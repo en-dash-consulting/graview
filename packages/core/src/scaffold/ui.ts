@@ -218,7 +218,7 @@ function Starter({ onCall }: { onCall: (call: ToolCall) => void }) {
       who="starter"
       testId="agent-starter"
       count={empty ? 1 : 0}
-      gate="add-${ids.kind}"
+      gate="${ids.gate}"
       label={() => "Add some starter data"}
       busyLabel="Adding…"
       idle="There is something here already"

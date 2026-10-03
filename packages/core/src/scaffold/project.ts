@@ -1,4 +1,5 @@
 import type { Ids } from "./names.js";
+import { documentReadmeLayout } from "./from-template.js";
 
 /** The packages a product depends on, in the order the skill lists them. */
 export const GRAVIEW_PACKAGES = [
@@ -191,6 +192,10 @@ export function packageJson(ids: Ids, workspace: boolean): string {
       mcp: `${run} build:domain && graview mcp ./dist/domain/app.js --data data`,
       skills: "graview skills install .",
       verify: `${run} typecheck && ${run} test && ${run} build && ${run} check`,
+      // Made from a template: set a store up from it — its acts, as one batch one undo takes back.
+      ...(ids.fromTemplate
+        ? { "apply-template": `${run} build:domain && graview apply ./dist/domain/app.js --template template.json --data data` }
+        : {}),
     },
     /*
      * pnpm 10 refuses postinstall scripts it was not told about, and says so
@@ -513,6 +518,20 @@ docs/agents.md
 export function readme(ids: Ids): string {
   const pm = ids.packageManager;
   const run = pm === "pnpm" ? "pnpm" : "npm run";
+  const layout = ids.fromTemplate
+    ? documentReadmeLayout(ids, run)
+    : `src/domain/      the declaration — no React in here; this is what graview check reads
+  schema.ts      the ${ids.kind} kind: its fields, its one edge, its horizon
+  mutations.ts   add, link, unlink, close — every change is a named, typed act
+  invariants.ts  one rule, and the repair it names
+  brand.ts       name, mark, typeface, palette — derived from one accent
+  app.ts         defineApp: the whole surface, in one object
+src/ui/
+  views.tsx      registerDefaultViews, then your own where the generic one is wrong
+  app.tsx        the provider, the Shell primitive, and a seat — under sixty lines
+  pages.tsx      the ${ids.kind}'s page on the routed face, in your words, over the derived ones
+src/main.tsx     the theme, the store that remembers, the two faces
+tests/           the rule fires on a graph that breaks it, and its repair resolves it`;
   const linked = ids.link
     ? `
 This project consumes the framework **by path** from \`${ids.link}\`. Build it
@@ -537,18 +556,7 @@ ${run} skills     # the authoring skills, for Claude Code and Codex
 ## Where things are
 
 \`\`\`
-src/domain/      the declaration — no React in here; this is what graview check reads
-  schema.ts      the ${ids.kind} kind: its fields, its one edge, its horizon
-  mutations.ts   add, link, unlink, close — every change is a named, typed act
-  invariants.ts  one rule, and the repair it names
-  brand.ts       name, mark, typeface, palette — derived from one accent
-  app.ts         defineApp: the whole surface, in one object
-src/ui/
-  views.tsx      registerDefaultViews, then your own where the generic one is wrong
-  app.tsx        the provider, the Shell primitive, and a seat — under sixty lines
-  pages.tsx      the ${ids.kind}'s page on the routed face, in your words, over the derived ones
-src/main.tsx     the theme, the store that remembers, the two faces
-tests/           the rule fires on a graph that breaks it, and its repair resolves it
+${layout}
 \`\`\`
 
 ## The loop

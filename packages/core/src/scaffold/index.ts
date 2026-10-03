@@ -32,6 +32,8 @@ import {
 } from "./project.js";
 import { schemaTs, mutationsTs, invariantsTs, brandTs, appTs, domainTest } from "./domain.js";
 import { indexHtml, embedHtml, embedTsx, viewsTsx, uiAppTsx, pagesTsx, mainTsx } from "./ui.js";
+import { documentAppTs, documentBrandTs, documentJson, documentSchemaTs, documentTest, templateJson, templateKind } from "./from-template.js";
+import type { GraviewTemplate } from "../document/graview-template.js";
 
 export { pascal, slugify, titleCase, validateScaffoldOptions } from "./names.js";
 export { GRAVIEW_PACKAGES, LINKED_PACKAGES } from "./project.js";
@@ -83,6 +85,14 @@ export interface ScaffoldOptions {
    * Two is a gap rather than a taste.
    */
   readonly workspace?: boolean;
+  /**
+   * A template made anywhere — Graview Cloud's shape (FR-08). The project
+   * keeps its document as the declaration (`src/domain/app.json`, compiled
+   * when the domain loads) and the template beside it as `template.json`,
+   * for `graview apply --template` to set a store up from. Read it with
+   * `readGraviewTemplate` first; this trusts what it is handed.
+   */
+  readonly template?: GraviewTemplate;
 }
 
 export interface ScaffoldFile {
@@ -103,13 +113,23 @@ export interface Scaffold {
 
 
 
-export function scaffoldProject(options: ScaffoldOptions): Scaffold {
+export function scaffoldProject(given: ScaffoldOptions): Scaffold {
+  /*
+   * FROM A TEMPLATE, the kind the UI leads with is the template's first kind
+   * that something creates, and its seat is gated on that act — unless the
+   * caller named a kind of the document's itself.
+   */
+  const led = given.template ? templateKind(given.template) : undefined;
+  const options: ScaffoldOptions = led
+    ? { ...given, kind: given.kind ?? led.kind, plural: given.plural ?? (given.kind === undefined ? led.plural : `${given.kind}s`) }
+    : given;
   const problems = validateScaffoldOptions(options);
   if (problems.length > 0) throw new Error(problems.join("\n"));
 
   const name = options.name.trim();
   const kind = options.kind ?? "item";
   const plural = options.plural ?? `${kind}s`;
+  const template = options.template;
   const packageName = options.packageName ?? slugify(name);
   const packageManager = options.packageManager ?? "pnpm";
   const port = options.port ?? 5170;
@@ -162,7 +182,28 @@ export function scaffoldProject(options: ScaffoldOptions): Scaffold {
     range,
     packageManager,
     packageName,
+    gate: led && given.kind === undefined ? led.gate : `add-${kind}`,
+    fromTemplate: template !== undefined,
   };
+
+  /*
+   * THE DECLARATION: TypeScript written for one kind, or — from a template —
+   * the template's document kept as the document (see ./from-template.ts).
+   */
+  const domain: ScaffoldFile[] = template
+    ? [
+        { path: "src/domain/app.json", contents: documentJson(template) },
+        { path: "src/domain/app.ts", contents: documentAppTs(ids) },
+        { path: "src/domain/schema.ts", contents: documentSchemaTs(ids) },
+        { path: "src/domain/brand.ts", contents: documentBrandTs(ids) },
+      ]
+    : [
+        { path: "src/domain/schema.ts", contents: schemaTs(ids) },
+        { path: "src/domain/mutations.ts", contents: mutationsTs(ids) },
+        { path: "src/domain/invariants.ts", contents: invariantsTs(ids) },
+        { path: "src/domain/brand.ts", contents: brandTs(ids) },
+        { path: "src/domain/app.ts", contents: appTs(ids) },
+      ];
 
   const files: ScaffoldFile[] = [
     { path: "package.json", contents: packageJson(ids, workspace) },
@@ -173,18 +214,15 @@ export function scaffoldProject(options: ScaffoldOptions): Scaffold {
     { path: "embed.html", contents: embedHtml(ids) },
     { path: ".gitignore", contents: gitignore() },
     { path: "README.md", contents: readme(ids) },
-    { path: "src/domain/schema.ts", contents: schemaTs(ids) },
-    { path: "src/domain/mutations.ts", contents: mutationsTs(ids) },
-    { path: "src/domain/invariants.ts", contents: invariantsTs(ids) },
-    { path: "src/domain/brand.ts", contents: brandTs(ids) },
-    { path: "src/domain/app.ts", contents: appTs(ids) },
+    ...domain,
     { path: "src/ui/views.tsx", contents: viewsTsx(ids) },
     { path: "src/ui/app.tsx", contents: uiAppTsx(ids) },
     { path: "src/ui/pages.tsx", contents: pagesTsx(ids) },
     { path: "src/main.tsx", contents: mainTsx(ids) },
     { path: "src/embed.tsx", contents: embedTsx(ids) },
-    { path: "tests/domain.test.ts", contents: domainTest(ids) },
+    { path: "tests/domain.test.ts", contents: template ? documentTest(ids) : domainTest(ids) },
     { path: ".github/workflows/ci.yml", contents: ciYml(ids) },
+    ...(template ? [{ path: "template.json", contents: templateJson(template) }] : []),
   ];
 
   if (!workspace) {

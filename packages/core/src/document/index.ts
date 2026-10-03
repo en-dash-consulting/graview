@@ -21,4 +21,6 @@ export type { Upgrade, Upgraded } from "./upgrade.js";
 export { expressionRule, shapesOfSchema } from "./rules.js";
 export type { ExpressionRuleSpec } from "./rules.js";
 export { documentOf, fieldSpecOf, toDocument } from "./to-document.js";
+export { instantiateTemplate, isGraviewTemplate, readGraviewTemplate, templateSeedPrimitives, TemplateSpec, TEMPLATE_FORMAT, TEMPLATE_FORMAT_VERSION, TEMPLATE_QUESTION_TYPES } from "./graview-template.js";
+export type { GraviewTemplate, InstantiatedTemplate, RefusedTemplate, TemplateCall, TemplateQuestion, TemplateSeed, TemplateSeedNode, TemplateSetupStep } from "./graview-template.js";
 export type { ToDocumentResult } from "./to-document.js";
