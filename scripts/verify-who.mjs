@@ -19,6 +19,7 @@ import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const { PRESENCE_TTL_MS } = await import(resolve(repoRoot, "packages/core/dist/index.js"));
 const ENGINE = engineName();
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {}, pageErrors: [] };
 let browser;
@@ -165,11 +166,23 @@ try {
     ok: followingLine === "following Nora" && /focus=aggregate%3Alist/.test(bHash) && !lineAfterEscape && /focus=aggregate%3Alist/.test(bHashAfter),
   };
 
-  /* ---------------------------------------------- A closes: gone within the TTL */
+  /*
+   * A closes: gone within the TTL. WHAT THE CODE PROMISES, not a number
+   * beside it: the last heartbeat can land just before the close, the
+   * person lapses PRESENCE_TTL_MS after it, and the sweep that notices runs
+   * every half TTL — so gone by TTL × 1.5, and a frame to draw it. A fixed
+   * 3.2s look sat inside that window and failed whenever the beats fell
+   * badly (nightly #16). B watches for her to go, and the claim says when.
+   */
   await a.close();
-  await b.waitForTimeout(3200);
-  const gone = await figureOf(b, NORA);
-  report.checks.aClosesAndIsGoneWithinTheTtl = { gone, ok: gone === null };
+  const closed = Date.now();
+  const promised = Math.ceil(PRESENCE_TTL_MS * 1.5) + 750;
+  let gone = await figureOf(b, NORA);
+  while (gone !== null && Date.now() - closed < promised) {
+    await b.waitForTimeout(100);
+    gone = await figureOf(b, NORA);
+  }
+  report.checks.aClosesAndIsGoneWithinTheTtl = { gone, tookMs: Date.now() - closed, promisedMs: promised, ok: gone === null };
 
   await b.close();
   report.passed = Object.values(report.checks).every((check) => check.ok) && report.pageErrors.length === 0;
