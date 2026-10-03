@@ -178,6 +178,29 @@ describe("repairPlan", () => {
     expect(codes(store.findings())).toEqual(codes(findings));
   });
 
+  it("a default declared beside the schema (`defaults`) coerces a required field; one that does not fit itself leaves the record to go", () => {
+    const shift = defineNode("shift", {
+      fields: z.object({ label: z.string(), state: z.enum(["open", "taken"]) }),
+      defaults: { state: "open" },
+    });
+    const odd = defineNode("odd", { fields: z.object({ label: z.string(), state: z.enum(["open", "taken"]) }), defaults: { state: "never" } });
+    const beside = { schema: createSchema([shift, odd]) };
+    const found = validateGraph(beside, {
+      nodes: [
+        { id: "s1", kind: "shift", label: "Monday", state: "maybe" },
+        { id: "o1", kind: "odd", label: "Tuesday", state: "maybe" },
+      ],
+      edges: [],
+    });
+    expect(found.map((f) => [f.id, f.detail, f.repair?.action])).toEqual([
+      ["o1", "state", "drop"],
+      ["s1", "state", "coerce"],
+    ]);
+    expect(repairPlan(found).said).toContain("1 required field would be set to its default");
+    // A field the schema can empty is still cleared, not set: the smallest fix.
+    expect(validateGraph({ schema: createSchema([defineNode("note", { fields: z.object({ label: z.string(), mood: z.enum(["calm"]).optional() }), defaults: { mood: "calm" } })]) }, { nodes: [{ id: "n1", kind: "note", label: "N", mood: "wild" }], edges: [] })[0]!.repair!.action).toBe("clear");
+  });
+
   it("a plan of no findings is no change", () => {
     const store = new Store({ schema, mutations: [], snapshot: clean as never });
     const plan = repairPlan(store.findings());

@@ -463,6 +463,8 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
     const labelParts = labelSource ? parseTemplate(labelSource) : undefined;
     const describeParts = spec.describe ? parseTemplate(spec.describe) : undefined;
     const labels = Object.fromEntries(Object.entries(spec.fields).filter(([, f]) => f.label).map(([n, f]) => [n, f.label!]));
+    // Defaults stay out of the zod schema (hydration must not invent values) and ride beside it, for a repair to read.
+    const defaults = Object.fromEntries(Object.entries(spec.fields).filter(([, f]) => f.default !== undefined).map(([n, f]) => [n, f.default]));
     const edgeDecls = Object.fromEntries(
       Object.entries(spec.edges ?? {}).map(([n, e]) => [
         n,
@@ -486,6 +488,7 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
       ...(spec.lifecycle ? { lifecycle: { field: spec.lifecycle.field, retired: spec.lifecycle.retired } } : {}),
       ...(spec.figure ? { figure: spec.figure } : {}),
       ...(Object.keys(labels).length > 0 || spec.glance ? { display: { ...(Object.keys(labels).length > 0 ? { labels } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}) } } : {}),
+      ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
     } as never);
   });
   const schema = createSchema(definitions as never);

@@ -112,13 +112,15 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       describe?: unknown;
       lifecycle?: { field: string; retired: readonly (string | number | boolean)[] };
       display?: { glance?: readonly string[] };
+      defaults?: Readonly<Record<string, unknown>>;
     };
     const at = `kinds.${kind}`;
     const fields: Record<string, FieldSpec> = {};
     for (const [name, field] of Object.entries(definition?.fields?.shape ?? {})) {
       if (name === "id" || name === "kind") continue;
       const read = fieldOf(field);
-      if ("spec" in read) fields[name] = read.spec;
+      const beside = definition?.defaults?.[name];
+      if ("spec" in read) fields[name] = beside !== undefined && read.spec.default === undefined ? ({ ...read.spec, default: beside } as FieldSpec) : read.spec;
       else findings.push(error("field-is-code", `${at}.fields.${name}`, `the field "${name}" cannot be written in a document: ${read.why}`));
     }
     if (typeof definition?.label === "function") findings.push(warning("label-is-code", `${at}.label`, `${kind}'s label is a function; the document names it by its first required word field instead`, 'write it as a template, like "{name}"'));
