@@ -27,7 +27,7 @@ export { openRemote, RemoteRefusedError, seatHeaders } from "./remote.js";
 export { SEAT_HEADERS } from "./seat-headers.js";
 export { createBroadcastPresence, presenceChannelName } from "./presence.js";
 export type { BroadcastPresenceOptions, ChannelLike } from "./presence.js";
-export type { LiveSocketLike, RemoteConflict, RemoteOptions, RemoteRefusal, RemoteStore } from "./remote.js";
+export type { LiveSocketLike, RemoteBackoff, RemoteConflict, RemoteCounters, RemoteOptions, RemoteRefusal, RemoteStatus, RemoteStore } from "./remote.js";
 export { conflictSentence, LIVE_PATH, REFUSAL_REASONS } from "./live.js";
 export type { LiveClientMessage, LiveServerMessage, RefusalReason, WireRefusal } from "./live.js";
 export {

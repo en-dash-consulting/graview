@@ -105,6 +105,8 @@ describe("a client that falls behind adopts the server's state", () => {
     expect(ids(client.store.log.all())).toEqual(ids(served.store.log.all()));
     expect(served.store.log.all().filter((op) => op.intent === "Rename to “Book the big hall”")).toHaveLength(1);
     expect(client.seq()).toBe(served.store.log.length - 1);
+    // Counted, for a host's beacon (FR-49).
+    expect(client.counters().resyncs).toBe(1);
   });
 
   it("recovers a copy that drifted by adopting the server's state, and carries on live", async () => {
