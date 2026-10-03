@@ -32,6 +32,8 @@ What is stored carries the format it was written in (FR-31). `FORMATS` names the
 - Within a major, a route or a response field may be added. None is removed, renamed or changed in meaning.
 - A request field the server does not know is ignored, never refused.
 - The live socket at `/graview/live` (FR-05) holds to the same rules: a message type or a field may be added, and a message the server does not know is ignored. `hello` and `welcome` carry `WIRE_PROTOCOL`, so either side can tell what the other speaks. Its seqs mean what `/graview/since?seq=N` means.
+- A refusal's `reason` (FR-46) is one of `REFUSAL_REASONS` — `forbidden`, `missing`, `invalid`, `limit` — on the socket's `refused` and on every refusing answer of the routes. A code never changes meaning, and none is added within a major: a program that branches on all four has branched on every refusal. `wouldNeed` is the roles that could, when the policy knows them.
+- `busy` (FR-45) is not a refusal: the host asked for the change again after `retryAfter` milliseconds (429 with `Retry-After` over HTTP), nothing was judged, and a client keeps the change. `limit` is a refusal: the change can never succeed as asked, and is taken back.
 - A field's revision, which a stale write is refused against, is the seq of the op that last wrote it. It is derived from the log and never stored, so it never changes a stored format.
 - `WIRE_PROTOCOL` moves only when a client of the previous protocol can no longer be served, and that is a major.
 

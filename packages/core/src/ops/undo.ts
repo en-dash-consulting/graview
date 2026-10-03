@@ -19,6 +19,12 @@ export type UndoCheck =
       /** Batches that would have to come along for the undo to be legal. */
       readonly includeBatches: readonly string[];
       readonly message: string;
+      /**
+       * Why, as a refusal's code (FR-46): `missing` when there is nothing
+       * live to take back, `forbidden` when it is a change the seat cannot
+       * see. Absent, the undo is blocked (`invalid`).
+       */
+      readonly reason?: "missing" | "forbidden";
     };
 
 /** An undo check that said no. */
@@ -78,6 +84,7 @@ export function checkUndo(
         ops,
         blockedBy: [],
         includeBatches: [],
+        reason: "missing",
         message: `Cannot undo ${behind.map((id) => `batch ${id}`).join(", ")}: it is not after the undo horizon at op ${horizon.seq}${horizon.at ? ` (${horizon.at})` : ""}. What was done before the horizon is archived, and undo does not reach behind it.`,
       };
     }
@@ -89,6 +96,7 @@ export function checkUndo(
       ops,
       blockedBy: [],
       includeBatches: [],
+      reason: "missing",
       message:
         batchIds.length === 0
           ? "No batch given to undo"
@@ -107,6 +115,7 @@ export function checkUndo(
       ops,
       blockedBy: [],
       includeBatches: [],
+      reason: "forbidden",
       message: ops.every(isWithheld)
         ? "Cannot undo a change you cannot see: only somebody who can see it can take it back."
         : "Cannot undo this here: part of it is a change you cannot see, and only somebody who can see it can take it back.",

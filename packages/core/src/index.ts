@@ -52,7 +52,7 @@ export {
 export type { JsonSchema, MutationToolSchema } from "./schema/json-schema.js";
 
 // Graph — the reactive in-memory model the framework owns.
-export { Graph, GraphError } from "./graph/graph.js";
+export { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 export type { ApplyPrimitivesOptions, GraphListener, GraphOptions } from "./graph/graph.js";
 export { diffSnapshots, EMPTY_DIFF, isEmptyDiff } from "./graph/diff.js";
 export type { GraphDiff, NodeChange } from "./graph/diff.js";
@@ -73,6 +73,8 @@ export { defineInvariant, evaluate, RuleBudgetError, UnregisteredInvariantError,
 export { FRAMEWORK_VERSION } from "./version.js";
 export { capabilities, WIRE_PROTOCOL } from "./capabilities.js";
 export type { Capabilities } from "./capabilities.js";
+export { REFUSAL_REASONS, refusalOf } from "./refusal.js";
+export type { RefusalReason, WireRefusal } from "./refusal.js";
 export { assertReadable, FORMATS, formatStamp, NewerFormatError, upgradeOp, upgradeSnapshot } from "./formats.js";
 export type { FormatName, FormatStamp } from "./formats.js";
 export type {

@@ -24,6 +24,9 @@ export const NOT_EXPORTS = new Map([
   ["onConflict", "a method of openRemote's store, not an export"],
   ["keepTheirs", "a method of a RemoteConflict, not an export"],
   ["useMine", "a method of a RemoteConflict, not an export"],
+  ["onRefusal", "a method of openRemote's store, not an export"],
+  ["wouldNeed", "a field of a refusal on the wire, not an export"],
+  ["retryAfter", "a field of a busy answer on the wire, not an export"],
   ["serializeAttachment", "a Cloudflare Durable Object WebSocket method, not an export"],
   ["deserializeAttachment", "a Cloudflare Durable Object WebSocket method, not an export"],
 ]);
