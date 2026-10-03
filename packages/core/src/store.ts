@@ -22,7 +22,7 @@ import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
 import { nounOf } from "./schema/define-node.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
-import { checkUndo, undoPrimitives, type UndoCheck } from "./ops/undo.js";
+import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
 import { validateGraph, type GraphFinding } from "./validate-graph.js";
 import { tellTheWatchItsNames, tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } from "./watched.js";
@@ -39,6 +39,18 @@ export interface StoreOptions<S extends AnySchema> {
    * seed was never an operation and folding the log alone would lose it.
    * Either way the log is live: what was done before is still attributed,
    * still in the activity, and still undoable.
+   *
+   * REOPENING ON A SNAPSHOT NEVER FOLDS THE LOG (FR-18). The snapshot is
+   * judged by this declaration (held as stored, FR-28; `findings()` says
+   * what no longer fits) and the log is only history, so a log that names
+   * a kind this declaration dropped opens: its ops stay attributed and
+   * listed, and their primitives are not applied again. What touches them
+   * afterwards is the declaration change's epoch: a migration that dropped
+   * the kind begins one (`epochs`, with `change`), `verify()` folds from
+   * it rather than from ops in the old words, and undo does not reach back
+   * across it. A log alone, with no snapshot, IS folded (from its last
+   * epoch), and a record of a dropped kind it makes is held as written,
+   * with `findings()` naming it `kind-unknown` until a repair removes it.
    */
   readonly log?: readonly Operation[];
   /**
@@ -51,6 +63,10 @@ export interface StoreOptions<S extends AnySchema> {
   readonly epochs?: readonly Epoch[];
   /** Defaults to a monotonic counter so tests stay deterministic. */
   readonly ids?: () => string;
+  /**
+   * The clock each op is stamped by, as an ISO string. Defaults to the
+   * current time (FR-18); a test or a replay that needs a fixed one says so.
+   */
   readonly now?: () => string;
   readonly validate?: boolean;
   readonly invariantOptions?: EvaluateOptions<S>;
@@ -100,6 +116,12 @@ export interface ApplyOptions {
   readonly author?: Author | Principal;
   /** Groups several mutations under one gesture or one agent turn. */
   readonly batch?: string;
+  /**
+   * What the gesture was for. Recorded beside each op's own sentence, as
+   * `batchIntent`, and read as the batch's intent; it no longer replaces
+   * the sentence each act's `describe()` gave (FR-18). For an act with no
+   * `describe`, it is the op's sentence too.
+   */
   readonly intent?: string;
   /** What the change came through — `web`, `mcp:<client>`, `view:<name>`, `api`, `cli` — recorded on each op (FR-06). */
   readonly via?: Via;
@@ -126,6 +148,32 @@ export interface ApplyResult<S extends AnySchema> extends Preview<S> {
 export type UndoPreview<S extends AnySchema> =
   | ({ readonly ok: true; readonly check: UndoCheck } & Preview<S>)
   | { readonly ok: false; readonly check: UndoCheck };
+
+/**
+ * An op a host built itself, for `Store.append` (FR-18): what it does, who
+ * did it and why. Everything else is filled in as the store fills its own
+ * ops, and kept when the host gave it. A whole `Operation` fits too; its
+ * `seq` is renumbered to this log.
+ */
+export interface AppendOp {
+  readonly primitives: readonly Primitive[];
+  readonly author: Author;
+  /** What was meant, in a sentence: what the activity and every undo say. */
+  readonly intent: string;
+  readonly id?: string;
+  readonly batch?: string;
+  readonly batchIntent?: string;
+  /** Defaults to the primitives inverted, newest first. */
+  readonly inverse?: readonly Primitive[];
+  readonly reads?: readonly string[];
+  /** Defaults to the ids the primitives write. */
+  readonly writes?: readonly string[];
+  readonly mutation?: MutationCall | null;
+  /** Defaults to the store's clock. */
+  readonly at?: string;
+  readonly undoes?: string;
+  readonly via?: Via;
+}
 
 const HUMAN: Author = { kind: "human" };
 
@@ -210,7 +258,7 @@ export class Store<S extends AnySchema> {
     this.modules = resolveModules(options.modules, options.enabledModules);
     let n = 0;
     this.nextId = options.ids ?? (() => `op${++n}`);
-    this.now = options.now ?? (() => new Date(0).toISOString());
+    this.now = options.now ?? (() => new Date().toISOString());
     this.validate = options.validate ?? true;
 
     for (const mutation of options.mutations ?? []) {
@@ -546,6 +594,51 @@ export class Store<S extends AnySchema> {
     });
   }
 
+  /**
+   * What several calls would do as one gesture, without doing any of it
+   * (FR-18): each compiles on the graph the one before it left, as
+   * `applyAll` would run them, on a copy. The diff is the net of them all,
+   * and `introduces` and `resolves` judge the end state against today's.
+   * A call that cannot compile throws, as it would on applying; nothing is
+   * written, logged or heard either way.
+   */
+  previewAll(calls: readonly MutationCall[], context?: InvariantContext): Preview<S> {
+    const before = this.violations(context);
+    const start = this.graph.snapshot();
+    const trial = Graph.from(this.schema, start, { validate: this.validate });
+    const primitives: Primitive[] = [];
+    const reads = new Set<string>();
+    const writes = new Set<string>();
+    const intents: string[] = [];
+    for (const call of calls) {
+      const compiled = compileMutation(trial, this.mutation(call.name), call.args);
+      // An act that does nothing leaves no trace when applied, nor here.
+      if (compiled.primitives.length === 0) continue;
+      const recorded = compiled.primitives.map(normalise);
+      trial.applyPrimitives(recorded);
+      primitives.push(...recorded);
+      for (const id of compiled.reads) reads.add(id);
+      for (const id of compiled.writes) writes.add(id);
+      intents.push(compiled.intent);
+    }
+    const after = evaluate(trial, this.allInvariants(), {
+      ...this.invariantOptions,
+      ...(context === undefined ? {} : { context }),
+    });
+    const beforeKeys = new Set(before.map(violationKey));
+    const afterKeys = new Set(after.map(violationKey));
+    return {
+      diff: diffSnapshots(start, trial.snapshot()),
+      primitives,
+      reads: [...reads],
+      writes: [...writes],
+      intent: intents.join("; "),
+      introduces: after.filter((v) => !beforeKeys.has(violationKey(v))),
+      resolves: before.filter((v) => !afterKeys.has(violationKey(v))),
+      violationsAfter: after,
+    };
+  }
+
   private previewPrimitives(
     primitives: readonly Primitive[],
     meta: {
@@ -655,7 +748,14 @@ export class Store<S extends AnySchema> {
           seq: this.log.length,
           batch,
           author,
-          intent: options.intent ?? compiled.intent,
+          /*
+           * THE ACT'S OWN SENTENCE, kept; what the gesture was for goes
+           * beside it (FR-18). An act with no `describe` has no sentence of
+           * its own, only `close-item(id="deposit")`, and there the caller's
+           * words ("Close it", the button's) are the better one.
+           */
+          intent: definition.describe !== undefined ? compiled.intent : (options.intent ?? compiled.intent),
+          ...(options.intent !== undefined ? { batchIntent: options.intent } : {}),
           mutation: call,
           /*
            * NORMALISED on the way into the record: a patch that clears a
@@ -769,6 +869,65 @@ export class Store<S extends AnySchema> {
     }
     this.notify(diffSnapshots(before, this.graph.snapshot()), landed);
     return landed;
+  }
+
+  /**
+   * OPS A HOST MADE, landed as ordinary history (FR-18): a template's
+   * example content, a seeded beginning, a repair or an import the host
+   * built itself. Unlike `receive`, which takes ops somebody else's store
+   * already made and skips the ones it has, these are new here, so the
+   * store fills in what the host left out the way it fills its own: the
+   * seq, an id, one batch for the call (`options.batch`, else a fresh one),
+   * the time, the inverse (from the primitives), what they write, and no
+   * mutation. What the host did say is kept.
+   *
+   * Each op lands as a write (a default is filled in on the way in, as a
+   * fold would), or, when it `undoes` another, as a putting-back. No policy
+   * is asked: there is no act to judge, and whoever calls this is the
+   * authority, as with `applyPrimitives`. All or nothing: an op that does
+   * not fit puts the store back as it was and throws a `ReceiveError`
+   * naming it, and an id the log already holds is refused before anything
+   * lands. Subscribers hear one change, and every op undoes like any other.
+   */
+  append(ops: readonly AppendOp[], options: { readonly batch?: string } = {}): readonly Operation[] {
+    if (ops.length === 0) return [];
+    const taken = new Set(this.log.all().map((op) => op.id));
+    let batch: string | undefined;
+    const built: Operation[] = ops.map((made, index) => {
+      const primitives = made.primitives.map(normalise);
+      const op: Operation = {
+        id: made.id ?? this.nextId(),
+        seq: this.log.length + index,
+        batch: made.batch ?? options.batch ?? (batch ??= `batch:${++this.counter}`),
+        author: made.author,
+        intent: made.intent,
+        ...(made.batchIntent !== undefined ? { batchIntent: made.batchIntent } : {}),
+        mutation: made.mutation ?? null,
+        primitives,
+        inverse: made.inverse ?? [...primitives].reverse().map(invert),
+        reads: made.reads ?? [],
+        writes: made.writes ?? [...new Set(primitives.flatMap(writesOf))],
+        at: made.at ?? this.now(),
+        ...(made.undoes !== undefined ? { undoes: made.undoes } : {}),
+        ...(made.via !== undefined ? { via: made.via } : {}),
+      };
+      if (taken.has(op.id)) throw new GraphError(`Op "${op.id}" (${op.intent}) is already in the log`, "A host-made op needs an id of its own; leave `id` out and the store mints one.");
+      taken.add(op.id);
+      return op;
+    });
+    const before = this.graph.snapshot();
+    for (const op of built) {
+      try {
+        this.graph.applyPrimitives(op.primitives, { restoring: op.undoes !== undefined });
+      } catch (error) {
+        this.graph.load(before);
+        throw new ReceiveError(op, error);
+      }
+    }
+    for (const op of built) this.log.append(op);
+    for (const op of built) tellTheWatchOfAnAuthor(op.author.id);
+    this.notify(diffSnapshots(before, this.graph.snapshot()), built);
+    return built;
   }
 
   /**
@@ -886,7 +1045,7 @@ export class Store<S extends AnySchema> {
   ): ApplyResult<S> {
     const ids = typeof batchIds === "string" ? [batchIds] : batchIds;
     const check = this.canUndo(ids);
-    if (!check.ok) throw new GraphError(check.message);
+    if (!check.ok) throw new UndoBlockedError(check);
 
     const batch = options.batch ?? `undo:${++this.counter}`;
     const author = options.author ?? HUMAN;
@@ -925,7 +1084,8 @@ export class Store<S extends AnySchema> {
         seq: this.log.length,
         batch,
         author,
-        intent: options.intent ?? `Undo: ${target.intent}`,
+        intent: `Undo: ${target.intent}`,
+        ...(options.intent !== undefined ? { batchIntent: options.intent } : {}),
         mutation: null,
         primitives: target.inverse,
         inverse: [...target.inverse].reverse().map(invert),

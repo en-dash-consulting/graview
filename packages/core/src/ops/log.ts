@@ -152,7 +152,8 @@ export class OperationLog {
       return {
         id,
         author: first.author,
-        intent: first.intent,
+        // What the gesture was for, when its caller said; else its first op's own sentence.
+        intent: first.batchIntent ?? first.intent,
         at: first.at,
         ops,
         undone: ops.every((op) => undone.has(op.id)),

@@ -1,3 +1,4 @@
+import { GraphError } from "../graph/graph.js";
 import type { OperationLog } from "./log.js";
 import type { Operation } from "./types.js";
 
@@ -18,6 +19,30 @@ export type UndoCheck =
       readonly includeBatches: readonly string[];
       readonly message: string;
     };
+
+/** An undo check that said no. */
+export type UndoRefused = Extract<UndoCheck, { readonly ok: false }>;
+
+/**
+ * AN UNDO THAT CANNOT RUN, AND WHY (FR-18): a later op read what it wrote
+ * (`blockedBy` names each, with what it read), it would reach back across a
+ * declaration change, or there was nothing live to undo. `check` is the
+ * `canUndo` answer it was refused on, so a host can offer to bring the
+ * blocking batches along (`check.includeBatches`) without asking again.
+ *
+ * Still a `GraphError`: a caller that caught those before catches this.
+ */
+export class UndoBlockedError extends GraphError {
+  constructor(readonly check: UndoRefused) {
+    super(check.message);
+    this.name = "UndoBlockedError";
+  }
+
+  /** The ops in the way, with what each read that the undo would take back. */
+  get blockedBy(): readonly UndoBlock[] {
+    return this.check.blockedBy;
+  }
+}
 
 /**
  * Undoing an op out of order is legal exactly when no later live op read

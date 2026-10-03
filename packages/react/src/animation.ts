@@ -264,7 +264,7 @@ export function useSeatWork<S extends AnySchema>(holdMs = 4000): SeatWork {
                 : act,
             );
           } else {
-            acts = [{ batch: op.batch, who, intent: op.intent, at: op.at, wrote: [...op.writes] }, ...acts].slice(0, 12);
+            acts = [{ batch: op.batch, who, intent: op.batchIntent ?? op.intent, at: op.at, wrote: [...op.writes] }, ...acts].slice(0, 12);
           }
         }
         return marks.size === current.marks.size && acts === current.acts && marks.size === 0
