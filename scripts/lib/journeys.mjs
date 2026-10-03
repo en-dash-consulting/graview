@@ -270,7 +270,7 @@ const appears = (locator, ms = Number(process.env["GRAVIEW_JOURNEYS_PATIENCE"] ?
 
 export class DeadEnd extends Error {}
 
-const onTarget = (page) =>
+const onMarked = (page) =>
   page.evaluate(() => {
     const target = document.querySelector("[data-journey-target]");
     const active = document.activeElement;
@@ -307,14 +307,29 @@ export class Person {
 
   /** The keyboard to this control, by Tab or Shift+Tab, whichever is shorter. */
   async reach(locator, what) {
-    const marked = await locator
-      .evaluate((el) => {
-        for (const old of document.querySelectorAll("[data-journey-target]")) old.removeAttribute("data-journey-target");
-        el.setAttribute("data-journey-target", "");
-        return true;
-      })
-      .catch(() => false);
-    if (!marked) throw new DeadEnd(`${what} is not on the screen`);
+    /*
+     * THE CONTROL AS IT IS NOW, asked again at every press. Marked once, a
+     * control a page redrew while the walk went on was a node no longer in
+     * the page, and the keyboard walked past the one that replaced it and
+     * was told it could not get there. The locator is the control; the mark
+     * is where it is this moment.
+     */
+    const mark = () =>
+      locator
+        .evaluate(
+          (el) => {
+            if (!el.hasAttribute("data-journey-target")) {
+              for (const old of document.querySelectorAll("[data-journey-target]")) old.removeAttribute("data-journey-target");
+              el.setAttribute("data-journey-target", "");
+            }
+            return true;
+          },
+          null,
+          { timeout: 2_000 },
+        )
+        .catch(() => false);
+    const onTarget = async (page) => (await mark()) && onMarked(page);
+    if (!(await mark())) throw new DeadEnd(`${what} is not on the screen`);
     if (await onTarget(this.page)) return;
     /*
      * HOW FAR IT REALLY IS, found by pressing rather than computed: the
@@ -698,6 +713,16 @@ async function openKindPage(person, plural) {
   if ((await visible.count()) === 0) throw new DeadEnd(`no link to the ${plural} is on the screen`);
   await person.press(visible.first(), `the ${plural} link`);
   await page.waitForLoadState("domcontentloaded");
+  /*
+   * ARRIVED, not merely asked to go. The face routes in the page, so the
+   * load state is the one it already had; on the nightly's runner the talks
+   * took a second to draw, and the journey took the HOME page's "Only…" —
+   * the gallery's lens has one — as the talks', walked past the real one,
+   * and said the keyboard could not reach it. The page is there when its
+   * heading names the kind.
+   */
+  const heading = page.getByRole("heading", { level: 1, name: new RegExp(`^\\s*${plural}(?!\\p{L})`, "u") });
+  if (!(await appears(heading))) throw new DeadEnd(`the ${plural} link did not open the ${plural}`);
   await person.settle(300);
 }
 
