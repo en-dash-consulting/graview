@@ -20,20 +20,26 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | Title | Status |
 |-------|--------|
 | [A conformance kit: fixtures any host runs against a version to prove it reads, compiles and derives the same](./a-conformance-kit-fixtures-any-host.md) | completed |
+| [A document can say a kind's glance fields, and the compiler stops asking for what it cannot say (FR-39)](./a-document-can-say-a-kind-s-glance.md) | completed |
 | [A host's own work has a seat: a system principal the policy lets through, and authors named by their own name](./a-host-s-own-work-has-a-seat-a-system.md) | completed |
+| [A live client a host can observe: status, counters, pending, backoff, presence cadence and visibility (FR-49)](./a-live-client-a-host-can-observe.md) | completed |
+| [A live connection a hibernating host can resume from serialized per-socket state (FR-41)](./a-live-connection-a-hibernating-host.md) | completed |
 | [A live wire: ops pushed as they land, pending edits rebased, and a stale write is a conflict rather than a loss](./a-live-wire-ops-pushed-as-they-land.md) | completed |
 | [A log a seat may not fully see is redacted, not gapped: OperationLog and openRemote take withheld ops](./a-log-a-seat-may-not-fully-see-is.md) | completed |
 | [A log can be folded from a base: epochs across declaration changes](./a-log-can-be-folded-from-a-base-epochs.md) | completed |
 | [A long-lived log compacts behind an undo horizon](./a-long-lived-log-compacts-behind-an.md) | completed |
 | [A member drawn as a row is a cell a view can claim](./a-member-drawn-as-a-row-is-a-cell-a.md) | completed |
+| [A repair reads a declared default, so a record a coerce would keep is patched rather than dropped (FR-50)](./a-repair-reads-a-declared-default-so-a.md) | completed |
 | [A rule language the framework interprets: total, budgeted, and read like a sentence](./a-rule-language-the-framework.md) | completed |
 | [A stability contract a host can hold the framework to: what a version may change, a changelog that says so, and capabilities() naming the seams it ships](./a-stability-contract-a-host-can-hold.md) | completed |
+| [A store can adopt the server's whole state, with pending batches applied again on top (FR-53)](./a-store-can-adopt-the-server-s-whole.md) | completed |
 | [A store can hold records that no longer fit while still checking new writes](./a-store-can-hold-records-that-no.md) | completed |
 | [A store can prove its own fold: a deterministic snapshot hash and store.verify()](./a-store-can-prove-its-own-fold-a.md) | completed |
 | [Agents name records the way people do: a node argument accepts a label, and ambiguity comes back as candidates](./agents-name-records-the-way-people-do.md) | completed |
 | [An agent acts for someone, through something: delegation and channel on every op, and seat headers trusted only on request](./an-agent-acts-for-someone-through.md) | completed |
 | [An optimistic client can roll back: Store.rebase, a public notify, and batch ids that never collide across clients](./an-optimistic-client-can-roll-back.md) | completed |
 | [Applying primitives is all or nothing: a failure leaves the graph as it was](./applying-primitives-is-all-or-nothing.md) | completed |
+| [Backpressure distinct from refusal: busy with retryAfter, and the client re-sends (FR-45)](./backpressure-distinct-from-refusal.md) | completed |
 | [Derived tools say what they do, are safe to name, and an act named like a read tool can still be run](./derived-tools-say-what-they-do-are.md) | completed |
 | [Embed hands its views to the routed face too](./embed-hands-its-views-to-the-routed.md) | completed |
 | [Embed holds inside a chat's widget: no storage assumed, its own height reported, the host's scheme taken](./embed-holds-inside-a-chat-s-widget-no.md) | completed |
@@ -44,18 +50,26 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [MCP for remote hosts: Streamable HTTP, honest tool hints, and other people's words marked as data](./mcp-for-remote-hosts-streamable-http.md) | completed |
 | [Migrations that keep data: declared renames and type coercion in steps and migrationBetween](./migrations-that-keep-data-declared.md) | completed |
 | [Modules reach the host: the enabled set is passed to opened, served and remote stores, and turning one off is in history](./modules-reach-the-host-the-enabled-set.md) | completed |
+| [Presence a host can add to: kind, name, onBehalfOf, announce for socketless visitors, and welcome.participant (FR-47)](./presence-a-host-can-add-to-kind-name.md) | completed |
 | [Presence speaks one dialect and forgets the gone; seats can be added after mount without offering to sit as someone else](./presence-speaks-one-dialect-and.md) | completed |
+| [Refusal reasons a program can branch on: forbidden, missing, invalid, limit, with wouldNeed (FR-46)](./refusal-reasons-a-program-can-branch.md) | completed |
 | [Registering one view layers over the defaults instead of replacing them, and a default can be wrapped](./registering-one-view-layers-over-the.md) | completed |
+| [Sights follow the log: seesId's judgement, an appended-op creator index, and the ambiguous refusal names the kind (FR-51)](./sights-follow-the-log-seesid-s.md) | completed |
 | [Stored data checked against its declaration: validateGraph, and repairs as ordinary ops](./stored-data-checked-against-its.md) | completed |
 | [Stored formats carry their version, and the next major brings the steps to read the last one](./stored-formats-carry-their-version-and.md) | completed |
 | [Structural edits as a vocabulary: add, rename, retype, remove — and a rename rewrites every reference](./structural-edits-as-a-vocabulary-add.md) | completed |
 | [Templates as data: graview create and graview apply take a template made anywhere](./templates-as-data-graview-create-and.md) | completed |
+| [The channel is the host's word: the live handler takes via from the seat, never from the client (FR-52)](./the-channel-is-the-host-s-word-the.md) | completed |
+| [The companion is a top-level landmark or none, so axe's landmark-complementary-is-top-level holds (FR-40)](./the-companion-is-a-top-level-landmark.md) | completed |
 | [The declaration is a document: one JSON object compiles into the same app defineApp declares](./the-declaration-is-a-document-one-json.md) | completed |
 | [The framework says its own version, and rule failures are structured](./the-framework-says-its-own-version-and.md) | completed |
+| [The live handler serves a store the host already holds (FR-42)](./the-live-handler-serves-a-store-the.md) | completed |
 | [The record names Graview Cloud and npm as they are](./the-record-names-graview-cloud-and-npm.md) | completed |
+| [The server pushes that the declaration changed, and a remote client reopens on it (FR-43)](./the-server-pushes-that-the-declaration.md) | completed |
 | [The store a host drives: a real clock, its own sentences kept, previews of several calls, host ops appended, typed undo refusals](./the-store-a-host-drives-a-real-clock.md) | completed |
 | [The store serves from any runtime: a fetch handler, an adapter over plain SQL, and core proven in workerd](./the-store-serves-from-any-runtime-a.md) | completed |
 | [The theme has good and bad tones, checked for contrast in both schemes](./the-theme-has-good-and-bad-tones.md) | completed |
 | [The workbench has a heading: an h1 naming the app, and headings for its regions](./the-workbench-has-a-heading-an-h1.md) | completed |
+| [Version skew on the wire: build strings, a reload answer, carried calls, and a codec name (FR-44)](./version-skew-on-the-wire-build-strings.md) | completed |
 | [Views as data: a card, a row and a badge declared rather than written, and drawn by the framework](./views-as-data-a-card-a-row-and-a-badge.md) | completed |
 | [What main can do, npm can do: 0.1.0 has no sights, so publish what the walks built](./what-main-can-do-npm-can-do-0-1-0-has.md) | completed |
