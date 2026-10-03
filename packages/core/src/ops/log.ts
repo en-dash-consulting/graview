@@ -162,13 +162,28 @@ export class OperationLog {
 
   /**
    * Rebuilds the graph by folding every op forward: from empty, or, given
-   * `from`, from that epoch's base with the ops from its seq on.
+   * `from`, from that epoch's base with the ops from its seq on (FR-27).
+   *
+   * Each op lands as it landed when it was made: a write is judged as a
+   * write (a default filled in on the way in is filled in again), an undo
+   * puts back what was there. An op an older declaration accepted and this
+   * one does not is HELD AS WRITTEN rather than refusing the whole history
+   * (FR-28) — `validateGraph` says what no longer fits. Only an op that
+   * cannot apply at all (a patch to a record that is not there) fails.
    */
   fold<S extends AnySchema>(schema: S, options: { validate?: boolean; from?: Epoch } = {}): Graph<S> {
     const base = (options.from?.base ?? { nodes: [], edges: [] }) as GraphSnapshot<NodeOfSchema<S>>;
     const graph = Graph.from(schema, base, options.validate !== undefined ? { validate: options.validate } : {});
     for (const op of this.ops.slice(options.from?.seq ?? 0)) {
-      graph.applyPrimitives(op.primitives);
+      if (op.undoes !== undefined) {
+        graph.applyPrimitives(op.primitives, { restoring: true });
+        continue;
+      }
+      try {
+        graph.applyPrimitives(op.primitives);
+      } catch {
+        graph.applyPrimitives(op.primitives, { restoring: true });
+      }
     }
     return graph;
   }

@@ -52,7 +52,7 @@ export type { JsonSchema, MutationToolSchema } from "./schema/json-schema.js";
 
 // Graph — the reactive in-memory model the framework owns.
 export { Graph, GraphError } from "./graph/graph.js";
-export type { GraphListener, GraphOptions } from "./graph/graph.js";
+export type { ApplyPrimitivesOptions, GraphListener, GraphOptions } from "./graph/graph.js";
 export { diffSnapshots, EMPTY_DIFF, isEmptyDiff } from "./graph/diff.js";
 export type { GraphDiff, NodeChange } from "./graph/diff.js";
 export { invert, isUnset, normalise, UNSET, writesOf } from "./graph/primitives.js";
@@ -251,6 +251,16 @@ export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 // Integrity — a fold has a fingerprint, and a store can prove its own (FR-20).
 export { snapshotHash } from "./integrity.js";
 export type { VerifyResult } from "./integrity.js";
+// Stored data checked against its declaration (FR-21).
+export { GRAPH_FINDING_CODES, repairPlan, validateGraph } from "./validate-graph.js";
+export type {
+  FindingRepair,
+  GraphFinding,
+  GraphFindingCode,
+  RepairPlan,
+  ValidatedApp,
+  ValidateGraphOptions,
+} from "./validate-graph.js";
 
 // Store — graph + log + mutations + invariants, one object.
 export { ReceiveError, Store, violationKey } from "./store.js";

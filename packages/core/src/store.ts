@@ -4,7 +4,7 @@ import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
 import { diffSnapshots, type GraphDiff } from "./graph/diff.js";
-import { invert, normalise, type Primitive } from "./graph/primitives.js";
+import { invert, normalise, writesOf, type Primitive } from "./graph/primitives.js";
 import type { GraphSnapshot } from "./graph/types.js";
 import { verifyFold, type VerifyResult } from "./integrity.js";
 import { evaluate } from "./invariants/engine.js";
@@ -24,6 +24,7 @@ import { nounOf } from "./schema/define-node.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
+import { validateGraph, type GraphFinding } from "./validate-graph.js";
 import { tellTheWatchItsNames, tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } from "./watched.js";
 
 export interface StoreOptions<S extends AnySchema> {
@@ -127,6 +128,19 @@ export type UndoPreview<S extends AnySchema> =
   | { readonly ok: false; readonly check: UndoCheck };
 
 const HUMAN: Author = { kind: "human" };
+
+/**
+ * WHETHER UNDOING AN OP PUTS BACK EXACTLY WHAT IT TOOK (FR-28).
+ *
+ * An op that was not an act — a repair from `repairPlan`, a migration, a
+ * host's own change through `applyPrimitives` — is undone by putting the
+ * records back as they were, even a record that no longer fits: undoing a
+ * repair means the misfit returns, and `validateGraph` says so again. The
+ * undo of an ACT is itself a change within the declaration, and is held to
+ * it like any write: one whose inverse the current declaration refuses is
+ * refused, and says why.
+ */
+const putsBack = (op: Operation): boolean => op.mutation === null && op.undoes === undefined;
 
 /** A violation's identity across judgements: the rule, what it is about, and what it says. */
 export function violationKey(v: Violation): string {
@@ -539,11 +553,13 @@ export class Store<S extends AnySchema> {
       writes: readonly string[];
       intent: string;
       context?: InvariantContext;
+      /** An undo: what it puts back is held as it was (FR-28). */
+      restoring?: boolean;
     },
   ): Preview<S> {
     const before = this.violations(meta.context);
     const trial = Graph.from(this.schema, this.graph.snapshot());
-    const diff = trial.applyPrimitives(primitives);
+    const diff = trial.applyPrimitives(primitives, { restoring: meta.restoring === true });
     const after = evaluate(trial, this.allInvariants(), {
       ...this.invariantOptions,
       ...(meta.context === undefined ? {} : { context: meta.context }),
@@ -737,7 +753,8 @@ export class Store<S extends AnySchema> {
     if (!options.applied) {
       for (const op of fresh) {
         try {
-          this.graph.applyPrimitives(op.primitives);
+          // Somebody's undo puts back what was there, here as there (FR-28).
+          this.graph.applyPrimitives(op.primitives, { restoring: op.undoes !== undefined });
         } catch (error) {
           this.graph.load(before);
           throw new ReceiveError(op, error);
@@ -752,6 +769,74 @@ export class Store<S extends AnySchema> {
     }
     this.notify(diffSnapshots(before, this.graph.snapshot()), landed);
     return landed;
+  }
+
+  /**
+   * PRIMITIVES AS AN ORDINARY CHANGE (FR-21): one batch, one op, logged,
+   * attributed to `author` and undoable like any act. For changes that are
+   * not a declared mutation — a repair from `repairPlan`, a host's own fix —
+   * so they land in the history rather than beside it.
+   *
+   * No policy is asked: there is no act to judge, so whoever calls this is
+   * the authority, the way a migration engine is. All or nothing (FR-26): a
+   * primitive that does not fit leaves the store as it was and throws.
+   */
+  applyPrimitives(primitives: readonly Primitive[], options: ApplyOptions = {}): ApplyResult<S> {
+    const batch = options.batch ?? `batch:${++this.counter}`;
+    const author = options.author ?? HUMAN;
+    const before = this.violations();
+    const rollback = this.graph.snapshot();
+    const intent = options.intent ?? "Apply a change";
+    const recorded = primitives.map(normalise);
+    const ops: Operation[] = [];
+    if (recorded.length > 0) {
+      const op: Operation = {
+        id: this.nextId(),
+        seq: this.log.length,
+        batch,
+        author,
+        intent,
+        mutation: null,
+        primitives: recorded,
+        inverse: [...recorded].reverse().map(invert),
+        reads: [],
+        writes: [...new Set(recorded.flatMap(writesOf))],
+        at: this.now(),
+        ...(options.via !== undefined ? { via: options.via } : {}),
+      };
+      this.graph.applyPrimitives(op.primitives);
+      this.log.append(op);
+      ops.push(op);
+      tellTheWatchOfAnAuthor(author.id);
+    }
+    const after = this.violations();
+    const beforeKeys = new Set(before.map(violationKey));
+    const afterKeys = new Set(after.map(violationKey));
+    const diff = diffSnapshots(rollback, this.graph.snapshot());
+    this.notify(diff, ops);
+    return {
+      batch,
+      ops,
+      diff,
+      primitives: recorded,
+      reads: [],
+      writes: ops[0]?.writes ?? [],
+      intent,
+      introduces: after.filter((v) => !beforeKeys.has(violationKey(v))),
+      resolves: before.filter((v) => !afterKeys.has(violationKey(v))),
+      violationsAfter: after,
+    };
+  }
+
+  /**
+   * What in this store no longer fits its declaration (FR-21): the graph
+   * as held, judged by `validateGraph` against the schema and the rules
+   * this workspace has on. A clean store has none.
+   */
+  findings(): GraphFinding[] {
+    return validateGraph({ schema: this.schema, invariants: this.allInvariants() }, this.graph.snapshot(), {
+      invariantOptions: this.invariantOptions,
+    });
   }
 
   batches(): Batch[] {
@@ -783,6 +868,7 @@ export class Store<S extends AnySchema> {
         reads: [...new Set(check.ops.flatMap((op) => [...op.reads]))],
         writes: [...writes],
         intent: `Undo: ${check.ops.map((op) => op.intent).join("; ")}`,
+        restoring: check.ops.every(putsBack),
         ...(context === undefined ? {} : { context }),
       }),
     };
@@ -849,7 +935,7 @@ export class Store<S extends AnySchema> {
         undoes: target.id,
         ...(options.via !== undefined ? { via: options.via } : {}),
       };
-      this.graph.applyPrimitives(op.primitives);
+      this.graph.applyPrimitives(op.primitives, { restoring: putsBack(target) });
       this.log.append(op);
       ops.push(op);
     }
