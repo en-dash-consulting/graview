@@ -64,6 +64,7 @@ describe("the browser adapter", () => {
     opened.close();
 
     expect([...storage.map.keys()].sort()).toEqual([
+      "test:garden:epochs",
       "test:garden:log",
       "test:garden:meta",
       "test:garden:snapshot",

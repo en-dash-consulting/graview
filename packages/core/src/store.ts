@@ -6,6 +6,7 @@ import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules
 import { diffSnapshots, type GraphDiff } from "./graph/diff.js";
 import { invert, normalise, type Primitive } from "./graph/primitives.js";
 import type { GraphSnapshot } from "./graph/types.js";
+import { verifyFold, type VerifyResult } from "./integrity.js";
 import { evaluate } from "./invariants/engine.js";
 import type {
   EvaluateOptions,
@@ -16,7 +17,7 @@ import type {
 import { compileMutation } from "./mutations/define-mutation.js";
 import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
-import { OperationLog } from "./ops/log.js";
+import { OperationLog, type Epoch } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
 import { nounOf } from "./schema/define-node.js";
@@ -39,6 +40,14 @@ export interface StoreOptions<S extends AnySchema> {
    * still in the activity, and still undoable.
    */
   readonly log?: readonly Operation[];
+  /**
+   * The epochs `log` folds from (FR-27): a base graph and the seq it starts
+   * at, one for each declaration version the log spans. `verify()` folds
+   * from the last one, and undo does not cross one that changed the
+   * declaration. A store opened on a snapshot alone takes the snapshot as
+   * its first epoch.
+   */
+  readonly epochs?: readonly Epoch[];
   /** Defaults to a monotonic counter so tests stay deterministic. */
   readonly ids?: () => string;
   readonly now?: () => string;
@@ -171,6 +180,7 @@ export class Store<S extends AnySchema> {
   readonly modules: ModuleProjection;
   private readonly nextId: () => string;
   private readonly now: () => string;
+  private readonly validate: boolean;
   private counter = 0;
   private readonly listeners = new Set<(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]) => void>();
 
@@ -187,6 +197,7 @@ export class Store<S extends AnySchema> {
     let n = 0;
     this.nextId = options.ids ?? (() => `op${++n}`);
     this.now = options.now ?? (() => new Date(0).toISOString());
+    this.validate = options.validate ?? true;
 
     for (const mutation of options.mutations ?? []) {
       if (this.mutations.has(mutation.name)) {
@@ -209,15 +220,16 @@ export class Store<S extends AnySchema> {
 
     if (options.log && options.snapshot) {
       // Hydrate: the graph as stored, the history as recorded.
-      this.log = OperationLog.from(options.log);
+      this.log = OperationLog.from(options.log, options.epochs);
       this.graph = Graph.from(options.schema, options.snapshot, {
         validate: options.validate ?? true,
       });
     } else if (options.log) {
-      this.log = OperationLog.from(options.log);
-      this.graph = this.log.fold(options.schema, { validate: options.validate ?? true });
+      this.log = OperationLog.from(options.log, options.epochs);
+      const last = this.log.lastEpoch();
+      this.graph = this.log.fold(options.schema, { validate: options.validate ?? true, ...(last ? { from: last } : {}) });
     } else {
-      this.log = new OperationLog();
+      this.log = OperationLog.from([], options.epochs ?? (options.snapshot ? [{ seq: 0, base: options.snapshot }] : []));
       this.graph = Graph.from(options.schema, options.snapshot ?? { nodes: [], edges: [] }, {
         validate: options.validate ?? true,
       });
@@ -889,6 +901,22 @@ export class Store<S extends AnySchema> {
 
   snapshot(): GraphSnapshot<NodeOfSchema<S>> {
     return this.graph.snapshot();
+  }
+
+  /**
+   * WHETHER THE GRAPH IS WHAT ITS LOG SAYS (FR-20).
+   *
+   * Refolds the log from its last epoch (FR-27), or from empty when it has
+   * none, and compares the result with the graph held, by `snapshotHash`. Agreement returns the hash; disagreement returns both
+   * hashes and the op after which they part, so a host that finds a store
+   * drifted knows where to look rather than only that it should.
+   */
+  verify(): VerifyResult {
+    const from = this.log.lastEpoch();
+    return verifyFold(this.schema, this.log.all().slice(from?.seq ?? 0), this.graph.snapshot(), {
+      validate: this.validate,
+      ...(from ? { base: from.base } : {}),
+    });
   }
 }
 
