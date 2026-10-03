@@ -126,8 +126,10 @@ export function QuickRelations<S extends AnySchema>({ inside = false }: { readon
   }
 
   return (
-    <aside
+    <section
       aria-label="Quick select"
+      // In the seat it is a part of the seat, not a landmark of its own (FR-40).
+      role={inside ? "group" : undefined}
       data-testid="quick-relations"
       style={
         inside
@@ -219,6 +221,6 @@ export function QuickRelations<S extends AnySchema>({ inside = false }: { readon
           </div>
         </div>
       ))}
-    </aside>
+    </section>
   );
 }
