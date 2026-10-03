@@ -1,5 +1,31 @@
 # @graview/embed
 
+## 0.1.3
+
+### Patch Changes
+
+- f4a1f72: The seat is a labelled region, not a landmark inside one. The companion was an `<aside>`, a complementary landmark, drawn inside the Shell's main and inside an embed's own region, and the inspector, the line key and the quick relations were asides inside it, so axe's `landmark-complementary-is-top-level` failed on every hosted app at every size and scheme. The companion is now a `<section>` named "The seat — about …", with its h2 and every test id and `data-graview-*` attribute as before; the inspector, the key and the quick relations are named groups while they sit in the seat, and labelled regions where they stand alone. The profile and the activity panes, which open from the bar or inside an embed, are labelled regions too. A click on any of them still leaves the selection alone, and an embed still names each region inside it after itself (FR-40).
+  
+  Compatibility: the wire — additive: `capabilities().shipped` gains "FR-40", and nothing else on it moves. Ops, stored formats, the declaration and the tool surface are unchanged.
+- Updated dependencies [c3683bb]
+- Updated dependencies [1ba2ab7]
+- Updated dependencies [5ea9572]
+- Updated dependencies [a65423f]
+- Updated dependencies [8e76788]
+- Updated dependencies [c2ed1f8]
+- Updated dependencies [5ea9572]
+- Updated dependencies [50beae9]
+- Updated dependencies [625ac82]
+- Updated dependencies [f4a1f72]
+- Updated dependencies [ca3c327]
+  - @graview/core@0.1.3
+  - @graview/react@0.1.3
+  - @graview/primitives@0.1.3
+  - @graview/layout@0.1.3
+  - @graview/pages@0.1.3
+  - @graview/studio@0.1.3
+  - @graview/tools@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes

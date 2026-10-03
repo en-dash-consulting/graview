@@ -1,5 +1,23 @@
 # @graview/render
 
+## 0.1.3
+
+### Patch Changes
+
+- Updated dependencies [c3683bb]
+- Updated dependencies [1ba2ab7]
+- Updated dependencies [5ea9572]
+- Updated dependencies [a65423f]
+- Updated dependencies [8e76788]
+- Updated dependencies [c2ed1f8]
+- Updated dependencies [5ea9572]
+- Updated dependencies [50beae9]
+- Updated dependencies [625ac82]
+- Updated dependencies [f4a1f72]
+- Updated dependencies [ca3c327]
+  - @graview/core@0.1.3
+  - @graview/layout@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes
