@@ -130,10 +130,16 @@ pinned at 1.49.1 on purpose.
 ## Releasing
 
 `.github/workflows/release.yml` turns merged changesets into a "Version
-packages" pull request; merging it publishes every package by npm trusted
-publishing, tags `<name>@<version>` and writes a GitHub release each. The
-trusted-publisher configuration is per package on npmjs.com (repository
-`en-dash-consulting/graview`, workflow `release.yml`, environment `npm`).
+packages" pull request; merging it **stages** every package on npm by
+trusted publishing (`scripts/release-stage.mjs`), and nothing is live until
+a person runs `pnpm release:approve` on main: it approves each staged
+version with their second factor, waits for npm to serve them, then tags
+`<name>@<version>` and writes a GitHub release each. The trusted-publisher
+configuration is per package on npmjs.com (repository
+`en-dash-consulting/graview`, workflow `release.yml`, environment `npm`,
+action `npm stage publish` — a direct publish from CI is refused on purpose).
+A brand-new package can't have a trusted publisher until it exists, so its
+first version is published by hand.
 License: Elastic License 2.0, at the root and in every tarball.
 
 ## Key files
