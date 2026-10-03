@@ -68,7 +68,8 @@ export type {
 } from "./graph/types.js";
 
 // Invariants — pure evaluation, with repairs as the seam to affordances.
-export { defineInvariant, evaluate, UnregisteredInvariantError, violationsTouching } from "./invariants/engine.js";
+export { defineInvariant, evaluate, RuleBudgetError, UnregisteredInvariantError, violationsTouching } from "./invariants/engine.js";
+export { FRAMEWORK_VERSION } from "./version.js";
 export type {
   EvaluateOptions,
   InvariantContext,
@@ -77,6 +78,7 @@ export type {
   InvariantScope,
   Repair,
   Violation,
+  ViolationStatus,
 } from "./invariants/types.js";
 
 // Arrangement — what a kind can be sorted, filtered and grouped by, and the grammar that carries it.

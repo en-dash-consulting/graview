@@ -99,7 +99,7 @@ jobs:
         id: changesets
         uses: changesets/action@v2
         with:
-          version-script: pnpm exec changeset version
+          version-script: pnpm version-packages
           publish-script: pnpm exec changeset publish
           pr-title: "Version packages"
           commit-message: "Version packages"

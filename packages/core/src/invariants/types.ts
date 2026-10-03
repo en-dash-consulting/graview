@@ -16,8 +16,18 @@ export interface Repair {
   readonly label: string;
 }
 
+/**
+ * What a violation says about the rule that produced it. `violated` is a
+ * judgement: the rule ran and the graph breaks it. The other two say the
+ * rule could not answer — it threw, or it would have read more than its
+ * budget — so a host counts them apart rather than matching the message.
+ */
+export type ViolationStatus = "violated" | "could-not-judge" | "over-budget";
+
 export interface Violation {
   readonly invariant: string;
+  /** Set by `evaluate`; a rule's own violations may leave it out and read as `violated`. */
+  readonly status?: ViolationStatus;
   /** The node whose declaration produced the check, when there is one. */
   readonly subjectId?: string;
   readonly label: string;

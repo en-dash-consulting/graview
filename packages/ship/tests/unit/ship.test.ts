@@ -6,7 +6,9 @@ import {
   checkApp,
   createSchema,
   defineApp,
+  defineInvariant,
   defineNode,
+  RuleBudgetError,
   Store,
 } from "@graview/core";
 import { afterEach, describe, expect, it } from "vitest";
@@ -242,9 +244,34 @@ describe("health is coherence, not liveness", () => {
       nodes: 1,
       edges: 0,
       violations: 0,
+      couldNotJudge: 0,
+      overBudget: 0,
       danglingEdges: [],
       at: "2026-09-01T00:00:00Z",
     });
+    opened.close();
+  });
+
+  // FR-29: a rule that could not answer is counted by its status, not found by its words.
+  it("counts the rules that could not judge and the rules over budget apart", async () => {
+    const unjudged = defineInvariant<typeof schema, "plot">("reads-a-missing-field", {
+      scope: { kind: "plot" },
+      evaluate: () => {
+        throw new TypeError("no such field");
+      },
+    });
+    const greedy = defineInvariant<typeof schema>("reads-everything", {
+      scope: "graph",
+      evaluate: () => {
+        throw new RuleBudgetError("this rule looks at too much of the graph");
+      },
+    });
+    const opened = await openStore({ app: defineApp({ ...app, invariants: [unjudged, greedy] }), adapter: createFileAdapter(scratch()) });
+    opened.store.apply({ name: "add-plot", args: { label: "One", beds: 3 } });
+    const report = health(opened.store);
+    expect(report.violations).toBe(2);
+    expect(report.couldNotJudge).toBe(1);
+    expect(report.overBudget).toBe(1);
     opened.close();
   });
 });
