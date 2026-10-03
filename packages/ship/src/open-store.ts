@@ -63,6 +63,15 @@ export interface OpenStoreOptions<S extends AnySchema> {
    * enforced by the store ship opens without saying so twice.
    */
   readonly storeOptions?: Partial<StoreOptions<S>>;
+  /**
+   * THE MODULES THIS WORKSPACE HAS ON (FR-12): the host's word, usually
+   * what the workspace pays for. The store opens with the set its log last
+   * said, and when this differs, turning the difference off or on is
+   * written as an op authored `system · modules` — in the history like any
+   * change — before the store is handed back. Absent, the log's word
+   * stands, and every module when it never said one.
+   */
+  readonly enabledModules?: readonly string[];
 }
 
 /*
@@ -199,6 +208,9 @@ export async function openStore<S extends AnySchema>(
     return id;
   };
 
+  /* A starting set given here is the host's word too, and is recorded below rather than assumed. */
+  const storeOptions: Partial<StoreOptions<S>> = { ...(options.storeOptions ?? {}) };
+  delete (storeOptions as { enabledModules?: unknown }).enabledModules;
   const store = new Store<S>({
     schema: app.schema,
     mutations: app.mutations ?? [],
@@ -214,7 +226,7 @@ export async function openStore<S extends AnySchema>(
     ids,
     // A stored history is read back later, so its timestamps are real ones.
     now: () => new Date().toISOString(),
-    ...(options.storeOptions ?? {}),
+    ...storeOptions,
   });
 
   /*
@@ -270,6 +282,10 @@ export async function openStore<S extends AnySchema>(
       })
       .catch(report);
   });
+
+  /* The host's word on modules, recorded where it changes the log's (FR-12). */
+  const enabledModules = options.enabledModules ?? options.storeOptions?.enabledModules;
+  if (enabledModules !== undefined) store.setEnabledModules(enabledModules);
 
   return {
     store,

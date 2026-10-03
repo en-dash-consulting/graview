@@ -69,7 +69,7 @@ export type LiveServerMessage =
       readonly protocol: number;
       readonly seq: number;
       readonly ops: readonly Operation[];
-      readonly state?: { readonly version: number; readonly snapshot: unknown; readonly log: readonly Operation[]; readonly migrated: readonly string[] };
+      readonly state?: { readonly version: number; readonly snapshot: unknown; readonly log: readonly Operation[]; readonly migrated: readonly string[]; readonly enabledModules?: readonly string[] };
     }
   /** A call or undo landed: the ops it made, in the batch they landed in. Every op before them has already been sent. */
   | { readonly t: "ack"; readonly cid: string; readonly seq: number; readonly batch: string; readonly ops: readonly Operation[] }

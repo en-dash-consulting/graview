@@ -83,6 +83,13 @@ export interface Operation {
    * on every op a store makes; an op without it reads as before.
    */
   readonly withheld?: true;
+  /**
+   * THE MODULES THIS OP LEAVES ON (FR-12). Set only on an op authored
+   * `system · modules`, which turns modules off or on and touches no
+   * record: the store's enabled set is the one the last such op says. An
+   * op without it reads as before, and folds the same.
+   */
+  readonly enabledModules?: readonly string[];
 }
 
 export interface Batch {

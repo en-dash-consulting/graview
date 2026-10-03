@@ -252,7 +252,7 @@ export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";
 export { recordsOf, sees, sightedKinds } from "./permissions/sight.js";
 export type { Records } from "./permissions/sight.js";
-export { logSeenBy, seenBy, seesId } from "./seen.js";
+export { hidesFrom, logSeenBy, seenBy, seesId } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
 export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 
@@ -271,7 +271,7 @@ export type {
 } from "./validate-graph.js";
 
 // Store — graph + log + mutations + invariants, one object.
-export { ReceiveError, Store, violationKey } from "./store.js";
+export { MODULES_AUTHOR, ReceiveError, Store, violationKey } from "./store.js";
 export type {
   AppendOp,
   ApplyOptions,

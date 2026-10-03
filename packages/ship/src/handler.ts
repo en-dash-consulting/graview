@@ -1,7 +1,7 @@
 import {
   FieldRevisions,
   foldPresence,
-  isSystem,
+  hidesFrom,
   isUnset,
   participantKey,
   WIRE_PROTOCOL,
@@ -46,7 +46,7 @@ import type { GraphSnapshot } from "./snapshot.js";
  *
  * The protocol is four routes:
  *
- *   GET  /graview/state        the graph, the log and the stored version
+ *   GET  /graview/state        the graph, the log, the stored version and the modules on
  *   POST /graview/ops          calls in, the ops they produced out — or `undo`, batches to take back
  *   GET  /graview/since?seq=N  the ops appended after N — everyone else's
  *   GET  /graview/health       ship's own report, plus where the data is
@@ -76,7 +76,7 @@ import type { GraphSnapshot } from "./snapshot.js";
  * `seatOf` and around these routes, never inside them.
  */
 export const WIRE = [
-  { method: "GET", path: "/graview/state", says: "the graph, the log and the stored version" },
+  { method: "GET", path: "/graview/state", says: "the graph, the log, the stored version and the modules on" },
   { method: "POST", path: "/graview/ops", says: "calls in, the ops they produced out — or `undo`, batches to take back; 409 with the policy's sentence when refused" },
   { method: "GET", path: "/graview/since", says: "the ops appended after ?seq=N — everyone else's" },
   { method: "GET", path: "/graview/health", says: "ship's own report, plus where the data is" },
@@ -117,6 +117,14 @@ export interface StoreHandlerOptions<S extends AnySchema> {
   readonly where?: string;
   /** How long a presence stands after its last word. Three heartbeats by default. */
   readonly presenceTtlMs?: number;
+  /**
+   * THE MODULES THIS WORKSPACE HAS ON (FR-12) — usually what it pays for.
+   * Handed to `openStore`, which records a change from what the store's
+   * log last said as an op; absent, the log's word stands (every module,
+   * when it never said one). A module off has its acts refused and its
+   * kinds kept from every route, as a sight keeps a record.
+   */
+  readonly enabledModules?: readonly string[];
 }
 
 export interface StoreHandler<S extends AnySchema> {
@@ -213,8 +221,11 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
     adapter: options.adapter,
     scope,
     ...(options.seed ? { seed: options.seed } : {}),
+    ...(options.enabledModules ? { enabledModules: options.enabledModules } : {}),
   });
   const store = opened.store;
+  /** Which modules are on, as the state says it (FR-12). */
+  const enabledModules = (): string[] => [...store.modules.enabled].sort();
 
   /*
    * WHO IS HERE. Keyed by participant, named by the seat the request
@@ -244,7 +255,8 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
    * ones that touched what it may not see withheld (FR-16).
    */
   const seenFor = (principal: Principal) => seenBy(store, principal);
-  const sighted = (principal: Principal): boolean => (store.policy?.sees?.length ?? 0) > 0 && !isSystem(principal);
+  // Kept from a seat: what its sight does not reach (FR-02), and the kinds of a module that is off (FR-12).
+  const sighted = (principal: Principal): boolean => hidesFrom(store, principal);
   /*
    * The ops after `seq`, as the seat sees them: the same ops `seenBy`'s log
    * holds after it (each op is withheld or not on its own), without
@@ -329,6 +341,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
         snapshot: seen.snapshot(),
         log: seen.log.all(),
         migrated: opened.migrated.map((op) => op.intent),
+        enabledModules: enabledModules(),
       });
     }
 
@@ -588,7 +601,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
               protocol: WIRE_PROTOCOL,
               seq: live.cursor,
               ops: [],
-              state: { version: options.app.version ?? 1, snapshot: seen.snapshot(), log: seen.log.all(), migrated: opened.migrated.map((op) => op.intent) },
+              state: { version: options.app.version ?? 1, snapshot: seen.snapshot(), log: seen.log.all(), migrated: opened.migrated.map((op) => op.intent), enabledModules: enabledModules() },
             });
           } else {
             say(live, { t: "welcome", protocol: WIRE_PROTOCOL, seq: live.cursor, ops: since(seat, seq) });
