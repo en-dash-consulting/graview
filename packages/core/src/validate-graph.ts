@@ -46,7 +46,8 @@ export const GRAPH_FINDING_CODES: readonly GraphFindingCode[] = [
 /**
  * The smallest fix for one finding. `drop` removes the record (with its
  * links first, so the undo puts them back) or the link; `clear` unsets an
- * optional field; `coerce` sets a required field to its declared default.
+ * optional field; `coerce` sets a required field to its declared default —
+ * a zod `.default()`, or the kind's `defaults` (a document's).
  */
 export interface FindingRepair {
   readonly action: "drop" | "clear" | "coerce";
@@ -166,7 +167,13 @@ export function validateGraph<S extends AnySchema>(
         continue;
       }
       const declared = fieldSchema(schema, node.kind, field);
-      const empty = declared ? declared.safeParse(undefined) : { success: true, data: undefined };
+      let empty = declared ? declared.safeParse(undefined) : { success: true, data: undefined };
+      /*
+       * A default declared beside the schema (a document's, FR-50): the zod
+       * field cannot invent it, so a required field reads it here.
+       */
+      const beside = schema.tryDefinition(node.kind)?.defaults;
+      if (!empty.success && declared && beside && Object.hasOwn(beside, field)) empty = declared.safeParse(beside[field]);
       if (!empty.success) fixable = false;
       else if (empty.data === undefined) fixes.set(field, { action: "clear", value: UNSET });
       else fixes.set(field, { action: "coerce", value: empty.data });

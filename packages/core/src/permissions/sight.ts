@@ -26,32 +26,110 @@ export interface Records {
   creatorOf(id: string): string | undefined;
 }
 
-const RECORDS = new WeakMap<object, { readonly length: number; readonly last: string | undefined; readonly records: Records }>();
+/** A log as `recordsOf` reads it: its ops, and, for an `OperationLog`, the seq it has reached (FR-23). */
+export interface RecordedLog {
+  all(): readonly Operation[];
+  /** The seq the next op takes, counting what a compaction archived; without it, the ops it holds. */
+  readonly length?: number;
+}
+
+/** What one op wrote into the index, so a log cut back can take it out again. */
+interface Entry {
+  readonly seq: number;
+  readonly id: string;
+  readonly creator: boolean;
+}
+
+/** The index one log keeps: the ops it read from seq `base` up to `end`, and what each wrote. */
+interface Index {
+  base: number;
+  end: number;
+  read: Operation[];
+  readonly kinds: Map<string, string>;
+  readonly creators: Map<string, string>;
+  readonly entries: Entry[];
+  readonly records: Records;
+}
+
+const INDEXES = new WeakMap<object, Index>();
+
+function indexFrom(base: number): Index {
+  const kinds = new Map<string, string>();
+  const creators = new Map<string, string>();
+  return { base, end: base, read: [], kinds, creators, entries: [], records: { kindOf: (id) => kinds.get(id), creatorOf: (id) => creators.get(id) } };
+}
+
+/** Reads one op into the index: the kind of each record it first adds or removes, and who first made one. */
+function readInto(index: Index, op: Operation): void {
+  const seq = index.end;
+  for (const primitive of op.primitives) {
+    if (primitive.op !== "add-node" && primitive.op !== "remove-node") continue;
+    const { id, kind } = primitive.node;
+    if (!index.kinds.has(id)) {
+      index.kinds.set(id, kind);
+      index.entries.push({ seq, id, creator: false });
+    }
+    if (primitive.op !== "add-node" || index.creators.has(id) || op.undoes !== undefined) continue;
+    const by = actingAs(op.author as Principal).id;
+    if (by === undefined) continue;
+    index.creators.set(id, by);
+    index.entries.push({ seq, id, creator: true });
+  }
+  index.read.push(op);
+  index.end++;
+}
+
+/** Takes out what the ops from `seq` on wrote: the log was cut back there. */
+function cutBack(index: Index, seq: number): void {
+  while (index.entries.length > 0 && index.entries.at(-1)!.seq >= seq) {
+    const entry = index.entries.pop()!;
+    (entry.creator ? index.creators : index.kinds).delete(entry.id);
+  }
+  index.read.length = seq - index.base;
+  index.end = seq;
+}
 
 /**
  * The records a log names, read from its add- and remove-node primitives.
  * The first op that added a record made it: putting one back by an undo is
- * not a new author. Kept per log until it grows or is cut.
+ * not a new author.
+ *
+ * KEPT AS THE LOG GOES (FR-51), as the label index follows the graph: a
+ * call reads only the ops appended since the last one, so a commit costs
+ * its own ops, not the log's. A log cut back (`truncate`, under a rebase)
+ * is noticed by its ops no longer being the ones read, and what they wrote
+ * is taken out, back to where the log and the index still agree. A log
+ * compacted behind its horizon (FR-23) keeps what the index had already
+ * read of the archived ops, so a record made behind the horizon is still
+ * known by its maker for as long as this log is open; a log OPENED
+ * compacted never read them, and knows its makers from the horizon on.
+ * The `Records` returned is the same object every time, and answers as of
+ * the last call.
  */
-export function recordsOf(log: { all(): readonly Operation[] }): Records {
+export function recordsOf(log: RecordedLog): Records {
   const ops = log.all();
-  const held = RECORDS.get(log);
-  if (held && held.length === ops.length && held.last === ops.at(-1)?.id) return held.records;
-  const kinds = new Map<string, string>();
-  const creators = new Map<string, string>();
-  for (const op of ops) {
-    for (const primitive of op.primitives) {
-      if (primitive.op !== "add-node" && primitive.op !== "remove-node") continue;
-      const { id, kind } = primitive.node;
-      if (!kinds.has(id)) kinds.set(id, kind);
-      if (primitive.op !== "add-node" || creators.has(id) || op.undoes !== undefined) continue;
-      const by = actingAs(op.author as Principal).id;
-      if (by !== undefined) creators.set(id, by);
+  const end = typeof log.length === "number" ? log.length : ops.length;
+  const first = end - ops.length;
+  let index = INDEXES.get(log);
+  if (index && index.base <= first && first <= index.end) {
+    // Back to the last seq where the log still holds the op the index read: a log is only ever cut from its end.
+    let agreed = Math.min(index.end, end);
+    while (agreed > first && ops[agreed - 1 - first] !== index.read[agreed - 1 - index.base]) agreed--;
+    if (agreed === first && first > index.base && agreed < index.end) {
+      // It disagrees all the way back to its horizon: not the log this index read.
+      index = undefined;
+    } else {
+      if (agreed < index.end) cutBack(index, agreed);
+      // What a compaction archived is no longer held here to compare against (FR-23).
+      if (first > index.base) {
+        index.read = index.read.slice(first - index.base);
+        index.base = first;
+      }
     }
-  }
-  const records: Records = { kindOf: (id) => kinds.get(id), creatorOf: (id) => creators.get(id) };
-  RECORDS.set(log, { length: ops.length, last: ops.at(-1)?.id, records });
-  return records;
+  } else index = undefined;
+  if (!index) INDEXES.set(log, (index = indexFrom(first)));
+  for (let seq = index.end; seq < end; seq++) readInto(index, ops[seq - first]!);
+  return index.records;
 }
 
 /**

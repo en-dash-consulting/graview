@@ -138,6 +138,17 @@ export interface NodeDefinitionSpec<
    */
   readonly fixed?: Readonly<Record<string, string>>;
   /**
+   * A REQUIRED FIELD'S DEFAULT, declared beside the schema rather than in it.
+   *
+   * A zod `.default()` makes parsing invent the value, which is right for a
+   * kind declared in TypeScript and wrong for one hydrated from storage,
+   * where a missing value must stay missing. A kind compiled from a document
+   * keeps its fields' `default`s here instead: they are applied when a record
+   * is made, and a repair (`validateGraph`) sets a required field that no
+   * longer fits to its default rather than removing the record.
+   */
+  readonly defaults?: Readonly<Record<string, unknown>>;
+  /**
    * A DRAWING OF THE THING, wherever the kind is drawn.
    *
    * Inline SVG — one `viewBox`, `currentColor` strokes, no fill — or the
