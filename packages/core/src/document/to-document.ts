@@ -83,6 +83,16 @@ function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { readonly why
   }
 }
 
+/**
+ * What one declared field is, in the document's words — `url`, `date`,
+ * `enum` and the rest — or undefined when a document has no word for it.
+ * A view spec reads it to know which values may be a link and which a date.
+ */
+export function fieldSpecOf(field: unknown): FieldSpec | undefined {
+  const read = fieldOf(field);
+  return "spec" in read ? read.spec : undefined;
+}
+
 /** Write an app as a declaration document, naming every surface the document cannot say. */
 export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentResult {
   const remembered = documentOf(app);
@@ -186,6 +196,8 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     ...(app.modules ? { modules: modules(app.modules as Record<string, { mutations?: readonly string[] } & Record<string, unknown>>, unwritten) } : {}),
     ...(app.lenses ? { lenses: app.lenses as unknown as Record<string, unknown>[] } : {}),
     ...(app.settings ? { settings: app.settings as unknown as Record<string, unknown>[] } : {}),
+    // View specs are already data: they are the document's views (FR-03).
+    ...(app.viewSpecs && Object.keys(app.viewSpecs).length > 0 ? { views: app.viewSpecs as unknown as GraviewDocument["views"] } : {}),
   } as GraviewDocument;
   return { document, findings };
 }

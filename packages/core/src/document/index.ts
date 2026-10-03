@@ -5,8 +5,8 @@ export type { CompiledDocument, RefusedDocument, CompileOptions } from "./compil
 export { canonicalize, documentHash } from "./canonical.js";
 export { parseTemplate, renderTemplate, formatValue, FORMATTERS } from "./template.js";
 export type { TemplatePart, Formatter, RenderContext } from "./template.js";
-export { validateViews, viewsOf, VIEW_SLOTS, VIEW_TONES, VIEW_FIELD_FORMATS, MAX_VIEW_DEPTH, MAX_VIEW_BLOCKS } from "./views.js";
-export type { ViewBlock, ViewSpecs, ViewSlot, ViewTone, ViewFieldFormat } from "./views.js";
+export { validateViews, validateViewSpecs, viewsOf, VIEW_SLOTS, VIEW_TONES, VIEW_FIELD_FORMATS, MAX_VIEW_DEPTH, MAX_VIEW_BLOCKS } from "./views.js";
+export type { ToneSpec, ViewBlock, ViewSpecs, ViewSpecsByKind, ViewSlot, ViewTone, ViewFieldFormat } from "./views.js";
 export * from "./expr/index.js";
 export { diffDocuments } from "./diff.js";
 export type { DocumentDiff } from "./diff.js";
@@ -20,5 +20,5 @@ export { upgradeDocument, UPGRADES } from "./upgrade.js";
 export type { Upgrade, Upgraded } from "./upgrade.js";
 export { expressionRule, shapesOfSchema } from "./rules.js";
 export type { ExpressionRuleSpec } from "./rules.js";
-export { documentOf, toDocument } from "./to-document.js";
+export { documentOf, fieldSpecOf, toDocument } from "./to-document.js";
 export type { ToDocumentResult } from "./to-document.js";

@@ -29,6 +29,8 @@ export interface ViewRegistration<V = unknown> {
   readonly view: V;
   /** The place's name, when the registration gave it one. */
   readonly title?: string;
+  /** The other kind of a picture over two, when the registration said so. */
+  readonly across?: string;
 }
 
 /**
@@ -99,6 +101,12 @@ export interface ViewRegistry<S extends AnySchema, V = unknown> {
    */
   resolve(kind: string, cell: ViewCell, as?: string): ViewRegistration<V> | undefined;
   all(): readonly ViewRegistration<V>[];
+  /**
+   * Every registration in the order it was made, a replaced one included —
+   * so one registry can be laid over another and land as it was written
+   * (`layerViews`), where `all()` answers only what each cell holds now.
+   */
+  registrations(): readonly ViewRegistration<V>[];
   kindsWithViews(): readonly string[];
 }
 
@@ -123,6 +131,8 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
   const entries = new Map<string, ViewRegistration<V>>();
   /** Every named place, in the order it was registered. */
   const named: Place[] = [];
+  /** Every registration, in the order it was made. */
+  const order: ViewRegistration<V>[] = [];
 
   const registry: ViewRegistry<S, V> = {
     register(kind, cell, view, meta) {
@@ -132,6 +142,7 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
         fidelity: cell.fidelity,
         view,
         ...(meta?.title ? { title: meta.title } : {}),
+        ...(meta?.across ? { across: meta.across } : {}),
       };
       /*
        * A titled registration fills its cell AND stands on its own.
@@ -143,6 +154,7 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
        * month are two questions about one pile of tasks, and before this a
        * kind could only ever have one answer.
        */
+      order.push(registration);
       entries.set(key(kind, cell), registration);
       if (meta?.title) {
         const as = placeSlug(meta.title);
@@ -178,6 +190,7 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
       }
       return undefined;
     },
+    registrations: () => order,
     all() {
       return [...entries.values()];
     },

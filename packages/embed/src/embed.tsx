@@ -1,10 +1,11 @@
 import { Store, type AnySchema, type Brand, type GraviewApp, type Place, type PresenceChannel, type Principal } from "@graview/core";
 import { EMPTY_VIEW, aggregateId, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout";
 import { PagesApp, PlacePicture, type PageComponent, type PageRegistry } from "@graview/pages";
-import { Companion, Inspector, OverviewButton, Places, Profile, ShowInstallation, Standing, descentTarget, registerDefaultViews, themeCss, useWidth } from "@graview/primitives";
+import { Companion, Inspector, OverviewButton, Places, Profile, ShowInstallation, Standing, VISUALLY_HIDDEN, descentTarget, registerDefaultViews, registerViewSpecs, themeCss, useWidth } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
 import {
   createViews,
+  layerViews,
   GraviewProvider,
   Scene,
   useGraview,
@@ -13,7 +14,7 @@ import {
   type ReactViewRegistry,
   useTheKeyboardLandsSomewhere,
 } from "@graview/react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { fontsLink } from "./fonts.js";
@@ -79,7 +80,15 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> {
    * declaration, which is the only thing this option is for, was a type
    * error with eleven lines of variance in it.
    */
-  readonly views?: (schema: S) => ReactViewRegistry<S>;
+  /*
+   * OVER THE DEFAULTS, NOT INSTEAD OF THEM (FR-36). The function is handed
+   * a registry that already holds the framework's own view for every cell
+   * and the declaration's view specs; register onto it what you want
+   * different. A function that builds a registry of its own is laid over
+   * the same defaults, so one card is one card and not the loss of every
+   * other view.
+   */
+  readonly views?: (schema: S, registry: ReactViewRegistry<S>) => ReactViewRegistry<S>;
   /** The pages face's own pages, over the derived defaults. */
   readonly pages?: PageRegistry<S, PageComponent<S>>;
   /** The face switcher and Standing, above the picture. Default on. */
@@ -97,6 +106,13 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> {
    * role and name; every landmark inside is named after the embed.
    */
   readonly label?: string;
+  /**
+   * THE WORKBENCH'S HEADING (FR-25): the level the embed's name is said at,
+   * for a reader moving by headings — `1` when the host's page is the app,
+   * `2` (the default) inside somebody else's article, `false` when the
+   * host's own heading already names it. The pages face brings its own.
+   */
+  readonly heading?: 1 | 2 | 3 | 4 | 5 | 6 | false;
 }
 
 export interface EmbedProps<S extends AnySchema = AnySchema> extends EmbedOptions<S> {
@@ -169,6 +185,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
     standing = "Everything is in order",
     pages,
     label,
+    heading = 2,
   } = props;
   const rootRef = useRef<HTMLDivElement>(null);
   useTheKeyboardLandsSomewhere(rootRef);
@@ -180,10 +197,16 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
    * somebody else down lost every edit and the history with them.
    */
   const store = useMemo(() => props.store ?? storeOf(app, seed), [props.store, app, seed]);
-  const views = useMemo(
-    () => (props.views ? props.views(app.schema) : registerDefaultViews(app.schema, createViews(app.schema))) as never,
-    [props.views, app.schema],
-  );
+  /*
+   * THE DEFAULTS, THE DECLARATION'S SPECS, THEN THE HOST'S OWN — one
+   * registry, each layer over the one before, so what the host leaves
+   * alone stays drawn (FR-36) and what the declaration says as data is
+   * drawn with no views at all (FR-03).
+   */
+  const views = useMemo(() => {
+    const base = registerViewSpecs(registerDefaultViews(app.schema, createViews(app.schema)), app.schema, app.viewSpecs);
+    return (props.views ? layerViews(base, props.views(app.schema, base)) : base) as never;
+  }, [props.views, app.schema, app.viewSpecs]);
   const kinds = app.schema.kinds as readonly string[];
   // The first view only: after it, where the reader goes is theirs.
   const initialView = useMemo(() => viewFor(face, stop, kinds, (views as ReactViewRegistry<S>).places()), []);
@@ -250,6 +273,12 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
       style={{ position: "relative", height, minHeight: 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" }}
     >
       <style>{css}</style>
+      {/*
+        * THE WORKBENCH SAYS ITS NAME IN A HEADING (FR-25). A screen reader
+        * moving by headings found nothing in the scene; the pages face has
+        * its own, so it is not said twice there.
+        */}
+      {heading !== false && face !== "pages" ? <HeadingAt level={heading}>{label ?? app.name}</HeadingAt> : null}
       <GraviewProvider
         store={store}
         views={views}
@@ -295,7 +324,21 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         ) : face === "pages" ? (
           <div style={{ flex: "1 1 auto", minHeight: 0, overflow: "auto" }}>
             <PagesApp<S>
-              context={{ store, embedded: true, ...(brand ? { brand } : {}), ...(principal ? { principal } : {}), ...(props.seats ? { seats: props.seats } : {}) }}
+              /*
+               * THE SAME PICTURES ON THE ROUTED FACE (FR-35): the registry the
+               * scene draws from, so a view registered here is the gallery's
+               * card, the list's row and the record's page too.
+               */
+              context={{
+                store,
+                embedded: true,
+                views: views as ReactViewRegistry<S>,
+                settings: app.settings ?? [],
+                ...(props.presence ? { presence: props.presence } : {}),
+                ...(brand ? { brand } : {}),
+                ...(principal ? { principal } : {}),
+                ...(props.seats ? { seats: props.seats } : {}),
+              }}
               {...(pages ? { registry: pages } : {})}
               initialPath={path}
             />
@@ -312,6 +355,12 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
       </GraviewProvider>
     </section>
   );
+}
+
+/** A heading at a level the host chose, heard and not seen. */
+function HeadingAt({ level, children }: { readonly level: 1 | 2 | 3 | 4 | 5 | 6; readonly children: ReactNode }) {
+  const Tag = `h${level}` as const;
+  return <Tag style={{ ...VISUALLY_HIDDEN, margin: 0 }}>{children}</Tag>;
 }
 
 /** Keeps the scene's view in step with the face and stop props. */

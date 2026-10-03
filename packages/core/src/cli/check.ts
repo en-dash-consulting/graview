@@ -35,6 +35,7 @@ import {
   checkShippedLenses,
   checkUnmakeable,
   checkArrangement,
+  checkViewSpecs,
 } from "./check/index.js";
 import type { CheckContext } from "./check/context.js";
 
@@ -106,6 +107,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   checkPalette(ctx);
   checkLensBindings(ctx);
   checkArrangement(ctx);
+  checkViewSpecs(ctx);
 
   const errors = findings.filter((f) => f.severity === "error").length;
   const notes = findings.filter((f) => f.severity === "note").length;

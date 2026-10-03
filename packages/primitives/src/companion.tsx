@@ -7,6 +7,7 @@ import { ChatPanel } from "./chat.js";
 import { QuickRelations } from "./quick-relations.js";
 import { RelationKey } from "./relation-key.js";
 import { Inspector } from "./workbench/index.js";
+import { VISUALLY_HIDDEN } from "./primitives/index.js";
 
 /**
  * THE SEAT IS A COMPANION ATTACHED TO THE VIEWFRAME.
@@ -432,6 +433,8 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
         overflow: "hidden",
       }}
     >
+      {/* A HEADING FOR THE REGION (FR-25): a reader moving by headings finds the seat, named as its landmark is. Out of the grid's flow. */}
+      <h2 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>The seat — about {subject.name}</h2>
       {/* THE SUBJECT, said in the header: what "this" means right now, and what the seat is doing about it. */}
       <button
         type="button"
