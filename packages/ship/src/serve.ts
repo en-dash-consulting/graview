@@ -13,6 +13,7 @@ import {
 } from "@graview/core";
 import { exportBundle } from "./export.js";
 import { health } from "./health.js";
+import { SEAT_HEADERS } from "./seat-headers.js";
 import { openStore, type OpenedStore } from "./open-store.js";
 import type { GraphSnapshot } from "./snapshot.js";
 
@@ -73,8 +74,7 @@ export const WIRE = [
   { method: "POST", path: "/graview/leave", says: "say you have gone" },
 ] as const;
 
-/** The headers a request carries its seat in. A host's `seatOf` may read others; these are what the framework's clients send. */
-export const SEAT_HEADERS = { seat: "x-graview-seat", roles: "x-graview-roles" } as const;
+export { SEAT_HEADERS };
 
 export interface ServeOptions<S extends AnySchema> {
   readonly app: GraviewApp<S>;
@@ -85,15 +85,23 @@ export interface ServeOptions<S extends AnySchema> {
   readonly scope?: string;
   readonly port?: number;
   /**
-   * Who a request is, from its own headers.
-   *
-   * Not an authentication system — this is a demo server, and pretending
-   * otherwise would be worse than saying so. It reads `x-graview-seat` and
-   * `x-graview-roles` and hands the result to the store, which is enough to
-   * show the thing worth showing: the SAME policy refusing the same act on
-   * the server that refuses it in the browser.
+   * Who a request is. The host's to say — from a session, a bearer token,
+   * whatever it authenticates with — and the store judges every call under
+   * the principal it returns.
    */
   readonly seatOf?: (request: IncomingMessage) => Principal;
+  /**
+   * BELIEVE THE SEAT HEADERS (`SEAT_HEADERS`) — off by default (FR-06).
+   *
+   * A header is a claim, and anyone who could reach a served store used to
+   * claim any seat by sending one, and every remote agent was recorded as
+   * a person. A store that neither trusts headers nor is given a `seatOf`
+   * answers 401: it cannot say who is asking. `graview serve` turns this on
+   * for a server bound to loopback only, and says so.
+   */
+  readonly trustSeatHeaders?: boolean;
+  /** The address to listen on. Every interface when absent. */
+  readonly host?: string;
   /** Where the data is, for the health report to say out loud. */
   readonly where?: string;
   /** How long a presence stands after its last word. Three heartbeats by default. */
@@ -109,15 +117,27 @@ export interface ServedStore<S extends AnySchema> {
   close(): Promise<void>;
 }
 
-const SEAT = (request: IncomingMessage): Principal => {
-  const id = header(request, "x-graview-seat");
-  const roles = header(request, "x-graview-roles");
+const KINDS = new Set(["human", "agent", "rule", "system"]);
+const list = (value: string | undefined) => (value ? value.split(",").filter(Boolean) : undefined);
+const decoded = (value: string | undefined) => (value ? decodeURIComponent(value) : undefined);
+
+/** A seat read from its headers — only ever when the host trusts them. */
+export function seatFromHeaders(request: IncomingMessage): Principal {
+  const id = header(request, SEAT_HEADERS.seat);
+  const roles = list(header(request, SEAT_HEADERS.roles));
+  const kind = header(request, SEAT_HEADERS.kind);
+  const name = decoded(header(request, SEAT_HEADERS.name));
+  const forId = header(request, SEAT_HEADERS.for);
+  const forRoles = list(header(request, SEAT_HEADERS.forRoles));
+  const forName = decoded(header(request, SEAT_HEADERS.forName));
   return {
-    kind: "human",
+    kind: (kind && KINDS.has(kind) ? kind : "human") as Principal["kind"],
     ...(id ? { id } : {}),
-    ...(roles ? { roles: roles.split(",").filter(Boolean) } : {}),
+    ...(roles ? { roles } : {}),
+    ...(name ? { name } : {}),
+    ...(forId ? { onBehalfOf: { kind: "human" as const, id: forId, ...(forRoles ? { roles: forRoles } : {}), ...(forName ? { name: forName } : {}) } } : {}),
   };
-};
+}
 
 function header(request: IncomingMessage, name: string): string | undefined {
   const value = request.headers[name];
@@ -126,7 +146,7 @@ function header(request: IncomingMessage, name: string): string | undefined {
 
 export async function serveStore<S extends AnySchema>(options: ServeOptions<S>): Promise<ServedStore<S>> {
   const scope = options.scope ?? options.app.name;
-  const seatOf = options.seatOf ?? SEAT;
+  const seatOf = options.seatOf ?? (options.trustSeatHeaders ? seatFromHeaders : undefined);
   /*
    * The migration runs HERE, once, against the stored graph — which is the
    * whole reason a server is the honest place for it. A browser that
@@ -171,13 +191,25 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
   async function handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
     // A browser on another origin is the ordinary case for an embed.
     response.setHeader("access-control-allow-origin", "*");
-    response.setHeader("access-control-allow-headers", "content-type, authorization, x-graview-seat, x-graview-roles");
+    response.setHeader("access-control-allow-headers", ["content-type", "authorization", ...Object.values(SEAT_HEADERS)].join(", "));
     response.setHeader("access-control-allow-methods", "GET, POST, OPTIONS");
     if (request.method === "OPTIONS") {
       response.writeHead(204).end();
       return;
     }
     const url = new URL(request.url ?? "/", "http://localhost");
+
+    /*
+     * WHO IS ASKING, OR NOTHING. Health is the only route a stranger gets:
+     * it says whether the store is well, not what is in it.
+     */
+    if (!seatOf && url.pathname !== "/graview/health") {
+      send(response, 401, {
+        error: "This store cannot tell who is asking: the host gives serveStore a seatOf, or trusts the seat headers (trustSeatHeaders) on a server only it can reach.",
+      });
+      return;
+    }
+    const seat = (): Principal => (seatOf as (request: IncomingMessage) => Principal)(request);
 
     if (url.pathname === "/graview/state") {
       send(response, 200, {
@@ -206,7 +238,7 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
         send(response, 400, { error: "A presence is a participant and a stop." });
         return;
       }
-      const mine = arrive(body.presence, seatOf(request));
+      const mine = arrive(body.presence, seat());
       // Folded into the poll: the heartbeat carries back everybody else AND
       // the ops since, so being here costs no round trip of its own.
       send(response, 200, {
@@ -249,9 +281,12 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
         undo?: readonly string[];
         intent?: string;
         batch?: string;
+        /** What the calls came through; `api` unless the caller says (FR-06). */
+        via?: string;
       };
       const calls = body.calls ?? [];
-      const seat = seatOf(request);
+      const author = seat();
+      const via = typeof body.via === "string" && body.via.length > 0 ? body.via : "api";
       try {
         /*
          * Through the STORE, under the requester's own seat. The policy
@@ -260,9 +295,10 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
          * bare 403, because that sentence is the product.
          */
         const result = body.undo
-          ? store.undo(body.undo, { author: seat, ...(body.intent ? { intent: body.intent } : {}) })
+          ? store.undo(body.undo, { author, via, ...(body.intent ? { intent: body.intent } : {}) })
           : store.applyAll(calls, {
-              author: seat,
+              author,
+              via,
               ...(body.intent ? { intent: body.intent } : {}),
               ...(body.batch ? { batch: body.batch } : {}),
             });
@@ -280,7 +316,7 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
     send(response, 404, { error: `Nothing at ${url.pathname}` });
   }
 
-  const port = await listen(server, options.port ?? 0);
+  const port = await listen(server, options.port ?? 0, options.host);
   return {
     store,
     opened,
@@ -308,10 +344,10 @@ async function read(request: IncomingMessage): Promise<unknown> {
   return text.length === 0 ? {} : JSON.parse(text);
 }
 
-function listen(server: Server, port: number): Promise<number> {
+function listen(server: Server, port: number, host?: string): Promise<number> {
   return new Promise((ready, fail) => {
     server.once("error", fail);
-    server.listen(port, () => {
+    server.listen(port, host, () => {
       const address = server.address();
       ready(typeof address === "object" && address !== null ? address.port : port);
     });

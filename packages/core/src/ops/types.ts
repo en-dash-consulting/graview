@@ -15,7 +15,26 @@ export interface Author {
   readonly kind: "human" | "agent" | "rule" | "system";
   readonly id?: string;
   readonly session?: string;
+  /**
+   * The author's own name, for a reader who has no record or seat to look
+   * it up in — another person in a hosted app, an agent from a chat. Said
+   * before any id is (FR-17).
+   */
+  readonly name?: string;
+  /**
+   * WHO THIS IS FOR. An agent acting for a person records both — "Claude,
+   * for Nick" — and is bounded by that person's roles as well as its own
+   * (FR-06).
+   */
+  readonly onBehalfOf?: Author;
 }
+
+/**
+ * THE CHANNEL an op came through: `web` (a person at the interface),
+ * `mcp:<client>` (an agent's tool call), `view:<name>` (a view acting for
+ * its viewer), `api`, `cli`. A fact in the log, beside who and for whom.
+ */
+export type Via = "web" | "api" | "cli" | `mcp:${string}` | `view:${string}` | (string & {});
 
 /**
  * One entry in the append-only log. The graph is a fold over these.
@@ -41,6 +60,8 @@ export interface Operation {
   readonly at: string;
   /** Set when this op exists to undo another one. */
   readonly undoes?: string;
+  /** What the change came through, when the caller said (FR-06). */
+  readonly via?: Via;
 }
 
 export interface Batch {

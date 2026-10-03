@@ -140,7 +140,11 @@ own rehearsal (`pnpm smoke`) does exactly this from packed tarballs —
    judged under the seat the request carries. Put `serve` and `mcp` in the
    app's scripts. The routes are `WIRE`, exported and pinned by a test, and
    `serveStore({ seatOf })` is where a host reads its own credential —
-   `openRemote({ headers })` carries whatever it asks for.
+   `openRemote({ headers })` carries whatever it asks for. A store believes
+   the seat headers the framework's clients send only with
+   `trustSeatHeaders: true` (`graview serve` sets it on 127.0.0.1 and
+   refuses another `--host` without `--trust-seat-headers`); with neither,
+   it answers 401.
 
 ## The boundary
 

@@ -87,10 +87,16 @@ export interface Host<S extends AnySchema> {
   close(): Promise<void>;
 }
 
-export async function openHost<S extends AnySchema>(app: GraviewApp<S>, argv: readonly string[], principal: Principal): Promise<Host<S>> {
+export async function openHost<S extends AnySchema>(
+  app: GraviewApp<S>,
+  argv: readonly string[],
+  principal: Principal,
+  /** What its changes come through, recorded on every op the server makes (FR-06). */
+  via: string = "mcp",
+): Promise<Host<S>> {
   const url = flag(argv, "--remote-url");
   if (url) {
-    const remote: RemoteStore<S> = await openRemote({ app, url, principal, headers: headersFrom(argv), pollMs: 0 });
+    const remote: RemoteStore<S> = await openRemote({ app, url, principal, headers: headersFrom(argv), pollMs: 0, via });
     let heard: string[] = [];
     remote.onRefusal((reason) => heard.push(reason));
     return {
@@ -169,7 +175,7 @@ export async function mcp(argv: readonly string[]): Promise<number> {
     return 0;
   }
 
-  const host = await openHost(app, argv, principal);
+  const host = await openHost(app, argv, principal, "mcp");
   const runtime = createToolRuntime(host.store, { author: principal, readOnly, places: () => app.views?.places?.() ?? [] });
   const inner = createMcpAdapter(runtime);
   say(`graview mcp: ${app.name} as ${principal.id} on ${host.where} — ${inner.listTools().length} tools\n`);
@@ -246,7 +252,7 @@ export async function apply(argv: readonly string[]): Promise<number> {
   }
   const intent = flag(argv, "--intent");
   const preview = argv.includes("--preview");
-  const host = await openHost(app, argv, principal);
+  const host = await openHost(app, argv, principal, "cli");
   try {
     await host.refresh();
     const store = host.store;

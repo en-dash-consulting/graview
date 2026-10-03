@@ -18,7 +18,7 @@ export { z } from "zod";
 
 // Schema — the single declaration everything else derives from.
 export { defineNode, isCurrent, labelOf, describeNode, tellApart } from "./schema/define-node.js";
-export { nameOfAuthor } from "./who.js";
+export { nameOfAuthor, viaSaid } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";
 export type {
   AnySchema,
@@ -178,8 +178,10 @@ export type {
 export { OperationLog } from "./ops/log.js";
 export { checkUndo, undoPrimitives } from "./ops/undo.js";
 export type { UndoBlock, UndoCheck } from "./ops/undo.js";
-export type { Author, Batch, Operation } from "./ops/types.js";
+export type { Author, Batch, Operation, Via } from "./ops/types.js";
 export {
+  actingAs,
+  isSystem,
   permits,
   permittedMutations,
   rolesOf,

@@ -17,7 +17,7 @@ import { compileMutation } from "./mutations/define-mutation.js";
 import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { OperationLog } from "./ops/log.js";
-import type { Author, Batch, Operation } from "./ops/types.js";
+import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
 import { nounOf } from "./schema/define-node.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
@@ -91,6 +91,8 @@ export interface ApplyOptions {
   /** Groups several mutations under one gesture or one agent turn. */
   readonly batch?: string;
   readonly intent?: string;
+  /** What the change came through — `web`, `mcp:<client>`, `view:<name>`, `api`, `cli` — recorded on each op (FR-06). */
+  readonly via?: Via;
 }
 
 export interface Preview<S extends AnySchema> {
@@ -638,6 +640,7 @@ export class Store<S extends AnySchema> {
           reads: compiled.reads,
           writes: compiled.writes,
           at: this.now(),
+          ...(options.via !== undefined ? { via: options.via } : {}),
         };
         this.graph.applyPrimitives(op.primitives);
         this.log.append(op);
@@ -832,6 +835,7 @@ export class Store<S extends AnySchema> {
         writes: target.writes,
         at: this.now(),
         undoes: target.id,
+        ...(options.via !== undefined ? { via: options.via } : {}),
       };
       this.graph.applyPrimitives(op.primitives);
       this.log.append(op);

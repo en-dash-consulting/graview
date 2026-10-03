@@ -63,10 +63,14 @@ so a host in front of it knows what it must keep answering for `openRemote`, `gr
 | GET | `/graview/who` | who is here right now |
 | POST | `/graview/leave` | say you have gone |
 
-A request carries its seat in `x-graview-seat` and `x-graview-roles` (`SEAT_HEADERS`) by
-default; `serveStore({ seatOf })` is where a host reads its own credential instead. Whatever
-a host asks for rides along: `openRemote({ headers })` sends them with every request, and
-the framework never reads them. `openRemote(...).settled()` resolves once every call sent
+Who is asking is the host's to say: `serveStore({ seatOf })` reads its own credential and
+returns the principal every call is judged under. The framework's clients also send the seat
+as headers (`SEAT_HEADERS`: who, as what, by what name, and for whom), and a store believes
+them only when told to — `serveStore({ trustSeatHeaders: true })`, which `graview serve`
+sets for a server on 127.0.0.1 and says so. A store with neither answers 401 on every route
+but health. Whatever a host asks for rides along: `openRemote({ headers })` sends them with
+every request, and the framework never reads them. A call says what it came through
+(`via`: `web` from `openRemote`, `mcp` and `cli` from the commands), recorded on the op. `openRemote(...).settled()` resolves once every call sent
 so far has been answered — a browser never waits for it; a host that must report the
 server's verdict before it exits does.
 

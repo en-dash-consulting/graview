@@ -1,5 +1,6 @@
 import type { GraphEdge } from "./graph/types.js";
 import type { Batch, Operation } from "./ops/types.js";
+import { actingAs, isSystem } from "./permissions/policy.js";
 import { sees } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -26,7 +27,9 @@ const bound = (target: object, prop: PropertyKey): unknown => {
  */
 export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principal): Store<S> {
   if (!store.policy?.sees?.length) return store;
-  const key = `${principal.kind}|${principal.id ?? ""}|${(principal.roles ?? []).join(",")}`;
+  // Keyed by the seat the policy judges: an agent for Nick is not the same agent alone.
+  const judged = isSystem(principal) ? principal : actingAs(principal);
+  const key = `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? "for" : ""}`;
   let views = VIEWS.get(store);
   if (!views) VIEWS.set(store, (views = new Map()));
   const held = views.get(key);

@@ -20,10 +20,14 @@ import { applySteps, seedSteps } from "./sync-seed.js";
  * changes nothing else, which is the actual claim about adapters.
  */
 export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <file>]
+                       [--host <address>] [--trust-seat-headers]
       Serves the app's store over HTTP. The op log is the wire: a client
       sends calls, the store judges them under the caller's own seat, and
       the ops come back. Data lives in <dir> (default ./data) as readable
-      JSON, or in a SQLite file with --sqlite.
+      JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and
+      believes the seat a request names in its headers, because only this
+      machine can reach it; on any other --host it will not start unless
+      --trust-seat-headers says the network in front of it can be trusted.
 
   graview sync-seed <entry> --seed <file> [--data <dir> | --sqlite <file>]
                             [--apply] [--prune] [--json]
@@ -91,22 +95,50 @@ async function entryOf(argv: readonly string[], command: string, usage: string):
   return loadApp(entry);
 }
 
+const LOOPBACK = new Set(["127.0.0.1", "::1", "localhost"]);
+
+/**
+ * WHETHER `graview serve` BELIEVES A SEAT HEADER (FR-06). Seat headers are
+ * how the framework's own clients say who they are, and anyone who can
+ * reach the server can send them. On loopback that is only this machine,
+ * so they are believed and the command says so; anywhere else it refuses
+ * to start unless told the network in front of it is trusted.
+ */
+export function seatTrust(host: string, trustFlag: boolean): { readonly trust: boolean; readonly says: string } | { readonly refuse: string } {
+  if (LOOPBACK.has(host)) return { trust: true, says: `believes seat headers: listening on ${host}, which only this machine reaches` };
+  if (trustFlag) return { trust: true, says: `believes seat headers on ${host}, because --trust-seat-headers says the network in front of it is trusted` };
+  return {
+    refuse:
+      `graview serve: refusing to listen on ${host} while believing seat headers — anyone who can reach it could claim any seat.\n` +
+      `  Serve on 127.0.0.1 (the default), put a host that authenticates in front with its own seatOf, or say --trust-seat-headers.\n`,
+  };
+}
+
 export async function serve(argv: readonly string[]): Promise<number> {
   const app = await entryOf(argv, "serve", SERVE_USAGE);
   if (typeof app === "number") return app;
   const port = Number(flag(argv, "--port") ?? 5196);
+  const host = flag(argv, "--host") ?? "127.0.0.1";
+  const trust = seatTrust(host, argv.includes("--trust-seat-headers"));
+  if ("refuse" in trust) {
+    process.stderr.write(trust.refuse);
+    return 1;
+  }
   const backend = await backendFrom(argv);
   const served = await serveStore({
     app: app as never,
     adapter: backend.adapter,
     ...(backend.seed ? { seed: backend.seed } : {}),
     port,
+    host,
+    trustSeatHeaders: trust.trust,
     where: backend.where,
   });
 
   process.stdout.write(
     `graview serve: ${app.name} on ${served.url}\n` +
       `  data: ${backend.where}  (${backend.adapter.name})\n` +
+      `  ${trust.says}\n` +
       `  ${served.store.graph.allNodes().length} nodes, ${served.opened.store.log.all().length} operations` +
       `${served.opened.migrated.length > 0 ? `, migrated: ${served.opened.migrated.map((op) => op.intent).join("; ")}` : ""}\n`,
   );
