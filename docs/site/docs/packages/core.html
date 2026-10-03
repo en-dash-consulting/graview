@@ -1084,6 +1084,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <li><strong>Permissions</strong> — a <code>Principal</code> is an <code>Author</code> with roles, so what the log blames is what the policy judged.</li>
 <li><strong>Theme</strong> — the token contract, the two shipped palettes, and a contrast checker that measures a brand's palette before it ships.</li>
 <li><strong><code>graview check</code></strong> — reads a declaration and reports what is wrong with it, in terms an agent can act on.</li>
+<li><strong>Documents</strong> — <code>@graview/core/document</code>: a whole app as one JSON object, compiled by <code>compileDocument</code> into the same app <code>defineApp</code> declares and never run as code; <code>toDocument</code> writes an app back out. Rules say what must hold in a small, budgeted language (<code>expressionRule</code>). Every command that takes an entry takes <code>--document &lt;file&gt;</code>.</li>
 </ul>
 <div class="code" data-scroller><pre><code>npx graview create my-app          # a product on Graview, started (also: npm create graview)
 npx graview check ./dist/domain/app.js

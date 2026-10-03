@@ -77,6 +77,13 @@ describe("a document compiles into an app the framework accepts", () => {
     expect(() => store.apply({ name: "book", args: { id: cakes.id } }, { author: owner })).toThrow("Sad Cakes was declined; reopen them first");
   });
 
+  it("schema-checks an act's arguments, as a defineMutation act is", () => {
+    const store = storeOf(compiled());
+    expect(() => store.apply({ name: "add-vendor", args: { name: 42 } }, { author: owner })).toThrow();
+    expect(() => store.apply({ name: "add-vendor", args: {} }, { author: owner })).toThrow();
+    expect(store.log.all()).toHaveLength(0);
+  });
+
   it("the policy refuses a role with no grant", () => {
     const store = storeOf(compiled());
     expect(() => store.apply({ name: "add-vendor", args: { name: "Nope" } }, { author: viewer })).toThrow(PermissionDeniedError);

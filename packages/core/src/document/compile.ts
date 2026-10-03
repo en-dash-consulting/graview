@@ -1,5 +1,6 @@
 import {
   RuleBudgetError,
+  withArticle,
   brandFromAccent,
   checkApp,
   createSchema,
@@ -21,6 +22,7 @@ import {
 } from "../index.js";
 import { z } from "zod";
 import { analyzeExpr } from "./expr/analyze.js";
+import { rememberDocument } from "./to-document.js";
 import { evaluateExpr, ExprBudgetError, ExprEvalError, type KindShape, type Value } from "./expr/evaluate.js";
 import { ExprSyntaxError, parseExpr, type Expr } from "./expr/parse.js";
 import { error, hasErrors, warning, type Finding } from "./findings.js";
@@ -523,7 +525,7 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
           const subjectId = typeof input[SUBJECT_ARG] === "string" ? (input[SUBJECT_ARG] as string) : undefined;
           const subject = subjectId ? graph.getNode(subjectId) : undefined;
           if (subjectId && !subject) throw new Refused(`there is no record "${subjectId}"`);
-          if (subject && subjectKinds.length > 0 && !subjectKinds.includes(subject.kind)) throw new Refused(`"${title}" acts on ${subjectKinds.join(" or ")}, not on a ${subject.kind}`);
+          if (subject && subjectKinds.length > 0 && !subjectKinds.includes(subject.kind)) throw new Refused(`"${title}" acts on ${subjectKinds.join(" or ")}, not on ${withArticle(subject.kind)}`);
           const bindings: Record<string, Value> = {};
           for (const [k, v] of Object.entries(input)) if (v !== undefined) bindings[k] = v as Value;
           if (guard && subject) {
@@ -709,6 +711,8 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
     if (hasErrors(findings)) return { ok: false, findings };
   }
 
+  // `toDocument(app)` gives this document back, byte for byte.
+  rememberDocument(app, document);
   return { ok: true, app, document, findings, sights: document.policy?.sees, kinds: shapes };
 }
 

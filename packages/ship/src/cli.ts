@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { loadApp } from "@graview/core/cli";
+import { entryArg, loadApp } from "@graview/core/cli";
 import type { GraviewApp, PersistenceAdapter } from "@graview/core";
 import { createFileAdapter } from "./file-adapter.js";
 import { openStore } from "./open-store.js";
@@ -88,8 +88,8 @@ function readSeed(file: string): GraphSnapshot {
 
 /** The entry module, or the reason it is not one — said before anything is opened. */
 async function entryOf(argv: readonly string[], command: string, usage: string): Promise<GraviewApp | number> {
-  const entry = argv[0];
-  if (!entry || entry.startsWith("--")) {
+  const entry = entryArg(argv, 0);
+  if (!entry) {
     process.stderr.write(`graview ${command}: an entry module is required\n\n${usage}`);
     return 2;
   }

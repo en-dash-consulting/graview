@@ -1,3 +1,4 @@
+import { withArticle } from "../../schema/define-node.js";
 import type { AnyGraphNode, GraphReader } from "../../index.js";
 import type { Expr } from "./parse.js";
 
@@ -78,7 +79,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
       return card === "one" ? (targets[0] ?? null) : new NodeSet(targets);
     }
     if (name === "id") return node.id;
-    throw new ExprEvalError(`a ${node.kind} has no field or relation called "${name}"`, at);
+    throw new ExprEvalError(`${withArticle(node.kind)} has no field or relation called "${name}"`, at);
   };
 
   const asSet = (v: Value, at: number, fn: string): NodeSet => {

@@ -20,3 +20,5 @@ export { upgradeDocument, UPGRADES } from "./upgrade.js";
 export type { Upgrade, Upgraded } from "./upgrade.js";
 export { expressionRule, shapesOfSchema } from "./rules.js";
 export type { ExpressionRuleSpec } from "./rules.js";
+export { documentOf, toDocument } from "./to-document.js";
+export type { ToDocumentResult } from "./to-document.js";

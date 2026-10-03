@@ -1,3 +1,4 @@
+import { withArticle } from "../schema/define-node.js";
 import type { GraviewDocument } from "./schema.js";
 import { VIEW_SLOTS, viewsOf } from "./views.js";
 
@@ -105,7 +106,7 @@ export function diffDocuments(before: GraviewDocument, after: GraviewDocument): 
       }
     }
     for (const edge of keys(now.edges)) if (!was.edges?.[edge] && !(now.edges?.[edge] as { renamedFrom?: string } | undefined)?.renamedFrom) sentences.push(`${kind} gains a relation, "${edge}".`);
-    if (!same(was.label, now.label) || !same(was.describe, now.describe)) sentences.push(`How a ${kind} is labelled changes.`);
+    if (!same(was.label, now.label) || !same(was.describe, now.describe)) sentences.push(`How ${withArticle(kind)} is labelled changes.`);
   }
   for (const [section, noun] of [["acts", "act"], ["rules", "rule"]] as const) {
     const a = before[section] ?? {};
