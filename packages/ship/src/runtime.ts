@@ -10,7 +10,7 @@
  */
 export { createStoreHandler, presenceSeenBy, SEAT_HEADERS, seatFromHeaders, WIRE } from "./handler.js";
 export type { AdapterStoreHandlerOptions, HeldStoreHandlerOptions, StoreHandler, StoreHandlerOptions } from "./handler.js";
-export { liveProtocol, presenceFrom } from "./live-protocol.js";
+export { announcePresence, liveProtocol, presenceFrom, visitorPresence } from "./live-protocol.js";
 export type { LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState } from "./live-protocol.js";
 export { openStore } from "./open-store.js";
 export type { Compaction, OpenStoreOptions, OpenedStore } from "./open-store.js";

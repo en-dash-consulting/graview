@@ -198,6 +198,13 @@ export interface RemoteStore<S extends AnySchema> {
   revision(node: string, field: string): number;
   /** The last op of the server's this client has. */
   seq(): number;
+  /**
+   * THIS CLIENT'S OWN KEY in who is here, as the server built it from the
+   * seat (FR-47): said in the socket's welcome, or in the answer to a poll's
+   * `here`. Undefined until one of them has, or from a server before it.
+   * Who is here, as `presence` tells it, never includes it.
+   */
+  participant(): string | undefined;
   /** How everybody else's ops reach this client now: pushed down the socket, or on the poll. */
   transport(): "socket" | "poll";
   /**
@@ -402,10 +409,14 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
    * whoever is listening.
    */
   let mine: Presence | null = null;
+  /** The key the server holds this client under, as its welcome or its last `here` said (FR-47). */
+  let self: string | undefined;
   let known = new Map<string, Presence>();
   const whoListeners = new Set<(who: readonly Presence[]) => void>();
   const heard = (who: readonly Presence[]) => {
     const next = foldPresence(new Map(), who, Date.now(), REMOTE_PRESENCE_TTL_MS, mine?.participant);
+    // Never yourself, under the key you made or the one the server built for you.
+    if (self !== undefined) next.delete(self);
     let changed = next.size !== known.size;
     if (!changed) for (const [participant, presence] of next) if (!samePresence(presence, known.get(participant))) changed = true;
     known = next;
@@ -562,7 +573,8 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
         headers,
         body: JSON.stringify({ presence: mine, seq: seen }),
       });
-      const { who, ops } = (await response.json()) as { who: Presence[]; ops?: Operation[] };
+      const { who, ops, participant } = (await response.json()) as { who: Presence[]; ops?: Operation[]; participant?: string };
+      if (typeof participant === "string") self = participant;
       heard(who ?? []);
       return land(ops ?? []);
     }
@@ -751,6 +763,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
       case "welcome": {
         welcomed = true;
         attempts = 0;
+        if (typeof message.participant === "string") self = message.participant;
         land(message.ops ?? []);
         // Whatever was sent and never answered goes again: the server answers a batch it already has with its ops.
         busy.clear();
@@ -1047,7 +1060,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     },
     leave() {
       if (!mine) return;
-      const body = JSON.stringify({ participant: mine.participant });
+      const body = JSON.stringify({ participant: self ?? mine.participant });
       mine = null;
       if (say({ t: "bye" })) return;
       // A page on its way out gets one shot; a beacon is what survives it.
@@ -1094,6 +1107,7 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     },
     revision: (node, field) => revisions.of(node, field),
     seq: () => seen,
+    participant: () => self,
     transport: () => (socketReady() ? "socket" : "poll"),
     status: () => status,
     onStatus(listener) {

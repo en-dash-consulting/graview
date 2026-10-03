@@ -84,6 +84,7 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
     connect: handler.connect,
     seatFor: handler.seatFor,
     protocol: handler.protocol,
+    announce: handler.announce,
     server,
     port,
     url: `http://localhost:${port}`,

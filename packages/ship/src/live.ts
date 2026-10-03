@@ -54,7 +54,11 @@ export type LiveClientMessage =
     }
   /** Batches to take back, judged as the seat that asks. */
   | { readonly t: "undo"; readonly cid: string; readonly batches: readonly string[]; readonly intent?: string; readonly batch?: string }
-  /** Where this client is, as `POST /graview/here` takes it. */
+  /**
+   * Where this client is, as `POST /graview/here` takes it. Who it is —
+   * the key, the kind, for whom — is the server's to say from the seat;
+   * a claim of any of them is not read (FR-47).
+   */
   | { readonly t: "here"; readonly presence: Presence }
   /** Gone, as `POST /graview/leave`. */
   | { readonly t: "bye" };
@@ -69,6 +73,8 @@ export type LiveServerMessage =
   | {
       readonly t: "welcome";
       readonly protocol: number;
+      /** This socket's own key in `presence`, built from its seat, so a client can leave itself out of who is here (FR-47). */
+      readonly participant?: string;
       readonly seq: number;
       readonly ops: readonly Operation[];
       /** `horizon`: the seq `log` begins at, when the store was compacted (FR-23); absent, 0. */

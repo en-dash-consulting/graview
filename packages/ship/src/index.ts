@@ -30,7 +30,7 @@ export { conflictSentence, LIVE_PATH, REFUSAL_REASONS } from "./live.js";
 export type { Limit, LimitAnswer, LimitAsked, LiveClientMessage, LiveConnection, LiveServerMessage, LiveSocket, RefusalReason, WireRefusal } from "./live.js";
 export { createStoreHandler, presenceSeenBy } from "./handler.js";
 export type { AdapterStoreHandlerOptions, HeldStoreHandlerOptions, StoreHandler, StoreHandlerOptions } from "./handler.js";
-export { liveProtocol, presenceFrom } from "./live-protocol.js";
+export { announcePresence, liveProtocol, presenceFrom, visitorPresence } from "./live-protocol.js";
 export type { LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState } from "./live-protocol.js";
 export { SEAT_HEADERS, seatFromHeaders, serveStore, WIRE } from "./serve.js";
 export type { ServeOptions, ServedStore } from "./serve.js";

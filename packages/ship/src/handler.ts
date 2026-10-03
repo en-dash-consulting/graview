@@ -2,10 +2,12 @@ import {
   foldPresence,
   PRESENCE_TTL_MS,
   refusalOf,
+  VISITOR_PRESENCE_TTL_MS,
   type AnySchema,
   type FieldRevision,
   type GraviewApp,
   type MutationCall,
+  type Operation,
   type PersistenceAdapter,
   type Presence,
   type Principal,
@@ -14,7 +16,17 @@ import {
 import { exportBundle } from "./export.js";
 import { health } from "./health.js";
 import { bytesOf, conflictSentence, LIVE_PATH, type Limit, type LiveConnection, type LiveSocket } from "./live.js";
-import { liveProtocol, presenceFrom, presenceSeenBy, wireOf, type LivePeer, type LiveProtocol, type LiveSocketState } from "./live-protocol.js";
+import {
+  announcePresence,
+  liveProtocol,
+  presenceFrom,
+  presenceSeenBy,
+  visitorPresence,
+  wireOf,
+  type LivePeer,
+  type LiveProtocol,
+  type LiveSocketState,
+} from "./live-protocol.js";
 import { openStore, type OpenedStore } from "./open-store.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
 import type { GraphSnapshot } from "./snapshot.js";
@@ -75,9 +87,9 @@ export const WIRE = [
   { method: "GET", path: "/graview/since", says: "the ops appended after ?seq=N — everyone else's" },
   { method: "GET", path: "/graview/health", says: "ship's own report, plus where the data is" },
   { method: "GET", path: "/graview/export", says: "the whole store as one bundle, the way out" },
-  { method: "POST", path: "/graview/here", says: "say where you are; answers with who else is, and the ops since `seq`" },
+  { method: "POST", path: "/graview/here", says: "say where you are; answers with who else is, the ops since `seq`, and the `participant` key you are held under" },
   { method: "GET", path: "/graview/who", says: "who is here right now" },
-  { method: "POST", path: "/graview/leave", says: "say you have gone" },
+  { method: "POST", path: "/graview/leave", says: "say you have gone — only ever yourself" },
   { method: "GET", path: LIVE_PATH, says: "the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict/busy, ops and presence; 426 to a plain request" },
 ] as const;
 
@@ -117,6 +129,16 @@ interface HandlerOptions<S extends AnySchema> {
   readonly where?: string;
   /** How long a presence stands after its last word. Three heartbeats by default. */
   readonly presenceTtlMs?: number;
+  /**
+   * AN AGENT THAT ACTS IS IN THE ROOM (FR-47). Every op an agent seat lands
+   * in the store — through `POST /graview/ops`, an MCP handler over the
+   * same store, the host's own loop — announces it to who is here, as the
+   * agent and for whom, standing over what it wrote, for this long after
+   * its last op: `VISITOR_PRESENCE_TTL_MS` when `true` or unsaid, the
+   * number of ms when one is given, never when `false`. An agent seat that
+   * holds a socket of its own is there already, and is not announced twice.
+   */
+  readonly announceAgents?: boolean | number;
   /**
    * THE HOST'S LIMITS (FR-45, FR-46): asked of every change — a socket's
    * `call` or `undo`, a `POST /graview/ops` — before it is judged.
@@ -190,6 +212,14 @@ export interface StoreHandler<S extends AnySchema> {
   readonly seatFor: (request: Request) => Promise<LiveSocketState | Response>;
   /** The live protocol over this handler's store, for a host that holds its sockets' state itself (FR-41). */
   readonly protocol: LiveProtocol<S>;
+  /**
+   * SOMEBODY HERE WITHOUT A SOCKET (FR-47): an agent acting over MCP or an
+   * RPC, a polling tab. Told to every socket and every poll at once, as
+   * each seat may see them, and gone `ttlMs` after (30 s unsaid) unless
+   * announced again. The host builds the presence — `visitorPresence(seat)`
+   * — because it is the host who knows who the seat is.
+   */
+  announce(presence: Presence, ttlMs?: number): void;
   /** Writes what is pending and lets the adapter go — or, over a store the host holds, writes what is pending and leaves the store open. */
   close(): Promise<void>;
 }
@@ -321,6 +351,11 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     here = new Map(here);
     here.delete(participant);
   };
+  const announce = (presence: Presence, ttlMs: number = VISITOR_PRESENCE_TTL_MS): void => {
+    const now = Date.now();
+    here = foldPresence(here, announcePresence([], presence, ttlMs, now), now, ttl);
+    tellWhoIsHere();
+  };
 
   async function route(request: Request): Promise<Response> {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
@@ -373,7 +408,9 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       tellWhoIsHere();
       // Folded into the poll: the heartbeat carries back everybody else AND
       // the ops since, so being here costs no round trip of its own.
+      // `participant` is the key the server holds this poller under, so it can leave itself out (FR-47).
       return send(200, {
+        participant: mine.participant,
         who: wire.whoFor(asking, alive().filter((presence) => presence.participant !== mine.participant)),
         ...(typeof body.seq === "number" ? { ops: wire.since(asking, body.seq) } : {}),
       });
@@ -381,11 +418,14 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
 
     if (url.pathname === "/graview/leave" && request.method === "POST") {
       const body = (await read(request)) as { participant?: string };
-      if (typeof body.participant === "string") {
+      const asking = await seat();
+      // Only your own: a seat says it has gone, never that somebody else has.
+      const own = asking.id ? `${asking.kind}:${asking.id}:` : "";
+      if (typeof body.participant === "string" && body.participant.startsWith(own)) {
         forget(body.participant);
         tellWhoIsHere();
       }
-      return send(200, { who: wire.whoFor(await seat(), alive()) });
+      return send(200, { who: wire.whoFor(asking, alive()) });
     }
 
     if (url.pathname === "/graview/health") {
@@ -475,12 +515,32 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     readonly socket: LiveSocket;
   }
   const sockets = new Set<Live>();
+  const agentsFor = options.announceAgents === false ? 0 : typeof options.announceAgents === "number" ? options.announceAgents : VISITOR_PRESENCE_TTL_MS;
   const unsubscribe = store.subscribe((_diff, ops) => {
     protocol.publish(
       ops,
       [...sockets].filter((live) => !live.answering),
     );
+    if (agentsFor > 0) agentsWereHere(ops);
   });
+  /*
+   * AN AGENT THAT ACTED IS IN THE ROOM (FR-47), standing over the last
+   * thing it wrote: once per agent per change, and not at all for one that
+   * holds a socket here, which is in the room as itself already.
+   */
+  function agentsWereHere(ops: readonly Operation[]): void {
+    const last = new Map<string, Operation>();
+    for (const op of ops) if (op.author.kind === "agent") last.set(`${op.author.id ?? ""}`, op);
+    let told = false;
+    for (const op of last.values()) {
+      const author = op.author;
+      if ([...sockets].some((live) => live.seat.kind === "agent" && live.seat.id === author.id)) continue;
+      const now = Date.now();
+      here = foldPresence(here, announcePresence([], visitorPresence(author, { over: op.writes[0] ?? null, now: new Date(now) }), agentsFor, now), now, ttl);
+      told = true;
+    }
+    if (told) tellWhoIsHere();
+  }
   /*
    * A socket's presence stands while the socket does; the TTL is for a
    * poller that went quiet, and a socket that went quiet is closed.
@@ -592,6 +652,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     connect,
     seatFor,
     protocol,
+    announce,
     handle: async (request) => {
       try {
         return await route(request);

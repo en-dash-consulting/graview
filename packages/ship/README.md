@@ -74,9 +74,9 @@ so a host in front of it knows what it must keep answering for `openRemote`, `gr
 | GET | `/graview/since?seq=N` | the ops appended after N — everyone else's |
 | GET | `/graview/health` | ship's own report, plus where the data is |
 | GET | `/graview/export` | the whole store as one bundle, the way out |
-| POST | `/graview/here` | say where you are; answers with who else is, and the ops since `seq` |
+| POST | `/graview/here` | say where you are; answers with who else is, the ops since `seq`, and the `participant` key you are held under |
 | GET | `/graview/who` | who is here right now |
-| POST | `/graview/leave` | say you have gone |
+| POST | `/graview/leave` | say you have gone — only ever yourself |
 | GET | `/graview/live` | the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict/busy, ops and presence; 426 to a plain request |
 
 Who is asking is the host's to say: `serveStore({ seatOf })` reads its own credential from
@@ -119,7 +119,7 @@ of the attempt in milliseconds or `{ min, max, factor }` for the jittered defaul
 | client | `call` | `cid`, `calls`, `intent`, `batch`, and `base`: the revision of each field it changes |
 | client | `undo` | `cid`, `batches` to take back |
 | client | `here` / `bye` | a presence, as `/graview/here` takes it; gone |
-| server | `welcome` | `protocol`, `seq` (the server's last), and the `ops` after the client's seq |
+| server | `welcome` | `protocol`, `participant` (this socket's own key, built from its seat), `seq` (the server's last), and the `ops` after the client's seq |
 | server | `ack` | `cid`, `batch`, `seq` and the `ops` the call made |
 | server | `refused` / `conflict` | `cid` and the sentence; a refusal's `reason` and, when the policy knows who could, `wouldNeed`; a conflict names each field, theirs, yours and who wrote theirs |
 | server | `busy` | `cid` and `retryAfter` in milliseconds: not now, and not refused — the client sends the call again after the wait |
@@ -149,6 +149,22 @@ if (landed) live.publish(landed, otherPeers); // each as its own seat sees them,
 ```
 
 `connect()` is this protocol with the state in memory, so there is one implementation.
+
+**Who is here is the server's to say.** A presence carries its `kind`, a display `name`
+and, for an agent, `onBehalfOf` (the person's id) and `onBehalfOfName`, all built from the
+seat by `presenceFrom`; a client's own claim of any of them, or of another key, is not read.
+A socket's key is built at `hello` and said back as `welcome.participant`, and
+`openRemote(...).participant()` hands it on, so a client leaves itself out of who is here.
+Somebody without a socket — an agent acting over MCP or an RPC, a polling tab — is announced:
+`handler.announce(visitorPresence(seat), ttlMs)` tells every socket and poll at once and
+stands until `until`. The handler does this itself for every op an agent seat lands in its
+store (`POST /graview/ops`, an MCP handler over the same store, the host's own loop), for
+`VISITOR_PRESENCE_TTL_MS`; `createStoreHandler({ announceAgents: false })` turns it off and a
+number sets the time. A hibernating host keeps `who` itself, with `announcePresence(who,
+visitorPresence(seat), ttlMs)`, and hands it to `receive` and `tell`; a visitor past its
+`until` is never told. Each seat is told as it may see: an agent acting for a person the
+seat may not see is shown without `onBehalfOf` or the name. The Shell draws it as "Claude,
+for Ada" (`presenceName`).
 
 **A stale write is a conflict, not a loss.** A field's revision is the seq of the op that last
 wrote it (`FieldRevisions`, derived from the log). A call that carries a `base` older than the

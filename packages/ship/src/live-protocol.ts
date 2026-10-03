@@ -1,14 +1,17 @@
 import {
   FieldRevisions,
   hidesFrom,
+  hueFor,
   isUnset,
   participantKey,
   redact,
   seenBy,
   seesId,
   refusalOf,
+  VISITOR_PRESENCE_TTL_MS,
   WIRE_PROTOCOL,
   type AnySchema,
+  type Author,
   type FieldConflict,
   type FieldRevision,
   type MutationCall,
@@ -52,7 +55,11 @@ export interface LiveSocketState {
   readonly via: string;
   /** The last seq this socket has been sent. Absent until it says hello: a call before that is refused. */
   cursor?: number;
-  /** Its presence key, once it has said where it is; built from the seat, never taken from the client. */
+  /**
+   * Its presence key: built from the seat at hello (or at its first `here`),
+   * said back in the welcome, and the key every later `here` on this
+   * socket is held under — never taken from the client (FR-47).
+   */
   participant?: string;
   /**
    * The call this socket was told is busy (FR-45), and when (epoch ms) it
@@ -125,18 +132,67 @@ export interface LiveProtocol<S extends AnySchema> {
   tell(who: readonly Presence[], peers: Iterable<LivePeer>): void;
 }
 
+/** For whom an author acts, as a presence says it: the person's id and name, or nothing. */
+const forWhom = (author: Author): Pick<Presence, "onBehalfOf" | "onBehalfOfName"> =>
+  author.onBehalfOf?.id ? { onBehalfOf: author.onBehalfOf.id, ...(author.onBehalfOf.name ? { onBehalfOfName: author.onBehalfOf.name } : {}) } : {};
+
 /**
  * A PRESENCE AS THE SERVER BUILDS IT. Keyed by the seat — a client cannot
  * claim to be somebody else — with only the session taken from what it
- * said, and stamped with the server's clock.
+ * said, and stamped with the server's clock. What it is, and for whom it
+ * acts, are the seat's (FR-47): a claimed `kind`, `onBehalfOf` or `until`
+ * is dropped, and the seat's name stands over a claimed one. `participant`
+ * is the key the server already gave this socket (its welcome said it):
+ * given, the claimed key is not read at all.
  */
-export function presenceFrom(told: Presence, seat: Principal, now: Date = new Date()): Presence {
+export function presenceFrom(told: Presence, seat: Principal, now: Date = new Date(), participant?: string): Presence {
+  const { participant: claimed, kind: _kind, name: claimedName, onBehalfOf: _for, onBehalfOfName: _forName, until: _until, at: _at, ...said } = told;
   // The session is what follows the seat's own `kind:id:` — an id may hold a colon (`shopper:bethan`).
   const own = `${seat.kind}:${seat.id ?? ""}:`;
-  const session = told.participant.startsWith(own) ? told.participant.slice(own.length) : (told.participant.split(":").at(-1) ?? "");
-  const participant = seat.id ? participantKey({ kind: seat.kind, id: seat.id, session }) : told.participant;
-  return { ...told, participant, at: now.toISOString() };
+  const session = claimed.startsWith(own) ? claimed.slice(own.length) : (claimed.split(":").at(-1) ?? "");
+  const key = participant ?? (seat.id ? participantKey({ kind: seat.kind, id: seat.id, session }) : claimed);
+  const name = seat.name ?? claimedName;
+  return { ...said, participant: key, kind: seat.kind, ...(name ? { name } : {}), ...forWhom(seat), at: now.toISOString() };
 }
+
+/**
+ * A VISITOR WITHOUT A SOCKET, as a host announces it (FR-47): an agent
+ * acting over MCP or an RPC, a polling tab. Built from the author the host
+ * already trusts — what it is, what it is called, for whom — keyed
+ * `kind:id:visit` unless a session is given, so every call by one agent
+ * refreshes one figure rather than adding another.
+ */
+export function visitorPresence(
+  author: Author,
+  options: { readonly session?: string; readonly stop?: string; readonly over?: string | null; readonly hue?: number; readonly now?: Date } = {},
+): Presence {
+  const name = author.name ?? author.id;
+  return {
+    participant: participantKey({ kind: author.kind, ...(author.id ? { id: author.id } : {}), session: options.session ?? author.session ?? "visit" }),
+    kind: author.kind,
+    ...(name ? { name } : {}),
+    ...forWhom(author),
+    hue: options.hue ?? hueFor(author.id ?? author.kind),
+    stop: options.stop ?? "",
+    ...(options.over !== undefined ? { over: options.over } : {}),
+    at: (options.now ?? new Date()).toISOString(),
+  };
+}
+
+/**
+ * WHO IS HERE, WITH ONE MORE (FR-47) — for a host that holds `who` itself,
+ * as a hibernating one does. The visitor is stamped now and stands until
+ * `ttlMs` from now; the same participant announced again replaces it, and
+ * anybody whose announced time has passed is dropped. Pure: keep what it
+ * answers, and hand it to `receive` and `tell`.
+ */
+export function announcePresence(who: readonly Presence[], presence: Presence, ttlMs: number = VISITOR_PRESENCE_TTL_MS, now: number = Date.now()): Presence[] {
+  const stamped: Presence = { ...presence, at: new Date(now).toISOString(), until: new Date(now + ttlMs).toISOString() };
+  return [...who.filter((one) => one.participant !== presence.participant && (one.until === undefined || now < Date.parse(one.until))), stamped];
+}
+
+/** A key for a socket that has not said one, minted by the server: the welcome tells the client what it is. */
+const mintSession = (): string => globalThis.crypto.randomUUID().slice(0, 8);
 
 /**
  * WHO IS HERE, AS ONE SEAT MAY BE TOLD (FR-02). Somebody whose own record
@@ -152,12 +208,18 @@ export function presenceSeenBy(who: readonly Presence[], sees: (id: string) => b
       const parts = presence.participant.split(":");
       return parts.slice(2).every((_, at) => sees(parts.slice(1, at + 2).join(":")));
     })
-    .map((presence) => ({
-      ...presence,
-      stop: names(presence.stop) ? presence.stop : "",
-      ...(typeof presence.over === "string" && !sees(presence.over) ? { over: null } : {}),
-      ...(presence.robot?.at && !sees(presence.robot.at) ? { robot: { ...presence.robot, at: null } } : {}),
-    }));
+    .map((presence) => {
+      // An agent is shown; for whom it acts is not, to a seat that may not see that person (FR-47).
+      const { onBehalfOf, onBehalfOfName, ...rest } = presence;
+      const forWhom = onBehalfOf !== undefined && sees(onBehalfOf) ? { onBehalfOf, ...(onBehalfOfName !== undefined ? { onBehalfOfName } : {}) } : {};
+      return {
+        ...rest,
+        ...forWhom,
+        stop: names(presence.stop) ? presence.stop : "",
+        ...(typeof presence.over === "string" && !sees(presence.over) ? { over: null } : {}),
+        ...(presence.robot?.at && !sees(presence.robot.at) ? { robot: { ...presence.robot, at: null } } : {}),
+      };
+    });
 }
 
 /**
@@ -218,7 +280,12 @@ export function wireOf<S extends AnySchema>(store: Store<S>): Wire<S> {
     shown,
     since: (principal, seq) => shown(principal, store.log.opsFrom(Math.max(0, Math.floor(seq) + 1))),
     seenFor: (principal) => seenBy(store, principal),
-    whoFor: (principal, who) => (sighted(principal) ? presenceSeenBy(who, seesId(store, principal)) : [...who]),
+    whoFor: (principal, who) => {
+      // A visitor whose announced time has passed is never told of, though a host may still hold it.
+      const now = Date.now();
+      const standing = who.filter((presence) => presence.until === undefined || now < Date.parse(presence.until));
+      return sighted(principal) ? presenceSeenBy(standing, seesId(store, principal)) : standing;
+    },
     answered: (batch) => (typeof batch === "string" && batch.length > 0 ? store.log.all().filter((op) => op.batch === batch) : []),
     horizonOf: () => (store.log.horizon > 0 ? { horizon: store.log.horizon } : {}),
     enabledModules: () => [...store.modules.enabled].sort(),
@@ -348,11 +415,15 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
         case "hello": {
           const seq = typeof message.seq === "number" && Number.isFinite(message.seq) ? message.seq : undefined;
           peer.cursor = wire.lastSeq();
+          // Its own key, built from the seat, so the client can leave itself out of who is here (FR-47).
+          peer.participant ??= participantKey({ kind: peer.seat.kind, ...(peer.seat.id ? { id: peer.seat.id } : {}), session: mintSession() });
+          const participant = peer.participant;
           if (seq === undefined) {
             const seen = wire.seenFor(peer.seat);
             say(peer, {
               t: "welcome",
               protocol: WIRE_PROTOCOL,
+              participant,
               seq: peer.cursor,
               ops: [],
               state: {
@@ -365,7 +436,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
               },
             });
           } else {
-            say(peer, { t: "welcome", protocol: WIRE_PROTOCOL, seq: peer.cursor, ops: wire.since(peer.seat, seq) });
+            say(peer, { t: "welcome", protocol: WIRE_PROTOCOL, participant, seq: peer.cursor, ops: wire.since(peer.seat, seq) });
           }
           const others = who.filter((presence) => presence.participant !== peer.participant);
           if (others.length > 0) say(peer, { t: "presence", who: wire.whoFor(peer.seat, others) });
@@ -417,7 +488,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             say(peer, { t: "error", sentence: "A presence is a participant and a stop." });
             return unchanged();
           }
-          const presence = presenceFrom(told, peer.seat);
+          const presence = presenceFrom(told, peer.seat, new Date(), peer.participant);
           peer.participant = presence.participant;
           return { ...unchanged(), presence };
         }

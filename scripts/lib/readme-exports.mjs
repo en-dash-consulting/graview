@@ -31,6 +31,8 @@ export const NOT_EXPORTS = new Map([
   ["retryAfter", "a field of a busy answer on the wire, not an export"],
   ["serializeAttachment", "a Cloudflare Durable Object WebSocket method, not an export"],
   ["deserializeAttachment", "a Cloudflare Durable Object WebSocket method, not an export"],
+  ["onBehalfOf", "a field of a Presence and a Principal, not an export"],
+  ["onBehalfOfName", "a field of a Presence, not an export"],
 ]);
 
 /** The API-shaped names a README puts in backticks: `name`, `name()`, `Name`. */
