@@ -99,6 +99,20 @@ server's verdict before it exits does.
 it as it lands. Calls go down it too; while it is down the client polls and posts, reconnects,
 and catches up from the last op it has. Polling stays: it is the wire `curl` can drive.
 
+**A host can watch it.** `remote.status()` is `connecting`, `online` or `offline`
+(`RemoteStatus`), and `remote.onStatus(listener)` is told each time it changes — an offline
+banner's switch. It is offline while a socket that was welcomed is down and nothing has been
+heard since, or when a poll or a call does not reach the server (a network failure, or a 502,
+503 or 504 from a gateway); online once a welcome or any answer lands, a refusal included. A
+call made while the server is away is not taken back: it stays shown, `remote.pending()`
+counts it, and it goes again the moment the server is reached. `remote.counters()`
+(`RemoteCounters`) counts `reconnects`, `rebases` (the server's ops landing under pending
+calls), `conflicts` and `resyncs`, for a beacon. Three options shape it: `backoff`, a function
+of the attempt in milliseconds or `{ min, max, factor }` for the jittered default (250, 10000,
+2); `presenceEveryMs`, how often an unchanged presence is said again down the socket; and
+`visible`, a predicate — while it answers false no presence is said, and in a page it reads
+`document.visibilityState` unless given.
+
 | From | Message | Carries |
 |---|---|---|
 | client | `hello` | `seq`, the last op it has (none: the welcome carries the whole state); `protocol` |
