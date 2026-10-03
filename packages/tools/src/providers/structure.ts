@@ -110,7 +110,18 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
       // A field and its value in words: "all 3 share status open" read the key and the JSON.
       const definitionOf = (kind: string) => store.schema.definitions.find((definition) => definition.kind === kind);
       for (const field of [...fields].sort()) {
-        const words = fieldWords(definitionOf(nodes[0]!.kind as string), field).toLowerCase();
+        const definition = definitionOf(nodes[0]!.kind as string);
+        const words = fieldWords(definition, field).toLowerCase();
+        // The value as the card shows it: the declared format, else the stored value quoted.
+        const format = definition?.display?.format?.[field];
+        const said = (key: string): string => {
+          if (!format) return key;
+          try {
+            return String(format(JSON.parse(key)));
+          } catch {
+            return key;
+          }
+        };
         const values = nodes.map((node) => (node as Record<string, unknown>)[field]);
         const groups = new Map<string, NodeOfSchema<S>[]>();
         values.forEach((value, index) => {
@@ -121,11 +132,11 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
         });
 
         if (groups.size === 1) {
-          const [key] = [...groups.keys()];
+          const key = [...groups.keys()][0]!;
           if (key === "null") continue;
           observations.push({
             id: `agree:${field}`,
-            text: `all ${nodes.length} share the ${words} ${key}`,
+            text: `all ${nodes.length} share the ${words} ${said(key)}`,
             nodeIds: ids,
           });
           continue;
@@ -142,7 +153,7 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
 
         observations.push({
           id: `odd-one-out:${field}`,
-          text: `${majority.length} share the ${words} ${majorityKey}; "${named(odd)}" does not`,
+          text: `${majority.length} share the ${words} ${said(majorityKey)}; "${named(odd)}" does not`,
           nodeIds: ids,
         });
 
@@ -182,7 +193,7 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
             args,
             open: [],
             score: ALIGN_SCORE,
-            why: `${majority.length} of ${nodes.length} share the ${words} ${majorityKey}`,
+            why: `${majority.length} of ${nodes.length} share the ${words} ${said(majorityKey)}`,
             nodeIds: ids,
           });
         }
