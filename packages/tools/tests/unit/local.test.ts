@@ -1,5 +1,5 @@
 import { bindSchema, createSchema, defineNode, Store } from "@graview/core";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import {
   configuredResponder,
@@ -141,6 +141,21 @@ describe("the local rung warms off the critical path", () => {
   });
 });
 
+/*
+ * AN UNREACHABLE PROVIDER, WITHOUT THE NETWORK. These tests asked a real
+ * fetch for https://nowhere.invalid and waited for DNS to give up — under
+ * a second here, past the five-second limit on a CI runner (PR #17). The
+ * provider not answering is the point; how long a resolver takes is not.
+ */
+function unreachable(): void {
+  vi.stubGlobal("fetch", async () => {
+    throw new TypeError("fetch failed: getaddrinfo ENOTFOUND nowhere.invalid");
+  });
+}
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe("grounded facts outrank any model", () => {
   it("answers a graph-answerable question from the graph, whatever the rung", async () => {
     let modelAsked = 0;
@@ -155,6 +170,7 @@ describe("grounded facts outrank any model", () => {
   });
 
   it("hands the model only what the graph cannot answer specifically", async () => {
+    unreachable();
     const responder = configuredResponder({
       source: "remote",
       remote: { preset: "custom", baseUrl: "https://nowhere.invalid/v1", apiKey: "k", model: "m" },
@@ -172,8 +188,9 @@ describe("configuredResponder: the graph is always the floor", () => {
   });
 
   it("falls back to the graph with a note when the remote model fails", async () => {
-    // No fetch shim and an unreachable host: the completion rejects, and
-    // the conversation still gets a real answer.
+    // An unreachable host: the completion rejects, and the conversation
+    // still gets a real answer.
+    unreachable();
     const responder = configuredResponder({
       source: "remote",
       remote: { preset: "custom", baseUrl: "https://nowhere.invalid/v1", apiKey: "k", model: "m" },
