@@ -391,8 +391,15 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
     return () => cancelAnimationFrame(frame);
   }, [asked]);
 
+  /*
+   * A REGION, NOT A LANDMARK INSIDE ONE (FR-40). The seat was an `<aside>`,
+   * a complementary landmark, drawn inside the Shell's main and inside an
+   * embed's own region, so axe's `landmark-complementary-is-top-level`
+   * failed on every hosted app at every size. It lives in the picture it is
+   * about, so it is a labelled region there, and what it holds are groups.
+   */
   return (
-    <aside
+    <section
       ref={frame}
       aria-label={`The seat — about ${subject.name}`}
       data-testid="companion"
@@ -642,6 +649,6 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
       {open && chat && docked ? (
         <div style={{ paddingTop: 8, borderTop: "1px solid var(--graview-edge)", minWidth: 0 }}>{conversation}</div>
       ) : null}
-    </aside>
+    </section>
   );
 }
