@@ -504,6 +504,13 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
     const severs = [...new Set(effects.flatMap((e) => ("sever" in e ? [e.sever] : [])))];
     // An act WRITES only what it sets on its subject; setting fields on a record it just made is part of making it.
     const writes = [...new Set(effects.flatMap((e) => ("set" in e && !("create" in e) && (refName(e.target ?? "$subject") === "subject") ? Object.keys(e.set) : [])))];
+    /*
+     * Twice is once when nothing is made and every value set is given
+     * (a literal or an argument), never computed from what is there.
+     */
+    const idempotent =
+      creates.length === 0 &&
+      effects.every((e) => !("set" in e) || !e.set || Object.values(e.set).every((v) => !(v && typeof v === "object" && !Array.isArray(v) && "expr" in v)));
     const exprs = new Map<string, Expr>();
     for (const effect of effects) {
       if (!("set" in effect) || !effect.set) continue;
@@ -518,6 +525,7 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
         ...(act.fromTheOtherEnd ? { fromTheOtherEnd: act.fromTheOtherEnd } : {}),
         ...(args.has(SUBJECT_ARG) ? { subject: { kinds: subjectKinds.length > 0 ? subjectKinds : "*", arg: SUBJECT_ARG } } : {}),
         ...(destructive ? { destructive: true } : {}),
+        ...(idempotent ? { idempotent: true } : {}),
         ...(creates.length > 0 ? { creates } : {}),
         ...(connects.length > 0 ? { connects } : {}),
         ...(severs.length > 0 ? { severs } : {}),

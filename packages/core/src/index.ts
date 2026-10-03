@@ -169,7 +169,10 @@ export {
   nodeRefArgs,
   nodeRefKinds,
 } from "./mutations/node-ref.js";
-export type { ArgShape } from "./mutations/node-ref.js";
+export type { ArgShape, NodeRefArg } from "./mutations/node-ref.js";
+// Records named the way people name them: a node argument takes a label (FR-33).
+export { nameKey } from "./labels.js";
+export type { RefCandidate, RefResolution } from "./labels.js";
 export type {
   AnyMutationDefinition,
   MutationCall,
@@ -249,7 +252,7 @@ export { walkKinds } from "./schema/path.js";
 export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 
 // Integrity — a fold has a fingerprint, and a store can prove its own (FR-20).
-export { snapshotHash } from "./integrity.js";
+export { sha256Hex, snapshotHash } from "./integrity.js";
 export type { VerifyResult } from "./integrity.js";
 // Stored data checked against its declaration (FR-21).
 export { GRAPH_FINDING_CODES, repairPlan, validateGraph } from "./validate-graph.js";

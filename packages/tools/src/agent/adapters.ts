@@ -1,5 +1,5 @@
 import type { AnySchema, GraphDiff, NodeOfSchema } from "@graview/core";
-import type { ToolRuntime } from "./tools.js";
+import type { ToolAnnotations, ToolRuntime } from "./tools.js";
 
 /** The shape an MCP server expects from `tools/list`. */
 export interface McpTool {
@@ -7,6 +7,8 @@ export interface McpTool {
   readonly title?: string;
   readonly description: string;
   readonly inputSchema: Record<string, unknown>;
+  /** What the tool does, as MCP directories ask: read-only, destructive, idempotent, open-world (FR-10). */
+  readonly annotations?: ToolAnnotations;
 }
 
 export interface McpContent {
@@ -28,12 +30,16 @@ export interface McpToolResult {
  */
 export function createMcpAdapter<S extends AnySchema>(runtime: ToolRuntime<S>) {
   return {
+    /** The surface's fingerprint, for a host that cannot push `tools/list_changed`. */
+    surfaceHash: runtime.hash,
+
     listTools(): McpTool[] {
       return runtime.definitions.map((tool) => ({
         name: tool.name,
-        ...(tool.title === undefined ? {} : { title: tool.title }),
+        title: tool.title,
         description: tool.description,
         inputSchema: tool.inputSchema,
+        annotations: tool.annotations,
       }));
     },
 

@@ -146,6 +146,7 @@ export function deriveEditMutations<S extends AnySchema>(
     derived.push({
       name,
       derived: { kind, act: "edit" },
+      idempotent: true,
       title: `Change the ${noun}`,
       description: `Change what was set when this ${noun} was made: ${said.join(", ")}.`,
       subject: { kinds: [kind], arg: "id" },
@@ -256,6 +257,7 @@ export function deriveRemoveMutations<S extends AnySchema>(
       description: `Take this ${noun} out of the graph, with every tie it has. Undo puts it back.`,
       subject: { kinds: [kind], arg: "id" },
       destructive: true,
+      idempotent: true,
       input: z.object({ id: nodeRef([kind]) }),
       describe: (args, graph) => {
         const id = (args as { id: string }).id;
