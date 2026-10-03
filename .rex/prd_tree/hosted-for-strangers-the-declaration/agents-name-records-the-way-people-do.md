@@ -13,7 +13,9 @@ acceptanceCriteria:
   - "act book with id 'bloom' books vendor:bloom-co and the result names the id it resolved"
   - "Two matches refuse with both candidates listed"
   - "Resolution only ever sees records the principal may see"
+  - "nodeRefArgs does not depend on sharing the framework module instance that compiled the act (no WeakMap keyed on a zod instance)"
+  - "A label index makes resolution O(matches), not a scan of every visible record"
 description: "WHAT IS THERE NOW: every act argument that names a record is a nodeRef taking an id; an agent in a conversation must look the id up first (a search call), and a person says 'mark the florist booked', never 'vendor:bloom-co'. MISSING: one round trip for the commonest thing a person asks. POSITION: createToolRuntime (and graview mcp / apply) resolve a nodeRef argument given as a label or a unique case-insensitive prefix among the seen records of the accepted kinds; exactly one match resolves (and the result says which id it chose); several come back as a refusal listing the candidates with ids and labels; none says so. Ids keep working unchanged."
-lastModified: "2026-10-02T23:32:59.124Z"
+lastModified: "2026-10-03T00:27:23.792Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
