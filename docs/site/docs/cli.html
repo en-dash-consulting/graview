@@ -1081,6 +1081,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
     (a .json file in the Graview document format): compiled, never run as
     code, and checked with the JSON path of every finding. With
     --previous &lt;file&gt;, check holds every renamedFrom to the version before.
+    A template (a graview-template .json) is read as the document inside it.
 </code></pre></div>
       <p>Loads &lt;entry&gt; (a module whose default export, or <code>app</code> export, is a GraviewApp) and reports schema problems. Exits 1 on any error.</p>
     </section>
@@ -1105,6 +1106,13 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
       --merge            write only the files that do not exist yet, and
                          name every collision without touching it
       --force            write into a directory that is not empty
+      --template &lt;file|url&gt;
+                         start from a template made anywhere (Graview
+                         Cloud's graview-template shape): the project keeps
+                         its document as src/domain/app.json and the
+                         template as template.json, for `graview apply
+                         --template` to set a store up from. Named after
+                         the template unless --name says otherwise.
 </code></pre></div>
       <p>Starts a product on Graview in &lt;dir&gt;: the declaration split into domain and UI, an eighty-line shell, a headless test, a CI workflow.</p>
     </section>
