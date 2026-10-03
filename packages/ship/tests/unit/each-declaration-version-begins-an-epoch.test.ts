@@ -147,14 +147,16 @@ describe("the epochs a store begins with", () => {
     again.close();
   });
 
-  it("keeps them in the browser adapter, under their own key", async () => {
+  it("does not keep them in the browser adapter: a page has no room for a second copy of the graph", async () => {
     const entries = new Map<string, string>();
     const storage = { getItem: (k: string) => entries.get(k) ?? null, setItem: (k: string, v: string) => void entries.set(k, v), removeItem: (k: string) => void entries.delete(k) };
     const adapter = createBrowserAdapter({ storage });
     const opened = await openStore({ app: v2, adapter });
+    // The epoch is the store's own, in memory; nothing is written for it.
+    expect(opened.epoch).toBeDefined();
     opened.close();
-    expect(entries.has(adapter.keysFor("garden").epochs)).toBe(true);
-    expect(await adapter.loadEpochs!("garden")).toHaveLength(1);
+    expect([...entries.keys()].some((key) => key.endsWith(":epochs"))).toBe(false);
+    expect(adapter.loadEpochs).toBeUndefined();
   });
 
   it("has a store from before epochs adopt what it holds, from empty when its whole log folds to it", async () => {

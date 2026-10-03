@@ -158,7 +158,13 @@ export async function openStore<S extends AnySchema>(
     epoch = { seq, base: snapshot, version: target, change: migrated.map((op) => op.intent).join("; "), at };
   } else if (stored === null) {
     epoch = { seq, base: snapshot, version: target, at };
-  } else if (epochs.length === 0) {
+  } else if (epochs.length === 0 && adapter.saveEpochs) {
+    /*
+     * Adopted once, where it can be kept: folding the whole log and hashing
+     * it is the cost of proving a store from before epochs, and an adapter
+     * that cannot keep the result would pay it on every open — a page with
+     * two thousand talks did, and the gauntlet took five times as long.
+     */
     epoch = foldsFromEmpty(app.schema, persisted, stored)
       ? { seq: 0, base: { nodes: [], edges: [] }, version: storedVersion, at }
       : { seq, base: stored, version: storedVersion, at };
