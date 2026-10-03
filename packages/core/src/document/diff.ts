@@ -107,6 +107,10 @@ export function diffDocuments(before: GraviewDocument, after: GraviewDocument): 
     }
     for (const edge of keys(now.edges)) if (!was.edges?.[edge] && !(now.edges?.[edge] as { renamedFrom?: string } | undefined)?.renamedFrom) sentences.push(`${kind} gains a relation, "${edge}".`);
     if (!same(was.label, now.label) || !same(was.describe, now.describe)) sentences.push(`How ${withArticle(kind)} is labelled changes.`);
+    // A glance follows its fields: a rename or a removal is already said, so only a different choice is.
+    const movedTo = new Map(Object.entries(now.fields).flatMap(([field, f]) => ((f as { renamedFrom?: string }).renamedFrom ? [[(f as { renamedFrom: string }).renamedFrom, field] as const] : [])));
+    const wasGlance = (was.glance ?? []).map((field) => movedTo.get(field) ?? field).filter((field) => now.fields[field]);
+    if (!same(wasGlance, now.glance ?? [])) sentences.push(`What a glance at ${withArticle(kind)} says changes.`);
   }
   for (const [section, noun] of [["acts", "act"], ["rules", "rule"]] as const) {
     const a = before[section] ?? {};

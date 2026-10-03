@@ -226,6 +226,9 @@ function validate(document: GraviewDocument): Finding[] {
       if (spec.fields[name]) findings.push(error("edge-field-clash", `${at}.edges.${name}`, `"${name}" is both a field and a relation of ${kind}`, "rename one of them"));
     }
     if (spec.lifecycle && !spec.fields[spec.lifecycle.field]) findings.push(error("lifecycle-field", `${at}.lifecycle.field`, `${kind} has no field "${spec.lifecycle.field}"`));
+    for (const field of spec.glance ?? []) {
+      if (!spec.fields[field]) findings.push(error("glance-field", `${at}.glance`, `a glance at ${kind} is to say "${field}", and ${kind} has no field called that`, `use one of: ${Object.keys(spec.fields).join(", ")}`));
+    }
     for (const key of ["label", "describe"] as const) {
       const source = spec[key];
       if (!source) continue;
@@ -484,7 +487,7 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
       ...(describeParts ? { describe: (node: { id: string }) => renderTemplate(describeParts, { node: node as AnyGraphNode, kinds: shapes, today: today() }) } : {}),
       ...(spec.lifecycle ? { lifecycle: { field: spec.lifecycle.field, retired: spec.lifecycle.retired } } : {}),
       ...(spec.figure ? { figure: spec.figure } : {}),
-      ...(Object.keys(labels).length > 0 ? { display: { labels } } : {}),
+      ...(Object.keys(labels).length > 0 || spec.glance ? { display: { ...(Object.keys(labels).length > 0 ? { labels } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}) } } : {}),
       ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
     } as never);
   });
@@ -737,7 +740,7 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
     const check = checkApp(app);
     for (const f of check.findings) {
       const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: f.message, ...(f.fix ? { fix: f.fix } : {}) } as const;
-      findings.push(finding);
+      findings.push(f.code === "glance-unchosen" ? inDocumentWords(finding, f.where, document) : finding);
     }
     if (hasErrors(findings)) return { ok: false, findings };
   }
@@ -754,6 +757,19 @@ function frameworkPath(where: string, document: GraviewDocument): string {
   if (document.acts?.[word]) return `acts.${word}`;
   if (document.rules?.[word]) return `rules.${word}`;
   return where;
+}
+
+/**
+ * The check tells a TypeScript author to write `display: { glance }`; a
+ * document's author writes `kinds.<kind>.glance` (FR-39) — the same choice
+ * and the same first three, in the words of the format they hold.
+ */
+function inDocumentWords(finding: Finding, where: string, document: GraviewDocument): Finding {
+  const kind = /^defineNode\("([^"]+)"\)/.exec(where)?.[1];
+  const spec = kind ? document.kinds[kind] : undefined;
+  if (!kind || !spec) return finding;
+  const first = Object.keys(spec.fields).filter((field) => field !== "label").slice(0, 3);
+  return { ...finding, path: `kinds.${kind}.glance`, fix: `Say which: "glance": [${first.map((field) => `"${field}"`).join(", ")}] on kinds.${kind} — the facts a person compares one by, at a glance.` };
 }
 
 export { Refused as ActRefusal };

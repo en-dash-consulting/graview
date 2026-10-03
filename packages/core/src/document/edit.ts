@@ -708,6 +708,10 @@ class Editor {
     if (origin && this.kindOrigin.get(kind)) f.renamedFrom = origin;
     else delete f.renamedFrom;
     if (spec.lifecycle?.field === field) spec.lifecycle.field = to;
+    if (spec.glance?.includes(field)) {
+      spec.glance = spec.glance.map((name: string) => (name === field ? to : name));
+      touched.push(`${kind}'s glance`);
+    }
     for (const x of this.fills) {
       if (x.kind === kind && x.field === field) (x as { field: string }).field = to;
       if (x.kind === kind && x.from === field) (x as { from: string }).from = to;
@@ -776,6 +780,14 @@ class Editor {
     if (spec.lifecycle?.field === field) {
       delete spec.lifecycle;
       gone.push(`${kind}'s lifecycle`);
+    }
+    // A glance says the fields that are left; one that said only this one is unsaid again.
+    if (spec.glance?.includes(field)) {
+      spec.glance = spec.glance.filter((name: string) => name !== field);
+      if (spec.glance.length === 0) {
+        delete spec.glance;
+        gone.push(`${kind}'s glance`);
+      }
     }
     for (const x of [...this.fills]) if (x.kind === kind && (x.field === field || x.from === field)) this.fills.splice(this.fills.indexOf(x), 1);
     this.said.push(`${kind} loses its ${field} field, and every value in it${gone.length ? `; ${listOf(gone)} ${gone.length === 1 ? "goes" : "go"} with it` : ""}.`);
