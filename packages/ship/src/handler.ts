@@ -420,6 +420,12 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     // Answered from the declaration served once any change under way is made (FR-43).
     while (changing) await changing;
     const { store, wire, app, migrated } = serving;
+    /*
+     * WHICH DECLARATION, AND WHICH BUILD, ANSWERED (FR-43, FR-44): on every
+     * answer a poll reads, so a client without a socket learns the
+     * declaration changed — or that it runs another build — on its next one.
+     */
+    const answering = { version: app.version ?? 1, ...(options.build ? { build: options.build } : {}) };
 
     /*
      * WHO IS ASKING, OR NOTHING. Health is the only route a stranger gets:
@@ -441,7 +447,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     if (url.pathname === "/graview/state") {
       const seen = wire.seenFor(await seat());
       return send(200, {
-        version: app.version ?? 1,
+        ...answering,
         snapshot: seen.snapshot(),
         log: seen.log.all(),
         migrated,
@@ -452,7 +458,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
 
     if (url.pathname === "/graview/since") {
       const seq = Number(url.searchParams.get("seq") ?? "-1");
-      return send(200, { ops: wire.since(await seat(), seq) });
+      return send(200, { ops: wire.since(await seat(), seq), ...answering });
     }
 
     if (url.pathname === "/graview/who") return send(200, { who: wire.whoFor(await seat(), alive()) });
@@ -471,6 +477,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       return send(200, {
         who: wire.whoFor(asking, alive().filter((presence) => presence.participant !== mine.participant)),
         ...(typeof body.seq === "number" ? { ops: wire.since(asking, body.seq) } : {}),
+        ...answering,
       });
     }
 
@@ -513,7 +520,14 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
        * and nothing is written: what to do about it is the person's call.
        */
       const conflicts = body.undo ? [] : wire.conflictsOf(author, calls, body.base);
-      if (conflicts.length > 0) return send(409, { error: conflictSentence(conflicts), refused: true, conflict: true, conflicts });
+      if (conflicts.length > 0) return send(409, { error: conflictSentence(conflicts), refused: true, conflict: true, conflicts, ...answering });
+      /*
+       * SENT TWICE, ANSWERED ONCE — as on the socket. A client that offers
+       * a call again under the batch it first sent it in (across a change
+       * of declaration, or a reload) is answered with the ops it made.
+       */
+      const already = body.batch ? store.log.all().filter((op) => op.batch === body.batch) : [];
+      if (already.length > 0) return send(200, { ops: wire.shown(author, already), batch: body.batch, ...answering });
       try {
         /*
          * Through the STORE, under the requester's own seat. The policy
@@ -525,9 +539,9 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
         const result = body.undo ? store.undo(body.undo, applying) : store.applyAll(calls, applying);
         await flush();
         // An act may make what its own seat may not see: that op goes back withheld, as it would on a poll.
-        return send(200, { ops: wire.shown(author, result.ops), batch: result.batch });
+        return send(200, { ops: wire.shown(author, result.ops), batch: result.batch, ...answering });
       } catch (error) {
-        return send(409, { error: error instanceof Error ? error.message : String(error), refused: true });
+        return send(409, { error: error instanceof Error ? error.message : String(error), refused: true, ...answering });
       }
     }
 

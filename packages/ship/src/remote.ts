@@ -316,6 +316,8 @@ async function opening<S extends AnySchema>(
       enabledModules?: string[];
       /** Where the server's log begins, when it was compacted (FR-23). */
       horizon?: number;
+      /** The host's build (FR-44); absent from a server before it, or a host that says none. */
+      build?: string;
     };
   };
   const state = await fetchState();
@@ -431,11 +433,11 @@ async function opening<S extends AnySchema>(
       return [];
     }
     /*
-     * A live client names the batch its call lands in, so an op of the
-     * server's in one of its pending batches IS that batch's answer —
-     * pushed, or caught up on after a reconnect, before its ack arrived.
+     * A client names the batch its call lands in, so an op of the server's
+     * in one of its pending batches IS that batch's answer — pushed, polled,
+     * or caught up on after a reconnect, before its own answer arrived.
      */
-    const echoed = live ? pending.filter((batch) => ops.some((op) => op.batch === batch)) : [];
+    const echoed = pending.filter((batch) => ops.some((op) => op.batch === batch));
     const dropping = [...new Set([...drop, ...echoed])].filter((batch) => provisional.has(batch));
     let landed: readonly Operation[];
     try {
@@ -472,6 +474,11 @@ async function opening<S extends AnySchema>(
     resyncing = track(
       fetchState()
         .then((next) => {
+          // A state on another declaration is not this store's to adopt: the client opens on it instead (FR-43).
+          if (moved(next)) {
+            meanwhile = [];
+            return;
+          }
           const held = new Set(next.log.map((op) => op.batch));
           const answered = pending.filter((batch) => held.has(batch));
           for (const batch of answered) settle(batch);
@@ -505,9 +512,23 @@ async function opening<S extends AnySchema>(
     );
   };
 
+  /*
+   * EVERY ANSWER A POLL READS SAYS WHICH DECLARATION AND WHICH BUILD
+   * (FR-43, FR-44). One on another declaration is not landed here: the
+   * client opens on the new one, exactly as a socket's `declaration` makes
+   * it, and its calls on the way go with it.
+   */
+  const moved = (answer: { readonly version?: unknown; readonly build?: unknown }): boolean => {
+    if (typeof answer.build === "string") noticeBuild(answer.build);
+    if (typeof answer.version !== "number" || answer.version === state.version) return false;
+    void declarationChanged(answer.version);
+    return true;
+  };
+
   const since = async (seq: number): Promise<Operation[]> => {
     const response = await call(`${options.url}/graview/since?seq=${seq}`, { headers });
-    return ((await response.json()) as { ops: Operation[] }).ops ?? [];
+    const answer = (await response.json()) as { ops?: Operation[]; version?: number; build?: string };
+    return moved(answer) ? [] : (answer.ops ?? []);
   };
 
   /** Asks for what is new, and waits for a resync the answer started, so the store is the server's when it returns. */
@@ -523,9 +544,10 @@ async function opening<S extends AnySchema>(
         headers,
         body: JSON.stringify({ presence: mine, seq: seen }),
       });
-      const { who, ops } = (await response.json()) as { who: Presence[]; ops?: Operation[] };
-      heard(who ?? []);
-      return land(ops ?? []);
+      const answer = (await response.json()) as { who: Presence[]; ops?: Operation[]; version?: number; build?: string };
+      if (moved(answer)) return [];
+      heard(answer.who ?? []);
+      return land(answer.ops ?? []);
     }
     return land(await since(seen));
   };
@@ -558,7 +580,13 @@ async function opening<S extends AnySchema>(
       headers,
       body: JSON.stringify(body),
     });
-    const answer = (await response.json()) as { ops?: Operation[]; batch?: string; error?: string; conflict?: boolean; conflicts?: FieldConflict[] };
+    const answer = (await response.json()) as { ops?: Operation[]; batch?: string; error?: string; conflict?: boolean; conflicts?: FieldConflict[]; version?: number; build?: string };
+    /*
+     * Answered on another declaration, or after this store was let go: the
+     * call goes with the rest to the store on the new one, under its batch,
+     * where the server answers it once (FR-43).
+     */
+    if (retiring || moved(answer)) throw new Superseded("The app was changed.");
     if (!response.ok) {
       // The policy's own sentence, carried across the wire unchanged: a
       // refusal a person can read is the whole point of having one.
@@ -956,7 +984,8 @@ async function opening<S extends AnySchema>(
           {
             calls,
             ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}),
-            ...(live ? { batch: result.batch } : {}),
+            // Named, so a call offered again — across a reconnect, a change of declaration or a reload — is answered once.
+            batch: result.batch,
             ...(base.length > 0 ? { base } : {}),
           },
           result.batch,
@@ -997,7 +1026,8 @@ async function opening<S extends AnySchema>(
               {
                 undo: ids.map((id) => batches.get(id) ?? id),
                 ...(undoOptions?.intent ? { intent: undoOptions.intent } : {}),
-                ...(live ? { batch: result.batch } : {}),
+                // Named, so a call offered again — across a reconnect, a change of declaration or a reload — is answered once.
+            batch: result.batch,
               },
               result.batch,
             ),

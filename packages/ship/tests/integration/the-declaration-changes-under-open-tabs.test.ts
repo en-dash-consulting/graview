@@ -228,6 +228,92 @@ describe("the declaration changes under open tabs", () => {
     await handler.close();
   });
 
+  it("tells two polling tabs on their next answer, and hands each a store on the new declaration with its pending calls offered again, without a reload", async () => {
+    const metas = new Map<string, StoredMeta>();
+    const adapter = { ...createMemoryAdapter(), name: "memory", loadMeta: (scope: string) => metas.get(scope) ?? null, saveMeta: (scope: string, meta: StoredMeta) => void metas.set(scope, meta) };
+    const handler = await createStoreHandler({ app: v1, adapter, seed: seed as never, trustSeatHeaders: true, build: "b2" });
+    const reloads: string[] = [];
+    /**
+     * A polling tab whose posts the test can hold: before they reach the
+     * server (`before`), or after the server answered, on the way back (`after`).
+     */
+    const openTab = async (principal: Principal) => {
+      const hold = { mode: "none" as "none" | "before" | "after", held: [] as (() => void)[] };
+      const fetch = (async (url: string, init?: RequestInit) => {
+        const posting = url.endsWith("/graview/ops");
+        if (posting && hold.mode === "before") await new Promise<void>((go) => hold.held.push(go));
+        const response = await handler.handle(new Request(url, init));
+        if (posting && hold.mode === "after") await new Promise<void>((go) => hold.held.push(go));
+        return response;
+      }) as typeof globalThis.fetch;
+      const remote = await openRemote({
+        app: v1,
+        url: "http://store.example",
+        principal,
+        pollMs: 0,
+        fetch,
+        resolveApp: (version) => (version === 2 ? v2 : v1),
+        reloadPage: () => reloads.push(principal.id!),
+      });
+      const next: { remote?: RemoteStore<AnySchema>; version?: number } = {};
+      const refusals: string[] = [];
+      remote.onDeclaration((store, version) => {
+        next.remote = store;
+        next.version = version;
+        store.onRefusal((sentence) => refusals.push(sentence));
+      });
+      return { remote, hold, next, refusals };
+    };
+    const one = await openTab(sam);
+    const two = await openTab(ana);
+    expect(one.remote.transport()).toBe("poll");
+
+    // Sam's rename reaches the server and lands; its answer is still on the way back when the change comes.
+    one.hold.mode = "after";
+    one.remote.store.apply({ name: "rename", args: { id: "t1", label: "Book the big hall" } });
+    await until(() => handler.store.log.length === 1);
+    // Ana's two changes have not reached the server.
+    two.hold.mode = "before";
+    two.remote.store.apply({ name: "rename", args: { id: "t2", label: "Pay it today" } });
+    two.remote.store.apply({ name: "annotate", args: { id: "t1", note: "Ask about chairs" } });
+    await until(() => two.hold.held.length === 2);
+
+    await handler.declarationChanged({ app: v2 });
+    // The next answer each tab reads says the declaration moved.
+    one.hold.mode = "none";
+    two.hold.mode = "none";
+    await one.remote.pull();
+    await two.remote.pull();
+    await until(() => !!one.next.remote && !!two.next.remote);
+    // What was held goes now, from stores already let go: answered, never made twice, never said refused.
+    for (const go of [...one.hold.held.splice(0), ...two.hold.held.splice(0)]) go();
+    await Promise.all([one.next.remote!.settled(), two.next.remote!.settled(), one.remote.settled(), two.remote.settled()]);
+    await Promise.all([one.next.remote!.pull(), two.next.remote!.pull()]);
+
+    for (const tab of [one, two]) {
+      expect(tab.next.version).toBe(2);
+      expect(tab.next.remote!.version).toBe(2);
+      expect(tab.next.remote!.store.schema).toBe(v2.schema);
+      expect(tab.next.remote!.store.graph.getNode("t1")).toMatchObject({ priority: 0 });
+    }
+    expect(reloads).toEqual([]);
+    expect(handler.store.log.all().filter((op) => op.intent === "Rename to “Book the big hall”")).toHaveLength(1);
+    expect(handler.store.log.all().filter((op) => op.intent === "Rename to “Pay it today”")).toHaveLength(1);
+    expect(handler.store.graph.getNode("t2")).toMatchObject({ label: "Pay it today", priority: 0 });
+    expect(handler.store.graph.getNode("t1")).not.toHaveProperty("note");
+    expect(two.refusals).toHaveLength(1);
+    expect(two.refusals[0]).toMatch(/annotate/);
+    expect(one.refusals).toEqual([]);
+    const ids = (store: { log: { all(): readonly { id: string }[] } }) => store.log.all().map((op) => op.id);
+    expect(ids(one.next.remote!.store)).toEqual(ids(handler.store));
+    expect(ids(two.next.remote!.store)).toEqual(ids(handler.store));
+    // A poll's answer says the build too: a tab on another one is told once.
+    const said = (await (await handler.handle(new Request("http://store.example/graview/since?seq=-1", { headers: seatHeaders(sam) }))).json()) as { version: number; build: string };
+    expect(said).toMatchObject({ version: 2, build: "b2" });
+    for (const remote of [one.next.remote!, two.next.remote!, one.remote, two.remote]) remote.close();
+    await handler.close();
+  });
+
   it("swaps the declaration over a store the host holds, and asks for the new store", async () => {
     const store = new Store({ schema: v1.schema, mutations: v1.mutations ?? [], policy: v1.policy!, snapshot: seed as never });
     const handler = await createStoreHandler({ app: v1, store, seatOf: () => sam });
