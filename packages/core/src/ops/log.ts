@@ -128,6 +128,21 @@ export class OperationLog {
     return log;
   }
 
+  /**
+   * TAKES ANOTHER LOG WHOLESALE (FR-53): its ops, its epochs and its
+   * horizon, checked exactly as `from` checks them, in place of what this
+   * log held. For a client that resynced and takes the server's history as
+   * the server has it (`Store.adopt`); like `truncate`, it is not for
+   * history another store has seen. All or nothing: a log that is not
+   * intact is refused and this one is as it was.
+   */
+  replace(ops: readonly Operation[], epochs: readonly Epoch[] = [], options: { readonly horizon?: number } = {}): void {
+    const next = OperationLog.from(ops, epochs, options);
+    this.ops = next.ops;
+    this.marks = next.marks;
+    this.start = next.start;
+  }
+
   /** The epochs this log can be folded from, oldest first. */
   epochs(): readonly Epoch[] {
     return this.marks;

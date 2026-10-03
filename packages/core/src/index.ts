@@ -273,6 +273,8 @@ export type {
 // Store — graph + log + mutations + invariants, one object.
 export { MODULES_AUTHOR, ReceiveError, Store, violationKey } from "./store.js";
 export type {
+  Adopt,
+  AdoptResult,
   AppendOp,
   ApplyOptions,
   ApplyResult,
