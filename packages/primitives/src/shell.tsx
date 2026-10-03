@@ -141,12 +141,31 @@ export function Shell<S extends AnySchema>({
    */
   const [needs, setNeeds] = useState(0);
   const narrow = barWidth !== null && (barWidth < 920 || barWidth < needs);
-  useLayoutEffect(() => setNeeds(0), [view.focusId]);
+  /*
+   * Asked of an IntersectionObserver, never by reading layout: a rise to
+   * altitude renders the shell several times, and a forced layout in that
+   * frame cost it a frame past 50 ms (verify-scale). The right-hand group
+   * — the standing, the activity and the profile — not wholly on screen IS
+   * the overflow; the observer says so after the frame, at no cost to it.
+   */
+  const trailing = useRef<HTMLDivElement>(null);
+  const focus = view.focusId;
   useLayoutEffect(() => {
-    const row = bar.current;
-    if (!row || narrow || barWidth === null) return;
-    if (row.scrollWidth > row.clientWidth + 1) setNeeds(row.scrollWidth + 1);
-  });
+    if (needs > 0) setNeeds(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus]);
+  useLayoutEffect(() => {
+    const group = trailing.current;
+    if (!group || narrow || barWidth === null || typeof IntersectionObserver === "undefined") return;
+    const watcher = new IntersectionObserver(
+      ([entry]) => {
+        if (entry && entry.intersectionRatio < 0.99) setNeeds(barWidth + 1);
+      },
+      { threshold: [0.99, 1] },
+    );
+    watcher.observe(group);
+    return () => watcher.disconnect();
+  }, [barWidth, focus, narrow]);
   const [calls, setCalls] = useState<readonly ToolCall[]>([]);
   const onCall = useCallback((call: ToolCall) => {
     setCalls((current) => {
@@ -240,6 +259,7 @@ export function Shell<S extends AnySchema>({
           <FindBox<S> compact={narrow} />
         </div>
         <div
+          ref={trailing}
           style={{
             display: "flex",
             alignItems: "center",
