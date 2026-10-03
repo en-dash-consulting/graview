@@ -1,0 +1,320 @@
+{
+  "at": "2026-10-03T04:37:06.841Z",
+  "engine": "webkit",
+  "claims": {
+    "every guest frame is sandboxed to scripts alone": {
+      "ok": true,
+      "detail": [
+        "allow-scripts",
+        "allow-scripts",
+        "allow-scripts"
+      ]
+    },
+    "the card was shown the cars and Bethan, and nobody else": {
+      "ok": true,
+      "detail": [
+        {
+          "id": "car:golf",
+          "kind": "car",
+          "label": "Golf"
+        },
+        {
+          "id": "shopper:bethan",
+          "kind": "shopper",
+          "label": "Bethan Okonkwo",
+          "email": "bethan@mail.example"
+        }
+      ]
+    },
+    "nothing a guest received names what Bethan may not see, or a secret of the host's": {
+      "ok": true,
+      "detail": []
+    },
+    "the card's own act was applied": {
+      "ok": true,
+      "detail": {
+        "type": "answer",
+        "id": 1,
+        "ok": true,
+        "intent": "Ask Is the Golf still there?"
+      }
+    },
+    "an act on a record she may not see was refused in the policy's words": {
+      "ok": true,
+      "detail": {
+        "type": "answer",
+        "id": 2,
+        "ok": false,
+        "reason": "refused",
+        "message": "Not permitted: “Ask” names a record you may not see."
+      }
+    },
+    "an act her roles do not grant was refused": {
+      "ok": true,
+      "detail": {
+        "type": "answer",
+        "id": 3,
+        "ok": false,
+        "reason": "refused",
+        "message": "Not permitted: “Retire a car” on a car — a staff can."
+      }
+    },
+    "every applied act is Bethan's, through the view that asked": {
+      "ok": true,
+      "detail": [
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 0"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 1"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 2"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 3"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:card",
+          "intent": "Ask Is the Golf still there?"
+        }
+      ]
+    },
+    "the card's act is in the log as Bethan's, via view:card": {
+      "ok": true,
+      "detail": [
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 0"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 1"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 2"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 3"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:card",
+          "intent": "Ask Is the Golf still there?"
+        }
+      ]
+    },
+    "the guest's origin is opaque": {
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "value": "null"
+      }
+    },
+    "the guest cannot read a cookie": {
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "SecurityError"
+      }
+    },
+    "the guest cannot read the host's storage": {
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "SecurityError"
+      }
+    },
+    "the guest cannot reach into the parent's document": {
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "SecurityError"
+      }
+    },
+    "the guest cannot reach the parent's store": {
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "SecurityError"
+      }
+    },
+    "the guest cannot open a popup": {
+      "ok": true,
+      "detail": {
+        "tried": {
+          "ok": true,
+          "value": "null"
+        },
+        "popups": []
+      }
+    },
+    "the guest cannot navigate the top window": {
+      "ok": true,
+      "detail": {
+        "url": "http://127.0.0.1:5670/",
+        "tried": {
+          "ok": false,
+          "error": "SecurityError"
+        }
+      }
+    },
+    "a guest served with connect-src 'none' never reaches the host's API": {
+      "ok": true,
+      "detail": {
+        "tried": {
+          "ok": false,
+          "error": "TypeError"
+        },
+        "hits": [
+          {
+            "from": "bare",
+            "cookie": "session=sk-host-cookie",
+            "origin": "null"
+          }
+        ]
+      }
+    },
+    "a guest served with no CSP at all still reads nothing from the host's API": {
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "TypeError"
+      }
+    },
+    "a forged act, posted to the parent rather than the port, changed nothing": {
+      "ok": true,
+      "detail": [
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 0"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 1"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 2"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 3"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:card",
+          "intent": "Ask Is the Golf still there?"
+        }
+      ]
+    },
+    "an act with the wrong nonce changed nothing and was not answered": {
+      "ok": true
+    },
+    "a flood of acts was applied no further than the frame's allowance of five": {
+      "ok": true,
+      "detail": {
+        "applied": 4,
+        "stats": {
+          "card": {
+            "applied": 1,
+            "refused": 2,
+            "dropped": 1
+          },
+          "hostile": {
+            "applied": 4,
+            "refused": 113,
+            "dropped": 86
+          },
+          "bare": {
+            "applied": 0,
+            "refused": 0,
+            "dropped": 0
+          }
+        }
+      }
+    },
+    "the rest of the flood was answered rate-limited or dropped unread past the message allowance": {
+      "ok": true,
+      "detail": {
+        "limited": 112,
+        "stats": {
+          "card": {
+            "applied": 1,
+            "refused": 2,
+            "dropped": 1
+          },
+          "hostile": {
+            "applied": 4,
+            "refused": 113,
+            "dropped": 86
+          },
+          "bare": {
+            "applied": 0,
+            "refused": 0,
+            "dropped": 0
+          }
+        }
+      }
+    },
+    "navigation went only to what Bethan may see": {
+      "ok": true,
+      "detail": [
+        "car:golf"
+      ]
+    },
+    "the host page throws nothing": {
+      "ok": true,
+      "detail": [
+        "Unsafe JavaScript attempt to initiate navigation for frame with URL 'http: /127.0.0.1:5670/' from frame with URL 'http://localhost:5671/hostile.html'. The frame attempting navigation of the top-level ",
+        "Fetch API cannot load http: /127.0.0.1:5670/secret?from=bare due to access control checks."
+      ]
+    }
+  },
+  "pageErrors": [
+    "Unsafe JavaScript attempt to initiate navigation for frame with URL 'http: /127.0.0.1:5670/' from frame with URL 'http://localhost:5671/hostile.html'. The frame attempting navigation of the top-level ",
+    "Fetch API cannot load http: /127.0.0.1:5670/secret?from=bare due to access control checks."
+  ],
+  "findings": {
+    "cookieOnAFetchWithNoCsp": [
+      true
+    ]
+  },
+  "stats": {
+    "card": {
+      "applied": 1,
+      "refused": 2,
+      "dropped": 1
+    },
+    "hostile": {
+      "applied": 4,
+      "refused": 113,
+      "dropped": 86
+    },
+    "bare": {
+      "applied": 0,
+      "refused": 0,
+      "dropped": 0
+    }
+  },
+  "passed": true
+}

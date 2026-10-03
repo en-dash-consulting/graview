@@ -1,0 +1,67 @@
+{
+  "name": "@graview/guest",
+  "version": "0.1.1",
+  "type": "module",
+  "description": "Guest views: somebody else's React or plain script in a sandboxed frame, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.",
+  "keywords": [
+    "graview",
+    "context-graph",
+    "typed-graph",
+    "interface",
+    "iframe",
+    "sandbox",
+    "guest-view"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "default": "./dist/react.js"
+    },
+    "./host": {
+      "types": "./dist/host/index.d.ts",
+      "default": "./dist/host/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@graview/core": "workspace:*",
+    "@graview/react": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/en-dash-consulting/graview.git",
+    "directory": "packages/guest"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "Elastic-2.0",
+  "homepage": "https://graview.dev/docs/packages/guest.html",
+  "bugs": {
+    "url": "https://github.com/en-dash-consulting/graview/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

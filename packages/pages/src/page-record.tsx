@@ -1,4 +1,7 @@
 import { describeNode, humaniseField, isWithheld, type AnySchema } from "@graview/core";
+import { DefaultViewElsewhere } from "@graview/primitives";
+import { isDefaultView, type ViewProps } from "@graview/react";
+import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useRef, useState } from "react";
 import { rankedRepairs, recordFacts } from "./facts.js";
@@ -69,6 +72,15 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * done" is the same button twice on one page.
    */
   const offered = facts.actions.affordances.filter((affordance) => affordance.provider !== "invariant");
+  /*
+   * THE KIND'S OWN PAGE VIEW, AT THE HEAD (FR-35). A view the app gave the
+   * kind at one × full — a component, or a spec's `page` — is drawn under
+   * the heading, where the scene draws it in focus. This page IS the
+   * framework's own record, so a view that wraps the default
+   * (`DefaultView`) draws only what it adds to it here.
+   */
+  const ownPage = context.views?.lookup(facts.kind, { cardinality: "one", fidelity: "full" });
+  const PageView = ownPage !== undefined && !isDefaultView(ownPage) ? (ownPage as ComponentType<ViewProps<S>>) : undefined;
 
   return (
     <PageMain context={context}>
@@ -104,6 +116,14 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           </p>
         ) : null}
       </header>
+
+      {PageView && node ? (
+        <section data-testid="record-view" style={{ display: "grid", minWidth: 0 }}>
+          <DefaultViewElsewhere>
+            <PageView node={node as never} cardinality="one" fidelity="full" mode="fullscreen" selected={false} {...(facts.violations.length > 0 ? { flagged: [id] } : {})} />
+          </DefaultViewElsewhere>
+        </section>
+      ) : null}
 
       {facts.violations.length > 0 ? (
         <section
@@ -306,7 +326,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
             {history.map((op) => (
               <li key={op.id} style={quiet}>
-                <span style={{ color: "var(--graview-ink)" }}>{op.intent}</span> — {whoDid(op, principal, { graph: store.graph as never, schema: store.schema, ...(context.seats ? { seats: context.seats } : {}) })}
+                <span style={{ color: "var(--graview-ink)" }}>{op.intent}</span> — {whoDid(op, principal, { graph: store.graph as never, schema: store.schema, ...(context.seats ? { seats: context.seats } : {}), ...(context.people ? { people: context.people } : {}) })}
               </li>
             ))}
           </ul>

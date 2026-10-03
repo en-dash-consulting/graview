@@ -46,6 +46,51 @@ export interface PresenceChannel {
 export const PRESENCE_TTL_MS = 2500;
 
 /**
+ * HOW LONG A PRESENCE FROM SOMEWHERE ELSE STANDS (FR-13). A list that came
+ * over a wire was stamped by a server's clock and read by a browser's, and
+ * it arrives at the poll's pace rather than the heartbeat's, so it is given
+ * four times a tab's own grace. Past it a participant is gone whether or
+ * not the channel ever said so: a host's channel that forgets to drop
+ * somebody does not keep them on the map.
+ */
+export const REMOTE_PRESENCE_TTL_MS = PRESENCE_TTL_MS * 4;
+
+/** The parts of a participant key: who, and which tab of theirs. */
+export interface Participant {
+  readonly kind: "human" | "agent" | "rule" | "system";
+  readonly id?: string;
+  readonly session?: string;
+}
+
+const PARTICIPANT_KINDS: ReadonlySet<string> = new Set(["human", "agent", "rule", "system"]);
+
+/**
+ * THE ONE DIALECT. A participant is `kind:id:session`: the op log's own
+ * reading of an author (`Author.kind`, `.id`, `.session`), a figure's key on
+ * the map, and what the wire's presence routes carry, so a figure and its
+ * edits are the same person by construction. A host that says who is here
+ * from its own server writes this, and only this.
+ */
+export function participantKey(participant: Participant): string {
+  return `${participant.kind}:${participant.id ?? ""}:${participant.session ?? ""}`;
+}
+
+/**
+ * A participant key read back. The kind is everything before the first
+ * colon and the session everything after the last, so an id that holds a
+ * colon (`mcp:claude`) survives. Null for anything that is not a key.
+ */
+export function parseParticipant(key: string): (Participant & { readonly session: string }) | null {
+  const first = key.indexOf(":");
+  const last = key.lastIndexOf(":");
+  if (first < 0 || last === first) return null;
+  const kind = key.slice(0, first);
+  if (!PARTICIPANT_KINDS.has(kind)) return null;
+  const id = key.slice(first + 1, last);
+  return { kind: kind as Participant["kind"], ...(id ? { id } : {}), session: key.slice(last + 1) };
+}
+
+/**
  * The others as they are now: what arrived, minus what has gone quiet, minus
  * yourself. Pure, so a test can ask what a viewer sees without a channel.
  */

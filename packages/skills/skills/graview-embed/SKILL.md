@@ -55,6 +55,29 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
 7. **Presence is opt-in.** An embed broadcasts nothing and draws nobody
    unless it is handed a `presence` channel: putting a graph on a page does
    not tell its readers about each other.
+8. **Register only what differs.** `views(schema, registry)` is handed the
+   framework's own view for every cell, with the declaration's `viewSpecs`
+   already drawn; register onto it the cells you want different, and the
+   rest stay. The same registry draws every face — the gallery's card, the
+   list's row (one × glyph), the record's page (one × full). A view that adds
+   to the default draws it inside itself with `<DefaultView {...props} />`
+   (`@graview/primitives`); on the record page, which is the default, that
+   draws nothing. `@graview/embed/pages` takes `views` too.
+9. **Say its name at the right level.** The workbench names itself in a
+   heading for readers moving by headings: `heading: 1` when the page is
+   the app, the default `2` inside an article, `false` when your heading
+   already says it.
+10. **In a chat's widget, let the frame be sized from the embed.** `height:
+    "auto"` with `onIntrinsicHeight` tells the host the height to give it;
+    `hostContext: { theme }` takes the chat's theme; `pagesBelow` swaps the
+    scene for the pages on a phone; `remote` takes an `openRemote` store. A
+    hosted reader sits only as who signed in: name members through `people`
+    (and `setPeople`), never as `seats`, which offer "sit as somebody else".
+    Where readers cannot save a declaration, `studio: false` (or `studio:
+    { onApply }` to keep what it applies); where only the pages are shown,
+    import `mount` from `@graview/embed/pages` and bundle nothing else.
+    `onError` and `onReady` tell the host failures (class and module only)
+    and time to first render.
 
 ## Worked examples
 

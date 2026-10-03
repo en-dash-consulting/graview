@@ -68,8 +68,10 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
   const field = (node: AnyGraphNode, name: string, at: number): Value => {
     spend(1, at);
     const shape = ctx.kinds.get(node.kind);
-    if (shape?.fields.has(name) || name in node) {
-      const v = node[name];
+    // A record's OWN values only: `constructor` or `__proto__` is not a field of anything, and reading one would hand a template a function.
+    const own = Object.prototype.hasOwnProperty.call(node, name);
+    if (shape?.fields.has(name) || own) {
+      const v = own ? node[name] : undefined;
       return v === undefined ? null : (v as Value);
     }
     const card = shape?.edges.get(name);
@@ -124,7 +126,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
       case "list":
         return e.items.map((item) => run(item, subject));
       case "ident": {
-        const bound = ctx.bindings?.[e.name];
+        const bound = ctx.bindings && Object.prototype.hasOwnProperty.call(ctx.bindings, e.name) ? ctx.bindings[e.name] : undefined;
         if (bound !== undefined) return bound;
         if (subject) return field(subject, e.name, e.at);
         throw new ExprEvalError(`"${e.name}" means nothing in a rule over the whole graph`, e.at);

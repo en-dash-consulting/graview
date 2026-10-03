@@ -1,7 +1,8 @@
 import { analyzeExpr } from "./expr/analyze.js";
 import { ExprSyntaxError, parseExpr, type Expr } from "./expr/parse.js";
 import { error, type Finding } from "./findings.js";
-import type { GraviewDocument, KindSpec } from "./schema.js";
+import type { AnySchema } from "../schema/schema.js";
+import type { GraviewDocument } from "./schema.js";
 import { parseTemplate, TemplateError, type TemplatePart } from "./template.js";
 
 /*
@@ -48,6 +49,9 @@ export type ViewBlock =
 
 export type ViewSpecs = { readonly [slot in ViewSlot]?: readonly ViewBlock[] };
 
+/** Every kind's view specs, by kind: a document's `views`, and a declaration's `viewSpecs`. */
+export type ViewSpecsByKind = Readonly<Record<string, ViewSpecs>>;
+
 /** What each block may say besides the key that names it. */
 const BLOCK_KEYS: Readonly<Record<string, readonly string[]>> = {
   title: [],
@@ -69,9 +73,20 @@ export function viewsOf(document: GraviewDocument): Readonly<Record<string, View
   return (document.views ?? {}) as Readonly<Record<string, ViewSpecs>>;
 }
 
+/**
+ * What a view may name on one kind: its fields, its relations, whether it
+ * has a figure. Read from a document's kind or from a declared schema, so
+ * the two are held to one vocabulary.
+ */
+interface KindNames {
+  readonly field: (name: string) => boolean;
+  readonly relation: (name: string) => boolean;
+  readonly figure: boolean;
+}
+
 interface Scope {
   readonly kind: string;
-  readonly spec: KindSpec;
+  readonly spec: KindNames;
   readonly kinds: ReadonlySet<string>;
   readonly edges: ReadonlySet<string>;
   readonly findings: Finding[];
@@ -84,7 +99,7 @@ function names(expr: Expr, path: string, scope: Scope) {
   const shape = analyzeExpr(expr);
   for (const fn of shape.unknownFunctions) scope.findings.push(error("unknown-function", path, `"${fn}" is not a function the rule language knows`, "see docs/declaration-document.md#expression-language"));
   for (const n of shape.names) {
-    if (n === "id" || scope.spec.fields[n] || scope.spec.edges?.[n]) continue;
+    if (n === "id" || scope.spec.field(n) || scope.spec.relation(n)) continue;
     scope.findings.push(error("view-name", path, `${scope.kind} has no field or relation called "${n}"`));
   }
   for (const e of shape.edges) if (!scope.edges.has(e)) scope.findings.push(error("view-edge", path, `"${e}" is not a relation any kind declares`));
@@ -173,8 +188,8 @@ function oneBlock(raw: unknown, path: string, depth: number, scope: Scope): void
       if ("tone" in raw) tone(raw["tone"], `${path}.tone`, scope);
       return;
     case "field": {
-      if (typeof value !== "string" || !scope.spec.fields[value]) {
-        const edge = typeof value === "string" && scope.spec.edges?.[value];
+      if (typeof value !== "string" || !scope.spec.field(value)) {
+        const edge = typeof value === "string" && scope.spec.relation(value);
         scope.findings.push(error("view-field", `${path}.field`, `${scope.kind} has no field ${typeof value === "string" ? `"${value}"` : "by that name"}`, edge ? `"${value}" is a relation; show it with {"text": "{${value}.name}"}` : undefined));
       }
       if ("as" in raw && !(VIEW_FIELD_FORMATS as readonly unknown[]).includes(raw["as"])) scope.findings.push(error("view-format", `${path}.as`, `"${String(raw["as"])}" is not a way to show a field`, `use one of ${VIEW_FIELD_FORMATS.join(", ")}`));
@@ -212,24 +227,94 @@ function label(value: unknown, path: string, scope: Scope): void {
   if (typeof value !== "string" || value.length === 0 || value.length > 60) scope.findings.push(error("view-label", path, "a label is a few words, at most 60 characters"));
 }
 
-/** Findings about a document's `views`, each at its JSON path. */
-export function validateViews(document: GraviewDocument): Finding[] {
+/** Every kind's specs, checked against what each kind holds, at `<at>.<kind>.<slot>`. */
+function validateAll(
+  specsByKind: unknown,
+  at: string,
+  namesOf: (kind: string) => KindNames | undefined,
+  kinds: ReadonlySet<string>,
+  edges: ReadonlySet<string>,
+  declares: string,
+): Finding[] {
   const findings: Finding[] = [];
-  const kinds = new Set(Object.keys(document.kinds));
-  const edges = new Set(Object.values(document.kinds).flatMap((k) => Object.keys(k.edges ?? {})));
-  for (const [kind, specs] of Object.entries(viewsOf(document))) {
-    const spec = document.kinds[kind];
+  if (!isObject(specsByKind)) {
+    findings.push(error("view-shape", at, 'views are an object of kinds, each with a "card", a "row" or a "page"'));
+    return findings;
+  }
+  for (const [kind, specs] of Object.entries(specsByKind)) {
+    const spec = namesOf(kind);
     if (!spec) {
-      findings.push(error("view-kind", `views.${kind}`, `"${kind}" is not a kind this document declares`));
+      findings.push(error("view-kind", `${at}.${kind}`, `"${kind}" is not a kind this ${declares} declares`));
       continue;
+    }
+    if (!isObject(specs)) {
+      findings.push(error("view-shape", `${at}.${kind}`, 'a kind\'s views are {"card": [blocks], "row": [blocks], "page": [blocks]}'));
+      continue;
+    }
+    for (const key of Object.keys(specs)) {
+      if (!(VIEW_SLOTS as readonly string[]).includes(key)) findings.push(error("view-slot", `${at}.${kind}.${key}`, `"${key}" is not a place a view is drawn`, `use ${VIEW_SLOTS.map((slot) => `"${slot}"`).join(", ")}`));
     }
     for (const slot of VIEW_SLOTS) {
       const list = specs[slot];
       if (list === undefined) continue;
       const scope: Scope = { kind, spec, kinds, edges, findings, count: 0 };
-      blocks(list, `views.${kind}.${slot}`, 1, scope);
-      if (scope.count > MAX_VIEW_BLOCKS) findings.push(error("view-size", `views.${kind}.${slot}`, `this ${slot} has ${scope.count} blocks; a view has at most ${MAX_VIEW_BLOCKS}`, "show less, or move detail to the page"));
+      blocks(list, `${at}.${kind}.${slot}`, 1, scope);
+      if (scope.count > MAX_VIEW_BLOCKS) findings.push(error("view-size", `${at}.${kind}.${slot}`, `this ${slot} has ${scope.count} blocks; a view has at most ${MAX_VIEW_BLOCKS}`, "show less, or move detail to the page"));
     }
   }
   return findings;
+}
+
+/** Findings about a document's `views`, each at its JSON path. */
+export function validateViews(document: GraviewDocument): Finding[] {
+  const kinds = new Set(Object.keys(document.kinds));
+  const edges = new Set(Object.values(document.kinds).flatMap((k) => Object.keys(k.edges ?? {})));
+  return validateAll(
+    viewsOf(document),
+    "views",
+    (kind) => {
+      const spec = document.kinds[kind];
+      return spec ? { field: (n) => spec.fields[n] !== undefined, relation: (n) => spec.edges?.[n] !== undefined, figure: spec.figure !== undefined } : undefined;
+    },
+    kinds,
+    edges,
+    "document",
+  );
+}
+
+type DeclaredKind = { readonly fields?: { readonly shape?: Readonly<Record<string, unknown>> }; readonly edges?: Readonly<Record<string, unknown>>; readonly figure?: string };
+
+/**
+ * Findings about a declaration's view specs (FR-03), each at
+ * `viewSpecs.<kind>.<slot>.<block>`: the vocabulary a document's `views`
+ * is held to, read against the declared schema — its fields, its relations,
+ * and its figures (the kind's own, or the brand's).
+ */
+export function validateViewSpecs(
+  schema: AnySchema,
+  specs: unknown,
+  options: { readonly figures?: Readonly<Record<string, string>>; readonly at?: string } = {},
+): Finding[] {
+  const declared = schema.kinds as readonly string[];
+  const kinds = new Set(declared);
+  const definitionOf = (kind: string) => schema.tryDefinition(kind) as DeclaredKind | undefined;
+  const edges = new Set(declared.flatMap((kind) => Object.keys(definitionOf(kind)?.edges ?? {})));
+  return validateAll(
+    specs,
+    options.at ?? "viewSpecs",
+    (kind) => {
+      if (!kinds.has(kind)) return undefined;
+      const definition = definitionOf(kind);
+      const fields = definition?.fields?.shape ?? {};
+      const relations = definition?.edges ?? {};
+      return {
+        field: (n) => n !== "id" && n !== "kind" && Object.prototype.hasOwnProperty.call(fields, n),
+        relation: (n) => Object.prototype.hasOwnProperty.call(relations, n),
+        figure: definition?.figure !== undefined || options.figures?.[kind] !== undefined,
+      };
+    },
+    kinds,
+    edges,
+    "app",
+  );
 }

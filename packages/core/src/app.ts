@@ -8,6 +8,7 @@ import type { GraphSnapshot } from "./graph/types.js";
 import type { Primitive } from "./graph/primitives.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { ViewRegistry } from "./views/types.js";
+import type { ViewSpecsByKind } from "./document/views.js";
 
 /**
  * Everything one application declares, in one object. `graview check` and
@@ -93,6 +94,22 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
   readonly mutations?: readonly AnyMutationDefinition<S>[];
   readonly invariants?: readonly InvariantDefinition<S>[];
   readonly views?: ViewRegistry<S, unknown>;
+  /**
+   * VIEWS AS DATA (FR-03): a card, a row and a page per kind, written as
+   * blocks from a closed set rather than as components —
+   *
+   *   viewSpecs: { vendor: { card: [{ title: "{name}" }, { badge: "{status}", tone: "good" }] } }
+   *
+   * Domain tier on purpose: blocks are data, bound to fields by templates
+   * and conditions in the rule language, so `graview check` holds every
+   * name and tone to the schema without importing React, and a host can
+   * accept them from a stranger because nothing in them runs. The
+   * framework's own views draw them (`registerDefaultViews(schema,
+   * registry, { specs })` in `@graview/primitives`, and the embed by
+   * itself): `card` at one × summary, `row` at one × glyph, `page` above
+   * the default at one × full. A document's `views` compile to this.
+   */
+  readonly viewSpecs?: ViewSpecsByKind;
   /**
    * Roles a lens requires an app to bind, and what it binds them to.
    *

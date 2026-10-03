@@ -29,6 +29,15 @@ export interface ThemeTokens {
   readonly accentDim: string;
   readonly accentInk: string;
   readonly warn: string;
+  /**
+   * A STATUS THAT IS GOOD, AND ONE THAT IS BAD: booked, paid, passing;
+   * overdue, refused, failing. The accent means "selected" and the warning
+   * means "a rule is broken", and a badge that meant neither invented a
+   * colour of its own and checked it by hand, if at all. Text colours,
+   * held to 4.5:1 on a panel and on the ground like every other ink.
+   */
+  readonly good: string;
+  readonly bad: string;
   readonly glow: string;
   /** The command bar's ground. Chrome, not scene. */
   readonly bar: string;
@@ -149,6 +158,10 @@ export const TEXT_PAIRS: readonly TextPair[] = [
   { ink: "warn", on: "panel", over: "ground", requires: 4.5, where: "a problem count" },
   { ink: "warn", on: "panelWarning", over: "ground", requires: 4.5, where: "a warning inside a flagged panel" },
   { ink: "warn", on: "float", over: "ground", requires: 4.5, where: "a failed agent call" },
+  { ink: "good", on: "panel", over: "ground", requires: 4.5, where: "a good status on a card" },
+  { ink: "good", on: "ground", requires: 4.5, where: "a good status on a page" },
+  { ink: "bad", on: "panel", over: "ground", requires: 4.5, where: "a bad status on a card" },
+  { ink: "bad", on: "ground", requires: 4.5, where: "a bad status on a page" },
   // An edge is not text, but a border that carries meaning owes 3:1 all the
   // same — a panel outline nobody can see is a panel with no edge.
   { ink: "edgeBright", on: "panel", over: "ground", requires: 3, where: "a lit edge" },

@@ -3,6 +3,7 @@ import {
   foldPresence,
   isSystem,
   isUnset,
+  participantKey,
   WIRE_PROTOCOL,
   PRESENCE_TTL_MS,
   redact,
@@ -231,7 +232,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
     // The session is what follows the seat's own `kind:id:` — an id may hold a colon (`shopper:bethan`).
     const own = `${seat.kind}:${seat.id ?? ""}:`;
     const session = told.participant.startsWith(own) ? told.participant.slice(own.length) : (told.participant.split(":").at(-1) ?? "");
-    const participant = seat.id ? `${seat.kind}:${seat.id}:${session}` : told.participant;
+    const participant = seat.id ? participantKey({ kind: seat.kind, id: seat.id, session }) : told.participant;
     const presence: Presence = { ...told, participant, at: new Date().toISOString() };
     here = foldPresence(here, [presence], Date.now(), ttl);
     return presence;

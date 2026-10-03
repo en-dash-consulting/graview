@@ -1,4 +1,4 @@
-import { violationKey, type AnySchema, type Author, type Operation, type Store } from "@graview/core";
+import { participantKey, violationKey, type AnySchema, type Author, type Operation, type Store } from "@graview/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useGraview } from "./context.js";
 
@@ -37,8 +37,7 @@ export interface ActivityMark {
 
 /** One author's identity across a window. Session is what separates two agents. */
 function participantOf(op: Operation): string {
-  const { kind, id, session } = op.author;
-  return `${kind}:${id ?? ""}:${session ?? ""}`;
+  return participantKey(op.author);
 }
 
 function mannerOf(participants: readonly string[], last: Operation["author"]["kind"]): Manner {

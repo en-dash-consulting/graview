@@ -1109,9 +1109,20 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <li><strong>A figure</strong>, which is line art of the THING at the city's own three-quarter angle — a person, a plot of ground, a gutter — drawn wherever the kind is drawn. Nine ship; any domain that is not an abstract tracker runs out of them at once, so draw the rest: `graview figure ./dist/domain/app.js --kind gutter --from "a gutter along a roof edge"` prints the brief (the rules, the angle, a shipped figure as the style), and <code>--judge &lt;file&gt;</code> reads the answer back, holds it to the rules <code>graview check</code> holds a figure to, and prints the line to paste. Then look at it at twenty pixels, which is the size a chip gives it.</li>
 <li><strong>A declared hue</strong> in the brand (<code>accents: { fixture: 210 }</code>) if this kind should wear a chosen colour rather than a stable hash — every chip dot, district roof and the focus tag follow.</li>
 </ul>
+<h3>How it looks, as data</h3>
+<p>When the default card is wrong but a component would be too much, say the card, the row and the page in <code>defineApp({ viewSpecs })</code> — blocks from a closed set, bound by <code>{field}</code> templates and rule-language conditions:</p>
+<div class="code" data-scroller><pre><code>viewSpecs: { fixture: {
+  card: [{ title: "{name}" }, { badge: "{status}", tone: { expr: "if(status == 'fitted', 'good', 'neutral')" } }, { field: "cost", as: "money" }],
+  row: [{ title: "{name}" }, { badge: "{status}" }],
+  page: [{ progress: { value: "done", max: "total" }, label: "Fitted" }],
+} }</code></pre></div>
+<p><code>card</code> is drawn beside the focus and on the pages face's gallery, <code>row</code> as the one line a member is among many (a focused group, the list page), and <code>page</code> above the default record. Tones are <code>good</code>, <code>warn</code>, <code>bad</code>, <code>neutral</code> and <code>accent</code>, the theme's own. Nothing in a spec runs: no CSS, no markup, and the only link drawn is an http(s) <code>url</code> field's own value. The scaffold's <code>views()</code> draws them (<code>registerViewSpecs</code>); so does the embed, by itself.</p>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code>pnpm build &amp;&amp; npx graview check ./dist/domain/app.js</code></pre></div>
 <p>Report <strong>the actual output</strong>, including warnings. What it catches here:</p>
+<ul>
+<li><code>view-field</code>, <code>view-name</code>, <code>view-tone</code> — a view spec naming a field the kind lacks, or a tone outside the kit</li>
+</ul>
 <ul>
 <li><code>edge-target-undeclared</code> — an edge to a kind nobody declared</li>
 <li><code>edge-without-inverse</code> — a relation with words for one of its two readings</li>

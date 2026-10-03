@@ -21,6 +21,11 @@ export const GRAVIEW_PACKAGES = [
    * graph, and a project without the package could not follow it.
    */
   "studio",
+  /*
+   * `guest` too: a view somebody else wrote is registered with `guestView`
+   * from `@graview/guest/host`, and the frame it draws loads the guest half.
+   */
+  "guest",
 ] as const;
 
 /**
@@ -464,7 +469,11 @@ export default defineConfig({
       "@graview/ship/dev": framework("ship/src/dev.ts"),
       "@graview/ship/cli": framework("ship/src/cli.ts"),
       "@graview/ship": framework("ship/src/index.ts"),
+      "@graview/embed/pages": framework("embed/src/pages.tsx"),
       "@graview/embed": framework("embed/src/index.ts"),
+      "@graview/guest/host": framework("guest/src/host/index.ts"),
+      "@graview/guest/react": framework("guest/src/react.ts"),
+      "@graview/guest": framework("guest/src/index.ts"),
       "@graview/studio": framework("studio/src/index.ts"),
     },
   },
