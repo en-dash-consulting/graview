@@ -355,6 +355,25 @@ export function ruleLines(read: Read, rule: Node, kept: boolean): string[] {
   const over = read.out(rule.id, "over")[0];
   const repairs = [...read.out(rule.id, "repairs").map(label), ...(list(rule, "derivedRepairs") ?? [])];
   const whole = bool(rule, "wholeGraph") || !over;
+  /*
+   * A JUDGEMENT IN WORDS IS WRITTEN AS WORDS (FR-07): the checkout runs the
+   * same rule the studio judged, through the same `expressionRule`, instead
+   * of a stub that holds nothing or throws.
+   */
+  const require = str(rule, "require");
+  if (require) {
+    const spec = [
+      `  over: ${q(whole ? "graph" : label(over!))},`,
+      `  require: ${q(require)},`,
+      ...(str(rule, "when") ? [`  when: ${q(str(rule, "when")!)},`] : []),
+      ...(str(rule, "says") ? [`  says: ${q(str(rule, "says")!)},`] : []),
+      `  title: ${q(str(rule, "title") ?? ruleName)},`,
+      ...(str(rule, "description") ? [`  description: ${q(str(rule, "description")!)},`] : []),
+      ...(repairs.length > 0 ? [`  repairs: [${repairs.map(q).join(", ")}],`] : []),
+      ...(bool(rule, "judgesPast") ? [`  judgesPast: true,`] : []),
+    ];
+    return [`export const ${camel(ruleName)} = expressionRule(${q(ruleName)}, {`, ...spec, `});`];
+  }
   const lines = [`export const ${camel(ruleName)} = ${whole ? "defineGraphInvariant" : "defineInvariant"}(${q(ruleName)}, {`];
   // The checkout's words for it, not its identifier.
   lines.push(`  label: ${q(str(rule, "title") ?? ruleName)},`);
@@ -448,8 +467,10 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
   ].join("\n");
 
   const rules = read.ofKind("rule");
+  const judged = rules.some((rule) => str(rule, "require"));
   const invariantsTs = [
     `import { bindSchema, type Violation } from "@graview/core";`,
+    ...(judged ? [`import { expressionRule } from "@graview/core/document";`] : []),
     `import { ${schemaVar} } from "./schema.js";`,
     ``,
     `const { defineInvariant, defineGraphInvariant } = bindSchema(${schemaVar});`,
@@ -461,7 +482,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
     ` * already judges keeps the checkout's evaluate.`,
     ` */`,
     ...rules.flatMap((rule) => {
-      const kept = baseRules.has(label(rule));
+      const kept = baseRules.has(label(rule)) && !str(rule, "require");
       if (kept) keptRules.push(label(rule));
       return ["", ...ruleLines(read, rule, kept)];
     }),

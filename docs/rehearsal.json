@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-03T02:11:05.893Z",
+  "at": "2026-10-03T03:04:05.708Z",
   "checks": {
     "theSeatsChangeIsKept": {
-      "kept": 2,
-      "said": "people should be assigned to plants not plotsMoving caretakers from plots to plantings.✓ Remove the edge tended-by✓ Add the edge tended-by from planting to gardener",
+      "kept": 3,
+      "said": "people should be assigned to plants not plotsMoving caretakers from plots to plantings.✓ Remove the edge tended-by✓ Add the edge tended-by from planting to gardener✓ Add the rule Every planting has a plot over planting",
       "ok": true
     },
     "theCodeTheChangeLeavesWrongIsNamed": {
@@ -18,7 +18,7 @@
       "ok": true
     },
     "itIsWrittenIntoTheCheckout": {
-      "outcome": "The checker is happy, and the change is written into src/domain/app.ts, src/domain/invariants.ts, src/domain/mutations.ts, src/domain/schema.ts. The app reloads onto it, and a stored graph is carried forward: plot tended-by edges move to the planting records tied to each plot.",
+      "outcome": "written into the checkout; the page reloaded onto it",
       "ok": true
     },
     "theRelationMovedWithItsWords": {
@@ -28,6 +28,9 @@
       "ok": true
     },
     "theRuleReadsPlantings": {
+      "ok": true
+    },
+    "aRuleJudgedInWordsIsWrittenAsWords": {
       "ok": true
     },
     "theAppCarriesItsGraphsForward": {
@@ -49,8 +52,12 @@
         "tended-by:chard->sam"
       ],
       "log": [
-        "{\"id\":\"migration:1-2:2026-10-03T02:11:10.774Z\",\"seq\":0,\"batch\":\"migration:1->2\",\"author\":{\"kind\":\"system\",\"id\":\"ship:migration\"},\"intent\":\"migration 1→2: plot tended-by edges move to the planting records tied to each plot\",\"mutation\":null,\"primitives\":[{\"op\":\"remove-edge\",\"edge\":{\"kind\":\"tended-by\","
+        "{\"id\":\"migration:1-2:2026-10-03T03:04:09.900Z\",\"seq\":0,\"batch\":\"migration:1->2\",\"author\":{\"kind\":\"system\",\"id\":\"ship:migration\"},\"intent\":\"migration 1→2: plot tended-by edges move to the planting records tied to each plot\",\"mutation\":null,\"primitives\":[{\"op\":\"remove-edge\",\"edge\":{\"kind\":\"tended-by\","
       ],
+      "ok": true
+    },
+    "theRuleJudgesTheStoredGarden": {
+      "said": "1 problemWhat is brokenEach rule says what it found, and names what would fix it.Mint grows nowhereMint",
       "ok": true
     },
     "itCompiles": {
@@ -67,7 +74,7 @@
   "debug": {
     "afterSeeding": 5,
     "beforeWriting": 5,
-    "rightAfterWriting": 5,
+    "rightAfterWriting": 6,
     "afterTheReload": 6
   },
   "prompts": 3

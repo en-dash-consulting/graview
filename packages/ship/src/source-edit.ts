@@ -70,7 +70,8 @@ function visit(ts: Ts, node: TS.Node, found: (node: TS.Node) => boolean): TS.Nod
 const DECLARERS = {
   kind: ["defineNode"],
   act: ["defineMutation"],
-  rule: ["defineInvariant", "defineGraphInvariant"],
+  // A rule judged in words is a rule too (FR-07): `expressionRule("name", { … }, shapes)`.
+  rule: ["defineInvariant", "defineGraphInvariant", "expressionRule"],
 } as const;
 type Sort = keyof typeof DECLARERS;
 
@@ -459,6 +460,10 @@ function addDeclaration(ts: Ts, files: Map<string, string>, sort: "act" | "rule"
       ? `${text.slice(0, tail.end)},\n${indentAt(text, tail.getStart(source))}${binding}${text.slice(tail.end)}`
       : `${text.slice(0, tail.end)}, ${binding}${text.slice(tail.end)}`;
     next = `${next.slice(0, last.end)}\n\n${statement.trim()}${next.slice(last.end)}`;
+    // A rule judged in words brings what judges it.
+    if (/\bexpressionRule\(/.test(statement)) {
+      next = withImport(ts, path, next, "expressionRule", "@graview/core/document");
+    }
     files.set(path, next);
     return undefined;
   }

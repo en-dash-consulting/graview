@@ -110,6 +110,12 @@ const model = createServer((request, response) => {
             args: { kind: "planting", label: "tended-by", to: "gardener", description: "who looks after it", inverse: "what they look after" },
             why: "a planting is",
           },
+          /* A rule judged in words (FR-07): the studio declares it and it holds the garden, with no code to write. */
+          {
+            mutation: "add-rule",
+            args: { kind: "planting", label: "Every planting has a plot", description: "A planting grows somewhere.", require: "exists(out('grows-in'))", says: "{label} grows nowhere" },
+            why: "a planting that grows nowhere is a mistake",
+          },
         ],
       });
     }
@@ -130,6 +136,8 @@ const stored = {
     { id: "kale", kind: "planting", label: "Kale", sown: "2026-04-02", status: "growing" },
     { id: "beans", kind: "planting", label: "Beans", sown: "2026-04-09", status: "growing" },
     { id: "chard", kind: "planting", label: "Chard", sown: "2026-05-01", status: "growing" },
+    // Sown and never put in a bed: the judged rule's one finding once the change is written.
+    { id: "mint", kind: "planting", label: "Mint", sown: "2026-05-04", status: "growing" },
   ],
   edges: [
     { kind: "tended-by", from: "back", to: "erin" },
@@ -200,7 +208,7 @@ try {
   report.checks.theSeatsChangeIsKept = {
     kept: await page.locator('[data-testid="studio-agent-applied"]').count(),
     said: (await page.textContent('[data-testid="studio-agent-panel"] ol'))?.slice(0, 600),
-    ok: (await page.locator('[data-testid="studio-agent-applied"]').count()) === 2,
+    ok: (await page.locator('[data-testid="studio-agent-applied"]').count()) === 3,
   };
   if (!report.checks.theSeatsChangeIsKept.ok) throw new Error(`The seat's change was not kept: ${report.checks.theSeatsChangeIsKept.said}`);
   await page.keyboard.press("Escape");
@@ -252,6 +260,13 @@ try {
   };
   report.checks.tendTakesAPlanting = { ok: file("mutations.ts").includes('input: z.object({ plantingId: nodeRef(["planting"]), gardenerId: nodeRef(["gardener"]) })') };
   report.checks.theRuleReadsPlantings = { ok: file("invariants.ts").includes('candidate.kind !== "planting"') };
+  // FR-07: the rule judged in words is written as those words — nothing for the checkout to fill in.
+  report.checks.aRuleJudgedInWordsIsWrittenAsWords = {
+    ok:
+      file("invariants.ts").includes('expressionRule("every-planting-has-a-plot", {') &&
+      file("invariants.ts").includes(`require: "exists(out('grows-in'))",`) &&
+      file("invariants.ts").includes('import { expressionRule } from "@graview/core/document";'),
+  };
   report.checks.theAppCarriesItsGraphsForward = {
     ok: file("app.ts").includes("version: 2") && file("app.ts").includes('stepsMigration({ from: 1, to: 2, steps: [{ what: "move-edge"'),
   };
@@ -276,6 +291,12 @@ try {
     log: after.log.slice(-3).map((op) => JSON.stringify(op).slice(0, 300)),
     ok: after.meta?.version === 2 && JSON.stringify(tended) === JSON.stringify(["beans->erin", "chard->sam", "kale->erin"]),
   };
+
+  // And it judges the stored garden: Mint, sown and never put in a bed, is named by it.
+  await page.goto(`http://localhost:${PORT}/pages/problems?remember=1`, { waitUntil: "load" });
+  await page.waitForTimeout(1500);
+  const problems = (await page.textContent("main")) ?? "";
+  report.checks.theRuleJudgesTheStoredGarden = { said: problems.slice(0, 400), ok: problems.includes("Mint grows nowhere") };
 
   /* ------------------------------------------ and the checkout still builds */
   const run = (command, args) => {

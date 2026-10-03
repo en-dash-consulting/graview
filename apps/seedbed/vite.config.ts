@@ -16,6 +16,7 @@ export default defineConfig({
   plugins: [studioDoor({ root: fileURLToPath(new URL(".", import.meta.url)) })],
   resolve: {
     alias: {
+      "@graview/core/document": fileURLToPath(new URL("../../packages/core/src/document/index.ts", import.meta.url)),
       "@graview/core": pkg("core"),
       "@graview/layout": pkg("layout"),
       "@graview/tools": pkg("tools"),

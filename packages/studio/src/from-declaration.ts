@@ -158,6 +158,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       judgesPast: rule.judgesPast ?? false,
       wholeGraph: rule.scope === "graph",
       ...(rule.label ? { title: rule.label } : {}),
+      ...(rule.judgement ? { require: rule.judgement.require, ...(rule.judgement.when ? { when: rule.judgement.when } : {}), ...(rule.judgement.says ? { says: rule.judgement.says } : {}) } : {}),
       ...(rule.description ?? rule.label ? { description: rule.description ?? rule.label } : {}),
       ...(derivedRepairs.length > 0 ? { derivedRepairs } : {}),
     });

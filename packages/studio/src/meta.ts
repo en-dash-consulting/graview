@@ -147,6 +147,17 @@ export const ruleNode = defineNode("rule", {
      * came back with no repairs at all.
      */
     derivedRepairs: z.array(z.string()).optional(),
+    /**
+     * THE JUDGEMENT, IN WORDS (FR-07): what must hold, in the rule language —
+     * `quote != null`, `count(in('fills') where status == 'booked') <= 1`.
+     * A rule that has one is judged by the studio and by the files it
+     * writes; one without is the checkout's to judge in code.
+     */
+    require: z.string().optional(),
+    /** Only the records for which this holds are judged. */
+    when: z.string().optional(),
+    /** What a violation says, as a template over the record: "{name} has no quote". */
+    says: z.string().optional(),
   }),
   edges: {
     over: { to: ["kind"], description: "the kind it judges", inverse: "the rules over it" },
@@ -459,17 +470,34 @@ export const removeAct = act("remove-act", {
 
 export const addRule = act("add-rule", {
   title: "Add a rule",
-  description: "Hold a kind to a rule. The judgement is written in the checkout; the studio declares it and names its repairs.",
+  description: "Hold a kind to a rule: what must hold, in the rule language (`quote != null`), and what a broken one says. Without a judgement the checkout writes one in code.",
   subject: { kinds: ["kind"], arg: "kind" },
   creates: ["rule"],
   connects: ["over"],
   fromTheOtherEnd: "over",
-  input: z.object({ kind: nodeRef(["kind"]), label: z.string().min(1), description: z.string().min(1) }),
+  input: z.object({
+    kind: nodeRef(["kind"]),
+    label: z.string().min(1),
+    description: z.string().min(1),
+    require: z.string().min(1).optional(),
+    when: z.string().min(1).optional(),
+    says: z.string().min(1).optional(),
+  }),
   describe: (args, graph) => `Add the rule ${args.label} over ${(graph.getNode(args.kind) as { label?: string } | undefined)?.label ?? args.kind}`,
   apply(ctx, args) {
     const name = slug(args.label);
     const id = `rule:${name}`;
-    ctx.addNode({ id, kind: "rule", label: name, description: args.description, judgesPast: false, wholeGraph: false });
+    ctx.addNode({
+      id,
+      kind: "rule",
+      label: name,
+      description: args.description,
+      judgesPast: false,
+      wholeGraph: false,
+      ...(args.require ? { require: args.require } : {}),
+      ...(args.when ? { when: args.when } : {}),
+      ...(args.says ? { says: args.says } : {}),
+    });
     ctx.addEdge({ kind: "over", from: id, to: args.kind });
   },
 });

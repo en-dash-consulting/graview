@@ -27,6 +27,7 @@ export default defineConfig({
   esbuild: { jsx: "automatic" },
   resolve: {
     alias: {
+      "@graview/core/document": fileURLToPath(new URL("../../packages/core/src/document/index.ts", import.meta.url)),
       "@graview/core": pkg("core"),
       "@graview/layout": pkg("layout"),
       "@graview/tools": pkg("tools"),
