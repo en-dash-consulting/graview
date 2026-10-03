@@ -163,6 +163,6 @@ export function refusalFor(schema: AnySchema, arg: Pick<NodeRefArg, "name" | "ki
     ok: false,
     reason: "ambiguous",
     candidates,
-    message: `"${given}" could mean ${candidates.length} records: ${shown.join(", ")}${more}. Pass the id of the one you mean as ${arg.name}.`,
+    message: `"${given}" names more than one ${what}: ${shown.join(", ")}${more}. Pass the id of the one you mean as ${arg.name}.`,
   };
 }
