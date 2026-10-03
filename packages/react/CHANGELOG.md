@@ -1,5 +1,72 @@
 # @graview/react
 
+## 0.1.2
+
+### Patch Changes
+
+- 55f8b27: An embed holds inside a chat's widget. `mount` takes `height: "auto"` and `onIntrinsicHeight`, and tells the host the height it asks for as it changes: the strip and the whole page on the pages face, the strip and the picture's box on the others. It takes `hostContext: { theme }` over the page's own scheme, and `scheme: "auto"` now follows the host page's `data-theme` and the system's preference as they change rather than reading them once. `pagesBelow` gives the scene and the Graview way to the pages face below a width. `remote` takes a store from `openRemote` and its presence. `memory` keeps the reader's settings and the tab's session where the host says, and a frame whose `localStorage` and `sessionStorage` throw still mounts. The routed face no longer asks for a window's height when embedded, which grew a frame sized from its content without end.
+  
+  Presence speaks one dialect and forgets the gone. `participantKey` and `parseParticipant` name the `kind:id:session` format the op log, the figures and the wire share. What a presence channel reports is dropped once its last word is older than `REMOTE_PRESENCE_TTL_MS`, whether or not the channel says the person left. A people directory (`people` on `mount`, `GraviewProvider` and the pages' context, `Person` in core) names authors in the rail, the pages, the profile and presence without offering anybody a seat, so a hosted reader sees no seat switcher and no "Sit as somebody else"; `nameOfAuthor` reads it after the seats. The handle gains `setPeople`, `setSeats` and `setHostContext` (FR-13).
+  
+  Compatibility: additive for the wire — `participantKey` writes the key the served store already wrote, and `openRemote` keeps the TTL it had, now named `REMOTE_PRESENCE_TTL_MS`. `EmbedOptions` gains optional `people`, `hostContext`, `remote`, `memory`, `presenceTtlMs`, `onIntrinsicHeight` and `pagesBelow`, and `EmbedHandle` gains `setPeople`, `setSeats` and `setHostContext`, which a host implementing the handle itself must now provide. Changed in meaning: an embed with `scheme: "auto"` follows the host's scheme after mount, and a figure's own name in presence is the one `nameOfAuthor` gives (a seat's label, a directory's name, `Principal.name`) where it was the principal's id. Ops, stored formats, the declaration and derived tools are unchanged.
+- a634594: An embed reports what went wrong and how long it took, without what was on screen. `mount` and `@graview/embed/pages` take `onError(error, { module, face })` and `onReady({ ms, face })`. Each face, the strip and the studio's place on it draw behind a boundary: what throws says it could not draw and offers to try again, and the rest of the embed keeps working, so a page that throws leaves the strip and the scene a press away. The host is told the error's class (`EmbedError`) and the framework module that caught it, never the message, which may quote a record. A view's own boundary in the scene reports the same way: `ViewBoundary` tells the `ErrorReportContext` above it, which `@graview/react` exports. `onReady` is told once, after the first render, how many milliseconds it took (FR-24).
+  
+  Compatibility: additive — `onError`, `onReady`, `EmbedError`, `EmbedErrorWhere`, `EmbedReady`, `ErrorReport` and `ErrorReportContext` are new, and a view that throws with no report above it is said on the console as before. Ops, stored formats, the wire, the declaration and derived tools are unchanged.
+- 2493564: The store a host drives. An op made without a `now` option is stamped with the current time, not the epoch. `applyAll` and `undo` given an `intent` keep each op's own sentence, from its act's `describe()` or "Undo: …", and record the intent beside it as `batchIntent`, which is what the batch reads as; an act with no `describe` takes the caller's words as its sentence, as before. `store.previewAll(calls)` previews several calls as one gesture, each compiled on the graph the one before it left, without writing anything. `store.append(ops)` lands ops a host built itself (example content, a seeded beginning, a repair) as ordinary, undoable history, filling in the seq, id, batch, time, inverse and writes it was not given, all or nothing. A blocked undo throws `UndoBlockedError`, a `GraphError` carrying the `UndoCheck` it was refused on and the ops in the way as `blockedBy`. Reopening on a snapshot never folds the log, so a log naming a kind the new declaration dropped opens as history (FR-18).
+  
+  Compatibility: additive for the stable contract — `Operation.batchIntent` is a new optional field, and an op without it reads as before. `Store.previewAll`, `Store.append`, `AppendOp`, `UndoBlockedError` and `UndoRefused` are new. Changed in meaning for callers of `Store`: the default clock is the current time, and `ApplyOptions.intent` no longer replaces an op's `describe()` sentence (read `batchIntent`, or `Batch.intent`, for the gesture's words). Stored formats, the wire and derived tools are unchanged.
+- 570f9e2: A view registered once is drawn on every face, over the defaults rather than instead of them.
+  
+  - **The embed hands its views to the routed face.** `mount({ views })` used to build the pages face without the registry. A registered view was drawn in the workbench and never on a phone. The pages face now gets the same registry, with the app's settings and presence, so the gallery's card is the registered one × summary. The record page draws the kind's own one × full view under its heading (FR-35).
+  - **Registering one view keeps the rest.** `views(schema, registry)` is handed a registry that already holds the framework's own view for every cell and the declaration's view specs. A function that builds a registry of its own is laid over those same defaults (`layerViews`), so one card no longer costs every other view. `<DefaultView {...props} />` draws the framework's own view for a cell inside a view of your own. On the record page, which is the default record, it draws nothing (`DefaultViewElsewhere`). `ViewRegistry.registrations()` lists every registration in the order it was made (FR-36).
+  - **A member drawn as a row is a cell a view can claim.** When a kind has a one × glyph view of its own, as a component or a spec's `row`, two places draw it. A focused group draws each member as that line, each a target for its record. The list page draws each record as that line, with the whole line as the link (FR-37).
+  
+  The framework's own one-cell views are now marked as defaults (`isDefaultView`), the way its group views were, so a surface can tell them from an app's.
+  
+  Compatibility: the declaration — additive: `ViewRegistry.registrations()` and `ViewRegistration.across` are new, and a registry that implements the interface by hand needs the method. `EmbedOptions.views` is now called with a second argument, the registry to register onto. A function that ignores it still works, and is laid over the defaults instead of replacing them. Ops, formats, the wire and tools are unchanged.
+- Updated dependencies [3afdd09]
+- Updated dependencies [b910210]
+- Updated dependencies [7f354e0]
+- Updated dependencies [74c9388]
+- Updated dependencies [a7fc818]
+- Updated dependencies [6a46f36]
+- Updated dependencies [2820fd3]
+- Updated dependencies [230d9b4]
+- Updated dependencies [a163197]
+- Updated dependencies [4a5dadd]
+- Updated dependencies [7afb9ae]
+- Updated dependencies [9b2c61b]
+- Updated dependencies [8990aa9]
+- Updated dependencies [539d0eb]
+- Updated dependencies [33c3cbb]
+- Updated dependencies [95444f1]
+- Updated dependencies [55f8b27]
+- Updated dependencies [6ea13f7]
+- Updated dependencies [c6cea46]
+- Updated dependencies [3b36d19]
+- Updated dependencies [85888f1]
+- Updated dependencies [d2683c5]
+- Updated dependencies [5a6f262]
+- Updated dependencies [c6bd456]
+- Updated dependencies [6c54eb1]
+- Updated dependencies [67a7d42]
+- Updated dependencies [6c62ca6]
+- Updated dependencies [5e85a39]
+- Updated dependencies [b2f8c22]
+- Updated dependencies [984c96f]
+- Updated dependencies [b71e7c5]
+- Updated dependencies [2493564]
+- Updated dependencies [c5c1c91]
+- Updated dependencies [346fbe3]
+- Updated dependencies [b334c25]
+- Updated dependencies [9680187]
+- Updated dependencies [570f9e2]
+- Updated dependencies [6460336]
+  - @graview/core@0.1.2
+  - @graview/render@0.1.2
+  - @graview/tools@0.1.2
+  - @graview/layout@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

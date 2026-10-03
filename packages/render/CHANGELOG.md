@@ -1,5 +1,51 @@
 # @graview/render
 
+## 0.1.2
+
+### Patch Changes
+
+- 6a46f36: Render's README names its hit-testing as it is exported, `PointerRouter` and `hitTest`, not the `routePointer` it was renamed from. The pack inspection now fails on any README that names an export no packed package has, so a README cannot promise an API the tarball lacks (FR-15).
+  
+  Compatibility: unchanged — a README and the pack inspection only.
+- Updated dependencies [3afdd09]
+- Updated dependencies [b910210]
+- Updated dependencies [7f354e0]
+- Updated dependencies [74c9388]
+- Updated dependencies [a7fc818]
+- Updated dependencies [2820fd3]
+- Updated dependencies [230d9b4]
+- Updated dependencies [a163197]
+- Updated dependencies [4a5dadd]
+- Updated dependencies [7afb9ae]
+- Updated dependencies [9b2c61b]
+- Updated dependencies [8990aa9]
+- Updated dependencies [539d0eb]
+- Updated dependencies [33c3cbb]
+- Updated dependencies [95444f1]
+- Updated dependencies [55f8b27]
+- Updated dependencies [6ea13f7]
+- Updated dependencies [3b36d19]
+- Updated dependencies [85888f1]
+- Updated dependencies [d2683c5]
+- Updated dependencies [5a6f262]
+- Updated dependencies [c6bd456]
+- Updated dependencies [6c54eb1]
+- Updated dependencies [67a7d42]
+- Updated dependencies [6c62ca6]
+- Updated dependencies [5e85a39]
+- Updated dependencies [b2f8c22]
+- Updated dependencies [984c96f]
+- Updated dependencies [b71e7c5]
+- Updated dependencies [2493564]
+- Updated dependencies [c5c1c91]
+- Updated dependencies [346fbe3]
+- Updated dependencies [b334c25]
+- Updated dependencies [9680187]
+- Updated dependencies [570f9e2]
+- Updated dependencies [6460336]
+  - @graview/core@0.1.2
+  - @graview/layout@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

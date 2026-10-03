@@ -1,5 +1,108 @@
 # @graview/studio
 
+## 0.1.2
+
+### Patch Changes
+
+- 230d9b4: A rule can say what must hold in words the framework judges: `quote != null`, `count(in('fills') where status == 'booked') <= 1`. `@graview/core/document` is a new entry, and its rule language has these properties:
+  - Fields and one-edge hops, `out`/`in`/`all` sets with `where`, and a closed set of functions.
+  - `null` that propagates.
+  - No regular expressions, loops or user functions.
+  - A step budget on every evaluation.
+  
+  `expressionRule(name, { over, require, when?, says?, repairs? })` makes the invariant the engine runs. A judgement that runs out of budget is `over-budget` (FR-29), and any other mistake is `could-not-judge`; neither is a hang.
+  
+  A rule in the studio now takes its judgement as a field. The studio judges it after apply, writes it into the checkout as `expressionRule(…)` with its import instead of a stub to fill in, and reads it back from a declaration whose invariant carries `judgement`. The seedbed rehearsal proves this end to end (FR-07).
+  
+  Compatibility: the declaration — additive: `InvariantDefinition.judgement` and a studio rule's `require`/`when`/`says` are optional; a rule without one is judged as before. `@graview/core/document` is a new entry point.
+- 6ea13f7: An embed knows what its host can keep. `mount({ studio: false })` leaves the Studio place off the strip, for a hosted reader who could change a declaration that would never be saved. `mount({ studio: { onApply } })` keeps it and hands the host what the checker passed (`StudioApplied`: the app, the migration and the files), asking after no dev-server door and writing nothing itself; `StudioPlace` takes the same `onApply`, and `useStudioDoor(null)` asks nobody. `@graview/embed/pages` mounts the routed face alone, without the scene, the lenses or the studio: bundled for the browser without React it is about 730 KB minified (195 KB gzipped), where every face is about 1.05 MB (300 KB). `node scripts/inspect-pack.mjs` bundles both and fails when either passes its budget, and a linked project's Vite config aliases the new entry (FR-19).
+  
+  Compatibility: additive — `EmbedOptions.studio`, `StudioPlace`'s `onApply`, `StudioApplied` and the `./pages` entry are new, and an embed without `studio` offers the Studio as before. `EmbedOptions` is now `FrameOptions` (exported) plus the scene's own options, with the same fields. Ops, stored formats, the wire, the declaration and derived tools are unchanged.
+- c6bd456: Migrations keep what they can. Ship's steps gain three:
+  - `rename-field` moves every value to the new name.
+  - `rename-edge` moves every link, on every kind that declares the relation.
+  - `coerce-field` keeps a value wherever its meaning survives and clears, and counts, what does not:
+    - text to a number when it parses;
+    - a datetime to a date;
+    - a word to the option it names;
+    - a value to a list of one.
+  
+  `countSteps` says per step how many values moved, were converted or were cleared, and how many records and links went. Whether a change breaks anything is judged by these counts, not by the kind of edit.
+  
+  The studio's migration sees a field or relation it renamed or retyped as the same one, by its node, so its values move instead of being dropped and re-added. A document's `planMigration` does the same through `renamedFrom`. `graview check --document <file> --previous <file>` refuses a `renamedFrom` that names nothing in the version before (FR-22).
+  
+  Compatibility: stored format — unchanged; migration steps — additive (three new steps). The declaration — `renamed-from-nothing` is a new check finding code, given only with a previous version.
+- 5e85a39: Structural change is a vocabulary. `editDocument(doc, edits)` takes twenty-one operations, from add-kind to rename-relation to set-view, and returns the document with a sentence for each.
+  
+  A rename sets `renamedFrom` and rewrites every reference, using the rule language's own walk, which knows a quoted word and another kind's field from this one:
+  - rules and templates;
+  - acts and the arguments they ask for;
+  - grants, repairs and views.
+  
+  When a rename moves an agent's tools — `set-quote` becoming `set-price`, `edit-vendor` asking for `price` — the result says so.
+  
+  The studio gains `rename-field`, the same operation over its own graph, through the same walk (`renameIn`). A test holds the studio and `editDocument` to the same declaration for the same change (FR-34).
+  
+  Compatibility: the declaration — additive: new functions and a new studio act; derived tool names change only when an app renames what they are named for, and an edit says so.
+- 6460336: What a seat may not see never leaves the store. The store handler, and so `graview serve`, answers each route with the store as the asking seat sees it. `/graview/state`, `/graview/since`, `/graview/export` and the ops on `/graview/here` come from `seenBy(store, principal)`, and ops that touched what the seat may not see come back withheld in place, so an unmodified `openRemote` still loads them (FR-16). `/graview/here`, `/graview/who` and `/graview/leave` leave out anybody whose own record the seat may not see. For everybody else they clear a stop, hover or robot position that names such a record (`presenceSeenBy`). The ops `/graview/ops` sends back are redacted the same way. A participant whose id holds a colon (`shopper:bethan`) now keeps its session as sent.
+  
+  A write that names a record the seat may not see is refused before any grant is read, with the sentence "Not permitted: “Answer the enquiry” names a record you may not see." This holds in `store.apply` and `store.permits`, over the wire and through the agent tools. A seat with sights may not undo what it may not see. Over `graview mcp`, `get_affordances` is derived from what the seat sees, and `undo_batch` judges over the log as the seat sees it.
+  
+  Sights have one meaning, the document's and the framework's, and `compileDocument` puts a document's `policy.sees` into the compiled app's policy. With no `sees`, everybody sees everything. With any sight, every kind is deny by default, like grants: a kind no sight names is seen by nobody but the system, and the new check warning `sight-unnamed-kind` names each one. `own` means the principal's own records: their record, what an edge joins to it, and what they made. `recordsOf(log)` reads who made each record and its kind, so a removed record is still judged by the kind it was. The studio models a sight as a node with three acts, `add-sight`, `change-sight` and `remove-sight`, and writes sights back into the declaration and `policy.ts`. Changing them in place is still said rather than written, as it is for grants (FR-02).
+  
+  Compatibility: breaking for a policy that declares `sees`: a kind no sight names used to be seen by everybody and is now seen only by the system. Add `{ roles: "*", kinds: [...] }` for the kinds everybody may see; `graview check` names each one with `sight-unnamed-kind`, a new warning. Additive for `own`, which now also covers the records a principal made. Breaking for a host that relied on the wire sending the whole store: every read route now answers with what the asking seat sees, and only the system seat sees everything. A host that serves its owners everything serves them as the system or names them in a sight. Additive for the wire otherwise: no route or field was added or removed, and `WIRE_PROTOCOL` stays 1. Changed for derived tools: the names and input schemas are unchanged, the studio gains `add-sight`, `change-sight` and `remove-sight`, and the read and undo tools answer as the seat sees. For the declaration document, `policy.sees` now takes effect in the compiled app, and the conformance fixtures declare no sights, so none of them changes.
+- Updated dependencies [3afdd09]
+- Updated dependencies [f36ccfc]
+- Updated dependencies [346fbe3]
+- Updated dependencies [b910210]
+- Updated dependencies [7f354e0]
+- Updated dependencies [74c9388]
+- Updated dependencies [a7fc818]
+- Updated dependencies [2820fd3]
+- Updated dependencies [230d9b4]
+- Updated dependencies [a163197]
+- Updated dependencies [4a5dadd]
+- Updated dependencies [7afb9ae]
+- Updated dependencies [9b2c61b]
+- Updated dependencies [8990aa9]
+- Updated dependencies [539d0eb]
+- Updated dependencies [33c3cbb]
+- Updated dependencies [95444f1]
+- Updated dependencies [55f8b27]
+- Updated dependencies [6ea13f7]
+- Updated dependencies [a634594]
+- Updated dependencies [c6cea46]
+- Updated dependencies [3b36d19]
+- Updated dependencies [85888f1]
+- Updated dependencies [d2683c5]
+- Updated dependencies [5a6f262]
+- Updated dependencies [c6bd456]
+- Updated dependencies [6c54eb1]
+- Updated dependencies [67a7d42]
+- Updated dependencies [6c62ca6]
+- Updated dependencies [5e85a39]
+- Updated dependencies [b2f8c22]
+- Updated dependencies [c74b21f]
+- Updated dependencies [984c96f]
+- Updated dependencies [ca11fe8]
+- Updated dependencies [b71e7c5]
+- Updated dependencies
+- Updated dependencies [2493564]
+- Updated dependencies [c5c1c91]
+- Updated dependencies [346fbe3]
+- Updated dependencies [b334c25]
+- Updated dependencies [afcb06d]
+- Updated dependencies [9680187]
+- Updated dependencies [570f9e2]
+- Updated dependencies [6460336]
+  - @graview/core@0.1.2
+  - @graview/primitives@0.1.2
+  - @graview/ship@0.1.2
+  - @graview/pages@0.1.2
+  - @graview/tools@0.1.2
+  - @graview/react@0.1.2
+  - @graview/layout@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

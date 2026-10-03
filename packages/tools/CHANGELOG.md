@@ -1,5 +1,113 @@
 # @graview/tools
 
+## 0.1.2
+
+### Patch Changes
+
+- 9b2c61b: Agents name records the way people do. A person says "book the florist", never `vendor:bloom-co`. Every argument that names a record now takes its id or its name:
+  - a label, case and accents aside;
+  - or the one label it starts;
+  - among the records the seat may see, of the kinds the argument accepts.
+  
+  `book` with `id: "bloom"` books `vendor:bloom-co`, and the result's `resolved` names the id it took. Two matches are refused with both listed, in the message and in `candidates`. None says so, and points at `search_graph`. `get_node` and `preview_mutation` take a name the same way. Ids keep working unchanged.
+  
+  `store.resolveRef(arg, given, principal)` gives a host the same answer: one id, or the candidates. A record the principal may not see is never a candidate, by name or by id. It reads a label index kept per kind as sorted keys. The index follows the graph's diffs, so resolving costs the matches, not a scan of every record.
+  
+  `nodeRefArgs` no longer needs the copy of the framework that compiled an act. A node reference keeps its kinds on the schema under a registry symbol rather than in a module's WeakMap. A host that bundles its own copy reads them too (FR-33).
+  
+  Compatibility: derived tool names and input schemas: unchanged, and the conformance fixtures match. Derived tool descriptions: every act tool with an argument that names a record ends with "An argument that names a record takes its id or its name." `get_node`'s `id` is described as "A node's id, or its name." where it said "Node id." Behaviour: a node argument that is neither an id the seat sees nor a name it can resolve is refused by the runtime, before the store sees it, where the act used to say so itself. A name that matches several records is refused rather than passed through. Additive: `Store.resolveRef`, and the `RefResolution`, `RefCandidate` and `NodeRefArg` types, `nameKey`, `BY_NAME`, `Resolved`, `ToolResult`'s `candidates` and `argument`.
+- 33c3cbb: An agent acts for someone, through something, and the log says so. An `Author` carries its own `name` and `onBehalfOf`, the person it acts for. An op carries `via`, what it came through: `web`, `mcp:<client>`, `view:<name>`, `api` or `cli`. The activity rail reads "Claude, for Nick, via Claude", and `nameOfAuthor` says an author's own name before any id.
+  
+  An agent acting for a person may do what both may: its roles are the intersection of its own and theirs, a `self` grant is about the person, and `actingAs` gives the seat a policy judges. A `system` principal acting for nobody passes the policy and sees every record (`isSystem`), so a host's setup, seed and migrations are not refused by the app's own grants (FR-06, FR-17).
+  
+  A served store believes a seat header only when told to. `serveStore({ trustSeatHeaders: true })` reads `SEAT_HEADERS`, now with kind, name and delegation, so a remote `graview mcp` is recorded as an agent. Without it and without a `seatOf`, every route but health answers 401. `graview serve` listens on 127.0.0.1 and trusts the headers there, saying so; on any other `--host` it will not start without `--trust-seat-headers`. `openRemote` sends its seat on every request, the first read included, and its calls say `via: "web"`.
+  
+  Compatibility: breaking for a host that served a store without `seatOf` and relied on the seat headers: it now answers 401 until it passes `trustSeatHeaders: true`. `graview serve` binds 127.0.0.1 by default where it used to bind every interface. Additive elsewhere: `Author.name`, `Author.onBehalfOf`, `Principal.onBehalfOf`, `Operation.via` and `ApplyOptions.via` are optional fields, and ops without them read as before.
+- c6cea46: An observation says a shared value the way the card does. Three duties at 8:30 came out as "3 share the at 510" in homeflow's rail: the minutes as stored, beside the field's name. The structure provider now says the value through the field's declared `display.format` ("all 3 share the starts 8:30"), and keeps the stored value, quoted, only where there is no format. The same goes for the odd-one-out sentence and the align offer's reason.
+  
+  Compatibility: unchanged — an observation's id and the align offer's args are as before; only the sentence a person reads changes where a field declares a format.
+- 5a6f262: MCP for remote hosts. `createMcpHttpHandler({ store, authenticate, name, version })` serves the agent tools over Streamable HTTP as a fetch handler, `(Request) → Response`, stateless, for 2025-11-25 clients. The host's `authenticate` hook supplies the principal for each request; with no principal, every message is a 401, `initialize` included. The MCP TypeScript SDK's client completes initialize, `tools/list` and `tools/call` against it in the tests. `graview mcp` and the HTTP handler answer the same five methods through one dispatcher.
+  
+  Every tool says what it does. A `ToolDefinition` has a `title` and `annotations` with all four MCP hints, derived from the declaration:
+  - `readOnlyHint` for the reads;
+  - `destructiveHint` for an act that removes or severs, so `remove-<kind>` is destructive;
+  - `idempotentHint` where an act sets only what it is given (a new `idempotent` on a mutation; derived edits and removes, and document acts that create nothing and compute nothing, have it);
+  - `openWorldHint: false` always.
+  
+  Tool names are MCP-safe, with collisions handled the same way every time, and `act` names the act a tool runs. An act named like a read tool, such as `get_node`, used to be impossible to run, because the read tool answered first. It is now listed as `get_node_2` and runs as the act. `toolDefinitions(app, principal)` gives a seat's surface without a store, with a `hash` that changes when the surface does; `tools/list` carries it as `_meta["dev.graview/surface"]`.
+  
+  Other people's words come back as data. Reads go through `seenBy`, and prose written by somebody other than the caller, or the person an agent acts for, comes back as `{ untrusted: true, authoredBy, text }` in `get_node`, `get_graph` and `search_graph` (FR-10).
+  
+  Compatibility: derived tool names: unchanged for every act whose name is already letters, digits, `_` and `-`, at most 64, beginning with a letter or `_` (every act in the conformance fixtures, and every derived `edit-<kind>` and `remove-<kind>` of such a kind). Any other act is listed under a safe name: other characters become `_`, accents fall away, a leading digit or hyphen gets `act_`, and the name is cut at 64. An act named `search_graph`, `get_graph`, `get_node`, `get_violations`, `get_affordances`, `preview_mutation` or `undo_batch`, or one whose safe name another act already took, gets `_2`, `_3`, and so on. A call by the declared act name still reaches the act unless a listed tool has that name. Derived tool input schemas: unchanged, and the conformance fixtures match. Additive: every tool now has a `title` (the read tools: "Find by name", "Read the whole graph", "Read one node", "List the problems", "Ask what can be done", "Try an act without applying it", "Undo a batch") and `annotations`, and `ToolDefinition.title` is now always set. Read results: breaking for a reader that expected a string in a prose field written by somebody else, which is now the untrusted wrapper. Breaking for a seat whose policy declares `sees`: `get_graph`, `get_node`, `get_violations` and `search_graph` now show it only what it may see. `MCP_PROTOCOL_VERSION` is `2025-11-25`; a client that asks for an older revision gets its own back, as before.
+- b2f8c22: Templates as data. A template made in Graview Cloud — a declaration document, the questions that set it up, what the answers do as ordinary acts, and example content, in Cloud's `graview-template` shape — now scaffolds a self-hosted project and sets up a live store with no Cloud in the room.
+  
+  `graview create <dir> --template <file|url>` judges the template first (its shape, its document through `compileDocument`, its setup acts against that document, its examples against the schema) and refuses with the path of every finding before a directory exists. The project is the checkout `graview create` always writes, with the declaration kept as the document: `src/domain/app.json`, compiled by `compileDocument` when the domain loads, and the template beside it as `template.json`. Writing TypeScript from the document would need a generator for every construct the document has and would then be a second declaration to drift from the first; kept as the document, `graview describe` says the same of the project as of the template, by construction. The project's test holds the declaration to `graview check` and runs the template's setup as one batch that one undo takes back, and `apply-template` is a script.
+  
+  `graview apply [<entry>] --template <file|url> [--answers '<json>'] [--examples]` runs the setup through the same `planFrom` and `applyPlan` as `--plan`: judged under the seat first, applied as one batch authored by the template (`{ kind: "system", id: "template:<id>" }` unless `--as` or `--roles` say who), with "Set up from <title>" as its intent. One `--undo` takes it back. `--examples` brings the example content as a batch of its own. Without an entry, the template's document is the app.
+  
+  `@graview/core/document` gains `readGraviewTemplate`, `isGraviewTemplate`, `instantiateTemplate`, `templateSeedPrimitives`, `TemplateSpec` and `TEMPLATE_FORMAT`, and `ScaffoldOptions` gains `template`. Every command that reads a `.json` entry reads a template as the document inside it (FR-08).
+  
+  Compatibility: the declaration — additive: a template is a new format beside the document, which is unchanged; every document that compiled compiles the same, and no check finding code changes. `graview create` without `--template` writes the same files as before. The wire — additive: `capabilities().shipped` now names FR-08. Derived tool names and input schemas: unchanged.
+- 984c96f: The declaration is a document. One JSON object, the Graview declaration document, compiles into the same app `defineApp` declares, through `compileDocument` in `@graview/core/document`.
+  - **Kinds** have typed fields, label templates, lifecycles and relations.
+  - **Acts** are a closed set of effects with `allowedWhen` refusals.
+  - **Rules** are written in the rule language.
+  - **Policy, modules, lenses and settings** are the data they already are.
+  
+  Nothing in the document path runs a string as code, and a test reads the module to hold that. `canonicalize` gives two documents equal in meaning the same bytes.
+  
+  `toDocument(app)` gives a document-made app back exactly. For a TypeScript app it writes what is data and names, at its JSON path, each surface that is code.
+  
+  `graview check`, `serve`, `mcp` and `describe` take `--document <file>` with no TypeScript entry, and check reports a document's findings with the path to fix each at. `capabilities().documentFormats` says `graview-document@1` (FR-01).
+  
+  Compatibility: the declaration — additive: a new entry point, a new format (graview-document 1), and `--document` on the commands; a TypeScript declaration is read as before.
+- 6460336: What a seat may not see never leaves the store. The store handler, and so `graview serve`, answers each route with the store as the asking seat sees it. `/graview/state`, `/graview/since`, `/graview/export` and the ops on `/graview/here` come from `seenBy(store, principal)`, and ops that touched what the seat may not see come back withheld in place, so an unmodified `openRemote` still loads them (FR-16). `/graview/here`, `/graview/who` and `/graview/leave` leave out anybody whose own record the seat may not see. For everybody else they clear a stop, hover or robot position that names such a record (`presenceSeenBy`). The ops `/graview/ops` sends back are redacted the same way. A participant whose id holds a colon (`shopper:bethan`) now keeps its session as sent.
+  
+  A write that names a record the seat may not see is refused before any grant is read, with the sentence "Not permitted: “Answer the enquiry” names a record you may not see." This holds in `store.apply` and `store.permits`, over the wire and through the agent tools. A seat with sights may not undo what it may not see. Over `graview mcp`, `get_affordances` is derived from what the seat sees, and `undo_batch` judges over the log as the seat sees it.
+  
+  Sights have one meaning, the document's and the framework's, and `compileDocument` puts a document's `policy.sees` into the compiled app's policy. With no `sees`, everybody sees everything. With any sight, every kind is deny by default, like grants: a kind no sight names is seen by nobody but the system, and the new check warning `sight-unnamed-kind` names each one. `own` means the principal's own records: their record, what an edge joins to it, and what they made. `recordsOf(log)` reads who made each record and its kind, so a removed record is still judged by the kind it was. The studio models a sight as a node with three acts, `add-sight`, `change-sight` and `remove-sight`, and writes sights back into the declaration and `policy.ts`. Changing them in place is still said rather than written, as it is for grants (FR-02).
+  
+  Compatibility: breaking for a policy that declares `sees`: a kind no sight names used to be seen by everybody and is now seen only by the system. Add `{ roles: "*", kinds: [...] }` for the kinds everybody may see; `graview check` names each one with `sight-unnamed-kind`, a new warning. Additive for `own`, which now also covers the records a principal made. Breaking for a host that relied on the wire sending the whole store: every read route now answers with what the asking seat sees, and only the system seat sees everything. A host that serves its owners everything serves them as the system or names them in a sight. Additive for the wire otherwise: no route or field was added or removed, and `WIRE_PROTOCOL` stays 1. Changed for derived tools: the names and input schemas are unchanged, the studio gains `add-sight`, `change-sight` and `remove-sight`, and the read and undo tools answer as the seat sees. For the declaration document, `policy.sees` now takes effect in the compiled app, and the conformance fixtures declare no sights, so none of them changes.
+- Updated dependencies [3afdd09]
+- Updated dependencies [b910210]
+- Updated dependencies [7f354e0]
+- Updated dependencies [74c9388]
+- Updated dependencies [a7fc818]
+- Updated dependencies [2820fd3]
+- Updated dependencies [230d9b4]
+- Updated dependencies [a163197]
+- Updated dependencies [4a5dadd]
+- Updated dependencies [7afb9ae]
+- Updated dependencies [9b2c61b]
+- Updated dependencies [8990aa9]
+- Updated dependencies [539d0eb]
+- Updated dependencies [33c3cbb]
+- Updated dependencies [95444f1]
+- Updated dependencies [55f8b27]
+- Updated dependencies [6ea13f7]
+- Updated dependencies [3b36d19]
+- Updated dependencies [85888f1]
+- Updated dependencies [d2683c5]
+- Updated dependencies [5a6f262]
+- Updated dependencies [c6bd456]
+- Updated dependencies [6c54eb1]
+- Updated dependencies [67a7d42]
+- Updated dependencies [6c62ca6]
+- Updated dependencies [5e85a39]
+- Updated dependencies [b2f8c22]
+- Updated dependencies [984c96f]
+- Updated dependencies [ca11fe8]
+- Updated dependencies [b71e7c5]
+- Updated dependencies [2493564]
+- Updated dependencies [c5c1c91]
+- Updated dependencies [346fbe3]
+- Updated dependencies [b334c25]
+- Updated dependencies [9680187]
+- Updated dependencies [570f9e2]
+- Updated dependencies [6460336]
+  - @graview/core@0.1.2
+  - @graview/ship@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes
