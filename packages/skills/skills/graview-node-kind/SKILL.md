@@ -129,6 +129,27 @@ agent tool that walks the graph.
   should wear a chosen colour rather than a stable hash — every chip dot,
   district roof and the focus tag follow.
 
+## How it looks, as data
+
+When the default card is wrong but a component would be too much, say the
+card, the row and the page in `defineApp({ viewSpecs })` — blocks from a
+closed set, bound by `{field}` templates and rule-language conditions:
+
+```ts
+viewSpecs: { fixture: {
+  card: [{ title: "{name}" }, { badge: "{status}", tone: { expr: "if(status == 'fitted', 'good', 'neutral')" } }, { field: "cost", as: "money" }],
+  row: [{ title: "{name}" }, { badge: "{status}" }],
+  page: [{ progress: { value: "done", max: "total" }, label: "Fitted" }],
+} }
+```
+
+`card` is drawn beside the focus and on the pages face's gallery, `row` as the
+one line a member is among many (a focused group, the list page), and `page`
+above the default record. Tones are `good`, `warn`, `bad`, `neutral` and
+`accent`, the theme's own. Nothing in a spec runs: no CSS, no markup, and the
+only link drawn is an http(s) `url` field's own value. The scaffold's
+`views()` draws them (`registerViewSpecs`); so does the embed, by itself.
+
 ## Then find out whether it worked
 
 ```sh
@@ -136,6 +157,9 @@ pnpm build && npx graview check ./dist/domain/app.js
 ```
 
 Report **the actual output**, including warnings. What it catches here:
+
+- `view-field`, `view-name`, `view-tone` — a view spec naming a field the kind
+  lacks, or a tone outside the kit
 
 - `edge-target-undeclared` — an edge to a kind nobody declared
 - `edge-without-inverse` — a relation with words for one of its two readings

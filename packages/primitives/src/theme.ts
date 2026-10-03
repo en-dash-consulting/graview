@@ -41,6 +41,7 @@ import type { Brand, Scheme, ThemeTokens } from "@graview/core";
  */
 export { DARK, LIGHT, SCHEMES } from "@graview/core";
 import { SCHEMES, kitVariables, resolveKit } from "@graview/core";
+import { SPEC_VIEW_CSS } from "./spec-css.js";
 
 
 /**
@@ -1737,5 +1738,7 @@ code { color: var(--graview-ink-muted); font-size: 0.8125rem; letter-spacing: 0.
 ${stillness(`${motionRoot}:not([data-graview-motion='full'])`, text)}
 }
 ${stillness(`${motionRoot}[data-graview-motion='reduce']`, text)}
-`;
+
+/* VIEWS AS DATA (FR-03): the blocks a view spec is drawn with, over the tokens above. */
+${SPEC_VIEW_CSS}`;
 }
