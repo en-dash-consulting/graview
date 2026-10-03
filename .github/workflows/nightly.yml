@@ -8,8 +8,8 @@
 # nobody heard until a walk's review a day later. This is the run nobody has
 # to remember, and the release workflow will not publish while it is red.
 #
-# Chromium every night; WebKit and Firefox once a week, through `pnpm
-# engines`. `shrunk`, `panning` and `scale` are left out: the GPU capture
+# Chromium every night, across six runners at once; WebKit and Firefox
+# once a week, through `pnpm engines`, on a runner of their own. `shrunk`, `panning` and `scale` are left out: the GPU capture
 # path needs Chrome Canary, and the other two time frames against a GPU the
 # runner does not have.
 
@@ -32,9 +32,33 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # SIX RUNNERS SIDE BY SIDE, not one: one two-core runner taking every
+  # harness in turn was 54 minutes of harness after setup, and a nightly
+  # nobody can wait for is one nobody kicks off before a release. Each shard
+  # is its own machine, so its ports and its CPU are its own and nothing
+  # starves a frame; within a shard the harnesses still run one at a time.
+  # Shards are balanced by the 2026-10-03 run's times (gauntlet 646s, site
+  # 468s, journeys 1111s across its five apps); the slowest is ~11 minutes.
   harnesses:
+    name: ${{ matrix.shard }}
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: gauntlet, chat, menu
+            run: node scripts/verify-all.mjs --serial gauntlet chat menu
+          - shard: site, audit
+            run: node scripts/verify-all.mjs --serial site audit
+          - shard: survey, create, pages, companion, navigation
+            run: node scripts/verify-all.mjs --serial survey create pages companion navigation
+          - shard: rota, lines, calendar, desk, remember, studio, watch, who, seat, rehearsal
+            run: node scripts/verify-all.mjs --serial rota lines calendar desk remember studio watch who seat rehearsal
+          - shard: journeys (gauntlet)
+            run: node scripts/verify-journeys.mjs gauntlet
+          - shard: journeys (todo, seedbed, rota, discography)
+            run: node scripts/verify-journeys.mjs todo seedbed rota discography
     steps:
       - uses: actions/checkout@v4
 
@@ -45,34 +69,44 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build
+      # typecheck, not build: the same tsc -b over the packages AND the apps,
+      # whose dist/domain the desk and the journeys read. Shards that built
+      # only the packages skipped four apps' journeys and lost the desk.
       - run: pnpm typecheck
 
-      - name: Browsers
-        run: npx playwright install --with-deps chromium webkit firefox
+      - name: Chromium
+        run: npx playwright install --with-deps chromium
 
-      # `site` is the chain's first harness; `pnpm test` already holds the
-      # site to the tree on every push.
-      # One at a time and journeys two-wide: a two-core runner running three
-      # harnesses at once starved every claim that waits on a frame (the first
-      # nightly took 40 minutes and failed eight on timing). panning and scale
-      # time frames against a GPU this runner does not have — they hold on a
-      # real machine, through `pnpm verify` there.
-      - name: Every harness, one at a time
+      # panning and scale time frames against a GPU this runner does not
+      # have, and shrunk needs Chrome Canary — they hold on a real machine,
+      # through `pnpm verify` there. Journeys two-wide on a two-core runner.
+      - name: ${{ matrix.shard }}
         env:
           GRAVIEW_JOURNEYS_PARALLEL: "2"
-        run: node scripts/verify-all.mjs --serial --except=shrunk,panning,scale
-
-      - name: Every engine (Mondays, or when asked)
-        if: github.event.schedule == '17 9 * * 1' || inputs.engines
-        run: pnpm engines
+        run: ${{ matrix.run }}
 
       - name: The verdicts, for reading
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: verdicts
+          name: verdicts-${{ strategy.job-index }}
           path: |
             docs/*.json
             docs/watch/
           if-no-files-found: ignore
+
+  engines:
+    if: github.event.schedule == '17 9 * * 1' || inputs.engines
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: npx playwright install --with-deps chromium webkit firefox
+      - run: pnpm engines
