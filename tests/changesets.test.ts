@@ -44,10 +44,10 @@ describe("the compatibility line", () => {
   });
 
   it("is said by every changeset waiting here that touches a surface", () => {
-    // The ones written for FR items name a surface; each of them says what it did.
+    // The ones written for FR items name a surface; each of them says what it did. Right after a
+    // release none is waiting, and that holds too: the release run tests the tree it just versioned.
     const pending = readdirSync(dir).filter((file) => file.endsWith(".md") && file !== "README.md");
-    const forItems = pending.filter((file) => /\(FR-(06|17|26|29|31)/.test(readFileSync(resolve(dir, file), "utf8")));
-    expect(forItems.length).toBeGreaterThan(0);
+    const forItems = pending.filter((file) => /\(FR-\d+/.test(readFileSync(resolve(dir, file), "utf8")));
     for (const file of forItems) expect(saysCompatibility(readFileSync(resolve(dir, file), "utf8")), file).toBe(true);
   });
 });
