@@ -58,7 +58,7 @@ describe("the workbench has headings", () => {
       ),
     );
     await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="activity-button"]')!.click());
-    const heading = host.querySelector('aside[aria-label="Activity"] h2');
+    const heading = host.querySelector('section[aria-label="Activity"] h2');
     expect(heading?.textContent).toBe("Activity");
     await act(async () => root.unmount());
     host.remove();

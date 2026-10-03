@@ -194,8 +194,12 @@ export function Profile<S extends AnySchema>({
         * the studio took the studio with it. Hidden rather than absent, the
         * pane keeps its children alive, and `hidden` keeps them out of the
         * picture and out of the accessibility tree both.
+        *
+        * A labelled region, not an aside: it opens from the bar or inside an
+        * embed's own region, and a complementary landmark inside another is
+        * what axe's `landmark-complementary-is-top-level` refuses (FR-40).
         */}
-      <aside
+      <section
           ref={(element) => {
             pane.current = element;
           }}
@@ -391,7 +395,7 @@ export function Profile<S extends AnySchema>({
           </div>
           ) : null}
 
-        </aside>
+        </section>
     </div>
   );
 }

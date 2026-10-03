@@ -85,8 +85,10 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
   }
 
   return (
-    <aside
+    <section
       aria-label="What the lines mean"
+      // In the seat it is a part of the seat, not a landmark of its own (FR-40).
+      role={inside ? "group" : undefined}
       data-testid="relation-key"
       style={inside ? { display: "grid", gap: 1 } : {
         position: "absolute",
@@ -227,7 +229,7 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
           </button>
         );
       })}
-    </aside>
+    </section>
   );
 }
 

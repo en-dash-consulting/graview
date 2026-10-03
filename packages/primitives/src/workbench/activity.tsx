@@ -306,7 +306,8 @@ export function ActivityRail({
         </div>
       ) : null}
       {open ? (
-        <aside
+        // A labelled region, not an aside: it opens from the bar, inside the banner (FR-40).
+        <section
           aria-label="Activity"
           data-testid="activity"
           data-graview-offstage=""
@@ -499,7 +500,7 @@ export function ActivityRail({
               <StartFresh />
             </div>
           ) : null}
-        </aside>
+        </section>
       ) : null}
     </div>
   );

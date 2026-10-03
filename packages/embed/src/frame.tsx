@@ -334,14 +334,16 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
       // embed's region, so it stops being a second landmark (two regions of
       // one name is axe's `landmark-unique`) and stays a named group.
       if (own === label) {
-        if (el.getAttribute("role") === "region") el.setAttribute("role", "group");
+        if (el.getAttribute("role") === "region" || (el.tagName === "SECTION" && !el.hasAttribute("role"))) el.setAttribute("role", "group");
         return;
       }
       el.setAttribute("aria-label", own ? `${label} · ${own}` : label);
     };
     // The root is the embed's own region and already wears the label; the
-    // sweep names what is INSIDE it.
-    const sweep = () => root.querySelectorAll("aside, nav, main, header, footer, [role=region], [role=complementary], [role=navigation]").forEach(name);
+    // sweep names what is INSIDE it — a named section is a region too, and
+    // the seat is one (FR-40).
+    const sweep = () =>
+      root.querySelectorAll("aside, nav, main, header, footer, section[aria-label]:not([role]), [role=region], [role=complementary], [role=navigation]").forEach(name);
     sweep();
     const observer = new MutationObserver(sweep);
     observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-label"] });
