@@ -158,6 +158,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       judgesPast: rule.judgesPast ?? false,
       wholeGraph: rule.scope === "graph",
       ...(rule.label ? { title: rule.label } : {}),
+      ...(rule.judgement ? { require: rule.judgement.require, ...(rule.judgement.when ? { when: rule.judgement.when } : {}), ...(rule.judgement.says ? { says: rule.judgement.says } : {}) } : {}),
       ...(rule.description ?? rule.label ? { description: rule.description ?? rule.label } : {}),
       ...(derivedRepairs.length > 0 ? { derivedRepairs } : {}),
     });
@@ -174,6 +175,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
    */
   const roles = new Set<string>(app.policy?.roles ?? []);
   for (const g of app.policy?.grants ?? []) if (g.roles !== "*") for (const role of g.roles) roles.add(role);
+  for (const sight of app.policy?.sees ?? []) if (sight.roles !== "*") for (const role of sight.roles) roles.add(role);
   for (const role of roles) nodes.push({ id: roleId(role), kind: "role", label: role });
 
   (app.policy?.grants ?? []).forEach((g, index) => {
@@ -193,6 +195,22 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
     if (g.roles !== "*") for (const role of g.roles) edges.push({ kind: "lets", from: id, to: roleId(role) });
     if (g.mutations !== "*") for (const name of g.mutations) edges.push({ kind: "may", from: id, to: actId(name) });
     if (g.kinds && g.kinds !== "*") for (const kind of g.kinds) edges.push({ kind: "allows-on", from: id, to: kindId(kind) });
+  });
+
+  // Who sees what, a node each like a grant, so the studio can add, change and take one away (FR-02).
+  (app.policy?.sees ?? []).forEach((sight, index) => {
+    const id = `sight:${index + 1}`;
+    const who = sight.roles === "*" ? "everybody" : sight.roles.join(", ");
+    nodes.push({
+      id,
+      kind: "sight",
+      label: sight.describe ?? `${who} may see ${sight.own ? "their own " : ""}${sight.kinds.join(", ")}`,
+      own: sight.own ?? false,
+      everyone: sight.roles === "*",
+      ...(sight.describe ? { describe: sight.describe } : {}),
+    });
+    if (sight.roles !== "*") for (const role of sight.roles) edges.push({ kind: "seen-by", from: id, to: roleId(role) });
+    for (const kind of sight.kinds) edges.push({ kind: "shows", from: id, to: kindId(kind) });
   });
 
   for (const lens of app.lenses ?? []) {

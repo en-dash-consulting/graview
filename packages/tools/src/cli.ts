@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { loadApp } from "@graview/core/cli";
+import { entryArg, loadApp } from "@graview/core/cli";
+import { instantiateTemplate, sayFindings, templateSeedPrimitives } from "@graview/core/document";
 import { Store, type AnySchema, type GraviewApp, type MutationCall, type Operation, type Principal } from "@graview/core";
 import { backendFrom, openRemote, openStore, type RemoteStore } from "@graview/ship";
 import { createMcpAdapter } from "./agent/adapters.js";
@@ -40,6 +41,15 @@ export const MCP_USAGE = `  graview mcp <entry> [--data <dir> | --sqlite <file> 
       array of { mutation, args, as? }; a later call names an earlier one's
       node as { "$plan": "<as>" }. --preview says what would happen and
       writes nothing.
+
+  graview apply [<entry>] --template <file|url> [--answers '<json>'] [--examples]
+                [--preview] [--as <id>] [--roles a,b] [--data <dir> | ...]
+      Sets a store up from a template (Graview Cloud's graview-template
+      shape): its questions answered from --answers or their defaults, its
+      setup acts run as ONE batch authored by the template (a system seat,
+      "template:<id>", unless --as/--roles say otherwise), so one --undo takes
+      it back. --examples brings its example content too, as a batch of its
+      own. Without <entry>, the template's own document is the app.
 `;
 
 function flag(argv: readonly string[], name: string): string | undefined {
@@ -87,10 +97,16 @@ export interface Host<S extends AnySchema> {
   close(): Promise<void>;
 }
 
-export async function openHost<S extends AnySchema>(app: GraviewApp<S>, argv: readonly string[], principal: Principal): Promise<Host<S>> {
+export async function openHost<S extends AnySchema>(
+  app: GraviewApp<S>,
+  argv: readonly string[],
+  principal: Principal,
+  /** What its changes come through, recorded on every op the server makes (FR-06). */
+  via: string = "mcp",
+): Promise<Host<S>> {
   const url = flag(argv, "--remote-url");
   if (url) {
-    const remote: RemoteStore<S> = await openRemote({ app, url, principal, headers: headersFrom(argv), pollMs: 0 });
+    const remote: RemoteStore<S> = await openRemote({ app, url, principal, headers: headersFrom(argv), pollMs: 0, via });
     let heard: string[] = [];
     remote.onRefusal((reason) => heard.push(reason));
     return {
@@ -128,8 +144,8 @@ export async function openHost<S extends AnySchema>(app: GraviewApp<S>, argv: re
 
 /** The entry module, or the exit code for not having one. */
 async function entryOf(argv: readonly string[], command: string): Promise<GraviewApp | number> {
-  const entry = argv[0];
-  if (!entry || entry.startsWith("--")) {
+  const entry = entryArg(argv, 0);
+  if (!entry) {
     process.stderr.write(`graview ${command}: an entry module is required\n\n${MCP_USAGE}`);
     return 2;
   }
@@ -169,7 +185,7 @@ export async function mcp(argv: readonly string[]): Promise<number> {
     return 0;
   }
 
-  const host = await openHost(app, argv, principal);
+  const host = await openHost(app, argv, principal, "mcp");
   const runtime = createToolRuntime(host.store, { author: principal, readOnly, places: () => app.views?.places?.() ?? [] });
   const inner = createMcpAdapter(runtime);
   say(`graview mcp: ${app.name} as ${principal.id} on ${host.where} — ${inner.listTools().length} tools\n`);
@@ -233,7 +249,101 @@ function readPlan(file: string): PlannedCall[] {
   });
 }
 
+/** JSON from a file or a URL. */
+async function readJson(where: string): Promise<unknown> {
+  if (/^https?:\/\//.test(where)) {
+    const response = await fetch(where);
+    if (!response.ok) throw new Error(`${where} answered ${response.status}`);
+    return (await response.json()) as unknown;
+  }
+  return JSON.parse(readFileSync(resolve(process.cwd(), where), "utf8")) as unknown;
+}
+
+/**
+ * A TEMPLATE, SET UP IN A LIVE STORE (FR-08) — the same instantiation
+ * Graview Cloud runs, here against a folder, a SQLite file or a served
+ * store. Every finding is said before anything is written; the setup acts
+ * then go through `planFrom` and `applyPlan` exactly as `--plan` does, so
+ * they are judged under the seat first and land as ONE batch, authored by
+ * the template, with the template's own sentence as its intent — one entry
+ * in the activity, one `--undo` to take it back. The example content is a
+ * batch of its own, so the examples can go without the setup.
+ */
+async function applyTemplate(argv: readonly string[], where: string): Promise<number> {
+  let answers: Record<string, unknown> = {};
+  const given = flag(argv, "--answers");
+  if (given !== undefined) {
+    try {
+      const parsed = JSON.parse(given) as unknown;
+      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) throw new Error("expected an object of answers by question id");
+      answers = parsed as Record<string, unknown>;
+    } catch (error) {
+      say(`graview apply: --answers is not a JSON object of answers by question id: ${error instanceof Error ? error.message : String(error)}\n`);
+      return 2;
+    }
+  }
+  const made = instantiateTemplate(await readJson(where), answers);
+  if (!made.ok) {
+    say(`graview apply: ${where} cannot be set up:\n${sayFindings(made.findings)}\n`);
+    return 1;
+  }
+  const { template } = made;
+  const entry = entryArg(argv, 0);
+  const app = entry ? await loadApp(entry) : (made.compiled.app as GraviewApp);
+  /* The template is who set this up, as Cloud records it — unless the command says who. */
+  const principal: Principal =
+    flag(argv, "--as") !== undefined || flag(argv, "--roles") !== undefined ? seatFrom(argv, `template:${template.id}`) : { kind: "system", id: `template:${template.id}` };
+  const preview = argv.includes("--preview");
+  const stamp = Date.now().toString(36);
+  const host = await openHost(app, argv, principal, "cli");
+  try {
+    await host.refresh();
+    const store = host.store;
+    const target = preview
+      ? new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: store.graph.snapshot() })
+      : store;
+    const plan = planFrom(target, made.setup.map((call) => ({ mutation: call.name, args: call.args, why: call.intent })), { principal, app });
+    if (plan.refused.length > 0) {
+      say(`graview apply: ${plan.refused.length} of ${plan.entries.length} setup acts cannot run:\n${plan.refused.map((entry) => `  ${entry.call.mutation}: ${entry.refusal!.message}\n`).join("")}`);
+      return 1;
+    }
+    const before = target.log.all().length;
+    const applied = applyPlan(target, plan, { author: principal, batch: `template:${template.id}:${stamp}` });
+    if (applied.stoppedAt) {
+      say(`graview apply: setup stopped at act ${applied.stoppedAt.at}: ${applied.stoppedAt.why}${applied.undone ? " — what had run was taken back." : ""}\n`);
+      return 1;
+    }
+    let examples: string | undefined;
+    if (argv.includes("--examples") && made.seed) {
+      examples = `examples:${template.id}:${stamp}`;
+      try {
+        target.applyPrimitives(templateSeedPrimitives(made.seed, made.document), { author: principal, batch: examples, intent: `Example content from ${template.title}` });
+      } catch (error) {
+        say(`graview apply: the example content could not be added: ${error instanceof Error ? error.message : String(error)}. The setup landed as ${applied.batch}.\n`);
+        if (!preview) await host.settled();
+        return 1;
+      }
+    }
+    const extra = { made: applied.made, ...(examples ? { examples } : {}) };
+    if (preview) {
+      process.stdout.write(report(target.log.all().slice(before), { preview: true, ...extra, violations: target.violations().length }));
+      return 0;
+    }
+    return finish(host, before, extra);
+  } finally {
+    await host.close();
+  }
+}
+
 export async function apply(argv: readonly string[]): Promise<number> {
+  const templateWhere = flag(argv, "--template");
+  if (templateWhere !== undefined) {
+    if (["--call", "--plan", "--undo"].some((other) => argv.includes(other))) {
+      say(`graview apply: --template sets a store up on its own; say --call, --plan or --undo in a separate command\n\n${MCP_USAGE}`);
+      return 2;
+    }
+    return applyTemplate(argv, templateWhere);
+  }
   const app = await entryOf(argv, "apply");
   if (typeof app === "number") return app;
   const principal = seatFrom(argv, "graview-apply");
@@ -246,7 +356,7 @@ export async function apply(argv: readonly string[]): Promise<number> {
   }
   const intent = flag(argv, "--intent");
   const preview = argv.includes("--preview");
-  const host = await openHost(app, argv, principal);
+  const host = await openHost(app, argv, principal, "cli");
   try {
     await host.refresh();
     const store = host.store;

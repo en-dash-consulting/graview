@@ -30,3 +30,8 @@ apps/gauntlet/build/
 # The vgpu skill is local tooling for apps/spike's WebGPU work, not part of
 # Graview; a product installs the graview-* skills, never this one.
 .claude/skills/vgpu/
+
+# The served rota's fixture is its snapshot and log; the epochs and the
+# compaction archive the file adapter writes beside them are derived.
+apps/*/data/**/epochs.json
+apps/*/data/**/archive/

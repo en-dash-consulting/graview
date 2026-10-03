@@ -1,5 +1,5 @@
 import { bindSchema, createSchema, defineApp, defineNode, nodeRef } from "@graview/core";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import {
   browserStartsFresh,
@@ -68,7 +68,7 @@ describe("the browser adapter", () => {
       "test:garden:meta",
       "test:garden:snapshot",
     ]);
-    expect(adapter.loadMeta("garden")).toEqual({ version: 1 });
+    expect(adapter.loadMeta("garden")).toMatchObject({ version: 1 });
     expect(await adapter.loadLog!("garden")).toHaveLength(1);
   });
 
@@ -170,7 +170,7 @@ describe("the browser adapter", () => {
     const upgraded = await openStore({ app: v2, adapter, seed });
     expect(upgraded.migrated).toHaveLength(1);
     expect((upgraded.store.graph.getNode("p1") as { beds: number }).beds).toBe(4);
-    expect(adapter.loadMeta("garden")).toEqual({ version: 2 });
+    expect(adapter.loadMeta("garden")).toMatchObject({ version: 2 });
     // The run is in the persisted log AND in the reopened store's history.
     expect(upgraded.store.batches()[0]?.author).toEqual({ kind: "system", id: "ship:migration" });
     upgraded.close();
@@ -234,4 +234,20 @@ describe("when a load starts fresh", () => {
       "http://x/?today=2026-09-01&fresh=1#focus=t1",
     );
   });
+
+  // A page cannot keep an epoch's copy of the graph, so it must not fold and hash the whole log to adopt one on every open.
+  it("opens a stored graph without folding its log, however many times it is opened", async () => {
+    const { OperationLog } = await import("@graview/core");
+    const storage = memoryStorage();
+    const adapter = createBrowserAdapter({ storage, prefix: "test" });
+    const first = await openStore({ app, adapter, seed });
+    first.store.apply({ name: "rename", args: { id: "p1", label: "Uno" } });
+    await first.flush();
+    first.close();
+    const fold = vi.spyOn(OperationLog.prototype, "fold");
+    for (let i = 0; i < 3; i++) (await openStore({ app, adapter })).close();
+    expect(fold).not.toHaveBeenCalled();
+    fold.mockRestore();
+  });
 });
+

@@ -32,6 +32,7 @@ export { createStudio } from "./studio.js";
 export type { Studio, StudioOptions } from "./studio.js";
 export { createStudioLens } from "./lens.js";
 export { StudioPlace, maySeeTheStudio } from "./place.js";
+export type { StudioApplied } from "./place.js";
 export { studioResponder, typeFromName } from "./agent.js";
 export type { StudioResponderOptions } from "./agent.js";
 export { StudioAgentPanel } from "./agent-panel.js";

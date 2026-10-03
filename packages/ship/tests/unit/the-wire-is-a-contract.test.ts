@@ -39,7 +39,7 @@ afterEach(async () => {
 
 describe("the wire", () => {
   it("names every route the server answers, and each one answers", async () => {
-    served = await serveStore({ app, adapter: createMemoryAdapter(), seed: seed as never });
+    served = await serveStore({ app, adapter: createMemoryAdapter(), seed: seed as never, trustSeatHeaders: true });
     expect(WIRE.map((route) => route.path)).toEqual([
       "/graview/state",
       "/graview/ops",
@@ -49,6 +49,7 @@ describe("the wire", () => {
       "/graview/here",
       "/graview/who",
       "/graview/leave",
+      "/graview/live",
     ]);
     for (const route of WIRE) {
       const response = await fetch(`${served.url}${route.path}${route.path.endsWith("since") ? "?seq=-1" : ""}`, {
@@ -72,8 +73,8 @@ describe("the wire", () => {
       seed: seed as never,
       // A host's `seatOf`: the framework carries a bearer token; the host says who it is.
       seatOf: (request) => {
-        seen.push(String(request.headers["authorization"] ?? ""));
-        return request.headers["authorization"] === "Bearer keeper-key" ? { kind: "human", id: "k", roles: ["keeper"] } : { kind: "human" };
+        seen.push(request.headers.get("authorization") ?? "");
+        return request.headers.get("authorization") === "Bearer keeper-key" ? { kind: "human", id: "k", roles: ["keeper"] } : { kind: "human" };
       },
     });
     // The browser's own store still judges locally as the keeper; the SERVER learns who from the token alone.
@@ -95,7 +96,7 @@ describe("the wire", () => {
   });
 
   it("settles: a host waits for the server's verdict, and a refusal is heard before it exits", async () => {
-    served = await serveStore({ app, adapter: createMemoryAdapter(), seed: seed as never });
+    served = await serveStore({ app, adapter: createMemoryAdapter(), seed: seed as never, trustSeatHeaders: true });
     const nobody = await openRemote({ app, url: served.url, pollMs: 0, principal: { kind: "human", id: "n" } });
     const refusals: string[] = [];
     nobody.onRefusal((reason) => refusals.push(reason));

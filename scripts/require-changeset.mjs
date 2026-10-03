@@ -14,9 +14,10 @@
  *   node scripts/require-changeset.mjs [base-ref]
  */
 import { execFileSync } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { saysCompatibility, surfacesTouched } from "./lib/surfaces.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const base = process.argv[2] ?? process.env["GITHUB_BASE_REF"] ?? "main";
@@ -61,6 +62,30 @@ if (pending.length > 0) {
   process.stdout.write(
     `${touchedPackages.join(", ")} changed; ${pending.length} changeset(s) present.\n`,
   );
+  /*
+   * AND A CHANGE TO A SURFACE A HOST HOLDS US TO SAYS WHAT IT DID (FR-30).
+   * Every changeset this pull request adds answers in a `Compatibility:`
+   * line — "unchanged" is an answer — when it touches ops and primitives,
+   * stored formats, the wire, the declaration and check codes, or derived
+   * tool names and schemas. docs/stability.md says what each may change.
+   */
+  const surfaces = surfacesTouched(changed);
+  if (surfaces.length > 0) {
+    const added = git("diff", "--name-only", "--diff-filter=A", range, "--", ".changeset")
+      .split("\n")
+      .filter((file) => file.endsWith(".md") && !file.endsWith("README.md"));
+    const silent = added.filter((file) => !saysCompatibility(readFileSync(resolve(repoRoot, file), "utf8")));
+    if (silent.length > 0) {
+      process.stderr.write(
+        `This change touches ${surfaces.join("; ")}.\nThese changesets do not say what it does to compatibility:\n` +
+          silent.map((file) => `  ${file}\n`).join("") +
+          "\nAdd a line `Compatibility: …` to each — additive, breaking, or unchanged, and for whom.\n" +
+          "docs/stability.md says what each surface may change within a major.\n",
+      );
+      process.exit(1);
+    }
+    process.stdout.write(`Touches ${surfaces.join(", ")}; every changeset added says what it does to compatibility.\n`);
+  }
   process.exit(0);
 }
 

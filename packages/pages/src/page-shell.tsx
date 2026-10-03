@@ -50,7 +50,14 @@ export function DefaultShell<S extends AnySchema>({
   return (
     <div
       style={{
-        minHeight: "100vh",
+        /*
+         * A WINDOW'S HEIGHT ONLY FOR A FACE THAT OWNS THE WINDOW. Embedded,
+         * `100vh` is the host's viewport, or the frame's when the embed is
+         * a chat's widget sized from its content: the page asked for the
+         * frame's height, the frame grew to the page plus the strip, and
+         * the page asked again, without end (FR-13).
+         */
+        ...(context.embedded ? {} : { minHeight: "100vh" }),
         display: "flex",
         flexDirection: "column",
         background: "var(--graview-ground)",

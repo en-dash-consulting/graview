@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFi
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { LINKED_PACKAGES, scaffoldProject, validateScaffoldOptions, type ScaffoldOptions } from "../scaffold/index.js";
+import { instantiateTemplate, type GraviewTemplate } from "../document/graview-template.js";
 
 /**
  * `graview create <dir>`: a product on Graview, started.
@@ -34,6 +35,13 @@ export const CREATE_USAGE = `  graview create <dir> [--name "Field Notes"] [--ki
         --merge            write only the files that do not exist yet, and
                            name every collision without touching it
         --force            write into a directory that is not empty
+        --template <file|url>
+                           start from a template made anywhere (Graview
+                           Cloud's graview-template shape): the project keeps
+                           its document as src/domain/app.json and the
+                           template as template.json, for \`graview apply
+                           --template\` to set a store up from. Named after
+                           the template unless --name says otherwise.
 `;
 
 export interface CreateIo {
@@ -109,6 +117,31 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
     return 2;
   }
 
+  /*
+   * A TEMPLATE IS JUDGED BEFORE A DIRECTORY EXISTS (FR-08): its shape, its
+   * document through the compiler every document goes through, its setup
+   * acts against that document, its examples against the schema. Only the
+   * answers are left open — nobody has been asked anything yet.
+   */
+  const templateFlag = flag(argv, "--template");
+  let template: GraviewTemplate | undefined;
+  if (templateFlag !== undefined) {
+    const read = await readTemplateFrom(templateFlag);
+    if (typeof read === "string") {
+      io.stderr(`graview create: ${read}\n`);
+      return 2;
+    }
+    const judged = instantiateTemplate(read.raw);
+    const wrong = judged.ok ? [] : judged.findings.filter((f) => f.code !== "answer");
+    if (!judged.ok && wrong.length > 0) {
+      io.stderr(
+        `graview create: ${templateFlag} is not a template that installs:\n${wrong.map((f) => `  ${f.path || "(template)"}: ${f.message}\n`).join("")}`,
+      );
+      return 2;
+    }
+    template = read.raw as GraviewTemplate;
+  }
+
   const { version } = ownManifest();
   const pmFlag = flag(argv, "--pm");
   const packageManager: "pnpm" | "npm" =
@@ -118,7 +151,8 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
 
   // Everything that can be refused is refused before a directory exists.
   const base: ScaffoldOptions = {
-    name: flag(argv, "--name") || fromDirectoryName(dir),
+    name: flag(argv, "--name") || template?.title || fromDirectoryName(dir),
+    ...(template ? { template } : {}),
     ...(flag(argv, "--kind") ? { kind: flag(argv, "--kind") } : {}),
     // "Shifts" is what a person types; the slug is what the generator wants.
     ...(flag(argv, "--plural") ? { plural: flag(argv, "--plural")!.trim().toLowerCase() } : {}),
@@ -239,6 +273,11 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
         ? `The framework is consumed by path from ${link}: rebuild it (pnpm -C ${link} build) when its sources change.\n` +
           `Its CI checks the framework out beside the app${frameworkRepo ? ` from ${frameworkRepo}` : " — fill in the repository in .github/workflows/ci.yml"}; a private framework needs a FRAMEWORK_TOKEN secret.\n\n`
         : "") +
+      (template
+        ? `Made from the template "${template.title}": its document is src/domain/app.json, and\n` +
+          `\`${run} apply-template\` runs its setup into ./data as one batch that one undo takes back\n` +
+          `(answer its questions with \`${run} apply-template ${pm === "pnpm" ? "" : "-- "}--answers '{"${template.questions[0]?.id ?? "question"}": …}'\`).\n\n`
+        : "") +
       `Then declare more: src/domain/ is the whole surface, and \`${run} check\` says what is wrong with it.\n`,
   );
   if (collisions.length > 0) {
@@ -252,6 +291,28 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
     return 1;
   }
   return 0;
+}
+
+/** A template from a file or a URL, parsed — or the sentence saying why it could not be. */
+async function readTemplateFrom(where: string): Promise<{ readonly raw: unknown } | string> {
+  if (where === "") return "--template needs a file or a URL";
+  let text: string;
+  try {
+    if (/^https?:\/\//.test(where)) {
+      const response = await fetch(where);
+      if (!response.ok) return `${where} answered ${response.status}`;
+      text = await response.text();
+    } else {
+      text = readFileSync(resolve(process.cwd(), where), "utf8");
+    }
+  } catch (error) {
+    return `${where} could not be read: ${error instanceof Error ? error.message : String(error)}`;
+  }
+  try {
+    return { raw: JSON.parse(text) as unknown };
+  } catch (error) {
+    return `${where} is not JSON: ${error instanceof Error ? error.message : String(error)}`;
+  }
 }
 
 /** Whether a directory already sits inside a git work tree. */

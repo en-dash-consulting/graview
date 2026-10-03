@@ -14,7 +14,9 @@ import {
   type InvariantDefinition,
   type LensDeclaration,
   type Policy,
+  type Sight,
 } from "@graview/core";
+import { expressionRule } from "@graview/core/document";
 import { z } from "zod";
 import { DECLARED_KIND, type FieldType } from "./meta.js";
 import { fieldTypeOf } from "./from-declaration.js";
@@ -293,6 +295,26 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     const kept = baseInvariants.get(ruleName);
     const scope = bool(rule, "wholeGraph") || !over ? ("graph" as const) : { kind: kindName.get(over.id) ?? name(over) };
     const description = str(rule, "description");
+    /*
+     * A judgement in words is judged — the studio's own rule and the
+     * checkout's alike, since the words are the judgement (FR-07).
+     */
+    const require = str(rule, "require");
+    if (require) {
+      return expressionRule(
+        ruleName,
+        {
+          over: scope === "graph" ? "graph" : scope.kind,
+          require,
+          ...(str(rule, "when") ? { when: str(rule, "when")! } : {}),
+          ...(str(rule, "says") ? { says: str(rule, "says")! } : {}),
+          title: str(rule, "title") ?? ruleName,
+          ...(description ? { description } : {}),
+          ...(repairs.length > 0 ? { repairs } : {}),
+          ...(bool(rule, "judgesPast") ? { judgesPast: true } : {}),
+        },
+      );
+    }
     if (kept) return { ...kept, scope, ...(description ? { description } : {}), ...(repairs.length > 0 ? { repairs } : {}) } as InvariantDefinition;
     return defineInvariant(ruleName, {
       scope,
@@ -319,16 +341,20 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     };
   });
   /*
-   * WHO SEES WHAT, carried from the checkout — the studio has no act for a
-   * sight yet — and kept to the kinds still declared. Dropped, a storefront
-   * written back by the studio showed every customer to everybody again.
+   * WHO SEES WHAT, read from the sights in the graph (FR-02), kept to the
+   * kinds still declared — a sight whose every kind is gone keeps nothing.
    */
-  const declared = new Set(kindName.values());
-  const sees = (base?.policy?.sees ?? [])
-    .map((sight) => ({ ...sight, kinds: sight.kinds.filter((kind) => declared.has(kind)) }))
+  const sees: Sight[] = read
+    .ofKind("sight")
+    .map((sight) => ({
+      roles: bool(sight, "everyone") ? ("*" as const) : read.out(sight.id, "seen-by").map(name),
+      kinds: read.out(sight.id, "shows").map((kind) => kindName.get(kind.id) ?? name(kind)),
+      ...(bool(sight, "own") ? { own: true } : {}),
+      ...(str(sight, "describe") ? { describe: str(sight, "describe")! } : {}),
+    }))
     .filter((sight) => sight.kinds.length > 0);
   const policy: Policy | undefined =
-    roles.length > 0 || grants.length > 0 ? { grants, ...(roles.length > 0 ? { roles } : {}), ...(sees.length > 0 ? { sees } : {}) } : undefined;
+    roles.length > 0 || grants.length > 0 || sees.length > 0 ? { grants, ...(roles.length > 0 ? { roles } : {}), ...(sees.length > 0 ? { sees } : {}) } : undefined;
 
   /*
    * A LENS'S BINDINGS FOLLOW THE KINDS THEY NAME — and let go of the ones

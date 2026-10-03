@@ -5,6 +5,7 @@ import { useAffordances, useApplyAffordance, useGraview, useSelection } from "@g
 import { loadPins, togglePin, type Affordance, type PinOverrides } from "@graview/tools";
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnswerArgs, nameOf } from "./answer-args.js";
+import { VISUALLY_HIDDEN } from "../primitives/index.js";
 
 
 /**
@@ -595,6 +596,8 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
             }),
       }}
     >
+      {/* A heading for the region (FR-25) where it stands alone; in the seat's rail, the seat's heading is its. */}
+      {railed ? null : <h2 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>Inspector</h2>}
       {/*
         * The heading row disappears entirely when it would hold nothing but
         * the dismiss control. An empty bar with one × in it reads as a

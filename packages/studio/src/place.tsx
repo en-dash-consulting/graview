@@ -1,4 +1,4 @@
-import { INSTALLATION_MODULE, type AnySchema, type CheckResult, type GraviewApp, type Store } from "@graview/core";
+import { INSTALLATION_MODULE, type AnySchema, type CheckResult, type GraviewApp, type MigrationDeclaration, type Store } from "@graview/core";
 import { EMPTY_VIEW, withWithin } from "@graview/layout";
 import { GraviewProvider, Scene, createViews, useGraview, useNavigation, useTheKeyboardLandsSomewhere } from "@graview/react";
 import { ActivityRail, AgentSeat, Inspector, Places, registerDefaultViews } from "@graview/primitives";
@@ -41,10 +41,22 @@ import { useStudioDoor } from "./write-in-place.js";
  * a link can open it, and closing puts you back exactly where you were —
  * which is what the stop you came from IS.
  */
+/**
+ * WHAT APPLYING HANDS A HOST that keeps the declaration itself (FR-19): the
+ * app the studio's declaration compiles to, the migration a stored graph
+ * needs, and the files `graview create` would write for it.
+ */
+export interface StudioApplied {
+  readonly app: GraviewApp<AnySchema>;
+  readonly migration: MigrationDeclaration | null;
+  readonly files: readonly WrittenFile[];
+}
+
 export function StudioPlace<S extends AnySchema>({
   app,
   label = "Studio",
   within = "page",
+  onApply,
 }: {
   /** The declaration to open. The running app's own, in every case that matters. */
   readonly app: GraviewApp<S>;
@@ -62,6 +74,13 @@ export function StudioPlace<S extends AnySchema>({
    * scene was laid out under the bar it was drawn in.
    */
   readonly within?: "page" | "box";
+  /**
+   * A HOST THAT KEEPS THE DECLARATION. Given, Apply hands it what the
+   * checker passed and the studio writes nothing: no door is asked after,
+   * no files are offered. A hosted app keeps declarations on its own
+   * server, versioned and reviewed, where a dev server's door is not.
+   */
+  readonly onApply?: (applied: StudioApplied) => void;
 }) {
   const { store, principal } = useGraview<S>();
   const { view, go } = useNavigation();
@@ -105,9 +124,9 @@ export function StudioPlace<S extends AnySchema>({
          * must not escape the embed.
          */
         within === "page" ? (
-          createPortal(<StudioOverlay app={app} within={within} onClose={() => setOpen(false)} />, document.body)
+          createPortal(<StudioOverlay app={app} within={within} onClose={() => setOpen(false)} {...(onApply ? { onApply } : {})} />, document.body)
         ) : (
-          <StudioOverlay app={app} within={within} onClose={() => setOpen(false)} />
+          <StudioOverlay app={app} within={within} onClose={() => setOpen(false)} {...(onApply ? { onApply } : {})} />
         )
       ) : null}
     </>
@@ -159,10 +178,12 @@ function StudioOverlay<S extends AnySchema>({
   app,
   within,
   onClose,
+  onApply,
 }: {
   readonly app: GraviewApp<S>;
   readonly within: "page" | "box";
   readonly onClose: () => void;
+  readonly onApply?: (applied: StudioApplied) => void;
 }) {
   const { principal, brand, scheme } = useGraview<S>();
   const studio = useMemo(() => createStudio(app, { principal }), [app, principal]);
@@ -224,7 +245,8 @@ function StudioOverlay<S extends AnySchema>({
   const turn = useStoreTick(studio.store);
   const verdict: CheckResult = useMemo(() => studio.check(), [studio, turn]);
   const [applied, setApplied] = useState<Applied | null>(null);
-  const door = useStudioDoor();
+  // A host that keeps the declaration is the only door there is.
+  const door = useStudioDoor(onApply ? null : undefined);
   const [calls, setCalls] = useState<readonly ToolCall[]>(NO_CALLS);
   const noteCall = useCallback((call: ToolCall) => {
     setCalls((current) => {
@@ -329,6 +351,12 @@ function StudioOverlay<S extends AnySchema>({
           data-testid="studio-apply"
           onClick={() => {
             const result = studio.apply();
+            if (result.ok && onApply) {
+              const files = studio.files();
+              onApply({ app: result.app, migration: result.migration, files });
+              setApplied({ ok: true, files, migration: result.migration?.title ?? null, door: false, handed: true });
+              return;
+            }
             setApplied(
               result.ok
                 ? { ok: true, files: studio.files(), migration: result.migration?.title ?? null, door: door !== null }
@@ -378,6 +406,8 @@ type Applied =
       readonly migration: string | null;
       /** Whether the dev server's studio door is open to write it through. */
       readonly door: boolean;
+      /** Handed to the host's `onApply`, which keeps it: nothing to write here. */
+      readonly handed?: boolean;
     }
   | { readonly ok: false; readonly check: CheckResult };
 
@@ -415,7 +445,12 @@ function Written({
         background: applied.ok ? "var(--graview-panel)" : "var(--graview-panel-warning)",
       }}
     >
-      {applied.ok && applied.door ? (
+      {applied.ok && applied.handed ? (
+        <strong style={{ fontSize: "0.875rem", fontWeight: 550 }}>
+          The checker is happy. Handed to the host to keep
+          {applied.migration ? `, with a migration: ${applied.migration}` : ", and no migration needed"}.
+        </strong>
+      ) : applied.ok && applied.door ? (
         <InPlaceWriter studio={studio} migration={applied.migration} files={applied.files} />
       ) : applied.ok ? (
         <>

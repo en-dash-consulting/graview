@@ -7,7 +7,7 @@ the framework derives the spatial scene, the routed pages, the legal actions,
 the agent tool surface and the accessibility labels from that declaration.
 
 `graview` is the tool a person installs. `@graview/*` is the framework a
-product imports. All thirteen packages share one version.
+product imports. All fourteen packages share one version.
 
 ## Layout
 
@@ -25,6 +25,7 @@ packages/
   ship/            @graview/ship        persistence, op-log-native migrations, export, health, `serve`
   studio/          @graview/studio      the declaration itself as a graph, edited in Graview's own interface
   embed/           @graview/embed       mount an app into any element without the Shell
+  guest/           @graview/guest       a view somebody else wrote, in a sandboxed frame that can only ask
   skills/          @graview/skills      the authoring skills an assistant installs into a product
 apps/
   todo/            THE EXAMPLE — the one the docs teach from

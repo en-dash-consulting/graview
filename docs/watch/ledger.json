@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-02T21:42:07.459Z",
+  "at": "2026-10-03T06:44:40.706Z",
   "open": 0,
   "problems": {
     "keyboard-lands-nowhere|a press on <div> \"#:#Pay the deposit\" left the keyboard on <body>": {
@@ -421,6 +421,20 @@
       "lastSeen": "2026-10-02T08:36:54.700Z",
       "status": "fixed",
       "fixedAt": "2026-10-02T08:48:39.171Z"
+    },
+    "page-error|Failed to execute 'setItem' on 'Storage': Setting the value of 'graview:Programme:snapshot' exceeded the quota.": {
+      "rule": "page-error",
+      "detail": "Failed to execute 'setItem' on 'Storage': Setting the value of 'graview:Programme:snapshot' exceeded the quota.",
+      "at": "?theme=light&as=u-4f1c9a#overview=1",
+      "harnesses": [
+        "verify-gauntlet",
+        "verify-journeys"
+      ],
+      "firstSeen": "2026-10-03T04:13:27.762Z",
+      "flaps": 0,
+      "lastSeen": "2026-10-03T04:13:27.762Z",
+      "status": "fixed",
+      "fixedAt": "2026-10-03T04:29:38.019Z"
     }
   }
 }

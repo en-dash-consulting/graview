@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-02T08:26:13.769Z",
+  "at": "2026-10-03T06:33:47.888Z",
   "engine": "chromium",
   "screens": [
     {
@@ -44,11 +44,11 @@
       "articles": [],
       "covered": [],
       "offscreen": [
-        "standing at 1065..1248"
+        "What has to happ at 12..251"
       ],
       "asking": [],
       "board": [],
-      "fill": 65,
+      "fill": 66,
       "inspector": {
         "shown": 0,
         "hidden": 0,
@@ -701,13 +701,10 @@
       "repeats": [],
       "articles": [],
       "covered": [],
-      "offscreen": [
-        "standing at 761..1218",
-        "profile-button at 1367..1707"
-      ],
+      "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 11,
+      "fill": 12,
       "inspector": null,
       "led": null,
       "figures": []

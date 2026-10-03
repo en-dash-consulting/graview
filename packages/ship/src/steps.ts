@@ -1,5 +1,7 @@
 import { UNSET, type MigrationDeclaration, type Primitive } from "@graview/core";
+import { coerce, type FieldSpec, type FieldType } from "@graview/core/document";
 import { applyToSnapshot, type GraphSnapshot } from "./snapshot.js";
+import { withArticle } from "@graview/core";
 
 /**
  * A MIGRATION AS DATA: what a stored graph needs when the declaration
@@ -25,6 +27,17 @@ export type MigrationStep =
    * the old end. Where nothing of the new kind is tied to it, it goes.
    */
   | { readonly what: "move-edge"; readonly kind: string; readonly edge: string; readonly to: string }
+  /** A field called something else: every value moves to the new name (FR-22). */
+  | { readonly what: "rename-field"; readonly kind: string; readonly field: string; readonly to: string }
+  /** A relation called something else, on every kind that declares it: every link moves. */
+  | { readonly what: "rename-edge"; readonly edge: string; readonly to: string }
+  /**
+   * A field whose type changed: each value kept where its meaning survives —
+   * text→number when it parses, datetime→date, a word→the enum option it
+   * names, a value→a list of one, and back where nothing is lost — and
+   * cleared, counted, where it does not.
+   */
+  | { readonly what: "coerce-field"; readonly kind: string; readonly field: string; readonly from: FieldType; readonly to: Pick<FieldSpec, "type" | "options" | "of"> }
   /*
    * CONTENT STEPS. The ones above move a stored graph when the DECLARATION
    * moves; these move it when the DEFAULT CONTENT does — a new question in
@@ -62,6 +75,12 @@ export function sayStep(step: MigrationStep): string {
       return `${step.kind} ${step.edge} edges go`;
     case "move-edge":
       return `${step.kind} ${step.edge} edges move to the ${step.to} records tied to each ${step.kind}`;
+    case "rename-field":
+      return `${step.kind}.${step.field} is renamed ${step.to}, its values kept`;
+    case "rename-edge":
+      return `${step.edge} links are renamed ${step.to}, every one kept`;
+    case "coerce-field":
+      return `${step.kind}.${step.field} becomes ${step.to.type === "enum" ? "a choice" : withArticle(step.to.type)}: values that fit are kept, the rest cleared`;
     case "put-node":
       return `${step.node.kind} ${step.node.id} is put`;
     case "patch-node":
@@ -157,6 +176,27 @@ export function primitivesFor(step: MigrationStep, stored: GraphSnapshot): Primi
       out.push({ op: "remove-edge", edge: step.edge });
       return out;
     }
+    case "rename-field":
+      for (const node of stored.nodes) {
+        if (node.kind !== step.kind || node[step.field] === undefined) continue;
+        out.push({ op: "patch-node", id: node.id, before: { [step.field]: node[step.field], [step.to]: node[step.to] === undefined ? UNSET : node[step.to] }, after: { [step.field]: UNSET, [step.to]: node[step.field] } });
+      }
+      return out;
+    case "rename-edge":
+      for (const edge of stored.edges) {
+        if (edge.kind !== step.edge) continue;
+        out.push({ op: "remove-edge", edge });
+        out.push({ op: "add-edge", edge: { ...edge, kind: step.to } });
+      }
+      return out;
+    case "coerce-field":
+      for (const node of stored.nodes) {
+        if (node.kind !== step.kind || node[step.field] === undefined || node[step.field] === null) continue;
+        const value = coerce(node[step.field], step.from, step.to as FieldSpec);
+        if (JSON.stringify(value) === JSON.stringify(node[step.field])) continue;
+        out.push({ op: "patch-node", id: node.id, before: { [step.field]: node[step.field] }, after: { [step.field]: value === undefined ? UNSET : value } });
+      }
+      return out;
     case "move-edge": {
       const froms = ofKind(step.kind);
       const heirs = ofKind(step.to);
@@ -223,4 +263,44 @@ export function primitivesForSteps(steps: readonly MigrationStep[], stored: Grap
       seen.add(key);
       return true;
     });
+}
+
+/** What one step does to one stored graph, counted: values or links that move, values converted, values cleared, records and links removed. */
+export interface StepCount {
+  readonly step: MigrationStep;
+  readonly said: string;
+  readonly moved: number;
+  readonly converted: number;
+  readonly cleared: number;
+  readonly removed: number;
+}
+
+/**
+ * WHAT MOVES AND WHAT IS LOST, PER STEP (FR-22), against the stored graph
+ * as the steps before it leave it — so "rename quote to price" says how
+ * many values moved, and "notes becomes a number" how many it kept and how
+ * many it had to clear. "Breaking" is these counts, not the kind of edit.
+ */
+export function countSteps(steps: readonly MigrationStep[], stored: GraphSnapshot): readonly StepCount[] {
+  let running = stored;
+  return steps.map((step) => {
+    const primitives = primitivesFor(step, running);
+    let moved = 0;
+    let converted = 0;
+    let cleared = 0;
+    let removed = 0;
+    for (const primitive of primitives) {
+      if (primitive.op === "remove-node") removed++;
+      else if (primitive.op === "add-edge" && (step.what === "rename-edge" || step.what === "move-edge" || step.what === "rename-kind")) moved++;
+      else if (primitive.op === "remove-edge" && step.what !== "rename-edge" && step.what !== "move-edge" && step.what !== "rename-kind") removed++;
+      else if (primitive.op === "patch-node") {
+        if (step.what === "rename-field") moved++;
+        else if (Object.values(primitive.after).some((value) => value === UNSET)) cleared++;
+        else converted++;
+      }
+    }
+    if (step.what === "move-edge") removed += primitives.filter((p) => p.op === "remove-edge").length - moved;
+    running = applyToSnapshot(running, primitives);
+    return { step, said: sayStep(step), moved, converted, cleared, removed: Math.max(0, removed) };
+  });
 }

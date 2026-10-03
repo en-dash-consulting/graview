@@ -146,7 +146,11 @@ export function sourceChanges(before: Reading, after: Reading, base?: GraviewApp
       if (!then.has(name)) {
         const text = (sort === "act" ? actLines(now, node, false) : ruleLines(now, node, false)).join("\n");
         changes.push(sort === "act" ? { what: "add-act", act: name, binding: camel(name), text } : { what: "add-rule", rule: name, binding: camel(name), text });
-        if (sort === "rule") rewrite.push({ sort, name, why: "It is new, and judges nothing until its evaluate says what breaks it." });
+        // A rule judged in words is whole as written; one without judges nothing until its evaluate says what breaks it.
+        if (sort === "rule" && !node["require"]) rewrite.push({ sort, name, why: "It is new, and judges nothing until its evaluate says what breaks it." });
+      } else if (then.get(name) !== signature(now, node) && sort === "rule" && node["require"]) {
+        // A rule judged in words is rewritten by the studio itself: its words are its judgement.
+        changes.push({ what: "replace-rule", rule: name, text: ruleLines(now, node, false).join("\n") });
       } else if (then.get(name) !== signature(now, node)) {
         rewrite.push({ sort, name, why: `Its declaration changed in the studio, and its ${sort === "act" ? "body" : "judgement"} was written for the old one.` });
       }
@@ -158,7 +162,7 @@ export function sourceChanges(before: Reading, after: Reading, base?: GraviewApp
   }
 
   // Policy and presentation are declared elsewhere, in ways the studio cannot yet edit in place: said, not written.
-  for (const kind of ["role", "grant", "lens", "brand"] as const) {
+  for (const kind of ["role", "grant", "sight", "lens", "brand"] as const) {
     const then = new Map(was.ofKind(kind).map((node) => [label(node), signature(was, node)]));
     const later = new Map(now.ofKind(kind).map((node) => [label(node), signature(now, node)]));
     for (const [name, sig] of later) {

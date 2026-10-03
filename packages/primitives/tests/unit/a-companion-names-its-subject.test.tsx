@@ -22,7 +22,8 @@ import { Companion, registerDefaultViews } from "../../src/index.js";
  * person cannot disagree about what a message means.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string() }), plural: "Tasks" });
-const schema = createSchema([task]);
+const note = defineNode("note", { fields: z.object({ label: z.string() }), plural: "Notes" });
+const schema = createSchema([task, note]);
 bindSchema(schema);
 const store = () =>
   new Store({
@@ -67,6 +68,12 @@ describe("a companion names its subject", () => {
     const html = draw(withWithin(withFocus(EMPTY_VIEW, "aggregate:task"), "view", "the-list"), []);
     expect(html).toContain('data-graview-because="place"');
     expect(html).toContain("Tasks");
+  });
+
+  it("names a group of several kinds by their plurals, never by its id", () => {
+    const html = draw(withFocus(EMPTY_VIEW, "aggregate:note+task"), []);
+    expect(html).toContain("Notes and Tasks");
+    expect(html.replace(/<[^>]*>/g, " ")).not.toContain("note+task");
   });
 
   it("carries the acts, the relations, the conversation and the key in one panel", () => {

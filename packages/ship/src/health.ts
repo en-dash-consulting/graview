@@ -11,7 +11,16 @@ export interface HealthReport {
   readonly nodes: number;
   readonly edges: number;
   readonly violations: number;
+  /** Of those, rules that threw rather than judged — counted apart, never matched by message. */
+  readonly couldNotJudge: number;
+  /** Of those, rules that would have read more of the graph than their budget. */
+  readonly overBudget: number;
   readonly danglingEdges: readonly string[];
+  /**
+   * What no longer fits the declaration (`store.findings()`, FR-21): records
+   * and links a repair could fix, and the rules that could not be judged.
+   */
+  readonly findings: number;
   readonly at: string;
 }
 
@@ -23,13 +32,17 @@ export function health<S extends AnySchema>(
   const dangling = [...store.graph.allEdges()]
     .filter((edge) => !ids.has(edge.from) || !ids.has(edge.to))
     .map((edge) => `${edge.kind}:${edge.from}->${edge.to}`);
-  const violations = store.violations().length;
+  const all = store.violations();
+  const violations = all.length;
   return {
     ok: dangling.length === 0,
     nodes: ids.size,
     edges: [...store.graph.allEdges()].length,
     violations,
+    couldNotJudge: all.filter((violation) => violation.status === "could-not-judge").length,
+    overBudget: all.filter((violation) => violation.status === "over-budget").length,
     danglingEdges: dangling,
+    findings: store.findings().length,
     at: (options.now ?? (() => new Date().toISOString()))(),
   };
 }

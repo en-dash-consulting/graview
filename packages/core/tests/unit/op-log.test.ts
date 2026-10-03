@@ -283,9 +283,11 @@ describe("selective undo", () => {
     expect(check.ok).toBe(false);
     if (check.ok) throw new Error("expected a block");
     expect(check.blockedBy).toHaveLength(1);
-    expect(check.blockedBy[0]!.op.intent).toBe("Match the evening run");
+    // Named by what the op did, in its act's own words; what the gesture was for is beside it (FR-18).
+    expect(check.blockedBy[0]!.op.intent).toBe("Mirror d1 onto d2");
+    expect(check.blockedBy[0]!.op.batchIntent).toBe("Match the evening run");
     expect(check.blockedBy[0]!.overlap).toEqual(["d1"]);
-    expect(check.message).toContain("Match the evening run");
+    expect(check.message).toContain("Mirror d1 onto d2");
     expect(check.includeBatches).toHaveLength(1);
     expect(() => s.undo(first.batch)).toThrow(/later operation depends on it/);
   });

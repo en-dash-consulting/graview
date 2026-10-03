@@ -6,8 +6,23 @@ import { isUnset, type Primitive } from "./primitives.js";
 import { edgeId, type GraphEdge, type GraphReader, type GraphSnapshot } from "./types.js";
 
 export interface GraphOptions {
-  /** Validate every node against its declared fields on the way in. */
+  /**
+   * Hold every WRITE to the declaration: a node added or patched must fit
+   * its kind, an edge must be declared between its ends. What is LOADED is
+   * held as it is (FR-28): a graph opens over records an older declaration
+   * wrote, and `validateGraph` says what no longer fits.
+   */
   readonly validate?: boolean;
+}
+
+export interface ApplyPrimitivesOptions {
+  /**
+   * The primitives put back what was there — an undo, or history folded
+   * again — rather than write something new. Records are then held as they
+   * are, as a load holds them: an undo of a repair puts back the misfit it
+   * repaired. A node still has to be there to be patched or removed.
+   */
+  readonly restoring?: boolean;
 }
 
 export type GraphListener<S extends AnySchema> = (
@@ -84,8 +99,14 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     this.edges.clear();
     this.outIndex.clear();
     this.inIndex.clear();
-    for (const node of snapshot.nodes) this.insertNode(node);
-    for (const edge of snapshot.edges) this.insertEdge(edge);
+    /*
+     * HELD AS STORED (FR-28). Loading never parses a node into something
+     * else — no default filled, no field stripped or coerced — and never
+     * refuses one that no longer fits: what was written stays what it was,
+     * and `validateGraph` is how a person hears what does not fit.
+     */
+    for (const node of snapshot.nodes) this.insertNode(node, true);
+    for (const edge of snapshot.edges) this.insertEdge(edge, true);
     const diff = diffSnapshots(before, this.snapshot());
     this.emit(diff);
     return diff;
@@ -159,18 +180,30 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
    * Applies primitives as one batch and emits a single diff. Nothing outside
    * the op log should call this directly — attribution lives in the log.
    */
-  applyPrimitives(primitives: readonly Primitive[]): GraphDiff<NodeOfSchema<S>> {
+  applyPrimitives(primitives: readonly Primitive[], options: ApplyPrimitivesOptions = {}): GraphDiff<NodeOfSchema<S>> {
     const before = this.snapshot();
-    for (const primitive of primitives) this.applyOne(primitive);
+    /*
+     * ALL OR NOTHING. A primitive that fails used to leave the ones before
+     * it applied, so a host rehearsed every repair and migration on a copy
+     * before trusting it (FR-26). The snapshot taken for the diff is the
+     * way back: on any failure the graph is put back as it was, nobody is
+     * told anything changed, and the error goes on up.
+     */
+    try {
+      for (const primitive of primitives) this.applyOne(primitive, options.restoring === true);
+    } catch (error) {
+      this.restore(before);
+      throw error;
+    }
     const diff = diffSnapshots(before, this.snapshot());
     this.emit(diff);
     return diff;
   }
 
   /** Applies primitives to a throwaway copy — used for previewing a diff. */
-  preview(primitives: readonly Primitive[]): GraphDiff<NodeOfSchema<S>> {
+  preview(primitives: readonly Primitive[], options: ApplyPrimitivesOptions = {}): GraphDiff<NodeOfSchema<S>> {
     const copy = Graph.from(this.schema, this.snapshot(), { validate: this.validate });
-    return copy.applyPrimitives(primitives);
+    return copy.applyPrimitives(primitives, options);
   }
 
   subscribe(listener: GraphListener<S>): () => void {
@@ -179,6 +212,16 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
   }
 
   // ------------------------------------------------------------ internals
+
+  /** Puts the graph back to a snapshot it held, silently: nothing a listener saw ever changed. */
+  private restore(snapshot: GraphSnapshot<NodeOfSchema<S>>): void {
+    this.nodes.clear();
+    this.edges.clear();
+    this.outIndex.clear();
+    this.inIndex.clear();
+    for (const node of snapshot.nodes) this.nodes.set(node.id, node);
+    for (const edge of snapshot.edges) this.insertEdge(edge, true);
+  }
 
   private emit(diff: GraphDiff<NodeOfSchema<S>>): void {
     if (
@@ -193,10 +236,10 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     for (const listener of this.listeners) listener(diff);
   }
 
-  private applyOne(primitive: Primitive): void {
+  private applyOne(primitive: Primitive, restoring: boolean): void {
     switch (primitive.op) {
       case "add-node":
-        this.insertNode(primitive.node as NodeOfSchema<S>);
+        this.insertNode(primitive.node as NodeOfSchema<S>, restoring);
         return;
       case "remove-node": {
         const id = primitive.node.id;
@@ -223,11 +266,11 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
           if (isUnset(value)) delete next[key];
           else next[key] = value;
         }
-        this.nodes.set(primitive.id, this.check(next) as NodeOfSchema<S>);
+        this.nodes.set(primitive.id, (restoring ? next : this.checkPatch(current, next, Object.keys(primitive.after))) as NodeOfSchema<S>);
         return;
       }
       case "add-edge":
-        this.insertEdge(primitive.edge);
+        this.insertEdge(primitive.edge, restoring);
         return;
       case "remove-edge": {
         if (!this.edges.has(edgeId(primitive.edge))) {
@@ -246,7 +289,66 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     try {
       return this.schema.parseNode(node) as NodeOfSchema<S>;
     } catch (error) {
+      throw this.refusal(node, error);
+    }
+  }
+
+  /**
+   * A PATCH IS JUDGED ON WHAT IT WRITES (FR-28). The fields it writes must
+   * fit, and are taken as the declaration reads them (a cleared field with
+   * a default takes it). The record as a whole may not come out fitting
+   * less than it went in — but a misfit it already held, in a field the
+   * patch does not touch, stays as stored: renaming a person is not refused
+   * because of an address an older declaration accepted, and nothing the
+   * patch did not write is parsed into something else.
+   */
+  private checkPatch(current: NodeOfSchema<S>, next: Record<string, unknown>, written: readonly string[]): NodeOfSchema<S> {
+    if (!this.validate) return next as NodeOfSchema<S>;
+    const shape = (this.schema.tryDefinition(String(next["kind"]))?.fields as { shape?: Record<string, { safeParse(value: unknown): { success: boolean; data?: unknown } }> } | undefined)?.shape;
+    if (!shape) return this.check(next);
+    for (const field of written) {
+      if (field === "id" || field === "kind") continue;
+      const declared = shape[field];
+      // A field the kind does not declare is not written, as a parse would strip it.
+      if (!declared) {
+        delete next[field];
+        continue;
+      }
+      const read = declared.safeParse(next[field]);
+      if (!read.success) continue; // judged with the whole record below, and refused there
+      if (read.data === undefined) delete next[field];
+      else next[field] = read.data;
+    }
+    const failing = this.failing(next);
+    if (failing === undefined) return next as NodeOfSchema<S>;
+    const before = this.failing(current)?.fields ?? new Set<string>();
+    if ([...failing.fields].some((field) => written.includes(field) || !before.has(field))) {
+      throw this.refusal(next, failing.error);
+    }
+    return next as NodeOfSchema<S>;
+  }
+
+  /** What about a node does not fit: undefined when it fits; `""` stands for a failure that names no field. */
+  private failing(node: unknown): { readonly fields: ReadonlySet<string>; readonly error: unknown } | undefined {
+    try {
+      this.schema.parseNode(node);
+      return undefined;
+    } catch (error) {
       if (error instanceof SchemaError) throw error;
+      const issues = (error as { issues?: readonly { code?: string; path?: readonly PropertyKey[]; keys?: readonly string[] }[] }).issues ?? [];
+      const fields = new Set<string>(
+        issues.flatMap((issue) =>
+          issue.code === "unrecognized_keys" && issue.keys ? [...issue.keys] : typeof issue.path?.[0] === "string" ? [issue.path[0]] : [""],
+        ),
+      );
+      return { fields, error };
+    }
+  }
+
+  /** Why a node was refused, in the app's own words. */
+  private refusal(node: unknown, error: unknown): Error {
+    if (error instanceof SchemaError) return error;
+    {
       const id = (node as { id?: string })?.id ?? "?";
       const kind = (node as { kind?: string })?.kind ?? "?";
       /*
@@ -262,21 +364,22 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         definition && node && typeof node === "object"
           ? labelOf(definition, node as never)
           : id;
-      throw new GraphError(
+      return new GraphError(
         `${named} does not match what ${kind} declares`,
         readably(error),
       );
     }
   }
 
-  private insertNode(node: NodeOfSchema<S>): void {
+  /** `held`: put in as it is (a load, a restore), not judged as a write. */
+  private insertNode(node: NodeOfSchema<S>, held: boolean): void {
     if (this.nodes.has(node.id)) {
       throw new GraphError(`Duplicate node id "${node.id}"`);
     }
-    this.nodes.set(node.id, this.check(node));
+    this.nodes.set(node.id, held ? node : this.check(node));
   }
 
-  private insertEdge(edge: GraphEdge): void {
+  private insertEdge(edge: GraphEdge, held: boolean): void {
     const from = this.nodes.get(edge.from);
     const to = this.nodes.get(edge.to);
     if (!from || !to) {
@@ -284,7 +387,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         `Edge "${edge.kind}" references missing node "${from ? edge.to : edge.from}"`,
       );
     }
-    if (this.validate && !this.schema.edgeAllowed(edge.kind, from.kind, to.kind)) {
+    if (this.validate && !held && !this.schema.edgeAllowed(edge.kind, from.kind, to.kind)) {
       const declared = this.schema.edge(edge.kind);
       throw new GraphError(
         `Edge "${edge.kind}" is not declared from ${from.kind} to ${to.kind}`,

@@ -1074,7 +1074,15 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
     </section>
     <section id="cli-check" aria-labelledby="h-cli-check">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-check">graview check</h2></div>
-      <div class="code" data-scroller aria-label="graview check, usage"><pre><code>graview check &lt;entry&gt; [--views &lt;module&gt;] [--json]</code></pre></div>
+      <div class="code" data-scroller aria-label="graview check, usage"><pre><code>graview check &lt;entry&gt; [--views &lt;module&gt;] [--json]
+
+--document &lt;file&gt;
+    Any command that takes an &lt;entry&gt; takes a declaration document instead
+    (a .json file in the Graview document format): compiled, never run as
+    code, and checked with the JSON path of every finding. With
+    --previous &lt;file&gt;, check holds every renamedFrom to the version before.
+    A template (a graview-template .json) is read as the document inside it.
+</code></pre></div>
       <p>Loads &lt;entry&gt; (a module whose default export, or <code>app</code> export, is a GraviewApp) and reports schema problems. Exits 1 on any error.</p>
     </section>
     <section id="cli-create" aria-labelledby="h-cli-create">
@@ -1098,6 +1106,13 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
       --merge            write only the files that do not exist yet, and
                          name every collision without touching it
       --force            write into a directory that is not empty
+      --template &lt;file|url&gt;
+                         start from a template made anywhere (Graview
+                         Cloud's graview-template shape): the project keeps
+                         its document as src/domain/app.json and the
+                         template as template.json, for `graview apply
+                         --template` to set a store up from. Named after
+                         the template unless --name says otherwise.
 </code></pre></div>
       <p>Starts a product on Graview in &lt;dir&gt;: the declaration split into domain and UI, an eighty-line shell, a headless test, a CI workflow.</p>
     </section>
@@ -1123,8 +1138,11 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
     </section>
     <section id="cli-serve" aria-labelledby="h-cli-serve">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-serve">graview serve</h2></div>
-      <div class="code" data-scroller aria-label="graview serve, usage"><pre><code>graview serve &lt;entry&gt; [--data &lt;dir&gt;] [--port &lt;n&gt;] [--seed &lt;file&gt;] [--sqlite &lt;file&gt;]</code></pre></div>
-      <p>Serves the app's store over HTTP. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back. Data lives in &lt;dir&gt; (default ./data) as readable JSON, or in a SQLite file with --sqlite.</p>
+      <div class="code" data-scroller aria-label="graview serve, usage"><pre><code>graview serve &lt;entry&gt; [--data &lt;dir&gt;] [--port &lt;n&gt;] [--seed &lt;file&gt;] [--sqlite &lt;file&gt;]
+
+    --trust-seat-headers says the network in front of it can be trusted.
+</code></pre></div>
+      <p>[--host &lt;address&gt;] [--trust-seat-headers] Serves the app's store over HTTP, and live over a WebSocket at /graview/live. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back, pushed to every socket as they land. Data lives in &lt;dir&gt; (default ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and believes the seat a request names in its headers, because only this machine can reach it; on any other --host it will not start unless</p>
     </section>
     <section id="cli-skills" aria-labelledby="h-cli-skills">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-skills">graview skills</h2></div>

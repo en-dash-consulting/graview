@@ -1094,13 +1094,20 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
       --merge            write only the files that do not exist yet, and
                          name every collision without touching it
       --force            write into a directory that is not empty
+      --template &lt;file|url&gt;
+                         start from a template made anywhere (Graview
+                         Cloud's graview-template shape): the project keeps
+                         its document as src/domain/app.json and the
+                         template as template.json, for `graview apply
+                         --template` to set a store up from. Named after
+                         the template unless --name says otherwise.
 </code></pre></div>
     </section>
     <section id="writes" aria-labelledby="h-writes">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-writes">What it writes (20 files)</h2></div>
       <p>The declaration split into domain and UI, so the domain has no React in it and <code>graview check</code> can read it headless. <code>src/domain/</code> is the whole surface you will work in; the shell in <code>src/ui/</code> is eighty lines made of framework parts, and every one of them can be replaced.</p>
       <ul class="names" aria-label="The files graview create writes"><li><code>package.json</code></li><li><code>tsconfig.json</code></li><li><code>tsconfig.build.json</code></li><li><code>vite.config.ts</code></li><li><code>index.html</code></li><li><code>embed.html</code></li><li><code>.gitignore</code></li><li><code>README.md</code></li><li><code>src/domain/schema.ts</code></li><li><code>src/domain/mutations.ts</code></li><li><code>src/domain/invariants.ts</code></li><li><code>src/domain/brand.ts</code></li><li><code>src/domain/app.ts</code></li><li><code>src/ui/views.tsx</code></li><li><code>src/ui/app.tsx</code></li><li><code>src/ui/pages.tsx</code></li><li><code>src/main.tsx</code></li><li><code>src/embed.tsx</code></li><li><code>tests/domain.test.ts</code></li><li><code>.github/workflows/ci.yml</code></li></ul>
-      <p class="sm dim" style="margin-top: 14px;">Dependencies: <code>@graview/core</code>, <code>@graview/layout</code>, <code>@graview/tools</code>, <code>@graview/render</code>, <code>@graview/react</code>, <code>@graview/primitives</code>, <code>@graview/pages</code>, <code>@graview/ship</code>, <code>@graview/embed</code>, <code>@graview/studio</code>, <code>react</code>, <code>react-dom</code>, <code>react-router-dom</code>. Dev: <code>graview</code>, <code>@types/node</code>, <code>@types/react</code>, <code>@types/react-dom</code>, <code>typescript</code>, <code>vite</code>, <code>vitest</code>. No zod of your own — <code>@graview/core</code> re-exports <code>z</code>, so a kind's fields are built with exactly the copy the framework was built with.</p>
+      <p class="sm dim" style="margin-top: 14px;">Dependencies: <code>@graview/core</code>, <code>@graview/layout</code>, <code>@graview/tools</code>, <code>@graview/render</code>, <code>@graview/react</code>, <code>@graview/primitives</code>, <code>@graview/pages</code>, <code>@graview/ship</code>, <code>@graview/embed</code>, <code>@graview/studio</code>, <code>@graview/guest</code>, <code>react</code>, <code>react-dom</code>, <code>react-router-dom</code>. Dev: <code>graview</code>, <code>@types/node</code>, <code>@types/react</code>, <code>@types/react-dom</code>, <code>typescript</code>, <code>vite</code>, <code>vitest</code>. No zod of your own — <code>@graview/core</code> re-exports <code>z</code>, so a kind's fields are built with exactly the copy the framework was built with.</p>
     </section>
     <section id="scripts" aria-labelledby="h-scripts">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-scripts">The scripts it gives you</h2></div>

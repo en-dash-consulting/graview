@@ -2,6 +2,7 @@ import type {
   AnySchema,
   Brand,
   NodeOfSchema,
+  Person,
   Presence,
   PresenceChannel,
   Principal,
@@ -12,7 +13,7 @@ import type {
 } from "@graview/core";
 import { search, tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen, touchWeights } from "@graview/core";
 import { loadIntelligenceConfig, saveIntelligenceConfig, type AffordanceProvider, type IntelligenceConfig } from "@graview/tools";
-import { honourSetting, loadSetting, rememberSetting } from "./settings.js";
+import { honourSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout";
@@ -202,6 +203,12 @@ export interface GraviewContextValue<S extends AnySchema> {
    * Empty when the app offers none, which is every app that has no policy.
    */
   readonly seats: readonly Seat[];
+  /**
+   * THE PEOPLE THE APP MAY NAME, apart from the seats (FR-13): a host's
+   * directory of who has an account here, so the rail and the pages say
+   * "Nick" for an op a member made, without anybody being offered a seat.
+   */
+  readonly people: readonly Person[];
   /** Sit down in one of `seats`. A no-op when the app offered none. */
   takeSeat(principal: Principal): void;
   /**
@@ -313,6 +320,7 @@ export function useViewMode(): ViewMode {
  */
 const ANONYMOUS: Principal = { kind: "human" };
 const NO_SEATS: readonly Seat[] = [];
+const NO_PEOPLE: readonly Person[] = [];
 const NO_SETTINGS: readonly SettingDeclaration[] = [];
 
 /** One shared empty, so "nothing selected" is referentially stable. */
@@ -351,6 +359,18 @@ export interface GraviewProviderProps<S extends AnySchema> {
   readonly seats?: readonly Seat[];
   /** Told when a seat is taken, for a host that keeps the choice (a URL, storage). */
   readonly onSeat?: (principal: Principal) => void;
+  /**
+   * Who the app may name: a host's directory, kept apart from the seats so
+   * naming a member never offers to sit as them. Changes as the host's do.
+   */
+  readonly people?: readonly Person[];
+  /**
+   * Where the reader's own choices are kept. The page's `localStorage` by
+   * default, which a sandboxed frame refuses; a host passes its own.
+   */
+  readonly memory?: ReaderMemory;
+  /** How long a participant the presence channel told of stands without a fresh word. */
+  readonly presenceTtlMs?: number;
   /** The app's declared reader settings — `app.settings`, passed straight through. */
   readonly settings?: readonly SettingDeclaration[];
   /**
@@ -415,6 +435,9 @@ export function GraviewProvider<S extends AnySchema>({
   principal,
   seats = NO_SEATS,
   onSeat,
+  people = NO_PEOPLE,
+  memory,
+  presenceTtlMs,
   settings: appSettings = NO_SETTINGS,
   presence,
   brand,
@@ -435,7 +458,7 @@ export function GraviewProvider<S extends AnySchema>({
   const store = useMemo(() => given.seenBy(seatNow), [given, seatNow]);
   useTheWatchKnowsWhatIsUnseen(given, seatNow);
   /* This tab, for the life of the tab: see `tabSession`. */
-  const [session] = useState(() => tabSession());
+  const [session] = useState(() => tabSession(memory));
   const [intelligence, setIntelligence] = useState<IntelligenceConfig>(() => loadIntelligenceConfig());
   const chooseIntelligence = useCallback((next: IntelligenceConfig) => {
     saveIntelligenceConfig(next);
@@ -555,7 +578,7 @@ export function GraviewProvider<S extends AnySchema>({
    * server where there is no document at all.
    */
   const [settingValues, setSettingValues] = useState<Readonly<Record<string, string>>>(() =>
-    Object.fromEntries(settings.map((setting) => [setting.name, loadSetting(setting)])),
+    Object.fromEntries(settings.map((setting) => [setting.name, loadSetting(setting, memory)])),
   );
   useEffect(() => {
     for (const setting of settings) {
@@ -566,10 +589,10 @@ export function GraviewProvider<S extends AnySchema>({
     (name: string, value: string) => {
       const setting = settings.find((candidate) => candidate.name === name);
       if (!setting || !setting.options.some((option) => option.value === value)) return;
-      rememberSetting(setting, value);
+      rememberSetting(setting, value, memory);
       setSettingValues((current) => ({ ...current, [name]: value }));
     },
-    [settings],
+    [settings, memory],
   );
   const [emphasis, setEmphasis] = useState<string | null>(null);
   const { activity, noteAttention: markAttention } = useActivityState(store);
@@ -760,6 +783,9 @@ export function GraviewProvider<S extends AnySchema>({
     seatWho,
     settingValues,
     setView,
+    seats,
+    people,
+    ...(presenceTtlMs !== undefined ? { ttlMs: presenceTtlMs } : {}),
   });
 
   const value = useMemo<GraviewContextValue<S>>(
@@ -801,6 +827,7 @@ export function GraviewProvider<S extends AnySchema>({
       noteAttention,
       principal: who,
       seats,
+      people,
       takeSeat,
       settings,
       settingValues,
@@ -844,6 +871,7 @@ export function GraviewProvider<S extends AnySchema>({
       noteAttention,
       who,
       seats,
+      people,
       takeSeat,
       settings,
       settingValues,

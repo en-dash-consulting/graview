@@ -18,7 +18,8 @@ export { z } from "zod";
 
 // Schema — the single declaration everything else derives from.
 export { defineNode, isCurrent, labelOf, describeNode, tellApart } from "./schema/define-node.js";
-export { nameOfAuthor } from "./who.js";
+export { nameOfAuthor, viaSaid } from "./who.js";
+export type { Person } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";
 export type {
   AnySchema,
@@ -52,7 +53,7 @@ export type { JsonSchema, MutationToolSchema } from "./schema/json-schema.js";
 
 // Graph — the reactive in-memory model the framework owns.
 export { Graph, GraphError } from "./graph/graph.js";
-export type { GraphListener, GraphOptions } from "./graph/graph.js";
+export type { ApplyPrimitivesOptions, GraphListener, GraphOptions } from "./graph/graph.js";
 export { diffSnapshots, EMPTY_DIFF, isEmptyDiff } from "./graph/diff.js";
 export type { GraphDiff, NodeChange } from "./graph/diff.js";
 export { invert, isUnset, normalise, UNSET, writesOf } from "./graph/primitives.js";
@@ -68,7 +69,12 @@ export type {
 } from "./graph/types.js";
 
 // Invariants — pure evaluation, with repairs as the seam to affordances.
-export { defineInvariant, evaluate, UnregisteredInvariantError, violationsTouching } from "./invariants/engine.js";
+export { defineInvariant, evaluate, RuleBudgetError, UnregisteredInvariantError, violationsTouching } from "./invariants/engine.js";
+export { FRAMEWORK_VERSION } from "./version.js";
+export { capabilities, WIRE_PROTOCOL } from "./capabilities.js";
+export type { Capabilities } from "./capabilities.js";
+export { assertReadable, FORMATS, formatStamp, NewerFormatError, upgradeOp, upgradeSnapshot } from "./formats.js";
+export type { FormatName, FormatStamp } from "./formats.js";
 export type {
   EvaluateOptions,
   InvariantContext,
@@ -77,6 +83,7 @@ export type {
   InvariantScope,
   Repair,
   Violation,
+  ViolationStatus,
 } from "./invariants/types.js";
 
 // Arrangement — what a kind can be sorted, filtered and grouped by, and the grammar that carries it.
@@ -163,7 +170,10 @@ export {
   nodeRefArgs,
   nodeRefKinds,
 } from "./mutations/node-ref.js";
-export type { ArgShape } from "./mutations/node-ref.js";
+export type { ArgShape, NodeRefArg } from "./mutations/node-ref.js";
+// Records named the way people name them: a node argument takes a label (FR-33).
+export { nameKey } from "./labels.js";
+export type { RefCandidate, RefResolution } from "./labels.js";
 export type {
   AnyMutationDefinition,
   MutationCall,
@@ -174,10 +184,16 @@ export type {
 
 // Operation log — attribution, causality, selective undo.
 export { OperationLog } from "./ops/log.js";
-export { checkUndo, undoPrimitives } from "./ops/undo.js";
-export type { UndoBlock, UndoCheck } from "./ops/undo.js";
-export type { Author, Batch, Operation } from "./ops/types.js";
+export type { Epoch, LogArchive, LogReading } from "./ops/log.js";
+export { isWithheld, redact, touchedBy, touchesUnseen, withhold, WITHHELD_AUTHOR, WITHHELD_INTENT } from "./ops/withheld.js";
+export { FieldRevisions, fieldsWritten, NEVER_WRITTEN, writtenBy } from "./ops/revisions.js";
+export type { FieldConflict, FieldRevision } from "./ops/revisions.js";
+export { checkUndo, undoPrimitives, UndoBlockedError } from "./ops/undo.js";
+export type { UndoBlock, UndoCheck, UndoRefused } from "./ops/undo.js";
+export type { Author, Batch, Operation, Via } from "./ops/types.js";
 export {
+  actingAs,
+  isSystem,
   permits,
   permittedMutations,
   rolesOf,
@@ -234,17 +250,36 @@ export { checkKitContrast, connectorHueColour, connectorKitFor, DEFAULT_KIT, kit
 export type { ConnectorKit, ConnectorRoute, Kit, KitContrastFinding, KitEndCap, KitOverrides, KitStrokePattern } from "./theme/kit.js";
 export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";
-export { sees, sightedKinds } from "./permissions/sight.js";
-export { seenBy } from "./seen.js";
+export { recordsOf, sees, sightedKinds } from "./permissions/sight.js";
+export type { Records } from "./permissions/sight.js";
+export { hidesFrom, logSeenBy, seenBy, seesId } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
 export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 
-// Store — graph + log + mutations + invariants, one object.
-export { Store, violationKey } from "./store.js";
+// Integrity — a fold has a fingerprint, and a store can prove its own (FR-20).
+export { sha256Hex, snapshotHash } from "./integrity.js";
+export type { VerifyResult } from "./integrity.js";
+// Stored data checked against its declaration (FR-21).
+export { GRAPH_FINDING_CODES, repairPlan, validateGraph } from "./validate-graph.js";
 export type {
+  FindingRepair,
+  GraphFinding,
+  GraphFindingCode,
+  RepairPlan,
+  ValidatedApp,
+  ValidateGraphOptions,
+} from "./validate-graph.js";
+
+// Store — graph + log + mutations + invariants, one object.
+export { MODULES_AUTHOR, ReceiveError, Store, violationKey } from "./store.js";
+export type {
+  AppendOp,
   ApplyOptions,
   ApplyResult,
+  CompactOptions,
   Preview,
+  Rebase,
+  RebaseResult,
   StoreOptions,
   UndoPreview,
 } from "./store.js";
@@ -269,9 +304,13 @@ export { createMemoryAdapter } from "./persistence/memory.js";
  * The sqlite adapter, exported so `graview serve --sqlite` can reach it.
  * It takes a database OBJECT rather than opening one, so `better-sqlite3`
  * is the caller's dependency and never this package's — nothing here is a
- * native module and nothing here needs building.
+ * native module and nothing here needs building. Under it is the SQL
+ * adapter, which asks only for a synchronous `exec` — a Durable Object's
+ * `ctx.storage.sql` as it is, or better-sqlite3 through `sqlFromDatabase`
+ * (FR-09).
  */
-export { createSqliteAdapter, SQLITE_TABLE_SHAPE } from "./persistence/sqlite.js";
+export { createSqlAdapter, createSqliteAdapter, sqlFromDatabase, SQLITE_TABLE_SHAPE } from "./persistence/sqlite.js";
+export type { SqlAdapterOptions, SqlExec } from "./persistence/sql.js";
 export type { SqliteAdapterOptions, SqliteDatabase, SqliteStatement } from "./persistence/sqlite.js";
 export type { PersistenceAdapter } from "./persistence/types.js";
 
@@ -333,5 +372,5 @@ export { generateAgentsMd, generateLlmsTxt } from "./cli/docs.js";
 // The city: a map drawn from the declaration, in lattice cells.
 export { BLOCK, cityExtent, cityMap, MAX_SIDE, plotsOverlap, roadsOf, sharedEdges, sideFor, toIso } from "./city.js";
 export type { CityHints, CityMap, Plot, Road } from "./city.js";
-export { foldPresence, PRESENCE_TTL_MS, samePresence } from "./presence.js";
-export type { Presence, PresenceChannel, PresenceRobot } from "./presence.js";
+export { foldPresence, parseParticipant, participantKey, PRESENCE_TTL_MS, REMOTE_PRESENCE_TTL_MS, samePresence } from "./presence.js";
+export type { Participant, Presence, PresenceChannel, PresenceRobot } from "./presence.js";

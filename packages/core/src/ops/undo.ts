@@ -1,5 +1,7 @@
-import type { OperationLog } from "./log.js";
+import { GraphError } from "../graph/graph.js";
+import type { LogReading } from "./log.js";
 import type { Operation } from "./types.js";
+import { isWithheld } from "./withheld.js";
 
 export interface UndoBlock {
   /** The op that read something the undo target wrote. */
@@ -19,6 +21,31 @@ export type UndoCheck =
       readonly message: string;
     };
 
+/** An undo check that said no. */
+export type UndoRefused = Extract<UndoCheck, { readonly ok: false }>;
+
+/**
+ * AN UNDO THAT CANNOT RUN, AND WHY (FR-18): a later op read what it wrote
+ * (`blockedBy` names each, with what it read), it would reach back across a
+ * declaration change or behind the undo horizon (FR-23), or there was
+ * nothing live to undo. `check` is the `canUndo` answer it was refused on,
+ * so a host can offer to bring the blocking batches along
+ * (`check.includeBatches`) without asking again.
+ *
+ * Still a `GraphError`: a caller that caught those before catches this.
+ */
+export class UndoBlockedError extends GraphError {
+  constructor(readonly check: UndoRefused) {
+    super(check.message);
+    this.name = "UndoBlockedError";
+  }
+
+  /** The ops in the way, with what each read that the undo would take back. */
+  get blockedBy(): readonly UndoBlock[] {
+    return this.check.blockedBy;
+  }
+}
+
 /**
  * Undoing an op out of order is legal exactly when no later live op read
  * something it wrote. That is a checkable condition rather than a policy —
@@ -26,7 +53,7 @@ export type UndoCheck =
  * it along, instead of refusing or corrupting state.
  */
 export function checkUndo(
-  log: OperationLog,
+  log: LogReading,
   batchIds: readonly string[],
 ): UndoCheck {
   const targets = new Set(batchIds);
@@ -34,6 +61,27 @@ export function checkUndo(
   const ops = log
     .all()
     .filter((op) => targets.has(op.batch) && !undone.has(op.id));
+
+  /*
+   * NOT BEHIND THE UNDO HORIZON (FR-23). A compacted log holds nothing
+   * before its checkpoint, so a batch it holds no op of is behind the
+   * horizon, or was never made: either way there is nothing here to put
+   * back, and the sentence names where history stops.
+   */
+  const horizon = [...log.epochs()].reverse().find((epoch) => epoch.horizon);
+  if (horizon) {
+    const held = new Set(log.all().map((op) => op.batch));
+    const behind = batchIds.filter((id) => !held.has(id));
+    if (behind.length > 0) {
+      return {
+        ok: false,
+        ops,
+        blockedBy: [],
+        includeBatches: [],
+        message: `Cannot undo ${behind.map((id) => `batch ${id}`).join(", ")}: it is not after the undo horizon at op ${horizon.seq}${horizon.at ? ` (${horizon.at})` : ""}. What was done before the horizon is archived, and undo does not reach behind it.`,
+      };
+    }
+  }
 
   if (ops.length === 0) {
     return {
@@ -48,9 +96,59 @@ export function checkUndo(
     };
   }
 
+  /*
+   * NOT A CHANGE YOU CANNOT SEE (FR-16). A withheld op carries no inverse
+   * to put back, and taking it back is for somebody who can see it; the
+   * sentence says so without saying what it was.
+   */
+  if (ops.some(isWithheld)) {
+    return {
+      ok: false,
+      ops,
+      blockedBy: [],
+      includeBatches: [],
+      message: ops.every(isWithheld)
+        ? "Cannot undo a change you cannot see: only somebody who can see it can take it back."
+        : "Cannot undo this here: part of it is a change you cannot see, and only somebody who can see it can take it back.",
+    };
+  }
+
+  /*
+   * NOT A MODULE TURNED OFF OR ON (FR-12). It touches no record, so there
+   * is nothing to put back, and the workspace's set is changed by turning
+   * the module the other way — which is the host's to do.
+   */
+  if (ops.some((op) => op.enabledModules !== undefined)) {
+    return {
+      ok: false,
+      ops,
+      blockedBy: [],
+      includeBatches: [],
+      message: "Cannot undo turning a module off or on: it is changed by turning the module the other way.",
+    };
+  }
+
   const writes = new Set<string>();
   for (const op of ops) for (const id of op.writes) writes.add(id);
   const earliest = Math.min(...ops.map((op) => op.seq));
+
+  /*
+   * NOT ACROSS A DECLARATION CHANGE (FR-27). An op from before the change
+   * carries an inverse written in the old declaration's words: putting it
+   * back would write the old shape into the new graph. The change is named,
+   * since it is what stands in the way, not anything a person did since.
+   */
+  const crossed = log.epochs().find((epoch) => epoch.change !== undefined && epoch.seq > earliest);
+  if (crossed) {
+    const before = ops.find((op) => op.seq < crossed.seq)!;
+    return {
+      ok: false,
+      ops,
+      blockedBy: [],
+      includeBatches: [],
+      message: `Cannot undo "${before.intent}": it was done before the declaration changed (${crossed.change}), and undo does not reach back across that change.`,
+    };
+  }
 
   const blockedBy: UndoBlock[] = [];
   for (const op of log.all()) {
@@ -63,10 +161,25 @@ export function checkUndo(
 
   if (blockedBy.length === 0) return { ok: true, ops };
 
-  const includeBatches = [...new Set(blockedBy.map((b) => b.op.batch))];
+  /*
+   * A LATER CHANGE YOU CANNOT SEE is said to be one, and nothing more: not
+   * its sentence, its id or what it read (FR-16). It cannot come along
+   * either, so no batch is offered while one stands in the way.
+   */
   const named = blockedBy
+    .filter((b) => !isWithheld(b.op))
     .map((b) => `"${b.op.intent}" (op ${b.op.id}, read ${b.overlap.join(", ")})`)
     .join("; ");
+  if (blockedBy.some((b) => isWithheld(b.op))) {
+    return {
+      ok: false,
+      ops,
+      blockedBy,
+      includeBatches: [],
+      message: `Cannot undo on its own — ${named ? `a later operation depends on it: ${named}; and ` : ""}a later change you cannot see depends on it, which only somebody who can see it can take back.`,
+    };
+  }
+  const includeBatches = [...new Set(blockedBy.map((b) => b.op.batch))];
   return {
     ok: false,
     ops,

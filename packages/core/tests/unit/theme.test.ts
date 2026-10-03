@@ -43,6 +43,8 @@ const dark: ThemeTokens = {
   accentDim: "rgba(111,220,234,0.35)",
   accentInk: "#06232a",
   warn: "#f0a868",
+  good: "#8fdcaa",
+  bad: "#ffa3a3",
   glow: "rgba(111,220,234,0.28)",
   bar: "#0e141a",
   float: "#131b22",
@@ -68,6 +70,8 @@ const light: ThemeTokens = {
   accent: "#0c6e78",
   accentInk: "#ffffff",
   warn: "#9a5312",
+  good: "#1b6436",
+  bad: "#a1232d",
   bar: "#ffffff",
   float: "#ffffff",
 };

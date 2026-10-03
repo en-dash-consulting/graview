@@ -1,8 +1,8 @@
-import { humaniseField, nameOfAuthor, type AnySchema } from "@graview/core";
+import { humaniseField, isWithheld, nameOfAuthor, viaSaid, type AnySchema, type Author } from "@graview/core";
 import { useGraph, useGraview } from "@graview/react";
 import type { ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Chip } from "../primitives/index.js";
+import { Chip, VISUALLY_HIDDEN } from "../primitives/index.js";
 import { nameOf } from "./answer-args.js";
 import { closeToTrigger } from "../popover.js";
 
@@ -12,8 +12,17 @@ export interface Change {
   readonly author: string;
   /** The author's own id, for seats that are not the person at the keyboard. */
   readonly authorId?: string;
+  /** The whole author — their own name, and who they acted for (FR-06, FR-17). */
+  readonly by?: Author;
+  /** What the change came through, when it said ("via Claude"). */
+  readonly via?: string;
   readonly touched: readonly string[];
   readonly batch: string;
+  /**
+   * A CHANGE YOU CANNOT SEE (FR-16): every op of it was withheld from this
+   * seat. Shown as having happened, with nothing it touched and no undo.
+   */
+  readonly withheld?: true;
 }
 
 /**
@@ -42,8 +51,12 @@ export function useRecentChanges(limit = 4): readonly Change[] {
           intent: batch.intent,
           author: batch.author.kind,
           ...(batch.author.id ? { authorId: batch.author.id } : {}),
-          touched: [...new Set(batch.ops.flatMap((op) => op.writes))],
+          by: batch.author,
+          ...(batch.ops[0]?.via ? { via: batch.ops[0].via } : {}),
+          // What a withheld op touched is not said, even the part this seat may see.
+          touched: [...new Set(batch.ops.filter((op) => !isWithheld(op)).flatMap((op) => op.writes))],
           batch: batch.id,
+          ...(batch.ops.every(isWithheld) ? { withheld: true as const } : {}),
         })),
     [store, nodes, limit],
   );
@@ -218,7 +231,7 @@ export function ActivityRail({
   readonly seat?: ReactNode;
 }) {
   const changes = useRecentChanges();
-  const { store, principal, seats } = useGraview<AnySchema>();
+  const { store, principal, seats, people } = useGraview<AnySchema>();
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLDivElement | null>(null);
   const running = calls.some((call) => call.phase === "running");
@@ -316,6 +329,8 @@ export function ActivityRail({
             boxShadow: "var(--graview-lift-high)",
           }}
         >
+          {/* A heading for the region (FR-25), named as its landmark is. */}
+          <h2 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>Activity</h2>
           {seat !== undefined ? (
             <div
               data-testid="agent-seat-row"
@@ -422,7 +437,15 @@ export function ActivityRail({
                 fontSize: "0.8125rem",
               }}
             >
-              {changes.map((change, index) => (
+              {changes.map((change, index) =>
+                change.withheld ? (
+                  /* SOMETHING YOU CANNOT SEE HAPPENED: said, and nothing more — not who, not what, no undo (FR-16). */
+                  <li key={`change:${index}`} data-testid="withheld-change" style={{ display: "grid", gap: 3, lineHeight: 1.45 }}>
+                    <span data-touched="" style={{ color: "var(--graview-ink-muted)", fontStyle: "italic" }}>
+                      {change.intent}
+                    </span>
+                  </li>
+                ) : (
                 <li key={`change:${index}`} style={{ display: "grid", gap: 3, lineHeight: 1.45 }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
                     <span style={{ minWidth: 0 }}>
@@ -436,9 +459,10 @@ export function ActivityRail({
                         {/* "you" is the person at the keyboard, not any
                             human: two seats on one store read each other's
                             work as their own. */}
-                        {change.author === "human" && (change.authorId === undefined || principal.id === undefined || change.authorId === principal.id)
+                        {change.author === "human" && change.by?.onBehalfOf === undefined && (change.authorId === undefined || principal.id === undefined || change.authorId === principal.id)
                           ? "you"
-                          : nameOfAuthor({ kind: change.author as never, id: change.authorId }, { graph: store.graph as never, schema: store.schema, seats })}
+                          : nameOfAuthor(change.by ?? { kind: change.author as never, id: change.authorId }, { graph: store.graph as never, schema: store.schema, seats, people })}
+                        {viaSaid(change.via) ? <span style={{ fontWeight: 400, color: "var(--graview-ink-muted)" }}>, {viaSaid(change.via)}</span> : null}
                       </strong>{" "}
                       <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>
                     </span>
@@ -453,7 +477,8 @@ export function ActivityRail({
                     ))}
                   </div>
                 </li>
-              ))}
+                ),
+              )}
             </ol>
           ) : null}
           {remembers ? (

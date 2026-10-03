@@ -1,0 +1,31 @@
+{
+  "written": "by @graview 0.1.0, before stamps existed: format 1",
+  "snapshot": {
+    "nodes": [
+      { "id": "list-1", "kind": "list", "label": "Today" },
+      { "id": "task-1", "kind": "task", "label": "Pay the deposit", "done": false, "due": "2026-08-28" }
+    ],
+    "edges": [{ "kind": "on", "from": "task-1", "to": "list-1" }]
+  },
+  "ops": [
+    {
+      "id": "op1",
+      "seq": 0,
+      "batch": "batch:1",
+      "author": { "kind": "human", "id": "nora" },
+      "intent": "Add “Pay the deposit”",
+      "mutation": { "name": "add-task", "args": { "label": "Pay the deposit", "listId": "list-1" } },
+      "primitives": [
+        { "op": "add-node", "node": { "id": "task-1", "kind": "task", "label": "Pay the deposit", "done": false, "due": "2026-08-28" } },
+        { "op": "add-edge", "edge": { "kind": "on", "from": "task-1", "to": "list-1" } }
+      ],
+      "inverse": [
+        { "op": "remove-edge", "edge": { "kind": "on", "from": "task-1", "to": "list-1" } },
+        { "op": "remove-node", "node": { "id": "task-1", "kind": "task", "label": "Pay the deposit", "done": false, "due": "2026-08-28" } }
+      ],
+      "reads": ["list-1"],
+      "writes": ["task-1"],
+      "at": "2026-08-27T09:00:00.000Z"
+    }
+  ]
+}

@@ -120,8 +120,28 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
           severity: "error",
           code: "sight-unknown-kind",
           where: "policy.sees",
-          message: `Says who may see "${kind}", which no defineNode declares — so nothing is kept from anybody.`,
+          message: `Says who may see "${kind}", which no defineNode declares — so nobody sees what it meant to show.`,
           fix: `Use one of: ${[...kinds].join(", ")}.`,
+        });
+      }
+    }
+    /*
+     * A KIND NO SIGHT NAMES, once some sight is declared, is seen by nobody
+     * but the system (FR-02). Deliberate for a kind the host keeps to
+     * itself; otherwise a kind added without saying who sees it, and every
+     * page that lists it is empty for everybody.
+     */
+    const sights = app.policy.sees ?? [];
+    if (sights.length > 0) {
+      const named = new Set(sights.flatMap((sight) => sight.kinds));
+      for (const kind of kinds) {
+        if (named.has(kind)) continue;
+        add({
+          severity: "warning",
+          code: "sight-unnamed-kind",
+          where: "policy.sees",
+          message: `No sight names "${kind}", so nobody but the system sees one: a policy that says who sees what says it for every kind.`,
+          fix: `Add a sight for "${kind}" — { roles: "*", kinds: ["${kind}"] } if everybody may see it.`,
         });
       }
     }

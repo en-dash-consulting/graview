@@ -61,6 +61,49 @@ export function defineInvariant<S extends AnySchema>(
 }
 
 /**
+ * A rule that would read more of the graph than it is allowed to. The rule
+ * language throws it when an expression exceeds its budget; any rule may.
+ * `evaluate` turns it into a violation with status `over-budget`.
+ */
+export class RuleBudgetError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RuleBudgetError";
+  }
+}
+
+/**
+ * A RULE THAT CANNOT ANSWER IS A FINDING, NOT A CRASH. One rule reading a
+ * field a record does not have used to take every other rule's standing
+ * down with it; now it says it could not be judged, about the subject it
+ * was asked of, and the rest still run.
+ */
+function judged<S extends AnySchema>(
+  invariant: InvariantDefinition<S>,
+  run: () => Violation[],
+  subjectId: string | undefined,
+): Violation[] {
+  try {
+    return run().map((violation) => (violation.status ? violation : { ...violation, status: "violated" as const }));
+  } catch (error) {
+    const over = error instanceof RuleBudgetError;
+    const reason = error instanceof Error ? error.message : String(error);
+    const label = invariant.label ?? invariant.name.replace(/-/g, " ");
+    return [
+      {
+        invariant: invariant.name,
+        status: over ? "over-budget" : "could-not-judge",
+        ...(subjectId !== undefined ? { subjectId } : {}),
+        label,
+        message: `${label} could not be judged: ${reason}`,
+        nodeIds: subjectId !== undefined ? [subjectId] : [],
+        repairs: [],
+      },
+    ];
+  }
+}
+
+/**
  * Pure evaluation: same graph, context and `today` in, same violations out.
  * The one clock read is the lifecycle horizon's date fallback when no
  * `options.today` is pinned — pin it and the whole tier runs headlessly in CI.
@@ -77,9 +120,7 @@ export function evaluate<S extends AnySchema>(
 
   for (const invariant of invariants) {
     if (invariant.scope !== "graph") continue;
-    violations.push(
-      ...invariant.evaluate({ graph, subject: undefined as never, context }),
-    );
+    violations.push(...judged(invariant, () => invariant.evaluate({ graph, subject: undefined as never, context }), undefined));
   }
 
   const scoped = invariants.filter((i) => i.scope !== "graph");
@@ -115,9 +156,7 @@ export function evaluate<S extends AnySchema>(
       if (retired && invariant.judgesPast !== true) continue;
       const match = (invariant.scope as { match?: (n: NodeOfSchema<S>) => boolean }).match;
       if (match && !match(node)) continue;
-      violations.push(
-        ...invariant.evaluate({ graph, subject: node as never, context }),
-      );
+      violations.push(...judged(invariant, () => invariant.evaluate({ graph, subject: node as never, context }), node.id));
     }
   }
 

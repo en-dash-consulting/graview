@@ -1,4 +1,5 @@
 import type { GraphSnapshot } from "../graph/types.js";
+import type { Epoch, LogArchive } from "../ops/log.js";
 import type { Operation } from "../ops/types.js";
 import type { PersistenceAdapter } from "./types.js";
 
@@ -11,6 +12,9 @@ export function createMemoryAdapter(
     Object.entries(seed).map(([k, v]) => [k, clone(v)]),
   );
   const logs = new Map<string, Operation[]>();
+  const epochs = new Map<string, Epoch[]>();
+  // What a compaction moved behind the undo horizon (FR-23): kept, never loaded on open.
+  const archives = new Map<string, LogArchive>();
 
   return {
     name: "memory",
@@ -24,6 +28,8 @@ export function createMemoryAdapter(
     async delete(scope) {
       graphs.delete(scope);
       logs.delete(scope);
+      epochs.delete(scope);
+      archives.delete(scope);
     },
     async loadLog(scope) {
       return clone(logs.get(scope) ?? []);
@@ -31,6 +37,26 @@ export function createMemoryAdapter(
     async appendOps(scope, ops) {
       const existing = logs.get(scope) ?? [];
       logs.set(scope, [...existing, ...clone([...ops])]);
+    },
+    async loadEpochs(scope) {
+      return clone(epochs.get(scope) ?? []);
+    },
+    async saveEpochs(scope, list) {
+      epochs.set(scope, clone([...list]));
+    },
+    async compact(scope, checkpoint) {
+      const log = logs.get(scope) ?? [];
+      const marks = epochs.get(scope) ?? [];
+      const held = archives.get(scope) ?? { ops: [], epochs: [] };
+      archives.set(scope, {
+        ops: [...held.ops, ...clone(log.filter((op) => op.seq < checkpoint.seq))],
+        epochs: [...held.epochs, ...clone(marks.filter((epoch) => epoch.seq < checkpoint.seq))],
+      });
+      logs.set(scope, log.filter((op) => op.seq >= checkpoint.seq));
+      epochs.set(scope, [clone({ ...checkpoint, horizon: true as const }), ...marks.filter((epoch) => epoch.seq > checkpoint.seq)]);
+    },
+    async loadArchive(scope) {
+      return clone(archives.get(scope) ?? { ops: [], epochs: [] });
     },
   };
 }

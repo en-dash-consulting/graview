@@ -4,8 +4,8 @@
   "type": "module",
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "build": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/skills packages/graview packages/create-graview apps/rota",
-    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/skills packages/graview packages/create-graview apps/todo apps/launcher apps/seedbed apps/rota apps/discography apps/gauntlet",
+    "build": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/guest packages/skills packages/graview packages/create-graview apps/rota",
+    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/guest packages/skills packages/graview packages/create-graview apps/todo apps/launcher apps/seedbed apps/rota apps/discography apps/gauntlet",
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "node packages/graview/dist/cli.js check apps/todo/dist/domain/app.js && node packages/graview/dist/cli.js check apps/launcher/dist/domain/app.js && node packages/graview/dist/cli.js check apps/seedbed/dist/domain/app.js && node packages/graview/dist/cli.js check apps/rota/dist/domain/app.js && node packages/graview/dist/cli.js check apps/discography/dist/domain/app.js && node packages/graview/dist/cli.js check apps/gauntlet/dist/domain/app.js",
@@ -58,7 +58,8 @@
     "lines": "node scripts/verify-lines.mjs",
     "companion": "node scripts/verify-companion.mjs",
     "who": "node scripts/verify-who.mjs",
-    "studio:rehearse": "node scripts/rehearse-studio.mjs"
+    "studio:rehearse": "node scripts/rehearse-studio.mjs",
+    "version-packages": "changeset version && node scripts/write-framework-version.mjs"
   },
   "devDependencies": {
     "@astermind/astermind-elm": "^2.1.1",
@@ -70,7 +71,9 @@
     "@webgpu/types": "^0.1.60",
     "axe-core": "^4.13.0",
     "better-sqlite3": "^13.0.3",
+    "esbuild": "^0.25.0",
     "jsdom": "^30.0.1",
+    "miniflare": "4.20260730.0",
     "playwright": "1.49.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -80,7 +83,8 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "better-sqlite3",
-      "esbuild"
+      "esbuild",
+      "workerd"
     ]
   }
 }

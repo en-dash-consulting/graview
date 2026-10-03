@@ -1,4 +1,15 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, createContext, type ErrorInfo, type ReactNode } from "react";
+
+/**
+ * WHERE A CAUGHT ERROR IS TOLD, beside the console (FR-24). A host that
+ * embeds an app observes its failures without reading what was on screen:
+ * a boundary tells this the error and the framework module it was caught
+ * in, and the host decides what of the error to keep.
+ */
+export type ErrorReport = (error: unknown, where: { readonly module: string }) => void;
+
+/** The report every boundary under it tells. Null outside any: the console alone. */
+export const ErrorReportContext = createContext<ErrorReport | null>(null);
 
 /**
  * A view that throws must not take the scene with it.
@@ -43,6 +54,8 @@ function messageOf(error: unknown): string {
 }
 
 export class ViewBoundary extends Component<ViewBoundaryProps, ViewBoundaryState> {
+  static override contextType = ErrorReportContext;
+  declare context: ErrorReport | null;
   override state: ViewBoundaryState = {};
 
   static getDerivedStateFromError(error: Error): ViewBoundaryState {
@@ -60,6 +73,7 @@ export class ViewBoundary extends Component<ViewBoundaryProps, ViewBoundaryState
       error,
       info.componentStack,
     );
+    this.context?.(error, { module: "@graview/react" });
   }
 
   override render(): ReactNode {

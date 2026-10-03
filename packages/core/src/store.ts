@@ -1,11 +1,13 @@
-import { seenBy } from "./seen.js";
-import { sees, sightedKinds } from "./permissions/sight.js";
+import { readingOf, seenBy, seesId } from "./seen.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
-import { diffSnapshots, type GraphDiff } from "./graph/diff.js";
-import { invert, normalise, type Primitive } from "./graph/primitives.js";
+import { diffSnapshots, EMPTY_DIFF, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
+import { invert, normalise, writesOf, type Primitive } from "./graph/primitives.js";
+import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
+import { nodeRefArgs, type NodeRefArg } from "./mutations/node-ref.js";
 import type { GraphSnapshot } from "./graph/types.js";
+import { verifyFold, type VerifyResult } from "./integrity.js";
 import { evaluate } from "./invariants/engine.js";
 import type {
   EvaluateOptions,
@@ -16,13 +18,15 @@ import type {
 import { compileMutation } from "./mutations/define-mutation.js";
 import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
-import { OperationLog } from "./ops/log.js";
-import type { Author, Batch, Operation } from "./ops/types.js";
-import { permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
+import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
+import type { Author, Batch, Operation, Via } from "./ops/types.js";
+import { actingAs, isSystem, permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
+import { redact } from "./ops/withheld.js";
 import { nounOf } from "./schema/define-node.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
-import { checkUndo, undoPrimitives, type UndoCheck } from "./ops/undo.js";
+import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
+import { validateGraph, type GraphFinding } from "./validate-graph.js";
 import { tellTheWatchItsNames, tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } from "./watched.js";
 
 export interface StoreOptions<S extends AnySchema> {
@@ -37,10 +41,49 @@ export interface StoreOptions<S extends AnySchema> {
    * seed was never an operation and folding the log alone would lose it.
    * Either way the log is live: what was done before is still attributed,
    * still in the activity, and still undoable.
+   *
+   * REOPENING ON A SNAPSHOT NEVER FOLDS THE LOG (FR-18). The snapshot is
+   * judged by this declaration (held as stored, FR-28; `findings()` says
+   * what no longer fits) and the log is only history, so a log that names
+   * a kind this declaration dropped opens: its ops stay attributed and
+   * listed, and their primitives are not applied again. What touches them
+   * afterwards is the declaration change's epoch: a migration that dropped
+   * the kind begins one (`epochs`, with `change`), `verify()` folds from
+   * it rather than from ops in the old words, and undo does not reach back
+   * across it. A log alone, with no snapshot, IS folded (from its last
+   * epoch), and a record of a dropped kind it makes is held as written,
+   * with `findings()` naming it `kind-unknown` until a repair removes it.
    */
   readonly log?: readonly Operation[];
+  /**
+   * The epochs `log` folds from (FR-27): a base graph and the seq it starts
+   * at, one for each declaration version the log spans. `verify()` folds
+   * from the last one, and undo does not cross one that changed the
+   * declaration. A store opened on a snapshot alone takes the snapshot as
+   * its first epoch.
+   */
+  readonly epochs?: readonly Epoch[];
+  /**
+   * The seq `log` begins at, when it was compacted behind an undo horizon
+   * and its checkpoint is not among `epochs` (FR-23): a client hydrating on
+   * a snapshot is handed the tail and the horizon, not the base. Absent,
+   * the log begins at its checkpoint's seq, or at 0.
+   */
+  readonly horizon?: number;
   /** Defaults to a monotonic counter so tests stay deterministic. */
   readonly ids?: () => string;
+  /**
+   * Mints a batch id: `kind` is `batch` for a change and `undo` for a
+   * take-back. Defaults to `<kind>:<this store's tag>:<n>`, the tag drawn
+   * fresh for each store, so two stores opened from the same log, two
+   * browsers on one roster, never mint the same batch id. A server that
+   * mints them its own way says so here.
+   */
+  readonly batchIds?: (kind: "batch" | "undo") => string;
+  /**
+   * The clock each op is stamped by, as an ISO string. Defaults to the
+   * current time (FR-18); a test or a replay that needs a fixed one says so.
+   */
   readonly now?: () => string;
   readonly validate?: boolean;
   readonly invariantOptions?: EvaluateOptions<S>;
@@ -56,9 +99,9 @@ export interface StoreOptions<S extends AnySchema> {
    * The app's declared modules, and which are on for THIS installation.
    *
    * `enabledModules` absent means everything — a store that never heard of
-   * modules behaves exactly as before. The projection is fixed at
-   * construction: a workspace toggle is an entitlement change, and the
-   * honest response to one is building the store the new workspace gets.
+   * modules behaves exactly as before. It is the set the store starts
+   * from: a log that says otherwise (an op `setEnabledModules` wrote) has
+   * the last word, because turning a module off or on is history (FR-12).
    */
   readonly modules?: ModuleMap;
   readonly enabledModules?: readonly string[];
@@ -90,7 +133,15 @@ export interface ApplyOptions {
   readonly author?: Author | Principal;
   /** Groups several mutations under one gesture or one agent turn. */
   readonly batch?: string;
+  /**
+   * What the gesture was for. Recorded beside each op's own sentence, as
+   * `batchIntent`, and read as the batch's intent; it no longer replaces
+   * the sentence each act's `describe()` gave (FR-18). For an act with no
+   * `describe`, it is the op's sentence too.
+   */
   readonly intent?: string;
+  /** What the change came through — `web`, `mcp:<client>`, `view:<name>`, `api`, `cli` — recorded on each op (FR-06). */
+  readonly via?: Via;
 }
 
 export interface Preview<S extends AnySchema> {
@@ -115,7 +166,49 @@ export type UndoPreview<S extends AnySchema> =
   | ({ readonly ok: true; readonly check: UndoCheck } & Preview<S>)
   | { readonly ok: false; readonly check: UndoCheck };
 
+/**
+ * An op a host built itself, for `Store.append` (FR-18): what it does, who
+ * did it and why. Everything else is filled in as the store fills its own
+ * ops, and kept when the host gave it. A whole `Operation` fits too; its
+ * `seq` is renumbered to this log.
+ */
+export interface AppendOp {
+  readonly primitives: readonly Primitive[];
+  readonly author: Author;
+  /** What was meant, in a sentence: what the activity and every undo say. */
+  readonly intent: string;
+  readonly id?: string;
+  readonly batch?: string;
+  readonly batchIntent?: string;
+  /** Defaults to the primitives inverted, newest first. */
+  readonly inverse?: readonly Primitive[];
+  readonly reads?: readonly string[];
+  /** Defaults to the ids the primitives write. */
+  readonly writes?: readonly string[];
+  readonly mutation?: MutationCall | null;
+  /** Defaults to the store's clock. */
+  readonly at?: string;
+  readonly undoes?: string;
+  readonly via?: Via;
+}
+
 const HUMAN: Author = { kind: "human" };
+
+/** Who turns a module off or on: the workspace itself, `system · modules` (FR-12). */
+export const MODULES_AUTHOR: Author = { kind: "system", id: "modules", name: "Modules" };
+
+/**
+ * WHETHER UNDOING AN OP PUTS BACK EXACTLY WHAT IT TOOK (FR-28).
+ *
+ * An op that was not an act — a repair from `repairPlan`, a migration, a
+ * host's own change through `applyPrimitives` — is undone by putting the
+ * records back as they were, even a record that no longer fits: undoing a
+ * repair means the misfit returns, and `validateGraph` says so again. The
+ * undo of an ACT is itself a change within the declaration, and is held to
+ * it like any write: one whose inverse the current declaration refuses is
+ * refused, and says why.
+ */
+const putsBack = (op: Operation): boolean => op.mutation === null && op.undoes === undefined;
 
 /** A violation's identity across judgements: the rule, what it is about, and what it says. */
 export function violationKey(v: Violation): string {
@@ -130,6 +223,57 @@ export function violationKey(v: Violation): string {
  * agent's work needs no bespoke observability layer — it produces the same
  * diff a human edit does, carrying the same attribution.
  */
+/**
+ * An op a store could not take: its primitives do not fit the graph (a node
+ * it patches is not there, an edge to nowhere, a field the schema refuses).
+ * Nothing it was handed has landed — the store is as it was — and `op` says
+ * which one, with the graph's own error as `cause`.
+ */
+export class ReceiveError extends Error {
+  constructor(
+    readonly op: Operation,
+    cause: unknown,
+  ) {
+    super(`Op "${op.id}" (${op.intent}) could not be applied: ${cause instanceof Error ? cause.message : String(cause)}`, { cause });
+    this.name = "ReceiveError";
+  }
+}
+
+/** What `Store.rebase` is handed. */
+export interface Rebase {
+  /** The server's ops, in its order, to land under whatever is pending. Ops the log already holds are skipped. */
+  readonly confirmed: readonly Operation[];
+  /** This store's batches still awaiting a verdict, oldest first: rolled back, then applied again on top. */
+  readonly pending: readonly string[];
+  /** This store's batches the server has answered or refused: rolled back and not applied again. */
+  readonly drop?: readonly string[];
+}
+
+/** What a rebase did. */
+export interface RebaseResult<S extends AnySchema> {
+  /** The net change, as subscribers heard it. */
+  readonly diff: GraphDiff<NodeOfSchema<S>>;
+  /** The server's ops that landed, as this log numbers them. */
+  readonly confirmed: readonly Operation[];
+  /** The pending batches' ops, applied again. */
+  readonly pending: readonly Operation[];
+  /** Pending batches that no longer apply on top, and why; they are no longer in the log. */
+  readonly refused: readonly { readonly batch: string; readonly error: unknown }[];
+}
+
+/**
+ * A tag nobody else's store is using, for this store's batch ids. Drawn
+ * from the platform's random source where there is one, which every page
+ * and Node 22 has.
+ */
+function storeTag(): string {
+  const random = (globalThis as { crypto?: { getRandomValues?: (array: Uint8Array) => Uint8Array } }).crypto;
+  const bytes = new Uint8Array(6);
+  if (random?.getRandomValues) random.getRandomValues(bytes);
+  else for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+  return [...bytes].map((byte) => byte.toString(36).padStart(2, "0")).join("");
+}
+
 export class Store<S extends AnySchema> {
   readonly schema: S;
   readonly graph: Graph<S>;
@@ -149,11 +293,17 @@ export class Store<S extends AnySchema> {
   readonly intelligence: readonly IntelligenceProviderDeclaration[];
   /** What each declared agent may do, by provider name. */
   private readonly may = new Map<string, ReadonlySet<string>>();
-  /** What the enabled modules work out to; every surface reads this one answer. */
-  readonly modules: ModuleProjection;
+  private readonly declaredModules: ModuleMap | undefined;
+  private readonly startingModules: readonly string[] | undefined;
+  /** The projection, and the log it was read from: its length and its last op. */
+  private projected: { readonly projection: ModuleProjection; readonly length: number; readonly last: string | undefined; readonly said: readonly string[] | undefined } | undefined;
   private readonly nextId: () => string;
   private readonly now: () => string;
+  private readonly validate: boolean;
+  private readonly mintBatch: (kind: "batch" | "undo") => string;
   private counter = 0;
+  /** Above zero while a rebase applies its pending calls again: they are told as one change at the end. */
+  private quiet = 0;
   private readonly listeners = new Set<(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]) => void>();
 
   constructor(options: StoreOptions<S>) {
@@ -165,10 +315,14 @@ export class Store<S extends AnySchema> {
     for (const provider of options.intelligence ?? []) {
       if (provider.may) this.may.set(provider.name, new Set(provider.may));
     }
-    this.modules = resolveModules(options.modules, options.enabledModules);
+    this.declaredModules = options.modules;
+    this.startingModules = options.enabledModules;
     let n = 0;
     this.nextId = options.ids ?? (() => `op${++n}`);
-    this.now = options.now ?? (() => new Date(0).toISOString());
+    this.now = options.now ?? (() => new Date().toISOString());
+    this.validate = options.validate ?? true;
+    const tag = storeTag();
+    this.mintBatch = options.batchIds ?? ((kind) => `${kind}:${tag}:${++this.counter}`);
 
     for (const mutation of options.mutations ?? []) {
       if (this.mutations.has(mutation.name)) {
@@ -189,17 +343,23 @@ export class Store<S extends AnySchema> {
     }
     tellTheWatchItsNames(options.schema, this.mutations.values(), options.policy);
 
+    const horizon = options.horizon !== undefined ? { horizon: options.horizon } : {};
     if (options.log && options.snapshot) {
       // Hydrate: the graph as stored, the history as recorded.
-      this.log = OperationLog.from(options.log);
+      this.log = OperationLog.from(options.log, options.epochs, horizon);
       this.graph = Graph.from(options.schema, options.snapshot, {
         validate: options.validate ?? true,
       });
     } else if (options.log) {
-      this.log = OperationLog.from(options.log);
-      this.graph = this.log.fold(options.schema, { validate: options.validate ?? true });
+      this.log = OperationLog.from(options.log, options.epochs, horizon);
+      const last = this.log.lastEpoch();
+      this.graph = this.log.fold(options.schema, { validate: options.validate ?? true, ...(last ? { from: last } : {}) });
     } else {
-      this.log = new OperationLog();
+      this.log = OperationLog.from(
+        [],
+        options.epochs ?? (options.snapshot ? [{ seq: options.horizon ?? 0, base: options.snapshot }] : []),
+        horizon,
+      );
       this.graph = Graph.from(options.schema, options.snapshot ?? { nodes: [], edges: [] }, {
         validate: options.validate ?? true,
       });
@@ -228,7 +388,87 @@ export class Store<S extends AnySchema> {
       this.counter = Math.max(this.counter, trailing(op.batch));
       n = Math.max(n, trailing(op.id));
     }
+    // Behind an undo horizon (FR-23) are ids the log no longer holds: count on past them all.
+    if (this.log.horizon > 0) n = Math.max(n, this.log.length);
     tellTheWatchOfAStore(this);
+  }
+
+  /**
+   * What the enabled modules work out to; every surface reads this one answer.
+   *
+   * READ FROM THE LOG (FR-12): the set the last `system · modules` op says,
+   * or the one the store was opened with when no op has said one. Kept
+   * between reads and re-read only past what it has read — a log only ever
+   * grows at its end, and a rebase that cut it is read again from the start.
+   */
+  get modules(): ModuleProjection {
+    const all = this.log.all();
+    const last = all.at(-1)?.id;
+    const held = this.projected;
+    if (held && held.length === all.length && held.last === last) return held.projection;
+    let said: readonly string[] | undefined;
+    let from = 0;
+    if (held && held.length <= all.length && (held.length === 0 || all[held.length - 1]?.id === held.last)) {
+      said = held.said;
+      from = held.length;
+    }
+    for (let at = all.length - 1; at >= from; at--) {
+      const stated = all[at]!.enabledModules;
+      if (stated !== undefined) {
+        said = stated;
+        break;
+      }
+    }
+    const projection =
+      held && said === held.said ? held.projection : resolveModules(this.declaredModules, said ?? this.startingModules);
+    this.projected = { projection, length: all.length, last, said };
+    return projection;
+  }
+
+  /**
+   * TURN MODULES OFF OR ON, AS AN OP (FR-12).
+   *
+   * The enabled set is a fact about the workspace — usually what it pays
+   * for — and changing it is history: one op, authored `system · modules`,
+   * saying the set it leaves (`enabledModules`) in a sentence a person can
+   * read. It touches no record, so it folds to nothing and takes nothing
+   * away: a module off is a horizon, and turning it on again brings every
+   * record back as it was. Not undone: the set changes by turning a module
+   * the other way. `undefined` is every declared module. Nothing is written
+   * when the set is the one the store already has.
+   */
+  setEnabledModules(enabled: readonly string[] | undefined, options: { readonly via?: Via; readonly batch?: string } = {}): Operation | undefined {
+    const before = this.modules.enabled;
+    const after = resolveModules(this.declaredModules, enabled).enabled;
+    const off = [...before].filter((name) => !after.has(name));
+    const on = [...after].filter((name) => !before.has(name));
+    if (off.length === 0 && on.length === 0) return undefined;
+    const named = (names: readonly string[]): string =>
+      names
+        .map((name) => {
+          const kinds = this.declaredModules?.[name]?.kinds ?? [];
+          return kinds.length > 0 ? kinds.map((kind) => this.schema.tryDefinition(kind)?.plural ?? kind).join(", ") : name;
+        })
+        .join(", ");
+    const said = [off.length > 0 ? `Turn off ${named(off)}` : "", on.length > 0 ? `turn on ${named(on)}` : ""].filter(Boolean).join("; ");
+    const op: Operation = {
+      id: this.nextId(),
+      seq: this.log.length,
+      batch: options.batch ?? this.mintBatch("batch"),
+      author: MODULES_AUTHOR,
+      intent: said.charAt(0).toUpperCase() + said.slice(1),
+      mutation: null,
+      primitives: [],
+      inverse: [],
+      reads: [],
+      writes: [],
+      at: this.now(),
+      ...(options.via !== undefined ? { via: options.via } : {}),
+      enabledModules: [...after].sort(),
+    };
+    this.log.append(op);
+    this.notify(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, [op]);
+    return op;
   }
 
   mutation(name: string): AnyMutationDefinition<S> {
@@ -302,7 +542,7 @@ export class Store<S extends AnySchema> {
      * repair as the starter seat, which may only add, and the press met
      * "starter may not take-off here" (W-110).
      */
-    const narrowed = this.refusesAgent(call, principal);
+    const narrowed = this.refusesAgent(call, principal) ?? this.namesTurnedOff(call) ?? this.namesUnseen(call, principal);
     if (narrowed) return { ok: false, refusal: narrowed } as ReturnType<typeof permits>;
     return permits(
       this.policy,
@@ -346,6 +586,57 @@ export class Store<S extends AnySchema> {
   }
 
   /**
+   * A CALL THAT NAMES A RECORD OF A MODULE THAT IS OFF IS REFUSED (FR-12),
+   * whoever makes it: the module's own acts are already off, and an act
+   * the core owns — a rename that takes any kind — must not reach into a
+   * district the workspace does not have. The sentence names the act.
+   */
+  private namesTurnedOff(call: MutationCall): Refusal | undefined {
+    const off = this.modules.disabledKinds;
+    if (off.size === 0) return undefined;
+    const mutation = this.mutations.get(call.name);
+    if (!mutation) return undefined;
+    const named: unknown[] = [];
+    if (mutation.subject) named.push(call.args[mutation.subject.arg]);
+    for (const ref of nodeRefArgs(mutation.input)) named.push(call.args[ref.name]);
+    const ids = named.flatMap((value) => (typeof value === "string" ? [value] : Array.isArray(value) ? value.filter((inner): inner is string => typeof inner === "string") : []));
+    if (!ids.some((id) => off.has(this.graph.getNode(id)?.kind as string))) return undefined;
+    return {
+      mutation: call.name,
+      message: `“${mutation.title ?? call.name}” names a record of a module this workspace has turned off.`,
+      wouldNeed: [],
+    };
+  }
+
+  /**
+   * A CALL THAT NAMES A RECORD THE CALLER MAY NOT SEE IS REFUSED (FR-02),
+   * before any grant is read: an act on a record is a way of reading it —
+   * its preview, its refusal, what its rules say after — and a seat that
+   * could act on what it may not see could learn it that way. Only a
+   * record that is there is judged; an id that names nothing is the act's
+   * own to refuse. The sentence names the act, never the record or its kind.
+   */
+  private namesUnseen(call: MutationCall, principal: Principal): Refusal | undefined {
+    if (!this.policy?.sees?.length || isSystem(principal)) return undefined;
+    const mutation = this.mutations.get(call.name);
+    if (!mutation) return undefined;
+    const named = new Set<string>();
+    const add = (value: unknown) => {
+      if (typeof value === "string") named.add(value);
+      else if (Array.isArray(value)) for (const inner of value) if (typeof inner === "string") named.add(inner);
+    };
+    if (mutation.subject) add(call.args[mutation.subject.arg]);
+    for (const ref of nodeRefArgs(mutation.input)) add(call.args[ref.name]);
+    const visible = seesId(this, principal);
+    if (![...named].some((id) => this.graph.has(id) && !visible(id))) return undefined;
+    return {
+      mutation: call.name,
+      message: `Not permitted: “${mutation.title ?? call.name}” names a record you may not see.`,
+      wouldNeed: [],
+    };
+  }
+
+  /**
    * Whether a principal may run ANY act of a module drawn only for those
    * who administer it. This is the one question the interface asks before
    * offering to show the installation's own districts; the answer comes
@@ -376,8 +667,35 @@ export class Store<S extends AnySchema> {
 
   /** Whether a principal may see one record (the policy's `sees`). */
   sees(principal: Principal, id: string): boolean {
-    const node = this.graph.getNode(id);
-    return node !== undefined && sees(this.policy, principal, node as never, this.graph as never);
+    return this.graph.has(id) && seesId(this, principal)(id);
+  }
+
+  private labels: LabelIndex<S> | undefined;
+
+  /**
+   * WHAT A NAME GIVEN FOR A NODE ARGUMENT MEANS, to this principal (FR-33).
+   *
+   * An id of a record the principal may see is that record, whatever it is
+   * called. Otherwise a label, case and accents aside, among the records of
+   * the kinds the argument accepts; failing that, the one label the name
+   * starts. Only records the principal may see are ever candidates — a
+   * name never tells a seat that something it may not see exists. Several
+   * matches are refused with every candidate; none says so.
+   */
+  resolveRef(arg: Pick<NodeRefArg, "name" | "kinds">, given: string, principal: Principal = HUMAN): RefResolution {
+    const sighted = (this.policy?.sees?.length ?? 0) > 0;
+    const visible = (id: string): boolean => !sighted || this.sees(principal, id);
+    const named = this.graph.getNode(given);
+    this.labels ??= new LabelIndex(this.graph);
+    if (named && visible(given)) return { ok: true, id: given, label: this.labels.labelOf(given) ?? given, by: "id" };
+    const found = this.labels.lookup(arg.kinds, given);
+    const exact = found.exact.filter(visible);
+    const exactly = exact.length > 0;
+    const candidates: RefCandidate[] = (exactly ? exact : found.prefix.filter(visible))
+      .map((id) => ({ id, kind: this.graph.getNode(id)!.kind, label: this.labels!.labelOf(id) ?? id }))
+      .sort((a, b) => (a.label < b.label ? -1 : a.label > b.label ? 1 : a.id < b.id ? -1 : 1));
+    if (candidates.length === 1) return { ok: true, id: candidates[0]!.id, label: candidates[0]!.label, by: exactly ? "label" : "prefix" };
+    return refusalFor(this.schema, arg, given, candidates);
   }
 
   /** The kinds of administered modules this principal may not see at all. */
@@ -394,9 +712,10 @@ export class Store<S extends AnySchema> {
      * "none yet — waiting for shoppers" was a page about other people.
      */
     const sights = this.policy?.sees ?? [];
-    if (sights.length > 0) {
+    if (sights.length > 0 && !isSystem(principal)) {
       const creatable = new Set(this.permittedMutations(principal).flatMap((mutation) => mutation.creates ?? []));
-      for (const kind of sightedKinds(this.policy)) {
+      // Every kind: once a policy says who sees what, a kind no sight names is seen by nobody.
+      for (const kind of this.schema.kinds as readonly string[]) {
         const seeing = sights.some((sight) => sight.kinds.includes(kind) && (sight.roles === "*" || (principal.roles ?? []).some((role) => (sight.roles as readonly string[]).includes(role))) && (!sight.own || principal.id !== undefined));
         if (!seeing && !creatable.has(kind)) kept.add(kind);
       }
@@ -429,7 +748,7 @@ export class Store<S extends AnySchema> {
     const derived = all.filter(
       (mutation) =>
         mutation.derived !== undefined &&
-        permits(this.policy, principal, mutation.name, mutation.derived.kind, this.viaOf(mutation)).ok,
+        permits(this.policy, principal, mutation.name, mutation.derived.kind, this.viaOf(mutation), actingAs(principal).id).ok,
     );
     return [...declared, ...derived];
   }
@@ -502,6 +821,51 @@ export class Store<S extends AnySchema> {
     });
   }
 
+  /**
+   * What several calls would do as one gesture, without doing any of it
+   * (FR-18): each compiles on the graph the one before it left, as
+   * `applyAll` would run them, on a copy. The diff is the net of them all,
+   * and `introduces` and `resolves` judge the end state against today's.
+   * A call that cannot compile throws, as it would on applying; nothing is
+   * written, logged or heard either way.
+   */
+  previewAll(calls: readonly MutationCall[], context?: InvariantContext): Preview<S> {
+    const before = this.violations(context);
+    const start = this.graph.snapshot();
+    const trial = Graph.from(this.schema, start, { validate: this.validate });
+    const primitives: Primitive[] = [];
+    const reads = new Set<string>();
+    const writes = new Set<string>();
+    const intents: string[] = [];
+    for (const call of calls) {
+      const compiled = compileMutation(trial, this.mutation(call.name), call.args);
+      // An act that does nothing leaves no trace when applied, nor here.
+      if (compiled.primitives.length === 0) continue;
+      const recorded = compiled.primitives.map(normalise);
+      trial.applyPrimitives(recorded);
+      primitives.push(...recorded);
+      for (const id of compiled.reads) reads.add(id);
+      for (const id of compiled.writes) writes.add(id);
+      intents.push(compiled.intent);
+    }
+    const after = evaluate(trial, this.allInvariants(), {
+      ...this.invariantOptions,
+      ...(context === undefined ? {} : { context }),
+    });
+    const beforeKeys = new Set(before.map(violationKey));
+    const afterKeys = new Set(after.map(violationKey));
+    return {
+      diff: diffSnapshots(start, trial.snapshot()),
+      primitives,
+      reads: [...reads],
+      writes: [...writes],
+      intent: intents.join("; "),
+      introduces: after.filter((v) => !beforeKeys.has(violationKey(v))),
+      resolves: before.filter((v) => !afterKeys.has(violationKey(v))),
+      violationsAfter: after,
+    };
+  }
+
   private previewPrimitives(
     primitives: readonly Primitive[],
     meta: {
@@ -509,11 +873,13 @@ export class Store<S extends AnySchema> {
       writes: readonly string[];
       intent: string;
       context?: InvariantContext;
+      /** An undo: what it puts back is held as it was (FR-28). */
+      restoring?: boolean;
     },
   ): Preview<S> {
     const before = this.violations(meta.context);
     const trial = Graph.from(this.schema, this.graph.snapshot());
-    const diff = trial.applyPrimitives(primitives);
+    const diff = trial.applyPrimitives(primitives, { restoring: meta.restoring === true });
     const after = evaluate(trial, this.allInvariants(), {
       ...this.invariantOptions,
       ...(meta.context === undefined ? {} : { context: meta.context }),
@@ -540,7 +906,16 @@ export class Store<S extends AnySchema> {
 
   /** Applies several mutations as one gesture — one batch, one undo unit. */
   applyAll(calls: readonly MutationCall[], options: ApplyOptions = {}): ApplyResult<S> {
-    const batch = options.batch ?? `batch:${++this.counter}`;
+    return this.applying(calls, options);
+  }
+
+  /**
+   * `applyAll` itself. Kept apart so a rebase applies pending calls again
+   * through the store's own path, whatever a host has wrapped `applyAll` in
+   * (`openRemote` sends each one down the wire).
+   */
+  private applying(calls: readonly MutationCall[], options: ApplyOptions): ApplyResult<S> {
+    const batch = options.batch ?? this.mintBatch("batch");
     const author = options.author ?? HUMAN;
     const ops: Operation[] = [];
     const allPrimitives: Primitive[] = [];
@@ -580,7 +955,7 @@ export class Store<S extends AnySchema> {
      * was brought in for, and the narrower of the two wins.
      */
     for (const call of calls) {
-      const refusal = this.refusesAgent(call, author);
+      const refusal = this.refusesAgent(call, author) ?? this.namesTurnedOff(call);
       if (refusal) {
         tellTheWatchOfARefusal(refusal, author.id);
         throw new PermissionDeniedError(refusal);
@@ -609,7 +984,14 @@ export class Store<S extends AnySchema> {
           seq: this.log.length,
           batch,
           author,
-          intent: options.intent ?? compiled.intent,
+          /*
+           * THE ACT'S OWN SENTENCE, kept; what the gesture was for goes
+           * beside it (FR-18). An act with no `describe` has no sentence of
+           * its own, only `close-item(id="deposit")`, and there the caller's
+           * words ("Close it", the button's) are the better one.
+           */
+          intent: definition.describe !== undefined ? compiled.intent : (options.intent ?? compiled.intent),
+          ...(options.intent !== undefined ? { batchIntent: options.intent } : {}),
           mutation: call,
           /*
            * NORMALISED on the way into the record: a patch that clears a
@@ -622,6 +1004,7 @@ export class Store<S extends AnySchema> {
           reads: compiled.reads,
           writes: compiled.writes,
           at: this.now(),
+          ...(options.via !== undefined ? { via: options.via } : {}),
         };
         this.graph.applyPrimitives(op.primitives);
         this.log.append(op);
@@ -690,21 +1073,165 @@ export class Store<S extends AnySchema> {
     if (fresh.length === 0) return [];
     const before = this.graph.snapshot();
     const landed: Operation[] = [];
-    for (const op of fresh) {
-      const here = { ...op, seq: this.log.all().length };
-      /*
-       * ALREADY IN EFFECT HERE. A client that applied a call provisionally
-       * and is now handed the server's op for it has the graph the op
-       * describes; applying the primitives again would add the node twice.
-       * The op still joins the log — it is the one everybody else has — so
-       * undo names it and the activity shows it, and the graph stays put.
-       */
-      if (!options.applied) this.graph.applyPrimitives(here.primitives);
+    /*
+     * ALL OR NOTHING, ACROSS THE OPS TOO (FR-26). Every op's primitives go
+     * on first; one that fails puts the graph back as it was — `load`, so a
+     * listener that heard the ops before it hears them reversed — and
+     * throws a ReceiveError naming that op, before any of them joins the
+     * log. A store handed a bad op is the store it was.
+     *
+     * ALREADY IN EFFECT HERE (`applied`). A client that applied a call
+     * provisionally and is now handed the server's op for it has the graph
+     * the op describes; applying the primitives again would add the node
+     * twice. The op still joins the log — it is the one everybody else has
+     * — so undo names it and the activity shows it, and the graph stays put.
+     */
+    if (!options.applied) {
+      for (const op of fresh) {
+        try {
+          // Somebody's undo puts back what was there, here as there (FR-28).
+          this.graph.applyPrimitives(op.primitives, { restoring: op.undoes !== undefined });
+        } catch (error) {
+          this.graph.load(before);
+          throw new ReceiveError(op, error);
+        }
+      }
+    }
+    const seq = this.log.length;
+    for (const [index, op] of fresh.entries()) {
+      const here = { ...op, seq: seq + index };
       this.log.append(here);
       landed.push(here);
     }
     this.notify(diffSnapshots(before, this.graph.snapshot()), landed);
     return landed;
+  }
+
+  /**
+   * OPS A HOST MADE, landed as ordinary history (FR-18): a template's
+   * example content, a seeded beginning, a repair or an import the host
+   * built itself. Unlike `receive`, which takes ops somebody else's store
+   * already made and skips the ones it has, these are new here, so the
+   * store fills in what the host left out the way it fills its own: the
+   * seq, an id, one batch for the call (`options.batch`, else a fresh one),
+   * the time, the inverse (from the primitives), what they write, and no
+   * mutation. What the host did say is kept.
+   *
+   * Each op lands as a write (a default is filled in on the way in, as a
+   * fold would), or, when it `undoes` another, as a putting-back. No policy
+   * is asked: there is no act to judge, and whoever calls this is the
+   * authority, as with `applyPrimitives`. All or nothing: an op that does
+   * not fit puts the store back as it was and throws a `ReceiveError`
+   * naming it, and an id the log already holds is refused before anything
+   * lands. Subscribers hear one change, and every op undoes like any other.
+   */
+  append(ops: readonly AppendOp[], options: { readonly batch?: string } = {}): readonly Operation[] {
+    if (ops.length === 0) return [];
+    const taken = new Set(this.log.all().map((op) => op.id));
+    let batch: string | undefined;
+    const built: Operation[] = ops.map((made, index) => {
+      const primitives = made.primitives.map(normalise);
+      const op: Operation = {
+        id: made.id ?? this.nextId(),
+        seq: this.log.length + index,
+        batch: made.batch ?? options.batch ?? (batch ??= this.mintBatch("batch")),
+        author: made.author,
+        intent: made.intent,
+        ...(made.batchIntent !== undefined ? { batchIntent: made.batchIntent } : {}),
+        mutation: made.mutation ?? null,
+        primitives,
+        inverse: made.inverse ?? [...primitives].reverse().map(invert),
+        reads: made.reads ?? [],
+        writes: made.writes ?? [...new Set(primitives.flatMap(writesOf))],
+        at: made.at ?? this.now(),
+        ...(made.undoes !== undefined ? { undoes: made.undoes } : {}),
+        ...(made.via !== undefined ? { via: made.via } : {}),
+      };
+      if (taken.has(op.id)) throw new GraphError(`Op "${op.id}" (${op.intent}) is already in the log`, "A host-made op needs an id of its own; leave `id` out and the store mints one.");
+      taken.add(op.id);
+      return op;
+    });
+    const before = this.graph.snapshot();
+    for (const op of built) {
+      try {
+        this.graph.applyPrimitives(op.primitives, { restoring: op.undoes !== undefined });
+      } catch (error) {
+        this.graph.load(before);
+        throw new ReceiveError(op, error);
+      }
+    }
+    for (const op of built) this.log.append(op);
+    for (const op of built) tellTheWatchOfAnAuthor(op.author.id);
+    this.notify(diffSnapshots(before, this.graph.snapshot()), built);
+    return built;
+  }
+
+  /**
+   * PRIMITIVES AS AN ORDINARY CHANGE (FR-21): one batch, one op, logged,
+   * attributed to `author` and undoable like any act. For changes that are
+   * not a declared mutation — a repair from `repairPlan`, a host's own fix —
+   * so they land in the history rather than beside it.
+   *
+   * No policy is asked: there is no act to judge, so whoever calls this is
+   * the authority, the way a migration engine is. All or nothing (FR-26): a
+   * primitive that does not fit leaves the store as it was and throws.
+   */
+  applyPrimitives(primitives: readonly Primitive[], options: ApplyOptions = {}): ApplyResult<S> {
+    const batch = options.batch ?? this.mintBatch("batch");
+    const author = options.author ?? HUMAN;
+    const before = this.violations();
+    const rollback = this.graph.snapshot();
+    const intent = options.intent ?? "Apply a change";
+    const recorded = primitives.map(normalise);
+    const ops: Operation[] = [];
+    if (recorded.length > 0) {
+      const op: Operation = {
+        id: this.nextId(),
+        seq: this.log.length,
+        batch,
+        author,
+        intent,
+        mutation: null,
+        primitives: recorded,
+        inverse: [...recorded].reverse().map(invert),
+        reads: [],
+        writes: [...new Set(recorded.flatMap(writesOf))],
+        at: this.now(),
+        ...(options.via !== undefined ? { via: options.via } : {}),
+      };
+      this.graph.applyPrimitives(op.primitives);
+      this.log.append(op);
+      ops.push(op);
+      tellTheWatchOfAnAuthor(author.id);
+    }
+    const after = this.violations();
+    const beforeKeys = new Set(before.map(violationKey));
+    const afterKeys = new Set(after.map(violationKey));
+    const diff = diffSnapshots(rollback, this.graph.snapshot());
+    this.notify(diff, ops);
+    return {
+      batch,
+      ops,
+      diff,
+      primitives: recorded,
+      reads: [],
+      writes: ops[0]?.writes ?? [],
+      intent,
+      introduces: after.filter((v) => !beforeKeys.has(violationKey(v))),
+      resolves: before.filter((v) => !afterKeys.has(violationKey(v))),
+      violationsAfter: after,
+    };
+  }
+
+  /**
+   * What in this store no longer fits its declaration (FR-21): the graph
+   * as held, judged by `validateGraph` against the schema and the rules
+   * this workspace has on. A clean store has none.
+   */
+  findings(): GraphFinding[] {
+    return validateGraph({ schema: this.schema, invariants: this.allInvariants() }, this.graph.snapshot(), {
+      invariantOptions: this.invariantOptions,
+    });
   }
 
   batches(): Batch[] {
@@ -736,6 +1263,7 @@ export class Store<S extends AnySchema> {
         reads: [...new Set(check.ops.flatMap((op) => [...op.reads]))],
         writes: [...writes],
         intent: `Undo: ${check.ops.map((op) => op.intent).join("; ")}`,
+        restoring: check.ops.every(putsBack),
         ...(context === undefined ? {} : { context }),
       }),
     };
@@ -751,12 +1279,35 @@ export class Store<S extends AnySchema> {
     batchIds: string | readonly string[],
     options: ApplyOptions = {},
   ): ApplyResult<S> {
-    const ids = typeof batchIds === "string" ? [batchIds] : batchIds;
-    const check = this.canUndo(ids);
-    if (!check.ok) throw new GraphError(check.message);
+    return this.undoing(batchIds, options);
+  }
 
-    const batch = options.batch ?? `undo:${++this.counter}`;
+  /** `undo` itself, kept apart for the same reason as `applying`. */
+  private undoing(batchIds: string | readonly string[], options: ApplyOptions): ApplyResult<S> {
+    const ids = typeof batchIds === "string" ? [batchIds] : batchIds;
     const author = options.author ?? HUMAN;
+    /*
+     * JUDGED FIRST AS THIS SEAT SEES THE LOG (FR-16, FR-02). A change it
+     * may not see is not its to take back, and when one stands in the way
+     * the refusal says a change you cannot see does — the full check's
+     * sentence would quote it. The two agree on what blocks: a withheld op
+     * keeps the ids this seat sees, and those are all it can overlap.
+     */
+    const sighted = (this.policy?.sees?.length ?? 0) > 0 && !isSystem(author as Principal);
+    if (sighted) {
+      const seen = checkUndo(readingOf(redact(this.log.all(), seesId(this, author as Principal)), () => this.log.epochs()), ids);
+      if (!seen.ok) throw new UndoBlockedError(seen);
+    }
+    const check = this.canUndo(ids);
+    if (!check.ok) {
+      throw new UndoBlockedError(
+        sighted
+          ? { ok: false, ops: [], blockedBy: [], includeBatches: [], message: "Cannot undo on its own — a later change you cannot see depends on it, which only somebody who can see it can take back." }
+          : check,
+      );
+    }
+
+    const batch = options.batch ?? this.mintBatch("undo");
 
     /*
      * Undo is a CHANGE, and it is judged like one.
@@ -792,7 +1343,8 @@ export class Store<S extends AnySchema> {
         seq: this.log.length,
         batch,
         author,
-        intent: options.intent ?? `Undo: ${target.intent}`,
+        intent: `Undo: ${target.intent}`,
+        ...(options.intent !== undefined ? { batchIntent: options.intent } : {}),
         mutation: null,
         primitives: target.inverse,
         inverse: [...target.inverse].reverse().map(invert),
@@ -800,8 +1352,9 @@ export class Store<S extends AnySchema> {
         writes: target.writes,
         at: this.now(),
         undoes: target.id,
+        ...(options.via !== undefined ? { via: options.via } : {}),
       };
-      this.graph.applyPrimitives(op.primitives);
+      this.graph.applyPrimitives(op.primitives, { restoring: putsBack(target) });
       this.log.append(op);
       ops.push(op);
     }
@@ -846,13 +1399,207 @@ export class Store<S extends AnySchema> {
     return () => this.listeners.delete(listener);
   }
 
-  private notify(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]): void {
-    if (ops.length === 0) return;
+  /**
+   * TELLS EVERY SUBSCRIBER OF A CHANGE: the diff, and the ops that made it.
+   * The store calls this for each change it makes; it is public for a host
+   * that changes the graph some other way and owes its subscribers the same
+   * news (the rebase item of FR-05). A change with no ops and an empty diff
+   * is nothing to tell.
+   */
+  notify(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]): void {
+    if (this.quiet > 0) return;
+    if (ops.length === 0 && isEmptyDiff(diff as GraphDiff<never>)) return;
     for (const listener of this.listeners) listener(diff, ops);
+  }
+
+  /**
+   * AN OPTIMISTIC CLIENT'S ROLLBACK (the rebase item of FR-05).
+   *
+   * A client applies a press at once and sends it; the server's op is the
+   * one that stays. When anything arrives from the server — somebody else's
+   * ops, or the verdict on one of this client's — the client's log must
+   * read `[confirmed…, pending…]` again. So, in one step:
+   *
+   * 1. every op of the `pending` and `drop` batches is rolled back, newest
+   *    first, and cut from the log (they must be its tail: an op after
+   *    them that is neither is refused, before anything moves);
+   * 2. the `confirmed` ops land in the server's order, skipped by id when
+   *    the log already holds them, all or nothing (`ReceiveError`);
+   * 3. the `pending` batches are applied again on top, in the order given,
+   *    under the same batch ids, author, intent and channel: each call
+   *    judged and compiled afresh against the graph the server's ops left.
+   *    One that no longer applies there is left off and said in `refused`;
+   *    the server's verdict on it will say the rest.
+   *
+   * `drop` is the batches the server has answered (its own op for them is
+   * among `confirmed`) or refused. Subscribers hear ONE change, the net
+   * diff, with the confirmed ops and the re-applied ones, so an interface
+   * never flickers through the states in between.
+   */
+  rebase(change: Rebase): RebaseResult<S> {
+    const settling = new Set([...change.pending, ...(change.drop ?? [])]);
+    const all = this.log.all();
+    const first = all.findIndex((op) => settling.has(op.batch));
+    const tail = all.slice(first < 0 ? all.length : first);
+    // The seq the log is cut back to: indexes into `all()` count from the horizon (FR-23).
+    const cut = this.log.horizon + (first < 0 ? all.length : first);
+    const stray = tail.find((op) => !settling.has(op.batch));
+    if (stray) {
+      throw new GraphError(
+        `Cannot rebase: op "${stray.id}" (${stray.intent}) comes after a pending batch and is neither pending nor dropped`,
+        "While anything is pending, land the server's ops through rebase, so the log stays confirmed ops then pending ones.",
+      );
+    }
+    const epoch = this.log.lastEpoch();
+    if (epoch && epoch.seq > cut) throw new GraphError(`Cannot rebase across an epoch: one begins at seq ${epoch.seq}, after pending op "${tail[0]!.id}"`);
+
+    const before = this.graph.snapshot();
+    const landed: Operation[] = [];
+    const replayed: Operation[] = [];
+    const refused: { batch: string; error: unknown }[] = [];
+    this.quiet++;
+    try {
+      // 1. Back to the confirmed prefix, putting back exactly what each op took.
+      for (const op of [...tail].reverse()) this.graph.applyPrimitives(op.inverse, { restoring: true });
+      this.log.truncate(cut);
+
+      // 2. What the server says, in its order.
+      const known = new Set(this.log.all().map((op) => op.id));
+      for (const op of change.confirmed) {
+        if (known.has(op.id)) continue;
+        try {
+          this.graph.applyPrimitives(op.primitives, { restoring: op.undoes !== undefined });
+        } catch (error) {
+          throw new ReceiveError(op, error);
+        }
+        const here = { ...op, seq: this.log.length };
+        this.log.append(here);
+        known.add(op.id);
+        landed.push(here);
+      }
+
+      // 3. What is still pending, again, on top.
+      for (const batch of change.pending) {
+        const ops = tail.filter((op) => op.batch === batch);
+        if (ops.length === 0) continue;
+        try {
+          replayed.push(...this.replay(batch, ops));
+        } catch (error) {
+          refused.push({ batch, error });
+        }
+      }
+    } catch (error) {
+      // A store handed a bad op is the store it was.
+      this.log.truncate(cut);
+      for (const op of tail) this.log.append(op);
+      this.graph.load(before);
+      throw error;
+    } finally {
+      this.quiet--;
+    }
+
+    const diff = diffSnapshots(before, this.graph.snapshot());
+    const ops = [...landed, ...replayed];
+    this.notify(diff, ops);
+    return { diff, confirmed: landed, pending: replayed, refused };
+  }
+
+  /** One pending batch, applied again as it was made: its calls, its undo, or its primitives. */
+  private replay(batch: string, ops: readonly Operation[]): readonly Operation[] {
+    const head = ops[0]!;
+    const options: ApplyOptions = {
+      author: head.author,
+      batch,
+      ...(head.batchIntent !== undefined ? { intent: head.batchIntent } : {}),
+      ...(head.via !== undefined ? { via: head.via } : {}),
+    };
+    if (head.undoes !== undefined) {
+      const targets = ops.map((op) => this.log.get(op.undoes ?? ""));
+      const missing = ops.find((_op, index) => targets[index] === undefined);
+      if (missing) throw new GraphError(`What "${missing.intent}" took back is no longer in the log`);
+      return this.undoing([...new Set(targets.map((op) => op!.batch))], options).ops;
+    }
+    if (ops.every((op) => op.mutation !== null)) {
+      return this.applying(ops.map((op) => op.mutation!), options).ops;
+    }
+    return this.append(ops.map(({ seq: _seq, ...op }) => op));
   }
 
   snapshot(): GraphSnapshot<NodeOfSchema<S>> {
     return this.graph.snapshot();
   }
+
+  /**
+   * WHETHER THE GRAPH IS WHAT ITS LOG SAYS (FR-20).
+   *
+   * Refolds the log from its last epoch (FR-27), or from empty when it has
+   * none, and compares the result with the graph held, by `snapshotHash`. Agreement returns the hash; disagreement returns both
+   * hashes and the op after which they part, so a host that finds a store
+   * drifted knows where to look rather than only that it should.
+   */
+  verify(): VerifyResult {
+    const from = this.log.lastEpoch();
+    return verifyFold(this.schema, this.log.opsFrom(from?.seq ?? 0), this.graph.snapshot(), {
+      validate: this.validate,
+      ...(from ? { base: from.base } : {}),
+    });
+  }
+
+  /**
+   * THE CHECKPOINT A COMPACTION WOULD MAKE (FR-23), or `undefined` when
+   * nothing is old enough to archive. The horizon is `seq` when given, or
+   * else whichever of two keeps more: the ops made in the last `keepDays`
+   * days before `now` (default 90), or the last `keepOps` ops (default
+   * 1000). It is moved back to the start of the gesture it would split, so
+   * a batch is never half behind it.
+   *
+   * Nothing moves until `compact` is handed the checkpoint, so a host can
+   * archive what is behind it first. A store whose graph does not verify
+   * against its log is not compacted: the checkpoint would vouch for a
+   * history that does not lead to the graph held.
+   */
+  checkpoint(options: CompactOptions = {}): Epoch | undefined {
+    const ops = this.log.all();
+    let seq: number;
+    if (options.seq !== undefined) seq = options.seq;
+    else {
+      const byOps = this.log.length - (options.keepOps ?? 1000);
+      const now = Date.parse(options.now ?? this.now());
+      const cutoff = now - (options.keepDays ?? 90) * 86_400_000;
+      const kept = ops.find((op) => Date.parse(op.at) > cutoff);
+      const byDays = kept ? kept.seq : this.log.length;
+      seq = Math.min(byOps, byDays);
+    }
+    seq = Math.min(Math.max(seq, this.log.horizon), this.log.length);
+    // Never inside a gesture: back to where the batch it would split began.
+    while (seq > this.log.horizon && seq < this.log.length && ops[seq - this.log.horizon]!.batch === ops[seq - 1 - this.log.horizon]!.batch) seq--;
+    if (seq <= this.log.horizon) return undefined;
+    const verified = this.verify();
+    if (!verified.ok) throw new GraphError(`Cannot compact a store that does not verify: ${verified.reason}`);
+    return this.log.checkpointAt(this.schema, seq, { validate: this.validate });
+  }
+
+  /**
+   * MOVES THE UNDO HORIZON TO `checkpoint` (FR-23): the ops and epochs
+   * before it leave the log, which begins at its seq from now on, and are
+   * returned for an adapter to archive. The graph is unchanged and still
+   * verifies; undo of anything behind the horizon is refused, naming it.
+   * Ship's `opened.compact()` archives first and calls this after.
+   */
+  compact(checkpoint: Epoch): LogArchive {
+    return this.log.compact(checkpoint);
+  }
+}
+
+/** Where `store.checkpoint` puts the undo horizon (FR-23). */
+export interface CompactOptions {
+  /** The seq to put it at. Absent, it follows from `keepDays` and `keepOps`. */
+  readonly seq?: number;
+  /** Keep every op made in the last this-many days before `now`; one exactly that old is archived. Default 90. */
+  readonly keepDays?: number;
+  /** Keep at least this many of the latest ops. Default 1000. */
+  readonly keepOps?: number;
+  /** The time the days count back from, as an ISO string. Defaults to the store's clock. */
+  readonly now?: string;
 }
 

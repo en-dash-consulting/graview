@@ -48,6 +48,14 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    */
   readonly destructive?: boolean;
   /**
+   * True when running this twice with the same arguments changes nothing
+   * the first run did not: setting a status, writing a field, removing a
+   * record. Read by an agent seat as MCP's `idempotentHint`, so a model may
+   * retry it safely. Absent means not known to be, which is the safe
+   * reading — an act that makes a record makes another each time.
+   */
+  readonly idempotent?: boolean;
+  /**
    * Node kinds this mutation brings into existence.
    *
    * The other half of the affordance seam. `subject` answers "what can I do

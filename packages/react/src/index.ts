@@ -9,10 +9,11 @@ export type { ActsDoor, AdministeredModule, DrawnBox, GraviewContextValue, Gravi
 export { createPointerStore } from "./pointer.js";
 export type { PointerStore, ScenePoint } from "./pointer.js";
 export { applySettings, honourSetting, loadSetting, rememberSetting } from "./settings.js";
+export type { ReaderMemory } from "./settings.js";
 
-export { createViews, DEFAULT_VIEW, isDefaultView, markDefaultView } from "./view-registry.js";
-export { ViewBoundary } from "./view-boundary.js";
-export type { ViewBoundaryProps } from "./view-boundary.js";
+export { createViews, DEFAULT_VIEW, isDefaultView, layerViews, markDefaultView } from "./view-registry.js";
+export { ErrorReportContext, ViewBoundary } from "./view-boundary.js";
+export type { ErrorReport, ViewBoundaryProps } from "./view-boundary.js";
 export type {
   Cardinality,
   Fidelity,

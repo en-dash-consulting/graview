@@ -2,6 +2,7 @@ import type { AnySchema, Place } from "@graview/core";
 import { aggregateId, withFocus, withOverview, withWithin } from "@graview/layout";
 import { useGraview, useNavigation } from "@graview/react";
 import { useLayoutEffect, useRef, useState } from "react";
+import { VISUALLY_HIDDEN } from "./primitives/index.js";
 
 /**
  * THE NAMED PLACES, as pills.
@@ -193,6 +194,8 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
         overflow: "hidden",
       }}
     >
+      {/* A heading for the region (FR-25), named as its landmark is; out of the row's flow. */}
+      <h2 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>Places</h2>
       {places.map((place, index) => {
         const here = isHere(place);
         return (

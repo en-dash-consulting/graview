@@ -100,20 +100,24 @@ mount(document.getElementById("here")!, {
 
 export function viewsTsx(ids: Ids): string {
   return `import { createViews } from "@graview/react";
-import { registerDefaultViews } from "@graview/primitives";
+import { registerDefaultViews, registerViewSpecs } from "@graview/primitives";
+import { ${ids.appVar} } from "../domain/app.js";
 import { ${ids.schemaVar} } from "../domain/schema.js";
 
 /**
  * Nothing custom yet, on purpose. \`registerDefaultViews\` renders every kind
- * at every fidelity from the declaration alone. Write a view for a kind when
- * the generic one is genuinely wrong, not on principle — see the framework's
- * \`apps/todo/src/ui/views.tsx\` for one that earns its place. Give a group
- * view a title and it is a PLACE, listed by name in the bar:
+ * at every fidelity from the declaration alone, and \`registerViewSpecs\`
+ * draws the cards, rows and pages the declaration writes as data
+ * (\`viewSpecs\` in domain/app.ts — checked by \`graview check\`). Write a
+ * view for a kind when the generic one is genuinely wrong, not on
+ * principle — see the framework's \`apps/todo/src/ui/views.tsx\` for one
+ * that earns its place. Give a group view a title and it is a PLACE,
+ * listed by name in the bar:
  *
  *   .register("${ids.kind}", { cardinality: "many", fidelity: "full" }, lens.View, { title: "…" })
  */
 export function views() {
-  return registerDefaultViews(${ids.schemaVar}, createViews(${ids.schemaVar}));
+  return registerViewSpecs(registerDefaultViews(${ids.schemaVar}, createViews(${ids.schemaVar})), ${ids.schemaVar}, ${ids.appVar}.viewSpecs);
 }
 `;
 }
@@ -214,7 +218,7 @@ function Starter({ onCall }: { onCall: (call: ToolCall) => void }) {
       who="starter"
       testId="agent-starter"
       count={empty ? 1 : 0}
-      gate="add-${ids.kind}"
+      gate="${ids.gate}"
       label={() => "Add some starter data"}
       busyLabel="Adding…"
       idle="There is something here already"

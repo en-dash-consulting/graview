@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-02T08:23:00.079Z",
+  "at": "2026-10-03T06:30:31.255Z",
   "engine": "chromium",
   "checks": {
     "threePicturesAndTheWayIn": {
@@ -98,7 +98,8 @@
         "kind:kind",
         "kind:lens",
         "kind:role",
-        "kind:rule"
+        "kind:rule",
+        "kind:sight"
       ],
       "ok": true
     },

@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-02T08:24:10.720Z",
+  "at": "2026-10-03T06:31:42.355Z",
   "checks": {
     "theSeatsChangeIsKept": {
-      "kept": 2,
-      "said": "people should be assigned to plants not plotsMoving caretakers from plots to plantings.✓ Remove the edge tended-by✓ Add the edge tended-by from planting to gardener",
+      "kept": 3,
+      "said": "people should be assigned to plants not plotsMoving caretakers from plots to plantings.✓ Remove the edge tended-by✓ Add the edge tended-by from planting to gardener✓ Add the rule Every planting has a plot over planting",
       "ok": true
     },
     "theCodeTheChangeLeavesWrongIsNamed": {
@@ -30,6 +30,9 @@
     "theRuleReadsPlantings": {
       "ok": true
     },
+    "aRuleJudgedInWordsIsWrittenAsWords": {
+      "ok": true
+    },
     "theAppCarriesItsGraphsForward": {
       "ok": true
     },
@@ -49,8 +52,12 @@
         "tended-by:chard->sam"
       ],
       "log": [
-        "{\"id\":\"migration:1-2:2026-10-02T08:24:14.814Z\",\"seq\":0,\"batch\":\"migration:1->2\",\"author\":{\"kind\":\"system\",\"id\":\"ship:migration\"},\"intent\":\"migration 1→2: plot tended-by edges move to the planting records tied to each plot\",\"mutation\":null,\"primitives\":[{\"op\":\"remove-edge\",\"edge\":{\"kind\":\"tended-by\","
+        "{\"id\":\"migration:1-2:2026-10-03T06:31:46.712Z\",\"seq\":0,\"batch\":\"migration:1->2\",\"author\":{\"kind\":\"system\",\"id\":\"ship:migration\"},\"intent\":\"migration 1→2: plot tended-by edges move to the planting records tied to each plot\",\"mutation\":null,\"primitives\":[{\"op\":\"remove-edge\",\"edge\":{\"kind\":\"tended-by\","
       ],
+      "ok": true
+    },
+    "theRuleJudgesTheStoredGarden": {
+      "said": "1 problemWhat is brokenEach rule says what it found, and names what would fix it.Mint grows nowhereMint",
       "ok": true
     },
     "itCompiles": {

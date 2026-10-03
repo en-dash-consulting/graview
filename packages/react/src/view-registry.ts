@@ -131,6 +131,25 @@ export function createViews<S extends AnySchema>(schema: S): ReactViewRegistry<S
   return createViewRegistry<S, ViewComponent<S>>(schema) as ReactViewRegistry<S>;
 }
 
+/**
+ * ONE REGISTRY LAID OVER ANOTHER (FR-36): every registration `over` made,
+ * replayed in the order it was made onto `base`, which keeps every cell
+ * `over` did not touch. A host that registers one card for one kind gets
+ * that card and every default beside it, rather than that card and nothing
+ * else. Returns `base`.
+ */
+export function layerViews<S extends AnySchema>(base: ReactViewRegistry<S>, over: ReactViewRegistry<S>): ReactViewRegistry<S> {
+  if (over === base) return base;
+  for (const registration of over.registrations()) {
+    const meta = {
+      ...(registration.title ? { title: registration.title } : {}),
+      ...(registration.across ? { across: registration.across } : {}),
+    };
+    base.register(registration.kind as KindOfSchema<S>, { cardinality: registration.cardinality, fidelity: registration.fidelity }, registration.view, meta);
+  }
+  return base;
+}
+
 export type { Cardinality, Fidelity, ViewCell };
 
 /**

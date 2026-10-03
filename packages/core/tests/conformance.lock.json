@@ -1,0 +1,6 @@
+{
+  "document:vendors": "sha256:f61e3bdb877beaf9b1df6fc5cd12c79b4601333c049588f44fe0609a308cdff5",
+  "document:two-lines": "sha256:f50c159d0bf26660830ceff82dafacd022ebcc821cb9bfd58e1e3cd4a24a75da",
+  "log:vendors-booked-then-taken-back": "sha256:d9ffabd22da8df0ad9f63a81df42ac9aa0d9b51f28a1c12bf27fc544d6af1b0e",
+  "log:two-lines-made-and-done": "sha256:82694f84193661adfbd4037d0f920e2d11a19be4d68ac8f57a3dca2ea20daa25"
+}

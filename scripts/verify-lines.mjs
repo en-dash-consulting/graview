@@ -96,14 +96,23 @@ const MEASURE = () => {
     };
   };
 
-  /* What is under a point, ignoring the overlay itself. */
+  /*
+   * What is under a point, ignoring the overlay itself. A line routed through
+   * the gutters leaves a card exactly at its border, and a border at a
+   * fractional pixel (a band drawn at 0.95) is outside the element at that
+   * very point; so the point and its neighbours within two pixels are asked,
+   * which still finds a line ending in open ground.
+   */
+  const NEAR = [[0, 0], [0, -2], [0, 2], [-2, 0], [2, 0]];
   const pickAt = (p) => {
-    const at = toClient(p);
-    for (const el of document.elementsFromPoint(at.x, at.y)) {
-      if (el.closest("svg") === svg) continue;
-      const host = el.closest("[data-graview-pick], [data-graview-view]");
-      if (host) {
-        return host.getAttribute("data-graview-pick") ?? host.getAttribute("data-graview-view");
+    for (const [dx, dy] of NEAR) {
+      const at = toClient({ x: p.x + dx, y: p.y + dy });
+      for (const el of document.elementsFromPoint(at.x, at.y)) {
+        if (el.closest("svg") === svg) continue;
+        const host = el.closest("[data-graview-pick], [data-graview-view]");
+        if (host) {
+          return host.getAttribute("data-graview-pick") ?? host.getAttribute("data-graview-view");
+        }
       }
     }
     return null;
@@ -161,6 +170,26 @@ const faults = (shot, when) => {
   return out;
 };
 
+/*
+ * READ A LINE ONCE ITS PATH HAS HELD. A reshape can move the scene twice —
+ * the window, then the bar wrapping a frame later because one row no longer
+ * holds at the new width — and a line read during the second move points at
+ * where its card was. Measured until two readings in a row agree, up to four
+ * seconds; what is still moving then is reported as it stands.
+ */
+async function settled(page) {
+  let last = null;
+  let reading = await page.evaluate(MEASURE);
+  for (let waited = 0; waited < 4000; waited += 200) {
+    const said = JSON.stringify(reading);
+    if (said === last) break;
+    last = said;
+    await page.waitForTimeout(200);
+    reading = await page.evaluate(MEASURE);
+  }
+  return reading;
+}
+
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {}, faults: [], seen: [] };
 
 for (const { app, port, states } of APPS) {
@@ -205,7 +234,7 @@ for (const { app, port, states } of APPS) {
       /* And a reshape, which moves everything without touching the graph. */
       await page.setViewportSize({ width: 1080, height: 820 });
       await page.waitForTimeout(900);
-      report.faults.push(...faults(await page.evaluate(MEASURE), `${where}, reshaped`));
+      report.faults.push(...faults(await settled(page), `${where}, reshaped`));
 
       await page.close();
     }

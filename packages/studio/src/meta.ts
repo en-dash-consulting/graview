@@ -1,4 +1,5 @@
 import { createSchema, defineNode, nodeRef, type AnyMutationDefinition, type GraviewApp } from "@graview/core";
+import { renameIn, type DeclaredKinds } from "@graview/core/document";
 import { z } from "zod";
 
 /*
@@ -147,6 +148,17 @@ export const ruleNode = defineNode("rule", {
      * came back with no repairs at all.
      */
     derivedRepairs: z.array(z.string()).optional(),
+    /**
+     * THE JUDGEMENT, IN WORDS (FR-07): what must hold, in the rule language —
+     * `quote != null`, `count(in('fills') where status == 'booked') <= 1`.
+     * A rule that has one is judged by the studio and by the files it
+     * writes; one without is the checkout's to judge in code.
+     */
+    require: z.string().optional(),
+    /** Only the records for which this holds are judged. */
+    when: z.string().optional(),
+    /** What a violation says, as a template over the record: "{name} has no quote". */
+    says: z.string().optional(),
   }),
   edges: {
     over: { to: ["kind"], description: "the kind it judges", inverse: "the rules over it" },
@@ -196,6 +208,31 @@ export const grantNode = defineNode("grant", {
   display: { labels: { self: "on their own record only", allActs: "every act", allKinds: "every kind" } },
 });
 
+export const sightNode = defineNode("sight", {
+  /*
+   * WHO SEES WHAT, as a node like a grant is (FR-02). The studio carried a
+   * checkout's `sees` through untouched and had no act for one, so a sight
+   * could be kept but never added, changed or taken away where everything
+   * else about the policy is.
+   */
+  description: "Who may see the records of some kinds at all — and, with own, only their own.",
+  plural: "sights",
+  fields: z.object({
+    label,
+    describe: z.string().optional(),
+    /** Only the seat's own records: theirs, joined to theirs, or made by them. */
+    own: z.boolean(),
+    /** Every seat, whatever its roles. */
+    everyone: z.boolean(),
+  }),
+  edges: {
+    "seen-by": { to: ["role"], description: "the roles it lets see", inverse: "what they see" },
+    shows: { to: ["kind"], description: "the kinds it shows", inverse: "who sees it" },
+  },
+  label: (node) => node.label,
+  display: { labels: { own: "their own records only", everyone: "everybody" } },
+});
+
 export const lensNode = defineNode("lens", {
   description: "A named way of looking at the graph, and the slots it asks an app to fill.",
   plural: "lenses",
@@ -224,7 +261,7 @@ export const brandNode = defineNode("brand", {
   display: { labels: { label: "name", body: "body typeface", display: "display typeface" } },
 });
 
-export const STUDIO_SCHEMA = createSchema([kindNode, fieldNode, edgeNode, actNode, ruleNode, roleNode, grantNode, lensNode, brandNode]);
+export const STUDIO_SCHEMA = createSchema([kindNode, fieldNode, edgeNode, actNode, ruleNode, roleNode, grantNode, sightNode, lensNode, brandNode]);
 export type StudioSchema = typeof STUDIO_SCHEMA;
 
 /*
@@ -348,6 +385,58 @@ export const addField = act("add-field", {
   },
 });
 
+/** The declaration the studio holds, as the rule language's name walk reads it. */
+function declaredKinds(graph: { ofKind?: unknown; nodesOfKind(kind: string): readonly { id: string; label?: unknown }[]; in(id: string, edge?: string): readonly { id: string; kind: string; label?: unknown }[]; out(id: string, edge?: string): readonly { id: string; label?: unknown }[] }): DeclaredKinds {
+  const kinds: Record<string, { fields: string[]; edges: Record<string, string[]> }> = {};
+  for (const kind of graph.nodesOfKind("kind")) {
+    const name = String(kind.label);
+    kinds[name] = {
+      fields: graph.in(kind.id, "of").filter((node) => node.kind === "field").map((field) => String(field.label)),
+      edges: Object.fromEntries(graph.in(kind.id, "from-kind").map((edge) => [String(edge.label), graph.out(edge.id, "to-kind").map((to) => String(to.label))])),
+    };
+  }
+  return kinds;
+}
+
+/*
+ * RENAME, AND EVERYTHING THAT READS IT FOLLOWS (FR-34). The same operation
+ * as `editDocument`'s rename-field: the field's records keep their values,
+ * and every rule judged in words that reads it — its `require`, its `when`,
+ * the sentence it `says` — is rewritten by the rule language's own walk,
+ * which knows a quoted word and another kind's field of the same name from
+ * this one.
+ */
+export const renameField = act("rename-field", {
+  title: "Rename the field",
+  description: "Give a field a new name. Its records keep their values, and every rule that reads it follows.",
+  subject: { kinds: ["field"], arg: "id" },
+  input: z.object({ id: nodeRef(["field"]), to: z.string().regex(/^[a-z][A-Za-z0-9]*$/, 'a field name is one word or camelCase, like "dueDate"') }),
+  describe: (args, graph) => `Rename the field ${(graph.getNode(args.id) as { label?: string } | undefined)?.label ?? args.id} to ${args.to}`,
+  apply(ctx, args) {
+    const field = ctx.graph.getNode(args.id) as { label: string } | undefined;
+    const owner = ctx.graph.out(args.id, "of")[0] as { label: string } | undefined;
+    if (!field || !owner || field.label === args.to) return;
+    const change = { what: "field" as const, kind: owner.label, from: field.label, to: args.to };
+    const kinds = declaredKinds(ctx.graph as never);
+    ctx.patchNode(args.id, { label: args.to });
+    for (const rule of ctx.graph.nodesOfKind("rule") as readonly ({ id: string; wholeGraph?: boolean } & Record<string, unknown>)[]) {
+      const over = rule.wholeGraph ? "graph" : String((ctx.graph.out(rule.id, "over")[0] as { label?: string } | undefined)?.label ?? "graph");
+      const patch: Record<string, string> = {};
+      for (const key of ["require", "when"] as const) {
+        const text = rule[key];
+        if (typeof text !== "string") continue;
+        const next = renameIn(kinds, over, { expression: text }, change);
+        if (next !== undefined && next !== text) patch[key] = next;
+      }
+      if (typeof rule["says"] === "string") {
+        const next = renameIn(kinds, over, { template: rule["says"] }, change);
+        if (next !== undefined && next !== rule["says"]) patch["says"] = next;
+      }
+      if (Object.keys(patch).length > 0) ctx.patchNode(rule.id, patch as never);
+    }
+  },
+});
+
 export const removeField = act("remove-field", {
   title: "Remove the field",
   description: "Take a field off its kind. Records that carry it need a migration.",
@@ -459,17 +548,34 @@ export const removeAct = act("remove-act", {
 
 export const addRule = act("add-rule", {
   title: "Add a rule",
-  description: "Hold a kind to a rule. The judgement is written in the checkout; the studio declares it and names its repairs.",
+  description: "Hold a kind to a rule: what must hold, in the rule language (`quote != null`), and what a broken one says. Without a judgement the checkout writes one in code.",
   subject: { kinds: ["kind"], arg: "kind" },
   creates: ["rule"],
   connects: ["over"],
   fromTheOtherEnd: "over",
-  input: z.object({ kind: nodeRef(["kind"]), label: z.string().min(1), description: z.string().min(1) }),
+  input: z.object({
+    kind: nodeRef(["kind"]),
+    label: z.string().min(1),
+    description: z.string().min(1),
+    require: z.string().min(1).optional(),
+    when: z.string().min(1).optional(),
+    says: z.string().min(1).optional(),
+  }),
   describe: (args, graph) => `Add the rule ${args.label} over ${(graph.getNode(args.kind) as { label?: string } | undefined)?.label ?? args.kind}`,
   apply(ctx, args) {
     const name = slug(args.label);
     const id = `rule:${name}`;
-    ctx.addNode({ id, kind: "rule", label: name, description: args.description, judgesPast: false, wholeGraph: false });
+    ctx.addNode({
+      id,
+      kind: "rule",
+      label: name,
+      description: args.description,
+      judgesPast: false,
+      wholeGraph: false,
+      ...(args.require ? { require: args.require } : {}),
+      ...(args.when ? { when: args.when } : {}),
+      ...(args.says ? { says: args.says } : {}),
+    });
     ctx.addEdge({ kind: "over", from: id, to: args.kind });
   },
 });
@@ -573,11 +679,61 @@ export const revokeGrant = act("revoke-grant", {
   },
 });
 
+const labelOf = (graph: Reader, id: string): string => (graph.getNode(id) as { label?: string } | undefined)?.label ?? id;
+
+export const addSight = act("add-sight", {
+  title: "Let a role see a kind",
+  description:
+    "Say who may see the records of a kind: one role, or everybody when none is named; with own, only their own records. Once any sight is declared, a kind no sight names is seen by nobody but the system.",
+  subject: { kinds: ["kind"], arg: "kind" },
+  creates: ["sight"],
+  connects: ["seen-by", "shows"],
+  fromTheOtherEnd: "shows",
+  input: z.object({ kind: nodeRef(["kind"]), role: nodeRef(["role"]).optional(), own: z.boolean().optional(), describe: z.string().optional() }),
+  describe: (args, graph) =>
+    `${args.role ? labelOf(graph, args.role) : "Everybody"} may see ${args.own ? "their own " : ""}${labelOf(graph, args.kind)}`,
+  apply(ctx, args) {
+    const who = args.role ? nameOf(ctx, args.role) : "everybody";
+    const what = nameOf(ctx, args.kind);
+    const said = `${who} may see ${args.own ? "their own " : ""}${what}`;
+    const id = ctx.freshId(said, "sight");
+    ctx.addNode({ id, kind: "sight", label: said, own: args.own ?? false, everyone: !args.role, ...(args.describe ? { describe: args.describe } : {}) });
+    if (args.role) ctx.addEdge({ kind: "seen-by", from: id, to: args.role });
+    ctx.addEdge({ kind: "shows", from: id, to: args.kind });
+  },
+});
+
+export const changeSight = act("change-sight", {
+  title: "Change the sight",
+  description: "Keep a sight to a seat's own records, or not, and say why in a sentence.",
+  subject: { kinds: ["sight"], arg: "id" },
+  writes: ["own", "describe"],
+  input: z.object({ id: nodeRef(["sight"]), own: z.boolean().optional(), describe: z.string().optional() }),
+  describe: (args, graph) => `Change ${labelOf(graph, args.id)}`,
+  apply(ctx, args) {
+    ctx.patchNode(args.id, { ...(args.own !== undefined ? { own: args.own } : {}), ...(args.describe !== undefined ? { describe: args.describe } : {}) });
+  },
+});
+
+export const removeSight = act("remove-sight", {
+  title: "Take the sight away",
+  description: "Stop letting these roles see these kinds. A kind no sight names is then seen by nobody but the system.",
+  subject: { kinds: ["sight"], arg: "id" },
+  destructive: true,
+  severs: ["seen-by", "shows"],
+  input: z.object({ id: nodeRef(["sight"]) }),
+  describe: (args, graph) => `Take away ${labelOf(graph, args.id)}`,
+  apply(ctx, args) {
+    ctx.removeNode(args.id);
+  },
+});
+
 export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = [
   addKind,
   renameKind,
   removeKind,
   addField,
+  renameField,
   removeField,
   addEdge,
   removeEdge,
@@ -591,6 +747,9 @@ export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = 
   addRole,
   grant,
   revokeGrant,
+  addSight,
+  changeSight,
+  removeSight,
 ];
 
 /** The studio as an app: the meta-schema, its acts, and an agent seat that may propose any of them. */

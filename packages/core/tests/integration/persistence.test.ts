@@ -9,7 +9,8 @@ import {
   type GraphSnapshot,
   type PersistenceAdapter,
 } from "../../src/index.js";
-import { createSqliteAdapter } from "../../src/persistence/sqlite.js";
+import { createSqlAdapter, createSqliteAdapter, sqlFromDatabase } from "../../src/persistence/sqlite.js";
+import { adapterCases, sqlCases } from "../support/adapter-contract.js";
 
 const person = defineNode("person", {
   fields: z.object({ label: z.string(), accent: z.string().optional() }),
@@ -48,76 +49,34 @@ function householdTables() {
 const adapters: [string, () => PersistenceAdapter<string>][] = [
   ["memory", () => createMemoryAdapter()],
   ["sqlite", () => createSqliteAdapter({ database: householdTables() as never })],
+  // The SQL adapter over better-sqlite3: the same `exec` a Durable Object hands it (FR-09).
+  ["sql over better-sqlite3", () => createSqlAdapter(sqlFromDatabase(householdTables() as never))],
 ];
 
 describe.each(adapters)("%s adapter", (_name, make) => {
-  it("returns null before anything is stored", async () => {
-    await expect(make().load("household-1")).resolves.toBeNull();
-  });
+  for (const contract of adapterCases(make)) it(contract.name, () => contract.run());
 
-  it("round-trips a graph through one interface", async () => {
+  // FR-23: the contract's compaction case runs only where an adapter keeps an archive; each of these does.
+  it("keeps epochs and an archive, so a long-lived log can compact", () => {
     const adapter = make();
-    await adapter.save("household-1", snapshot);
-    const loaded = await adapter.load("household-1");
-    expect(loaded).not.toBeNull();
-    const graph = Graph.from(schema, loaded as never);
-    expect(graph.size).toEqual({ nodes: 3, edges: 1 });
-    expect(graph.getNode("p2")).toEqual({ id: "p2", kind: "person", label: "Bo", accent: "moss" });
-    expect(graph.out("p1", "assigned-to").map((n) => n.id)).toEqual(["d1"]);
+    for (const method of ["loadEpochs", "saveEpochs", "compact", "loadArchive"] as const) expect(typeof adapter[method]).toBe("function");
   });
+});
 
-  it("keeps scopes apart", async () => {
-    const adapter = make();
-    await adapter.save("household-1", snapshot);
-    await adapter.save("household-2", {
-      nodes: [{ id: "p9", kind: "person", label: "Solo" }],
-      edges: [],
-    });
-    expect((await adapter.load("household-2"))?.nodes).toHaveLength(1);
-    expect((await adapter.load("household-1"))?.nodes).toHaveLength(3);
-    expect(await adapter.load("household-3")).toBeNull();
-  });
+describe("sql adapter over better-sqlite3", () => {
+  for (const contract of sqlCases(() => sqlFromDatabase(new Database(":memory:") as never))) it(contract.name, () => contract.run());
 
-  it("survives a write, a reload, and a second write", async () => {
-    const adapter = make();
+  it("prepares a statement once, however many times it runs", async () => {
+    const db = householdTables();
+    let prepared = 0;
+    const counting = { prepare: (sql: string) => (prepared++, db.prepare(sql)), exec: (sql: string) => db.exec(sql), transaction: db.transaction.bind(db) };
+    const adapter = createSqlAdapter(sqlFromDatabase(counting as never));
     await adapter.save("h", snapshot);
-    const first = await adapter.load("h");
-    const graph = Graph.from(schema, first as never);
-    graph.applyPrimitives([
-      { op: "patch-node", id: "d1", before: { at: 480 }, after: { at: 540 } },
-    ]);
-    await adapter.save("h", graph.snapshot());
-    const second = await adapter.load("h");
-    expect(second?.nodes.find((n) => n.id === "d1")).toMatchObject({ at: 540 });
-  });
-
-  it("deletes a scope without touching the others", async () => {
-    const adapter = make();
+    const once = prepared;
     await adapter.save("h", snapshot);
-    await adapter.save("other", snapshot);
-    await adapter.delete("h");
-    expect(await adapter.load("h")).toBeNull();
-    expect(await adapter.load("other")).not.toBeNull();
-  });
-
-  it("appends and reloads the operation log when it supports one", async () => {
-    const adapter = make();
-    if (!adapter.appendOps || !adapter.loadLog) return;
-    const op = {
-      id: "op1",
-      seq: 0,
-      batch: "b1",
-      author: { kind: "human" as const },
-      intent: "Retime",
-      mutation: null,
-      primitives: [],
-      inverse: [],
-      reads: ["d1"],
-      writes: ["d1"],
-      at: "1970-01-01T00:00:00.000Z",
-    };
-    await adapter.appendOps("h", [op]);
-    expect(await adapter.loadLog("h")).toEqual([op]);
+    await adapter.load("h");
+    await adapter.load("h");
+    expect(prepared).toBeLessThanOrEqual(once + 2);
   });
 });
 

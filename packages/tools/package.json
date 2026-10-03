@@ -22,6 +22,7 @@
     "@graview/ship": "workspace:*"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "zod": "^4.4.3"
   },
   "description": "Derived affordances and the agent tool surface, generated from the same declarations; graview mcp and graview apply host it against a real store.",

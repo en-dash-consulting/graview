@@ -15,7 +15,26 @@ export interface Author {
   readonly kind: "human" | "agent" | "rule" | "system";
   readonly id?: string;
   readonly session?: string;
+  /**
+   * The author's own name, for a reader who has no record or seat to look
+   * it up in — another person in a hosted app, an agent from a chat. Said
+   * before any id is (FR-17).
+   */
+  readonly name?: string;
+  /**
+   * WHO THIS IS FOR. An agent acting for a person records both — "Claude,
+   * for Nick" — and is bounded by that person's roles as well as its own
+   * (FR-06).
+   */
+  readonly onBehalfOf?: Author;
 }
+
+/**
+ * THE CHANNEL an op came through: `web` (a person at the interface),
+ * `mcp:<client>` (an agent's tool call), `view:<name>` (a view acting for
+ * its viewer), `api`, `cli`. A fact in the log, beside who and for whom.
+ */
+export type Via = "web" | "api" | "cli" | `mcp:${string}` | `view:${string}` | (string & {});
 
 /**
  * One entry in the append-only log. The graph is a fold over these.
@@ -31,8 +50,20 @@ export interface Operation {
   /** One user gesture, or one agent turn. */
   readonly batch: string;
   readonly author: Author;
-  /** Human-readable statement of what was meant, not what changed. */
+  /**
+   * Human-readable statement of what was meant, not what changed: the act's
+   * own `describe()` sentence ("Add “Book the van”"), or "Undo: …".
+   */
   readonly intent: string;
+  /**
+   * What the whole gesture was for, when its caller said ("Plan the move"),
+   * on every op of the batch. Beside `intent`, never instead of it (FR-18):
+   * an op keeps its own sentence, so a blocked undo, the record's history
+   * and an audit still say what each op did, and the batch reads as what
+   * was meant. Absent when no intent was given, and the batch reads as its
+   * ops, as it always did.
+   */
+  readonly batchIntent?: string;
   readonly mutation: MutationCall | null;
   readonly primitives: readonly Primitive[];
   readonly inverse: readonly Primitive[];
@@ -41,6 +72,24 @@ export interface Operation {
   readonly at: string;
   /** Set when this op exists to undo another one. */
   readonly undoes?: string;
+  /** What the change came through, when the caller said (FR-06). */
+  readonly via?: Via;
+  /**
+   * SOMETHING YOU CANNOT SEE HAPPENED HERE (FR-16). Set on an op a store
+   * served to a seat that may not see what it touched: it keeps its id,
+   * seq, batch and time, so the log has no hole, and nothing else of its
+   * own — its author, intent, call and inverse are withheld, and its
+   * primitives, reads and writes keep only what the seat may see. Absent
+   * on every op a store makes; an op without it reads as before.
+   */
+  readonly withheld?: true;
+  /**
+   * THE MODULES THIS OP LEAVES ON (FR-12). Set only on an op authored
+   * `system · modules`, which turns modules off or on and touches no
+   * record: the store's enabled set is the one the last such op says. An
+   * op without it reads as before, and folds the same.
+   */
+  readonly enabledModules?: readonly string[];
 }
 
 export interface Batch {

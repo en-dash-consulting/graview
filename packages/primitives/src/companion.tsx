@@ -1,12 +1,13 @@
 import { labelOf, placeSlug, type AnySchema } from "@graview/core";
 import { withFocus } from "@graview/layout";
-import { aggregateId, bandAggregateWords, isAggregateId, kindOfCard } from "@graview/layout";
+import { aggregateId, bandAggregateWords, kindOfCard, kindsOfAggregate } from "@graview/layout";
 import { useGraview, useSeatWork, useSelection } from "@graview/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChatPanel } from "./chat.js";
 import { QuickRelations } from "./quick-relations.js";
 import { RelationKey } from "./relation-key.js";
 import { Inspector } from "./workbench/index.js";
+import { VISUALLY_HIDDEN } from "./primitives/index.js";
 
 /**
  * THE SEAT IS A COMPANION ATTACHED TO THE VIEWFRAME.
@@ -141,8 +142,14 @@ export function useSubject<S extends AnySchema>(): Subject {
     if (node) return labelOf(store.schema.tryDefinition(node.kind), node);
     const band = bandAggregateWords(id, store.schema);
     if (band) return band;
-    const kind = kindOfCard(id) ?? (isAggregateId(id) ? id.slice("aggregate:".length) : null);
+    const kind = kindOfCard(id);
     if (kind) return store.schema.tryDefinition(kind)?.plural ?? kind;
+    /* A group of several kinds is its plurals together, as the scene's own label says: "Blocks and Runs", never "block+duty". */
+    const kinds = kindsOfAggregate(id);
+    if (kinds.length > 0) {
+      const plurals = kinds.map((one) => store.schema.tryDefinition(one)?.plural ?? one);
+      return plurals.length === 1 ? plurals[0]! : `${plurals.slice(0, -1).join(", ")} and ${plurals.at(-1)}`;
+    }
     return null;
   };
 
@@ -178,6 +185,8 @@ export function useSubject<S extends AnySchema>(): Subject {
  * user's dictation sets off by accident (WCAG 2.1.4).
  */
 export const ACTS_KEY = "A";
+
+const RULE = "1px solid var(--graview-edge)";
 
 /** What the seat is doing, in one word, from the state it already reports. */
 function seatSays(mode: string | undefined): { readonly word: string; readonly tone: string } {
@@ -400,7 +409,11 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
         flexDirection: "column",
         gap: 8,
         borderRadius: "var(--graview-radius, 12px)",
-        border: "1px solid var(--graview-edge)",
+        /* Each side by itself: docking takes three away, and React warns when a shorthand and its longhands trade places. */
+        borderTop: RULE,
+        borderRight: RULE,
+        borderBottom: RULE,
+        borderLeft: RULE,
         background: "var(--graview-float)",
         boxShadow: "var(--graview-lift-high)",
         ...(framed
@@ -423,8 +436,9 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
               width: "min(264px, 22cqw)",
               padding: open ? "12px 12px 10px" : "10px 12px",
               borderRadius: 0,
-              border: "none",
-              borderRight: "1px solid var(--graview-edge)",
+              borderTop: "none",
+              borderBottom: "none",
+              borderLeft: "none",
               boxShadow: "none",
               background: "var(--graview-bar)",
               ...(open ? { display: "grid" as const, gridTemplateRows: "auto minmax(0, 1fr) auto" } : {}),
@@ -432,6 +446,8 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
         overflow: "hidden",
       }}
     >
+      {/* A HEADING FOR THE REGION (FR-25): a reader moving by headings finds the seat, named as its landmark is. Out of the grid's flow. */}
+      <h2 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>The seat — about {subject.name}</h2>
       {/* THE SUBJECT, said in the header: what "this" means right now, and what the seat is doing about it. */}
       <button
         type="button"
