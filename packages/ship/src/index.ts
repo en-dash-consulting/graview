@@ -26,6 +26,8 @@ export { openRemote, seatHeaders } from "./remote.js";
 export { createBroadcastPresence, presenceChannelName } from "./presence.js";
 export type { BroadcastPresenceOptions, ChannelLike } from "./presence.js";
 export type { RemoteOptions, RemoteStore } from "./remote.js";
+export { createStoreHandler } from "./handler.js";
+export type { StoreHandler, StoreHandlerOptions } from "./handler.js";
 export { SEAT_HEADERS, seatFromHeaders, serveStore, WIRE } from "./serve.js";
 export type { ServeOptions, ServedStore } from "./serve.js";
 export { backendFrom, serve, SERVE_USAGE, syncSeed } from "./cli.js";

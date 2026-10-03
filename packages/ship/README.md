@@ -29,6 +29,11 @@ declaration plus one persistence adapter is a running deployment.
   client sends CALLS, never primitives; the server applies them through an ordinary `Store`
   under the seat the request carries, so the policy refuses on the server exactly what it
   refuses in a browser. `graview serve <entry>` is the command.
+- **`createStoreHandler`** — the same routes as one function from a `Request` to a
+  `Response`, for any runtime: a Cloudflare Worker or Durable Object, Deno, Bun. `serveStore`
+  is a thin `node:http` wrapper around it. Import it from `@graview/ship/runtime`, the entry
+  that reaches no `node:` builtin: the store, migrations, the handler and `openRemote`, without
+  the file adapter or the page's localStorage.
 - **Content moves as steps.** The step DSL (`stepsMigration`) has five content steps beside
   the schema ones — `put-node`, `patch-node`, `drop-node`, `put-edge`, `drop-edge` — each
   judged against the stored graph when it runs, so a default that is already there is not
@@ -63,8 +68,8 @@ so a host in front of it knows what it must keep answering for `openRemote`, `gr
 | GET | `/graview/who` | who is here right now |
 | POST | `/graview/leave` | say you have gone |
 
-Who is asking is the host's to say: `serveStore({ seatOf })` reads its own credential and
-returns the principal every call is judged under. The framework's clients also send the seat
+Who is asking is the host's to say: `serveStore({ seatOf })` reads its own credential from
+the `Request` and returns the principal every call is judged under, or a promise of it. The framework's clients also send the seat
 as headers (`SEAT_HEADERS`: who, as what, by what name, and for whom), and a store believes
 them only when told to — `serveStore({ trustSeatHeaders: true })`, which `graview serve`
 sets for a server on 127.0.0.1 and says so. A store with neither answers 401 on every route
@@ -83,7 +88,7 @@ host of the same API, and it consumes this package the way any customer would.
 | Concern | In the framework | In a host (Graview Cloud, or yours) |
 |---|---|---|
 | Op log + snapshot + migrate on open | `openStore` | runs it on the server, per deployment |
-| The wire | `serveStore`, `openRemote`, `WIRE` | production TLS, a gateway URL |
+| The wire | `serveStore`, `createStoreHandler`, `openRemote`, `WIRE` | production TLS, a gateway URL, the runtime it runs in |
 | Who is asking | `Principal` on every `apply`; `seatOf` reads the request | maps users, keys and agents to principals; tenancy; quotas |
 | Seed | read once, on an empty store | the same |
 | Default content moving | `seedSteps`, `applySteps`, `graview sync-seed` | when to run it, and for whom |

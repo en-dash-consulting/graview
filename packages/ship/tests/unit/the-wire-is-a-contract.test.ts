@@ -72,8 +72,8 @@ describe("the wire", () => {
       seed: seed as never,
       // A host's `seatOf`: the framework carries a bearer token; the host says who it is.
       seatOf: (request) => {
-        seen.push(String(request.headers["authorization"] ?? ""));
-        return request.headers["authorization"] === "Bearer keeper-key" ? { kind: "human", id: "k", roles: ["keeper"] } : { kind: "human" };
+        seen.push(request.headers.get("authorization") ?? "");
+        return request.headers.get("authorization") === "Bearer keeper-key" ? { kind: "human", id: "k", roles: ["keeper"] } : { kind: "human" };
       },
     });
     // The browser's own store still judges locally as the keeper; the SERVER learns who from the token alone.

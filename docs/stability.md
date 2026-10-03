@@ -26,7 +26,7 @@ What is stored carries the format it was written in (FR-31). `FORMATS` names the
 
 ### 3. The wire and live protocols: additive within a major
 
-`WIRE` (in `@graview/ship`) lists every route `serveStore` answers. `WIRE_PROTOCOL` numbers the protocol.
+`WIRE` (in `@graview/ship`) lists every route `serveStore` answers, and `createStoreHandler` answers the same routes in any runtime (FR-09). `WIRE_PROTOCOL` numbers the protocol.
 
 - Within a major, a route or a response field may be added. None is removed, renamed or changed in meaning.
 - A request field the server does not know is ignored, never refused.
