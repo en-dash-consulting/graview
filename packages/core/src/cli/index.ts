@@ -7,6 +7,7 @@ import type { GraviewApp } from "../app.js";
 import { checkApp, formatFindings } from "./check.js";
 import { compileDocument, readDocument } from "../document/compile.js";
 import { sayFindings } from "../document/findings.js";
+import { isGraviewTemplate } from "../document/graview-template.js";
 import { create, CREATE_USAGE } from "./create.js";
 import { describeApp } from "./describe.js";
 import { generateAgentsMd, generateLlmsTxt } from "./docs.js";
@@ -26,6 +27,7 @@ ${CREATE_USAGE}
       (a .json file in the Graview document format): compiled, never run as
       code, and checked with the JSON path of every finding. With
       --previous <file>, check holds every renamedFrom to the version before.
+      A template (a graview-template .json) is read as the document inside it.
 
   graview docs <entry> [--out <dir>] [--views <module>]
       Writes llms.txt and agents.md next to the entry, or into <dir>.
@@ -71,9 +73,23 @@ export const isDocument = (entry: string): boolean => entry.endsWith(".json");
 
 /** A declaration document compiled, with the findings it came with — or every finding that refused it. */
 export function loadDocument(entry: string, previous?: string): ReturnType<typeof compileDocument> {
-  const path = resolve(process.cwd(), entry);
-  const before = previous ? readDocument(readFileSync(resolve(process.cwd(), previous), "utf8")).document : undefined;
-  return compileDocument(readFileSync(path, "utf8"), before ? { previous: before } : {});
+  const before = previous ? readDocument(documentIn(previous)).document : undefined;
+  return compileDocument(documentIn(entry), before ? { previous: before } : {});
+}
+
+/**
+ * The declaration a .json file holds: the file itself, or — when it is a
+ * template (FR-08) — the document inside it, so `graview describe` and
+ * `graview check` read a template made anywhere as the app it makes.
+ */
+export function documentIn(file: string): unknown {
+  const text = readFileSync(resolve(process.cwd(), file), "utf8");
+  try {
+    const parsed = JSON.parse(text) as unknown;
+    return isGraviewTemplate(parsed) ? (parsed as { document?: unknown }).document : text;
+  } catch {
+    return text;
+  }
 }
 
 export async function loadApp(entry: string): Promise<GraviewApp> {
