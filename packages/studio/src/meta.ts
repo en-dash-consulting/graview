@@ -1,4 +1,5 @@
 import { createSchema, defineNode, nodeRef, type AnyMutationDefinition, type GraviewApp } from "@graview/core";
+import { renameIn, type DeclaredKinds } from "@graview/core/document";
 import { z } from "zod";
 
 /*
@@ -359,6 +360,58 @@ export const addField = act("add-field", {
   },
 });
 
+/** The declaration the studio holds, as the rule language's name walk reads it. */
+function declaredKinds(graph: { ofKind?: unknown; nodesOfKind(kind: string): readonly { id: string; label?: unknown }[]; in(id: string, edge?: string): readonly { id: string; kind: string; label?: unknown }[]; out(id: string, edge?: string): readonly { id: string; label?: unknown }[] }): DeclaredKinds {
+  const kinds: Record<string, { fields: string[]; edges: Record<string, string[]> }> = {};
+  for (const kind of graph.nodesOfKind("kind")) {
+    const name = String(kind.label);
+    kinds[name] = {
+      fields: graph.in(kind.id, "of").filter((node) => node.kind === "field").map((field) => String(field.label)),
+      edges: Object.fromEntries(graph.in(kind.id, "from-kind").map((edge) => [String(edge.label), graph.out(edge.id, "to-kind").map((to) => String(to.label))])),
+    };
+  }
+  return kinds;
+}
+
+/*
+ * RENAME, AND EVERYTHING THAT READS IT FOLLOWS (FR-34). The same operation
+ * as `editDocument`'s rename-field: the field's records keep their values,
+ * and every rule judged in words that reads it — its `require`, its `when`,
+ * the sentence it `says` — is rewritten by the rule language's own walk,
+ * which knows a quoted word and another kind's field of the same name from
+ * this one.
+ */
+export const renameField = act("rename-field", {
+  title: "Rename the field",
+  description: "Give a field a new name. Its records keep their values, and every rule that reads it follows.",
+  subject: { kinds: ["field"], arg: "id" },
+  input: z.object({ id: nodeRef(["field"]), to: z.string().regex(/^[a-z][A-Za-z0-9]*$/, 'a field name is one word or camelCase, like "dueDate"') }),
+  describe: (args, graph) => `Rename the field ${(graph.getNode(args.id) as { label?: string } | undefined)?.label ?? args.id} to ${args.to}`,
+  apply(ctx, args) {
+    const field = ctx.graph.getNode(args.id) as { label: string } | undefined;
+    const owner = ctx.graph.out(args.id, "of")[0] as { label: string } | undefined;
+    if (!field || !owner || field.label === args.to) return;
+    const change = { what: "field" as const, kind: owner.label, from: field.label, to: args.to };
+    const kinds = declaredKinds(ctx.graph as never);
+    ctx.patchNode(args.id, { label: args.to });
+    for (const rule of ctx.graph.nodesOfKind("rule") as readonly ({ id: string; wholeGraph?: boolean } & Record<string, unknown>)[]) {
+      const over = rule.wholeGraph ? "graph" : String((ctx.graph.out(rule.id, "over")[0] as { label?: string } | undefined)?.label ?? "graph");
+      const patch: Record<string, string> = {};
+      for (const key of ["require", "when"] as const) {
+        const text = rule[key];
+        if (typeof text !== "string") continue;
+        const next = renameIn(kinds, over, { expression: text }, change);
+        if (next !== undefined && next !== text) patch[key] = next;
+      }
+      if (typeof rule["says"] === "string") {
+        const next = renameIn(kinds, over, { template: rule["says"] }, change);
+        if (next !== undefined && next !== rule["says"]) patch["says"] = next;
+      }
+      if (Object.keys(patch).length > 0) ctx.patchNode(rule.id, patch as never);
+    }
+  },
+});
+
 export const removeField = act("remove-field", {
   title: "Remove the field",
   description: "Take a field off its kind. Records that carry it need a migration.",
@@ -606,6 +659,7 @@ export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = 
   renameKind,
   removeKind,
   addField,
+  renameField,
   removeField,
   addEdge,
   removeEdge,

@@ -17,7 +17,7 @@ export const WIRE_PROTOCOL = 1;
  * id is named in the changeset that shipped it; `capabilities.test.ts`
  * holds the two lists to each other.
  */
-const SHIPPED = ["FR-01", "FR-06", "FR-07", "FR-11", "FR-15", "FR-17", "FR-26", "FR-29", "FR-30", "FR-31"] as const;
+const SHIPPED = ["FR-01", "FR-06", "FR-07", "FR-11", "FR-15", "FR-17", "FR-26", "FR-29", "FR-30", "FR-31", "FR-34"] as const;
 
 /**
  * The declaration-document formats `@graview/core/document` parses, as

@@ -360,6 +360,8 @@ function setTargets(act: Doc): { set: Record<string, unknown>; kinds: Kinds; whe
 
 class Editor {
   readonly said: string[] = [];
+  /** The agent tools this change renames or reshapes: a model that listed them before calls what is gone. */
+  readonly toolsMoved = new Set<string>();
   readonly findings: Finding[] = [];
   readonly fills: Fill[] = [];
   /** Where each kind, field and relation of the current draft came from in the base document (undefined: new in this change). */
@@ -571,6 +573,9 @@ class Editor {
     const from: string = e.kind;
     const to: string = e.to;
     const touched = this.rewriteAll({ t: "kind", from, to });
+    // The acts the framework derives for every kind are named for it, so they move with it.
+    this.toolsMoved.add(`edit-${from} is now edit-${to}`);
+    this.toolsMoved.add(`remove-${from} is now remove-${to}`);
     // The kind itself, in order, continuing its records.
     const kinds: Doc = {};
     for (const [k, v] of Object.entries(this.doc.kinds)) kinds[k === from ? to : k] = v;
@@ -690,6 +695,8 @@ class Editor {
     if (!this.freeName(i, kind, to, "field")) return;
     const r: Rename = { t: "field", kind, from: field, to };
     const touched = this.rewriteAll(r);
+    // An act's arguments are named for the fields it writes: the derived edit, and any act that writes this one.
+    this.toolsMoved.add(`edit-${kind} asks for ${to} where it asked for ${field}`);
     const spec = this.doc.kinds[kind];
     const fields: Doc = {};
     for (const [k, v] of Object.entries(spec.fields)) fields[k === field ? to : k] = v;
@@ -893,6 +900,7 @@ class Editor {
 
   /** An act gets a new name, and every grant and repair that named it follows. */
   private renameAct(from: string, to: string) {
+    this.toolsMoved.add(`${from} is now ${to}`);
     const acts: Doc = {};
     for (const [k, v] of Object.entries(this.doc.acts)) acts[k === from ? to : k] = v;
     this.doc.acts = acts;
@@ -966,7 +974,10 @@ class Editor {
           for (const [k, v] of Object.entries(act.args)) next[k === r.from ? r.to : k] = v;
           act.args = next;
         }
-        if (args.size) renamedArgs.set(name, args);
+        if (args.size) {
+          renamedArgs.set(name, args);
+          this.toolsMoved.add(`${name} asks for ${[...args.values()].join(", ")} where it asked for ${[...args.keys()].join(", ")}`);
+        }
       }
       const argRename = renamedArgs.get(name);
       // A guard reads the subject's fields and the act's arguments by the same bare names.
@@ -1240,5 +1251,51 @@ export function editDocument(document: GraviewDocument, edits: readonly unknown[
     editor.apply(i, raw);
   });
   if (editor.findings.length > 0) return { ok: false, findings: editor.findings };
+  /*
+   * THE TOOL INTERFACE MOVED, AND SAYS SO (FR-34). A derived act is named for
+   * its kind and asks for its fields by name, so a rename changes what an
+   * agent calls; a conversation that listed the tools before sends what is
+   * no longer there.
+   */
+  if (editor.toolsMoved.size > 0) {
+    editor.said.push(`The tools an agent is offered change: ${listOf([...editor.toolsMoved])}. A conversation that listed them before should list them again.`);
+  }
   return { ok: true, document: editor.doc as GraviewDocument, said: editor.said, fills: editor.fills };
+}
+
+/** What a declaration holds, enough for the rule language's name walk: each kind's fields, and where its relations go. */
+export interface DeclaredKinds {
+  readonly [kind: string]: { readonly fields: readonly string[]; readonly edges?: Readonly<Record<string, readonly string[] | "*">> };
+}
+
+/** A name that changes: a kind's field, an app-wide relation, or a kind. */
+export type NameChange =
+  | { readonly what: "field"; readonly kind: string; readonly from: string; readonly to: string }
+  | { readonly what: "relation"; readonly from: string; readonly to: string }
+  | { readonly what: "kind"; readonly from: string; readonly to: string };
+
+/**
+ * ONE RENAME, WHEREVER IT IS WRITTEN (FR-34). The walk `editDocument` renames
+ * with — which kind each bare name reads from, a quoted word left alone,
+ * another kind's field of the same name untouched — for a surface that holds
+ * its own declaration, like the studio's. An expression comes back printed;
+ * a template keeps the words around its braces.
+ */
+export function renameIn(kinds: DeclaredKinds, over: string | "graph", text: { readonly expression?: string; readonly template?: string }, change: NameChange): string | undefined {
+  const doc: Doc = {
+    kinds: Object.fromEntries(
+      Object.entries(kinds).map(([kind, shape]) => [
+        kind,
+        {
+          fields: Object.fromEntries(shape.fields.map((field) => [field, {}])),
+          edges: Object.fromEntries(Object.entries(shape.edges ?? {}).map(([edge, to]) => [edge, { to }])),
+        },
+      ]),
+    ),
+  };
+  const r: Rename = change.what === "field" ? { t: "field", kind: change.kind, from: change.from, to: change.to } : change.what === "relation" ? { t: "edge", from: change.from, to: change.to } : { t: "kind", from: change.from, to: change.to };
+  const ctx: Kinds = over === "graph" ? NONE : new Set([over]);
+  if (text.expression !== undefined) return rewriteExpr(doc, text.expression, ctx, r);
+  if (text.template !== undefined) return rewriteTemplate(doc, text.template, ctx, r);
+  return undefined;
 }

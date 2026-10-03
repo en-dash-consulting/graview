@@ -661,6 +661,7 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
         ? defineInvariant(name, {
             scope: "graph",
             label: title,
+            judgement: { require: rule.require, ...(rule.when ? { when: rule.when } : {}), ...(rule.says ? { says: rule.says } : {}) },
             ...(rule.description ? { description: rule.description } : {}),
             ...(repairs.length > 0 ? { repairs: repairs.map((r) => r.act) } : {}),
             evaluate: ({ graph }: { graph: unknown }) => judge(graph as GraphReader, null),
@@ -668,6 +669,7 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
         : defineInvariant(name, {
             scope: { kind: rule.over },
             label: title,
+            judgement: { require: rule.require, ...(rule.when ? { when: rule.when } : {}), ...(rule.says ? { says: rule.says } : {}) },
             ...(rule.description ? { description: rule.description } : {}),
             ...(repairs.length > 0 ? { repairs: repairs.map((r) => r.act) } : {}),
             evaluate: ({ graph, subject }: { graph: unknown; subject: unknown }) => judge(graph as GraphReader, subject as AnyGraphNode),
