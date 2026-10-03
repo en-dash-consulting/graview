@@ -1,5 +1,31 @@
 # @graview/react
 
+## 0.1.3
+
+### Patch Changes
+
+- 50beae9: Presence a host can add to. Who is here held only sockets and pollers, so an agent acting for Ada over MCP or an RPC never appeared in the room while it worked, and a presence said only where somebody stood and what to call them. A `Presence` now carries its `kind`, and for an agent `onBehalfOf` (the person's id) and `onBehalfOfName`; `presenceName(presence)` says it as "Claude, for Ada", and the Shell's figures are named that way. `presenceFrom(told, seat, now?, participant?)` builds all of it from the seat: a claimed `kind`, `onBehalfOf` or `until` is dropped, the seat's name stands over a claimed one, and a socket's `here` is held under the key the server gave it, whatever key it claims. That key is built at `hello` and said back as `welcome.participant`, `POST /graview/here` answers with the poller's own, and `openRemote(...).participant()` hands it on, so a client leaves itself out of who is here. Somebody without a socket is announced: `handler.announce(presence, ttlMs?)` tells every socket and poll at once, and `visitorPresence(author, { session?, stop?, over? })` builds the presence from a seat the host trusts. The handler announces an agent itself for every op an agent seat lands in its store — through `POST /graview/ops`, an MCP handler over the same store, or the host's own loop — standing over what it wrote, for `VISITOR_PRESENCE_TTL_MS` (30 s); `announceAgents: false` turns that off and a number sets the time. An announced presence carries `until`, and stands until then without a heartbeat, in the server's map and in every client's fold (`presenceStands`). A hibernating host keeps who is here itself with `announcePresence(who, presence, ttlMs?, now?)`, which stamps the visitor, replaces the same participant and drops whoever has passed; `tell` and every route never tell of a visitor past its `until`. Each seat is told as it may see: an agent acting for a person the seat may not see is shown, without `onBehalfOf` or the name. `POST /graview/leave` now forgets only the asking seat's own key (FR-47).
+  
+  Compatibility: wire surface additive — `welcome.participant`, `participant` in the answer to `POST /graview/here`, and `kind`, `onBehalfOf`, `onBehalfOfName` and `until` on a presence; a client that ignores them is served as before. A socket's presence key is now minted by the server at hello, so the session after `kind:id:` is no longer the one the client put in its own key; a client that matched its own key against who is here reads `welcome.participant` instead. `POST /graview/leave` naming another seat's key now does nothing. New exports: `presenceName`, `presenceStands` and `VISITOR_PRESENCE_TTL_MS` from `@graview/core`; `announcePresence` and `visitorPresence` from `@graview/ship` and `@graview/ship/runtime`; `StoreHandler` and `ServedStore` gain `announce`, `RemoteStore` gains `participant()`, and the handler options gain `announceAgents` (additive). Stored formats and op shapes are unchanged, and `@graview/ship/runtime` still reaches no `node:` builtin.
+- f4a1f72: The seat is a labelled region, not a landmark inside one. The companion was an `<aside>`, a complementary landmark, drawn inside the Shell's main and inside an embed's own region, and the inspector, the line key and the quick relations were asides inside it, so axe's `landmark-complementary-is-top-level` failed on every hosted app at every size and scheme. The companion is now a `<section>` named "The seat — about …", with its h2 and every test id and `data-graview-*` attribute as before; the inspector, the key and the quick relations are named groups while they sit in the seat, and labelled regions where they stand alone. The profile and the activity panes, which open from the bar or inside an embed, are labelled regions too. A click on any of them still leaves the selection alone, and an embed still names each region inside it after itself (FR-40).
+  
+  Compatibility: the wire — additive: `capabilities().shipped` gains "FR-40", and nothing else on it moves. Ops, stored formats, the declaration and the tool surface are unchanged.
+- Updated dependencies [c3683bb]
+- Updated dependencies [1ba2ab7]
+- Updated dependencies [5ea9572]
+- Updated dependencies [a65423f]
+- Updated dependencies [8e76788]
+- Updated dependencies [c2ed1f8]
+- Updated dependencies [5ea9572]
+- Updated dependencies [50beae9]
+- Updated dependencies [625ac82]
+- Updated dependencies [f4a1f72]
+- Updated dependencies [ca3c327]
+  - @graview/core@0.1.3
+  - @graview/layout@0.1.3
+  - @graview/render@0.1.3
+  - @graview/tools@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes

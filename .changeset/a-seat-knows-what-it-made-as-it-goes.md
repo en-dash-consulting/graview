@@ -1,7 +1,0 @@
----
-"@graview/core": patch
----
-
-A seat knows what it made as the log goes (FR-51). `seesId(store, principal)` read who made each record when it was called, so a judgement taken before a commit and asked after it did not know the record just made was its maker's own; a room filtering an act's own ack had to take the judgement again whenever the log moved. It now reads the policy, the modules that are off and who made what as it is asked. Who made what is kept by an index the log follows, as the label index follows the graph: `recordsOf` reads only the ops appended since it was last asked, where it read the whole log again after every commit, so a sighted room's cost per commit is the commit's rather than the log's. A log cut back by a rebase takes out what the cut ops wrote; a log compacted behind its horizon (FR-23) keeps the makers it had already read, where before it forgot every record made behind the horizon. And the refusal for a name that means several records says what they are, as the refusal for none does: `"bloom" names more than one vendor: …` where it said `could mean 2 records`.
-
-Compatibility: unchanged — no stored format, wire, check code, document format or tool name or schema moves. `recordsOf` takes a `RecordedLog` (a log's `all()` and, optionally, its `length`), which every log it took before still is; the type is exported. The ambiguous refusal's sentence changes; its `reason` and `candidates` do not.
