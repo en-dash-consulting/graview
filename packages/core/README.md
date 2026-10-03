@@ -24,6 +24,8 @@ Everything a Graview app declares, and the checker that verifies it.
   never run as code; `toDocument` writes an app back out. Rules say what must
   hold in a small, budgeted language (`expressionRule`). Every command that
   takes an entry takes `--document <file>`.
+- **Conformance** — `@graview/core/conformance`: fixtures a host runs against
+  a version (`conformance()`) to prove it reads, compiles and derives the same.
 
 ```sh
 npx graview create my-app          # a product on Graview, started (also: npm create graview)

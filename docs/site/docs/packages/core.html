@@ -1070,7 +1070,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
       <h1 id="h-what">@graview/core</h1>
       <p class="lede" style="margin-top: 18px;">The graph, the log, the schema and the checker. Everything a Graview app declares, and the CLI that verifies it.</p>
       <div class="cta"><div class="cta-line"><code>pnpm add @graview/core</code><button type="button" class="copy" data-copy="pnpm add @graview/core">Copy</button></div></div>
-      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/core</code>, <code>@graview/core/document</code>, <code>@graview/core/sqlite</code>, <code>@graview/core/scaffold</code>, <code>@graview/core/cli</code>, <code>@graview/core/testing</code></p>
+      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/core</code>, <code>@graview/core/document</code>, <code>@graview/core/conformance</code>, <code>@graview/core/sqlite</code>, <code>@graview/core/scaffold</code>, <code>@graview/core/cli</code>, <code>@graview/core/testing</code></p>
     </section>
     <section id="readme" aria-labelledby="h-readme">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-readme">What it is</h2></div>
@@ -1085,6 +1085,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <li><strong>Theme</strong> — the token contract, the two shipped palettes, and a contrast checker that measures a brand's palette before it ships.</li>
 <li><strong><code>graview check</code></strong> — reads a declaration and reports what is wrong with it, in terms an agent can act on.</li>
 <li><strong>Documents</strong> — <code>@graview/core/document</code>: a whole app as one JSON object, compiled by <code>compileDocument</code> into the same app <code>defineApp</code> declares and never run as code; <code>toDocument</code> writes an app back out. Rules say what must hold in a small, budgeted language (<code>expressionRule</code>). Every command that takes an entry takes <code>--document &lt;file&gt;</code>.</li>
+<li><strong>Conformance</strong> — <code>@graview/core/conformance</code>: fixtures a host runs against a version (<code>conformance()</code>) to prove it reads, compiles and derives the same.</li>
 </ul>
 <div class="code" data-scroller><pre><code>npx graview create my-app          # a product on Graview, started (also: npm create graview)
 npx graview check ./dist/domain/app.js

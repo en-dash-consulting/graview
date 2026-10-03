@@ -13,6 +13,10 @@
       "types": "./dist/document/index.d.ts",
       "default": "./dist/document/index.js"
     },
+    "./conformance": {
+      "types": "./dist/conformance/index.d.ts",
+      "default": "./dist/conformance/index.js"
+    },
     "./sqlite": {
       "types": "./dist/persistence/sqlite.d.ts",
       "default": "./dist/persistence/sqlite.js"

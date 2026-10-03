@@ -57,6 +57,12 @@ Tools are derived from the declaration (`createToolRuntime`, `graview mcp`), and
 - A change to a derived tool's name, description or input schema for an unchanged declaration is called out in a `Compatibility:` line, even when it is a fix.
 - A change caused by the declaration (a renamed field renames an argument) is the app's change, not the framework's. The framework's part is saying which tools moved.
 
+## The conformance kit
+
+`@graview/core/conformance` ships fixtures: declaration documents with the check findings and tool schemas this framework made of them, and op logs with the snapshot hash each folds to. `conformance()` runs them against this build, or against a build a host hands it, and returns the differences by fixture id. A host runs it before it takes a version.
+
+The fixtures are append-only. `node scripts/conformance-fixtures.mjs` only ever adds a fixture with a new id, and a lock holds the rest. A change to a recorded fixture is an announced difference (`ANNOUNCED`), with the version that made it and what changed.
+
 ## The Compatibility line
 
 A pull request that touches a file on one of the five surfaces asks every changeset it adds for a line:
