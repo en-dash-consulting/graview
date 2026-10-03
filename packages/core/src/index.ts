@@ -374,5 +374,5 @@ export { generateAgentsMd, generateLlmsTxt } from "./cli/docs.js";
 // The city: a map drawn from the declaration, in lattice cells.
 export { BLOCK, cityExtent, cityMap, MAX_SIDE, plotsOverlap, roadsOf, sharedEdges, sideFor, toIso } from "./city.js";
 export type { CityHints, CityMap, Plot, Road } from "./city.js";
-export { foldPresence, parseParticipant, participantKey, PRESENCE_TTL_MS, REMOTE_PRESENCE_TTL_MS, samePresence } from "./presence.js";
+export { foldPresence, parseParticipant, participantKey, PRESENCE_TTL_MS, presenceName, presenceStands, REMOTE_PRESENCE_TTL_MS, samePresence, VISITOR_PRESENCE_TTL_MS } from "./presence.js";
 export type { Participant, Presence, PresenceChannel, PresenceRobot } from "./presence.js";
