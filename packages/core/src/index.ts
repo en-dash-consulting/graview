@@ -247,6 +247,17 @@ export { seenBy } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
 export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 
+// Stored data checked against its declaration (FR-21).
+export { GRAPH_FINDING_CODES, repairPlan, validateGraph } from "./validate-graph.js";
+export type {
+  FindingRepair,
+  GraphFinding,
+  GraphFindingCode,
+  RepairPlan,
+  ValidatedApp,
+  ValidateGraphOptions,
+} from "./validate-graph.js";
+
 // Store — graph + log + mutations + invariants, one object.
 export { ReceiveError, Store, violationKey } from "./store.js";
 export type {

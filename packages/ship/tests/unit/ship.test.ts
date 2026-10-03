@@ -250,6 +250,7 @@ describe("health is coherence, not liveness", () => {
       couldNotJudge: 0,
       overBudget: 0,
       danglingEdges: [],
+      findings: 0,
       at: "2026-09-01T00:00:00Z",
     });
     opened.close();
@@ -275,6 +276,8 @@ describe("health is coherence, not liveness", () => {
     expect(report.violations).toBe(2);
     expect(report.couldNotJudge).toBe(1);
     expect(report.overBudget).toBe(1);
+    // FR-21: and each is a stored-data finding, counted with the rest.
+    expect(report.findings).toBe(2);
     opened.close();
   });
 });
