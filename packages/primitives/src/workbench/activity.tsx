@@ -2,7 +2,7 @@ import { humaniseField, isWithheld, nameOfAuthor, viaSaid, type AnySchema, type 
 import { useGraph, useGraview } from "@graview/react";
 import type { ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Chip } from "../primitives/index.js";
+import { Chip, VISUALLY_HIDDEN } from "../primitives/index.js";
 import { nameOf } from "./answer-args.js";
 import { closeToTrigger } from "../popover.js";
 
@@ -329,6 +329,8 @@ export function ActivityRail({
             boxShadow: "var(--graview-lift-high)",
           }}
         >
+          {/* A heading for the region (FR-25), named as its landmark is. */}
+          <h2 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>Activity</h2>
           {seat !== undefined ? (
             <div
               data-testid="agent-seat-row"

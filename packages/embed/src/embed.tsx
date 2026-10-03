@@ -1,7 +1,7 @@
 import { Store, type AnySchema, type Brand, type GraviewApp, type Place, type PresenceChannel, type Principal } from "@graview/core";
 import { EMPTY_VIEW, aggregateId, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout";
 import { PagesApp, PlacePicture, type PageComponent, type PageRegistry } from "@graview/pages";
-import { Companion, Inspector, OverviewButton, Places, Profile, ShowInstallation, Standing, descentTarget, registerDefaultViews, themeCss, useWidth } from "@graview/primitives";
+import { Companion, Inspector, OverviewButton, Places, Profile, ShowInstallation, Standing, VISUALLY_HIDDEN, descentTarget, registerDefaultViews, themeCss, useWidth } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
 import {
   createViews,
@@ -13,7 +13,7 @@ import {
   type ReactViewRegistry,
   useTheKeyboardLandsSomewhere,
 } from "@graview/react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { fontsLink } from "./fonts.js";
@@ -97,6 +97,13 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> {
    * role and name; every landmark inside is named after the embed.
    */
   readonly label?: string;
+  /**
+   * THE WORKBENCH'S HEADING (FR-25): the level the embed's name is said at,
+   * for a reader moving by headings — `1` when the host's page is the app,
+   * `2` (the default) inside somebody else's article, `false` when the
+   * host's own heading already names it. The pages face brings its own.
+   */
+  readonly heading?: 1 | 2 | 3 | 4 | 5 | 6 | false;
 }
 
 export interface EmbedProps<S extends AnySchema = AnySchema> extends EmbedOptions<S> {
@@ -169,6 +176,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
     standing = "Everything is in order",
     pages,
     label,
+    heading = 2,
   } = props;
   const rootRef = useRef<HTMLDivElement>(null);
   useTheKeyboardLandsSomewhere(rootRef);
@@ -250,6 +258,12 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
       style={{ position: "relative", height, minHeight: 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" }}
     >
       <style>{css}</style>
+      {/*
+        * THE WORKBENCH SAYS ITS NAME IN A HEADING (FR-25). A screen reader
+        * moving by headings found nothing in the scene; the pages face has
+        * its own, so it is not said twice there.
+        */}
+      {heading !== false && face !== "pages" ? <HeadingAt level={heading}>{label ?? app.name}</HeadingAt> : null}
       <GraviewProvider
         store={store}
         views={views}
@@ -312,6 +326,12 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
       </GraviewProvider>
     </section>
   );
+}
+
+/** A heading at a level the host chose, heard and not seen. */
+function HeadingAt({ level, children }: { readonly level: 1 | 2 | 3 | 4 | 5 | 6; readonly children: ReactNode }) {
+  const Tag = `h${level}` as const;
+  return <Tag style={{ ...VISUALLY_HIDDEN, margin: 0 }}>{children}</Tag>;
 }
 
 /** Keeps the scene's view in step with the face and stop props. */
