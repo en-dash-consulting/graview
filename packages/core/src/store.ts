@@ -120,6 +120,19 @@ export type UndoPreview<S extends AnySchema> =
 
 const HUMAN: Author = { kind: "human" };
 
+/**
+ * WHETHER UNDOING AN OP PUTS BACK EXACTLY WHAT IT TOOK (FR-28).
+ *
+ * An op that was not an act — a repair from `repairPlan`, a migration, a
+ * host's own change through `applyPrimitives` — is undone by putting the
+ * records back as they were, even a record that no longer fits: undoing a
+ * repair means the misfit returns, and `validateGraph` says so again. The
+ * undo of an ACT is itself a change within the declaration, and is held to
+ * it like any write: one whose inverse the current declaration refuses is
+ * refused, and says why.
+ */
+const putsBack = (op: Operation): boolean => op.mutation === null && op.undoes === undefined;
+
 /** A violation's identity across judgements: the rule, what it is about, and what it says. */
 export function violationKey(v: Violation): string {
   return `${v.invariant}|${v.subjectId ?? ""}|${v.message}`;
@@ -528,11 +541,13 @@ export class Store<S extends AnySchema> {
       writes: readonly string[];
       intent: string;
       context?: InvariantContext;
+      /** An undo: what it puts back is held as it was (FR-28). */
+      restoring?: boolean;
     },
   ): Preview<S> {
     const before = this.violations(meta.context);
     const trial = Graph.from(this.schema, this.graph.snapshot());
-    const diff = trial.applyPrimitives(primitives);
+    const diff = trial.applyPrimitives(primitives, { restoring: meta.restoring === true });
     const after = evaluate(trial, this.allInvariants(), {
       ...this.invariantOptions,
       ...(meta.context === undefined ? {} : { context: meta.context }),
@@ -726,7 +741,8 @@ export class Store<S extends AnySchema> {
     if (!options.applied) {
       for (const op of fresh) {
         try {
-          this.graph.applyPrimitives(op.primitives);
+          // Somebody's undo puts back what was there, here as there (FR-28).
+          this.graph.applyPrimitives(op.primitives, { restoring: op.undoes !== undefined });
         } catch (error) {
           this.graph.load(before);
           throw new ReceiveError(op, error);
@@ -840,6 +856,7 @@ export class Store<S extends AnySchema> {
         reads: [...new Set(check.ops.flatMap((op) => [...op.reads]))],
         writes: [...writes],
         intent: `Undo: ${check.ops.map((op) => op.intent).join("; ")}`,
+        restoring: check.ops.every(putsBack),
         ...(context === undefined ? {} : { context }),
       }),
     };
@@ -906,7 +923,7 @@ export class Store<S extends AnySchema> {
         undoes: target.id,
         ...(options.via !== undefined ? { via: options.via } : {}),
       };
-      this.graph.applyPrimitives(op.primitives);
+      this.graph.applyPrimitives(op.primitives, { restoring: putsBack(target) });
       this.log.append(op);
       ops.push(op);
     }

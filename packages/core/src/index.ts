@@ -52,7 +52,7 @@ export type { JsonSchema, MutationToolSchema } from "./schema/json-schema.js";
 
 // Graph — the reactive in-memory model the framework owns.
 export { Graph, GraphError } from "./graph/graph.js";
-export type { GraphListener, GraphOptions } from "./graph/graph.js";
+export type { ApplyPrimitivesOptions, GraphListener, GraphOptions } from "./graph/graph.js";
 export { diffSnapshots, EMPTY_DIFF, isEmptyDiff } from "./graph/diff.js";
 export type { GraphDiff, NodeChange } from "./graph/diff.js";
 export { invert, isUnset, normalise, UNSET, writesOf } from "./graph/primitives.js";

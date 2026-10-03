@@ -159,9 +159,9 @@ export async function openStore<S extends AnySchema>(
 
   /*
    * Write at open only when opening CHANGED something — a fresh scope or a
-   * migration run. Re-saving an untouched store rewrites the snapshot
-   * through the current schema's parse, which silently strips any field a
-   * rolled-back declaration does not know — data loss with no prior copy.
+   * migration run. A store opens over records that no longer fit and holds
+   * them exactly as stored (FR-28); writing them straight back would only
+   * churn the file, and `store.findings()` is how a host hears about them.
    */
   if (stored === null || migrated.length > 0) {
     await adapter.save(scope, store.snapshot());

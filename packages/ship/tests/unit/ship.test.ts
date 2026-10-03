@@ -282,6 +282,32 @@ describe("health is coherence, not liveness", () => {
   });
 });
 
+// FR-28: a store opens over records an older declaration wrote, says what they are, and still checks what is written next.
+describe("a store holds records that no longer fit", () => {
+  it("opens over a stored graph whose records no longer fit, reports them, refuses a write that does not fit, and writes nothing back", async () => {
+    const root = scratch();
+    (await openStore({ app, adapter: createFileAdapter(root) })).close();
+    const misfits = {
+      nodes: [
+        { id: "p1", kind: "plot", label: "North", beds: 0 },
+        { id: "p2", kind: "plot", label: "South", beds: 2, size: "large" },
+      ],
+      edges: [],
+    };
+    await createFileAdapter(root).save("garden", misfits as never);
+
+    const opened = await openStore({ app, adapter: createFileAdapter(root) });
+    expect(opened.store.findings().map((f) => `${f.code} ${f.id} ${f.detail}`)).toEqual(["node-shape p1 beds"]);
+    expect(health(opened.store).findings).toBe(1);
+    expect(opened.store.snapshot()).toEqual(misfits);
+    expect(await createFileAdapter(root).load("garden")).toEqual(misfits);
+    expect(() =>
+      opened.store.applyPrimitives([{ op: "patch-node", id: "p2", before: { beds: 2 }, after: { beds: 0 } }]),
+    ).toThrow();
+    opened.close();
+  });
+});
+
 // FR-31: what a version writes says what wrote it, and the version before it says "newer format" rather than folding it.
 describe("stored formats carry their version", () => {
   it("a store records the framework and the formats that wrote it", async () => {

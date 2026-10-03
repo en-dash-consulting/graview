@@ -101,11 +101,28 @@ export class OperationLog {
     });
   }
 
-  /** Rebuilds the graph from empty by folding every live op forward. */
+  /**
+   * Rebuilds the graph from empty by folding every live op forward.
+   *
+   * Each op lands as it landed when it was made: a write is judged as a
+   * write (a default filled in on the way in is filled in again), an undo
+   * puts back what was there. An op an older declaration accepted and this
+   * one does not is HELD AS WRITTEN rather than refusing the whole history
+   * (FR-28) — `validateGraph` says what no longer fits. Only an op that
+   * cannot apply at all (a patch to a record that is not there) fails.
+   */
   fold<S extends AnySchema>(schema: S, options?: { validate?: boolean }): Graph<S> {
     const graph = new Graph(schema, options);
     for (const op of this.ops) {
-      graph.applyPrimitives(op.primitives);
+      if (op.undoes !== undefined) {
+        graph.applyPrimitives(op.primitives, { restoring: true });
+        continue;
+      }
+      try {
+        graph.applyPrimitives(op.primitives);
+      } catch {
+        graph.applyPrimitives(op.primitives, { restoring: true });
+      }
     }
     return graph;
   }
