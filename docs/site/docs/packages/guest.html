@@ -16,16 +16,16 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 }
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Packages — Graview docs</title>
-<meta name="description" content="The 14 packages Graview ships, what each is for, and what each exports.">
+<title>@graview/guest — Graview docs</title>
+<meta name="description" content="Guest views: somebody else's React or plain script in a sandboxed frame, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.">
 <meta name="color-scheme" content="light dark">
-<meta property="og:title" content="Packages — Graview docs">
-<meta property="og:description" content="The 14 packages Graview ships, what each is for, and what each exports.">
+<meta property="og:title" content="@graview/guest — Graview docs">
+<meta property="og:description" content="Guest views: somebody else's React or plain script in a sandboxed frame, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://graview.dev/docs/packages.html">
+<meta property="og:url" content="https://graview.dev/docs/packages/guest.html">
 <meta property="og:image" content="https://graview.dev/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="canonical" href="https://graview.dev/docs/packages.html">
+<link rel="canonical" href="https://graview.dev/docs/packages/guest.html">
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzMwIiBoZWlnaHQ9IjMzMCIgdmlld0JveD0iMCAwIDMzMCAzMzAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHg9IjcuNSIgeT0iNy41IiB3aWR0aD0iMzE1IiBoZWlnaHQ9IjMxNSIgc3Ryb2tlPSIjMDBFNUI5IiBzdHJva2Utd2lkdGg9IjE1Ii8+CjxwYXRoIGQ9Ik0zMTUgMTVIMTVWMzE1SDMxNVYxNVoiIGZpbGw9IiMwMDE3NjkiLz4KPHBhdGggZD0iTTMxNSAyMzIuMTE5SDQ3LjAwNzRWMjQ3LjcwNUgzMTVWMjMyLjExOVoiIGZpbGw9IiMwMEU1QjkiLz4KPHBhdGggZD0iTTEzOS43OTUgMTY0Ljk5N0wxNDUuMzI0IDE2OS44MzhDMTQwLjk0MiAxNzguMzcyIDEyNi4xOTEgMTkyLjg5NCAxMDAuNTg5IDE5Mi44OTRDNzEuNzc0IDE5Mi44OTQgNDUuMDI0OCAxNzQuNjc4IDQ1LjAyNDggMTM5LjYyNUM0NS4wMjQ4IDEwMy40MjQgNzMuNjEwMiA4NS40MzggMTAyLjQyNSA4NS40MzhDMTI3LjA4OCA4NS40MzggMTQ2LjQ3MSA5OC44MTI2IDE0Ni40NzEgMTE5LjMyM0MxNDYuNDcxIDEzNy41MzggMTMxLjI2MSAxNDAuMDg0IDEwNi44MDcgMTQxLjAwMkw4MS40NTU1IDE0MS45MkM3Ny4zMDMzIDE0Mi4xNSA3Ni4zODUzIDE0NS42MTMgNzcuNzYyNCAxNTAuOTEzQzgzLjUyMTIgMTY3LjUyMiA5Ni44OTU4IDE3Ni45NzQgMTEzLjk2NCAxNzYuOTc0QzEyMi43MjcgMTc2Ljk5NSAxMzEuNzIgMTc0LjY3OSAxMzkuNzk1IDE2NC45OTdaTTc0LjU0OTEgMTI0LjE4NUM3NC4zMTk2IDEzMS4xMTIgNzYuNjE0OCAxMzMuODY2IDgyLjYyNCAxMzMuODY2SDk0Ljg1MUMxMTQuNjczIDEzMy44NjYgMTIwLjY4MiAxMjcuNjQ4IDEyMC42ODIgMTE3LjAyOEMxMjAuNjgyIDEwNS4yNiAxMTIuODM3IDk0LjIwMTQgOTkuMDAzMSA5NC4yMDE0QzgzLjMxMjUgOTQuMjIyMiA3NS42OTY3IDEwNi42NTggNzQuNTQ5MSAxMjQuMTg1WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0NC4yMjUgMTczLjUzMVYxMzEuNTcxQzI0NC4yMjUgMTE0LjUwMyAyMzcuMDY4IDEwMi45ODYgMjIzLjAwNSAxMDIuOTg2QzIwOC4yNTMgMTAyLjk4NiAxOTkuMjYxIDExNC41MjQgMTk5LjI2MSAxMzEuNTcxVjE2OS42MDhDMTk5LjI2MSAxNzkuNTE5IDIwMy4xODMgMTgyLjc1NCAyMTMuNzgzIDE4My42NzJWMTkxLjUxN0gxNTYuODQyVjE4My42NzJDMTY3LjY3MSAxODIuNzU0IDE3MS41OTMgMTc5LjUxOSAxNzEuNTkzIDE2OS42MDhWMTEyLjE4N0MxNzEuNTkzIDEwMS41ODggMTY3LjIxMiA5OC44MTI4IDE1Ni44NDIgOTkuNzMwOFY5MS44ODU1TDE4OS4xMiA4NS44OTcyQzE5NS43OTcgODQuNzQ5NiAxOTkuMjYxIDg3LjczMzMgMTk5LjI2MSA5My4wNTRDMTk5LjI2MSAxMDEuMzU4IDIwMi45NTQgMTAzLjQyNCAyMDUuOTM3IDk5Ljk4MTJDMjExLjAwOCA5NC40NTE5IDIyMC4yMyA4NSAyMzguNDQ1IDg1QzI1NS4yODQgODUgMjcxLjg3MSA5My4zMDQ0IDI3MS44NzEgMTI1LjU4M1YxNzEuMDA2QzI3MS44NzEgMTc4LjYyMiAyNzUuNzk0IDE4MS4zNzYgMjgzLjYzOSAxNzkuNzdWMTg3LjYxNUMyNzkuNDg3IDE5MC44NDkgMjcwLjk1MyAxOTIuNjg1IDI2NC4yNzcgMTkyLjY4NUMyNTEuNjExIDE5Mi42NjQgMjQ0LjIyNSAxODUuOTg4IDI0NC4yMjUgMTczLjUzMVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1040,22 +1040,22 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <path d="M139.795 164.997L145.324 169.838C140.942 178.372 126.191 192.894 100.589 192.894C71.774 192.894 45.0248 174.678 45.0248 139.625C45.0248 103.424 73.6102 85.438 102.425 85.438C127.088 85.438 146.471 98.8126 146.471 119.323C146.471 137.538 131.261 140.084 106.807 141.002L81.4555 141.92C77.3033 142.15 76.3853 145.613 77.7624 150.913C83.5212 167.522 96.8958 176.974 113.964 176.974C122.727 176.995 131.72 174.679 139.795 164.997ZM74.5491 124.185C74.3196 131.112 76.6148 133.866 82.624 133.866H94.851C114.673 133.866 120.682 127.648 120.682 117.028C120.682 105.26 112.837 94.2014 99.0031 94.2014C83.3125 94.2222 75.6967 106.658 74.5491 124.185Z" fill="white"/>
 <path d="M244.225 173.531V131.571C244.225 114.503 237.068 102.986 223.005 102.986C208.253 102.986 199.261 114.524 199.261 131.571V169.608C199.261 179.519 203.183 182.754 213.783 183.672V191.517H156.842V183.672C167.671 182.754 171.593 179.519 171.593 169.608V112.187C171.593 101.588 167.212 98.8128 156.842 99.7308V91.8855L189.12 85.8972C195.797 84.7496 199.261 87.7333 199.261 93.054C199.261 101.358 202.954 103.424 205.937 99.9812C211.008 94.4519 220.23 85 238.445 85C255.284 85 271.871 93.3044 271.871 125.583V171.006C271.871 178.622 275.794 181.376 283.639 179.77V187.615C279.487 190.849 270.953 192.685 264.277 192.685C251.611 192.664 244.225 185.988 244.225 173.531Z" fill="white"/>
 </svg><span>En&nbsp;Dash</span></a>
-      <span class="it"><a href="../index.html" style="color: inherit; text-decoration: none;">Graview</a></span>
+      <span class="it"><a href="../../index.html" style="color: inherit; text-decoration: none;">Graview</a></span>
       <span class="sub">Documentation</span>
     </div>
 
     <div class="jump">
-      <a href="index.html">Docs home</a>
-      <a href="getting-started.html">Getting started</a>
-      <a href="concepts.html">Concepts</a>
-      <a href="packages.html" aria-current="page">Packages</a>
-      <a href="cli.html">The CLI</a>
-      <a href="agents.html">With a model</a>
-      <a href="skills.html">Skills</a>
-      <a href="checks.html">What check says</a>
-      <a href="demos.html">Live demos</a>
-      <a href="../progression.html">The garden, grown</a>
-      <a href="../index.html">&larr; graview.dev</a>
+      <a href="../index.html">Docs home</a>
+      <a href="../getting-started.html">Getting started</a>
+      <a href="../concepts.html">Concepts</a>
+      <a href="../packages.html" aria-current="page">Packages</a>
+      <a href="../cli.html">The CLI</a>
+      <a href="../agents.html">With a model</a>
+      <a href="../skills.html">Skills</a>
+      <a href="../checks.html">What check says</a>
+      <a href="../demos.html">Live demos</a>
+      <a href="../../progression.html">The garden, grown</a>
+      <a href="../../index.html">&larr; graview.dev</a>
     </div>
 
     <div class="railfoot">
@@ -1067,27 +1067,41 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
-      <h1 id="h-what">The packages</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview</code> is the tool a person installs; <code>@graview/*</code> is the framework a product imports. 14 packages, one version, each depending only on the ones beneath it.</p>
+      <h1 id="h-what">@graview/guest</h1>
+      <p class="lede" style="margin-top: 18px;">Guest views: somebody else's React or plain script in a sandboxed frame, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.</p>
+      <div class="cta"><div class="cta-line"><code>pnpm add @graview/guest</code><button type="button" class="copy" data-copy="pnpm add @graview/guest">Copy</button></div></div>
+      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/guest</code>, <code>@graview/guest/react</code>, <code>@graview/guest/host</code></p>
     </section>
-    <section id="all" aria-labelledby="h-all">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-all">All of them</h2></div>
-      <ul class="cards">
-        <li><a href="packages/core.html"><strong>@graview/core</strong><span>The graph, the log, the schema and the checker. Everything a Graview app declares, and the CLI that verifies it.</span></a></li>
-        <li><a href="packages/create-graview.html"><strong>create-graview</strong><span>Start a product on Graview: `npm create graview my-app`. The conventional door to `graview create`.</span></a></li>
-        <li><a href="packages/embed.html"><strong>@graview/embed</strong><span>Mount a declared Graview app into any element — the scene, the Graview, or the routed pages — without the Shell, sized and themed within the element.</span></a></li>
-        <li><a href="packages/graview.html"><strong>graview</strong><span>The Graview command line: start a product, check its declaration, write its agent docs, serve its store, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.</span></a></li>
-        <li><a href="packages/guest.html"><strong>@graview/guest</strong><span>Guest views: somebody else's React or plain script in a sandboxed frame, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.</span></a></li>
-        <li><a href="packages/layout.html"><strong>@graview/layout</strong><span>Where every node goes: three planes, one pure function of the graph and the view state.</span></a></li>
-        <li><a href="packages/pages.html"><strong>@graview/pages</strong><span>The traditional face: a routed webapp derived from the same declaration that drives the scene.</span></a></li>
-        <li><a href="packages/primitives.html"><strong>@graview/primitives</strong><span>The primitive set, the three lenses, the workbench and the visual system.</span></a></li>
-        <li><a href="packages/react.html"><strong>@graview/react</strong><span>The React binding: a provider, a scene, and the hooks an app builds on.</span></a></li>
-        <li><a href="packages/render.html"><strong>@graview/render</strong><span>The spatial renderer. The DOM path is what ships; the GPU capture path is EXPERIMENTAL — see README.</span></a></li>
-        <li><a href="packages/ship.html"><strong>@graview/ship</strong><span>What every deployment needs, hosted or self-hosted: persistence wiring, op-log-native migrations, export, health.</span></a></li>
-        <li><a href="packages/skills.html"><strong>@graview/skills</strong><span>Skills that teach an assistant the authoring moves, each ending in a real graview check verdict.</span></a></li>
-        <li><a href="packages/studio.html"><strong>@graview/studio</strong><span>The declaration itself as a graph: kinds, fields, edges, acts, rules, roles and grants as nodes, edited with ordinary mutations in Graview's own interface, checked before they are applied, migrated, and written back as the files graview create writes.</span></a></li>
-        <li><a href="packages/tools.html"><strong>@graview/tools</strong><span>Derived affordances and the agent tool surface, generated from the same declarations; graview mcp and graview apply host it against a real store.</span></a></li>
-      </ul>
+    <section id="readme" aria-labelledby="h-readme">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-readme">What it is</h2></div>
+<p>A view somebody else wrote — a recipe card, a bespoke dashboard, React or plain script — drawn in an iframe that can see only what the viewer may see and can only ask. The host pushes the view's props as the viewer sees them; the guest asks for an act by name, and the host applies it as the viewer, so the policy refuses on the guest's behalf exactly as it would refuse a click. The rail says the act came through the view.</p>
+<h3>In the host</h3>
+<div class="code" data-scroller><pre><code>import { guestView, mountGuestView } from "@graview/guest/host";
+
+views.register("recipe", { fidelity: "full", cardinality: "one" },
+  guestView({ url: "https://cards.example/recipe.html", name: "recipe-card" }));
+
+// Or without React, into any element:
+const frame = mountGuestView(element, { url, view: "recipe-card", store, principal, input: () =&gt; ({ node: { id } }) });
+frame.update();   // the input moved
+frame.dispose();</code></pre></div>
+<p><code>mountGuestView</code> gives the frame <code>sandbox="allow-scripts"</code> and never <code>allow-same-origin</code>, so its origin is opaque and no cookie, storage or store of the host's is reachable from it. A <code>guest-ready</code> is answered only from that frame's own window and from the opaque origin, with a fresh nonce and a MessageChannel; every request over the port carries the nonce. Acts are rate-limited per frame (30 a minute by default, <code>limits</code>), and a flood of messages past 120 a second is dropped unread. <code>createGuestHost</code> is the same host without the DOM. Where the frame is served from, and its CSP, are the host's business: a separate registrable domain with <code>connect-src 'none'</code> is the shape the protocol assumes. It matters where the host's session rides a cookie: in Firefox and WebKit a guest with no CSP can send a credentialed request to the host that carries a cookie without SameSite. It cannot read the answer, but the request is made. Set the cookie SameSite=Lax or Strict, or serve guests with <code>connect-src 'none'</code> (<code>scripts/guest-sandbox.mjs</code> checks both in all three engines).</p>
+<h3>In the guest</h3>
+<div class="code" data-scroller><pre><code>import { connectGuest } from "@graview/guest";
+
+const guest = connectGuest();
+guest.subscribe((props) =&gt; render(props.node, props.acts));
+const answer = await guest.act("mark-cooked", { recipeId: props.node.id });
+if (!answer.ok) show(answer.message);   // the policy's own sentence
+guest.navigate(id);
+guest.autoSize();</code></pre></div>
+<p>In React, <code>useGuest()</code> from <code>@graview/guest/react</code> is the same connection: <code>{ props, act, navigate, size }</code>, re-rendering on every push. The guest entries import nothing of the framework, so a guest bundle carries none of it.</p>
+<p><code>GuestProps</code> is the plain-data half of <code>ViewProps</code> — <code>node</code>, <code>nodes</code>, the <code>edges</code> among them, <code>label</code>, <code>fidelity</code>, <code>cardinality</code>, <code>mode</code>, <code>selected</code>, <code>implicated</code>, <code>flagged</code> — and <code>acts</code>, the acts the viewer may run. A record the viewer may not see is in none of them.</p>
+    </section>
+    <section id="api" aria-labelledby="h-api">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (6)</h2></div>
+      <p class="sm dim">Read off the package's own barrel, so this is what is there today.</p>
+      <ul class="names"><li><code>connectGuest</code></li><li><code>GUEST_PROTOCOL</code></li><li><code>GUEST_SANDBOX</code></li><li><code>isGuestReady</code></li><li><code>isHostHello</code></li><li><code>OPAQUE_ORIGIN</code></li></ul>
     </section>
 
   </main>
