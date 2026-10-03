@@ -50,8 +50,20 @@ export interface Operation {
   /** One user gesture, or one agent turn. */
   readonly batch: string;
   readonly author: Author;
-  /** Human-readable statement of what was meant, not what changed. */
+  /**
+   * Human-readable statement of what was meant, not what changed: the act's
+   * own `describe()` sentence ("Add “Book the van”"), or "Undo: …".
+   */
   readonly intent: string;
+  /**
+   * What the whole gesture was for, when its caller said ("Plan the move"),
+   * on every op of the batch. Beside `intent`, never instead of it (FR-18):
+   * an op keeps its own sentence, so a blocked undo, the record's history
+   * and an audit still say what each op did, and the batch reads as what
+   * was meant. Absent when no intent was given, and the batch reads as its
+   * ops, as it always did.
+   */
+  readonly batchIntent?: string;
   readonly mutation: MutationCall | null;
   readonly primitives: readonly Primitive[];
   readonly inverse: readonly Primitive[];

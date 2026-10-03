@@ -21,9 +21,10 @@ import type { GraphSnapshot } from "./snapshot.js";
  * The browser still holds a real `Store` — the scene, the strip, the rules
  * and the routed face all read it the way they always have — but it does not
  * own the truth. A call goes to the server, which judges it under this
- * seat's principal and answers with the op it produced; the op is `receive`d
- * here, so it lands with its own id, author and sequence and the interface
- * updates exactly as it does for a local change.
+ * seat's principal and answers with the op it produced; the op lands here by
+ * `store.rebase`, under whatever is still pending, with its own id, author
+ * and sequence, and the interface updates exactly as it does for a local
+ * change.
  *
  * Everyone else's ops arrive the same way, on a poll. Two browsers open on
  * the same roster see each other within a second, and neither of them has a
@@ -166,10 +167,24 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
     for (const listener of whoListeners) listener([...known.values()]);
   };
 
-  const land = (ops: readonly Operation[], applied = false): readonly Operation[] => {
-    if (ops.length === 0) return [];
-    seen = Math.max(seen, ...ops.map((op) => op.seq));
-    return store.receive(ops, { applied });
+  /*
+   * THE LOG READS `[confirmed…, pending…]`. `pending` is this browser's own
+   * batches, applied here and not yet answered, oldest first. Whatever
+   * arrives from the server lands UNDER them by `store.rebase`: the pending
+   * tail is rolled back, the server's ops land in its order, and the
+   * pending calls are applied again on top, heard as one change. A batch
+   * the server has answered or refused is dropped, so its provisional op
+   * never sits in the log beside the server's op for the same press.
+   */
+  const pending: string[] = [];
+  const settle = (batch: string) => {
+    const at = pending.indexOf(batch);
+    if (at >= 0) pending.splice(at, 1);
+  };
+  const land = (ops: readonly Operation[], drop: readonly string[] = []): readonly Operation[] => {
+    if (ops.length === 0 && drop.length === 0) return [];
+    if (ops.length > 0) seen = Math.max(seen, ...ops.map((op) => op.seq));
+    return store.rebase({ confirmed: ops, pending: [...pending], drop }).confirmed;
   };
 
   const pull = async (): Promise<readonly Operation[]> => {
@@ -211,6 +226,8 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
 
   /** The server's batch for each provisional one this browser minted, so an undo names what the server has. */
   const batches = new Map<string, string>();
+  /** Each provisional batch's post, so an undo of it waits until the server has named it. */
+  const answers = new Map<string, Promise<unknown>>();
   /** Every post not yet answered, so `settled` can wait for the verdicts. */
   const inFlight = new Set<Promise<unknown>>();
   const track = <T>(promise: Promise<T>): Promise<T> => {
@@ -220,14 +237,14 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
   };
 
   /*
-   * `applied` says the local store already holds this change — it was
-   * applied optimistically before the post — so the server's op is
-   * recorded rather than re-applied. `send` never applies first, so its
-   * answer lands in full.
+   * `mine` names the provisional batch this post answers, when the call was
+   * applied here first: the server's op lands and the provisional one is
+   * dropped, in one rebase. `send` never applies first, so its answer
+   * lands under whatever is pending.
    */
   const post = async (
     body: { calls?: readonly MutationCall[]; undo?: readonly string[]; intent?: string; batch?: string },
-    applied = false,
+    mine?: string,
   ): Promise<{ ops: readonly Operation[]; batch?: string }> => {
     const response = await call(`${options.url}/graview/ops`, {
       method: "POST",
@@ -242,7 +259,11 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
       throw new Error(answer.error ?? `The server refused (${response.status})`);
     }
     const ops = answer.ops ?? [];
-    land(ops, applied);
+    if (mine !== undefined) {
+      if (answer.batch) batches.set(mine, answer.batch);
+      settle(mine);
+    }
+    land(ops, mine !== undefined ? [mine] : []);
     return { ops, ...(answer.batch ? { batch: answer.batch } : {}) };
   };
 
@@ -269,17 +290,17 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
   const undone = store.undo.bind(store);
   const refusals = new Set<(reason: string) => void>();
   /*
-   * A refusal takes the optimism back — undone by its own batch, which is
-   * the same mechanism a person's undo uses — AS THE SAME PERSON. What you
-   * may undo is what you may have done, and an undo judged as nobody is
-   * refused in an app with a policy: taking back your own optimism would
-   * have thrown a second, more confusing refusal on top of the first.
+   * A refusal takes the optimism back: the provisional batch is dropped
+   * by a rebase, which rolls it back and applies whatever is still pending
+   * again on top. Nothing is undone, so nothing is judged a second time
+   * and nothing is added to the log: the press simply never happened here,
+   * as it never happened there.
    */
   const takeBack = (batch: string, error: unknown) => {
     const reason = error instanceof Error ? error.message : String(error);
+    settle(batch);
     try {
-      const asMe = options.principal ? { author: options.principal } : {};
-      if (store.canUndo(batch).ok) undone(batch, asMe);
+      land([], [batch]);
     } catch {
       // A take-back that cannot run leaves the interface wrong, and
       // saying so is still better than saying nothing.
@@ -308,12 +329,14 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
       ...(options.principal ? { author: options.principal } : {}),
       ...applyOptions,
     });
-    track(
-      post({ calls, ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}) }, true)
-        .then((answer) => {
-          if (answer.batch) batches.set(result.batch, answer.batch);
-        })
-        .catch((error: unknown) => takeBack(result.batch, error)),
+    pending.push(result.batch);
+    answers.set(
+      result.batch,
+      track(
+        post({ calls, ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}) }, result.batch).catch((error: unknown) =>
+          takeBack(result.batch, error),
+        ),
+      ),
     );
     return result;
   }) as typeof store.applyAll;
@@ -321,18 +344,31 @@ export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>)
   store.apply = ((callMade, applyOptions) => store.applyAll([callMade], applyOptions)) as typeof store.apply;
   store.undo = ((batchIds, undoOptions) => {
     const ids = typeof batchIds === "string" ? [batchIds] : batchIds;
-    const result = undone(ids, {
-      ...(options.principal ? { author: options.principal } : {}),
-      ...undoOptions,
-    });
-    // Named as the server knows them: a provisional batch by the one it became.
-    const theirs = ids.map((id) => batches.get(id) ?? id);
-    track(
-      post({ undo: theirs, ...(undoOptions?.intent ? { intent: undoOptions.intent } : {}) }, true)
-        .then((answer) => {
-          if (answer.batch) batches.set(result.batch, answer.batch);
-        })
-        .catch((error: unknown) => takeBack(result.batch, error)),
+    /*
+     * A provisional batch the server has answered is not in this log any
+     * more: the server's op for it is. So it is undone by the name it
+     * became, here as there.
+     */
+    const result = undone(
+      ids.map((id) => batches.get(id) ?? id),
+      {
+        ...(options.principal ? { author: options.principal } : {}),
+        ...undoOptions,
+      },
+    );
+    pending.push(result.batch);
+    /*
+     * Named as the server knows them: a provisional batch by the one it
+     * became, once the server has said what that is.
+     */
+    const asked = Promise.allSettled(ids.map((id) => answers.get(id)));
+    answers.set(
+      result.batch,
+      track(
+        asked
+          .then(() => post({ undo: ids.map((id) => batches.get(id) ?? id), ...(undoOptions?.intent ? { intent: undoOptions.intent } : {}) }, result.batch))
+          .catch((error: unknown) => takeBack(result.batch, error)),
+      ),
     );
     return result;
   }) as typeof store.undo;

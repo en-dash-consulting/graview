@@ -93,6 +93,25 @@ export class OperationLog {
     this.marks.push(epoch);
   }
 
+  /**
+   * ROLLS THE LOG BACK TO `length`, for ops that were only ever
+   * provisional: an optimistic client's pending tail, cut back before the
+   * server's ops land under it (`Store.rebase`). This is the one way an
+   * entry leaves the log, and it is not for history: ops another store has
+   * seen are undone by appending, never cut. Refuses to cut behind an epoch.
+   * Returns what was cut, oldest first.
+   */
+  truncate(length: number): Operation[] {
+    if (!Number.isInteger(length) || length < 0 || length > this.ops.length) {
+      throw new Error(`Cannot cut a log ${this.ops.length} long back to ${length}`);
+    }
+    const last = this.lastEpoch();
+    if (last && last.seq > length) {
+      throw new Error(`Cannot cut the log back to ${length}: an epoch begins at seq ${last.seq}`);
+    }
+    return this.ops.splice(length);
+  }
+
   get(id: string): Operation | undefined {
     return this.ops.find((op) => op.id === id);
   }
@@ -152,7 +171,8 @@ export class OperationLog {
       return {
         id,
         author: first.author,
-        intent: first.intent,
+        // What the gesture was for, when its caller said; else its first op's own sentence.
+        intent: first.batchIntent ?? first.intent,
         at: first.at,
         ops,
         undone: ops.every((op) => undone.has(op.id)),

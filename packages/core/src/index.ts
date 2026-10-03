@@ -181,8 +181,8 @@ export type {
 // Operation log — attribution, causality, selective undo.
 export { OperationLog } from "./ops/log.js";
 export type { Epoch } from "./ops/log.js";
-export { checkUndo, undoPrimitives } from "./ops/undo.js";
-export type { UndoBlock, UndoCheck } from "./ops/undo.js";
+export { checkUndo, undoPrimitives, UndoBlockedError } from "./ops/undo.js";
+export type { UndoBlock, UndoCheck, UndoRefused } from "./ops/undo.js";
 export type { Author, Batch, Operation, Via } from "./ops/types.js";
 export {
   actingAs,
@@ -265,9 +265,12 @@ export type {
 // Store — graph + log + mutations + invariants, one object.
 export { ReceiveError, Store, violationKey } from "./store.js";
 export type {
+  AppendOp,
   ApplyOptions,
   ApplyResult,
   Preview,
+  Rebase,
+  RebaseResult,
   StoreOptions,
   UndoPreview,
 } from "./store.js";
