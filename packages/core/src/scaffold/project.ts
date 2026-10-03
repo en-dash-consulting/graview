@@ -444,6 +444,8 @@ export default defineConfig({
      */
     alias: {
       "@graview/core/testing": framework("core/src/testing.ts"),
+      "@graview/core/document": framework("core/src/document/index.ts"),
+      "@graview/core/conformance": framework("core/src/conformance/index.ts"),
       "@graview/core/cli": framework("core/src/cli/index.ts"),
       "@graview/core/scaffold": framework("core/src/scaffold/index.ts"),
       "@graview/core/sqlite": framework("core/src/persistence/sqlite.ts"),

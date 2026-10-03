@@ -27,7 +27,7 @@ export const SURFACES = [
   },
   {
     name: "the declaration and check finding codes",
-    paths: [/^packages\/core\/src\/cli\/check\//, /^packages\/core\/src\/document\//],
+    paths: [/^packages\/core\/src\/cli\/check\//, /^packages\/core\/src\/document\//, /^packages\/core\/src\/validate-graph\.ts$/],
   },
   {
     name: "derived tool names and input schemas",

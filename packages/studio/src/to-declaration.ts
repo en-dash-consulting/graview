@@ -15,6 +15,7 @@ import {
   type LensDeclaration,
   type Policy,
 } from "@graview/core";
+import { expressionRule } from "@graview/core/document";
 import { z } from "zod";
 import { DECLARED_KIND, type FieldType } from "./meta.js";
 import { fieldTypeOf } from "./from-declaration.js";
@@ -293,6 +294,26 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     const kept = baseInvariants.get(ruleName);
     const scope = bool(rule, "wholeGraph") || !over ? ("graph" as const) : { kind: kindName.get(over.id) ?? name(over) };
     const description = str(rule, "description");
+    /*
+     * A judgement in words is judged — the studio's own rule and the
+     * checkout's alike, since the words are the judgement (FR-07).
+     */
+    const require = str(rule, "require");
+    if (require) {
+      return expressionRule(
+        ruleName,
+        {
+          over: scope === "graph" ? "graph" : scope.kind,
+          require,
+          ...(str(rule, "when") ? { when: str(rule, "when")! } : {}),
+          ...(str(rule, "says") ? { says: str(rule, "says")! } : {}),
+          title: str(rule, "title") ?? ruleName,
+          ...(description ? { description } : {}),
+          ...(repairs.length > 0 ? { repairs } : {}),
+          ...(bool(rule, "judgesPast") ? { judgesPast: true } : {}),
+        },
+      );
+    }
     if (kept) return { ...kept, scope, ...(description ? { description } : {}), ...(repairs.length > 0 ? { repairs } : {}) } as InvariantDefinition;
     return defineInvariant(ruleName, {
       scope,

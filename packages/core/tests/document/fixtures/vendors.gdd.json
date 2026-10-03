@@ -1,0 +1,197 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Wedding vendors",
+  "description": "Who we're hiring, what they quoted, and who's booked.",
+  "kinds": {
+    "category": {
+      "noun": "category",
+      "plural": "categories",
+      "description": "A kind of vendor we need one of.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "budget": {
+          "type": "number",
+          "format": "money"
+        }
+      }
+    },
+    "vendor": {
+      "noun": "vendor",
+      "plural": "vendors",
+      "description": "Someone we might hire.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "researching",
+            "contacted",
+            "booked",
+            "declined"
+          ],
+          "default": "researching",
+          "required": true
+        },
+        "quote": {
+          "type": "number",
+          "format": "money"
+        },
+        "due": {
+          "type": "date",
+          "description": "when they need an answer"
+        },
+        "notes": {
+          "type": "text"
+        }
+      },
+      "describe": "{status} \u00b7 {quote|money}",
+      "lifecycle": {
+        "field": "status",
+        "retired": [
+          "declined"
+        ]
+      },
+      "edges": {
+        "fills": {
+          "to": [
+            "category"
+          ],
+          "cardinality": "one",
+          "description": "the category it fills",
+          "inverse": "vendors for it"
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-category": {
+      "title": "Add a category",
+      "creates": "category",
+      "description": "Start tracking a kind of vendor you need, optionally with a budget for it."
+    },
+    "add-vendor": {
+      "title": "Add a vendor",
+      "creates": "vendor",
+      "description": "Add a vendor you are considering, before you know which category they fill."
+    },
+    "add-to-category": {
+      "title": "Add a vendor to this category",
+      "on": "category",
+      "args": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "effects": [
+        {
+          "create": "vendor",
+          "as": "new",
+          "set": {
+            "name": "$name"
+          }
+        },
+        {
+          "connect": "fills",
+          "from": "$new",
+          "to": "$subject"
+        }
+      ],
+      "description": "Add a vendor you are considering for this category."
+    },
+    "set-quote": {
+      "title": "Set the quote",
+      "on": "vendor",
+      "writes": [
+        "quote"
+      ],
+      "description": "Record what a vendor quoted, in the app's currency."
+    },
+    "book": {
+      "title": "Book",
+      "on": "vendor",
+      "sets": {
+        "status": "booked"
+      },
+      "allowedWhen": "status != 'declined'",
+      "refusal": "{name} was declined; reopen them first",
+      "description": "Mark a vendor as booked once you have committed to them."
+    },
+    "decline": {
+      "title": "Decline",
+      "on": "vendor",
+      "sets": {
+        "status": "declined"
+      },
+      "description": "Mark a vendor as declined; they drop behind the horizon but are not deleted."
+    },
+    "file-under": {
+      "title": "File under a category",
+      "on": "vendor",
+      "connects": "fills",
+      "description": "Say which category a vendor is for.",
+      "fromTheOtherEnd": "Add one of our vendors"
+    },
+    "unfile": {
+      "title": "Take out of its category",
+      "on": "vendor",
+      "severs": "fills",
+      "description": "Take a vendor out of the category they were filed under.",
+      "fromTheOtherEnd": "Take a vendor out of this category"
+    }
+  },
+  "rules": {
+    "booked-needs-quote": {
+      "title": "A booked vendor has a quote",
+      "over": "vendor",
+      "when": "status == 'booked'",
+      "require": "quote != null",
+      "says": "{name} is booked but has no quote",
+      "repairs": [
+        {
+          "act": "set-quote",
+          "label": "Add the quote"
+        }
+      ]
+    },
+    "one-booked-per-category": {
+      "title": "One vendor booked per category",
+      "over": "category",
+      "require": "count(in('fills') where status == 'booked') <= 1",
+      "says": "{name} has more than one vendor booked"
+    },
+    "within-budget": {
+      "title": "Booked vendors fit the category's budget",
+      "over": "category",
+      "when": "present(budget)",
+      "require": "sum(in('fills') where status == 'booked', 'quote') <= budget",
+      "says": "{name} is over its {budget|money} budget"
+    }
+  },
+  "roles": [
+    "owner",
+    "planner",
+    "viewer"
+  ],
+  "policy": {
+    "grants": [
+      {
+        "roles": [
+          "owner",
+          "planner"
+        ],
+        "mutations": "*"
+      }
+    ]
+  },
+  "brand": {
+    "accent": "#a8456a"
+  }
+}

@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-03T01:50:02.913Z",
+  "at": "2026-10-03T03:21:33.088Z",
   "packages": {
     "@graview/core": {
-      "files": 347,
-      "tarballBytes": 332132,
+      "files": 447,
+      "tarballBytes": 470520,
       "ok": true
     },
     "create-graview": {
@@ -18,7 +18,7 @@
     },
     "graview": {
       "files": 11,
-      "tarballBytes": 4891,
+      "tarballBytes": 4890,
       "ok": true
     },
     "@graview/layout": {
@@ -28,12 +28,12 @@
     },
     "@graview/pages": {
       "files": 79,
-      "tarballBytes": 88532,
+      "tarballBytes": 88535,
       "ok": true
     },
     "@graview/primitives": {
       "files": 211,
-      "tarballBytes": 347053,
+      "tarballBytes": 347309,
       "ok": true
     },
     "@graview/react": {
@@ -47,23 +47,23 @@
       "ok": true
     },
     "@graview/ship": {
-      "files": 87,
-      "tarballBytes": 80087,
+      "files": 95,
+      "tarballBytes": 89028,
       "ok": true
     },
     "@graview/skills": {
       "files": 25,
-      "tarballBytes": 42722,
+      "tarballBytes": 42815,
       "ok": true
     },
     "@graview/studio": {
       "files": 67,
-      "tarballBytes": 99674,
+      "tarballBytes": 104120,
       "ok": true
     },
     "@graview/tools": {
       "files": 111,
-      "tarballBytes": 153199,
+      "tarballBytes": 153322,
       "ok": true
     }
   },

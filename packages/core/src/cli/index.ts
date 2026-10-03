@@ -5,6 +5,8 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { GraviewApp } from "../app.js";
 import { checkApp, formatFindings } from "./check.js";
+import { compileDocument, readDocument } from "../document/compile.js";
+import { sayFindings } from "../document/findings.js";
 import { create, CREATE_USAGE } from "./create.js";
 import { describeApp } from "./describe.js";
 import { generateAgentsMd, generateLlmsTxt } from "./docs.js";
@@ -18,6 +20,12 @@ ${CREATE_USAGE}
   graview check <entry> [--views <module>] [--json]
       Loads <entry> (a module whose default export, or \`app\` export, is a
       GraviewApp) and reports schema problems. Exits 1 on any error.
+
+  --document <file>
+      Any command that takes an <entry> takes a declaration document instead
+      (a .json file in the Graview document format): compiled, never run as
+      code, and checked with the JSON path of every finding. With
+      --previous <file>, check holds every renamedFrom to the version before.
 
   graview docs <entry> [--out <dir>] [--views <module>]
       Writes llms.txt and agents.md next to the entry, or into <dir>.
@@ -46,7 +54,34 @@ ${CREATE_USAGE}
       not a vocabulary to finish in.
 `;
 
+/**
+ * THE ENTRY A COMMAND IS ABOUT: `--document <file>` when given, otherwise
+ * the module named where the command expects it. A document is JSON a host
+ * can accept from a stranger and run without running their code (FR-01).
+ */
+export function entryArg(argv: readonly string[], at: number): string | undefined {
+  const document = flag(argv, "--document");
+  if (document) return document;
+  const positional = argv[at];
+  return positional && !positional.startsWith("--") ? positional : undefined;
+}
+
+/** Whether an entry is a declaration document rather than a module. */
+export const isDocument = (entry: string): boolean => entry.endsWith(".json");
+
+/** A declaration document compiled, with the findings it came with — or every finding that refused it. */
+export function loadDocument(entry: string, previous?: string): ReturnType<typeof compileDocument> {
+  const path = resolve(process.cwd(), entry);
+  const before = previous ? readDocument(readFileSync(resolve(process.cwd(), previous), "utf8")).document : undefined;
+  return compileDocument(readFileSync(path, "utf8"), before ? { previous: before } : {});
+}
+
 export async function loadApp(entry: string): Promise<GraviewApp> {
+  if (isDocument(entry)) {
+    const compiled = loadDocument(entry);
+    if (!compiled.ok) throw new Error(`${entry} is not a declaration that compiles:\n${sayFindings(compiled.findings)}`);
+    return compiled.app as GraviewApp;
+  }
   const path = resolve(process.cwd(), entry);
   const module = (await import(pathToFileURL(path).href)) as Record<string, unknown>;
   const app = (module["default"] ?? module["app"]) as GraviewApp | undefined;
@@ -103,14 +138,15 @@ async function loadViews(app: GraviewApp, entry: string | undefined): Promise<Gr
   return withViews(app, module, entry);
 }
 
-function flag(argv: string[], name: string): string | undefined {
+function flag(argv: readonly string[], name: string): string | undefined {
   const index = argv.indexOf(name);
   if (index === -1) return undefined;
   return argv[index + 1] ?? "";
 }
 
 export async function main(argv: string[]): Promise<number> {
-  const [command, entry] = argv;
+  const command = argv[0];
+  const entry = entryArg(argv, 1);
   if (!command || command === "--help" || command === "-h") {
     process.stdout.write(USAGE);
     return 0;
@@ -169,6 +205,18 @@ export async function main(argv: string[]): Promise<number> {
 
   switch (command) {
     case "check": {
+      /*
+       * A DOCUMENT IS CHECKED AS A DOCUMENT: its own findings — a rule that
+       * sweeps every record for every record, a field a template names and
+       * the kind lacks — beside the framework's, each with the JSON path a
+       * person or an agent fixes it at.
+       */
+      if (isDocument(entry)) {
+        const compiled = loadDocument(entry, flag(argv, "--previous"));
+        if (argv.includes("--json")) process.stdout.write(`${JSON.stringify({ ok: compiled.ok, findings: compiled.findings }, null, 2)}\n`);
+        else process.stdout.write(`${compiled.findings.length > 0 ? sayFindings(compiled.findings) : "✓ the document compiles and checks clean"}\n`);
+        return compiled.ok ? 0 : 1;
+      }
       const app = await loadViews(await loadApp(entry), flag(argv, "--views"));
       const result = checkApp(app);
       if (argv.includes("--json")) {

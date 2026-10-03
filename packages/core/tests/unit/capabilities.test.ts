@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { capabilities, FORMATS, FRAMEWORK_VERSION, WIRE_PROTOCOL } from "../../src/index.js";
+import { FORMAT, FORMAT_VERSION } from "../../src/document/schema.js";
 
 /**
  * FR-30. A host reads what a build ships instead of guessing from its
@@ -32,7 +33,7 @@ describe("capabilities()", () => {
     expect(said.version).toBe(FRAMEWORK_VERSION);
     expect(said.protocol).toBe(WIRE_PROTOCOL);
     expect(said.formats).toEqual(FORMATS);
-    expect(Array.isArray(said.documentFormats)).toBe(true);
+    expect(said.documentFormats).toEqual([`${FORMAT}@${FORMAT_VERSION}`]);
     for (const id of said.shipped) expect(id).toMatch(/^FR-\d+$/);
     expect(new Set(said.shipped).size).toBe(said.shipped.length);
   });

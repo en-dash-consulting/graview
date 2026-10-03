@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { loadApp } from "@graview/core/cli";
+import { entryArg, loadApp } from "@graview/core/cli";
 import { Store, type AnySchema, type GraviewApp, type MutationCall, type Operation, type Principal } from "@graview/core";
 import { backendFrom, openRemote, openStore, type RemoteStore } from "@graview/ship";
 import { createMcpAdapter } from "./agent/adapters.js";
@@ -134,8 +134,8 @@ export async function openHost<S extends AnySchema>(
 
 /** The entry module, or the exit code for not having one. */
 async function entryOf(argv: readonly string[], command: string): Promise<GraviewApp | number> {
-  const entry = argv[0];
-  if (!entry || entry.startsWith("--")) {
+  const entry = entryArg(argv, 0);
+  if (!entry) {
     process.stderr.write(`graview ${command}: an entry module is required\n\n${MCP_USAGE}`);
     return 2;
   }

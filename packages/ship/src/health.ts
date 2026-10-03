@@ -16,6 +16,11 @@ export interface HealthReport {
   /** Of those, rules that would have read more of the graph than their budget. */
   readonly overBudget: number;
   readonly danglingEdges: readonly string[];
+  /**
+   * What no longer fits the declaration (`store.findings()`, FR-21): records
+   * and links a repair could fix, and the rules that could not be judged.
+   */
+  readonly findings: number;
   readonly at: string;
 }
 
@@ -37,6 +42,7 @@ export function health<S extends AnySchema>(
     couldNotJudge: all.filter((violation) => violation.status === "could-not-judge").length,
     overBudget: all.filter((violation) => violation.status === "over-budget").length,
     danglingEdges: dangling,
+    findings: store.findings().length,
     at: (options.now ?? (() => new Date().toISOString()))(),
   };
 }

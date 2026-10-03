@@ -52,6 +52,24 @@ export function checkUndo(
   for (const op of ops) for (const id of op.writes) writes.add(id);
   const earliest = Math.min(...ops.map((op) => op.seq));
 
+  /*
+   * NOT ACROSS A DECLARATION CHANGE (FR-27). An op from before the change
+   * carries an inverse written in the old declaration's words: putting it
+   * back would write the old shape into the new graph. The change is named,
+   * since it is what stands in the way, not anything a person did since.
+   */
+  const crossed = log.epochs().find((epoch) => epoch.change !== undefined && epoch.seq > earliest);
+  if (crossed) {
+    const before = ops.find((op) => op.seq < crossed.seq)!;
+    return {
+      ok: false,
+      ops,
+      blockedBy: [],
+      includeBatches: [],
+      message: `Cannot undo "${before.intent}": it was done before the declaration changed (${crossed.change}), and undo does not reach back across that change.`,
+    };
+  }
+
   const blockedBy: UndoBlock[] = [];
   for (const op of log.all()) {
     if (op.seq <= earliest) continue;

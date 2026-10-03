@@ -37,6 +37,17 @@ What is stored carries the format it was written in (FR-31). `FORMATS` names the
 A declaration that compiled and checked clean on one version compiles on the next version of the major.
 
 - A check finding's `code` never changes meaning. A new code may appear, and a new warning or note is not a break. A new *error* on a declaration that used to pass is a break.
+- The stored-data finding codes of `validateGraph` (FR-21) hold to the same rule. Each is a record, a link or a rule that no longer fits the declaration, found by id:
+
+  | Code | What it says | `repairPlan` |
+  |------|--------------|--------------|
+  | `node-shape` | a record's field does not fit its kind (`detail` names the field) | clear an optional field, coerce a required one to its default, else drop the record with its links |
+  | `kind-unknown` | a record of a kind the declaration no longer has | drop it, with its links |
+  | `edge-dangling` | a link to or from a record that is not there | drop the link |
+  | `edge-disallowed` | a link the declaration does not allow between those kinds | drop the link |
+  | `rule-error` | a rule threw rather than judged (`could-not-judge`; `detail` names the rule) | none: the declaration's to fix |
+  | `rule-budget` | a rule would have read more than its budget (`over-budget`) | none: the declaration's to fix |
+
 - The declaration document format (FR-01) is versioned like a stored format, and `capabilities().documentFormats` lists what a build parses.
 
 ### 5. Derived tool names and input schemas
@@ -45,6 +56,12 @@ Tools are derived from the declaration (`createToolRuntime`, `graview mcp`), and
 
 - A change to a derived tool's name, description or input schema for an unchanged declaration is called out in a `Compatibility:` line, even when it is a fix.
 - A change caused by the declaration (a renamed field renames an argument) is the app's change, not the framework's. The framework's part is saying which tools moved.
+
+## The conformance kit
+
+`@graview/core/conformance` ships fixtures: declaration documents with the check findings and tool schemas this framework made of them, and op logs with the snapshot hash each folds to. `conformance()` runs them against this build, or against a build a host hands it, and returns the differences by fixture id. A host runs it before it takes a version.
+
+The fixtures are append-only. `node scripts/conformance-fixtures.mjs` only ever adds a fixture with a new id, and a lock holds the rest. A change to a recorded fixture is an announced difference (`ANNOUNCED`), with the version that made it and what changed.
 
 ## The Compatibility line
 

@@ -54,6 +54,12 @@ export interface InvariantEvalArgs<S extends AnySchema, Subject> {
 
 export interface InvariantDefinition<S extends AnySchema = AnySchema> {
   readonly name: string;
+  /**
+   * The judgement in the rule language, when the rule was written in it
+   * (`expressionRule`) rather than as a function — so the studio can show
+   * it, edit it and write it back instead of a stub (FR-07).
+   */
+  readonly judgement?: { readonly require: string; readonly when?: string; readonly says?: string };
   readonly label?: string;
   readonly description?: string;
   readonly scope: { readonly kind: string; readonly match?: (node: never) => boolean } | "graph";

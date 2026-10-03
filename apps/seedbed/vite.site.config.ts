@@ -13,6 +13,7 @@ export default defineConfig({
   define: { "process.env.NODE_ENV": '"production"' },
   resolve: {
     alias: {
+      "@graview/core/document": fileURLToPath(new URL("../../packages/core/src/document/index.ts", import.meta.url)),
       "@graview/core": pkg("core"),
       "@graview/layout": pkg("layout"),
       "@graview/tools": pkg("tools"),

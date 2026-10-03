@@ -1074,7 +1074,14 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
     </section>
     <section id="cli-check" aria-labelledby="h-cli-check">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-check">graview check</h2></div>
-      <div class="code" data-scroller aria-label="graview check, usage"><pre><code>graview check &lt;entry&gt; [--views &lt;module&gt;] [--json]</code></pre></div>
+      <div class="code" data-scroller aria-label="graview check, usage"><pre><code>graview check &lt;entry&gt; [--views &lt;module&gt;] [--json]
+
+--document &lt;file&gt;
+    Any command that takes an &lt;entry&gt; takes a declaration document instead
+    (a .json file in the Graview document format): compiled, never run as
+    code, and checked with the JSON path of every finding. With
+    --previous &lt;file&gt;, check holds every renamedFrom to the version before.
+</code></pre></div>
       <p>Loads &lt;entry&gt; (a module whose default export, or <code>app</code> export, is a GraviewApp) and reports schema problems. Exits 1 on any error.</p>
     </section>
     <section id="cli-create" aria-labelledby="h-cli-create">

@@ -1,4 +1,5 @@
 import type { GraphSnapshot } from "../graph/types.js";
+import type { Epoch } from "../ops/log.js";
 import type { Operation } from "../ops/types.js";
 import type { PersistenceAdapter } from "./types.js";
 
@@ -11,6 +12,7 @@ export function createMemoryAdapter(
     Object.entries(seed).map(([k, v]) => [k, clone(v)]),
   );
   const logs = new Map<string, Operation[]>();
+  const epochs = new Map<string, Epoch[]>();
 
   return {
     name: "memory",
@@ -24,6 +26,7 @@ export function createMemoryAdapter(
     async delete(scope) {
       graphs.delete(scope);
       logs.delete(scope);
+      epochs.delete(scope);
     },
     async loadLog(scope) {
       return clone(logs.get(scope) ?? []);
@@ -31,6 +34,12 @@ export function createMemoryAdapter(
     async appendOps(scope, ops) {
       const existing = logs.get(scope) ?? [];
       logs.set(scope, [...existing, ...clone([...ops])]);
+    },
+    async loadEpochs(scope) {
+      return clone(epochs.get(scope) ?? []);
+    },
+    async saveEpochs(scope, list) {
+      epochs.set(scope, clone([...list]));
     },
   };
 }

@@ -433,7 +433,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
           .replace(/^-+|-+$/g, "")
           .slice(0, 60);
         return reading(
-          `A rule over ${label(kind)}. The judgement itself is code — the studio declares the rule and names where its body goes; the file it writes says so where the checkout must fill it in.`,
+          `A rule over ${label(kind)}. Say what must hold in the rule language — "quote != null", "count(in('fills') where status == 'booked') <= 1" — and it is judged after every change; left without one, the file it writes says where the checkout judges it in code.`,
           [
             {
               mutation: "add-rule",
