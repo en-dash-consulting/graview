@@ -6,6 +6,7 @@ import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules
 import { diffSnapshots, type GraphDiff } from "./graph/diff.js";
 import { invert, normalise, type Primitive } from "./graph/primitives.js";
 import type { GraphSnapshot } from "./graph/types.js";
+import { verifyFold, type VerifyResult } from "./integrity.js";
 import { evaluate } from "./invariants/engine.js";
 import type {
   EvaluateOptions,
@@ -171,6 +172,7 @@ export class Store<S extends AnySchema> {
   readonly modules: ModuleProjection;
   private readonly nextId: () => string;
   private readonly now: () => string;
+  private readonly validate: boolean;
   private counter = 0;
   private readonly listeners = new Set<(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]) => void>();
 
@@ -187,6 +189,7 @@ export class Store<S extends AnySchema> {
     let n = 0;
     this.nextId = options.ids ?? (() => `op${++n}`);
     this.now = options.now ?? (() => new Date(0).toISOString());
+    this.validate = options.validate ?? true;
 
     for (const mutation of options.mutations ?? []) {
       if (this.mutations.has(mutation.name)) {
@@ -889,6 +892,18 @@ export class Store<S extends AnySchema> {
 
   snapshot(): GraphSnapshot<NodeOfSchema<S>> {
     return this.graph.snapshot();
+  }
+
+  /**
+   * WHETHER THE GRAPH IS WHAT ITS LOG SAYS (FR-20).
+   *
+   * Refolds the log from empty and compares the result with the graph held,
+   * by `snapshotHash`. Agreement returns the hash; disagreement returns both
+   * hashes and the op after which they part, so a host that finds a store
+   * drifted knows where to look rather than only that it should.
+   */
+  verify(): VerifyResult {
+    return verifyFold(this.schema, this.log.all(), this.graph.snapshot(), { validate: this.validate });
   }
 }
 

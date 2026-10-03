@@ -247,6 +247,10 @@ export { seenBy } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
 export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 
+// Integrity — a fold has a fingerprint, and a store can prove its own (FR-20).
+export { snapshotHash } from "./integrity.js";
+export type { VerifyResult } from "./integrity.js";
+
 // Store — graph + log + mutations + invariants, one object.
 export { ReceiveError, Store, violationKey } from "./store.js";
 export type {

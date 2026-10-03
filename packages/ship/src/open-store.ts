@@ -7,6 +7,7 @@ import {
   type Operation,
   type PersistenceAdapter,
   type StoreOptions,
+  type VerifyResult,
 } from "@graview/core";
 import { migrateSnapshot } from "./migrations.js";
 import type { StoredMeta } from "./meta.js";
@@ -47,6 +48,13 @@ export interface OpenStoreOptions<S extends AnySchema> {
    */
   readonly fresh?: boolean;
   /**
+   * Prove the stored graph against its log on open (FR-20). When the two
+   * disagree, the graph is rebuilt from the log, saved, and the opened
+   * store says so in `rebuilt`. A log that does not fold at all cannot be
+   * rebuilt from, and the open throws rather than trusting either.
+   */
+  readonly verify?: boolean;
+  /**
    * Overrides for the store. The declaration's own policy and modules are
    * applied before these, so an app that declares who may do what gets it
    * enforced by the store ship opens without saying so twice.
@@ -64,6 +72,14 @@ export interface OpenedStore<S extends AnySchema> {
   readonly store: Store<S>;
   /** Operations the opening appended: the migration run, when one happened. */
   readonly migrated: readonly Operation[];
+  /** What verifying on open found, when `verify` was asked for. */
+  readonly verified?: VerifyResult;
+  /**
+   * The graph was rebuilt from the log because the stored one disagreed:
+   * the hash it had (`from`), the hash it has now (`to`), and the op after
+   * which the stored graph had drifted, when one could be named.
+   */
+  readonly rebuilt?: { readonly from: string; readonly to: string; readonly divergedAfter?: string };
   /** Resolves when every write accepted so far has settled on the adapter. */
   flush(): Promise<void>;
   /** Stops persisting. The store keeps working; nothing further is written. */
@@ -158,12 +174,36 @@ export async function openStore<S extends AnySchema>(
   });
 
   /*
-   * Write at open only when opening CHANGED something — a fresh scope or a
-   * migration run. Re-saving an untouched store rewrites the snapshot
+   * A STORE OPENED TO VERIFY PROVES ITS GRAPH AGAINST ITS LOG (FR-20). A
+   * drifted snapshot — a write that landed without its ops, an edit by hand
+   * — is replaced by what the log folds to, which is the record, and the
+   * opening says what it did. A log that does not fold is not a record to
+   * rebuild from: nothing is replaced, and the open refuses.
+   */
+  const verified = options.verify ? store.verify() : undefined;
+  let rebuilt: OpenedStore<S>["rebuilt"];
+  if (verified && !verified.ok) {
+    let folded: GraphSnapshot;
+    try {
+      folded = store.log.fold(app.schema, { validate: options.storeOptions?.validate ?? true }).snapshot();
+    } catch {
+      throw new Error(`graview ship: "${scope}" does not verify, and its log cannot be rebuilt from. ${verified.reason} Nothing was rebuilt.`);
+    }
+    store.graph.load(folded as never);
+    rebuilt = {
+      from: verified.actual,
+      to: verified.expected,
+      ...(verified.divergedAfter !== undefined ? { divergedAfter: verified.divergedAfter } : {}),
+    };
+  }
+
+  /*
+   * Write at open only when opening CHANGED something — a fresh scope, a
+   * rebuild or a migration run. Re-saving an untouched store rewrites the snapshot
    * through the current schema's parse, which silently strips any field a
    * rolled-back declaration does not know — data loss with no prior copy.
    */
-  if (stored === null || migrated.length > 0) {
+  if (stored === null || migrated.length > 0 || rebuilt) {
     await adapter.save(scope, store.snapshot());
   }
   adapter.saveMeta?.(scope, { version: target, ...formatStamp() });
@@ -185,5 +225,12 @@ export async function openStore<S extends AnySchema>(
       .catch(report);
   });
 
-  return { store, migrated, flush: () => writing, close: unsubscribe };
+  return {
+    store,
+    migrated,
+    ...(verified ? { verified } : {}),
+    ...(rebuilt ? { rebuilt } : {}),
+    flush: () => writing,
+    close: unsubscribe,
+  };
 }
