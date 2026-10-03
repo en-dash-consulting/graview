@@ -1,6 +1,6 @@
 {
-  "at": "2026-09-25T04:59:30.356Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-pyJWEg",
+  "at": "2026-10-03T02:04:01.693Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-smoke-Rr3Dng",
   "steps": {
     "packed": [
       "@graview/core",
@@ -27,10 +27,10 @@
     "checkFindings": 1,
     "violations": 1,
     "placed": 3,
-    "affordances": 2,
-    "tools": 8,
+    "affordances": 3,
+    "tools": 10,
     "draws": 3,
-    "cssBytes": 55408,
+    "cssBytes": 61374,
     "palettes": [
       "#6fdcea",
       "#0c6e78"
