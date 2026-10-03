@@ -6,6 +6,10 @@ declaration plus one persistence adapter is a running deployment.
 - **`openStore({ app, adapter })`** — load what was stored, migrate it forward, fold it into
   a live `Store`, and keep the adapter current (every diff appends its operations and
   rewrites the snapshot).
+- **`createSqlAdapter({ sql })`** (from `@graview/core`) — persistence over one synchronous
+  `exec(sql, ...params)`: a Durable Object's `ctx.storage.sql` as it is, or better-sqlite3
+  through `sqlFromDatabase(db)`. The core's sqlite adapter is this adapter over better-sqlite3,
+  so the same tests hold for both.
 - **`createFileAdapter(root)`** — persistence a person can read: `snapshot.json`,
   append-only `log.jsonl`, `meta.json` with the stored schema version. The core's sqlite
   adapter is the scale answer; this is the "where is my data" answer.

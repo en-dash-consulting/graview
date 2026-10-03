@@ -292,9 +292,13 @@ export { createMemoryAdapter } from "./persistence/memory.js";
  * The sqlite adapter, exported so `graview serve --sqlite` can reach it.
  * It takes a database OBJECT rather than opening one, so `better-sqlite3`
  * is the caller's dependency and never this package's — nothing here is a
- * native module and nothing here needs building.
+ * native module and nothing here needs building. Under it is the SQL
+ * adapter, which asks only for a synchronous `exec` — a Durable Object's
+ * `ctx.storage.sql` as it is, or better-sqlite3 through `sqlFromDatabase`
+ * (FR-09).
  */
-export { createSqliteAdapter, SQLITE_TABLE_SHAPE } from "./persistence/sqlite.js";
+export { createSqlAdapter, createSqliteAdapter, sqlFromDatabase, SQLITE_TABLE_SHAPE } from "./persistence/sqlite.js";
+export type { SqlAdapterOptions, SqlExec } from "./persistence/sql.js";
 export type { SqliteAdapterOptions, SqliteDatabase, SqliteStatement } from "./persistence/sqlite.js";
 export type { PersistenceAdapter } from "./persistence/types.js";
 
