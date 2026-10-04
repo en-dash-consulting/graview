@@ -1,7 +1,7 @@
 import { createMemoryAdapter, createSchema, defineApp, defineNode, OperationLog, Store, type AnySchema, type GraphEdge, type GraviewApp, type Operation, type Presence, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { leaked, MUTATIONS, policyOf, SCHEMA, storeOf, unseenIds, world, type World } from "../../../core/tests/support/unseen-worlds.js";
+import { canonical, leaked, MUTATIONS, policyOf, rng, SCHEMA, schemaOf, storeAt, storeOf, unseenIds, world, type World } from "../../../core/tests/support/unseen-worlds.js";
 import { createStoreHandler, liveProtocol, seatHeaders, serveStore, type LivePeer, type LiveServerMessage } from "../../src/index.js";
 
 /**
@@ -236,4 +236,68 @@ describe("no id a seat may not see leaves the wire", () => {
       await served.close();
     }
   });
+
+  /*
+   * A CLIENT KEEPS UP (FR-55). A record withheld for a required field that
+   * names a hidden one comes and goes as the field moves; a client that
+   * took a welcome and lands every `ops` it is sent — and one that drops
+   * and says hello again from its cursor — holds exactly what the seat is
+   * served at the end, through the store a client lands ops in, which
+   * judges every write. Nothing is ever asked again.
+   */
+  for (const required of [false, true]) {
+    it(`keeps a client's copy what the seat is served, from a welcome and from any cursor — ${WORLDS.toLocaleString("en")} random worlds, ${required ? "every" : "one kind's"} ref required`, async () => {
+      let landed = 0;
+      for (let seed = 1; seed <= WORLDS; seed++) {
+        const w = world(seed, { required });
+        const r = rng(seed * 104729);
+        const schema = schemaOf(w);
+        const start = Math.floor(r() * (w.ops.length + 1));
+        const drop = start + Math.floor(r() * (w.ops.length - start + 1));
+        const server = storeAt(w, start);
+        const live = liveProtocol({ store: server });
+        type Client = { peer: LivePeer; heard: string[]; store?: Store<AnySchema> };
+        const join = async (seq?: number): Promise<Client> => {
+          const heard: string[] = [];
+          const peer = socket(live.open(w.viewer, "web"), heard);
+          await live.receive(peer, JSON.stringify({ t: "hello", protocol: 1, ...(seq !== undefined ? { seq } : {}) }));
+          return { peer, heard };
+        };
+        /** Everything a client has been sent and not yet landed, landed as a client lands it. */
+        const land = (client: Client) => {
+          for (const text of client.heard.splice(0)) {
+            const message = JSON.parse(text) as LiveServerMessage;
+            try {
+              if (message.t === "welcome" && message.state) {
+                client.store = new Store<AnySchema>({ schema, snapshot: message.state.snapshot as never, log: message.state.log as Operation[] });
+              } else if (message.t === "welcome" || message.t === "ops") {
+                client.store!.receive(message.ops as Operation[]);
+                landed += message.ops.length;
+              }
+            } catch (error) {
+              throw new Error(`seed ${seed}, from ${start}, ${message.t}: ${(error as Error).message}`);
+            }
+          }
+        };
+        const a = await join();
+        let b = await join();
+        land(a);
+        land(b);
+        for (let at = start; at < w.ops.length; at++) {
+          const ops = server.receive([w.ops[at]!]);
+          live.publish(ops, at < drop ? [a.peer, b.peer] : [a.peer]);
+          land(a);
+          land(b);
+        }
+        // B dropped at `drop` and says hello again from where it was.
+        const had = b.store;
+        b = { ...(await join(b.peer.cursor)), store: had! };
+        land(b);
+        const now = canonical(server.seenBy(w.viewer).snapshot());
+        expect(canonical(a.store!.graph.snapshot()), `seed ${seed}, from ${start}: a client that stayed`).toBe(now);
+        expect(canonical(b.store!.graph.snapshot()), `seed ${seed}, from ${start}, dropped at ${drop}: a client that came back`).toBe(now);
+      }
+      expect(landed).toBeGreaterThan(WORLDS * 10);
+    }, 300_000);
+  }
 });

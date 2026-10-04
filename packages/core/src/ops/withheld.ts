@@ -1,4 +1,6 @@
 import { UNSET, type Primitive } from "../graph/primitives.js";
+import type { AnyGraphNode, GraphEdge } from "../graph/types.js";
+import { serveAlong, type Timeline } from "./served.js";
 import type { Author, Operation } from "./types.js";
 
 /**
@@ -52,6 +54,8 @@ export interface SeatLens {
   readonly optional: (kind: string, field: string) => boolean;
   /** The kind of a record, by id, when it is known: for a patch, whose primitive does not say. */
   readonly kindOf: (id: string) => string | undefined;
+  /** The store's graph now and the log that led to it, so an op is judged where it stood (`serveAlong`). */
+  readonly timeline?: Timeline;
 }
 
 /** Whether any field of a record — not its id or kind — names what `sees` says no to. */
@@ -145,7 +149,7 @@ function servedPrimitive(primitive: Primitive, lens: SeatLens): Primitive | unde
  * served ids, so an undo the seat asks for is still blocked by it where it
  * should be.
  */
-export function withhold(op: Operation, seeing: SeatLens | ((id: string) => boolean)): Operation {
+export function withhold(op: Operation, seeing: SeatLens | ((id: string) => boolean), served?: readonly Primitive[]): Operation {
   const lens = lensOf(seeing);
   return {
     id: op.id,
@@ -154,10 +158,12 @@ export function withhold(op: Operation, seeing: SeatLens | ((id: string) => bool
     author: WITHHELD_AUTHOR,
     intent: WITHHELD_INTENT,
     mutation: null,
-    primitives: op.primitives.flatMap((primitive) => {
-      const served = servedPrimitive(primitive, lens);
-      return served ? [served] : [];
-    }),
+    primitives:
+      served ??
+      op.primitives.flatMap((primitive) => {
+        const one = servedPrimitive(primitive, lens);
+        return one ? [one] : [];
+      }),
     inverse: [],
     reads: op.reads.filter(lens.shows),
     writes: op.writes.filter(lens.shows),
@@ -176,5 +182,16 @@ export function withhold(op: Operation, seeing: SeatLens | ((id: string) => bool
  */
 export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: string) => boolean)): Operation[] {
   const lens = lensOf(seeing);
+  /*
+   * ALONG THE STORE'S HISTORY, when the lens knows it: each primitive judged
+   * by whether its record was served just before it and just after, so the
+   * ops a seat is served fold to the snapshot it is served (`serveAlong`).
+   */
+  if (lens.timeline) {
+    const judge = { served: (node: AnyGraphNode) => lens.served(node), edgeClean: (edge: GraphEdge) => !namesUnseen(edge, lens.sees) };
+    return serveAlong(ops, lens.timeline, judge).map(({ op, primitives, faithful }) =>
+      !op.withheld && faithful && !namesUnseen(op, lens.sees) ? op : withhold(op, lens, primitives),
+    );
+  }
   return ops.map((op) => (!op.withheld && !touchesUnseen(op, lens.shows) && !namesUnseen(op, lens.sees) ? op : withhold(op, lens)));
 }

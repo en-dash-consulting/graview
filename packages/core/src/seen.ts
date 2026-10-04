@@ -1,10 +1,12 @@
 import type { GraphDiff, NodeChange } from "./graph/diff.js";
 import type { GraphNodeBase } from "./graph/types.js";
-import type { GraphEdge } from "./graph/types.js";
+import type { Primitive } from "./graph/primitives.js";
+import type { AnyGraphNode, GraphEdge, GraphSnapshot } from "./graph/types.js";
 import type { Violation } from "./invariants/types.js";
 import { batchesOf, undoneIn, type LogReading } from "./ops/log.js";
 import { checkUndo } from "./ops/undo.js";
 import type { Batch, Operation } from "./ops/types.js";
+import { servePrimitives, type Timeline } from "./ops/served.js";
 import { namesUnseen, redact, WITHHELD_INTENT, type SeatLens } from "./ops/withheld.js";
 import { actingAs, isSystem } from "./permissions/policy.js";
 import { recordsOf, sees } from "./permissions/sight.js";
@@ -19,6 +21,9 @@ interface Judged {
     getNode(id: string): { readonly id: string; readonly kind: string } | undefined;
     out(id: string): readonly { readonly id: string }[];
     in(id: string): readonly { readonly id: string }[];
+    /** A store's own graph says its links, so an op can be judged where it stood (FR-55). */
+    outEdges?(id: string): readonly GraphEdge[];
+    inEdges?(id: string): readonly GraphEdge[];
   };
   readonly log: LogReading;
   /** The kinds of the modules this workspace has off (FR-12), kept from every seat as a sight keeps a record. */
@@ -133,7 +138,19 @@ export function seatLens(store: Judged, principal: Principal): SeatLens {
     return node === undefined || served(node) !== undefined;
   };
   const kindOf = (id: string): string | undefined => store.graph.getNode(id)?.kind ?? recordsOf(store.log).kindOf(id);
-  return { sees, shows, served, optional, kindOf };
+  const graph = store.graph;
+  const timeline: Timeline | undefined =
+    graph.outEdges && graph.inEdges
+      ? {
+          present: {
+            getNode: (id) => graph.getNode(id) as AnyGraphNode | undefined,
+            outEdges: (id) => graph.outEdges!(id),
+            inEdges: (id) => graph.inEdges!(id),
+          },
+          log: store.log,
+        }
+      : undefined;
+  return { sees, shows, served, optional, kindOf, ...(timeline ? { timeline } : {}) };
 }
 
 /** The store's log as one seat may read it: every op in its place, the ones it may not see withheld (FR-16), and no id it may not see in any of them (FR-55). */
@@ -197,7 +214,15 @@ export function answerSeenBy<
     };
   }
   if (answer.ops) out["ops"] = redact(answer.ops, lens);
-  if (answer.primitives) out["primitives"] = redact([{ id: "", seq: 0, batch: "", author: { kind: "system" }, intent: "", mutation: null, primitives: answer.primitives as never, inverse: [], reads: [], writes: [], at: "" }], lens)[0]!.primitives;
+  if (answer.primitives) {
+    // An apply's primitives are its ops'; a preview's are not in the log yet, and are judged from the graph as it stands.
+    const ops = out["ops"] as readonly Operation[] | undefined;
+    out["primitives"] = ops
+      ? ops.flatMap((op) => op.primitives)
+      : lens.timeline
+        ? servePrimitives(answer.primitives as readonly Primitive[], lens.timeline.present, { served: (node) => lens.served(node), edgeClean: (edge) => !namesUnseen(edge, lens.sees) })
+        : redact([{ id: "", seq: 0, batch: "", author: { kind: "system" }, intent: "", mutation: null, primitives: answer.primitives as never, inverse: [], reads: [], writes: [], at: "" }], lens)[0]!.primitives;
+  }
   if (answer.reads) out["reads"] = answer.reads.filter(lens.shows);
   if (answer.writes) out["writes"] = answer.writes.filter(lens.shows);
   if (answer.intent !== undefined && namesUnseen(answer.intent, lens.sees)) out["intent"] = WITHHELD_INTENT;
@@ -255,6 +280,12 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
   const seenId = (id: string): boolean => seenNode(full.getNode(id) as never);
   const seenEdge = (edge: GraphEdge): boolean => seenId(edge.from) && seenId(edge.to) && !namesUnseen(edge, lens.sees);
   const servedAll = <N>(nodes: readonly N[]): N[] => nodes.flatMap((node) => served(node) ?? []);
+  /** A graph of another moment — an epoch's base — as this seat is served it: its records, and its links between them. */
+  const servedGraph = (snapshot: GraphSnapshot): GraphSnapshot => {
+    const nodes = servedAll(snapshot.nodes);
+    const kept = new Set(nodes.map((node) => node.id));
+    return { nodes, edges: snapshot.edges.filter((edge) => kept.has(edge.from) && kept.has(edge.to) && !namesUnseen(edge, lens.sees)) };
+  };
   /*
    * THE LOG, REDACTED RATHER THAN GAPPED (FR-16): every op in its place,
    * and one that touched what this seat may not see withheld — so the log
@@ -313,6 +344,14 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
         case "all":
         case "toJSON":
           return () => [...ops()];
+        // Each epoch's base as this seat is served it, so its log folds from there to what it is served (FR-55).
+        case "epochs":
+          return () => target.epochs().map((epoch) => ({ ...epoch, base: servedGraph(epoch.base) }));
+        case "lastEpoch":
+          return () => {
+            const epoch = target.lastEpoch();
+            return epoch && { ...epoch, base: servedGraph(epoch.base) };
+          };
         case "live":
           return () => {
             const all = ops();
@@ -358,6 +397,12 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
           return (other: Principal) => seenBy(target, other);
         case "seenFor":
           return principal;
+        // A checkpoint taken through the seat's view is the one it is served.
+        case "checkpoint":
+          return (...args: Parameters<Store<S>["checkpoint"]>) => {
+            const epoch = target.checkpoint(...args);
+            return epoch && { ...epoch, base: servedGraph(epoch.base) };
+          };
         default:
           return bound(target, prop);
       }

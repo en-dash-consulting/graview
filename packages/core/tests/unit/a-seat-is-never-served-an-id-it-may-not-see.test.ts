@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createSchema, defineNode, isWithheld, logSeenBy, OperationLog, Store, type AnySchema, type Principal } from "../../src/index.js";
-import { leaked, oracle, SCHEMA, storeOf, unseenIds, world } from "../support/unseen-worlds.js";
+import { createSchema, defineNode, isWithheld, logSeenBy, OperationLog, Store, type AnySchema, type Primitive, type Principal } from "../../src/index.js";
+import { canonical, fold, leaked, oracle, rng, SCHEMA, schemaOf, storeAt, storeOf, unseenIds, world } from "../support/unseen-worlds.js";
 
 /**
  * A SEAT IS NEVER SERVED AN ID IT MAY NOT SEE (FR-55).
@@ -134,4 +134,155 @@ describe("a seat is never served an id it may not see", () => {
     expect(hidden).toBeGreaterThan(1000);
     expect(cleared).toBeGreaterThan(100);
   }, 120_000);
+
+  /*
+   * WHAT A SEAT IS SERVED FOLDS (FR-55). A record withheld because a
+   * required field names a hidden one comes and goes as that field moves,
+   * and the log a seat is served has to say so: folding it from nothing
+   * reaches the snapshot the seat is served, after every op — and folding
+   * the ops after any moment onto what the seat was served at that moment
+   * reaches what it is served now, as a client catching up from a cursor
+   * does. The fold judges every write as a client does.
+   */
+  it("serves a record that comes and goes as its required field moves, in ops a client can fold", () => {
+    const pub = defineNode("pub", { fields: z.object({ title: z.string(), ref: z.string() }), edges: { rel: { to: ["pub"], cardinality: "many" } } });
+    const secret = defineNode("secret", { fields: z.object({ title: z.string() }) });
+    const schema = createSchema([pub, secret]) as unknown as AnySchema;
+    const store = new Store<AnySchema>({ schema, policy: { grants: [], sees: [{ roles: ["viewer"], kinds: ["pub"] }] } });
+    const viewer: Principal = { kind: "human", id: "u2", roles: ["viewer"] };
+    const p1 = { id: "pub:p1", kind: "pub", title: "P1", ref: "secret:s1" };
+    const p2 = { id: "pub:p2", kind: "pub", title: "P2", ref: "pub:p2" };
+    const steps: Primitive[][] = [
+      // A record the seat may see, withheld because its required field names one it may not.
+      [{ op: "add-node", node: { id: "secret:s1", kind: "secret", title: "S" } }, { op: "add-node", node: p1 }, { op: "add-node", node: p2 }, { op: "add-edge", edge: { kind: "rel", from: "pub:p1", to: "pub:p2" } }],
+      // Its field points at a record the seat sees: it arrives, with its link.
+      [{ op: "patch-node", id: "pub:p1", before: { ref: "secret:s1" }, after: { ref: "pub:p2" } }],
+      // A seen record's required field points at the hidden one: it goes.
+      [{ op: "patch-node", id: "pub:p2", before: { ref: "pub:p2" }, after: { ref: "secret:s1" } }],
+      // The one that went is removed: nothing to say.
+      [{ op: "remove-edge", edge: { kind: "rel", from: "pub:p1", to: "pub:p2" } }, { op: "remove-node", node: { ...p2, ref: "secret:s1" } }],
+      // Pointed back at the hidden record, then removed: it goes, and its removal is nothing to say.
+      [{ op: "patch-node", id: "pub:p1", before: { ref: "pub:p2" }, after: { ref: "secret:s1" } }],
+      [{ op: "remove-node", node: p1 }],
+    ];
+    let had = { nodes: [], edges: [] } as ReturnType<typeof fold>;
+    let seq = 0;
+    const served: string[] = [];
+    for (const primitives of steps) {
+      store.applyPrimitives(primitives, { author: { kind: "human", id: "u1" } });
+      const log = logSeenBy(store, viewer);
+      const now = store.seenBy(viewer).snapshot();
+      expect(canonical(fold(schema, log)), `after ${log.length} ops, from nothing`).toBe(canonical(now));
+      had = fold(schema, log.slice(seq), had);
+      expect(canonical(had), `after ${log.length} ops, caught up`).toBe(canonical(now));
+      seq = log.length;
+      served.push(now.nodes.map((node) => node.id).join(","));
+      expect(JSON.stringify(log)).not.toContain("secret:s1");
+    }
+    expect(served).toEqual(["pub:p2", "pub:p1,pub:p2", "pub:p1", "pub:p1", "", ""]);
+  });
+
+  it(`folds what a seat is served across acts, undo, a rebase and a compaction, from the epoch it is served — ${WORLDS.toLocaleString("en")} random worlds`, () => {
+    const host: Principal = { kind: "system", id: "host" };
+    let undone = 0;
+    let compacted = 0;
+    let rebased = 0;
+    for (let seed = 1; seed <= WORLDS; seed++) {
+      const w = world(seed, { required: seed % 2 === 0 });
+      const schema = schemaOf(w);
+      const s = storeAt(w, w.ops.length);
+      const t = storeAt(w, w.ops.length);
+      const r = rng(seed * 7919);
+      const pick = <T,>(xs: readonly T[]): T => xs[Math.floor(r() * xs.length)]!;
+
+      const act = (store: Store<AnySchema>, batch?: string) => {
+        const live = store.graph.allNodes().map((node) => node.id);
+        const call = r() < 0.5 && live.length > 0 ? { name: "point", args: { id: pick(live), ref: w.anyId() } } : r() < 0.5 && live.length > 0 ? { name: "retitle", args: { id: pick(live), title: `R${seed}` } } : { name: "make", args: { title: `M${Math.floor(r() * 1e6)}`, ref: w.anyId() } };
+        try {
+          return store.applyAll([call], { author: host, ...(batch ? { batch } : {}) });
+        } catch {
+          return undefined;
+        }
+      };
+      const check = (what: string) => {
+        const view = s.seenBy(w.viewer);
+        const base = [...view.log.epochs()].reverse().find((epoch) => epoch.seq <= s.log.horizon)?.base ?? { nodes: [], edges: [] };
+        let folded: ReturnType<typeof fold>;
+        try {
+          folded = fold(schema, view.log.all(), base);
+        } catch (error) {
+          throw new Error(`seed ${seed}, ${what}: ${(error as Error).message}`);
+        }
+        expect(canonical(folded), `seed ${seed}, ${what}`).toBe(canonical(view.snapshot()));
+        expect(leaked({ log: view.log.all(), epochs: view.log.epochs() }, unseenIds(w)), `seed ${seed}, ${what}`).toBeUndefined();
+      };
+      for (let round = 0; round < 8; round++) {
+        if (r() < 0.3 && s.batches().length > 0) {
+          try {
+            s.undo([pick(s.batches()).id], { author: host });
+            undone++;
+          } catch {
+            // A change something later depends on stays.
+          }
+          check(`after an undo in round ${round}`);
+        } else {
+          act(s);
+          check(`after an act in round ${round}`);
+        }
+      }
+      // Somebody else's ops land under one of ours still pending.
+      const theirs = act(t);
+      if (theirs && act(s, "pending:mine")) {
+        s.rebase({ confirmed: theirs.ops, pending: ["pending:mine"] });
+        rebased++;
+        check("after a rebase");
+      }
+
+      const checkpoint = s.checkpoint({ seq: Math.max(1, s.log.length - 3) });
+      if (checkpoint) {
+        s.compact(checkpoint);
+        compacted++;
+        check("after a compaction");
+        act(s);
+        check("after an act past the horizon");
+      }
+    }
+    expect(undone).toBeGreaterThan(WORLDS / 2);
+    expect(rebased).toBeGreaterThan(WORLDS / 2);
+    expect(compacted).toBeGreaterThan(WORLDS / 2);
+  }, 300_000);
+
+  for (const required of [false, true]) {
+    it(`folds what a seat is served to what it is served, from nothing and from every cursor — ${WORLDS.toLocaleString("en")} random worlds, ${required ? "every" : "one kind's"} ref required`, () => {
+      let folds = 0;
+      let hiddenWhole = 0;
+      for (let seed = 1; seed <= WORLDS; seed++) {
+        const w = world(seed, { required });
+        const schema = schemaOf(w);
+        const snapshots = Array.from({ length: w.ops.length + 1 }, (_, count) => storeAt(w, count).seenBy(w.viewer).snapshot());
+        const store = storeAt(w, w.ops.length);
+        const log = logSeenBy(store, w.viewer);
+        expect(canonical(store.seenBy(w.viewer).snapshot())).toBe(canonical(snapshots[w.ops.length]!));
+        for (let count = 0; count <= w.ops.length; count++) {
+          const at = `seed ${seed}, ${count} of ${w.ops.length} ops`;
+          let fromNothing: ReturnType<typeof fold>;
+          let caughtUp: ReturnType<typeof fold>;
+          try {
+            fromNothing = fold(schema, logSeenBy(storeAt(w, count), w.viewer));
+            caughtUp = fold(schema, log.slice(count), snapshots[count]);
+          } catch (error) {
+            throw new Error(`${at}: ${(error as Error).message}`);
+          }
+          expect(canonical(fromNothing), `${at}, from nothing`).toBe(canonical(snapshots[count]!));
+          expect(canonical(caughtUp), `${at}, caught up from there`).toBe(canonical(snapshots[w.ops.length]!));
+          folds += 2;
+        }
+        const shown = new Set(snapshots[w.ops.length]!.nodes.map((node) => node.id));
+        hiddenWhole += w.nodes.filter((node) => oracle(w, node.id) && !shown.has(node.id)).length;
+      }
+      expect(folds).toBeGreaterThan(WORLDS * 20);
+      // The generator really withheld seen records whole for a required field.
+      expect(hiddenWhole).toBeGreaterThan(required ? 500 : 100);
+    }, 300_000);
+  }
 });

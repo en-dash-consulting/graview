@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { bindSchema, createSchema, defineNode, nodeRef, Store, type AnyGraphNode, type AnySchema, type GraphEdge, type Operation, type Policy, type Primitive, type Principal, type Sight } from "../../src/index.js";
+import { bindSchema, createSchema, defineNode, Graph, nodeRef, Store, type AnyGraphNode, type AnySchema, type GraphEdge, type GraphSnapshot, type Operation, type Policy, type Primitive, type Principal, type Sight } from "../../src/index.js";
 
 /*
  * RANDOM WORLDS FOR THE SEAT VIEW (FR-55), ported from Graview Cloud's
@@ -13,6 +13,8 @@ import { bindSchema, createSchema, defineNode, nodeRef, Store, type AnyGraphNode
 const OPTIONAL = { fields: z.object({ title: z.string(), ref: z.string().optional() }), edges: { rel: { to: ["a", "b", "c", "d"], cardinality: "many" } } } as const;
 const REQUIRED = { fields: z.object({ title: z.string(), ref: z.string() }), edges: { rel: { to: ["a", "b", "c", "d"], cardinality: "many" } } } as const;
 export const SCHEMA = createSchema([defineNode("a", OPTIONAL), defineNode("b", OPTIONAL), defineNode("c", OPTIONAL), defineNode("d", REQUIRED)]);
+/** Every kind's `ref` required: every record that names a hidden one is withheld whole, and comes and goes as its `ref` moves. */
+export const SCHEMA_REQUIRED = createSchema([defineNode("a", REQUIRED), defineNode("b", REQUIRED), defineNode("c", REQUIRED), defineNode("d", REQUIRED)]);
 const { defineMutation } = bindSchema(SCHEMA);
 
 const ANY = ["a", "b", "c", "d"] as const;
@@ -65,6 +67,8 @@ const AUTHORS = ["u1", "u2", "u3"];
 
 export interface World {
   readonly seed: number;
+  /** Whether every kind's `ref` is required (`SCHEMA_REQUIRED`), or only d's (`SCHEMA`). */
+  readonly required: boolean;
   readonly nodes: AnyGraphNode[];
   readonly edges: GraphEdge[];
   readonly ops: Operation[];
@@ -77,7 +81,8 @@ export interface World {
   pick<T>(xs: readonly T[]): T;
 }
 
-export function world(seed: number): World {
+export function world(seed: number, options: { readonly required?: boolean } = {}): World {
+  const required = options.required ?? false;
   const r = rng(seed);
   const pick = <T>(xs: readonly T[]): T => xs[Math.floor(r() * xs.length)]!;
   const some = <T>(xs: readonly T[]): T[] => xs.filter(() => r() < 0.5);
@@ -97,7 +102,7 @@ export function world(seed: number): World {
     if (roll < 0.4 || nodes.size < 2) {
       const kind = pick(ANY);
       const id = `${kind}:n${++made}`;
-      const ref = kind === "d" ? (kindOf.size > 0 ? anyId() : id) : r() < 0.3 && kindOf.size > 0 ? anyId() : undefined;
+      const ref = kind === "d" || required ? (kindOf.size > 0 ? anyId() : id) : r() < 0.3 && kindOf.size > 0 ? anyId() : undefined;
       const node: AnyGraphNode = { id, kind, title: `T${made}`, ...(ref !== undefined ? { ref } : {}) };
       prims.push({ op: "add-node", node });
       nodes.set(id, node);
@@ -155,7 +160,34 @@ export function world(seed: number): World {
           return { roles: r() < 0.2 ? ("*" as const) : some(ROLES), kinds: kinds.length > 0 ? kinds : [pick(ANY)], ...(r() < 0.4 ? { own: true } : {}) };
         });
   const viewer = { kind: "human" as const, id: pick(AUTHORS), roles: some(ROLES) };
-  return { seed, nodes: [...nodes.values()], edges: [...edges.values()], ops, sights, viewer, kindOf, creatorOf, anyId, pick };
+  return { seed, required, nodes: [...nodes.values()], edges: [...edges.values()], ops, sights, viewer, kindOf, creatorOf, anyId, pick };
+}
+
+/** The declaration a world's records are judged by. */
+export function schemaOf(w: Pick<World, "required">): AnySchema {
+  return (w.required ? SCHEMA_REQUIRED : SCHEMA) as unknown as AnySchema;
+}
+
+/** The store this world was after its first `count` ops: the log alone, folded. */
+export function storeAt(w: World, count: number): Store<AnySchema> {
+  return new Store<AnySchema>({ schema: schemaOf(w), mutations: MUTATIONS as never, policy: policyOf(w), log: w.ops.slice(0, count) });
+}
+
+/**
+ * WHAT A CLIENT HOLDS after folding ops onto what it had: a graph that
+ * judges every write as a client's does, so a record served misfitting, a
+ * patch on a record it never had or a link to one it does not have throws.
+ */
+export function fold(schema: AnySchema, ops: readonly Operation[], from: GraphSnapshot = { nodes: [], edges: [] }): GraphSnapshot {
+  const graph = Graph.from(schema, from as never);
+  for (const op of ops) graph.applyPrimitives(op.primitives, { restoring: op.undoes !== undefined });
+  return graph.snapshot();
+}
+
+/** A graph written so two that hold the same records and links read the same, whatever their order. */
+export function canonical(snapshot: GraphSnapshot): string {
+  const node = (one: object) => JSON.stringify(Object.entries(one).sort(([a], [b]) => (a < b ? -1 : 1)));
+  return JSON.stringify({ nodes: snapshot.nodes.map(node).sort(), edges: snapshot.edges.map((edge) => `${edge.kind} ${edge.from} ${edge.to}`).sort() });
 }
 
 /** Everyone may act; who sees what is the world's sights. */
@@ -165,7 +197,7 @@ export function policyOf(w: Pick<World, "sights">): Policy {
 
 /** The store this world is: its graph, the history that made it, and its policy. */
 export function storeOf(w: World): Store<AnySchema> {
-  return new Store<AnySchema>({ schema: SCHEMA as unknown as AnySchema, mutations: MUTATIONS as never, policy: policyOf(w), snapshot: { nodes: w.nodes, edges: w.edges }, log: w.ops });
+  return new Store<AnySchema>({ schema: schemaOf(w), mutations: MUTATIONS as never, policy: policyOf(w), snapshot: { nodes: w.nodes, edges: w.edges }, log: w.ops });
 }
 
 /**
