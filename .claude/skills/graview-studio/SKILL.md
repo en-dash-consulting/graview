@@ -35,10 +35,12 @@ any other.
    ```
 
    The acts: `add-kind`, `rename-kind`, `remove-kind`, `add-field`,
-   `remove-field`, `add-edge`, `remove-edge`, `add-act`, `remove-act`,
-   `add-rule`, `remove-rule`, `name-repair`, `forget-repair`, `add-role`,
-   `grant`, `revoke-grant`, and the derived `edit-<kind>` for every field
-   (a description, an inverse, a title, a lifecycle).
+   `rename-field`, `remove-field`, `retype-field`, `set-required`,
+   `set-options`, `describe-field` (a field changed in place: `{ id:
+   "field:vendor.notes", type: "string" }`), `add-edge`, `remove-edge`,
+   `add-act`, `remove-act`, `add-rule`, `remove-rule`, `name-repair`,
+   `forget-repair`, `add-role`, `grant`, `revoke-grant`, and the derived
+   `edit-<kind>` for what no act names (an inverse, a title, a lifecycle).
 
 3. **Check before you apply.** `studio.check()` is `graview check` on the
    declaration as it now stands. `studio.apply()` refuses while there are
@@ -58,7 +60,9 @@ any other.
    policy swapped, says it: `createStudio(app, { document })`; without one,
    `whyNoDocument()` says why. A change no op says yet — a relation's
    cardinality, a lifecycle, a grant, retyping a money field — comes back
-   as `documentFindings`, one sentence each, and no document.
+   as `documentFindings`, one sentence each, and no document. Ask ahead
+   what it keeps but will not change: `uneditable(document)` is one note
+   per format, unit or list item type (`kinds.vendor.fields.quote`).
 
 4. **Write it back.** `studio.files({ schemaVar: "gardenSchema" })` is
    `src/domain/schema.ts`, `mutations.ts`, `invariants.ts` and, with roles,

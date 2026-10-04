@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-04T07:15:29.492Z",
+  "at": "2026-10-04T15:09:42.272Z",
   "engine": "chromium",
   "checks": {
     "theDoorBelongsToWhoeverKeepsTheApp": {
@@ -153,6 +153,61 @@
     "closingPutsYouBackWhereYouWere": {
       "studioGone": true,
       "stillTheApp": true,
+      "ok": true
+    },
+    "aStudioHandedInWaitsForNoChunk": {
+      "fetched": [
+        "entry.js",
+        "chunk-ZOKDILRX.js"
+      ],
+      "ok": true
+    },
+    "anEditorTheHostOffersItToSeesTheStudio": {
+      "studio": true,
+      "policyKept": true,
+      "ok": true
+    },
+    "aStudioInAHostsPageDrawsNoMainOfItsOwn": {
+      "mains": 1,
+      "mainsInTheEmbed": 0,
+      "violations": [],
+      "landmarks": [],
+      "ok": true
+    },
+    "aHostThatRefusesIsShownRefusingAndTheEditsStay": {
+      "strip": [
+        "Say what the field is for …",
+        "Rename the field …",
+        "Change the field's type …",
+        "Change the options …",
+        "Say whether it must be given …",
+        "Remove the field"
+      ],
+      "once": {
+        "said": "refused-by-host",
+        "open": true,
+        "claimedKept": false
+      },
+      "handed": [
+        [
+          {
+            "op": "remove-field",
+            "kind": "vendor",
+            "field": "notes"
+          }
+        ],
+        [
+          {
+            "op": "remove-field",
+            "kind": "vendor",
+            "field": "notes"
+          }
+        ]
+      ],
+      "ok": true
+    },
+    "theHostsPageThrowsNothing": {
+      "errors": [],
       "ok": true
     }
   },

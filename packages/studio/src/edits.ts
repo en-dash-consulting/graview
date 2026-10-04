@@ -1,5 +1,6 @@
 import { canonicalize, editDocument, error, parseExpr, printExpr, renameIn, type DeclaredKinds, type DocumentEdit, type EditOutcome, type Finding, type GraviewDocument } from "@graview/core/document";
 import { label, Read, type Node } from "./source.js";
+import { keptBy } from "./uneditable.js";
 import type { Reading } from "./to-declaration.js";
 
 /*
@@ -125,7 +126,8 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
        * type does to them either.
        */
       const spec = specOf(label(kindsBefore.get(kind.id)!), label(old));
-      const kept = spec?.format ? `shown as ${spec.format}` : spec?.unit ? `counted in ${spec.unit}` : spec?.of ? `a list of ${spec.of}s` : undefined;
+      // The rule `uneditable(document)` says ahead (FR-62), in the same words.
+      const kept = keptBy(spec)[0]?.said;
       if (kept) {
         findings.push(unsaid(`kinds.${at.kind}.fields.${at.field}`, `${at.kind}'s ${at.field} is ${kept}, which the studio does not edit, so it cannot say what making it a ${type} does to that; retype it in the document, where that is decided with it`));
         continue;
