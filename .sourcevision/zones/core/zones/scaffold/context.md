@@ -5,10 +5,10 @@
 <zone>
 
 Zone: Scaffold (`core/scaffold`)
-Files: 6, Cohesion: 0.89, Coupling: 0.11
+Files: 6, Cohesion: 0.84, Coupling: 0.16
 Description: 6 files, primarily TypeScript
 Entry points: packages/core/src/cli/create.ts, packages/core/src/scaffold/index.ts
-Lines: 2108
+Lines: 2152
 
 </zone>
 
@@ -18,8 +18,8 @@ packages/core/src/cli/create.ts (TypeScript, 288 lines, source)
 packages/core/src/scaffold/domain.ts (TypeScript, 339 lines, source)
 packages/core/src/scaffold/index.ts (TypeScript, 231 lines, source)
 packages/core/src/scaffold/names.ts (TypeScript, 109 lines, source)
-packages/core/src/scaffold/project.ts (TypeScript, 630 lines, source)
-packages/core/src/scaffold/ui.ts (TypeScript, 511 lines, source)
+packages/core/src/scaffold/project.ts (TypeScript, 641 lines, source)
+packages/core/src/scaffold/ui.ts (TypeScript, 544 lines, source)
 
 </files>
 

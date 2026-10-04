@@ -1,118 +1,136 @@
 {
   "schemaVersion": "1.0.0",
   "toolVersion": "0.1.0",
-  "analyzedAt": "2026-09-28T19:40:47.765Z",
+  "analyzedAt": "2026-10-02T03:11:26.616Z",
   "targetPath": "graview",
   "modules": {
     "inventory": {
       "status": "complete",
-      "startedAt": "2026-09-28T19:38:43.835Z",
-      "completedAt": "2026-09-28T19:38:43.995Z"
+      "startedAt": "2026-10-02T03:10:10.846Z",
+      "completedAt": "2026-10-02T03:10:10.963Z"
     },
     "imports": {
       "status": "complete",
-      "startedAt": "2026-09-28T19:38:43.995Z",
-      "completedAt": "2026-09-28T19:38:44.649Z"
+      "startedAt": "2026-10-02T03:10:10.964Z",
+      "completedAt": "2026-10-02T03:10:11.779Z"
     },
     "classifications": {
       "status": "complete",
-      "startedAt": "2026-09-28T19:38:44.649Z",
-      "completedAt": "2026-09-28T19:40:44.853Z"
+      "startedAt": "2026-10-02T03:10:11.780Z",
+      "completedAt": "2026-10-02T03:11:23.080Z"
     },
     "zones": {
       "status": "complete",
-      "startedAt": "2026-09-28T19:40:44.854Z",
-      "completedAt": "2026-09-28T19:40:46.219Z"
+      "startedAt": "2026-10-02T03:11:23.081Z",
+      "completedAt": "2026-10-02T03:11:24.788Z"
     },
     "components": {
       "status": "complete",
-      "startedAt": "2026-09-28T19:40:46.220Z",
-      "completedAt": "2026-09-28T19:40:46.562Z"
+      "startedAt": "2026-10-02T03:11:24.790Z",
+      "completedAt": "2026-10-02T03:11:25.140Z"
     },
     "callgraph": {
       "status": "complete",
-      "startedAt": "2026-09-28T19:40:46.562Z",
-      "completedAt": "2026-09-28T19:40:47.765Z"
+      "startedAt": "2026-10-02T03:11:25.141Z",
+      "completedAt": "2026-10-02T03:11:26.616Z"
     }
   },
   "language": "typescript",
   "languages": [
     "typescript"
   ],
-  "gitSha": "ae34c95d6fd7e69b2a3ff0d6d3ef950c1b3ffac9",
+  "gitSha": "840577c35c51881f83263e2ca74d22793d6dd30a",
   "gitBranch": "main",
-  "analysisFingerprint": "e212cc2b1d2c1c7a",
+  "analysisFingerprint": "c0143a37bc8eec7e",
   "zoneOutputs": true,
   "tokenUsage": {
-    "calls": 14,
-    "inputTokens": 200290,
-    "outputTokens": 22783,
+    "calls": 10,
+    "inputTokens": 114399,
+    "outputTokens": 12550,
     "vendor": "claude",
     "model": "claude-sonnet-5"
   },
   "lastAnalysis": {
-    "at": "2026-09-28T19:38:43.835Z",
+    "at": "2026-10-02T03:10:10.842Z",
     "mode": "cascade",
-    "durationMs": 124067,
+    "durationMs": 76211,
     "phases": {
-      "inventory": 160,
-      "imports": 654,
-      "classifications": 120204,
-      "zones": 1367,
-      "components": 342,
-      "callgraph": 1276
+      "inventory": 119,
+      "imports": 816,
+      "classifications": 71301,
+      "zones": 1709,
+      "components": 350,
+      "callgraph": 1566
     },
     "llm": {
       "byTaskClass": {
         "code.classify": {
-          "calls": 5,
-          "inputTokens": 168185,
-          "outputTokens": 18903,
-          "durationMs": 2022,
+          "calls": 3,
+          "inputTokens": 82348,
+          "outputTokens": 9225,
+          "durationMs": 1252,
           "vendor": "typesafe",
           "model": "jev-1.13.0"
         },
         "code.classify/claude": {
-          "calls": 5,
+          "calls": 3,
           "inputTokens": 0,
           "outputTokens": 0,
-          "durationMs": 118096,
+          "durationMs": 69997,
           "vendor": "claude",
           "model": "claude-haiku-4-5"
         },
         "zone.judge": {
-          "calls": 4,
-          "inputTokens": 39159,
-          "outputTokens": 4943,
-          "durationMs": 939,
+          "calls": 5,
+          "inputTokens": 44593,
+          "outputTokens": 4498,
+          "durationMs": 1221,
           "vendor": "typesafe",
           "model": "jev-1.13.0"
         },
         "finding.judge": {
           "calls": 1,
-          "inputTokens": 3287,
-          "outputTokens": 140,
-          "durationMs": 156,
+          "inputTokens": 3405,
+          "outputTokens": 123,
+          "durationMs": 142,
           "vendor": "typesafe",
           "model": "jev-1.13.0"
         }
       },
       "judgmentCache": {
-        "hits": 0,
-        "misses": 273
+        "hits": 18,
+        "misses": 193
       }
+    },
+    "partition": {
+      "fingerprint": "2cc7aa9e309e71eb",
+      "health": {
+        "zones": 42,
+        "smallZones": 12,
+        "smallShare": 0.29,
+        "numericIds": 0,
+        "largestShare": 0.1,
+        "verdict": "borderline",
+        "reasons": [
+          "12/42 zones hold 2 files or fewer"
+        ]
+      },
+      "rejected": false,
+      "mapProbability": 0.33,
+      "reused": false
     }
   },
   "narration": {
     "status": "done",
     "zones": [
       "core",
+      "core-mutations",
       "core-ops"
     ],
     "names": [],
-    "startedAt": "2026-09-28T19:40:47.903Z",
-    "pid": 10536,
+    "startedAt": "2026-10-02T03:11:27.054Z",
+    "pid": 46088,
     "log": ".sourcevision/.cache/narration.log",
-    "finishedAt": "2026-09-28T19:42:32.159Z"
+    "finishedAt": "2026-10-02T03:12:08.754Z"
   }
 }

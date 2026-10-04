@@ -8,13 +8,13 @@ Zone: Documentation Site (`docs`)
 Files: 1, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: Documentation and static-site assets: chapters.js
-Lines: 1701
+Lines: 1837
 
 </zone>
 
 <files>
 
-docs/site/chapters.js (JavaScript, 1701 lines, docs)
+docs/site/chapters.js (JavaScript, 1837 lines, docs)
 
 </files>
 

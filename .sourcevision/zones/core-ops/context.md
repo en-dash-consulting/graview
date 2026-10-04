@@ -5,11 +5,11 @@
 <zone>
 
 Zone: Core Ops (`core-ops`)
-Files: 3, Cohesion: 0.29, Coupling: 0.71
+Files: 4, Cohesion: 0.29, Coupling: 0.71
 Risk: catastrophic (score: 0.71)
-Description: 3 files, mostly utilities and types; entry points log.ts, types.ts, undo.ts; imports Core and Core Mutations; imported by Core and Core Sync.
-Entry points: packages/core/src/ops/log.ts, packages/core/src/ops/types.ts, packages/core/src/ops/undo.ts
-Lines: 260
+Description: 4 files, mostly utilities and types; entry points log.ts, types.ts, undo.ts; imports Core and Core Mutations; imported by Core and Core Sync.
+Entry points: packages/core/src/ops/log.ts, packages/core/src/ops/types.ts, packages/core/src/ops/undo.ts, packages/core/src/who.ts
+Lines: 288
 
 </zone>
 
@@ -18,6 +18,7 @@ Lines: 260
 packages/core/src/ops/log.ts (TypeScript, 118 lines, source)
 packages/core/src/ops/types.ts (TypeScript, 54 lines, source)
 packages/core/src/ops/undo.ts (TypeScript, 88 lines, source)
+packages/core/src/who.ts (TypeScript, 28 lines, source)
 
 </files>
 
@@ -27,29 +28,32 @@ Internal:
   packages/core/src/ops/log.ts → packages/core/src/ops/types.ts {Batch, Operation}
   packages/core/src/ops/undo.ts → packages/core/src/ops/log.ts {OperationLog}
   packages/core/src/ops/undo.ts → packages/core/src/ops/types.ts {Operation}
+  packages/core/src/who.ts → packages/core/src/ops/types.ts {Author}
 
 Outgoing (this zone → other zones):
-  → core: packages/core/src/ops/log.ts → packages/core/src/graph/graph.ts; packages/core/src/ops/log.ts → packages/core/src/schema/schema.ts; packages/core/src/ops/types.ts → packages/core/src/graph/primitives.ts
+  → core: packages/core/src/ops/log.ts → packages/core/src/graph/graph.ts; packages/core/src/ops/log.ts → packages/core/src/schema/schema.ts; packages/core/src/ops/types.ts → packages/core/src/graph/primitives.ts; packages/core/src/who.ts → packages/core/src/permissions/types.ts; packages/core/src/who.ts → packages/core/src/schema/define-node.ts; packages/core/src/who.ts → packages/core/src/schema/schema.ts
   → core-mutations: packages/core/src/ops/types.ts → packages/core/src/mutations/types.ts
 
 Incoming (other zones → this zone):
-  ← core: packages/core/src/index.ts → packages/core/src/ops/log.ts; packages/core/src/index.ts → packages/core/src/ops/types.ts; packages/core/src/index.ts → packages/core/src/ops/undo.ts; packages/core/src/index.ts → packages/core/src/ops/undo.ts; packages/core/src/permissions/types.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/memory.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/sqlite.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/types.ts → packages/core/src/ops/types.ts; packages/core/src/store.ts → packages/core/src/ops/log.ts; packages/core/src/store.ts → packages/core/src/ops/types.ts; packages/core/src/store.ts → packages/core/src/ops/undo.ts; packages/core/src/store.ts → packages/core/src/ops/undo.ts
+  ← core: packages/core/src/index.ts → packages/core/src/ops/log.ts; packages/core/src/index.ts → packages/core/src/ops/types.ts; packages/core/src/index.ts → packages/core/src/ops/undo.ts; packages/core/src/index.ts → packages/core/src/ops/undo.ts; packages/core/src/index.ts → packages/core/src/who.ts; packages/core/src/permissions/types.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/memory.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/sqlite.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/types.ts → packages/core/src/ops/types.ts; packages/core/src/search.ts → packages/core/src/ops/types.ts; packages/core/src/store.ts → packages/core/src/ops/log.ts; packages/core/src/store.ts → packages/core/src/ops/types.ts; packages/core/src/store.ts → packages/core/src/ops/undo.ts; packages/core/src/store.ts → packages/core/src/ops/undo.ts
   ← core-sync: packages/core/src/sync/types.ts → packages/core/src/ops/types.ts
 
 </imports>
 
 <findings>
 
-[observation] [warning] High coupling (0.71) — 3 imports target "core"
-[pattern] [info] Consumers of core-ops (store.ts, persistence/{sqlite,memory,types}.ts, permissions/types.ts, sync/types.ts) sit strictly downstream — no file inside ops/ imports any of them back — so despite the high raw coupling number the dependency shape is a clean, acyclic layer rather than a leak.
-[suggestion] [info] Zone "Core Ops" has an unreliable risk reading: only 3 files tracked (minimum 5 needed for reliable metrics) — cohesion: 0.29, coupling: 0.71 (risk score: 0.71)
+[observation] [warning] High coupling (0.71) — 6 imports target "core"
+[observation] [warning] Low cohesion (0.29) — files are loosely related, consider splitting this zone
+[pattern] [warning] The call graph shows this zone as almost purely passive (0 internal calls, cohesion 0) relative to core and core-mutations — it defines types/log structures that core and core-mutations call into, but has no internal logic of its own tying ops/log.ts, ops/types.ts, ops/undo.ts and who.ts together; splitting who.ts into its own zone (or folding it into core) would likely raise core-ops's cohesion score without changing any actual code boundary
+[suggestion] [info] Zone "Core Ops" has an unreliable risk reading: only 4 files tracked (minimum 5 needed for reliable metrics) — cohesion: 0.29, coupling: 0.71 (risk score: 0.71)
 
 </findings>
 
 <insights>
 
-- High coupling (0.71) — 3 imports target "core"
-- The 0.71 coupling is one-directional grounding, not entanglement: all three files (log.ts, undo.ts, types.ts) depend only on foundational modules — graph/graph.ts, schema/schema.ts, mutations/types.ts — and none of those foundational files import back from ops/, so core-ops sits cleanly above core-schema/core-mutations in a layered DAG despite the zone-level bidirectional crossing count (core→core-ops 12, core-ops→core 3).
-- All three ops files are re-exported directly from packages/core/src/index.ts alongside the rest of core's public surface (OperationLog, checkUndo, undoPrimitives, Author/Batch/Operation types) — the ops/ directory is an internal grouping within one package's barrel, not a separately consumable module boundary, so the zone split is organizational rather than architectural.
+- Low cohesion (0.29) — files are loosely related, consider splitting this zone
+- High coupling (0.71) — 6 imports target "core"
+- [call graph] 0 internal calls, 1 outgoing, 4 incoming (cohesion: 0, coupling: 1)
+- who.ts (actor/identity) is grouped with ops/log.ts, ops/types.ts and ops/undo.ts purely by directory proximity, not by shared concern — identity attribution and op-log mechanics are different responsibilities that happen to both be small utility files, which explains the low cohesion independent of any coupling problem
 
 </insights>

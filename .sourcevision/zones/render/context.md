@@ -9,7 +9,7 @@ Files: 11, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: 11 files, mostly utilities and entry points; entry points gpu.ts, index.ts, pointer-router.ts; imported by Packages.
 Entry points: packages/render/src/gpu.ts, packages/render/src/index.ts, packages/render/src/interaction/pointer-router.ts, packages/render/src/scene/plane.ts
-Lines: 1727
+Lines: 1728
 
 </zone>
 
@@ -20,7 +20,7 @@ packages/render/src/index.ts (TypeScript, 69 lines, source)
 packages/render/src/interaction/pointer-router.ts (TypeScript, 204 lines, source)
 packages/render/src/platform/html-in-canvas.ts (TypeScript, 269 lines, source)
 packages/render/src/platform/matrix.ts (TypeScript, 77 lines, source)
-packages/render/src/scene/compositor.ts (TypeScript, 440 lines, source)
+packages/render/src/scene/compositor.ts (TypeScript, 441 lines, source)
 packages/render/src/scene/compositor.wgsl.ts (TypeScript, 105 lines, source)
 packages/render/src/scene/connectors.ts (TypeScript, 121 lines, source)
 packages/render/src/scene/frame-plan.ts (TypeScript, 215 lines, source)

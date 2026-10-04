@@ -3,7 +3,8 @@
   "primaryLanguage": "typescript",
   "languages": [
     "typescript",
-    "javascript"
+    "javascript",
+    "python"
   ],
   "frameworks": [
     "react",
@@ -24,6 +25,10 @@
   "ciSurfaces": [
     {
       "path": ".github/workflows/ci.yml",
+      "kind": "GitHub Actions"
+    },
+    {
+      "path": ".github/workflows/nightly.yml",
       "kind": "GitHub Actions"
     },
     {

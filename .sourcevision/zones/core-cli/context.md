@@ -5,18 +5,18 @@
 <zone>
 
 Zone: Core Cli (`core-cli`)
-Files: 4, Cohesion: 0.23, Coupling: 0.77
-Risk: catastrophic (score: 0.77)
+Files: 4, Cohesion: 0.22, Coupling: 0.78
+Risk: catastrophic (score: 0.78)
 Description: 4 files, mostly utilities and entry points; entry points check.ts; imports Core and Core Mutations; imported by Core.
 Entry points: packages/core/src/cli/check.ts
-Lines: 243
+Lines: 249
 
 </zone>
 
 <files>
 
-packages/core/src/cli/check.ts (TypeScript, 128 lines, source)
-packages/core/src/cli/check/index.ts (TypeScript, 12 lines, source)
+packages/core/src/cli/check.ts (TypeScript, 133 lines, source)
+packages/core/src/cli/check/index.ts (TypeScript, 13 lines, source)
 packages/core/src/cli/check/migrations.ts (TypeScript, 57 lines, source)
 packages/core/src/cli/check/routes.ts (TypeScript, 46 lines, source)
 
@@ -25,14 +25,13 @@ packages/core/src/cli/check/routes.ts (TypeScript, 46 lines, source)
 <imports>
 
 Internal:
-  packages/core/src/cli/check.ts → packages/core/src/cli/check/index.ts {checkAccents, checkActsFromEnds, checkBlankInstallation, checkEditableFields, checkFigures, checkLensBindings, checkMigrations, checkModelWritten, checkModules, checkPalette, checkPlots, checkPolicy, checkProviders, checkReadings, checkRoutes, checkSettings, checkShippedLenses, checkUnmakeable}
+  packages/core/src/cli/check.ts → packages/core/src/cli/check/index.ts {checkAccents, checkActsFromEnds, checkBlankInstallation, checkEditableFields, checkFigures, checkLensBindings, checkMigrations, checkModelWritten, checkModules, checkPalette, checkPlots, checkPolicy, checkProviders, checkReadings, checkEdgeNamesAgree, checkRoutes, checkSettings, checkShippedLenses, checkUnmakeable, checkArrangement}
   packages/core/src/cli/check/index.ts → packages/core/src/cli/check/migrations.ts {*}
   packages/core/src/cli/check/index.ts → packages/core/src/cli/check/routes.ts {*}
 
 Outgoing (this zone → other zones):
-  → core: packages/core/src/cli/check.ts → packages/core/src/app.ts; packages/core/src/cli/check.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/beginnings.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/brand.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/city.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/intelligence.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/lenses.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/modules.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/policy.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/settings.ts; packages/core/src/cli/check/migrations.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/migrations.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/routes.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/routes.ts → packages/core/src/schema/schema.ts
+  → core: packages/core/src/cli/check.ts → packages/core/src/app.ts; packages/core/src/cli/check.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/arrangement.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/beginnings.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/brand.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/city.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/intelligence.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/lenses.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/modules.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/policy.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/relations.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/settings.ts; packages/core/src/cli/check/migrations.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/migrations.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/routes.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/routes.ts → packages/core/src/schema/schema.ts
   → core-mutations: packages/core/src/cli/check.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/fields.ts
-  → core-schema: packages/core/src/cli/check/index.ts → packages/core/src/cli/check/relations.ts
 
 Incoming (other zones → this zone):
   ← core: packages/core/src/cli/check/context.ts → packages/core/src/cli/check.ts; packages/core/src/cli/index.ts → packages/core/src/cli/check.ts; packages/core/src/index.ts → packages/core/src/cli/check.ts; packages/core/src/index.ts → packages/core/src/cli/check.ts
@@ -41,18 +40,18 @@ Incoming (other zones → this zone):
 
 <findings>
 
-[observation] [warning] High coupling (0.77) — 15 imports target "core"
-[observation] [warning] Low cohesion (0.23) — files are loosely related, consider splitting this zone
+[observation] [warning] High coupling (0.78) — 17 imports target "core"
+[observation] [warning] Low cohesion (0.22) — files are loosely related, consider splitting this zone
 [observation] [info] Zone "Core Cli" depends on more of the rest of the codebase than a module of its size and purpose warrants.
-[suggestion] [info] Zone "Core Cli" has an unreliable risk reading: only 4 files tracked (minimum 5 needed for reliable metrics) — cohesion: 0.23, coupling: 0.77 (risk score: 0.77)
+[suggestion] [info] Zone "Core Cli" has an unreliable risk reading: only 4 files tracked (minimum 5 needed for reliable metrics) — cohesion: 0.22, coupling: 0.78 (risk score: 0.78)
 
 </findings>
 
 <insights>
 
-- Low cohesion (0.23) — files are loosely related, consider splitting this zone
-- High coupling (0.77) — 15 imports target "core"
+- Low cohesion (0.22) — files are loosely related, consider splitting this zone
+- High coupling (0.78) — 17 imports target "core"
 - Zone "Core Cli" depends on more of the rest of the codebase than a module of its size and purpose warrants.
-- [call graph] 18 internal calls, 1 outgoing, 2 incoming (cohesion: 0.95, coupling: 0.05)
+- [call graph] 20 internal calls, 2 outgoing, 2 incoming (cohesion: 0.91, coupling: 0.09)
 
 </insights>

@@ -11,14 +11,14 @@
   "entryPoints": [
     "packages/core/src/cli/check.ts"
   ],
-  "cohesion": 0.23,
-  "coupling": 0.77,
+  "cohesion": 0.22,
+  "coupling": 0.78,
   "fileCount": 4,
-  "lineCount": 243,
+  "lineCount": 249,
   "riskMetrics": {
-    "cohesion": 0.23,
-    "coupling": 0.77,
-    "riskScore": 0.77,
+    "cohesion": 0.22,
+    "coupling": 0.78,
+    "riskScore": 0.78,
     "riskLevel": "catastrophic",
     "failsThreshold": true
   }

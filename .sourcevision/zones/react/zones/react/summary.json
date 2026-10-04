@@ -1,11 +1,12 @@
 {
   "id": "react/react",
   "name": "React",
-  "description": "6 files, primarily TypeScript",
+  "description": "7 files, primarily TypeScript",
   "files": [
     "packages/react/src/animation.ts",
     "packages/react/src/drawn.ts",
     "packages/react/src/index.ts",
+    "packages/react/src/keyboard.ts",
     "packages/react/src/local-intelligence.ts",
     "packages/react/src/scene.tsx",
     "packages/react/src/seat-marks.tsx"
@@ -17,8 +18,8 @@
     "packages/react/src/scene.tsx",
     "packages/react/src/seat-marks.tsx"
   ],
-  "cohesion": 0.29,
-  "coupling": 0.71,
-  "fileCount": 6,
-  "lineCount": 673
+  "cohesion": 0.32,
+  "coupling": 0.68,
+  "fileCount": 7,
+  "lineCount": 848
 }

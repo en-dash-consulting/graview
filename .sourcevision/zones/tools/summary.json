@@ -1,10 +1,11 @@
 {
   "id": "tools",
   "name": "Tools",
-  "description": "25 files, mostly utilities and services; entry points index.ts, local.ts, derive.ts; imported by Packages.",
+  "description": "27 files, mostly utilities and services; entry points index.ts, cli.ts, mcp-stdio.ts; imported by Packages.",
   "files": [
     "packages/tools/src/agent/adapters.ts",
     "packages/tools/src/agent/tools.ts",
+    "packages/tools/src/cli.ts",
     "packages/tools/src/conversation.ts",
     "packages/tools/src/decide.ts",
     "packages/tools/src/derive.ts",
@@ -14,6 +15,7 @@
     "packages/tools/src/intelligence.ts",
     "packages/tools/src/local.ts",
     "packages/tools/src/loop.ts",
+    "packages/tools/src/mcp-stdio.ts",
     "packages/tools/src/pins.ts",
     "packages/tools/src/plan.ts",
     "packages/tools/src/providers/insight.ts",
@@ -30,16 +32,18 @@
     "packages/tools/src/usage.ts"
   ],
   "entryPoints": [
+    "packages/tools/src/cli.ts",
     "packages/tools/src/derive.ts",
     "packages/tools/src/index.ts",
     "packages/tools/src/local.ts",
+    "packages/tools/src/mcp-stdio.ts",
     "packages/tools/src/pins.ts",
     "packages/tools/src/usage.ts"
   ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 25,
-  "lineCount": 6587,
+  "fileCount": 27,
+  "lineCount": 7189,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

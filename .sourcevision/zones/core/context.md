@@ -5,32 +5,35 @@
 <zone>
 
 Zone: Core (`core`)
-Files: 60, Cohesion: 0.82, Coupling: 0.18
-Risk: healthy (score: 0.18)
-Description: 60 files, mostly utilities and types; entry points app.ts, context.ts, schema.ts; imports Core Mutations and Core Schema; imported by Packages and Core Cli.
-Entry points: packages/core/src/app.ts, packages/core/src/cli/check/beginnings.ts, packages/core/src/cli/check/brand.ts, packages/core/src/cli/check/city.ts, packages/core/src/cli/check/context.ts, packages/core/src/cli/check/intelligence.ts, packages/core/src/cli/check/lenses.ts, packages/core/src/cli/check/modules.ts, packages/core/src/cli/check/policy.ts, packages/core/src/cli/check/settings.ts, packages/core/src/cli/create.ts, packages/core/src/cli/index.ts, packages/core/src/graph/graph.ts, packages/core/src/graph/primitives.ts, packages/core/src/graph/types.ts, packages/core/src/index.ts, packages/core/src/mutations/node-ref.ts, packages/core/src/permissions/policy.ts, packages/core/src/persistence/sqlite.ts, packages/core/src/presence.ts, packages/core/src/scaffold/index.ts, packages/core/src/scaffold/lens.ts, packages/core/src/schema/figures.ts, packages/core/src/schema/schema.ts, packages/core/src/store.ts
-Lines: 10761
+Files: 67, Cohesion: 0.86, Coupling: 0.14
+Risk: healthy (score: 0.14)
+Description: 67 files, mostly utilities and types; entry points app.ts, context.ts, schema.ts; imports Core Mutations and Core Ops; imported by Packages and Core Cli.
+Entry points: packages/core/src/app.ts, packages/core/src/cli/check/arrangement.ts, packages/core/src/cli/check/beginnings.ts, packages/core/src/cli/check/brand.ts, packages/core/src/cli/check/city.ts, packages/core/src/cli/check/context.ts, packages/core/src/cli/check/intelligence.ts, packages/core/src/cli/check/lenses.ts, packages/core/src/cli/check/modules.ts, packages/core/src/cli/check/policy.ts, packages/core/src/cli/check/relations.ts, packages/core/src/cli/check/settings.ts, packages/core/src/cli/create.ts, packages/core/src/cli/describe.ts, packages/core/src/cli/docs.ts, packages/core/src/cli/index.ts, packages/core/src/graph/graph.ts, packages/core/src/graph/primitives.ts, packages/core/src/graph/types.ts, packages/core/src/index.ts, packages/core/src/mutations/define-mutation.ts, packages/core/src/mutations/node-ref.ts, packages/core/src/permissions/policy.ts, packages/core/src/permissions/types.ts, packages/core/src/persistence/sqlite.ts, packages/core/src/presence.ts, packages/core/src/scaffold/index.ts, packages/core/src/scaffold/lens.ts, packages/core/src/schema/define-node.ts, packages/core/src/schema/schema.ts, packages/core/src/schema/types.ts, packages/core/src/store.ts, packages/core/src/testing.ts
+Lines: 13353
 
 </zone>
 
 <files>
 
-packages/core/src/app.ts (TypeScript, 319 lines, source)
+packages/core/src/app.ts (TypeScript, 327 lines, source)
+packages/core/src/arrange.ts (TypeScript, 596 lines, source)
 packages/core/src/beginning.ts (TypeScript, 167 lines, source)
-packages/core/src/bind.ts (TypeScript, 67 lines, source)
+packages/core/src/bind.ts (TypeScript, 69 lines, source)
 packages/core/src/city.ts (TypeScript, 215 lines, source)
+packages/core/src/cli/check/arrangement.ts (TypeScript, 59 lines, source)
 packages/core/src/cli/check/beginnings.ts (TypeScript, 66 lines, source)
-packages/core/src/cli/check/brand.ts (TypeScript, 171 lines, source)
+packages/core/src/cli/check/brand.ts (TypeScript, 172 lines, source)
 packages/core/src/cli/check/city.ts (TypeScript, 72 lines, source)
-packages/core/src/cli/check/context.ts (TypeScript, 66 lines, source)
+packages/core/src/cli/check/context.ts (TypeScript, 72 lines, source)
 packages/core/src/cli/check/intelligence.ts (TypeScript, 149 lines, source)
 packages/core/src/cli/check/lenses.ts (TypeScript, 260 lines, source)
 packages/core/src/cli/check/modules.ts (TypeScript, 136 lines, source)
-packages/core/src/cli/check/policy.ts (TypeScript, 119 lines, source)
+packages/core/src/cli/check/policy.ts (TypeScript, 116 lines, source)
+packages/core/src/cli/check/relations.ts (TypeScript, 299 lines, source)
 packages/core/src/cli/check/settings.ts (TypeScript, 95 lines, source)
 packages/core/src/cli/create.ts (TypeScript, 288 lines, source)
-packages/core/src/cli/describe.ts (TypeScript, 279 lines, source)
-packages/core/src/cli/docs.ts (TypeScript, 147 lines, source)
+packages/core/src/cli/describe.ts (TypeScript, 316 lines, source)
+packages/core/src/cli/docs.ts (TypeScript, 233 lines, source)
 packages/core/src/cli/index.ts (TypeScript, 304 lines, source)
 packages/core/src/extend.ts (TypeScript, 65 lines, source)
 packages/core/src/graph/diff.ts (TypeScript, 95 lines, source)
@@ -38,17 +41,17 @@ packages/core/src/graph/graph.ts (TypeScript, 340 lines, source)
 packages/core/src/graph/primitives.ts (TypeScript, 86 lines, source)
 packages/core/src/graph/tracked.ts (TypeScript, 79 lines, source)
 packages/core/src/graph/types.ts (TypeScript, 0 lines, source)
-packages/core/src/index.ts (TypeScript, 266 lines, source)
+packages/core/src/index.ts (TypeScript, 332 lines, source)
 packages/core/src/installation.ts (TypeScript, 285 lines, source)
 packages/core/src/intelligence-bridge.ts (TypeScript, 66 lines, source)
 packages/core/src/invariants/engine.ts (TypeScript, 150 lines, source)
 packages/core/src/invariants/types.ts (TypeScript, 81 lines, source)
 packages/core/src/modules.ts (TypeScript, 136 lines, source)
 packages/core/src/mutations/decidable.ts (TypeScript, 56 lines, source)
-packages/core/src/mutations/define-mutation.ts (TypeScript, 166 lines, source)
-packages/core/src/mutations/form.ts (TypeScript, 177 lines, source)
-packages/core/src/mutations/node-ref.ts (TypeScript, 159 lines, source)
-packages/core/src/permissions/policy.ts (TypeScript, 204 lines, source)
+packages/core/src/mutations/define-mutation.ts (TypeScript, 221 lines, source)
+packages/core/src/mutations/form.ts (TypeScript, 180 lines, source)
+packages/core/src/mutations/node-ref.ts (TypeScript, 168 lines, source)
+packages/core/src/permissions/policy.ts (TypeScript, 223 lines, source)
 packages/core/src/permissions/types.ts (TypeScript, 86 lines, source)
 packages/core/src/persistence/memory.ts (TypeScript, 40 lines, source)
 packages/core/src/persistence/sqlite.ts (TypeScript, 181 lines, source)
@@ -58,29 +61,34 @@ packages/core/src/scaffold/domain.ts (TypeScript, 339 lines, source)
 packages/core/src/scaffold/index.ts (TypeScript, 231 lines, source)
 packages/core/src/scaffold/lens.ts (TypeScript, 224 lines, source)
 packages/core/src/scaffold/names.ts (TypeScript, 109 lines, source)
-packages/core/src/scaffold/project.ts (TypeScript, 630 lines, source)
-packages/core/src/scaffold/ui.ts (TypeScript, 511 lines, source)
+packages/core/src/scaffold/project.ts (TypeScript, 641 lines, source)
+packages/core/src/scaffold/ui.ts (TypeScript, 544 lines, source)
+packages/core/src/schema/define-node.ts (TypeScript, 316 lines, source)
 packages/core/src/schema/figures.ts (TypeScript, 233 lines, source)
-packages/core/src/schema/json-schema.ts (TypeScript, 82 lines, source)
-packages/core/src/schema/schema.ts (TypeScript, 157 lines, source)
+packages/core/src/schema/json-schema.ts (TypeScript, 99 lines, source)
+packages/core/src/schema/schema.ts (TypeScript, 164 lines, source)
+packages/core/src/schema/types.ts (TypeScript, 221 lines, source)
+packages/core/src/search.ts (TypeScript, 628 lines, source)
 packages/core/src/settings.ts (TypeScript, 77 lines, source)
-packages/core/src/store.ts (TypeScript, 782 lines, source)
+packages/core/src/store.ts (TypeScript, 821 lines, source)
 packages/core/src/studio-door.ts (TypeScript, 109 lines, source)
 packages/core/src/sync/conflict.ts (TypeScript, 79 lines, source)
 packages/core/src/temporal/effectivity.ts (TypeScript, 113 lines, source)
 packages/core/src/testing.ts (TypeScript, 261 lines, source)
 packages/core/src/theme/contrast.ts (TypeScript, 200 lines, source)
 packages/core/src/theme/derive.ts (TypeScript, 258 lines, source)
-packages/core/src/theme/kit.ts (TypeScript, 171 lines, source)
+packages/core/src/theme/kit.ts (TypeScript, 173 lines, source)
 packages/core/src/theme/palettes.ts (TypeScript, 103 lines, source)
 packages/core/src/theme/types.ts (TypeScript, 155 lines, source)
 packages/core/src/views/types.ts (TypeScript, 190 lines, source)
+packages/core/src/watched.ts (TypeScript, 75 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
+  packages/core/src/app.ts → packages/core/src/arrange.ts {ArrangementWords}
   packages/core/src/app.ts → packages/core/src/graph/primitives.ts {Primitive}
   packages/core/src/app.ts → packages/core/src/graph/types.ts {GraphSnapshot}
   packages/core/src/app.ts → packages/core/src/invariants/types.ts {InvariantDefinition}
@@ -89,6 +97,11 @@ Internal:
   packages/core/src/app.ts → packages/core/src/schema/schema.ts {AnySchema}
   packages/core/src/app.ts → packages/core/src/theme/types.ts {Brand}
   packages/core/src/app.ts → packages/core/src/views/types.ts {ViewRegistry}
+  packages/core/src/arrange.ts → packages/core/src/mutations/node-ref.ts {describeArg}
+  packages/core/src/arrange.ts → packages/core/src/schema/define-node.ts {humaniseField, isCurrent, labelOf, tellApart}
+  packages/core/src/arrange.ts → packages/core/src/schema/schema.ts {AnySchema}
+  packages/core/src/arrange.ts → packages/core/src/schema/types.ts {AnyNodeDefinition}
+  packages/core/src/arrange.ts → packages/core/src/search.ts {matchNode, parseQuery}
   packages/core/src/beginning.ts → packages/core/src/app.ts {GraviewApp}
   packages/core/src/beginning.ts → packages/core/src/mutations/node-ref.ts {nodeRefArgs}
   packages/core/src/beginning.ts → packages/core/src/schema/schema.ts {AnySchema}
@@ -98,6 +111,9 @@ Internal:
   packages/core/src/bind.ts → packages/core/src/views/types.ts {createViewRegistry}
   packages/core/src/bind.ts → packages/core/src/views/types.ts {ViewRegistry}
   packages/core/src/city.ts → packages/core/src/schema/schema.ts {AnySchema}
+  packages/core/src/cli/check/arrangement.ts → packages/core/src/arrange.ts {admitArrangement, arrangeable, parseArrangement}
+  packages/core/src/cli/check/arrangement.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/arrangement.ts → packages/core/src/schema/schema.ts {AnySchema}
   packages/core/src/cli/check/beginnings.ts → packages/core/src/beginning.ts {beginning}
   packages/core/src/cli/check/beginnings.ts → packages/core/src/cli/check/context.ts {CheckContext}
   packages/core/src/cli/check/beginnings.ts → packages/core/src/schema/schema.ts {AnySchema}
@@ -123,19 +139,29 @@ Internal:
   packages/core/src/cli/check/policy.ts → packages/core/src/cli/check/context.ts {CheckContext}
   packages/core/src/cli/check/policy.ts → packages/core/src/permissions/policy.ts {permits, rolesOf}
   packages/core/src/cli/check/policy.ts → packages/core/src/schema/schema.ts {AnySchema}
+  packages/core/src/cli/check/relations.ts → packages/core/src/cli/check/context.ts {bounded}
+  packages/core/src/cli/check/relations.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/relations.ts → packages/core/src/mutations/node-ref.ts {nodeRefArgs}
+  packages/core/src/cli/check/relations.ts → packages/core/src/schema/define-node.ts {withArticle}
+  packages/core/src/cli/check/relations.ts → packages/core/src/schema/schema.ts {AnySchema}
   packages/core/src/cli/check/settings.ts → packages/core/src/cli/check/context.ts {CheckContext}
   packages/core/src/cli/check/settings.ts → packages/core/src/schema/schema.ts {AnySchema}
   packages/core/src/cli/create.ts → packages/core/src/scaffold/index.ts {LINKED_PACKAGES, scaffoldProject, validateScaffoldOptions}
   packages/core/src/cli/create.ts → packages/core/src/scaffold/index.ts {ScaffoldOptions}
   packages/core/src/cli/describe.ts → packages/core/src/app.ts {capabilitiesOf, describeCapability}
   packages/core/src/cli/describe.ts → packages/core/src/app.ts {GraviewApp, IntelligenceProviderDeclaration}
+  packages/core/src/cli/describe.ts → packages/core/src/arrange.ts {arrangeable}
   packages/core/src/cli/describe.ts → packages/core/src/beginning.ts {beginning}
   packages/core/src/cli/describe.ts → packages/core/src/city.ts {cityMap, roadsOf}
+  packages/core/src/cli/describe.ts → packages/core/src/schema/define-node.ts {withArticle}
   packages/core/src/cli/describe.ts → packages/core/src/schema/schema.ts {AnySchema}
+  packages/core/src/cli/describe.ts → packages/core/src/search.ts {searchableFields}
   packages/core/src/cli/describe.ts → packages/core/src/theme/derive.ts {hueFor}
   packages/core/src/cli/docs.ts → packages/core/src/app.ts {GraviewApp}
+  packages/core/src/cli/docs.ts → packages/core/src/arrange.ts {arrangeable}
   packages/core/src/cli/docs.ts → packages/core/src/schema/json-schema.ts {mutationToolSchema}
   packages/core/src/cli/docs.ts → packages/core/src/schema/schema.ts {AnySchema}
+  packages/core/src/cli/docs.ts → packages/core/src/search.ts {searchableFields}
   packages/core/src/cli/index.ts → packages/core/src/app.ts {GraviewApp}
   packages/core/src/cli/index.ts → packages/core/src/cli/create.ts {create, CREATE_USAGE}
   packages/core/src/cli/index.ts → packages/core/src/cli/describe.ts {describeApp}
@@ -155,12 +181,15 @@ Internal:
   packages/core/src/graph/graph.ts → packages/core/src/graph/primitives.ts {Primitive}
   packages/core/src/graph/graph.ts → packages/core/src/graph/types.ts {edgeId}
   packages/core/src/graph/graph.ts → packages/core/src/graph/types.ts {GraphEdge, GraphReader, GraphSnapshot}
+  packages/core/src/graph/graph.ts → packages/core/src/schema/define-node.ts {humaniseField, labelOf}
   packages/core/src/graph/graph.ts → packages/core/src/schema/schema.ts {SchemaError}
   packages/core/src/graph/graph.ts → packages/core/src/schema/schema.ts {AnySchema, NodeOfSchema}
   packages/core/src/graph/primitives.ts → packages/core/src/graph/types.ts {AnyGraphNode, GraphEdge}
   packages/core/src/graph/tracked.ts → packages/core/src/graph/types.ts {GraphEdge, GraphNodeBase, GraphReader}
   packages/core/src/index.ts → packages/core/src/app.ts {capabilitiesOf, describeCapability, providerCan, defineApp}
   packages/core/src/index.ts → packages/core/src/app.ts {IntelligenceCapability, IntelligenceKind, IntelligenceProviderDeclaration, IntelligenceReach, MigrationDeclaration, SettingDeclaration, EntityBinding, GraviewApp, LensDeclaration}
+  packages/core/src/index.ts → packages/core/src/arrange.ts {admitArrangement, arrange, arrangeable, arrangeAllows, asksForThePast, bucketStart, conditionHolds, edgesOf, formatArrangement, matches, NO_ARRANGEMENT, parseArrangement}
+  packages/core/src/index.ts → packages/core/src/arrange.ts {Arrangeable, ArrangeContext, Arranged, ArrangeGraph, ArrangedGroup, Arrangement, ArrangementWords, ArrangeNode, ArrangeOffer, ArrangeOption, Condition, DateBucket, Grouping, OfferType, Sort, SortDirection}
   packages/core/src/index.ts → packages/core/src/beginning.ts {beginning}
   packages/core/src/index.ts → packages/core/src/beginning.ts {Beginning, KindBeginning}
   packages/core/src/index.ts → packages/core/src/bind.ts {bindSchema}
@@ -190,13 +219,14 @@ Internal:
   packages/core/src/index.ts → packages/core/src/modules.ts {ModuleDeclaration, ModuleMap, ModuleProjection}
   packages/core/src/index.ts → packages/core/src/mutations/decidable.ts {undecidableArguments}
   packages/core/src/index.ts → packages/core/src/mutations/decidable.ts {UndecidableArgument}
-  packages/core/src/index.ts → packages/core/src/mutations/define-mutation.ts {compileMutation, defineMutation}
+  packages/core/src/index.ts → packages/core/src/mutations/define-mutation.ts {compileMutation, defineMutation, takesAnId}
   packages/core/src/index.ts → packages/core/src/mutations/define-mutation.ts {CompiledMutation}
   packages/core/src/index.ts → packages/core/src/mutations/form.ts {formField, formFields, formComplete}
   packages/core/src/index.ts → packages/core/src/mutations/form.ts {FormField, ScalarField}
   packages/core/src/index.ts → packages/core/src/mutations/node-ref.ts {argShape, describeArg, nodeRef, nodeRefArgs, nodeRefKinds}
   packages/core/src/index.ts → packages/core/src/mutations/node-ref.ts {ArgShape}
   packages/core/src/index.ts → packages/core/src/permissions/policy.ts {permits, permittedMutations, rolesOf, rolesWhoCould, whyNot}
+  packages/core/src/index.ts → packages/core/src/permissions/policy.ts {PolicyWords}
   packages/core/src/index.ts → packages/core/src/permissions/types.ts {PermissionDeniedError}
   packages/core/src/index.ts → packages/core/src/permissions/types.ts {Grant, Policy, Principal, Refusal}
   packages/core/src/index.ts → packages/core/src/persistence/memory.ts {createMemoryAdapter}
@@ -205,12 +235,17 @@ Internal:
   packages/core/src/index.ts → packages/core/src/persistence/types.ts {PersistenceAdapter}
   packages/core/src/index.ts → packages/core/src/presence.ts {foldPresence, PRESENCE_TTL_MS, samePresence}
   packages/core/src/index.ts → packages/core/src/presence.ts {Presence, PresenceChannel, PresenceRobot}
+  packages/core/src/index.ts → packages/core/src/schema/define-node.ts {defineNode, isCurrent, labelOf, describeNode, tellApart, article, fieldWords, humaniseField, nounOf, readableFields, summarise, withArticle}
+  packages/core/src/index.ts → packages/core/src/schema/define-node.ts {ReadableField}
   packages/core/src/index.ts → packages/core/src/schema/figures.ts {FIGURES, FIGURE_NAMES, figureBrief, figureFaults, figureSvg}
   packages/core/src/index.ts → packages/core/src/schema/figures.ts {Figure}
   packages/core/src/index.ts → packages/core/src/schema/json-schema.ts {mutationToolSchema, nodeJsonSchema, schemaJson, toJsonSchema}
   packages/core/src/index.ts → packages/core/src/schema/json-schema.ts {JsonSchema, MutationToolSchema}
   packages/core/src/index.ts → packages/core/src/schema/schema.ts {createSchema, SchemaError}
   packages/core/src/index.ts → packages/core/src/schema/schema.ts {AnySchema, EdgeKindInfo, KindOfSchema, NodeOfKind, NodeOfSchema, Schema}
+  packages/core/src/index.ts → packages/core/src/schema/types.ts {LifecycleDeclaration, AnyNodeDefinition, DeclaredEdgeTargets, EdgeCardinality, EdgeDeclaration, EdgeMap, EmptyEdgeMap, FieldRoleMap, NodeDefinition, NodeDefinitionSpec, NodeOf, ValidateEdgeTargets}
+  packages/core/src/index.ts → packages/core/src/search.ts {actsOn, describeSearched, fold, fragmentOf, matchNode, parseQuery, search, searchableFields, squeeze, strengthOf, touchWeights}
+  packages/core/src/index.ts → packages/core/src/search.ts {Hit, HitAbout, MatchStrength, ParsedQuery, SearchCondition, SearchOptions, SearchResult, Why}
   packages/core/src/index.ts → packages/core/src/settings.ts {motion, readerSettings, textSize}
   packages/core/src/index.ts → packages/core/src/store.ts {Store, violationKey}
   packages/core/src/index.ts → packages/core/src/store.ts {ApplyOptions, ApplyResult, Preview, StoreOptions, UndoPreview}
@@ -235,8 +270,11 @@ Internal:
   packages/core/src/installation.ts → packages/core/src/mutations/define-mutation.ts {defineMutation}
   packages/core/src/installation.ts → packages/core/src/mutations/node-ref.ts {nodeRef}
   packages/core/src/installation.ts → packages/core/src/permissions/types.ts {Grant, Policy}
+  packages/core/src/installation.ts → packages/core/src/schema/define-node.ts {defineNode}
+  packages/core/src/installation.ts → packages/core/src/schema/types.ts {AnyNodeDefinition}
   packages/core/src/invariants/engine.ts → packages/core/src/graph/graph.ts {Graph}
   packages/core/src/invariants/engine.ts → packages/core/src/invariants/types.ts {EvaluateOptions, InvariantContext, InvariantDefinition, InvariantEvalArgs, Violation}
+  packages/core/src/invariants/engine.ts → packages/core/src/schema/define-node.ts {isCurrent}
   packages/core/src/invariants/engine.ts → packages/core/src/schema/schema.ts {AnySchema, KindOfSchema, NodeOfKind, NodeOfSchema}
   packages/core/src/invariants/types.ts → packages/core/src/graph/types.ts {GraphReader}
   packages/core/src/invariants/types.ts → packages/core/src/schema/schema.ts {AnySchema, KindOfSchema, NodeOfKind, NodeOfSchema}
@@ -251,6 +289,7 @@ Internal:
   packages/core/src/mutations/define-mutation.ts → packages/core/src/schema/schema.ts {AnySchema, NodeOfSchema}
   packages/core/src/mutations/form.ts → packages/core/src/mutations/node-ref.ts {describeArg, nodeRefKinds, unwrap}
   packages/core/src/permissions/policy.ts → packages/core/src/permissions/types.ts {Grant, Policy, Principal, Refusal}
+  packages/core/src/permissions/policy.ts → packages/core/src/schema/define-node.ts {humaniseField, withArticle}
   packages/core/src/permissions/policy.ts → packages/core/src/schema/schema.ts {AnySchema}
   packages/core/src/persistence/memory.ts → packages/core/src/graph/types.ts {GraphSnapshot}
   packages/core/src/persistence/memory.ts → packages/core/src/persistence/types.ts {PersistenceAdapter}
@@ -265,14 +304,29 @@ Internal:
   packages/core/src/scaffold/index.ts → packages/core/src/scaffold/project.ts {GRAVIEW_PACKAGES, LINKED_PACKAGES}
   packages/core/src/scaffold/index.ts → packages/core/src/scaffold/project.ts {SURVEY_SAYS, AUDIT_SAYS, A11Y_SAYS, harness, workspaceRoot, tsconfigBase, rootVitest, packageJson, tsconfig, tsconfigBuild, viteConfig, gitignore, readme, ciYml}
   packages/core/src/scaffold/index.ts → packages/core/src/scaffold/ui.ts {indexHtml, embedHtml, embedTsx, viewsTsx, uiAppTsx, pagesTsx, mainTsx}
+  packages/core/src/scaffold/index.ts → packages/core/src/schema/define-node.ts {withArticle}
   packages/core/src/scaffold/lens.ts → packages/core/src/scaffold/index.ts {pascal, titleCase}
   packages/core/src/scaffold/lens.ts → packages/core/src/scaffold/index.ts {ScaffoldFile}
   packages/core/src/scaffold/names.ts → packages/core/src/scaffold/index.ts {ScaffoldOptions}
   packages/core/src/scaffold/project.ts → packages/core/src/scaffold/names.ts {Ids}
   packages/core/src/scaffold/ui.ts → packages/core/src/scaffold/names.ts {escapeHtml, escapeString, escapeTemplate}
   packages/core/src/scaffold/ui.ts → packages/core/src/scaffold/names.ts {Ids}
+  packages/core/src/schema/define-node.ts → packages/core/src/schema/types.ts {AnyNodeDefinition, EdgeMap, EmptyEdgeMap, NodeDefinition, NodeDefinitionSpec}
+  packages/core/src/schema/json-schema.ts → packages/core/src/mutations/define-mutation.ts {takesAnId}
   packages/core/src/schema/json-schema.ts → packages/core/src/mutations/node-ref.ts {nodeRefArgs}
   packages/core/src/schema/json-schema.ts → packages/core/src/schema/schema.ts {AnySchema}
+  packages/core/src/schema/json-schema.ts → packages/core/src/schema/types.ts {AnyNodeDefinition}
+  packages/core/src/schema/schema.ts → packages/core/src/schema/types.ts {AnyNodeDefinition, EdgeDeclaration, NodeOf, ValidateEdgeTargets}
+  packages/core/src/schema/types.ts → packages/core/src/schema/figures.ts {Figure}
+  packages/core/src/search.ts → packages/core/src/arrange.ts {arrangeable, asksForThePast, conditionHolds}
+  packages/core/src/search.ts → packages/core/src/arrange.ts {ArrangeContext, ArrangeGraph, Condition}
+  packages/core/src/search.ts → packages/core/src/mutations/node-ref.ts {describeArg}
+  packages/core/src/search.ts → packages/core/src/permissions/types.ts {Principal}
+  packages/core/src/search.ts → packages/core/src/schema/define-node.ts {humaniseField, isCurrent, labelOf, readableFields, tellApart}
+  packages/core/src/search.ts → packages/core/src/schema/schema.ts {AnySchema}
+  packages/core/src/search.ts → packages/core/src/schema/types.ts {AnyNodeDefinition}
+  packages/core/src/search.ts → packages/core/src/store.ts {Store}
+  packages/core/src/search.ts → packages/core/src/views/types.ts {Place}
   packages/core/src/settings.ts → packages/core/src/app.ts {SettingDeclaration}
   packages/core/src/store.ts → packages/core/src/app.ts {IntelligenceProviderDeclaration}
   packages/core/src/store.ts → packages/core/src/graph/diff.ts {diffSnapshots}
@@ -287,9 +341,12 @@ Internal:
   packages/core/src/store.ts → packages/core/src/modules.ts {ModuleMap, ModuleProjection}
   packages/core/src/store.ts → packages/core/src/mutations/define-mutation.ts {compileMutation}
   packages/core/src/store.ts → packages/core/src/permissions/policy.ts {permits, permittedMutations}
+  packages/core/src/store.ts → packages/core/src/permissions/policy.ts {PolicyWords}
   packages/core/src/store.ts → packages/core/src/permissions/types.ts {PermissionDeniedError}
   packages/core/src/store.ts → packages/core/src/permissions/types.ts {Policy, Principal, Refusal}
+  packages/core/src/store.ts → packages/core/src/schema/define-node.ts {nounOf}
   packages/core/src/store.ts → packages/core/src/schema/schema.ts {AnySchema, NodeOfSchema}
+  packages/core/src/store.ts → packages/core/src/watched.ts {tellTheWatchItsNames, tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal}
   packages/core/src/sync/conflict.ts → packages/core/src/invariants/engine.ts {defineInvariant}
   packages/core/src/sync/conflict.ts → packages/core/src/invariants/types.ts {InvariantDefinition, Violation}
   packages/core/src/sync/conflict.ts → packages/core/src/schema/schema.ts {AnySchema}
@@ -299,6 +356,7 @@ Internal:
   packages/core/src/testing.ts → packages/core/src/graph/types.ts {GraphSnapshot}
   packages/core/src/testing.ts → packages/core/src/installation.ts {declareInstallation}
   packages/core/src/testing.ts → packages/core/src/mutations/node-ref.ts {nodeRef}
+  packages/core/src/testing.ts → packages/core/src/schema/define-node.ts {defineNode}
   packages/core/src/testing.ts → packages/core/src/schema/schema.ts {createSchema}
   packages/core/src/theme/contrast.ts → packages/core/src/theme/types.ts {TEXT_PAIRS}
   packages/core/src/theme/contrast.ts → packages/core/src/theme/types.ts {ThemeTokens}
@@ -311,70 +369,71 @@ Internal:
   packages/core/src/theme/palettes.ts → packages/core/src/theme/types.ts {Scheme, ThemeTokens}
   packages/core/src/theme/types.ts → packages/core/src/theme/kit.ts {KitOverrides}
   packages/core/src/views/types.ts → packages/core/src/schema/schema.ts {AnySchema, KindOfSchema}
+  packages/core/src/watched.ts → packages/core/src/permissions/types.ts {Policy, Refusal}
+  packages/core/src/watched.ts → packages/core/src/schema/schema.ts {AnySchema}
 
 Outgoing (this zone → other zones):
   → core-cli: packages/core/src/cli/check/context.ts → packages/core/src/cli/check.ts; packages/core/src/cli/index.ts → packages/core/src/cli/check.ts; packages/core/src/index.ts → packages/core/src/cli/check.ts; packages/core/src/index.ts → packages/core/src/cli/check.ts
-  → core-mutations: packages/core/src/app.ts → packages/core/src/mutations/types.ts; packages/core/src/beginning.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/beginning.ts → packages/core/src/mutations/types.ts; packages/core/src/bind.ts → packages/core/src/mutations/types.ts; packages/core/src/cli/check/context.ts → packages/core/src/mutations/types.ts; packages/core/src/cli/describe.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/docs.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/extend.ts → packages/core/src/mutations/types.ts; packages/core/src/index.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/index.ts → packages/core/src/mutations/types.ts; packages/core/src/installation.ts → packages/core/src/mutations/types.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/mutations/types.ts; packages/core/src/permissions/policy.ts → packages/core/src/mutations/types.ts; packages/core/src/store.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/store.ts → packages/core/src/mutations/types.ts
-  → core-ops: packages/core/src/index.ts → packages/core/src/ops/log.ts; packages/core/src/index.ts → packages/core/src/ops/types.ts; packages/core/src/index.ts → packages/core/src/ops/undo.ts; packages/core/src/index.ts → packages/core/src/ops/undo.ts; packages/core/src/permissions/types.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/memory.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/sqlite.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/types.ts → packages/core/src/ops/types.ts; packages/core/src/store.ts → packages/core/src/ops/log.ts; packages/core/src/store.ts → packages/core/src/ops/types.ts; packages/core/src/store.ts → packages/core/src/ops/undo.ts; packages/core/src/store.ts → packages/core/src/ops/undo.ts
-  → core-schema: packages/core/src/cli/describe.ts → packages/core/src/schema/define-node.ts; packages/core/src/graph/graph.ts → packages/core/src/schema/define-node.ts; packages/core/src/index.ts → packages/core/src/schema/define-node.ts; packages/core/src/index.ts → packages/core/src/schema/define-node.ts; packages/core/src/index.ts → packages/core/src/schema/types.ts; packages/core/src/installation.ts → packages/core/src/schema/define-node.ts; packages/core/src/installation.ts → packages/core/src/schema/types.ts; packages/core/src/invariants/engine.ts → packages/core/src/schema/define-node.ts; packages/core/src/permissions/policy.ts → packages/core/src/schema/define-node.ts; packages/core/src/scaffold/index.ts → packages/core/src/schema/define-node.ts; packages/core/src/schema/json-schema.ts → packages/core/src/schema/types.ts; packages/core/src/schema/schema.ts → packages/core/src/schema/types.ts; packages/core/src/testing.ts → packages/core/src/schema/define-node.ts
+  → core-mutations: packages/core/src/app.ts → packages/core/src/mutations/types.ts; packages/core/src/beginning.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/beginning.ts → packages/core/src/mutations/types.ts; packages/core/src/bind.ts → packages/core/src/mutations/types.ts; packages/core/src/cli/check/context.ts → packages/core/src/mutations/types.ts; packages/core/src/cli/check/policy.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/describe.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/docs.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/extend.ts → packages/core/src/mutations/types.ts; packages/core/src/index.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/index.ts → packages/core/src/mutations/types.ts; packages/core/src/installation.ts → packages/core/src/mutations/types.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/mutations/types.ts; packages/core/src/permissions/policy.ts → packages/core/src/mutations/types.ts; packages/core/src/store.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/store.ts → packages/core/src/mutations/types.ts
+  → core-ops: packages/core/src/index.ts → packages/core/src/ops/log.ts; packages/core/src/index.ts → packages/core/src/ops/types.ts; packages/core/src/index.ts → packages/core/src/ops/undo.ts; packages/core/src/index.ts → packages/core/src/ops/undo.ts; packages/core/src/index.ts → packages/core/src/who.ts; packages/core/src/permissions/types.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/memory.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/sqlite.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/types.ts → packages/core/src/ops/types.ts; packages/core/src/search.ts → packages/core/src/ops/types.ts; packages/core/src/store.ts → packages/core/src/ops/log.ts; packages/core/src/store.ts → packages/core/src/ops/types.ts; packages/core/src/store.ts → packages/core/src/ops/undo.ts; packages/core/src/store.ts → packages/core/src/ops/undo.ts
   → core-sync: packages/core/src/index.ts → packages/core/src/sync/engine.ts; packages/core/src/index.ts → packages/core/src/sync/engine.ts; packages/core/src/index.ts → packages/core/src/sync/google-calendar.ts; packages/core/src/index.ts → packages/core/src/sync/google-calendar.ts; packages/core/src/index.ts → packages/core/src/sync/types.ts; packages/core/src/index.ts → packages/core/src/sync/types.ts; packages/core/src/sync/conflict.ts → packages/core/src/sync/engine.ts
 
 Incoming (other zones → this zone):
-  ← core-cli: packages/core/src/cli/check.ts → packages/core/src/app.ts; packages/core/src/cli/check.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/beginnings.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/brand.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/city.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/intelligence.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/lenses.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/modules.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/policy.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/settings.ts; packages/core/src/cli/check/migrations.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/migrations.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/routes.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/routes.ts → packages/core/src/schema/schema.ts
-  ← core-mutations: packages/core/src/cli/check/fields.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/fields.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/cli/check/fields.ts → packages/core/src/permissions/policy.ts; packages/core/src/cli/check/fields.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/types.ts → packages/core/src/graph/primitives.ts; packages/core/src/mutations/types.ts → packages/core/src/graph/types.ts; packages/core/src/mutations/types.ts → packages/core/src/schema/schema.ts
-  ← core-ops: packages/core/src/ops/log.ts → packages/core/src/graph/graph.ts; packages/core/src/ops/log.ts → packages/core/src/schema/schema.ts; packages/core/src/ops/types.ts → packages/core/src/graph/primitives.ts
-  ← core-schema: packages/core/src/cli/check/relations.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/relations.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/relations.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/cli/check/relations.ts → packages/core/src/schema/schema.ts; packages/core/src/schema/types.ts → packages/core/src/schema/figures.ts
+  ← core-cli: packages/core/src/cli/check.ts → packages/core/src/app.ts; packages/core/src/cli/check.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/arrangement.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/beginnings.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/brand.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/city.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/intelligence.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/lenses.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/modules.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/policy.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/relations.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/settings.ts; packages/core/src/cli/check/migrations.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/migrations.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/routes.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/routes.ts → packages/core/src/schema/schema.ts
+  ← core-mutations: packages/core/src/cli/check/fields.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/fields.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/cli/check/fields.ts → packages/core/src/permissions/policy.ts; packages/core/src/cli/check/fields.ts → packages/core/src/schema/define-node.ts; packages/core/src/cli/check/fields.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/define-node.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/types.ts; packages/core/src/mutations/types.ts → packages/core/src/graph/primitives.ts; packages/core/src/mutations/types.ts → packages/core/src/graph/types.ts; packages/core/src/mutations/types.ts → packages/core/src/schema/schema.ts
+  ← core-ops: packages/core/src/ops/log.ts → packages/core/src/graph/graph.ts; packages/core/src/ops/log.ts → packages/core/src/schema/schema.ts; packages/core/src/ops/types.ts → packages/core/src/graph/primitives.ts; packages/core/src/who.ts → packages/core/src/permissions/types.ts; packages/core/src/who.ts → packages/core/src/schema/define-node.ts; packages/core/src/who.ts → packages/core/src/schema/schema.ts
   ← core-sync: packages/core/src/sync/engine.ts → packages/core/src/graph/types.ts; packages/core/src/sync/engine.ts → packages/core/src/schema/schema.ts; packages/core/src/sync/engine.ts → packages/core/src/store.ts
-  ← tests-core-unit: packages/core/tests/unit/a-described-node-ref.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-hue-is-degrees.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-lens-started.test.ts → packages/core/src/scaffold/lens.ts; packages/core/tests/unit/a-module-that-is-never-off.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-third-kind-decides.test.ts → packages/core/src/index.ts; packages/core/tests/unit/an-edge-to-a-person.test.ts → packages/core/src/index.ts; packages/core/tests/unit/check.test.ts → packages/core/src/index.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/scaffold/index.ts; packages/core/tests/unit/derive-edits.test.ts → packages/core/src/index.ts; packages/core/tests/unit/derive-edits.test.ts → packages/core/src/index.ts; packages/core/tests/unit/figures.test.ts → packages/core/src/index.ts; packages/core/tests/unit/form.test.ts → packages/core/src/index.ts; packages/core/tests/unit/graph.test.ts → packages/core/src/index.ts; packages/core/tests/unit/graph.test.ts → packages/core/src/index.ts; packages/core/tests/unit/installation.test.ts → packages/core/src/index.ts; packages/core/tests/unit/installation.test.ts → packages/core/src/index.ts; packages/core/tests/unit/kit.test.ts → packages/core/src/index.ts; packages/core/tests/unit/lifecycle.test.ts → packages/core/src/index.ts; packages/core/tests/unit/lifecycle.test.ts → packages/core/src/index.ts; packages/core/tests/unit/modules.test.ts → packages/core/src/index.ts; packages/core/tests/unit/modules.test.ts → packages/core/src/index.ts; packages/core/tests/unit/mutations.test.ts → packages/core/src/index.ts; packages/core/tests/unit/op-log.test.ts → packages/core/src/index.ts; packages/core/tests/unit/op-log.test.ts → packages/core/src/index.ts; packages/core/tests/unit/permissions.test.ts → packages/core/src/index.ts; packages/core/tests/unit/permissions.test.ts → packages/core/src/index.ts; packages/core/tests/unit/places.test.ts → packages/core/src/index.ts; packages/core/tests/unit/reading-an-app-out.test.ts → packages/core/src/index.ts; packages/core/tests/unit/scaffold.test.ts → packages/core/src/scaffold/index.ts; packages/core/tests/unit/schema.test.ts → packages/core/src/index.ts; packages/core/tests/unit/settings.test.ts → packages/core/src/index.ts; packages/core/tests/unit/store-hydrate.test.ts → packages/core/src/index.ts; packages/core/tests/unit/temporal.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-city-is-a-map.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-doors-a-provider-has.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-order-things-are-made-in.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-pictures-from-where-they-live.test.ts → packages/core/src/cli/index.ts; packages/core/tests/unit/the-pictures-from-where-they-live.test.ts → packages/core/src/index.ts; packages/core/tests/unit/theme.test.ts → packages/core/src/index.ts; packages/core/tests/unit/theme.test.ts → packages/core/src/index.ts; packages/core/tests/unit/what-an-agent-may-do.test.ts → packages/core/src/index.ts; packages/core/tests/unit/what-an-agent-may-do.test.ts → packages/core/src/index.ts; packages/core/tests/unit/who-is-here.test.ts → packages/core/src/presence.ts; packages/core/tests/unit/who-is-here.test.ts → packages/core/src/presence.ts
-  ← tests-packages: packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/persistence/sqlite.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts
+  ← tests-core: packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/persistence/sqlite.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts
+  ← tests-core-unit: packages/core/tests/unit/a-change-in-the-records-words.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-described-node-ref.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-glance-does-not-say-its-heading-again.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-hue-is-degrees.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-kind-says-what-one-is-called.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-lens-started.test.ts → packages/core/src/scaffold/lens.ts; packages/core/tests/unit/a-module-that-is-never-off.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-refusal-in-words.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-third-kind-decides.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-time-of-day-is-asked-for.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-watching-harness-is-told.test.ts → packages/core/src/index.ts; packages/core/tests/unit/an-edge-to-a-person.test.ts → packages/core/src/index.ts; packages/core/tests/unit/an-id-is-the-name-folded.test.ts → packages/core/src/mutations/define-mutation.ts; packages/core/tests/unit/arranged-from-the-declaration.test.ts → packages/core/src/cli/describe.ts; packages/core/tests/unit/arranged-from-the-declaration.test.ts → packages/core/src/cli/docs.ts; packages/core/tests/unit/arranged-from-the-declaration.test.ts → packages/core/src/index.ts; packages/core/tests/unit/arranged-from-the-declaration.test.ts → packages/core/src/index.ts; packages/core/tests/unit/arranged-from-the-declaration.test.ts → packages/core/src/testing.ts; packages/core/tests/unit/check.test.ts → packages/core/src/index.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/scaffold/index.ts; packages/core/tests/unit/derive-edits.test.ts → packages/core/src/index.ts; packages/core/tests/unit/derive-edits.test.ts → packages/core/src/index.ts; packages/core/tests/unit/figures.test.ts → packages/core/src/index.ts; packages/core/tests/unit/form.test.ts → packages/core/src/index.ts; packages/core/tests/unit/graph.test.ts → packages/core/src/index.ts; packages/core/tests/unit/graph.test.ts → packages/core/src/index.ts; packages/core/tests/unit/installation.test.ts → packages/core/src/index.ts; packages/core/tests/unit/installation.test.ts → packages/core/src/index.ts; packages/core/tests/unit/kit.test.ts → packages/core/src/index.ts; packages/core/tests/unit/lifecycle.test.ts → packages/core/src/index.ts; packages/core/tests/unit/lifecycle.test.ts → packages/core/src/index.ts; packages/core/tests/unit/modules.test.ts → packages/core/src/index.ts; packages/core/tests/unit/modules.test.ts → packages/core/src/index.ts; packages/core/tests/unit/mutations.test.ts → packages/core/src/index.ts; packages/core/tests/unit/one-matcher-finds-it.test.ts → packages/core/src/index.ts; packages/core/tests/unit/one-matcher-finds-it.test.ts → packages/core/src/index.ts; packages/core/tests/unit/one-matcher-finds-it.test.ts → packages/core/src/testing.ts; packages/core/tests/unit/op-log.test.ts → packages/core/src/index.ts; packages/core/tests/unit/op-log.test.ts → packages/core/src/index.ts; packages/core/tests/unit/permissions.test.ts → packages/core/src/index.ts; packages/core/tests/unit/permissions.test.ts → packages/core/src/index.ts; packages/core/tests/unit/permits-answers-as-apply.test.ts → packages/core/src/index.ts; packages/core/tests/unit/places.test.ts → packages/core/src/index.ts; packages/core/tests/unit/reading-an-app-out.test.ts → packages/core/src/index.ts; packages/core/tests/unit/scaffold.test.ts → packages/core/src/scaffold/index.ts; packages/core/tests/unit/schema.test.ts → packages/core/src/index.ts; packages/core/tests/unit/settings.test.ts → packages/core/src/index.ts; packages/core/tests/unit/store-hydrate.test.ts → packages/core/src/index.ts; packages/core/tests/unit/temporal.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-city-is-a-map.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-doors-a-provider-has.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-order-things-are-made-in.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-pictures-from-where-they-live.test.ts → packages/core/src/cli/index.ts; packages/core/tests/unit/the-pictures-from-where-they-live.test.ts → packages/core/src/index.ts; packages/core/tests/unit/theme.test.ts → packages/core/src/index.ts; packages/core/tests/unit/theme.test.ts → packages/core/src/index.ts; packages/core/tests/unit/two-of-one-name.test.ts → packages/core/src/index.ts; packages/core/tests/unit/what-an-agent-may-do.test.ts → packages/core/src/index.ts; packages/core/tests/unit/what-an-agent-may-do.test.ts → packages/core/src/index.ts; packages/core/tests/unit/what-was-made-can-be-unmade.test.ts → packages/core/src/index.ts; packages/core/tests/unit/what-was-made-can-be-unmade.test.ts → packages/core/src/index.ts; packages/core/tests/unit/who-is-here.test.ts → packages/core/src/presence.ts; packages/core/tests/unit/who-is-here.test.ts → packages/core/src/presence.ts
 
 </imports>
 
 <findings>
 
-[observation] [warning] 25 entry points — wide API surface, consider consolidating exports
-[observation] [info] High cohesion (0.82) — files are tightly interconnected
+[observation] [warning] 33 entry points — wide API surface, consider consolidating exports
+[observation] [info] High cohesion (0.86) — files are tightly interconnected
 [observation] [info] Zones "Core" and "Core Cli" may be one architectural concept; the import graph links them but the judgment was undecided.
 [suggestion] [info] Zone "core" has files across 14 directories — consider consolidating under a dedicated directory
-[anti-pattern] [warning] cli/check/*.ts (beginnings, brand, city, context, fields, intelligence, policy, relations, migrations, routes, settings, modules, lenses) each import directly from internal submodules — schema/schema.ts, mutations/{derive-edits,node-ref,decidable}.ts, permissions/policy.ts, theme/{derive,kit,types}.ts, city.ts, beginning.ts, schema/{figures,define-node}.ts — by relative path rather than through a single check-facing seam or core's own index.ts barrel. The checker suite therefore has no boundary from core internals: renaming or moving any of those ~9 internal modules ripples across every check/*.ts file individually, and the 'core-cli → core: 15 imports' crossing is really many independent point-to-point reaches rather than one interface.
+[pattern] [warning] cli/check/*.ts (arrangement, beginnings, brand, city, context, intelligence, lenses, modules, policy, relations, settings) is a flat set of ~11 single-purpose checker modules fanning out from cli/index.ts; each likely imports a narrow slice of the domain modules (app.ts, graph/, city.ts, beginning.ts, bind.ts) — this is a clean hub-and-spoke from the CLI into the domain, but bundling it into the same zone as the domain modules it checks hides that the checkers have no interface of their own beyond ad hoc imports; consider a `cli/check` barrel/interface so domain changes don't require touching each checker file's import list individually
 
 </findings>
 
 <insights>
 
-- High cohesion (0.82) — files are tightly interconnected
-- 25 entry points — wide API surface, consider consolidating exports
+- High cohesion (0.86) — files are tightly interconnected
+- 33 entry points — wide API surface, consider consolidating exports
 - Zones "Core" and "Core Cli" may be one architectural concept; the import graph links them but the judgment was undecided.
 - Zone "core" has files across 14 directories — consider consolidating under a dedicated directory
-- [call graph] 371 internal calls, 21 outgoing, 625 incoming (cohesion: 0.95, coupling: 0.05)
-- schema/schema.ts's `AnySchema` type is the de facto shared contract for the checker suite: all 13 cli/check/*.ts files import it, more than import any other single core symbol, even though it isn't exposed as a dedicated check-facing interface.
+- [call graph] 554 internal calls, 12 outgoing, 853 incoming (cohesion: 0.98, coupling: 0.02)
+- Zone mixes a wide dispatcher surface (cli/, cli/check/* with 10+ one-file-per-concern checkers) with core domain modules (app.ts, graph/, bind.ts, arrange.ts) in the same zone — the cli/check/* files are consumers of the domain files, not peers, so the single zone id for both obscures a layered relationship (domain core → cli/check adapters) that the directory split already expresses
 
 </insights>
 
 <sub-crossings>
 
 Cross-dependencies between sub-zones:
-  core/cli → core/graph: 9
-  core/cli → core/mutations: 2
-  core/cli → core/src: 4
-  core/cli → core/theme: 1
-  core/graph → core/cli: 2
-  core/graph → core/mutations: 2
-  core/graph → core/src: 2
-  core/graph → core/src-schema: 3
-  core/src → core/cli: 1
-  core/src → core/graph: 11
-  core/src → core/mutations: 1
-  core/src → core/scaffold: 3
-  core/src → core/src-schema: 2
-  core/src → core/theme: 1
-  core/src-schema → core/cli: 4
-  core/src-schema → core/graph: 36
-  core/src-schema → core/mutations: 7
-  core/src-schema → core/src: 6
+  core/cli → core/cli-check: 1
+  core/cli → core/scaffold: 3
+  core/cli → core/src: 7
+  core/cli → core/src-graph: 12
+  core/cli → core/src-schema: 1
+  core/cli → core/theme: 2
+  core/cli-check → core/cli: 1
+  core/cli-check → core/src: 3
+  core/cli-check → core/src-graph: 6
+  core/scaffold → core/src: 1
+  core/src → core/cli: 3
+  core/src → core/cli-check: 1
+  core/src → core/src-graph: 12
+  core/src-graph → core/cli: 2
+  core/src-graph → core/cli-check: 2
+  core/src-graph → core/src: 6
+  core/src-schema → core/cli: 10
+  core/src-schema → core/src: 17
+  core/src-schema → core/src-graph: 38
   core/src-schema → core/theme: 9
-  core/theme → core/cli: 1
-  core/theme → core/graph: 1
+  core/theme → core/cli-check: 1
+  core/theme → core/src-graph: 1
 
 </sub-crossings>
 
@@ -382,12 +441,12 @@ Cross-dependencies between sub-zones:
 
 This zone has 7 sub-zone(s):
 
-- **Cli Check** (`core/cli`): 8 files, cohesion 0.4, coupling 0.6
-- **Graph** (`core/graph`): 23 files, cohesion 0.67, coupling 0.33
-- **Mutations** (`core/mutations`): 3 files, cohesion 0.31, coupling 0.69
-- **Scaffold** (`core/scaffold`): 6 files, cohesion 0.89, coupling 0.11
-- **Src** (`core/src`): 7 files, cohesion 0.34, coupling 0.66
-- **Src Schema** (`core/src-schema`): 7 files, cohesion 0.23, coupling 0.77
+- **Cli** (`core/cli`): 9 files, cohesion 0.38, coupling 0.62
+- **Cli Check** (`core/cli-check`): 6 files, cohesion 0.4, coupling 0.6
+- **Scaffold** (`core/scaffold`): 6 files, cohesion 0.84, coupling 0.16
+- **Src** (`core/src`): 10 files, cohesion 0.45, coupling 0.55
+- **Src Graph** (`core/src-graph`): 24 files, cohesion 0.62, coupling 0.38
+- **Src Schema** (`core/src-schema`): 6 files, cohesion 0.18, coupling 0.82
 - **Theme** (`core/theme`): 6 files, cohesion 0.67, coupling 0.33
 
 Detailed sub-zone context available in `zones/{sub-zone-id}/context.md`

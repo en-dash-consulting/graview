@@ -5,10 +5,11 @@
 <zone>
 
 Zone: Build & CI Scripts (`scripts`)
-Files: 39, Cohesion: 1.00, Coupling: 0.00
+Files: 47, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Build, packaging, and CI scripts: run-a11y.mjs, audit-ui.mjs, eval-elm.mjs (+36 more)
-Lines: 12208
+Description: Build, packaging, and CI scripts: run-a11y.mjs, audit-ui.mjs, eval-elm.mjs (+44 more)
+Entry points: scripts/lib/journeys.mjs
+Lines: 15775
 
 </zone>
 
@@ -18,40 +19,48 @@ apps/todo/scripts/run-a11y.mjs (JavaScript, 0 lines, build)
 scripts/audit-ui.mjs (JavaScript, 986 lines, build)
 scripts/eval-elm.mjs (JavaScript, 225 lines, build)
 scripts/inspect-pack.mjs (JavaScript, 118 lines, build)
-scripts/lib/engine.mjs (JavaScript, 82 lines, build)
+scripts/lib/engine.mjs (JavaScript, 89 lines, build)
+scripts/lib/journeys.mjs (JavaScript, 1201 lines, build)
+scripts/lib/ledger.mjs (JavaScript, 88 lines, build)
 scripts/lib/places.mjs (JavaScript, 24 lines, build)
-scripts/lib/serve.mjs (JavaScript, 67 lines, build)
+scripts/lib/serve.mjs (JavaScript, 81 lines, build)
 scripts/lib/tarballs.mjs (JavaScript, 53 lines, build)
-scripts/progression.mjs (JavaScript, 253 lines, build)
+scripts/lib/watch-acknowledged.mjs (JavaScript, 25 lines, build)
+scripts/lib/watch.mjs (JavaScript, 319 lines, build)
+scripts/progression.mjs (JavaScript, 275 lines, build)
 scripts/rehearse-studio.mjs (JavaScript, 310 lines, build)
 scripts/require-changeset.mjs (JavaScript, 73 lines, build)
 scripts/site-artifact.mjs (JavaScript, 50 lines, build)
 scripts/site-css.mjs (JavaScript, 53 lines, build)
 scripts/site-docs.mjs (JavaScript, 810 lines, build)
-scripts/site-numbers.mjs (JavaScript, 128 lines, build)
-scripts/site-progression.mjs (JavaScript, 104 lines, build)
-scripts/smoke-create.mjs (JavaScript, 663 lines, build)
+scripts/site-numbers.mjs (JavaScript, 135 lines, build)
+scripts/site-progression.mjs (JavaScript, 105 lines, build)
+scripts/smoke-create.mjs (JavaScript, 690 lines, build)
 scripts/smoke-install.mjs (JavaScript, 366 lines, build)
-scripts/survey-ui.mjs (JavaScript, 467 lines, build)
-scripts/verify-all.mjs (JavaScript, 168 lines, build)
+scripts/survey-ui.mjs (JavaScript, 471 lines, build)
+scripts/verify-all.mjs (JavaScript, 276 lines, build)
 scripts/verify-calendar.mjs (JavaScript, 440 lines, build)
-scripts/verify-chat.mjs (JavaScript, 347 lines, build)
+scripts/verify-chat.mjs (JavaScript, 383 lines, build)
 scripts/verify-companion.mjs (JavaScript, 396 lines, build)
 scripts/verify-desk.mjs (JavaScript, 209 lines, build)
-scripts/verify-engines.mjs (JavaScript, 372 lines, build)
+scripts/verify-engines.mjs (JavaScript, 381 lines, build)
+scripts/verify-gauntlet.mjs (JavaScript, 575 lines, build)
+scripts/verify-journeys.mjs (JavaScript, 398 lines, build)
 scripts/verify-lines.mjs (JavaScript, 256 lines, build)
 scripts/verify-menu.mjs (JavaScript, 459 lines, build)
-scripts/verify-navigation.mjs (JavaScript, 835 lines, build)
-scripts/verify-pages.mjs (JavaScript, 758 lines, build)
+scripts/verify-navigation.mjs (JavaScript, 1012 lines, build)
+scripts/verify-pages.mjs (JavaScript, 851 lines, build)
 scripts/verify-panning.mjs (JavaScript, 439 lines, build)
 scripts/verify-products.mjs (JavaScript, 111 lines, build)
 scripts/verify-remember.mjs (JavaScript, 330 lines, build)
-scripts/verify-rota.mjs (JavaScript, 330 lines, build)
-scripts/verify-seat.mjs (JavaScript, 374 lines, build)
+scripts/verify-rota.mjs (JavaScript, 361 lines, build)
+scripts/verify-scale.mjs (JavaScript, 312 lines, build)
+scripts/verify-seat.mjs (JavaScript, 388 lines, build)
 scripts/verify-served.mjs (JavaScript, 197 lines, build)
 scripts/verify-shrunk.mjs (JavaScript, 221 lines, build)
-scripts/verify-site.mjs (JavaScript, 416 lines, build)
+scripts/verify-site.mjs (JavaScript, 437 lines, build)
 scripts/verify-studio.mjs (JavaScript, 530 lines, build)
+scripts/verify-watch.mjs (JavaScript, 78 lines, build)
 scripts/verify-who.mjs (JavaScript, 188 lines, build)
 
 </files>
@@ -62,6 +71,8 @@ Internal:
   apps/todo/scripts/run-a11y.mjs → scripts/lib/serve.mjs {serving}
   scripts/audit-ui.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/audit-ui.mjs → scripts/lib/serve.mjs {serving}
+  scripts/lib/engine.mjs → scripts/lib/watch.mjs {watched}
+  scripts/lib/watch.mjs → scripts/lib/watch-acknowledged.mjs {acknowledgedBy}
   scripts/progression.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/progression.mjs → scripts/lib/serve.mjs {serving}
   scripts/rehearse-studio.mjs → scripts/lib/engine.mjs {launchEngine}
@@ -69,6 +80,9 @@ Internal:
   scripts/smoke-create.mjs → scripts/lib/tarballs.mjs {packTarballs, pinToTarballs}
   scripts/survey-ui.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/survey-ui.mjs → scripts/lib/serve.mjs {serving}
+  scripts/verify-all.mjs → scripts/lib/ledger.mjs {updateLedger}
+  scripts/verify-all.mjs → scripts/lib/serve.mjs {serving}
+  scripts/verify-all.mjs → scripts/lib/watch.mjs {watchFile}
   scripts/verify-calendar.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-calendar.mjs → scripts/lib/places.mjs {pressPlace}
   scripts/verify-calendar.mjs → scripts/lib/serve.mjs {serving}
@@ -80,6 +94,12 @@ Internal:
   scripts/verify-desk.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-engines.mjs → scripts/lib/engine.mjs {ENGINES, launchEngine}
   scripts/verify-engines.mjs → scripts/lib/serve.mjs {serving}
+  scripts/verify-gauntlet.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-gauntlet.mjs → scripts/lib/serve.mjs {serving}
+  scripts/verify-journeys.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-journeys.mjs → scripts/lib/journeys.mjs {DeadEnd, frictionOf, inStore, JOBS, Person, planJobs, readDeclaration, regressionsOf, storeHookInPage, VARIANTS, variantKey}
+  scripts/verify-journeys.mjs → scripts/lib/serve.mjs {serving}
+  scripts/verify-journeys.mjs → scripts/lib/watch.mjs {takeViolations}
   scripts/verify-lines.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-lines.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-menu.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
@@ -95,6 +115,7 @@ Internal:
   scripts/verify-rota.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-rota.mjs → scripts/lib/places.mjs {pressPlace}
   scripts/verify-rota.mjs → scripts/lib/serve.mjs {serving}
+  scripts/verify-scale.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-seat.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-seat.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-served.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
@@ -104,8 +125,13 @@ Internal:
   scripts/verify-site.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-studio.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-studio.mjs → scripts/lib/serve.mjs {serving}
+  scripts/verify-watch.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-watch.mjs → scripts/lib/watch.mjs {takeViolations}
   scripts/verify-who.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-who.mjs → scripts/lib/serve.mjs {serving}
+
+Incoming (other zones → this zone):
+  ← tests: tests/journeys.test.ts → scripts/lib/journeys.mjs
 
 </imports>
 
@@ -118,14 +144,15 @@ Internal:
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 745 internal calls, 0 outgoing, 0 incoming (cohesion: 1, coupling: 0)
+- [call graph] 1126 internal calls, 0 outgoing, 5 incoming (cohesion: 1, coupling: 0)
 
 </insights>
 
 <sub-crossings>
 
 Cross-dependencies between sub-zones:
-  scripts/verify → scripts/scripts: 4
+  scripts/lib → scripts/scripts: 3
+  scripts/scripts → scripts/lib: 2
 
 </sub-crossings>
 
@@ -133,10 +160,10 @@ Cross-dependencies between sub-zones:
 
 This zone has 4 sub-zone(s):
 
-- **Verification Suite** (`scripts/scripts`): 25 files, cohesion 0.95, coupling 0.05
-- **Site** (`scripts/site`): 8 files, cohesion 0, coupling 0
-- **Smoke Install Verify All** (`scripts/smoke-install-verify-all`): 3 files, cohesion 0, coupling 0
-- **Verify** (`scripts/verify`): 3 files, cohesion 0.5, coupling 0.5
+- **Lib** (`scripts/lib`): 5 files, cohesion 0.62, coupling 0.38
+- **Scripts** (`scripts/scripts`): 32 files, cohesion 0.95, coupling 0.05
+- **Scripts 2** (`scripts/scripts-2`): 4 files, cohesion 0, coupling 0
+- **Site** (`scripts/site`): 6 files, cohesion 0, coupling 0
 
 Detailed sub-zone context available in `zones/{sub-zone-id}/context.md`
 

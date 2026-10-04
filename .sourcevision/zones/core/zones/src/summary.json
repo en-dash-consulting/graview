@@ -1,26 +1,33 @@
 {
   "id": "core/src",
   "name": "Src",
-  "description": "7 files, primarily TypeScript",
+  "description": "10 files, primarily TypeScript",
   "files": [
-    "packages/core/src/app.ts",
-    "packages/core/src/cli/docs.ts",
-    "packages/core/src/cli/index.ts",
-    "packages/core/src/scaffold/lens.ts",
-    "packages/core/src/schema/figures.ts",
-    "packages/core/src/settings.ts",
+    "packages/core/src/arrange.ts",
+    "packages/core/src/cli/check/arrangement.ts",
+    "packages/core/src/installation.ts",
+    "packages/core/src/mutations/decidable.ts",
+    "packages/core/src/mutations/form.ts",
+    "packages/core/src/mutations/node-ref.ts",
+    "packages/core/src/schema/define-node.ts",
+    "packages/core/src/schema/types.ts",
+    "packages/core/src/search.ts",
     "packages/core/src/testing.ts"
   ],
   "entryPoints": [
-    "packages/core/src/app.ts",
-    "packages/core/src/cli/docs.ts",
-    "packages/core/src/cli/index.ts",
-    "packages/core/src/scaffold/lens.ts",
-    "packages/core/src/schema/figures.ts",
-    "packages/core/src/settings.ts"
+    "packages/core/src/arrange.ts",
+    "packages/core/src/cli/check/arrangement.ts",
+    "packages/core/src/installation.ts",
+    "packages/core/src/mutations/decidable.ts",
+    "packages/core/src/mutations/form.ts",
+    "packages/core/src/mutations/node-ref.ts",
+    "packages/core/src/schema/define-node.ts",
+    "packages/core/src/schema/types.ts",
+    "packages/core/src/search.ts",
+    "packages/core/src/testing.ts"
   ],
-  "cohesion": 0.34,
-  "coupling": 0.66,
-  "fileCount": 7,
-  "lineCount": 1565
+  "cohesion": 0.45,
+  "coupling": 0.55,
+  "fileCount": 10,
+  "lineCount": 2770
 }

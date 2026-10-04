@@ -5,51 +5,58 @@
 <zone>
 
 Zone: Layout (`layout`)
-Files: 10, Cohesion: 1.00, Coupling: 0.00
+Files: 11, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 10 files, mostly utilities and entry points; entry points index.ts, layout.ts; imported by Packages.
+Description: 11 files, mostly utilities and entry points; entry points index.ts, layout.ts; imported by Packages.
 Entry points: packages/layout/src/index.ts, packages/layout/src/layout.ts
-Lines: 3393
+Lines: 4208
 
 </zone>
 
 <files>
 
-packages/layout/src/city.ts (TypeScript, 335 lines, source)
-packages/layout/src/ids.ts (TypeScript, 113 lines, source)
-packages/layout/src/index.ts (TypeScript, 53 lines, source)
-packages/layout/src/interpolate.ts (TypeScript, 212 lines, source)
+packages/layout/src/band.ts (TypeScript, 428 lines, source)
+packages/layout/src/city.ts (TypeScript, 413 lines, source)
+packages/layout/src/ids.ts (TypeScript, 136 lines, source)
+packages/layout/src/index.ts (TypeScript, 58 lines, source)
+packages/layout/src/interpolate.ts (TypeScript, 257 lines, source)
 packages/layout/src/label-fit.ts (TypeScript, 215 lines, source)
-packages/layout/src/layout.ts (TypeScript, 1370 lines, source)
+packages/layout/src/layout.ts (TypeScript, 1518 lines, source)
 packages/layout/src/rank.ts (TypeScript, 105 lines, source)
-packages/layout/src/related.ts (TypeScript, 223 lines, source)
-packages/layout/src/types.ts (TypeScript, 344 lines, source)
-packages/layout/src/view-state.ts (TypeScript, 423 lines, source)
+packages/layout/src/related.ts (TypeScript, 234 lines, source)
+packages/layout/src/types.ts (TypeScript, 382 lines, source)
+packages/layout/src/view-state.ts (TypeScript, 462 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/layout/src/city.ts → packages/layout/src/types.ts {CityFrame}
-  packages/layout/src/ids.ts → packages/layout/src/view-state.ts {toggleExpanded, withFocus, withZoom}
+  packages/layout/src/band.ts → packages/layout/src/ids.ts {aggregateId}
+  packages/layout/src/band.ts → packages/layout/src/types.ts {Aggregate, Opens, Via}
+  packages/layout/src/city.ts → packages/layout/src/types.ts {CityFrame, Layout}
+  packages/layout/src/ids.ts → packages/layout/src/view-state.ts {toggleExpanded, withFocus, withOverview, withWithin, withZoom}
   packages/layout/src/ids.ts → packages/layout/src/view-state.ts {ViewState}
-  packages/layout/src/index.ts → packages/layout/src/city.ts {cameraLimit, collides, panForZoom, placeCity}
-  packages/layout/src/index.ts → packages/layout/src/city.ts {CityCard, PlacedCard}
+  packages/layout/src/index.ts → packages/layout/src/band.ts {bandAggregateWords, bandCaps, bandOf, chooseGrouping, isBandAggregate, packRuns, runOf, shares}
+  packages/layout/src/index.ts → packages/layout/src/band.ts {BandItem, BandOptions, Relevance}
+  packages/layout/src/index.ts → packages/layout/src/city.ts {cameraLimit, collides, districtsPastTheEdge, panForZoom, placeCity}
+  packages/layout/src/index.ts → packages/layout/src/city.ts {CityCard, PastTheEdge, PlacedCard}
   packages/layout/src/index.ts → packages/layout/src/ids.ts {aggregateId, isAggregateId, kindCardId, kindOfCard, kindsOf, kindsOfAggregate, KIND_PREFIX, withJackIn, AGGREGATE_PREFIX}
   packages/layout/src/index.ts → packages/layout/src/interpolate.ts {easeInOut, interpolate}
   packages/layout/src/index.ts → packages/layout/src/interpolate.ts {InterpolatedLayout, InterpolatedNode}
   packages/layout/src/index.ts → packages/layout/src/label-fit.ts {areaOf, boxOf, centroidOf, estimateWidth, fitLabel, overlaps, spanAt}
   packages/layout/src/index.ts → packages/layout/src/label-fit.ts {FitOptions, FitPoint, FittedLabel, LabelBox, Measure}
-  packages/layout/src/index.ts → packages/layout/src/layout.ts {layout, marqueeHeightFor, panLayout, planeOf, SCREEN_LEASH_CELLS}
+  packages/layout/src/index.ts → packages/layout/src/layout.ts {holdLayout, layout, marqueeHeightFor, panLayout, planeOf, ROSTER_MOST, ROSTER_ROW, rosterHeight, rosterRows, SCREEN_LEASH_CELLS}
   packages/layout/src/index.ts → packages/layout/src/rank.ts {rankKinds}
   packages/layout/src/index.ts → packages/layout/src/rank.ts {KindRank, KindRanking}
   packages/layout/src/index.ts → packages/layout/src/types.ts {DEFAULT_OPTIONS}
-  packages/layout/src/index.ts → packages/layout/src/types.ts {Aggregate, Connector, Layout, LayoutNode, LayoutOptions, Plane, Via, CityFrame}
-  packages/layout/src/index.ts → packages/layout/src/view-state.ts {EDGE_SELECTION_PREFIX, edgeOfSelection, edgeSelectionId, EMPTY_VIEW, fromUrl, sameView, toggleExpanded, toUrl, withFocus, withOverview, withPan, withPast, withShown, withPin, withoutMoves, withRelation, withWithin, withSelection, withZoom}
+  packages/layout/src/index.ts → packages/layout/src/types.ts {Aggregate, Connector, Layout, LayoutNode, LayoutOptions, Plane, Via, CityFrame, Opens}
+  packages/layout/src/index.ts → packages/layout/src/view-state.ts {EDGE_SELECTION_PREFIX, edgeOfSelection, edgeSelectionId, EMPTY_VIEW, fromUrl, sameView, toggleExpanded, toUrl, withFocus, withOverview, withPan, withPast, withQuery, withoutSearch, withShown, withPin, withoutMoves, withRelation, withWithin, withSelection, withZoom}
   packages/layout/src/index.ts → packages/layout/src/view-state.ts {EdgeRef, Pin, ViewState}
   packages/layout/src/interpolate.ts → packages/layout/src/ids.ts {aggregateId, isAggregateId, kindCardId, kindOfCard}
   packages/layout/src/interpolate.ts → packages/layout/src/types.ts {CityFrame, Connector, Layout, LayoutNode}
+  packages/layout/src/layout.ts → packages/layout/src/band.ts {bandCaps, bandOf, packRuns, runOf}
+  packages/layout/src/layout.ts → packages/layout/src/band.ts {BandItem}
   packages/layout/src/layout.ts → packages/layout/src/city.ts {placeCity}
   packages/layout/src/layout.ts → packages/layout/src/ids.ts {byStableKey, kindCardId, kindsOfAggregate, BEYOND_CARD}
   packages/layout/src/layout.ts → packages/layout/src/rank.ts {rankKinds}
@@ -62,7 +69,7 @@ Internal:
   packages/layout/src/related.ts → packages/layout/src/view-state.ts {ViewState}
 
 Incoming (other zones → this zone):
-  ← tests-layout-unit: packages/layout/tests/unit/a-name-that-fits.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/layout.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/layout.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/properties.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-billboard-is-on-a-leash.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-city-at-altitude.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-city-at-altitude.test.ts → packages/layout/src/layout.ts; packages/layout/tests/unit/the-drive-in.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-pan-is-a-translation.test.ts → packages/layout/src/index.ts
+  ← tests-layout-unit: packages/layout/tests/unit/a-band-is-named-in-words.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/a-name-that-fits.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/a-tuck-goes-with-its-parent.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/an-opened-district-lists-what-it-has-room-for.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/layout.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/layout.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/properties.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-band-draws-what-fits.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-band-draws-what-fits.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-billboard-is-on-a-leash.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-city-at-altitude.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-city-at-altitude.test.ts → packages/layout/src/layout.ts; packages/layout/tests/unit/the-city-stays-beside-the-rail.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-drive-in.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-pan-is-a-translation.test.ts → packages/layout/src/index.ts
 
 </imports>
 
@@ -75,6 +82,6 @@ Incoming (other zones → this zone):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 136 internal calls, 0 outgoing, 378 incoming (cohesion: 1, coupling: 0)
+- [call graph] 196 internal calls, 0 outgoing, 434 incoming (cohesion: 1, coupling: 0)
 
 </insights>

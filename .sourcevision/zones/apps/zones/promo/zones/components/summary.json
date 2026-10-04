@@ -1,0 +1,19 @@
+{
+  "id": "apps/promo/components",
+  "name": "Components",
+  "description": "5 files, primarily TypeScript",
+  "files": [
+    "apps/promo/src/Composition.tsx",
+    "apps/promo/src/components/CameraRig.tsx",
+    "apps/promo/src/components/Field.tsx",
+    "apps/promo/src/scenes/BrandMorph.tsx",
+    "apps/promo/src/scenes/OutroBumper.tsx"
+  ],
+  "entryPoints": [
+    "apps/promo/src/Composition.tsx"
+  ],
+  "cohesion": 0.3,
+  "coupling": 0.7,
+  "fileCount": 5,
+  "lineCount": 415
+}

@@ -9,13 +9,13 @@ Files: 3, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: 3 files, mostly components and utilities; entry points index.ts; imported by Packages.
 Entry points: packages/embed/src/index.ts
-Lines: 609
+Lines: 626
 
 </zone>
 
 <files>
 
-packages/embed/src/embed.tsx (TypeScript, 581 lines, source)
+packages/embed/src/embed.tsx (TypeScript, 598 lines, source)
 packages/embed/src/fonts.ts (TypeScript, 25 lines, source)
 packages/embed/src/index.ts (TypeScript, 3 lines, source)
 
@@ -30,7 +30,7 @@ Internal:
   packages/embed/src/index.ts → packages/embed/src/fonts.ts {fontsLink, familiesOf}
 
 Incoming (other zones → this zone):
-  ← tests-packages: packages/embed/tests/unit/embed.test.ts → packages/embed/src/index.ts
+  ← tests-embed-unit: packages/embed/tests/unit/a-seat-change-keeps-the-store.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/embed.test.ts → packages/embed/src/index.ts; packages/embed/tests/unit/one-name-said-once.test.tsx → packages/embed/src/index.ts
 
 </imports>
 

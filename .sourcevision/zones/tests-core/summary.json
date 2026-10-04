@@ -1,0 +1,22 @@
+{
+  "id": "tests-core",
+  "name": "Tests Core",
+  "description": "Non-source files in packages: persistence.test.ts, sync.test.ts, judges-past.ts",
+  "files": [
+    "packages/core/tests/integration/persistence.test.ts",
+    "packages/core/tests/integration/sync.test.ts",
+    "packages/core/tests/types/judges-past.ts"
+  ],
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 3,
+  "lineCount": 749,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

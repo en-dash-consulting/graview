@@ -5,20 +5,18 @@
 <zone>
 
 Zone: Src 2 (`react/src-2`)
-Files: 6, Cohesion: 0.55, Coupling: 0.45
-Description: 6 files, primarily TypeScript
-Entry points: packages/react/src/channels.ts, packages/react/src/connectors.tsx, packages/react/src/kit.ts, packages/react/src/routes.ts, packages/react/src/scene-lines.tsx, packages/react/src/where-drawn.tsx
-Lines: 2380
+Files: 4, Cohesion: 0.29, Coupling: 0.71
+Description: 4 files, primarily TypeScript
+Entry points: packages/react/src/captions.ts, packages/react/src/kit.ts, packages/react/src/scene-lines.tsx, packages/react/src/where-drawn.tsx
+Lines: 1195
 
 </zone>
 
 <files>
 
-packages/react/src/channels.ts (TypeScript, 118 lines, source)
-packages/react/src/connectors.tsx (TypeScript, 1025 lines, source)
+packages/react/src/captions.ts (TypeScript, 100 lines, source)
 packages/react/src/kit.ts (TypeScript, 34 lines, source)
-packages/react/src/routes.ts (TypeScript, 159 lines, source)
-packages/react/src/scene-lines.tsx (TypeScript, 765 lines, source)
+packages/react/src/scene-lines.tsx (TypeScript, 782 lines, source)
 packages/react/src/where-drawn.tsx (TypeScript, 279 lines, source)
 
 </files>
@@ -26,14 +24,9 @@ packages/react/src/where-drawn.tsx (TypeScript, 279 lines, source)
 <imports>
 
 Internal:
-  packages/react/src/channels.ts → packages/react/src/routes.ts {Box, Point}
-  packages/react/src/connectors.tsx → packages/react/src/channels.ts {channelRoute}
-  packages/react/src/connectors.tsx → packages/react/src/kit.ts {kitConnector, useKit}
-  packages/react/src/connectors.tsx → packages/react/src/routes.ts {clipPolyline, latticePoints, orthogonalPoints, polylineD, roundedPolylineD, routedQuadratic}
-  packages/react/src/connectors.tsx → packages/react/src/where-drawn.tsx {altitudeOpacity, drawnBox, measureVisible, onScreen, stackOpacity}
-  packages/react/src/scene-lines.tsx → packages/react/src/connectors.tsx {Connectors, connectorStrands, tieRoute}
+  packages/react/src/scene-lines.tsx → packages/react/src/captions.ts {captionRuns}
+  packages/react/src/scene-lines.tsx → packages/react/src/captions.ts {CaptionEntry, CaptionRun}
   packages/react/src/scene-lines.tsx → packages/react/src/kit.ts {kitConnector, useKit}
-  packages/react/src/scene-lines.tsx → packages/react/src/routes.ts {orthogonalPoints, polylineD, routePoint, routedQuadratic}
   packages/react/src/scene-lines.tsx → packages/react/src/where-drawn.tsx {drawnBox, measureVisible, visibleRect}
 
 </imports>

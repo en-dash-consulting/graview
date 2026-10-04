@@ -1,0 +1,25 @@
+{
+  "id": "core/cli-check",
+  "name": "Cli Check",
+  "description": "6 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/cli/check/context.ts",
+    "packages/core/src/cli/check/intelligence.ts",
+    "packages/core/src/cli/check/lenses.ts",
+    "packages/core/src/cli/check/modules.ts",
+    "packages/core/src/cli/check/relations.ts",
+    "packages/core/src/cli/check/settings.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/cli/check/context.ts",
+    "packages/core/src/cli/check/intelligence.ts",
+    "packages/core/src/cli/check/lenses.ts",
+    "packages/core/src/cli/check/modules.ts",
+    "packages/core/src/cli/check/relations.ts",
+    "packages/core/src/cli/check/settings.ts"
+  ],
+  "cohesion": 0.4,
+  "coupling": 0.6,
+  "fileCount": 6,
+  "lineCount": 1011
+}

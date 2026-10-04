@@ -1,0 +1,21 @@
+{
+  "id": "react/src-3",
+  "name": "Src 3",
+  "description": "4 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/channels.ts",
+    "packages/react/src/connectors.tsx",
+    "packages/react/src/parallel.ts",
+    "packages/react/src/routes.ts"
+  ],
+  "entryPoints": [
+    "packages/react/src/channels.ts",
+    "packages/react/src/connectors.tsx",
+    "packages/react/src/parallel.ts",
+    "packages/react/src/routes.ts"
+  ],
+  "cohesion": 0.47,
+  "coupling": 0.53,
+  "fileCount": 4,
+  "lineCount": 1376
+}

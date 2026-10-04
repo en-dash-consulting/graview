@@ -1,9 +1,10 @@
 {
   "id": "apps/rota",
-  "name": "Rota Scheduler",
-  "description": "9 files, primarily TypeScript",
+  "name": "Rota",
+  "description": "15 files, primarily TypeScript",
   "files": [
     "apps/rota/src/domain/app.ts",
+    "apps/rota/src/domain/brand.ts",
     "apps/rota/src/domain/installation.ts",
     "apps/rota/src/domain/invariants.ts",
     "apps/rota/src/domain/mutations.ts",
@@ -11,16 +12,21 @@
     "apps/rota/src/domain/schema.ts",
     "apps/rota/src/embed.ts",
     "apps/rota/src/index.ts",
-    "apps/rota/src/ui/views.tsx"
+    "apps/rota/src/main.tsx",
+    "apps/rota/src/open.ts",
+    "apps/rota/src/ui/app.tsx",
+    "apps/rota/src/ui/design.tsx",
+    "apps/rota/src/ui/views.tsx",
+    "apps/rota/src/ui/when.ts"
   ],
   "entryPoints": [
     "apps/rota/src/domain/app.ts",
     "apps/rota/src/domain/policy.ts",
-    "apps/rota/src/domain/schema.ts",
+    "apps/rota/src/ui/app.tsx",
     "apps/rota/src/ui/views.tsx"
   ],
-  "cohesion": 0.75,
-  "coupling": 0.25,
-  "fileCount": 9,
-  "lineCount": 832
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 15,
+  "lineCount": 2299
 }

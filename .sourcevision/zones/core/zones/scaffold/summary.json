@@ -14,8 +14,8 @@
     "packages/core/src/cli/create.ts",
     "packages/core/src/scaffold/index.ts"
   ],
-  "cohesion": 0.89,
-  "coupling": 0.11,
+  "cohesion": 0.84,
+  "coupling": 0.16,
   "fileCount": 6,
-  "lineCount": 2108
+  "lineCount": 2152
 }

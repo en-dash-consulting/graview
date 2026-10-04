@@ -5,31 +5,32 @@
 <zone>
 
 Zone: Studio (`studio`)
-Files: 15, Cohesion: 1.00, Coupling: 0.00
+Files: 16, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 15 files, mostly utilities and components; entry points index.ts, meta.ts; imported by Packages.
+Description: 16 files, mostly utilities and components; entry points index.ts, meta.ts; imported by Packages.
 Entry points: packages/studio/src/index.ts, packages/studio/src/meta.ts
-Lines: 4270
+Lines: 4612
 
 </zone>
 
 <files>
 
-packages/studio/src/agent-panel.tsx (TypeScript, 581 lines, source)
+packages/studio/src/agent-panel.tsx (TypeScript, 611 lines, source)
 packages/studio/src/agent.ts (TypeScript, 462 lines, source)
 packages/studio/src/changes.ts (TypeScript, 244 lines, source)
-packages/studio/src/from-declaration.ts (TypeScript, 221 lines, source)
+packages/studio/src/from-declaration.ts (TypeScript, 225 lines, source)
 packages/studio/src/in-place.tsx (TypeScript, 268 lines, source)
 packages/studio/src/index.ts (TypeScript, 37 lines, source)
 packages/studio/src/lens.tsx (TypeScript, 73 lines, source)
-packages/studio/src/meta.ts (TypeScript, 594 lines, source)
+packages/studio/src/meta.ts (TypeScript, 604 lines, source)
 packages/studio/src/migration.ts (TypeScript, 94 lines, source)
-packages/studio/src/place.tsx (TypeScript, 496 lines, source)
+packages/studio/src/place.tsx (TypeScript, 547 lines, source)
 packages/studio/src/rewrite.ts (TypeScript, 69 lines, source)
-packages/studio/src/source.ts (TypeScript, 440 lines, source)
+packages/studio/src/source.ts (TypeScript, 507 lines, source)
 packages/studio/src/studio.ts (TypeScript, 146 lines, source)
-packages/studio/src/to-declaration.ts (TypeScript, 477 lines, source)
+packages/studio/src/to-declaration.ts (TypeScript, 501 lines, source)
 packages/studio/src/write-in-place.ts (TypeScript, 68 lines, source)
+packages/studio/src/zod-source.ts (TypeScript, 156 lines, source)
 
 </files>
 
@@ -92,7 +93,10 @@ Internal:
   packages/studio/src/place.tsx → packages/studio/src/studio.ts {Studio}
   packages/studio/src/place.tsx → packages/studio/src/write-in-place.ts {useStudioDoor}
   packages/studio/src/rewrite.ts → packages/studio/src/changes.ts {Rewrite}
+  packages/studio/src/source.ts → packages/studio/src/from-declaration.ts {fieldTypeOf}
   packages/studio/src/source.ts → packages/studio/src/meta.ts {FieldType}
+  packages/studio/src/source.ts → packages/studio/src/zod-source.ts {printZod}
+  packages/studio/src/source.ts → packages/studio/src/zod-source.ts {ZodUses}
   packages/studio/src/studio.ts → packages/studio/src/changes.ts {sourceChanges}
   packages/studio/src/studio.ts → packages/studio/src/changes.ts {SourceChanges}
   packages/studio/src/studio.ts → packages/studio/src/from-declaration.ts {declarationToGraph}
@@ -102,11 +106,12 @@ Internal:
   packages/studio/src/studio.ts → packages/studio/src/source.ts {declarationFiles}
   packages/studio/src/studio.ts → packages/studio/src/source.ts {SourceOptions, WrittenFile}
   packages/studio/src/studio.ts → packages/studio/src/to-declaration.ts {graphToDeclaration}
+  packages/studio/src/to-declaration.ts → packages/studio/src/from-declaration.ts {fieldTypeOf}
   packages/studio/src/to-declaration.ts → packages/studio/src/meta.ts {DECLARED_KIND}
   packages/studio/src/to-declaration.ts → packages/studio/src/meta.ts {FieldType}
 
 Incoming (other zones → this zone):
-  ← tests-studio-unit: packages/studio/tests/unit/an-agent-in-the-studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/what-it-does-not-model.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-back.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-in-place.test.ts → packages/studio/src/index.ts
+  ← tests-studio-unit: packages/studio/tests/unit/an-agent-in-the-studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-round-trip-keeps-the-checkouts-words.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/what-it-does-not-model.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-back.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-in-place.test.ts → packages/studio/src/index.ts
 
 </imports>
 
@@ -119,6 +124,6 @@ Incoming (other zones → this zone):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 540 internal calls, 0 outgoing, 57 incoming (cohesion: 1, coupling: 0)
+- [call graph] 582 internal calls, 0 outgoing, 65 incoming (cohesion: 1, coupling: 0)
 
 </insights>

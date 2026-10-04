@@ -5,10 +5,10 @@
 <zone>
 
 Zone: Tests Studio Unit (`tests-studio-unit`)
-Files: 8, Cohesion: 1.00, Coupling: 0.00
+Files: 9, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in packages: an-agent-in-the-studio.test.ts, one-seat-one-conversation.test.tsx, rewrite-before-writing.test.tsx (+5 more)
-Lines: 1443
+Description: Non-source files in packages: an-agent-in-the-studio.test.ts, one-seat-one-conversation.test.tsx, rewrite-before-writing.test.tsx (+6 more)
+Lines: 1631
 
 </zone>
 
@@ -18,6 +18,7 @@ packages/studio/tests/unit/an-agent-in-the-studio.test.ts (TypeScript, 393 lines
 packages/studio/tests/unit/one-seat-one-conversation.test.tsx (TypeScript, 136 lines, test)
 packages/studio/tests/unit/rewrite-before-writing.test.tsx (TypeScript, 99 lines, test)
 packages/studio/tests/unit/studio.test.ts (TypeScript, 373 lines, test)
+packages/studio/tests/unit/the-round-trip-keeps-the-checkouts-words.test.ts (TypeScript, 188 lines, test)
 packages/studio/tests/unit/the-studio-agent-panel.test.tsx (TypeScript, 54 lines, test)
 packages/studio/tests/unit/what-it-does-not-model.test.ts (TypeScript, 137 lines, test)
 packages/studio/tests/unit/written-back.test.ts (TypeScript, 158 lines, test)
@@ -31,7 +32,7 @@ packages/studio/tests/unit/written-in-place.test.ts (TypeScript, 93 lines, test)
 Outgoing (this zone → other zones):
   → apps-seedbed: packages/studio/tests/unit/rewrite-before-writing.test.tsx → apps/seedbed/src/domain/app.ts; packages/studio/tests/unit/written-in-place.test.ts → apps/seedbed/src/domain/app.ts
   → ship: packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/ship/src/source-edit.ts; packages/studio/tests/unit/written-in-place.test.ts → packages/ship/src/source-edit.ts
-  → studio: packages/studio/tests/unit/an-agent-in-the-studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/what-it-does-not-model.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-back.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-in-place.test.ts → packages/studio/src/index.ts
+  → studio: packages/studio/tests/unit/an-agent-in-the-studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-round-trip-keeps-the-checkouts-words.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/what-it-does-not-model.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-back.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-in-place.test.ts → packages/studio/src/index.ts
 
 </imports>
 
@@ -44,6 +45,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 48 internal calls, 60 outgoing, 0 incoming (cohesion: 0.44, coupling: 0.56)
+- [call graph] 58 internal calls, 68 outgoing, 0 incoming (cohesion: 0.46, coupling: 0.54)
 
 </insights>

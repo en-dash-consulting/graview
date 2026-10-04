@@ -8,14 +8,14 @@ Zone: Graview (`graview`)
 Files: 2, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: 2 files, mostly entry points.
-Lines: 51
+Lines: 61
 
 </zone>
 
 <files>
 
 packages/graview/src/cli.ts (TypeScript, 11 lines, source)
-packages/graview/src/index.ts (TypeScript, 40 lines, source)
+packages/graview/src/index.ts (TypeScript, 50 lines, source)
 
 </files>
 

@@ -1,0 +1,16 @@
+{
+  "id": "scripts/scripts-2",
+  "name": "Scripts 2",
+  "description": "4 files, primarily JavaScript",
+  "files": [
+    "scripts/eval-elm.mjs",
+    "scripts/inspect-pack.mjs",
+    "scripts/require-changeset.mjs",
+    "scripts/site-artifact.mjs"
+  ],
+  "entryPoints": [],
+  "cohesion": 0,
+  "coupling": 0,
+  "fileCount": 4,
+  "lineCount": 466
+}

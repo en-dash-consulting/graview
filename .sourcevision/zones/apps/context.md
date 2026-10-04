@@ -5,16 +5,21 @@
 <zone>
 
 Zone: Apps (`apps`)
-Files: 60, Cohesion: 1.00, Coupling: 0.00
+Files: 69, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 60 files, mostly components and schemas; entry points app.ts, survey.ts, app.ts; imported by Apps.
+Description: 69 files, mostly components and entry points; entry points app.ts, survey.ts, app.ts; imported by Apps.
 Entry points: apps/launcher/src/domain/app.ts, apps/launcher/src/domain/survey.ts, apps/rota/src/domain/app.ts, apps/rota/src/domain/policy.ts, apps/rota/src/ui/app.tsx, apps/rota/src/ui/views.tsx
-Lines: 9163
+Lines: 10049
 
 </zone>
 
 <files>
 
+apps/discography/scripts/musicbrainz/build.py (Python, 110 lines, build)
+apps/discography/scripts/musicbrainz/fetch_guest.py (Python, 24 lines, build)
+apps/discography/scripts/musicbrainz/fetch_own.py (Python, 21 lines, build)
+apps/discography/scripts/musicbrainz/mb.py (Python, 13 lines, build)
+apps/gauntlet/scripts/generate-seed.mjs (JavaScript, 411 lines, build)
 apps/launcher/src/domain/app.ts (TypeScript, 47 lines, source)
 apps/launcher/src/domain/invariants.ts (TypeScript, 161 lines, source)
 apps/launcher/src/domain/mutations.ts (TypeScript, 126 lines, source)
@@ -24,6 +29,8 @@ apps/launcher/src/index.ts (TypeScript, 5 lines, source)
 apps/launcher/src/main.tsx (TypeScript, 543 lines, source)
 apps/launcher/src/ui/liveness.tsx (TypeScript, 56 lines, source)
 apps/launcher/src/ui/views.tsx (TypeScript, 257 lines, source)
+apps/launcher/vite.config.ts (TypeScript, 63 lines, config)
+apps/promo/remotion.config.ts (TypeScript, 56 lines, config)
 apps/promo/src/Composition.tsx (TypeScript, 170 lines, source)
 apps/promo/src/FeedComposition.tsx (TypeScript, 68 lines, source)
 apps/promo/src/Root.tsx (TypeScript, 34 lines, source)
@@ -68,13 +75,15 @@ apps/rota/src/index.ts (TypeScript, 7 lines, source)
 apps/rota/src/main.tsx (TypeScript, 111 lines, source)
 apps/rota/src/open.ts (TypeScript, 88 lines, source)
 apps/rota/src/ui/app.tsx (TypeScript, 181 lines, source)
-apps/rota/src/ui/design.tsx (TypeScript, 997 lines, source)
-apps/rota/src/ui/views.tsx (TypeScript, 99 lines, source)
+apps/rota/src/ui/design.tsx (TypeScript, 1001 lines, source)
+apps/rota/src/ui/views.tsx (TypeScript, 101 lines, source)
 apps/rota/src/ui/when.ts (TypeScript, 16 lines, source)
 apps/spike/scripts/introspect4.mjs (JavaScript, 55 lines, build)
 apps/spike/scripts/run-probe.mjs (JavaScript, 94 lines, build)
 apps/spike/scripts/run-restrictions.mjs (JavaScript, 151 lines, build)
 apps/spike/scripts/run-spike.mjs (JavaScript, 346 lines, build)
+apps/spike/src/main.ts (TypeScript, 20 lines, source)
+apps/spike/src/three-planes.ts (TypeScript, 162 lines, source)
 
 </files>
 
@@ -243,6 +252,7 @@ Internal:
   apps/rota/src/ui/views.tsx → apps/rota/src/domain/schema.ts {rotaSchema}
   apps/rota/src/ui/views.tsx → apps/rota/src/domain/schema.ts {RotaSchema}
   apps/rota/src/ui/views.tsx → apps/rota/src/ui/when.ts {EXAMPLE_TODAY}
+  apps/spike/src/main.ts → apps/spike/src/three-planes.ts {mountThreePlanes}
 
 Incoming (other zones → this zone):
   ← tests-apps: apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/app.ts; apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/survey.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/app.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/policy.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/app.tsx; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/views.tsx
@@ -252,39 +262,28 @@ Incoming (other zones → this zone):
 <findings>
 
 [observation] [info] High cohesion (1) — files are tightly interconnected
-[suggestion] [info] Zone "apps" has files across 11 directories — consider consolidating under a dedicated directory
+[suggestion] [info] Zone "apps" has files across 16 directories — consider consolidating under a dedicated directory
 
 </findings>
 
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- Zone "apps" has files across 11 directories — consider consolidating under a dedicated directory
-- [call graph] 272 internal calls, 0 outgoing, 15 incoming (cohesion: 1, coupling: 0)
+- Zone "apps" has files across 16 directories — consider consolidating under a dedicated directory
+- [call graph] 394 internal calls, 0 outgoing, 15 incoming (cohesion: 1, coupling: 0)
 
 </insights>
 
-<sub-crossings>
-
-Cross-dependencies between sub-zones:
-  apps/apps → apps/promo: 2
-  apps/apps → apps/promo-feed: 8
-  apps/promo-feed → apps/promo: 8
-  apps/rota → apps/rota-ui: 4
-  apps/rota-ui → apps/rota: 9
-
-</sub-crossings>
-
 <sub-zones>
 
-This zone has 7 sub-zone(s):
+This zone has 6 sub-zone(s):
 
-- **Apps** (`apps/apps`): 3 files, cohesion 0.29, coupling 0.71
+- **Discography Scripts** (`apps/discography`): 4 files, cohesion 0, coupling 0
+- **Gauntlet** (`apps/gauntlet`): 3 files, cohesion 0, coupling 0
 - **App Launcher** (`apps/launcher`): 9 files, cohesion 1, coupling 0
-- **Promo** (`apps/promo`): 21 files, cohesion 0.93, coupling 0.07
-- **Feed** (`apps/promo-feed`): 8 files, cohesion 0.53, coupling 0.47
-- **Rota Scheduler** (`apps/rota`): 9 files, cohesion 0.75, coupling 0.25
-- **Rota Interface** (`apps/rota-ui`): 6 files, cohesion 0.6, coupling 0.4
+- **Promo** (`apps/promo`): 34 files, cohesion 1, coupling 0
+  - Has 5 nested sub-zone(s)
+- **Rota** (`apps/rota`): 15 files, cohesion 1, coupling 0
 - **Spike Scripts** (`apps/spike`): 4 files, cohesion 0, coupling 0
 
 Detailed sub-zone context available in `zones/{sub-zone-id}/context.md`

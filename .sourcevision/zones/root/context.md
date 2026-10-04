@@ -8,13 +8,13 @@ Zone: Project Root (`root`)
 Files: 1, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: Project configuration and manifest files: vitest.config.ts
-Lines: 50
+Lines: 65
 
 </zone>
 
 <files>
 
-vitest.config.ts (TypeScript, 50 lines, config)
+vitest.config.ts (TypeScript, 65 lines, config)
 
 </files>
 
@@ -27,6 +27,6 @@ vitest.config.ts (TypeScript, 50 lines, config)
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 12 internal calls, 0 outgoing, 0 incoming (cohesion: 1, coupling: 0)
+- [call graph] 13 internal calls, 0 outgoing, 0 incoming (cohesion: 1, coupling: 0)
 
 </insights>
