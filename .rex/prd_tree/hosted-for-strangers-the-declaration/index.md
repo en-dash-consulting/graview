@@ -19,6 +19,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
+| [A compacted log keeps who made each record, so an own sight survives a restart](./a-compacted-log-keeps-who-made-each.md) | completed |
 | [A conformance kit: fixtures any host runs against a version to prove it reads, compiles and derives the same](./a-conformance-kit-fixtures-any-host.md) | completed |
 | [A document can say a kind's glance fields, and the compiler stops asking for what it cannot say (FR-39)](./a-document-can-say-a-kind-s-glance.md) | completed |
 | [A host's own work has a seat: a system principal the policy lets through, and authors named by their own name](./a-host-s-own-work-has-a-seat-a-system.md) | completed |
@@ -37,6 +38,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A store can prove its own fold: a deterministic snapshot hash and store.verify()](./a-store-can-prove-its-own-fold-a.md) | completed |
 | [Agents name records the way people do: a node argument accepts a label, and ambiguity comes back as candidates](./agents-name-records-the-way-people-do.md) | completed |
 | [An agent acts for someone, through something: delegation and channel on every op, and seat headers trusted only on request](./an-agent-acts-for-someone-through.md) | completed |
+| [An edit can set a kind's glance (set-glance), and the studio renames display.glance with its field](./an-edit-can-set-a-kind-s-glance-set.md) | pending |
 | [An optimistic client can roll back: Store.rebase, a public notify, and batch ids that never collide across clients](./an-optimistic-client-can-roll-back.md) | completed |
 | [Applying primitives is all or nothing: a failure leaves the graph as it was](./applying-primitives-is-all-or-nothing.md) | completed |
 | [Backpressure distinct from refusal: busy with retryAfter, and the client re-sends (FR-45)](./backpressure-distinct-from-refusal.md) | completed |
@@ -45,15 +47,18 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Embed holds inside a chat's widget: no storage assumed, its own height reported, the host's scheme taken](./embed-holds-inside-a-chat-s-widget-no.md) | completed |
 | [Embed knows what its host can keep: the studio hidden or handed to the host, and a size budget](./embed-knows-what-its-host-can-keep-the.md) | completed |
 | [Embed reports what went wrong and how long it took, without what was on screen](./embed-reports-what-went-wrong-and-how.md) | completed |
+| [Every harness honours GRAVIEW_PORT_BASE, so a second checkout can run any of them](./every-harness-honours-graview-port.md) | pending |
 | [/graview/export calls exportBundle with its arguments the wrong way round](./graview-export-calls-exportbundle-with.md) | completed |
 | [Guest views: someone else's React in a sandboxed frame that can only ask, under the viewer's seat](./guest-views-someone-else-s-react-in-a.md) | completed |
 | [MCP for remote hosts: Streamable HTTP, honest tool hints, and other people's words marked as data](./mcp-for-remote-hosts-streamable-http.md) | completed |
 | [Migrations that keep data: declared renames and type coercion in steps and migrationBetween](./migrations-that-keep-data-declared.md) | completed |
 | [Modules reach the host: the enabled set is passed to opened, served and remote stores, and turning one off is in history](./modules-reach-the-host-the-enabled-set.md) | completed |
+| [openRemote's runtime entry exports the observable-client types, and read-only MCP calls can show presence](./openremote-s-runtime-entry-exports-the.md) | pending |
 | [Presence a host can add to: kind, name, onBehalfOf, announce for socketless visitors, and welcome.participant (FR-47)](./presence-a-host-can-add-to-kind-name.md) | completed |
 | [Presence speaks one dialect and forgets the gone; seats can be added after mount without offering to sit as someone else](./presence-speaks-one-dialect-and.md) | completed |
 | [Refusal reasons a program can branch on: forbidden, missing, invalid, limit, with wouldNeed (FR-46)](./refusal-reasons-a-program-can-branch.md) | completed |
 | [Registering one view layers over the defaults instead of replacing them, and a default can be wrapped](./registering-one-view-layers-over-the.md) | completed |
+| [SECURITY: the seat view serves no unseen record's id, in field values, primitives, reads, writes or args (FR-55)](./security-the-seat-view-serves-no.md) | pending |
 | [Sights follow the log: seesId's judgement, an appended-op creator index, and the ambiguous refusal names the kind (FR-51)](./sights-follow-the-log-seesid-s.md) | completed |
 | [Stored data checked against its declaration: validateGraph, and repairs as ordinary ops](./stored-data-checked-against-its.md) | completed |
 | [Stored formats carry their version, and the next major brings the steps to read the last one](./stored-formats-carry-their-version-and.md) | completed |
@@ -68,6 +73,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The server pushes that the declaration changed, and a remote client reopens on it (FR-43)](./the-server-pushes-that-the-declaration.md) | completed |
 | [The store a host drives: a real clock, its own sentences kept, previews of several calls, host ops appended, typed undo refusals](./the-store-a-host-drives-a-real-clock.md) | completed |
 | [The store serves from any runtime: a fetch handler, an adapter over plain SQL, and core proven in workerd](./the-store-serves-from-any-runtime-a.md) | completed |
+| [The studio hands a document-compiled app back as a document, and editDocument can set a glance (FR-54)](./the-studio-hands-a-document-compiled.md) | pending |
 | [The theme has good and bad tones, checked for contrast in both schemes](./the-theme-has-good-and-bad-tones.md) | completed |
 | [The workbench has a heading: an h1 naming the app, and headings for its regions](./the-workbench-has-a-heading-an-h1.md) | completed |
 | [Version skew on the wire: build strings, a reload answer, carried calls, and a codec name (FR-44)](./version-skew-on-the-wire-build-strings.md) | completed |
