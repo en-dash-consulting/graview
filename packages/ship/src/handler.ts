@@ -7,6 +7,7 @@ import {
   type GraviewApp,
   type Operation,
   type PersistenceAdapter,
+  type PlannedChange,
   type Presence,
   type Principal,
   type Store,
@@ -15,7 +16,7 @@ import {
 } from "@graview/core";
 import { exportBundle } from "./export.js";
 import { health } from "./health.js";
-import { LIVE_PATH, type Limit, type LiveConnection, type LiveSocket } from "./live.js";
+import { LIVE_PATH, type Limit, type LimitAnswer, type LimitAsked, type LiveConnection, type LiveSocket } from "./live.js";
 import {
   announcePresence,
   liveProtocol,
@@ -155,6 +156,13 @@ interface HandlerOptions<S extends AnySchema> {
    * the client keeps the change and sends it again, backing off.
    */
   readonly limit?: Limit;
+  /**
+   * THE HOST'S CAPS ON WHAT A CHANGE WOULD DO: `liveProtocol`'s `admit`,
+   * on the socket and `POST /graview/ops`. Asked after a change is
+   * compiled and before anything is kept, with `limit`'s `asked` and the
+   * store's own plan of it; answered as `limit` is answered.
+   */
+  readonly admit?: (asked: LimitAsked, planned: PlannedChange) => LimitAnswer | undefined;
   /**
    * THE HOST'S BUILD (FR-44), an opaque string said in every welcome. A
    * client on another build keeps working and is told once, so a person
@@ -481,6 +489,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       ...(options.refusal ? { refusal: options.refusal } : {}),
       ...(options.withheldKey !== undefined ? { withheldKey: options.withheldKey } : {}),
       ...(options.limit ? { limit: options.limit } : {}),
+      ...(options.admit ? { admit: options.admit } : {}),
     }),
   });
   let serving = serve(options.app, options.store as unknown as Store<AnySchema>, options.flush, options.migrated ?? []);

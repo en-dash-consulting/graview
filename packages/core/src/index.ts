@@ -283,6 +283,7 @@ export type {
   ApplyOptions,
   ApplyResult,
   CompactOptions,
+  PlannedChange,
   Preview,
   Rebase,
   RebaseResult,

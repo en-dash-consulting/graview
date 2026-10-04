@@ -48,6 +48,9 @@ export const NOT_EXPORTS = new Map([
   ["reloadPage", "an option of openRemote, not an export"],
   ["onBehalfOf", "a field of a Presence and a Principal, not an export"],
   ["onBehalfOfName", "a field of a Presence, not an export"],
+  ["nodesAfter", "a field of a PlannedChange, not an export"],
+  ["edgesAfter", "a field of a PlannedChange, not an export"],
+  ["applyAll", "a method of a Store, not an export"],
 ]);
 
 /** The API-shaped names a README puts in backticks: `name`, `name()`, `Name`. */

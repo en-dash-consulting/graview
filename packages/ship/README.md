@@ -199,7 +199,7 @@ bytes of state, 692 with a presence), half the attachment, the rest the host's.
 
 `connect()` is this protocol with the state in memory, so there is one implementation.
 Every `liveProtocol` option is an option of `createStoreHandler` and `serveStore` too, so a
-host gets it either way: `limit`, `build` (a string, or a function of the socket),
+host gets it either way: `limit`, `admit`, `build` (a string, or a function of the socket),
 `minProtocol`, `minHostProtocol`, `refusal` and `withheldKey` by the same names; and, where
 the handler already has a name that reads the request, the protocol's `viaOf` as
 `viaClaimed` and its `seatOf` as `seatOfKey` — with `seatKey(seat)`, handed the seat without
@@ -394,6 +394,28 @@ the size in bytes and the calls. It answers nothing, `{ retryAfter }`, `{ refuse
 
 `limit` is asked only of a change that has not landed: a call sent again after it did — its
 ack lost with the socket — is answered with the ops it made, whatever the host would say now.
+
+**A cap on what a change would do is `admit`.** `limit` is asked before a change is compiled,
+so it cannot count what the change would do — how many records a call removes, how many the
+store would hold after it — and a host's own wrapper around its acts is gone round by the
+socket and `POST /graview/ops`. `admit(asked, planned)` — on `liveProtocol`,
+`createStoreHandler` and `serveStore` — is asked after the calls (or the undo) are compiled
+and applied, before anything is kept, with `limit`'s `asked` and the store's own plan of the
+change (`PlannedChange`, from `@graview/core`): its ops and primitives, `added`, `removed` and
+`changed` records and links (a removed record's links among the links removed), and
+`nodesAfter` and `edgesAfter`. No second rehearsal on a copy: it is the store's `applyAll`
+asking (`ApplyOptions.admit`). Its answers mean what `limit`'s do — `{ refuse }` refused
+`limit` (413), `{ retryAfter }` busy (429), `{ unavailable }` refused `unavailable` (503) — and
+a change it answers is put back: not kept, not flushed, not sent to anybody.
+
+```ts
+admit: (asked, planned) =>
+  asked.seat.kind === "agent" && planned.removed.nodes > 25
+    ? { refuse: `That would remove ${planned.removed.nodes} records; an agent may remove at most 25 in one call.` }
+    : planned.nodesAfter > MAX_NODES
+      ? { refuse: `This app holds ${MAX_NODES} records, the most an app may hold for now.` }
+      : undefined,
+```
 
 ## The hosted-store contract
 
