@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-04T15:04:46.214Z",
+  "at": "2026-10-04T15:09:42.272Z",
   "engine": "chromium",
   "checks": {
     "theDoorBelongsToWhoeverKeepsTheApp": {
@@ -158,7 +158,7 @@
     "aStudioHandedInWaitsForNoChunk": {
       "fetched": [
         "entry.js",
-        "chunk-WHJI344D.js"
+        "chunk-ZOKDILRX.js"
       ],
       "ok": true
     },
