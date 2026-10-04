@@ -23,7 +23,7 @@ import {
   type Store,
   type WireRefusal,
 } from "@graview/core";
-import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LiveClientMessage, type LiveServerMessage } from "./live.js";
+import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LimitAnswer, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 
 /**
  * THE LIVE WIRE AS FUNCTIONS OVER STATE THE HOST HOLDS (FR-41, FR-42).
@@ -144,6 +144,29 @@ export interface LiveProtocol<S extends AnySchema> {
   /** Who is here, told to every socket that has said hello: as its seat may be told it, and without itself. */
   tell(who: readonly Presence[], peers: Iterable<LivePeer>): void;
   /**
+   * `POST /graview/ops`, FOR A HOST THAT ROUTES ITS OWN REQUESTS. Hand it
+   * the request's body as text and who is asking; it answers the status,
+   * the JSON body and the headers to send, exactly as `createStoreHandler`
+   * answers the route — which is this — and `landed`, the ops it put in
+   * the store, unredacted, for the host to `publish` to its sockets:
+   *
+   * - a batch the asking seat already landed: 200 with the ops it made;
+   *   somebody else's, or not a client's shape: 409, `invalid`;
+   * - the host's `limit`: 429 with `Retry-After` (busy), 413 `limit`,
+   *   503 `unavailable`;
+   * - a field that moved since the call's `base`: 409 with `conflict`;
+   * - refused by the store: 409 with its sentence and `reason`;
+   * - landed: 200 with the ops as the seat may see them, once `flush`
+   *   says they are durable.
+   *
+   * Every answer but busy says the declaration `version` and the `build`.
+   */
+  post(body: string, asked: WireAsked): Promise<WireAnswer & { readonly landed?: readonly Operation[] }>;
+  /** `GET /graview/state`: the store as the asking seat sees it — snapshot, log, migrations, modules, horizon. */
+  state(asked: WireAsked): WireAnswer;
+  /** `GET /graview/since?seq=N`: the ops after `seq`, as the asking seat sees them. */
+  since(seq: number, asked: WireAsked): WireAnswer;
+  /**
    * THE DECLARATION CHANGED (FR-43), and this protocol is the one over the
    * store migrated to it. Every socket that has said hello is told
    * `{ t: "declaration", version }` and its cursor is forgotten: a seq of
@@ -153,6 +176,41 @@ export interface LiveProtocol<S extends AnySchema> {
    */
   declared(peers: Iterable<LivePeer>): void;
 }
+
+/**
+ * WHO ASKS A ROUTE, as the host's own routing says it: the seat its
+ * credential names, what the request came through (FR-52), and — for a
+ * host whose build differs per request — the build that answers it (FR-44).
+ */
+export interface WireAsked {
+  readonly seat: Principal;
+  readonly via: string;
+  /** The host's build answering this request; the protocol's `build` when absent. */
+  readonly build?: string;
+}
+
+/** A route's answer, for the host to send: a status, a JSON body, and the headers that carry meaning (`Retry-After`). */
+export interface WireAnswer {
+  readonly status: number;
+  readonly body: Readonly<Record<string, unknown>>;
+  readonly headers: Readonly<Record<string, string>>;
+}
+
+/** A change as both the socket and `POST /graview/ops` ask for one. */
+interface Change {
+  readonly t: "call" | "undo";
+  readonly calls: readonly MutationCall[];
+  readonly batches: readonly string[];
+  readonly intent: string | undefined;
+  readonly batch: unknown;
+  readonly base: unknown;
+}
+
+/** What judging a change came to: a stale write, a refusal, or the ops it landed in the store. */
+type Landing =
+  | { readonly conflicts: readonly FieldConflict[]; readonly refusal?: undefined; readonly result?: undefined }
+  | { readonly refusal: WireRefusal; readonly conflicts?: undefined; readonly result?: undefined }
+  | { readonly result: { readonly ops: readonly Operation[]; readonly batch: string }; readonly conflicts?: undefined; readonly refusal?: undefined };
 
 /** For whom an author acts, as a presence says it: the person's id and name, or nothing. */
 const forWhom = (author: Author): Pick<Presence, "onBehalfOf" | "onBehalfOfName"> =>
@@ -459,37 +517,73 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     if (after.length > 0) say(peer, { t: "ops", seq: last, ops: wire.shown(peer.seat, after) });
   };
 
-  /** A call or an undo from a socket: judged as its seat, exactly as `POST /graview/ops` judges it. */
-  const answer = async (peer: LivePeer, message: Extract<LiveClientMessage, { t: "call" | "undo" }>): Promise<LiveReceived> => {
-    const cid = typeof message.cid === "string" ? message.cid : "";
-    const author = peer.seat;
-    const intent = typeof message.intent === "string" && message.intent.length > 0 ? message.intent : undefined;
-    catchUp(peer);
-    const batch = typeof message.batch === "string" && message.batch.length > 0 ? message.batch : mintServed(message.t === "undo" ? "undo" : "batch");
-    const calls = message.t === "call" && Array.isArray(message.calls) ? message.calls : [];
-    if (message.t === "call") {
-      const conflicts = wire.conflictsOf(author, calls, message.base);
-      if (conflicts.length > 0) {
-        say(peer, { t: "conflict", cid, sentence: conflictSentence(conflicts), conflicts });
-        return { cursor: peer.cursor! };
-      }
+  /** What the host's `limit` says of a change, before it is judged; nothing when it has none. */
+  const limitOf = async (seat: Principal, via: string, change: Change, bytes: number): Promise<LimitAnswer | undefined> =>
+    options.limit ? options.limit({ seat, via, t: change.t, bytes, calls: change.t === "call" ? change.calls : [] }) : undefined;
+
+  /**
+   * ONE CHANGE, JUDGED AS ITS SEAT — the socket's and `POST /graview/ops`'s
+   * alike, so the two can never disagree. A stale write is a conflict and
+   * nothing is written (FR-05); then through the store, under the seat and
+   * the host's channel (never the client's, FR-52), in the batch the client
+   * named or one minted here; then flushed. `applied` runs between the
+   * store taking it and the flush, for the socket to move its cursor.
+   */
+  const land = async (seat: Principal, via: string, change: Change, applied?: () => void): Promise<Landing> => {
+    if (change.t === "call") {
+      const conflicts = wire.conflictsOf(seat, change.calls, change.base);
+      if (conflicts.length > 0) return { conflicts };
     }
+    const batch = typeof change.batch === "string" && change.batch.length > 0 ? change.batch : mintServed(change.t === "undo" ? "undo" : "batch");
     let result: { readonly ops: readonly Operation[]; readonly batch: string };
     try {
-      // The channel is the seat's, as the host said it when the socket opened: a client's own `via` is never read (FR-52).
-      const applying = { author, via: peer.via, ...(intent ? { intent } : {}), batch };
-      result = message.t === "undo" ? store.undo(Array.isArray(message.batches) ? message.batches : [], applying) : store.applyAll(calls, applying);
+      const applying = { author: seat, via, ...(change.intent ? { intent: change.intent } : {}), batch };
+      result = change.t === "undo" ? store.undo(change.batches, applying) : store.applyAll(change.calls, applying);
     } catch (error) {
-      say(peer, { t: "refused", cid, ...refusalOf(error) });
+      return { refusal: refusalOf(error) };
+    }
+    applied?.();
+    await options.flush?.();
+    return { result };
+  };
+
+  /** A change as the socket's message says it. */
+  const changeOf = (message: Extract<LiveClientMessage, { t: "call" | "undo" }>): Change => ({
+    t: message.t,
+    calls: message.t === "call" && Array.isArray(message.calls) ? message.calls : [],
+    batches: message.t === "undo" && Array.isArray(message.batches) ? message.batches : [],
+    intent: typeof message.intent === "string" && message.intent.length > 0 ? message.intent : undefined,
+    batch: message.batch,
+    base: message.t === "call" ? message.base : undefined,
+  });
+
+  /** A call or an undo from a socket, past its claim and the host's limit: judged as its seat, exactly as `POST /graview/ops` judges it. */
+  const answer = async (peer: LivePeer, cid: string, change: Change): Promise<LiveReceived> => {
+    catchUp(peer);
+    // Every op before this call's went down this socket before it landed; its own go in the ack.
+    const landing = await land(peer.seat, peer.via, change, () => {
+      peer.cursor = wire.lastSeq();
+    });
+    if (landing.conflicts) {
+      say(peer, { t: "conflict", cid, sentence: conflictSentence(landing.conflicts), conflicts: [...landing.conflicts] });
       return { cursor: peer.cursor! };
     }
-    // Every op before this call's went down this socket before it landed; its own go in the ack.
-    peer.cursor = wire.lastSeq();
-    const ops = wire.shown(author, result.ops);
-    await options.flush?.();
-    say(peer, { t: "ack", cid, seq: ops.at(-1)?.seq ?? peer.cursor, batch: result.batch, ops });
-    return { cursor: peer.cursor, landed: result.ops };
+    if (landing.refusal) {
+      say(peer, { t: "refused", cid, ...landing.refusal });
+      return { cursor: peer.cursor! };
+    }
+    const { result } = landing;
+    const ops = wire.shown(peer.seat, result.ops);
+    say(peer, { t: "ack", cid, seq: ops.at(-1)?.seq ?? peer.cursor!, batch: result.batch, ops });
+    return { cursor: peer.cursor!, landed: result.ops };
   };
+
+  /** Which declaration, and which build, answered (FR-43, FR-44): on every route's answer a poll reads. */
+  const answering = (asked: WireAsked): { version: number; build?: string } => {
+    const build = asked.build ?? options.build;
+    return { version: options.version ?? 1, ...(build ? { build } : {}) };
+  };
+  const reply = (status: number, body: Record<string, unknown>, headers: Record<string, string> = {}): WireAnswer => ({ status, body, headers });
 
   return {
     store,
@@ -563,16 +657,12 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             return {};
           }
           /*
-           * BUSY IS NOT REFUSED (FR-45). A call made after one that was told
-           * to wait waits too, whatever the rate says now: the client sends
-           * them again in the order it made them, the held one first.
-           */
-          /*
            * SENT AGAIN AFTER IT LANDED: answered with what it made, before the
            * host is asked anything. A call whose ack was lost is never told
            * busy, capped or unavailable for a change already made — and only
            * ever with the asking seat's own ops (`claim`).
            */
+          const change = changeOf(message);
           const claim = wire.claim(message.batch, peer.seat);
           if (claim.refusal || claim.answered) {
             catchUp(peer);
@@ -581,20 +671,17 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             else say(peer, { t: "ack", cid, seq: claim.answered!.at(-1)!.seq, batch: message.batch!, ops: wire.shown(peer.seat, claim.answered!) });
             return { cursor: peer.cursor };
           }
+          /*
+           * BUSY IS NOT REFUSED (FR-45). A call made after one that was told
+           * to wait waits too, whatever the rate says now: the client sends
+           * them again in the order it made them, the held one first.
+           */
           const now = Date.now();
           if (peer.held && peer.held.cid !== cid) {
             say(peer, { t: "busy", cid, retryAfter: Math.max(0, peer.held.until - now) });
             return { cursor: peer.cursor };
           }
-          const limited = options.limit
-            ? await options.limit({
-                seat: peer.seat,
-                via: peer.via,
-                t: message.t,
-                bytes: bytesOf(text),
-                calls: message.t === "call" && Array.isArray(message.calls) ? message.calls : [],
-              })
-            : undefined;
+          const limited = await limitOf(peer.seat, peer.via, change, bytesOf(text));
           if (limited && "refuse" in limited) {
             delete peer.held;
             say(peer, { t: "refused", cid, reason: "limit", sentence: limited.refuse });
@@ -613,7 +700,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             return { cursor: peer.cursor };
           }
           delete peer.held;
-          return answer(peer, message);
+          return answer(peer, cid, change);
         }
         case "here": {
           const told = message.presence;
@@ -642,6 +729,65 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
         if (peer.cursor === undefined) continue;
         say(peer, { t: "presence", who: wire.whoFor(peer.seat, who.filter((presence) => presence.participant !== peer.participant)) });
       }
+    },
+    async post(text, asked) {
+      const said = answering(asked);
+      let body: { calls?: unknown; undo?: unknown; intent?: unknown; batch?: unknown; base?: unknown };
+      try {
+        body = text.length === 0 ? {} : (JSON.parse(text) as typeof body);
+      } catch {
+        return reply(400, { error: "A change is one JSON object: { calls } to make, or { undo } to take back.", reason: "invalid" });
+      }
+      if (!body || typeof body !== "object") return reply(400, { error: "A change is one JSON object: { calls } to make, or { undo } to take back.", reason: "invalid" });
+      const undo = Array.isArray(body.undo) ? (body.undo as string[]) : undefined;
+      const change: Change = {
+        t: undo ? "undo" : "call",
+        calls: !undo && Array.isArray(body.calls) ? (body.calls as MutationCall[]) : [],
+        batches: undo ?? [],
+        intent: typeof body.intent === "string" && body.intent.length > 0 ? body.intent : undefined,
+        batch: body.batch,
+        base: undo ? undefined : body.base,
+      };
+      // Sent again after its answer was lost — or offered again on a new declaration, or after a reload (FR-43, FR-44, FR-49): only ever the asker's own ops.
+      const claim = wire.claim(change.batch, asked.seat);
+      if (claim.refusal) return reply(409, { error: claim.refusal.sentence, refused: true, reason: claim.refusal.reason, ...said });
+      if (claim.answered) return reply(200, { ops: wire.shown(asked.seat, claim.answered), batch: change.batch, ...said });
+      /*
+       * THE HOST'S LIMITS, BEFORE ANYTHING IS JUDGED. Busy is 429 and the
+       * change is kept to send again (FR-45); a hard cap is refused, `limit`,
+       * and the change is taken back (FR-46); unavailable is 503, kept.
+       */
+      const limited = await limitOf(asked.seat, asked.via, change, bytesOf(text));
+      if (limited && "refuse" in limited) return reply(413, { error: limited.refuse, refused: true, reason: "limit", ...said });
+      if (limited && "unavailable" in limited) return reply(503, { error: limited.unavailable, refused: true, reason: "unavailable", ...said });
+      if (limited) {
+        const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
+        return reply(429, { error: limited.sentence ?? `The store is busy: send it again in ${retryAfter} ms.`, busy: true, retryAfter }, { "retry-after": String(Math.ceil(retryAfter / 1000)) });
+      }
+      const landing = await land(asked.seat, asked.via, change);
+      // A stale write is a conflict, not a loss (FR-05): theirs and yours, by name, and nothing written.
+      if (landing.conflicts) return reply(409, { error: conflictSentence(landing.conflicts), refused: true, conflict: true, conflicts: landing.conflicts, ...said });
+      // The policy's own sentence rather than a bare 403, because that sentence is the product.
+      if (landing.refusal) {
+        const { sentence, ...why } = landing.refusal;
+        return reply(409, { error: sentence, refused: true, ...why, ...said });
+      }
+      // An act may make what its own seat may not see: that op goes back withheld, as it would on a poll.
+      return { ...reply(200, { ops: wire.shown(asked.seat, landing.result.ops), batch: landing.result.batch, ...said }), landed: landing.result.ops };
+    },
+    state(asked) {
+      const seen = wire.seenFor(asked.seat);
+      return reply(200, {
+        ...answering(asked),
+        snapshot: seen.snapshot(),
+        log: seen.log.all(),
+        migrated: [...(options.migrated ?? [])],
+        enabledModules: wire.enabledModules(),
+        ...wire.horizonOf(),
+      });
+    },
+    since(seq, asked) {
+      return reply(200, { ops: wire.since(asked.seat, seq), ...answering(asked) });
     },
     declared(peers) {
       for (const peer of peers) {

@@ -1,12 +1,9 @@
 import {
   foldPresence,
   PRESENCE_TTL_MS,
-  refusalOf,
   VISITOR_PRESENCE_TTL_MS,
   type AnySchema,
-  type FieldRevision,
   type GraviewApp,
-  type MutationCall,
   type Operation,
   type PersistenceAdapter,
   type Presence,
@@ -15,7 +12,7 @@ import {
 } from "@graview/core";
 import { exportBundle } from "./export.js";
 import { health } from "./health.js";
-import { bytesOf, conflictSentence, LIVE_PATH, type Limit, type LiveConnection, type LiveSocket } from "./live.js";
+import { LIVE_PATH, type Limit, type LiveConnection, type LiveSocket } from "./live.js";
 import {
   announcePresence,
   liveProtocol,
@@ -28,6 +25,7 @@ import {
   type LiveProtocol,
   type LiveSocketState,
   type Wire,
+  type WireAnswer,
 } from "./live-protocol.js";
 import { openStore, type OpenedStore } from "./open-store.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
@@ -409,8 +407,6 @@ type Swap = (app: GraviewApp<AnySchema>, open: () => Promise<{ store: Store<AnyS
 
 function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, adapterName = "held by the host"): { handler: Omit<StoreHandler<S>, "declarationChanged">; swap: Swap } {
   const seatOf = options.seatOf ?? (options.trustSeatHeaders ? seatFromHeaders : undefined);
-  /** A change posted without a batch lands in one minted here, outside the shape a client may name. */
-  const mintServed = serverBatchIds();
   const flush = async (): Promise<void> => {
     await serving.flush?.();
   };
@@ -476,7 +472,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     const url = new URL(request.url, "http://localhost");
     // Answered from the declaration served once any change under way is made (FR-43).
     while (changing) await changing;
-    const { store, wire, app, migrated } = serving;
+    const { store, wire, app } = serving;
     /*
      * WHICH DECLARATION, AND WHICH BUILD, ANSWERED (FR-43, FR-44): on every
      * answer a poll reads, so a client without a socket learns the
@@ -501,21 +497,18 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
      * policy keeps from it, and its log with every op in its place and the
      * ones that touched what it may not see withheld (FR-16).
      */
-    if (url.pathname === "/graview/state") {
-      const seen = wire.seenFor(await seat());
-      return send(200, {
-        ...answering,
-        snapshot: seen.snapshot(),
-        log: seen.log.all(),
-        migrated,
-        enabledModules: wire.enabledModules(),
-        ...wire.horizonOf(),
-      });
-    }
+    // The routes with semantics are the protocol's, so a host that routes its own requests answers them the same (`post`, `state`, `since`).
+    const asked = async (otherwise: string) => {
+      const author = await seat();
+      return { seat: author, via: await viaFor(request, author, otherwise), ...(options.build ? { build: options.build } : {}) };
+    };
+    const answered = (answer: WireAnswer) => send(answer.status, answer.body, answer.headers);
+
+    if (url.pathname === "/graview/state") return answered(serving.protocol.state(await asked("api")));
 
     if (url.pathname === "/graview/since") {
       const seq = Number(url.searchParams.get("seq") ?? "-1");
-      return send(200, { ops: wire.since(await seat(), seq), ...answering });
+      return answered(serving.protocol.since(seq, await asked("api")));
     }
 
     if (url.pathname === "/graview/who") return send(200, { who: wire.whoFor(await seat(), alive()) });
@@ -578,65 +571,8 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
 
     if (url.pathname === "/graview/ops" && request.method === "POST") {
       const text = await request.text();
-      const body = (text.length === 0 ? {} : JSON.parse(text)) as {
-        calls?: readonly MutationCall[];
-        /** Batches to take back instead — judged like any change, as the seat that asks. */
-        undo?: readonly string[];
-        intent?: string;
-        batch?: string;
-        /** The revision of each field the calls change, as the caller last saw it (FR-05). */
-        base?: readonly FieldRevision[];
-      };
-      const calls = body.calls ?? [];
-      const author = await seat();
       // What the calls came through is the host's to say, never the body's (FR-52).
-      const via = await viaFor(request, author, "api");
-      // A batch already in the log is a call sent again after its answer was lost — or offered again on a new declaration, or after a reload (FR-43, FR-44): answered with what it made, as on the socket (FR-49).
-      // Only ever the asker's own ops: a batch that is somebody else's, or one a client may not name, is refused (`isClientBatch`).
-      const claim = wire.claim(body.batch, author);
-      if (claim.refusal) return send(409, { error: claim.refusal.sentence, refused: true, reason: claim.refusal.reason, ...answering });
-      if (claim.answered) return send(200, { ops: wire.shown(author, claim.answered), batch: body.batch, ...answering });
-      /*
-       * THE HOST'S LIMITS, BEFORE ANYTHING IS JUDGED. Busy is 429 and the
-       * change is kept to send again (FR-45); a hard cap is refused, `limit`,
-       * and the change is taken back (FR-46).
-       */
-      const limited = options.limit
-        ? await options.limit({ seat: author, via, t: body.undo ? "undo" : "call", bytes: bytesOf(text), calls: body.undo ? [] : calls })
-        : undefined;
-      if (limited && "refuse" in limited) return send(413, { error: limited.refuse, refused: true, reason: "limit", ...answering });
-      if (limited && "unavailable" in limited) return send(503, { error: limited.unavailable, refused: true, reason: "unavailable", ...answering });
-      if (limited) {
-        const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
-        return send(
-          429,
-          { error: limited.sentence ?? `The store is busy: send it again in ${retryAfter} ms.`, busy: true, retryAfter },
-          { "retry-after": String(Math.ceil(retryAfter / 1000)) },
-        );
-      }
-      /*
-       * A STALE WRITE IS A CONFLICT, NOT A LOSS (FR-05). A field that moved
-       * since the caller read it is refused by name — theirs and yours —
-       * and nothing is written: what to do about it is the person's call.
-       */
-      const conflicts = body.undo ? [] : wire.conflictsOf(author, calls, body.base);
-      if (conflicts.length > 0) return send(409, { error: conflictSentence(conflicts), refused: true, conflict: true, conflicts, ...answering });
-      try {
-        /*
-         * Through the STORE, under the requester's own seat. The policy
-         * refuses here exactly what it refuses in the browser — and the
-         * refusal comes back with the policy's own sentence rather than a
-         * bare 403, because that sentence is the product.
-         */
-        const applying = { author, via, ...(body.intent ? { intent: body.intent } : {}), batch: body.batch ? body.batch : mintServed(body.undo ? "undo" : "batch") };
-        const result = body.undo ? store.undo(body.undo, applying) : store.applyAll(calls, applying);
-        await flush();
-        // An act may make what its own seat may not see: that op goes back withheld, as it would on a poll.
-        return send(200, { ops: wire.shown(author, result.ops), batch: result.batch, ...answering });
-      } catch (error) {
-        const { sentence, ...why } = refusalOf(error);
-        return send(409, { error: sentence, refused: true, ...why, ...answering });
-      }
+      return answered(await serving.protocol.post(text, await asked("api")));
     }
 
     return send(404, { error: `Nothing at ${url.pathname}`, reason: "missing" });

@@ -31,7 +31,7 @@ export type { Limit, LimitAnswer, LimitAsked, LiveClientMessage, LiveConnection,
 export { createStoreHandler, presenceSeenBy } from "./handler.js";
 export type { AdapterStoreHandlerOptions, DeclarationChange, HeldStoreHandlerOptions, StoreHandler, StoreHandlerOptions } from "./handler.js";
 export { announcePresence, authoredBy, isClientBatch, liveProtocol, presenceFrom, serverBatchIds, visitorPresence } from "./live-protocol.js";
-export type { BatchClaim, LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState } from "./live-protocol.js";
+export type { BatchClaim, LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState, WireAnswer, WireAsked } from "./live-protocol.js";
 export { SEAT_HEADERS, seatFromHeaders, serveStore, WIRE } from "./serve.js";
 export type { ServeOptions, ServedStore } from "./serve.js";
 export { backendFrom, serve, SERVE_USAGE, syncSeed } from "./cli.js";

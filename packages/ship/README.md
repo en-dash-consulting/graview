@@ -156,6 +156,24 @@ if (landed) live.publish(landed, otherPeers); // each as its own seat sees them,
 
 `connect()` is this protocol with the state in memory, so there is one implementation.
 
+**A host that routes its own requests** answers the routes with meaning through the same
+protocol, so it keeps what `createStoreHandler` does — a batch sent again answered once, a
+stale write a conflict, its `limit`, a refusal's reason, the ops as the seat may see them:
+
+```ts
+// POST /graview/ops, in the host's own router, after it has said who is asking:
+const { status, body, headers, landed } = await live.post(await request.text(), { seat, via: "api" });
+if (landed) live.publish(landed, peers);
+return Response.json(body, { status, headers });
+// GET /graview/state and /graview/since?seq=N, as the seat sees them:
+live.state({ seat, via: "api" });
+live.since(seq, { seat, via: "api" });
+```
+
+`post` answers a `WireAnswer` — `{ status, body, headers }` — and is the handler's
+`POST /graview/ops`: the handler calls it, so the two answer every body the same. `WireAsked`
+is who asks, `{ seat, via, build? }`.
+
 **Who is here is the server's to say.** A presence carries its `kind`, a display `name`
 and, for an agent, `onBehalfOf` (the person's id) and `onBehalfOfName`, all built from the
 seat by `presenceFrom`; a client's own claim of any of them, or of another key, is not read.
