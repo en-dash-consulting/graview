@@ -1,4 +1,4 @@
-import { createMemoryAdapter, createSchema, defineApp, defineMutation, defineNode, nodeRef, type Presence, type Principal } from "@graview/core";
+import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, nodeRef, type Presence, type Principal } from "@graview/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createStoreHandler, openRemote, seatHeaders, type LiveSocketLike, type RemoteStatus, type RemoteStore, type StoreHandler } from "../../src/index.js";
@@ -20,6 +20,8 @@ const task = defineNode("task", {
   plural: "Tasks",
   label: (node) => node.label,
 });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
 const rename = defineMutation("rename", {
   title: "Rename",
   subject: { kinds: ["task"], arg: "id" },
@@ -30,7 +32,6 @@ const rename = defineMutation("rename", {
     ctx.patchNode(args.id, { label: args.label });
   },
 });
-const schema = createSchema([task]);
 const app = defineApp({
   name: "observed",
   schema,
@@ -280,15 +281,15 @@ describe("a live client a host can observe", () => {
         batch: string;
         error?: string;
       };
-    const call = { calls: [{ name: "rename", args: { id: "t1", label: "Book the big hall" } }], batch: "local-x-1", base: [{ node: "t1", field: "label", rev: -1 }] };
+    const call = { calls: [{ name: "rename", args: { id: "t1", label: "Book the big hall" } }], batch: "batch:samtab:1", base: [{ node: "t1", field: "label", rev: -1 }] };
     const first = await post(call);
     const again = await post(call);
     expect(again.error).toBeUndefined();
     expect(again).toEqual(first);
-    expect(first.batch).toBe("local-x-1");
+    expect(first.batch).toBe("batch:samtab:1");
     expect(handler.store.log.length).toBe(1);
 
-    const undo = { undo: ["local-x-1"], batch: "local-x-2" };
+    const undo = { undo: ["batch:samtab:1"], batch: "undo:samtab:2" };
     const undone = await post(undo);
     expect(await post(undo)).toEqual(undone);
     expect(handler.store.log.length).toBe(2);

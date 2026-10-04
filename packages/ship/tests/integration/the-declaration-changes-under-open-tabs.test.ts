@@ -173,7 +173,7 @@ describe("the declaration changes under open tabs", () => {
     two.tab.holdUp = true;
     two.remote.store.apply({ name: "rename", args: { id: "t2", label: "Pay it today" } });
     two.remote.store.apply({ name: "annotate", args: { id: "t1", note: "Ask about chairs" } });
-    expect((two.remote.store.graph.getNode("t2") as { label: string }).label).toBe("Pay it today");
+    expect(two.remote.store.graph.getNode("t2")?.label).toBe("Pay it today");
 
     // The host adds a field. Every socket is told.
     one.tab.dropAcks = false;
@@ -209,14 +209,15 @@ describe("the declaration changes under open tabs", () => {
     // Sam's had already landed: it is not made a second time.
     expect(handler.store.log.all().filter((op) => op.intent === "Rename to “Book the big hall”")).toHaveLength(1);
     expect(one.refusals).toEqual([]);
-    // Both tabs agree with the server, op for op.
+    // Both tabs agree with the server, op for op — each told of the other's change once it was written.
     const ids = (store: { log: { all(): readonly { id: string }[] } }) => store.log.all().map((op) => op.id);
+    await until(() => [one, two].every((tab) => ids(tab.next.remote!.store).join() === ids(handler.store).join()));
     expect(ids(one.next.remote!.store)).toEqual(ids(handler.store));
     expect(ids(two.next.remote!.store)).toEqual(ids(handler.store));
 
     // And the new stores are live: a change on one reaches the other.
     one.next.remote!.store.apply({ name: "rename", args: { id: "t1", label: "Book the church hall" } });
-    await until(() => (two.next.remote!.store.graph.getNode("t1") as { label: string }).label === "Book the church hall");
+    await until(() => two.next.remote!.store.graph.getNode("t1")?.label === "Book the church hall");
     // Where Sam stands came across with him; letting the old store go does not say he left.
     const who = async () => ((await (await handler.handle(new Request("http://store.example/graview/who", { headers: seatHeaders(ana) }))).json()) as { who: { participant: string }[] }).who.map((presence) => presence.participant);
     one.remote.close();

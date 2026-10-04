@@ -1,5 +1,8 @@
 import {
+  argumentWords,
   FieldRevisions,
+  InvalidArguments,
+  UnknownMutationError,
   hidesFrom,
   hueFor,
   isUnset,
@@ -7,6 +10,7 @@ import {
   participantKey,
   redact,
   seatLens,
+  sha256Hex,
   seenBy,
   seesId,
   refusalOf,
@@ -21,8 +25,9 @@ import {
   type Presence,
   type Principal,
   type Store,
+  type WireRefusal,
 } from "@graview/core";
-import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LiveClientMessage, type LiveServerMessage } from "./live.js";
+import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LimitAnswer, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 
 /**
  * THE LIVE WIRE AS FUNCTIONS OVER STATE THE HOST HOLDS (FR-41, FR-42).
@@ -51,8 +56,14 @@ import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LiveClientMessag
  * hibernating host can promise.
  */
 export interface LiveSocketState {
-  /** Who this socket is: read once, from its upgrade, by the host's `seatOf`. */
-  readonly seat: Principal;
+  /**
+   * Who this socket is: read once, from its upgrade, by the host's `seatOf`
+   * — the principal itself, or a host's key for it (a string), which the
+   * protocol's `seatOf` resolves on every message. A key keeps the state
+   * small: a seat with fifty roles is most of a Durable Object's 2,048-byte
+   * attachment on its own.
+   */
+  readonly seat: Principal | string;
   /** What its calls come through, recorded on every op they make: the host's word, never the client's (FR-52). */
   readonly via: string;
   /** The last seq this socket has been sent. Absent until it says hello: a call before that is refused. */
@@ -66,12 +77,33 @@ export interface LiveSocketState {
   /** The build its hello said it runs (FR-44): the client's word, kept for the host to count, never judged. */
   build?: string;
   /**
+   * THE HOST'S BUILD THIS SOCKET IS SERVED BY (FR-44), said at `open` —
+   * for a host that learns it per upgrade, as a worker carrying the socket
+   * says which shell it serves. Said in the welcome over the protocol's
+   * own `build`.
+   */
+  readonly hostBuild?: string;
+  /**
    * The call this socket was told is busy (FR-45), and when (epoch ms) it
    * may come again. Every other call is busy too until it does, so nothing
    * made after it overtakes it.
    */
   held?: { readonly cid: string; readonly until: number };
 }
+
+/**
+ * A SOCKET AS A HOST'S JUDGEMENT IS HANDED IT (`build`, `viaOf`): its
+ * seat resolved to the principal, its channel, and the host's build it
+ * was opened under.
+ */
+export interface ServedSocket {
+  readonly seat: Principal;
+  readonly via: string;
+  readonly hostBuild?: string;
+}
+
+/** The longest `cid` a socket's call or undo may name: it is kept in `held` while the call is busy. */
+const MAX_CID = 64;
 
 /** A socket as the protocol is handed it: its state, and a way to send it text. */
 export interface LivePeer extends LiveSocketState {
@@ -95,14 +127,90 @@ export interface LiveReceived {
 export interface LiveProtocolOptions<S extends AnySchema> {
   /** The store the wire serves: the host's own (FR-42). */
   readonly store: Store<S>;
-  /** The declaration's version, said in a welcome's state. 1 when unsaid. */
+  /**
+   * THE DECLARATION'S VERSION (FR-43): the host's own monotonic number for
+   * the declaration it serves — `app.version`, or a host's document version
+   * (Graview Cloud's `documentVersion`) — said in every welcome, in the
+   * state, on every route's answer, and in the `declaration` push. A client
+   * hands it to its `resolveApp(version)` to get the app at that version,
+   * so it names one declaration and only ever grows. A `declaration` push,
+   * or a welcome, with the number the client already serves is ignored:
+   * nothing reopens. 1 when unsaid.
+   */
   readonly version?: number;
   /** What opening the store migrated, said in a welcome's state. */
   readonly migrated?: readonly string[];
-  /** Resolves once what landed is durable: an ack waits for it. */
-  readonly flush?: () => Promise<void>;
-  /** The host's build, an opaque string said in every welcome (FR-44): a client on another one is told once and keeps working. */
-  readonly build?: string;
+  /**
+   * MAKES WHAT LANDED DURABLE: an ack, and a post's answer, wait for it.
+   * Handed every op the protocol landed that is not durable yet, in seq
+   * order — the ones that just landed, after any a failed flush left — so
+   * a host that writes ops (a ledger) writes exactly these. Flushes run one
+   * at a time. One that rejects is not silence: the client is refused
+   * `unavailable` in words and keeps the change, the socket's cursor does
+   * not move, and the ops stay in the store but are held back from every
+   * socket until a later flush holds them — the change sent again, or the
+   * next one, which is handed them first. So a change sent again after a
+   * failed flush is never made twice, and never acked before it is durable.
+   * A flush may be handed an op again after it rejected: one it already
+   * holds, it skips.
+   */
+  readonly flush?: (landed: readonly Operation[]) => Promise<void>;
+  /**
+   * The host's build, an opaque string said in every welcome (FR-44): a
+   * client on another one is told once and keeps working. One string for
+   * every socket, or a function of the socket for a host whose build
+   * differs per upgrade; a socket opened with its own (`open(seat, via,
+   * { build })`) is welcomed with that. A route answers with its request's
+   * `build`, else this.
+   */
+  readonly build?: string | ((peer: ServedSocket) => string | undefined);
+  /**
+   * THE KEY A WITHHELD OP'S OPAQUE BATCH IS MINTED UNDER. A withheld op is
+   * served under `withheld:<16 hex>`, a keyed hash of its batch, so a seat
+   * cannot tell which session made a change it may not see. Without one,
+   * a key is drawn once per store held — the same opaque batch on every
+   * route and socket over that store, until a host that wakes holds a new
+   * one; a host that wants it the same across wakes gives a secret of its
+   * own, never sent to a client.
+   */
+  readonly withheldKey?: string;
+  /**
+   * THE LOWEST HOST PROTOCOL SERVED (FR-44): the host's own number for its
+   * half of the wire — its routing, its auth, its shell — beside ship's
+   * `WIRE_PROTOCOL`, which a host does not move. A hello whose
+   * `hostProtocol` is below it (absent is 0) is answered `reload` with
+   * `hostProtocol` and nothing else, so the page reloads onto a build that
+   * speaks it, carrying its unsent calls (`openRemote({ hostProtocol })`).
+   */
+  readonly minHostProtocol?: number;
+  /**
+   * WHAT A CHANGE CAME THROUGH, WHEN THE CLIENT CLAIMS IT (FR-52). A call
+   * or an undo may carry `via` — `openRemote` sends the one a call was
+   * applied with, as a guest view's `view:<name>` — and this judges it:
+   * handed the socket (or the route's `WireAsked`) and the claim, it
+   * answers the via to record. Asked of every change, with `claimed`
+   * undefined when there is none; answering nothing records the host's
+   * own. Absent, a claim is never read: what a change came through is the
+   * host's word, and a browser could otherwise record its edit as Claude's.
+   */
+  readonly viaOf?: (peer: ServedSocket, claimed: string | undefined) => string | undefined;
+  /**
+   * THE SEAT A HOST'S KEY NAMES. A socket opened with a key —
+   * `open("user:6b3f…", "web")` — keeps only the key in its state, and is
+   * judged on every message as the principal this answers. Answering
+   * nothing, the socket is told its seat is no longer known and is served
+   * nothing more. Called at most once per key in one `publish` or `tell`.
+   */
+  readonly seatOf?: (key: string) => Principal | undefined;
+  /**
+   * A REFUSAL IN THE HOST'S WORDS (FR-46). Handed what the store threw, the
+   * calls that were refused and the socket (or the route's asker), it
+   * answers the refusal to send — reason, sentence, `wouldNeed` — or
+   * nothing for ship's own: invalid arguments said field by field in the
+   * form's words, an act the app does not have named as the seat named it
+   * and no other, and the policy's sentence as the policy said it.
+   */
+  readonly refusal?: (error: unknown, calls: readonly MutationCall[], peer: ServedSocket) => WireRefusal | undefined;
   /**
    * THE LOWEST PROTOCOL SERVED (FR-44). A hello on an older one is answered
    * `reload` and nothing else: its calls are refused until it says hello
@@ -119,8 +227,12 @@ export interface LiveProtocolOptions<S extends AnySchema> {
 
 export interface LiveProtocol<S extends AnySchema> {
   readonly store: Store<S>;
-  /** The state a socket starts with: its seat and its channel, and no cursor until it says hello. */
-  open(seat: Principal, via: string): LiveSocketState;
+  /**
+   * The state a socket starts with: its seat and its channel, and no
+   * cursor until it says hello — and the host's `build` for this socket,
+   * when the host learns it per upgrade.
+   */
+  open(seat: Principal | string, via: string, options?: { readonly build?: string }): LiveSocketState;
   /**
    * Hand it one message the client sent. It answers down `peer.send`,
    * moves `peer.cursor` (and `peer.participant`) as it goes, and says what
@@ -131,17 +243,47 @@ export interface LiveProtocol<S extends AnySchema> {
    * the one before has resolved. A host that publishes while a receive
    * awaits its flush reads the cursor off the same peer object, or
    * leaves the receiving socket out: its ops reach it in the ack.
+   *
+   * `landed` is what became durable: the call's ops, and any a failed
+   * flush had held back before them. When the flush fails, nothing has:
+   * `landed` is absent, the cursor is where it was, and the client was
+   * refused `unavailable`.
    */
   receive(peer: LivePeer, text: string, who?: readonly Presence[]): Promise<LiveReceived>;
   /**
    * Ops that landed, down every socket that has said hello and has not had
    * them, each as its own seat may see them (FR-02, FR-16): in seq order,
    * none skipped, caught up from the peer's own cursor. Sets each peer's
-   * cursor; the host keeps it.
+   * cursor; the host keeps it. Each seat's view is made once however many
+   * sockets it holds: its key resolved once, each run of ops redacted and
+   * written once.
    */
   publish(ops: readonly Operation[], peers: Iterable<LivePeer>): void;
   /** Who is here, told to every socket that has said hello: as its seat may be told it, and without itself. */
   tell(who: readonly Presence[], peers: Iterable<LivePeer>): void;
+  /**
+   * `POST /graview/ops`, FOR A HOST THAT ROUTES ITS OWN REQUESTS. Hand it
+   * the request's body as text and who is asking; it answers the status,
+   * the JSON body and the headers to send, exactly as `createStoreHandler`
+   * answers the route — which is this — and `landed`, the ops it put in
+   * the store, unredacted, for the host to `publish` to its sockets:
+   *
+   * - a batch the asking seat already landed: 200 with the ops it made;
+   *   somebody else's, or not a client's shape: 409, `invalid`;
+   * - the host's `limit`: 429 with `Retry-After` (busy), 413 `limit`,
+   *   503 `unavailable`;
+   * - a field that moved since the call's `base`: 409 with `conflict`;
+   * - refused by the store: 409 with its sentence and `reason`;
+   * - landed: 200 with the ops as the seat may see them, once `flush`
+   *   says they are durable.
+   *
+   * Every answer but busy says the declaration `version` and the `build`.
+   */
+  post(body: string, asked: WireAsked): Promise<WireAnswer & { readonly landed?: readonly Operation[] }>;
+  /** `GET /graview/state`: the store as the asking seat sees it — snapshot, log, migrations, modules, horizon. */
+  state(asked: WireAsked): WireAnswer;
+  /** `GET /graview/since?seq=N`: the ops after `seq`, as the asking seat sees them. */
+  since(seq: number, asked: WireAsked): WireAnswer;
   /**
    * THE DECLARATION CHANGED (FR-43), and this protocol is the one over the
    * store migrated to it. Every socket that has said hello is told
@@ -151,6 +293,74 @@ export interface LiveProtocol<S extends AnySchema> {
    * cursors as it keeps them after `receive`.
    */
   declared(peers: Iterable<LivePeer>): void;
+}
+
+/**
+ * WHO ASKS A ROUTE, as the host's own routing says it: the seat its
+ * credential names, what the request came through (FR-52), and — for a
+ * host whose build differs per request — the build that answers it (FR-44).
+ */
+export interface WireAsked {
+  readonly seat: Principal;
+  readonly via: string;
+  /** The host's build answering this request; the protocol's `build` when absent. */
+  readonly build?: string;
+}
+
+/** A route's answer, for the host to send: a status, a JSON body, and the headers that carry meaning (`Retry-After`). */
+export interface WireAnswer {
+  readonly status: number;
+  readonly body: Readonly<Record<string, unknown>>;
+  readonly headers: Readonly<Record<string, string>>;
+}
+
+/** A change as both the socket and `POST /graview/ops` ask for one. */
+interface Change {
+  readonly t: "call" | "undo";
+  readonly calls: readonly MutationCall[];
+  readonly batches: readonly string[];
+  readonly intent: string | undefined;
+  readonly batch: unknown;
+  readonly base: unknown;
+  /** The via the client claimed, for the host's `viaOf` to judge; never read without one. */
+  readonly claimed: string | undefined;
+}
+
+/** What judging a change came to: a stale write, a refusal, or the ops it landed in the store. */
+type Landing =
+  | { readonly conflicts: readonly FieldConflict[]; readonly refusal?: undefined; readonly result?: undefined }
+  | { readonly refusal: WireRefusal; readonly conflicts?: undefined; readonly result?: undefined }
+  | {
+      readonly result: { readonly ops: readonly Operation[]; readonly batch: string };
+      /** What the flush made durable — these ops, and any a failed flush left — or nothing: it failed, and they are held back. */
+      readonly saved: readonly Operation[] | undefined;
+      readonly conflicts?: undefined;
+      readonly refusal?: undefined;
+    };
+
+/** A client's claim of what its change came through: a short string, or none. */
+const claimOfVia = (via: unknown): string | undefined => (typeof via === "string" && via.length > 0 ? via.slice(0, 64) : undefined);
+
+/**
+ * A STORE'S REFUSAL, SAID TO A PERSON (FR-46). The store's own sentences
+ * were written for a developer: `Invalid arguments for mutation "add"
+ * label: Too small…`, and an unknown act listed every act the app has.
+ * Arguments are said field by field in the words the form asked in, and
+ * an unknown act by the name the call gave; anything else is the
+ * refusal's own sentence, the policy's among them.
+ */
+export function wireRefusalOf(store: Store<AnySchema>, error: unknown): WireRefusal {
+  const refusal = refusalOf(error);
+  if (error instanceof UnknownMutationError) return { ...refusal, sentence: `This app has no act called “${error.mutation}”.` };
+  if (error instanceof InvalidArguments) {
+    const mutation = store.allMutations().find((one) => one.name === error.mutation);
+    const said = error.issues.map((issue) => {
+      const message = issue.message.replace(/^./, (first) => first.toLowerCase());
+      return issue.path.length > 0 ? `${argumentWords(store.schema, mutation, String(issue.path[0])).label} — ${message}` : message;
+    });
+    return { ...refusal, sentence: `“${mutation?.title ?? error.mutation}” was not made: ${said.join("; ")}.` };
+  }
+  return refusal;
 }
 
 /** For whom an author acts, as a presence says it: the person's id and name, or nothing. */
@@ -244,6 +454,59 @@ export function presenceSeenBy(who: readonly Presence[], sees: (id: string) => b
 }
 
 /**
+ * THE SHAPE OF A BATCH A CLIENT NAMES: what a `Store` mints by default,
+ * `batch:<tag>:<n>` for a change and `undo:<tag>:<n>` for a take-back,
+ * the tag 1–24 lowercase letters and digits and `n` up to 12 digits. A
+ * client names the batch its call lands in, so a call sent twice is
+ * answered once (FR-49) — and anything else a client names is refused
+ * `invalid`, so it cannot claim a batch the host mints for itself
+ * (`setup`, `migration:v2`) before the host does.
+ */
+const CLIENT_BATCH = /^(?:batch|undo):[0-9a-z]{1,24}:[0-9]{1,12}$/;
+
+/** Whether a client may name this batch: `batch:<tag>:<n>` or `undo:<tag>:<n>`, as a `Store` mints them. */
+export function isClientBatch(batch: unknown): batch is string {
+  return typeof batch === "string" && CLIENT_BATCH.test(batch);
+}
+
+/** A tag for one minter, from the platform's random source. */
+const mintTag = (): string => globalThis.crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+
+/**
+ * BATCH IDS NO CLIENT CAN NAME FIRST: `served:<kind>:<tag>:<n>`, outside
+ * the shape `isClientBatch` accepts. Hand it to the host's own store —
+ * `new Store({ batchIds: serverBatchIds() })`, or `openStore`'s
+ * `storeOptions` — so what the host lands itself (an agent's RPC, a
+ * migration, a seed) is in a batch no client could have claimed.
+ * `createStoreHandler` mints its own this way, and `liveProtocol` mints
+ * one for a call that names none.
+ */
+export function serverBatchIds(): (kind: "batch" | "undo") => string {
+  const tag = mintTag();
+  let count = 0;
+  return (kind) => `served:${kind}:${tag}:${++count}`;
+}
+
+/**
+ * THE SAME SEAT. An op is the asking seat's own when its author is the
+ * same kind and id — and, for an agent, acts for the same person: Claude
+ * for Ada is not Claude for Bo.
+ */
+export function authoredBy(author: Author, seat: Principal): boolean {
+  if (author.kind !== seat.kind || (author.id ?? "") !== (seat.id ?? "")) return false;
+  return seat.kind !== "agent" || (author.onBehalfOf?.id ?? "") === (seat.onBehalfOf?.id ?? "");
+}
+
+/**
+ * WHAT A BATCH A CHANGE NAMES IS: answered already (`answered`, the ops it
+ * made), refused (`refusal`), or free to land in (neither).
+ */
+export type BatchClaim =
+  | { readonly answered: readonly Operation[]; readonly refusal?: undefined }
+  | { readonly refusal: WireRefusal; readonly answered?: undefined }
+  | { readonly answered?: undefined; readonly refusal?: undefined };
+
+/**
  * THE STORE AS EACH SEAT SEES IT, on the wire — shared by the HTTP routes
  * and the socket, so the two can never disagree. Internal: everything in
  * it is derived from the store, and kept only to save reading the log
@@ -261,31 +524,94 @@ export interface Wire<S extends AnySchema> {
   since(principal: Principal, seq: number): Operation[];
   /** The store as the seat sees it. */
   seenFor(principal: Principal): Store<S>;
+  /** The store's log as the seat sees it: every op in place, withheld ones under an opaque batch. */
+  seenLog(principal: Principal): Operation[];
   whoFor(principal: Principal, who: readonly Presence[]): Presence[];
   /** The fields a call would write that moved since the caller's base: a stale write (FR-05). */
   conflictsOf(author: Principal, calls: readonly MutationCall[], base: unknown): FieldConflict[];
   /**
-   * SENT TWICE, ANSWERED ONCE: the ops already in the log under the batch a
-   * call or an undo names, or none. A client that never heard the answer
-   * sends again under the same batch — down the socket or over HTTP — and
-   * is answered with what it made the first time (FR-49).
+   * SENT TWICE, ANSWERED ONCE: what the batch a call or an undo names is,
+   * for the seat that names it. A client that never heard the answer sends
+   * again under the same batch — down the socket or over HTTP — and is
+   * answered with what it made the first time (FR-49): only ever its own
+   * ops. A batch that holds somebody else's, or one a client may not name
+   * (`isClientBatch`), is refused `invalid`.
    */
-  answered(batch: unknown): Operation[];
+  claim(batch: unknown, seat: Principal): BatchClaim;
   /** `{ horizon }` when the log was compacted (FR-23); nothing otherwise. */
   horizonOf(): { horizon?: number };
   enabledModules(): string[];
 }
 
-export function wireOf<S extends AnySchema>(store: Store<S>): Wire<S> {
+/**
+ * THE KEY A STORE'S WITHHELD BATCHES ARE MINTED UNDER, when the host gives
+ * none: drawn once per store held, so every route and socket over one
+ * store says the same opaque batch for one batch.
+ */
+const WITHHELD_KEYS = new WeakMap<object, string>();
+
+export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: string): Wire<S> {
   const sighted = (principal: Principal): boolean => hidesFrom(store, principal);
-  // Withheld in place (FR-16), and no id the seat may not see in any of them (FR-55).
-  const shown = (principal: Principal, ops: readonly Operation[]): Operation[] => (sighted(principal) ? redact(ops, seatLens(store, principal)) : [...ops]);
+  /*
+   * A WITHHELD OP SAYS NOBODY'S SESSION. Its batch is the one its author's
+   * client minted — `batch:<that browser's tag>:<n>` — which would tell a
+   * seat that may not see the change which session made it, and link it to
+   * the changes it may see. So it is served under `withheld:<16 hex>`, a
+   * keyed SHA-256 of the batch: the same for every op of one batch, and not
+   * one a seat can work back from, the key never leaving the server. The
+   * seat that made it is served its own.
+   */
+  let key = withheldKey;
+  if (key === undefined) {
+    key = WITHHELD_KEYS.get(store) ?? mintTag() + mintTag();
+    WITHHELD_KEYS.set(store, key);
+  }
+  const opaque = new Map<string, string>();
+  const opaqueBatch = (batch: string): string => {
+    let said = opaque.get(batch);
+    if (said === undefined) {
+      said = `withheld:${sha256Hex(`${key}\u0000${batch}`).slice(0, 16)}`;
+      opaque.set(batch, said);
+    }
+    return said;
+  };
+  const unattributed = (principal: Principal, served: readonly Operation[], authorOf: (op: Operation, at: number) => Author | undefined): Operation[] =>
+    served.map((op, at) => {
+      if (!op.withheld) return op;
+      const author = authorOf(op, at);
+      return author && authoredBy(author, principal) ? op : { ...op, batch: opaqueBatch(op.batch) };
+    });
+  // Withheld in place (FR-16), no id the seat may not see in any of them (FR-55), and no session it may not see.
+  const shown = (principal: Principal, ops: readonly Operation[]): Operation[] =>
+    sighted(principal) ? unattributed(principal, redact(ops, seatLens(store, principal)), (_op, at) => ops[at]?.author) : [...ops];
   /*
    * EVERY FIELD'S REVISION (FR-05): the seq of the op that last wrote it,
    * read off the log once and caught up from wherever the log has grown
    * to since — no subscription, so nothing here goes stale while a host
    * sleeps, and a host that made this again reads the same revisions.
    */
+  /*
+   * WHO EACH CLIENT TAG IS: the author of the first op landed under it,
+   * read off the log once and caught up as it grows — derived, so a host
+   * that wakes reads the same owners the sleeper had.
+   */
+  const owners = new Map<string, Author>();
+  const own = (ops: readonly Operation[]): void => {
+    for (const op of ops) {
+      if (!isClientBatch(op.batch)) continue;
+      const tag = op.batch.split(":")[1]!;
+      if (!owners.has(tag)) owners.set(tag, op.author);
+    }
+  };
+  own(store.log.all());
+  let owned = store.log.length;
+  const tagOwner = (tag: string): Author | undefined => {
+    if (store.log.length > owned) {
+      own(store.log.opsFrom(owned));
+      owned = store.log.length;
+    }
+    return owners.get(tag);
+  };
   const revisions = FieldRevisions.of(store.log.all());
   let noted = store.log.length;
   const current = (): FieldRevisions => {
@@ -302,13 +628,49 @@ export function wireOf<S extends AnySchema>(store: Store<S>): Wire<S> {
     shown,
     since: (principal, seq) => shown(principal, store.log.opsFrom(Math.max(0, Math.floor(seq) + 1))),
     seenFor: (principal) => seenBy(store, principal),
+    seenLog(principal) {
+      const log = seenBy(store, principal).log.all();
+      if (!sighted(principal)) return [...log];
+      const authors = new Map(store.log.all().map((op) => [op.id, op.author] as const));
+      return unattributed(principal, log, (op) => authors.get(op.id));
+    },
     whoFor: (principal, who) => {
       // A visitor whose announced time has passed is never told of, though a host may still hold it.
       const now = Date.now();
       const standing = who.filter((presence) => presence.until === undefined || now < Date.parse(presence.until));
       return sighted(principal) ? presenceSeenBy(standing, seesId(store, principal)) : standing;
     },
-    answered: (batch) => (typeof batch === "string" && batch.length > 0 ? store.log.all().filter((op) => op.batch === batch) : []),
+    claim(batch, seat) {
+      if (batch === undefined || batch === null || batch === "") return {};
+      if (!isClientBatch(batch)) {
+        const said = typeof batch === "string" ? `“${batch.length > 40 ? `${batch.slice(0, 37)}…` : batch}”` : "a batch that is not a string";
+        return {
+          refusal: {
+            reason: "invalid",
+            sentence: `A client names its batch batch:<tag>:<n> or undo:<tag>:<n>, as a Store mints it; ${said} is not one. Send the change without a batch, or under one this client minted.`,
+          },
+        };
+      }
+      /*
+       * A TAG IS THE FIRST SEAT'S. A client's tag is in every op it lands,
+       * so a batch it has not sent yet — `batch:<tag>:<n+1>` — could be
+       * named first by anybody who saw one. The store's own minting tag is
+       * nobody's to name: what the host lands later would join it.
+       */
+      const tag = batch.split(":")[1]!;
+      if (tag === store.batchTag) {
+        return { refusal: { reason: "invalid", sentence: "That batch is under the server's own tag: send the change under a batch this client minted." } };
+      }
+      const owner = tagOwner(tag);
+      if (owner && !authoredBy(owner, seat)) {
+        return { refusal: { reason: "invalid", sentence: "That batch is under somebody else's tag: send the change under a batch this client minted." } };
+      }
+      const ops = store.log.all().filter((op) => op.batch === batch);
+      if (ops.some((op) => !authoredBy(op.author, seat))) {
+        return { refusal: { reason: "invalid", sentence: "That batch is somebody else's: send the change under a batch this client minted." } };
+      }
+      return ops.length > 0 ? { answered: ops } : {};
+    },
     horizonOf: () => (store.log.horizon > 0 ? { horizon: store.log.horizon } : {}),
     enabledModules: () => [...store.modules.enabled].sort(),
     conflictsOf(author, calls, base) {
@@ -359,13 +721,28 @@ export function wireOf<S extends AnySchema>(store: Store<S>): Wire<S> {
   };
 }
 
-const say = (peer: LivePeer, message: LiveServerMessage): void => {
+const say = (peer: LivePeer, message: LiveServerMessage): void => sayText(peer, JSON.stringify(message));
+const sayText = (peer: LivePeer, text: string): void => {
   try {
-    peer.send(JSON.stringify(message));
+    peer.send(text);
   } catch {
     // A socket that cannot be written to is closing; its close is what forgets it.
   }
 };
+
+/**
+ * ONE PUBLISH, SEEN ONCE PER SEAT. Fifty sockets of five seats are five
+ * views, not fifty: each seat's key is resolved once and each run of ops
+ * is redacted and written once per seat, then sent down every socket that
+ * seat holds. Made for one `publish` or `tell` and thrown away after it.
+ */
+interface Sight {
+  readonly seats: Map<string, Principal | undefined>;
+  readonly texts: Map<string, string>;
+}
+const aSight = (): Sight => ({ seats: new Map(), texts: new Map() });
+/** What a socket's seat is, as a key a sight is kept under: a host's key, or the principal written out. */
+const seatKeyOf = (peer: Pick<LiveSocketState, "seat">): string => (typeof peer.seat === "string" ? `key:${peer.seat}` : `seat:${JSON.stringify(peer.seat)}`);
 
 /**
  * THE PROTOCOL OVER A STORE. Cheap to make, and safe to make again on
@@ -373,61 +750,203 @@ const say = (peer: LivePeer, message: LiveServerMessage): void => {
  */
 export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S>): LiveProtocol<S> {
   const { store } = options;
-  const wire = wireOf(store);
+  const wire = wireOf(store, options.withheldKey);
+  /** A call that names no batch lands in one minted here, outside the shape a client may name. */
+  const mintServed = serverBatchIds();
 
-  /** Every op this socket has not been sent, down it now, as its seat sees them. */
-  const catchUp = (peer: LivePeer, ops?: readonly Operation[]): void => {
-    if (peer.cursor === undefined) return;
-    const last = wire.lastSeq();
-    if (peer.cursor >= last) return;
-    const from = peer.cursor + 1;
-    // The ops handed in, when they are the whole of what this peer is missing; the log otherwise.
-    const after = ops && ops.length > 0 && ops[0]!.seq <= from && ops.at(-1)!.seq === last ? ops.filter((op) => op.seq >= from) : store.log.opsFrom(from);
-    peer.cursor = last;
-    if (after.length > 0) say(peer, { t: "ops", seq: last, ops: wire.shown(peer.seat, after) });
+  /**
+   * OPS THAT LANDED AND ARE NOT DURABLE: a flush rejected them. Held back
+   * from every socket — nothing is sent past the first of them, so none is
+   * skipped — until a flush holds them. Derived: a host that wakes makes
+   * its store again from what is durable, where none of them is.
+   */
+  let unsaved: Operation[] = [];
+  /**
+   * OPS THAT LANDED AND ARE BEING FLUSHED: held back from every socket like
+   * the unsaved ones, so a change anybody else hears is a change that is
+   * written. Only with a `flush`: a host without one pushes at once.
+   */
+  let flying: Operation[] = [];
+  /** While the store takes a change (its subscribers hear it then): the seq its ops begin at, held back like the rest. */
+  let taking: number | undefined;
+  let flushing: Promise<unknown> = Promise.resolve();
+  /** The first seq held back from every socket — not durable, or not yet — before `before`, when one is. */
+  const heldFrom = (before = Number.POSITIVE_INFINITY): number | undefined => {
+    let first: number | undefined = taking !== undefined && taking < before ? taking : undefined;
+    for (const op of [...unsaved, ...flying]) if (op.seq < before && (first === undefined || op.seq < first)) first = op.seq;
+    return first;
   };
-
-  /** A call or an undo from a socket: judged as its seat, exactly as `POST /graview/ops` judges it. */
-  const answer = async (peer: LivePeer, message: Extract<LiveClientMessage, { t: "call" | "undo" }>): Promise<LiveReceived> => {
-    const cid = typeof message.cid === "string" ? message.cid : "";
-    const author = peer.seat;
-    const intent = typeof message.intent === "string" && message.intent.length > 0 ? message.intent : undefined;
-    const batch = typeof message.batch === "string" && message.batch.length > 0 ? message.batch : undefined;
-    catchUp(peer);
-    // A client that lost its socket before the ack sends the call again under the same batch: `answered` says what it made.
-    const already = wire.answered(batch);
-    if (already.length > 0) {
-      say(peer, { t: "ack", cid, seq: already.at(-1)!.seq, batch: batch!, ops: wire.shown(author, already) });
-      return { cursor: peer.cursor! };
-    }
-    const calls = message.t === "call" && Array.isArray(message.calls) ? message.calls : [];
-    if (message.t === "call") {
-      const conflicts = wire.conflictsOf(author, calls, message.base);
-      if (conflicts.length > 0) {
-        say(peer, { t: "conflict", cid, sentence: conflictSentence(conflicts), conflicts });
-        return { cursor: peer.cursor! };
+  /**
+   * THROUGH THE HOST'S FLUSH, ONE AT A TIME: `ops` and every op a failed
+   * flush left before them. Says whether they are durable now, and which
+   * ops became durable — for the host to publish.
+   */
+  const durable = (ops: readonly Operation[]): Promise<{ readonly saved: readonly Operation[] } | { readonly failed: true }> => {
+    const turn = flushing.then(async () => {
+      const ids = new Set(unsaved.map((op) => op.id));
+      const handing = [...unsaved, ...ops.filter((op) => !ids.has(op.id))].sort((a, b) => a.seq - b.seq);
+      const handed = new Set(handing.map((op) => op.id));
+      try {
+        await options.flush?.(handing);
+      } catch {
+        unsaved = handing;
+        flying = flying.filter((op) => !handed.has(op.id));
+        return { failed: true as const };
       }
+      unsaved = unsaved.filter((op) => !handed.has(op.id));
+      flying = flying.filter((op) => !handed.has(op.id));
+      return { saved: handing };
+    });
+    flushing = turn.catch(() => {});
+    return turn;
+  };
+  /** Whether any of these ops is not durable yet. */
+  const unsavedIn = (ops: readonly Operation[]): boolean => unsaved.length > 0 && ops.some((op) => unsaved.some((one) => one.id === op.id));
+  const UNSAVED = "Your change could not be saved just now. It is kept, and sent again until it is.";
+
+  /** The principal a socket is: its seat, or what the host's `seatOf` says its key names — once per key in one sight. */
+  const principalOf = (peer: Pick<LiveSocketState, "seat">, sight?: Sight): Principal | undefined => {
+    if (typeof peer.seat !== "string") return peer.seat;
+    if (!sight) return options.seatOf?.(peer.seat);
+    const key = seatKeyOf(peer);
+    if (!sight.seats.has(key)) sight.seats.set(key, options.seatOf?.(peer.seat));
+    return sight.seats.get(key);
+  };
+
+  /** The ops after this socket's cursor up to `last`, down it now, as its seat sees them — written once per seat and run in one sight. */
+  const sendUpTo = (peer: LivePeer, last: number, ops?: readonly Operation[], known?: Principal, sight?: Sight): void => {
+    if (peer.cursor === undefined || peer.cursor >= last) return;
+    const seat = known ?? principalOf(peer, sight);
+    if (!seat) return;
+    const from = peer.cursor + 1;
+    peer.cursor = last;
+    const key = sight ? `${seatKeyOf(peer)}\u0000${from}\u0000${last}` : undefined;
+    const kept = key !== undefined ? sight!.texts.get(key) : undefined;
+    if (kept !== undefined) {
+      if (kept.length > 0) sayText(peer, kept);
+      return;
     }
+    // The ops handed in, when they are the whole of what this peer is missing; the log otherwise.
+    const after = (ops && ops.length > 0 && ops[0]!.seq <= from && ops.at(-1)!.seq >= last ? ops.filter((op) => op.seq >= from) : store.log.opsFrom(from)).filter((op) => op.seq <= last);
+    const text = after.length > 0 ? JSON.stringify({ t: "ops", seq: last, ops: wire.shown(seat, after) } satisfies LiveServerMessage) : "";
+    if (key !== undefined) sight!.texts.set(key, text);
+    if (text.length > 0) sayText(peer, text);
+  };
+  /** Every op this socket has not been sent, down it now, as its seat sees them — up to the first that is not durable. */
+  const catchUp = (peer: LivePeer, ops?: readonly Operation[], known?: Principal, sight?: Sight): void => {
+    const held = heldFrom();
+    sendUpTo(peer, held === undefined ? wire.lastSeq() : Math.min(wire.lastSeq(), held - 1), ops, known, sight);
+  };
+
+  /** What the host's `limit` says of a change, before it is judged; nothing when it has none. */
+  const limitOf = async (seat: Principal, via: string, change: Change, bytes: number): Promise<LimitAnswer | undefined> =>
+    options.limit ? options.limit({ seat, via, t: change.t, bytes, calls: change.t === "call" ? change.calls : [] }) : undefined;
+
+  /**
+   * ONE CHANGE, JUDGED AS ITS SEAT — the socket's and `POST /graview/ops`'s
+   * alike, so the two can never disagree. A stale write is a conflict and
+   * nothing is written (FR-05); then through the store, under the seat and
+   * the host's channel (never the client's, FR-52), in the batch the client
+   * named or one minted here; then flushed. `applied` runs between the
+   * store taking it and the flush, for the socket to move its cursor.
+   */
+  const land = async (seat: Principal, via: string, change: Change, applied?: (ops: readonly Operation[]) => void): Promise<Landing> => {
+    if (change.t === "call") {
+      const conflicts = wire.conflictsOf(seat, change.calls, change.base);
+      if (conflicts.length > 0) return { conflicts };
+    }
+    const batch = typeof change.batch === "string" && change.batch.length > 0 ? change.batch : mintServed(change.t === "undo" ? "undo" : "batch");
     let result: { readonly ops: readonly Operation[]; readonly batch: string };
+    // A host that publishes from the store's own subscription does so inside the apply: hold from here.
+    if (options.flush) taking = wire.lastSeq() + 1;
     try {
-      // The channel is the seat's, as the host said it when the socket opened: a client's own `via` is never read (FR-52).
-      const applying = { author, via: peer.via, ...(intent ? { intent } : {}), ...(batch ? { batch } : {}) };
-      result = message.t === "undo" ? store.undo(Array.isArray(message.batches) ? message.batches : [], applying) : store.applyAll(calls, applying);
+      const applying = { author: seat, via, ...(change.intent ? { intent: change.intent } : {}), batch };
+      result = change.t === "undo" ? store.undo(change.batches, applying) : store.applyAll(change.calls, applying);
     } catch (error) {
-      say(peer, { t: "refused", cid, ...refusalOf(error) });
+      taking = undefined;
+      const worded = options.refusal?.(error, change.calls, { seat, via });
+      return { refusal: worded ?? wireRefusalOf(store as unknown as Store<AnySchema>, error) };
+    }
+    // Being written: nobody else hears it until it is (`heldFrom`).
+    if (options.flush) flying = [...flying, ...result.ops];
+    taking = undefined;
+    applied?.(result.ops);
+    const flushed = await durable(result.ops);
+    return { result, saved: "saved" in flushed ? flushed.saved : undefined };
+  };
+
+  /** A change as the socket's message says it. */
+  const changeOf = (message: Extract<LiveClientMessage, { t: "call" | "undo" }>): Change => ({
+    t: message.t,
+    calls: message.t === "call" && Array.isArray(message.calls) ? message.calls : [],
+    batches: message.t === "undo" && Array.isArray(message.batches) ? message.batches : [],
+    intent: typeof message.intent === "string" && message.intent.length > 0 ? message.intent : undefined,
+    batch: message.batch,
+    base: message.t === "call" ? message.base : undefined,
+    claimed: claimOfVia(message.via),
+  });
+
+  /** What a change came through: the host's word, or a claim its `viaOf` accepts (FR-52). */
+  const viaFor = (peer: ServedSocket, change: Change): string => {
+    const judged = options.viaOf?.(peer, change.claimed);
+    return typeof judged === "string" && judged.length > 0 ? judged : peer.via;
+  };
+
+  /** A call or an undo from a socket, past its claim and the host's limit: judged as its seat, exactly as `POST /graview/ops` judges it. */
+  const answer = async (peer: LivePeer, seat: Principal, cid: string, change: Change, via: string): Promise<LiveReceived> => {
+    catchUp(peer, undefined, seat);
+    const prior = peer.cursor!;
+    /*
+     * Every op before this call's went down this socket before it landed;
+     * its own go in the ack. Unless one before it is held back as not
+     * durable: then the cursor stays, and they go down after the flush.
+     */
+    const landing = await land(seat, via, change, (own) => {
+      if (own.length === 0 || heldFrom(own[0]!.seq) === undefined) peer.cursor = wire.lastSeq();
+    });
+    if (landing.conflicts) {
+      say(peer, { t: "conflict", cid, sentence: conflictSentence(landing.conflicts), conflicts: [...landing.conflicts] });
       return { cursor: peer.cursor! };
     }
-    // Every op before this call's went down this socket before it landed; its own go in the ack.
-    peer.cursor = wire.lastSeq();
-    const ops = wire.shown(author, result.ops);
-    await options.flush?.();
-    say(peer, { t: "ack", cid, seq: ops.at(-1)?.seq ?? peer.cursor, batch: result.batch, ops });
-    return { cursor: peer.cursor, landed: result.ops };
+    if (landing.refusal) {
+      say(peer, { t: "refused", cid, ...landing.refusal });
+      return { cursor: peer.cursor! };
+    }
+    const { result, saved } = landing;
+    if (!saved) {
+      // Not durable: refused `unavailable`, which the client keeps and sends again; nothing is acked and the cursor does not move.
+      peer.cursor = prior;
+      say(peer, { t: "refused", cid, reason: "unavailable", sentence: UNSAVED });
+      return { cursor: prior };
+    }
+    return acked(peer, seat, cid, result.batch, result.ops, saved);
   };
+
+  /** The ack of ops that are durable: what was held back before them goes first, so none is skipped. */
+  const acked = (peer: LivePeer, seat: Principal, cid: string, batch: string, own: readonly Operation[], saved: readonly Operation[] | undefined): LiveReceived => {
+    const first = own[0]?.seq;
+    if (first !== undefined) {
+      sendUpTo(peer, first - 1, undefined, seat);
+      peer.cursor = Math.max(peer.cursor!, own.at(-1)!.seq);
+    }
+    const ops = wire.shown(seat, own);
+    say(peer, { t: "ack", cid, seq: ops.at(-1)?.seq ?? peer.cursor!, batch, ops });
+    return { cursor: peer.cursor!, ...(saved && saved.length > 0 ? { landed: saved } : {}) };
+  };
+
+  /** The host's build a socket — or a route's request — is served by (FR-44): its own, else the protocol's word for it. */
+  const buildFor = (peer: ServedSocket): string | undefined =>
+    peer.hostBuild ?? (typeof options.build === "function" ? options.build(peer) : options.build);
+  /** Which declaration, and which build, answered (FR-43, FR-44): on every route's answer a poll reads. */
+  const answering = (asked: WireAsked): { version: number; build?: string } => {
+    const build = buildFor({ seat: asked.seat, via: asked.via, ...(asked.build ? { hostBuild: asked.build } : {}) });
+    return { version: options.version ?? 1, ...(build ? { build } : {}) };
+  };
+  const reply = (status: number, body: Record<string, unknown>, headers: Record<string, string> = {}): WireAnswer => ({ status, body, headers });
 
   return {
     store,
-    open: (seat, via) => ({ seat, via }),
+    open: (seat, via, opening = {}) => ({ seat, via, ...(opening.build ? { hostBuild: opening.build.slice(0, 64) } : {}) }),
     async receive(peer, text, who = []) {
       let message: LiveClientMessage;
       try {
@@ -438,6 +957,14 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       }
       const unchanged = (): LiveReceived => (peer.cursor !== undefined ? { cursor: peer.cursor } : {});
       if (!message || typeof message !== "object") return unchanged();
+      // Who this socket is, on this message: its seat, or the principal its key names now.
+      const seat = principalOf(peer);
+      if (!seat) {
+        delete peer.cursor;
+        say(peer, { t: "error", sentence: "This socket's seat is no longer known to this app: open it again to be served." });
+        return {};
+      }
+      const served: ServedSocket = { seat, via: peer.via, ...(peer.hostBuild ? { hostBuild: peer.hostBuild } : {}) };
       switch (message.t) {
         case "hello": {
           /*
@@ -459,15 +986,28 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             });
             return {};
           }
+          // The host's own half of the wire, numbered by the host: an older page reloads onto a build that speaks it.
+          const hostSpeaks = typeof message.hostProtocol === "number" && Number.isFinite(message.hostProtocol) ? message.hostProtocol : 0;
+          if (options.minHostProtocol !== undefined && hostSpeaks < options.minHostProtocol) {
+            delete peer.cursor;
+            say(peer, {
+              t: "reload",
+              reason: "This app was updated, and this page is from before it. Reload the page; changes not yet sent are offered again after it.",
+              protocol: options.minProtocol ?? WIRE_PROTOCOL,
+              hostProtocol: options.minHostProtocol,
+            });
+            return {};
+          }
           if (typeof message.build === "string" && message.build.length > 0) peer.build = message.build.slice(0, 64);
           const seq = typeof message.seq === "number" && Number.isFinite(message.seq) ? message.seq : undefined;
           peer.cursor = wire.lastSeq();
           // Its own key, built from the seat, so the client can leave itself out of who is here (FR-47).
-          peer.participant ??= participantKey({ kind: peer.seat.kind, ...(peer.seat.id ? { id: peer.seat.id } : {}), session: mintSession() });
+          peer.participant ??= participantKey({ kind: seat.kind, ...(seat.id ? { id: seat.id } : {}), session: mintSession() });
           const participant = peer.participant;
-          const said = { protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, version: options.version ?? 1, participant, ...(options.build ? { build: options.build } : {}) };
+          const build = buildFor(served);
+          const said = { protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, version: options.version ?? 1, participant, ...(build ? { build } : {}) };
           if (seq === undefined) {
-            const seen = wire.seenFor(peer.seat);
+            const seen = wire.seenFor(seat);
             say(peer, {
               t: "welcome",
               ...said,
@@ -476,25 +1016,64 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
               state: {
                 version: options.version ?? 1,
                 snapshot: seen.snapshot(),
-                log: seen.log.all(),
+                log: wire.seenLog(seat),
                 migrated: [...(options.migrated ?? [])],
                 enabledModules: wire.enabledModules(),
                 ...wire.horizonOf(),
               },
             });
           } else {
-            say(peer, { t: "welcome", ...said, seq: peer.cursor, ops: wire.since(peer.seat, seq) });
+            // Caught up to what is written: an op still being flushed, or one a flush failed, comes once it holds.
+            const held = heldFrom();
+            if (held !== undefined) peer.cursor = Math.max(Math.floor(seq), held - 1);
+            say(peer, { t: "welcome", ...said, seq: peer.cursor, ops: wire.since(seat, seq).filter((op) => op.seq <= peer.cursor!) });
           }
           const others = who.filter((presence) => presence.participant !== peer.participant);
-          if (others.length > 0) say(peer, { t: "presence", who: wire.whoFor(peer.seat, others) });
+          if (others.length > 0) say(peer, { t: "presence", who: wire.whoFor(seat, others) });
           return { cursor: peer.cursor };
         }
         case "call":
         case "undo": {
           const cid = String(message.cid ?? "");
+          // A cid is kept while its call is busy: a long one would crowd the host's attachment.
+          if (cid.length > MAX_CID) {
+            say(peer, { t: "refused", cid, reason: "invalid", sentence: `A call's cid is at most ${MAX_CID} characters; this one is ${cid.length}. Name it again shorter.` });
+            return unchanged();
+          }
           if (peer.cursor === undefined) {
             say(peer, { t: "refused", cid, reason: "invalid", sentence: "Say hello first: the live wire answers calls once it knows what the client has." });
             return {};
+          }
+          /*
+           * SENT AGAIN AFTER IT LANDED: answered with what it made, before the
+           * host is asked anything. A call whose ack was lost is never told
+           * busy, capped or unavailable for a change already made — and only
+           * ever with the asking seat's own ops (`claim`).
+           */
+          const change = changeOf(message);
+          const claim = wire.claim(message.batch, seat);
+          if (claim.refusal) {
+            catchUp(peer, undefined, seat);
+            if (peer.held?.cid === cid) delete peer.held;
+            say(peer, { t: "refused", cid, ...claim.refusal });
+            return { cursor: peer.cursor };
+          }
+          if (claim.answered) {
+            if (peer.held?.cid === cid) delete peer.held;
+            // Landed, but a flush failed it: flushed again, and acked only once it holds.
+            if (unsavedIn(claim.answered)) {
+              const flushed = await durable([]);
+              if (!("saved" in flushed)) {
+                catchUp(peer, undefined, seat);
+                say(peer, { t: "refused", cid, reason: "unavailable", sentence: UNSAVED });
+                return { cursor: peer.cursor };
+              }
+              catchUp(peer, undefined, seat);
+              return acked(peer, seat, cid, message.batch as string, claim.answered, flushed.saved);
+            }
+            catchUp(peer, undefined, seat);
+            say(peer, { t: "ack", cid, seq: claim.answered.at(-1)!.seq, batch: message.batch as string, ops: wire.shown(seat, claim.answered) });
+            return { cursor: peer.cursor };
           }
           /*
            * BUSY IS NOT REFUSED (FR-45). A call made after one that was told
@@ -506,18 +1085,17 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             say(peer, { t: "busy", cid, retryAfter: Math.max(0, peer.held.until - now) });
             return { cursor: peer.cursor };
           }
-          const limited = options.limit
-            ? await options.limit({
-                seat: peer.seat,
-                via: peer.via,
-                t: message.t,
-                bytes: bytesOf(text),
-                calls: message.t === "call" && Array.isArray(message.calls) ? message.calls : [],
-              })
-            : undefined;
+          const via = viaFor(served, change);
+          const limited = await limitOf(seat, via, change, bytesOf(text));
           if (limited && "refuse" in limited) {
             delete peer.held;
             say(peer, { t: "refused", cid, reason: "limit", sentence: limited.refuse });
+            return { cursor: peer.cursor };
+          }
+          // Not for a while, and no wait to name: refused `unavailable`, which the client keeps and sends again, backing off.
+          if (limited && "unavailable" in limited) {
+            delete peer.held;
+            say(peer, { t: "refused", cid, reason: "unavailable", sentence: limited.unavailable });
             return { cursor: peer.cursor };
           }
           if (limited) {
@@ -527,7 +1105,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             return { cursor: peer.cursor };
           }
           delete peer.held;
-          return answer(peer, message);
+          return answer(peer, seat, cid, change, via);
         }
         case "here": {
           const told = message.presence;
@@ -535,7 +1113,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             say(peer, { t: "error", sentence: "A presence is a participant and a stop." });
             return unchanged();
           }
-          const presence = presenceFrom(told, peer.seat, new Date(), peer.participant);
+          const presence = presenceFrom(told, seat, new Date(), peer.participant);
           peer.participant = presence.participant;
           return { ...unchanged(), presence };
         }
@@ -549,13 +1127,88 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       }
     },
     publish(ops, peers) {
-      for (const peer of peers) catchUp(peer, ops);
+      const sight = aSight();
+      for (const peer of peers) catchUp(peer, ops, undefined, sight);
     },
     tell(who, peers) {
+      const sight = aSight();
       for (const peer of peers) {
         if (peer.cursor === undefined) continue;
-        say(peer, { t: "presence", who: wire.whoFor(peer.seat, who.filter((presence) => presence.participant !== peer.participant)) });
+        const seat = principalOf(peer, sight);
+        if (!seat) continue;
+        say(peer, { t: "presence", who: wire.whoFor(seat, who.filter((presence) => presence.participant !== peer.participant)) });
       }
+    },
+    async post(text, asked) {
+      const said = answering(asked);
+      let body: { calls?: unknown; undo?: unknown; intent?: unknown; batch?: unknown; base?: unknown; via?: unknown };
+      try {
+        body = text.length === 0 ? {} : (JSON.parse(text) as typeof body);
+      } catch {
+        return reply(400, { error: "A change is one JSON object: { calls } to make, or { undo } to take back.", reason: "invalid" });
+      }
+      if (!body || typeof body !== "object") return reply(400, { error: "A change is one JSON object: { calls } to make, or { undo } to take back.", reason: "invalid" });
+      const undo = Array.isArray(body.undo) ? (body.undo as string[]) : undefined;
+      const change: Change = {
+        t: undo ? "undo" : "call",
+        calls: !undo && Array.isArray(body.calls) ? (body.calls as MutationCall[]) : [],
+        batches: undo ?? [],
+        intent: typeof body.intent === "string" && body.intent.length > 0 ? body.intent : undefined,
+        batch: body.batch,
+        base: undo ? undefined : body.base,
+        claimed: claimOfVia(body.via),
+      };
+      const via = viaFor({ seat: asked.seat, via: asked.via, ...(asked.build ? { hostBuild: asked.build } : {}) }, change);
+      // Sent again after its answer was lost — or offered again on a new declaration, or after a reload (FR-43, FR-44, FR-49): only ever the asker's own ops.
+      const claim = wire.claim(change.batch, asked.seat);
+      if (claim.refusal) return reply(409, { error: claim.refusal.sentence, refused: true, reason: claim.refusal.reason, ...said });
+      if (claim.answered) {
+        // Landed, but a flush failed it: flushed again, and answered only once it holds.
+        if (unsavedIn(claim.answered)) {
+          const flushed = await durable([]);
+          if (!("saved" in flushed)) return reply(503, { error: UNSAVED, refused: true, reason: "unavailable", ...said });
+          return { ...reply(200, { ops: wire.shown(asked.seat, claim.answered), batch: change.batch, ...said }), landed: flushed.saved };
+        }
+        return reply(200, { ops: wire.shown(asked.seat, claim.answered), batch: change.batch, ...said });
+      }
+      /*
+       * THE HOST'S LIMITS, BEFORE ANYTHING IS JUDGED. Busy is 429 and the
+       * change is kept to send again (FR-45); a hard cap is refused, `limit`,
+       * and the change is taken back (FR-46); unavailable is 503, kept.
+       */
+      const limited = await limitOf(asked.seat, via, change, bytesOf(text));
+      if (limited && "refuse" in limited) return reply(413, { error: limited.refuse, refused: true, reason: "limit", ...said });
+      if (limited && "unavailable" in limited) return reply(503, { error: limited.unavailable, refused: true, reason: "unavailable", ...said });
+      if (limited) {
+        const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
+        return reply(429, { error: limited.sentence ?? `The store is busy: send it again in ${retryAfter} ms.`, busy: true, retryAfter }, { "retry-after": String(Math.ceil(retryAfter / 1000)) });
+      }
+      const landing = await land(asked.seat, via, change);
+      // A stale write is a conflict, not a loss (FR-05): theirs and yours, by name, and nothing written.
+      if (landing.conflicts) return reply(409, { error: conflictSentence(landing.conflicts), refused: true, conflict: true, conflicts: landing.conflicts, ...said });
+      // The policy's own sentence rather than a bare 403, because that sentence is the product.
+      if (landing.refusal) {
+        const { sentence, ...why } = landing.refusal;
+        return reply(409, { error: sentence, refused: true, ...why, ...said });
+      }
+      // Not durable: refused `unavailable`, which the client keeps and sends again.
+      if (!landing.saved) return reply(503, { error: UNSAVED, refused: true, reason: "unavailable", ...said });
+      // An act may make what its own seat may not see: that op goes back withheld, as it would on a poll.
+      return { ...reply(200, { ops: wire.shown(asked.seat, landing.result.ops), batch: landing.result.batch, ...said }), landed: landing.saved };
+    },
+    state(asked) {
+      const seen = wire.seenFor(asked.seat);
+      return reply(200, {
+        ...answering(asked),
+        snapshot: seen.snapshot(),
+        log: wire.seenLog(asked.seat),
+        migrated: [...(options.migrated ?? [])],
+        enabledModules: wire.enabledModules(),
+        ...wire.horizonOf(),
+      });
+    },
+    since(seq, asked) {
+      return reply(200, { ops: wire.since(asked.seat, seq), ...answering(asked) });
     },
     declared(peers) {
       for (const peer of peers) {

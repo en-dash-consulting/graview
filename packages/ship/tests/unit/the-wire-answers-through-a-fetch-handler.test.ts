@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createMemoryAdapter, createSchema, defineApp, defineMutation, defineNode, nodeRef, type Principal } from "@graview/core";
+import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, nodeRef, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createStoreHandler, LIVE_PATH, SEAT_HEADERS, seatFromHeaders, WIRE } from "../../src/runtime.js";
@@ -17,6 +17,8 @@ import { createStoreHandler, LIVE_PATH, SEAT_HEADERS, seatFromHeaders, WIRE } fr
  */
 
 const task = defineNode("task", { fields: z.object({ label: z.string().min(1), done: z.boolean() }) });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
 const finish = defineMutation("finish", {
   title: "Finish it",
   description: "Marks a task done.",
@@ -27,7 +29,6 @@ const finish = defineMutation("finish", {
     ctx.patchNode(args.id, { done: true });
   },
 });
-const schema = createSchema([task]);
 const app = defineApp({
   name: "handled",
   schema,

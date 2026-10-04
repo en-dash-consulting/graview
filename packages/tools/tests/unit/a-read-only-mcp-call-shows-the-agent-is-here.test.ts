@@ -79,7 +79,7 @@ describe("the MCP handler tells its host about every tool call", () => {
       version: "0.0.0",
       onCall: (call) => {
         // Before it answers: the act has not landed yet.
-        calls.push({ ...call, arguments: { ...call.arguments, doneWhenTold: store.graph.getNode("t1")?.["done"] } });
+        calls.push({ ...call, arguments: { ...call.arguments, doneWhenTold: ((task) => (task?.kind === "task" ? task.done : undefined))(store.graph.getNode("t1")) } });
       },
     });
     await mcp(rpc("tools/list"));

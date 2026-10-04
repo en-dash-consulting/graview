@@ -41,7 +41,7 @@ const store = () =>
     snapshot: { nodes: [{ id: "t1", kind: "task", label: "Pay the deposit", done: false }] as never, edges: [] },
   });
 
-const seen = async (run: (store: ReturnType<typeof store>) => Promise<void> | void) => {
+const seen = async (run: (held: ReturnType<typeof store>) => Promise<void> | void) => {
   const made = store();
   let latest: ReturnType<typeof useSeatWork> | null = null;
   const Probe = () => {

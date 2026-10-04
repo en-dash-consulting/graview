@@ -83,8 +83,13 @@ export interface LensDeclaration {
    * options carry the same words to the picture (`arrangedBy`).
    */
   readonly arrangedBy?: ArrangementWords;
+  /**
+   * Per kind, each role bound to a field — `"at"` — or to a field and the
+   * values that make it true — `{ field: "status", is: ["done"] }`, the
+   * shape `lifecycle` reads a state in — or an entity binding.
+   */
   readonly bindings?:
-    | Readonly<Record<string, Readonly<Record<string, string>>>>
+    | Readonly<Record<string, Readonly<Record<string, string | { readonly field: string; readonly is: readonly unknown[] }>>>>
     | Readonly<Record<string, EntityBinding>>;
 }
 

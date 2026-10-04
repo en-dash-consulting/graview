@@ -1,4 +1,4 @@
-import { createSchema, defineMutation, defineNode, nodeRef, Store } from "@graview/core";
+import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
@@ -15,7 +15,6 @@ import {
   entriesOn,
   finerThan,
   minutesOf,
-  placeOnCalendar,
   rangesOf,
   spanOf,
   startOfWeek,
@@ -287,6 +286,7 @@ describe("the act that moves a date", () => {
     label: (node) => node.label,
   });
   const jobs = createSchema([moved]);
+  const { defineMutation } = bindSchema(jobs);
   const reschedule = defineMutation("reschedule", {
     title: "Move the date",
     description: "Change when a job is due.",
@@ -308,7 +308,7 @@ describe("the act that moves a date", () => {
     },
   });
 
-  const store = (mutations: Parameters<typeof Store<typeof jobs>>[0]["mutations"]) =>
+  const store = (mutations: ConstructorParameters<typeof Store<typeof jobs>>[0]["mutations"]) =>
     new Store<typeof jobs>({ schema: jobs, mutations });
 
   it("finds the declared act that writes the bound field and can be told the answer", () => {

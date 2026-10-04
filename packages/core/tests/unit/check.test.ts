@@ -11,6 +11,10 @@ import {
   generateAgentsMd,
   generateLlmsTxt,
   nodeRef,
+  type AnyMutationDefinition,
+  type AnySchema,
+  type GraviewApp,
+  type LensDeclaration,
 } from "../../src/index.js";
 
 const person = defineNode("person", {
@@ -43,7 +47,7 @@ const clash = bound.defineInvariant("clash", {
   evaluate: () => [],
 });
 
-function findings(app: Parameters<typeof checkApp>[0]) {
+function findings<S extends AnySchema>(app: GraviewApp<S>) {
   return checkApp(app).findings.map((f) => `${f.severity}:${f.code}`);
 }
 
@@ -115,6 +119,11 @@ describe("checkApp", () => {
    * asks the same question of both shapes — is that a field this kind
    * declares? — and says so plainly when it is neither.
    */
+  // A binding that is neither shape does not typecheck; the checker is held to saying so anyway.
+  const predicateBindings = (
+    bindings: Readonly<Record<string, Readonly<Record<string, string | { field: string; is?: readonly unknown[] }>>>>,
+  ) => bindings as unknown as LensDeclaration["bindings"];
+
   it("reads a role bound to a field, or to a field and the values that fill it", () => {
     const withField = defineApp({
       name: "test",
@@ -161,7 +170,7 @@ describe("checkApp", () => {
         {
           name: "calendar",
           requiredRoles: ["start"],
-          bindings: { duty: { start: "at", done: { field: "until" } } },
+          bindings: predicateBindings({ duty: { start: "at", done: { field: "until" } } }),
         },
       ],
     });
@@ -233,7 +242,7 @@ describe("generated agent docs", () => {
  * question rather than something noticed in use.
  */
 describe("what a mutation calls itself", () => {
-  const app = (mutation: Parameters<typeof defineApp>[0]["mutations"][number]) =>
+  const app = (mutation: AnyMutationDefinition<typeof schema>) =>
     defineApp({
       name: "test",
       schema,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createPointerStore, latticePoints, whereIsIn } from "../../src/index.js";
+import { createPointerStore, latticePoints, whereIsIn, type SceneNode } from "../../src/index.js";
 
 /**
  * WHERE IS, AND WHO IS LISTENING.
@@ -10,13 +10,13 @@ import { createPointerStore, latticePoints, whereIsIn } from "../../src/index.js
  * subscribes. And a road between two districts runs along the lattice's
  * own diagonals.
  */
-const frame = {
+const frame: { readonly nodes: readonly SceneNode[] } = {
   nodes: [
     { id: "kind:zone", kind: "zone", plane: 2, x: 100, y: 200, width: 200, height: 80, pinned: false, opacity: 1, aggregate: { kind: "zone", memberIds: ["lawn", "border"], label: "Zones" } },
     { id: "aggregate:zone", kind: "zone", plane: 0, x: 400, y: 100, width: 600, height: 300, pinned: false, opacity: 1, aggregate: { kind: "zone", memberIds: ["lawn", "border"], label: "Zones" } },
     { id: "lawn", kind: "zone", plane: 1, x: 10, y: 10, width: 50, height: 20, pinned: false, opacity: 1 },
   ],
-} as never;
+};
 const views = { places: () => [{ kind: "zone", as: "the-grounds" }] };
 
 describe("where is", () => {
@@ -32,7 +32,7 @@ describe("where is", () => {
     expect(whereIsIn(frame, null, "light", views, "aggregate:zone")!.x).toBe(400);
     expect(whereIsIn(frame, null, "light", views, "the-grounds")!.x).toBe(400);
     /* A kind whose card is not in this frame answers as its group, and the other way round. */
-    const cardOnly = { nodes: frame.nodes.filter((node: { id: string }) => node.id !== "aggregate:zone") } as never;
+    const cardOnly = { nodes: frame.nodes.filter((node) => node.id !== "aggregate:zone") };
     expect(whereIsIn(cardOnly, null, "light", views, "aggregate:zone")!.x).toBe(100);
   });
 
@@ -47,7 +47,7 @@ describe("the audience strip", () => {
   it("answers screen:<kind> with the ground in front of the drive-in's screen, down to its nameplate", () => {
     const withScreen = {
       nodes: [
-        ...(frame as { nodes: unknown[] }).nodes,
+        ...frame.nodes,
         { id: "aggregate:zone", kind: "zone", plane: 0, x: 120, y: 40, width: 300, height: 120, pinned: false, opacity: 1, screenOf: "zone", aggregate: { kind: "zone", memberIds: [], label: "Zones" } },
       ].filter((node: { id: string }) => node.id !== "aggregate:zone" || (node as { screenOf?: string }).screenOf === "zone"),
     } as never;

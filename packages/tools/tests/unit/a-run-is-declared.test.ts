@@ -140,6 +140,13 @@ const run: RunDeclaration = {
   ],
 };
 
+/** A zone's surface, read through its kind rather than around it. */
+const surfaceOf = (at: ReturnType<typeof store>, id: string) => {
+  const node = at.graph.getNode(id);
+  if (node?.kind !== "zone") throw new Error(`${id} is not a zone`);
+  return node.surface;
+};
+
 describe("a run can be read before it is run", () => {
   it("counts the nodes, the questions and the calls of every step, and says roughly what it costs", () => {
     const reading = readRun(store(), run);
@@ -235,14 +242,14 @@ describe("each step is typed, and the whole run is one batch", () => {
     const result = await runFrom(at, run, { decide, app });
     expect(result.applied).toBeUndefined();
     expect(result.plan.ready).toHaveLength(3 + 2 + 3);
-    expect(at.graph.getNode("lawn")!["surface"]).toBeUndefined();
+    expect(surfaceOf(at, "lawn")).toBeUndefined();
     const landed = landRun(at, result);
     expect(landed.stoppedAt).toBeUndefined();
     expect(landed.applied).toBe(8);
-    expect(at.graph.getNode("lawn")!["surface"]).toBe("turf");
+    expect(surfaceOf(at, "lawn")).toBe("turf");
     expect(at.batches().map((batch) => batch.id)).toEqual([result.batch]);
     at.undo(result.batch);
-    expect(at.graph.getNode("lawn")!["surface"]).toBeUndefined();
+    expect(surfaceOf(at, "lawn")).toBeUndefined();
     expect(at.graph.outEdges("mow")).toEqual([]);
   });
 

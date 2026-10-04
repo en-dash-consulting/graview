@@ -1,5 +1,5 @@
 import { createSchema, defineNode, Store } from "@graview/core";
-import { EMPTY_VIEW, aggregateId, kindCardId } from "@graview/layout";
+import { EMPTY_VIEW, kindCardId } from "@graview/layout";
 import { GraviewProvider, Scene, createViews } from "@graview/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";

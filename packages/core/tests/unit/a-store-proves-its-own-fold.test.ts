@@ -107,7 +107,7 @@ describe("store.verify()", () => {
 
   it("names no op when the graph disagrees before the first one", () => {
     const store = worked();
-    const extra = { id: "z", kind: "thing", label: "Never made" };
+    const extra = { id: "z", kind: "thing" as const, label: "Never made" };
     const reopened = new Store({
       schema,
       mutations,

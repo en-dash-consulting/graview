@@ -1,7 +1,6 @@
 import {
   bindSchema,
   createSchema,
-  defineInvariant,
   defineNode,
   nodeRef,
   Store,
@@ -265,21 +264,22 @@ describe("selecting a rule says what it judges", () => {
     const song = defineNode("song", { fields: z.object({ label: z.string(), explicit: z.boolean() }), edges: {} });
     const single = defineNode("single", { fields: z.object({ label: z.string(), late: z.boolean() }), edges: { holds: { to: ["song"] } } });
     const both = createSchema([song, single]);
-    const clean = defineInvariant("clean", {
+    const onBoth = bindSchema(both);
+    const clean = onBoth.defineInvariant("clean", {
       scope: { kind: "song" },
-      evaluate: ({ subject }) => ((subject as { explicit: boolean }).explicit ? [{ invariant: "clean", subjectId: subject.id, message: "explicit", nodeIds: [subject.id], repairs: [] }] : []),
+      evaluate: ({ subject }) => (subject.explicit ? [{ invariant: "clean", subjectId: subject.id, label: "Explicit", message: "explicit", nodeIds: [subject.id], repairs: [] }] : []),
     });
-    const onTime = defineInvariant("on-time", {
+    const onTime = onBoth.defineInvariant("on-time", {
       scope: { kind: "single" },
       evaluate: ({ subject, graph }) =>
-        (subject as { late: boolean }).late
-          ? [{ invariant: "on-time", subjectId: subject.id, message: "The single came out after its album", nodeIds: [subject.id, ...graph.out(subject.id, "holds").map((one) => one.id)], repairs: [] }]
+        subject.late
+          ? [{ invariant: "on-time", subjectId: subject.id, label: "Late", message: "The single came out after its album", nodeIds: [subject.id, ...graph.out(subject.id, "holds").map((one) => one.id)], repairs: [] }]
           : [],
     });
     const held = new Store({
       schema: both,
       mutations: [],
-      invariants: [clean, onTime] as never,
+      invariants: [clean, onTime],
       snapshot: {
         nodes: [
           { id: "kerosene", kind: "song", label: "Kerosene", explicit: false },
@@ -402,7 +402,7 @@ describe("lens and LLM providers", () => {
     expect(rich.affordances.length).toBeGreaterThan(2);
     await deriveWithLlm(
       { propose },
-      { store: s, selection: ["d1"], nodes: [], violations: [], context: {} },
+      { store: s, selection: ["d1"], nodes: [], kindSelection: [], edgeSelection: [], violations: [], context: {} },
       rich.affordances,
     );
     expect(propose).not.toHaveBeenCalled();
@@ -419,7 +419,7 @@ describe("lens and LLM providers", () => {
           ];
         },
       },
-      { store: s, selection: ["d1"], nodes: [], violations: [], context: {} },
+      { store: s, selection: ["d1"], nodes: [], kindSelection: [], edgeSelection: [], violations: [], context: {} },
       [],
     );
     expect(affordances.map((a) => a.mutation)).toEqual(["reday"]);

@@ -1,7 +1,7 @@
 import { createMemoryAdapter, createSchema, defineApp, defineNode, OperationLog, Store, type AnySchema, type GraphEdge, type GraviewApp, type Operation, type Presence, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { canonical, leaked, MUTATIONS, policyOf, rng, SCHEMA, schemaOf, storeAt, storeOf, unsaidUnseen, unseenIds, world, type World } from "../../../core/tests/support/unseen-worlds.js";
+import { canonical, leaked, MUTATIONS, policyOf, rng, SCHEMA, schemaOf, storeAt, storeOf, unsaidUnseen, world, type World } from "../../../core/tests/support/unseen-worlds.js";
 import { createStoreHandler, liveProtocol, seatHeaders, serveStore, type LivePeer, type LiveServerMessage } from "../../src/index.js";
 
 /**
@@ -111,7 +111,7 @@ async function overHttp(w: World): Promise<string[]> {
     await keep(await post("/graview/ops", { calls: [{ name: "point", args: { id, ref: w.anyId() } }], ...(round === 2 ? { base: [{ node: id, field: "ref", rev: -1 }] } : {}) }));
   }
   // The batch sent again is answered with what it made the first time.
-  const again = { calls: [{ name: "retitle", args: { id: w.pick(ids), title: "Again" } }], batch: `again:${w.seed}` };
+  const again = { calls: [{ name: "retitle", args: { id: w.pick(ids), title: "Again" } }], batch: `batch:again${w.seed}:1` };
   await keep(await post("/graview/ops", again));
   await keep(await post("/graview/ops", again));
   await keep(await post("/graview/here", { presence: { participant: "human:u1:tab", hue: 1, stop: `/a/${w.anyId()}`, over: w.anyId(), at: "" }, seq: -1 }));

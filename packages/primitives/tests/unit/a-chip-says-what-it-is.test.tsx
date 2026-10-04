@@ -36,7 +36,7 @@ describe("a field read on its own", () => {
     const Summary = views.lookup("song", { cardinality: "one", fidelity: "summary" })!;
     const html = renderToStaticMarkup(
       <GraviewProvider store={store} views={views} initialView={EMPTY_VIEW}>
-        <Summary node={node as never} fidelity="summary" cardinality="one" mode="captured" selected={false} />
+        <Summary node={node as never} fidelity="summary" cardinality="one" mode="scene" selected={false} />
       </GraviewProvider>,
     );
     expect(html).toContain("Track 8");

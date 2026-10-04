@@ -59,7 +59,7 @@ describe("createSchema", () => {
   });
 
   it("refuses a duplicate kind", () => {
-    expect(() => createSchema([person, person])).toThrow(/Duplicate node kind/);
+    expect(() => createSchema([person, duty, person])).toThrow(/Duplicate node kind/);
   });
 
   it("refuses an edge to an undeclared kind at runtime too", () => {
@@ -69,7 +69,8 @@ describe("createSchema", () => {
       fields: z.object({}),
       edges: { rides: { to: ["vehicle"] } },
     });
-    expect(() => createSchema([orphan as never])).toThrow(/undeclared kind "vehicle"/);
+    // @ts-expect-error -- the edge names a kind this schema does not declare
+    expect(() => createSchema([orphan])).toThrow(/undeclared kind "vehicle"/);
   });
 });
 

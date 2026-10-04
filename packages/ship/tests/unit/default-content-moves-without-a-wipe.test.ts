@@ -1,4 +1,4 @@
-import { createMemoryAdapter, createSchema, defineApp, defineMutation, defineNode, nodeRef, UNSET } from "@graview/core";
+import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, nodeRef, UNSET } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
@@ -23,6 +23,7 @@ import {
 const list = defineNode("list", { fields: z.object({ label: z.string().min(1) }), edges: { holds: { to: ["task"] } } });
 const task = defineNode("task", { fields: z.object({ label: z.string().min(1), done: z.boolean(), note: z.string().optional() }) });
 const schema = createSchema([list, task]);
+const { defineMutation } = bindSchema(schema);
 const rename = defineMutation("rename", {
   title: "Rename",
   description: "Call it something else.",
@@ -131,7 +132,7 @@ describe("the seed diffed against the live store", () => {
     expect(op!.author).toEqual({ kind: "system", id: "ship:sync-seed" });
     expect(op!.intent).toMatch(/^seed sync: today is patched: label; task t-van is put; today holds t-van is tied$/);
     expect(op!.inverse).toHaveLength(op!.primitives.length);
-    expect(op!.writes.sort()).toEqual(["t-van", "today"]);
+    expect([...op!.writes].sort()).toEqual(["t-van", "today"]);
     expect(contentOperation(seedSteps(v1, v1), v1)).toBeNull();
     // A patch that unsets says so in the log's own word for absence.
     const clearing = contentOperation([{ what: "patch-node", id: "t-milk", fields: { note: undefined } }], {

@@ -297,6 +297,21 @@ export interface AdoptResult<S extends AnySchema> {
 }
 
 /**
+ * A CALL NAMES AN ACT THE APP DOES NOT HAVE. Its message lists every act
+ * the store has, for the developer reading it; `mutation` is the name the
+ * call gave, so a surface that tells a person can say only that (FR-46).
+ */
+export class UnknownMutationError extends GraphError {
+  constructor(
+    readonly mutation: string,
+    registered: readonly string[],
+  ) {
+    super(`Unknown mutation "${mutation}"`, `Registered: ${registered.join(", ") || "(none)"}`);
+    this.name = "UnknownMutationError";
+  }
+}
+
+/**
  * A tag nobody else's store is using, for this store's batch ids. Drawn
  * from the platform's random source where there is one, which every page
  * and Node 22 has.
@@ -336,6 +351,13 @@ export class Store<S extends AnySchema> {
   private readonly now: () => string;
   private readonly validate: boolean;
   private readonly mintBatch: (kind: "batch" | "undo") => string;
+  /**
+   * THE TAG THIS STORE MINTS ITS OWN BATCHES UNDER — `batch:<tag>:<n>` —
+   * when it mints them its default way; undefined when `batchIds` says
+   * otherwise. A server that takes batch ids from clients refuses this tag
+   * from one, so nothing the store lands later joins a client's batch.
+   */
+  readonly batchTag: string | undefined;
   private counter = 0;
   /** The default op id generator's count. */
   private opCount = 0;
@@ -358,6 +380,7 @@ export class Store<S extends AnySchema> {
     this.now = options.now ?? (() => new Date().toISOString());
     this.validate = options.validate ?? true;
     const tag = storeTag();
+    this.batchTag = options.batchIds ? undefined : tag;
     this.mintBatch = options.batchIds ?? ((kind) => `${kind}:${tag}:${++this.counter}`);
 
     for (const mutation of options.mutations ?? []) {
@@ -515,10 +538,7 @@ export class Store<S extends AnySchema> {
   mutation(name: string): AnyMutationDefinition<S> {
     const found = this.mutations.get(name);
     if (!found) {
-      throw new GraphError(
-        `Unknown mutation "${name}"`,
-        `Registered: ${[...this.mutations.keys()].join(", ") || "(none)"}`,
-      );
+      throw new UnknownMutationError(name, [...this.mutations.keys()]);
     }
     // A refusal is a result: the mutation exists, and this workspace has its
     // module off — which is a different sentence from "unknown".

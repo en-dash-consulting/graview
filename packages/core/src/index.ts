@@ -23,6 +23,7 @@ export type { Person } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";
 export type {
   AnySchema,
+  DefinitionOfKind,
   EdgeKindInfo,
   KindOfSchema,
   NodeOfKind,
@@ -274,7 +275,7 @@ export type {
 } from "./validate-graph.js";
 
 // Store — graph + log + mutations + invariants, one object.
-export { MODULES_AUTHOR, ReceiveError, Store, violationKey } from "./store.js";
+export { MODULES_AUTHOR, ReceiveError, Store, UnknownMutationError, violationKey } from "./store.js";
 export type {
   Adopt,
   AdoptResult,

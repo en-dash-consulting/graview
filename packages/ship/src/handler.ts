@@ -1,32 +1,34 @@
 import {
   foldPresence,
   PRESENCE_TTL_MS,
-  refusalOf,
   VISITOR_PRESENCE_TTL_MS,
   type AnySchema,
-  type FieldRevision,
   type GraviewApp,
-  type MutationCall,
   type Operation,
   type PersistenceAdapter,
   type Presence,
   type Principal,
   type Store,
+  type MutationCall,
+  type WireRefusal,
 } from "@graview/core";
 import { exportBundle } from "./export.js";
 import { health } from "./health.js";
-import { bytesOf, conflictSentence, LIVE_PATH, type Limit, type LiveConnection, type LiveSocket } from "./live.js";
+import { LIVE_PATH, type Limit, type LiveConnection, type LiveSocket } from "./live.js";
 import {
   announcePresence,
   liveProtocol,
   presenceFrom,
   presenceSeenBy,
+  serverBatchIds,
   visitorPresence,
   wireOf,
   type LivePeer,
   type LiveProtocol,
   type LiveSocketState,
+  type ServedSocket,
   type Wire,
+  type WireAnswer,
 } from "./live-protocol.js";
 import { openStore, type OpenedStore } from "./open-store.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
@@ -84,7 +86,7 @@ import type { GraphSnapshot } from "./snapshot.js";
  */
 export const WIRE = [
   { method: "GET", path: "/graview/state", says: "the graph, the log, the stored version and the modules on" },
-  { method: "POST", path: "/graview/ops", says: "calls in, the ops they produced out — or `undo`, batches to take back; a `batch` already in the log is answered with the ops it made; 409 with the policy's sentence and a `reason` when refused, 429 with `Retry-After` when the host is busy" },
+  { method: "POST", path: "/graview/ops", says: "calls in, the ops they produced out — or `undo`, batches to take back; a `batch` the asking seat already landed is answered with the ops it made, and one that is somebody else's or not `batch:<tag>:<n>` is refused `invalid`; 409 with the policy's sentence and a `reason` when refused, 429 with `Retry-After` when the host is busy, 503 with the reason `unavailable` when it takes no changes for a while" },
   { method: "GET", path: "/graview/since", says: "the ops appended after ?seq=N — everyone else's" },
   { method: "GET", path: "/graview/health", says: "ship's own report, plus where the data is" },
   { method: "GET", path: "/graview/export", says: "the whole store as one bundle, the way out" },
@@ -146,7 +148,9 @@ interface HandlerOptions<S extends AnySchema> {
    * `{ retryAfter }` is BUSY: the socket says `busy`, HTTP answers 429 with
    * `Retry-After`, and the client sends the change again after the wait.
    * `{ refuse }` is a hard cap: refused with reason `limit` (413 over
-   * HTTP), and the client takes the change back.
+   * HTTP), and the client takes the change back. `{ unavailable }` is a
+   * spell with no known end: refused `unavailable` (503 over HTTP), and
+   * the client keeps the change and sends it again, backing off.
    */
   readonly limit?: Limit;
   /**
@@ -154,7 +158,27 @@ interface HandlerOptions<S extends AnySchema> {
    * client on another build keeps working and is told once, so a person
    * can reload when it suits them.
    */
-  readonly build?: string;
+  readonly build?: string | ((peer: ServedSocket) => string | undefined);
+  /**
+   * WHAT A CLIENT CLAIMS ITS CHANGE CAME THROUGH, JUDGED (FR-52):
+   * `liveProtocol`'s `viaOf`, for the socket and every post. `viaOf` above
+   * reads the request; this reads a call's own `via` claim — a guest
+   * view's `view:<name>` — and answers the via to record, or nothing to
+   * keep the host's. Absent, a claim is never read.
+   */
+  readonly viaClaimed?: (peer: ServedSocket, claimed: string | undefined) => string | undefined;
+  /**
+   * A SOCKET KEEPS A KEY, NOT ITS SEAT (FR-41): `seatKey` names the seat
+   * `seatOf` read as a host's key, which a socket's state keeps instead of
+   * the principal — small enough for a Durable Object's attachment — and
+   * `seatOfKey` (`liveProtocol`'s `seatOf`) resolves it on every message.
+   */
+  readonly seatKey?: (seat: Principal) => string | undefined;
+  readonly seatOfKey?: (key: string) => Principal | undefined;
+  /** A refusal in the host's words: `liveProtocol`'s `refusal`, on the socket and `POST /graview/ops`. */
+  readonly refusal?: (error: unknown, calls: readonly MutationCall[], peer: ServedSocket) => WireRefusal | undefined;
+  /** The key a withheld op's opaque batch is minted under: `liveProtocol`'s `withheldKey`, the same across wakes. */
+  readonly withheldKey?: string;
   /**
    * THE LOWEST LIVE PROTOCOL SERVED (FR-44). A socket whose hello says an
    * older one is answered `reload`: its client keeps what it had not sent,
@@ -162,6 +186,13 @@ interface HandlerOptions<S extends AnySchema> {
    * Absent, every protocol is served.
    */
   readonly minProtocol?: number;
+  /**
+   * THE LOWEST HOST PROTOCOL SERVED (FR-44): the host's own number for its
+   * half of the wire, beside `WIRE_PROTOCOL`. A socket whose hello says an
+   * older `hostProtocol` (`openRemote({ hostProtocol })`; absent is 0) is
+   * answered `reload`, as below `minProtocol`.
+   */
+  readonly minHostProtocol?: number;
 }
 
 /**
@@ -174,7 +205,7 @@ interface HandlerOptions<S extends AnySchema> {
 export interface DeclarationChange {
   readonly app: GraviewApp<AnySchema>;
   readonly store?: Store<AnySchema>;
-  readonly flush?: () => Promise<void>;
+  readonly flush?: (landed: readonly Operation[]) => Promise<void>;
   readonly migrated?: readonly string[];
 }
 
@@ -206,8 +237,13 @@ export interface AdapterStoreHandlerOptions<S extends AnySchema> extends Handler
 export interface HeldStoreHandlerOptions<S extends AnySchema> extends HandlerOptions<S> {
   readonly store: Store<S>;
   readonly adapter?: never;
-  /** Resolves once what landed is durable: a call's answer waits for it. Absent, the answer goes at once. */
-  readonly flush?: () => Promise<void>;
+  /**
+   * Resolves once what landed is durable: a call's answer waits for it.
+   * Handed the ops not yet durable, in seq order (`liveProtocol`'s
+   * `flush`); one that rejects refuses the call `unavailable`, and the
+   * change is kept and sent again. Absent, the answer goes at once.
+   */
+  readonly flush?: (landed: readonly Operation[]) => Promise<void>;
   /** What opening the store migrated, in the migrations' own words: said in the state, as `openStore`'s would be. */
   readonly migrated?: readonly string[];
 }
@@ -355,8 +391,10 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
       scope,
       ...(options.seed ? { seed: options.seed } : {}),
       ...(options.enabledModules ? { enabledModules: options.enabledModules } : {}),
+      // What the handler's store lands itself is in a batch no client could have named first.
+      storeOptions: { batchIds: serverBatchIds() },
     });
-  let opened = (await opening(options.app as unknown as GraviewApp<AnySchema>)) as OpenedStore<AnySchema>;
+  let opened = (await opening(options.app)) as OpenedStore<AnySchema>;
   const { adapter, seed: _seed, scope: _scope, enabledModules: _modules, ...rest } = options;
   const { handler, swap } = storeHandler({
     ...rest,
@@ -404,20 +442,20 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
 interface Serving {
   readonly app: GraviewApp<AnySchema>;
   readonly store: Store<AnySchema>;
-  readonly flush: (() => Promise<void>) | undefined;
+  readonly flush: ((landed: readonly Operation[]) => Promise<void>) | undefined;
   readonly migrated: string[];
   readonly wire: Wire<AnySchema>;
   readonly protocol: LiveProtocol<AnySchema>;
 }
 
-type Swap = (app: GraviewApp<AnySchema>, open: () => Promise<{ store: Store<AnySchema>; flush?: () => Promise<void>; migrated: readonly string[] }>) => Promise<void>;
+type Swap = (app: GraviewApp<AnySchema>, open: () => Promise<{ store: Store<AnySchema>; flush?: (landed: readonly Operation[]) => Promise<void>; migrated: readonly string[] }>) => Promise<void>;
 
 function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, adapterName = "held by the host"): { handler: Omit<StoreHandler<S>, "declarationChanged">; swap: Swap } {
   const seatOf = options.seatOf ?? (options.trustSeatHeaders ? seatFromHeaders : undefined);
-  const flush = async (): Promise<void> => {
-    await serving.flush?.();
+  const flush = async (landed: readonly Operation[] = []): Promise<void> => {
+    await serving.flush?.(landed);
   };
-  const serve = (app: GraviewApp<AnySchema>, store: Store<AnySchema>, flushing: (() => Promise<void>) | undefined, migrated: readonly string[]): Serving => ({
+  const serve = (app: GraviewApp<AnySchema>, store: Store<AnySchema>, flushing: ((landed: readonly Operation[]) => Promise<void>) | undefined, migrated: readonly string[]): Serving => ({
     app,
     store,
     flush: flushing,
@@ -427,13 +465,19 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       store,
       version: app.version ?? 1,
       migrated,
-      flush,
+      // Only a flush the host has: one without pushes every op the moment it lands.
+      ...(flushing ? { flush: (landed: readonly Operation[]) => flushing(landed) } : {}),
       ...(options.build ? { build: options.build } : {}),
       ...(options.minProtocol !== undefined ? { minProtocol: options.minProtocol } : {}),
+      ...(options.minHostProtocol !== undefined ? { minHostProtocol: options.minHostProtocol } : {}),
+      ...(options.viaClaimed ? { viaOf: options.viaClaimed } : {}),
+      ...(options.seatOfKey ? { seatOf: options.seatOfKey } : {}),
+      ...(options.refusal ? { refusal: options.refusal } : {}),
+      ...(options.withheldKey !== undefined ? { withheldKey: options.withheldKey } : {}),
       ...(options.limit ? { limit: options.limit } : {}),
     }),
   });
-  let serving = serve(options.app as unknown as GraviewApp<AnySchema>, options.store as unknown as Store<AnySchema>, options.flush, options.migrated ?? []);
+  let serving = serve(options.app, options.store as unknown as Store<AnySchema>, options.flush, options.migrated ?? []);
   /** Set while the declaration is being changed: every request and message waits for it. */
   let changing: Promise<void> | undefined;
 
@@ -479,13 +523,17 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     const url = new URL(request.url, "http://localhost");
     // Answered from the declaration served once any change under way is made (FR-43).
     while (changing) await changing;
-    const { store, wire, app, migrated } = serving;
+    const { store, wire, app } = serving;
     /*
      * WHICH DECLARATION, AND WHICH BUILD, ANSWERED (FR-43, FR-44): on every
      * answer a poll reads, so a client without a socket learns the
      * declaration changed — or that it runs another build — on its next one.
      */
-    const answering = { version: app.version ?? 1, ...(options.build ? { build: options.build } : {}) };
+    const buildOf = (seat: Principal, via: string): string | undefined => (typeof options.build === "function" ? options.build({ seat, via }) : options.build);
+    const answering = (seat: Principal) => {
+      const build = buildOf(seat, "api");
+      return { version: app.version ?? 1, ...(build ? { build } : {}) };
+    };
 
     /*
      * WHO IS ASKING, OR NOTHING. Health is the only route a stranger gets:
@@ -504,21 +552,20 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
      * policy keeps from it, and its log with every op in its place and the
      * ones that touched what it may not see withheld (FR-16).
      */
-    if (url.pathname === "/graview/state") {
-      const seen = wire.seenFor(await seat());
-      return send(200, {
-        ...answering,
-        snapshot: seen.snapshot(),
-        log: seen.log.all(),
-        migrated,
-        enabledModules: wire.enabledModules(),
-        ...wire.horizonOf(),
-      });
-    }
+    // The routes with semantics are the protocol's, so a host that routes its own requests answers them the same (`post`, `state`, `since`).
+    const asked = async (otherwise: string) => {
+      const author = await seat();
+      const via = await viaFor(request, author, otherwise);
+      const build = buildOf(author, via);
+      return { seat: author, via, ...(build ? { build } : {}) };
+    };
+    const answered = (answer: WireAnswer) => send(answer.status, answer.body, answer.headers);
+
+    if (url.pathname === "/graview/state") return answered(serving.protocol.state(await asked("api")));
 
     if (url.pathname === "/graview/since") {
       const seq = Number(url.searchParams.get("seq") ?? "-1");
-      return send(200, { ops: wire.since(await seat(), seq), ...answering });
+      return answered(serving.protocol.since(seq, await asked("api")));
     }
 
     if (url.pathname === "/graview/who") return send(200, { who: wire.whoFor(await seat(), alive()) });
@@ -539,7 +586,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
         participant: mine.participant,
         who: wire.whoFor(asking, alive().filter((presence) => presence.participant !== mine.participant)),
         ...(typeof body.seq === "number" ? { ops: wire.since(asking, body.seq) } : {}),
-        ...answering,
+        ...answering(asking),
       });
     }
 
@@ -577,66 +624,19 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       });
     }
 
-    if (url.pathname === "/graview/export") return send(200, exportBundle(app, wire.seenFor(await seat())));
+    if (url.pathname === "/graview/export") {
+      const asking = await seat();
+      // The log as the seat sees it, withheld ops under their opaque batch, as on every other route.
+      return send(200, exportBundle(app, wire.seenFor(asking), { log: wire.seenLog(asking) }));
+    }
 
     if (url.pathname === "/graview/ops" && request.method === "POST") {
       const text = await request.text();
-      const body = (text.length === 0 ? {} : JSON.parse(text)) as {
-        calls?: readonly MutationCall[];
-        /** Batches to take back instead — judged like any change, as the seat that asks. */
-        undo?: readonly string[];
-        intent?: string;
-        batch?: string;
-        /** The revision of each field the calls change, as the caller last saw it (FR-05). */
-        base?: readonly FieldRevision[];
-      };
-      const calls = body.calls ?? [];
-      const author = await seat();
       // What the calls came through is the host's to say, never the body's (FR-52).
-      const via = await viaFor(request, author, "api");
-      // A batch already in the log is a call sent again after its answer was lost — or offered again on a new declaration, or after a reload (FR-43, FR-44): answered with what it made, as on the socket (FR-49).
-      const already = wire.answered(body.batch);
-      if (already.length > 0) return send(200, { ops: wire.shown(author, already), batch: body.batch, ...answering });
-      /*
-       * THE HOST'S LIMITS, BEFORE ANYTHING IS JUDGED. Busy is 429 and the
-       * change is kept to send again (FR-45); a hard cap is refused, `limit`,
-       * and the change is taken back (FR-46).
-       */
-      const limited = options.limit
-        ? await options.limit({ seat: author, via, t: body.undo ? "undo" : "call", bytes: bytesOf(text), calls: body.undo ? [] : calls })
-        : undefined;
-      if (limited && "refuse" in limited) return send(413, { error: limited.refuse, refused: true, reason: "limit", ...answering });
-      if (limited) {
-        const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
-        return send(
-          429,
-          { error: limited.sentence ?? `The store is busy: send it again in ${retryAfter} ms.`, busy: true, retryAfter },
-          { "retry-after": String(Math.ceil(retryAfter / 1000)) },
-        );
-      }
-      /*
-       * A STALE WRITE IS A CONFLICT, NOT A LOSS (FR-05). A field that moved
-       * since the caller read it is refused by name — theirs and yours —
-       * and nothing is written: what to do about it is the person's call.
-       */
-      const conflicts = body.undo ? [] : wire.conflictsOf(author, calls, body.base);
-      if (conflicts.length > 0) return send(409, { error: conflictSentence(conflicts), refused: true, conflict: true, conflicts, ...answering });
-      try {
-        /*
-         * Through the STORE, under the requester's own seat. The policy
-         * refuses here exactly what it refuses in the browser — and the
-         * refusal comes back with the policy's own sentence rather than a
-         * bare 403, because that sentence is the product.
-         */
-        const applying = { author, via, ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}) };
-        const result = body.undo ? store.undo(body.undo, applying) : store.applyAll(calls, applying);
-        await flush();
-        // An act may make what its own seat may not see: that op goes back withheld, as it would on a poll.
-        return send(200, { ops: wire.shown(author, result.ops), batch: result.batch, ...answering });
-      } catch (error) {
-        const { sentence, ...why } = refusalOf(error);
-        return send(409, { error: sentence, refused: true, ...why, ...answering });
-      }
+      const answer = await serving.protocol.post(text, await asked("api"));
+      // Ops a failed flush had held back are durable now: down every socket.
+      if (answer.landed) heldBackDurable();
+      return answered(answer);
     }
 
     return send(404, { error: `Nothing at ${url.pathname}`, reason: "missing" });
@@ -667,6 +667,17 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     });
   let unsubscribe = watch(serving.store);
   /*
+   * Every op is pushed as it lands — but one whose flush failed is held
+   * back from every socket until a flush holds it (`liveProtocol`'s
+   * `flush`). When one does, each socket is caught up from its cursor.
+   */
+  function heldBackDurable(except?: Live): void {
+    serving.protocol.publish(
+      [],
+      [...sockets].filter((live) => live !== except && !live.answering),
+    );
+  }
+  /*
    * AN AGENT THAT ACTED IS IN THE ROOM (FR-47), standing over the last
    * thing it wrote: once per agent per change, and not at all for one that
    * holds a socket here, which is in the room as itself already.
@@ -679,11 +690,13 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     if (told) tellWhoIsHere();
   }
   /** Stands an agent seat in the room for `agentsFor`, unless it is not an agent, is held by a socket here, or the host said not to. */
-  function agentIsHere(author: Parameters<typeof visitorPresence>[0], options: { readonly over?: string | null } = {}): boolean {
+  function agentIsHere(author: Parameters<typeof visitorPresence>[0], standing: { readonly over?: string | null } = {}): boolean {
     if (agentsFor <= 0 || author.kind !== "agent") return false;
-    if ([...sockets].some((live) => live.seat.kind === "agent" && live.seat.id === author.id)) return false;
+    // A socket keeps its seat, or the host's key for it (`seatKey`).
+    const seated = (live: Live): Principal | undefined => (typeof live.seat === "string" ? options.seatOfKey?.(live.seat) : live.seat);
+    if ([...sockets].some((live) => seated(live)?.kind === "agent" && seated(live)?.id === author.id)) return false;
     const now = Date.now();
-    here = foldPresence(here, announcePresence([], visitorPresence(author, { ...options, now: new Date(now) }), agentsFor, now), now, ttl);
+    here = foldPresence(here, announcePresence([], visitorPresence(author, { ...standing, now: new Date(now) }), agentsFor, now), now, ttl);
     return true;
   }
   const onCall = (call: { readonly principal: Principal }): void => {
@@ -734,7 +747,10 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     const asked = seatRequest(request);
     try {
       const seat = await seatOf(asked);
-      return serving.protocol.open(seat, await viaFor(asked, seat, "web"));
+      const via = await viaFor(asked, seat, "web");
+      // The host's key for the seat, when it keeps one, and the build this socket is served by.
+      const build = typeof options.build === "function" ? options.build({ seat, via }) : undefined;
+      return serving.protocol.open(options.seatKey?.(seat) ?? seat, via, build ? { build } : {});
     } catch (error) {
       return unknownSeat(error instanceof Error ? error.message : String(error));
     }
@@ -768,6 +784,8 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
         // What landed while this socket's own answer waited for its flush, after its ack.
         serving.protocol.publish([], [live]);
       }
+      // Ops a failed flush had held back are durable now: down every other socket too.
+      if (received.landed) heldBackDurable(live);
       if (received.presence) {
         arrive(received.presence);
         tellWhoIsHere();

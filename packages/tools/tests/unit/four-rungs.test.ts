@@ -83,7 +83,7 @@ describe("four rungs, two axes", () => {
 
 describe("the chat seat on the decision rung", () => {
   it("is answered by the graph and SAYS so in the answer itself, not in chrome", async () => {
-    const reply = await configuredResponder({ source: "decision" })(store(), "hello");
+    const reply = await configuredResponder<typeof schema>({ source: "decision" })(store(), "hello");
     expect(reply.say).toContain("2 Things");
     expect(reply.say).toContain("Jev decides rather than talks — the graph is answering here.");
     expect(reply.proposals).toEqual([]);
@@ -91,7 +91,7 @@ describe("the chat seat on the decision rung", () => {
 
   it("says which rung a turn was answered on when the person switched meanwhile", async () => {
     let now: IntelligenceConfig = { source: "graph" };
-    const responder = configuredResponder({ source: "graph" }, { current: () => now });
+    const responder = configuredResponder<typeof schema>({ source: "graph" }, { current: () => now });
     now = { source: "decision" };
     const reply = await responder(store(), "hello");
     expect(reply.say).toContain("answered on the Graph only rung — you switched to Jev meanwhile.");

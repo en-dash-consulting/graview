@@ -157,7 +157,7 @@ describe("the wire sends a seat only what it may see", () => {
     connection.receive(JSON.stringify({ t: "hello" }));
     const welcome = (await next("welcome")) as Extract<LiveServerMessage, { t: "welcome" }>;
     expect(welcome.state?.log.map(isWithheld)).toEqual([true, false]);
-    expect((welcome.state?.snapshot as { nodes: { id: string }[] }).nodes.map((node) => node.id).sort()).toEqual(["car:golf", "enquiry:is-it-still-there", "shopper:bethan"]);
+    expect(welcome.state!.snapshot.nodes.map((node) => node.id).sort()).toEqual(["car:golf", "enquiry:is-it-still-there", "shopper:bethan"]);
 
     // Somebody else's change to what she may not see is pushed in its place, withheld.
     let from = heard.length;

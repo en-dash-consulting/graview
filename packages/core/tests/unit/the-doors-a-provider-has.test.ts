@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { checkApp, createSchema, defineApp, defineNode, generateLlmsTxt } from "../../src/index.js";
+import { type AnySchema, checkApp, createSchema, defineApp, defineNode, generateLlmsTxt, type GraviewApp } from "../../src/index.js";
 
 /**
  * A PROVIDER CAN SAY HOW IT IS REACHED.
@@ -18,7 +18,7 @@ const zone = defineNode("zone", { fields: z.object({ label: z.string() }), plura
 const schema = createSchema([zone]);
 const app = (intelligence: Parameters<typeof defineApp>[0]["intelligence"]) =>
   defineApp({ name: "grounds", schema, intelligence });
-const codes = (a: Parameters<typeof checkApp>[0]) =>
+const codes = <S extends AnySchema>(a: GraviewApp<S>) =>
   checkApp(a).findings.map((finding) => `${finding.severity}:${finding.code}`);
 
 describe("the doors a provider declares", () => {

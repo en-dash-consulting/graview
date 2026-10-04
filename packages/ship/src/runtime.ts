@@ -10,8 +10,8 @@
  */
 export { createStoreHandler, presenceSeenBy, SEAT_HEADERS, seatFromHeaders, WIRE } from "./handler.js";
 export type { AdapterStoreHandlerOptions, DeclarationChange, HeldStoreHandlerOptions, StoreHandler, StoreHandlerOptions } from "./handler.js";
-export { announcePresence, liveProtocol, presenceFrom, visitorPresence } from "./live-protocol.js";
-export type { LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState } from "./live-protocol.js";
+export { announcePresence, authoredBy, isClientBatch, liveProtocol, presenceFrom, serverBatchIds, visitorPresence, wireRefusalOf } from "./live-protocol.js";
+export type { BatchClaim, LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState, ServedSocket, WireAnswer, WireAsked } from "./live-protocol.js";
 export { openStore } from "./open-store.js";
 export type { Compaction, OpenStoreOptions, OpenedStore } from "./open-store.js";
 export { migrateSnapshot, pendingMigrations } from "./migrations.js";

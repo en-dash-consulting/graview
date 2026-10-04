@@ -1,9 +1,8 @@
-import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { execFileSync } from "node:child_process";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { readdirSync, readFileSync } from "node:fs";
 import { readSkills, SKILLS_DIR, SKILL_DESTINATIONS } from "../../src/index.js";
 
 /** The checker's own source — `check.ts` and its families — so a skill cannot name a finding it never emits. */

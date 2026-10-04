@@ -25,7 +25,7 @@ function guestWindow() {
   };
 }
 
-function joined(at: ReturnType<typeof guestWindow>, nonce = "f00d") {
+function joined(_at: ReturnType<typeof guestWindow>, nonce = "f00d") {
   const store = showroom();
   const channel = new MessageChannel();
   const host = createGuestHost({ store, principal: staff, view: "card", nonce, send: (message) => channel.port1.postMessage(message), input: () => ({ node: { id: "car:golf" } }) });

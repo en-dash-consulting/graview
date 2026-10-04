@@ -1,4 +1,4 @@
-import { createMemoryAdapter, createSchema, defineApp, defineMutation, defineNode, nodeRef, type Principal } from "@graview/core";
+import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, nodeRef, type Principal } from "@graview/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { openRemote, serveStore, type RemoteStore, type ServedStore } from "../../src/index.js";
@@ -20,6 +20,8 @@ const task = defineNode("task", {
   plural: "Tasks",
   label: (node) => node.label,
 });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
 const rename = defineMutation("rename", {
   title: "Rename",
   subject: { kinds: ["task"], arg: "id" },
@@ -39,7 +41,6 @@ const add = defineMutation("add", {
     ctx.addNode({ id: args.id, kind: "task", label: args.label, done: false });
   },
 });
-const schema = createSchema([task]);
 const app = defineApp({
   name: "behind",
   schema,
@@ -85,7 +86,7 @@ describe("a client that falls behind adopts the server's state", () => {
       return fetch(input, init);
     };
     const client = await openRemote({ app, url: served.url, principal: sam, live: false, pollMs: 0, fetch: held });
-    opened.push(client as never);
+    opened.push(client);
     client.store.apply({ name: "rename", args: { id: "t1", label: "Book the big hall" } });
 
     // Meanwhile the server moved on, and compacted past where the client left off.
@@ -112,7 +113,7 @@ describe("a client that falls behind adopts the server's state", () => {
   it("recovers a copy that drifted by adopting the server's state, and carries on live", async () => {
     served = await serveStore({ app, adapter: createMemoryAdapter(), seed: seed as never, trustSeatHeaders: true });
     const client = await openRemote({ app, url: served.url, principal: sam, live: true, pollMs: 0 });
-    opened.push(client as never);
+    opened.push(client);
     expect(client.transport()).toBe("socket");
 
     // This copy drifted: t2 is gone here, and nothing in its log says so.

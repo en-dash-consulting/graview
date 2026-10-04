@@ -133,7 +133,7 @@ describe("who may do what", () => {
   });
 
   it("says nothing extra when the grants have nothing to say", () => {
-    const quiet = {
+    const quiet: Policy = {
       roles: ["parent", "child"],
       grants: [{ roles: ["parent"], mutations: "*" }],
     };

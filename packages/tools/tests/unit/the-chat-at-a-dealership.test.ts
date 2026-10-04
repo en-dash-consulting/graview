@@ -30,7 +30,7 @@ const store = () =>
       edges: [],
     },
   });
-const ask = graphResponder();
+const ask = graphResponder<typeof schema>();
 
 describe("the chat on a dealership's lot", () => {
   it("keeps a value's own capitals and says what a bare value is", async () => {

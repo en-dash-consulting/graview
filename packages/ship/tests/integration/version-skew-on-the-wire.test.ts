@@ -1,4 +1,4 @@
-import { createMemoryAdapter, createSchema, defineApp, defineMutation, defineNode, nodeRef, Store, WIRE_PROTOCOL, type AnySchema, type Principal } from "@graview/core";
+import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, nodeRef, Store, WIRE_PROTOCOL, type Principal } from "@graview/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
@@ -31,6 +31,8 @@ import {
  */
 
 const task = defineNode("task", { fields: z.object({ label: z.string().min(1), done: z.boolean() }), plural: "Tasks", label: (node) => node.label });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
 const rename = defineMutation("rename", {
   title: "Rename",
   subject: { kinds: ["task"], arg: "id" },
@@ -43,7 +45,7 @@ const rename = defineMutation("rename", {
 });
 const app = defineApp({
   name: "skew",
-  schema: createSchema([task]),
+  schema,
   mutations: [rename],
   policy: { roles: ["keeper"], grants: [{ roles: ["keeper"], mutations: "*", describe: "The keeper keeps everything." }] },
   version: 1,
@@ -70,7 +72,7 @@ const until = async (holds: () => boolean, ms = 3000) => {
  * with the calls going up held when the test says, and a way to drop the
  * socket as a restarting server would.
  */
-function deployment(first: StoreHandler<AnySchema>) {
+function deployment(first: StoreHandler<typeof schema>) {
   const at = { serving: first, holdUp: false, held: [] as string[], hellos: [] as Record<string, unknown>[], protocols: [] as (readonly string[])[], heard: [] as LiveServerMessage[] };
   const open: { drop(): void }[] = [];
   const socket = (url: string, _headers: Readonly<Record<string, string>>, protocols?: readonly string[]): LiveSocketLike => {
@@ -125,8 +127,8 @@ function deployment(first: StoreHandler<AnySchema>) {
   return { at, socket, fetch, restart: () => open.splice(0).forEach((one) => one.drop()) };
 }
 
-let served: ServedStore<AnySchema> | undefined;
-const remotes: RemoteStore<AnySchema>[] = [];
+let served: ServedStore<typeof schema> | undefined;
+const remotes: RemoteStore<typeof schema>[] = [];
 afterEach(async () => {
   for (const remote of remotes.splice(0)) remote.close();
   await served?.close();
@@ -137,9 +139,9 @@ describe("version skew on the wire", () => {
   it("keeps a tab on a different build working, and tells it once", async () => {
     const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], policy: app.policy!, snapshot: seed as never });
     const handler = await createStoreHandler({ app, store, seatOf: () => sam, build: "2026.10.03-b" });
-    const { at, socket, fetch, restart } = deployment(handler as never);
+    const { at, socket, fetch, restart } = deployment(handler);
     const remote = await openRemote({ app, url: "http://store.example", principal: sam, live: true, pollMs: 0, socket, fetch, build: "2026.10.02-a" });
-    remotes.push(remote as never);
+    remotes.push(remote);
     // The hello says which wire and which build this tab speaks.
     expect(at.hellos[0]).toMatchObject({ t: "hello", protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, build: "2026.10.02-a" });
     // The socket asks for ship's codec by subprotocol, so a host serving two codecs on one path can tell.
@@ -163,7 +165,7 @@ describe("version skew on the wire", () => {
 
     // A tab on the same build is never told.
     const same = await openRemote({ app, url: "http://store.example", principal: sam, live: true, pollMs: 0, socket, fetch, build: "2026.10.03-b" });
-    remotes.push(same as never);
+    remotes.push(same);
     const quiet: string[] = [];
     same.onBuild((build) => quiet.push(build));
     expect(quiet).toEqual([]);
@@ -193,7 +195,7 @@ describe("version skew on the wire", () => {
   it("carries a tab's unsent calls across the reload a protocol it no longer serves asks for, and lands them on the next open", async () => {
     const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], policy: app.policy!, snapshot: seed as never });
     const before = await createStoreHandler({ app, store, seatOf: () => sam });
-    const { at, socket, fetch, restart } = deployment(before as never);
+    const { at, socket, fetch, restart } = deployment(before);
     const storage = new Map<string, string>();
     const carry = {
       key: "graview:pending:skew",
@@ -201,7 +203,7 @@ describe("version skew on the wire", () => {
     };
     const reloads: number[] = [];
     const tab = await openRemote({ app, url: "http://store.example", principal: sam, live: true, pollMs: 0, socket, fetch, carry, reloadPage: () => reloads.push(1) });
-    remotes.push(tab as never);
+    remotes.push(tab);
     const refusals: string[] = [];
     tab.onRefusal((sentence) => refusals.push(sentence));
 
@@ -212,7 +214,7 @@ describe("version skew on the wire", () => {
     expect(at.held).toHaveLength(2);
 
     // The deploy: the new server serves from a protocol past this tab's, and restarts every socket.
-    at.serving = (await createStoreHandler({ app, store, seatOf: () => sam, minProtocol: WIRE_PROTOCOL + 2 })) as never;
+    at.serving = await createStoreHandler({ app, store, seatOf: () => sam, minProtocol: WIRE_PROTOCOL + 2 });
     at.holdUp = false;
     at.held.length = 0;
     restart();
@@ -225,9 +227,9 @@ describe("version skew on the wire", () => {
     await tab.settled();
 
     // The page reloads onto the build that speaks the server's protocol, with the same storage.
-    at.serving = (await createStoreHandler({ app, store, seatOf: () => sam })) as never;
+    at.serving = await createStoreHandler({ app, store, seatOf: () => sam });
     const after = await openRemote({ app, url: "http://store.example", principal: sam, live: true, pollMs: 0, socket, fetch, carry });
-    remotes.push(after as never);
+    remotes.push(after);
     await after.settled();
     expect(label(store, "t1")).toBe("Book the big hall");
     expect(label(store, "t2")).toBe("Pay it");
@@ -240,15 +242,15 @@ describe("version skew on the wire", () => {
 
   it("refuses in words, and reloads, when a tab with nowhere to carry its calls is told to", async () => {
     const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], policy: app.policy!, snapshot: seed as never });
-    const { at, socket, fetch, restart } = deployment((await createStoreHandler({ app, store, seatOf: () => sam })) as never);
+    const { at, socket, fetch, restart } = deployment(await createStoreHandler({ app, store, seatOf: () => sam }));
     const reloads: number[] = [];
     const tab = await openRemote({ app, url: "http://store.example", principal: sam, live: true, pollMs: 0, socket, fetch, reloadPage: () => reloads.push(1) });
-    remotes.push(tab as never);
+    remotes.push(tab);
     const refusals: string[] = [];
     tab.onRefusal((sentence) => refusals.push(sentence));
     at.holdUp = true;
     tab.store.apply({ name: "rename", args: { id: "t1", label: "Book the big hall" } });
-    at.serving = (await createStoreHandler({ app, store, seatOf: () => sam, minProtocol: WIRE_PROTOCOL + 1 })) as never;
+    at.serving = await createStoreHandler({ app, store, seatOf: () => sam, minProtocol: WIRE_PROTOCOL + 1 });
     at.holdUp = false;
     restart();
     await until(() => reloads.length === 1);
@@ -257,7 +259,7 @@ describe("version skew on the wire", () => {
   });
 
   it("names ship's codec by subprotocol on a served store, and does not welcome a hello in another codec", async () => {
-    served = (await serveStore({ app, adapter: createMemoryAdapter(), seed: seed as never, trustSeatHeaders: true, build: "b1" })) as never;
+    served = await serveStore({ app, adapter: createMemoryAdapter(), seed: seed as never, trustSeatHeaders: true, build: "b1" });
     const socket = new WebSocket(`${served!.url.replace(/^http/, "ws")}${LIVE_PATH}`, { protocols: [LIVE_SUBPROTOCOL], headers: seatHeaders(sam) } as never);
     const heard: LiveServerMessage[] = [];
     socket.onmessage = (event) => heard.push(JSON.parse(String(event.data)) as LiveServerMessage);

@@ -124,7 +124,7 @@ export interface StudioOptions {
 
 export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: StudioOptions = {}): Studio<S> {
   const app = studioApp(options.name ?? `${base.name} studio`);
-  const seed = declarationToGraph(base as unknown as GraviewApp<AnySchema>) as GraphSnapshot;
+  const seed = declarationToGraph(base) as GraphSnapshot;
   const store = new Store<StudioSchema>({
     schema: app.schema,
     mutations: app.mutations ?? [],
@@ -133,7 +133,7 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
     ...(options.principal ? { principal: options.principal } : {}),
   });
   const since = store.batches().length;
-  const declaration = () => graphToDeclaration(store.snapshot() as GraphSnapshot, { base: base as unknown as GraviewApp<AnySchema>, name: base.name });
+  const declaration = () => graphToDeclaration(store.snapshot() as GraphSnapshot, { base: base, name: base.name });
   const isAgent = (batch: Batch) => batch.author.kind === "agent";
   // The document the app was compiled from, if it was; the edits are read against it, or against what toDocument can say of a TypeScript app.
   const opened = options.document ?? documentOf(base);
@@ -146,7 +146,7 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
         "if the app was compiled from a document, say it: createStudio(app, { document })",
       );
   let against: GraviewDocument | undefined;
-  const reference = () => opened ?? (against ??= toDocument(base as unknown as GraviewApp<AnySchema>).document);
+  const reference = () => opened ?? (against ??= toDocument(base).document);
   const made = () => documentEdits(reference(), seed, store.snapshot() as GraphSnapshot);
   const document = (): EditOutcome | undefined => (opened ? documentAfter(opened, made()) : undefined);
   /*
@@ -168,9 +168,9 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
         const compiled = compileDocument(said.document);
         return { check: verdictOf(base.name, compiled.findings), compiled, said };
       }
-      return { check: checkApp(graphToDeclaration(graph, { base: base as unknown as GraviewApp<AnySchema>, name: base.name })), said };
+      return { check: checkApp(graphToDeclaration(graph, { base: base, name: base.name })), said };
     }
-    return { check: checkApp(graphToDeclaration(graph, { base: base as unknown as GraviewApp<AnySchema>, name: base.name })) };
+    return { check: checkApp(graphToDeclaration(graph, { base: base, name: base.name })) };
   };
   let proposed = 0;
   return {
@@ -223,7 +223,7 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
       const graph = store.snapshot() as GraphSnapshot;
       const judged = judge(graph);
       if (judged.check.errors > 0) return { ok: false, check: judged.check };
-      const migration = migrationBetween(base as unknown as GraviewApp<AnySchema>, graph);
+      const migration = migrationBetween(base, graph);
       /*
        * THE DOCUMENT'S APP, NOT THE STUDIO'S READING. Handed the document
        * and the studio's TypeScript reading beside it, a host that kept the
@@ -246,11 +246,11 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
       return { ok: true, app, migration, ...(noDocument ? { documentFindings: [noDocument] } : {}) };
     },
     files: (sourceOptions) =>
-      declarationFiles(store.snapshot() as GraphSnapshot, { name: base.name, base: base as unknown as GraviewApp<AnySchema>, ...sourceOptions }),
+      declarationFiles(store.snapshot() as GraphSnapshot, { name: base.name, base: base, ...sourceOptions }),
     edits: () => made().edits,
     document,
     whyNoDocument: () => noDocument,
-    sourceChanges: () => sourceChanges(seed, store.snapshot() as GraphSnapshot, base as unknown as GraviewApp<AnySchema>),
+    sourceChanges: () => sourceChanges(seed, store.snapshot() as GraphSnapshot, base),
   };
 }
 

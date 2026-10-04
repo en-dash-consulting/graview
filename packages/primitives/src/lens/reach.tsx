@@ -1,5 +1,5 @@
 import { nounOf, permits, withArticle, type AnySchema, type Policy, type Principal } from "@graview/core";
-import { useGraview, type ViewComponent, type ViewProps } from "@graview/react";
+import { useGraview, type ViewProps } from "@graview/react";
 import type { ReactElement } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip } from "../primitives/index.js";
@@ -156,4 +156,4 @@ export function ReachView<S extends AnySchema>({ label, fidelity, mode }: ViewPr
   );
 }
 
-export const reachLens = { name: "reach" as const, requiredRoles: [] as const, View: ReachView as ViewComponent<AnySchema> };
+export const reachLens = { name: "reach" as const, requiredRoles: [] as const, View: ReachView };

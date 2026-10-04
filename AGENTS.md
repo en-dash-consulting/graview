@@ -71,7 +71,7 @@ These are pinned by tests, not by convention:
 ```sh
 pnpm install && pnpm build     # the framework; apps typecheck against dist/
 pnpm test                      # vitest, headless: no GPU, no browser
-pnpm typecheck                 # packages and apps
+pnpm typecheck                 # packages, apps, and every package's tests (tsconfig.tests.json)
 pnpm check                     # graview check against every app's declaration
 pnpm verify                    # every browser harness, 3 side by side then the timing ones alone (~10 min)
 pnpm verify <name> [<name>]    # only these harnesses (pnpm verify --list)

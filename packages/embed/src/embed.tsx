@@ -163,7 +163,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         <Faces face={shown} stop={stop} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} />
         {toggle && shown !== "picture" ? (
           <FaceBoundary module="@graview/embed" report={report}>
-            <EmbedStrip app={app as unknown as GraviewApp<AnySchema>} studio={props.studio} face={shown} narrow={narrow} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} report={report} />
+            <EmbedStrip app={app} studio={props.studio} face={shown} narrow={narrow} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} report={report} />
           </FaceBoundary>
         ) : null}
         <FaceBoundary key={shown} module={shown === "pages" || shown === "picture" ? "@graview/pages" : "@graview/react"} report={report} content>

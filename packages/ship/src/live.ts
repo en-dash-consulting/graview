@@ -1,3 +1,4 @@
+import type { GraphSnapshot } from "./snapshot.js";
 import { WIRE_PROTOCOL, type FieldConflict, type FieldRevision, type MutationCall, type Operation, type Presence, type Principal, type RefusalReason } from "@graview/core";
 export { REFUSAL_REASONS } from "@graview/core";
 export type { RefusalReason, WireRefusal } from "@graview/core";
@@ -70,6 +71,12 @@ export type LiveClientMessage =
       readonly wire?: string;
       /** The host's build this client runs, an opaque string: said for the host to count, never judged (FR-44). */
       readonly build?: string;
+      /**
+       * The host's own protocol this page speaks (FR-44): a number the host
+       * moves for its half of the wire, beside `protocol`, which is ship's.
+       * A server whose `minHostProtocol` is past it answers `reload`. Absent is 0.
+       */
+      readonly hostProtocol?: number;
     }
   /**
    * Calls, as `POST /graview/ops` takes them. `cid` names the answer.
@@ -78,7 +85,9 @@ export type LiveClientMessage =
    * ops it already made rather than made again. `base` is the revision of
    * each field the calls change as the client last saw it; one that moved
    * since is a `conflict`. What the calls came through is not the
-   * client's to say: the host records its own `via` (FR-52).
+   * client's to say: the host records its own `via` (FR-52). `via` is a
+   * claim — a guest view's `view:<name>` — that the host's `viaOf` may
+   * accept; without one it is never read.
    */
   | {
       readonly t: "call";
@@ -87,9 +96,10 @@ export type LiveClientMessage =
       readonly intent?: string;
       readonly batch?: string;
       readonly base?: readonly FieldRevision[];
+      readonly via?: string;
     }
-  /** Batches to take back, judged as the seat that asks. */
-  | { readonly t: "undo"; readonly cid: string; readonly batches: readonly string[]; readonly intent?: string; readonly batch?: string }
+  /** Batches to take back, judged as the seat that asks. `via` is a claim, as on a call. */
+  | { readonly t: "undo"; readonly cid: string; readonly batches: readonly string[]; readonly intent?: string; readonly batch?: string; readonly via?: string }
   /**
    * Where this client is, as `POST /graview/here` takes it. Who it is —
    * the key, the kind, for whom — is the server's to say from the seat;
@@ -120,16 +130,18 @@ export type LiveServerMessage =
       readonly seq: number;
       readonly ops: readonly Operation[];
       /** `horizon`: the seq `log` begins at, when the store was compacted (FR-23); absent, 0. */
-      readonly state?: { readonly version: number; readonly snapshot: unknown; readonly log: readonly Operation[]; readonly migrated: readonly string[]; readonly enabledModules?: readonly string[]; readonly horizon?: number };
+      readonly state?: { readonly version: number; readonly snapshot: GraphSnapshot; readonly log: readonly Operation[]; readonly migrated: readonly string[]; readonly enabledModules?: readonly string[]; readonly horizon?: number };
     }
   /** A call or undo landed: the ops it made, in the batch they landed in. Every op before them has already been sent. */
   | { readonly t: "ack"; readonly cid: string; readonly seq: number; readonly batch: string; readonly ops: readonly Operation[] }
   /**
    * Refused, in the policy's own sentence, and why as a code a program can
-   * branch on (FR-46): `forbidden`, `missing`, `invalid` or `limit`
-   * (`REFUSAL_REASONS`), with `wouldNeed` — the roles that could — when
-   * the policy knows them. Final: nothing landed, and the client takes the
-   * change back.
+   * branch on (FR-46): `forbidden`, `missing`, `invalid`, `limit` or
+   * `unavailable` (`REFUSAL_REASONS`), with `wouldNeed` — the roles that
+   * could — when the policy knows them. Final, but for `unavailable`:
+   * nothing landed, and the client takes the change back. `unavailable` is
+   * the host taking no changes for a while: the client keeps the change
+   * pending and sends it again, backing off.
    */
   | { readonly t: "refused"; readonly cid: string; readonly sentence: string; readonly reason: RefusalReason; readonly wouldNeed?: readonly string[] }
   /**
@@ -159,7 +171,13 @@ export type LiveServerMessage =
    * follows: the client keeps what it had not sent, reloads onto a build
    * that speaks it, and offers them again there.
    */
-  | { readonly t: "reload"; readonly reason: string; readonly protocol: number }
+  | {
+      readonly t: "reload";
+      readonly reason: string;
+      readonly protocol: number;
+      /** The lowest host protocol served, when it is the host's own number the hello was below (`minHostProtocol`). */
+      readonly hostProtocol?: number;
+    }
   /** A message the server could not read. */
   | { readonly t: "error"; readonly sentence: string };
 
@@ -188,8 +206,15 @@ export interface LimitAsked {
  * - `{ refuse }` — REFUSED, reason `limit`: never as asked (over a hard
  *   size cap, more calls in one batch than the host takes). The socket says
  *   `refused` and HTTP answers 413; the client takes the change back.
+ * - `{ unavailable }` — NOT FOR A WHILE, reason `unavailable`: the host
+ *   takes no changes for now and cannot say how long (a room read-only
+ *   while it is checked). The socket says `refused` and HTTP answers 503;
+ *   the client keeps the change pending and sends it again, backing off.
+ *
+ * Asked only of a change that has not landed: a call sent again after it
+ * did is answered with its ops, whatever the host would say now.
  */
-export type LimitAnswer = { readonly retryAfter: number; readonly sentence?: string } | { readonly refuse: string };
+export type LimitAnswer = { readonly retryAfter: number; readonly sentence?: string } | { readonly refuse: string } | { readonly unavailable: string };
 
 /** A host's word on whether a change may be judged now: busy, refused at its limit, or nothing. */
 export type Limit = (asked: LimitAsked) => LimitAnswer | undefined | Promise<LimitAnswer | undefined>;

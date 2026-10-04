@@ -1,4 +1,4 @@
-import { createSchema, defineInvariant, defineNode, Store, type Violation } from "@graview/core";
+import { bindSchema, createSchema, defineNode, Store, type Violation } from "@graview/core";
 import { EMPTY_VIEW } from "@graview/layout";
 import { createViews, GraviewProvider } from "@graview/react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -15,6 +15,7 @@ import { Connections } from "../../src/index.js";
 const task = defineNode("task", { fields: z.object({ label: z.string(), done: z.boolean() }), label: (n) => n.label });
 const rule = defineNode("rule", { fields: z.object({ label: z.string() }), label: (n) => n.label });
 const schema = createSchema([task, rule]);
+const { defineInvariant } = bindSchema(schema);
 const nothingDone = defineInvariant("nothing-done", {
   scope: { kind: "rule" },
   evaluate({ graph, subject }): Violation[] {
@@ -38,7 +39,7 @@ describe("what it finds wrong", () => {
         ],
         edges: [],
       },
-    } as never);
+    });
     const html = renderToStaticMarkup(
       <GraviewProvider store={store} views={createViews(schema)} initialView={EMPTY_VIEW}>
         <Connections id="r" empty="Nothing is connected to this rule yet." />

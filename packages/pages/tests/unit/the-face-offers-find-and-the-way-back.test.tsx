@@ -145,7 +145,7 @@ describe("the routed face's way back", () => {
     expect(button?.textContent).toContain("Take back “Rename to \"Pay the deposit for now\"”");
     button!.focus();
     await act(async () => button!.click());
-    await act(async () => new Promise((done) => requestAnimationFrame(() => done(null))));
+    await act(async () => new Promise<void>((done) => requestAnimationFrame(() => done())));
     expect(store.graph.getNode("i1")?.label).toBe("Pay the deposit");
     expect(store.batches().at(-1)?.author).toMatchObject({ id: "nina" });
     // Nothing left to take back: the control is gone, and the keyboard is on the page's heading, not <body>.

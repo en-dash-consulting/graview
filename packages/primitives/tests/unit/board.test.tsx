@@ -1,6 +1,6 @@
 import { createSchema, defineInvariant, defineNode, Store } from "@graview/core";
 import { aggregateId, EMPTY_VIEW } from "@graview/layout";
-import { createViews, GraviewProvider, ResolvedView } from "@graview/react";
+import { createViews, GraviewProvider, ResolvedView, type ViewProps } from "@graview/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -265,7 +265,7 @@ describe("what the board says a mark is about", () => {
     });
 
   const lens = createBoardLens<typeof schema>(options);
-  const BoardPicture = (props: never) => <lens.View {...props} label="The table" />;
+  const BoardPicture = (props: ViewProps<typeof schema>) => <lens.View {...props} label="The table" />;
   const views = () =>
     registerDefaultViews(schema, createViews(schema))
       .register("seat", { cardinality: "many", fidelity: "full" }, BoardPicture)
