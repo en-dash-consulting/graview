@@ -24,6 +24,7 @@ What is stored carries the format it was written in (FR-31). `FORMATS` names the
 - An older format is brought up by `upgradeSnapshot(snapshot, from)` and `upgradeOp(op, from)`, one step per format change. Each step ships with a test over a fixture of the format before it (`packages/core/tests/fixtures/formats/`).
 - Anything written before stamps existed (0.1.0) is format 1.
 - A log compacted behind an undo horizon (FR-23) is not a new format. Its ops are ops, its checkpoint is an epoch marked `horizon`, and the archive sits beside it. A build before compaction refuses such a store on open, because its log no longer begins at seq 0. It never misreads one.
+- A checkpoint keeps who made each record behind it (`Epoch.creators`, record id to seat id), so an `own` sight knows them after a restart without the archive. The field is optional and additive within format 1: a checkpoint without it opens as before and knows its makers from the horizon on, and a build that predates it ignores it, folds the same graph and judges sights as it always did. A build that predates it and compacts again writes its next checkpoint without the field. Epochs are never served to a seat, so the ids it names stay with the host.
 
 ### 3. The wire and live protocols: additive within a major
 

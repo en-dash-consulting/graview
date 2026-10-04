@@ -259,6 +259,16 @@ export interface StoreHandler<S extends AnySchema> {
    * — because it is the host who knows who the seat is.
    */
   announce(presence: Presence, ttlMs?: number): void;
+  /**
+   * AN AGENT CALLED, AND IS HERE: the hook `createMcpHttpHandler`'s
+   * `onCall` takes (`@graview/tools`), so an agent seat is announced on
+   * every tool call — a read lands no op, and would otherwise leave it out
+   * of the room. Announced as an op of its would announce it: an agent
+   * seat only, for `announceAgents`' time and never when that is `false`,
+   * not when it holds a socket here, and for whom only to a seat that may
+   * see the person. Bound, so it can be handed on as it is.
+   */
+  readonly onCall: (call: { readonly principal: Principal }) => void;
   /** Writes what is pending and lets the adapter go — or, over a store the host holds, writes what is pending and leaves the store open. */
   close(): Promise<void>;
 }
@@ -665,15 +675,20 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     const last = new Map<string, Operation>();
     for (const op of ops) if (op.author.kind === "agent") last.set(`${op.author.id ?? ""}`, op);
     let told = false;
-    for (const op of last.values()) {
-      const author = op.author;
-      if ([...sockets].some((live) => live.seat.kind === "agent" && live.seat.id === author.id)) continue;
-      const now = Date.now();
-      here = foldPresence(here, announcePresence([], visitorPresence(author, { over: op.writes[0] ?? null, now: new Date(now) }), agentsFor, now), now, ttl);
-      told = true;
-    }
+    for (const op of last.values()) told = agentIsHere(op.author, { over: op.writes[0] ?? null }) || told;
     if (told) tellWhoIsHere();
   }
+  /** Stands an agent seat in the room for `agentsFor`, unless it is not an agent, is held by a socket here, or the host said not to. */
+  function agentIsHere(author: Parameters<typeof visitorPresence>[0], options: { readonly over?: string | null } = {}): boolean {
+    if (agentsFor <= 0 || author.kind !== "agent") return false;
+    if ([...sockets].some((live) => live.seat.kind === "agent" && live.seat.id === author.id)) return false;
+    const now = Date.now();
+    here = foldPresence(here, announcePresence([], visitorPresence(author, { ...options, now: new Date(now) }), agentsFor, now), now, ttl);
+    return true;
+  }
+  const onCall = (call: { readonly principal: Principal }): void => {
+    if (agentIsHere(call.principal)) tellWhoIsHere();
+  };
   /*
    * A socket's presence stands while the socket does; the TTL is for a
    * poller that went quiet, and a socket that went quiet is closed.
@@ -816,6 +831,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     connect,
     seatFor,
     announce,
+    onCall,
     handle: async (request) => {
       try {
         return await route(request);

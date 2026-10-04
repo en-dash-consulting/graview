@@ -23,6 +23,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { launchCanaryGpu } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { portFor } from "./lib/ports.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -39,7 +40,7 @@ const GPU_ARGS = ["--enable-unsafe-webgpu", "--use-angle=metal"];
 const APPS = [
   {
     name: "todo",
-    port: 5193,
+    port: portFor("todo"),
     ready: "__todoReady",
     query: "&today=2026-09-01",
     places: [

@@ -18,10 +18,11 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const app = resolve(repoRoot, "apps/discography");
-const PORT = 5198;
+const PORT = portFor("discography-preview");
 const ENGINE = engineName();
 const report = { at: new Date().toISOString(), engine: ENGINE, stops: {} };
 
@@ -165,7 +166,7 @@ try {
       return box ? { x: box.x + 12, y: box.y + 8 } : null;
     }, selector);
 
-  await page.goto(`http://localhost:${PORT}/?fresh=1#overview=1`, { waitUntil: "load" });
+  await page.goto(`${at("discography-preview")}/?fresh=1#overview=1`, { waitUntil: "load" });
   await page.waitForSelector("[data-graview-view]", { timeout: 120_000 });
   await page.waitForTimeout(1500);
 
