@@ -639,6 +639,17 @@ class Editor {
     if (!this.kind(i, kind)) return;
     if (Object.keys(this.doc.kinds).length === 1) return this.fail(i, "kind", "an app keeps at least one kind");
     const gone: string[] = [];
+    /*
+     * The relations it declares go with it — and so does what walks them
+     * from elsewhere: a rule over a category that counts `in('fills')` cannot
+     * be judged once no kind has fills. Dropped while the kind still stands,
+     * so the walk knows where each name leads.
+     */
+    for (const edge of Object.keys(this.doc.kinds[kind].edges ?? {})) {
+      const went: string[] = [];
+      this.dropRelation(kind, edge, went);
+      for (const what of went) if (!gone.includes(what)) gone.push(what);
+    }
     delete this.doc.kinds[kind];
     this.kindOrigin.delete(kind);
     // Relations that only led to it go with it.
