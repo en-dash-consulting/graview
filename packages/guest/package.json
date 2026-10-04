@@ -1,6 +1,6 @@
 {
   "name": "@graview/guest",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "type": "module",
   "description": "Guest views: somebody else's React or plain script in a sandboxed frame, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.",
   "keywords": [
