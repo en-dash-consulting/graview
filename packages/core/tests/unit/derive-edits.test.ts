@@ -12,6 +12,7 @@ import {
   PermissionDeniedError,
   Store,
   unwrittenFields,
+  type GraviewApp,
   type Policy,
 } from "../../src/index.js";
 
@@ -27,17 +28,18 @@ const drill = defineNode2("drill", {
   minPlayers: z.number().int().min(1).max(40),
   intensity: z.enum(["low", "medium", "high"]),
 });
-const requirement = {
-  ...defineNode2("requirement", { ref: z.string(), text: z.string(), priority: z.enum(["must", "should"]) }),
-  fixed: { ref: "the client's reference", text: "the client's words" },
-};
+const requirement = defineNode2(
+  "requirement",
+  { ref: z.string(), text: z.string(), priority: z.enum(["must", "should"]) },
+  { ref: "the client's reference", text: "the client's words" },
+);
 const task = defineNode2("task", { label: z.string(), done: z.boolean() });
 const schema = createSchema([drill, requirement, task]);
 const { defineMutation } = bindSchema(schema);
 
 import { defineNode } from "../../src/index.js";
-function defineNode2<F extends z.ZodRawShape>(kind: string, shape: F) {
-  return defineNode(kind, { fields: z.object(shape) });
+function defineNode2<const K extends string, F extends z.ZodRawShape>(kind: K, shape: F, fixed?: Readonly<Record<string, string>>) {
+  return defineNode(kind, { fields: z.object(shape), ...(fixed ? { fixed } : {}) });
 }
 
 const resizeDrill = defineMutation("resize-drill", {
@@ -200,8 +202,8 @@ describe("through the policy, with no second list", () => {
 });
 
 describe("graview check", () => {
-  const app = (over: Partial<Parameters<typeof defineApp>[0]> = {}) =>
-    defineApp({ name: "t", schema, mutations, invariants: [], ...over } as never);
+  const app = (over: Partial<GraviewApp<typeof schema>> = {}) =>
+    defineApp({ name: "t", schema, mutations, invariants: [], ...over });
   const codes = (result: ReturnType<typeof checkApp>) => result.findings.map((f) => `${f.severity}:${f.code}`);
 
   it("passes when every settable field is reachable", () => {
@@ -248,7 +250,7 @@ describe("graview check", () => {
     expect(codes(checkApp(app({ mutations: [...mutations, liar] })))).toContain("error:writes-unknown-field");
 
     const contradiction = createSchema([
-      { ...drill, fixed: { minutes: "never", nope: "not a field" } },
+      defineNode("drill", { fields: drill.fields, fixed: { minutes: "never", nope: "not a field" } }),
       task,
     ]);
     const result = checkApp(defineApp({ name: "c", schema: contradiction, mutations: [resizeDrill, rename, finish], invariants: [] } as never));

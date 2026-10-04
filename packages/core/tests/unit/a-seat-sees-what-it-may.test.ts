@@ -49,28 +49,28 @@ const make = () =>
         { id: "shopper:bethan", kind: "shopper", label: "Bethan Okonkwo", email: "bethan@mail.example" },
         { id: "shopper:freya", kind: "shopper", label: "Freya Davies", email: "freya@mail.example" },
         { id: "enquiry:1", kind: "enquiry", label: "Finance on the Golf" },
-      ] as never,
+      ],
       edges: [{ kind: "from", from: "enquiry:1", to: "shopper:freya" }, { kind: "about", from: "enquiry:1", to: "car:golf" }],
     },
   });
 const bethan: Principal = { kind: "human", id: "shopper:bethan", roles: ["shopper"] };
 const staff: Principal = { kind: "human", id: "staff:rhian", roles: ["staff"] };
 const browsing: Principal = { kind: "human", id: "browsing", roles: [] };
-const ids = (store: Store<never>) => store.graph.allNodes().map((node) => node.id).sort();
+const ids = (store: Store<typeof schema>) => store.graph.allNodes().map((node) => node.id).sort();
 
 describe("the store as one seat may see it", () => {
   it("shows a stranger the shop window and nobody in it", () => {
     const store = make();
-    expect(ids(store.seenBy(browsing) as never)).toEqual(["car:golf"]);
+    expect(ids(store.seenBy(browsing))).toEqual(["car:golf"]);
     expect(store.seenBy(browsing).graph.in("car:golf")).toEqual([]);
     expect(store.kindsKeptFrom(browsing)).toEqual(new Set(["shopper", "enquiry"]));
   });
 
   it("shows a shopper themselves and what is theirs, never another customer", () => {
     const store = make();
-    expect(ids(store.seenBy(bethan) as never)).toEqual(["car:golf", "shopper:bethan"]);
+    expect(ids(store.seenBy(bethan))).toEqual(["car:golf", "shopper:bethan"]);
     store.seenBy(bethan).apply({ name: "ask", args: { shopperId: "shopper:bethan", label: "Is it still there?" } }, { author: bethan });
-    expect(ids(store.seenBy(bethan) as never)).toEqual(["car:golf", "enquiry:is-it-still-there", "shopper:bethan"]);
+    expect(ids(store.seenBy(bethan))).toEqual(["car:golf", "enquiry:is-it-still-there", "shopper:bethan"]);
     expect(store.seenBy(bethan).batches().map((batch) => batch.intent)).toHaveLength(1);
     // Somebody else's enquiry is a change the stranger cannot see: in its place, and saying nothing of it (FR-16).
     expect(store.seenBy(browsing).batches().map((batch) => batch.intent)).toEqual(["A change you cannot see"]);
@@ -78,7 +78,7 @@ describe("the store as one seat may see it", () => {
 
   it("shows the store everything, and is the store itself where no sight is declared", () => {
     const store = make();
-    expect(ids(store.seenBy(staff) as never)).toHaveLength(4);
+    expect(ids(store.seenBy(staff))).toHaveLength(4);
     const open = new Store({ schema, mutations: [ask] });
     expect(open.seenBy(browsing)).toBe(open);
   });

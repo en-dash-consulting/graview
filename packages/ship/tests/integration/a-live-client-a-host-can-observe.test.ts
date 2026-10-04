@@ -1,4 +1,4 @@
-import { createMemoryAdapter, createSchema, defineApp, defineMutation, defineNode, nodeRef, type Presence, type Principal } from "@graview/core";
+import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, nodeRef, type Presence, type Principal } from "@graview/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createStoreHandler, openRemote, seatHeaders, type LiveSocketLike, type RemoteStatus, type RemoteStore, type StoreHandler } from "../../src/index.js";
@@ -20,6 +20,8 @@ const task = defineNode("task", {
   plural: "Tasks",
   label: (node) => node.label,
 });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
 const rename = defineMutation("rename", {
   title: "Rename",
   subject: { kinds: ["task"], arg: "id" },
@@ -30,7 +32,6 @@ const rename = defineMutation("rename", {
     ctx.patchNode(args.id, { label: args.label });
   },
 });
-const schema = createSchema([task]);
 const app = defineApp({
   name: "observed",
   schema,

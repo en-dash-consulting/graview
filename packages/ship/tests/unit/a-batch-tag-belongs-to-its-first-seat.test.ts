@@ -1,4 +1,4 @@
-import { createSchema, defineApp, defineMutation, defineNode, Store, type Principal } from "@graview/core";
+import { bindSchema, createSchema, defineApp, defineNode, Store, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createStoreHandler, liveProtocol, SEAT_HEADERS, type LivePeer, type LiveServerMessage } from "../../src/runtime.js";
@@ -17,6 +17,8 @@ import { createStoreHandler, liveProtocol, SEAT_HEADERS, type LivePeer, type Liv
  * `invalid` in words, before anything lands.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string() }) });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
 const add = defineMutation("add", {
   title: "Add a task",
   creates: ["task"],
@@ -26,7 +28,6 @@ const add = defineMutation("add", {
     ctx.addNode({ id: args.id, kind: "task", label: args.label });
   },
 });
-const schema = createSchema([task]);
 const app = defineApp({ name: "tags", schema, mutations: [add], policy: { roles: ["keeper"], grants: [{ roles: ["keeper"], mutations: "*" }] }, version: 1 });
 const ada: Principal = { kind: "human", id: "ada", roles: ["keeper"] };
 const bo: Principal = { kind: "human", id: "bo", roles: ["keeper"] };

@@ -1,4 +1,4 @@
-import { createSchema, defineApp, defineMutation, defineNode, Store, type MutationCall, type Principal } from "@graview/core";
+import { bindSchema, createSchema, defineApp, defineNode, Store, type MutationCall, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { liveProtocol, type LivePeer, type LiveServerMessage, type ServedSocket } from "../../src/runtime.js";
@@ -16,6 +16,8 @@ import { liveProtocol, type LivePeer, type LiveServerMessage, type ServedSocket 
  * the refusal to send, or nothing for the default.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string().min(1) }), plural: "Tasks" });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
 const add = defineMutation("add", {
   title: "Add a task",
   creates: ["task"],
@@ -31,7 +33,6 @@ const archiveEverything = defineMutation("archive-everything-secretly", {
   describe: () => "Archive everything",
   apply() {},
 });
-const schema = createSchema([task]);
 const app = defineApp({ name: "words", schema, mutations: [add, archiveEverything], policy: { roles: ["keeper"], grants: [{ roles: ["keeper"], mutations: "*" }] }, version: 1 });
 const kim: Principal = { kind: "human", id: "kim", name: "Kim", roles: ["keeper"] };
 const hostsStore = () => new Store({ schema, mutations: app.mutations ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: { nodes: [], edges: [] } as never });

@@ -37,7 +37,7 @@ const clean = defineInvariant("clean", {
   description: "Nothing explicit.",
   scope: { kind: "song" },
   evaluate({ subject }) {
-    return subject.explicit ? [{ invariant: "clean", subjectId: subject.id, message: "explicit", nodeIds: [subject.id], repairs: [] }] : [];
+    return subject.explicit ? [{ invariant: "clean", subjectId: subject.id, label: "Clean", message: "explicit", nodeIds: [subject.id], repairs: [] }] : [];
   },
 });
 

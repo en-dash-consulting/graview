@@ -1,4 +1,4 @@
-import { createSchema, defineMutation, defineNode, nodeRef, Store } from "@graview/core";
+import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { configuredResponder, type Responder } from "../../src/index.js";
@@ -23,7 +23,7 @@ const meal = defineNode("meal", {
   label: (node) => node.label,
 });
 const schema = createSchema([meal]);
-const rename = defineMutation("rename", {
+const rename = bindSchema(schema).defineMutation("rename", {
   title: "Rename it",
   description: "Call it something else.",
   subject: { kinds: ["meal"], arg: "id" },

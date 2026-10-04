@@ -8,6 +8,7 @@ import {
   defineNode,
   describeApp,
   nodeRef,
+  SCHEMES,
 } from "../../src/index.js";
 
 /**
@@ -108,14 +109,14 @@ describe("reading an app out", () => {
       name: "grounds",
       schema,
       mutations: [stakeOut],
-      brand: { name: "Grounds", accents: { zone: 120, feature: 124 } },
+      brand: { name: "Grounds", schemes: SCHEMES, accents: { zone: 120, feature: 124 } },
     });
     expect(describeApp(near)).toContain("will read as one colour");
     const apart = defineApp({
       name: "grounds",
       schema,
       mutations: [stakeOut],
-      brand: { name: "Grounds", accents: { zone: 120, feature: 300 } },
+      brand: { name: "Grounds", schemes: SCHEMES, accents: { zone: 120, feature: 300 } },
     });
     expect(describeApp(apart)).not.toContain("will read as one colour");
   });

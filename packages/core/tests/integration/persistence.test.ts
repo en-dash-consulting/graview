@@ -1,23 +1,8 @@
 import Database from "better-sqlite3";
 import { describe, expect, it } from "vitest";
-import { z } from "zod";
-import {
-  createMemoryAdapter,
-  createSchema,
-  defineNode,
-  Graph,
-  type GraphSnapshot,
-  type PersistenceAdapter,
-} from "../../src/index.js";
+import { createMemoryAdapter, type GraphSnapshot, type PersistenceAdapter } from "../../src/index.js";
 import { createSqlAdapter, createSqliteAdapter, sqlFromDatabase } from "../../src/persistence/sqlite.js";
 import { adapterCases, sqlCases } from "../support/adapter-contract.js";
-
-const person = defineNode("person", {
-  fields: z.object({ label: z.string(), accent: z.string().optional() }),
-  edges: { "assigned-to": { to: ["duty"] } },
-});
-const duty = defineNode("duty", { fields: z.object({ label: z.string(), at: z.number() }) });
-const schema = createSchema([person, duty]);
 
 const snapshot: GraphSnapshot = {
   nodes: [

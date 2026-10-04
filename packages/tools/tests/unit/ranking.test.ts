@@ -114,7 +114,7 @@ describe("pins and bands", () => {
           primitives: [
             { op: "add-node", node: { id: "t1", kind: "thing", label: "One", done: false, touched: 0 } },
           ],
-          inverse: [{ op: "remove-node", id: "t1" }],
+          inverse: [{ op: "remove-node", node: { id: "t1", kind: "thing", label: "One", done: false, touched: 0 } }],
           reads: [],
           writes: ["t1"],
           at: "2026-01-01T00:00:00Z",

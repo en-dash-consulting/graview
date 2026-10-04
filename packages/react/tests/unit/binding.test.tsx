@@ -356,7 +356,7 @@ describe("a node with a natural size is drawn scaled, not re-laid-out", () => {
     const html = graview("dom");
     const scaled = /data-graview-natural="([\d.]+)x([\d.]+)"/.exec(html);
     expect(scaled).not.toBeNull();
-    const [naturalWidth, naturalHeight] = [Number(scaled![1]), Number(scaled![2])];
+    const naturalWidth = Number(scaled![1]);
 
     // The box the view lays itself out in is the FULL one, not the slot.
     const host = html.slice(html.indexOf('data-graview-view="week-1"'));

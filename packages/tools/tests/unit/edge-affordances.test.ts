@@ -206,7 +206,7 @@ describe("a move offers the new, a pure sever offers the attached", () => {
     expect(offer).toBeDefined();
     expect(offer?.args).toEqual({ personId: "bo" });
     // Bo rides nothing: every duty is a valid new home.
-    expect(offer?.open?.find((p) => p.name === "dutyId")?.candidates?.sort()).toEqual([
+    expect([...(offer?.open?.find((p) => p.name === "dutyId")?.candidates ?? [])].sort()).toEqual([
       "bare",
       "morning",
     ]);
@@ -238,7 +238,7 @@ describe("a move offers the new, a pure sever offers the attached", () => {
     });
     const offer = affordances.find((a) => a.mutation === "unlink");
     for (const parameter of offer?.open ?? []) {
-      expect(parameter.candidates?.sort()).toEqual(["a", "b"]);
+      expect([...(parameter.candidates ?? [])].sort()).toEqual(["a", "b"]);
     }
   });
 });

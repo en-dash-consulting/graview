@@ -1,4 +1,4 @@
-import { createSchema, defineApp, defineMutation, defineNode, isWithheld, Store, type Operation, type Principal } from "@graview/core";
+import { bindSchema, createSchema, defineApp, defineNode, isWithheld, Store, type Operation, type Policy, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createStoreHandler, liveProtocol, type LivePeer, type LiveServerMessage } from "../../src/runtime.js";
@@ -19,6 +19,8 @@ import { createStoreHandler, liveProtocol, type LivePeer, type LiveServerMessage
  */
 const task = defineNode("task", { fields: z.object({ label: z.string() }) });
 const secret = defineNode("secret", { fields: z.object({ label: z.string() }) });
+const schema = createSchema([task, secret]);
+const { defineMutation } = bindSchema(schema);
 const add = defineMutation("add", {
   title: "Add a task",
   creates: ["task"],
@@ -37,8 +39,7 @@ const hide = defineMutation("hide", {
     ctx.addNode({ id: `${args.id}-a`, kind: "secret", label: "A" });
   },
 });
-const schema = createSchema([task, secret]);
-const policy = {
+const policy: Policy = {
   grants: [{ roles: ["keeper", "viewer"], mutations: "*" }],
   sees: [
     { roles: ["keeper"], kinds: ["task", "secret"] },

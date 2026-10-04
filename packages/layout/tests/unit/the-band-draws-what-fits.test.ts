@@ -1,6 +1,6 @@
-import { createSchema, defineNode, Graph, isoDate, z } from "@graview/core";
+import { createSchema, defineNode, Graph, isoDate, z, type NodeOfSchema } from "@graview/core";
 import { describe, expect, it } from "vitest";
-import { bandCaps, bandOf, chooseGrouping, EMPTY_VIEW, layout, packRuns, shares, toggleExpanded, type BandItem } from "../../src/index.js";
+import { bandCaps, bandOf, chooseGrouping, EMPTY_VIEW, layout, packRuns, shares, toggleExpanded, type BandItem, type BandOptions } from "../../src/index.js";
 
 /**
  * THE BAND DRAWS WHAT A PERSON CAN READ (docs/scale.md). Below its budget
@@ -40,7 +40,7 @@ const related = (kinds?: string[]) =>
   graph.allEdges()
     .filter((edge) => edge.to === "hub" && (!kinds || kinds.includes(edge.kind)))
     .map((edge) => ({ node: graph.getNode(edge.from)!, via: { edgeKind: edge.kind, direction: "in" as const } }));
-const band = (budget: number, extra: Partial<Parameters<typeof bandOf>[1]> = {}) =>
+const band = (budget: number, extra: Partial<BandOptions<NodeOfSchema<typeof schema>>> = {}) =>
   bandOf(related(), { schema, graph, budget, focusId: "hub", expanded: new Set(), plural: (kind) => schema.tryDefinition(kind)?.plural ?? kind, ...extra });
 const ids = (items: readonly BandItem<{ id: string; kind: string }>[]) => items.map((item) => item.id);
 

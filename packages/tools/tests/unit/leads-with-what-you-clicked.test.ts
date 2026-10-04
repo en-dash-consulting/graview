@@ -55,8 +55,7 @@ const rename = bound.defineMutation("rename", {
  * A rule scoped per node would have hidden it, because each violation would
  * have implicated exactly the node you clicked.
  */
-const overdue = bound.defineInvariant("nothing-overdue", {
-  scope: "graph",
+const overdue = bound.defineGraphInvariant("nothing-overdue", {
   description: "Nothing may sit past its date.",
   repairs: ["reschedule", "finish"],
   evaluate({ graph }) {
@@ -100,7 +99,10 @@ const store = (): Store<typeof schema> =>
           op: "add-node" as const,
           node: { id, kind: "task", label, done: false, due: "2026-09-01" },
         })),
-        inverse: seeded.map(([id]) => ({ op: "remove-node" as const, id })),
+        inverse: seeded.map(([id, label]) => ({
+          op: "remove-node" as const,
+          node: { id, kind: "task", label, done: false, due: "2026-09-01" },
+        })),
         reads: [],
         writes: seeded.map(([id]) => id),
         at: "2026-01-01T00:00:00Z",

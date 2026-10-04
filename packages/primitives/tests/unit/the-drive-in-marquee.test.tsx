@@ -46,8 +46,8 @@ async function mounted(view: ViewState, onView?: (next: ViewState) => void) {
   await act(async () =>
     root.render(
       <GraviewProvider store={at} views={registry} initialView={view} {...(onView ? { onViewChange: onView } : {})}>
-        <Card nodes={at.graph.nodesOfKind("task" as never) as never} fidelity="glyph" cardinality="many" mode="card" selected={false} label="Tasks" />
-        <NoteCard nodes={at.graph.nodesOfKind("note" as never) as never} fidelity="glyph" cardinality="many" mode="card" selected={false} label="Notes" />
+        <Card nodes={at.graph.nodesOfKind("task" as never) as never} fidelity="glyph" cardinality="many" mode="scene" selected={false} label="Tasks" />
+        <NoteCard nodes={at.graph.nodesOfKind("note" as never) as never} fidelity="glyph" cardinality="many" mode="scene" selected={false} label="Notes" />
       </GraviewProvider>,
     ),
   );

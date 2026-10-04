@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { createSchema, defineNode, isCurrent, Store } from "@graview/core";
 import { EMPTY_VIEW } from "@graview/layout";
 import { createViews, GraviewProvider } from "@graview/react";
@@ -47,7 +48,7 @@ function draw(lens: { View: unknown }, kind: "song" | "stage") {
   const View = lens.View as (props: Record<string, unknown>) => JSX.Element;
   return renderToStaticMarkup(
     <GraviewProvider store={held} views={registerDefaultViews(schema, createViews(schema))} initialView={EMPTY_VIEW}>
-      <View nodes={members} label="Lens" fidelity="full" cardinality="many" mode="captured" selected={false} />
+      <View nodes={members} label="Lens" fidelity="full" cardinality="many" mode="scene" selected={false} />
     </GraviewProvider>,
   );
 }

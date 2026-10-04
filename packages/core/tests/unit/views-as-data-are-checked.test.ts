@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { checkApp, createSchema, defineApp, defineNode, z } from "@graview/core";
-import { compileDocument, toDocument } from "@graview/core/document";
+import { compileDocument, toDocument, type ViewSpecsByKind } from "@graview/core/document";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -59,7 +59,7 @@ describe("views as data, checked", () => {
 
   it("is the document's views, compiled and written back", () => {
     const vendors = JSON.parse(readFileSync(resolve(import.meta.dirname, "../document/fixtures/vendors.gdd.json"), "utf8"));
-    const views = { vendor: { card: [{ title: "{name}" }, { badge: "{status}", tone: "good" }] } };
+    const views: ViewSpecsByKind = { vendor: { card: [{ title: "{name}" }, { badge: "{status}", tone: "good" }] } };
     const compiled = compileDocument({ ...vendors, views });
     expect(compiled.ok).toBe(true);
     if (!compiled.ok) return;

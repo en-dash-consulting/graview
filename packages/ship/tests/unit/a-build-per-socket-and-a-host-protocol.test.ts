@@ -1,4 +1,4 @@
-import { createSchema, defineApp, defineMutation, defineNode, Store, WIRE_PROTOCOL, type Principal } from "@graview/core";
+import { bindSchema, createSchema, defineApp, defineNode, Store, WIRE_PROTOCOL, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createStoreHandler, liveProtocol, openRemote, type LiveClientMessage, type LivePeer, type LiveServerMessage, type LiveSocketLike } from "../../src/index.js";
@@ -17,6 +17,8 @@ import { createStoreHandler, liveProtocol, openRemote, type LiveClientMessage, t
  * hello, which `liveProtocol({ minHostProtocol })` answers `reload` below.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string().min(1) }) });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
 const add = defineMutation("add", {
   title: "Add a task",
   creates: ["task"],
@@ -26,12 +28,11 @@ const add = defineMutation("add", {
     ctx.addNode({ id: args.id, kind: "task", label: args.label });
   },
 });
-const schema = createSchema([task]);
 const app = defineApp({ name: "skew", schema, mutations: [add], policy: { roles: ["keeper"], grants: [{ roles: ["keeper"], mutations: "*" }] }, version: 1 });
 const kim: Principal = { kind: "human", id: "kim", name: "Kim", roles: ["keeper"] };
 const hostsStore = () => new Store({ schema, mutations: app.mutations ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: { nodes: [], edges: [] } as never });
 
-function peerOf(live: ReturnType<typeof liveProtocol<typeof schema>>, state: ReturnType<ReturnType<typeof liveProtocol<typeof schema>>["open"]>) {
+function peerOf(state: ReturnType<ReturnType<typeof liveProtocol<typeof schema>>["open"]>) {
   const heard: LiveServerMessage[] = [];
   const peer: LivePeer = { ...state, send: (text) => heard.push(JSON.parse(text) as LiveServerMessage) };
   return { peer, heard };
@@ -40,10 +41,10 @@ function peerOf(live: ReturnType<typeof liveProtocol<typeof schema>>, state: Ret
 describe("a build per socket, and a host protocol", () => {
   it("welcomes each socket with the build it was opened under, else the protocol's word for it", async () => {
     const live = liveProtocol({ store: hostsStore(), build: (peer) => (peer.via === "mcp" ? "agent-shell" : "b-default") });
-    const old = peerOf(live, live.open(kim, "web", { build: "b-old" }));
-    const fresh = peerOf(live, live.open(kim, "web", { build: "b-new" }));
-    const plain = peerOf(live, live.open(kim, "web"));
-    const agent = peerOf(live, live.open(kim, "mcp"));
+    const old = peerOf(live.open(kim, "web", { build: "b-old" }));
+    const fresh = peerOf(live.open(kim, "web", { build: "b-new" }));
+    const plain = peerOf(live.open(kim, "web"));
+    const agent = peerOf(live.open(kim, "mcp"));
     for (const one of [old, fresh, plain, agent]) await live.receive(one.peer, JSON.stringify({ t: "hello", seq: -1 }));
     expect([old, fresh, plain, agent].map((one) => (one.heard[0] as Extract<LiveServerMessage, { t: "welcome" }>).build)).toEqual(["b-old", "b-new", "b-default", "agent-shell"]);
     // The socket's own build survives a hibernation: it is in the state the host keeps.
@@ -55,9 +56,9 @@ describe("a build per socket, and a host protocol", () => {
 
   it("answers a hello below the host's protocol with reload, and welcomes one at it; WIRE_PROTOCOL stays the wire's", async () => {
     const live = liveProtocol({ store: hostsStore(), minHostProtocol: 3 });
-    const below = peerOf(live, live.open(kim, "web"));
-    const unsaid = peerOf(live, live.open(kim, "web"));
-    const at = peerOf(live, live.open(kim, "web"));
+    const below = peerOf(live.open(kim, "web"));
+    const unsaid = peerOf(live.open(kim, "web"));
+    const at = peerOf(live.open(kim, "web"));
     await live.receive(below.peer, JSON.stringify({ t: "hello", seq: -1, protocol: WIRE_PROTOCOL, hostProtocol: 2 }));
     await live.receive(unsaid.peer, JSON.stringify({ t: "hello", seq: -1, protocol: WIRE_PROTOCOL }));
     await live.receive(at.peer, JSON.stringify({ t: "hello", seq: -1, protocol: WIRE_PROTOCOL, hostProtocol: 3 }));

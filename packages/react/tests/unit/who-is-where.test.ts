@@ -47,7 +47,7 @@ describe("who is where", () => {
   it("puts somebody watching a showing in the audience row in front of that screen", () => {
     const [one] = placeOthers([here("human:nora:a", "#focus=aggregate%3Atask&in.view=week")], whereIs, 800);
     expect(one).toMatchObject({ kind: "person", at: "screen:task", audience: true });
-    expect(one!.kind === "person" && one.point.y).toBe(drawn["screen:task"]!.y + 24);
+    expect(one?.kind === "person" && one.point.y).toBe(drawn["screen:task"]!.y + 24);
   });
 
   it("draws a row and then a number: past the row, the rest are +n", () => {
@@ -65,7 +65,7 @@ describe("who is where", () => {
   it("names somebody whose stop is nowhere on this map at the edge", () => {
     const placed = placeOthers([here("human:nora:a", "#focus=elsewhere")], whereIs, 800);
     expect(placed).toEqual([expect.objectContaining({ kind: "edge" })]);
-    expect(placed[0]!.kind === "edge" && placed[0].point.x).toBe(792);
+    expect(placed[0]?.kind === "edge" && placed[0].point.x).toBe(792);
   });
 
   it("stands their robot where it works, captioned as theirs, and outlines what they point at", () => {

@@ -148,7 +148,7 @@ describe("a store whose log spans two declaration versions", () => {
 
 describe("a store opened on a snapshot alone", () => {
   it("takes the snapshot as its first epoch, so it verifies without a log to fold it from", () => {
-    const seed = { nodes: [{ id: "back", kind: "plot", label: "Back bed", beds: 6 }], edges: [] };
+    const seed = { nodes: [{ id: "back", kind: "plot" as const, label: "Back bed", beds: 6 }], edges: [] };
     const store = new Store({ schema: v2, mutations: [addV2, rename], snapshot: seed });
     store.apply({ name: "rename", args: { id: "back", label: "Far bed" } });
     expect(store.log.epochs()).toEqual([{ seq: 0, base: seed }]);

@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { create, type CreateIo } from "../../src/cli/create.js";
 import { main } from "../../src/cli/index.js";
+import type { Diagnostic } from "typescript";
 import { describeApp } from "../../src/cli/describe.js";
 import { compileDocument } from "../../src/document/index.js";
 import { scaffoldProject } from "../../src/scaffold/index.js";
@@ -107,7 +108,7 @@ describe("graview create --template", () => {
         if (file.path.endsWith(".json")) expect(() => JSON.parse(file.contents), file.path).not.toThrow();
         if (!/\.tsx?$/.test(file.path)) continue;
         const parsed = ts.createSourceFile(file.path, file.contents, ts.ScriptTarget.ES2022, true, file.path.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
-        const problems = (parsed as unknown as { parseDiagnostics: readonly ts.Diagnostic[] }).parseDiagnostics;
+        const problems = (parsed as unknown as { parseDiagnostics: readonly Diagnostic[] }).parseDiagnostics;
         expect(problems.map((one) => ts.flattenDiagnosticMessageText(one.messageText, " ")), file.path).toEqual([]);
       }
     }

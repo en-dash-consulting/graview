@@ -1,7 +1,7 @@
 import {
+  bindSchema,
   createSchema,
   defineInvariant,
-  defineMutation,
   defineNode,
   figureFaults,
   nodeRef,
@@ -34,8 +34,9 @@ const shift = defineNode("shift", {
   label: (node) => node.label,
 });
 const schema = createSchema([volunteer, shift]);
+const bound = bindSchema(schema);
 
-const cover = defineMutation("cover", {
+const cover = bound.defineMutation("cover", {
   title: "Cover the shift",
   fromTheOtherEnd: "Take a shift",
   description: "Put a volunteer on a shift.",
@@ -47,7 +48,7 @@ const cover = defineMutation("cover", {
     ctx.addEdge({ kind: "covered-by", from: args.shift, to: args.volunteer });
   },
 });
-const addShift = defineMutation("add-shift", {
+const addShift = bound.defineMutation("add-shift", {
   title: "Add a shift",
   description: "Put a stretch of time on the rota.",
   creates: ["shift"],

@@ -6,7 +6,7 @@ import { act, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { KindFigure } from "../../src/index.js";
+import { GRAVIEW_BRAND, KindFigure } from "../../src/index.js";
 
 /**
  * A FIGURE IS NOT REDRAWN WHEN NOTHING ABOUT IT CHANGED.
@@ -81,7 +81,7 @@ describe("a figure that has not changed", () => {
       // A brand may override any kind's figure, and that is a different
       // drawing: the memo must not hold the old one.
       root.render(
-        <KindFigure kind="person" schema={schema} size={20} brand={{ figures: { person: "vehicle" } }} />,
+        <KindFigure kind="person" schema={schema} size={20} brand={{ ...GRAVIEW_BRAND, figures: { person: "vehicle" } }} />,
       );
     });
     expect(host.querySelector("svg")).not.toBe(drawn);

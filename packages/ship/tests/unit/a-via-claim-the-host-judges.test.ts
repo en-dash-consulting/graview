@@ -1,4 +1,4 @@
-import { createSchema, defineApp, defineMutation, defineNode, Store, type Principal } from "@graview/core";
+import { bindSchema, createSchema, defineApp, defineNode, Store, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createStoreHandler, liveProtocol, openRemote, type LiveClientMessage, type LivePeer, type LiveServerMessage, type LiveSocketLike } from "../../src/index.js";
@@ -16,6 +16,8 @@ import { createStoreHandler, liveProtocol, openRemote, type LiveClientMessage, t
  * lets the host judge it: the claim is ignored unless the host says so.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string().min(1) }) });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
 const add = defineMutation("add", {
   title: "Add a task",
   creates: ["task"],
@@ -25,7 +27,6 @@ const add = defineMutation("add", {
     ctx.addNode({ id: args.id, kind: "task", label: args.label });
   },
 });
-const schema = createSchema([task]);
 const app = defineApp({ name: "views", schema, mutations: [add], policy: { roles: ["keeper"], grants: [{ roles: ["keeper"], mutations: "*" }] }, version: 1 });
 const kim: Principal = { kind: "human", id: "kim", name: "Kim", roles: ["keeper"] };
 const hostsStore = () => new Store({ schema, mutations: app.mutations ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: { nodes: [], edges: [] } as never });

@@ -29,7 +29,7 @@ describe("the change, as the checkout's source receives it", () => {
 
   it("reads an edge removed from one kind and declared on another as one relation moved", () => {
     const studio = createStudio(seedbedApp);
-    const edge = [...studio.store.graph.nodesOfKind("edge" as never)].find((node) => node["label"] === "tended-by")!;
+    const edge = [...studio.store.graph.nodesOfKind("edge")].find((node) => node["label"] === "tended-by")!;
     studio.store.apply({ name: "remove-edge", args: { id: edge.id } }, as);
     studio.store.apply(
       {
@@ -54,7 +54,7 @@ describe("the change, as the checkout's source receives it", () => {
 
   it("judges a set of changes by what they make together", () => {
     const studio = createStudio(seedbedApp);
-    const edge = [...studio.store.graph.nodesOfKind("edge" as never)].find((node) => node["label"] === "tended-by")!;
+    const edge = [...studio.store.graph.nodesOfKind("edge")].find((node) => node["label"] === "tended-by")!;
     const remove = { name: "remove-edge", args: { id: edge.id } };
     const add = { name: "add-edge", args: { kind: "declared:planting", label: "tended-by", to: "declared:gardener" } };
     // Alone, taking the edge away leaves `tend` connecting something nobody declares.

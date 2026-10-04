@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { PassThrough } from "node:stream";
-import { createSchema, defineApp, defineMutation, defineNode, nodeRef } from "@graview/core";
+import { type AnySchema, bindSchema, createSchema, defineApp, defineNode, type GraviewApp, nodeRef } from "@graview/core";
 import { createFileAdapter, openStore, serveStore, type ServedStore } from "@graview/ship";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -20,6 +20,7 @@ import { MCP_PROTOCOL_VERSION, serveMcpStdio } from "../../src/mcp-stdio.js";
 const list = defineNode("list", { fields: z.object({ label: z.string().min(1) }), edges: { holds: { to: ["task"] } } });
 const task = defineNode("task", { fields: z.object({ label: z.string().min(1), done: z.boolean() }) });
 const schema = createSchema([list, task]);
+const { defineMutation } = bindSchema(schema);
 const addTask = defineMutation("add-task", {
   title: "Add a task",
   description: "Put something on a list.",
@@ -84,7 +85,7 @@ describe("MCP over stdio, against a folder", () => {
     const adapter = createMcpAdapter(createToolRuntime(again.store, { author: keeper }));
 
     const c = client();
-    const serving = serveMcpStdio({ adapter, name: app.name, version: "1", instructions: instructionsFor(app, keeper, root), input: c.input, output: c.output });
+    const serving = serveMcpStdio({ adapter, name: app.name, version: "1", instructions: instructionsFor(app as unknown as GraviewApp<AnySchema>, keeper, root), input: c.input, output: c.output });
     c.ask("initialize", { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "test", version: "0" } });
     c.tell("notifications/initialized");
     c.ask("tools/list");

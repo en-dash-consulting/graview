@@ -76,21 +76,21 @@ const labelsOn = (store: Store<typeof schema>, id: string) =>
 describe("a tie act offered on the far end of its tie", () => {
   it("uses the words written for that end", () => {
     const store = stocked(keep({ fromTheOtherEnd: "Take on an item" }));
-    const ana = store.graph.nodesOfKind("owner" as never)[0]!.id;
+    const ana = store.graph.nodesOfKind("owner")[0]!.id;
     expect(labelsOn(store, ana)).toContain("Take on an item");
     expect(labelsOn(store, ana)).not.toContain("Hand it to someone");
   });
 
   it("still uses the subject's own words where the subject is", () => {
     const store = stocked(keep({ fromTheOtherEnd: "Take on an item" }));
-    const thing = store.graph.nodesOfKind("item" as never)[0]!.id;
+    const thing = store.graph.nodesOfKind("item")[0]!.id;
     expect(labelsOn(store, thing)).toContain("Hand it to someone");
     expect(labelsOn(store, thing)).not.toContain("Take on an item");
   });
 
   it("falls back to the subject's words rather than dropping the offer", () => {
     const store = stocked(keep());
-    const ana = store.graph.nodesOfKind("owner" as never)[0]!.id;
+    const ana = store.graph.nodesOfKind("owner")[0]!.id;
     expect(labelsOn(store, ana)).toContain("Hand it to someone");
   });
 });

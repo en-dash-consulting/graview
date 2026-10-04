@@ -40,7 +40,7 @@ const draw = (element: React.ReactElement, view: ViewState) =>
       {element}
     </GraviewProvider>,
   );
-const picks = (html: string) => [...html.matchAll(/data-graview-pick="([^"]+)"/g)].map((match) => match[1]);
+const picks = (html: string) => [...html.matchAll(/data-graview-pick="([^"]+)"/g)].map((match) => match[1]!);
 const guests = (html: string) => picks(html).filter((id) => id.startsWith("g-"));
 
 describe("the board", () => {

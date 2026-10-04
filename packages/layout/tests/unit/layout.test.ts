@@ -1,4 +1,4 @@
-import { createSchema, defineNode, Graph } from "@graview/core";
+import { createSchema, defineNode, Graph, type NodeOfSchema } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
@@ -1023,7 +1023,7 @@ describe("derivations aggregate over the horizon", () => {
   });
 
   it("survives a crowd: three hundred retired nodes cost a count, not cards", () => {
-    const nodes: Parameters<typeof Graph.from>[1]["nodes"] = [
+    const nodes: NodeOfSchema<typeof horizonSchema>[] = [
       { id: "ana", kind: "person", label: "Ana" },
     ];
     for (let i = 0; i < 320; i++) {
@@ -1164,7 +1164,7 @@ describe("a line that stands for one edge says so", () => {
     });
     const state = withSelection(EMPTY_VIEW, [id]);
     expect(fromUrl(toUrl(state)).selection).toEqual([id]);
-    expect(edgeOfSelection(fromUrl(toUrl(state)).selection[0]!)).toEqual({
+    expect(edgeOfSelection(fromUrl(toUrl(state)).selection?.[0] ?? "")).toEqual({
       kind: "assigned-to",
       from: "item:buy-milk",
       to: "owner:ana",
@@ -1247,9 +1247,9 @@ describe("going deeper into a card", () => {
    * to have members. The empty picture is exactly the one a blank app needs.
    */
   it("draws a group you have gone to even when nobody is in it", () => {
-    const bare = new Graph([], []);
+    const bare = new Graph(schema);
     const at = { ...EMPTY_VIEW, focusId: aggregateId("person"), zoom: true };
-    const placed = layout(bare as never, schema, at, { width: 1280, height: 800 });
+    const placed = layout(bare, schema, at, { width: 1280, height: 800 });
     const card = placed.nodes.find((node) => node.id === aggregateId("person"));
     expect(card).toBeDefined();
     expect(card?.plane).toBe(0);
@@ -1351,7 +1351,7 @@ describe("the relation band", () => {
     Graph.from(schema, {
       nodes: [
         { id: "week-1", kind: "week", label: "This week" },
-        ...Array.from({ length: 12 }, (_, i) => ({ id: `person-${i}`, kind: "person", label: `Person ${i}` })),
+        ...Array.from({ length: 12 }, (_, i) => ({ id: `person-${i}`, kind: "person" as const, label: `Person ${i}` })),
       ],
       edges: [],
     });

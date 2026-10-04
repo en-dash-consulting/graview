@@ -16,7 +16,7 @@ import { recordFacts } from "../../src/index.js";
  */
 describe("a record with more fields than a glance shows", () => {
   const app = awkwardApp({ kinds: 2, fields: 16, people: false, chain: false });
-  const store = new Store({ schema: app.schema as never, mutations: app.mutations as never, snapshot: awkwardGraph(app, 2) });
+  const store = new Store({ schema: app.schema, mutations: app.mutations, snapshot: awkwardGraph(app, 2) });
 
   it("states every one on its page", () => {
     for (const node of store.graph.allNodes()) {

@@ -1,4 +1,4 @@
-import { createSchema, defineApp, defineMutation, defineNode, REFUSAL_REASONS, Store, type Principal } from "@graview/core";
+import { bindSchema, createSchema, defineApp, defineNode, REFUSAL_REASONS, Store, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createStoreHandler, liveProtocol, openRemote, type LimitAnswer, type LiveServerMessage, type LiveSocketLike, type LiveSocketState, type StoreHandler } from "../../src/index.js";
@@ -18,6 +18,8 @@ import { createStoreHandler, liveProtocol, openRemote, type LimitAnswer, type Li
  * pending and sends again, backing off, until the host takes it.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string().min(1) }) });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
 const add = defineMutation("add", {
   title: "Add a task",
   creates: ["task"],
@@ -27,7 +29,6 @@ const add = defineMutation("add", {
     ctx.addNode({ id: args.id, kind: "task", label: args.label });
   },
 });
-const schema = createSchema([task]);
 const app = defineApp({ name: "quarantine", schema, mutations: [add], policy: { roles: ["keeper"], grants: [{ roles: ["keeper"], mutations: "*" }] }, version: 1 });
 const kim: Principal = { kind: "human", id: "kim", name: "Kim", roles: ["keeper"] };
 const READ_ONLY = "This app is read-only while it is checked; your change is kept and sent again shortly.";

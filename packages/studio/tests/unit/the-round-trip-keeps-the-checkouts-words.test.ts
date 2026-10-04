@@ -1,4 +1,4 @@
-import { checkApp, createSchema, defineApp, defineInvariant, defineMutation, defineNode, isoDate, nodeRef } from "@graview/core";
+import { bindSchema, checkApp, createSchema, defineApp, defineInvariant, defineMutation, defineNode, isoDate, nodeRef } from "@graview/core";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -36,7 +36,8 @@ const album = defineNode("album", {
   label: (node) => node.label,
 });
 const schema = createSchema([song, album]);
-const addSong = defineMutation("add-song", {
+const bound = bindSchema(schema);
+const addSong = bound.defineMutation("add-song", {
   title: "Add a song",
   description: "A demo, until it is released.",
   creates: ["song"],
@@ -44,7 +45,7 @@ const addSong = defineMutation("add-song", {
   describe: (args) => `Add ${args.label}`,
   apply: (ctx, args) => void ctx.addNode({ id: ctx.freshId(args.label, "song"), kind: "song", label: args.label, explicit: false, status: "demo" } as never),
 });
-const addAlbum = defineMutation("add-album", {
+const addAlbum = bound.defineMutation("add-album", {
   title: "Add a release",
   description: "An album or a single.",
   creates: ["album"],
@@ -52,7 +53,7 @@ const addAlbum = defineMutation("add-album", {
   describe: (args) => `Add ${args.label}`,
   apply: (ctx, args) => void ctx.addNode({ id: ctx.freshId(args.label, "album"), kind: "album", ...args } as never),
 });
-const putOn = defineMutation("put-on", {
+const putOn = bound.defineMutation("put-on", {
   title: "Put it on a release",
   fromTheOtherEnd: "Add a song to the tracklist",
   description: "Put a song on a release.",
@@ -110,7 +111,7 @@ describe("the studio's round trip, on a checkout with bounds", () => {
     const applied = studio.apply();
     expect(applied.ok).toBe(true);
     if (!applied.ok) return;
-    const fields = applied.app.schema.definition("song").fields as z.ZodType;
+    const fields = applied.app.schema.tryDefinition("song")!.fields as z.ZodType;
     expect(fields.safeParse({ label: "x".repeat(61), explicit: false, status: "demo" }).success).toBe(false);
     expect(checkApp(applied.app).findings.map((finding) => finding.code)).not.toContain("label-unbounded");
   });

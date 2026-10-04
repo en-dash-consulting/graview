@@ -1,7 +1,7 @@
-import { bindSchema, createSchema, defineNode, nodeRef, Store, type Violation } from "@graview/core";
+import { type AnySchema, bindSchema, createSchema, defineNode, nodeRef, Store, type Violation } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { graphResponder, llmResponder } from "../../src/index.js";
+import { type ChatContext, graphResponder, llmResponder } from "../../src/index.js";
 
 /**
  * The conversation is the intelligence contract given a voice: words in,
@@ -56,6 +56,9 @@ const tooLong = bound.defineInvariant("too-long", {
       : [],
 });
 
+/** The graph's own responder, typed for whichever store it is asked about. */
+const ask = <S extends AnySchema>(at: Store<S>, text: string, context?: ChatContext) => graphResponder<S>()(at, text, context);
+
 const store = () =>
   new Store({
     schema,
@@ -73,7 +76,7 @@ const store = () =>
 
 describe("the graph answers for itself", () => {
   it("states the standing and proposes the rules' own repairs", async () => {
-    const reply = await graphResponder()(store(), "what's wrong?");
+    const reply = await ask(store(), "what's wrong?");
     expect(reply.say).toContain("1 problem");
     expect(reply.say).toContain("School run runs over an hour");
     expect(reply.proposals).toEqual([
@@ -127,7 +130,7 @@ describe("the graph answers for itself", () => {
         edges: [],
       },
     });
-    const reply = await graphResponder()(asking, "what's wrong?");
+    const reply = await ask(asking, "what's wrong?");
     expect(reply.proposals).toEqual([]);
     expect(reply.say).not.toContain("The repairs below");
     // Named by what it picks — "a person", never the argument "toPersonId".
@@ -136,7 +139,7 @@ describe("the graph answers for itself", () => {
   });
 
   it("states a named thing's facts, relations in the declared words, and its trouble", async () => {
-    const reply = await graphResponder()(store(), "tell me about the School run");
+    const reply = await ask(store(), "tell me about the School run");
     expect(reply.say).toContain("School run — a duty");
     // The relation summary speaks the declaration's own sentence.
     // A sentence of its own, so it starts like one (W-120).
@@ -150,7 +153,7 @@ describe("the graph answers for itself", () => {
 
   it("puts a NAMED thing ahead of the standing selection", async () => {
     // Asking about the School run while Bo is selected is about the run.
-    const reply = await graphResponder()(store(), "tell me about the School run", {
+    const reply = await ask(store(), "tell me about the School run", {
       selection: ["bo"],
     });
     expect(reply.say).toContain("School run — a duty");
@@ -162,21 +165,21 @@ describe("the graph answers for itself", () => {
      * nothing yet." and marked grounded, so no model ever read it. Naming a
      * thing inside a change is not asking about it.
      */
-    const said = await graphResponder()(store(), "Bo does the School run now");
+    const said = await ask(store(), "Bo does the School run now");
     expect(said.grounded).toBeUndefined();
     // The bare name, or a question, still is a fact.
-    expect((await graphResponder()(store(), "Bo")).grounded).toBe(true);
-    expect((await graphResponder()(store(), "what about Bo?")).grounded).toBe(true);
+    expect((await ask(store(), "Bo")).grounded).toBe(true);
+    expect((await ask(store(), "what about Bo?")).grounded).toBe(true);
   });
 
   it('treats the selection as what "this" means', async () => {
-    const reply = await graphResponder()(store(), "what is this?", { selection: ["ana"] });
+    const reply = await ask(store(), "what is this?", { selection: ["ana"] });
     expect(reply.say).toContain("Ana — a person");
     expect(reply.say).toContain("Nothing about it is broken");
   });
 
   it("proposes a mutation said in its own words, endpoints from the referents", async () => {
-    const reply = await graphResponder()(store(), "reassign the run to Bo", {
+    const reply = await ask(store(), "reassign the run to Bo", {
       selection: ["school"],
     });
     expect(reply.proposals).toEqual([
@@ -195,7 +198,7 @@ describe("the graph answers for itself", () => {
      * record, apply button and all. A question is answered from the graph.
      */
     for (const question of ["who should reassign the run to Bo?", "Reassign the run to Bo?", "does it shorten it"]) {
-      const reply = await graphResponder()(store(), question, { selection: ["school"] });
+      const reply = await ask(store(), question, { selection: ["school"] });
       // The rules' own repairs may still be proposed; the question is not.
       expect(reply.proposals.map((p) => p.why), question).not.toContain("you asked in words");
       expect(reply.say, question).not.toContain("I can do that");
@@ -216,7 +219,7 @@ describe("the graph answers for itself", () => {
       invariants: [],
       snapshot: { nodes: [{ id: "school", kind: "duty", label: "School run", minutes: 20 }] as never, edges: [] },
     });
-    const reply = await graphResponder()(one, "depends on the School run");
+    const reply = await ask(one, "depends on the School run");
     // One record named, two ends to fill: the second is honestly missing.
     expect(reply.proposals).toEqual([]);
     expect(reply.say).toContain("needs");
@@ -242,15 +245,15 @@ describe("the graph answers for itself", () => {
         edges: [{ kind: "handled-by", from: "deposit", to: "ada" }],
       },
     });
-    const fromTheItem = await graphResponder()(tied, "tell me about Pay the deposit");
+    const fromTheItem = await ask(tied, "tell me about Pay the deposit");
     expect(fromTheItem.say).toContain("Who is seeing to it: Ada");
-    const fromTheHelper = await graphResponder()(tied, "tell me about Ada");
+    const fromTheHelper = await ask(tied, "tell me about Ada");
     expect(fromTheHelper.say).toContain("What they are seeing to: Pay the deposit");
     expect(fromTheHelper.say).not.toMatch(/who is seeing to it/i);
   });
 
   it("asks for what it cannot honestly fill rather than guessing", async () => {
-    const reply = await graphResponder()(store(), "reassign the run please");
+    const reply = await ask(store(), "reassign the run please");
     // "the run" is not a node label; nothing is selected; both refs missing.
     expect(reply.proposals).toEqual([]);
     expect(reply.say).toContain("needs");
@@ -269,17 +272,20 @@ describe("the graph answers for itself", () => {
         edges: [],
       },
     });
-    const reply = await graphResponder()(spaced, "when does child 2 nap?");
+    const reply = await ask(spaced, "when does child 2 nap?");
     // The longest matching name wins: the nap block, not just the child.
     expect(reply.say).toContain("child2 nap — a duty");
     expect(reply.say).toContain("minutes 30");
     // Token alignment still keeps "Bo" out of "elbow".
-    const noFalse = await graphResponder()(store(), "my elbow hurts");
+    const noFalse = await ask(store(), "my elbow hurts");
     expect(noFalse.say).toContain("This graph holds");
   });
 
   it("answers WHEN from the declared field roles, spoken by display.format", async () => {
-    const clock = (v) => `${String(Math.floor(v / 60)).padStart(2, "0")}:${String(v % 60).padStart(2, "0")}`;
+    const clock = (value: unknown) => {
+      const v = Number(value);
+      return `${String(Math.floor(v / 60)).padStart(2, "0")}:${String(v % 60).padStart(2, "0")}`;
+    };
     const block = defineNode("block", {
       fields: z.object({ label: z.string(), start: z.number(), end: z.number(), days: z.array(z.string()) }),
       plural: "Blocks",
@@ -300,7 +306,7 @@ describe("the graph answers for itself", () => {
         edges: [],
       },
     });
-    const reply = await graphResponder()(timed, "when does child 1 school start?");
+    const reply = await ask(timed, "when does child 1 school start?");
     expect(reply.say).toBe("child1 school runs 08:30–13:00 on mon, tue.");
   });
 
@@ -338,7 +344,7 @@ describe("the graph answers for itself", () => {
         ],
       },
     });
-    const reply = await graphResponder()(week, "who drives child1 to school on tuesday?");
+    const reply = await ask(week, "who drives child1 to school on tuesday?");
     // The day named picked the right run; the edge's own sentence answers.
     expect(reply.say).toContain("tue school drop-off");
     expect(reply.say).toContain("who does the run: parent2");
@@ -368,12 +374,12 @@ describe("the graph answers for itself", () => {
         edges: [{ kind: "driven-by", from: "r1", to: "p1" }],
       },
     });
-    const reply = await graphResponder()(store2, "who drives the school run?");
+    const reply = await ask(store2, "who drives the school run?");
     expect(reply.say).toContain("who does the run: Edna");
   });
 
   it("falls back to the shape of the graph, and how to ask", async () => {
-    const reply = await graphResponder()(store(), "hello");
+    const reply = await ask(store(), "hello");
     expect(reply.say).toContain("2 People");
     expect(reply.say).toContain("1 Runs");
   });
@@ -381,7 +387,7 @@ describe("the graph answers for itself", () => {
 
 describe("a model holds the conversation through the same gate", () => {
   it("threads history and selection into the prompt and validates the reply", async () => {
-    const model = llmResponder({
+    const model = llmResponder<typeof schema>({
       may: ["shorten"],
       complete: async (prompt) => {
         expect(prompt).toContain("Person: and now?");
@@ -411,7 +417,7 @@ describe("a model holds the conversation through the same gate", () => {
 
   it("shows the model what each act takes and how things are connected", async () => {
     let seen = "";
-    const model = llmResponder({
+    const model = llmResponder<typeof schema>({
       complete: async (prompt) => {
         seen = prompt;
         return '{"say":"Ok.","proposals":[]}';
@@ -424,13 +430,13 @@ describe("a model holds the conversation through the same gate", () => {
   });
 
   it("degrades an unparseable answer to words, never to guesses", async () => {
-    const model = llmResponder({ complete: async () => "I would rather chat." });
+    const model = llmResponder<typeof schema>({ complete: async () => "I would rather chat." });
     const reply = await model(store(), "hm");
     expect(reply).toEqual({ say: "I would rather chat.", proposals: [] });
   });
 
   it("never hands the person the plumbing when the answer is a shape it cannot read", async () => {
-    const model = llmResponder({ complete: async () => '{"say": "half an answer' });
+    const model = llmResponder<typeof schema>({ complete: async () => '{"say": "half an answer' });
     const reply = await model(store(), "hm");
     expect(reply.say).not.toContain("{");
     expect(reply.proposals).toEqual([]);
@@ -449,9 +455,9 @@ describe("a choice is its own word", () => {
       apply: (ctx, args) => ctx.patchNode(args.id, { tone: args.tone }),
     });
     const at = new Store({ schema: one, mutations: [setTone], snapshot: { nodes: [{ id: "s1", kind: "shade", label: "Hall" }] as never, edges: [] } });
-    const reply = await graphResponder()(at, "set the tone dark for Hall");
+    const reply = await ask(at, "set the tone dark for Hall");
     expect(reply.proposals).toEqual([{ mutation: "set-tone", args: { id: "s1", tone: "dark" }, why: expect.any(String) }]);
-    const unsure = await graphResponder()(at, "set the tone light or dark for Hall");
+    const unsure = await ask(at, "set the tone light or dark for Hall");
     expect(unsure.proposals).toEqual([]);
     expect(unsure.say).toContain("needs tone");
   });

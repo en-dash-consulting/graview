@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { beginning, bindSchema, checkApp, createSchema, defineApp, defineNode, nodeRef } from "../../src/index.js";
+import { type AnySchema, beginning, bindSchema, checkApp, createSchema, defineApp, defineNode, type GraviewApp, nodeRef } from "../../src/index.js";
 
 /**
  * THE ORDER THINGS MUST BE MADE IN, WHICH THE DECLARATION ALREADY STATES.
@@ -25,19 +25,19 @@ const stakeOut = defineMutation("stake-out", {
   title: "Stake out some ground",
   creates: ["zone"],
   input: z.object({ label: z.string() }),
-  apply: (ctx, args) => void ctx.addNode("zone", { label: args.label }),
+  apply: (ctx, args) => ctx.addNode({ id: ctx.freshId(args.label, "zone"), kind: "zone", label: args.label }),
 });
 const placeFeature = defineMutation("place-feature", {
   title: "Place a feature",
   creates: ["feature"],
   input: z.object({ label: z.string(), zoneId: nodeRef(["zone"]) }),
-  apply: (ctx, args) => void ctx.addNode("feature", { label: args.label }),
+  apply: (ctx, args) => ctx.addNode({ id: ctx.freshId(args.label, "feature"), kind: "feature", label: args.label }),
 });
 const scheduleRoutine = defineMutation("schedule-routine", {
   title: "Schedule a routine",
   creates: ["routine"],
   input: z.object({ label: z.string(), featureId: nodeRef(["feature"]) }),
-  apply: (ctx, args) => void ctx.addNode("routine", { label: args.label }),
+  apply: (ctx, args) => ctx.addNode({ id: ctx.freshId(args.label, "routine"), kind: "routine", label: args.label }),
 });
 
 const app = defineApp({ name: "grounds", schema, mutations: [stakeOut, placeFeature, scheduleRoutine] });
@@ -78,7 +78,7 @@ describe("the chain a declaration states", () => {
     const quick = defineMutation("plant-anywhere", {
       creates: ["feature"],
       input: z.object({ label: z.string() }),
-      apply: (ctx, args) => void ctx.addNode("feature", { label: args.label }),
+      apply: (ctx, args) => ctx.addNode({ id: ctx.freshId(args.label, "feature"), kind: "feature", label: args.label }),
     });
     const chain = beginning(defineApp({ name: "g", schema, mutations: [stakeOut, placeFeature, quick] }));
     /* One open door is enough, so the feature is a root and waits for nothing. */
@@ -172,7 +172,7 @@ describe("the chain a declaration states", () => {
 });
 
 describe("what the checker says about a blank installation", () => {
-  const codes = (a: Parameters<typeof checkApp>[0]) =>
+  const codes = <S extends AnySchema>(a: GraviewApp<S>) =>
     checkApp(a).findings.map((finding) => `${finding.severity}:${finding.code}`);
 
   it("notes the kinds that cannot arrive, and names the way in", () => {
@@ -189,10 +189,19 @@ describe("what the checker says about a blank installation", () => {
   });
 
   it("says nothing about an app whose every kind has a door", () => {
+    const small = bindSchema(createSchema([zone, feature]));
     const open = defineApp({
       name: "g",
-      schema: createSchema([zone, feature]),
-      mutations: [stakeOut, placeFeature],
+      schema: small.schema,
+      mutations: [
+        small.defineMutation("stake-out", { title: "Stake out some ground", creates: ["zone"], input: z.object({ label: z.string() }), apply: () => {} }),
+        small.defineMutation("place-feature", {
+          title: "Place a feature",
+          creates: ["feature"],
+          input: z.object({ label: z.string(), zoneId: nodeRef(["zone"]) }),
+          apply: () => {},
+        }),
+      ],
     });
     expect(codes(open)).not.toContain("note:blank-graph-unreachable");
     expect(codes(open)).not.toContain("note:blank-graph-has-no-door");

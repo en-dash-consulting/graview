@@ -7,6 +7,8 @@ import {
   defineApp,
   defineNode,
   resolveModules,
+  type AnySchema,
+  type GraviewApp,
 } from "../../src/index.js";
 
 /**
@@ -39,7 +41,7 @@ const zoneWith = (installation: ReturnType<typeof declareInstallation>) => {
   });
 };
 
-const codes = (app: Parameters<typeof checkApp>[0]) =>
+const codes = <S extends AnySchema>(app: GraviewApp<S>) =>
   checkApp(app).findings.map((finding) => `${finding.severity}:${finding.code}`);
 
 describe("an edge into a module", () => {

@@ -1,4 +1,4 @@
-import { createSchema, defineApp, defineMutation, defineNode, nodeRef, Store, type AnySchema, type GraviewApp } from "@graview/core";
+import { bindSchema, createSchema, defineApp, defineMutation, defineNode, nodeRef, Store, type AnySchema, type GraviewApp } from "@graview/core";
 import { FIXTURES } from "@graview/core/conformance";
 import { compileDocument } from "@graview/core/document";
 import { describe, expect, it } from "vitest";
@@ -88,8 +88,8 @@ describe("every derived tool says what it does", () => {
   it("narrows to what the principal may run, as the runtime does", () => {
     const note = defineNode("note", { fields: z.object({ label: z.string() }) });
     const schema = createSchema([note]);
-    const add = defineMutation("add-note", { title: "Add a note", creates: ["note"], input: z.object({ label: z.string() }), apply(ctx, args) { ctx.addNode({ id: ctx.freshId(args.label, "note"), kind: "note", label: args.label }); } });
-    const guarded = defineApp({ name: "Notes", schema, mutations: [add] as never, policy: { grants: [{ roles: ["editor"], mutations: ["add-note"] }] } }) as GraviewApp<AnySchema>;
+    const add = bindSchema(schema).defineMutation("add-note", { title: "Add a note", creates: ["note"], input: z.object({ label: z.string() }), apply(ctx, args) { ctx.addNode({ id: ctx.freshId(args.label, "note"), kind: "note", label: args.label }); } });
+    const guarded = defineApp({ name: "Notes", schema, mutations: [add], policy: { grants: [{ roles: ["editor"], mutations: ["add-note"] }] } }) as unknown as GraviewApp<AnySchema>;
     const reader = toolDefinitions(guarded, { kind: "agent", roles: [] });
     const editor = toolDefinitions(guarded, { kind: "agent", roles: ["editor"] });
     expect(reader.definitions.map((tool) => tool.name)).not.toContain("add-note");

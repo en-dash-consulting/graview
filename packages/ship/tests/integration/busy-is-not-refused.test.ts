@@ -1,4 +1,4 @@
-import { createSchema, defineApp, defineMutation, defineNode, Store, type Principal } from "@graview/core";
+import { bindSchema, createSchema, defineApp, defineNode, Store, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createStoreHandler, liveProtocol, openRemote, type LiveServerMessage, type LiveSocketLike, type LiveSocketState, type StoreHandler } from "../../src/index.js";
@@ -15,6 +15,8 @@ import { createStoreHandler, liveProtocol, openRemote, type LiveServerMessage, t
  * and pending and sends it again after the wait — in the order it was made.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string().min(1) }) });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
 const add = defineMutation("add", {
   title: "Add a task",
   creates: ["task"],
@@ -24,7 +26,6 @@ const add = defineMutation("add", {
     ctx.addNode({ id: args.id, kind: "task", label: args.label });
   },
 });
-const schema = createSchema([task]);
 const app = defineApp({
   name: "busy",
   schema,

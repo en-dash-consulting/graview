@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 import { createSchema, defineNode, Store } from "@graview/core";
 import { EMPTY_VIEW } from "@graview/layout";
 import { createViews, GraviewProvider } from "@graview/react";
@@ -37,7 +38,7 @@ describe("a coverage cell under a selection", () => {
     const View = lens.View as unknown as (props: Record<string, unknown>) => JSX.Element;
     const html = renderToStaticMarkup(
       <GraviewProvider store={store} views={registerDefaultViews(schema, createViews(schema))} initialView={EMPTY_VIEW}>
-        <View nodes={store.graph.nodesOfKind("song")} fidelity="full" cardinality="many" mode="captured" selected={false} implicated={["cobalt", "night"]} />
+        <View nodes={store.graph.nodesOfKind("song")} fidelity="full" cardinality="many" mode="scene" selected={false} implicated={["cobalt", "night"]} />
       </GraviewProvider>,
     );
     const cells = [...html.matchAll(/data-graview-pick="night" data-graview-emphasis="(\w+)"[^>]*title="night answers ([^"]+)"/g)].map((match) => `${match[2]}:${match[1]}`);

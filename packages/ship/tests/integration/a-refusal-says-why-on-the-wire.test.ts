@@ -1,4 +1,4 @@
-import { createSchema, defineApp, defineMutation, defineNode, nodeRef, REFUSAL_REASONS, Store, type Principal } from "@graview/core";
+import { bindSchema, createSchema, defineApp, defineNode, nodeRef, REFUSAL_REASONS, Store, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createStoreHandler, LIVE_PATH, openRemote, REFUSAL_REASONS as SHIPPED_REASONS, RemoteRefusedError, type LiveServerMessage, type LiveSocketLike, type RemoteRefusal, type StoreHandler } from "../../src/index.js";
@@ -14,6 +14,8 @@ import { createStoreHandler, LIVE_PATH, openRemote, REFUSAL_REASONS as SHIPPED_R
  * `openRemote`'s `onRefusal` hands both to the listener.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string().min(1), done: z.boolean() }) });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
 const finish = defineMutation("finish", {
   title: "Finish it",
   subject: { kinds: ["task"], arg: "id" },
@@ -40,7 +42,6 @@ const drop = defineMutation("drop", {
     ctx.removeNode(args.id);
   },
 });
-const schema = createSchema([task]);
 const app = defineApp({
   name: "reasons",
   schema,

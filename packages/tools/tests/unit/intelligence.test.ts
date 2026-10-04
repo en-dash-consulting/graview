@@ -60,7 +60,7 @@ const empty = () => new Store({ schema, mutations: [addGardener, addPlot, tend],
 
 describe("the starter intelligence proposes from the declaration alone", () => {
   it("offers a creator per empty kind, with honest arguments off the form", async () => {
-    const proposals = await templateIntelligence({ today: "2026-09-01" }).propose(empty());
+    const proposals = await templateIntelligence<typeof schema>({ today: "2026-09-01" }).propose(empty());
     expect(proposals.map((p) => p.mutation).sort()).toEqual(["add-gardener", "add-plot"]);
     const plotCall = proposals.find((p) => p.mutation === "add-plot")!;
     expect(plotCall.args["beds"]).toBe(1);
@@ -71,14 +71,14 @@ describe("the starter intelligence proposes from the declaration alone", () => {
   it("says nothing about kinds that already have members", async () => {
     const store = empty();
     store.apply({ name: "add-gardener", args: { label: "June" } });
-    const proposals = await templateIntelligence().propose(store);
+    const proposals = await templateIntelligence<typeof schema>().propose(store);
     expect(proposals.map((p) => p.mutation)).toEqual(["add-plot"]);
   });
 });
 
 describe("a model is one completion function", () => {
   it("parses proposals out of the answer and validates them", async () => {
-    const model = llmIntelligence({
+    const model = llmIntelligence<typeof schema>({
       name: "fake",
       may: ["add-gardener"],
       complete: async (prompt) => {
@@ -100,7 +100,7 @@ describe("a model is one completion function", () => {
   });
 
   it("answers nothing on an unparseable reply rather than guessing", async () => {
-    const model = llmIntelligence({ name: "fake", complete: async () => "I refuse." });
+    const model = llmIntelligence<typeof schema>({ name: "fake", complete: async () => "I refuse." });
     expect(await model.propose(empty())).toEqual([]);
   });
 });
@@ -144,13 +144,14 @@ describe("the graph itself is the first intelligence", () => {
         ],
       },
     });
-    const provider = insightProvider();
+    const provider = insightProvider<typeof schema>();
     const said = (selection: string[], kinds: string[] = []) =>
       (provider.derive({
         store,
         selection,
         nodes: selection.map((id) => store.graph.getNode(id)!),
         kindSelection: kinds,
+        edgeSelection: [],
         violations: [],
         context: {},
       }).observations ?? []).map((o) => o.text);
@@ -159,11 +160,12 @@ describe("the graph itself is the first intelligence", () => {
     expect(said(["june"])[0]).toMatch(/holds 4 of 4/);
 
     const bare = new Store({ schema, mutations: [], invariants: [] });
-    const gap = (insightProvider().derive({
+    const gap = (insightProvider<typeof schema>().derive({
       store: bare,
       selection: ["kind:gardener"],
       nodes: [],
       kindSelection: ["gardener"],
+      edgeSelection: [],
       violations: [],
       context: {},
     }).observations ?? []).map((o) => o.text);
@@ -185,11 +187,12 @@ describe("the graph itself is the first intelligence", () => {
     const alone = createSchema([item]);
     const bare = new Store({ schema: alone, mutations: [], invariants: [] });
     const said = (
-      insightProvider().derive({
+      insightProvider<typeof alone>().derive({
         store: bare,
         selection: ["kind:item"],
         nodes: [],
         kindSelection: ["item"],
+        edgeSelection: [],
         violations: [],
         context: {},
       }).observations ?? []
@@ -202,7 +205,7 @@ describe("an intelligence surfaces as an ordinary provider", () => {
   it("caches per log position, refreshes in the background, and labels its provider", async () => {
     const store = empty();
     let woken = 0;
-    const provider = intelligenceProvider(templateIntelligence(), { notify: () => (woken += 1) });
+    const provider = intelligenceProvider(templateIntelligence<typeof schema>(), { notify: () => (woken += 1) });
     // First derive: nothing yet, the proposal is in flight.
     const first = deriveAffordances(store, [], { providers: [provider] });
     expect(first.affordances).toHaveLength(0);

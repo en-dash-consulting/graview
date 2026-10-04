@@ -9,6 +9,8 @@ import {
   describeApp,
   generateLlmsTxt,
   nodeRef,
+  type AnySchema,
+  type GraviewApp,
   providerCan,
   undecidableArguments,
 } from "../../src/index.js";
@@ -55,7 +57,7 @@ const note = defineMutation("note", {
 
 const app = (intelligence: Parameters<typeof defineApp>[0]["intelligence"]) =>
   defineApp({ name: "grounds", schema, mutations: [stakeOut, setSurface, note], intelligence });
-const codes = (a: Parameters<typeof checkApp>[0]) =>
+const codes = <S extends AnySchema>(a: GraviewApp<S>) =>
   checkApp(a).findings.map((finding) => `${finding.severity}:${finding.code}`);
 
 describe("what a decision provider can and cannot fill", () => {
@@ -69,11 +71,11 @@ describe("what a decision provider can and cannot fill", () => {
   });
 
   it("knows which kinds talk and which decide", () => {
-    expect(providerCan({ name: "jev", kind: "decision" }, "prose")).toBe(false);
-    expect(providerCan({ name: "jev", kind: "decision" }, "decide")).toBe(true);
-    expect(providerCan({ name: "model", kind: "llm" }, "prose")).toBe(true);
-    expect(providerCan({ name: "starter", kind: "graph" }, "prose")).toBe(false);
-    expect(providerCan({ name: "starter", kind: "graph" }, "propose")).toBe(true);
+    expect(providerCan({ kind: "decision" }, "prose")).toBe(false);
+    expect(providerCan({ kind: "decision" }, "decide")).toBe(true);
+    expect(providerCan({ kind: "llm" }, "prose")).toBe(true);
+    expect(providerCan({ kind: "graph" }, "prose")).toBe(false);
+    expect(providerCan({ kind: "graph" }, "propose")).toBe(true);
   });
 });
 

@@ -30,7 +30,7 @@ class BindingError extends Error {
   }
 }
 
-function ThrowingMap(_props: ViewProps<typeof schema>) {
+function ThrowingMap(_props: ViewProps<typeof schema>): never {
   throw new BindingError();
 }
 function Tasks({ nodes, label }: ViewProps<typeof schema>) {

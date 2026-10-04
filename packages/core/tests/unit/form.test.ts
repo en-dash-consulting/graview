@@ -56,7 +56,8 @@ describe("formFields", () => {
     });
     const [window, tags] = formFields(input);
     expect(window?.control).toBe("group");
-    expect((window as { fields: unknown[] }).fields).toHaveLength(2);
+    if (window?.control !== "group") throw new Error("window is not a group");
+    expect(window.fields).toHaveLength(2);
     expect(tags).toEqual({
       control: "list",
       name: "tags",
