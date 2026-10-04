@@ -319,6 +319,18 @@ export interface StoreHandler<S extends AnySchema> {
    * see the person. Bound, so it can be handed on as it is.
    */
   readonly onCall: (call: { readonly principal: Principal }) => void;
+  /**
+   * HOLD THE APP READ-ONLY FOR NOW (FR-66), saying why in a sentence for
+   * the person: every change is refused `unavailable` in it until
+   * `release`, every open socket is told `{ t: "held", sentence }` at once,
+   * and every welcome and every answer a poll reads says `held`. A client
+   * of `openRemote` shows it (`status()` is `held`, `onHeld`) and keeps
+   * what is made meanwhile, sending it on release. Holding again replaces
+   * the sentence.
+   */
+  hold(sentence: string): void;
+  /** Take changes again (FR-66): every open socket is told `{ t: "held", sentence: null }`, and what clients kept is sent. */
+  release(): void;
   /** Writes what is pending and lets the adapter go — or, over a store the host holds, writes what is pending and leaves the store open. */
   close(): Promise<void>;
 }
@@ -490,8 +502,11 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       ...(options.withheldKey !== undefined ? { withheldKey: options.withheldKey } : {}),
       ...(options.limit ? { limit: options.limit } : {}),
       ...(options.admit ? { admit: options.admit } : {}),
+      held: () => holding,
     }),
   });
+  /** The sentence the app is held in (FR-66), or nothing: it takes changes. Read by every protocol made over it. */
+  let holding: string | undefined;
   let serving = serve(options.app, options.store as unknown as Store<AnySchema>, options.flush, options.migrated ?? []);
   /** Set while the declaration is being changed: every request and message waits for it. */
   let changing: Promise<void> | undefined;
@@ -621,6 +636,8 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
         who: wire.whoFor(asking, alive().filter((presence) => presence.participant !== mine.participant)),
         ...(typeof body.seq === "number" ? { ops: wire.since(asking, body.seq) } : {}),
         ...answering(asking),
+        // A poller that only says where it is learns the hold, and its end, here too (FR-66).
+        ...(holding ? { held: holding } : {}),
       });
     }
 
@@ -894,6 +911,16 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     seatFor,
     announce,
     onCall,
+    hold(sentence) {
+      const said = sentence.trim();
+      holding = said.length > 0 ? said : "This app takes no changes for now.";
+      serving.protocol.heldChanged(sockets);
+    },
+    release() {
+      if (holding === undefined) return;
+      holding = undefined;
+      serving.protocol.heldChanged(sockets);
+    },
     handle: async (request) => {
       try {
         return await route(request);

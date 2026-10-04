@@ -70,6 +70,13 @@ export interface SeatLens {
    * reading it was made for, so it never answers for a store that moved.
    */
   readonly pin?: () => SeatLens;
+  /**
+   * WHETHER ANYTHING IS KEPT FROM THIS SEAT AT ALL (`hidesFrom`), when the
+   * lens can say. When nothing is, a log is served to it as it is (FR-67):
+   * no judgement of what a record or a link was can withhold an op from a
+   * seat that may see everything.
+   */
+  readonly hides?: () => boolean;
 }
 
 /** Whether any field of a record — not its id or kind — names what `sees` says no to. */
@@ -204,6 +211,8 @@ export function withhold(op: Operation, seeing: SeatLens | ((id: string) => bool
 export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: string) => boolean)): Operation[] {
   // One reading of the store, whatever its length: every id and record judged once in it.
   const given = lensOf(seeing);
+  // A seat from whom nothing is kept is served the log as it is (FR-67).
+  if (given.hides?.() === false) return [...ops];
   const lens = given.pin?.() ?? given;
   /*
    * ALONG THE STORE'S HISTORY, when the lens knows it: each primitive judged
@@ -243,7 +252,13 @@ function whole(op: Operation, lens: SeatLens, served?: readonly Primitive[]): Op
    */
   const kept = (id: string) => lens.sees(id) && isRecord(lens, id);
   const reads = op.reads.filter(kept);
-  const writes = op.writes.filter(kept);
+  /*
+   * WHAT IT WROTE, AS ITS PRIMITIVES SAY IT (FR-67). An id it wrote that
+   * names no record is the end of a link it served the seat — a repair
+   * removing a dangling one — and stays: the primitive names it already.
+   */
+  const touched = new Set((served ?? op.primitives).flatMap(touchedBy));
+  const writes = op.writes.filter((id) => kept(id) || (lens.sees(id) && touched.has(id)));
   const tidy = reads.length === op.reads.length && writes.length === op.writes.length ? op : { ...op, reads, writes };
   /*
    * ANOTHER AUTHOR'S SENTENCE, ONLY IF ITS READER SEES WHAT IT READ. A
