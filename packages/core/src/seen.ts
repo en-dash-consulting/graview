@@ -234,17 +234,40 @@ export function answerSeenBy<
     const edge = (one: GraphEdge) => lens.shows(one.from) && lens.shows(one.to) && !namesUnseen(one, lens.sees);
     const madeBy = (id: string, fields?: readonly string[]): FieldWriter =>
       answer.ops ? wroteAt(id, end) : (field) => (fields === undefined || fields.includes(field) ? actor : writers.writerAt(id, field, end));
+    const changed = diff.changedNodes.flatMap((change: NodeChange) => {
+      const before = node(change.before, wroteAt(change.before.id, first));
+      const after = node(change.after, madeBy(change.after.id, change.fields));
+      return before && after ? [{ before, after, fields: change.fields.filter((field) => field in before || field in after) }] : [];
+    });
+    /*
+     * A WRITE THAT CHANGED NOTHING BUT WHOSE WORDS THEY ARE. A seat that
+     * wrote the value a field already held, naming what it may not see, made
+     * those words its own (FR-55): the store's graph did not move, and the
+     * seat's view of the record did. Said as a change, so the answer reads
+     * as it would had the field held anything else.
+     */
+    const listed = new Set(diff.changedNodes.map((change: NodeChange) => change.after.id));
+    const patched = new Map<string, string[]>();
+    for (const primitive of (answer.ops?.flatMap((op) => op.primitives) ?? (answer.primitives as readonly Primitive[] | undefined) ?? [])) {
+      if (primitive.op !== "patch-node" || listed.has(primitive.id)) continue;
+      patched.set(primitive.id, [...(patched.get(primitive.id) ?? []), ...Object.keys(primitive.after)]);
+    }
+    const kept = () =>
+      [...patched].flatMap(([id, fields]) => {
+        const held = store.graph.getNode(id) as AnyGraphNode | undefined;
+        if (!held) return [];
+        const before = node(held, wroteAt(id, first));
+        const after = node(held, madeBy(id, fields));
+        return before && after && JSON.stringify(before) !== JSON.stringify(after) ? [{ before, after, fields }] : [];
+      });
+    const madeTheirs = kept();
     out["diff"] = {
       addedNodes: nodes(diff.addedNodes, (id) => madeBy(id)),
       removedNodes: nodes(diff.removedNodes, (id) => wroteAt(id, first)),
-      changedNodes: diff.changedNodes.flatMap((change: NodeChange) => {
-        const before = node(change.before, wroteAt(change.before.id, first));
-        const after = node(change.after, madeBy(change.after.id, change.fields));
-        return before && after ? [{ before, after, fields: change.fields.filter((field) => field in before || field in after) }] : [];
-      }),
+      changedNodes: [...changed, ...madeTheirs],
       addedEdges: diff.addedEdges.filter(edge),
       removedEdges: diff.removedEdges.filter(edge),
-      touched: diff.touched.filter(lens.shows),
+      touched: [...diff.touched.filter(lens.shows), ...[...patched.keys()].filter((id) => lens.shows(id) && !diff.touched.includes(id))],
     };
   }
   if (answer.ops) out["ops"] = redact(answer.ops, lens);
@@ -257,7 +280,8 @@ export function answerSeenBy<
         ? servePrimitives(answer.primitives as readonly Primitive[], lens.timeline, { served: (node, writer) => lens.servedWith(node, writer), edgeClean: (edge) => !namesUnseen(edge, lens.sees) }, actingAs(principal).id)
         : redact([{ id: "", seq: 0, batch: "", author: { kind: "system" }, intent: "", mutation: null, primitives: answer.primitives as never, inverse: [], reads: [], writes: [], at: "" }], lens)[0]!.primitives;
   }
-  if (answer.reads) out["reads"] = answer.reads.filter(lens.shows);
+  // Records the seat is served, and no id that names nothing: a hidden record and an absent one are left out alike (FR-55).
+  if (answer.reads) out["reads"] = answer.reads.filter((id) => lens.shows(id) && has(id));
   if (answer.writes) out["writes"] = answer.writes.filter(lens.shows);
   if (answer.intent !== undefined && namesUnseen(answer.intent, lens.sees)) out["intent"] = WITHHELD_INTENT;
   for (const key of ["introduces", "resolves", "violationsAfter"] as const) {

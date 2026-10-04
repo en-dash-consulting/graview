@@ -172,8 +172,8 @@ export function withhold(op: Operation, seeing: SeatLens | ((id: string) => bool
         return one ? [one] : [];
       }),
     inverse: [],
-    reads: op.reads.filter(lens.shows),
-    writes: op.writes.filter(lens.shows),
+    reads: op.reads.filter((id) => lens.shows(id) && isRecord(lens, id)),
+    writes: op.writes.filter((id) => lens.shows(id) && isRecord(lens, id)),
     at: op.at,
     ...(op.undoes !== undefined ? { undoes: op.undoes } : {}),
     withheld: true,
@@ -214,7 +214,17 @@ export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: strin
  * Davies"), so one that names a hidden record anywhere withholds the op.
  */
 function whole(op: Operation, lens: SeatLens, served?: readonly Primitive[]): Operation | undefined {
-  if (!namesUnseen(op, lens.sees)) return op;
+  /*
+   * WHAT IT READ, AS RECORDS THE SEAT SEES (FR-55). An act that looked for a
+   * record that is not there read its absence, and one that looked for a
+   * hidden one read nothing the seat may be told: both are left out alike,
+   * or the reads of a seat's own act would say which guess was real.
+   */
+  const kept = (id: string) => lens.sees(id) && isRecord(lens, id);
+  const reads = op.reads.filter(kept);
+  const writes = op.writes.filter(kept);
+  const tidy = reads.length === op.reads.length && writes.length === op.writes.length ? op : { ...op, reads, writes };
+  if (!namesUnseen(op, lens.sees)) return tidy;
   const said = new Set<string>();
   const collect = (value: unknown): void => {
     if (typeof value === "string") said.add(value);
@@ -227,6 +237,10 @@ function whole(op: Operation, lens: SeatLens, served?: readonly Primitive[]): Op
   if (served) collect(served);
   if (lens.actor !== undefined && op.mutation && actingAs(op.author as Principal).id === lens.actor) collect(op.mutation.args);
   const told = (id: string) => lens.sees(id) || said.has(id);
-  const trimmed: Operation = { ...op, reads: op.reads.filter((id) => lens.sees(id)), writes: op.writes.filter((id) => lens.sees(id)) };
-  return namesUnseen({ ...trimmed, primitives: [] }, told) ? undefined : trimmed;
+  return namesUnseen({ ...tidy, primitives: [] }, told) ? undefined : tidy;
+}
+
+/** Whether an id names a record the store knows — in the graph or its log — when the lens can say; a bare sight cannot, and keeps every id. */
+function isRecord(lens: SeatLens, id: string): boolean {
+  return lens.timeline === undefined || lens.kindOf(id) !== undefined;
 }

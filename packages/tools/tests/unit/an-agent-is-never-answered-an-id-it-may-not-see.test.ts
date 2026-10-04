@@ -107,6 +107,7 @@ describe("an agent is never answered an id it may not see", () => {
       if (hidden.length === 0) continue;
       const named = w.pick(hidden);
       const nothing = `${named.split(":")[0]}:never-${seed}`;
+      const visible = w.nodes.map((node) => node.id).find((id) => !unseenIds(w).includes(id));
       const answered = async (id: string) =>
         (
           await answers(handlerOver(storeOf(w), w.viewer), [
@@ -117,6 +118,8 @@ describe("an agent is never answered an id it may not see", () => {
             { name: "search_graph", arguments: { query: id } },
             // A record of its own that names the guess: served the same, whether the guess is real (FR-55).
             { name: "make", arguments: { title: "Guess", ref: id } },
+            // An act on a record it sees, naming the guess: its sentence is worded from what the agent may see.
+            ...(visible ? [{ name: "preview_mutation", arguments: { mutation: "point", args: { id: visible, ref: id } } }, { name: "point", arguments: { id: visible, ref: id } }] : []),
             { name: "get_graph", arguments: {} },
           ])
         ).map((text) => text.split(id).join("<id>").replace(new RegExp(`(?<![A-Za-z0-9:-])${id.slice(id.indexOf(":") + 1)}(?![A-Za-z0-9-])`, "g"), "<rest>").replace(/batch:[a-z0-9]+:/g, "batch:minted:"));

@@ -35,7 +35,8 @@ export const point = defineMutation("point", {
   subject: { kinds: [...ANY], arg: "id" },
   writes: ["ref"],
   input: z.object({ id: nodeRef([...ANY]), ref: z.string() }),
-  describe: (args) => `Point ${args.id} at ${args.ref}`,
+  // Worded from the graph, as an act that names a record by its title is: the title of what it points at, or the id as given.
+  describe: (args, graph) => `Point ${args.id} at ${(graph.getNode(args.ref) as { title?: string } | undefined)?.title ?? args.ref}`,
   apply(ctx, args) {
     ctx.patchNode(args.id, { ref: args.ref });
   },

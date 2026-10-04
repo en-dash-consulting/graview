@@ -649,7 +649,7 @@ export function createToolRuntime<S extends AnySchema>(
           // A preview reads what it acts on: one naming a record this seat may not see is refused as one naming nothing (FR-55).
           const missing = store.missingFor({ name: act, args: named.args }, principal);
           if (missing) return { ok: false, error: missing.message };
-          const preview = answerSeenBy(store, principal, store.preview({ name: act, args: named.args }));
+          const preview = answerSeenBy(store, principal, store.preview({ name: act, args: named.args }, undefined, { author: principal }));
           return { ok: true, data: named.resolved.length > 0 ? { ...preview, resolved: named.resolved } : preview };
         }
 

@@ -651,6 +651,23 @@ export class Store<S extends AnySchema> {
   }
 
   /**
+   * AN ACT'S SENTENCE IS WORDED FROM ITS AUTHOR'S VIEW (FR-55). `describe`
+   * reads the graph to name what the act touched ("Point at Venue"); read
+   * from the whole store, it named a record the author may not see by its
+   * label, and so told the author whether a guessed id was real. Read from
+   * the store as the author is served it, such a record is named only by
+   * what the author wrote, as one that does not exist is. A reader who sees
+   * more reads the author's sentence as the author would have. With nothing
+   * kept from the author, the store's own graph.
+   */
+  private wordedFor(author: Principal | undefined): NonNullable<Parameters<typeof compileMutation<S>>[3]> {
+    if (author === undefined || !hidesFrom(this, author)) return {};
+    // And a seat that writes a value naming what it may not see has written its own words, though the store held them already.
+    const hidden = seesId(this, author);
+    return { describeWith: seenBy(this, author).graph as never, keepUnchanged: (value: unknown) => namesUnseen(value, hidden) };
+  }
+
+  /**
    * A CALL THAT NAMES A RECORD THAT IS NOT THERE FOR ITS CALLER IS REFUSED
    * AS MISSING (FR-02, FR-55) — one that does not exist, and one the caller
    * may not see, alike: the same `MissingRecordError`, the same sentence,
@@ -858,9 +875,9 @@ export class Store<S extends AnySchema> {
     }
   }
 
-  preview(call: MutationCall, context?: InvariantContext): Preview<S> {
+  preview(call: MutationCall, context?: InvariantContext, options: { readonly author?: Principal } = {}): Preview<S> {
     const definition = this.mutation(call.name);
-    const compiled = compileMutation(this.graph, definition, call.args);
+    const compiled = compileMutation(this.graph, definition, call.args, this.wordedFor(options.author));
     return this.previewPrimitives(compiled.primitives, {
       reads: compiled.reads,
       writes: compiled.writes,
@@ -1016,9 +1033,7 @@ export class Store<S extends AnySchema> {
         const definition = this.mutation(call.name);
         const missing = this.missingFor(call, author as Principal);
         if (missing) throw missing;
-        // A seat that writes a value naming what it may not see has written its own words, though the store held them already (FR-55).
-        const hidden = hidesFrom(this, author as Principal) ? seesId(this, author as Principal) : undefined;
-        const compiled = compileMutation(this.graph, definition, call.args, hidden ? { keepUnchanged: (value) => namesUnseen(value, hidden) } : {});
+        const compiled = compileMutation(this.graph, definition, call.args, this.wordedFor(author as Principal));
         /*
          * AN ACT THAT DID NOTHING DOES NOT GO IN THE HISTORY.
          *
