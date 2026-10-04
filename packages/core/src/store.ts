@@ -1,4 +1,4 @@
-import { readingOf, seatLens, seenBy, seesId } from "./seen.js";
+import { hidesFrom, readingOf, seatLens, seenBy, seesId } from "./seen.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
@@ -21,7 +21,7 @@ import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { actingAs, isSystem, permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
-import { redact } from "./ops/withheld.js";
+import { namesUnseen, redact } from "./ops/withheld.js";
 import { nounOf } from "./schema/define-node.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./ops/undo.js";
@@ -1016,7 +1016,9 @@ export class Store<S extends AnySchema> {
         const definition = this.mutation(call.name);
         const missing = this.missingFor(call, author as Principal);
         if (missing) throw missing;
-        const compiled = compileMutation(this.graph, definition, call.args);
+        // A seat that writes a value naming what it may not see has written its own words, though the store held them already (FR-55).
+        const hidden = hidesFrom(this, author as Principal) ? seesId(this, author as Principal) : undefined;
+        const compiled = compileMutation(this.graph, definition, call.args, hidden ? { keepUnchanged: (value) => namesUnseen(value, hidden) } : {});
         /*
          * AN ACT THAT DID NOTHING DOES NOT GO IN THE HISTORY.
          *

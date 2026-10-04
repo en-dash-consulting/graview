@@ -1,7 +1,7 @@
 import { createSchema, defineNode, Store, type AnySchema, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { leaked, storeOf, unseenIds, world } from "../../../core/tests/support/unseen-worlds.js";
+import { leaked, storeOf, unsaidUnseen, unseenIds, world } from "../../../core/tests/support/unseen-worlds.js";
 import { createMcpHttpHandler } from "../../src/index.js";
 
 /**
@@ -69,9 +69,8 @@ describe("an agent is never answered an id it may not see", () => {
     for (let seed = 1; seed <= WORLDS; seed++) {
       const w = world(seed);
       const store = storeOf(w);
-      const unseen = unseenIds(w);
       const ids = [...w.kindOf.keys()];
-      const said = await answers(handlerOver(store, w.viewer), [
+      const calls = [
         { name: "get_graph", arguments: {} },
         ...ids.slice(0, 8).map((id) => ({ name: "get_node", arguments: { id } })),
         { name: "search_graph", arguments: { query: "T" } },
@@ -80,7 +79,11 @@ describe("an agent is never answered an id it may not see", () => {
         { name: "point", arguments: { id: w.pick(ids), ref: w.anyId() } },
         { name: "retitle", arguments: { id: w.pick(ids), title: "Again" } },
         { name: "undo_batch", arguments: { batch: w.pick(store.log.all()).batch } },
-      ]);
+      ];
+      const said = await answers(handlerOver(store, w.viewer), calls);
+      // What the agent wrote, and what it sent, are its own words: said back, they tell it nothing (FR-55).
+      const sent = JSON.stringify(calls);
+      const unseen = unsaidUnseen(w, store.log.all()).filter((id) => !sent.includes(JSON.stringify(id)));
       for (const text of said) {
         const id = leaked(opened(text), unseen);
         expect(id, `seed ${seed}: names unseen ${id}: ${text.slice(0, 400)}`).toBeUndefined();
@@ -99,7 +102,8 @@ describe("an agent is never answered an id it may not see", () => {
     for (let seed = 1; seed <= WORLDS; seed++) {
       const w = world(seed);
       const there = new Set(w.nodes.map((node) => node.id));
-      const hidden = unseenIds(w).filter((id) => there.has(id));
+      // A hidden record the agent has not named in its own words already: those it is served as it wrote them.
+      const hidden = unsaidUnseen(w).filter((id) => there.has(id));
       if (hidden.length === 0) continue;
       const named = w.pick(hidden);
       const nothing = `${named.split(":")[0]}:never-${seed}`;
@@ -111,8 +115,11 @@ describe("an agent is never answered an id it may not see", () => {
             { name: "point", arguments: { id, ref: "x" } },
             { name: "retitle", arguments: { id, title: "Guess" } },
             { name: "search_graph", arguments: { query: id } },
+            // A record of its own that names the guess: served the same, whether the guess is real (FR-55).
+            { name: "make", arguments: { title: "Guess", ref: id } },
+            { name: "get_graph", arguments: {} },
           ])
-        ).map((text) => text.split(id).join("<id>").split(id.slice(id.indexOf(":") + 1)).join("<rest>"));
+        ).map((text) => text.split(id).join("<id>").replace(new RegExp(`(?<![A-Za-z0-9:-])${id.slice(id.indexOf(":") + 1)}(?![A-Za-z0-9-])`, "g"), "<rest>").replace(/batch:[a-z0-9]+:/g, "batch:minted:"));
       expect(await answered(named), `seed ${seed}: ${named} answered unlike ${nothing}`).toEqual(await answered(nothing));
       probed++;
     }

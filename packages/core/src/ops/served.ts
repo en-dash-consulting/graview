@@ -1,6 +1,9 @@
 import { isUnset, UNSET, type Primitive } from "../graph/primitives.js";
 import { edgeId, type AnyGraphNode, type GraphEdge } from "../graph/types.js";
+import { actingAs } from "../permissions/policy.js";
+import type { Principal } from "../permissions/types.js";
 import type { Operation } from "./types.js";
+import type { Writers } from "./writers.js";
 
 /**
  * A SERVED LOG FOLDS TO THE SERVED SNAPSHOT (FR-55).
@@ -36,16 +39,20 @@ export interface Present {
   inEdges(id: string): readonly GraphEdge[];
 }
 
-/** What a walk needs of a store: the graph now and the log that led to it. */
+/** What a walk needs of a store: the graph now, the log that led to it, and who wrote each field's value. */
 export interface Timeline {
   readonly present: Present;
-  readonly log: { all(): readonly Operation[] };
+  readonly log: { all(): readonly Operation[]; readonly length?: number };
+  readonly writers?: Writers;
 }
+
+/** Who wrote a record's fields, as of one moment: the seat's own words are served as written (FR-55). */
+export type FieldWriter = (field: string) => string | undefined;
 
 /** How the walk judges one record or one link for the seat. */
 export interface ServedJudge {
-  /** The record as the seat is served it, or undefined when it is not. */
-  served(node: AnyGraphNode): AnyGraphNode | undefined;
+  /** The record as the seat is served it, given who wrote each of its fields' values, or undefined when it is not. */
+  served(node: AnyGraphNode, writer: FieldWriter): AnyGraphNode | undefined;
   /** Whether a link names nothing the seat may not see (its ends are judged as records). */
   edgeClean(edge: GraphEdge): boolean;
 }
@@ -55,8 +62,37 @@ class Moment {
   private readonly nodes = new Map<string, AnyGraphNode | null>();
   private readonly edges = new Map<string, GraphEdge | null>();
   private readonly touching = new Map<string, Set<string>>();
+  /** The seq of the op this moment stands just before; who wrote what is read as of it. */
+  private seq = Number.MAX_SAFE_INTEGER;
+  /** Who wrote the fields the op under way has written so far. */
+  private readonly wrote = new Map<string, string | undefined>();
 
-  constructor(private readonly present: Present) {}
+  constructor(
+    private readonly present: Present,
+    private readonly writers?: Writers,
+  ) {}
+
+  /** The moment just before op `seq`. */
+  begin(seq: number): void {
+    this.seq = seq;
+    this.wrote.clear();
+  }
+
+  /** Who wrote a record's fields' values at this moment. */
+  writerOf(id: string): FieldWriter {
+    return (field) => {
+      const key = `${id}\u0000${field}`;
+      if (this.wrote.has(key)) return this.wrote.get(key);
+      return this.writers?.writerAt(id, field, this.seq);
+    };
+  }
+
+  /** The fields a primitive just wrote, and who wrote them. */
+  note(primitive: Primitive, by: (id: string, field: string) => string | undefined): void {
+    const fields = primitive.op === "add-node" ? Object.keys(primitive.node) : primitive.op === "patch-node" ? Object.keys(primitive.after) : [];
+    const id = primitive.op === "add-node" ? primitive.node.id : primitive.op === "patch-node" ? primitive.id : "";
+    for (const field of fields) if (field !== "id" && field !== "kind") this.wrote.set(`${id}\u0000${field}`, by(id, field));
+  }
 
   node(id: string): AnyGraphNode | undefined {
     if (this.nodes.has(id)) return this.nodes.get(id) ?? undefined;
@@ -160,10 +196,10 @@ const idOf = (primitive: Primitive): string | undefined =>
   primitive.op === "add-node" || primitive.op === "remove-node" ? primitive.node.id : primitive.op === "patch-node" ? primitive.id : undefined;
 
 /** Judges one primitive at a moment, and moves the moment past it. */
-function serveOne(primitive: Primitive, moment: Moment, judge: ServedJudge): Served {
+function serveOne(primitive: Primitive, moment: Moment, judge: ServedJudge, by: (id: string, field: string) => string | undefined): Served {
   const servedAt = (id: string): AnyGraphNode | undefined => {
     const node = moment.node(id);
-    return node ? judge.served(node) : undefined;
+    return node ? judge.served(node, moment.writerOf(id)) : undefined;
   };
   const id = idOf(primitive);
   if (id === undefined) {
@@ -173,10 +209,11 @@ function serveOne(primitive: Primitive, moment: Moment, judge: ServedJudge): Ser
     return served ? { primitives: [primitive], faithful: true } : { primitives: [], faithful: false };
   }
   const was = moment.node(id);
-  const before = was ? judge.served(was) : undefined;
+  const before = was ? judge.served(was, moment.writerOf(id)) : undefined;
   moment.apply(primitive);
+  moment.note(primitive, by);
   const now = moment.node(id);
-  const after = now ? judge.served(now) : undefined;
+  const after = now ? judge.served(now, moment.writerOf(id)) : undefined;
   if (!before && !after) return { primitives: [], faithful: false };
   if (!before && after) {
     // Into what the seat is served: the record as it is served, and its links to what the seat is served.
@@ -222,10 +259,12 @@ export function serveAlong(ops: readonly Operation[], timeline: Timeline, judge:
   const log = timeline.log.all();
   const base = log[0]?.seq ?? 0;
   const placed = ops.every((op) => log[op.seq - base]?.id === op.id);
-  const moment = new Moment(timeline.present);
+  const moment = new Moment(timeline.present, timeline.writers);
   if (!placed) {
+    moment.begin(timeline.log.length ?? base + log.length);
     return ops.map((op) => {
-      const served = op.primitives.map((primitive) => serveOne(primitive, moment, judge));
+      const author = actingAs(op.author as Principal).id;
+      const served = op.primitives.map((primitive) => serveOne(primitive, moment, judge, () => author));
       return { op, primitives: served.flatMap((one) => one.primitives), faithful: served.every((one) => one.faithful) };
     });
   }
@@ -239,18 +278,22 @@ export function serveAlong(ops: readonly Operation[], timeline: Timeline, judge:
   const answer = new Map<number, ServedOp>();
   for (let at = first; at <= last; at++) {
     const op = log[at]!;
+    moment.begin(op.seq);
     if (!wanted.has(op.seq)) {
       for (const primitive of op.primitives) moment.apply(primitive);
       continue;
     }
-    const served = op.primitives.map((primitive) => serveOne(primitive, moment, judge));
+    // What this op wrote is written by whom the log says: its author, or for an undo whoever wrote what it puts back.
+    const by = (id: string, field: string) => timeline.writers?.writerAt(id, field, op.seq + 1);
+    const served = op.primitives.map((primitive) => serveOne(primitive, moment, judge, by));
     answer.set(op.seq, { op, primitives: served.flatMap((one) => one.primitives), faithful: served.every((one) => one.faithful) });
   }
   return ops.map((op) => answer.get(op.seq)!);
 }
 
-/** Primitives not yet in any log — a preview — as the seat would be served them, from the graph as it stands. */
-export function servePrimitives(primitives: readonly Primitive[], present: Present, judge: ServedJudge): Primitive[] {
-  const moment = new Moment(present);
-  return primitives.flatMap((primitive) => serveOne(primitive, moment, judge).primitives);
+/** Primitives not yet in any log — a preview `author` would make — as the seat would be served them, from the graph as it stands. */
+export function servePrimitives(primitives: readonly Primitive[], timeline: Timeline, judge: ServedJudge, author: string | undefined): Primitive[] {
+  const moment = new Moment(timeline.present, timeline.writers);
+  moment.begin(timeline.log.length ?? timeline.log.all().length);
+  return primitives.flatMap((primitive) => serveOne(primitive, moment, judge, () => author).primitives);
 }

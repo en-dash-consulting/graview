@@ -1,7 +1,7 @@
 import { createMemoryAdapter, createSchema, defineApp, defineNode, OperationLog, Store, type AnySchema, type GraphEdge, type GraviewApp, type Operation, type Presence, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { canonical, leaked, MUTATIONS, policyOf, rng, SCHEMA, schemaOf, storeAt, storeOf, unseenIds, world, type World } from "../../../core/tests/support/unseen-worlds.js";
+import { canonical, leaked, MUTATIONS, policyOf, rng, SCHEMA, schemaOf, storeAt, storeOf, unsaidUnseen, unseenIds, world, type World } from "../../../core/tests/support/unseen-worlds.js";
 import { createStoreHandler, liveProtocol, seatHeaders, serveStore, type LivePeer, type LiveServerMessage } from "../../src/index.js";
 
 /**
@@ -26,6 +26,9 @@ function socket(state: ReturnType<ReturnType<typeof liveProtocol>["open"]>, hear
 }
 
 /** Everything the live wire sends this world's viewer, as text. */
+/** The log the last sweep left, for what the seat said in it: a seat is served its own words (FR-55). */
+let history: readonly Operation[] = [];
+
 async function overTheSocket(w: World): Promise<string[]> {
   const store = storeOf(w);
   const live = liveProtocol({ store, version: 1 });
@@ -62,6 +65,7 @@ async function overTheSocket(w: World): Promise<string[]> {
   }
   await live.receive(fresh, JSON.stringify({ t: "undo", cid: `c${++cid}`, batches: [w.pick(store.log.all()).batch] }));
   live.tell([...who, other("three")], [fresh, behind]);
+  history = store.log.all();
   return heard;
 }
 
@@ -112,6 +116,7 @@ async function overHttp(w: World): Promise<string[]> {
   await keep(await post("/graview/ops", again));
   await keep(await post("/graview/here", { presence: { participant: "human:u1:tab", hue: 1, stop: `/a/${w.anyId()}`, over: w.anyId(), at: "" }, seq: -1 }));
   await keep(await at("/graview/who"));
+  history = store.log.all();
   return texts;
 }
 
@@ -187,8 +192,9 @@ describe("no id a seat may not see leaves the wire", () => {
     let messages = 0;
     for (let seed = 1; seed <= WORLDS; seed++) {
       const w = world(seed);
-      const unseen = unseenIds(w);
-      for (const text of await overTheSocket(w)) {
+      const heard = await overTheSocket(w);
+      const unseen = unsaidUnseen(w, history);
+      for (const text of heard) {
         messages++;
         // As a client receives it: parsed from the text it was sent in.
         const message = JSON.parse(text) as LiveServerMessage;
@@ -203,8 +209,9 @@ describe("no id a seat may not see leaves the wire", () => {
   it(`never answers an unseen id over HTTP — ${WORLDS.toLocaleString("en")} random worlds`, async () => {
     for (let seed = 1; seed <= WORLDS; seed++) {
       const w = world(seed);
-      const unseen = unseenIds(w);
-      for (const text of await overHttp(w)) {
+      const texts = await overHttp(w);
+      const unseen = unsaidUnseen(w, history);
+      for (const text of texts) {
         const id = leaked(JSON.parse(text), unseen);
         expect(id, `seed ${seed}: names unseen ${id}: ${text.slice(0, 400)}`).toBeUndefined();
       }
@@ -314,7 +321,7 @@ describe("no id a seat may not see leaves the wire", () => {
     for (let seed = 1; seed <= WORLDS; seed++) {
       const w = world(seed);
       const there = new Set(w.nodes.map((node) => node.id));
-      const hidden = unseenIds(w).filter((id) => there.has(id));
+      const hidden = unsaidUnseen(w).filter((id) => there.has(id));
       if (hidden.length === 0) continue;
       const seen = w.nodes.filter((node) => !hidden.includes(node.id)).map((node) => node.id);
       const named = w.pick(hidden);

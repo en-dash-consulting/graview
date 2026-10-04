@@ -1,6 +1,8 @@
 import { UNSET, type Primitive } from "../graph/primitives.js";
 import type { AnyGraphNode, GraphEdge } from "../graph/types.js";
-import { serveAlong, type Timeline } from "./served.js";
+import { actingAs } from "../permissions/policy.js";
+import type { Principal } from "../permissions/types.js";
+import { serveAlong, type FieldWriter, type Timeline } from "./served.js";
 import type { Author, Operation } from "./types.js";
 
 /**
@@ -51,6 +53,10 @@ export interface SeatLens {
   readonly sees: (id: string) => boolean;
   readonly shows: (id: string) => boolean;
   readonly served: <N extends { readonly id: string; readonly kind: string }>(node: N) => N | undefined;
+  /** A record as the seat is served it, given who wrote each field's value: the seat's own words are served as written (FR-55). */
+  readonly servedWith: <N extends { readonly id: string; readonly kind: string }>(node: N, writer: FieldWriter) => N | undefined;
+  /** The seat whose words these are — the person, for an agent acting for one. */
+  readonly actor?: string;
   readonly optional: (kind: string, field: string) => boolean;
   /** The kind of a record, by id, when it is known: for a patch, whose primitive does not say. */
   readonly kindOf: (id: string) => string | undefined;
@@ -70,6 +76,7 @@ export function lensOf(seeing: SeatLens | ((id: string) => boolean)): SeatLens {
     sees,
     shows: sees,
     served: (node) => (sees(node.id) && !fieldsNameUnseen(node, sees) ? node : undefined),
+    servedWith: (node) => (sees(node.id) && !fieldsNameUnseen(node, sees) ? node : undefined),
     optional: () => false,
     kindOf: () => undefined,
   };
@@ -188,8 +195,8 @@ export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: strin
    * ops a seat is served fold to the snapshot it is served (`serveAlong`).
    */
   if (lens.timeline) {
-    const judge = { served: (node: AnyGraphNode) => lens.served(node), edgeClean: (edge: GraphEdge) => !namesUnseen(edge, lens.sees) };
-    return serveAlong(ops, lens.timeline, judge).map(({ op, primitives, faithful }) => (!op.withheld && faithful ? whole(op, lens) : undefined) ?? withhold(op, lens, primitives));
+    const judge = { served: (node: AnyGraphNode, writer: FieldWriter) => lens.servedWith(node, writer), edgeClean: (edge: GraphEdge) => !namesUnseen(edge, lens.sees) };
+    return serveAlong(ops, lens.timeline, judge).map(({ op, primitives, faithful }) => (!op.withheld && faithful ? whole(op, lens, primitives) : undefined) ?? withhold(op, lens, primitives));
   }
   return ops.map((op) => (!op.withheld && !touchesUnseen(op, lens.shows) ? whole(op, lens) : undefined) ?? withhold(op, lens));
 }
@@ -198,14 +205,28 @@ export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: strin
  * AN OP SERVED WHOLE, when what it did is all the seat's to know: as it is
  * when it names nothing hidden, and with its reads and writes trimmed of
  * what is hidden when that is the only place it does — what it looked at
- * is not the seat's to be told, what it did is. Its call, sentence, author
- * and inverse are never trimmed: an act's sentence is made from its call
- * ("Compare with Freya Davies"), so one that names a hidden record anywhere
- * else withholds the op.
+ * is not the seat's to be told, what it did is. A string its primitives are
+ * served with, as the seat is served them, is the seat's to read anywhere
+ * in it — a field value the seat wrote, in a patch and in the inverse that
+ * would put it back — and so is its call, when the call was the seat's own
+ * (FR-55). Otherwise its call, sentence, author and inverse are not
+ * trimmed: an act's sentence is made from its call ("Compare with Freya
+ * Davies"), so one that names a hidden record anywhere withholds the op.
  */
-function whole(op: Operation, lens: SeatLens): Operation | undefined {
+function whole(op: Operation, lens: SeatLens, served?: readonly Primitive[]): Operation | undefined {
   if (!namesUnseen(op, lens.sees)) return op;
-  const named = (value: unknown) => namesUnseen(value, lens.sees);
-  const trimmed: Operation = { ...op, reads: op.reads.filter((id) => !named(id)), writes: op.writes.filter((id) => !named(id)) };
-  return named(trimmed) ? undefined : trimmed;
+  const said = new Set<string>();
+  const collect = (value: unknown): void => {
+    if (typeof value === "string") said.add(value);
+    else if (Array.isArray(value)) for (const inner of value) collect(inner);
+    else if (value !== null && typeof value === "object") for (const [key, inner] of Object.entries(value)) {
+      said.add(key);
+      collect(inner);
+    }
+  };
+  if (served) collect(served);
+  if (lens.actor !== undefined && op.mutation && actingAs(op.author as Principal).id === lens.actor) collect(op.mutation.args);
+  const told = (id: string) => lens.sees(id) || said.has(id);
+  const trimmed: Operation = { ...op, reads: op.reads.filter((id) => lens.sees(id)), writes: op.writes.filter((id) => lens.sees(id)) };
+  return namesUnseen({ ...trimmed, primitives: [] }, told) ? undefined : trimmed;
 }

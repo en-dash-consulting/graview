@@ -76,6 +76,8 @@ export interface World {
   readonly viewer: Principal & { id: string; roles: readonly string[] };
   readonly kindOf: Map<string, string>;
   readonly creatorOf: Map<string, string>;
+  /** Who wrote each record's current `ref`: a seat is served its own words (FR-55). */
+  readonly refBy: Map<string, string>;
   /** A random record id, seen or not: for the calls and presences a test makes. */
   anyId(): string;
   pick<T>(xs: readonly T[]): T;
@@ -90,6 +92,7 @@ export function world(seed: number, options: { readonly required?: boolean } = {
   const edges = new Map<string, GraphEdge>();
   const kindOf = new Map<string, string>();
   const creatorOf = new Map<string, string>();
+  const refBy = new Map<string, string>();
   const ops: Operation[] = [];
   let made = 0;
   const live = () => [...nodes.keys()];
@@ -108,6 +111,7 @@ export function world(seed: number, options: { readonly required?: boolean } = {
       nodes.set(id, node);
       kindOf.set(id, kind);
       creatorOf.set(id, author);
+      if (ref !== undefined) refBy.set(id, author);
     } else if (roll < 0.55) {
       const edge = { kind: "rel", from: pick(live()), to: pick(live()) };
       prims.push({ op: "add-edge", edge });
@@ -123,6 +127,7 @@ export function world(seed: number, options: { readonly required?: boolean } = {
       const ref = anyId();
       prims.push({ op: "patch-node", id, before: { ref: node["ref"] ?? "\u0000graview:unset" }, after: { ref } });
       nodes.set(id, { ...node, ref });
+      refBy.set(id, author);
     } else {
       const id = pick(live());
       for (const [k, e] of edges) {
@@ -160,7 +165,7 @@ export function world(seed: number, options: { readonly required?: boolean } = {
           return { roles: r() < 0.2 ? ("*" as const) : some(ROLES), kinds: kinds.length > 0 ? kinds : [pick(ANY)], ...(r() < 0.4 ? { own: true } : {}) };
         });
   const viewer = { kind: "human" as const, id: pick(AUTHORS), roles: some(ROLES) };
-  return { seed, required, nodes: [...nodes.values()], edges: [...edges.values()], ops, sights, viewer, kindOf, creatorOf, anyId, pick };
+  return { seed, required, nodes: [...nodes.values()], edges: [...edges.values()], ops, sights, viewer, kindOf, creatorOf, refBy, anyId, pick };
 }
 
 /** The declaration a world's records are judged by. */
@@ -217,6 +222,37 @@ export function oracle(w: World, id: string): boolean {
 /** The ids of every record this world ever had that its viewer may not see. */
 export function unseenIds(w: World): string[] {
   return [...w.kindOf.keys()].filter((id) => !oracle(w, id));
+}
+
+/**
+ * WHAT A SEAT SAID ITSELF (FR-55): every string in the calls and the
+ * written values of the ops it authored — or the person an agent acts for.
+ * A seat is served its own words, so the oracle does not count these: an id
+ * a seat wrote tells it nothing it did not say.
+ */
+export function saidBy(ops: readonly Operation[], seat: string): Set<string> {
+  const said = new Set<string>();
+  const collect = (value: unknown): void => {
+    if (typeof value === "string") said.add(value);
+    else if (Array.isArray(value)) for (const inner of value) collect(inner);
+    else if (value !== null && typeof value === "object") for (const inner of Object.values(value)) collect(inner);
+  };
+  for (const op of ops) {
+    const by = op.author.onBehalfOf?.id ?? op.author.id;
+    if (by !== seat || op.undoes !== undefined) continue;
+    collect(op.mutation?.args);
+    for (const primitive of op.primitives) {
+      if (primitive.op === "add-node") collect(Object.entries(primitive.node).filter(([key]) => key !== "id" && key !== "kind").map(([, value]) => value));
+      if (primitive.op === "patch-node") collect(primitive.after);
+    }
+  }
+  return said;
+}
+
+/** The ids a seat may not see that it did not write itself: what nothing it is served may name. */
+export function unsaidUnseen(w: World, ops: readonly Operation[] = w.ops): string[] {
+  const said = saidBy(ops, w.viewer.id);
+  return unseenIds(w).filter((id) => !said.has(id));
 }
 
 /** Whether a payload, as it would be serialised, holds `id` as a whole string anywhere — a value or a key. */

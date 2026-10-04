@@ -83,6 +83,15 @@ export function compileMutation<S extends AnySchema>(
   graph: Graph<S>,
   definition: AnyMutationDefinition<S>,
   rawArgs: unknown,
+  options: {
+    /**
+     * A field written with the value it already holds is kept in the patch
+     * when this says so (FR-55): a seat that writes a value the store holds
+     * in words it may not see has written its own words, and an act that
+     * wrote nothing would tell it the guess was the hidden value.
+     */
+    readonly keepUnchanged?: (value: unknown) => boolean;
+  } = {},
 ): CompiledMutation {
   /*
    * THE ID A CALLER BROUGHT. An act that creates a kind takes an optional
@@ -135,7 +144,7 @@ export function compileMutation<S extends AnySchema>(
       const after: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(fields)) {
         const current = (node as Record<string, unknown>)[key];
-        if (JSON.stringify(current) === JSON.stringify(value)) continue;
+        if (JSON.stringify(current) === JSON.stringify(value) && !options.keepUnchanged?.(value)) continue;
         before[key] = current;
         after[key] = value;
       }

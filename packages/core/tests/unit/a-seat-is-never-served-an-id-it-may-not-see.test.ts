@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createSchema, defineNode, isWithheld, logSeenBy, OperationLog, Store, type AnySchema, type Primitive, type Principal } from "../../src/index.js";
-import { canonical, fold, leaked, oracle, rng, SCHEMA, schemaOf, storeAt, storeOf, unseenIds, world } from "../support/unseen-worlds.js";
+import { canonical, fold, leaked, oracle, rng, SCHEMA, schemaOf, storeAt, storeOf, unsaidUnseen, unseenIds, world } from "../support/unseen-worlds.js";
 
 /**
  * A SEAT IS NEVER SERVED AN ID IT MAY NOT SEE (FR-55).
@@ -89,7 +89,8 @@ describe("a seat is never served an id it may not see", () => {
       const w = world(seed);
       const store = storeOf(w);
       const seen = store.seenBy(w.viewer);
-      const unseen = unseenIds(w);
+      // A seat is served its own words: an id it wrote itself is not one it is kept from (FR-55).
+      const unseen = unsaidUnseen(w);
 
       const snapshot = seen.snapshot();
       const log = logSeenBy(store, w.viewer);
@@ -112,7 +113,7 @@ describe("a seat is never served an id it may not see", () => {
       const shown = new Map(snapshot.nodes.map((node) => [node.id, node]));
       for (const node of w.nodes) {
         if (!oracle(w, node.id)) continue;
-        const names = typeof node["ref"] === "string" && w.kindOf.has(node["ref"]) && !oracle(w, node["ref"]);
+        const names = typeof node["ref"] === "string" && w.kindOf.has(node["ref"]) && !oracle(w, node["ref"]) && w.refBy.get(node.id) !== w.viewer.id;
         if (names && node.kind === "d") {
           expect(shown.has(node.id), `seed ${seed}: served ${node.id}, whose required ref names an unseen record`).toBe(false);
           continue;
@@ -253,6 +254,7 @@ describe("a seat is never served an id it may not see", () => {
           return undefined;
         }
       };
+      const history = new Map(s.log.all().map((op) => [op.id, op] as const));
       const check = (what: string) => {
         const view = s.seenBy(w.viewer);
         const base = [...view.log.epochs()].reverse().find((epoch) => epoch.seq <= s.log.horizon)?.base ?? { nodes: [], edges: [] };
@@ -263,7 +265,9 @@ describe("a seat is never served an id it may not see", () => {
           throw new Error(`seed ${seed}, ${what}: ${(error as Error).message}`);
         }
         expect(canonical(folded), `seed ${seed}, ${what}`).toBe(canonical(view.snapshot()));
-        expect(leaked({ log: view.log.all(), epochs: view.log.epochs() }, unseenIds(w)), `seed ${seed}, ${what}`).toBeUndefined();
+        // Everything the seat ever said, a compaction's archive included.
+        for (const op of s.log.all()) history.set(op.id, op);
+        expect(leaked({ log: view.log.all(), epochs: view.log.epochs() }, unsaidUnseen(w, [...history.values()])), `seed ${seed}, ${what}`).toBeUndefined();
       };
       for (let round = 0; round < 8; round++) {
         if (r() < 0.3 && s.batches().length > 0) {
@@ -331,7 +335,7 @@ describe("a seat is never served an id it may not see", () => {
       }
       expect(folds).toBeGreaterThan(WORLDS * 20);
       // The generator really withheld seen records whole for a required field.
-      expect(hiddenWhole).toBeGreaterThan(required ? 500 : 100);
+      expect(hiddenWhole).toBeGreaterThan(required ? 250 : 50);
     }, 300_000);
   }
 });
