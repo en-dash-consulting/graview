@@ -56,7 +56,17 @@ const live = (name) => {
 };
 
 /* 1. What is staged, read defensively: npm's list is young and its fields may be named either way. */
-const staged = JSON.parse(quiet("npx", [...NPM, "stage", "list", "--json"]) || "[]");
+let listed;
+try {
+  listed = quiet("npx", [...NPM, "stage", "list", "--json"]);
+} catch (error) {
+  const said = String(error.stdout ?? "") + String(error.stderr ?? "");
+  // npm's login lapses; say so in a sentence rather than a stack trace.
+  if (/E401|authenticat/i.test(said)) console.error("npm doesn't know who you are any more. Run `npm login`, then this again.");
+  else console.error(said.trim().split("\n").filter((line) => !/npm warn/.test(line)).slice(-5).join("\n"));
+  process.exit(1);
+}
+const staged = JSON.parse(listed || "[]");
 const field = (item, ...names) => names.map((name) => item?.[name]).find((value) => value !== undefined);
 const ours = new Map(packages.map((one) => [one.name, one]));
 const waiting = (Array.isArray(staged) ? staged : [])
