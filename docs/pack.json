@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-04T03:22:34.083Z",
+  "at": "2026-10-04T03:26:36.400Z",
   "packages": {
     "@graview/core": {
       "files": 479,
-      "tarballBytes": 555093,
+      "tarballBytes": 555419,
       "ok": true
     },
     "create-graview": {
@@ -13,12 +13,12 @@
     },
     "@graview/embed": {
       "files": 23,
-      "tarballBytes": 31140,
+      "tarballBytes": 31141,
       "ok": true
     },
     "graview": {
       "files": 11,
-      "tarballBytes": 4890,
+      "tarballBytes": 4891,
       "ok": true
     },
     "@graview/guest": {
@@ -33,12 +33,12 @@
     },
     "@graview/pages": {
       "files": 79,
-      "tarballBytes": 89933,
+      "tarballBytes": 89932,
       "ok": true
     },
     "@graview/primitives": {
       "files": 219,
-      "tarballBytes": 356491,
+      "tarballBytes": 356489,
       "ok": true
     },
     "@graview/react": {
@@ -63,7 +63,7 @@
     },
     "@graview/studio": {
       "files": 71,
-      "tarballBytes": 117257,
+      "tarballBytes": 117190,
       "ok": true
     },
     "@graview/tools": {
@@ -85,8 +85,8 @@
     },
     {
       "name": "every face",
-      "minified": 1257643,
-      "gzipped": 353370,
+      "minified": 1257763,
+      "gzipped": 353413,
       "budget": {
         "minified": 1290000,
         "gzipped": 362000
