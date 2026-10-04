@@ -21,6 +21,7 @@ import {
   liveProtocol,
   presenceFrom,
   presenceSeenBy,
+  seatOfTab,
   serverBatchIds,
   visitorPresence,
   wireOf,
@@ -173,6 +174,10 @@ interface HandlerOptions<S extends AnySchema> {
    * `seatOf` read as a host's key, which a socket's state keeps instead of
    * the principal — small enough for a Durable Object's attachment — and
    * `seatOfKey` (`liveProtocol`'s `seatOf`) resolves it on every message.
+   * `seatKey` is handed the seat without its session (`seatOfTab`), so
+   * every tab of one seat holds one key and `publish` makes one view of
+   * it; keep what `seatOfKey` reads where a wake does not empty it. A key
+   * it no longer resolves is told to open again, and is opened again.
    */
   readonly seatKey?: (seat: Principal) => string | undefined;
   readonly seatOfKey?: (key: string) => Principal | undefined;
@@ -772,7 +777,8 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       const via = await viaFor(asked, seat, "web");
       // The host's key for the seat, when it keeps one, and the build this socket is served by.
       const build = typeof options.build === "function" ? options.build({ seat, via }) : undefined;
-      return serving.protocol.open(options.seatKey?.(seat) ?? seat, via, build ? { build } : {});
+      // The seat's key, never its tab's: a key made from the session would be one view per tab.
+      return serving.protocol.open(options.seatKey?.(seatOfTab(seat)) ?? seat, via, build ? { build } : {});
     } catch (error) {
       return unknownSeat(error instanceof Error ? error.message : String(error));
     }
@@ -788,6 +794,13 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       open: true,
       send: (text) => {
         if (live.open) socket.send(text);
+      },
+      // A socket whose seat the host lost is closed, so its client opens a new one.
+      close: (code, reason) => {
+        if (!live.open) return;
+        live.open = false;
+        sockets.delete(live);
+        socket.close?.(code, reason);
       },
     };
     const hear = async (text: string): Promise<void> => {

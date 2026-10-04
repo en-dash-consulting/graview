@@ -91,13 +91,13 @@ describe("a socket fits its attachment", () => {
     expect(store.log.length).toBe(0);
   });
 
-  it("answers a seat key the host no longer knows with an error, and serves it nothing", async () => {
+  it("answers a seat key the host no longer knows by telling the socket to open again, and serves it nothing", async () => {
     const store = hostsStore();
     const live = liveProtocol({ store, seatOf: (key) => seats.get(key) });
     const heard: LiveServerMessage[] = [];
     const peer: LivePeer = { ...live.open("user:gone", "web"), send: (text) => heard.push(JSON.parse(text) as LiveServerMessage) };
     await live.receive(peer, JSON.stringify({ t: "hello", seq: -1 }));
-    expect(heard).toEqual([{ t: "error", sentence: expect.stringMatching(/no longer/) }]);
+    expect(heard).toEqual([{ t: "error", reopen: true, sentence: expect.stringMatching(/no longer knows/) }]);
     expect(peer.cursor).toBeUndefined();
   });
 });

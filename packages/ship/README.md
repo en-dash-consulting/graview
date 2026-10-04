@@ -148,11 +148,23 @@ same protocol as functions over the store and one plain-JSON `LiveSocketState` p
 `serializeAttachment` keeps:
 
 ```ts
-const live = liveProtocol({ store, version: app.version, flush, seatOf: (key) => seats.get(key) });
+// A seat's key outlives a wake: kept in the Durable Object's storage, never only in a map in memory.
+// And it is the seat's, not the tab's: seatOfTab(principal) leaves the session out, so every tab is one key.
+const keyOf = (principal) => {
+  const seat = seatOfTab(principal);
+  const key = `seat:${sha256Hex(JSON.stringify(seat)).slice(0, 24)}`;
+  ctx.storage.sql.exec("INSERT OR IGNORE INTO seats (key, seat) VALUES (?, ?)", key, JSON.stringify(seat));
+  return key;
+};
+const seatOf = (key) => {
+  const row = ctx.storage.sql.exec("SELECT seat FROM seats WHERE key = ?", key).toArray()[0];
+  return row ? JSON.parse(row.seat) : undefined;
+};
+const live = liveProtocol({ store, version: app.version, flush, seatOf });
 // On the upgrade: the seat and channel, read once (handler.seatFor(request) does this with seatOf and viaOf).
-ws.serializeAttachment(live.open(seatKey, "web", { build }));
+ws.serializeAttachment(live.open(keyOf(principal), "web", { build }));
 // On each message, after any wake:
-const peer = { ...ws.deserializeAttachment(), send: (text) => ws.send(text) };
+const peer = { ...ws.deserializeAttachment(), send: (text) => ws.send(text), close: (code, reason) => ws.close(code, reason) };
 const { landed, presence } = await live.receive(peer, text, whoIsHere);
 const { send, ...state } = peer;
 ws.serializeAttachment(state);
@@ -171,8 +183,15 @@ keeps it the same across wakes, and is never sent to a client.
 **The attachment budget.** Cloudflare refuses an attachment over 2,048 bytes, and a seat
 held whole is most of that: a person with fifty roles is about 1.9 kB of state on its own.
 So `seat` may be a host's key (a string) — `live.open("user:6b3f…", "web")` — which
-`liveProtocol({ seatOf: (key) => principal })` resolves on every message; a key it no longer
-knows is told so (`error`) and served nothing. A call's `cid` is at most 64 characters (a
+`liveProtocol({ seatOf: (key) => principal })` resolves on every message. Keep what it reads
+where a wake does not empty it — the sketch above keeps it in the Durable Object's storage; a
+map in memory is empty after the first wake — and make the key from `seatOfTab(principal)`,
+the seat without its session: a key with the session in it is one view per tab where it would
+be one per seat. A key the host no longer resolves is told to open again (`{ t: "error",
+reopen: true }` — "The host no longer knows who this socket is…"), closed with code 4000 when
+the peer has a `close`, and served nothing more; `openRemote` opens a new socket, the host
+reads the seat from its upgrade again, and what the tab had not had answered is sent again and
+lands once. A call's `cid` is at most 64 characters (a
 longer one is refused `invalid`, in words), so `held` stays small, and the client's and the
 host's builds are kept to 64. The budget, held by a test: a socket's state with a seat key,
 a busy call held and the host's own presence beside it stays within 1 KB (measured: 350
@@ -183,7 +202,8 @@ Every `liveProtocol` option is an option of `createStoreHandler` and `serveStore
 host gets it either way: `limit`, `build` (a string, or a function of the socket),
 `minProtocol`, `minHostProtocol`, `refusal` and `withheldKey` by the same names; and, where
 the handler already has a name that reads the request, the protocol's `viaOf` as
-`viaClaimed` and its `seatOf` as `seatOfKey` — with `seatKey(seat)`, the key a socket the
+`viaClaimed` and its `seatOf` as `seatOfKey` — with `seatKey(seat)`, handed the seat without
+its session (`seatOfTab`), the key a socket the
 handler opens keeps in its state instead of the principal.
 
 **An ack waits for `flush`, and a failed flush is never acked.** `flush(landed)` is handed

@@ -1073,6 +1073,18 @@ async function opening<S extends AnySchema>(
       case "reload":
         reloadOntoNewer(typeof message.reason === "string" ? message.reason : "This app was updated.");
         return;
+      case "error":
+        // The host lost who this socket is: a new socket's upgrade tells it again, and what was not answered is sent again there.
+        if (message.reopen === true && socket) {
+          const was = socket;
+          dropped(was);
+          try {
+            was.close(1000, "Opening again.");
+          } catch {
+            // Already closing.
+          }
+        }
+        return;
       default:
         return;
     }
@@ -1217,19 +1229,7 @@ async function opening<S extends AnySchema>(
       }
       hear(message);
     };
-    made.onclose = () => {
-      if (socket !== made) return;
-      const dropped = welcomed;
-      socket = undefined;
-      welcomed = false;
-      said = null;
-      // A socket that never opened says nothing a poll does not; one that was up and dropped is the server gone.
-      if (dropped) {
-        become("offline");
-        lapseHeld();
-      }
-      reconnect();
-    };
+    made.onclose = () => dropped(made);
     made.onerror = () => {
       // The close follows; that is where reconnecting is decided.
     };
@@ -1255,6 +1255,20 @@ async function opening<S extends AnySchema>(
     }, REMOTE_PRESENCE_TTL_MS);
     (lapse as { unref?: () => void }).unref?.();
   };
+  /** A socket gone — closed, or one the host no longer knows: forgotten, and another opened after a backoff. */
+  function dropped(made: LiveSocketLike): void {
+    if (socket !== made) return;
+    const wasUp = welcomed;
+    socket = undefined;
+    welcomed = false;
+    said = null;
+    // A socket that never opened says nothing a poll does not; one that was up and dropped is the server gone.
+    if (wasUp) {
+      become("offline");
+      lapseHeld();
+    }
+    reconnect();
+  }
   const reconnect = () => {
     if (closed) return;
     const wait = backoffFor(options.backoff, attempts);

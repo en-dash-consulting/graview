@@ -105,9 +105,15 @@ export interface ServedSocket {
 /** The longest `cid` a socket's call or undo may name: it is kept in `held` while the call is busy. */
 const MAX_CID = 64;
 
-/** A socket as the protocol is handed it: its state, and a way to send it text. */
+/** A socket as the protocol is handed it: its state, a way to send it text, and — when the host can — a way to close it. */
 export interface LivePeer extends LiveSocketState {
   send(text: string): void;
+  /**
+   * Closes the socket. Called only when the socket's seat key is one the
+   * host no longer resolves, after it is told so (`{ t: "error", reopen:
+   * true }`), with code 4000: a client of any release then opens a new one.
+   */
+  close?(code?: number, reason?: string): void;
 }
 
 /** What one message did, for the host to keep and pass on. */
@@ -197,9 +203,15 @@ export interface LiveProtocolOptions<S extends AnySchema> {
   /**
    * THE SEAT A HOST'S KEY NAMES. A socket opened with a key —
    * `open("user:6b3f…", "web")` — keeps only the key in its state, and is
-   * judged on every message as the principal this answers. Answering
-   * nothing, the socket is told its seat is no longer known and is served
-   * nothing more. Called at most once per key in one `publish` or `tell`.
+   * judged on every message as the principal this answers. Keep what it
+   * reads somewhere a wake does not empty (a Durable Object's storage, not
+   * a map in memory), and make the key from the seat, never its session:
+   * every tab of one seat holds one key, and `publish` makes one view of
+   * it. Answering nothing, the host has lost the seat: the socket is told
+   * to open again (`{ t: "error", reopen: true }`), closed when the peer
+   * can be, and served nothing more; `openRemote` opens a new socket, whose
+   * upgrade the host reads the seat from again. Called at most once per
+   * key in one `publish` or `tell`.
    */
   readonly seatOf?: (key: string) => Principal | undefined;
   /**
@@ -759,8 +771,34 @@ interface Sight {
   readonly texts: Map<string, string>;
 }
 const aSight = (): Sight => ({ seats: new Map(), texts: new Map() });
-/** What a socket's seat is, as a key a sight is kept under: a host's key, or the principal written out. */
-const seatKeyOf = (peer: Pick<LiveSocketState, "seat">): string => (typeof peer.seat === "string" ? `key:${peer.seat}` : `seat:${JSON.stringify(peer.seat)}`);
+/**
+ * A SEAT, NOT ITS TAB: the principal without its session — and without the
+ * session of the person an agent acts for. What a seat is served never
+ * depends on which tab asks, so its key never does either: the key a
+ * handler asks a host for (`seatKey`), and the one a sight is kept under.
+ */
+export function seatOfTab(seat: Principal): Principal {
+  const { session: _session, onBehalfOf, ...rest } = seat;
+  return { ...rest, ...(onBehalfOf ? { onBehalfOf: seatOfTab(onBehalfOf) } : {}) };
+}
+
+/** What a socket's seat is, as a key a sight is kept under: a host's key, or the seat written out — one per seat, however many tabs hold it. */
+const seatKeyOf = (peer: Pick<LiveSocketState, "seat">): string => (typeof peer.seat === "string" ? `key:${peer.seat}` : `seat:${JSON.stringify(seatOfTab(peer.seat))}`);
+
+/** What a socket whose seat the host lost is told, and the code it is closed with. */
+const SEAT_LOST = "The host no longer knows who this socket is: open it again, and it reads who you are from the new one.";
+const SEAT_LOST_CODE = 4000;
+
+/** The host lost this socket's seat: told to open again, closed when it can be, and served nothing more. */
+const lost = (peer: LivePeer): void => {
+  delete peer.cursor;
+  say(peer, { t: "error", reopen: true, sentence: SEAT_LOST });
+  try {
+    peer.close?.(SEAT_LOST_CODE, "Seat no longer known: open it again.");
+  } catch {
+    // Already closing.
+  }
+};
 
 /**
  * THE PROTOCOL OVER A STORE. Cheap to make, and safe to make again on
@@ -978,8 +1016,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       // Who this socket is, on this message: its seat, or the principal its key names now.
       const seat = principalOf(peer);
       if (!seat) {
-        delete peer.cursor;
-        say(peer, { t: "error", sentence: "This socket's seat is no longer known to this app: open it again to be served." });
+        lost(peer);
         return {};
       }
       const served: ServedSocket = { seat, via: peer.via, ...(peer.hostBuild ? { hostBuild: peer.hostBuild } : {}) };
@@ -1147,14 +1184,22 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     },
     publish(ops, peers) {
       const sight = aSight();
-      for (const peer of peers) catchUp(peer, ops, undefined, sight);
+      for (const peer of peers) {
+        if (peer.cursor === undefined) continue;
+        const seat = principalOf(peer, sight);
+        if (!seat) lost(peer);
+        else catchUp(peer, ops, seat, sight);
+      }
     },
     tell(who, peers) {
       const sight = aSight();
       for (const peer of peers) {
         if (peer.cursor === undefined) continue;
         const seat = principalOf(peer, sight);
-        if (!seat) continue;
+        if (!seat) {
+          lost(peer);
+          continue;
+        }
         say(peer, { t: "presence", who: wire.whoFor(seat, who.filter((presence) => presence.participant !== peer.participant)) });
       }
     },
