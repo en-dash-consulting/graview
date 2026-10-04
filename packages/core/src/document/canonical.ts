@@ -20,8 +20,9 @@ function sortKeys(value: unknown): unknown {
   return value;
 }
 
-export function canonicalize(document: GraviewDocument): string {
-  return JSON.stringify(sortKeys(document));
+/** A document — or any part of one — as canonical JSON: two values that mean the same are the same text. */
+export function canonicalize(document: GraviewDocument | unknown): string {
+  return JSON.stringify(sortKeys(document)) ?? "undefined";
 }
 
 export async function documentHash(document: GraviewDocument): Promise<string> {

@@ -1,4 +1,4 @@
-import { editDocument, error, parseExpr, printExpr, type DocumentEdit, type EditOutcome, type Finding, type GraviewDocument } from "@graview/core/document";
+import { canonicalize, editDocument, error, parseExpr, printExpr, type DocumentEdit, type EditOutcome, type Finding, type GraviewDocument } from "@graview/core/document";
 import { label, Read, type Node } from "./source.js";
 import type { Reading } from "./to-declaration.js";
 
@@ -32,7 +32,7 @@ export interface StudioEdits {
 
 const str = (node: Node, key: string): string | undefined => (typeof node[key] === "string" ? (node[key] as string) : undefined);
 const strings = (node: Node, key: string): string[] | undefined => (Array.isArray(node[key]) ? (node[key] as unknown[]).map(String) : undefined);
-const same = (a: unknown, b: unknown): boolean => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+const same = (a: unknown, b: unknown): boolean => canonicalize(a ?? null) === canonicalize(b ?? null);
 /** An expression as the rule language prints it, so `||` and `or` are one judgement. */
 const printed = (text: string | undefined): string | undefined => {
   if (text === undefined) return undefined;
