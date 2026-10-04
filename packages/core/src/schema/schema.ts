@@ -20,9 +20,7 @@ export interface Schema<Defs extends readonly AnyNodeDefinition[] = readonly Any
   readonly definitions: Defs;
   readonly kinds: readonly Defs[number]["kind"][];
   readonly edgeKinds: readonly string[];
-  definition<K extends Defs[number]["kind"]>(
-    kind: K,
-  ): Extract<Defs[number], { kind: K }>;
+  definition<K extends Defs[number]["kind"]>(kind: K): DefinitionOfKind<Defs[number], K>;
   tryDefinition(kind: string): Defs[number] | undefined;
   edge(kind: string): EdgeKindInfo | undefined;
   /** Whether an edge of `kind` may run from one node kind to another. */
@@ -33,13 +31,26 @@ export interface Schema<Defs extends readonly AnyNodeDefinition[] = readonly Any
   readonly __node: NodeOf<Defs[number]>;
 }
 
+/**
+ * THE DEFINITION OF ONE KIND: the one that names it, in a schema whose kinds
+ * are known; any definition, narrowed to that kind, in one whose kinds are
+ * only `string` (`AnySchema`), where the exact one cannot be picked out and
+ * `Extract` would leave nothing.
+ */
+export type DefinitionOfKind<D extends AnyNodeDefinition, K extends string> = D extends { readonly kind: infer Named } ? (K extends Named ? D : never) : never;
+
 export type AnySchema = Schema<readonly AnyNodeDefinition[]>;
 export type NodeOfSchema<S extends AnySchema> = S["__node"];
 export type KindOfSchema<S extends AnySchema> = NodeOfSchema<S>["kind"];
-export type NodeOfKind<S extends AnySchema, K extends KindOfSchema<S>> = Extract<
-  NodeOfSchema<S>,
-  { kind: K }
->;
+/**
+ * A node of one kind: the kind's own node in a schema whose kinds are known;
+ * any node of that kind in one whose kinds are only `string` (`AnySchema`,
+ * as an unbound `defineInvariant` sees it), where `Extract` would leave
+ * nothing and every field read off it would be `never`.
+ */
+export type NodeOfKind<S extends AnySchema, K extends KindOfSchema<S>> = string extends KindOfSchema<S>
+  ? NodeOfSchema<S> & { readonly kind: K }
+  : Extract<NodeOfSchema<S>, { kind: K }>;
 
 export class SchemaError extends Error {
   constructor(
@@ -126,7 +137,7 @@ export function createSchema<const Defs extends readonly AnyNodeDefinition[]>(
           `Declared kinds: ${[...byKind.keys()].join(", ")}`,
         );
       }
-      return def as Extract<Defs[number], { kind: typeof kind }>;
+      return def as DefinitionOfKind<Defs[number], typeof kind>;
     },
     tryDefinition(kind) {
       return byKind.get(kind) as Defs[number] | undefined;

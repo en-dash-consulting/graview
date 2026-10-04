@@ -135,8 +135,8 @@ export function seedbedViews(
     registry = registry
       .register("planting", { cardinality: "many", fidelity: "full" }, YearView, { title: "The year" })
       .register("planting", { cardinality: "many", fidelity: "summary" }, YearView, { title: "The year" })
-      .register("planting", { cardinality: "many", fidelity: "full" }, season.View as ViewComponent<S>, { title: "The season" })
-      .register("planting", { cardinality: "many", fidelity: "summary" }, season.View as ViewComponent<S>, { title: "The season" });
+      .register("planting", { cardinality: "many", fidelity: "full" }, season.View, { title: "The season" })
+      .register("planting", { cardinality: "many", fidelity: "summary" }, season.View, { title: "The season" });
   }
   if (options.rotation && kinds.includes("rotation")) {
     /*
@@ -155,8 +155,8 @@ export function seedbedViews(
       horizon: { years: 4, title: "The rotation" },
     });
     registry = registry
-      .register("rotation", { cardinality: "many", fidelity: "full" }, turning.View as ViewComponent<S>, { title: "The rotation" })
-      .register("rotation", { cardinality: "many", fidelity: "summary" }, turning.View as ViewComponent<S>, { title: "The rotation" });
+      .register("rotation", { cardinality: "many", fidelity: "full" }, turning.View, { title: "The rotation" })
+      .register("rotation", { cardinality: "many", fidelity: "summary" }, turning.View, { title: "The rotation" });
   }
   if (options.studio && kinds.includes("kind")) {
     // The studio over a declaration: what the checker says about it as it
@@ -170,8 +170,8 @@ export function seedbedViews(
     // What each role reaches, read from the policy the store refuses with:
     // a place, for the seat that keeps the installation.
     registry = registry
-      .register("user" as never, { cardinality: "many", fidelity: "full" }, reachLens.View as ViewComponent<S>, { title: "Who may do what" })
-      .register("user" as never, { cardinality: "many", fidelity: "summary" }, reachLens.View as ViewComponent<S>, { title: "Who may do what" });
+      .register("user" as never, { cardinality: "many", fidelity: "full" }, reachLens.View, { title: "Who may do what" })
+      .register("user" as never, { cardinality: "many", fidelity: "summary" }, reachLens.View, { title: "Who may do what" });
   }
   if (options.lens && kinds.includes("gardener")) {
     // The lens, for a group of gardeners. The lens supplies the picture.

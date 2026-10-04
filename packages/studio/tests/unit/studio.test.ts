@@ -1,4 +1,4 @@
-import { bindSchema, checkApp, type AnySchema, type GraviewApp, createSchema, DARK, defineApp, defineInvariant, defineNode, LIGHT, nodeRef, Store, type GraphSnapshot, type Principal, type Violation } from "@graview/core";
+import { bindSchema, checkApp, createSchema, DARK, defineApp, defineInvariant, defineNode, LIGHT, nodeRef, Store, type GraphSnapshot, type Principal, type Violation } from "@graview/core";
 import { EMPTY_VIEW, KIND_PREFIX, kindCardId, layout } from "@graview/layout";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -99,7 +99,7 @@ const garden = defineApp({
  * assign to GraviewApp<AnySchema>, so it crosses that boundary here once,
  * as createStudio does inside.
  */
-const declared = garden as unknown as GraviewApp<AnySchema>;
+const declared = garden;
 const seed: GraphSnapshot = {
   nodes: [
     { id: "june", kind: "gardener", label: "June" },

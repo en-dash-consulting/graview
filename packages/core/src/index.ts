@@ -23,6 +23,7 @@ export type { Person } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";
 export type {
   AnySchema,
+  DefinitionOfKind,
   EdgeKindInfo,
   KindOfSchema,
   NodeOfKind,

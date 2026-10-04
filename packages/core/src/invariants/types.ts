@@ -76,7 +76,7 @@ export interface InvariantDefinition<S extends AnySchema = AnySchema> {
    * genuinely audits history says so here, explicitly.
    */
   readonly judgesPast?: boolean;
-  readonly evaluate: (args: InvariantEvalArgs<S, never>) => Violation[];
+  evaluate(args: InvariantEvalArgs<S, never>): Violation[];
 }
 
 export interface EvaluateOptions<S extends AnySchema = AnySchema> {

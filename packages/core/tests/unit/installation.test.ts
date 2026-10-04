@@ -24,7 +24,7 @@ const schema = createSchema([...installation.kinds]);
 const app = defineApp({
   name: "Garden",
   schema,
-  mutations: installation.mutations as never,
+  mutations: installation.mutations,
   modules: installation.modules,
   policy: installation.withPolicy({ roles: ["gardener"], grants: [] }),
 });
@@ -33,7 +33,7 @@ const ravi: Principal = { kind: "human", id: "ravi", roles: ["gardener"] };
 const store = () =>
   new Store({
     schema,
-    mutations: installation.mutations as never,
+    mutations: installation.mutations,
     modules: installation.modules,
     policy: app.policy,
     snapshot: {

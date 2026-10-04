@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { type AnySchema, createSchema, createViewRegistry, defineApp, defineNode, describeApp, type GraviewApp } from "../../src/index.js";
+import { createSchema, createViewRegistry, defineApp, defineNode, describeApp } from "../../src/index.js";
 import { withViews } from "../../src/cli/index.js";
 
 /**
@@ -15,7 +15,7 @@ const note = defineNode("note", { fields: z.object({ label: z.string() }), plura
 const schema = createSchema([task, note]);
 const app = defineApp({ name: "things", schema });
 // `withViews` reads any app, so it takes one widened the way the CLI holds it.
-const loaded = app as unknown as GraviewApp<AnySchema>;
+const loaded = app;
 
 describe("the pictures, from where they live", () => {
   it("says the design rather than reading as neglect, and names the flag", () => {

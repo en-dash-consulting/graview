@@ -340,7 +340,7 @@ describe("a conflict is a violation, with a repair", () => {
      * indicator, lights the node it is about, and offers its repair in the
      * actions strip, all without one line of sync-aware interface code.
      */
-    const invariant = syncConflictInvariant({
+    const invariant = syncConflictInvariant<typeof schema>({
       system: "google-calendar",
       mutation: "retime",
       argsFor: (conflict) => ({ id: conflict.localId, [conflict.field]: conflict.theirs }),

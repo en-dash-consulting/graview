@@ -394,7 +394,7 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
       // What the handler's store lands itself is in a batch no client could have named first.
       storeOptions: { batchIds: serverBatchIds() },
     });
-  let opened = (await opening(options.app as unknown as GraviewApp<AnySchema>)) as OpenedStore<AnySchema>;
+  let opened = (await opening(options.app)) as OpenedStore<AnySchema>;
   const { adapter, seed: _seed, scope: _scope, enabledModules: _modules, ...rest } = options;
   const { handler, swap } = storeHandler({
     ...rest,
@@ -477,7 +477,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       ...(options.limit ? { limit: options.limit } : {}),
     }),
   });
-  let serving = serve(options.app as unknown as GraviewApp<AnySchema>, options.store as unknown as Store<AnySchema>, options.flush, options.migrated ?? []);
+  let serving = serve(options.app, options.store as unknown as Store<AnySchema>, options.flush, options.migrated ?? []);
   /** Set while the declaration is being changed: every request and message waits for it. */
   let changing: Promise<void> | undefined;
 

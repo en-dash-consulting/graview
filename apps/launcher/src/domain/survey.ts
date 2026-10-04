@@ -50,7 +50,7 @@ export interface AppEntry {
 export const APPS: readonly AppEntry[] = [
   {
     id: "todo",
-    app: todoApp as unknown as GraviewApp,
+    app: todoApp,
     label: "Things",
     tagline: "The example: a todo list, because nobody has to be taught what one is.",
     port: portOf("todo", 5193),
@@ -58,7 +58,7 @@ export const APPS: readonly AppEntry[] = [
   },
   {
     id: "rota",
-    app: rotaApp as unknown as GraviewApp,
+    app: rotaApp,
     label: "Rota",
     tagline: "The product-grade one: a volunteer roster, branded, permissioned, remembered, embedded and open in its own studio.",
     port: portOf("rota", 5195),
@@ -66,7 +66,7 @@ export const APPS: readonly AppEntry[] = [
   },
   {
     id: "seedbed",
-    app: seedbedApp as unknown as GraviewApp,
+    app: seedbedApp,
     label: "Seedbed",
     tagline: "The example that starts empty: a declared graph and no data, so onboarding is filling it in.",
     port: portOf("seedbed", 5194),

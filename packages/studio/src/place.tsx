@@ -263,7 +263,7 @@ function StudioOverlay<S extends AnySchema>({
       }, 0);
     };
   }, []);
-  const views = useMemo(() => studioViews(app as unknown as GraviewApp<AnySchema>), [app]);
+  const views = useMemo(() => studioViews(app), [app]);
   /*
    * Re-read on every change rather than cached: the checker is cheap, the
    * declaration is small, and a verdict that can go stale is a verdict
