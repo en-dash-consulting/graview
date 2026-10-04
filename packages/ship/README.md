@@ -277,7 +277,13 @@ could have named first; `createStoreHandler` does this for the store it opens.
 | `unavailable` | the host takes no changes for a while and cannot say how long — a room read-only while it is checked, a write to storage that failed; the one refusal that is not final |
 
 `openRemote`'s `remote.onRefusal((sentence, refusal) => …)` is handed the reason beside the
-sentence, and `remote.send` throws a `RemoteRefusedError` carrying it. The routes' other
+sentence, and `remote.send` throws a `RemoteRefusedError` carrying it. What a person reads is
+said for them (`wireRefusalOf`): arguments that do not fit field by field, in the words the
+form asked in ("“Add a task” was not made: Name — …"), and an act the app does not have by
+the name the call gave and no other ("This app has no act called “dance”."). A host words a
+refusal itself with `liveProtocol({ refusal: (error, calls, peer) => … })`, on the socket
+and through `post`: it answers the `{ reason, sentence, wouldNeed? }` to send, or nothing
+for ship's. The routes' other
 refusing answers say one too: 401 `forbidden`, 404 `missing`, 400 `invalid`.
 
 **Busy is not refused** (FR-45). A host's `limit` option — on `createStoreHandler`, `serveStore`

@@ -1,5 +1,8 @@
 import {
+  argumentWords,
   FieldRevisions,
+  InvalidArguments,
+  UnknownMutationError,
   hidesFrom,
   hueFor,
   isUnset,
@@ -180,6 +183,15 @@ export interface LiveProtocolOptions<S extends AnySchema> {
    */
   readonly seatOf?: (key: string) => Principal | undefined;
   /**
+   * A REFUSAL IN THE HOST'S WORDS (FR-46). Handed what the store threw, the
+   * calls that were refused and the socket (or the route's asker), it
+   * answers the refusal to send — reason, sentence, `wouldNeed` — or
+   * nothing for ship's own: invalid arguments said field by field in the
+   * form's words, an act the app does not have named as the seat named it
+   * and no other, and the policy's sentence as the policy said it.
+   */
+  readonly refusal?: (error: unknown, calls: readonly MutationCall[], peer: ServedSocket) => WireRefusal | undefined;
+  /**
    * THE LOWEST PROTOCOL SERVED (FR-44). A hello on an older one is answered
    * `reload` and nothing else: its calls are refused until it says hello
    * on one served. Absent, every protocol is served.
@@ -306,6 +318,28 @@ type Landing =
 
 /** A client's claim of what its change came through: a short string, or none. */
 const claimOfVia = (via: unknown): string | undefined => (typeof via === "string" && via.length > 0 ? via.slice(0, 64) : undefined);
+
+/**
+ * A STORE'S REFUSAL, SAID TO A PERSON (FR-46). The store's own sentences
+ * were written for a developer: `Invalid arguments for mutation "add"
+ * label: Too small…`, and an unknown act listed every act the app has.
+ * Arguments are said field by field in the words the form asked in, and
+ * an unknown act by the name the call gave; anything else is the
+ * refusal's own sentence, the policy's among them.
+ */
+export function wireRefusalOf(store: Store<AnySchema>, error: unknown): WireRefusal {
+  const refusal = refusalOf(error);
+  if (error instanceof UnknownMutationError) return { ...refusal, sentence: `This app has no act called “${error.mutation}”.` };
+  if (error instanceof InvalidArguments) {
+    const mutation = store.allMutations().find((one) => one.name === error.mutation);
+    const said = error.issues.map((issue) => {
+      const message = issue.message.replace(/^./, (first) => first.toLowerCase());
+      return issue.path.length > 0 ? `${argumentWords(store.schema, mutation, String(issue.path[0])).label} — ${message}` : message;
+    });
+    return { ...refusal, sentence: `“${mutation?.title ?? error.mutation}” was not made: ${said.join("; ")}.` };
+  }
+  return refusal;
+}
 
 /** For whom an author acts, as a presence says it: the person's id and name, or nothing. */
 const forWhom = (author: Author): Pick<Presence, "onBehalfOf" | "onBehalfOfName"> =>
@@ -677,7 +711,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       const applying = { author: seat, via, ...(change.intent ? { intent: change.intent } : {}), batch };
       result = change.t === "undo" ? store.undo(change.batches, applying) : store.applyAll(change.calls, applying);
     } catch (error) {
-      return { refusal: refusalOf(error) };
+      const worded = options.refusal?.(error, change.calls, { seat, via });
+      return { refusal: worded ?? wireRefusalOf(store as unknown as Store<AnySchema>, error) };
     }
     applied?.();
     const flushed = await durable(result.ops);
