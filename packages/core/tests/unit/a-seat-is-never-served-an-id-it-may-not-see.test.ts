@@ -182,6 +182,55 @@ describe("a seat is never served an id it may not see", () => {
     expect(served).toEqual(["pub:p2", "pub:p1,pub:p2", "pub:p1", "pub:p1", "", ""]);
   });
 
+  /*
+   * NOT WITHHELD FOR WHAT IT ONLY READ. An op whose every primitive is about
+   * records the seat is served, as it is served them, and whose only
+   * mention of a hidden record is in what it read or wrote, is served whole
+   * with those trimmed: what it did is the seat's to know, and only the name
+   * of what it looked at is not. A call that names one stays withheld — an
+   * act's sentence is made from its call.
+   */
+  it(`serves an op whole when the only hidden record it mentions is in its reads or writes — ${WORLDS.toLocaleString("en")} random worlds`, () => {
+    let trimmed = 0;
+    for (let seed = 1; seed <= WORLDS; seed++) {
+      const w = world(seed);
+      const store = storeOf(w);
+      const unseen = unseenIds(w);
+      const served = logSeenBy(store, w.viewer);
+      served.forEach((op, at) => {
+        const raw = w.ops[at]!;
+        const rest = { ...raw, reads: [], writes: [] };
+        if (!isWithheld(op) && leaked(raw, unseen) !== undefined) trimmed++;
+        if (!isWithheld(op) || leaked(rest, unseen) !== undefined) return;
+        expect(JSON.stringify(op.primitives), `seed ${seed}: ${op.id} withheld only for what it read or wrote`).not.toBe(JSON.stringify(raw.primitives));
+      });
+    }
+    expect(trimmed).toBeGreaterThan(300);
+  }, 120_000);
+
+  it("serves an op that only read a hidden record whole, without naming it", () => {
+    const pub = defineNode("pub", { fields: z.object({ title: z.string() }) });
+    const secret = defineNode("secret", { fields: z.object({ title: z.string() }) });
+    const store = new Store<AnySchema>({
+      schema: createSchema([pub, secret]) as unknown as AnySchema,
+      policy: { grants: [], sees: [{ roles: ["viewer"], kinds: ["pub"] }] },
+      snapshot: { nodes: [{ id: "pub:p1", kind: "pub", title: "Q" }, { id: "secret:s1", kind: "secret", title: "S" }], edges: [] },
+      log: [
+        {
+          id: "op1", seq: 0, batch: "b1", author: { kind: "human", id: "u1" }, intent: "Retitle P",
+          mutation: { name: "retitle", args: { id: "pub:p1", title: "Q" } },
+          primitives: [{ op: "patch-node", id: "pub:p1", before: { title: "P" }, after: { title: "Q" } }],
+          inverse: [{ op: "patch-node", id: "pub:p1", before: { title: "Q" }, after: { title: "P" } }],
+          reads: ["pub:p1", "secret:s1"], writes: ["pub:p1"], at: "2026-10-02T00:00:00.000Z",
+        },
+      ],
+    });
+    const [op] = logSeenBy(store, { kind: "human", id: "u2", roles: ["viewer"] });
+    expect(isWithheld(op!)).toBe(false);
+    expect(op).toMatchObject({ intent: "Retitle P", author: { id: "u1" }, reads: ["pub:p1"], writes: ["pub:p1"], mutation: { name: "retitle", args: { id: "pub:p1", title: "Q" } } });
+    expect(JSON.stringify(op)).not.toContain("secret:s1");
+  });
+
   it(`folds what a seat is served across acts, undo, a rebase and a compaction, from the epoch it is served — ${WORLDS.toLocaleString("en")} random worlds`, () => {
     const host: Principal = { kind: "system", id: "host" };
     let undone = 0;

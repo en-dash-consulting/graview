@@ -189,9 +189,23 @@ export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: strin
    */
   if (lens.timeline) {
     const judge = { served: (node: AnyGraphNode) => lens.served(node), edgeClean: (edge: GraphEdge) => !namesUnseen(edge, lens.sees) };
-    return serveAlong(ops, lens.timeline, judge).map(({ op, primitives, faithful }) =>
-      !op.withheld && faithful && !namesUnseen(op, lens.sees) ? op : withhold(op, lens, primitives),
-    );
+    return serveAlong(ops, lens.timeline, judge).map(({ op, primitives, faithful }) => (!op.withheld && faithful ? whole(op, lens) : undefined) ?? withhold(op, lens, primitives));
   }
-  return ops.map((op) => (!op.withheld && !touchesUnseen(op, lens.shows) && !namesUnseen(op, lens.sees) ? op : withhold(op, lens)));
+  return ops.map((op) => (!op.withheld && !touchesUnseen(op, lens.shows) ? whole(op, lens) : undefined) ?? withhold(op, lens));
+}
+
+/**
+ * AN OP SERVED WHOLE, when what it did is all the seat's to know: as it is
+ * when it names nothing hidden, and with its reads and writes trimmed of
+ * what is hidden when that is the only place it does — what it looked at
+ * is not the seat's to be told, what it did is. Its call, sentence, author
+ * and inverse are never trimmed: an act's sentence is made from its call
+ * ("Compare with Freya Davies"), so one that names a hidden record anywhere
+ * else withholds the op.
+ */
+function whole(op: Operation, lens: SeatLens): Operation | undefined {
+  if (!namesUnseen(op, lens.sees)) return op;
+  const named = (value: unknown) => namesUnseen(value, lens.sees);
+  const trimmed: Operation = { ...op, reads: op.reads.filter((id) => !named(id)), writes: op.writes.filter((id) => !named(id)) };
+  return named(trimmed) ? undefined : trimmed;
 }

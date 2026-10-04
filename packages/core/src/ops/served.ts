@@ -194,7 +194,9 @@ function serveOne(primitive: Primitive, moment: Moment, judge: ServedJudge): Ser
   }
   // Served before and after: what changed, as the seat is served it.
   if (primitive.op === "patch-node") {
-    if (before === was && after === now) return { primitives: [primitive], faithful: true };
+    // The patch as written, when no field it writes was cleared for the seat on either side.
+    const kept = (served: AnyGraphNode, held: AnyGraphNode | undefined) => (field: string) => field in served === (held !== undefined && field in held);
+    if (Object.keys(primitive.after).every((field) => kept(before!, was)(field) && kept(after!, now)(field))) return { primitives: [primitive], faithful: true };
     const side = (node: AnyGraphNode) => Object.fromEntries(Object.keys(primitive.after).map((field) => [field, field in node ? node[field] : UNSET]));
     return { primitives: [{ op: "patch-node", id, before: side(before!), after: side(after!) }], faithful: false };
   }
