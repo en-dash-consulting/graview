@@ -37,6 +37,8 @@ export const OWN = {
   /** The scratch app `rehearse-studio` writes, and the model it stands in for. */
   rehearsal: 5285,
   "rehearsal-model": 5286,
+  /** The host's page `verify-studio` mounts the studio into through the embed, as Graview Cloud's builder does. */
+  "studio-host": 5287,
   /** The OpenAI-shaped stand-in `verify-studio` points the studio's remote model at. */
   "studio-model": 5289,
 };

@@ -66,8 +66,8 @@ export interface StudioApplied {
  */
 export function handedToTheHost(
   studio: Studio<AnySchema>,
-  onApply: (applied: StudioApplied) => void,
-): (StudioApplied & { readonly ok: true }) | { readonly ok: false; readonly check: CheckResult } {
+  onApply: StudioOnApply,
+): (StudioApplied & { readonly ok: true; readonly answer: StudioHostAnswer }) | { readonly ok: false; readonly check: CheckResult } {
   const result = studio.apply();
   if (!result.ok) return result;
   const applied: StudioApplied = {
@@ -77,14 +77,36 @@ export function handedToTheHost(
     ...(result.document ? { document: result.document, ...(result.edits ? { edits: result.edits } : {}) } : {}),
     ...(result.documentFindings ? { documentFindings: result.documentFindings } : {}),
   };
-  onApply(applied);
-  return { ok: true, ...applied };
+  const answer = onApply(applied);
+  return { ok: true, ...applied, answer };
 }
+
+/**
+ * WHAT A HOST SAYS BACK (FR-60). Nothing, or `{ ok: true }`, is "kept".
+ * `{ ok: false, findings }` is a refusal: the host could not keep this
+ * change — Graview Cloud cannot preview a change no edit says — and the
+ * studio shows the findings and stays open with the edits as they are,
+ * where it used to say "Handed to the host to keep" while the host's page
+ * previewed nothing.
+ */
+export type StudioHostVerdict = { readonly ok: true } | { readonly ok: false; readonly findings: readonly Finding[] };
+/** What `onApply` returns: a verdict, nothing, or a promise of either, for a host that asks its server first. */
+export type StudioHostAnswer = void | StudioHostVerdict | PromiseLike<void | StudioHostVerdict>;
+/** A host that keeps the declaration: handed what the checker passed, and saying whether it kept it. */
+export type StudioOnApply = (applied: StudioApplied) => StudioHostAnswer;
+
+const isPromise = (answer: StudioHostAnswer): answer is PromiseLike<void | StudioHostVerdict> =>
+  typeof answer === "object" && answer !== null && typeof (answer as { then?: unknown }).then === "function";
+
+/** A host's word on who is offered the studio: outright, or decided from the store and the seat (FR-59). */
+export type StudioOffered = boolean | ((store: Store<AnySchema>, principal: Parameters<Store<AnySchema>["mayAdminister"]>[1]) => boolean);
 
 export function StudioPlace<S extends AnySchema>({
   app,
   label = "Studio",
   within = "page",
+  landmark,
+  offered,
   onApply,
 }: {
   /** The declaration to open. The running app's own, in every case that matters. */
@@ -104,18 +126,45 @@ export function StudioPlace<S extends AnySchema>({
    */
   readonly within?: "page" | "box";
   /**
+   * WHAT THE STUDIO'S PICTURE IS TO THE PAGE AROUND IT (FR-58).
+   *
+   * "main" when the studio is the document's own: a whole app's window.
+   * "region" when it is drawn into an element of somebody else's page. An
+   * embed's studio drew a `<main>` inside the embed's labelled section, so
+   * axe failed the host twice (`landmark-main-is-top-level`,
+   * `landmark-no-duplicate-main`) whatever the host did. Omitted, it
+   * follows `within`: a boxed studio is a region, a page-filling one the main.
+   */
+  readonly landmark?: "main" | "region";
+  /**
+   * WHO IS OFFERED IT, WHEN A HOST HAS ALREADY DECIDED (FR-59).
+   *
+   * `maySeeTheStudio` reads the app's own policy, which grants the app's
+   * people, not its builders: a host that let an editor onto its builder
+   * page saw the studio withheld from them, and could only take the policy
+   * off the store to get it back. `true` or `false` is the host's word over
+   * the policy's; a function decides from the store and the seat. Omitted,
+   * `maySeeTheStudio` decides, as it always has.
+   */
+  readonly offered?: StudioOffered;
+  /**
    * A HOST THAT KEEPS THE DECLARATION. Given, Apply hands it what the
    * checker passed and the studio writes nothing: no door is asked after,
    * no files are offered. A hosted app keeps declarations on its own
    * server, versioned and reviewed, where a dev server's door is not.
+   *
+   * It may say it did not keep the change (FR-60): return, or resolve to,
+   * `{ ok: false, findings }`, and the studio shows those findings and
+   * stays open with the edits intact.
    */
-  readonly onApply?: (applied: StudioApplied) => void;
+  readonly onApply?: StudioOnApply;
 }) {
   const { store, principal } = useGraview<S>();
   const { view, go } = useNavigation();
   const open = view.within?.["studio"] === "open";
   const setOpen = (next: boolean) => go(withWithin(view, "studio", next ? "open" : null));
-  if (!maySeeTheStudio(store, principal)) return null;
+  const may = offered === undefined ? maySeeTheStudio(store, principal) : typeof offered === "function" ? offered(store as unknown as Store<AnySchema>, principal) : offered;
+  if (!may) return null;
   return (
     <>
       <button
@@ -153,9 +202,9 @@ export function StudioPlace<S extends AnySchema>({
          * must not escape the embed.
          */
         within === "page" ? (
-          createPortal(<StudioOverlay app={app} within={within} onClose={() => setOpen(false)} {...(onApply ? { onApply } : {})} />, document.body)
+          createPortal(<StudioOverlay app={app} within={within} landmark={landmark ?? "main"} onClose={() => setOpen(false)} {...(onApply ? { onApply } : {})} />, document.body)
         ) : (
-          <StudioOverlay app={app} within={within} onClose={() => setOpen(false)} {...(onApply ? { onApply } : {})} />
+          <StudioOverlay app={app} within={within} landmark={landmark ?? "region"} onClose={() => setOpen(false)} {...(onApply ? { onApply } : {})} />
         )
       ) : null}
     </>
@@ -206,13 +255,15 @@ export { INSTALLATION_MODULE };
 function StudioOverlay<S extends AnySchema>({
   app,
   within,
+  landmark,
   onClose,
   onApply,
 }: {
   readonly app: GraviewApp<S>;
   readonly within: "page" | "box";
+  readonly landmark: "main" | "region";
   readonly onClose: () => void;
-  readonly onApply?: (applied: StudioApplied) => void;
+  readonly onApply?: StudioOnApply;
 }) {
   const { principal, brand, scheme } = useGraview<S>();
   const studio = useMemo(() => createStudio(app, { principal }), [app, principal]);
@@ -274,6 +325,7 @@ function StudioOverlay<S extends AnySchema>({
   const turn = useStoreTick(studio.store);
   const verdict: CheckResult = useMemo(() => studio.check(), [studio, turn]);
   const [applied, setApplied] = useState<Applied | null>(null);
+  const presses = useRef(0);
   // A host that keeps the declaration is the only door there is.
   const door = useStudioDoor(onApply ? null : undefined);
   const [calls, setCalls] = useState<readonly ToolCall[]>(NO_CALLS);
@@ -320,7 +372,14 @@ function StudioOverlay<S extends AnySchema>({
       style={{
         position: within === "page" ? "fixed" : "absolute",
         inset: 0,
-        zIndex: 40,
+        /*
+         * OVER EVERYTHING IN THE BOX. Boxed, the studio is drawn from the
+         * embed's strip, which comes before the embed's own picture, and the
+         * picture's seat sits at the same 40 and its menu at 60: later in the
+         * page and no lower, the embed's seat was drawn over the studio and
+         * took its presses. A modal dialog is above what it covers.
+         */
+        zIndex: within === "page" ? 40 : 100,
         display: "flex",
         flexDirection: "column",
         background: "var(--graview-ground-deep)",
@@ -381,7 +440,28 @@ function StudioOverlay<S extends AnySchema>({
           onClick={() => {
             if (onApply) {
               const handed = handedToTheHost(studio as unknown as Studio<AnySchema>, onApply);
-              setApplied(handed.ok ? { ok: true, files: handed.files, migration: handed.migration?.title ?? null, door: false, handed: true } : { ok: false, check: handed.check });
+              if (!handed.ok) {
+                setApplied({ ok: false, check: handed.check });
+                return;
+              }
+              /*
+               * KEPT ONLY WHEN THE HOST SAYS SO (FR-60). A refusal is shown
+               * in the host's own findings, and nothing else moves: the
+               * studio stays open on the edits as they are. An answer to an
+               * earlier press that arrives late says nothing.
+               */
+              const press = ++presses.current;
+              const kept: Applied = { ok: true, files: handed.files, migration: handed.migration?.title ?? null, door: false, handed: true };
+              const heard = (verdict: void | StudioHostVerdict) => {
+                if (press !== presses.current) return;
+                setApplied(verdict && verdict.ok === false ? { ok: false, refused: verdict.findings } : kept);
+              };
+              if (isPromise(handed.answer)) {
+                setApplied({ ...kept, asking: true });
+                handed.answer.then(heard, (error: unknown) =>
+                  heard({ ok: false, findings: [{ severity: "error", code: "host-refused", path: "", message: error instanceof Error ? error.message : String(error) }] }),
+                );
+              } else heard(handed.answer);
               return;
             }
             const result = studio.apply();
@@ -408,14 +488,29 @@ function StudioOverlay<S extends AnySchema>({
 
       {applied ? <Written applied={applied} studio={studio as unknown as Studio<AnySchema>} onDismiss={() => setApplied(null)} /> : null}
 
-      <main style={{ position: "relative", flex: "1 1 auto", minHeight: 0, containerType: "size" }}>
-        <Scene renderer="dom" />
-        <Inspector />
-      </main>
+      {/*
+        * THE PICTURE IS THE PAGE'S MAIN ONLY WHEN THE STUDIO IS THE PAGE
+        * (FR-58). Inside somebody else's page (an embed, itself a labelled
+        * region of it) a main can never be top-level, and the host's own
+        * makes it a second one: there the picture is a region, named.
+        */}
+      {landmark === "main" ? (
+        <main style={PICTURE}>
+          <Scene renderer="dom" />
+          <Inspector />
+        </main>
+      ) : (
+        <section aria-label="The declaration" style={PICTURE}>
+          <Scene renderer="dom" />
+          <Inspector />
+        </section>
+      )}
     </div>
     </GraviewProvider>
   );
 }
+
+const PICTURE = { position: "relative", flex: "1 1 auto", minHeight: 0, containerType: "size" } as const;
 
 /**
  * The studio OPENS FROM ALTITUDE: a declaration's first honest picture is
@@ -436,8 +531,12 @@ type Applied =
       readonly door: boolean;
       /** Handed to the host's `onApply`, which keeps it: nothing to write here. */
       readonly handed?: boolean;
+      /** Handed, and the host has not answered yet. */
+      readonly asking?: boolean;
     }
-  | { readonly ok: false; readonly check: CheckResult };
+  | { readonly ok: false; readonly check: CheckResult }
+  /** The host's `onApply` said it could not keep the change, and why (FR-60). */
+  | { readonly ok: false; readonly refused: readonly Finding[] };
 
 /**
  * WHAT APPLYING ACTUALLY GIVES YOU.
@@ -463,7 +562,8 @@ function Written({
   return (
     <section
       data-testid="studio-applied"
-      aria-label={applied.ok ? "What the studio wrote" : "What the checker refused"}
+      aria-label={applied.ok ? "What the studio wrote" : "refused" in applied ? "What the host refused" : "What the checker refused"}
+      data-applied={applied.ok ? (applied.asking ? "asking" : "kept") : "refused" in applied ? "refused-by-host" : "refused-by-checker"}
       style={{
         flex: "0 0 auto",
         display: "grid",
@@ -473,7 +573,11 @@ function Written({
         background: applied.ok ? "var(--graview-panel)" : "var(--graview-panel-warning)",
       }}
     >
-      {applied.ok && applied.handed ? (
+      {applied.ok && applied.asking ? (
+        <strong role="status" style={{ fontSize: "0.875rem", fontWeight: 550 }}>
+          The checker is happy. Handing it to the host…
+        </strong>
+      ) : applied.ok && applied.handed ? (
         <strong style={{ fontSize: "0.875rem", fontWeight: 550 }}>
           The checker is happy. Handed to the host to keep
           {applied.migration ? `, with a migration: ${applied.migration}` : ", and no migration needed"}.
@@ -491,6 +595,22 @@ function Written({
             A browser cannot write your checkout. Run the app with the studio door (studioDoor() from @graview/ship/dev) and Apply writes the change in place.
           </span>
           <Downloads files={applied.files} />
+        </>
+      ) : "refused" in applied ? (
+        <>
+          <strong style={{ fontSize: "0.875rem", fontWeight: 550, color: "var(--graview-warn)" }}>
+            Not kept: the host could not keep this change. Your edits are still here.
+          </strong>
+          {applied.refused.length > 0 ? (
+            <ul data-testid="studio-host-findings" style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 4 }}>
+              {applied.refused.map((finding, at) => (
+                <li key={`${finding.code}:${finding.path}:${at}`} style={{ fontSize: "0.875rem" }}>
+                  {finding.path ? <><code>{finding.path}</code> — </> : null}
+                  {finding.message} {finding.fix ? <em>{finding.fix}</em> : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </>
       ) : (
         <>

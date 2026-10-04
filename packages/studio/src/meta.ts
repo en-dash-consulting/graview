@@ -426,6 +426,12 @@ export const renameField = act("rename-field", {
   title: "Rename the field",
   description: "Give a field a new name. Its records keep their values, and every rule that reads it follows.",
   subject: { kinds: ["field"], arg: "id" },
+  /*
+   * Said, so no derived "Change the field" offers the name beside it: a
+   * name patched in place would skip the rules that read it (FR-61 left the
+   * name the only thing such an edit could still change).
+   */
+  writes: ["label"],
   input: z.object({ id: nodeRef(["field"]), to: z.string().regex(/^[a-z][A-Za-z0-9]*$/, 'a field name is one word or camelCase, like "dueDate"') }),
   describe: (args, graph) => `Rename the field ${(graph.getNode(args.id) as { label?: string } | undefined)?.label ?? args.id} to ${args.to}`,
   apply(ctx, args) {
@@ -463,6 +469,85 @@ export const removeField = act("remove-field", {
   describe: (args, graph) => `Remove the field ${(graph.getNode(args.id) as { label?: string } | undefined)?.label ?? args.id}`,
   apply(ctx, args) {
     ctx.removeNode(args.id);
+  },
+});
+
+/*
+ * A FIELD CHANGES IN PLACE (FR-61). What a field is — its type, whether it
+ * must be given, its options, what it is for — each changed by an act of its
+ * own, so the strip names the change and the studio says it as the one edit
+ * a person writing the document would write: `retype-field`,
+ * `set-required`, `set-options`, `set-label`. Its records keep their values;
+ * whether they still fit is the checker's and the migration's to say.
+ */
+const fieldLabel = (graph: Reader, id: string): string => {
+  const field = graph.getNode(id) as { label?: string } | undefined;
+  const owner = graph.out(id, "of")[0] as { label?: string } | undefined;
+  return owner?.label && field?.label ? `${owner.label}'s ${field.label}` : (field?.label ?? id);
+};
+
+export const retypeField = act("retype-field", {
+  title: "Change the field's type",
+  description: "Make a field another type. An enum is given its options; a field made anything else lets them go.",
+  subject: { kinds: ["field"], arg: "id" },
+  writes: ["type", "options"],
+  input: z.object({ id: nodeRef(["field"]), type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1)).min(1).optional() }),
+  describe: (args, graph) => `Make ${fieldLabel(graph, args.id)} a ${args.type}`,
+  apply(ctx, args) {
+    const field = ctx.graph.getNode(args.id) as { options?: readonly string[] } | undefined;
+    if (args.type === "enum") {
+      const options = args.options ?? field?.options;
+      if (!options || options.length === 0) throw new Error(`${nameOf(ctx, args.id)} is made an enum, and an enum names its options: give them`);
+      ctx.patchNode(args.id, { type: args.type, options: [...options] });
+      return;
+    }
+    ctx.patchNode(args.id, { type: args.type, ...(field?.options !== undefined ? { options: undefined } : {}) });
+  },
+});
+
+export const setRequired = act("set-required", {
+  title: "Say whether it must be given",
+  description: "Make a field required, or optional again.",
+  subject: { kinds: ["field"], arg: "id" },
+  writes: ["required"],
+  input: z.object({ id: nodeRef(["field"]), required: z.boolean() }),
+  describe: (args, graph) => `Make ${fieldLabel(graph, args.id)} ${args.required ? "required" : "optional"}`,
+  apply(ctx, args) {
+    ctx.patchNode(args.id, { required: args.required });
+  },
+});
+
+export const setOptions = act("set-options", {
+  title: "Change the options",
+  description: "Say the options a field offers. Options already there keep their order and new ones come after them; a field that is not an enum yet becomes one.",
+  subject: { kinds: ["field"], arg: "id" },
+  writes: ["options"],
+  input: z.object({ id: nodeRef(["field"]), options: z.array(z.string().min(1)).min(1) }),
+  describe: (args, graph) => `Offer ${args.options.join(", ")} on ${fieldLabel(graph, args.id)}`,
+  apply(ctx, args) {
+    /*
+     * OFFERED ON EVERY FIELD, so never refused on one: a field that is not
+     * an enum is made one with these options, which the studio says as the
+     * `retype-field` it is.
+     */
+    const field = ctx.graph.getNode(args.id) as { type?: string; options?: readonly string[] } | undefined;
+    const had = field?.type === "enum" ? (field.options ?? []) : [];
+    const kept = had.filter((option) => args.options.includes(option));
+    const added = args.options.filter((option) => !had.includes(option));
+    ctx.patchNode(args.id, { ...(field?.type === "enum" ? {} : { type: "enum" }), options: [...new Set([...kept, ...added])] });
+  },
+});
+
+export const describeField = act("describe-field", {
+  title: "Say what the field is for",
+  description: "Give a field the sentence that says what it is for, or take it away with an empty one.",
+  subject: { kinds: ["field"], arg: "id" },
+  writes: ["description"],
+  input: z.object({ id: nodeRef(["field"]), description: z.string() }),
+  describe: (args, graph) => (args.description.trim() ? `Say what ${fieldLabel(graph, args.id)} is for` : `Take away what ${fieldLabel(graph, args.id)} says it is for`),
+  apply(ctx, args) {
+    const said = args.description.trim();
+    ctx.patchNode(args.id, { description: said === "" ? undefined : said });
   },
 });
 
@@ -751,6 +836,10 @@ export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = 
   addField,
   renameField,
   removeField,
+  retypeField,
+  setRequired,
+  setOptions,
+  describeField,
   addEdge,
   removeEdge,
   addAct,

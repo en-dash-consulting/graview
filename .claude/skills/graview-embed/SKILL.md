@@ -74,7 +74,10 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     hosted reader sits only as who signed in: name members through `people`
     (and `setPeople`), never as `seats`, which offer "sit as somebody else".
     Where readers cannot save a declaration, `studio: false` (or `studio:
-    { onApply }` to keep what it applies); where only the pages are shown,
+    { onApply }` to keep what it applies: return `{ ok: false, findings }`
+    when you could not, `offered: true` when you decided who builds, and
+    `place: StudioPlace`, imported, when the page is the studio and should
+    not wait for its chunk); where only the pages are shown,
     import `mount` from `@graview/embed/pages` and bundle nothing else.
     `onError` and `onReady` tell the host failures (class and module only)
     and time to first render.
