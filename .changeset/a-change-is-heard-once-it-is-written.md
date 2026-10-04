@@ -1,7 +1,0 @@
----
-"@graview/ship": patch
----
-
-A change anybody else hears is a change that is written. The author's ack waited for the host's `flush`, but every other socket was pushed the op the moment it landed in memory — `createStoreHandler` pushed from the store's own subscription — so a flush that then failed left other people looking at a change that was never written. Now, over a host with a `flush`, an op is held back from every socket while its flush is under way, as one whose flush failed already was: from pushes, and from the ops a `hello` with a seq is welcomed with. It goes down once the flush resolves — `createStoreHandler` catches every socket up then, and a hibernating host publishes the `landed` that `receive` or `post` answers, as it did. A flush that fails was heard by nobody; the author is refused `unavailable` and the change sent again is heard once. A host without a `flush` pushes every op the moment it lands, as before, and `createStoreHandler` over a store the host holds without one now passes none. A whole-state read — `/graview/state`, or a hello without a seq — is still the store as it stands in memory.
-
-Compatibility: the live protocol — no message or field added or removed, `WIRE_PROTOCOL` unchanged. Over a host with a `flush`, other sockets hear a change after it is written rather than when it lands, so a test or a host that read a push synchronously after a call waits for it; a hello with a seq during a flush is welcomed up to the last op written. `REFUSAL_REASONS`, ops, stored formats and check codes are unchanged.

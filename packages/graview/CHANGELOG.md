@@ -1,5 +1,58 @@
 # graview
 
+## 0.1.4
+
+### Patch Changes
+
+- Updated dependencies [56e4e95]
+- Updated dependencies [df9932a]
+- Updated dependencies [7fc5c32]
+- Updated dependencies [745971d]
+- Updated dependencies [9de42fe]
+- Updated dependencies [36df620]
+- Updated dependencies [a9c0f2d]
+- Updated dependencies [6548504]
+- Updated dependencies [75c1a26]
+- Updated dependencies [7650ff1]
+- Updated dependencies [e0f75bb]
+- Updated dependencies [569928f]
+- Updated dependencies [833e390]
+- Updated dependencies [c5b36f7]
+- Updated dependencies [53857e9]
+- Updated dependencies [fdf82ed]
+- Updated dependencies [f923330]
+- Updated dependencies [368840e]
+- Updated dependencies [936814b]
+- Updated dependencies [f06dca9]
+- Updated dependencies [98f0438]
+- Updated dependencies [ba312af]
+- Updated dependencies [d5a386e]
+- Updated dependencies [a57ea5d]
+- Updated dependencies [d5af759]
+- Updated dependencies [5375e2a]
+- Updated dependencies [8d9eb57]
+- Updated dependencies [d774558]
+- Updated dependencies [0183340]
+- Updated dependencies [cc889f4]
+- Updated dependencies [f75ff5b]
+- Updated dependencies [35aec0c]
+- Updated dependencies [5fd6380]
+- Updated dependencies [c44f0d1]
+- Updated dependencies [dee1fb2]
+- Updated dependencies [67fbb6f]
+- Updated dependencies [180452e]
+- Updated dependencies [8675901]
+- Updated dependencies [ba950f3]
+- Updated dependencies [86baf0b]
+- Updated dependencies [83448ba]
+- Updated dependencies [1f260a7]
+- Updated dependencies [062fe46]
+- Updated dependencies [0497bbf]
+  - @graview/ship@0.1.4
+  - @graview/core@0.1.4
+  - @graview/tools@0.1.4
+  - @graview/skills@0.1.4
+
 ## 0.1.3
 
 ### Patch Changes
