@@ -161,13 +161,13 @@ const forWhom = (author: Author): Pick<Presence, "onBehalfOf" | "onBehalfOfName"
  * A PRESENCE AS THE SERVER BUILDS IT. Keyed by the seat — a client cannot
  * claim to be somebody else — with only the session taken from what it
  * said, and stamped with the server's clock. What it is, and for whom it
- * acts, are the seat's (FR-47): a claimed `kind`, `onBehalfOf` or `until`
- * is dropped, and the seat's name stands over a claimed one. `participant`
+ * acts, are the seat's (FR-47): a claimed `kind`, `onBehalfOf`, `until` or
+ * `held` is dropped, and the seat's name stands over a claimed one. `participant`
  * is the key the server already gave this socket (its welcome said it):
  * given, the claimed key is not read at all.
  */
 export function presenceFrom(told: Presence, seat: Principal, now: Date = new Date(), participant?: string): Presence {
-  const { participant: claimed, kind: _kind, name: claimedName, onBehalfOf: _for, onBehalfOfName: _forName, until: _until, at: _at, ...said } = told;
+  const { participant: claimed, kind: _kind, name: claimedName, onBehalfOf: _for, onBehalfOfName: _forName, until: _until, held: _held, at: _at, ...said } = told;
   // The session is what follows the seat's own `kind:id:` — an id may hold a colon (`shopper:bethan`).
   const own = `${seat.kind}:${seat.id ?? ""}:`;
   const session = claimed.startsWith(own) ? claimed.slice(own.length) : (claimed.split(":").at(-1) ?? "");
@@ -533,7 +533,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             say(peer, { t: "error", sentence: "A presence is a participant and a stop." });
             return unchanged();
           }
-          const presence = presenceFrom(told, peer.seat, new Date(), peer.participant);
+          // Held by this socket: it stands while the socket does, with no heartbeat to keep it.
+          const presence: Presence = { ...presenceFrom(told, peer.seat, new Date(), peer.participant), held: "socket" };
           peer.participant = presence.participant;
           return { ...unchanged(), presence };
         }

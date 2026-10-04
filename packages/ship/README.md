@@ -109,7 +109,8 @@ counts it, and it goes again the moment the server is reached. `remote.counters(
 (`RemoteCounters`) counts `reconnects`, `rebases` (the server's ops landing under pending
 calls), `conflicts` and `resyncs`, for a beacon. Three options shape it: `backoff`, a function
 of the attempt in milliseconds or `{ min, max, factor }` for the jittered default (250, 10000,
-2); `presenceEveryMs`, how often an unchanged presence is said again down the socket; and
+2); `presenceEveryMs`, a heartbeat down the socket opted into (by default the socket says
+`here` only when where the client stands changes — see below); and
 `visible`, a predicate — while it answers false no presence is said, and in a page it reads
 `document.visibilityState` unless given.
 
@@ -171,6 +172,17 @@ visitorPresence(seat), ttlMs)`, and hands it to `receive` and `tell`; a visitor 
 `until` is never told. Each seat is told as it may see: an agent acting for a person the
 seat may not see is shown without `onBehalfOf` or the name. The Shell draws it as "Claude,
 for Ada" (`presenceName`).
+
+**A socket holds its presence; it needs no heartbeat.** The `here` a socket says comes back
+from the server stamped `held: "socket"` (a client's own claim of it is dropped), and such a
+presence stands for as long as the server lists it — `presenceStands` and `foldPresence` do
+not expire it by its `at`. The host drops it when the socket closes, at once. So
+`openRemote` says `here` down a socket only when where it stands changes: an idle tab says
+nothing, and a hibernating host is not woken to hear it. A poller is still held by time
+(`presenceTtlMs`) and says where it is with every poll. A client whose own socket dropped
+lets the held presences it was told go after `REMOTE_PRESENCE_TTL_MS` without a list from
+the server. A host that keeps a socket's presence by time can ask for the old heartbeat
+with `presenceEveryMs`.
 
 **The declaration changes under open tabs.** A host that adds a field calls
 `handler.declarationChanged({ app })` — over an adapter the handler opens the store again

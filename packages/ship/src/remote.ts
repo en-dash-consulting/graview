@@ -1,7 +1,6 @@
 import {
   FieldRevisions,
   foldPresence,
-  PRESENCE_TTL_MS,
   ReceiveError,
   refusalOf,
   REMOTE_PRESENCE_TTL_MS,
@@ -159,10 +158,14 @@ export interface RemoteOptions<S extends AnySchema> {
    */
   readonly backoff?: RemoteBackoff;
   /**
-   * How often the same presence is said again down the socket, in
-   * milliseconds (FR-49). A new place is said at once; an unchanged one, on
-   * the heartbeat, no oftener than this. Half of `PRESENCE_TTL_MS` unless
-   * said. A polling client says it with every poll, so `pollMs` paces it.
+   * A HEARTBEAT DOWN THE SOCKET, opted into, in milliseconds (FR-49). A
+   * server holds a socket's presence for as long as the socket is open
+   * (`held: "socket"`), so by default the socket says `here` only when where
+   * this client stands changes — an idle tab says nothing, and a host that
+   * hibernates is not woken for it. Given, an unchanged presence is said
+   * again on the heartbeat, no oftener than this: for a host that still
+   * keeps a socket's presence by time. A polling client says it with every
+   * poll whatever this says, so `pollMs` paces it.
    */
   readonly presenceEveryMs?: number;
   /**
@@ -405,7 +408,8 @@ async function opening<S extends AnySchema>(
   const seat = { ...seatHeaders(options.principal), [SEAT_HEADERS.via]: options.via ?? "web" };
   Object.assign(headers, seat);
   const live = options.live === true;
-  const presenceEveryMs = options.presenceEveryMs ?? PRESENCE_TTL_MS / 2;
+  /** Undefined: the socket says `here` only on a change, because the server holds it while the socket is open. */
+  const presenceEveryMs = options.presenceEveryMs;
   const visible = options.visible ?? pageVisible;
 
   /*
@@ -514,7 +518,11 @@ async function opening<S extends AnySchema>(
   let self: string | undefined;
   let known = new Map<string, Presence>();
   const whoListeners = new Set<(who: readonly Presence[]) => void>();
+  /** Set when a list of who is here arrives; read when a dropped socket's held presences lapse. */
+  let heardWho = false;
   const heard = (who: readonly Presence[]) => {
+    if (retiring) return;
+    heardWho = true;
     const next = foldPresence(new Map(), who, Date.now(), REMOTE_PRESENCE_TTL_MS, mine?.participant);
     // Never yourself, under the key you made or the one the server built for you.
     if (self !== undefined) next.delete(self);
@@ -837,7 +845,8 @@ async function opening<S extends AnySchema>(
   };
   const sayWhere = (force = false) => {
     if (!mine || !socketReady() || !visible()) return;
-    if (!force && said && samePresence(mine, said) && Date.now() - saidAt < presenceEveryMs) return;
+    // Unchanged: said again only on a heartbeat the host opted into. The server holds it while the socket is open.
+    if (!force && said && samePresence(mine, said) && (presenceEveryMs === undefined || Date.now() - saidAt < presenceEveryMs)) return;
     if (say({ t: "here", presence: mine })) {
       said = mine;
       saidAt = Date.now();
@@ -1001,6 +1010,7 @@ async function opening<S extends AnySchema>(
     closed = true;
     if (retry) clearTimeout(retry);
     if (busyTimer) clearTimeout(busyTimer);
+    if (lapse) clearTimeout(lapse);
     // A post waiting for the server to be reached again goes with the rest instead.
     for (const waiting of held.splice(0)) waiting.give(superseded);
     const was = socket;
@@ -1107,12 +1117,36 @@ async function opening<S extends AnySchema>(
       welcomed = false;
       said = null;
       // A socket that never opened says nothing a poll does not; one that was up and dropped is the server gone.
-      if (dropped) become("offline");
+      if (dropped) {
+        become("offline");
+        lapseHeld();
+      }
       reconnect();
     };
     made.onerror = () => {
       // The close follows; that is where reconnecting is decided.
     };
+  };
+  /*
+   * WHAT A DROPPED SOCKET WAS TOLD STANDS NO LONGER ON THE SERVER'S WORD. A
+   * presence held by somebody's socket stands while the server lists it,
+   * and this client hears the server no longer. Unless a list comes within
+   * `REMOTE_PRESENCE_TTL_MS` — a welcome after a reconnect, a poll — the
+   * held ones are let go, as a word that old would be.
+   */
+  let lapse: ReturnType<typeof setTimeout> | undefined;
+  const lapseHeld = () => {
+    heardWho = false;
+    if (lapse) clearTimeout(lapse);
+    lapse = setTimeout(() => {
+      lapse = undefined;
+      if (heardWho || closed) return;
+      const kept = new Map([...known].filter(([, presence]) => presence.held !== "socket"));
+      if (kept.size === known.size) return;
+      known = kept;
+      for (const listener of whoListeners) listener([...known.values()]);
+    }, REMOTE_PRESENCE_TTL_MS);
+    (lapse as { unref?: () => void }).unref?.();
   };
   const reconnect = () => {
     if (closed) return;
@@ -1417,6 +1451,7 @@ async function opening<S extends AnySchema>(
       closed = true;
       if (retry) clearTimeout(retry);
       if (busyTimer) clearTimeout(busyTimer);
+      if (lapse) clearTimeout(lapse);
       for (const waiting of held.splice(0)) waiting.give(new Error("The client closed before the server could be reached."));
       const was = socket;
       socket = undefined;
