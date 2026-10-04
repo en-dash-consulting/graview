@@ -1,7 +1,0 @@
----
-"@graview/studio": patch
----
-
-A studio in an embed is drawn over the embed's own seat. Boxed, the studio is drawn from the embed's strip, which comes before the embed's picture in the page, and the picture's seat sits at the same `z-index` (40) and its menu above it (60): later and no lower, the seat was drawn over the open studio and took its presses, so in Graview Cloud's builder a press on "Remove the field" in the studio's own actions strip landed on the seat's form underneath. A boxed studio, the modal dialog it is, now stands at 100 inside its box; a page-filling one is unchanged. `scripts/verify-studio.mjs` opens the studio in a host's page built like Cloud's — a header, a nav, its own main, a footer — through the embed, as an editor the host offers it to, with a host that refuses what it is handed and `StudioPlace` handed in, and holds five claims there: no chunk fetched after the page's own (FR-63), the studio drawn for the editor with the app's policy kept (FR-59), one main on the page and none in the embed with axe's landmark rules and `region` clean over the whole document (FR-58), a field removed from the studio's own strip and refused by the host, shown refused, still open, and handed over the same on a second Apply (FR-60), beside the field's acts by name on that strip (FR-61), and nothing thrown.
-
-Compatibility: unchanged. Ops, stored formats, the wire, check codes and tool schemas are untouched; only where an open boxed studio stacks within its box moved.

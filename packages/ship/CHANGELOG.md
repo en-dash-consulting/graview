@@ -1,5 +1,24 @@
 # @graview/ship
 
+## 0.1.5
+
+### Patch Changes
+
+- a83a311: A preview is judged as its batch would be (FR-56). `store.previewAll(calls, context)` took no author, so it could not be refused for a seat's role or sight the way the apply would be, nor take the channel or the host's `admit`, and it answered no ops: Graview Cloud rehearsed every previewed call with `applyAll` on a copy of the store built from its snapshot alone, which judged an `own` sight without the log that says who made what. Now `store.previewAll(calls, { author, via, batch, intent, admit, context })` takes what `applyAll` takes and runs `applyAll`'s own path on a rehearsal of the store — its graph and log copied, nobody listening — so it refuses exactly when the apply would, with the same error in the same words: the policy, a declared agent's `may`, the seat's sight (a record made earlier in the batch is its maker's for the calls after), an act's own guard, and whatever `admit` throws, asked with the change as planned. Otherwise it answers what the apply would, `BatchPreview`: the ops as the log would hold them, marked not kept — ids `preview:<n>`, which no store mints, the seq each would take, the batch given or `preview` (`PREVIEW_BATCH`), and `kept: false` — with the diff, `introduces`, `resolves` and `violationsAfter`, judged in `context`. It writes, logs and tells nothing: no subscriber of the store or its graph hears it, a watching harness is not told of its author or its refusal, and no op id or batch the store would mint next is spent. A test compares it with `applyAll` on a fresh copy across seven seats, twelve batches and four answers from `admit`. In `@graview/ship`, the stale-write check on the live wire and `POST /graview/ops` previews the call as its seat and channel instead of asking `permits` and `missingFor` beside it, and `openRemote`'s store previews as whoever is at the keyboard, as its `applyAll` applies.
+  
+  Compatibility: additive for a caller that passed an author; the wire, `WIRE_PROTOCOL`, `REFUSAL_REASONS`, ops, stored formats, tool names and schemas, and check codes are unchanged. `previewAll`'s second parameter is now the options object, with the invariant context as its `context`: a call that passed a context positionally passes `{ context }`. Like `applyAll`, a preview with no `author` is judged as an anonymous person, so in an app with a policy it is refused where it was answered. Its answer gains `ops`, `batch` and `kept`. `PreviewOptions`, `BatchPreview` and `PREVIEW_BATCH` are new exports of `@graview/core`; the wire's `conflictsOf` takes the channel as an optional fourth argument. `capabilities().shipped` lists FR-56.
+- Updated dependencies [f989024]
+- Updated dependencies [97f2a0a]
+- Updated dependencies [1e21d54]
+- Updated dependencies [281761b]
+- Updated dependencies [a83a311]
+- Updated dependencies [f1fcf13]
+- Updated dependencies [826e19b]
+- Updated dependencies [e22a00d]
+- Updated dependencies [5a2086e]
+- Updated dependencies [76df9ba]
+  - @graview/core@0.1.5
+
 ## 0.1.4
 
 ### Patch Changes
