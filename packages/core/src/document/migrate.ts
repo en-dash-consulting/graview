@@ -1,4 +1,5 @@
 import { UNSET, type GraphEdge, type Primitive } from "../index.js";
+import { canonicalize } from "./canonical.js";
 import type { FieldSpec, FieldType, GraviewDocument } from "./schema.js";
 
 /*
@@ -187,7 +188,7 @@ export function planMigration(before: GraviewDocument, after: GraviewDocument, g
         } else if (src !== field) {
           counts.moved++;
           note(`${newKind}'s ${src} renamed to ${field}, values kept`);
-        } else if (JSON.stringify(value) !== JSON.stringify(old)) {
+        } else if (canonicalize(value) !== canonicalize(old)) {
           counts.coerced++;
           note(`${newKind}'s ${field} converted to ${spec.type}`);
         }
@@ -235,7 +236,7 @@ export function planMigration(before: GraviewDocument, after: GraviewDocument, g
       if (key === "id" || key === "kind") continue;
       const a = node[key];
       const b = next[key];
-      if (JSON.stringify(a) === JSON.stringify(b)) continue;
+      if (canonicalize(a) === canonicalize(b)) continue;
       patchBefore[key] = a === undefined ? UNSET : a;
       patchAfter[key] = b === undefined ? UNSET : b;
     }

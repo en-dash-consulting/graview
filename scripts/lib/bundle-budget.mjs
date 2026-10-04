@@ -26,9 +26,15 @@ export const BUDGETS = [
      * views (FR-35 over FR-19): the framework's default views and the
      * declaration's view specs, which the pages now draw their cards, rows
      * and record pages from — about 48 kB minified, 15.5 kB gzipped.
+     *
+     * Raised again from 815_000 / 220_000 when the workspace moved to zod
+     * 4.6, the zod a consumer resolves from the published ranges: 4.6 gives
+     * every schema type its own JSON-schema processor, so zod no longer
+     * shakes down to what the pages use — about 130 kB minified, 30 kB
+     * gzipped, of zod's, which a host already paid on 4.6.
      */
-    minified: 815_000,
-    gzipped: 220_000,
+    minified: 950_000,
+    gzipped: 252_000,
   },
   {
     name: "every face",
@@ -38,9 +44,12 @@ export const BUDGETS = [
      * back a document (FR-54): its changes are `editDocument`'s own ops, so
      * the studio every face carries now carries the editor and the document
      * schema it checks against — about 43 kB minified, 13 kB gzipped.
+     *
+     * Raised again from 1_150_000 / 330_000 with zod 4.6, for the same reason
+     * as the pages face: about 130 kB minified, 30 kB gzipped, of zod's.
      */
-    minified: 1_150_000,
-    gzipped: 330_000,
+    minified: 1_290_000,
+    gzipped: 362_000,
   },
 ];
 

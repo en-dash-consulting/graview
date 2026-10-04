@@ -1,5 +1,6 @@
 import { execFileSync, spawn } from "node:child_process";
 import { mkdtempSync, writeFileSync } from "node:fs";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -53,7 +54,14 @@ describe("a document runs without code", () => {
 
   it("graview serve --document serves it", async () => {
     const data = mkdtempSync(join(tmpdir(), "graview-doc-data-"));
-    const server = spawn("node", [cli, "serve", "--document", vendors, "--data", data, "--port", "5689"], { cwd: root, stdio: ["ignore", "pipe", "pipe"] });
+    // A port nobody holds, asked of the system: a fixed one met another checkout's server and failed as "exited 1".
+    const port = await new Promise<number>((given) => {
+      const probe = createServer().listen(0, "127.0.0.1", () => {
+        const { port } = probe.address() as { port: number };
+        probe.close(() => given(port));
+      });
+    });
+    const server = spawn("node", [cli, "serve", "--document", vendors, "--data", data, "--port", String(port)], { cwd: root, stdio: ["ignore", "pipe", "pipe"] });
     try {
       await new Promise<void>((ready, fail) => {
         const timer = setTimeout(() => fail(new Error("graview serve did not start")), 20_000);
@@ -65,7 +73,7 @@ describe("a document runs without code", () => {
         });
         server.on("exit", (code) => fail(new Error(`graview serve exited ${code}`)));
       });
-      const health = (await (await fetch("http://127.0.0.1:5689/graview/health")).json()) as { ok: boolean };
+      const health = (await (await fetch(`http://127.0.0.1:${port}/graview/health`)).json()) as { ok: boolean };
       expect(health.ok).toBe(true);
     } finally {
       server.kill();

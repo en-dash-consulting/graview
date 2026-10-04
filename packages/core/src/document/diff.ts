@@ -1,4 +1,5 @@
 import { withArticle } from "../schema/define-node.js";
+import { canonicalize } from "./canonical.js";
 import type { GraviewDocument } from "./schema.js";
 import { VIEW_SLOTS, viewsOf } from "./views.js";
 
@@ -25,7 +26,8 @@ export interface DocumentDiff {
 }
 
 const keys = <T extends object>(o: T | undefined) => Object.keys(o ?? {});
-const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+/** The same meaning, whatever order the keys were written in: compared as documentHash compares. */
+const same = (a: unknown, b: unknown) => canonicalize(a) === canonicalize(b);
 
 export function diffDocuments(before: GraviewDocument, after: GraviewDocument): DocumentDiff {
   const sentences: string[] = [];

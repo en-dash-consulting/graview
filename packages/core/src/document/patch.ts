@@ -1,3 +1,4 @@
+import { canonicalize } from "./canonical.js";
 /*
  * JSON Patch (RFC 6902: add, remove, replace, move, copy, test) — how an agent
  * in a chat proposes a small change without resending the whole document.
@@ -43,7 +44,7 @@ export function applyPatch<T>(document: T, ops: readonly PatchOp[]): T {
   for (const op of ops) {
     const parts = pointer(op.path);
     if (op.op === "test") {
-      if (JSON.stringify(get(root, op.path)) !== JSON.stringify(op.value)) throw new PatchError(`"${op.path}" is not what the patch expected`);
+      if (canonicalize(get(root, op.path)) !== canonicalize(op.value)) throw new PatchError(`"${op.path}" is not what the patch expected`);
       continue;
     }
     const value = "from" in op ? structuredClone(get(root, op.from)) : "value" in op ? structuredClone(op.value) : undefined;
