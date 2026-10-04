@@ -546,8 +546,22 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     }
 
     if (url.pathname === "/graview/health") {
+      /*
+       * A STRANGER GETS HEALTH, AND NO ID (FR-55). The counts are the whole
+       * store's; the links it names are only those the asking seat may be
+       * told of — and somebody the host cannot tell is judged as a seat
+       * with no id and no roles, so a store with sights names them nothing.
+       */
+      let asking: Principal = { kind: "human" };
+      if (seatOf) {
+        try {
+          asking = await seat();
+        } catch {
+          // A poller the host does not recognise is still told whether the store is well.
+        }
+      }
       return send(200, {
-        ...health(store as never, app as never),
+        ...health(store as never, { seat: asking }),
         where: options.where ?? app.name,
         adapter: adapterName,
       });

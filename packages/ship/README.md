@@ -131,7 +131,11 @@ Seqs mean what `/graview/since?seq=N` means, and `hello` and `welcome` carry `WI
 A host on any runtime attaches a socket with `createStoreHandler(...).connect(request, { send,
 close })`, which reads the seat from the upgrade and answers with the connection to hand each
 message to; `serveStore` does this for Node's upgrade. What a seat may not see holds on the
-socket as on the routes.
+socket as on the routes, and so does its id (FR-55): no record id the seat may not see is in
+anything it is sent — a welcome, ops, an ack, a conflict, a route's answer. A seen record's
+field that names a hidden one is cleared, or, when the record cannot do without that field,
+the record is withheld from the seat whole; a withheld op keeps no hidden id in any
+primitive. `seatLens(store, principal)` is that judgement, the one every surface reads.
 
 A host that hibernates — a Durable Object wakes on a message with no closure left — holds
 each socket's state itself. `liveProtocol({ store })` (from `@graview/ship/runtime`) is the

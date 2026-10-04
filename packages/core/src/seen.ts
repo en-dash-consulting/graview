@@ -1,8 +1,11 @@
+import type { GraphDiff, NodeChange } from "./graph/diff.js";
+import type { GraphNodeBase } from "./graph/types.js";
 import type { GraphEdge } from "./graph/types.js";
+import type { Violation } from "./invariants/types.js";
 import { batchesOf, undoneIn, type LogReading } from "./ops/log.js";
 import { checkUndo } from "./ops/undo.js";
 import type { Batch, Operation } from "./ops/types.js";
-import { redact } from "./ops/withheld.js";
+import { namesUnseen, redact, WITHHELD_INTENT, type SeatLens } from "./ops/withheld.js";
 import { actingAs, isSystem } from "./permissions/policy.js";
 import { recordsOf, sees } from "./permissions/sight.js";
 import type { Policy, Principal } from "./permissions/types.js";
@@ -20,6 +23,8 @@ interface Judged {
   readonly log: LogReading;
   /** The kinds of the modules this workspace has off (FR-12), kept from every seat as a sight keeps a record. */
   readonly modules?: { readonly disabledKinds: ReadonlySet<string> };
+  /** The declaration, to say which of a kind's fields a record may be served without (FR-55). */
+  readonly schema?: { tryDefinition(kind: string): { readonly fields: unknown } | undefined };
 }
 
 const NOTHING: ReadonlySet<string> = new Set();
@@ -68,10 +73,139 @@ export function seesId(store: Judged, principal: Principal): (id: string) => boo
   };
 }
 
-/** The store's log as one seat may read it: every op in its place, the ones it may not see withheld (FR-16). */
+/** Whether a kind's field may be left off a record: declared optional, or not declared at all. Unknown kinds keep every field. */
+function optionalIn(schema: Judged["schema"]): (kind: string, field: string) => boolean {
+  const known = new Map<string, boolean>();
+  return (kind, field) => {
+    const key = `${kind}\u0000${field}`;
+    let optional = known.get(key);
+    if (optional === undefined) {
+      const shape = (schema?.tryDefinition(kind)?.fields as { shape?: Record<string, { safeParse?(value: unknown): { success: boolean } }> } | undefined)?.shape;
+      const declared = shape?.[field];
+      optional = shape !== undefined && (declared === undefined || declared.safeParse?.(undefined).success === true);
+      known.set(key, optional);
+    }
+    return optional;
+  };
+}
+
+/**
+ * WHAT ONE SEAT IS SERVED (FR-55) — the judgement every surface built on
+ * the seat view reads, so a snapshot, a log, an answer and the wire cannot
+ * disagree about it.
+ *
+ * Its sight (`seesId`) says which records it may be told of. An id is
+ * minted from a label, so a seen record's field that holds the id of one
+ * it may not see tells it that record's name: such a field is CLEARED in
+ * what the seat is served — the record stays, usable, without it — when
+ * the kind's declaration lets a record be without it. When the field is
+ * one the record cannot do without, clearing it would serve a record that
+ * fails its own declaration, and a client refuses to load that: the record
+ * is WITHHELD from the seat whole instead, as if its sight did not reach
+ * it — not in the graph, the snapshot, the log's primitives or an edge.
+ * Which ids a field names is judged by the seat's sight alone, so a record
+ * naming one withheld this way still names a record the seat may see.
+ */
+export function seatLens(store: Judged, principal: Principal): SeatLens {
+  const sees = seesId(store, principal);
+  const optional = optionalIn(store.schema);
+  // The same record served the same way is the same object, so a view read twice is equal by identity.
+  const cleared = new WeakMap<object, { readonly without: string; readonly node: unknown }>();
+  const served = <N extends { readonly id: string; readonly kind: string }>(node: N): N | undefined => {
+    if (!sees(node.id)) return undefined;
+    let without: string[] | undefined;
+    for (const [field, value] of Object.entries(node)) {
+      if (field === "id" || field === "kind" || !namesUnseen(value, sees)) continue;
+      if (!optional(node.kind, field)) return undefined;
+      (without ??= []).push(field);
+    }
+    if (!without) return node;
+    const key = without.join("\u0000");
+    const held = cleared.get(node);
+    if (held?.without === key) return held.node as N;
+    const out = Object.fromEntries(Object.entries(node).filter(([field]) => !without.includes(field))) as N;
+    cleared.set(node, { without: key, node: out });
+    return out;
+  };
+  const shows = (id: string): boolean => {
+    if (!sees(id)) return false;
+    const node = store.graph.getNode(id);
+    return node === undefined || served(node) !== undefined;
+  };
+  const kindOf = (id: string): string | undefined => store.graph.getNode(id)?.kind ?? recordsOf(store.log).kindOf(id);
+  return { sees, shows, served, optional, kindOf };
+}
+
+/** The store's log as one seat may read it: every op in its place, the ones it may not see withheld (FR-16), and no id it may not see in any of them (FR-55). */
 export function logSeenBy(store: Judged, principal: Principal): readonly Operation[] {
   if (!hidesFrom(store, principal)) return store.log.all();
-  return redact(store.log.all(), seesId(store, principal));
+  return redact(store.log.all(), seatLens(store, principal));
+}
+
+/** Whether a rule's finding or violation is one a seat may be told: about records it is served, naming none it may not see. */
+function violationShown(lens: SeatLens, has: (id: string) => boolean, violation: Pick<Violation, "subjectId" | "nodeIds">): boolean {
+  return (
+    (violation.subjectId === undefined || !has(violation.subjectId) || lens.shows(violation.subjectId)) &&
+    violation.nodeIds.every((id) => !has(id) || lens.shows(id)) &&
+    !namesUnseen(violation, lens.sees)
+  );
+}
+
+/**
+ * A CHANGE'S ANSWER AS ONE SEAT MAY BE TOLD IT (FR-55) — the diff, the
+ * primitives, the ops and the rules it would break or mend of a preview,
+ * an apply or an undo, for a surface that hands a seat what its own act
+ * did: an act may touch what its own seat may not see. Records and edges
+ * it is not served go, a field naming one it may not see is cleared as
+ * the view clears it, the ops are redacted as its log is, and a sentence
+ * that names what it may not see says only that a change it cannot see
+ * happened. With nothing kept from the seat, the answer as it is.
+ */
+export function answerSeenBy<
+  A extends {
+    readonly diff?: GraphDiff<GraphNodeBase>;
+    readonly primitives?: readonly unknown[];
+    readonly reads?: readonly string[];
+    readonly writes?: readonly string[];
+    readonly intent?: string;
+    readonly introduces?: readonly Violation[];
+    readonly resolves?: readonly Violation[];
+    readonly violationsAfter?: readonly Violation[];
+    readonly ops?: readonly Operation[];
+  },
+>(store: Judged, principal: Principal, answer: A): A {
+  if (!hidesFrom(store, principal)) return answer;
+  const lens = seatLens(store, principal);
+  const has = (id: string) => store.graph.getNode(id) !== undefined || recordsOf(store.log).kindOf(id) !== undefined;
+  const out: Record<string, unknown> = { ...answer };
+  if (answer.diff) {
+    const diff = answer.diff as GraphDiff;
+    const node = <N extends { id: string; kind: string }>(one: N) => (lens.shows(one.id) ? lens.served(one) : undefined);
+    const nodes = <N extends { id: string; kind: string }>(all: readonly N[]) => all.flatMap((one) => node(one) ?? []);
+    const edge = (one: GraphEdge) => lens.shows(one.from) && lens.shows(one.to) && !namesUnseen(one, lens.sees);
+    out["diff"] = {
+      addedNodes: nodes(diff.addedNodes),
+      removedNodes: nodes(diff.removedNodes),
+      changedNodes: diff.changedNodes.flatMap((change: NodeChange) => {
+        const before = node(change.before);
+        const after = node(change.after);
+        return before && after ? [{ before, after, fields: change.fields.filter((field) => field in before || field in after) }] : [];
+      }),
+      addedEdges: diff.addedEdges.filter(edge),
+      removedEdges: diff.removedEdges.filter(edge),
+      touched: diff.touched.filter(lens.shows),
+    };
+  }
+  if (answer.ops) out["ops"] = redact(answer.ops, lens);
+  if (answer.primitives) out["primitives"] = redact([{ id: "", seq: 0, batch: "", author: { kind: "system" }, intent: "", mutation: null, primitives: answer.primitives as never, inverse: [], reads: [], writes: [], at: "" }], lens)[0]!.primitives;
+  if (answer.reads) out["reads"] = answer.reads.filter(lens.shows);
+  if (answer.writes) out["writes"] = answer.writes.filter(lens.shows);
+  if (answer.intent !== undefined && namesUnseen(answer.intent, lens.sees)) out["intent"] = WITHHELD_INTENT;
+  for (const key of ["introduces", "resolves", "violationsAfter"] as const) {
+    const violations = answer[key];
+    if (violations) out[key] = violations.filter((violation) => violationShown(lens, has, violation));
+  }
+  return out as A;
 }
 
 /** A log reading over a seat's redacted ops, for `checkUndo`. */
@@ -110,10 +244,17 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
   if (held) return held as Store<S>;
 
   const full = store.graph;
-  const seenNode = (node: { id: string; kind: string } | undefined): boolean =>
-    node !== undefined && !turnedOff(store, principal).has(node.kind) && sees(store.policy, principal, node as never, full as never, recordsOf(store.log));
+  /*
+   * WHAT THIS SEAT IS SERVED (FR-55): a record its sight reaches, with any
+   * field that names one it may not see cleared — or, when that field is
+   * one the record cannot do without, not the record at all.
+   */
+  const lens = seatLens(store as never, principal);
+  const served = <N>(node: N | undefined): N | undefined => (node === undefined ? undefined : (lens.served(node as never) as N | undefined));
+  const seenNode = (node: { id: string; kind: string } | undefined): boolean => served(node) !== undefined;
   const seenId = (id: string): boolean => seenNode(full.getNode(id) as never);
-  const seenEdge = (edge: GraphEdge): boolean => seenId(edge.from) && seenId(edge.to);
+  const seenEdge = (edge: GraphEdge): boolean => seenId(edge.from) && seenId(edge.to) && !namesUnseen(edge, lens.sees);
+  const servedAll = <N>(nodes: readonly N[]): N[] => nodes.flatMap((node) => served(node) ?? []);
   /*
    * THE LOG, REDACTED RATHER THAN GAPPED (FR-16): every op in its place,
    * and one that touched what this seat may not see withheld — so the log
@@ -126,26 +267,23 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
     get(target, prop) {
       switch (prop) {
         case "getNode":
-          return (id: string) => {
-            const node = target.getNode(id);
-            return seenNode(node as never) ? node : undefined;
-          };
+          return (id: string) => served(target.getNode(id));
         case "has":
           return (id: string) => seenId(id);
         case "allNodes":
-          return () => target.allNodes().filter((node) => seenNode(node as never));
+          return () => servedAll(target.allNodes());
         case "nodesOfKind":
-          return (kind: never) => target.nodesOfKind(kind).filter((node) => seenNode(node as never));
+          return (kind: never) => servedAll(target.nodesOfKind(kind));
         case "allEdges":
           return () => target.allEdges().filter(seenEdge);
         case "edgesOfKind":
           return (kind: string) => target.edgesOfKind(kind).filter(seenEdge);
         case "out":
-          return (id: string, kind?: string) => (seenId(id) ? target.out(id, kind).filter((node) => seenNode(node as never)) : []);
+          return (id: string, kind?: string) => (seenId(id) ? servedAll(target.out(id, kind)) : []);
         case "in":
-          return (id: string, kind?: string) => (seenId(id) ? target.in(id, kind).filter((node) => seenNode(node as never)) : []);
+          return (id: string, kind?: string) => (seenId(id) ? servedAll(target.in(id, kind)) : []);
         case "neighbors":
-          return (id: string) => (seenId(id) ? target.neighbors(id).filter((node) => seenNode(node as never)) : []);
+          return (id: string) => (seenId(id) ? servedAll(target.neighbors(id)) : []);
         case "outEdges":
           return (id: string, kind?: string) => target.outEdges(id, kind).filter(seenEdge);
         case "inEdges":
@@ -153,7 +291,7 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
         case "snapshot":
           return () => {
             const snapshot = target.snapshot();
-            return { ...snapshot, nodes: snapshot.nodes.filter((node) => seenNode(node as never)), edges: snapshot.edges.filter(seenEdge) };
+            return { ...snapshot, nodes: servedAll(snapshot.nodes), edges: snapshot.edges.filter(seenEdge) };
           };
         case "size": {
           const nodes = target.allNodes().filter((node) => seenNode(node as never)).length;
@@ -208,8 +346,14 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
         case "canUndo":
           return (batchIds: string | readonly string[]) => checkUndo(reading(), typeof batchIds === "string" ? [batchIds] : batchIds);
         case "violations":
-          return (...args: Parameters<Store<S>["violations"]>) =>
-            target.violations(...args).filter((violation) => (violation.subjectId === undefined || seenId(violation.subjectId)) && violation.nodeIds.every((id) => !full.has(id) || seenId(id)));
+          return (...args: Parameters<Store<S>["violations"]>) => target.violations(...args).filter((violation) => violationShown(lens, (id) => full.has(id), violation));
+        // What no longer fits, about records this seat is served and naming none it may not see (FR-55).
+        case "findings":
+          return () =>
+            target.findings().filter((finding) => {
+              const ids = finding.id.includes("->") ? finding.id.split("->").map((end, at) => (at === 0 ? end.slice(end.indexOf(":") + 1) : end)) : [finding.id];
+              return ids.every((id) => !full.has(id) || seenId(id)) && !namesUnseen(finding, lens.sees);
+            });
         case "seenBy":
           return (other: Principal) => seenBy(target, other);
         case "seenFor":
