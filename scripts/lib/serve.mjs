@@ -3,9 +3,9 @@
  *
  * Every harness span its own `vite` and waited for the port number to
  * appear on stdout. That works exactly once: with a dev server already
- * holding 5193 — which is how anyone actually working on the app leaves it —
- * the second vite picks 5194 instead, the readiness match never fires, and
- * the harness dies with "vite did not start" sixty seconds later. A harness
+ * holding the app's port — which is how anyone actually working on the app
+ * leaves it — the second vite picks the next port instead, the readiness
+ * match never fires, and the harness dies with "vite did not start" sixty seconds later. A harness
  * you cannot run while the app is open is a harness nobody runs.
  *
  * So: ask the port first. If something is already answering there, drive
@@ -26,7 +26,7 @@ const answers = async (port) => {
 
 /**
  * @param {string} app  directory under `apps/`, or an absolute path to an app beside the checkout
- * @param {number} port the port that app's vite config claims
+ * @param {number} port the port to serve it on: `portFor(app)` (lib/ports.mjs), moved onto GRAVIEW_PORT_BASE
  * @param {string} repoRoot
  * @returns {Promise<{ url: string, borrowed: boolean, stop: () => void }>}
  */

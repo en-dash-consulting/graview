@@ -20,10 +20,11 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
-const BASE = "http://localhost:5193/?today=2026-09-01";
+const BASE = `${at("todo")}/?today=2026-09-01`;
 
 /**
  * The app this harness drives — borrowed if a dev server is already holding
@@ -89,7 +90,7 @@ const activity = async (page) => {
 };
 
 try {
-  vite = await startVite("todo", 5193);
+  vite = await startVite("todo", portFor("todo"));
   browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
 
   /* -------------------------------- one browser that asks to remember */
@@ -138,7 +139,7 @@ try {
   report.steps.afterFresh = { deposit: await labelOf(page, "t-deposit") };
 
   // The pages face shares the store — and the way back.
-  await page.goto(`http://localhost:5193/pages/tasks/t-deposit?today=2026-09-01&remember=1`, {
+  await page.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01&remember=1`, {
     waitUntil: "networkidle",
   });
   await page.waitForTimeout(500);
@@ -201,7 +202,7 @@ try {
    * both go through `open()` with the same scope. And the two demos keep two
    * stores, because each names its own.
    */
-  const desk = await serving("launcher", 5199, repoRoot);
+  const desk = await serving("launcher", portFor("launcher"), repoRoot);
   try {
     const context = await browser.newContext();
     const page = await context.newPage({ viewport: { width: 1400, height: 900 } });
@@ -210,7 +211,7 @@ try {
     const onTheDesk = async (app) => {
       // `remember=1` because a driven browser starts fresh unless it asks to,
       // which is what keeps every other harness from inheriting the last one's.
-      await page.goto(`http://localhost:5199/?theme=light&remember=1&app=${app}`, { waitUntil: "load" });
+      await page.goto(`${at("launcher")}/?theme=light&remember=1&app=${app}`, { waitUntil: "load" });
       /*
        * For the MOUNT, not for a card: the garden starts empty on purpose,
        * and waiting for something pickable there waits for ever. A district
@@ -247,9 +248,9 @@ try {
     const afterReload = await offeredOn(page, "t-deposit", FINISH);
 
     // The same browser, at the app's own port: one store, two doors.
-    const own = await serving("todo", 5193, repoRoot);
+    const own = await serving("todo", portFor("todo"), repoRoot);
     const alone = await context.newPage({ viewport: { width: 1400, height: 900 } });
-    await alone.goto("http://localhost:5193/?today=2026-09-01&remember=1", { waitUntil: "load" });
+    await alone.goto(`${at("todo")}/?today=2026-09-01&remember=1`, { waitUntil: "load" });
     await alone.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await alone.waitForTimeout(1000);
     const atItsOwnPort = await offeredOn(alone, "t-deposit", FINISH);

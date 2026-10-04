@@ -36,6 +36,7 @@ import { fileURLToPath } from "node:url";
 import { updateLedger } from "./lib/ledger.mjs";
 import { serving } from "./lib/serve.mjs";
 import { watchFile } from "./lib/watch.mjs";
+import { portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -166,7 +167,7 @@ const gist = (text) => {
  *
  * So it says so now, at the top, before any of it runs.
  */
-const APP_PORTS = [5178, 5190, 5191, 5192, 5193, 5194, 5195, 5196];
+const APP_PORTS = ["linked", "gauntlet", "todo", "seedbed", "rota", "served", "launcher"].map(portFor);
 const answering = [];
 for (const port of APP_PORTS) {
   try {
@@ -191,14 +192,15 @@ if (answering.length > 0) {
  * harnesses run side by side instead of racing to start the same vite.
  */
 const SHARED = [
-  ["todo", 5193],
-  ["seedbed", 5194],
-  ["rota", 5195],
-  ["launcher", 5199],
+  "todo",
+  "seedbed",
+  "rota",
+  "launcher",
 ];
 const servers = [];
 if (chain.length > 1) {
-  for (const [app, port] of SHARED) {
+  for (const app of SHARED) {
+    const port = portFor(app);
     try {
       servers.push(await serving(app, port, repoRoot));
     } catch (error) {

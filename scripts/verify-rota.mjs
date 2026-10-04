@@ -18,14 +18,15 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
-const BASE = "http://localhost:5195";
+const BASE = `${at("rota")}`;
 const DAY = "today=2026-09-14";
 
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };
-const app = await serving("rota", 5195, repoRoot);
+const app = await serving("rota", portFor("rota"), repoRoot);
 let browser;
 
 try {

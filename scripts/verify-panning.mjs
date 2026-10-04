@@ -23,6 +23,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -58,8 +59,8 @@ const SLOW_SHARE = 0.1;
 const BLOCKED_MS = 500;
 
 const APPS = [
-  { name: "todo", port: 5193, ready: "__todoReady" },
-  { name: "rota", port: 5195, ready: "__rotaReady" },
+  { name: "todo", port: portFor("todo"), ready: "__todoReady" },
+  { name: "rota", port: portFor("rota"), ready: "__rotaReady" },
 ];
 
 /*

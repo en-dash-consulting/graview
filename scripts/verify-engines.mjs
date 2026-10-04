@@ -29,6 +29,7 @@ import { fileURLToPath } from "node:url";
 import { firefox } from "playwright";
 import { ENGINES, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const chosen =
@@ -89,7 +90,7 @@ const stopVite = (child) => {
  * left behind.
  */
 const { createServer } = await import("node:net");
-for (const port of [5190, 5191, 5192, 5193, 5194]) {
+for (const port of ["gauntlet", "todo", "seedbed"].map(portFor)) {
   await new Promise((free, taken) => {
     const probe = createServer();
     probe.once("error", () =>
@@ -178,11 +179,11 @@ for (const engine of chosen) {
  * mobile browser, so this is a launch gate rather than polish.
  */
 async function verifyKeyboardSurvivesThePane(engine, launch) {
-  const vite = await startVite("todo", 5193);
+  const vite = await startVite("todo", portFor("todo"));
   const browser = await launch();
   try {
     const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
-    await page.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
+    await page.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await page.waitForTimeout(900);
     // Somewhere with a pane, and the keyboard inside it.
@@ -232,7 +233,7 @@ async function verifyKeyboardSurvivesThePane(engine, launch) {
 /* --------------------------- degradation: the morph must cut, not break */
 
 async function verifyAltitudeCut() {
-  const vite = await startVite("todo", 5193);
+  const vite = await startVite("todo", portFor("todo"));
   // ESR-class Firefox: registered custom properties OFF. The morph cannot
   // interpolate; the check is that it lands, instantly and completely.
   const browser = await firefox.launch({
@@ -243,7 +244,7 @@ async function verifyAltitudeCut() {
     const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
-    await page.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
+    await page.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     const unsupported = await page.evaluate(() => typeof globalThis.CSSPropertyRule === "undefined");
     await page.click('[data-testid="overview"]');
@@ -289,7 +290,7 @@ async function verifyAltitudeCut() {
 /* -------------------- capability: no WebGPU, no Prompt API, graph answers */
 
 async function verifyLocalFallback() {
-  const vite = await startVite("todo", 5193);
+  const vite = await startVite("todo", portFor("todo"));
   // An engine with neither Chrome's Prompt API nor WebGPU: Firefox with
   // WebGPU explicitly off, so the verdict does not ride a default that
   // shifts under us when Firefox ships WebGPU on this platform.
@@ -303,7 +304,7 @@ async function verifyLocalFallback() {
     await page.addInitScript(() => {
       localStorage.setItem("graview:intelligence", JSON.stringify({ source: "local" }));
     });
-    await page.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
+    await page.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     const engineFacts = await page.evaluate(() => ({
       webgpu: "gpu" in navigator,

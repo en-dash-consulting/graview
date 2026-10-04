@@ -25,6 +25,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, movedIn, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -51,14 +52,14 @@ const store = spawn(
     "--seed",
     "apps/rota/src/data/example.json",
     "--port",
-    "5196",
+    String(portFor("served")),
   ],
   { cwd: repoRoot, stdio: ["ignore", "pipe", "pipe"], detached: true },
 );
 await new Promise((ready, fail) => {
   const timer = setTimeout(() => fail(new Error("the store server did not start")), 30_000);
   store.stdout.on("data", (chunk) => {
-    if (String(chunk).includes("5196")) {
+    if (String(chunk).includes(at("served"))) {
       clearTimeout(timer);
       ready(undefined);
     }
@@ -69,10 +70,10 @@ await new Promise((ready, fail) => {
   });
 });
 
-const desk = await serving("launcher", 5199, repoRoot);
+const desk = await serving("launcher", portFor("launcher"), repoRoot);
 const demos = Object.fromEntries(
   await Promise.all(
-    APPS.map(async (entry) => [entry.id, await serving(entry.id, entry.port, repoRoot)]),
+    APPS.map(async (entry) => [entry.id, await serving(entry.id, portFor(entry.id), repoRoot)]),
   ),
 );
 let browser;
@@ -84,7 +85,7 @@ try {
   page.on("pageerror", (error) => errors.push(error.message));
 
   /* ----------------------- the list is the platform's, in onboarding order */
-  await page.goto("http://localhost:5199/?theme=light", { waitUntil: "load" });
+  await page.goto(`${at("launcher")}/?theme=light`, { waitUntil: "load" });
   await page.waitForFunction(() => document.querySelector("[data-graview-view]") !== null, null, {
     timeout: 40_000,
   });
@@ -141,7 +142,7 @@ try {
     const stop = capability.stop.startsWith("/") || capability.stop.startsWith("?")
       ? capability.stop
       : `/${capability.stop}`;
-    const url = `http://localhost:${entry.port}${stop}`;
+    const url = `${at(entry.id)}${movedIn(stop)}`;
     try {
       await page.goto(url, { waitUntil: "load" });
       if (!stop.startsWith("/pages") && !stop.startsWith("/embed")) {
