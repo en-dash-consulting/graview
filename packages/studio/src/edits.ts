@@ -1,4 +1,4 @@
-import { editDocument, error, parseExpr, printExpr, renameIn, type DeclaredKinds, type DocumentEdit, type EditOutcome, type Finding, type GraviewDocument } from "@graview/core/document";
+import { canonicalize, editDocument, error, parseExpr, printExpr, renameIn, type DeclaredKinds, type DocumentEdit, type EditOutcome, type Finding, type GraviewDocument } from "@graview/core/document";
 import { label, Read, type Node } from "./source.js";
 import type { Reading } from "./to-declaration.js";
 
@@ -32,7 +32,7 @@ export interface StudioEdits {
 
 const str = (node: Node, key: string): string | undefined => (typeof node[key] === "string" ? (node[key] as string) : undefined);
 const strings = (node: Node, key: string): string[] | undefined => (Array.isArray(node[key]) ? (node[key] as unknown[]).map(String) : undefined);
-const same = (a: unknown, b: unknown): boolean => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+const same = (a: unknown, b: unknown): boolean => canonicalize(a ?? null) === canonicalize(b ?? null);
 /** An expression as the rule language prints it, so `||` and `or` are one judgement. */
 const printed = (text: string | undefined): string | undefined => {
   if (text === undefined) return undefined;
@@ -213,7 +213,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
   }
 
   // ── acts and rules, against the document the edits so far make ──
-  const middle = edits.length === 0 ? ({ ok: true, document } as const) : editDocument(document, edits);
+  const middle = editDocument(document, edits);
   if (!middle.ok) return { edits, unsaid: findings };
   const mid = middle.document;
   const kindName = (node: Node | undefined) => (node ? label(node) : undefined);
@@ -393,6 +393,5 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
 /** The document the studio's changes make: the one it opened on with its edits applied, or why there is none. */
 export function documentAfter(document: GraviewDocument, made: StudioEdits): EditOutcome {
   if (made.unsaid.length > 0) return { ok: false, findings: made.unsaid };
-  if (made.edits.length === 0) return { ok: true, document, said: [], fills: [] };
   return editDocument(document, made.edits);
 }

@@ -16,12 +16,13 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };
-const app = await serving("todo", 5193, repoRoot);
+const app = await serving("todo", portFor("todo"), repoRoot);
 let browser;
 
 /** The strip's offered mutations, in document order, via each row's pin. */
@@ -42,7 +43,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
 
   /* ------------------------- the searcher appears only past the fold */
@@ -276,7 +277,7 @@ try {
   // 2026-09-04 leaves five tasks past their date; 2026-09-01 leaves one,
   // and one subject cannot show an order problem between subjects.
   const LATE = "today=2026-09-04";
-  await page.goto(`http://localhost:5193/?${LATE}&fresh=1`, { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?${LATE}&fresh=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
   const led = {};
   for (const [id, label] of [
@@ -299,7 +300,7 @@ try {
    * first subject the rule happened to walk. And the acts it does list
    * carry the derivation's rank, ascending — one order, two renderings.
    */
-  await page.goto(`http://localhost:5193/pages/tasks/t-post?${LATE}`, { waitUntil: "networkidle" });
+  await page.goto(`${at("todo")}/pages/tasks/t-post?${LATE}`, { waitUntil: "networkidle" });
   await page.waitForSelector('[data-testid="record-violations"] [data-graview-repair]', {
     timeout: 20_000,
   });
@@ -324,7 +325,7 @@ try {
     record.ranks.every((rank, at) => at === 0 || rank > record.ranks[at - 1]);
 
   /* ------------------------- the inbox's repair changes what it names */
-  await page.goto(`http://localhost:5193/pages/problems?${LATE}`, { waitUntil: "networkidle" });
+  await page.goto(`${at("todo")}/pages/problems?${LATE}`, { waitUntil: "networkidle" });
   await page.waitForSelector('[data-testid="repairs"] [data-graview-repair]', { timeout: 20_000 });
   const finishPost = await page.evaluate(() =>
     [...document.querySelectorAll('[data-testid="repairs"] [data-graview-repair="finish"]')].findIndex(
@@ -367,7 +368,7 @@ try {
   /* ------------------------------------ the keyboard keeps its place */
   // Back to the scene the rest of this file drives, at its own date — and
   // holding a selection, because what follows begins by putting one down.
-  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
   await page.click('[data-graview-pick="t-book"]');
   // The pane is up once it has acts in it; the × it used to wait for belongs

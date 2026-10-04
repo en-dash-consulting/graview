@@ -34,9 +34,15 @@ export const BUDGETS = [
      * views (FR-35 over FR-19): the framework's default views and the
      * declaration's view specs, which the pages now draw their cards, rows
      * and record pages from — about 48 kB minified, 15.5 kB gzipped.
+     *
+     * Raised again from 815_000 / 220_000 when the workspace moved to zod
+     * 4.6, the zod a consumer resolves from the published ranges: 4.6 gives
+     * every schema type its own JSON-schema processor, so zod no longer
+     * shakes down to what the pages use — about 130 kB minified, 30 kB
+     * gzipped, of zod's, which a host already paid on 4.6.
      */
-    minified: 815_000,
-    gzipped: 220_000,
+    minified: 950_000,
+    gzipped: 252_000,
     load: "first",
   },
   {
@@ -46,10 +52,10 @@ export const BUDGETS = [
      * Every face, as a page with `studio: false` loads it: the studio is
      * imported when it is turned on, and not before (it was about 104 kB
      * minified of every embed, whether it was offered or not). Set at
-     * 1_047_473 / 300_745 measured.
+     * 1_175_514 / 329_683 measured, on zod 4.6.
      */
-    minified: 1_070_000,
-    gzipped: 308_000,
+    minified: 1_200_000,
+    gzipped: 337_000,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -62,15 +68,19 @@ export const BUDGETS = [
      * the studio every face carries now carries the editor and the document
      * schema it checks against — about 43 kB minified, 13 kB gzipped.
      *
-     * Raised again from 1_150_000 / 330_000 when a studio opened on a
-     * document came to be judged by compiling it (FR-54): the studio now
-     * carries `compileDocument`, about 26 kB minified and 9 kB gzipped; and
-     * since the studio became a chunk of its own, loaded when it is turned
-     * on, its chunk is gzipped on its own — about 2 kB and 3 kB more. What
-     * a page without the studio loads fell by 110 kB: the budget above.
+     * Raised again from 1_150_000 / 330_000 with zod 4.6, for the same reason
+     * as the pages face: about 130 kB minified, 30 kB gzipped, of zod's.
+     *
+     * And again when a studio opened on a document came to be judged by
+     * compiling it (FR-54): the studio now carries `compileDocument`, about
+     * 26 kB minified and 9 kB gzipped; and since the studio became a chunk of
+     * its own, loaded when it is turned on, its chunk is gzipped on its own —
+     * about 2 kB and 3 kB more. Measured at 1_285_784 / 365_101 (from
+     * 1_259_216 / 354_049 before), so raised from 1_290_000 / 362_000. What
+     * a page without the studio loads fell by about 110 kB: the budget above.
      */
-    minified: 1_185_000,
-    gzipped: 345_000,
+    minified: 1_310_000,
+    gzipped: 373_000,
     load: "all",
   },
 ];

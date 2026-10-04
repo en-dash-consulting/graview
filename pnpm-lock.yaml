@@ -99,8 +99,8 @@ importers:
         specifier: ^7.1.1
         version: 7.18.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
     devDependencies:
       '@vitejs/plugin-react':
         specifier: ^4.3.4
@@ -148,8 +148,8 @@ importers:
         specifier: ^7.1.1
         version: 7.18.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
     devDependencies:
       '@vitejs/plugin-react':
         specifier: ^4.3.4
@@ -200,8 +200,8 @@ importers:
         specifier: ^19.2.0
         version: 19.2.8(react@19.2.8)
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
     devDependencies:
       vite:
         specifier: ^5.4.11
@@ -283,8 +283,8 @@ importers:
         specifier: ^7.1.1
         version: 7.18.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
     devDependencies:
       '@vitejs/plugin-react':
         specifier: ^4.3.4
@@ -338,8 +338,8 @@ importers:
         specifier: ^7.1.1
         version: 7.18.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
     devDependencies:
       '@vitejs/plugin-react':
         specifier: ^4.3.4
@@ -403,8 +403,8 @@ importers:
         specifier: ^7.1.1
         version: 7.18.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
     devDependencies:
       '@vitejs/plugin-react':
         specifier: ^4.3.4
@@ -419,8 +419,8 @@ importers:
         specifier: '*'
         version: 13.0.3
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
 
   packages/create-graview:
     dependencies:
@@ -492,8 +492,8 @@ importers:
         version: link:../core
     devDependencies:
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
 
   packages/pages:
     dependencies:
@@ -520,8 +520,8 @@ importers:
         version: 7.18.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     devDependencies:
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
 
   packages/primitives:
     dependencies:
@@ -545,8 +545,8 @@ importers:
         version: 19.2.8
     devDependencies:
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
 
   packages/react:
     dependencies:
@@ -570,8 +570,8 @@ importers:
         version: 19.2.8(react@19.2.8)
     devDependencies:
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
 
   packages/render:
     dependencies:
@@ -586,8 +586,8 @@ importers:
         version: 0.1.72
     devDependencies:
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
 
   packages/ship:
     dependencies:
@@ -599,8 +599,8 @@ importers:
         version: 5.9.3
     devDependencies:
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
 
   packages/skills: {}
 
@@ -634,8 +634,8 @@ importers:
         specifier: '>=18'
         version: 19.2.8(react@19.2.8)
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
 
   packages/tools:
     dependencies:
@@ -648,10 +648,10 @@ importers:
     devDependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.0
-        version: 1.32.0(zod@4.4.3)
+        version: 1.32.0(zod@4.6.5)
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.6.5
+        version: 4.6.5
 
 packages:
 
@@ -3179,8 +3179,8 @@ packages:
   zod@3.22.3:
     resolution: {integrity: sha512-EjIevzuJRiRPbVH4mGc8nApb/lVLKVpmUhAaR5R5doKGfAnGJ6Gr3CViAVjP+4FWSxCsybeWQdcgCtbX+7oZug==}
 
-  zod@4.4.3:
-    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+  zod@4.6.5:
+    resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
 
 snapshots:
 
@@ -3787,9 +3787,9 @@ snapshots:
 
   '@modelcontextprotocol/core@2.0.0':
     dependencies:
-      zod: 4.4.3
+      zod: 4.6.5
 
-  '@modelcontextprotocol/sdk@1.32.0(zod@4.4.3)':
+  '@modelcontextprotocol/sdk@1.32.0(zod@4.6.5)':
     dependencies:
       '@hono/node-server': 2.1.3(hono@4.13.12)
       ajv: 8.20.0
@@ -3806,15 +3806,15 @@ snapshots:
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
       raw-body: 3.0.2
-      zod: 4.4.3
-      zod-to-json-schema: 3.25.2(zod@4.4.3)
+      zod: 4.6.5
+      zod-to-json-schema: 3.25.2(zod@4.6.5)
     transitivePeerDependencies:
       - supports-color
 
   '@modelcontextprotocol/server@2.0.0':
     dependencies:
       '@modelcontextprotocol/core': 2.0.0
-      zod: 4.4.3
+      zod: 4.6.5
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
@@ -5483,7 +5483,7 @@ snapshots:
       pixelmatch: 7.2.0
       pngjs: 7.0.0
       wgpu-matrix: 3.4.2
-      zod: 4.4.3
+      zod: 4.6.5
     transitivePeerDependencies:
       - supports-color
 
@@ -5680,10 +5680,10 @@ snapshots:
       cookie: 1.1.1
       youch-core: 0.3.3
 
-  zod-to-json-schema@3.25.2(zod@4.4.3):
+  zod-to-json-schema@3.25.2(zod@4.6.5):
     dependencies:
-      zod: 4.4.3
+      zod: 4.6.5
 
   zod@3.22.3: {}
 
-  zod@4.4.3: {}
+  zod@4.6.5: {}

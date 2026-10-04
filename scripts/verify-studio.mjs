@@ -23,12 +23,13 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };
-const app = await serving("todo", 5193, repoRoot);
+const app = await serving("todo", portFor("todo"), repoRoot);
 let browser;
 
 /** The written schema, read out of the download link the studio offers. */
@@ -66,7 +67,7 @@ try {
   page.on("pageerror", (error) => errors.push(error.message));
 
   const open = async (as) => {
-    await page.goto(`http://localhost:5193/?today=2026-09-01&fresh=1&as=${as}`, { waitUntil: "load" });
+    await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1&as=${as}`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await page.waitForTimeout(800);
     await profile();
@@ -414,7 +415,7 @@ try {
       response.end(JSON.stringify({ choices: [{ message: { content: answer } }] }));
     });
   });
-  await new Promise((ready) => provider.listen(5399, ready));
+  await new Promise((ready) => provider.listen(portFor("studio-model"), ready));
 
   try {
     /*
@@ -430,13 +431,13 @@ try {
         { mutation: "add-field", args: { kind: "Meal", label: "serves", type: "number", required: false }, why: "how many it feeds" },
       ],
     });
-    await page.addInitScript(() => {
+    await page.addInitScript((baseUrl) => {
       localStorage.setItem(
         "graview:intelligence",
-        JSON.stringify({ source: "remote", remote: { preset: "custom", baseUrl: "http://localhost:5399/v1", apiKey: "harness", model: "stub" } }),
+        JSON.stringify({ source: "remote", remote: { preset: "custom", baseUrl, apiKey: "harness", model: "stub" } }),
       );
-    });
-    await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1&as=user-nora", { waitUntil: "load" });
+    }, `${at("studio-model")}/v1`);
+    await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1&as=user-nora`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await page.waitForTimeout(900);
     await profile();

@@ -24,7 +24,7 @@
     "@graview/tools": "workspace:*",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "zod": "^4.4.3"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "vite": "^5.4.11"

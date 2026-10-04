@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-04T03:37:11.825Z",
+  "at": "2026-10-04T03:26:36.400Z",
   "packages": {
     "@graview/core": {
       "files": 479,
-      "tarballBytes": 553280,
+      "tarballBytes": 555419,
       "ok": true
     },
     "create-graview": {
@@ -13,12 +13,12 @@
     },
     "@graview/embed": {
       "files": 23,
-      "tarballBytes": 31408,
+      "tarballBytes": 31141,
       "ok": true
     },
     "graview": {
       "files": 11,
-      "tarballBytes": 4892,
+      "tarballBytes": 4891,
       "ok": true
     },
     "@graview/guest": {
@@ -28,7 +28,7 @@
     },
     "@graview/layout": {
       "files": 47,
-      "tarballBytes": 93798,
+      "tarballBytes": 93800,
       "ok": true
     },
     "@graview/pages": {
@@ -38,12 +38,12 @@
     },
     "@graview/primitives": {
       "files": 219,
-      "tarballBytes": 356490,
+      "tarballBytes": 356489,
       "ok": true
     },
     "@graview/react": {
       "files": 147,
-      "tarballBytes": 213489,
+      "tarballBytes": 213491,
       "ok": true
     },
     "@graview/render": {
@@ -53,63 +53,44 @@
     },
     "@graview/ship": {
       "files": 115,
-      "tarballBytes": 156211,
+      "tarballBytes": 156213,
       "ok": true
     },
     "@graview/skills": {
       "files": 25,
-      "tarballBytes": 44604,
+      "tarballBytes": 44562,
       "ok": true
     },
     "@graview/studio": {
       "files": 71,
-      "tarballBytes": 121078,
+      "tarballBytes": 117190,
       "ok": true
     },
     "@graview/tools": {
       "files": 123,
-      "tarballBytes": 170232,
+      "tarballBytes": 170234,
       "ok": true
     }
   },
   "budgets": [
     {
       "name": "the pages face alone",
-      "load": "first",
-      "minified": 797078,
-      "gzipped": 215907,
-      "chunks": 1,
+      "minified": 924220,
+      "gzipped": 244613,
       "budget": {
-        "minified": 815000,
-        "gzipped": 220000
+        "minified": 950000,
+        "gzipped": 252000
       },
-      "carries": [],
-      "over": false
-    },
-    {
-      "name": "embed without the studio",
-      "load": "first",
-      "minified": 1047473,
-      "gzipped": 300745,
-      "chunks": 2,
-      "budget": {
-        "minified": 1070000,
-        "gzipped": 308000
-      },
-      "carries": [],
       "over": false
     },
     {
       "name": "every face",
-      "load": "all",
-      "minified": 1157845,
-      "gzipped": 336191,
-      "chunks": 3,
+      "minified": 1257763,
+      "gzipped": 353413,
       "budget": {
-        "minified": 1185000,
-        "gzipped": 345000
+        "minified": 1290000,
+        "gzipped": 362000
       },
-      "carries": [],
       "over": false
     }
   ],

@@ -29,6 +29,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { packTarballs, pinToTarballs } from "./lib/tarballs.mjs";
+import { portFor } from "./lib/ports.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -179,7 +180,7 @@ try {
 
   /* ======================================================= the browser */
   if (withBrowser) {
-    const port = 5177;
+    const port = portFor("created");
     const base = `http://localhost:${port}`;
     vite = await startVite(app, port);
     browser = await launchEngine(engineName(), { headless: true });
@@ -571,7 +572,7 @@ try {
   // sources, the dedupe, and the allowed directory are what this shape adds,
   // and a headless verify exercises none of them.
   if (withBrowser) {
-    const port = 5178;
+    const port = portFor("linked");
     vite = await startVite(linked, port);
     browser = await launchEngine(engineName(), { headless: true });
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });

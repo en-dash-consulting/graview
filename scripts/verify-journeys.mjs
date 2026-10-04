@@ -27,9 +27,9 @@
  *   node scripts/verify-journeys.mjs                 every app
  *   node scripts/verify-journeys.mjs todo rota       only these
  *   GRAVIEW_PORT_BASE=5600 node scripts/verify-journeys.mjs
- *                                                    todo on 5603, seedbed on 5604, … —
- *                                                    the config's port less 5190, on the base,
- *                                                    so two checkouts can run harnesses at once
+ *                                                    every port moved onto the base, as every
+ *                                                    harness's is (scripts/lib/ports.mjs), so
+ *                                                    two checkouts can run harnesses at once
  *   GRAVIEW_JOURNEYS_PARALLEL=4                      how many runs at once (6)
  *
  * Every run is its own process with its own browser, so the watch's
@@ -79,15 +79,6 @@ const APPS = [
   // The awkward example, built in parallel: driven when it is here, skipped when it is not.
   { dir: "gauntlet", query: {} },
 ];
-
-/** The app's port: its vite config's, or moved onto GRAVIEW_PORT_BASE. */
-function portOf(dir) {
-  const config = readFileSync(resolve(repoRoot, "apps", dir, "vite.config.ts"), "utf8");
-  const port = Number(/server:\s*\{[^}]*port:\s*(\d+)/.exec(config)?.[1]);
-  if (!port) throw new Error(`apps/${dir}/vite.config.ts names no server port`);
-  const base = process.env["GRAVIEW_PORT_BASE"];
-  return base ? Number(base) + (port - 5190) : port;
-}
 
 const address = (base, path, query, extra = {}, hash = "") => {
   const search = new URLSearchParams({ ...query, ...extra }).toString();
@@ -188,7 +179,7 @@ async function runVariant({ setupFile, variant, out }) {
 /* ------------------------------------------------------------------ */
 
 async function setUp(browser, entry, declaration) {
-  const port = portOf(entry.dir);
+  const port = portFor(entry.dir);
   const served = await serving(entry.dir, port, repoRoot);
   const plan = planJobs(declaration);
   const setup = {

@@ -22,13 +22,14 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };
-const app = await serving("todo", 5193, repoRoot);
-const garden = await serving("seedbed", 5194, repoRoot);
-const roster = await serving("rota", 5195, repoRoot);
+const app = await serving("todo", portFor("todo"), repoRoot);
+const garden = await serving("seedbed", portFor("seedbed"), repoRoot);
+const roster = await serving("rota", portFor("rota"), repoRoot);
 let browser;
 
 const showing = (page) =>
@@ -50,7 +51,7 @@ try {
   page.on("pageerror", (error) => errors.push(error.message));
 
   /* ----------------------------------- the month is a place on the bar */
-  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
   await page.waitForTimeout(800);
   const places = await page.evaluate(() =>
@@ -128,7 +129,7 @@ try {
   /* -------------------------- a busy day says how many, and opens itself */
   // 2026-09-04 onwards: the example's tasks cluster, so at one per cell the
   // overflow is guaranteed rather than hoped for.
-  await page.goto("http://localhost:5193/?today=2026-09-01#focus=aggregate:task&in.view=the-month&in.range=day&in.at=2026-09-03", {
+  await page.goto(`${at("todo")}/?today=2026-09-01#focus=aggregate:task&in.view=the-month&in.range=day&in.at=2026-09-03`, {
     waitUntil: "load",
   });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
@@ -147,7 +148,7 @@ try {
    * date, the store judges it, and the log records it — so one undo puts
    * the entry back on the day it came from.
    */
-  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1#focus=aggregate:task&in.view=the-month", {
+  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1#focus=aggregate:task&in.view=the-month`, {
     waitUntil: "load",
   });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
@@ -216,7 +217,7 @@ try {
    * forty-eight times. A month per cell, the span drawn across every cell it
    * covers, and the years themselves as stops down into one of them.
    */
-  await page.goto("http://localhost:5194/?chapter=16&theme=light#focus=agg:rotation&in.view=the-rotation", {
+  await page.goto(`${at("seedbed")}/?chapter=16&theme=light#focus=agg:rotation&in.view=the-rotation`, {
     waitUntil: "load",
   });
   await page.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
@@ -305,7 +306,7 @@ try {
   };
 
   /* ------------------------------------- and the rota plans by the quarter */
-  await page.goto("http://localhost:5195/?today=2026-09-14&fresh=1#focus=aggregate:shift&in.view=the-quarter", {
+  await page.goto(`${at("rota")}/?today=2026-09-14&fresh=1#focus=aggregate:shift&in.view=the-quarter`, {
     waitUntil: "load",
   });
   await page.waitForFunction(() => "__rotaReady" in window, null, { timeout: 60_000 }).catch(() => {});
@@ -340,8 +341,8 @@ try {
    */
   const axeSource = readFileSync(resolve(repoRoot, "node_modules/axe-core/axe.min.js"), "utf8");
   const horizons = [
-    ["the rotation", "http://localhost:5194/?chapter=16#focus=agg:rotation&in.view=the-rotation", "__seedbedReady"],
-    ["the quarter", "http://localhost:5195/?today=2026-09-14#focus=aggregate:shift&in.view=the-quarter", "__rotaReady"],
+    ["the rotation", `${at("seedbed")}/?chapter=16#focus=agg:rotation&in.view=the-rotation`, "__seedbedReady"],
+    ["the quarter", `${at("rota")}/?today=2026-09-14#focus=aggregate:shift&in.view=the-quarter`, "__rotaReady"],
   ];
   const violations = {};
   for (const width of [390, 1280]) {
@@ -365,7 +366,7 @@ try {
 
   /* -------- the reader's own text size, and their say about movement */
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  await phone.goto("http://localhost:5194/?chapter=16#focus=agg:rotation&in.view=the-rotation", { waitUntil: "load" });
+  await phone.goto(`${at("seedbed")}/?chapter=16#focus=agg:rotation&in.view=the-rotation`, { waitUntil: "load" });
   await phone.waitForSelector('[data-testid="calendar"]', { timeout: 30_000 });
   await phone.evaluate(() => {
     document.documentElement.style.fontSize = "32px";
@@ -402,7 +403,7 @@ try {
   await phone.close();
 
   const still = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
-  await still.goto("http://localhost:5194/?chapter=16#focus=agg:rotation&in.view=the-rotation", { waitUntil: "load" });
+  await still.goto(`${at("seedbed")}/?chapter=16#focus=agg:rotation&in.view=the-rotation`, { waitUntil: "load" });
   await still.waitForSelector('[data-testid="calendar"]', { timeout: 30_000 });
   await still.waitForTimeout(500);
   const motion = await still.evaluate(() => {

@@ -17,6 +17,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -44,7 +45,7 @@ const openProfile = async (page) => {
 /** Every landing place, and how to get to it from a fresh load. */
 const APPS = {
   todo: {
-    port: 5193,
+    port: portFor("todo"),
     ready: "__todoReady",
     // The example is written around a day, so the screenshots pin it — a
     // survey whose pictures change every morning is a survey nobody can
@@ -71,7 +72,7 @@ const APPS = {
         await page.waitForTimeout(700);
       },
       member: async (page) => {
-        await page.goto("http://localhost:5193/?theme=light&today=2026-09-01&fresh=1&as=user-sam", { waitUntil: "load" });
+        await page.goto(`${at("todo")}/?theme=light&today=2026-09-01&fresh=1&as=user-sam`, { waitUntil: "load" });
         await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
         await page.waitForTimeout(700);
       },
@@ -112,12 +113,12 @@ const APPS = {
        */
       pages: async (page) => {
         const scheme = new URL(page.url()).searchParams.get("theme");
-        await page.goto(`http://localhost:5193/pages?theme=${scheme}&today=2026-09-01`, { waitUntil: "networkidle" });
+        await page.goto(`${at("todo")}/pages?theme=${scheme}&today=2026-09-01`, { waitUntil: "networkidle" });
         await page.waitForTimeout(400);
       },
       pagesRecord: async (page) => {
         const scheme = new URL(page.url()).searchParams.get("theme");
-        await page.goto(`http://localhost:5193/pages/tasks/t-deposit?theme=${scheme}&today=2026-09-01`, { waitUntil: "networkidle" });
+        await page.goto(`${at("todo")}/pages/tasks/t-deposit?theme=${scheme}&today=2026-09-01`, { waitUntil: "networkidle" });
         await page.waitForTimeout(400);
       },
       tidied: async (page) => {
@@ -131,13 +132,13 @@ const APPS = {
     },
   },
   launcher: {
-    port: 5199,
+    port: portFor("launcher"),
     ready: "__launcherReady",
     states: {
       home: async () => {},
     },
   },
-  seedbed: { port: 5194, ready: "__seedbedReady", states: {
+  seedbed: { port: portFor("seedbed"), ready: "__seedbedReady", states: {
     // The empty app's own first screen: a city of districts saying "none yet".
     empty: async () => {},
     /*
@@ -147,7 +148,7 @@ const APPS = {
      */
     rotation: async (page) => {
       const scheme = new URL(page.url()).searchParams.get("theme");
-      await page.goto(`http://localhost:5194/?chapter=16&theme=${scheme}#focus=agg:rotation&in.view=the-rotation`, { waitUntil: "load" });
+      await page.goto(`${at("seedbed")}/?chapter=16&theme=${scheme}#focus=agg:rotation&in.view=the-rotation`, { waitUntil: "load" });
       await page.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
       await page.waitForTimeout(1100);
     },

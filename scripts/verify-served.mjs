@@ -16,12 +16,13 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 const DATA = resolve(repoRoot, "apps/rota/data");
-const PORT = 5196;
-const SERVER = `http://localhost:${PORT}`;
+const PORT = portFor("served");
+const SERVER = at("served");
 
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };
 
@@ -71,14 +72,14 @@ const logLines = () => {
 };
 
 rmSync(DATA, { recursive: true, force: true });
-const app = await serving("rota", 5195, repoRoot);
+const app = await serving("rota", portFor("rota"), repoRoot);
 let server = await startServer();
 let browser;
 
 try {
   browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
   const open = async (page, as) => {
-    await page.goto(`http://localhost:5195/?today=2026-09-14&server=${SERVER}&as=${as}`, { waitUntil: "load" });
+    await page.goto(`${at("rota")}/?today=2026-09-14&server=${SERVER}&as=${as}`, { waitUntil: "load" });
     await page.waitForFunction(() => "__rotaReady" in window, null, { timeout: 60_000 });
     await page.waitForTimeout(1000);
   };
@@ -111,7 +112,7 @@ try {
         : (document.querySelector('[data-graview-view="s-fri-repair"]')?.textContent ?? ""),
     );
   // Through the interface: select the uncovered shift and take its repair.
-  await one.goto(`http://localhost:5195/pages/shifts/s-fri-repair?today=2026-09-14&server=${SERVER}&as=user-jo`, {
+  await one.goto(`${at("rota")}/pages/shifts/s-fri-repair?today=2026-09-14&server=${SERVER}&as=user-jo`, {
     waitUntil: "networkidle",
   });
   await one.waitForSelector('[data-testid="record-violations"] [data-graview-repair]', { timeout: 20_000 });
