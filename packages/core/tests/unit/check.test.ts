@@ -119,9 +119,7 @@ describe("checkApp", () => {
    * asks the same question of both shapes — is that a field this kind
    * declares? — and says so plainly when it is neither.
    */
-  // `LensDeclaration.bindings` types a field role as a field name only, while
-  // the checker (and the calendar lens) also read `{ field, is }`; these
-  // cases hand it both shapes, and one that is neither.
+  // A binding that is neither shape does not typecheck; the checker is held to saying so anyway.
   const predicateBindings = (
     bindings: Readonly<Record<string, Readonly<Record<string, string | { field: string; is?: readonly unknown[] }>>>>,
   ) => bindings as unknown as LensDeclaration["bindings"];
@@ -141,7 +139,7 @@ describe("checkApp", () => {
         {
           name: "calendar",
           requiredRoles: ["start"],
-          bindings: predicateBindings({ duty: { start: "at", done: { field: "until", is: [0] } } }),
+          bindings: { duty: { start: "at", done: { field: "until", is: [0] } } },
         },
       ],
     });
@@ -157,7 +155,7 @@ describe("checkApp", () => {
         {
           name: "calendar",
           requiredRoles: ["start"],
-          bindings: predicateBindings({ duty: { start: "at", done: { field: "status", is: ["done"] } } }),
+          bindings: { duty: { start: "at", done: { field: "status", is: ["done"] } } },
         },
       ],
     });

@@ -1,4 +1,4 @@
-import { createMemoryAdapter, createSchema, defineApp, defineNode, OperationLog, Store, type AnySchema, type GraphEdge, type GraphSnapshot, type GraviewApp, type Operation, type Presence, type Principal } from "@graview/core";
+import { createMemoryAdapter, createSchema, defineApp, defineNode, OperationLog, Store, type AnySchema, type GraphEdge, type GraviewApp, type Operation, type Presence, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { leaked, MUTATIONS, policyOf, SCHEMA, storeOf, unseenIds, world, type World } from "../../../core/tests/support/unseen-worlds.js";
@@ -145,7 +145,7 @@ describe("no id a seat may not see leaves the wire", () => {
     const live = liveProtocol({ store });
     await live.receive(socket(live.open(viewer, "web"), heard), JSON.stringify({ t: "hello" }));
     const welcome = JSON.parse(heard[0]!) as Extract<LiveServerMessage, { t: "welcome" }>;
-    expect((welcome.state?.snapshot as GraphSnapshot | undefined)?.nodes).toEqual([{ id: "pub:p1", kind: "pub", title: "P" }]);
+    expect(welcome.state?.snapshot.nodes).toEqual([{ id: "pub:p1", kind: "pub", title: "P" }]);
     expect(heard.join("\n")).not.toContain("secret:s1");
 
     const handler = await createStoreHandler({ app: defineApp({ name: "repro", schema, policy, version: 1 }), store, seatOf: () => viewer });

@@ -1,3 +1,4 @@
+import type { GraphSnapshot } from "./snapshot.js";
 import { WIRE_PROTOCOL, type FieldConflict, type FieldRevision, type MutationCall, type Operation, type Presence, type Principal, type RefusalReason } from "@graview/core";
 export { REFUSAL_REASONS } from "@graview/core";
 export type { RefusalReason, WireRefusal } from "@graview/core";
@@ -129,7 +130,7 @@ export type LiveServerMessage =
       readonly seq: number;
       readonly ops: readonly Operation[];
       /** `horizon`: the seq `log` begins at, when the store was compacted (FR-23); absent, 0. */
-      readonly state?: { readonly version: number; readonly snapshot: unknown; readonly log: readonly Operation[]; readonly migrated: readonly string[]; readonly enabledModules?: readonly string[]; readonly horizon?: number };
+      readonly state?: { readonly version: number; readonly snapshot: GraphSnapshot; readonly log: readonly Operation[]; readonly migrated: readonly string[]; readonly enabledModules?: readonly string[]; readonly horizon?: number };
     }
   /** A call or undo landed: the ops it made, in the batch they landed in. Every op before them has already been sent. */
   | { readonly t: "ack"; readonly cid: string; readonly seq: number; readonly batch: string; readonly ops: readonly Operation[] }
