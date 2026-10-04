@@ -580,7 +580,11 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       });
     }
 
-    if (url.pathname === "/graview/export") return send(200, exportBundle(app, wire.seenFor(await seat())));
+    if (url.pathname === "/graview/export") {
+      const asking = await seat();
+      // The log as the seat sees it, withheld ops under their opaque batch, as on every other route.
+      return send(200, exportBundle(app, wire.seenFor(asking), { log: wire.seenLog(asking) }));
+    }
 
     if (url.pathname === "/graview/ops" && request.method === "POST") {
       const text = await request.text();

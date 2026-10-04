@@ -158,6 +158,15 @@ ws.serializeAttachment(state);
 if (landed) live.publish(landed, otherPeers); // each as its own seat sees them, from its own cursor
 ```
 
+`publish` and `tell` make each seat's view once, however many sockets it holds: a seat key is
+resolved once, and each run of ops is redacted and written once and sent down every socket of
+that seat (200 ops to 50 sockets of 5 seats: 4.7 ms, where it was 43 ms; 50 sockets of 50
+seats are still 50 views). A withheld op is served under an opaque batch, `withheld:<16 hex>`,
+a keyed hash of its batch — the same for every op of one batch — so a seat cannot tell which
+session made a change it may not see; the seat that made it is served its own. The key is
+drawn once per store held, so a host that wakes holds a new one; `liveProtocol({ withheldKey })`
+keeps it the same across wakes, and is never sent to a client.
+
 **The attachment budget.** Cloudflare refuses an attachment over 2,048 bytes, and a seat
 held whole is most of that: a person with fifty roles is about 1.9 kB of state on its own.
 So `seat` may be a host's key (a string) — `live.open("user:6b3f…", "web")` — which

@@ -10,6 +10,7 @@ import {
   participantKey,
   redact,
   seatLens,
+  sha256Hex,
   seenBy,
   seesId,
   refusalOf,
@@ -155,6 +156,16 @@ export interface LiveProtocolOptions<S extends AnySchema> {
    */
   readonly build?: string | ((peer: ServedSocket) => string | undefined);
   /**
+   * THE KEY A WITHHELD OP'S OPAQUE BATCH IS MINTED UNDER. A withheld op is
+   * served under `withheld:<16 hex>`, a keyed hash of its batch, so a seat
+   * cannot tell which session made a change it may not see. Without one,
+   * a key is drawn once per store held — the same opaque batch on every
+   * route and socket over that store, until a host that wakes holds a new
+   * one; a host that wants it the same across wakes gives a secret of its
+   * own, never sent to a client.
+   */
+  readonly withheldKey?: string;
+  /**
    * THE LOWEST HOST PROTOCOL SERVED (FR-44): the host's own number for its
    * half of the wire — its routing, its auth, its shell — beside ship's
    * `WIRE_PROTOCOL`, which a host does not move. A hello whose
@@ -234,7 +245,9 @@ export interface LiveProtocol<S extends AnySchema> {
    * Ops that landed, down every socket that has said hello and has not had
    * them, each as its own seat may see them (FR-02, FR-16): in seq order,
    * none skipped, caught up from the peer's own cursor. Sets each peer's
-   * cursor; the host keeps it.
+   * cursor; the host keeps it. Each seat's view is made once however many
+   * sockets it holds: its key resolved once, each run of ops redacted and
+   * written once.
    */
   publish(ops: readonly Operation[], peers: Iterable<LivePeer>): void;
   /** Who is here, told to every socket that has said hello: as its seat may be told it, and without itself. */
@@ -502,6 +515,8 @@ export interface Wire<S extends AnySchema> {
   since(principal: Principal, seq: number): Operation[];
   /** The store as the seat sees it. */
   seenFor(principal: Principal): Store<S>;
+  /** The store's log as the seat sees it: every op in place, withheld ones under an opaque batch. */
+  seenLog(principal: Principal): Operation[];
   whoFor(principal: Principal, who: readonly Presence[]): Presence[];
   /** The fields a call would write that moved since the caller's base: a stale write (FR-05). */
   conflictsOf(author: Principal, calls: readonly MutationCall[], base: unknown): FieldConflict[];
@@ -519,10 +534,47 @@ export interface Wire<S extends AnySchema> {
   enabledModules(): string[];
 }
 
-export function wireOf<S extends AnySchema>(store: Store<S>): Wire<S> {
+/**
+ * THE KEY A STORE'S WITHHELD BATCHES ARE MINTED UNDER, when the host gives
+ * none: drawn once per store held, so every route and socket over one
+ * store says the same opaque batch for one batch.
+ */
+const WITHHELD_KEYS = new WeakMap<object, string>();
+
+export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: string): Wire<S> {
   const sighted = (principal: Principal): boolean => hidesFrom(store, principal);
-  // Withheld in place (FR-16), and no id the seat may not see in any of them (FR-55).
-  const shown = (principal: Principal, ops: readonly Operation[]): Operation[] => (sighted(principal) ? redact(ops, seatLens(store, principal)) : [...ops]);
+  /*
+   * A WITHHELD OP SAYS NOBODY'S SESSION. Its batch is the one its author's
+   * client minted — `batch:<that browser's tag>:<n>` — which would tell a
+   * seat that may not see the change which session made it, and link it to
+   * the changes it may see. So it is served under `withheld:<16 hex>`, a
+   * keyed SHA-256 of the batch: the same for every op of one batch, and not
+   * one a seat can work back from, the key never leaving the server. The
+   * seat that made it is served its own.
+   */
+  let key = withheldKey;
+  if (key === undefined) {
+    key = WITHHELD_KEYS.get(store) ?? mintTag() + mintTag();
+    WITHHELD_KEYS.set(store, key);
+  }
+  const opaque = new Map<string, string>();
+  const opaqueBatch = (batch: string): string => {
+    let said = opaque.get(batch);
+    if (said === undefined) {
+      said = `withheld:${sha256Hex(`${key}\u0000${batch}`).slice(0, 16)}`;
+      opaque.set(batch, said);
+    }
+    return said;
+  };
+  const unattributed = (principal: Principal, served: readonly Operation[], authorOf: (op: Operation, at: number) => Author | undefined): Operation[] =>
+    served.map((op, at) => {
+      if (!op.withheld) return op;
+      const author = authorOf(op, at);
+      return author && authoredBy(author, principal) ? op : { ...op, batch: opaqueBatch(op.batch) };
+    });
+  // Withheld in place (FR-16), no id the seat may not see in any of them (FR-55), and no session it may not see.
+  const shown = (principal: Principal, ops: readonly Operation[]): Operation[] =>
+    sighted(principal) ? unattributed(principal, redact(ops, seatLens(store, principal)), (_op, at) => ops[at]?.author) : [...ops];
   /*
    * EVERY FIELD'S REVISION (FR-05): the seq of the op that last wrote it,
    * read off the log once and caught up from wherever the log has grown
@@ -545,6 +597,12 @@ export function wireOf<S extends AnySchema>(store: Store<S>): Wire<S> {
     shown,
     since: (principal, seq) => shown(principal, store.log.opsFrom(Math.max(0, Math.floor(seq) + 1))),
     seenFor: (principal) => seenBy(store, principal),
+    seenLog(principal) {
+      const log = seenBy(store, principal).log.all();
+      if (!sighted(principal)) return [...log];
+      const authors = new Map(store.log.all().map((op) => [op.id, op.author] as const));
+      return unattributed(principal, log, (op) => authors.get(op.id));
+    },
     whoFor: (principal, who) => {
       // A visitor whose announced time has passed is never told of, though a host may still hold it.
       const now = Date.now();
@@ -616,13 +674,28 @@ export function wireOf<S extends AnySchema>(store: Store<S>): Wire<S> {
   };
 }
 
-const say = (peer: LivePeer, message: LiveServerMessage): void => {
+const say = (peer: LivePeer, message: LiveServerMessage): void => sayText(peer, JSON.stringify(message));
+const sayText = (peer: LivePeer, text: string): void => {
   try {
-    peer.send(JSON.stringify(message));
+    peer.send(text);
   } catch {
     // A socket that cannot be written to is closing; its close is what forgets it.
   }
 };
+
+/**
+ * ONE PUBLISH, SEEN ONCE PER SEAT. Fifty sockets of five seats are five
+ * views, not fifty: each seat's key is resolved once and each run of ops
+ * is redacted and written once per seat, then sent down every socket that
+ * seat holds. Made for one `publish` or `tell` and thrown away after it.
+ */
+interface Sight {
+  readonly seats: Map<string, Principal | undefined>;
+  readonly texts: Map<string, string>;
+}
+const aSight = (): Sight => ({ seats: new Map(), texts: new Map() });
+/** What a socket's seat is, as a key a sight is kept under: a host's key, or the principal written out. */
+const seatKeyOf = (peer: Pick<LiveSocketState, "seat">): string => (typeof peer.seat === "string" ? `key:${peer.seat}` : `seat:${JSON.stringify(peer.seat)}`);
 
 /**
  * THE PROTOCOL OVER A STORE. Cheap to make, and safe to make again on
@@ -630,7 +703,7 @@ const say = (peer: LivePeer, message: LiveServerMessage): void => {
  */
 export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S>): LiveProtocol<S> {
   const { store } = options;
-  const wire = wireOf(store);
+  const wire = wireOf(store, options.withheldKey);
   /** A call that names no batch lands in one minted here, outside the shape a client may name. */
   const mintServed = serverBatchIds();
 
@@ -668,24 +741,38 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
   const unsavedIn = (ops: readonly Operation[]): boolean => unsaved.length > 0 && ops.some((op) => unsaved.some((one) => one.id === op.id));
   const UNSAVED = "Your change could not be saved just now. It is kept, and sent again until it is.";
 
-  /** The principal a socket is: its seat, or what the host's `seatOf` says its key names. */
-  const principalOf = (peer: Pick<LiveSocketState, "seat">): Principal | undefined => (typeof peer.seat === "string" ? options.seatOf?.(peer.seat) : peer.seat);
+  /** The principal a socket is: its seat, or what the host's `seatOf` says its key names — once per key in one sight. */
+  const principalOf = (peer: Pick<LiveSocketState, "seat">, sight?: Sight): Principal | undefined => {
+    if (typeof peer.seat !== "string") return peer.seat;
+    if (!sight) return options.seatOf?.(peer.seat);
+    const key = seatKeyOf(peer);
+    if (!sight.seats.has(key)) sight.seats.set(key, options.seatOf?.(peer.seat));
+    return sight.seats.get(key);
+  };
 
-  /** The ops after this socket's cursor up to `last`, down it now, as its seat sees them. */
-  const sendUpTo = (peer: LivePeer, last: number, ops?: readonly Operation[], known?: Principal): void => {
+  /** The ops after this socket's cursor up to `last`, down it now, as its seat sees them — written once per seat and run in one sight. */
+  const sendUpTo = (peer: LivePeer, last: number, ops?: readonly Operation[], known?: Principal, sight?: Sight): void => {
     if (peer.cursor === undefined || peer.cursor >= last) return;
-    const seat = known ?? principalOf(peer);
+    const seat = known ?? principalOf(peer, sight);
     if (!seat) return;
     const from = peer.cursor + 1;
+    peer.cursor = last;
+    const key = sight ? `${seatKeyOf(peer)}\u0000${from}\u0000${last}` : undefined;
+    const kept = key !== undefined ? sight!.texts.get(key) : undefined;
+    if (kept !== undefined) {
+      if (kept.length > 0) sayText(peer, kept);
+      return;
+    }
     // The ops handed in, when they are the whole of what this peer is missing; the log otherwise.
     const after = (ops && ops.length > 0 && ops[0]!.seq <= from && ops.at(-1)!.seq >= last ? ops.filter((op) => op.seq >= from) : store.log.opsFrom(from)).filter((op) => op.seq <= last);
-    peer.cursor = last;
-    if (after.length > 0) say(peer, { t: "ops", seq: last, ops: wire.shown(seat, after) });
+    const text = after.length > 0 ? JSON.stringify({ t: "ops", seq: last, ops: wire.shown(seat, after) } satisfies LiveServerMessage) : "";
+    if (key !== undefined) sight!.texts.set(key, text);
+    if (text.length > 0) sayText(peer, text);
   };
   /** Every op this socket has not been sent, down it now, as its seat sees them — up to the first that is not durable. */
-  const catchUp = (peer: LivePeer, ops?: readonly Operation[], known?: Principal): void => {
+  const catchUp = (peer: LivePeer, ops?: readonly Operation[], known?: Principal, sight?: Sight): void => {
     const held = unsaved[0]?.seq;
-    sendUpTo(peer, held === undefined ? wire.lastSeq() : Math.min(wire.lastSeq(), held - 1), ops, known);
+    sendUpTo(peer, held === undefined ? wire.lastSeq() : Math.min(wire.lastSeq(), held - 1), ops, known, sight);
   };
 
   /** What the host's `limit` says of a change, before it is judged; nothing when it has none. */
@@ -860,7 +947,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
               state: {
                 version: options.version ?? 1,
                 snapshot: seen.snapshot(),
-                log: seen.log.all(),
+                log: wire.seenLog(seat),
                 migrated: [...(options.migrated ?? [])],
                 enabledModules: wire.enabledModules(),
                 ...wire.horizonOf(),
@@ -968,12 +1055,14 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       }
     },
     publish(ops, peers) {
-      for (const peer of peers) catchUp(peer, ops);
+      const sight = aSight();
+      for (const peer of peers) catchUp(peer, ops, undefined, sight);
     },
     tell(who, peers) {
+      const sight = aSight();
       for (const peer of peers) {
         if (peer.cursor === undefined) continue;
-        const seat = principalOf(peer);
+        const seat = principalOf(peer, sight);
         if (!seat) continue;
         say(peer, { t: "presence", who: wire.whoFor(seat, who.filter((presence) => presence.participant !== peer.participant)) });
       }
@@ -1040,7 +1129,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       return reply(200, {
         ...answering(asked),
         snapshot: seen.snapshot(),
-        log: seen.log.all(),
+        log: wire.seenLog(asked.seat),
         migrated: [...(options.migrated ?? [])],
         enabledModules: wire.enabledModules(),
         ...wire.horizonOf(),

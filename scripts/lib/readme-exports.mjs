@@ -39,6 +39,7 @@ export const NOT_EXPORTS = new Map([
   ["minHostProtocol", "an option of liveProtocol and createStoreHandler, not an export"],
   ["hostProtocol", "an option of openRemote and a field of hello and reload on the wire, not an export"],
   ["hostBuild", "a field of a LiveSocketState, not an export"],
+  ["withheldKey", "an option of liveProtocol, not an export"],
   ["reloadPage", "an option of openRemote, not an export"],
   ["onBehalfOf", "a field of a Presence and a Principal, not an export"],
   ["onBehalfOfName", "a field of a Presence, not an export"],
