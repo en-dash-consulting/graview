@@ -195,8 +195,13 @@ makes a `liveProtocol` over the new store and calls `declared(peers)`. `openRemo
 app fetches and compiles its document), opens a new remote store on the server's migrated
 state and hands it to `remote.onDeclaration((next, version) => …)`. The calls still on the
 way are offered again there under the batch they were sent in, so one the server already
-made is not made twice, and one that no longer fits is refused in words on
-`next.onRefusal`. No page reloads. A polling client learns it the same way: every answer a
+made is not made twice, and one that no longer fits is refused in words on `onRefusal`. No
+page reloads. **The host's wiring goes with it:** every listener put on the first store —
+`onRefusal`, `onConflict`, `onStatus`, `onBuild`, `presence.onWho`, `onDeclaration` — is
+carried to each store that replaces it, and `counters()` run on, so a host writes its
+listeners once and only swaps which store it mounts (one added again is told twice).
+`presence.onWho` tells a listener added late who is here already, at once, and
+`remote.who()` says it any time. A polling client learns it the same way: every answer a
 poll reads (`/graview/state`, `/graview/since`, `/graview/here`, the `/graview/ops` answer)
 says the declaration `version` and the host's `build`, and `openRemote` compares it on each.
 
