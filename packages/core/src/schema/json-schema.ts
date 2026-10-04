@@ -20,7 +20,33 @@ export function toJsonSchema(schema: z.ZodType): JsonSchema {
         "or pass a JSON Schema explicitly.",
     );
   }
-  return convert(schema, { io: "input", unrepresentable: "any" });
+  return convert(schema, { io: "input", unrepresentable: "any", override: formatsByName });
+}
+
+/** zod's names for string formats that JSON Schema calls something else; the rest are the same word. */
+const JSON_SCHEMA_FORMATS: Readonly<Record<string, string>> = { guid: "uuid", url: "uri", datetime: "date-time", json_string: "json-string" };
+
+type ZodStringDef = { readonly type?: string; readonly format?: string; readonly checks?: readonly { readonly _zod?: { readonly def?: { readonly format?: string; readonly pattern?: RegExp } } }[] };
+
+/*
+ * A FORMAT IS SAID BY ITS NAME (a tool schema is a stability surface). zod
+ * writes its own regex for `z.email()`, `z.uuid()`, `z.iso.datetime()` beside
+ * the format, and that regex changes between zod's minor versions — so the
+ * tools an app offers moved with the version a consumer happened to resolve.
+ * A string format says `format` and nothing else; a pattern the author wrote
+ * with `.regex(…)` is the author's, and is kept.
+ */
+function formatsByName(ctx: { readonly zodSchema: unknown; readonly jsonSchema: JsonSchema }): void {
+  const def = (ctx.zodSchema as { _zod?: { def?: ZodStringDef } })._zod?.def;
+  if (!def || def.type !== "string" || typeof def.format !== "string" || def.format === "regex") return;
+  const js = ctx.jsonSchema;
+  const authored = (def.checks ?? []).map((check) => check._zod?.def).filter((check) => check?.format === "regex" && check.pattern instanceof RegExp).map((check) => check!.pattern!.source);
+  delete js["pattern"];
+  const allOf = js["allOf"];
+  if (Array.isArray(allOf) && allOf.every((part) => typeof part === "object" && part !== null && Object.keys(part).length === 1 && "pattern" in part)) delete js["allOf"];
+  js["format"] = JSON_SCHEMA_FORMATS[def.format] ?? def.format;
+  if (authored.length === 1) js["pattern"] = authored[0];
+  else if (authored.length > 1) js["allOf"] = authored.map((pattern) => ({ pattern }));
 }
 
 /** JSON Schema for one node kind, including its id and kind discriminator. */
