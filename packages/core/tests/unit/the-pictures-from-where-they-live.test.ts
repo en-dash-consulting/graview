@@ -14,6 +14,8 @@ const task = defineNode("task", { fields: z.object({ label: z.string() }), plura
 const note = defineNode("note", { fields: z.object({ label: z.string() }), plural: "Notes" });
 const schema = createSchema([task, note]);
 const app = defineApp({ name: "things", schema });
+// `withViews` reads any app, so it takes one widened the way the CLI holds it.
+const loaded = app;
 
 describe("the pictures, from where they live", () => {
   it("says the design rather than reading as neglect, and names the flag", () => {
@@ -25,10 +27,10 @@ describe("the pictures, from where they live", () => {
 
   it("takes a module exporting views — a registry, or a function that builds one — and reads the drive-ins out", () => {
     const registry = createViewRegistry(schema).register("task", { cardinality: "many", fidelity: "full" }, () => null, { title: "The week" });
-    const seen = describeApp(withViews(app, { views: () => registry }, "views.js"));
+    const seen = describeApp(withViews(loaded, { views: () => registry }, "views.js"));
     expect(seen).toContain('1 named places: "The week" over the tasks');
     expect(seen).toContain("Drive-ins from altitude: task; the rest open in place.");
-    expect(describeApp(withViews(app, { default: registry }, "views.js"))).toContain("The week");
-    expect(() => withViews(app, { nothing: 1 }, "views.js")).toThrow(/does not export a view registry/);
+    expect(describeApp(withViews(loaded, { default: registry }, "views.js"))).toContain("The week");
+    expect(() => withViews(loaded, { nothing: 1 }, "views.js")).toThrow(/does not export a view registry/);
   });
 });

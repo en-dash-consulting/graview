@@ -18,6 +18,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -45,11 +46,11 @@ const subject = (page) =>
   });
 
 try {
-  vite = await serving("todo", 5193, repoRoot);
+  vite = await serving("todo", portFor("todo"), repoRoot);
   browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
   const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   page.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(1500);
 
@@ -79,7 +80,7 @@ try {
   };
 
   /* ------------------------------------------------- the subject, without a gesture */
-  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(1500);
   const atRest = await subject(page);
@@ -126,7 +127,7 @@ try {
   report.checks.thisIsTheSubject = thisIsTheSubject;
 
   /* ------------------------------------- right-click opens the same acts at the pointer */
-  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(1500);
   /* Choose a thing: the acts the inspector used to strip out are the rail's, about the subject it names. */
@@ -175,7 +176,7 @@ try {
   };
 
   /* ------------------------------- what the seat wrote is marked where it is */
-  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(1500);
   await page.click('[data-testid="activity-button"]').catch(() => {});
@@ -228,7 +229,7 @@ try {
   /* ------------------------------------------- undo takes the mark with it */
   let cleared = { ok: false, why: "nothing to undo" };
   if (marked.ok) {
-    await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1", { waitUntil: "load" });
+    await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
     await page.waitForTimeout(1400);
     await page.click('[data-testid="activity-button"]').catch(() => {});
@@ -259,7 +260,7 @@ try {
    * the rail flickered through the whole map on the way. It costs a
    * render each time, and it is the wrong answer each time.
    */
-  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1#overview=1", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1#overview=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(1400);
   await page.evaluate(() => {
@@ -296,7 +297,7 @@ try {
    * chips and the field were painted straight over the relations. A
    * section that overlaps the one below it is a panel nobody can use.
    */
-  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1#overview=1", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1#overview=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(1400);
   await page.click('[data-testid="companion-key"] summary').catch(() => {});
@@ -318,7 +319,7 @@ try {
   });
 
   /* --------------------------------- quiet: nothing animating on a still city */
-  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1#overview=1", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1#overview=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(3000);
   const quiet = await page.evaluate(() => ({
@@ -328,7 +329,7 @@ try {
   report.checks.quietCityRunsNothing = { ...quiet, ok: quiet.animations === 0 && quiet.figures === 0 };
 
   /* ------------------------------------ a refused proposal is said in the rail */
-  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1&as=user-sam", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1&as=user-sam`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(1500);
   const ask = await page.$('[aria-label="Message the seat"]');
@@ -347,7 +348,7 @@ try {
   report.checks.aRefusalIsSaidAtTheGate = refusal;
 
   /* ---------------------------------------------- the keyboard reaches the dock */
-  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(1200);
   /*

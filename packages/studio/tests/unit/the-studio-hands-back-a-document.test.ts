@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { compileDocument, diffDocuments, documentHash, editDocument, readDocument, toDocument, type DocumentEdit, type GraviewDocument } from "@graview/core/document";
+import { compileDocument, diffDocuments, documentHash, editDocument, toDocument, type DocumentEdit, type GraviewDocument } from "@graview/core/document";
 import { describe, expect, it } from "vitest";
 import { createStudio } from "../../src/index.js";
 
@@ -60,7 +60,9 @@ describe("the studio's apply, written as a document (FR-54)", () => {
     expect(back.findings.filter((finding) => finding.severity === "error")).toEqual([]);
     expect(await documentHash(back.document)).toBe(await documentHash(edited));
     // Nothing the graph did not touch moved: every act, the brand, the description, notes as text.
-    expect(diffDocuments(readDocument(vendors).document!, back.document).sentences).toEqual(["vendor gains a field, soil (string)."]);
+    // Said against the document as the host wrote it, keys in its own order: exactly the one change.
+    expect(diffDocuments(vendors, applied.document!).sentences).toEqual(["vendor gains a field, soil (string)."]);
+    expect(diffDocuments(vendors, back.document).sentences).toEqual(["vendor gains a field, soil (string)."]);
     expect(back.document.kinds["vendor"]!.fields["notes"]!.type).toBe("text");
     expect(back.document.brand).toEqual(vendors.brand);
     expect(back.document.description).toBe(vendors.description);

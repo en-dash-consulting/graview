@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /* React's act() wants to know it is in a test environment. */
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
+import { bindSchema, createSchema, defineNode, nodeRef, Store, type Principal } from "@graview/core";
 import { EMPTY_VIEW } from "@graview/layout";
 import { createViews, GraviewProvider } from "@graview/react";
 import { planFrom } from "@graview/tools";
@@ -64,7 +64,7 @@ const guarded = (nodes: readonly unknown[] = []) =>
     policy: { roles: ["keeper", "crew"], grants: [{ roles: ["keeper"], mutations: ["stake-out"] }, { roles: ["crew"], mutations: ["place-feature"] }] },
     snapshot: { nodes: nodes as never, edges: [] },
   });
-const crew = { id: "c", roles: ["crew"] } as const;
+const crew = { kind: "human", id: "c", roles: ["crew"] } as const;
 
 let host: HTMLDivElement;
 beforeEach(() => {
@@ -73,7 +73,7 @@ beforeEach(() => {
 });
 afterEach(() => host.remove());
 
-const draw = async (node: React.ReactNode, at = store(), principal?: { readonly id: string; readonly roles: readonly string[] }) => {
+const draw = async (node: React.ReactNode, at = store(), principal?: Principal) => {
   const root = createRoot(host);
   await act(async () => {
     root.render(
@@ -138,7 +138,7 @@ describe("the first screen of an empty product", () => {
       { id: "lawn", kind: "zone", label: "Back Lawn" },
       { id: "a", kind: "almanac", label: "2026" },
     ]);
-    const asKeeper = { id: "k", roles: ["keeper"] } as const;
+    const asKeeper = { kind: "human", id: "k", roles: ["keeper"] } as const;
     const { root } = await draw(<Begin whenFull={<p data-testid="full">All set.</p>} />, standing, asKeeper);
     /* A keeper may not place features, and features are all that is left. */
     expect(host.querySelector('[data-testid="begin"]')).toBeNull();

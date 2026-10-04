@@ -1,5 +1,5 @@
 import { checkApp, Store, type AnySchema, type Batch, type CheckResult, type GraphSnapshot, type GraviewApp, type MigrationDeclaration, type MutationCall, type Principal } from "@graview/core";
-import { documentOf, toDocument, type DocumentEdit, type EditOutcome, type Fill, type Finding, type GraviewDocument } from "@graview/core/document";
+import { compileDocument, documentOf, toDocument, warning, type CompiledDocument, type RefusedDocument, type DocumentEdit, type EditOutcome, type Fill, type Finding, type GraviewDocument } from "@graview/core/document";
 import { resolveProposal } from "@graview/tools";
 import { documentAfter, documentEdits } from "./edits.js";
 import { declarationToGraph } from "./from-declaration.js";
@@ -68,9 +68,19 @@ export interface Studio<S extends AnySchema = AnySchema> {
    * The document the studio's changes make — the one it opened on, with
    * `edits()` applied and everything the graph did not touch kept as it
    * was written — or the findings that say why there is none. Undefined
-   * when the studio was not opened on an app compiled from a document.
+   * when the studio knows no document for its app: `whyNoDocument()`
+   * says why.
    */
   document(): EditOutcome | undefined;
+  /**
+   * WHY `document()` IS UNDEFINED, in one finding (`studio-no-document`):
+   * the studio was opened on a TypeScript app, or on an app that is not
+   * the object `compileDocument` returned — a copy, or one with its policy
+   * swapped — and no document was said with `createStudio(app, { document })`.
+   * Undefined when the studio has a document. `apply()` hands it back as
+   * `documentFindings`.
+   */
+  whyNoDocument(): Finding | undefined;
   /** The declaration as the files `graview create` writes. */
   files(options?: SourceOptions): readonly WrittenFile[];
   /** What changed since the studio opened, as edits the checkout's own source can take — and what cannot be written that way yet. */
@@ -81,7 +91,14 @@ export interface StudioApplyResult {
   readonly ok: true;
   readonly app: GraviewApp<AnySchema>;
   readonly migration: MigrationDeclaration | null;
-  /** The document the change makes, when the studio was opened on one and every change could be said (FR-54). */
+  /**
+   * The document the change makes, when the studio was opened on one and
+   * every change could be said (FR-54). `app` is then the app this
+   * document compiles to, remembered as compiled from it, so
+   * `toDocument(app)` gives this document back; its version is the
+   * document's, and a stored graph's move is planned from `fills` (or
+   * `migration`), which the app does not carry.
+   */
   readonly document?: GraviewDocument;
   /** The edits that made it, in order. */
   readonly edits?: readonly DocumentEdit[];
@@ -89,18 +106,25 @@ export interface StudioApplyResult {
   readonly said?: readonly string[];
   /** Values the edits give records already there, for the migration planner. */
   readonly fills?: readonly Fill[];
-  /** Why no document came back, when the studio was opened on one and could not say the change as a document. */
+  /** Why no document came back: the change could not be said or compiled as a document, or the studio knows no document for its app (`studio-no-document`). */
   readonly documentFindings?: readonly Finding[];
 }
 
 export interface StudioOptions {
   readonly name?: string;
   readonly principal?: Principal;
+  /**
+   * The document the app was compiled from, said outright (FR-54). Without
+   * it the studio knows the document only for the very object
+   * `compileDocument` returned; a host that copies that app, or swaps its
+   * policy for the signed-in seat's, says the document here.
+   */
+  readonly document?: GraviewDocument;
 }
 
 export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: StudioOptions = {}): Studio<S> {
   const app = studioApp(options.name ?? `${base.name} studio`);
-  const seed = declarationToGraph(base as unknown as GraviewApp<AnySchema>) as GraphSnapshot;
+  const seed = declarationToGraph(base) as GraphSnapshot;
   const store = new Store<StudioSchema>({
     schema: app.schema,
     mutations: app.mutations ?? [],
@@ -109,20 +133,51 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
     ...(options.principal ? { principal: options.principal } : {}),
   });
   const since = store.batches().length;
-  const declaration = () => graphToDeclaration(store.snapshot() as GraphSnapshot, { base: base as unknown as GraviewApp<AnySchema>, name: base.name });
+  const declaration = () => graphToDeclaration(store.snapshot() as GraphSnapshot, { base: base, name: base.name });
   const isAgent = (batch: Batch) => batch.author.kind === "agent";
   // The document the app was compiled from, if it was; the edits are read against it, or against what toDocument can say of a TypeScript app.
-  const opened = documentOf(base);
+  const opened = options.document ?? documentOf(base);
+  const noDocument: Finding | undefined = opened
+    ? undefined
+    : warning(
+        "studio-no-document",
+        "document",
+        `no document is known for ${base.name}: the studio was opened on a TypeScript app, or on an app that is not the object compileDocument returned (a copy, or one with its policy swapped), so it can hand back the app but not a document`,
+        "if the app was compiled from a document, say it: createStudio(app, { document })",
+      );
   let against: GraviewDocument | undefined;
-  const reference = () => opened ?? (against ??= toDocument(base as unknown as GraviewApp<AnySchema>).document);
+  const reference = () => opened ?? (against ??= toDocument(base).document);
   const made = () => documentEdits(reference(), seed, store.snapshot() as GraphSnapshot);
   const document = (): EditOutcome | undefined => (opened ? documentAfter(opened, made()) : undefined);
+  /*
+   * ONE JUDGE, AND FOR A DOCUMENT IT IS THE DOCUMENT'S. The studio's own
+   * TypeScript reading of a document does not carry a removal into the acts
+   * the way editDocument does — removing a relation left the acts that
+   * connect it claiming an edge nobody declares — so the checker refused
+   * changes whose document compiled clean. Opened on a document, a graph
+   * is judged by compiling the document its changes make; `check`,
+   * `would` and `apply` all ask here, so the verdict the studio shows, the
+   * one an agent's proposal is judged by and the one Apply keeps agree.
+   * A change no edit can say has no document to compile: it is judged as
+   * the studio's reading, as a TypeScript app is.
+   */
+  const judge = (graph: GraphSnapshot): { readonly check: CheckResult; readonly compiled?: CompiledDocument | RefusedDocument; readonly said?: EditOutcome } => {
+    if (opened) {
+      const said = documentAfter(opened, documentEdits(opened, seed, graph));
+      if (said.ok) {
+        const compiled = compileDocument(said.document);
+        return { check: verdictOf(base.name, compiled.findings), compiled, said };
+      }
+      return { check: checkApp(graphToDeclaration(graph, { base: base, name: base.name })), said };
+    }
+    return { check: checkApp(graphToDeclaration(graph, { base: base, name: base.name })) };
+  };
   let proposed = 0;
   return {
     store,
     base,
     declaration,
-    check: () => checkApp(declaration()),
+    check: () => judge(store.snapshot() as GraphSnapshot).check,
     changes: () => store.batches().slice(since),
     proposals: () => store.batches().slice(since).filter((batch) => isAgent(batch) && !batch.undone),
     propose(call, agent, intent) {
@@ -162,33 +217,53 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
       } catch (error) {
         return { ok: false, reason: error instanceof Error ? error.message : String(error) };
       }
-      return {
-        ok: true,
-        check: checkApp(
-          graphToDeclaration(trial.snapshot() as GraphSnapshot, { base: base as unknown as GraviewApp<AnySchema>, name: base.name }),
-        ),
-      };
+      return { ok: true, check: judge(trial.snapshot() as GraphSnapshot).check };
     },
     apply() {
+      const graph = store.snapshot() as GraphSnapshot;
+      const judged = judge(graph);
+      if (judged.check.errors > 0) return { ok: false, check: judged.check };
+      const migration = migrationBetween(base, graph);
+      /*
+       * THE DOCUMENT'S APP, NOT THE STUDIO'S READING. Handed the document
+       * and the studio's TypeScript reading beside it, a host that kept the
+       * app and read it back got acts as code (`act-is-code`) — the
+       * document it had just been given, lost. The app is the one the
+       * document compiles to, which the compiler remembers as compiled
+       * from it, so `toDocument(apply().app)` is `apply().document`.
+       */
+      if (judged.compiled?.ok && judged.said?.ok) {
+        return { ok: true, app: judged.compiled.app, migration, document: judged.compiled.document, edits: made().edits, said: judged.said.said, fills: judged.said.fills };
+      }
       const next = declaration();
-      const check = checkApp(next);
-      if (check.errors > 0) return { ok: false, check };
-      const migration = migrationBetween(base as unknown as GraviewApp<AnySchema>, store.snapshot() as GraphSnapshot);
       const version = migration ? migration.to : base.version;
       const app: GraviewApp<AnySchema> = {
         ...next,
         ...(version !== undefined ? { version } : {}),
         ...(migration ? { migrations: [...(base.migrations ?? []), migration] } : {}),
       };
-      if (!opened) return { ok: true, app, migration };
-      const said = document()!;
-      if (!said.ok) return { ok: true, app, migration, documentFindings: said.findings };
-      return { ok: true, app, migration, document: said.document, edits: made().edits, said: said.said, fills: said.fills };
+      if (judged.said && !judged.said.ok) return { ok: true, app, migration, documentFindings: judged.said.findings };
+      return { ok: true, app, migration, ...(noDocument ? { documentFindings: [noDocument] } : {}) };
     },
     files: (sourceOptions) =>
-      declarationFiles(store.snapshot() as GraphSnapshot, { name: base.name, base: base as unknown as GraviewApp<AnySchema>, ...sourceOptions }),
+      declarationFiles(store.snapshot() as GraphSnapshot, { name: base.name, base: base, ...sourceOptions }),
     edits: () => made().edits,
     document,
-    sourceChanges: () => sourceChanges(seed, store.snapshot() as GraphSnapshot, base as unknown as GraviewApp<AnySchema>),
+    whyNoDocument: () => noDocument,
+    sourceChanges: () => sourceChanges(seed, store.snapshot() as GraphSnapshot, base),
   };
+}
+
+/** What compiling a document says, as the checker's verdict: the same findings, at the document's paths, under the checker's own codes. */
+function verdictOf(app: string, findings: readonly Finding[]): CheckResult {
+  const said = findings.map((finding) => ({
+    severity: finding.severity,
+    code: finding.code.replace(/^check:/, ""),
+    where: finding.path,
+    message: finding.message,
+    fix: finding.fix ?? "",
+  }));
+  const count = (severity: Finding["severity"]) => said.filter((finding) => finding.severity === severity).length;
+  const errors = count("error");
+  return { app, findings: said, errors, warnings: count("warning"), notes: count("note"), ok: errors === 0 };
 }

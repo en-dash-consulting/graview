@@ -1,4 +1,4 @@
-import { createMemoryAdapter, createSchema, defineApp, defineMutation, defineNode, nodeRef, type Principal } from "@graview/core";
+import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, nodeRef, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createStoreHandler, LIVE_PATH, openRemote, SEAT_HEADERS, type LiveServerMessage } from "../../src/runtime.js";
@@ -14,6 +14,8 @@ import { createStoreHandler, LIVE_PATH, openRemote, SEAT_HEADERS, type LiveServe
  * ignored wherever it is sent.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string().min(1), done: z.boolean() }) });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
 const finish = defineMutation("finish", {
   title: "Finish it",
   subject: { kinds: ["task"], arg: "id" },
@@ -23,7 +25,6 @@ const finish = defineMutation("finish", {
     ctx.patchNode(args.id, { done: true });
   },
 });
-const schema = createSchema([task]);
 const app = defineApp({ name: "channel", schema, mutations: [finish], policy: { roles: ["keeper"], grants: [{ roles: ["keeper"], mutations: "*" }] }, version: 1 });
 const seed = { nodes: [{ id: "t1", kind: "task", label: "Book the hall", done: false }], edges: [] };
 const person: Principal = { kind: "human", id: "u1", roles: ["keeper"] };

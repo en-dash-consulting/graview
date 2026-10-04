@@ -27,6 +27,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -43,7 +44,7 @@ const ENGINE = engineName();
 const APPS = [
   {
     app: "todo",
-    port: 5193,
+    port: portFor("todo"),
     states: [
       ["at rest", "/?theme=light&today=2026-09-01"],
       ["from altitude", "/?theme=light&today=2026-09-01#overview=1"],
@@ -53,7 +54,7 @@ const APPS = [
   },
   {
     app: "seedbed",
-    port: 5194,
+    port: portFor("seedbed"),
     states: [
       ["at rest", "/?chapter=15&theme=light"],
       ["from altitude", "/?chapter=15&theme=light#overview=1"],
@@ -62,7 +63,7 @@ const APPS = [
   },
   {
     app: "rota",
-    port: 5195,
+    port: portFor("rota"),
     states: [
       ["at rest", "/?theme=light&today=2026-09-14"],
       ["from altitude", "/?theme=light&today=2026-09-14#overview=1"],

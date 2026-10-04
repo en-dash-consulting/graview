@@ -18,13 +18,13 @@ import {
  */
 
 const installation = declareInstallation({ roles: ["coordinator", "gardener"], admin: "coordinator" });
-const schema = createSchema([...installation.kinds] as never);
+const schema = createSchema([...installation.kinds]);
 // The app's own policy names the gardener and grants nothing beyond what the
 // installation gives everyone: their own profile. That is enough to be a role.
 const app = defineApp({
   name: "Garden",
-  schema: schema as never,
-  mutations: installation.mutations as never,
+  schema,
+  mutations: installation.mutations,
   modules: installation.modules,
   policy: installation.withPolicy({ roles: ["gardener"], grants: [] }),
 });
@@ -32,8 +32,8 @@ const june: Principal = { kind: "human", id: "june", roles: ["coordinator"] };
 const ravi: Principal = { kind: "human", id: "ravi", roles: ["gardener"] };
 const store = () =>
   new Store({
-    schema: schema as never,
-    mutations: installation.mutations as never,
+    schema,
+    mutations: installation.mutations,
     modules: installation.modules,
     policy: app.policy,
     snapshot: {
@@ -66,10 +66,10 @@ describe("who is here", () => {
   it("invite, then welcome: an invitation becomes a person with the roles it carried", () => {
     const s = store();
     s.apply({ name: "invite", args: { email: "sam@garden.test", roles: ["gardener"] } }, { author: june });
-    const [asked] = s.graph.nodesOfKind("invitation" as never);
+    const [asked] = s.graph.nodesOfKind("invitation");
     expect((asked as { status: string }).status).toBe("pending");
     s.apply({ name: "welcome", args: { invitationId: asked!.id, label: "Sam" } }, { author: june });
-    const sam = s.graph.nodesOfKind("user" as never).find((u) => (u as { label: string }).label === "Sam")!;
+    const sam = s.graph.nodesOfKind("user").find((u) => (u as { label: string }).label === "Sam")!;
     expect((sam as { roles: string[] }).roles).toEqual(["gardener"]);
     expect((s.graph.getNode(asked!.id) as { status: string }).status).toBe("accepted");
     expect(s.graph.out(asked!.id, "became")[0]?.id).toBe(sam.id);
@@ -80,7 +80,7 @@ describe("who is here", () => {
   it("a welcomed invitation cannot be welcomed twice", () => {
     const s = store();
     s.apply({ name: "invite", args: { email: "sam@garden.test", roles: ["gardener"] } }, { author: june });
-    const [asked] = s.graph.nodesOfKind("invitation" as never);
+    const [asked] = s.graph.nodesOfKind("invitation");
     s.apply({ name: "welcome", args: { invitationId: asked!.id, label: "Sam" } }, { author: june });
     expect(() => s.apply({ name: "welcome", args: { invitationId: asked!.id, label: "Sam again" } }, { author: june })).toThrow(
       /pending/,

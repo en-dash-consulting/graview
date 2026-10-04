@@ -84,7 +84,7 @@ describe("the framework says the kind the way the app spells it", () => {
       ["item", "this is an item"],
       ["work-order", "this is a work order"],
     ] as const) {
-      const node = s.graph.nodesOfKind(kind as never)[0]!;
+      const node = s.graph.nodesOfKind(kind)[0]!;
       const whys = deriveAffordances(s, [node.id], {
         providers: defaultProviders(),
       }).affordances.map((a) => a.why);
@@ -95,8 +95,8 @@ describe("the framework says the kind the way the app spells it", () => {
   it("introduces a node in the chat the same way", async () => {
     const s = store();
     s.apply({ name: "add-work-order", args: { label: "Pump" } });
-    const node = s.graph.nodesOfKind("work-order" as never)[0]!;
-    const reply = await graphResponder()(s, "what is this?", { selection: [node.id] });
+    const node = s.graph.nodesOfKind("work-order")[0]!;
+    const reply = await graphResponder<typeof schema>()(s, "what is this?", { selection: [node.id] });
     expect(reply.say).toContain("Pump — a work order");
     expect(reply.say).not.toContain("work-order");
   });

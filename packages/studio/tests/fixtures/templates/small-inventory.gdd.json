@@ -1,0 +1,294 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Small inventory",
+  "description": "The things you keep in stock, where each is kept, and every time some came in or went out.",
+  "kinds": {
+    "item": {
+      "noun": "item",
+      "plural": "items",
+      "description": "Something you keep a stock of, like printer paper or jars of honey.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "unit": {
+          "type": "string",
+          "description": "what you count it in, like boxes or jars"
+        },
+        "reorderAt": {
+          "type": "integer",
+          "label": "Reorder at",
+          "description": "restock when it gets down to this many"
+        },
+        "supplier": {
+          "type": "string"
+        },
+        "link": {
+          "type": "url"
+        }
+      },
+      "glance": [
+        "name",
+        "unit",
+        "reorderAt"
+      ],
+      "edges": {
+        "kept-in": {
+          "to": [
+            "location"
+          ],
+          "cardinality": "one",
+          "description": "where it is kept",
+          "inverse": "items kept here"
+        }
+      }
+    },
+    "location": {
+      "noun": "location",
+      "plural": "locations",
+      "description": "Somewhere things are kept: a shelf, a cupboard, a van.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    "movement": {
+      "noun": "movement",
+      "plural": "movements",
+      "description": "Some of an item coming in (a delivery) or going out (used or sold). Stock is what they add up to.",
+      "fields": {
+        "change": {
+          "type": "integer",
+          "required": true,
+          "description": "how many came in (positive) or went out (negative)"
+        },
+        "reason": {
+          "type": "enum",
+          "options": [
+            "received",
+            "used",
+            "sold",
+            "counted"
+          ],
+          "default": "received",
+          "required": true
+        },
+        "on": {
+          "type": "date"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "glance": [
+        "change",
+        "reason",
+        "on"
+      ],
+      "label": "{reason} {change}",
+      "describe": "{on|date}",
+      "edges": {
+        "of": {
+          "to": [
+            "item"
+          ],
+          "cardinality": "one",
+          "description": "the item it moved",
+          "inverse": "movements"
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-item": {
+      "title": "Add an item",
+      "creates": "item",
+      "description": "Start keeping track of something you stock, and when to reorder it."
+    },
+    "add-location": {
+      "title": "Add a location",
+      "creates": "location",
+      "description": "Add somewhere things are kept."
+    },
+    "add-item-here": {
+      "title": "Add an item kept here",
+      "on": "location",
+      "args": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "effects": [
+        {
+          "create": "item",
+          "as": "new",
+          "set": {
+            "name": "$name",
+            "reorderAt": "$reorderAt"
+          }
+        },
+        {
+          "connect": "kept-in",
+          "from": "$new",
+          "to": "$subject"
+        }
+      ],
+      "description": "Add an item that is kept in this location, by name, and when to reorder it."
+    },
+    "receive": {
+      "title": "Some came in",
+      "on": "item",
+      "args": {
+        "amount": {
+          "type": "integer",
+          "required": true
+        }
+      },
+      "effects": [
+        {
+          "create": "movement",
+          "as": "new",
+          "set": {
+            "change": "$amount",
+            "reason": "received",
+            "on": "$today"
+          }
+        },
+        {
+          "connect": "of",
+          "from": "$new",
+          "to": "$subject"
+        }
+      ],
+      "description": "Record a delivery or restock: how many came in today."
+    },
+    "use": {
+      "title": "Some went out",
+      "on": "item",
+      "args": {
+        "amount": {
+          "type": "integer",
+          "required": true
+        }
+      },
+      "effects": [
+        {
+          "create": "movement",
+          "as": "new",
+          "set": {
+            "change": {
+              "expr": "0 - amount"
+            },
+            "reason": "used",
+            "on": "$today"
+          }
+        },
+        {
+          "connect": "of",
+          "from": "$new",
+          "to": "$subject"
+        }
+      ],
+      "description": "Record some of an item used or sold today: how many went out."
+    },
+    "set-reorder-point": {
+      "title": "Set when to reorder",
+      "on": "item",
+      "writes": [
+        "reorderAt"
+      ],
+      "description": "Say how low an item may get before it needs restocking."
+    },
+    "store-in": {
+      "title": "Keep somewhere",
+      "on": "item",
+      "connects": "kept-in",
+      "description": "Say where an item is kept, in place of wherever it was.",
+      "fromTheOtherEnd": "Keep one of our items here"
+    },
+    "take-out-of-location": {
+      "title": "Take out of its location",
+      "on": "item",
+      "severs": "kept-in",
+      "description": "Say an item is no longer kept where it was.",
+      "fromTheOtherEnd": "Take an item out of here"
+    },
+    "add-movement": {
+      "title": "Record a movement",
+      "creates": "movement",
+      "description": "Record stock coming in or going out, before saying which item it was."
+    },
+    "attribute-movement": {
+      "title": "Say which item",
+      "on": "movement",
+      "connects": "of",
+      "description": "Say which item a movement was of.",
+      "fromTheOtherEnd": "Record a movement against this item"
+    },
+    "detach-movement": {
+      "title": "Take off its item",
+      "on": "movement",
+      "severs": "of",
+      "description": "Take a movement off the item it was recorded against, so it no longer counts.",
+      "fromTheOtherEnd": "Take a movement off this item"
+    }
+  },
+  "rules": {
+    "stock-above-reorder-point": {
+      "title": "Nothing runs below its reorder point",
+      "description": "The time to reorder is before the last box goes, not after.",
+      "over": "item",
+      "when": "present(reorderAt)",
+      "require": "sum(in('of'), 'change') > reorderAt",
+      "says": "{name} is down to {sum(in('of'), 'change')} — reorder at {reorderAt}",
+      "repairs": [
+        {
+          "act": "receive",
+          "label": "Record a delivery"
+        },
+        {
+          "act": "set-reorder-point",
+          "label": "Change when to reorder"
+        }
+      ]
+    },
+    "stock-not-negative": {
+      "title": "Stock never goes below none",
+      "description": "Using more than you had means a delivery or a count went unrecorded.",
+      "over": "item",
+      "require": "sum(in('of'), 'change') >= 0",
+      "says": "{name} shows {sum(in('of'), 'change')} in stock — a delivery or a count is missing",
+      "repairs": [
+        {
+          "act": "receive",
+          "label": "Record what came in"
+        }
+      ]
+    }
+  },
+  "roles": [
+    "owner",
+    "editor",
+    "viewer"
+  ],
+  "policy": {
+    "grants": [
+      {
+        "roles": [
+          "owner",
+          "editor"
+        ],
+        "mutations": "*",
+        "describe": "Owners and editors may do everything; viewers can look."
+      }
+    ]
+  },
+  "brand": {
+    "accent": "#5b6b2f"
+  }
+}

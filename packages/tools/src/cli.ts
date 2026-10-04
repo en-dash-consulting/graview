@@ -155,7 +155,7 @@ async function entryOf(argv: readonly string[], command: string): Promise<Gravie
 const say = (text: string) => process.stderr.write(text);
 
 /** How to work here, told to the model on connecting — derived, not authored per app. */
-export function instructionsFor(app: GraviewApp, principal: Principal, where: string): string {
+export function instructionsFor(app: Pick<GraviewApp, "name">, principal: Principal, where: string): string {
   return (
     `${app.name} is a Graview app; its graph is the interface and this seat (${principal.id ?? "an agent"}` +
     `${principal.roles?.length ? `, roles ${principal.roles.join(", ")}` : ""}) acts on the store at ${where}. ` +

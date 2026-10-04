@@ -1,4 +1,4 @@
-import { createSchema, defineMutation, defineNode, nodeRef, Store } from "@graview/core";
+import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createMcpAdapter, createToolRuntime, graphResponder, type ToolCall } from "../../src/index.js";
@@ -19,7 +19,7 @@ const task = defineNode("task", {
   lifecycle: { field: "done", retired: [true] },
 });
 const schema = createSchema([list, task]);
-const finish = defineMutation("finish", {
+const finish = bindSchema(schema).defineMutation("finish", {
   title: "Mark it done",
   description: "Say a task is finished.",
   subject: { kinds: ["task"], arg: "taskId" },
@@ -92,7 +92,7 @@ describe("search_graph", () => {
 
 describe("the conversation, when a message names no act and no fact", () => {
   it("answers with what the words find, each a pick, and not as a grounded fact", async () => {
-    const reply = await graphResponder()(store(), "where is the van?");
+    const reply = await graphResponder<typeof schema>()(store(), "where is the van?");
     expect(reply.say).toBe("Two things are called “van” — Book the van (task); Call the agent (task, notes: about the van).");
     expect(reply.picks?.map((hit) => hit.id)).toEqual(["t-van", "t-call"]);
     expect(reply.proposals).toEqual([]);
@@ -100,10 +100,10 @@ describe("the conversation, when a message names no act and no fact", () => {
   });
 
   it("still answers a whole name as the fact it is, and the shape when nothing is found", async () => {
-    const named = await graphResponder()(store(), "tell me about Book the van");
+    const named = await graphResponder<typeof schema>()(store(), "tell me about Book the van");
     expect(named.grounded).toBe(true);
     expect(named.picks).toBeUndefined();
-    const nothing = await graphResponder()(store(), "where are the zebras");
+    const nothing = await graphResponder<typeof schema>()(store(), "where are the zebras");
     expect(nothing.picks).toBeUndefined();
     expect(nothing.say).toContain("This graph holds");
   });

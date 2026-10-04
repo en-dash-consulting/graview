@@ -23,6 +23,7 @@ export type { Person } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";
 export type {
   AnySchema,
+  DefinitionOfKind,
   EdgeKindInfo,
   KindOfSchema,
   NodeOfKind,
@@ -253,6 +254,7 @@ export type { ConnectorKit, ConnectorRoute, Kit, KitContrastFinding, KitEndCap, 
 export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";
 export { recordsOf, sees, sightedKinds } from "./permissions/sight.js";
+export { writersOf, type Writers } from "./ops/writers.js";
 export type { RecordedLog, Records } from "./permissions/sight.js";
 export { answerSeenBy, hidesFrom, logSeenBy, seatLens, seenBy, seesId } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
@@ -273,7 +275,7 @@ export type {
 } from "./validate-graph.js";
 
 // Store — graph + log + mutations + invariants, one object.
-export { MODULES_AUTHOR, ReceiveError, Store, violationKey } from "./store.js";
+export { MODULES_AUTHOR, ReceiveError, Store, UnknownMutationError, violationKey } from "./store.js";
 export type {
   Adopt,
   AdoptResult,

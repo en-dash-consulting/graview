@@ -153,7 +153,7 @@ export function awkwardApp(options: AwkwardOptions = {}): GraviewApp {
   return defineApp({
     name: "awkward",
     schema: schema as never,
-    mutations: [...acts, ...(people ? installation.mutations : [])] as never,
+    mutations: [...acts, ...(people ? installation.mutations : [])],
     ...(people
       ? {
           modules: installation.modules,
@@ -169,7 +169,7 @@ export function awkwardApp(options: AwkwardOptions = {}): GraviewApp {
           }),
         }
       : {}),
-  }) as unknown as GraviewApp;
+  });
 }
 
 /** A graph with `per` of each kind the app declares, and the edges between them. */

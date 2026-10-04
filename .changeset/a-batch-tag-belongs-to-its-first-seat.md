@@ -1,0 +1,8 @@
+---
+"@graview/core": patch
+"@graview/ship": patch
+---
+
+**Security.** A batch's tag belongs to the first seat that used it. A batch sent again was answered only with the asker's own ops, but a batch id is `batch:<tag>:<n>` and a client's tag is in every op it lands, so Bo could name Ada's next batch, `batch:<her tag>:<n+1>`, before she did — and her call then met his batch and was refused. A held store that mints its own batches in the client's shape could likewise have its next batch named first, so what the host landed later joined a client's batch. Now the live wire and `POST /graview/ops` keep who each tag is — the author of the first op landed under it, read off the log and caught up as it grows, so a host that wakes reads the same — and refuse `invalid`, in words, a batch under somebody else's tag ("That batch is under somebody else's tag: …"), the same agent acting for another person included, and a batch under the store's own minting tag ("That batch is under the server's own tag: …"). In `@graview/core`, `store.batchTag` is the tag a store mints its own batches under when it mints them its default way, and undefined when it is given `batchIds`. A host holding its own store should still give it `batchIds: serverBatchIds()`, which the README now says in bold.
+
+Compatibility: the wire and live protocols — narrowing, no field added, `WIRE_PROTOCOL` and `REFUSAL_REASONS` unchanged. A client that names its batches as a `Store` mints them, with a tag of its own — `openRemote` does — is served as before; a batch under a tag another seat used first, or under the server store's own tag, is now refused `invalid` where it was made. `Store.batchTag` is a new read-only field. Ops, stored formats and check codes are unchanged.

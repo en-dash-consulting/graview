@@ -47,7 +47,11 @@ const connect = async (handler: (request: Request) => Promise<Response>, token =
   return client;
 };
 
-const textOf = (result: { content?: unknown }) => JSON.parse((result.content as { text: string }[])[0]!.text) as { data: unknown };
+const textOf = (result: Awaited<ReturnType<Client["callTool"]>>) => {
+  const first: unknown = Array.isArray(result.content) ? result.content[0] : undefined;
+  if (!first || typeof first !== "object" || !("text" in first) || typeof first.text !== "string") throw new Error("the tool answered without text");
+  return JSON.parse(first.text) as { data: unknown };
+};
 
 describe("MCP over Streamable HTTP", () => {
   it("the MCP TypeScript SDK client completes initialize, tools/list and tools/call against createMcpHttpHandler", async () => {

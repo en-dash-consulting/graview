@@ -1101,6 +1101,9 @@ export default {
     authenticate: (request) =&gt; seatFor(request.headers.get("authorization")),
   }),
 };</code></pre></div>
+<p><code>onCall</code> is told every tool call before it is answered — the caller, the tool, its arguments and whether it only reads — and cannot refuse one. Mounted beside a store handler, <code>onCall: handler.onCall</code> shows an agent in the room while it reads, as an op of its shows it while it acts:</p>
+<div class="code" data-scroller><pre><code>const handler = await createStoreHandler({ app, adapter, seatOf });
+const mcp = createMcpHttpHandler({ store: () =&gt; handler.store, authenticate: seatOf, name: "rota", version: "1.0.0", onCall: handler.onCall });</code></pre></div>
 <p>Every tool carries a title and MCP's four hints in its <code>annotations</code>, derived from the declaration: the reads are read-only; an act that removes or severs is destructive; an act that sets only what it is given is idempotent; and no tool reaches an open world. Tool names are MCP-safe — letters, digits, <code>_</code> and <code>-</code>, at most 64 — and an act whose name is not is listed under a safe one, with <code>_2</code> on a collision; <code>act</code> on a definition says which act it runs. <code>toolDefinitions(app, principal)</code> lists the same surface without a store, with the <code>hash</code> a stateless host compares to learn that it moved.</p>
 <p>Reads go through <code>seenBy</code>, and prose written by somebody other than the caller — or the person an agent acts for — comes back as <code>{ untrusted: true, authoredBy, text }</code> in <code>get_node</code>, <code>get_graph</code> and <code>search_graph</code>, so a model reads another collaborator's words as data.</p>
 <h3>Records by name</h3>

@@ -1,7 +1,7 @@
-import { createMemoryAdapter, createSchema, defineApp, defineMutation, defineNode, nodeRef, type Operation, type Principal } from "@graview/core";
+import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, nodeRef, type Operation, type Principal } from "@graview/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createStoreHandler, LIVE_PATH, openRemote, seatHeaders, serveStore, type LiveServerMessage, type RemoteConflict, type RemoteStore, type ServedStore } from "../../src/index.js";
+import { createStoreHandler, LIVE_PATH, openRemote, seatHeaders, serveStore, type LiveServerMessage, type RemoteConflict, type RemoteOptions, type RemoteStore, type ServedStore } from "../../src/index.js";
 
 /**
  * A LIVE WIRE (FR-05): ops pushed as they land, pending edits rebased, and a
@@ -20,6 +20,8 @@ const task = defineNode("task", {
   plural: "Tasks",
   label: (node) => node.label,
 });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
 const rename = defineMutation("rename", {
   title: "Rename",
   subject: { kinds: ["task"], arg: "id" },
@@ -50,7 +52,6 @@ const add = defineMutation("add", {
     ctx.addNode({ id: args.id, kind: "task", label: args.label, done: false });
   },
 });
-const schema = createSchema([task]);
 const app = defineApp({
   name: "live",
   schema,
@@ -82,9 +83,9 @@ const until = async (holds: () => boolean, ms = 2000) => {
 
 let served: ServedStore<typeof schema> | undefined;
 const opened: RemoteStore<typeof schema>[] = [];
-const open = async (principal: Principal, extra: Partial<Parameters<typeof openRemote>[0]> = {}) => {
+const open = async (principal: Principal, extra: Partial<RemoteOptions<typeof schema>> = {}) => {
   const remote = await openRemote({ app, url: served!.url, principal, live: true, ...extra });
-  opened.push(remote as never);
+  opened.push(remote);
   return remote;
 };
 afterEach(async () => {
@@ -169,7 +170,7 @@ describe("a live wire", () => {
       return fake;
     };
     const remote = await openRemote({ app, url: "http://store.example", principal: sam, live: true, socket, fetch: ((url: string, init?: RequestInit) => handler.handle(new Request(url, { ...init, headers: { ...(init?.headers as Record<string, string>) } }))) as typeof fetch });
-    opened.push(remote as never);
+    opened.push(remote);
     expect(remote.transport()).toBe("socket");
 
     // Confirmed: Sam renames t1; Ana notes t2 on the server before Sam's call arrives.

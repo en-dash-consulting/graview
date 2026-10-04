@@ -4,6 +4,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { GraviewApp } from "../app.js";
+import type { AnySchema } from "../schema/schema.js";
 import { checkApp, formatFindings } from "./check.js";
 import { compileDocument, readDocument } from "../document/compile.js";
 import { sayFindings } from "../document/findings.js";
@@ -131,7 +132,7 @@ function nearest(kind: string): string {
  * without rendering anything. The module exports `views` (a registry, or
  * a function that builds one), or the registry as its default export.
  */
-export function withViews(app: GraviewApp, module: Record<string, unknown>, name: string): GraviewApp {
+export function withViews<S extends AnySchema>(app: GraviewApp<S>, module: Record<string, unknown>, name: string): GraviewApp<S> {
   const candidate = module["views"] ?? module["default"] ?? module["registry"];
   const registry = typeof candidate === "function" ? (candidate as () => unknown)() : candidate;
   const looksLikeOne =
@@ -144,7 +145,7 @@ export function withViews(app: GraviewApp, module: Record<string, unknown>, name
       `${name} does not export a view registry. Export \`views\` — the registry, or a function that builds it — or the registry as default.`,
     );
   }
-  return { ...app, views: registry as GraviewApp["views"] };
+  return { ...app, views: registry as GraviewApp<S>["views"] };
 }
 
 async function loadViews(app: GraviewApp, entry: string | undefined): Promise<GraviewApp> {

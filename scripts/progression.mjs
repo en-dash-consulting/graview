@@ -18,12 +18,13 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { portFor } from "./lib/ports.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
 const out = resolve(repoRoot, "docs/progression");
 mkdirSync(out, { recursive: true });
-const port = 5194;
+const port = portFor("seedbed");
 
 // The chapters themselves, from the compiled app: the same objects the page opens.
 const { CHAPTERS } = await import(pathToFileURL(resolve(repoRoot, "apps/seedbed/dist/domain/chapters.js")).href);
@@ -38,8 +39,8 @@ const { aggregateId } = await import(pathToFileURL(resolve(repoRoot, "packages/l
  */
 function startVite() {
   // Seedbed, on the port the chapters are photographed at. This started Things
-  // on 5193 for two weeks, and passed only where a Seedbed dev server already
-  // held 5194 — which is every laptop, and never CI.
+  // on Things' port for two weeks, and passed only where a Seedbed dev server
+  // already held Seedbed's — which is every laptop, and never CI.
   return serving("seedbed", port, repoRoot);
 }
 

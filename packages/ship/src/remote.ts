@@ -142,6 +142,13 @@ export interface RemoteOptions<S extends AnySchema> {
    */
   readonly build?: string;
   /**
+   * THE HOST'S OWN PROTOCOL THIS PAGE SPEAKS (FR-44), said in `hello`
+   * beside ship's `WIRE_PROTOCOL`: a number the host moves when its half
+   * of the wire changes. A server below whose `minHostProtocol` it is
+   * answers `reload`, and this page reloads carrying what it had not sent.
+   */
+  readonly hostProtocol?: number;
+  /**
    * WHERE UNSENT CALLS WAIT ACROSS A RELOAD (FR-44). When the server
    * answers `reload`, every call not yet answered is written to `storage`
    * under `key`, and the next `openRemote` with the same key offers them
@@ -234,7 +241,8 @@ export interface RemoteStore<S extends AnySchema> {
    * The second argument says why as a code a program can branch on
    * (FR-46): `forbidden`, `missing`, `invalid` or `limit`, with `wouldNeed`
    * when the policy knows who could. Busy is never told here: a change the
-   * host asked to wait is kept, and sent again (FR-45).
+   * host asked to wait is kept, and sent again (FR-45) — and so is one
+   * refused `unavailable`, which waits out the spell, backing off.
    */
   onRefusal(listener: (sentence: string, refusal: RemoteRefusal) => void): () => void;
   /**
@@ -394,6 +402,15 @@ class Unreached extends Error {
 /** What a gateway in front of a server says when the server behind it is not there. */
 const AWAY = new Set([502, 503, 504]);
 
+/** A 503 that is the host saying it takes no changes for a while (reason `unavailable`), not a gateway saying it is away. */
+async function unavailableSaid(response: Response): Promise<boolean> {
+  try {
+    return ((await response.clone().json()) as { reason?: unknown }).reason === "unavailable";
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Opens a store from a server and keeps it in step with it.
  *
@@ -495,6 +512,11 @@ async function opening<S extends AnySchema>(
       // A live client whose socket is up is reaching the server, whatever one request met.
       if (!socketReady()) become("offline");
       throw new Unreached(error instanceof Error ? error.message : String(error));
+    }
+    // A host that takes no changes for a while is reached, and says so: not away (FR-46).
+    if (response.status === 503 && (await unavailableSaid(response))) {
+      become("online");
+      return response;
     }
     if (AWAY.has(response.status)) {
       if (!socketReady()) become("offline");
@@ -784,8 +806,8 @@ async function opening<S extends AnySchema>(
     return promise;
   };
 
-  /** `via` is a claim — a guest view's `view:<name>` — which a server records only if its `viaOf` accepts it (FR-52). */
-  type Body = { calls?: readonly MutationCall[]; undo?: readonly string[]; intent?: string; batch?: string; base?: readonly FieldRevision[]; via?: Via };
+  /** `via` is what the call was applied with — a guest view's `view:<name>` — sent as a claim the host may judge (FR-52). */
+  type Body = { calls?: readonly MutationCall[]; undo?: readonly string[]; intent?: string; batch?: string; base?: readonly FieldRevision[]; via?: string };
 
   /*
    * `mine` names the provisional batch this post answers, when the call was
@@ -801,6 +823,8 @@ async function opening<S extends AnySchema>(
    * turn and goes again from there, and the posts behind it wait for it.
    */
   let lane: Promise<unknown> = Promise.resolve();
+  /** How many times in a row the host said it takes no changes for a while: the backoff's attempt. */
+  let unavailableTries = 0;
   const post = (body: Body, mine?: string): Promise<{ ops: readonly Operation[]; batch?: string }> => {
     const turn = lane.then(() => posted(body, mine));
     lane = turn.catch(() => {});
@@ -833,12 +857,21 @@ async function opening<S extends AnySchema>(
         continue;
       }
       answer = (await response.json().catch(() => ({}))) as Answer;
-      if (response.status !== 429 || closed) break;
       /*
-       * BUSY, NOT REFUSED (FR-45): the host asked for it again later. The
-       * change stays shown and pending, and goes again after the wait.
+       * ONE WAY TO WAIT, IN THE POST LANE. Not for a while (FR-46): a 503
+       * whose reason is `unavailable` — the host takes no changes now and
+       * cannot say how long — waits a backoff, as a reconnect would. Busy
+       * (FR-45): a 429 waits what it asks, `Retry-After` read in seconds and
+       * a JSON `retryAfter` in milliseconds (`retryAfterMs`). Either way the
+       * change stays shown and pending, refused by nobody, and goes again.
        */
-      const wait = retryAfterMs(response.headers.get("retry-after"), answer.retryAfter);
+      let wait: number;
+      if (response.status === 503 && answer.reason === "unavailable" && !closed) wait = backoffFor(options.backoff, unavailableTries++);
+      else {
+        unavailableTries = 0;
+        if (response.status !== 429 || closed) break;
+        wait = retryAfterMs(response.headers.get("retry-after"), answer.retryAfter);
+      }
       await new Promise((later) => setTimeout(later, wait));
       if (socketReady()) return viaSocket(body, mine);
     }
@@ -996,6 +1029,7 @@ async function opening<S extends AnySchema>(
           return;
         }
         waiting.delete(message.cid);
+        unavailableTries = 0;
         if (waiter.mine !== undefined) {
           batches.set(waiter.mine, message.batch);
           settle(waiter.mine);
@@ -1008,6 +1042,11 @@ async function opening<S extends AnySchema>(
       case "conflict": {
         const waiter = waiting.get(message.cid);
         if (!waiter) return;
+        // Not for a while, and not final (FR-46): kept, and sent again after a backoff, with every call made behind it.
+        if (message.t === "refused" && message.reason === "unavailable") {
+          hold(message.cid, backoffFor(options.backoff, unavailableTries++));
+          return;
+        }
         waiting.delete(message.cid);
         waiter.reject(
           message.t === "conflict"
@@ -1166,7 +1205,7 @@ async function opening<S extends AnySchema>(
       if (socket !== made) return;
       // From the last op this client has: the welcome brings exactly the ones after it.
       // Which codec, which protocol and which build this page speaks (FR-44).
-      made.send(JSON.stringify({ t: "hello", seq: seen, protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, ...(options.build ? { build: options.build.slice(0, 64) } : {}) } satisfies LiveClientMessage));
+      made.send(JSON.stringify({ t: "hello", seq: seen, protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, ...(options.build ? { build: options.build.slice(0, 64) } : {}), ...(options.hostProtocol !== undefined ? { hostProtocol: options.hostProtocol } : {}) } satisfies LiveClientMessage));
     };
     made.onmessage = (event) => {
       if (socket !== made) return;
@@ -1341,7 +1380,6 @@ async function opening<S extends AnySchema>(
             ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}),
             batch: result.batch,
             ...(base.length > 0 ? { base } : {}),
-            // What it claims to come through, for a server that may believe it (FR-52).
             ...(applyOptions?.via ? { via: applyOptions.via } : {}),
           },
           result.batch,

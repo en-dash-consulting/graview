@@ -52,8 +52,7 @@ const rename = bound.defineMutation("rename", {
     ctx.patchNode(args.id, { label: args.label });
   },
 });
-const fleetRule = bound.defineInvariant("fleet-not-empty", {
-  scope: "graph",
+const fleetRule = bound.defineGraphInvariant("fleet-not-empty", {
   evaluate: ({ graph }): Violation[] =>
     [...graph.allNodes()].some((node) => node.kind === "vehicle")
       ? []

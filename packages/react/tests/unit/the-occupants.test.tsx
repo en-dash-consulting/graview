@@ -26,11 +26,6 @@ function Seated({ who }: { who: string }) {
   return null;
 }
 
-/* From altitude: a city with a pad at its origin block, where a docked robot stands. */
-const frame = { nodes: [], connectors: [], width: 800, height: 500, t: 1, city: { cell: 40, originX: 200, originY: 120 } } as never;
-/* In the stack: no city, no pad. */
-const stack = { nodes: [], connectors: [], width: 800, height: 500, t: 1 } as never;
-
 describe("the occupants", () => {
   it("draws no body for the seat at all: it lives on the frame, in the companion", async () => {
     const host = document.createElement("div");
@@ -40,7 +35,7 @@ describe("the occupants", () => {
       root.render(
         <GraviewProvider store={store()} views={createViews(schema)} initialView={EMPTY_VIEW}>
           <Seated who="tidy" />
-          <Occupants frame={frame} width={800} height={500} whereIs={() => null} stageRef={{ current: host }} pan={{ x: 0, y: 0 }} />
+          <Occupants width={800} whereIs={() => null} />
         </GraviewProvider>,
       ),
     );

@@ -96,11 +96,11 @@ describe("whose failure it is", () => {
   });
 
   it("reads a refused key as the seat's problem, and a malformed question as ours", async () => {
-    const seat = await jevDecide({ apiKey: KEY, fetch: answering([401]).fetch, ...noSleep })({}, questions).catch((e: JevError) => e);
+    const seat = await jevDecide({ apiKey: KEY, fetch: answering([401]).fetch, ...noSleep })({}, questions).then(() => expect.unreachable("a refused key decided"), (e: JevError) => e);
     expect(seat).toMatchObject({ failure: "seat" });
     expect(seat.message).toContain("seat problem");
     expect(seat.message).toContain("not the model's");
-    const ours = await jevDecide({ apiKey: KEY, fetch: answering([422]).fetch, ...noSleep })({}, questions).catch((e: JevError) => e);
+    const ours = await jevDecide({ apiKey: KEY, fetch: answering([422]).fetch, ...noSleep })({}, questions).then(() => expect.unreachable("a malformed question decided"), (e: JevError) => e);
     expect(ours).toMatchObject({ failure: "ours", status: 422 });
     expect(ours.message).toContain("our bug");
   });

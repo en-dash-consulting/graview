@@ -119,8 +119,8 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    */
   readonly pinned?: boolean;
   /** One-line description of a concrete application, for previews and logs. */
-  readonly describe?: (args: z.infer<I>, graph: GraphReader<NodeOfSchema<S>>) => string;
-  readonly apply: (context: MutationContext<S>, args: z.infer<I>) => void;
+  describe?(args: z.infer<I>, graph: GraphReader<NodeOfSchema<S>>): string;
+  apply(context: MutationContext<S>, args: z.infer<I>): void;
 }
 
 export interface MutationDefinition<

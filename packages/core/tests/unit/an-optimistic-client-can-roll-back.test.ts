@@ -158,7 +158,7 @@ describe("an optimistic client can roll back", () => {
     client.subscribe((_diff, ops) => heard.push(ops.length));
     client.notify(client.graph.applyPrimitives([{ op: "add-node", node: { id: "z", kind: "task", label: "z" } }] as never), []);
     // Nothing changed and nothing done is nothing to tell.
-    client.notify({ addedNodes: [], removedNodes: [], changedNodes: [], addedEdges: [], removedEdges: [] }, []);
+    client.notify({ addedNodes: [], removedNodes: [], changedNodes: [], addedEdges: [], removedEdges: [], touched: [] }, []);
     expect(heard).toEqual([0]);
   });
 });

@@ -40,7 +40,7 @@ describe("a drive-in's thumbnail", () => {
     await act(async () =>
       root.render(
         <GraviewProvider store={store} views={registry} initialView={{ ...EMPTY_VIEW, overview: true }}>
-          <Card nodes={store.graph.nodesOfKind("song" as never) as never} fidelity="glyph" cardinality="many" mode="card" selected={false} label="Songs" />
+          <Card nodes={store.graph.nodesOfKind("song" as never) as never} fidelity="glyph" cardinality="many" mode="scene" selected={false} label="Songs" />
         </GraviewProvider>,
       ),
     );

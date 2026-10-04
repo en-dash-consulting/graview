@@ -4,7 +4,6 @@
 import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
 import { EMPTY_VIEW } from "@graview/layout";
 import { GraviewProvider, createViews } from "@graview/react";
-import { deriveAffordances, defaultProviders } from "@graview/tools";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it } from "vitest";

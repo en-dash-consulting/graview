@@ -58,6 +58,29 @@ export interface StudioApplied {
   readonly documentFindings?: readonly Finding[];
 }
 
+/**
+ * APPLY, HANDED TO A HOST THAT KEEPS THE DECLARATION: what the checker
+ * passed — for a studio opened on a document, the document and the app it
+ * compiles to — or the verdict that refused it, in which case the host is
+ * handed nothing.
+ */
+export function handedToTheHost(
+  studio: Studio<AnySchema>,
+  onApply: (applied: StudioApplied) => void,
+): (StudioApplied & { readonly ok: true }) | { readonly ok: false; readonly check: CheckResult } {
+  const result = studio.apply();
+  if (!result.ok) return result;
+  const applied: StudioApplied = {
+    app: result.app,
+    migration: result.migration,
+    files: studio.files(),
+    ...(result.document ? { document: result.document, ...(result.edits ? { edits: result.edits } : {}) } : {}),
+    ...(result.documentFindings ? { documentFindings: result.documentFindings } : {}),
+  };
+  onApply(applied);
+  return { ok: true, ...applied };
+}
+
 export function StudioPlace<S extends AnySchema>({
   app,
   label = "Studio",
@@ -240,7 +263,7 @@ function StudioOverlay<S extends AnySchema>({
       }, 0);
     };
   }, []);
-  const views = useMemo(() => studioViews(app as unknown as GraviewApp<AnySchema>), [app]);
+  const views = useMemo(() => studioViews(app), [app]);
   /*
    * Re-read on every change rather than cached: the checker is cheap, the
    * declaration is small, and a verdict that can go stale is a verdict
@@ -356,19 +379,12 @@ function StudioOverlay<S extends AnySchema>({
           type="button"
           data-testid="studio-apply"
           onClick={() => {
-            const result = studio.apply();
-            if (result.ok && onApply) {
-              const files = studio.files();
-              onApply({
-                app: result.app,
-                migration: result.migration,
-                files,
-                ...(result.document ? { document: result.document, ...(result.edits ? { edits: result.edits } : {}) } : {}),
-                ...(result.documentFindings ? { documentFindings: result.documentFindings } : {}),
-              });
-              setApplied({ ok: true, files, migration: result.migration?.title ?? null, door: false, handed: true });
+            if (onApply) {
+              const handed = handedToTheHost(studio as unknown as Studio<AnySchema>, onApply);
+              setApplied(handed.ok ? { ok: true, files: handed.files, migration: handed.migration?.title ?? null, door: false, handed: true } : { ok: false, check: handed.check });
               return;
             }
+            const result = studio.apply();
             setApplied(
               result.ok
                 ? { ok: true, files: studio.files(), migration: result.migration?.title ?? null, door: door !== null }

@@ -1,4 +1,4 @@
-import { checkApp, createSchema, DARK, defineApp, defineInvariant, defineMutation, defineNode, LIGHT, nodeRef, Store, type GraphSnapshot, type Principal, type Violation } from "@graview/core";
+import { bindSchema, checkApp, createSchema, DARK, defineApp, defineInvariant, defineNode, LIGHT, nodeRef, Store, type GraphSnapshot, type Principal, type Violation } from "@graview/core";
 import { EMPTY_VIEW, KIND_PREFIX, kindCardId, layout } from "@graview/layout";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -25,8 +25,9 @@ const plot = defineNode("plot", {
   lifecycle: { field: "status", retired: ["retired"] },
 });
 const schema = createSchema([gardener, plot]);
+const bound = bindSchema(schema);
 
-const tend = defineMutation("tend", {
+const tend = bound.defineMutation("tend", {
   title: "Tend",
   // Read from the gardener's end: the round trip has to carry it, or a
   // checkout that was clean comes back warning act-without-far-end-reading.
@@ -40,7 +41,7 @@ const tend = defineMutation("tend", {
     ctx.addEdge({ kind: "tended-by", from: args.plot, to: args.gardener });
   },
 });
-const untend = defineMutation("untend", {
+const untend = bound.defineMutation("untend", {
   title: "Leave it",
   fromTheOtherEnd: "Leave a plot",
   description: "Take a gardener off a plot.",
@@ -52,7 +53,7 @@ const untend = defineMutation("untend", {
     ctx.removeEdge({ kind: "tended-by", from: args.plot, to: args.gardener });
   },
 });
-const addPlot = defineMutation("add-plot", {
+const addPlot = bound.defineMutation("add-plot", {
   title: "Add a plot",
   description: "Mark out a bed.",
   creates: ["plot"],
@@ -62,7 +63,7 @@ const addPlot = defineMutation("add-plot", {
     ctx.addNode({ id: ctx.freshId(args.label, "plot"), kind: "plot", label: args.label, size: 4, status: "open" });
   },
 });
-const everyPlotTended = defineInvariant("every-plot-tended", {
+const everyPlotTended = bound.defineInvariant("every-plot-tended", {
   label: "Every plot has someone",
   description: "An open plot with nobody tending it is a gap.",
   scope: { kind: "plot" },
@@ -92,6 +93,13 @@ const garden = defineApp({
   brand: { name: "Garden", schemes: { dark: DARK, light: LIGHT } },
   version: 1,
 });
+/*
+ * The studio's readers (graphToDeclaration, declarationFiles, migrationBetween)
+ * take a declaration whose kinds they do not know; a typed app does not
+ * assign to GraviewApp<AnySchema>, so it crosses that boundary here once,
+ * as createStudio does inside.
+ */
+const declared = garden;
 const seed: GraphSnapshot = {
   nodes: [
     { id: "june", kind: "gardener", label: "June" },
@@ -133,7 +141,7 @@ describe("the declaration is a graph", () => {
 
   it("a lens's binding slots are not seats: the roles are who may act, and only that", () => {
     const graph = declarationToGraph(garden);
-    const roles = graph.nodes.filter((node) => node.kind === "role").map((node) => (node as { label: string }).label);
+    const roles = graph.nodes.filter((node) => node.kind === "role").map((node) => node["label"]);
     /*
      * The garden declares two seats and a lens that asks for three slots.
      * Reading both into `role` said the garden had five roles, three of
@@ -148,10 +156,10 @@ describe("the declaration is a graph", () => {
     });
 
     // And it survives the trip back, on the lens rather than in the policy.
-    const back = graphToDeclaration(graph, { base: garden });
+    const back = graphToDeclaration(graph, { base: declared });
     expect(back.policy?.roles).toEqual(["coordinator", "gardener"]);
     expect(back.lenses?.[0]?.requiredRoles).toEqual(["rows", "columns", "link"]);
-    const written = declarationFiles(graph, { base: garden, name: garden.name }).find((file) => file.path.endsWith("policy.ts"));
+    const written = declarationFiles(graph, { base: declared, name: garden.name }).find((file) => file.path.endsWith("policy.ts"));
     expect(written?.contents).toContain('roles: ["coordinator", "gardener"]');
   });
 
@@ -209,11 +217,11 @@ describe("the declaration is a graph", () => {
   });
 
   it("gives the declaration back: the same kinds, edges and acts, with the checkout's own bodies kept", () => {
-    const back = graphToDeclaration(declarationToGraph(garden), { base: garden });
+    const back = graphToDeclaration(declarationToGraph(garden), { base: declared });
     expect(checkApp(back).errors).toBe(0);
     expect([...back.schema.kinds].sort()).toEqual(["gardener", "plot"]);
-    expect(back.schema.definition("plot").edges["tended-by"]).toMatchObject({ to: ["gardener"], description: "who looks after it", inverse: "what they look after" });
-    expect(back.schema.definition("plot").lifecycle).toEqual({ field: "status", retired: ["retired"] });
+    expect(back.schema.tryDefinition("plot")?.edges["tended-by"]).toMatchObject({ to: ["gardener"], description: "who looks after it", inverse: "what they look after" });
+    expect(back.schema.tryDefinition("plot")?.lifecycle).toEqual({ field: "status", retired: ["retired"] });
     expect(back.policy).toEqual(garden.policy);
     expect(back.mutations?.find((m) => m.name === "tend")?.fromTheOtherEnd).toBe("Take on a plot");
     expect(checkApp(back).findings.map((f) => f.code)).not.toContain("act-without-far-end-reading");
@@ -241,10 +249,10 @@ describe("a change to the declaration is a mutation", () => {
     const [change] = studio.changes();
     expect(change).toMatchObject({ author: june, intent: "Plots have soil", undone: false });
     expect(studio.store.graph.getNode("field:plot.soil")).toMatchObject({ type: "enum", options: ["clay", "loam"] });
-    expect(studio.declaration().schema.definition("plot").fields.shape).toHaveProperty("soil");
+    expect(studio.declaration().schema.tryDefinition("plot")?.fields.shape).toHaveProperty("soil");
     studio.store.undo(change!.id);
     expect(studio.store.graph.getNode("field:plot.soil")).toBeUndefined();
-    expect(studio.declaration().schema.definition("plot").fields.shape).not.toHaveProperty("soil");
+    expect(studio.declaration().schema.tryDefinition("plot")?.fields.shape).not.toHaveProperty("soil");
   });
 
   it("an act the studio declares gets a body from what it says, and the interface can run it", () => {
@@ -283,7 +291,7 @@ describe("a change to the declaration is a mutation", () => {
     const store = new Store({ schema: applied.app.schema, mutations: applied.app.mutations ?? [], invariants: applied.app.invariants ?? [], snapshot: migrated } as never);
     expect(store.graph.getNode("june")).toMatchObject({ status: "here" });
     // And nothing to migrate when nothing moved.
-    expect(migrationBetween(garden, graphToDeclaration(declarationToGraph(garden), { base: garden }))).toBeNull();
+    expect(migrationBetween(garden, graphToDeclaration(declarationToGraph(garden), { base: declared }))).toBeNull();
   });
 
   it("removing a kind is a migration that takes its records and their edges", () => {

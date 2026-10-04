@@ -1,4 +1,4 @@
-import { checkApp, createSchema, DARK, defineApp, defineInvariant, defineMutation, defineNode, LIGHT, nodeRef, Store } from "@graview/core";
+import { bindSchema, checkApp, createSchema, DARK, defineApp, defineNode, LIGHT, nodeRef, Store } from "@graview/core";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -24,7 +24,8 @@ const thing = defineNode("thing", {
   lifecycle: { field: "status", retired: ["closed"] },
 });
 const schema = createSchema([thing]);
-const addThing = defineMutation("add-thing", {
+const bound = bindSchema(schema);
+const addThing = bound.defineMutation("add-thing", {
   title: "Add a thing",
   description: "Bring a new thing in.",
   creates: ["thing"],
@@ -34,7 +35,7 @@ const addThing = defineMutation("add-thing", {
     ctx.addNode({ id: ctx.freshId(args.label, "thing"), kind: "thing", label: args.label, status: "open" });
   },
 });
-const link = defineMutation("link-thing", {
+const link = bound.defineMutation("link-thing", {
   title: "Depends on",
   description: "Say one thing has to be closed before another.",
   subject: { kinds: ["thing"], arg: "id" },
@@ -45,7 +46,7 @@ const link = defineMutation("link-thing", {
     ctx.addEdge({ kind: "depends-on", from: args.id, to: args.dependsOn });
   },
 });
-const unlink = defineMutation("unlink-thing", {
+const unlink = bound.defineMutation("unlink-thing", {
   title: "No longer depends on",
   description: "Take a dependency back.",
   subject: { kinds: ["thing"], arg: "id" },
@@ -57,7 +58,7 @@ const unlink = defineMutation("unlink-thing", {
   },
 });
 /** A rule the checkout judges — whose judgement the studio can never write. */
-const labelled = defineInvariant("labelled-things", {
+const labelled = bound.defineInvariant("labelled-things", {
   label: "Things are labelled",
   description: "A thing called by a single letter has not been named.",
   scope: { kind: "thing" },
@@ -153,7 +154,7 @@ export const app = defineApp({ name: "Field Notes", schema: fieldNotesSchema, mu
     expect(written).toContain("dependsOn: nodeRef([\"thing\"])");
     expect(written).not.toMatch(/\bto: nodeRef/);
     // And an act the STUDIO wrote names nodes in its history, never by id.
-    const closed = store.log.all().find((op) => op.mutation.name === "close-thing")!;
+    const closed = store.log.all().find((op) => op.mutation?.name === "close-thing")!;
     expect(closed.intent).toContain("Water the beds");
     expect(closed.intent).not.toMatch(/thing:/);
   });

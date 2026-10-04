@@ -159,7 +159,7 @@ afterEach(() => {
 describe("grounded facts outrank any model", () => {
   it("answers a graph-answerable question from the graph, whatever the rung", async () => {
     let modelAsked = 0;
-    const responder = configuredResponder(
+    const responder = configuredResponder<typeof schema>(
       { source: "remote", remote: { preset: "custom", baseUrl: "https://x.invalid/v1", apiKey: "k", model: "m" } },
     );
     // "tell me about Widget" is grounded: the model must not even be tried.
@@ -171,7 +171,7 @@ describe("grounded facts outrank any model", () => {
 
   it("hands the model only what the graph cannot answer specifically", async () => {
     unreachable();
-    const responder = configuredResponder({
+    const responder = configuredResponder<typeof schema>({
       source: "remote",
       remote: { preset: "custom", baseUrl: "https://nowhere.invalid/v1", apiKey: "k", model: "m" },
     });
@@ -183,7 +183,7 @@ describe("grounded facts outrank any model", () => {
 
 describe("configuredResponder: the graph is always the floor", () => {
   it("answers from the graph by default", async () => {
-    const reply = await configuredResponder(DEFAULT_INTELLIGENCE)(store(), "hello");
+    const reply = await configuredResponder<typeof schema>(DEFAULT_INTELLIGENCE)(store(), "hello");
     expect(reply.say).toContain("1 Things");
   });
 
@@ -191,7 +191,7 @@ describe("configuredResponder: the graph is always the floor", () => {
     // An unreachable host: the completion rejects, and the conversation
     // still gets a real answer.
     unreachable();
-    const responder = configuredResponder({
+    const responder = configuredResponder<typeof schema>({
       source: "remote",
       remote: { preset: "custom", baseUrl: "https://nowhere.invalid/v1", apiKey: "k", model: "m" },
     });
@@ -204,7 +204,7 @@ describe("configuredResponder: the graph is always the floor", () => {
     // The default local rung would import WebLLM off the network; here the
     // point is the LADDER: cold → floor with a note. (The warm path is
     // covered through localCompletion above.)
-    const responder = configuredResponder({ source: "local" });
+    const responder = configuredResponder<typeof schema>({ source: "local" });
     const reply = await responder(store(), "hello");
     expect(reply.say).toContain("1 Things");
     expect(reply.say).toContain("warming");

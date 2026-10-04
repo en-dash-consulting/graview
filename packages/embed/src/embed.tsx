@@ -2,9 +2,9 @@ import type { AnySchema, Brand, GraviewApp, Person, Place, Principal, Store } fr
 import { EMPTY_VIEW, aggregateId, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout";
 import { PlacePicture } from "@graview/pages";
 import { Companion, Inspector, OverviewButton, Places, ShowInstallation, VISUALLY_HIDDEN, descentTarget, useWidth } from "@graview/primitives";
-import { StudioPlace, type StudioApplied } from "@graview/studio";
+import type { StudioApplied } from "@graview/studio";
 import { ErrorReportContext, GraviewProvider, Scene, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react";
-import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { lazy, Suspense, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
 import {
@@ -22,6 +22,15 @@ import {
   type EmbedHostContext,
   type FrameOptions,
 } from "./frame.js";
+
+/*
+ * THE STUDIO, WHEN IT IS TURNED ON. Imported outright, it was about 104 kB
+ * minified of every embed — `studio: false` included, which never draws
+ * it. A product's bundler splits it off here, and a page fetches it only
+ * when an embed offers the studio; until it arrives, the strip simply has
+ * no studio on it yet.
+ */
+const StudioPlace = lazy(() => import("@graview/studio").then((studio) => ({ default: studio.StudioPlace })));
 
 /**
  * A GRAVIEW IN SOMEBODY ELSE'S PAGE.
@@ -154,7 +163,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         <Faces face={shown} stop={stop} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} />
         {toggle && shown !== "picture" ? (
           <FaceBoundary module="@graview/embed" report={report}>
-            <EmbedStrip app={app as unknown as GraviewApp<AnySchema>} studio={props.studio} face={shown} narrow={narrow} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} report={report} />
+            <EmbedStrip app={app} studio={props.studio} face={shown} narrow={narrow} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} report={report} />
           </FaceBoundary>
         ) : null}
         <FaceBoundary key={shown} module={shown === "pages" || shown === "picture" ? "@graview/pages" : "@graview/react"} report={report} content>
@@ -315,7 +324,9 @@ function EmbedStrip({
                     else's page would be the rudest thing this package could do. */}
                 {studio !== false ? (
                   <FaceBoundary module="@graview/studio" report={report}>
-                    <StudioPlace app={app} within="box" {...(studio ? { onApply: studio.onApply } : {})} />
+                    <Suspense fallback={null}>
+                      <StudioPlace app={app} within="box" {...(studio ? { onApply: studio.onApply } : {})} />
+                    </Suspense>
                   </FaceBoundary>
                 ) : null}
               </>

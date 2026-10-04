@@ -504,8 +504,8 @@ export function todoViews() {
      * PLACE: the bar lists it by name, and pressing it is a stop with a URL.
      * A member never sees it, because a member never sees the people.
      */
-    .register("user", { cardinality: "many", fidelity: "full" }, reachLens.View as ViewComponent<S>, { title: "Who may do what" })
-    .register("user", { cardinality: "many", fidelity: "summary" }, reachLens.View as ViewComponent<S>, { title: "Who may do what" })
+    .register("user", { cardinality: "many", fidelity: "full" }, reachLens.View, { title: "Who may do what" })
+    .register("user", { cardinality: "many", fidelity: "summary" }, reachLens.View, { title: "Who may do what" })
     .register("task", { cardinality: "one", fidelity: "full" }, TaskView)
     .register("task", { cardinality: "one", fidelity: "summary" }, TaskView)
     .register("task", { cardinality: "one", fidelity: "glyph" }, TaskView)

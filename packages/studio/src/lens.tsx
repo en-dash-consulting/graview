@@ -16,7 +16,7 @@ export function createStudioLens<S extends AnySchema>(base: GraviewApp<S>): { re
   function StudioCheckView({ label, fidelity, mode }: ViewProps<StudioSchema>): ReactElement | null {
     const { store } = useGraview<StudioSchema>();
     const snapshot = store.snapshot() as GraphSnapshot;
-    const result = useMemo(() => checkApp(graphToDeclaration(snapshot, { base: base as unknown as GraviewApp<AnySchema>, name: base.name })), [snapshot]);
+    const result = useMemo(() => checkApp(graphToDeclaration(snapshot, { base, name: base.name })), [snapshot]);
     const kinds = snapshot.nodes.filter((node) => node.kind === "kind").length;
     const acts = snapshot.nodes.filter((node) => node.kind === "act" && node["derived"] !== true).length;
     const rules = snapshot.nodes.filter((node) => node.kind === "rule").length;

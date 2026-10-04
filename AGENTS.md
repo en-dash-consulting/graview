@@ -71,7 +71,7 @@ These are pinned by tests, not by convention:
 ```sh
 pnpm install && pnpm build     # the framework; apps typecheck against dist/
 pnpm test                      # vitest, headless: no GPU, no browser
-pnpm typecheck                 # packages and apps
+pnpm typecheck                 # packages, apps, and every package's tests (tsconfig.tests.json)
 pnpm check                     # graview check against every app's declaration
 pnpm verify                    # every browser harness, 3 side by side then the timing ones alone (~10 min)
 pnpm verify <name> [<name>]    # only these harnesses (pnpm verify --list)
@@ -92,8 +92,11 @@ pnpm skills                    # install the authoring skills into .claude/skill
 
 The harnesses drive dev servers on fixed ports, so run **one harness chain
 at a time** per checkout; a second checkout (a worktree) runs its servers
-outside 5190–5399, and a harness only borrows a server that serves its own
-checkout. Each writes its verdict to `docs/*.json` as named claims; when one
+outside 5190–5399 by setting `GRAVIEW_PORT_BASE` (5600 puts todo on 5603:
+every port moves to base + (port − 5190), through `scripts/lib/ports.mjs`,
+and no harness writes a port of its own; the apps' vite configs move
+with it, and the desk links to and probes the moved ports), and a harness only borrows a
+server that serves its own checkout. Each writes its verdict to `docs/*.json` as named claims; when one
 fails it names the claim that stopped being true. Every page every harness
 opens is also judged by the watch (`scripts/lib/watch.mjs`) — the keyboard
 never left on `<body>`, no declared id shown to a person, no act offered

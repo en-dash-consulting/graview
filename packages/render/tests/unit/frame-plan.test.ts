@@ -1,7 +1,6 @@
 import { createSchema, defineNode, Graph } from "@graview/core";
 import {
   EMPTY_VIEW,
-  aggregateId,
   interpolate,
   kindCardId,
   layout,

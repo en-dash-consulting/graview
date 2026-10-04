@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import type { Diagnostic } from "typescript";
 import { describe, expect, it } from "vitest";
 import {
   GRAVIEW_PACKAGES,
@@ -199,13 +200,15 @@ describe("what a project starts with", () => {
       dependencies: Record<string, string>;
       devDependencies: Record<string, string>;
       scripts: Record<string, string>;
+      engines: { node: string };
+      pnpm?: { onlyBuiltDependencies: string[] };
     };
     expect(manifest.name).toBe("field-notes");
     for (const pkg of GRAVIEW_PACKAGES) expect(manifest.dependencies[`@graview/${pkg}`]).toBeDefined();
     expect(manifest.devDependencies["graview"]).toBeDefined();
     expect(manifest.scripts["check"]).toBe("pnpm build:domain && graview check ./dist/domain/app.js");
-    expect((manifest as { engines: { node: string } }).engines.node).toBe(">=22");
-    expect((manifest as { pnpm?: { onlyBuiltDependencies: string[] } }).pnpm?.onlyBuiltDependencies).toEqual(["esbuild"]);
+    expect(manifest.engines.node).toBe(">=22");
+    expect(manifest.pnpm?.onlyBuiltDependencies).toEqual(["esbuild"]);
     const viaNpm = JSON.parse(scaffoldProject({ name: "X", packageManager: "npm" }).files.find((f) => f.path === "package.json")!.contents) as { pnpm?: unknown; scripts: Record<string, string> };
     expect(viaNpm.pnpm).toBeUndefined();
     expect(viaNpm.scripts["check"]).toBe("npm run build:domain && graview check ./dist/domain/app.js");
@@ -373,7 +376,7 @@ describe("every generated file is syntactically whole", () => {
           true,
           file.path.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
         );
-        const problems = (parsed as unknown as { parseDiagnostics: readonly ts.Diagnostic[] })
+        const problems = (parsed as unknown as { parseDiagnostics: readonly Diagnostic[] })
           .parseDiagnostics;
         expect(
           problems.map((one) => ts.flattenDiagnosticMessageText(one.messageText, " ")),

@@ -95,7 +95,7 @@ export function rotaViews() {
       .register("volunteer", { cardinality: "many", fidelity: "full" }, CoverageView, { title: "Who is covering what" })
       .register("volunteer", { cardinality: "many", fidelity: "summary" }, CoverageView, { title: "Who is covering what" })
       /* And what each role reaches, for the seat that keeps the installation. */
-      .register("user", { cardinality: "many", fidelity: "full" }, reachLens.View as ViewComponent<S>, { title: "Who may do what" })
-      .register("user", { cardinality: "many", fidelity: "summary" }, reachLens.View as ViewComponent<S>, { title: "Who may do what" })
+      .register("user", { cardinality: "many", fidelity: "full" }, reachLens.View, { title: "Who may do what" })
+      .register("user", { cardinality: "many", fidelity: "summary" }, reachLens.View, { title: "Who may do what" })
   );
 }

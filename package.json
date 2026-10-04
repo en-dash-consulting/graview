@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/guest packages/skills packages/graview packages/create-graview apps/rota",
-    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/guest packages/skills packages/graview packages/create-graview apps/todo apps/launcher apps/seedbed apps/rota apps/discography apps/gauntlet",
+    "typecheck": "tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/guest packages/skills packages/graview packages/create-graview apps/todo apps/launcher apps/seedbed apps/rota apps/discography apps/gauntlet && tsc -p tsconfig.tests.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "node packages/graview/dist/cli.js check apps/todo/dist/domain/app.js && node packages/graview/dist/cli.js check apps/launcher/dist/domain/app.js && node packages/graview/dist/cli.js check apps/seedbed/dist/domain/app.js && node packages/graview/dist/cli.js check apps/rota/dist/domain/app.js && node packages/graview/dist/cli.js check apps/discography/dist/domain/app.js && node packages/graview/dist/cli.js check apps/gauntlet/dist/domain/app.js",

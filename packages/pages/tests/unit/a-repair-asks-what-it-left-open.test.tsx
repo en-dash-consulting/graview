@@ -26,7 +26,7 @@ const early = defineInvariant("early", {
   repairs: ["edit-album"],
   evaluate({ subject }): Violation[] {
     return subject.released && subject.released > "2023-05-05"
-      ? [{ invariant: "early", subjectId: subject.id, message: "late", nodeIds: [subject.id], repairs: [{ mutation: "edit-album", args: { id: subject.id }, missing: ["released"], label: `Correct when ${subject.label} came out` }] }]
+      ? [{ invariant: "early", subjectId: subject.id, label: "Released too late", message: "late", nodeIds: [subject.id], repairs: [{ mutation: "edit-album", args: { id: subject.id }, missing: ["released"], label: `Correct when ${subject.label} came out` }] }]
       : [];
   },
 });
@@ -59,7 +59,7 @@ describe("a repair that leaves one argument open, on the routed face", () => {
       input.form!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     });
     await act(async () => draw());
-    await act(async () => new Promise((resolve) => requestAnimationFrame(() => resolve(null))));
+    await act(async () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
     expect(store.graph.getNode("kerosene")).toMatchObject({ label: "Kerosene", released: "2023-04-14" });
     expect(document.activeElement).not.toBe(document.body);
     await act(async () => root.unmount());

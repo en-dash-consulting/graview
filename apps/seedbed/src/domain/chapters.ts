@@ -560,7 +560,7 @@ const chapterFourteen: Chapter = {
     defineApp({
       name: "Seedbed",
       schema: fourAndWhoIsHere as never,
-      mutations: [...grown, ...installation.mutations] as never,
+      mutations: [...grown, ...installation.mutations],
       invariants: [everyPlotTended as never],
       intelligence,
       policy: installation.withPolicy(policy),

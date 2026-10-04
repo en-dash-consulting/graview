@@ -1,7 +1,7 @@
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createSchema, defineApp, defineMutation, defineNode, nodeRef } from "@graview/core";
+import { bindSchema, createSchema, defineApp, defineNode, nodeRef } from "@graview/core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { assertBundle } from "../../src/export.js";
@@ -25,6 +25,8 @@ const task = defineNode("task", {
   plural: "Tasks",
   label: (node) => node.label,
 });
+const schema = createSchema([task]);
+const { defineMutation } = bindSchema(schema);
 const finish = defineMutation("finish", {
   title: "Finish it",
   description: "Marks a task done.",
@@ -40,7 +42,6 @@ const finish = defineMutation("finish", {
     ctx.patchNode(args.id, { done: true });
   },
 });
-const schema = createSchema([task]);
 const app = defineApp({
   name: "served",
   schema,

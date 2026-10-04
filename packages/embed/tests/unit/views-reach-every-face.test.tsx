@@ -88,7 +88,7 @@ describe("views reach every face", () => {
     await mounted(
       {
         face: "pages",
-        views: (s, registry) => {
+        views: (_s, registry) => {
           handed = registry?.lookup("category", { cardinality: "one", fidelity: "summary" });
           return registry!.register("vendor", { cardinality: "one", fidelity: "summary" }, Card);
         },

@@ -2,7 +2,7 @@
 /* React's act() wants to know it is in a test environment. */
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { createSchema, defineNode, Store } from "@graview/core";
-import { EMPTY_VIEW, aggregateId } from "@graview/layout";
+import { EMPTY_VIEW } from "@graview/layout";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";

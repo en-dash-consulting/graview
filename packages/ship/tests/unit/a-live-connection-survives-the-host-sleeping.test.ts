@@ -141,7 +141,7 @@ describe("a live connection a hibernating host can resume", () => {
     room.evict();
 
     // Every in-memory object but the store is gone; the attachments are strings.
-    for (const [id, text] of room.attachments) expect(JSON.parse(text)).toEqual(JSON.parse(JSON.stringify(JSON.parse(text))), id);
+    for (const [id, text] of room.attachments) expect(JSON.parse(text), id).toEqual(JSON.parse(JSON.stringify(JSON.parse(text))));
     const before = room.attachments.get("bethan")!;
     // Her key was built from her seat at hello, and said back in the welcome (FR-47).
     const welcome = said(room, "bethan", "welcome")[0] as Extract<LiveServerMessage, { t: "welcome" }>;

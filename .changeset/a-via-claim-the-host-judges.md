@@ -1,0 +1,7 @@
+---
+"@graview/ship": patch
+---
+
+What a change came through may be claimed by the client and judged by the host. A guest view applies through the page's store with `via: "view:<name>"`, so the log can say a change came through somebody else's view — but `openRemote` dropped the via a call was applied with, and `liveProtocol` read only the socket's own, so every change through a view was recorded as `web`. A client's word is still never enough on its own (FR-52): a browser could otherwise record its edit as Claude's. Now `openRemote` sends the via a call or an undo was applied with as a claim — `via` on the socket's `call` and `undo`, and in the `POST /graview/ops` body — and `liveProtocol({ viaOf: (peer, claimed) => via })` lets a host judge it: asked of every change, on the socket and through `post`, with the socket (or the route's `WireAsked`) and the claim, it answers the via to record, and answering nothing keeps the host's own. Without a `viaOf`, the claim is ignored, as every claim was. The host's `limit` is asked with the via that will be recorded.
+
+Compatibility: the live protocol — additive: `call` and `undo` gain an optional `via`, and the `POST /graview/ops` body an optional `via`, each a claim a server without `viaOf` ignores, so what is recorded is unchanged unless a host opts in. `LiveProtocolOptions` gains `viaOf`. `WIRE_PROTOCOL`, `REFUSAL_REASONS`, ops, stored formats and check codes are unchanged.

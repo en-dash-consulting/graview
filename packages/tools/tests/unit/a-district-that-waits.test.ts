@@ -30,7 +30,7 @@ const stakeOut = defineMutation("stake-out", {
   creates: ["zone"],
   input: z.object({ label: z.string() }),
   apply(ctx, args) {
-    ctx.addNode("zone", { label: args.label });
+    ctx.addNode({ id: ctx.freshId(args.label, "zone"), kind: "zone", label: args.label });
   },
 });
 const placeFeature = defineMutation("place-feature", {
@@ -38,7 +38,7 @@ const placeFeature = defineMutation("place-feature", {
   creates: ["feature"],
   input: z.object({ label: z.string(), zoneId: nodeRef(["zone"]) }),
   apply(ctx, args) {
-    ctx.addNode("feature", { label: args.label });
+    ctx.addNode({ id: ctx.freshId(args.label, "feature"), kind: "feature", label: args.label });
   },
 });
 
