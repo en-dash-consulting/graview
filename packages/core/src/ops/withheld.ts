@@ -224,6 +224,15 @@ function whole(op: Operation, lens: SeatLens, served?: readonly Primitive[]): Op
   const reads = op.reads.filter(kept);
   const writes = op.writes.filter(kept);
   const tidy = reads.length === op.reads.length && writes.length === op.writes.length ? op : { ...op, reads, writes };
+  /*
+   * ANOTHER AUTHOR'S SENTENCE, ONLY IF ITS READER SEES WHAT IT READ. A
+   * sentence names records by their labels, which no id check catches;
+   * the op says which records its `describe` read, and a seat that may not
+   * see one of them is served the op withheld. The seat's own sentences
+   * were worded from its own view.
+   */
+  const own = lens.actor !== undefined && actingAs(op.author as Principal).id === lens.actor;
+  if (!own && op.described?.some((id) => !lens.sees(id))) return undefined;
   if (!namesUnseen(op, lens.sees)) return tidy;
   const said = new Set<string>();
   const collect = (value: unknown): void => {
@@ -234,10 +243,21 @@ function whole(op: Operation, lens: SeatLens, served?: readonly Primitive[]): Op
       collect(inner);
     }
   };
+  /*
+   * THE SEAT'S OWN WORDS EXCUSE ONLY WHAT IT WROTE. A value the primitives
+   * are served with (the seat wrote it, or it would have been cleared) may
+   * stand in the inverse that puts it back; the call may name what the
+   * seat said only when the call is the seat's own. Another author's call,
+   * sentence and name are judged by sight alone, whatever the seat wrote.
+   */
   if (served) collect(served);
-  if (lens.actor !== undefined && op.mutation && actingAs(op.author as Principal).id === lens.actor) collect(op.mutation.args);
   const told = (id: string) => lens.sees(id) || said.has(id);
-  return namesUnseen({ ...tidy, primitives: [] }, told) ? undefined : tidy;
+  if (namesUnseen(tidy.inverse, told)) return undefined;
+  if (own) {
+    if (op.mutation) collect(op.mutation.args);
+    return namesUnseen({ ...tidy, primitives: [], inverse: [] }, told) ? undefined : tidy;
+  }
+  return namesUnseen({ ...tidy, primitives: [], inverse: [] }, lens.sees) ? undefined : tidy;
 }
 
 /** Whether an id names a record the store knows — in the graph or its log — when the lens can say; a bare sight cannot, and keeps every id. */

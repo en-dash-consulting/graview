@@ -50,7 +50,43 @@ export const make = defineMutation("make", {
     ctx.addNode({ id: ctx.freshId(args.title, "d"), kind: "d", title: args.title, ref: args.ref });
   },
 });
-export const MUTATIONS = [retitle, point, make];
+const titleOf = (graph: { getNode(id: string): unknown }, id: string): string => (graph.getNode(id) as { title?: string } | undefined)?.title ?? id;
+/** Credit a record to another: its sentence quotes the other's title, read through an argument. */
+export const credit = defineMutation("credit", {
+  title: "Credit",
+  subject: { kinds: [...ANY], arg: "id" },
+  writes: ["title"],
+  input: z.object({ id: nodeRef([...ANY]), because: z.string() }),
+  describe: (args, graph) => `Credit ${titleOf(graph, args.id)} in favour of ${titleOf(graph, args.because)}`,
+  apply(ctx, args) {
+    ctx.patchNode(args.id, { title: `Credited ${args.id}` });
+  },
+});
+/** Tag a record: its sentence quotes the title of a record it links to, read through an edge no argument names. */
+export const tag = defineMutation("tag", {
+  title: "Tag",
+  subject: { kinds: [...ANY], arg: "id" },
+  writes: ["title"],
+  input: z.object({ id: nodeRef([...ANY]) }),
+  describe: (args, graph) => {
+    const near = (graph as unknown as { out(id: string, kind?: string): { title?: string }[] }).out(args.id, "rel")[0];
+    return `Tag ${titleOf(graph, args.id)}${near ? ` near ${near.title}` : ""}`;
+  },
+  apply(ctx, args) {
+    ctx.patchNode(args.id, { title: `Tagged ${args.id}` });
+  },
+});
+/** Drop a record in favour of another: it removes the record, and its sentence quotes the other's title. */
+export const drop = defineMutation("drop", {
+  title: "Drop",
+  subject: { kinds: [...ANY], arg: "id" },
+  input: z.object({ id: nodeRef([...ANY]), because: z.string() }),
+  describe: (args, graph) => `Drop ${args.id} in favour of ${titleOf(graph, args.because)}`,
+  apply(ctx, args) {
+    ctx.removeNode(args.id);
+  },
+});
+export const MUTATIONS = [retitle, point, make, credit, tag, drop];
 
 export function rng(seed: number): () => number {
   let s = seed >>> 0;

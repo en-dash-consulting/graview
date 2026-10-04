@@ -15,7 +15,7 @@ import type {
   InvariantDefinition,
   Violation,
 } from "./invariants/types.js";
-import { compileMutation } from "./mutations/define-mutation.js";
+import { compileMutation, READ_BEFORE_REFUSING } from "./mutations/define-mutation.js";
 import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
@@ -689,6 +689,22 @@ export class Store<S extends AnySchema> {
   }
 
   /**
+   * AN ACT'S OWN REFUSAL, AS ITS CALLER MAY READ IT (FR-55). An act's body
+   * may refuse in its own words, worded from what it read — "Freya Davies
+   * is already booked" — and what it read may be a record its caller may
+   * not see. Such a refusal is said without its words: the act, and that it
+   * could not be done. The store's own refusals already name nothing.
+   */
+  private refusalWordedFor(error: unknown, author: Principal, calls: readonly MutationCall[]): unknown {
+    if (!hidesFrom(this, author) || error instanceof PermissionDeniedError || error instanceof MissingRecordError || error === null || typeof error !== "object") return error;
+    const read = (error as { [READ_BEFORE_REFUSING]?: readonly string[] })[READ_BEFORE_REFUSING] ?? [];
+    const visible = seesId(this, author);
+    if (!read.some((id) => this.graph.has(id) && !visible(id))) return error;
+    const title = calls.length === 1 ? (this.mutations.get(calls[0]!.name)?.title ?? calls[0]!.name) : undefined;
+    return new GraphError(title ? `“${title}” could not be done as asked.` : "This change could not be done as asked.");
+  }
+
+  /**
    * A CALL THAT NAMES A RECORD THAT IS NOT THERE FOR ITS CALLER IS REFUSED
    * AS MISSING (FR-02, FR-55) — one that does not exist, and one the caller
    * may not see, alike: the same `MissingRecordError`, the same sentence,
@@ -1091,6 +1107,8 @@ export class Store<S extends AnySchema> {
           inverse: [...compiled.primitives].reverse().map(normalise).map(invert),
           reads: compiled.reads,
           writes: compiled.writes,
+          // Which records its sentence read, so a reader who may not see one is not handed the sentence (FR-55).
+          ...(definition.describe !== undefined && compiled.described && compiled.described.length > 0 ? { described: compiled.described } : {}),
           at: this.now(),
           ...(options.via !== undefined ? { via: options.via } : {}),
         };
@@ -1104,7 +1122,7 @@ export class Store<S extends AnySchema> {
       }
     } catch (error) {
       this.graph.load(rollback);
-      throw error;
+      throw this.refusalWordedFor(error, author as Principal, calls);
     }
 
     const after = this.violations();

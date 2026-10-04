@@ -276,7 +276,20 @@ describe("a seat is never served an id it may not see", () => {
 
       const act = (store: Store<AnySchema>, batch?: string) => {
         const live = store.graph.allNodes().map((node) => node.id);
-        const call = r() < 0.5 && live.length > 0 ? { name: "point", args: { id: pick(live), ref: w.anyId() } } : r() < 0.5 && live.length > 0 ? { name: "retitle", args: { id: pick(live), title: `R${seed}` } } : { name: "make", args: { title: `M${Math.floor(r() * 1e6)}`, ref: w.anyId() } };
+        const roll = r();
+        // Sentences worded from the graph too: through an argument (credit, drop) and through a link (tag).
+        const call =
+          live.length === 0 || roll < 0.15
+            ? { name: "make", args: { title: `M${Math.floor(r() * 1e6)}`, ref: w.anyId() } }
+            : roll < 0.4
+              ? { name: "point", args: { id: pick(live), ref: w.anyId() } }
+              : roll < 0.55
+                ? { name: "retitle", args: { id: pick(live), title: `R${seed}` } }
+                : roll < 0.7
+                  ? { name: "credit", args: { id: pick(live), because: w.anyId() } }
+                  : roll < 0.85
+                    ? { name: "tag", args: { id: pick(live) } }
+                    : { name: "drop", args: { id: pick(live), because: w.anyId() } };
         try {
           return store.applyAll([call], { author: host, ...(batch ? { batch } : {}) });
         } catch {

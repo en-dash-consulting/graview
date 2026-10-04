@@ -28,6 +28,8 @@ export interface CompiledMutation {
   readonly primitives: readonly Primitive[];
   /** Node ids the mutation looked at while computing its writes. */
   readonly reads: readonly string[];
+  /** Node ids its `describe` read to word its sentence, when it has one (FR-55). */
+  readonly described?: readonly string[];
   readonly writes: readonly string[];
   readonly intent: string;
 }
@@ -79,6 +81,9 @@ export function slug(label: string): string {
  * primitives it would emit plus the causal read set. Applying is the op
  * log's job — keeping the two apart is what makes preview-as-diff free.
  */
+/** Where a refusal thrown by an act's own body carries the ids it had read: see `compileMutation`. */
+export const READ_BEFORE_REFUSING = Symbol("graview.readBeforeRefusing");
+
 export function compileMutation<S extends AnySchema>(
   graph: Graph<S>,
   definition: AnyMutationDefinition<S>,
@@ -198,7 +203,13 @@ export function compileMutation<S extends AnySchema>(
     },
   };
 
-  definition.apply(context, args);
+  try {
+    definition.apply(context, args);
+  } catch (error) {
+    // What it had read when it refused, so a store can tell whether its sentence may name what its caller may not see (FR-55).
+    if (error !== null && typeof error === "object") Object.defineProperty(error, READ_BEFORE_REFUSING, { value: reader.reads(), configurable: true });
+    throw error;
+  }
 
   const writes = new Set<string>();
   for (const primitive of primitives) {
@@ -218,7 +229,8 @@ export function compileMutation<S extends AnySchema>(
     }
   }
 
-  const wording = options.describeWith ? new TrackedReader<NodeOfSchema<S>>(options.describeWith) : reader;
+  // Its own reader, so what the sentence read is known apart from what the act read (FR-55).
+  const wording = new TrackedReader<NodeOfSchema<S>>(options.describeWith ?? graph);
   const intent =
     definition.describe?.(args, wording) ??
     `${definition.name}(${Object.entries(args)
@@ -227,7 +239,8 @@ export function compileMutation<S extends AnySchema>(
 
   return {
     primitives,
-    reads: wording === reader ? reader.reads() : [...new Set([...reader.reads(), ...wording.reads()])],
+    reads: [...new Set([...reader.reads(), ...wording.reads()])],
+    ...(definition.describe ? { described: wording.reads() } : {}),
     writes: [...writes],
     intent,
   };
