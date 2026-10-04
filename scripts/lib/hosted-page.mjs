@@ -33,14 +33,14 @@ export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
  * app.
  */
 export const HOSTED_PAGE_ENTRY = `
-import { compileDocument } from "@graview/core/document";
+import { compileDocumentWithoutCheck } from "@graview/core/document";
 import { mount } from "@graview/embed";
 import { guestView } from "@graview/guest/host";
 import { openRemote } from "@graview/ship/browser";
 
 const root = document.getElementById("graview-app");
 const opened = await (await fetch("/graview/document")).json();
-const compiled = compileDocument(opened.document, { skipFrameworkCheck: true });
+const compiled = compileDocumentWithoutCheck(opened.document);
 if (!compiled.ok) throw new Error("does not compile");
 const me = { kind: "human", id: opened.principal.id, roles: opened.principal.roles };
 const remote = await openRemote({ app: compiled.app, url: location.origin, principal: me, live: true, subprotocol: true, pollMs: 1200, openTimeoutMs: 3000 });

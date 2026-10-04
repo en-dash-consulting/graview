@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { compileDocument } from "../../src/document/index.js";
+import { compileDocumentWithoutCheck } from "../../src/document/index.js";
 import { Store, type AnySchema, type Principal } from "../../src/index.js";
 
 /**
@@ -24,7 +24,7 @@ const sighted = {
 };
 
 function storeOf(document: unknown) {
-  const compiled = compileDocument(document, { today: () => "2026-10-02", skipFrameworkCheck: true });
+  const compiled = compileDocumentWithoutCheck(document, { today: () => "2026-10-02" });
   if (!compiled.ok) throw new Error("the document compiles");
   const app = compiled.app;
   return {

@@ -72,8 +72,6 @@ export interface RefusedDocument {
 export interface CompileOptions {
   /** The clock rules read as today(); injectable for tests. */
   readonly today?: () => string;
-  /** Skip the framework's own checkApp (it is the slow half). Default false. */
-  readonly skipFrameworkCheck?: boolean;
   /**
    * The version this one follows. Given, every `renamedFrom` must name a
    * kind, field or relation that version has — a rename from nothing moves
@@ -451,7 +449,34 @@ function argsOf(name: string, act: ActSpec, effects: readonly EffectSpec[], docu
 
 class Refused extends Error {}
 
+/**
+ * A document, compiled and judged: its own sentences, then the framework's
+ * `checkApp` over the app it compiles to — what a host does with a document
+ * it is handed, and what `graview check` says of one.
+ */
 export function compileDocument(raw: unknown, options: CompileOptions = {}): CompiledDocument | RefusedDocument {
+  const compiled = compileDocumentWithoutCheck(raw, options);
+  if (!compiled.ok) return compiled;
+  const { app, document } = compiled;
+  const findings: Finding[] = [...compiled.findings];
+  const check = checkApp(app);
+  for (const f of check.findings) {
+    const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: f.message, ...(f.fix ? { fix: f.fix } : {}) } as const;
+    findings.push(f.code === "glance-unchosen" ? inDocumentWords(finding, f.where, document) : finding);
+  }
+  if (hasErrors(findings)) return { ok: false, findings };
+  return { ...compiled, findings };
+}
+
+/**
+ * A DOCUMENT COMPILED WITHOUT THE FRAMEWORK'S CHECKER: its own sentences
+ * still judged, `checkApp` not asked. For a page drawing a document its host
+ * has already judged — Graview Cloud's shell compiles in the browser what the
+ * room checked when it was kept — and for a test that wants the app and not
+ * the verdict. The checker is the whole of `graview check`; a page that
+ * calls only this does not carry it (FR-57).
+ */
+export function compileDocumentWithoutCheck(raw: unknown, options: CompileOptions = {}): CompiledDocument | RefusedDocument {
   const read = readDocument(raw);
   if (!read.document || hasErrors(read.findings)) return { ok: false, findings: read.findings };
   const document = read.document;
@@ -741,15 +766,6 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
     ...(document.views && Object.keys(document.views).length > 0 ? { viewSpecs: document.views as never } : {}),
     version: document.version ?? 1,
   };
-
-  if (!options.skipFrameworkCheck) {
-    const check = checkApp(app);
-    for (const f of check.findings) {
-      const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: f.message, ...(f.fix ? { fix: f.fix } : {}) } as const;
-      findings.push(f.code === "glance-unchosen" ? inDocumentWords(finding, f.where, document) : finding);
-    }
-    if (hasErrors(findings)) return { ok: false, findings };
-  }
 
   // `toDocument(app)` gives this document back, byte for byte.
   rememberDocument(app, document);

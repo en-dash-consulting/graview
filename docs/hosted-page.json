@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-04T14:59:33.740Z",
+  "at": "2026-10-04T15:03:08.001Z",
   "page": "openRemote + mount(…, { studio: false }) over the vendors document, built as Graview Cloud's packages/client/bundles.mjs builds its shell",
   "checks": {
     "atMost600KbMinifiedUpFront": {
-      "kb": 939,
+      "kb": 897,
       "budgetKb": 600,
       "ok": false
     },
@@ -17,12 +17,12 @@
     }
   },
   "upFront": {
-    "kb": 939,
+    "kb": 897,
     "chunks": 2,
     "packagesKb": {
-      "@graview/core": 205,
       "react-dom": 177,
       "@graview/primitives": 174,
+      "@graview/core": 163,
       "@graview/react": 94,
       "@graview/pages": 64,
       "zod": 54,

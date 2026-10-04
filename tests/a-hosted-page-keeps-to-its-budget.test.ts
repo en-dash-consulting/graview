@@ -38,6 +38,10 @@ describe("a hosted page", () => {
     expect(modules.filter((module) => module.startsWith("zod/v4/classic/"))).toEqual([]);
   });
 
+  it("carries no checker: the page compiles with compileDocumentWithoutCheck, and graview check stays in Node", () => {
+    expect(Object.keys(measured.upFront.modules).filter((module) => module.startsWith("core/src/cli/"))).toEqual([]);
+  });
+
   it("names the package each input of the metafile belongs to", () => {
     expect(packageOf("packages/core/src/store.ts")).toBe("@graview/core");
     expect(packageOf("../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/schemas.js")).toBe("zod");
