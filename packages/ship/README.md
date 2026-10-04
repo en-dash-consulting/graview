@@ -181,7 +181,7 @@ presence stands for as long as the server lists it — `presenceStands` and `fol
 not expire it by its `at`. The host drops it when the socket closes, at once. So
 `openRemote` says `here` down a socket only when where it stands changes: an idle tab says
 nothing, and a hibernating host is not woken to hear it. A poller is still held by time
-(`presenceTtlMs`) and says where it is with every poll. A client whose own socket dropped
+(the handler's own time to live) and says where it is with every poll. A client whose own socket dropped
 lets the held presences it was told go after `REMOTE_PRESENCE_TTL_MS` without a list from
 the server. A host that keeps a socket's presence by time can ask for the old heartbeat
 with `presenceEveryMs`.
