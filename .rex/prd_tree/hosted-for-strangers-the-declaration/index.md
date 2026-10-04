@@ -25,7 +25,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A host can ask up front what the studio will not edit: uneditable(document) (FR-62)](./a-host-can-ask-up-front-what-the.md) | completed |
 | [A host that keeps the declaration chooses who sees the studio (FR-59)](./a-host-that-keeps-the-declaration.md) | completed |
 | [A host's own work has a seat: a system principal the policy lets through, and authors named by their own name](./a-host-s-own-work-has-a-seat-a-system.md) | completed |
-| [A host's refusal can say its own sentence, and an Apply with no edits says so before the host is asked (FR-65)](./a-host-s-refusal-can-say-its-own.md) | pending |
+| [A host's refusal can say its own sentence, and an Apply with no edits says so before the host is asked (FR-65)](./a-host-s-refusal-can-say-its-own.md) | completed |
 | [A hosted page carries at most 600 KB of framework up front, and zod at most 150 KB of it (FR-57)](./a-hosted-page-carries-at-most-600-kb.md) | completed |
 | [A live client a host can observe: status, counters, pending, backoff, presence cadence and visibility (FR-49)](./a-live-client-a-host-can-observe.md) | completed |
 | [A live connection a hibernating host can resume from serialized per-socket state (FR-41)](./a-live-connection-a-hibernating-host.md) | completed |
@@ -73,7 +73,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The companion is a top-level landmark or none, so axe's landmark-complementary-is-top-level holds (FR-40)](./the-companion-is-a-top-level-landmark.md) | completed |
 | [The declaration is a document: one JSON object compiles into the same app defineApp declares](./the-declaration-is-a-document-one-json.md) | completed |
 | [The embed loads the studio eagerly when the studio is the whole page (FR-63)](./the-embed-loads-the-studio-eagerly.md) | completed |
-| [The embed's stylesheet stays inside its box: every scoped themeCss rule is under the scope (FR-64)](./the-embed-s-stylesheet-stays-inside-its-box.md) | pending |
+| [The embed's stylesheet stays inside its box: every scoped themeCss rule is under the scope (FR-64)](./the-embed-s-stylesheet-stays-inside-its-box.md) | completed |
 | [The framework says its own version, and rule failures are structured](./the-framework-says-its-own-version-and.md) | completed |
 | [The live handler serves a store the host already holds (FR-42)](./the-live-handler-serves-a-store-the.md) | completed |
 | [The record names Graview Cloud and npm as they are](./the-record-names-graview-cloud-and-npm.md) | completed |
