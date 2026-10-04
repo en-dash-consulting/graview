@@ -37,6 +37,32 @@ describe("the embed's bundle budget", () => {
     expect(every.minified - without.minified).toBeGreaterThan(80_000);
   }, 60_000);
 
+  /*
+   * FR-63: A HOST WHOSE PAGE IS THE STUDIO HANDS IT IN, AND WAITS FOR NO
+   * CHUNK. The embed's own studio is a lazy chunk, so Graview Cloud's
+   * builder paid a round trip of about 109 kB before the studio drew.
+   * `studio: { onApply, place: StudioPlace }` puts it in what the page
+   * loads first, read off esbuild's metafile: no `@graview/studio` module
+   * is in a chunk the entry does not import outright.
+   */
+  it("puts no @graview/studio module in a lazy chunk when the host hands the studio in", async () => {
+    const measured = (await measureBudgets(repo)) as (Measured & { lazy: string[]; defers: string[]; packages?: string[] })[];
+    const handed = measured.find((one) => one.name === "embed with the studio handed in")!;
+    const every = measured.find((one) => one.name === "every face")!;
+    expect(handed.over, `${handed.minified} B minified, ${handed.gzipped} B gzipped, deferring ${handed.defers.join(", ")}`).toBe(false);
+    expect(handed.lazy).not.toContain("@graview/studio");
+    // The measure can tell: the embed's own studio is a lazy chunk.
+    expect(every.lazy).toContain("@graview/studio");
+  }, 60_000);
+
+  it("fails a bundle that leaves a package it must load at once in a lazy chunk", async () => {
+    const waiting = (BUDGETS as { name: string; entry: string }[])
+      .filter((budget) => budget.name === "every face")
+      .map((budget) => ({ ...budget, minified: 10_000_000, gzipped: 10_000_000, lazyLacks: ["@graview/studio"] }));
+    const measured = (await measureBudgets(repo, waiting)) as (Measured & { defers: string[] })[];
+    expect(measured.map((one) => [one.over, one.defers])).toEqual([[true, ["@graview/studio"]]]);
+  }, 60_000);
+
   it("fails a bundle that carries a package it must not", async () => {
     const carrying = (BUDGETS as { name: string; entry: string; lacks?: string[] }[]).map((budget) => ({ ...budget, minified: 10_000_000, gzipped: 10_000_000, lacks: ["@graview/core"] }));
     const measured = (await measureBudgets(repo, carrying)) as Measured[];

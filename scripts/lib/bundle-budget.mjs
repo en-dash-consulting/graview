@@ -83,6 +83,21 @@ export const BUDGETS = [
     gzipped: 373_000,
     load: "all",
   },
+  {
+    name: "embed with the studio handed in",
+    /*
+     * A HOST WHOSE PAGE IS THE STUDIO (FR-63) hands `StudioPlace` in and
+     * pays no round trip for it: the studio is in what the page loads
+     * first, and `lazyLacks` fails the bundle if any module of it is left
+     * in a chunk fetched later. Set at every face's budget: it is every
+     * face, loaded at once.
+     */
+    entry: `import { mount } from "@graview/embed"; import { StudioPlace } from "@graview/studio"; globalThis.mount = (element, options) => mount(element, { ...options, studio: { onApply() {}, place: StudioPlace } });`,
+    minified: 1_310_000,
+    gzipped: 373_000,
+    load: "first",
+    lazyLacks: ["@graview/studio"],
+  },
 ];
 
 /** The host's own: a page has one React, and the embed is not it. */
@@ -120,18 +135,30 @@ export async function bundleSize(repo, entry, load = "all") {
   if (load === "first") visit(entryChunk);
   else for (const path of Object.keys(outputs)) loaded.add(path);
   const files = result.outputFiles.filter((file) => [...loaded].some((path) => name(path) === relative(join(repo, "out"), file.path)));
-  const packages = new Set();
-  for (const path of loaded) {
-    for (const input of Object.keys(outputs[path].inputs)) {
-      const found = input.match(/(?:^|\/)packages\/([^/]+)\/src\//);
-      if (found) packages.add(`@graview/${found[1]}`);
+  const packagesIn = (paths) => {
+    const packages = new Set();
+    for (const path of paths) {
+      for (const input of Object.keys(outputs[path].inputs)) {
+        const found = input.match(/(?:^|\/)packages\/([^/]+)\/src\//);
+        if (found) packages.add(`@graview/${found[1]}`);
+      }
     }
-  }
+    return [...packages].sort();
+  };
+  // What the page fetches only when it is asked for: every chunk the entry does not import outright.
+  const statically = new Set();
+  const reach = (path) => {
+    if (statically.has(path)) return;
+    statically.add(path);
+    for (const one of outputs[path].imports) if (one.kind === "import-statement" && outputs[one.path]) reach(one.path);
+  };
+  reach(entryChunk);
   return {
     minified: files.reduce((sum, file) => sum + file.contents.length, 0),
     gzipped: files.reduce((sum, file) => sum + gzipSync(file.contents).length, 0),
     chunks: files.length,
-    packages: [...packages].sort(),
+    packages: packagesIn(loaded),
+    lazy: packagesIn(Object.keys(outputs).filter((path) => !statically.has(path))),
   };
 }
 
@@ -139,10 +166,12 @@ export async function bundleSize(repo, entry, load = "all") {
 export async function measureBudgets(repo, budgets = BUDGETS) {
   const measured = [];
   for (const budget of budgets) {
-    const { packages, ...size } = await bundleSize(repo, budget.entry, budget.load ?? "all");
+    const { packages, lazy, ...size } = await bundleSize(repo, budget.entry, budget.load ?? "all");
     const carries = (budget.lacks ?? []).filter((name) => packages.includes(name));
-    const over = size.minified > budget.minified || size.gzipped > budget.gzipped || carries.length > 0;
-    measured.push({ name: budget.name, load: budget.load ?? "all", ...size, budget: { minified: budget.minified, gzipped: budget.gzipped }, carries, over });
+    // A package that must not wait for a chunk of its own: any module of it fetched later fails the budget.
+    const defers = (budget.lazyLacks ?? []).filter((name) => lazy.includes(name));
+    const over = size.minified > budget.minified || size.gzipped > budget.gzipped || carries.length > 0 || defers.length > 0;
+    measured.push({ name: budget.name, load: budget.load ?? "all", ...size, budget: { minified: budget.minified, gzipped: budget.gzipped }, carries, defers, lazy, over });
   }
   return measured;
 }

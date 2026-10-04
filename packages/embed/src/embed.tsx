@@ -2,7 +2,7 @@ import type { AnySchema, Brand, GraviewApp, Person, Place, Principal, Store } fr
 import { EMPTY_VIEW, aggregateId, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout";
 import { PlacePicture } from "@graview/pages";
 import { Companion, Inspector, OverviewButton, Places, ShowInstallation, VISUALLY_HIDDEN, descentTarget, useWidth } from "@graview/primitives";
-import type { StudioOffered, StudioOnApply } from "@graview/studio";
+import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import { ErrorReportContext, GraviewProvider, Scene, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react";
 import { lazy, Suspense, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -97,6 +97,17 @@ export interface EmbedStudio {
    * function of the store and the seat. Omitted, the app's policy decides.
    */
   readonly offered?: StudioOffered;
+  /**
+   * THE STUDIO, HANDED IN (FR-63): `StudioPlace` from `@graview/studio`,
+   * imported by the host outright. The embed imports the studio when it is
+   * turned on, so a page that never turns it on never fetches it — and a
+   * page whose whole point is the studio paid a round trip for its chunk
+   * before anything drew. Handed in, the studio is in the host's own bundle,
+   * no `@graview/studio` module is left in a lazy chunk, and the studio
+   * draws in the same render as the embed. A flag could not do this: what
+   * a bundler splits is decided by what the code imports, not by a value.
+   */
+  readonly place?: typeof StudioPlaceType;
 }
 
 export interface EmbedProps<S extends AnySchema = AnySchema> extends EmbedOptions<S> {
@@ -348,15 +359,34 @@ function EmbedStrip({
                     else's page would be the rudest thing this package could do. */}
                 {studio !== false ? (
                   <FaceBoundary module="@graview/studio" report={report}>
-                    <Suspense fallback={null}>
-                      <StudioPlace app={app} within="box" {...(studio ? { onApply: studio.onApply, ...(studio.landmark ? { landmark: studio.landmark } : {}), ...(studio.offered !== undefined ? { offered: studio.offered } : {}) } : {})} />
-                    </Suspense>
+                    <StudioOnTheStrip app={app} studio={studio} />
                   </FaceBoundary>
                 ) : null}
               </>
             )
       }
     />
+  );
+}
+
+/**
+ * The studio's place on the strip: the one the host handed in, drawn at
+ * once (FR-63), or the embed's own, fetched when it is first drawn.
+ */
+function StudioOnTheStrip({ app, studio }: { readonly app: GraviewApp<AnySchema>; readonly studio: EmbedStudio | undefined }) {
+  const props = {
+    app,
+    within: "box" as const,
+    ...(studio ? { onApply: studio.onApply } : {}),
+    ...(studio?.landmark ? { landmark: studio.landmark } : {}),
+    ...(studio?.offered !== undefined ? { offered: studio.offered } : {}),
+  };
+  const Handed = studio?.place;
+  if (Handed) return <Handed {...props} />;
+  return (
+    <Suspense fallback={null}>
+      <StudioPlace {...props} />
+    </Suspense>
   );
 }
 
