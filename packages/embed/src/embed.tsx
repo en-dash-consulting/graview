@@ -2,7 +2,7 @@ import type { AnySchema, Brand, GraviewApp, Person, Place, Principal, Store } fr
 import { EMPTY_VIEW, aggregateId, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout";
 import { PlacePicture } from "@graview/pages";
 import { Companion, Inspector, OverviewButton, Places, ShowInstallation, VISUALLY_HIDDEN, descentTarget, useWidth } from "@graview/primitives";
-import type { StudioApplied } from "@graview/studio";
+import type { StudioApplied, StudioOffered } from "@graview/studio";
 import { ErrorReportContext, GraviewProvider, Scene, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react";
 import { lazy, Suspense, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -86,6 +86,13 @@ export interface EmbedStudio {
    * body is the studio.
    */
   readonly landmark?: "main" | "region";
+  /**
+   * Who is offered it (FR-59). The host has already decided who may build,
+   * so its word stands over the app's policy, which grants the app's people
+   * and stays on the store for everything else: `true`, `false`, or a
+   * function of the store and the seat. Omitted, the app's policy decides.
+   */
+  readonly offered?: StudioOffered;
 }
 
 export interface EmbedProps<S extends AnySchema = AnySchema> extends EmbedOptions<S> {
@@ -338,7 +345,7 @@ function EmbedStrip({
                 {studio !== false ? (
                   <FaceBoundary module="@graview/studio" report={report}>
                     <Suspense fallback={null}>
-                      <StudioPlace app={app} within="box" {...(studio ? { onApply: studio.onApply, ...(studio.landmark ? { landmark: studio.landmark } : {}) } : {})} />
+                      <StudioPlace app={app} within="box" {...(studio ? { onApply: studio.onApply, ...(studio.landmark ? { landmark: studio.landmark } : {}), ...(studio.offered !== undefined ? { offered: studio.offered } : {}) } : {})} />
                     </Suspense>
                   </FaceBoundary>
                 ) : null}

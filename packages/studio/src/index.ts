@@ -34,7 +34,7 @@ export { documentAfter, documentEdits } from "./edits.js";
 export type { StudioEdits } from "./edits.js";
 export { createStudioLens } from "./lens.js";
 export { StudioPlace, maySeeTheStudio } from "./place.js";
-export type { StudioApplied } from "./place.js";
+export type { StudioApplied, StudioOffered } from "./place.js";
 export { studioResponder, typeFromName } from "./agent.js";
 export type { StudioResponderOptions } from "./agent.js";
 export { StudioAgentPanel } from "./agent-panel.js";

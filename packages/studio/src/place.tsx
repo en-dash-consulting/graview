@@ -81,11 +81,15 @@ export function handedToTheHost(
   return { ok: true, ...applied };
 }
 
+/** A host's word on who is offered the studio: outright, or decided from the store and the seat (FR-59). */
+export type StudioOffered = boolean | ((store: Store<AnySchema>, principal: Parameters<Store<AnySchema>["mayAdminister"]>[1]) => boolean);
+
 export function StudioPlace<S extends AnySchema>({
   app,
   label = "Studio",
   within = "page",
   landmark,
+  offered,
   onApply,
 }: {
   /** The declaration to open. The running app's own, in every case that matters. */
@@ -116,6 +120,17 @@ export function StudioPlace<S extends AnySchema>({
    */
   readonly landmark?: "main" | "region";
   /**
+   * WHO IS OFFERED IT, WHEN A HOST HAS ALREADY DECIDED (FR-59).
+   *
+   * `maySeeTheStudio` reads the app's own policy, which grants the app's
+   * people, not its builders: a host that let an editor onto its builder
+   * page saw the studio withheld from them, and could only take the policy
+   * off the store to get it back. `true` or `false` is the host's word over
+   * the policy's; a function decides from the store and the seat. Omitted,
+   * `maySeeTheStudio` decides, as it always has.
+   */
+  readonly offered?: StudioOffered;
+  /**
    * A HOST THAT KEEPS THE DECLARATION. Given, Apply hands it what the
    * checker passed and the studio writes nothing: no door is asked after,
    * no files are offered. A hosted app keeps declarations on its own
@@ -127,7 +142,8 @@ export function StudioPlace<S extends AnySchema>({
   const { view, go } = useNavigation();
   const open = view.within?.["studio"] === "open";
   const setOpen = (next: boolean) => go(withWithin(view, "studio", next ? "open" : null));
-  if (!maySeeTheStudio(store, principal)) return null;
+  const may = offered === undefined ? maySeeTheStudio(store, principal) : typeof offered === "function" ? offered(store as unknown as Store<AnySchema>, principal) : offered;
+  if (!may) return null;
   return (
     <>
       <button
