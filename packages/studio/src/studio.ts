@@ -1,5 +1,5 @@
 import { checkApp, Store, type AnySchema, type Batch, type CheckResult, type GraphSnapshot, type GraviewApp, type MigrationDeclaration, type MutationCall, type Principal } from "@graview/core";
-import { compileDocument, documentOf, toDocument, type DocumentEdit, type EditOutcome, type Fill, type Finding, type GraviewDocument } from "@graview/core/document";
+import { compileDocument, documentOf, toDocument, type CompiledDocument, type RefusedDocument, type DocumentEdit, type EditOutcome, type Fill, type Finding, type GraviewDocument } from "@graview/core/document";
 import { resolveProposal } from "@graview/tools";
 import { documentAfter, documentEdits } from "./edits.js";
 import { declarationToGraph } from "./from-declaration.js";
@@ -124,12 +124,35 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
   const reference = () => opened ?? (against ??= toDocument(base as unknown as GraviewApp<AnySchema>).document);
   const made = () => documentEdits(reference(), seed, store.snapshot() as GraphSnapshot);
   const document = (): EditOutcome | undefined => (opened ? documentAfter(opened, made()) : undefined);
+  /*
+   * ONE JUDGE, AND FOR A DOCUMENT IT IS THE DOCUMENT'S. The studio's own
+   * TypeScript reading of a document does not carry a removal into the acts
+   * the way editDocument does — removing a relation left the acts that
+   * connect it claiming an edge nobody declares — so the checker refused
+   * changes whose document compiled clean. Opened on a document, a graph
+   * is judged by compiling the document its changes make; `check`,
+   * `would` and `apply` all ask here, so the verdict the studio shows, the
+   * one an agent's proposal is judged by and the one Apply keeps agree.
+   * A change no edit can say has no document to compile: it is judged as
+   * the studio's reading, as a TypeScript app is.
+   */
+  const judge = (graph: GraphSnapshot): { readonly check: CheckResult; readonly compiled?: CompiledDocument | RefusedDocument; readonly said?: EditOutcome } => {
+    if (opened) {
+      const said = documentAfter(opened, documentEdits(opened, seed, graph));
+      if (said.ok) {
+        const compiled = compileDocument(said.document);
+        return { check: verdictOf(base.name, compiled.findings), compiled, said };
+      }
+      return { check: checkApp(graphToDeclaration(graph, { base: base as unknown as GraviewApp<AnySchema>, name: base.name })), said };
+    }
+    return { check: checkApp(graphToDeclaration(graph, { base: base as unknown as GraviewApp<AnySchema>, name: base.name })) };
+  };
   let proposed = 0;
   return {
     store,
     base,
     declaration,
-    check: () => checkApp(declaration()),
+    check: () => judge(store.snapshot() as GraphSnapshot).check,
     changes: () => store.batches().slice(since),
     proposals: () => store.batches().slice(since).filter((batch) => isAgent(batch) && !batch.undone),
     propose(call, agent, intent) {
@@ -169,27 +192,13 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
       } catch (error) {
         return { ok: false, reason: error instanceof Error ? error.message : String(error) };
       }
-      return {
-        ok: true,
-        check: checkApp(
-          graphToDeclaration(trial.snapshot() as GraphSnapshot, { base: base as unknown as GraviewApp<AnySchema>, name: base.name }),
-        ),
-      };
+      return { ok: true, check: judge(trial.snapshot() as GraphSnapshot).check };
     },
     apply() {
-      const next = declaration();
-      const check = checkApp(next);
-      if (check.errors > 0) return { ok: false, check };
-      const migration = migrationBetween(base as unknown as GraviewApp<AnySchema>, store.snapshot() as GraphSnapshot);
-      const version = migration ? migration.to : base.version;
-      const app: GraviewApp<AnySchema> = {
-        ...next,
-        ...(version !== undefined ? { version } : {}),
-        ...(migration ? { migrations: [...(base.migrations ?? []), migration] } : {}),
-      };
-      if (!opened) return { ok: true, app, migration };
-      const said = document()!;
-      if (!said.ok) return { ok: true, app, migration, documentFindings: said.findings };
+      const graph = store.snapshot() as GraphSnapshot;
+      const judged = judge(graph);
+      if (judged.check.errors > 0) return { ok: false, check: judged.check };
+      const migration = migrationBetween(base as unknown as GraviewApp<AnySchema>, graph);
       /*
        * THE DOCUMENT'S APP, NOT THE STUDIO'S READING. Handed the document
        * and the studio's TypeScript reading beside it, a host that kept the
@@ -198,9 +207,18 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
        * document compiles to, which the compiler remembers as compiled
        * from it, so `toDocument(apply().app)` is `apply().document`.
        */
-      const compiled = compileDocument(said.document);
-      if (!compiled.ok) return { ok: true, app, migration, documentFindings: compiled.findings };
-      return { ok: true, app: compiled.app, migration, document: compiled.document, edits: made().edits, said: said.said, fills: said.fills };
+      if (judged.compiled?.ok && judged.said?.ok) {
+        return { ok: true, app: judged.compiled.app, migration, document: judged.compiled.document, edits: made().edits, said: judged.said.said, fills: judged.said.fills };
+      }
+      const next = declaration();
+      const version = migration ? migration.to : base.version;
+      const app: GraviewApp<AnySchema> = {
+        ...next,
+        ...(version !== undefined ? { version } : {}),
+        ...(migration ? { migrations: [...(base.migrations ?? []), migration] } : {}),
+      };
+      if (judged.said && !judged.said.ok) return { ok: true, app, migration, documentFindings: judged.said.findings };
+      return { ok: true, app, migration };
     },
     files: (sourceOptions) =>
       declarationFiles(store.snapshot() as GraphSnapshot, { name: base.name, base: base as unknown as GraviewApp<AnySchema>, ...sourceOptions }),
@@ -208,4 +226,18 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
     document,
     sourceChanges: () => sourceChanges(seed, store.snapshot() as GraphSnapshot, base as unknown as GraviewApp<AnySchema>),
   };
+}
+
+/** What compiling a document says, as the checker's verdict: the same findings, at the document's paths, under the checker's own codes. */
+function verdictOf(app: string, findings: readonly Finding[]): CheckResult {
+  const said = findings.map((finding) => ({
+    severity: finding.severity,
+    code: finding.code.replace(/^check:/, ""),
+    where: finding.path,
+    message: finding.message,
+    fix: finding.fix ?? "",
+  }));
+  const count = (severity: Finding["severity"]) => said.filter((finding) => finding.severity === severity).length;
+  const errors = count("error");
+  return { app, findings: said, errors, warnings: count("warning"), notes: count("note"), ok: errors === 0 };
 }
