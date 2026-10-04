@@ -14,7 +14,7 @@ export { applyPatch, PatchError } from "./patch.js";
 export type { PatchOp } from "./patch.js";
 export { planMigration, coerce, losesData } from "./migrate.js";
 export { editDocument, EDIT_OPS, renameIn } from "./edit.js";
-export type { DeclaredKinds, EditOutcome, EditOp, Fill, NameChange } from "./edit.js";
+export type { DeclaredKinds, DocumentEdit, EditOutcome, EditOp, Fill, NameChange } from "./edit.js";
 export type { MigrationPlan, StoredGraph, MigrationFill } from "./migrate.js";
 export { upgradeDocument, UPGRADES } from "./upgrade.js";
 export type { Upgrade, Upgraded } from "./upgrade.js";

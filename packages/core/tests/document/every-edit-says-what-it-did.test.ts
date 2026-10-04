@@ -26,6 +26,7 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "set-label": { op: "set-label", kind: "vendor", label: "{name} ({status})" },
   "set-describe": { op: "set-describe", kind: "vendor", describe: "{status}" },
   "set-view": { op: "set-view", kind: "vendor", slot: "card", blocks: [{ title: "{name}" }] },
+  "set-glance": { op: "set-glance", kind: "vendor", fields: ["status", "quote"] },
 };
 
 describe("every edit says what it did", () => {
