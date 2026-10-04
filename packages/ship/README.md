@@ -156,6 +156,17 @@ if (landed) live.publish(landed, otherPeers); // each as its own seat sees them,
 
 `connect()` is this protocol with the state in memory, so there is one implementation.
 
+**An ack waits for `flush`, and a failed flush is never acked.** `flush(landed)` is handed
+every op the protocol landed that is not durable yet, in seq order — what just landed, after
+any a failed flush left — so a host that writes ops to a ledger writes exactly those (and
+skips one it is handed again). Flushes run one at a time. When one rejects, the client is
+refused `unavailable` ("Your change could not be saved just now. It is kept, and sent again
+until it is."), keeps the change, and sends it again; the socket's cursor does not move,
+`receive` answers no `landed`, and the ops stay in the store but are held back from every
+socket until a flush holds them — the change sent again, or the next change, which hands
+them over first. A change sent again after a failed flush is never made twice and never
+acked before it is durable. `createStoreHandler({ store, flush })` takes the same `flush`.
+
 **A host that routes its own requests** answers the routes with meaning through the same
 protocol, so it keeps what `createStoreHandler` does — a batch sent again answered once, a
 stale write a conflict, its `limit`, a refusal's reason, the ops as the seat may see them:

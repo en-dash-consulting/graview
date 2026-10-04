@@ -175,7 +175,7 @@ interface HandlerOptions<S extends AnySchema> {
 export interface DeclarationChange {
   readonly app: GraviewApp<AnySchema>;
   readonly store?: Store<AnySchema>;
-  readonly flush?: () => Promise<void>;
+  readonly flush?: (landed: readonly Operation[]) => Promise<void>;
   readonly migrated?: readonly string[];
 }
 
@@ -207,8 +207,13 @@ export interface AdapterStoreHandlerOptions<S extends AnySchema> extends Handler
 export interface HeldStoreHandlerOptions<S extends AnySchema> extends HandlerOptions<S> {
   readonly store: Store<S>;
   readonly adapter?: never;
-  /** Resolves once what landed is durable: a call's answer waits for it. Absent, the answer goes at once. */
-  readonly flush?: () => Promise<void>;
+  /**
+   * Resolves once what landed is durable: a call's answer waits for it.
+   * Handed the ops not yet durable, in seq order (`liveProtocol`'s
+   * `flush`); one that rejects refuses the call `unavailable`, and the
+   * change is kept and sent again. Absent, the answer goes at once.
+   */
+  readonly flush?: (landed: readonly Operation[]) => Promise<void>;
   /** What opening the store migrated, in the migrations' own words: said in the state, as `openStore`'s would be. */
   readonly migrated?: readonly string[];
 }
@@ -397,20 +402,20 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
 interface Serving {
   readonly app: GraviewApp<AnySchema>;
   readonly store: Store<AnySchema>;
-  readonly flush: (() => Promise<void>) | undefined;
+  readonly flush: ((landed: readonly Operation[]) => Promise<void>) | undefined;
   readonly migrated: string[];
   readonly wire: Wire<AnySchema>;
   readonly protocol: LiveProtocol<AnySchema>;
 }
 
-type Swap = (app: GraviewApp<AnySchema>, open: () => Promise<{ store: Store<AnySchema>; flush?: () => Promise<void>; migrated: readonly string[] }>) => Promise<void>;
+type Swap = (app: GraviewApp<AnySchema>, open: () => Promise<{ store: Store<AnySchema>; flush?: (landed: readonly Operation[]) => Promise<void>; migrated: readonly string[] }>) => Promise<void>;
 
 function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, adapterName = "held by the host"): { handler: Omit<StoreHandler<S>, "declarationChanged">; swap: Swap } {
   const seatOf = options.seatOf ?? (options.trustSeatHeaders ? seatFromHeaders : undefined);
-  const flush = async (): Promise<void> => {
-    await serving.flush?.();
+  const flush = async (landed: readonly Operation[] = []): Promise<void> => {
+    await serving.flush?.(landed);
   };
-  const serve = (app: GraviewApp<AnySchema>, store: Store<AnySchema>, flushing: (() => Promise<void>) | undefined, migrated: readonly string[]): Serving => ({
+  const serve = (app: GraviewApp<AnySchema>, store: Store<AnySchema>, flushing: ((landed: readonly Operation[]) => Promise<void>) | undefined, migrated: readonly string[]): Serving => ({
     app,
     store,
     flush: flushing,
@@ -572,7 +577,10 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     if (url.pathname === "/graview/ops" && request.method === "POST") {
       const text = await request.text();
       // What the calls came through is the host's to say, never the body's (FR-52).
-      return answered(await serving.protocol.post(text, await asked("api")));
+      const answer = await serving.protocol.post(text, await asked("api"));
+      // Ops a failed flush had held back are durable now: down every socket.
+      if (answer.landed) heldBackDurable();
+      return answered(answer);
     }
 
     return send(404, { error: `Nothing at ${url.pathname}`, reason: "missing" });
@@ -602,6 +610,17 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       if (agentsFor > 0) agentsWereHere(ops);
     });
   let unsubscribe = watch(serving.store);
+  /*
+   * Every op is pushed as it lands — but one whose flush failed is held
+   * back from every socket until a flush holds it (`liveProtocol`'s
+   * `flush`). When one does, each socket is caught up from its cursor.
+   */
+  function heldBackDurable(except?: Live): void {
+    serving.protocol.publish(
+      [],
+      [...sockets].filter((live) => live !== except && !live.answering),
+    );
+  }
   /*
    * AN AGENT THAT ACTED IS IN THE ROOM (FR-47), standing over the last
    * thing it wrote: once per agent per change, and not at all for one that
@@ -699,6 +718,8 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
         // What landed while this socket's own answer waited for its flush, after its ack.
         serving.protocol.publish([], [live]);
       }
+      // Ops a failed flush had held back are durable now: down every other socket too.
+      if (received.landed) heldBackDurable(live);
       if (received.presence) {
         arrive(received.presence);
         tellWhoIsHere();

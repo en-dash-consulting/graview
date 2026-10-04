@@ -100,8 +100,21 @@ export interface LiveProtocolOptions<S extends AnySchema> {
   readonly version?: number;
   /** What opening the store migrated, said in a welcome's state. */
   readonly migrated?: readonly string[];
-  /** Resolves once what landed is durable: an ack waits for it. */
-  readonly flush?: () => Promise<void>;
+  /**
+   * MAKES WHAT LANDED DURABLE: an ack, and a post's answer, wait for it.
+   * Handed every op the protocol landed that is not durable yet, in seq
+   * order — the ones that just landed, after any a failed flush left — so
+   * a host that writes ops (a ledger) writes exactly these. Flushes run one
+   * at a time. One that rejects is not silence: the client is refused
+   * `unavailable` in words and keeps the change, the socket's cursor does
+   * not move, and the ops stay in the store but are held back from every
+   * socket until a later flush holds them — the change sent again, or the
+   * next one, which is handed them first. So a change sent again after a
+   * failed flush is never made twice, and never acked before it is durable.
+   * A flush may be handed an op again after it rejected: one it already
+   * holds, it skips.
+   */
+  readonly flush?: (landed: readonly Operation[]) => Promise<void>;
   /** The host's build, an opaque string said in every welcome (FR-44): a client on another one is told once and keeps working. */
   readonly build?: string;
   /**
@@ -132,6 +145,11 @@ export interface LiveProtocol<S extends AnySchema> {
    * the one before has resolved. A host that publishes while a receive
    * awaits its flush reads the cursor off the same peer object, or
    * leaves the receiving socket out: its ops reach it in the ack.
+   *
+   * `landed` is what became durable: the call's ops, and any a failed
+   * flush had held back before them. When the flush fails, nothing has:
+   * `landed` is absent, the cursor is where it was, and the client was
+   * refused `unavailable`.
    */
   receive(peer: LivePeer, text: string, who?: readonly Presence[]): Promise<LiveReceived>;
   /**
@@ -210,7 +228,13 @@ interface Change {
 type Landing =
   | { readonly conflicts: readonly FieldConflict[]; readonly refusal?: undefined; readonly result?: undefined }
   | { readonly refusal: WireRefusal; readonly conflicts?: undefined; readonly result?: undefined }
-  | { readonly result: { readonly ops: readonly Operation[]; readonly batch: string }; readonly conflicts?: undefined; readonly refusal?: undefined };
+  | {
+      readonly result: { readonly ops: readonly Operation[]; readonly batch: string };
+      /** What the flush made durable — these ops, and any a failed flush left — or nothing: it failed, and they are held back. */
+      readonly saved: readonly Operation[] | undefined;
+      readonly conflicts?: undefined;
+      readonly refusal?: undefined;
+    };
 
 /** For whom an author acts, as a presence says it: the person's id and name, or nothing. */
 const forWhom = (author: Author): Pick<Presence, "onBehalfOf" | "onBehalfOfName"> =>
@@ -505,16 +529,53 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
   /** A call that names no batch lands in one minted here, outside the shape a client may name. */
   const mintServed = serverBatchIds();
 
-  /** Every op this socket has not been sent, down it now, as its seat sees them. */
-  const catchUp = (peer: LivePeer, ops?: readonly Operation[]): void => {
-    if (peer.cursor === undefined) return;
-    const last = wire.lastSeq();
-    if (peer.cursor >= last) return;
+  /**
+   * OPS THAT LANDED AND ARE NOT DURABLE: a flush rejected them. Held back
+   * from every socket — nothing is sent past the first of them, so none is
+   * skipped — until a flush holds them. Derived: a host that wakes makes
+   * its store again from what is durable, where none of them is.
+   */
+  let unsaved: Operation[] = [];
+  let flushing: Promise<unknown> = Promise.resolve();
+  /**
+   * THROUGH THE HOST'S FLUSH, ONE AT A TIME: `ops` and every op a failed
+   * flush left before them. Says whether they are durable now, and which
+   * ops became durable — for the host to publish.
+   */
+  const durable = (ops: readonly Operation[]): Promise<{ readonly saved: readonly Operation[] } | { readonly failed: true }> => {
+    const turn = flushing.then(async () => {
+      const ids = new Set(unsaved.map((op) => op.id));
+      const handing = [...unsaved, ...ops.filter((op) => !ids.has(op.id))].sort((a, b) => a.seq - b.seq);
+      try {
+        await options.flush?.(handing);
+      } catch {
+        unsaved = handing;
+        return { failed: true as const };
+      }
+      const saved = new Set(handing.map((op) => op.id));
+      unsaved = unsaved.filter((op) => !saved.has(op.id));
+      return { saved: handing };
+    });
+    flushing = turn.catch(() => {});
+    return turn;
+  };
+  /** Whether any of these ops is not durable yet. */
+  const unsavedIn = (ops: readonly Operation[]): boolean => unsaved.length > 0 && ops.some((op) => unsaved.some((one) => one.id === op.id));
+  const UNSAVED = "Your change could not be saved just now. It is kept, and sent again until it is.";
+
+  /** The ops after this socket's cursor up to `last`, down it now, as its seat sees them. */
+  const sendUpTo = (peer: LivePeer, last: number, ops?: readonly Operation[]): void => {
+    if (peer.cursor === undefined || peer.cursor >= last) return;
     const from = peer.cursor + 1;
     // The ops handed in, when they are the whole of what this peer is missing; the log otherwise.
-    const after = ops && ops.length > 0 && ops[0]!.seq <= from && ops.at(-1)!.seq === last ? ops.filter((op) => op.seq >= from) : store.log.opsFrom(from);
+    const after = (ops && ops.length > 0 && ops[0]!.seq <= from && ops.at(-1)!.seq >= last ? ops.filter((op) => op.seq >= from) : store.log.opsFrom(from)).filter((op) => op.seq <= last);
     peer.cursor = last;
     if (after.length > 0) say(peer, { t: "ops", seq: last, ops: wire.shown(peer.seat, after) });
+  };
+  /** Every op this socket has not been sent, down it now, as its seat sees them — up to the first that is not durable. */
+  const catchUp = (peer: LivePeer, ops?: readonly Operation[]): void => {
+    const held = unsaved[0]?.seq;
+    sendUpTo(peer, held === undefined ? wire.lastSeq() : Math.min(wire.lastSeq(), held - 1), ops);
   };
 
   /** What the host's `limit` says of a change, before it is judged; nothing when it has none. */
@@ -543,8 +604,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       return { refusal: refusalOf(error) };
     }
     applied?.();
-    await options.flush?.();
-    return { result };
+    const flushed = await durable(result.ops);
+    return { result, saved: "saved" in flushed ? flushed.saved : undefined };
   };
 
   /** A change as the socket's message says it. */
@@ -560,9 +621,14 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
   /** A call or an undo from a socket, past its claim and the host's limit: judged as its seat, exactly as `POST /graview/ops` judges it. */
   const answer = async (peer: LivePeer, cid: string, change: Change): Promise<LiveReceived> => {
     catchUp(peer);
-    // Every op before this call's went down this socket before it landed; its own go in the ack.
+    const prior = peer.cursor!;
+    /*
+     * Every op before this call's went down this socket before it landed;
+     * its own go in the ack. Unless one before it is held back as not
+     * durable: then the cursor stays, and they go down after the flush.
+     */
     const landing = await land(peer.seat, peer.via, change, () => {
-      peer.cursor = wire.lastSeq();
+      if (unsaved.length === 0) peer.cursor = wire.lastSeq();
     });
     if (landing.conflicts) {
       say(peer, { t: "conflict", cid, sentence: conflictSentence(landing.conflicts), conflicts: [...landing.conflicts] });
@@ -572,10 +638,26 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       say(peer, { t: "refused", cid, ...landing.refusal });
       return { cursor: peer.cursor! };
     }
-    const { result } = landing;
-    const ops = wire.shown(peer.seat, result.ops);
-    say(peer, { t: "ack", cid, seq: ops.at(-1)?.seq ?? peer.cursor!, batch: result.batch, ops });
-    return { cursor: peer.cursor!, landed: result.ops };
+    const { result, saved } = landing;
+    if (!saved) {
+      // Not durable: refused `unavailable`, which the client keeps and sends again; nothing is acked and the cursor does not move.
+      peer.cursor = prior;
+      say(peer, { t: "refused", cid, reason: "unavailable", sentence: UNSAVED });
+      return { cursor: prior };
+    }
+    return acked(peer, cid, result.batch, result.ops, saved);
+  };
+
+  /** The ack of ops that are durable: what was held back before them goes first, so none is skipped. */
+  const acked = (peer: LivePeer, cid: string, batch: string, own: readonly Operation[], saved: readonly Operation[] | undefined): LiveReceived => {
+    const first = own[0]?.seq;
+    if (first !== undefined) {
+      sendUpTo(peer, first - 1);
+      peer.cursor = Math.max(peer.cursor!, own.at(-1)!.seq);
+    }
+    const ops = wire.shown(peer.seat, own);
+    say(peer, { t: "ack", cid, seq: ops.at(-1)?.seq ?? peer.cursor!, batch, ops });
+    return { cursor: peer.cursor!, ...(saved && saved.length > 0 ? { landed: saved } : {}) };
   };
 
   /** Which declaration, and which build, answered (FR-43, FR-44): on every route's answer a poll reads. */
@@ -664,11 +746,27 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
            */
           const change = changeOf(message);
           const claim = wire.claim(message.batch, peer.seat);
-          if (claim.refusal || claim.answered) {
+          if (claim.refusal) {
             catchUp(peer);
             if (peer.held?.cid === cid) delete peer.held;
-            if (claim.refusal) say(peer, { t: "refused", cid, ...claim.refusal });
-            else say(peer, { t: "ack", cid, seq: claim.answered!.at(-1)!.seq, batch: message.batch!, ops: wire.shown(peer.seat, claim.answered!) });
+            say(peer, { t: "refused", cid, ...claim.refusal });
+            return { cursor: peer.cursor };
+          }
+          if (claim.answered) {
+            if (peer.held?.cid === cid) delete peer.held;
+            // Landed, but a flush failed it: flushed again, and acked only once it holds.
+            if (unsavedIn(claim.answered)) {
+              const flushed = await durable([]);
+              if (!("saved" in flushed)) {
+                catchUp(peer);
+                say(peer, { t: "refused", cid, reason: "unavailable", sentence: UNSAVED });
+                return { cursor: peer.cursor };
+              }
+              catchUp(peer);
+              return acked(peer, cid, message.batch as string, claim.answered, flushed.saved);
+            }
+            catchUp(peer);
+            say(peer, { t: "ack", cid, seq: claim.answered.at(-1)!.seq, batch: message.batch as string, ops: wire.shown(peer.seat, claim.answered) });
             return { cursor: peer.cursor };
           }
           /*
@@ -751,7 +849,15 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       // Sent again after its answer was lost — or offered again on a new declaration, or after a reload (FR-43, FR-44, FR-49): only ever the asker's own ops.
       const claim = wire.claim(change.batch, asked.seat);
       if (claim.refusal) return reply(409, { error: claim.refusal.sentence, refused: true, reason: claim.refusal.reason, ...said });
-      if (claim.answered) return reply(200, { ops: wire.shown(asked.seat, claim.answered), batch: change.batch, ...said });
+      if (claim.answered) {
+        // Landed, but a flush failed it: flushed again, and answered only once it holds.
+        if (unsavedIn(claim.answered)) {
+          const flushed = await durable([]);
+          if (!("saved" in flushed)) return reply(503, { error: UNSAVED, refused: true, reason: "unavailable", ...said });
+          return { ...reply(200, { ops: wire.shown(asked.seat, claim.answered), batch: change.batch, ...said }), landed: flushed.saved };
+        }
+        return reply(200, { ops: wire.shown(asked.seat, claim.answered), batch: change.batch, ...said });
+      }
       /*
        * THE HOST'S LIMITS, BEFORE ANYTHING IS JUDGED. Busy is 429 and the
        * change is kept to send again (FR-45); a hard cap is refused, `limit`,
@@ -772,8 +878,10 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
         const { sentence, ...why } = landing.refusal;
         return reply(409, { error: sentence, refused: true, ...why, ...said });
       }
+      // Not durable: refused `unavailable`, which the client keeps and sends again.
+      if (!landing.saved) return reply(503, { error: UNSAVED, refused: true, reason: "unavailable", ...said });
       // An act may make what its own seat may not see: that op goes back withheld, as it would on a poll.
-      return { ...reply(200, { ops: wire.shown(asked.seat, landing.result.ops), batch: landing.result.batch, ...said }), landed: landing.result.ops };
+      return { ...reply(200, { ops: wire.shown(asked.seat, landing.result.ops), batch: landing.result.batch, ...said }), landed: landing.saved };
     },
     state(asked) {
       const seen = wire.seenFor(asked.seat);
