@@ -209,8 +209,9 @@ describe("the declaration changes under open tabs", () => {
     // Sam's had already landed: it is not made a second time.
     expect(handler.store.log.all().filter((op) => op.intent === "Rename to “Book the big hall”")).toHaveLength(1);
     expect(one.refusals).toEqual([]);
-    // Both tabs agree with the server, op for op.
+    // Both tabs agree with the server, op for op — each told of the other's change once it was written.
     const ids = (store: { log: { all(): readonly { id: string }[] } }) => store.log.all().map((op) => op.id);
+    await until(() => [one, two].every((tab) => ids(tab.next.remote!.store).join() === ids(handler.store).join()));
     expect(ids(one.next.remote!.store)).toEqual(ids(handler.store));
     expect(ids(two.next.remote!.store)).toEqual(ids(handler.store));
 

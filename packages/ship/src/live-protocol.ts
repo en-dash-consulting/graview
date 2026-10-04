@@ -759,7 +759,21 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
    * its store again from what is durable, where none of them is.
    */
   let unsaved: Operation[] = [];
+  /**
+   * OPS THAT LANDED AND ARE BEING FLUSHED: held back from every socket like
+   * the unsaved ones, so a change anybody else hears is a change that is
+   * written. Only with a `flush`: a host without one pushes at once.
+   */
+  let flying: Operation[] = [];
+  /** While the store takes a change (its subscribers hear it then): the seq its ops begin at, held back like the rest. */
+  let taking: number | undefined;
   let flushing: Promise<unknown> = Promise.resolve();
+  /** The first seq held back from every socket — not durable, or not yet — before `before`, when one is. */
+  const heldFrom = (before = Number.POSITIVE_INFINITY): number | undefined => {
+    let first: number | undefined = taking !== undefined && taking < before ? taking : undefined;
+    for (const op of [...unsaved, ...flying]) if (op.seq < before && (first === undefined || op.seq < first)) first = op.seq;
+    return first;
+  };
   /**
    * THROUGH THE HOST'S FLUSH, ONE AT A TIME: `ops` and every op a failed
    * flush left before them. Says whether they are durable now, and which
@@ -769,14 +783,16 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     const turn = flushing.then(async () => {
       const ids = new Set(unsaved.map((op) => op.id));
       const handing = [...unsaved, ...ops.filter((op) => !ids.has(op.id))].sort((a, b) => a.seq - b.seq);
+      const handed = new Set(handing.map((op) => op.id));
       try {
         await options.flush?.(handing);
       } catch {
         unsaved = handing;
+        flying = flying.filter((op) => !handed.has(op.id));
         return { failed: true as const };
       }
-      const saved = new Set(handing.map((op) => op.id));
-      unsaved = unsaved.filter((op) => !saved.has(op.id));
+      unsaved = unsaved.filter((op) => !handed.has(op.id));
+      flying = flying.filter((op) => !handed.has(op.id));
       return { saved: handing };
     });
     flushing = turn.catch(() => {});
@@ -816,7 +832,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
   };
   /** Every op this socket has not been sent, down it now, as its seat sees them — up to the first that is not durable. */
   const catchUp = (peer: LivePeer, ops?: readonly Operation[], known?: Principal, sight?: Sight): void => {
-    const held = unsaved[0]?.seq;
+    const held = heldFrom();
     sendUpTo(peer, held === undefined ? wire.lastSeq() : Math.min(wire.lastSeq(), held - 1), ops, known, sight);
   };
 
@@ -832,21 +848,27 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
    * named or one minted here; then flushed. `applied` runs between the
    * store taking it and the flush, for the socket to move its cursor.
    */
-  const land = async (seat: Principal, via: string, change: Change, applied?: () => void): Promise<Landing> => {
+  const land = async (seat: Principal, via: string, change: Change, applied?: (ops: readonly Operation[]) => void): Promise<Landing> => {
     if (change.t === "call") {
       const conflicts = wire.conflictsOf(seat, change.calls, change.base);
       if (conflicts.length > 0) return { conflicts };
     }
     const batch = typeof change.batch === "string" && change.batch.length > 0 ? change.batch : mintServed(change.t === "undo" ? "undo" : "batch");
     let result: { readonly ops: readonly Operation[]; readonly batch: string };
+    // A host that publishes from the store's own subscription does so inside the apply: hold from here.
+    if (options.flush) taking = wire.lastSeq() + 1;
     try {
       const applying = { author: seat, via, ...(change.intent ? { intent: change.intent } : {}), batch };
       result = change.t === "undo" ? store.undo(change.batches, applying) : store.applyAll(change.calls, applying);
     } catch (error) {
+      taking = undefined;
       const worded = options.refusal?.(error, change.calls, { seat, via });
       return { refusal: worded ?? wireRefusalOf(store as unknown as Store<AnySchema>, error) };
     }
-    applied?.();
+    // Being written: nobody else hears it until it is (`heldFrom`).
+    if (options.flush) flying = [...flying, ...result.ops];
+    taking = undefined;
+    applied?.(result.ops);
     const flushed = await durable(result.ops);
     return { result, saved: "saved" in flushed ? flushed.saved : undefined };
   };
@@ -877,8 +899,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
      * its own go in the ack. Unless one before it is held back as not
      * durable: then the cursor stays, and they go down after the flush.
      */
-    const landing = await land(seat, via, change, () => {
-      if (unsaved.length === 0) peer.cursor = wire.lastSeq();
+    const landing = await land(seat, via, change, (own) => {
+      if (own.length === 0 || heldFrom(own[0]!.seq) === undefined) peer.cursor = wire.lastSeq();
     });
     if (landing.conflicts) {
       say(peer, { t: "conflict", cid, sentence: conflictSentence(landing.conflicts), conflicts: [...landing.conflicts] });
@@ -999,7 +1021,10 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
               },
             });
           } else {
-            say(peer, { t: "welcome", ...said, seq: peer.cursor, ops: wire.since(seat, seq) });
+            // Caught up to what is written: an op still being flushed, or one a flush failed, comes once it holds.
+            const held = heldFrom();
+            if (held !== undefined) peer.cursor = Math.max(Math.floor(seq), held - 1);
+            say(peer, { t: "welcome", ...said, seq: peer.cursor, ops: wire.since(seat, seq).filter((op) => op.seq <= peer.cursor!) });
           }
           const others = who.filter((presence) => presence.participant !== peer.participant);
           if (others.length > 0) say(peer, { t: "presence", who: wire.whoFor(seat, others) });

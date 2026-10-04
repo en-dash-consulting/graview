@@ -189,6 +189,12 @@ until it is."), keeps the change, and sends it again; the socket's cursor does n
 socket until a flush holds them — the change sent again, or the next change, which hands
 them over first. A change sent again after a failed flush is never made twice and never
 acked before it is durable. `createStoreHandler({ store, flush })` takes the same `flush`.
+**A change anybody else hears is a change that is written**: while an op's flush is under way
+it is held back from every socket — pushes, and the ops a `hello` is welcomed with — and it
+goes down once the flush resolves (a hibernating host publishes the `landed` that `receive`
+or `post` answers; `createStoreHandler` does it itself). A flush that fails was heard by
+nobody. A host without a `flush` pushes every op the moment it lands. A whole-state read
+(`/graview/state`, a hello without a seq) is the store as it stands in memory.
 
 **A host that routes its own requests** answers the routes with meaning through the same
 protocol, so it keeps what `createStoreHandler` does — a batch sent again answered once, a
