@@ -2,7 +2,7 @@ import type { AnySchema, Brand, GraviewApp, Person, Place, Principal, Store } fr
 import { EMPTY_VIEW, aggregateId, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout";
 import { PlacePicture } from "@graview/pages";
 import { Companion, Inspector, OverviewButton, Places, ShowInstallation, VISUALLY_HIDDEN, descentTarget, useWidth } from "@graview/primitives";
-import type { StudioApplied, StudioOffered } from "@graview/studio";
+import type { StudioOffered, StudioOnApply } from "@graview/studio";
 import { ErrorReportContext, GraviewProvider, Scene, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react";
 import { lazy, Suspense, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -77,8 +77,12 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOpti
 
 /** The studio an embed offers, for a host that keeps the declaration itself. */
 export interface EmbedStudio {
-  /** Handed what the checker passed; the studio writes nothing itself. */
-  readonly onApply: (applied: StudioApplied) => void;
+  /**
+   * Handed what the checker passed; the studio writes nothing itself. A
+   * host that could not keep it returns, or resolves to, `{ ok: false,
+   * findings }`, and the studio shows those and stays open (FR-60).
+   */
+  readonly onApply: StudioOnApply;
   /**
    * What the studio's picture is to the host's page (FR-58). Inside an
    * embed it is a labelled region by default, never a second `<main>`;
