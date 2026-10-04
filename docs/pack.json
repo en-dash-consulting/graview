@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-04T02:30:34.612Z",
+  "at": "2026-10-04T03:37:11.825Z",
   "packages": {
     "@graview/core": {
       "files": 479,
-      "tarballBytes": 553286,
+      "tarballBytes": 553280,
       "ok": true
     },
     "create-graview": {
@@ -13,12 +13,12 @@
     },
     "@graview/embed": {
       "files": 23,
-      "tarballBytes": 31140,
+      "tarballBytes": 31408,
       "ok": true
     },
     "graview": {
       "files": 11,
-      "tarballBytes": 4890,
+      "tarballBytes": 4892,
       "ok": true
     },
     "@graview/guest": {
@@ -33,17 +33,17 @@
     },
     "@graview/pages": {
       "files": 79,
-      "tarballBytes": 89933,
+      "tarballBytes": 89932,
       "ok": true
     },
     "@graview/primitives": {
-      "files": 223,
-      "tarballBytes": 363212,
+      "files": 219,
+      "tarballBytes": 356490,
       "ok": true
     },
     "@graview/react": {
-      "files": 151,
-      "tarballBytes": 220287,
+      "files": 147,
+      "tarballBytes": 213489,
       "ok": true
     },
     "@graview/render": {
@@ -58,12 +58,12 @@
     },
     "@graview/skills": {
       "files": 25,
-      "tarballBytes": 44562,
+      "tarballBytes": 44604,
       "ok": true
     },
     "@graview/studio": {
       "files": 71,
-      "tarballBytes": 117251,
+      "tarballBytes": 121078,
       "ok": true
     },
     "@graview/tools": {
@@ -75,22 +75,41 @@
   "budgets": [
     {
       "name": "the pages face alone",
+      "load": "first",
       "minified": 797078,
       "gzipped": 215907,
+      "chunks": 1,
       "budget": {
         "minified": 815000,
         "gzipped": 220000
       },
+      "carries": [],
+      "over": false
+    },
+    {
+      "name": "embed without the studio",
+      "load": "first",
+      "minified": 1047473,
+      "gzipped": 300745,
+      "chunks": 2,
+      "budget": {
+        "minified": 1070000,
+        "gzipped": 308000
+      },
+      "carries": [],
       "over": false
     },
     {
       "name": "every face",
-      "minified": 1130225,
-      "gzipped": 324760,
+      "load": "all",
+      "minified": 1157845,
+      "gzipped": 336191,
+      "chunks": 3,
       "budget": {
-        "minified": 1150000,
-        "gzipped": 330000
+        "minified": 1185000,
+        "gzipped": 345000
       },
+      "carries": [],
       "over": false
     }
   ],
