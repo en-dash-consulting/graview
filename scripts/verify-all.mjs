@@ -50,6 +50,8 @@ const say = (text) => writeSync(1, text);
 const CHAIN = [
   // First: the watch that judges every other harness's screens, made to fire.
   ["watch", "verify-watch.mjs"],
+  // No browser: what Cloud's hosted page carries before the app draws, from esbuild's metafile (FR-57).
+  ["hosted", "verify-hosted-page.mjs"],
   ["site", "verify-site.mjs"],
   // The awkward example in every face, width, scheme and seat — long, so it starts early.
   ["gauntlet", "verify-gauntlet.mjs"],

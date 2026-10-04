@@ -1,0 +1,50 @@
+{
+  "at": "2026-10-04T14:46:38.446Z",
+  "page": "openRemote + mount(…, { studio: false }) over the vendors document, built as Graview Cloud's packages/client/bundles.mjs builds its shell",
+  "checks": {
+    "atMost600KbMinifiedUpFront": {
+      "kb": 1075,
+      "budgetKb": 600,
+      "ok": false
+    },
+    "atMost150KbOfZodUpFront": {
+      "kb": 188,
+      "budgetKb": 150,
+      "ok": false
+    },
+    "theStudioIsNotCarried": {
+      "ok": true
+    }
+  },
+  "upFront": {
+    "kb": 1075,
+    "chunks": 2,
+    "packagesKb": {
+      "@graview/core": 207,
+      "zod": 188,
+      "react-dom": 177,
+      "@graview/primitives": 174,
+      "@graview/react": 94,
+      "@graview/pages": 64,
+      "@graview/tools": 46,
+      "react-router": 43,
+      "@graview/layout": 31,
+      "@graview/ship": 16,
+      "@graview/embed": 14,
+      "react": 8,
+      "@graview/guest": 5,
+      "scheduler": 4,
+      "@graview/render": 1,
+      "(the page)": 1
+    }
+  },
+  "whenAsked": {
+    "kb": 0,
+    "chunks": 1,
+    "packagesKb": {
+      "(the page)": 0
+    },
+    "doors": []
+  },
+  "passed": false
+}
