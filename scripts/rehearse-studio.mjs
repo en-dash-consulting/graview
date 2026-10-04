@@ -23,11 +23,12 @@ import { createServer } from "node:http";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { launchEngine } from "./lib/engine.mjs";
+import { portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const scratch = resolve(repoRoot, "apps/.studio-rehearsal");
-const PORT = 5297;
-const MODEL_PORT = 5398;
+const PORT = portFor("rehearsal");
+const MODEL_PORT = portFor("rehearsal-model");
 const report = { at: new Date().toISOString(), checks: {} };
 
 /* ------------------------------------------------ what the model answers */

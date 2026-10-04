@@ -17,6 +17,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -72,11 +73,11 @@ try {
   browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
 
   /* ============================================== todo: the conversation */
-  vite = await startVite("todo", 5193);
+  vite = await startVite("todo", portFor("todo"));
   const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
 
   /* ------------------------- in the rail, open with it, with no pill of its own */
@@ -271,7 +272,7 @@ try {
       }),
     );
   });
-  await remote.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
+  await remote.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
   await remote.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
   /* The rail is already open: the conversation is a section of it, not a panel behind a pill. */
   await remote.waitForSelector('[data-testid="chat-panel"]');

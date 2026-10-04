@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import { DESK_SERVES, moved, portsFor } from "../../scripts/lib/ports.mjs";
 import { fileURLToPath } from "node:url";
 
 const pkg = (name: string) =>
@@ -60,5 +61,7 @@ export default defineConfig({
       "@graview/rota": app("rota"),
     },
   },
-  server: { port: 5199, strictPort: true },
+  // The ports this checkout serves the demos on, moved onto GRAVIEW_PORT_BASE when it is set: a page cannot read the environment.
+  define: { __GRAVIEW_PORTS__: JSON.stringify(portsFor(DESK_SERVES)) },
+  server: { port: moved(5199), strictPort: true },
 });

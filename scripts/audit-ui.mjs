@@ -15,6 +15,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -39,7 +40,7 @@ const openProfile = async (page) => {
 };
 
 const APPS = {
-  todo: { port: 5193, ready: "__todoReady", query: "&today=2026-09-01", states: {
+  todo: { port: portFor("todo"), ready: "__todoReady", query: "&today=2026-09-01", states: {
     lists: async () => {},
     /*
      * AT THE READER'S LARGEST TEXT, which is 200% of the browser's own and
@@ -70,7 +71,7 @@ const APPS = {
       await p.waitForTimeout(700);
     },
     member: async (p) => {
-      await p.goto("http://localhost:5193/?theme=light&today=2026-09-01&fresh=1&as=user-sam", { waitUntil: "load" });
+      await p.goto(`${at("todo")}/?theme=light&today=2026-09-01&fresh=1&as=user-sam`, { waitUntil: "load" });
       await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(700);
     },
@@ -110,12 +111,12 @@ const APPS = {
      * a node with no edge or judgement of it, twelve chips that must wrap.
      */
     judged: async (p) => {
-      await p.goto("http://localhost:5193/?theme=light&today=2026-09-01#focus=rule-order&relation=task&zoom=1", { waitUntil: "load" });
+      await p.goto(`${at("todo")}/?theme=light&today=2026-09-01#focus=rule-order&relation=task&zoom=1`, { waitUntil: "load" });
       await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(900);
     },
     crowd: async (p) => {
-      await p.goto("http://localhost:5193/?theme=light&today=2026-09-01#focus=reason-deposit&relation=task&zoom=1", { waitUntil: "load" });
+      await p.goto(`${at("todo")}/?theme=light&today=2026-09-01#focus=reason-deposit&relation=task&zoom=1`, { waitUntil: "load" });
       await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(900);
     },
@@ -128,7 +129,7 @@ const APPS = {
      * between late tasks.
      */
     menu: async (p) => {
-      await p.goto("http://localhost:5193/?theme=light&today=2026-09-04&fresh=1", { waitUntil: "load" });
+      await p.goto(`${at("todo")}/?theme=light&today=2026-09-04&fresh=1`, { waitUntil: "load" });
       await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(600);
       await p.click('[data-graview-pick="t-post"]', { button: "right" });
@@ -147,12 +148,12 @@ const APPS = {
      * this state exists to catch.
      */
     figures: async (p) => {
-      await p.goto("http://localhost:5193/?theme=light&today=2026-09-01&fresh=1#overview=1", { waitUntil: "load" });
+      await p.goto(`${at("todo")}/?theme=light&today=2026-09-01&fresh=1#overview=1`, { waitUntil: "load" });
       await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(900);
     },
     figuresDark: async (p) => {
-      await p.goto("http://localhost:5193/?theme=dark&today=2026-09-01&fresh=1#overview=1", { waitUntil: "load" });
+      await p.goto(`${at("todo")}/?theme=dark&today=2026-09-01&fresh=1#overview=1`, { waitUntil: "load" });
       await p.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(900);
     },
@@ -226,7 +227,7 @@ const APPS = {
    * battery is measuring a face that looks like something somebody shipped
    * rather than the framework's own defaults.
    */
-  rota: { port: 5195, ready: "__rotaReady", query: "&today=2026-09-14", states: {
+  rota: { port: portFor("rota"), ready: "__rotaReady", query: "&today=2026-09-14", states: {
     week: async () => {},
     fortnight: async (p) => {
       await p.locator('nav[aria-label="Places"] button', { hasText: "The fortnight" }).click();
@@ -245,14 +246,14 @@ const APPS = {
     /* A shift nobody has taken, selected: the repair asks WHO rather than
        choosing, which is the one thing an organiser would never forgive. */
     gap: async (p) => {
-      await p.goto("http://localhost:5195/?theme=light&today=2026-09-14&fresh=1#focus=aggregate:shift&sel=s-fri-repair", { waitUntil: "load" });
+      await p.goto(`${at("rota")}/?theme=light&today=2026-09-14&fresh=1#focus=aggregate:shift&sel=s-fri-repair`, { waitUntil: "load" });
       await p.waitForFunction(() => "__rotaReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(900);
     },
     /* The seat that may do NOTHING: every act struck through with its own
        sentence, which is what "withheld, not hidden" looks like. */
     viewer: async (p) => {
-      await p.goto("http://localhost:5195/?theme=light&today=2026-09-14&fresh=1&as=user-sam#focus=aggregate:shift&sel=s-fri-repair", { waitUntil: "load" });
+      await p.goto(`${at("rota")}/?theme=light&today=2026-09-14&fresh=1&as=user-sam#focus=aggregate:shift&sel=s-fri-repair`, { waitUntil: "load" });
       await p.waitForFunction(() => "__rotaReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(900);
     },
@@ -262,7 +263,7 @@ const APPS = {
       await p.waitForTimeout(800);
     },
   } },
-  seedbed: { port: 5194, ready: "__seedbedReady", states: {
+  seedbed: { port: portFor("seedbed"), ready: "__seedbedReady", states: {
     /*
      * AT THE READER'S LARGEST TEXT, which is 200% of the browser's own and
      * the size WCAG 1.4.4 asks an interface to survive. Every count in this
@@ -302,7 +303,7 @@ const APPS = {
     empty: async () => {},
     /* THE SEASON: plantings drawn across the days they were in the ground. */
     season: async (p) => {
-      await p.goto("http://localhost:5194/?chapter=4&theme=light#overview=1", { waitUntil: "load" });
+      await p.goto(`${at("seedbed")}/?chapter=4&theme=light#overview=1`, { waitUntil: "load" });
       await p.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(700);
       await p.locator('nav[aria-label="Places"] button', { hasText: "The season" }).click();
@@ -311,7 +312,7 @@ const APPS = {
     /* THE YEAR: the same season, a month per cell, with each planting drawn
        across every month it was actually in the ground. */
     year: async (p) => {
-      await p.goto("http://localhost:5194/?chapter=4&theme=light#overview=1", { waitUntil: "load" });
+      await p.goto(`${at("seedbed")}/?chapter=4&theme=light#overview=1`, { waitUntil: "load" });
       await p.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(700);
       await p.locator('nav[aria-label="Places"] button', { hasText: "The year" }).click();
@@ -323,7 +324,7 @@ const APPS = {
      * has the least room for.
      */
     rotation: async (p) => {
-      await p.goto("http://localhost:5194/?chapter=16&theme=light#focus=agg:rotation&in.view=the-rotation", { waitUntil: "load" });
+      await p.goto(`${at("seedbed")}/?chapter=16&theme=light#focus=agg:rotation&in.view=the-rotation`, { waitUntil: "load" });
       await p.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(1100);
     },
