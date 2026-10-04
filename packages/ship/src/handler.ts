@@ -1,5 +1,6 @@
 import {
   foldPresence,
+  nextExpiry,
   PRESENCE_TTL_MS,
   refusalOf,
   VISITOR_PRESENCE_TTL_MS,
@@ -462,7 +463,26 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     const now = Date.now();
     here = foldPresence(here, announcePresence([], presence, ttlMs, now), now, ttl);
     tellWhoIsHere();
+    watchVisitors();
   };
+  /*
+   * A VISITOR WHOSE TIME IS UP IS SAID TO GO: a timer set by `nextExpiry`,
+   * so every socket is told when an announced visitor's `until` passes,
+   * with nothing else happening. A hibernating host sets its alarm the same way.
+   */
+  let visitorsGo: ReturnType<typeof setTimeout> | undefined;
+  function watchVisitors(): void {
+    if (visitorsGo) clearTimeout(visitorsGo);
+    visitorsGo = undefined;
+    const next = nextExpiry([...here.values()]);
+    if (next === undefined) return;
+    visitorsGo = setTimeout(() => {
+      visitorsGo = undefined;
+      tellWhoIsHere();
+      watchVisitors();
+    }, Math.max(0, next - Date.now()) + 1);
+    (visitorsGo as { unref?: () => void }).unref?.();
+  }
 
   async function route(request: Request): Promise<Response> {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
@@ -672,7 +692,10 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       here = foldPresence(here, announcePresence([], visitorPresence(author, { over: op.writes[0] ?? null, now: new Date(now) }), agentsFor, now), now, ttl);
       told = true;
     }
-    if (told) tellWhoIsHere();
+    if (told) {
+      tellWhoIsHere();
+      watchVisitors();
+    }
   }
   /*
    * A socket's presence stands while the socket does; the TTL is for a
@@ -824,6 +847,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       }
     },
     async close() {
+      if (visitorsGo) clearTimeout(visitorsGo);
       for (const live of sockets) {
         live.open = false;
         try {

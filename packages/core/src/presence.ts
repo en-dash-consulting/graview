@@ -103,6 +103,24 @@ export function presenceStands(presence: Presence, now: number, ttlMs: number = 
   return now - Date.parse(presence.at) < ttlMs;
 }
 
+/**
+ * WHEN THE NEXT VISITOR GOES, in epoch ms: the earliest `until` still ahead
+ * of `now` in `who`, or undefined when nobody standing has one (a socket's
+ * presence goes when its socket closes, a poller's by its host's TTL). A
+ * host that keeps `who` itself sets its alarm by it — a Durable Object's
+ * `setAlarm`, a timer — and tells the room then, so a visitor whose time
+ * is up leaves every map without anything else happening.
+ */
+export function nextExpiry(who: readonly Presence[], now: number = Date.now()): number | undefined {
+  let next: number | undefined;
+  for (const presence of who) {
+    if (presence.until === undefined || presence.held === "socket") continue;
+    const until = Date.parse(presence.until);
+    if (Number.isFinite(until) && until > now && (next === undefined || until < next)) next = until;
+  }
+  return next;
+}
+
 /** The parts of a participant key: who, and which tab of theirs. */
 export interface Participant {
   readonly kind: "human" | "agent" | "rule" | "system";

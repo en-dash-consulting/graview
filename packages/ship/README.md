@@ -169,7 +169,9 @@ store (`POST /graview/ops`, an MCP handler over the same store, the host's own l
 `VISITOR_PRESENCE_TTL_MS`; `createStoreHandler({ announceAgents: false })` turns it off and a
 number sets the time. A hibernating host keeps `who` itself, with `announcePresence(who,
 visitorPresence(seat), ttlMs)`, and hands it to `receive` and `tell`; a visitor past its
-`until` is never told. Each seat is told as it may see: an agent acting for a person the
+`until` is never told. `nextExpiry(who)` (from `@graview/core`) says when the next visitor
+goes, in epoch ms, for the host's alarm: on it, `tell` the room again and the visitor is gone
+from every map. The handler keeps that timer itself. Each seat is told as it may see: an agent acting for a person the
 seat may not see is shown without `onBehalfOf` or the name. The Shell draws it as "Claude,
 for Ada" (`presenceName`).
 
