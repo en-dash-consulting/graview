@@ -280,15 +280,15 @@ describe("a live client a host can observe", () => {
         batch: string;
         error?: string;
       };
-    const call = { calls: [{ name: "rename", args: { id: "t1", label: "Book the big hall" } }], batch: "local-x-1", base: [{ node: "t1", field: "label", rev: -1 }] };
+    const call = { calls: [{ name: "rename", args: { id: "t1", label: "Book the big hall" } }], batch: "batch:samtab:1", base: [{ node: "t1", field: "label", rev: -1 }] };
     const first = await post(call);
     const again = await post(call);
     expect(again.error).toBeUndefined();
     expect(again).toEqual(first);
-    expect(first.batch).toBe("local-x-1");
+    expect(first.batch).toBe("batch:samtab:1");
     expect(handler.store.log.length).toBe(1);
 
-    const undo = { undo: ["local-x-1"], batch: "local-x-2" };
+    const undo = { undo: ["batch:samtab:1"], batch: "undo:samtab:2" };
     const undone = await post(undo);
     expect(await post(undo)).toEqual(undone);
     expect(handler.store.log.length).toBe(2);

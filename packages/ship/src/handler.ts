@@ -21,6 +21,7 @@ import {
   liveProtocol,
   presenceFrom,
   presenceSeenBy,
+  serverBatchIds,
   visitorPresence,
   wireOf,
   type LivePeer,
@@ -84,7 +85,7 @@ import type { GraphSnapshot } from "./snapshot.js";
  */
 export const WIRE = [
   { method: "GET", path: "/graview/state", says: "the graph, the log, the stored version and the modules on" },
-  { method: "POST", path: "/graview/ops", says: "calls in, the ops they produced out — or `undo`, batches to take back; a `batch` already in the log is answered with the ops it made; 409 with the policy's sentence and a `reason` when refused, 429 with `Retry-After` when the host is busy" },
+  { method: "POST", path: "/graview/ops", says: "calls in, the ops they produced out — or `undo`, batches to take back; a `batch` the asking seat already landed is answered with the ops it made, and one that is somebody else's or not `batch:<tag>:<n>` is refused `invalid`; 409 with the policy's sentence and a `reason` when refused, 429 with `Retry-After` when the host is busy" },
   { method: "GET", path: "/graview/since", says: "the ops appended after ?seq=N — everyone else's" },
   { method: "GET", path: "/graview/health", says: "ship's own report, plus where the data is" },
   { method: "GET", path: "/graview/export", says: "the whole store as one bundle, the way out" },
@@ -345,6 +346,8 @@ export async function createStoreHandler<S extends AnySchema>(options: StoreHand
       scope,
       ...(options.seed ? { seed: options.seed } : {}),
       ...(options.enabledModules ? { enabledModules: options.enabledModules } : {}),
+      // What the handler's store lands itself is in a batch no client could have named first.
+      storeOptions: { batchIds: serverBatchIds() },
     });
   let opened = (await opening(options.app as unknown as GraviewApp<AnySchema>)) as OpenedStore<AnySchema>;
   const { adapter, seed: _seed, scope: _scope, enabledModules: _modules, ...rest } = options;
@@ -404,6 +407,8 @@ type Swap = (app: GraviewApp<AnySchema>, open: () => Promise<{ store: Store<AnyS
 
 function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, adapterName = "held by the host"): { handler: Omit<StoreHandler<S>, "declarationChanged">; swap: Swap } {
   const seatOf = options.seatOf ?? (options.trustSeatHeaders ? seatFromHeaders : undefined);
+  /** A change posted without a batch lands in one minted here, outside the shape a client may name. */
+  const mintServed = serverBatchIds();
   const flush = async (): Promise<void> => {
     await serving.flush?.();
   };
@@ -585,8 +590,10 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       // What the calls came through is the host's to say, never the body's (FR-52).
       const via = await viaFor(request, author, "api");
       // A batch already in the log is a call sent again after its answer was lost — or offered again on a new declaration, or after a reload (FR-43, FR-44): answered with what it made, as on the socket (FR-49).
-      const already = wire.answered(body.batch);
-      if (already.length > 0) return send(200, { ops: wire.shown(author, already), batch: body.batch, ...answering });
+      // Only ever the asker's own ops: a batch that is somebody else's, or one a client may not name, is refused (`isClientBatch`).
+      const claim = wire.claim(body.batch, author);
+      if (claim.refusal) return send(409, { error: claim.refusal.sentence, refused: true, reason: claim.refusal.reason, ...answering });
+      if (claim.answered) return send(200, { ops: wire.shown(author, claim.answered), batch: body.batch, ...answering });
       /*
        * THE HOST'S LIMITS, BEFORE ANYTHING IS JUDGED. Busy is 429 and the
        * change is kept to send again (FR-45); a hard cap is refused, `limit`,
@@ -618,7 +625,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
          * refusal comes back with the policy's own sentence rather than a
          * bare 403, because that sentence is the product.
          */
-        const applying = { author, via, ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}) };
+        const applying = { author, via, ...(body.intent ? { intent: body.intent } : {}), batch: body.batch ? body.batch : mintServed(body.undo ? "undo" : "batch") };
         const result = body.undo ? store.undo(body.undo, applying) : store.applyAll(calls, applying);
         await flush();
         // An act may make what its own seat may not see: that op goes back withheld, as it would on a poll.

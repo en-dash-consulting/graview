@@ -21,6 +21,7 @@ import {
   type Presence,
   type Principal,
   type Store,
+  type WireRefusal,
 } from "@graview/core";
 import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 
@@ -244,6 +245,59 @@ export function presenceSeenBy(who: readonly Presence[], sees: (id: string) => b
 }
 
 /**
+ * THE SHAPE OF A BATCH A CLIENT NAMES: what a `Store` mints by default,
+ * `batch:<tag>:<n>` for a change and `undo:<tag>:<n>` for a take-back,
+ * the tag 1–24 lowercase letters and digits and `n` up to 12 digits. A
+ * client names the batch its call lands in, so a call sent twice is
+ * answered once (FR-49) — and anything else a client names is refused
+ * `invalid`, so it cannot claim a batch the host mints for itself
+ * (`setup`, `migration:v2`) before the host does.
+ */
+const CLIENT_BATCH = /^(?:batch|undo):[0-9a-z]{1,24}:[0-9]{1,12}$/;
+
+/** Whether a client may name this batch: `batch:<tag>:<n>` or `undo:<tag>:<n>`, as a `Store` mints them. */
+export function isClientBatch(batch: unknown): batch is string {
+  return typeof batch === "string" && CLIENT_BATCH.test(batch);
+}
+
+/** A tag for one minter, from the platform's random source. */
+const mintTag = (): string => globalThis.crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+
+/**
+ * BATCH IDS NO CLIENT CAN NAME FIRST: `served:<kind>:<tag>:<n>`, outside
+ * the shape `isClientBatch` accepts. Hand it to the host's own store —
+ * `new Store({ batchIds: serverBatchIds() })`, or `openStore`'s
+ * `storeOptions` — so what the host lands itself (an agent's RPC, a
+ * migration, a seed) is in a batch no client could have claimed.
+ * `createStoreHandler` mints its own this way, and `liveProtocol` mints
+ * one for a call that names none.
+ */
+export function serverBatchIds(): (kind: "batch" | "undo") => string {
+  const tag = mintTag();
+  let count = 0;
+  return (kind) => `served:${kind}:${tag}:${++count}`;
+}
+
+/**
+ * THE SAME SEAT. An op is the asking seat's own when its author is the
+ * same kind and id — and, for an agent, acts for the same person: Claude
+ * for Ada is not Claude for Bo.
+ */
+export function authoredBy(author: Author, seat: Principal): boolean {
+  if (author.kind !== seat.kind || (author.id ?? "") !== (seat.id ?? "")) return false;
+  return seat.kind !== "agent" || (author.onBehalfOf?.id ?? "") === (seat.onBehalfOf?.id ?? "");
+}
+
+/**
+ * WHAT A BATCH A CHANGE NAMES IS: answered already (`answered`, the ops it
+ * made), refused (`refusal`), or free to land in (neither).
+ */
+export type BatchClaim =
+  | { readonly answered: readonly Operation[]; readonly refusal?: undefined }
+  | { readonly refusal: WireRefusal; readonly answered?: undefined }
+  | { readonly answered?: undefined; readonly refusal?: undefined };
+
+/**
  * THE STORE AS EACH SEAT SEES IT, on the wire — shared by the HTTP routes
  * and the socket, so the two can never disagree. Internal: everything in
  * it is derived from the store, and kept only to save reading the log
@@ -265,12 +319,14 @@ export interface Wire<S extends AnySchema> {
   /** The fields a call would write that moved since the caller's base: a stale write (FR-05). */
   conflictsOf(author: Principal, calls: readonly MutationCall[], base: unknown): FieldConflict[];
   /**
-   * SENT TWICE, ANSWERED ONCE: the ops already in the log under the batch a
-   * call or an undo names, or none. A client that never heard the answer
-   * sends again under the same batch — down the socket or over HTTP — and
-   * is answered with what it made the first time (FR-49).
+   * SENT TWICE, ANSWERED ONCE: what the batch a call or an undo names is,
+   * for the seat that names it. A client that never heard the answer sends
+   * again under the same batch — down the socket or over HTTP — and is
+   * answered with what it made the first time (FR-49): only ever its own
+   * ops. A batch that holds somebody else's, or one a client may not name
+   * (`isClientBatch`), is refused `invalid`.
    */
-  answered(batch: unknown): Operation[];
+  claim(batch: unknown, seat: Principal): BatchClaim;
   /** `{ horizon }` when the log was compacted (FR-23); nothing otherwise. */
   horizonOf(): { horizon?: number };
   enabledModules(): string[];
@@ -308,7 +364,23 @@ export function wireOf<S extends AnySchema>(store: Store<S>): Wire<S> {
       const standing = who.filter((presence) => presence.until === undefined || now < Date.parse(presence.until));
       return sighted(principal) ? presenceSeenBy(standing, seesId(store, principal)) : standing;
     },
-    answered: (batch) => (typeof batch === "string" && batch.length > 0 ? store.log.all().filter((op) => op.batch === batch) : []),
+    claim(batch, seat) {
+      if (batch === undefined || batch === null || batch === "") return {};
+      if (!isClientBatch(batch)) {
+        const said = typeof batch === "string" ? `“${batch.length > 40 ? `${batch.slice(0, 37)}…` : batch}”` : "a batch that is not a string";
+        return {
+          refusal: {
+            reason: "invalid",
+            sentence: `A client names its batch batch:<tag>:<n> or undo:<tag>:<n>, as a Store mints it; ${said} is not one. Send the change without a batch, or under one this client minted.`,
+          },
+        };
+      }
+      const ops = store.log.all().filter((op) => op.batch === batch);
+      if (ops.some((op) => !authoredBy(op.author, seat))) {
+        return { refusal: { reason: "invalid", sentence: "That batch is somebody else's: send the change under a batch this client minted." } };
+      }
+      return ops.length > 0 ? { answered: ops } : {};
+    },
     horizonOf: () => (store.log.horizon > 0 ? { horizon: store.log.horizon } : {}),
     enabledModules: () => [...store.modules.enabled].sort(),
     conflictsOf(author, calls, base) {
@@ -372,6 +444,8 @@ const say = (peer: LivePeer, message: LiveServerMessage): void => {
 export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S>): LiveProtocol<S> {
   const { store } = options;
   const wire = wireOf(store);
+  /** A call that names no batch lands in one minted here, outside the shape a client may name. */
+  const mintServed = serverBatchIds();
 
   /** Every op this socket has not been sent, down it now, as its seat sees them. */
   const catchUp = (peer: LivePeer, ops?: readonly Operation[]): void => {
@@ -390,14 +464,18 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     const cid = typeof message.cid === "string" ? message.cid : "";
     const author = peer.seat;
     const intent = typeof message.intent === "string" && message.intent.length > 0 ? message.intent : undefined;
-    const batch = typeof message.batch === "string" && message.batch.length > 0 ? message.batch : undefined;
     catchUp(peer);
-    // A client that lost its socket before the ack sends the call again under the same batch: `answered` says what it made.
-    const already = wire.answered(batch);
-    if (already.length > 0) {
-      say(peer, { t: "ack", cid, seq: already.at(-1)!.seq, batch: batch!, ops: wire.shown(author, already) });
+    // A client that lost its socket before the ack sends the call again under the same batch: `claim` says what it made — its own, never somebody else's.
+    const claim = wire.claim(message.batch, author);
+    if (claim.refusal) {
+      say(peer, { t: "refused", cid, ...claim.refusal });
       return { cursor: peer.cursor! };
     }
+    if (claim.answered) {
+      say(peer, { t: "ack", cid, seq: claim.answered.at(-1)!.seq, batch: message.batch!, ops: wire.shown(author, claim.answered) });
+      return { cursor: peer.cursor! };
+    }
+    const batch = typeof message.batch === "string" && message.batch.length > 0 ? message.batch : mintServed(message.t === "undo" ? "undo" : "batch");
     const calls = message.t === "call" && Array.isArray(message.calls) ? message.calls : [];
     if (message.t === "call") {
       const conflicts = wire.conflictsOf(author, calls, message.base);
@@ -409,7 +487,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     let result: { readonly ops: readonly Operation[]; readonly batch: string };
     try {
       // The channel is the seat's, as the host said it when the socket opened: a client's own `via` is never read (FR-52).
-      const applying = { author, via: peer.via, ...(intent ? { intent } : {}), ...(batch ? { batch } : {}) };
+      const applying = { author, via: peer.via, ...(intent ? { intent } : {}), batch };
       result = message.t === "undo" ? store.undo(Array.isArray(message.batches) ? message.batches : [], applying) : store.applyAll(calls, applying);
     } catch (error) {
       say(peer, { t: "refused", cid, ...refusalOf(error) });

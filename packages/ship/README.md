@@ -70,7 +70,7 @@ so a host in front of it knows what it must keep answering for `openRemote`, `gr
 | Method | Path | Says |
 |---|---|---|
 | GET | `/graview/state` | the graph, the log, the stored version and the modules on |
-| POST | `/graview/ops` | calls in, the ops they produced out — or `undo`, batches to take back; a `batch` already in the log is answered with the ops it made; 409 with the policy's sentence and a `reason` when refused, 429 with `Retry-After` when the host is busy |
+| POST | `/graview/ops` | calls in, the ops they produced out — or `undo`, batches to take back; a `batch` the asking seat already landed is answered with the ops it made, and one that is somebody else's or not `batch:<tag>:<n>` is refused `invalid`; 409 with the policy's sentence and a `reason` when refused, 429 with `Retry-After` when the host is busy |
 | GET | `/graview/since?seq=N` | the ops appended after N — everyone else's |
 | GET | `/graview/health` | ship's own report, plus where the data is |
 | GET | `/graview/export` | the whole store as one bundle, the way out |
@@ -201,6 +201,17 @@ wrote it (`FieldRevisions`, derived from the log). A call that carries a `base` 
 field is refused, before anything is written, naming the field, theirs and yours.
 `openRemote` sends one with every call and hands the refusal to `remote.onConflict(…)`,
 with `conflict.keepTheirs()` and `conflict.useMine()`.
+
+**A batch is answered only to whoever made it.** A client names the batch its call lands in,
+so a call sent again after a lost answer is answered with the ops it made the first time —
+and only ever with the asking seat's own ops: a batch that holds somebody else's (another
+person, or the same agent acting for somebody else) is refused `invalid` in words, and so is
+any batch not shaped as a `Store` mints it, `batch:<tag>:<n>` or `undo:<tag>:<n>`
+(`isClientBatch`). A call that names none lands in a batch the server mints outside that
+shape. A host's own store mints there too with `new Store({ batchIds: serverBatchIds() })`,
+so nothing a host lands itself — a migration, a seed, an agent's RPC — is in a batch a client
+could have named first; `createStoreHandler` does this for the store it opens.
+`authoredBy(author, seat)` is the judgement of "the same seat".
 
 **A refusal says why** (FR-46). Every `refused` on the socket, and every refusing answer of
 `POST /graview/ops` (409, or 413 at a host's cap), carries a `reason` from a closed set,
