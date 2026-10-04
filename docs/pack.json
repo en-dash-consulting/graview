@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-04T03:20:11.531Z",
+  "at": "2026-10-04T02:30:34.612Z",
   "packages": {
     "@graview/core": {
       "files": 479,
-      "tarballBytes": 554652,
+      "tarballBytes": 553286,
       "ok": true
     },
     "create-graview": {
@@ -13,12 +13,12 @@
     },
     "@graview/embed": {
       "files": 23,
-      "tarballBytes": 31143,
+      "tarballBytes": 31140,
       "ok": true
     },
     "graview": {
       "files": 11,
-      "tarballBytes": 4892,
+      "tarballBytes": 4890,
       "ok": true
     },
     "@graview/guest": {
@@ -33,17 +33,17 @@
     },
     "@graview/pages": {
       "files": 79,
-      "tarballBytes": 89932,
+      "tarballBytes": 89933,
       "ok": true
     },
     "@graview/primitives": {
-      "files": 219,
-      "tarballBytes": 356489,
+      "files": 223,
+      "tarballBytes": 363212,
       "ok": true
     },
     "@graview/react": {
-      "files": 147,
-      "tarballBytes": 213489,
+      "files": 151,
+      "tarballBytes": 220287,
       "ok": true
     },
     "@graview/render": {
@@ -53,7 +53,7 @@
     },
     "@graview/ship": {
       "files": 115,
-      "tarballBytes": 156692,
+      "tarballBytes": 156211,
       "ok": true
     },
     "@graview/skills": {
@@ -63,20 +63,20 @@
     },
     "@graview/studio": {
       "files": 71,
-      "tarballBytes": 117248,
+      "tarballBytes": 117251,
       "ok": true
     },
     "@graview/tools": {
       "files": 123,
-      "tarballBytes": 171105,
+      "tarballBytes": 170232,
       "ok": true
     }
   },
   "budgets": [
     {
       "name": "the pages face alone",
-      "minified": 797516,
-      "gzipped": 216055,
+      "minified": 797078,
+      "gzipped": 215907,
       "budget": {
         "minified": 815000,
         "gzipped": 220000
@@ -85,8 +85,8 @@
     },
     {
       "name": "every face",
-      "minified": 1130663,
-      "gzipped": 324940,
+      "minified": 1130225,
+      "gzipped": 324760,
       "budget": {
         "minified": 1150000,
         "gzipped": 330000
