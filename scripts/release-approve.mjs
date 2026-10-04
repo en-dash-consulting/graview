@@ -85,11 +85,12 @@ if (missing.length > 0) {
 if (process.argv.includes("--list")) process.exit(0);
 
 /*
- * 2. Approve. With no code, npm asks for the second factor in the browser
- * for each (tick its five-minute skip on the first and the rest go
- * through). With `--otp=<code>` from an authenticator app, every approval
- * goes at once inside the code's thirty seconds; any npm refuses (a code
- * it would not take twice, say) is asked again with a fresh code.
+ * 2. Approve. `npm stage approve` takes one stage id and nothing else but
+ * `--otp`, so with no code npm asks for the second factor in the browser
+ * once per package: a security key's page offers no five-minute skip (0.1.5
+ * took fourteen). With `--otp=<code>` from an authenticator app, every
+ * approval goes at once inside the code's thirty seconds; any npm refuses
+ * (a code it would not take twice, say) is asked again with a fresh code.
  */
 let otp = process.argv.find((arg) => arg.startsWith("--otp="))?.slice("--otp=".length);
 const approve = (item, code) =>
@@ -103,6 +104,7 @@ const approve = (item, code) =>
 let left = waiting;
 while (left.length > 0) {
   if (!otp) {
+    console.log(`\nnpm asks for your second factor once for each of the ${left.length}. With an authenticator app on your npm account, --otp=<code> approves them all at once.`);
     for (const item of left) {
       console.log(`\napproving ${item.name}@${item.version}`);
       loud("npx", [...NPM, "stage", "approve", item.id]);
