@@ -178,6 +178,12 @@ a busy call held and the host's own presence beside it stays within 1 KB (measur
 bytes of state, 692 with a presence), half the attachment, the rest the host's.
 
 `connect()` is this protocol with the state in memory, so there is one implementation.
+Every `liveProtocol` option is an option of `createStoreHandler` and `serveStore` too, so a
+host gets it either way: `limit`, `build` (a string, or a function of the socket),
+`minProtocol`, `minHostProtocol`, `refusal` and `withheldKey` by the same names; and, where
+the handler already has a name that reads the request, the protocol's `viaOf` as
+`viaClaimed` and its `seatOf` as `seatOfKey` — with `seatKey(seat)`, the key a socket the
+handler opens keeps in its state instead of the principal.
 
 **An ack waits for `flush`, and a failed flush is never acked.** `flush(landed)` is handed
 every op the protocol landed that is not durable yet, in seq order — what just landed, after

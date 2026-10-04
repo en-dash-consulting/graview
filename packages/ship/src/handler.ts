@@ -9,6 +9,8 @@ import {
   type Presence,
   type Principal,
   type Store,
+  type MutationCall,
+  type WireRefusal,
 } from "@graview/core";
 import { exportBundle } from "./export.js";
 import { health } from "./health.js";
@@ -24,6 +26,7 @@ import {
   type LivePeer,
   type LiveProtocol,
   type LiveSocketState,
+  type ServedSocket,
   type Wire,
   type WireAnswer,
 } from "./live-protocol.js";
@@ -155,7 +158,27 @@ interface HandlerOptions<S extends AnySchema> {
    * client on another build keeps working and is told once, so a person
    * can reload when it suits them.
    */
-  readonly build?: string;
+  readonly build?: string | ((peer: ServedSocket) => string | undefined);
+  /**
+   * WHAT A CLIENT CLAIMS ITS CHANGE CAME THROUGH, JUDGED (FR-52):
+   * `liveProtocol`'s `viaOf`, for the socket and every post. `viaOf` above
+   * reads the request; this reads a call's own `via` claim — a guest
+   * view's `view:<name>` — and answers the via to record, or nothing to
+   * keep the host's. Absent, a claim is never read.
+   */
+  readonly viaClaimed?: (peer: ServedSocket, claimed: string | undefined) => string | undefined;
+  /**
+   * A SOCKET KEEPS A KEY, NOT ITS SEAT (FR-41): `seatKey` names the seat
+   * `seatOf` read as a host's key, which a socket's state keeps instead of
+   * the principal — small enough for a Durable Object's attachment — and
+   * `seatOfKey` (`liveProtocol`'s `seatOf`) resolves it on every message.
+   */
+  readonly seatKey?: (seat: Principal) => string | undefined;
+  readonly seatOfKey?: (key: string) => Principal | undefined;
+  /** A refusal in the host's words: `liveProtocol`'s `refusal`, on the socket and `POST /graview/ops`. */
+  readonly refusal?: (error: unknown, calls: readonly MutationCall[], peer: ServedSocket) => WireRefusal | undefined;
+  /** The key a withheld op's opaque batch is minted under: `liveProtocol`'s `withheldKey`, the same across wakes. */
+  readonly withheldKey?: string;
   /**
    * THE LOWEST LIVE PROTOCOL SERVED (FR-44). A socket whose hello says an
    * older one is answered `reload`: its client keeps what it had not sent,
@@ -437,6 +460,10 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       ...(options.build ? { build: options.build } : {}),
       ...(options.minProtocol !== undefined ? { minProtocol: options.minProtocol } : {}),
       ...(options.minHostProtocol !== undefined ? { minHostProtocol: options.minHostProtocol } : {}),
+      ...(options.viaClaimed ? { viaOf: options.viaClaimed } : {}),
+      ...(options.seatOfKey ? { seatOf: options.seatOfKey } : {}),
+      ...(options.refusal ? { refusal: options.refusal } : {}),
+      ...(options.withheldKey !== undefined ? { withheldKey: options.withheldKey } : {}),
       ...(options.limit ? { limit: options.limit } : {}),
     }),
   });
@@ -492,7 +519,11 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
      * answer a poll reads, so a client without a socket learns the
      * declaration changed — or that it runs another build — on its next one.
      */
-    const answering = { version: app.version ?? 1, ...(options.build ? { build: options.build } : {}) };
+    const buildOf = (seat: Principal, via: string): string | undefined => (typeof options.build === "function" ? options.build({ seat, via }) : options.build);
+    const answering = (seat: Principal) => {
+      const build = buildOf(seat, "api");
+      return { version: app.version ?? 1, ...(build ? { build } : {}) };
+    };
 
     /*
      * WHO IS ASKING, OR NOTHING. Health is the only route a stranger gets:
@@ -514,7 +545,9 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     // The routes with semantics are the protocol's, so a host that routes its own requests answers them the same (`post`, `state`, `since`).
     const asked = async (otherwise: string) => {
       const author = await seat();
-      return { seat: author, via: await viaFor(request, author, otherwise), ...(options.build ? { build: options.build } : {}) };
+      const via = await viaFor(request, author, otherwise);
+      const build = buildOf(author, via);
+      return { seat: author, via, ...(build ? { build } : {}) };
     };
     const answered = (answer: WireAnswer) => send(answer.status, answer.body, answer.headers);
 
@@ -543,7 +576,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
         participant: mine.participant,
         who: wire.whoFor(asking, alive().filter((presence) => presence.participant !== mine.participant)),
         ...(typeof body.seq === "number" ? { ops: wire.since(asking, body.seq) } : {}),
-        ...answering,
+        ...answering(asking),
       });
     }
 
@@ -645,8 +678,8 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     let told = false;
     for (const op of last.values()) {
       const author = op.author;
-      // The handler opens every socket with its principal, never a key.
-      if ([...sockets].some((live) => typeof live.seat !== "string" && live.seat.kind === "agent" && live.seat.id === author.id)) continue;
+      const seated = (live: Live): Principal | undefined => (typeof live.seat === "string" ? options.seatOfKey?.(live.seat) : live.seat);
+      if ([...sockets].some((live) => seated(live)?.kind === "agent" && seated(live)?.id === author.id)) continue;
       const now = Date.now();
       here = foldPresence(here, announcePresence([], visitorPresence(author, { over: op.writes[0] ?? null, now: new Date(now) }), agentsFor, now), now, ttl);
       told = true;
@@ -698,7 +731,10 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     const asked = seatRequest(request);
     try {
       const seat = await seatOf(asked);
-      return serving.protocol.open(seat, await viaFor(asked, seat, "web"));
+      const via = await viaFor(asked, seat, "web");
+      // The host's key for the seat, when it keeps one, and the build this socket is served by.
+      const build = typeof options.build === "function" ? options.build({ seat, via }) : undefined;
+      return serving.protocol.open(options.seatKey?.(seat) ?? seat, via, build ? { build } : {});
     } catch (error) {
       return unknownSeat(error instanceof Error ? error.message : String(error));
     }
