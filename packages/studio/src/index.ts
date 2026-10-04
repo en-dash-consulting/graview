@@ -32,6 +32,8 @@ export { createStudio } from "./studio.js";
 export type { Studio, StudioApplyResult, StudioOptions } from "./studio.js";
 export { documentAfter, documentEdits } from "./edits.js";
 export type { StudioEdits } from "./edits.js";
+export { keptBy, uneditable } from "./uneditable.js";
+export type { KeptProperty } from "./uneditable.js";
 export { createStudioLens } from "./lens.js";
 export { StudioPlace, maySeeTheStudio } from "./place.js";
 export type { StudioApplied, StudioHostAnswer, StudioHostVerdict, StudioOffered, StudioOnApply } from "./place.js";

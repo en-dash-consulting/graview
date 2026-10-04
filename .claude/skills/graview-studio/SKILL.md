@@ -60,7 +60,9 @@ any other.
    policy swapped, says it: `createStudio(app, { document })`; without one,
    `whyNoDocument()` says why. A change no op says yet — a relation's
    cardinality, a lifecycle, a grant, retyping a money field — comes back
-   as `documentFindings`, one sentence each, and no document.
+   as `documentFindings`, one sentence each, and no document. Ask ahead
+   what it keeps but will not change: `uneditable(document)` is one note
+   per format, unit or list item type (`kinds.vendor.fields.quote`).
 
 4. **Write it back.** `studio.files({ schemaVar: "gardenSchema" })` is
    `src/domain/schema.ts`, `mutations.ts`, `invariants.ts` and, with roles,
