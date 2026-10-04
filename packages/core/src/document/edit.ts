@@ -76,8 +76,12 @@ export const EDIT_OPS = [
   "set-label",
   "set-describe",
   "set-view",
+  "set-glance",
 ] as const;
 export type EditOp = (typeof EDIT_OPS)[number];
+
+/** One edit as `editDocument` takes it: an op from EDIT_OPS and that op's own keys. */
+export type DocumentEdit = { readonly op: EditOp } & { readonly [key: string]: unknown };
 
 /** Words the rule language keeps: a field or relation renamed to one could not be named in a rule. */
 const KEYWORDS = new Set(["and", "or", "not", "in", "where", "true", "false", "null"]);
@@ -112,6 +116,7 @@ const SHAPES: Record<EditOp, z.ZodType> = {
   "set-label": z.object({ op: z.literal("set-label"), kind: kindName, field: fieldName.optional(), label: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
   "set-describe": z.object({ op: z.literal("set-describe"), kind: kindName, describe: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
   "set-view": z.object({ op: z.literal("set-view"), kind: kindName, slot: z.enum(VIEW_SLOTS), blocks: z.union([z.array(z.unknown()).min(1), z.null()]) }).strict(),
+  "set-glance": z.object({ op: z.literal("set-glance"), kind: kindName, fields: z.array(fieldName).max(20) }).strict(),
 };
 
 // ── the document as something to change ──────────────────────────────────────
@@ -534,6 +539,28 @@ class Editor {
         } else {
           (views[e.kind] ??= {})[e.slot] = e.blocks;
           this.said.push(`A ${e.kind} ${e.slot} gets a look of its own (${e.blocks.length} block${e.blocks.length === 1 ? "" : "s"}).`);
+        }
+        return;
+      }
+      case "set-glance": {
+        // What a glance at one says (FR-39): fields of this kind, each once, in the order given; none takes the choice away.
+        const spec = this.kind(i, e.kind);
+        if (!spec) return;
+        const fields: string[] = e.fields;
+        const seen = new Set<string>();
+        for (const [n, field] of fields.entries()) {
+          if (!spec.fields[field]) return this.fail(i, `fields.${n}`, `a glance at ${e.kind} is to say "${field}", and ${e.kind} has no field called that`, `use one of: ${Object.keys(spec.fields).join(", ")}`);
+          if (seen.has(field)) return this.fail(i, `fields.${n}`, `"${field}" is in the glance twice; name each field once`);
+          seen.add(field);
+        }
+        const noun: string = spec.noun ?? words(e.kind);
+        const a = /^[aeiou]/i.test(noun) ? "an" : "a";
+        if (fields.length === 0) {
+          delete spec.glance;
+          this.said.push(`A glance at ${a} ${noun} goes back to what Graview chooses.`);
+        } else {
+          spec.glance = [...fields];
+          this.said.push(`A glance at ${a} ${noun} says ${listOf(fields)}, in that order.`);
         }
         return;
       }

@@ -74,7 +74,15 @@ export function zodSource(type: FieldType, required: boolean, options?: readonly
   const base =
     type === "number"
       ? "z.number()"
-      : type === "boolean"
+      : type === "integer"
+        ? "z.number().int()"
+        : type === "url"
+          ? "z.url()"
+          : type === "email"
+            ? "z.email()"
+            : type === "datetime"
+              ? "z.iso.datetime()"
+              : type === "boolean"
         ? "z.boolean()"
         : type === "enum" && options && options.length > 0
           ? `z.enum([${options.map(q).join(", ")}])`
@@ -87,7 +95,7 @@ export function zodSource(type: FieldType, required: boolean, options?: readonly
 }
 
 const defaultSource = (type: FieldType, options?: readonly string[]): string =>
-  type === "number" ? "0" : type === "boolean" ? "false" : type === "enum" ? q(options?.[0] ?? "") : type === "list" ? "[]" : type === "date" ? "new Date().toISOString().slice(0, 10)" : '""';
+  type === "number" || type === "integer" ? "0" : type === "datetime" ? "new Date().toISOString()" : type === "boolean" ? "false" : type === "enum" ? q(options?.[0] ?? "") : type === "list" ? "[]" : type === "date" ? "new Date().toISOString().slice(0, 10)" : '""';
 
 /**
  * The lines of a `defineNode` the studio carries from the checkout rather

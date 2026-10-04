@@ -47,6 +47,17 @@ any other.
    `{ from, to, title, apply }` to append to the app's migrations (the new
    app already carries it and the bumped version).
 
+   **Opened on a document** (`createStudio(compileDocument(d).app)`), the
+   studio hands back a document, not TypeScript. `studio.edits()` is the
+   change as `editDocument`'s own ops (`add-field`, `rename-field`,
+   `set-required`, `set-options`, `add-relation`, `remove-act`, `add-rule`
+   …); `studio.document()` is the opened document with them applied, every
+   act, label, brand and money field untouched; `apply()` adds that
+   `document`, for the host to compile and keep. A change no op says yet —
+   a relation's cardinality, a lifecycle, a grant, retyping a field that
+   is money or has a unit — comes back as `documentFindings`, one sentence
+   each, and no document. Field types are the document's eleven.
+
 4. **Write it back.** `studio.files({ schemaVar: "gardenSchema" })` is
    `src/domain/schema.ts`, `mutations.ts`, `invariants.ts` and, with roles,
    `policy.ts` — the files `graview create` writes. Shape is what a graph

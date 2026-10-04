@@ -1,5 +1,7 @@
 import { checkApp, Store, type AnySchema, type Batch, type CheckResult, type GraphSnapshot, type GraviewApp, type MigrationDeclaration, type MutationCall, type Principal } from "@graview/core";
+import { documentOf, toDocument, type DocumentEdit, type EditOutcome, type Fill, type Finding, type GraviewDocument } from "@graview/core/document";
 import { resolveProposal } from "@graview/tools";
+import { documentAfter, documentEdits } from "./edits.js";
 import { declarationToGraph } from "./from-declaration.js";
 import { sourceChanges, type SourceChanges } from "./changes.js";
 import { migrationBetween } from "./migration.js";
@@ -45,12 +47,50 @@ export interface Studio<S extends AnySchema = AnySchema> {
    * refusal in the store's own words rather than as a thrown error.
    */
   would(call: MutationCall | readonly MutationCall[]): { readonly ok: true; readonly check: CheckResult } | { readonly ok: false; readonly reason: string };
-  /** The new app and, where a stored graph needs one, the migration to it. Refused while the checker finds errors. */
-  apply(): { readonly ok: true; readonly app: GraviewApp<AnySchema>; readonly migration: MigrationDeclaration | null } | { readonly ok: false; readonly check: CheckResult };
+  /**
+   * The new app and, where a stored graph needs one, the migration to it. Refused while the checker finds errors.
+   *
+   * Opened on an app compiled from a document, it also hands back the
+   * document (FR-54): the one it opened on with `edits()` applied, which a
+   * host compiles and keeps in place of `app`. When a change cannot be
+   * said as a document, `documentFindings` says why, one sentence each.
+   */
+  apply(): StudioApplyResult | { readonly ok: false; readonly check: CheckResult };
+  /**
+   * WHAT CHANGED, AS editDocument's OWN OPS (FR-54). Applied to the
+   * document the app was compiled from, they make the document `apply`
+   * hands back; a host that keeps documents stores these, or the document.
+   * Empty when nothing changed. A change no op can say is not among them:
+   * `document()` names it.
+   */
+  edits(): readonly DocumentEdit[];
+  /**
+   * The document the studio's changes make — the one it opened on, with
+   * `edits()` applied and everything the graph did not touch kept as it
+   * was written — or the findings that say why there is none. Undefined
+   * when the studio was not opened on an app compiled from a document.
+   */
+  document(): EditOutcome | undefined;
   /** The declaration as the files `graview create` writes. */
   files(options?: SourceOptions): readonly WrittenFile[];
   /** What changed since the studio opened, as edits the checkout's own source can take — and what cannot be written that way yet. */
   sourceChanges(): SourceChanges;
+}
+
+export interface StudioApplyResult {
+  readonly ok: true;
+  readonly app: GraviewApp<AnySchema>;
+  readonly migration: MigrationDeclaration | null;
+  /** The document the change makes, when the studio was opened on one and every change could be said (FR-54). */
+  readonly document?: GraviewDocument;
+  /** The edits that made it, in order. */
+  readonly edits?: readonly DocumentEdit[];
+  /** What each edit did, in words. */
+  readonly said?: readonly string[];
+  /** Values the edits give records already there, for the migration planner. */
+  readonly fills?: readonly Fill[];
+  /** Why no document came back, when the studio was opened on one and could not say the change as a document. */
+  readonly documentFindings?: readonly Finding[];
 }
 
 export interface StudioOptions {
@@ -68,17 +108,23 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
     snapshot: seed as never,
     ...(options.principal ? { principal: options.principal } : {}),
   });
-  const opened = store.batches().length;
+  const since = store.batches().length;
   const declaration = () => graphToDeclaration(store.snapshot() as GraphSnapshot, { base: base as unknown as GraviewApp<AnySchema>, name: base.name });
   const isAgent = (batch: Batch) => batch.author.kind === "agent";
+  // The document the app was compiled from, if it was; the edits are read against it, or against what toDocument can say of a TypeScript app.
+  const opened = documentOf(base);
+  let against: GraviewDocument | undefined;
+  const reference = () => opened ?? (against ??= toDocument(base as unknown as GraviewApp<AnySchema>).document);
+  const made = () => documentEdits(reference(), seed, store.snapshot() as GraphSnapshot);
+  const document = (): EditOutcome | undefined => (opened ? documentAfter(opened, made()) : undefined);
   let proposed = 0;
   return {
     store,
     base,
     declaration,
     check: () => checkApp(declaration()),
-    changes: () => store.batches().slice(opened),
-    proposals: () => store.batches().slice(opened).filter((batch) => isAgent(batch) && !batch.undone),
+    changes: () => store.batches().slice(since),
+    proposals: () => store.batches().slice(since).filter((batch) => isAgent(batch) && !batch.undone),
     propose(call, agent, intent) {
       const batch = `proposal:${++proposed}`;
       try {
@@ -129,18 +175,20 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
       if (check.errors > 0) return { ok: false, check };
       const migration = migrationBetween(base as unknown as GraviewApp<AnySchema>, store.snapshot() as GraphSnapshot);
       const version = migration ? migration.to : base.version;
-      return {
-        ok: true,
-        app: {
-          ...next,
-          ...(version !== undefined ? { version } : {}),
-          ...(migration ? { migrations: [...(base.migrations ?? []), migration] } : {}),
-        },
-        migration,
+      const app: GraviewApp<AnySchema> = {
+        ...next,
+        ...(version !== undefined ? { version } : {}),
+        ...(migration ? { migrations: [...(base.migrations ?? []), migration] } : {}),
       };
+      if (!opened) return { ok: true, app, migration };
+      const said = document()!;
+      if (!said.ok) return { ok: true, app, migration, documentFindings: said.findings };
+      return { ok: true, app, migration, document: said.document, edits: made().edits, said: said.said, fills: said.fills };
     },
     files: (sourceOptions) =>
       declarationFiles(store.snapshot() as GraphSnapshot, { name: base.name, base: base as unknown as GraviewApp<AnySchema>, ...sourceOptions }),
+    edits: () => made().edits,
+    document,
     sourceChanges: () => sourceChanges(seed, store.snapshot() as GraphSnapshot, base as unknown as GraviewApp<AnySchema>),
   };
 }

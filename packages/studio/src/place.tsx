@@ -1,4 +1,5 @@
 import { INSTALLATION_MODULE, type AnySchema, type CheckResult, type GraviewApp, type MigrationDeclaration, type Store } from "@graview/core";
+import type { DocumentEdit, Finding, GraviewDocument } from "@graview/core/document";
 import { EMPTY_VIEW, withWithin } from "@graview/layout";
 import { GraviewProvider, Scene, createViews, useGraview, useNavigation, useTheKeyboardLandsSomewhere } from "@graview/react";
 import { ActivityRail, AgentSeat, Inspector, Places, registerDefaultViews } from "@graview/primitives";
@@ -50,6 +51,11 @@ export interface StudioApplied {
   readonly app: GraviewApp<AnySchema>;
   readonly migration: MigrationDeclaration | null;
   readonly files: readonly WrittenFile[];
+  /** For an app compiled from a document: the document the change makes, and the edits that make it (FR-54). */
+  readonly document?: GraviewDocument;
+  readonly edits?: readonly DocumentEdit[];
+  /** For an app compiled from a document: why no document came back, one sentence each. */
+  readonly documentFindings?: readonly Finding[];
 }
 
 export function StudioPlace<S extends AnySchema>({
@@ -353,7 +359,13 @@ function StudioOverlay<S extends AnySchema>({
             const result = studio.apply();
             if (result.ok && onApply) {
               const files = studio.files();
-              onApply({ app: result.app, migration: result.migration, files });
+              onApply({
+                app: result.app,
+                migration: result.migration,
+                files,
+                ...(result.document ? { document: result.document, ...(result.edits ? { edits: result.edits } : {}) } : {}),
+                ...(result.documentFindings ? { documentFindings: result.documentFindings } : {}),
+              });
               setApplied({ ok: true, files, migration: result.migration?.title ?? null, door: false, handed: true });
               return;
             }

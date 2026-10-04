@@ -1,4 +1,5 @@
 import { nodeRefArgs } from "@graview/core";
+import { documentOf, fieldSpecOf } from "@graview/core/document";
 import type { AnyMutationDefinition, AnySchema, GraphEdge, GraphSnapshot, GraviewApp, InvariantDefinition } from "@graview/core";
 import type { z } from "zod";
 import { DECLARED_KIND, type FieldType } from "./meta.js";
@@ -42,7 +43,7 @@ export function fieldTypeOf(type: unknown): { readonly type: FieldType; readonly
   switch (def.type) {
     case "number":
     case "int":
-      return { type: "number", required };
+      return { type: fieldSpecOf(type)?.type === "integer" ? "integer" : "number", required };
     case "boolean":
       return { type: "boolean", required };
     case "date":
@@ -53,6 +54,11 @@ export function fieldTypeOf(type: unknown): { readonly type: FieldType; readonly
     }
     case "array":
       return { type: "list", required };
+    case "string": {
+      // A link, an address or a date and time is a string zod checks; the document's reading says which.
+      const said = fieldSpecOf(type)?.type;
+      return { type: said === "url" || said === "email" || said === "datetime" ? said : "string", required };
+    }
     default:
       return { type: "string", required };
   }
@@ -68,6 +74,8 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
   const kinds = app.schema.definitions;
   const kindId = (kind: string) => `${DECLARED_KIND}${kind}`;
   const edgeIds = new Map<string, string>();
+  // An app compiled from a document is read in the document's words: `text` is a long text, not the string zod sees (FR-54).
+  const document = documentOf(app);
 
   for (const def of kinds) {
     nodes.push({
@@ -82,7 +90,9 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
     });
     for (const [name, type] of Object.entries(shapeOf(def.fields))) {
       const id = `field:${def.kind}.${name}`;
-      const typed = fieldTypeOf(type);
+      const read = fieldTypeOf(type);
+      const said = document?.kinds[def.kind]?.fields[name]?.type;
+      const typed = said ? { ...read, type: said } : read;
       nodes.push({
         id,
         kind: "field",
