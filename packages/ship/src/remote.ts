@@ -126,6 +126,16 @@ export interface RemoteOptions<S extends AnySchema> {
    */
   readonly resolveApp?: (version: number) => GraviewApp<AnySchema> | Promise<GraviewApp<AnySchema>>;
   /**
+   * THE HOST'S POLICY, IN THE BROWSER TOO. A call is judged here before the
+   * server is asked, under the app this store is built from; a host whose
+   * own store judges by more than the declaration says — Graview Cloud adds
+   * a sight, an app's owners see everything — shapes that app here the same
+   * way, or the browser refuses what the server would allow. Applied to
+   * `app` and to every app `resolveApp` gives. The server judges regardless:
+   * this only keeps the two in agreement.
+   */
+  readonly localApp?: (app: GraviewApp<AnySchema>) => GraviewApp<AnySchema>;
+  /**
    * THE HOST'S BUILD THIS PAGE RUNS (FR-44), an opaque string said in
    * `hello`. A server on another build keeps serving it; `onBuild` is told
    * once, so the page can offer a reload when it suits the person.
@@ -514,14 +524,16 @@ async function opening<S extends AnySchema>(
   if (!live) status = "online";
   const enabledModules = state.enabledModules ?? options.enabledModules;
 
+  // The app as the host judges it (`localApp`), so the browser refuses only what the server would.
+  const app = (options.localApp ? options.localApp(options.app as unknown as GraviewApp<AnySchema>) : options.app) as unknown as GraviewApp<S>;
   const store = new Store<S>({
-    schema: options.app.schema,
-    mutations: options.app.mutations ?? [],
-    invariants: options.app.invariants ?? [],
-    ...(options.app.policy ? { policy: options.app.policy } : {}),
-    ...(options.app.modules ? { modules: options.app.modules } : {}),
+    schema: app.schema,
+    mutations: app.mutations ?? [],
+    invariants: app.invariants ?? [],
+    ...(app.policy ? { policy: app.policy } : {}),
+    ...(app.modules ? { modules: app.modules } : {}),
     ...(enabledModules ? { enabledModules } : {}),
-    ...(options.app.intelligence ? { intelligence: options.app.intelligence } : {}),
+    ...(app.intelligence ? { intelligence: app.intelligence } : {}),
     /*
      * The snapshot AND the log: the snapshot is the graph, the log is the
      * history that led to it. Folding the log alone would lose whatever the
@@ -1087,9 +1099,9 @@ async function opening<S extends AnySchema>(
     const standing = mine;
     retire("The app was changed.");
     try {
-      const app = await resolveApp(version);
+      const resolved = await resolveApp(version);
       // The host's wiring goes with it: its listeners, the counters, the build it was told of.
-      const next = await opening({ ...(options as unknown as RemoteOptions<AnySchema>), app }, carried, "The app was changed while your changes were on the way.", wiring);
+      const next = await opening({ ...(options as unknown as RemoteOptions<AnySchema>), app: resolved }, carried, "The app was changed while your changes were on the way.", wiring);
       if (standing) next.remote.presence.here(standing);
       for (const listener of [...declarationListeners]) listener(next.remote, version);
       const said = [...(undos > 0 ? [refused(undosSaid(undos, "The app was changed"))] : []), ...next.unheard()];

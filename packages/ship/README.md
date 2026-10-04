@@ -196,7 +196,10 @@ app fetches and compiles its document), opens a new remote store on the server's
 state and hands it to `remote.onDeclaration((next, version) => …)`. The calls still on the
 way are offered again there under the batch they were sent in, so one the server already
 made is not made twice, and one that no longer fits is refused in words on `onRefusal`. No
-page reloads. **The host's wiring goes with it:** every listener put on the first store —
+page reloads. A host whose own store judges by more than the declaration says — an owner
+sight Graview Cloud adds — passes `localApp: (app) => app` to shape the app the browser's
+store is built from, the first one and every one `resolveApp` gives, so the browser refuses
+only what the server would. **The host's wiring goes with it:** every listener put on the first store —
 `onRefusal`, `onConflict`, `onStatus`, `onBuild`, `presence.onWho`, `onDeclaration` — is
 carried to each store that replaces it, and `counters()` run on, so a host writes its
 listeners once and only swaps which store it mounts (one added again is told twice).
