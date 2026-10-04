@@ -1,5 +1,5 @@
 import type { AnySchema, Principal } from "@graview/core";
-import { useGraview } from "@graview/react";
+import { useGraview } from "@graview/react/provider";
 
 /**
  * WHO YOU ARE SITTING AS — on the bar, where a policy can be felt.

@@ -1,7 +1,7 @@
 import { Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
-import { PagesApp, type PageComponent, type PageRegistry } from "@graview/pages";
-import { Profile, Standing, registerDefaultViews, registerViewSpecs, themeCss, useWidth } from "@graview/primitives";
-import { createViews, layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react";
+import type { PageComponent, PageRegistry } from "@graview/pages";
+import { Profile, Standing, themeCss, useWidth } from "@graview/primitives/frame";
+import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
 
@@ -180,10 +180,19 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
  * stays drawn (FR-36) and what the declaration says as data is drawn with
  * no views at all (FR-03). Every face draws from it, the pages too (FR-35).
  */
-export function useViews<S extends AnySchema>(props: Pick<FrameOptions<S>, "app" | "views">): ReactViewRegistry<S> {
+export function useViews<S extends AnySchema>(
+  props: Pick<FrameOptions<S>, "app" | "views">,
+  /**
+   * The framework's own views for the schema, its defaults with the
+   * declaration's specs over them. The whole embed registers them behind
+   * doors (`frameworkViewDoors`), fetched with the face that draws them
+   * (FR-57); the pages alone register them outright.
+   */
+  framework: (schema: S, specs: GraviewApp<S>["viewSpecs"]) => ReactViewRegistry<S>,
+): ReactViewRegistry<S> {
   const { app } = props;
   return useMemo(() => {
-    const base = registerViewSpecs(registerDefaultViews(app.schema, createViews(app.schema)), app.schema, app.viewSpecs) as unknown as ReactViewRegistry<S>;
+    const base = framework(app.schema, app.viewSpecs);
     return (props.views ? layerViews(base, props.views(app.schema, base)) : base) as ReactViewRegistry<S>;
   }, [props.views, app.schema, app.viewSpecs]);
 }
@@ -287,6 +296,9 @@ export function useIntrinsicHeight(rootRef: { readonly current: HTMLElement | nu
   }, [rootRef, face, wanted]);
 }
 
+/** The scene and the Graview's height when the embed sizes itself to its content (`height: "auto"`). */
+export const AUTO_SCENE_HEIGHT = 480;
+
 let sequence = 0;
 
 /**
@@ -368,55 +380,6 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
        too: the answer lives on the browser, not on the installation. */
     settings: props.app.settings ?? [],
   };
-}
-
-/**
- * The routed face in the frame. The page scrolls inside the embed's box,
- * unless the embed is sized from its content: then the page is as tall as
- * it is, and the height the host is told is the whole of it.
- */
-export function PagesContent<S extends AnySchema>({
-  store,
-  auto,
-  brand,
-  views,
-  presence,
-  props,
-}: {
-  readonly store: Store<S>;
-  /** The registry the scene draws from, so the pages draw the same pictures (FR-35). */
-  readonly views: ReactViewRegistry<S>;
-  readonly presence: PresenceChannel | undefined;
-  readonly auto: boolean;
-  readonly brand: Brand | undefined;
-  readonly props: FrameOptions<S>;
-}) {
-  return (
-    <div data-embed-content="" style={auto ? { flex: "0 0 auto", background: "var(--graview-ground)" } : { flex: "1 1 auto", minHeight: 0, overflow: "auto", background: "var(--graview-ground)" }}>
-      <div data-embed-measure="" style={{ display: "flow-root" }}>
-        <PagesApp<S>
-          /*
-           * THE SAME PICTURES ON THE ROUTED FACE (FR-35): the registry the
-           * scene draws from, so a view registered here is the gallery's
-           * card, the list's row and the record's page too.
-           */
-          context={{
-            store,
-            embedded: true,
-            views,
-            settings: props.app.settings ?? [],
-            ...(presence ? { presence } : {}),
-            ...(brand ? { brand } : {}),
-            ...(props.principal ? { principal: props.principal } : {}),
-            ...(props.seats ? { seats: props.seats } : {}),
-            ...(props.people ? { people: props.people } : {}),
-          }}
-          {...(props.pages ? { registry: props.pages } : {})}
-          initialPath={props.path ?? "/"}
-        />
-      </div>
-    </div>
-  );
 }
 
 /**
@@ -561,17 +524,22 @@ export function useErrorReport(onError: FrameOptions["onError"], face: EmbedFace
   return useCallback<ErrorReport>((error, where) => latest.current.onError?.(errorClass(error), { module: where.module, face: latest.current.face }), []);
 }
 
-/** `onReady`, once: from the first render to the first commit. */
-export function useReady(onReady: FrameOptions["onReady"], face: EmbedFace): void {
+/**
+ * `onReady`, once: from the first render to the moment the first face is
+ * drawn. The returned function is called as a face draws; only its first
+ * call tells the host. A face is fetched as it is first drawn (FR-57), so
+ * the frame's own first commit is not the app on the page.
+ */
+export function useReady(onReady: FrameOptions["onReady"], face: EmbedFace): (drawn: EmbedFace) => void {
   const start = useRef<number | null>(null);
   if (start.current === null) start.current = now();
   const latest = useRef({ onReady, face });
   latest.current = { onReady, face };
   const fired = useRef(false);
-  useEffect(() => {
+  return useCallback((drawn: EmbedFace) => {
     if (fired.current) return;
     fired.current = true;
-    latest.current.onReady?.({ ms: Math.max(0, now() - (start.current ?? now())), face: latest.current.face });
+    latest.current.onReady?.({ ms: Math.max(0, now() - (start.current ?? now())), face: drawn });
   }, []);
 }
 

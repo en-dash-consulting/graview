@@ -1,11 +1,18 @@
 import { labelOf, type AnySchema } from "@graview/core";
-import { aggregateId, kindCardId } from "@graview/layout";
-import { Companion } from "@graview/primitives";
-import { useGraviewIfAny } from "@graview/react";
-import { useEffect, useRef, useState } from "react";
+import { aggregateId, kindCardId } from "@graview/layout/view";
+import { useGraviewIfAny } from "@graview/react/provider";
+import { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { kindOfSlug, recordPath } from "./registry.js";
 import type { PageContext } from "./pages.js";
+
+/*
+ * THE COMPANION, FETCHED WHEN "ASK" IS OPENED (FR-57). It is the scene's
+ * own panel — the subject, its acts, the conversation, the models behind
+ * it — and a page that is read and never asked does not carry it.
+ */
+type CompanionProps = { readonly framed?: boolean; readonly onPick?: (id: string) => void };
+const Companion = lazy(() => import("./ask-companion.js").then((companion) => ({ default: companion.Companion as ComponentType<CompanionProps> })));
 
 /**
  * THE ASSISTANT ON EVERY PAGE — the same panel, not a second one.
@@ -79,13 +86,15 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
         >
           <div style={{ position: "absolute", inset: "12px 12px 64px 12px", pointerEvents: "auto", display: "grid" }}>
             {/* A pick goes to the record's page: there is no scene here to move. */}
-            <Companion<S>
-              framed
-              onPick={(id) => {
-                const node = context.store.graph.getNode(id);
-                if (node) navigate(recordPath(context.store.schema, node.kind as string, id));
-              }}
-            />
+            <Suspense fallback={null}>
+              <Companion
+                framed
+                onPick={(id) => {
+                  const node = context.store.graph.getNode(id);
+                  if (node) navigate(recordPath(context.store.schema, node.kind as string, id));
+                }}
+              />
+            </Suspense>
           </div>
         </div>
       ) : null}

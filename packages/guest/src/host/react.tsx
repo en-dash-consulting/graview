@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { useGraview, type ViewComponent, type ViewProps } from "@graview/react";
+import { useGraview, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useEffect, useRef } from "react";
 import { mountGuestView, type GuestFrame } from "./frame.js";
 import type { GuestLimits, GuestViewInput } from "./session.js";

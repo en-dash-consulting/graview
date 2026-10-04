@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { useGraview } from "@graview/react";
+import { useGraview } from "@graview/react/provider";
 
 
 /**

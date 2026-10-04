@@ -1,8 +1,8 @@
-import { RelationMark } from "@graview/primitives";
+import { RelationMark } from "@graview/primitives/pages";
 import { humaniseField, labelOf, type AnySchema, type Store } from "@graview/core";
 import { Link } from "react-router-dom";
 import { kindMap, type KindRelation } from "./facts.js";
-import { useGraviewIfAny } from "@graview/react";
+import { useGraviewIfAny } from "@graview/react/provider";
 import { pluralSlug, recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
 import { KindMark, eyebrow, h1, h2, lede, link, liveKinds, plain, pluralOf, quiet, rule } from "./page-typography.js";

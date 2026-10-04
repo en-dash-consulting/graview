@@ -22,15 +22,21 @@ export default defineConfig({
       "@graview/core/document": fileURLToPath(new URL("./packages/core/src/document/index.ts", import.meta.url)),
       "@graview/core/conformance": fileURLToPath(new URL("./packages/core/src/conformance/index.ts", import.meta.url)),
       "@graview/core": src("core"),
+      // The narrow entries (FR-57): the subpath first, or the bare-name alias swallows it.
+      "@graview/layout/view": fileURLToPath(new URL("./packages/layout/src/view.ts", import.meta.url)),
       "@graview/layout": src("layout"),
       "@graview/tools/cli": fileURLToPath(new URL("./packages/tools/src/cli.ts", import.meta.url)),
+      "@graview/tools/frame": fileURLToPath(new URL("./packages/tools/src/frame.ts", import.meta.url)),
       "@graview/tools": src("tools"),
       // The subpath first, or the bare-name alias swallows it.
       "@graview/render/gpu": fileURLToPath(
         new URL("./packages/render/src/gpu.ts", import.meta.url),
       ),
       "@graview/render": src("render"),
+      "@graview/react/provider": fileURLToPath(new URL("./packages/react/src/provider.ts", import.meta.url)),
       "@graview/react": src("react"),
+      "@graview/primitives/frame": fileURLToPath(new URL("./packages/primitives/src/frame.ts", import.meta.url)),
+      "@graview/primitives/pages": fileURLToPath(new URL("./packages/primitives/src/pages.ts", import.meta.url)),
       "@graview/primitives": src("primitives"),
       "@graview/pages": src("pages"),
       "@graview/ship/browser": fileURLToPath(new URL("./packages/ship/src/browser.ts", import.meta.url)),

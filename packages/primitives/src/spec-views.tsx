@@ -19,7 +19,7 @@ import {
   type ViewSpecsByKind,
   type ViewTone,
 } from "@graview/core/document";
-import { useGraview, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react";
+import { useGraview, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import type { ReactNode } from "react";
 import { DefaultView } from "./default-view.js";
 import { KindFigure } from "./figure.js";

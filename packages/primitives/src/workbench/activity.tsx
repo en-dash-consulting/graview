@@ -1,5 +1,5 @@
 import { humaniseField, isWithheld, nameOfAuthor, viaSaid, type AnySchema, type Author } from "@graview/core";
-import { useGraph, useGraview } from "@graview/react";
+import { useGraph, useGraview } from "@graview/react/provider";
 import type { ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chip, VISUALLY_HIDDEN } from "../primitives/index.js";

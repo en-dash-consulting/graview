@@ -1,4 +1,4 @@
-import { withOverview, withPan, withPin, type ViewState } from "@graview/layout";
+import { withOverview, withPan, withPin, type ViewState } from "@graview/layout/view";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
 import type { SceneNode } from "./scene-root.js";
 

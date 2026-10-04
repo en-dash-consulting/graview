@@ -1,7 +1,7 @@
 import type { AnySchema } from "@graview/core";
 import { BrowserRouter, MemoryRouter, Route, Routes } from "react-router-dom";
 import { useEffect, useLayoutEffect, useRef, type ComponentType, type ReactNode } from "react";
-import { GraviewProvider, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen } from "@graview/react";
+import { GraviewProvider, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen } from "@graview/react/provider";
 import { PageAsk } from "./ask.js";
 import { FaceControlsRoot } from "./face-controls.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";

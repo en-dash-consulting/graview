@@ -1,7 +1,7 @@
 import { argumentWords, humaniseField, labelOf, nounOf, tellApart, type AnySchema, type Store } from "@graview/core";
 import { relationWords } from "../relation-key.js";
-import { edgeOfSelection, kindsOf } from "@graview/layout";
-import { useGraview } from "@graview/react";
+import { edgeOfSelection, kindsOf } from "@graview/layout/view";
+import { useGraview } from "@graview/react/provider";
 import type { Affordance, OpenParameter } from "@graview/tools";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 

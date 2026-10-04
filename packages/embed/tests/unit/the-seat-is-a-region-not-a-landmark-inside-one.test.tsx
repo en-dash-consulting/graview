@@ -8,8 +8,11 @@ import { createViews, GraviewProvider } from "@graview/react";
 import axe from "axe-core";
 import { act, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import { describe, expect, it } from "vitest";
-import { mount, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
+import { beforeAll, describe, expect, it } from "vitest";
+import { mount, type EmbedHandle, type EmbedOptions, preload } from "../../src/index.js";
+
+// Every face fetched before the first mount, so each draws in the commit `mount` makes (FR-57).
+beforeAll(() => preload());
 
 /**
  * FR-40: THE SEAT IS A REGION, NOT A LANDMARK INSIDE ONE.
@@ -111,6 +114,8 @@ describe("the seat is a region, not a landmark inside one", () => {
       });
       try {
         await click(host, "page-ask");
+        // The pages fetch the companion when "Ask" is opened (FR-57).
+        for (let turn = 0; turn < 200 && !host.querySelector('[data-testid="companion"]'); turn++) await act(async () => new Promise((resolve) => setTimeout(resolve, 5)));
         await click(host, "profile-button");
         expect(host.querySelector('[data-testid="companion"]')).not.toBeNull();
         expect(nested(host)).toEqual([]);

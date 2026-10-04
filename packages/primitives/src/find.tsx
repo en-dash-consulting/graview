@@ -1,6 +1,6 @@
 import { actsOn, counted, type AnySchema, type Hit } from "@graview/core";
-import { aggregateId, kindCardId, withFocus, withJackIn, withOverview, withoutSearch, withQuery, withSelection, withWithin } from "@graview/layout";
-import { useFound, useGraview, useKit, useViolations } from "@graview/react";
+import { aggregateId, kindCardId, withFocus, withJackIn, withOverview, withoutSearch, withQuery, withSelection, withWithin } from "@graview/layout/view";
+import { useFound, useGraview, useKit, useViolations } from "@graview/react/provider";
 import { hueFor } from "@graview/render";
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";

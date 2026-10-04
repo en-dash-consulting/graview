@@ -1,4 +1,4 @@
-import { useViewMode } from "@graview/react";
+import { useViewMode } from "@graview/react/provider";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 /**

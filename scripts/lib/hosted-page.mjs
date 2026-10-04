@@ -19,6 +19,12 @@ import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve, sep } from "node:path";
 
+/** What each face fetches as it is first drawn (`@graview/embed`'s doors). */
+export const FACE_DOORS = {
+  scene: ["embed/src/scene-face.tsx", "primitives/src/framework-views.ts"],
+  pages: ["embed/src/pages-content.tsx", "primitives/src/framework-views.ts"],
+};
+
 /** Bytes, minified. A page over either is over. */
 export const HOSTED_PAGE_BUDGET = { minified: 600 * 1024, zod: 150 * 1024 };
 
@@ -167,12 +173,26 @@ export async function measureHostedPage(repo, entry = HOSTED_PAGE_ENTRY) {
       return { module: byModuleName(output.entryPoint), minified: bytes(more), packages: byPackage(more) };
     })
     .sort((a, b) => b.minified - a.minified);
+  /*
+   * BEFORE EACH FACE DRAWS: what is up front, and what the face fetches as
+   * it is first drawn — its own chunk and the framework's views, which every
+   * face fetches beside it (FACE_DOORS). Not a budget of Cloud's; said so a
+   * face that is merely moved out of the first chunk is not called smaller.
+   */
+  const doorChunk = (module) => Object.keys(outputs).find((file) => outputs[file].entryPoint && byModuleName(outputs[file].entryPoint) === module);
+  const faces = Object.fromEntries(
+    Object.entries(FACE_DOORS).map(([face, modules]) => {
+      const fetched = new Set(modules.map(doorChunk).filter(Boolean).flatMap((file) => [...closure(file)]).filter((file) => !eager.has(file)));
+      return [face, { minified: bytes(eager) + bytes(fetched), fetched: bytes(fetched), packages: byPackage(new Set([...eager, ...fetched])) }];
+    }),
+  );
   const upFront = byPackage(eager);
   const minified = bytes(eager);
   const zod = upFront.zod ?? 0;
   return {
     upFront: { minified, zod, chunks: eager.size, packages: upFront, modules: byModule(eager) },
     whenAsked: { minified: bytes(lazy), chunks: lazy.length, packages: byPackage(lazy), doors },
+    beforeDrawn: faces,
     budget: HOSTED_PAGE_BUDGET,
     metafile: result.metafile,
     over: minified > HOSTED_PAGE_BUDGET.minified || zod > HOSTED_PAGE_BUDGET.zod,

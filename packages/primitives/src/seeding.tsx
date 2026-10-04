@@ -1,5 +1,5 @@
 import { beginning, nounOf, providerCan, type AnySchema, type Beginning, type Principal, type Store } from "@graview/core";
-import { kindCardId } from "@graview/layout";
+import { kindCardId } from "@graview/layout/view";
 import {
   createViews,
   GraviewProvider,

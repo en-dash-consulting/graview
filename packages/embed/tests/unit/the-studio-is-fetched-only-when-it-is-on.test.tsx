@@ -16,7 +16,9 @@ vi.mock("@graview/studio", () => {
   return { StudioPlace: () => <button type="button" data-testid="studio-place">Studio</button> };
 });
 
-const { mount } = await import("../../src/index.js");
+const { mount, preload } = await import("../../src/index.js");
+// The scene and its strip fetched first, so what is counted below is the studio alone (FR-57).
+await preload("graview");
 
 const task = defineNode("task", { fields: z.object({ label: z.string() }), plural: "Tasks", label: (node: { label: string }) => node.label });
 const schema = createSchema([task]);

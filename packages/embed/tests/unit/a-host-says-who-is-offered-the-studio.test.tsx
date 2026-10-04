@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { AnySchema, GraviewApp, Principal } from "@graview/core";
-import { compileDocument, type GraviewDocument } from "@graview/core/document";
+import { compileDocumentWithoutCheck, type GraviewDocument } from "@graview/core/document";
 import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { mount, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
@@ -19,7 +19,7 @@ import { mount, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
  * word, and the app's policy stays on the store.
  */
 const vendors = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../core/tests/document/fixtures/vendors.gdd.json"), "utf8")) as GraviewDocument;
-const compiled = compileDocument(vendors, { skipFrameworkCheck: true });
+const compiled = compileDocumentWithoutCheck(vendors);
 if (!compiled.ok) throw new Error(JSON.stringify(compiled.findings));
 const app = compiled.app as GraviewApp<AnySchema>;
 

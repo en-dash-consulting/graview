@@ -39,6 +39,10 @@ const verdict = {
     packagesKb: inKb(whenAsked.packages),
     doors: whenAsked.doors.map((door) => ({ module: door.module, kb: kb(door.minified), packagesKb: inKb(door.packages) })),
   },
+  // What each face fetches as it is first drawn, on top of what is up front: not one of the claims, said so a face moved out of the first chunk is not called smaller.
+  beforeEachFaceDraws: {
+    ...Object.fromEntries(Object.entries(measured.beforeDrawn).map(([face, one]) => [face, { kb: kb(one.minified), fetchedKb: kb(one.fetched) }])),
+  },
   passed,
 };
 mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
@@ -51,5 +55,6 @@ process.stdout.write(
     .join(", ")}\n`,
 );
 for (const door of whenAsked.doors) process.stdout.write(`when asked: ${door.module} +${kb(door.minified)} KB\n`);
+for (const [face, one] of Object.entries(measured.beforeDrawn)) process.stdout.write(`before the ${face} face draws: ${kb(one.minified)} KB (${kb(one.fetched)} KB of it fetched as it is drawn)\n`);
 process.stdout.write(`${passed ? "a hosted page holds to its budget" : "a hosted page is over its budget"}: ${kb(upFront.minified)} KB up front, ${kb(upFront.zod)} KB of it zod\n`);
 process.exit(passed ? 0 : 1);

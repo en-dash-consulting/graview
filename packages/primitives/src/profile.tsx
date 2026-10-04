@@ -1,5 +1,5 @@
 import { humaniseField, labelOf, nameOfAuthor, type AnySchema } from "@graview/core";
-import { useGraview } from "@graview/react";
+import { useGraview } from "@graview/react/provider";
 import { LadderSetting } from "./ladder.js";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Seats } from "./seats.js";

@@ -134,3 +134,10 @@ export function withJackIn(
 export function byStableKey(a: { id: string }, b: { id: string }): number {
   return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 }
+
+export const BAND_PREFIX = "aggregate:";
+
+/** Whether an id names a band aggregate — a group or the rest of a relation — rather than a kind's group. */
+export function isBandAggregate(id: string): boolean {
+  return id.startsWith(BAND_PREFIX) && id.includes("|");
+}

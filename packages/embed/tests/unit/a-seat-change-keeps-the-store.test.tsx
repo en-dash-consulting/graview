@@ -4,8 +4,11 @@ import { createSchema, defineApp, defineNode, z, type Principal, type Store } fr
 import { createPageRegistry, PageMain, type PageComponent } from "@graview/pages";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { describe, expect, it } from "vitest";
-import { Embed } from "../../src/index.js";
+import { beforeAll, describe, expect, it } from "vitest";
+import { Embed, preload } from "../../src/index.js";
+
+// Every face fetched before the first mount, so each draws in the commit `mount` makes (FR-57).
+beforeAll(() => preload());
 
 /**
  * CHANGING SEATS KEEPS THE STORE. `<Embed>` handed no store made one from

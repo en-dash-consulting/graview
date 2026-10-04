@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { compileDocument, type GraviewDocument } from "@graview/core/document";
+import { compileDocumentWithoutCheck, type GraviewDocument } from "@graview/core/document";
 import { describe, expect, it } from "vitest";
 import { createStudio, uneditable } from "../../src/index.js";
 
@@ -40,7 +40,7 @@ describe("uneditable(document) (FR-62)", () => {
   });
 
   it("is the very rule the studio refuses by: retyping the quote is refused in the words it said ahead", () => {
-    const compiled = compileDocument(vendors, { skipFrameworkCheck: true });
+    const compiled = compileDocumentWithoutCheck(vendors);
     if (!compiled.ok) throw new Error(JSON.stringify(compiled.findings));
     const studio = createStudio(compiled.app);
     studio.store.apply({ name: "retype-field", args: { id: "field:vendor.quote", type: "integer" } });

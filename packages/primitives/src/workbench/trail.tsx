@@ -1,6 +1,6 @@
 import type { AnySchema } from "@graview/core";
-import { withoutMoves, withPast, withZoom } from "@graview/layout";
-import { useBacktrack, useGraview, useNavigation } from "@graview/react";
+import { withoutMoves, withPast, withZoom } from "@graview/layout/view";
+import { useBacktrack, useGraview, useNavigation } from "@graview/react/provider";
 import { Fragment, type ReactNode } from "react";
 import { nameOf } from "./answer-args.js";
 

@@ -7,8 +7,8 @@ import {
   withoutSearch,
   type ViewState,
   kindsOfAggregate,
-} from "@graview/layout";
-import { useGraview, useJackIn, useNavigation, useSelection } from "@graview/react";
+} from "@graview/layout/view";
+import { useGraview, useJackIn, useNavigation, useSelection } from "@graview/react/provider";
 import { useEffect } from "react";
 
 /**

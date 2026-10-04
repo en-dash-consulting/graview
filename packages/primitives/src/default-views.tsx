@@ -10,7 +10,7 @@ import {
   type NodeOfSchema,
   violationsTouching,
 } from "@graview/core";
-import { aggregateId, kindCardId, marqueeHeightFor, rosterRows, withFocus, withJackIn, withOverview, withPast, withWithin } from "@graview/layout";
+import { aggregateId, kindCardId, marqueeHeightFor, rosterRows, withFocus, withJackIn, withOverview, withPast, withWithin } from "@graview/layout/view";
 import {
   createViews,
   useFound,
@@ -25,9 +25,15 @@ import {
   type ReactViewRegistry,
   type ViewComponent,
   type ViewProps,
- markDefaultView } from "@graview/react";
-import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ArrangeBar, arrangementOf, withArrangement } from "./arrange-bar.js";
+ markDefaultView } from "@graview/react/provider";
+import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { arrangementOf, withArrangement } from "./arrangement.js";
+/*
+ * THE ROW THAT ARRANGES A DISTRICT, fetched when a district is opened full
+ * with more than one member in it: every other card draws without it, and a
+ * page's first chunk does not carry it (FR-57).
+ */
+const ArrangeBar = lazy(() => import("./arrange-bar.js").then((bar) => ({ default: bar.ArrangeBar })));
 import { Connections } from "./connections.js";
 import { EditableTitle, Fields } from "./editable.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
@@ -499,15 +505,17 @@ export function registerDefaultViews<S extends AnySchema>(
       });
       const bar =
         props.fidelity === "full" && members.length > 1 ? (
-          <ArrangeBar
-            schema={schema}
-            graph={store.graph}
-            kind={String(kind)}
-            arrangement={arrangement}
-            onChange={(next) => go(withArrangement(view, next))}
-            kept={{ shown: arranged.nodes.length, of: members.length }}
-            style={{ marginBottom: 8 }}
-          />
+          <Suspense fallback={null}>
+            <ArrangeBar
+              schema={schema}
+              graph={store.graph}
+              kind={String(kind)}
+              arrangement={arrangement}
+              onChange={(next) => go(withArrangement(view, next))}
+              kept={{ shown: arranged.nodes.length, of: members.length }}
+              style={{ marginBottom: 8 }}
+            />
+          </Suspense>
         ) : null;
       // A receded group still has to report trouble inside it, or the only
       // way to find a problem is to open every group in turn.

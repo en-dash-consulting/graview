@@ -12,6 +12,10 @@
     "./cli": {
       "types": "./dist/cli.d.ts",
       "default": "./dist/cli.js"
+    },
+    "./frame": {
+      "types": "./dist/frame.d.ts",
+      "default": "./dist/frame.js"
     }
   },
   "scripts": {

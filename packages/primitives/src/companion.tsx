@@ -1,5 +1,5 @@
 import { labelOf, placeSlug, type AnySchema } from "@graview/core";
-import { withFocus } from "@graview/layout";
+import { withFocus } from "@graview/layout/view";
 import { aggregateId, bandAggregateWords, kindOfCard, kindsOfAggregate } from "@graview/layout";
 import { useGraview, useSeatWork, useSelection } from "@graview/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";

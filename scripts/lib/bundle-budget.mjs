@@ -40,9 +40,13 @@ export const BUDGETS = [
      * every schema type its own JSON-schema processor, so zod no longer
      * shakes down to what the pages use — about 130 kB minified, 30 kB
      * gzipped, of zod's, which a host already paid on 4.6.
+     *
+     * Lowered from 950_000 / 252_000 when the framework built its own
+     * schemas in zod/mini and the routed face stopped reaching the workbench
+     * through its imports (FR-57): measured at 500_379 / 163_300.
      */
-    minified: 950_000,
-    gzipped: 252_000,
+    minified: 530_000,
+    gzipped: 175_000,
     load: "first",
   },
   {
@@ -53,9 +57,14 @@ export const BUDGETS = [
      * imported when it is turned on, and not before (it was about 104 kB
      * minified of every embed, whether it was offered or not). Set at
      * 1_175_514 / 329_683 measured, on zod 4.6.
+     *
+     * Lowered from 1_200_000 / 337_000 when each face came to be fetched as
+     * it is first drawn, with the framework's own views (FR-57): what a page
+     * loads first is the frame — measured at 747_000 / 190_229 — and the
+     * faces are their own chunks.
      */
-    minified: 1_200_000,
-    gzipped: 337_000,
+    minified: 780_000,
+    gzipped: 200_000,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -78,9 +87,14 @@ export const BUDGETS = [
      * about 2 kB and 3 kB more. Measured at 1_285_784 / 365_101 (from
      * 1_259_216 / 354_049 before), so raised from 1_290_000 / 362_000. What
      * a page without the studio loads fell by about 110 kB: the budget above.
+     *
+     * Gzipped raised from 373_000 when each face became a chunk of its own,
+     * fetched as it is drawn (FR-57): every face is about 11 kB smaller
+     * minified (1_289_095 from 1_300_584), and about 2.5 kB larger gzipped
+     * (372_654 from 370_200), because six chunks are each gzipped alone.
      */
     minified: 1_310_000,
-    gzipped: 373_000,
+    gzipped: 380_000,
     load: "all",
   },
   {

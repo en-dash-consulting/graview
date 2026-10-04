@@ -1,5 +1,5 @@
 import { foldPresence, hueFor, nameOfAuthor, REMOTE_PRESENCE_TTL_MS, type AnySchema, type Person, type Presence, type PresenceChannel, type Principal, type SettingDeclaration, type Store } from "@graview/core";
-import { fromUrl, kindsOfAggregate, sameView, toUrl, type ViewState } from "@graview/layout";
+import { fromUrl, kindsOfAggregate, sameView, toUrl, type ViewState } from "@graview/layout/view";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DrawnBox } from "./context.js";
 import { pickedFrom } from "./picking.js";

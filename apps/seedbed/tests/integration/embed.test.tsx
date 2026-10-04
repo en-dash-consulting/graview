@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
 import { Store } from "@graview/core";
-import { mount } from "@graview/embed";
-import { describe, expect, it } from "vitest";
+import { mount, preload } from "@graview/embed";
+import { beforeAll, describe, expect, it } from "vitest";
 import { CHAPTERS } from "../../src/domain/chapters.js";
 import { seedbedDesign } from "../../src/ui/design.js";
 import { seedbedPages } from "../../src/ui/pages.js";
 import { seedbedViews } from "../../src/ui/views.js";
+
+// Every face fetched before the first mount, so each draws in the commit `mount` makes (FR-57).
+beforeAll(() => preload());
 
 /**
  * A chapter of the garden, mounted into an element that is not on any page:

@@ -1,5 +1,5 @@
 import { counted, type AnySchema, type Fidelity, type NodeOfSchema } from "@graview/core";
-import { aggregateId, isAggregateId, kindCardId, kindOfCard, withFocus } from "@graview/layout";
+import { aggregateId, isAggregateId, kindCardId, kindOfCard, withFocus } from "@graview/layout/view";
 import { PLANE_STYLES } from "@graview/render";
 import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";

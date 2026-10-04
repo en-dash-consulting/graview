@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { checkApp } from "@graview/core";
-import { compileDocument, type GraviewDocument } from "@graview/core/document";
+import { compileDocumentWithoutCheck, type GraviewDocument } from "@graview/core/document";
 import { describe, expect, it } from "vitest";
 import { createStudio, STUDIO_MUTATIONS, studioApp } from "../../src/index.js";
 
@@ -18,7 +18,7 @@ import { createStudio, STUDIO_MUTATIONS, studioApp } from "../../src/index.js";
 const vendors = JSON.parse(readFileSync(new URL("../../../core/tests/document/fixtures/vendors.gdd.json", import.meta.url), "utf8")) as GraviewDocument;
 
 function studio() {
-  const compiled = compileDocument(vendors, { skipFrameworkCheck: true });
+  const compiled = compileDocumentWithoutCheck(vendors);
   if (!compiled.ok) throw new Error(JSON.stringify(compiled.findings));
   return createStudio(compiled.app);
 }

@@ -15,6 +15,7 @@ const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 type Measured = {
   upFront: { minified: number; zod: number; packages: Record<string, number>; modules: Record<string, number> };
   whenAsked: { minified: number; packages: Record<string, number>; doors: { module: string; minified: number }[] };
+  beforeDrawn: Record<"scene" | "pages", { minified: number; fetched: number; packages: Record<string, number> }>;
   over: boolean;
 };
 
@@ -26,6 +27,30 @@ beforeAll(async () => {
 describe("a hosted page", () => {
   it("is measured as Cloud's shell is built: React, zod and the framework that draws the app are in what it loads up front", () => {
     for (const name of ["react-dom", "zod", "@graview/core", "@graview/embed", "@graview/ship"]) expect(Object.keys(measured.upFront.packages)).toContain(name);
+  });
+
+  it("carries at most 600 KB minified up front", () => {
+    expect(measured.upFront.minified, `${Math.round(measured.upFront.minified / 1024)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
+    expect(measured.over).toBe(false);
+  });
+
+  it("carries at most 150 KB of zod up front", () => {
+    expect(measured.upFront.zod, `${Math.round(measured.upFront.zod / 1024)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.zod);
+  });
+
+  it("draws either face without loading the other: the scene carries no routed face, the pages no scene", () => {
+    const scene = Object.keys(measured.beforeDrawn.scene.packages);
+    const pages = Object.keys(measured.beforeDrawn.pages.packages);
+    expect(scene).not.toContain("@graview/pages");
+    expect(scene).not.toContain("react-router");
+    // The scene itself is @graview/react's; the pages draw with its provider alone.
+    expect(measured.beforeDrawn.pages.packages["@graview/react"] ?? 0).toBeLessThan(measured.beforeDrawn.scene.packages["@graview/react"]! / 2);
+    expect(pages).toContain("@graview/pages");
+  });
+
+  it("is smaller before either face draws than it was up front before the faces were fetched as drawn", () => {
+    // 1,075 KB up front, measured this way before FR-57: the face fetched as it is drawn does not hide the bytes, it leaves them out.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(800 * 1024);
   });
 
   it("carries no studio, up front or when asked: the shell stubs it out", () => {

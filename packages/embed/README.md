@@ -23,6 +23,31 @@ handle.unmount();
 
 `<Embed {...options} />` is the same thing as a React component.
 
+## What a page loads first
+
+The frame — the element's region, its theme, the strip, the provider — is
+on the page when `mount` returns. Each face is a chunk of its own, fetched
+the first time it is drawn: a page that opens on the pages never loads the
+scene, one that opens on the scene never loads the router, and the
+framework's own cards, rows and record pages come with whichever face
+draws them first. Until a face's chunk arrives its box stands empty
+(`aria-busy`), and `handle.drawn()` resolves once the face asked for is on
+the page — after `mount`, and after every change of face.
+
+A host that knows its face before it mounts starts that chunk at once,
+beside its own requests, and an embed mounted once it is here draws it in
+the first commit:
+
+```ts
+import { mount, preload } from "@graview/embed";
+
+const face = innerWidth < 768 ? "pages" : "graview";
+const faceReady = preload(face);            // with no face named, every face
+const app = await fetchAndCompile();        // the host's own round trips, meanwhile
+await faceReady;
+const handle = mount(root, { app, face });  // drawn in this commit
+```
+
 What this asks of the framework, and what it adds: the theme scopes to the
 element (`themeCss(scheme, brand, { scope })`) rather than the document; the
 panes size against the picture's own box (`cqh`) rather than the viewport;
@@ -45,7 +70,7 @@ A view, a page, the strip or the studio that throws is contained where it
 threw: it says it could not draw and offers to try again, and the rest of
 the embed keeps working. The host is told the error's class (a TypeError,
 a `GraphError`) and the framework module that caught it, never the message,
-which may quote a record. The ready callback is told once, after the first render,
+which may quote a record. The ready callback is told once, when the first face is drawn,
 how many milliseconds it took.
 
 ## What the host can keep
@@ -72,9 +97,10 @@ that and does not bundle the scene, the Graview or the studio:
 import { mount } from "@graview/embed/pages";
 ```
 
-Bundled for the browser without React, the pages face alone is about 730 KB
-minified (195 KB gzipped) and every face about 1.05 MB (300 KB);
-`node scripts/inspect-pack.mjs` fails CI when either passes its budget
+Bundled for the browser without React, the pages face alone is about 500 KB
+minified (165 KB gzipped); the whole embed loads about 750 KB (190 KB) before a
+face is fetched, and every face about 1.28 MB (370 KB);
+`node scripts/inspect-pack.mjs` fails CI when one passes its budget
 (`scripts/lib/bundle-budget.mjs`).
 
 ## In a chat's widget
