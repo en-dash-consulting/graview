@@ -106,9 +106,11 @@ holds the contracts; copy its shape for a host of your own.
 
 ## What the check cannot see
 
-- Whether the host's CSS reaches in. The embed scopes its own theme; a host
-  rule like `button { … }` on the whole page still applies, and only looking
-  at the page finds it.
+- Whether the host's CSS reaches in. The embed scopes its own theme, and
+  every rule of it stays inside its element, so the host's own buttons,
+  headings and code keep the host's look; but a host rule like
+  `button { … }` on the whole page still applies inside the embed, and only
+  looking at the page finds it.
 - Whether the stop still lands. A stop names ids and places; rename a place
   or seed different ids and an embed opens somewhere it resolves to rather
   than where the article says it does.

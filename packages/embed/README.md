@@ -49,7 +49,8 @@ const handle = mount(root, { app, face });  // drawn in this commit
 ```
 
 What this asks of the framework, and what it adds: the theme scopes to the
-element (`themeCss(scheme, brand, { scope })`) rather than the document; the
+element (`themeCss(scheme, brand, { scope })`) rather than the document, every
+rule of it held inside that element, so nothing of the host's is restyled; the
 panes size against the picture's own box (`cqh`) rather than the viewport;
 the routed face runs on a memory router, so the host page's address is never
 touched; the brand's fonts are fetched by the embed rather than assumed. The
