@@ -96,6 +96,8 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
     declarationChanged: handler.declarationChanged,
     announce: handler.announce,
     onCall: handler.onCall,
+    hold: handler.hold,
+    release: handler.release,
     server,
     port,
     url: `http://localhost:${port}`,

@@ -194,8 +194,12 @@ export interface RemoteOptions<S extends AnySchema> {
   readonly visible?: () => boolean;
 }
 
-/** How a client is reaching its server now (FR-49): not yet, yes, or not at the moment. */
-export type RemoteStatus = "connecting" | "online" | "offline";
+/**
+ * How a client is reaching its server now (FR-49): not yet, yes, or not at
+ * the moment — and `held` (FR-66): reached, and the host takes no changes
+ * for now (`held()` says why).
+ */
+export type RemoteStatus = "connecting" | "online" | "offline" | "held";
 
 /** What happened to a client since it opened, as counts for a host's beacon (FR-49). */
 export interface RemoteCounters {
@@ -276,6 +280,22 @@ export interface RemoteStore<S extends AnySchema> {
   status(): RemoteStatus;
   /** Told each time the status changes — the offline banner's switch. Returns the way to stop listening. */
   onStatus(listener: (status: RemoteStatus) => void): () => void;
+  /**
+   * WHY THE HOST TAKES NO CHANGES FOR NOW (FR-66), in its own sentence —
+   * "This app is read-only while it is being repaired." — or undefined
+   * while it takes them. Said by the server on the socket, in its welcome
+   * and on every answer a poll reads, so a page opened during a hold knows
+   * at once. While it stands `status()` is `held`, and a change made
+   * meanwhile stays shown and pending, waiting on the hold rather than the
+   * network: not refused, not backed off, and sent on release.
+   */
+  held(): string | undefined;
+  /**
+   * Told when the host holds the app (its sentence) and when it releases it
+   * (`null`) — the read-only banner's switch. A listener added during a
+   * hold is told at once. Returns the way to stop listening.
+   */
+  onHeld(listener: (sentence: string | null) => void): () => void;
   /** How often this client reconnected, rebased, met a conflict and resynced — counts only. */
   counters(): RemoteCounters;
   /**
@@ -438,6 +458,8 @@ interface Wiring {
   readonly refusals: Set<(sentence: string, refusal: RemoteRefusal) => void>;
   readonly conflicts: Set<(conflict: RemoteConflict) => void>;
   readonly statuses: Set<(status: RemoteStatus) => void>;
+  /** Told when the host holds the app and releases it (FR-66). */
+  readonly helds: Set<(sentence: string | null) => void>;
   readonly builds: Set<(build: string) => void>;
   readonly who: Set<(who: readonly Presence[]) => void>;
   readonly declarations: Set<(next: RemoteStore<AnySchema>, version: number) => void>;
@@ -446,12 +468,15 @@ interface Wiring {
   told?: RemoteStatus;
   /** Another build, once noticed: told once across every store. */
   otherBuild?: string;
+  /** The hold the listeners were last told (FR-66), so a store that replaces another tells them only a change. */
+  toldHeld?: string;
 }
 
 const freshWiring = (): Wiring => ({
   refusals: new Set(),
   conflicts: new Set(),
   statuses: new Set(),
+  helds: new Set(),
   builds: new Set(),
   who: new Set(),
   declarations: new Set(),
@@ -488,21 +513,55 @@ async function opening<S extends AnySchema>(
    * request after the first goes through `reach`, which says so either way;
    * the socket says so on its welcome and when a welcomed socket drops.
    */
-  let status: RemoteStatus = "connecting";
+  let status: Exclude<RemoteStatus, "held"> = "connecting";
   const statusListeners = wiring.statuses;
   const tally = wiring.tally;
   /** Calls that could not reach the server, each waiting to be sent again once it is back. */
   const held: { again(): void; give(error: unknown): void }[] = [];
-  const become = (next: RemoteStatus) => {
+  /*
+   * THE HOST'S HOLD (FR-66): its sentence while it takes no changes, said
+   * on the socket, in a welcome and on every answer a poll reads. Beside
+   * whether the server is reached, not instead of it: a held server that
+   * drops is offline, and held again if it says so when it is back.
+   */
+  let holding: string | undefined;
+  /** Posts waiting on the hold over HTTP, each sent again on release. */
+  const onRelease: (() => void)[] = [];
+  const shown = (): RemoteStatus => (status === "online" && holding !== undefined ? "held" : status);
+  const tellStatus = () => {
+    const now = shown();
+    // A store that replaced another and comes online says nothing its listeners were not already told.
+    if (wiring.told === now) return;
+    wiring.told = now;
+    for (const told of [...statusListeners]) told(now);
+  };
+  const become = (next: Exclude<RemoteStatus, "held">) => {
     if (next === status || retiring) return;
     if (status === "offline" && next === "online") tally.reconnects++;
     status = next;
-    // A store that replaced another and comes online says nothing its listeners were not already told.
-    if (wiring.told !== next) {
-      wiring.told = next;
-      for (const told of [...statusListeners]) told(next);
-    }
+    tellStatus();
     if (next === "online") for (const waiting of held.splice(0)) waiting.again();
+  };
+  /** The host said whether it holds the app: its sentence, or nothing — it takes changes. */
+  const hearHeld = (said: unknown) => {
+    if (retiring) return;
+    const next = typeof said === "string" && said.length > 0 ? said : undefined;
+    const changed = next !== holding;
+    holding = next;
+    tellHeld();
+    if (!changed) return;
+    tellStatus();
+    if (next !== undefined) return;
+    // Released: what waited on the hold goes now, in the order it was made.
+    for (const again of onRelease.splice(0)) again();
+    if (busyTimer) clearTimeout(busyTimer);
+    sendBusy();
+  };
+  /** The listeners told the hold as it is now, once: a store that replaced another tells them only a change. */
+  const tellHeld = () => {
+    if (wiring.toldHeld === holding) return;
+    wiring.toldHeld = holding;
+    for (const told of [...wiring.helds]) told(holding ?? null);
   };
   const reach = async (url: string, init: RequestInit): Promise<Response> => {
     let response: Response;
@@ -541,11 +600,16 @@ async function opening<S extends AnySchema>(
       horizon?: number;
       /** The host's build (FR-44); absent from a server before it, or a host that says none. */
       build?: string;
+      /** The host's hold, in its sentence (FR-66); absent while it takes changes, or from a server before it. */
+      held?: string;
     };
   };
   const state = await fetchState(true);
   // A polling client has its first answer; a live one is connecting until its socket is welcomed.
   if (!live) status = "online";
+  // Opened during a hold — or on a new declaration after one ended: known from the first answer (FR-66).
+  holding = typeof state.held === "string" && state.held.length > 0 ? state.held : undefined;
+  tellHeld();
   const enabledModules = state.enabledModules ?? options.enabledModules;
 
   // The app as the host judges it (`localApp`), so the browser refuses only what the server would.
@@ -756,8 +820,10 @@ async function opening<S extends AnySchema>(
    * client opens on the new one, exactly as a socket's `declaration` makes
    * it, and its calls on the way go with it.
    */
-  const moved = (answer: { readonly version?: unknown; readonly build?: unknown }): boolean => {
+  const moved = (answer: { readonly version?: unknown; readonly build?: unknown; readonly held?: unknown }): boolean => {
     if (typeof answer.build === "string") noticeBuild(answer.build);
+    // Whether the host holds the app, said on every answer that says the version (FR-66).
+    if (typeof answer.version === "number") hearHeld(answer.held);
     if (typeof answer.version !== "number" || answer.version === state.version) return false;
     void declarationChanged(answer.version);
     return true;
@@ -833,7 +899,7 @@ async function opening<S extends AnySchema>(
   /** Resolves once the server is reached again (FR-49); rejects if the client closes first. */
   const backOnline = (): Promise<void> => new Promise((again, give) => held.push({ again, give }));
   const posted = async (body: Body, mine?: string): Promise<{ ops: readonly Operation[]; batch?: string }> => {
-    type Answer = { ops?: Operation[]; batch?: string; error?: string; conflict?: boolean; conflicts?: FieldConflict[]; reason?: RemoteRefusal["reason"]; wouldNeed?: string[]; retryAfter?: number; version?: number; build?: string };
+    type Answer = { ops?: Operation[]; batch?: string; error?: string; conflict?: boolean; conflicts?: FieldConflict[]; reason?: RemoteRefusal["reason"]; wouldNeed?: string[]; retryAfter?: number; version?: number; build?: string; held?: string };
     let response: Response;
     let answer: Answer;
     for (;;) {
@@ -857,6 +923,23 @@ async function opening<S extends AnySchema>(
         continue;
       }
       answer = (await response.json().catch(() => ({}))) as Answer;
+      /*
+       * HELD (FR-66): the host takes no changes for now and said why. The
+       * change waits on the hold, not the network — kept, never backed off
+       * — and goes again on release, which a poll or the socket hears. A
+       * client that hears neither (no poll, no socket) asks again after a
+       * backoff, as it would have.
+       */
+      if (response.status === 503 && answer.reason === "unavailable" && typeof answer.held === "string" && !closed) {
+        // Answered on another declaration: carried with the rest, below.
+        if (typeof answer.version === "number" ? moved(answer) : (hearHeld(answer.held), false)) break;
+        if (holding !== undefined && (every > 0 || live)) {
+          await new Promise<void>((again) => onRelease.push(again));
+          if (closed) throw new Superseded("The client closed.");
+          if (socketReady()) return viaSocket(body, mine);
+          continue;
+        }
+      }
       /*
        * ONE WAY TO WAIT, IN THE POST LANE. Not for a while (FR-46): a 503
        * whose reason is `unavailable` — the host takes no changes now and
@@ -956,6 +1039,8 @@ async function opening<S extends AnySchema>(
   let busyTimer: ReturnType<typeof setTimeout> | undefined;
   const sendBusy = () => {
     busyTimer = undefined;
+    // Held (FR-66): nothing goes until the host takes changes again; release sends them.
+    if (holding !== undefined) return;
     const again = [...waiting.entries()].filter(([cid]) => busy.has(cid));
     busy.clear();
     for (const [, waiter] of again) say(waiter.message);
@@ -965,6 +1050,11 @@ async function opening<S extends AnySchema>(
     busy.add(cid);
     if (busyTimer) clearTimeout(busyTimer);
     busyTimer = setTimeout(sendBusy, Math.max(0, retryAfter));
+  };
+
+  /** A call kept while the app is held (FR-66): with the rest, in order, sent on release and not before. */
+  const park = (cid: string) => {
+    if (waiting.has(cid)) busy.add(cid);
   };
 
   /** A call down the socket; its answer lands when it comes, in the order the server said it. */
@@ -983,8 +1073,8 @@ async function opening<S extends AnySchema>(
             ...(body.via ? { via: body.via } : {}),
           };
       waiting.set(cid, { message, ...(mine !== undefined ? { mine } : {}), resolve, reject });
-      // Behind calls the host asked to wait: it goes with them.
-      if (busy.size > 0) {
+      // Behind calls the host asked to wait, or while the app is held (FR-66): it goes with them.
+      if (busy.size > 0 || holding !== undefined) {
         busy.add(cid);
         return;
       }
@@ -1007,12 +1097,16 @@ async function opening<S extends AnySchema>(
         welcomed = true;
         attempts = 0;
         if (typeof message.participant === "string") self = message.participant;
+        // Held, or not, as of this welcome: a hold released while this socket was away ends here (FR-66).
+        hearHeld(message.held);
         land(message.ops ?? []);
         // Whatever was sent and never answered goes again: the server answers a batch it already has with its ops.
         busy.clear();
         if (busyTimer) clearTimeout(busyTimer);
         busyTimer = undefined;
-        for (const waiter of waiting.values()) say(waiter.message);
+        // Unless the app is held: then they wait for its release (FR-66).
+        if (holding !== undefined) for (const cid of waiting.keys()) busy.add(cid);
+        else for (const waiter of waiting.values()) say(waiter.message);
         sayWhere(true);
         // And what could not reach the server at all goes after it.
         become("online");
@@ -1044,7 +1138,9 @@ async function opening<S extends AnySchema>(
         if (!waiter) return;
         // Not for a while, and not final (FR-46): kept, and sent again after a backoff, with every call made behind it.
         if (message.t === "refused" && message.reason === "unavailable") {
-          hold(message.cid, backoffFor(options.backoff, unavailableTries++));
+          // Held (FR-66): it waits on the hold, not a backoff, and goes on release.
+          if (holding !== undefined) park(message.cid);
+          else hold(message.cid, backoffFor(options.backoff, unavailableTries++));
           return;
         }
         waiting.delete(message.cid);
@@ -1066,6 +1162,9 @@ async function opening<S extends AnySchema>(
         return;
       case "presence":
         heard(message.who ?? []);
+        return;
+      case "held":
+        hearHeld(message.sentence);
         return;
       case "declaration":
         if (typeof message.version === "number" && message.version !== state.version) void declarationChanged(message.version);
@@ -1131,6 +1230,8 @@ async function opening<S extends AnySchema>(
     if (lapse) clearTimeout(lapse);
     // A post waiting for the server to be reached again goes with the rest instead.
     for (const waiting of held.splice(0)) waiting.give(superseded);
+    // So does one waiting on a hold: it wakes, finds the store let go, and is carried (FR-66).
+    for (const again of onRelease.splice(0)) again();
     const was = socket;
     socket = undefined;
     welcomed = false;
@@ -1566,10 +1667,16 @@ async function opening<S extends AnySchema>(
     seq: () => seen,
     participant: () => self,
     transport: () => (socketReady() ? "socket" : "poll"),
-    status: () => status,
+    status: shown,
     onStatus(listener) {
       statusListeners.add(listener);
       return () => statusListeners.delete(listener);
+    },
+    held: () => holding,
+    onHeld(listener) {
+      wiring.helds.add(listener);
+      if (holding !== undefined) listener(holding);
+      return () => wiring.helds.delete(listener);
     },
     counters: () => ({ ...tally }),
     who: () => [...known.values()],
@@ -1587,6 +1694,7 @@ async function opening<S extends AnySchema>(
       if (busyTimer) clearTimeout(busyTimer);
       if (lapse) clearTimeout(lapse);
       for (const waiting of held.splice(0)) waiting.give(new Error("The client closed before the server could be reached."));
+      for (const again of onRelease.splice(0)) again();
       const was = socket;
       socket = undefined;
       welcomed = false;

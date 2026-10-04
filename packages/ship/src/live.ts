@@ -127,6 +127,8 @@ export type LiveServerMessage =
       readonly build?: string;
       /** This socket's own key in `presence`, built from its seat, so a client can leave itself out of who is here (FR-47). */
       readonly participant?: string;
+      /** The host holds the app and takes no changes for now, in its own words (FR-66): absent when it takes them. */
+      readonly held?: string;
       readonly seq: number;
       readonly ops: readonly Operation[];
       /** `horizon`: the seq `log` begins at, when the store was compacted (FR-23); absent, 0. */
@@ -165,6 +167,17 @@ export type LiveServerMessage =
    * opens on the new declaration, offering its unanswered calls again.
    */
   | { readonly t: "declaration"; readonly version: number }
+  /**
+   * THE APP IS HELD, OR RELEASED (FR-66). The host takes no changes for now
+   * — a room read-only while a repair is checked — and says why in
+   * `sentence`; `null` once it takes them again. Said to every socket that
+   * has said hello when the hold starts or ends, and in a welcome while it
+   * stands (`held`). Every call meanwhile is refused `unavailable` in the
+   * same sentence: a client keeps the change and sends it again on release.
+   * Additive to protocol 1, as `declaration` was: a client that does not
+   * know it ignores it, and backs off on `unavailable` as before.
+   */
+  | { readonly t: "held"; readonly sentence: string | null }
   /**
    * THIS SERVER NO LONGER SERVES THE CLIENT'S PROTOCOL (FR-44). `protocol`
    * is the lowest it serves. Said in answer to `hello`, and nothing

@@ -250,6 +250,18 @@ export interface LiveProtocolOptions<S extends AnySchema> {
    * the store waits on it with the change applied.
    */
   readonly admit?: (asked: LimitAsked, planned: PlannedChange) => LimitAnswer | undefined;
+  /**
+   * THE APP IS HELD (FR-66): the host takes no changes for now — a room
+   * read-only while a repair is checked — and this answers why, in a
+   * sentence for the person; nothing while it takes them. Read as it is
+   * asked, so a host keeps the hold where a wake does not empty it. While
+   * it answers, every call and undo that has not already landed is refused
+   * `unavailable` in that sentence (503 over HTTP) before `limit` is asked,
+   * every welcome says `held`, and so does every answer a poll reads —
+   * the state, since, a post's — so a page opened during a hold knows.
+   * When it starts or ends, the host calls `heldChanged` with its sockets.
+   */
+  readonly held?: () => string | undefined;
 }
 
 /** A change the host's `admit` answered: thrown through the store, which puts the change back. */
@@ -338,6 +350,14 @@ export interface LiveProtocol<S extends AnySchema> {
    * cursors as it keeps them after `receive`.
    */
   declared(peers: Iterable<LivePeer>): void;
+  /**
+   * THE HOLD STARTED OR ENDED (FR-66): every socket that has said hello is
+   * told `{ t: "held", sentence }` — the host's `held` now, or `null` once
+   * it answers nothing. A socket that has not said hello is told in its
+   * welcome. `openRemote` says it (`status()` is `held`, `onHeld`), and
+   * sends what it kept on release.
+   */
+  heldChanged(peers: Iterable<LivePeer>): void;
 }
 
 /**
@@ -947,6 +967,11 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     sendUpTo(peer, held === undefined ? wire.lastSeq() : Math.min(wire.lastSeq(), held - 1), ops, known, sight);
   };
 
+  /** The host's hold, in its sentence, or nothing: the app takes changes (FR-66). */
+  const heldNow = (): string | undefined => {
+    const sentence = options.held?.();
+    return typeof sentence === "string" && sentence.length > 0 ? sentence : undefined;
+  };
   /** What the host's `limit` says of a change, before it is judged; nothing when it has none. */
   const limitOf = async (seat: Principal, via: string, change: Change, bytes: number): Promise<LimitAnswer | undefined> =>
     options.limit ? options.limit({ seat, via, t: change.t, bytes, calls: change.t === "call" ? change.calls : [] }) : undefined;
@@ -1086,9 +1111,11 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
   const buildFor = (peer: ServedSocket): string | undefined =>
     peer.hostBuild ?? (typeof options.build === "function" ? options.build(peer) : options.build);
   /** Which declaration, and which build, answered (FR-43, FR-44): on every route's answer a poll reads. */
-  const answering = (asked: WireAsked): { version: number; build?: string } => {
+  const answering = (asked: WireAsked): { version: number; build?: string; held?: string } => {
     const build = buildFor({ seat: asked.seat, via: asked.via, ...(asked.build ? { hostBuild: asked.build } : {}) });
-    return { version: options.version ?? 1, ...(build ? { build } : {}) };
+    // And whether the app is held (FR-66): a poller learns it, and its end, from any answer.
+    const held = heldNow();
+    return { version: options.version ?? 1, ...(build ? { build } : {}), ...(held ? { held } : {}) };
   };
   const reply = (status: number, body: Record<string, unknown>, headers: Record<string, string> = {}): WireAnswer => ({ status, body, headers });
 
@@ -1152,7 +1179,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
           peer.participant ??= participantKey({ kind: seat.kind, ...(seat.id ? { id: seat.id } : {}), session: mintSession() });
           const participant = peer.participant;
           const build = buildFor(served);
-          const said = { protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, version: options.version ?? 1, participant, ...(build ? { build } : {}) };
+          const held = heldNow();
+          const said = { protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, version: options.version ?? 1, participant, ...(build ? { build } : {}), ...(held ? { held } : {}) };
           if (seq === undefined) {
             const seen = wire.seenFor(seat);
             say(peer, {
@@ -1220,6 +1248,18 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             }
             catchUp(peer, undefined, seat);
             say(peer, { t: "ack", cid, seq: claim.answered.at(-1)!.seq, batch: message.batch as string, ops: wire.shown(seat, claim.answered) });
+            return { cursor: peer.cursor };
+          }
+          /*
+           * HELD (FR-66): no change is taken for now, and the host said why.
+           * Refused `unavailable` in its sentence before its limit is asked:
+           * the client keeps the change and sends it on release.
+           */
+          const holding = heldNow();
+          if (holding) {
+            if (peer.held?.cid === cid) delete peer.held;
+            catchUp(peer, undefined, seat);
+            say(peer, { t: "refused", cid, reason: "unavailable", sentence: holding });
             return { cursor: peer.cursor };
           }
           /*
@@ -1319,6 +1359,9 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
        * change is kept to send again (FR-45); a hard cap is refused, `limit`,
        * and the change is taken back (FR-46); unavailable is 503, kept.
        */
+      // Held (FR-66): 503 `unavailable` in the hold's sentence, and the answer says `held`.
+      const holding = heldNow();
+      if (holding) return reply(503, { error: holding, refused: true, reason: "unavailable", ...said });
       const bytes = bytesOf(text);
       const limited = await limitOf(asked.seat, via, change, bytes);
       if (limited) return limitedReply(limited, said);
@@ -1357,6 +1400,11 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
         delete peer.cursor;
         say(peer, { t: "declaration", version: options.version ?? 1 });
       }
+    },
+    heldChanged(peers) {
+      // The same words for every seat: a hold names nothing in the store.
+      const text = JSON.stringify({ t: "held", sentence: heldNow() ?? null } satisfies LiveServerMessage);
+      for (const peer of peers) if (peer.cursor !== undefined) sayText(peer, text);
     },
   };
 }

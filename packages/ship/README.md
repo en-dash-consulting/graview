@@ -102,7 +102,7 @@ server's verdict before it exits does.
 it as it lands. Calls go down it too; while it is down the client polls and posts, reconnects,
 and catches up from the last op it has. Polling stays: it is the wire `curl` can drive.
 
-**A host can watch it.** `remote.status()` is `connecting`, `online` or `offline`
+**A host can watch it.** `remote.status()` is `connecting`, `online`, `offline` or `held`
 (`RemoteStatus`), and `remote.onStatus(listener)` is told each time it changes — an offline
 banner's switch. It is offline while a socket that was welcomed is down and nothing has been
 heard since, or when a poll or a call does not reach the server (a network failure, or a 502,
@@ -391,6 +391,21 @@ the size in bytes and the calls. It answers nothing, `{ retryAfter }`, `{ refuse
   `unavailable` and HTTP answers 503 with it. Nothing is judged and nothing is taken back:
   `openRemote` keeps the change shown and pending, and sends it again after its `backoff`,
   with every call made behind it, until the host takes it.
+
+**A hold is said to the page** (FR-66). A host that holds the app read-only for a spell —
+a room while a repair is checked — says so rather than answering every write `unavailable`
+in silence: `handler.hold(sentence)` and `handler.release()` on `createStoreHandler` and
+`serveStore`, or `liveProtocol({ held: () => sentence })` for a host that keeps the hold
+itself, calling `live.heldChanged(peers)` when it starts and ends. While it stands, every
+change that has not already landed is refused `unavailable` in that sentence before `limit`
+is asked, every open socket is told `{ t: "held", sentence }` (and `sentence: null` on
+release), and every welcome and every answer a poll reads — the state, since, here, a post's
+— says `held`, so a page opened during a hold knows at once. `openRemote` says it:
+`remote.status()` is `held`, `remote.held()` is the sentence, and `remote.onHeld(listener)`
+is handed it, and `null` on release — a read-only banner's switch. A change made meanwhile
+stays shown and pending and waits on the hold, not on the network: it is not backed off, and
+it goes on release, in the order it was made. The message and the field are additive to
+protocol 1: a client before them ignores both and backs off on `unavailable` as it did.
 
 `limit` is asked only of a change that has not landed: a call sent again after it did — its
 ack lost with the socket — is answered with the ops it made, whatever the host would say now.
