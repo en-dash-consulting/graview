@@ -22,12 +22,13 @@ import {
   type FieldRevision,
   type MutationCall,
   type Operation,
+  type PlannedChange,
   type Presence,
   type Principal,
   type Store,
   type WireRefusal,
 } from "@graview/core";
-import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LimitAnswer, type LiveClientMessage, type LiveServerMessage } from "./live.js";
+import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LimitAnswer, type LimitAsked, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 
 /**
  * THE LIVE WIRE AS FUNCTIONS OVER STATE THE HOST HOLDS (FR-41, FR-42).
@@ -105,9 +106,15 @@ export interface ServedSocket {
 /** The longest `cid` a socket's call or undo may name: it is kept in `held` while the call is busy. */
 const MAX_CID = 64;
 
-/** A socket as the protocol is handed it: its state, and a way to send it text. */
+/** A socket as the protocol is handed it: its state, a way to send it text, and — when the host can — a way to close it. */
 export interface LivePeer extends LiveSocketState {
   send(text: string): void;
+  /**
+   * Closes the socket. Called only when the socket's seat key is one the
+   * host no longer resolves, after it is told so (`{ t: "error", reopen:
+   * true }`), with code 4000: a client of any release then opens a new one.
+   */
+  close?(code?: number, reason?: string): void;
 }
 
 /** What one message did, for the host to keep and pass on. */
@@ -197,9 +204,15 @@ export interface LiveProtocolOptions<S extends AnySchema> {
   /**
    * THE SEAT A HOST'S KEY NAMES. A socket opened with a key —
    * `open("user:6b3f…", "web")` — keeps only the key in its state, and is
-   * judged on every message as the principal this answers. Answering
-   * nothing, the socket is told its seat is no longer known and is served
-   * nothing more. Called at most once per key in one `publish` or `tell`.
+   * judged on every message as the principal this answers. Keep what it
+   * reads somewhere a wake does not empty (a Durable Object's storage, not
+   * a map in memory), and make the key from the seat, never its session:
+   * every tab of one seat holds one key, and `publish` makes one view of
+   * it. Answering nothing, the host has lost the seat: the socket is told
+   * to open again (`{ t: "error", reopen: true }`), closed when the peer
+   * can be, and served nothing more; `openRemote` opens a new socket, whose
+   * upgrade the host reads the seat from again. Called at most once per
+   * key in one `publish` or `tell`.
    */
   readonly seatOf?: (key: string) => Principal | undefined;
   /**
@@ -223,6 +236,27 @@ export interface LiveProtocolOptions<S extends AnySchema> {
    * (`{ refuse }`, reason `limit`), or nothing.
    */
   readonly limit?: Limit;
+  /**
+   * THE HOST'S CAPS ON WHAT A CHANGE WOULD DO. `limit` is asked before a
+   * change is compiled, so it cannot count what the change would do; this
+   * is asked after — the calls (or the undo) compiled and applied by the
+   * store, nothing kept yet — with `limit`'s `asked` and the store's own
+   * plan (`PlannedChange`: the ops and primitives, the records and links
+   * added, removed and changed, how many records the store would hold).
+   * Its answers mean what `limit`'s do: `{ refuse }` is refused `limit`
+   * (413 over HTTP), `{ retryAfter }` busy (429), `{ unavailable }`
+   * refused `unavailable` (503); and a change it answers is not kept,
+   * flushed or sent to anybody. Answering nothing keeps it. Synchronous:
+   * the store waits on it with the change applied.
+   */
+  readonly admit?: (asked: LimitAsked, planned: PlannedChange) => LimitAnswer | undefined;
+}
+
+/** A change the host's `admit` answered: thrown through the store, which puts the change back. */
+class NotAdmitted extends Error {
+  constructor(readonly answer: LimitAnswer) {
+    super("Not admitted by the host.");
+  }
 }
 
 export interface LiveProtocol<S extends AnySchema> {
@@ -248,8 +282,12 @@ export interface LiveProtocol<S extends AnySchema> {
    * flush had held back before them. When the flush fails, nothing has:
    * `landed` is absent, the cursor is where it was, and the client was
    * refused `unavailable`.
+   *
+   * `peers` is every socket the host holds, for the same presence: one a
+   * socket holds is said `held: "socket"` whatever the host built (as in
+   * `tell`). Unsaid, only this socket's own is known to be held.
    */
-  receive(peer: LivePeer, text: string, who?: readonly Presence[]): Promise<LiveReceived>;
+  receive(peer: LivePeer, text: string, who?: readonly Presence[], peers?: Iterable<LiveSocketState>): Promise<LiveReceived>;
   /**
    * Ops that landed, down every socket that has said hello and has not had
    * them, each as its own seat may see them (FR-02, FR-16): in seq order,
@@ -259,7 +297,14 @@ export interface LiveProtocol<S extends AnySchema> {
    * written once.
    */
   publish(ops: readonly Operation[], peers: Iterable<LivePeer>): void;
-  /** Who is here, told to every socket that has said hello: as its seat may be told it, and without itself. */
+  /**
+   * Who is here, told to every socket that has said hello: as its seat may
+   * be told it, and without itself. A presence whose participant one of
+   * `peers` holds is said `held: "socket"` — it stands while that socket
+   * does, with no heartbeat — whatever the host built it with, so a host
+   * that rebuilds presences from its own records cannot drop the stamp; a
+   * visitor's `until` is said as the host gave it.
+   */
   tell(who: readonly Presence[], peers: Iterable<LivePeer>): void;
   /**
    * `POST /graview/ops`, FOR A HOST THAT ROUTES ITS OWN REQUESTS. Hand it
@@ -326,16 +371,18 @@ interface Change {
   readonly claimed: string | undefined;
 }
 
-/** What judging a change came to: a stale write, a refusal, or the ops it landed in the store. */
+/** What judging a change came to: a stale write, a refusal, the host's word on what it would do, or the ops it landed in the store. */
 type Landing =
-  | { readonly conflicts: readonly FieldConflict[]; readonly refusal?: undefined; readonly result?: undefined }
-  | { readonly refusal: WireRefusal; readonly conflicts?: undefined; readonly result?: undefined }
+  | { readonly conflicts: readonly FieldConflict[]; readonly refusal?: undefined; readonly limited?: undefined; readonly result?: undefined }
+  | { readonly refusal: WireRefusal; readonly conflicts?: undefined; readonly limited?: undefined; readonly result?: undefined }
+  | { readonly limited: LimitAnswer; readonly conflicts?: undefined; readonly refusal?: undefined; readonly result?: undefined }
   | {
       readonly result: { readonly ops: readonly Operation[]; readonly batch: string };
       /** What the flush made durable — these ops, and any a failed flush left — or nothing: it failed, and they are held back. */
       readonly saved: readonly Operation[] | undefined;
       readonly conflicts?: undefined;
       readonly refusal?: undefined;
+      readonly limited?: undefined;
     };
 
 /** A client's claim of what its change came through: a short string, or none. */
@@ -420,6 +467,24 @@ export function visitorPresence(
 export function announcePresence(who: readonly Presence[], presence: Presence, ttlMs: number = VISITOR_PRESENCE_TTL_MS, now: number = Date.now()): Presence[] {
   const stamped: Presence = { ...presence, at: new Date(now).toISOString(), until: new Date(now + ttlMs).toISOString() };
   return [...who.filter((one) => one.participant !== presence.participant && (one.until === undefined || now < Date.parse(one.until))), stamped];
+}
+
+/**
+ * WHO IS HERE, AS THE SOCKETS SAY IT: a presence whose participant one of
+ * the host's sockets holds is held by that socket (`held: "socket"`, and no
+ * `until` — it stands while the socket does); everybody else, a visitor
+ * with its `until` among them, as the host built them. A new list: the
+ * host's own is not changed.
+ */
+function heldBySockets(who: readonly Presence[], peers: Iterable<Pick<LiveSocketState, "participant">>): Presence[] {
+  const held = new Set<string>();
+  for (const peer of peers) if (peer.participant) held.add(peer.participant);
+  if (held.size === 0) return [...who];
+  return who.map((presence) => {
+    if (!held.has(presence.participant)) return presence;
+    const { until: _until, ...standing } = presence;
+    return { ...standing, held: "socket" };
+  });
 }
 
 /** A key for a socket that has not said one, minted by the server: the welcome tells the client what it is. */
@@ -550,6 +615,13 @@ export interface Wire<S extends AnySchema> {
  */
 const WITHHELD_KEYS = new WeakMap<object, string>();
 
+/**
+ * EACH STORE'S OPAQUE BATCHES, BY KEY: a keyed hash per batch, made once
+ * for every route and socket over the store rather than once per protocol
+ * made over it — a protocol is made again on every wake.
+ */
+const OPAQUE_BATCHES = new WeakMap<object, Map<string, Map<string, string>>>();
+
 export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: string): Wire<S> {
   const sighted = (principal: Principal): boolean => hidesFrom(store, principal);
   /*
@@ -566,7 +638,10 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
     key = WITHHELD_KEYS.get(store) ?? mintTag() + mintTag();
     WITHHELD_KEYS.set(store, key);
   }
-  const opaque = new Map<string, string>();
+  let byKey = OPAQUE_BATCHES.get(store);
+  if (!byKey) OPAQUE_BATCHES.set(store, (byKey = new Map()));
+  let opaque = byKey.get(key);
+  if (!opaque) byKey.set(key, (opaque = new Map()));
   const opaqueBatch = (batch: string): string => {
     let said = opaque.get(batch);
     if (said === undefined) {
@@ -595,6 +670,11 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
    * read off the log once and caught up as it grows — derived, so a host
    * that wakes reads the same owners the sleeper had.
    */
+  /*
+   * Both read on first asking, not when the protocol is made: a host makes
+   * it again on every wake, and most wakes are a message that names no
+   * batch and carries no base.
+   */
   const owners = new Map<string, Author>();
   const own = (ops: readonly Operation[]): void => {
     for (const op of ops) {
@@ -603,8 +683,7 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
       if (!owners.has(tag)) owners.set(tag, op.author);
     }
   };
-  own(store.log.all());
-  let owned = store.log.length;
+  let owned = store.log.horizon;
   const tagOwner = (tag: string): Author | undefined => {
     if (store.log.length > owned) {
       own(store.log.opsFrom(owned));
@@ -612,10 +691,13 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
     }
     return owners.get(tag);
   };
-  const revisions = FieldRevisions.of(store.log.all());
-  let noted = store.log.length;
+  let revisions: FieldRevisions | undefined;
+  let noted = 0;
   const current = (): FieldRevisions => {
-    if (store.log.length > noted) {
+    if (!revisions) {
+      revisions = FieldRevisions.of(store.log.all());
+      noted = store.log.length;
+    } else if (store.log.length > noted) {
       revisions.note(store.log.opsFrom(noted));
       noted = store.log.length;
     }
@@ -631,8 +713,9 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
     seenLog(principal) {
       const log = seenBy(store, principal).log.all();
       if (!sighted(principal)) return [...log];
-      const authors = new Map(store.log.all().map((op) => [op.id, op.author] as const));
-      return unattributed(principal, log, (op) => authors.get(op.id));
+      // The seat's log holds every op in its place: who made one is the store's op at the same place.
+      const all = store.log.all();
+      return unattributed(principal, log, (op, at) => (all[at]?.id === op.id ? all[at]!.author : all.find((one) => one.id === op.id)?.author));
     },
     whoFor: (principal, who) => {
       // A visitor whose announced time has passed is never told of, though a host may still hold it.
@@ -741,8 +824,34 @@ interface Sight {
   readonly texts: Map<string, string>;
 }
 const aSight = (): Sight => ({ seats: new Map(), texts: new Map() });
-/** What a socket's seat is, as a key a sight is kept under: a host's key, or the principal written out. */
-const seatKeyOf = (peer: Pick<LiveSocketState, "seat">): string => (typeof peer.seat === "string" ? `key:${peer.seat}` : `seat:${JSON.stringify(peer.seat)}`);
+/**
+ * A SEAT, NOT ITS TAB: the principal without its session — and without the
+ * session of the person an agent acts for. What a seat is served never
+ * depends on which tab asks, so its key never does either: the key a
+ * handler asks a host for (`seatKey`), and the one a sight is kept under.
+ */
+export function seatOfTab(seat: Principal): Principal {
+  const { session: _session, onBehalfOf, ...rest } = seat;
+  return { ...rest, ...(onBehalfOf ? { onBehalfOf: seatOfTab(onBehalfOf) } : {}) };
+}
+
+/** What a socket's seat is, as a key a sight is kept under: a host's key, or the seat written out — one per seat, however many tabs hold it. */
+const seatKeyOf = (peer: Pick<LiveSocketState, "seat">): string => (typeof peer.seat === "string" ? `key:${peer.seat}` : `seat:${JSON.stringify(seatOfTab(peer.seat))}`);
+
+/** What a socket whose seat the host lost is told, and the code it is closed with. */
+const SEAT_LOST = "The host no longer knows who this socket is: open it again, and it reads who you are from the new one.";
+const SEAT_LOST_CODE = 4000;
+
+/** The host lost this socket's seat: told to open again, closed when it can be, and served nothing more. */
+const lost = (peer: LivePeer): void => {
+  delete peer.cursor;
+  say(peer, { t: "error", reopen: true, sentence: SEAT_LOST });
+  try {
+    peer.close?.(SEAT_LOST_CODE, "Seat no longer known: open it again.");
+  } catch {
+    // Already closing.
+  }
+};
 
 /**
  * THE PROTOCOL OVER A STORE. Cheap to make, and safe to make again on
@@ -850,7 +959,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
    * named or one minted here; then flushed. `applied` runs between the
    * store taking it and the flush, for the socket to move its cursor.
    */
-  const land = async (seat: Principal, via: string, change: Change, applied?: (ops: readonly Operation[]) => void): Promise<Landing> => {
+  const land = async (seat: Principal, via: string, change: Change, bytes: number, applied?: (ops: readonly Operation[]) => void): Promise<Landing> => {
     if (change.t === "call") {
       const conflicts = wire.conflictsOf(seat, change.calls, change.base);
       if (conflicts.length > 0) return { conflicts };
@@ -860,10 +969,19 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     // A host that publishes from the store's own subscription does so inside the apply: hold from here.
     if (options.flush) taking = wire.lastSeq() + 1;
     try {
-      const applying = { author: seat, via, ...(change.intent ? { intent: change.intent } : {}), batch };
+      // The host's caps on what it would do, asked of the store's own plan before anything is kept.
+      const admit = options.admit;
+      const admitting = admit
+        ? (planned: PlannedChange) => {
+            const answer = admit({ seat, via, t: change.t, bytes, calls: change.t === "call" ? change.calls : [] }, planned);
+            if (answer) throw new NotAdmitted(answer);
+          }
+        : undefined;
+      const applying = { author: seat, via, ...(change.intent ? { intent: change.intent } : {}), batch, ...(admitting ? { admit: admitting } : {}) };
       result = change.t === "undo" ? store.undo(change.batches, applying) : store.applyAll(change.calls, applying);
     } catch (error) {
       taking = undefined;
+      if (error instanceof NotAdmitted) return { limited: error.answer };
       const worded = options.refusal?.(error, change.calls, { seat, via });
       return { refusal: worded ?? wireRefusalOf(store as unknown as Store<AnySchema>, error) };
     }
@@ -892,8 +1010,36 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     return typeof judged === "string" && judged.length > 0 ? judged : peer.via;
   };
 
+  /**
+   * THE HOST'S WORD ON A SOCKET'S CALL (FR-45, FR-46) — its `limit`'s, or
+   * its `admit`'s: refused at a cap, unavailable for a while, or busy, when
+   * every later call waits behind it.
+   */
+  const sayLimited = (peer: LivePeer, cid: string, limited: LimitAnswer): LiveReceived => {
+    if ("refuse" in limited) {
+      delete peer.held;
+      say(peer, { t: "refused", cid, reason: "limit", sentence: limited.refuse });
+    } else if ("unavailable" in limited) {
+      // Not for a while, and no wait to name: refused `unavailable`, which the client keeps and sends again, backing off.
+      delete peer.held;
+      say(peer, { t: "refused", cid, reason: "unavailable", sentence: limited.unavailable });
+    } else {
+      const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
+      peer.held = { cid, until: Date.now() + retryAfter };
+      say(peer, { t: "busy", cid, retryAfter, ...(limited.sentence ? { sentence: limited.sentence } : {}) });
+    }
+    return { cursor: peer.cursor! };
+  };
+  /** The same word over HTTP: 413 `limit`, 503 `unavailable`, or 429 with `Retry-After`. */
+  const limitedReply = (limited: LimitAnswer, said: Record<string, unknown>): WireAnswer => {
+    if ("refuse" in limited) return reply(413, { error: limited.refuse, refused: true, reason: "limit", ...said });
+    if ("unavailable" in limited) return reply(503, { error: limited.unavailable, refused: true, reason: "unavailable", ...said });
+    const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
+    return reply(429, { error: limited.sentence ?? `The store is busy: send it again in ${retryAfter} ms.`, busy: true, retryAfter }, { "retry-after": String(Math.ceil(retryAfter / 1000)) });
+  };
+
   /** A call or an undo from a socket, past its claim and the host's limit: judged as its seat, exactly as `POST /graview/ops` judges it. */
-  const answer = async (peer: LivePeer, seat: Principal, cid: string, change: Change, via: string): Promise<LiveReceived> => {
+  const answer = async (peer: LivePeer, seat: Principal, cid: string, change: Change, via: string, bytes: number): Promise<LiveReceived> => {
     catchUp(peer, undefined, seat);
     const prior = peer.cursor!;
     /*
@@ -901,9 +1047,11 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
      * its own go in the ack. Unless one before it is held back as not
      * durable: then the cursor stays, and they go down after the flush.
      */
-    const landing = await land(seat, via, change, (own) => {
+    const landing = await land(seat, via, change, bytes, (own) => {
       if (own.length === 0 || heldFrom(own[0]!.seq) === undefined) peer.cursor = wire.lastSeq();
     });
+    // What it would do is over the host's caps: nothing was kept.
+    if (landing.limited) return sayLimited(peer, cid, landing.limited);
     if (landing.conflicts) {
       say(peer, { t: "conflict", cid, sentence: conflictSentence(landing.conflicts), conflicts: [...landing.conflicts] });
       return { cursor: peer.cursor! };
@@ -947,7 +1095,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
   return {
     store,
     open: (seat, via, opening = {}) => ({ seat, via, ...(opening.build ? { hostBuild: opening.build.slice(0, 64) } : {}) }),
-    async receive(peer, text, who = []) {
+    async receive(peer, text, who = [], peers = [peer]) {
       let message: LiveClientMessage;
       try {
         message = JSON.parse(text) as LiveClientMessage;
@@ -960,8 +1108,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       // Who this socket is, on this message: its seat, or the principal its key names now.
       const seat = principalOf(peer);
       if (!seat) {
-        delete peer.cursor;
-        say(peer, { t: "error", sentence: "This socket's seat is no longer known to this app: open it again to be served." });
+        lost(peer);
         return {};
       }
       const served: ServedSocket = { seat, via: peer.via, ...(peer.hostBuild ? { hostBuild: peer.hostBuild } : {}) };
@@ -1028,7 +1175,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             if (held !== undefined) peer.cursor = Math.max(Math.floor(seq), held - 1);
             say(peer, { t: "welcome", ...said, seq: peer.cursor, ops: wire.since(seat, seq).filter((op) => op.seq <= peer.cursor!) });
           }
-          const others = who.filter((presence) => presence.participant !== peer.participant);
+          const others = heldBySockets(who, [peer, ...peers]).filter((presence) => presence.participant !== peer.participant);
           if (others.length > 0) say(peer, { t: "presence", who: wire.whoFor(seat, others) });
           return { cursor: peer.cursor };
         }
@@ -1086,26 +1233,11 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             return { cursor: peer.cursor };
           }
           const via = viaFor(served, change);
-          const limited = await limitOf(seat, via, change, bytesOf(text));
-          if (limited && "refuse" in limited) {
-            delete peer.held;
-            say(peer, { t: "refused", cid, reason: "limit", sentence: limited.refuse });
-            return { cursor: peer.cursor };
-          }
-          // Not for a while, and no wait to name: refused `unavailable`, which the client keeps and sends again, backing off.
-          if (limited && "unavailable" in limited) {
-            delete peer.held;
-            say(peer, { t: "refused", cid, reason: "unavailable", sentence: limited.unavailable });
-            return { cursor: peer.cursor };
-          }
-          if (limited) {
-            const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
-            peer.held = { cid, until: now + retryAfter };
-            say(peer, { t: "busy", cid, retryAfter, ...(limited.sentence ? { sentence: limited.sentence } : {}) });
-            return { cursor: peer.cursor };
-          }
+          const bytes = bytesOf(text);
+          const limited = await limitOf(seat, via, change, bytes);
+          if (limited) return sayLimited(peer, cid, limited);
           delete peer.held;
-          return answer(peer, seat, cid, change, via);
+          return answer(peer, seat, cid, change, via, bytes);
         }
         case "here": {
           const told = message.presence;
@@ -1129,14 +1261,24 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     },
     publish(ops, peers) {
       const sight = aSight();
-      for (const peer of peers) catchUp(peer, ops, undefined, sight);
-    },
-    tell(who, peers) {
-      const sight = aSight();
       for (const peer of peers) {
         if (peer.cursor === undefined) continue;
         const seat = principalOf(peer, sight);
-        if (!seat) continue;
+        if (!seat) lost(peer);
+        else catchUp(peer, ops, seat, sight);
+      }
+    },
+    tell(said, peers) {
+      const sight = aSight();
+      const all = [...peers];
+      const who = heldBySockets(said, all);
+      for (const peer of all) {
+        if (peer.cursor === undefined) continue;
+        const seat = principalOf(peer, sight);
+        if (!seat) {
+          lost(peer);
+          continue;
+        }
         say(peer, { t: "presence", who: wire.whoFor(seat, who.filter((presence) => presence.participant !== peer.participant)) });
       }
     },
@@ -1177,14 +1319,12 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
        * change is kept to send again (FR-45); a hard cap is refused, `limit`,
        * and the change is taken back (FR-46); unavailable is 503, kept.
        */
-      const limited = await limitOf(asked.seat, via, change, bytesOf(text));
-      if (limited && "refuse" in limited) return reply(413, { error: limited.refuse, refused: true, reason: "limit", ...said });
-      if (limited && "unavailable" in limited) return reply(503, { error: limited.unavailable, refused: true, reason: "unavailable", ...said });
-      if (limited) {
-        const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
-        return reply(429, { error: limited.sentence ?? `The store is busy: send it again in ${retryAfter} ms.`, busy: true, retryAfter }, { "retry-after": String(Math.ceil(retryAfter / 1000)) });
-      }
-      const landing = await land(asked.seat, via, change);
+      const bytes = bytesOf(text);
+      const limited = await limitOf(asked.seat, via, change, bytes);
+      if (limited) return limitedReply(limited, said);
+      const landing = await land(asked.seat, via, change, bytes);
+      // What it would do is over the host's caps (its `admit`): nothing was kept.
+      if (landing.limited) return limitedReply(landing.limited, said);
       // A stale write is a conflict, not a loss (FR-05): theirs and yours, by name, and nothing written.
       if (landing.conflicts) return reply(409, { error: conflictSentence(landing.conflicts), refused: true, conflict: true, conflicts: landing.conflicts, ...said });
       // The policy's own sentence rather than a bare 403, because that sentence is the product.

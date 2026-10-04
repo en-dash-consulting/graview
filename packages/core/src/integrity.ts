@@ -160,9 +160,20 @@ const K = new Uint32Array([
   0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
 ]);
 
+/*
+ * One encoder and one schedule for every hash: a hash is synchronous and
+ * runs to the end, so nothing else uses them while it does. A withheld op's
+ * opaque batch is a hash per batch (`withheld:<16 hex>`), thousands of them
+ * when a seat is served a long log, so a hash allocates as little as it can.
+ */
+const ENCODER = new TextEncoder();
+const SCHEDULE = new Uint32Array(64);
+const STATE = new Uint32Array(8);
+const HEX = Array.from({ length: 256 }, (_, byte) => byte.toString(16).padStart(2, "0"));
+
 /** SHA-256 of a string's UTF-8 bytes, as lowercase hex. */
 export function sha256Hex(text: string): string {
-  const data = new TextEncoder().encode(text);
+  const data = ENCODER.encode(text);
   const bitLength = data.length * 8;
   const padded = new Uint8Array(((data.length + 9 + 63) >> 6) << 6);
   padded.set(data);
@@ -171,8 +182,16 @@ export function sha256Hex(text: string): string {
   view.setUint32(padded.length - 8, Math.floor(bitLength / 2 ** 32));
   view.setUint32(padded.length - 4, bitLength >>> 0);
 
-  const h = new Uint32Array([0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]);
-  const w = new Uint32Array(64);
+  const h = STATE;
+  h[0] = 0x6a09e667;
+  h[1] = 0xbb67ae85;
+  h[2] = 0x3c6ef372;
+  h[3] = 0xa54ff53a;
+  h[4] = 0x510e527f;
+  h[5] = 0x9b05688c;
+  h[6] = 0x1f83d9ab;
+  h[7] = 0x5be0cd19;
+  const w = SCHEDULE;
   for (let block = 0; block < padded.length; block += 64) {
     for (let i = 0; i < 16; i++) w[i] = view.getUint32(block + i * 4);
     for (let i = 16; i < 64; i++) {
@@ -182,7 +201,14 @@ export function sha256Hex(text: string): string {
       const s1 = ((b >>> 17) | (b << 15)) ^ ((b >>> 19) | (b << 13)) ^ (b >>> 10);
       w[i] = (w[i - 16]! + s0 + w[i - 7]! + s1) >>> 0;
     }
-    let [a, b, c, d, e, f, g, hh] = [h[0]!, h[1]!, h[2]!, h[3]!, h[4]!, h[5]!, h[6]!, h[7]!];
+    let a: number = h[0]!;
+    let b: number = h[1]!;
+    let c: number = h[2]!;
+    let d: number = h[3]!;
+    let e: number = h[4]!;
+    let f: number = h[5]!;
+    let g: number = h[6]!;
+    let hh: number = h[7]!;
     for (let i = 0; i < 64; i++) {
       const S1 = ((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7));
       const ch = (e & f) ^ (~e & g);
@@ -208,5 +234,10 @@ export function sha256Hex(text: string): string {
     h[6] = (h[6]! + g) >>> 0;
     h[7] = (h[7]! + hh) >>> 0;
   }
-  return [...h].map((x) => x.toString(16).padStart(8, "0")).join("");
+  let hex = "";
+  for (let i = 0; i < 8; i++) {
+    const word = h[i]!;
+    hex += HEX[word >>> 24]! + HEX[(word >>> 16) & 0xff]! + HEX[(word >>> 8) & 0xff]! + HEX[word & 0xff]!;
+  }
+  return hex;
 }

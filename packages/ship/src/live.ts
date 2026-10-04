@@ -178,8 +178,14 @@ export type LiveServerMessage =
       /** The lowest host protocol served, when it is the host's own number the hello was below (`minHostProtocol`). */
       readonly hostProtocol?: number;
     }
-  /** A message the server could not read. */
-  | { readonly t: "error"; readonly sentence: string };
+  /**
+   * A message the server could not read — or, with `reopen`, a socket the
+   * host no longer knows the seat of (its key is one the host lost, as a
+   * host that kept keys only in memory loses them on a wake). Nothing more
+   * is served down it: the client opens a new socket, whose upgrade the
+   * host reads the seat from again, and sends again what was not answered.
+   */
+  | { readonly t: "error"; readonly sentence: string; readonly reopen?: true };
 
 /**
  * WHAT A HOST'S `limit` IS ASKED (FR-45, FR-46): one change, from one seat,

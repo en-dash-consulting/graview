@@ -148,11 +148,23 @@ same protocol as functions over the store and one plain-JSON `LiveSocketState` p
 `serializeAttachment` keeps:
 
 ```ts
-const live = liveProtocol({ store, version: app.version, flush, seatOf: (key) => seats.get(key) });
+// A seat's key outlives a wake: kept in the Durable Object's storage, never only in a map in memory.
+// And it is the seat's, not the tab's: seatOfTab(principal) leaves the session out, so every tab is one key.
+const keyOf = (principal) => {
+  const seat = seatOfTab(principal);
+  const key = `seat:${sha256Hex(JSON.stringify(seat)).slice(0, 24)}`;
+  ctx.storage.sql.exec("INSERT OR IGNORE INTO seats (key, seat) VALUES (?, ?)", key, JSON.stringify(seat));
+  return key;
+};
+const seatOf = (key) => {
+  const row = ctx.storage.sql.exec("SELECT seat FROM seats WHERE key = ?", key).toArray()[0];
+  return row ? JSON.parse(row.seat) : undefined;
+};
+const live = liveProtocol({ store, version: app.version, flush, seatOf });
 // On the upgrade: the seat and channel, read once (handler.seatFor(request) does this with seatOf and viaOf).
-ws.serializeAttachment(live.open(seatKey, "web", { build }));
+ws.serializeAttachment(live.open(keyOf(principal), "web", { build }));
 // On each message, after any wake:
-const peer = { ...ws.deserializeAttachment(), send: (text) => ws.send(text) };
+const peer = { ...ws.deserializeAttachment(), send: (text) => ws.send(text), close: (code, reason) => ws.close(code, reason) };
 const { landed, presence } = await live.receive(peer, text, whoIsHere);
 const { send, ...state } = peer;
 ws.serializeAttachment(state);
@@ -171,8 +183,15 @@ keeps it the same across wakes, and is never sent to a client.
 **The attachment budget.** Cloudflare refuses an attachment over 2,048 bytes, and a seat
 held whole is most of that: a person with fifty roles is about 1.9 kB of state on its own.
 So `seat` may be a host's key (a string) — `live.open("user:6b3f…", "web")` — which
-`liveProtocol({ seatOf: (key) => principal })` resolves on every message; a key it no longer
-knows is told so (`error`) and served nothing. A call's `cid` is at most 64 characters (a
+`liveProtocol({ seatOf: (key) => principal })` resolves on every message. Keep what it reads
+where a wake does not empty it — the sketch above keeps it in the Durable Object's storage; a
+map in memory is empty after the first wake — and make the key from `seatOfTab(principal)`,
+the seat without its session: a key with the session in it is one view per tab where it would
+be one per seat. A key the host no longer resolves is told to open again (`{ t: "error",
+reopen: true }` — "The host no longer knows who this socket is…"), closed with code 4000 when
+the peer has a `close`, and served nothing more; `openRemote` opens a new socket, the host
+reads the seat from its upgrade again, and what the tab had not had answered is sent again and
+lands once. A call's `cid` is at most 64 characters (a
 longer one is refused `invalid`, in words), so `held` stays small, and the client's and the
 host's builds are kept to 64. The budget, held by a test: a socket's state with a seat key,
 a busy call held and the host's own presence beside it stays within 1 KB (measured: 350
@@ -180,10 +199,11 @@ bytes of state, 692 with a presence), half the attachment, the rest the host's.
 
 `connect()` is this protocol with the state in memory, so there is one implementation.
 Every `liveProtocol` option is an option of `createStoreHandler` and `serveStore` too, so a
-host gets it either way: `limit`, `build` (a string, or a function of the socket),
+host gets it either way: `limit`, `admit`, `build` (a string, or a function of the socket),
 `minProtocol`, `minHostProtocol`, `refusal` and `withheldKey` by the same names; and, where
 the handler already has a name that reads the request, the protocol's `viaOf` as
-`viaClaimed` and its `seatOf` as `seatOfKey` — with `seatKey(seat)`, the key a socket the
+`viaClaimed` and its `seatOf` as `seatOfKey` — with `seatKey(seat)`, handed the seat without
+its session (`seatOfTab`), the key a socket the
 handler opens keeps in its state instead of the principal.
 
 **An ack waits for `flush`, and a failed flush is never acked.** `flush(landed)` is handed
@@ -246,7 +266,11 @@ from the server stamped `held: "socket"` (a client's own claim of it is dropped)
 presence stands for as long as the server lists it — `presenceStands` and `foldPresence` do
 not expire it by its `at`. The host drops it when the socket closes, at once. So
 `openRemote` says `here` down a socket only when where it stands changes: an idle tab says
-nothing, and a hibernating host is not woken to hear it. A poller is still held by time
+nothing, and a hibernating host is not woken to hear it. A host that rebuilds `who` from its
+own records cannot drop the stamp: `tell(who, peers)` — and `receive(peer, text, who,
+peers)`, for the presence a welcome is followed by — says `held: "socket"` on every presence
+whose participant one of the sockets it is handed holds, whatever the host built, and says a
+visitor's `until` as the host gave it. A poller is still held by time
 (the handler's own time to live) and says where it is with every poll. A client whose own socket dropped
 lets the held presences it was told go after `REMOTE_PRESENCE_TTL_MS` without a list from
 the server. A host that keeps a socket's presence by time can ask for the old heartbeat
@@ -370,6 +394,28 @@ the size in bytes and the calls. It answers nothing, `{ retryAfter }`, `{ refuse
 
 `limit` is asked only of a change that has not landed: a call sent again after it did — its
 ack lost with the socket — is answered with the ops it made, whatever the host would say now.
+
+**A cap on what a change would do is `admit`.** `limit` is asked before a change is compiled,
+so it cannot count what the change would do — how many records a call removes, how many the
+store would hold after it — and a host's own wrapper around its acts is gone round by the
+socket and `POST /graview/ops`. `admit(asked, planned)` — on `liveProtocol`,
+`createStoreHandler` and `serveStore` — is asked after the calls (or the undo) are compiled
+and applied, before anything is kept, with `limit`'s `asked` and the store's own plan of the
+change (`PlannedChange`, from `@graview/core`): its ops and primitives, `added`, `removed` and
+`changed` records and links (a removed record's links among the links removed), and
+`nodesAfter` and `edgesAfter`. No second rehearsal on a copy: it is the store's `applyAll`
+asking (`ApplyOptions.admit`). Its answers mean what `limit`'s do — `{ refuse }` refused
+`limit` (413), `{ retryAfter }` busy (429), `{ unavailable }` refused `unavailable` (503) — and
+a change it answers is put back: not kept, not flushed, not sent to anybody.
+
+```ts
+admit: (asked, planned) =>
+  asked.seat.kind === "agent" && planned.removed.nodes > 25
+    ? { refuse: `That would remove ${planned.removed.nodes} records; an agent may remove at most 25 in one call.` }
+    : planned.nodesAfter > MAX_NODES
+      ? { refuse: `This app holds ${MAX_NODES} records, the most an app may hold for now.` }
+      : undefined,
+```
 
 ## The hosted-store contract
 

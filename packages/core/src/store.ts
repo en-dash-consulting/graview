@@ -143,6 +143,30 @@ export interface ApplyOptions {
   readonly intent?: string;
   /** What the change came through — `web`, `mcp:<client>`, `view:<name>`, `api`, `cli` — recorded on each op (FR-06). */
   readonly via?: Via;
+  /**
+   * A HOST'S LAST WORD, BY WHAT THE CHANGE WOULD DO. Asked once the calls
+   * (or the undo) are compiled and applied, before anything is kept, with
+   * the store's own plan of them: no second rehearsal on a copy. Whatever
+   * it throws goes on up as it was thrown, and the graph, the log and the
+   * subscribers are as if the change was never asked. Returning keeps it.
+   */
+  readonly admit?: (planned: PlannedChange) => void;
+}
+
+/**
+ * WHAT A CHANGE WOULD DO, before it is kept (`ApplyOptions.admit`): its
+ * ops and their primitives, the records and links it adds, removes and
+ * changes — a removed record's links counted among the links removed —
+ * and how many the store would hold after it.
+ */
+export interface PlannedChange {
+  readonly ops: readonly Operation[];
+  readonly primitives: readonly Primitive[];
+  readonly added: { readonly nodes: number; readonly edges: number };
+  readonly removed: { readonly nodes: number; readonly edges: number };
+  readonly changed: { readonly nodes: number };
+  readonly nodesAfter: number;
+  readonly edgesAfter: number;
 }
 
 export interface Preview<S extends AnySchema> {
@@ -1027,6 +1051,7 @@ export class Store<S extends AnySchema> {
 
     const before = this.violations();
     const rollback = this.graph.snapshot();
+    const kept = this.log.length;
 
     /*
      * Permission is checked for the WHOLE gesture before any of it runs.
@@ -1121,14 +1146,16 @@ export class Store<S extends AnySchema> {
         intents.push(op.intent);
       }
     } catch (error) {
-      this.graph.load(rollback);
+      // A batch refused part way keeps none of it: the graph, and the ops it had logged before the refusal.
+      this.putBack(rollback, kept);
       throw this.refusalWordedFor(error, author as Principal, calls);
     }
 
+    const diff = diffSnapshots(rollback, this.graph.snapshot());
+    this.admitted(options, ops, allPrimitives, diff, rollback, kept);
     const after = this.violations();
     const beforeKeys = new Set(before.map(violationKey));
     const afterKeys = new Set(after.map(violationKey));
-    const diff = diffSnapshots(rollback, this.graph.snapshot());
     this.notify(diff, ops);
 
     return {
@@ -1442,6 +1469,7 @@ export class Store<S extends AnySchema> {
     const rollback = this.graph.snapshot();
     const before = this.violations();
     const ops: Operation[] = [];
+    const kept = this.log.length;
 
     for (const target of [...check.ops].sort((a, b) => b.seq - a.seq)) {
       const op: Operation = {
@@ -1465,10 +1493,11 @@ export class Store<S extends AnySchema> {
       ops.push(op);
     }
 
+    const diff = diffSnapshots(rollback, this.graph.snapshot());
+    this.admitted(options, ops, ops.flatMap((op) => [...op.primitives]), diff, rollback, kept);
     const after = this.violations();
     const beforeKeys = new Set(before.map(violationKey));
     const afterKeys = new Set(after.map(violationKey));
-    const diff = diffSnapshots(rollback, this.graph.snapshot());
     this.notify(diff, ops);
 
     return {
@@ -1483,6 +1512,32 @@ export class Store<S extends AnySchema> {
       resolves: before.filter((v) => !afterKeys.has(violationKey(v))),
       violationsAfter: after,
     };
+  }
+
+  /** A change not kept: the graph as it was, and the log cut back to where it stood. */
+  private putBack(rollback: GraphSnapshot<NodeOfSchema<S>>, kept: number): void {
+    this.graph.load(rollback);
+    if (this.log.length > kept) this.log.truncate(kept);
+  }
+
+  /** Asks the host's `admit`, when there is one, with the change as planned; one it refuses is put back, and its word goes on up. */
+  private admitted(options: ApplyOptions, ops: readonly Operation[], primitives: readonly Primitive[], diff: GraphDiff<NodeOfSchema<S>>, rollback: GraphSnapshot<NodeOfSchema<S>>, kept: number): void {
+    if (!options.admit || ops.length === 0) return;
+    const size = this.graph.size;
+    try {
+      options.admit({
+        ops,
+        primitives,
+        added: { nodes: diff.addedNodes.length, edges: diff.addedEdges.length },
+        removed: { nodes: diff.removedNodes.length, edges: diff.removedEdges.length },
+        changed: { nodes: diff.changedNodes.length },
+        nodesAfter: size.nodes,
+        edgesAfter: size.edges,
+      });
+    } catch (error) {
+      this.putBack(rollback, kept);
+      throw error;
+    }
   }
 
   /** Redo is the undo of an undo — no separate stack exists. */

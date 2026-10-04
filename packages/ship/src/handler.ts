@@ -7,6 +7,7 @@ import {
   type GraviewApp,
   type Operation,
   type PersistenceAdapter,
+  type PlannedChange,
   type Presence,
   type Principal,
   type Store,
@@ -15,12 +16,13 @@ import {
 } from "@graview/core";
 import { exportBundle } from "./export.js";
 import { health } from "./health.js";
-import { LIVE_PATH, type Limit, type LiveConnection, type LiveSocket } from "./live.js";
+import { LIVE_PATH, type Limit, type LimitAnswer, type LimitAsked, type LiveConnection, type LiveSocket } from "./live.js";
 import {
   announcePresence,
   liveProtocol,
   presenceFrom,
   presenceSeenBy,
+  seatOfTab,
   serverBatchIds,
   visitorPresence,
   wireOf,
@@ -155,6 +157,13 @@ interface HandlerOptions<S extends AnySchema> {
    */
   readonly limit?: Limit;
   /**
+   * THE HOST'S CAPS ON WHAT A CHANGE WOULD DO: `liveProtocol`'s `admit`,
+   * on the socket and `POST /graview/ops`. Asked after a change is
+   * compiled and before anything is kept, with `limit`'s `asked` and the
+   * store's own plan of it; answered as `limit` is answered.
+   */
+  readonly admit?: (asked: LimitAsked, planned: PlannedChange) => LimitAnswer | undefined;
+  /**
    * THE HOST'S BUILD (FR-44), an opaque string said in every welcome. A
    * client on another build keeps working and is told once, so a person
    * can reload when it suits them.
@@ -173,6 +182,10 @@ interface HandlerOptions<S extends AnySchema> {
    * `seatOf` read as a host's key, which a socket's state keeps instead of
    * the principal — small enough for a Durable Object's attachment — and
    * `seatOfKey` (`liveProtocol`'s `seatOf`) resolves it on every message.
+   * `seatKey` is handed the seat without its session (`seatOfTab`), so
+   * every tab of one seat holds one key and `publish` makes one view of
+   * it; keep what `seatOfKey` reads where a wake does not empty it. A key
+   * it no longer resolves is told to open again, and is opened again.
    */
   readonly seatKey?: (seat: Principal) => string | undefined;
   readonly seatOfKey?: (key: string) => Principal | undefined;
@@ -476,6 +489,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       ...(options.refusal ? { refusal: options.refusal } : {}),
       ...(options.withheldKey !== undefined ? { withheldKey: options.withheldKey } : {}),
       ...(options.limit ? { limit: options.limit } : {}),
+      ...(options.admit ? { admit: options.admit } : {}),
     }),
   });
   let serving = serve(options.app, options.store as unknown as Store<AnySchema>, options.flush, options.migrated ?? []);
@@ -772,7 +786,8 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       const via = await viaFor(asked, seat, "web");
       // The host's key for the seat, when it keeps one, and the build this socket is served by.
       const build = typeof options.build === "function" ? options.build({ seat, via }) : undefined;
-      return serving.protocol.open(options.seatKey?.(seat) ?? seat, via, build ? { build } : {});
+      // The seat's key, never its tab's: a key made from the session would be one view per tab.
+      return serving.protocol.open(options.seatKey?.(seatOfTab(seat)) ?? seat, via, build ? { build } : {});
     } catch (error) {
       return unknownSeat(error instanceof Error ? error.message : String(error));
     }
@@ -789,6 +804,13 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       send: (text) => {
         if (live.open) socket.send(text);
       },
+      // A socket whose seat the host lost is closed, so its client opens a new one.
+      close: (code, reason) => {
+        if (!live.open) return;
+        live.open = false;
+        sockets.delete(live);
+        socket.close?.(code, reason);
+      },
     };
     const hear = async (text: string): Promise<void> => {
       const was = live.participant;
@@ -797,7 +819,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       try {
         // A message that came while the declaration was changing is answered under the new one (FR-43).
         while (changing) await changing;
-        received = await serving.protocol.receive(live, text, standing());
+        received = await serving.protocol.receive(live, text, standing(), sockets);
       } finally {
         live.answering = false;
       }
