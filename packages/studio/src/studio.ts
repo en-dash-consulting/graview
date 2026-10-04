@@ -1,5 +1,5 @@
 import { checkApp, Store, type AnySchema, type Batch, type CheckResult, type GraphSnapshot, type GraviewApp, type MigrationDeclaration, type MutationCall, type Principal } from "@graview/core";
-import { documentOf, toDocument, type DocumentEdit, type EditOutcome, type Fill, type Finding, type GraviewDocument } from "@graview/core/document";
+import { compileDocument, documentOf, toDocument, type DocumentEdit, type EditOutcome, type Fill, type Finding, type GraviewDocument } from "@graview/core/document";
 import { resolveProposal } from "@graview/tools";
 import { documentAfter, documentEdits } from "./edits.js";
 import { declarationToGraph } from "./from-declaration.js";
@@ -81,7 +81,14 @@ export interface StudioApplyResult {
   readonly ok: true;
   readonly app: GraviewApp<AnySchema>;
   readonly migration: MigrationDeclaration | null;
-  /** The document the change makes, when the studio was opened on one and every change could be said (FR-54). */
+  /**
+   * The document the change makes, when the studio was opened on one and
+   * every change could be said (FR-54). `app` is then the app this
+   * document compiles to, remembered as compiled from it, so
+   * `toDocument(app)` gives this document back; its version is the
+   * document's, and a stored graph's move is planned from `fills` (or
+   * `migration`), which the app does not carry.
+   */
   readonly document?: GraviewDocument;
   /** The edits that made it, in order. */
   readonly edits?: readonly DocumentEdit[];
@@ -183,7 +190,17 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
       if (!opened) return { ok: true, app, migration };
       const said = document()!;
       if (!said.ok) return { ok: true, app, migration, documentFindings: said.findings };
-      return { ok: true, app, migration, document: said.document, edits: made().edits, said: said.said, fills: said.fills };
+      /*
+       * THE DOCUMENT'S APP, NOT THE STUDIO'S READING. Handed the document
+       * and the studio's TypeScript reading beside it, a host that kept the
+       * app and read it back got acts as code (`act-is-code`) — the
+       * document it had just been given, lost. The app is the one the
+       * document compiles to, which the compiler remembers as compiled
+       * from it, so `toDocument(apply().app)` is `apply().document`.
+       */
+      const compiled = compileDocument(said.document);
+      if (!compiled.ok) return { ok: true, app, migration, documentFindings: compiled.findings };
+      return { ok: true, app: compiled.app, migration, document: compiled.document, edits: made().edits, said: said.said, fills: said.fills };
     },
     files: (sourceOptions) =>
       declarationFiles(store.snapshot() as GraphSnapshot, { name: base.name, base: base as unknown as GraviewApp<AnySchema>, ...sourceOptions }),
