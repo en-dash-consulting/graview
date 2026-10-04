@@ -300,4 +300,53 @@ describe("no id a seat may not see leaves the wire", () => {
       expect(landed).toBeGreaterThan(WORLDS * 10);
     }, 300_000);
   }
+
+  /*
+   * A REFUSAL IS NO ORACLE (FR-55). Ids are minted from labels, so a seat
+   * can guess one; a refusal that said "a record you may not see" for a
+   * hidden one and "no record" for one that does not exist told it which
+   * guesses were real. A call naming a hidden record is answered exactly as
+   * one naming a record that was never there — same reason, same sentence
+   * but for the id it sent — on the socket and over HTTP.
+   */
+  it(`answers a call naming a hidden record exactly as one naming nothing — ${WORLDS.toLocaleString("en")} random worlds`, async () => {
+    let probed = 0;
+    for (let seed = 1; seed <= WORLDS; seed++) {
+      const w = world(seed);
+      const there = new Set(w.nodes.map((node) => node.id));
+      const hidden = unseenIds(w).filter((id) => there.has(id));
+      if (hidden.length === 0) continue;
+      const seen = w.nodes.filter((node) => !hidden.includes(node.id)).map((node) => node.id);
+      const named = w.pick(hidden);
+      const nothing = `${named.split(":")[0]}:never-${seed}`;
+      /** Everything the seat is answered, for calls that name `id`, with `id` itself written out of it. */
+      const answers = async (id: string): Promise<string[]> => {
+        const store = storeOf(w);
+        const said: string[] = [];
+        const live = liveProtocol({ store });
+        const heard: string[] = [];
+        const peer = socket(live.open(w.viewer, "web"), heard);
+        await live.receive(peer, JSON.stringify({ t: "hello", protocol: 1, seq: store.log.length - 1 }));
+        heard.length = 0;
+        const calls = [
+          [{ name: "point", args: { id, ref: "x" } }],
+          [{ name: "retitle", args: { id, title: "Guess" } }],
+          ...(seen.length > 0 ? [[{ name: "retitle", args: { id: seen[0]!, title: "Mine" } }, { name: "point", args: { id, ref: seen[0]! } }]] : []),
+        ];
+        for (const [at, batch] of calls.entries()) {
+          await live.receive(peer, JSON.stringify({ t: "call", cid: `c${at}`, calls: batch, base: [{ node: id, field: "title", rev: -1 }] }));
+        }
+        said.push(...heard);
+        const handler = await createStoreHandler({ app: appOf(w), store: storeOf(w), seatOf: () => w.viewer });
+        for (const batch of calls) {
+          const response = await handler.handle(new Request("https://store.example/graview/ops", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ calls: batch, base: [{ node: id, field: "title", rev: -1 }] }) }));
+          said.push(`${response.status} ${await response.text()}`);
+        }
+        return said.map((text) => text.split(id).join("<id>").replace(/"seq":\d+/g, '"seq":N').replace(/"version":\d+/g, ""));
+      };
+      expect(await answers(named), `seed ${seed}: ${named} answered unlike ${nothing}`).toEqual(await answers(nothing));
+      probed++;
+    }
+    expect(probed).toBeGreaterThan(WORLDS / 3);
+  }, 300_000);
 });

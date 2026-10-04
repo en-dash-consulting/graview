@@ -87,4 +87,35 @@ describe("an agent is never answered an id it may not see", () => {
       }
     }
   }, 120_000);
+
+  /*
+   * A REFUSAL IS NO ORACLE (FR-55): an agent that guesses an id — they are
+   * minted from labels — is answered the same for a hidden record as for
+   * one that was never there, whatever it asks: to read it, to preview an
+   * act on it, or to act.
+   */
+  it(`answers an agent naming a hidden record exactly as one naming nothing — ${WORLDS.toLocaleString("en")} random worlds`, async () => {
+    let probed = 0;
+    for (let seed = 1; seed <= WORLDS; seed++) {
+      const w = world(seed);
+      const there = new Set(w.nodes.map((node) => node.id));
+      const hidden = unseenIds(w).filter((id) => there.has(id));
+      if (hidden.length === 0) continue;
+      const named = w.pick(hidden);
+      const nothing = `${named.split(":")[0]}:never-${seed}`;
+      const answered = async (id: string) =>
+        (
+          await answers(handlerOver(storeOf(w), w.viewer), [
+            { name: "get_node", arguments: { id } },
+            { name: "preview_mutation", arguments: { mutation: "point", args: { id, ref: "x" } } },
+            { name: "point", arguments: { id, ref: "x" } },
+            { name: "retitle", arguments: { id, title: "Guess" } },
+            { name: "search_graph", arguments: { query: id } },
+          ])
+        ).map((text) => text.split(id).join("<id>").split(id.slice(id.indexOf(":") + 1)).join("<rest>"));
+      expect(await answered(named), `seed ${seed}: ${named} answered unlike ${nothing}`).toEqual(await answered(nothing));
+      probed++;
+    }
+    expect(probed).toBeGreaterThan(WORLDS / 3);
+  }, 120_000);
 });

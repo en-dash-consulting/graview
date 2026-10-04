@@ -107,7 +107,7 @@ describe("an agent seat over graview mcp", () => {
     expect(result.ok).toBe(false);
     expect(store.graph.getNode("enquiry:finance-on-the-golf")).not.toHaveProperty("note");
     expect(() => store.apply({ name: "compare", args: { id: "enquiry:finance-on-the-golf", other: "shopper:bethan" } }, { author: seat })).toThrow(
-      "Not permitted: “Compare” names a record you may not see.",
+      "“Compare” names a record that is not there.",
     );
   });
 });
