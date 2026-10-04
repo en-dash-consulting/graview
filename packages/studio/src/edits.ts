@@ -213,7 +213,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
   }
 
   // ── acts and rules, against the document the edits so far make ──
-  const middle = edits.length === 0 ? ({ ok: true, document } as const) : editDocument(document, edits);
+  const middle = editDocument(document, edits);
   if (!middle.ok) return { edits, unsaid: findings };
   const mid = middle.document;
   const kindName = (node: Node | undefined) => (node ? label(node) : undefined);
@@ -344,6 +344,5 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
 /** The document the studio's changes make: the one it opened on with its edits applied, or why there is none. */
 export function documentAfter(document: GraviewDocument, made: StudioEdits): EditOutcome {
   if (made.unsaid.length > 0) return { ok: false, findings: made.unsaid };
-  if (made.edits.length === 0) return { ok: true, document, said: [], fills: [] };
   return editDocument(document, made.edits);
 }

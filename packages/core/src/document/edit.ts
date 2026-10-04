@@ -1292,7 +1292,9 @@ function blockMentions(doc: Doc, b: Record<string, unknown>, ctx: Kinds, r: Rena
  * previews it like any other proposed document.
  */
 export function editDocument(document: GraviewDocument, edits: readonly unknown[]): EditOutcome {
-  if (!Array.isArray(edits) || edits.length === 0) return { ok: false, findings: [error("edit", "edits", "give at least one edit")] };
+  if (!Array.isArray(edits)) return { ok: false, findings: [error("edit", "edits", "edits are a list, like [{\"op\": \"add-field\", …}]")] };
+  // No edits is no change: the document as it was, and nothing said.
+  if (edits.length === 0) return { ok: true, document: clone(document), said: [], fills: [] };
   if (edits.length > MAX_EDITS) return { ok: false, findings: [error("edit", "edits", `at most ${MAX_EDITS} edits at once`)] };
   const editor = new Editor(clone(document), document);
   edits.forEach((raw, i) => {
