@@ -2,7 +2,10 @@
 id: "1e08c7c8-916a-4736-9e35-c3de11f81c55"
 level: "feature"
 title: "The studio changes a field in place: its type, required flag, options and description (FR-61)"
-status: "pending"
+status: "completed"
+startedAt: "2026-10-04T15:31:00.000Z"
+completedAt: "2026-10-04T15:31:00.000Z"
+endedAt: "2026-10-04T15:31:00.000Z"
 priority: "medium"
 tags:
   - "graview-cloud"
@@ -13,5 +16,5 @@ acceptanceCriteria:
   - "Changing vendor's notes from text to string through the act yields edits() equal to [{ op: 'retype-field', kind: 'vendor', field: 'notes', type: 'string' }]"
   - "Each act's edits are the ones documentEdits already produces (retype-field, set-required, set-options, set-label)"
 description: "STUDIO_MUTATIONS adds, renames and removes kinds, fields and edges, but cannot change a field, though documentEdits already turns such changes into edit ops."
-lastModified: "2026-10-04T14:38:55.737Z"
+lastModified: "2026-10-04T15:31:00.000Z"
 ---
