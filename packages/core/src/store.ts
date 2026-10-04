@@ -348,6 +348,13 @@ export class Store<S extends AnySchema> {
   private readonly now: () => string;
   private readonly validate: boolean;
   private readonly mintBatch: (kind: "batch" | "undo") => string;
+  /**
+   * THE TAG THIS STORE MINTS ITS OWN BATCHES UNDER — `batch:<tag>:<n>` —
+   * when it mints them its default way; undefined when `batchIds` says
+   * otherwise. A server that takes batch ids from clients refuses this tag
+   * from one, so nothing the store lands later joins a client's batch.
+   */
+  readonly batchTag: string | undefined;
   private counter = 0;
   /** The default op id generator's count. */
   private opCount = 0;
@@ -370,6 +377,7 @@ export class Store<S extends AnySchema> {
     this.now = options.now ?? (() => new Date().toISOString());
     this.validate = options.validate ?? true;
     const tag = storeTag();
+    this.batchTag = options.batchIds ? undefined : tag;
     this.mintBatch = options.batchIds ?? ((kind) => `${kind}:${tag}:${++this.counter}`);
 
     for (const mutation of options.mutations ?? []) {

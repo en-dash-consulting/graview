@@ -590,6 +590,28 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
    * to since — no subscription, so nothing here goes stale while a host
    * sleeps, and a host that made this again reads the same revisions.
    */
+  /*
+   * WHO EACH CLIENT TAG IS: the author of the first op landed under it,
+   * read off the log once and caught up as it grows — derived, so a host
+   * that wakes reads the same owners the sleeper had.
+   */
+  const owners = new Map<string, Author>();
+  const own = (ops: readonly Operation[]): void => {
+    for (const op of ops) {
+      if (!isClientBatch(op.batch)) continue;
+      const tag = op.batch.split(":")[1]!;
+      if (!owners.has(tag)) owners.set(tag, op.author);
+    }
+  };
+  own(store.log.all());
+  let owned = store.log.length;
+  const tagOwner = (tag: string): Author | undefined => {
+    if (store.log.length > owned) {
+      own(store.log.opsFrom(owned));
+      owned = store.log.length;
+    }
+    return owners.get(tag);
+  };
   const revisions = FieldRevisions.of(store.log.all());
   let noted = store.log.length;
   const current = (): FieldRevisions => {
@@ -628,6 +650,20 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
             sentence: `A client names its batch batch:<tag>:<n> or undo:<tag>:<n>, as a Store mints it; ${said} is not one. Send the change without a batch, or under one this client minted.`,
           },
         };
+      }
+      /*
+       * A TAG IS THE FIRST SEAT'S. A client's tag is in every op it lands,
+       * so a batch it has not sent yet — `batch:<tag>:<n+1>` — could be
+       * named first by anybody who saw one. The store's own minting tag is
+       * nobody's to name: what the host lands later would join it.
+       */
+      const tag = batch.split(":")[1]!;
+      if (tag === store.batchTag) {
+        return { refusal: { reason: "invalid", sentence: "That batch is under the server's own tag: send the change under a batch this client minted." } };
+      }
+      const owner = tagOwner(tag);
+      if (owner && !authoredBy(owner, seat)) {
+        return { refusal: { reason: "invalid", sentence: "That batch is under somebody else's tag: send the change under a batch this client minted." } };
       }
       const ops = store.log.all().filter((op) => op.batch === batch);
       if (ops.some((op) => !authoredBy(op.author, seat))) {

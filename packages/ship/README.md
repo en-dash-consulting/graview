@@ -276,7 +276,14 @@ any batch not shaped as a `Store` mints it, `batch:<tag>:<n>` or `undo:<tag>:<n>
 shape. A host's own store mints there too with `new Store({ batchIds: serverBatchIds() })`,
 so nothing a host lands itself — a migration, a seed, an agent's RPC — is in a batch a client
 could have named first; `createStoreHandler` does this for the store it opens.
-`authoredBy(author, seat)` is the judgement of "the same seat".
+`authoredBy(author, seat)` is the judgement of "the same seat". A batch's tag belongs to the
+first seat that landed under it, so nobody names another client's next batch
+(`batch:<her tag>:<n+1>`) before she does: a batch under somebody else's tag is refused
+`invalid`, and so is one under the store's own minting tag (`store.batchTag`), so even a held
+store that still mints `batch:<tag>:<n>` cannot have its next batch named first. **A host
+holding its own store should still give it `batchIds: serverBatchIds()`**: then its batches
+are not in a client's shape at all, and a reader of the log can tell a client's from the
+host's.
 
 **A refusal says why** (FR-46). Every `refused` on the socket, and every refusing answer of
 `POST /graview/ops` (409, or 413 at a host's cap), carries a `reason` from a closed set,
