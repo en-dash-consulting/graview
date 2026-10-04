@@ -62,6 +62,14 @@ export interface SeatLens {
   readonly kindOf: (id: string) => string | undefined;
   /** The store's graph now and the log that led to it, so an op is judged where it stood (`serveAlong`). */
   readonly timeline?: Timeline;
+  /**
+   * THIS LENS AS OF NOW, ITS JUDGEMENTS KEPT: each id judged once, each
+   * record served once, for one reading of a store that does not change
+   * while it is read — a log redacted, a snapshot served. A lens follows
+   * the store as it is asked (FR-51); a pinned one is thrown away after the
+   * reading it was made for, so it never answers for a store that moved.
+   */
+  readonly pin?: () => SeatLens;
 }
 
 /** Whether any field of a record — not its id or kind — names what `sees` says no to. */
@@ -90,9 +98,15 @@ export function lensOf(seeing: SeatLens | ((id: string) => boolean)): SeatLens {
  */
 export function namesUnseen(value: unknown, sees: (id: string) => boolean): boolean {
   if (typeof value === "string") return !sees(value);
-  if (Array.isArray(value)) return value.some((inner) => namesUnseen(inner, sees));
-  if (value !== null && typeof value === "object") {
-    for (const [key, inner] of Object.entries(value)) if (!sees(key) || namesUnseen(inner, sees)) return true;
+  if (value === null || typeof value !== "object") return false;
+  // Walked without copying: a served log asks this of every op in it.
+  if (Array.isArray(value)) {
+    for (let at = 0; at < value.length; at++) if (namesUnseen(value[at], sees)) return true;
+    return false;
+  }
+  for (const key in value) {
+    if (!Object.hasOwn(value, key)) continue;
+    if (!sees(key) || namesUnseen((value as Record<string, unknown>)[key], sees)) return true;
   }
   return false;
 }
@@ -188,14 +202,21 @@ export function withhold(op: Operation, seeing: SeatLens | ((id: string) => bool
  * (FR-55). One withheld already is withheld again under this seat's lens.
  */
 export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: string) => boolean)): Operation[] {
-  const lens = lensOf(seeing);
+  // One reading of the store, whatever its length: every id and record judged once in it.
+  const given = lensOf(seeing);
+  const lens = given.pin?.() ?? given;
   /*
    * ALONG THE STORE'S HISTORY, when the lens knows it: each primitive judged
    * by whether its record was served just before it and just after, so the
    * ops a seat is served fold to the snapshot it is served (`serveAlong`).
    */
   if (lens.timeline) {
-    const judge = { served: (node: AnyGraphNode, writer: FieldWriter) => lens.servedWith(node, writer), edgeClean: (edge: GraphEdge) => !namesUnseen(edge, lens.sees) };
+    const judge = {
+      served: (node: AnyGraphNode, writer: FieldWriter) => lens.servedWith(node, writer),
+      edgeClean: (edge: GraphEdge) => !namesUnseen(edge, lens.sees),
+      sees: lens.sees,
+      names: (value: unknown) => namesUnseen(value, lens.sees),
+    };
     return serveAlong(ops, lens.timeline, judge).map(({ op, primitives, faithful }) => (!op.withheld && faithful ? whole(op, lens, primitives) : undefined) ?? withhold(op, lens, primitives));
   }
   return ops.map((op) => (!op.withheld && !touchesUnseen(op, lens.shows) ? whole(op, lens) : undefined) ?? withhold(op, lens));

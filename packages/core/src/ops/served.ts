@@ -55,6 +55,16 @@ export interface ServedJudge {
   served(node: AnyGraphNode, writer: FieldWriter): AnyGraphNode | undefined;
   /** Whether a link names nothing the seat may not see (its ends are judged as records). */
   edgeClean(edge: GraphEdge): boolean;
+  /**
+   * THE SEAT'S SIGHT AND WHAT A VALUE NAMES, when the judge can say them:
+   * then a record whose every version in the walk is served as it is — one
+   * the seat sees, no value of which names what it may not — is never
+   * judged or copied along the way, and one it does not see is never
+   * served. Only a record that a field of the seat's view clears, or that
+   * such a field withholds, is followed version by version.
+   */
+  readonly sees?: (id: string) => boolean;
+  readonly names?: (value: unknown) => boolean;
 }
 
 /** The graph at one moment of the log: now, with what differs held apart. */
@@ -69,7 +79,10 @@ class Moment {
 
   constructor(
     private readonly present: Present,
-    private readonly writers?: Writers,
+    /** Who wrote each field's value: read only when a record is judged, so a walk that judges none never builds it. */
+    private readonly timeline?: Pick<Timeline, "writers">,
+    /** Records whose versions are never judged (`ServedJudge.sees`): only whether they are there is followed. */
+    private readonly unversioned?: ReadonlySet<string>,
   ) {}
 
   /** The moment just before op `seq`. */
@@ -83,14 +96,16 @@ class Moment {
     return (field) => {
       const key = `${id}\u0000${field}`;
       if (this.wrote.has(key)) return this.wrote.get(key);
-      return this.writers?.writerAt(id, field, this.seq);
+      return this.timeline?.writers?.writerAt(id, field, this.seq);
     };
   }
 
   /** The fields a primitive just wrote, and who wrote them. */
   note(primitive: Primitive, by: (id: string, field: string) => string | undefined): void {
-    const fields = primitive.op === "add-node" ? Object.keys(primitive.node) : primitive.op === "patch-node" ? Object.keys(primitive.after) : [];
     const id = primitive.op === "add-node" ? primitive.node.id : primitive.op === "patch-node" ? primitive.id : "";
+    // A record never judged never asks who wrote it.
+    if (id === "" || this.unversioned?.has(id)) return;
+    const fields = primitive.op === "add-node" ? Object.keys(primitive.node) : Object.keys((primitive as { after: object }).after);
     for (const field of fields) if (field !== "id" && field !== "kind") this.wrote.set(`${id}\u0000${field}`, by(id, field));
   }
 
@@ -137,6 +152,7 @@ class Moment {
         this.setNode(primitive.node.id, primitive.node);
         return;
       case "patch-node": {
+        if (this.unversioned?.has(primitive.id)) return;
         const node = this.node(primitive.id);
         if (!node) return;
         this.setNode(primitive.id, patched(node, primitive.before));
@@ -162,6 +178,7 @@ class Moment {
         this.setNode(primitive.node.id, null);
         return;
       case "patch-node": {
+        if (this.unversioned?.has(primitive.id)) return;
         const node = this.node(primitive.id);
         if (!node) return;
         this.setNode(primitive.id, patched(node, primitive.after));
@@ -259,7 +276,7 @@ export function serveAlong(ops: readonly Operation[], timeline: Timeline, judge:
   const log = timeline.log.all();
   const base = log[0]?.seq ?? 0;
   const placed = ops.every((op) => log[op.seq - base]?.id === op.id);
-  const moment = new Moment(timeline.present, timeline.writers);
+  const moment = new Moment(timeline.present, timeline);
   if (!placed) {
     moment.begin(timeline.log.length ?? base + log.length);
     return ops.map((op) => {
@@ -269,12 +286,84 @@ export function serveAlong(ops: readonly Operation[], timeline: Timeline, judge:
     });
   }
   const wanted = new Set(ops.map((op) => op.seq));
-  const first = Math.min(...wanted) - base;
-  const last = Math.max(...wanted) - base;
+  let first = Number.POSITIVE_INFINITY;
+  let last = Number.NEGATIVE_INFINITY;
+  for (const seq of wanted) {
+    if (seq < first) first = seq;
+    if (seq > last) last = seq;
+  }
+  first -= base;
+  last -= base;
+  const along = judgedAlong(log, first, timeline.present, judge);
+  const walk = along ? new Moment(timeline.present, timeline, along.unversioned) : moment;
   for (let at = log.length - 1; at >= first; at--) {
     const primitives = log[at]!.primitives;
-    for (let index = primitives.length - 1; index >= 0; index--) moment.undo(primitives[index]!);
+    for (let index = primitives.length - 1; index >= 0; index--) walk.undo(primitives[index]!);
   }
+  return servedFrom(ops, log, first, last, wanted, walk, along?.judge ?? judge, timeline);
+}
+
+/**
+ * WHICH RECORDS THE WALK MUST FOLLOW VERSION BY VERSION. A record the seat
+ * does not see is served at no moment; one it sees, and no version of
+ * which — now, or in any primitive from `first` on — names what it may
+ * not see, is served as it is at every moment. Neither needs its versions:
+ * only whether it is there. Every other record is judged as before. A
+ * judge that cannot say its sight is judged record by record throughout.
+ */
+function judgedAlong(log: readonly Operation[], first: number, present: Present, judge: ServedJudge): { readonly unversioned: ReadonlySet<string>; readonly judge: ServedJudge } | undefined {
+  const { sees, names } = judge;
+  if (!sees || !names) return undefined;
+  const unseen = new Set<string>();
+  const followed = new Set<string>();
+  const plain = new Set<string>();
+  const version = (id: string, values: unknown): void => {
+    if (unseen.has(id) || followed.has(id)) return;
+    if (!sees(id)) {
+      unseen.add(id);
+      plain.delete(id);
+    } else if (names(values)) {
+      followed.add(id);
+      plain.delete(id);
+    } else plain.add(id);
+  };
+  for (let at = first; at < log.length; at++) {
+    for (const primitive of log[at]!.primitives) {
+      if (primitive.op === "add-node" || primitive.op === "remove-node") version(primitive.node.id, primitive.node);
+      else if (primitive.op === "patch-node") {
+        version(primitive.id, primitive.before);
+        version(primitive.id, primitive.after);
+      }
+    }
+  }
+  for (const id of plain) {
+    const now = present.getNode(id);
+    if (now && names(now)) {
+      plain.delete(id);
+      followed.add(id);
+    }
+  }
+  const unversioned = new Set([...plain, ...unseen]);
+  return {
+    unversioned,
+    judge: {
+      ...judge,
+      served: (node, writer) => (plain.has(node.id) ? node : unseen.has(node.id) ? undefined : judge.served(node, writer)),
+    },
+  };
+}
+
+/** The walk forward from `first`, each op asked about judged at the moment it stood. */
+function servedFrom(
+  ops: readonly Operation[],
+  log: readonly Operation[],
+  first: number,
+  last: number,
+  wanted: ReadonlySet<number>,
+  moment: Moment,
+  judge: ServedJudge,
+  timeline: Timeline,
+): ServedOp[] {
   const answer = new Map<number, ServedOp>();
   for (let at = first; at <= last; at++) {
     const op = log[at]!;
@@ -293,7 +382,7 @@ export function serveAlong(ops: readonly Operation[], timeline: Timeline, judge:
 
 /** Primitives not yet in any log — a preview `author` would make — as the seat would be served them, from the graph as it stands. */
 export function servePrimitives(primitives: readonly Primitive[], timeline: Timeline, judge: ServedJudge, author: string | undefined): Primitive[] {
-  const moment = new Moment(timeline.present, timeline.writers);
+  const moment = new Moment(timeline.present, timeline);
   moment.begin(timeline.log.length ?? timeline.log.all().length);
   return primitives.flatMap((primitive) => serveOne(primitive, moment, judge, () => author).primitives);
 }

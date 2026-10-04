@@ -550,6 +550,13 @@ export interface Wire<S extends AnySchema> {
  */
 const WITHHELD_KEYS = new WeakMap<object, string>();
 
+/**
+ * EACH STORE'S OPAQUE BATCHES, BY KEY: a keyed hash per batch, made once
+ * for every route and socket over the store rather than once per protocol
+ * made over it — a protocol is made again on every wake.
+ */
+const OPAQUE_BATCHES = new WeakMap<object, Map<string, Map<string, string>>>();
+
 export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: string): Wire<S> {
   const sighted = (principal: Principal): boolean => hidesFrom(store, principal);
   /*
@@ -566,7 +573,10 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
     key = WITHHELD_KEYS.get(store) ?? mintTag() + mintTag();
     WITHHELD_KEYS.set(store, key);
   }
-  const opaque = new Map<string, string>();
+  let byKey = OPAQUE_BATCHES.get(store);
+  if (!byKey) OPAQUE_BATCHES.set(store, (byKey = new Map()));
+  let opaque = byKey.get(key);
+  if (!opaque) byKey.set(key, (opaque = new Map()));
   const opaqueBatch = (batch: string): string => {
     let said = opaque.get(batch);
     if (said === undefined) {
@@ -595,6 +605,11 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
    * read off the log once and caught up as it grows — derived, so a host
    * that wakes reads the same owners the sleeper had.
    */
+  /*
+   * Both read on first asking, not when the protocol is made: a host makes
+   * it again on every wake, and most wakes are a message that names no
+   * batch and carries no base.
+   */
   const owners = new Map<string, Author>();
   const own = (ops: readonly Operation[]): void => {
     for (const op of ops) {
@@ -603,8 +618,7 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
       if (!owners.has(tag)) owners.set(tag, op.author);
     }
   };
-  own(store.log.all());
-  let owned = store.log.length;
+  let owned = store.log.horizon;
   const tagOwner = (tag: string): Author | undefined => {
     if (store.log.length > owned) {
       own(store.log.opsFrom(owned));
@@ -612,10 +626,13 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
     }
     return owners.get(tag);
   };
-  const revisions = FieldRevisions.of(store.log.all());
-  let noted = store.log.length;
+  let revisions: FieldRevisions | undefined;
+  let noted = 0;
   const current = (): FieldRevisions => {
-    if (store.log.length > noted) {
+    if (!revisions) {
+      revisions = FieldRevisions.of(store.log.all());
+      noted = store.log.length;
+    } else if (store.log.length > noted) {
       revisions.note(store.log.opsFrom(noted));
       noted = store.log.length;
     }
@@ -631,8 +648,9 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
     seenLog(principal) {
       const log = seenBy(store, principal).log.all();
       if (!sighted(principal)) return [...log];
-      const authors = new Map(store.log.all().map((op) => [op.id, op.author] as const));
-      return unattributed(principal, log, (op) => authors.get(op.id));
+      // The seat's log holds every op in its place: who made one is the store's op at the same place.
+      const all = store.log.all();
+      return unattributed(principal, log, (op, at) => (all[at]?.id === op.id ? all[at]!.author : all.find((one) => one.id === op.id)?.author));
     },
     whoFor: (principal, who) => {
       // A visitor whose announced time has passed is never told of, though a host may still hold it.

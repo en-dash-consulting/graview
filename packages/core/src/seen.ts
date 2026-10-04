@@ -79,6 +79,39 @@ export function seesId(store: Judged, principal: Principal): (id: string) => boo
   };
 }
 
+const NO_LINKS = { out: () => [], in: () => [] };
+
+/**
+ * ONE SEAT'S SIGHT AS OF NOW, each id judged once: `seesId` for a reading
+ * of the store that does not change while it is read. What is off, the
+ * records the log knows and each answer are taken once here, where
+ * `seesId` reads them again for every id — a served log asks of every
+ * string in every op, and most are the same few ids.
+ */
+function pinnedSight(store: Judged, principal: Principal, judged: Map<string, boolean> = new Map(), unnamed?: Set<string>): (id: string) => boolean {
+  const off = turnedOff(store, principal);
+  if (!store.policy?.sees?.length && off.size === 0) return () => true;
+  const records = recordsOf(store.log);
+  return (id) => {
+    const held = judged.get(id);
+    if (held !== undefined) return held;
+    let seen: boolean;
+    const node = store.graph.getNode(id);
+    if (node) seen = !off.has(node.kind) && sees(store.policy, principal, node, store.graph, records);
+    else {
+      const kind = records.kindOf(id);
+      // A string that names no record is nothing to keep, and not judged: most strings in a log are not ids. A caller that keeps a reading is told it was asked.
+      if (kind === undefined) {
+        unnamed?.add(id);
+        return true;
+      }
+      seen = !off.has(kind) && sees(store.policy, principal, { id, kind }, NO_LINKS, records);
+    }
+    judged.set(id, seen);
+    return seen;
+  };
+}
+
 /** Whether a kind's field may be left off a record: declared optional, or not declared at all. Unknown kinds keep every field. */
 function optionalIn(schema: Judged["schema"]): (kind: string, field: string) => boolean {
   const known = new Map<string, boolean>();
@@ -113,7 +146,19 @@ function optionalIn(schema: Judged["schema"]): (kind: string, field: string) => 
  * naming one withheld this way still names a record the seat may see.
  */
 export function seatLens(store: Judged, principal: Principal): SeatLens {
-  const sees = seesId(store, principal);
+  return lensFor(store, principal).lens;
+}
+
+/** What a pinned lens judged: each id's sight and whether each is served, kept for a reading that goes on (`logSeenBy`). */
+interface Judgements {
+  readonly judged: Map<string, boolean>;
+  readonly shown: Map<string, boolean>;
+  /** Strings it was asked about that named no record then: one a record takes later is a name it must judge again. */
+  readonly unnamed?: Set<string>;
+}
+
+/** A seat's lens, and a way to pin it over judgements the caller keeps. */
+function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens; readonly pinWith: (memo: Judgements) => SeatLens } {
   const optional = optionalIn(store.schema);
   /*
    * A SEAT IS SERVED ITS OWN WORDS (FR-55). A field whose value this seat
@@ -123,60 +168,211 @@ export function seatLens(store: Judged, principal: Principal): SeatLens {
    * that guessed an id whether the guess was real.
    */
   const actor = isSystem(principal) ? undefined : actingAs(principal).id;
-  const writers = (): Writers => writersOf(store.log as never);
   const length = (): number => (store.log as { readonly length?: number }).length ?? store.log.all().length;
   // The same record served the same way is the same object, so a view read twice is equal by identity.
   const cleared = new WeakMap<object, { readonly without: string; readonly node: unknown }>();
-  const servedWith = <N extends { readonly id: string; readonly kind: string }>(node: N, writer: FieldWriter): N | undefined => {
-    if (!sees(node.id)) return undefined;
-    let without: string[] | undefined;
-    for (const [field, value] of Object.entries(node)) {
-      if (field === "id" || field === "kind" || !namesUnseen(value, sees)) continue;
-      if (actor !== undefined && writer(field) === actor) continue;
-      if (!optional(node.kind, field)) return undefined;
-      (without ??= []).push(field);
-    }
-    if (!without) return node;
-    const key = without.join("\u0000");
-    const held = cleared.get(node);
-    if (held?.without === key) return held.node as N;
-    const out = Object.fromEntries(Object.entries(node).filter(([field]) => !without.includes(field))) as N;
-    cleared.set(node, { without: key, node: out });
-    return out;
-  };
-  const served = <N extends { readonly id: string; readonly kind: string }>(node: N): N | undefined => {
-    const now = length();
-    const known = writers();
-    return servedWith(node, (field) => known.writerAt(node.id, field, now));
-  };
-  const shows = (id: string): boolean => {
-    if (!sees(id)) return false;
-    const node = store.graph.getNode(id);
-    return node === undefined || served(node) !== undefined;
-  };
-  const kindOf = (id: string): string | undefined => store.graph.getNode(id)?.kind ?? recordsOf(store.log).kindOf(id);
   const graph = store.graph;
-  const timeline: Timeline | undefined =
-    graph.outEdges && graph.inEdges
-      ? {
-          present: {
-            getNode: (id) => graph.getNode(id) as AnyGraphNode | undefined,
-            outEdges: (id) => graph.outEdges!(id),
-            inEdges: (id) => graph.inEdges!(id),
-          },
-          log: store.log as Timeline["log"],
-          get writers() {
-            return writers();
-          },
+  /**
+   * The lens over one sight: the seat's own, which follows the store as it
+   * is asked, or one pinned to now (`pin`), which judges each id and each
+   * record once and is thrown away after the reading it was made for.
+   */
+  const over = (sees: (id: string) => boolean, writers: () => Writers, now: () => number, kindOf: (id: string) => string | undefined, pinned?: Judgements): SeatLens => {
+    const servedWith = <N extends { readonly id: string; readonly kind: string }>(node: N, writer: FieldWriter): N | undefined => {
+      if (!sees(node.id)) return undefined;
+      let without: string[] | undefined;
+      for (const field in node) {
+        if (!Object.hasOwn(node, field) || field === "id" || field === "kind" || !namesUnseen(node[field], sees)) continue;
+        if (actor !== undefined && writer(field) === actor) continue;
+        if (!optional(node.kind, field)) return undefined;
+        (without ??= []).push(field);
+      }
+      if (!without) return node;
+      const key = without.join("\u0000");
+      const held = cleared.get(node);
+      if (held?.without === key) return held.node as N;
+      const out = Object.fromEntries(Object.entries(node).filter(([field]) => !without.includes(field))) as N;
+      cleared.set(node, { without: key, node: out });
+      return out;
+    };
+    const judge = <N extends { readonly id: string; readonly kind: string }>(node: N): N | undefined => {
+      const at = now();
+      return servedWith(node, (field) => writers().writerAt(node.id, field, at));
+    };
+    // Pinned, a record is served once however often the reading asks for it: no record or id changes under a pin.
+    const servedOnce = new WeakMap<object, { readonly node: unknown }>();
+    const served = pinned
+      ? <N extends { readonly id: string; readonly kind: string }>(node: N): N | undefined => {
+          let held = servedOnce.get(node);
+          if (!held) servedOnce.set(node, (held = { node: judge(node) }));
+          return held.node as N | undefined;
         }
-      : undefined;
-  return { sees, shows, served, servedWith, optional, kindOf, ...(actor !== undefined ? { actor } : {}), ...(timeline ? { timeline } : {}) };
+      : judge;
+    const showsNow = (id: string): boolean => {
+      if (!sees(id)) return false;
+      const node = graph.getNode(id);
+      return node === undefined || served(node) !== undefined;
+    };
+    const shown = pinned?.shown ?? new Map<string, boolean>();
+    const shows = pinned
+      ? (id: string): boolean => {
+          let held = shown.get(id);
+          if (held === undefined) shown.set(id, (held = showsNow(id)));
+          return held;
+        }
+      : showsNow;
+    const timeline: Timeline | undefined =
+      graph.outEdges && graph.inEdges
+        ? {
+            present: {
+              getNode: (id) => graph.getNode(id) as AnyGraphNode | undefined,
+              outEdges: (id) => graph.outEdges!(id),
+              inEdges: (id) => graph.inEdges!(id),
+            },
+            log: store.log as Timeline["log"],
+            get writers() {
+              return writers();
+            },
+          }
+        : undefined;
+    const lens: SeatLens = {
+      sees,
+      shows,
+      served,
+      servedWith,
+      optional,
+      kindOf,
+      ...(actor !== undefined ? { actor } : {}),
+      ...(timeline ? { timeline } : {}),
+      // A pinned lens is already of one moment: pinning it again is itself.
+      pin: pinned ? () => lens : () => pinWith({ judged: new Map(), shown: new Map() }),
+    };
+    return lens;
+  };
+  function pinWith(memo: Judgements): SeatLens {
+    // Who wrote what is read only when a field names what the seat may not see: a seat that sees all of it never asks.
+    let writers: Writers | undefined;
+    const at = length();
+    const records = recordsOf(store.log);
+    return over(pinnedSight(store, principal, memo.judged, memo.unnamed), () => (writers ??= writersOf(store.log as never)), () => at, (id) => graph.getNode(id)?.kind ?? records.kindOf(id), memo);
+  }
+  const lens = over(
+    seesId(store, principal),
+    () => writersOf(store.log as never),
+    length,
+    (id) => graph.getNode(id)?.kind ?? recordsOf(store.log).kindOf(id),
+  );
+  return { lens, pinWith };
 }
+
+/**
+ * ONE SEAT'S SERVED LOG, KEPT WITH WHAT SERVING IT READ. Redacting a long
+ * log judges every string in every op, so a log that only grew is served
+ * from what was served before it grew, and its new ops are judged alone —
+ * when nothing the old ops were judged by can have moved:
+ *
+ *   - the log still holds the ops it was served from, at the same horizon,
+ *     and the same modules are off;
+ *   - every id a new op touches (a record it adds, removes, patches or
+ *     links) is seen, and served, as it was: a sight follows a record's
+ *     own links, kind and maker, and only an op touching it moves those;
+ *   - and no record a new op adds or touches has an id the old ops were
+ *     judged to name nothing by — an id that names nothing is nobody's to
+ *     keep, and one that names a hidden record is (`UNNAMED`).
+ *
+ * Otherwise the whole log is served again. The moments a served op is
+ * judged at are the log's own up to it, which later ops do not change.
+ */
+interface ServedLog {
+  readonly horizon: number;
+  readonly off: string;
+  readonly length: number;
+  readonly last: Operation | undefined;
+  readonly ops: readonly Operation[];
+  readonly judgements: Judgements;
+}
+
+const SERVED_LOGS = new WeakMap<object, Map<string, ServedLog>>();
+
+/**
+ * EVERY STRING A SERVED LOG'S READING ASKED ABOUT THAT NAMED NO RECORD THEN,
+ * for every seat served from the log: an id a record takes later is one
+ * an op served before may name. A string never asked about changed nothing
+ * any seat was served — a withheld op drops its sentence, its call and its
+ * author unread — so these are all the names that can come to matter.
+ * Shared by the seats, so a name one seat asked about only ever sends
+ * another to serve its log again; never fewer.
+ */
+const UNNAMED = new WeakMap<object, Set<string>>();
+
+/** The ids a primitive touches, links' ends among them: what can move a record's sight. */
+const touchedIds = (ops: readonly Operation[]): Set<string> => {
+  const ids = new Set<string>();
+  for (const op of ops) {
+    for (const primitive of op.primitives) {
+      if (primitive.op === "add-node" || primitive.op === "remove-node") ids.add(primitive.node.id);
+      else if (primitive.op === "patch-node") ids.add(primitive.id);
+      else {
+        ids.add(primitive.edge.from);
+        ids.add(primitive.edge.to);
+      }
+    }
+  }
+  return ids;
+};
 
 /** The store's log as one seat may read it: every op in its place, the ones it may not see withheld (FR-16), and no id it may not see in any of them (FR-55). */
 export function logSeenBy(store: Judged, principal: Principal): readonly Operation[] {
   if (!hidesFrom(store, principal)) return store.log.all();
-  return redact(store.log.all(), seatLens(store, principal));
+  const all = store.log.all();
+  const length = (store.log as { readonly length?: number }).length ?? all.length;
+  const horizon = length - all.length;
+  const off = [...turnedOff(store, principal)].sort().join("\u0000");
+  const judged = isSystem(principal) ? principal : actingAs(principal);
+  const key = `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? "for" : ""}`;
+  let seats = SERVED_LOGS.get(store.log);
+  if (!seats) SERVED_LOGS.set(store.log, (seats = new Map()));
+  const held = seats.get(key);
+  const { pinWith } = lensFor(store, principal);
+  let unnamed = UNNAMED.get(store.log);
+  if (!unnamed) UNNAMED.set(store.log, (unnamed = new Set()));
+  const grown = held !== undefined && held.horizon === horizon && held.off === off && held.length <= length && (held.length === horizon || all[held.length - 1 - horizon] === held.last);
+  if (held && grown) {
+    if (held.length === length) return held.ops;
+    const added = all.slice(held.length - horizon);
+    // Judged afresh, to compare with what serving the old ops read.
+    const now = pinWith({ judged: new Map(), shown: new Map() });
+    let still = true;
+    const touched = touchedIds(added);
+    for (const id of touched) {
+      const sight = held.judgements.judged.get(id);
+      const served = held.judgements.shown.get(id);
+      if ((sight !== undefined && now.sees(id) !== sight) || (served !== undefined && now.shows(id) !== served)) {
+        still = false;
+        break;
+      }
+    }
+    if (still) {
+      // A record new to the log that an op already served named, when it named nothing: that name may be one to keep now.
+      for (const id of touched) {
+        if (unnamed.has(id)) {
+          still = false;
+          break;
+        }
+      }
+    }
+    if (still) {
+      // What the old ops read stands: the new ones are judged over it, and what they read is kept with it.
+      const ops = [...held.ops, ...redact(added, pinWith(held.judgements))];
+      const served: ServedLog = { horizon, off, length, last: all.at(-1), ops, judgements: held.judgements };
+      seats.set(key, served);
+      return ops;
+    }
+  }
+  const judgements: Judgements = { judged: new Map(), shown: new Map(), unnamed };
+  const ops = redact(all, pinWith(judgements));
+  seats.set(key, { horizon, off, length, last: all.at(-1), ops, judgements });
+  return ops;
 }
 
 /** Whether a rule's finding or violation is one a seat may be told: about records it is served, naming none it may not see. */
@@ -316,8 +512,8 @@ const bound = (target: object, prop: PropertyKey): unknown => {
  * With no `sees`, it is the store, unchanged.
  */
 export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principal): Store<S> {
-  // A module off keeps its kinds from every seat as a sight would (FR-12); the view reads which are off as it goes.
-  if (!store.policy?.sees?.length && store.modules.disabledKinds.size === 0) return store;
+  // A module off keeps its kinds from every seat as a sight would (FR-12); the view reads which are off as it goes. The system is kept from nothing.
+  if (!hidesFrom(store, principal)) return store;
   // Keyed by the seat the policy judges: an agent for Nick is not the same agent alone.
   const judged = isSystem(principal) ? principal : actingAs(principal);
   const key = `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? "for" : ""}`;
@@ -333,17 +529,28 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
    * one the record cannot do without, not the record at all.
    */
   const lens = seatLens(store as never, principal);
-  const served = <N>(node: N | undefined): N | undefined => (node === undefined ? undefined : (lens.served(node as never) as N | undefined));
-  const seenNode = (node: { id: string; kind: string } | undefined): boolean => served(node) !== undefined;
-  const seenId = (id: string): boolean => seenNode(full.getNode(id) as never);
-  const seenEdge = (edge: GraphEdge): boolean => seenId(edge.from) && seenId(edge.to) && !namesUnseen(edge, lens.sees);
-  const servedAll = <N>(nodes: readonly N[]): N[] => nodes.flatMap((node) => served(node) ?? []);
+  /**
+   * HOW ONE READING JUDGES: a single record by the lens, which follows the
+   * store; a whole graph, a snapshot or a neighbourhood by the lens pinned
+   * for that one reading, each id and record judged once in it.
+   */
+  const judging = (seat: SeatLens) => {
+    const served = <N>(node: N | undefined): N | undefined => (node === undefined ? undefined : (seat.served(node as never) as N | undefined));
+    const seenNode = (node: { id: string; kind: string } | undefined): boolean => served(node) !== undefined;
+    const seenId = (id: string): boolean => seenNode(full.getNode(id) as never);
+    const seenEdge = (edge: GraphEdge): boolean => seenId(edge.from) && seenId(edge.to) && !namesUnseen(edge, seat.sees);
+    const servedAll = <N>(nodes: readonly N[]): N[] => nodes.flatMap((node) => served(node) ?? []);
+    return { served, seenNode, seenId, seenEdge, servedAll };
+  };
+  const { served, seenId } = judging(lens);
+  const pinned = () => judging(lens.pin?.() ?? lens);
   /** A graph of another moment — an epoch's base, at `seq` — as this seat is served it: its records, as who wrote them then, and its links between them. */
   const servedGraph = (snapshot: GraphSnapshot, seq: number): GraphSnapshot => {
     const writers = writersOf(store.log as never);
-    const nodes = snapshot.nodes.flatMap((node) => lens.servedWith(node, (field) => writers.writerAt(node.id, field, seq)) ?? []);
+    const seat = lens.pin?.() ?? lens;
+    const nodes = snapshot.nodes.flatMap((node) => seat.servedWith(node, (field) => writers.writerAt(node.id, field, seq)) ?? []);
     const kept = new Set(nodes.map((node) => node.id));
-    return { nodes, edges: snapshot.edges.filter((edge) => kept.has(edge.from) && kept.has(edge.to) && !namesUnseen(edge, lens.sees)) };
+    return { nodes, edges: snapshot.edges.filter((edge) => kept.has(edge.from) && kept.has(edge.to) && !namesUnseen(edge, seat.sees)) };
   };
   /**
    * AN EPOCH AS THIS SEAT IS SERVED IT: its base as the seat was served it
@@ -376,31 +583,42 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
         case "has":
           return (id: string) => seenId(id);
         case "allNodes":
-          return () => servedAll(target.allNodes());
+          return () => pinned().servedAll(target.allNodes());
         case "nodesOfKind":
-          return (kind: never) => servedAll(target.nodesOfKind(kind));
+          return (kind: never) => pinned().servedAll(target.nodesOfKind(kind));
         case "allEdges":
-          return () => target.allEdges().filter(seenEdge);
+          return () => target.allEdges().filter(pinned().seenEdge);
         case "edgesOfKind":
-          return (kind: string) => target.edgesOfKind(kind).filter(seenEdge);
+          return (kind: string) => target.edgesOfKind(kind).filter(pinned().seenEdge);
         case "out":
-          return (id: string, kind?: string) => (seenId(id) ? servedAll(target.out(id, kind)) : []);
+          return (id: string, kind?: string) => {
+            const now = pinned();
+            return now.seenId(id) ? now.servedAll(target.out(id, kind)) : [];
+          };
         case "in":
-          return (id: string, kind?: string) => (seenId(id) ? servedAll(target.in(id, kind)) : []);
+          return (id: string, kind?: string) => {
+            const now = pinned();
+            return now.seenId(id) ? now.servedAll(target.in(id, kind)) : [];
+          };
         case "neighbors":
-          return (id: string) => (seenId(id) ? servedAll(target.neighbors(id)) : []);
+          return (id: string) => {
+            const now = pinned();
+            return now.seenId(id) ? now.servedAll(target.neighbors(id)) : [];
+          };
         case "outEdges":
-          return (id: string, kind?: string) => target.outEdges(id, kind).filter(seenEdge);
+          return (id: string, kind?: string) => target.outEdges(id, kind).filter(pinned().seenEdge);
         case "inEdges":
-          return (id: string, kind?: string) => target.inEdges(id, kind).filter(seenEdge);
+          return (id: string, kind?: string) => target.inEdges(id, kind).filter(pinned().seenEdge);
         case "snapshot":
           return () => {
             const snapshot = target.snapshot();
-            return { ...snapshot, nodes: servedAll(snapshot.nodes), edges: snapshot.edges.filter(seenEdge) };
+            const now = pinned();
+            return { ...snapshot, nodes: now.servedAll(snapshot.nodes), edges: snapshot.edges.filter(now.seenEdge) };
           };
         case "size": {
-          const nodes = target.allNodes().filter((node) => seenNode(node as never)).length;
-          return { nodes, edges: target.allEdges().filter(seenEdge).length };
+          const now = pinned();
+          const nodes = target.allNodes().filter((node) => now.seenNode(node as never)).length;
+          return { nodes, edges: target.allEdges().filter(now.seenEdge).length };
         }
         default:
           return bound(target, prop);
