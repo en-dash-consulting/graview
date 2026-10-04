@@ -1,5 +1,6 @@
 import { studioDoor } from "@graview/ship/dev";
 import { defineConfig } from "vite";
+import { moved } from "../../scripts/lib/ports.mjs";
 import { fileURLToPath } from "node:url";
 
 const pkg = (name: string) =>
@@ -36,7 +37,7 @@ export default defineConfig({
       "@graview/embed": pkg("embed"),
     },
   },
-  server: { port: 5195, strictPort: true },
+  server: { port: moved(5195), strictPort: true },
   build: {
     rollupOptions: {
       // Two pages: the app, and the article the app is embedded in.

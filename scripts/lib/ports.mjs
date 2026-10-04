@@ -44,7 +44,8 @@ export const OWN = {
 /** The port an app's vite config claims for its dev server. */
 function configPort(app) {
   const config = readFileSync(resolve(repoRoot, "apps", app, "vite.config.ts"), "utf8");
-  const port = Number(/server:\s*\{[^}]*port:\s*(\d+)/.exec(config)?.[1]);
+  // `port: moved(5193)`: the config moves its own dev server onto the base, and says the port it claims.
+  const port = Number(/server:\s*\{[^}]*port:\s*(?:moved\()?(\d+)/.exec(config)?.[1]);
   if (!port) throw new Error(`apps/${app}/vite.config.ts names no server port`);
   return port;
 }
@@ -73,6 +74,14 @@ export function portFor(name) {
 /** The address of what a harness serves: `at("todo")` is `http://localhost:5193`, or 5603 on a base of 5600. */
 export function at(name) {
   return `http://localhost:${portFor(name)}`;
+}
+
+/** What the desk (apps/launcher) links to and probes: the apps it surveys, and the store server one demo opens from. */
+export const DESK_SERVES = ["todo", "seedbed", "rota", "served"];
+
+/** Each name's port, moved: what the launcher's vite config hands the page as `__GRAVIEW_PORTS__`. */
+export function portsFor(names) {
+  return Object.fromEntries(names.map((name) => [name, portFor(name)]));
 }
 
 /** An address read from somewhere else (a demo's stop), with any port in the block moved onto the base. */

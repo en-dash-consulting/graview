@@ -1,5 +1,6 @@
 import { studioDoor } from "@graview/ship/dev";
 import { defineConfig } from "vite";
+import { moved } from "../../scripts/lib/ports.mjs";
 import { fileURLToPath } from "node:url";
 
 const pkg = (name: string) =>
@@ -35,5 +36,5 @@ export default defineConfig({
       ),
     },
   },
-  server: { port: 5194, strictPort: true },
+  server: { port: moved(5194), strictPort: true },
 });

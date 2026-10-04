@@ -94,7 +94,8 @@ The harnesses drive dev servers on fixed ports, so run **one harness chain
 at a time** per checkout; a second checkout (a worktree) runs its servers
 outside 5190–5399 by setting `GRAVIEW_PORT_BASE` (5600 puts todo on 5603:
 every port moves to base + (port − 5190), through `scripts/lib/ports.mjs`,
-and no harness writes a port of its own), and a harness only borrows a
+and no harness writes a port of its own; the apps' vite configs move
+with it, and the desk links to and probes the moved ports), and a harness only borrows a
 server that serves its own checkout. Each writes its verdict to `docs/*.json` as named claims; when one
 fails it names the claim that stopped being true. Every page every harness
 opens is also judged by the watch (`scripts/lib/watch.mjs`) — the keyboard
