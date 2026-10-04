@@ -104,6 +104,9 @@ yesterday and now the button is gone.
    kind to a seat's own records — theirs, joined to theirs, or made by
    them. A served store sends a seat only what it sees, withholds the rest
    of the log in place, and refuses an act that names a record it may not.
+   A record whose required reference names a kind its seat may not see is
+   withheld whole (`sight-hides-required-ref` says which role loses which
+   kind): let the role see the target, or make the field optional.
 
 ## Worked examples
 
