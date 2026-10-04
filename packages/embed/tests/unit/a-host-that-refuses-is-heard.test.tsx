@@ -55,7 +55,11 @@ const press = async (element: Element, testid: string) => {
 async function edit(element: Element) {
   const studio = element.querySelector('[data-testid="studio"]')!;
   const open = [...studio.querySelectorAll<HTMLButtonElement>('[data-graview-view="kind:field"] button')].find((button) => button.textContent?.includes("open"));
-  await act(async () => open!.click());
+  // The scene may still be settling under a studio that arrived from cache: pressed until the fields are open.
+  for (let tries = 0; tries < 20 && !studio.querySelector('[data-graview-pick="field:vendor.notes"]'); tries += 1) {
+    if (open!.getAttribute("aria-expanded") !== "true") await act(async () => open!.click());
+    await act(async () => new Promise((wait) => setTimeout(wait, 50)));
+  }
   const pick = studio.querySelector<HTMLElement>('[data-graview-pick="field:vendor.notes"]');
   expect(pick, "vendor's notes in the scene").not.toBeNull();
   await act(async () => {
@@ -92,6 +96,8 @@ describe("a host that keeps the declaration, and refuses a change", () => {
   it("a promise the host keeps its answer in is waited for, then heard", async () => {
     let answer!: (verdict: { ok: false; findings: readonly Finding[] }) => void;
     const element = await builder(() => new Promise((resolve) => (answer = resolve)));
+    // A change to hand over: with nothing changed the host is not asked at all (FR-65).
+    await edit(element);
     await press(element, "studio-apply");
     expect(element.querySelector('[data-testid="studio-applied"]')?.getAttribute("data-applied")).toBe("asking");
     expect(element.querySelector('[data-testid="studio-applied"]')?.textContent).not.toContain("Handed to the host");
@@ -102,6 +108,7 @@ describe("a host that keeps the declaration, and refuses a change", () => {
   it("a host that keeps it, saying so or saying nothing, is still said to have it", async () => {
     for (const onApply of [() => ({ ok: true }) as const, () => undefined]) {
       const element = await builder(onApply);
+      await edit(element);
       await press(element, "studio-apply");
       const panel = element.querySelector('[data-testid="studio-applied"]');
       expect(panel?.getAttribute("data-applied")).toBe("kept");

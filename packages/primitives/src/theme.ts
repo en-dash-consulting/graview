@@ -108,6 +108,12 @@ export interface ThemeCssOptions {
    * the document. The tokens land on that element and the ground, type and
    * colour that `html, body` would have taken land there too, so a Graview
    * inside somebody else's page is themed without touching their page.
+   *
+   * Every other rule is held inside the box as well (FR-64): a selector is
+   * written under `:where(<scope>)`, so it weighs what it weighed on a whole
+   * page and reaches nothing of the host's. Only the reader's motion answer
+   * is asked of the document element, and only to apply inside the box; the
+   * registered custom property and the keyframes name no element.
    */
   readonly scope?: string;
 }
@@ -148,6 +154,101 @@ export function themeCss(
   brand: Brand = GRAVIEW_BRAND,
   options: ThemeCssOptions = {},
 ): string {
+  const css = sheet(scheme, brand, options);
+  return options.scope === undefined ? css : withinTheBox(css, options.scope);
+}
+
+/*
+ * A SCOPED STYLESHEET KEEPS TO ITS BOX (FR-64).
+ *
+ * The tokens, the ground and the type were written on the scope, but every
+ * other rule was written for a whole page — `button`, `h1, h2, h3, h4`,
+ * `code` — and an embed's <style> is a whole page's stylesheet: on Cloud's
+ * builder the host's own buttons, below the studio, took the framework's
+ * ink on a transparent ground and failed contrast in dark. Rather than
+ * remember to scope each rule as it is written, the finished sheet is
+ * rewritten: every selector that does not already start at the box is put
+ * under `:where(<scope>)`. `:where` weighs nothing, so each rule wins and
+ * loses exactly the contests it did on a whole page, and only where it
+ * applies changes. What is not a style rule (a registered property, the
+ * keyframes) names no element and is left as it is; @media and @supports
+ * are walked into.
+ */
+function withinTheBox(css: string, scope: string): string {
+  const under = `:where(${scope}) `;
+  const at = (selector: string) =>
+    selector === scope ||
+    selector.startsWith(`${scope} `) ||
+    selector.startsWith(`${scope}:`) ||
+    selector.startsWith(`${scope}[`) ||
+    // The reader's motion answer: asked of the document, applied inside the box.
+    (selector.startsWith(":root") && selector.includes(` ${scope} `));
+  const rewrite = (prelude: string) => {
+    const lead = prelude.match(/^\s*/)![0];
+    const list = splitSelectors(prelude.trim()).map((selector) => (at(selector) ? selector : `${under}${selector}`));
+    return `${lead}${list.join(", ")} `;
+  };
+  const walk = (text: string): string => {
+    let out = "";
+    let i = 0;
+    while (i < text.length) {
+      const open = text.indexOf("{", i);
+      if (open === -1) return out + text.slice(i);
+      const close = blockEnd(text, open);
+      const prelude = text.slice(i, open);
+      const body = text.slice(open + 1, close);
+      const name = prelude.trim().startsWith("@") ? prelude.trim().split(/[\s(]/)[0] : null;
+      if (name === null) out += `${rewrite(prelude)}{${body}}`;
+      else if (name === "@media" || name === "@supports" || name === "@container" || name === "@layer") out += `${prelude}{${walk(body)}}`;
+      else out += `${prelude}{${body}}`;
+      i = close + 1;
+    }
+    return out;
+  };
+  return walk(css);
+}
+
+/** The index of the brace that closes the block opened at `open`, past strings and comments. */
+function blockEnd(text: string, open: number): number {
+  let depth = 0;
+  let quote: string | null = null;
+  for (let j = open; j < text.length; j++) {
+    const ch = text[j]!;
+    if (quote) {
+      if (ch === "\\") j++;
+      else if (ch === quote) quote = null;
+    } else if (ch === '"' || ch === "'") quote = ch;
+    else if (ch === "/" && text[j + 1] === "*") j = text.indexOf("*/", j + 2) + 1 || text.length;
+    else if (ch === "{") depth++;
+    else if (ch === "}" && --depth === 0) return j;
+  }
+  return text.length;
+}
+
+/** A selector list split on its own commas — not those inside `:is(…)`, `[…]` or a string. */
+function splitSelectors(list: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let quote: string | null = null;
+  let current = "";
+  for (const ch of list) {
+    if (quote) {
+      if (ch === quote) quote = null;
+    } else if (ch === '"' || ch === "'") quote = ch;
+    else if (ch === "(" || ch === "[") depth++;
+    else if (ch === ")" || ch === "]") depth--;
+    else if (ch === "," && depth === 0) {
+      out.push(current.trim());
+      current = "";
+      continue;
+    }
+    current += ch;
+  }
+  if (current.trim()) out.push(current.trim());
+  return out;
+}
+
+function sheet(scheme: Scheme, brand: Brand, options: ThemeCssOptions): string {
   const tokens = brand.schemes[scheme];
   const root = options.scope ?? ":root";
   const surface = options.scope ?? "html, body";

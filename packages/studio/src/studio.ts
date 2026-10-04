@@ -1,4 +1,4 @@
-import { checkApp, Store, type AnySchema, type Batch, type CheckResult, type GraphSnapshot, type GraviewApp, type MigrationDeclaration, type MutationCall, type Principal } from "@graview/core";
+import { checkApp, diffSnapshots, isEmptyDiff, Store, type AnySchema, type Batch, type CheckResult, type GraphSnapshot, type GraviewApp, type MigrationDeclaration, type MutationCall, type Principal } from "@graview/core";
 import { compileDocument, documentOf, toDocument, warning, type CompiledDocument, type RefusedDocument, type DocumentEdit, type EditOutcome, type Fill, type Finding, type GraviewDocument } from "@graview/core/document";
 import { resolveProposal } from "@graview/tools";
 import { documentAfter, documentEdits } from "./edits.js";
@@ -30,6 +30,12 @@ export interface Studio<S extends AnySchema = AnySchema> {
   check(): CheckResult;
   /** Batches applied since the studio opened — every change, with its author and intent. */
   changes(): readonly Batch[];
+  /**
+   * WHETHER THE DECLARATION STANDS AS IT OPENED (FR-65): nothing changed,
+   * or every change taken back again. Read from the graph, not the history,
+   * so a change undone is no change; an Apply then has nothing to hand on.
+   */
+  unchanged(): boolean;
   /** The changes an agent seat made and nobody has taken back. */
   proposals(): readonly Batch[];
   /** An agent's proposed change: applied under its seat, in a batch of its own, so a person can keep or take it back. */
@@ -248,6 +254,7 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
     files: (sourceOptions) =>
       declarationFiles(store.snapshot() as GraphSnapshot, { name: base.name, base: base, ...sourceOptions }),
     edits: () => made().edits,
+    unchanged: () => isEmptyDiff(diffSnapshots(seed, store.snapshot() as GraphSnapshot) as never),
     document,
     whyNoDocument: () => noDocument,
     sourceChanges: () => sourceChanges(seed, store.snapshot() as GraphSnapshot, base),

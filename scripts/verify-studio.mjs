@@ -78,6 +78,9 @@ const verdict = (page) =>
  * product's bundler splits it. Then: axe over the whole document, what the
  * page fetched, and a change made, refused, and still there.
  */
+/** The host's own controls below the studio, as Cloud's builder has them (FR-64). */
+const HOSTS_OWN = `<section id="host-own" aria-label="Staged"><h2>Staged</h2><p>Nothing yet in <code>vendor.notes</code>.</p><p><button type="button">Preview these changes</button></p></section>`;
+
 async function inAHostsPage(browser, report) {
   const require = createRequire(import.meta.url);
   const esbuild = require("esbuild");
@@ -100,7 +103,7 @@ async function inAHostsPage(browser, report) {
             place: StudioPlace,
             onApply(applied) {
               window.__handed.push(applied.edits ?? null);
-              return { ok: false, findings: [{ severity: "error", code: "host-refused", path: "kinds.vendor", message: "This host previews only what an edit says, and keeps nothing else" }] };
+              return { ok: false, sentence: "Not previewed: this host previews only what an edit says.", findings: [{ severity: "error", code: "host-refused", path: "kinds.vendor", message: "This host previews only what an edit says, and keeps nothing else" }] };
             },
           },
           stop: "#overview=1&in.studio=open",
@@ -141,9 +144,15 @@ async function inAHostsPage(browser, report) {
     join(out, "index.html"),
     `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Build Wedding vendors</title></head>
 <body><header><nav aria-label="Account"><a href="/apps">Apps</a></nav></header>
-<main><h1>Build Wedding vendors</h1><h2>Studio</h2><div id="graview-builder" style="position:relative;height:720px"></div></main>
+<main><h1>Build Wedding vendors</h1><h2>Studio</h2><div id="graview-builder" style="position:relative;height:720px"></div>${HOSTS_OWN}</main>
 <footer><a href="/privacy">Privacy</a></footer>
 <script type="module" src="/entry.js"></script></body></html>`,
+  );
+  // The same page with no embed on it: what the host's own elements look like untouched.
+  writeFileSync(
+    join(out, "plain.html"),
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Build Wedding vendors</title></head>
+<body><main><h1>Build Wedding vendors</h1>${HOSTS_OWN}</main></body></html>`,
   );
   const fetched = [];
   const host = createServer((request, response) => {
@@ -204,6 +213,20 @@ async function inAHostsPage(browser, report) {
       ok: audited.mains === 1 && audited.mainsInTheEmbed === 0 && landmarks.length === 0,
     };
 
+    /* ---- FR-65: Apply with nothing changed asks the host nothing */
+    await page.click('[data-testid="studio-apply"]');
+    await page.waitForSelector('[data-testid="studio-applied"]', { timeout: 10_000 });
+    const nothing = await page.evaluate(() => {
+      const panel = document.querySelector('[data-testid="studio-applied"]');
+      return { said: panel?.getAttribute("data-applied") ?? null, text: panel?.querySelector("strong")?.textContent?.trim() ?? "", handed: window.__handed.length };
+    });
+    report.checks.anApplyWithNothingChangedAsksTheHostNothing = {
+      ...nothing,
+      ok: nothing.said === "unchanged" && nothing.text.startsWith("Nothing to apply") && nothing.handed === 0,
+    };
+    await page.locator('[data-testid="studio-applied"] button', { hasText: "Dismiss" }).first().click();
+    await page.waitForTimeout(200);
+
     /* ---- FR-60: a change made, refused by the host, and still there */
     await page.locator('#graview-builder [data-graview-view="kind:field"] button', { hasText: "open" }).first().click();
     await page.waitForSelector('[data-graview-pick="field:vendor.notes"]', { timeout: 10_000 });
@@ -222,7 +245,7 @@ async function inAHostsPage(browser, report) {
       await page.waitForTimeout(300);
       return page.evaluate(() => {
         const panel = document.querySelector('[data-testid="studio-applied"]');
-        return { said: panel?.getAttribute("data-applied") ?? null, text: panel?.textContent ?? "", open: document.querySelector('[data-testid="studio"]') !== null };
+        return { said: panel?.getAttribute("data-applied") ?? null, text: panel?.textContent ?? "", heading: panel?.querySelector("strong")?.textContent?.trim() ?? "", open: document.querySelector('[data-testid="studio"]') !== null };
       });
     };
     const once = await pressApply();
@@ -241,6 +264,51 @@ async function inAHostsPage(browser, report) {
         once.open &&
         twice.said === "refused-by-host" &&
         JSON.stringify(handed) === JSON.stringify([[{ op: "remove-field", kind: "vendor", field: "notes" }], [{ op: "remove-field", kind: "vendor", field: "notes" }]]),
+    };
+    /* ---- FR-65: the host's sentence is the heading, in place of the studio's own */
+    report.checks.aHostsRefusalIsHeadedInItsOwnWords = {
+      heading: once.heading,
+      ok: once.heading === "Not previewed: this host previews only what an edit says." && !once.text.includes("the host could not keep this change"),
+    };
+    /* ---- FR-64: the host's own button, heading and code, as the host styled them */
+    /*
+     * The embed's stylesheet once said `button`, `h1, h2, h3, h4` and `code`
+     * bare, and the host's buttons below the studio took the framework's ink
+     * on a transparent ground (3.41:1 in dark, on Cloud's builder). Read
+     * beside the same markup on a page with no embed, in both schemes.
+     */
+    const looks = (where) =>
+      where.evaluate(() => {
+        const keys = ["color", "background-color", "font-family", "font-size", "font-weight", "letter-spacing", "border-top-width", "border-top-style", "border-top-color", "border-radius", "padding-top", "padding-left", "box-shadow", "cursor", "line-height"];
+        const read = (selector) => {
+          const style = getComputedStyle(document.querySelector(selector));
+          return Object.fromEntries(keys.map((key) => [key, style.getPropertyValue(key)]));
+        };
+        return { button: read("#host-own button"), heading: read("#host-own h2"), code: read("#host-own code") };
+      });
+    const plain = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    const schemes = {};
+    try {
+      for (const colorScheme of ["dark", "light"]) {
+        await page.emulateMedia({ colorScheme });
+        await plain.emulateMedia({ colorScheme });
+        await plain.goto(`${at("studio-host")}/plain.html`, { waitUntil: "load" });
+        await page.waitForTimeout(300);
+        const beside = await looks(page);
+        const alone = await looks(plain);
+        const changed = Object.entries(beside).flatMap(([element, style]) =>
+          Object.entries(style).filter(([key, value]) => alone[element][key] !== value).map(([key, value]) => `${element} ${key}: ${alone[element][key]} → ${value}`),
+        );
+        const embedScheme = await page.evaluate(() => document.querySelector("#graview-builder [data-graview-scheme]")?.getAttribute("data-graview-scheme") ?? null);
+        schemes[colorScheme] = { embedScheme, changed };
+      }
+    } finally {
+      await page.emulateMedia({ colorScheme: null });
+      await plain.close();
+    }
+    report.checks.theHostsOwnButtonHeadingAndCodeAreAsTheHostStyledThem = {
+      ...schemes,
+      ok: Object.entries(schemes).every(([colorScheme, said]) => said.embedScheme === colorScheme && said.changed.length === 0),
     };
     report.checks.theHostsPageThrowsNothing = { errors, ok: errors.length === 0 };
   } finally {

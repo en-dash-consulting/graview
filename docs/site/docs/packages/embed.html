@@ -1100,7 +1100,7 @@ const faceReady = preload(face);            // with no face named, every face
 const app = await fetchAndCompile();        // the host's own round trips, meanwhile
 await faceReady;
 const handle = mount(root, { app, face });  // drawn in this commit</code></pre></div>
-<p>What this asks of the framework, and what it adds: the theme scopes to the element (<code>themeCss(scheme, brand, { scope })</code>) rather than the document; the panes size against the picture's own box (<code>cqh</code>) rather than the viewport; the routed face runs on a memory router, so the host page's address is never touched; the brand's fonts are fetched by the embed rather than assumed. The store is in memory and starts from the seed on every mount, unless the host hands it one.</p>
+<p>What this asks of the framework, and what it adds: the theme scopes to the element (<code>themeCss(scheme, brand, { scope })</code>) rather than the document, every rule of it held inside that element, so nothing of the host's is restyled; the panes size against the picture's own box (<code>cqh</code>) rather than the viewport; the routed face runs on a memory router, so the host page's address is never touched; the brand's fonts are fetched by the embed rather than assumed. The store is in memory and starts from the seed on every mount, unless the host hands it one.</p>
 <h3>What went wrong, and how long it took</h3>
 <div class="code" data-scroller><pre><code>mount(root, {
   app,
@@ -1112,7 +1112,7 @@ const handle = mount(root, { app, face });  // drawn in this commit</code></pre>
 <p>The Studio is on the strip for the seat that keeps the app, and writes through a dev server's door or hands over files. A host whose readers cannot save a declaration leaves it off, or keeps what it applies:</p>
 <div class="code" data-scroller><pre><code>mount(root, { app, studio: false });                      // no Studio place at all
 mount(root, { app, studio: { onApply: ({ app, migration, files }) =&gt; propose(app) } });</code></pre></div>
-<p>Handed an onApply, the studio asks after no door and writes nothing; what the checker passed is the host's.</p>
+<p>Handed an onApply, the studio asks after no door and writes nothing; what the checker passed is the host's. A host that could not keep it answers ok: false with a sentence, which the studio says as its heading, and findings, which may be empty; an Apply with nothing changed is said by the studio and never reaches the host.</p>
 <p><code>@graview/embed/pages</code> is the routed face alone, with the same options less the face, the stop, the heading and the studio, and the same handle less the faces. It takes <code>views</code>, and its pages draw the same cards, rows and record pages the whole embed's would. A page that only ever shows the pages imports that and does not bundle the scene, the Graview or the studio:</p>
 <div class="code" data-scroller><pre><code>import { mount } from "@graview/embed/pages";</code></pre></div>
 <p>Bundled for the browser without React, the pages face alone is about 500 KB minified (165 KB gzipped); the whole embed loads about 750 KB (190 KB) before a face is fetched, and every face about 1.28 MB (370 KB); <code>node scripts/inspect-pack.mjs</code> fails CI when one passes its budget (<code>scripts/lib/bundle-budget.mjs</code>).</p>

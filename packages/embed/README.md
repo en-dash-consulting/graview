@@ -49,7 +49,8 @@ const handle = mount(root, { app, face });  // drawn in this commit
 ```
 
 What this asks of the framework, and what it adds: the theme scopes to the
-element (`themeCss(scheme, brand, { scope })`) rather than the document; the
+element (`themeCss(scheme, brand, { scope })`) rather than the document, every
+rule of it held inside that element, so nothing of the host's is restyled; the
 panes size against the picture's own box (`cqh`) rather than the viewport;
 the routed face runs on a memory router, so the host page's address is never
 touched; the brand's fonts are fetched by the embed rather than assumed. The
@@ -85,7 +86,10 @@ mount(root, { app, studio: { onApply: ({ app, migration, files }) => propose(app
 ```
 
 Handed an onApply, the studio asks after no door and writes nothing; what the
-checker passed is the host's.
+checker passed is the host's. A host that could not keep it answers ok: false
+with a sentence, which the studio says as its heading, and findings, which
+may be empty; an Apply with nothing changed is said by the studio and never
+reaches the host.
 
 `@graview/embed/pages` is the routed face alone, with the same options less
 the face, the stop, the heading and the studio, and the same handle less the
