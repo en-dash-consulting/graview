@@ -237,6 +237,11 @@ made is not made twice, and one that no longer fits is refused in words on
 `next.onRefusal`. No page reloads. A polling client learns it the same way: every answer a
 poll reads (`/graview/state`, `/graview/since`, `/graview/here`, the `/graview/ops` answer)
 says the declaration `version` and the host's `build`, and `openRemote` compares it on each.
+`version` is the host's own monotonic number for the declaration it serves — `app.version`,
+or a host's document version — handed to `liveProtocol({ version })` and, on the client, to
+`resolveApp(version)`: it names one declaration and only ever grows. A `declaration` push or
+a welcome with the number a client already serves is ignored, so a host that pushes twice
+reopens nothing.
 
 **Version skew.** A host says its `build` (an opaque string) in every welcome; a page that
 said another in its hello keeps working and `remote.onBuild(…)` is told once. A host with

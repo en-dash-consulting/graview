@@ -127,7 +127,16 @@ export interface LiveReceived {
 export interface LiveProtocolOptions<S extends AnySchema> {
   /** The store the wire serves: the host's own (FR-42). */
   readonly store: Store<S>;
-  /** The declaration's version, said in a welcome's state. 1 when unsaid. */
+  /**
+   * THE DECLARATION'S VERSION (FR-43): the host's own monotonic number for
+   * the declaration it serves — `app.version`, or a host's document version
+   * (Graview Cloud's `documentVersion`) — said in every welcome, in the
+   * state, on every route's answer, and in the `declaration` push. A client
+   * hands it to its `resolveApp(version)` to get the app at that version,
+   * so it names one declaration and only ever grows. A `declaration` push,
+   * or a welcome, with the number the client already serves is ignored:
+   * nothing reopens. 1 when unsaid.
+   */
   readonly version?: number;
   /** What opening the store migrated, said in a welcome's state. */
   readonly migrated?: readonly string[];
