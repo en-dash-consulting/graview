@@ -80,7 +80,9 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     not wait for its chunk); where only the pages are shown,
     import `mount` from `@graview/embed/pages` and bundle nothing else.
     `onError` and `onReady` tell the host failures (class and module only)
-    and time to first render.
+    and time to the first face drawn. Each face is fetched as it is first
+    drawn: `preload(face)` starts it beside the host's own requests, and
+    `handle.drawn()` waits for it.
 
 ## Worked examples
 

@@ -1,9 +1,9 @@
-import { z } from "zod";
+import * as z from "../schema/zod.js";
 import { labelOf } from "../schema/define-node.js";
 import { humaniseField, nounOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
-import { nodeRef, nodeRefArgs } from "./node-ref.js";
+import { nodeRefArgs, refTo } from "./node-ref.js";
 import type { AnyMutationDefinition } from "./types.js";
 
 /**
@@ -140,7 +140,7 @@ export function deriveEditMutations<S extends AnySchema>(
     if (taken.has(name)) continue;
     const fields = unwrittenFields(schema, mutations, kind);
     if (fields.length === 0) continue;
-    const shape = definition.fields.shape as Record<string, z.ZodType>;
+    const shape = definition.fields.shape as unknown as Record<string, z.ZodMiniType>;
     const noun = nounOf(definition, kind);
     const said = fields.map((field) => humaniseField(field).toLowerCase());
     derived.push({
@@ -152,9 +152,9 @@ export function deriveEditMutations<S extends AnySchema>(
       subject: { kinds: [kind], arg: "id" },
       writes: fields,
       input: z.object({
-        id: nodeRef([kind]),
-        ...Object.fromEntries(fields.map((field) => [field, withoutDefault(shape[field]!).optional()])),
-      }),
+        id: refTo([kind]),
+        ...Object.fromEntries(fields.map((field) => [field, z.optional(withoutDefault(shape[field]!))])),
+      }) as never,
       describe: (args, graph) => {
         const node = graph.getNode((args as { id: string }).id);
         const label = node ? labelOf(definition, node) : (args as { id: string }).id;
@@ -203,8 +203,8 @@ export function deriveEditMutations<S extends AnySchema>(
  * Under zod 4 `optional()` over a `default()` still fills the default, so
  * renaming a person set their role back to "member".
  */
-function withoutDefault(schema: z.ZodType): z.ZodType {
-  let current = schema as z.ZodType & { _zod?: { def?: { type?: string; innerType?: z.ZodType } } };
+function withoutDefault(schema: z.ZodMiniType): z.ZodMiniType {
+  let current = schema as z.ZodMiniType & { _zod?: { def?: { type?: string; innerType?: z.ZodMiniType } } };
   for (let depth = 0; depth < 4; depth++) {
     const def = current._zod?.def;
     if ((def?.type === "default" || def?.type === "prefault") && def.innerType) current = def.innerType as typeof current;
@@ -274,7 +274,7 @@ export function deriveRemoveMutations<S extends AnySchema>(
       subject: { kinds: [kind], arg: "id" },
       destructive: true,
       idempotent: true,
-      input: z.object({ id: nodeRef([kind]) }),
+      input: z.object({ id: refTo([kind]) }) as never,
       describe: (args, graph) => {
         const id = (args as { id: string }).id;
         const node = graph.getNode(id);

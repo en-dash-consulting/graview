@@ -3,8 +3,11 @@
 import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, z, type SettingDeclaration } from "@graview/core";
 import { createStoreHandler, openRemote } from "@graview/ship/runtime";
 import { act } from "react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { mount, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
+import { beforeAll, afterEach, beforeEach, describe, expect, it } from "vitest";
+import { mount, type EmbedHandle, type EmbedOptions, preload } from "../../src/index.js";
+
+// Every face fetched before the first mount, so each draws in the commit `mount` makes (FR-57).
+beforeAll(() => preload());
 
 /**
  * AN EMBED HOLDS INSIDE A CHAT'S WIDGET (FR-13).

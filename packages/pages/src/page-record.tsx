@@ -1,6 +1,6 @@
 import { describeNode, humaniseField, isWithheld, type AnySchema } from "@graview/core";
-import { DefaultViewElsewhere } from "@graview/primitives";
-import { isDefaultView, type ViewProps } from "@graview/react";
+import { DefaultViewElsewhere } from "@graview/primitives/pages";
+import { isDefaultView, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useRef, useState } from "react";

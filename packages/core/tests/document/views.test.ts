@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { compileDocument, diffDocuments, readDocument, type GraviewDocument } from "../../src/document/index.js";
+import { compileDocumentWithoutCheck, diffDocuments, readDocument, type GraviewDocument } from "../../src/document/index.js";
 
 const vendors = JSON.parse(readFileSync(new URL("./fixtures/vendors.gdd.json", import.meta.url), "utf8"));
 const withViews = (views: unknown) => ({ ...vendors, views });
@@ -30,7 +30,7 @@ describe("view specs are checked into findings with JSON paths", () => {
         },
       }),
     ).toEqual([]);
-    const c = compileDocument(withViews({ vendor: { card: CARD } }), { today: () => "2026-10-02", skipFrameworkCheck: true });
+    const c = compileDocumentWithoutCheck(withViews({ vendor: { card: CARD } }), { today: () => "2026-10-02" });
     expect(c.ok).toBe(true);
   });
 
@@ -88,7 +88,7 @@ describe("view specs are checked into findings with JSON paths", () => {
   });
 
   it("refuses a document whose views do not check, when compiled", () => {
-    const c = compileDocument(withViews({ vendor: { card: [{ badge: "{status}", tone: "green" }] } }), { skipFrameworkCheck: true });
+    const c = compileDocumentWithoutCheck(withViews({ vendor: { card: [{ badge: "{status}", tone: "green" }] } }));
     expect(c.ok).toBe(false);
   });
 });

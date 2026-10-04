@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Store, type AnySchema, type GraviewApp } from "@graview/core";
-import { compileDocument, type GraviewDocument } from "@graview/core/document";
+import { compileDocumentWithoutCheck, type GraviewDocument } from "@graview/core/document";
 import axe from "axe-core";
 import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
@@ -23,7 +23,7 @@ import { mount, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
 const vendors = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../core/tests/document/fixtures/vendors.gdd.json"), "utf8")) as GraviewDocument;
 
 function builder(): { app: GraviewApp<AnySchema>; store: Store<AnySchema> } {
-  const compiled = compileDocument(vendors, { skipFrameworkCheck: true });
+  const compiled = compileDocumentWithoutCheck(vendors);
   if (!compiled.ok) throw new Error(JSON.stringify(compiled.findings));
   const app = compiled.app as GraviewApp<AnySchema>;
   // As Cloud's builder does: a store with no policy, because the host judged who may build.

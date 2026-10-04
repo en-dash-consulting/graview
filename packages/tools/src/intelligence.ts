@@ -7,6 +7,7 @@ import {
   type FormField,
   type MutationCall,
   type Store,
+  defOf,
 } from "@graview/core";
 import type { Affordance, AffordanceProvider, OpenParameter } from "./types.js";
 
@@ -510,6 +511,6 @@ export function stillNeeded<S extends AnySchema>(
 
 /** Whether an argument may be left out, so it does not count as unanswered. */
 function optionalArg(schema: unknown): boolean {
-  const type = (schema as { _def?: { type?: string } })?._def?.type;
+  const type = defOf(schema)?.type;
   return type === "optional" || type === "default" || type === "nullable";
 }

@@ -38,6 +38,7 @@
     "apps:all": "pnpm --parallel --filter @graview/launcher --filter @graview/todo --filter @graview/seedbed --filter @graview/rota dev",
     "audit-ui": "node scripts/audit-ui.mjs",
     "verify": "node scripts/verify-all.mjs",
+    "hosted": "node scripts/verify-hosted-page.mjs",
     "verify:products": "node scripts/verify-products.mjs",
     "elm": "node scripts/eval-elm.mjs",
     "smoke:create": "node scripts/smoke-create.mjs",

@@ -12,12 +12,12 @@ import type {
   ViewRegistry,
 } from "@graview/core";
 import { search, tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen, touchWeights } from "@graview/core";
-import { loadIntelligenceConfig, saveIntelligenceConfig, type AffordanceProvider, type IntelligenceConfig } from "@graview/tools";
+import { loadIntelligenceConfig, saveIntelligenceConfig, type AffordanceProvider, type IntelligenceConfig } from "@graview/tools/frame";
 import { honourSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
-import type { ViewState } from "@graview/layout";
-import { EMPTY_VIEW, edgeOfSelection, isBandAggregate, kindOfCard, kindsOfAggregate, withFocus, withSelection } from "@graview/layout";
+import type { ViewState } from "@graview/layout/view";
+import { EMPTY_VIEW, edgeOfSelection, isBandAggregate, kindOfCard, kindsOfAggregate, withFocus, withSelection } from "@graview/layout/view";
 import {
   createContext,
   useCallback,

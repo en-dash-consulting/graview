@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-04T07:08:22.174Z",
+  "at": "2026-10-04T16:04:40.900Z",
   "packages": {
     "@graview/core": {
-      "files": 487,
-      "tarballBytes": 583521,
+      "files": 491,
+      "tarballBytes": 586955,
       "ok": true
     },
     "create-graview": {
@@ -12,38 +12,38 @@
       "ok": true
     },
     "@graview/embed": {
-      "files": 23,
-      "tarballBytes": 31400,
+      "files": 35,
+      "tarballBytes": 37093,
       "ok": true
     },
     "graview": {
       "files": 11,
-      "tarballBytes": 4891,
+      "tarballBytes": 4892,
       "ok": true
     },
     "@graview/guest": {
       "files": 35,
-      "tarballBytes": 21063,
+      "tarballBytes": 21075,
       "ok": true
     },
     "@graview/layout": {
-      "files": 47,
-      "tarballBytes": 93800,
+      "files": 55,
+      "tarballBytes": 95495,
       "ok": true
     },
     "@graview/pages": {
-      "files": 79,
-      "tarballBytes": 89934,
+      "files": 83,
+      "tarballBytes": 90471,
       "ok": true
     },
     "@graview/primitives": {
-      "files": 223,
-      "tarballBytes": 363190,
+      "files": 239,
+      "tarballBytes": 362404,
       "ok": true
     },
     "@graview/react": {
-      "files": 151,
-      "tarballBytes": 220289,
+      "files": 155,
+      "tarballBytes": 215918,
       "ok": true
     },
     "@graview/render": {
@@ -58,17 +58,17 @@
     },
     "@graview/skills": {
       "files": 25,
-      "tarballBytes": 44707,
+      "tarballBytes": 44985,
       "ok": true
     },
     "@graview/studio": {
-      "files": 71,
-      "tarballBytes": 121008,
+      "files": 75,
+      "tarballBytes": 126539,
       "ok": true
     },
     "@graview/tools": {
-      "files": 123,
-      "tarballBytes": 171252,
+      "files": 135,
+      "tarballBytes": 173704,
       "ok": true
     }
   },
@@ -76,40 +76,88 @@
     {
       "name": "the pages face alone",
       "load": "first",
-      "minified": 938384,
-      "gzipped": 249580,
-      "chunks": 1,
+      "minified": 500379,
+      "gzipped": 163300,
+      "chunks": 5,
       "budget": {
-        "minified": 950000,
-        "gzipped": 252000
+        "minified": 530000,
+        "gzipped": 175000
       },
       "carries": [],
+      "defers": [],
+      "lazy": [
+        "@graview/pages",
+        "@graview/primitives"
+      ],
       "over": false
     },
     {
       "name": "embed without the studio",
       "load": "first",
-      "minified": 1190314,
-      "gzipped": 334771,
-      "chunks": 2,
+      "minified": 747418,
+      "gzipped": 190384,
+      "chunks": 7,
       "budget": {
-        "minified": 1200000,
-        "gzipped": 337000
+        "minified": 780000,
+        "gzipped": 200000
       },
       "carries": [],
+      "defers": [],
+      "lazy": [
+        "@graview/core",
+        "@graview/embed",
+        "@graview/layout",
+        "@graview/pages",
+        "@graview/primitives",
+        "@graview/react",
+        "@graview/ship",
+        "@graview/studio",
+        "@graview/tools"
+      ],
       "over": false
     },
     {
       "name": "every face",
       "load": "all",
-      "minified": 1300584,
-      "gzipped": 370200,
-      "chunks": 3,
+      "minified": 1289095,
+      "gzipped": 372654,
+      "chunks": 21,
       "budget": {
         "minified": 1310000,
         "gzipped": 373000
       },
       "carries": [],
+      "defers": [],
+      "lazy": [
+        "@graview/core",
+        "@graview/embed",
+        "@graview/layout",
+        "@graview/pages",
+        "@graview/primitives",
+        "@graview/react",
+        "@graview/ship",
+        "@graview/studio",
+        "@graview/tools"
+      ],
+      "over": false
+    },
+    {
+      "name": "embed with the studio handed in",
+      "load": "first",
+      "minified": 1284642,
+      "gzipped": 368305,
+      "chunks": 10,
+      "budget": {
+        "minified": 1310000,
+        "gzipped": 373000
+      },
+      "carries": [],
+      "defers": [],
+      "lazy": [
+        "@graview/embed",
+        "@graview/pages",
+        "@graview/primitives"
+      ],
       "over": false
     }
   ],

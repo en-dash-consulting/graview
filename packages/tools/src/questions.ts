@@ -11,6 +11,8 @@ import {
   type InvariantDefinition,
   type Store,
   type Violation,
+  defOf,
+  descriptionOf,
 } from "@graview/core";
 
 /**
@@ -116,10 +118,11 @@ const MAX_SCORE_LEVELS = 10;
 
 /** The description a zod field carries, through optional/default wrappers. */
 function describedAs(schema: unknown): string | undefined {
-  let at = schema as { description?: string; _def?: { innerType?: unknown } } | undefined;
+  let at: unknown = schema;
   while (at) {
-    if (typeof at.description === "string" && at.description.length > 0) return at.description;
-    at = at._def?.innerType as typeof at;
+    const said = descriptionOf(at);
+    if (said) return said;
+    at = defOf(at)?.innerType;
   }
   return undefined;
 }

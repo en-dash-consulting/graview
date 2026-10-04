@@ -86,11 +86,11 @@ async function inAHostsPage(browser, report) {
   const built = await esbuild.build({
     stdin: {
       contents: `
-        import { compileDocument } from "@graview/core/document";
+        import { compileDocumentWithoutCheck } from "@graview/core/document";
         import { mount } from "@graview/embed";
         import { StudioPlace } from "@graview/studio";
         import vendors from ${JSON.stringify(vendors)};
-        const compiled = compileDocument(vendors, { skipFrameworkCheck: true });
+        const compiled = compileDocumentWithoutCheck(vendors);
         window.__handed = [];
         const handle = mount(document.getElementById("graview-builder"), {
           app: compiled.app,
@@ -169,9 +169,18 @@ async function inAHostsPage(browser, report) {
     await page.waitForTimeout(1200);
 
     /* ---- FR-63: the studio handed in is in what the page loads first */
+    /*
+     * Waiting for no chunk is the studio's: the scene and the framework's
+     * views are fetched as the face draws (FR-57), but none of what the page
+     * fetched after its first chunks holds a module of `@graview/studio`.
+     */
+    const later = fetched.filter((path) => !first.has(path));
+    const studioLater = later.filter((path) => Object.keys(outputs[Object.keys(outputs).find((one) => name(one) === path)]?.inputs ?? {}).some((input) => /packages\/studio\/src\//.test(input)));
     report.checks.aStudioHandedInWaitsForNoChunk = {
       fetched,
-      ok: fetched.length > 0 && fetched.every((path) => first.has(path)),
+      later,
+      studioLater,
+      ok: fetched.length > 0 && fetched.some((path) => first.has(path)) && studioLater.length === 0,
     };
 
     /* ---- FR-59: an editor the host offers it to sees it, the policy kept */

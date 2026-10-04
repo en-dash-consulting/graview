@@ -1,6 +1,6 @@
 import { failureWords, humaniseField, InvalidArguments, nounOf, withArticle, type AnySchema } from "@graview/core";
 import { useSubject } from "../companion.js";
-import { edgeOfSelection, kindsOf } from "@graview/layout";
+import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { useAffordances, useApplyAffordance, useGraview, useSelection } from "@graview/react";
 import { loadPins, togglePin, type Affordance, type PinOverrides } from "@graview/tools";
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";

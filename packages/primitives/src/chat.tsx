@@ -1,6 +1,6 @@
 import type { AnySchema } from "@graview/core";
-import { useAttention, useGraview, useSelection } from "@graview/react";
-import { kindCardId, withFocus, withOverview, withSelection } from "@graview/layout";
+import { useAttention, useGraview, useSelection } from "@graview/react/provider";
+import { kindCardId, withFocus, withOverview, withSelection } from "@graview/layout/view";
 import {
   configuredResponder,
   createToolRuntime,

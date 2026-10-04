@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { useGraview } from "@graview/react";
+import { useGraview } from "@graview/react/provider";
 import { useMarkup } from "./markup.js";
 import { GRAVIEW_BRAND } from "./theme.js";
 

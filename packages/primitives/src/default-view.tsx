@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { createViews, useGraview, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react";
+import { createViews, useGraview, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { createContext, useContext, type ReactNode } from "react";
 import { registerDefaultViews } from "./default-views.js";
 

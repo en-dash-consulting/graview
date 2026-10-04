@@ -1,15 +1,14 @@
 import type { AnySchema, Brand, GraviewApp, Person, Place, Principal, Store } from "@graview/core";
-import { EMPTY_VIEW, aggregateId, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout";
-import { PlacePicture } from "@graview/pages";
-import { Companion, Inspector, OverviewButton, Places, ShowInstallation, VISUALLY_HIDDEN, descentTarget, useWidth } from "@graview/primitives";
+import { EMPTY_VIEW, aggregateId, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
+import { VISUALLY_HIDDEN, descentTarget, fetchFrameworkViews, frameworkViewDoors, useWidth } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
-import { ErrorReportContext, GraviewProvider, Scene, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react";
-import { lazy, Suspense, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { ErrorReportContext, GraviewProvider, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
+import { createElement, lazy, Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
 import {
+  AUTO_SCENE_HEIGHT,
   FaceBoundary,
-  PagesContent,
   providerProps,
   storeOf,
   Strip,
@@ -24,11 +23,96 @@ import {
 } from "./frame.js";
 
 /*
+ * EACH FACE, FETCHED WHEN IT IS DRAWN (FR-57). Every face was imported
+ * outright, so a page that drew the pages carried the scene, the companion
+ * and the inspector, and one that drew the scene carried the routed face
+ * and its router — Graview Cloud's hosted page loaded 1.1 MB before the app
+ * drew. The frame, the strip and the provider are here; each face is a
+ * chunk of its own, fetched as it is first drawn, and the frame stands
+ * empty for that one request. The studio is the scene's, fetched only when
+ * it is offered (`./scene-face.tsx`).
+ */
+type PagesContentProps = Parameters<typeof import("./pages-content.js").PagesContent<AnySchema>>[0];
+type PictureFaceProps = Parameters<typeof import("./picture-face.js").PictureFace<AnySchema>>[0];
+type SceneControlsProps = Parameters<typeof import("./scene-face.js").SceneControls>[0];
+
+/**
+ * A FACE BEHIND A DOOR: fetched the first time it is drawn, or before that
+ * when a host asks (`preload`). Drawn once its module is here, it draws in
+ * the same commit as the frame, with nothing suspended; drawn before, it
+ * suspends until it arrives. Which of the two an instance is, it stays: a
+ * component that changed from the lazy wrapper to the module's own would be
+ * a different element, and the face would be drawn again from nothing.
+ */
+function door<P extends object>(load: () => Promise<ComponentType<P>>) {
+  let loaded: ComponentType<P> | undefined;
+  let fetching: Promise<void> | undefined;
+  const fetch = (): Promise<void> =>
+    (fetching ??= load().then((component) => {
+      loaded = component;
+    }));
+  const Lazy = lazy(async () => {
+    await fetch();
+    return { default: loaded! };
+  });
+  function Face(props: P) {
+    const [here] = useState(() => loaded);
+    return here ? createElement(here, props) : createElement(Lazy as unknown as ComponentType<P>, props);
+  }
+  return { Face, fetch };
+}
+
+/* Each face draws the framework's own views, so it fetches them beside its own chunk (`frameworkViewDoors`). */
+const withViews = <T,>(face: Promise<T>): Promise<T> => Promise.all([face, fetchFrameworkViews()]).then(([loaded]) => loaded);
+const scene = door(() => withViews(import("./scene-face.js").then((face) => face.SceneFace as ComponentType<{ auto: boolean }>)));
+const sceneControls = door(() => import("./scene-face.js").then((face) => face.SceneControls as ComponentType<SceneControlsProps>));
+const pages = door(() => withViews(import("./pages-content.js").then((face) => face.PagesContent as ComponentType<PagesContentProps>)));
+const picture = door(() => withViews(import("./picture-face.js").then((face) => face.PictureFace as ComponentType<PictureFaceProps>)));
+const SceneFace = scene.Face;
+const SceneControls = sceneControls.Face;
+const PagesContent = pages.Face;
+const PictureFace = picture.Face;
+
+/**
+ * FETCH A FACE BEFORE IT IS DRAWN (FR-57). A host that knows which face it
+ * will open on — Graview Cloud's shell knows from the window's width before
+ * it has fetched the document — starts the face's chunk now, beside its own
+ * requests, rather than after `mount`; and an embed mounted once the face is
+ * here draws it in the first commit. With no face named, every face.
+ */
+export function preload(...faces: readonly EmbedFace[]): Promise<void> {
+  const asked = faces.length > 0 ? faces : (["scene", "pages", "picture"] as const);
+  const doors = new Set<{ fetch(): Promise<void> }>(asked.flatMap((face): { fetch(): Promise<void> }[] => (face === "pages" ? [pages] : face === "picture" ? [picture] : [scene, sceneControls])));
+  return Promise.all([...doors].map((one) => one.fetch())).then(() => undefined);
+}
+
+/**
+ * Committed with the face, never before it: a lazy face suspends its whole
+ * boundary, so this mounts in the same commit the face first draws in.
+ */
+function Drawn({ asked, shown, onDrawn }: { readonly asked: EmbedFace; readonly shown: EmbedFace; readonly onDrawn: (asked: EmbedFace, shown: EmbedFace) => void }) {
+  useLayoutEffect(() => onDrawn(asked, shown), [asked, shown, onDrawn]);
+  return null;
+}
+
+/** The face's place while its chunk is on its way: the box it will fill, the ground it will be drawn on. */
+function Arriving({ auto, scene }: { readonly auto: boolean; readonly scene: boolean }) {
+  return (
+    <div
+      data-embed-content=""
+      aria-busy="true"
+      style={{ flex: auto ? (scene ? `0 0 ${AUTO_SCENE_HEIGHT}px` : "0 0 auto") : "1 1 auto", minHeight: 0, background: "var(--graview-ground)" }}
+    />
+  );
+}
+
+/*
  * THE STUDIO, WHEN IT IS TURNED ON. Imported outright, it was about 104 kB
  * minified of every embed — `studio: false` included, which never draws
  * it. A product's bundler splits it off here, and a page fetches it only
  * when an embed offers the studio; until it arrives, the strip simply has
- * no studio on it yet.
+ * no studio on it yet. A host that hands it in (`studio.place`, FR-63) has
+ * it drawn on the strip in the frame's own render.
  */
 const StudioPlace = lazy(() => import("@graview/studio").then((studio) => ({ default: studio.StudioPlace })));
 
@@ -44,8 +128,7 @@ const StudioPlace = lazy(() => import("@graview/studio").then((studio) => ({ def
  * inspector, the pages — is the framework's own, unchanged.
  */
 
-/** The scene and the Graview's height when the embed sizes itself to its content (`height: "auto"`). */
-export const AUTO_SCENE_HEIGHT = 480;
+export { AUTO_SCENE_HEIGHT };
 
 export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOptions<S> {
   /** Which face to open on. Omitted, the stop decides: altitude opens the Graview, anything else the scene. */
@@ -73,6 +156,13 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOpti
    * itself: the host makes it a proposal, a version, a review.
    */
   readonly studio?: false | EmbedStudio;
+  /**
+   * TOLD WHEN A FACE IS ON THE PAGE (FR-57). Each face is fetched as it is
+   * first drawn, so the frame stands before the face does; this is called
+   * with the face asked for once it has drawn (below `pagesBelow`, drawn
+   * as the pages that stand in for it), each time the face changes.
+   */
+  readonly onDrawn?: (face: EmbedFace) => void;
 }
 
 /** The studio an embed offers, for a host that keeps the declaration itself. */
@@ -145,7 +235,7 @@ export function faceOf(stop: string | undefined): EmbedFace {
 export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
   const { app, face = faceOf(props.stop), stop, toggle = true, standing = "Everything is in order", principal, heading = 2 } = props;
   const { rootRef, scope, css, scheme, store, presence, brand, auto, height } = useFrame(props);
-  const views = useViews<S>(props) as never;
+  const views = useViews<S>(props, frameworkViewDoors) as never;
   const kinds = app.schema.kinds as readonly string[];
   // The first view only: after it, where the reader goes is theirs.
   const initialView = useMemo(() => viewFor(face, stop, kinds, (views as ReactViewRegistry<S>).places()), []);
@@ -159,7 +249,13 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
   const shown: EmbedFace = narrow ? "pages" : face;
   useIntrinsicHeight(rootRef, shown, props.onIntrinsicHeight);
   const report = useErrorReport(props.onError, shown);
-  useReady(props.onReady, shown);
+  const ready = useReady(props.onReady, shown);
+  const told = useRef(props.onDrawn);
+  told.current = props.onDrawn;
+  const drawn = useCallback((asked: EmbedFace, drew: EmbedFace) => {
+    ready(drew);
+    told.current?.(asked);
+  }, [ready]);
 
   /*
    * THE EMBED IS ITSELF A LANDMARK.
@@ -202,44 +298,16 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
           </FaceBoundary>
         ) : null}
         <FaceBoundary key={shown} module={shown === "pages" || shown === "picture" ? "@graview/pages" : "@graview/react"} report={report} content>
-        {shown === "picture" ? (
-          /*
-           * The lens fills the frame: a one-row grid stretches it to the
-           * height it was given, and it scrolls inside itself past that.
-           */
-          <div
-            data-testid="embed-picture"
-            data-embed-content=""
-            // A region that may scroll has to be reachable by keyboard, and a
-            // reachable region has to say what it is: the picture's own name.
-            tabIndex={0}
-            aria-label={
-              (views as ReactViewRegistry<S>).places().find((place) => place.as === (stop ? fromUrl(stop).within?.["view"] : undefined))?.title ?? "The picture"
-            }
-            style={{
-              flex: "1 1 auto",
-              minHeight: 0,
-              display: "grid",
-              gridTemplateRows: "minmax(0, 1fr)",
-              overflow: "auto",
-              background: "var(--graview-ground)",
-              color: "var(--graview-ink)",
-              fontFamily: "var(--graview-font-body, system-ui)",
-            }}
-          >
-            <PlacePicture<S> store={store} views={views as ReactViewRegistry<S>} as={(stop ? fromUrl(stop).within?.["view"] : undefined) ?? ""} />
-          </div>
-        ) : shown === "pages" ? (
-          <PagesContent<S> store={store} views={views as ReactViewRegistry<S>} presence={presence} auto={auto} brand={brand} props={props} />
-        ) : (
-          <div data-embed-content="" style={{ position: "relative", flex: auto ? `0 0 ${AUTO_SCENE_HEIGHT}px` : "1 1 auto", minHeight: 0, containerType: "size" }}>
-            <Scene renderer="dom" />
-            <OverviewButton />
-            {/* One panel on the frame — the acts, the relations, the seat, the key. */}
-            <Companion<S> />
-            <Inspector placement="menu" />
-          </div>
-        )}
+          <Suspense fallback={<Arriving auto={auto} scene={shown !== "pages" && shown !== "picture"} />}>
+            {shown === "picture" ? (
+              <PictureFace store={store as never} views={views as never} as={(stop ? fromUrl(stop).within?.["view"] : undefined) ?? ""} />
+            ) : shown === "pages" ? (
+              <PagesContent store={store as never} views={views as never} presence={presence} auto={auto} brand={brand} props={props as never} />
+            ) : (
+              <SceneFace auto={auto} />
+            )}
+            <Drawn asked={face} shown={shown} onDrawn={drawn} />
+          </Suspense>
         </FaceBoundary>
       </GraviewProvider>
       </FaceBoundary>
@@ -351,9 +419,9 @@ function EmbedStrip({
           ? undefined
           : (compact) => (
               <>
-                {/* The named pictures over the graph — a lens is somewhere to go, by name. */}
-                <Places compact={compact} />
-                <ShowInstallation />
+                <Suspense fallback={null}>
+                  <SceneControls compact={compact} />
+                </Suspense>
                 {/* And the app's own declaration, for the seat that keeps it — inside
                     the embed's box, because a studio that escaped onto somebody
                     else's page would be the rudest thing this package could do. */}
@@ -404,6 +472,13 @@ export interface EmbedHandle {
   setHostContext(context: EmbedHostContext): void;
   /** Re-dress the embed: another brand, or the same brand with a different kit. */
   setBrand(brand: Brand | undefined): void;
+  /**
+   * Resolves once the face now asked for is drawn (FR-57). The frame is on
+   * the page when `mount` returns; each face is fetched as it is first
+   * drawn, so a host or a test that needs the face itself waits for this —
+   * after `mount`, and after `setFace`.
+   */
+  drawn(): Promise<void>;
   readonly store: Store<AnySchema>;
   unmount(): void;
 }
@@ -426,6 +501,18 @@ interface Setters {
 export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedOptions<S>): EmbedHandle {
   const store = options.store ?? options.remote?.store ?? storeOf(options.app, options.seed);
   let setters: Setters | null = null;
+  // Which face is asked for, which is drawn, and who is waiting for the one asked for.
+  let asked: EmbedFace = options.face ?? faceOf(options.stop);
+  let drawnFace: EmbedFace | null = null;
+  let waiting: (() => void)[] = [];
+  const onDrawn = (face: EmbedFace) => {
+    drawnFace = face;
+    options.onDrawn?.(face);
+    if (face !== asked) return;
+    const done = waiting;
+    waiting = [];
+    for (const resolve of done) resolve();
+  };
   function Host() {
     const [face, setFace] = useState<EmbedFace>(options.face ?? faceOf(options.stop));
     const [stop, setStop] = useState<string | undefined>(options.stop);
@@ -448,8 +535,12 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         {...(hostContext ? { hostContext } : {})}
         {...(brand ? { brand } : {})}
         scheme={scheme}
-        onFace={setFace}
+        onFace={(next) => {
+          asked = next;
+          setFace(next);
+        }}
         onSeat={setSeat}
+        onDrawn={onDrawn}
       />
     );
   }
@@ -457,7 +548,10 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
   flushSync(() => root.render(<Host />));
   return {
     store: store as never,
-    setFace: (face) => flushSync(() => setters?.face(face)),
+    setFace: (face) => {
+      asked = face;
+      flushSync(() => setters?.face(face));
+    },
     setStop: (stop) => flushSync(() => setters?.stop(stop)),
     setScheme: (scheme) => flushSync(() => setters?.scheme(scheme)),
     setSeat: (principal) => flushSync(() => setters?.seat(principal)),
@@ -465,6 +559,8 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setPeople: (people) => flushSync(() => setters?.people(people)),
     setHostContext: (context) => flushSync(() => setters?.hostContext(context)),
     setBrand: (brand) => flushSync(() => setters?.brand(brand)),
+    /* Drawn is the face asked for — below `pagesBelow`, drawn as the pages that stand in for it. */
+    drawn: () => (drawnFace === asked ? Promise.resolve() : new Promise<void>((resolve) => waiting.push(resolve))),
     unmount: () => root.unmount(),
   };
 }

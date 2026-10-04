@@ -1,6 +1,6 @@
 import type { AnySchema } from "@graview/core";
-import { withShown } from "@graview/layout";
-import { useGraview, useNavigation } from "@graview/react";
+import { withShown } from "@graview/layout/view";
+import { useGraview, useNavigation } from "@graview/react/provider";
 
 /**
  * THE WAY INTO THE INSTALLATION, for those who keep it.

@@ -1,6 +1,6 @@
 import type { AnySchema, Brand, Person, Principal, Store, PresenceChannel, SettingDeclaration } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore } from "react";
-import type { ReactViewRegistry } from "@graview/react";
+import type { ReactViewRegistry } from "@graview/react/provider";
 
 
 /**

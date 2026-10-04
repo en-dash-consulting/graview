@@ -57,8 +57,6 @@ export { kitConnector, useKit } from "./kit.js";
 export { clipPolyline, latticePoints, orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
 export { bandRows, channelRoute } from "./channels.js";
 export {
-  useAffordances,
-  useApplyAffordance,
   adjustment,
   useBacktrack,
   useEditableFields,
@@ -73,3 +71,4 @@ export type { DrawnOptions, DrawnSize } from "./drawn.js";
 export { createMotionStore, useSceneStill } from "./motion.js";
 export type { MotionStore } from "./motion.js";
 export { landingIn, useTheKeyboardLandsSomewhere } from "./keyboard.js";
+export { useAffordances, useApplyAffordance } from "./affordances.js";

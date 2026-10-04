@@ -1,4 +1,4 @@
-import { LadderSetting, useMarkup } from "@graview/primitives";
+import { LadderSetting, useMarkup } from "@graview/primitives/pages";
 import type { AnySchema } from "@graview/core";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";

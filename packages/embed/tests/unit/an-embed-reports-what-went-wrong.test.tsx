@@ -5,9 +5,12 @@ import { createPageRegistry, type PageComponent } from "@graview/pages";
 import { registerDefaultViews } from "@graview/primitives";
 import { createViews, type ViewComponent } from "@graview/react";
 import { act } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { mount, type EmbedError, type EmbedErrorWhere, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
+import { beforeAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { mount, type EmbedError, type EmbedErrorWhere, type EmbedHandle, type EmbedOptions, preload } from "../../src/index.js";
 import { mount as mountPages } from "@graview/embed/pages";
+
+// Every face fetched before the first mount, so each draws in the commit `mount` makes (FR-57).
+beforeAll(() => preload());
 
 /**
  * AN EMBED REPORTS WHAT WENT WRONG AND HOW LONG IT TOOK, WITHOUT WHAT WAS

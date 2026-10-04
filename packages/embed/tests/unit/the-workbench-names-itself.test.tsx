@@ -2,8 +2,11 @@
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { createSchema, defineApp, defineNode, z } from "@graview/core";
 import { act } from "react";
-import { describe, expect, it } from "vitest";
-import { mount, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
+import { beforeAll, describe, expect, it } from "vitest";
+import { mount, type EmbedHandle, type EmbedOptions, preload } from "../../src/index.js";
+
+// Every face fetched before the first mount, so each draws in the commit `mount` makes (FR-57).
+beforeAll(() => preload());
 
 /**
  * FR-25: the workbench in an embed says its name in a heading. axe's

@@ -1,5 +1,5 @@
 import { resolveKit, type AnySchema } from "@graview/core";
-import { kitConnector, useGraph, useGraview, useGraviewIfAny, useKit, useNavigation, useSelection } from "@graview/react";
+import { kitConnector, useGraph, useGraview, useGraviewIfAny, useKit, useNavigation, useSelection } from "@graview/react/provider";
 import {
   CONNECTOR_DASH,
   connectorStroke,

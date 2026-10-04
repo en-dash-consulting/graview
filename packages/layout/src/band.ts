@@ -1,5 +1,6 @@
 import { arrange, arrangeable, fieldWords, humaniseField, type AnySchema, type ArrangeGraph, type ArrangeNode, type DateBucket, type GraphReader } from "@graview/core";
-import { aggregateId } from "./ids.js";
+import { aggregateId, BAND_PREFIX, isBandAggregate } from "./ids.js";
+export { BAND_PREFIX, isBandAggregate } from "./ids.js";
 import type { Aggregate, Opens, Via } from "./types.js";
 
 /*
@@ -65,14 +66,9 @@ export interface BandOptions<N extends ArrangeNode> {
 }
 
 /** A band aggregate's id: the kind, the relation, and which part of it. */
-export const BAND_PREFIX = "aggregate:";
 const runKey = (via: Via | undefined, kind: string) => (via ? `${via.edgeKind}|${via.direction}` : `raised|${kind}`);
 const groupId = (kind: string, run: string, part: string) => `${BAND_PREFIX}${kind}|${run}|${part}`;
 
-/** Whether an id names a band aggregate — a group or the rest of a relation — rather than a kind's group. */
-export function isBandAggregate(id: string): boolean {
-  return id.startsWith(BAND_PREFIX) && id.includes("|");
-}
 
 /**
  * A band aggregate in words: "Albums — released by, type: album". Its id is

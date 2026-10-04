@@ -1,9 +1,16 @@
 import type { AnySchema, Brand, Person, Principal, Store } from "@graview/core";
-import { ErrorReportContext, GraviewProvider, type Scheme } from "@graview/react";
-import { useState } from "react";
+import { ErrorReportContext, GraviewProvider, type Scheme } from "@graview/react/provider";
+import { useEffect, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { PagesContent } from "./pages-content.js";
+import { registerDefaultViews, registerViewSpecs } from "@graview/primitives";
+import { createViews, type ReactViewRegistry } from "@graview/react/provider";
+
+/** The pages alone draw from the first commit, so the framework's views are registered outright here. */
+const pagesViews = <S extends AnySchema>(schema: S, specs: Parameters<typeof registerViewSpecs>[2]): ReactViewRegistry<S> =>
+  registerViewSpecs(registerDefaultViews(schema, createViews(schema)), schema, specs) as unknown as ReactViewRegistry<S>;
 import { flushSync } from "react-dom";
-import { FaceBoundary, PagesContent, providerProps, storeOf, Strip, useErrorReport, useFrame, useIntrinsicHeight, useReady, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
+import { FaceBoundary, providerProps, storeOf, Strip, useErrorReport, useFrame, useIntrinsicHeight, useReady, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
 
 /**
  * THE PAGES AND NOTHING ELSE (FR-19). `@graview/embed/pages` mounts the
@@ -28,10 +35,11 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
   const { app, toggle = true, standing = "Everything is in order" } = props;
   const { rootRef, scope, css, scheme, store, presence, brand, auto, height } = useFrame(props);
   // The registry the whole embed would draw from: the pages' cards, rows and record pages (FR-35).
-  const views = useViews<S>(props);
+  const views = useViews<S>(props, pagesViews);
   useIntrinsicHeight(rootRef, "pages", props.onIntrinsicHeight);
   const report = useErrorReport(props.onError, "pages");
-  useReady(props.onReady, "pages");
+  const ready = useReady(props.onReady, "pages");
+  useEffect(() => ready("pages"), [ready]);
   return (
     <section
       ref={rootRef}

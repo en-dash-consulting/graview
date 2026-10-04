@@ -1,4 +1,4 @@
-import { ArrangeBar, RelationMark } from "@graview/primitives";
+import { ArrangeBar, RelationMark } from "@graview/primitives/pages";
 import {
   admitArrangement,
   arrange,
@@ -18,7 +18,7 @@ import {
   type Arrangement,
   type Condition,
 } from "@graview/core";
-import { isDefaultView, type ViewProps } from "@graview/react";
+import { isDefaultView, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts, kindMap } from "./facts.js";

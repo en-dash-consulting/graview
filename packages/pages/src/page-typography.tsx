@@ -1,4 +1,4 @@
-import { KindFigure } from "@graview/primitives";
+import { KindFigure } from "@graview/primitives/pages";
 import {
   humaniseField,
   readableFields,

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { compileDocument, diffDocuments, documentHash, documentOf, type GraviewDocument } from "../../src/document/index.js";
+import { compileDocumentWithoutCheck, diffDocuments, documentHash, documentOf, type GraviewDocument } from "../../src/document/index.js";
 
 /**
  * A DIFF READS WHAT A DOCUMENT MEANS, NOT THE ORDER ITS KEYS WERE WRITTEN IN.
@@ -28,7 +28,7 @@ describe("a diff reads meaning, not key order", () => {
   });
 
   it("the document an app remembers is the document it was compiled from, as far as a diff can tell", async () => {
-    const compiled = compileDocument(vendors, { skipFrameworkCheck: true });
+    const compiled = compileDocumentWithoutCheck(vendors);
     if (!compiled.ok) throw new Error("the vendors fixture must compile");
     const remembered = documentOf(compiled.app)!;
     expect(await documentHash(remembered)).toBe(await documentHash(vendors));

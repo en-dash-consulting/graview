@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { UNSET } from "../../src/index.js";
 import { describe, expect, it } from "vitest";
-import { applyPatch, compileDocument, diffDocuments, planMigration, readDocument, type GraviewDocument } from "../../src/document/index.js";
+import { applyPatch, compileDocumentWithoutCheck, diffDocuments, planMigration, readDocument, type GraviewDocument } from "../../src/document/index.js";
 
 const vendors = readDocument(JSON.parse(readFileSync(new URL("./fixtures/vendors.gdd.json", import.meta.url), "utf8"))).document!;
 
@@ -19,7 +19,7 @@ const graph = {
 
 /** Apply a plan to the stored graph and prove the result fits the NEW declaration. */
 function migrated(after: GraviewDocument) {
-  const compiled = compileDocument(after, { skipFrameworkCheck: true });
+  const compiled = compileDocumentWithoutCheck(after);
   if (!compiled.ok) throw new Error(JSON.stringify(compiled.findings));
   const plan = planMigration(vendors, after, graph);
   const result = applyLoose(graph, plan.primitives as never);

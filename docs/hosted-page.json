@@ -1,0 +1,123 @@
+{
+  "at": "2026-10-04T16:01:48.331Z",
+  "page": "openRemote + mount(…, { studio: false }) over the vendors document, built as Graview Cloud's packages/client/bundles.mjs builds its shell",
+  "checks": {
+    "atMost600KbMinifiedUpFront": {
+      "kb": 536,
+      "budgetKb": 600,
+      "ok": true
+    },
+    "atMost150KbOfZodUpFront": {
+      "kb": 54,
+      "budgetKb": 150,
+      "ok": true
+    },
+    "theStudioIsNotCarried": {
+      "ok": true
+    }
+  },
+  "upFront": {
+    "kb": 536,
+    "chunks": 8,
+    "packagesKb": {
+      "react-dom": 176,
+      "@graview/core": 163,
+      "@graview/primitives": 59,
+      "zod": 54,
+      "@graview/react": 23,
+      "@graview/ship": 16,
+      "@graview/embed": 14,
+      "react": 8,
+      "@graview/guest": 5,
+      "@graview/layout": 5,
+      "scheduler": 4,
+      "@graview/tools": 3,
+      "@graview/render": 1,
+      "(the page)": 1
+    }
+  },
+  "whenAsked": {
+    "kb": 344,
+    "chunks": 14,
+    "packagesKb": {
+      "@graview/primitives": 90,
+      "@graview/react": 71,
+      "@graview/pages": 64,
+      "@graview/tools": 43,
+      "react-router": 43,
+      "@graview/layout": 26,
+      "@graview/embed": 1,
+      "(the page)": 0
+    },
+    "doors": [
+      {
+        "module": "embed/src/scene-face.tsx",
+        "kb": 233,
+        "packagesKb": {
+          "@graview/primitives": 90,
+          "@graview/react": 71,
+          "@graview/tools": 43,
+          "@graview/layout": 26,
+          "@graview/embed": 0
+        }
+      },
+      {
+        "module": "pages/src/ask-companion.tsx",
+        "kb": 232,
+        "packagesKb": {
+          "@graview/primitives": 90,
+          "@graview/react": 71,
+          "@graview/tools": 43,
+          "@graview/layout": 26
+        }
+      },
+      {
+        "module": "embed/src/pages-content.tsx",
+        "kb": 185,
+        "packagesKb": {
+          "@graview/pages": 64,
+          "@graview/tools": 43,
+          "react-router": 43,
+          "@graview/primitives": 32,
+          "@graview/embed": 1
+        }
+      },
+      {
+        "module": "embed/src/picture-face.tsx",
+        "kb": 185,
+        "packagesKb": {
+          "@graview/pages": 64,
+          "@graview/tools": 43,
+          "react-router": 43,
+          "@graview/primitives": 32,
+          "@graview/embed": 0
+        }
+      },
+      {
+        "module": "primitives/src/framework-views.ts",
+        "kb": 27,
+        "packagesKb": {
+          "@graview/primitives": 26
+        }
+      },
+      {
+        "module": "primitives/src/arrange-bar.tsx",
+        "kb": 10,
+        "packagesKb": {
+          "@graview/primitives": 9
+        }
+      }
+    ]
+  },
+  "beforeEachFaceDraws": {
+    "scene": {
+      "kb": 770,
+      "fetchedKb": 233
+    },
+    "pages": {
+      "kb": 729,
+      "fetchedKb": 193
+    }
+  },
+  "passed": true
+}

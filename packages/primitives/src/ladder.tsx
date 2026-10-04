@@ -1,5 +1,5 @@
 import type { IntelligenceConfig } from "@graview/tools";
-import { useGraview } from "@graview/react";
+import { useGraview } from "@graview/react/provider";
 import type { CSSProperties } from "react";
 
 /*

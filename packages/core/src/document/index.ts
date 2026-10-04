@@ -1,6 +1,6 @@
 export * from "./schema.js";
 export * from "./findings.js";
-export { compileDocument, readDocument, effectsOf, kindShapes, ActRefusal } from "./compile.js";
+export { compileDocument, compileDocumentWithoutCheck, readDocument, effectsOf, kindShapes, ActRefusal } from "./compile.js";
 export type { CompiledDocument, RefusedDocument, CompileOptions } from "./compile.js";
 export { canonicalize, documentHash } from "./canonical.js";
 export { parseTemplate, renderTemplate, formatValue, FORMATTERS } from "./template.js";

@@ -1,6 +1,6 @@
 import { labelOf, type AnySchema } from "@graview/core";
-import { kindsOfAggregate } from "@graview/layout";
-import { useGraph, useGraview, useSelection } from "@graview/react";
+import { kindsOfAggregate } from "@graview/layout/view";
+import { useGraph, useGraview, useSelection } from "@graview/react/provider";
 import { useMemo } from "react";
 import { hueFor } from "./default-views.js";
 

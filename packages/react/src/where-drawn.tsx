@@ -1,4 +1,4 @@
-import { aggregateId, isAggregateId, kindCardId, kindOfCard, kindsOfAggregate } from "@graview/layout";
+import { aggregateId, isAggregateId, kindCardId, kindOfCard, kindsOfAggregate } from "@graview/layout/view";
 import { mixStyles, styleFor } from "@graview/render";
 import type { Manner } from "./activity.js";
 import type { DrawnBox } from "./context.js";

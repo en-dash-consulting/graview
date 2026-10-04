@@ -1,6 +1,6 @@
 import type { AnySchema, Place } from "@graview/core";
-import { aggregateId, withFocus, withOverview, withWithin } from "@graview/layout";
-import { useGraview, useNavigation } from "@graview/react";
+import { aggregateId, withFocus, withOverview, withWithin } from "@graview/layout/view";
+import { useGraview, useNavigation } from "@graview/react/provider";
 import { useLayoutEffect, useRef, useState } from "react";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
 

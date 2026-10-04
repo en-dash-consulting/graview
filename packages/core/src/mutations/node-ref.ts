@@ -1,4 +1,6 @@
-import { z } from "zod";
+import { z as classic } from "zod";
+import * as z from "../schema/zod.js";
+import { defOf } from "../schema/zod.js";
 
 /**
  * WHERE A NODE REFERENCE KEEPS ITS KINDS: on the schema itself, under a
@@ -26,8 +28,22 @@ const marked = (value: unknown): readonly string[] | undefined =>
  */
 export function nodeRef<const K extends string>(
   kinds: readonly K[] | "*" = "*",
-): z.ZodString {
-  const schema = z.string().min(1);
+): classic.ZodString {
+  return markRef(classic.string().min(1), kinds);
+}
+
+/**
+ * `nodeRef` in zod/mini: what the framework's own acts — a compiled
+ * document's, a derived edit's — are made of, so a page that never wrote a
+ * classic schema loads none of classic zod (FR-57). `nodeRef` stays classic
+ * for a product to chain on (`nodeRef(["plot"]).optional()`).
+ */
+export function refTo(kinds: readonly string[] | "*" = "*"): z.ZodMiniString<string> {
+  return markRef(z.string().check(z.minLength(1)), kinds);
+}
+
+/** Marks a string schema as naming a node of these kinds. */
+function markRef<T extends object>(schema: T, kinds: readonly string[] | "*"): T {
   const accepted: readonly string[] = Object.freeze(kinds === "*" ? ["*"] : [...kinds]);
   const mark = (target: object | undefined) => {
     if (target) Object.defineProperty(target, NODE_REF, { value: accepted, enumerable: true, configurable: true });
@@ -39,7 +55,7 @@ export function nodeRef<const K extends string>(
    * description is the question a decision provider is asked — used to
    * come back as a plain string. The def is the stable identity.
    */
-  mark((schema as { _def?: object })._def);
+  mark(defOf(schema));
   return schema;
 }
 
@@ -48,12 +64,12 @@ export function nodeRefKinds(schema: unknown): readonly string[] | undefined {
   if (typeof schema !== "object" || schema === null) return undefined;
   const direct = marked(schema);
   if (direct) return direct;
-  const def = (schema as { _def?: object })._def;
+  const def = defOf(schema);
   const byDef = marked(def);
   if (byDef) return byDef;
   // Unwrap optional/default/nullable wrappers so `nodeRef([...]).optional()`
   // keeps its meaning.
-  const inner = (schema as { _def?: { innerType?: unknown } })._def?.innerType;
+  const inner = def?.innerType;
   return inner ? nodeRefKinds(inner) : undefined;
 }
 
@@ -66,9 +82,9 @@ export interface NodeRefArg {
 
 /** Reads the node-ref arguments off a mutation input object schema. */
 export function nodeRefArgs(
-  input: z.ZodType,
+  input: unknown,
 ): { name: string; kinds: readonly string[]; optional: boolean }[] {
-  const shape = (input as { shape?: Record<string, z.ZodType> }).shape;
+  const shape = (input as { shape?: Record<string, { safeParse(value: unknown): { success: boolean } }> }).shape;
   if (!shape) return [];
   const args: { name: string; kinds: readonly string[]; optional: boolean }[] = [];
   for (const [name, field] of Object.entries(shape)) {
@@ -123,7 +139,7 @@ export type ArgShape =
 
 /** Unwraps optional/default/nullable so a wrapped field still describes itself. */
 export function unwrap(schema: unknown): unknown {
-  const inner = (schema as { _def?: { innerType?: unknown } })._def?.innerType;
+  const inner = defOf(schema)?.innerType;
   return inner === undefined ? schema : unwrap(inner);
 }
 
@@ -149,15 +165,12 @@ const checksOf = (field: unknown): CheckDef[] =>
  * every other layer free of zod internals.
  */
 export function describeArg(schema: unknown): ArgShape {
-  const field = unwrap(schema) as
-    | {
-        _def?: { type?: string; entries?: Record<string, string>; element?: unknown };
-      }
-    | undefined;
-  const type = field?._def?.type;
+  const field = unwrap(schema);
+  const def = defOf(field);
+  const type = def?.type;
   const checks = checksOf(field);
 
-  if (type === "enum") return { type: "choice", options: Object.keys(field?._def?.entries ?? {}) };
+  if (type === "enum") return { type: "choice", options: Object.keys(def?.entries ?? {}) };
 
   if (type === "boolean") return { type: "boolean" };
 
@@ -168,7 +181,7 @@ export function describeArg(schema: unknown): ArgShape {
    * shape exists to prevent.
    */
   if (type === "array") {
-    const of = describeArg((field as { _def?: { element?: unknown } })._def?.element);
+    const of = describeArg(def?.element);
     return of.type === "unknown" ? { type: "unknown" } : { type: "several", of };
   }
 
@@ -194,7 +207,7 @@ export function describeArg(schema: unknown): ArgShape {
     // the interface offers a date picker instead of a free text box, which
     // is the difference between an action anyone can run and one only its
     // author knows the format for.
-    const own = (field as { _zod?: { def?: { pattern?: unknown } } })?._zod?.def?.pattern;
+    const own = def?.pattern;
     const sources = [own, ...checks.map((check) => check.pattern)].filter((pattern): pattern is RegExp => pattern instanceof RegExp).map((pattern) => pattern.source);
     if (sources.some((source) => source.includes("\\d{4}"))) {
       // A time of day in the pattern as well: `T\d{2}:\d{2}`, or a space before it.

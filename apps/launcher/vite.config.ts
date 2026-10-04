@@ -30,7 +30,9 @@ export default defineConfig({
     alias: {
       "@graview/core/document": fileURLToPath(new URL("../../packages/core/src/document/index.ts", import.meta.url)),
       "@graview/core": pkg("core"),
+      "@graview/layout/view": fileURLToPath(new URL("../../packages/layout/src/view.ts", import.meta.url)),
       "@graview/layout": pkg("layout"),
+      "@graview/tools/frame": fileURLToPath(new URL("../../packages/tools/src/frame.ts", import.meta.url)),
       "@graview/tools": pkg("tools"),
       // The subpath first: an alias for the bare name would otherwise swallow
       // "@graview/render/gpu" and resolve it to the main entry, which has no
@@ -39,7 +41,10 @@ export default defineConfig({
         new URL("../../packages/render/src/gpu.ts", import.meta.url),
       ),
       "@graview/render": pkg("render"),
+      "@graview/react/provider": fileURLToPath(new URL("../../packages/react/src/provider.ts", import.meta.url)),
       "@graview/react": pkg("react"),
+      "@graview/primitives/frame": fileURLToPath(new URL("../../packages/primitives/src/frame.ts", import.meta.url)),
+      "@graview/primitives/pages": fileURLToPath(new URL("../../packages/primitives/src/pages.ts", import.meta.url)),
       "@graview/primitives": pkg("primitives"),
       "@graview/pages": pkg("pages"),
       "@graview/ship/browser": fileURLToPath(

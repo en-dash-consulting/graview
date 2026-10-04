@@ -2,8 +2,11 @@
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { bindSchema, createSchema, defineApp, defineNode, Store, z, type Principal } from "@graview/core";
 import { act } from "react";
-import { afterEach, describe, expect, it } from "vitest";
-import { mount, type EmbedHandle } from "../../src/index.js";
+import { beforeAll, afterEach, describe, expect, it } from "vitest";
+import { mount, type EmbedHandle, preload } from "../../src/index.js";
+
+// Every face fetched before the first mount, so each draws in the commit `mount` makes (FR-57).
+beforeAll(() => preload());
 
 /**
  * PEOPLE ARE NAMED WITHOUT BEING OFFERED AS SEATS (FR-13).

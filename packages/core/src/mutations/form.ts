@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import { defOf } from "../schema/zod.js";
 import { describeArg, nodeRefKinds, unwrap } from "./node-ref.js";
 
 /**
@@ -45,15 +46,8 @@ export interface ScalarField {
   readonly max?: number;
 }
 
+/** Classic or mini alike: the definition is read with `defOf`, never through `_def`, which mini has not got. */
 type ZodLike = {
-  _def?: {
-    type?: string;
-    innerType?: unknown;
-    options?: readonly unknown[];
-    element?: unknown;
-    values?: readonly unknown[];
-    entries?: Record<string, string>;
-  };
   shape?: Record<string, unknown>;
   safeParse?: (value: unknown) => { success: boolean };
 };
@@ -67,8 +61,8 @@ const shapeOf = (schema: unknown): Record<string, unknown> | undefined =>
 /** The single literal value of a zod literal, or undefined. */
 const literalValue = (schema: unknown): string | undefined => {
   const field = unwrap(schema) as ZodLike;
-  if (field._def?.type !== "literal") return undefined;
-  const values = field._def.values;
+  if (defOf(field)?.type !== "literal") return undefined;
+  const values = defOf(field)?.values;
   return values && values.length === 1 && typeof values[0] === "string" ? values[0] : undefined;
 };
 
@@ -76,7 +70,7 @@ const literalValue = (schema: unknown): string | undefined => {
 export function formField(name: string, schema: unknown): FormField {
   const optional = isOptional(schema);
   const field = unwrap(schema) as ZodLike;
-  const type = field._def?.type;
+  const type = defOf(field)?.type;
 
   const kinds = nodeRefKinds(schema);
   if (kinds) return { control: "node", name, optional, kinds };
@@ -94,7 +88,7 @@ export function formField(name: string, schema: unknown): FormField {
   }
 
   if (type === "union") {
-    const options = field._def?.options ?? [];
+    const options = defOf(field)?.options ?? [];
     /*
      * A DISCRIMINATED union renders as one picker and then that option's
      * fields — the household example's constraint spec is the canonical case. The tag is
@@ -130,7 +124,7 @@ export function formField(name: string, schema: unknown): FormField {
   }
 
   if (type === "array") {
-    const element = field._def?.element;
+    const element = defOf(field)?.element;
     if (element !== undefined) {
       return { control: "list", name, optional, item: formField(name, element) };
     }

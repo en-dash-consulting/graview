@@ -194,3 +194,4 @@ export {
 export type { PlanLens, PlanLensOptions, PlanLensState, PlanViewProps } from "./lens/plan.js";
 export { THUMBNAIL_BUDGET } from "./default-views.js";
 export { withMore } from "./lens/more.js";
+export { fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews } from "./view-doors.js";

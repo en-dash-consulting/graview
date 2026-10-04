@@ -7,7 +7,6 @@ import {
   defineInvariant,
   defineMutation,
   defineNode,
-  nodeRef,
   SCHEMES,
   type AnyGraphNode,
   type AnyMutationDefinition,
@@ -20,7 +19,8 @@ import {
   type Repair,
   type Violation,
 } from "../index.js";
-import { z } from "zod";
+import * as z from "../schema/zod.js";
+import { refTo } from "../mutations/node-ref.js";
 import { analyzeExpr } from "./expr/analyze.js";
 import { rememberDocument } from "./to-document.js";
 import { evaluateExpr, ExprBudgetError, ExprEvalError, type KindShape, type Value } from "./expr/evaluate.js";
@@ -72,8 +72,6 @@ export interface RefusedDocument {
 export interface CompileOptions {
   /** The clock rules read as today(); injectable for tests. */
   readonly today?: () => string;
-  /** Skip the framework's own checkApp (it is the slow half). Default false. */
-  readonly skipFrameworkCheck?: boolean;
   /**
    * The version this one follows. Given, every `renamedFrom` must name a
    * kind, field or relation that version has — a rename from nothing moves
@@ -331,35 +329,41 @@ function validate(document: GraviewDocument): Finding[] {
   return findings;
 }
 
-function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodType {
-  let schema: z.ZodType;
+/*
+ * A FIELD'S SCHEMA, in zod/mini (schema/zod.ts): a page that compiles a
+ * document in the browser pays for the checks it calls, not for classic
+ * zod whole (FR-57). The checks, their messages and their definitions are
+ * the ones classic's methods make.
+ */
+function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
+  let schema: z.ZodMiniType;
   switch (spec.type) {
     case "string":
-      schema = z.string().max(500);
+      schema = z.string().check(z.maxLength(500));
       break;
     case "text":
-      schema = z.string().max(20_000);
+      schema = z.string().check(z.maxLength(20_000));
       break;
     case "number":
       schema = z.number();
       break;
     case "integer":
-      schema = z.number().int();
+      schema = z.number().check(z.int());
       break;
     case "boolean":
       schema = z.boolean();
       break;
     case "date":
-      schema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "a date like 2026-10-02");
+      schema = z.string().check(z.regex(/^\d{4}-\d{2}-\d{2}$/, "a date like 2026-10-02"));
       break;
     case "datetime":
-      schema = z.string().refine((s) => !Number.isNaN(Date.parse(s)), "a date and time like 2026-10-02T14:30:00Z");
+      schema = z.string().check(z.refine((s: string) => !Number.isNaN(Date.parse(s)), "a date and time like 2026-10-02T14:30:00Z"));
       break;
     case "enum":
       schema = z.enum(spec.options as [string, ...string[]]);
       break;
     case "list":
-      schema = z.array(spec.of === "number" ? z.number() : spec.of === "date" ? z.string().regex(/^\d{4}-\d{2}-\d{2}$/) : z.string().max(500)).max(200);
+      schema = z.array(spec.of === "number" ? z.number() : spec.of === "date" ? z.string().check(z.regex(/^\d{4}-\d{2}-\d{2}$/)) : z.string().check(z.maxLength(500))).check(z.maxLength(200));
       break;
     case "url":
       schema = z.url();
@@ -368,8 +372,8 @@ function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodType {
       schema = z.email();
       break;
   }
-  if (spec.description) schema = schema.describe(spec.description);
-  return optional ? schema.optional() : schema;
+  if (spec.description) schema = schema.check(z.describe(spec.description));
+  return optional ? z.optional(schema) : schema;
 }
 
 /** What one of these is called, when the kind says nothing: the first required word-ish field. */
@@ -382,7 +386,7 @@ function defaultLabelField(spec: KindSpec): string | undefined {
 }
 
 interface ActArg {
-  readonly schema: z.ZodType;
+  readonly schema: z.ZodMiniType;
   readonly required: boolean;
 }
 
@@ -394,7 +398,7 @@ function argsOf(name: string, act: ActSpec, effects: readonly EffectSpec[], docu
   const usesSubject =
     subjectKinds.length > 0 ||
     effects.some((e) => ("remove" in e && refName(e.remove) === "subject") || ("from" in e && (refName(e.from) === "subject" || refName(e.to) === "subject")) || ("set" in e && !("create" in e) && refName(e.target ?? "$subject") === "subject"));
-  if (usesSubject) args.set(SUBJECT_ARG, { schema: nodeRef(subjectKinds.length > 0 ? subjectKinds : "*"), required: true });
+  if (usesSubject) args.set(SUBJECT_ARG, { schema: refTo(subjectKinds.length > 0 ? subjectKinds : "*"), required: true });
 
   const declared = act.args ?? {};
   const writesOnlyOne = act.writes?.length === 1;
@@ -421,21 +425,21 @@ function argsOf(name: string, act: ActSpec, effects: readonly EffectSpec[], docu
         const arg = refName(value);
         if (!arg) continue;
         const kinds = end === "to" ? edge?.to ?? "*" : edge?.from ?? "*";
-        note(arg, () => ({ schema: nodeRef(kinds === "*" ? "*" : kinds), required: true }));
+        note(arg, () => ({ schema: refTo(kinds === "*" ? "*" : kinds), required: true }));
       }
     } else if ("set" in effect) {
       const target = refName(effect.target ?? "$subject");
       const targetKind = target === "subject" ? subjectKinds[0] : created.get(target ?? "");
-      if (target && target !== "subject" && !created.has(target)) note(target, () => ({ schema: nodeRef("*"), required: true }));
+      if (target && target !== "subject" && !created.has(target)) note(target, () => ({ schema: refTo("*"), required: true }));
       for (const [field, value] of Object.entries(effect.set)) {
         const arg = refName(value);
         if (!arg) continue;
         const spec = targetKind ? document.kinds[targetKind]?.fields[field] : undefined;
-        note(arg, () => (spec ? { schema: fieldSchema(spec, !writesOnlyOne), required: writesOnlyOne } : { schema: z.unknown().optional(), required: false }));
+        note(arg, () => (spec ? { schema: fieldSchema(spec, !writesOnlyOne), required: writesOnlyOne } : { schema: z.optional(z.unknown()), required: false }));
       }
     } else if ("remove" in effect) {
       const arg = refName(effect.remove);
-      if (arg) note(arg, () => ({ schema: nodeRef("*"), required: true }));
+      if (arg) note(arg, () => ({ schema: refTo("*"), required: true }));
     }
   }
   for (const [arg, d] of Object.entries(declared)) if (!args.has(arg)) args.set(arg, { schema: fieldSchema(d, !d.required), required: Boolean(d.required) });
@@ -445,7 +449,34 @@ function argsOf(name: string, act: ActSpec, effects: readonly EffectSpec[], docu
 
 class Refused extends Error {}
 
+/**
+ * A document, compiled and judged: its own sentences, then the framework's
+ * `checkApp` over the app it compiles to — what a host does with a document
+ * it is handed, and what `graview check` says of one.
+ */
 export function compileDocument(raw: unknown, options: CompileOptions = {}): CompiledDocument | RefusedDocument {
+  const compiled = compileDocumentWithoutCheck(raw, options);
+  if (!compiled.ok) return compiled;
+  const { app, document } = compiled;
+  const findings: Finding[] = [...compiled.findings];
+  const check = checkApp(app);
+  for (const f of check.findings) {
+    const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: f.message, ...(f.fix ? { fix: f.fix } : {}) } as const;
+    findings.push(f.code === "glance-unchosen" ? inDocumentWords(finding, f.where, document) : finding);
+  }
+  if (hasErrors(findings)) return { ok: false, findings };
+  return { ...compiled, findings };
+}
+
+/**
+ * A DOCUMENT COMPILED WITHOUT THE FRAMEWORK'S CHECKER: its own sentences
+ * still judged, `checkApp` not asked. For a page drawing a document its host
+ * has already judged — Graview Cloud's shell compiles in the browser what the
+ * room checked when it was kept — and for a test that wants the app and not
+ * the verdict. The checker is the whole of `graview check`; a page that
+ * calls only this does not carry it (FR-57).
+ */
+export function compileDocumentWithoutCheck(raw: unknown, options: CompileOptions = {}): CompiledDocument | RefusedDocument {
   const read = readDocument(raw);
   if (!read.document || hasErrors(read.findings)) return { ok: false, findings: read.findings };
   const document = read.document;
@@ -457,7 +488,7 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
 
   // ── kinds ────────────────────────────────────────────────────────────────
   const definitions = Object.entries(document.kinds).map(([kind, spec]) => {
-    const shape: Record<string, z.ZodType> = {};
+    const shape: Record<string, z.ZodMiniType> = {};
     for (const [field, f] of Object.entries(spec.fields)) shape[field] = fieldSchema(f, !f.required);
     const labelSource = spec.label ?? (defaultLabelField(spec) ? `{${defaultLabelField(spec)}}` : undefined);
     const labelParts = labelSource ? parseTemplate(labelSource) : undefined;
@@ -478,7 +509,7 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
       ]),
     );
     return defineNode(kind, {
-      fields: z.object(shape),
+      fields: z.object(shape) as never,
       edges: edgeDecls,
       ...(spec.plural ? { plural: spec.plural } : {}),
       ...(spec.noun ? { noun: spec.noun } : {}),
@@ -498,7 +529,7 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
   for (const [name, act] of Object.entries(document.acts ?? {})) {
     const effects = effectsOf(act, document);
     const args = argsOf(name, act, effects, document, edges);
-    const shape: Record<string, z.ZodType> = {};
+    const shape: Record<string, z.ZodMiniType> = {};
     for (const [arg, a] of args) shape[arg] = a.schema;
     const subjectKinds = asArray(act.on);
     const title = act.title ?? name.replace(/-/g, " ");
@@ -525,7 +556,7 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
 
     mutations.push(
       defineMutation(name, {
-        input: z.object(shape),
+        input: z.object(shape) as never,
         title,
         ...(act.description ? { description: act.description } : {}),
         ...(act.fromTheOtherEnd ? { fromTheOtherEnd: act.fromTheOtherEnd } : {}),
@@ -735,15 +766,6 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
     ...(document.views && Object.keys(document.views).length > 0 ? { viewSpecs: document.views as never } : {}),
     version: document.version ?? 1,
   };
-
-  if (!options.skipFrameworkCheck) {
-    const check = checkApp(app);
-    for (const f of check.findings) {
-      const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: f.message, ...(f.fix ? { fix: f.fix } : {}) } as const;
-      findings.push(f.code === "glance-unchosen" ? inDocumentWords(finding, f.where, document) : finding);
-    }
-    if (hasErrors(findings)) return { ok: false, findings };
-  }
 
   // `toDocument(app)` gives this document back, byte for byte.
   rememberDocument(app, document);

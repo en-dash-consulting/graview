@@ -1,7 +1,7 @@
 import { counted, isCurrent, labelOf, type AnySchema, type Store, type Place } from "@graview/core";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts } from "./facts.js";
-import { isDefaultView, ViewBoundary, type ViewProps } from "@graview/react";
+import { isDefaultView, ViewBoundary, type ViewProps } from "@graview/react/provider";
 import { useLayoutEffect, useRef, useState, type ComponentType } from "react";
 import { DerivedForm } from "./form.js";
 import { placeHref, placePath, pluralSlug, recordPath } from "./registry.js";

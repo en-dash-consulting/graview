@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { compileDocument, diffDocuments, documentHash, editDocument, toDocument, type DocumentEdit, type GraviewDocument } from "@graview/core/document";
+import { compileDocument, compileDocumentWithoutCheck, diffDocuments, documentHash, editDocument, toDocument, type DocumentEdit, type GraviewDocument } from "@graview/core/document";
 import { describe, expect, it } from "vitest";
 import { createStudio } from "../../src/index.js";
 
@@ -26,7 +26,7 @@ const ADD = { op: "add-field", kind: "vendor", field: "soil", type: "string" } a
 type Call = { readonly name: string; readonly args: Record<string, unknown> };
 
 function studioOn(document: GraviewDocument) {
-  const compiled = compileDocument(document, { skipFrameworkCheck: true });
+  const compiled = compileDocumentWithoutCheck(document);
   if (!compiled.ok) throw new Error(`the fixture must compile: ${JSON.stringify(compiled.findings)}`);
   return createStudio(compiled.app);
 }
@@ -79,7 +79,7 @@ describe("the studio's apply, written as a document (FR-54)", () => {
   });
 
   it("a studio opened on a TypeScript app has no document to hand back", () => {
-    const compiled = compileDocument(vendors, { skipFrameworkCheck: true });
+    const compiled = compileDocumentWithoutCheck(vendors);
     if (!compiled.ok) throw new Error("the fixture must compile");
     const studio = createStudio({ ...compiled.app }); // a copy: no document remembered for it
     expect(studio.document()).toBeUndefined();

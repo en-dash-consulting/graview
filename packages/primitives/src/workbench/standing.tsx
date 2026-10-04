@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { useSelection, useViolations } from "@graview/react";
+import { useSelection, useViolations } from "@graview/react/provider";
 import { useEffect, useRef, useState } from "react";
 import { closeToTrigger } from "../popover.js";
 
