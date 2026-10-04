@@ -72,7 +72,20 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOpti
    * keeps it and hands the host what the checker passed, writing nothing
    * itself: the host makes it a proposal, a version, a review.
    */
-  readonly studio?: false | { readonly onApply: (applied: StudioApplied) => void };
+  readonly studio?: false | EmbedStudio;
+}
+
+/** The studio an embed offers, for a host that keeps the declaration itself. */
+export interface EmbedStudio {
+  /** Handed what the checker passed; the studio writes nothing itself. */
+  readonly onApply: (applied: StudioApplied) => void;
+  /**
+   * What the studio's picture is to the host's page (FR-58). Inside an
+   * embed it is a labelled region by default, never a second `<main>`;
+   * "main" is for a host whose page has none of its own and whose whole
+   * body is the studio.
+   */
+  readonly landmark?: "main" | "region";
 }
 
 export interface EmbedProps<S extends AnySchema = AnySchema> extends EmbedOptions<S> {
@@ -325,7 +338,7 @@ function EmbedStrip({
                 {studio !== false ? (
                   <FaceBoundary module="@graview/studio" report={report}>
                     <Suspense fallback={null}>
-                      <StudioPlace app={app} within="box" {...(studio ? { onApply: studio.onApply } : {})} />
+                      <StudioPlace app={app} within="box" {...(studio ? { onApply: studio.onApply, ...(studio.landmark ? { landmark: studio.landmark } : {}) } : {})} />
                     </Suspense>
                   </FaceBoundary>
                 ) : null}

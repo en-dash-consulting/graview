@@ -85,6 +85,7 @@ export function StudioPlace<S extends AnySchema>({
   app,
   label = "Studio",
   within = "page",
+  landmark,
   onApply,
 }: {
   /** The declaration to open. The running app's own, in every case that matters. */
@@ -103,6 +104,17 @@ export function StudioPlace<S extends AnySchema>({
    * scene was laid out under the bar it was drawn in.
    */
   readonly within?: "page" | "box";
+  /**
+   * WHAT THE STUDIO'S PICTURE IS TO THE PAGE AROUND IT (FR-58).
+   *
+   * "main" when the studio is the document's own: a whole app's window.
+   * "region" when it is drawn into an element of somebody else's page. An
+   * embed's studio drew a `<main>` inside the embed's labelled section, so
+   * axe failed the host twice (`landmark-main-is-top-level`,
+   * `landmark-no-duplicate-main`) whatever the host did. Omitted, it
+   * follows `within`: a boxed studio is a region, a page-filling one the main.
+   */
+  readonly landmark?: "main" | "region";
   /**
    * A HOST THAT KEEPS THE DECLARATION. Given, Apply hands it what the
    * checker passed and the studio writes nothing: no door is asked after,
@@ -153,9 +165,9 @@ export function StudioPlace<S extends AnySchema>({
          * must not escape the embed.
          */
         within === "page" ? (
-          createPortal(<StudioOverlay app={app} within={within} onClose={() => setOpen(false)} {...(onApply ? { onApply } : {})} />, document.body)
+          createPortal(<StudioOverlay app={app} within={within} landmark={landmark ?? "main"} onClose={() => setOpen(false)} {...(onApply ? { onApply } : {})} />, document.body)
         ) : (
-          <StudioOverlay app={app} within={within} onClose={() => setOpen(false)} {...(onApply ? { onApply } : {})} />
+          <StudioOverlay app={app} within={within} landmark={landmark ?? "region"} onClose={() => setOpen(false)} {...(onApply ? { onApply } : {})} />
         )
       ) : null}
     </>
@@ -206,11 +218,13 @@ export { INSTALLATION_MODULE };
 function StudioOverlay<S extends AnySchema>({
   app,
   within,
+  landmark,
   onClose,
   onApply,
 }: {
   readonly app: GraviewApp<S>;
   readonly within: "page" | "box";
+  readonly landmark: "main" | "region";
   readonly onClose: () => void;
   readonly onApply?: (applied: StudioApplied) => void;
 }) {
@@ -408,14 +422,29 @@ function StudioOverlay<S extends AnySchema>({
 
       {applied ? <Written applied={applied} studio={studio as unknown as Studio<AnySchema>} onDismiss={() => setApplied(null)} /> : null}
 
-      <main style={{ position: "relative", flex: "1 1 auto", minHeight: 0, containerType: "size" }}>
-        <Scene renderer="dom" />
-        <Inspector />
-      </main>
+      {/*
+        * THE PICTURE IS THE PAGE'S MAIN ONLY WHEN THE STUDIO IS THE PAGE
+        * (FR-58). Inside somebody else's page (an embed, itself a labelled
+        * region of it) a main can never be top-level, and the host's own
+        * makes it a second one: there the picture is a region, named.
+        */}
+      {landmark === "main" ? (
+        <main style={PICTURE}>
+          <Scene renderer="dom" />
+          <Inspector />
+        </main>
+      ) : (
+        <section aria-label="The declaration" style={PICTURE}>
+          <Scene renderer="dom" />
+          <Inspector />
+        </section>
+      )}
     </div>
     </GraviewProvider>
   );
 }
+
+const PICTURE = { position: "relative", flex: "1 1 auto", minHeight: 0, containerType: "size" } as const;
 
 /**
  * The studio OPENS FROM ALTITUDE: a declaration's first honest picture is
