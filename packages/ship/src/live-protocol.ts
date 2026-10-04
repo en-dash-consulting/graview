@@ -260,8 +260,12 @@ export interface LiveProtocol<S extends AnySchema> {
    * flush had held back before them. When the flush fails, nothing has:
    * `landed` is absent, the cursor is where it was, and the client was
    * refused `unavailable`.
+   *
+   * `peers` is every socket the host holds, for the same presence: one a
+   * socket holds is said `held: "socket"` whatever the host built (as in
+   * `tell`). Unsaid, only this socket's own is known to be held.
    */
-  receive(peer: LivePeer, text: string, who?: readonly Presence[]): Promise<LiveReceived>;
+  receive(peer: LivePeer, text: string, who?: readonly Presence[], peers?: Iterable<LiveSocketState>): Promise<LiveReceived>;
   /**
    * Ops that landed, down every socket that has said hello and has not had
    * them, each as its own seat may see them (FR-02, FR-16): in seq order,
@@ -271,7 +275,14 @@ export interface LiveProtocol<S extends AnySchema> {
    * written once.
    */
   publish(ops: readonly Operation[], peers: Iterable<LivePeer>): void;
-  /** Who is here, told to every socket that has said hello: as its seat may be told it, and without itself. */
+  /**
+   * Who is here, told to every socket that has said hello: as its seat may
+   * be told it, and without itself. A presence whose participant one of
+   * `peers` holds is said `held: "socket"` — it stands while that socket
+   * does, with no heartbeat — whatever the host built it with, so a host
+   * that rebuilds presences from its own records cannot drop the stamp; a
+   * visitor's `until` is said as the host gave it.
+   */
   tell(who: readonly Presence[], peers: Iterable<LivePeer>): void;
   /**
    * `POST /graview/ops`, FOR A HOST THAT ROUTES ITS OWN REQUESTS. Hand it
@@ -432,6 +443,24 @@ export function visitorPresence(
 export function announcePresence(who: readonly Presence[], presence: Presence, ttlMs: number = VISITOR_PRESENCE_TTL_MS, now: number = Date.now()): Presence[] {
   const stamped: Presence = { ...presence, at: new Date(now).toISOString(), until: new Date(now + ttlMs).toISOString() };
   return [...who.filter((one) => one.participant !== presence.participant && (one.until === undefined || now < Date.parse(one.until))), stamped];
+}
+
+/**
+ * WHO IS HERE, AS THE SOCKETS SAY IT: a presence whose participant one of
+ * the host's sockets holds is held by that socket (`held: "socket"`, and no
+ * `until` — it stands while the socket does); everybody else, a visitor
+ * with its `until` among them, as the host built them. A new list: the
+ * host's own is not changed.
+ */
+function heldBySockets(who: readonly Presence[], peers: Iterable<Pick<LiveSocketState, "participant">>): Presence[] {
+  const held = new Set<string>();
+  for (const peer of peers) if (peer.participant) held.add(peer.participant);
+  if (held.size === 0) return [...who];
+  return who.map((presence) => {
+    if (!held.has(presence.participant)) return presence;
+    const { until: _until, ...standing } = presence;
+    return { ...standing, held: "socket" };
+  });
 }
 
 /** A key for a socket that has not said one, minted by the server: the welcome tells the client what it is. */
@@ -1003,7 +1032,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
   return {
     store,
     open: (seat, via, opening = {}) => ({ seat, via, ...(opening.build ? { hostBuild: opening.build.slice(0, 64) } : {}) }),
-    async receive(peer, text, who = []) {
+    async receive(peer, text, who = [], peers = [peer]) {
       let message: LiveClientMessage;
       try {
         message = JSON.parse(text) as LiveClientMessage;
@@ -1083,7 +1112,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             if (held !== undefined) peer.cursor = Math.max(Math.floor(seq), held - 1);
             say(peer, { t: "welcome", ...said, seq: peer.cursor, ops: wire.since(seat, seq).filter((op) => op.seq <= peer.cursor!) });
           }
-          const others = who.filter((presence) => presence.participant !== peer.participant);
+          const others = heldBySockets(who, [peer, ...peers]).filter((presence) => presence.participant !== peer.participant);
           if (others.length > 0) say(peer, { t: "presence", who: wire.whoFor(seat, others) });
           return { cursor: peer.cursor };
         }
@@ -1191,9 +1220,11 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
         else catchUp(peer, ops, seat, sight);
       }
     },
-    tell(who, peers) {
+    tell(said, peers) {
       const sight = aSight();
-      for (const peer of peers) {
+      const all = [...peers];
+      const who = heldBySockets(said, all);
+      for (const peer of all) {
         if (peer.cursor === undefined) continue;
         const seat = principalOf(peer, sight);
         if (!seat) {

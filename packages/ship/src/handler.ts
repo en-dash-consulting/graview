@@ -810,7 +810,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       try {
         // A message that came while the declaration was changing is answered under the new one (FR-43).
         while (changing) await changing;
-        received = await serving.protocol.receive(live, text, standing());
+        received = await serving.protocol.receive(live, text, standing(), sockets);
       } finally {
         live.answering = false;
       }
