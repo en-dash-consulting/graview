@@ -163,6 +163,13 @@ interface HandlerOptions<S extends AnySchema> {
    * Absent, every protocol is served.
    */
   readonly minProtocol?: number;
+  /**
+   * THE LOWEST HOST PROTOCOL SERVED (FR-44): the host's own number for its
+   * half of the wire, beside `WIRE_PROTOCOL`. A socket whose hello says an
+   * older `hostProtocol` (`openRemote({ hostProtocol })`; absent is 0) is
+   * answered `reload`, as below `minProtocol`.
+   */
+  readonly minHostProtocol?: number;
 }
 
 /**
@@ -428,6 +435,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       flush,
       ...(options.build ? { build: options.build } : {}),
       ...(options.minProtocol !== undefined ? { minProtocol: options.minProtocol } : {}),
+      ...(options.minHostProtocol !== undefined ? { minHostProtocol: options.minHostProtocol } : {}),
       ...(options.limit ? { limit: options.limit } : {}),
     }),
   });

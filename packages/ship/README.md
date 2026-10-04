@@ -220,6 +220,14 @@ said another in its hello keeps working and `remote.onBuild(…)` is told once. 
 `minProtocol` answers an older protocol's hello with `reload`: `openRemote` writes every
 call not yet answered to its `carry` (`{ storage, key }`, `sessionStorage` in a page),
 calls `reloadPage`, and the next `openRemote` with the same `carry` offers them again.
+A host whose build differs per upgrade — the worker that carried the socket says which shell
+it serves — says it per socket: `live.open(seat, via, { build })` keeps it in the socket's
+state as `hostBuild`, or `liveProtocol({ build: (peer) => … })` answers it from the socket.
+A host that changes its own half of the wire (its routing, its auth, its shell) numbers it:
+`openRemote({ hostProtocol })` says the number in `hello.hostProtocol`, and
+`liveProtocol({ minHostProtocol })` (or `createStoreHandler`'s) answers a hello below it —
+absent is 0 — with `reload` carrying `hostProtocol`, so an old page reloads with its calls
+carried exactly as for `minProtocol`. `hello.protocol` stays `WIRE_PROTOCOL`, ship's.
 Two codecs on one path are told apart by `hello.wire`, and by the WebSocket subprotocol
 `LIVE_SUBPROTOCOL` (`graview.ship.1`): `serveStore` answers it, a Worker answers its upgrade
 with `liveSubprotocol(request)`, and `openRemote` sends it with `subprotocol: true` or hands

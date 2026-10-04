@@ -133,6 +133,13 @@ export interface RemoteOptions<S extends AnySchema> {
    */
   readonly build?: string;
   /**
+   * THE HOST'S OWN PROTOCOL THIS PAGE SPEAKS (FR-44), said in `hello`
+   * beside ship's `WIRE_PROTOCOL`: a number the host moves when its half
+   * of the wire changes. A server below whose `minHostProtocol` it is
+   * answers `reload`, and this page reloads carrying what it had not sent.
+   */
+  readonly hostProtocol?: number;
+  /**
    * WHERE UNSENT CALLS WAIT ACROSS A RELOAD (FR-44). When the server
    * answers `reload`, every call not yet answered is written to `storage`
    * under `key`, and the next `openRemote` with the same key offers them
@@ -1122,7 +1129,7 @@ async function opening<S extends AnySchema>(
       if (socket !== made) return;
       // From the last op this client has: the welcome brings exactly the ones after it.
       // Which codec, which protocol and which build this page speaks (FR-44).
-      made.send(JSON.stringify({ t: "hello", seq: seen, protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, ...(options.build ? { build: options.build.slice(0, 64) } : {}) } satisfies LiveClientMessage));
+      made.send(JSON.stringify({ t: "hello", seq: seen, protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, ...(options.build ? { build: options.build.slice(0, 64) } : {}), ...(options.hostProtocol !== undefined ? { hostProtocol: options.hostProtocol } : {}) } satisfies LiveClientMessage));
     };
     made.onmessage = (event) => {
       if (socket !== made) return;

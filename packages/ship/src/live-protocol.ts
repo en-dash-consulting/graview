@@ -67,6 +67,13 @@ export interface LiveSocketState {
   /** The build its hello said it runs (FR-44): the client's word, kept for the host to count, never judged. */
   build?: string;
   /**
+   * THE HOST'S BUILD THIS SOCKET IS SERVED BY (FR-44), said at `open` —
+   * for a host that learns it per upgrade, as a worker carrying the socket
+   * says which shell it serves. Said in the welcome over the protocol's
+   * own `build`.
+   */
+  readonly hostBuild?: string;
+  /**
    * The call this socket was told is busy (FR-45), and when (epoch ms) it
    * may come again. Every other call is busy too until it does, so nothing
    * made after it overtakes it.
@@ -115,8 +122,24 @@ export interface LiveProtocolOptions<S extends AnySchema> {
    * holds, it skips.
    */
   readonly flush?: (landed: readonly Operation[]) => Promise<void>;
-  /** The host's build, an opaque string said in every welcome (FR-44): a client on another one is told once and keeps working. */
-  readonly build?: string;
+  /**
+   * The host's build, an opaque string said in every welcome (FR-44): a
+   * client on another one is told once and keeps working. One string for
+   * every socket, or a function of the socket for a host whose build
+   * differs per upgrade; a socket opened with its own (`open(seat, via,
+   * { build })`) is welcomed with that. A route answers with its request's
+   * `build`, else this.
+   */
+  readonly build?: string | ((peer: Pick<LiveSocketState, "seat" | "via" | "hostBuild">) => string | undefined);
+  /**
+   * THE LOWEST HOST PROTOCOL SERVED (FR-44): the host's own number for its
+   * half of the wire — its routing, its auth, its shell — beside ship's
+   * `WIRE_PROTOCOL`, which a host does not move. A hello whose
+   * `hostProtocol` is below it (absent is 0) is answered `reload` with
+   * `hostProtocol` and nothing else, so the page reloads onto a build that
+   * speaks it, carrying its unsent calls (`openRemote({ hostProtocol })`).
+   */
+  readonly minHostProtocol?: number;
   /**
    * THE LOWEST PROTOCOL SERVED (FR-44). A hello on an older one is answered
    * `reload` and nothing else: its calls are refused until it says hello
@@ -133,8 +156,12 @@ export interface LiveProtocolOptions<S extends AnySchema> {
 
 export interface LiveProtocol<S extends AnySchema> {
   readonly store: Store<S>;
-  /** The state a socket starts with: its seat and its channel, and no cursor until it says hello. */
-  open(seat: Principal, via: string): LiveSocketState;
+  /**
+   * The state a socket starts with: its seat and its channel, and no
+   * cursor until it says hello — and the host's `build` for this socket,
+   * when the host learns it per upgrade.
+   */
+  open(seat: Principal, via: string, options?: { readonly build?: string }): LiveSocketState;
   /**
    * Hand it one message the client sent. It answers down `peer.send`,
    * moves `peer.cursor` (and `peer.participant`) as it goes, and says what
@@ -660,16 +687,19 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     return { cursor: peer.cursor!, ...(saved && saved.length > 0 ? { landed: saved } : {}) };
   };
 
+  /** The host's build a socket — or a route's request — is served by (FR-44): its own, else the protocol's word for it. */
+  const buildFor = (peer: Pick<LiveSocketState, "seat" | "via" | "hostBuild">): string | undefined =>
+    peer.hostBuild ?? (typeof options.build === "function" ? options.build(peer) : options.build);
   /** Which declaration, and which build, answered (FR-43, FR-44): on every route's answer a poll reads. */
   const answering = (asked: WireAsked): { version: number; build?: string } => {
-    const build = asked.build ?? options.build;
+    const build = buildFor({ seat: asked.seat, via: asked.via, ...(asked.build ? { hostBuild: asked.build } : {}) });
     return { version: options.version ?? 1, ...(build ? { build } : {}) };
   };
   const reply = (status: number, body: Record<string, unknown>, headers: Record<string, string> = {}): WireAnswer => ({ status, body, headers });
 
   return {
     store,
-    open: (seat, via) => ({ seat, via }),
+    open: (seat, via, opening = {}) => ({ seat, via, ...(opening.build ? { hostBuild: opening.build.slice(0, 64) } : {}) }),
     async receive(peer, text, who = []) {
       let message: LiveClientMessage;
       try {
@@ -701,13 +731,26 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             });
             return {};
           }
+          // The host's own half of the wire, numbered by the host: an older page reloads onto a build that speaks it.
+          const hostSpeaks = typeof message.hostProtocol === "number" && Number.isFinite(message.hostProtocol) ? message.hostProtocol : 0;
+          if (options.minHostProtocol !== undefined && hostSpeaks < options.minHostProtocol) {
+            delete peer.cursor;
+            say(peer, {
+              t: "reload",
+              reason: "This app was updated, and this page is from before it. Reload the page; changes not yet sent are offered again after it.",
+              protocol: options.minProtocol ?? WIRE_PROTOCOL,
+              hostProtocol: options.minHostProtocol,
+            });
+            return {};
+          }
           if (typeof message.build === "string" && message.build.length > 0) peer.build = message.build.slice(0, 64);
           const seq = typeof message.seq === "number" && Number.isFinite(message.seq) ? message.seq : undefined;
           peer.cursor = wire.lastSeq();
           // Its own key, built from the seat, so the client can leave itself out of who is here (FR-47).
           peer.participant ??= participantKey({ kind: peer.seat.kind, ...(peer.seat.id ? { id: peer.seat.id } : {}), session: mintSession() });
           const participant = peer.participant;
-          const said = { protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, version: options.version ?? 1, participant, ...(options.build ? { build: options.build } : {}) };
+          const build = buildFor(peer);
+          const said = { protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, version: options.version ?? 1, participant, ...(build ? { build } : {}) };
           if (seq === undefined) {
             const seen = wire.seenFor(peer.seat);
             say(peer, {

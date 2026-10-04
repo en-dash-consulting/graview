@@ -70,6 +70,12 @@ export type LiveClientMessage =
       readonly wire?: string;
       /** The host's build this client runs, an opaque string: said for the host to count, never judged (FR-44). */
       readonly build?: string;
+      /**
+       * The host's own protocol this page speaks (FR-44): a number the host
+       * moves for its half of the wire, beside `protocol`, which is ship's.
+       * A server whose `minHostProtocol` is past it answers `reload`. Absent is 0.
+       */
+      readonly hostProtocol?: number;
     }
   /**
    * Calls, as `POST /graview/ops` takes them. `cid` names the answer.
@@ -161,7 +167,13 @@ export type LiveServerMessage =
    * follows: the client keeps what it had not sent, reloads onto a build
    * that speaks it, and offers them again there.
    */
-  | { readonly t: "reload"; readonly reason: string; readonly protocol: number }
+  | {
+      readonly t: "reload";
+      readonly reason: string;
+      readonly protocol: number;
+      /** The lowest host protocol served, when it is the host's own number the hello was below (`minHostProtocol`). */
+      readonly hostProtocol?: number;
+    }
   /** A message the server could not read. */
   | { readonly t: "error"; readonly sentence: string };
 
