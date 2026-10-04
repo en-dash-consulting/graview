@@ -133,4 +133,22 @@ describe("a seat is seen once, and a withheld batch says nobody's", () => {
     expect(exported.map((op) => op.batch)).toEqual([batch]);
     await handler.close();
   });
+
+  it("names the op a withheld undo takes back by the id the seat was served it under, and no session", async () => {
+    const store = hostsStore();
+    const live = liveProtocol({ store });
+    const heard: LiveServerMessage[] = [];
+    const bos: LivePeer = { ...live.open(bo, "web"), send: () => {} };
+    const adas: LivePeer = { ...live.open(ada, "web"), send: (text) => heard.push(JSON.parse(text) as LiveServerMessage) };
+    await live.receive(bos, JSON.stringify({ t: "hello", seq: -1 }));
+    await live.receive(adas, JSON.stringify({ t: "hello", seq: -1 }));
+    await live.receive(bos, JSON.stringify({ t: "call", cid: "h", batch: "batch:botab7q2x9k1:4", calls: [{ name: "hide", args: { id: "s1" } }] }));
+    await live.receive(bos, JSON.stringify({ t: "undo", cid: "u", batch: "undo:botab7q2x9k1:5", batches: ["batch:botab7q2x9k1:4"] }));
+    live.publish(store.log.all(), [adas]);
+    const [made, undone] = heard.flatMap((message) => (message.t === "ops" ? message.ops : []));
+    expect(isWithheld(made!) && isWithheld(undone!)).toBe(true);
+    // `undoes` is an op's id, minted by the server and served on the op itself: it points where it should, and names no session.
+    expect(undone!.undoes).toBe(made!.id);
+    expect(JSON.stringify([made, undone])).not.toContain("botab7q2x9k1");
+  });
 });
