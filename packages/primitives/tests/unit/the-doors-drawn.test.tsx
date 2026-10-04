@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /* React's act() wants to know it is in a test environment. */
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-import { bindSchema, createSchema, defineNode, Store, type IntelligenceProviderDeclaration } from "@graview/core";
+import { bindSchema, createSchema, defineNode, nodeRef, Store, type IntelligenceProviderDeclaration } from "@graview/core";
 import { EMPTY_VIEW } from "@graview/layout";
 import { createViews, GraviewProvider } from "@graview/react";
 import { act } from "react";
@@ -31,8 +31,16 @@ const stakeOut = defineMutation("stake-out", {
     void ctx.addNode({ id: ctx.freshId(args.label, "zone"), kind: "zone", label: args.label } as never),
 });
 
-const store = (intelligence: readonly IntelligenceProviderDeclaration[]) =>
-  new Store({ schema, mutations: [stakeOut], intelligence });
+const renameZone = defineMutation("rename-zone", {
+  title: "Rename some ground",
+  input: z.object({ zone: nodeRef(["zone"]), label: z.string() }),
+  apply: (ctx, args) => void ctx.patchNode(args.zone, { label: args.label }),
+});
+
+const store = (
+  intelligence: readonly IntelligenceProviderDeclaration[],
+  nodes: readonly { id: string; kind: "zone"; label: string }[] = [],
+) => new Store({ schema, mutations: [stakeOut, renameZone], intelligence, snapshot: { nodes: [...nodes], edges: [] } });
 
 let host: HTMLDivElement;
 beforeEach(() => {
@@ -140,6 +148,50 @@ describe("a door", () => {
     await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="door-read"]')!.click());
     expect(taken).toHaveLength(0);
     expect(host.querySelector('[data-testid="door-said"]')).not.toBeNull();
+    await act(async () => root.unmount());
+  });
+
+  it("reads a node named by its label as that node, where exactly one carries it", async () => {
+    /*
+     * A model names things the way a person does — "the back lawn", not
+     * `zone-7` — and the seat reads a label that means exactly one node as
+     * that node before the gate sees it. A door is the same model reached
+     * another way, so it reads the same. A label two nodes share, and a
+     * reference to something the plan itself will make, are left as they came.
+     */
+    const taken: PlannedCall[][] = [];
+    const root = await draw(
+      store([{ name: "surveyor", kind: "llm", reach: ["paste"] }], [
+        { id: "zone-7", kind: "zone", label: "Back Lawn" },
+        { id: "zone-8", kind: "zone", label: "Bed" },
+        { id: "zone-9", kind: "zone", label: "Bed" },
+      ]),
+      (p) => taken.push([...p]),
+    );
+    const paste = host.querySelector<HTMLTextAreaElement>('[data-testid="door-paste"]')!;
+    await act(async () => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!;
+      setter.call(
+        paste,
+        JSON.stringify({
+          proposals: [
+            { mutation: "rename-zone", args: { zone: "back lawn", label: "Lawn" }, why: "shorter", confidence: 0.8 },
+            { mutation: "rename-zone", args: { zone: "Bed", label: "East Bed" } },
+            { mutation: "stake-out", as: "patch", args: { label: "Patch" } },
+            { mutation: "rename-zone", args: { zone: { $plan: "patch" }, label: "Veg Patch" } },
+          ],
+        }),
+      );
+      paste.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="door-read"]')!.click());
+    expect(taken).toHaveLength(1);
+    expect(taken[0]).toEqual([
+      { mutation: "rename-zone", args: { zone: "zone-7", label: "Lawn" }, why: "shorter", confidence: 0.8 },
+      { mutation: "rename-zone", args: { zone: "Bed", label: "East Bed" } },
+      { mutation: "stake-out", as: "patch", args: { label: "Patch" } },
+      { mutation: "rename-zone", args: { zone: { $plan: "patch" }, label: "Veg Patch" } },
+    ]);
     await act(async () => root.unmount());
   });
 });

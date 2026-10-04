@@ -14,6 +14,7 @@ import {
   dependentsOf,
   deriveAffordances,
   firstJsonObject,
+  resolveProposal,
   validateProposals,
   without,
   type Affordance,
@@ -923,7 +924,14 @@ export function Door<S extends AnySchema>({ provider, prompt, photos = [], onPro
 
   const read = (text: string) => {
     const answer = firstJsonObject(text) as { proposals?: readonly PlannedCall[] } | null;
-    const proposals = Array.isArray(answer?.proposals) ? answer!.proposals : [];
+    /*
+     * A model names things the way a person does, so a label that means
+     * exactly one node is read as that node before the gate sees it — as
+     * the seat reads it. `resolveProposal` keeps the rest of the call.
+     */
+    const proposals = (Array.isArray(answer?.proposals) ? answer!.proposals : []).map(
+      (proposal) => resolveProposal(store, proposal) as PlannedCall,
+    );
     const kept = validateProposals(store, proposals, declared?.may) as readonly PlannedCall[];
     if (kept.length === 0) {
       setSaid("Nothing in that answer was a call this app knows, so nothing was taken from it.");
