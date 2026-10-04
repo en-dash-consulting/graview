@@ -519,18 +519,22 @@ export const setRequired = act("set-required", {
 
 export const setOptions = act("set-options", {
   title: "Change the options",
-  description: "Say the options an enum field offers. Options already there keep their order; new ones come after them.",
+  description: "Say the options a field offers. Options already there keep their order and new ones come after them; a field that is not an enum yet becomes one.",
   subject: { kinds: ["field"], arg: "id" },
   writes: ["options"],
   input: z.object({ id: nodeRef(["field"]), options: z.array(z.string().min(1)).min(1) }),
   describe: (args, graph) => `Offer ${args.options.join(", ")} on ${fieldLabel(graph, args.id)}`,
   apply(ctx, args) {
+    /*
+     * OFFERED ON EVERY FIELD, so never refused on one: a field that is not
+     * an enum is made one with these options, which the studio says as the
+     * `retype-field` it is.
+     */
     const field = ctx.graph.getNode(args.id) as { type?: string; options?: readonly string[] } | undefined;
-    if (field?.type !== "enum") throw new Error(`${nameOf(ctx, args.id)} is not an enum; change its type to enum and give its options there`);
-    const had = field.options ?? [];
+    const had = field?.type === "enum" ? (field.options ?? []) : [];
     const kept = had.filter((option) => args.options.includes(option));
     const added = args.options.filter((option) => !had.includes(option));
-    ctx.patchNode(args.id, { options: [...new Set([...kept, ...added])] });
+    ctx.patchNode(args.id, { ...(field?.type === "enum" ? {} : { type: "enum" }), options: [...new Set([...kept, ...added])] });
   },
 });
 

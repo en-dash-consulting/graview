@@ -63,6 +63,12 @@ describe("a field changes in place (FR-61)", () => {
     expect(s.store.graph.getNode("field:vendor.status")).not.toHaveProperty("options");
   });
 
+  it("options given to a field that is not an enum make it one, said as the retype it is, never refused", () => {
+    const s = studio();
+    s.store.apply({ name: "set-options", args: { id: "field:vendor.due", options: ["this week", "next week"] } });
+    expect(s.edits()).toEqual([{ op: "retype-field", kind: "vendor", field: "due", type: "enum", options: ["this week", "next week"] }]);
+  });
+
   it("each is undone like any other act", () => {
     const s = studio();
     s.store.apply({ name: "retype-field", args: { id: "field:vendor.notes", type: "string" } });
