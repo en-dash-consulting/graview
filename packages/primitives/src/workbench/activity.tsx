@@ -385,18 +385,24 @@ export function ActivityRail({
                     */}
                   {!call.mutating && call.reads && call.reads.length > 0 ? (
                     <div data-testid="activity-reads" style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 12 }}>
-                      {call.reads.slice(0, 3).map((id) => (
+                      {/* Once each: a neighbourhood read lists a node joined to it twice twice. */}
+                      {[...new Set(call.reads)].slice(0, 3).map((id) => (
                         <Chip key={id} label={nameOf(store, id)} pickId={id} />
                       ))}
-                      {call.reads.length > 3 ? <span style={{ color: "var(--graview-ink-muted)" }}>+{call.reads.length - 3}</span> : null}
+                      {new Set(call.reads).size > 3 ? <span style={{ color: "var(--graview-ink-muted)" }}>+{new Set(call.reads).size - 3}</span> : null}
                     </div>
                   ) : Object.values(call.args).some((value) => typeof value === "string") ? (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 12 }}>
-                      {Object.values(call.args)
-                        .filter((value): value is string => typeof value === "string")
+                      {/*
+                        * Keyed by the ARGUMENT, not by what it says: a piece
+                        * of kit with the id `trailer` and the type `trailer`
+                        * hands one call the same word twice.
+                        */}
+                      {Object.entries(call.args)
+                        .filter((entry): entry is [string, string] => typeof entry[1] === "string")
                         .slice(0, 3)
-                        .map((value) => (
-                          <Chip key={value} label={nameOf(store, value)} pickId={value} />
+                        .map(([name, value]) => (
+                          <Chip key={name} label={nameOf(store, value)} pickId={value} />
                         ))}
                     </div>
                   ) : null}
