@@ -37,8 +37,9 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A store can hold records that no longer fit while still checking new writes](./a-store-can-hold-records-that-no.md) | completed |
 | [A store can prove its own fold: a deterministic snapshot hash and store.verify()](./a-store-can-prove-its-own-fold-a.md) | completed |
 | [Agents name records the way people do: a node argument accepts a label, and ambiguity comes back as candidates](./agents-name-records-the-way-people-do.md) | completed |
+| [An act's own logic cannot tell a seat whether a hidden record exists](./an-act-s-own-logic-cannot-tell-a-seat.md) | pending |
 | [An agent acts for someone, through something: delegation and channel on every op, and seat headers trusted only on request](./an-agent-acts-for-someone-through.md) | completed |
-| [An edit can set a kind's glance (set-glance), and the studio renames display.glance with its field](./an-edit-can-set-a-kind-s-glance-set.md) | pending |
+| [An edit can set a kind's glance (set-glance), and the studio renames display.glance with its field](./an-edit-can-set-a-kind-s-glance-set.md) | completed |
 | [An optimistic client can roll back: Store.rebase, a public notify, and batch ids that never collide across clients](./an-optimistic-client-can-roll-back.md) | completed |
 | [Applying primitives is all or nothing: a failure leaves the graph as it was](./applying-primitives-is-all-or-nothing.md) | completed |
 | [Backpressure distinct from refusal: busy with retryAfter, and the client re-sends (FR-45)](./backpressure-distinct-from-refusal.md) | completed |
@@ -47,13 +48,13 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Embed holds inside a chat's widget: no storage assumed, its own height reported, the host's scheme taken](./embed-holds-inside-a-chat-s-widget-no.md) | completed |
 | [Embed knows what its host can keep: the studio hidden or handed to the host, and a size budget](./embed-knows-what-its-host-can-keep-the.md) | completed |
 | [Embed reports what went wrong and how long it took, without what was on screen](./embed-reports-what-went-wrong-and-how.md) | completed |
-| [Every harness honours GRAVIEW_PORT_BASE, so a second checkout can run any of them](./every-harness-honours-graview-port.md) | pending |
+| [Every harness honours GRAVIEW_PORT_BASE, so a second checkout can run any of them](./every-harness-honours-graview-port.md) | completed |
 | [/graview/export calls exportBundle with its arguments the wrong way round](./graview-export-calls-exportbundle-with.md) | completed |
 | [Guest views: someone else's React in a sandboxed frame that can only ask, under the viewer's seat](./guest-views-someone-else-s-react-in-a.md) | completed |
 | [MCP for remote hosts: Streamable HTTP, honest tool hints, and other people's words marked as data](./mcp-for-remote-hosts-streamable-http.md) | completed |
 | [Migrations that keep data: declared renames and type coercion in steps and migrationBetween](./migrations-that-keep-data-declared.md) | completed |
 | [Modules reach the host: the enabled set is passed to opened, served and remote stores, and turning one off is in history](./modules-reach-the-host-the-enabled-set.md) | completed |
-| [openRemote's runtime entry exports the observable-client types, and read-only MCP calls can show presence](./openremote-s-runtime-entry-exports-the.md) | pending |
+| [openRemote's runtime entry exports the observable-client types, and read-only MCP calls can show presence](./openremote-s-runtime-entry-exports-the.md) | completed |
 | [Presence a host can add to: kind, name, onBehalfOf, announce for socketless visitors, and welcome.participant (FR-47)](./presence-a-host-can-add-to-kind-name.md) | completed |
 | [Presence speaks one dialect and forgets the gone; seats can be added after mount without offering to sit as someone else](./presence-speaks-one-dialect-and.md) | completed |
 | [Refusal reasons a program can branch on: forbidden, missing, invalid, limit, with wouldNeed (FR-46)](./refusal-reasons-a-program-can-branch.md) | completed |
