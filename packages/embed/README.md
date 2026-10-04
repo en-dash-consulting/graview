@@ -86,7 +86,10 @@ mount(root, { app, studio: { onApply: ({ app, migration, files }) => propose(app
 ```
 
 Handed an onApply, the studio asks after no door and writes nothing; what the
-checker passed is the host's.
+checker passed is the host's. A host that could not keep it answers ok: false
+with a sentence, which the studio says as its heading, and findings, which
+may be empty; an Apply with nothing changed is said by the studio and never
+reaches the host.
 
 `@graview/embed/pages` is the routed face alone, with the same options less
 the face, the stop, the heading and the studio, and the same handle less the

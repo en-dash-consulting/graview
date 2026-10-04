@@ -103,7 +103,7 @@ async function inAHostsPage(browser, report) {
             place: StudioPlace,
             onApply(applied) {
               window.__handed.push(applied.edits ?? null);
-              return { ok: false, findings: [{ severity: "error", code: "host-refused", path: "kinds.vendor", message: "This host previews only what an edit says, and keeps nothing else" }] };
+              return { ok: false, sentence: "Not previewed: this host previews only what an edit says.", findings: [{ severity: "error", code: "host-refused", path: "kinds.vendor", message: "This host previews only what an edit says, and keeps nothing else" }] };
             },
           },
           stop: "#overview=1&in.studio=open",
@@ -213,6 +213,20 @@ async function inAHostsPage(browser, report) {
       ok: audited.mains === 1 && audited.mainsInTheEmbed === 0 && landmarks.length === 0,
     };
 
+    /* ---- FR-65: Apply with nothing changed asks the host nothing */
+    await page.click('[data-testid="studio-apply"]');
+    await page.waitForSelector('[data-testid="studio-applied"]', { timeout: 10_000 });
+    const nothing = await page.evaluate(() => {
+      const panel = document.querySelector('[data-testid="studio-applied"]');
+      return { said: panel?.getAttribute("data-applied") ?? null, text: panel?.querySelector("strong")?.textContent?.trim() ?? "", handed: window.__handed.length };
+    });
+    report.checks.anApplyWithNothingChangedAsksTheHostNothing = {
+      ...nothing,
+      ok: nothing.said === "unchanged" && nothing.text.startsWith("Nothing to apply") && nothing.handed === 0,
+    };
+    await page.locator('[data-testid="studio-applied"] button', { hasText: "Dismiss" }).first().click();
+    await page.waitForTimeout(200);
+
     /* ---- FR-60: a change made, refused by the host, and still there */
     await page.locator('#graview-builder [data-graview-view="kind:field"] button', { hasText: "open" }).first().click();
     await page.waitForSelector('[data-graview-pick="field:vendor.notes"]', { timeout: 10_000 });
@@ -231,7 +245,7 @@ async function inAHostsPage(browser, report) {
       await page.waitForTimeout(300);
       return page.evaluate(() => {
         const panel = document.querySelector('[data-testid="studio-applied"]');
-        return { said: panel?.getAttribute("data-applied") ?? null, text: panel?.textContent ?? "", open: document.querySelector('[data-testid="studio"]') !== null };
+        return { said: panel?.getAttribute("data-applied") ?? null, text: panel?.textContent ?? "", heading: panel?.querySelector("strong")?.textContent?.trim() ?? "", open: document.querySelector('[data-testid="studio"]') !== null };
       });
     };
     const once = await pressApply();
@@ -250,6 +264,11 @@ async function inAHostsPage(browser, report) {
         once.open &&
         twice.said === "refused-by-host" &&
         JSON.stringify(handed) === JSON.stringify([[{ op: "remove-field", kind: "vendor", field: "notes" }], [{ op: "remove-field", kind: "vendor", field: "notes" }]]),
+    };
+    /* ---- FR-65: the host's sentence is the heading, in place of the studio's own */
+    report.checks.aHostsRefusalIsHeadedInItsOwnWords = {
+      heading: once.heading,
+      ok: once.heading === "Not previewed: this host previews only what an edit says." && !once.text.includes("the host could not keep this change"),
     };
     /* ---- FR-64: the host's own button, heading and code, as the host styled them */
     /*

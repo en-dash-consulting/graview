@@ -15,7 +15,7 @@ import { mount as mountPages, type PagesEmbedHandle } from "@graview/embed/pages
  * either hides the studio or takes what it applies: a hosted app turns an
  * applied declaration into a proposal of its own.
  */
-const task = defineNode("task", { fields: z.object({ label: z.string() }), plural: "Tasks", label: (node: { label: string }) => node.label });
+const task = defineNode("task", { fields: z.object({ label: z.string(), notes: z.string().optional() }), plural: "Tasks", label: (node: { label: string }) => node.label });
 const schema = createSchema([task]);
 const app = defineApp({ name: "Errands", schema, mutations: [] });
 const seed = { nodes: [{ id: "t1", kind: "task", label: "Post the letter" }], edges: [] };
@@ -67,6 +67,24 @@ describe("@graview/embed/pages", () => {
   });
 });
 
+/** Remove task's notes in the studio: open the fields, pick it, and press "Remove the field" on its strip. */
+async function removeTheNotes(host: HTMLElement) {
+  const studio = host.querySelector("[data-testid=studio]")!;
+  const open = [...studio.querySelectorAll<HTMLButtonElement>('[data-graview-view="kind:field"] button')].find((button) => button.textContent?.includes("open"));
+  for (let tries = 0; tries < 20 && !studio.querySelector('[data-graview-pick="field:task.notes"]'); tries += 1) {
+    if (open!.getAttribute("aria-expanded") !== "true") await act(async () => open!.click());
+    await act(async () => new Promise((wait) => setTimeout(wait, 50)));
+  }
+  const pick = studio.querySelector<HTMLElement>('[data-graview-pick="field:task.notes"]');
+  expect(pick, "task's notes in the scene").not.toBeNull();
+  await act(async () => {
+    pick!.focus();
+    pick!.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  });
+  const remove = [...studio.querySelectorAll<HTMLButtonElement>('[data-testid="inspector-strip"] [data-affordance]')].find((button) => button.textContent?.startsWith("Remove the field"));
+  await act(async () => remove!.click());
+}
+
 describe("an embed's studio", () => {
   it("is offered by default, and not at all with studio: false", async () => {
     const offered = await mounting({});
@@ -87,6 +105,8 @@ describe("an embed's studio", () => {
     await untilTheStudioArrives(host);
     await act(async () => host.querySelector<HTMLButtonElement>("[data-testid=studio-place]")!.click());
     expect(host.querySelector("[data-testid=studio]"), "the studio opened").not.toBeNull();
+    // A change to hand over, made as a person would: with nothing changed the host is not asked (FR-65).
+    await removeTheNotes(host);
     await act(async () => host.querySelector<HTMLButtonElement>("[data-testid=studio-apply]")!.click());
 
     expect(handed).toHaveLength(1);

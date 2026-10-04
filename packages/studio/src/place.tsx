@@ -89,7 +89,17 @@ export function handedToTheHost(
  * where it used to say "Handed to the host to keep" while the host's page
  * previewed nothing.
  */
-export type StudioHostVerdict = { readonly ok: true } | { readonly ok: false; readonly findings: readonly Finding[] };
+export type StudioHostVerdict =
+  | { readonly ok: true }
+  /*
+   * IN THE HOST'S OWN WORDS (FR-65). `sentence` is said as the panel's
+   * heading in place of the studio's "Not kept: the host could not keep
+   * this change", and with one, `findings` may be empty or left out: a
+   * reason that is one sentence ("Your plan keeps three apps") need not be
+   * dressed as a finding at a made-up path.
+   */
+  | { readonly ok: false; readonly sentence: string; readonly findings?: readonly Finding[] }
+  | { readonly ok: false; readonly sentence?: string; readonly findings: readonly Finding[] };
 /** What `onApply` returns: a verdict, nothing, or a promise of either, for a host that asks its server first. */
 export type StudioHostAnswer = void | StudioHostVerdict | PromiseLike<void | StudioHostVerdict>;
 /** A host that keeps the declaration: handed what the checker passed, and saying whether it kept it. */
@@ -439,6 +449,16 @@ function StudioOverlay<S extends AnySchema>({
           data-testid="studio-apply"
           onClick={() => {
             if (onApply) {
+              /*
+               * NOTHING CHANGED, SAID BY THE STUDIO (FR-65). A host handed
+               * an empty change previews nothing, or refuses it in words
+               * about something else; the studio knows before it asks.
+               */
+              if (studio.unchanged()) {
+                ++presses.current;
+                setApplied({ ok: false, unchanged: true });
+                return;
+              }
               const handed = handedToTheHost(studio as unknown as Studio<AnySchema>, onApply);
               if (!handed.ok) {
                 setApplied({ ok: false, check: handed.check });
@@ -454,7 +474,9 @@ function StudioOverlay<S extends AnySchema>({
               const kept: Applied = { ok: true, files: handed.files, migration: handed.migration?.title ?? null, door: false, handed: true };
               const heard = (verdict: void | StudioHostVerdict) => {
                 if (press !== presses.current) return;
-                setApplied(verdict && verdict.ok === false ? { ok: false, refused: verdict.findings } : kept);
+                if (!verdict || verdict.ok !== false) return setApplied(kept);
+                const sentence = verdict.sentence?.trim();
+                setApplied({ ok: false, refused: verdict.findings ?? [], ...(sentence ? { sentence } : {}) });
               };
               if (isPromise(handed.answer)) {
                 setApplied({ ...kept, asking: true });
@@ -536,7 +558,9 @@ type Applied =
     }
   | { readonly ok: false; readonly check: CheckResult }
   /** The host's `onApply` said it could not keep the change, and why (FR-60). */
-  | { readonly ok: false; readonly refused: readonly Finding[] };
+  | { readonly ok: false; readonly refused: readonly Finding[]; readonly sentence?: string }
+  /** Apply pressed with nothing changed: the host is not asked (FR-65). */
+  | { readonly ok: false; readonly unchanged: true };
 
 /**
  * WHAT APPLYING ACTUALLY GIVES YOU.
@@ -562,15 +586,15 @@ function Written({
   return (
     <section
       data-testid="studio-applied"
-      aria-label={applied.ok ? "What the studio wrote" : "refused" in applied ? "What the host refused" : "What the checker refused"}
-      data-applied={applied.ok ? (applied.asking ? "asking" : "kept") : "refused" in applied ? "refused-by-host" : "refused-by-checker"}
+      aria-label={applied.ok ? "What the studio wrote" : "unchanged" in applied ? "Nothing to apply" : "refused" in applied ? "What the host refused" : "What the checker refused"}
+      data-applied={applied.ok ? (applied.asking ? "asking" : "kept") : "unchanged" in applied ? "unchanged" : "refused" in applied ? "refused-by-host" : "refused-by-checker"}
       style={{
         flex: "0 0 auto",
         display: "grid",
         gap: 8,
         padding: "10px 18px",
         borderBottom: "1px solid var(--graview-edge)",
-        background: applied.ok ? "var(--graview-panel)" : "var(--graview-panel-warning)",
+        background: applied.ok || "unchanged" in applied ? "var(--graview-panel)" : "var(--graview-panel-warning)",
       }}
     >
       {applied.ok && applied.asking ? (
@@ -596,10 +620,14 @@ function Written({
           </span>
           <Downloads files={applied.files} />
         </>
+      ) : "unchanged" in applied ? (
+        <strong role="status" style={{ fontSize: "0.875rem", fontWeight: 550 }}>
+          Nothing to apply: the declaration is as the studio opened it. Change something, then Apply.
+        </strong>
       ) : "refused" in applied ? (
         <>
           <strong style={{ fontSize: "0.875rem", fontWeight: 550, color: "var(--graview-warn)" }}>
-            Not kept: the host could not keep this change. Your edits are still here.
+            {applied.sentence ?? "Not kept: the host could not keep this change. Your edits are still here."}
           </strong>
           {applied.refused.length > 0 ? (
             <ul data-testid="studio-host-findings" style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 4 }}>
