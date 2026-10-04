@@ -17,9 +17,11 @@ import { canonical, fold, rng, schemaOf, storeAt, storeOf, unseenIds, world } fr
  */
 const WORLDS = 1000;
 
+/** Every whole mention of an id — `d:n1`, never the start of `d:n10` — said as `<id>`. */
+const unnamed = (text: string, id: string): string => text.split(/([\w:-]+)/).map((part) => (part === id ? "<id>" : part)).join("");
 /** Everything a seat is served, with one id written out of it. */
 const servedOf = (store: ReturnType<typeof storeOf>, viewer: Principal, id: string) =>
-  JSON.stringify({ snapshot: store.seenBy(viewer).snapshot(), log: logSeenBy(store, viewer) }).split(id).join("<id>").replace(/batch:[a-z0-9]+:/g, "batch:minted:").replace(/"at":"[^"]*"/g, "\"at\":\"now\"");
+  unnamed(JSON.stringify({ snapshot: store.seenBy(viewer).snapshot(), log: logSeenBy(store, viewer) }), id).replace(/batch:[a-z0-9]+:/g, "batch:minted:").replace(/"at":"[^"]*"/g, "\"at\":\"now\"");
 
 describe("a seat is served its own words", () => {
   it("serves a record the seat made naming a hidden record exactly as one naming nothing", () => {

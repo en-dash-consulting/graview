@@ -158,10 +158,10 @@ export function world(seed: number, options: { readonly required?: boolean } = {
       prims.push({ op: "patch-node", id, before: { title: nodes.get(id)!["title"] }, after: { title: `P${i}` } });
       nodes.set(id, { ...nodes.get(id)!, title: `P${i}` });
     } else if (roll < 0.85) {
-      // A field that names another record — or stops naming one.
+      // A field that names another record — or stops naming one, or names an id that is no record at all (FR-67).
       const id = pick(live());
       const node = nodes.get(id)!;
-      const ref = anyId();
+      const ref = r() < 0.1 ? `${pick(ANY)}:ghost${i}` : anyId();
       prims.push({ op: "patch-node", id, before: { ref: node["ref"] ?? "\u0000graview:unset" }, after: { ref } });
       nodes.set(id, { ...node, ref });
       refBy.set(id, author);

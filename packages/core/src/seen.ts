@@ -244,6 +244,7 @@ function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens
       kindOf,
       ...(actor !== undefined ? { actor } : {}),
       ...(timeline ? { timeline } : {}),
+      hides: () => hidesFrom(store, principal),
       // A pinned lens is already of one moment: pinning it again is itself.
       pin: pinned ? () => lens : () => pinWith({ judged: new Map(), shown: new Map() }),
     };
@@ -473,7 +474,7 @@ export function answerSeenBy<
     out["primitives"] = ops
       ? ops.flatMap((op) => op.primitives)
       : lens.timeline
-        ? servePrimitives(answer.primitives as readonly Primitive[], lens.timeline, { served: (node, writer) => lens.servedWith(node, writer), edgeClean: (edge) => !namesUnseen(edge, lens.sees) }, actingAs(principal).id)
+        ? servePrimitives(answer.primitives as readonly Primitive[], lens.timeline, { served: (node, writer) => lens.servedWith(node, writer), edgeClean: (edge) => !namesUnseen(edge, lens.sees), sees: lens.sees }, actingAs(principal).id)
         : redact([{ id: "", seq: 0, batch: "", author: { kind: "system" }, intent: "", mutation: null, primitives: answer.primitives as never, inverse: [], reads: [], writes: [], at: "" }], lens)[0]!.primitives;
   }
   // Records the seat is served, and no id that names nothing: a hidden record and an absent one are left out alike (FR-55).

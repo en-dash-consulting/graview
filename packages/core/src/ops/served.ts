@@ -214,14 +214,25 @@ const idOf = (primitive: Primitive): string | undefined =>
 
 /** Judges one primitive at a moment, and moves the moment past it. */
 function serveOne(primitive: Primitive, moment: Moment, judge: ServedJudge, by: (id: string, field: string) => string | undefined): Served {
-  const servedAt = (id: string): AnyGraphNode | undefined => {
+  /*
+   * WHETHER A LINK'S END IS SERVED AT THIS MOMENT: its record, as the seat
+   * is served it — or, when no record is there (a dangling link a repair
+   * removes), the id as the seat's sight judges it (FR-67). That sight
+   * keeps nothing from anybody that names no record at all, and judges one
+   * the store knows by what the log says it was: a link to a record that
+   * was hidden from the seat, removed before it, after it or in the same
+   * op, is still not served. A judge that cannot say its sight serves no
+   * such link.
+   */
+  const endServed = (id: string): boolean => {
     const node = moment.node(id);
-    return node ? judge.served(node, moment.writerOf(id)) : undefined;
+    if (node) return judge.served(node, moment.writerOf(id)) !== undefined;
+    return judge.sees?.(id) ?? false;
   };
   const id = idOf(primitive);
   if (id === undefined) {
     const edge = (primitive as { edge: GraphEdge }).edge;
-    const served = judge.edgeClean(edge) && servedAt(edge.from) !== undefined && servedAt(edge.to) !== undefined;
+    const served = judge.edgeClean(edge) && endServed(edge.from) && endServed(edge.to);
     moment.apply(primitive);
     return served ? { primitives: [primitive], faithful: true } : { primitives: [], faithful: false };
   }
@@ -236,7 +247,7 @@ function serveOne(primitive: Primitive, moment: Moment, judge: ServedJudge, by: 
     // Into what the seat is served: the record as it is served, and its links to what the seat is served.
     const links: Primitive[] = moment
       .incident(id)
-      .filter((edge) => judge.edgeClean(edge) && servedAt(edge.from === id ? edge.to : edge.from) !== undefined)
+      .filter((edge) => judge.edgeClean(edge) && endServed(edge.from === id ? edge.to : edge.from))
       .map((edge) => ({ op: "add-edge", edge }));
     const faithful = primitive.op === "add-node" && after === primitive.node && links.length === 0;
     return { primitives: faithful ? [primitive] : [{ op: "add-node", node: after }, ...links], faithful };
