@@ -1,5 +1,5 @@
 import { BLOCK, hueFor, roadsOf, toIso, villageOf, type Brand, type Building, type Plot } from "@graview/core";
-import { kindOfCard, type InterpolatedLayout } from "@graview/layout";
+import { kindCardId, kindOfCard, type InterpolatedLayout } from "@graview/layout";
 import { memo, useCallback, useMemo, useRef, type CSSProperties, type ReactElement } from "react";
 import { useGraview } from "./context.js";
 import { useFlagged } from "./hooks.js";
@@ -150,6 +150,9 @@ export function Plots({ frame, width, height, pan, brand, pinned, swallowed, onF
                 key={`${road.from}|${road.to}`}
                 className="graview-road"
                 data-graview-road={road.edges.join(",")}
+                /* The plots it joins, by the id each plot wears in data-graview-plot. */
+                data-graview-from={kindCardId(road.from)}
+                data-graview-to={kindCardId(road.to)}
                 data-graview-lit={emphasis !== null && road.edges.includes(emphasis) ? "" : undefined}
               >
                 <path className="graview-road-edge" d={road.d} />
