@@ -1,0 +1,246 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Household chores",
+  "description": "The jobs that keep a home running, who's on each this week, and when each was last done.",
+  "kinds": {
+    "chore": {
+      "noun": "chore",
+      "plural": "chores",
+      "description": "A job that comes round again, like the dishes or the bins.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "often": {
+          "type": "enum",
+          "options": [
+            "daily",
+            "weekly",
+            "fortnightly",
+            "monthly"
+          ],
+          "default": "weekly",
+          "required": true,
+          "label": "How often"
+        },
+        "lastDone": {
+          "type": "date",
+          "label": "Last done"
+        },
+        "minutes": {
+          "type": "integer",
+          "description": "roughly how long it takes"
+        }
+      },
+      "glance": [
+        "name",
+        "often",
+        "lastDone"
+      ],
+      "describe": "{often} · last done {lastDone|relative}",
+      "edges": {
+        "assigned": {
+          "to": [
+            "person"
+          ],
+          "cardinality": "one",
+          "description": "who is on this chore this week",
+          "inverse": "their chores"
+        },
+        "in-area": {
+          "to": [
+            "area"
+          ],
+          "cardinality": "one",
+          "description": "the part of the home it belongs to",
+          "inverse": "chores here"
+        }
+      }
+    },
+    "person": {
+      "noun": "person",
+      "plural": "people",
+      "description": "Someone who lives here and shares the work.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    "area": {
+      "noun": "area",
+      "plural": "areas",
+      "description": "A part of the home, like the kitchen or the garden.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-chore": {
+      "title": "Add a chore",
+      "creates": "chore",
+      "description": "Add a job that comes round again, and how often."
+    },
+    "add-chore-here": {
+      "title": "Add a chore in this area",
+      "on": "area",
+      "args": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "effects": [
+        {
+          "create": "chore",
+          "as": "new",
+          "set": {
+            "name": "$name",
+            "often": "$often"
+          }
+        },
+        {
+          "connect": "in-area",
+          "from": "$new",
+          "to": "$subject"
+        }
+      ],
+      "description": "Add a chore that belongs to this part of the home, by name, and how often it comes round."
+    },
+    "give-chore": {
+      "title": "Add a chore for them",
+      "on": "person",
+      "args": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "effects": [
+        {
+          "create": "chore",
+          "as": "new",
+          "set": {
+            "name": "$name",
+            "often": "$often"
+          }
+        },
+        {
+          "connect": "assigned",
+          "from": "$new",
+          "to": "$subject"
+        }
+      ],
+      "description": "Add a new chore and put this person on it."
+    },
+    "done-today": {
+      "title": "Done it today",
+      "on": "chore",
+      "sets": {
+        "lastDone": "$today"
+      },
+      "description": "Record that a chore was done today."
+    },
+    "set-often": {
+      "title": "Change how often",
+      "on": "chore",
+      "writes": [
+        "often"
+      ],
+      "description": "Say how often a chore comes round: daily, weekly, fortnightly or monthly."
+    },
+    "assign": {
+      "title": "Give to someone",
+      "on": "chore",
+      "connects": "assigned",
+      "description": "Put someone on a chore this week, in place of whoever had it.",
+      "fromTheOtherEnd": "Give them one of our chores"
+    },
+    "unassign": {
+      "title": "Take off them",
+      "on": "chore",
+      "severs": "assigned",
+      "description": "Take a person off a chore.",
+      "fromTheOtherEnd": "Take a chore off them"
+    },
+    "move-chore": {
+      "title": "Move to an area",
+      "on": "chore",
+      "connects": "in-area",
+      "description": "Say which part of the home a chore belongs to.",
+      "fromTheOtherEnd": "Move one of our chores here"
+    },
+    "add-person": {
+      "title": "Add a person",
+      "creates": "person",
+      "description": "Add someone who lives here and shares the work."
+    },
+    "add-area": {
+      "title": "Add an area",
+      "creates": "area",
+      "description": "Add a part of the home to group chores by."
+    },
+    "take-out-of-area": {
+      "title": "Take out of its area",
+      "on": "chore",
+      "severs": "in-area",
+      "description": "Say a chore no longer belongs to the area it was in.",
+      "fromTheOtherEnd": "Take one of our chores out of here"
+    }
+  },
+  "rules": {
+    "chore-has-someone": {
+      "title": "Every chore has somebody on it",
+      "description": "A chore that is everyone's job is nobody's.",
+      "over": "chore",
+      "require": "present(assigned)",
+      "says": "Nobody is on {name} this week",
+      "repairs": [
+        {
+          "act": "assign",
+          "label": "Give it to someone"
+        }
+      ]
+    },
+    "chore-not-overdue": {
+      "title": "Chores are done as often as they come round",
+      "over": "chore",
+      "when": "present(lastDone)",
+      "require": "days(lastDone, today()) <= if(often == 'daily', 1, if(often == 'weekly', 7, if(often == 'fortnightly', 14, 31)))",
+      "says": "{name} is overdue — last done {lastDone|relative}",
+      "repairs": [
+        {
+          "act": "done-today",
+          "label": "Done it today"
+        }
+      ]
+    }
+  },
+  "roles": [
+    "owner",
+    "editor",
+    "viewer"
+  ],
+  "policy": {
+    "grants": [
+      {
+        "roles": [
+          "owner",
+          "editor"
+        ],
+        "mutations": "*",
+        "describe": "Owners and editors may do everything; viewers can look."
+      }
+    ]
+  },
+  "brand": {
+    "accent": "#7a4fb0"
+  }
+}

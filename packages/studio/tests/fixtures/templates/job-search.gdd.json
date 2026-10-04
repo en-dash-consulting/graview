@@ -1,0 +1,448 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Job search",
+  "description": "The roles we're going for, the companies behind them, who we know there, and what happens next.",
+  "kinds": {
+    "company": {
+      "noun": "company",
+      "plural": "companies",
+      "description": "An organisation we might work for.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "site": {
+          "type": "url"
+        },
+        "notes": {
+          "type": "text"
+        }
+      }
+    },
+    "role": {
+      "noun": "role",
+      "plural": "roles",
+      "description": "A job we are interested in or have applied for, and how far along it is.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "interested",
+            "applied",
+            "interviewing",
+            "offer",
+            "accepted",
+            "rejected",
+            "withdrawn"
+          ],
+          "default": "interested",
+          "required": true
+        },
+        "applied": {
+          "type": "date",
+          "label": "Applied on",
+          "description": "the day the application went in"
+        },
+        "salary": {
+          "type": "number",
+          "format": "money"
+        },
+        "link": {
+          "type": "url",
+          "description": "the job advert"
+        },
+        "notes": {
+          "type": "text"
+        }
+      },
+      "glance": [
+        "title",
+        "status",
+        "salary"
+      ],
+      "describe": "{status}",
+      "lifecycle": {
+        "field": "status",
+        "retired": [
+          "rejected",
+          "withdrawn"
+        ]
+      },
+      "edges": {
+        "at": {
+          "to": [
+            "company"
+          ],
+          "cardinality": "one",
+          "description": "the company hiring for this role",
+          "inverse": "roles there"
+        }
+      }
+    },
+    "step": {
+      "noun": "step",
+      "plural": "steps",
+      "description": "The next thing to do for a role: a follow-up, an interview, a task to send back.",
+      "fields": {
+        "what": {
+          "type": "string",
+          "required": true
+        },
+        "due": {
+          "type": "date"
+        },
+        "done": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "describe": "due {due|relative}",
+      "edges": {
+        "about": {
+          "to": [
+            "role"
+          ],
+          "cardinality": "one",
+          "description": "the role this step moves forward",
+          "inverse": "next steps"
+        }
+      }
+    },
+    "contact": {
+      "noun": "contact",
+      "plural": "contacts",
+      "description": "Someone we know, or have spoken to, at a company.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "email": {
+          "type": "email"
+        },
+        "position": {
+          "type": "string",
+          "description": "their job, like \"Design manager\""
+        },
+        "notes": {
+          "type": "text"
+        }
+      },
+      "glance": [
+        "name",
+        "position",
+        "email"
+      ],
+      "describe": "{position}",
+      "edges": {
+        "works-at": {
+          "to": [
+            "company"
+          ],
+          "cardinality": "one",
+          "description": "where they work",
+          "inverse": "people we know there"
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-company": {
+      "title": "Add a company",
+      "creates": "company",
+      "description": "Add an organisation you might want to work for."
+    },
+    "add-role": {
+      "title": "Add a role",
+      "creates": "role",
+      "description": "Add a job you are interested in, before choosing its company."
+    },
+    "add-role-here": {
+      "title": "Add a role at this company",
+      "on": "company",
+      "args": {
+        "title": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "effects": [
+        {
+          "create": "role",
+          "as": "new",
+          "set": {
+            "title": "$title",
+            "link": "$link"
+          }
+        },
+        {
+          "connect": "at",
+          "from": "$new",
+          "to": "$subject"
+        }
+      ],
+      "description": "Add a job this company is hiring for, by title, with a link to the advert if you have one."
+    },
+    "log-application": {
+      "title": "Log an application",
+      "args": {
+        "title": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "effects": [
+        {
+          "create": "role",
+          "as": "new",
+          "set": {
+            "title": "$title",
+            "status": "applied",
+            "applied": "$today"
+          }
+        }
+      ],
+      "description": "Record a role you applied for today, by title."
+    },
+    "apply": {
+      "title": "Mark as applied",
+      "on": "role",
+      "sets": {
+        "status": "applied",
+        "applied": "$today"
+      },
+      "allowedWhen": "status == 'interested'",
+      "refusal": "{title} is already past applying",
+      "description": "Say you sent the application today; the clock for a next step starts now."
+    },
+    "start-interviewing": {
+      "title": "Interviewing",
+      "on": "role",
+      "sets": {
+        "status": "interviewing"
+      },
+      "allowedWhen": "status == 'applied' || status == 'interested'",
+      "refusal": "{title} is not waiting on an interview",
+      "description": "Say this role has moved to interviews."
+    },
+    "got-offer": {
+      "title": "Got an offer",
+      "on": "role",
+      "sets": {
+        "status": "offer"
+      },
+      "description": "Say this role made you an offer."
+    },
+    "accept-offer": {
+      "title": "Accept",
+      "on": "role",
+      "sets": {
+        "status": "accepted"
+      },
+      "allowedWhen": "status == 'offer'",
+      "refusal": "{title} has not made an offer yet",
+      "description": "Say you accepted this role's offer."
+    },
+    "rejected": {
+      "title": "Rejected",
+      "on": "role",
+      "sets": {
+        "status": "rejected"
+      },
+      "description": "Say this role turned you down; it drops out of view but is not deleted."
+    },
+    "withdraw": {
+      "title": "Withdraw",
+      "on": "role",
+      "sets": {
+        "status": "withdrawn"
+      },
+      "description": "Say you pulled out of this role; it drops out of view but is not deleted."
+    },
+    "set-salary": {
+      "title": "Set the salary",
+      "on": "role",
+      "writes": [
+        "salary"
+      ],
+      "description": "Record the salary advertised or offered."
+    },
+    "add-next-step": {
+      "title": "Plan the next step",
+      "on": "role",
+      "args": {
+        "what": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "effects": [
+        {
+          "create": "step",
+          "as": "new",
+          "set": {
+            "what": "$what",
+            "due": "$due"
+          }
+        },
+        {
+          "connect": "about",
+          "from": "$new",
+          "to": "$subject"
+        }
+      ],
+      "description": "Add the next thing to do for this role, like a follow-up email, with a due date if there is one."
+    },
+    "complete-step": {
+      "title": "Done",
+      "on": "step",
+      "sets": {
+        "done": true
+      },
+      "allowedWhen": "done != true",
+      "refusal": "{what} is already done",
+      "description": "Mark a step as done."
+    },
+    "set-due": {
+      "title": "Change the due date",
+      "on": "step",
+      "writes": [
+        "due"
+      ],
+      "description": "Set or move the date a step is due."
+    },
+    "attach-step": {
+      "title": "Attach to a role",
+      "on": "step",
+      "connects": "about",
+      "description": "Say which role a step is for.",
+      "fromTheOtherEnd": "Attach one of our steps to this role"
+    },
+    "file-role": {
+      "title": "Set the company",
+      "on": "role",
+      "connects": "at",
+      "description": "Say which company is hiring for a role.",
+      "fromTheOtherEnd": "Add one of our roles to this company"
+    },
+    "add-contact": {
+      "title": "Add a contact",
+      "creates": "contact",
+      "description": "Add someone you know or have spoken to."
+    },
+    "add-contact-here": {
+      "title": "Add someone we know here",
+      "on": "company",
+      "args": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "effects": [
+        {
+          "create": "contact",
+          "as": "new",
+          "set": {
+            "name": "$name",
+            "email": "$email",
+            "position": "$position"
+          }
+        },
+        {
+          "connect": "works-at",
+          "from": "$new",
+          "to": "$subject"
+        }
+      ],
+      "description": "Add a person who works at this company, by name, with their email and job if you have them."
+    },
+    "set-workplace": {
+      "title": "Set where they work",
+      "on": "contact",
+      "connects": "works-at",
+      "description": "Say which company a contact works at.",
+      "fromTheOtherEnd": "Add one of our contacts here"
+    },
+    "unfile-role": {
+      "title": "Clear the company",
+      "on": "role",
+      "severs": "at",
+      "description": "Say a role is not at the company it was filed under.",
+      "fromTheOtherEnd": "Take one of our roles off this company"
+    },
+    "detach-step": {
+      "title": "Detach from its role",
+      "on": "step",
+      "severs": "about",
+      "description": "Take a step off the role it was for.",
+      "fromTheOtherEnd": "Detach a step from this role"
+    },
+    "clear-workplace": {
+      "title": "Clear where they work",
+      "on": "contact",
+      "severs": "works-at",
+      "description": "Say a contact no longer works at the company they were filed under.",
+      "fromTheOtherEnd": "Say someone no longer works here"
+    }
+  },
+  "rules": {
+    "application-has-next-step": {
+      "title": "A live application always has a next step",
+      "description": "Applications go quiet; a week without a planned step means it is time to follow up.",
+      "over": "role",
+      "when": "status == 'applied' || status == 'interviewing'",
+      "require": "exists(in('about') where done != true) || !present(applied) || days(applied, today()) < 7",
+      "says": "{title} has had no next step for a week",
+      "repairs": [
+        {
+          "act": "add-next-step",
+          "label": "Plan the next step"
+        }
+      ]
+    },
+    "step-on-time": {
+      "title": "Steps are done by their due date",
+      "over": "step",
+      "when": "done != true && present(due)",
+      "require": "due >= today()",
+      "says": "{what} was due {due|relative}",
+      "repairs": [
+        {
+          "act": "complete-step",
+          "label": "Mark it done"
+        },
+        {
+          "act": "set-due",
+          "label": "Move the date"
+        }
+      ]
+    }
+  },
+  "roles": [
+    "owner",
+    "editor",
+    "viewer"
+  ],
+  "policy": {
+    "grants": [
+      {
+        "roles": [
+          "owner",
+          "editor"
+        ],
+        "mutations": "*",
+        "describe": "Owners and editors may do everything; viewers can look."
+      }
+    ]
+  },
+  "brand": {
+    "accent": "#4b5bb5"
+  }
+}
