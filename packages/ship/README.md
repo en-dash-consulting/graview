@@ -422,7 +422,7 @@ takes what `applyAll` takes and runs `applyAll`'s own path on a rehearsal of the
 graph and log copied, nobody listening — so it refuses exactly when the apply would: the
 policy, the seat's sight, an act's own guard, whatever `admit` throws. Otherwise it answers
 the ops as the log would hold them, marked not kept (ids `preview:<n>`, `kept: false`), with
-`violationsAfter`. It writes, logs and tells nothing, and spends no id the store mints next.
+the rules broken after. It writes, logs and tells nothing, and spends no id the store mints next.
 
 ```ts
 const would = store.previewAll(calls, { author: seat, via, admit: (planned) => caps(seat, planned) });
