@@ -1,10 +1,13 @@
 import type { GraphDiff, NodeChange } from "./graph/diff.js";
 import type { GraphNodeBase } from "./graph/types.js";
-import type { GraphEdge } from "./graph/types.js";
+import type { Primitive } from "./graph/primitives.js";
+import type { AnyGraphNode, GraphEdge, GraphSnapshot } from "./graph/types.js";
 import type { Violation } from "./invariants/types.js";
 import { batchesOf, undoneIn, type LogReading } from "./ops/log.js";
 import { checkUndo } from "./ops/undo.js";
 import type { Batch, Operation } from "./ops/types.js";
+import { servePrimitives, type FieldWriter, type Timeline } from "./ops/served.js";
+import { writersOf, type Writers } from "./ops/writers.js";
 import { namesUnseen, redact, WITHHELD_INTENT, type SeatLens } from "./ops/withheld.js";
 import { actingAs, isSystem } from "./permissions/policy.js";
 import { recordsOf, sees } from "./permissions/sight.js";
@@ -19,6 +22,9 @@ interface Judged {
     getNode(id: string): { readonly id: string; readonly kind: string } | undefined;
     out(id: string): readonly { readonly id: string }[];
     in(id: string): readonly { readonly id: string }[];
+    /** A store's own graph says its links, so an op can be judged where it stood (FR-55). */
+    outEdges?(id: string): readonly GraphEdge[];
+    inEdges?(id: string): readonly GraphEdge[];
   };
   readonly log: LogReading;
   /** The kinds of the modules this workspace has off (FR-12), kept from every seat as a sight keeps a record. */
@@ -109,13 +115,24 @@ function optionalIn(schema: Judged["schema"]): (kind: string, field: string) => 
 export function seatLens(store: Judged, principal: Principal): SeatLens {
   const sees = seesId(store, principal);
   const optional = optionalIn(store.schema);
+  /*
+   * A SEAT IS SERVED ITS OWN WORDS (FR-55). A field whose value this seat
+   * wrote — or the person an agent acts for — is served as written, though
+   * it name a record the seat may not see: saying back what a seat said
+   * tells it nothing, and judging it like anybody else's would tell a seat
+   * that guessed an id whether the guess was real.
+   */
+  const actor = isSystem(principal) ? undefined : actingAs(principal).id;
+  const writers = (): Writers => writersOf(store.log as never);
+  const length = (): number => (store.log as { readonly length?: number }).length ?? store.log.all().length;
   // The same record served the same way is the same object, so a view read twice is equal by identity.
   const cleared = new WeakMap<object, { readonly without: string; readonly node: unknown }>();
-  const served = <N extends { readonly id: string; readonly kind: string }>(node: N): N | undefined => {
+  const servedWith = <N extends { readonly id: string; readonly kind: string }>(node: N, writer: FieldWriter): N | undefined => {
     if (!sees(node.id)) return undefined;
     let without: string[] | undefined;
     for (const [field, value] of Object.entries(node)) {
       if (field === "id" || field === "kind" || !namesUnseen(value, sees)) continue;
+      if (actor !== undefined && writer(field) === actor) continue;
       if (!optional(node.kind, field)) return undefined;
       (without ??= []).push(field);
     }
@@ -127,13 +144,33 @@ export function seatLens(store: Judged, principal: Principal): SeatLens {
     cleared.set(node, { without: key, node: out });
     return out;
   };
+  const served = <N extends { readonly id: string; readonly kind: string }>(node: N): N | undefined => {
+    const now = length();
+    const known = writers();
+    return servedWith(node, (field) => known.writerAt(node.id, field, now));
+  };
   const shows = (id: string): boolean => {
     if (!sees(id)) return false;
     const node = store.graph.getNode(id);
     return node === undefined || served(node) !== undefined;
   };
   const kindOf = (id: string): string | undefined => store.graph.getNode(id)?.kind ?? recordsOf(store.log).kindOf(id);
-  return { sees, shows, served, optional, kindOf };
+  const graph = store.graph;
+  const timeline: Timeline | undefined =
+    graph.outEdges && graph.inEdges
+      ? {
+          present: {
+            getNode: (id) => graph.getNode(id) as AnyGraphNode | undefined,
+            outEdges: (id) => graph.outEdges!(id),
+            inEdges: (id) => graph.inEdges!(id),
+          },
+          log: store.log as Timeline["log"],
+          get writers() {
+            return writers();
+          },
+        }
+      : undefined;
+  return { sees, shows, served, servedWith, optional, kindOf, ...(actor !== undefined ? { actor } : {}), ...(timeline ? { timeline } : {}) };
 }
 
 /** The store's log as one seat may read it: every op in its place, the ones it may not see withheld (FR-16), and no id it may not see in any of them (FR-55). */
@@ -180,25 +217,71 @@ export function answerSeenBy<
   const out: Record<string, unknown> = { ...answer };
   if (answer.diff) {
     const diff = answer.diff as GraphDiff;
-    const node = <N extends { id: string; kind: string }>(one: N) => (lens.shows(one.id) ? lens.served(one) : undefined);
-    const nodes = <N extends { id: string; kind: string }>(all: readonly N[]) => all.flatMap((one) => node(one) ?? []);
+    /*
+     * EACH SIDE AS WHO WROTE IT THEN (FR-55): the seat's own words are served
+     * as written, and the words a change replaced were somebody's before it.
+     * Before is judged as of the first op the answer made (now, for a
+     * preview); after as of now — and, for a preview, what it would write
+     * is the caller's.
+     */
+    const writers = writersOf(store.log as never);
+    const end = (store.log as { readonly length?: number }).length ?? store.log.all().length;
+    const first = answer.ops?.[0]?.seq ?? end;
+    const actor = actingAs(principal).id;
+    const wroteAt = (id: string, seq: number) => (field: string) => writers.writerAt(id, field, seq);
+    const node = <N extends { id: string; kind: string }>(one: N, writer: FieldWriter) => (lens.shows(one.id) ? lens.servedWith(one, writer) : undefined);
+    const nodes = <N extends { id: string; kind: string }>(all: readonly N[], writer: (id: string) => FieldWriter) => all.flatMap((one) => node(one, writer(one.id)) ?? []);
     const edge = (one: GraphEdge) => lens.shows(one.from) && lens.shows(one.to) && !namesUnseen(one, lens.sees);
+    const madeBy = (id: string, fields?: readonly string[]): FieldWriter =>
+      answer.ops ? wroteAt(id, end) : (field) => (fields === undefined || fields.includes(field) ? actor : writers.writerAt(id, field, end));
+    const changed = diff.changedNodes.flatMap((change: NodeChange) => {
+      const before = node(change.before, wroteAt(change.before.id, first));
+      const after = node(change.after, madeBy(change.after.id, change.fields));
+      return before && after ? [{ before, after, fields: change.fields.filter((field) => field in before || field in after) }] : [];
+    });
+    /*
+     * A WRITE THAT CHANGED NOTHING BUT WHOSE WORDS THEY ARE. A seat that
+     * wrote the value a field already held, naming what it may not see, made
+     * those words its own (FR-55): the store's graph did not move, and the
+     * seat's view of the record did. Said as a change, so the answer reads
+     * as it would had the field held anything else.
+     */
+    const listed = new Set(diff.changedNodes.map((change: NodeChange) => change.after.id));
+    const patched = new Map<string, string[]>();
+    for (const primitive of (answer.ops?.flatMap((op) => op.primitives) ?? (answer.primitives as readonly Primitive[] | undefined) ?? [])) {
+      if (primitive.op !== "patch-node" || listed.has(primitive.id)) continue;
+      patched.set(primitive.id, [...(patched.get(primitive.id) ?? []), ...Object.keys(primitive.after)]);
+    }
+    const kept = () =>
+      [...patched].flatMap(([id, fields]) => {
+        const held = store.graph.getNode(id) as AnyGraphNode | undefined;
+        if (!held) return [];
+        const before = node(held, wroteAt(id, first));
+        const after = node(held, madeBy(id, fields));
+        return before && after && JSON.stringify(before) !== JSON.stringify(after) ? [{ before, after, fields }] : [];
+      });
+    const madeTheirs = kept();
     out["diff"] = {
-      addedNodes: nodes(diff.addedNodes),
-      removedNodes: nodes(diff.removedNodes),
-      changedNodes: diff.changedNodes.flatMap((change: NodeChange) => {
-        const before = node(change.before);
-        const after = node(change.after);
-        return before && after ? [{ before, after, fields: change.fields.filter((field) => field in before || field in after) }] : [];
-      }),
+      addedNodes: nodes(diff.addedNodes, (id) => madeBy(id)),
+      removedNodes: nodes(diff.removedNodes, (id) => wroteAt(id, first)),
+      changedNodes: [...changed, ...madeTheirs],
       addedEdges: diff.addedEdges.filter(edge),
       removedEdges: diff.removedEdges.filter(edge),
-      touched: diff.touched.filter(lens.shows),
+      touched: [...diff.touched.filter(lens.shows), ...[...patched.keys()].filter((id) => lens.shows(id) && !diff.touched.includes(id))],
     };
   }
   if (answer.ops) out["ops"] = redact(answer.ops, lens);
-  if (answer.primitives) out["primitives"] = redact([{ id: "", seq: 0, batch: "", author: { kind: "system" }, intent: "", mutation: null, primitives: answer.primitives as never, inverse: [], reads: [], writes: [], at: "" }], lens)[0]!.primitives;
-  if (answer.reads) out["reads"] = answer.reads.filter(lens.shows);
+  if (answer.primitives) {
+    // An apply's primitives are its ops'; a preview's are not in the log yet, and are judged from the graph as it stands.
+    const ops = out["ops"] as readonly Operation[] | undefined;
+    out["primitives"] = ops
+      ? ops.flatMap((op) => op.primitives)
+      : lens.timeline
+        ? servePrimitives(answer.primitives as readonly Primitive[], lens.timeline, { served: (node, writer) => lens.servedWith(node, writer), edgeClean: (edge) => !namesUnseen(edge, lens.sees) }, actingAs(principal).id)
+        : redact([{ id: "", seq: 0, batch: "", author: { kind: "system" }, intent: "", mutation: null, primitives: answer.primitives as never, inverse: [], reads: [], writes: [], at: "" }], lens)[0]!.primitives;
+  }
+  // Records the seat is served, and no id that names nothing: a hidden record and an absent one are left out alike (FR-55).
+  if (answer.reads) out["reads"] = answer.reads.filter((id) => lens.shows(id) && has(id));
   if (answer.writes) out["writes"] = answer.writes.filter(lens.shows);
   if (answer.intent !== undefined && namesUnseen(answer.intent, lens.sees)) out["intent"] = WITHHELD_INTENT;
   for (const key of ["introduces", "resolves", "violationsAfter"] as const) {
@@ -255,6 +338,28 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
   const seenId = (id: string): boolean => seenNode(full.getNode(id) as never);
   const seenEdge = (edge: GraphEdge): boolean => seenId(edge.from) && seenId(edge.to) && !namesUnseen(edge, lens.sees);
   const servedAll = <N>(nodes: readonly N[]): N[] => nodes.flatMap((node) => served(node) ?? []);
+  /** A graph of another moment — an epoch's base, at `seq` — as this seat is served it: its records, as who wrote them then, and its links between them. */
+  const servedGraph = (snapshot: GraphSnapshot, seq: number): GraphSnapshot => {
+    const writers = writersOf(store.log as never);
+    const nodes = snapshot.nodes.flatMap((node) => lens.servedWith(node, (field) => writers.writerAt(node.id, field, seq)) ?? []);
+    const kept = new Set(nodes.map((node) => node.id));
+    return { nodes, edges: snapshot.edges.filter((edge) => kept.has(edge.from) && kept.has(edge.to) && !namesUnseen(edge, lens.sees)) };
+  };
+  /**
+   * AN EPOCH AS THIS SEAT IS SERVED IT: its base as the seat was served it
+   * then, and who made each record (`creators`, which a checkpoint carries
+   * so a seat's own records stay its own past a compaction) only for the
+   * records in that base — a record the seat is not served is not named in
+   * the map either, by its id or by its maker's (FR-55). The store keeps
+   * the whole map for its own judgement.
+   */
+  const servedEpoch = <E extends { readonly seq: number; readonly base: GraphSnapshot; readonly creators?: Readonly<Record<string, string>> }>(epoch: E): E => {
+    const base = servedGraph(epoch.base, epoch.seq);
+    if (!epoch.creators) return { ...epoch, base };
+    const kept = new Set(base.nodes.map((node) => node.id));
+    const creators = Object.fromEntries(Object.entries(epoch.creators).filter(([id, maker]) => kept.has(id) && !namesUnseen(maker, lens.sees)));
+    return { ...epoch, base, creators };
+  };
   /*
    * THE LOG, REDACTED RATHER THAN GAPPED (FR-16): every op in its place,
    * and one that touched what this seat may not see withheld — so the log
@@ -313,6 +418,14 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
         case "all":
         case "toJSON":
           return () => [...ops()];
+        // Each epoch's base as this seat is served it, so its log folds from there to what it is served (FR-55).
+        case "epochs":
+          return () => target.epochs().map((epoch) => servedEpoch(epoch));
+        case "lastEpoch":
+          return () => {
+            const epoch = target.lastEpoch();
+            return epoch && servedEpoch(epoch);
+          };
         case "live":
           return () => {
             const all = ops();
@@ -358,6 +471,12 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
           return (other: Principal) => seenBy(target, other);
         case "seenFor":
           return principal;
+        // A checkpoint taken through the seat's view is the one it is served.
+        case "checkpoint":
+          return (...args: Parameters<Store<S>["checkpoint"]>) => {
+            const epoch = target.checkpoint(...args);
+            return epoch && servedEpoch(epoch);
+          };
         default:
           return bound(target, prop);
       }

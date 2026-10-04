@@ -328,6 +328,8 @@ export function wireOf<S extends AnySchema>(store: Store<S>): Wire<S> {
        * it first), is refused for that, in its own sentence.
        */
       if (store.policy && calls.some((call) => !store.permits(call, author).ok)) return [];
+      // Nor does a call naming a record that is not there for this seat: it is refused as missing, a hidden record and an absent one alike (FR-55).
+      if (calls.some((call) => store.missingFor(call, author))) return [];
       const yours = new Map<string, unknown>();
       try {
         for (const primitive of store.previewAll(calls).primitives) {

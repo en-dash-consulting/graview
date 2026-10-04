@@ -210,8 +210,8 @@ with `conflict.keepTheirs()` and `conflict.useMine()`.
 
 | `reason` | What it means |
 |---|---|
-| `forbidden` | the seat may not: the policy, a sight, an agent's declared acts, a module turned off; `wouldNeed` names the roles that could, when the policy knows them |
-| `missing` | what the call names is not there: a record, or a batch to take back |
+| `forbidden` | the seat may not: the policy, an agent's declared acts, a module turned off (for the host's own seat); `wouldNeed` names the roles that could, when the policy knows them |
+| `missing` | what the call names is not there for this seat: a record that does not exist or one it may not see — answered alike, so a refusal never tells a guessed id from a real one (FR-55) — or a batch to take back |
 | `invalid` | the call as asked does not fit: its arguments, the kind, a rule, a call before `hello` |
 | `limit` | the host's hard cap: the call can never succeed as asked, however long the caller waits |
 
