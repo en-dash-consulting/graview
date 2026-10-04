@@ -1,8 +1,0 @@
----
-"@graview/core": patch
-"@graview/ship": patch
----
-
-A compacted log keeps who made each record. An `own` sight with nothing but the log to say whose a record is (a note no edge joins to anybody) read its makers from the ops, and a store opened on a log compacted behind its undo horizon holds only the ops after it: a record made behind the horizon had no maker after a restart, and the seat that made it stopped seeing it. `store.checkpoint` now writes who made each record behind the checkpoint into it, as `creators` (record id to the seat that first added it, the person for an agent acting for one, and never the undo that put a record back); every adapter keeps it with the epoch; and `recordsOf` reads it when it opens a log that begins at that checkpoint, so `seesId`, `seenBy` and every seat surface judge the same records before and after the restart. A second compaction carries the first checkpoint's makers forward. Epochs are never served to a seat, so the ids the field names stay with the host.
-
-Compatibility: stored formats — additive within format 1, `FORMATS` unchanged. `Epoch` gains an optional `creators`, written only on a checkpoint `store.checkpoint` makes. A checkpoint without it, written by an earlier build or handed to `compact` bare, opens exactly as before and knows its makers from the horizon on. An earlier build reading a checkpoint with it ignores the field: it folds the same graph and judges sights as it always did (its makers known from the horizon on), and if it compacts again it writes its next checkpoint without the field. Ops, the wire, derived tool names and schemas, and check codes are unchanged.
