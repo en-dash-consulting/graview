@@ -47,7 +47,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [An act's own logic cannot tell a seat whether a hidden record exists](./an-act-s-own-logic-cannot-tell-a-seat.md) | pending |
 | [An agent acts for someone, through something: delegation and channel on every op, and seat headers trusted only on request](./an-agent-acts-for-someone-through.md) | completed |
 | [An edit can set a kind's glance (set-glance), and the studio renames display.glance with its field](./an-edit-can-set-a-kind-s-glance-set.md) | completed |
-| [An open page is told the app takes no changes for now, and when it does again (FR-66)](./an-open-page-is-told-the-app-is-held.md) | pending |
+| [An open page is told the app takes no changes for now, and when it does again (FR-66)](./an-open-page-is-told-the-app-is-held.md) | completed |
 | [An optimistic client can roll back: Store.rebase, a public notify, and batch ids that never collide across clients](./an-optimistic-client-can-roll-back.md) | completed |
 | [Applying primitives is all or nothing: a failure leaves the graph as it was](./applying-primitives-is-all-or-nothing.md) | completed |
 | [Backpressure distinct from refusal: busy with retryAfter, and the client re-sends (FR-45)](./backpressure-distinct-from-refusal.md) | completed |
@@ -82,7 +82,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The framework says its own version, and rule failures are structured](./the-framework-says-its-own-version-and.md) | completed |
 | [The live handler serves a store the host already holds (FR-42)](./the-live-handler-serves-a-store-the.md) | completed |
 | [The record names Graview Cloud and npm as they are](./the-record-names-graview-cloud-and-npm.md) | completed |
-| [The seat view serves an op that names a record that isn't there (FR-67)](./the-seat-view-serves-an-op-naming-a.md) | pending |
+| [The seat view serves an op that names a record that isn't there (FR-67)](./the-seat-view-serves-an-op-naming-a.md) | completed |
 | [The server pushes that the declaration changed, and a remote client reopens on it (FR-43)](./the-server-pushes-that-the-declaration.md) | completed |
 | [The store a host drives: a real clock, its own sentences kept, previews of several calls, host ops appended, typed undo refusals](./the-store-a-host-drives-a-real-clock.md) | completed |
 | [The store serves from any runtime: a fetch handler, an adapter over plain SQL, and core proven in workerd](./the-store-serves-from-any-runtime-a.md) | completed |
