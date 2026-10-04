@@ -14,8 +14,10 @@
  *
  *   pnpm release:approve            approve, tag, release
  *   pnpm release:approve --list     only say what is staged
+ *   pnpm release:approve --otp=<c>  approve them all at once with an authenticator code
  */
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
+import { createInterface } from "node:readline/promises";
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -37,6 +39,14 @@ if (!version || packages.some((one) => one.version !== version)) {
   console.error("The packages do not share one version here; run this on main after the Version packages merge.");
   process.exit(1);
 }
+const ask = async (question) => {
+  const line = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    return (await line.question(question)).trim();
+  } finally {
+    line.close();
+  }
+};
 const live = (name) => {
   try {
     return quiet("npm", ["view", `${name}@${version}`, "version", "--prefer-online"]).trim() === version;
@@ -64,10 +74,38 @@ if (missing.length > 0) {
 }
 if (process.argv.includes("--list")) process.exit(0);
 
-/* 2. Approve: npm asks for the second factor in the browser for each, unless it was told to remember. */
-for (const item of waiting) {
-  console.log(`\napproving ${item.name}@${item.version}`);
-  loud("npx", [...NPM, "stage", "approve", item.id]);
+/*
+ * 2. Approve. With no code, npm asks for the second factor in the browser
+ * for each (tick its five-minute skip on the first and the rest go
+ * through). With `--otp=<code>` from an authenticator app, every approval
+ * goes at once inside the code's thirty seconds; any npm refuses (a code
+ * it would not take twice, say) is asked again with a fresh code.
+ */
+let otp = process.argv.find((arg) => arg.startsWith("--otp="))?.slice("--otp=".length);
+const approve = (item, code) =>
+  new Promise((done) => {
+    const child = spawn("npx", [...NPM, "stage", "approve", item.id, ...(code ? ["--otp", code] : [])], { cwd: root, stdio: code ? ["ignore", "pipe", "pipe"] : "inherit" });
+    let said = "";
+    child.stdout?.on("data", (chunk) => (said += chunk));
+    child.stderr?.on("data", (chunk) => (said += chunk));
+    child.on("close", (status) => done({ item, ok: status === 0, said }));
+  });
+let left = waiting;
+while (left.length > 0) {
+  if (!otp) {
+    for (const item of left) {
+      console.log(`\napproving ${item.name}@${item.version}`);
+      loud("npx", [...NPM, "stage", "approve", item.id]);
+    }
+    break;
+  }
+  console.log(`approving ${left.length} with one code`);
+  const results = await Promise.all(left.map((item) => approve(item, otp)));
+  for (const result of results) console.log(`  ${result.ok ? "approved" : "refused "} ${result.item.name}@${result.item.version}`);
+  left = results.filter((result) => !result.ok).map((result) => result.item);
+  if (left.length === 0) break;
+  console.log(results.find((result) => !result.ok)?.said.trim().split("\n").slice(-3).join("\n"));
+  otp = await ask(`A fresh code for the ${left.length} left (empty to approve them in the browser): `);
 }
 
 /* 3. Live everywhere: npm processes a version for a few minutes before it serves it. */

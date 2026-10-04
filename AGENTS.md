@@ -132,7 +132,7 @@ pinned at 1.49.1 on purpose.
 `.github/workflows/release.yml` turns merged changesets into a "Version
 packages" pull request; merging it **stages** every package on npm by
 trusted publishing (`scripts/release-stage.mjs`), and nothing is live until
-a person runs `pnpm release:approve` on main: it approves each staged
+a person runs `pnpm release:approve` on main (or `--otp=<code>` from an authenticator app, to approve them all at once): it approves each staged
 version with their second factor, waits for npm to serve them, then tags
 `<name>@<version>` and writes a GitHub release each. The trusted-publisher
 configuration is per package on npmjs.com (repository
