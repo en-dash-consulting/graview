@@ -1,5 +1,33 @@
 # @graview/primitives
 
+## 0.1.5
+
+### Patch Changes
+
+- 826e19b: A hosted page carries 536 KB up front, not 1,075 KB, and each face of the embed is fetched as it is first drawn (FR-57). Graview Cloud's shell — `openRemote` and the embed over a document compiled in the browser — loaded every face before the app drew: the scene, the companion, the inspector, the routed face and its router, the chat and the agent's tool surface, and every default view. The embed imported every face outright, and a bundler splits a page by which files its first chunk can reach: the frame took its provider from `@graview/react`, its theme from `@graview/primitives`, and the provider took the reader's rung from `@graview/tools`, and each of those reaches the rest of its package. Now the frame — the region, the theme, the strip, the provider — is what a page loads first, and the scene, the pages and the picture are each a chunk fetched as they are drawn, with the framework's own views beside them. The frame reaches only the narrow entries `@graview/react/provider` (the provider, hooks and view registry without the scene), `@graview/primitives/frame` (the theme, the strip's Profile and Standing, and the framework's views behind doors), `@graview/tools/frame` (the reader's rung, pins and editable fields without the agent) and `@graview/layout/view` (the view state without the city); the routed face reaches `@graview/primitives/pages` and fetches the companion when "Ask" is opened, and a district fetches its arrange row when it is opened full. `scripts/verify-hosted-page.mjs` (`pnpm hosted`, first in `pnpm verify`) builds Cloud's page the way Cloud does and holds it to 600 KB up front and 150 KB of zod; it also says what each face fetches as it draws, 770 KB in all before the scene draws and 729 KB before the pages do.
+  
+  CI's bundle budgets follow: the pages face alone is held to 530 KB (from 950 KB) and the embed without the studio to 780 KB first loaded (from 1.2 MB); every face, loaded whole, is 11 KB smaller minified and 2.5 KB larger gzipped, its chunks each gzipped alone, so its gzipped budget is raised from 373 KB to 380 KB.
+  
+  Compatibility: the embed — a change of shape. `mount` returns with the frame on the page and the face on its way: its box stands empty (`aria-busy`) until the face's chunk arrives, and `handle.drawn()` resolves once the face asked for is drawn, after `mount` and after `setFace`. `preload(...faces)`, a new export of `@graview/embed`, fetches faces before they are drawn, and an embed mounted once its face is here draws it in the first commit, as before; with no face named, every face. `onReady` is told when the first face is drawn, not at the frame's first commit, and the new `onDrawn` option each time a face is. The framework's own views in an embed's registry are doors that draw them once fetched (`frameworkViewDoors`, `registerFrameworkViews`, `fetchFrameworkViews`, new exports of `@graview/primitives`); a host's `views` function is handed them as before. `@graview/react/provider`, `@graview/primitives/frame`, `@graview/primitives/pages`, `@graview/tools/frame` and `@graview/layout/view` are new subpath exports — each also exported from its package's main entry — and a product that aliases the framework's packages (a linked project's vite config, which `graview create` writes) aliases them ahead of the bare names. `@graview/embed/pages` is unchanged and still draws in the first commit. Ops, stored formats, the wire, check codes and derived tool schemas are unchanged.
+- 6ff733b: The stylesheet's notes stay in the source and out of the page. `themeCss` explained its rules in CSS comments inside the template it returns, so every page carried them and every embed parsed them into its `<style>`: 25 KB of the 60 KB the function was. They are now JavaScript comments in an empty interpolation, `${/* … */ ""}`, beside the rules they explain, and a minifier folds them away; the CSS a page receives is the same rules, without the prose.
+  
+  Compatibility: unchanged. `themeCss` returns the same rules in the same order; only the comments between them are gone from its output.
+- Updated dependencies [f989024]
+- Updated dependencies [97f2a0a]
+- Updated dependencies [1e21d54]
+- Updated dependencies [281761b]
+- Updated dependencies [a83a311]
+- Updated dependencies [f1fcf13]
+- Updated dependencies [826e19b]
+- Updated dependencies [e22a00d]
+- Updated dependencies [5a2086e]
+- Updated dependencies [76df9ba]
+  - @graview/core@0.1.5
+  - @graview/react@0.1.5
+  - @graview/tools@0.1.5
+  - @graview/layout@0.1.5
+  - @graview/render@0.1.5
+
 ## 0.1.4
 
 ### Patch Changes
