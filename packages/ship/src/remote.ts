@@ -1,7 +1,6 @@
 import {
   FieldRevisions,
   foldPresence,
-  PRESENCE_TTL_MS,
   ReceiveError,
   refusalOf,
   REMOTE_PRESENCE_TTL_MS,
@@ -127,6 +126,16 @@ export interface RemoteOptions<S extends AnySchema> {
    */
   readonly resolveApp?: (version: number) => GraviewApp<AnySchema> | Promise<GraviewApp<AnySchema>>;
   /**
+   * THE HOST'S POLICY, IN THE BROWSER TOO. A call is judged here before the
+   * server is asked, under the app this store is built from; a host whose
+   * own store judges by more than the declaration says — Graview Cloud adds
+   * a sight, an app's owners see everything — shapes that app here the same
+   * way, or the browser refuses what the server would allow. Applied to
+   * `app` and to every app `resolveApp` gives. The server judges regardless:
+   * this only keeps the two in agreement.
+   */
+  readonly localApp?: (app: GraviewApp<AnySchema>) => GraviewApp<AnySchema>;
+  /**
    * THE HOST'S BUILD THIS PAGE RUNS (FR-44), an opaque string said in
    * `hello`. A server on another build keeps serving it; `onBuild` is told
    * once, so the page can offer a reload when it suits the person.
@@ -166,10 +175,14 @@ export interface RemoteOptions<S extends AnySchema> {
    */
   readonly backoff?: RemoteBackoff;
   /**
-   * How often the same presence is said again down the socket, in
-   * milliseconds (FR-49). A new place is said at once; an unchanged one, on
-   * the heartbeat, no oftener than this. Half of `PRESENCE_TTL_MS` unless
-   * said. A polling client says it with every poll, so `pollMs` paces it.
+   * A HEARTBEAT DOWN THE SOCKET, opted into, in milliseconds (FR-49). A
+   * server holds a socket's presence for as long as the socket is open
+   * (`held: "socket"`), so by default the socket says `here` only when where
+   * this client stands changes — an idle tab says nothing, and a host that
+   * hibernates is not woken for it. Given, an unchanged presence is said
+   * again on the heartbeat, no oftener than this: for a host that still
+   * keeps a socket's presence by time. A polling client says it with every
+   * poll whatever this says, so `pollMs` paces it.
    */
   readonly presenceEveryMs?: number;
   /**
@@ -282,16 +295,26 @@ export interface RemoteStore<S extends AnySchema> {
    * WHO IS HERE, over the same poll — or the socket. Saying where you are
    * rides on the next heartbeat and the answer carries everybody else — no
    * round trip of its own, nothing written to the store, the adapter or
-   * the log.
+   * the log. Its `onWho` tells a listener added late who is here already,
+   * at once, as `onBuild` does.
    */
   readonly presence: PresenceChannel;
+  /** Who else is here now, as this client was last told: never itself. */
+  who(): readonly Presence[];
   /**
    * THE DECLARATION CHANGED ON THE SERVER (FR-43): handed a new remote
    * store, opened on the server's migrated state under the app
    * `resolveApp` gave for `version`, with this one's unanswered calls
    * offered again on it. This one is closed: mount the new one. A call
-   * that no longer fits is told on the new store's `onRefusal` (or this
-   * one's, when nobody listens there), in words.
+   * that no longer fits is told on `onRefusal`, in words.
+   *
+   * THE HOST'S WIRING GOES WITH IT. Every listener put on this store —
+   * `onRefusal`, `onConflict`, `onStatus`, `onBuild`, `presence.onWho` and
+   * `onDeclaration` itself — is carried to the new one, and to each after
+   * it, and `counters()` run on rather than starting again; the way to stop
+   * listening a host was handed stops it on whichever store is current. So
+   * a host writes its listeners once: one added again on the new store is
+   * told twice.
    */
   onDeclaration(listener: (next: RemoteStore<AnySchema>, version: number) => void): () => void;
   /**
@@ -309,6 +332,8 @@ interface Carried {
   readonly intent?: string;
   /** The batch it was sent in: a server that already has it answers with its ops rather than making it again. */
   readonly batch?: string;
+  /** What it claimed to come through — `view:<name>` — sent as a claim the server may believe or not. */
+  readonly via?: Via;
 }
 
 /** A call this client let go of for a new declaration or a reload: not refused, so nothing is taken back or said. */
@@ -402,8 +427,39 @@ function localIds(): () => string {
 
 const OPEN = 1;
 
+/*
+ * THE HOST'S WIRING, carried from a remote store to each one that replaces
+ * it on a new declaration (FR-43): every listener a host put on the first,
+ * the counters, and the build already noticed. A host writes its listeners
+ * once; an unsubscribe it was handed stops them on whichever store is
+ * current.
+ */
+interface Wiring {
+  readonly refusals: Set<(sentence: string, refusal: RemoteRefusal) => void>;
+  readonly conflicts: Set<(conflict: RemoteConflict) => void>;
+  readonly statuses: Set<(status: RemoteStatus) => void>;
+  readonly builds: Set<(build: string) => void>;
+  readonly who: Set<(who: readonly Presence[]) => void>;
+  readonly declarations: Set<(next: RemoteStore<AnySchema>, version: number) => void>;
+  readonly tally: { reconnects: number; rebases: number; conflicts: number; resyncs: number };
+  /** The status the listeners were last told, so a store that replaces another does not tell them `online` again. */
+  told?: RemoteStatus;
+  /** Another build, once noticed: told once across every store. */
+  otherBuild?: string;
+}
+
+const freshWiring = (): Wiring => ({
+  refusals: new Set(),
+  conflicts: new Set(),
+  statuses: new Set(),
+  builds: new Set(),
+  who: new Set(),
+  declarations: new Set(),
+  tally: { reconnects: 0, rebases: 0, conflicts: 0, resyncs: 0 },
+});
+
 export async function openRemote<S extends AnySchema>(options: RemoteOptions<S>): Promise<RemoteStore<S>> {
-  return (await opening(options, takeCarried(options.carry), "This app was updated while your changes were on the way.")).remote;
+  return (await opening(options, takeCarried(options.carry), "This app was updated while your changes were on the way.", freshWiring())).remote;
 }
 
 /**
@@ -415,6 +471,7 @@ async function opening<S extends AnySchema>(
   options: RemoteOptions<S>,
   offered: readonly Carried[],
   lostSaid: string,
+  wiring: Wiring,
 ): Promise<{ remote: RemoteStore<S>; unheard(): RemoteRefusal[] }> {
   const call = options.fetch ?? fetch;
   const headers: Record<string, string> = { "content-type": "application/json", ...(options.headers ?? {}) };
@@ -422,7 +479,8 @@ async function opening<S extends AnySchema>(
   const seat = { ...seatHeaders(options.principal), [SEAT_HEADERS.via]: options.via ?? "web" };
   Object.assign(headers, seat);
   const live = options.live === true;
-  const presenceEveryMs = options.presenceEveryMs ?? PRESENCE_TTL_MS / 2;
+  /** Undefined: the socket says `here` only on a change, because the server holds it while the socket is open. */
+  const presenceEveryMs = options.presenceEveryMs;
   const visible = options.visible ?? pageVisible;
 
   /*
@@ -431,15 +489,19 @@ async function opening<S extends AnySchema>(
    * the socket says so on its welcome and when a welcomed socket drops.
    */
   let status: RemoteStatus = "connecting";
-  const statusListeners = new Set<(status: RemoteStatus) => void>();
-  const tally = { reconnects: 0, rebases: 0, conflicts: 0, resyncs: 0 };
+  const statusListeners = wiring.statuses;
+  const tally = wiring.tally;
   /** Calls that could not reach the server, each waiting to be sent again once it is back. */
   const held: { again(): void; give(error: unknown): void }[] = [];
   const become = (next: RemoteStatus) => {
-    if (next === status) return;
+    if (next === status || retiring) return;
     if (status === "offline" && next === "online") tally.reconnects++;
     status = next;
-    for (const told of statusListeners) told(next);
+    // A store that replaced another and comes online says nothing its listeners were not already told.
+    if (wiring.told !== next) {
+      wiring.told = next;
+      for (const told of [...statusListeners]) told(next);
+    }
     if (next === "online") for (const waiting of held.splice(0)) waiting.again();
   };
   const reach = async (url: string, init: RequestInit): Promise<Response> => {
@@ -486,14 +548,16 @@ async function opening<S extends AnySchema>(
   if (!live) status = "online";
   const enabledModules = state.enabledModules ?? options.enabledModules;
 
+  // The app as the host judges it (`localApp`), so the browser refuses only what the server would.
+  const app = (options.localApp ? options.localApp(options.app as unknown as GraviewApp<AnySchema>) : options.app) as unknown as GraviewApp<S>;
   const store = new Store<S>({
-    schema: options.app.schema,
-    mutations: options.app.mutations ?? [],
-    invariants: options.app.invariants ?? [],
-    ...(options.app.policy ? { policy: options.app.policy } : {}),
-    ...(options.app.modules ? { modules: options.app.modules } : {}),
+    schema: app.schema,
+    mutations: app.mutations ?? [],
+    invariants: app.invariants ?? [],
+    ...(app.policy ? { policy: app.policy } : {}),
+    ...(app.modules ? { modules: app.modules } : {}),
     ...(enabledModules ? { enabledModules } : {}),
-    ...(options.app.intelligence ? { intelligence: options.app.intelligence } : {}),
+    ...(app.intelligence ? { intelligence: app.intelligence } : {}),
     /*
      * The snapshot AND the log: the snapshot is the graph, the log is the
      * history that led to it. Folding the log alone would lose whatever the
@@ -535,8 +599,12 @@ async function opening<S extends AnySchema>(
   /** The key the server holds this client under, as its welcome or its last `here` said (FR-47). */
   let self: string | undefined;
   let known = new Map<string, Presence>();
-  const whoListeners = new Set<(who: readonly Presence[]) => void>();
+  const whoListeners = wiring.who;
+  /** Set when a list of who is here arrives; read when a dropped socket's held presences lapse. */
+  let heardWho = false;
   const heard = (who: readonly Presence[]) => {
+    if (retiring) return;
+    heardWho = true;
     const next = foldPresence(new Map(), who, Date.now(), REMOTE_PRESENCE_TTL_MS, mine?.participant);
     // Never yourself, under the key you made or the one the server built for you.
     if (self !== undefined) next.delete(self);
@@ -544,7 +612,7 @@ async function opening<S extends AnySchema>(
     if (!changed) for (const [participant, presence] of next) if (!samePresence(presence, known.get(participant))) changed = true;
     known = next;
     if (!changed) return;
-    for (const listener of whoListeners) listener([...known.values()]);
+    for (const listener of [...whoListeners]) listener([...known.values()]);
   };
 
   /*
@@ -729,7 +797,7 @@ async function opening<S extends AnySchema>(
   /** Each provisional batch's post, so an undo of it waits until the server has named it. */
   const answers = new Map<string, Promise<unknown>>();
   /** What each provisional batch asked for, so a conflict's `useMine` can ask again. */
-  const asked = new Map<string, { calls: readonly MutationCall[]; intent?: string }>();
+  const asked = new Map<string, { calls: readonly MutationCall[]; intent?: string; via?: Via }>();
   /** Every post not yet answered, so `settled` can wait for the verdicts. */
   const inFlight = new Set<Promise<unknown>>();
   const track = <T>(promise: Promise<T>): Promise<T> => {
@@ -789,25 +857,22 @@ async function opening<S extends AnySchema>(
         continue;
       }
       answer = (await response.json().catch(() => ({}))) as Answer;
-      if (response.status === 503 && answer.reason === "unavailable" && !closed) {
-        /*
-         * NOT FOR A WHILE, NOT REFUSED (FR-46): the host takes no changes
-         * now and cannot say how long. The change stays shown and pending,
-         * and goes again after a backoff, as a reconnect would.
-         */
-        await new Promise((later) => setTimeout(later, backoffFor(options.backoff, unavailableTries++)));
-        if (socketReady()) return viaSocket(body, mine);
-        continue;
-      }
-      unavailableTries = 0;
-      if (response.status !== 429 || closed) break;
       /*
-       * BUSY, NOT REFUSED (FR-45): the host asked for it again later. The
-       * change stays shown and pending, and goes again after the wait.
+       * ONE WAY TO WAIT, IN THE POST LANE. Not for a while (FR-46): a 503
+       * whose reason is `unavailable` — the host takes no changes now and
+       * cannot say how long — waits a backoff, as a reconnect would. Busy
+       * (FR-45): a 429 waits what it asks, `Retry-After` read in seconds and
+       * a JSON `retryAfter` in milliseconds (`retryAfterMs`). Either way the
+       * change stays shown and pending, refused by nobody, and goes again.
        */
-      const header = Number(response.headers.get("retry-after"));
-      const wait = typeof answer.retryAfter === "number" ? answer.retryAfter : Number.isFinite(header) && header > 0 ? header * 1000 : 1000;
-      await new Promise((later) => setTimeout(later, Math.max(0, wait)));
+      let wait: number;
+      if (response.status === 503 && answer.reason === "unavailable" && !closed) wait = backoffFor(options.backoff, unavailableTries++);
+      else {
+        unavailableTries = 0;
+        if (response.status !== 429 || closed) break;
+        wait = retryAfterMs(response.headers.get("retry-after"), answer.retryAfter);
+      }
+      await new Promise((later) => setTimeout(later, wait));
       if (socketReady()) return viaSocket(body, mine);
     }
     /*
@@ -873,7 +938,8 @@ async function opening<S extends AnySchema>(
   };
   const sayWhere = (force = false) => {
     if (!mine || !socketReady() || !visible()) return;
-    if (!force && said && samePresence(mine, said) && Date.now() - saidAt < presenceEveryMs) return;
+    // Unchanged: said again only on a heartbeat the host opted into. The server holds it while the socket is open.
+    if (!force && said && samePresence(mine, said) && (presenceEveryMs === undefined || Date.now() - saidAt < presenceEveryMs)) return;
     if (say({ t: "here", presence: mine })) {
       said = mine;
       saidAt = Date.now();
@@ -1016,13 +1082,12 @@ async function opening<S extends AnySchema>(
 
   /** Set once this store has been let go of, for a new declaration or a reload: it acts on nothing more. */
   let retiring = false;
-  const declarationListeners = new Set<(next: RemoteStore<AnySchema>, version: number) => void>();
-  const buildListeners = new Set<(build: string) => void>();
-  let otherBuild: string | undefined;
+  const declarationListeners = wiring.declarations;
+  const buildListeners = wiring.builds;
   const noticeBuild = (build: string | undefined) => {
-    if (otherBuild !== undefined || !options.build || typeof build !== "string" || build.length === 0 || build === options.build) return;
-    otherBuild = build;
-    for (const listener of buildListeners) listener(build);
+    if (retiring || wiring.otherBuild !== undefined || !options.build || typeof build !== "string" || build.length === 0 || build === options.build) return;
+    wiring.otherBuild = build;
+    for (const listener of [...buildListeners]) listener(build);
   };
 
   /** Every call this client applied that the server has not answered, oldest first; and how many undos are. */
@@ -1031,7 +1096,7 @@ async function opening<S extends AnySchema>(
     let undos = 0;
     for (const batch of pending) {
       const made = asked.get(batch);
-      if (made) carried.push({ calls: made.calls, ...(made.intent ? { intent: made.intent } : {}), batch });
+      if (made) carried.push({ calls: made.calls, ...(made.intent ? { intent: made.intent } : {}), ...(made.via ? { via: made.via } : {}), batch });
       else undos++;
     }
     return { carried, undos };
@@ -1051,6 +1116,7 @@ async function opening<S extends AnySchema>(
     closed = true;
     if (retry) clearTimeout(retry);
     if (busyTimer) clearTimeout(busyTimer);
+    if (lapse) clearTimeout(lapse);
     // A post waiting for the server to be reached again goes with the rest instead.
     for (const waiting of held.splice(0)) waiting.give(superseded);
     const was = socket;
@@ -1082,10 +1148,11 @@ async function opening<S extends AnySchema>(
     const standing = mine;
     retire("The app was changed.");
     try {
-      const app = await resolveApp(version);
-      const next = await opening({ ...(options as unknown as RemoteOptions<AnySchema>), app }, carried, "The app was changed while your changes were on the way.");
+      const resolved = await resolveApp(version);
+      // The host's wiring goes with it: its listeners, the counters, the build it was told of.
+      const next = await opening({ ...(options as unknown as RemoteOptions<AnySchema>), app: resolved }, carried, "The app was changed while your changes were on the way.", wiring);
       if (standing) next.remote.presence.here(standing);
-      for (const listener of declarationListeners) listener(next.remote, version);
+      for (const listener of [...declarationListeners]) listener(next.remote, version);
       const said = [...(undos > 0 ? [refused(undosSaid(undos, "The app was changed"))] : []), ...next.unheard()];
       for (const refusal of said) for (const told of refusals) told(refusal.sentence, refusal);
     } catch (error) {
@@ -1157,12 +1224,36 @@ async function opening<S extends AnySchema>(
       welcomed = false;
       said = null;
       // A socket that never opened says nothing a poll does not; one that was up and dropped is the server gone.
-      if (dropped) become("offline");
+      if (dropped) {
+        become("offline");
+        lapseHeld();
+      }
       reconnect();
     };
     made.onerror = () => {
       // The close follows; that is where reconnecting is decided.
     };
+  };
+  /*
+   * WHAT A DROPPED SOCKET WAS TOLD STANDS NO LONGER ON THE SERVER'S WORD. A
+   * presence held by somebody's socket stands while the server lists it,
+   * and this client hears the server no longer. Unless a list comes within
+   * `REMOTE_PRESENCE_TTL_MS` — a welcome after a reconnect, a poll — the
+   * held ones are let go, as a word that old would be.
+   */
+  let lapse: ReturnType<typeof setTimeout> | undefined;
+  const lapseHeld = () => {
+    heardWho = false;
+    if (lapse) clearTimeout(lapse);
+    lapse = setTimeout(() => {
+      lapse = undefined;
+      if (heardWho || closed) return;
+      const kept = new Map([...known].filter(([, presence]) => presence.held !== "socket"));
+      if (kept.size === known.size) return;
+      known = kept;
+      for (const listener of whoListeners) listener([...known.values()]);
+    }, REMOTE_PRESENCE_TTL_MS);
+    (lapse as { unref?: () => void }).unref?.();
   };
   const reconnect = () => {
     if (closed) return;
@@ -1187,12 +1278,12 @@ async function opening<S extends AnySchema>(
    */
   const appliedAll = store.applyAll.bind(store);
   const undone = store.undo.bind(store);
-  const refusals = new Set<(sentence: string, refusal: RemoteRefusal) => void>();
+  const refusals = wiring.refusals;
   /** What became of carried calls before anybody listened: told to the first listener (FR-43, FR-44). */
   let unheard: RemoteRefusal[] = [];
   /** A change of this client's that did not survive a new declaration or a reload: `invalid`, it no longer fits (FR-46). */
   const refused = (sentence: string): RemoteRefusal => ({ reason: "invalid", sentence });
-  const conflictListeners = new Set<(conflict: RemoteConflict) => void>();
+  const conflictListeners = wiring.conflicts;
   /** Set while `useMine` sends a change again: it goes without the revisions it was refused for. */
   let overriding = false;
   /*
@@ -1236,7 +1327,7 @@ async function opening<S extends AnySchema>(
           chosen = true;
           overriding = true;
           try {
-            store.applyAll(made.calls, made.intent ? { intent: made.intent } : {});
+            store.applyAll(made.calls, { ...(made.intent ? { intent: made.intent } : {}), ...(made.via ? { via: made.via } : {}) });
           } finally {
             overriding = false;
           }
@@ -1277,7 +1368,7 @@ async function opening<S extends AnySchema>(
     });
     pending.push(result.batch);
     provisional.add(result.batch);
-    asked.set(result.batch, { calls, ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}) });
+    asked.set(result.batch, { calls, ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}), ...(applyOptions?.via ? { via: applyOptions.via } : {}) });
     // The revision of each field this changes, as this browser saw it — unless the person chose theirs over it.
     const base = overriding ? [] : revisions.baseFor(result.ops, earlier);
     answers.set(
@@ -1362,6 +1453,8 @@ async function opening<S extends AnySchema>(
     },
     onWho(listener) {
       whoListeners.add(listener);
+      // Told at once who is here already: a host that subscribes after the welcome is not shown an empty room.
+      if (known.size > 0) listener([...known.values()]);
       return () => {
         whoListeners.delete(listener);
       };
@@ -1411,7 +1504,7 @@ async function opening<S extends AnySchema>(
     for (const one of offered) {
       if (one.batch !== undefined && landed.has(one.batch)) continue;
       try {
-        store.applyAll(one.calls, { ...(one.intent ? { intent: one.intent } : {}), ...(one.batch ? { batch: one.batch } : {}) });
+        store.applyAll(one.calls, { ...(one.intent ? { intent: one.intent } : {}), ...(one.batch ? { batch: one.batch } : {}), ...(one.via ? { via: one.via } : {}) });
       } catch (error) {
         lost.push(named(one, error));
       }
@@ -1440,7 +1533,7 @@ async function opening<S extends AnySchema>(
     },
     onBuild(listener) {
       buildListeners.add(listener);
-      if (otherBuild !== undefined) listener(otherBuild);
+      if (wiring.otherBuild !== undefined) listener(wiring.otherBuild);
       return () => buildListeners.delete(listener);
     },
     onConflict(listener) {
@@ -1457,6 +1550,7 @@ async function opening<S extends AnySchema>(
       return () => statusListeners.delete(listener);
     },
     counters: () => ({ ...tally }),
+    who: () => [...known.values()],
     pending: () => pending.length + sendsOut,
     async settled() {
       // Whatever is in flight now — and whatever a settling handler put in flight after it.
@@ -1469,6 +1563,7 @@ async function opening<S extends AnySchema>(
       closed = true;
       if (retry) clearTimeout(retry);
       if (busyTimer) clearTimeout(busyTimer);
+      if (lapse) clearTimeout(lapse);
       for (const waiting of held.splice(0)) waiting.give(new Error("The client closed before the server could be reached."));
       const was = socket;
       socket = undefined;
@@ -1506,6 +1601,33 @@ async function opening<S extends AnySchema>(
     for (const [name, value] of Object.entries(seat)) withSeat.searchParams.set(name, value);
     return protocols.length > 0 ? new Socket(withSeat.toString(), protocols) : new Socket(withSeat.toString());
   }
+}
+
+/**
+ * HOW LONG A 429 ASKS TO WAIT, IN MILLISECONDS (FR-45). The `Retry-After`
+ * header is read as HTTP says — delta SECONDS, or an HTTP date — and the
+ * JSON `retryAfter` as ship documents it, MILLISECONDS, the finer of the
+ * two. A JSON wait under 50 beside a header that says the same number of
+ * seconds is a host that said seconds in the body too (`retryAfter: 2`,
+ * `Retry-After: 2` — two "milliseconds" is a retry storm, not a wait): the
+ * header wins. Ship's own handler says a short wait as, say, 30 in the body
+ * and 1 in the header, which is read as the 30 ms it means. Neither said:
+ * a second.
+ */
+function retryAfterMs(header: string | null | undefined, json: unknown, now: number = Date.now()): number {
+  let fromHeader: number | undefined;
+  const said = header?.trim();
+  if (said) {
+    if (/^\d+(\.\d+)?$/.test(said)) fromHeader = Number(said) * 1000;
+    else {
+      const date = Date.parse(said);
+      if (Number.isFinite(date)) fromHeader = Math.max(0, date - now);
+    }
+  }
+  const fromJson = typeof json === "number" && Number.isFinite(json) && json >= 0 ? json : undefined;
+  const secondsInTheBody = fromJson !== undefined && fromJson < 50 && fromHeader !== undefined && Math.abs(fromJson * 1000 - fromHeader) < 1000;
+  if (fromJson !== undefined && !secondsInTheBody) return fromJson;
+  return fromHeader ?? 1000;
 }
 
 /** The page's own reload, where there is a page. */

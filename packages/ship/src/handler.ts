@@ -1,5 +1,6 @@
 import {
   foldPresence,
+  nextExpiry,
   PRESENCE_TTL_MS,
   VISITOR_PRESENCE_TTL_MS,
   type AnySchema,
@@ -516,7 +517,26 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     const now = Date.now();
     here = foldPresence(here, announcePresence([], presence, ttlMs, now), now, ttl);
     tellWhoIsHere();
+    watchVisitors();
   };
+  /*
+   * A VISITOR WHOSE TIME IS UP IS SAID TO GO: a timer set by `nextExpiry`,
+   * so every socket is told when an announced visitor's `until` passes,
+   * with nothing else happening. A hibernating host sets its alarm the same way.
+   */
+  let visitorsGo: ReturnType<typeof setTimeout> | undefined;
+  function watchVisitors(): void {
+    if (visitorsGo) clearTimeout(visitorsGo);
+    visitorsGo = undefined;
+    const next = nextExpiry([...here.values()]);
+    if (next === undefined) return;
+    visitorsGo = setTimeout(() => {
+      visitorsGo = undefined;
+      tellWhoIsHere();
+      watchVisitors();
+    }, Math.max(0, next - Date.now()) + 1);
+    (visitorsGo as { unref?: () => void }).unref?.();
+  }
 
   async function route(request: Request): Promise<Response> {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
@@ -697,6 +717,8 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     if ([...sockets].some((live) => seated(live)?.kind === "agent" && seated(live)?.id === author.id)) return false;
     const now = Date.now();
     here = foldPresence(here, announcePresence([], visitorPresence(author, { ...standing, now: new Date(now) }), agentsFor, now), now, ttl);
+    // Said to go when its time is up, as an announced visitor is.
+    watchVisitors();
     return true;
   }
   const onCall = (call: { readonly principal: Principal }): void => {
@@ -858,6 +880,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       }
     },
     async close() {
+      if (visitorsGo) clearTimeout(visitorsGo);
       for (const live of sockets) {
         live.open = false;
         try {

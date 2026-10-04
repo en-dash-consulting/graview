@@ -1,0 +1,7 @@
+---
+"@graview/ship": patch
+---
+
+A declaration swap carries the host's wiring (FR-43). `onDeclaration` handed a host a fresh remote store with nothing wired: every listener had to be put on it again, and by the time the host subscribed to who is here the new store had already heard its welcome's presence, so the room looked empty until somebody moved; and its counters started again from nothing, so a beacon read a page that had reconnected all morning as a quiet one. Graview Cloud's shell met all three. Now every listener a host put on the first store — `onRefusal`, `onConflict`, `onStatus`, `onBuild`, `presence.onWho` and `onDeclaration` itself — is carried to each store that replaces it, through any number of swaps; `counters()` run on; another build is told once across them; and the way to stop listening a host was handed stops it on whichever store is current. A host writes its listeners once and only swaps which store it mounts. `presence.onWho` tells a listener added late who is here already, at once, as `onBuild` does, and `remote.who()` says the list any time.
+
+Compatibility: the `openRemote` surface — `RemoteStore` gains `who()`. A host that re-registered its listeners on the store `onDeclaration` hands over is now told each thing twice, and should register them once, on the first store. A store that replaces another does not tell `onStatus` `online` when its listeners were already told it. The wire, presence, ops, stored formats and check codes are unchanged.

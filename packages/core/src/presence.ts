@@ -43,10 +43,20 @@ export interface Presence {
    * Until then they stand without a heartbeat; after it, they are gone.
    */
   readonly until?: string;
+  /**
+   * HELD BY AN OPEN SOCKET, as the server says it — never a client: this
+   * presence stands as long as the server lists it, whatever its `at`. The
+   * server drops it the moment the socket closes, so it needs no heartbeat
+   * to stay, and a client holding a list it was told does not expire it.
+   */
+  readonly held?: "socket";
 }
 
 export interface PresenceChannel {
-  /** Say where you are. Called on every change and on every heartbeat. */
+  /**
+   * Say where you are. Called on every change and on every heartbeat; a
+   * channel whose server holds it by socket says it again only on a change.
+   */
   here(presence: Presence): void;
   /** Told who else is here, every time that changes. Returns the way to stop listening. */
   onWho(listener: (who: readonly Presence[]) => void): () => void;
@@ -83,10 +93,32 @@ export function presenceName(presence: Presence): string {
   return name && presence.onBehalfOfName ? `${name}, for ${presence.onBehalfOfName}` : name;
 }
 
-/** Whether a presence still stands at `now`: until its announced time, or within the TTL of its last word. */
+/**
+ * Whether a presence still stands at `now`: while a socket holds it, until
+ * its announced time, or within the TTL of its last word.
+ */
 export function presenceStands(presence: Presence, now: number, ttlMs: number = PRESENCE_TTL_MS): boolean {
+  if (presence.held === "socket") return true;
   if (presence.until !== undefined) return now < Date.parse(presence.until);
   return now - Date.parse(presence.at) < ttlMs;
+}
+
+/**
+ * WHEN THE NEXT VISITOR GOES, in epoch ms: the earliest `until` still ahead
+ * of `now` in `who`, or undefined when nobody standing has one (a socket's
+ * presence goes when its socket closes, a poller's by its host's TTL). A
+ * host that keeps `who` itself sets its alarm by it — a Durable Object's
+ * `setAlarm`, a timer — and tells the room then, so a visitor whose time
+ * is up leaves every map without anything else happening.
+ */
+export function nextExpiry(who: readonly Presence[], now: number = Date.now()): number | undefined {
+  let next: number | undefined;
+  for (const presence of who) {
+    if (presence.until === undefined || presence.held === "socket") continue;
+    const until = Date.parse(presence.until);
+    if (Number.isFinite(until) && until > now && (next === undefined || until < next)) next = until;
+  }
+  return next;
 }
 
 /** The parts of a participant key: who, and which tab of theirs. */
@@ -161,6 +193,7 @@ export function samePresence(a: Presence | undefined, b: Presence | undefined): 
     a.onBehalfOf === b.onBehalfOf &&
     a.onBehalfOfName === b.onBehalfOfName &&
     a.until === b.until &&
+    a.held === b.held &&
     a.hue === b.hue &&
     a.stop === b.stop &&
     (a.over ?? null) === (b.over ?? null) &&

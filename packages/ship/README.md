@@ -112,15 +112,16 @@ counts it, and it goes again the moment the server is reached. `remote.counters(
 (`RemoteCounters`) counts `reconnects`, `rebases` (the server's ops landing under pending
 calls), `conflicts` and `resyncs`, for a beacon. Three options shape it: `backoff`, a function
 of the attempt in milliseconds or `{ min, max, factor }` for the jittered default (250, 10000,
-2); `presenceEveryMs`, how often an unchanged presence is said again down the socket; and
+2); `presenceEveryMs`, a heartbeat down the socket opted into (by default the socket says
+`here` only when where the client stands changes — see below); and
 `visible`, a predicate — while it answers false no presence is said, and in a page it reads
 `document.visibilityState` unless given.
 
 | From | Message | Carries |
 |---|---|---|
 | client | `hello` | `seq`, the last op it has (none: the welcome carries the whole state); `protocol`; `wire` (`LIVE_WIRE`); `build`, the host's build the page runs |
-| client | `call` | `cid`, `calls`, `intent`, `batch`, and `base`: the revision of each field it changes |
-| client | `undo` | `cid`, `batches` to take back |
+| client | `call` | `cid`, `calls`, `intent`, `batch`, `base` (the revision of each field it changes), and `via`: a claim of the channel, such as a guest view's `view:<name>`, which a server records only if it accepts it |
+| client | `undo` | `cid`, `batches` to take back, and a `via` claim as on `call` |
 | client | `here` / `bye` | a presence, as `/graview/here` takes it; gone |
 | server | `welcome` | `protocol`, `wire`, `version` (the declaration it serves), `build`, `participant` (this socket's own key, built from its seat), `seq` (the server's last), and the `ops` after the client's seq |
 | server | `ack` | `cid`, `batch`, `seq` and the `ops` the call made |
@@ -234,9 +235,22 @@ number sets the time. An agent that only reads lands no op, so hand `handler.onC
 `createMcpHttpHandler`'s `onCall` (`@graview/tools`): every tool call announces the agent seat
 the same way, reads included. A hibernating host keeps `who` itself, with `announcePresence(who,
 visitorPresence(seat), ttlMs)`, and hands it to `receive` and `tell`; a visitor past its
-`until` is never told. Each seat is told as it may see: an agent acting for a person the
+`until` is never told. `nextExpiry(who)` (from `@graview/core`) says when the next visitor
+goes, in epoch ms, for the host's alarm: on it, `tell` the room again and the visitor is gone
+from every map. The handler keeps that timer itself. Each seat is told as it may see: an agent acting for a person the
 seat may not see is shown without `onBehalfOf` or the name. The Shell draws it as "Claude,
 for Ada" (`presenceName`).
+
+**A socket holds its presence; it needs no heartbeat.** The `here` a socket says comes back
+from the server stamped `held: "socket"` (a client's own claim of it is dropped), and such a
+presence stands for as long as the server lists it — `presenceStands` and `foldPresence` do
+not expire it by its `at`. The host drops it when the socket closes, at once. So
+`openRemote` says `here` down a socket only when where it stands changes: an idle tab says
+nothing, and a hibernating host is not woken to hear it. A poller is still held by time
+(the handler's own time to live) and says where it is with every poll. A client whose own socket dropped
+lets the held presences it was told go after `REMOTE_PRESENCE_TTL_MS` without a list from
+the server. A host that keeps a socket's presence by time can ask for the old heartbeat
+with `presenceEveryMs`.
 
 **The declaration changes under open tabs.** A host that adds a field calls
 `handler.declarationChanged({ app })` — over an adapter the handler opens the store again
@@ -247,8 +261,16 @@ makes a `liveProtocol` over the new store and calls `declared(peers)`. `openRemo
 app fetches and compiles its document), opens a new remote store on the server's migrated
 state and hands it to `remote.onDeclaration((next, version) => …)`. The calls still on the
 way are offered again there under the batch they were sent in, so one the server already
-made is not made twice, and one that no longer fits is refused in words on
-`next.onRefusal`. No page reloads. A polling client learns it the same way: every answer a
+made is not made twice, and one that no longer fits is refused in words on `onRefusal`. No
+page reloads. A host whose own store judges by more than the declaration says — an owner
+sight Graview Cloud adds — passes `localApp: (app) => app` to shape the app the browser's
+store is built from, the first one and every one `resolveApp` gives, so the browser refuses
+only what the server would. **The host's wiring goes with it:** every listener put on the first store —
+`onRefusal`, `onConflict`, `onStatus`, `onBuild`, `presence.onWho`, `onDeclaration` — is
+carried to each store that replaces it, and `counters()` run on, so a host writes its
+listeners once and only swaps which store it mounts (one added again is told twice).
+`presence.onWho` tells a listener added late who is here already, at once, and
+`remote.who()` says it any time. A polling client learns it the same way: every answer a
 poll reads (`/graview/state`, `/graview/since`, `/graview/here`, the `/graview/ops` answer)
 says the declaration `version` and the host's `build`, and `openRemote` compares it on each.
 `version` is the host's own monotonic number for the declaration it serves — `app.version`,
@@ -330,6 +352,13 @@ the size in bytes and the calls. It answers nothing, `{ retryAfter }`, `{ refuse
   `openRemote` keeps the change shown and pending and sends it again after the wait. Every later
   call on that socket is busy too until the held one comes again, and HTTP posts go one at a
   time, so a burst lands in the order it was made.
+
+  **The units, loudly.** `retryAfter` — in `limit`'s answer, in the socket's `busy`, and in the
+  JSON body of a 429 — is **milliseconds**. The `Retry-After` header is **seconds** (or an
+  HTTP date), as HTTP says; ship's handler rounds the wait up to whole seconds there.
+  `openRemote` reads each in its own unit, and a host that puts seconds in the JSON body too
+  (`retryAfter: 2` beside `Retry-After: 2`) is caught: a JSON wait under 50 beside a header
+  that says the same number of seconds is read as those seconds.
 - **refused, `limit`** — `{ refuse }`, a sentence, for a hard cap such as a message over the
   size a host takes: it would be refused however long the client waited, so it is refused now
   and taken back.
