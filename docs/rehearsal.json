@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-04T02:37:59.166Z",
+  "at": "2026-10-04T07:15:53.748Z",
   "checks": {
     "theSeatsChangeIsKept": {
       "kept": 3,
@@ -52,7 +52,7 @@
         "tended-by:chard->sam"
       ],
       "log": [
-        "{\"id\":\"migration:1-2:2026-10-04T02:38:03.497Z\",\"seq\":0,\"batch\":\"migration:1->2\",\"author\":{\"kind\":\"system\",\"id\":\"ship:migration\"},\"intent\":\"migration 1→2: plot tended-by edges move to the planting records tied to each plot\",\"mutation\":null,\"primitives\":[{\"op\":\"remove-edge\",\"edge\":{\"kind\":\"tended-by\","
+        "{\"id\":\"migration:1-2:2026-10-04T07:15:58.015Z\",\"seq\":0,\"batch\":\"migration:1->2\",\"author\":{\"kind\":\"system\",\"id\":\"ship:migration\"},\"intent\":\"migration 1→2: plot tended-by edges move to the planting records tied to each plot\",\"mutation\":null,\"primitives\":[{\"op\":\"remove-edge\",\"edge\":{\"kind\":\"tended-by\","
       ],
       "ok": true
     },
