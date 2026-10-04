@@ -1292,6 +1292,14 @@ async function opening<S extends AnySchema>(
    */
   const appliedAll = store.applyAll.bind(store);
   const undone = store.undo.bind(store);
+  /*
+   * A PREVIEW IS JUDGED AS ITS APPLY WOULD BE (FR-56): as whoever is at this
+   * keyboard, by default, as `applyAll` below is. It goes nowhere — it is a
+   * rehearsal on this browser's store, and nothing of it is kept or sent.
+   */
+  const previewedAll = store.previewAll.bind(store);
+  store.previewAll = ((calls, previewOptions) =>
+    previewedAll(calls, { ...(options.principal ? { author: options.principal } : {}), ...previewOptions })) as typeof store.previewAll;
   const refusals = wiring.refusals;
   /** What became of carried calls before anybody listened: told to the first listener (FR-43, FR-44). */
   let unheard: RemoteRefusal[] = [];

@@ -187,6 +187,29 @@ export interface ApplyResult<S extends AnySchema> extends Preview<S> {
   readonly batch: string;
 }
 
+/**
+ * WHAT `previewAll` TAKES (FR-56): everything `applyAll` takes — the author
+ * it is judged as, the channel, the batch, the gesture's intent and the
+ * host's `admit` — and the context the rules are judged in.
+ */
+export interface PreviewOptions extends ApplyOptions {
+  readonly context?: InvariantContext;
+}
+
+/**
+ * A BATCH AS IT WOULD BE KEPT, AND NOT KEPT (FR-56): `applyAll`'s answer,
+ * rehearsed. Its ops are the ones the log would hold — author, channel,
+ * sentence, primitives, inverse, the seq each would take — save their ids,
+ * `preview:<n>`, which the store never mints; `batch` is the one given, or
+ * `preview`. `kept` says so to whoever is handed it.
+ */
+export interface BatchPreview<S extends AnySchema> extends ApplyResult<S> {
+  readonly kept: false;
+}
+
+/** The batch a preview's ops are under when it was given none: no store mints it. */
+export const PREVIEW_BATCH = "preview";
+
 export type UndoPreview<S extends AnySchema> =
   | ({ readonly ok: true; readonly check: UndoCheck } & Preview<S>)
   | { readonly ok: false; readonly check: UndoCheck };
@@ -387,6 +410,8 @@ export class Store<S extends AnySchema> {
   private opCount = 0;
   /** Above zero while a rebase applies its pending calls again: they are told as one change at the end. */
   private quiet = 0;
+  /** True of a rehearsal (`previewAll`): what it does is told to nobody. */
+  private rehearsing = false;
   private readonly listeners = new Set<(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]) => void>();
 
   constructor(options: StoreOptions<S>) {
@@ -948,48 +973,53 @@ export class Store<S extends AnySchema> {
   }
 
   /**
-   * What several calls would do as one gesture, without doing any of it
-   * (FR-18): each compiles on the graph the one before it left, as
-   * `applyAll` would run them, on a copy. The diff is the net of them all,
-   * and `introduces` and `resolves` judge the end state against today's.
-   * A call that cannot compile throws, as it would on applying; nothing is
-   * written, logged or heard either way.
+   * WHAT SEVERAL CALLS WOULD DO AS ONE GESTURE, JUDGED AS IT WOULD BE, WITHOUT
+   * DOING ANY OF IT (FR-18, FR-56).
+   *
+   * Not a second path beside `applyAll` but `applyAll`'s own, run on a
+   * rehearsal of this store — its graph and its log copied, nobody
+   * listening — so it cannot drift from it: it refuses exactly when the
+   * apply would, in the same words, for the same author, channel and batch
+   * — the policy, the seat's sight (a record the batch made earlier is its
+   * maker's for the calls after, read off the rehearsal's log as it goes),
+   * a declared agent's `may`, an act's own guard, and whatever `admit`
+   * throws, asked with the change as planned. Otherwise it answers what the
+   * apply would: the ops as the log would hold them, marked not kept (ids
+   * `preview:<n>`, `kept: false`), the net diff, and the problems after,
+   * judged in `context`. Nothing is written, logged, told to a subscriber
+   * of the store or its graph, or told to a watching harness; no id or
+   * batch this store would mint next is spent.
+   *
+   * Why not `applyAll(calls, { dryRun: true })`: a host wraps `applyAll` —
+   * `openRemote` sends every call down the wire — and a flag on it would
+   * travel with the call; and an answer that says `kept: false` in its type
+   * cannot be mistaken for one that was.
    */
-  previewAll(calls: readonly MutationCall[], context?: InvariantContext): Preview<S> {
-    const before = this.violations(context);
-    const start = this.graph.snapshot();
-    const trial = Graph.from(this.schema, start, { validate: this.validate });
-    const primitives: Primitive[] = [];
-    const reads = new Set<string>();
-    const writes = new Set<string>();
-    const intents: string[] = [];
-    for (const call of calls) {
-      const compiled = compileMutation(trial, this.mutation(call.name), call.args);
-      // An act that does nothing leaves no trace when applied, nor here.
-      if (compiled.primitives.length === 0) continue;
-      const recorded = compiled.primitives.map(normalise);
-      trial.applyPrimitives(recorded);
-      primitives.push(...recorded);
-      for (const id of compiled.reads) reads.add(id);
-      for (const id of compiled.writes) writes.add(id);
-      intents.push(compiled.intent);
-    }
-    const after = evaluate(trial, this.allInvariants(), {
-      ...this.invariantOptions,
-      ...(context === undefined ? {} : { context }),
+  previewAll(calls: readonly MutationCall[], options: PreviewOptions = {}): BatchPreview<S> {
+    const { context, ...applying } = options;
+    const result = this.rehearsal().applying(calls, applying, context);
+    return { ...result, kept: false };
+  }
+
+  /**
+   * THIS STORE, TO REHEARSE ON (FR-56): its declaration, policy, modules and
+   * clock as they are, its graph and log copied, and nobody listening. Its
+   * op ids are `preview:<n>` and its batch `preview`, so nothing this store
+   * would mint next is spent; it tells a watching harness nothing.
+   */
+  private rehearsal(): Store<S> {
+    const twin = Object.assign(Object.create(Store.prototype) as Store<S>, this);
+    let made = 0;
+    Object.assign(twin as unknown as Record<string, unknown>, {
+      graph: Graph.from(this.schema, this.graph.snapshot(), { validate: this.validate }),
+      log: OperationLog.from(this.log.all(), this.log.epochs(), { horizon: this.log.horizon }),
+      listeners: new Set(),
+      labels: undefined,
+      nextId: () => `${PREVIEW_BATCH}:${++made}`,
+      mintBatch: () => PREVIEW_BATCH,
+      rehearsing: true,
     });
-    const beforeKeys = new Set(before.map(violationKey));
-    const afterKeys = new Set(after.map(violationKey));
-    return {
-      diff: diffSnapshots(start, trial.snapshot()),
-      primitives,
-      reads: [...reads],
-      writes: [...writes],
-      intent: intents.join("; "),
-      introduces: after.filter((v) => !beforeKeys.has(violationKey(v))),
-      resolves: before.filter((v) => !afterKeys.has(violationKey(v))),
-      violationsAfter: after,
-    };
+    return twin;
   }
 
   private previewPrimitives(
@@ -1040,7 +1070,7 @@ export class Store<S extends AnySchema> {
    * through the store's own path, whatever a host has wrapped `applyAll` in
    * (`openRemote` sends each one down the wire).
    */
-  private applying(calls: readonly MutationCall[], options: ApplyOptions): ApplyResult<S> {
+  private applying(calls: readonly MutationCall[], options: ApplyOptions, context?: InvariantContext): ApplyResult<S> {
     const batch = options.batch ?? this.mintBatch("batch");
     const author = options.author ?? HUMAN;
     const ops: Operation[] = [];
@@ -1049,7 +1079,7 @@ export class Store<S extends AnySchema> {
     const writes = new Set<string>();
     const intents: string[] = [];
 
-    const before = this.violations();
+    const before = this.violations(context);
     const rollback = this.graph.snapshot();
     const kept = this.log.length;
 
@@ -1066,7 +1096,7 @@ export class Store<S extends AnySchema> {
       for (const call of calls) {
         const verdict = this.permits(call, author as Principal);
         if (!verdict.ok) {
-          tellTheWatchOfARefusal(verdict.refusal, author.id);
+          if (!this.rehearsing) tellTheWatchOfARefusal(verdict.refusal, author.id);
           throw new PermissionDeniedError(verdict.refusal);
         }
       }
@@ -1084,11 +1114,11 @@ export class Store<S extends AnySchema> {
     for (const call of calls) {
       const refusal = this.refusesAgent(call, author) ?? this.namesTurnedOff(call, author as Principal);
       if (refusal) {
-        tellTheWatchOfARefusal(refusal, author.id);
+        if (!this.rehearsing) tellTheWatchOfARefusal(refusal, author.id);
         throw new PermissionDeniedError(refusal);
       }
     }
-    tellTheWatchOfAnAuthor(author.id);
+    if (!this.rehearsing) tellTheWatchOfAnAuthor(author.id);
 
     try {
       for (const call of calls) {
@@ -1153,7 +1183,7 @@ export class Store<S extends AnySchema> {
 
     const diff = diffSnapshots(rollback, this.graph.snapshot());
     this.admitted(options, ops, allPrimitives, diff, rollback, kept);
-    const after = this.violations();
+    const after = this.violations(context);
     const beforeKeys = new Set(before.map(violationKey));
     const afterKeys = new Set(after.map(violationKey));
     this.notify(diff, ops);

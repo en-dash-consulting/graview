@@ -592,8 +592,8 @@ export interface Wire<S extends AnySchema> {
   /** The store's log as the seat sees it: every op in place, withheld ones under an opaque batch. */
   seenLog(principal: Principal): Operation[];
   whoFor(principal: Principal, who: readonly Presence[]): Presence[];
-  /** The fields a call would write that moved since the caller's base: a stale write (FR-05). */
-  conflictsOf(author: Principal, calls: readonly MutationCall[], base: unknown): FieldConflict[];
+  /** The fields a call would write that moved since the caller's base: a stale write (FR-05). Judged as the call would be, by its seat and channel (FR-56). */
+  conflictsOf(author: Principal, calls: readonly MutationCall[], base: unknown, via?: string): FieldConflict[];
   /**
    * SENT TWICE, ANSWERED ONCE: what the batch a call or an undo names is,
    * for the seat that names it. A client that never heard the answer sends
@@ -756,7 +756,7 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
     },
     horizonOf: () => (store.log.horizon > 0 ? { horizon: store.log.horizon } : {}),
     enabledModules: () => [...store.modules.enabled].sort(),
-    conflictsOf(author, calls, base) {
+    conflictsOf(author, calls, base, via) {
       if (!Array.isArray(base) || base.length === 0) return [];
       const lens = sighted(author) ? seatLens(store, author) : undefined;
       // A record the seat is not served is not there to have moved: the call itself is refused for naming it.
@@ -769,15 +769,15 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
       /*
        * A conflict is a choice — keep theirs, or put yours over it — and only
        * a call that could still land offers one. A call the policy refuses,
-       * or one that no longer runs on the graph as it is (somebody finished
-       * it first), is refused for that, in its own sentence.
+       * one naming a record that is not there for this seat (a hidden record
+       * and an absent one alike, FR-55), or one that no longer runs on the
+       * graph as it is (somebody finished it first), is refused for that, in
+       * its own sentence. The preview is judged as the apply would be, by the
+       * seat and the channel (FR-56), so it refuses exactly those.
        */
-      if (store.policy && calls.some((call) => !store.permits(call, author).ok)) return [];
-      // Nor does a call naming a record that is not there for this seat: it is refused as missing, a hidden record and an absent one alike (FR-55).
-      if (calls.some((call) => store.missingFor(call, author))) return [];
       const yours = new Map<string, unknown>();
       try {
-        for (const primitive of store.previewAll(calls).primitives) {
+        for (const primitive of store.previewAll(calls, { author, ...(via !== undefined ? { via } : {}) }).primitives) {
           if (primitive.op === "patch-node") for (const [field, value] of Object.entries(primitive.after)) yours.set(`${primitive.id}\u0000${field}`, isUnset(value) ? undefined : value);
         }
       } catch {
@@ -961,7 +961,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
    */
   const land = async (seat: Principal, via: string, change: Change, bytes: number, applied?: (ops: readonly Operation[]) => void): Promise<Landing> => {
     if (change.t === "call") {
-      const conflicts = wire.conflictsOf(seat, change.calls, change.base);
+      const conflicts = wire.conflictsOf(seat, change.calls, change.base, via);
       if (conflicts.length > 0) return { conflicts };
     }
     const batch = typeof change.batch === "string" && change.batch.length > 0 ? change.batch : mintServed(change.t === "undo" ? "undo" : "batch");
