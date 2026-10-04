@@ -1,4 +1,5 @@
 import {
+  answerSeenBy,
   deriveMutations,
   derivedVia,
   mutationToolSchema,
@@ -532,9 +533,11 @@ export function createToolRuntime<S extends AnySchema>(
       if (definition.act !== undefined) {
         const named = resolve(definition.act, args);
         if ("ok" in named) return named;
-        const result = store.apply(
-          { name: definition.act, args: named.args },
-          { ...(options.author ? { author: options.author } : {}) },
+        // What the act did, as this seat may be told it: an act may touch what its own seat may not see (FR-55).
+        const result = answerSeenBy(
+          store,
+          principal,
+          store.apply({ name: definition.act, args: named.args }, { ...(options.author ? { author: options.author } : {}) }),
         );
         return {
           ok: true,
@@ -563,7 +566,7 @@ export function createToolRuntime<S extends AnySchema>(
           });
           return {
             ok: true,
-            data: markHits(found, authorship(store, principal)),
+            data: markHits(found, authorship(seen, principal)),
             // What came back was looked at: the records named, and nothing else.
             reads: found.hits.flatMap((hit) => (hit.about === "node" ? [hit.id] : [])),
           };
@@ -573,7 +576,7 @@ export function createToolRuntime<S extends AnySchema>(
           const snapshot = seen.graph.snapshot();
           return {
             ok: true,
-            data: markGraph(snapshot, authorship(store, principal)),
+            data: markGraph(snapshot, authorship(seen, principal)),
             reads: snapshot.nodes.map((node) => node.id),
           };
         }
@@ -597,7 +600,7 @@ export function createToolRuntime<S extends AnySchema>(
           return {
             ok: true,
             data: {
-              node: markNode(node, authorship(store, principal)),
+              node: markNode(node, authorship(seen, principal)),
               out,
               in: inbound,
               violations: seen
@@ -643,7 +646,7 @@ export function createToolRuntime<S extends AnySchema>(
           const act = actNamed(asked) ?? asked;
           const named = resolve(act, (args["args"] as Record<string, unknown>) ?? {});
           if ("ok" in named) return named;
-          const preview = store.preview({ name: act, args: named.args });
+          const preview = answerSeenBy(store, principal, store.preview({ name: act, args: named.args }));
           return { ok: true, data: named.resolved.length > 0 ? { ...preview, resolved: named.resolved } : preview };
         }
 
@@ -653,9 +656,11 @@ export function createToolRuntime<S extends AnySchema>(
           // Judged over the log as this seat sees it, so a refusal never quotes a change it may not see (FR-16).
           const check = seen.canUndo([batch, ...include]);
           if (!check.ok) return { ok: false, error: check.message };
-          const result = store.undo([batch, ...include], {
-            ...(options.author ? { author: options.author } : {}),
-          });
+          const result = answerSeenBy(
+            store,
+            principal,
+            store.undo([batch, ...include], { ...(options.author ? { author: options.author } : {}) }),
+          );
           return { ok: true, data: result, diff: result.diff };
         }
 

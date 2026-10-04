@@ -3,8 +3,10 @@ import {
   hidesFrom,
   hueFor,
   isUnset,
+  namesUnseen,
   participantKey,
   redact,
+  seatLens,
   seenBy,
   seesId,
   refusalOf,
@@ -276,7 +278,8 @@ export interface Wire<S extends AnySchema> {
 
 export function wireOf<S extends AnySchema>(store: Store<S>): Wire<S> {
   const sighted = (principal: Principal): boolean => hidesFrom(store, principal);
-  const shown = (principal: Principal, ops: readonly Operation[]): Operation[] => (sighted(principal) ? redact(ops, seesId(store, principal)) : [...ops]);
+  // Withheld in place (FR-16), and no id the seat may not see in any of them (FR-55).
+  const shown = (principal: Principal, ops: readonly Operation[]): Operation[] => (sighted(principal) ? redact(ops, seatLens(store, principal)) : [...ops]);
   /*
    * EVERY FIELD'S REVISION (FR-05): the seq of the op that last wrote it,
    * read off the log once and caught up from wherever the log has grown
@@ -310,10 +313,10 @@ export function wireOf<S extends AnySchema>(store: Store<S>): Wire<S> {
     enabledModules: () => [...store.modules.enabled].sort(),
     conflictsOf(author, calls, base) {
       if (!Array.isArray(base) || base.length === 0) return [];
-      const sees = sighted(author) ? seesId(store, author) : () => true;
-      // A record the seat may not see is not there to have moved: the call itself is refused for naming it.
+      const lens = sighted(author) ? seatLens(store, author) : undefined;
+      // A record the seat is not served is not there to have moved: the call itself is refused for naming it.
       const claimed = (base as FieldRevision[]).filter(
-        (entry) => entry && typeof entry.node === "string" && typeof entry.field === "string" && typeof entry.rev === "number" && sees(entry.node),
+        (entry) => entry && typeof entry.node === "string" && typeof entry.field === "string" && typeof entry.rev === "number" && (!lens || lens.shows(entry.node)),
       );
       const revs = current();
       const stale = revs.stale(claimed);
@@ -336,12 +339,15 @@ export function wireOf<S extends AnySchema>(store: Store<S>): Wire<S> {
       return stale.map((entry) => {
         const rev = revs.of(entry.node, entry.field);
         const wrote = rev >= store.log.horizon ? store.log.opsFrom(rev)[0] : undefined;
-        const seen = wrote && sighted(author) ? redact([wrote], sees)[0] : wrote;
+        const seen = wrote && lens ? redact([wrote], lens)[0] : wrote;
+        // Theirs as the seat's view serves the record: a field naming what it may not see is cleared there too (FR-55).
+        const theirs = ((lens ? seenBy(store, author) : store).graph.getNode(entry.node) as Record<string, unknown> | undefined)?.[entry.field];
+        const mine = yours.get(`${entry.node}\u0000${entry.field}`);
         return {
           node: entry.node,
           field: entry.field,
-          theirs: (store.graph.getNode(entry.node) as Record<string, unknown> | undefined)?.[entry.field],
-          yours: yours.get(`${entry.node}\u0000${entry.field}`),
+          theirs,
+          yours: lens && namesUnseen(mine, lens.sees) ? undefined : mine,
           by: seen?.author.name ?? seen?.author.id ?? "Someone",
           rev,
           saw: entry.rev,

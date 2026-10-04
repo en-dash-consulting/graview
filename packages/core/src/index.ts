@@ -187,7 +187,7 @@ export type {
 // Operation log — attribution, causality, selective undo.
 export { OperationLog } from "./ops/log.js";
 export type { Epoch, LogArchive, LogReading } from "./ops/log.js";
-export { isWithheld, redact, touchedBy, touchesUnseen, withhold, WITHHELD_AUTHOR, WITHHELD_INTENT } from "./ops/withheld.js";
+export { isWithheld, namesUnseen, redact, touchedBy, touchesUnseen, withhold, WITHHELD_AUTHOR, WITHHELD_INTENT, type SeatLens } from "./ops/withheld.js";
 export { FieldRevisions, fieldsWritten, NEVER_WRITTEN, writtenBy } from "./ops/revisions.js";
 export type { FieldConflict, FieldRevision } from "./ops/revisions.js";
 export { checkUndo, undoPrimitives, UndoBlockedError } from "./ops/undo.js";
@@ -254,7 +254,7 @@ export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";
 export { recordsOf, sees, sightedKinds } from "./permissions/sight.js";
 export type { RecordedLog, Records } from "./permissions/sight.js";
-export { hidesFrom, logSeenBy, seenBy, seesId } from "./seen.js";
+export { answerSeenBy, hidesFrom, logSeenBy, seatLens, seenBy, seesId } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
 export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 

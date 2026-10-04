@@ -1,4 +1,4 @@
-import { readingOf, seenBy, seesId } from "./seen.js";
+import { readingOf, seatLens, seenBy, seesId } from "./seen.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
@@ -1333,7 +1333,7 @@ export class Store<S extends AnySchema> {
      */
     const sighted = (this.policy?.sees?.length ?? 0) > 0 && !isSystem(author as Principal);
     if (sighted) {
-      const seen = checkUndo(readingOf(redact(this.log.all(), seesId(this, author as Principal)), () => this.log.epochs()), ids);
+      const seen = checkUndo(readingOf(redact(this.log.all(), seatLens(this, author as Principal)), () => this.log.epochs()), ids);
       if (!seen.ok) throw new UndoBlockedError(seen);
     }
     const check = this.canUndo(ids);
