@@ -324,6 +324,8 @@ interface Carried {
   readonly intent?: string;
   /** The batch it was sent in: a server that already has it answers with its ops rather than making it again. */
   readonly batch?: string;
+  /** What it claimed to come through — `view:<name>` — sent as a claim the server may believe or not. */
+  readonly via?: Via;
 }
 
 /** A call this client let go of for a new declaration or a reload: not refused, so nothing is taken back or said. */
@@ -773,7 +775,7 @@ async function opening<S extends AnySchema>(
   /** Each provisional batch's post, so an undo of it waits until the server has named it. */
   const answers = new Map<string, Promise<unknown>>();
   /** What each provisional batch asked for, so a conflict's `useMine` can ask again. */
-  const asked = new Map<string, { calls: readonly MutationCall[]; intent?: string }>();
+  const asked = new Map<string, { calls: readonly MutationCall[]; intent?: string; via?: Via }>();
   /** Every post not yet answered, so `settled` can wait for the verdicts. */
   const inFlight = new Set<Promise<unknown>>();
   const track = <T>(promise: Promise<T>): Promise<T> => {
@@ -782,7 +784,8 @@ async function opening<S extends AnySchema>(
     return promise;
   };
 
-  type Body = { calls?: readonly MutationCall[]; undo?: readonly string[]; intent?: string; batch?: string; base?: readonly FieldRevision[] };
+  /** `via` is a claim — a guest view's `view:<name>` — which a server records only if its `viaOf` accepts it (FR-52). */
+  type Body = { calls?: readonly MutationCall[]; undo?: readonly string[]; intent?: string; batch?: string; base?: readonly FieldRevision[]; via?: Via };
 
   /*
    * `mine` names the provisional batch this post answers, when the call was
@@ -937,8 +940,16 @@ async function opening<S extends AnySchema>(
     new Promise((resolve, reject) => {
       const cid = mine ?? `send-${++counter}`;
       const message: LiveClientMessage = body.undo
-        ? { t: "undo", cid, batches: body.undo, ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}) }
-        : { t: "call", cid, calls: body.calls ?? [], ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}), ...(body.base?.length ? { base: body.base } : {}) };
+        ? { t: "undo", cid, batches: body.undo, ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}), ...(body.via ? { via: body.via } : {}) }
+        : {
+            t: "call",
+            cid,
+            calls: body.calls ?? [],
+            ...(body.intent ? { intent: body.intent } : {}),
+            ...(body.batch ? { batch: body.batch } : {}),
+            ...(body.base?.length ? { base: body.base } : {}),
+            ...(body.via ? { via: body.via } : {}),
+          };
       waiting.set(cid, { message, ...(mine !== undefined ? { mine } : {}), resolve, reject });
       // Behind calls the host asked to wait: it goes with them.
       if (busy.size > 0) {
@@ -1047,7 +1058,7 @@ async function opening<S extends AnySchema>(
     let undos = 0;
     for (const batch of pending) {
       const made = asked.get(batch);
-      if (made) carried.push({ calls: made.calls, ...(made.intent ? { intent: made.intent } : {}), batch });
+      if (made) carried.push({ calls: made.calls, ...(made.intent ? { intent: made.intent } : {}), ...(made.via ? { via: made.via } : {}), batch });
       else undos++;
     }
     return { carried, undos };
@@ -1278,7 +1289,7 @@ async function opening<S extends AnySchema>(
           chosen = true;
           overriding = true;
           try {
-            store.applyAll(made.calls, made.intent ? { intent: made.intent } : {});
+            store.applyAll(made.calls, { ...(made.intent ? { intent: made.intent } : {}), ...(made.via ? { via: made.via } : {}) });
           } finally {
             overriding = false;
           }
@@ -1319,7 +1330,7 @@ async function opening<S extends AnySchema>(
     });
     pending.push(result.batch);
     provisional.add(result.batch);
-    asked.set(result.batch, { calls, ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}) });
+    asked.set(result.batch, { calls, ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}), ...(applyOptions?.via ? { via: applyOptions.via } : {}) });
     // The revision of each field this changes, as this browser saw it — unless the person chose theirs over it.
     const base = overriding ? [] : revisions.baseFor(result.ops, earlier);
     answers.set(
@@ -1331,6 +1342,8 @@ async function opening<S extends AnySchema>(
             ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}),
             batch: result.batch,
             ...(base.length > 0 ? { base } : {}),
+            // What it claims to come through, for a server that may believe it (FR-52).
+            ...(applyOptions?.via ? { via: applyOptions.via } : {}),
           },
           result.batch,
         ).catch((error: unknown) => takeBack(result.batch, error)),
@@ -1371,6 +1384,7 @@ async function opening<S extends AnySchema>(
                 undo: ids.map((id) => batches.get(id) ?? id),
                 ...(undoOptions?.intent ? { intent: undoOptions.intent } : {}),
                 batch: result.batch,
+                ...(undoOptions?.via ? { via: undoOptions.via } : {}),
               },
               result.batch,
             ),
@@ -1453,7 +1467,7 @@ async function opening<S extends AnySchema>(
     for (const one of offered) {
       if (one.batch !== undefined && landed.has(one.batch)) continue;
       try {
-        store.applyAll(one.calls, { ...(one.intent ? { intent: one.intent } : {}), ...(one.batch ? { batch: one.batch } : {}) });
+        store.applyAll(one.calls, { ...(one.intent ? { intent: one.intent } : {}), ...(one.batch ? { batch: one.batch } : {}), ...(one.via ? { via: one.via } : {}) });
       } catch (error) {
         lost.push(named(one, error));
       }

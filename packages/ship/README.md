@@ -117,8 +117,8 @@ of the attempt in milliseconds or `{ min, max, factor }` for the jittered defaul
 | From | Message | Carries |
 |---|---|---|
 | client | `hello` | `seq`, the last op it has (none: the welcome carries the whole state); `protocol`; `wire` (`LIVE_WIRE`); `build`, the host's build the page runs |
-| client | `call` | `cid`, `calls`, `intent`, `batch`, and `base`: the revision of each field it changes |
-| client | `undo` | `cid`, `batches` to take back |
+| client | `call` | `cid`, `calls`, `intent`, `batch`, `base` (the revision of each field it changes), and `via`: a claim of the channel, such as a guest view's `view:<name>`, which a server records only if it accepts it |
+| client | `undo` | `cid`, `batches` to take back, and a `via` claim as on `call` |
 | client | `here` / `bye` | a presence, as `/graview/here` takes it; gone |
 | server | `welcome` | `protocol`, `wire`, `version` (the declaration it serves), `build`, `participant` (this socket's own key, built from its seat), `seq` (the server's last), and the `ops` after the client's seq |
 | server | `ack` | `cid`, `batch`, `seq` and the `ops` the call made |

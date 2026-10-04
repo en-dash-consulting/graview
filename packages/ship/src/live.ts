@@ -77,8 +77,10 @@ export type LiveClientMessage =
    * one, so a call it sent twice across a reconnect is answered with the
    * ops it already made rather than made again. `base` is the revision of
    * each field the calls change as the client last saw it; one that moved
-   * since is a `conflict`. What the calls came through is not the
-   * client's to say: the host records its own `via` (FR-52).
+   * since is a `conflict`. What the calls came through is the host's to
+   * say (FR-52): `via` is only a CLAIM — a guest view's `view:<name>` — and
+   * a server records it only when its own `viaOf` accepts it; by default
+   * it records its own channel and ignores the claim.
    */
   | {
       readonly t: "call";
@@ -87,9 +89,10 @@ export type LiveClientMessage =
       readonly intent?: string;
       readonly batch?: string;
       readonly base?: readonly FieldRevision[];
+      readonly via?: string;
     }
-  /** Batches to take back, judged as the seat that asks. */
-  | { readonly t: "undo"; readonly cid: string; readonly batches: readonly string[]; readonly intent?: string; readonly batch?: string }
+  /** Batches to take back, judged as the seat that asks; `via` is a claim, as on `call`. */
+  | { readonly t: "undo"; readonly cid: string; readonly batches: readonly string[]; readonly intent?: string; readonly batch?: string; readonly via?: string }
   /**
    * Where this client is, as `POST /graview/here` takes it. Who it is —
    * the key, the kind, for whom — is the server's to say from the seat;
