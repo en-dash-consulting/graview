@@ -1,14 +1,14 @@
 {
-  "at": "2026-10-03T19:13:22.874Z",
+  "at": "2026-10-04T02:02:47.716Z",
   "packages": {
     "@graview/core": {
       "files": 479,
-      "tarballBytes": 547121,
+      "tarballBytes": 552785,
       "ok": true
     },
     "create-graview": {
       "files": 11,
-      "tarballBytes": 3659,
+      "tarballBytes": 3660,
       "ok": true
     },
     "@graview/embed": {
@@ -23,27 +23,27 @@
     },
     "@graview/guest": {
       "files": 35,
-      "tarballBytes": 21062,
+      "tarballBytes": 21063,
       "ok": true
     },
     "@graview/layout": {
       "files": 47,
-      "tarballBytes": 93800,
+      "tarballBytes": 93798,
       "ok": true
     },
     "@graview/pages": {
       "files": 79,
-      "tarballBytes": 89932,
+      "tarballBytes": 89933,
       "ok": true
     },
     "@graview/primitives": {
-      "files": 223,
-      "tarballBytes": 363214,
+      "files": 219,
+      "tarballBytes": 356490,
       "ok": true
     },
     "@graview/react": {
-      "files": 151,
-      "tarballBytes": 220287,
+      "files": 147,
+      "tarballBytes": 213489,
       "ok": true
     },
     "@graview/render": {
@@ -53,7 +53,7 @@
     },
     "@graview/ship": {
       "files": 115,
-      "tarballBytes": 154999,
+      "tarballBytes": 155392,
       "ok": true
     },
     "@graview/skills": {
@@ -63,20 +63,20 @@
     },
     "@graview/studio": {
       "files": 67,
-      "tarballBytes": 106460,
+      "tarballBytes": 106459,
       "ok": true
     },
     "@graview/tools": {
       "files": 123,
-      "tarballBytes": 170153,
+      "tarballBytes": 170232,
       "ok": true
     }
   },
   "budgets": [
     {
       "name": "the pages face alone",
-      "minified": 794033,
-      "gzipped": 214706,
+      "minified": 797078,
+      "gzipped": 215907,
       "budget": {
         "minified": 815000,
         "gzipped": 220000
@@ -85,8 +85,8 @@
     },
     {
       "name": "every face",
-      "minified": 1083697,
-      "gzipped": 310491,
+      "minified": 1086742,
+      "gzipped": 311598,
       "budget": {
         "minified": 1100000,
         "gzipped": 315000
