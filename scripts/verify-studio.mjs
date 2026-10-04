@@ -13,15 +13,21 @@
  * see the field in the schema the studio would write, take the change back,
  * and check that the seat that may not administer is never offered the door
  * at all — then ASK FOR A CHANGE IN WORDS, read what the checker makes of it
- * before keeping it, keep it, and undo it.
+ * before keeping it, keep it, and undo it. Then the studio in SOMEBODY
+ * ELSE'S PAGE, mounted through the embed the way Graview Cloud's builder
+ * mounts it (`inAHostsPage`): axe over the host's page, who is offered it,
+ * a host that refuses, and a studio handed in that waits for no chunk.
  *
  *   node scripts/verify-studio.mjs [--engine=chromium|webkit|firefox]
  */
 import { createServer } from "node:http";
-import { writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
+import { graviewSources } from "./lib/graview-sources.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 
@@ -59,6 +65,181 @@ const verdict = (page) =>
       warnings: Number(said?.getAttribute("data-warnings") ?? -1),
     };
   });
+
+/**
+ * THE STUDIO IN SOMEBODY ELSE'S PAGE (FR-58, FR-59, FR-60, FR-63).
+ *
+ * Graview Cloud's builder mounts the studio through the embed into a
+ * `<div>` inside its own page's `<main>`, keeps the declaration itself, and
+ * decides who may build. Built here the way that page is: a header, a nav,
+ * its main, a footer; Cloud's vendors document compiled; an editor whose
+ * only role is `viewer`, offered the studio by the host; a host that
+ * refuses what it is handed; and `StudioPlace` handed in, bundled as a
+ * product's bundler splits it. Then: axe over the whole document, what the
+ * page fetched, and a change made, refused, and still there.
+ */
+async function inAHostsPage(browser, report) {
+  const require = createRequire(import.meta.url);
+  const esbuild = require("esbuild");
+  const out = mkdtempSync(join(tmpdir(), "graview-studio-host-"));
+  const vendors = resolve(repoRoot, "packages/core/tests/document/fixtures/vendors.gdd.json");
+  const built = await esbuild.build({
+    stdin: {
+      contents: `
+        import { compileDocument } from "@graview/core/document";
+        import { mount } from "@graview/embed";
+        import { StudioPlace } from "@graview/studio";
+        import vendors from ${JSON.stringify(vendors)};
+        const compiled = compileDocument(vendors, { skipFrameworkCheck: true });
+        window.__handed = [];
+        const handle = mount(document.getElementById("graview-builder"), {
+          app: compiled.app,
+          principal: { kind: "human", id: "editor", roles: ["viewer"] },
+          studio: {
+            offered: true,
+            place: StudioPlace,
+            onApply(applied) {
+              window.__handed.push(applied.edits ?? null);
+              return { ok: false, findings: [{ severity: "error", code: "host-refused", path: "kinds.vendor", message: "This host previews only what an edit says, and keeps nothing else" }] };
+            },
+          },
+          stop: "#overview=1&in.studio=open",
+          face: "graview",
+          heading: false,
+          label: "Wedding vendors: studio",
+          height: "100%",
+          fonts: false,
+        });
+        window.__policy = handle.store.policy !== undefined;
+        window.__ready = true;`,
+      resolveDir: resolve(repoRoot, "packages/embed"),
+      loader: "js",
+    },
+    bundle: true,
+    splitting: true,
+    format: "esm",
+    platform: "browser",
+    outdir: out,
+    entryNames: "entry",
+    define: { "process.env.NODE_ENV": '"production"' },
+    plugins: [graviewSources(repoRoot)],
+    metafile: true,
+    logLevel: "silent",
+  });
+  // What the page imports outright; anything else it fetched, it fetched later.
+  const outputs = built.metafile.outputs;
+  const name = (path) => relative(out, resolve(process.cwd(), path));
+  const statically = new Set();
+  const reach = (path) => {
+    if (statically.has(path)) return;
+    statically.add(path);
+    for (const one of outputs[path].imports) if (one.kind === "import-statement" && outputs[one.path]) reach(one.path);
+  };
+  reach(Object.keys(outputs).find((path) => outputs[path].entryPoint !== undefined));
+  const first = new Set([...statically].map(name));
+  writeFileSync(
+    join(out, "index.html"),
+    `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Build Wedding vendors</title></head>
+<body><header><nav aria-label="Account"><a href="/apps">Apps</a></nav></header>
+<main><h1>Build Wedding vendors</h1><h2>Studio</h2><div id="graview-builder" style="position:relative;height:720px"></div></main>
+<footer><a href="/privacy">Privacy</a></footer>
+<script type="module" src="/entry.js"></script></body></html>`,
+  );
+  const fetched = [];
+  const host = createServer((request, response) => {
+    const path = decodeURIComponent((request.url ?? "/").split("?")[0]).replace(/^\/+/, "") || "index.html";
+    const file = join(out, path);
+    if (!file.startsWith(out) || !existsSync(file)) {
+      response.writeHead(404);
+      response.end();
+      return;
+    }
+    if (path.endsWith(".js")) fetched.push(path);
+    response.writeHead(200, { "content-type": path.endsWith(".js") ? "text/javascript" : "text/html" });
+    response.end(readFileSync(file));
+  });
+  await new Promise((ready) => host.listen(portFor("studio-host"), ready));
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  try {
+    await page.goto(`${at("studio-host")}/`, { waitUntil: "load" });
+    await page.waitForFunction(() => window.__ready === true, null, { timeout: 30_000 });
+    await page.waitForSelector('#graview-builder [data-testid="studio"]', { timeout: 20_000 });
+    await page.waitForTimeout(1200);
+
+    /* ---- FR-63: the studio handed in is in what the page loads first */
+    report.checks.aStudioHandedInWaitsForNoChunk = {
+      fetched,
+      ok: fetched.length > 0 && fetched.every((path) => first.has(path)),
+    };
+
+    /* ---- FR-59: an editor the host offers it to sees it, the policy kept */
+    const offered = await page.evaluate(() => ({ studio: document.querySelector('[data-testid="studio"]') !== null, policyKept: window.__policy === true }));
+    report.checks.anEditorTheHostOffersItToSeesTheStudio = { ...offered, ok: offered.studio && offered.policyKept };
+
+    /* ---- FR-58: no main of its own, and axe finds no landmark violation */
+    await page.addScriptTag({ path: require.resolve("axe-core/axe.min.js") });
+    const audited = await page.evaluate(async () => {
+      const result = await window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "best-practice"] }, resultTypes: ["violations"] });
+      return {
+        mains: document.querySelectorAll("main").length,
+        mainsInTheEmbed: document.querySelectorAll("#graview-builder main").length,
+        violations: result.violations.map((violation) => ({ id: violation.id, nodes: violation.nodes.length })),
+      };
+    });
+    const landmarks = audited.violations.filter((violation) => violation.id.startsWith("landmark") || violation.id === "region");
+    report.checks.aStudioInAHostsPageDrawsNoMainOfItsOwn = {
+      ...audited,
+      landmarks,
+      ok: audited.mains === 1 && audited.mainsInTheEmbed === 0 && landmarks.length === 0,
+    };
+
+    /* ---- FR-60: a change made, refused by the host, and still there */
+    await page.locator('#graview-builder [data-graview-view="kind:field"] button', { hasText: "open" }).first().click();
+    await page.waitForSelector('[data-graview-pick="field:vendor.notes"]', { timeout: 10_000 });
+    await page.waitForTimeout(500);
+    await page.focus('[data-graview-pick="field:vendor.notes"]');
+    await page.keyboard.press("Enter");
+    await page.waitForSelector('[data-testid="studio"] [data-testid="inspector-strip"] [data-affordance]', { timeout: 10_000 });
+    const strip = await page.evaluate(() =>
+      [...document.querySelectorAll('[data-testid="studio"] [data-testid="inspector-strip"] [data-affordance]')].map((button) => button.textContent?.trim()),
+    );
+    await page.locator('[data-testid="studio"] [data-testid="inspector-strip"] [data-affordance]', { hasText: "Remove the field" }).first().click();
+    await page.waitForTimeout(500);
+    const pressApply = async () => {
+      await page.click('[data-testid="studio-apply"]');
+      await page.waitForSelector('[data-testid="studio-applied"]', { timeout: 10_000 });
+      await page.waitForTimeout(300);
+      return page.evaluate(() => {
+        const panel = document.querySelector('[data-testid="studio-applied"]');
+        return { said: panel?.getAttribute("data-applied") ?? null, text: panel?.textContent ?? "", open: document.querySelector('[data-testid="studio"]') !== null };
+      });
+    };
+    const once = await pressApply();
+    const twice = await pressApply();
+    const handed = await page.evaluate(() => window.__handed);
+    report.checks.aHostThatRefusesIsShownRefusingAndTheEditsStay = {
+      /* FR-61: a field's acts on the strip, by what they change. */
+      strip,
+      once: { said: once.said, open: once.open, claimedKept: once.text.includes("Handed to the host") },
+      handed,
+      ok:
+        ["Change the field's type", "Say whether it must be given", "Say what the field is for"].every((title) => strip.some((offered) => offered?.startsWith(title))) &&
+        once.said === "refused-by-host" &&
+        !once.text.includes("Handed to the host") &&
+        once.text.includes("This host previews only what an edit says") &&
+        once.open &&
+        twice.said === "refused-by-host" &&
+        JSON.stringify(handed) === JSON.stringify([[{ op: "remove-field", kind: "vendor", field: "notes" }], [{ op: "remove-field", kind: "vendor", field: "notes" }]]),
+    };
+    report.checks.theHostsPageThrowsNothing = { errors, ok: errors.length === 0 };
+  } finally {
+    await page.close();
+    host.close();
+    rmSync(out, { recursive: true, force: true });
+  }
+}
 
 try {
   browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
@@ -515,6 +696,8 @@ try {
     stillTheApp: document.querySelector('[data-graview-pick="t-deposit"]') !== null,
   }));
   report.checks.closingPutsYouBackWhereYouWere = { ...back, ok: back.studioGone && back.stillTheApp };
+
+  await inAHostsPage(browser, report);
 
   report.pageErrors = errors;
   report.passed = Object.values(report.checks).every((check) => check.ok) && errors.length === 0;

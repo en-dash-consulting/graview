@@ -372,7 +372,14 @@ function StudioOverlay<S extends AnySchema>({
       style={{
         position: within === "page" ? "fixed" : "absolute",
         inset: 0,
-        zIndex: 40,
+        /*
+         * OVER EVERYTHING IN THE BOX. Boxed, the studio is drawn from the
+         * embed's strip, which comes before the embed's own picture, and the
+         * picture's seat sits at the same 40 and its menu at 60: later in the
+         * page and no lower, the embed's seat was drawn over the studio and
+         * took its presses. A modal dialog is above what it covers.
+         */
+        zIndex: within === "page" ? 40 : 100,
         display: "flex",
         flexDirection: "column",
         background: "var(--graview-ground-deep)",
