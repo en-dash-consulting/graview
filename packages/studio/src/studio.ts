@@ -1,5 +1,5 @@
 import { checkApp, Store, type AnySchema, type Batch, type CheckResult, type GraphSnapshot, type GraviewApp, type MigrationDeclaration, type MutationCall, type Principal } from "@graview/core";
-import { compileDocument, documentOf, toDocument, type CompiledDocument, type RefusedDocument, type DocumentEdit, type EditOutcome, type Fill, type Finding, type GraviewDocument } from "@graview/core/document";
+import { compileDocument, documentOf, toDocument, warning, type CompiledDocument, type RefusedDocument, type DocumentEdit, type EditOutcome, type Fill, type Finding, type GraviewDocument } from "@graview/core/document";
 import { resolveProposal } from "@graview/tools";
 import { documentAfter, documentEdits } from "./edits.js";
 import { declarationToGraph } from "./from-declaration.js";
@@ -68,9 +68,19 @@ export interface Studio<S extends AnySchema = AnySchema> {
    * The document the studio's changes make — the one it opened on, with
    * `edits()` applied and everything the graph did not touch kept as it
    * was written — or the findings that say why there is none. Undefined
-   * when the studio was not opened on an app compiled from a document.
+   * when the studio knows no document for its app: `whyNoDocument()`
+   * says why.
    */
   document(): EditOutcome | undefined;
+  /**
+   * WHY `document()` IS UNDEFINED, in one finding (`studio-no-document`):
+   * the studio was opened on a TypeScript app, or on an app that is not
+   * the object `compileDocument` returned — a copy, or one with its policy
+   * swapped — and no document was said with `createStudio(app, { document })`.
+   * Undefined when the studio has a document. `apply()` hands it back as
+   * `documentFindings`.
+   */
+  whyNoDocument(): Finding | undefined;
   /** The declaration as the files `graview create` writes. */
   files(options?: SourceOptions): readonly WrittenFile[];
   /** What changed since the studio opened, as edits the checkout's own source can take — and what cannot be written that way yet. */
@@ -96,13 +106,20 @@ export interface StudioApplyResult {
   readonly said?: readonly string[];
   /** Values the edits give records already there, for the migration planner. */
   readonly fills?: readonly Fill[];
-  /** Why no document came back, when the studio was opened on one and could not say the change as a document. */
+  /** Why no document came back: the change could not be said or compiled as a document, or the studio knows no document for its app (`studio-no-document`). */
   readonly documentFindings?: readonly Finding[];
 }
 
 export interface StudioOptions {
   readonly name?: string;
   readonly principal?: Principal;
+  /**
+   * The document the app was compiled from, said outright (FR-54). Without
+   * it the studio knows the document only for the very object
+   * `compileDocument` returned; a host that copies that app, or swaps its
+   * policy for the signed-in seat's, says the document here.
+   */
+  readonly document?: GraviewDocument;
 }
 
 export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: StudioOptions = {}): Studio<S> {
@@ -119,7 +136,15 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
   const declaration = () => graphToDeclaration(store.snapshot() as GraphSnapshot, { base: base as unknown as GraviewApp<AnySchema>, name: base.name });
   const isAgent = (batch: Batch) => batch.author.kind === "agent";
   // The document the app was compiled from, if it was; the edits are read against it, or against what toDocument can say of a TypeScript app.
-  const opened = documentOf(base);
+  const opened = options.document ?? documentOf(base);
+  const noDocument: Finding | undefined = opened
+    ? undefined
+    : warning(
+        "studio-no-document",
+        "document",
+        `no document is known for ${base.name}: the studio was opened on a TypeScript app, or on an app that is not the object compileDocument returned (a copy, or one with its policy swapped), so it can hand back the app but not a document`,
+        "if the app was compiled from a document, say it: createStudio(app, { document })",
+      );
   let against: GraviewDocument | undefined;
   const reference = () => opened ?? (against ??= toDocument(base as unknown as GraviewApp<AnySchema>).document);
   const made = () => documentEdits(reference(), seed, store.snapshot() as GraphSnapshot);
@@ -218,12 +243,13 @@ export function createStudio<S extends AnySchema>(base: GraviewApp<S>, options: 
         ...(migration ? { migrations: [...(base.migrations ?? []), migration] } : {}),
       };
       if (judged.said && !judged.said.ok) return { ok: true, app, migration, documentFindings: judged.said.findings };
-      return { ok: true, app, migration };
+      return { ok: true, app, migration, ...(noDocument ? { documentFindings: [noDocument] } : {}) };
     },
     files: (sourceOptions) =>
       declarationFiles(store.snapshot() as GraphSnapshot, { name: base.name, base: base as unknown as GraviewApp<AnySchema>, ...sourceOptions }),
     edits: () => made().edits,
     document,
+    whyNoDocument: () => noDocument,
     sourceChanges: () => sourceChanges(seed, store.snapshot() as GraphSnapshot, base as unknown as GraviewApp<AnySchema>),
   };
 }
