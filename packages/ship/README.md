@@ -248,6 +248,13 @@ the size in bytes and the calls. It answers nothing, `{ retryAfter }` or `{ refu
   `openRemote` keeps the change shown and pending and sends it again after the wait. Every later
   call on that socket is busy too until the held one comes again, and HTTP posts go one at a
   time, so a burst lands in the order it was made.
+
+  **The units, loudly.** `retryAfter` — in `limit`'s answer, in the socket's `busy`, and in the
+  JSON body of a 429 — is **milliseconds**. The `Retry-After` header is **seconds** (or an
+  HTTP date), as HTTP says; ship's handler rounds the wait up to whole seconds there.
+  `openRemote` reads each in its own unit, and a host that puts seconds in the JSON body too
+  (`retryAfter: 2` beside `Retry-After: 2`) is caught: a JSON wait under 50 beside a header
+  that says the same number of seconds is read as those seconds.
 - **refused, `limit`** — `{ refuse }`, a sentence, for a hard cap such as a message over the
   size a host takes: it would be refused however long the client waited, so it is refused now
   and taken back.

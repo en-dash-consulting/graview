@@ -838,9 +838,8 @@ async function opening<S extends AnySchema>(
        * BUSY, NOT REFUSED (FR-45): the host asked for it again later. The
        * change stays shown and pending, and goes again after the wait.
        */
-      const header = Number(response.headers.get("retry-after"));
-      const wait = typeof answer.retryAfter === "number" ? answer.retryAfter : Number.isFinite(header) && header > 0 ? header * 1000 : 1000;
-      await new Promise((later) => setTimeout(later, Math.max(0, wait)));
+      const wait = retryAfterMs(response.headers.get("retry-after"), answer.retryAfter);
+      await new Promise((later) => setTimeout(later, wait));
       if (socketReady()) return viaSocket(body, mine);
     }
     /*
@@ -1564,6 +1563,33 @@ async function opening<S extends AnySchema>(
     for (const [name, value] of Object.entries(seat)) withSeat.searchParams.set(name, value);
     return protocols.length > 0 ? new Socket(withSeat.toString(), protocols) : new Socket(withSeat.toString());
   }
+}
+
+/**
+ * HOW LONG A 429 ASKS TO WAIT, IN MILLISECONDS (FR-45). The `Retry-After`
+ * header is read as HTTP says — delta SECONDS, or an HTTP date — and the
+ * JSON `retryAfter` as ship documents it, MILLISECONDS, the finer of the
+ * two. A JSON wait under 50 beside a header that says the same number of
+ * seconds is a host that said seconds in the body too (`retryAfter: 2`,
+ * `Retry-After: 2` — two "milliseconds" is a retry storm, not a wait): the
+ * header wins. Ship's own handler says a short wait as, say, 30 in the body
+ * and 1 in the header, which is read as the 30 ms it means. Neither said:
+ * a second.
+ */
+function retryAfterMs(header: string | null | undefined, json: unknown, now: number = Date.now()): number {
+  let fromHeader: number | undefined;
+  const said = header?.trim();
+  if (said) {
+    if (/^\d+(\.\d+)?$/.test(said)) fromHeader = Number(said) * 1000;
+    else {
+      const date = Date.parse(said);
+      if (Number.isFinite(date)) fromHeader = Math.max(0, date - now);
+    }
+  }
+  const fromJson = typeof json === "number" && Number.isFinite(json) && json >= 0 ? json : undefined;
+  const secondsInTheBody = fromJson !== undefined && fromJson < 50 && fromHeader !== undefined && Math.abs(fromJson * 1000 - fromHeader) < 1000;
+  if (fromJson !== undefined && !secondsInTheBody) return fromJson;
+  return fromHeader ?? 1000;
 }
 
 /** The page's own reload, where there is a page. */
