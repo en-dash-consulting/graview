@@ -4,7 +4,7 @@ import type { Graph } from "../graph/graph.js";
 import { GraphError, MissingRecordError } from "../graph/graph.js";
 import type { Primitive } from "../graph/primitives.js";
 import { TrackedReader } from "../graph/tracked.js";
-import { edgeId, type GraphEdge } from "../graph/types.js";
+import { edgeId, type GraphEdge, type GraphReader } from "../graph/types.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
 import type {
   AnyMutationDefinition,
@@ -83,6 +83,22 @@ export function compileMutation<S extends AnySchema>(
   graph: Graph<S>,
   definition: AnyMutationDefinition<S>,
   rawArgs: unknown,
+  options: {
+    /**
+     * A field written with the value it already holds is kept in the patch
+     * when this says so (FR-55): a seat that writes a value the store holds
+     * in words it may not see has written its own words, and an act that
+     * wrote nothing would tell it the guess was the hidden value.
+     */
+    readonly keepUnchanged?: (value: unknown) => boolean;
+    /**
+     * THE GRAPH THE SENTENCE IS WORDED FROM (FR-55): the author's view, so a
+     * record the author may not see is named only by what the author wrote
+     * — the id as given — exactly as one that does not exist. Absent, the
+     * graph the act runs on.
+     */
+    readonly describeWith?: GraphReader<NodeOfSchema<S>>;
+  } = {},
 ): CompiledMutation {
   /*
    * THE ID A CALLER BROUGHT. An act that creates a kind takes an optional
@@ -135,7 +151,7 @@ export function compileMutation<S extends AnySchema>(
       const after: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(fields)) {
         const current = (node as Record<string, unknown>)[key];
-        if (JSON.stringify(current) === JSON.stringify(value)) continue;
+        if (JSON.stringify(current) === JSON.stringify(value) && !options.keepUnchanged?.(value)) continue;
         before[key] = current;
         after[key] = value;
       }
@@ -202,15 +218,16 @@ export function compileMutation<S extends AnySchema>(
     }
   }
 
+  const wording = options.describeWith ? new TrackedReader<NodeOfSchema<S>>(options.describeWith) : reader;
   const intent =
-    definition.describe?.(args, reader) ??
+    definition.describe?.(args, wording) ??
     `${definition.name}(${Object.entries(args)
       .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
       .join(", ")})`;
 
   return {
     primitives,
-    reads: reader.reads(),
+    reads: wording === reader ? reader.reads() : [...new Set([...reader.reads(), ...wording.reads()])],
     writes: [...writes],
     intent,
   };

@@ -1,5 +1,6 @@
 import { permits, rolesOf } from "../../permissions/policy.js";
 import { derivedVia } from "../../mutations/derive-edits.js";
+import { nodeRefKinds } from "../../mutations/node-ref.js";
 import type { AnySchema } from "../../schema/schema.js";
 
 /**
@@ -143,6 +144,42 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
           message: `No sight names "${kind}", so nobody but the system sees one: a policy that says who sees what says it for every kind.`,
           fix: `Add a sight for "${kind}" — { roles: "*", kinds: ["${kind}"] } if everybody may see it.`,
         });
+      }
+      /*
+       * A REQUIRED REFERENCE TO WHAT A ROLE MAY NOT SEE (FR-55). A record
+       * whose required field names a record its seat may not see is withheld
+       * from that seat whole — clearing the field would serve a record that
+       * fails its own declaration — so a role that sees the kind but not
+       * what every one of its records must name sees none of them but the
+       * ones it wrote itself. Asked of every role a grant or a sight names,
+       * and, when a sight is for everybody, of a seat with no role at all.
+       */
+      const seesKind = (role: string | undefined, kind: string) =>
+        sights.some((sight) => sight.kinds.includes(kind) && (sight.roles === "*" || (role !== undefined && sight.roles.includes(role))));
+      const everyRole: (string | undefined)[] = [
+        ...new Set([...rolesOf(app.policy), ...sights.flatMap((sight) => (sight.roles === "*" ? [] : sight.roles))]),
+      ].sort();
+      if (sights.some((sight) => sight.roles === "*")) everyRole.push(undefined);
+      for (const definition of app.schema.definitions) {
+        const shape = (definition.fields as { shape?: Record<string, unknown> }).shape ?? {};
+        for (const [field, declared] of Object.entries(shape)) {
+          const targets = nodeRefKinds(declared);
+          const required = !(declared as { safeParse(value: unknown): { success: boolean } }).safeParse(undefined).success;
+          if (!targets || !required || targets.includes("*")) continue;
+          for (const role of everyRole) {
+            if (!seesKind(role, definition.kind)) continue;
+            const hidden = targets.filter((target) => !seesKind(role, target));
+            if (hidden.length !== targets.length) continue;
+            const who = role === undefined ? "Anybody without a role" : `${/^[aeiou]/i.test(role) ? "An" : "A"} ${role}`;
+            add({
+              severity: "warning",
+              code: "sight-hides-required-ref",
+              where: "policy.sees",
+              message: `${who} will never see ${definition.kind} records somebody else wrote, because each names a ${hidden.join(" or ")} (its required field "${field}") they may not see — a record that names one is withheld whole, since clearing a required field would serve it broken.`,
+              fix: `Let ${role === undefined ? "everybody" : `"${role}"`} see ${hidden.map((kind) => `"${kind}"`).join(" and ")} too, make "${field}" optional so it can be cleared instead, or say the link with an edge.`,
+            });
+          }
+        }
       }
     }
   }

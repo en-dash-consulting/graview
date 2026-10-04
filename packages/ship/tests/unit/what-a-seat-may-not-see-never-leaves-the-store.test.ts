@@ -110,14 +110,14 @@ describe("the wire sends a seat only what it may see", () => {
     expect(who.who.map((presence) => presence.participant).sort()).toEqual(["human:shopper:bethan:b1", "human:shopper:freya:f1"]);
   });
 
-  it("refuses a write naming a record the seat may not see, with the policy's sentence", async () => {
+  it("refuses a write naming a record the seat may not see exactly as one naming nothing (FR-55)", async () => {
     const handler = await showroom();
     const response = await handler.handle(
       at("/graview/ops", bethan, { method: "POST", body: JSON.stringify({ calls: [{ name: "answer", args: { id: "enquiry:finance-on-the-golf" } }] }) }),
     );
     expect(response.status).toBe(409);
     const body = (await response.json()) as { error: string };
-    expect(body.error).toBe("Not permitted: “Answer the enquiry” names a record you may not see.");
+    expect(body.error).toBe("“Answer the enquiry” names a record that is not there.");
     expect(handler.store.graph.getNode("enquiry:finance-on-the-golf")).not.toHaveProperty("answered");
     // Their own is theirs to answer.
     const own = await handler.handle(at("/graview/ops", bethan, { method: "POST", body: JSON.stringify({ calls: [{ name: "answer", args: { id: "enquiry:is-it-still-there" } }] }) }));
@@ -177,8 +177,8 @@ describe("the wire sends a seat only what it may see", () => {
       JSON.stringify({ t: "call", cid: "c1", calls: [{ name: "answer", args: { id: "enquiry:finance-on-the-golf" } }], base: [{ node: "enquiry:finance-on-the-golf", field: "answered", rev: -1 }] }),
     );
     const refused = (await next("refused", from)) as Extract<LiveServerMessage, { t: "refused" }>;
-    // Forbidden, and no role named: the reason says no more than the sentence does (FR-46).
-    expect(refused).toEqual({ t: "refused", cid: "c1", reason: "forbidden", sentence: "Not permitted: “Answer the enquiry” names a record you may not see." });
+    // Missing, as a record that is not there is: a refusal is no oracle for what exists (FR-55).
+    expect(refused).toEqual({ t: "refused", cid: "c1", reason: "missing", sentence: "“Answer the enquiry” names a record that is not there." });
 
     // Her own act is answered with its ops.
     from = heard.length;

@@ -28,6 +28,6 @@ export type { StoredMeta } from "./meta.js";
 export { health } from "./health.js";
 export type { HealthReport } from "./health.js";
 export { openRemote, RemoteRefusedError, seatHeaders } from "./remote.js";
-export type { LiveSocketLike, RemoteConflict, RemoteOptions, RemoteRefusal, RemoteStore } from "./remote.js";
+export type { LiveSocketLike, RemoteBackoff, RemoteConflict, RemoteCounters, RemoteOptions, RemoteRefusal, RemoteStatus, RemoteStore } from "./remote.js";
 export { conflictSentence, LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, liveSubprotocol, REFUSAL_REASONS } from "./live.js";
 export type { Limit, LimitAnswer, LimitAsked, LiveClientMessage, LiveConnection, LiveServerMessage, LiveSocket, RefusalReason, WireRefusal } from "./live.js";

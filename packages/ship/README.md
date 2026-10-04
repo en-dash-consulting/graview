@@ -230,7 +230,9 @@ Somebody without a socket — an agent acting over MCP or an RPC, a polling tab 
 stands until `until`. The handler does this itself for every op an agent seat lands in its
 store (`POST /graview/ops`, an MCP handler over the same store, the host's own loop), for
 `VISITOR_PRESENCE_TTL_MS`; `createStoreHandler({ announceAgents: false })` turns it off and a
-number sets the time. A hibernating host keeps `who` itself, with `announcePresence(who,
+number sets the time. An agent that only reads lands no op, so hand `handler.onCall` to
+`createMcpHttpHandler`'s `onCall` (`@graview/tools`): every tool call announces the agent seat
+the same way, reads included. A hibernating host keeps `who` itself, with `announcePresence(who,
 visitorPresence(seat), ttlMs)`, and hands it to `receive` and `tell`; a visitor past its
 `until` is never told. Each seat is told as it may see: an agent acting for a person the
 seat may not see is shown without `onBehalfOf` or the name. The Shell draws it as "Claude,
@@ -303,8 +305,8 @@ host's.
 
 | `reason` | What it means |
 |---|---|
-| `forbidden` | the seat may not: the policy, a sight, an agent's declared acts, a module turned off; `wouldNeed` names the roles that could, when the policy knows them |
-| `missing` | what the call names is not there: a record, or a batch to take back |
+| `forbidden` | the seat may not: the policy, an agent's declared acts, a module turned off (for the host's own seat); `wouldNeed` names the roles that could, when the policy knows them |
+| `missing` | what the call names is not there for this seat: a record that does not exist or one it may not see — answered alike, so a refusal never tells a guessed id from a real one (FR-55) — or a batch to take back |
 | `invalid` | the call as asked does not fit: its arguments, the kind, a rule, a call before `hello` |
 | `limit` | the host's hard cap: the call can never succeed as asked, however long the caller waits |
 | `unavailable` | the host takes no changes for a while and cannot say how long — a room read-only while it is checked, a write to storage that failed; the one refusal that is not final |

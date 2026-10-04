@@ -67,6 +67,16 @@ export default {
 };
 ```
 
+`onCall` is told every tool call before it is answered — the caller, the
+tool, its arguments and whether it only reads — and cannot refuse one. Mounted
+beside a store handler, `onCall: handler.onCall` shows an agent in the room
+while it reads, as an op of its shows it while it acts:
+
+```ts
+const handler = await createStoreHandler({ app, adapter, seatOf });
+const mcp = createMcpHttpHandler({ store: () => handler.store, authenticate: seatOf, name: "rota", version: "1.0.0", onCall: handler.onCall });
+```
+
 Every tool carries a title and MCP's four hints in its `annotations`,
 derived from the declaration: the reads are read-only; an act that removes or
 severs is destructive; an act that sets only what it is given is idempotent;

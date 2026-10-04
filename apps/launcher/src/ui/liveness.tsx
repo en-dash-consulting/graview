@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { APPS } from "../domain/survey.js";
+import { addressOf, APPS } from "../domain/survey.js";
 
 /**
  * Which apps are actually serving on this machine, right now.
@@ -20,11 +20,11 @@ export function useLiveness(): Readonly<Record<string, boolean>> {
   return useContext(LivenessContext);
 }
 
-async function reachable(port: number, signal: AbortSignal): Promise<boolean> {
+async function reachable(entry: { readonly port: number }, signal: AbortSignal): Promise<boolean> {
   try {
     // `no-cors` gives an opaque response we cannot read, which is fine — the
     // question is only whether anything answered.
-    await fetch(`http://localhost:${port}/`, { mode: "no-cors", signal });
+    await fetch(`${addressOf(entry)}/`, { mode: "no-cors", signal });
     return true;
   } catch {
     return false;
@@ -39,7 +39,7 @@ export function LivenessProvider({ children }: { children: ReactNode }) {
     const controller = new AbortController();
     const sweep = async () => {
       const results = await Promise.all(
-        APPS.map(async (entry) => [entry.id, await reachable(entry.port, controller.signal)] as const),
+        APPS.map(async (entry) => [entry.id, await reachable(entry, controller.signal)] as const),
       );
       if (!cancelled) setLive(Object.fromEntries(results));
     };

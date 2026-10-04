@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "The example that starts empty. A community garden with a declared graph and no data \u2014 onboarding is filling it in.",
+  "description": "The example that starts empty. A community garden with a declared graph and no data — onboarding is filling it in.",
   "main": "./dist/index.js",
   "exports": {
     ".": {
@@ -39,10 +39,10 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.1.1",
-    "zod": "^4.4.3"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
-    "vite": "^5.4.11",
-    "@vitejs/plugin-react": "^4.3.4"
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
   }
 }

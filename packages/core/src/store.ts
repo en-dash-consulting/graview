@@ -1,6 +1,6 @@
-import { readingOf, seatLens, seenBy, seesId } from "./seen.js";
+import { hidesFrom, readingOf, seatLens, seenBy, seesId } from "./seen.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
-import { Graph, GraphError } from "./graph/graph.js";
+import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
 import { diffSnapshots, EMPTY_DIFF, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
 import { invert, normalise, writesOf, type Primitive } from "./graph/primitives.js";
@@ -21,8 +21,9 @@ import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { actingAs, isSystem, permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
-import { redact } from "./ops/withheld.js";
+import { namesUnseen, redact } from "./ops/withheld.js";
 import { nounOf } from "./schema/define-node.js";
+import { creatorsBefore } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
@@ -193,6 +194,8 @@ export interface AppendOp {
 }
 
 const HUMAN: Author = { kind: "human" };
+/** The host itself, which sees what it keeps: the principal a question is asked as when no seat is named. */
+const SYSTEM: Principal = { kind: "system" };
 
 /** Who turns a module off or on: the workspace itself, `system · modules` (FR-12). */
 export const MODULES_AUTHOR: Author = { kind: "system", id: "modules", name: "Modules" };
@@ -600,13 +603,13 @@ export class Store<S extends AnySchema> {
      * repair as the starter seat, which may only add, and the press met
      * "starter may not take-off here" (W-110).
      */
-    const narrowed = this.refusesAgent(call, principal) ?? this.namesTurnedOff(call) ?? this.namesUnseen(call, principal);
+    const narrowed = this.refusesAgent(call, principal) ?? this.namesTurnedOff(call, principal);
     if (narrowed) return { ok: false, refusal: narrowed } as ReturnType<typeof permits>;
     return permits(
       this.policy,
       principal,
       call.name,
-      this.subjectKindOf(call),
+      this.subjectKindOf(call, principal),
       this.viaOf(this.mutations.get(call.name)),
       this.subjectIdOf(call),
       this.words,
@@ -649,9 +652,11 @@ export class Store<S extends AnySchema> {
    * the core owns — a rename that takes any kind — must not reach into a
    * district the workspace does not have. The sentence names the act.
    */
-  private namesTurnedOff(call: MutationCall): Refusal | undefined {
+  private namesTurnedOff(call: MutationCall, principal: Principal = SYSTEM): Refusal | undefined {
     const off = this.modules.disabledKinds;
     if (off.size === 0) return undefined;
+    // A seat the module's records are kept from is not told they are there: naming one is naming nothing (FR-55).
+    if (!isSystem(principal)) return undefined;
     const mutation = this.mutations.get(call.name);
     if (!mutation) return undefined;
     const named: unknown[] = [];
@@ -667,15 +672,36 @@ export class Store<S extends AnySchema> {
   }
 
   /**
-   * A CALL THAT NAMES A RECORD THE CALLER MAY NOT SEE IS REFUSED (FR-02),
-   * before any grant is read: an act on a record is a way of reading it —
-   * its preview, its refusal, what its rules say after — and a seat that
-   * could act on what it may not see could learn it that way. Only a
-   * record that is there is judged; an id that names nothing is the act's
-   * own to refuse. The sentence names the act, never the record or its kind.
+   * AN ACT'S SENTENCE IS WORDED FROM ITS AUTHOR'S VIEW (FR-55). `describe`
+   * reads the graph to name what the act touched ("Point at Venue"); read
+   * from the whole store, it named a record the author may not see by its
+   * label, and so told the author whether a guessed id was real. Read from
+   * the store as the author is served it, such a record is named only by
+   * what the author wrote, as one that does not exist is. A reader who sees
+   * more reads the author's sentence as the author would have. With nothing
+   * kept from the author, the store's own graph.
    */
-  private namesUnseen(call: MutationCall, principal: Principal): Refusal | undefined {
-    if (!this.policy?.sees?.length || isSystem(principal)) return undefined;
+  private wordedFor(author: Principal | undefined): NonNullable<Parameters<typeof compileMutation<S>>[3]> {
+    if (author === undefined || !hidesFrom(this, author)) return {};
+    // And a seat that writes a value naming what it may not see has written its own words, though the store held them already.
+    const hidden = seesId(this, author);
+    return { describeWith: seenBy(this, author).graph as never, keepUnchanged: (value: unknown) => namesUnseen(value, hidden) };
+  }
+
+  /**
+   * A CALL THAT NAMES A RECORD THAT IS NOT THERE FOR ITS CALLER IS REFUSED
+   * AS MISSING (FR-02, FR-55) — one that does not exist, and one the caller
+   * may not see, alike: the same `MissingRecordError`, the same sentence,
+   * reason `missing`. Ids are minted from labels, so a seat can guess one,
+   * and a refusal that told a hidden record from an absent one would tell
+   * it which guesses were real. An act on a record is also a way of reading
+   * it — its preview, what its rules say after — so a hidden one is never
+   * acted on by a seat that may not see it. Asked of each call as it is
+   * about to run, so a record an earlier call in the same gesture made is
+   * there. The sentence names the act, never the id: it says the same of a
+   * hidden record and an absent one, and says back nothing the seat sent.
+   */
+  missingFor(call: MutationCall, principal: Principal = HUMAN): MissingRecordError | undefined {
     const mutation = this.mutations.get(call.name);
     if (!mutation) return undefined;
     const named = new Set<string>();
@@ -685,13 +711,13 @@ export class Store<S extends AnySchema> {
     };
     if (mutation.subject) add(call.args[mutation.subject.arg]);
     for (const ref of nodeRefArgs(mutation.input)) add(call.args[ref.name]);
+    if (named.size === 0) return undefined;
     const visible = seesId(this, principal);
-    if (![...named].some((id) => this.graph.has(id) && !visible(id))) return undefined;
-    return {
-      mutation: call.name,
-      message: `Not permitted: “${mutation.title ?? call.name}” names a record you may not see.`,
-      wouldNeed: [],
-    };
+    for (const id of named) {
+      if (this.graph.has(id) && visible(id)) continue;
+      return new MissingRecordError(id, `“${mutation.title ?? call.name}” names a record that is not there.`);
+    }
+    return undefined;
   }
 
   /**
@@ -819,7 +845,7 @@ export class Store<S extends AnySchema> {
    * refuses that case rather than allowing it: the safe reading of "I could
    * not tell what this acts on" is no.
    */
-  private subjectKindOf(call: MutationCall): string | undefined {
+  private subjectKindOf(call: MutationCall, principal: Principal = SYSTEM): string | undefined {
     const definition = this.mutations.get(call.name);
     const subject = definition?.subject;
     if (!subject) return undefined;
@@ -831,6 +857,8 @@ export class Store<S extends AnySchema> {
      * reviewer on every topic with "a chair or a reviewer can".
      */
     if (typeof id !== "string") return subject.kinds !== "*" && subject.kinds.length === 1 ? (subject.kinds[0] as string) : undefined;
+    // A record the principal may not see is judged as one that is not there: its kind is not the policy's to read aloud (FR-55).
+    if (!isSystem(principal) && !seesId(this, principal)(id)) return undefined;
     return this.graph.getNode(id)?.kind as string | undefined;
   }
 
@@ -868,9 +896,9 @@ export class Store<S extends AnySchema> {
     }
   }
 
-  preview(call: MutationCall, context?: InvariantContext): Preview<S> {
+  preview(call: MutationCall, context?: InvariantContext, options: { readonly author?: Principal } = {}): Preview<S> {
     const definition = this.mutation(call.name);
-    const compiled = compileMutation(this.graph, definition, call.args);
+    const compiled = compileMutation(this.graph, definition, call.args, this.wordedFor(options.author));
     return this.previewPrimitives(compiled.primitives, {
       reads: compiled.reads,
       writes: compiled.writes,
@@ -1013,7 +1041,7 @@ export class Store<S extends AnySchema> {
      * was brought in for, and the narrower of the two wins.
      */
     for (const call of calls) {
-      const refusal = this.refusesAgent(call, author) ?? this.namesTurnedOff(call);
+      const refusal = this.refusesAgent(call, author) ?? this.namesTurnedOff(call, author as Principal);
       if (refusal) {
         tellTheWatchOfARefusal(refusal, author.id);
         throw new PermissionDeniedError(refusal);
@@ -1024,7 +1052,9 @@ export class Store<S extends AnySchema> {
     try {
       for (const call of calls) {
         const definition = this.mutation(call.name);
-        const compiled = compileMutation(this.graph, definition, call.args);
+        const missing = this.missingFor(call, author as Principal);
+        if (missing) throw missing;
+        const compiled = compileMutation(this.graph, definition, call.args, this.wordedFor(author as Principal));
         /*
          * AN ACT THAT DID NOTHING DOES NOT GO IN THE HISTORY.
          *
@@ -1683,6 +1713,9 @@ export class Store<S extends AnySchema> {
    * 1000). It is moved back to the start of the gesture it would split, so
    * a batch is never half behind it.
    *
+   * The checkpoint keeps who made each record behind it (`creators`), so a
+   * store opened on it knows a record's maker without the archived ops.
+   *
    * Nothing moves until `compact` is handed the checkpoint, so a host can
    * archive what is behind it first. A store whose graph does not verify
    * against its log is not compacted: the checkpoint would vouch for a
@@ -1706,7 +1739,10 @@ export class Store<S extends AnySchema> {
     if (seq <= this.log.horizon) return undefined;
     const verified = this.verify();
     if (!verified.ok) throw new GraphError(`Cannot compact a store that does not verify: ${verified.reason}`);
-    return this.log.checkpointAt(this.schema, seq, { validate: this.validate });
+    const checkpoint = this.log.checkpointAt(this.schema, seq, { validate: this.validate });
+    // Who made each record behind it, so a store opened on it still knows (an `own` sight reads the log for it).
+    const creators = creatorsBefore(this.log, seq);
+    return Object.keys(creators).length > 0 ? { ...checkpoint, creators } : checkpoint;
   }
 
   /**

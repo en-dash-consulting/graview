@@ -17,7 +17,7 @@ import {
   type ViewComponent,
   type ViewProps,
 } from "@graview/react";
-import { APPS } from "../domain/survey.js";
+import { addressOf, APPS } from "../domain/survey.js";
 import { launcherSchema, type LauncherSchema } from "../domain/schema.js";
 import { useLiveness } from "./liveness.js";
 
@@ -118,7 +118,7 @@ function AppView({ node, fidelity, selected, flagged }: ViewProps<S, "app">) {
           {live[node.id] ? (
             <a
               data-testid={`visit-${node.id}`}
-              href={`http://localhost:${node.port}/`}
+              href={`${addressOf(APPS.find((entry) => entry.id === node.id) ?? node)}/`}
               style={{ fontSize: "0.75rem", color: "var(--graview-accent)" }}
             >
               Or open it on its own port ↗
@@ -187,7 +187,7 @@ function ShowMe({ app, stop }: { app: string; stop: string }) {
   const entry = APPS.find((candidate) => candidate.id === app);
   if (!entry) return null;
   const serving = live[app] === true;
-  const where = `http://localhost:${entry.port}${stop.startsWith("/") || stop.startsWith("?") ? stop : `/${stop}`}`;
+  const where = `${addressOf(entry)}${stop.startsWith("/") || stop.startsWith("?") ? stop : `/${stop}`}`;
   return serving ? (
     <a
       href={where}

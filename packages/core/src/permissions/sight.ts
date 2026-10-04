@@ -1,3 +1,4 @@
+import type { Epoch } from "../ops/log.js";
 import type { Operation } from "../ops/types.js";
 import { actingAs, isSystem } from "./policy.js";
 import type { Policy, Principal, Sight } from "./types.js";
@@ -31,6 +32,8 @@ export interface RecordedLog {
   all(): readonly Operation[];
   /** The seq the next op takes, counting what a compaction archived; without it, the ops it holds. */
   readonly length?: number;
+  /** Its epochs, for a log compacted behind a checkpoint that names who made what behind it (`Epoch.creators`). */
+  epochs?(): readonly Epoch[];
 }
 
 /** What one op wrote into the index, so a log cut back can take it out again. */
@@ -53,9 +56,10 @@ interface Index {
 
 const INDEXES = new WeakMap<object, Index>();
 
-function indexFrom(base: number): Index {
+/** A fresh index for a log that begins at seq `base`, knowing the makers its checkpoint kept behind it. */
+function indexFrom(base: number, behind: Readonly<Record<string, string>> | undefined): Index {
   const kinds = new Map<string, string>();
-  const creators = new Map<string, string>();
+  const creators = new Map<string, string>(Object.entries(behind ?? {}));
   return { base, end: base, read: [], kinds, creators, entries: [], records: { kindOf: (id) => kinds.get(id), creatorOf: (id) => creators.get(id) } };
 }
 
@@ -101,8 +105,11 @@ function cutBack(index: Index, seq: number): void {
  * is taken out, back to where the log and the index still agree. A log
  * compacted behind its horizon (FR-23) keeps what the index had already
  * read of the archived ops, so a record made behind the horizon is still
- * known by its maker for as long as this log is open; a log OPENED
- * compacted never read them, and knows its makers from the horizon on.
+ * known by its maker for as long as this log is open. A log OPENED
+ * compacted never read them: it knows them from its checkpoint, which keeps
+ * who made each record behind it (`Epoch.creators`, written by
+ * `store.checkpoint`), and a checkpoint without that (one written before it
+ * existed) leaves it knowing its makers from the horizon on.
  * The `Records` returned is the same object every time, and answers as of
  * the last call.
  */
@@ -127,9 +134,33 @@ export function recordsOf(log: RecordedLog): Records {
       }
     }
   } else index = undefined;
-  if (!index) INDEXES.set(log, (index = indexFrom(first)));
+  if (!index) INDEXES.set(log, (index = indexFrom(first, first > 0 ? checkpointOf(log, first)?.creators : undefined)));
   for (let seq = index.end; seq < end; seq++) readInto(index, ops[seq - first]!);
   return index.records;
+}
+
+/** The checkpoint a log compacted at `seq` begins from: the last epoch marked `horizon`, when it is there. */
+function checkpointOf(log: RecordedLog, seq: number): Epoch | undefined {
+  const checkpoint = [...(log.epochs?.() ?? [])].reverse().find((epoch) => epoch.horizon);
+  return checkpoint?.seq === seq ? checkpoint : undefined;
+}
+
+/**
+ * WHO MADE EACH RECORD BEFORE `seq`, as a checkpoint at `seq` keeps it
+ * (`Epoch.creators`): record id to the seat that first added it, in the
+ * order they were made — what the log's checkpoint already kept, then what
+ * the ops it holds before `seq` add.
+ */
+export function creatorsBefore(log: RecordedLog, seq: number): Record<string, string> {
+  recordsOf(log);
+  const index = INDEXES.get(log)!;
+  const after = new Set<string>();
+  for (let at = index.entries.length - 1; at >= 0 && index.entries[at]!.seq >= seq; at--) {
+    if (index.entries[at]!.creator) after.add(index.entries[at]!.id);
+  }
+  const creators: Record<string, string> = {};
+  for (const [id, by] of index.creators) if (!after.has(id)) creators[id] = by;
+  return creators;
 }
 
 /**

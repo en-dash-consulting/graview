@@ -12,12 +12,13 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 
 const SEATS = {
-  todo: { port: 5193, ready: "__todoReady", testId: "agent-tidy", who: "tidy", query: "&today=2026-09-01" },
+  todo: { port: portFor("todo"), ready: "__todoReady", testId: "agent-tidy", who: "tidy", query: "&today=2026-09-01" },
 };
 
 /**
@@ -165,14 +166,14 @@ try {
    * never meets a person or an invitation at all, because the module is
    * drawn only for those who administer it.
    */
-  const things = await startVite("todo", 5193);
+  const things = await startVite("todo", portFor("todo"));
   try {
     const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
     const errors = [];
     page.on("pageerror", (e) => errors.push(String(e).slice(0, 90)));
 
     const sitAs = async (as) => {
-      await page.goto(`http://localhost:5193/?theme=light&today=2026-09-01&fresh=1&as=${as}`, { waitUntil: "load" });
+      await page.goto(`${at("todo")}/?theme=light&today=2026-09-01&fresh=1&as=${as}`, { waitUntil: "load" });
       await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await page.waitForTimeout(900);
     };
@@ -292,7 +293,7 @@ const openProfile = async (page) => {
       memberKinds && !listed.some((word) => word.startsWith("People")),
       listed.join(", "),
     );
-    await page.goto("http://localhost:5193/pages?today=2026-09-01&as=user-nora", { waitUntil: "networkidle" });
+    await page.goto(`${at("todo")}/pages?today=2026-09-01&as=user-nora`, { waitUntil: "networkidle" });
     await page.waitForTimeout(700);
     const keeperListed = await page.evaluate(() =>
       [...document.querySelectorAll('nav[aria-label="Kinds"] a')].map((a) => a.textContent.trim()),
@@ -320,12 +321,12 @@ const openProfile = async (page) => {
    * nowhere to happen. Seedbed's seventh chapter is the framework's own app
    * WITH one, sat in by a gardener who may sow.
    */
-  const seedbed = await startVite("seedbed", 5194);
+  const seedbed = await startVite("seedbed", portFor("seedbed"));
   try {
     const seven = await browser.newPage({ viewport: { width: 1560, height: 940 } });
     const seatErrors = [];
     seven.on("pageerror", (e) => seatErrors.push(String(e).slice(0, 90)));
-    await seven.goto("http://localhost:5194/?chapter=7&theme=light#overview=1", { waitUntil: "load" });
+    await seven.goto(`${at("seedbed")}/?chapter=7&theme=light#overview=1`, { waitUntil: "load" });
     await seven.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
     await seven.waitForTimeout(1400);
     /*

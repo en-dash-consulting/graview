@@ -1,4 +1,8 @@
 import { UNSET, type Primitive } from "../graph/primitives.js";
+import type { AnyGraphNode, GraphEdge } from "../graph/types.js";
+import { actingAs } from "../permissions/policy.js";
+import type { Principal } from "../permissions/types.js";
+import { serveAlong, type FieldWriter, type Timeline } from "./served.js";
 import type { Author, Operation } from "./types.js";
 
 /**
@@ -49,9 +53,15 @@ export interface SeatLens {
   readonly sees: (id: string) => boolean;
   readonly shows: (id: string) => boolean;
   readonly served: <N extends { readonly id: string; readonly kind: string }>(node: N) => N | undefined;
+  /** A record as the seat is served it, given who wrote each field's value: the seat's own words are served as written (FR-55). */
+  readonly servedWith: <N extends { readonly id: string; readonly kind: string }>(node: N, writer: FieldWriter) => N | undefined;
+  /** The seat whose words these are — the person, for an agent acting for one. */
+  readonly actor?: string;
   readonly optional: (kind: string, field: string) => boolean;
   /** The kind of a record, by id, when it is known: for a patch, whose primitive does not say. */
   readonly kindOf: (id: string) => string | undefined;
+  /** The store's graph now and the log that led to it, so an op is judged where it stood (`serveAlong`). */
+  readonly timeline?: Timeline;
 }
 
 /** Whether any field of a record — not its id or kind — names what `sees` says no to. */
@@ -66,6 +76,7 @@ export function lensOf(seeing: SeatLens | ((id: string) => boolean)): SeatLens {
     sees,
     shows: sees,
     served: (node) => (sees(node.id) && !fieldsNameUnseen(node, sees) ? node : undefined),
+    servedWith: (node) => (sees(node.id) && !fieldsNameUnseen(node, sees) ? node : undefined),
     optional: () => false,
     kindOf: () => undefined,
   };
@@ -145,7 +156,7 @@ function servedPrimitive(primitive: Primitive, lens: SeatLens): Primitive | unde
  * served ids, so an undo the seat asks for is still blocked by it where it
  * should be.
  */
-export function withhold(op: Operation, seeing: SeatLens | ((id: string) => boolean)): Operation {
+export function withhold(op: Operation, seeing: SeatLens | ((id: string) => boolean), served?: readonly Primitive[]): Operation {
   const lens = lensOf(seeing);
   return {
     id: op.id,
@@ -154,13 +165,15 @@ export function withhold(op: Operation, seeing: SeatLens | ((id: string) => bool
     author: WITHHELD_AUTHOR,
     intent: WITHHELD_INTENT,
     mutation: null,
-    primitives: op.primitives.flatMap((primitive) => {
-      const served = servedPrimitive(primitive, lens);
-      return served ? [served] : [];
-    }),
+    primitives:
+      served ??
+      op.primitives.flatMap((primitive) => {
+        const one = servedPrimitive(primitive, lens);
+        return one ? [one] : [];
+      }),
     inverse: [],
-    reads: op.reads.filter(lens.shows),
-    writes: op.writes.filter(lens.shows),
+    reads: op.reads.filter((id) => lens.shows(id) && isRecord(lens, id)),
+    writes: op.writes.filter((id) => lens.shows(id) && isRecord(lens, id)),
     at: op.at,
     ...(op.undoes !== undefined ? { undoes: op.undoes } : {}),
     withheld: true,
@@ -176,5 +189,58 @@ export function withhold(op: Operation, seeing: SeatLens | ((id: string) => bool
  */
 export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: string) => boolean)): Operation[] {
   const lens = lensOf(seeing);
-  return ops.map((op) => (!op.withheld && !touchesUnseen(op, lens.shows) && !namesUnseen(op, lens.sees) ? op : withhold(op, lens)));
+  /*
+   * ALONG THE STORE'S HISTORY, when the lens knows it: each primitive judged
+   * by whether its record was served just before it and just after, so the
+   * ops a seat is served fold to the snapshot it is served (`serveAlong`).
+   */
+  if (lens.timeline) {
+    const judge = { served: (node: AnyGraphNode, writer: FieldWriter) => lens.servedWith(node, writer), edgeClean: (edge: GraphEdge) => !namesUnseen(edge, lens.sees) };
+    return serveAlong(ops, lens.timeline, judge).map(({ op, primitives, faithful }) => (!op.withheld && faithful ? whole(op, lens, primitives) : undefined) ?? withhold(op, lens, primitives));
+  }
+  return ops.map((op) => (!op.withheld && !touchesUnseen(op, lens.shows) ? whole(op, lens) : undefined) ?? withhold(op, lens));
+}
+
+/**
+ * AN OP SERVED WHOLE, when what it did is all the seat's to know: as it is
+ * when it names nothing hidden, and with its reads and writes trimmed of
+ * what is hidden when that is the only place it does — what it looked at
+ * is not the seat's to be told, what it did is. A string its primitives are
+ * served with, as the seat is served them, is the seat's to read anywhere
+ * in it — a field value the seat wrote, in a patch and in the inverse that
+ * would put it back — and so is its call, when the call was the seat's own
+ * (FR-55). Otherwise its call, sentence, author and inverse are not
+ * trimmed: an act's sentence is made from its call ("Compare with Freya
+ * Davies"), so one that names a hidden record anywhere withholds the op.
+ */
+function whole(op: Operation, lens: SeatLens, served?: readonly Primitive[]): Operation | undefined {
+  /*
+   * WHAT IT READ, AS RECORDS THE SEAT SEES (FR-55). An act that looked for a
+   * record that is not there read its absence, and one that looked for a
+   * hidden one read nothing the seat may be told: both are left out alike,
+   * or the reads of a seat's own act would say which guess was real.
+   */
+  const kept = (id: string) => lens.sees(id) && isRecord(lens, id);
+  const reads = op.reads.filter(kept);
+  const writes = op.writes.filter(kept);
+  const tidy = reads.length === op.reads.length && writes.length === op.writes.length ? op : { ...op, reads, writes };
+  if (!namesUnseen(op, lens.sees)) return tidy;
+  const said = new Set<string>();
+  const collect = (value: unknown): void => {
+    if (typeof value === "string") said.add(value);
+    else if (Array.isArray(value)) for (const inner of value) collect(inner);
+    else if (value !== null && typeof value === "object") for (const [key, inner] of Object.entries(value)) {
+      said.add(key);
+      collect(inner);
+    }
+  };
+  if (served) collect(served);
+  if (lens.actor !== undefined && op.mutation && actingAs(op.author as Principal).id === lens.actor) collect(op.mutation.args);
+  const told = (id: string) => lens.sees(id) || said.has(id);
+  return namesUnseen({ ...tidy, primitives: [] }, told) ? undefined : tidy;
+}
+
+/** Whether an id names a record the store knows — in the graph or its log — when the lens can say; a bare sight cannot, and keeps every id. */
+function isRecord(lens: SeatLens, id: string): boolean {
+  return lens.timeline === undefined || lens.kindOf(id) !== undefined;
 }

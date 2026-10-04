@@ -127,20 +127,35 @@ export function unwrap(schema: unknown): unknown {
   return inner === undefined ? schema : unwrap(inner);
 }
 
+/** What a number's declared format bounds it to, as zod's own `int()`, `int32()` … say. */
+const NUMBER_FORMAT_RANGES: Readonly<Record<string, readonly [number, number]>> = {
+  safeint: [Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
+  int32: [-2147483648, 2147483647],
+  uint32: [0, 4294967295],
+  float32: [-3.4028234663852886e38, 3.4028234663852886e38],
+  float64: [-Number.MAX_VALUE, Number.MAX_VALUE],
+};
+
+type CheckDef = { readonly check?: string; readonly value?: unknown; readonly inclusive?: boolean; readonly format?: string; readonly pattern?: unknown };
+const checksOf = (field: unknown): CheckDef[] =>
+  (((field as { _zod?: { def?: { checks?: readonly { _zod?: { def?: CheckDef } }[] } } })?._zod?.def?.checks ?? []).map((check) => check._zod?.def).filter((def): def is CheckDef => def !== undefined));
+
 /**
  * Zod 4 keeps the primitive type on `_def.type` and the refinements a UI
- * actually needs — bounds, patterns — in `_zod.bag`. Reading them here, in
- * one place, keeps every other layer free of zod internals.
+ * actually needs — bounds, patterns — as the checks on its definition. Read
+ * from the checks themselves, not from `_zod.bag`, which zod 4.6 stopped
+ * filling as it builds a schema: the bounds and the date pattern read there
+ * vanished with a minor version. Reading them here, in one place, keeps
+ * every other layer free of zod internals.
  */
 export function describeArg(schema: unknown): ArgShape {
   const field = unwrap(schema) as
     | {
         _def?: { type?: string; entries?: Record<string, string>; element?: unknown };
-        _zod?: { bag?: Record<string, unknown> };
       }
     | undefined;
   const type = field?._def?.type;
-  const bag = field?._zod?.bag ?? {};
+  const checks = checksOf(field);
 
   if (type === "enum") return { type: "choice", options: Object.keys(field?._def?.entries ?? {}) };
 
@@ -158,8 +173,15 @@ export function describeArg(schema: unknown): ArgShape {
   }
 
   if (type === "number") {
-    const min = typeof bag["minimum"] === "number" ? (bag["minimum"] as number) : undefined;
-    const max = typeof bag["maximum"] === "number" ? (bag["maximum"] as number) : undefined;
+    let min: number | undefined;
+    let max: number | undefined;
+    for (const check of checks) {
+      const range = check.check === "number_format" && check.format ? NUMBER_FORMAT_RANGES[check.format] : undefined;
+      const low = range ? range[0] : check.check === "greater_than" && check.inclusive && typeof check.value === "number" ? check.value : undefined;
+      const high = range ? range[1] : check.check === "less_than" && check.inclusive && typeof check.value === "number" ? check.value : undefined;
+      if (low !== undefined) min = min === undefined ? low : Math.max(min, low);
+      if (high !== undefined) max = max === undefined ? high : Math.min(max, high);
+    }
     return {
       type: "number",
       ...(min === undefined ? {} : { min }),
@@ -172,9 +194,8 @@ export function describeArg(schema: unknown): ArgShape {
     // the interface offers a date picker instead of a free text box, which
     // is the difference between an action anyone can run and one only its
     // author knows the format for.
-    const patterns = bag["patterns"];
-    const sources =
-      patterns instanceof Set ? [...patterns].map((pattern) => String((pattern as RegExp).source)) : [];
+    const own = (field as { _zod?: { def?: { pattern?: unknown } } })?._zod?.def?.pattern;
+    const sources = [own, ...checks.map((check) => check.pattern)].filter((pattern): pattern is RegExp => pattern instanceof RegExp).map((pattern) => pattern.source);
     if (sources.some((source) => source.includes("\\d{4}"))) {
       // A time of day in the pattern as well: `T\d{2}:\d{2}`, or a space before it.
       return sources.some((source) => source.includes("\\d{2}:\\d{2}")) ? { type: "date", time: true } : { type: "date" };

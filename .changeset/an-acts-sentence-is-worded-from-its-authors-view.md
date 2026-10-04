@@ -1,0 +1,8 @@
+---
+"@graview/core": patch
+"@graview/tools": patch
+---
+
+**Security.** An act's sentence no longer tells its author whether a hidden record exists (FR-55). `describe(args, graph)` read the whole store, so a seat that pointed a record it sees at a guessed id was told "Point the barn at Venue" when the venue existed and was hidden from it, and "Point the barn at category:x" when it did not. A sighted author's act is now worded from the store as that author is served it — in `apply` and in `preview(call, context, { author })`, which the agent tools' `preview_mutation` passes — so a record the author may not see is named only by what the author wrote, exactly as one that does not exist. A reader who may see more reads the author's sentence as the author would have, which is what the author meant. Three more differences by existence went with it: an answer's and a served op's `reads` leave out an id that names no record, as they leave out a hidden one; a write of the value a field already holds, naming what the seat may not see, is kept in a preview as it is when applied; and an agent tool's diff says that write as a change to the seat's view of the record. With no sights, nothing changes.
+
+Compatibility: ops and the wire — an op's sentence is worded from its author's view: for an author with sights, `intent` names a record the author may not see by the argument it gave rather than by the record's label. `reads` on what a seat with sights is served name only records it sees. `Store.preview` takes an optional third argument, `{ author }`. Stored formats, derived tools and check codes are unchanged.

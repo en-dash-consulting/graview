@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import { moved } from "../../scripts/lib/ports.mjs";
 import { fileURLToPath } from "node:url";
 
 const pkg = (name: string) =>
@@ -29,6 +30,6 @@ export default defineConfig({
   // Top-level await in main.tsx (the store opens before the first render);
   // the page goes to build/ so tsc's dist/ (the declaration, for graview check) stays.
   build: { target: "es2022", outDir: "build" },
-  preview: { port: 5198, strictPort: true },
-  server: { port: 5197, strictPort: true },
+  preview: { port: moved(5198), strictPort: true },
+  server: { port: moved(5197), strictPort: true },
 });

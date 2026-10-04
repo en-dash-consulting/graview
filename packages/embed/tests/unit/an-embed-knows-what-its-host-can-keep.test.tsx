@@ -39,6 +39,13 @@ async function mounting(options: Omit<EmbedOptions<typeof schema>, "app">) {
   return { handle, host };
 }
 
+/** The studio is imported when it is turned on, so it arrives a moment after the embed does. */
+async function untilTheStudioArrives(host: HTMLElement) {
+  for (let tries = 0; tries < 100 && !host.querySelector("[data-testid=studio-place]"); tries++) {
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 10)));
+  }
+}
+
 describe("@graview/embed/pages", () => {
   it("mounts the routed face alone: the strip and the pages, no scene and no studio", async () => {
     const host = document.createElement("div");
@@ -63,8 +70,11 @@ describe("@graview/embed/pages", () => {
 describe("an embed's studio", () => {
   it("is offered by default, and not at all with studio: false", async () => {
     const offered = await mounting({});
+    await untilTheStudioArrives(offered.host);
     expect(offered.host.querySelector("[data-testid=studio-place]")).not.toBeNull();
     const hidden = await mounting({ studio: false });
+    // As long as the offered one took to arrive, and then some: it is not late, it is not coming.
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 50)));
     expect(hidden.host.querySelector("[data-testid=embed-faces]"), "the strip is still there").not.toBeNull();
     expect(hidden.host.querySelector("[data-testid=studio-place]")).toBeNull();
   });
@@ -74,6 +84,7 @@ describe("an embed's studio", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => (fetches.push(String(input)), new Response("{}", { status: 404 }))));
     const handed: { app: GraviewApp; migration: unknown }[] = [];
     const { host } = await mounting({ studio: { onApply: (applied) => void handed.push(applied) } });
+    await untilTheStudioArrives(host);
     await act(async () => host.querySelector<HTMLButtonElement>("[data-testid=studio-place]")!.click());
     expect(host.querySelector("[data-testid=studio]"), "the studio opened").not.toBeNull();
     await act(async () => host.querySelector<HTMLButtonElement>("[data-testid=studio-apply]")!.click());

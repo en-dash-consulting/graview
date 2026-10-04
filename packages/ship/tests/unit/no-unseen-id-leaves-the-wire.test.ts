@@ -1,7 +1,7 @@
 import { createMemoryAdapter, createSchema, defineApp, defineNode, OperationLog, Store, type AnySchema, type GraphEdge, type GraviewApp, type Operation, type Presence, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { leaked, MUTATIONS, policyOf, SCHEMA, storeOf, unseenIds, world, type World } from "../../../core/tests/support/unseen-worlds.js";
+import { canonical, leaked, MUTATIONS, policyOf, rng, SCHEMA, schemaOf, storeAt, storeOf, unsaidUnseen, world, type World } from "../../../core/tests/support/unseen-worlds.js";
 import { createStoreHandler, liveProtocol, seatHeaders, serveStore, type LivePeer, type LiveServerMessage } from "../../src/index.js";
 
 /**
@@ -26,6 +26,9 @@ function socket(state: ReturnType<ReturnType<typeof liveProtocol>["open"]>, hear
 }
 
 /** Everything the live wire sends this world's viewer, as text. */
+/** The log the last sweep left, for what the seat said in it: a seat is served its own words (FR-55). */
+let history: readonly Operation[] = [];
+
 async function overTheSocket(w: World): Promise<string[]> {
   const store = storeOf(w);
   const live = liveProtocol({ store, version: 1 });
@@ -62,6 +65,7 @@ async function overTheSocket(w: World): Promise<string[]> {
   }
   await live.receive(fresh, JSON.stringify({ t: "undo", cid: `c${++cid}`, batches: [w.pick(store.log.all()).batch] }));
   live.tell([...who, other("three")], [fresh, behind]);
+  history = store.log.all();
   return heard;
 }
 
@@ -112,6 +116,7 @@ async function overHttp(w: World): Promise<string[]> {
   await keep(await post("/graview/ops", again));
   await keep(await post("/graview/here", { presence: { participant: "human:u1:tab", hue: 1, stop: `/a/${w.anyId()}`, over: w.anyId(), at: "" }, seq: -1 }));
   await keep(await at("/graview/who"));
+  history = store.log.all();
   return texts;
 }
 
@@ -187,8 +192,9 @@ describe("no id a seat may not see leaves the wire", () => {
     let messages = 0;
     for (let seed = 1; seed <= WORLDS; seed++) {
       const w = world(seed);
-      const unseen = unseenIds(w);
-      for (const text of await overTheSocket(w)) {
+      const heard = await overTheSocket(w);
+      const unseen = unsaidUnseen(w, history);
+      for (const text of heard) {
         messages++;
         // As a client receives it: parsed from the text it was sent in.
         const message = JSON.parse(text) as LiveServerMessage;
@@ -203,8 +209,9 @@ describe("no id a seat may not see leaves the wire", () => {
   it(`never answers an unseen id over HTTP — ${WORLDS.toLocaleString("en")} random worlds`, async () => {
     for (let seed = 1; seed <= WORLDS; seed++) {
       const w = world(seed);
-      const unseen = unseenIds(w);
-      for (const text of await overHttp(w)) {
+      const texts = await overHttp(w);
+      const unseen = unsaidUnseen(w, history);
+      for (const text of texts) {
         const id = leaked(JSON.parse(text), unseen);
         expect(id, `seed ${seed}: names unseen ${id}: ${text.slice(0, 400)}`).toBeUndefined();
       }
@@ -236,4 +243,117 @@ describe("no id a seat may not see leaves the wire", () => {
       await served.close();
     }
   });
+
+  /*
+   * A CLIENT KEEPS UP (FR-55). A record withheld for a required field that
+   * names a hidden one comes and goes as the field moves; a client that
+   * took a welcome and lands every `ops` it is sent — and one that drops
+   * and says hello again from its cursor — holds exactly what the seat is
+   * served at the end, through the store a client lands ops in, which
+   * judges every write. Nothing is ever asked again.
+   */
+  for (const required of [false, true]) {
+    it(`keeps a client's copy what the seat is served, from a welcome and from any cursor — ${WORLDS.toLocaleString("en")} random worlds, ${required ? "every" : "one kind's"} ref required`, async () => {
+      let landed = 0;
+      for (let seed = 1; seed <= WORLDS; seed++) {
+        const w = world(seed, { required });
+        const r = rng(seed * 104729);
+        const schema = schemaOf(w);
+        const start = Math.floor(r() * (w.ops.length + 1));
+        const drop = start + Math.floor(r() * (w.ops.length - start + 1));
+        const server = storeAt(w, start);
+        const live = liveProtocol({ store: server });
+        type Client = { peer: LivePeer; heard: string[]; store?: Store<AnySchema> };
+        const join = async (seq?: number): Promise<Client> => {
+          const heard: string[] = [];
+          const peer = socket(live.open(w.viewer, "web"), heard);
+          await live.receive(peer, JSON.stringify({ t: "hello", protocol: 1, ...(seq !== undefined ? { seq } : {}) }));
+          return { peer, heard };
+        };
+        /** Everything a client has been sent and not yet landed, landed as a client lands it. */
+        const land = (client: Client) => {
+          for (const text of client.heard.splice(0)) {
+            const message = JSON.parse(text) as LiveServerMessage;
+            try {
+              if (message.t === "welcome" && message.state) {
+                client.store = new Store<AnySchema>({ schema, snapshot: message.state.snapshot as never, log: message.state.log as Operation[] });
+              } else if (message.t === "welcome" || message.t === "ops") {
+                client.store!.receive(message.ops as Operation[]);
+                landed += message.ops.length;
+              }
+            } catch (error) {
+              throw new Error(`seed ${seed}, from ${start}, ${message.t}: ${(error as Error).message}`);
+            }
+          }
+        };
+        const a = await join();
+        let b = await join();
+        land(a);
+        land(b);
+        for (let at = start; at < w.ops.length; at++) {
+          const ops = server.receive([w.ops[at]!]);
+          live.publish(ops, at < drop ? [a.peer, b.peer] : [a.peer]);
+          land(a);
+          land(b);
+        }
+        // B dropped at `drop` and says hello again from where it was.
+        const had = b.store;
+        b = { ...(await join(b.peer.cursor)), store: had! };
+        land(b);
+        const now = canonical(server.seenBy(w.viewer).snapshot());
+        expect(canonical(a.store!.graph.snapshot()), `seed ${seed}, from ${start}: a client that stayed`).toBe(now);
+        expect(canonical(b.store!.graph.snapshot()), `seed ${seed}, from ${start}, dropped at ${drop}: a client that came back`).toBe(now);
+      }
+      expect(landed).toBeGreaterThan(WORLDS * 10);
+    }, 300_000);
+  }
+
+  /*
+   * A REFUSAL IS NO ORACLE (FR-55). Ids are minted from labels, so a seat
+   * can guess one; a refusal that said "a record you may not see" for a
+   * hidden one and "no record" for one that does not exist told it which
+   * guesses were real. A call naming a hidden record is answered exactly as
+   * one naming a record that was never there — same reason, same sentence
+   * but for the id it sent — on the socket and over HTTP.
+   */
+  it(`answers a call naming a hidden record exactly as one naming nothing — ${WORLDS.toLocaleString("en")} random worlds`, async () => {
+    let probed = 0;
+    for (let seed = 1; seed <= WORLDS; seed++) {
+      const w = world(seed);
+      const there = new Set(w.nodes.map((node) => node.id));
+      const hidden = unsaidUnseen(w).filter((id) => there.has(id));
+      if (hidden.length === 0) continue;
+      const seen = w.nodes.filter((node) => !hidden.includes(node.id)).map((node) => node.id);
+      const named = w.pick(hidden);
+      const nothing = `${named.split(":")[0]}:never-${seed}`;
+      /** Everything the seat is answered, for calls that name `id`, with `id` itself written out of it. */
+      const answers = async (id: string): Promise<string[]> => {
+        const store = storeOf(w);
+        const said: string[] = [];
+        const live = liveProtocol({ store });
+        const heard: string[] = [];
+        const peer = socket(live.open(w.viewer, "web"), heard);
+        await live.receive(peer, JSON.stringify({ t: "hello", protocol: 1, seq: store.log.length - 1 }));
+        heard.length = 0;
+        const calls = [
+          [{ name: "point", args: { id, ref: "x" } }],
+          [{ name: "retitle", args: { id, title: "Guess" } }],
+          ...(seen.length > 0 ? [[{ name: "retitle", args: { id: seen[0]!, title: "Mine" } }, { name: "point", args: { id, ref: seen[0]! } }]] : []),
+        ];
+        for (const [at, batch] of calls.entries()) {
+          await live.receive(peer, JSON.stringify({ t: "call", cid: `c${at}`, calls: batch, base: [{ node: id, field: "title", rev: -1 }] }));
+        }
+        said.push(...heard);
+        const handler = await createStoreHandler({ app: appOf(w), store: storeOf(w), seatOf: () => w.viewer });
+        for (const batch of calls) {
+          const response = await handler.handle(new Request("https://store.example/graview/ops", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ calls: batch, base: [{ node: id, field: "title", rev: -1 }] }) }));
+          said.push(`${response.status} ${await response.text()}`);
+        }
+        return said.map((text) => text.split(id).join("<id>").replace(/"seq":\d+/g, '"seq":N').replace(/"version":\d+/g, ""));
+      };
+      expect(await answers(named), `seed ${seed}: ${named} answered unlike ${nothing}`).toEqual(await answers(nothing));
+      probed++;
+    }
+    expect(probed).toBeGreaterThan(WORLDS / 3);
+  }, 300_000);
 });
