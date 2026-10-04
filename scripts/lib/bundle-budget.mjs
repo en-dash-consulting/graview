@@ -33,8 +33,14 @@ export const BUDGETS = [
   {
     name: "every face",
     entry: `import { mount } from "@graview/embed"; globalThis.mount = mount;`,
-    minified: 1_100_000,
-    gzipped: 315_000,
+    /*
+     * Raised from 1_100_000 / 315_000 when the studio learned to hand a host
+     * back a document (FR-54): its changes are `editDocument`'s own ops, so
+     * the studio every face carries now carries the editor and the document
+     * schema it checks against — about 43 kB minified, 13 kB gzipped.
+     */
+    minified: 1_150_000,
+    gzipped: 330_000,
   },
 ];
 

@@ -70,7 +70,15 @@ export function zodFor(type: FieldType, required: boolean, options?: readonly st
   const base: z.ZodType =
     type === "number"
       ? z.number()
-      : type === "boolean"
+      : type === "integer"
+        ? z.number().int()
+        : type === "url"
+          ? z.url()
+          : type === "email"
+            ? z.email()
+            : type === "datetime"
+              ? z.iso.datetime()
+              : type === "boolean"
         ? z.boolean()
         : type === "enum" && options && options.length > 0
           ? z.enum(options as [string, ...string[]])
@@ -86,7 +94,10 @@ export function zodFor(type: FieldType, required: boolean, options?: readonly st
 export function defaultFor(type: FieldType, options?: readonly string[]): unknown {
   switch (type) {
     case "number":
+    case "integer":
       return 0;
+    case "datetime":
+      return new Date().toISOString();
     case "boolean":
       return false;
     case "enum":
