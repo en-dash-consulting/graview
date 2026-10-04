@@ -103,10 +103,10 @@ describe("the studio and editDocument make the same document", () => {
     { name: "add-field (an integer)", calls: [{ name: "add-field", args: { kind: "declared:vendor", label: "guests", type: "integer", required: false } }], edits: [{ op: "add-field", kind: "vendor", field: "guests", type: "integer" }] },
     { name: "rename-field", calls: [{ name: "rename-field", args: { id: "field:vendor.quote", to: "price" } }], edits: [{ op: "rename-field", kind: "vendor", field: "quote", to: "price" }] },
     { name: "remove-field", calls: [{ name: "remove-field", args: { id: "field:vendor.notes" } }], edits: [{ op: "remove-field", kind: "vendor", field: "notes" }] },
-    { name: "retype-field", calls: [{ name: "edit-field", args: { id: "field:vendor.notes", type: "string" } }], edits: [{ op: "retype-field", kind: "vendor", field: "notes", type: "string" }] },
-    { name: "set-required", calls: [{ name: "edit-field", args: { id: "field:vendor.due", required: true } }], edits: [{ op: "set-required", kind: "vendor", field: "due", required: true }] },
-    { name: "set-options", calls: [{ name: "edit-field", args: { id: "field:vendor.status", options: ["researching", "contacted", "booked", "declined", "waitlisted"] } }], edits: [{ op: "set-options", kind: "vendor", field: "status", add: ["waitlisted"] }] },
-    { name: "set-label", calls: [{ name: "edit-field", args: { id: "field:vendor.due", description: "Answer by" } }], edits: [{ op: "set-label", kind: "vendor", field: "due", label: "Answer by" }] },
+    { name: "retype-field", calls: [{ name: "retype-field", args: { id: "field:vendor.notes", type: "string" } }], edits: [{ op: "retype-field", kind: "vendor", field: "notes", type: "string" }] },
+    { name: "set-required", calls: [{ name: "set-required", args: { id: "field:vendor.due", required: true } }], edits: [{ op: "set-required", kind: "vendor", field: "due", required: true }] },
+    { name: "set-options", calls: [{ name: "set-options", args: { id: "field:vendor.status", options: ["researching", "contacted", "booked", "declined", "waitlisted"] } }], edits: [{ op: "set-options", kind: "vendor", field: "status", add: ["waitlisted"] }] },
+    { name: "set-label", calls: [{ name: "describe-field", args: { id: "field:vendor.due", description: "Answer by" } }], edits: [{ op: "set-label", kind: "vendor", field: "due", label: "Answer by" }] },
     { name: "add-relation", calls: [{ name: "add-edge", args: { kind: "declared:vendor", label: "backup", to: "declared:vendor", cardinality: "one", description: "who stands in" } }], edits: [{ op: "add-relation", kind: "vendor", relation: "backup", to: ["vendor"], cardinality: "one", description: "who stands in" }] },
     { name: "rename-relation", calls: [{ name: "edit-edge", args: { id: "edge:vendor.fills", label: "fillsNeed" } }], edits: [{ op: "rename-relation", kind: "vendor", relation: "fills", to: "fillsNeed" }] },
     { name: "remove-relation", calls: [{ name: "remove-edge", args: { id: "edge:vendor.fills" } }], edits: [{ op: "remove-relation", kind: "vendor", relation: "fills" }] },
@@ -175,7 +175,7 @@ describe("what the studio does not edit, it names", () => {
   });
 
   it("retyping a field that carries a format, a unit or a list's element is refused in words, not carried half", () => {
-    const studio = throughTheStudio(typed, [{ name: "edit-field", args: { id: "field:vendor.quote", type: "string" } }]);
+    const studio = throughTheStudio(typed, [{ name: "retype-field", args: { id: "field:vendor.quote", type: "string" } }]);
     const outcome = studio.document();
     expect(outcome?.ok).toBe(false);
     if (outcome?.ok !== false) return;
