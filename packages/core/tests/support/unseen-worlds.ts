@@ -192,8 +192,12 @@ export function mentions(payload: unknown, id: string): boolean {
   return JSON.stringify(payload).includes(JSON.stringify(id));
 }
 
-/** The first unseen id a payload names, or undefined. */
+/**
+ * The first unseen id a payload names, or undefined: as a whole string, or
+ * as either end of a link named `kind:from->to`, the way `health()` and a
+ * finding name one.
+ */
 export function leaked(payload: unknown, unseen: readonly string[]): string | undefined {
   const text = typeof payload === "string" ? payload : JSON.stringify(payload);
-  return unseen.find((id) => text.includes(JSON.stringify(id)));
+  return unseen.find((id) => text.includes(JSON.stringify(id)) || text.includes(`:${id}->`) || text.includes(`->${id}"`));
 }

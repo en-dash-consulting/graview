@@ -1,4 +1,4 @@
-import { createMemoryAdapter, createSchema, defineApp, defineNode, OperationLog, Store, type AnySchema, type GraviewApp, type Operation, type Presence, type Principal } from "@graview/core";
+import { createMemoryAdapter, createSchema, defineApp, defineNode, OperationLog, Store, type AnySchema, type GraphEdge, type GraviewApp, type Operation, type Presence, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { leaked, MUTATIONS, policyOf, SCHEMA, storeOf, unseenIds, world, type World } from "../../../core/tests/support/unseen-worlds.js";
@@ -66,8 +66,31 @@ async function overTheSocket(w: World): Promise<string[]> {
 }
 
 /** Everything the HTTP routes answer this world's viewer, as text. */
+/**
+ * A STORE WHOSE GRAPH HOLDS LINKS THAT DANGLE. A graph refuses one as it
+ * loads, so what `health()` looks for is a store gone wrong underneath —
+ * a host's own storage, a bug — and this is that store: the same store,
+ * with `allEdges` also answering the links given. Nothing else reads them.
+ */
+function withDangling(store: Store<AnySchema>, dangling: readonly GraphEdge[]): Store<AnySchema> {
+  const bind = (target: object, prop: PropertyKey) => {
+    const value = Reflect.get(target, prop, target);
+    return typeof value === "function" ? (value as (...args: unknown[]) => unknown).bind(target) : value;
+  };
+  const graph = new Proxy(store.graph, { get: (target, prop) => (prop === "allEdges" ? () => [...target.allEdges(), ...dangling] : bind(target, prop)) });
+  return new Proxy(store, { get: (target, prop) => (prop === "graph" ? graph : bind(target, prop)) });
+}
+
+/** The world's store with links that dangle from a live record to every record since removed — hidden ones among them — and to an id that never named one. */
+function danglingStoreOf(w: World): Store<AnySchema> {
+  const live = new Set(w.nodes.map((node) => node.id));
+  const from = w.nodes[0]!.id;
+  const gone = [...w.kindOf.keys()].filter((id) => !live.has(id));
+  return withDangling(storeOf(w), [...[...gone, "ghost:never"].map((to) => ({ kind: "rel", from, to })), ...gone.map((id) => ({ kind: "rel", from: id, to: from }))]);
+}
+
 async function overHttp(w: World): Promise<string[]> {
-  const store = storeOf(w);
+  const store = danglingStoreOf(w);
   const handler = await createStoreHandler({ app: appOf(w), store, seatOf: () => w.viewer });
   const at = (path: string, init: RequestInit = {}) => handler.handle(new Request(`https://store.example${path}`, { ...init, headers: { "content-type": "application/json" } }));
   const post = (path: string, body: unknown) => at(path, { method: "POST", body: JSON.stringify(body) });
@@ -77,6 +100,7 @@ async function overHttp(w: World): Promise<string[]> {
   await keep(await at("/graview/since?seq=-1"));
   await keep(await at(`/graview/since?seq=${Math.floor(store.log.length / 2)}`));
   await keep(await at("/graview/export"));
+  await keep(await at("/graview/health"));
   const ids = [...w.kindOf.keys()];
   for (let round = 0; round < 3; round++) {
     const id = w.pick(ids);
@@ -128,6 +152,35 @@ describe("no id a seat may not see leaves the wire", () => {
     for (const path of ["/graview/state", "/graview/since?seq=-1", "/graview/export"]) {
       expect(await (await handler.handle(new Request(`https://store.example${path}`))).text(), path).not.toContain("secret:s1");
     }
+  });
+
+  it("says a link dangles from a hidden record in /graview/health without naming it, to a seat or a stranger", async () => {
+    const pub = defineNode("pub", { fields: z.object({ title: z.string() }), edges: { rel: { to: ["pub", "secret"], cardinality: "many" } } });
+    const secret = defineNode("secret", { fields: z.object({ title: z.string() }) });
+    const schema = createSchema([pub, secret]) as unknown as AnySchema;
+    const policy = { grants: [], sees: [{ roles: ["viewer"], kinds: ["pub"] }, { roles: ["keeper"], kinds: ["pub", "secret"] }] };
+    const gone = { id: "secret:gone", kind: "secret", title: "Gone" };
+    const op = (seq: number, primitive: Operation["primitives"][number]): Operation => ({
+      id: `op${seq}`, seq, batch: `b${seq}`, author: { kind: "human", id: "u1" }, intent: "", mutation: null, primitives: [primitive], inverse: [], reads: [], writes: [], at: "2026-10-02T00:00:00.000Z",
+    });
+    const store = withDangling(
+      new Store<AnySchema>({
+        schema,
+        policy,
+        snapshot: { nodes: [{ id: "pub:p1", kind: "pub", title: "P" }], edges: [] },
+        log: [op(0, { op: "add-node", node: gone }), op(1, { op: "remove-node", node: gone })],
+      }),
+      [{ kind: "rel", from: "pub:p1", to: "secret:gone" }],
+    );
+    const app = defineApp({ name: "dangling", schema, policy, version: 1 });
+    const ask = async (handler: { handle(request: Request): Promise<Response> }) =>
+      (await (await handler.handle(new Request("https://store.example/graview/health"))).json()) as { ok: boolean; edges: number; danglingEdges: string[] };
+    const viewer = await ask(await createStoreHandler({ app, store, seatOf: () => ({ kind: "human", id: "u2", roles: ["viewer"] }) }));
+    const stranger = await ask(await createStoreHandler({ app, store }));
+    const keeper = await ask(await createStoreHandler({ app, store, seatOf: () => ({ kind: "human", id: "u3", roles: ["keeper"] }) }));
+    // The store is not well, whoever asks; only a seat that may see the hidden record is told which link.
+    for (const said of [viewer, stranger]) expect(said).toMatchObject({ ok: false, edges: 1, danglingEdges: [] });
+    expect(keeper).toMatchObject({ ok: false, edges: 1, danglingEdges: ["rel:pub:p1->secret:gone"] });
   });
 
   it(`never sends an unseen id down the live wire — ${WORLDS.toLocaleString("en")} random worlds`, async () => {

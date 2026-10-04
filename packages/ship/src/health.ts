@@ -1,4 +1,4 @@
-import type { AnySchema, Store } from "@graview/core";
+import { hidesFrom, seatLens, type AnySchema, type Principal, type Store } from "@graview/core";
 
 /**
  * Whether a deployment is WELL, asked of the store itself. Not liveness —
@@ -24,18 +24,28 @@ export interface HealthReport {
   readonly at: string;
 }
 
+/**
+ * THE COUNTS ARE THE STORE'S; THE IDS ARE THE SEAT'S (FR-55). `ok` and every
+ * count judge the whole store, because a service polling a tenant asks
+ * whether the store is well, and a seat-relative count would say a broken
+ * store is fine — a count names no record. Given `seat`, `danglingEdges`
+ * names only the links whose both ends are ids that seat may be told
+ * (`seatLens(...).shows`: a record it is served, or an id that names no
+ * record at all), so a link dangling from a hidden record is counted in
+ * `ok` and never named.
+ */
 export function health<S extends AnySchema>(
   store: Store<S>,
-  options: { readonly now?: () => string } = {},
+  options: { readonly now?: () => string; readonly seat?: Principal } = {},
 ): HealthReport {
   const ids = new Set([...store.graph.allNodes()].map((node) => node.id));
-  const dangling = [...store.graph.allEdges()]
-    .filter((edge) => !ids.has(edge.from) || !ids.has(edge.to))
-    .map((edge) => `${edge.kind}:${edge.from}->${edge.to}`);
+  const told = options.seat && hidesFrom(store, options.seat) ? seatLens(store, options.seat).shows : () => true;
+  const broken = [...store.graph.allEdges()].filter((edge) => !ids.has(edge.from) || !ids.has(edge.to));
+  const dangling = broken.filter((edge) => told(edge.from) && told(edge.to)).map((edge) => `${edge.kind}:${edge.from}->${edge.to}`);
   const all = store.violations();
   const violations = all.length;
   return {
-    ok: dangling.length === 0,
+    ok: broken.length === 0,
     nodes: ids.size,
     edges: [...store.graph.allEdges()].length,
     violations,
