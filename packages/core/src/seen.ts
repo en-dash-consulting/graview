@@ -345,6 +345,21 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
     const kept = new Set(nodes.map((node) => node.id));
     return { nodes, edges: snapshot.edges.filter((edge) => kept.has(edge.from) && kept.has(edge.to) && !namesUnseen(edge, lens.sees)) };
   };
+  /**
+   * AN EPOCH AS THIS SEAT IS SERVED IT: its base as the seat was served it
+   * then, and who made each record (`creators`, which a checkpoint carries
+   * so a seat's own records stay its own past a compaction) only for the
+   * records in that base — a record the seat is not served is not named in
+   * the map either, by its id or by its maker's (FR-55). The store keeps
+   * the whole map for its own judgement.
+   */
+  const servedEpoch = <E extends { readonly seq: number; readonly base: GraphSnapshot; readonly creators?: Readonly<Record<string, string>> }>(epoch: E): E => {
+    const base = servedGraph(epoch.base, epoch.seq);
+    if (!epoch.creators) return { ...epoch, base };
+    const kept = new Set(base.nodes.map((node) => node.id));
+    const creators = Object.fromEntries(Object.entries(epoch.creators).filter(([id, maker]) => kept.has(id) && !namesUnseen(maker, lens.sees)));
+    return { ...epoch, base, creators };
+  };
   /*
    * THE LOG, REDACTED RATHER THAN GAPPED (FR-16): every op in its place,
    * and one that touched what this seat may not see withheld — so the log
@@ -405,11 +420,11 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
           return () => [...ops()];
         // Each epoch's base as this seat is served it, so its log folds from there to what it is served (FR-55).
         case "epochs":
-          return () => target.epochs().map((epoch) => ({ ...epoch, base: servedGraph(epoch.base, epoch.seq) }));
+          return () => target.epochs().map((epoch) => servedEpoch(epoch));
         case "lastEpoch":
           return () => {
             const epoch = target.lastEpoch();
-            return epoch && { ...epoch, base: servedGraph(epoch.base, epoch.seq) };
+            return epoch && servedEpoch(epoch);
           };
         case "live":
           return () => {
@@ -460,7 +475,7 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
         case "checkpoint":
           return (...args: Parameters<Store<S>["checkpoint"]>) => {
             const epoch = target.checkpoint(...args);
-            return epoch && { ...epoch, base: servedGraph(epoch.base, epoch.seq) };
+            return epoch && servedEpoch(epoch);
           };
         default:
           return bound(target, prop);

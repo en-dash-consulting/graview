@@ -145,6 +145,35 @@ describe("a seat is never served an id it may not see", () => {
    * reaches what it is served now, as a client catching up from a cursor
    * does. The fold judges every write as a client does.
    */
+  /*
+   * A CHECKPOINT CARRIES WHO MADE EACH RECORD, so a seat's own records stay
+   * its own past a compaction — and the seat's view serves that map only
+   * for the records it is served: the whole map named every record, hidden
+   * ones and their makers among them.
+   */
+  it("keeps a seat's own records its own past a compaction, and serves the checkpoint's makers only for what it is served", () => {
+    const thing = defineNode("thing", { fields: z.object({ title: z.string() }) });
+    const secret = defineNode("secret", { fields: z.object({ title: z.string() }) });
+    const schema = createSchema([thing, secret]) as unknown as AnySchema;
+    const store = new Store<AnySchema>({ schema, policy: { grants: [], sees: [{ roles: ["maker"], kinds: ["thing"], own: true }] } });
+    const viewer: Principal = { kind: "human", id: "u2", roles: ["maker"] };
+    store.applyPrimitives([{ op: "add-node", node: { id: "thing:mine", kind: "thing", title: "Mine" } }], { author: viewer });
+    store.applyPrimitives([{ op: "add-node", node: { id: "thing:theirs", kind: "thing", title: "Theirs" } }, { op: "add-node", node: { id: "secret:s1", kind: "secret", title: "S" } }], { author: { kind: "human", id: "u1" } });
+    store.applyPrimitives([{ op: "add-node", node: { id: "thing:later", kind: "thing", title: "Later" } }], { author: viewer });
+    const checkpoint = store.checkpoint({ seq: 2 })!;
+    expect(Object.keys(checkpoint.creators ?? {}).sort()).toEqual(["secret:s1", "thing:mine", "thing:theirs"]);
+    store.compact(checkpoint);
+    const view = store.seenBy(viewer);
+    // Its own, made behind the horizon, is still its own.
+    expect(view.snapshot().nodes.map((node) => node.id)).toEqual(["thing:mine", "thing:later"]);
+    // The served checkpoint names who made only what the seat is served.
+    expect(view.log.epochs().at(-1)).toMatchObject({ seq: 2, creators: { "thing:mine": "u2" } });
+    expect(Object.keys(view.log.epochs().at(-1)!.creators ?? {})).toEqual(["thing:mine"]);
+    const served = JSON.stringify({ epochs: view.log.epochs(), last: view.log.lastEpoch(), log: view.log.all() });
+    for (const hidden of ["secret:s1", "thing:theirs"]) expect(served).not.toContain(hidden);
+    expect(canonical(fold(schema, view.log.all(), view.log.lastEpoch()!.base))).toBe(canonical(view.snapshot()));
+  });
+
   it("serves a record that comes and goes as its required field moves, in ops a client can fold", () => {
     const pub = defineNode("pub", { fields: z.object({ title: z.string(), ref: z.string() }), edges: { rel: { to: ["pub"], cardinality: "many" } } });
     const secret = defineNode("secret", { fields: z.object({ title: z.string() }) });
