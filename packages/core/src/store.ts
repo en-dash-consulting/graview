@@ -23,6 +23,7 @@ import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { actingAs, isSystem, permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { nounOf } from "./schema/define-node.js";
+import { creatorsBefore } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
@@ -1692,6 +1693,9 @@ export class Store<S extends AnySchema> {
    * 1000). It is moved back to the start of the gesture it would split, so
    * a batch is never half behind it.
    *
+   * The checkpoint keeps who made each record behind it (`creators`), so a
+   * store opened on it knows a record's maker without the archived ops.
+   *
    * Nothing moves until `compact` is handed the checkpoint, so a host can
    * archive what is behind it first. A store whose graph does not verify
    * against its log is not compacted: the checkpoint would vouch for a
@@ -1715,7 +1719,10 @@ export class Store<S extends AnySchema> {
     if (seq <= this.log.horizon) return undefined;
     const verified = this.verify();
     if (!verified.ok) throw new GraphError(`Cannot compact a store that does not verify: ${verified.reason}`);
-    return this.log.checkpointAt(this.schema, seq, { validate: this.validate });
+    const checkpoint = this.log.checkpointAt(this.schema, seq, { validate: this.validate });
+    // Who made each record behind it, so a store opened on it still knows (an `own` sight reads the log for it).
+    const creators = creatorsBefore(this.log, seq);
+    return Object.keys(creators).length > 0 ? { ...checkpoint, creators } : checkpoint;
   }
 
   /**

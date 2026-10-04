@@ -17,6 +17,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -83,12 +84,12 @@ const hygiene = (page) =>
   }));
 
 try {
-  vite = await startVite("todo", 5193);
+  vite = await startVite("todo", portFor("todo"));
   browser = await launchEngine(ENGINE, { headless: true });
 
   /* ---------------------------------------------------- the phone, first */
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  await phone.goto("http://localhost:5193/pages?today=2026-09-01", { waitUntil: "networkidle" });
+  await phone.goto(`${at("todo")}/pages?today=2026-09-01`, { waitUntil: "networkidle" });
   await phone.waitForTimeout(600);
   report.checks.phoneHome = await hygiene(phone);
   report.checks.homeIndexesKinds = await phone.evaluate(() =>
@@ -133,7 +134,7 @@ try {
    * checks are one number. Set once, on the scene, and carried to the
    * routed face by the browser rather than by this script.
    */
-  await phone.goto("http://localhost:5193/?today=2026-09-01&fresh=1", { waitUntil: "load" });
+  await phone.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
   await phone.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
   await phone.waitForTimeout(600);
   await phone.click('[data-testid="profile-button"]');
@@ -149,7 +150,7 @@ try {
   }));
 
   for (const path of ["/pages", "/pages/tasks", "/pages/tasks/t-deposit", "/pages/problems"]) {
-    await phone.goto(`http://localhost:5193${path}?today=2026-09-01`, { waitUntil: "networkidle" });
+    await phone.goto(`${at("todo")}${path}?today=2026-09-01`, { waitUntil: "networkidle" });
     await phone.waitForTimeout(400);
     const reflow = await phone.evaluate(() => ({
       root: getComputedStyle(document.documentElement).fontSize,
@@ -201,7 +202,7 @@ try {
    * policy, the same op log.
    */
   const desk2 = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await desk2.goto("http://localhost:5193/pages/tasks?today=2026-09-01&fresh=1", { waitUntil: "networkidle" });
+  await desk2.goto(`${at("todo")}/pages/tasks?today=2026-09-01&fresh=1`, { waitUntil: "networkidle" });
   await desk2.waitForSelector('[data-testid="list-controls"]', { timeout: 20_000 });
   await desk2.selectOption('[data-testid="list-group"]', "due");
   await desk2.fill('[data-testid="list-query"]', "the");
@@ -211,7 +212,7 @@ try {
     rows: document.querySelectorAll('[data-testid="records"] li').length,
   }));
   // A link somebody could send: opened cold, the same arrangement.
-  await desk2.goto(`http://localhost:5193/pages/tasks${arranged.url}&today=2026-09-01`, { waitUntil: "networkidle" });
+  await desk2.goto(`${at("todo")}/pages/tasks${arranged.url}&today=2026-09-01`, { waitUntil: "networkidle" });
   await desk2.waitForSelector('[data-testid="list-controls"]', { timeout: 20_000 });
   await desk2.waitForTimeout(300);
   const reopened = await desk2.evaluate(() => ({
@@ -252,7 +253,7 @@ try {
    * sideways nor offers a target under 24px.
    */
   const finder = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await finder.goto("http://localhost:5193/pages/search?q=the&today=2026-09-01", { waitUntil: "networkidle" });
+  await finder.goto(`${at("todo")}/pages/search?q=the&today=2026-09-01`, { waitUntil: "networkidle" });
   await finder.waitForSelector('[data-testid="search-heading"]', { timeout: 20_000 });
   const cold = await finder.evaluate(() => ({
     heading: document.querySelector('[data-testid="search-heading"]')?.textContent?.trim() ?? "",
@@ -269,7 +270,7 @@ try {
     query: document.querySelector('[data-testid="list-query"]')?.value ?? null,
     rows: document.querySelectorAll('[data-testid="records"] li').length,
   }));
-  await finder.goto("http://localhost:5193/pages/?today=2026-09-01", { waitUntil: "networkidle" });
+  await finder.goto(`${at("todo")}/pages/?today=2026-09-01`, { waitUntil: "networkidle" });
   await finder.waitForSelector('[data-testid="nav-find"]', { timeout: 20_000 });
   await finder.fill('[data-testid="nav-find"]', "deposit");
   await finder.waitForSelector('[data-testid="search-heading"]', { timeout: 20_000 });
@@ -284,7 +285,7 @@ try {
    * the address back — one that caught up after the next key overwrote it,
    * so on a slow runner "digital" was searched as "dgtl". Every key arrives.
    */
-  await finder.goto("http://localhost:5193/pages/tasks?today=2026-09-01", { waitUntil: "networkidle" });
+  await finder.goto(`${at("todo")}/pages/tasks?today=2026-09-01`, { waitUntil: "networkidle" });
   await finder.waitForSelector('[data-testid="nav-find"]', { timeout: 20_000 });
   await finder.click('[data-testid="nav-find"]');
   await finder.keyboard.type("pay the deposit now", { delay: 0 });
@@ -293,7 +294,7 @@ try {
     box: document.querySelector('[data-testid="nav-find"]')?.value ?? null,
     q: new URLSearchParams(location.search).get("q"),
   }));
-  await finder.goto("http://localhost:5193/pages/search?q=zzzz&today=2026-09-01", { waitUntil: "networkidle" });
+  await finder.goto(`${at("todo")}/pages/search?q=zzzz&today=2026-09-01`, { waitUntil: "networkidle" });
   await finder.waitForSelector('[data-testid="search-heading"]', { timeout: 20_000 });
   const nothing = await finder.evaluate(() => ({
     heading: document.querySelector('[data-testid="search-heading"]')?.textContent?.trim() ?? "",
@@ -303,7 +304,7 @@ try {
   }));
   await finder.close();
   const phoneFinder = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  await phoneFinder.goto("http://localhost:5193/pages/search?q=the&today=2026-09-01", { waitUntil: "networkidle" });
+  await phoneFinder.goto(`${at("todo")}/pages/search?q=the&today=2026-09-01`, { waitUntil: "networkidle" });
   await phoneFinder.evaluate(() => { document.documentElement.style.fontSize = "32px"; });
   await phoneFinder.waitForSelector('[data-testid="search-heading"]', { timeout: 20_000 });
   await phoneFinder.waitForTimeout(300);
@@ -336,7 +337,7 @@ try {
   };
 
   /* A record edits where it is shown, through the act the framework found. */
-  await desk2.goto("http://localhost:5193/pages/tasks/t-deposit?today=2026-09-01", { waitUntil: "networkidle" });
+  await desk2.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01`, { waitUntil: "networkidle" });
   await desk2.waitForSelector('[data-testid="record-fields"]', { timeout: 20_000 });
   // The HEADING is the name, so the heading is where the name is changed —
   // `readableFields` leaves the label out of the facts because it is
@@ -356,7 +357,7 @@ try {
   };
 
   /* And the problems page is an inbox: one press puts a rule right. */
-  await desk2.goto("http://localhost:5193/pages/problems?today=2026-09-01", { waitUntil: "networkidle" });
+  await desk2.goto(`${at("todo")}/pages/problems?today=2026-09-01`, { waitUntil: "networkidle" });
   await desk2.waitForSelector('[data-testid="problem"]', { timeout: 20_000 });
   const before2 = await desk2.evaluate(() => document.querySelectorAll('[data-testid="problem"]').length);
   await desk2.locator('[data-testid="repairs"] button:not([data-graview-asks])').first().click();
@@ -385,7 +386,7 @@ try {
     for (const theme of ["light", "dark"]) {
       const seen = await browser.newPage({ viewport: { width, height: 900 } });
       for (const route of routes) {
-        await seen.goto(`http://localhost:5193${route}?today=2026-09-01&theme=${theme}`, {
+        await seen.goto(`${at("todo")}${route}?today=2026-09-01&theme=${theme}`, {
           waitUntil: "networkidle",
         });
         await seen.waitForTimeout(400);
@@ -432,7 +433,7 @@ try {
   for (const width of [390, 1280]) {
     for (const theme of ["light", "dark"]) {
       const seen = await browser.newPage({ viewport: { width, height: 900 } });
-      await seen.goto(`http://localhost:5193/?today=2026-09-01&theme=${theme}#focus=aggregate:task&in.view=the-month`, {
+      await seen.goto(`${at("todo")}/?today=2026-09-01&theme=${theme}#focus=aggregate:task&in.view=the-month`, {
         waitUntil: "load",
       });
       await seen.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
@@ -455,7 +456,7 @@ try {
   for (const width of [390, 1280]) {
     for (const theme of ["light", "dark"]) {
       const seen = await browser.newPage({ viewport: { width, height: 900 } });
-      await seen.goto(`http://localhost:5193/?today=2026-09-01&theme=${theme}`, { waitUntil: "load" });
+      await seen.goto(`${at("todo")}/?today=2026-09-01&theme=${theme}`, { waitUntil: "load" });
       await seen.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
       await seen.waitForTimeout(700);
       paneFindings[`${width}-${theme}`] = await axeOnThePane(seen);
@@ -468,7 +469,7 @@ try {
   };
 
   /* Back to the reader's own size, through the same control. */
-  await phone.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
+  await phone.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
   await phone.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
   await phone.waitForTimeout(500);
   await phone.click('[data-testid="profile-button"]');
@@ -477,7 +478,7 @@ try {
   await phone.waitForTimeout(300);
 
   /* ------------------------------------- a derived form actually applies */
-  await phone.goto("http://localhost:5193/pages/tasks?today=2026-09-01", { waitUntil: "networkidle" });
+  await phone.goto(`${at("todo")}/pages/tasks?today=2026-09-01`, { waitUntil: "networkidle" });
   await phone.waitForTimeout(500);
   const before = await phone.evaluate(
     () => document.querySelectorAll('[data-testid="records"] a').length,
@@ -496,12 +497,12 @@ try {
 
   /* ------------------------------------------- the two faces cross-link */
   const desk = await browser.newPage({ viewport: { width: 1560, height: 940 } });
-  await desk.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
+  await desk.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
   await desk.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   report.checks.sceneOffersThePages = await desk.evaluate(
     () => document.querySelector('[data-testid="pages-link"]')?.getAttribute("href") === "/pages",
   );
-  await desk.goto("http://localhost:5193/pages/tasks/t-deposit?today=2026-09-01", { waitUntil: "networkidle" });
+  await desk.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01`, { waitUntil: "networkidle" });
   await desk.waitForTimeout(400);
   const spatial = await desk.evaluate(
     () => document.querySelector('[data-testid="spatial-link"]')?.getAttribute("href") ?? "",
@@ -509,7 +510,7 @@ try {
   report.checks.recordLinksItsStop = spatial === "/#focus=t-deposit";
 
   /* ------------------------------------------------ the pictures on pages */
-  await desk.goto("http://localhost:5193/pages/places?today=2026-09-01", { waitUntil: "networkidle" });
+  await desk.goto(`${at("todo")}/pages/places?today=2026-09-01`, { waitUntil: "networkidle" });
   await desk.waitForTimeout(500);
   const index = await desk.evaluate(() => ({
     cards: [...document.querySelectorAll('[data-testid="place-card"]')].map((a) => a.getAttribute("href")),
@@ -529,7 +530,7 @@ try {
     nav: index.nav,
     ok: firstPlace !== -1 && firstKind !== -1 && firstPlace < firstKind && (index.nav[index.nav.length - 1] ?? "").startsWith("Problems"),
   };
-  await desk.goto("http://localhost:5193/pages/places/the-week?today=2026-09-01", { waitUntil: "networkidle" });
+  await desk.goto(`${at("todo")}/pages/places/the-week?today=2026-09-01`, { waitUntil: "networkidle" });
   await desk.waitForTimeout(500);
   const lens = await desk.evaluate(() => ({
     present: document.querySelector('[data-testid="place-lens"]') !== null,
@@ -547,17 +548,17 @@ try {
   await desk.close();
   // The index and a picture at a phone's width: one column, nothing side-scrolls the document.
   const phone3 = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  await phone3.goto("http://localhost:5193/pages/places?today=2026-09-01", { waitUntil: "networkidle" });
+  await phone3.goto(`${at("todo")}/pages/places?today=2026-09-01`, { waitUntil: "networkidle" });
   await phone3.waitForTimeout(400);
   report.checks.phonePlaces = await hygiene(phone3);
-  await phone3.goto("http://localhost:5193/pages/places/the-week?today=2026-09-01", { waitUntil: "networkidle" });
+  await phone3.goto(`${at("todo")}/pages/places/the-week?today=2026-09-01`, { waitUntil: "networkidle" });
   await phone3.waitForTimeout(400);
   report.checks.phonePlace = await hygiene(phone3);
   await phone3.close();
 
   /* ------------------------------------------ the assistant on every page */
   const asker = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await asker.goto("http://localhost:5193/pages/tasks/t-deposit?today=2026-09-01&fresh=1", { waitUntil: "networkidle" });
+  await asker.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01&fresh=1`, { waitUntil: "networkidle" });
   await asker.waitForTimeout(600);
   await asker.click('[data-testid="page-ask"]');
   await asker.waitForSelector('[data-testid="page-ask-drawer"]');
@@ -599,7 +600,7 @@ try {
   await asker.close();
   /* The drawer on a phone: nothing side-scrolls the document. */
   const phone4 = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  await phone4.goto("http://localhost:5193/pages/tasks?today=2026-09-01", { waitUntil: "networkidle" });
+  await phone4.goto(`${at("todo")}/pages/tasks?today=2026-09-01`, { waitUntil: "networkidle" });
   await phone4.waitForTimeout(500);
   await phone4.click('[data-testid="page-ask"]');
   await phone4.waitForTimeout(700);
@@ -612,9 +613,9 @@ try {
    * design: seedbed's chapter nine keeps the framework's list and record
    * pages, with plots tended by gardeners and plantings that grow in plots.
    */
-  garden = await startVite("seedbed", 5194);
+  garden = await startVite("seedbed", portFor("seedbed"));
   const bed = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await bed.goto("http://localhost:5194/pages/map?chapter=9", { waitUntil: "networkidle" });
+  await bed.goto(`${at("seedbed")}/pages/map?chapter=9`, { waitUntil: "networkidle" });
   await bed.waitForTimeout(500);
   const map = await bed.evaluate(() => ({
     relations: [...document.querySelectorAll('[data-testid="relation"]')].map((li) => ({
@@ -629,7 +630,7 @@ try {
     ok: map.relations.length >= 2 && map.relations.every((r) => r.marked) && map.relations.some((r) => r.edge === "grows-in" && r.count === 2) && map.kinds >= 3,
   };
   // A list grouped by a relation is a link you can send: opened cold, the same groups.
-  await bed.goto("http://localhost:5194/pages/plantings?chapter=9&by=grows-in&past=1", { waitUntil: "networkidle" });
+  await bed.goto(`${at("seedbed")}/pages/plantings?chapter=9&by=grows-in&past=1`, { waitUntil: "networkidle" });
   await bed.waitForTimeout(500);
   const grouped = await bed.evaluate(() => ({
     groups: [...document.querySelectorAll('[data-testid="list-group"] h2')].map((h) => (h.textContent ?? "").trim()),
@@ -641,7 +642,7 @@ try {
     ok: grouped.groups.length === 2 && grouped.groups.some((g) => g.startsWith("Plot 1")) && grouped.by === "grows-in" && grouped.related,
   };
   // A record links the other way round: the far kind's list, narrowed to it.
-  await bed.goto("http://localhost:5194/pages/gardeners/june?chapter=9", { waitUntil: "networkidle" });
+  await bed.goto(`${at("seedbed")}/pages/gardeners/june?chapter=9`, { waitUntil: "networkidle" });
   await bed.waitForTimeout(500);
   const related = await bed.evaluate(() => document.querySelector('[data-testid="related-all"]')?.getAttribute("href") ?? null);
   await bed.click('[data-testid="related-all"]');
@@ -658,7 +659,7 @@ try {
   };
   report.checks.phoneMap = await (async () => {
     const small = await browser.newPage({ viewport: { width: 390, height: 844 } });
-    await small.goto("http://localhost:5194/pages/map?chapter=9", { waitUntil: "networkidle" });
+    await small.goto(`${at("seedbed")}/pages/map?chapter=9`, { waitUntil: "networkidle" });
     await small.waitForTimeout(400);
     const seen = await hygiene(small);
     await small.close();
@@ -679,7 +680,7 @@ try {
    * half: a kind with no picture is drawn anyway.
    */
   const gallery = async (page, path) => {
-    await page.goto(`http://localhost:5194${path}`, { waitUntil: "networkidle" });
+    await page.goto(`${at("seedbed")}${path}`, { waitUntil: "networkidle" });
     await page.waitForTimeout(600);
     return page.evaluate(() => {
       const main = document.querySelector("main");
@@ -730,7 +731,7 @@ try {
   };
   /* A new page opens at its top, however far down the gallery the press was. */
   const scroller = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await scroller.goto("http://localhost:5194/pages?chapter=16", { waitUntil: "networkidle" });
+  await scroller.goto(`${at("seedbed")}/pages?chapter=16`, { waitUntil: "networkidle" });
   await scroller.waitForTimeout(500);
   await scroller.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await scroller.waitForTimeout(200);

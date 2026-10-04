@@ -33,7 +33,7 @@
     "@graview/core": "workspace:*"
   },
   "devDependencies": {
-    "zod": "^4.4.3"
+    "zod": "^4.6.5"
   },
   "description": "What every deployment needs, hosted or self-hosted: persistence wiring, op-log-native migrations, export, health.",
   "keywords": [

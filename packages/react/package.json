@@ -24,7 +24,7 @@
     "react-dom": ">=18"
   },
   "devDependencies": {
-    "zod": "^4.4.3"
+    "zod": "^4.6.5"
   },
   "description": "The React binding: a provider, a scene, and the hooks an app builds on.",
   "keywords": [

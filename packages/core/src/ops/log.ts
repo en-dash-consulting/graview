@@ -38,6 +38,17 @@ export interface Epoch {
    * does not reach behind it. Absent on every other epoch.
    */
   readonly horizon?: true;
+  /**
+   * WHO MADE EACH RECORD BEHIND IT, on a checkpoint (`horizon`): record id
+   * to the id of the seat that first added it, as `recordsOf` reads the
+   * log. A store opened on the checkpoint and the tail never reads the
+   * archived ops, so without this an `own` sight with nothing but the log
+   * to go on would forget them. Written by `store.checkpoint`, carried by
+   * every adapter as part of the epoch, never served to a seat. Optional:
+   * a checkpoint without it (written before it existed, or handed over
+   * bare) knows its makers from the horizon on.
+   */
+  readonly creators?: Readonly<Record<string, string>>;
 }
 
 /**

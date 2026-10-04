@@ -21,6 +21,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -62,7 +63,7 @@ const note = async (page, step) =>
   });
 
 try {
-  vite = await startVite("todo", 5193);
+  vite = await startVite("todo", portFor("todo"));
   browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
   const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   /*
@@ -72,7 +73,7 @@ try {
    */
   report.pageErrors = [];
   page.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-  await page.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(900);
   await note(page, "landed");
@@ -127,7 +128,7 @@ try {
    * from the list column to the same task's chip says nothing the column
    * does not. Twelve of them over the panel were the picture Nick sent.
    */
-  await page.goto("http://localhost:5193/?today=2026-09-01#focus=aggregate%3Alist&relation=task", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01#focus=aggregate%3Alist&relation=task`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(1200);
   report.restated = await page.evaluate(() => ({
@@ -140,7 +141,7 @@ try {
   // The other way round: the week in focus, the lists raised as cards. A card
   // summarising its members as chips has not drawn the relation between the
   // week's entries and itself; every entry keeps its line to its list.
-  await page.goto("http://localhost:5193/?today=2026-09-01#focus=aggregate%3Atask&relation=list", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01#focus=aggregate%3Atask&relation=list`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(1200);
   report.restated = {
@@ -409,7 +410,7 @@ try {
     await page.waitForTimeout(350);
   };
 
-  await page.goto("http://localhost:5193/?today=2026-09-01&fresh=1&as=user-nora", { waitUntil: "load" });
+  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1&as=user-nora`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(900);
 
@@ -476,7 +477,7 @@ try {
 try {
   const drive = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   drive.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-  await drive.goto("http://localhost:5193/?today=2026-09-01#overview=1", { waitUntil: "load" });
+  await drive.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
   await drive.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await drive.waitForTimeout(1200);
   const marquee = await drive.evaluate(() =>
@@ -573,7 +574,7 @@ try {
 try {
   const cam = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   cam.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-  await cam.goto("http://localhost:5193/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists", { waitUntil: "load" });
+  await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists`, { waitUntil: "load" });
   await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await cam.waitForTimeout(1500);
   const ground = () =>
@@ -641,7 +642,7 @@ try {
    * rather than the view, so the biggest thing on screen — the one most
    * likely to be under the hand — was the one place panning did not work.
    */
-  await cam.goto("http://localhost:5193/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists", { waitUntil: "load" });
+  await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists`, { waitUntil: "load" });
   await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await cam.waitForTimeout(1500);
   const before = await ground();
@@ -667,7 +668,7 @@ try {
    * rode the tween — so choosing a picture snapped the whole ground to the
    * new place on one frame and the buildings walked over to join it.
    */
-  await cam.goto("http://localhost:5193/?today=2026-09-01#overview=1", { waitUntil: "load" });
+  await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
   await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await cam.waitForTimeout(1500);
   const travel = await cam.evaluate(async () => {
@@ -730,7 +731,7 @@ try {
 try {
   const find = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   find.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-  await find.goto("http://localhost:5193/?today=2026-09-01#overview=1", { waitUntil: "load" });
+  await find.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
   await find.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await find.waitForTimeout(1200);
   const history = () => find.evaluate(() => window.history.length);
@@ -787,7 +788,7 @@ try {
 
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
   phone.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-  await phone.goto("http://localhost:5193/?today=2026-09-01", { waitUntil: "load" });
+  await phone.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
   await phone.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await phone.evaluate(() => { document.documentElement.style.fontSize = "32px"; });
   await phone.waitForTimeout(1200);

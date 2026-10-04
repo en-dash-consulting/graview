@@ -31,7 +31,7 @@
     "@graview/react": "workspace:*",
     "@graview/ship": "workspace:*",
     "@graview/tools": "workspace:*",
-    "zod": "^4.4.3"
+    "zod": "^4.6.5"
   },
   "peerDependencies": {
     "react": ">=18",

@@ -1,0 +1,7 @@
+---
+"@graview/core": patch
+---
+
+A removal leaves nothing dangling. `editDocument`'s `remove-kind` took with it the relations that led to the kind, but not the ones the kind declared itself, so a rule over another kind that walked one of them stayed: removing the vendor kind left "One vendor booked per category" counting `in('fills')`, and the document no longer compiled ("fills" is not a relation any kind declares). Five of Cloud's twelve templates broke that way on one removal. Now the relations a removed kind declares go as `remove-relation` takes one — when no other kind declares the same name, every act that makes or breaks it, every rule that walks it, every view block and label that shows it goes too — and the edit's sentence names each ("The vendor kind is removed, and every vendor with it; so are rule one-booked-per-category, rule within-budget, …"). Every single removal of a kind, a field or a relation, across the vendors document, the vendor-shortlist template and the conformance documents (and, checked once, all 207 in Cloud's twelve templates), leaves a document that compiles with no error, or is refused in words.
+
+Compatibility: the document edit vocabulary — `remove-kind` now removes more: what walks the relations the removed kind declared, as `remove-relation` already did, said in its sentence. An edit list that applied before applies the same, to a document that now compiles where it did not. The op set, the document format, ops, stored formats, the wire, tool names and schemas, and check codes are unchanged.

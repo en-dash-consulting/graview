@@ -166,7 +166,9 @@ Somebody without a socket — an agent acting over MCP or an RPC, a polling tab 
 stands until `until`. The handler does this itself for every op an agent seat lands in its
 store (`POST /graview/ops`, an MCP handler over the same store, the host's own loop), for
 `VISITOR_PRESENCE_TTL_MS`; `createStoreHandler({ announceAgents: false })` turns it off and a
-number sets the time. A hibernating host keeps `who` itself, with `announcePresence(who,
+number sets the time. An agent that only reads lands no op, so hand `handler.onCall` to
+`createMcpHttpHandler`'s `onCall` (`@graview/tools`): every tool call announces the agent seat
+the same way, reads included. A hibernating host keeps `who` itself, with `announcePresence(who,
 visitorPresence(seat), ttlMs)`, and hands it to `receive` and `tell`; a visitor past its
 `until` is never told. Each seat is told as it may see: an agent acting for a person the
 seat may not see is shown without `onBehalfOf` or the name. The Shell draws it as "Claude,

@@ -37,6 +37,28 @@ export interface McpHttpOptions<S extends AnySchema> {
   readonly derive?: ToolRuntimeOptions<S>["derive"];
   /** What a refused request's `WWW-Authenticate` says, e.g. `Bearer resource_metadata="…"`. `Bearer` when unsaid. */
   readonly challenge?: string;
+  /**
+   * EVERY TOOL CALL, TOLD TO THE HOST before it is answered — read-only
+   * ones included, which land no op and so are otherwise invisible to a
+   * room. A store handler's `onCall` (`@graview/ship`) is the hook to hand
+   * it: the calling agent is announced as here. It observes and cannot
+   * refuse: what it answers or throws is ignored, and the call is answered
+   * either way. Not called for `initialize` or `tools/list`.
+   */
+  readonly onCall?: (call: McpCall) => void | Promise<void>;
+}
+
+/** One tool call, as `onCall` is told it. */
+export interface McpCall {
+  /** Who is calling, as `authenticate` said. */
+  readonly principal: Principal;
+  /** The tool called, by name. */
+  readonly tool: string;
+  readonly arguments: Readonly<Record<string, unknown>>;
+  /** Whether the tool only reads (its `readOnlyHint`); false for a tool the surface does not have. */
+  readonly readOnly: boolean;
+  /** The request it came in. */
+  readonly request: Request;
 }
 
 const JSON_TYPE = { "content-type": "application/json" };
@@ -74,19 +96,32 @@ export function createMcpHttpHandler<S extends AnySchema>(options: McpHttpOption
     }
 
     const store = typeof options.store === "function" ? await options.store(principal, request) : options.store;
-    const adapter = createMcpAdapter(
-      createToolRuntime(store, {
-        author: principal,
-        ...(options.readOnly ? { readOnly: true } : {}),
-        ...(options.places ? { places: options.places } : {}),
-        ...(options.derive ? { derive: options.derive } : {}),
-      }),
-    );
+    const runtime = createToolRuntime(store, {
+      author: principal,
+      ...(options.readOnly ? { readOnly: true } : {}),
+      ...(options.places ? { places: options.places } : {}),
+      ...(options.derive ? { derive: options.derive } : {}),
+    });
+    const adapter = createMcpAdapter(runtime);
+    const told = async (message: JsonRpcRequest): Promise<void> => {
+      if (!options.onCall || message.method !== "tools/call") return;
+      const params = (message.params ?? {}) as Record<string, unknown>;
+      const tool = params["name"];
+      if (typeof tool !== "string") return;
+      const args = params["arguments"];
+      const readOnly = runtime.definitions.find((definition) => definition.name === tool)?.annotations.readOnlyHint === true;
+      try {
+        await options.onCall({ principal, tool, arguments: args && typeof args === "object" ? (args as Record<string, unknown>) : {}, readOnly, request });
+      } catch {
+        // It observes; it cannot refuse.
+      }
+    };
     // In order, one at a time: an act lands before the read after it looks.
     const responses: unknown[] = [];
     for (const message of messages) {
       // A response from the client (to a request this server never sends) is accepted and dropped.
       if (message.method === undefined) continue;
+      await told(message);
       const answer = await answerMcp(message, adapter, info);
       if (answer.response !== undefined) responses.push(answer.response);
     }

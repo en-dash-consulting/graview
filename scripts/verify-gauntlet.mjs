@@ -28,11 +28,12 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
-const PORT = 5191;
-const BASE = `http://localhost:${PORT}`;
+const PORT = portFor("gauntlet");
+const BASE = at("gauntlet");
 
 /** Every seat the app offers, by the id `?as=` takes — none of them a name. */
 const ALL_SEATS = [

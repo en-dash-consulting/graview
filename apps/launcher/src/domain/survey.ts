@@ -19,6 +19,25 @@ import { todoApp } from "@graview/todo";
  * worth arguing about.
  */
 
+/**
+ * THE PORTS THIS CHECKOUT SERVES THE DEMOS ON. A page cannot read the
+ * environment, so the launcher's vite config hands it the ports moved onto
+ * `GRAVIEW_PORT_BASE` (`__GRAVIEW_PORTS__`, computed by
+ * `scripts/lib/ports.mjs`, the harnesses' own mapping): a desk in a second
+ * checkout links to and probes that checkout's apps, not the first one's.
+ * Where nothing was handed — Node, `graview check` — the ports are the ones
+ * the apps' vite configs claim.
+ */
+declare const __GRAVIEW_PORTS__: Readonly<Record<string, number>> | undefined;
+const HANDED: Readonly<Record<string, number>> =
+  typeof __GRAVIEW_PORTS__ === "object" && __GRAVIEW_PORTS__ !== null ? __GRAVIEW_PORTS__ : {};
+const portOf = (name: string, port: number): number => HANDED[name] ?? port;
+
+/** Where something the desk names is served: an app's own address, which liveness probes and the views link to. */
+export function addressOf(entry: { readonly port: number }): string {
+  return `http://localhost:${entry.port}`;
+}
+
 export interface AppEntry {
   readonly id: string;
   readonly app: GraviewApp;
@@ -34,7 +53,7 @@ export const APPS: readonly AppEntry[] = [
     app: todoApp as unknown as GraviewApp,
     label: "Things",
     tagline: "The example: a todo list, because nobody has to be taught what one is.",
-    port: 5193,
+    port: portOf("todo", 5193),
     command: "pnpm dev",
   },
   {
@@ -42,7 +61,7 @@ export const APPS: readonly AppEntry[] = [
     app: rotaApp as unknown as GraviewApp,
     label: "Rota",
     tagline: "The product-grade one: a volunteer roster, branded, permissioned, remembered, embedded and open in its own studio.",
-    port: 5195,
+    port: portOf("rota", 5195),
     command: "pnpm dev:rota",
   },
   {
@@ -50,7 +69,7 @@ export const APPS: readonly AppEntry[] = [
     app: seedbedApp as unknown as GraviewApp,
     label: "Seedbed",
     tagline: "The example that starts empty: a declared graph and no data, so onboarding is filling it in.",
-    port: 5194,
+    port: portOf("seedbed", 5194),
     command: "pnpm dev:seedbed",
   },
 ];
@@ -314,7 +333,7 @@ export const CAPABILITIES: readonly Capability[] = [
      */
     holds: (app) => app.version !== undefined && (app.migrations ?? []).length > 0,
     shownIn: "rota",
-    stop: "?server=http://localhost:5196#overview=1",
+    stop: `?server=${addressOf({ port: portOf("served", 5196) })}#overview=1`,
   },
 
   /* --------------------------------------- 8 · the agent, and the studio */

@@ -30,7 +30,7 @@
     }
   },
   "devDependencies": {
-    "zod": "^4.4.3"
+    "zod": "^4.6.5"
   },
   "description": "The spatial renderer. The DOM path is what ships; the GPU capture path is EXPERIMENTAL — see README.",
   "keywords": [

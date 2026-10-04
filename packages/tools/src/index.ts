@@ -45,7 +45,7 @@ export { createInAppAdapter, createMcpAdapter } from "./agent/adapters.js";
 export type { InAppAgent, McpContent, McpTool, McpToolResult } from "./agent/adapters.js";
 // MCP for remote hosts: Streamable HTTP, stateless, behind the host's auth hook (FR-10).
 export { createMcpHttpHandler } from "./mcp-http.js";
-export type { McpHttpOptions } from "./mcp-http.js";
+export type { McpCall, McpHttpOptions } from "./mcp-http.js";
 export { MCP_PROTOCOL_VERSION } from "./mcp-protocol.js";
 export { insightProvider } from "./providers/insight.js";
 export { usageBoost, usageWeights } from "./usage.js";

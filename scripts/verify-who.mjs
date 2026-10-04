@@ -17,6 +17,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const { PRESENCE_TTL_MS } = await import(resolve(repoRoot, "packages/core/dist/index.js"));
@@ -27,7 +28,7 @@ let vite;
 
 const NORA = "user-nora";
 const SAM = "user-sam";
-const BASE = "http://localhost:5193/?today=2026-09-01";
+const BASE = `${at("todo")}/?today=2026-09-01`;
 
 /** The figure B draws for a participant, if any. */
 const figureOf = (page, id) =>
@@ -67,7 +68,7 @@ const go = async (page, hash) => {
 };
 
 try {
-  vite = await serving("todo", 5193, repoRoot);
+  vite = await serving("todo", portFor("todo"), repoRoot);
   browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
   const context = await browser.newContext({ viewport: { width: 1560, height: 940 } });
   const a = await open(context, NORA, "#overview=1&focus=aggregate%3Atask");

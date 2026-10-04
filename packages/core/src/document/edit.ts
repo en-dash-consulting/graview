@@ -639,6 +639,17 @@ class Editor {
     if (!this.kind(i, kind)) return;
     if (Object.keys(this.doc.kinds).length === 1) return this.fail(i, "kind", "an app keeps at least one kind");
     const gone: string[] = [];
+    /*
+     * The relations it declares go with it — and so does what walks them
+     * from elsewhere: a rule over a category that counts `in('fills')` cannot
+     * be judged once no kind has fills. Dropped while the kind still stands,
+     * so the walk knows where each name leads.
+     */
+    for (const edge of Object.keys(this.doc.kinds[kind].edges ?? {})) {
+      const went: string[] = [];
+      this.dropRelation(kind, edge, went);
+      for (const what of went) if (!gone.includes(what)) gone.push(what);
+    }
     delete this.doc.kinds[kind];
     this.kindOrigin.delete(kind);
     // Relations that only led to it go with it.
@@ -1281,7 +1292,9 @@ function blockMentions(doc: Doc, b: Record<string, unknown>, ctx: Kinds, r: Rena
  * previews it like any other proposed document.
  */
 export function editDocument(document: GraviewDocument, edits: readonly unknown[]): EditOutcome {
-  if (!Array.isArray(edits) || edits.length === 0) return { ok: false, findings: [error("edit", "edits", "give at least one edit")] };
+  if (!Array.isArray(edits)) return { ok: false, findings: [error("edit", "edits", "edits are a list, like [{\"op\": \"add-field\", …}]")] };
+  // No edits is no change: the document as it was, and nothing said.
+  if (edits.length === 0) return { ok: true, document: clone(document), said: [], fills: [] };
   if (edits.length > MAX_EDITS) return { ok: false, findings: [error("edit", "edits", `at most ${MAX_EDITS} edits at once`)] };
   const editor = new Editor(clone(document), document);
   edits.forEach((raw, i) => {

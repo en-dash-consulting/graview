@@ -1,0 +1,426 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Renovation",
+  "description": "The rooms we're redoing, the work in each, what we have to buy, and who's doing it.",
+  "kinds": {
+    "room": {
+      "noun": "room",
+      "plural": "rooms",
+      "description": "A room or area being worked on, with what we can spend on it.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "budget": {
+          "type": "number",
+          "format": "money",
+          "description": "the most we want to spend on purchases for this room"
+        }
+      }
+    },
+    "task": {
+      "noun": "task",
+      "plural": "tasks",
+      "description": "A piece of work, like tiling the floor or moving a socket.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "todo",
+            "doing",
+            "done"
+          ],
+          "default": "todo",
+          "required": true
+        },
+        "due": {
+          "type": "date"
+        },
+        "notes": {
+          "type": "text"
+        }
+      },
+      "glance": [
+        "title",
+        "status",
+        "due"
+      ],
+      "describe": "{status}",
+      "lifecycle": {
+        "field": "status",
+        "retired": [
+          "done"
+        ]
+      },
+      "edges": {
+        "in-room": {
+          "to": [
+            "room"
+          ],
+          "cardinality": "one",
+          "description": "the room this work happens in",
+          "inverse": "tasks in it"
+        },
+        "needs": {
+          "to": [
+            "purchase"
+          ],
+          "cardinality": "many",
+          "description": "what has to arrive before this work can happen",
+          "inverse": "tasks waiting on it"
+        },
+        "done-by": {
+          "to": [
+            "trade"
+          ],
+          "cardinality": "one",
+          "description": "who is doing the work",
+          "inverse": "their tasks"
+        }
+      }
+    },
+    "purchase": {
+      "noun": "purchase",
+      "plural": "purchases",
+      "description": "Something to buy: materials, fixtures, appliances.",
+      "fields": {
+        "item": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "to-order",
+            "ordered",
+            "delivered"
+          ],
+          "default": "to-order",
+          "required": true
+        },
+        "cost": {
+          "type": "number",
+          "format": "money"
+        },
+        "supplier": {
+          "type": "string"
+        },
+        "link": {
+          "type": "url"
+        }
+      },
+      "glance": [
+        "item",
+        "status",
+        "cost"
+      ],
+      "describe": "{status} · {cost|money}",
+      "edges": {
+        "for-room": {
+          "to": [
+            "room"
+          ],
+          "cardinality": "one",
+          "description": "the room whose budget this comes out of",
+          "inverse": "purchases for it"
+        }
+      }
+    },
+    "trade": {
+      "noun": "tradesperson",
+      "plural": "trades",
+      "description": "A builder, plumber, electrician or anyone else doing the work.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "craft": {
+          "type": "string",
+          "description": "what they do, like \"plumber\""
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "email"
+        },
+        "quote": {
+          "type": "number",
+          "format": "money"
+        }
+      },
+      "glance": [
+        "name",
+        "craft",
+        "quote"
+      ],
+      "describe": "{craft}"
+    }
+  },
+  "acts": {
+    "add-room": {
+      "title": "Add a room",
+      "creates": "room",
+      "description": "Add a room or area being worked on, optionally with a budget."
+    },
+    "set-room-budget": {
+      "title": "Set the budget",
+      "on": "room",
+      "writes": [
+        "budget"
+      ],
+      "description": "Set or change the most you want to spend on purchases for this room."
+    },
+    "add-task": {
+      "title": "Add a task",
+      "creates": "task",
+      "description": "Add a piece of work, before choosing its room."
+    },
+    "add-task-here": {
+      "title": "Add a task in this room",
+      "on": "room",
+      "args": {
+        "title": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "effects": [
+        {
+          "create": "task",
+          "as": "new",
+          "set": {
+            "title": "$title",
+            "due": "$due"
+          }
+        },
+        {
+          "connect": "in-room",
+          "from": "$new",
+          "to": "$subject"
+        }
+      ],
+      "description": "Add a piece of work in this room, by title, with a due date if there is one."
+    },
+    "start-task": {
+      "title": "Start",
+      "on": "task",
+      "sets": {
+        "status": "doing"
+      },
+      "allowedWhen": "status == 'todo'",
+      "refusal": "{title} has already started",
+      "description": "Say work on a task has begun."
+    },
+    "finish-task": {
+      "title": "Done",
+      "on": "task",
+      "sets": {
+        "status": "done"
+      },
+      "description": "Say a task is finished; it drops out of view but is not deleted."
+    },
+    "add-purchase": {
+      "title": "Add a purchase",
+      "creates": "purchase",
+      "description": "Add something to buy, before choosing its room."
+    },
+    "add-purchase-for-task": {
+      "title": "Add something this task needs",
+      "on": "task",
+      "args": {
+        "item": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "effects": [
+        {
+          "create": "purchase",
+          "as": "new",
+          "set": {
+            "item": "$item",
+            "cost": "$cost",
+            "supplier": "$supplier"
+          }
+        },
+        {
+          "connect": "needs",
+          "from": "$subject",
+          "to": "$new"
+        }
+      ],
+      "description": "Add a thing to buy that this task cannot start without, by name, with cost and supplier if known."
+    },
+    "add-purchase-for-room": {
+      "title": "Add a purchase for this room",
+      "on": "room",
+      "args": {
+        "item": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "effects": [
+        {
+          "create": "purchase",
+          "as": "new",
+          "set": {
+            "item": "$item",
+            "cost": "$cost",
+            "supplier": "$supplier"
+          }
+        },
+        {
+          "connect": "for-room",
+          "from": "$new",
+          "to": "$subject"
+        }
+      ],
+      "description": "Add a thing to buy that comes out of this room's budget."
+    },
+    "mark-ordered": {
+      "title": "Mark as ordered",
+      "on": "purchase",
+      "sets": {
+        "status": "ordered"
+      },
+      "allowedWhen": "status == 'to-order'",
+      "refusal": "{item} is already ordered",
+      "description": "Say a purchase has been ordered."
+    },
+    "mark-delivered": {
+      "title": "Mark as delivered",
+      "on": "purchase",
+      "sets": {
+        "status": "delivered"
+      },
+      "description": "Say a purchase has arrived on site."
+    },
+    "set-cost": {
+      "title": "Set the cost",
+      "on": "purchase",
+      "writes": [
+        "cost"
+      ],
+      "description": "Record what a purchase costs."
+    },
+    "charge-to-room": {
+      "title": "Charge to a room",
+      "on": "purchase",
+      "connects": "for-room",
+      "description": "Say which room's budget a purchase comes out of.",
+      "fromTheOtherEnd": "Charge one of our purchases to this room"
+    },
+    "needs-purchase": {
+      "title": "Waits on a purchase",
+      "on": "task",
+      "connects": "needs",
+      "description": "Say a task cannot start until a purchase arrives.",
+      "fromTheOtherEnd": "Say a task is waiting on this"
+    },
+    "no-longer-needs": {
+      "title": "No longer waits on a purchase",
+      "on": "task",
+      "severs": "needs",
+      "description": "Say a task no longer waits on a purchase.",
+      "fromTheOtherEnd": "Say a task no longer waits on this"
+    },
+    "move-task": {
+      "title": "Move to a room",
+      "on": "task",
+      "connects": "in-room",
+      "description": "Say which room a task happens in.",
+      "fromTheOtherEnd": "Move one of our tasks to this room"
+    },
+    "add-trade": {
+      "title": "Add a tradesperson",
+      "creates": "trade",
+      "description": "Add a builder, plumber, electrician or anyone else doing the work."
+    },
+    "assign-trade": {
+      "title": "Give to a tradesperson",
+      "on": "task",
+      "connects": "done-by",
+      "description": "Say who is doing a task.",
+      "fromTheOtherEnd": "Give them one of our tasks"
+    },
+    "uncharge": {
+      "title": "Take off a room's budget",
+      "on": "purchase",
+      "severs": "for-room",
+      "description": "Stop charging a purchase to a room's budget.",
+      "fromTheOtherEnd": "Take a purchase off this room's budget"
+    },
+    "take-out-of-room": {
+      "title": "Take out of its room",
+      "on": "task",
+      "severs": "in-room",
+      "description": "Say a task no longer belongs to the room it was in.",
+      "fromTheOtherEnd": "Take one of our tasks out of this room"
+    },
+    "unassign-trade": {
+      "title": "Take off a tradesperson",
+      "on": "task",
+      "severs": "done-by",
+      "description": "Say a tradesperson is no longer doing a task.",
+      "fromTheOtherEnd": "Take a task off them"
+    }
+  },
+  "rules": {
+    "order-what-work-waits-on": {
+      "title": "Nothing waits on a purchase not yet ordered",
+      "description": "A tiler booked for Monday with no tiles ordered is a lost week.",
+      "over": "purchase",
+      "when": "status == 'to-order'",
+      "require": "!exists(in('needs') where status != 'done')",
+      "says": "{item} isn't ordered yet — waiting on it: {in('needs') where status != 'done'}",
+      "repairs": [
+        {
+          "act": "mark-ordered",
+          "label": "Mark it ordered"
+        }
+      ]
+    },
+    "room-within-budget": {
+      "title": "A room's purchases fit its budget",
+      "over": "room",
+      "when": "present(budget)",
+      "require": "sum(in('for-room'), 'cost') <= budget",
+      "says": "{name} is over its {budget|money} budget",
+      "repairs": [
+        {
+          "act": "set-room-budget",
+          "label": "Raise the budget"
+        }
+      ]
+    }
+  },
+  "roles": [
+    "owner",
+    "editor",
+    "viewer"
+  ],
+  "policy": {
+    "grants": [
+      {
+        "roles": [
+          "owner",
+          "editor"
+        ],
+        "mutations": "*",
+        "describe": "Owners and editors may do everything; viewers can look."
+      }
+    ]
+  },
+  "brand": {
+    "accent": "#3d5a80"
+  }
+}
