@@ -118,3 +118,24 @@ describe("a via claim the host judges", () => {
     await handler.close();
   });
 });
+
+describe("a preview on a remote store (FR-56)", () => {
+  it("is judged as whoever is at this keyboard, as its apply is, and sends nothing", async () => {
+    const handler = await createStoreHandler({ app, store: hostsStore(), seatOf: () => kim });
+    const posted: unknown[] = [];
+    const fetcher = (async (url: string, init?: RequestInit) => {
+      if (init?.method === "POST") posted.push(JSON.parse(String(init.body)));
+      return handler.handle(new Request(url, init));
+    }) as typeof fetch;
+    const remote = await openRemote({ app, url: "https://store.example", principal: kim, fetch: fetcher, pollMs: 0 });
+    const preview = remote.store.previewAll([{ name: "add", args: { id: "p1", label: "P1" } }], { via: "view:board" });
+    expect(preview.kept).toBe(false);
+    expect(preview.ops.map((op) => [op.author, op.via])).toEqual([[kim, "view:board"]]);
+    // A seat the policy grants nothing is refused, as its apply would be.
+    expect(() => remote.store.previewAll([{ name: "add", args: { id: "p2", label: "P2" } }], { author: { kind: "human", id: "lee", roles: [] } })).toThrow(/Not permitted/);
+    await remote.settled();
+    expect(posted).toEqual([]);
+    expect(remote.store.log.length).toBe(0);
+    remote.close();
+  });
+});

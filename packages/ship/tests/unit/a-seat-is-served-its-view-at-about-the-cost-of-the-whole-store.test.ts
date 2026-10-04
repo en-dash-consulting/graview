@@ -103,9 +103,9 @@ describe("a seat is served its view at about the cost of the whole store", () =>
   });
 
   it("serves a planner and an owner their state, read again and after the log grew, for at most 1.75 whole-store reads", () => {
-    const times: Record<string, number[]> = { system: [], planner: [], owner: [], "planner, after the log grew": [], "planner, first after a wake": [] };
+    const times: Record<string, number[]> = { system: [], "system, after the log grew": [], planner: [], owner: [], "planner, after the log grew": [], "planner, first after a wake": [] };
     // A round first that is not counted: the first of anything in a process is the compiler's.
-    for (let round = 0; round < 8; round++) {
+    for (let round = 0; round < 12; round++) {
       const store = woken();
       const live = liveProtocol({ store });
       const first = timed(() => read(live, planner));
@@ -116,16 +116,21 @@ describe("a seat is served its view at about the cost of the whole store", () =>
       for (let more = 0; more < 10; more++) store.applyAll([{ name: "add", args: { title: `More ${round}.${more}` } }], { author: more % 2 ? planner : owner });
       read(live, planner);
       for (let more = 0; more < 10; more++) store.applyAll([{ name: "add", args: { title: `Again ${round}.${more}` } }], { author: more % 2 ? planner : owner });
+      // The grown read is judged against the whole of the same grown store, read either side of it,
+      // so a pause that lands after the writes is not charged to the seat alone.
+      const before = timed(() => read(live, system));
       const grown = timed(() => read(live, planner));
+      const wholeGrown = [before, timed(() => read(live, system))];
       if (round === 0) continue;
+      times["system, after the log grew"]!.push(...wholeGrown);
       times["system"]!.push(...whole);
       times["planner, first after a wake"]!.push(first);
       times["planner"]!.push(again);
       times["owner"]!.push(owned);
       times["planner, after the log grew"]!.push(grown);
     }
-    const whole = fastest(times["system"]!);
-    const ratio = (who: string) => fastest(times[who]!) / whole;
+    const against = (who: string) => fastest(times[who === "planner, after the log grew" ? "system, after the log grew" : "system"]!);
+    const ratio = (who: string) => fastest(times[who]!) / against(who);
     const said = Object.keys(times)
       .map((who) => `${who} ${fastest(times[who]!).toFixed(2)} ms (${ratio(who).toFixed(2)}x)`)
       .join(", ");
