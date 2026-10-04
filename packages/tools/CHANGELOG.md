@@ -1,5 +1,80 @@
 # @graview/tools
 
+## 0.1.4
+
+### Patch Changes
+
+- 833e390: An agent that only reads is in the room too. A store handler announced an agent seat when an op of its landed, so "Claude, for Ada" showed while it changed things and not at all while it read, which is most of what it does over MCP. `createMcpHttpHandler` takes `onCall`, told every tool call before it is answered — the caller, the tool, its arguments, whether the tool only reads, and the request — read-only calls included; it observes and cannot refuse, so what it answers or throws is ignored and the call is answered either way. `initialize` and `tools/list` are not calls. A store handler, and `serveStore`'s answer, carry `onCall`, the hook to hand it: `createMcpHttpHandler({ store: () => handler.store, authenticate, onCall: handler.onCall, … })` announces the calling agent as an op of its would — an agent seat only, for `announceAgents`' time and never when that is `false`, not when the agent holds a socket of its own, and for whom only to a seat that may see the person. An act after a read still stands the agent over what it wrote. `McpCall` is exported from `@graview/tools`.
+  
+  Compatibility: the wire — additive. `StoreHandler` and `ServedStore` gain `onCall`; `McpHttpOptions` gains an optional `onCall`, and `McpCall` is a new type. No route, field or message changes, and a host that hands no hook announces exactly what it did. Ops, stored formats, derived tool names and schemas, and check codes are unchanged.
+- 53857e9: **Security.** A refusal no longer tells a seat whether a hidden record exists (FR-55). Ids are minted from labels, so a seat can guess one, and a call naming a hidden record was refused `forbidden`, "names a record you may not see", while one naming a record that was never there came back `invalid` ("there is no record …", in a document's app) or `missing` in the act's own words: a planner calling set-quote on `vendor:the-barn` learned whether the barn was real. Both are now refused alike, by the store, just before the call runs: a `MissingRecordError` saying "“Set the quote” names a record that is not there." — the act, never the id — reason `missing`, on the socket's `refused`, a 409 from `POST /graview/ops` and an agent tool's answer. Permission is asked of such a call as if the record were not there (its kind is not read aloud), a stale-write check does not offer a conflict over it, the agent tools' `preview_mutation` refuses it the same way, and a module turned off no longer refuses a seat's call as `forbidden` for naming one of its records, since that seat may not see them. `Store.missingFor(call, principal)` is that judgement, for a surface that asks before it acts. A record made earlier in the same gesture is there for a later call. The host's own seat sees what it keeps and is judged as before.
+  
+  Compatibility: refusal reasons (the wire and live protocols) — `REFUSAL_REASONS` is unchanged, and `missing` keeps its meaning, "what the call names is not there", now for this seat. A call naming a record the seat may not see is refused `missing` with "“<act>” names a record that is not there." where it was `forbidden` with "Not permitted: “<act>” names a record you may not see."; a call naming a record that does not exist is refused `missing` with that sentence where a document's app said `invalid` and an act's own words. `Store.missingFor` is new. Ops, stored formats, derived tools and check codes are unchanged.
+- f923330: **Security.** A seat is never served the id of a record it may not see (FR-55). `seenBy` and `logSeenBy` dropped the records a seat's sight does not reach and left their ids wherever else they stood: in a seen record's field (`ref: "secret:s1"`) and in a withheld op's primitives (`after: { ref: "secret:s1" }`). An id is minted from a label, so it told the seat the hidden record's name — on every surface built on the seat view: `graview serve`, `createStoreHandler`, `liveProtocol` and `createMcpHttpHandler`. Graview Cloud found it; its oracle-based property test, ported, now holds over 1,000 random worlds each against `seenBy` and `logSeenBy`, the live wire's messages and the HTTP routes, and the agent tools' answers: no string that is an unseen record's id is in anything the seat is sent.
+  
+  The rule. A seen record whose field names a hidden one is served with that field CLEARED, so the record stays usable, when its kind declares the field optional (or does not declare it). When the field is required, clearing it would serve a record that fails its own declaration, and a client refuses to load that — so the record is WITHHELD from that seat whole, as if its sight did not reach it: not in the graph, the snapshot or an edge, and every op that touched it withheld. Which ids a field names is judged by the seat's sight alone. An op is withheld when it names a hidden id anywhere — its call, its sentence, its author, a primitive's values, its inverse — and a withheld op keeps only the primitives about records the seat is served: an added record as the seat is served it, a patch that wrote a hidden id into an optional field as that field cleared (`UNSET`, so the seat's copy matches its snapshot), and none that would need a required field cleared. `seenBy(...).violations()` and `findings()` leave out what names a hidden record, repairs included.
+  
+  `seatLens(store, principal)` is that judgement — `sees` (the sight), `shows` (served), `served(record)` — and `seenBy`, `logSeenBy`, `redact`, the live wire, the routes and the store's own undo check read it. `answerSeenBy(store, principal, answer)` tells a seat what its own act, preview or undo did, as it may be told it: the agent tools' `diff`, `introduces`, `resolves` and undo answers come through it, and their untrusted-words marking reads the seat's own log. `/graview/health` is answered the same way: `ok` and every count stay the whole store's — a service polling a tenant asks whether the store is well, a count names no record, and a count of only what the asker sees would call a broken store well — while `danglingEdges` names only the links whose ends the asking seat may be told of. Health is the one route a stranger gets, so a caller the host cannot tell is judged as a seat with no id and no roles, and a store with sights names it no link. `health(store, { seat })` takes the seat to answer. `namesUnseen` and the `SeatLens` type are exported; `redact` and `withhold` take a lens or a bare sight, which serves a record whole or not at all.
+  
+  Compatibility: the wire and live protocols — narrowing, no field added or removed, `WIRE_PROTOCOL` unchanged. A seat with sights is now sent a seen record without any field whose value names a record it may not see (or not sent the record at all when that field is required), and ops that named such a record anywhere arrive withheld, with their primitives cut to what it is served; a seat with nothing kept from it is sent exactly what it was. `/graview/health`'s `danglingEdges` lists only links the asker may be told of (none, to a stranger, on a store with sights); its `ok` and counts are unchanged. The agent tools answer the same narrowing. Ops, stored formats, derived tool names and schemas, and check codes are unchanged.
+- 936814b: **Security.** A seat can no longer test whether a hidden record exists by writing its id (FR-55). Ids are minted from labels, so they can be guessed: an editor who may see vendors but not categories added a vendor whose category was `category:venue`, and when the venue existed the seat view cleared that field — or withheld the editor's own new vendor, the field being required — while `category:nothing-here` came back as written. A seat is now served its own words: a field whose current value this seat's principal wrote, or the person an agent acts for, is served as written whatever it names, and a record withheld only for such a field is served; so is the seat's own call in its own ops. Who wrote each field's value is an index kept as the log goes (`writersOf`, beside `recordsOf`), and an undo is never the author of what it puts back — the words are whoever's they were before the op it takes back. A write of the value a field already holds is kept in the log as the seat's when that value names a record the seat may not see, since an act that wrote nothing would tell it the guess was the hidden value. Everything a seat did not write keeps FR-55's rule, and the served log still folds to the served snapshot, from any moment, because each moment is judged by who had written what then. The agent tools' answers judge each side of a change as who wrote it then: the words a change replaced are somebody else's. Cloud's acceptance oracle needs the same exception: the strings a seat itself wrote are not counted as leaks in what it is served.
+  
+  Compatibility: the wire and live protocols — widening within FR-55, no field added or removed. A seat is now served, as written, any field whose current value it wrote, and a record withheld only for such a field; its own ops whose call named a record it may not see are served whole. A no-op write by a seat of a value naming what it may not see now appears in the log as an op. `SeatLens` gains `servedWith` and `actor`; `writersOf` is new. Stored formats, derived tools and check codes are unchanged.
+- 0183340: A tool's schema does not depend on zod's minor version. An agent tool's input schema is a stability surface, and zod writes its own regex for a string format — `z.email()`, `z.uuid()`, `z.iso.datetime()`, `z.iso.date()` — beside the format's name. That regex differs between zod 4.4.3, which this repository locked, and 4.6.5, which a consumer resolves from the published ranges, so Cloud's tool-schema snapshot saw sixteen "inputSchema changed" entries that were only zod's regex. `toJsonSchema`, and with it `mutationToolSchema`, `nodeJsonSchema`, `schemaJson` and the conformance kit's tools, now says a format string by its JSON-schema `format` alone (`email`, `uri`, `uuid`, `date-time`, `date` …) and drops zod's `pattern`; a pattern the author wrote with `.regex(…)` is kept, beside the format where there is one. Moving the workspace to zod 4.6.5 found a second dependence on zod's internals: zod 4.6 no longer fills a schema's `_zod.bag` as it builds it, so `describeArg` lost a number's bounds and a date's pattern, and a date argument was asked for as free text. It now reads the checks on the definition, which both versions keep. Every package's zod range is now `^4.6.5`, so the tests run on what a consumer gets.
+  
+  Compatibility: tool input schemas — a format-based string no longer carries zod's regex `pattern`, only its `format` (an `email` property is `{ "type": "string", "format": "email" }`); a `z.url()` property is unchanged, and an author-written pattern is kept. A snapshot of a tool surface taken with either zod version changes once, for those properties only, and then holds across zod minors. The conformance kit's recorded fixtures are unchanged: none declares a format string, and the lock holds. `describeArg` and `argShape` answer as they did on zod 4.4 for every schema, now on 4.6 too. Every package's `zod` dependency moves from `^4.4.3` to `^4.6.5` (products never install zod; `@graview/core` re-exports it). The embed's bundle budgets rise with zod 4.6, which gives every schema type its own JSON-schema processor: the pages face alone from 815,000 / 220,000 to 950,000 / 252,000 bytes and every face from 1,150,000 / 330,000 to 1,290,000 / 362,000 (minified / gzipped), about 130 kB / 30 kB of zod's that a host on zod 4.6 was already paying. The document format, ops, stored formats, the wire and check codes are unchanged.
+- dee1fb2: **Security.** An act's sentence no longer tells its author whether a hidden record exists (FR-55). `describe(args, graph)` read the whole store, so a seat that pointed a record it sees at a guessed id was told "Point the barn at Venue" when the venue existed and was hidden from it, and "Point the barn at category:x" when it did not. A sighted author's act is now worded from the store as that author is served it — in `apply` and in `preview(call, context, { author })`, which the agent tools' `preview_mutation` passes — so a record the author may not see is named only by what the author wrote, exactly as one that does not exist. A reader who may see more reads the author's sentence as the author would have, which is what the author meant. Three more differences by existence went with it: an answer's and a served op's `reads` leave out an id that names no record, as they leave out a hidden one; a write of the value a field already holds, naming what the seat may not see, is kept in a preview as it is when applied; and an agent tool's diff says that write as a change to the seat's view of the record. With no sights, nothing changes.
+  
+  Compatibility: ops and the wire — an op's sentence is worded from its author's view: for an author with sights, `intent` names a record the author may not see by the argument it gave rather than by the record's label. `reads` on what a seat with sights is served name only records it sees. `Store.preview` takes an optional third argument, `{ author }`. Stored formats, derived tools and check codes are unchanged.
+- 062fe46: Four types now say what the code already accepts, found when every package's tests began to be typechecked. A lens role may be bound to a field and the values that make it true — `{ field: "status", is: ["done"] }`, the shape `lifecycle` reads a state in — which the checker and the calendar lens always read, but `LensDeclaration.bindings` refused. `withViews` keeps the app's schema (`<S>(app: GraviewApp<S>, …) => GraviewApp<S>`) instead of widening it to one a typed app is not. `instructionsFor` takes anything with a `name`, the only thing it reads. And a live `welcome`'s `state.snapshot` is typed a `GraphSnapshot`, which it always was, rather than `unknown`.
+  
+  Compatibility: types only, and each one wider or more exact than before: nothing that compiled stops compiling, and nothing at run time changes. The wire, `WIRE_PROTOCOL`, ops, stored formats and check codes are unchanged.
+- Updated dependencies [56e4e95]
+- Updated dependencies [df9932a]
+- Updated dependencies [7fc5c32]
+- Updated dependencies [745971d]
+- Updated dependencies [9de42fe]
+- Updated dependencies [36df620]
+- Updated dependencies [a9c0f2d]
+- Updated dependencies [6548504]
+- Updated dependencies [75c1a26]
+- Updated dependencies [7650ff1]
+- Updated dependencies [e0f75bb]
+- Updated dependencies [569928f]
+- Updated dependencies [833e390]
+- Updated dependencies [c5b36f7]
+- Updated dependencies [53857e9]
+- Updated dependencies [fdf82ed]
+- Updated dependencies [f923330]
+- Updated dependencies [368840e]
+- Updated dependencies [936814b]
+- Updated dependencies [f06dca9]
+- Updated dependencies [98f0438]
+- Updated dependencies [ba312af]
+- Updated dependencies [d5a386e]
+- Updated dependencies [a57ea5d]
+- Updated dependencies [d5af759]
+- Updated dependencies [5375e2a]
+- Updated dependencies [8d9eb57]
+- Updated dependencies [d774558]
+- Updated dependencies [0183340]
+- Updated dependencies [cc889f4]
+- Updated dependencies [f75ff5b]
+- Updated dependencies [35aec0c]
+- Updated dependencies [5fd6380]
+- Updated dependencies [c44f0d1]
+- Updated dependencies [dee1fb2]
+- Updated dependencies [67fbb6f]
+- Updated dependencies [180452e]
+- Updated dependencies [8675901]
+- Updated dependencies [86baf0b]
+- Updated dependencies [83448ba]
+- Updated dependencies [1f260a7]
+- Updated dependencies [062fe46]
+- Updated dependencies [0497bbf]
+  - @graview/ship@0.1.4
+  - @graview/core@0.1.4
+
 ## 0.1.3
 
 ### Patch Changes

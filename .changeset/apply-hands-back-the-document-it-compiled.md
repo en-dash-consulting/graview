@@ -1,7 +1,0 @@
----
-"@graview/studio": patch
----
-
-The app the studio's `apply()` hands back is the document's. Opened on a document, `apply()` gave back the document the change makes and, beside it, the studio's own TypeScript reading of the declaration as `app` — so `toDocument(studio.apply().app)` still said every act was code (`act-is-code`), and a host that kept the app and read it back lost the document it had just been handed. When the change is said as a document, `app` is now the app that document compiles to, which the compiler remembers as compiled from it: `documentOf(apply().app)` is `apply().document`, and `toDocument(apply().app)` gives it back with no finding and the same `documentHash`. Held for a field added to every kind of five of Graview Cloud's templates, 16 of 16, where all 16 read back as code before; `StudioPlace`'s `onApply` hands a host the same app.
-
-Compatibility: for a studio opened on a document whose change compiles, `apply().app` is `compileDocument(apply().document).app` where it was the studio's reading: its version is the document's, and it carries no `migrations` entry for the change — `migration` and `fills` still say how a stored graph moves. A document that does not compile comes back as `documentFindings` beside the studio's reading, as a change no edit can say does. A studio opened on a TypeScript app is unchanged. The document format, the edit op surface, ops, stored formats, the wire and check codes are unchanged.

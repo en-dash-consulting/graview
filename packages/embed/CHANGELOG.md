@@ -1,5 +1,54 @@
 # @graview/embed
 
+## 0.1.4
+
+### Patch Changes
+
+- cc889f4: A typed app fits wherever an app goes, with no cast. A consumer's TypeScript met four walls that the framework's own code got past with `as never` and `as unknown as GraviewApp<AnySchema>`. `installation.mutations` would not spread into an app's mutations. A typed app was not an app: `GraviewApp<S>` would not widen to `GraviewApp<AnySchema>`, because an act's `apply` and `describe` and a rule's `evaluate` were function-typed properties, checked contravariantly — so the studio's readers (`graphToDeclaration`, `migrationBetween`, `sourceChanges`, `declarationFiles`), `createStoreHandler` and the embed could not be handed one. `schema.definition(kind)` on a schema whose kinds are only `string` was `never`. And an unbound `defineInvariant` handed its rule a `never` subject. Now `apply`, `describe` and `evaluate` are declared as methods, so a typed app and its acts and rules widen; `installation.mutations` spreads into any app's mutations; `definition(kind)` answers the kind's definition, any definition of that kind on `AnySchema` (`DefinitionOfKind`); an unbound rule's subject is a node of its kind (`NodeOfKind` on `AnySchema`), its fields `unknown` until bound; and `reachLens.View` is the generic view it always was, so it registers on any app. The casts are gone from the studio, the store handler, the embed, `@graview/core/testing`, the launcher and the example apps, and type-level tests hold each wall down.
+  
+  Compatibility: types only, nothing at run time changes. Every type is wider than before except one: `apply`, `describe` and `evaluate` lose `readonly` (a method cannot be marked so), so code that reassigned one is now allowed to, where it was refused. `DefinitionOfKind` is a new exported type. A call such as `syncConflictInvariant()` beside a typed schema may now infer `AnySchema` where it inferred the schema, and wants `syncConflictInvariant<typeof schema>()`. The wire, ops, stored formats and check codes are unchanged.
+- 0fb76b7: An embed loads the studio when the studio is turned on, not before. `@graview/embed` imported `StudioPlace` outright, so every hosted page carried the studio — about 110 kB minified, 35 kB gzipped — including an embed mounted with `studio: false`, which never draws it. The studio is now imported with `import()` behind `React.lazy` and `Suspense`, inside the boundary it already drew behind: a product's bundler splits it into a chunk of its own, a page fetches it only when an embed offers the studio, and until it arrives the strip has no studio on it yet (a chunk that fails to load is said by that boundary, like a studio that throws). `scripts/inspect-pack.mjs` now bundles the embed split as a product's bundler would, and holds a new budget, "embed without the studio": what a page loads first, 1,175,514 bytes minified and 329,683 gzipped, budgeted at 1,200,000 / 337,000, which fails if any module of `@graview/studio` is in it. "Every face" — every chunk, studio included — did not fall: the studio now carries `compileDocument` to judge a document by compiling it (about 26 kB minified, 9 kB gzipped), and its chunk is gzipped on its own (about 2 kB and 3 kB more), so it measures 1,285,784 / 365,101 (1,259,216 / 354,049 before) and its budget rises from 1,290,000 / 362,000 to 1,310,000 / 373,000.
+  
+  Compatibility: `mount`'s options and handle are unchanged; the studio's button appears a moment after the embed does, once its chunk arrives, where it appeared with the first render. A bundler that does not split puts the studio back in the one file, as before. `StudioApplied` is still exported as a type. Ops, stored formats, the wire and check codes are unchanged.
+- Updated dependencies [df9932a]
+- Updated dependencies [9de42fe]
+- Updated dependencies [a9c0f2d]
+- Updated dependencies [a814d97]
+- Updated dependencies [75c1a26]
+- Updated dependencies [e0f75bb]
+- Updated dependencies [d496926]
+- Updated dependencies [833e390]
+- Updated dependencies [c5b36f7]
+- Updated dependencies [53857e9]
+- Updated dependencies [fdf82ed]
+- Updated dependencies [be20407]
+- Updated dependencies [f923330]
+- Updated dependencies [936814b]
+- Updated dependencies [98f0438]
+- Updated dependencies [ba312af]
+- Updated dependencies [d5a386e]
+- Updated dependencies [a57ea5d]
+- Updated dependencies [d5af759]
+- Updated dependencies [d774558]
+- Updated dependencies [0183340]
+- Updated dependencies [cc889f4]
+- Updated dependencies [5fd6380]
+- Updated dependencies [dee1fb2]
+- Updated dependencies [67fbb6f]
+- Updated dependencies [6d324a0]
+- Updated dependencies [180452e]
+- Updated dependencies [ba950f3]
+- Updated dependencies [1f260a7]
+- Updated dependencies [062fe46]
+- Updated dependencies [0497bbf]
+  - @graview/core@0.1.4
+  - @graview/studio@0.1.4
+  - @graview/tools@0.1.4
+  - @graview/layout@0.1.4
+  - @graview/react@0.1.4
+  - @graview/primitives@0.1.4
+  - @graview/pages@0.1.4
+
 ## 0.1.3
 
 ### Patch Changes
