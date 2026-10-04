@@ -141,6 +141,17 @@ export interface LiveProtocolOptions<S extends AnySchema> {
    */
   readonly minHostProtocol?: number;
   /**
+   * WHAT A CHANGE CAME THROUGH, WHEN THE CLIENT CLAIMS IT (FR-52). A call
+   * or an undo may carry `via` — `openRemote` sends the one a call was
+   * applied with, as a guest view's `view:<name>` — and this judges it:
+   * handed the socket (or the route's `WireAsked`) and the claim, it
+   * answers the via to record. Asked of every change, with `claimed`
+   * undefined when there is none; answering nothing records the host's
+   * own. Absent, a claim is never read: what a change came through is the
+   * host's word, and a browser could otherwise record its edit as Claude's.
+   */
+  readonly viaOf?: (peer: Pick<LiveSocketState, "seat" | "via">, claimed: string | undefined) => string | undefined;
+  /**
    * THE LOWEST PROTOCOL SERVED (FR-44). A hello on an older one is answered
    * `reload` and nothing else: its calls are refused until it says hello
    * on one served. Absent, every protocol is served.
@@ -249,6 +260,8 @@ interface Change {
   readonly intent: string | undefined;
   readonly batch: unknown;
   readonly base: unknown;
+  /** The via the client claimed, for the host's `viaOf` to judge; never read without one. */
+  readonly claimed: string | undefined;
 }
 
 /** What judging a change came to: a stale write, a refusal, or the ops it landed in the store. */
@@ -262,6 +275,9 @@ type Landing =
       readonly conflicts?: undefined;
       readonly refusal?: undefined;
     };
+
+/** A client's claim of what its change came through: a short string, or none. */
+const claimOfVia = (via: unknown): string | undefined => (typeof via === "string" && via.length > 0 ? via.slice(0, 64) : undefined);
 
 /** For whom an author acts, as a presence says it: the person's id and name, or nothing. */
 const forWhom = (author: Author): Pick<Presence, "onBehalfOf" | "onBehalfOfName"> =>
@@ -643,10 +659,17 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     intent: typeof message.intent === "string" && message.intent.length > 0 ? message.intent : undefined,
     batch: message.batch,
     base: message.t === "call" ? message.base : undefined,
+    claimed: claimOfVia(message.via),
   });
 
+  /** What a change came through: the host's word, or a claim its `viaOf` accepts (FR-52). */
+  const viaFor = (peer: Pick<LiveSocketState, "seat" | "via">, change: Change): string => {
+    const judged = options.viaOf?.(peer, change.claimed);
+    return typeof judged === "string" && judged.length > 0 ? judged : peer.via;
+  };
+
   /** A call or an undo from a socket, past its claim and the host's limit: judged as its seat, exactly as `POST /graview/ops` judges it. */
-  const answer = async (peer: LivePeer, cid: string, change: Change): Promise<LiveReceived> => {
+  const answer = async (peer: LivePeer, cid: string, change: Change, via: string): Promise<LiveReceived> => {
     catchUp(peer);
     const prior = peer.cursor!;
     /*
@@ -654,7 +677,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
      * its own go in the ack. Unless one before it is held back as not
      * durable: then the cursor stays, and they go down after the flush.
      */
-    const landing = await land(peer.seat, peer.via, change, () => {
+    const landing = await land(peer.seat, via, change, () => {
       if (unsaved.length === 0) peer.cursor = wire.lastSeq();
     });
     if (landing.conflicts) {
@@ -822,7 +845,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             say(peer, { t: "busy", cid, retryAfter: Math.max(0, peer.held.until - now) });
             return { cursor: peer.cursor };
           }
-          const limited = await limitOf(peer.seat, peer.via, change, bytesOf(text));
+          const via = viaFor(peer, change);
+          const limited = await limitOf(peer.seat, via, change, bytesOf(text));
           if (limited && "refuse" in limited) {
             delete peer.held;
             say(peer, { t: "refused", cid, reason: "limit", sentence: limited.refuse });
@@ -841,7 +865,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             return { cursor: peer.cursor };
           }
           delete peer.held;
-          return answer(peer, cid, change);
+          return answer(peer, cid, change, via);
         }
         case "here": {
           const told = message.presence;
@@ -873,7 +897,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     },
     async post(text, asked) {
       const said = answering(asked);
-      let body: { calls?: unknown; undo?: unknown; intent?: unknown; batch?: unknown; base?: unknown };
+      let body: { calls?: unknown; undo?: unknown; intent?: unknown; batch?: unknown; base?: unknown; via?: unknown };
       try {
         body = text.length === 0 ? {} : (JSON.parse(text) as typeof body);
       } catch {
@@ -888,7 +912,9 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
         intent: typeof body.intent === "string" && body.intent.length > 0 ? body.intent : undefined,
         batch: body.batch,
         base: undo ? undefined : body.base,
+        claimed: claimOfVia(body.via),
       };
+      const via = viaFor(asked, change);
       // Sent again after its answer was lost — or offered again on a new declaration, or after a reload (FR-43, FR-44, FR-49): only ever the asker's own ops.
       const claim = wire.claim(change.batch, asked.seat);
       if (claim.refusal) return reply(409, { error: claim.refusal.sentence, refused: true, reason: claim.refusal.reason, ...said });
@@ -906,14 +932,14 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
        * change is kept to send again (FR-45); a hard cap is refused, `limit`,
        * and the change is taken back (FR-46); unavailable is 503, kept.
        */
-      const limited = await limitOf(asked.seat, asked.via, change, bytesOf(text));
+      const limited = await limitOf(asked.seat, via, change, bytesOf(text));
       if (limited && "refuse" in limited) return reply(413, { error: limited.refuse, refused: true, reason: "limit", ...said });
       if (limited && "unavailable" in limited) return reply(503, { error: limited.unavailable, refused: true, reason: "unavailable", ...said });
       if (limited) {
         const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
         return reply(429, { error: limited.sentence ?? `The store is busy: send it again in ${retryAfter} ms.`, busy: true, retryAfter }, { "retry-after": String(Math.ceil(retryAfter / 1000)) });
       }
-      const landing = await land(asked.seat, asked.via, change);
+      const landing = await land(asked.seat, via, change);
       // A stale write is a conflict, not a loss (FR-05): theirs and yours, by name, and nothing written.
       if (landing.conflicts) return reply(409, { error: conflictSentence(landing.conflicts), refused: true, conflict: true, conflicts: landing.conflicts, ...said });
       // The policy's own sentence rather than a bare 403, because that sentence is the product.

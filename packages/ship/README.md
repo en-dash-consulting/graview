@@ -88,8 +88,11 @@ but health. Whatever a host asks for rides along: `openRemote({ headers })` send
 every request, and the framework never reads them. What a call came through (`via`: `web`,
 `api`, `mcp:Claude`), recorded on the op, is the host's word too: `viaOf(request, seat)` says
 it, or `SEAT_HEADERS.via` where the seat headers are trusted (`openRemote({ via })` sends it,
-`mcp` and `cli` from the commands). A `via` in a call's body or message is never read; without
-either, a socket's calls are `web` and an HTTP call's `api`. `openRemote(...).settled()` resolves once every call sent
+`mcp` and `cli` from the commands). A `via` in a call's body or message is a claim, never read
+on its own: `openRemote` sends the one a call was applied with (a guest view applies with
+`view:<name>`), and `liveProtocol({ viaOf: (peer, claimed) => … })` lets a host judge it —
+asked of every change, it answers the via to record, and nothing keeps the host's own. Without
+any of these, a socket's calls are `web` and an HTTP call's `api`. `openRemote(...).settled()` resolves once every call sent
 so far has been answered — a browser never waits for it; a host that must report the
 server's verdict before it exits does.
 

@@ -738,7 +738,8 @@ async function opening<S extends AnySchema>(
     return promise;
   };
 
-  type Body = { calls?: readonly MutationCall[]; undo?: readonly string[]; intent?: string; batch?: string; base?: readonly FieldRevision[] };
+  /** `via` is what the call was applied with — a guest view's `view:<name>` — sent as a claim the host may judge (FR-52). */
+  type Body = { calls?: readonly MutationCall[]; undo?: readonly string[]; intent?: string; batch?: string; base?: readonly FieldRevision[]; via?: string };
 
   /*
    * `mine` names the provisional batch this post answers, when the call was
@@ -905,8 +906,16 @@ async function opening<S extends AnySchema>(
     new Promise((resolve, reject) => {
       const cid = mine ?? `send-${++counter}`;
       const message: LiveClientMessage = body.undo
-        ? { t: "undo", cid, batches: body.undo, ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}) }
-        : { t: "call", cid, calls: body.calls ?? [], ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}), ...(body.base?.length ? { base: body.base } : {}) };
+        ? { t: "undo", cid, batches: body.undo, ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}), ...(body.via ? { via: body.via } : {}) }
+        : {
+            t: "call",
+            cid,
+            calls: body.calls ?? [],
+            ...(body.intent ? { intent: body.intent } : {}),
+            ...(body.batch ? { batch: body.batch } : {}),
+            ...(body.base?.length ? { base: body.base } : {}),
+            ...(body.via ? { via: body.via } : {}),
+          };
       waiting.set(cid, { message, ...(mine !== undefined ? { mine } : {}), resolve, reject });
       // Behind calls the host asked to wait: it goes with them.
       if (busy.size > 0) {
@@ -1280,6 +1289,7 @@ async function opening<S extends AnySchema>(
             ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}),
             batch: result.batch,
             ...(base.length > 0 ? { base } : {}),
+            ...(applyOptions?.via ? { via: applyOptions.via } : {}),
           },
           result.batch,
         ).catch((error: unknown) => takeBack(result.batch, error)),
@@ -1320,6 +1330,7 @@ async function opening<S extends AnySchema>(
                 undo: ids.map((id) => batches.get(id) ?? id),
                 ...(undoOptions?.intent ? { intent: undoOptions.intent } : {}),
                 batch: result.batch,
+                ...(undoOptions?.via ? { via: undoOptions.via } : {}),
               },
               result.batch,
             ),
