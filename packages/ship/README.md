@@ -223,6 +223,7 @@ could have named first; `createStoreHandler` does this for the store it opens.
 | `missing` | what the call names is not there: a record, or a batch to take back |
 | `invalid` | the call as asked does not fit: its arguments, the kind, a rule, a call before `hello` |
 | `limit` | the host's hard cap: the call can never succeed as asked, however long the caller waits |
+| `unavailable` | the host takes no changes for a while and cannot say how long — a room read-only while it is checked, a write to storage that failed; the one refusal that is not final |
 
 `openRemote`'s `remote.onRefusal((sentence, refusal) => …)` is handed the reason beside the
 sentence, and `remote.send` throws a `RemoteRefusedError` carrying it. The routes' other
@@ -230,7 +231,7 @@ refusing answers say one too: 401 `forbidden`, 404 `missing`, 400 `invalid`.
 
 **Busy is not refused** (FR-45). A host's `limit` option — on `createStoreHandler`, `serveStore`
 and `liveProtocol` — is asked of every change before it is judged, with the seat, the channel,
-the size in bytes and the calls. It answers nothing, `{ retryAfter }` or `{ refuse }`:
+the size in bytes and the calls. It answers nothing, `{ retryAfter }`, `{ refuse }` or `{ unavailable }`:
 
 - **busy** — `{ retryAfter }` in milliseconds, for a rate or a queue: "not now". The socket says
   `busy` and HTTP answers 429 with `Retry-After`. Nothing is judged and nothing is refused:
@@ -240,6 +241,14 @@ the size in bytes and the calls. It answers nothing, `{ retryAfter }` or `{ refu
 - **refused, `limit`** — `{ refuse }`, a sentence, for a hard cap such as a message over the
   size a host takes: it would be refused however long the client waited, so it is refused now
   and taken back.
+- **refused, `unavailable`** — `{ unavailable }`, a sentence, for a spell with no known end,
+  such as a room read-only while it is checked. The socket says `refused` with the reason
+  `unavailable` and HTTP answers 503 with it. Nothing is judged and nothing is taken back:
+  `openRemote` keeps the change shown and pending, and sends it again after its `backoff`,
+  with every call made behind it, until the host takes it.
+
+`limit` is asked only of a change that has not landed: a call sent again after it did — its
+ack lost with the socket — is answered with the ops it made, whatever the host would say now.
 
 ## The hosted-store contract
 

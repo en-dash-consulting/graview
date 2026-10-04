@@ -126,10 +126,12 @@ export type LiveServerMessage =
   | { readonly t: "ack"; readonly cid: string; readonly seq: number; readonly batch: string; readonly ops: readonly Operation[] }
   /**
    * Refused, in the policy's own sentence, and why as a code a program can
-   * branch on (FR-46): `forbidden`, `missing`, `invalid` or `limit`
-   * (`REFUSAL_REASONS`), with `wouldNeed` — the roles that could — when
-   * the policy knows them. Final: nothing landed, and the client takes the
-   * change back.
+   * branch on (FR-46): `forbidden`, `missing`, `invalid`, `limit` or
+   * `unavailable` (`REFUSAL_REASONS`), with `wouldNeed` — the roles that
+   * could — when the policy knows them. Final, but for `unavailable`:
+   * nothing landed, and the client takes the change back. `unavailable` is
+   * the host taking no changes for a while: the client keeps the change
+   * pending and sends it again, backing off.
    */
   | { readonly t: "refused"; readonly cid: string; readonly sentence: string; readonly reason: RefusalReason; readonly wouldNeed?: readonly string[] }
   /**
@@ -188,8 +190,15 @@ export interface LimitAsked {
  * - `{ refuse }` — REFUSED, reason `limit`: never as asked (over a hard
  *   size cap, more calls in one batch than the host takes). The socket says
  *   `refused` and HTTP answers 413; the client takes the change back.
+ * - `{ unavailable }` — NOT FOR A WHILE, reason `unavailable`: the host
+ *   takes no changes for now and cannot say how long (a room read-only
+ *   while it is checked). The socket says `refused` and HTTP answers 503;
+ *   the client keeps the change pending and sends it again, backing off.
+ *
+ * Asked only of a change that has not landed: a call sent again after it
+ * did is answered with its ops, whatever the host would say now.
  */
-export type LimitAnswer = { readonly retryAfter: number; readonly sentence?: string } | { readonly refuse: string };
+export type LimitAnswer = { readonly retryAfter: number; readonly sentence?: string } | { readonly refuse: string } | { readonly unavailable: string };
 
 /** A host's word on whether a change may be judged now: busy, refused at its limit, or nothing. */
 export type Limit = (asked: LimitAsked) => LimitAnswer | undefined | Promise<LimitAnswer | undefined>;

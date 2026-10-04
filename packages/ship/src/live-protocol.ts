@@ -465,16 +465,6 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     const author = peer.seat;
     const intent = typeof message.intent === "string" && message.intent.length > 0 ? message.intent : undefined;
     catchUp(peer);
-    // A client that lost its socket before the ack sends the call again under the same batch: `claim` says what it made — its own, never somebody else's.
-    const claim = wire.claim(message.batch, author);
-    if (claim.refusal) {
-      say(peer, { t: "refused", cid, ...claim.refusal });
-      return { cursor: peer.cursor! };
-    }
-    if (claim.answered) {
-      say(peer, { t: "ack", cid, seq: claim.answered.at(-1)!.seq, batch: message.batch!, ops: wire.shown(author, claim.answered) });
-      return { cursor: peer.cursor! };
-    }
     const batch = typeof message.batch === "string" && message.batch.length > 0 ? message.batch : mintServed(message.t === "undo" ? "undo" : "batch");
     const calls = message.t === "call" && Array.isArray(message.calls) ? message.calls : [];
     if (message.t === "call") {
@@ -577,6 +567,20 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
            * to wait waits too, whatever the rate says now: the client sends
            * them again in the order it made them, the held one first.
            */
+          /*
+           * SENT AGAIN AFTER IT LANDED: answered with what it made, before the
+           * host is asked anything. A call whose ack was lost is never told
+           * busy, capped or unavailable for a change already made — and only
+           * ever with the asking seat's own ops (`claim`).
+           */
+          const claim = wire.claim(message.batch, peer.seat);
+          if (claim.refusal || claim.answered) {
+            catchUp(peer);
+            if (peer.held?.cid === cid) delete peer.held;
+            if (claim.refusal) say(peer, { t: "refused", cid, ...claim.refusal });
+            else say(peer, { t: "ack", cid, seq: claim.answered!.at(-1)!.seq, batch: message.batch!, ops: wire.shown(peer.seat, claim.answered!) });
+            return { cursor: peer.cursor };
+          }
           const now = Date.now();
           if (peer.held && peer.held.cid !== cid) {
             say(peer, { t: "busy", cid, retryAfter: Math.max(0, peer.held.until - now) });
@@ -594,6 +598,12 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
           if (limited && "refuse" in limited) {
             delete peer.held;
             say(peer, { t: "refused", cid, reason: "limit", sentence: limited.refuse });
+            return { cursor: peer.cursor };
+          }
+          // Not for a while, and no wait to name: refused `unavailable`, which the client keeps and sends again, backing off.
+          if (limited && "unavailable" in limited) {
+            delete peer.held;
+            say(peer, { t: "refused", cid, reason: "unavailable", sentence: limited.unavailable });
             return { cursor: peer.cursor };
           }
           if (limited) {

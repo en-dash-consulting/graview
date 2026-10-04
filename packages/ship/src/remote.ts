@@ -221,7 +221,8 @@ export interface RemoteStore<S extends AnySchema> {
    * The second argument says why as a code a program can branch on
    * (FR-46): `forbidden`, `missing`, `invalid` or `limit`, with `wouldNeed`
    * when the policy knows who could. Busy is never told here: a change the
-   * host asked to wait is kept, and sent again (FR-45).
+   * host asked to wait is kept, and sent again (FR-45) — and so is one
+   * refused `unavailable`, which waits out the spell, backing off.
    */
   onRefusal(listener: (sentence: string, refusal: RemoteRefusal) => void): () => void;
   /**
@@ -369,6 +370,15 @@ class Unreached extends Error {
 /** What a gateway in front of a server says when the server behind it is not there. */
 const AWAY = new Set([502, 503, 504]);
 
+/** A 503 that is the host saying it takes no changes for a while (reason `unavailable`), not a gateway saying it is away. */
+async function unavailableSaid(response: Response): Promise<boolean> {
+  try {
+    return ((await response.clone().json()) as { reason?: unknown }).reason === "unavailable";
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Opens a store from a server and keeps it in step with it.
  *
@@ -433,6 +443,11 @@ async function opening<S extends AnySchema>(
       // A live client whose socket is up is reaching the server, whatever one request met.
       if (!socketReady()) become("offline");
       throw new Unreached(error instanceof Error ? error.message : String(error));
+    }
+    // A host that takes no changes for a while is reached, and says so: not away (FR-46).
+    if (response.status === 503 && (await unavailableSaid(response))) {
+      become("online");
+      return response;
     }
     if (AWAY.has(response.status)) {
       if (!socketReady()) become("offline");
@@ -732,6 +747,8 @@ async function opening<S extends AnySchema>(
    * turn and goes again from there, and the posts behind it wait for it.
    */
   let lane: Promise<unknown> = Promise.resolve();
+  /** How many times in a row the host said it takes no changes for a while: the backoff's attempt. */
+  let unavailableTries = 0;
   const post = (body: Body, mine?: string): Promise<{ ops: readonly Operation[]; batch?: string }> => {
     const turn = lane.then(() => posted(body, mine));
     lane = turn.catch(() => {});
@@ -764,6 +781,17 @@ async function opening<S extends AnySchema>(
         continue;
       }
       answer = (await response.json().catch(() => ({}))) as Answer;
+      if (response.status === 503 && answer.reason === "unavailable" && !closed) {
+        /*
+         * NOT FOR A WHILE, NOT REFUSED (FR-46): the host takes no changes
+         * now and cannot say how long. The change stays shown and pending,
+         * and goes again after a backoff, as a reconnect would.
+         */
+        await new Promise((later) => setTimeout(later, backoffFor(options.backoff, unavailableTries++)));
+        if (socketReady()) return viaSocket(body, mine);
+        continue;
+      }
+      unavailableTries = 0;
       if (response.status !== 429 || closed) break;
       /*
        * BUSY, NOT REFUSED (FR-45): the host asked for it again later. The
@@ -919,6 +947,7 @@ async function opening<S extends AnySchema>(
           return;
         }
         waiting.delete(message.cid);
+        unavailableTries = 0;
         if (waiter.mine !== undefined) {
           batches.set(waiter.mine, message.batch);
           settle(waiter.mine);
@@ -931,6 +960,11 @@ async function opening<S extends AnySchema>(
       case "conflict": {
         const waiter = waiting.get(message.cid);
         if (!waiter) return;
+        // Not for a while, and not final (FR-46): kept, and sent again after a backoff, with every call made behind it.
+        if (message.t === "refused" && message.reason === "unavailable") {
+          hold(message.cid, backoffFor(options.backoff, unavailableTries++));
+          return;
+        }
         waiting.delete(message.cid);
         waiter.reject(
           message.t === "conflict"

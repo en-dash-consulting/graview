@@ -85,7 +85,7 @@ import type { GraphSnapshot } from "./snapshot.js";
  */
 export const WIRE = [
   { method: "GET", path: "/graview/state", says: "the graph, the log, the stored version and the modules on" },
-  { method: "POST", path: "/graview/ops", says: "calls in, the ops they produced out — or `undo`, batches to take back; a `batch` the asking seat already landed is answered with the ops it made, and one that is somebody else's or not `batch:<tag>:<n>` is refused `invalid`; 409 with the policy's sentence and a `reason` when refused, 429 with `Retry-After` when the host is busy" },
+  { method: "POST", path: "/graview/ops", says: "calls in, the ops they produced out — or `undo`, batches to take back; a `batch` the asking seat already landed is answered with the ops it made, and one that is somebody else's or not `batch:<tag>:<n>` is refused `invalid`; 409 with the policy's sentence and a `reason` when refused, 429 with `Retry-After` when the host is busy, 503 with the reason `unavailable` when it takes no changes for a while" },
   { method: "GET", path: "/graview/since", says: "the ops appended after ?seq=N — everyone else's" },
   { method: "GET", path: "/graview/health", says: "ship's own report, plus where the data is" },
   { method: "GET", path: "/graview/export", says: "the whole store as one bundle, the way out" },
@@ -147,7 +147,9 @@ interface HandlerOptions<S extends AnySchema> {
    * `{ retryAfter }` is BUSY: the socket says `busy`, HTTP answers 429 with
    * `Retry-After`, and the client sends the change again after the wait.
    * `{ refuse }` is a hard cap: refused with reason `limit` (413 over
-   * HTTP), and the client takes the change back.
+   * HTTP), and the client takes the change back. `{ unavailable }` is a
+   * spell with no known end: refused `unavailable` (503 over HTTP), and
+   * the client keeps the change and sends it again, backing off.
    */
   readonly limit?: Limit;
   /**
@@ -603,6 +605,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
         ? await options.limit({ seat: author, via, t: body.undo ? "undo" : "call", bytes: bytesOf(text), calls: body.undo ? [] : calls })
         : undefined;
       if (limited && "refuse" in limited) return send(413, { error: limited.refuse, refused: true, reason: "limit", ...answering });
+      if (limited && "unavailable" in limited) return send(503, { error: limited.unavailable, refused: true, reason: "unavailable", ...answering });
       if (limited) {
         const retryAfter = Math.max(0, Math.ceil(limited.retryAfter));
         return send(

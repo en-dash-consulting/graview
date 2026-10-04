@@ -14,13 +14,17 @@ import { PermissionDeniedError } from "./permissions/types.js";
  *   missing    what the call names is not there: a record, or a batch to take back
  *   invalid    the call as asked does not fit: its arguments, the kind, a rule, the order things happened in
  *   limit      the host's hard cap: the call can never succeed as asked, however long the caller waits
+ *   unavailable  the host takes no changes for a while — a room read-only while it is checked, storage that failed to write — and does not know for how long
  *
- * `limit` is the host's to say; nothing in the store says it. It is not
- * `busy`: busy is "not now", and the client keeps the change and sends it
- * again (FR-45). A refusal of any reason is final, and the change is taken
- * back.
+ * `limit` and `unavailable` are the host's to say; nothing in the store
+ * says them. Neither is `busy`: busy is "not now, after `retryAfter`", and
+ * the client keeps the change and sends it again (FR-45). `unavailable` is
+ * the one refusal that is not final: nothing was judged, and the client
+ * keeps the change pending and sends it again, backing off as it does to
+ * reconnect, until the host takes it. A refusal of any other reason is
+ * final, and the change is taken back.
  */
-export const REFUSAL_REASONS = ["forbidden", "missing", "invalid", "limit"] as const;
+export const REFUSAL_REASONS = ["forbidden", "missing", "invalid", "limit", "unavailable"] as const;
 
 export type RefusalReason = (typeof REFUSAL_REASONS)[number];
 
