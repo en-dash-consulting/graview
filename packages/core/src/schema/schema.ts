@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "./zod.js";
 import type {
   AnyNodeDefinition,
   EdgeDeclaration,
@@ -117,11 +117,11 @@ export function createSchema<const Defs extends readonly AnyNodeDefinition[]>(
     });
   }
 
-  const nodeSchemas = new Map<string, z.ZodType>();
+  const nodeSchemas = new Map<string, z.ZodMiniType>();
   for (const def of defs) {
     nodeSchemas.set(
       def.kind,
-      def.fields.extend({ id: z.string().min(1), kind: z.literal(def.kind) }),
+      z.extend(def.fields as unknown as z.ZodMiniObject, { id: z.string().check(z.minLength(1)), kind: z.literal(def.kind) }),
     );
   }
 

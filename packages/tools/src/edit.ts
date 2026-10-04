@@ -5,6 +5,7 @@ import {
   type AnySchema,
   type ArgShape,
   type Store,
+  defOf,
 } from "@graview/core";
 import type { OpenParameter } from "./types.js";
 
@@ -147,6 +148,6 @@ export function editableFields<S extends AnySchema>(
 
 /** Whether an argument may be left out, so it does not count as unanswered. */
 function optional(schema: unknown): boolean {
-  const type = (schema as { _def?: { type?: string } })?._def?.type;
+  const type = defOf(schema)?.type;
   return type === "optional" || type === "default" || type === "nullable";
 }

@@ -174,6 +174,7 @@ export async function measureHostedPage(repo, entry = HOSTED_PAGE_ENTRY) {
     upFront: { minified, zod, chunks: eager.size, packages: upFront, modules: byModule(eager) },
     whenAsked: { minified: bytes(lazy), chunks: lazy.length, packages: byPackage(lazy), doors },
     budget: HOSTED_PAGE_BUDGET,
+    metafile: result.metafile,
     over: minified > HOSTED_PAGE_BUDGET.minified || zod > HOSTED_PAGE_BUDGET.zod,
   };
 }

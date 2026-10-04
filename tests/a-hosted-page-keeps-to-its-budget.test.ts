@@ -13,7 +13,7 @@ import { HOSTED_PAGE_BUDGET, measureHostedPage, packageOf } from "../scripts/lib
  */
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 type Measured = {
-  upFront: { minified: number; zod: number; packages: Record<string, number> };
+  upFront: { minified: number; zod: number; packages: Record<string, number>; modules: Record<string, number> };
   whenAsked: { minified: number; packages: Record<string, number>; doors: { module: string; minified: number }[] };
   over: boolean;
 };
@@ -31,6 +31,11 @@ describe("a hosted page", () => {
   it("carries no studio, up front or when asked: the shell stubs it out", () => {
     expect(Object.keys(measured.upFront.packages)).not.toContain("@graview/studio");
     expect(Object.keys(measured.whenAsked.packages)).not.toContain("@graview/studio");
+  });
+
+  it("loads no classic zod: the framework builds a document's schemas in zod/mini", () => {
+    const modules = Object.keys(measured.upFront.modules);
+    expect(modules.filter((module) => module.startsWith("zod/v4/classic/"))).toEqual([]);
   });
 
   it("names the package each input of the metafile belongs to", () => {

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "./zod.js";
 import { takesAnId } from "../mutations/define-mutation.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
 import type { AnySchema } from "./schema.js";
@@ -11,16 +11,8 @@ export type JsonSchema = Record<string, unknown>;
  * validation, TypeScript inference, and the JSON Schema an agent tool
  * definition needs. Nothing is written twice, so nothing drifts.
  */
-export function toJsonSchema(schema: z.ZodType): JsonSchema {
-  const convert = (z as { toJSONSchema?: (s: z.ZodType, o?: unknown) => JsonSchema })
-    .toJSONSchema;
-  if (typeof convert !== "function") {
-    throw new Error(
-      "This Zod build has no toJSONSchema(). Upgrade to zod >= 3.25 / 4.x, " +
-        "or pass a JSON Schema explicitly.",
-    );
-  }
-  return convert(schema, { io: "input", unrepresentable: "any", override: formatsByName });
+export function toJsonSchema(schema: unknown): JsonSchema {
+  return z.toJSONSchema(schema as z.ZodMiniType, { io: "input", unrepresentable: "any", override: formatsByName as never }) as JsonSchema;
 }
 
 /** zod's names for string formats that JSON Schema calls something else; the rest are the same word. */
@@ -52,8 +44,8 @@ function formatsByName(ctx: { readonly zodSchema: unknown; readonly jsonSchema: 
 /** JSON Schema for one node kind, including its id and kind discriminator. */
 export function nodeJsonSchema(definition: AnyNodeDefinition): JsonSchema {
   return toJsonSchema(
-    definition.fields.extend({
-      id: z.string().min(1),
+    z.extend(definition.fields as unknown as z.ZodMiniObject, {
+      id: z.string().check(z.minLength(1)),
       kind: z.literal(definition.kind),
     }),
   );
@@ -77,7 +69,7 @@ export function mutationToolSchema(mutation: {
   name: string;
   title?: string;
   description?: string;
-  input: z.ZodType;
+  input: unknown;
   creates?: readonly string[];
 }): MutationToolSchema {
   const refs = nodeRefArgs(mutation.input);

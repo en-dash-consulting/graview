@@ -15,6 +15,14 @@
  * keep in step.
  */
 export { z } from "zod";
+/*
+ * A field's definition and description, read the way the framework reads
+ * them: through `_zod.def` and zod's registry, so a classic schema a product
+ * wrote and a mini one the framework built (a compiled document's) read
+ * alike (FR-57).
+ */
+export { defOf, descriptionOf } from "./schema/zod.js";
+export type { ZodDef } from "./schema/zod.js";
 
 // Schema — the single declaration everything else derives from.
 export { defineNode, isCurrent, labelOf, describeNode, tellApart } from "./schema/define-node.js";

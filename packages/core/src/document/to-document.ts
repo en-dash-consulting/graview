@@ -1,4 +1,5 @@
 import type { AnySchema, GraviewApp, InvariantDefinition, Policy } from "../index.js";
+import { descriptionOf } from "../schema/zod.js";
 import { error, warning, type Finding } from "./findings.js";
 import { FORMAT, FORMAT_VERSION, type FieldSpec, type GraviewDocument, type KindSpec, type RuleSpec } from "./schema.js";
 
@@ -52,7 +53,7 @@ function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { readonly why
     def = defOf(def["innerType"]);
   }
   if (!def) return { why: "it is not a zod field" };
-  const description = (schema as { description?: string }).description;
+  const description = descriptionOf(schema);
   const base = { ...(required ? { required: true } : {}), ...(fallback !== undefined ? { default: fallback } : {}), ...(description ? { description } : {}) };
   const checks = ((def["checks"] as readonly ZodLike[] | undefined) ?? []).map((check) => defOf(check));
   switch (def["type"]) {

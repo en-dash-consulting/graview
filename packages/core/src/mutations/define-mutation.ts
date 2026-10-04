@@ -35,7 +35,7 @@ export interface CompiledMutation {
 }
 
 /** Whether an act takes the framework's `id` argument: it creates, and has no `id` of its own. */
-export function takesAnId(definition: Pick<AnyMutationDefinition, "creates" | "input">): boolean {
+export function takesAnId(definition: { readonly creates?: readonly string[] | undefined; readonly input: unknown }): boolean {
   if (!definition.creates?.length) return false;
   const shape = (definition.input as { shape?: Record<string, unknown> }).shape;
   return shape === undefined || !("id" in shape);
