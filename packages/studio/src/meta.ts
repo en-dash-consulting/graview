@@ -293,6 +293,16 @@ const slug = (text: string): string =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "") || "thing";
+/*
+ * A NAME ALREADY WRITTEN AS ONE IS KEPT. A relation may be one camelCase
+ * word ("tendedBy") and a field always is ("lastDone"): folding them to
+ * lower case made a different relation from the one a document — and
+ * editDocument, and every builder that writes documents — names with the
+ * same words. Words that are not yet a name are still made into one.
+ */
+const RELATION_NAME = /^(?:[a-z][a-z0-9]*(?:-[a-z0-9]+)*|[a-z][A-Za-z0-9]*)$/;
+const FIELD_NAME = /^[a-z][A-Za-z0-9]*$/;
+const named = (text: string, legal: RegExp): string => (legal.test(text.trim()) ? text.trim() : slug(text));
 
 const act = <I extends z.ZodType>(name: string, spec: Spec<I>): AnyMutationDefinition<StudioSchema> =>
   ({ ...spec, name }) as AnyMutationDefinition<StudioSchema>;
@@ -376,7 +386,7 @@ export const addField = act("add-field", {
   describe: (args, graph) => `Add the field ${args.label} to ${(graph.getNode(args.kind) as { label?: string } | undefined)?.label ?? args.kind}`,
   apply(ctx, args) {
     const kind = nameOf(ctx, args.kind);
-    const name = slug(args.label);
+    const name = named(args.label, FIELD_NAME);
     const id = `field:${kind}.${name}`;
     ctx.addNode({
       id,
@@ -475,7 +485,7 @@ export const addEdge = act("add-edge", {
     `Add the edge ${args.label} from ${(graph.getNode(args.kind) as { label?: string } | undefined)?.label ?? args.kind} to ${(graph.getNode(args.to) as { label?: string } | undefined)?.label ?? args.to}`,
   apply(ctx, args) {
     const kind = nameOf(ctx, args.kind);
-    const name = slug(args.label);
+    const name = named(args.label, RELATION_NAME);
     const id = `edge:${kind}.${name}`;
     ctx.addNode({
       id,

@@ -1,4 +1,4 @@
-import { canonicalize, editDocument, error, parseExpr, printExpr, type DocumentEdit, type EditOutcome, type Finding, type GraviewDocument } from "@graview/core/document";
+import { canonicalize, editDocument, error, parseExpr, printExpr, renameIn, type DeclaredKinds, type DocumentEdit, type EditOutcome, type Finding, type GraviewDocument } from "@graview/core/document";
 import { label, Read, type Node } from "./source.js";
 import type { Reading } from "./to-declaration.js";
 
@@ -248,6 +248,36 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
     if (changed.length > 0) findings.push(unsaid(`acts.${label(act)}`, `the act ${label(act)} changed (${changed.join(", ")}); an edit adds or removes an act whole — remove it and add it again as it should be`));
   }
 
+  /** Every field the studio renamed, by the names it had. */
+  const fieldRenames = [...fieldsAfter].flatMap(([id, field]) => {
+    const old = fieldsBefore.get(id);
+    const kind = old ? ownerOf(was, old) : undefined;
+    return old && kind && label(old) !== label(field) && ownerOf(now, field)?.id === kind.id ? [{ what: "field" as const, kind: label(kind), from: label(old), to: label(field) }] : [];
+  });
+  /** A rule's words as the studio's renames alone would leave them — its rename-field's own walk, over the declaration it opened on. */
+  const renamedRule = (rule: Node, over: string): { require?: string | undefined; when?: string | undefined; says?: string | undefined } => {
+    const text = { require: str(rule, "require"), when: str(rule, "when"), says: str(rule, "says") };
+    if (fieldRenames.length === 0) return text;
+    const kinds: Record<string, { fields: string[]; edges: Record<string, string[]> }> = {};
+    for (const kind of was.ofKind("kind")) {
+      kinds[label(kind)] = {
+        fields: was.in(kind.id, "of").map(label),
+        edges: Object.fromEntries(was.in(kind.id, "from-kind").map((edge) => [label(edge), was.out(edge.id, "to-kind").map(label)])),
+      };
+    }
+    for (const change of fieldRenames) {
+      for (const key of ["require", "when", "says"] as const) {
+        const before = text[key];
+        if (before === undefined) continue;
+        const after = renameIn(kinds as DeclaredKinds, over, key === "says" ? { template: before } : { expression: before }, change);
+        if (after !== undefined) text[key] = after;
+      }
+      const fields = kinds[change.kind]?.fields;
+      const at = fields?.indexOf(change.from) ?? -1;
+      if (fields && at >= 0) fields[at] = change.to;
+    }
+    return text;
+  };
   const rulesBefore = new Map(was.ofKind("rule").map((rule) => [rule.id, rule]));
   const rulesAfter = new Map(now.ofKind("rule").map((rule) => [rule.id, rule]));
   const repairsOf = (read: Read, rule: Node) => [...read.out(rule.id, "repairs").map(label), ...(strings(rule, "derivedRepairs") ?? [])];
@@ -284,8 +314,18 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
      * rule given again whole, with the document's own repairs kept.
      */
     const wanted = { require: str(rule, "require"), when: str(rule, "when"), says: str(rule, "says") };
-    const moved = (key: "require" | "when", text: string | undefined) => printed(text) !== printed(str(old, key)) && printed(text) !== printed(kept[key]);
-    const judged = moved("require", wanted.require) || moved("when", wanted.when) || (wanted.says !== str(old, "says") && wanted.says !== kept.says);
+    /*
+     * AGAINST THE RULE AS THE RENAMES LEFT IT. editDocument's rename
+     * rewrites the prose around a field's name as well as the name ("was
+     * due {due}" becomes "was renamed {renamed}") and the act named for it
+     * (`set-budget` becomes `set-renamed`); the studio's rewrites only the
+     * name. So the studio's copy is compared with the old rule put through
+     * the studio's own renames, and a rule only a rename touched is the
+     * document's — not said again in the studio's narrower words.
+     */
+    const renamed = renamedRule(old, overOf(was, old));
+    const moved = (key: "require" | "when", text: string | undefined) => printed(text) !== printed(renamed[key]) && printed(text) !== printed(kept[key]);
+    const judged = moved("require", wanted.require) || moved("when", wanted.when) || (wanted.says !== renamed.says && wanted.says !== kept.says);
     const worded = str(rule, "title") !== str(old, "title") || str(rule, "description") !== str(old, "description");
     const repairs = repairsOf(now, rule);
     const repaired = !same([...repairsOf(was, old)].sort(), [...repairs].sort());
@@ -299,8 +339,17 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       findings.push(unsaid(`rules.${name}`, `the rule ${name} no longer says what must hold; a document's rule is judged in words`));
       continue;
     }
-    const keptRepairs = (kept.repairs ?? []).filter((repair) => repairs.includes(repair.act));
-    const newRepairs = repairs.filter((act) => !keptRepairs.some((repair) => repair.act === act)).map((act) => ({ act }));
+    /*
+     * A REPAIR KEEPS THE DOCUMENT'S WORDS FOR IT — its label, and the name
+     * the edits so far gave its act. The written repairs and the edited
+     * ones are the same list, one for one, so an act the studio still
+     * calls `set-budget` is kept under the name it has now, `set-cap`; an
+     * act the studio added is given bare.
+     */
+    const written = document.rules?.[name]?.repairs ?? [];
+    const edited = kept.repairs?.length === written.length ? kept.repairs : written;
+    const keptRepairs = written.flatMap((repair, at) => (repairs.includes(repair.act) ? [edited[at] ?? repair] : []));
+    const newRepairs = repairs.filter((act) => !written.some((repair) => repair.act === act)).map((act) => ({ act }));
     const allRepairs = [...keptRepairs, ...newRepairs];
     const { repairs: _repairs, when: _when, says: _says, ...rest } = kept;
     edits.push({

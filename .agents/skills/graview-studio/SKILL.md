@@ -52,11 +52,13 @@ any other.
    change as `editDocument`'s own ops (`add-field`, `rename-field`,
    `set-required`, `set-options`, `add-relation`, `remove-act`, `add-rule`
    …); `studio.document()` is the opened document with them applied, every
-   act, label, brand and money field untouched; `apply()` adds that
-   `document`, for the host to compile and keep. A change no op says yet —
-   a relation's cardinality, a lifecycle, a grant, retyping a field that
-   is money or has a unit — comes back as `documentFindings`, one sentence
-   each, and no document. Field types are the document's eleven.
+   act, label, brand and money field untouched. `check()`, `would()` and
+   `apply()` judge by compiling that document, and `apply()` hands back
+   `document` with `app` compiled from it. A copied app, or one with its
+   policy swapped, says it: `createStudio(app, { document })`; without one,
+   `whyNoDocument()` says why. A change no op says yet — a relation's
+   cardinality, a lifecycle, a grant, retyping a money field — comes back
+   as `documentFindings`, one sentence each, and no document.
 
 4. **Write it back.** `studio.files({ schemaVar: "gardenSchema" })` is
    `src/domain/schema.ts`, `mutations.ts`, `invariants.ts` and, with roles,

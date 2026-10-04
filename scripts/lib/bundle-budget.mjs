@@ -10,9 +10,17 @@
  *
  * A budget is the size it was when it was set, with room for ordinary
  * growth. Raising one is a decision, said in the changeset that raises it.
+ *
+ * WHAT A PAGE LOADS FIRST, AND WHAT IT LOADS IN ALL. The bundle is split
+ * where the code says `import()`, as a product's bundler splits it: `load:
+ * "first"` measures the chunks a page loads before anything is turned on
+ * (the entry and what it imports outright), `load: "all"` every chunk. A
+ * budget that `lacks` a package fails when any module of it is in what it
+ * measures — so "the studio is not in a page that does not turn it on" is
+ * a claim CI holds, not a size that happens to be small.
  */
 import { createRequire } from "node:module";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { gzipSync } from "node:zlib";
 import { graviewSources } from "./graview-sources.mjs";
 
@@ -35,6 +43,21 @@ export const BUDGETS = [
      */
     minified: 950_000,
     gzipped: 252_000,
+    load: "first",
+  },
+  {
+    name: "embed without the studio",
+    entry: `import { mount } from "@graview/embed"; globalThis.mount = mount;`,
+    /*
+     * Every face, as a page with `studio: false` loads it: the studio is
+     * imported when it is turned on, and not before (it was about 104 kB
+     * minified of every embed, whether it was offered or not). Set at
+     * 1_175_514 / 329_683 measured, on zod 4.6.
+     */
+    minified: 1_200_000,
+    gzipped: 337_000,
+    load: "first",
+    lacks: ["@graview/studio"],
   },
   {
     name: "every face",
@@ -47,42 +70,79 @@ export const BUDGETS = [
      *
      * Raised again from 1_150_000 / 330_000 with zod 4.6, for the same reason
      * as the pages face: about 130 kB minified, 30 kB gzipped, of zod's.
+     *
+     * And again when a studio opened on a document came to be judged by
+     * compiling it (FR-54): the studio now carries `compileDocument`, about
+     * 26 kB minified and 9 kB gzipped; and since the studio became a chunk of
+     * its own, loaded when it is turned on, its chunk is gzipped on its own —
+     * about 2 kB and 3 kB more. Measured at 1_285_784 / 365_101 (from
+     * 1_259_216 / 354_049 before), so raised from 1_290_000 / 362_000. What
+     * a page without the studio loads fell by about 110 kB: the budget above.
      */
-    minified: 1_290_000,
-    gzipped: 362_000,
+    minified: 1_310_000,
+    gzipped: 373_000,
+    load: "all",
   },
 ];
 
 /** The host's own: a page has one React, and the embed is not it. */
 const HOSTS_OWN = ["react", "react-dom", "react/jsx-runtime", "react-dom/client"];
 
-/** One entry, bundled as a product would bundle it. */
-export async function bundleSize(repo, entry) {
+/** One entry, bundled and split as a product would bundle it: its size, and the packages in it. */
+export async function bundleSize(repo, entry, load = "all") {
   const require = createRequire(join(repo, "package.json"));
   const esbuild = require("esbuild");
   const result = await esbuild.build({
     stdin: { contents: entry, resolveDir: join(repo, "packages", "embed"), loader: "js" },
     bundle: true,
+    splitting: true,
+    outdir: "out",
     minify: true,
     format: "esm",
     platform: "browser",
     external: HOSTS_OWN,
     define: { "process.env.NODE_ENV": '"production"' },
     plugins: [graviewSources(repo)],
+    metafile: true,
     write: false,
     logLevel: "silent",
   });
-  const bytes = result.outputFiles[0].contents;
-  return { minified: bytes.length, gzipped: gzipSync(bytes).length };
+  const outputs = result.metafile.outputs;
+  const name = (path) => relative(join(repo, "out"), join(repo, path));
+  const entryChunk = Object.keys(outputs).find((path) => outputs[path].entryPoint !== undefined);
+  // What a page loads first: the entry, and every chunk it imports outright, never one it imports when asked.
+  const loaded = new Set();
+  const visit = (path) => {
+    if (loaded.has(path)) return;
+    loaded.add(path);
+    for (const one of outputs[path].imports) if (one.kind === "import-statement" && outputs[one.path]) visit(one.path);
+  };
+  if (load === "first") visit(entryChunk);
+  else for (const path of Object.keys(outputs)) loaded.add(path);
+  const files = result.outputFiles.filter((file) => [...loaded].some((path) => name(path) === relative(join(repo, "out"), file.path)));
+  const packages = new Set();
+  for (const path of loaded) {
+    for (const input of Object.keys(outputs[path].inputs)) {
+      const found = input.match(/(?:^|\/)packages\/([^/]+)\/src\//);
+      if (found) packages.add(`@graview/${found[1]}`);
+    }
+  }
+  return {
+    minified: files.reduce((sum, file) => sum + file.contents.length, 0),
+    gzipped: files.reduce((sum, file) => sum + gzipSync(file.contents).length, 0),
+    chunks: files.length,
+    packages: [...packages].sort(),
+  };
 }
 
-/** Every budget, measured: what it is, what it may be, and whether it is over. */
+/** Every budget, measured: what it is, what it may be, what it carries that it must not, and whether it is over. */
 export async function measureBudgets(repo, budgets = BUDGETS) {
   const measured = [];
   for (const budget of budgets) {
-    const size = await bundleSize(repo, budget.entry);
-    const over = size.minified > budget.minified || size.gzipped > budget.gzipped;
-    measured.push({ name: budget.name, ...size, budget: { minified: budget.minified, gzipped: budget.gzipped }, over });
+    const { packages, ...size } = await bundleSize(repo, budget.entry, budget.load ?? "all");
+    const carries = (budget.lacks ?? []).filter((name) => packages.includes(name));
+    const over = size.minified > budget.minified || size.gzipped > budget.gzipped || carries.length > 0;
+    measured.push({ name: budget.name, load: budget.load ?? "all", ...size, budget: { minified: budget.minified, gzipped: budget.gzipped }, carries, over });
   }
   return measured;
 }
