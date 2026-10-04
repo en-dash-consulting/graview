@@ -52,8 +52,14 @@ import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LimitAnswer, typ
  * hibernating host can promise.
  */
 export interface LiveSocketState {
-  /** Who this socket is: read once, from its upgrade, by the host's `seatOf`. */
-  readonly seat: Principal;
+  /**
+   * Who this socket is: read once, from its upgrade, by the host's `seatOf`
+   * — the principal itself, or a host's key for it (a string), which the
+   * protocol's `seatOf` resolves on every message. A key keeps the state
+   * small: a seat with fifty roles is most of a Durable Object's 2,048-byte
+   * attachment on its own.
+   */
+  readonly seat: Principal | string;
   /** What its calls come through, recorded on every op they make: the host's word, never the client's (FR-52). */
   readonly via: string;
   /** The last seq this socket has been sent. Absent until it says hello: a call before that is refused. */
@@ -80,6 +86,20 @@ export interface LiveSocketState {
    */
   held?: { readonly cid: string; readonly until: number };
 }
+
+/**
+ * A SOCKET AS A HOST'S JUDGEMENT IS HANDED IT (`build`, `viaOf`): its
+ * seat resolved to the principal, its channel, and the host's build it
+ * was opened under.
+ */
+export interface ServedSocket {
+  readonly seat: Principal;
+  readonly via: string;
+  readonly hostBuild?: string;
+}
+
+/** The longest `cid` a socket's call or undo may name: it is kept in `held` while the call is busy. */
+const MAX_CID = 64;
 
 /** A socket as the protocol is handed it: its state, and a way to send it text. */
 export interface LivePeer extends LiveSocketState {
@@ -130,7 +150,7 @@ export interface LiveProtocolOptions<S extends AnySchema> {
    * { build })`) is welcomed with that. A route answers with its request's
    * `build`, else this.
    */
-  readonly build?: string | ((peer: Pick<LiveSocketState, "seat" | "via" | "hostBuild">) => string | undefined);
+  readonly build?: string | ((peer: ServedSocket) => string | undefined);
   /**
    * THE LOWEST HOST PROTOCOL SERVED (FR-44): the host's own number for its
    * half of the wire — its routing, its auth, its shell — beside ship's
@@ -150,7 +170,15 @@ export interface LiveProtocolOptions<S extends AnySchema> {
    * own. Absent, a claim is never read: what a change came through is the
    * host's word, and a browser could otherwise record its edit as Claude's.
    */
-  readonly viaOf?: (peer: Pick<LiveSocketState, "seat" | "via">, claimed: string | undefined) => string | undefined;
+  readonly viaOf?: (peer: ServedSocket, claimed: string | undefined) => string | undefined;
+  /**
+   * THE SEAT A HOST'S KEY NAMES. A socket opened with a key —
+   * `open("user:6b3f…", "web")` — keeps only the key in its state, and is
+   * judged on every message as the principal this answers. Answering
+   * nothing, the socket is told its seat is no longer known and is served
+   * nothing more. Called at most once per key in one `publish` or `tell`.
+   */
+  readonly seatOf?: (key: string) => Principal | undefined;
   /**
    * THE LOWEST PROTOCOL SERVED (FR-44). A hello on an older one is answered
    * `reload` and nothing else: its calls are refused until it says hello
@@ -172,7 +200,7 @@ export interface LiveProtocol<S extends AnySchema> {
    * cursor until it says hello — and the host's `build` for this socket,
    * when the host learns it per upgrade.
    */
-  open(seat: Principal, via: string, options?: { readonly build?: string }): LiveSocketState;
+  open(seat: Principal | string, via: string, options?: { readonly build?: string }): LiveSocketState;
   /**
    * Hand it one message the client sent. It answers down `peer.send`,
    * moves `peer.cursor` (and `peer.participant`) as it goes, and says what
@@ -606,19 +634,24 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
   const unsavedIn = (ops: readonly Operation[]): boolean => unsaved.length > 0 && ops.some((op) => unsaved.some((one) => one.id === op.id));
   const UNSAVED = "Your change could not be saved just now. It is kept, and sent again until it is.";
 
+  /** The principal a socket is: its seat, or what the host's `seatOf` says its key names. */
+  const principalOf = (peer: Pick<LiveSocketState, "seat">): Principal | undefined => (typeof peer.seat === "string" ? options.seatOf?.(peer.seat) : peer.seat);
+
   /** The ops after this socket's cursor up to `last`, down it now, as its seat sees them. */
-  const sendUpTo = (peer: LivePeer, last: number, ops?: readonly Operation[]): void => {
+  const sendUpTo = (peer: LivePeer, last: number, ops?: readonly Operation[], known?: Principal): void => {
     if (peer.cursor === undefined || peer.cursor >= last) return;
+    const seat = known ?? principalOf(peer);
+    if (!seat) return;
     const from = peer.cursor + 1;
     // The ops handed in, when they are the whole of what this peer is missing; the log otherwise.
     const after = (ops && ops.length > 0 && ops[0]!.seq <= from && ops.at(-1)!.seq >= last ? ops.filter((op) => op.seq >= from) : store.log.opsFrom(from)).filter((op) => op.seq <= last);
     peer.cursor = last;
-    if (after.length > 0) say(peer, { t: "ops", seq: last, ops: wire.shown(peer.seat, after) });
+    if (after.length > 0) say(peer, { t: "ops", seq: last, ops: wire.shown(seat, after) });
   };
   /** Every op this socket has not been sent, down it now, as its seat sees them — up to the first that is not durable. */
-  const catchUp = (peer: LivePeer, ops?: readonly Operation[]): void => {
+  const catchUp = (peer: LivePeer, ops?: readonly Operation[], known?: Principal): void => {
     const held = unsaved[0]?.seq;
-    sendUpTo(peer, held === undefined ? wire.lastSeq() : Math.min(wire.lastSeq(), held - 1), ops);
+    sendUpTo(peer, held === undefined ? wire.lastSeq() : Math.min(wire.lastSeq(), held - 1), ops, known);
   };
 
   /** What the host's `limit` says of a change, before it is judged; nothing when it has none. */
@@ -663,21 +696,21 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
   });
 
   /** What a change came through: the host's word, or a claim its `viaOf` accepts (FR-52). */
-  const viaFor = (peer: Pick<LiveSocketState, "seat" | "via">, change: Change): string => {
+  const viaFor = (peer: ServedSocket, change: Change): string => {
     const judged = options.viaOf?.(peer, change.claimed);
     return typeof judged === "string" && judged.length > 0 ? judged : peer.via;
   };
 
   /** A call or an undo from a socket, past its claim and the host's limit: judged as its seat, exactly as `POST /graview/ops` judges it. */
-  const answer = async (peer: LivePeer, cid: string, change: Change, via: string): Promise<LiveReceived> => {
-    catchUp(peer);
+  const answer = async (peer: LivePeer, seat: Principal, cid: string, change: Change, via: string): Promise<LiveReceived> => {
+    catchUp(peer, undefined, seat);
     const prior = peer.cursor!;
     /*
      * Every op before this call's went down this socket before it landed;
      * its own go in the ack. Unless one before it is held back as not
      * durable: then the cursor stays, and they go down after the flush.
      */
-    const landing = await land(peer.seat, via, change, () => {
+    const landing = await land(seat, via, change, () => {
       if (unsaved.length === 0) peer.cursor = wire.lastSeq();
     });
     if (landing.conflicts) {
@@ -695,23 +728,23 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       say(peer, { t: "refused", cid, reason: "unavailable", sentence: UNSAVED });
       return { cursor: prior };
     }
-    return acked(peer, cid, result.batch, result.ops, saved);
+    return acked(peer, seat, cid, result.batch, result.ops, saved);
   };
 
   /** The ack of ops that are durable: what was held back before them goes first, so none is skipped. */
-  const acked = (peer: LivePeer, cid: string, batch: string, own: readonly Operation[], saved: readonly Operation[] | undefined): LiveReceived => {
+  const acked = (peer: LivePeer, seat: Principal, cid: string, batch: string, own: readonly Operation[], saved: readonly Operation[] | undefined): LiveReceived => {
     const first = own[0]?.seq;
     if (first !== undefined) {
-      sendUpTo(peer, first - 1);
+      sendUpTo(peer, first - 1, undefined, seat);
       peer.cursor = Math.max(peer.cursor!, own.at(-1)!.seq);
     }
-    const ops = wire.shown(peer.seat, own);
+    const ops = wire.shown(seat, own);
     say(peer, { t: "ack", cid, seq: ops.at(-1)?.seq ?? peer.cursor!, batch, ops });
     return { cursor: peer.cursor!, ...(saved && saved.length > 0 ? { landed: saved } : {}) };
   };
 
   /** The host's build a socket — or a route's request — is served by (FR-44): its own, else the protocol's word for it. */
-  const buildFor = (peer: Pick<LiveSocketState, "seat" | "via" | "hostBuild">): string | undefined =>
+  const buildFor = (peer: ServedSocket): string | undefined =>
     peer.hostBuild ?? (typeof options.build === "function" ? options.build(peer) : options.build);
   /** Which declaration, and which build, answered (FR-43, FR-44): on every route's answer a poll reads. */
   const answering = (asked: WireAsked): { version: number; build?: string } => {
@@ -733,6 +766,14 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       }
       const unchanged = (): LiveReceived => (peer.cursor !== undefined ? { cursor: peer.cursor } : {});
       if (!message || typeof message !== "object") return unchanged();
+      // Who this socket is, on this message: its seat, or the principal its key names now.
+      const seat = principalOf(peer);
+      if (!seat) {
+        delete peer.cursor;
+        say(peer, { t: "error", sentence: "This socket's seat is no longer known to this app: open it again to be served." });
+        return {};
+      }
+      const served: ServedSocket = { seat, via: peer.via, ...(peer.hostBuild ? { hostBuild: peer.hostBuild } : {}) };
       switch (message.t) {
         case "hello": {
           /*
@@ -770,12 +811,12 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
           const seq = typeof message.seq === "number" && Number.isFinite(message.seq) ? message.seq : undefined;
           peer.cursor = wire.lastSeq();
           // Its own key, built from the seat, so the client can leave itself out of who is here (FR-47).
-          peer.participant ??= participantKey({ kind: peer.seat.kind, ...(peer.seat.id ? { id: peer.seat.id } : {}), session: mintSession() });
+          peer.participant ??= participantKey({ kind: seat.kind, ...(seat.id ? { id: seat.id } : {}), session: mintSession() });
           const participant = peer.participant;
-          const build = buildFor(peer);
+          const build = buildFor(served);
           const said = { protocol: WIRE_PROTOCOL, wire: LIVE_WIRE, version: options.version ?? 1, participant, ...(build ? { build } : {}) };
           if (seq === undefined) {
-            const seen = wire.seenFor(peer.seat);
+            const seen = wire.seenFor(seat);
             say(peer, {
               t: "welcome",
               ...said,
@@ -791,15 +832,20 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
               },
             });
           } else {
-            say(peer, { t: "welcome", ...said, seq: peer.cursor, ops: wire.since(peer.seat, seq) });
+            say(peer, { t: "welcome", ...said, seq: peer.cursor, ops: wire.since(seat, seq) });
           }
           const others = who.filter((presence) => presence.participant !== peer.participant);
-          if (others.length > 0) say(peer, { t: "presence", who: wire.whoFor(peer.seat, others) });
+          if (others.length > 0) say(peer, { t: "presence", who: wire.whoFor(seat, others) });
           return { cursor: peer.cursor };
         }
         case "call":
         case "undo": {
           const cid = String(message.cid ?? "");
+          // A cid is kept while its call is busy: a long one would crowd the host's attachment.
+          if (cid.length > MAX_CID) {
+            say(peer, { t: "refused", cid, reason: "invalid", sentence: `A call's cid is at most ${MAX_CID} characters; this one is ${cid.length}. Name it again shorter.` });
+            return unchanged();
+          }
           if (peer.cursor === undefined) {
             say(peer, { t: "refused", cid, reason: "invalid", sentence: "Say hello first: the live wire answers calls once it knows what the client has." });
             return {};
@@ -811,9 +857,9 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
            * ever with the asking seat's own ops (`claim`).
            */
           const change = changeOf(message);
-          const claim = wire.claim(message.batch, peer.seat);
+          const claim = wire.claim(message.batch, seat);
           if (claim.refusal) {
-            catchUp(peer);
+            catchUp(peer, undefined, seat);
             if (peer.held?.cid === cid) delete peer.held;
             say(peer, { t: "refused", cid, ...claim.refusal });
             return { cursor: peer.cursor };
@@ -824,15 +870,15 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             if (unsavedIn(claim.answered)) {
               const flushed = await durable([]);
               if (!("saved" in flushed)) {
-                catchUp(peer);
+                catchUp(peer, undefined, seat);
                 say(peer, { t: "refused", cid, reason: "unavailable", sentence: UNSAVED });
                 return { cursor: peer.cursor };
               }
-              catchUp(peer);
-              return acked(peer, cid, message.batch as string, claim.answered, flushed.saved);
+              catchUp(peer, undefined, seat);
+              return acked(peer, seat, cid, message.batch as string, claim.answered, flushed.saved);
             }
-            catchUp(peer);
-            say(peer, { t: "ack", cid, seq: claim.answered.at(-1)!.seq, batch: message.batch as string, ops: wire.shown(peer.seat, claim.answered) });
+            catchUp(peer, undefined, seat);
+            say(peer, { t: "ack", cid, seq: claim.answered.at(-1)!.seq, batch: message.batch as string, ops: wire.shown(seat, claim.answered) });
             return { cursor: peer.cursor };
           }
           /*
@@ -845,8 +891,8 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             say(peer, { t: "busy", cid, retryAfter: Math.max(0, peer.held.until - now) });
             return { cursor: peer.cursor };
           }
-          const via = viaFor(peer, change);
-          const limited = await limitOf(peer.seat, via, change, bytesOf(text));
+          const via = viaFor(served, change);
+          const limited = await limitOf(seat, via, change, bytesOf(text));
           if (limited && "refuse" in limited) {
             delete peer.held;
             say(peer, { t: "refused", cid, reason: "limit", sentence: limited.refuse });
@@ -865,7 +911,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             return { cursor: peer.cursor };
           }
           delete peer.held;
-          return answer(peer, cid, change, via);
+          return answer(peer, seat, cid, change, via);
         }
         case "here": {
           const told = message.presence;
@@ -873,7 +919,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             say(peer, { t: "error", sentence: "A presence is a participant and a stop." });
             return unchanged();
           }
-          const presence = presenceFrom(told, peer.seat, new Date(), peer.participant);
+          const presence = presenceFrom(told, seat, new Date(), peer.participant);
           peer.participant = presence.participant;
           return { ...unchanged(), presence };
         }
@@ -892,7 +938,9 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     tell(who, peers) {
       for (const peer of peers) {
         if (peer.cursor === undefined) continue;
-        say(peer, { t: "presence", who: wire.whoFor(peer.seat, who.filter((presence) => presence.participant !== peer.participant)) });
+        const seat = principalOf(peer);
+        if (!seat) continue;
+        say(peer, { t: "presence", who: wire.whoFor(seat, who.filter((presence) => presence.participant !== peer.participant)) });
       }
     },
     async post(text, asked) {
@@ -914,7 +962,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
         base: undo ? undefined : body.base,
         claimed: claimOfVia(body.via),
       };
-      const via = viaFor(asked, change);
+      const via = viaFor({ seat: asked.seat, via: asked.via, ...(asked.build ? { hostBuild: asked.build } : {}) }, change);
       // Sent again after its answer was lost — or offered again on a new declaration, or after a reload (FR-43, FR-44, FR-49): only ever the asker's own ops.
       const claim = wire.claim(change.batch, asked.seat);
       if (claim.refusal) return reply(409, { error: claim.refusal.sentence, refused: true, reason: claim.refusal.reason, ...said });

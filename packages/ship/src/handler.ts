@@ -640,7 +640,8 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
     let told = false;
     for (const op of last.values()) {
       const author = op.author;
-      if ([...sockets].some((live) => live.seat.kind === "agent" && live.seat.id === author.id)) continue;
+      // The handler opens every socket with its principal, never a key.
+      if ([...sockets].some((live) => typeof live.seat !== "string" && live.seat.kind === "agent" && live.seat.id === author.id)) continue;
       const now = Date.now();
       here = foldPresence(here, announcePresence([], visitorPresence(author, { over: op.writes[0] ?? null, now: new Date(now) }), agentsFor, now), now, ttl);
       told = true;

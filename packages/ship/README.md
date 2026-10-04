@@ -143,12 +143,13 @@ primitive. `seatLens(store, principal)` is that judgement, the one every surface
 A host that hibernates — a Durable Object wakes on a message with no closure left — holds
 each socket's state itself. `liveProtocol({ store })` (from `@graview/ship/runtime`) is the
 same protocol as functions over the store and one plain-JSON `LiveSocketState` per socket,
-`{ seat, via, cursor?, participant?, held? }`, the thing `serializeAttachment` keeps:
+`{ seat, via, cursor?, participant?, build?, hostBuild?, held? }`, the thing
+`serializeAttachment` keeps:
 
 ```ts
-const live = liveProtocol({ store, version: app.version, flush });
+const live = liveProtocol({ store, version: app.version, flush, seatOf: (key) => seats.get(key) });
 // On the upgrade: the seat and channel, read once (handler.seatFor(request) does this with seatOf and viaOf).
-ws.serializeAttachment(live.open(seat, "web"));
+ws.serializeAttachment(live.open(seatKey, "web", { build }));
 // On each message, after any wake:
 const peer = { ...ws.deserializeAttachment(), send: (text) => ws.send(text) };
 const { landed, presence } = await live.receive(peer, text, whoIsHere);
@@ -156,6 +157,16 @@ const { send, ...state } = peer;
 ws.serializeAttachment(state);
 if (landed) live.publish(landed, otherPeers); // each as its own seat sees them, from its own cursor
 ```
+
+**The attachment budget.** Cloudflare refuses an attachment over 2,048 bytes, and a seat
+held whole is most of that: a person with fifty roles is about 1.9 kB of state on its own.
+So `seat` may be a host's key (a string) — `live.open("user:6b3f…", "web")` — which
+`liveProtocol({ seatOf: (key) => principal })` resolves on every message; a key it no longer
+knows is told so (`error`) and served nothing. A call's `cid` is at most 64 characters (a
+longer one is refused `invalid`, in words), so `held` stays small, and the client's and the
+host's builds are kept to 64. The budget, held by a test: a socket's state with a seat key,
+a busy call held and the host's own presence beside it stays within 1 KB (measured: 350
+bytes of state, 692 with a presence), half the attachment, the rest the host's.
 
 `connect()` is this protocol with the state in memory, so there is one implementation.
 
