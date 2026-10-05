@@ -14,7 +14,9 @@
  *             srcset, an <img> with an address, a <link rel=preconnect>
  *             built in code, inline handlers, a fixed overlay — each to its
  *             own path on an attacker's server;
- *   prober    what the view's own worker can still reach after hardening.
+ *   prober    what the view's own worker can still reach after hardening;
+ *   spoofer   a stylesheet that spells `:host` past a CDC or CDO, to lift
+ *             the region's containment and paint over the app's own bar.
  *
  * The page is served with NO content security policy (`--policy=page`), so
  * nothing but the open kit stands between a view and the network: every
@@ -132,6 +134,16 @@ graview.onProps(() => {
 });
 `);
 
+  /* A view that reaches its own region's host by a marker the sanitiser drops (`:-->host`), lifts the region's containment and paints over the app's bar. */
+  const spooferJs = await viewScript(`
+graview.style(\`
+:-->host { contain: none !important; overflow: visible !important; position: static !important; isolation: auto !important; }
+:<!--host { min-width: 0 !important; }
+.cover { position: absolute; top: 0; left: 0; width: 100vw; height: 48px; z-index: 2147483647; background: rgb(200, 0, 0); }
+\`);
+graview.onProps(() => graview.render(graview.html\`<div class="cover" id="cover">The app's own bar, drawn by a view</div>\`));
+`);
+
   const proberJs = await viewScript(`
 const out = {};
 out.absent = Object.fromEntries(["fetch", "XMLHttpRequest", "WebSocket", "EventSource", "importScripts", "indexedDB", "caches", "BroadcastChannel", "Worker", "SharedWorker", "Blob", "URL", "eval"].map((name) => [name, !(name in self)]));
@@ -151,7 +163,7 @@ import { mountWorkerView } from "./packages/guest/dist/host/worker.js";
 ${SHOWROOM}
 const failures = [];
 const views = {};
-for (const [name, script] of [["showcase", SHOWCASE], ["escapes", ESCAPES], ["prober", PROBER]]) {
+for (const [name, script] of [["showcase", SHOWCASE], ["escapes", ESCAPES], ["prober", PROBER], ["spoofer", SPOOFER]]) {
   views[name] = mountWorkerView(document.getElementById(name), { manifest: { name, attach: "car", cardinality: "many", reads: { kinds: ["shopper"] } }, worker: { script }, store, principal: bethan, onFailure: (reason, detail) => failures.push([name, reason, detail]) });
 }
 window.__host = {
@@ -173,14 +185,14 @@ window.__host = {
       define: { "process.env.NODE_ENV": '"production"' },
     })
   ).outputFiles[0].text;
-  const inline = `const SHOWCASE = ${JSON.stringify(showcaseJs)}; const ESCAPES = ${JSON.stringify(escapesJs)}; const PROBER = ${JSON.stringify(proberJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
+  const inline = `const SHOWCASE = ${JSON.stringify(showcaseJs)}; const ESCAPES = ${JSON.stringify(escapesJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPOOFER = ${JSON.stringify(spooferJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
   const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>The app</title><style>${TOKENS(core)}
 body { margin: 0; background: var(--graview-ground); color: var(--graview-ink); font-family: var(--graview-font-body); }
 #bar { height: 48px; display: flex; align-items: center; padding: 0 12px; border-bottom: 1px solid var(--graview-edge); }
 main { display: grid; gap: 16px; padding: 16px; }
 #showcase, #escapes, #prober { border: 1px dashed var(--graview-edge); }
 .probe-panel { background-color: var(--graview-panel); border-top: 1px solid var(--graview-edge); color: var(--graview-accent); }
-</style></head><body data-graview-scheme="light"><header id="bar">The app's own bar</header><main><div id="showcase"></div><div id="escapes"></div><div id="prober"></div></main><footer id="foot" class="probe-panel">The app's own footer</footer><script>${inline}</script></body></html>`;
+</style></head><body data-graview-scheme="light"><header id="bar">The app's own bar</header><main><div id="showcase"></div><div id="escapes"></div><div id="prober"></div><div id="spoofer"></div></main><footer id="foot" class="probe-panel">The app's own footer</footer><script>${inline}</script></body></html>`;
 
   const attacker = { requests: [], connections: 0 };
   const servers = [
@@ -238,6 +250,7 @@ main { display: grid; gap: 16px; padding: 16px; }
     await waitFor("showcase", ".ring", "the showcase");
     await waitFor("escapes", "#overlay-sheet", "the escapes");
     await waitFor("prober", "#probed", "the prober");
+    await waitFor("spoofer", "#cover", "the spoofer");
     /* Long enough for anything kept to have been fetched: images, fonts, a preconnect. */
     await tab.waitForTimeout(1_500);
 
@@ -343,6 +356,19 @@ main { display: grid; gap: 16px; padding: 16px; }
       "a fixed overlay stays in the view's region: drawn in place, and the app's bar and footer are still on top where they are",
       escapes.overlay?.position !== "fixed" && escapes.sheetOverlay?.position !== "fixed" && escapes.atBar === "bar" && escapes.atFoot === "foot" && escapes.overlay.rect.top >= escapes.region.top - 1,
       { overlay: escapes.overlay, sheetOverlay: escapes.sheetOverlay, region: escapes.region, atBar: escapes.atBar, atFoot: escapes.atFoot },
+    );
+    const spoofed = await app.evaluate(() => {
+      const region = document.querySelector("#spoofer [data-worker-view]");
+      const bar = document.getElementById("bar");
+      bar.scrollIntoView({ block: "center" });
+      const box = bar.getBoundingClientRect();
+      const at = document.elementFromPoint(box.left + 5, box.top + box.height / 2);
+      return { cover: region.shadowRoot.querySelector("#cover").getBoundingClientRect().toJSON(), sheet: region.shadowRoot.querySelector("style[data-graview-view-style]").textContent, at: at?.id || at?.localName, contain: getComputedStyle(region).contain, overflow: getComputedStyle(region).overflow };
+    });
+    claim(
+      "a view's stylesheet never reaches its region's :host, however the selector is spelled (:-->host, :<!--host), and the app's bar stays on top",
+      !/:\s*host/i.test(spoofed.sheet) && spoofed.at === "bar" && /paint|content|strict/.test(spoofed.contain) && spoofed.overflow === "clip",
+      spoofed,
     );
     const refused = await app.evaluate(() => window.__host.refused().escapes);
     claim("what was not drawn was written down as refused", refused.length >= URL_PROPERTIES.length + 8, { count: refused.length });

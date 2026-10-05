@@ -112,6 +112,12 @@ const CASES: Record<string, string> = {
   "::slotted": `::slotted(*) { position: fixed }`,
   ":host-context": `:host-context(body) { display: none }`,
   "::part": `::part(x) { color: red }`,
+  /* A CDC or CDO between the colon and the name: never judged as `:host`, and once dropped from what was written back, read as it. */
+  "a selector reaching the host past a CDC": `:-->host { contain: none !important; overflow: visible !important; position: static !important }`,
+  "a selector reaching the host past a CDO": `:<!--host { translate: 0 -400px !important }`,
+  "::slotted past a CDC": `::-->slotted(*) { color: red }`,
+  ":host-context past a CDC, nested": `.x { @media screen { :-->host-context(body) { display: none } } }`,
+  "::part past a CDC, in @supports": `@supports selector(::-->part(x)) { .x { color: red } }`,
 };
 
 describe("a hostile stylesheet", () => {

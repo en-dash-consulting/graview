@@ -625,6 +625,11 @@ function serializeOne(value: ComponentValue): string {
       return `url(${serializeString(value.value)})`;
     case "delim":
       return value.value === "\\" ? "\\\n" : value.value;
+    /* Written back as they were: dropped, `:-->host` would read back as `:host`. */
+    case "CDO":
+      return "<!--";
+    case "CDC":
+      return "-->";
     case "number":
       return value.repr;
     case "percentage":
@@ -802,7 +807,8 @@ function judgeSelector(prelude: readonly ComponentValue[], refuse: (refusal: Css
           return false;
         }
       }
-      if (value.type === "url" || value.type === "bad-url" || value.type === "bad-string" || value.type === "at-keyword" || (value.type === "block" && value.open === "{")) {
+      /* `<!--` and `-->` mean nothing in a selector, and stand between a colon and the name it is judged by (`:-->host`). */
+      if (value.type === "url" || value.type === "bad-url" || value.type === "bad-string" || value.type === "at-keyword" || value.type === "CDO" || value.type === "CDC" || (value.type === "block" && value.open === "{")) {
         refuse({ reason: "unreadable", name: "selector" });
         return false;
       }
