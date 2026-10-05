@@ -102,7 +102,9 @@ named for the act's arguments and typed by the person:
 
 A field the view filled (`value="…"`) is the view's until the person
 empties it, and a press carrying it is refused. Do not prefill. A view
-may empty a field after a press. The press is applied before the view
+may empty a field after a press. A radio or a select is the person's
+pick, not their words: its value goes only if it is one the act declares
+(an enum's option) or a record the view was shown. The press is applied before the view
 hears it; read `event.pressed`.
 
 ## Limits

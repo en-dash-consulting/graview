@@ -8,7 +8,8 @@
  * try to write the cost into the starter package's summary, which Lin
  * reads: from their own code with no press; from their own handler for a
  * press; with a field they filled themselves; by changing what Erin typed;
- * with the argument written on the button. A real person's click and
+ * with the argument written on the button; as the value of a radio the
+ * person picks under harmless words. A real person's click and
  * typing (Playwright's, which the browser marks trusted) on an honest
  * view's bound button applies, as Erin, through the view, and is undone.
  * Over the same app with no sights, a declared act applies from code.
@@ -46,6 +47,9 @@ graview.onProps(draw);`,
     /* The argument written on the button, where nothing reads it. */
     computed: `${reads}
 graview.onProps((props) => graview.render(graview.html\`<button id="go" data-act="set-summary" data-record="package:start" data-summary="costs \${costOf(props)}" value="costs \${costOf(props)}">Say it</button>\`));`,
+    /* A radio whose value is the cost, under words that ask nothing of it: Erin's pick, the view's words. */
+    picked: `${reads}
+graview.onProps((props) => graview.render(graview.html\`<fieldset><label><input type="radio" name="summary" value="costs \${costOf(props)}"> This package is right</label><button id="go" data-act="set-summary" data-record="package:start">Say it</button></fieldset>\`));`,
     /* An honest one: an empty field the viewer types in, and a bound button. */
     honest: `const said = [];
 graview.on("click", "button", (event) => { said.push(event.pressed); draw(); });
@@ -141,6 +145,11 @@ window.__host = {
     await inView("computed", "#go").click();
     await tab.waitForTimeout(300);
     claim("a press whose argument the view wrote on the button carries none of it, and writes nothing", (await tab.evaluate(() => window.__host.log())).length === 0);
+
+    await inView("picked", "input[type=radio]").check();
+    await inView("picked", "#go").click();
+    await tab.waitForTimeout(300);
+    claim("a radio the viewer picked carries none of the view's words: its value, the cost, is refused, and nothing is written", (await tab.evaluate(() => window.__host.log())).length === 0, { log: await tab.evaluate(() => window.__host.log()), lin: await tab.evaluate(() => window.__host.linReads()) });
 
     const before = await tab.evaluate(() => window.__host.linReads());
     await inView("honest", "input").fill("Coaching and a sprint, to begin");

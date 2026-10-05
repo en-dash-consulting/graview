@@ -53,6 +53,29 @@ export interface PressedField {
   readonly typed: boolean;
   /** It holds nothing, and nobody has touched it. */
   readonly empty: boolean;
+  /**
+   * It is a pick — a radio, a select — whose value is the view's own words:
+   * the viewer chose it, but did not write it. Taken only as a value the
+   * app itself declares for the argument, or a record the view was shown.
+   */
+  readonly chosen?: true;
+}
+
+/**
+ * The values the app's own declaration allows an argument — an enum's
+ * options or a literal's values, through `optional()`, `default()` and the
+ * like — or undefined when it declares no such list.
+ */
+export function declaredValues(schema: unknown): readonly unknown[] | undefined {
+  let at = schema as { _zod?: { def?: Record<string, unknown> } } | undefined;
+  for (let depth = 0; depth < 8 && at?._zod?.def; depth += 1) {
+    const def = at._zod.def;
+    if (def["type"] === "enum") return Object.values(def["entries"] as Record<string, unknown>);
+    if (def["type"] === "literal") return def["values"] as unknown[];
+    if (!("innerType" in def)) return undefined;
+    at = def["innerType"] as typeof at;
+  }
+  return undefined;
 }
 
 /** A press the host saw on an element bound to an act. */

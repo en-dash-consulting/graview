@@ -1,6 +1,6 @@
 import type { AnySchema, Store } from "@graview/core";
 import type { WorkerViewManifest } from "./manifest.js";
-import { entryFor, refuse, type Judged, type Press, type PressedField } from "./writes.js";
+import { declaredValues, entryFor, refuse, type Judged, type Press, type PressedField } from "./writes.js";
 
 /*
  * A PRESS, AS THE HOST SEES IT (FR-92): the half of the write rules that
@@ -25,6 +25,11 @@ import { entryFor, refuse, type Judged, type Press, type PressedField } from "./
  *     view that only empties a field (after an act, say) takes nothing away.
  *   · A view that says back exactly what a field already shows has not
  *     changed it.
+ *   · A pick is the viewer's choice, never the viewer's words: a radio's
+ *     value and a select's options are the view's, so a picked one goes
+ *     only as a value the app itself declares for the argument (an enum's,
+ *     a literal's) or a record the view was shown. Otherwise a radio
+ *     labelled "Yes" whose value is a hidden record's text would carry it.
  */
 
 const FIELD = new Set(["input", "select", "textarea"]);
@@ -84,7 +89,11 @@ export function createPressReader(trusted: (event: Event) => boolean = (event) =
         const mine = !written.has(field) && typed.get(field) === shows(field);
         if (field.type === "radio") {
           if (!field.checked) continue;
-          fields.push({ name: field.name, value: field.value, typed: mine, empty: false });
+          fields.push({ name: field.name, value: field.value, typed: mine, empty: false, chosen: true });
+          continue;
+        }
+        if (field.localName === "select") {
+          fields.push({ name: field.name, value: field.value, typed: mine, empty: field.value === "" && !mine, chosen: true });
           continue;
         }
         if (field.type === "checkbox") {
@@ -118,13 +127,20 @@ export function judgePress<S extends AnySchema>(store: Store<S>, manifest: Worke
     args[name] = value;
   }
   /* The act's arguments, by name: its input object's own keys. */
-  const declared = new Set(Object.keys((mutation.input as { shape?: Record<string, unknown> } | undefined)?.shape ?? {}));
+  const shape = (mutation.input as { shape?: Record<string, unknown> } | undefined)?.shape ?? {};
+  const declared = new Set(Object.keys(shape));
   const seen = new Set<string>();
   for (const field of press.fields) {
     if (!declared.has(field.name) || field.name in args) continue;
     if (seen.has(field.name)) return refuse("malformed", `Two fields here are called “${field.name}”.`);
     seen.add(field.name);
-    if (field.typed) args[field.name] = field.value;
+    if (field.typed && field.chosen) {
+      /* The viewer picked it; the view wrote it. It goes only as one of the app's own values, or a record the view was shown. */
+      const value = declaredValues(shape[field.name])?.find((one) => String(one) === String(field.value));
+      if (value !== undefined) args[field.name] = value;
+      else if (typeof field.value === "string" && shown.has(field.value)) args[field.name] = field.value;
+      else return refuse("untyped", `“${field.name}” was a choice among the view's own words, not one this app declares, so it was not sent.`);
+    } else if (field.typed) args[field.name] = field.value;
     else if (!field.empty) return refuse("untyped", `“${field.name}” was filled in by the view, not typed by you, so it was not sent.`);
   }
   return { ok: true, name: entry.act, args };
