@@ -1,0 +1,26 @@
+{
+  "id": "core/document",
+  "name": "Document",
+  "description": "8 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/document/canonical.ts",
+    "packages/core/src/document/diff.ts",
+    "packages/core/src/document/index.ts",
+    "packages/core/src/document/migrate.ts",
+    "packages/core/src/document/patch.ts",
+    "packages/core/src/document/schema.ts",
+    "packages/core/src/document/to-document.ts",
+    "packages/core/src/document/upgrade.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/document/index.ts",
+    "packages/core/src/document/migrate.ts",
+    "packages/core/src/document/schema.ts",
+    "packages/core/src/document/to-document.ts",
+    "packages/core/src/document/upgrade.ts"
+  ],
+  "cohesion": 0.71,
+  "coupling": 0.29,
+  "fileCount": 8,
+  "lineCount": 1034
+}

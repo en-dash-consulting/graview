@@ -1,0 +1,35 @@
+{
+  "id": "core-document",
+  "name": "Core Document",
+  "description": "8 files, mostly utilities and entry points; entry points views.ts, graview-template.ts, findings.ts; imports Core and Core Graph; imported by Core and Core Cli.",
+  "files": [
+    "packages/core/src/document/edit.ts",
+    "packages/core/src/document/expr/analyze.ts",
+    "packages/core/src/document/expr/index.ts",
+    "packages/core/src/document/expr/parse.ts",
+    "packages/core/src/document/expr/print.ts",
+    "packages/core/src/document/findings.ts",
+    "packages/core/src/document/graview-template.ts",
+    "packages/core/src/document/views.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/document/edit.ts",
+    "packages/core/src/document/expr/analyze.ts",
+    "packages/core/src/document/expr/index.ts",
+    "packages/core/src/document/expr/parse.ts",
+    "packages/core/src/document/findings.ts",
+    "packages/core/src/document/graview-template.ts",
+    "packages/core/src/document/views.ts"
+  ],
+  "cohesion": 0.47,
+  "coupling": 0.53,
+  "fileCount": 8,
+  "lineCount": 2586,
+  "riskMetrics": {
+    "cohesion": 0.47,
+    "coupling": 0.53,
+    "riskScore": 0.53,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

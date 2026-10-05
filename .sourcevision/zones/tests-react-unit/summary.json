@@ -1,7 +1,7 @@
 {
   "id": "tests-react-unit",
   "name": "Tests React Unit",
-  "description": "Non-source files in packages: a-chosen-member-is-not-its-district.test.ts, a-door-that-is-not-there.test.tsx, a-door-the-back-button-knows.test.ts (+26 more)",
+  "description": "Non-source files in packages: a-chosen-member-is-not-its-district.test.ts, a-door-that-is-not-there.test.tsx, a-door-the-back-button-knows.test.ts (+28 more)",
   "files": [
     "packages/react/tests/unit/a-chosen-member-is-not-its-district.test.ts",
     "packages/react/tests/unit/a-door-that-is-not-there.test.tsx",
@@ -16,8 +16,10 @@
     "packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx",
     "packages/react/tests/unit/activity.test.ts",
     "packages/react/tests/unit/administered.test.tsx",
+    "packages/react/tests/unit/an-agent-in-the-room-says-for-whom.test.tsx",
     "packages/react/tests/unit/binding.test.tsx",
     "packages/react/tests/unit/channels.test.ts",
+    "packages/react/tests/unit/remote-presence-forgets-the-gone.test.tsx",
     "packages/react/tests/unit/routes.test.ts",
     "packages/react/tests/unit/strands.test.ts",
     "packages/react/tests/unit/the-crowd-recedes-in-the-stack.test.ts",
@@ -36,8 +38,8 @@
   "entryPoints": [],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 29,
-  "lineCount": 3009,
+  "fileCount": 31,
+  "lineCount": 3183,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

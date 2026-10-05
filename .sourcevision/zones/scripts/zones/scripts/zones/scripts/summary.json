@@ -1,0 +1,41 @@
+{
+  "id": "scripts/scripts/scripts",
+  "name": "Test Pipeline Suite",
+  "description": "25 files, primarily JavaScript, TypeScript",
+  "files": [
+    "apps/discography/vite.config.ts",
+    "apps/gauntlet/vite.config.ts",
+    "apps/launcher/vite.config.ts",
+    "apps/rota/vite.config.ts",
+    "apps/seedbed/vite.config.ts",
+    "apps/todo/vite.config.ts",
+    "scripts/audit-ui.mjs",
+    "scripts/lib/hosted-page.mjs",
+    "scripts/lib/ports.mjs",
+    "scripts/lib/surfaces.mjs",
+    "scripts/require-changeset.mjs",
+    "scripts/survey-ui.mjs",
+    "scripts/verify-chat.mjs",
+    "scripts/verify-companion.mjs",
+    "scripts/verify-desk.mjs",
+    "scripts/verify-engines.mjs",
+    "scripts/verify-gauntlet.mjs",
+    "scripts/verify-hosted-page.mjs",
+    "scripts/verify-menu.mjs",
+    "scripts/verify-navigation.mjs",
+    "scripts/verify-pages.mjs",
+    "scripts/verify-scale.mjs",
+    "scripts/verify-seat.mjs",
+    "scripts/verify-served.mjs",
+    "scripts/verify-who.mjs"
+  ],
+  "entryPoints": [
+    "scripts/lib/hosted-page.mjs",
+    "scripts/lib/ports.mjs",
+    "scripts/lib/surfaces.mjs"
+  ],
+  "cohesion": 0.54,
+  "coupling": 0.46,
+  "fileCount": 25,
+  "lineCount": 7655
+}

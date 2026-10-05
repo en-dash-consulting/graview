@@ -1,0 +1,39 @@
+{
+  "id": "core/schema",
+  "name": "Schema",
+  "description": "13 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/bind.ts",
+    "packages/core/src/city.ts",
+    "packages/core/src/cli/check/city.ts",
+    "packages/core/src/cli/check/relations.ts",
+    "packages/core/src/extend.ts",
+    "packages/core/src/invariants/engine.ts",
+    "packages/core/src/invariants/types.ts",
+    "packages/core/src/mutations/words.ts",
+    "packages/core/src/schema/define-node.ts",
+    "packages/core/src/schema/schema.ts",
+    "packages/core/src/schema/types.ts",
+    "packages/core/src/sync/conflict.ts",
+    "packages/core/src/views/types.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/bind.ts",
+    "packages/core/src/city.ts",
+    "packages/core/src/cli/check/city.ts",
+    "packages/core/src/cli/check/relations.ts",
+    "packages/core/src/extend.ts",
+    "packages/core/src/invariants/engine.ts",
+    "packages/core/src/invariants/types.ts",
+    "packages/core/src/mutations/words.ts",
+    "packages/core/src/schema/define-node.ts",
+    "packages/core/src/schema/schema.ts",
+    "packages/core/src/schema/types.ts",
+    "packages/core/src/sync/conflict.ts",
+    "packages/core/src/views/types.ts"
+  ],
+  "cohesion": 0.4,
+  "coupling": 0.6,
+  "fileCount": 13,
+  "lineCount": 2156
+}

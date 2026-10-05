@@ -1,17 +1,22 @@
 {
   "id": "tests-core",
   "name": "Tests Core",
-  "description": "Non-source files in packages: persistence.test.ts, sync.test.ts, judges-past.ts",
+  "description": "Non-source files in packages: persistence.test.ts, sync.test.ts, adapter-contract.ts (+2 more)",
   "files": [
     "packages/core/tests/integration/persistence.test.ts",
     "packages/core/tests/integration/sync.test.ts",
+    "packages/core/tests/support/adapter-contract.ts",
+    "packages/core/tests/support/unseen-worlds.ts",
     "packages/core/tests/types/judges-past.ts"
   ],
-  "entryPoints": [],
+  "entryPoints": [
+    "packages/core/tests/support/adapter-contract.ts",
+    "packages/core/tests/support/unseen-worlds.ts"
+  ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 3,
-  "lineCount": 749,
+  "fileCount": 5,
+  "lineCount": 1257,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

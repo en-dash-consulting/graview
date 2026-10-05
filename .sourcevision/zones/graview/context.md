@@ -7,15 +7,16 @@
 Zone: Graview (`graview`)
 Files: 2, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 2 files, mostly entry points.
-Lines: 61
+Description: 2 files, mostly entry points; entry points index.ts; imported by Packages.
+Entry points: packages/graview/src/index.ts
+Lines: 63
 
 </zone>
 
 <files>
 
 packages/graview/src/cli.ts (TypeScript, 11 lines, source)
-packages/graview/src/index.ts (TypeScript, 50 lines, source)
+packages/graview/src/index.ts (TypeScript, 52 lines, source)
 
 </files>
 
@@ -23,6 +24,9 @@ packages/graview/src/index.ts (TypeScript, 50 lines, source)
 
 Internal:
   packages/graview/src/cli.ts → packages/graview/src/index.ts {main}
+
+Incoming (other zones → this zone):
+  ← tests-packages: packages/graview/tests/unit/a-separator-is-not-a-command.test.ts → packages/graview/src/index.ts
 
 </imports>
 
@@ -35,6 +39,6 @@ Internal:
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 2 internal calls, 0 outgoing, 0 incoming (cohesion: 1, coupling: 0)
+- [call graph] 2 internal calls, 0 outgoing, 1 incoming (cohesion: 1, coupling: 0)
 
 </insights>

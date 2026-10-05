@@ -5,11 +5,11 @@
 <zone>
 
 Zone: Studio (`studio`)
-Files: 16, Cohesion: 1.00, Coupling: 0.00
+Files: 18, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 16 files, mostly utilities and components; entry points index.ts, meta.ts; imported by Packages.
-Entry points: packages/studio/src/index.ts, packages/studio/src/meta.ts
-Lines: 4612
+Description: 18 files, mostly utilities and components; entry points place.tsx, index.ts, meta.ts; imported by Packages.
+Entry points: packages/studio/src/index.ts, packages/studio/src/meta.ts, packages/studio/src/migration.ts, packages/studio/src/place.tsx
+Lines: 5865
 
 </zone>
 
@@ -17,19 +17,21 @@ Lines: 4612
 
 packages/studio/src/agent-panel.tsx (TypeScript, 611 lines, source)
 packages/studio/src/agent.ts (TypeScript, 462 lines, source)
-packages/studio/src/changes.ts (TypeScript, 244 lines, source)
-packages/studio/src/from-declaration.ts (TypeScript, 225 lines, source)
+packages/studio/src/changes.ts (TypeScript, 248 lines, source)
+packages/studio/src/edits.ts (TypeScript, 399 lines, source)
+packages/studio/src/from-declaration.ts (TypeScript, 253 lines, source)
 packages/studio/src/in-place.tsx (TypeScript, 268 lines, source)
-packages/studio/src/index.ts (TypeScript, 37 lines, source)
+packages/studio/src/index.ts (TypeScript, 42 lines, source)
 packages/studio/src/lens.tsx (TypeScript, 73 lines, source)
-packages/studio/src/meta.ts (TypeScript, 604 lines, source)
-packages/studio/src/migration.ts (TypeScript, 94 lines, source)
-packages/studio/src/place.tsx (TypeScript, 547 lines, source)
+packages/studio/src/meta.ts (TypeScript, 868 lines, source)
+packages/studio/src/migration.ts (TypeScript, 126 lines, source)
+packages/studio/src/place.tsx (TypeScript, 771 lines, source)
 packages/studio/src/rewrite.ts (TypeScript, 69 lines, source)
-packages/studio/src/source.ts (TypeScript, 507 lines, source)
-packages/studio/src/studio.ts (TypeScript, 146 lines, source)
-packages/studio/src/to-declaration.ts (TypeScript, 501 lines, source)
-packages/studio/src/write-in-place.ts (TypeScript, 68 lines, source)
+packages/studio/src/source.ts (TypeScript, 563 lines, source)
+packages/studio/src/studio.ts (TypeScript, 276 lines, source)
+packages/studio/src/to-declaration.ts (TypeScript, 552 lines, source)
+packages/studio/src/uneditable.ts (TypeScript, 56 lines, source)
+packages/studio/src/write-in-place.ts (TypeScript, 72 lines, source)
 packages/studio/src/zod-source.ts (TypeScript, 156 lines, source)
 
 </files>
@@ -45,6 +47,10 @@ Internal:
   packages/studio/src/changes.ts → packages/studio/src/source.ts {actLines, camel, edgeParts, fieldsOf, kindLines, label, q, Read, ruleLines, zodSource}
   packages/studio/src/changes.ts → packages/studio/src/source.ts {Node}
   packages/studio/src/changes.ts → packages/studio/src/to-declaration.ts {Reading}
+  packages/studio/src/edits.ts → packages/studio/src/source.ts {label, Read}
+  packages/studio/src/edits.ts → packages/studio/src/source.ts {Node}
+  packages/studio/src/edits.ts → packages/studio/src/to-declaration.ts {Reading}
+  packages/studio/src/edits.ts → packages/studio/src/uneditable.ts {keptBy}
   packages/studio/src/from-declaration.ts → packages/studio/src/meta.ts {DECLARED_KIND}
   packages/studio/src/from-declaration.ts → packages/studio/src/meta.ts {FieldType}
   packages/studio/src/in-place.tsx → packages/studio/src/changes.ts {codeTouched}
@@ -59,6 +65,8 @@ Internal:
   packages/studio/src/index.ts → packages/studio/src/agent.ts {StudioResponderOptions}
   packages/studio/src/index.ts → packages/studio/src/changes.ts {codeTouched, sourceChanges}
   packages/studio/src/index.ts → packages/studio/src/changes.ts {Rewrite, SourceChanges}
+  packages/studio/src/index.ts → packages/studio/src/edits.ts {documentAfter, documentEdits}
+  packages/studio/src/index.ts → packages/studio/src/edits.ts {StudioEdits}
   packages/studio/src/index.ts → packages/studio/src/from-declaration.ts {declarationToGraph, fieldTypeOf}
   packages/studio/src/index.ts → packages/studio/src/in-place.tsx {InPlaceWriter}
   packages/studio/src/index.ts → packages/studio/src/lens.tsx {createStudioLens}
@@ -67,14 +75,17 @@ Internal:
   packages/studio/src/index.ts → packages/studio/src/migration.ts {migrationBetween, migrationSteps}
   packages/studio/src/index.ts → packages/studio/src/migration.ts {MigrationStep}
   packages/studio/src/index.ts → packages/studio/src/place.tsx {StudioPlace, maySeeTheStudio}
+  packages/studio/src/index.ts → packages/studio/src/place.tsx {StudioApplied, StudioHostAnswer, StudioHostVerdict, StudioOffered, StudioOnApply}
   packages/studio/src/index.ts → packages/studio/src/rewrite.ts {rewriteCode, theObject}
   packages/studio/src/index.ts → packages/studio/src/rewrite.ts {RewriteAsk}
   packages/studio/src/index.ts → packages/studio/src/source.ts {declarationFiles}
   packages/studio/src/index.ts → packages/studio/src/source.ts {SourceOptions, WrittenFile}
   packages/studio/src/index.ts → packages/studio/src/studio.ts {createStudio}
-  packages/studio/src/index.ts → packages/studio/src/studio.ts {Studio, StudioOptions}
+  packages/studio/src/index.ts → packages/studio/src/studio.ts {Studio, StudioApplyResult, StudioOptions}
   packages/studio/src/index.ts → packages/studio/src/to-declaration.ts {graphToDeclaration, zodFor, defaultFor}
   packages/studio/src/index.ts → packages/studio/src/to-declaration.ts {DeclarationOptions, Reading}
+  packages/studio/src/index.ts → packages/studio/src/uneditable.ts {keptBy, uneditable}
+  packages/studio/src/index.ts → packages/studio/src/uneditable.ts {KeptProperty}
   packages/studio/src/index.ts → packages/studio/src/write-in-place.ts {readCode, useStudioDoor, writeChanges}
   packages/studio/src/index.ts → packages/studio/src/write-in-place.ts {InPlace}
   packages/studio/src/lens.tsx → packages/studio/src/meta.ts {StudioSchema}
@@ -99,6 +110,7 @@ Internal:
   packages/studio/src/source.ts → packages/studio/src/zod-source.ts {ZodUses}
   packages/studio/src/studio.ts → packages/studio/src/changes.ts {sourceChanges}
   packages/studio/src/studio.ts → packages/studio/src/changes.ts {SourceChanges}
+  packages/studio/src/studio.ts → packages/studio/src/edits.ts {documentAfter, documentEdits}
   packages/studio/src/studio.ts → packages/studio/src/from-declaration.ts {declarationToGraph}
   packages/studio/src/studio.ts → packages/studio/src/meta.ts {studioApp}
   packages/studio/src/studio.ts → packages/studio/src/meta.ts {StudioSchema}
@@ -111,7 +123,7 @@ Internal:
   packages/studio/src/to-declaration.ts → packages/studio/src/meta.ts {FieldType}
 
 Incoming (other zones → this zone):
-  ← tests-studio-unit: packages/studio/tests/unit/an-agent-in-the-studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-round-trip-keeps-the-checkouts-words.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/what-it-does-not-model.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-back.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-in-place.test.ts → packages/studio/src/index.ts
+  ← tests-studio-unit: packages/studio/tests/unit/a-document-is-judged-as-a-document.test.ts → packages/studio/src/place.tsx; packages/studio/tests/unit/a-document-is-judged-as-a-document.test.ts → packages/studio/src/place.tsx; packages/studio/tests/unit/a-field-changes-in-place.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/a-rule-judged-in-words.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/a-rule-judged-in-words.test.ts → packages/studio/src/meta.ts; packages/studio/tests/unit/a-typed-app-opens-in-the-studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/an-agent-in-the-studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/templates.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-document-is-said-not-guessed.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-round-trip-keeps-the-checkouts-words.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/the-studio-and-edit-document-agree.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-and-edit-document-agree.test.ts → packages/studio/src/meta.ts; packages/studio/tests/unit/the-studio-and-edit-document-agree.test.ts → packages/studio/src/migration.ts; packages/studio/tests/unit/the-studio-hands-back-a-document.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-says-who-sees-what.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/what-it-does-not-model.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/what-the-studio-will-not-change-is-said-up-front.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-back.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-in-place.test.ts → packages/studio/src/index.ts
 
 </imports>
 
@@ -124,6 +136,6 @@ Incoming (other zones → this zone):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 582 internal calls, 0 outgoing, 65 incoming (cohesion: 1, coupling: 0)
+- [call graph] 859 internal calls, 0 outgoing, 99 incoming (cohesion: 1, coupling: 0)
 
 </insights>

@@ -1,0 +1,37 @@
+{
+  "id": "tests-core-document",
+  "name": "Tests Core Document",
+  "description": "Non-source files in packages: a-compiled-document-is-read-like-a-declared-one.test.ts, a-diff-reads-meaning-not-key-order.test.ts, a-document-says-what-a-glance-says.test.ts (+15 more)",
+  "files": [
+    "packages/core/tests/document/a-compiled-document-is-read-like-a-declared-one.test.ts",
+    "packages/core/tests/document/a-diff-reads-meaning-not-key-order.test.ts",
+    "packages/core/tests/document/a-document-says-what-a-glance-says.test.ts",
+    "packages/core/tests/document/a-documents-sights-are-the-apps.test.ts",
+    "packages/core/tests/document/a-glance-is-an-edit.test.ts",
+    "packages/core/tests/document/a-name-on-the-prototype-is-no-field.test.ts",
+    "packages/core/tests/document/a-page-compiles-without-the-checker.test.ts",
+    "packages/core/tests/document/a-removal-leaves-nothing-dangling.test.ts",
+    "packages/core/tests/document/a-repair-takes-a-documents-default.test.ts",
+    "packages/core/tests/document/a-template-is-data.test.ts",
+    "packages/core/tests/document/diff.test.ts",
+    "packages/core/tests/document/edit.test.ts",
+    "packages/core/tests/document/every-edit-says-what-it-did.test.ts",
+    "packages/core/tests/document/expr.test.ts",
+    "packages/core/tests/document/migrate.test.ts",
+    "packages/core/tests/document/no-edits-is-no-change.test.ts",
+    "packages/core/tests/document/the-rule-language-is-total.test.ts",
+    "packages/core/tests/document/views.test.ts"
+  ],
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 18,
+  "lineCount": 1671,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

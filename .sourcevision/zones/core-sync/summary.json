@@ -1,7 +1,7 @@
 {
   "id": "core-sync",
   "name": "Core Sync",
-  "description": "3 files, mostly utilities and types; entry points engine.ts, google-calendar.ts, types.ts; imports Core and Core Ops; imported by Core.",
+  "description": "3 files, mostly utilities and types; entry points engine.ts, google-calendar.ts, types.ts; imports Core and Core Graph; imported by Core.",
   "files": [
     "packages/core/src/sync/engine.ts",
     "packages/core/src/sync/google-calendar.ts",

@@ -1,0 +1,20 @@
+{
+  "id": "scripts/scripts/lib",
+  "name": "Lib",
+  "description": "5 files, primarily JavaScript",
+  "files": [
+    "scripts/lib/engine.mjs",
+    "scripts/lib/places.mjs",
+    "scripts/lib/tarballs.mjs",
+    "scripts/verify-calendar.mjs",
+    "scripts/verify-rota.mjs"
+  ],
+  "entryPoints": [
+    "scripts/lib/engine.mjs",
+    "scripts/lib/tarballs.mjs"
+  ],
+  "cohesion": 0.23,
+  "coupling": 0.77,
+  "fileCount": 5,
+  "lineCount": 969
+}

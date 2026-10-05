@@ -1,0 +1,19 @@
+{
+  "id": "tools/mcp",
+  "name": "Mcp",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/tools/src/mcp-http.ts",
+    "packages/tools/src/mcp-protocol.ts",
+    "packages/tools/src/mcp-stdio.ts"
+  ],
+  "entryPoints": [
+    "packages/tools/src/mcp-http.ts",
+    "packages/tools/src/mcp-protocol.ts",
+    "packages/tools/src/mcp-stdio.ts"
+  ],
+  "cohesion": 0.4,
+  "coupling": 0.6,
+  "fileCount": 3,
+  "lineCount": 284
+}

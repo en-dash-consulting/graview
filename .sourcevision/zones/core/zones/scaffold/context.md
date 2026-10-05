@@ -5,21 +5,22 @@
 <zone>
 
 Zone: Scaffold (`core/scaffold`)
-Files: 6, Cohesion: 0.84, Coupling: 0.16
-Description: 6 files, primarily TypeScript
+Files: 7, Cohesion: 0.88, Coupling: 0.12
+Description: 7 files, primarily TypeScript
 Entry points: packages/core/src/cli/create.ts, packages/core/src/scaffold/index.ts
-Lines: 2152
+Lines: 2466
 
 </zone>
 
 <files>
 
-packages/core/src/cli/create.ts (TypeScript, 288 lines, source)
+packages/core/src/cli/create.ts (TypeScript, 349 lines, source)
 packages/core/src/scaffold/domain.ts (TypeScript, 339 lines, source)
-packages/core/src/scaffold/index.ts (TypeScript, 231 lines, source)
-packages/core/src/scaffold/names.ts (TypeScript, 109 lines, source)
-packages/core/src/scaffold/project.ts (TypeScript, 641 lines, source)
-packages/core/src/scaffold/ui.ts (TypeScript, 544 lines, source)
+packages/core/src/scaffold/from-template.ts (TypeScript, 166 lines, source)
+packages/core/src/scaffold/index.ts (TypeScript, 269 lines, source)
+packages/core/src/scaffold/names.ts (TypeScript, 113 lines, source)
+packages/core/src/scaffold/project.ts (TypeScript, 677 lines, source)
+packages/core/src/scaffold/ui.ts (TypeScript, 553 lines, source)
 
 </files>
 
@@ -30,13 +31,17 @@ Internal:
   packages/core/src/cli/create.ts → packages/core/src/scaffold/index.ts {ScaffoldOptions}
   packages/core/src/scaffold/domain.ts → packages/core/src/scaffold/names.ts {escapeString, escapeTemplate}
   packages/core/src/scaffold/domain.ts → packages/core/src/scaffold/names.ts {Ids}
+  packages/core/src/scaffold/from-template.ts → packages/core/src/scaffold/names.ts {escapeString, slugify}
+  packages/core/src/scaffold/from-template.ts → packages/core/src/scaffold/names.ts {Ids}
   packages/core/src/scaffold/index.ts → packages/core/src/scaffold/domain.ts {schemaTs, mutationsTs, invariantsTs, brandTs, appTs, domainTest}
+  packages/core/src/scaffold/index.ts → packages/core/src/scaffold/from-template.ts {documentAppTs, documentBrandTs, documentJson, documentSchemaTs, documentTest, templateJson, templateKind}
   packages/core/src/scaffold/index.ts → packages/core/src/scaffold/names.ts {pascal, slugify, titleCase, validateScaffoldOptions}
   packages/core/src/scaffold/index.ts → packages/core/src/scaffold/names.ts {slugify, titleCase, camel, pascal, validateScaffoldOptions}
   packages/core/src/scaffold/index.ts → packages/core/src/scaffold/project.ts {GRAVIEW_PACKAGES, LINKED_PACKAGES}
   packages/core/src/scaffold/index.ts → packages/core/src/scaffold/project.ts {SURVEY_SAYS, AUDIT_SAYS, A11Y_SAYS, harness, workspaceRoot, tsconfigBase, rootVitest, packageJson, tsconfig, tsconfigBuild, viteConfig, gitignore, readme, ciYml}
   packages/core/src/scaffold/index.ts → packages/core/src/scaffold/ui.ts {indexHtml, embedHtml, embedTsx, viewsTsx, uiAppTsx, pagesTsx, mainTsx}
   packages/core/src/scaffold/names.ts → packages/core/src/scaffold/index.ts {ScaffoldOptions}
+  packages/core/src/scaffold/project.ts → packages/core/src/scaffold/from-template.ts {documentReadmeLayout}
   packages/core/src/scaffold/project.ts → packages/core/src/scaffold/names.ts {Ids}
   packages/core/src/scaffold/ui.ts → packages/core/src/scaffold/names.ts {escapeHtml, escapeString, escapeTemplate}
   packages/core/src/scaffold/ui.ts → packages/core/src/scaffold/names.ts {Ids}

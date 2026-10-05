@@ -5,11 +5,11 @@
 <zone>
 
 Zone: Apps (`apps`)
-Files: 69, Cohesion: 1.00, Coupling: 0.00
+Files: 83, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 69 files, mostly components and entry points; entry points app.ts, survey.ts, app.ts; imported by Apps.
-Entry points: apps/launcher/src/domain/app.ts, apps/launcher/src/domain/survey.ts, apps/rota/src/domain/app.ts, apps/rota/src/domain/policy.ts, apps/rota/src/ui/app.tsx, apps/rota/src/ui/views.tsx
-Lines: 10049
+Description: 83 files, mostly components and entry points; entry points app.ts, survey.ts, app.ts; imported by Apps and Apps.
+Entry points: apps/launcher/src/domain/app.ts, apps/launcher/src/domain/survey.ts, apps/rota/src/domain/app.ts, apps/rota/src/domain/policy.ts, apps/rota/src/ui/app.tsx, apps/rota/src/ui/views.tsx, apps/seedbed/src/domain/app.ts, apps/seedbed/src/domain/chapters.ts, apps/seedbed/src/domain/schema.ts, apps/seedbed/src/ui/app.tsx, apps/seedbed/src/ui/design.tsx, apps/seedbed/src/ui/pages.tsx, apps/seedbed/src/ui/views.tsx
+Lines: 13313
 
 </zone>
 
@@ -24,12 +24,11 @@ apps/launcher/src/domain/app.ts (TypeScript, 47 lines, source)
 apps/launcher/src/domain/invariants.ts (TypeScript, 161 lines, source)
 apps/launcher/src/domain/mutations.ts (TypeScript, 126 lines, source)
 apps/launcher/src/domain/schema.ts (TypeScript, 128 lines, source)
-apps/launcher/src/domain/survey.ts (TypeScript, 442 lines, source)
+apps/launcher/src/domain/survey.ts (TypeScript, 461 lines, source)
 apps/launcher/src/index.ts (TypeScript, 5 lines, source)
-apps/launcher/src/main.tsx (TypeScript, 543 lines, source)
+apps/launcher/src/main.tsx (TypeScript, 558 lines, source)
 apps/launcher/src/ui/liveness.tsx (TypeScript, 56 lines, source)
 apps/launcher/src/ui/views.tsx (TypeScript, 257 lines, source)
-apps/launcher/vite.config.ts (TypeScript, 63 lines, config)
 apps/promo/remotion.config.ts (TypeScript, 56 lines, config)
 apps/promo/src/Composition.tsx (TypeScript, 170 lines, source)
 apps/promo/src/FeedComposition.tsx (TypeScript, 68 lines, source)
@@ -78,6 +77,21 @@ apps/rota/src/ui/app.tsx (TypeScript, 181 lines, source)
 apps/rota/src/ui/design.tsx (TypeScript, 1001 lines, source)
 apps/rota/src/ui/views.tsx (TypeScript, 101 lines, source)
 apps/rota/src/ui/when.ts (TypeScript, 16 lines, source)
+apps/seedbed/src/domain/app.ts (TypeScript, 88 lines, source)
+apps/seedbed/src/domain/brand.ts (TypeScript, 39 lines, source)
+apps/seedbed/src/domain/chapters.ts (TypeScript, 764 lines, source)
+apps/seedbed/src/domain/invariants.ts (TypeScript, 58 lines, source)
+apps/seedbed/src/domain/mutations.ts (TypeScript, 193 lines, source)
+apps/seedbed/src/domain/schema.ts (TypeScript, 141 lines, source)
+apps/seedbed/src/index.ts (TypeScript, 6 lines, source)
+apps/seedbed/src/main.tsx (TypeScript, 151 lines, source)
+apps/seedbed/src/open.ts (TypeScript, 39 lines, source)
+apps/seedbed/src/site-embed.ts (TypeScript, 159 lines, source)
+apps/seedbed/src/ui/app.tsx (TypeScript, 183 lines, source)
+apps/seedbed/src/ui/design.tsx (TypeScript, 779 lines, source)
+apps/seedbed/src/ui/garden-map.tsx (TypeScript, 414 lines, source)
+apps/seedbed/src/ui/pages.tsx (TypeScript, 96 lines, source)
+apps/seedbed/src/ui/views.tsx (TypeScript, 183 lines, source)
 apps/spike/scripts/introspect4.mjs (JavaScript, 55 lines, build)
 apps/spike/scripts/run-probe.mjs (JavaScript, 94 lines, build)
 apps/spike/scripts/run-restrictions.mjs (JavaScript, 151 lines, build)
@@ -109,10 +123,10 @@ Internal:
   apps/launcher/src/main.tsx → apps/launcher/src/domain/survey.ts {APPS}
   apps/launcher/src/main.tsx → apps/launcher/src/ui/liveness.tsx {LivenessProvider, useLiveness}
   apps/launcher/src/main.tsx → apps/launcher/src/ui/views.tsx {launcherViews}
-  apps/launcher/src/ui/liveness.tsx → apps/launcher/src/domain/survey.ts {APPS}
+  apps/launcher/src/ui/liveness.tsx → apps/launcher/src/domain/survey.ts {addressOf, APPS}
   apps/launcher/src/ui/views.tsx → apps/launcher/src/domain/schema.ts {launcherSchema}
   apps/launcher/src/ui/views.tsx → apps/launcher/src/domain/schema.ts {LauncherSchema}
-  apps/launcher/src/ui/views.tsx → apps/launcher/src/domain/survey.ts {APPS}
+  apps/launcher/src/ui/views.tsx → apps/launcher/src/domain/survey.ts {addressOf, APPS}
   apps/launcher/src/ui/views.tsx → apps/launcher/src/ui/liveness.tsx {useLiveness}
   apps/promo/src/Composition.tsx → apps/promo/src/camera.ts {sampleCamera}
   apps/promo/src/Composition.tsx → apps/promo/src/components/BrandPresence.tsx {BrandPresence}
@@ -252,39 +266,94 @@ Internal:
   apps/rota/src/ui/views.tsx → apps/rota/src/domain/schema.ts {rotaSchema}
   apps/rota/src/ui/views.tsx → apps/rota/src/domain/schema.ts {RotaSchema}
   apps/rota/src/ui/views.tsx → apps/rota/src/ui/when.ts {EXAMPLE_TODAY}
+  apps/seedbed/src/domain/app.ts → apps/seedbed/src/domain/brand.ts {seedbedBrand}
+  apps/seedbed/src/domain/app.ts → apps/seedbed/src/domain/invariants.ts {seedbedInvariants}
+  apps/seedbed/src/domain/app.ts → apps/seedbed/src/domain/mutations.ts {seedbedMutations}
+  apps/seedbed/src/domain/app.ts → apps/seedbed/src/domain/schema.ts {seedbedSchema}
+  apps/seedbed/src/domain/app.ts → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
+  apps/seedbed/src/domain/chapters.ts → apps/seedbed/src/domain/brand.ts {seedbedBrand}
+  apps/seedbed/src/domain/chapters.ts → apps/seedbed/src/domain/invariants.ts {everyPlotTended}
+  apps/seedbed/src/domain/chapters.ts → apps/seedbed/src/domain/mutations.ts {addGardener, addPlot, adoptRule, harvest, rotate, sow, sowInTurn, tend}
+  apps/seedbed/src/domain/chapters.ts → apps/seedbed/src/domain/schema.ts {gardener, planting, plot, rotation, rule}
+  apps/seedbed/src/domain/invariants.ts → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
+  apps/seedbed/src/domain/mutations.ts → apps/seedbed/src/domain/schema.ts {seedbedSchema}
+  apps/seedbed/src/domain/mutations.ts → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
+  apps/seedbed/src/index.ts → apps/seedbed/src/domain/app.ts {*}
+  apps/seedbed/src/index.ts → apps/seedbed/src/domain/brand.ts {*}
+  apps/seedbed/src/index.ts → apps/seedbed/src/domain/chapters.ts {*}
+  apps/seedbed/src/index.ts → apps/seedbed/src/domain/invariants.ts {*}
+  apps/seedbed/src/index.ts → apps/seedbed/src/domain/mutations.ts {*}
+  apps/seedbed/src/index.ts → apps/seedbed/src/domain/schema.ts {*}
+  apps/seedbed/src/main.tsx → apps/seedbed/src/domain/app.ts {seedbedApp}
+  apps/seedbed/src/main.tsx → apps/seedbed/src/domain/brand.ts {seedbedBrand}
+  apps/seedbed/src/main.tsx → apps/seedbed/src/domain/chapters.ts {chapterFromSearch}
+  apps/seedbed/src/main.tsx → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
+  apps/seedbed/src/main.tsx → apps/seedbed/src/ui/app.tsx {SeedbedApp}
+  apps/seedbed/src/main.tsx → apps/seedbed/src/ui/design.tsx {seedbedDesign}
+  apps/seedbed/src/main.tsx → apps/seedbed/src/ui/pages.tsx {seedbedPages}
+  apps/seedbed/src/main.tsx → apps/seedbed/src/ui/views.tsx {seedbedViews}
+  apps/seedbed/src/open.ts → apps/seedbed/src/domain/app.ts {seedbedApp}
+  apps/seedbed/src/open.ts → apps/seedbed/src/domain/brand.ts {seedbedBrand}
+  apps/seedbed/src/open.ts → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
+  apps/seedbed/src/site-embed.ts → apps/seedbed/src/domain/brand.ts {SEEDBED_BRAND}
+  apps/seedbed/src/site-embed.ts → apps/seedbed/src/domain/chapters.ts {CHAPTERS}
+  apps/seedbed/src/site-embed.ts → apps/seedbed/src/domain/chapters.ts {Chapter}
+  apps/seedbed/src/site-embed.ts → apps/seedbed/src/ui/design.tsx {seedbedDesign}
+  apps/seedbed/src/site-embed.ts → apps/seedbed/src/ui/pages.tsx {seedbedPages}
+  apps/seedbed/src/site-embed.ts → apps/seedbed/src/ui/views.tsx {seedbedViews}
+  apps/seedbed/src/ui/app.tsx → apps/seedbed/src/domain/app.ts {createSeedbedStore, seedbedApp}
+  apps/seedbed/src/ui/app.tsx → apps/seedbed/src/domain/app.ts {SeedbedStore}
+  apps/seedbed/src/ui/app.tsx → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
+  apps/seedbed/src/ui/app.tsx → apps/seedbed/src/ui/views.tsx {seedbedViews}
+  apps/seedbed/src/ui/design.tsx → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
+  apps/seedbed/src/ui/design.tsx → apps/seedbed/src/ui/garden-map.tsx {GardenMapPicture, initials, readGarden, Sprout}
+  apps/seedbed/src/ui/design.tsx → apps/seedbed/src/ui/garden-map.tsx {Garden, GardenPlot}
+  apps/seedbed/src/ui/garden-map.tsx → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
+  apps/seedbed/src/ui/pages.tsx → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
+  apps/seedbed/src/ui/views.tsx → apps/seedbed/src/domain/schema.ts {seedbedSchema}
+  apps/seedbed/src/ui/views.tsx → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
+  apps/seedbed/src/ui/views.tsx → apps/seedbed/src/ui/garden-map.tsx {GardenMapView}
   apps/spike/src/main.ts → apps/spike/src/three-planes.ts {mountThreePlanes}
 
 Incoming (other zones → this zone):
+  ← tests: tests/a-refusal-never-names-your-own-role.test.ts → apps/rota/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/rota/src/ui/app.tsx; tests/the-desk-points-at-the-moved-ports.test.ts → apps/launcher/src/domain/survey.ts
   ← tests-apps: apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/app.ts; apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/survey.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/app.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/policy.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/app.tsx; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/views.tsx
+  ← tests-seedbed-integration: apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/app.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/schema.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/app.tsx; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/views.tsx
+  ← tests-studio-unit: packages/studio/tests/unit/rewrite-before-writing.test.tsx → apps/seedbed/src/domain/app.ts; packages/studio/tests/unit/written-in-place.test.ts → apps/seedbed/src/domain/app.ts
 
 </imports>
 
 <findings>
 
+[observation] [warning] 13 entry points — wide API surface, consider consolidating exports
 [observation] [info] High cohesion (1) — files are tightly interconnected
-[suggestion] [info] Zone "apps" has files across 16 directories — consider consolidating under a dedicated directory
+[observation] [info] Files in zone "Apps" appear to serve unrelated purposes; a maintainer would expect them in separate modules.
+[suggestion] [info] Zone "apps" has files across 18 directories — consider consolidating under a dedicated directory
 
 </findings>
 
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- Zone "apps" has files across 16 directories — consider consolidating under a dedicated directory
-- [call graph] 394 internal calls, 0 outgoing, 15 incoming (cohesion: 1, coupling: 0)
+- 13 entry points — wide API surface, consider consolidating exports
+- Files in zone "Apps" appear to serve unrelated purposes; a maintainer would expect them in separate modules.
+- Zone "apps" has files across 18 directories — consider consolidating under a dedicated directory
+- [call graph] 481 internal calls, 0 outgoing, 47 incoming (cohesion: 1, coupling: 0)
 
 </insights>
 
 <sub-zones>
 
-This zone has 6 sub-zone(s):
+This zone has 7 sub-zone(s):
 
 - **Discography Scripts** (`apps/discography`): 4 files, cohesion 0, coupling 0
-- **Gauntlet** (`apps/gauntlet`): 3 files, cohesion 0, coupling 0
 - **App Launcher** (`apps/launcher`): 9 files, cohesion 1, coupling 0
-- **Promo** (`apps/promo`): 34 files, cohesion 1, coupling 0
-  - Has 5 nested sub-zone(s)
+- **Promo** (`apps/promo`): 32 files, cohesion 1, coupling 0
+  - Has 6 nested sub-zone(s)
 - **Rota** (`apps/rota`): 15 files, cohesion 1, coupling 0
-- **Spike Scripts** (`apps/spike`): 4 files, cohesion 0, coupling 0
+- **Seedbed** (`apps/seedbed`): 15 files, cohesion 1, coupling 0
+- **Feature Validation Spike** (`apps/spike`): 4 files, cohesion 1, coupling 0
+- **Spike Scripts** (`apps/spike-scripts`): 4 files, cohesion 0, coupling 0
 
 Detailed sub-zone context available in `zones/{sub-zone-id}/context.md`
 

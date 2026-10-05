@@ -1,0 +1,28 @@
+{
+  "id": "core-persistence",
+  "name": "Core Persistence",
+  "description": "4 files, mostly utilities and types; entry points memory.ts, sql.ts, sqlite.ts; imports Core and Core Graph; imported by Core and Packages.",
+  "files": [
+    "packages/core/src/persistence/memory.ts",
+    "packages/core/src/persistence/sql.ts",
+    "packages/core/src/persistence/sqlite.ts",
+    "packages/core/src/persistence/types.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/persistence/memory.ts",
+    "packages/core/src/persistence/sql.ts",
+    "packages/core/src/persistence/sqlite.ts",
+    "packages/core/src/persistence/types.ts"
+  ],
+  "cohesion": 0.38,
+  "coupling": 0.62,
+  "fileCount": 4,
+  "lineCount": 408,
+  "riskMetrics": {
+    "cohesion": 0.38,
+    "coupling": 0.62,
+    "riskScore": 0.62,
+    "riskLevel": "critical",
+    "failsThreshold": true
+  }
+}

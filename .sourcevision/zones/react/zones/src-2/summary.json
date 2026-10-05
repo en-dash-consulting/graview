@@ -14,8 +14,8 @@
     "packages/react/src/scene-lines.tsx",
     "packages/react/src/where-drawn.tsx"
   ],
-  "cohesion": 0.29,
-  "coupling": 0.71,
+  "cohesion": 0.27,
+  "coupling": 0.73,
   "fileCount": 4,
   "lineCount": 1195
 }

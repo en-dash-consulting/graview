@@ -1,16 +1,17 @@
 {
   "id": "scripts/scripts-2",
   "name": "Scripts 2",
-  "description": "4 files, primarily JavaScript",
+  "description": "5 files, primarily JavaScript",
   "files": [
-    "scripts/eval-elm.mjs",
-    "scripts/inspect-pack.mjs",
-    "scripts/require-changeset.mjs",
-    "scripts/site-artifact.mjs"
+    "scripts/site-numbers.mjs",
+    "scripts/site-progression.mjs",
+    "scripts/smoke-install.mjs",
+    "scripts/verify-products.mjs",
+    "scripts/write-framework-version.mjs"
   ],
   "entryPoints": [],
   "cohesion": 0,
   "coupling": 0,
-  "fileCount": 4,
-  "lineCount": 466
+  "fileCount": 5,
+  "lineCount": 738
 }

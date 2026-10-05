@@ -1,0 +1,20 @@
+{
+  "id": "scripts/scripts/verify",
+  "name": "Audit And Test",
+  "description": "6 files, primarily JavaScript",
+  "files": [
+    "apps/todo/scripts/run-a11y.mjs",
+    "scripts/lib/ledger.mjs",
+    "scripts/lib/serve.mjs",
+    "scripts/verify-all.mjs",
+    "scripts/verify-remember.mjs",
+    "scripts/verify-shrunk.mjs"
+  ],
+  "entryPoints": [
+    "scripts/lib/serve.mjs"
+  ],
+  "cohesion": 0.3,
+  "coupling": 0.7,
+  "fileCount": 6,
+  "lineCount": 1021
+}

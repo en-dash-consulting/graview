@@ -5,18 +5,18 @@
 <zone>
 
 Zone: View System (`react/view`)
-Files: 3, Cohesion: 0.33, Coupling: 0.67
+Files: 3, Cohesion: 0.29, Coupling: 0.71
 Description: 3 files, primarily TypeScript
 Entry points: packages/react/src/resolved-view.tsx, packages/react/src/view-boundary.tsx, packages/react/src/view-registry.ts
-Lines: 750
+Lines: 782
 
 </zone>
 
 <files>
 
-packages/react/src/resolved-view.tsx (TypeScript, 500 lines, source)
-packages/react/src/view-boundary.tsx (TypeScript, 98 lines, source)
-packages/react/src/view-registry.ts (TypeScript, 152 lines, source)
+packages/react/src/resolved-view.tsx (TypeScript, 499 lines, source)
+packages/react/src/view-boundary.tsx (TypeScript, 112 lines, source)
+packages/react/src/view-registry.ts (TypeScript, 171 lines, source)
 
 </files>
 

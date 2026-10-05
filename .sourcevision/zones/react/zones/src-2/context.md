@@ -5,7 +5,7 @@
 <zone>
 
 Zone: Src 2 (`react/src-2`)
-Files: 4, Cohesion: 0.29, Coupling: 0.71
+Files: 4, Cohesion: 0.27, Coupling: 0.73
 Description: 4 files, primarily TypeScript
 Entry points: packages/react/src/captions.ts, packages/react/src/kit.ts, packages/react/src/scene-lines.tsx, packages/react/src/where-drawn.tsx
 Lines: 1195

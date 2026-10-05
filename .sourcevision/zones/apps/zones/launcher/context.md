@@ -8,7 +8,7 @@ Zone: App Launcher (`apps/launcher`)
 Files: 9, Cohesion: 1.00, Coupling: 0.00
 Description: 9 files, primarily TypeScript
 Entry points: apps/launcher/src/domain/app.ts, apps/launcher/src/domain/survey.ts
-Lines: 1765
+Lines: 1799
 
 </zone>
 
@@ -18,9 +18,9 @@ apps/launcher/src/domain/app.ts (TypeScript, 47 lines, source)
 apps/launcher/src/domain/invariants.ts (TypeScript, 161 lines, source)
 apps/launcher/src/domain/mutations.ts (TypeScript, 126 lines, source)
 apps/launcher/src/domain/schema.ts (TypeScript, 128 lines, source)
-apps/launcher/src/domain/survey.ts (TypeScript, 442 lines, source)
+apps/launcher/src/domain/survey.ts (TypeScript, 461 lines, source)
 apps/launcher/src/index.ts (TypeScript, 5 lines, source)
-apps/launcher/src/main.tsx (TypeScript, 543 lines, source)
+apps/launcher/src/main.tsx (TypeScript, 558 lines, source)
 apps/launcher/src/ui/liveness.tsx (TypeScript, 56 lines, source)
 apps/launcher/src/ui/views.tsx (TypeScript, 257 lines, source)
 
@@ -48,10 +48,10 @@ Internal:
   apps/launcher/src/main.tsx → apps/launcher/src/domain/survey.ts {APPS}
   apps/launcher/src/main.tsx → apps/launcher/src/ui/liveness.tsx {LivenessProvider, useLiveness}
   apps/launcher/src/main.tsx → apps/launcher/src/ui/views.tsx {launcherViews}
-  apps/launcher/src/ui/liveness.tsx → apps/launcher/src/domain/survey.ts {APPS}
+  apps/launcher/src/ui/liveness.tsx → apps/launcher/src/domain/survey.ts {addressOf, APPS}
   apps/launcher/src/ui/views.tsx → apps/launcher/src/domain/schema.ts {launcherSchema}
   apps/launcher/src/ui/views.tsx → apps/launcher/src/domain/schema.ts {LauncherSchema}
-  apps/launcher/src/ui/views.tsx → apps/launcher/src/domain/survey.ts {APPS}
+  apps/launcher/src/ui/views.tsx → apps/launcher/src/domain/survey.ts {addressOf, APPS}
   apps/launcher/src/ui/views.tsx → apps/launcher/src/ui/liveness.tsx {useLiveness}
 
 </imports>

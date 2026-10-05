@@ -7,8 +7,8 @@
 Zone: Discography (`apps-discography`)
 Files: 13, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 13 files, mostly components and schemas; entry points app.ts, tracklist.tsx; imported by Apps.
-Entry points: apps/discography/src/domain/app.ts, apps/discography/src/ui/tracklist.tsx
+Description: 13 files, mostly components and schemas; entry points app.ts, tracklist.tsx, seats.ts; imported by Tests and Apps.
+Entry points: apps/discography/src/domain/app.ts, apps/discography/src/ui/seats.ts, apps/discography/src/ui/tracklist.tsx
 Lines: 1624
 
 </zone>
@@ -63,6 +63,7 @@ Internal:
   apps/discography/src/ui/views.tsx → apps/discography/src/ui/tracklist.tsx {createTracklistLens}
 
 Incoming (other zones → this zone):
+  ← tests: tests/a-refusal-never-names-your-own-role.test.ts → apps/discography/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/discography/src/ui/seats.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/discography/src/domain/app.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/discography/src/ui/seats.ts
   ← tests-apps: apps/discography/tests/domain.test.ts → apps/discography/src/domain/app.ts; apps/discography/tests/lens-reuse.test.ts → apps/discography/src/ui/tracklist.tsx
 
 </imports>
@@ -76,6 +77,6 @@ Incoming (other zones → this zone):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 58 internal calls, 0 outgoing, 3 incoming (cohesion: 1, coupling: 0)
+- [call graph] 58 internal calls, 0 outgoing, 5 incoming (cohesion: 1, coupling: 0)
 
 </insights>

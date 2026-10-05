@@ -1,17 +1,27 @@
 {
   "id": "scripts/scripts",
-  "name": "Scripts",
-  "description": "32 files, primarily JavaScript",
+  "name": "Build And Verify",
+  "description": "42 files, primarily JavaScript, TypeScript",
   "files": [
+    "apps/discography/vite.config.ts",
+    "apps/gauntlet/vite.config.ts",
+    "apps/launcher/vite.config.ts",
+    "apps/rota/vite.config.ts",
+    "apps/seedbed/vite.config.ts",
     "apps/todo/scripts/run-a11y.mjs",
+    "apps/todo/vite.config.ts",
     "scripts/audit-ui.mjs",
     "scripts/lib/engine.mjs",
+    "scripts/lib/hosted-page.mjs",
     "scripts/lib/ledger.mjs",
     "scripts/lib/places.mjs",
+    "scripts/lib/ports.mjs",
     "scripts/lib/serve.mjs",
+    "scripts/lib/surfaces.mjs",
     "scripts/lib/tarballs.mjs",
     "scripts/progression.mjs",
     "scripts/rehearse-studio.mjs",
+    "scripts/require-changeset.mjs",
     "scripts/smoke-create.mjs",
     "scripts/survey-ui.mjs",
     "scripts/verify-all.mjs",
@@ -21,6 +31,7 @@
     "scripts/verify-desk.mjs",
     "scripts/verify-engines.mjs",
     "scripts/verify-gauntlet.mjs",
+    "scripts/verify-hosted-page.mjs",
     "scripts/verify-lines.mjs",
     "scripts/verify-menu.mjs",
     "scripts/verify-navigation.mjs",
@@ -33,15 +44,17 @@
     "scripts/verify-served.mjs",
     "scripts/verify-shrunk.mjs",
     "scripts/verify-site.mjs",
-    "scripts/verify-studio.mjs",
     "scripts/verify-who.mjs"
   ],
   "entryPoints": [
     "scripts/lib/engine.mjs",
-    "scripts/lib/serve.mjs"
+    "scripts/lib/hosted-page.mjs",
+    "scripts/lib/ports.mjs",
+    "scripts/lib/serve.mjs",
+    "scripts/lib/surfaces.mjs"
   ],
   "cohesion": 0.95,
   "coupling": 0.05,
-  "fileCount": 32,
-  "lineCount": 11708
+  "fileCount": 42,
+  "lineCount": 12107
 }

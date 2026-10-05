@@ -1,21 +1,20 @@
 {
   "id": "seedbed",
-  "name": "Seedbed",
-  "description": "Project configuration and manifest files: vite.config.ts, vite.site.config.ts",
+  "name": "Apps Config",
+  "description": "Project configuration and manifest files: vite.site.config.ts",
   "files": [
-    "apps/seedbed/vite.config.ts",
     "apps/seedbed/vite.site.config.ts"
   ],
   "entryPoints": [],
-  "cohesion": 0,
+  "cohesion": 1,
   "coupling": 0,
-  "fileCount": 2,
-  "lineCount": 91,
+  "fileCount": 1,
+  "lineCount": 59,
   "riskMetrics": {
-    "cohesion": 0,
+    "cohesion": 1,
     "coupling": 0,
-    "riskScore": 0.5,
-    "riskLevel": "at-risk",
+    "riskScore": 0,
+    "riskLevel": "healthy",
     "failsThreshold": false
   }
 }

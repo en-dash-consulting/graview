@@ -5,26 +5,38 @@
 <zone>
 
 Zone: Tests Core (`tests-core`)
-Files: 3, Cohesion: 1.00, Coupling: 0.00
+Files: 5, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in packages: persistence.test.ts, sync.test.ts, judges-past.ts
-Lines: 749
+Description: Non-source files in packages: persistence.test.ts, sync.test.ts, adapter-contract.ts (+2 more)
+Entry points: packages/core/tests/support/adapter-contract.ts, packages/core/tests/support/unseen-worlds.ts
+Lines: 1257
 
 </zone>
 
 <files>
 
-packages/core/tests/integration/persistence.test.ts (TypeScript, 161 lines, test)
+packages/core/tests/integration/persistence.test.ts (TypeScript, 105 lines, test)
 packages/core/tests/integration/sync.test.ts (TypeScript, 566 lines, test)
+packages/core/tests/support/adapter-contract.ts (TypeScript, 256 lines, test)
+packages/core/tests/support/unseen-worlds.ts (TypeScript, 308 lines, test)
 packages/core/tests/types/judges-past.ts (TypeScript, 22 lines, test)
 
 </files>
 
 <imports>
 
+Internal:
+  packages/core/tests/integration/persistence.test.ts → packages/core/tests/support/adapter-contract.ts {adapterCases, sqlCases}
 
 Outgoing (this zone → other zones):
-  → core: packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/persistence/sqlite.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts
+  → core: packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts; packages/core/tests/support/unseen-worlds.ts → packages/core/src/index.ts; packages/core/tests/support/unseen-worlds.ts → packages/core/src/index.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts
+  → core-persistence: packages/core/tests/integration/persistence.test.ts → packages/core/src/persistence/sqlite.ts
+
+Incoming (other zones → this zone):
+  ← tests: tests/workerd/worker.ts → packages/core/tests/support/adapter-contract.ts; tests/workerd/worker.ts → packages/core/tests/support/adapter-contract.ts
+  ← tests-core-unit: packages/core/tests/unit/a-log-that-only-grew-is-served-as-if-read-whole.test.ts → packages/core/tests/support/unseen-worlds.ts; packages/core/tests/unit/a-refusal-is-no-oracle.test.ts → packages/core/tests/support/unseen-worlds.ts; packages/core/tests/unit/a-seat-is-never-served-an-id-it-may-not-see.test.ts → packages/core/tests/support/unseen-worlds.ts; packages/core/tests/unit/a-seat-is-served-its-own-words.test.ts → packages/core/tests/support/unseen-worlds.ts; packages/core/tests/unit/a-sentence-names-only-what-its-reader-may-see.test.ts → packages/core/tests/support/unseen-worlds.ts; packages/core/tests/unit/an-op-naming-no-record-is-served-as-it-is.test.ts → packages/core/tests/support/unseen-worlds.ts
+  ← tests-ship-unit: packages/ship/tests/unit/no-unseen-id-leaves-the-wire.test.ts → packages/core/tests/support/unseen-worlds.ts; packages/ship/tests/unit/no-unseen-id-leaves-the-wire.test.ts → packages/core/tests/support/unseen-worlds.ts
+  ← tests-tools-unit: packages/tools/tests/unit/an-agent-is-never-answered-an-id-it-may-not-see.test.ts → packages/core/tests/support/unseen-worlds.ts
 
 </imports>
 
@@ -37,6 +49,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 40 internal calls, 23 outgoing, 0 incoming (cohesion: 0.63, coupling: 0.37)
+- [call graph] 118 internal calls, 40 outgoing, 101 incoming (cohesion: 0.75, coupling: 0.25)
 
 </insights>

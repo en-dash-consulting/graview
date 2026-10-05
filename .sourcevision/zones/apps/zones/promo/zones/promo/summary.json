@@ -1,7 +1,7 @@
 {
   "id": "apps/promo/promo",
   "name": "Promo",
-  "description": "15 files, primarily TypeScript",
+  "description": "9 files, primarily TypeScript",
   "files": [
     "apps/promo/src/camera.ts",
     "apps/promo/src/components/BrandPresence.tsx",
@@ -9,15 +9,9 @@
     "apps/promo/src/components/Constellation.tsx",
     "apps/promo/src/components/LightCharacter.tsx",
     "apps/promo/src/components/SurveyInsert.tsx",
-    "apps/promo/src/components/TypePlate.tsx",
     "apps/promo/src/motion.ts",
     "apps/promo/src/scenes/CityAltitude.tsx",
-    "apps/promo/src/scenes/GraphInterface.tsx",
-    "apps/promo/src/scenes/OpenBrand.tsx",
-    "apps/promo/src/scenes/SettleLockup.tsx",
-    "apps/promo/src/theme.ts",
-    "apps/spike/src/main.ts",
-    "apps/spike/src/three-planes.ts"
+    "apps/promo/src/scenes/GraphInterface.tsx"
   ],
   "entryPoints": [
     "apps/promo/src/camera.ts",
@@ -28,13 +22,10 @@
     "apps/promo/src/components/SurveyInsert.tsx",
     "apps/promo/src/motion.ts",
     "apps/promo/src/scenes/CityAltitude.tsx",
-    "apps/promo/src/scenes/GraphInterface.tsx",
-    "apps/promo/src/scenes/OpenBrand.tsx",
-    "apps/promo/src/scenes/SettleLockup.tsx",
-    "apps/promo/src/theme.ts"
+    "apps/promo/src/scenes/GraphInterface.tsx"
   ],
-  "cohesion": 0.63,
-  "coupling": 0.38,
-  "fileCount": 15,
-  "lineCount": 2264
+  "cohesion": 0.41,
+  "coupling": 0.59,
+  "fileCount": 9,
+  "lineCount": 1711
 }

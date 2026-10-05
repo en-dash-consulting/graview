@@ -1,74 +1,74 @@
 {
   "schemaVersion": "1.0.0",
   "toolVersion": "0.1.0",
-  "analyzedAt": "2026-10-02T03:11:26.616Z",
+  "analyzedAt": "2026-10-05T00:02:39.551Z",
   "targetPath": "graview",
   "modules": {
     "inventory": {
       "status": "complete",
-      "startedAt": "2026-10-02T03:10:10.846Z",
-      "completedAt": "2026-10-02T03:10:10.963Z"
+      "startedAt": "2026-10-05T00:01:12.930Z",
+      "completedAt": "2026-10-05T00:01:13.069Z"
     },
     "imports": {
       "status": "complete",
-      "startedAt": "2026-10-02T03:10:10.964Z",
-      "completedAt": "2026-10-02T03:10:11.779Z"
+      "startedAt": "2026-10-05T00:01:13.070Z",
+      "completedAt": "2026-10-05T00:01:14.099Z"
     },
     "classifications": {
       "status": "complete",
-      "startedAt": "2026-10-02T03:10:11.780Z",
-      "completedAt": "2026-10-02T03:11:23.080Z"
+      "startedAt": "2026-10-05T00:01:14.100Z",
+      "completedAt": "2026-10-05T00:02:35.060Z"
     },
     "zones": {
       "status": "complete",
-      "startedAt": "2026-10-02T03:11:23.081Z",
-      "completedAt": "2026-10-02T03:11:24.788Z"
+      "startedAt": "2026-10-05T00:02:35.061Z",
+      "completedAt": "2026-10-05T00:02:36.928Z"
     },
     "components": {
       "status": "complete",
-      "startedAt": "2026-10-02T03:11:24.790Z",
-      "completedAt": "2026-10-02T03:11:25.140Z"
+      "startedAt": "2026-10-05T00:02:36.931Z",
+      "completedAt": "2026-10-05T00:02:37.330Z"
     },
     "callgraph": {
       "status": "complete",
-      "startedAt": "2026-10-02T03:11:25.141Z",
-      "completedAt": "2026-10-02T03:11:26.616Z"
+      "startedAt": "2026-10-05T00:02:37.331Z",
+      "completedAt": "2026-10-05T00:02:39.551Z"
     }
   },
   "language": "typescript",
   "languages": [
     "typescript"
   ],
-  "gitSha": "840577c35c51881f83263e2ca74d22793d6dd30a",
-  "gitBranch": "main",
-  "analysisFingerprint": "c0143a37bc8eec7e",
+  "gitSha": "1a45bf34a3ebb833692bf906889e969c81c24078",
+  "gitBranch": "analysis/sourcevision-scan-2026-10-02",
+  "analysisFingerprint": "1e7f662730821a5d",
   "zoneOutputs": true,
   "tokenUsage": {
     "calls": 10,
-    "inputTokens": 114399,
-    "outputTokens": 12550,
+    "inputTokens": 148883,
+    "outputTokens": 16491,
     "vendor": "claude",
     "model": "claude-sonnet-5"
   },
   "lastAnalysis": {
-    "at": "2026-10-02T03:10:10.842Z",
+    "at": "2026-10-05T00:01:12.928Z",
     "mode": "cascade",
-    "durationMs": 76211,
+    "durationMs": 87570,
     "phases": {
-      "inventory": 119,
-      "imports": 816,
-      "classifications": 71301,
-      "zones": 1709,
-      "components": 350,
-      "callgraph": 1566
+      "inventory": 140,
+      "imports": 1029,
+      "classifications": 80960,
+      "zones": 1869,
+      "components": 400,
+      "callgraph": 2340
     },
     "llm": {
       "byTaskClass": {
         "code.classify": {
           "calls": 3,
-          "inputTokens": 82348,
-          "outputTokens": 9225,
-          "durationMs": 1252,
+          "inputTokens": 109910,
+          "outputTokens": 12350,
+          "durationMs": 1414,
           "vendor": "typesafe",
           "model": "jev-1.13.0"
         },
@@ -76,61 +76,59 @@
           "calls": 3,
           "inputTokens": 0,
           "outputTokens": 0,
-          "durationMs": 69997,
+          "durationMs": 79467,
           "vendor": "claude",
           "model": "claude-haiku-4-5"
         },
         "zone.judge": {
           "calls": 5,
-          "inputTokens": 44593,
-          "outputTokens": 4498,
-          "durationMs": 1221,
+          "inputTokens": 52566,
+          "outputTokens": 5650,
+          "durationMs": 1285,
           "vendor": "typesafe",
           "model": "jev-1.13.0"
         },
         "finding.judge": {
           "calls": 1,
-          "inputTokens": 3405,
-          "outputTokens": 123,
-          "durationMs": 142,
+          "inputTokens": 6104,
+          "outputTokens": 228,
+          "durationMs": 165,
           "vendor": "typesafe",
           "model": "jev-1.13.0"
         }
       },
       "judgmentCache": {
-        "hits": 18,
-        "misses": 193
+        "hits": 7,
+        "misses": 255
       }
     },
     "partition": {
-      "fingerprint": "2cc7aa9e309e71eb",
+      "fingerprint": "5d36251d404e23dc",
       "health": {
-        "zones": 42,
-        "smallZones": 12,
-        "smallShare": 0.29,
+        "zones": 44,
+        "smallZones": 10,
+        "smallShare": 0.23,
         "numericIds": 0,
         "largestShare": 0.1,
         "verdict": "borderline",
         "reasons": [
-          "12/42 zones hold 2 files or fewer"
+          "10/44 zones hold 2 files or fewer"
         ]
       },
       "rejected": false,
-      "mapProbability": 0.33,
+      "mapProbability": 0.47,
       "reused": false
     }
   },
   "narration": {
     "status": "done",
     "zones": [
-      "core",
-      "core-mutations",
-      "core-ops"
+      "core"
     ],
     "names": [],
-    "startedAt": "2026-10-02T03:11:27.054Z",
-    "pid": 46088,
+    "startedAt": "2026-10-05T00:02:40.499Z",
+    "pid": 86430,
     "log": ".sourcevision/.cache/narration.log",
-    "finishedAt": "2026-10-02T03:12:08.754Z"
+    "finishedAt": "2026-10-05T00:03:36.156Z"
   }
 }

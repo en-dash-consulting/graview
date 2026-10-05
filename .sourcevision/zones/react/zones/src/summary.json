@@ -4,9 +4,9 @@
   "description": "10 files, primarily TypeScript",
   "files": [
     "packages/react/src/activity.ts",
+    "packages/react/src/affordances.ts",
     "packages/react/src/context.tsx",
     "packages/react/src/hooks.ts",
-    "packages/react/src/motion.ts",
     "packages/react/src/occupants.tsx",
     "packages/react/src/plots.tsx",
     "packages/react/src/pointer.ts",
@@ -16,9 +16,9 @@
   ],
   "entryPoints": [
     "packages/react/src/activity.ts",
+    "packages/react/src/affordances.ts",
     "packages/react/src/context.tsx",
     "packages/react/src/hooks.ts",
-    "packages/react/src/motion.ts",
     "packages/react/src/occupants.tsx",
     "packages/react/src/plots.tsx",
     "packages/react/src/pointer.ts",
@@ -26,8 +26,8 @@
     "packages/react/src/robot.ts",
     "packages/react/src/settings.ts"
   ],
-  "cohesion": 0.49,
-  "coupling": 0.51,
+  "cohesion": 0.44,
+  "coupling": 0.56,
   "fileCount": 10,
-  "lineCount": 3196
+  "lineCount": 3269
 }

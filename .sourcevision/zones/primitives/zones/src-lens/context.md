@@ -5,55 +5,71 @@
 <zone>
 
 Zone: Src Lens (`primitives/src-lens`)
-Files: 15, Cohesion: 0.68, Coupling: 0.32
-Description: 15 files, primarily TypeScript
-Entry points: packages/primitives/src/default-views.tsx, packages/primitives/src/index.ts, packages/primitives/src/primitives/index.tsx, packages/primitives/src/wordmark.tsx
-Lines: 7995
+Files: 21, Cohesion: 0.64, Coupling: 0.36
+Description: 21 files, primarily TypeScript
+Entry points: packages/primitives/src/arrangement.ts, packages/primitives/src/chat.tsx, packages/primitives/src/companion.tsx, packages/primitives/src/default-views.tsx, packages/primitives/src/figure.tsx, packages/primitives/src/index.ts, packages/primitives/src/lens/coverage.tsx, packages/primitives/src/lens/more.tsx, packages/primitives/src/markup.ts, packages/primitives/src/primitives/index.tsx, packages/primitives/src/view-doors.tsx
+Lines: 8958
 
 </zone>
 
 <files>
 
+packages/primitives/src/arrangement.ts (TypeScript, 26 lines, source)
+packages/primitives/src/chat.tsx (TypeScript, 611 lines, source)
+packages/primitives/src/companion.tsx (TypeScript, 654 lines, source)
 packages/primitives/src/connections.tsx (TypeScript, 173 lines, source)
-packages/primitives/src/default-views.tsx (TypeScript, 881 lines, source)
-packages/primitives/src/editable.tsx (TypeScript, 349 lines, source)
+packages/primitives/src/default-views.tsx (TypeScript, 1148 lines, source)
+packages/primitives/src/editable.tsx (TypeScript, 364 lines, source)
 packages/primitives/src/figure.tsx (TypeScript, 102 lines, source)
-packages/primitives/src/index.ts (TypeScript, 180 lines, source)
-packages/primitives/src/lens/board.tsx (TypeScript, 1047 lines, source)
-packages/primitives/src/lens/calendar.tsx (TypeScript, 43 lines, source)
-packages/primitives/src/lens/coverage.tsx (TypeScript, 1002 lines, source)
+packages/primitives/src/framework-views.ts (TypeScript, 21 lines, source)
+packages/primitives/src/index.ts (TypeScript, 197 lines, source)
+packages/primitives/src/lens/board.tsx (TypeScript, 1113 lines, source)
+packages/primitives/src/lens/coverage.tsx (TypeScript, 1127 lines, source)
+packages/primitives/src/lens/horizon.ts (TypeScript, 26 lines, source)
+packages/primitives/src/lens/more.tsx (TypeScript, 28 lines, source)
 packages/primitives/src/lens/reach.tsx (TypeScript, 159 lines, source)
-packages/primitives/src/lens/timeline.tsx (TypeScript, 697 lines, source)
+packages/primitives/src/lens/timeline.tsx (TypeScript, 725 lines, source)
 packages/primitives/src/markup.ts (TypeScript, 24 lines, source)
-packages/primitives/src/primitives/index.tsx (TypeScript, 709 lines, source)
-packages/primitives/src/seeding.tsx (TypeScript, 953 lines, source)
-packages/primitives/src/theme.ts (TypeScript, 1605 lines, source)
-packages/primitives/src/wordmark.tsx (TypeScript, 71 lines, source)
+packages/primitives/src/primitives/index.tsx (TypeScript, 731 lines, source)
+packages/primitives/src/quick-relations.tsx (TypeScript, 226 lines, source)
+packages/primitives/src/seat.tsx (TypeScript, 414 lines, source)
+packages/primitives/src/seeding.tsx (TypeScript, 1013 lines, source)
+packages/primitives/src/view-doors.tsx (TypeScript, 76 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
+  packages/primitives/src/chat.tsx → packages/primitives/src/companion.tsx {useSubject}
+  packages/primitives/src/chat.tsx → packages/primitives/src/seat.tsx {describeSource, proposalKey, SeatComposer, SeatHeader, SeatSettings, SeatThread, Settled, useSeatConversation}
+  packages/primitives/src/companion.tsx → packages/primitives/src/chat.tsx {ChatPanel}
+  packages/primitives/src/companion.tsx → packages/primitives/src/primitives/index.tsx {VISUALLY_HIDDEN}
+  packages/primitives/src/companion.tsx → packages/primitives/src/quick-relations.tsx {QuickRelations}
   packages/primitives/src/connections.tsx → packages/primitives/src/default-views.tsx {hueFor}
   packages/primitives/src/connections.tsx → packages/primitives/src/primitives/index.tsx {Chip}
+  packages/primitives/src/default-views.tsx → packages/primitives/src/arrangement.ts {arrangementOf, withArrangement}
   packages/primitives/src/default-views.tsx → packages/primitives/src/connections.tsx {Connections}
   packages/primitives/src/default-views.tsx → packages/primitives/src/editable.tsx {EditableTitle, Fields}
   packages/primitives/src/default-views.tsx → packages/primitives/src/figure.tsx {hasFigure, KindFigure}
   packages/primitives/src/default-views.tsx → packages/primitives/src/primitives/index.tsx {Aggregate, Chip, Panel, Roster}
   packages/primitives/src/figure.tsx → packages/primitives/src/default-views.tsx {hueFor}
   packages/primitives/src/figure.tsx → packages/primitives/src/markup.ts {useMarkup}
+  packages/primitives/src/framework-views.ts → packages/primitives/src/default-views.tsx {registerDefaultViews}
+  packages/primitives/src/index.ts → packages/primitives/src/chat.tsx {ChatPanel}
+  packages/primitives/src/index.ts → packages/primitives/src/chat.tsx {ChatPanelProps}
+  packages/primitives/src/index.ts → packages/primitives/src/companion.tsx {Companion, useSubject}
+  packages/primitives/src/index.ts → packages/primitives/src/companion.tsx {CompanionProps, Subject}
   packages/primitives/src/index.ts → packages/primitives/src/connections.tsx {Connections}
   packages/primitives/src/index.ts → packages/primitives/src/connections.tsx {ConnectionsProps}
-  packages/primitives/src/index.ts → packages/primitives/src/default-views.tsx {hueFor, registerDefaultViews}
+  packages/primitives/src/index.ts → packages/primitives/src/default-views.tsx {rosterOf, hueFor, registerDefaultViews, THUMBNAIL_BUDGET}
   packages/primitives/src/index.ts → packages/primitives/src/editable.tsx {EditableTitle, EditableValue, Fields, humanise}
   packages/primitives/src/index.ts → packages/primitives/src/figure.tsx {hasFigure, KindFigure}
   packages/primitives/src/index.ts → packages/primitives/src/lens/board.tsx {BOARD_REQUIRED_ROLES, BoardBindingError, BoardView, buildBoard, createBoardLens}
   packages/primitives/src/index.ts → packages/primitives/src/lens/board.tsx {BoardLens, BoardOptions, BoardSlot, BoardState, BoardViewProps}
-  packages/primitives/src/index.ts → packages/primitives/src/lens/calendar.tsx {actThatMoves, addDays, addMonths, CalendarBindingError, CALENDAR_RANGES, CALENDAR_REQUIRED_ROLES, createCalendarLens, dayOf, daysBetween, daysFrom, endOfMonth, entriesIn, entriesOn, finerThan, minutesOf, placeOnCalendar, rangesOf, spanOf, startOfMonth, startOfQuarter, startOfWeek, titleOf, weekdayOf}
-  packages/primitives/src/index.ts → packages/primitives/src/lens/calendar.tsx {CalendarBindings, CalendarCell, CalendarGrain, CalendarHorizon, CalendarLens, CalendarOptions, CalendarRange, CalendarRoles, CalendarSpan, PlacedEntry}
-  packages/primitives/src/index.ts → packages/primitives/src/lens/coverage.tsx {buildCoverage, CoverageBindingError, COVERAGE_REQUIRED_ROLES, CoverageView, createCoverageLens}
-  packages/primitives/src/index.ts → packages/primitives/src/lens/coverage.tsx {CoverageCell, CoverageGrid, CoverageLens, CoverageOptions, CoverageRoles, CoverageViewProps}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/coverage.tsx {buildCoverage, capCoverage, CoverageBindingError, COVERAGE_MAX_COLUMNS, COVERAGE_MAX_ROWS, COVERAGE_REQUIRED_ROLES, CoverageView, createCoverageLens}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/coverage.tsx {CappedCoverage, CoverageCell, CoverageGrid, CoverageLens, CoverageOptions, CoverageRoles, CoverageViewProps}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/more.tsx {withMore}
   packages/primitives/src/index.ts → packages/primitives/src/lens/reach.tsx {buildReach, ReachView, reachLens}
   packages/primitives/src/index.ts → packages/primitives/src/lens/reach.tsx {Reach, ReachCell}
   packages/primitives/src/index.ts → packages/primitives/src/lens/timeline.tsx {activeWindow, assignLanes, createTimelineLens, placeOnTimeline, TimelineBindingError, TimelineView, TIMELINE_REQUIRED_ROLES}
@@ -61,21 +77,26 @@ Internal:
   packages/primitives/src/index.ts → packages/primitives/src/markup.ts {useMarkup}
   packages/primitives/src/index.ts → packages/primitives/src/primitives/index.tsx {Aggregate, Axis, Chip, Connector, FAINT_TEXT, Grid, MUTED_TEXT, Panel, Prose, VISUALLY_HIDDEN, Roster, useWidth}
   packages/primitives/src/index.ts → packages/primitives/src/primitives/index.tsx {AggregateProps, AxisProps, ChipProps, ConnectorProps, GridProps, PanelProps, RosterProps}
+  packages/primitives/src/index.ts → packages/primitives/src/quick-relations.tsx {QuickRelations, handles}
+  packages/primitives/src/index.ts → packages/primitives/src/seat.tsx {describeSource, proposalKey, SeatComposer, SeatHeader, SeatSettings, SeatThread, Settled, splitAside, useSeatConversation}
+  packages/primitives/src/index.ts → packages/primitives/src/seat.tsx {SeatAnswer, SeatOutcome, SeatTurn}
   packages/primitives/src/index.ts → packages/primitives/src/seeding.tsx {Begin, Door, downscale, Intake, PlanReview, PHOTO_MAX_EDGE, PHOTO_QUALITY}
   packages/primitives/src/index.ts → packages/primitives/src/seeding.tsx {BeginProps, DoorProps, IntakeProps, PlanReviewProps}
-  packages/primitives/src/index.ts → packages/primitives/src/theme.ts {DARK, GRAVIEW_BRAND, LIGHT, SCHEMES, themeCss, themeVariables}
-  packages/primitives/src/index.ts → packages/primitives/src/theme.ts {Brand, Scheme, ThemeCssOptions, ThemeTokens}
-  packages/primitives/src/index.ts → packages/primitives/src/wordmark.tsx {Wordmark}
+  packages/primitives/src/index.ts → packages/primitives/src/view-doors.tsx {fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews}
   packages/primitives/src/lens/board.tsx → packages/primitives/src/default-views.tsx {hueFor}
+  packages/primitives/src/lens/board.tsx → packages/primitives/src/lens/horizon.ts {onTheHorizon}
+  packages/primitives/src/lens/board.tsx → packages/primitives/src/lens/more.tsx {withMore}
   packages/primitives/src/lens/board.tsx → packages/primitives/src/primitives/index.tsx {Chip, Panel, Roster}
   packages/primitives/src/lens/coverage.tsx → packages/primitives/src/default-views.tsx {hueFor}
+  packages/primitives/src/lens/coverage.tsx → packages/primitives/src/lens/horizon.ts {onTheHorizon}
   packages/primitives/src/lens/coverage.tsx → packages/primitives/src/primitives/index.tsx {Chip, Panel, Roster, useWidth}
   packages/primitives/src/lens/reach.tsx → packages/primitives/src/default-views.tsx {hueFor}
   packages/primitives/src/lens/reach.tsx → packages/primitives/src/primitives/index.tsx {Chip}
   packages/primitives/src/lens/timeline.tsx → packages/primitives/src/default-views.tsx {hueFor}
+  packages/primitives/src/lens/timeline.tsx → packages/primitives/src/lens/more.tsx {withMore}
   packages/primitives/src/lens/timeline.tsx → packages/primitives/src/primitives/index.tsx {Chip, Panel, Roster}
+  packages/primitives/src/quick-relations.tsx → packages/primitives/src/default-views.tsx {hueFor}
   packages/primitives/src/seeding.tsx → packages/primitives/src/primitives/index.tsx {MUTED_TEXT, Panel}
-  packages/primitives/src/wordmark.tsx → packages/primitives/src/markup.ts {useMarkup}
-  packages/primitives/src/wordmark.tsx → packages/primitives/src/theme.ts {GRAVIEW_BRAND}
+  packages/primitives/src/view-doors.tsx → packages/primitives/src/framework-views.ts {*}
 
 </imports>

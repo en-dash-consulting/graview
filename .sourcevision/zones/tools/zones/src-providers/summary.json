@@ -1,0 +1,19 @@
+{
+  "id": "tools/src-providers",
+  "name": "Src Providers",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/tools/src/derive.ts",
+    "packages/tools/src/providers/insight.ts",
+    "packages/tools/src/usage.ts"
+  ],
+  "entryPoints": [
+    "packages/tools/src/derive.ts",
+    "packages/tools/src/providers/insight.ts",
+    "packages/tools/src/usage.ts"
+  ],
+  "cohesion": 0.31,
+  "coupling": 0.69,
+  "fileCount": 3,
+  "lineCount": 584
+}

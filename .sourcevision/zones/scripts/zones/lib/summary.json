@@ -3,18 +3,18 @@
   "name": "Lib",
   "description": "5 files, primarily JavaScript",
   "files": [
-    "scripts/lib/journeys.mjs",
-    "scripts/lib/watch-acknowledged.mjs",
-    "scripts/lib/watch.mjs",
-    "scripts/verify-journeys.mjs",
-    "scripts/verify-watch.mjs"
+    "scripts/inspect-pack.mjs",
+    "scripts/lib/bundle-budget.mjs",
+    "scripts/lib/graview-sources.mjs",
+    "scripts/lib/readme-exports.mjs",
+    "scripts/verify-studio.mjs"
   ],
   "entryPoints": [
-    "scripts/lib/journeys.mjs",
-    "scripts/lib/watch.mjs"
+    "scripts/lib/bundle-budget.mjs",
+    "scripts/lib/readme-exports.mjs"
   ],
-  "cohesion": 0.62,
-  "coupling": 0.38,
+  "cohesion": 0.73,
+  "coupling": 0.27,
   "fileCount": 5,
-  "lineCount": 2021
+  "lineCount": 1254
 }

@@ -5,17 +5,18 @@
 <zone>
 
 Zone: Scripts 2 (`scripts/scripts-2`)
-Files: 4, Cohesion: 0.00, Coupling: 0.00
-Description: 4 files, primarily JavaScript
-Lines: 466
+Files: 5, Cohesion: 0.00, Coupling: 0.00
+Description: 5 files, primarily JavaScript
+Lines: 738
 
 </zone>
 
 <files>
 
-scripts/eval-elm.mjs (JavaScript, 225 lines, build)
-scripts/inspect-pack.mjs (JavaScript, 118 lines, build)
-scripts/require-changeset.mjs (JavaScript, 73 lines, build)
-scripts/site-artifact.mjs (JavaScript, 50 lines, build)
+scripts/site-numbers.mjs (JavaScript, 135 lines, build)
+scripts/site-progression.mjs (JavaScript, 105 lines, build)
+scripts/smoke-install.mjs (JavaScript, 366 lines, build)
+scripts/verify-products.mjs (JavaScript, 111 lines, build)
+scripts/write-framework-version.mjs (JavaScript, 21 lines, build)
 
 </files>

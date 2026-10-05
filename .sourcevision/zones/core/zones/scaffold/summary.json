@@ -1,10 +1,11 @@
 {
   "id": "core/scaffold",
   "name": "Scaffold",
-  "description": "6 files, primarily TypeScript",
+  "description": "7 files, primarily TypeScript",
   "files": [
     "packages/core/src/cli/create.ts",
     "packages/core/src/scaffold/domain.ts",
+    "packages/core/src/scaffold/from-template.ts",
     "packages/core/src/scaffold/index.ts",
     "packages/core/src/scaffold/names.ts",
     "packages/core/src/scaffold/project.ts",
@@ -14,8 +15,8 @@
     "packages/core/src/cli/create.ts",
     "packages/core/src/scaffold/index.ts"
   ],
-  "cohesion": 0.84,
-  "coupling": 0.16,
-  "fileCount": 6,
-  "lineCount": 2152
+  "cohesion": 0.88,
+  "coupling": 0.12,
+  "fileCount": 7,
+  "lineCount": 2466
 }

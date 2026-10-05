@@ -1,8 +1,9 @@
 {
   "id": "pages",
   "name": "Pages",
-  "description": "19 files, mostly pages and entry points; entry points index.ts, page-list.tsx; imported by Packages.",
+  "description": "20 files, mostly pages and entry points; entry points index.ts, page-list.tsx; imported by Packages.",
   "files": [
+    "packages/pages/src/ask-companion.tsx",
     "packages/pages/src/ask.tsx",
     "packages/pages/src/face-controls.tsx",
     "packages/pages/src/face-placed.ts",
@@ -29,8 +30,8 @@
   ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 19,
-  "lineCount": 4459,
+  "fileCount": 20,
+  "lineCount": 4583,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

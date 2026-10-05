@@ -1,0 +1,20 @@
+{
+  "id": "scripts/watch",
+  "name": "Watch",
+  "description": "5 files, primarily JavaScript",
+  "files": [
+    "scripts/lib/journeys.mjs",
+    "scripts/lib/watch-acknowledged.mjs",
+    "scripts/lib/watch.mjs",
+    "scripts/verify-journeys.mjs",
+    "scripts/verify-watch.mjs"
+  ],
+  "entryPoints": [
+    "scripts/lib/journeys.mjs",
+    "scripts/lib/watch.mjs"
+  ],
+  "cohesion": 0.62,
+  "coupling": 0.38,
+  "fileCount": 5,
+  "lineCount": 2289
+}
