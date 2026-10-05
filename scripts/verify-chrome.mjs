@@ -467,6 +467,91 @@ async function theSeatPutAway(newPage, readyOf) {
   return said;
 }
 
+/** A notice as the browser draws it: in the top layer, in the viewport, on top at its middle, in the floating panel, readable. */
+function noticeLooks(page, kind) {
+  return page.evaluate((testId) => {
+    const stack = document.querySelector(`[data-testid="${testId}"]`);
+    const card = stack?.querySelector('[data-testid="notice"]');
+    if (!stack || !card) return null;
+    const box = card.getBoundingClientRect();
+    const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    const channel = (value) => {
+      const c = value / 255;
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    };
+    const luminance = (rgb) => {
+      const [r, g, b] = rgb.match(/[\d.]+/g).map(Number);
+      return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+    };
+    const style = getComputedStyle(card);
+    const painted = /rgba?\([^)]*\)/.exec(style.backgroundImage)?.[0] ?? style.backgroundColor;
+    const ink = luminance(getComputedStyle(card.querySelector("span:nth-of-type(2)")).color);
+    const ground = luminance(painted);
+    const [light, dark] = ink > ground ? [ink, ground] : [ground, ink];
+    return {
+      topLayer: stack.matches(":popover-open"),
+      onTop: hit !== null && card.contains(hit),
+      inTheViewport: box.left >= 0 && box.top >= 0 && box.right <= document.documentElement.clientWidth && box.bottom <= innerHeight,
+      floatingPanel: style.backgroundImage.includes("gradient") && style.boxShadow !== "none",
+      contrast: Math.round(((light + 0.05) / (dark + 0.05)) * 100) / 100,
+      text: card.textContent,
+    };
+  }, kind === "toast" ? "notices-toasts" : "notices-banners");
+}
+
+/** Whether the toast stands over the popover that is open, laid over the middle of it. */
+function toastOverThePopover(page, pane) {
+  return page.evaluate((testId) => {
+    const popover = document.querySelector(`[data-testid="${testId}"]`);
+    const stack = document.querySelector('[data-testid="notices-toasts"]');
+    if (!popover || !stack) return null;
+    const at = popover.getBoundingClientRect();
+    // Moved, not restacked: where it stands in the top layer is what is asked.
+    stack.style.bottom = "auto";
+    stack.style.top = `${Math.round(at.top + at.height / 2 - 10)}px`;
+    stack.style.left = `${Math.round(at.left + at.width / 2)}px`;
+    const card = stack.querySelector('[data-testid="notice"]').getBoundingClientRect();
+    const hit = document.elementFromPoint(card.left + card.width / 2, card.top + Math.min(card.height / 2, 12));
+    return stack.contains(hit);
+  }, pane);
+}
+
+/** The host's notices, said through the handle: drawn, on top, aloud, gone or kept, changed in place, over a popover opened after them. */
+async function theHostsNotices(page) {
+  const said = {};
+  await page.evaluate(() => {
+    window.__newer = window.__handle.notify({ kind: "banner", id: "newer", sentence: "A newer version is available — reload when convenient.", tone: "info", action: { label: "Reload", href: "#" } });
+    window.__handle.notify({ kind: "toast", sentence: "The app was changed — now version 4", tone: "good" });
+  });
+  await page.waitForTimeout(250);
+  said.banner = await noticeLooks(page, "banner");
+  said.toast = await noticeLooks(page, "toast");
+  said.aloud = await page.evaluate(() => document.querySelector('[data-testid="notices-said"]')?.textContent ?? null);
+  /* A popover opened after the toast: the toast keeps the top rung. */
+  await page.locator('[data-testid="profile-button"]:visible').first().click();
+  await page.waitForTimeout(250);
+  said.overTheProfile = await toastOverThePopover(page, "profile");
+  await page.keyboard.press("Escape");
+  /* A toast goes by itself; a banner stays, and changes in place. */
+  await page.waitForTimeout(6500);
+  said.toastGone = await page.evaluate(() => document.querySelector('[data-testid="notices-toasts"] [data-testid="notice"]') === null);
+  said.bannerStays = await page.evaluate(() => document.querySelector('[data-testid="notices-banners"] [data-testid="notice"]') !== null);
+  await page.evaluate(() => window.__newer.update({ sentence: "Offline — changes will be sent when you reconnect.", tone: "warn" }));
+  await page.waitForTimeout(200);
+  said.changedInPlace = await page.evaluate(() => {
+    const one = [...document.querySelectorAll('[data-testid="notices-banners"] [data-testid="notice"]')];
+    return one.length === 1 && one[0].getAttribute("data-tone") === "warn" && one[0].textContent.includes("Offline");
+  });
+  /* A bad one is an alert. */
+  await page.evaluate(() => window.__handle.notify({ kind: "toast", sentence: "That change was refused.", tone: "bad" }));
+  await page.waitForTimeout(250);
+  said.alarm = await page.evaluate(() => document.querySelector('[data-testid="notices-alarm"]')?.textContent ?? null);
+  await page.evaluate(() => window.__newer.dismiss());
+  await page.waitForTimeout(150);
+  said.cleared = await page.evaluate(() => document.querySelector('[data-testid="notices-banners"]') === null);
+  return said;
+}
+
 let browser;
 const todo = await serving("todo", portFor("todo"), repoRoot);
 const host = await buildHost();
@@ -522,6 +607,28 @@ try {
     .filter(([name, entry]) => entry.drawn.some((face) => face === "shell" || face === "embed") && !seen[name])
     .map(([name]) => name);
   report.checks.everyPopoverAFaceDrawsWasOpened = { seen, unseen, quick: QUICK, ok: unseen.length === 0 || QUICK };
+  /* ---- FR-75: a host speaks in the app's own notices */
+  {
+    const notices = {};
+    for (const size of SIZES) {
+      for (const colorScheme of ["light", "dark"]) {
+        const page = await browser.newPage({ viewport: size, colorScheme });
+        page.on("pageerror", (error) => errors.push(error.message));
+        await page.goto(`${at("chrome-host")}/?face=graview`, { waitUntil: "load" });
+        await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+        await page.waitForTimeout(900);
+        await openTheSeat(page);
+        const said = await theHostsNotices(page);
+        await page.close();
+        const drawn = (one) => one !== null && one.topLayer && one.onTop && one.inTheViewport && one.floatingPanel && one.contrast >= 4.5;
+        notices[`${size.width}×${size.height} ${colorScheme}`] = {
+          ...said,
+          ok: drawn(said.banner) && drawn(said.toast) && said.aloud === "The app was changed — now version 4" && said.overTheProfile === true && said.toastGone && said.bannerStays && said.changedInPlace && said.alarm === "That change was refused." && said.cleared,
+        };
+      }
+    }
+    report.checks.aHostSpeaksInTheAppsOwnNotices = { ...notices, ok: Object.values(notices).every((one) => one.ok) };
+  }
   /* ---- FR-78: the seat can be put away, and the picture takes the room */
   const seat = await theSeatPutAway(
     async (viewport) => {

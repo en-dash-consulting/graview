@@ -1,6 +1,6 @@
 import { Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { PageComponent, PageRegistry } from "@graview/pages";
-import { Profile, Standing, themeCss, useWidth, type HostAction } from "@graview/primitives/frame";
+import { createNoticeBoard, Notices, Profile, Standing, themeCss, useWidth, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -164,6 +164,12 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * scene.
    */
   readonly hostActions?: readonly HostAction[];
+  /**
+   * THE BOARD THE HOST NOTICES ARE SAID ON (FR-75). `mount` makes one and
+   * hands its `notify` back on the handle; a React host drawing `<Embed>`
+   * makes its own with `createNoticeBoard()` and says things on it.
+   */
+  readonly notices?: NoticeBoard;
   /**
    * TOLD WHAT WENT WRONG (FR-24). A view, a page or the strip that throws
    * is contained where it threw, the rest of the embed keeps working, and
@@ -371,6 +377,17 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
   }, [label]);
 
   return { rootRef, scope, css, scheme, store, presence, brand, auto: height === "auto", height };
+}
+
+/**
+ * THE HOST'S NOTICES, over the face (FR-75): banners at the top of the
+ * picture, toasts at its foot, said aloud. The board is the host's when it
+ * gave one, else the frame's own.
+ */
+export function FrameNotices({ rootRef, board }: { readonly rootRef: { readonly current: HTMLElement | null }; readonly board: NoticeBoard | undefined }) {
+  const [own] = useState(() => board ?? createNoticeBoard());
+  const anchor = useCallback(() => rootRef.current?.querySelector<HTMLElement>("[data-embed-content]") ?? rootRef.current, [rootRef]);
+  return <Notices board={board ?? own} anchor={anchor} />;
 }
 
 /** What the provider under every face is handed from the options, beside the store and the views. */

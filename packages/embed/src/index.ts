@@ -4,5 +4,7 @@ export { hostScheme } from "./frame.js";
 export type { EmbedError, EmbedErrorWhere, EmbedFace, EmbedHostContext, EmbedReady, EmbedRemote, FrameOptions } from "./frame.js";
 export type { HostAction } from "@graview/primitives/frame";
 export type { CompanionMode } from "@graview/primitives";
+export { createNoticeBoard } from "@graview/primitives/frame";
+export type { Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "@graview/primitives/frame";
 export type { StudioApplied, StudioHostVerdict, StudioOffered, StudioOnApply } from "@graview/studio";
 export { fontsLink, familiesOf } from "./fonts.js";

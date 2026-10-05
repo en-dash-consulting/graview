@@ -105,10 +105,16 @@ export const BUDGETS = [
      * first, and `lazyLacks` fails the bundle if any module of it is left
      * in a chunk fetched later. Set at every face's budget: it is every
      * face, loaded at once.
+     *
+     * Gzipped raised from 373_000 to every face's 380_000, the budget it
+     * is set at, when the embed's chrome became one family (FR-72, FR-75 –
+     * FR-78: the popover family, the host's actions and notices, the seat
+     * put away): measured at 1_297_634 / 373_048, with every face at
+     * 1_302_133 / 377_358.
      */
     entry: `import { mount } from "@graview/embed"; import { StudioPlace } from "@graview/studio"; globalThis.mount = (element, options) => mount(element, { ...options, studio: { onApply() {}, place: StudioPlace } });`,
     minified: 1_310_000,
-    gzipped: 373_000,
+    gzipped: 380_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

@@ -92,7 +92,10 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     the embed draws stands in the browser's top layer, so a host needs no
     `z-index` override and nothing fixed over the scene. `companion:
     "collapsed"` starts the seat's rail put away to a slim tab (`"hidden"`:
-    not drawn); the reader's own choice is remembered over it.
+    not drawn); the reader's own choice is remembered over it. Say the
+    host's own news through `handle.notify({ kind: "toast" | "banner",
+    sentence, tone, action })`, not a toast of your own fixed over the app:
+    it is drawn in the framework's panel, on top, and read aloud.
 
 ## Worked examples
 

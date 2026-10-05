@@ -140,6 +140,8 @@ export function useTopLayer(pane: RefObject<HTMLElement | null>, open: boolean, 
     if (supportsTopLayer(element) && !inTopLayer(element)) {
       try {
         element.showPopover();
+        // The notices stay over it: the ladder's top rung is theirs.
+        raiseAgain();
       } catch {
         // Not connected, or shown already: the ladder's rung still holds it over every rail.
       }
@@ -172,6 +174,32 @@ export function useTopLayer(pane: RefObject<HTMLElement | null>, open: boolean, 
     // The anchor is read when placing, not watched: a new function each render is the same anchor.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, pane, align]);
+}
+
+/**
+ * WHAT STANDS OVER A POPOVER: the notices (FR-75), the ladder's top rung.
+ * The top layer is ordered by when a thing was shown, so a popover opened
+ * after a toast would stand over it; each element here is shown again,
+ * over it, the moment a popover of the family opens.
+ */
+const raised = new Set<HTMLElement>();
+
+/** Keeps an element in the top layer over any popover that opens after it; returns the way to stop. */
+export function raiseOverPopovers(element: HTMLElement): () => void {
+  raised.add(element);
+  return () => raised.delete(element);
+}
+
+function raiseAgain(): void {
+  for (const element of raised) {
+    if (!element.isConnected || !inTopLayer(element)) continue;
+    try {
+      element.hidePopover();
+      element.showPopover();
+    } catch {
+      // Not shown after all: nothing to raise.
+    }
+  }
 }
 
 /**

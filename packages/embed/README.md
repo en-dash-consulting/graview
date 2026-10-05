@@ -113,6 +113,41 @@ mount(root, { app, companion: "collapsed" });   // "open" (the default), "collap
 The reader's own choice wins over `"open"` and `"collapsed"`; `"hidden"` is
 the host's to make, and draws no rail and no tab at all.
 
+## The host's notices
+
+What the host has to say while the app is open — a newer version, the
+connection gone, the app held while a repair is checked, a conflict to
+settle, a refusal — it says in the app's own notices rather than in
+elements of its own fixed over the app:
+
+```ts
+const offline = handle.notify({ kind: "banner", sentence: "Offline — changes will be sent when you reconnect.", tone: "warn" });
+offline.update({ sentence: "Back online.", tone: "good" });
+offline.dismiss();
+
+handle.notify({ kind: "toast", sentence: `The app was changed — now version ${version}` });
+handle.notify({
+  kind: "toast",
+  sentence: conflict.sentence,
+  tone: "warn",
+  actions: [{ label: "Keep theirs", onSelect: conflict.keepTheirs }, { label: "Use mine", onSelect: conflict.useMine }],
+});
+handle.notify({ id: "newer", kind: "banner", sentence: "A newer version is available.", action: { label: "Reload", onSelect: () => location.reload() } });
+```
+
+A toast goes by itself after six seconds (`timeout` says otherwise, `false`
+keeps it), unless it carries an action, when it waits for one; a banner stays
+until it is dismissed. A notice said again under the same `id` takes the
+place of the one before. An action is a press (`onSelect`) or a link
+(`href`), and either closes the notice; every notice also has a dismiss
+control. Banners are drawn at the top of the picture and toasts at its
+foot, in the framework's floating panel and the embed's scheme, in the
+top layer and kept over any popover that opens after them; each is said
+aloud as it arrives, and one whose tone is bad is said as an alert.
+`@graview/embed/pages` has the same `notify`; a React host drawing
+`<Embed>` makes a board with `createNoticeBoard()`, passes it as
+`notices`, and says things on it.
+
 ## What went wrong, and how long it took
 
 ```ts

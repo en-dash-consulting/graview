@@ -76,6 +76,8 @@ export { ShowInstallation } from "./installation.js";
 export { Seats } from "./seats.js";
 export { Profile } from "./profile.js";
 export type { HostAction } from "./profile.js";
+export { createNoticeBoard, Notices, TOAST_MS } from "./notices.js";
+export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "./notices.js";
 export { buildReach, ReachView, reachLens } from "./lens/reach.js";
 export type { Reach, ReachCell } from "./lens/reach.js";
 export { Shell } from "./shell.js";

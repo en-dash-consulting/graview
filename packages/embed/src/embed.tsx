@@ -3,6 +3,7 @@ import { EMPTY_VIEW, aggregateId, fromUrl, withFocus, withOverview, type ViewSta
 import { VISUALLY_HIDDEN, descentTarget, fetchFrameworkViews, frameworkViewDoors, useWidth } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import type { CompanionMode } from "@graview/primitives";
+import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { ErrorReportContext, GraviewProvider, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { createElement, lazy, Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -10,6 +11,7 @@ import { flushSync } from "react-dom";
 import {
   AUTO_SCENE_HEIGHT,
   FaceBoundary,
+  FrameNotices,
   providerProps,
   storeOf,
   Strip,
@@ -299,6 +301,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         */}
       {heading !== false && shown !== "pages" ? <HeadingAt level={heading}>{props.label ?? app.name}</HeadingAt> : null}
       <ErrorReportContext.Provider value={report}>
+      <FrameNotices rootRef={rootRef} board={props.notices} />
       <FaceBoundary module="@graview/react" report={report} content>
       <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)}>
         <Faces face={shown} stop={stop} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} />
@@ -493,6 +496,13 @@ export interface EmbedHandle {
    * after `mount`, and after `setFace`.
    */
   drawn(): Promise<void>;
+  /**
+   * SAYS SOMETHING IN THE APP'S OWN NOTICES (FR-75): a toast that goes by
+   * itself, or a banner that stays until it is cleared, in the framework's
+   * floating panel over the face, on the ladder's top rung, and aloud. The
+   * handle it returns changes it in place or clears it.
+   */
+  notify(notice: Notice): NoticeHandle;
   readonly store: Store<AnySchema>;
   unmount(): void;
 }
@@ -514,6 +524,7 @@ interface Setters {
  */
 export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedOptions<S>): EmbedHandle {
   const store = options.store ?? options.remote?.store ?? storeOf(options.app, options.seed);
+  const board = options.notices ?? createNoticeBoard();
   let setters: Setters | null = null;
   // Which face is asked for, which is drawn, and who is waiting for the one asked for.
   let asked: EmbedFace = options.face ?? faceOf(options.stop);
@@ -541,6 +552,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
       <Embed<S>
         {...options}
         store={store as never}
+        notices={board}
         face={face}
         {...(stop !== undefined ? { stop } : {})}
         {...(principal ? { principal } : {})}
@@ -575,6 +587,13 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setBrand: (brand) => flushSync(() => setters?.brand(brand)),
     /* Drawn is the face asked for — below `pagesBelow`, drawn as the pages that stand in for it. */
     drawn: () => (drawnFace === asked ? Promise.resolve() : new Promise<void>((resolve) => waiting.push(resolve))),
+    notify: (notice) => {
+      let said: NoticeHandle | undefined;
+      flushSync(() => {
+        said = board.notify(notice);
+      });
+      return said!;
+    },
     unmount: () => root.unmount(),
   };
 }

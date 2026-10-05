@@ -16,6 +16,8 @@ export { DARK, GRAVIEW_BRAND, LIGHT, SCHEMES, themeCss, themeVariables } from ".
 export type { Brand, Scheme, ThemeCssOptions, ThemeTokens } from "./theme.js";
 export { Profile } from "./profile.js";
 export type { HostAction } from "./profile.js";
+export { createNoticeBoard, Notices, TOAST_MS } from "./notices.js";
+export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "./notices.js";
 export { Standing } from "./workbench/standing.js";
 export { descentTarget } from "./workbench/back-out.js";
 export { fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews } from "./view-doors.js";
