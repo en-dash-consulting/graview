@@ -92,7 +92,7 @@ mount(root, {
 
 Each is a stop for the keyboard in the menu, in the order given, drawn in
 the embed's own scheme; a press closes the menu. The whole-page Shell takes
-the same `hostActions`.
+the same host actions.
 
 ## The seat, put away
 
@@ -138,7 +138,7 @@ handle.notify({ id: "newer", kind: "banner", sentence: "A newer version is avail
 A toast goes by itself after six seconds (`timeout` says otherwise, `false`
 keeps it), unless it carries an action, when it waits for one; a banner stays
 until it is dismissed. A notice said again under the same `id` takes the
-place of the one before. An action is a press (`onSelect`) or a link
+place of the one before. An action is a press (onSelect) or a link
 (`href`), and either closes the notice; every notice also has a dismiss
 control. Banners are drawn at the top of the picture and toasts at its
 foot, in the framework's floating panel and the embed's scheme, in the
