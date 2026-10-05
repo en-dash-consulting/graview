@@ -12,3 +12,4 @@ export * from "./fields.js";
 export * from "./policy.js";
 export * from "./arrangement.js";
 export * from "./views.js";
+export * from "./computed.js";

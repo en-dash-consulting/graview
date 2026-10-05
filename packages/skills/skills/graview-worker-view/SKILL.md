@@ -122,7 +122,7 @@ with its manifest.
 ## Registering it
 
 ```ts
-import { registerWorkerView, workerHome } from "@graview/guest/host";
+import { registerWorkerView, workerHome } from "@graview/guest/host/views";
 views: (schema, registry) => registerWorkerView(registry, { manifest, worker: { source } }),
 pages.surface("home", workerHome({ manifest: front, worker: { source: frontSource } }));
 ```
@@ -131,7 +131,7 @@ pages.surface("home", workerHome({ manifest: front, worker: { source: frontSourc
 
 1. `graview check` the app the view names: a manifest is only as sound as
    the declaration it reads. `checkManifest(manifest, store)` and
-   `checkViewSource(source)` from `@graview/guest/host` must both say
+   `checkViewSource(source)` from `@graview/guest/host/views` must both say
    nothing.
 2. Open the place on both faces, as a member who may see less than you.
    Is anything shown that they should not see? Does the region carry no

@@ -33,7 +33,7 @@ export async function placeSuite({ repoRoot, build, browser, claim, report, HOST
     stdin: {
       contents: `
 import { mount } from "@graview/embed";
-import { registerWorkerView } from "@graview/guest/host";
+import { registerWorkerView } from "@graview/guest/host/views";
 import { erin, lin, offersApp, offersSeed } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/offers-app.ts"))};
 const asked = new URLSearchParams(location.search);
 window.__failures = [];

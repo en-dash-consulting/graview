@@ -8,7 +8,7 @@ import { kindOfSlug, pluralSlug } from "./registry.js";
 import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
 import { placesOf } from "./page-places.js";
 import { usePlacedOnTheFace } from "./face-placed.js";
-import { DISPLAY, WIDE, column, liveKinds, plain, pluralOf, quiet } from "./page-typography.js";
+import { DISPLAY, WIDE, arrangedKinds, column, plain, pluralOf, quiet } from "./page-typography.js";
 
 
 /**
@@ -135,7 +135,7 @@ export function DefaultShell<S extends AnySchema>({
             }}
           >
             {tab("/", placesOf(context).length > 0 ? "Pictures" : "Home")}
-            {liveKinds(store, context.principal).map((kind) => tab(`/${pluralSlug(store.schema, kind)}`, pluralOf(store, kind)))}
+            {arrangedKinds(context).map((kind) => tab(`/${pluralSlug(store.schema, kind)}`, pluralOf(store, kind)))}
             {kindMap(store).relations.length > 0 ? tab("/map", "Map") : null}
             {tab(
               "/problems",

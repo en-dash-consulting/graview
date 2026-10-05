@@ -30,6 +30,7 @@
       "@graview/embed/pages": ["./packages/embed/src/pages.tsx"],
       "@graview/embed": ["./packages/embed/src/index.ts"],
       "@graview/guest/host/worker": ["./packages/guest/src/host/worker.ts"],
+      "@graview/guest/host/views": ["./packages/guest/src/host/views.ts"],
       "@graview/guest/host": ["./packages/guest/src/host/index.ts"],
       "@graview/guest/react": ["./packages/guest/src/react.ts"],
       "@graview/guest/build": ["./packages/guest/src/build.ts"],

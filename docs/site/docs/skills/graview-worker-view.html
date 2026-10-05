@@ -1116,12 +1116,12 @@ graview.navigate("offer:7")     // a record; graview.navigate({ place: "the-pack
 <h3>Worked examples</h3>
 <p><code>examples/offers-list.js</code> is a list lens: rows linking to their records, and a note typed and pressed in. <code>examples/front-page.js</code> is a home: a headline, a figure, an SVG ring and cards linking to a place. Each opens with its manifest.</p>
 <h3>Registering it</h3>
-<div class="code" data-scroller><pre><code>import { registerWorkerView, workerHome } from "@graview/guest/host";
+<div class="code" data-scroller><pre><code>import { registerWorkerView, workerHome } from "@graview/guest/host/views";
 views: (schema, registry) =&gt; registerWorkerView(registry, { manifest, worker: { source } }),
 pages.surface("home", workerHome({ manifest: front, worker: { source: frontSource } }));</code></pre></div>
 <h3>Then find out whether it worked</h3>
 <ol>
-<li><code>graview check</code> the app the view names: a manifest is only as sound as the declaration it reads. <code>checkManifest(manifest, store)</code> and <code>checkViewSource(source)</code> from <code>@graview/guest/host</code> must both say nothing.</li>
+<li><code>graview check</code> the app the view names: a manifest is only as sound as the declaration it reads. <code>checkManifest(manifest, store)</code> and <code>checkViewSource(source)</code> from <code>@graview/guest/host/views</code> must both say nothing.</li>
 <li>Open the place on both faces, as a member who may see less than you. Is anything shown that they should not see? Does the region carry no <code>data-worker-view-failed</code>?</li>
 <li>Toggle the app to dark. Does the view restyle?</li>
 <li>Press each bound button with typed words, then again with a field the view filled. The first applies and the second is refused.</li>

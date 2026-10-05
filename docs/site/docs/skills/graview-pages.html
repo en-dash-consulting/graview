@@ -1088,6 +1088,7 @@ if (location.pathname.startsWith("/pages")) {
 <li><code>/problems</code> — every broken rule with its repairs.</li>
 </ul>
 <p>The shell is one row — pictures (home), kinds, Map, Problems — scrolling sideways on a phone. Shell and gallery are 1160px wide; read pages, 760.</p>
+<p><strong>Arrange it in the declaration</strong>: <code>pages: { order: ["offer", "package"], hide: ["party"], first: "The offers" }</code>. <code>order</code> sets the gallery, nav and city; <code>hide</code> takes kinds off the home only; <code>first</code> (a place, a kind or <code>"home"</code>) is where both faces open. <code>placesOf(app)</code> lists every place.</p>
 <p><strong>Hand it <code>views</code></strong> (the scene's registry, plus <code>settings</code>/<code>presence</code>) — <code>graview create</code> does — and the face puts the scene's provider under its routes, which buys three things at once:</p>
 <ul>
 <li><code>/places</code>, <code>/places/&lt;as&gt;</code> — every named lens as a page (fullscreen, over the kind's members, siblings one press away, the beginning acts beneath) and the gallery again. A kind's page lists its pictures; a pick in a lens travels to the record. A kind's own row (one × glyph) is each line of its list, and its own page view (one × full) heads its record.</li>
@@ -1095,8 +1096,8 @@ if (location.pathname.startsWith("/pages")) {
 <li><code>/search?q=</code> — the Find box's matcher: hits by kind, each with why; a nav box narrows a list, else lands here. Find and the way back ("Take back “…”", ⌘Z) are on every face: a shell that places <code>&lt;PageFind&gt;</code> or <code>&lt;PageUndo&gt;</code> says where, one that does not gets them drawn around it, and <code>surface("shell", Shell, { without: ["find"] })</code> goes without.</li>
 <li><strong>The assistant</strong>, on every route: one control opens the scene's own <code>Companion</code> in a drawer, and the ROUTE is what "this" means. Grounded questions before anybody types; proposals apply through the same runtime, attributed and undoable, withheld ones struck through. Open questions are listed on <code>/problems</code>; the rung that answers is chosen in the footer.</li>
 </ul>
-<p>Everything a page shows is a derivation the scene also uses: <code>recordFacts</code>, <code>deriveAffordances</code>, <code>store.permits</code>. <strong>A page never decides what an act is or who may take it</strong> — it strikes through what the seat may not, and says why.</p>
-<p><strong>At a phone's width this face is the answer.</strong> The scene still holds there — districts stay legible, panels scroll — but a 134px card in a 390px viewport is a city through a letterbox. <code>Shell</code> carries <code>pagesHref</code>.</p>
+<p>Everything a page shows is a derivation the scene also uses: <code>recordFacts</code>, <code>deriveAffordances</code>, <code>store.permits</code>. <strong>A page never decides what an act is or who may take it</strong> — it strikes through what the seat may not, and says why. A record's facts include its <code>computed</code> fields, worked out from what the seat may see: a price never counts a discount the seat cannot see.</p>
+<p><strong>At a phone's width this face is the answer</strong>: a 134px card in a 390px viewport is a city through a letterbox. <code>Shell</code> carries <code>pagesHref</code>.</p>
 <h3>Rung one: a page in the app's own words</h3>
 <p><code>createPageRegistry(schema)</code> replaces pages per kind and surfaces per app:</p>
 <div class="code" data-scroller><pre><code>import { createPageRegistry, DerivedForm, kindFacts, PageMain, pageStyles, recordFacts, spatialHref, useStoreTick } from "@graview/pages";
@@ -1151,7 +1152,7 @@ export const pages = createPageRegistry&lt;S, PageComponent&lt;S&gt;&gt;(schema)
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code>pnpm build &amp;&amp; npx graview check ./dist/domain/app.js   # the declaration is still whole
 pnpm test                                               # render every page you registered</code></pre></div>
-<p>Render each registered page with <code>PagesApp</code> and <code>initialPath</code> in a test — <code>apps/seedbed/tests/integration/chapters.test.ts</code> does. Then open it: a design that passes its tests and reads like an admin panel has replaced nothing.</p>
+<p>Render each registered page with <code>PagesApp</code> and <code>initialPath</code> in a test (<code>apps/seedbed/tests/integration/chapters.test.ts</code>). Then open it: a design that passes its tests and reads like an admin panel has replaced nothing.</p>
 <h3>What the check cannot see</h3>
 <ul>
 <li>Whether the design's words are the domain's. The derived pages use the declaration's <code>description</code> and <code>inverse</code>; a design that writes its own sentences must keep them true as the declaration changes.</li>

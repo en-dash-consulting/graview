@@ -7,6 +7,8 @@ import { deriveMutations } from "../mutations/derive-edits.js";
 import type { AnySchema } from "../schema/schema.js";
 import { hueFor } from "../theme/derive.js";
 import { withArticle } from "../schema/define-node.js";
+import { declaredLenses, isShippedLens, placesOf } from "../places.js";
+import { computedOf } from "../document/computed.js";
 
 /**
  * WHAT THIS APP IS, READ OUT — the rung between `check` and a browser.
@@ -111,6 +113,34 @@ export function describeApp<S extends AnySchema>(
    * tidy enough that nobody notices the picture was never written.
    */
   lines.push("", "## What is drawn");
+  /*
+   * THE PLACES THE DECLARATION DRAWS ITSELF (FR-79), read from the one list
+   * that decides what draws — so this says what the faces show, and why a
+   * titled lens that is missing is missing.
+   */
+  const lensesDeclared = declaredLenses(app);
+  const everywhere = placesOf(app);
+  if (lensesDeclared.drawn.length > 0) {
+    lines.push(
+      `${lensesDeclared.drawn.length} declared ${lensesDeclared.drawn.length === 1 ? "lens draws" : "lenses draw"} as places, with no view of the app's own: ${list(
+        lensesDeclared.drawn.map((lens) => {
+          const at = everywhere.find((place) => place.slug === lens.as && place.kind === lens.kinds[0]);
+          return `"${lens.title}" (the ${lens.lens} over ${list(lens.kinds.map((kind) => app.schema.tryDefinition(kind)?.plural ?? `${kind}s`))}${lens.across ? ` across ${app.schema.tryDefinition(lens.across)?.plural ?? `${lens.across}s`}` : ""}, at ${at?.address ?? `/places/${lens.as}`})`;
+        }),
+      )}.`,
+    );
+  }
+  for (const lens of lensesDeclared.undrawn) {
+    if (lens.title) lines.push(`  "${lens.title}" does not draw: ${lens.why}.`);
+  }
+  if (app.pages) {
+    const first = everywhere.find((place) => place.first);
+    const order = (app.pages.order ?? []).filter((kind) => kinds.includes(kind));
+    const hidden = (app.pages.hide ?? []).filter((kind) => kinds.includes(kind));
+    if (first) lines.push(`It opens on ${first.kind === null ? "its home" : `"${first.title}"`} (${first.address}).`);
+    if (order.length > 0) lines.push(`The home and the city take the kinds in this order: ${list(order)}${order.length < kinds.length ? ", then the rest as declared" : ""}.`);
+    if (hidden.length > 0) lines.push(`Left off the home, and still at their own addresses and in search: ${list(hidden)}.`);
+  }
   if (!app.views) {
     /*
      * NOT "there are no views" — "nothing here can see them".
@@ -181,9 +211,7 @@ export function describeApp<S extends AnySchema>(
   }
   lines.push("  key:value tokens narrow as a list's filter does, and kind:<kind> to one kind.");
 
-  const authored = (app.lenses ?? []).filter(
-    (lens) => !["timeline", "coverage", "board", "calendar", "reach"].includes(lens.name),
-  );
+  const authored = (app.lenses ?? []).filter((lens) => !isShippedLens(lens.name));
   if (authored.length > 0) {
     lines.push(
       `Lenses this app wrote: ${list(
@@ -298,6 +326,24 @@ export function describeApp<S extends AnySchema>(
   for (const [kind, plot] of map) lines.push(`${kind} at (${plot.col}, ${plot.row})`);
   const roads = roadsOf(app.schema, map);
   lines.push(roads.length === 0 ? "No roads: no kind declares an edge to another." : `Roads: ${roads.map((road) => `${road.from} — ${road.to} by ${road.edges.join(", ")}`).join("; ")}.`);
+
+  /*
+   * WHAT IS WORKED OUT (FR-83). A computed field reads like a stored one in
+   * every template, view and rule, and no act writes it: an agent that knows
+   * which is which never tries to set a price that is a sum.
+   */
+  const worked = kinds.flatMap((kind) => {
+    const definition = app.schema.tryDefinition(kind) as Parameters<typeof computedOf>[0] & { display?: { labels?: Readonly<Record<string, string>> } };
+    return [...computedOf(definition)].map(([name, entry]) => {
+      const label = entry.label ?? definition?.display?.labels?.[name];
+      return `${kind} · ${name}${label ? ` (${label})` : ""}, read-only: ${entry.expr}`;
+    });
+  });
+  if (worked.length > 0) {
+    lines.push("", "## Worked out");
+    lines.push("Computed fields: read like fields, written by nothing, worked out from what the reader may see.");
+    for (const line of worked) lines.push(`  ${line}`);
+  }
 
   /* WHAT IS JUDGED. A rule with no repair is a problem a person is told about and cannot fix. */
   const invariants = app.invariants ?? [];

@@ -471,6 +471,7 @@ export default defineConfig({
       "@graview/react": framework("react/src/index.ts"),
       "@graview/primitives/frame": framework("primitives/src/frame.ts"),
       "@graview/primitives/pages": framework("primitives/src/pages.ts"),
+      "@graview/primitives/scene": framework("primitives/src/scene.ts"),
       "@graview/primitives": framework("primitives/src/index.ts"),
       "@graview/pages": framework("pages/src/index.ts"),
       // The browser entry, so the file adapter's node:fs never meets the bundler.
@@ -482,6 +483,7 @@ export default defineConfig({
       "@graview/embed/pages": framework("embed/src/pages.tsx"),
       "@graview/embed": framework("embed/src/index.ts"),
       "@graview/guest/host/worker": framework("guest/src/host/worker.ts"),
+      "@graview/guest/host/views": framework("guest/src/host/views.ts"),
       "@graview/guest/host": framework("guest/src/host/index.ts"),
       "@graview/guest/react": framework("guest/src/react.ts"),
       "@graview/guest/worker/view": framework("guest/src/worker/view.ts"),

@@ -1,6 +1,6 @@
 import { Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { PageComponent, PageRegistry } from "@graview/pages";
-import { createNoticeBoard, Notices, Profile, Standing, themeCss, useWidth, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
+import { createNoticeBoard, Notices, Profile, registerDeclaredLenses, Standing, themeCss, useWidth, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -206,9 +206,10 @@ export function useViews<S extends AnySchema>(
 ): ReactViewRegistry<S> {
   const { app } = props;
   return useMemo(() => {
-    const base = framework(app.schema, app.viewSpecs);
+    // The lenses the declaration titles are places of their own (FR-79), and its arrangement goes with them (FR-80).
+    const base = registerDeclaredLenses(framework(app.schema, app.viewSpecs), app);
     return (props.views ? layerViews(base, props.views(app.schema, base)) : base) as ReactViewRegistry<S>;
-  }, [props.views, app.schema, app.viewSpecs]);
+  }, [props.views, app.schema, app.viewSpecs, app.lenses, app.pages]);
 }
 
 /** A store from a declaration and a seed: the app's own policy, in memory. */

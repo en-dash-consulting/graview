@@ -14,6 +14,8 @@ import {
   h2,
   lede,
   link,
+  arrangedKinds,
+  homeKinds,
   liveKinds,
   plain,
   pluralOf,
@@ -214,11 +216,17 @@ export interface GalleryEntry {
 
 export function galleryOf<S extends AnySchema>(context: PageContext<S>): readonly GalleryEntry[] {
   const { store } = context;
-  const places = placesOf(context);
+  /*
+   * IN THE DECLARATION'S ORDER (FR-80): the pictures by their kind's place
+   * in `pages.order`, then a card for every kind with none — less the kinds
+   * `pages.hide` leaves off the home, which keep their lists and links.
+   */
+  const order = arrangedKinds(context);
+  const places = [...placesOf(context)].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
   const pictured = new Set(places.map((place) => place.kind));
   return [
     ...places.map((place) => ({ key: placeKey(place), kind: place.kind, title: place.title, to: pathOfPlace(context, place), place })),
-    ...liveKinds(store, context.principal)
+    ...homeKinds(context)
       .filter((kind) => !pictured.has(kind))
       .map((kind) => ({ key: `kind:${kind}`, kind, title: pluralOf(store, kind), to: `/${pluralSlug(store.schema, kind)}` })),
   ];

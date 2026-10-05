@@ -62,9 +62,21 @@ export const BUDGETS = [
      * it is first drawn, with the framework's own views (FR-57): what a page
      * loads first is the frame — measured at 747_000 / 190_229 — and the
      * faces are their own chunks.
+     *
+     * Gzipped raised from 200_000 when a declared lens came to draw (FR-79)
+     * and the arrangement to be honoured (FR-80): the frame registers each
+     * titled lens as a place and reads where the app opens, which is
+     * `declaredLenses` and `openingOf` in what a page loads first — the
+     * factories themselves are a chunk fetched when a lens is first drawn.
+     * Measured at 773_663 / 200_080.
+     *
+     * Raised again when the rule language came to compute what pages need
+     * (FR-83): computed fields, worked out for the seat a record is drawn
+     * for, and the words, and and plural formatters. With both, measured at
+     * 791_069 / 206_781.
      */
-    minified: 780_000,
-    gzipped: 200_000,
+    minified: 800_000,
+    gzipped: 210_000,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -92,9 +104,20 @@ export const BUDGETS = [
      * fetched as it is drawn (FR-57): every face is about 11 kB smaller
      * minified (1_289_095 from 1_300_584), and about 2.5 kB larger gzipped
      * (372_654 from 370_200), because six chunks are each gzipped alone.
+     *
+     * Raised from 1_310_000 / 380_000 when a declared lens came to draw
+     * (FR-79): the six shipped factories — timeline, calendar, coverage,
+     * board, plan and reach — were shaken out of every embed while only an
+     * app's own views could draw them, and now a document's lenses draw
+     * through them. They are a chunk of their own, fetched when the first
+     * lens is drawn, so no face loads them before it needs one. Measured at
+     * 1_388_501 / 407_629.
+     *
+     * Raised again when the rule language came to compute what pages need
+     * (FR-83): with both, measured at 1_399_742 / 412_177.
      */
-    minified: 1_310_000,
-    gzipped: 380_000,
+    minified: 1_410_000,
+    gzipped: 416_000,
     load: "all",
   },
   {
@@ -111,10 +134,14 @@ export const BUDGETS = [
      * FR-78: the popover family, the host's actions and notices, the seat
      * put away): measured at 1_297_634 / 373_048, with every face at
      * 1_302_133 / 377_358.
+     *
+     * Raised with every face when the rule language came to compute what
+     * pages need (FR-83) and a declared lens came to draw (FR-79).
      */
     entry: `import { mount } from "@graview/embed"; import { StudioPlace } from "@graview/studio"; globalThis.mount = (element, options) => mount(element, { ...options, studio: { onApply() {}, place: StudioPlace } });`,
-    minified: 1_310_000,
-    gzipped: 380_000,
+    // Raised with every face's when a declared lens came to draw (FR-79) and the rule language came to compute what pages need (FR-83): the studio reaches the lenses through `@graview/primitives`, so here they load with it. With both, measured at 1_393_930 / 407_048.
+    minified: 1_410_000,
+    gzipped: 416_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
@@ -155,14 +182,27 @@ export const BUDGETS = [
      * them, esbuild put them in what the page loads first (16_898 / 6_652).
      * Remote DOM is in neither. Measured at 6_482 / 3_118.
      *
-     * Raised from 8_000 / 4_000 when a worker view became a place (FR-91,
-     * FR-92, FR-96): `@graview/guest/host` registers one (`registerWorkerView`,
-     * `workerHome`) and judges what it may be handed, ask and run
-     * (`checkManifest`, `workerViewProps`, `judgeCodeAct`, `checkViewSource`)
-     * without a worker. Measured at 11_561 / 5_139; the worker's host and
-     * the open kit are still fetched only when a view is drawn.
+     * Measured at 7_443 / 3_546 once a worker view became a place (FR-91):
+     * registering and judging one is `@graview/guest/host/views`, apart, so
+     * a page that draws only frames carries none of it — the next budget.
      */
     entry: `import { guestView, mountGuestView } from "@graview/guest/host"; globalThis.host = { guestView, mountGuestView };`,
+    minified: 8_000,
+    gzipped: 4_000,
+    load: "first",
+    lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
+  },
+  {
+    name: "the guest host, registering a worker view",
+    /*
+     * `@graview/guest/host/views` (FR-91, FR-92, FR-96): registering a worker
+     * view for its kind or the home, and judging with no worker what it may
+     * be handed, ask and run (`checkManifest`, `workerViewProps`,
+     * `judgeCodeAct`, `checkViewSource`), with the frame's host it shares a
+     * session with. The worker's host and the open kit are fetched when a
+     * view is drawn. Measured at 11_181 / 4_945.
+     */
+    entry: `import { registerWorkerView, workerHome } from "@graview/guest/host/views"; globalThis.views = { registerWorkerView, workerHome };`,
     minified: 13_000,
     gzipped: 6_000,
     load: "first",
@@ -251,7 +291,14 @@ export async function bundleSize(repo, entry, load = "all") {
   });
   const outputs = result.metafile.outputs;
   const name = (path) => relative(join(repo, "out"), join(repo, path));
-  const entryChunk = Object.keys(outputs).find((path) => outputs[path].entryPoint !== undefined);
+  /*
+   * THE PAGE'S OWN ENTRY, by name. Every chunk fetched by `import()` is an
+   * entry point to esbuild too, and the first output carrying one was taken
+   * for the page's: a new door (the declared lenses, FR-79) moved the
+   * studio's chunk to the front of the list, and the page was measured as
+   * though it began there.
+   */
+  const entryChunk = Object.keys(outputs).find((path) => outputs[path].entryPoint === "<stdin>");
   // What a page loads first: the entry, and every chunk it imports outright, never one it imports when asked.
   const loaded = new Set();
   const visit = (path) => {

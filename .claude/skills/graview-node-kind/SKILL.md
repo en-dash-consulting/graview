@@ -150,6 +150,27 @@ above the default record. Tones are `good`, `warn`, `bad`, `neutral` and
 only link drawn is an http(s) `url` field's own value. The scaffold's
 `views()` draws them (`registerViewSpecs`); so does the embed, by itself.
 
+## Worked out, not stored
+
+A value that follows from others is declared once, never kept in step by
+hand. `computed` names it and says it in the rule language:
+
+```ts
+computed: {
+  net: { expr: "sum(out('includes'), list * units) * (100 - either(first(all('party') where role == 'client').discount, 0)) / 100", label: "After the discount" },
+}
+```
+
+Every template, view spec, rule, sum and sort reads `net` like a field
+(`{ field: "net", as: "money" }`, `sort(all('package'), [standing, net], 'desc')`);
+no act or edit form offers it, and an act that sets one is refused. It is
+worked out over the graph the reader holds, so a seat is served one from what
+it may see. Templates say counts in words: `{n | words}` ("three"),
+`{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C").
+The check refuses a cycle (`computed-cycle`), a name that is already a field
+(`computed-clash`) and work that grows with the cube of the graph
+(`computed-cost`, a warning at the square).
+
 ## Then find out whether it worked
 
 ```sh

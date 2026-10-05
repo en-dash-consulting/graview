@@ -32,6 +32,7 @@ export default defineConfig({
       "@graview/react": pkg("react"),
       "@graview/primitives/frame": fileURLToPath(new URL("../../packages/primitives/src/frame.ts", import.meta.url)),
       "@graview/primitives/pages": fileURLToPath(new URL("../../packages/primitives/src/pages.ts", import.meta.url)),
+      "@graview/primitives/scene": fileURLToPath(new URL("../../packages/primitives/src/scene.ts", import.meta.url)),
       "@graview/primitives": pkg("primitives"),
       "@graview/pages": pkg("pages"),
       "@graview/studio": pkg("studio"),

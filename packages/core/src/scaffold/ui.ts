@@ -100,24 +100,27 @@ mount(document.getElementById("here")!, {
 
 export function viewsTsx(ids: Ids): string {
   return `import { createViews } from "@graview/react";
-import { registerDefaultViews, registerViewSpecs } from "@graview/primitives";
+import { registerDeclaredLenses, registerDefaultViews, registerViewSpecs } from "@graview/primitives";
 import { ${ids.appVar} } from "../domain/app.js";
 import { ${ids.schemaVar} } from "../domain/schema.js";
 
 /**
  * Nothing custom yet, on purpose. \`registerDefaultViews\` renders every kind
- * at every fidelity from the declaration alone, and \`registerViewSpecs\`
- * draws the cards, rows and pages the declaration writes as data
- * (\`viewSpecs\` in domain/app.ts — checked by \`graview check\`). Write a
- * view for a kind when the generic one is genuinely wrong, not on
- * principle — see the framework's \`apps/todo/src/ui/views.tsx\` for one
- * that earns its place. Give a group view a title and it is a PLACE,
- * listed by name in the bar:
+ * at every fidelity from the declaration alone, \`registerViewSpecs\` draws
+ * the cards, rows and pages the declaration writes as data (\`viewSpecs\` in
+ * domain/app.ts — checked by \`graview check\`), and
+ * \`registerDeclaredLenses\` draws every lens the declaration gives a title
+ * as a PLACE, listed by name in the bar:
  *
- *   .register("${ids.kind}", { cardinality: "many", fidelity: "full" }, lens.View, { title: "…" })
+ *   lenses: [{ name: "calendar", title: "The month", bindings: { ${ids.kind}: { start: "<date field>" } } }]
+ *
+ * Write a view for a kind when the generic one is genuinely wrong, not on
+ * principle — see the framework's \`apps/todo/src/ui/views.tsx\` for one
+ * that earns its place, registered before the declared lenses are laid over.
  */
 export function views() {
-  return registerViewSpecs(registerDefaultViews(${ids.schemaVar}, createViews(${ids.schemaVar})), ${ids.schemaVar}, ${ids.appVar}.viewSpecs);
+  const own = registerViewSpecs(registerDefaultViews(${ids.schemaVar}, createViews(${ids.schemaVar})), ${ids.schemaVar}, ${ids.appVar}.viewSpecs);
+  return registerDeclaredLenses(own, ${ids.appVar});
 }
 `;
 }

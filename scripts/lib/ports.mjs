@@ -39,7 +39,7 @@ export const OWN = {
   /** `guest-sandbox`'s other origin: the frame guests, and the widget's sandbox proxy. */
   "guest-sandbox": 5283,
   /** `guest-sandbox`'s attacker for the open kit: every request and every connection that reaches it is a view getting out. */
-  "guest-attacker": 5284,
+  "guest-attacker": 5279,
   /** The scratch app `rehearse-studio` writes, and the model it stands in for. */
   rehearsal: 5285,
   "rehearsal-model": 5286,
@@ -47,6 +47,8 @@ export const OWN = {
   "studio-host": 5287,
   /** The host's page `verify-chrome` mounts the embed into, with a host's own actions, notices and the seat put away. */
   "chrome-host": 5288,
+  /** The host's page `verify-declared` mounts a document's declared lenses and arrangement into (FR-79, FR-80). */
+  "declared-host": 5284,
   /** The OpenAI-shaped stand-in `verify-studio` points the studio's remote model at. */
   "studio-model": 5289,
 };

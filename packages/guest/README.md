@@ -200,7 +200,7 @@ A worker view says what it is and what it may touch in a manifest the host
 enforces:
 
 ```ts
-import { registerWorkerView, workerHome } from "@graview/guest/host";
+import { registerWorkerView, workerHome } from "@graview/guest/host/views";
 
 const packages = {
   manifest: { name: "packages", title: "The packages", attach: "package", cardinality: "many",

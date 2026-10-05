@@ -1092,6 +1092,15 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <ol>
 <li><strong>Fill in <code>missing</code> for a repair that cannot be complete.</strong> A repair still needing an argument lists it, and the framework offers real candidates for it — the interface never wires up a picker per mutation.</li>
 </ol>
+<h3>A rule said in words</h3>
+<p>When what must hold is a sentence about the graph, say it in the rule language instead of a function — <code>expressionRule</code> from <code>@graview/core/document</code> makes the invariant, and the studio and a document can read it:</p>
+<div class="code" data-scroller><pre><code>export const pricedPackages = expressionRule("priced-packages", {
+  over: "package",
+  require: "net &gt; 0",
+  says: "{name} costs nothing after the discount",
+  repairs: ["edit-package"],
+});</code></pre></div>
+<p>Fields and one-edge hops by name, <code>out('edge')</code>, <code>in('edge')</code>, <code>all('kind')</code> and <code>S where cond</code>; <code>count</code>, <code>exists</code>, <code>every</code>/<code>some(S, cond)</code>; <code>sum</code>/<code>min</code>/<code>max(S, expr)</code> with an expression per member (<code>sum(out('includes'), list * units)</code>); <code>sort(S, key, 'asc'|'desc')</code> (a list key sorts by its first value, then its next), <code>first(S)</code> for one record, <code>either(a, b)</code> for the first that is something; <code>if</code>, <code>present</code>, <code>len</code>, dates. A kind's <code>computed</code> fields read like stored ones. Every evaluation has a step budget: a rule that reads too much is <code>over-budget</code>, never a hang.</p>
 <h3>The horizon</h3>
 <p>A scoped invariant judges only CURRENT subjects — nodes retired under their kind's declared <code>lifecycle</code> are skipped, because a rule about last term's agreement is noise, not a violation. An invariant that genuinely audits history says so with <code>judgesPast: true</code>.</p>
 <p>So a rule about the past and the present — "nothing closed may still depend on something open" — is written from the side that is still current: the subject is the OPEN thing, the violation names what closed against it, and the repair acts on the subject, because that is the node a person can still act on. Judging the closed one would put the violation behind the horizon and the repair on a thing that has already left the picture.</p>
