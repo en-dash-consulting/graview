@@ -94,6 +94,25 @@ Each is a stop for the keyboard in the menu, in the order given, drawn in
 the embed's own scheme; a press closes the menu. The whole-page Shell takes
 the same `hostActions`.
 
+## The seat, put away
+
+The seat's rail — the subject, its acts, its relations, the conversation —
+stands as a column at the picture's left edge. A reader puts it away to a
+slim tab from its header and opens it again from the tab, by the pointer
+or the keyboard, and what they chose is remembered for the app (in
+`memory`, or the page's storage, wherever the browser allows it). Put
+away, the picture and its controls take the whole width but the tab, and
+the city lays out into it. Narrower than a laptop, the open rail lies over
+the picture instead of taking a column of it; on a phone it is a sheet
+along the bottom. The host says where it starts:
+
+```ts
+mount(root, { app, companion: "collapsed" });   // "open" (the default), "collapsed" or "hidden"
+```
+
+The reader's own choice wins over `"open"` and `"collapsed"`; `"hidden"` is
+the host's to make, and draws no rail and no tab at all.
+
 ## What went wrong, and how long it took
 
 ```ts

@@ -2,7 +2,7 @@ import { layer, type AnySchema } from "@graview/core";
 import { Scene, useGraview, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
 import type { Responder, ToolCall } from "@graview/tools";
 import { useCallback, useLayoutEffect, useState, type ReactNode, useRef } from "react";
-import { Companion } from "./companion.js";
+import { Companion, type CompanionMode } from "./companion.js";
 import { VISUALLY_HIDDEN, useWidth } from "./primitives/index.js";
 import { FindBox } from "./find.js";
 import { ShowInstallation } from "./installation.js";
@@ -90,6 +90,13 @@ export interface ShellProps<S extends AnySchema> {
    * menu under who is signed in — a hosting service's "Your apps", say.
    */
   readonly hostActions?: readonly HostAction[];
+  /**
+   * HOW THE SEAT'S RAIL STARTS (FR-78): `"open"` (the default), `"collapsed"`
+   * to a slim tab, or `"hidden"`. The reader can put it away and open it
+   * again, and what they chose is remembered for the app (by the brand's
+   * name) over this start — except `"hidden"`, which is the app's to say.
+   */
+  readonly companion?: CompanionMode;
 }
 
 /** The narrowest the Find box gets at a desk: room for a word, not a sliver. */
@@ -112,6 +119,7 @@ export function Shell<S extends AnySchema>({
   profileHref,
   studio,
   hostActions,
+  companion,
 }: ShellProps<S>) {
   const { brand, view } = useGraview<S>();
   // Below a laptop's width the standing and the profile keep their marks and
@@ -325,6 +333,8 @@ export function Shell<S extends AnySchema>({
         <Companion<S>
           chat={chat !== false}
           onCall={onCall}
+          {...(companion ? { start: companion } : {})}
+          rememberAs={brand?.name ?? "graview"}
           {...(typeof chat === "object" && chat.respond ? { respond: chat.respond } : {})}
         />
         {/* The same pane at the pointer: right-click is the context menu, and it is this. */}

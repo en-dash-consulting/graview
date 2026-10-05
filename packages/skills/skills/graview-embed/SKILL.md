@@ -90,7 +90,9 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     host's links — "Your apps", "Report this app" — in the strip's profile
     menu, under who is signed in, reached by the keyboard. Every popover
     the embed draws stands in the browser's top layer, so a host needs no
-    `z-index` override and nothing fixed over the scene.
+    `z-index` override and nothing fixed over the scene. `companion:
+    "collapsed"` starts the seat's rail put away to a slim tab (`"hidden"`:
+    not drawn); the reader's own choice is remembered over it.
 
 ## Worked examples
 

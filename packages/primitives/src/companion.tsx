@@ -1,7 +1,7 @@
 import { labelOf, layer, placeSlug, type AnySchema } from "@graview/core";
 import { withFocus } from "@graview/layout/view";
 import { aggregateId, bandAggregateWords, kindOfCard, kindsOfAggregate } from "@graview/layout";
-import { useGraview, useSeatWork, useSelection } from "@graview/react";
+import { useGraview, useSeatWork, useSelection, type ReaderMemory } from "@graview/react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChatPanel } from "./chat.js";
 import { QuickRelations } from "./quick-relations.js";
@@ -219,13 +219,62 @@ export interface CompanionProps<S extends AnySchema> {
    * decided how much room there is before it mounted.
    */
   readonly framed?: boolean;
+  /**
+   * HOW IT STARTS (FR-78): `"open"`, `"collapsed"` to a slim tab at the
+   * picture's edge, or `"hidden"` — no seat drawn at all. The reader's own
+   * choice, once they have made one, is remembered and wins over the
+   * start, except over `"hidden"`, which is the host's to make.
+   */
+  readonly start?: CompanionMode;
+  /** The name the reader's choice is kept under — the app's, so two apps on one page each keep their own. */
+  readonly rememberAs?: string;
 }
 
-export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat = true, framed = false }: CompanionProps<S> = {}) {
-  const { seatWho, robots, session, store, setView: setViewOf, registerActsDoor } = useGraview<S>();
+/** Open, put away to a slim tab, or not drawn at all (FR-78). */
+export type CompanionMode = "open" | "collapsed" | "hidden";
+
+/** The slim tab the seat is put away to, in pixels: the picture has everything else. */
+export const COMPANION_TAB = 36;
+
+/** Narrower than this the open seat is laid over the picture rather than taking a column of it. */
+export const COMPANION_OVERLAY_BELOW = 960;
+
+const COMPANION_KEY = (app: string) => `graview:companion:${app}`;
+
+/** What the reader chose last time for this app, if their browser lets the page remember. */
+function remembered(memory: ReaderMemory | undefined, app: string | undefined): CompanionMode | null {
+  if (!app) return null;
+  try {
+    const kept = (memory ?? localStorage).getItem(COMPANION_KEY(app));
+    return kept === "open" || kept === "collapsed" ? kept : null;
+  } catch {
+    // A private window, a sandboxed frame: the start stands.
+    return null;
+  }
+}
+
+function remember(memory: ReaderMemory | undefined, app: string | undefined, mode: CompanionMode): void {
+  if (!app) return;
+  try {
+    (memory ?? localStorage).setItem(COMPANION_KEY(app), mode);
+  } catch {
+    // Put away for this visit only.
+  }
+}
+
+export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat = true, framed = false, start, rememberAs }: CompanionProps<S> = {}) {
+  const { seatWho, robots, session, store, setView: setViewOf, registerActsDoor, registerRail, memory } = useGraview<S>();
   const { set: chooseOf } = useSelection();
   const subject = useSubject<S>();
-  const [open, setOpen] = useState(true);
+  /*
+   * THE SEAT CAN BE PUT AWAY (FR-78). The rail took a fifth of the picture
+   * on every screen whether anybody was talking to it or not. Put away, it
+   * is a slim tab at the picture's edge and the city has the rest; the
+   * reader's choice is remembered for this app. On a phone it is the sheet
+   * along the bottom, which starts shut, as it always has.
+   */
+  const [mode, setModeState] = useState<CompanionMode>(() => (start === "hidden" ? "hidden" : (remembered(memory, rememberAs) ?? start ?? "open")));
+  const [sheetOpen, setSheetOpen] = useState(false);
   const robot = robots.get(`agent:${seatWho ?? "chat"}:${session}`);
   const state = seatSays(robot?.mode);
   const said = robot?.say ?? null;
@@ -236,20 +285,67 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
    * is a sheet along the bottom, which is where a phone has always put
    * this, and it starts closed so the picture is the first thing.
    */
-  const [narrow, setNarrow] = useState(false);
+  /*
+   * AND BELOW A LAPTOP'S WIDTH IT IS LAID OVER THE PICTURE rather than
+   * taking a column of it: a column of 22% of a tablet's picture is a
+   * column the city never gets back. The tab keeps its place at the edge.
+   */
+  const [shape, setShape] = useState<"column" | "overlay" | "sheet">("column");
+  const narrow = shape === "sheet";
   const frame = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (framed) return;
     const element = frame.current?.parentElement;
     if (!element || typeof ResizeObserver === "undefined") return;
-    const watch = new ResizeObserver(() => setNarrow(element.getBoundingClientRect().width < 640));
+    const measure = () => {
+      const width = element.getBoundingClientRect().width;
+      setShape(width < 640 ? "sheet" : width < COMPANION_OVERLAY_BELOW ? "overlay" : "column");
+    };
+    const watch = new ResizeObserver(measure);
     watch.observe(element);
-    setNarrow(element.getBoundingClientRect().width < 640);
+    measure();
     return () => watch.disconnect();
-  }, []);
+  }, [mode === "hidden"]);
+  const open = framed ? true : narrow ? sheetOpen : mode === "open";
+  /** Opens or puts it away; a choice the reader made is kept for this app. */
+  const setOpen = (next: boolean, kept = true) => {
+    if (narrow) {
+      setSheetOpen(next);
+      return;
+    }
+    const to: CompanionMode = next ? "open" : "collapsed";
+    setModeState(to);
+    if (kept) remember(memory, rememberAs, to);
+  };
+  const tabbed = !framed && !narrow && mode !== "hidden" && (mode === "collapsed" || shape === "overlay");
+  /*
+   * WHAT THE SEAT TAKES OF THE PICTURE. As a column, the scene keeps its
+   * proportional rail; as a tab, an overlay or nothing, the picture's own
+   * box gives up only the tab (below) and the city lays out into the rest.
+   */
   useEffect(() => {
-    if (narrow && !framed) setOpen(false);
-  }, [narrow, framed]);
+    if (framed || narrow) return;
+    registerRail(mode === "hidden" || tabbed ? 8 : null);
+    return () => registerRail(null);
+  }, [framed, narrow, mode, tabbed, registerRail]);
+  useLayoutEffect(() => {
+    const parent = frame.current?.parentElement;
+    if (!parent || !tabbed) return;
+    const before = parent.style.paddingLeft;
+    parent.style.paddingLeft = `${COMPANION_TAB}px`;
+    return () => {
+      parent.style.paddingLeft = before;
+    };
+  }, [tabbed]);
+  const tab = useRef<HTMLButtonElement | null>(null);
+  /* The keyboard follows the control: put away from the header, it lands on the tab; opened from the tab, on the header. */
+  const followTo = useRef<"tab" | "dock" | null>(null);
+  useLayoutEffect(() => {
+    const to = followTo.current;
+    followTo.current = null;
+    if (to === "tab") tab.current?.focus({ preventScroll: true });
+    else if (to === "dock") dock.current?.focus({ preventScroll: true });
+  });
   /*
    * AND THE PICTURE MAKES ROOM FOR THE SHEET. Laid over a 390-wide scene,
    * an open sheet covers the districts and the control that opens one —
@@ -282,17 +378,19 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
   const dock = useRef<HTMLButtonElement | null>(null);
   const [asked, setAsked] = useState(0);
   useEffect(() => {
-    if (framed) return;
+    // Hidden by the host, there is no seat to open: a card's acts stay at the pointer.
+    if (framed || mode === "hidden") return;
     registerActsDoor({
       key: ACTS_KEY,
       open: (from) => {
         cameFrom.current = from;
-        setOpen(true);
+        setOpen(true, false);
         setAsked((count) => count + 1);
       },
     });
     return () => registerActsDoor(null);
-  }, [framed, registerActsDoor]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [framed, registerActsDoor, narrow, mode === "hidden"]);
   /* Whether the keyboard stands on a card, so the seat can say the key where it is seen. */
   const [onACard, setOnACard] = useState(false);
   useEffect(() => {
@@ -310,6 +408,7 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
   }, [framed]);
   const anything = store.graph.allEdges().length > 0;
   const docked = !narrow && !framed;
+  const overlaid = docked && shape === "overlay";
   /* The conversation, rendered once and placed by the pane's shape. */
   const conversation = (
     <ChatPanel<S>
@@ -398,12 +497,67 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
    * failed on every hosted app at every size. It lives in the picture it is
    * about, so it is a labelled region there, and what it holds are groups.
    */
+  if (mode === "hidden" && !framed) return null;
+  if (tabbed && !open) {
+    /*
+     * PUT AWAY: a slim tab at the picture's edge, the whole height of it,
+     * and one control that opens the seat again.
+     */
+    return (
+      <section
+        ref={frame}
+        aria-label={`The seat — about ${subject.name}`}
+        data-testid="companion"
+        data-graview-companion="shut"
+        data-graview-companion-mode="collapsed"
+        data-graview-subject={subject.id ?? ""}
+        data-graview-offstage=""
+        onMouseDown={(event) => event.stopPropagation()}
+        style={{
+          zIndex: layer("rail"),
+          position: "absolute",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: COMPANION_TAB,
+          boxSizing: "border-box",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          paddingTop: 8,
+          borderRight: RULE,
+          background: "var(--graview-bar)",
+        }}
+      >
+        <button
+          type="button"
+          ref={tab}
+          data-testid="companion-tab"
+          aria-expanded={false}
+          aria-label={`Open the seat — about ${subject.name}`}
+          title={`Open the seat — about ${subject.name}`}
+          onClick={() => {
+            followTo.current = "dock";
+            setOpen(true);
+          }}
+          style={{ display: "grid", justifyItems: "center", gap: 8, width: 28, minHeight: 28, padding: "6px 0", borderRadius: 8, fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}
+        >
+          <span aria-hidden="true">◆</span>
+          <span aria-hidden="true" style={{ writingMode: "vertical-rl", letterSpacing: "0.12em", textTransform: "uppercase", fontSize: "0.6875rem" }}>
+            The seat
+          </span>
+        </button>
+      </section>
+    );
+  }
   return (
     <section
       ref={frame}
       aria-label={`The seat — about ${subject.name}`}
       data-testid="companion"
       data-graview-companion={open ? "open" : "shut"}
+      data-graview-companion-mode={narrow ? (open ? "open" : "collapsed") : mode}
+      data-graview-companion-shape={framed ? "framed" : shape}
       data-graview-subject={subject.id ?? ""}
       data-graview-because={subject.because}
       // Chrome, not scene: no line is ever anchored to what this repeats.
@@ -427,6 +581,26 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
           ? { position: "static" as const, width: "auto", maxHeight: "100%", padding: "10px 12px" }
           : narrow
           ? { position: "absolute" as const, left: 10, right: 10, bottom: 10, maxHeight: open ? "min(58cqh, 420px)" : undefined, padding: open ? "10px 12px" : "6px 10px" }
+          : overlaid
+          ? {
+              /*
+               * LAID OVER THE PICTURE, from the tab's edge: the floating
+               * panel's look, the high lift, and the picture underneath
+               * keeps its whole width.
+               */
+              position: "absolute" as const,
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: "min(300px, calc(100% - 48px))",
+              padding: "12px 12px 10px",
+              borderRadius: 0,
+              borderTop: "none",
+              borderBottom: "none",
+              borderLeft: "none",
+              display: "grid" as const,
+              gridTemplateRows: "auto minmax(0, 1fr) auto",
+            }
           : {
               /*
                * DOCKED, NOT FLOATING. The layout keeps this rail clear of the
@@ -462,6 +636,8 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
         data-testid="companion-dock"
         aria-expanded={open}
         onClick={(event) => {
+          // Put away from the header where there is a tab to put it away to, the keyboard lands on the tab.
+          if (open && !narrow) followTo.current = "tab";
           setOpen(!open);
           /*
            * Put away from the keyboard (a click no pointer made), the

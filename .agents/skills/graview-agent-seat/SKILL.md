@@ -132,6 +132,10 @@ path to the store:
   acts at the pointer, so the context menu and the assistant are one
   construct. The seat has no figure in the picture; other people's agents
   still have theirs. `useSubject()` gives the same answer to any surface.
+  A reader puts it away to a slim tab from its header and opens it from the
+  tab; the choice is remembered per app, and the city takes the room.
+  Narrower than a laptop it lies over the picture. `<Shell companion="collapsed" />`
+  (or `"hidden"`) and the embed's `companion` option set where it starts.
 - **The conversation** — a section of that rail — answers questions in words.
   Keyless it answers from the graph (`graphResponder`: standings, named
   things, when/who, mutations phrased in their own titles); a model plugs in

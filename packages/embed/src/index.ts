@@ -3,5 +3,6 @@ export type { EmbedHandle, EmbedOptions, EmbedProps, EmbedStudio } from "./embed
 export { hostScheme } from "./frame.js";
 export type { EmbedError, EmbedErrorWhere, EmbedFace, EmbedHostContext, EmbedReady, EmbedRemote, FrameOptions } from "./frame.js";
 export type { HostAction } from "@graview/primitives/frame";
+export type { CompanionMode } from "@graview/primitives";
 export type { StudioApplied, StudioHostVerdict, StudioOffered, StudioOnApply } from "@graview/studio";
 export { fontsLink, familiesOf } from "./fonts.js";

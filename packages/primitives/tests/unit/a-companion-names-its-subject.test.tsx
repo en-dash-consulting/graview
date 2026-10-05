@@ -100,8 +100,13 @@ describe("a companion names its subject", () => {
     expect(host.querySelector('[data-graview-companion]')!.getAttribute("data-graview-companion")).toBe("open");
     await act(async () => dock.click());
     expect(host.querySelector('[data-graview-companion]')!.getAttribute("data-graview-companion")).toBe("shut");
-    expect(host.querySelector('[data-testid="companion-dock"]')).not.toBeNull();
+    // Put away to its tab (FR-78), which is the tab stop that brings it back.
+    const tab = host.querySelector<HTMLButtonElement>('[data-testid="companion-tab"]')!;
+    expect(tab).not.toBeNull();
     expect(host.querySelector('[data-testid="chat-panel"]')).toBeNull();
+    await act(async () => tab.click());
+    expect(host.querySelector('[data-graview-companion]')!.getAttribute("data-graview-companion")).toBe("open");
+    expect(host.querySelector('[data-testid="companion-dock"]')).not.toBeNull();
     await act(async () => root.unmount());
     host.remove();
   });
