@@ -5,23 +5,20 @@
 <zone>
 
 Zone: Tests Packages (`tests-packages`)
-Files: 8, Cohesion: 1.00, Coupling: 0.00
+Files: 5, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in packages: persistence.test.ts, sync.test.ts, door.test.ts (+5 more)
-Lines: 1797
+Description: Non-source files in packages: door.test.ts, frame-plan.test.ts, pointer-router.test.ts (+2 more)
+Lines: 1038
 
 </zone>
 
 <files>
 
-packages/core/tests/integration/persistence.test.ts (TypeScript, 161 lines, test)
-packages/core/tests/integration/sync.test.ts (TypeScript, 566 lines, test)
 packages/create-graview/tests/unit/door.test.ts (TypeScript, 30 lines, test)
-packages/embed/tests/unit/embed.test.ts (TypeScript, 35 lines, test)
 packages/render/tests/unit/frame-plan.test.ts (TypeScript, 297 lines, test)
 packages/render/tests/unit/pointer-router.test.ts (TypeScript, 104 lines, test)
 packages/ship/tests/integration/serve.test.ts (TypeScript, 323 lines, test)
-packages/skills/tests/unit/skills.test.ts (TypeScript, 281 lines, test)
+packages/skills/tests/unit/skills.test.ts (TypeScript, 284 lines, test)
 
 </files>
 
@@ -29,8 +26,6 @@ packages/skills/tests/unit/skills.test.ts (TypeScript, 281 lines, test)
 
 
 Outgoing (this zone → other zones):
-  → core: packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/persistence/sqlite.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts
-  → embed: packages/embed/tests/unit/embed.test.ts → packages/embed/src/index.ts
   → render: packages/render/tests/unit/frame-plan.test.ts → packages/render/src/gpu.ts; packages/render/tests/unit/frame-plan.test.ts → packages/render/src/index.ts; packages/render/tests/unit/frame-plan.test.ts → packages/render/src/index.ts; packages/render/tests/unit/pointer-router.test.ts → packages/render/src/index.ts; packages/render/tests/unit/pointer-router.test.ts → packages/render/src/interaction/pointer-router.ts; packages/render/tests/unit/pointer-router.test.ts → packages/render/src/interaction/pointer-router.ts; packages/render/tests/unit/pointer-router.test.ts → packages/render/src/scene/plane.ts
   → ship: packages/ship/tests/integration/serve.test.ts → packages/ship/src/file-adapter.ts; packages/ship/tests/integration/serve.test.ts → packages/ship/src/remote.ts; packages/ship/tests/integration/serve.test.ts → packages/ship/src/serve.ts; packages/ship/tests/integration/serve.test.ts → packages/ship/src/serve.ts
   → skills: packages/skills/tests/unit/skills.test.ts → packages/skills/src/index.ts
@@ -40,14 +35,12 @@ Outgoing (this zone → other zones):
 <findings>
 
 [observation] [info] High cohesion (1) — files are tightly interconnected
-[suggestion] [info] Zone "tests-packages" has files across 6 directories — consider consolidating under a dedicated directory
 
 </findings>
 
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- Zone "tests-packages" has files across 6 directories — consider consolidating under a dedicated directory
-- [call graph] 89 internal calls, 109 outgoing, 0 incoming (cohesion: 0.45, coupling: 0.55)
+- [call graph] 49 internal calls, 86 outgoing, 0 incoming (cohesion: 0.36, coupling: 0.64)
 
 </insights>

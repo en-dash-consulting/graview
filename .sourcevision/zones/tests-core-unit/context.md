@@ -5,47 +5,60 @@
 <zone>
 
 Zone: Tests Core Unit (`tests-core-unit`)
-Files: 33, Cohesion: 1.00, Coupling: 0.00
+Files: 46, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in packages: a-described-node-ref.test.ts, a-hue-is-degrees.test.ts, a-lens-started.test.ts (+30 more)
-Lines: 5016
+Description: Non-source files in packages: a-change-in-the-records-words.test.ts, a-described-node-ref.test.ts, a-glance-does-not-say-its-heading-again.test.ts (+43 more)
+Lines: 6364
 
 </zone>
 
 <files>
 
+packages/core/tests/unit/a-change-in-the-records-words.test.ts (TypeScript, 37 lines, test)
 packages/core/tests/unit/a-described-node-ref.test.ts (TypeScript, 24 lines, test)
+packages/core/tests/unit/a-glance-does-not-say-its-heading-again.test.ts (TypeScript, 28 lines, test)
 packages/core/tests/unit/a-hue-is-degrees.test.ts (TypeScript, 43 lines, test)
+packages/core/tests/unit/a-kind-says-what-one-is-called.test.ts (TypeScript, 42 lines, test)
 packages/core/tests/unit/a-lens-started.test.ts (TypeScript, 68 lines, test)
 packages/core/tests/unit/a-module-that-is-never-off.test.ts (TypeScript, 74 lines, test)
+packages/core/tests/unit/a-refusal-in-words.test.ts (TypeScript, 36 lines, test)
 packages/core/tests/unit/a-third-kind-decides.test.ts (TypeScript, 134 lines, test)
+packages/core/tests/unit/a-time-of-day-is-asked-for.test.ts (TypeScript, 30 lines, test)
+packages/core/tests/unit/a-watching-harness-is-told.test.ts (TypeScript, 83 lines, test)
 packages/core/tests/unit/an-edge-to-a-person.test.ts (TypeScript, 63 lines, test)
-packages/core/tests/unit/check.test.ts (TypeScript, 606 lines, test)
+packages/core/tests/unit/an-id-is-the-name-folded.test.ts (TypeScript, 24 lines, test)
+packages/core/tests/unit/arranged-from-the-declaration.test.ts (TypeScript, 226 lines, test)
+packages/core/tests/unit/check.test.ts (TypeScript, 665 lines, test)
 packages/core/tests/unit/create-command.test.ts (TypeScript, 257 lines, test)
-packages/core/tests/unit/derive-edits.test.ts (TypeScript, 263 lines, test)
+packages/core/tests/unit/derive-edits.test.ts (TypeScript, 264 lines, test)
 packages/core/tests/unit/figures.test.ts (TypeScript, 122 lines, test)
 packages/core/tests/unit/form.test.ts (TypeScript, 74 lines, test)
 packages/core/tests/unit/graph.test.ts (TypeScript, 170 lines, test)
 packages/core/tests/unit/installation.test.ts (TypeScript, 130 lines, test)
-packages/core/tests/unit/kit.test.ts (TypeScript, 63 lines, test)
+packages/core/tests/unit/kit.test.ts (TypeScript, 67 lines, test)
 packages/core/tests/unit/lifecycle.test.ts (TypeScript, 178 lines, test)
-packages/core/tests/unit/modules.test.ts (TypeScript, 242 lines, test)
+packages/core/tests/unit/modules.test.ts (TypeScript, 244 lines, test)
 packages/core/tests/unit/mutations.test.ts (TypeScript, 64 lines, test)
+packages/core/tests/unit/one-matcher-finds-it.test.ts (TypeScript, 356 lines, test)
 packages/core/tests/unit/op-log.test.ts (TypeScript, 348 lines, test)
-packages/core/tests/unit/permissions.test.ts (TypeScript, 236 lines, test)
+packages/core/tests/unit/permissions.test.ts (TypeScript, 239 lines, test)
+packages/core/tests/unit/permits-answers-as-apply.test.ts (TypeScript, 51 lines, test)
 packages/core/tests/unit/places.test.ts (TypeScript, 52 lines, test)
 packages/core/tests/unit/reading-an-app-out.test.ts (TypeScript, 151 lines, test)
-packages/core/tests/unit/scaffold.test.ts (TypeScript, 491 lines, test)
+packages/core/tests/unit/scaffold.test.ts (TypeScript, 545 lines, test)
 packages/core/tests/unit/schema.test.ts (TypeScript, 169 lines, test)
 packages/core/tests/unit/settings.test.ts (TypeScript, 65 lines, test)
 packages/core/tests/unit/store-hydrate.test.ts (TypeScript, 58 lines, test)
 packages/core/tests/unit/temporal.test.ts (TypeScript, 82 lines, test)
+packages/core/tests/unit/the-bound-declaration.test.ts (TypeScript, 35 lines, test)
 packages/core/tests/unit/the-city-is-a-map.test.ts (TypeScript, 140 lines, test)
 packages/core/tests/unit/the-doors-a-provider-has.test.ts (TypeScript, 80 lines, test)
 packages/core/tests/unit/the-order-things-are-made-in.test.ts (TypeScript, 147 lines, test)
 packages/core/tests/unit/the-pictures-from-where-they-live.test.ts (TypeScript, 34 lines, test)
 packages/core/tests/unit/theme.test.ts (TypeScript, 236 lines, test)
+packages/core/tests/unit/two-of-one-name.test.ts (TypeScript, 89 lines, test)
 packages/core/tests/unit/what-an-agent-may-do.test.ts (TypeScript, 103 lines, test)
+packages/core/tests/unit/what-was-made-can-be-unmade.test.ts (TypeScript, 188 lines, test)
 packages/core/tests/unit/who-is-here.test.ts (TypeScript, 49 lines, test)
 
 </files>
@@ -54,7 +67,7 @@ packages/core/tests/unit/who-is-here.test.ts (TypeScript, 49 lines, test)
 
 
 Outgoing (this zone → other zones):
-  → core: packages/core/tests/unit/a-described-node-ref.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-hue-is-degrees.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-lens-started.test.ts → packages/core/src/scaffold/lens.ts; packages/core/tests/unit/a-module-that-is-never-off.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-third-kind-decides.test.ts → packages/core/src/index.ts; packages/core/tests/unit/an-edge-to-a-person.test.ts → packages/core/src/index.ts; packages/core/tests/unit/check.test.ts → packages/core/src/index.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/scaffold/index.ts; packages/core/tests/unit/derive-edits.test.ts → packages/core/src/index.ts; packages/core/tests/unit/derive-edits.test.ts → packages/core/src/index.ts; packages/core/tests/unit/figures.test.ts → packages/core/src/index.ts; packages/core/tests/unit/form.test.ts → packages/core/src/index.ts; packages/core/tests/unit/graph.test.ts → packages/core/src/index.ts; packages/core/tests/unit/graph.test.ts → packages/core/src/index.ts; packages/core/tests/unit/installation.test.ts → packages/core/src/index.ts; packages/core/tests/unit/installation.test.ts → packages/core/src/index.ts; packages/core/tests/unit/kit.test.ts → packages/core/src/index.ts; packages/core/tests/unit/lifecycle.test.ts → packages/core/src/index.ts; packages/core/tests/unit/lifecycle.test.ts → packages/core/src/index.ts; packages/core/tests/unit/modules.test.ts → packages/core/src/index.ts; packages/core/tests/unit/modules.test.ts → packages/core/src/index.ts; packages/core/tests/unit/mutations.test.ts → packages/core/src/index.ts; packages/core/tests/unit/op-log.test.ts → packages/core/src/index.ts; packages/core/tests/unit/op-log.test.ts → packages/core/src/index.ts; packages/core/tests/unit/permissions.test.ts → packages/core/src/index.ts; packages/core/tests/unit/permissions.test.ts → packages/core/src/index.ts; packages/core/tests/unit/places.test.ts → packages/core/src/index.ts; packages/core/tests/unit/reading-an-app-out.test.ts → packages/core/src/index.ts; packages/core/tests/unit/scaffold.test.ts → packages/core/src/scaffold/index.ts; packages/core/tests/unit/schema.test.ts → packages/core/src/index.ts; packages/core/tests/unit/settings.test.ts → packages/core/src/index.ts; packages/core/tests/unit/store-hydrate.test.ts → packages/core/src/index.ts; packages/core/tests/unit/temporal.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-city-is-a-map.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-doors-a-provider-has.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-order-things-are-made-in.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-pictures-from-where-they-live.test.ts → packages/core/src/cli/index.ts; packages/core/tests/unit/the-pictures-from-where-they-live.test.ts → packages/core/src/index.ts; packages/core/tests/unit/theme.test.ts → packages/core/src/index.ts; packages/core/tests/unit/theme.test.ts → packages/core/src/index.ts; packages/core/tests/unit/what-an-agent-may-do.test.ts → packages/core/src/index.ts; packages/core/tests/unit/what-an-agent-may-do.test.ts → packages/core/src/index.ts; packages/core/tests/unit/who-is-here.test.ts → packages/core/src/presence.ts; packages/core/tests/unit/who-is-here.test.ts → packages/core/src/presence.ts
+  → core: packages/core/tests/unit/a-change-in-the-records-words.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-described-node-ref.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-glance-does-not-say-its-heading-again.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-hue-is-degrees.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-kind-says-what-one-is-called.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-lens-started.test.ts → packages/core/src/scaffold/lens.ts; packages/core/tests/unit/a-module-that-is-never-off.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-refusal-in-words.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-third-kind-decides.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-time-of-day-is-asked-for.test.ts → packages/core/src/index.ts; packages/core/tests/unit/a-watching-harness-is-told.test.ts → packages/core/src/index.ts; packages/core/tests/unit/an-edge-to-a-person.test.ts → packages/core/src/index.ts; packages/core/tests/unit/an-id-is-the-name-folded.test.ts → packages/core/src/mutations/define-mutation.ts; packages/core/tests/unit/arranged-from-the-declaration.test.ts → packages/core/src/cli/describe.ts; packages/core/tests/unit/arranged-from-the-declaration.test.ts → packages/core/src/cli/docs.ts; packages/core/tests/unit/arranged-from-the-declaration.test.ts → packages/core/src/index.ts; packages/core/tests/unit/arranged-from-the-declaration.test.ts → packages/core/src/index.ts; packages/core/tests/unit/arranged-from-the-declaration.test.ts → packages/core/src/testing.ts; packages/core/tests/unit/check.test.ts → packages/core/src/index.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/scaffold/index.ts; packages/core/tests/unit/derive-edits.test.ts → packages/core/src/index.ts; packages/core/tests/unit/derive-edits.test.ts → packages/core/src/index.ts; packages/core/tests/unit/figures.test.ts → packages/core/src/index.ts; packages/core/tests/unit/form.test.ts → packages/core/src/index.ts; packages/core/tests/unit/graph.test.ts → packages/core/src/index.ts; packages/core/tests/unit/graph.test.ts → packages/core/src/index.ts; packages/core/tests/unit/installation.test.ts → packages/core/src/index.ts; packages/core/tests/unit/installation.test.ts → packages/core/src/index.ts; packages/core/tests/unit/kit.test.ts → packages/core/src/index.ts; packages/core/tests/unit/lifecycle.test.ts → packages/core/src/index.ts; packages/core/tests/unit/lifecycle.test.ts → packages/core/src/index.ts; packages/core/tests/unit/modules.test.ts → packages/core/src/index.ts; packages/core/tests/unit/modules.test.ts → packages/core/src/index.ts; packages/core/tests/unit/mutations.test.ts → packages/core/src/index.ts; packages/core/tests/unit/one-matcher-finds-it.test.ts → packages/core/src/index.ts; packages/core/tests/unit/one-matcher-finds-it.test.ts → packages/core/src/index.ts; packages/core/tests/unit/one-matcher-finds-it.test.ts → packages/core/src/testing.ts; packages/core/tests/unit/op-log.test.ts → packages/core/src/index.ts; packages/core/tests/unit/op-log.test.ts → packages/core/src/index.ts; packages/core/tests/unit/permissions.test.ts → packages/core/src/index.ts; packages/core/tests/unit/permissions.test.ts → packages/core/src/index.ts; packages/core/tests/unit/permits-answers-as-apply.test.ts → packages/core/src/index.ts; packages/core/tests/unit/places.test.ts → packages/core/src/index.ts; packages/core/tests/unit/reading-an-app-out.test.ts → packages/core/src/index.ts; packages/core/tests/unit/scaffold.test.ts → packages/core/src/scaffold/index.ts; packages/core/tests/unit/schema.test.ts → packages/core/src/index.ts; packages/core/tests/unit/settings.test.ts → packages/core/src/index.ts; packages/core/tests/unit/store-hydrate.test.ts → packages/core/src/index.ts; packages/core/tests/unit/temporal.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-city-is-a-map.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-doors-a-provider-has.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-order-things-are-made-in.test.ts → packages/core/src/index.ts; packages/core/tests/unit/the-pictures-from-where-they-live.test.ts → packages/core/src/cli/index.ts; packages/core/tests/unit/the-pictures-from-where-they-live.test.ts → packages/core/src/index.ts; packages/core/tests/unit/theme.test.ts → packages/core/src/index.ts; packages/core/tests/unit/theme.test.ts → packages/core/src/index.ts; packages/core/tests/unit/two-of-one-name.test.ts → packages/core/src/index.ts; packages/core/tests/unit/what-an-agent-may-do.test.ts → packages/core/src/index.ts; packages/core/tests/unit/what-an-agent-may-do.test.ts → packages/core/src/index.ts; packages/core/tests/unit/what-was-made-can-be-unmade.test.ts → packages/core/src/index.ts; packages/core/tests/unit/what-was-made-can-be-unmade.test.ts → packages/core/src/index.ts; packages/core/tests/unit/who-is-here.test.ts → packages/core/src/presence.ts; packages/core/tests/unit/who-is-here.test.ts → packages/core/src/presence.ts
 
 </imports>
 
@@ -67,6 +80,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 271 internal calls, 597 outgoing, 0 incoming (cohesion: 0.31, coupling: 0.69)
+- [call graph] 349 internal calls, 813 outgoing, 0 incoming (cohesion: 0.3, coupling: 0.7)
 
 </insights>

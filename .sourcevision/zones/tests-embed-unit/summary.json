@@ -1,0 +1,22 @@
+{
+  "id": "tests-embed-unit",
+  "name": "Tests Embed Unit",
+  "description": "Non-source files in packages: a-seat-change-keeps-the-store.test.tsx, embed.test.ts, one-name-said-once.test.tsx",
+  "files": [
+    "packages/embed/tests/unit/a-seat-change-keeps-the-store.test.tsx",
+    "packages/embed/tests/unit/embed.test.ts",
+    "packages/embed/tests/unit/one-name-said-once.test.tsx"
+  ],
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 3,
+  "lineCount": 138,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

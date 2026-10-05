@@ -1,0 +1,15 @@
+{
+  "id": "apps/gauntlet",
+  "name": "Gauntlet",
+  "description": "3 files, primarily TypeScript, JavaScript",
+  "files": [
+    "apps/gauntlet/scripts/generate-seed.mjs",
+    "apps/launcher/vite.config.ts",
+    "apps/promo/remotion.config.ts"
+  ],
+  "entryPoints": [],
+  "cohesion": 0,
+  "coupling": 0,
+  "fileCount": 3,
+  "lineCount": 530
+}

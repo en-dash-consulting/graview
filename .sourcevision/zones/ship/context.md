@@ -5,11 +5,11 @@
 <zone>
 
 Zone: Ship (`ship`)
-Files: 20, Cohesion: 1.00, Coupling: 0.00
+Files: 21, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 20 files, mostly utilities and services; entry points file-adapter.ts, remote.ts, serve.ts; imported by Packages and Packages.
+Description: 21 files, mostly utilities and services; entry points file-adapter.ts, remote.ts, serve.ts; imported by Packages and Packages.
 Entry points: packages/ship/src/browser.ts, packages/ship/src/dev.ts, packages/ship/src/file-adapter.ts, packages/ship/src/index.ts, packages/ship/src/presence.ts, packages/ship/src/remote.ts, packages/ship/src/serve.ts, packages/ship/src/source-edit.ts
-Lines: 3099
+Lines: 3501
 
 </zone>
 
@@ -17,23 +17,24 @@ Lines: 3099
 
 packages/ship/src/browser-adapter.ts (TypeScript, 153 lines, source)
 packages/ship/src/browser.ts (TypeScript, 37 lines, source)
-packages/ship/src/cli.ts (TypeScript, 90 lines, source)
+packages/ship/src/cli.ts (TypeScript, 198 lines, source)
 packages/ship/src/dev.ts (TypeScript, 452 lines, source)
 packages/ship/src/door.ts (TypeScript, 55 lines, source)
 packages/ship/src/export.ts (TypeScript, 58 lines, source)
 packages/ship/src/file-adapter.ts (TypeScript, 72 lines, source)
 packages/ship/src/health.ts (TypeScript, 35 lines, source)
-packages/ship/src/index.ts (TypeScript, 37 lines, source)
+packages/ship/src/index.ts (TypeScript, 40 lines, source)
 packages/ship/src/migrations.ts (TypeScript, 102 lines, source)
 packages/ship/src/open-store.ts (TypeScript, 179 lines, source)
 packages/ship/src/photos.ts (TypeScript, 139 lines, source)
 packages/ship/src/presence.ts (TypeScript, 124 lines, source)
-packages/ship/src/remote.ts (TypeScript, 330 lines, source)
-packages/ship/src/serve.ts (TypeScript, 299 lines, source)
+packages/ship/src/remote.ts (TypeScript, 366 lines, source)
+packages/ship/src/serve.ts (TypeScript, 321 lines, source)
 packages/ship/src/snapshot.ts (TypeScript, 60 lines, source)
 packages/ship/src/source-edit.ts (TypeScript, 523 lines, source)
-packages/ship/src/steps.ts (TypeScript, 139 lines, source)
+packages/ship/src/steps.ts (TypeScript, 226 lines, source)
 packages/ship/src/studio-door.ts (TypeScript, 149 lines, source)
+packages/ship/src/sync-seed.ts (TypeScript, 146 lines, source)
 packages/ship/src/typecheck.ts (TypeScript, 66 lines, source)
 
 </files>
@@ -63,7 +64,11 @@ Internal:
   packages/ship/src/browser.ts → packages/ship/src/steps.ts {primitivesFor, sayStep, stepsMigration}
   packages/ship/src/browser.ts → packages/ship/src/steps.ts {MigrationStep}
   packages/ship/src/cli.ts → packages/ship/src/file-adapter.ts {createFileAdapter}
+  packages/ship/src/cli.ts → packages/ship/src/open-store.ts {openStore}
   packages/ship/src/cli.ts → packages/ship/src/serve.ts {serveStore}
+  packages/ship/src/cli.ts → packages/ship/src/snapshot.ts {GraphSnapshot}
+  packages/ship/src/cli.ts → packages/ship/src/steps.ts {sayStep}
+  packages/ship/src/cli.ts → packages/ship/src/sync-seed.ts {applySteps, seedSteps}
   packages/ship/src/dev.ts → packages/ship/src/door.ts {sameOrigin}
   packages/ship/src/dev.ts → packages/ship/src/door.ts {fromThisApp, readBody, sendJson}
   packages/ship/src/dev.ts → packages/ship/src/door.ts {DevServerPlugin}
@@ -76,7 +81,8 @@ Internal:
   packages/ship/src/file-adapter.ts → packages/ship/src/snapshot.ts {GraphSnapshot}
   packages/ship/src/index.ts → packages/ship/src/browser-adapter.ts {browserStartsFresh, createBrowserAdapter, forgetFreshParam, freshHref}
   packages/ship/src/index.ts → packages/ship/src/browser-adapter.ts {BrowserAdapter, BrowserAdapterOptions, StorageLike}
-  packages/ship/src/index.ts → packages/ship/src/cli.ts {serve, SERVE_USAGE}
+  packages/ship/src/index.ts → packages/ship/src/cli.ts {backendFrom, serve, SERVE_USAGE, syncSeed}
+  packages/ship/src/index.ts → packages/ship/src/cli.ts {StoreBackend}
   packages/ship/src/index.ts → packages/ship/src/export.ts {assertBundle, exportBundle}
   packages/ship/src/index.ts → packages/ship/src/export.ts {AppBundle}
   packages/ship/src/index.ts → packages/ship/src/file-adapter.ts {createFileAdapter}
@@ -93,12 +99,14 @@ Internal:
   packages/ship/src/index.ts → packages/ship/src/presence.ts {BroadcastPresenceOptions, ChannelLike}
   packages/ship/src/index.ts → packages/ship/src/remote.ts {openRemote}
   packages/ship/src/index.ts → packages/ship/src/remote.ts {RemoteOptions, RemoteStore}
-  packages/ship/src/index.ts → packages/ship/src/serve.ts {serveStore}
+  packages/ship/src/index.ts → packages/ship/src/serve.ts {SEAT_HEADERS, serveStore, WIRE}
   packages/ship/src/index.ts → packages/ship/src/serve.ts {ServeOptions, ServedStore}
   packages/ship/src/index.ts → packages/ship/src/snapshot.ts {applyToSnapshot}
   packages/ship/src/index.ts → packages/ship/src/snapshot.ts {GraphSnapshot}
-  packages/ship/src/index.ts → packages/ship/src/steps.ts {primitivesFor, sayStep, stepsMigration}
+  packages/ship/src/index.ts → packages/ship/src/steps.ts {primitivesFor, primitivesForSteps, sayStep, stepsMigration}
   packages/ship/src/index.ts → packages/ship/src/steps.ts {MigrationStep}
+  packages/ship/src/index.ts → packages/ship/src/sync-seed.ts {applySteps, contentOperation, SEED_SYNC_AUTHOR, seedSteps}
+  packages/ship/src/index.ts → packages/ship/src/sync-seed.ts {SeedSyncOptions}
   packages/ship/src/migrations.ts → packages/ship/src/snapshot.ts {applyToSnapshot}
   packages/ship/src/migrations.ts → packages/ship/src/snapshot.ts {GraphSnapshot}
   packages/ship/src/open-store.ts → packages/ship/src/migrations.ts {migrateSnapshot}
@@ -109,15 +117,19 @@ Internal:
   packages/ship/src/serve.ts → packages/ship/src/open-store.ts {openStore}
   packages/ship/src/serve.ts → packages/ship/src/open-store.ts {OpenedStore}
   packages/ship/src/serve.ts → packages/ship/src/snapshot.ts {GraphSnapshot}
+  packages/ship/src/steps.ts → packages/ship/src/snapshot.ts {applyToSnapshot}
   packages/ship/src/steps.ts → packages/ship/src/snapshot.ts {GraphSnapshot}
   packages/ship/src/studio-door.ts → packages/ship/src/door.ts {fromThisApp, readBody, sendJson}
   packages/ship/src/studio-door.ts → packages/ship/src/door.ts {DevServerPlugin}
   packages/ship/src/studio-door.ts → packages/ship/src/source-edit.ts {declaredCode, editDeclaration}
   packages/ship/src/studio-door.ts → packages/ship/src/typecheck.ts {typecheckWith}
+  packages/ship/src/sync-seed.ts → packages/ship/src/snapshot.ts {GraphSnapshot}
+  packages/ship/src/sync-seed.ts → packages/ship/src/steps.ts {primitivesForSteps, sayStep}
+  packages/ship/src/sync-seed.ts → packages/ship/src/steps.ts {MigrationStep}
 
 Incoming (other zones → this zone):
   ← tests-packages: packages/ship/tests/integration/serve.test.ts → packages/ship/src/file-adapter.ts; packages/ship/tests/integration/serve.test.ts → packages/ship/src/remote.ts; packages/ship/tests/integration/serve.test.ts → packages/ship/src/serve.ts; packages/ship/tests/integration/serve.test.ts → packages/ship/src/serve.ts
-  ← tests-ship-unit: packages/ship/tests/unit/a-migration-is-data.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/a-migration-is-data.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/browser-adapter.test.ts → packages/ship/src/browser.ts; packages/ship/tests/unit/browser-adapter.test.ts → packages/ship/src/browser.ts; packages/ship/tests/unit/ship.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/the-decision-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-local-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-local-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-studio-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/who-is-here-between-tabs.test.ts → packages/ship/src/presence.ts
+  ← tests-ship-unit: packages/ship/tests/unit/a-migration-is-data.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/a-migration-is-data.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/browser-adapter.test.ts → packages/ship/src/browser.ts; packages/ship/tests/unit/browser-adapter.test.ts → packages/ship/src/browser.ts; packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/ship.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/the-decision-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-local-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-local-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-studio-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-wire-is-a-contract.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/the-wire-is-a-contract.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/who-is-here-between-tabs.test.ts → packages/ship/src/presence.ts
   ← tests-studio-unit: packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/ship/src/source-edit.ts; packages/studio/tests/unit/written-in-place.test.ts → packages/ship/src/source-edit.ts
 
 </imports>
@@ -131,6 +143,6 @@ Incoming (other zones → this zone):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 257 internal calls, 0 outgoing, 130 incoming (cohesion: 1, coupling: 0)
+- [call graph] 279 internal calls, 0 outgoing, 170 incoming (cohesion: 1, coupling: 0)
 
 </insights>

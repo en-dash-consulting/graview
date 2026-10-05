@@ -1,6 +1,493 @@
 {
   "edges": [
     {
+      "from": "apps/discography/src/domain/app.ts",
+      "to": "apps/discography/src/domain/brand.ts",
+      "type": "static",
+      "symbols": [
+        "discographyBrand"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/discography/src/domain/app.ts",
+      "to": "apps/discography/src/domain/invariants.ts",
+      "type": "static",
+      "symbols": [
+        "invariants"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/discography/src/domain/app.ts",
+      "to": "apps/discography/src/domain/mutations.ts",
+      "type": "static",
+      "symbols": [
+        "mutations"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/discography/src/domain/app.ts",
+      "to": "apps/discography/src/domain/policy.ts",
+      "type": "static",
+      "symbols": [
+        "policy"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/discography/src/domain/app.ts",
+      "to": "apps/discography/src/domain/schema.ts",
+      "type": "static",
+      "symbols": [
+        "discographySchema"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "apps/discography/src/domain/app.ts",
+      "to": "apps/discography/src/domain/schema.ts",
+      "type": "type",
+      "symbols": [
+        "DiscographySchema"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/discography/src/domain/invariants.ts",
+      "to": "apps/discography/src/domain/schema.ts",
+      "type": "static",
+      "symbols": [
+        "discographySchema"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/discography/src/domain/mutations.ts",
+      "to": "apps/discography/src/domain/schema.ts",
+      "type": "static",
+      "symbols": [
+        "discographySchema"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/discography/src/main.tsx",
+      "to": "apps/discography/src/domain/app.ts",
+      "type": "static",
+      "symbols": [
+        "discographyApp"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "apps/discography/src/main.tsx",
+      "to": "apps/discography/src/domain/brand.ts",
+      "type": "static",
+      "symbols": [
+        "discographyBrand"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "apps/discography/src/main.tsx",
+      "to": "apps/discography/src/domain/schema.ts",
+      "type": "static",
+      "symbols": [
+        "discographySchema"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/discography/src/main.tsx",
+      "to": "apps/discography/src/ui/app.tsx",
+      "type": "static",
+      "symbols": [
+        "DiscographyApp"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/discography/src/main.tsx",
+      "to": "apps/discography/src/ui/design.tsx",
+      "type": "static",
+      "symbols": [
+        "linerNotes"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/discography/src/main.tsx",
+      "to": "apps/discography/src/ui/seats.ts",
+      "type": "static",
+      "symbols": [
+        "openingSeat",
+        "SEATS"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "apps/discography/src/main.tsx",
+      "to": "apps/discography/src/ui/views.tsx",
+      "type": "static",
+      "symbols": [
+        "views"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/discography/src/ui/app.tsx",
+      "to": "apps/discography/src/domain/app.ts",
+      "type": "static",
+      "symbols": [
+        "discographyApp",
+        "createStore"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/discography/src/ui/app.tsx",
+      "to": "apps/discography/src/domain/app.ts",
+      "type": "type",
+      "symbols": [
+        "DiscographyStore"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/discography/src/ui/app.tsx",
+      "to": "apps/discography/src/domain/brand.ts",
+      "type": "static",
+      "symbols": [
+        "discographyBrand"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/discography/src/ui/app.tsx",
+      "to": "apps/discography/src/domain/schema.ts",
+      "type": "type",
+      "symbols": [
+        "DiscographySchema"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/discography/src/ui/app.tsx",
+      "to": "apps/discography/src/ui/seats.ts",
+      "type": "static",
+      "symbols": [
+        "openingSeat",
+        "SEATS"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "apps/discography/src/ui/app.tsx",
+      "to": "apps/discography/src/ui/views.tsx",
+      "type": "static",
+      "symbols": [
+        "views"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/discography/src/ui/design.tsx",
+      "to": "apps/discography/src/domain/schema.ts",
+      "type": "type",
+      "symbols": [
+        "DiscographySchema"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/discography/src/ui/pages.tsx",
+      "to": "apps/discography/src/domain/schema.ts",
+      "type": "static",
+      "symbols": [
+        "discographySchema"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/discography/src/ui/pages.tsx",
+      "to": "apps/discography/src/domain/schema.ts",
+      "type": "type",
+      "symbols": [
+        "DiscographySchema"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/discography/src/ui/views.tsx",
+      "to": "apps/discography/src/domain/schema.ts",
+      "type": "static",
+      "symbols": [
+        "discographySchema"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "apps/discography/src/ui/views.tsx",
+      "to": "apps/discography/src/domain/schema.ts",
+      "type": "type",
+      "symbols": [
+        "DiscographySchema"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/discography/src/ui/views.tsx",
+      "to": "apps/discography/src/ui/tracklist.tsx",
+      "type": "static",
+      "symbols": [
+        "createTracklistLens"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/discography/tests/domain.test.ts",
+      "to": "apps/discography/src/domain/app.ts",
+      "type": "static",
+      "symbols": [
+        "discographyApp",
+        "createStore"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/discography/tests/lens-reuse.test.ts",
+      "to": "apps/discography/src/ui/tracklist.tsx",
+      "type": "static",
+      "symbols": [
+        "buildTracklists"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/gauntlet/src/domain/app.ts",
+      "to": "apps/gauntlet/src/domain/brand.ts",
+      "type": "static",
+      "symbols": [
+        "gauntletBrand"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/gauntlet/src/domain/app.ts",
+      "to": "apps/gauntlet/src/domain/invariants.ts",
+      "type": "static",
+      "symbols": [
+        "invariants"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/gauntlet/src/domain/app.ts",
+      "to": "apps/gauntlet/src/domain/mutations.ts",
+      "type": "static",
+      "symbols": [
+        "mutations"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/gauntlet/src/domain/app.ts",
+      "to": "apps/gauntlet/src/domain/policy.ts",
+      "type": "static",
+      "symbols": [
+        "policy"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/gauntlet/src/domain/app.ts",
+      "to": "apps/gauntlet/src/domain/schema.ts",
+      "type": "static",
+      "symbols": [
+        "gauntletSchema"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "apps/gauntlet/src/domain/app.ts",
+      "to": "apps/gauntlet/src/domain/schema.ts",
+      "type": "type",
+      "symbols": [
+        "GauntletSchema"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/gauntlet/src/domain/invariants.ts",
+      "to": "apps/gauntlet/src/domain/schema.ts",
+      "type": "static",
+      "symbols": [
+        "gauntletSchema"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/gauntlet/src/domain/mutations.ts",
+      "to": "apps/gauntlet/src/domain/schema.ts",
+      "type": "static",
+      "symbols": [
+        "gauntletSchema",
+        "speakerKind",
+        "roomKind"
+      ],
+      "weight": 4
+    },
+    {
+      "from": "apps/gauntlet/src/main.tsx",
+      "to": "apps/gauntlet/src/domain/app.ts",
+      "type": "static",
+      "symbols": [
+        "gauntletApp"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "apps/gauntlet/src/main.tsx",
+      "to": "apps/gauntlet/src/domain/brand.ts",
+      "type": "static",
+      "symbols": [
+        "gauntletBrand"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "apps/gauntlet/src/main.tsx",
+      "to": "apps/gauntlet/src/ui/app.tsx",
+      "type": "static",
+      "symbols": [
+        "GauntletApp"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/gauntlet/src/main.tsx",
+      "to": "apps/gauntlet/src/ui/seats.ts",
+      "type": "static",
+      "symbols": [
+        "openingSeat",
+        "SEATS"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "apps/gauntlet/src/main.tsx",
+      "to": "apps/gauntlet/src/ui/views.tsx",
+      "type": "static",
+      "symbols": [
+        "views"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/gauntlet/src/ui/app.tsx",
+      "to": "apps/gauntlet/src/domain/app.ts",
+      "type": "static",
+      "symbols": [
+        "gauntletApp",
+        "createStore"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/gauntlet/src/ui/app.tsx",
+      "to": "apps/gauntlet/src/domain/app.ts",
+      "type": "type",
+      "symbols": [
+        "GauntletStore"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/gauntlet/src/ui/app.tsx",
+      "to": "apps/gauntlet/src/domain/brand.ts",
+      "type": "static",
+      "symbols": [
+        "gauntletBrand"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/gauntlet/src/ui/app.tsx",
+      "to": "apps/gauntlet/src/domain/schema.ts",
+      "type": "type",
+      "symbols": [
+        "GauntletSchema"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/gauntlet/src/ui/app.tsx",
+      "to": "apps/gauntlet/src/ui/seats.ts",
+      "type": "static",
+      "symbols": [
+        "openingSeat",
+        "SEATS"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "apps/gauntlet/src/ui/app.tsx",
+      "to": "apps/gauntlet/src/ui/views.tsx",
+      "type": "static",
+      "symbols": [
+        "views"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/gauntlet/src/ui/views.tsx",
+      "to": "apps/gauntlet/src/domain/schema.ts",
+      "type": "static",
+      "symbols": [
+        "gauntletSchema"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "apps/gauntlet/src/ui/views.tsx",
+      "to": "apps/gauntlet/src/domain/schema.ts",
+      "type": "type",
+      "symbols": [
+        "GauntletSchema"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "apps/gauntlet/tests/the-awkward-shapes.test.ts",
+      "to": "apps/gauntlet/src/domain/app.ts",
+      "type": "static",
+      "symbols": [
+        "createStore",
+        "gauntletApp"
+      ],
+      "weight": 4
+    },
+    {
+      "from": "apps/gauntlet/tests/the-awkward-shapes.test.ts",
+      "to": "apps/gauntlet/src/domain/schema.ts",
+      "type": "static",
+      "symbols": [
+        "gauntletSchema"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "apps/gauntlet/tests/the-awkward-shapes.test.ts",
+      "to": "apps/gauntlet/src/ui/seats.ts",
+      "type": "static",
+      "symbols": [
+        "SEATS"
+      ],
+      "weight": 4
+    },
+    {
       "from": "apps/launcher/src/domain/app.ts",
       "to": "apps/launcher/src/domain/invariants.ts",
       "type": "static",
@@ -2530,7 +3017,7 @@
         "EXAMPLE_TODAY",
         "today"
       ],
-      "weight": 7
+      "weight": 9
     },
     {
       "from": "apps/todo/src/ui/app.tsx",
@@ -2539,7 +3026,7 @@
       "symbols": [
         "today"
       ],
-      "weight": 7
+      "weight": 9
     },
     {
       "from": "apps/todo/src/ui/design.tsx",
@@ -2557,7 +3044,7 @@
       "symbols": [
         "today"
       ],
-      "weight": 9
+      "weight": 10
     },
     {
       "from": "apps/todo/src/ui/views.tsx",
@@ -2658,6 +3145,15 @@
     },
     {
       "from": "packages/core/src/app.ts",
+      "to": "packages/core/src/arrange.ts",
+      "type": "type",
+      "symbols": [
+        "ArrangementWords"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/app.ts",
       "to": "packages/core/src/graph/primitives.ts",
       "type": "type",
       "symbols": [
@@ -2738,6 +3234,55 @@
       "weight": 1
     },
     {
+      "from": "packages/core/src/arrange.ts",
+      "to": "packages/core/src/mutations/node-ref.ts",
+      "type": "static",
+      "symbols": [
+        "describeArg"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/core/src/arrange.ts",
+      "to": "packages/core/src/schema/define-node.ts",
+      "type": "static",
+      "symbols": [
+        "humaniseField",
+        "isCurrent",
+        "labelOf",
+        "tellApart"
+      ],
+      "weight": 10
+    },
+    {
+      "from": "packages/core/src/arrange.ts",
+      "to": "packages/core/src/schema/schema.ts",
+      "type": "type",
+      "symbols": [
+        "AnySchema"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "packages/core/src/arrange.ts",
+      "to": "packages/core/src/schema/types.ts",
+      "type": "type",
+      "symbols": [
+        "AnyNodeDefinition"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/arrange.ts",
+      "to": "packages/core/src/search.ts",
+      "type": "static",
+      "symbols": [
+        "matchNode",
+        "parseQuery"
+      ],
+      "weight": 2
+    },
+    {
       "from": "packages/core/src/beginning.ts",
       "to": "packages/core/src/app.ts",
       "type": "type",
@@ -2800,7 +3345,7 @@
         "InvariantEvalArgs",
         "Violation"
       ],
-      "weight": 6
+      "weight": 7
     },
     {
       "from": "packages/core/src/bind.ts",
@@ -2887,10 +3432,12 @@
         "checkPolicy",
         "checkProviders",
         "checkReadings",
+        "checkEdgeNamesAgree",
         "checkRoutes",
         "checkSettings",
         "checkShippedLenses",
-        "checkUnmakeable"
+        "checkUnmakeable",
+        "checkArrangement"
       ],
       "weight": 10
     },
@@ -2899,12 +3446,42 @@
       "to": "packages/core/src/mutations/derive-edits.ts",
       "type": "static",
       "symbols": [
-        "deriveEditMutations"
+        "deriveEditMutations",
+        "deriveRemoveMutations"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/core/src/cli/check.ts",
+      "to": "packages/core/src/schema/schema.ts",
+      "type": "type",
+      "symbols": [
+        "AnySchema"
       ],
       "weight": 1
     },
     {
-      "from": "packages/core/src/cli/check.ts",
+      "from": "packages/core/src/cli/check/arrangement.ts",
+      "to": "packages/core/src/arrange.ts",
+      "type": "static",
+      "symbols": [
+        "admitArrangement",
+        "arrangeable",
+        "parseArrangement"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "packages/core/src/cli/check/arrangement.ts",
+      "to": "packages/core/src/cli/check/context.ts",
+      "type": "type",
+      "symbols": [
+        "CheckContext"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/cli/check/arrangement.ts",
       "to": "packages/core/src/schema/schema.ts",
       "type": "type",
       "symbols": [
@@ -3048,7 +3625,7 @@
       "symbols": [
         "AnyMutationDefinition"
       ],
-      "weight": 3
+      "weight": 4
     },
     {
       "from": "packages/core/src/cli/check/context.ts",
@@ -3114,6 +3691,15 @@
       "type": "type",
       "symbols": [
         "AnySchema"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/cli/check/index.ts",
+      "to": "packages/core/src/cli/check/arrangement.ts",
+      "type": "reexport",
+      "symbols": [
+        "*"
       ],
       "weight": 1
     },
@@ -3326,6 +3912,15 @@
     },
     {
       "from": "packages/core/src/cli/check/policy.ts",
+      "to": "packages/core/src/mutations/derive-edits.ts",
+      "type": "static",
+      "symbols": [
+        "derivedVia"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/cli/check/policy.ts",
       "to": "packages/core/src/permissions/policy.ts",
       "type": "static",
       "symbols": [
@@ -3359,7 +3954,7 @@
       "symbols": [
         "CheckContext"
       ],
-      "weight": 3
+      "weight": 4
     },
     {
       "from": "packages/core/src/cli/check/relations.ts",
@@ -3377,7 +3972,7 @@
       "symbols": [
         "withArticle"
       ],
-      "weight": 7
+      "weight": 10
     },
     {
       "from": "packages/core/src/cli/check/relations.ts",
@@ -3386,7 +3981,7 @@
       "symbols": [
         "AnySchema"
       ],
-      "weight": 3
+      "weight": 4
     },
     {
       "from": "packages/core/src/cli/check/routes.ts",
@@ -3466,6 +4061,15 @@
     },
     {
       "from": "packages/core/src/cli/describe.ts",
+      "to": "packages/core/src/arrange.ts",
+      "type": "static",
+      "symbols": [
+        "arrangeable"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/cli/describe.ts",
       "to": "packages/core/src/beginning.ts",
       "type": "static",
       "symbols": [
@@ -3488,7 +4092,7 @@
       "to": "packages/core/src/mutations/derive-edits.ts",
       "type": "static",
       "symbols": [
-        "deriveEditMutations"
+        "deriveMutations"
       ],
       "weight": 1
     },
@@ -3512,6 +4116,15 @@
     },
     {
       "from": "packages/core/src/cli/describe.ts",
+      "to": "packages/core/src/search.ts",
+      "type": "static",
+      "symbols": [
+        "searchableFields"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/cli/describe.ts",
       "to": "packages/core/src/theme/derive.ts",
       "type": "static",
       "symbols": [
@@ -3530,10 +4143,19 @@
     },
     {
       "from": "packages/core/src/cli/docs.ts",
+      "to": "packages/core/src/arrange.ts",
+      "type": "static",
+      "symbols": [
+        "arrangeable"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/cli/docs.ts",
       "to": "packages/core/src/mutations/derive-edits.ts",
       "type": "static",
       "symbols": [
-        "deriveEditMutations"
+        "deriveMutations"
       ],
       "weight": 1
     },
@@ -3554,6 +4176,15 @@
         "AnySchema"
       ],
       "weight": 3
+    },
+    {
+      "from": "packages/core/src/cli/docs.ts",
+      "to": "packages/core/src/search.ts",
+      "type": "static",
+      "symbols": [
+        "searchableFields"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/core/src/cli/index.ts",
@@ -3833,6 +4464,50 @@
         "LensDeclaration"
       ],
       "weight": 2
+    },
+    {
+      "from": "packages/core/src/index.ts",
+      "to": "packages/core/src/arrange.ts",
+      "type": "reexport",
+      "symbols": [
+        "admitArrangement",
+        "arrange",
+        "arrangeable",
+        "arrangeAllows",
+        "asksForThePast",
+        "bucketStart",
+        "conditionHolds",
+        "edgesOf",
+        "formatArrangement",
+        "matches",
+        "NO_ARRANGEMENT",
+        "parseArrangement"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/core/src/index.ts",
+      "to": "packages/core/src/arrange.ts",
+      "type": "type",
+      "symbols": [
+        "Arrangeable",
+        "ArrangeContext",
+        "Arranged",
+        "ArrangeGraph",
+        "ArrangedGroup",
+        "Arrangement",
+        "ArrangementWords",
+        "ArrangeNode",
+        "ArrangeOffer",
+        "ArrangeOption",
+        "Condition",
+        "DateBucket",
+        "Grouping",
+        "OfferType",
+        "Sort",
+        "SortDirection"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/core/src/index.ts",
@@ -4169,7 +4844,8 @@
       "type": "reexport",
       "symbols": [
         "compileMutation",
-        "defineMutation"
+        "defineMutation",
+        "takesAnId"
       ],
       "weight": 1
     },
@@ -4188,8 +4864,13 @@
       "type": "reexport",
       "symbols": [
         "deriveEditMutations",
+        "deriveMutations",
+        "deriveRemoveMutations",
+        "derivedVia",
         "editMutationName",
         "editVia",
+        "removeMutationName",
+        "removeVia",
         "fieldWriters",
         "fieldsWrittenBy",
         "settableFields",
@@ -4309,6 +4990,15 @@
     },
     {
       "from": "packages/core/src/index.ts",
+      "to": "packages/core/src/permissions/policy.ts",
+      "type": "type",
+      "symbols": [
+        "PolicyWords"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/index.ts",
       "to": "packages/core/src/permissions/types.ts",
       "type": "reexport",
       "symbols": [
@@ -4398,8 +5088,11 @@
         "isCurrent",
         "labelOf",
         "describeNode",
+        "tellApart",
         "article",
+        "fieldWords",
         "humaniseField",
+        "nounOf",
         "readableFields",
         "summarise",
         "withArticle"
@@ -4500,6 +5193,41 @@
         "NodeDefinitionSpec",
         "NodeOf",
         "ValidateEdgeTargets"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/index.ts",
+      "to": "packages/core/src/search.ts",
+      "type": "reexport",
+      "symbols": [
+        "actsOn",
+        "describeSearched",
+        "fold",
+        "fragmentOf",
+        "matchNode",
+        "parseQuery",
+        "search",
+        "searchableFields",
+        "squeeze",
+        "strengthOf",
+        "touchWeights"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/core/src/index.ts",
+      "to": "packages/core/src/search.ts",
+      "type": "type",
+      "symbols": [
+        "Hit",
+        "HitAbout",
+        "MatchStrength",
+        "ParsedQuery",
+        "SearchCondition",
+        "SearchOptions",
+        "SearchResult",
+        "Why"
       ],
       "weight": 1
     },
@@ -4803,6 +5531,15 @@
       "weight": 1
     },
     {
+      "from": "packages/core/src/index.ts",
+      "to": "packages/core/src/who.ts",
+      "type": "reexport",
+      "symbols": [
+        "nameOfAuthor"
+      ],
+      "weight": 1
+    },
+    {
       "from": "packages/core/src/installation.ts",
       "to": "packages/core/src/modules.ts",
       "type": "type",
@@ -4955,7 +5692,7 @@
       "symbols": [
         "GraphError"
       ],
-      "weight": 3
+      "weight": 5
     },
     {
       "from": "packages/core/src/mutations/define-mutation.ts",
@@ -5012,7 +5749,7 @@
         "MutationDefinition",
         "MutationDefinitionSpec"
       ],
-      "weight": 4
+      "weight": 5
     },
     {
       "from": "packages/core/src/mutations/define-mutation.ts",
@@ -5032,7 +5769,7 @@
         "nodeRef",
         "nodeRefArgs"
       ],
-      "weight": 2
+      "weight": 3
     },
     {
       "from": "packages/core/src/mutations/derive-edits.ts",
@@ -5041,7 +5778,7 @@
       "symbols": [
         "AnyMutationDefinition"
       ],
-      "weight": 9
+      "weight": 10
     },
     {
       "from": "packages/core/src/mutations/derive-edits.ts",
@@ -5049,9 +5786,10 @@
       "type": "static",
       "symbols": [
         "labelOf",
-        "humaniseField"
+        "humaniseField",
+        "nounOf"
       ],
-      "weight": 4
+      "weight": 6
     },
     {
       "from": "packages/core/src/mutations/derive-edits.ts",
@@ -5060,7 +5798,7 @@
       "symbols": [
         "AnySchema"
       ],
-      "weight": 6
+      "weight": 10
     },
     {
       "from": "packages/core/src/mutations/derive-edits.ts",
@@ -5202,9 +5940,10 @@
       "to": "packages/core/src/schema/define-node.ts",
       "type": "static",
       "symbols": [
+        "humaniseField",
         "withArticle"
       ],
-      "weight": 1
+      "weight": 3
     },
     {
       "from": "packages/core/src/permissions/policy.ts",
@@ -5480,7 +6219,16 @@
         "NodeDefinition",
         "NodeDefinitionSpec"
       ],
-      "weight": 8
+      "weight": 9
+    },
+    {
+      "from": "packages/core/src/schema/json-schema.ts",
+      "to": "packages/core/src/mutations/define-mutation.ts",
+      "type": "static",
+      "symbols": [
+        "takesAnId"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/core/src/schema/json-schema.ts",
@@ -5527,6 +6275,104 @@
       "type": "type",
       "symbols": [
         "Figure"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/search.ts",
+      "to": "packages/core/src/arrange.ts",
+      "type": "static",
+      "symbols": [
+        "arrangeable",
+        "asksForThePast",
+        "conditionHolds"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "packages/core/src/search.ts",
+      "to": "packages/core/src/arrange.ts",
+      "type": "type",
+      "symbols": [
+        "ArrangeContext",
+        "ArrangeGraph",
+        "Condition"
+      ],
+      "weight": 5
+    },
+    {
+      "from": "packages/core/src/search.ts",
+      "to": "packages/core/src/mutations/node-ref.ts",
+      "type": "static",
+      "symbols": [
+        "describeArg"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/search.ts",
+      "to": "packages/core/src/ops/types.ts",
+      "type": "type",
+      "symbols": [
+        "Operation"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/search.ts",
+      "to": "packages/core/src/permissions/types.ts",
+      "type": "type",
+      "symbols": [
+        "Principal"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/core/src/search.ts",
+      "to": "packages/core/src/schema/define-node.ts",
+      "type": "static",
+      "symbols": [
+        "humaniseField",
+        "isCurrent",
+        "labelOf",
+        "readableFields",
+        "tellApart"
+      ],
+      "weight": 10
+    },
+    {
+      "from": "packages/core/src/search.ts",
+      "to": "packages/core/src/schema/schema.ts",
+      "type": "type",
+      "symbols": [
+        "AnySchema"
+      ],
+      "weight": 6
+    },
+    {
+      "from": "packages/core/src/search.ts",
+      "to": "packages/core/src/schema/types.ts",
+      "type": "type",
+      "symbols": [
+        "AnyNodeDefinition"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "packages/core/src/search.ts",
+      "to": "packages/core/src/store.ts",
+      "type": "type",
+      "symbols": [
+        "Store"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/core/src/search.ts",
+      "to": "packages/core/src/views/types.ts",
+      "type": "type",
+      "symbols": [
+        "Place"
       ],
       "weight": 1
     },
@@ -5658,8 +6504,8 @@
       "to": "packages/core/src/mutations/derive-edits.ts",
       "type": "static",
       "symbols": [
-        "deriveEditMutations",
-        "editVia"
+        "deriveMutations",
+        "derivedVia"
       ],
       "weight": 2
     },
@@ -5724,6 +6570,15 @@
     },
     {
       "from": "packages/core/src/store.ts",
+      "to": "packages/core/src/permissions/policy.ts",
+      "type": "type",
+      "symbols": [
+        "PolicyWords"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/store.ts",
       "to": "packages/core/src/permissions/types.ts",
       "type": "static",
       "symbols": [
@@ -5744,6 +6599,15 @@
     },
     {
       "from": "packages/core/src/store.ts",
+      "to": "packages/core/src/schema/define-node.ts",
+      "type": "static",
+      "symbols": [
+        "nounOf"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/store.ts",
       "to": "packages/core/src/schema/schema.ts",
       "type": "type",
       "symbols": [
@@ -5751,6 +6615,18 @@
         "NodeOfSchema"
       ],
       "weight": 10
+    },
+    {
+      "from": "packages/core/src/store.ts",
+      "to": "packages/core/src/watched.ts",
+      "type": "static",
+      "symbols": [
+        "tellTheWatchItsNames",
+        "tellTheWatchOfAStore",
+        "tellTheWatchOfAnAuthor",
+        "tellTheWatchOfARefusal"
+      ],
+      "weight": 6
     },
     {
       "from": "packages/core/src/sync/conflict.ts",
@@ -6046,6 +6922,61 @@
       "weight": 3
     },
     {
+      "from": "packages/core/src/watched.ts",
+      "to": "packages/core/src/permissions/types.ts",
+      "type": "type",
+      "symbols": [
+        "Policy",
+        "Refusal"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "packages/core/src/watched.ts",
+      "to": "packages/core/src/schema/schema.ts",
+      "type": "type",
+      "symbols": [
+        "AnySchema"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/who.ts",
+      "to": "packages/core/src/ops/types.ts",
+      "type": "type",
+      "symbols": [
+        "Author"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/who.ts",
+      "to": "packages/core/src/permissions/types.ts",
+      "type": "type",
+      "symbols": [
+        "Principal"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/who.ts",
+      "to": "packages/core/src/schema/define-node.ts",
+      "type": "static",
+      "symbols": [
+        "labelOf"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/src/who.ts",
+      "to": "packages/core/src/schema/schema.ts",
+      "type": "type",
+      "symbols": [
+        "AnySchema"
+      ],
+      "weight": 1
+    },
+    {
       "from": "packages/core/tests/integration/persistence.test.ts",
       "to": "packages/core/src/index.ts",
       "type": "static",
@@ -6108,6 +7039,39 @@
       "weight": 10
     },
     {
+      "from": "packages/core/tests/types/judges-past.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "bindSchema",
+        "createSchema",
+        "defineNode"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "packages/core/tests/types/judges-past.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "type",
+      "symbols": [
+        "Violation"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/tests/unit/a-change-in-the-records-words.test.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "bindSchema",
+        "createSchema",
+        "defineNode",
+        "Store",
+        "z"
+      ],
+      "weight": 10
+    },
+    {
       "from": "packages/core/tests/unit/a-described-node-ref.test.ts",
       "to": "packages/core/src/index.ts",
       "type": "static",
@@ -6119,6 +7083,16 @@
       "weight": 7
     },
     {
+      "from": "packages/core/tests/unit/a-glance-does-not-say-its-heading-again.test.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "defineNode",
+        "readableFields"
+      ],
+      "weight": 3
+    },
+    {
       "from": "packages/core/tests/unit/a-hue-is-degrees.test.ts",
       "to": "packages/core/src/index.ts",
       "type": "static",
@@ -6126,6 +7100,21 @@
         "hueFor"
       ],
       "weight": 10
+    },
+    {
+      "from": "packages/core/tests/unit/a-kind-says-what-one-is-called.test.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "createSchema",
+        "defineNode",
+        "deriveEditMutations",
+        "deriveRemoveMutations",
+        "nounOf",
+        "Store",
+        "bindSchema"
+      ],
+      "weight": 9
     },
     {
       "from": "packages/core/tests/unit/a-lens-started.test.ts",
@@ -6152,6 +7141,20 @@
       "weight": 10
     },
     {
+      "from": "packages/core/tests/unit/a-refusal-in-words.test.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "bindSchema",
+        "createSchema",
+        "defineNode",
+        "nodeRef",
+        "Store",
+        "z"
+      ],
+      "weight": 9
+    },
+    {
       "from": "packages/core/tests/unit/a-third-kind-decides.test.ts",
       "to": "packages/core/src/index.ts",
       "type": "static",
@@ -6170,6 +7173,31 @@
       "weight": 10
     },
     {
+      "from": "packages/core/tests/unit/a-time-of-day-is-asked-for.test.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "describeArg",
+        "formFields",
+        "isoDate"
+      ],
+      "weight": 6
+    },
+    {
+      "from": "packages/core/tests/unit/a-watching-harness-is-told.test.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "bindSchema",
+        "createSchema",
+        "defineNode",
+        "nodeRef",
+        "Store",
+        "z"
+      ],
+      "weight": 10
+    },
+    {
       "from": "packages/core/tests/unit/an-edge-to-a-person.test.ts",
       "to": "packages/core/src/index.ts",
       "type": "static",
@@ -6180,6 +7208,71 @@
         "Store"
       ],
       "weight": 5
+    },
+    {
+      "from": "packages/core/tests/unit/an-id-is-the-name-folded.test.ts",
+      "to": "packages/core/src/mutations/define-mutation.ts",
+      "type": "static",
+      "symbols": [
+        "slug"
+      ],
+      "weight": 8
+    },
+    {
+      "from": "packages/core/tests/unit/arranged-from-the-declaration.test.ts",
+      "to": "packages/core/src/cli/describe.ts",
+      "type": "dynamic",
+      "symbols": [
+        "describeApp"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/tests/unit/arranged-from-the-declaration.test.ts",
+      "to": "packages/core/src/cli/docs.ts",
+      "type": "dynamic",
+      "symbols": [
+        "generateLlmsTxt"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/core/tests/unit/arranged-from-the-declaration.test.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "dynamic",
+      "symbols": [
+        "checkApp",
+        "defineApp"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/core/tests/unit/arranged-from-the-declaration.test.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "admitArrangement",
+        "arrange",
+        "arrangeable",
+        "arrangeAllows",
+        "bucketStart",
+        "createSchema",
+        "defineNode",
+        "formatArrangement",
+        "Graph",
+        "isoDate",
+        "parseArrangement"
+      ],
+      "weight": 10
+    },
+    {
+      "from": "packages/core/tests/unit/arranged-from-the-declaration.test.ts",
+      "to": "packages/core/src/testing.ts",
+      "type": "static",
+      "symbols": [
+        "awkwardApp"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/core/tests/unit/check.test.ts",
@@ -6412,6 +7505,51 @@
       "weight": 9
     },
     {
+      "from": "packages/core/tests/unit/one-matcher-finds-it.test.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "actsOn",
+        "arrange",
+        "bindSchema",
+        "createSchema",
+        "defineApp",
+        "defineInvariant",
+        "defineNode",
+        "describeApp",
+        "describeSearched",
+        "fold",
+        "generateLlmsTxt",
+        "Graph",
+        "isoDate",
+        "parseQuery",
+        "search",
+        "searchableFields",
+        "Store"
+      ],
+      "weight": 10
+    },
+    {
+      "from": "packages/core/tests/unit/one-matcher-finds-it.test.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "type",
+      "symbols": [
+        "Hit",
+        "Principal"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "packages/core/tests/unit/one-matcher-finds-it.test.ts",
+      "to": "packages/core/src/testing.ts",
+      "type": "static",
+      "symbols": [
+        "awkwardApp",
+        "awkwardGraph"
+      ],
+      "weight": 2
+    },
+    {
       "from": "packages/core/tests/unit/op-log.test.ts",
       "to": "packages/core/src/index.ts",
       "type": "static",
@@ -6458,6 +7596,19 @@
         "Policy"
       ],
       "weight": 3
+    },
+    {
+      "from": "packages/core/tests/unit/permits-answers-as-apply.test.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "bindSchema",
+        "createSchema",
+        "defineNode",
+        "nodeRef",
+        "Store"
+      ],
+      "weight": 6
     },
     {
       "from": "packages/core/tests/unit/places.test.ts",
@@ -6653,6 +7804,21 @@
       "weight": 2
     },
     {
+      "from": "packages/core/tests/unit/two-of-one-name.test.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "arrange",
+        "createSchema",
+        "defineNode",
+        "isoDate",
+        "search",
+        "Store",
+        "tellApart"
+      ],
+      "weight": 10
+    },
+    {
       "from": "packages/core/tests/unit/what-an-agent-may-do.test.ts",
       "to": "packages/core/src/index.ts",
       "type": "static",
@@ -6674,6 +7840,34 @@
         "Principal"
       ],
       "weight": 2
+    },
+    {
+      "from": "packages/core/tests/unit/what-was-made-can-be-unmade.test.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "bindSchema",
+        "checkApp",
+        "createSchema",
+        "defineApp",
+        "defineNode",
+        "deriveRemoveMutations",
+        "mutationToolSchema",
+        "nodeRef",
+        "removeVia",
+        "Store",
+        "takesAnId"
+      ],
+      "weight": 10
+    },
+    {
+      "from": "packages/core/tests/unit/what-was-made-can-be-unmade.test.ts",
+      "to": "packages/core/src/index.ts",
+      "type": "type",
+      "symbols": [
+        "Policy"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/core/tests/unit/who-is-here.test.ts",
@@ -6748,6 +7942,15 @@
       "weight": 1
     },
     {
+      "from": "packages/embed/tests/unit/a-seat-change-keeps-the-store.test.tsx",
+      "to": "packages/embed/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "Embed"
+      ],
+      "weight": 3
+    },
+    {
       "from": "packages/embed/tests/unit/embed.test.ts",
       "to": "packages/embed/src/index.ts",
       "type": "static",
@@ -6756,6 +7959,15 @@
         "fontsLink"
       ],
       "weight": 3
+    },
+    {
+      "from": "packages/embed/tests/unit/one-name-said-once.test.tsx",
+      "to": "packages/embed/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "Embed"
+      ],
+      "weight": 2
     },
     {
       "from": "packages/graview/src/cli.ts",
@@ -6767,13 +7979,34 @@
       "weight": 1
     },
     {
+      "from": "packages/layout/src/band.ts",
+      "to": "packages/layout/src/ids.ts",
+      "type": "static",
+      "symbols": [
+        "aggregateId"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/layout/src/band.ts",
+      "to": "packages/layout/src/types.ts",
+      "type": "type",
+      "symbols": [
+        "Aggregate",
+        "Opens",
+        "Via"
+      ],
+      "weight": 7
+    },
+    {
       "from": "packages/layout/src/city.ts",
       "to": "packages/layout/src/types.ts",
       "type": "type",
       "symbols": [
-        "CityFrame"
+        "CityFrame",
+        "Layout"
       ],
-      "weight": 3
+      "weight": 4
     },
     {
       "from": "packages/layout/src/ids.ts",
@@ -6782,9 +8015,11 @@
       "symbols": [
         "toggleExpanded",
         "withFocus",
+        "withOverview",
+        "withWithin",
         "withZoom"
       ],
-      "weight": 4
+      "weight": 8
     },
     {
       "from": "packages/layout/src/ids.ts",
@@ -6797,11 +8032,39 @@
     },
     {
       "from": "packages/layout/src/index.ts",
+      "to": "packages/layout/src/band.ts",
+      "type": "reexport",
+      "symbols": [
+        "bandAggregateWords",
+        "bandCaps",
+        "bandOf",
+        "chooseGrouping",
+        "isBandAggregate",
+        "packRuns",
+        "runOf",
+        "shares"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/layout/src/index.ts",
+      "to": "packages/layout/src/band.ts",
+      "type": "type",
+      "symbols": [
+        "BandItem",
+        "BandOptions",
+        "Relevance"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/layout/src/index.ts",
       "to": "packages/layout/src/city.ts",
       "type": "reexport",
       "symbols": [
         "cameraLimit",
         "collides",
+        "districtsPastTheEdge",
         "panForZoom",
         "placeCity"
       ],
@@ -6813,6 +8076,7 @@
       "type": "type",
       "symbols": [
         "CityCard",
+        "PastTheEdge",
         "PlacedCard"
       ],
       "weight": 1
@@ -6887,10 +8151,15 @@
       "to": "packages/layout/src/layout.ts",
       "type": "reexport",
       "symbols": [
+        "holdLayout",
         "layout",
         "marqueeHeightFor",
         "panLayout",
         "planeOf",
+        "ROSTER_MOST",
+        "ROSTER_ROW",
+        "rosterHeight",
+        "rosterRows",
         "SCREEN_LEASH_CELLS"
       ],
       "weight": 1
@@ -6935,9 +8204,10 @@
         "LayoutOptions",
         "Plane",
         "Via",
-        "CityFrame"
+        "CityFrame",
+        "Opens"
       ],
-      "weight": 2
+      "weight": 3
     },
     {
       "from": "packages/layout/src/index.ts",
@@ -6956,6 +8226,8 @@
         "withOverview",
         "withPan",
         "withPast",
+        "withQuery",
+        "withoutSearch",
         "withShown",
         "withPin",
         "withoutMoves",
@@ -7003,6 +8275,27 @@
     },
     {
       "from": "packages/layout/src/layout.ts",
+      "to": "packages/layout/src/band.ts",
+      "type": "static",
+      "symbols": [
+        "bandCaps",
+        "bandOf",
+        "packRuns",
+        "runOf"
+      ],
+      "weight": 4
+    },
+    {
+      "from": "packages/layout/src/layout.ts",
+      "to": "packages/layout/src/band.ts",
+      "type": "type",
+      "symbols": [
+        "BandItem"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/layout/src/layout.ts",
       "to": "packages/layout/src/city.ts",
       "type": "static",
       "symbols": [
@@ -7040,7 +8333,7 @@
         "pluralOf",
         "relatedNodes"
       ],
-      "weight": 5
+      "weight": 6
     },
     {
       "from": "packages/layout/src/layout.ts",
@@ -7091,7 +8384,7 @@
         "LayoutNode",
         "Via"
       ],
-      "weight": 5
+      "weight": 6
     },
     {
       "from": "packages/layout/src/related.ts",
@@ -7101,6 +8394,15 @@
         "ViewState"
       ],
       "weight": 1
+    },
+    {
+      "from": "packages/layout/tests/unit/a-band-is-named-in-words.test.ts",
+      "to": "packages/layout/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "bandAggregateWords"
+      ],
+      "weight": 3
     },
     {
       "from": "packages/layout/tests/unit/a-name-that-fits.test.ts",
@@ -7118,10 +8420,35 @@
       "weight": 10
     },
     {
+      "from": "packages/layout/tests/unit/a-tuck-goes-with-its-parent.test.ts",
+      "to": "packages/layout/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "EMPTY_VIEW",
+        "layout"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/layout/tests/unit/an-opened-district-lists-what-it-has-room-for.test.ts",
+      "to": "packages/layout/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "EMPTY_VIEW",
+        "interpolate",
+        "layout",
+        "ROSTER_ROW",
+        "rosterHeight"
+      ],
+      "weight": 10
+    },
+    {
       "from": "packages/layout/tests/unit/layout.test.ts",
       "to": "packages/layout/src/index.ts",
       "type": "static",
       "symbols": [
+        "withoutSearch",
+        "withQuery",
         "withWithin",
         "cameraLimit",
         "aggregateId",
@@ -7174,6 +8501,31 @@
       "weight": 10
     },
     {
+      "from": "packages/layout/tests/unit/the-band-draws-what-fits.test.ts",
+      "to": "packages/layout/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "bandCaps",
+        "bandOf",
+        "chooseGrouping",
+        "EMPTY_VIEW",
+        "layout",
+        "packRuns",
+        "shares",
+        "toggleExpanded"
+      ],
+      "weight": 10
+    },
+    {
+      "from": "packages/layout/tests/unit/the-band-draws-what-fits.test.ts",
+      "to": "packages/layout/src/index.ts",
+      "type": "type",
+      "symbols": [
+        "BandItem"
+      ],
+      "weight": 1
+    },
+    {
       "from": "packages/layout/tests/unit/the-billboard-is-on-a-leash.test.ts",
       "to": "packages/layout/src/index.ts",
       "type": "static",
@@ -7209,6 +8561,16 @@
         "marqueeHeightFor"
       ],
       "weight": 3
+    },
+    {
+      "from": "packages/layout/tests/unit/the-city-stays-beside-the-rail.test.ts",
+      "to": "packages/layout/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "EMPTY_VIEW",
+        "layout"
+      ],
+      "weight": 4
     },
     {
       "from": "packages/layout/tests/unit/the-drive-in.test.ts",
@@ -7249,9 +8611,77 @@
       "to": "packages/pages/src/registry.ts",
       "type": "static",
       "symbols": [
+        "kindOfSlug",
+        "recordPath"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/pages/src/face-controls.tsx",
+      "to": "packages/pages/src/face-placed.ts",
+      "type": "static",
+      "symbols": [
+        "createPlaced",
+        "FaceControls",
+        "usePlaced",
+        "usePlacedOnTheFace"
+      ],
+      "weight": 8
+    },
+    {
+      "from": "packages/pages/src/face-controls.tsx",
+      "to": "packages/pages/src/face-placed.ts",
+      "type": "type",
+      "symbols": [
+        "FaceControl",
+        "Placed"
+      ],
+      "weight": 7
+    },
+    {
+      "from": "packages/pages/src/face-controls.tsx",
+      "to": "packages/pages/src/page-context.tsx",
+      "type": "static",
+      "symbols": [
+        "useStoreTick"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/src/face-controls.tsx",
+      "to": "packages/pages/src/page-context.tsx",
+      "type": "type",
+      "symbols": [
+        "PageContext"
+      ],
+      "weight": 7
+    },
+    {
+      "from": "packages/pages/src/face-controls.tsx",
+      "to": "packages/pages/src/page-shell.tsx",
+      "type": "static",
+      "symbols": [
+        "PageFind"
+      ],
+      "weight": 4
+    },
+    {
+      "from": "packages/pages/src/face-controls.tsx",
+      "to": "packages/pages/src/registry.ts",
+      "type": "static",
+      "symbols": [
         "kindOfSlug"
       ],
       "weight": 1
+    },
+    {
+      "from": "packages/pages/src/face-controls.tsx",
+      "to": "packages/pages/src/registry.ts",
+      "type": "type",
+      "symbols": [
+        "PageRegistry"
+      ],
+      "weight": 2
     },
     {
       "from": "packages/pages/src/index.ts",
@@ -7259,6 +8689,26 @@
       "type": "reexport",
       "symbols": [
         "PageAsk"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/src/index.ts",
+      "to": "packages/pages/src/face-controls.tsx",
+      "type": "reexport",
+      "symbols": [
+        "lastChangeOf",
+        "PageUndo"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/src/index.ts",
+      "to": "packages/pages/src/face-controls.tsx",
+      "type": "type",
+      "symbols": [
+        "FaceControl",
+        "LastChange"
       ],
       "weight": 1
     },
@@ -7324,7 +8774,13 @@
         "KindMapSection",
         "DefaultProblemsPage",
         "DefaultRecordPage",
+        "DefaultSearchPage",
         "DefaultShell",
+        "PageFind",
+        "SearchToCreate",
+        "beginningsFor",
+        "beginningsFrom",
+        "WhyLine",
         "StartFreshLink",
         "useStoreTick",
         "pageStyles",
@@ -7339,7 +8795,8 @@
       "type": "type",
       "symbols": [
         "PageContext",
-        "GalleryEntry"
+        "GalleryEntry",
+        "Beginning"
       ],
       "weight": 1
     },
@@ -7367,6 +8824,8 @@
         "PageRegistry",
         "PageRegistration",
         "PageType",
+        "ShellComponent",
+        "ShellOptions",
         "SurfaceType"
       ],
       "weight": 2
@@ -7509,6 +8968,16 @@
       "type": "static",
       "symbols": [
         "placesOf"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/pages/src/page-list.tsx",
+      "to": "packages/pages/src/page-search.tsx",
+      "type": "static",
+      "symbols": [
+        "beginningsFrom",
+        "WhyLine"
       ],
       "weight": 2
     },
@@ -7880,6 +9349,99 @@
       "weight": 6
     },
     {
+      "from": "packages/pages/src/page-search.tsx",
+      "to": "packages/pages/src/facts.ts",
+      "type": "static",
+      "symbols": [
+        "kindFacts"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/pages/src/page-search.tsx",
+      "to": "packages/pages/src/form.tsx",
+      "type": "static",
+      "symbols": [
+        "DerivedForm"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/src/page-search.tsx",
+      "to": "packages/pages/src/page-context.tsx",
+      "type": "static",
+      "symbols": [
+        "useStoreTick"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/src/page-search.tsx",
+      "to": "packages/pages/src/page-context.tsx",
+      "type": "type",
+      "symbols": [
+        "PageContext"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/src/page-search.tsx",
+      "to": "packages/pages/src/page-places.tsx",
+      "type": "static",
+      "symbols": [
+        "placesOf"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/src/page-search.tsx",
+      "to": "packages/pages/src/page-shell.tsx",
+      "type": "static",
+      "symbols": [
+        "PageMain"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/pages/src/page-search.tsx",
+      "to": "packages/pages/src/page-typography.tsx",
+      "type": "static",
+      "symbols": [
+        "DISPLAY",
+        "KindMark",
+        "eyebrow",
+        "h1",
+        "h2",
+        "lede",
+        "link",
+        "plain",
+        "pluralOf",
+        "quiet",
+        "rule"
+      ],
+      "weight": 10
+    },
+    {
+      "from": "packages/pages/src/page-search.tsx",
+      "to": "packages/pages/src/registry.ts",
+      "type": "static",
+      "symbols": [
+        "placePath",
+        "pluralSlug",
+        "recordPath"
+      ],
+      "weight": 4
+    },
+    {
+      "from": "packages/pages/src/page-shell.tsx",
+      "to": "packages/pages/src/face-placed.ts",
+      "type": "static",
+      "symbols": [
+        "usePlacedOnTheFace"
+      ],
+      "weight": 1
+    },
+    {
       "from": "packages/pages/src/page-shell.tsx",
       "to": "packages/pages/src/facts.ts",
       "type": "static",
@@ -7905,7 +9467,7 @@
       "symbols": [
         "PageContext"
       ],
-      "weight": 2
+      "weight": 3
     },
     {
       "from": "packages/pages/src/page-shell.tsx",
@@ -7936,9 +9498,10 @@
       "to": "packages/pages/src/registry.ts",
       "type": "static",
       "symbols": [
+        "kindOfSlug",
         "pluralSlug"
       ],
-      "weight": 1
+      "weight": 2
     },
     {
       "from": "packages/pages/src/pages.tsx",
@@ -8005,6 +9568,15 @@
     },
     {
       "from": "packages/pages/src/pages.tsx",
+      "to": "packages/pages/src/page-search.tsx",
+      "type": "reexport",
+      "symbols": [
+        "*"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/src/pages.tsx",
       "to": "packages/pages/src/page-shell.tsx",
       "type": "reexport",
       "symbols": [
@@ -8022,6 +9594,24 @@
       "weight": 1
     },
     {
+      "from": "packages/pages/src/registry.ts",
+      "to": "packages/pages/src/face-placed.ts",
+      "type": "type",
+      "symbols": [
+        "FaceControl"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "packages/pages/src/registry.ts",
+      "to": "packages/pages/src/page-context.tsx",
+      "type": "type",
+      "symbols": [
+        "PageContext"
+      ],
+      "weight": 1
+    },
+    {
       "from": "packages/pages/src/router.tsx",
       "to": "packages/pages/src/ask.tsx",
       "type": "static",
@@ -8029,6 +9619,15 @@
         "PageAsk"
       ],
       "weight": 1
+    },
+    {
+      "from": "packages/pages/src/router.tsx",
+      "to": "packages/pages/src/face-controls.tsx",
+      "type": "static",
+      "symbols": [
+        "FaceControlsRoot"
+      ],
+      "weight": 2
     },
     {
       "from": "packages/pages/src/router.tsx",
@@ -8042,9 +9641,10 @@
         "DefaultPlacesPage",
         "DefaultProblemsPage",
         "DefaultRecordPage",
+        "DefaultSearchPage",
         "DefaultShell"
       ],
-      "weight": 8
+      "weight": 9
     },
     {
       "from": "packages/pages/src/router.tsx",
@@ -8053,7 +9653,7 @@
       "symbols": [
         "PageContext"
       ],
-      "weight": 6
+      "weight": 7
     },
     {
       "from": "packages/pages/src/router.tsx",
@@ -8072,7 +9672,7 @@
       "symbols": [
         "PageRegistry"
       ],
-      "weight": 3
+      "weight": 5
     },
     {
       "from": "packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx",
@@ -8093,6 +9693,33 @@
         "PageContext"
       ],
       "weight": 4
+    },
+    {
+      "from": "packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "PagesApp"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "type",
+      "symbols": [
+        "PageContext"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx",
+      "to": "packages/pages/src/page-list.tsx",
+      "type": "static",
+      "symbols": [
+        "arrangementFromSearch"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx",
@@ -8144,6 +9771,51 @@
       "weight": 4
     },
     {
+      "from": "packages/pages/tests/unit/a-picker-fits-its-field.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "DerivedForm"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/a-repair-asks-what-it-left-open.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "Repairs"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/a-search-fits-a-phone-at-200.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "PagesApp"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/a-search-fits-a-phone-at-200.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "type",
+      "symbols": [
+        "PageContext"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/a-time-of-day-is-asked-for.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "DerivedForm"
+      ],
+      "weight": 1
+    },
+    {
       "from": "packages/pages/tests/unit/asked-as-the-person.test.tsx",
       "to": "packages/pages/src/index.ts",
       "type": "static",
@@ -8161,6 +9833,24 @@
         "DerivedForm"
       ],
       "weight": 3
+    },
+    {
+      "from": "packages/pages/tests/unit/one-is-not-a-pile.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "PagesApp"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/one-is-not-a-pile.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "type",
+      "symbols": [
+        "PageContext"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/pages/tests/unit/one-main-under-a-shell.test.tsx",
@@ -8217,6 +9907,38 @@
       "weight": 1
     },
     {
+      "from": "packages/pages/tests/unit/the-button-says-the-heading.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "DerivedForm"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "createPageRegistry",
+        "PageFind",
+        "PagesApp",
+        "PageUndo"
+      ],
+      "weight": 4
+    },
+    {
+      "from": "packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "type",
+      "symbols": [
+        "PageComponent",
+        "PageContext",
+        "PageRegistry"
+      ],
+      "weight": 5
+    },
+    {
       "from": "packages/pages/tests/unit/the-map-of-kinds.test.tsx",
       "to": "packages/pages/src/index.ts",
       "type": "static",
@@ -8255,6 +9977,63 @@
       "weight": 1
     },
     {
+      "from": "packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "PagesApp"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "type",
+      "symbols": [
+        "PageContext"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "beginningsFor",
+        "createPageRegistry",
+        "PagesApp"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "type",
+      "symbols": [
+        "PageContext"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/two-ties-of-one-name.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "PagesApp",
+        "recordFacts"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/pages/tests/unit/two-ties-of-one-name.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "type": "type",
+      "symbols": [
+        "PageContext"
+      ],
+      "weight": 1
+    },
+    {
       "from": "packages/pages/tests/unit/what-begins-a-kind.test.tsx",
       "to": "packages/pages/src/index.ts",
       "type": "static",
@@ -8279,6 +10058,15 @@
       "type": "static",
       "symbols": [
         "useSubject"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/chat.tsx",
+      "to": "packages/primitives/src/popover.ts",
+      "type": "static",
+      "symbols": [
+        "closeToTrigger"
       ],
       "weight": 1
     },
@@ -8314,7 +10102,7 @@
       "symbols": [
         "ChatPanel"
       ],
-      "weight": 3
+      "weight": 4
     },
     {
       "from": "packages/primitives/src/companion.tsx",
@@ -8363,6 +10151,17 @@
     },
     {
       "from": "packages/primitives/src/default-views.tsx",
+      "to": "packages/primitives/src/arrange-bar.tsx",
+      "type": "static",
+      "symbols": [
+        "ArrangeBar",
+        "arrangementOf",
+        "withArrangement"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "packages/primitives/src/default-views.tsx",
       "to": "packages/primitives/src/connections.tsx",
       "type": "static",
       "symbols": [
@@ -8400,7 +10199,7 @@
         "Panel",
         "Roster"
       ],
-      "weight": 9
+      "weight": 10
     },
     {
       "from": "packages/primitives/src/figure.tsx",
@@ -8419,6 +10218,37 @@
         "useMarkup"
       ],
       "weight": 2
+    },
+    {
+      "from": "packages/primitives/src/find.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "type": "static",
+      "symbols": [
+        "VISUALLY_HIDDEN"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/index.ts",
+      "to": "packages/primitives/src/arrange-bar.tsx",
+      "type": "reexport",
+      "symbols": [
+        "ArrangeBar",
+        "arrangementCaption",
+        "arrangementOf",
+        "sayCondition",
+        "withArrangement"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/index.ts",
+      "to": "packages/primitives/src/arrange-bar.tsx",
+      "type": "type",
+      "symbols": [
+        "ArrangeBarProps"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/primitives/src/index.ts",
@@ -8481,10 +10311,12 @@
       "to": "packages/primitives/src/default-views.tsx",
       "type": "reexport",
       "symbols": [
+        "rosterOf",
         "hueFor",
-        "registerDefaultViews"
+        "registerDefaultViews",
+        "THUMBNAIL_BUDGET"
       ],
-      "weight": 1
+      "weight": 3
     },
     {
       "from": "packages/primitives/src/index.ts",
@@ -8510,6 +10342,15 @@
     },
     {
       "from": "packages/primitives/src/index.ts",
+      "to": "packages/primitives/src/find.tsx",
+      "type": "reexport",
+      "symbols": [
+        "FindBox"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/index.ts",
       "to": "packages/primitives/src/installation.tsx",
       "type": "reexport",
       "symbols": [
@@ -8523,6 +10364,25 @@
       "type": "reexport",
       "symbols": [
         "LadderSetting"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/index.ts",
+      "to": "packages/primitives/src/lens/arranging.tsx",
+      "type": "reexport",
+      "symbols": [
+        "useArranging"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/index.ts",
+      "to": "packages/primitives/src/lens/arranging.tsx",
+      "type": "type",
+      "symbols": [
+        "Arranging",
+        "ArrangingOptions"
       ],
       "weight": 1
     },
@@ -8607,7 +10467,10 @@
       "type": "reexport",
       "symbols": [
         "buildCoverage",
+        "capCoverage",
         "CoverageBindingError",
+        "COVERAGE_MAX_COLUMNS",
+        "COVERAGE_MAX_ROWS",
         "COVERAGE_REQUIRED_ROLES",
         "CoverageView",
         "createCoverageLens"
@@ -8619,12 +10482,22 @@
       "to": "packages/primitives/src/lens/coverage.tsx",
       "type": "type",
       "symbols": [
+        "CappedCoverage",
         "CoverageCell",
         "CoverageGrid",
         "CoverageLens",
         "CoverageOptions",
         "CoverageRoles",
         "CoverageViewProps"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/index.ts",
+      "to": "packages/primitives/src/lens/more.tsx",
+      "type": "reexport",
+      "symbols": [
+        "withMore"
       ],
       "weight": 1
     },
@@ -8772,7 +10645,8 @@
       "to": "packages/primitives/src/quick-relations.tsx",
       "type": "reexport",
       "symbols": [
-        "QuickRelations"
+        "QuickRelations",
+        "handles"
       ],
       "weight": 1
     },
@@ -8782,7 +10656,8 @@
       "type": "reexport",
       "symbols": [
         "RelationKey",
-        "RelationMark"
+        "RelationMark",
+        "relationWords"
       ],
       "weight": 1
     },
@@ -8936,11 +10811,49 @@
       "weight": 1
     },
     {
+      "from": "packages/primitives/src/lens/arranging.tsx",
+      "to": "packages/primitives/src/arrange-bar.tsx",
+      "type": "static",
+      "symbols": [
+        "ArrangeBar",
+        "arrangementOf",
+        "withArrangement"
+      ],
+      "weight": 3
+    },
+    {
       "from": "packages/primitives/src/lens/board.tsx",
       "to": "packages/primitives/src/default-views.tsx",
       "type": "static",
       "symbols": [
         "hueFor"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/board.tsx",
+      "to": "packages/primitives/src/lens/arranging.tsx",
+      "type": "static",
+      "symbols": [
+        "useArranging"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/board.tsx",
+      "to": "packages/primitives/src/lens/horizon.ts",
+      "type": "static",
+      "symbols": [
+        "onTheHorizon"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/primitives/src/lens/board.tsx",
+      "to": "packages/primitives/src/lens/more.tsx",
+      "type": "static",
+      "symbols": [
+        "withMore"
       ],
       "weight": 1
     },
@@ -9105,6 +11018,15 @@
     },
     {
       "from": "packages/primitives/src/lens/calendar-view.tsx",
+      "to": "packages/primitives/src/lens/arranging.tsx",
+      "type": "static",
+      "symbols": [
+        "useArranging"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/calendar-view.tsx",
       "to": "packages/primitives/src/lens/calendar-dates.ts",
       "type": "static",
       "symbols": [
@@ -9185,6 +11107,15 @@
     },
     {
       "from": "packages/primitives/src/lens/calendar-view.tsx",
+      "to": "packages/primitives/src/lens/more.tsx",
+      "type": "static",
+      "symbols": [
+        "withMore"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/calendar-view.tsx",
       "to": "packages/primitives/src/primitives/index.tsx",
       "type": "static",
       "symbols": [
@@ -9255,6 +11186,15 @@
       "type": "static",
       "symbols": [
         "hueFor"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/coverage.tsx",
+      "to": "packages/primitives/src/lens/horizon.ts",
+      "type": "static",
+      "symbols": [
+        "onTheHorizon"
       ],
       "weight": 1
     },
@@ -9394,6 +11334,24 @@
     },
     {
       "from": "packages/primitives/src/lens/timeline.tsx",
+      "to": "packages/primitives/src/lens/arranging.tsx",
+      "type": "static",
+      "symbols": [
+        "useArranging"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/timeline.tsx",
+      "to": "packages/primitives/src/lens/more.tsx",
+      "type": "static",
+      "symbols": [
+        "withMore"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/timeline.tsx",
       "to": "packages/primitives/src/primitives/index.tsx",
       "type": "static",
       "symbols": [
@@ -9411,6 +11369,16 @@
         "LadderSetting"
       ],
       "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/profile.tsx",
+      "to": "packages/primitives/src/popover.ts",
+      "type": "static",
+      "symbols": [
+        "closeToTrigger",
+        "keepInside"
+      ],
+      "weight": 3
     },
     {
       "from": "packages/primitives/src/profile.tsx",
@@ -9464,6 +11432,15 @@
       "type": "static",
       "symbols": [
         "Companion"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/shell.tsx",
+      "to": "packages/primitives/src/find.tsx",
+      "type": "static",
+      "symbols": [
+        "FindBox"
       ],
       "weight": 1
     },
@@ -9549,12 +11526,21 @@
     },
     {
       "from": "packages/primitives/src/workbench/activity.tsx",
+      "to": "packages/primitives/src/popover.ts",
+      "type": "static",
+      "symbols": [
+        "closeToTrigger"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/src/workbench/activity.tsx",
       "to": "packages/primitives/src/primitives/index.tsx",
       "type": "static",
       "symbols": [
         "Chip"
       ],
-      "weight": 2
+      "weight": 3
     },
     {
       "from": "packages/primitives/src/workbench/activity.tsx",
@@ -9563,7 +11549,16 @@
       "symbols": [
         "nameOf"
       ],
-      "weight": 2
+      "weight": 3
+    },
+    {
+      "from": "packages/primitives/src/workbench/answer-args.tsx",
+      "to": "packages/primitives/src/relation-key.tsx",
+      "type": "static",
+      "symbols": [
+        "relationWords"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/primitives/src/workbench/index.tsx",
@@ -9654,7 +11649,16 @@
         "AnswerArgs",
         "nameOf"
       ],
-      "weight": 5
+      "weight": 6
+    },
+    {
+      "from": "packages/primitives/src/workbench/standing.tsx",
+      "to": "packages/primitives/src/popover.ts",
+      "type": "static",
+      "symbols": [
+        "closeToTrigger"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/primitives/src/workbench/trail.tsx",
@@ -9662,6 +11666,44 @@
       "type": "static",
       "symbols": [
         "nameOf"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-calendar-draws-every-kind-it-is-bound-to.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "createCalendarLens"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-card-s-acts-are-one-key-away.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "Companion",
+        "registerDefaultViews"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-cell-is-an-edge.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "createCoverageLens",
+        "registerDefaultViews"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-chip-says-what-it-is.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "registerDefaultViews"
       ],
       "weight": 1
     },
@@ -9694,6 +11736,47 @@
       "weight": 1
     },
     {
+      "from": "packages/primitives/tests/unit/a-lens-arranges-before-it-draws.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "createBoardLens",
+        "createCalendarLens",
+        "createTimelineLens"
+      ],
+      "weight": 4
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-lens-keeps-the-horizon.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "createBoardLens",
+        "createCoverageLens",
+        "registerDefaultViews"
+      ],
+      "weight": 4
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-lens-keeps-the-horizon.test.tsx",
+      "to": "packages/primitives/src/lens/coverage.tsx",
+      "type": "static",
+      "symbols": [
+        "gapWords",
+        "unaskedWords"
+      ],
+      "weight": 5
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-line-is-named-in-its-words.test.ts",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "nameOf"
+      ],
+      "weight": 1
+    },
+    {
       "from": "packages/primitives/tests/unit/a-mark-can-say-so.test.tsx",
       "to": "packages/primitives/src/index.ts",
       "type": "static",
@@ -9702,6 +11785,26 @@
         "Roster"
       ],
       "weight": 4
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-matrix-the-page-can-hold.test.ts",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "capCoverage",
+        "COVERAGE_MAX_COLUMNS",
+        "COVERAGE_MAX_ROWS"
+      ],
+      "weight": 7
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-matrix-the-page-can-hold.test.ts",
+      "to": "packages/primitives/src/index.ts",
+      "type": "type",
+      "symbols": [
+        "CoverageGrid"
+      ],
+      "weight": 2
     },
     {
       "from": "packages/primitives/tests/unit/a-panel-that-scrolls-is-a-stop.test.tsx",
@@ -9732,6 +11835,56 @@
         "registerDefaultViews"
       ],
       "weight": 4
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-roster-you-can-read.test.ts",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "rosterOf",
+        "themeCss"
+      ],
+      "weight": 4
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-select-keeps-its-floor-in-webkit.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "createCalendarLens",
+        "Places"
+      ],
+      "weight": 4
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-thumbnail-is-a-picture.test.tsx",
+      "to": "packages/primitives/src/arrange-bar.tsx",
+      "type": "static",
+      "symbols": [
+        "FAR_ENDS"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-thumbnail-is-a-picture.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "ArrangeBar",
+        "registerDefaultViews",
+        "THUMBNAIL_BUDGET",
+        "withMore"
+      ],
+      "weight": 9
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-value-stays-in-its-cell.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "registerDefaultViews"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/primitives/tests/unit/back-out.test.tsx",
@@ -9823,6 +11976,17 @@
       "weight": 10
     },
     {
+      "from": "packages/primitives/tests/unit/escape-gives-the-keyboard-back.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "ActivityRail",
+        "Standing",
+        "registerDefaultViews"
+      ],
+      "weight": 4
+    },
+    {
       "from": "packages/primitives/tests/unit/every-size-is-the-readers.test.ts",
       "to": "packages/primitives/src/index.ts",
       "type": "static",
@@ -9830,6 +11994,25 @@
         "themeCss"
       ],
       "weight": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/find-says-which-is-which.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "FindBox",
+        "registerDefaultViews"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/primitives/tests/unit/handles-can-be-told-apart.test.ts",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "handles"
+      ],
+      "weight": 4
     },
     {
       "from": "packages/primitives/tests/unit/installation.test.tsx",
@@ -9854,6 +12037,16 @@
       "weight": 1
     },
     {
+      "from": "packages/primitives/tests/unit/nothing-withheld-is-hidden.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "Inspector",
+        "registerDefaultViews"
+      ],
+      "weight": 2
+    },
+    {
       "from": "packages/primitives/tests/unit/one-request-one-press.test.tsx",
       "to": "packages/primitives/src/index.ts",
       "type": "static",
@@ -9861,7 +12054,19 @@
         "ChatPanel",
         "registerDefaultViews"
       ],
-      "weight": 2
+      "weight": 4
+    },
+    {
+      "from": "packages/primitives/tests/unit/one-row-arranges-every-surface.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "ArrangeBar",
+        "arrangementOf",
+        "sayCondition",
+        "withArrangement"
+      ],
+      "weight": 8
     },
     {
       "from": "packages/primitives/tests/unit/places.test.tsx",
@@ -9926,7 +12131,7 @@
         "registerDefaultViews",
         "Shell"
       ],
-      "weight": 5
+      "weight": 7
     },
     {
       "from": "packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx",
@@ -9935,6 +12140,15 @@
       "symbols": [
         "Inspector",
         "registerDefaultViews"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-door-keeps-the-keyboard.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "Begin"
       ],
       "weight": 2
     },
@@ -9966,6 +12180,16 @@
         "registerDefaultViews"
       ],
       "weight": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-find-box-keeps-room-to-type.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "registerDefaultViews",
+        "Shell"
+      ],
+      "weight": 2
     },
     {
       "from": "packages/primitives/tests/unit/the-key-stays-in-its-rail.test.tsx",
@@ -10032,7 +12256,7 @@
         "ChatPanel",
         "registerDefaultViews"
       ],
-      "weight": 4
+      "weight": 6
     },
     {
       "from": "packages/primitives/tests/unit/the-shell-hands-the-seat-its-own-answer.test.tsx",
@@ -10054,6 +12278,15 @@
         "registerDefaultViews"
       ],
       "weight": 10
+    },
+    {
+      "from": "packages/primitives/tests/unit/two-changes-before-one-redraw.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "ArrangeBar"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/primitives/tests/unit/undo-turn.test.tsx",
@@ -10132,6 +12365,15 @@
     },
     {
       "from": "packages/react/src/connectors.tsx",
+      "to": "packages/react/src/parallel.ts",
+      "type": "static",
+      "symbols": [
+        "parallelOffsets"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/react/src/connectors.tsx",
       "to": "packages/react/src/routes.ts",
       "type": "static",
       "symbols": [
@@ -10184,6 +12426,24 @@
         "Attention"
       ],
       "weight": 3
+    },
+    {
+      "from": "packages/react/src/context.tsx",
+      "to": "packages/react/src/motion.ts",
+      "type": "static",
+      "symbols": [
+        "createMotionStore"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/react/src/context.tsx",
+      "to": "packages/react/src/motion.ts",
+      "type": "type",
+      "symbols": [
+        "MotionStore"
+      ],
+      "weight": 2
     },
     {
       "from": "packages/react/src/context.tsx",
@@ -10260,6 +12520,7 @@
       "to": "packages/react/src/context.tsx",
       "type": "static",
       "symbols": [
+        "useFound",
         "useGraph",
         "useGraview"
       ],
@@ -10328,6 +12589,7 @@
       "symbols": [
         "GraviewProvider",
         "ROBOT_REST_MS",
+        "useFound",
         "useGraph",
         "useGraview",
         "useGraviewIfAny",
@@ -10345,6 +12607,7 @@
       "to": "packages/react/src/context.tsx",
       "type": "type",
       "symbols": [
+        "ActsDoor",
         "AdministeredModule",
         "DrawnBox",
         "GraviewContextValue",
@@ -10382,8 +12645,10 @@
       "to": "packages/react/src/hooks.ts",
       "type": "reexport",
       "symbols": [
+        "NOTHING_FOUND",
         "useFlagged",
         "useImplicated",
+        "useReached",
         "useViolations",
         "useAffordances",
         "useApplyAffordance",
@@ -10397,6 +12662,16 @@
         "useUrlSync"
       ],
       "weight": 2
+    },
+    {
+      "from": "packages/react/src/index.ts",
+      "to": "packages/react/src/keyboard.ts",
+      "type": "reexport",
+      "symbols": [
+        "landingIn",
+        "useTheKeyboardLandsSomewhere"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/react/src/index.ts",
@@ -10424,6 +12699,25 @@
       "symbols": [
         "Ask",
         "LocalIntelligence"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/react/src/index.ts",
+      "to": "packages/react/src/motion.ts",
+      "type": "reexport",
+      "symbols": [
+        "createMotionStore",
+        "useSceneStill"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/react/src/index.ts",
+      "to": "packages/react/src/motion.ts",
+      "type": "type",
+      "symbols": [
+        "MotionStore"
       ],
       "weight": 1
     },
@@ -10638,6 +12932,15 @@
       "weight": 1
     },
     {
+      "from": "packages/react/src/motion.ts",
+      "to": "packages/react/src/context.tsx",
+      "type": "static",
+      "symbols": [
+        "useGraview"
+      ],
+      "weight": 1
+    },
+    {
       "from": "packages/react/src/occupants.tsx",
       "to": "packages/react/src/context.tsx",
       "type": "static",
@@ -10732,11 +13035,12 @@
       "to": "packages/react/src/context.tsx",
       "type": "static",
       "symbols": [
+        "useFound",
         "useGraph",
         "useGraview",
         "ViewModeProvider"
       ],
-      "weight": 5
+      "weight": 7
     },
     {
       "from": "packages/react/src/resolved-view.tsx",
@@ -10765,7 +13069,7 @@
       "symbols": [
         "SceneNode"
       ],
-      "weight": 4
+      "weight": 5
     },
     {
       "from": "packages/react/src/resolved-view.tsx",
@@ -10815,6 +13119,25 @@
     },
     {
       "from": "packages/react/src/scene-lines.tsx",
+      "to": "packages/react/src/captions.ts",
+      "type": "static",
+      "symbols": [
+        "captionRuns"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/react/src/scene-lines.tsx",
+      "to": "packages/react/src/captions.ts",
+      "type": "type",
+      "symbols": [
+        "CaptionEntry",
+        "CaptionRun"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "packages/react/src/scene-lines.tsx",
       "to": "packages/react/src/connectors.tsx",
       "type": "static",
       "symbols": [
@@ -10833,6 +13156,15 @@
         "useKit"
       ],
       "weight": 3
+    },
+    {
+      "from": "packages/react/src/scene-lines.tsx",
+      "to": "packages/react/src/rails.ts",
+      "type": "static",
+      "symbols": [
+        "railInset"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/react/src/scene-lines.tsx",
@@ -10900,10 +13232,20 @@
       "to": "packages/react/src/context.tsx",
       "type": "static",
       "symbols": [
+        "useFound",
         "useGraph",
         "useGraview"
       ],
-      "weight": 2
+      "weight": 4
+    },
+    {
+      "from": "packages/react/src/scene-root.tsx",
+      "to": "packages/react/src/edge-signs.tsx",
+      "type": "static",
+      "symbols": [
+        "EdgeSigns"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/react/src/scene-root.tsx",
@@ -10934,13 +13276,23 @@
     },
     {
       "from": "packages/react/src/scene-root.tsx",
+      "to": "packages/react/src/rails.ts",
+      "type": "static",
+      "symbols": [
+        "railInset"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/react/src/scene-root.tsx",
       "to": "packages/react/src/resolved-view.tsx",
       "type": "static",
       "symbols": [
+        "BandCard",
         "BeyondCard",
         "SettledView"
       ],
-      "weight": 2
+      "weight": 3
     },
     {
       "from": "packages/react/src/scene-root.tsx",
@@ -11118,7 +13470,7 @@
         "pickedFrom",
         "usePickTargets"
       ],
-      "weight": 5
+      "weight": 6
     },
     {
       "from": "packages/react/src/view-host.tsx",
@@ -11258,6 +13610,39 @@
         "ViewProps"
       ],
       "weight": 2
+    },
+    {
+      "from": "packages/react/tests/unit/a-relation-is-captioned-once.test.ts",
+      "to": "packages/react/src/captions.ts",
+      "type": "static",
+      "symbols": [
+        "captionRuns"
+      ],
+      "weight": 5
+    },
+    {
+      "from": "packages/react/tests/unit/a-relation-is-captioned-once.test.ts",
+      "to": "packages/react/src/captions.ts",
+      "type": "type",
+      "symbols": [
+        "CaptionEntry"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/react/tests/unit/a-search-lights-the-picture.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "adjustment",
+        "createViews",
+        "GraviewProvider",
+        "NOTHING_FOUND",
+        "useFound",
+        "useImplicated",
+        "useReached"
+      ],
+      "weight": 10
     },
     {
       "from": "packages/react/tests/unit/a-stop-that-still-exists.test.tsx",
@@ -11417,6 +13802,18 @@
       "weight": 10
     },
     {
+      "from": "packages/react/tests/unit/the-edge-says-what-is-past-it.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "createViews",
+        "GraviewProvider",
+        "Scene",
+        "useGraview"
+      ],
+      "weight": 5
+    },
+    {
       "from": "packages/react/tests/unit/the-ground-under-a-district.test.ts",
       "to": "packages/react/src/plots.tsx",
       "type": "static",
@@ -11431,6 +13828,15 @@
         "villageOf"
       ],
       "weight": 10
+    },
+    {
+      "from": "packages/react/tests/unit/the-keyboard-always-lands-somewhere.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "useTheKeyboardLandsSomewhere"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/react/tests/unit/the-occupants.test.tsx",
@@ -11510,6 +13916,15 @@
         "tieRoute"
       ],
       "weight": 7
+    },
+    {
+      "from": "packages/react/tests/unit/two-relations-are-two-lines.test.ts",
+      "to": "packages/react/src/parallel.ts",
+      "type": "static",
+      "symbols": [
+        "parallelOffsets"
+      ],
+      "weight": 2
     },
     {
       "from": "packages/react/tests/unit/where-is.test.ts",
@@ -12229,12 +14644,49 @@
     },
     {
       "from": "packages/ship/src/cli.ts",
+      "to": "packages/ship/src/open-store.ts",
+      "type": "static",
+      "symbols": [
+        "openStore"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/ship/src/cli.ts",
       "to": "packages/ship/src/serve.ts",
       "type": "static",
       "symbols": [
         "serveStore"
       ],
       "weight": 1
+    },
+    {
+      "from": "packages/ship/src/cli.ts",
+      "to": "packages/ship/src/snapshot.ts",
+      "type": "type",
+      "symbols": [
+        "GraphSnapshot"
+      ],
+      "weight": 5
+    },
+    {
+      "from": "packages/ship/src/cli.ts",
+      "to": "packages/ship/src/steps.ts",
+      "type": "static",
+      "symbols": [
+        "sayStep"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/ship/src/cli.ts",
+      "to": "packages/ship/src/sync-seed.ts",
+      "type": "static",
+      "symbols": [
+        "applySteps",
+        "seedSteps"
+      ],
+      "weight": 3
     },
     {
       "from": "packages/ship/src/dev.ts",
@@ -12359,10 +14811,21 @@
       "to": "packages/ship/src/cli.ts",
       "type": "reexport",
       "symbols": [
+        "backendFrom",
         "serve",
-        "SERVE_USAGE"
+        "SERVE_USAGE",
+        "syncSeed"
       ],
       "weight": 2
+    },
+    {
+      "from": "packages/ship/src/index.ts",
+      "to": "packages/ship/src/cli.ts",
+      "type": "type",
+      "symbols": [
+        "StoreBackend"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/ship/src/index.ts",
@@ -12525,7 +14988,9 @@
       "to": "packages/ship/src/serve.ts",
       "type": "reexport",
       "symbols": [
-        "serveStore"
+        "SEAT_HEADERS",
+        "serveStore",
+        "WIRE"
       ],
       "weight": 1
     },
@@ -12563,6 +15028,7 @@
       "type": "reexport",
       "symbols": [
         "primitivesFor",
+        "primitivesForSteps",
         "sayStep",
         "stepsMigration"
       ],
@@ -12574,6 +15040,27 @@
       "type": "type",
       "symbols": [
         "MigrationStep"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/ship/src/index.ts",
+      "to": "packages/ship/src/sync-seed.ts",
+      "type": "reexport",
+      "symbols": [
+        "applySteps",
+        "contentOperation",
+        "SEED_SYNC_AUTHOR",
+        "seedSteps"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/ship/src/index.ts",
+      "to": "packages/ship/src/sync-seed.ts",
+      "type": "type",
+      "symbols": [
+        "SeedSyncOptions"
       ],
       "weight": 1
     },
@@ -12638,7 +15125,7 @@
       "symbols": [
         "health"
       ],
-      "weight": 5
+      "weight": 6
     },
     {
       "from": "packages/ship/src/serve.ts",
@@ -12670,11 +15157,20 @@
     {
       "from": "packages/ship/src/steps.ts",
       "to": "packages/ship/src/snapshot.ts",
+      "type": "static",
+      "symbols": [
+        "applyToSnapshot"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/ship/src/steps.ts",
+      "to": "packages/ship/src/snapshot.ts",
       "type": "type",
       "symbols": [
         "GraphSnapshot"
       ],
-      "weight": 2
+      "weight": 8
     },
     {
       "from": "packages/ship/src/studio-door.ts",
@@ -12714,6 +15210,34 @@
         "typecheckWith"
       ],
       "weight": 1
+    },
+    {
+      "from": "packages/ship/src/sync-seed.ts",
+      "to": "packages/ship/src/snapshot.ts",
+      "type": "type",
+      "symbols": [
+        "GraphSnapshot"
+      ],
+      "weight": 4
+    },
+    {
+      "from": "packages/ship/src/sync-seed.ts",
+      "to": "packages/ship/src/steps.ts",
+      "type": "static",
+      "symbols": [
+        "primitivesForSteps",
+        "sayStep"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/ship/src/sync-seed.ts",
+      "to": "packages/ship/src/steps.ts",
+      "type": "type",
+      "symbols": [
+        "MigrationStep"
+      ],
+      "weight": 4
     },
     {
       "from": "packages/ship/tests/integration/serve.test.ts",
@@ -12792,6 +15316,31 @@
       "weight": 1
     },
     {
+      "from": "packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts",
+      "to": "packages/ship/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "applySteps",
+        "contentOperation",
+        "openStore",
+        "primitivesFor",
+        "sayStep",
+        "seedSteps",
+        "stepsMigration"
+      ],
+      "weight": 10
+    },
+    {
+      "from": "packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts",
+      "to": "packages/ship/src/index.ts",
+      "type": "type",
+      "symbols": [
+        "GraphSnapshot",
+        "MigrationStep"
+      ],
+      "weight": 10
+    },
+    {
       "from": "packages/ship/tests/unit/ship.test.ts",
       "to": "packages/ship/src/index.ts",
       "type": "static",
@@ -12853,6 +15402,27 @@
         "typecheckWith"
       ],
       "weight": 10
+    },
+    {
+      "from": "packages/ship/tests/unit/the-wire-is-a-contract.test.ts",
+      "to": "packages/ship/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "openRemote",
+        "SEAT_HEADERS",
+        "serveStore",
+        "WIRE"
+      ],
+      "weight": 10
+    },
+    {
+      "from": "packages/ship/tests/unit/the-wire-is-a-contract.test.ts",
+      "to": "packages/ship/src/index.ts",
+      "type": "type",
+      "symbols": [
+        "ServedStore"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/ship/tests/unit/who-is-here-between-tabs.test.ts",
@@ -13431,12 +16001,39 @@
     },
     {
       "from": "packages/studio/src/source.ts",
+      "to": "packages/studio/src/from-declaration.ts",
+      "type": "static",
+      "symbols": [
+        "fieldTypeOf"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/studio/src/source.ts",
       "to": "packages/studio/src/meta.ts",
       "type": "type",
       "symbols": [
         "FieldType"
       ],
       "weight": 5
+    },
+    {
+      "from": "packages/studio/src/source.ts",
+      "to": "packages/studio/src/zod-source.ts",
+      "type": "static",
+      "symbols": [
+        "printZod"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/studio/src/source.ts",
+      "to": "packages/studio/src/zod-source.ts",
+      "type": "type",
+      "symbols": [
+        "ZodUses"
+      ],
+      "weight": 4
     },
     {
       "from": "packages/studio/src/studio.ts",
@@ -13519,6 +16116,15 @@
         "graphToDeclaration"
       ],
       "weight": 2
+    },
+    {
+      "from": "packages/studio/src/to-declaration.ts",
+      "to": "packages/studio/src/from-declaration.ts",
+      "type": "static",
+      "symbols": [
+        "fieldTypeOf"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/studio/src/to-declaration.ts",
@@ -13643,6 +16249,15 @@
       "weight": 10
     },
     {
+      "from": "packages/studio/tests/unit/the-round-trip-keeps-the-checkouts-words.test.ts",
+      "to": "packages/studio/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "createStudio"
+      ],
+      "weight": 8
+    },
+    {
       "from": "packages/studio/tests/unit/the-studio-agent-panel.test.tsx",
       "to": "packages/studio/src/index.ts",
       "type": "static",
@@ -13746,6 +16361,52 @@
         "DeriveOptions"
       ],
       "weight": 2
+    },
+    {
+      "from": "packages/tools/src/cli.ts",
+      "to": "packages/tools/src/agent/adapters.ts",
+      "type": "static",
+      "symbols": [
+        "createMcpAdapter"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/tools/src/cli.ts",
+      "to": "packages/tools/src/agent/tools.ts",
+      "type": "static",
+      "symbols": [
+        "createToolRuntime"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "packages/tools/src/cli.ts",
+      "to": "packages/tools/src/mcp-stdio.ts",
+      "type": "static",
+      "symbols": [
+        "serveMcpStdio"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "packages/tools/src/cli.ts",
+      "to": "packages/tools/src/plan.ts",
+      "type": "static",
+      "symbols": [
+        "applyPlan",
+        "planFrom"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "packages/tools/src/cli.ts",
+      "to": "packages/tools/src/plan.ts",
+      "type": "type",
+      "symbols": [
+        "PlannedCall"
+      ],
+      "weight": 1
     },
     {
       "from": "packages/tools/src/conversation.ts",
@@ -14537,6 +17198,16 @@
       "weight": 1
     },
     {
+      "from": "packages/tools/src/mcp-stdio.ts",
+      "to": "packages/tools/src/agent/adapters.ts",
+      "type": "type",
+      "symbols": [
+        "McpTool",
+        "McpToolResult"
+      ],
+      "weight": 2
+    },
+    {
       "from": "packages/tools/src/plan.ts",
       "to": "packages/tools/src/intelligence.ts",
       "type": "type",
@@ -14817,6 +17488,57 @@
       "weight": 9
     },
     {
+      "from": "packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts",
+      "to": "packages/tools/src/cli.ts",
+      "type": "static",
+      "symbols": [
+        "instructionsFor",
+        "openHost",
+        "seatFrom"
+      ],
+      "weight": 10
+    },
+    {
+      "from": "packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts",
+      "to": "packages/tools/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "createMcpAdapter",
+        "createToolRuntime"
+      ],
+      "weight": 8
+    },
+    {
+      "from": "packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts",
+      "to": "packages/tools/src/mcp-stdio.ts",
+      "type": "static",
+      "symbols": [
+        "MCP_PROTOCOL_VERSION",
+        "serveMcpStdio"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "packages/tools/tests/unit/an-agent-finds-by-name.test.ts",
+      "to": "packages/tools/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "createMcpAdapter",
+        "createToolRuntime",
+        "graphResponder"
+      ],
+      "weight": 9
+    },
+    {
+      "from": "packages/tools/tests/unit/an-agent-finds-by-name.test.ts",
+      "to": "packages/tools/src/index.ts",
+      "type": "type",
+      "symbols": [
+        "ToolCall"
+      ],
+      "weight": 1
+    },
+    {
       "from": "packages/tools/tests/unit/asked-as-somebody.test.ts",
       "to": "packages/tools/src/index.ts",
       "type": "static",
@@ -15067,6 +17789,15 @@
       "weight": 5
     },
     {
+      "from": "packages/tools/tests/unit/the-chat-at-a-dealership.test.ts",
+      "to": "packages/tools/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "graphResponder"
+      ],
+      "weight": 1
+    },
+    {
       "from": "packages/tools/tests/unit/the-log-says-what-happened.test.ts",
       "to": "packages/tools/src/index.ts",
       "type": "static",
@@ -15112,6 +17843,15 @@
       "weight": 10
     },
     {
+      "from": "packages/tools/tests/unit/the-reason-says-the-noun.test.ts",
+      "to": "packages/tools/src/index.ts",
+      "type": "static",
+      "symbols": [
+        "deriveAffordances"
+      ],
+      "weight": 1
+    },
+    {
       "from": "scripts/audit-ui.mjs",
       "to": "scripts/lib/engine.mjs",
       "type": "static",
@@ -15127,6 +17867,24 @@
       "type": "static",
       "symbols": [
         "serving"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "scripts/lib/engine.mjs",
+      "to": "scripts/lib/watch.mjs",
+      "type": "static",
+      "symbols": [
+        "watched"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "scripts/lib/watch.mjs",
+      "to": "scripts/lib/watch-acknowledged.mjs",
+      "type": "static",
+      "symbols": [
+        "acknowledgedBy"
       ],
       "weight": 1
     },
@@ -15194,6 +17952,33 @@
       "type": "static",
       "symbols": [
         "serving"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "scripts/verify-all.mjs",
+      "to": "scripts/lib/ledger.mjs",
+      "type": "static",
+      "symbols": [
+        "updateLedger"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "scripts/verify-all.mjs",
+      "to": "scripts/lib/serve.mjs",
+      "type": "static",
+      "symbols": [
+        "serving"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "scripts/verify-all.mjs",
+      "to": "scripts/lib/watch.mjs",
+      "type": "static",
+      "symbols": [
+        "watchFile"
       ],
       "weight": 1
     },
@@ -15302,6 +18087,72 @@
       "weight": 1
     },
     {
+      "from": "scripts/verify-gauntlet.mjs",
+      "to": "scripts/lib/engine.mjs",
+      "type": "static",
+      "symbols": [
+        "engineName",
+        "launchEngine"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "scripts/verify-gauntlet.mjs",
+      "to": "scripts/lib/serve.mjs",
+      "type": "static",
+      "symbols": [
+        "serving"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "scripts/verify-journeys.mjs",
+      "to": "scripts/lib/engine.mjs",
+      "type": "static",
+      "symbols": [
+        "engineName",
+        "launchEngine"
+      ],
+      "weight": 3
+    },
+    {
+      "from": "scripts/verify-journeys.mjs",
+      "to": "scripts/lib/journeys.mjs",
+      "type": "static",
+      "symbols": [
+        "DeadEnd",
+        "frictionOf",
+        "inStore",
+        "JOBS",
+        "Person",
+        "planJobs",
+        "readDeclaration",
+        "regressionsOf",
+        "storeHookInPage",
+        "VARIANTS",
+        "variantKey"
+      ],
+      "weight": 10
+    },
+    {
+      "from": "scripts/verify-journeys.mjs",
+      "to": "scripts/lib/serve.mjs",
+      "type": "static",
+      "symbols": [
+        "serving"
+      ],
+      "weight": 1
+    },
+    {
+      "from": "scripts/verify-journeys.mjs",
+      "to": "scripts/lib/watch.mjs",
+      "type": "static",
+      "symbols": [
+        "takeViolations"
+      ],
+      "weight": 4
+    },
+    {
       "from": "scripts/verify-lines.mjs",
       "to": "scripts/lib/engine.mjs",
       "type": "static",
@@ -15444,6 +18295,16 @@
       "weight": 1
     },
     {
+      "from": "scripts/verify-scale.mjs",
+      "to": "scripts/lib/engine.mjs",
+      "type": "static",
+      "symbols": [
+        "engineName",
+        "launchEngine"
+      ],
+      "weight": 2
+    },
+    {
       "from": "scripts/verify-seat.mjs",
       "to": "scripts/lib/engine.mjs",
       "type": "static",
@@ -15529,6 +18390,25 @@
       "weight": 1
     },
     {
+      "from": "scripts/verify-watch.mjs",
+      "to": "scripts/lib/engine.mjs",
+      "type": "static",
+      "symbols": [
+        "engineName",
+        "launchEngine"
+      ],
+      "weight": 2
+    },
+    {
+      "from": "scripts/verify-watch.mjs",
+      "to": "scripts/lib/watch.mjs",
+      "type": "static",
+      "symbols": [
+        "takeViolations"
+      ],
+      "weight": 4
+    },
+    {
       "from": "scripts/verify-who.mjs",
       "to": "scripts/lib/engine.mjs",
       "type": "static",
@@ -15546,6 +18426,17 @@
         "serving"
       ],
       "weight": 1
+    },
+    {
+      "from": "tests/journeys.test.ts",
+      "to": "scripts/lib/journeys.mjs",
+      "type": "static",
+      "symbols": [
+        "frictionOf",
+        "planJobs",
+        "regressionsOf"
+      ],
+      "weight": 5
     }
   ],
   "external": [
@@ -15561,6 +18452,25 @@
     {
       "package": "@graview/core",
       "importedBy": [
+        "apps/discography/src/domain/app.ts",
+        "apps/discography/src/domain/brand.ts",
+        "apps/discography/src/domain/invariants.ts",
+        "apps/discography/src/domain/mutations.ts",
+        "apps/discography/src/domain/policy.ts",
+        "apps/discography/src/domain/schema.ts",
+        "apps/discography/src/ui/design.tsx",
+        "apps/discography/src/ui/pages.tsx",
+        "apps/discography/src/ui/seats.ts",
+        "apps/discography/src/ui/tracklist.tsx",
+        "apps/discography/tests/domain.test.ts",
+        "apps/gauntlet/src/domain/app.ts",
+        "apps/gauntlet/src/domain/brand.ts",
+        "apps/gauntlet/src/domain/invariants.ts",
+        "apps/gauntlet/src/domain/mutations.ts",
+        "apps/gauntlet/src/domain/policy.ts",
+        "apps/gauntlet/src/domain/schema.ts",
+        "apps/gauntlet/src/ui/seats.ts",
+        "apps/gauntlet/tests/the-awkward-shapes.test.ts",
         "apps/launcher/src/domain/app.ts",
         "apps/launcher/src/domain/invariants.ts",
         "apps/launcher/src/domain/mutations.ts",
@@ -15607,19 +18517,28 @@
         "apps/todo/src/ui/design.tsx",
         "packages/embed/src/embed.tsx",
         "packages/embed/src/fonts.ts",
+        "packages/embed/tests/unit/a-seat-change-keeps-the-store.test.tsx",
         "packages/embed/tests/unit/embed.test.ts",
+        "packages/embed/tests/unit/one-name-said-once.test.tsx",
         "packages/graview/src/index.ts",
+        "packages/layout/src/band.ts",
         "packages/layout/src/city.ts",
         "packages/layout/src/layout.ts",
         "packages/layout/src/rank.ts",
         "packages/layout/src/related.ts",
+        "packages/layout/tests/unit/a-band-is-named-in-words.test.ts",
+        "packages/layout/tests/unit/a-tuck-goes-with-its-parent.test.ts",
+        "packages/layout/tests/unit/an-opened-district-lists-what-it-has-room-for.test.ts",
         "packages/layout/tests/unit/layout.test.ts",
         "packages/layout/tests/unit/properties.test.ts",
+        "packages/layout/tests/unit/the-band-draws-what-fits.test.ts",
         "packages/layout/tests/unit/the-billboard-is-on-a-leash.test.ts",
         "packages/layout/tests/unit/the-city-at-altitude.test.ts",
+        "packages/layout/tests/unit/the-city-stays-beside-the-rail.test.ts",
         "packages/layout/tests/unit/the-drive-in.test.ts",
         "packages/layout/tests/unit/the-pan-is-a-translation.test.ts",
         "packages/pages/src/ask.tsx",
+        "packages/pages/src/face-controls.tsx",
         "packages/pages/src/facts.ts",
         "packages/pages/src/form.tsx",
         "packages/pages/src/page-context.tsx",
@@ -15629,34 +18548,52 @@
         "packages/pages/src/page-places.tsx",
         "packages/pages/src/page-problems.tsx",
         "packages/pages/src/page-record.tsx",
+        "packages/pages/src/page-search.tsx",
         "packages/pages/src/page-shell.tsx",
         "packages/pages/src/page-typography.tsx",
         "packages/pages/src/registry.ts",
         "packages/pages/src/router.tsx",
         "packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx",
+        "packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx",
         "packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx",
         "packages/pages/tests/unit/a-page-links-to-a-picture.test.ts",
         "packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx",
+        "packages/pages/tests/unit/a-picker-fits-its-field.test.tsx",
+        "packages/pages/tests/unit/a-repair-asks-what-it-left-open.test.tsx",
+        "packages/pages/tests/unit/a-search-fits-a-phone-at-200.test.tsx",
+        "packages/pages/tests/unit/a-time-of-day-is-asked-for.test.tsx",
         "packages/pages/tests/unit/asked-as-the-person.test.tsx",
         "packages/pages/tests/unit/its-own-far-end.test.tsx",
+        "packages/pages/tests/unit/one-is-not-a-pile.test.tsx",
         "packages/pages/tests/unit/one-main-under-a-shell.test.tsx",
         "packages/pages/tests/unit/parity.test.tsx",
         "packages/pages/tests/unit/the-assistant-on-every-page.test.tsx",
+        "packages/pages/tests/unit/the-button-says-the-heading.test.tsx",
+        "packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx",
         "packages/pages/tests/unit/the-map-of-kinds.test.tsx",
         "packages/pages/tests/unit/the-pictures-on-pages.test.tsx",
+        "packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx",
+        "packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx",
+        "packages/pages/tests/unit/two-ties-of-one-name.test.tsx",
         "packages/pages/tests/unit/what-begins-a-kind.test.tsx",
         "packages/pages/tests/unit/whose-work.test.tsx",
+        "packages/primitives/src/arrange-bar.tsx",
         "packages/primitives/src/chat.tsx",
         "packages/primitives/src/companion.tsx",
         "packages/primitives/src/connections.tsx",
         "packages/primitives/src/default-views.tsx",
         "packages/primitives/src/editable.tsx",
         "packages/primitives/src/figure.tsx",
+        "packages/primitives/src/find.tsx",
         "packages/primitives/src/installation.tsx",
+        "packages/primitives/src/lens/arranging.tsx",
         "packages/primitives/src/lens/board.tsx",
+        "packages/primitives/src/lens/calendar-options.ts",
         "packages/primitives/src/lens/calendar-placing.ts",
         "packages/primitives/src/lens/calendar-view.tsx",
         "packages/primitives/src/lens/coverage.tsx",
+        "packages/primitives/src/lens/horizon.ts",
+        "packages/primitives/src/lens/more.tsx",
         "packages/primitives/src/lens/plan-lens.tsx",
         "packages/primitives/src/lens/plan-state.ts",
         "packages/primitives/src/lens/plan-view.tsx",
@@ -15678,28 +18615,44 @@
         "packages/primitives/src/workbench/inspector.tsx",
         "packages/primitives/src/workbench/standing.tsx",
         "packages/primitives/src/workbench/trail.tsx",
+        "packages/primitives/tests/unit/a-calendar-draws-every-kind-it-is-bound-to.test.tsx",
+        "packages/primitives/tests/unit/a-card-s-acts-are-one-key-away.test.tsx",
+        "packages/primitives/tests/unit/a-cell-is-an-edge.test.tsx",
+        "packages/primitives/tests/unit/a-chip-says-what-it-is.test.tsx",
         "packages/primitives/tests/unit/a-companion-names-its-subject.test.tsx",
         "packages/primitives/tests/unit/a-district-offers-what-it-can-do.test.tsx",
         "packages/primitives/tests/unit/a-district-stands-as-its-figure.test.tsx",
+        "packages/primitives/tests/unit/a-lens-arranges-before-it-draws.test.tsx",
+        "packages/primitives/tests/unit/a-lens-keeps-the-horizon.test.tsx",
+        "packages/primitives/tests/unit/a-line-is-named-in-its-words.test.ts",
         "packages/primitives/tests/unit/a-plan-places-by-shape.test.tsx",
         "packages/primitives/tests/unit/a-question-stands-at-its-node.test.tsx",
+        "packages/primitives/tests/unit/a-select-keeps-its-floor-in-webkit.test.tsx",
+        "packages/primitives/tests/unit/a-thumbnail-is-a-picture.test.tsx",
+        "packages/primitives/tests/unit/a-value-stays-in-its-cell.test.tsx",
         "packages/primitives/tests/unit/back-out.test.tsx",
         "packages/primitives/tests/unit/board.test.tsx",
         "packages/primitives/tests/unit/calendar.test.ts",
         "packages/primitives/tests/unit/chat.test.tsx",
         "packages/primitives/tests/unit/coverage.test.tsx",
         "packages/primitives/tests/unit/edge-inspector.test.tsx",
+        "packages/primitives/tests/unit/escape-gives-the-keyboard-back.test.tsx",
+        "packages/primitives/tests/unit/find-says-which-is-which.test.tsx",
         "packages/primitives/tests/unit/installation.test.tsx",
+        "packages/primitives/tests/unit/nothing-withheld-is-hidden.test.tsx",
         "packages/primitives/tests/unit/one-request-one-press.test.tsx",
+        "packages/primitives/tests/unit/one-row-arranges-every-surface.test.tsx",
         "packages/primitives/tests/unit/places.test.tsx",
         "packages/primitives/tests/unit/primitives.test.tsx",
         "packages/primitives/tests/unit/quick-relations.test.tsx",
         "packages/primitives/tests/unit/rename-in-place.test.tsx",
         "packages/primitives/tests/unit/shell.test.tsx",
         "packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx",
+        "packages/primitives/tests/unit/the-door-keeps-the-keyboard.test.tsx",
         "packages/primitives/tests/unit/the-doors-drawn.test.tsx",
         "packages/primitives/tests/unit/the-drawing-stays-put.test.tsx",
         "packages/primitives/tests/unit/the-drive-in-marquee.test.tsx",
+        "packages/primitives/tests/unit/the-find-box-keeps-room-to-type.test.tsx",
         "packages/primitives/tests/unit/the-key-stays-in-its-rail.test.tsx",
         "packages/primitives/tests/unit/the-kit-is-in-the-theme.test.ts",
         "packages/primitives/tests/unit/the-ladder-is-a-setting.test.tsx",
@@ -15707,11 +18660,13 @@
         "packages/primitives/tests/unit/the-seat-under-a-policy.test.tsx",
         "packages/primitives/tests/unit/the-shell-hands-the-seat-its-own-answer.test.tsx",
         "packages/primitives/tests/unit/the-way-in.test.tsx",
+        "packages/primitives/tests/unit/two-changes-before-one-redraw.test.tsx",
         "packages/primitives/tests/unit/undo-turn.test.tsx",
         "packages/primitives/tests/unit/what-it-finds-wrong.test.tsx",
         "packages/react/src/activity.ts",
         "packages/react/src/animation.ts",
         "packages/react/src/context.tsx",
+        "packages/react/src/edge-signs.tsx",
         "packages/react/src/hooks.ts",
         "packages/react/src/kit.ts",
         "packages/react/src/local-intelligence.ts",
@@ -15727,6 +18682,7 @@
         "packages/react/src/view-host.tsx",
         "packages/react/src/view-registry.ts",
         "packages/react/tests/unit/a-link-to-a-picture.test.tsx",
+        "packages/react/tests/unit/a-search-lights-the-picture.test.tsx",
         "packages/react/tests/unit/a-stop-that-still-exists.test.tsx",
         "packages/react/tests/unit/a-tile-is-its-district.test.tsx",
         "packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx",
@@ -15734,6 +18690,7 @@
         "packages/react/tests/unit/administered.test.tsx",
         "packages/react/tests/unit/binding.test.tsx",
         "packages/react/tests/unit/the-crowd-recedes-in-the-stack.test.ts",
+        "packages/react/tests/unit/the-edge-says-what-is-past-it.test.tsx",
         "packages/react/tests/unit/the-ground-under-a-district.test.ts",
         "packages/react/tests/unit/the-occupants.test.tsx",
         "packages/react/tests/unit/the-row-that-sheds.test.tsx",
@@ -15757,10 +18714,13 @@
         "packages/ship/src/source-edit.ts",
         "packages/ship/src/steps.ts",
         "packages/ship/src/studio-door.ts",
+        "packages/ship/src/sync-seed.ts",
         "packages/ship/src/typecheck.ts",
         "packages/ship/tests/integration/serve.test.ts",
         "packages/ship/tests/unit/browser-adapter.test.ts",
+        "packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts",
         "packages/ship/tests/unit/ship.test.ts",
+        "packages/ship/tests/unit/the-wire-is-a-contract.test.ts",
         "packages/ship/tests/unit/who-is-here-between-tabs.test.ts",
         "packages/studio/src/agent-panel.tsx",
         "packages/studio/src/agent.ts",
@@ -15776,14 +18736,17 @@
         "packages/studio/src/studio.ts",
         "packages/studio/src/to-declaration.ts",
         "packages/studio/src/write-in-place.ts",
+        "packages/studio/src/zod-source.ts",
         "packages/studio/tests/unit/an-agent-in-the-studio.test.ts",
         "packages/studio/tests/unit/one-seat-one-conversation.test.tsx",
         "packages/studio/tests/unit/studio.test.ts",
+        "packages/studio/tests/unit/the-round-trip-keeps-the-checkouts-words.test.ts",
         "packages/studio/tests/unit/the-studio-agent-panel.test.tsx",
         "packages/studio/tests/unit/what-it-does-not-model.test.ts",
         "packages/studio/tests/unit/written-back.test.ts",
         "packages/tools/src/agent/adapters.ts",
         "packages/tools/src/agent/tools.ts",
+        "packages/tools/src/cli.ts",
         "packages/tools/src/conversation.ts",
         "packages/tools/src/decide.ts",
         "packages/tools/src/derive.ts",
@@ -15810,6 +18773,8 @@
         "packages/tools/tests/unit/a-run-is-declared.test.ts",
         "packages/tools/tests/unit/affordances.test.ts",
         "packages/tools/tests/unit/an-act-under-specified-is-an-ask.test.ts",
+        "packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts",
+        "packages/tools/tests/unit/an-agent-finds-by-name.test.ts",
         "packages/tools/tests/unit/asked-as-somebody.test.ts",
         "packages/tools/tests/unit/confidence-is-an-answer.test.ts",
         "packages/tools/tests/unit/conversation.test.ts",
@@ -15826,15 +18791,26 @@
         "packages/tools/tests/unit/properties.test.ts",
         "packages/tools/tests/unit/ranking.test.ts",
         "packages/tools/tests/unit/says-the-kind.test.ts",
+        "packages/tools/tests/unit/the-chat-at-a-dealership.test.ts",
         "packages/tools/tests/unit/the-log-says-what-happened.test.ts",
-        "packages/tools/tests/unit/the-questions-are-derived.test.ts"
+        "packages/tools/tests/unit/the-questions-are-derived.test.ts",
+        "packages/tools/tests/unit/the-reason-says-the-noun.test.ts",
+        "tests/journeys.test.ts"
       ],
       "symbols": [
+        "*",
         "AnyGraphNode",
         "AnyMutationDefinition",
         "AnyNodeDefinition",
         "AnySchema",
         "ArgShape",
+        "ArrangeGraph",
+        "ArrangeNode",
+        "ArrangeOffer",
+        "ArrangeOption",
+        "Arrangeable",
+        "Arranged",
+        "Arrangement",
         "Author",
         "BLOCK",
         "Batch",
@@ -15844,11 +18820,13 @@
         "Cardinality",
         "CheckResult",
         "CityMap",
+        "Condition",
         "ConnectorKit",
         "ConnectorRoute",
         "DARK",
         "DECISION_BRIDGE_PATH",
         "DEFAULT_KIT",
+        "DateBucket",
         "DecisionBridgeAnswer",
         "DecisionBridgeAsk",
         "DecisionBridgeStatus",
@@ -15866,6 +18844,7 @@
         "GraphReader",
         "GraphSnapshot",
         "GraviewApp",
+        "Hit",
         "INSTALLATION_MODULE",
         "IntelligenceCapability",
         "IntelligenceProviderDeclaration",
@@ -15902,6 +18881,7 @@
         "STUDIO_DOOR_PATH",
         "Schema",
         "Scheme",
+        "SearchResult",
         "SettingDeclaration",
         "Store",
         "StoreOptions",
@@ -15916,7 +18896,13 @@
         "ViewMeta",
         "ViewRegistry",
         "Violation",
+        "actsOn",
+        "admitArrangement",
         "argShape",
+        "arrange",
+        "arrangeAllows",
+        "arrangeable",
+        "asksForThePast",
         "awkwardApp",
         "awkwardGraph",
         "beginning",
@@ -15938,13 +18924,16 @@
         "defineMutation",
         "defineNode",
         "describeNode",
+        "describeSearched",
         "effectivity",
+        "fieldWords",
         "fieldWriters",
         "fieldsWrittenBy",
         "figureFaults",
         "figureSvg",
         "foldPresence",
         "formFields",
+        "formatArrangement",
         "hueFor",
         "humanise",
         "humaniseField",
@@ -15955,11 +18944,17 @@
         "isoDate",
         "kitVariables",
         "labelOf",
+        "loadApp",
+        "matchNode",
         "mutationToolSchema",
+        "nameOfAuthor",
         "nodeRef",
         "nodeRefArgs",
         "nodeRefKinds",
         "normalise",
+        "nounOf",
+        "parseArrangement",
+        "parseQuery",
         "permits",
         "placeSlug",
         "providerCan",
@@ -15968,8 +18963,11 @@
         "resolveKit",
         "roadsOf",
         "samePresence",
+        "search",
         "summarise",
+        "tellApart",
         "toIso",
+        "touchWeights",
         "violationKey",
         "violationsTouching",
         "withArticle",
@@ -15994,6 +18992,9 @@
     {
       "package": "@graview/layout",
       "importedBy": [
+        "apps/discography/src/ui/app.tsx",
+        "apps/discography/tests/domain.test.ts",
+        "apps/gauntlet/src/ui/app.tsx",
         "apps/launcher/src/main.tsx",
         "apps/rota/src/ui/app.tsx",
         "apps/seedbed/src/ui/app.tsx",
@@ -16003,9 +19004,11 @@
         "apps/todo/tests/integration/acceptance.test.tsx",
         "packages/embed/src/embed.tsx",
         "packages/pages/src/ask.tsx",
+        "packages/primitives/src/arrange-bar.tsx",
         "packages/primitives/src/chat.tsx",
         "packages/primitives/src/companion.tsx",
         "packages/primitives/src/default-views.tsx",
+        "packages/primitives/src/find.tsx",
         "packages/primitives/src/installation.tsx",
         "packages/primitives/src/lens/calendar-view.tsx",
         "packages/primitives/src/lens/plan-state.ts",
@@ -16018,17 +19021,31 @@
         "packages/primitives/src/workbench/back-out.tsx",
         "packages/primitives/src/workbench/inspector.tsx",
         "packages/primitives/src/workbench/trail.tsx",
+        "packages/primitives/tests/unit/a-calendar-draws-every-kind-it-is-bound-to.test.tsx",
+        "packages/primitives/tests/unit/a-card-s-acts-are-one-key-away.test.tsx",
+        "packages/primitives/tests/unit/a-cell-is-an-edge.test.tsx",
+        "packages/primitives/tests/unit/a-chip-says-what-it-is.test.tsx",
         "packages/primitives/tests/unit/a-companion-names-its-subject.test.tsx",
         "packages/primitives/tests/unit/a-district-offers-what-it-can-do.test.tsx",
         "packages/primitives/tests/unit/a-district-stands-as-its-figure.test.tsx",
+        "packages/primitives/tests/unit/a-lens-arranges-before-it-draws.test.tsx",
+        "packages/primitives/tests/unit/a-lens-keeps-the-horizon.test.tsx",
+        "packages/primitives/tests/unit/a-line-is-named-in-its-words.test.ts",
         "packages/primitives/tests/unit/a-question-stands-at-its-node.test.tsx",
+        "packages/primitives/tests/unit/a-select-keeps-its-floor-in-webkit.test.tsx",
+        "packages/primitives/tests/unit/a-thumbnail-is-a-picture.test.tsx",
+        "packages/primitives/tests/unit/a-value-stays-in-its-cell.test.tsx",
         "packages/primitives/tests/unit/back-out.test.tsx",
         "packages/primitives/tests/unit/board.test.tsx",
         "packages/primitives/tests/unit/chat.test.tsx",
         "packages/primitives/tests/unit/coverage.test.tsx",
         "packages/primitives/tests/unit/edge-inspector.test.tsx",
+        "packages/primitives/tests/unit/escape-gives-the-keyboard-back.test.tsx",
+        "packages/primitives/tests/unit/find-says-which-is-which.test.tsx",
         "packages/primitives/tests/unit/installation.test.tsx",
+        "packages/primitives/tests/unit/nothing-withheld-is-hidden.test.tsx",
         "packages/primitives/tests/unit/one-request-one-press.test.tsx",
+        "packages/primitives/tests/unit/one-row-arranges-every-surface.test.tsx",
         "packages/primitives/tests/unit/places.test.tsx",
         "packages/primitives/tests/unit/primitives.test.tsx",
         "packages/primitives/tests/unit/quick-relations.test.tsx",
@@ -16037,6 +19054,7 @@
         "packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx",
         "packages/primitives/tests/unit/the-doors-drawn.test.tsx",
         "packages/primitives/tests/unit/the-drive-in-marquee.test.tsx",
+        "packages/primitives/tests/unit/the-find-box-keeps-room-to-type.test.tsx",
         "packages/primitives/tests/unit/the-key-stays-in-its-rail.test.tsx",
         "packages/primitives/tests/unit/the-ladder-is-a-setting.test.tsx",
         "packages/primitives/tests/unit/the-pane-keeps-its-hands-off.test.tsx",
@@ -16049,6 +19067,7 @@
         "packages/react/src/connectors.tsx",
         "packages/react/src/context.tsx",
         "packages/react/src/drawn.ts",
+        "packages/react/src/edge-signs.tsx",
         "packages/react/src/hooks.ts",
         "packages/react/src/plots.tsx",
         "packages/react/src/presence.ts",
@@ -16060,11 +19079,13 @@
         "packages/react/src/where-drawn.tsx",
         "packages/react/tests/unit/a-door-the-back-button-knows.test.ts",
         "packages/react/tests/unit/a-link-to-a-picture.test.tsx",
+        "packages/react/tests/unit/a-search-lights-the-picture.test.tsx",
         "packages/react/tests/unit/a-stop-that-still-exists.test.tsx",
         "packages/react/tests/unit/a-tile-is-its-district.test.tsx",
         "packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx",
         "packages/react/tests/unit/administered.test.tsx",
         "packages/react/tests/unit/binding.test.tsx",
+        "packages/react/tests/unit/the-edge-says-what-is-past-it.test.tsx",
         "packages/react/tests/unit/the-occupants.test.tsx",
         "packages/react/tests/unit/the-row-that-sheds.test.tsx",
         "packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx",
@@ -16089,20 +19110,25 @@
         "LayoutNode",
         "LayoutOptions",
         "Measure",
+        "PastTheEdge",
         "ViewState",
         "aggregateId",
         "areaOf",
+        "bandAggregateWords",
         "boxOf",
         "cameraLimit",
         "centroidOf",
+        "districtsPastTheEdge",
         "easeInOut",
         "edgeOfSelection",
         "edgeSelectionId",
         "estimateWidth",
         "fitLabel",
         "fromUrl",
+        "holdLayout",
         "interpolate",
         "isAggregateId",
+        "isBandAggregate",
         "kindCardId",
         "kindOfCard",
         "kindsOf",
@@ -16112,6 +19138,7 @@
         "overlaps",
         "panForZoom",
         "panLayout",
+        "rosterRows",
         "sameView",
         "spanAt",
         "toUrl",
@@ -16122,17 +19149,23 @@
         "withPan",
         "withPast",
         "withPin",
+        "withQuery",
         "withRelation",
         "withSelection",
         "withShown",
         "withWithin",
         "withZoom",
-        "withoutMoves"
+        "withoutMoves",
+        "withoutSearch"
       ]
     },
     {
       "package": "@graview/pages",
       "importedBy": [
+        "apps/discography/src/main.tsx",
+        "apps/discography/src/ui/design.tsx",
+        "apps/discography/src/ui/pages.tsx",
+        "apps/gauntlet/src/main.tsx",
         "apps/rota/src/main.tsx",
         "apps/rota/src/ui/design.tsx",
         "apps/rota/tests/integration/acceptance.test.ts",
@@ -16145,22 +19178,28 @@
         "apps/todo/src/ui/design.tsx",
         "apps/todo/tests/integration/who-is-here.test.tsx",
         "packages/embed/src/embed.tsx",
+        "packages/embed/tests/unit/a-seat-change-keeps-the-store.test.tsx",
+        "packages/embed/tests/unit/one-name-said-once.test.tsx",
         "packages/studio/src/agent-panel.tsx",
         "packages/studio/src/place.tsx"
       ],
       "symbols": [
+        "DefaultHomePage",
         "DerivedForm",
         "PageComponent",
         "PageContext",
+        "PageFind",
         "PageMain",
         "PageRegistry",
         "PagesApp",
         "PlacePicture",
+        "Repairs",
         "StartFreshLink",
         "createPageRegistry",
         "kindFacts",
         "pageStyles",
         "placePath",
+        "pluralSlug",
         "rankedRepairs",
         "recordFacts",
         "recordPath",
@@ -16171,6 +19210,15 @@
     {
       "package": "@graview/primitives",
       "importedBy": [
+        "apps/discography/src/main.tsx",
+        "apps/discography/src/ui/app.tsx",
+        "apps/discography/src/ui/design.tsx",
+        "apps/discography/src/ui/pages.tsx",
+        "apps/discography/src/ui/tracklist.tsx",
+        "apps/discography/src/ui/views.tsx",
+        "apps/gauntlet/src/main.tsx",
+        "apps/gauntlet/src/ui/app.tsx",
+        "apps/gauntlet/src/ui/views.tsx",
         "apps/launcher/src/main.tsx",
         "apps/launcher/src/ui/views.tsx",
         "apps/rota/src/main.tsx",
@@ -16202,7 +19250,9 @@
       "symbols": [
         "ActivityRail",
         "AgentSeat",
+        "ArrangeBar",
         "BackOut",
+        "Begin",
         "ChatPanel",
         "Chip",
         "Companion",
@@ -16245,14 +19295,21 @@
         "registerDefaultViews",
         "spanOf",
         "themeCss",
+        "useArranging",
         "useMarkup",
         "useSeatConversation",
-        "useWidth"
+        "useWidth",
+        "withMore"
       ]
     },
     {
       "package": "@graview/react",
       "importedBy": [
+        "apps/discography/src/ui/app.tsx",
+        "apps/discography/src/ui/tracklist.tsx",
+        "apps/discography/src/ui/views.tsx",
+        "apps/gauntlet/src/ui/app.tsx",
+        "apps/gauntlet/src/ui/views.tsx",
         "apps/launcher/src/main.tsx",
         "apps/launcher/src/ui/views.tsx",
         "apps/rota/src/main.tsx",
@@ -16282,8 +19339,10 @@
         "packages/primitives/src/connections.tsx",
         "packages/primitives/src/default-views.tsx",
         "packages/primitives/src/editable.tsx",
+        "packages/primitives/src/find.tsx",
         "packages/primitives/src/installation.tsx",
         "packages/primitives/src/ladder.tsx",
+        "packages/primitives/src/lens/arranging.tsx",
         "packages/primitives/src/lens/board.tsx",
         "packages/primitives/src/lens/calendar-view.tsx",
         "packages/primitives/src/lens/coverage.tsx",
@@ -16308,16 +19367,28 @@
         "packages/primitives/src/workbench/inspector.tsx",
         "packages/primitives/src/workbench/standing.tsx",
         "packages/primitives/src/workbench/trail.tsx",
+        "packages/primitives/tests/unit/a-calendar-draws-every-kind-it-is-bound-to.test.tsx",
+        "packages/primitives/tests/unit/a-card-s-acts-are-one-key-away.test.tsx",
+        "packages/primitives/tests/unit/a-cell-is-an-edge.test.tsx",
+        "packages/primitives/tests/unit/a-chip-says-what-it-is.test.tsx",
         "packages/primitives/tests/unit/a-companion-names-its-subject.test.tsx",
         "packages/primitives/tests/unit/a-district-offers-what-it-can-do.test.tsx",
         "packages/primitives/tests/unit/a-district-stands-as-its-figure.test.tsx",
+        "packages/primitives/tests/unit/a-lens-arranges-before-it-draws.test.tsx",
+        "packages/primitives/tests/unit/a-lens-keeps-the-horizon.test.tsx",
         "packages/primitives/tests/unit/a-question-stands-at-its-node.test.tsx",
+        "packages/primitives/tests/unit/a-select-keeps-its-floor-in-webkit.test.tsx",
+        "packages/primitives/tests/unit/a-thumbnail-is-a-picture.test.tsx",
+        "packages/primitives/tests/unit/a-value-stays-in-its-cell.test.tsx",
         "packages/primitives/tests/unit/back-out.test.tsx",
         "packages/primitives/tests/unit/board.test.tsx",
         "packages/primitives/tests/unit/chat.test.tsx",
         "packages/primitives/tests/unit/coverage.test.tsx",
         "packages/primitives/tests/unit/edge-inspector.test.tsx",
+        "packages/primitives/tests/unit/escape-gives-the-keyboard-back.test.tsx",
+        "packages/primitives/tests/unit/find-says-which-is-which.test.tsx",
         "packages/primitives/tests/unit/installation.test.tsx",
+        "packages/primitives/tests/unit/nothing-withheld-is-hidden.test.tsx",
         "packages/primitives/tests/unit/one-request-one-press.test.tsx",
         "packages/primitives/tests/unit/places.test.tsx",
         "packages/primitives/tests/unit/primitives.test.tsx",
@@ -16327,6 +19398,7 @@
         "packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx",
         "packages/primitives/tests/unit/the-doors-drawn.test.tsx",
         "packages/primitives/tests/unit/the-drive-in-marquee.test.tsx",
+        "packages/primitives/tests/unit/the-find-box-keeps-room-to-type.test.tsx",
         "packages/primitives/tests/unit/the-key-stays-in-its-rail.test.tsx",
         "packages/primitives/tests/unit/the-ladder-is-a-setting.test.tsx",
         "packages/primitives/tests/unit/the-pane-keeps-its-hands-off.test.tsx",
@@ -16364,6 +19436,7 @@
         "useBacktrack",
         "useDrawnSize",
         "useEditableFields",
+        "useFound",
         "useGraph",
         "useGraview",
         "useGraviewIfAny",
@@ -16372,9 +19445,12 @@
         "useLocalIntelligence",
         "useNavigation",
         "useNode",
+        "useReached",
+        "useSceneStill",
         "useSeatWork",
         "useSelection",
         "useTextMeasure",
+        "useTheKeyboardLandsSomewhere",
         "useUrlSync",
         "useViewMode",
         "useViolations"
@@ -16385,6 +19461,7 @@
       "importedBy": [
         "apps/spike/src/three-planes.ts",
         "packages/primitives/src/default-views.tsx",
+        "packages/primitives/src/find.tsx",
         "packages/primitives/src/relation-key.tsx",
         "packages/react/src/connectors.tsx",
         "packages/react/src/kit.ts",
@@ -16441,6 +19518,8 @@
     {
       "package": "@graview/ship",
       "importedBy": [
+        "apps/discography/src/main.tsx",
+        "apps/gauntlet/src/main.tsx",
         "apps/rota/src/open.ts",
         "apps/rota/vite.config.ts",
         "apps/seedbed/src/main.tsx",
@@ -16449,22 +19528,30 @@
         "apps/seedbed/vite.config.ts",
         "apps/todo/src/open.ts",
         "packages/graview/src/index.ts",
-        "packages/studio/src/migration.ts"
+        "packages/studio/src/migration.ts",
+        "packages/tools/src/cli.ts",
+        "packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts"
       ],
       "symbols": [
         "MigrationStep",
         "OpenedStore",
+        "RemoteStore",
         "SERVE_USAGE",
+        "ServedStore",
+        "backendFrom",
         "browserStartsFresh",
         "createBroadcastPresence",
         "createBrowserAdapter",
+        "createFileAdapter",
         "forgetFreshParam",
         "migrateSnapshot",
         "openRemote",
         "openStore",
         "serve",
+        "serveStore",
         "stepsMigration",
-        "studioDoor"
+        "studioDoor",
+        "syncSeed"
       ]
     },
     {
@@ -16480,6 +19567,8 @@
     {
       "package": "@graview/studio",
       "importedBy": [
+        "apps/discography/src/ui/app.tsx",
+        "apps/gauntlet/src/ui/app.tsx",
         "apps/rota/src/ui/app.tsx",
         "apps/seedbed/src/domain/chapters.ts",
         "apps/seedbed/src/ui/app.tsx",
@@ -16501,7 +19590,8 @@
       "importedBy": [
         "apps/launcher/src/domain/survey.ts",
         "apps/launcher/src/main.tsx",
-        "apps/launcher/tests/integration/acceptance.test.ts"
+        "apps/launcher/tests/integration/acceptance.test.ts",
+        "tests/journeys.test.ts"
       ],
       "symbols": [
         "TodoApp",
@@ -16512,6 +19602,10 @@
     {
       "package": "@graview/tools",
       "importedBy": [
+        "apps/discography/src/ui/app.tsx",
+        "apps/discography/src/ui/design.tsx",
+        "apps/discography/tests/domain.test.ts",
+        "apps/gauntlet/tests/the-awkward-shapes.test.ts",
         "apps/launcher/src/main.tsx",
         "apps/rota/src/ui/app.tsx",
         "apps/rota/src/ui/design.tsx",
@@ -16521,8 +19615,10 @@
         "apps/todo/src/ui/app.tsx",
         "apps/todo/src/ui/design.tsx",
         "apps/todo/tests/integration/acceptance.test.tsx",
+        "packages/graview/src/index.ts",
         "packages/pages/src/facts.ts",
         "packages/pages/src/form.tsx",
+        "packages/pages/src/page-search.tsx",
         "packages/pages/tests/unit/parity.test.tsx",
         "packages/pages/tests/unit/what-begins-a-kind.test.tsx",
         "packages/primitives/src/chat.tsx",
@@ -16563,6 +19659,7 @@
         "InAppAgent",
         "IntelligenceConfig",
         "LocalStatus",
+        "MCP_USAGE",
         "OfferedQuestion",
         "OpenParameter",
         "PinOverrides",
@@ -16574,6 +19671,7 @@
         "Responder",
         "ToolCall",
         "ToolRuntime",
+        "apply",
         "applyAffordance",
         "applyPlan",
         "completionFor",
@@ -16592,6 +19690,7 @@
         "llmIntelligence",
         "loadIntelligenceConfig",
         "loadPins",
+        "mcp",
         "nearestFigure",
         "planFrom",
         "previewAffordance",
@@ -16671,6 +19770,10 @@
     {
       "package": "react",
       "importedBy": [
+        "apps/discography/src/ui/app.tsx",
+        "apps/discography/src/ui/design.tsx",
+        "apps/discography/src/ui/tracklist.tsx",
+        "apps/gauntlet/src/ui/app.tsx",
         "apps/launcher/src/main.tsx",
         "apps/launcher/src/ui/liveness.tsx",
         "apps/promo/src/Composition.tsx",
@@ -16711,7 +19814,11 @@
         "apps/todo/src/ui/design.tsx",
         "apps/todo/src/ui/views.tsx",
         "packages/embed/src/embed.tsx",
+        "packages/embed/tests/unit/a-seat-change-keeps-the-store.test.tsx",
+        "packages/embed/tests/unit/one-name-said-once.test.tsx",
         "packages/pages/src/ask.tsx",
+        "packages/pages/src/face-controls.tsx",
+        "packages/pages/src/face-placed.ts",
         "packages/pages/src/form.tsx",
         "packages/pages/src/page-context.tsx",
         "packages/pages/src/page-places.tsx",
@@ -16720,17 +19827,24 @@
         "packages/pages/src/page-shell.tsx",
         "packages/pages/src/registry.ts",
         "packages/pages/src/router.tsx",
+        "packages/pages/tests/unit/a-repair-asks-what-it-left-open.test.tsx",
         "packages/pages/tests/unit/asked-as-the-person.test.tsx",
         "packages/pages/tests/unit/one-main-under-a-shell.test.tsx",
+        "packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx",
+        "packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx",
+        "packages/primitives/src/arrange-bar.tsx",
         "packages/primitives/src/chat.tsx",
         "packages/primitives/src/companion.tsx",
         "packages/primitives/src/default-views.tsx",
         "packages/primitives/src/editable.tsx",
+        "packages/primitives/src/find.tsx",
         "packages/primitives/src/ladder.tsx",
+        "packages/primitives/src/lens/arranging.tsx",
         "packages/primitives/src/lens/board.tsx",
         "packages/primitives/src/lens/calendar-drawing.tsx",
         "packages/primitives/src/lens/calendar-view.tsx",
         "packages/primitives/src/lens/coverage.tsx",
+        "packages/primitives/src/lens/more.tsx",
         "packages/primitives/src/lens/plan-lens.tsx",
         "packages/primitives/src/lens/plan-view.tsx",
         "packages/primitives/src/lens/reach.tsx",
@@ -16751,15 +19865,22 @@
         "packages/primitives/src/workbench/inspector.tsx",
         "packages/primitives/src/workbench/standing.tsx",
         "packages/primitives/src/workbench/trail.tsx",
+        "packages/primitives/tests/unit/a-card-s-acts-are-one-key-away.test.tsx",
         "packages/primitives/tests/unit/a-companion-names-its-subject.test.tsx",
         "packages/primitives/tests/unit/a-district-offers-what-it-can-do.test.tsx",
         "packages/primitives/tests/unit/a-district-stands-as-its-figure.test.tsx",
         "packages/primitives/tests/unit/a-panel-that-scrolls-is-a-stop.test.tsx",
         "packages/primitives/tests/unit/a-question-stands-at-its-node.test.tsx",
+        "packages/primitives/tests/unit/a-select-keeps-its-floor-in-webkit.test.tsx",
+        "packages/primitives/tests/unit/a-thumbnail-is-a-picture.test.tsx",
+        "packages/primitives/tests/unit/a-value-stays-in-its-cell.test.tsx",
         "packages/primitives/tests/unit/back-out.test.tsx",
+        "packages/primitives/tests/unit/escape-gives-the-keyboard-back.test.tsx",
+        "packages/primitives/tests/unit/find-says-which-is-which.test.tsx",
         "packages/primitives/tests/unit/one-request-one-press.test.tsx",
         "packages/primitives/tests/unit/rename-in-place.test.tsx",
         "packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx",
+        "packages/primitives/tests/unit/the-door-keeps-the-keyboard.test.tsx",
         "packages/primitives/tests/unit/the-doors-drawn.test.tsx",
         "packages/primitives/tests/unit/the-drawing-stays-put.test.tsx",
         "packages/primitives/tests/unit/the-drive-in-marquee.test.tsx",
@@ -16768,14 +19889,18 @@
         "packages/primitives/tests/unit/the-seat-under-a-policy.test.tsx",
         "packages/primitives/tests/unit/the-shell-hands-the-seat-its-own-answer.test.tsx",
         "packages/primitives/tests/unit/the-way-in.test.tsx",
+        "packages/primitives/tests/unit/two-changes-before-one-redraw.test.tsx",
         "packages/primitives/tests/unit/undo-turn.test.tsx",
         "packages/react/src/activity.ts",
         "packages/react/src/animation.ts",
         "packages/react/src/context.tsx",
         "packages/react/src/drawn.ts",
+        "packages/react/src/edge-signs.tsx",
         "packages/react/src/hooks.ts",
+        "packages/react/src/keyboard.ts",
         "packages/react/src/kit.ts",
         "packages/react/src/local-intelligence.ts",
+        "packages/react/src/motion.ts",
         "packages/react/src/occupants.tsx",
         "packages/react/src/picking.ts",
         "packages/react/src/plots.tsx",
@@ -16796,6 +19921,8 @@
         "packages/react/tests/unit/a-stop-that-still-exists.test.tsx",
         "packages/react/tests/unit/a-tile-is-its-district.test.tsx",
         "packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx",
+        "packages/react/tests/unit/the-edge-says-what-is-past-it.test.tsx",
+        "packages/react/tests/unit/the-keyboard-always-lands-somewhere.test.tsx",
         "packages/react/tests/unit/the-occupants.test.tsx",
         "packages/react/tests/unit/the-row-that-sheds.test.tsx",
         "packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx",
@@ -16839,6 +19966,8 @@
     {
       "package": "react-dom",
       "importedBy": [
+        "apps/discography/src/main.tsx",
+        "apps/gauntlet/src/main.tsx",
         "apps/launcher/src/main.tsx",
         "apps/rota/src/main.tsx",
         "apps/seedbed/src/main.tsx",
@@ -16848,57 +19977,89 @@
         "apps/todo/src/main.tsx",
         "apps/todo/tests/integration/acceptance.test.tsx",
         "packages/embed/src/embed.tsx",
+        "packages/embed/tests/unit/a-seat-change-keeps-the-store.test.tsx",
+        "packages/embed/tests/unit/one-name-said-once.test.tsx",
         "packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx",
+        "packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx",
         "packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx",
         "packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx",
+        "packages/pages/tests/unit/a-picker-fits-its-field.test.tsx",
+        "packages/pages/tests/unit/a-repair-asks-what-it-left-open.test.tsx",
+        "packages/pages/tests/unit/a-search-fits-a-phone-at-200.test.tsx",
+        "packages/pages/tests/unit/a-time-of-day-is-asked-for.test.tsx",
         "packages/pages/tests/unit/asked-as-the-person.test.tsx",
         "packages/pages/tests/unit/its-own-far-end.test.tsx",
+        "packages/pages/tests/unit/one-is-not-a-pile.test.tsx",
         "packages/pages/tests/unit/one-main-under-a-shell.test.tsx",
         "packages/pages/tests/unit/parity.test.tsx",
         "packages/pages/tests/unit/the-assistant-on-every-page.test.tsx",
+        "packages/pages/tests/unit/the-button-says-the-heading.test.tsx",
+        "packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx",
         "packages/pages/tests/unit/the-map-of-kinds.test.tsx",
         "packages/pages/tests/unit/the-pictures-on-pages.test.tsx",
+        "packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx",
+        "packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx",
+        "packages/pages/tests/unit/two-ties-of-one-name.test.tsx",
         "packages/pages/tests/unit/what-begins-a-kind.test.tsx",
         "packages/pages/tests/unit/whose-work.test.tsx",
+        "packages/primitives/tests/unit/a-calendar-draws-every-kind-it-is-bound-to.test.tsx",
+        "packages/primitives/tests/unit/a-card-s-acts-are-one-key-away.test.tsx",
+        "packages/primitives/tests/unit/a-cell-is-an-edge.test.tsx",
+        "packages/primitives/tests/unit/a-chip-says-what-it-is.test.tsx",
         "packages/primitives/tests/unit/a-companion-names-its-subject.test.tsx",
         "packages/primitives/tests/unit/a-district-offers-what-it-can-do.test.tsx",
         "packages/primitives/tests/unit/a-district-stands-as-its-figure.test.tsx",
+        "packages/primitives/tests/unit/a-lens-arranges-before-it-draws.test.tsx",
+        "packages/primitives/tests/unit/a-lens-keeps-the-horizon.test.tsx",
         "packages/primitives/tests/unit/a-mark-can-say-so.test.tsx",
         "packages/primitives/tests/unit/a-panel-that-scrolls-is-a-stop.test.tsx",
         "packages/primitives/tests/unit/a-question-stands-at-its-node.test.tsx",
+        "packages/primitives/tests/unit/a-select-keeps-its-floor-in-webkit.test.tsx",
+        "packages/primitives/tests/unit/a-thumbnail-is-a-picture.test.tsx",
+        "packages/primitives/tests/unit/a-value-stays-in-its-cell.test.tsx",
         "packages/primitives/tests/unit/back-out.test.tsx",
         "packages/primitives/tests/unit/board.test.tsx",
         "packages/primitives/tests/unit/chat.test.tsx",
         "packages/primitives/tests/unit/coverage.test.tsx",
         "packages/primitives/tests/unit/edge-inspector.test.tsx",
+        "packages/primitives/tests/unit/escape-gives-the-keyboard-back.test.tsx",
+        "packages/primitives/tests/unit/find-says-which-is-which.test.tsx",
         "packages/primitives/tests/unit/installation.test.tsx",
+        "packages/primitives/tests/unit/nothing-withheld-is-hidden.test.tsx",
         "packages/primitives/tests/unit/one-request-one-press.test.tsx",
+        "packages/primitives/tests/unit/one-row-arranges-every-surface.test.tsx",
         "packages/primitives/tests/unit/places.test.tsx",
         "packages/primitives/tests/unit/primitives.test.tsx",
         "packages/primitives/tests/unit/quick-relations.test.tsx",
         "packages/primitives/tests/unit/rename-in-place.test.tsx",
         "packages/primitives/tests/unit/shell.test.tsx",
         "packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx",
+        "packages/primitives/tests/unit/the-door-keeps-the-keyboard.test.tsx",
         "packages/primitives/tests/unit/the-doors-drawn.test.tsx",
         "packages/primitives/tests/unit/the-drawing-stays-put.test.tsx",
         "packages/primitives/tests/unit/the-drive-in-marquee.test.tsx",
+        "packages/primitives/tests/unit/the-find-box-keeps-room-to-type.test.tsx",
         "packages/primitives/tests/unit/the-key-stays-in-its-rail.test.tsx",
         "packages/primitives/tests/unit/the-ladder-is-a-setting.test.tsx",
         "packages/primitives/tests/unit/the-pane-keeps-its-hands-off.test.tsx",
         "packages/primitives/tests/unit/the-seat-under-a-policy.test.tsx",
         "packages/primitives/tests/unit/the-shell-hands-the-seat-its-own-answer.test.tsx",
         "packages/primitives/tests/unit/the-way-in.test.tsx",
+        "packages/primitives/tests/unit/two-changes-before-one-redraw.test.tsx",
         "packages/primitives/tests/unit/undo-turn.test.tsx",
         "packages/primitives/tests/unit/what-it-finds-wrong.test.tsx",
         "packages/react/src/resolved-view.tsx",
         "packages/react/tests/unit/a-door-that-is-not-there.test.tsx",
         "packages/react/tests/unit/a-drawn-shape-is-a-control.test.tsx",
         "packages/react/tests/unit/a-link-to-a-picture.test.tsx",
+        "packages/react/tests/unit/a-search-lights-the-picture.test.tsx",
         "packages/react/tests/unit/a-stop-that-still-exists.test.tsx",
         "packages/react/tests/unit/a-tile-is-its-district.test.tsx",
         "packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx",
         "packages/react/tests/unit/administered.test.tsx",
         "packages/react/tests/unit/binding.test.tsx",
+        "packages/react/tests/unit/the-edge-says-what-is-past-it.test.tsx",
+        "packages/react/tests/unit/the-keyboard-always-lands-somewhere.test.tsx",
         "packages/react/tests/unit/the-occupants.test.tsx",
         "packages/react/tests/unit/the-row-that-sheds.test.tsx",
         "packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx",
@@ -16918,17 +20079,21 @@
     {
       "package": "react-router-dom",
       "importedBy": [
+        "apps/discography/src/ui/design.tsx",
+        "apps/discography/src/ui/pages.tsx",
         "apps/rota/src/ui/design.tsx",
         "apps/seedbed/src/ui/design.tsx",
         "apps/seedbed/src/ui/pages.tsx",
         "apps/todo/src/ui/design.tsx",
         "packages/pages/src/ask.tsx",
+        "packages/pages/src/face-controls.tsx",
         "packages/pages/src/page-home.tsx",
         "packages/pages/src/page-list.tsx",
         "packages/pages/src/page-map.tsx",
         "packages/pages/src/page-places.tsx",
         "packages/pages/src/page-problems.tsx",
         "packages/pages/src/page-record.tsx",
+        "packages/pages/src/page-search.tsx",
         "packages/pages/src/page-shell.tsx",
         "packages/pages/src/router.tsx",
         "packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx"
@@ -16999,6 +20164,7 @@
       "package": "typescript",
       "importedBy": [
         "packages/core/tests/unit/scaffold.test.ts",
+        "packages/core/tests/unit/the-bound-declaration.test.ts",
         "packages/ship/src/source-edit.ts",
         "packages/ship/src/studio-door.ts",
         "packages/ship/src/typecheck.ts",
@@ -17025,6 +20191,8 @@
     {
       "package": "vite",
       "importedBy": [
+        "apps/discography/vite.config.ts",
+        "apps/gauntlet/vite.config.ts",
         "apps/launcher/vite.config.ts",
         "apps/rota/vite.config.ts",
         "apps/seedbed/vite.config.ts",
@@ -17039,6 +20207,9 @@
     {
       "package": "vitest",
       "importedBy": [
+        "apps/discography/tests/domain.test.ts",
+        "apps/discography/tests/lens-reuse.test.ts",
+        "apps/gauntlet/tests/the-awkward-shapes.test.ts",
         "apps/launcher/tests/integration/acceptance.test.ts",
         "apps/rota/tests/integration/acceptance.test.ts",
         "apps/seedbed/tests/integration/acceptance.test.tsx",
@@ -17049,12 +20220,20 @@
         "apps/todo/tests/integration/who-is-here.test.tsx",
         "packages/core/tests/integration/persistence.test.ts",
         "packages/core/tests/integration/sync.test.ts",
+        "packages/core/tests/unit/a-change-in-the-records-words.test.ts",
         "packages/core/tests/unit/a-described-node-ref.test.ts",
+        "packages/core/tests/unit/a-glance-does-not-say-its-heading-again.test.ts",
         "packages/core/tests/unit/a-hue-is-degrees.test.ts",
+        "packages/core/tests/unit/a-kind-says-what-one-is-called.test.ts",
         "packages/core/tests/unit/a-lens-started.test.ts",
         "packages/core/tests/unit/a-module-that-is-never-off.test.ts",
+        "packages/core/tests/unit/a-refusal-in-words.test.ts",
         "packages/core/tests/unit/a-third-kind-decides.test.ts",
+        "packages/core/tests/unit/a-time-of-day-is-asked-for.test.ts",
+        "packages/core/tests/unit/a-watching-harness-is-told.test.ts",
         "packages/core/tests/unit/an-edge-to-a-person.test.ts",
+        "packages/core/tests/unit/an-id-is-the-name-folded.test.ts",
+        "packages/core/tests/unit/arranged-from-the-declaration.test.ts",
         "packages/core/tests/unit/check.test.ts",
         "packages/core/tests/unit/create-command.test.ts",
         "packages/core/tests/unit/derive-edits.test.ts",
@@ -17066,8 +20245,10 @@
         "packages/core/tests/unit/lifecycle.test.ts",
         "packages/core/tests/unit/modules.test.ts",
         "packages/core/tests/unit/mutations.test.ts",
+        "packages/core/tests/unit/one-matcher-finds-it.test.ts",
         "packages/core/tests/unit/op-log.test.ts",
         "packages/core/tests/unit/permissions.test.ts",
+        "packages/core/tests/unit/permits-answers-as-apply.test.ts",
         "packages/core/tests/unit/places.test.ts",
         "packages/core/tests/unit/reading-an-app-out.test.ts",
         "packages/core/tests/unit/scaffold.test.ts",
@@ -17075,61 +20256,101 @@
         "packages/core/tests/unit/settings.test.ts",
         "packages/core/tests/unit/store-hydrate.test.ts",
         "packages/core/tests/unit/temporal.test.ts",
+        "packages/core/tests/unit/the-bound-declaration.test.ts",
         "packages/core/tests/unit/the-city-is-a-map.test.ts",
         "packages/core/tests/unit/the-doors-a-provider-has.test.ts",
         "packages/core/tests/unit/the-order-things-are-made-in.test.ts",
         "packages/core/tests/unit/the-pictures-from-where-they-live.test.ts",
         "packages/core/tests/unit/theme.test.ts",
+        "packages/core/tests/unit/two-of-one-name.test.ts",
         "packages/core/tests/unit/what-an-agent-may-do.test.ts",
+        "packages/core/tests/unit/what-was-made-can-be-unmade.test.ts",
         "packages/core/tests/unit/who-is-here.test.ts",
         "packages/create-graview/tests/unit/door.test.ts",
+        "packages/embed/tests/unit/a-seat-change-keeps-the-store.test.tsx",
         "packages/embed/tests/unit/embed.test.ts",
+        "packages/embed/tests/unit/one-name-said-once.test.tsx",
+        "packages/layout/tests/unit/a-band-is-named-in-words.test.ts",
         "packages/layout/tests/unit/a-name-that-fits.test.ts",
+        "packages/layout/tests/unit/a-tuck-goes-with-its-parent.test.ts",
+        "packages/layout/tests/unit/an-opened-district-lists-what-it-has-room-for.test.ts",
         "packages/layout/tests/unit/layout.test.ts",
         "packages/layout/tests/unit/properties.test.ts",
+        "packages/layout/tests/unit/the-band-draws-what-fits.test.ts",
         "packages/layout/tests/unit/the-billboard-is-on-a-leash.test.ts",
         "packages/layout/tests/unit/the-city-at-altitude.test.ts",
+        "packages/layout/tests/unit/the-city-stays-beside-the-rail.test.ts",
         "packages/layout/tests/unit/the-drive-in.test.ts",
         "packages/layout/tests/unit/the-pan-is-a-translation.test.ts",
         "packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx",
+        "packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx",
         "packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx",
         "packages/pages/tests/unit/a-page-links-to-a-picture.test.ts",
         "packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx",
+        "packages/pages/tests/unit/a-picker-fits-its-field.test.tsx",
+        "packages/pages/tests/unit/a-repair-asks-what-it-left-open.test.tsx",
+        "packages/pages/tests/unit/a-search-fits-a-phone-at-200.test.tsx",
+        "packages/pages/tests/unit/a-time-of-day-is-asked-for.test.tsx",
         "packages/pages/tests/unit/asked-as-the-person.test.tsx",
         "packages/pages/tests/unit/its-own-far-end.test.tsx",
+        "packages/pages/tests/unit/one-is-not-a-pile.test.tsx",
         "packages/pages/tests/unit/one-main-under-a-shell.test.tsx",
         "packages/pages/tests/unit/parity.test.tsx",
         "packages/pages/tests/unit/the-assistant-on-every-page.test.tsx",
+        "packages/pages/tests/unit/the-button-says-the-heading.test.tsx",
+        "packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx",
         "packages/pages/tests/unit/the-map-of-kinds.test.tsx",
         "packages/pages/tests/unit/the-pictures-on-pages.test.tsx",
+        "packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx",
+        "packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx",
+        "packages/pages/tests/unit/two-ties-of-one-name.test.tsx",
         "packages/pages/tests/unit/what-begins-a-kind.test.tsx",
         "packages/pages/tests/unit/whose-work.test.tsx",
+        "packages/primitives/tests/unit/a-calendar-draws-every-kind-it-is-bound-to.test.tsx",
+        "packages/primitives/tests/unit/a-card-s-acts-are-one-key-away.test.tsx",
+        "packages/primitives/tests/unit/a-cell-is-an-edge.test.tsx",
+        "packages/primitives/tests/unit/a-chip-says-what-it-is.test.tsx",
         "packages/primitives/tests/unit/a-companion-names-its-subject.test.tsx",
         "packages/primitives/tests/unit/a-district-offers-what-it-can-do.test.tsx",
         "packages/primitives/tests/unit/a-district-stands-as-its-figure.test.tsx",
+        "packages/primitives/tests/unit/a-lens-arranges-before-it-draws.test.tsx",
+        "packages/primitives/tests/unit/a-lens-keeps-the-horizon.test.tsx",
+        "packages/primitives/tests/unit/a-line-is-named-in-its-words.test.ts",
         "packages/primitives/tests/unit/a-mark-can-say-so.test.tsx",
+        "packages/primitives/tests/unit/a-matrix-the-page-can-hold.test.ts",
         "packages/primitives/tests/unit/a-panel-that-scrolls-is-a-stop.test.tsx",
         "packages/primitives/tests/unit/a-plan-places-by-shape.test.tsx",
         "packages/primitives/tests/unit/a-question-stands-at-its-node.test.tsx",
+        "packages/primitives/tests/unit/a-roster-you-can-read.test.ts",
+        "packages/primitives/tests/unit/a-select-keeps-its-floor-in-webkit.test.tsx",
+        "packages/primitives/tests/unit/a-thumbnail-is-a-picture.test.tsx",
+        "packages/primitives/tests/unit/a-value-stays-in-its-cell.test.tsx",
         "packages/primitives/tests/unit/back-out.test.tsx",
         "packages/primitives/tests/unit/board.test.tsx",
         "packages/primitives/tests/unit/calendar.test.ts",
         "packages/primitives/tests/unit/chat.test.tsx",
         "packages/primitives/tests/unit/coverage.test.tsx",
         "packages/primitives/tests/unit/edge-inspector.test.tsx",
+        "packages/primitives/tests/unit/escape-gives-the-keyboard-back.test.tsx",
         "packages/primitives/tests/unit/every-size-is-the-readers.test.ts",
+        "packages/primitives/tests/unit/find-says-which-is-which.test.tsx",
+        "packages/primitives/tests/unit/handles-can-be-told-apart.test.ts",
         "packages/primitives/tests/unit/installation.test.tsx",
         "packages/primitives/tests/unit/no-control-under-a-fingertip.test.ts",
+        "packages/primitives/tests/unit/nothing-withheld-is-hidden.test.tsx",
         "packages/primitives/tests/unit/one-request-one-press.test.tsx",
+        "packages/primitives/tests/unit/one-row-arranges-every-surface.test.tsx",
         "packages/primitives/tests/unit/places.test.tsx",
         "packages/primitives/tests/unit/primitives.test.tsx",
         "packages/primitives/tests/unit/quick-relations.test.tsx",
         "packages/primitives/tests/unit/rename-in-place.test.tsx",
         "packages/primitives/tests/unit/shell.test.tsx",
         "packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx",
+        "packages/primitives/tests/unit/the-door-keeps-the-keyboard.test.tsx",
         "packages/primitives/tests/unit/the-doors-drawn.test.tsx",
         "packages/primitives/tests/unit/the-drawing-stays-put.test.tsx",
         "packages/primitives/tests/unit/the-drive-in-marquee.test.tsx",
+        "packages/primitives/tests/unit/the-find-box-keeps-room-to-type.test.tsx",
         "packages/primitives/tests/unit/the-key-stays-in-its-rail.test.tsx",
         "packages/primitives/tests/unit/the-kit-is-in-the-theme.test.ts",
         "packages/primitives/tests/unit/the-ladder-is-a-setting.test.tsx",
@@ -17138,6 +20359,7 @@
         "packages/primitives/tests/unit/the-seat-under-a-policy.test.tsx",
         "packages/primitives/tests/unit/the-shell-hands-the-seat-its-own-answer.test.tsx",
         "packages/primitives/tests/unit/the-way-in.test.tsx",
+        "packages/primitives/tests/unit/two-changes-before-one-redraw.test.tsx",
         "packages/primitives/tests/unit/undo-turn.test.tsx",
         "packages/primitives/tests/unit/what-it-finds-wrong.test.tsx",
         "packages/react/tests/unit/a-chosen-member-is-not-its-district.test.ts",
@@ -17146,6 +20368,8 @@
         "packages/react/tests/unit/a-drawn-shape-is-a-control.test.tsx",
         "packages/react/tests/unit/a-line-goes-under-what-it-crosses.test.ts",
         "packages/react/tests/unit/a-link-to-a-picture.test.tsx",
+        "packages/react/tests/unit/a-relation-is-captioned-once.test.ts",
+        "packages/react/tests/unit/a-search-lights-the-picture.test.tsx",
         "packages/react/tests/unit/a-stop-that-still-exists.test.tsx",
         "packages/react/tests/unit/a-tile-is-its-district.test.tsx",
         "packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx",
@@ -17156,12 +20380,15 @@
         "packages/react/tests/unit/routes.test.ts",
         "packages/react/tests/unit/strands.test.ts",
         "packages/react/tests/unit/the-crowd-recedes-in-the-stack.test.ts",
+        "packages/react/tests/unit/the-edge-says-what-is-past-it.test.tsx",
         "packages/react/tests/unit/the-ground-under-a-district.test.ts",
+        "packages/react/tests/unit/the-keyboard-always-lands-somewhere.test.tsx",
         "packages/react/tests/unit/the-occupants.test.tsx",
         "packages/react/tests/unit/the-row-that-sheds.test.tsx",
         "packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx",
         "packages/react/tests/unit/the-seats-standing.test.ts",
         "packages/react/tests/unit/tie-route.test.ts",
+        "packages/react/tests/unit/two-relations-are-two-lines.test.ts",
         "packages/react/tests/unit/where-is.test.ts",
         "packages/react/tests/unit/who-is-where.test.ts",
         "packages/render/tests/unit/frame-plan.test.ts",
@@ -17169,17 +20396,20 @@
         "packages/ship/tests/integration/serve.test.ts",
         "packages/ship/tests/unit/a-migration-is-data.test.ts",
         "packages/ship/tests/unit/browser-adapter.test.ts",
+        "packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts",
         "packages/ship/tests/unit/ship.test.ts",
         "packages/ship/tests/unit/the-browser-entry.test.ts",
         "packages/ship/tests/unit/the-decision-door.test.ts",
         "packages/ship/tests/unit/the-local-door.test.ts",
         "packages/ship/tests/unit/the-studio-door.test.ts",
+        "packages/ship/tests/unit/the-wire-is-a-contract.test.ts",
         "packages/ship/tests/unit/who-is-here-between-tabs.test.ts",
         "packages/skills/tests/unit/skills.test.ts",
         "packages/studio/tests/unit/an-agent-in-the-studio.test.ts",
         "packages/studio/tests/unit/one-seat-one-conversation.test.tsx",
         "packages/studio/tests/unit/rewrite-before-writing.test.tsx",
         "packages/studio/tests/unit/studio.test.ts",
+        "packages/studio/tests/unit/the-round-trip-keeps-the-checkouts-words.test.ts",
         "packages/studio/tests/unit/the-studio-agent-panel.test.tsx",
         "packages/studio/tests/unit/what-it-does-not-model.test.ts",
         "packages/studio/tests/unit/written-back.test.ts",
@@ -17191,6 +20421,8 @@
         "packages/tools/tests/unit/a-run-is-declared.test.ts",
         "packages/tools/tests/unit/affordances.test.ts",
         "packages/tools/tests/unit/an-act-under-specified-is-an-ask.test.ts",
+        "packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts",
+        "packages/tools/tests/unit/an-agent-finds-by-name.test.ts",
         "packages/tools/tests/unit/asked-as-somebody.test.ts",
         "packages/tools/tests/unit/chat-experience.test.ts",
         "packages/tools/tests/unit/checked-against-the-space.test.ts",
@@ -17210,9 +20442,13 @@
         "packages/tools/tests/unit/properties.test.ts",
         "packages/tools/tests/unit/ranking.test.ts",
         "packages/tools/tests/unit/says-the-kind.test.ts",
+        "packages/tools/tests/unit/the-chat-at-a-dealership.test.ts",
         "packages/tools/tests/unit/the-log-says-what-happened.test.ts",
         "packages/tools/tests/unit/the-provider-is-one-call.test.ts",
         "packages/tools/tests/unit/the-questions-are-derived.test.ts",
+        "packages/tools/tests/unit/the-reason-says-the-noun.test.ts",
+        "tests/changesets.test.ts",
+        "tests/journeys.test.ts",
         "tests/setup.test.ts",
         "tests/site.test.ts",
         "vitest.config.ts"
@@ -17256,10 +20492,15 @@
         "packages/core/src/testing.ts",
         "packages/core/tests/integration/persistence.test.ts",
         "packages/core/tests/integration/sync.test.ts",
+        "packages/core/tests/types/judges-past.ts",
         "packages/core/tests/unit/a-described-node-ref.test.ts",
+        "packages/core/tests/unit/a-glance-does-not-say-its-heading-again.test.ts",
+        "packages/core/tests/unit/a-kind-says-what-one-is-called.test.ts",
         "packages/core/tests/unit/a-module-that-is-never-off.test.ts",
         "packages/core/tests/unit/a-third-kind-decides.test.ts",
+        "packages/core/tests/unit/a-time-of-day-is-asked-for.test.ts",
         "packages/core/tests/unit/an-edge-to-a-person.test.ts",
+        "packages/core/tests/unit/arranged-from-the-declaration.test.ts",
         "packages/core/tests/unit/check.test.ts",
         "packages/core/tests/unit/derive-edits.test.ts",
         "packages/core/tests/unit/figures.test.ts",
@@ -17269,8 +20510,10 @@
         "packages/core/tests/unit/lifecycle.test.ts",
         "packages/core/tests/unit/modules.test.ts",
         "packages/core/tests/unit/mutations.test.ts",
+        "packages/core/tests/unit/one-matcher-finds-it.test.ts",
         "packages/core/tests/unit/op-log.test.ts",
         "packages/core/tests/unit/permissions.test.ts",
+        "packages/core/tests/unit/permits-answers-as-apply.test.ts",
         "packages/core/tests/unit/places.test.ts",
         "packages/core/tests/unit/reading-an-app-out.test.ts",
         "packages/core/tests/unit/schema.test.ts",
@@ -17281,42 +20524,68 @@
         "packages/core/tests/unit/the-order-things-are-made-in.test.ts",
         "packages/core/tests/unit/the-pictures-from-where-they-live.test.ts",
         "packages/core/tests/unit/theme.test.ts",
+        "packages/core/tests/unit/two-of-one-name.test.ts",
         "packages/core/tests/unit/what-an-agent-may-do.test.ts",
+        "packages/core/tests/unit/what-was-made-can-be-unmade.test.ts",
+        "packages/layout/tests/unit/a-tuck-goes-with-its-parent.test.ts",
+        "packages/layout/tests/unit/an-opened-district-lists-what-it-has-room-for.test.ts",
         "packages/layout/tests/unit/layout.test.ts",
         "packages/layout/tests/unit/the-billboard-is-on-a-leash.test.ts",
         "packages/layout/tests/unit/the-city-at-altitude.test.ts",
+        "packages/layout/tests/unit/the-city-stays-beside-the-rail.test.ts",
         "packages/layout/tests/unit/the-drive-in.test.ts",
         "packages/layout/tests/unit/the-pan-is-a-translation.test.ts",
         "packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx",
+        "packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx",
         "packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx",
         "packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx",
+        "packages/pages/tests/unit/a-repair-asks-what-it-left-open.test.tsx",
         "packages/pages/tests/unit/asked-as-the-person.test.tsx",
         "packages/pages/tests/unit/its-own-far-end.test.tsx",
+        "packages/pages/tests/unit/one-is-not-a-pile.test.tsx",
         "packages/pages/tests/unit/one-main-under-a-shell.test.tsx",
         "packages/pages/tests/unit/parity.test.tsx",
         "packages/pages/tests/unit/the-assistant-on-every-page.test.tsx",
+        "packages/pages/tests/unit/the-button-says-the-heading.test.tsx",
+        "packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx",
         "packages/pages/tests/unit/the-map-of-kinds.test.tsx",
         "packages/pages/tests/unit/the-pictures-on-pages.test.tsx",
+        "packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx",
+        "packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx",
         "packages/pages/tests/unit/what-begins-a-kind.test.tsx",
         "packages/pages/tests/unit/whose-work.test.tsx",
+        "packages/primitives/tests/unit/a-calendar-draws-every-kind-it-is-bound-to.test.tsx",
+        "packages/primitives/tests/unit/a-card-s-acts-are-one-key-away.test.tsx",
+        "packages/primitives/tests/unit/a-cell-is-an-edge.test.tsx",
+        "packages/primitives/tests/unit/a-chip-says-what-it-is.test.tsx",
         "packages/primitives/tests/unit/a-companion-names-its-subject.test.tsx",
         "packages/primitives/tests/unit/a-district-offers-what-it-can-do.test.tsx",
         "packages/primitives/tests/unit/a-district-stands-as-its-figure.test.tsx",
+        "packages/primitives/tests/unit/a-lens-arranges-before-it-draws.test.tsx",
+        "packages/primitives/tests/unit/a-lens-keeps-the-horizon.test.tsx",
+        "packages/primitives/tests/unit/a-line-is-named-in-its-words.test.ts",
         "packages/primitives/tests/unit/a-question-stands-at-its-node.test.tsx",
+        "packages/primitives/tests/unit/a-thumbnail-is-a-picture.test.tsx",
+        "packages/primitives/tests/unit/a-value-stays-in-its-cell.test.tsx",
         "packages/primitives/tests/unit/back-out.test.tsx",
         "packages/primitives/tests/unit/board.test.tsx",
         "packages/primitives/tests/unit/calendar.test.ts",
         "packages/primitives/tests/unit/chat.test.tsx",
         "packages/primitives/tests/unit/coverage.test.tsx",
         "packages/primitives/tests/unit/edge-inspector.test.tsx",
+        "packages/primitives/tests/unit/escape-gives-the-keyboard-back.test.tsx",
+        "packages/primitives/tests/unit/find-says-which-is-which.test.tsx",
         "packages/primitives/tests/unit/installation.test.tsx",
+        "packages/primitives/tests/unit/nothing-withheld-is-hidden.test.tsx",
         "packages/primitives/tests/unit/one-request-one-press.test.tsx",
+        "packages/primitives/tests/unit/one-row-arranges-every-surface.test.tsx",
         "packages/primitives/tests/unit/places.test.tsx",
         "packages/primitives/tests/unit/primitives.test.tsx",
         "packages/primitives/tests/unit/quick-relations.test.tsx",
         "packages/primitives/tests/unit/rename-in-place.test.tsx",
         "packages/primitives/tests/unit/shell.test.tsx",
         "packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx",
+        "packages/primitives/tests/unit/the-door-keeps-the-keyboard.test.tsx",
         "packages/primitives/tests/unit/the-doors-drawn.test.tsx",
         "packages/primitives/tests/unit/the-drawing-stays-put.test.tsx",
         "packages/primitives/tests/unit/the-drive-in-marquee.test.tsx",
@@ -17326,27 +20595,33 @@
         "packages/primitives/tests/unit/the-seat-under-a-policy.test.tsx",
         "packages/primitives/tests/unit/the-shell-hands-the-seat-its-own-answer.test.tsx",
         "packages/primitives/tests/unit/the-way-in.test.tsx",
+        "packages/primitives/tests/unit/two-changes-before-one-redraw.test.tsx",
         "packages/primitives/tests/unit/undo-turn.test.tsx",
         "packages/primitives/tests/unit/what-it-finds-wrong.test.tsx",
         "packages/react/tests/unit/a-link-to-a-picture.test.tsx",
+        "packages/react/tests/unit/a-search-lights-the-picture.test.tsx",
         "packages/react/tests/unit/a-stop-that-still-exists.test.tsx",
         "packages/react/tests/unit/a-tile-is-its-district.test.tsx",
         "packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx",
         "packages/react/tests/unit/administered.test.tsx",
         "packages/react/tests/unit/binding.test.tsx",
+        "packages/react/tests/unit/the-edge-says-what-is-past-it.test.tsx",
         "packages/react/tests/unit/the-occupants.test.tsx",
         "packages/react/tests/unit/the-row-that-sheds.test.tsx",
         "packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx",
         "packages/render/tests/unit/frame-plan.test.ts",
         "packages/ship/tests/integration/serve.test.ts",
         "packages/ship/tests/unit/browser-adapter.test.ts",
+        "packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts",
         "packages/ship/tests/unit/ship.test.ts",
+        "packages/ship/tests/unit/the-wire-is-a-contract.test.ts",
         "packages/studio/src/from-declaration.ts",
         "packages/studio/src/meta.ts",
         "packages/studio/src/to-declaration.ts",
         "packages/studio/tests/unit/an-agent-in-the-studio.test.ts",
         "packages/studio/tests/unit/one-seat-one-conversation.test.tsx",
         "packages/studio/tests/unit/studio.test.ts",
+        "packages/studio/tests/unit/the-round-trip-keeps-the-checkouts-words.test.ts",
         "packages/studio/tests/unit/the-studio-agent-panel.test.tsx",
         "packages/studio/tests/unit/what-it-does-not-model.test.ts",
         "packages/studio/tests/unit/written-back.test.ts",
@@ -17357,6 +20632,8 @@
         "packages/tools/tests/unit/a-run-is-declared.test.ts",
         "packages/tools/tests/unit/affordances.test.ts",
         "packages/tools/tests/unit/an-act-under-specified-is-an-ask.test.ts",
+        "packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts",
+        "packages/tools/tests/unit/an-agent-finds-by-name.test.ts",
         "packages/tools/tests/unit/asked-as-somebody.test.ts",
         "packages/tools/tests/unit/confidence-is-an-answer.test.ts",
         "packages/tools/tests/unit/conversation.test.ts",
@@ -17372,7 +20649,8 @@
         "packages/tools/tests/unit/ranking.test.ts",
         "packages/tools/tests/unit/says-the-kind.test.ts",
         "packages/tools/tests/unit/the-log-says-what-happened.test.ts",
-        "packages/tools/tests/unit/the-questions-are-derived.test.ts"
+        "packages/tools/tests/unit/the-questions-are-derived.test.ts",
+        "packages/tools/tests/unit/the-reason-says-the-noun.test.ts"
       ],
       "symbols": [
         "z"
@@ -17380,10 +20658,30 @@
     }
   ],
   "summary": {
-    "totalEdges": 1516,
+    "totalEdges": 1799,
     "totalExternal": 30,
-    "circularCount": 25,
+    "circularCount": 29,
     "circulars": [
+      {
+        "cycle": [
+          "packages/core/src/app.ts",
+          "packages/core/src/arrange.ts",
+          "packages/core/src/search.ts",
+          "packages/core/src/store.ts"
+        ]
+      },
+      {
+        "cycle": [
+          "packages/core/src/arrange.ts",
+          "packages/core/src/search.ts"
+        ]
+      },
+      {
+        "cycle": [
+          "packages/core/src/arrange.ts",
+          "packages/core/src/search.ts"
+        ]
+      },
       {
         "cycle": [
           "packages/core/src/cli/check.ts",
@@ -17484,6 +20782,12 @@
       {
         "cycle": [
           "packages/react/src/context.tsx",
+          "packages/react/src/motion.ts"
+        ]
+      },
+      {
+        "cycle": [
+          "packages/react/src/context.tsx",
           "packages/react/src/presence.ts"
         ]
       },
@@ -17547,27 +20851,31 @@
     "mostImported": [
       {
         "path": "packages/primitives/src/index.ts",
-        "count": 36
+        "count": 56
       },
       {
         "path": "packages/core/src/index.ts",
-        "count": 31
+        "count": 44
       },
       {
         "path": "packages/tools/src/index.ts",
-        "count": 25
+        "count": 29
+      },
+      {
+        "path": "scripts/lib/engine.mjs",
+        "count": 27
+      },
+      {
+        "path": "packages/pages/src/index.ts",
+        "count": 24
+      },
+      {
+        "path": "scripts/lib/serve.mjs",
+        "count": 24
       },
       {
         "path": "apps/promo/src/motion.ts",
         "count": 23
-      },
-      {
-        "path": "scripts/lib/engine.mjs",
-        "count": 23
-      },
-      {
-        "path": "scripts/lib/serve.mjs",
-        "count": 21
       },
       {
         "path": "apps/promo/src/theme.ts",
@@ -17575,30 +20883,34 @@
       },
       {
         "path": "packages/react/src/index.ts",
-        "count": 14
-      },
-      {
-        "path": "packages/pages/src/index.ts",
-        "count": 13
-      },
-      {
-        "path": "packages/primitives/src/primitives/index.tsx",
-        "count": 13
+        "count": 17
       },
       {
         "path": "packages/core/src/schema/define-node.ts",
-        "count": 11
+        "count": 15
       },
       {
-        "path": "packages/react/src/context.tsx",
-        "count": 11
+        "path": "packages/primitives/src/primitives/index.tsx",
+        "count": 14
       },
       {
         "path": "packages/core/src/mutations/node-ref.ts",
-        "count": 10
+        "count": 12
+      },
+      {
+        "path": "packages/layout/src/index.ts",
+        "count": 12
       },
       {
         "path": "packages/pages/src/registry.ts",
+        "count": 12
+      },
+      {
+        "path": "packages/react/src/context.tsx",
+        "count": 12
+      },
+      {
+        "path": "packages/pages/src/page-context.tsx",
         "count": 10
       },
       {
@@ -17614,18 +20926,10 @@
         "count": 9
       },
       {
-        "path": "packages/pages/src/page-context.tsx",
-        "count": 8
-      },
-      {
-        "path": "packages/pages/src/page-typography.tsx",
-        "count": 8
-      },
-      {
-        "path": "packages/studio/src/index.ts",
-        "count": 8
+        "path": "packages/pages/src/page-shell.tsx",
+        "count": 9
       }
     ],
-    "avgImportsPerFile": 3.27
+    "avgImportsPerFile": 3.17
   }
 }

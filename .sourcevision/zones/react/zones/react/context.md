@@ -5,10 +5,10 @@
 <zone>
 
 Zone: React (`react/react`)
-Files: 6, Cohesion: 0.29, Coupling: 0.71
-Description: 6 files, primarily TypeScript
+Files: 7, Cohesion: 0.32, Coupling: 0.68
+Description: 7 files, primarily TypeScript
 Entry points: packages/react/src/animation.ts, packages/react/src/index.ts, packages/react/src/local-intelligence.ts, packages/react/src/scene.tsx, packages/react/src/seat-marks.tsx
-Lines: 673
+Lines: 848
 
 </zone>
 
@@ -16,7 +16,8 @@ Lines: 673
 
 packages/react/src/animation.ts (TypeScript, 285 lines, source)
 packages/react/src/drawn.ts (TypeScript, 102 lines, source)
-packages/react/src/index.ts (TypeScript, 71 lines, source)
+packages/react/src/index.ts (TypeScript, 74 lines, source)
+packages/react/src/keyboard.ts (TypeScript, 172 lines, source)
 packages/react/src/local-intelligence.ts (TypeScript, 90 lines, source)
 packages/react/src/scene.tsx (TypeScript, 17 lines, source)
 packages/react/src/seat-marks.tsx (TypeScript, 108 lines, source)
@@ -30,6 +31,7 @@ Internal:
   packages/react/src/index.ts → packages/react/src/animation.ts {SeatAct, SeatWork, TransitionOptions}
   packages/react/src/index.ts → packages/react/src/drawn.ts {useDrawnSize, useTextMeasure}
   packages/react/src/index.ts → packages/react/src/drawn.ts {DrawnOptions, DrawnSize}
+  packages/react/src/index.ts → packages/react/src/keyboard.ts {landingIn, useTheKeyboardLandsSomewhere}
   packages/react/src/index.ts → packages/react/src/local-intelligence.ts {useLocalIntelligence}
   packages/react/src/index.ts → packages/react/src/local-intelligence.ts {Ask, LocalIntelligence}
   packages/react/src/index.ts → packages/react/src/scene.tsx {clipQuadratic, connectorStrands, altitudeOpacity, stackOpacity, onScreen, ResolvedView, Scene, selectionFor, tieRoute, whereIsIn}

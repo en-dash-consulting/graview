@@ -1,25 +1,21 @@
 {
   "id": "primitives/lens",
   "name": "Lens",
-  "description": "6 files, primarily TypeScript",
+  "description": "7 files, primarily TypeScript",
   "files": [
     "packages/primitives/src/lens/calendar-dates.ts",
     "packages/primitives/src/lens/calendar-drawing.tsx",
     "packages/primitives/src/lens/calendar-options.ts",
     "packages/primitives/src/lens/calendar-placing.ts",
     "packages/primitives/src/lens/calendar-spans.ts",
-    "packages/primitives/src/lens/calendar-view.tsx"
+    "packages/primitives/src/lens/calendar-view.tsx",
+    "packages/primitives/src/lens/calendar.tsx"
   ],
   "entryPoints": [
-    "packages/primitives/src/lens/calendar-dates.ts",
-    "packages/primitives/src/lens/calendar-drawing.tsx",
-    "packages/primitives/src/lens/calendar-options.ts",
-    "packages/primitives/src/lens/calendar-placing.ts",
-    "packages/primitives/src/lens/calendar-spans.ts",
-    "packages/primitives/src/lens/calendar-view.tsx"
+    "packages/primitives/src/lens/calendar.tsx"
   ],
-  "cohesion": 0.74,
-  "coupling": 0.26,
-  "fileCount": 6,
-  "lineCount": 1263
+  "cohesion": 0.86,
+  "coupling": 0.14,
+  "fileCount": 7,
+  "lineCount": 1426
 }

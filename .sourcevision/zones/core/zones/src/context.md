@@ -5,21 +5,24 @@
 <zone>
 
 Zone: Src (`core/src`)
-Files: 7, Cohesion: 0.34, Coupling: 0.66
-Description: 7 files, primarily TypeScript
-Entry points: packages/core/src/app.ts, packages/core/src/cli/docs.ts, packages/core/src/cli/index.ts, packages/core/src/scaffold/lens.ts, packages/core/src/schema/figures.ts, packages/core/src/settings.ts
-Lines: 1565
+Files: 10, Cohesion: 0.45, Coupling: 0.55
+Description: 10 files, primarily TypeScript
+Entry points: packages/core/src/arrange.ts, packages/core/src/cli/check/arrangement.ts, packages/core/src/installation.ts, packages/core/src/mutations/decidable.ts, packages/core/src/mutations/form.ts, packages/core/src/mutations/node-ref.ts, packages/core/src/schema/define-node.ts, packages/core/src/schema/types.ts, packages/core/src/search.ts, packages/core/src/testing.ts
+Lines: 2770
 
 </zone>
 
 <files>
 
-packages/core/src/app.ts (TypeScript, 319 lines, source)
-packages/core/src/cli/docs.ts (TypeScript, 147 lines, source)
-packages/core/src/cli/index.ts (TypeScript, 304 lines, source)
-packages/core/src/scaffold/lens.ts (TypeScript, 224 lines, source)
-packages/core/src/schema/figures.ts (TypeScript, 233 lines, source)
-packages/core/src/settings.ts (TypeScript, 77 lines, source)
+packages/core/src/arrange.ts (TypeScript, 596 lines, source)
+packages/core/src/cli/check/arrangement.ts (TypeScript, 59 lines, source)
+packages/core/src/installation.ts (TypeScript, 285 lines, source)
+packages/core/src/mutations/decidable.ts (TypeScript, 56 lines, source)
+packages/core/src/mutations/form.ts (TypeScript, 180 lines, source)
+packages/core/src/mutations/node-ref.ts (TypeScript, 168 lines, source)
+packages/core/src/schema/define-node.ts (TypeScript, 316 lines, source)
+packages/core/src/schema/types.ts (TypeScript, 221 lines, source)
+packages/core/src/search.ts (TypeScript, 628 lines, source)
 packages/core/src/testing.ts (TypeScript, 261 lines, source)
 
 </files>
@@ -27,14 +30,25 @@ packages/core/src/testing.ts (TypeScript, 261 lines, source)
 <imports>
 
 Internal:
-  packages/core/src/cli/docs.ts → packages/core/src/app.ts {GraviewApp}
-  packages/core/src/cli/index.ts → packages/core/src/app.ts {GraviewApp}
-  packages/core/src/cli/index.ts → packages/core/src/cli/docs.ts {generateAgentsMd, generateLlmsTxt}
-  packages/core/src/cli/index.ts → packages/core/src/scaffold/lens.ts {scaffoldLens, validateLensOptions}
-  packages/core/src/cli/index.ts → packages/core/src/scaffold/lens.ts {LensScaffoldOptions}
-  packages/core/src/cli/index.ts → packages/core/src/schema/figures.ts {figureBrief, figureFaults, FIGURE_NAMES, FIGURES}
-  packages/core/src/settings.ts → packages/core/src/app.ts {SettingDeclaration}
-  packages/core/src/testing.ts → packages/core/src/app.ts {defineApp}
-  packages/core/src/testing.ts → packages/core/src/app.ts {GraviewApp}
+  packages/core/src/arrange.ts → packages/core/src/mutations/node-ref.ts {describeArg}
+  packages/core/src/arrange.ts → packages/core/src/schema/define-node.ts {humaniseField, isCurrent, labelOf, tellApart}
+  packages/core/src/arrange.ts → packages/core/src/schema/types.ts {AnyNodeDefinition}
+  packages/core/src/arrange.ts → packages/core/src/search.ts {matchNode, parseQuery}
+  packages/core/src/cli/check/arrangement.ts → packages/core/src/arrange.ts {admitArrangement, arrangeable, parseArrangement}
+  packages/core/src/installation.ts → packages/core/src/mutations/node-ref.ts {nodeRef}
+  packages/core/src/installation.ts → packages/core/src/schema/define-node.ts {defineNode}
+  packages/core/src/installation.ts → packages/core/src/schema/types.ts {AnyNodeDefinition}
+  packages/core/src/mutations/decidable.ts → packages/core/src/mutations/form.ts {formFields}
+  packages/core/src/mutations/decidable.ts → packages/core/src/mutations/form.ts {FormField}
+  packages/core/src/mutations/form.ts → packages/core/src/mutations/node-ref.ts {describeArg, nodeRefKinds, unwrap}
+  packages/core/src/schema/define-node.ts → packages/core/src/schema/types.ts {AnyNodeDefinition, EdgeMap, EmptyEdgeMap, NodeDefinition, NodeDefinitionSpec}
+  packages/core/src/search.ts → packages/core/src/arrange.ts {arrangeable, asksForThePast, conditionHolds}
+  packages/core/src/search.ts → packages/core/src/arrange.ts {ArrangeContext, ArrangeGraph, Condition}
+  packages/core/src/search.ts → packages/core/src/mutations/node-ref.ts {describeArg}
+  packages/core/src/search.ts → packages/core/src/schema/define-node.ts {humaniseField, isCurrent, labelOf, readableFields, tellApart}
+  packages/core/src/search.ts → packages/core/src/schema/types.ts {AnyNodeDefinition}
+  packages/core/src/testing.ts → packages/core/src/installation.ts {declareInstallation}
+  packages/core/src/testing.ts → packages/core/src/mutations/node-ref.ts {nodeRef}
+  packages/core/src/testing.ts → packages/core/src/schema/define-node.ts {defineNode}
 
 </imports>

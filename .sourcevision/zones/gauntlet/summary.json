@@ -1,16 +1,15 @@
 {
-  "id": "apps-spike",
-  "name": "Spike",
-  "description": "2 files, mostly entry points.",
+  "id": "gauntlet",
+  "name": "Gauntlet",
+  "description": "Project configuration and manifest files: vite.config.ts",
   "files": [
-    "apps/spike/src/main.ts",
-    "apps/spike/src/three-planes.ts"
+    "apps/gauntlet/vite.config.ts"
   ],
   "entryPoints": [],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 2,
-  "lineCount": 182,
+  "fileCount": 1,
+  "lineCount": 32,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

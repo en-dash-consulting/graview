@@ -1,9 +1,11 @@
 {
   "id": "apps/promo",
   "name": "Promo",
-  "description": "21 files, primarily TypeScript",
+  "description": "34 files, primarily TypeScript",
   "files": [
     "apps/promo/src/Composition.tsx",
+    "apps/promo/src/FeedComposition.tsx",
+    "apps/promo/src/Root.tsx",
     "apps/promo/src/camera.ts",
     "apps/promo/src/components/BigTitle.tsx",
     "apps/promo/src/components/BrandPresence.tsx",
@@ -14,6 +16,15 @@
     "apps/promo/src/components/LightCharacter.tsx",
     "apps/promo/src/components/SurveyInsert.tsx",
     "apps/promo/src/components/TypePlate.tsx",
+    "apps/promo/src/feed/BeautyPlate.tsx",
+    "apps/promo/src/feed/Cta.tsx",
+    "apps/promo/src/feed/Lockup.tsx",
+    "apps/promo/src/feed/MagicHook.tsx",
+    "apps/promo/src/feed/StepsBeat.tsx",
+    "apps/promo/src/feed/StoryMontage.tsx",
+    "apps/promo/src/feed/TaglinePayoff.tsx",
+    "apps/promo/src/feedTheme.ts",
+    "apps/promo/src/index.ts",
     "apps/promo/src/motion.ts",
     "apps/promo/src/scenes/BrandMorph.tsx",
     "apps/promo/src/scenes/CityAltitude.tsx",
@@ -23,15 +34,13 @@
     "apps/promo/src/scenes/OutroBumper.tsx",
     "apps/promo/src/scenes/RelationsDemo.tsx",
     "apps/promo/src/scenes/SettleLockup.tsx",
-    "apps/promo/src/theme.ts"
+    "apps/promo/src/theme.ts",
+    "apps/spike/src/main.ts",
+    "apps/spike/src/three-planes.ts"
   ],
-  "entryPoints": [
-    "apps/promo/src/Composition.tsx",
-    "apps/promo/src/motion.ts",
-    "apps/promo/src/theme.ts"
-  ],
-  "cohesion": 0.93,
-  "coupling": 0.07,
-  "fileCount": 21,
-  "lineCount": 3391
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 34,
+  "lineCount": 4641
 }

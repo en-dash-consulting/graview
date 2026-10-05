@@ -8,16 +8,16 @@ Zone: Theme (`core/theme`)
 Files: 6, Cohesion: 0.67, Coupling: 0.33
 Description: 6 files, primarily TypeScript
 Entry points: packages/core/src/cli/check/brand.ts, packages/core/src/theme/contrast.ts, packages/core/src/theme/derive.ts, packages/core/src/theme/kit.ts, packages/core/src/theme/palettes.ts, packages/core/src/theme/types.ts
-Lines: 1058
+Lines: 1061
 
 </zone>
 
 <files>
 
-packages/core/src/cli/check/brand.ts (TypeScript, 171 lines, source)
+packages/core/src/cli/check/brand.ts (TypeScript, 172 lines, source)
 packages/core/src/theme/contrast.ts (TypeScript, 200 lines, source)
 packages/core/src/theme/derive.ts (TypeScript, 258 lines, source)
-packages/core/src/theme/kit.ts (TypeScript, 171 lines, source)
+packages/core/src/theme/kit.ts (TypeScript, 173 lines, source)
 packages/core/src/theme/palettes.ts (TypeScript, 103 lines, source)
 packages/core/src/theme/types.ts (TypeScript, 155 lines, source)
 

@@ -1,12 +1,9 @@
 {
   "id": "tests-packages",
   "name": "Tests Packages",
-  "description": "Non-source files in packages: persistence.test.ts, sync.test.ts, door.test.ts (+5 more)",
+  "description": "Non-source files in packages: door.test.ts, frame-plan.test.ts, pointer-router.test.ts (+2 more)",
   "files": [
-    "packages/core/tests/integration/persistence.test.ts",
-    "packages/core/tests/integration/sync.test.ts",
     "packages/create-graview/tests/unit/door.test.ts",
-    "packages/embed/tests/unit/embed.test.ts",
     "packages/render/tests/unit/frame-plan.test.ts",
     "packages/render/tests/unit/pointer-router.test.ts",
     "packages/ship/tests/integration/serve.test.ts",
@@ -15,8 +12,8 @@
   "entryPoints": [],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 8,
-  "lineCount": 1797,
+  "fileCount": 5,
+  "lineCount": 1038,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

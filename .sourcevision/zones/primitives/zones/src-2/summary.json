@@ -1,0 +1,23 @@
+{
+  "id": "primitives/src-2",
+  "name": "Src 2",
+  "description": "5 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/ladder.tsx",
+    "packages/primitives/src/popover.ts",
+    "packages/primitives/src/profile.tsx",
+    "packages/primitives/src/seats.tsx",
+    "packages/primitives/src/workbench/standing.tsx"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/ladder.tsx",
+    "packages/primitives/src/popover.ts",
+    "packages/primitives/src/profile.tsx",
+    "packages/primitives/src/seats.tsx",
+    "packages/primitives/src/workbench/standing.tsx"
+  ],
+  "cohesion": 0.5,
+  "coupling": 0.5,
+  "fileCount": 5,
+  "lineCount": 853
+}

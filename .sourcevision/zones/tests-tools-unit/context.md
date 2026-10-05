@@ -5,10 +5,10 @@
 <zone>
 
 Zone: Tests Tools Unit (`tests-tools-unit`)
-Files: 29, Cohesion: 1.00, Coupling: 0.00
+Files: 33, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in packages: a-district-that-waits.test.ts, a-loop-knows-when-to-stop.test.ts, a-plan-is-an-object.test.ts (+26 more)
-Lines: 5044
+Description: Non-source files in packages: a-district-that-waits.test.ts, a-loop-knows-when-to-stop.test.ts, a-plan-is-an-object.test.ts (+30 more)
+Lines: 5471
 
 </zone>
 
@@ -19,15 +19,17 @@ packages/tools/tests/unit/a-loop-knows-when-to-stop.test.ts (TypeScript, 220 lin
 packages/tools/tests/unit/a-plan-is-an-object.test.ts (TypeScript, 265 lines, test)
 packages/tools/tests/unit/a-reading-is-not-a-fact.test.ts (TypeScript, 133 lines, test)
 packages/tools/tests/unit/a-run-is-declared.test.ts (TypeScript, 287 lines, test)
-packages/tools/tests/unit/affordances.test.ts (TypeScript, 647 lines, test)
+packages/tools/tests/unit/affordances.test.ts (TypeScript, 684 lines, test)
 packages/tools/tests/unit/an-act-under-specified-is-an-ask.test.ts (TypeScript, 121 lines, test)
+packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts (TypeScript, 182 lines, test)
+packages/tools/tests/unit/an-agent-finds-by-name.test.ts (TypeScript, 110 lines, test)
 packages/tools/tests/unit/asked-as-somebody.test.ts (TypeScript, 82 lines, test)
 packages/tools/tests/unit/chat-experience.test.ts (TypeScript, 73 lines, test)
 packages/tools/tests/unit/checked-against-the-space.test.ts (TypeScript, 92 lines, test)
 packages/tools/tests/unit/confidence-is-an-answer.test.ts (TypeScript, 126 lines, test)
-packages/tools/tests/unit/conversation.test.ts (TypeScript, 455 lines, test)
+packages/tools/tests/unit/conversation.test.ts (TypeScript, 458 lines, test)
 packages/tools/tests/unit/draws-a-figure.test.ts (TypeScript, 75 lines, test)
-packages/tools/tests/unit/edge-affordances.test.ts (TypeScript, 243 lines, test)
+packages/tools/tests/unit/edge-affordances.test.ts (TypeScript, 244 lines, test)
 packages/tools/tests/unit/edit.test.ts (TypeScript, 70 lines, test)
 packages/tools/tests/unit/four-rungs.test.ts (TypeScript, 139 lines, test)
 packages/tools/tests/unit/from-the-other-end.test.ts (TypeScript, 140 lines, test)
@@ -38,11 +40,13 @@ packages/tools/tests/unit/never-the-plumbing.test.ts (TypeScript, 170 lines, tes
 packages/tools/tests/unit/nothing-left-to-do.test.ts (TypeScript, 140 lines, test)
 packages/tools/tests/unit/pins.test.ts (TypeScript, 43 lines, test)
 packages/tools/tests/unit/properties.test.ts (TypeScript, 115 lines, test)
-packages/tools/tests/unit/ranking.test.ts (TypeScript, 196 lines, test)
+packages/tools/tests/unit/ranking.test.ts (TypeScript, 197 lines, test)
 packages/tools/tests/unit/says-the-kind.test.ts (TypeScript, 133 lines, test)
+packages/tools/tests/unit/the-chat-at-a-dealership.test.ts (TypeScript, 54 lines, test)
 packages/tools/tests/unit/the-log-says-what-happened.test.ts (TypeScript, 107 lines, test)
-packages/tools/tests/unit/the-provider-is-one-call.test.ts (TypeScript, 130 lines, test)
+packages/tools/tests/unit/the-provider-is-one-call.test.ts (TypeScript, 140 lines, test)
 packages/tools/tests/unit/the-questions-are-derived.test.ts (TypeScript, 196 lines, test)
+packages/tools/tests/unit/the-reason-says-the-noun.test.ts (TypeScript, 29 lines, test)
 
 </files>
 
@@ -50,7 +54,7 @@ packages/tools/tests/unit/the-questions-are-derived.test.ts (TypeScript, 196 lin
 
 
 Outgoing (this zone → other zones):
-  → tools: packages/tools/tests/unit/a-district-that-waits.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-loop-knows-when-to-stop.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-loop-knows-when-to-stop.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-plan-is-an-object.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-reading-is-not-a-fact.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-reading-is-not-a-fact.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-run-is-declared.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-run-is-declared.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/affordances.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-act-under-specified-is-an-ask.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/asked-as-somebody.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/chat-experience.test.ts → packages/tools/src/local.ts; packages/tools/tests/unit/chat-experience.test.ts → packages/tools/src/local.ts; packages/tools/tests/unit/checked-against-the-space.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/confidence-is-an-answer.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/confidence-is-an-answer.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/conversation.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/draws-a-figure.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/edge-affordances.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/edit.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/four-rungs.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/four-rungs.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/from-the-other-end.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/intelligence.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/leads-with-what-you-clicked.test.ts → packages/tools/src/derive.ts; packages/tools/tests/unit/local.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/never-the-plumbing.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/nothing-left-to-do.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/pins.test.ts → packages/tools/src/pins.ts; packages/tools/tests/unit/properties.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/ranking.test.ts → packages/tools/src/derive.ts; packages/tools/tests/unit/ranking.test.ts → packages/tools/src/usage.ts; packages/tools/tests/unit/says-the-kind.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-log-says-what-happened.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-provider-is-one-call.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-provider-is-one-call.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-questions-are-derived.test.ts → packages/tools/src/index.ts
+  → tools: packages/tools/tests/unit/a-district-that-waits.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-loop-knows-when-to-stop.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-loop-knows-when-to-stop.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-plan-is-an-object.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-reading-is-not-a-fact.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-reading-is-not-a-fact.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-run-is-declared.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-run-is-declared.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/affordances.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-act-under-specified-is-an-ask.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts → packages/tools/src/cli.ts; packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts → packages/tools/src/mcp-stdio.ts; packages/tools/tests/unit/an-agent-finds-by-name.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-finds-by-name.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/asked-as-somebody.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/chat-experience.test.ts → packages/tools/src/local.ts; packages/tools/tests/unit/chat-experience.test.ts → packages/tools/src/local.ts; packages/tools/tests/unit/checked-against-the-space.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/confidence-is-an-answer.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/confidence-is-an-answer.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/conversation.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/draws-a-figure.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/edge-affordances.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/edit.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/four-rungs.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/four-rungs.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/from-the-other-end.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/intelligence.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/leads-with-what-you-clicked.test.ts → packages/tools/src/derive.ts; packages/tools/tests/unit/local.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/never-the-plumbing.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/nothing-left-to-do.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/pins.test.ts → packages/tools/src/pins.ts; packages/tools/tests/unit/properties.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/ranking.test.ts → packages/tools/src/derive.ts; packages/tools/tests/unit/ranking.test.ts → packages/tools/src/usage.ts; packages/tools/tests/unit/says-the-kind.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-chat-at-a-dealership.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-log-says-what-happened.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-provider-is-one-call.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-provider-is-one-call.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-questions-are-derived.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-reason-says-the-noun.test.ts → packages/tools/src/index.ts
 
 </imports>
 
@@ -63,6 +67,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 310 internal calls, 330 outgoing, 0 incoming (cohesion: 0.48, coupling: 0.52)
+- [call graph] 325 internal calls, 363 outgoing, 0 incoming (cohesion: 0.47, coupling: 0.53)
 
 </insights>

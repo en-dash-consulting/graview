@@ -5,20 +5,19 @@
 <zone>
 
 Zone: Src Schema (`core/src-schema`)
-Files: 7, Cohesion: 0.23, Coupling: 0.77
-Description: 7 files, primarily TypeScript
-Entry points: packages/core/src/index.ts, packages/core/src/modules.ts, packages/core/src/presence.ts, packages/core/src/schema/json-schema.ts
-Lines: 859
+Files: 6, Cohesion: 0.18, Coupling: 0.82
+Description: 6 files, primarily TypeScript
+Entry points: packages/core/src/index.ts, packages/core/src/presence.ts, packages/core/src/schema/json-schema.ts
+Lines: 806
 
 </zone>
 
 <files>
 
-packages/core/src/index.ts (TypeScript, 266 lines, source)
+packages/core/src/index.ts (TypeScript, 332 lines, source)
 packages/core/src/intelligence-bridge.ts (TypeScript, 66 lines, source)
-packages/core/src/modules.ts (TypeScript, 136 lines, source)
 packages/core/src/presence.ts (TypeScript, 87 lines, source)
-packages/core/src/schema/json-schema.ts (TypeScript, 82 lines, source)
+packages/core/src/schema/json-schema.ts (TypeScript, 99 lines, source)
 packages/core/src/studio-door.ts (TypeScript, 109 lines, source)
 packages/core/src/temporal/effectivity.ts (TypeScript, 113 lines, source)
 
@@ -29,8 +28,6 @@ packages/core/src/temporal/effectivity.ts (TypeScript, 113 lines, source)
 Internal:
   packages/core/src/index.ts → packages/core/src/intelligence-bridge.ts {DECISION_BRIDGE_PATH, LOCAL_BRIDGE_PATH}
   packages/core/src/index.ts → packages/core/src/intelligence-bridge.ts {DecisionBridgeAnswer, DecisionBridgeAsk, DecisionBridgeStatus, LocalBridgeAnswer, LocalBridgeAsk, LocalBridgeStatus}
-  packages/core/src/index.ts → packages/core/src/modules.ts {resolveModules}
-  packages/core/src/index.ts → packages/core/src/modules.ts {ModuleDeclaration, ModuleMap, ModuleProjection}
   packages/core/src/index.ts → packages/core/src/presence.ts {foldPresence, PRESENCE_TTL_MS, samePresence}
   packages/core/src/index.ts → packages/core/src/presence.ts {Presence, PresenceChannel, PresenceRobot}
   packages/core/src/index.ts → packages/core/src/schema/json-schema.ts {mutationToolSchema, nodeJsonSchema, schemaJson, toJsonSchema}

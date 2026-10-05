@@ -1,7 +1,7 @@
 {
   "id": "studio",
   "name": "Studio",
-  "description": "15 files, mostly utilities and components; entry points index.ts, meta.ts; imported by Packages.",
+  "description": "16 files, mostly utilities and components; entry points index.ts, meta.ts; imported by Packages.",
   "files": [
     "packages/studio/src/agent-panel.tsx",
     "packages/studio/src/agent.ts",
@@ -17,7 +17,8 @@
     "packages/studio/src/source.ts",
     "packages/studio/src/studio.ts",
     "packages/studio/src/to-declaration.ts",
-    "packages/studio/src/write-in-place.ts"
+    "packages/studio/src/write-in-place.ts",
+    "packages/studio/src/zod-source.ts"
   ],
   "entryPoints": [
     "packages/studio/src/index.ts",
@@ -25,8 +26,8 @@
   ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 15,
-  "lineCount": 4270,
+  "fileCount": 16,
+  "lineCount": 4612,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

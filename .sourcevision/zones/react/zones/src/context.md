@@ -5,18 +5,19 @@
 <zone>
 
 Zone: Src (`react/src`)
-Files: 9, Cohesion: 0.48, Coupling: 0.52
-Description: 9 files, primarily TypeScript
-Entry points: packages/react/src/activity.ts, packages/react/src/context.tsx, packages/react/src/hooks.ts, packages/react/src/occupants.tsx, packages/react/src/plots.tsx, packages/react/src/pointer.ts, packages/react/src/presence.ts, packages/react/src/robot.ts, packages/react/src/settings.ts
-Lines: 3001
+Files: 10, Cohesion: 0.49, Coupling: 0.51
+Description: 10 files, primarily TypeScript
+Entry points: packages/react/src/activity.ts, packages/react/src/context.tsx, packages/react/src/hooks.ts, packages/react/src/motion.ts, packages/react/src/occupants.tsx, packages/react/src/plots.tsx, packages/react/src/pointer.ts, packages/react/src/presence.ts, packages/react/src/robot.ts, packages/react/src/settings.ts
+Lines: 3196
 
 </zone>
 
 <files>
 
 packages/react/src/activity.ts (TypeScript, 323 lines, source)
-packages/react/src/context.tsx (TypeScript, 905 lines, source)
-packages/react/src/hooks.ts (TypeScript, 507 lines, source)
+packages/react/src/context.tsx (TypeScript, 999 lines, source)
+packages/react/src/hooks.ts (TypeScript, 569 lines, source)
+packages/react/src/motion.ts (TypeScript, 39 lines, source)
 packages/react/src/occupants.tsx (TypeScript, 204 lines, source)
 packages/react/src/plots.tsx (TypeScript, 447 lines, source)
 packages/react/src/pointer.ts (TypeScript, 61 lines, source)
@@ -32,13 +33,16 @@ Internal:
   packages/react/src/activity.ts → packages/react/src/context.tsx {useGraview}
   packages/react/src/context.tsx → packages/react/src/activity.ts {useActivityState}
   packages/react/src/context.tsx → packages/react/src/activity.ts {ActivityMark, Attention}
+  packages/react/src/context.tsx → packages/react/src/motion.ts {createMotionStore}
+  packages/react/src/context.tsx → packages/react/src/motion.ts {MotionStore}
   packages/react/src/context.tsx → packages/react/src/pointer.ts {createPointerStore}
   packages/react/src/context.tsx → packages/react/src/pointer.ts {PointerStore, ScenePoint}
   packages/react/src/context.tsx → packages/react/src/presence.ts {PRESENCE_SETTINGS, tabSession, usePresenceState}
   packages/react/src/context.tsx → packages/react/src/robot.ts {foldRobots}
   packages/react/src/context.tsx → packages/react/src/robot.ts {RobotEvent, RobotState, SeatNote}
   packages/react/src/context.tsx → packages/react/src/settings.ts {honourSetting, loadSetting, rememberSetting}
-  packages/react/src/hooks.ts → packages/react/src/context.tsx {useGraph, useGraview}
+  packages/react/src/hooks.ts → packages/react/src/context.tsx {useFound, useGraph, useGraview}
+  packages/react/src/motion.ts → packages/react/src/context.tsx {useGraview}
   packages/react/src/occupants.tsx → packages/react/src/context.tsx {useGraview}
   packages/react/src/occupants.tsx → packages/react/src/context.tsx {DrawnBox}
   packages/react/src/occupants.tsx → packages/react/src/presence.ts {placeOthers}

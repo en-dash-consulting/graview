@@ -1,0 +1,19 @@
+{
+  "id": "apps/promo/scenes",
+  "name": "Scenes Components",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "apps/promo/src/components/BigTitle.tsx",
+    "apps/promo/src/scenes/GlyphsBloom.tsx",
+    "apps/promo/src/scenes/RelationsDemo.tsx"
+  ],
+  "entryPoints": [
+    "apps/promo/src/components/BigTitle.tsx",
+    "apps/promo/src/scenes/GlyphsBloom.tsx",
+    "apps/promo/src/scenes/RelationsDemo.tsx"
+  ],
+  "cohesion": 0.24,
+  "coupling": 0.76,
+  "fileCount": 3,
+  "lineCount": 894
+}

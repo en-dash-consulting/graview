@@ -5,19 +5,29 @@
 <zone>
 
 Zone: Tests (`tests`)
-Files: 2, Cohesion: 1.00, Coupling: 0.00
+Files: 4, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in tests: setup.test.ts, site.test.ts
-Lines: 211
+Description: Non-source files in tests: changesets.test.ts, journeys.test.ts, setup.test.ts (+1 more)
+Lines: 335
 
 </zone>
 
 <files>
 
-tests/setup.test.ts (TypeScript, 97 lines, test)
-tests/site.test.ts (TypeScript, 114 lines, test)
+tests/changesets.test.ts (TypeScript, 26 lines, test)
+tests/journeys.test.ts (TypeScript, 74 lines, test)
+tests/setup.test.ts (TypeScript, 120 lines, test)
+tests/site.test.ts (TypeScript, 115 lines, test)
 
 </files>
+
+<imports>
+
+
+Outgoing (this zone → other zones):
+  → scripts: tests/journeys.test.ts → scripts/lib/journeys.mjs
+
+</imports>
 
 <findings>
 
@@ -28,6 +38,6 @@ tests/site.test.ts (TypeScript, 114 lines, test)
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 20 internal calls, 0 outgoing, 0 incoming (cohesion: 1, coupling: 0)
+- [call graph] 39 internal calls, 5 outgoing, 0 incoming (cohesion: 0.89, coupling: 0.11)
 
 </insights>

@@ -1,16 +1,18 @@
 {
   "id": "tests",
   "name": "Tests",
-  "description": "Non-source files in tests: setup.test.ts, site.test.ts",
+  "description": "Non-source files in tests: changesets.test.ts, journeys.test.ts, setup.test.ts (+1 more)",
   "files": [
+    "tests/changesets.test.ts",
+    "tests/journeys.test.ts",
     "tests/setup.test.ts",
     "tests/site.test.ts"
   ],
   "entryPoints": [],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 2,
-  "lineCount": 211,
+  "fileCount": 4,
+  "lineCount": 335,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

@@ -9,7 +9,7 @@ Files: 14, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: 14 files, mostly components and entry points; entry points app.ts, schema.ts, app.tsx; imported by Apps.
 Entry points: apps/todo/src/domain/app.ts, apps/todo/src/domain/policy.ts, apps/todo/src/domain/schema.ts, apps/todo/src/ui/app.tsx, apps/todo/src/ui/views.tsx
-Lines: 2987
+Lines: 2941
 
 </zone>
 
@@ -25,8 +25,8 @@ apps/todo/src/domain/schema.ts (TypeScript, 188 lines, source)
 apps/todo/src/index.ts (TypeScript, 5 lines, source)
 apps/todo/src/main.tsx (TypeScript, 128 lines, source)
 apps/todo/src/open.ts (TypeScript, 61 lines, source)
-apps/todo/src/ui/app.tsx (TypeScript, 258 lines, source)
-apps/todo/src/ui/design.tsx (TypeScript, 1189 lines, source)
+apps/todo/src/ui/app.tsx (TypeScript, 264 lines, source)
+apps/todo/src/ui/design.tsx (TypeScript, 1137 lines, source)
 apps/todo/src/ui/views.tsx (TypeScript, 541 lines, source)
 apps/todo/src/ui/when.ts (TypeScript, 28 lines, source)
 
@@ -91,6 +91,6 @@ Incoming (other zones → this zone):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 87 internal calls, 0 outgoing, 16 incoming (cohesion: 1, coupling: 0)
+- [call graph] 79 internal calls, 0 outgoing, 16 incoming (cohesion: 1, coupling: 0)
 
 </insights>

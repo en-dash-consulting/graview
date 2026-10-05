@@ -1,6 +1,6 @@
 {
   "id": "spike",
-  "name": "Spike",
+  "name": "Apps Spike",
   "description": "Project configuration and manifest files: vite.config.ts",
   "files": [
     "apps/spike/vite.config.ts"

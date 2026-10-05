@@ -5,16 +5,17 @@
 <zone>
 
 Zone: Promo (`apps/promo`)
-Files: 21, Cohesion: 0.93, Coupling: 0.07
-Description: 21 files, primarily TypeScript
-Entry points: apps/promo/src/Composition.tsx, apps/promo/src/motion.ts, apps/promo/src/theme.ts
-Lines: 3391
+Files: 34, Cohesion: 1.00, Coupling: 0.00
+Description: 34 files, primarily TypeScript
+Lines: 4641
 
 </zone>
 
 <files>
 
 apps/promo/src/Composition.tsx (TypeScript, 170 lines, source)
+apps/promo/src/FeedComposition.tsx (TypeScript, 68 lines, source)
+apps/promo/src/Root.tsx (TypeScript, 34 lines, source)
 apps/promo/src/camera.ts (TypeScript, 266 lines, source)
 apps/promo/src/components/BigTitle.tsx (TypeScript, 94 lines, source)
 apps/promo/src/components/BrandPresence.tsx (TypeScript, 65 lines, source)
@@ -25,6 +26,15 @@ apps/promo/src/components/Field.tsx (TypeScript, 99 lines, source)
 apps/promo/src/components/LightCharacter.tsx (TypeScript, 44 lines, source)
 apps/promo/src/components/SurveyInsert.tsx (TypeScript, 227 lines, source)
 apps/promo/src/components/TypePlate.tsx (TypeScript, 113 lines, source)
+apps/promo/src/feed/BeautyPlate.tsx (TypeScript, 132 lines, source)
+apps/promo/src/feed/Cta.tsx (TypeScript, 99 lines, source)
+apps/promo/src/feed/Lockup.tsx (TypeScript, 106 lines, source)
+apps/promo/src/feed/MagicHook.tsx (TypeScript, 116 lines, source)
+apps/promo/src/feed/StepsBeat.tsx (TypeScript, 96 lines, source)
+apps/promo/src/feed/StoryMontage.tsx (TypeScript, 246 lines, source)
+apps/promo/src/feed/TaglinePayoff.tsx (TypeScript, 138 lines, source)
+apps/promo/src/feedTheme.ts (TypeScript, 29 lines, source)
+apps/promo/src/index.ts (TypeScript, 4 lines, source)
 apps/promo/src/motion.ts (TypeScript, 96 lines, source)
 apps/promo/src/scenes/BrandMorph.tsx (TypeScript, 83 lines, source)
 apps/promo/src/scenes/CityAltitude.tsx (TypeScript, 122 lines, source)
@@ -35,6 +45,8 @@ apps/promo/src/scenes/OutroBumper.tsx (TypeScript, 21 lines, source)
 apps/promo/src/scenes/RelationsDemo.tsx (TypeScript, 763 lines, source)
 apps/promo/src/scenes/SettleLockup.tsx (TypeScript, 99 lines, source)
 apps/promo/src/theme.ts (TypeScript, 80 lines, source)
+apps/spike/src/main.ts (TypeScript, 20 lines, source)
+apps/spike/src/three-planes.ts (TypeScript, 162 lines, source)
 
 </files>
 
@@ -57,6 +69,17 @@ Internal:
   apps/promo/src/Composition.tsx → apps/promo/src/scenes/RelationsDemo.tsx {RelationsDemo}
   apps/promo/src/Composition.tsx → apps/promo/src/scenes/SettleLockup.tsx {SettleLockup}
   apps/promo/src/Composition.tsx → apps/promo/src/theme.ts {beats, colors, DIP_WHITE_FRAMES, OUTRO_FRAMES, STORY_FRAMES}
+  apps/promo/src/FeedComposition.tsx → apps/promo/src/feed/Cta.tsx {Cta}
+  apps/promo/src/FeedComposition.tsx → apps/promo/src/feed/Lockup.tsx {Lockup}
+  apps/promo/src/FeedComposition.tsx → apps/promo/src/feed/MagicHook.tsx {MagicHook}
+  apps/promo/src/FeedComposition.tsx → apps/promo/src/feed/StepsBeat.tsx {StepsBeat}
+  apps/promo/src/FeedComposition.tsx → apps/promo/src/feed/StoryMontage.tsx {StoryMontage}
+  apps/promo/src/FeedComposition.tsx → apps/promo/src/feed/TaglinePayoff.tsx {TaglinePayoff}
+  apps/promo/src/FeedComposition.tsx → apps/promo/src/feedTheme.ts {colors, feedBeats}
+  apps/promo/src/Root.tsx → apps/promo/src/Composition.tsx {GraviewIntro}
+  apps/promo/src/Root.tsx → apps/promo/src/FeedComposition.tsx {GraviewFeed}
+  apps/promo/src/Root.tsx → apps/promo/src/feedTheme.ts {FEED_DURATION, FEED_FPS, FEED_HEIGHT, FEED_WIDTH}
+  apps/promo/src/Root.tsx → apps/promo/src/theme.ts {DURATION_IN_FRAMES, FPS, HEIGHT, WIDTH}
   apps/promo/src/camera.ts → apps/promo/src/motion.ts {clamp, easings}
   apps/promo/src/camera.ts → apps/promo/src/theme.ts {STORY_FRAMES}
   apps/promo/src/components/BigTitle.tsx → apps/promo/src/motion.ts {blurIn, clamp, easings, fadeWindow, maskWipe}
@@ -76,6 +99,24 @@ Internal:
   apps/promo/src/components/SurveyInsert.tsx → apps/promo/src/theme.ts {colors, fonts}
   apps/promo/src/components/TypePlate.tsx → apps/promo/src/motion.ts {blurIn, clamp, easings, fadeWindow, maskWipe}
   apps/promo/src/components/TypePlate.tsx → apps/promo/src/theme.ts {colors, fonts}
+  apps/promo/src/feed/BeautyPlate.tsx → apps/promo/src/feedTheme.ts {colors, fonts, FEED_SAFE}
+  apps/promo/src/feed/BeautyPlate.tsx → apps/promo/src/motion.ts {clamp}
+  apps/promo/src/feed/Cta.tsx → apps/promo/src/feedTheme.ts {colors, fonts, FEED_SAFE}
+  apps/promo/src/feed/Cta.tsx → apps/promo/src/motion.ts {clamp, springProgress}
+  apps/promo/src/feed/Lockup.tsx → apps/promo/src/feedTheme.ts {colors, fonts, FEED_SAFE, feedBeats}
+  apps/promo/src/feed/Lockup.tsx → apps/promo/src/motion.ts {clamp, easings, springProgress}
+  apps/promo/src/feed/MagicHook.tsx → apps/promo/src/feed/BeautyPlate.tsx {BeautyPlate}
+  apps/promo/src/feed/MagicHook.tsx → apps/promo/src/feedTheme.ts {colors, fonts, FEED_SAFE, feedBeats}
+  apps/promo/src/feed/MagicHook.tsx → apps/promo/src/motion.ts {clamp, easings, springProgress}
+  apps/promo/src/feed/StepsBeat.tsx → apps/promo/src/feedTheme.ts {colors, fonts, FEED_SAFE, feedBeats}
+  apps/promo/src/feed/StepsBeat.tsx → apps/promo/src/motion.ts {clamp, easings, springProgress}
+  apps/promo/src/feed/StoryMontage.tsx → apps/promo/src/feed/BeautyPlate.tsx {BeautyPlate}
+  apps/promo/src/feed/StoryMontage.tsx → apps/promo/src/feedTheme.ts {colors, fonts, FEED_SAFE, feedBeats}
+  apps/promo/src/feed/StoryMontage.tsx → apps/promo/src/motion.ts {clamp, easings}
+  apps/promo/src/feed/TaglinePayoff.tsx → apps/promo/src/feedTheme.ts {colors, fonts, FEED_SAFE, feedBeats}
+  apps/promo/src/feed/TaglinePayoff.tsx → apps/promo/src/motion.ts {clamp, easings, springProgress}
+  apps/promo/src/feedTheme.ts → apps/promo/src/theme.ts {colors, fonts}
+  apps/promo/src/index.ts → apps/promo/src/Root.tsx {RemotionRoot}
   apps/promo/src/scenes/BrandMorph.tsx → apps/promo/src/camera.ts {beatOpacity}
   apps/promo/src/scenes/BrandMorph.tsx → apps/promo/src/motion.ts {clamp, easings, springProgress}
   apps/promo/src/scenes/BrandMorph.tsx → apps/promo/src/theme.ts {beats, colors, fonts}
@@ -105,5 +146,34 @@ Internal:
   apps/promo/src/scenes/SettleLockup.tsx → apps/promo/src/camera.ts {beatOpacity}
   apps/promo/src/scenes/SettleLockup.tsx → apps/promo/src/motion.ts {fadeIn, springProgress}
   apps/promo/src/scenes/SettleLockup.tsx → apps/promo/src/theme.ts {beats, colors, fonts, tagline}
+  apps/spike/src/main.ts → apps/spike/src/three-planes.ts {mountThreePlanes}
 
 </imports>
+
+<sub-crossings>
+
+Cross-dependencies between sub-zones:
+  apps/promo/components → apps/promo/promo: 16
+  apps/promo/components → apps/promo/scenes: 2
+  apps/promo/feed → apps/promo/promo: 8
+  apps/promo/promo → apps/promo/scenes: 1
+  apps/promo/scenes → apps/promo/promo: 10
+  apps/promo/src → apps/promo/components: 1
+  apps/promo/src → apps/promo/feed: 8
+  apps/promo/src → apps/promo/promo: 1
+
+</sub-crossings>
+
+<sub-zones>
+
+This zone has 5 sub-zone(s):
+
+- **Components** (`apps/promo/components`): 5 files, cohesion 0.3, coupling 0.7
+- **Feed** (`apps/promo/feed`): 8 files, cohesion 0.53, coupling 0.47
+- **Promo** (`apps/promo/promo`): 15 files, cohesion 0.63, coupling 0.38
+- **Scenes Components** (`apps/promo/scenes`): 3 files, cohesion 0.24, coupling 0.76
+- **Src** (`apps/promo/src`): 3 files, cohesion 0.29, coupling 0.71
+
+Detailed sub-zone context available in `zones/{sub-zone-id}/context.md`
+
+</sub-zones>

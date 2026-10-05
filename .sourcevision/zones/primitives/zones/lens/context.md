@@ -5,21 +5,22 @@
 <zone>
 
 Zone: Lens (`primitives/lens`)
-Files: 6, Cohesion: 0.74, Coupling: 0.26
-Description: 6 files, primarily TypeScript
-Entry points: packages/primitives/src/lens/calendar-dates.ts, packages/primitives/src/lens/calendar-drawing.tsx, packages/primitives/src/lens/calendar-options.ts, packages/primitives/src/lens/calendar-placing.ts, packages/primitives/src/lens/calendar-spans.ts, packages/primitives/src/lens/calendar-view.tsx
-Lines: 1263
+Files: 7, Cohesion: 0.86, Coupling: 0.14
+Description: 7 files, primarily TypeScript
+Entry points: packages/primitives/src/lens/calendar.tsx
+Lines: 1426
 
 </zone>
 
 <files>
 
 packages/primitives/src/lens/calendar-dates.ts (TypeScript, 68 lines, source)
-packages/primitives/src/lens/calendar-drawing.tsx (TypeScript, 420 lines, source)
-packages/primitives/src/lens/calendar-options.ts (TypeScript, 117 lines, source)
+packages/primitives/src/lens/calendar-drawing.tsx (TypeScript, 427 lines, source)
+packages/primitives/src/lens/calendar-options.ts (TypeScript, 125 lines, source)
 packages/primitives/src/lens/calendar-placing.ts (TypeScript, 122 lines, source)
-packages/primitives/src/lens/calendar-spans.ts (TypeScript, 170 lines, source)
-packages/primitives/src/lens/calendar-view.tsx (TypeScript, 366 lines, source)
+packages/primitives/src/lens/calendar-spans.ts (TypeScript, 189 lines, source)
+packages/primitives/src/lens/calendar-view.tsx (TypeScript, 452 lines, source)
+packages/primitives/src/lens/calendar.tsx (TypeScript, 43 lines, source)
 
 </files>
 
@@ -45,5 +46,11 @@ Internal:
   packages/primitives/src/lens/calendar-view.tsx → packages/primitives/src/lens/calendar-placing.ts {actThatMoves, entriesOn, placeOnCalendar}
   packages/primitives/src/lens/calendar-view.tsx → packages/primitives/src/lens/calendar-spans.ts {finerThan, spanOf}
   packages/primitives/src/lens/calendar-view.tsx → packages/primitives/src/lens/calendar-spans.ts {CalendarCell}
+  packages/primitives/src/lens/calendar.tsx → packages/primitives/src/lens/calendar-dates.ts {*}
+  packages/primitives/src/lens/calendar.tsx → packages/primitives/src/lens/calendar-drawing.tsx {*}
+  packages/primitives/src/lens/calendar.tsx → packages/primitives/src/lens/calendar-options.ts {*}
+  packages/primitives/src/lens/calendar.tsx → packages/primitives/src/lens/calendar-placing.ts {*}
+  packages/primitives/src/lens/calendar.tsx → packages/primitives/src/lens/calendar-spans.ts {*}
+  packages/primitives/src/lens/calendar.tsx → packages/primitives/src/lens/calendar-view.tsx {*}
 
 </imports>

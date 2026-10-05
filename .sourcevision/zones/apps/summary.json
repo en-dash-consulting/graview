@@ -1,8 +1,13 @@
 {
   "id": "apps",
   "name": "Apps",
-  "description": "60 files, mostly components and schemas; entry points app.ts, survey.ts, app.ts; imported by Apps.",
+  "description": "69 files, mostly components and entry points; entry points app.ts, survey.ts, app.ts; imported by Apps.",
   "files": [
+    "apps/discography/scripts/musicbrainz/build.py",
+    "apps/discography/scripts/musicbrainz/fetch_guest.py",
+    "apps/discography/scripts/musicbrainz/fetch_own.py",
+    "apps/discography/scripts/musicbrainz/mb.py",
+    "apps/gauntlet/scripts/generate-seed.mjs",
     "apps/launcher/src/domain/app.ts",
     "apps/launcher/src/domain/invariants.ts",
     "apps/launcher/src/domain/mutations.ts",
@@ -12,6 +17,8 @@
     "apps/launcher/src/main.tsx",
     "apps/launcher/src/ui/liveness.tsx",
     "apps/launcher/src/ui/views.tsx",
+    "apps/launcher/vite.config.ts",
+    "apps/promo/remotion.config.ts",
     "apps/promo/src/Composition.tsx",
     "apps/promo/src/FeedComposition.tsx",
     "apps/promo/src/Root.tsx",
@@ -62,7 +69,9 @@
     "apps/spike/scripts/introspect4.mjs",
     "apps/spike/scripts/run-probe.mjs",
     "apps/spike/scripts/run-restrictions.mjs",
-    "apps/spike/scripts/run-spike.mjs"
+    "apps/spike/scripts/run-spike.mjs",
+    "apps/spike/src/main.ts",
+    "apps/spike/src/three-planes.ts"
   ],
   "entryPoints": [
     "apps/launcher/src/domain/app.ts",
@@ -74,8 +83,8 @@
   ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 60,
-  "lineCount": 9163,
+  "fileCount": 69,
+  "lineCount": 10049,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

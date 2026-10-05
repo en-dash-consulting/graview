@@ -1,11 +1,10 @@
 {
   "id": "core/src-schema",
   "name": "Src Schema",
-  "description": "7 files, primarily TypeScript",
+  "description": "6 files, primarily TypeScript",
   "files": [
     "packages/core/src/index.ts",
     "packages/core/src/intelligence-bridge.ts",
-    "packages/core/src/modules.ts",
     "packages/core/src/presence.ts",
     "packages/core/src/schema/json-schema.ts",
     "packages/core/src/studio-door.ts",
@@ -13,12 +12,11 @@
   ],
   "entryPoints": [
     "packages/core/src/index.ts",
-    "packages/core/src/modules.ts",
     "packages/core/src/presence.ts",
     "packages/core/src/schema/json-schema.ts"
   ],
-  "cohesion": 0.23,
-  "coupling": 0.77,
-  "fileCount": 7,
-  "lineCount": 859
+  "cohesion": 0.18,
+  "coupling": 0.82,
+  "fileCount": 6,
+  "lineCount": 806
 }

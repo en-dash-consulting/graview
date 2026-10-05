@@ -1,0 +1,16 @@
+{
+  "id": "apps/discography",
+  "name": "Discography Scripts",
+  "description": "4 files, primarily Python",
+  "files": [
+    "apps/discography/scripts/musicbrainz/build.py",
+    "apps/discography/scripts/musicbrainz/fetch_guest.py",
+    "apps/discography/scripts/musicbrainz/fetch_own.py",
+    "apps/discography/scripts/musicbrainz/mb.py"
+  ],
+  "entryPoints": [],
+  "cohesion": 0,
+  "coupling": 0,
+  "fileCount": 4,
+  "lineCount": 168
+}

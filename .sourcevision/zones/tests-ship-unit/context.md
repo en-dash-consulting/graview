@@ -5,10 +5,10 @@
 <zone>
 
 Zone: Tests Ship Unit (`tests-ship-unit`)
-Files: 8, Cohesion: 1.00, Coupling: 0.00
+Files: 10, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in packages: a-migration-is-data.test.ts, browser-adapter.test.ts, ship.test.ts (+5 more)
-Lines: 1179
+Description: Non-source files in packages: a-migration-is-data.test.ts, browser-adapter.test.ts, default-content-moves-without-a-wipe.test.ts (+7 more)
+Lines: 1476
 
 </zone>
 
@@ -16,11 +16,13 @@ Lines: 1179
 
 packages/ship/tests/unit/a-migration-is-data.test.ts (TypeScript, 77 lines, test)
 packages/ship/tests/unit/browser-adapter.test.ts (TypeScript, 237 lines, test)
+packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts (TypeScript, 182 lines, test)
 packages/ship/tests/unit/ship.test.ts (TypeScript, 250 lines, test)
 packages/ship/tests/unit/the-browser-entry.test.ts (TypeScript, 78 lines, test)
 packages/ship/tests/unit/the-decision-door.test.ts (TypeScript, 88 lines, test)
 packages/ship/tests/unit/the-local-door.test.ts (TypeScript, 131 lines, test)
 packages/ship/tests/unit/the-studio-door.test.ts (TypeScript, 230 lines, test)
+packages/ship/tests/unit/the-wire-is-a-contract.test.ts (TypeScript, 115 lines, test)
 packages/ship/tests/unit/who-is-here-between-tabs.test.ts (TypeScript, 88 lines, test)
 
 </files>
@@ -29,7 +31,7 @@ packages/ship/tests/unit/who-is-here-between-tabs.test.ts (TypeScript, 88 lines,
 
 
 Outgoing (this zone → other zones):
-  → ship: packages/ship/tests/unit/a-migration-is-data.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/a-migration-is-data.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/browser-adapter.test.ts → packages/ship/src/browser.ts; packages/ship/tests/unit/browser-adapter.test.ts → packages/ship/src/browser.ts; packages/ship/tests/unit/ship.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/the-decision-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-local-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-local-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-studio-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/who-is-here-between-tabs.test.ts → packages/ship/src/presence.ts
+  → ship: packages/ship/tests/unit/a-migration-is-data.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/a-migration-is-data.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/browser-adapter.test.ts → packages/ship/src/browser.ts; packages/ship/tests/unit/browser-adapter.test.ts → packages/ship/src/browser.ts; packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/ship.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/the-decision-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-local-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-local-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-studio-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-wire-is-a-contract.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/the-wire-is-a-contract.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/who-is-here-between-tabs.test.ts → packages/ship/src/presence.ts
 
 </imports>
 
@@ -42,6 +44,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 69 internal calls, 99 outgoing, 0 incoming (cohesion: 0.41, coupling: 0.59)
+- [call graph] 69 internal calls, 139 outgoing, 0 incoming (cohesion: 0.33, coupling: 0.67)
 
 </insights>

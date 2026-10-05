@@ -1,9 +1,11 @@
 {
   "id": "pages",
   "name": "Pages",
-  "description": "16 files, mostly pages and entry points; entry points index.ts; imported by Packages.",
+  "description": "19 files, mostly pages and entry points; entry points index.ts, page-list.tsx; imported by Packages.",
   "files": [
     "packages/pages/src/ask.tsx",
+    "packages/pages/src/face-controls.tsx",
+    "packages/pages/src/face-placed.ts",
     "packages/pages/src/facts.ts",
     "packages/pages/src/form.tsx",
     "packages/pages/src/index.ts",
@@ -14,6 +16,7 @@
     "packages/pages/src/page-places.tsx",
     "packages/pages/src/page-problems.tsx",
     "packages/pages/src/page-record.tsx",
+    "packages/pages/src/page-search.tsx",
     "packages/pages/src/page-shell.tsx",
     "packages/pages/src/page-typography.tsx",
     "packages/pages/src/pages.tsx",
@@ -21,12 +24,13 @@
     "packages/pages/src/router.tsx"
   ],
   "entryPoints": [
-    "packages/pages/src/index.ts"
+    "packages/pages/src/index.ts",
+    "packages/pages/src/page-list.tsx"
   ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 16,
-  "lineCount": 3406,
+  "fileCount": 19,
+  "lineCount": 4459,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

@@ -1,0 +1,33 @@
+{
+  "id": "apps-gauntlet",
+  "name": "Gauntlet",
+  "description": "10 files, mostly schemas and components; entry points app.ts, schema.ts, seats.ts; imported by Apps.",
+  "files": [
+    "apps/gauntlet/src/domain/app.ts",
+    "apps/gauntlet/src/domain/brand.ts",
+    "apps/gauntlet/src/domain/invariants.ts",
+    "apps/gauntlet/src/domain/mutations.ts",
+    "apps/gauntlet/src/domain/policy.ts",
+    "apps/gauntlet/src/domain/schema.ts",
+    "apps/gauntlet/src/main.tsx",
+    "apps/gauntlet/src/ui/app.tsx",
+    "apps/gauntlet/src/ui/seats.ts",
+    "apps/gauntlet/src/ui/views.tsx"
+  ],
+  "entryPoints": [
+    "apps/gauntlet/src/domain/app.ts",
+    "apps/gauntlet/src/domain/schema.ts",
+    "apps/gauntlet/src/ui/seats.ts"
+  ],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 10,
+  "lineCount": 971,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}
