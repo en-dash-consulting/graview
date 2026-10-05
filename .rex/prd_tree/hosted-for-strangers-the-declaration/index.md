@@ -25,8 +25,8 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A document can say a kind's glance fields, and the compiler stops asking for what it cannot say (FR-39)](./a-document-can-say-a-kind-s-glance.md) | completed |
 | [A hardened guest worker runtime: every global outside an allowlist removed before guest code runs (FR-70)](./a-hardened-guest-worker-runtime.md) | completed |
 | [A host can ask up front what the studio will not edit: uneditable(document) (FR-62)](./a-host-can-ask-up-front-what-the.md) | completed |
-| [A host can read Graview's shape and type: SHAPE, TYPOGRAPHY and isoShade(scheme) from core (FR-73)](./a-host-can-read-graview-s-shape-and.md) | pending |
-| [A host speaks in the app's own notices: notify() on the embed handle (FR-75)](./a-host-speaks-in-the-app-s-own-notices.md) | pending |
+| [A host can read Graview's shape and type: SHAPE, TYPOGRAPHY and isoShade(scheme) from core (FR-73)](./a-host-can-read-graview-s-shape-and.md) | completed |
+| [A host speaks in the app's own notices: notify() on the embed handle (FR-75)](./a-host-speaks-in-the-app-s-own-notices.md) | completed |
 | [A host that keeps the declaration chooses who sees the studio (FR-59)](./a-host-that-keeps-the-declaration.md) | completed |
 | [A host's own work has a seat: a system principal the policy lets through, and authors named by their own name](./a-host-s-own-work-has-a-seat-a-system.md) | completed |
 | [A host's refusal can say its own sentence, and an Apply with no edits says so before the host is asked (FR-65)](./a-host-s-refusal-can-say-its-own.md) | completed |
@@ -38,7 +38,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A log can be folded from a base: epochs across declaration changes](./a-log-can-be-folded-from-a-base-epochs.md) | completed |
 | [A long-lived log compacts behind an undo horizon](./a-long-lived-log-compacts-behind-an.md) | completed |
 | [A member drawn as a row is a cell a view can claim](./a-member-drawn-as-a-row-is-a-cell-a.md) | completed |
-| [A picture of an app without a browser: sceneThumbnail(document, { scheme }) as an SVG string (FR-74)](./a-picture-of-an-app-without-a-browser.md) | pending |
+| [A picture of an app without a browser: sceneThumbnail(document, { scheme }) as an SVG string (FR-74)](./a-picture-of-an-app-without-a-browser.md) | completed |
 | [A repair reads a declared default, so a record a coerce would keep is patched rather than dropped (FR-50)](./a-repair-reads-a-declared-default-so-a.md) | completed |
 | [A rule language the framework interprets: total, budgeted, and read like a sentence](./a-rule-language-the-framework.md) | completed |
 | [A stability contract a host can hold the framework to: what a version may change, a changelog that says so, and capabilities() naming the seams it ships](./a-stability-contract-a-host-can-hold.md) | completed |
@@ -76,15 +76,15 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Stored formats carry their version, and the next major brings the steps to read the last one](./stored-formats-carry-their-version-and.md) | completed |
 | [Structural edits as a vocabulary: add, rename, retype, remove — and a rename rewrites every reference](./structural-edits-as-a-vocabulary-add.md) | completed |
 | [Templates as data: graview create and graview apply take a template made anywhere](./templates-as-data-graview-create-and.md) | completed |
-| [The AI rail can be put away: collapse to a tab, overlay when narrow, and a host's starting state (FR-78)](./the-ai-rail-can-be-put-away.md) | pending |
+| [The AI rail can be put away: collapse to a tab, overlay when narrow, and a host's starting state (FR-78)](./the-ai-rail-can-be-put-away.md) | completed |
 | [The channel is the host's word: the live handler takes via from the seat, never from the client (FR-52)](./the-channel-is-the-host-s-word-the.md) | completed |
 | [The companion is a top-level landmark or none, so axe's landmark-complementary-is-top-level holds (FR-40)](./the-companion-is-a-top-level-landmark.md) | completed |
 | [The component kit as remote elements, declared once for both sides (FR-69)](./the-component-kit-as-remote-elements.md) | completed |
 | [The declaration is a document: one JSON object compiles into the same app defineApp declares](./the-declaration-is-a-document-one-json.md) | completed |
-| [The embed has a place for a host's own actions, in the bar's profile menu (FR-72)](./the-embed-has-a-place-for-a-host-s.md) | pending |
-| [The embed has one layering system: popovers in the top layer, persistent surfaces on one ladder (FR-76)](./the-embed-has-one-layering-system.md) | pending |
+| [The embed has a place for a host's own actions, in the bar's profile menu (FR-72)](./the-embed-has-a-place-for-a-host-s.md) | completed |
+| [The embed has one layering system: popovers in the top layer, persistent surfaces on one ladder (FR-76)](./the-embed-has-one-layering-system.md) | completed |
 | [The embed loads the studio eagerly when the studio is the whole page (FR-63)](./the-embed-loads-the-studio-eagerly.md) | completed |
-| [The embed's popovers behave as one family: one open, Escape and outside click, focus in and back, kept in the viewport (FR-77)](./the-embed-s-popovers-behave-as-one.md) | pending |
+| [The embed's popovers behave as one family: one open, Escape and outside click, focus in and back, kept in the viewport (FR-77)](./the-embed-s-popovers-behave-as-one.md) | completed |
 | [The embed's stylesheet stays inside its box: every scoped themeCss rule is under the scope (FR-64)](./the-embed-s-stylesheet-stays-inside-its-box.md) | completed |
 | [The framework says its own version, and rule failures are structured](./the-framework-says-its-own-version-and.md) | completed |
 | [The live handler serves a store the host already holds (FR-42)](./the-live-handler-serves-a-store-the.md) | completed |

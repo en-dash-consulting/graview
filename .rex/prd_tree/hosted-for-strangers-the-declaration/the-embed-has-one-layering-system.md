@@ -2,7 +2,10 @@
 id: "dcab0d73-d7f8-40f3-b6b4-149fd39f5558"
 level: "feature"
 title: "The embed has one layering system: popovers in the top layer, persistent surfaces on one ladder (FR-76)"
-status: "pending"
+status: "completed"
+startedAt: "2026-10-05T04:56:18.000Z"
+completedAt: "2026-10-05T04:56:18.000Z"
+endedAt: "2026-10-05T04:56:18.000Z"
 priority: "high"
 tags:
   - "graview-cloud"
@@ -15,5 +18,5 @@ acceptanceCriteria:
   - "A test opens each popover on each face at 1440x900 and 390x844 and finds elementFromPoint inside it to be the popover"
   - "Cloud's installShellStyles override of [data-testid=\"profile\"] z-index is deleted"
 description: "Each surface picks its own inline z-index (profile and problems popovers 20, companion 40, zoom 8, overview 5) in one stacking context, so on a hosted app the profile menu opens under the AI rail and can't be read (found by Nick on staging)."
-lastModified: "2026-10-05T03:06:25.537Z"
+lastModified: "2026-10-05T04:56:18.000Z"
 ---
