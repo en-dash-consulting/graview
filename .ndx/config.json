@@ -8,7 +8,7 @@
   "claude": {
     "model": "claude-sonnet-5"
   },
-  "_initVersion": "0.5.0",
+  "_initVersion": "0.8.0",
   "cli": {
     "name": "n-dx"
   }

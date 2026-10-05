@@ -161,18 +161,19 @@ License: Elastic License 2.0, at the root and in every tarball.
 
 ## Project management tooling (n-dx)
 
-This repository is developed with [n-dx](https://github.com/en-dash-consulting/n-dx):
+This repository is developed with [n-dx](https://github.com/en-dash-consulting/n-dx)
+(0.8, the `.ndx/` layout):
 the PRD, the analysis and the run history live in the tree and are part of
 the project's record. They are not published — no package's `files` reaches
 them — but they are the context for what was built and why.
 
 | Path | What it is |
 |------|------------|
-| `.rex/prd_tree/` | The PRD: one directory per epic/feature/task with an `index.md`; the sole writable PRD surface |
-| `.rex/workflow.md` | Project-specific task-execution rules appended to the n-dx workflow |
-| `.rex/config.json`, `.n-dx.json`, `.hench/config.json` | Tool configuration (model, guard, ports) |
-| `.hench/runs/*.json` | One record per autonomous run: task, status, summary, token usage |
-| `.sourcevision/` | Static analysis: zones, imports, findings, `CONTEXT.md` |
+| `.ndx/rex/prd_tree/` | The PRD: one directory per epic/feature/task with an `index.md`; the sole writable PRD surface |
+| `.ndx/rex/workflow.md` | Project-specific task-execution rules appended to the n-dx workflow |
+| `.ndx/config.json`, `.ndx/rex/config.json`, `.ndx/hench/config.json` | Tool configuration (model, guard, ports) |
+| `.ndx/hench/runs/*.json` | One record per autonomous run: task, status, summary, token usage |
+| `.ndx/sourcevision/` | Static analysis: zones, imports, findings, `CONTEXT.md` |
 | `.claude/skills/`, `.agents/skills/` | Installed skills: the `graview-*` authoring skills plus the `ndx-*` workflow skills |
 
 Commands: `ndx status .` (progress), `ndx plan .` (analyze and propose PRD
@@ -185,7 +186,7 @@ which is therefore gitignored.
 
 **Rex MCP tools** — read: `get_prd_status`, `get_next_task`, `get_item`,
 `get_recommendations`, `get_token_usage`, `health`, `facets`,
-`get_capabilities`; write (folder tree only): `update_task_status`,
+`get_capabilities`; write (folder tree only): `claim_task`, `release_task`, `update_task_status`,
 `add_item`, `edit_item`, `move_item`, `merge_items`, `append_log`,
 `verify_criteria`, `reorganize`, `sync_with_remote`.
 
@@ -198,12 +199,16 @@ Rules that matter here:
 - **One PRD writer at a time.** MCP writes and CLI commands that rewrite
   the tree (`plan`, `reorganize`, `prune`, `reshape`) must not overlap; the
   last writer wins silently.
-- **One task per autonomous run.** Pick it with `get_next_task`, read its
+- **One task per autonomous run.** Pick it with `get_next_task` and hold it
+  with `claim_task` (another worktree's agent then skips it), read its
   parent chain and acceptance criteria, implement with a failing test first
   where possible, run `pnpm test` and the relevant harness, mark it done,
   `append_log` what was decided, commit, exit.
 - **Keep machine identifiers out of the tree.** Run records and analysis
   output are committed; hostnames and home-directory paths are not. If a
   tool writes one, scrub it before committing.
-- **Do not re-run `ndx init` here** without re-applying this file and
-  `CLAUDE.md`: it regenerates both with n-dx's generic guidance.
+- **Do not re-run `ndx init` here** without restoring this file and
+  `CLAUDE.md` afterwards: n-dx 0.8.0's init overwrites both with n-dx's own
+  monorepo guidance (its packages, gateways and zone rules), which does not
+  describe this project. Keep the `ndx-*` skills it refreshes; restore these
+  two files from git and carry over only new tool names.
