@@ -133,16 +133,22 @@ pinned at 1.49.1 on purpose.
 ## Releasing
 
 `.github/workflows/release.yml` turns merged changesets into a "Version
-packages" pull request; merging it **stages** every package on npm by
-trusted publishing (`scripts/release-stage.mjs`), and nothing is live until
-a person runs `pnpm release:approve` on main (or `--otp=<code>` from an authenticator app, to approve them all at once): it approves each staged
-version with their second factor, waits for npm to serve them, then tags
-`<name>@<version>` and writes a GitHub release each. The trusted-publisher
-configuration is per package on npmjs.com (repository
-`en-dash-consulting/graview`, workflow `release.yml`, environment `npm`,
-action `npm stage publish` — a direct publish from CI is refused on purpose).
-A brand-new package can't have a trusted publisher until it exists, so its
+packages" pull request (and dispatches CI on it, since a pull request the
+workflow's own token opens starts none). Merging it starts the `publish` job,
+which **waits in the `npm` environment for its required reviewer to approve
+it once in GitHub** — that one approval releases all fourteen packages. The
+job then builds, tests, checks the last Nightly on main is green, publishes
+each package by npm trusted publishing (`scripts/release-publish.mjs`), tags
+`<name>@<version>` and writes a GitHub release each. Re-running the job
+finishes a release that stopped part way. Each package's trusted publisher on
+npmjs.com names repository `en-dash-consulting/graview`, workflow
+`release.yml`, environment `npm`, and allows publish;
+`pnpm release:trust --apply` (npm 12, logged in as an owner) sets that. A
+brand-new package can't have a trusted publisher until it exists, so its
 first version is published by hand.
+
+`main` is protected by a ruleset: changes arrive by pull request, `verify`
+and `changeset` must pass, and nothing force-pushes or deletes it.
 License: Elastic License 2.0, at the root and in every tarball.
 
 ## Key files
