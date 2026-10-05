@@ -227,6 +227,8 @@ export {
 } from "./theme/contrast.js";
 export type { ContrastFinding, Rgba } from "./theme/contrast.js";
 export { DARK, LIGHT, SCHEMES } from "./theme/palettes.js";
+export { isoShade, SHAPE, shapeOf, TYPOGRAPHY, typographyOf } from "./theme/look.js";
+export type { IsoFace, IsoShade, IsoWash, ResolvedShape, ResolvedTypography } from "./theme/look.js";
 export { googleCalendar, googleCalendarMapping } from "./sync/google-calendar.js";
 export type { Fetcher, GoogleCalendarOptions } from "./sync/google-calendar.js";
 export { syncConflictInvariant, SYNC_CONFLICTS } from "./sync/conflict.js";

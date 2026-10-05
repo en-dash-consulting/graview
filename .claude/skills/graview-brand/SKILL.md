@@ -92,7 +92,11 @@ because the whole look is one serialisable declaration:
   lines", "make tended-by dashed and navy") and the ground's `kit.grid`;
 - **feel** → `shape.radius` (square = formal) and `shape.density` (tight =
   dense) — one number each;
-- **voice** → `typography.body/display/mono` with real fallback stacks;
+- **voice** → `typography.body/display/mono` with real fallback stacks
+  (unset, each is the framework's: `SHAPE` and `TYPOGRAPHY` in
+  `@graview/core`; a page outside the app dressed to match reads
+  `shapeOf(brand)`, `typographyOf(brand)` and `isoShade(scheme)`, never
+  copied numbers);
 - **kind colours** → `accents` hues per kind;
 - **per-kind layout** → register a view over the registry cell, the same
   authoring move as everything else (see graview-node-kind).

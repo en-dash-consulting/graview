@@ -16,7 +16,10 @@ Everything a Graview app declares, and the checker that verifies it.
 - **Permissions** — a `Principal` is an `Author` with roles, so what the log
   blames is what the policy judged.
 - **Theme** — the token contract, the two shipped palettes, and a contrast
-  checker that measures a brand's palette before it ships.
+  checker that measures a brand's palette before it ships. The rest of the
+  look is data beside them — `SHAPE`, `TYPOGRAPHY` and `isoShade(scheme)`,
+  resolved for a brand by `shapeOf` and `typographyOf` — so a page outside
+  the app can dress as one without importing a stylesheet.
 - **`graview check`** — reads a declaration and reports what is wrong with it,
   in terms an agent can act on.
 - **Documents** — `@graview/core/document`: a whole app as one JSON object,
