@@ -19,6 +19,7 @@ graview.style(`
   .price { font-variant-numeric: tabular-nums; font-weight: 600; }
   .offers { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; color: var(--graview-ink-muted); }
   .offers li { display: flex; justify-content: space-between; gap: 12px; }
+  .offers a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
   @media (max-width: 420px) { .package header { display: grid; } }
 `);
 
@@ -36,7 +37,7 @@ graview.onProps((props) => {
         return graview.html`
           <article class="package ${pkg.standing}" data-key="${pkg.id}">
             <header><span class="tag">${pkg.standing}</span><h3>${pkg.label}</h3><span class="price">${money(total)}</span></header>
-            <ul class="offers">${offers.map((offer) => graview.html`<li data-key="${offer.id}"><span>${offer.label}</span><span>${money(offer.list * offer.units)}</span></li>`)}</ul>
+            <ul class="offers">${offers.map((offer) => graview.html`<li data-key="${offer.id}"><a data-record="${offer.id}">${offer.label}</a><span>${money(offer.list * offer.units)}</span></li>`)}</ul>
           </article>`;
       })}
     </div>`);

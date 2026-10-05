@@ -30,8 +30,10 @@ export interface OpenRendererOptions extends JudgeContext {
   readonly maxNodes?: number;
   /** The view went past `maxNodes`. Called once. */
   readonly onOverBudget?: () => void;
-  /** An element was made: the host's chance to set what is its own on it (a button's type, a link's role). */
+  /** An element was made, with its first attributes: the host's chance to set what is its own on it (a button's type, a link's role). */
   readonly decorate?: (element: Element, name: string, namespace: OpenNamespace) => void;
+  /** An attribute the view gave was drawn, or taken away. */
+  readonly onAttribute?: (element: Element, name: string) => void;
   /** The view set what a field holds (its `value`, `checked`, `selected`, or a textarea's text): it is no longer what the person typed. */
   readonly onFieldSet?: (field: Element) => void;
 }
@@ -105,6 +107,7 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
     const before = isField ? (judged.name === "value" ? field.value : judged.name === "checked" ? field.checked : field.selected) : undefined;
     if (judged.value === null) element.removeAttribute(judged.name);
     else element.setAttribute(judged.name, judged.value);
+    options.onAttribute?.(element, judged.name);
     if (!isField) return;
     /* What a field holds live, as well as what it says. */
     if (judged.name === "value" && "value" in field) {
@@ -172,8 +175,8 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
     byId.set(id, drawn);
     ids.set(element, id);
     size += 1;
-    options.decorate?.(element, judged.name, judged.namespace);
     if (isRecord(raw["attributes"])) for (const [key, value] of Object.entries(raw["attributes"])) setAttribute(drawn, key, value);
+    options.decorate?.(element, judged.name, judged.namespace);
     /* A native element has attributes, never Remote DOM properties or listeners: those are a kit component's. */
     if (isRecord(raw["properties"])) for (const key of Object.keys(raw["properties"])) refuse({ reason: "attribute", element: judged.name, name: key });
     if (isRecord(raw["eventListeners"])) for (const key of Object.keys(raw["eventListeners"])) if (raw["eventListeners"][key] != null) refuse({ reason: "attribute", element: judged.name, name: `on${key}` });

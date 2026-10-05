@@ -31,6 +31,7 @@ export interface OpenDrawingOptions {
   readonly send: (message: GuestDomEvent) => void;
   readonly decorate?: (element: Element, name: string, namespace: OpenNamespace) => void;
   readonly onFieldSet?: (field: Element) => void;
+  readonly onAttribute?: (element: Element, name: string) => void;
   /**
    * The viewer did something on what the view drew, before the view is
    * told: the host's own handling (a press bound to an act, a link), in the
@@ -78,6 +79,7 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
       options.decorate?.(element, name, namespace);
     },
     ...(options.onFieldSet ? { onFieldSet: options.onFieldSet } : {}),
+    ...(options.onAttribute ? { onAttribute: options.onAttribute } : {}),
   });
   const cssRefused: ViewRefusal[] = [];
   let css = "";

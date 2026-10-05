@@ -256,3 +256,19 @@ until the viewer empties it; a `change` a browser raises when such a field
 loses focus is not typing; a view that says back what a field shows, or
 empties it, takes nothing away. Either way an act is applied as the viewer,
 `via: "view:<name>"`, within the view's allowance, and undoable.
+
+### Links stay in the app
+
+A worker view links to a record or a named place of this app, and nowhere
+else. The open kit draws no `href`, so `<a href="https://…">` is text;
+`<a data-record="offer:coaching">` and `<a data-place="the-packages">` are
+made links by the host — focusable, a link to assistive technology — and
+followed by it on a press or Enter, to a record the viewer may see or a
+place the app has. `graview.navigate("offer:coaching")` and
+`graview.navigate({ place: "the-packages" })` are held to the same. The
+props list the app's places (`places`, each with its slug and title). On
+the Graview face a record is focused and chosen and a place is drawn; on
+the pages face each goes to its own address — through `useGoTo` in
+`@graview/react`, which the routed face provides. The kit's `gv-link`
+keeps `links.origins`: it is the kit's one deliberate way out, to the
+origins a host lists, and an open-kit view has none.

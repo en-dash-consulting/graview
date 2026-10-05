@@ -1,5 +1,5 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
-import type { GuestAct, GuestEdge, GuestProps, GuestTheme } from "../protocol.js";
+import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import { plainNode, type GuestViewInput } from "./session.js";
 
 /*
@@ -81,6 +81,8 @@ export interface WorkerViewPropsInput {
   /** Where the view is drawn: the record, or the members, the face hands it. */
   readonly input?: GuestViewInput;
   readonly theme?: GuestTheme;
+  /** The app's named places, which the view may link to (FR-93). */
+  readonly places?: readonly GuestPlace[];
 }
 
 /**
@@ -143,5 +145,6 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
     ...(input.flagged ? { flagged: visible(input.flagged) } : {}),
     acts,
     ...(given.theme ? { theme: given.theme } : {}),
+    ...(given.places ? { places: given.places.map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
   };
 }

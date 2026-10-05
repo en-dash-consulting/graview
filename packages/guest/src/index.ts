@@ -8,6 +8,7 @@ export type {
   GuestDomEvent,
   GuestEvent,
   GuestNode,
+  GuestPlace,
   GuestPressed,
   GuestProps,
   GuestTheme,

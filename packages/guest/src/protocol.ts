@@ -12,6 +12,7 @@
  *   host  → guest    { type: "props", props }                        (over the port, whenever what it sees moves)
  *   guest → host     { type: "act", nonce, id, name, args }          (over the port: ask for an act)
  *   guest → host     { type: "navigate", nonce, to }                 (over the port: go to a record)
+ *   guest → host     { type: "navigate", nonce, place }              (over the port: go to a named place of the app, by its slug)
  *   guest → host     { type: "size", nonce, height }                 (over the port: the height it wants)
  *   host  → guest    { type: "answer", id, ok, … }                   (over the port: what became of an act)
  *
@@ -134,6 +135,15 @@ export interface GuestProps {
   readonly acts: readonly GuestAct[];
   /** The app's look now, for a worker view (FR-91): pushed again when the app's scheme changes. */
   readonly theme?: GuestTheme;
+  /** The app's named places, for a worker view to link to by slug (FR-93): never an address outside the app. */
+  readonly places?: readonly GuestPlace[];
+}
+
+/** A named place of the app: a picture by its title, and the slug a link names it by. */
+export interface GuestPlace {
+  readonly as: string;
+  readonly title: string;
+  readonly kind: string;
 }
 
 /** Why the host did not apply an act the guest asked for. */
@@ -238,6 +248,8 @@ export type HostMessage =
 export type GuestRequest =
   | { readonly type: "act"; readonly nonce: string; readonly id: string | number; readonly name: string; readonly args: Readonly<Record<string, unknown>> }
   | { readonly type: "navigate"; readonly nonce: string; readonly to: string }
+  /** Go to a named place of this app, by its slug (FR-93): a worker view's links stay in the app. */
+  | { readonly type: "navigate"; readonly nonce: string; readonly place: string }
   | { readonly type: "size"; readonly nonce: string; readonly height: number }
   /** A worker guest's drawing: Remote DOM mutation records, with each listener sent as `{ listener: id }`. */
   | { readonly type: "render"; readonly nonce: string; readonly records: readonly unknown[] }

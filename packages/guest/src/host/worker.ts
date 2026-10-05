@@ -210,3 +210,4 @@ export type { MountWorkerViewOptions, WorkerView, WorkerViewFailure, WorkerViewL
 export type { ViewRefusal } from "./open-draw.js";
 export type { OpenRefusal, OpenRefusalReason } from "./open-judge.js";
 export type { CssRefusal, CssRefusalReason } from "./css.js";
+export type { Destination } from "./links.js";

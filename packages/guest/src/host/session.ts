@@ -50,6 +50,10 @@ export interface GuestHostOptions<S extends AnySchema> {
   readonly onNavigate?: (id: string) => void;
   /** The guest asked for a height. */
   readonly onSize?: (height: number) => void;
+  /** The guest asked to go to a named place of the app, one `places` lists (FR-93). */
+  readonly onNavigatePlace?: (as: string) => void;
+  /** The app's named places, by slug: where a guest may ask to go besides a record. */
+  readonly places?: () => readonly string[];
   /**
    * A worker guest's drawing (FR-68): its Remote DOM mutation records, for
    * the kit's renderer to draw what the kit allows of. Without it, a
@@ -276,6 +280,11 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
         return;
       }
       if (data.type === "act" && (typeof data.id === "string" || typeof data.id === "number")) return act(data.id, data.name, data.args);
+      if (data.type === "navigate" && typeof data.place === "string") {
+        if (options.places?.().includes(data.place)) options.onNavigatePlace?.(data.place);
+        else stats.dropped += 1;
+        return;
+      }
       if (data.type === "navigate" && typeof data.to === "string") {
         if (seen().graph.has(data.to)) options.onNavigate?.(data.to);
         else stats.dropped += 1;

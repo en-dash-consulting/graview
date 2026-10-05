@@ -1,10 +1,11 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
-import type { GuestDomEvent, GuestTheme } from "../protocol.js";
+import type { GuestDomEvent, GuestPlace, GuestTheme } from "../protocol.js";
 import { checkManifest, workerViewProps, type WorkerViewManifest } from "./manifest.js";
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
 import { judgeCodeAct } from "./writes.js";
+import { createLinks, type Destination } from "./links.js";
 
 /** Why a worker view is not shown, for a host that draws something else in its place. */
 export type WorkerViewFailure =
@@ -36,7 +37,15 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
   readonly principal: Principal;
   /** Where the view is drawn: the record, or the members, the face hands it. */
   readonly input?: () => GuestViewInput;
-  readonly onNavigate?: (id: string) => void;
+  /**
+   * The view asked to go to a record or a named place of this app — by a
+   * link it drew (`<a data-record>`, `<a data-place>`) or from its code.
+   * Only a record the viewer may see and a place `places` lists get here;
+   * a worker view has no way to an address outside the app (FR-93).
+   */
+  readonly onNavigate?: (to: Destination) => void;
+  /** The app's named places: what the view is told of, and may link to by slug. None by default. */
+  readonly places?: () => readonly GuestPlace[];
   /**
    * The app's look now. Read off the region by default: the `--graview-*`
    * tokens it inherits, and the scheme of the nearest `data-graview-scheme`
@@ -199,6 +208,13 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     if (one[0] === "render") drawing.apply(one[1]);
     else drawing.style(one[1]);
   };
+  /* Links stay in the app (FR-93): a record the viewer may see, or a place the app has. */
+  const links = createLinks({
+    sees: (id) => options.store.seenBy(options.principal).graph.has(id),
+    places: () => options.places?.() ?? [],
+    ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
+  });
+
   /* The records the view was last shown: a press may be bound to one of these, and to nothing else (FR-92). */
   let shown: ReadonlySet<string> = new Set();
   void Promise.all([import("./open-draw.js"), import("./press.js")]).then(([{ createOpenDrawing }, { createPressReader, judgePress }]) => {
@@ -210,6 +226,12 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       onOverBudget: () => fail("budget"),
       send,
       onFieldSet: (field) => reader.filled(field),
+      onAttribute: (element, name) => {
+        if (element.localName === "a" && (name === "data-record" || name === "data-place")) links.link(element);
+      },
+      decorate: (element) => {
+        if (element.localName === "a") links.link(element);
+      },
       /*
        * THE VIEWER'S PRESS, IN ITS OWN HANDLER (FR-92). A trusted click on
        * an element bound to an act is judged and applied here, before the
@@ -217,8 +239,17 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
        */
       before: (event, at, root) => {
         reader.heard(event, at);
+        /* A link the view drew goes where it says, if that is a record or a place of this app. */
+        const anchor = at.closest("a[data-graview-link]");
+        if (anchor && root.contains(anchor) && (event.type === "click" || (event.type === "keydown" && (event as KeyboardEvent).key === "Enter"))) {
+          /* Followed here, and nowhere else: the face around the view does not also take the press for a press on the card. */
+          event.preventDefault();
+          event.stopPropagation();
+          links.follow(anchor);
+        }
         const press = reader.press(event, at, root);
         if (!press || !session) return;
+        event.stopPropagation();
         const outcome = session.pressed(judgePress(options.store, manifest, shown, press));
         tally();
         return { pressed: { as: press.as, ...outcome } };
@@ -244,14 +275,16 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         nonce,
         send: (message) => given.postMessage(message),
         props: () => {
-          const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme() });
+          const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), ...(options.places ? { places: options.places() } : {}) });
           shown = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
           return props;
         },
         judgeAct: (name, args) => judgeCodeAct(options.store, manifest, name, args),
         onRender: (records) => draw(["render", records]),
         onStyle: (css) => draw(["style", css]),
-        ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
+        onNavigate: (record) => void links.go({ record }),
+        onNavigatePlace: (place) => void links.go({ place }),
+        places: () => (options.places?.() ?? []).map((place) => place.as),
         ...(options.limits ? { limits: options.limits } : {}),
         limiter,
       });

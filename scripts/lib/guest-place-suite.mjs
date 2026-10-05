@@ -21,9 +21,11 @@ import { join, resolve } from "node:path";
 import { graviewSources } from "./graview-sources.mjs";
 
 export const PACKAGES_MANIFEST = { name: "packages", title: "The packages", attach: "package", cardinality: "many", reads: { kinds: ["offer"], edges: ["includes"] } };
+export const NOTES_MANIFEST = { name: "notes", title: "What we heard", attach: "signal", cardinality: "many" };
 
 export async function placeSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript }) {
   const packagesJs = await viewScript(readFileSync(resolve(repoRoot, "scripts/fixtures/views/packages.js"), "utf8"));
+  const notesJs = await viewScript(readFileSync(resolve(repoRoot, "scripts/fixtures/views/notes.js"), "utf8"));
   const out = mkdtempSync(join(tmpdir(), "graview-guest-place-"));
   await build({
     stdin: {
@@ -34,6 +36,7 @@ import { erin, lin, offersApp, offersSeed } from ${JSON.stringify(resolve(repoRo
 const asked = new URLSearchParams(location.search);
 window.__failures = [];
 const definition = { manifest: ${JSON.stringify(PACKAGES_MANIFEST)}, worker: { script: window.PACKAGES }, author: "Made by Claude for Nick" };
+const notes = { manifest: ${JSON.stringify(NOTES_MANIFEST)}, worker: { script: window.NOTES } };
 window.__handle = mount(document.getElementById("app"), {
   app: offersApp,
   seed: offersSeed,
@@ -46,7 +49,7 @@ window.__handle = mount(document.getElementById("app"), {
   height: "100%",
   fonts: false,
   studio: false,
-  views: (schema, registry) => registerWorkerView(registry, definition),
+  views: (schema, registry) => registerWorkerView(registerWorkerView(registry, definition), notes),
 });
 window.__handle.drawn().then(() => { window.__ready = true; });
 `,
@@ -65,7 +68,7 @@ window.__handle.drawn().then(() => { window.__ready = true; });
   });
   const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Offers</title>
 <style>body{margin:0;font:16px/1.4 Georgia,serif}#app{position:relative;height:100vh}</style></head>
-<body><div id="app"></div><script>window.PACKAGES = ${JSON.stringify(packagesJs).replace(/<\/script/gi, "<\\/script")};</script><script type="module" src="/entry.js"></script></body></html>`;
+<body><div id="app"></div><script>window.PACKAGES = ${JSON.stringify(packagesJs).replace(/<\/script/gi, "<\\/script")}; window.NOTES = ${JSON.stringify(notesJs).replace(/<\/script/gi, "<\\/script")};</script><script type="module" src="/entry.js"></script></body></html>`;
   writeFileSync(join(out, "index.html"), page);
   const server = createServer((request, response) => {
     const path = decodeURIComponent((request.url ?? "/").split("?")[0]).replace(/^\/+/, "") || "index.html";
@@ -100,7 +103,7 @@ window.__handle.drawn().then(() => { window.__ready = true; });
           heading: root.querySelector("h2")?.textContent ?? null,
           kinds: root.querySelector(".lens")?.getAttribute("data-kinds"),
           scheme: root.querySelector(".lens")?.getAttribute("data-scheme"),
-          packages: [...root.querySelectorAll(".package")].map((one) => ({ id: one.getAttribute("data-key"), title: one.querySelector("h3").textContent, offers: [...one.querySelectorAll(".offers li span:first-child")].map((offer) => offer.textContent) })),
+          packages: [...root.querySelectorAll(".package")].map((one) => ({ id: one.getAttribute("data-key"), title: one.querySelector("h3").textContent, offers: [...one.querySelectorAll(".offers li a")].map((offer) => offer.textContent) })),
           background: getComputedStyle(root.querySelector(".package")).backgroundColor,
           text: root.querySelector("[data-graview-view-root]").textContent,
         };
@@ -160,6 +163,36 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     const system = await tab.evaluate(() => matchMedia("(prefers-color-scheme: dark)").matches);
     claim("in light the packages take the app's light panel", light.scheme === "light" && light.background === lightPanel, { light: light.background, lightPanel });
     claim("toggling the app to dark restyles the view and pushes it the dark theme, though the system says light", !system && dark.scheme === "dark" && dark.background === darkPanel && darkPanel !== lightPanel, { dark: dark.background, darkPanel, system, scheme: dark.scheme });
+    // ── links stay in the app (FR-93) ──
+    const inRegion = (view, selector) => tab.locator(`[data-worker-view="${view}"]`).locator(selector);
+    await open("face=pages&path=/places/the-packages");
+    await lens();
+    await inRegion("packages", 'a[data-record="offer:coaching"]').first().click();
+    await tab.waitForFunction(() => /Team coaching/.test(document.querySelector("h1")?.textContent ?? ""), null, { timeout: 10_000 }).catch(() => {});
+    const recordPage = await tab.evaluate(() => ({ heading: document.querySelector("h1")?.textContent ?? null, region: Boolean(document.querySelector('[data-worker-view="packages"]')) }));
+    claim("on the pages face, a view's link to a record goes to that record's page", /Team coaching/.test(recordPage.heading ?? "") && !recordPage.region, recordPage);
+    await open("face=pages&path=/places/what-we-heard");
+    await inRegion("notes", "#to-packages").waitFor({ timeout: 15_000 });
+    const out = await inRegion("notes", "#out").evaluate((anchor) => ({ href: anchor.getAttribute("href"), role: anchor.getAttribute("role"), text: anchor.textContent }));
+    claim('a view\'s <a href="https://…"> is drawn as text: no href, not a link', out.href === null && out.role === null && out.text === "Somewhere else", out);
+    await inRegion("notes", "#to-packages").focus();
+    await tab.keyboard.press("Enter");
+    await lens().catch(() => null);
+    const placePage = await tab.evaluate(() => Boolean(document.querySelector('[data-worker-view="packages"]')?.shadowRoot?.querySelector(".package")));
+    claim("on the pages face, a view's link to a place, followed with Enter, goes to that place", placePage);
+    await open("face=scene");
+    await tab.waitForSelector('[data-testid="place-what-we-heard"], [data-testid="places-more"]', { state: "attached", timeout: 20_000 });
+    const notesPill = tab.locator('[data-testid="place-what-we-heard"]');
+    if (await notesPill.isVisible()) await notesPill.click();
+    else await tab.locator('[data-testid="places-more"]').selectOption({ label: "What we heard" });
+    await inRegion("notes", "#to-packages").waitFor({ timeout: 15_000 });
+    await inRegion("notes", "#to-packages").click();
+    const scenePlace = await lens().then((drawn) => drawn.packages.length === 3).catch(() => false);
+    claim("on the Graview face, a view's link to a place goes to that place", scenePlace);
+    await inRegion("packages", 'a[data-record="offer:strategy"]').first().click();
+    await tab.waitForFunction(() => Boolean(document.querySelector('[data-graview-view="offer:strategy"][data-graview-selected]')), null, { timeout: 10_000 }).catch(() => {});
+    const sceneRecord = await tab.evaluate(() => Boolean(document.querySelector('[data-graview-view="offer:strategy"][data-graview-selected]')));
+    claim("on the Graview face, a view's link to a record goes to that record, chosen", sceneRecord);
     claim("no view failed", (await tab.evaluate(() => window.__failures)).length === 0);
     claim("the page throws nothing", report.pageErrors.length === 0, report.pageErrors);
     await context.close();

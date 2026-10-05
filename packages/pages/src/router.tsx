@@ -1,12 +1,13 @@
 import type { AnySchema } from "@graview/core";
 import { BrowserRouter, MemoryRouter, Route, Routes } from "react-router-dom";
-import { useEffect, useLayoutEffect, useRef, type ComponentType, type ReactNode } from "react";
-import { GraviewProvider, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen } from "@graview/react/provider";
+import { useEffect, useLayoutEffect, useMemo, useRef, type ComponentType, type ReactNode } from "react";
+import { GoToContext, GraviewProvider, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo } from "@graview/react/provider";
 import { PageAsk } from "./ask.js";
 import { FaceControlsRoot } from "./face-controls.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
-import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
-import { useLocation, useNavigationType, useParams } from "react-router-dom";
+import { pathOfPlace } from "./page-places.js";
+import { createPageRegistry, kindOfSlug, recordPath, type PageRegistry } from "./registry.js";
+import { useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
 
 /**
  * The routed face, assembled: `/` home, `/:plural` a list per kind,
@@ -137,6 +138,29 @@ function ScrollReset() {
   return <span ref={mark} hidden data-graview-scroll-reset="" />;
 }
 
+/**
+ * GOING SOMEWHERE, ON THIS FACE: a record is its page, a place is its
+ * address under `/places/`. What a view that is not React — a worker view
+ * (FR-93) — reaches through `useGoTo`.
+ */
+function GoesByAddress<S extends AnySchema>({ context, children }: { readonly context: PageContext<S>; readonly children: ReactNode }) {
+  const navigate = useNavigate();
+  const goTo = useMemo<GoTo>(
+    () => ({
+      record: (id) => {
+        const node = context.store.graph.getNode(id);
+        if (node) navigate(recordPath(context.store.schema, node.kind, id));
+      },
+      place: (as) => {
+        const place = context.views?.places().find((candidate) => candidate.as === as);
+        if (place) navigate(pathOfPlace(context, place));
+      },
+    }),
+    [context, navigate],
+  );
+  return <GoToContext.Provider value={goTo}>{children}</GoToContext.Provider>;
+}
+
 export function PagesRoutes<S extends AnySchema>({
   context,
   registry,
@@ -165,6 +189,7 @@ export function PagesRoutes<S extends AnySchema>({
   return (
     // The routed face holds the keyboard the way the scene does, and offers Find and the way back, whichever shell an app draws.
     <FaceRoot context={context} registry={registry}>
+    <GoesByAddress context={context}>
     <Shell context={context}>
       <ScrollReset />
       <Routes>
@@ -192,6 +217,7 @@ export function PagesRoutes<S extends AnySchema>({
         />
       </Routes>
     </Shell>
+    </GoesByAddress>
     </FaceRoot>
   );
 }
