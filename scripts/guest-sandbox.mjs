@@ -159,18 +159,6 @@ function protocolClaims({ seen, answers, wire, log, heard, stats, went }) {
   claim("navigation went only to what Bethan may see", JSON.stringify(went) === JSON.stringify(["car:golf"]), went);
 }
 
-const browser = await playwright[ENGINE].launch();
-let servers = [];
-try {
-  if (TRANSPORT === "frame") await frameSuite();
-  else await workerSuite();
-} finally {
-  await browser.close();
-  for (const server of servers) server.close();
-}
-report.passed = Object.values(report.claims).every((one) => one.ok);
-writeFileSync(resolve(repoRoot, VERDICT), `${JSON.stringify(report, null, 2)}\n`);
-process.exit(report.passed ? 0 : 1);
 
 // ── the frame ────────────────────────────────────────────────────────────────
 
@@ -348,19 +336,79 @@ window.__done = true;
 
 // ── the worker, in a chat's widget ───────────────────────────────────────────
 
+/** FR-70's list: every one of these must be absent from a guest's worker (`!(name in self)`), and `navigator.storage`. */
+const BANNED = ["fetch", "XMLHttpRequest", "WebSocket", "EventSource", "WebTransport", "importScripts", "indexedDB", "caches", "BroadcastChannel", "Worker", "SharedWorker"];
+
+/** What the platform had before the runtime ran, by name, for the prober to look for afterwards. */
+const NATIVES = `
+const names = ["fetch", "XMLHttpRequest", "WebSocket", "EventSource", "WebTransport", "importScripts", "indexedDB", "caches", "BroadcastChannel", "Worker", "SharedWorker", "MessageChannel", "MessagePort", "navigator", "location", "performance", "Blob", "URL", "FileReader", "WebAssembly", "eval", "Function", "Request", "Response", "Headers", "addEventListener", "removeEventListener", "close", "fonts", "FontFace", "OffscreenCanvas", "createImageBitmap", "Notification", "CacheStorage", "IDBFactory", "StorageManager", "Cache", "XMLHttpRequestEventTarget", "WorkerNavigator", "WorkerLocation"];
+export const captured = new Map();
+for (const name of names) {
+  let value;
+  try { value = self[name]; } catch { continue; }
+  if (value === null || (typeof value !== "object" && typeof value !== "function")) continue;
+  captured.set(value, name);
+  if (typeof value === "function" && value.prototype && name !== "Function" && name !== "eval") captured.set(value.prototype, name + ".prototype");
+}
+for (const [path, read] of [["navigator.storage", () => self.navigator.storage], ["the async function constructor", () => (async function () {}).constructor], ["the generator function constructor", () => (function* () {}).constructor], ["crypto.subtle", () => self.crypto.subtle], ["crypto", () => self.crypto]]) {
+  try { const value = read(); if (value) captured.set(value, path); } catch {}
+}
+`;
+
+/** FR-70's claims, from what the prober drew. */
+async function hardeningClaims(probed) {
+  const { GUEST_GLOBALS, OBJECT_PROTOTYPE } = await import(resolve(repoRoot, "packages/guest/dist/worker/harden.js"));
+  const present = Object.entries(probed.absent).filter(([, absent]) => !absent).map(([name]) => name);
+  claim("inside the guest's worker, fetch, XMLHttpRequest, WebSocket, EventSource, WebTransport, importScripts, indexedDB, caches, navigator.storage, BroadcastChannel, Worker and SharedWorker are all absent", Object.keys(probed.absent).length === 12 && present.length === 0, present);
+  const allowed = new Set([...GUEST_GLOBALS, "constructor", "Symbol(Symbol.toStringTag)"]);
+  const outside = probed.levels.flatMap((level, depth) => level.names.filter((name) => !(level.objectPrototype ? OBJECT_PROTOTYPE.includes(name) : allowed.has(name))).map((name) => `${depth}:${name}`));
+  claim("the worker's global, own and inherited, symbols included, names nothing outside the allowlist", probed.levels.length >= 3 && outside.length === 0, outside);
+  claim("hardening removed every name it meant to, and the global takes no new one", probed.hardening.stuck.length === 0 && probed.hardening.removed > 0 && probed.hardening.sealed === true, probed.hardening);
+  claim("self.constructor.prototype holds none of them", probed.constructorPrototype.length === 0, probed.constructorPrototype);
+  claim("no prototype on the global's chain holds any of them", probed.chain.length === 0, probed.chain);
+  claim("globalThis is the same hardened global", probed.globalThis.same && probed.globalThis.has.length === 0, probed.globalThis);
+  const code = probed.code;
+  claim("Function('return this')() and every function constructor make nothing", [code.functionThis, code.functionConstructor, code.asyncFunction, code.generatorFunction, code.asyncGeneratorFunction].every((one) => !one.ok && one.error === "EvalError"), code);
+  claim("eval is gone, by name and indirectly", code.evalInSelf === false && !code.indirectEval.ok, { evalInSelf: code.evalInSelf, indirect: code.indirectEval });
+  claim("a string handed to setTimeout or setInterval runs nothing", !code.timerString.ok && !code.intervalString.ok, { setTimeout: code.timerString, setInterval: code.intervalString });
+  claim("navigator and location are gone, from the global and from the polyfill's window", Object.values(probed.navigator).every((one) => one === false), probed.navigator);
+  claim("there is no nested context to post to, and no worker to start", probed.nested.length === 0, probed.nested);
+  claim("nothing reachable from the polyfilled DOM, the global or the guest's API is a removed API", probed.reach.visited > 500 && probed.reach.leaks.length === 0, probed.reach);
+  claim("an error's stack hands back no removed API and no port, and there is no onerror to listen on", probed.stack.leaks.length === 0 && Object.values(probed.errors).every((one) => one === false), { stack: probed.stack, errors: probed.errors });
+  claim("there is no Blob to make a script of, nor importScripts to run one", Object.values(probed.moreCode).every((one) => one === false), probed.moreCode);
+  const sticks = probed.sticks;
+  claim("what hardening left stays: no name added to the global or a prototype, none kept replaced or deleted", !sticks.addGlobal.ok && !sticks.addToPrototype.ok && !sticks.replaceKept.ok && !sticks.deleteKept.ok && sticks.frozen, sticks);
+  report.hardening = { removed: probed.hardening.removed, reached: probed.reach.visited, stackApi: probed.stack.api, stackHandedBack: probed.stack.handed };
+}
+
 async function workerSuite() {
   const policy = POLICIES[POLICY];
-  /* A guest bundle as a classic script: the worker entry first, then the guest. */
+  /*
+   * A guest bundle as a classic script: the worker entry first, then the
+   * guest. `fixture:natives` is the prober's alone: a module evaluated
+   * before the runtime, holding what the platform had, so the prober can
+   * look for any of it after hardening.
+   */
   const guestBundle = (contents) =>
     build({
       stdin: { contents, resolveDir: repoRoot, loader: "js" },
       bundle: true,
       format: "iife",
+      banner: { js: '"use strict";' },
       write: false,
       platform: "browser",
       target: "es2022",
       logLevel: "silent",
       alias: { "@graview/guest/worker": resolve(repoRoot, "packages/guest/dist/worker/index.js") },
+      plugins: [
+        {
+          name: "fixture",
+          setup(on) {
+            on.onResolve({ filter: /^fixture:/ }, (args) => ({ path: args.path, namespace: "fixture" }));
+            on.onLoad({ filter: /.*/, namespace: "fixture" }, () => ({ contents: NATIVES, loader: "js" }));
+          },
+        },
+      ],
     }).then((out) => out.outputFiles[0].text);
 
   /* The honest card: its kit, the props, and a button whose press asks for one act of hers and two that are not. */
@@ -437,6 +485,110 @@ guest.root.replaceChildren(card);
 })();
 `);
 
+  /*
+   * THE PROBER (FR-70): inside a hardened guest worker, everything a guest
+   * might try to get back what hardening took. What it finds it draws, as
+   * the kit's text; it has no other way out.
+   */
+  const proberJs = await guestBundle(`
+import { captured } from "fixture:natives";
+import { connectGuest, hardening } from "@graview/guest/worker";
+const guest = connectGuest();
+const BANNED = ${JSON.stringify(BANNED)};
+const outcome = (fn) => { try { const value = fn(); return { ok: true, value: String(value) }; } catch (error) { return { ok: false, error: (error && error.name) || String(error) }; } };
+const tagOf = (value) => Object.prototype.toString.call(value);
+const owns = (at, name) => { try { return Object.prototype.hasOwnProperty.call(at, name); } catch { return false; } };
+const chain = []; for (let at = self; at; at = Object.getPrototypeOf(at)) chain.push(at);
+/* Each value the platform had, to the name it had it by. */
+const found = captured;
+const out = {};
+out.absent = Object.fromEntries(BANNED.map((name) => [name, !(name in self)]));
+out.absent["navigator.storage"] = !("navigator" in self) || !("storage" in self.navigator);
+out.levels = chain.map((at) => ({ objectPrototype: at === Object.prototype, names: Reflect.ownKeys(at).map((key) => key.toString()) }));
+out.constructorPrototype = BANNED.filter((name) => owns(self.constructor && self.constructor.prototype, name));
+out.chain = chain.flatMap((at) => BANNED.filter((name) => owns(at, name)));
+out.globalThis = { same: globalThis === self, has: BANNED.filter((name) => name in globalThis) };
+out.code = {
+  functionThis: outcome(() => Function("return this")()),
+  functionConstructor: outcome(() => (function () {}).constructor("return typeof fetch")()),
+  asyncFunction: outcome(() => (async function () {}).constructor("return 1")),
+  generatorFunction: outcome(() => (function* () {}).constructor("yield 1")),
+  asyncGeneratorFunction: outcome(() => (async function* () {}).constructor("yield 1")),
+  evalInSelf: "eval" in self,
+  indirectEval: outcome(() => (0, self.eval)("typeof fetch")),
+  timerString: outcome(() => setTimeout("self.__ran = 1", 0)),
+  intervalString: outcome(() => setInterval("self.__ran = 1", 1000)),
+};
+out.navigator = { self: "navigator" in self, window: "navigator" in window, defaultView: "navigator" in document.defaultView, location: "location" in self || "location" in window };
+out.nested = ["Worker", "SharedWorker", "MessageChannel", "MessagePort", "BroadcastChannel", "ServiceWorker", "Notification", "importScripts"].filter((name) => name in self);
+/* Everything reachable from what the guest is given, six steps deep: the global, the polyfill's window and document, a kit element, the guest's own API. */
+const reach = () => {
+  const roots = [[globalThis, "globalThis"], [window, "window"], [document, "document"], [document.defaultView, "document.defaultView"], [document.createElement("gv-card"), "a kit element"], [document.createElement("iframe"), "an iframe of the polyfill's"], [customElements, "customElements"], [new Event("x"), "an event"], [guest, "the guest"], [guest.root, "the guest's root"], [new Error("x"), "an error"], [hardening, "hardening"]];
+  const queue = roots.map(([value, path]) => [value, path, 0]);
+  const seen = new Set();
+  const leaks = [];
+  while (queue.length > 0 && seen.size < 60000) {
+    const [value, path, depth] = queue.shift();
+    if (seen.has(value)) continue;
+    seen.add(value);
+    if (found.has(value)) leaks.push(path + " is " + found.get(value));
+    else if (/^\\[object (MessagePort|Worker|SharedWorker|IDBFactory|CacheStorage|StorageManager|WorkerNavigator|WorkerLocation|Blob|Performance|BroadcastChannel|WebSocket|XMLHttpRequest|EventSource)\\]$/.test(tagOf(value))) leaks.push(path + " is " + tagOf(value));
+    if (depth >= 6) continue;
+    let keys = [];
+    try { keys = Reflect.ownKeys(value); } catch {}
+    for (const key of keys) {
+      let descriptor;
+      try { descriptor = Object.getOwnPropertyDescriptor(value, key); } catch { continue; }
+      if (!descriptor) continue;
+      const next = [];
+      if ("value" in descriptor) next.push(descriptor.value);
+      if (descriptor.get) { next.push(descriptor.get); try { next.push(descriptor.get.call(value)); } catch {} }
+      if (descriptor.set) next.push(descriptor.set);
+      for (const one of next) if (one && (typeof one === "object" || typeof one === "function")) queue.push([one, path + "." + key.toString(), depth + 1]);
+    }
+    let prototype = null;
+    try { prototype = Object.getPrototypeOf(value); } catch {}
+    if (prototype) queue.push([prototype, path + ".__proto__", depth + 1]);
+  }
+  return { visited: seen.size, leaks };
+};
+out.reach = reach();
+out.errors = { onerror: "onerror" in self, onunhandledrejection: "onunhandledrejection" in self, addEventListener: "addEventListener" in self, onmessage: "onmessage" in self };
+out.sticks = {
+  addGlobal: outcome(() => { self.fetch = () => 1; return "fetch" in self; }),
+  addToPrototype: outcome(() => { Object.getPrototypeOf(self).fetch = () => 1; return "fetch" in self; }),
+  replaceKept: outcome(() => { self.postMessage = () => 1; return "replaced"; }),
+  deleteKept: outcome(() => { delete self.document; return typeof document; }),
+  frozen: chain.slice(1, -1).every((at) => Object.isFrozen(at)),
+};
+out.hardening = { removed: hardening.removed.length, stuck: hardening.stuck, sealed: hardening.sealed };
+/* Code from a script made in the worker, and from a URL it can name: there is no Blob to make one from, nor importScripts to run it. */
+out.moreCode = { blob: "Blob" in self, url: "URL" in self, importScripts: "importScripts" in self };
+let drawnOnce = false;
+guest.subscribe(() => {
+  if (drawnOnce) return;
+  drawnOnce = true;
+  /* An error's stack, read with V8's CallSite API from inside a call the runtime made: what is on the stack, handed back? */
+  if (typeof Error.captureStackTrace === "function") {
+    const handed = [];
+    const before = Error.prepareStackTrace;
+    Error.prepareStackTrace = (error, sites) => { for (const site of sites) handed.push(site.getThis && site.getThis(), site.getFunction && site.getFunction()); return ""; };
+    void new Error("probe").stack;
+    Error.prepareStackTrace = before;
+    const values = handed.filter((value) => value !== undefined && value !== null);
+    out.stack = { api: true, handed: values.map((value) => (typeof value === "function" ? "function " + value.name : tagOf(value))), leaks: values.filter((value) => found.has(value) || /MessagePort/.test(tagOf(value))).map((value) => found.get(value) || tagOf(value)) };
+  } else out.stack = { api: false, handed: [], leaks: [] };
+  const said = JSON.stringify(out);
+  const card = document.createElement("gv-card");
+  for (let at = 0; at < said.length; at += 9000) {
+    const part = document.createElement("gv-text");
+    part.textContent = said.slice(at, at + 9000);
+    card.append(part);
+  }
+  guest.root.replaceChildren(card);
+});
+`);
+
   const widgetJs = await bundle(
     `
 import { mountGuestWorker } from "./packages/guest/dist/host/index.js";
@@ -446,17 +598,22 @@ const started = [];
 const NativeWorker = window.Worker;
 window.Worker = function Worker(url, options) {
   started.push({ url: String(url).slice(0, 5), type: (options && options.type) || "classic" });
-  return new NativeWorker(url, options);
+  const worker = new NativeWorker(url, options);
+  worker.addEventListener("error", (event) => errors.push(String(event.message)));
+  return worker;
 };
+const errors = [];
 const failures = [];
 const guests = {
   card: mountGuestWorker(document.getElementById("card"), { worker: { script: CARD }, view: "card", store, principal: bethan, input: all, onNavigate: (id) => went.push(id), onFailure: (reason) => failures.push(["card", reason]) }),
   hostile: mountGuestWorker(document.getElementById("hostile"), { worker: { script: HOSTILE }, view: "hostile", store, principal: bethan, input: all, limits: { acts: 5 }, onNavigate: (id) => went.push(id), onFailure: (reason) => failures.push(["hostile", reason]) }),
+  prober: mountGuestWorker(document.getElementById("prober"), { worker: { script: PROBER }, view: "prober", store, principal: bethan, input: all, onFailure: (reason) => failures.push(["prober", reason]) }),
 };
 window.__host = {
   ...host,
   started,
   failures,
+  errors,
   origin: self.origin,
   stats: () => ({ card: { ...guests.card.stats }, hostile: { ...guests.hostile.stats } }),
   refused: () => ({ card: guests.card.refused, hostile: guests.hostile.refused }),
@@ -464,8 +621,8 @@ window.__host = {
 `,
     "iife",
   );
-  const inline = `const CARD = ${JSON.stringify(cardJs)}; const HOSTILE = ${JSON.stringify(hostileJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
-  const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Graview view</title></head><body><main><div id="card"></div><div id="hostile"></div></main><script>${inline}</script></body></html>`;
+  const inline = `const CARD = ${JSON.stringify(cardJs)}; const HOSTILE = ${JSON.stringify(hostileJs)}; const PROBER = ${JSON.stringify(proberJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
+  const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Graview view</title></head><body><main><div id="card"></div><div id="hostile"></div><div id="prober"></div></main><script>${inline}</script></body></html>`;
 
   const hostHtml = `<!doctype html><html><head><meta charset="utf-8"><title>Chat</title></head><body><iframe id="proxy" title="Widget" style="width:720px;height:600px;border:0" src="${GUEST}/proxy/${POLICY}.html"></iframe></body></html>`;
   servers = [
@@ -505,20 +662,22 @@ window.__host = {
       if (text !== null && test(text)) return text;
       await tab.waitForTimeout(100);
     }
-    throw new Error(`${what} never drawn: ${JSON.stringify(await widget.evaluate(() => ({ failures: window.__host.failures, html: document.body.innerHTML.slice(0, 400) })))}`);
+    throw new Error(`${what} never drawn: ${JSON.stringify(await widget.evaluate(() => ({ failures: window.__host.failures, errors: window.__host.errors, html: document.body.innerHTML.slice(0, 400) })))}`);
   };
   const reportOf = (text) => JSON.parse(text);
   await drawn("#card [data-gv=text]", (text) => reportOf(text).seen.length > 0, "the card");
   await widget.click("#card button");
   const cardSaid = reportOf(await drawn("#card [data-gv=text]", (text) => reportOf(text).answers.length === 3, "the card's answers"));
   const hostileSaid = reportOf(await drawn("#hostile [data-gv=text]", () => true, "the hostile guest's report"));
+  await drawn("#prober [data-gv=text]", () => true, "the prober's report");
+  const probed = JSON.parse((await widget.evaluate(() => [...document.querySelectorAll("#prober [data-gv=text]")].map((one) => one.textContent))).join(""));
   await tab.waitForTimeout(300);
 
   const host = await widget.evaluate(() => ({ started: window.__host.started, failures: window.__host.failures, origin: window.__host.origin, log: window.__host.log(), went: window.__host.went, stats: window.__host.stats(), refused: window.__host.refused() }));
   const html = await widget.evaluate(() => document.querySelector("main").innerHTML);
   report.policy = { name: POLICY, csp: localize(policy.proxyMetaCsp ?? policy.proxyCsp, HOST), sandbox: policy.innerSandbox, widgetOrigin: host.origin };
 
-  claim("every guest was started as a classic worker from a blob: URL", host.started.length === 2 && host.started.every((one) => one.url === "blob:" && one.type === "classic"), host.started);
+  claim("every guest was started as a classic worker from a blob: URL", host.started.length === 3 && host.started.every((one) => one.url === "blob:" && one.type === "classic"), host.started);
   claim("no guest failed to start", host.failures.length === 0, host.failures);
   claim("the card was drawn in the widget's page, from the kit", /<section[^>]*data-gv="card"/.test(html) && /<strong[^>]*>Golf<\/strong>/.test(html) && /<button[^>]*data-gv="button"/.test(html), html.slice(0, 300));
   protocolClaims({
@@ -538,6 +697,22 @@ window.__host = {
   claim("a link the guest gave a javascript:, http: or data: address was drawn with none", links.length === 3 && links.every((href) => href === null) && host.refused.hostile.filter((one) => one.reason === "url").length === 3, { links, refused: host.refused.hostile.filter((one) => one.reason === "url") });
   claim("a second ready, and a forged act, were dropped unread", host.stats.hostile.dropped >= 2, host.stats);
   claim("no guest reached the chat's origin", secretHits.length === 0, secretHits);
+  await hardeningClaims(probed);
   claim("the host page throws nothing", report.pageErrors.length === 0, report.pageErrors);
   report.stats = host.stats;
 }
+
+// ── run ──────────────────────────────────────────────────────────────────────
+
+const browser = await playwright[ENGINE].launch();
+let servers = [];
+try {
+  if (TRANSPORT === "frame") await frameSuite();
+  else await workerSuite();
+} finally {
+  await browser.close();
+  for (const server of servers) server.close();
+}
+report.passed = Object.values(report.claims).every((one) => one.ok);
+writeFileSync(resolve(repoRoot, VERDICT), `${JSON.stringify(report, null, 2)}\n`);
+process.exit(report.passed ? 0 : 1);

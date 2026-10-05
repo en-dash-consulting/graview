@@ -110,5 +110,12 @@ from it, and the host draws from it alone. An element outside it, a property
 or event it does not declare, a value of another type, and a link that is
 not an absolute `https:` URL are not drawn, and `refused` says why.
 
+Before the guest runs, the worker entry hardens the worker's global: every
+name outside `GUEST_GLOBALS` goes, from the global and every prototype on its
+chain — the network, storage, channels, nested workers, `importScripts`,
+`eval` and every function constructor — and what is left is frozen. A name
+that will not go stops the worker before any guest code runs. `hardening`
+says what was removed.
+
 The worker entry carries Remote DOM (`@remote-dom/core` and its polyfill,
 MIT, pinned); the frame guest and the host do not.

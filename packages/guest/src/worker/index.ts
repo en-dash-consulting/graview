@@ -9,7 +9,8 @@
  *   1. it keeps, for itself, how to hear the host and say ready (natives.ts);
  *   2. it boots Remote DOM's DOM polyfill, so the guest has a `document`;
  *   3. it defines the component kit as remote elements (kit.ts, elements.ts);
- *   4. it hardens the worker's global before guest code runs (harden.ts);
+ *   4. it hardens the worker's global before guest code runs (harden.ts),
+ *      and stops if it cannot;
  *   5. it offers the guest the same API a frame guest has — props in,
  *      `act`, `navigate`, `size` — and a `root` to draw the kit into.
  *
@@ -23,12 +24,24 @@ import { RemoteRootElement } from "@remote-dom/core/elements";
 import { openGuest, type Guest } from "../channel.js";
 import { GUEST_KIT } from "../kit.js";
 import { defineKit } from "./elements.js";
+import { harden, type Hardening } from "./harden.js";
 
 /** The element a worker guest draws into; the host's container stands for it. */
 export const GUEST_ROOT = "graview-root";
 
 defineKit(GUEST_KIT);
 customElements.define(GUEST_ROOT, RemoteRootElement as unknown as CustomElementConstructor);
+
+/**
+ * WHAT HARDENING TOOK (FR-70), before any guest code ran. Should a name
+ * outside the allowlist refuse to go, the runtime stops here: no guest
+ * code runs in a worker that is not hardened, and the host hears it fail
+ * to start rather than a guest that is not held. Outside a worker (a test
+ * of the runtime in Node) there is no worker's global to harden, and
+ * `worker` says so.
+ */
+export const hardening: Hardening = "WorkerGlobalScope" in globalThis ? harden() : { removed: [], stuck: [], sealed: false, worker: false };
+if (hardening.stuck.length > 0) throw new Error(`The guest's worker could not be hardened: ${hardening.stuck.join(", ")} would not go.`);
 
 /** A guest in a worker: a frame guest's channel, and the root its kit elements go in. */
 export interface WorkerGuest extends Guest {
@@ -110,6 +123,8 @@ export function connectGuest(): WorkerGuest {
   return shared;
 }
 
+export { GUEST_GLOBALS, INERT, LANGUAGE, OBJECT_PROTOTYPE, PLATFORM, POLYFILLED_DOM } from "./harden.js";
+export type { Hardening } from "./harden.js";
 export { GUEST_KIT, KIT_TONES } from "../kit.js";
 export type { GuestKitElement, Kit, KitComponent, KitEvent, KitProperty, KitPropertyType, KitTone } from "../kit.js";
 export type { Guest } from "../channel.js";
