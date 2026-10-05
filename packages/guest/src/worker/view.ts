@@ -29,7 +29,7 @@ import "@remote-dom/core/polyfill";
 import { RemoteRootElement, remoteId } from "@remote-dom/core/elements";
 import { openGuest } from "../channel.js";
 import { HTML_ELEMENTS, openAttribute, svgElementName } from "../open-kit.js";
-import type { GuestAnswer, GuestDomEvent, GuestProps, HostMessage } from "../protocol.js";
+import type { GuestAnswer, GuestDomEvent, GuestPressed, GuestProps, HostMessage } from "../protocol.js";
 import { harden, type Hardening } from "./harden.js";
 import { createListenerLedger } from "./listeners.js";
 
@@ -55,6 +55,8 @@ export interface ViewEvent {
   readonly checked?: boolean;
   /** A key's name, for `keydown`. */
   readonly key?: string;
+  /** What became of the act this press was bound to (`data-act`): the host applied it, or refused it, before the view heard (FR-92). */
+  readonly pressed?: GuestPressed;
 }
 
 export type Drawable = string | Html | Node | readonly (string | Html | Node)[] | null | undefined;
@@ -112,7 +114,7 @@ const heard = (message: GuestDomEvent) => {
   const target = byId(message.target);
   if (!target) return;
   const event = new DomEvent(message.event, { bubbles: true });
-  for (const key of ["value", "checked", "key"] as const) if (message[key] !== undefined) Object.defineProperty(event, key, { value: message[key], enumerable: true });
+  for (const key of ["value", "checked", "key", "pressed"] as const) if (message[key] !== undefined) Object.defineProperty(event, key, { value: message[key], enumerable: true });
   target.dispatchEvent(event);
   for (const one of delegated) {
     if (one.type !== message.event) continue;
@@ -124,7 +126,7 @@ const heard = (message: GuestDomEvent) => {
     }
     for (let at: Element | null = target; at && at !== (root as unknown as Element); at = at.parentNode as Element | null) {
       if (!matching.has(at)) continue;
-      one.listener(Object.freeze({ type: message.event, target, element: at, ...(message.value !== undefined ? { value: message.value } : {}), ...(message.checked !== undefined ? { checked: message.checked } : {}), ...(message.key !== undefined ? { key: message.key } : {}) }));
+      one.listener(Object.freeze({ type: message.event, target, element: at, ...(message.value !== undefined ? { value: message.value } : {}), ...(message.checked !== undefined ? { checked: message.checked } : {}), ...(message.key !== undefined ? { key: message.key } : {}), ...(message.pressed !== undefined ? { pressed: message.pressed } : {}) }));
       break;
     }
   }
@@ -319,4 +321,4 @@ export const hardening: Hardening = "WorkerGlobalScope" in globalThis ? harden(g
 if (hardening.stuck.length > 0) throw new Error(`The view's worker could not be hardened: ${hardening.stuck.join(", ")} would not go.`);
 
 export { view as graview };
-export type { GuestAnswer, GuestProps, GuestTheme } from "../protocol.js";
+export type { GuestAnswer, GuestPressed, GuestProps, GuestTheme } from "../protocol.js";

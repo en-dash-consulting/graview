@@ -227,3 +227,32 @@ pushes again when the app's own toggle changes the scheme, whatever the
 system prefers. `checkManifest` says what in a manifest names a kind, an
 edge or an act the app does not declare, and the host refuses to start
 such a view (`onFailure` hears `manifest`).
+
+### Writes that cannot leak
+
+A view runs for every member with that member's sight, and its author is
+not the member, so the danger is a view reading what this viewer may see
+and writing it where somebody else may. An act must be named in the
+manifest. Where the app's sight is total — no sight is declared, or every
+kind is seen whole by everybody (`sightIsTotal`) — an act the view asks for
+from its code applies with its arguments as given. Otherwise it applies
+only from a press the host itself saw:
+
+```html
+<fieldset>
+  <input name="summary" placeholder="What it is">
+  <button data-act="set-summary" data-record="package:start">Say it</button>
+</fieldset>
+```
+
+A trusted click on an element with `data-act` is judged and applied in the
+click's own handler, before the view hears of it (it hears `pressed`). Its
+arguments come only from the record the element is bound to (`data-record`,
+one the view was shown), the manifest's constants for the act (`{ act,
+as, constants }`), and the fields in the press's `fieldset` the host read
+itself — each one the viewer's: its last change a trusted `input`, and
+nothing the view wrote in it since. A field the view filled is the view's
+until the viewer empties it; a `change` a browser raises when such a field
+loses focus is not typing; a view that says back what a field shows, or
+empties it, takes nothing away. Either way an act is applied as the viewer,
+`via: "view:<name>"`, within the view's allowance, and undoable.

@@ -20,6 +20,9 @@ export { registerWorkerView, workerHome, workerView } from "./worker-react.js";
 export type { WorkerHomeContext, WorkerViewDefinition } from "./worker-react.js";
 export { checkManifest, manifestActs, workerViewProps } from "./manifest.js";
 export type { ManifestAct, WorkerViewManifest, WorkerViewPropsInput } from "./manifest.js";
+/* Writes that cannot leak (FR-92): when an act from a view's code may apply at all. */
+export { judgeCodeAct, sightIsTotal } from "./writes.js";
+export type { Judged, Press, PressedField } from "./writes.js";
 export type { MountWorkerViewOptions, WorkerView, WorkerViewFailure, WorkerViewLimits } from "./view.js";
 export { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN } from "../protocol.js";
 export type { GuestProps } from "../protocol.js";

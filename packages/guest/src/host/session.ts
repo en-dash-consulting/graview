@@ -76,6 +76,12 @@ export interface GuestHostOptions<S extends AnySchema> {
    * by default.
    */
   readonly props?: () => GuestProps;
+  /**
+   * The rules an act the guest asks for from its own code is held to before
+   * the store is asked: a worker view's manifest and write rules (FR-92).
+   * Its answer names the act to apply and the arguments, or a refusal.
+   */
+  readonly judgeAct?: (name: string, args: Readonly<Record<string, unknown>>) => { readonly ok: true; readonly name: string; readonly args: Record<string, unknown> } | { readonly ok: false; readonly reason: GuestRefusal; readonly message: string };
 }
 
 /** How much one frame may still ask: each call spends one, and says whether there was one to spend. */
@@ -97,6 +103,12 @@ export interface GuestStats {
 export interface GuestHost {
   /** Hand the host one message from the frame's port. */
   receive(data: unknown): void;
+  /**
+   * An act a press asked for, already judged by the host's write rules
+   * (FR-92): applied as the viewer, through the view, under the view's
+   * allowance, in the press's own handler.
+   */
+  pressed(judged: { readonly ok: true; readonly name: string; readonly args: Record<string, unknown> } | { readonly ok: false; readonly reason: GuestRefusal; readonly message: string }): { readonly ok: true; readonly intent: string } | { readonly ok: false; readonly reason: GuestRefusal; readonly message: string };
   /** Push what the viewer sees now. Called on every change to the store, and by a host when the view's input moves. */
   push(): void;
   readonly stats: Readonly<GuestStats>;
@@ -210,15 +222,22 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
     });
   });
 
-  const answer = (id: string | number, reason: GuestRefusal, message: string) => {
+  /** What became of an act, applied or not: the one place an act is applied, from code or from a press. */
+  type Outcome = { readonly ok: true; readonly intent: string } | { readonly ok: false; readonly reason: GuestRefusal; readonly message: string };
+  const refused = (reason: GuestRefusal, message: string): Outcome => {
     stats.refused += 1;
-    options.send({ type: "answer", id, ok: false, reason, message } satisfies GuestAnswer);
+    return { ok: false, reason, message };
   };
-
-  const act = (id: string | number, name: unknown, args: unknown) => {
-    if (typeof name !== "string" || !isRecord(args)) return answer(id, "malformed", "An act is asked for by name, with its arguments as an object.");
-    if (!limiter.act()) return answer(id, "rate-limited", "Too many acts asked for at once; this one was not applied.");
-    if (!options.store.allMutations().some((mutation) => mutation.name === name)) return answer(id, "unknown-act", "There is no act by that name here.");
+  const run = (name: string, args: Record<string, unknown>, judged?: (name: string, args: Readonly<Record<string, unknown>>) => { readonly ok: true; readonly name: string; readonly args: Record<string, unknown> } | { readonly ok: false; readonly reason: GuestRefusal; readonly message: string }): Outcome => {
+    if (!limiter.act()) return refused("rate-limited", "Too many acts asked for at once; this one was not applied.");
+    /* A worker view's manifest and its write rules (FR-92), before the store is asked. */
+    if (judged) {
+      const said = judged(name, args);
+      if (!said.ok) return refused(said.reason, said.message);
+      name = said.name;
+      args = said.args;
+    }
+    if (!options.store.allMutations().some((mutation) => mutation.name === name)) return refused("unknown-act", "There is no act by that name here.");
     try {
       /*
        * THE VIEWER'S CLICK, NOT THE GUEST'S: the store judges the viewer's
@@ -227,12 +246,21 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
        */
       const result = options.store.apply({ name, args }, { author: options.principal, via });
       stats.applied += 1;
-      options.send({ type: "answer", id, ok: true, intent: result.intent });
+      return { ok: true, intent: result.intent };
     } catch (error) {
-      if (error instanceof PermissionDeniedError) return answer(id, "refused", error.refusal.message);
+      if (error instanceof PermissionDeniedError) return refused("refused", error.refusal.message);
       /* An act's own error can name what it read; the guest is told only that it did not happen. */
-      return answer(id, "failed", "The act could not be applied.");
+      return refused("failed", "The act could not be applied.");
     }
+  };
+
+  const act = (id: string | number, name: unknown, args: unknown) => {
+    if (typeof name !== "string" || !isRecord(args)) {
+      stats.refused += 1;
+      return options.send({ type: "answer", id, ok: false, reason: "malformed", message: "An act is asked for by name, with its arguments as an object." } satisfies GuestAnswer);
+    }
+    const outcome = run(name, args, options.judgeAct);
+    options.send(outcome.ok ? ({ type: "answer", id, ok: true, intent: outcome.intent } satisfies GuestAnswer) : ({ type: "answer", id, ok: false, reason: outcome.reason, message: outcome.message } satisfies GuestAnswer));
   };
 
   return {
@@ -272,6 +300,14 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       stats.dropped += 1;
     },
     push,
+    pressed(judged) {
+      if (disposed) return { ok: false, reason: "refused", message: "The view has gone." };
+      if (!judged.ok) {
+        stats.refused += 1;
+        return judged;
+      }
+      return run(judged.name, judged.args);
+    },
     get stats() {
       return stats;
     },

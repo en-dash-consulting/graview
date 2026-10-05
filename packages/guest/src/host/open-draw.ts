@@ -33,10 +33,11 @@ export interface OpenDrawingOptions {
   readonly onFieldSet?: (field: Element) => void;
   /**
    * The viewer did something on what the view drew, before the view is
-   * told: the host's own handling (a press bound to an act, a link). Its
-   * `false` keeps the view from being told.
+   * told: the host's own handling (a press bound to an act, a link), in the
+   * event's own handler. What it returns goes with what the view is told
+   * (`pressed`); `false` keeps the view from being told.
    */
-  readonly before?: (event: Event, element: Element) => boolean | void;
+  readonly before?: (event: Event, element: Element, root: Element) => Partial<GuestDomEvent> | false | void;
 }
 
 export type ViewRefusal = OpenRefusal | { readonly reason: "css"; readonly name: "stylesheet"; readonly css: CssRefusal };
@@ -92,7 +93,8 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
     const element = drawnAt(event);
     if (!element) return;
     if (event.type === "keydown" && !KEYS.has((event as KeyboardEvent).key)) return;
-    if (options.before?.(event, element) === false) return;
+    const said = options.before?.(event, element, into);
+    if (said === false) return;
     const field = element as HTMLInputElement;
     const isField = element.namespaceURI === "http://www.w3.org/1999/xhtml" && ["input", "select", "textarea"].includes(element.localName);
     options.send({
@@ -102,6 +104,7 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
       ...(isField ? { value: String(field.value ?? "") } : {}),
       ...(isField && (field.type === "checkbox" || field.type === "radio") ? { checked: field.checked } : {}),
       ...(event.type === "keydown" ? { key: (event as KeyboardEvent).key } : {}),
+      ...(said ?? {}),
     });
   };
   for (const type of EVENTS) shadow.addEventListener(type, hear);

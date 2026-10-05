@@ -147,7 +147,19 @@ export type GuestRefusal =
   /** The request was not one the protocol knows. */
   | "malformed"
   /** The act ran and threw: its arguments did not fit, or its own rule said no. */
-  | "failed";
+  | "failed"
+  /** A worker view asked for an act its manifest does not name (FR-92). */
+  | "undeclared"
+  /**
+   * A worker view asked for an act from its own code, in an app where some
+   * members may not see some records: there, an act applies only from the
+   * viewer's own press on what the view drew (FR-92).
+   */
+  | "press-only"
+  /** A press would have carried a field's value the view filled in, not one the viewer typed (FR-92). */
+  | "untyped"
+  /** A press was bound (`data-record`) to a record the view was not shown, or to an act that takes none (FR-92). */
+  | "unbound";
 
 export type GuestAnswer =
   | { readonly type: "answer"; readonly id: string | number; readonly ok: true; readonly intent: string }
@@ -197,6 +209,22 @@ export interface GuestDomEvent {
   readonly value?: string;
   readonly checked?: boolean;
   readonly key?: string;
+  /**
+   * What became of the act the press was bound to (`data-act`), when it
+   * was: applied by the host in the press's own handler, before the view
+   * heard of it (FR-92).
+   */
+  readonly pressed?: GuestPressed;
+}
+
+/** The answer to a press bound to an act: the act's name, and whether it applied or why not. */
+export interface GuestPressed {
+  /** What the view called it (`data-act`). */
+  readonly as: string;
+  readonly ok: boolean;
+  readonly intent?: string;
+  readonly reason?: GuestRefusal;
+  readonly message?: string;
 }
 
 export type HostMessage =

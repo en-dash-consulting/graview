@@ -4,6 +4,7 @@ import { checkManifest, workerViewProps, type WorkerViewManifest } from "./manif
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
+import { judgeCodeAct } from "./writes.js";
 
 /** Why a worker view is not shown, for a host that draws something else in its place. */
 export type WorkerViewFailure =
@@ -198,13 +199,30 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     if (one[0] === "render") drawing.apply(one[1]);
     else drawing.style(one[1]);
   };
-  void import("./open-draw.js").then(({ createOpenDrawing }) => {
+  /* The records the view was last shown: a press may be bound to one of these, and to nothing else (FR-92). */
+  let shown: ReadonlySet<string> = new Set();
+  void Promise.all([import("./open-draw.js"), import("./press.js")]).then(([{ createOpenDrawing }, { createPressReader, judgePress }]) => {
     if (failed) return;
+    const reader = createPressReader();
     drawing = createOpenDrawing(shadow, {
       origin: options.origin ?? window.location.origin,
       ...(options.limits?.maxNodes !== undefined ? { maxNodes: options.limits.maxNodes } : {}),
       onOverBudget: () => fail("budget"),
       send,
+      onFieldSet: (field) => reader.filled(field),
+      /*
+       * THE VIEWER'S PRESS, IN ITS OWN HANDLER (FR-92). A trusted click on
+       * an element bound to an act is judged and applied here, before the
+       * view hears of it; the view is told what became of it.
+       */
+      before: (event, at, root) => {
+        reader.heard(event, at);
+        const press = reader.press(event, at, root);
+        if (!press || !session) return;
+        const outcome = session.pressed(judgePress(options.store, manifest, shown, press));
+        tally();
+        return { pressed: { as: press.as, ...outcome } };
+      },
     });
     for (const one of waiting.splice(0)) draw(one);
   });
@@ -225,7 +243,12 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         view: manifest.name,
         nonce,
         send: (message) => given.postMessage(message),
-        props: () => workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme() }),
+        props: () => {
+          const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme() });
+          shown = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
+          return props;
+        },
+        judgeAct: (name, args) => judgeCodeAct(options.store, manifest, name, args),
         onRender: (records) => draw(["render", records]),
         onStyle: (css) => draw(["style", css]),
         ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
