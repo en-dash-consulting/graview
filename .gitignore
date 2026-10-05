@@ -37,3 +37,12 @@ apps/*/data/**/epochs.json
 apps/*/data/**/archive/
 ndx-export/
 .ndx/sourcevision/.cache/analyze-progress.json
+.ndx/hench/locks/
+.ndx/hench/usage-cursors/
+.ndx/hench/reviews/
+.ndx/hench/recovery/
+.ndx/hench/mcp/
+.ndx/hench/session-cache.json
+.hench-commit-msg.txt
+.run-logs/
+.claude/worktrees/
