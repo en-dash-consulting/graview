@@ -26,7 +26,10 @@ Everything a Graview app declares, and the checker that verifies it.
   compiled by `compileDocument` into the same app `defineApp` declares and
   never run as code; `toDocument` writes an app back out. Rules say what must
   hold in a small, budgeted language (`expressionRule`). Every command that
-  takes an entry takes `--document <file>`.
+  takes an entry takes `--document <file>`. `sceneThumbnail` draws a
+  document (or an app) as the Scene draws it from altitude — the same
+  districts on the same map, in their hues — as one SVG string, with no DOM,
+  for a host listing apps; `sceneDistricts` is the same answer as data.
 - **Conformance** — `@graview/core/conformance`: fixtures a host runs against
   a version (`conformance()`) to prove it reads, compiles and derives the same.
 

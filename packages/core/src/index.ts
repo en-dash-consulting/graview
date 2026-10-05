@@ -389,7 +389,9 @@ export type { CheckResult, Finding, Severity } from "./cli/check.js";
 export { generateAgentsMd, generateLlmsTxt } from "./cli/docs.js";
 
 // The city: a map drawn from the declaration, in lattice cells.
-export { BLOCK, cityExtent, cityMap, MAX_SIDE, plotsOverlap, roadsOf, sharedEdges, sideFor, toIso } from "./city.js";
-export type { CityHints, CityMap, Plot, Road } from "./city.js";
+export { BLOCK, cityExtent, cityMap, heightOf, MAX_SIDE, plotsOverlap, roadsOf, sharedEdges, sideFor, toIso, villageCap, villageOf } from "./city.js";
+export type { Building, CityHints, CityMap, Plot, Road } from "./city.js";
+export { sceneDistricts } from "./scene-districts.js";
+export type { SceneDistrict, SceneDistrictOptions } from "./scene-districts.js";
 export { foldPresence, nextExpiry, parseParticipant, participantKey, PRESENCE_TTL_MS, presenceName, presenceStands, REMOTE_PRESENCE_TTL_MS, samePresence, VISITOR_PRESENCE_TTL_MS } from "./presence.js";
 export type { Participant, Presence, PresenceChannel, PresenceRobot } from "./presence.js";

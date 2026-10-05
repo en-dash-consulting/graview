@@ -213,3 +213,80 @@ export function cityExtent(map: CityMap): { readonly minCol: number; readonly mi
 export function toIso(col: number, row: number, cell: number): { readonly x: number; readonly y: number } {
   return { x: ((col - row) * cell) / 2, y: ((col + row) * cell) / 4 };
 }
+
+/*
+ * THE VILLAGE ON A PLOT. From altitude a district stands one building per
+ * member on its plot's own sub-lattice. Pure arithmetic on the map, so it
+ * lives with the map: the scene draws it, and so does a picture of an app
+ * drawn without a browser.
+ */
+
+/** The most buildings a plot of this side holds: a sub-lattice of side+1 to a side, minus the square in the middle. */
+export function villageCap(side: number): number {
+  const n = side + 1;
+  return n * n - squareCells(n).length;
+}
+
+/** The sub-cells of an n×n sub-lattice that make the village square: the middle one, or the middle four; a 2×2 has no room for one. */
+function squareCells(n: number): readonly (readonly [number, number])[] {
+  if (n < 3) return [];
+  if (n % 2 === 1) {
+    const mid = (n - 1) / 2;
+    return [[mid, mid]];
+  }
+  const a = n / 2 - 1;
+  const b = n / 2;
+  return [
+    [a, a],
+    [b, a],
+    [a, b],
+    [b, b],
+  ];
+}
+
+/** A stable number in [0, 1) from an id, so a village is not a barracks and does not reshuffle on every render. */
+export function heightOf(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619);
+  return ((h >>> 0) % 1000) / 1000;
+}
+
+export interface Building {
+  readonly id: string;
+  /** The foot, in lattice units from the plot's own corner. */
+  readonly col: number;
+  readonly row: number;
+  /** How wide a building is on the ground, in lattice units. */
+  readonly footprint: number;
+  /** How tall, as a fraction of its footprint. */
+  readonly height: number;
+}
+
+/**
+ * WHERE THE MEMBERS STAND. One building per member on the plot's own
+ * sub-lattice, back to front so the near ones are drawn last; the middle
+ * of the plot is the village square, where the nameplate and the kind's
+ * landmark stand, so no building is under them. Past the cap the rest are
+ * a number on the kerb.
+ */
+export function villageOf(plot: { readonly col: number; readonly row: number; readonly side: number }, memberIds: readonly string[]): { readonly buildings: readonly Building[]; readonly rest: number } {
+  const n = plot.side + 1;
+  const square = new Set(squareCells(n).map(([c, r]) => `${c},${r}`));
+  const pitch = plot.side / n;
+  const cells: (readonly [number, number])[] = [];
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (!square.has(`${c},${r}`)) cells.push([c, r]);
+  // Back to front: a smaller col+row is further from the viewer on a 2:1 lattice.
+  cells.sort((a, b) => a[0] + a[1] - (b[0] + b[1]) || a[0] - b[0]);
+  const shown = memberIds.slice(0, cells.length);
+  const buildings = shown.map((id, i) => {
+    const [c, r] = cells[i]!;
+    return {
+      id,
+      col: plot.col + (c + 0.5) * pitch,
+      row: plot.row + (r + 0.5) * pitch,
+      footprint: pitch * 0.62,
+      height: 0.55 + heightOf(id) * 0.7,
+    };
+  });
+  return { buildings, rest: Math.max(0, memberIds.length - shown.length) };
+}

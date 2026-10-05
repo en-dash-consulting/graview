@@ -10,6 +10,7 @@
  *   /cases                    the adapter contract's case names
  *   /contract/<suite>/<i>     one contract case, against a fresh Durable Object's SQLite
  *   /tools                    a call applied through the tool runtime, in the isolate
+ *   /thumbnail                a picture of an app (FR-74), drawn with no DOM
  *   /graview/*                the WIRE, from a Durable Object whose store is its own storage
  */
 import { DurableObject } from "cloudflare:workers";
@@ -24,6 +25,7 @@ import {
   nodeRef,
   z,
 } from "@graview/core";
+import { sceneThumbnail } from "@graview/core/document";
 import { createToolRuntime } from "@graview/tools";
 import { createStoreHandler, liveProtocol, openStore, type LiveSocketState, type StoreHandler } from "@graview/ship/runtime";
 import { adapterCases, householdTables, sqlCases, type SqlHandle } from "../../packages/core/tests/support/adapter-contract.js";
@@ -138,6 +140,23 @@ export default {
         author: opened.store.log.all().at(-1)?.author,
         tools: runtime.definitions.map((tool) => tool.name),
         shipped: capabilities().shipped,
+      });
+    }
+    if (pathname === "/thumbnail") {
+      /* A picture of an app with no DOM in the isolate (FR-74): from a document, and from the declared app. */
+      const document = {
+        format: "graview-document",
+        formatVersion: 1,
+        name: "Errands",
+        kinds: {
+          errand: { plural: "Errands", fields: { label: { type: "string", required: true } }, edges: { at: { to: ["shop"] } } },
+          shop: { fields: { name: { type: "string", required: true } } },
+        },
+      };
+      return Response.json({
+        dom: typeof (globalThis as { document?: unknown }).document,
+        fromDocument: sceneThumbnail(document, { scheme: "dark", counts: { errand: 3 } }),
+        fromApp: sceneThumbnail(app),
       });
     }
     if (pathname === "/live") {
