@@ -1107,7 +1107,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <li><strong>palette</strong> → change <code>accent</code> (or supply explicit scheme tokens) and let <code>brandFromAccent</code> move lightness the minimum distance that clears AA;</li>
 <li><strong>lines</strong> → <code>kit.connectors</code> ("right-angled lines", "hide the grows-in lines", "make tended-by dashed and navy") and the ground's <code>kit.grid</code>;</li>
 <li><strong>feel</strong> → <code>shape.radius</code> (square = formal) and <code>shape.density</code> (tight = dense) — one number each;</li>
-<li><strong>voice</strong> → <code>typography.body/display/mono</code> with real fallback stacks;</li>
+<li><strong>voice</strong> → <code>typography.body/display/mono</code> with real fallback stacks (unset, each is the framework's: <code>SHAPE</code> and <code>TYPOGRAPHY</code> in <code>@graview/core</code>; a page outside the app dressed to match reads <code>shapeOf(brand)</code>, <code>typographyOf(brand)</code> and <code>isoShade(scheme)</code>, never copied numbers);</li>
 <li><strong>kind colours</strong> → <code>accents</code> hues per kind;</li>
 <li><strong>per-kind layout</strong> → register a view over the registry cell, the same authoring move as everything else (see graview-node-kind).</li>
 </ul>
