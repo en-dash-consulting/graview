@@ -209,7 +209,7 @@ export function useViews<S extends AnySchema>(
     // The lenses the declaration titles are places of their own (FR-79), and its arrangement goes with them (FR-80).
     const base = registerDeclaredLenses(framework(app.schema, app.viewSpecs), app);
     return (props.views ? layerViews(base, props.views(app.schema, base)) : base) as ReactViewRegistry<S>;
-  }, [props.views, app.schema, app.viewSpecs, app.lenses, app.pages]);
+  }, [props.views, app.schema, app.viewSpecs, app.lenses, app.pages, app.home]);
 }
 
 /** A store from a declaration and a seed: the app's own policy, in memory. */

@@ -235,7 +235,8 @@ export const DocumentSpec = z.strictObject({
   modules: z.optional(loose),
   lenses: z.optional(z.array(loose)),
   pages: z.optional(PagesSpec),
-  views: z.optional(z.record(z.string(), ViewSpecsSpec)),
+  /** Each kind's views by kind, and `home`: the home view, a list of blocks about no one record (FR-81). */
+  views: z.optional(z.record(z.string(), z.union([ViewSpecsSpec, z.array(z.unknown())]))),
   brand: z.optional(BrandSpec),
   settings: z.optional(z.array(loose)),
   migrations: z.optional(z.array(loose)),

@@ -35,6 +35,17 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 const DOCUMENT = resolve(repoRoot, "packages/core/tests/document/fixtures/every-lens.gdd.json");
 const TITLES = JSON.parse(readFileSync(DOCUMENT, "utf8")).lenses.map((lens) => lens.title);
+/** LifeLogics' front page and four lenses, rebuilt as data (FR-81, FR-82), and the seed it is drawn over. */
+const LIFELOGICS = resolve(repoRoot, "packages/core/tests/document/fixtures/lifelogics.gdd.json");
+const LIFELOGICS_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/lifelogics.seed.json");
+const LENSES = JSON.parse(readFileSync(LIFELOGICS, "utf8")).lenses.map((lens) => lens.title);
+const SIZES = [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+];
+const SCHEMES = ["light", "dark"];
+/** `--shots=<dir>`: a screenshot of every page the front-page claims open, for a person to look at. */
+const SHOTS = process.argv.find((arg) => arg.startsWith("--shots="))?.slice("--shots=".length);
 const report = { at: new Date().toISOString(), engine: ENGINE, document: "packages/core/tests/document/fixtures/every-lens.gdd.json", checks: {} };
 
 /** The seed: something on every kind, so every lens has members to draw. */
@@ -70,15 +81,18 @@ async function buildHost() {
         import { mount } from "@graview/embed";
         import { compileDocumentWithoutCheck } from "@graview/core/document";
         import hall from ${JSON.stringify(DOCUMENT)};
-        const compiled = compileDocumentWithoutCheck(hall, { today: () => "2026-09-01" });
-        if (!compiled.ok) throw new Error("the document did not compile");
+        import lifelogics from ${JSON.stringify(LIFELOGICS)};
+        import lifelogicsSeed from ${JSON.stringify(LIFELOGICS_SEED)};
         const asked = new URLSearchParams(location.search);
+        const proposal = asked.get("doc") === "lifelogics";
+        const compiled = compileDocumentWithoutCheck(proposal ? lifelogics : hall, { today: () => "2026-09-01" });
+        if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
-          seed: ${JSON.stringify(SEED)},
+          seed: proposal ? lifelogicsSeed : ${JSON.stringify(SEED)},
           face: asked.get("face") ?? "scene",
           ...(asked.get("path") ? { path: asked.get("path") } : {}),
-          principal: { kind: "human", id: "m1", roles: ["keeper"] },
+          principal: proposal ? { kind: "human", id: "u:owner", roles: ["owner"] } : { kind: "human", id: "m1", roles: ["keeper"] },
           label: "The hall",
           heading: false,
           height: "100%",
@@ -120,8 +134,8 @@ let browser;
 const errors = [];
 try {
   browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
-  const open = async (query, viewport = { width: 1600, height: 1000 }) => {
-    const page = await browser.newPage({ viewport });
+  const open = async (query, viewport = { width: 1600, height: 1000 }, colorScheme = "light") => {
+    const page = await browser.newPage({ viewport, colorScheme });
     page.on("pageerror", (error) => errors.push(`${query}: ${error.message}`));
     await page.goto(`${at("declared-host")}/?${query}`, { waitUntil: "load" });
     await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
@@ -223,6 +237,150 @@ try {
     const bySearch = await searched.evaluate(() => document.body.textContent?.includes("The cellar") ?? false);
     await searched.close();
     report.checks.theHiddenKindIsReachedByLinkNavAndSearch = { byLink, byNav: home.nav.includes("/rooms"), bySearch, ok: byLink && bySearch && home.nav.includes("/rooms") };
+  }
+
+  /*
+   * ---- FR-81, FR-82: LifeLogics' front page and four lenses, as data, on both faces,
+   * at a desk and a phone, in both schemes. The document is the only thing
+   * the host hands over: no view, no page, no component of its own.
+   */
+  if (SHOTS) mkdirSync(SHOTS, { recursive: true });
+  const shoot = async (page, name) => {
+    if (SHOTS) await page.screenshot({ path: join(SHOTS, `${name}.png`), fullPage: false });
+  };
+  /** What a drawing of blocks shows: its headings, its figures, the records it lists, and whether anything spills sideways. */
+  const drawn = (page, within) =>
+    page.evaluate((selector) => {
+      const root = document.querySelector(selector);
+      const embed = document.querySelector("[data-graview-embed]");
+      return {
+        present: root !== null,
+        headings: root ? [...root.querySelectorAll(".graview-spec-headline, .graview-spec-list-heading")].map((h) => `${h.tagName.toLowerCase()} ${h.textContent?.trim()}`) : [],
+        figures: root ? [...root.querySelectorAll(".graview-spec-number-value")].map((f) => f.textContent?.trim()) : [],
+        listed: root ? [...root.querySelectorAll("[data-graview-listed]")].map((li) => li.getAttribute("data-graview-listed")) : [],
+        links: root ? root.querySelectorAll(".graview-spec-item-link").length : 0,
+        // Nothing wider than the page: the embed's box and the document alike.
+        spills: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1 || (embed ? embed.scrollWidth > embed.clientWidth + 1 : false),
+        fits: root ? root.getBoundingClientRect().right <= document.documentElement.clientWidth + 1 && root.getBoundingClientRect().left >= -1 : false,
+      };
+    }, within);
+  const FRONT = { headline: "A small start, on three fronts.", figure: "$21,000", card: "pkg-start" };
+  const frontOk = (seen, level) =>
+    seen.present &&
+    seen.headings.includes(`${level} ${FRONT.headline}`) &&
+    seen.figures.includes(FRONT.figure) &&
+    seen.listed.includes(FRONT.card) &&
+    seen.links >= seen.listed.length &&
+    !seen.spills &&
+    seen.fits;
+
+  {
+    const pages = {};
+    const scene = {};
+    const city = {};
+    for (const size of SIZES) {
+      for (const scheme of SCHEMES) {
+        const at = `${size.width}×${size.height} ${scheme}`;
+        // The routed face: the home view is the home's body, its first headline the page's h1.
+        let page = await open("doc=lifelogics&face=pages", size, scheme);
+        await page.waitForSelector('[data-testid="home-view"] .graview-spec-headline', { timeout: 15_000 }).catch(() => {});
+        pages[at] = await drawn(page, '[data-testid="home-view"]');
+        await shoot(page, `front-pages-${size.width}-${scheme}`);
+        await page.close();
+        // The Graview face at ground level, and from altitude: the home view is the landing over the picture.
+        for (const [face, into] of [["scene", scene], ["graview", city]]) {
+          page = await open(`doc=lifelogics&face=${face}`, size, scheme);
+          await page.waitForSelector('[data-testid="home-landing"] .graview-spec-headline', { timeout: 15_000 }).catch(() => {});
+          into[at] = await drawn(page, '[data-testid="home-landing"]');
+          await shoot(page, `front-${face}-${size.width}-${scheme}`);
+          await page.close();
+        }
+      }
+    }
+    report.checks.theFrontPageMadeOfDataIsTheHomeOnThePagesFace = { pages, ok: Object.values(pages).every((seen) => frontOk(seen, "h1")) };
+    report.checks.theFrontPageMadeOfDataIsTheLandingOnTheGraviewFace = {
+      scene,
+      city,
+      ok: [...Object.values(scene), ...Object.values(city)].every((seen) => frontOk(seen, "h2")),
+    };
+  }
+
+  {
+    // A listed record is a link: on the routed face to its page; on the picture, to the record itself.
+    let page = await open("doc=lifelogics&face=pages", SIZES[0]);
+    await page.waitForSelector('[data-graview-listed="pkg-start"] .graview-spec-item-link', { timeout: 15_000 });
+    await page.click('[data-graview-listed="pkg-start"] .graview-spec-item-link');
+    await page.waitForTimeout(500);
+    const followed = await page.evaluate(() => document.querySelector("[data-graview-embed] h1")?.textContent?.trim() ?? null);
+    await page.close();
+    page = await open("doc=lifelogics&face=scene", SIZES[0]);
+    await page.waitForSelector('[data-testid="home-landing"] [data-graview-listed="pkg-start"] .graview-spec-item-link', { timeout: 15_000 });
+    await page.click('[data-testid="home-landing"] [data-graview-listed="pkg-start"] .graview-spec-item-link');
+    await page.waitForTimeout(900);
+    const picked = await page.evaluate(() => ({
+      selected: [...document.querySelectorAll("[data-graview-view][data-graview-selected]")].map((view) => view.getAttribute("data-graview-view")),
+      landing: document.querySelector('[data-testid="home-landing"]') !== null,
+    }));
+    await page.close();
+    report.checks.aListedRecordIsALinkOnBothFaces = { followed, picked, ok: followed === "The small start" && !picked.landing && picked.selected.includes("pkg-start") };
+  }
+
+  {
+    // Each of the four lenses: a page of its own on the routed face, and a pill that draws it on the picture, at both sizes.
+    const lenses = {};
+    for (const title of LENSES) {
+      const as = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      for (const size of SIZES) {
+        for (const scheme of SCHEMES) {
+          const at = `${title} ${size.width}×${size.height} ${scheme}`;
+          let page = await open(`doc=lifelogics&face=pages&path=${encodeURIComponent(`/places/${as}`)}`, size, scheme);
+          await page.waitForSelector('[data-testid="place-lens"] [data-graview-listed]', { timeout: 15_000 }).catch(() => {});
+          const onPage = await drawn(page, '[data-testid="place-lens"]');
+          await shoot(page, `lens-${as}-pages-${size.width}-${scheme}`);
+          await page.close();
+          page = await open("doc=lifelogics&face=scene", size, scheme);
+          const pill = page.locator('[data-testid="places"] button[data-testid^="place-"]', { hasText: title }).first();
+          let onPicture = { pill: false };
+          if ((await pill.count()) > 0 && (await pill.isVisible())) {
+            await pill.click();
+            await page.waitForTimeout(900);
+            onPicture = { pill: true, ...(await drawn(page, ".graview-ground .graview-spec-place")) };
+          } else {
+            // A narrow bar keeps its places in a menu; the place is its stop, as a host would set it.
+            await page.evaluate((stop) => window.__handle.setStop(stop), `#view=${as}`);
+            await page.waitForTimeout(1200);
+            onPicture = { pill: false, menu: true, ...(await drawn(page, ".graview-ground .graview-spec-place")) };
+          }
+          await shoot(page, `lens-${as}-scene-${size.width}-${scheme}`);
+          await page.close();
+          lenses[at] = { onPage, onPicture };
+        }
+      }
+    }
+    report.checks.theFourLensesMadeOfDataDrawOnBothFaces = {
+      lenses,
+      ok: Object.values(lenses).every(({ onPage, onPicture }) => onPage.present && onPage.listed.length > 0 && !onPage.spills && onPicture.present && onPicture.listed.length > 0),
+    };
+  }
+
+  {
+    // FR-82: a package's page lists its offers as rows; a note's row on its list names the offers that answer it.
+    let page = await open(`doc=lifelogics&face=pages&path=${encodeURIComponent("/packages/pkg-whole")}`, SIZES[1]);
+    await page.waitForSelector("[data-graview-listed]", { timeout: 15_000 }).catch(() => {});
+    const pack = await drawn(page, "main");
+    await page.close();
+    page = await open(`doc=lifelogics&face=pages&path=${encodeURIComponent("/what-we-heard")}`, SIZES[1]);
+    await page.waitForSelector('[data-graview-spec="row"][data-graview-kind="signal"]', { timeout: 15_000 }).catch(() => {});
+    const note = await page.evaluate(() => {
+      const row = [...document.querySelectorAll('[data-graview-spec="row"][data-graview-kind="signal"]')].find((one) => one.textContent?.includes("Start with a pilot"));
+      return { listed: row ? [...row.querySelectorAll("[data-graview-listed]")].map((li) => li.getAttribute("data-graview-listed")) : [], spills: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1 };
+    });
+    await page.close();
+    report.checks.aPackageListsItsOffersAndANoteTheOffersThatAnswerIt = {
+      pack: pack.listed,
+      note: note.listed,
+      ok: JSON.stringify(pack.listed) === JSON.stringify(["offer-workshop", "offer-analysis", "offer-suite", "offer-advice"]) && JSON.stringify(note.listed) === JSON.stringify(["offer-workshop", "offer-analysis"]) && !pack.spills && !note.spills,
+    };
   }
 
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };

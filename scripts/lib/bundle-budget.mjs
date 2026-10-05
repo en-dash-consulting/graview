@@ -74,9 +74,15 @@ export const BUDGETS = [
      * (FR-83): computed fields, worked out for the seat a record is drawn
      * for, and the words, and and plural formatters. With both, measured at
      * 791_069 / 206_781.
+     *
+     * Raised again when the home and a view came to be written from blocks
+     * (FR-81, FR-82): the document's vocabulary for headlines, figures and
+     * lists (what the frame checks a document it compiles against) and the
+     * blocks' stylesheet, in what a page loads first. Measured at
+     * 802_562 / 209_988.
      */
-    minified: 800_000,
-    gzipped: 210_000,
+    minified: 815_000,
+    gzipped: 215_000,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -115,9 +121,14 @@ export const BUDGETS = [
      *
      * Raised again when the rule language came to compute what pages need
      * (FR-83): with both, measured at 1_399_742 / 412_177.
+     *
+     * Raised again when the home and a view came to be written from blocks
+     * (FR-81, FR-82): headlines, figures and lists of records drawn by their
+     * own cards, the home's landing over the scene, and the vocabulary that
+     * checks them. Measured at 1_420_964 / 418_572.
      */
-    minified: 1_410_000,
-    gzipped: 416_000,
+    minified: 1_430_000,
+    gzipped: 424_000,
     load: "all",
   },
   {
@@ -140,8 +151,9 @@ export const BUDGETS = [
      */
     entry: `import { mount } from "@graview/embed"; import { StudioPlace } from "@graview/studio"; globalThis.mount = (element, options) => mount(element, { ...options, studio: { onApply() {}, place: StudioPlace } });`,
     // Raised with every face's when a declared lens came to draw (FR-79) and the rule language came to compute what pages need (FR-83): the studio reaches the lenses through `@graview/primitives`, so here they load with it. With both, measured at 1_393_930 / 407_048.
-    minified: 1_410_000,
-    gzipped: 416_000,
+    // Raised with every face's again when the home and a view came to be written from blocks (FR-81, FR-82): measured at 1_414_220 / 413_619.
+    minified: 1_430_000,
+    gzipped: 424_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

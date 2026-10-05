@@ -17,3 +17,4 @@ export { Inspector } from "./workbench/inspector.js";
 export { OverviewButton } from "./workbench/back-out.js";
 export { Places } from "./places.js";
 export { ShowInstallation } from "./installation.js";
+export { HomeLanding } from "./home-landing.js";
