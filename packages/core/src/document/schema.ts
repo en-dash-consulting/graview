@@ -194,6 +194,18 @@ const ViewSpecsSpec = z.strictObject({
   page: z.optional(z.array(z.unknown())),
 });
 
+/**
+ * THE ARRANGEMENT (FR-80): the kinds in order, the kinds the home leaves
+ * off, the place the app opens on. Loose enough that a document which
+ * carried anything else under `pages` before FR-80 — when it was accepted
+ * and ignored — still parses; `graview check` says what it cannot honour.
+ */
+export const PagesSpec = z.looseObject({
+  order: z.optional(z.array(z.string())),
+  hide: z.optional(z.array(z.string())),
+  first: z.optional(z.string()),
+});
+
 export const DocumentSpec = z.strictObject({
   format: z.literal(FORMAT),
   formatVersion: z.literal(FORMAT_VERSION),
@@ -212,7 +224,7 @@ export const DocumentSpec = z.strictObject({
   policy: z.optional(PolicySpec),
   modules: z.optional(loose),
   lenses: z.optional(z.array(loose)),
-  pages: z.optional(loose),
+  pages: z.optional(PagesSpec),
   views: z.optional(z.record(z.string(), ViewSpecsSpec)),
   brand: z.optional(BrandSpec),
   settings: z.optional(z.array(loose)),

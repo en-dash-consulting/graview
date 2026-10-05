@@ -147,6 +147,9 @@ export function layerViews<S extends AnySchema>(base: ReactViewRegistry<S>, over
     };
     base.register(registration.kind as KindOfSchema<S>, { cardinality: registration.cardinality, fidelity: registration.fidelity }, registration.view, meta);
   }
+  // The arrangement travels with the places it arranges (FR-80).
+  const arranged = over.arrangement?.();
+  if (arranged) base.arrange?.(arranged);
   return base;
 }
 

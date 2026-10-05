@@ -11,6 +11,7 @@ import {
   h2,
   lede,
   link,
+  homeKinds,
   liveKinds,
   plain,
   pluralOf,
@@ -41,7 +42,8 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   useStoreTick(store);
   const violations = store.violations(invariantContext);
   const recent = [...store.log.all()].slice(-5).reverse();
-  const kinds = liveKinds(store, context.principal);
+  // In the declaration's order, less what it leaves off the home (FR-80).
+  const kinds = homeKinds(context);
   const counted = kinds.map((kind) => ({
     kind,
     members: store.graph
@@ -77,7 +79,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
           )
           .join(", ")
           .replace(/, ([^,]*)$/, " and $1")}.`;
-  const live = new Set(kinds);
+  const live = new Set(liveKinds(store, context.principal));
   const relations = kindMap(store).relations.filter((relation) => live.has(relation.from) && (relation.to === "*" || live.has(relation.to)));
 
   return (

@@ -202,6 +202,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     ...(policy ? { policy: { grants, ...(policy.sees ? { sees: policy.sees.map((sight) => ({ ...sight })) } : {}) } } : {}),
     ...(app.modules ? { modules: modules(app.modules as Record<string, { mutations?: readonly string[] } & Record<string, unknown>>, unwritten) } : {}),
     ...(app.lenses ? { lenses: app.lenses as unknown as Record<string, unknown>[] } : {}),
+    ...(app.pages ? { pages: app.pages as GraviewDocument["pages"] } : {}),
     ...(app.settings ? { settings: app.settings as unknown as Record<string, unknown>[] } : {}),
     // View specs are already data: they are the document's views (FR-03).
     ...(app.viewSpecs && Object.keys(app.viewSpecs).length > 0 ? { views: app.viewSpecs as unknown as GraviewDocument["views"] } : {}),
