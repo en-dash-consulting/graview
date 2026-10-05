@@ -78,7 +78,7 @@ views.register("recipe", { fidelity: "full", cardinality: "one" },
 `mountGuestWorker` starts the worker without `type: "module"`, which a
 `blob:` URL in an opaque origin cannot start, from the script's text or a
 URL it is given. It speaks the frame's protocol: one `guest-ready`, answered
-with a fresh nonce and a `MessageChannel`; the props as the viewer sees
+with a fresh nonce and a MessageChannel; the props as the viewer sees
 them; acts applied as the viewer, `via: "view:<name>"`, under the same
 limits. A second ready from the same worker is dropped. What the guest draws
 comes over the port as Remote DOM mutation records, and the host draws only
@@ -114,7 +114,7 @@ not an absolute `https:` URL are not drawn, and `refused` says why.
 
 Before the guest runs, the worker entry hardens the worker's global: every
 name outside `GUEST_GLOBALS` goes, from the global and every prototype on its
-chain — the network, storage, channels, nested workers, `importScripts`,
+chain — the network, storage, channels, nested workers, importScripts,
 `eval` and every function constructor — and what is left is frozen. A name
 that will not go stops the worker before any guest code runs. `hardening`
 says what was removed.
@@ -129,7 +129,7 @@ import { buildGuestBundle } from "@graview/guest/build";
 const { script, sha256 } = await buildGuestBundle({ entry: "src/recipe-card.ts" });
 ```
 
-A guest that writes `import()` or `importScripts` is refused at build, and
+A guest that writes `import()` or importScripts is refused at build, and
 `checkGuestBundle` says the same of a script built elsewhere. Hardening holds
 only for a bundle whose first module is the worker entry, so a host that
 runs guests it did not build checks them, or better, builds them itself.
