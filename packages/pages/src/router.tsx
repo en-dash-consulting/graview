@@ -3,13 +3,33 @@ import { BrowserRouter, MemoryRouter, Navigate, Route, Routes } from "react-rout
 import { openingOf } from "@graview/core";
 import { pathOfPlace } from "./page-places.js";
 import { pluralSlug } from "./registry.js";
-import { useEffect, useLayoutEffect, useRef, type ComponentType, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, type ComponentType, type ReactNode } from "react";
 import { GraviewProvider, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen } from "@graview/react/provider";
 import { PageAsk } from "./ask.js";
 import { FaceControlsRoot } from "./face-controls.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
-import { useLocation, useNavigationType, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
+import { SpecLinks } from "@graview/primitives/pages";
+import { recordPath } from "./registry.js";
+
+/**
+ * WHERE A LISTED RECORD LEADS ON THIS FACE (FR-81, FR-82): a list block in a
+ * home, a lens, a card or a row draws each record as a link, and here a
+ * link is the record's own address, followed by the router.
+ */
+function RecordLinks<S extends AnySchema>({ context, children }: { readonly context: PageContext<S>; readonly children: ReactNode }) {
+  const navigate = useNavigate();
+  const schema = context.store.schema;
+  const value = useMemo(
+    () => ({
+      href: (node: { readonly id: string; readonly kind: string }) => recordPath(schema, node.kind, node.id),
+      go: (node: { readonly id: string; readonly kind: string }) => navigate(recordPath(schema, node.kind, node.id)),
+    }),
+    [schema, navigate],
+  );
+  return <SpecLinks.Provider value={value}>{children}</SpecLinks.Provider>;
+}
 
 /**
  * The routed face, assembled: `/` home, `/:plural` a list per kind,
@@ -186,6 +206,7 @@ export function PagesRoutes<S extends AnySchema>({
     // The routed face holds the keyboard the way the scene does, and offers Find and the way back, whichever shell an app draws.
     <FaceRoot context={context} registry={registry}>
     <Shell context={context}>
+    <RecordLinks context={context}>
       <ScrollReset />
       <Routes>
         {/*
@@ -211,6 +232,7 @@ export function PagesRoutes<S extends AnySchema>({
           element={<KindSwitch context={inside} registry={registry} page="record" />}
         />
       </Routes>
+    </RecordLinks>
     </Shell>
     </FaceRoot>
   );

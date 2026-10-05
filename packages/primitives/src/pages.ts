@@ -19,4 +19,4 @@ export { useMarkup } from "./markup.js";
 export { RelationMark } from "./relation-key.js";
 // The framework's own views and the declaration's specs, for a routed face that registers them outright (`@graview/embed/pages`) without reaching every lens through the package's main entry.
 export { registerDefaultViews } from "./default-views.js";
-export { registerViewSpecs } from "./spec-views.js";
+export { registerViewSpecs, SpecLinks } from "./spec-views.js";

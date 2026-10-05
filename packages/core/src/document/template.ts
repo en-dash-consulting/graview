@@ -197,6 +197,8 @@ export interface RenderContext {
   readonly graph?: GraphReader;
   readonly bindings?: Readonly<Record<string, Value>>;
   readonly today?: string;
+  /** The steps each part may take; 500 unless the surface says (a home sweeps whole kinds). */
+  readonly budget?: number;
 }
 
 /** Render a parsed template. A part that cannot be judged renders as "—" rather than failing the whole sentence. */
@@ -211,7 +213,7 @@ export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContex
           subject: ctx.node,
           kinds: ctx.kinds,
           today,
-          budget: 500,
+          budget: ctx.budget ?? 500,
           ...(ctx.bindings ? { bindings: ctx.bindings } : {}),
         });
         return show(value, part.format, today, part.formatArgs);

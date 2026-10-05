@@ -39,8 +39,8 @@ import {
 } from "./schema.js";
 import { parseTemplate, renderTemplate, TemplateError, type TemplatePart } from "./template.js";
 import { upgradeDocument } from "./upgrade.js";
-import { validateViews } from "./views.js";
-import { computedOf, parsedComputed, validateComputed } from "./computed.js";
+import { homeOf, validateViews, viewsOf } from "./views.js";
+import { computedOf, parsedComputed, validateComputed, workedOutAlone } from "./computed.js";
 
 /*
  * A DOCUMENT, COMPILED.
@@ -227,8 +227,10 @@ function validate(document: GraviewDocument): Finding[] {
       if (spec.fields[name]) findings.push(error("edge-field-clash", `${at}.edges.${name}`, `"${name}" is both a field and a relation of ${kind}`, "rename one of them"));
     }
     if (spec.lifecycle && !spec.fields[spec.lifecycle.field]) findings.push(error("lifecycle-field", `${at}.lifecycle.field`, `${kind} has no field "${spec.lifecycle.field}"`));
+    // A glance may say a computed field: the surfaces that draw a glance work it out over the seat's graph (FR-83).
+    const computedHere = (name: string) => spec.computed !== undefined && Object.prototype.hasOwnProperty.call(spec.computed, name);
     for (const field of spec.glance ?? []) {
-      if (!spec.fields[field]) findings.push(error("glance-field", `${at}.glance`, `a glance at ${kind} is to say "${field}", and ${kind} has no field called that`, `use one of: ${Object.keys(spec.fields).join(", ")}`));
+      if (!spec.fields[field] && !computedHere(field)) findings.push(error("glance-field", `${at}.glance`, `a glance at ${kind} is to say "${field}", and ${kind} has no field or computed field called that`, `use one of: ${[...Object.keys(spec.fields), ...Object.keys(spec.computed ?? {})].join(", ")}`));
     }
     for (const key of ["label", "describe"] as const) {
       const source = spec[key];
@@ -237,7 +239,13 @@ function validate(document: GraviewDocument): Finding[] {
       for (const part of parts ?? []) {
         if (!part.expr) continue;
         for (const name of analyzeExpr(part.expr).names) {
-          if (!spec.fields[name]) findings.push(error("template-field", `${at}.${key}`, `${kind} has no field "${name}" for its ${key} to show`, key === "label" ? "a label can only show the record's own fields" : undefined));
+          if (spec.fields[name]) continue;
+          // A computed field worked out from the record alone is said like a field; one that reads beyond it cannot be, with no graph in hand.
+          if (computedHere(name)) {
+            if (!workedOutAlone(spec, name)) findings.push(error("template-field", `${at}.${key}`, `${kind}'s ${name} is worked out from beyond the record, and a ${key} is said with no graph to read`, `show it in a view instead, or name a computed field worked out from ${kind}'s own fields`));
+            continue;
+          }
+          findings.push(error("template-field", `${at}.${key}`, `${kind} has no field "${name}" for its ${key} to show`, key === "label" ? "a label can only show the record's own fields and what they work out" : undefined));
         }
       }
     }
@@ -485,6 +493,8 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
   const check = checkApp(app);
   for (const f of check.findings) {
     const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: f.message, ...(f.fix ? { fix: f.fix } : {}) } as const;
+    // The document already said it, at the same path (a blocks lens's words are held by both): once is enough.
+    if (compiled.findings.some((said) => said.code === f.code && said.path === finding.path)) continue;
     findings.push(f.code === "glance-unchosen" ? inDocumentWords(finding, f.where, document) : finding);
   }
   if (hasErrors(findings)) return { ok: false, findings };
@@ -794,7 +804,9 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
     ...(document.pages ? { pages: document.pages as never } : {}),
     ...(document.settings ? { settings: document.settings as never } : {}),
     // The document's views are the declaration's view specs (FR-03): data the framework draws.
-    ...(document.views && Object.keys(document.views).length > 0 ? { viewSpecs: document.views as never } : {}),
+    ...(Object.keys(viewsOf(document)).length > 0 ? { viewSpecs: viewsOf(document) as never } : {}),
+    // And its home view, about no one record, is the app's home (FR-81).
+    ...(homeOf(document) ? { home: homeOf(document) as never } : {}),
     version: document.version ?? 1,
   };
 

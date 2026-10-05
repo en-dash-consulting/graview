@@ -8,7 +8,7 @@ import type { GraphSnapshot } from "./graph/types.js";
 import type { Primitive } from "./graph/primitives.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { ViewRegistry } from "./views/types.js";
-import type { ViewSpecsByKind } from "./document/views.js";
+import type { HomeView, ViewSpecsByKind } from "./document/views.js";
 import type { PagesArrangement } from "./places.js";
 
 /**
@@ -138,6 +138,15 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    * the default at one × full. A document's `views` compile to this.
    */
   readonly viewSpecs?: ViewSpecsByKind;
+  /**
+   * THE HOME VIEW, AS DATA (FR-81): blocks from the same closed set —
+   * `headline`, `figure`, `list` and the rest — about no one record, drawn
+   * as the home's body on both faces in place of the derived one. A
+   * document writes it as `views.home`.
+   *
+   *   home: [{ headline: "{count(all('offer')) | words} offers" }, { list: "all('offer')", as: "card" }]
+   */
+  readonly home?: HomeView;
   /**
    * Roles a lens requires an app to bind, and what it binds them to.
    *

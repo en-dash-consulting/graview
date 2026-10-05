@@ -71,7 +71,8 @@
     { "name": "coverage", "title": "Who covers what", "bindings": { "rows": { "kind": "shift" }, "columns": { "kind": "volunteer" }, "link": { "edge": "covered-by" } } },
     { "name": "board", "title": "The floor", "bindings": { "slots": { "kind": "seat" }, "x": { "field": "x", "on": "slots" }, "y": { "field": "y", "on": "slots" }, "fill": { "edge": "taken-by" } } },
     { "name": "plan", "title": "The building", "bindings": { "regions": { "kind": "room" }, "outline": { "field": "outline", "on": "regions" } } },
-    { "name": "reach", "title": "Who may do what", "on": "member" }
+    { "name": "reach", "title": "Who may do what", "on": "member" },
+    { "name": "blocks", "title": "Who keeps the hall", "on": "member", "options": { "blocks": [{ "headline": "{count(all('member')) | words} {count(all('member')) | plural: 'member'}" }, { "list": "all('member')", "sort": "label", "as": "row", "empty": "Nobody yet." }] } }
   ],
   "pages": { "order": ["volunteer", "seat", "shift"], "hide": ["room"], "first": "The floor" }
 }

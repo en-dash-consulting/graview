@@ -62,16 +62,57 @@ function doorFor<S extends AnySchema>(lens: DrawnLens): ViewComponent<S> {
   return Door;
 }
 
+type HomeModule = typeof import("./home-view.js");
+let home: HomeModule | undefined;
+let fetchingHome: Promise<void> | undefined;
+
+/** Fetch the home view's drawing: the blocks, and nothing of the lenses. */
+export function fetchHomeView(): Promise<void> {
+  return (fetchingHome ??= import("./home-view.js").then((module) => {
+    home = module;
+  }));
+}
+
+interface HomeDoorProps {
+  readonly blocks: readonly unknown[];
+  readonly view: ViewProps<AnySchema>;
+}
+
+function HomeDrawn({ blocks, view }: HomeDoorProps) {
+  const View = home!.homeView(blocks);
+  return <View {...view} />;
+}
+
+const HomeArriving = lazy(() => fetchHomeView().then(() => ({ default: HomeDrawn as ComponentType<HomeDoorProps> })));
+
+/** The home view (FR-81) behind a door, fetched when the home first draws it. */
+function homeDoor<S extends AnySchema>(blocks: readonly unknown[]): ViewComponent<S> {
+  return (view: ViewProps<S>) => {
+    const [here] = useState(() => home !== undefined);
+    const props: HomeDoorProps = { blocks, view: view as unknown as ViewProps<AnySchema> };
+    return here ? (
+      <HomeDrawn {...props} />
+    ) : (
+      <Suspense fallback={null}>
+        <HomeArriving {...props} />
+      </Suspense>
+    );
+  };
+}
+
 /**
- * Registers every lens the declaration draws as a named place, and lays the
- * declaration's arrangement on the registry. Returns the registry.
+ * Registers every lens the declaration draws as a named place, lays the
+ * declaration's arrangement on the registry, and gives it the home's own
+ * view when the declaration writes one. Returns the registry.
  *
  * A TypeScript app calls it once over the registry it builds (or starts from
  * `declaredViews(app)`); the embed calls it for every app it mounts.
  * Registered last, a lens is what its kind draws when an address names no
  * picture, as any registration made last is.
  */
-export function registerDeclaredLenses<S extends AnySchema>(registry: ReactViewRegistry<S>, app: Pick<GraviewApp<S>, "schema" | "lenses" | "pages">): ReactViewRegistry<S> {
+export function registerDeclaredLenses<S extends AnySchema>(registry: ReactViewRegistry<S>, app: Pick<GraviewApp<S>, "schema" | "lenses" | "pages" | "home">): ReactViewRegistry<S> {
+  // The home's own view, when the declaration writes one (FR-81): both faces draw it in place of the derived home's body.
+  if (app.home && app.home.length > 0) registry.home?.(homeDoor<S>(app.home));
   for (const lens of declaredLenses(app as GraviewApp<S>).drawn) {
     const Door = doorFor<S>(lens);
     const meta = { title: lens.title, ...(lens.across ? { across: lens.across } : {}) };

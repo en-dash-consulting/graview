@@ -133,6 +133,13 @@ export function describeApp<S extends AnySchema>(
   for (const lens of lensesDeclared.undrawn) {
     if (lens.title) lines.push(`  "${lens.title}" does not draw: ${lens.why}.`);
   }
+  // The home view (FR-81): what the home draws in place of the derived one, on both faces, once there is something to show.
+  if (app.home && app.home.length > 0) {
+    const lists = app.home.filter((block) => typeof block === "object" && block !== null && "list" in block).length;
+    lines.push(
+      `Its home is drawn from ${app.home.length} ${app.home.length === 1 ? "block" : "blocks"} of its own${lists > 0 ? `, ${lists} of them ${lists === 1 ? "a list" : "lists"} of records` : ""}, in place of the derived home; an empty graph still opens on the way in.`,
+    );
+  }
   if (app.pages) {
     const first = everywhere.find((place) => place.first);
     const order = (app.pages.order ?? []).filter((kind) => kinds.includes(kind));

@@ -140,6 +140,13 @@ the reuse test beside it, red on purpose.
    `.register("gardener", { cardinality: "many", fidelity: "full" }, View, { title: "Who tends what" })`.
    Untitled, it is reachable only by focusing the group.
 
+10. **Before writing a picture, try blocks.** `{ name: "blocks", title:
+   "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')",
+   group: "type", as: "row" }] } }` is a place drawn from the closed block set
+   (headline, figure, list — `graview-node-kind`), each record by its own row
+   or card. Nothing in it runs; a chat can write it. Write code only for what
+   blocks cannot say: a meter, a grid of cells, positions.
+
 ## Roles live in two places, and they do different jobs
 
 `defineNode("shift", { fieldRoles: { start: "from" } })` is what everything

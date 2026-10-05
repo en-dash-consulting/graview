@@ -14,8 +14,14 @@ import type { CheckContext } from "./context.js";
  */
 export function checkViewSpecs<S extends AnySchema>(ctx: CheckContext<S>): void {
   const { app, add } = ctx;
-  if (!app.viewSpecs) return;
-  const findings = validateViewSpecs(app.schema, app.viewSpecs, app.brand?.figures ? { figures: app.brand.figures } : {});
+  // A home view and the lenses drawn from blocks are held to the same words (FR-81).
+  const blockLenses = (app.lenses ?? []).some((lens) => lens.name === "blocks");
+  if (!app.viewSpecs && app.home === undefined && !blockLenses) return;
+  const findings = validateViewSpecs(app.schema, app.viewSpecs, {
+    ...(app.brand?.figures ? { figures: app.brand.figures } : {}),
+    ...(app.home !== undefined ? { home: app.home } : {}),
+    ...(blockLenses ? { lenses: app.lenses } : {}),
+  });
   for (const finding of findings) {
     add({
       severity: finding.severity,
