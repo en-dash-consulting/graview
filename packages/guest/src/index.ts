@@ -5,6 +5,7 @@ export type {
   GuestAct,
   GuestAnswer,
   GuestEdge,
+  GuestEvent,
   GuestNode,
   GuestProps,
   GuestReady,

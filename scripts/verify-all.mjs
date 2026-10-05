@@ -52,6 +52,8 @@ const CHAIN = [
   ["watch", "verify-watch.mjs"],
   // No browser: what Cloud's hosted page carries before the app draws, from esbuild's metafile (FR-57).
   ["hosted", "verify-hosted-page.mjs"],
+  // Guest views, hostile, in a frame (three engines) and in a worker inside Claude's and ChatGPT's widgets (FR-04, FR-68–FR-71).
+  ["guest", "guest-sandbox.mjs"],
   ["site", "verify-site.mjs"],
   // The awkward example in every face, width, scheme and seat — long, so it starts early.
   ["gauntlet", "verify-gauntlet.mjs"],

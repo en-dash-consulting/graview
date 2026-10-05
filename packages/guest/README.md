@@ -58,3 +58,51 @@ entries import nothing of the framework, so a guest bundle carries none of it.
 `edges` among them, `label`, `fidelity`, `cardinality`, `mode`, `selected`,
 `implicated`, `flagged` — and `acts`, the acts the viewer may run. A record
 the viewer may not see is in none of them.
+
+## In a worker
+
+Where a frame cannot be nested — a chat's widget, whose sandbox will not
+frame another origin — the same guest runs in a classic Web Worker the host
+starts from a `blob:` URL, and draws in the host's page from a component kit.
+
+```ts
+import { mountGuestWorker } from "@graview/guest/host";
+
+const guest = mountGuestWorker(element, { worker: { script }, view: "recipe-card", store, principal,
+  onFailure: (reason) => showTheTierOneCard(reason) });   // refused, silent, or budget
+
+views.register("recipe", { fidelity: "full", cardinality: "one" },
+  guestView({ worker: { script }, name: "recipe-card" }));
+```
+
+`mountGuestWorker` starts the worker without `type: "module"`, which a
+`blob:` URL in an opaque origin cannot start, from the script's text or a
+URL it is given. It speaks the frame's protocol: one `guest-ready`, answered
+with a fresh nonce and a `MessageChannel`; the props as the viewer sees
+them; acts applied as the viewer, `via: "view:<name>"`, under the same
+limits. A second ready from the same worker is dropped. What the guest draws
+comes over the port as Remote DOM mutation records, and the host draws only
+the kit (`GUEST_KIT`), with `createKitRenderer`. The worker's half of the
+host, and the renderer, are fetched only when `guestView` draws a worker.
+
+In the guest, `connectGuest` from `@graview/guest/worker` is the frame
+guest's API with a `root` to draw into:
+
+```ts
+import { connectGuest } from "@graview/guest/worker";
+
+const guest = connectGuest();
+guest.subscribe((props) => {
+  const card = document.createElement("gv-card");
+  const title = document.createElement("gv-title");
+  title.textContent = props.node?.label ?? "";
+  const cook = document.createElement("gv-button");
+  cook.textContent = "Cooked it";
+  cook.addEventListener("press", () => guest.act("mark-cooked", { recipeId: props.node!.id }));
+  card.append(title, cook);
+  guest.root.replaceChildren(card);
+});
+```
+
+The worker entry carries Remote DOM (`@remote-dom/core` and its polyfill,
+MIT, pinned); the frame guest and the host do not.

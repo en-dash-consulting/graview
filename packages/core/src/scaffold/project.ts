@@ -483,6 +483,7 @@ export default defineConfig({
       "@graview/embed": framework("embed/src/index.ts"),
       "@graview/guest/host": framework("guest/src/host/index.ts"),
       "@graview/guest/react": framework("guest/src/react.ts"),
+      "@graview/guest/worker": framework("guest/src/worker/index.ts"),
       "@graview/guest": framework("guest/src/index.ts"),
       "@graview/studio": framework("studio/src/index.ts"),
     },

@@ -1,5 +1,6 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type HostHello } from "../protocol.js";
+import { mintNonce } from "./nonce.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 
 export interface MountGuestViewOptions<S extends AnySchema> {
@@ -27,13 +28,6 @@ export interface GuestFrame {
   /** What this frame has been refused or had dropped, across every document it has loaded. */
   readonly stats: Readonly<GuestStats>;
   dispose(): void;
-}
-
-/** A nonce no other frame and no other load of this one shares. */
-function mintNonce(): string {
-  const bytes = new Uint8Array(16);
-  globalThis.crypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 /**

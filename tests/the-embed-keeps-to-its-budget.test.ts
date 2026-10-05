@@ -64,7 +64,7 @@ describe("the embed's bundle budget", () => {
   }, 60_000);
 
   it("fails a bundle that carries a package it must not", async () => {
-    const carrying = (BUDGETS as { name: string; entry: string; lacks?: string[] }[]).map((budget) => ({ ...budget, minified: 10_000_000, gzipped: 10_000_000, lacks: ["@graview/core"] }));
+    const carrying = (BUDGETS as { name: string; entry: string; lacks?: string[] }[]).filter((budget) => budget.entry.includes("@graview/embed")).map((budget) => ({ ...budget, minified: 10_000_000, gzipped: 10_000_000, lacks: ["@graview/core"] }));
     const measured = (await measureBudgets(repo, carrying)) as Measured[];
     expect(measured.every((one) => one.over && one.carries.includes("@graview/core"))).toBe(true);
   }, 60_000);

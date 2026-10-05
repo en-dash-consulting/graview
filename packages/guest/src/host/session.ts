@@ -50,6 +50,12 @@ export interface GuestHostOptions<S extends AnySchema> {
   readonly onNavigate?: (id: string) => void;
   /** The guest asked for a height. */
   readonly onSize?: (height: number) => void;
+  /**
+   * A worker guest's drawing (FR-68): its Remote DOM mutation records, for
+   * the kit's renderer to draw what the kit allows of. Without it, a
+   * `render` is dropped unread: a frame guest draws in its own document.
+   */
+  readonly onRender?: (records: readonly unknown[]) => void;
   readonly limits?: GuestLimits;
   /**
    * The frame's limiter, when the frame outlives this session: a guest
@@ -218,6 +224,10 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       if (data.type === "navigate" && typeof data.to === "string") {
         if (seen().graph.has(data.to)) options.onNavigate?.(data.to);
         else stats.dropped += 1;
+        return;
+      }
+      if (data.type === "render" && Array.isArray(data.records) && options.onRender) {
+        options.onRender(data.records);
         return;
       }
       if (data.type === "size" && typeof data.height === "number" && Number.isFinite(data.height)) {

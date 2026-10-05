@@ -112,6 +112,48 @@ export const BUDGETS = [
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
+  {
+    name: "a guest view in a frame",
+    /*
+     * The guest half a frame guest bundles (FR-04): the protocol and the
+     * channel, nothing of the framework, and none of Remote DOM, which only
+     * a worker guest needs (FR-68). Measured at 1_578 / 845.
+     */
+    entry: `import { connectGuest } from "@graview/guest"; globalThis.connect = connectGuest;`,
+    minified: 3_000,
+    gzipped: 1_500,
+    load: "all",
+    lacks: ["@graview/core", "@remote-dom/core", "@remote-dom/polyfill"],
+  },
+  {
+    name: "a guest view in a worker",
+    /*
+     * The worker entry (FR-68–FR-71): Remote DOM's polyfill and remote
+     * elements, the component kit, the hardening and the channel. Graview
+     * Cloud's spike measured the polyfill and elements alone at 46.9 kB
+     * minified, 15.5 kB gzipped. Measured at 52_080 / 17_369.
+     */
+    entry: `import { connectGuest } from "@graview/guest/worker"; globalThis.connect = connectGuest;`,
+    minified: 60_000,
+    gzipped: 20_000,
+    load: "all",
+    lacks: ["@graview/core"],
+  },
+  {
+    name: "the guest host, before a worker is drawn",
+    /*
+     * What a host page loads first to draw guest views (FR-04, FR-68): the
+     * frame's host, the session, and `guestView`. The worker's host and
+     * the kit's renderer are a chunk fetched when a worker view is drawn,
+     * and Remote DOM is in neither: the host reads its records without it.
+     * Measured at 16_089 / 6_388.
+     */
+    entry: `import { guestView, mountGuestView } from "@graview/guest/host"; globalThis.host = { guestView, mountGuestView };`,
+    minified: 18_000,
+    gzipped: 7_500,
+    load: "first",
+    lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
+  },
 ];
 
 /** The host's own: a page has one React, and the embed is not it. */
@@ -159,6 +201,17 @@ export async function bundleSize(repo, entry, load = "all") {
     }
     return [...packages].sort();
   };
+  /* The third-party packages in some paths, by name, for a budget that must not carry one (`@remote-dom/core`). */
+  const vendorsIn = (paths) => {
+    const vendors = new Set();
+    for (const path of paths) {
+      for (const input of Object.keys(outputs[path].inputs)) {
+        const found = input.match(/.*node_modules\/((?:@[^/]+\/)?[^/]+)\//);
+        if (found) vendors.add(found[1]);
+      }
+    }
+    return [...vendors].sort();
+  };
   // What the page fetches only when it is asked for: every chunk the entry does not import outright.
   const statically = new Set();
   const reach = (path) => {
@@ -172,6 +225,7 @@ export async function bundleSize(repo, entry, load = "all") {
     gzipped: files.reduce((sum, file) => sum + gzipSync(file.contents).length, 0),
     chunks: files.length,
     packages: packagesIn(loaded),
+    vendors: vendorsIn(loaded),
     lazy: packagesIn(Object.keys(outputs).filter((path) => !statically.has(path))),
   };
 }
@@ -180,8 +234,8 @@ export async function bundleSize(repo, entry, load = "all") {
 export async function measureBudgets(repo, budgets = BUDGETS) {
   const measured = [];
   for (const budget of budgets) {
-    const { packages, lazy, ...size } = await bundleSize(repo, budget.entry, budget.load ?? "all");
-    const carries = (budget.lacks ?? []).filter((name) => packages.includes(name));
+    const { packages, vendors, lazy, ...size } = await bundleSize(repo, budget.entry, budget.load ?? "all");
+    const carries = (budget.lacks ?? []).filter((name) => packages.includes(name) || vendors.includes(name));
     // A package that must not wait for a chunk of its own: any module of it fetched later fails the budget.
     const defers = (budget.lazyLacks ?? []).filter((name) => lazy.includes(name));
     const over = size.minified > budget.minified || size.gzipped > budget.gzipped || carries.length > 0 || defers.length > 0;

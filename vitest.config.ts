@@ -49,6 +49,7 @@ export default defineConfig({
       // The subpaths first, or the bare-name alias swallows them.
       "@graview/guest/host": fileURLToPath(new URL("./packages/guest/src/host/index.ts", import.meta.url)),
       "@graview/guest/react": fileURLToPath(new URL("./packages/guest/src/react.ts", import.meta.url)),
+      "@graview/guest/worker": fileURLToPath(new URL("./packages/guest/src/worker/index.ts", import.meta.url)),
       "@graview/guest": src("guest"),
       "@graview/studio": src("studio"),
       // The subpaths first, or the bare-name alias swallows them.

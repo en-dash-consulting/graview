@@ -34,6 +34,10 @@ export const OWN = {
   /** The app `smoke-create` scaffolds, and the linked one after it. */
   created: 5280,
   linked: 5281,
+  /** `guest-sandbox`'s host page, and the chat's stand-in that frames a widget; it also logs what reaches it. */
+  "guest-host": 5282,
+  /** `guest-sandbox`'s other origin: the frame guests, and the widget's sandbox proxy. */
+  "guest-sandbox": 5283,
   /** The scratch app `rehearse-studio` writes, and the model it stands in for. */
   rehearsal: 5285,
   "rehearsal-model": 5286,

@@ -15,6 +15,18 @@
  *   guest → host     { type: "size", nonce, height }                 (over the port: the height it wants)
  *   host  → guest    { type: "answer", id, ok, … }                   (over the port: what became of an act)
  *
+ * A GUEST IN A WORKER (FR-68) says the same things. Its `guest-ready` goes
+ * to the worker's owner (`self.postMessage`), which is the host by
+ * construction, and the hello comes back the same way with the port. A
+ * worker has no DOM of its own to draw in, so it draws in the host's, from
+ * the component kit alone (kit.ts):
+ *
+ *   guest → host     { type: "render", nonce, records }              (over the port: Remote DOM mutation records)
+ *   host  → guest    { type: "event", listener, detail }             (over the port: a kit event the viewer raised)
+ *
+ * A frame guest never sends `render`; a host that is not drawing a worker
+ * drops it unread.
+ *
  * The host answers a `guest-ready` only from its own frame's window and
  * only from the opaque origin, and every request over the port carries the
  * nonce of that hello. What the guest is pushed is the store as the viewer
@@ -112,12 +124,25 @@ export interface HostHello {
   readonly view: string;
 }
 
-export type HostMessage = { readonly type: "props"; readonly props: GuestProps } | GuestAnswer;
+/**
+ * A kit event the viewer raised on something a worker guest drew: which of
+ * the guest's listeners to call, and the one plain value the kit declares
+ * for it (an input's text), if any.
+ */
+export interface GuestEvent {
+  readonly type: "event";
+  readonly listener: number;
+  readonly detail?: string | number | boolean | null;
+}
+
+export type HostMessage = { readonly type: "props"; readonly props: GuestProps } | GuestAnswer | GuestEvent;
 
 export type GuestRequest =
   | { readonly type: "act"; readonly nonce: string; readonly id: string | number; readonly name: string; readonly args: Readonly<Record<string, unknown>> }
   | { readonly type: "navigate"; readonly nonce: string; readonly to: string }
-  | { readonly type: "size"; readonly nonce: string; readonly height: number };
+  | { readonly type: "size"; readonly nonce: string; readonly height: number }
+  /** A worker guest's drawing: Remote DOM mutation records, with each listener sent as `{ listener: id }`. */
+  | { readonly type: "render"; readonly nonce: string; readonly records: readonly unknown[] };
 
 /** Whether a window message is a guest saying it is ready. */
 export function isGuestReady(data: unknown): data is GuestReady {
