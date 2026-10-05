@@ -70,6 +70,8 @@ export interface KitRenderer {
   readonly refused: readonly KitRefusal[];
   /** How many nodes are drawn. */
   readonly size: number;
+  /** How many of the guest's listeners are attached to what is drawn: each goes with its node, or when the guest takes it away. */
+  readonly listening: number;
   dispose(): void;
 }
 
@@ -150,6 +152,7 @@ export function createKitRenderer(into: HTMLElement, options: KitRendererOptions
   const root: Drawn = { dom: into, name: ROOT_ID, component: { host: "div", properties: {}, events: {}, children: "any" }, children: [], listeners: new Map(), id: ROOT_ID };
   byId.set(ROOT_ID, root);
   let size = 0;
+  let listening = 0;
   let over = false;
 
   const refuse = (refusal: KitRefusal) => {
@@ -180,8 +183,12 @@ export function createKitRenderer(into: HTMLElement, options: KitRendererOptions
   const setListener = (drawn: Drawn, name: string, value: unknown) => {
     const component = drawn.component!;
     if (!own(component.events, name)) return refuse({ reason: "event", element: drawn.name!, name });
-    drawn.listeners.get(name)?.();
-    drawn.listeners.delete(name);
+    const before = drawn.listeners.get(name);
+    if (before) {
+      before();
+      drawn.listeners.delete(name);
+      listening -= 1;
+    }
     if (value === null || value === undefined) return;
     if (!isRecord(value) || typeof value["listener"] !== "number") return refuse({ reason: "value", element: drawn.name!, name });
     const listener = value["listener"];
@@ -190,6 +197,7 @@ export function createKitRenderer(into: HTMLElement, options: KitRendererOptions
     const raised = () => options.onEvent(listener, event.detail === "value" ? String((element as HTMLInputElement).value ?? "") : undefined);
     element.addEventListener(event.from, raised);
     drawn.listeners.set(name, () => element.removeEventListener(event.from, raised));
+    listening += 1;
   };
 
   const forget = (drawn: Drawn) => {
@@ -197,6 +205,8 @@ export function createKitRenderer(into: HTMLElement, options: KitRendererOptions
     size -= 1;
     if (drawn.id !== undefined) byId.delete(drawn.id);
     for (const off of drawn.listeners.values()) off();
+    listening -= drawn.listeners.size;
+    drawn.listeners.clear();
     for (const child of drawn.children) forget(child);
   };
 
@@ -317,6 +327,9 @@ export function createKitRenderer(into: HTMLElement, options: KitRendererOptions
     },
     get size() {
       return size;
+    },
+    get listening() {
+      return listening;
     },
     dispose() {
       for (const child of root.children) forget(child);

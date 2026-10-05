@@ -25,6 +25,7 @@ import { openGuest, type Guest } from "../channel.js";
 import { GUEST_KIT } from "../kit.js";
 import { defineKit } from "./elements.js";
 import { harden, type Hardening } from "./harden.js";
+import { createListenerLedger } from "./listeners.js";
 
 /** The element a worker guest draws into; the host's container stands for it. */
 export const GUEST_ROOT = "graview-root";
@@ -49,9 +50,6 @@ export interface WorkerGuest extends Guest {
   readonly root: Element;
 }
 
-type Listener = (...args: unknown[]) => unknown;
-type Plain = string | number | boolean | null | undefined | { readonly listener: number } | readonly Plain[] | { readonly [key: string]: Plain };
-
 let shared: WorkerGuest | undefined;
 
 /**
@@ -64,27 +62,10 @@ export function connectGuest(): WorkerGuest {
 
   /*
    * A listener cannot be cloned into a message, so it crosses as an id the
-   * host hands back when the viewer raises the event. The same function is
-   * always the same id.
+   * host hands back when the viewer raises the event, and is let go when
+   * what it was on leaves the tree (listeners.ts).
    */
-  const byId = new Map<number, Listener>();
-  const ids = new WeakMap<Listener, number>();
-  let nextListener = 0;
-  const plain = (value: unknown, depth = 0): Plain => {
-    if (typeof value === "function") {
-      let id = ids.get(value as Listener);
-      if (id === undefined) {
-        id = nextListener += 1;
-        ids.set(value as Listener, id);
-        byId.set(id, value as Listener);
-      }
-      return { listener: id };
-    }
-    if (value === null || typeof value === "string" || typeof value === "number" || typeof value === "boolean" || value === undefined) return value;
-    if (depth > 64 || typeof value !== "object") return undefined;
-    if (Array.isArray(value)) return value.map((one) => plain(one, depth + 1));
-    return Object.fromEntries(Object.entries(value).map(([key, one]) => [key, plain(one, depth + 1)]));
-  };
+  const ledger = createListenerLedger();
 
   const opened = openGuest(
     {
@@ -96,7 +77,7 @@ export function connectGuest(): WorkerGuest {
       fromHost: () => true,
       ready: (message) => natives.post(message),
     },
-    { onEvent: (event) => void byId.get(event.listener)?.(event.detail) },
+    { onEvent: (event) => void ledger.listener(event.listener)?.(event.detail) },
   );
 
   /* A microtask's mutations go as one message: building a card is one render, not one per node. */
@@ -108,7 +89,7 @@ export function connectGuest(): WorkerGuest {
         natives.microtask(() => {
           const records = pending ?? [];
           pending = undefined;
-          opened.send({ type: "render", records: plain(records) as readonly unknown[] });
+          opened.send({ type: "render", records: ledger.encode(records) });
         });
       }
       pending.push(...records);
