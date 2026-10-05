@@ -516,6 +516,8 @@ try {
   await page.click('[data-testid="studio-agent"]');
   await page.waitForSelector('[data-testid="studio-agent-panel"]', { timeout: 10_000 });
   const asked = async (words) => {
+    // Another popover, or a press elsewhere in the studio, closes the seat's (FR-77): open it again.
+    if (!(await page.$('[data-testid="studio-agent-panel"]'))) await page.click('[data-testid="studio-agent"]');
     await page.fill('[data-testid="studio-agent-draft"]', words);
     await page.click('[data-testid="studio-agent-send"]');
     await page.waitForTimeout(900);
@@ -572,6 +574,12 @@ try {
    * half right costs one press to fix rather than another sentence and
    * another turn. Change the name here and the declaration takes THAT.
    */
+  /*
+   * Applying is a press elsewhere in the studio, which closes the seat's
+   * popover as any popover closes (FR-77); the conversation outlives it,
+   * and the seat's pill opens it again where it was.
+   */
+  if (!(await page.$('[data-testid="studio-agent-panel"]'))) await page.click('[data-testid="studio-agent"]');
   await page.fill('[data-testid="studio-agent-arg-label"]', "wanted by");
   await page.waitForTimeout(400);
   const corrected = await page.evaluate(() => ({

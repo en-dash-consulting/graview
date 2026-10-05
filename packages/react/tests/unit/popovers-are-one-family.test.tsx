@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-import { act } from "react";
+import { act, useState } from "react";
+import { createPortal } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { POPOVERS, usePopover, type PopoverName } from "../../src/popover.js";
@@ -98,5 +99,53 @@ describe.each(NAMES)("the %s popover", (name) => {
     press(`${name}-trigger`);
     act(() => $(`${name}-first`)!.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true })));
     expect($(`${name}-pane`)).not.toBeNull();
+  });
+});
+
+/**
+ * A DIALOG A POPOVER OPENS TAKES OVER. The studio opens from a button in the
+ * profile; in the top layer the profile stood over it. The keyboard going
+ * into the dialog closes the popover, and when the dialog is gone the
+ * keyboard goes back to the popover's trigger.
+ */
+describe("a dialog a popover opens", () => {
+  function Opener() {
+    const popover = usePopover("profile");
+    const [dialog, setDialog] = useState(false);
+    return (
+      <div>
+        <button type="button" data-testid="opener" {...popover.trigger} onClick={popover.toggle}>
+          profile
+        </button>
+        <div data-testid="opener-pane" {...popover.pane} hidden={!popover.open}>
+          <button type="button" data-testid="open-dialog" onClick={() => setDialog(true)}>
+            studio
+          </button>
+          {dialog
+            ? createPortal(
+                <div role="dialog" tabIndex={-1} data-testid="dialog" ref={(element) => element?.focus()}>
+                  <button type="button" data-testid="close-dialog" onClick={() => setDialog(false)}>
+                    close
+                  </button>
+                </div>,
+                document.body,
+              )
+            : null}
+        </div>
+      </div>
+    );
+  }
+
+  it("closes the popover, and gives the keyboard back to its trigger when it goes", async () => {
+    act(() => root.render(<Opener />));
+    press("opener");
+    press("open-dialog");
+    expect($("dialog")).not.toBeNull();
+    expect($("opener")!.getAttribute("aria-expanded")).toBe("false");
+    $("close-dialog")!.focus();
+    press("close-dialog");
+    await frame();
+    await frame();
+    expect(document.activeElement).toBe($("opener"));
   });
 });

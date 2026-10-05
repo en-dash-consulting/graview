@@ -362,11 +362,49 @@ export function usePopover(name: PopoverName, options: PopoverOptions = {}): Pop
         }
       });
     };
+    /*
+     * A DIALOG IT OPENED TAKES OVER. The studio is a dialog its button in
+     * the profile opens; in the top layer the profile stood over it and
+     * covered its bar. When the keyboard goes into a dialog the pane does
+     * not hold, the pane closes (it stays mounted where its owner keeps it
+     * so, and the dialog with it), and when that dialog is gone and has left
+     * the keyboard nowhere — its way back was a control in the closed pane —
+     * the keyboard goes to the trigger.
+     */
+    let handedTo: Element | null = null;
+    let watching: MutationObserver | null = null;
+    const takenOver = (event: FocusEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const pane = paneRef.current;
+      const dialog = target.closest('[role="dialog"], [role="alertdialog"]');
+      if (!dialog || (pane && (pane.contains(dialog) || dialog.contains(pane)))) return;
+      handedTo = dialog;
+      close(false);
+    };
     document.addEventListener("keydown", key);
     document.addEventListener("pointerdown", away, true);
+    document.addEventListener("focusin", takenOver);
     return () => {
       document.removeEventListener("keydown", key);
       document.removeEventListener("pointerdown", away, true);
+      document.removeEventListener("focusin", takenOver);
+      const dialog = handedTo;
+      if (dialog && typeof MutationObserver !== "undefined") {
+        watching?.disconnect();
+        watching = new MutationObserver(() => {
+          if (dialog.isConnected) return;
+          watching?.disconnect();
+          requestAnimationFrame(() => {
+            const active = document.activeElement;
+            const lost = active === null || active === document.body || (active instanceof HTMLElement && active.closest("[hidden]") !== null);
+            if (lost) (triggerRef.current ?? latest.current.returnTo?.() ?? null)?.focus({ preventScroll: true });
+          });
+        });
+        watching.observe(document.body, { childList: true, subtree: true });
+        // Given up after a while: a dialog left open for good is not waited on.
+        setTimeout(() => watching?.disconnect(), 10 * 60_000);
+      }
       if (current?.close === me.close) current = null;
     };
   }, [enabled, open, name, close]);
