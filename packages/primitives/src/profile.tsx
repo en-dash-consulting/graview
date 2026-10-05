@@ -55,6 +55,7 @@ export function Profile<S extends AnySchema>({
    * and the block they sit in hides itself when they do.
    */
   keeping,
+  hostActions = NO_HOST_ACTIONS,
   compact = false,
 }: {
   /** Just the mark: the name is the title. For a bar without the room. */
@@ -69,6 +70,8 @@ export function Profile<S extends AnySchema>({
   readonly onScheme?: (scheme: "light" | "dark") => void;
   readonly profileHref?: (userId: string) => string;
   readonly keeping?: ReactNode;
+  /** The host's own ways out and about: its links, drawn under who you are (FR-72). */
+  readonly hostActions?: readonly HostAction[];
 }) {
   const { store, principal, seats, people, settings, settingValues, chooseSetting, sharing, hostAnswers } = useGraview<S>();
   /*
@@ -249,6 +252,51 @@ export function Profile<S extends AnySchema>({
           </div>
 
           {/*
+            * THE HOST'S OWN ACTIONS (FR-72), under who you are: "Your apps",
+            * "Change the app", "Report this app" — the host's, about the app
+            * and the person, where a person looks for exactly that. Graview
+            * Cloud kept them in a menu of its own fixed over the scene's
+            * corner, because the embed had nowhere to put them. A link is a
+            * link (opened where the host says), and a press closes the menu.
+            */}
+          {hostActions.length > 0 ? (
+            <ul role="list" aria-label="From the host" data-testid="host-actions" style={{ ...ruled, margin: 0, paddingLeft: 0, listStyle: "none", display: "grid", gap: 2 }}>
+              {hostActions.map((action) => (
+                <li key={action.label}>
+                  {action.href !== undefined ? (
+                    <a
+                      href={action.href}
+                      data-testid="host-action"
+                      className="graview-host-action"
+                      {...(action.target ? { target: action.target, rel: "noopener" } : {})}
+                      onClick={() => {
+                        action.onSelect?.();
+                        popover.setOpen(false);
+                      }}
+                      style={hostRow}
+                    >
+                      {action.label}
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      data-testid="host-action"
+                      className="graview-host-action"
+                      onClick={() => {
+                        popover.setOpen(false);
+                        action.onSelect?.();
+                      }}
+                      style={{ ...hostRow, width: "100%", textAlign: "left", border: "none", background: "none", boxShadow: "none", font: "inherit", cursor: "pointer" }}
+                    >
+                      {action.label}
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {/*
             * THE WAYS INTO THE APP ITSELF — under who you are, because that
             * is what decides whether they are there at all, and above the
             * reader's own settings, because a pane that put them last put
@@ -366,6 +414,32 @@ export function Profile<S extends AnySchema>({
     </div>
   );
 }
+
+/**
+ * ONE OF A HOST'S OWN ACTIONS, in the profile menu (FR-72): a link
+ * (`href`, and `target` if it opens elsewhere) or a press (`onSelect`).
+ * Given both, the link is followed and `onSelect` is told.
+ */
+export interface HostAction {
+  readonly label: string;
+  readonly href?: string;
+  readonly target?: string;
+  readonly onSelect?: () => void;
+}
+
+const NO_HOST_ACTIONS: readonly HostAction[] = [];
+
+/** A row of the host's: a full fingertip, the ink of the pane, the accent when the keyboard is on it. */
+const hostRow = {
+  display: "flex",
+  alignItems: "center",
+  minHeight: 28,
+  padding: "2px 8px",
+  borderRadius: 7,
+  fontSize: "0.875rem",
+  color: "var(--graview-ink)",
+  textDecoration: "none",
+};
 
 const eyebrow = {
   fontSize: "0.75rem",

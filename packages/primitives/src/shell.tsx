@@ -6,7 +6,7 @@ import { Companion } from "./companion.js";
 import { VISUALLY_HIDDEN, useWidth } from "./primitives/index.js";
 import { FindBox } from "./find.js";
 import { ShowInstallation } from "./installation.js";
-import { Profile } from "./profile.js";
+import { Profile, type HostAction } from "./profile.js";
 import { Places } from "./places.js";
 import {
   ActivityRail,
@@ -85,6 +85,11 @@ export interface ShellProps<S extends AnySchema> {
    * and the cycle would be real rather than a typing accident.
    */
   readonly studio?: ReactNode;
+  /**
+   * THE HOST'S OWN ACTIONS (FR-72): links or presses drawn in the profile
+   * menu under who is signed in — a hosting service's "Your apps", say.
+   */
+  readonly hostActions?: readonly HostAction[];
 }
 
 /** The narrowest the Find box gets at a desk: room for a word, not a sliver. */
@@ -106,6 +111,7 @@ export function Shell<S extends AnySchema>({
   chat = true,
   profileHref,
   studio,
+  hostActions,
 }: ShellProps<S>) {
   const { brand, view } = useGraview<S>();
   // Below a laptop's width the standing and the profile keep their marks and
@@ -284,6 +290,7 @@ export function Shell<S extends AnySchema>({
             onScheme={onScheme}
             compact={compact}
             {...(profileHref ? { profileHref } : {})}
+            {...(hostActions ? { hostActions } : {})}
             keeping={
               <>
                 <ShowInstallation<S> />

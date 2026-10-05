@@ -610,6 +610,12 @@ ${/* THE KEEPER'S BLOCK IN THE PROFILE, which hides itself when it is empty.
 .graview-profile-keeping { display: grid; gap: 6px; }
 .graview-profile-keeping:not(:has(button, a)) { display: none; }
 .graview-profile-keeping > * { justify-self: start; }
+${/* A host's own action in the profile (FR-72): a row of the pane, lit where the pointer or the keyboard is. */ ""}
+.graview-host-action:hover,
+.graview-host-action:focus-visible {
+  background: var(--graview-wash);
+  color: var(--graview-accent);
+}
 
 ${/* THE OPEN CHEVRON APPEARS WHEN REACHED FOR. Drawn on every plate at
    altitude it was noise times the number of districts; it shows on hover,

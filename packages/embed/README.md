@@ -72,6 +72,28 @@ controls, then popovers, dialogs and notices, `--graview-layer-scene`
 through `--graview-layer-toast`. A host that lays something of its own over
 the embed reads the rung it means rather than guessing a number.
 
+## The host's own actions
+
+A host's links about the app and the person — "Change the app", "Your
+apps", "Report this app" — go in the strip's profile menu, under who is
+signed in, rather than in a menu of the host's own laid over the scene:
+
+```ts
+mount(root, {
+  app,
+  hostActions: [
+    { label: "Change the app", href: `/apps/${id}/change` },
+    { label: "Your apps", href: "/apps" },
+    { label: "Report this app", href: `/report?app=${slug}`, target: "_blank" },
+    { label: "Sign out", onSelect: () => signOut() },   // a press rather than a link
+  ],
+});
+```
+
+Each is a stop for the keyboard in the menu, in the order given, drawn in
+the embed's own scheme; a press closes the menu. The whole-page Shell takes
+the same `hostActions`.
+
 ## What went wrong, and how long it took
 
 ```ts

@@ -294,7 +294,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         <Faces face={shown} stop={stop} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} />
         {toggle && shown !== "picture" ? (
           <FaceBoundary module="@graview/embed" report={report}>
-            <EmbedStrip app={app} studio={props.studio} face={shown} narrow={narrow} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} report={report} />
+            <EmbedStrip app={app} studio={props.studio} face={shown} narrow={narrow} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} hostActions={props.hostActions} report={report} />
           </FaceBoundary>
         ) : null}
         <FaceBoundary key={shown} module={shown === "pages" || shown === "picture" ? "@graview/pages" : "@graview/react"} report={report} content>
@@ -362,8 +362,11 @@ function EmbedStrip({
   seats,
   principal,
   onSeat,
+  hostActions,
   report,
 }: {
+  /** The host's own actions, for the profile menu (FR-72). */
+  hostActions?: EmbedOptions["hostActions"] | undefined;
   /** The declaration this embed is running, for the way into the studio. */
   app: GraviewApp<AnySchema>;
   /** Where the studio's own boundary reports. */
@@ -392,6 +395,7 @@ function EmbedStrip({
       seats={seats}
       principal={principal}
       onSeat={onSeat}
+      hostActions={hostActions}
       faces={faces.map((candidate) => (
         <button
           key={candidate.id}

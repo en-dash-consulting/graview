@@ -75,6 +75,7 @@ export { FindBox } from "./find.js";
 export { ShowInstallation } from "./installation.js";
 export { Seats } from "./seats.js";
 export { Profile } from "./profile.js";
+export type { HostAction } from "./profile.js";
 export { buildReach, ReachView, reachLens } from "./lens/reach.js";
 export type { Reach, ReachCell } from "./lens/reach.js";
 export { Shell } from "./shell.js";

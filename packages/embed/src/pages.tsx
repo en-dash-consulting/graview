@@ -55,7 +55,7 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
           <GraviewProvider store={store} views={views} scheme={scheme} {...providerProps(props, presence, brand)}>
             {toggle ? (
               <FaceBoundary module="@graview/embed" report={report}>
-                <Strip standing={standing} seats={props.seats} principal={props.principal} onSeat={props.onSeat} />
+                <Strip standing={standing} seats={props.seats} principal={props.principal} onSeat={props.onSeat} hostActions={props.hostActions} />
               </FaceBoundary>
             ) : null}
             <FaceBoundary module="@graview/pages" report={report} content>
@@ -136,3 +136,4 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
 
 export { hostScheme } from "./frame.js";
 export type { EmbedError, EmbedErrorWhere, EmbedHostContext, EmbedReady, EmbedRemote } from "./frame.js";
+export type { HostAction } from "@graview/primitives/frame";

@@ -66,6 +66,12 @@ async function buildHost() {
           height: "100%",
           fonts: false,
           studio: false,
+          // A host's own actions, as Graview Cloud has them (FR-72).
+          hostActions: [
+            { label: "Change the app", href: "/apps/things/change" },
+            { label: "Your apps", href: "/apps" },
+            { label: "Report this app", href: "/report?app=things" },
+          ],
         };
         window.__handle = mount(document.getElementById("app"), options);
         window.__handle.drawn().then(() => { window.__ready = true; });`,
@@ -316,6 +322,59 @@ async function everyPopoverOn(page, where, size, seen) {
   return results;
 }
 
+/** The host's actions in the profile menu, reached from the keyboard alone, and readable in the scheme the embed wears. */
+async function hostActionsByKeyboard(page) {
+  await page.locator('[data-testid="profile-button"]:visible').first().focus();
+  await page.keyboard.press("Enter");
+  await page.waitForSelector('[data-testid="profile"]:not([hidden])', { timeout: 3000 });
+  const reached = [];
+  for (let presses = 0; presses < 40 && reached.length < 3; presses++) {
+    const at = await page.evaluate(() => {
+      const active = document.activeElement;
+      return active?.getAttribute("data-testid") === "host-action" ? active.textContent : null;
+    });
+    if (at && !reached.includes(at)) reached.push(at);
+    if (reached.length < 3) await page.keyboard.press("Tab");
+  }
+  const looks = await page.evaluate(() => {
+    const channel = (value) => {
+      const c = value / 255;
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    };
+    const luminance = (rgb) => {
+      const [r, g, b] = rgb.match(/[\d.]+/g).map(Number);
+      return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+    };
+    const pane = document.querySelector('[data-testid="profile"]');
+    const link = pane.querySelector('[data-testid="host-action"]');
+    const ink = luminance(getComputedStyle(link).color);
+    // The floating panel is a gradient: its first stop is the ground the words stand on.
+    const style = getComputedStyle(pane);
+    const painted = /rgba?\([^)]*\)/.exec(style.backgroundImage)?.[0];
+    const ground = luminance(style.backgroundColor === "rgba(0, 0, 0, 0)" && painted ? painted : style.backgroundColor);
+    const [light, dark] = ink > ground ? [ink, ground] : [ground, ink];
+    return {
+      scheme: pane.closest("[data-graview-scheme]")?.getAttribute("data-graview-scheme") ?? null,
+      contrast: Math.round(((light + 0.05) / (dark + 0.05)) * 100) / 100,
+      inThePane: [...pane.querySelectorAll('[data-testid="host-action"]')].map((one) => [one.textContent, one.getAttribute("href")]),
+    };
+  });
+  /* Nothing of the host's stands over the embed: no fixed element outside it covers any of its box. */
+  const overTheScene = await page.evaluate(() => {
+    const root = document.querySelector("[data-graview-embed]");
+    const box = root.getBoundingClientRect();
+    return [...document.body.querySelectorAll("*")]
+      .filter((one) => !root.contains(one) && getComputedStyle(one).position === "fixed")
+      .filter((one) => {
+        const at = one.getBoundingClientRect();
+        return at.width > 0 && at.right > box.left && at.left < box.right && at.bottom > box.top && at.top < box.bottom;
+      })
+      .map((one) => one.tagName.toLowerCase());
+  });
+  await page.keyboard.press("Escape");
+  return { reached, ...looks, overTheScene };
+}
+
 let browser;
 const todo = await serving("todo", portFor("todo"), repoRoot);
 const host = await buildHost();
@@ -324,6 +383,7 @@ try {
   const errors = [];
   const seen = {};
   const faces = {};
+  const hosts = {};
   for (const size of SIZES) {
     const page = await browser.newPage({ viewport: size });
     page.on("pageerror", (error) => errors.push(error.message));
@@ -338,6 +398,15 @@ try {
       await page.waitForTimeout(900);
       const seat = await openTheSeat(page);
       faces[`${place.where} ${size.width}×${size.height}`] = { seat, popovers: await everyPopoverOn(page, place.where, size, seen) };
+      /* ---- FR-72: the host's actions, by keyboard, in both schemes */
+      if (place.url.startsWith(at("chrome-host"))) {
+        for (const colorScheme of ["light", "dark"]) {
+          await page.emulateMedia({ colorScheme });
+          await page.waitForTimeout(250);
+          hosts[`${place.where} ${size.width}×${size.height} ${colorScheme}`] = { colorScheme, ...(await hostActionsByKeyboard(page)) };
+        }
+        await page.emulateMedia({ colorScheme: null });
+      }
     }
     await page.close();
   }
@@ -361,6 +430,12 @@ try {
     .filter(([name, entry]) => entry.drawn.some((face) => face === "shell" || face === "embed") && !seen[name])
     .map(([name]) => name);
   report.checks.everyPopoverAFaceDrawsWasOpened = { seen, unseen, quick: QUICK, ok: unseen.length === 0 || QUICK };
+  /* ---- FR-72: a host's own actions are in the profile menu, reached by the keyboard, readable in both schemes, with nothing of the host's over the scene */
+  const wanted = ["Change the app", "Your apps", "Report this app"];
+  const astray = Object.entries(hosts)
+    .filter(([, said]) => JSON.stringify(said.reached) !== JSON.stringify(wanted) || said.scheme !== said.colorScheme || said.contrast < 4.5 || said.overTheScene.length > 0)
+    .map(([where, said]) => `${where}: ${JSON.stringify(said)}`);
+  report.checks.aHostsActionsAreInTheProfileByKeyboardInBothSchemes = { hosts, astray, ok: Object.keys(hosts).length > 0 && astray.length === 0 };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);
 } catch (error) {

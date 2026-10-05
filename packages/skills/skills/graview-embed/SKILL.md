@@ -85,6 +85,12 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     and time to the first face drawn. Each face is fetched as it is first
     drawn: `preload(face)` starts it beside the host's own requests, and
     `handle.drawn()` waits for it.
+11. **Put the host's own furniture inside the embed, never over it.**
+    `hostActions: [{ label, href }]` (or `onSelect` for a press) draws the
+    host's links — "Your apps", "Report this app" — in the strip's profile
+    menu, under who is signed in, reached by the keyboard. Every popover
+    the embed draws stands in the browser's top layer, so a host needs no
+    `z-index` override and nothing fixed over the scene.
 
 ## Worked examples
 
