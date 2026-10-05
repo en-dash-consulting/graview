@@ -15,6 +15,11 @@
  *           hostile guest reads the host's cookie and storage, reaches into
  *           the parent, navigates the top window, opens a popup and fetches
  *           the host's API.
+ *   open    a worker view on the open kit (FR-90): HTML, SVG and CSS drawn
+ *           into a shadow root on the app's own page, served with no CSP
+ *           (`--policy=page`) so the open kit alone holds the network back,
+ *           in Chromium, WebKit and Firefox; and inside Claude's widget
+ *           (scripts/lib/guest-open-suite.mjs).
  *   worker  a classic worker the host starts from a blob: URL, inside a
  *           chat's widget framed the way Claude or ChatGPT frames one
  *           (scripts/lib/widget-policies.mjs, from Graview Cloud's spike);
@@ -28,6 +33,7 @@
  *   node scripts/guest-sandbox.mjs                       every transport, policy and engine, one after another
  *   node scripts/guest-sandbox.mjs --transport=frame --engine=webkit
  *   node scripts/guest-sandbox.mjs --transport=worker --policy=claude --engine=chromium
+ *   node scripts/guest-sandbox.mjs --transport=open --policy=page --engine=firefox
  *
  * Needs `pnpm build` (it bundles packages/guest/dist and packages/core/dist).
  */
@@ -40,6 +46,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { portFor } from "./lib/ports.mjs";
 import { localize, POLICIES, proxyPage } from "./lib/widget-policies.mjs";
+import { openSuite } from "./lib/guest-open-suite.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(resolve(repoRoot, "package.json"));
@@ -52,10 +59,12 @@ const arg = (name) => process.argv.find((one) => one.startsWith(`--${name}=`))?.
 if (!arg("transport") && !arg("engine") && !arg("policy")) {
   /* `--quick` (GRAVIEW_QUICK): one engine per transport and policy, crossed so both engines still run. */
   const runs = process.env.GRAVIEW_QUICK
-    ? [["--transport=frame", "--engine=chromium"], ["--transport=worker", "--policy=claude", "--engine=chromium"], ["--transport=worker", "--policy=chatgpt", "--engine=webkit"]]
+    ? [["--transport=frame", "--engine=chromium"], ["--transport=worker", "--policy=claude", "--engine=chromium"], ["--transport=worker", "--policy=chatgpt", "--engine=webkit"], ["--transport=open", "--policy=page", "--engine=firefox"]]
     : [
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=frame", `--engine=${engine}`]),
         ...["claude", "chatgpt"].flatMap((policy) => ["chromium", "webkit"].map((engine) => ["--transport=worker", `--policy=${policy}`, `--engine=${engine}`])),
+        ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=open", "--policy=page", `--engine=${engine}`]),
+        ["--transport=open", "--policy=claude", "--engine=chromium"],
       ];
   let failed = 0;
   for (const run of runs) {
@@ -69,16 +78,17 @@ if (!arg("transport") && !arg("engine") && !arg("policy")) {
 
 const TRANSPORT = arg("transport") ?? "frame";
 const ENGINE = arg("engine") ?? "chromium";
-const POLICY = arg("policy") ?? "claude";
-if (!["frame", "worker"].includes(TRANSPORT)) throw new Error(`--transport is frame or worker, not ${TRANSPORT}`);
+const POLICY = arg("policy") ?? (TRANSPORT === "open" ? "page" : "claude");
+if (!["frame", "worker", "open"].includes(TRANSPORT)) throw new Error(`--transport is frame, worker or open, not ${TRANSPORT}`);
 if (TRANSPORT === "worker" && !POLICIES[POLICY]) throw new Error(`--policy is one of ${Object.keys(POLICIES).join(", ")}, not ${POLICY}`);
+if (TRANSPORT === "open" && POLICY !== "page" && !POLICIES[POLICY]) throw new Error(`--policy is page or one of ${Object.keys(POLICIES).join(", ")}, not ${POLICY}`);
 const HOST_PORT = portFor("guest-host");
 /* The watchdog's limit for the spinner and the busy guest: short, so the run stays short. */
 const SILENT_MS = 1_500;
 const GUEST_PORT = portFor("guest-sandbox");
 const HOST = `http://127.0.0.1:${HOST_PORT}`;
 const GUEST = `http://localhost:${GUEST_PORT}`;
-const VERDICT = `docs/guest-sandbox${TRANSPORT === "worker" ? `-worker-${POLICY}` : ""}${ENGINE === "chromium" ? "" : `-${ENGINE}`}.json`;
+const VERDICT = `docs/guest-sandbox${TRANSPORT === "frame" ? "" : `-${TRANSPORT}-${POLICY}`}${ENGINE === "chromium" ? "" : `-${ENGINE}`}.json`;
 
 const bundle = async (contents, format = "esm") =>
   (
@@ -129,7 +139,7 @@ const host = {
 `;
 
 const secretHits = [];
-const report = { at: new Date().toISOString(), transport: TRANSPORT, engine: ENGINE, ...(TRANSPORT === "worker" ? { policy: POLICIES[POLICY].label } : {}), claims: {}, pageErrors: [] };
+const report = { at: new Date().toISOString(), transport: TRANSPORT, engine: ENGINE, ...(TRANSPORT !== "frame" ? { policy: POLICIES[POLICY]?.label ?? "the app's own page, with no content security policy" } : {}), claims: {}, pageErrors: [] };
 const claim = (name, ok, detail) => {
   report.claims[name] = { ok: Boolean(ok), ...(detail === undefined ? {} : { detail }) };
   process.stdout.write(`${ok ? "ok  " : "FAIL"} ${name}${ok ? "" : ` — ${JSON.stringify(detail)}`}\n`);
@@ -824,6 +834,7 @@ const browser = await playwright[ENGINE].launch();
 let servers = [];
 try {
   if (TRANSPORT === "frame") await frameSuite();
+  else if (TRANSPORT === "open") await openSuite({ repoRoot, build, browser, claim, report, POLICY, ENGINE, HOST, GUEST, HOST_PORT, GUEST_PORT, ATTACKER_PORT: portFor("guest-attacker"), SHOWROOM });
   else await workerSuite();
 } finally {
   await browser.close();

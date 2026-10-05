@@ -16,10 +16,14 @@ const add = scope.addEventListener;
 const remove = scope.removeEventListener;
 const post = scope.postMessage;
 const microtask = globalThis.queueMicrotask;
+/* The fine clock goes with hardening; the runtime keeps it, to time a view's own work (FR-94). */
+const clock = (globalThis as { performance?: { now(): number } }).performance;
+const now = clock ? clock.now.bind(clock) : Date.now;
 
 export const natives = {
   listen: (heard: (event: MessageEvent) => void) => add.call(scope, "message", heard),
   unlisten: (heard: (event: MessageEvent) => void) => remove.call(scope, "message", heard),
   post: (message: unknown) => post.call(scope, message),
   microtask: (task: () => void) => microtask.call(globalThis, task),
+  now: () => now(),
 };

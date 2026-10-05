@@ -38,6 +38,8 @@ export const OWN = {
   "guest-host": 5282,
   /** `guest-sandbox`'s other origin: the frame guests, and the widget's sandbox proxy. */
   "guest-sandbox": 5283,
+  /** `guest-sandbox`'s attacker for the open kit: every request and every connection that reaches it is a view getting out. */
+  "guest-attacker": 5284,
   /** The scratch app `rehearse-studio` writes, and the model it stands in for. */
   rehearsal: 5285,
   "rehearsal-model": 5286,

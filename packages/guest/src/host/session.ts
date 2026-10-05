@@ -56,6 +56,12 @@ export interface GuestHostOptions<S extends AnySchema> {
    * `render` is dropped unread: a frame guest draws in its own document.
    */
   readonly onRender?: (records: readonly unknown[]) => void;
+  /** An open-kit view's stylesheet (FR-90). Without it, a `style` is dropped unread. */
+  readonly onStyle?: (css: string) => void;
+  /** An open-kit view's runtime has drawn a push (FR-94). Without it, a `pushed` is dropped unread. */
+  readonly onPushed?: (push: number, ms: number) => void;
+  /** A message came past the allowance: the host stops a view that floods, rather than reading on (FR-94). */
+  readonly onFlood?: () => void;
   readonly limits?: GuestLimits;
   /**
    * The frame's limiter, when the frame outlives this session: a guest
@@ -169,8 +175,11 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
   };
 
   let disposed = false;
+  let pushes = 0;
   const push = () => {
-    if (!disposed) options.send({ type: "props", props: props() });
+    if (disposed) return;
+    pushes += 1;
+    options.send({ type: "props", props: props(), push: pushes });
   };
 
   /* Every change to the store is a push, coalesced: a batch of five ops is one message, not five. */
@@ -214,6 +223,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       if (disposed) return;
       if (!limiter.message()) {
         stats.dropped += 1;
+        options.onFlood?.();
         return;
       }
       if (!isRecord(data) || data.nonce !== options.nonce) {
@@ -228,6 +238,14 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       }
       if (data.type === "render" && Array.isArray(data.records) && options.onRender) {
         options.onRender(data.records);
+        return;
+      }
+      if (data.type === "style" && typeof data.css === "string" && options.onStyle) {
+        options.onStyle(data.css);
+        return;
+      }
+      if (data.type === "pushed" && typeof data.push === "number" && typeof data.ms === "number" && options.onPushed) {
+        options.onPushed(data.push, data.ms);
         return;
       }
       if (data.type === "size" && typeof data.height === "number" && Number.isFinite(data.height)) {

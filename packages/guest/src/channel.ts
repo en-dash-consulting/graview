@@ -51,7 +51,14 @@ export interface GuestLink {
  * the first hello from the host, and talk only over the port that came
  * with it, every request carrying the hello's nonce.
  */
-export function openGuest(link: GuestLink, hooks: { readonly onEvent?: (event: GuestEvent) => void } = {}): { readonly guest: Guest; send(request: Unsent): void } {
+export function openGuest(
+  link: GuestLink,
+  hooks: {
+    readonly onEvent?: (event: GuestEvent) => void;
+    /** Every message from the host, once the channel's own handling of it is done: a runtime's way to hear what is its own (FR-90). */
+    readonly onMessage?: (message: HostMessage) => void;
+  } = {},
+): { readonly guest: Guest; send(request: Unsent): void } {
   let port: MessagePort | undefined;
   let nonce = "";
   let props: GuestProps | undefined;
@@ -80,6 +87,7 @@ export function openGuest(link: GuestLink, hooks: { readonly onEvent?: (event: G
       /* The runtime answers, so only a blocked event loop goes quiet. */
       send({ type: "heartbeat", beat: message.beat });
     }
+    hooks.onMessage?.(message);
   };
 
   let stop = () => {};

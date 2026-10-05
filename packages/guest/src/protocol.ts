@@ -27,6 +27,18 @@
  * A frame guest never sends `render`; a host that is not drawing a worker
  * drops it unread.
  *
+ * A WORKER VIEW ON THE OPEN KIT (FR-90) draws HTML, SVG and CSS rather than
+ * the kit's components, so its records name native elements and their
+ * attributes, and it says two things more and hears one:
+ *
+ *   guest → host     { type: "style", nonce, css }                   (over the port: its one stylesheet)
+ *   guest → host     { type: "pushed", nonce, push, ms }             (over the port: the runtime has drawn push `push`, in `ms`)
+ *   host  → guest    { type: "dom-event", target, event, … }         (over the port: the viewer clicked, typed or chose on what it drew)
+ *
+ * The host draws a stylesheet only as the open kit allows (host/css.ts),
+ * and numbers each props push (`push`) so the runtime can say when it has
+ * drawn it.
+ *
  * A worker's host also watches that the worker is alive. Its runtime — not
  * the guest's code, which can stop it only by blocking its own event loop —
  * answers each heartbeat with the beat it was asked, and a worker that goes
@@ -149,7 +161,30 @@ export interface HostHeartbeat {
   readonly beat: number;
 }
 
-export type HostMessage = { readonly type: "props"; readonly props: GuestProps } | GuestAnswer | GuestEvent | HostHeartbeat;
+/**
+ * What the viewer did on something an open-kit view drew (FR-90): which
+ * node (the view's own id for it), and what the host read off it — a
+ * field's `value` and `checked`, a key's name — never anything of the
+ * host's page.
+ */
+export interface GuestDomEvent {
+  readonly type: "dom-event";
+  /** The view's id for the node it happened on. */
+  readonly target: string;
+  /** `click`, `input`, `change`, `keydown` or `toggle`. */
+  readonly event: string;
+  readonly value?: string;
+  readonly checked?: boolean;
+  readonly key?: string;
+}
+
+export type HostMessage =
+  /** `push` numbers it, for a worker view's runtime to say when it has drawn it (FR-94). */
+  | { readonly type: "props"; readonly props: GuestProps; readonly push?: number }
+  | GuestAnswer
+  | GuestEvent
+  | GuestDomEvent
+  | HostHeartbeat;
 
 export type GuestRequest =
   | { readonly type: "act"; readonly nonce: string; readonly id: string | number; readonly name: string; readonly args: Readonly<Record<string, unknown>> }
@@ -158,7 +193,11 @@ export type GuestRequest =
   /** A worker guest's drawing: Remote DOM mutation records, with each listener sent as `{ listener: id }`. */
   | { readonly type: "render"; readonly nonce: string; readonly records: readonly unknown[] }
   /** The runtime's answer to a heartbeat, with the beat it was asked. */
-  | { readonly type: "heartbeat"; readonly nonce: string; readonly beat: number };
+  | { readonly type: "heartbeat"; readonly nonce: string; readonly beat: number }
+  /** An open-kit view's one stylesheet (FR-90): the host draws what the open kit allows of it. */
+  | { readonly type: "style"; readonly nonce: string; readonly css: string }
+  /** An open-kit view's runtime has drawn props push `push`, its listeners taking `ms` (FR-94). */
+  | { readonly type: "pushed"; readonly nonce: string; readonly push: number; readonly ms: number };
 
 /** Whether a window message is a guest saying it is ready. */
 export function isGuestReady(data: unknown): data is GuestReady {

@@ -144,3 +144,51 @@ runs guests it did not build checks them, or better, builds them itself.
 
 The worker entry carries Remote DOM (`@remote-dom/core` and its polyfill,
 MIT, pinned); the frame guest and the host do not.
+
+## A worker view on the open kit
+
+A view that needs more than the kit's components — a card grid, a chart,
+an animated ring — draws plain HTML, SVG and one stylesheet instead. What
+keeps it safe is what it can reach, not what it can draw: it runs in the
+same hardened classic worker, and the host draws what it says into a
+shadow root inside a region of the host's own — `contain: layout paint
+style`, `isolation: isolate`, `overflow: clip` — keeping only what the open
+kit allows (`@graview/guest/worker/view` is the view's runtime).
+
+```ts
+import { mountWorkerView } from "@graview/guest/host/worker";
+
+const view = mountWorkerView(element, { worker: { script }, view: "packages", store, principal,
+  onFailure: (reason, detail) => showTheTierOneFace(reason, detail) });
+```
+
+In the worker, the view has one global, `graview`:
+
+```js
+graview.style(`.grid { display: grid; gap: 12px } .card { background: var(--graview-panel) }`);
+graview.onProps((props) => graview.render(graview.html`
+  <section class="grid">${props.nodes.map((n) => graview.html`<article class="card"><h3>${n.label}</h3></article>`)}</section>`));
+graview.on("click", ".card", (event) => { /* … */ });
+```
+
+What may be drawn is one declaration, read by both sides: most of HTML's
+sectioning, text, lists, tables, `details`, buttons, fields and `img`;
+SVG's shapes, paths, text, gradients, clip paths, masks, markers and `use`
+of `#id`; and CSS for layout, grid, flex, colour, type, transitions,
+keyframes, media and container queries, with the app's theme tokens
+(`--graview-*`) inherited, light or dark as the app is. The stylesheet,
+every `style` attribute and every SVG paint are read with the CSS Syntax
+tokenizer and parser — escapes decoded, comments gone — and written afresh
+from what was kept: `url()` only as `url(#id)` on a paint, no `@import`,
+`@font-face` or other at-rule but `@media`, `@supports`, `@container` and
+`@keyframes`, only the functions on the list (no `image-set()`, `attr()`,
+`cross-fade()`, `element()` …), `position` only static, relative or
+absolute, and no selector that reaches out of the shadow tree (`:host`,
+`::slotted`). An image is a `data:` image or a `blob:` of the page's own;
+an SVG image in an `img` runs no script and loads nothing. No `<script>`,
+`<iframe>`, `<object>`, `<embed>`, `<link>`, `<meta>`, `<base>`, `<style>`,
+`<form>`, SVG `<image>` or `<foreignObject>`, no `src`, `href`, `srcset`,
+`formaction` or `on*` attribute is drawn; what is not drawn is in
+`refused`, with why. `guest-sandbox --transport=open` serves a page with no
+content security policy, tries every way out, and finds no request leaving
+it in Chromium, WebKit or Firefox.

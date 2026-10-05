@@ -1,17 +1,10 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import type { Kit } from "../kit.js";
-import { GUEST_PROTOCOL, isGuestReady, type HostHello } from "../protocol.js";
 import { createKitRenderer, GUEST_KIT_CSS, type KitLinks, type KitRefusal, type KitRenderer } from "./kit.js";
-import { mintNonce } from "./nonce.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
+import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
 
-/**
- * Where a worker guest's code comes from: a URL the host already holds (a
- * `blob:` URL, typically), or the script's text, which the host makes into
- * a `blob:` URL itself. A chat's widget receives the text through a tool
- * call and never fetches it.
- */
-export type GuestWorkerSource = { readonly url: string } | { readonly script: string };
+export type { GuestWorkerSource } from "./worker-start.js";
 
 /** Why a worker guest is not shown, for a host that falls back to something else. */
 export type GuestWorkerFailure =
@@ -112,9 +105,8 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
   const stats: GuestStats = { applied: 0, refused: 0, dropped: 0 };
   const limiter = createGuestLimiter(options.limits);
   let session: GuestHost | undefined;
-  let port: MessagePort | undefined;
   let renderer: KitRenderer | undefined;
-  let worker: Worker | undefined;
+  let started: StartedWorker | undefined;
   let failed = false;
   let counted: GuestStats = { applied: 0, refused: 0, dropped: 0 };
   const tally = () => {
@@ -126,22 +118,11 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
     counted = { ...now };
   };
 
-  const made = "script" in options.worker ? window.URL.createObjectURL(new window.Blob([options.worker.script], { type: "text/javascript" })) : undefined;
-  const url = "script" in options.worker ? made! : options.worker.url;
-
-  let silence = 0;
-  let watchdog = 0;
   const stop = () => {
     tally();
     session?.dispose();
-    port?.close();
-    worker?.terminate();
     session = undefined;
-    port = undefined;
-    worker = undefined;
-    window.clearTimeout(silence);
-    window.clearInterval(watchdog);
-    if (made) window.URL.revokeObjectURL(made);
+    started?.stop();
   };
   const fail = (reason: GuestWorkerFailure) => {
     if (failed) return;
@@ -151,107 +132,51 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
     options.onFailure?.(reason);
   };
 
-  const ready = () => {
-    window.clearTimeout(silence);
-    const nonce = mintNonce();
-    const channel = new window.MessageChannel();
-    port = channel.port1;
-    const draw = createKitRenderer(container, {
-      ...(options.kit ? { kit: options.kit } : {}),
-      ...(options.links ? { links: options.links } : {}),
-      onEvent: (listener, detail) => channel.port1.postMessage({ type: "event", listener, ...(detail !== undefined ? { detail } : {}) }),
-      ...(options.limits?.maxNodes !== undefined ? { maxNodes: options.limits.maxNodes } : {}),
-      onOverBudget: () => fail("budget"),
-    });
-    renderer = draw;
-    const live = createGuestHost({
-      store: options.store,
-      principal: options.principal,
-      view: options.view,
-      nonce,
-      send: (message) => channel.port1.postMessage(message),
-      onRender: (records) => draw.apply(records),
-      ...(options.input ? { input: options.input } : {}),
-      ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
-      onSize: options.onSize ?? ((height) => (container.style.minHeight = `${height}px`)),
-      ...(options.limits ? { limits: options.limits } : {}),
-      limiter,
-    });
-    session = live;
-
-    /*
-     * THE WATCHDOG. The host asks on an interval, and the worker's runtime
-     * answers with the beat and the nonce. An answer is not a request: it
-     * spends none of the guest's message allowance. One with any other
-     * nonce goes to the session, which drops it.
-     */
-    const silentMs = Math.max(1, options.limits?.silentMs ?? 5_000);
-    const every = Math.max(10, Math.min(1_000, Math.floor(silentMs / 4)));
-    const clock = window.performance;
-    let beat = 0;
-    let answered = 0;
-    let heard = clock.now();
-    let ticked = heard;
-    watchdog = window.setInterval(() => {
-      const at = clock.now();
-      /* The host's own page was held up: that time is not the guest's silence. */
-      if (at - ticked > every * 2) heard += at - ticked - every;
-      ticked = at;
-      if (at - heard >= silentMs) return fail("silent");
-      beat += 1;
-      channel.port1.postMessage({ type: "heartbeat", beat });
-    }, every);
-    const answer = (data: unknown) => {
-      const said = data as { type?: unknown; nonce?: unknown; beat?: unknown } | null;
-      if (typeof said !== "object" || said === null || said.type !== "heartbeat" || said.nonce !== nonce) return false;
-      if (typeof said.beat === "number" && said.beat > answered && said.beat <= beat) {
-        answered = said.beat;
-        heard = clock.now();
-      }
-      return true;
-    };
-
-    channel.port1.onmessage = (message) => {
-      if (answer(message.data)) return;
-      live.receive(message.data);
-      tally();
-    };
-    const hello: HostHello = { graview: "host-hello", protocol: GUEST_PROTOCOL, nonce, view: options.view };
-    worker!.postMessage(hello, [channel.port2]);
-    live.push();
-  };
-
-  try {
-    /* Classic, on purpose: a module worker from a blob: URL is refused in an opaque origin (Chromium), which is where a chat's widget runs. */
-    worker = new window.Worker(url, { name: options.view });
-  } catch {
-    worker = undefined;
-  }
-  if (!worker) {
-    queueMicrotask(() => fail("refused"));
-  } else {
-    silence = window.setTimeout(() => fail("silent"), options.limits?.readyMs ?? 5_000);
-    worker.onerror = () => {
-      if (!session) fail("refused");
-    };
-    worker.onmessage = (event: MessageEvent) => {
-      /*
-       * A worker's messages come from that worker alone. Its one message
-       * here is `guest-ready`, said once: a worker is one realm for its
-       * whole life, so a second ready is not a reload but a forgery.
-       */
-      if (!limiter.message() || session || !isGuestReady(event.data) || event.data.protocol !== GUEST_PROTOCOL) {
-        stats.dropped += 1;
-        return;
-      }
-      ready();
-    };
-  }
+  started = startWorker(window, {
+    source: options.worker,
+    name: options.view,
+    limiter,
+    readyMs: options.limits?.readyMs ?? 5_000,
+    silentMs: options.limits?.silentMs ?? 5_000,
+    onDropped: () => (stats.dropped += 1),
+    onStop: (reason) => fail(reason),
+    onReady: (nonce, port) => {
+      const draw = createKitRenderer(container, {
+        ...(options.kit ? { kit: options.kit } : {}),
+        ...(options.links ? { links: options.links } : {}),
+        onEvent: (listener, detail) => port.postMessage({ type: "event", listener, ...(detail !== undefined ? { detail } : {}) }),
+        ...(options.limits?.maxNodes !== undefined ? { maxNodes: options.limits.maxNodes } : {}),
+        onOverBudget: () => fail("budget"),
+      });
+      renderer = draw;
+      const live = createGuestHost({
+        store: options.store,
+        principal: options.principal,
+        view: options.view,
+        nonce,
+        send: (message) => port.postMessage(message),
+        onRender: (records) => draw.apply(records),
+        ...(options.input ? { input: options.input } : {}),
+        ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
+        onSize: options.onSize ?? ((height) => (container.style.minHeight = `${height}px`)),
+        ...(options.limits ? { limits: options.limits } : {}),
+        limiter,
+      });
+      session = live;
+      /* An answer to the watchdog is the runtime's, not a request; one with any other nonce goes to the session, which drops it. */
+      port.onmessage = (message) => {
+        if (started?.answer(message.data)) return;
+        live.receive(message.data);
+        tally();
+      };
+      live.push();
+    },
+  });
 
   return {
     element: container,
     get worker() {
-      return worker;
+      return started?.worker;
     },
     update: () => session?.push(),
     get stats() {
@@ -274,3 +199,14 @@ export { createKitRenderer, GUEST_KIT_CSS, hostAttribute, kitValue } from "./kit
 export type { KitLinks, KitRefusal, KitRefusalReason, KitRenderer, KitRendererOptions } from "./kit.js";
 export { GUEST_KIT, KIT_LINK_TARGETS, KIT_TONES } from "../kit.js";
 export type { GuestKitElement, Kit, KitComponent, KitEvent, KitProperty, KitPropertyType, KitTone } from "../kit.js";
+/*
+ * A worker view on the open kit (FR-90): HTML, SVG and CSS drawn into a
+ * shadow root of the host's, with what could fetch or escape not drawn.
+ * Its sanitiser and renderer are a chunk of their own, fetched the first
+ * time a view draws.
+ */
+export { mountWorkerView } from "./view.js";
+export type { MountWorkerViewOptions, WorkerView, WorkerViewFailure, WorkerViewLimits } from "./view.js";
+export type { ViewRefusal } from "./open-draw.js";
+export type { OpenRefusal, OpenRefusalReason } from "./open-judge.js";
+export type { CssRefusal, CssRefusalReason } from "./css.js";

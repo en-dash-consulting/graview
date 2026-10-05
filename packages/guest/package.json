@@ -37,6 +37,10 @@
       "types": "./dist/worker/index.d.ts",
       "default": "./dist/worker/index.js"
     },
+    "./worker/view": {
+      "types": "./dist/worker/view.d.ts",
+      "default": "./dist/worker/view.js"
+    },
     "./build": {
       "types": "./dist/build.d.ts",
       "default": "./dist/build.js"

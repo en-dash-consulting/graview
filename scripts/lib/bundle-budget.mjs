@@ -167,12 +167,46 @@ export const BUDGETS = [
      * `@graview/guest/host/worker` (FR-68, FR-69): the worker's host and the
      * kit's renderer, which read Remote DOM's records without Remote DOM.
      * Measured at 13_578 / 5_097.
+     *
+     * What a page loads first, since the open kit (FR-90): the open kit's
+     * sanitiser and renderer are a chunk of their own, fetched the first
+     * time a worker view draws — the next budget — so a page that draws only
+     * the kit's guests carries none of them. Measured at 15_229 / 5_727, with
+     * `mountWorkerView`'s own few lines and the start the two share.
      */
     entry: `import { mountGuestWorker } from "@graview/guest/host/worker"; globalThis.mount = mountGuestWorker;`,
     minified: 16_000,
     gzipped: 6_000,
+    load: "first",
+    lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
+  },
+  {
+    name: "the guest host, drawing a worker view on the open kit",
+    /*
+     * `mountWorkerView` (FR-90) and everything it fetches when a view first
+     * draws: the open kit's tables, the CSS Syntax tokenizer, parser and
+     * sanitiser, the element and attribute judge, and the renderer into a
+     * shadow root. Measured at 41_547 / 14_294.
+     */
+    entry: `import { mountWorkerView } from "@graview/guest/host/worker"; globalThis.mount = mountWorkerView;`,
+    minified: 46_000,
+    gzipped: 16_000,
     load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
+  },
+  {
+    name: "a worker view's runtime",
+    /*
+     * `@graview/guest/worker/view` (FR-90): Remote DOM's polyfill, the
+     * hardening, the channel, the `graview` global with its morphing render,
+     * and the open kit's tables for telling an author what will not be
+     * drawn — no components. Measured at 59_440 / 20_322.
+     */
+    entry: `import { graview } from "@graview/guest/worker/view"; globalThis.graview = graview;`,
+    minified: 64_000,
+    gzipped: 22_000,
+    load: "all",
+    lacks: ["@graview/core"],
   },
 ];
 
