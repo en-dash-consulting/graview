@@ -27,6 +27,14 @@
  * A frame guest never sends `render`; a host that is not drawing a worker
  * drops it unread.
  *
+ * A worker's host also watches that the worker is alive. Its runtime — not
+ * the guest's code, which can stop it only by blocking its own event loop —
+ * answers each heartbeat with the beat it was asked, and a worker that goes
+ * `limits.silentMs` without an answer is stopped:
+ *
+ *   host  → guest    { type: "heartbeat", beat }                     (over the port, on an interval)
+ *   guest → host     { type: "heartbeat", nonce, beat }              (over the port: the runtime's answer)
+ *
  * The host answers a `guest-ready` only from its own frame's window and
  * only from the opaque origin, and every request over the port carries the
  * nonce of that hello. What the guest is pushed is the store as the viewer
@@ -135,14 +143,22 @@ export interface GuestEvent {
   readonly detail?: string | number | boolean | null;
 }
 
-export type HostMessage = { readonly type: "props"; readonly props: GuestProps } | GuestAnswer | GuestEvent;
+/** The host asking a worker guest's runtime whether it is still answering. */
+export interface HostHeartbeat {
+  readonly type: "heartbeat";
+  readonly beat: number;
+}
+
+export type HostMessage = { readonly type: "props"; readonly props: GuestProps } | GuestAnswer | GuestEvent | HostHeartbeat;
 
 export type GuestRequest =
   | { readonly type: "act"; readonly nonce: string; readonly id: string | number; readonly name: string; readonly args: Readonly<Record<string, unknown>> }
   | { readonly type: "navigate"; readonly nonce: string; readonly to: string }
   | { readonly type: "size"; readonly nonce: string; readonly height: number }
   /** A worker guest's drawing: Remote DOM mutation records, with each listener sent as `{ listener: id }`. */
-  | { readonly type: "render"; readonly nonce: string; readonly records: readonly unknown[] };
+  | { readonly type: "render"; readonly nonce: string; readonly records: readonly unknown[] }
+  /** The runtime's answer to a heartbeat, with the beat it was asked. */
+  | { readonly type: "heartbeat"; readonly nonce: string; readonly beat: number };
 
 /** Whether a window message is a guest saying it is ready. */
 export function isGuestReady(data: unknown): data is GuestReady {
