@@ -2,7 +2,7 @@
   "name": "@graview/guest",
   "version": "0.1.7",
   "type": "module",
-  "description": "Guest views: somebody else's React or plain script in a sandboxed frame, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.",
+  "description": "Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.",
   "keywords": [
     "graview",
     "context-graph",
@@ -10,7 +10,9 @@
     "interface",
     "iframe",
     "sandbox",
-    "guest-view"
+    "guest-view",
+    "web-worker",
+    "remote-dom"
   ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -26,6 +28,18 @@
     "./host": {
       "types": "./dist/host/index.d.ts",
       "default": "./dist/host/index.js"
+    },
+    "./host/worker": {
+      "types": "./dist/host/worker.d.ts",
+      "default": "./dist/host/worker.js"
+    },
+    "./worker": {
+      "types": "./dist/worker/index.d.ts",
+      "default": "./dist/worker/index.js"
+    },
+    "./build": {
+      "types": "./dist/build.d.ts",
+      "default": "./dist/build.js"
     }
   },
   "scripts": {
@@ -33,13 +47,19 @@
   },
   "dependencies": {
     "@graview/core": "workspace:*",
-    "@graview/react": "workspace:*"
+    "@graview/react": "workspace:*",
+    "@remote-dom/core": "1.12.0",
+    "@remote-dom/polyfill": "1.6.0"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "react": ">=18",
+    "esbuild": ">=0.20"
   },
   "peerDependenciesMeta": {
     "react": {
+      "optional": true
+    },
+    "esbuild": {
       "optional": true
     }
   },
@@ -47,7 +67,10 @@
     "dist",
     "README.md"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/worker/*.js",
+    "./src/worker/*.ts"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/en-dash-consulting/graview.git",

@@ -58,3 +58,81 @@ entries import nothing of the framework, so a guest bundle carries none of it.
 `edges` among them, `label`, `fidelity`, `cardinality`, `mode`, `selected`,
 `implicated`, `flagged` — and `acts`, the acts the viewer may run. A record
 the viewer may not see is in none of them.
+
+## In a worker
+
+Where a frame cannot be nested — a chat's widget, whose sandbox will not
+frame another origin — the same guest runs in a classic Web Worker the host
+starts from a `blob:` URL, and draws in the host's page from a component kit.
+
+```ts
+import { mountGuestWorker } from "@graview/guest/host/worker";
+
+const guest = mountGuestWorker(element, { worker: { script }, view: "recipe-card", store, principal,
+  onFailure: (reason) => showTheTierOneCard(reason) });   // refused, silent, or budget
+
+views.register("recipe", { fidelity: "full", cardinality: "one" },
+  guestView({ worker: { script }, name: "recipe-card" }));
+```
+
+`mountGuestWorker` starts the worker without `type: "module"`, which a
+`blob:` URL in an opaque origin cannot start, from the script's text or a
+URL it is given. It speaks the frame's protocol: one `guest-ready`, answered
+with a fresh nonce and a MessageChannel; the props as the viewer sees
+them; acts applied as the viewer, `via: "view:<name>"`, under the same
+limits. A second ready from the same worker is dropped. What the guest draws
+comes over the port as Remote DOM mutation records, and the host draws only
+the kit (`GUEST_KIT`), with `createKitRenderer`. Both are
+`@graview/guest/host/worker`, apart from the frame's host, so a page that
+draws only frames loads none of it, and `guestView` fetches it only when it
+draws a worker.
+
+In the guest, `connectGuest` from `@graview/guest/worker` is the frame
+guest's API with a `root` to draw into:
+
+```ts
+import { connectGuest } from "@graview/guest/worker";
+
+const guest = connectGuest();
+guest.subscribe((props) => {
+  const card = document.createElement("gv-card");
+  const title = document.createElement("gv-title");
+  title.textContent = props.node?.label ?? "";
+  const cook = document.createElement("gv-button");
+  cook.textContent = "Cooked it";
+  cook.addEventListener("press", () => guest.act("mark-cooked", { recipeId: props.node!.id }));
+  card.append(title, cook);
+  guest.root.replaceChildren(card);
+});
+```
+
+The kit is one declaration for both sides: each component's host element,
+typed properties, events and children. The worker's remote elements are made
+from it, and the host draws from it alone. An element outside it, a property
+or event it does not declare, a value of another type, and a link that is
+not an absolute `https:` URL are not drawn, and `refused` says why.
+
+Before the guest runs, the worker entry hardens the worker's global: every
+name outside `GUEST_GLOBALS` goes, from the global and every prototype on its
+chain — the network, storage, channels, nested workers, importScripts,
+`eval` and every function constructor — and what is left is frozen. A name
+that will not go stops the worker before any guest code runs. `hardening`
+says what was removed.
+
+Build the guest with `buildGuestBundle` from `@graview/guest/build` (Node,
+with esbuild installed): one strict classic script, the worker entry first
+and the guest after it, with nothing to load at run time.
+
+```ts
+import { buildGuestBundle } from "@graview/guest/build";
+
+const { script, sha256 } = await buildGuestBundle({ entry: "src/recipe-card.ts" });
+```
+
+A guest that writes `import()` or importScripts is refused at build, and
+`checkGuestBundle` says the same of a script built elsewhere. Hardening holds
+only for a bundle whose first module is the worker entry, so a host that
+runs guests it did not build checks them, or better, builds them itself.
+
+The worker entry carries Remote DOM (`@remote-dom/core` and its polyfill,
+MIT, pinned); the frame guest and the host do not.
