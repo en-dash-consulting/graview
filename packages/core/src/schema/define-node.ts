@@ -195,8 +195,13 @@ export function counted(schema: { tryDefinition(kind: string): { readonly noun?:
   return `${count} ${count === 1 ? nounOf(definition, kind) : (definition?.plural ?? `${kind}s`).toLowerCase()}`;
 }
 
-export function fieldWords(definition: { readonly display?: { readonly labels?: Readonly<Record<string, string>> } } | undefined, key: string): string {
-  return definition?.display?.labels?.[key] ?? humaniseField(key);
+export function fieldWords(
+  definition: { readonly display?: { readonly labels?: Readonly<Record<string, string>> }; readonly computed?: Readonly<Record<string, string | { readonly label?: string }>> } | undefined,
+  key: string,
+): string {
+  // A computed field's own label is its words too (FR-83), where the display does not say otherwise.
+  const computed = definition?.computed && Object.prototype.hasOwnProperty.call(definition.computed, key) ? definition.computed[key] : undefined;
+  return definition?.display?.labels?.[key] ?? (typeof computed === "object" ? computed.label : undefined) ?? humaniseField(key);
 }
 
 /*

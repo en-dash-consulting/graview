@@ -83,6 +83,10 @@ export const EdgeSpec = z.strictObject({
 });
 export type EdgeSpec = z.infer<typeof EdgeSpec>;
 
+/** A computed field: its expression, or the expression with the words it is shown by (FR-83). */
+export const ComputedSpec = z.union([expression, z.strictObject({ expr: expression, label: z.optional(str(1, 60)), description: z.optional(sentence) })]);
+export type ComputedSpec = z.infer<typeof ComputedSpec>;
+
 export const KindSpec = z.strictObject({
   noun: z.optional(str(1, 40)),
   plural: z.optional(str(1, 40)),
@@ -95,6 +99,12 @@ export const KindSpec = z.strictObject({
   /** What a glance at one says — a card, a row, a hit in Find — first, in this order: the definition's `display.glance` (FR-39). */
   glance: z.optional(some(fieldName, 1, 20)),
   edges: z.optional(z.record(edgeName, EdgeSpec)),
+  /**
+   * Values worked out, not stored (FR-83): a name and a rule-language
+   * expression read like a field — `"net": "sum(out('includes'), list * units)"` —
+   * or `{ expr, label?, description? }`. Never written by an act.
+   */
+  computed: z.optional(z.record(z.string(), ComputedSpec).check(z.refine((c: Record<string, unknown>) => Object.keys(c).length <= 20, "a kind works out at most 20 computed fields"))),
   /** The name this kind had in the previous version: its records move. */
   renamedFrom: z.optional(z.string().check(z.regex(NAME))),
 });

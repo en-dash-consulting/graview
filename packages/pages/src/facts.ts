@@ -11,6 +11,7 @@ import {
   type Violation,
 } from "@graview/core";
 import { deriveAffordances, type AffordanceSet } from "@graview/tools";
+import { withComputed } from "@graview/core/document";
 
 /**
  * Everything a record page says, derived ONCE.
@@ -114,7 +115,8 @@ export function recordFacts<S extends AnySchema>(
     id,
     kind: node.kind as string,
     label: name(node),
-    fields: readableFields(node as Record<string, unknown>, definition),
+    // Its computed fields beside its stored ones, worked out from the store this page reads — the seat's (FR-83).
+    fields: readableFields(withComputed(store.schema, store.graph as never, node as never) as Record<string, unknown>, definition),
     violations: violationsTouching(store.violations(options.context), [id]),
     /*
      * The record IS the focus: a page about one task leads with that task's

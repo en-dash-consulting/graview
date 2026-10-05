@@ -274,7 +274,8 @@ export function validateViews(document: GraviewDocument): Finding[] {
     "views",
     (kind) => {
       const spec = document.kinds[kind];
-      return spec ? { field: (n) => spec.fields[n] !== undefined, relation: (n) => spec.edges?.[n] !== undefined, figure: spec.figure !== undefined } : undefined;
+      // A computed field is shown like a stored one (FR-83).
+      return spec ? { field: (n) => spec.fields[n] !== undefined || (spec.computed !== undefined && Object.prototype.hasOwnProperty.call(spec.computed, n)), relation: (n) => spec.edges?.[n] !== undefined, figure: spec.figure !== undefined } : undefined;
     },
     kinds,
     edges,
@@ -282,7 +283,7 @@ export function validateViews(document: GraviewDocument): Finding[] {
   );
 }
 
-type DeclaredKind = { readonly fields?: { readonly shape?: Readonly<Record<string, unknown>> }; readonly edges?: Readonly<Record<string, unknown>>; readonly figure?: string };
+type DeclaredKind = { readonly fields?: { readonly shape?: Readonly<Record<string, unknown>> }; readonly edges?: Readonly<Record<string, unknown>>; readonly figure?: string; readonly computed?: Readonly<Record<string, unknown>> };
 
 /**
  * Findings about a declaration's view specs (FR-03), each at
@@ -307,8 +308,9 @@ export function validateViewSpecs(
       const definition = definitionOf(kind);
       const fields = definition?.fields?.shape ?? {};
       const relations = definition?.edges ?? {};
+      const computed = definition?.computed ?? {};
       return {
-        field: (n) => n !== "id" && n !== "kind" && Object.prototype.hasOwnProperty.call(fields, n),
+        field: (n) => n !== "id" && n !== "kind" && (Object.prototype.hasOwnProperty.call(fields, n) || Object.prototype.hasOwnProperty.call(computed, n)),
         relation: (n) => Object.prototype.hasOwnProperty.call(relations, n),
         figure: definition?.figure !== undefined || options.figures?.[kind] !== undefined,
       };
