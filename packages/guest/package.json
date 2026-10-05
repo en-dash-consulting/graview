@@ -29,9 +29,17 @@
       "types": "./dist/host/index.d.ts",
       "default": "./dist/host/index.js"
     },
+    "./host/worker": {
+      "types": "./dist/host/worker.d.ts",
+      "default": "./dist/host/worker.js"
+    },
     "./worker": {
       "types": "./dist/worker/index.d.ts",
       "default": "./dist/worker/index.js"
+    },
+    "./build": {
+      "types": "./dist/build.d.ts",
+      "default": "./dist/build.js"
     }
   },
   "scripts": {
@@ -44,10 +52,14 @@
     "@remote-dom/polyfill": "1.6.0"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "react": ">=18",
+    "esbuild": ">=0.20"
   },
   "peerDependenciesMeta": {
     "react": {
+      "optional": true
+    },
+    "esbuild": {
       "optional": true
     }
   },

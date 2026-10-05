@@ -34,7 +34,8 @@
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { createServer } from "node:http";
-import { writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { portFor } from "./lib/ports.mjs";
@@ -411,8 +412,25 @@ async function workerSuite() {
       ],
     }).then((out) => out.outputFiles[0].text);
 
+  /*
+   * THE FRAMEWORK'S OWN BUILD (FR-71): the card and the hostile guest are
+   * written as a guest author writes one, a module importing
+   * `@graview/guest/worker`, and built by `buildGuestBundle` into one classic
+   * script. (The prober is built by hand, to put its fixture first.)
+   */
+  const { buildGuestBundle, checkGuestBundle } = await import(resolve(repoRoot, "packages/guest/dist/build.js"));
+  const sources = mkdtempSync(resolve(tmpdir(), "graview-guest-sandbox-"));
+  const checked = {};
+  const built = async (name, source) => {
+    const entry = resolve(sources, `${name}.js`);
+    writeFileSync(entry, source);
+    const { script } = await buildGuestBundle({ entry });
+    checked[name] = await checkGuestBundle(script);
+    return script;
+  };
+
   /* The honest card: its kit, the props, and a button whose press asks for one act of hers and two that are not. */
-  const cardJs = await guestBundle(`
+  const cardJs = await built("card", `
 import { connectGuest } from "@graview/guest/worker";
 const guest = connectGuest();
 const seen = [];
@@ -445,7 +463,7 @@ guest.subscribe((props) => { seen.push(props); draw(); });
 `);
 
   /* The hostile one: forgeries outside the port, an act on what she may not see, a flood, and elements outside the kit. */
-  const hostileJs = await guestBundle(`
+  const hostileJs = await built("hostile", `
 import { connectGuest } from "@graview/guest/worker";
 const guest = connectGuest();
 const heard = [];
@@ -591,7 +609,7 @@ guest.subscribe(() => {
 
   const widgetJs = await bundle(
     `
-import { mountGuestWorker } from "./packages/guest/dist/host/index.js";
+import { mountGuestWorker } from "./packages/guest/dist/host/worker.js";
 ${SHOWROOM}
 /* What the host asks of the page when it starts a worker, written down for the harness. */
 const started = [];
@@ -604,6 +622,15 @@ window.Worker = function Worker(url, options) {
 };
 const errors = [];
 const failures = [];
+/* The control: a module worker from a blob: URL, which Chromium refuses in Claude's opaque view frame. */
+const control = { module: "pending" };
+try {
+  const module = new NativeWorker(URL.createObjectURL(new Blob(["postMessage('ran')"], { type: "text/javascript" })), { type: "module" });
+  module.onmessage = () => (control.module = "ran");
+  module.onerror = () => (control.module = "refused");
+} catch (error) {
+  control.module = "threw " + error.name;
+}
 const guests = {
   card: mountGuestWorker(document.getElementById("card"), { worker: { script: CARD }, view: "card", store, principal: bethan, input: all, onNavigate: (id) => went.push(id), onFailure: (reason) => failures.push(["card", reason]) }),
   hostile: mountGuestWorker(document.getElementById("hostile"), { worker: { script: HOSTILE }, view: "hostile", store, principal: bethan, input: all, limits: { acts: 5 }, onNavigate: (id) => went.push(id), onFailure: (reason) => failures.push(["hostile", reason]) }),
@@ -612,6 +639,7 @@ const guests = {
 window.__host = {
   ...host,
   started,
+  control,
   failures,
   errors,
   origin: self.origin,
@@ -677,6 +705,10 @@ window.__host = {
   const html = await widget.evaluate(() => document.querySelector("main").innerHTML);
   report.policy = { name: POLICY, csp: localize(policy.proxyMetaCsp ?? policy.proxyCsp, HOST), sandbox: policy.innerSandbox, widgetOrigin: host.origin };
 
+  claim("the card and the hostile guest, built by buildGuestBundle, are classic scripts with nothing to load at run time", Object.keys(checked).length === 2 && Object.values(checked).every((findings) => findings.length === 0), checked);
+  const control = await widget.evaluate(() => window.__host.control.module);
+  report.findings = { ...report.findings, moduleBlobWorker: control };
+  if (POLICY === "claude" && ENGINE === "chromium") claim("here a module worker from a blob: URL is refused, and the classic guests started", control !== "ran" && host.failures.length === 0, { module: control });
   claim("every guest was started as a classic worker from a blob: URL", host.started.length === 3 && host.started.every((one) => one.url === "blob:" && one.type === "classic"), host.started);
   claim("no guest failed to start", host.failures.length === 0, host.failures);
   claim("the card was drawn in the widget's page, from the kit", /<section[^>]*data-gv="card"/.test(html) && /<strong[^>]*>Golf<\/strong>/.test(html) && /<button[^>]*data-gv="button"/.test(html), html.slice(0, 300));

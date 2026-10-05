@@ -211,3 +211,8 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
     },
   };
 }
+
+export { createKitRenderer, GUEST_KIT_CSS, hostAttribute, kitValue } from "./kit.js";
+export type { KitRefusal, KitRefusalReason, KitRenderer, KitRendererOptions } from "./kit.js";
+export { GUEST_KIT, KIT_TONES } from "../kit.js";
+export type { GuestKitElement, Kit, KitComponent, KitEvent, KitProperty, KitPropertyType, KitTone } from "../kit.js";

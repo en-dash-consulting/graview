@@ -131,7 +131,7 @@ export const BUDGETS = [
      * The worker entry (FR-68–FR-71): Remote DOM's polyfill and remote
      * elements, the component kit, the hardening and the channel. Graview
      * Cloud's spike measured the polyfill and elements alone at 46.9 kB
-     * minified, 15.5 kB gzipped. Measured at 52_080 / 17_369.
+     * minified, 15.5 kB gzipped. Measured at 55_935 / 18_726, with the hardening.
      */
     entry: `import { connectGuest } from "@graview/guest/worker"; globalThis.connect = connectGuest;`,
     minified: 60_000,
@@ -144,14 +144,28 @@ export const BUDGETS = [
     /*
      * What a host page loads first to draw guest views (FR-04, FR-68): the
      * frame's host, the session, and `guestView`. The worker's host and
-     * the kit's renderer are a chunk fetched when a worker view is drawn,
-     * and Remote DOM is in neither: the host reads its records without it.
-     * Measured at 16_089 / 6_388.
+     * the kit's renderer are `@graview/guest/host/worker`, a chunk fetched
+     * when a worker view is drawn — while `@graview/guest/host` re-exported
+     * them, esbuild put them in what the page loads first (16_898 / 6_652).
+     * Remote DOM is in neither. Measured at 6_482 / 3_118.
      */
     entry: `import { guestView, mountGuestView } from "@graview/guest/host"; globalThis.host = { guestView, mountGuestView };`,
-    minified: 18_000,
-    gzipped: 7_500,
+    minified: 8_000,
+    gzipped: 4_000,
     load: "first",
+    lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
+  },
+  {
+    name: "the guest host, drawing a worker",
+    /*
+     * `@graview/guest/host/worker` (FR-68, FR-69): the worker's host and the
+     * kit's renderer, which read Remote DOM's records without Remote DOM.
+     * Measured at 13_578 / 5_097.
+     */
+    entry: `import { mountGuestWorker } from "@graview/guest/host/worker"; globalThis.mount = mountGuestWorker;`,
+    minified: 16_000,
+    gzipped: 6_000,
+    load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
 ];

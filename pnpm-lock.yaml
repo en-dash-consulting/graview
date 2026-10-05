@@ -487,6 +487,9 @@ importers:
       '@remote-dom/polyfill':
         specifier: 1.6.0
         version: 1.6.0
+      esbuild:
+        specifier: '>=0.20'
+        version: 0.25.0
       react:
         specifier: '>=18'
         version: 19.2.8

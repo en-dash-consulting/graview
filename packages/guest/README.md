@@ -66,7 +66,7 @@ frame another origin — the same guest runs in a classic Web Worker the host
 starts from a `blob:` URL, and draws in the host's page from a component kit.
 
 ```ts
-import { mountGuestWorker } from "@graview/guest/host";
+import { mountGuestWorker } from "@graview/guest/host/worker";
 
 const guest = mountGuestWorker(element, { worker: { script }, view: "recipe-card", store, principal,
   onFailure: (reason) => showTheTierOneCard(reason) });   // refused, silent, or budget
@@ -82,8 +82,10 @@ with a fresh nonce and a `MessageChannel`; the props as the viewer sees
 them; acts applied as the viewer, `via: "view:<name>"`, under the same
 limits. A second ready from the same worker is dropped. What the guest draws
 comes over the port as Remote DOM mutation records, and the host draws only
-the kit (`GUEST_KIT`), with `createKitRenderer`. The worker's half of the
-host, and the renderer, are fetched only when `guestView` draws a worker.
+the kit (`GUEST_KIT`), with `createKitRenderer`. Both are
+`@graview/guest/host/worker`, apart from the frame's host, so a page that
+draws only frames loads none of it, and `guestView` fetches it only when it
+draws a worker.
 
 In the guest, `connectGuest` from `@graview/guest/worker` is the frame
 guest's API with a `root` to draw into:
@@ -116,6 +118,21 @@ chain — the network, storage, channels, nested workers, `importScripts`,
 `eval` and every function constructor — and what is left is frozen. A name
 that will not go stops the worker before any guest code runs. `hardening`
 says what was removed.
+
+Build the guest with `buildGuestBundle` from `@graview/guest/build` (Node,
+with esbuild installed): one strict classic script, the worker entry first
+and the guest after it, with nothing to load at run time.
+
+```ts
+import { buildGuestBundle } from "@graview/guest/build";
+
+const { script, sha256 } = await buildGuestBundle({ entry: "src/recipe-card.ts" });
+```
+
+A guest that writes `import()` or `importScripts` is refused at build, and
+`checkGuestBundle` says the same of a script built elsewhere. Hardening holds
+only for a bundle whose first module is the worker entry, so a host that
+runs guests it did not build checks them, or better, builds them itself.
 
 The worker entry carries Remote DOM (`@remote-dom/core` and its polyfill,
 MIT, pinned); the frame guest and the host do not.
