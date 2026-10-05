@@ -130,14 +130,15 @@ the reuse test beside it, red on purpose.
    bound kind and `graview describe` can say it. A person who arranged the
    list can ask your picture the same thing in the same words.
 
-9. **Give it a name when you register it.** A lens mounted over a group is
-   registered on that kind's `many` cells, and the fourth argument names it:
-   `registry.register("gardener", { cardinality: "many", fidelity: "full" },
-   TendingView, { title: "Who tends what" })`. A titled group view is a
-   PLACE — the bar and an embed's strip list it by name, press it from
-   anywhere, and show it pressed while you are there. Without the title the
-   lens is reachable only by focusing the group, and once someone clicks
-   into a member nothing on screen says it exists.
+9. **Declare a shipped lens; register only your own.** A `lenses` entry
+   with a `title` is a PLACE the framework draws with no registration — a
+   pill, a drive-in, a page at `/places/<as>`:
+   `{ name: "calendar", title: "The month", bindings: { task: { start: "due" } }, options: { range: "month" } }`.
+   `on` names the kind when the bindings do not (reach; a coverage over its
+   columns), and `options` are data (`SHIPPED_LENSES[name].options`). A lens
+   you wrote is registered with a title as the fourth argument:
+   `.register("gardener", { cardinality: "many", fidelity: "full" }, View, { title: "Who tends what" })`.
+   Untitled, it is reachable only by focusing the group.
 
 ## Roles live in two places, and they do different jobs
 
@@ -159,7 +160,10 @@ pnpm build && npx graview check ./dist/domain/app.js
 ```
 
 The checker reads `lenses` in `defineApp` and reports `lens-role-unbound`,
-`lens-binding-missing-field` and `lens-binding-undeclared-kind`. Report the output.
+`lens-binding-missing-field` and `lens-binding-undeclared-kind` — and, for a
+titled lens that cannot draw, why, at its path (`lens-cannot-draw`,
+`lens-option-unknown`, `lens-title-taken`); `graview describe` lists the
+places that draw. Report the output.
 
 **And prove the reuse.** This is the claim a lens exists to support, and the one
 the checker cannot make for you — it NOTES every lens in `lenses` that the

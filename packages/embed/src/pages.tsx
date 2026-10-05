@@ -3,7 +3,7 @@ import { ErrorReportContext, GraviewProvider, type Scheme } from "@graview/react
 import { useEffect, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { PagesContent } from "./pages-content.js";
-import { registerDefaultViews, registerViewSpecs } from "@graview/primitives";
+import { registerDefaultViews, registerViewSpecs } from "@graview/primitives/pages";
 import { createViews, type ReactViewRegistry } from "@graview/react/provider";
 
 /** The pages alone draw from the first commit, so the framework's views are registered outright here. */

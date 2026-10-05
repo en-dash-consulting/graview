@@ -1,5 +1,6 @@
 import { admitArrangement, arrangeable, parseArrangement } from "../../arrange.js";
 import type { AnySchema } from "../../schema/schema.js";
+import { bindsOf } from "../../places.js";
 import type { CheckContext } from "./context.js";
 
 /**
@@ -35,7 +36,7 @@ export function checkArrangement<S extends AnySchema>(ctx: CheckContext<S>): voi
      */
     const bound = new Set<string>();
     for (const [key, binding] of Object.entries(lens.bindings ?? {})) {
-      if (lens.binds === "entities") {
+      if (bindsOf(lens) === "entities") {
         const kind = (binding as { kind?: unknown }).kind;
         if (typeof kind === "string") bound.add(kind);
       } else {
@@ -50,7 +51,7 @@ export function checkArrangement<S extends AnySchema>(ctx: CheckContext<S>): voi
       add({
         severity: "note",
         code: "lens-arrangement-unknown",
-        where: `lens "${lens.name}" arrangedBy`,
+        where: `lens "${lens.title ?? lens.name}" arrangedBy`,
         message: `The lens opens arranged by "${part}", and none of ${[...bound].join(", ")} can be arranged that way — the picture will open unarranged there.`,
         fix: `Name a field, an edge or \`is\` the bound kind has; \`graview describe\` lists what each kind can be arranged by.`,
       });

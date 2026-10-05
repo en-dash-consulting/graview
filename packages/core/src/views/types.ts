@@ -1,4 +1,5 @@
 import type { AnySchema, KindOfSchema } from "../schema/schema.js";
+import type { PagesArrangement } from "../places.js";
 
 /** One node, or a group of them standing in for a kind. */
 export type Cardinality = "one" | "many";
@@ -108,6 +109,16 @@ export interface ViewRegistry<S extends AnySchema, V = unknown> {
    */
   registrations(): readonly ViewRegistration<V>[];
   kindsWithViews(): readonly string[];
+  /**
+   * THE DECLARATION'S ARRANGEMENT OF ITS PLACES (FR-80), held where the
+   * places are held: every face that reads the places reads this beside
+   * them — the routed face's gallery and nav, the city's order, the view
+   * an app opens on. `arrange` sets it (the last word wins); a registry
+   * that was never arranged answers undefined, and every face keeps the
+   * declaration's own order.
+   */
+  arrange?(arrangement: PagesArrangement | undefined): ViewRegistry<S, V>;
+  arrangement?(): PagesArrangement | undefined;
 }
 
 const key = (kind: string, cell: ViewCell, as = "") =>
@@ -134,7 +145,14 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
   /** Every registration, in the order it was made. */
   const order: ViewRegistration<V>[] = [];
 
+  let arranged: PagesArrangement | undefined;
+
   const registry: ViewRegistry<S, V> = {
+    arrange(arrangement) {
+      if (arrangement !== undefined) arranged = arrangement;
+      return registry;
+    },
+    arrangement: () => arranged,
     register(kind, cell, view, meta) {
       const registration: ViewRegistration<V> = {
         kind,

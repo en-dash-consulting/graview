@@ -7,6 +7,7 @@ import { deriveMutations } from "../mutations/derive-edits.js";
 import type { AnySchema } from "../schema/schema.js";
 import { hueFor } from "../theme/derive.js";
 import { withArticle } from "../schema/define-node.js";
+import { declaredLenses, isShippedLens, placesOf } from "../places.js";
 
 /**
  * WHAT THIS APP IS, READ OUT — the rung between `check` and a browser.
@@ -111,6 +112,34 @@ export function describeApp<S extends AnySchema>(
    * tidy enough that nobody notices the picture was never written.
    */
   lines.push("", "## What is drawn");
+  /*
+   * THE PLACES THE DECLARATION DRAWS ITSELF (FR-79), read from the one list
+   * that decides what draws — so this says what the faces show, and why a
+   * titled lens that is missing is missing.
+   */
+  const lensesDeclared = declaredLenses(app);
+  const everywhere = placesOf(app);
+  if (lensesDeclared.drawn.length > 0) {
+    lines.push(
+      `${lensesDeclared.drawn.length} declared ${lensesDeclared.drawn.length === 1 ? "lens draws" : "lenses draw"} as places, with no view of the app's own: ${list(
+        lensesDeclared.drawn.map((lens) => {
+          const at = everywhere.find((place) => place.slug === lens.as && place.kind === lens.kinds[0]);
+          return `"${lens.title}" (the ${lens.lens} over ${list(lens.kinds.map((kind) => app.schema.tryDefinition(kind)?.plural ?? `${kind}s`))}${lens.across ? ` across ${app.schema.tryDefinition(lens.across)?.plural ?? `${lens.across}s`}` : ""}, at ${at?.address ?? `/places/${lens.as}`})`;
+        }),
+      )}.`,
+    );
+  }
+  for (const lens of lensesDeclared.undrawn) {
+    if (lens.title) lines.push(`  "${lens.title}" does not draw: ${lens.why}.`);
+  }
+  if (app.pages) {
+    const first = everywhere.find((place) => place.first);
+    const order = (app.pages.order ?? []).filter((kind) => kinds.includes(kind));
+    const hidden = (app.pages.hide ?? []).filter((kind) => kinds.includes(kind));
+    if (first) lines.push(`It opens on ${first.kind === null ? "its home" : `"${first.title}"`} (${first.address}).`);
+    if (order.length > 0) lines.push(`The home and the city take the kinds in this order: ${list(order)}${order.length < kinds.length ? ", then the rest as declared" : ""}.`);
+    if (hidden.length > 0) lines.push(`Left off the home, and still at their own addresses and in search: ${list(hidden)}.`);
+  }
   if (!app.views) {
     /*
      * NOT "there are no views" — "nothing here can see them".
@@ -181,9 +210,7 @@ export function describeApp<S extends AnySchema>(
   }
   lines.push("  key:value tokens narrow as a list's filter does, and kind:<kind> to one kind.");
 
-  const authored = (app.lenses ?? []).filter(
-    (lens) => !["timeline", "coverage", "board", "calendar", "reach"].includes(lens.name),
-  );
+  const authored = (app.lenses ?? []).filter((lens) => !isShippedLens(lens.name));
   if (authored.length > 0) {
     lines.push(
       `Lenses this app wrote: ${list(

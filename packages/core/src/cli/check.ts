@@ -21,6 +21,8 @@ import {
   checkEditableFields,
   checkFigures,
   checkLensBindings,
+  checkDeclaredLenses,
+  checkPagesArrangement,
   checkMigrations,
   checkModelWritten,
   checkModules,
@@ -106,7 +108,9 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   checkPolicy(ctx);
   checkPalette(ctx);
   checkLensBindings(ctx);
+  checkDeclaredLenses(ctx);
   checkArrangement(ctx);
+  checkPagesArrangement(ctx);
   checkViewSpecs(ctx);
 
   const errors = findings.filter((f) => f.severity === "error").length;

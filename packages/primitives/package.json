@@ -16,6 +16,10 @@
     "./pages": {
       "types": "./dist/pages.d.ts",
       "default": "./dist/pages.js"
+    },
+    "./scene": {
+      "types": "./dist/scene.d.ts",
+      "default": "./dist/scene.js"
     }
   },
   "scripts": {
