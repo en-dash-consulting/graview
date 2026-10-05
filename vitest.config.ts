@@ -51,6 +51,7 @@ export default defineConfig({
       "@graview/guest/host": fileURLToPath(new URL("./packages/guest/src/host/index.ts", import.meta.url)),
       "@graview/guest/react": fileURLToPath(new URL("./packages/guest/src/react.ts", import.meta.url)),
       "@graview/guest/build": fileURLToPath(new URL("./packages/guest/src/build.ts", import.meta.url)),
+      "@graview/guest/worker/view": fileURLToPath(new URL("./packages/guest/src/worker/view.ts", import.meta.url)),
       "@graview/guest/worker": fileURLToPath(new URL("./packages/guest/src/worker/index.ts", import.meta.url)),
       "@graview/guest": src("guest"),
       "@graview/studio": src("studio"),

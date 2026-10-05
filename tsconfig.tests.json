@@ -33,6 +33,7 @@
       "@graview/guest/host": ["./packages/guest/src/host/index.ts"],
       "@graview/guest/react": ["./packages/guest/src/react.ts"],
       "@graview/guest/build": ["./packages/guest/src/build.ts"],
+      "@graview/guest/worker/view": ["./packages/guest/src/worker/view.ts"],
       "@graview/guest/worker": ["./packages/guest/src/worker/index.ts"],
       "@graview/guest": ["./packages/guest/src/index.ts"],
       "@graview/studio": ["./packages/studio/src/index.ts"],

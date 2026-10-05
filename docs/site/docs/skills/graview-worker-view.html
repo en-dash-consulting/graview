@@ -16,16 +16,16 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 }
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>@graview/guest — Graview docs</title>
-<meta name="description" content="Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.">
+<title>graview-worker-view — Graview docs</title>
+<meta name="description" content="Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.">
 <meta name="color-scheme" content="light dark">
-<meta property="og:title" content="@graview/guest — Graview docs">
-<meta property="og:description" content="Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.">
+<meta property="og:title" content="graview-worker-view — Graview docs">
+<meta property="og:description" content="Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://graview.dev/docs/packages/guest.html">
+<meta property="og:url" content="https://graview.dev/docs/skills/graview-worker-view.html">
 <meta property="og:image" content="https://graview.dev/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="canonical" href="https://graview.dev/docs/packages/guest.html">
+<link rel="canonical" href="https://graview.dev/docs/skills/graview-worker-view.html">
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzMwIiBoZWlnaHQ9IjMzMCIgdmlld0JveD0iMCAwIDMzMCAzMzAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHg9IjcuNSIgeT0iNy41IiB3aWR0aD0iMzE1IiBoZWlnaHQ9IjMxNSIgc3Ryb2tlPSIjMDBFNUI5IiBzdHJva2Utd2lkdGg9IjE1Ii8+CjxwYXRoIGQ9Ik0zMTUgMTVIMTVWMzE1SDMxNVYxNVoiIGZpbGw9IiMwMDE3NjkiLz4KPHBhdGggZD0iTTMxNSAyMzIuMTE5SDQ3LjAwNzRWMjQ3LjcwNUgzMTVWMjMyLjExOVoiIGZpbGw9IiMwMEU1QjkiLz4KPHBhdGggZD0iTTEzOS43OTUgMTY0Ljk5N0wxNDUuMzI0IDE2OS44MzhDMTQwLjk0MiAxNzguMzcyIDEyNi4xOTEgMTkyLjg5NCAxMDAuNTg5IDE5Mi44OTRDNzEuNzc0IDE5Mi44OTQgNDUuMDI0OCAxNzQuNjc4IDQ1LjAyNDggMTM5LjYyNUM0NS4wMjQ4IDEwMy40MjQgNzMuNjEwMiA4NS40MzggMTAyLjQyNSA4NS40MzhDMTI3LjA4OCA4NS40MzggMTQ2LjQ3MSA5OC44MTI2IDE0Ni40NzEgMTE5LjMyM0MxNDYuNDcxIDEzNy41MzggMTMxLjI2MSAxNDAuMDg0IDEwNi44MDcgMTQxLjAwMkw4MS40NTU1IDE0MS45MkM3Ny4zMDMzIDE0Mi4xNSA3Ni4zODUzIDE0NS42MTMgNzcuNzYyNCAxNTAuOTEzQzgzLjUyMTIgMTY3LjUyMiA5Ni44OTU4IDE3Ni45NzQgMTEzLjk2NCAxNzYuOTc0QzEyMi43MjcgMTc2Ljk5NSAxMzEuNzIgMTc0LjY3OSAxMzkuNzk1IDE2NC45OTdaTTc0LjU0OTEgMTI0LjE4NUM3NC4zMTk2IDEzMS4xMTIgNzYuNjE0OCAxMzMuODY2IDgyLjYyNCAxMzMuODY2SDk0Ljg1MUMxMTQuNjczIDEzMy44NjYgMTIwLjY4MiAxMjcuNjQ4IDEyMC42ODIgMTE3LjAyOEMxMjAuNjgyIDEwNS4yNiAxMTIuODM3IDk0LjIwMTQgOTkuMDAzMSA5NC4yMDE0QzgzLjMxMjUgOTQuMjIyMiA3NS42OTY3IDEwNi42NTggNzQuNTQ5MSAxMjQuMTg1WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0NC4yMjUgMTczLjUzMVYxMzEuNTcxQzI0NC4yMjUgMTE0LjUwMyAyMzcuMDY4IDEwMi45ODYgMjIzLjAwNSAxMDIuOTg2QzIwOC4yNTMgMTAyLjk4NiAxOTkuMjYxIDExNC41MjQgMTk5LjI2MSAxMzEuNTcxVjE2OS42MDhDMTk5LjI2MSAxNzkuNTE5IDIwMy4xODMgMTgyLjc1NCAyMTMuNzgzIDE4My42NzJWMTkxLjUxN0gxNTYuODQyVjE4My42NzJDMTY3LjY3MSAxODIuNzU0IDE3MS41OTMgMTc5LjUxOSAxNzEuNTkzIDE2OS42MDhWMTEyLjE4N0MxNzEuNTkzIDEwMS41ODggMTY3LjIxMiA5OC44MTI4IDE1Ni44NDIgOTkuNzMwOFY5MS44ODU1TDE4OS4xMiA4NS44OTcyQzE5NS43OTcgODQuNzQ5NiAxOTkuMjYxIDg3LjczMzMgMTk5LjI2MSA5My4wNTRDMTk5LjI2MSAxMDEuMzU4IDIwMi45NTQgMTAzLjQyNCAyMDUuOTM3IDk5Ljk4MTJDMjExLjAwOCA5NC40NTE5IDIyMC4yMyA4NSAyMzguNDQ1IDg1QzI1NS4yODQgODUgMjcxLjg3MSA5My4zMDQ0IDI3MS44NzEgMTI1LjU4M1YxNzEuMDA2QzI3MS44NzEgMTc4LjYyMiAyNzUuNzk0IDE4MS4zNzYgMjgzLjYzOSAxNzkuNzdWMTg3LjYxNUMyNzkuNDg3IDE5MC44NDkgMjcwLjk1MyAxOTIuNjg1IDI2NC4yNzcgMTkyLjY4NUMyNTEuNjExIDE5Mi42NjQgMjQ0LjIyNSAxODUuOTg4IDI0NC4yMjUgMTczLjUzMVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1048,10 +1048,10 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
       <a href="../index.html">Docs home</a>
       <a href="../getting-started.html">Getting started</a>
       <a href="../concepts.html">Concepts</a>
-      <a href="../packages.html" aria-current="page">Packages</a>
+      <a href="../packages.html">Packages</a>
       <a href="../cli.html">The CLI</a>
       <a href="../agents.html">With a model</a>
-      <a href="../skills.html">Skills</a>
+      <a href="../skills.html" aria-current="page">Skills</a>
       <a href="../checks.html">What check says</a>
       <a href="../demos.html">Live demos</a>
       <a href="../../progression.html">The garden, grown</a>
@@ -1067,111 +1067,67 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
-      <h1 id="h-what">@graview/guest</h1>
-      <p class="lede" style="margin-top: 18px;">Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.</p>
-      <div class="cta"><div class="cta-line"><code>pnpm add @graview/guest</code><button type="button" class="copy" data-copy="pnpm add @graview/guest">Copy</button></div></div>
-      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/guest</code>, <code>@graview/guest/react</code>, <code>@graview/guest/host</code>, <code>@graview/guest/host/worker</code>, <code>@graview/guest/worker</code>, <code>@graview/guest/worker/view</code>, <code>@graview/guest/build</code></p>
+      <h1 id="h-what">graview-worker-view</h1>
+      <p class="lede" style="margin-top: 18px;">Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.</p>
+      <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
-    <section id="readme" aria-labelledby="h-readme">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-readme">What it is</h2></div>
-<p>A view somebody else wrote — a recipe card, a bespoke dashboard, React or plain script — drawn in an iframe that can see only what the viewer may see and can only ask. The host pushes the view's props as the viewer sees them; the guest asks for an act by name, and the host applies it as the viewer, so the policy refuses on the guest's behalf exactly as it would refuse a click. The rail says the act came through the view.</p>
-<h3>In the host</h3>
-<div class="code" data-scroller><pre><code>import { guestView, mountGuestView } from "@graview/guest/host";
-
-views.register("recipe", { fidelity: "full", cardinality: "one" },
-  guestView({ url: "https://cards.example/recipe.html", name: "recipe-card" }));
-
-// Or without React, into any element:
-const frame = mountGuestView(element, { url, view: "recipe-card", store, principal, input: () =&gt; ({ node: { id } }) });
-frame.update();   // the input moved
-frame.dispose();</code></pre></div>
-<p><code>mountGuestView</code> gives the frame <code>sandbox="allow-scripts"</code> and never <code>allow-same-origin</code>, so its origin is opaque and no cookie, storage or store of the host's is reachable from it. A <code>guest-ready</code> is answered only from that frame's own window and from the opaque origin, with a fresh nonce and a MessageChannel; every request over the port carries the nonce. Acts are rate-limited per frame (30 a minute by default, <code>limits</code>), and a flood of messages past 120 a second is dropped unread. <code>createGuestHost</code> is the same host without the DOM. Where the frame is served from, and its CSP, are the host's business: a separate registrable domain with <code>connect-src 'none'</code> is the shape the protocol assumes. It matters where the host's session rides a cookie: in Firefox and WebKit a guest with no CSP can send a credentialed request to the host that carries a cookie without SameSite. It cannot read the answer, but the request is made. Set the cookie SameSite=Lax or Strict, or serve guests with <code>connect-src 'none'</code> (<code>scripts/guest-sandbox.mjs</code> checks both in all three engines).</p>
-<h3>In the guest</h3>
-<div class="code" data-scroller><pre><code>import { connectGuest } from "@graview/guest";
-
-const guest = connectGuest();
-guest.subscribe((props) =&gt; render(props.node, props.acts));
-const answer = await guest.act("mark-cooked", { recipeId: props.node.id });
-if (!answer.ok) show(answer.message);   // the policy's own sentence
-guest.navigate(id);
-guest.autoSize();</code></pre></div>
-<p>In React, <code>useGuest()</code> from <code>@graview/guest/react</code> is the same connection: <code>{ props, act, navigate, size }</code>, re-rendering on every push. The guest entries import nothing of the framework, so a guest bundle carries none of it.</p>
-<p><code>GuestProps</code> is the plain-data half of <code>ViewProps</code> — <code>node</code>, <code>nodes</code>, the <code>edges</code> among them, <code>label</code>, <code>fidelity</code>, <code>cardinality</code>, <code>mode</code>, <code>selected</code>, <code>implicated</code>, <code>flagged</code> — and <code>acts</code>, the acts the viewer may run. A record the viewer may not see is in none of them.</p>
-<h3>In a worker</h3>
-<p>Where a frame cannot be nested — a chat's widget, whose sandbox will not frame another origin — the same guest runs in a classic Web Worker the host starts from a <code>blob:</code> URL, and draws in the host's page from a component kit.</p>
-<div class="code" data-scroller><pre><code>import { mountGuestWorker } from "@graview/guest/host/worker";
-
-const guest = mountGuestWorker(element, { worker: { script }, view: "recipe-card", store, principal,
-  onFailure: (reason) =&gt; showTheTierOneCard(reason) });   // refused, silent, or budget
-
-views.register("recipe", { fidelity: "full", cardinality: "one" },
-  guestView({ worker: { script }, name: "recipe-card" }));</code></pre></div>
-<p><code>mountGuestWorker</code> starts the worker without <code>type: "module"</code>, which a <code>blob:</code> URL in an opaque origin cannot start, from the script's text or a URL it is given. It speaks the frame's protocol: one <code>guest-ready</code>, answered with a fresh nonce and a MessageChannel; the props as the viewer sees them; acts applied as the viewer, <code>via: "view:&lt;name&gt;"</code>, under the same limits. A second ready from the same worker is dropped. Once it is ready, the host sends a heartbeat over the port and the worker's runtime answers it; a worker that goes <code>limits.silentMs</code> (5 000 by default) without an answer — a guest spinning in <code>while (true)</code> — is terminated, and the host is told <code>silent</code>. A guest that is busy but yields is kept. What the guest draws comes over the port as Remote DOM mutation records, and the host draws only the kit (<code>GUEST_KIT</code>), with <code>createKitRenderer</code>. Both are <code>@graview/guest/host/worker</code>, apart from the frame's host, so a page that draws only frames loads none of it, and <code>guestView</code> fetches it only when it draws a worker.</p>
-<p>In the guest, <code>connectGuest</code> from <code>@graview/guest/worker</code> is the frame guest's API with a <code>root</code> to draw into:</p>
-<div class="code" data-scroller><pre><code>import { connectGuest } from "@graview/guest/worker";
-
-const guest = connectGuest();
-guest.subscribe((props) =&gt; {
-  const card = document.createElement("gv-card");
-  const title = document.createElement("gv-title");
-  title.textContent = props.node?.label ?? "";
-  const cook = document.createElement("gv-button");
-  cook.textContent = "Cooked it";
-  cook.addEventListener("press", () =&gt; guest.act("mark-cooked", { recipeId: props.node!.id }));
-  card.append(title, cook);
-  guest.root.replaceChildren(card);
-});</code></pre></div>
-<p>The kit is one declaration for both sides: each component's host element, typed properties, events and children. The worker's remote elements are made from it, and the host draws from it alone. An element outside it, a property or event it does not declare, a value of another type, and a link that is not an absolute <code>https:</code> URL are not drawn, and <code>refused</code> says why. A link opens with <code>rel="noopener noreferrer"</code> and no referrer, in a new tab unless the kit says <code>target: "_self"</code>; a host that passes <code>links: { origins: ["https://recipes.example"] }</code> draws a link only to one of those origins, and any other with no <code>href</code>.</p>
-<p>Before the guest runs, the worker entry hardens the worker's global: every name outside <code>GUEST_GLOBALS</code> goes, from the global and every prototype on its chain — the network, storage, channels, nested workers, importScripts, <code>eval</code> and every function constructor — and what is left is frozen. A name that will not go stops the worker before any guest code runs. <code>hardening</code> says what was removed.</p>
-<p>Build the guest with <code>buildGuestBundle</code> from <code>@graview/guest/build</code> (Node, with esbuild installed): one strict classic script, the worker entry first and the guest after it, with nothing to load at run time.</p>
-<div class="code" data-scroller><pre><code>import { buildGuestBundle } from "@graview/guest/build";
-
-const { script, sha256 } = await buildGuestBundle({ entry: "src/recipe-card.ts" });</code></pre></div>
-<p>A guest that writes <code>import()</code> or importScripts is refused at build, and <code>checkGuestBundle</code> says the same of a script built elsewhere. Hardening holds only for a bundle whose first module is the worker entry, so a host that runs guests it did not build checks them, or better, builds them itself.</p>
-<p>The worker entry carries Remote DOM (<code>@remote-dom/core</code> and its polyfill, MIT, pinned); the frame guest and the host do not.</p>
-<h3>A worker view on the open kit</h3>
-<p>A view that needs more than the kit's components — a card grid, a chart, an animated ring — draws plain HTML, SVG and one stylesheet instead. What keeps it safe is what it can reach, not what it can draw: it runs in the same hardened classic worker, and the host draws what it says into a shadow root inside a region of the host's own — <code>contain: layout paint style</code>, <code>isolation: isolate</code>, <code>overflow: clip</code> — keeping only what the open kit allows. The view is one plain script with no imports and no build; the host puts the view's runtime in front of it.</p>
-<div class="code" data-scroller><pre><code>import { mountWorkerView } from "@graview/guest/host/worker";
-
-const view = mountWorkerView(element, { manifest, worker: { source }, store, principal,
-  onFailure: (reason, detail) =&gt; showTheTierOneFace(reason, detail) });</code></pre></div>
-<p>In the worker, the view has one global, <code>graview</code>:</p>
-<div class="code" data-scroller><pre><code>graview.style(`.grid { display: grid; gap: 12px } .card { background: var(--graview-panel) }`);
-graview.onProps((props) =&gt; graview.render(graview.html`
-  &lt;section class="grid"&gt;${props.nodes.map((n) =&gt; graview.html`&lt;article class="card"&gt;&lt;h3&gt;${n.label}&lt;/h3&gt;&lt;/article&gt;`)}&lt;/section&gt;`));
-graview.on("click", ".card", (event) =&gt; { /* … */ });</code></pre></div>
-<p>What may be drawn is one declaration, read by both sides: most of HTML's sectioning, text, lists, tables, <code>details</code>, buttons, fields and <code>img</code>; SVG's shapes, paths, text, gradients, clip paths, masks, markers and <code>use</code> of <code>#id</code>; and CSS for layout, grid, flex, colour, type, transitions, keyframes, media and container queries, with the app's theme tokens (<code>--graview-*</code>) inherited, light or dark as the app is. The stylesheet, every <code>style</code> attribute and every SVG paint are read with the CSS Syntax tokenizer and parser — escapes decoded, comments gone — and written afresh from what was kept: <code>url()</code> only as <code>url(#id)</code> on a paint, no <code>@import</code>, <code>@font-face</code> or other at-rule but <code>@media</code>, <code>@supports</code>, <code>@container</code> and <code>@keyframes</code>, only the functions on the list (no <code>image-set()</code>, <code>attr()</code>, <code>cross-fade()</code>, <code>element()</code> …), <code>position</code> only static, relative or absolute, and no selector that reaches out of the shadow tree (<code>:host</code>, <code>::slotted</code>). An image is a <code>data:</code> image or a <code>blob:</code> of the page's own; an SVG image in an <code>img</code> runs no script and loads nothing. No <code>&lt;script&gt;</code>, <code>&lt;iframe&gt;</code>, <code>&lt;object&gt;</code>, <code>&lt;embed&gt;</code>, <code>&lt;link&gt;</code>, <code>&lt;meta&gt;</code>, <code>&lt;base&gt;</code>, <code>&lt;style&gt;</code>, <code>&lt;form&gt;</code>, SVG <code>&lt;image&gt;</code> or <code>&lt;foreignObject&gt;</code>, no <code>src</code>, <code>href</code>, <code>srcset</code>, <code>formaction</code> or <code>on*</code> attribute is drawn; what is not drawn is in <code>refused</code>, with why. <code>guest-sandbox --transport=open</code> serves a page with no content security policy, tries every way out, and finds no request leaving it in Chromium, WebKit or Firefox.</p>
-<h4>A worker view is a place</h4>
-<p>A worker view says what it is and what it may touch in a manifest the host enforces:</p>
-<div class="code" data-scroller><pre><code>import { registerWorkerView, workerHome } from "@graview/guest/host";
-
-const packages = {
-  manifest: { name: "packages", title: "The packages", attach: "package", cardinality: "many",
-    reads: { kinds: ["offer"], edges: ["includes"] }, acts: ["set-standing"] },
-  worker: { source },
-  author: "Made by Claude for Nick",
-};
-views: (schema, registry) =&gt; registerWorkerView(registry, packages),   // the embed's views
-pages.surface("home", workerHome(frontPage));                         // a view of the home</code></pre></div>
-<p>It is handed the viewer's sight and nothing more, cut to the kind it attaches to (the members the face hands it, or every one the viewer sees) and the kinds and edges it reads: a record the viewer may not see is in none of it, and a kind it did not ask to read is not handed to it however visible. Every record's <code>label</code> is filled as the host labels it — for a frame guest too. A titled view is a named place on the Graview face and the pages face, by its title; whatever the registry drew for that kind before is drawn if the view fails. With <code>attach: "home"</code>, <code>workerHome</code> makes it the routed face's home. Its props carry the app's look as a <code>GuestTheme</code> — the scheme, the accent, ground, panel, ink, muted ink and edge colours, and the body and mono fonts — read off the region it is drawn in, and the host pushes again when the app's own toggle changes the scheme, whatever the system prefers. <code>checkManifest</code> says what in a manifest names a kind, an edge or an act the app does not declare, and the host refuses to start such a view (<code>onFailure</code> hears <code>manifest</code>).</p>
-<h4>Writes that cannot leak</h4>
-<p>A view runs for every member with that member's sight, and its author is not the member, so the danger is a view reading what this viewer may see and writing it where somebody else may. An act must be named in the manifest. Where the app's sight is total — no sight is declared, or every kind is seen whole by everybody (<code>sightIsTotal</code>) — an act the view asks for from its code applies with its arguments as given. Otherwise it applies only from a press the host itself saw:</p>
+    <section id="skill" aria-labelledby="h-skill">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-skill">The skill</h2></div>
+<h2>A worker view</h2>
+<p>A worker view is for what the declared blocks cannot draw: a chart, a grid of cards, a front page with a figure and a ring. It is one plain script. The host runs it in a hardened worker with no network, no storage and no DOM of its own, and draws what it says into a shadow root inside a region the host owns. <strong>What it may draw is broad; what it may reach is not.</strong> Write it against one global, <code>graview</code>. There is nothing to import and nothing to build; the word <code>import</code> may not appear in it at all, even in a comment, and nor may <code>export</code>.</p>
+<h3>The manifest</h3>
+<p>Every view comes with a manifest the host enforces:</p>
+<div class="code" data-scroller><pre><code>{ name: "packages", title: "The packages", attach: "package", cardinality: "many",
+  reads: { kinds: ["offer"], edges: ["includes"] },
+  acts: ["set-summary", { act: "set-standing", as: "recommend", constants: { standing: "recommended" } }] }</code></pre></div>
+<ul>
+<li><code>name</code> is lower-case letters, digits and hyphens. Acts are recorded <code>via: "view:&lt;name&gt;"</code>.</li>
+<li><code>title</code> makes it a named place on both faces, with the slug <code>placeSlug(title)</code> (<code>"the-packages"</code>).</li>
+<li><code>attach</code> is a kind, or <code>"home"</code> for the front page's body (cardinality <code>many</code>).</li>
+<li><code>reads</code> lists the other kinds and the edges it is shown. Nothing else is handed to it.</li>
+<li><code>acts</code> lists the acts it may ask for, by name. An entry with <code>as</code> and <code>constants</code> is another name for the same act with arguments the view cannot change.</li>
+</ul>
+<p>A manifest that names a kind, an edge or an act the app does not declare is refused before the view starts.</p>
+<h3>The global</h3>
+<div class="code" data-scroller><pre><code>graview.style(css)              // the view's one stylesheet
+graview.onProps((props) =&gt; …)   // every push of what it is shown (and at once)
+graview.props                   // the last push
+graview.render(markup)          // draw: a string, graview.html`…`, or nodes
+graview.html`&lt;li&gt;${x}&lt;/li&gt;`     // markup; every value put in is escaped
+graview.on("click", ".card", (event) =&gt; …)   // also input, change, keydown, toggle
+graview.act(name, args)         // ask for an act: resolves { ok, intent } or { ok: false, reason, message }
+graview.navigate("offer:7")     // a record; graview.navigate({ place: "the-packages" }) a place</code></pre></div>
+<p><code>props</code> holds <code>nodes</code> (each with its <code>id</code>, <code>kind</code>, <code>label</code> and fields), <code>edges</code> (<code>{ kind, from, to }</code> among them), <code>node</code> for a view of one, <code>label</code> (its title), <code>acts</code>, <code>places</code> (<code>{ as, title }</code>), and <code>theme</code> (<code>scheme</code>, <code>accent</code>, <code>panel</code>, <code>ink</code> …). <code>render</code> keeps what it can, by element and by <code>data-key</code> or <code>id</code>, so give repeated rows a <code>data-key</code>: a field being typed in keeps its text across a push. An event carries <code>value</code>, <code>checked</code>, <code>key</code>, and <code>pressed</code> for a bound press.</p>
+<h3>What it may draw</h3>
+<p>HTML's sectioning, headings, text, lists, tables, <code>details</code>/<code>summary</code>, <code>button</code>, <code>input</code>, <code>select</code>, <code>textarea</code>, <code>label</code>, <code>fieldset</code>, <code>meter</code>, <code>progress</code> and <code>img</code>. SVG's <code>svg</code>, <code>g</code>, shapes, <code>path</code>, <code>text</code>, gradients, <code>clipPath</code>, <code>mask</code>, <code>marker</code>, <code>pattern</code>, <code>symbol</code> and <code>use href="#id"</code>. Attributes: <code>id</code>, <code>class</code>, <code>style</code>, <code>title</code>, <code>role</code>, <code>aria-*</code>, <code>data-*</code>, and each element's own. CSS for layout, grid, flex, colour, type, transitions, <code>@keyframes</code>, <code>@media</code>, <code>@supports</code> and <code>@container</code>.</p>
+<p>Never drawn: <code>script</code>, <code>iframe</code>, <code>object</code>, <code>embed</code>, <code>link</code>, <code>meta</code>, <code>base</code>, <code>style</code>, <code>form</code>, <code>video</code>, <code>canvas</code>, SVG <code>image</code> and <code>foreignObject</code>; any <code>href</code>, <code>srcset</code> or <code>on*</code> attribute; <code>src</code> except on <code>img</code>, as a <code>data:</code> image. In CSS: <code>url()</code> except <code>url(#id)</code> on <code>fill</code>, <code>stroke</code>, <code>clip-path</code> or <code>marker</code>; <code>@import</code>; <code>@font-face</code>; <code>image-set()</code>, <code>attr()</code> and other unlisted functions; <code>position: fixed</code> or <code>sticky</code>; <code>:host</code>. What the host leaves out it lists in <code>refused</code>; <code>graview.refused</code> is the runtime's own early word on the last render.</p>
+<p><strong>Draw with the app's tokens</strong>, so light and dark follow the app's own toggle: <code>var(--graview-panel)</code>, <code>--graview-ground</code>, <code>--graview-ink</code>, <code>--graview-ink-muted</code>, <code>--graview-edge</code>, <code>--graview-accent</code>, <code>--graview-font-body</code>, <code>--graview-font-mono</code>. Presentation attributes do not take <code>var()</code>; put paints in the stylesheet (<code>.bar { fill: var(--graview-accent) }</code>).</p>
+<h3>Links</h3>
+<p><code>&lt;a data-record="offer:7"&gt;</code> and <code>&lt;a data-place="the-packages"&gt;</code> are links the host follows, on both faces. <code>&lt;a href="https://…"&gt;</code> is drawn as text.</p>
+<h3>Writes</h3>
+<p>An act must be in the manifest. If every member of the app sees every record, <code>graview.act</code> applies it as given. Otherwise <strong>only a press applies an act</strong>: a person's click on an element with <code>data-act</code>. Its arguments come only from the record it is bound to (<code>data-record</code>, on it or around it), the manifest's constants, and the fields in its <code>fieldset</code>, named for the act's arguments and typed by the person:</p>
 <div class="code" data-scroller><pre><code>&lt;fieldset&gt;
   &lt;input name="summary" placeholder="What it is"&gt;
   &lt;button data-act="set-summary" data-record="package:start"&gt;Say it&lt;/button&gt;
 &lt;/fieldset&gt;</code></pre></div>
-<p>A trusted click on an element with <code>data-act</code> is judged and applied in the click's own handler, before the view hears of it (it hears <code>pressed</code>). Its arguments come only from the record the element is bound to (<code>data-record</code>, one the view was shown), the manifest's constants for the act (<code>{ act, as, constants }</code>), and the fields in the press's <code>fieldset</code> the host read itself — each one the viewer's: its last change a trusted <code>input</code>, and nothing the view wrote in it since. A field the view filled is the view's until the viewer empties it; a <code>change</code> a browser raises when such a field loses focus is not typing; a view that says back what a field shows, or empties it, takes nothing away. Either way an act is applied as the viewer, <code>via: "view:&lt;name&gt;"</code>, within the view's allowance, and undoable.</p>
-<h4>Links stay in the app</h4>
-<p>A worker view links to a record or a named place of this app, and nowhere else. The open kit draws no <code>href</code>, so <code>&lt;a href="https://…"&gt;</code> is text; <code>&lt;a data-record="offer:coaching"&gt;</code> and <code>&lt;a data-place="the-packages"&gt;</code> are made links by the host — focusable, a link to assistive technology — and followed by it on a press or Enter, to a record the viewer may see or a place the app has. <code>graview.navigate("offer:coaching")</code> and <code>graview.navigate({ place: "the-packages" })</code> are held to the same. The props list the app's places (<code>places</code>, each with its slug and title). On the Graview face a record is focused and chosen and a place is drawn; on the pages face each goes to its own address — through <code>useGoTo</code> in <code>@graview/react</code>, which the routed face provides. The kit's <code>gv-link</code> keeps <code>links.origins</code>: it is the kit's one deliberate way out, to the origins a host lists, and an open-kit view has none.</p>
-<h4>Limits, and what is drawn in a view's place</h4>
-<p>The host caps a view's code (<code>maxSourceBytes</code>, 256 000 by default), the nodes it draws (<code>maxNodes</code>, 5 000), the messages it sends (<code>messages</code> in <code>messageWindowMs</code>, 120 a second) and the time it takes over each push of what it is shown (<code>pushMs</code>, 1 000 ms: the view's listeners as its runtime times them, and the wait for the runtime to say it drew, as the host times it), beside the heartbeat's <code>silentMs</code>. Past any of them the worker is terminated, the plain face of what the view was shown — its title and each record by its label, drawn by the host — is drawn in the region, and <code>onFailure</code> hears why: <code>source</code>, <code>nodes</code>, <code>flood</code>, <code>slow</code>, <code>silent</code>, <code>error</code> (it threw before it drew), <code>refused</code> or <code>manifest</code>, with a sentence saying it. A host draws its own in its place with <code>fallback</code>; the React registrations draw whatever the registry drew for the kind before.</p>
-<h4>A view with no build</h4>
-<p>A view is handed over as its plain source, <code>{ source }</code>: one script against the <code>graview</code> global, with no imports, no bundler and no copy of the protocol. The host puts the view's runtime in front of it — Remote DOM's polyfill, the hardening, the channel and the global, which the host holds as one classic script and fetches only when it first starts a view — and runs both as one strict classic worker. A module worker is not an option: a <code>blob:</code> one is refused in an opaque origin. The hardened worker has no <code>eval</code>, no function constructor and no <code>importScripts</code>, so the one way left to load code is <code>import()</code>, which is syntax: a source whose text says <code>import</code> anywhere, even in a string or a comment, is refused before it runs (<code>checkViewSource</code> says why), and so is one that exports. <code>{ script }</code> still takes a whole worker script built against <code>@graview/guest/worker/view</code>. How to write one — the manifest, what may be drawn, the theme's tokens, the write rules, links and limits, with a list lens and a home worked through — is the <code>graview-worker-view</code> skill (<code>graview skills install</code>).</p>
-    </section>
-    <section id="api" aria-labelledby="h-api">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (6)</h2></div>
-      <p class="sm dim">Read off the package's own barrel, so this is what is there today.</p>
-      <ul class="names"><li><code>connectGuest</code></li><li><code>GUEST_PROTOCOL</code></li><li><code>GUEST_SANDBOX</code></li><li><code>isGuestReady</code></li><li><code>isHostHello</code></li><li><code>OPAQUE_ORIGIN</code></li></ul>
+<p>A field the view filled (<code>value="…"</code>) is the view's until the person empties it, and a press carrying it is refused. Do not prefill. A view may empty a field after a press. The press is applied before the view hears it; read <code>event.pressed</code>.</p>
+<h3>Limits</h3>
+<p>About 256 kB of source, 5 000 drawn nodes, 120 messages a second, and 1 000 ms per push. Past any of them the view is stopped and the plain face of its records is drawn instead, with why. Draw summaries, not every row of a huge set.</p>
+<h3>Worked examples</h3>
+<p><code>examples/offers-list.js</code> is a list lens: rows linking to their records, and a note typed and pressed in. <code>examples/front-page.js</code> is a home: a headline, a figure, an SVG ring and cards linking to a place. Each opens with its manifest.</p>
+<h3>Registering it</h3>
+<div class="code" data-scroller><pre><code>import { registerWorkerView, workerHome } from "@graview/guest/host";
+views: (schema, registry) =&gt; registerWorkerView(registry, { manifest, worker: { source } }),
+pages.surface("home", workerHome({ manifest: front, worker: { source: frontSource } }));</code></pre></div>
+<h3>Then find out whether it worked</h3>
+<ol>
+<li><code>graview check</code> the app the view names: a manifest is only as sound as the declaration it reads. <code>checkManifest(manifest, store)</code> and <code>checkViewSource(source)</code> from <code>@graview/guest/host</code> must both say nothing.</li>
+<li>Open the place on both faces, as a member who may see less than you. Is anything shown that they should not see? Does the region carry no <code>data-worker-view-failed</code>?</li>
+<li>Toggle the app to dark. Does the view restyle?</li>
+<li>Press each bound button with typed words, then again with a field the view filled. The first applies and the second is refused.</li>
+</ol>
+<h3>What the check cannot see</h3>
+<p><code>graview check</code> judges the declaration, not the script. It cannot see a view that throws on an empty graph, draws the wrong number, or takes too long on a big one. Only running it does: an empty app, a full one, and a member with narrow sight. Nor can it see a view that misleads. The host keeps it from reaching or leaking anything, not from arranging what the person may see badly.</p>
     </section>
 
   </main>

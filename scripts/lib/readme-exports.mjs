@@ -51,6 +51,13 @@ export const NOT_EXPORTS = new Map([
   ["nodesAfter", "a field of a PlannedChange, not an export"],
   ["edgesAfter", "a field of a PlannedChange, not an export"],
   ["applyAll", "a method of a Store, not an export"],
+  ["onFailure", "an option of mountGuestWorker and mountWorkerView, not an export"],
+  ["maxNodes", "a limit of mountGuestWorker and mountWorkerView, not an export"],
+  ["maxSourceBytes", "a limit of mountWorkerView, not an export"],
+  ["messageWindowMs", "a limit of a guest's host, not an export"],
+  ["pushMs", "a limit of mountWorkerView, not an export"],
+  ["silentMs", "a limit of mountGuestWorker and mountWorkerView, not an export"],
+  ["importScripts", "a worker global, which a guest's worker does not have"],
 ]);
 
 /** The API-shaped names a README puts in backticks: `name`, `name()`, `Name`. */
