@@ -80,7 +80,11 @@ views.register("recipe", { fidelity: "full", cardinality: "one" },
 URL it is given. It speaks the frame's protocol: one `guest-ready`, answered
 with a fresh nonce and a MessageChannel; the props as the viewer sees
 them; acts applied as the viewer, `via: "view:<name>"`, under the same
-limits. A second ready from the same worker is dropped. What the guest draws
+limits. A second ready from the same worker is dropped. Once it is ready,
+the host sends a heartbeat over the port and the worker's runtime answers
+it; a worker that goes `limits.silentMs` (5 000 by default) without an
+answer — a guest spinning in `while (true)` — is terminated, and
+the host is told `silent`. A guest that is busy but yields is kept. What the guest draws
 comes over the port as Remote DOM mutation records, and the host draws only
 the kit (`GUEST_KIT`), with `createKitRenderer`. Both are
 `@graview/guest/host/worker`, apart from the frame's host, so a page that
@@ -110,7 +114,11 @@ The kit is one declaration for both sides: each component's host element,
 typed properties, events and children. The worker's remote elements are made
 from it, and the host draws from it alone. An element outside it, a property
 or event it does not declare, a value of another type, and a link that is
-not an absolute `https:` URL are not drawn, and `refused` says why.
+not an absolute `https:` URL are not drawn, and `refused` says why. A link
+opens with `rel="noopener noreferrer"` and no referrer, in a new tab unless
+the kit says `target: "_self"`; a host that passes
+`links: { origins: ["https://recipes.example"] }` draws a link only to one
+of those origins, and any other with no `href`.
 
 Before the guest runs, the worker entry hardens the worker's global: every
 name outside `GUEST_GLOBALS` goes, from the global and every prototype on its

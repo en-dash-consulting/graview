@@ -1,7 +1,7 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import type { Kit } from "../kit.js";
 import { GUEST_PROTOCOL, isGuestReady, type HostHello } from "../protocol.js";
-import { createKitRenderer, GUEST_KIT_CSS, type KitRefusal, type KitRenderer } from "./kit.js";
+import { createKitRenderer, GUEST_KIT_CSS, type KitLinks, type KitRefusal, type KitRenderer } from "./kit.js";
 import { mintNonce } from "./nonce.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 
@@ -17,7 +17,11 @@ export type GuestWorkerSource = { readonly url: string } | { readonly script: st
 export type GuestWorkerFailure =
   /** The page's policy refused the worker, or it failed before it said ready. */
   | "refused"
-  /** It never said ready in `readyMs`. */
+  /**
+   * It never said ready in `readyMs`, or after it did, its runtime went
+   * `silentMs` without answering the host's heartbeat: its event loop is
+   * blocked (a `while (true)`), and it was stopped.
+   */
   | "silent"
   /** It drew more than `maxNodes`; it was stopped. */
   | "budget";
@@ -39,11 +43,28 @@ export interface MountGuestWorkerOptions<S extends AnySchema> {
     readonly maxNodes?: number;
     /** How long the guest has to say ready, in milliseconds. 5 000 by default. */
     readonly readyMs?: number;
+    /**
+     * How long, once it has said ready, the guest's runtime may go without
+     * answering the host's heartbeat, in milliseconds; past it the worker
+     * is stopped and `onFailure` hears `silent`. 5 000 by default. The
+     * host asks every quarter of it, and at least once a second. A guest
+     * that blocks its own event loop cannot answer; one that is busy but
+     * yields answers late and is kept. Time the host's own page was held
+     * up (a long task, a throttled background tab) is not counted.
+     */
+    readonly silentMs?: number;
   };
   /** The guest is not going to be shown, and why: the host can show something else in its place. */
   readonly onFailure?: (reason: GuestWorkerFailure) => void;
   /** The kit it may draw from. `GUEST_KIT` by default. */
   readonly kit?: Kit;
+  /**
+   * Where the guest's links may go: `{ origins: ["https://recipes.example"] }`
+   * draws a link only to one of them, and any other with no `href`. Any
+   * `https:` address by default. Every link opens with `noopener
+   * noreferrer` and no referrer, in a new tab unless the kit says otherwise.
+   */
+  readonly links?: KitLinks;
   /** The container's accessible name. The view's name by default. */
   readonly title?: string;
 }
@@ -109,6 +130,7 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
   const url = "script" in options.worker ? made! : options.worker.url;
 
   let silence = 0;
+  let watchdog = 0;
   const stop = () => {
     tally();
     session?.dispose();
@@ -118,6 +140,7 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
     port = undefined;
     worker = undefined;
     window.clearTimeout(silence);
+    window.clearInterval(watchdog);
     if (made) window.URL.revokeObjectURL(made);
   };
   const fail = (reason: GuestWorkerFailure) => {
@@ -135,6 +158,7 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
     port = channel.port1;
     const draw = createKitRenderer(container, {
       ...(options.kit ? { kit: options.kit } : {}),
+      ...(options.links ? { links: options.links } : {}),
       onEvent: (listener, detail) => channel.port1.postMessage({ type: "event", listener, ...(detail !== undefined ? { detail } : {}) }),
       ...(options.limits?.maxNodes !== undefined ? { maxNodes: options.limits.maxNodes } : {}),
       onOverBudget: () => fail("budget"),
@@ -154,7 +178,41 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
       limiter,
     });
     session = live;
+
+    /*
+     * THE WATCHDOG. The host asks on an interval, and the worker's runtime
+     * answers with the beat and the nonce. An answer is not a request: it
+     * spends none of the guest's message allowance. One with any other
+     * nonce goes to the session, which drops it.
+     */
+    const silentMs = Math.max(1, options.limits?.silentMs ?? 5_000);
+    const every = Math.max(10, Math.min(1_000, Math.floor(silentMs / 4)));
+    const clock = window.performance;
+    let beat = 0;
+    let answered = 0;
+    let heard = clock.now();
+    let ticked = heard;
+    watchdog = window.setInterval(() => {
+      const at = clock.now();
+      /* The host's own page was held up: that time is not the guest's silence. */
+      if (at - ticked > every * 2) heard += at - ticked - every;
+      ticked = at;
+      if (at - heard >= silentMs) return fail("silent");
+      beat += 1;
+      channel.port1.postMessage({ type: "heartbeat", beat });
+    }, every);
+    const answer = (data: unknown) => {
+      const said = data as { type?: unknown; nonce?: unknown; beat?: unknown } | null;
+      if (typeof said !== "object" || said === null || said.type !== "heartbeat" || said.nonce !== nonce) return false;
+      if (typeof said.beat === "number" && said.beat > answered && said.beat <= beat) {
+        answered = said.beat;
+        heard = clock.now();
+      }
+      return true;
+    };
+
     channel.port1.onmessage = (message) => {
+      if (answer(message.data)) return;
       live.receive(message.data);
       tally();
     };
@@ -213,6 +271,6 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
 }
 
 export { createKitRenderer, GUEST_KIT_CSS, hostAttribute, kitValue } from "./kit.js";
-export type { KitRefusal, KitRefusalReason, KitRenderer, KitRendererOptions } from "./kit.js";
-export { GUEST_KIT, KIT_TONES } from "../kit.js";
+export type { KitLinks, KitRefusal, KitRefusalReason, KitRenderer, KitRendererOptions } from "./kit.js";
+export { GUEST_KIT, KIT_LINK_TARGETS, KIT_TONES } from "../kit.js";
 export type { GuestKitElement, Kit, KitComponent, KitEvent, KitProperty, KitPropertyType, KitTone } from "../kit.js";

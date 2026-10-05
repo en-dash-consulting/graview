@@ -73,6 +73,8 @@ const POLICY = arg("policy") ?? "claude";
 if (!["frame", "worker"].includes(TRANSPORT)) throw new Error(`--transport is frame or worker, not ${TRANSPORT}`);
 if (TRANSPORT === "worker" && !POLICIES[POLICY]) throw new Error(`--policy is one of ${Object.keys(POLICIES).join(", ")}, not ${POLICY}`);
 const HOST_PORT = portFor("guest-host");
+/* The watchdog's limit for the spinner and the busy guest: short, so the run stays short. */
+const SILENT_MS = 1_500;
 const GUEST_PORT = portFor("guest-sandbox");
 const HOST = `http://127.0.0.1:${HOST_PORT}`;
 const GUEST = `http://localhost:${GUEST_PORT}`;
@@ -454,6 +456,13 @@ const draw = () => {
     draw();
   });
   card.append(ask);
+  // A link to the one origin the host lists, and one elsewhere (links.origins).
+  for (const href of ["https://recipes.example/golf", "https://elsewhere.example/golf"]) {
+    const link = document.createElement("gv-link");
+    link.setAttribute("href", href);
+    link.textContent = "the recipe";
+    card.append(link);
+  }
   const said = document.createElement("gv-text");
   said.textContent = JSON.stringify({ seen, answers });
   card.append(said);
@@ -501,6 +510,46 @@ said.textContent = JSON.stringify(heard);
 card.append(said);
 guest.root.replaceChildren(card);
 })();
+`);
+
+  /*
+   * THE WATCHDOG'S TWO: a guest that blocks its own event loop once it has
+   * drawn, which the host must stop as silent within the limit, and one
+   * that works in 200 ms slices for three times the limit, yielding between
+   * them, which the host must keep.
+   */
+  const spinnerJs = await built("spinner", `
+import { connectGuest } from "@graview/guest/worker";
+const guest = connectGuest();
+let spun = false;
+guest.subscribe(() => {
+  if (spun) return;
+  spun = true;
+  const said = document.createElement("gv-text");
+  said.textContent = "spinning";
+  guest.root.replaceChildren(said);
+  setTimeout(() => { for (;;) {} }, 50);
+});
+`);
+  const busyJs = await built("busy", `
+import { connectGuest } from "@graview/guest/worker";
+const guest = connectGuest();
+let started = false;
+guest.subscribe(() => {
+  if (started) return;
+  started = true;
+  const said = document.createElement("gv-text");
+  said.textContent = "busy";
+  guest.root.replaceChildren(said);
+  const until = Date.now() + ${SILENT_MS * 3};
+  const slice = () => {
+    const end = Date.now() + 200;
+    while (Date.now() < end) {}
+    if (Date.now() < until) setTimeout(slice, 0);
+    else said.textContent = "done";
+  };
+  setTimeout(slice, 0);
+});
 `);
 
   /*
@@ -622,6 +671,26 @@ window.Worker = function Worker(url, options) {
 };
 const errors = [];
 const failures = [];
+const failedAt = {};
+const failed = (name) => (reason) => {
+  failures.push([name, reason]);
+  failedAt[name] = performance.now();
+};
+/* The widget's own timer, every 50 ms: the longest it went between ticks while a guest spun. */
+const pulse = { last: performance.now(), longest: 0, ticks: 0 };
+setInterval(() => {
+  const at = performance.now();
+  if (drewAt.spinner !== undefined && (failedAt.spinner === undefined || at - failedAt.spinner < 500)) {
+    pulse.longest = Math.max(pulse.longest, at - pulse.last);
+    pulse.ticks += 1;
+  }
+  pulse.last = at;
+}, 50);
+/* When the spinner first drew: it spins 50 ms after. */
+const drewAt = {};
+new MutationObserver(() => {
+  if (document.querySelector("#spinner [data-gv]")) drewAt.spinner ??= performance.now();
+}).observe(document.getElementById("spinner"), { childList: true, subtree: true });
 /* The control: a module worker from a blob: URL, which Chromium refuses in Claude's opaque view frame. */
 const control = { module: "pending" };
 try {
@@ -632,9 +701,11 @@ try {
   control.module = "threw " + error.name;
 }
 const guests = {
-  card: mountGuestWorker(document.getElementById("card"), { worker: { script: CARD }, view: "card", store, principal: bethan, input: all, onNavigate: (id) => went.push(id), onFailure: (reason) => failures.push(["card", reason]) }),
+  card: mountGuestWorker(document.getElementById("card"), { worker: { script: CARD }, view: "card", store, principal: bethan, input: all, links: { origins: ["https://recipes.example"] }, onNavigate: (id) => went.push(id), onFailure: (reason) => failures.push(["card", reason]) }),
   hostile: mountGuestWorker(document.getElementById("hostile"), { worker: { script: HOSTILE }, view: "hostile", store, principal: bethan, input: all, limits: { acts: 5 }, onNavigate: (id) => went.push(id), onFailure: (reason) => failures.push(["hostile", reason]) }),
   prober: mountGuestWorker(document.getElementById("prober"), { worker: { script: PROBER }, view: "prober", store, principal: bethan, input: all, onFailure: (reason) => failures.push(["prober", reason]) }),
+  spinner: mountGuestWorker(document.getElementById("spinner"), { worker: { script: SPINNER }, view: "spinner", store, principal: bethan, input: all, limits: { silentMs: ${SILENT_MS} }, onFailure: failed("spinner") }),
+  busy: mountGuestWorker(document.getElementById("busy"), { worker: { script: BUSY }, view: "busy", store, principal: bethan, input: all, limits: { silentMs: ${SILENT_MS} }, onFailure: failed("busy") }),
 };
 window.__host = {
   ...host,
@@ -644,13 +715,14 @@ window.__host = {
   errors,
   origin: self.origin,
   stats: () => ({ card: { ...guests.card.stats }, hostile: { ...guests.hostile.stats } }),
+  watchdog: () => ({ failedAt, drewAt, pulse, spinnerStopped: guests.spinner.worker === undefined, busyRunning: guests.busy.worker !== undefined }),
   refused: () => ({ card: guests.card.refused, hostile: guests.hostile.refused }),
 };
 `,
     "iife",
   );
-  const inline = `const CARD = ${JSON.stringify(cardJs)}; const HOSTILE = ${JSON.stringify(hostileJs)}; const PROBER = ${JSON.stringify(proberJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
-  const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Graview view</title></head><body><main><div id="card"></div><div id="hostile"></div><div id="prober"></div></main><script>${inline}</script></body></html>`;
+  const inline = `const CARD = ${JSON.stringify(cardJs)}; const HOSTILE = ${JSON.stringify(hostileJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPINNER = ${JSON.stringify(spinnerJs)}; const BUSY = ${JSON.stringify(busyJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
+  const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Graview view</title></head><body><main><div id="card"></div><div id="hostile"></div><div id="prober"></div><div id="spinner"></div><div id="busy"></div></main><script>${inline}</script></body></html>`;
 
   const hostHtml = `<!doctype html><html><head><meta charset="utf-8"><title>Chat</title></head><body><iframe id="proxy" title="Widget" style="width:720px;height:600px;border:0" src="${GUEST}/proxy/${POLICY}.html"></iframe></body></html>`;
   servers = [
@@ -699,18 +771,21 @@ window.__host = {
   const hostileSaid = reportOf(await drawn("#hostile [data-gv=text]", () => true, "the hostile guest's report"));
   await drawn("#prober [data-gv=text]", () => true, "the prober's report");
   const probed = JSON.parse((await widget.evaluate(() => [...document.querySelectorAll("#prober [data-gv=text]")].map((one) => one.textContent))).join(""));
+  await drawn("#busy [data-gv=text]", (text) => text === "done", "the busy guest's end");
   await tab.waitForTimeout(300);
 
-  const host = await widget.evaluate(() => ({ started: window.__host.started, failures: window.__host.failures, origin: window.__host.origin, log: window.__host.log(), went: window.__host.went, stats: window.__host.stats(), refused: window.__host.refused() }));
+  const host = await widget.evaluate(() => ({ watchdog: window.__host.watchdog(), started: window.__host.started, failures: window.__host.failures, origin: window.__host.origin, log: window.__host.log(), went: window.__host.went, stats: window.__host.stats(), refused: window.__host.refused() }));
   const html = await widget.evaluate(() => document.querySelector("main").innerHTML);
   report.policy = { name: POLICY, csp: localize(policy.proxyMetaCsp ?? policy.proxyCsp, HOST), sandbox: policy.innerSandbox, widgetOrigin: host.origin };
 
-  claim("the card and the hostile guest, built by buildGuestBundle, are classic scripts with nothing to load at run time", Object.keys(checked).length === 2 && Object.values(checked).every((findings) => findings.length === 0), checked);
+  claim("the card and the hostile guest, built by buildGuestBundle, are classic scripts with nothing to load at run time", ["card", "hostile"].every((name) => checked[name]?.length === 0) && Object.values(checked).every((findings) => findings.length === 0), checked);
   const control = await widget.evaluate(() => window.__host.control.module);
   report.findings = { ...report.findings, moduleBlobWorker: control };
-  if (POLICY === "claude" && ENGINE === "chromium") claim("here a module worker from a blob: URL is refused, and the classic guests started", control !== "ran" && host.failures.length === 0, { module: control });
-  claim("every guest was started as a classic worker from a blob: URL", host.started.length === 3 && host.started.every((one) => one.url === "blob:" && one.type === "classic"), host.started);
-  claim("no guest failed to start", host.failures.length === 0, host.failures);
+  /* The spinner is stopped on purpose, after it started; it is the watchdog's claim below. */
+  const startFailures = host.failures.filter(([name]) => name !== "spinner");
+  if (POLICY === "claude" && ENGINE === "chromium") claim("here a module worker from a blob: URL is refused, and the classic guests started", control !== "ran" && startFailures.length === 0, { module: control });
+  claim("every guest was started as a classic worker from a blob: URL", host.started.length === 5 && host.started.every((one) => one.url === "blob:" && one.type === "classic"), host.started);
+  claim("no guest failed to start", startFailures.length === 0, host.failures);
   claim("the card was drawn in the widget's page, from the kit", /<section[^>]*data-gv="card"/.test(html) && /<strong[^>]*>Golf<\/strong>/.test(html) && /<button[^>]*data-gv="button"/.test(html), html.slice(0, 300));
   protocolClaims({
     seen: cardSaid.seen,
@@ -727,8 +802,17 @@ window.__host = {
   claim("what was not drawn was written down as refused", ["script", "iframe", "img", "a", "gv-evil"].every((name) => host.refused.hostile.some((one) => one.reason === "element" && one.element === name)), host.refused.hostile);
   const links = await widget.evaluate(() => [...document.querySelectorAll("#hostile a")].map((one) => one.getAttribute("href")));
   claim("a link the guest gave a javascript:, http: or data: address was drawn with none", links.length === 3 && links.every((href) => href === null) && host.refused.hostile.filter((one) => one.reason === "url").length === 3, { links, refused: host.refused.hostile.filter((one) => one.reason === "url") });
+  const cardLinks = await widget.evaluate(() => [...document.querySelectorAll("#card a")].map((one) => ({ href: one.getAttribute("href"), rel: one.getAttribute("rel"), referrerpolicy: one.getAttribute("referrerpolicy"), target: one.getAttribute("target") })));
+  claim("a link the card drew opens apart from the chat: noopener noreferrer, no referrer, a new tab", cardLinks.length === 2 && cardLinks.every((one) => one.rel === "noopener noreferrer" && one.referrerpolicy === "no-referrer" && one.target === "_blank"), cardLinks);
+  claim("a link to an origin the host does not list was drawn with no href, and one it lists with its own", cardLinks[0]?.href === "https://recipes.example/golf" && cardLinks[1]?.href === null && host.refused.card.some((one) => one.reason === "url"), { cardLinks, refused: host.refused.card });
   claim("a second ready, and a forged act, were dropped unread", host.stats.hostile.dropped >= 2, host.stats);
   claim("no guest reached the chat's origin", secretHits.length === 0, secretHits);
+  const watchdog = host.watchdog;
+  const spun = watchdog.failedAt.spinner - watchdog.drewAt.spinner;
+  /* It drew, spun 50 ms later, and was stopped once silentMs had passed since its last answer, checked every quarter of it. */
+  claim(`a guest that spins after ready is stopped as silent within limits.silentMs (${SILENT_MS} ms) and one interval of it`, JSON.stringify(host.failures.filter(([name]) => name === "spinner")) === JSON.stringify([["spinner", "silent"]]) && watchdog.spinnerStopped && spun >= SILENT_MS - SILENT_MS / 4 && spun <= SILENT_MS + SILENT_MS / 4 + 250, { spun, ...watchdog });
+  claim("the widget's page kept its own timer while a guest spun, never more than 250 ms between 50 ms ticks", watchdog.pulse.ticks > 20 && watchdog.pulse.longest < 250, watchdog.pulse);
+  claim(`a guest that is busy but yields, for three times silentMs, is kept`, !host.failures.some(([name]) => name === "busy") && watchdog.busyRunning, { failures: host.failures, busyRunning: watchdog.busyRunning });
   await hardeningClaims(probed);
   claim("the host page throws nothing", report.pageErrors.length === 0, report.pageErrors);
   report.stats = host.stats;

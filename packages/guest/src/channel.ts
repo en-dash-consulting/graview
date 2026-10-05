@@ -76,6 +76,9 @@ export function openGuest(link: GuestLink, hooks: { readonly onEvent?: (event: G
       waiting.delete(message.id);
     } else if (message.type === "event" && typeof message.listener === "number") {
       hooks.onEvent?.(message);
+    } else if (message.type === "heartbeat" && typeof message.beat === "number") {
+      /* The runtime answers, so only a blocked event loop goes quiet. */
+      send({ type: "heartbeat", beat: message.beat });
     }
   };
 

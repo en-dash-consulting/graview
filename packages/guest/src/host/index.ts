@@ -8,7 +8,7 @@ export type { GuestHost, GuestHostOptions, GuestLimiter, GuestLimits, GuestStats
  * loads none of it, and `guestView({ worker })` fetches it when it draws one.
  */
 export type { GuestWorker, GuestWorkerFailure, GuestWorkerSource, MountGuestWorkerOptions } from "./worker.js";
-export type { KitRefusal, KitRefusalReason, KitRenderer, KitRendererOptions } from "./kit.js";
+export type { KitLinks, KitRefusal, KitRefusalReason, KitRenderer, KitRendererOptions } from "./kit.js";
 export type { GuestKitElement, Kit, KitComponent, KitEvent, KitProperty, KitPropertyType, KitTone } from "../kit.js";
 export { guestView } from "./react.js";
 export type { GuestViewOptions } from "./react.js";

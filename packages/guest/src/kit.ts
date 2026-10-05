@@ -53,6 +53,12 @@ export interface KitEvent {
   readonly detail?: "value";
 }
 
+/**
+ * Where a link may open. A new tab (`_blank`) unless the kit says
+ * otherwise; never `_top` or `_parent`, which would take the host's page.
+ */
+export const KIT_LINK_TARGETS = ["_blank", "_self"] as const;
+
 /** The host elements a component may be drawn as. */
 export const KIT_HOST_TAGS = ["section", "div", "span", "strong", "p", "hr", "a", "button", "input", "progress"] as const;
 
@@ -63,6 +69,8 @@ export interface KitComponent {
   readonly events: Readonly<Record<string, KitEvent>>;
   /** What it may hold: other components and words, words alone, or nothing. */
   readonly children: "any" | "text" | "none";
+  /** Where a link opens, for a component drawn as `a`. A new tab (`_blank`) by default. */
+  readonly target?: (typeof KIT_LINK_TARGETS)[number];
 }
 
 export type Kit = Readonly<Record<string, KitComponent>>;
