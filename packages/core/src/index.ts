@@ -40,6 +40,7 @@ export type {
 } from "./schema/schema.js";
 export type {
   LifecycleDeclaration,
+  ComputedField,
   AnyNodeDefinition,
   DeclaredEdgeTargets,
   EdgeCardinality,

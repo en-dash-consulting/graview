@@ -61,6 +61,7 @@ A declaration that compiled and checked clean on one version compiles on the nex
   | `rule-budget` | a rule would have read more than its budget (`over-budget`) | none: the declaration's to fix |
 
 - The declaration document format (FR-01) is versioned like a stored format, and `capabilities().documentFormats` lists what a build parses.
+- A key may be added to a document format within its version when it is optional and a document without it means what it meant: `kinds.<kind>.computed` (FR-83) arrived in `graview-document@1` this way. Every key is closed, so a build that predates one refuses a document that uses it as `unknown-key`, by path, and never misreads it. A host that keeps documents for more than one build reads `capabilities().shipped` before it writes the key.
 
 ### 5. Derived tool names and input schemas
 

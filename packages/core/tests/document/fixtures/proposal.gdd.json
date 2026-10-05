@@ -1,0 +1,102 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Proposal",
+  "description": "A proposal shaped like LifeLogics': what was heard, the offers that answer it, and the packages they make, priced after the client's discount.",
+  "roles": ["owner", "partner"],
+  "kinds": {
+    "party": {
+      "noun": "party",
+      "plural": "Parties",
+      "description": "A firm in the proposal. The client carries the discount.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "role": { "type": "enum", "options": ["prime", "delivery", "client"], "required": true },
+        "discount": { "type": "number", "description": "Percent off list, for a client that qualifies." }
+      },
+      "computed": {
+        "lead": {
+          "expr": "either(first(all('package') where recommended), first(sort(all('package'), [standing, net], 'desc')))",
+          "label": "The package we lead with",
+          "description": "The recommended package, else the top one by standing and then by price after the discount."
+        }
+      }
+    },
+    "note": {
+      "noun": "note",
+      "plural": "What we heard",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "type": { "type": "enum", "options": ["pain", "opportunity", "ask", "fact"], "required": true }
+      }
+    },
+    "offer": {
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "list": { "type": "number", "required": true, "description": "Dollars per unit, before any discount." },
+        "units": { "type": "integer", "required": true }
+      },
+      "edges": {
+        "answers": { "to": ["note"], "description": "what this answers", "inverse": "the offers that answer this" }
+      },
+      "computed": {
+        "total": "list * units"
+      }
+    },
+    "package": {
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "recommended": { "type": "boolean" },
+        "standing": { "type": "integer", "description": "How strongly we stand behind it, 1 to 5." }
+      },
+      "edges": {
+        "includes": { "to": ["offer"], "description": "the offers in this package", "inverse": "the packages this is in" }
+      },
+      "computed": {
+        "net": {
+          "expr": "sum(out('includes'), list * units) * (100 - either(first(all('party') where role == 'client').discount, 0)) / 100",
+          "label": "After the discount"
+        }
+      }
+    }
+  },
+  "rules": {
+    "a-package-costs-something": {
+      "over": "package",
+      "require": "net > 0",
+      "says": "{name} costs nothing after the discount"
+    }
+  },
+  "views": {
+    "offer": {
+      "card": [
+        { "title": "{name}" },
+        { "text": "Answers {count(out('answers')) | words} of the {count(all('note')) | words} {count(all('note')) | plural: 'thing'} we heard" },
+        { "field": "total", "as": "money" }
+      ]
+    },
+    "note": {
+      "card": [
+        { "title": "{name}" },
+        { "text": "Answered by {in('answers') | and}" }
+      ]
+    },
+    "package": {
+      "card": [
+        { "title": "{name}" },
+        { "field": "net", "as": "money" },
+        { "text": "{count(out('includes')) | words} {count(out('includes')) | plural: 'offer'}: {out('includes') | and}" }
+      ]
+    },
+    "party": {
+      "card": [{ "title": "{name}" }, { "text": "We lead with {lead.name}" }]
+    }
+  },
+  "policy": {
+    "grants": [{ "roles": "*", "mutations": "*" }],
+    "sees": [
+      { "roles": ["owner"], "kinds": ["party", "note", "offer", "package"] },
+      { "roles": ["partner"], "kinds": ["note", "offer", "package"] }
+    ]
+  }
+}

@@ -40,11 +40,10 @@ The shell is one row — pictures (home), kinds, Map, Problems — scrolling
 sideways on a phone. Shell and gallery are 1160px wide; read pages, 760.
 
 **Arrange it in the declaration**: `pages: { order: ["offer",
-"package"], hide: ["party"], first: "The offers" }` on `defineApp` (or a
-document). `order` is the gallery's, the nav's and the city's; `hide` takes
-kinds off the home only — their lists, links and search stay; `first` (a
-place's title, a kind, or `"home"`) is where both faces open. `graview
-check` names what it cannot find; `placesOf(app)` lists every place.
+"package"], hide: ["party"], first: "The offers" }`. `order` sets the
+gallery, nav and city; `hide` takes kinds off the home only; `first` (a
+place, a kind or `"home"`) is where both faces open.
+`placesOf(app)` lists every place.
 
 **Hand it `views`** (the scene's registry, plus `settings`/`presence`) —
 `graview create` does — and the face puts the scene's provider
@@ -75,6 +74,8 @@ under its routes, which buys three things at once:
 Everything a page shows is a derivation the scene also uses: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is
 or who may take it** — it strikes through what the seat may not, and says why.
+A record's facts include its `computed` fields, worked out from what the seat
+may see: a price never counts a discount the seat cannot see.
 
 **At a phone's width this face is the answer**: a 134px card in a 390px
 viewport is a city through a letterbox. `Shell` carries `pagesHref`.

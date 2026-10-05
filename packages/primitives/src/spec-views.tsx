@@ -224,8 +224,18 @@ function Block({ block, ctx }: { readonly block: SpecBlock; readonly ctx: SpecCo
         </span>
       );
     case "field": {
-      // An OWN field only: a name on the prototype is not a field of the record.
-      const raw = Object.prototype.hasOwnProperty.call(ctx.node, block.field) ? ctx.node[block.field] : undefined;
+      // A computed field is worked out like any expression, under the same budget (FR-83); else an OWN field only: a name on the prototype is not a field of the record.
+      const worked = ctx.kinds.get(ctx.node.kind)?.computed?.has(block.field);
+      const judged = worked ? judge({ t: "ident", name: block.field, at: 0 }, ctx) : undefined;
+      const raw = worked
+        ? judged === FAILED || judged === undefined
+          ? undefined
+          : judged !== null && typeof judged === "object"
+            ? formatValue(judged, undefined, ctx.today)
+            : judged
+        : Object.prototype.hasOwnProperty.call(ctx.node, block.field)
+          ? ctx.node[block.field]
+          : undefined;
       const label = block.label ?? fieldWords(ctx.definition, block.field);
       const href = ctx.fields[block.field]?.type === "url" && block.as === undefined ? safeHref(raw) : undefined;
       const shown = safely(() => fieldText(block.field, raw, ctx, block.as)) ?? NOTHING;

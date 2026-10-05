@@ -114,6 +114,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       lifecycle?: { field: string; retired: readonly (string | number | boolean)[] };
       display?: { glance?: readonly string[] };
       defaults?: Readonly<Record<string, unknown>>;
+      computed?: KindSpec["computed"];
     };
     const at = `kinds.${kind}`;
     const fields: Record<string, FieldSpec> = {};
@@ -148,6 +149,8 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       ...(definition?.lifecycle ? { lifecycle: { field: definition.lifecycle.field, retired: [...definition.lifecycle.retired] as [string | number | boolean, ...(string | number | boolean)[]] } } : {}),
       ...(glance.length > 0 ? { glance } : {}),
       ...(Object.keys(edges).length > 0 ? { edges: edges as KindSpec["edges"] } : {}),
+      // Computed fields are already data: an expression and its words (FR-83).
+      ...(definition?.computed && Object.keys(definition.computed).length > 0 ? { computed: structuredClone(definition.computed) } : {}),
     } as KindSpec;
   }
 

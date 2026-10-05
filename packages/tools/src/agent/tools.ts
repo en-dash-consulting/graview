@@ -20,7 +20,8 @@ import {
   type RefCandidate,
   type Store,
 } from "@graview/core";
-import { authorship, markGraph, markHits, markNode } from "./untrusted.js";
+import { computedValues } from "@graview/core/document";
+import { authorship, markComputed, markGraph, markHits, markNode } from "./untrusted.js";
 import {
   deriveAffordances,
   applyAffordance,
@@ -159,7 +160,7 @@ const READ_TOOLS: readonly ToolDefinition[] = [
     name: "get_node",
     title: "Read one node",
     description:
-      "Read one node, its edges, and the violations that implicate it. Use this to check a thing before you change it.",
+      "Read one node, its edges, and the violations that implicate it, with its computed values: read-only fields worked out from what you can see, which no act sets. Use this to check a thing before you change it.",
     inputSchema: {
       type: "object",
       properties: { id: { type: "string", description: "A node's id, or its name." } },
@@ -597,10 +598,15 @@ export function createToolRuntime<S extends AnySchema>(
           const node = seen.graph.getNode(id)!;
           const out = seen.graph.outEdges(id);
           const inbound = seen.graph.inEdges(id);
+          const by = authorship(seen, principal);
+          // Worked out over what this seat sees, never the store's whole graph (FR-83, FR-55).
+          const worked = computedValues(seen.schema, seen.graph as never, node as never);
           return {
             ok: true,
             data: {
-              node: markNode(node, authorship(seen, principal)),
+              node: markNode(node, by),
+              ...(Object.keys(worked.values).length > 0 ? { computed: markComputed(id, worked.values, by) } : {}),
+              ...(Object.keys(worked.refused).length > 0 ? { uncomputed: worked.refused } : {}),
               out,
               in: inbound,
               violations: seen

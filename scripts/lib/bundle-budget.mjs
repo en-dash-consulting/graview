@@ -69,9 +69,14 @@ export const BUDGETS = [
      * `declaredLenses` and `openingOf` in what a page loads first — the
      * factories themselves are a chunk fetched when a lens is first drawn.
      * Measured at 773_663 / 200_080.
+     *
+     * Raised again when the rule language came to compute what pages need
+     * (FR-83): computed fields, worked out for the seat a record is drawn
+     * for, and the words, and and plural formatters. With both, measured at
+     * 791_069 / 206_781.
      */
-    minified: 780_000,
-    gzipped: 203_000,
+    minified: 800_000,
+    gzipped: 210_000,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -107,9 +112,12 @@ export const BUDGETS = [
      * through them. They are a chunk of their own, fetched when the first
      * lens is drawn, so no face loads them before it needs one. Measured at
      * 1_388_501 / 407_629.
+     *
+     * Raised again when the rule language came to compute what pages need
+     * (FR-83): with both, measured at 1_399_742 / 412_177.
      */
-    minified: 1_400_000,
-    gzipped: 412_000,
+    minified: 1_410_000,
+    gzipped: 416_000,
     load: "all",
   },
   {
@@ -126,11 +134,14 @@ export const BUDGETS = [
      * FR-78: the popover family, the host's actions and notices, the seat
      * put away): measured at 1_297_634 / 373_048, with every face at
      * 1_302_133 / 377_358.
+     *
+     * Raised with every face when the rule language came to compute what
+     * pages need (FR-83) and a declared lens came to draw (FR-79).
      */
     entry: `import { mount } from "@graview/embed"; import { StudioPlace } from "@graview/studio"; globalThis.mount = (element, options) => mount(element, { ...options, studio: { onApply() {}, place: StudioPlace } });`,
-    // Raised with every face's when a declared lens came to draw (FR-79): the studio reaches the lenses through `@graview/primitives`, so here they load with it. Measured at 1_382_664 / 402_669.
-    minified: 1_400_000,
-    gzipped: 412_000,
+    // Raised with every face's when a declared lens came to draw (FR-79) and the rule language came to compute what pages need (FR-83): the studio reaches the lenses through `@graview/primitives`, so here they load with it. With both, measured at 1_393_930 / 407_048.
+    minified: 1_410_000,
+    gzipped: 416_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

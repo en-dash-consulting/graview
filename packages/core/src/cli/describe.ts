@@ -8,6 +8,7 @@ import type { AnySchema } from "../schema/schema.js";
 import { hueFor } from "../theme/derive.js";
 import { withArticle } from "../schema/define-node.js";
 import { declaredLenses, isShippedLens, placesOf } from "../places.js";
+import { computedOf } from "../document/computed.js";
 
 /**
  * WHAT THIS APP IS, READ OUT — the rung between `check` and a browser.
@@ -325,6 +326,24 @@ export function describeApp<S extends AnySchema>(
   for (const [kind, plot] of map) lines.push(`${kind} at (${plot.col}, ${plot.row})`);
   const roads = roadsOf(app.schema, map);
   lines.push(roads.length === 0 ? "No roads: no kind declares an edge to another." : `Roads: ${roads.map((road) => `${road.from} — ${road.to} by ${road.edges.join(", ")}`).join("; ")}.`);
+
+  /*
+   * WHAT IS WORKED OUT (FR-83). A computed field reads like a stored one in
+   * every template, view and rule, and no act writes it: an agent that knows
+   * which is which never tries to set a price that is a sum.
+   */
+  const worked = kinds.flatMap((kind) => {
+    const definition = app.schema.tryDefinition(kind) as Parameters<typeof computedOf>[0] & { display?: { labels?: Readonly<Record<string, string>> } };
+    return [...computedOf(definition)].map(([name, entry]) => {
+      const label = entry.label ?? definition?.display?.labels?.[name];
+      return `${kind} · ${name}${label ? ` (${label})` : ""}, read-only: ${entry.expr}`;
+    });
+  });
+  if (worked.length > 0) {
+    lines.push("", "## Worked out");
+    lines.push("Computed fields: read like fields, written by nothing, worked out from what the reader may see.");
+    for (const line of worked) lines.push(`  ${line}`);
+  }
 
   /* WHAT IS JUDGED. A rule with no repair is a problem a person is told about and cannot fix. */
   const invariants = app.invariants ?? [];
