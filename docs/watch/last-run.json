@@ -1,40 +1,15 @@
 {
-  "at": "2026-10-04T15:17:14.544Z",
+  "at": "2026-10-05T05:31:36.888Z",
   "results": [
-    {
-      "name": "navigation",
-      "code": 0,
-      "took": 57
-    },
-    {
-      "name": "rota",
-      "code": 0,
-      "took": 47
-    },
-    {
-      "name": "studio",
-      "code": 0,
-      "took": 28
-    },
-    {
-      "name": "rehearsal",
-      "code": 0,
-      "took": 11
-    },
     {
       "name": "pages",
       "code": 0,
-      "took": 88
-    },
-    {
-      "name": "site",
-      "code": 0,
-      "took": 409
+      "took": 89
     },
     {
       "name": "gauntlet",
       "code": 0,
-      "took": 556
+      "took": 555
     }
   ]
 }
