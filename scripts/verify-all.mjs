@@ -69,6 +69,8 @@ const CHAIN = [
   ["desk", "verify-desk.mjs"],
   ["rota", "verify-rota.mjs"],
   ["studio", "verify-studio.mjs"],
+  // The embed's chrome as one family: every popover over everything, the host's actions, the seat put away, the host's notices (FR-72, FR-75–FR-78).
+  ["chrome", "verify-chrome.mjs"],
   // The studio's whole path, on a scratch copy of seedbed: said, rewritten, written, compiled, migrated.
   ["rehearsal", "rehearse-studio.mjs"],
   ["remember", "verify-remember.mjs"],

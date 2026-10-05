@@ -1,3 +1,4 @@
+import { SCENE_LAYERS } from "@graview/core";
 import { type Connector, edgeSelectionId, edgeOfSelection } from "@graview/layout";
 import { CONNECTOR_DASH, connectorStroke, connectorWidth } from "@graview/render";
 import type { ActivityMark } from "./activity.js";
@@ -1022,7 +1023,7 @@ export function Connectors({
            * the span to the panel's edge. Every run is clipped to open ground
            * now, so sitting on top costs nothing the picture can see.
            */
-          zIndex: 2,
+          zIndex: SCENE_LAYERS.ties,
         }}
       >
         {drawn.map((piece) => piece?.line)}
@@ -1041,7 +1042,7 @@ export function Connectors({
             // the legend and the quick-select must win their own corners;
             // the paths inside are clipped to open ground, so nothing that
             // looks like a panel behaves like a line.
-            zIndex: 4,
+            zIndex: SCENE_LAYERS.tieLabels,
           }}
         >
           {drawn.map((piece) => piece?.hit)}

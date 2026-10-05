@@ -1,4 +1,4 @@
-import { labelOf, placeSlug, type AnySchema } from "@graview/core";
+import { labelOf, layer, placeSlug, type AnySchema } from "@graview/core";
 import { withFocus } from "@graview/layout/view";
 import { aggregateId, bandAggregateWords, kindOfCard, kindsOfAggregate } from "@graview/layout";
 import { useGraview, useSeatWork, useSelection } from "@graview/react";
@@ -410,7 +410,7 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
       data-graview-offstage=""
       onMouseDown={(event) => event.stopPropagation()}
       style={{
-        zIndex: 40,
+        zIndex: layer("rail"),
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",

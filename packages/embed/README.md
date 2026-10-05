@@ -57,6 +57,21 @@ touched; the brand's fonts are fetched by the embed rather than assumed. The
 store is in memory and starts from the seed on every mount, unless the host
 hands it one.
 
+## What stands over what
+
+Every popover, menu and list of suggestions the embed draws — the profile,
+the problems, the districts a row could not hold, a card's acts at the
+pointer — opens in the browser's top layer, hung from what opened it and
+kept to the viewport, so nothing in the embed (the seat's rail, the
+altitude control, the scene) and nothing on the host's page stands over it.
+It is still inside the embed's element, so the scoped theme reaches it and
+nothing of it lands on the host. Everything that stays on screen takes a
+rung of one ladder, written once as custom properties on the embed's
+element: the scene, then the altitude control, then the rails and floating
+controls, then popovers, dialogs and notices, `--graview-layer-scene`
+through `--graview-layer-toast`. A host that lays something of its own over
+the embed reads the rung it means rather than guessing a number.
+
 ## What went wrong, and how long it took
 
 ```ts

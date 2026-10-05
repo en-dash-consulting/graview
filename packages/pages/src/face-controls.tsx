@@ -1,4 +1,4 @@
-import type { AnySchema, Principal, Store } from "@graview/core";
+import { layer, type AnySchema, type Principal, type Store } from "@graview/core";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState, type ReactNode, type RefObject } from "react";
 import { useLocation } from "react-router-dom";
 import type { PageContext } from "./page-context.js";
@@ -132,7 +132,7 @@ function TakeBack<S extends AnySchema>({ context, docked }: { readonly context: 
   const corner: React.CSSProperties = docked
     ? context.embedded
       ? { position: "sticky", bottom: 12, marginLeft: "auto", marginRight: 12, width: "fit-content" }
-      : { position: "fixed", right: 16, bottom: 16, zIndex: 30 }
+      : { position: "fixed", right: 16, bottom: 16, zIndex: layer("rail") }
     : {};
   return (
     <div

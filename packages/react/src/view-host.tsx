@@ -1,4 +1,4 @@
-import { counted, labelOf, nounOf } from "@graview/core";
+import { counted, labelOf, nounOf, SCENE_LAYERS } from "@graview/core";
 import { mixStyles, styleFor, transformFor, hueFor } from "@graview/render";
 import {
   useEffect,
@@ -560,7 +560,7 @@ export function SceneViewHost({
         // comes to the front outright: its roster grows over whatever is
         // beside it, and a chip half-hidden behind the live view is a chip
         // nobody can press.
-        zIndex: node.opened ? 11 : 10 - Math.round(node.plane),
+        zIndex: node.opened ? SCENE_LAYERS.opened : SCENE_LAYERS.card - Math.round(node.plane),
         left: useDom ? 0 : Math.round(node.x),
         top: useDom ? 0 : Math.round(node.y),
         // Whole pixels, matching what the renderer allocates a texture for.

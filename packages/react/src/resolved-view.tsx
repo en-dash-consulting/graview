@@ -2,9 +2,9 @@ import { counted, type AnySchema, type Fidelity, type NodeOfSchema } from "@grav
 import { aggregateId, isAggregateId, kindCardId, kindOfCard, withFocus } from "@graview/layout/view";
 import { PLANE_STYLES } from "@graview/render";
 import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 import { useFlagged, useImplicated, useNavigation } from "./hooks.js";
 import { useFound, useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
+import { POPOVER_STYLE, useTopLayer } from "./popover.js";
 import { ViewBoundary } from "./view-boundary.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
 import type { SceneNode } from "./scene-root.js";
@@ -44,19 +44,14 @@ export function BeyondCard({ kinds }: { kinds: readonly string[] }) {
   /*
    * THE PANEL LEAVES THE PLANE. Drawn inside the card it sat on plane two,
    * and the focused card on plane zero painted over it — a menu nobody
-   * could press. It is portalled onto the scene's ground, above every
-   * plane, and placed by the card's own screen rectangle at the moment it
-   * opens; a press anywhere else closes it before the scene can move.
+   * could press. It stands in the browser's top layer (FR-76), over every
+   * plane, every rail and the seat, hung from the "+N more" button and
+   * kept to the viewport; a press anywhere else closes it before the
+   * scene can move.
    */
-  const [anchor, setAnchor] = useState<{ into: HTMLElement; left: number; bottom: number } | null>(null);
-  const place = () => {
-    const box = card.current;
-    const into = box?.closest<HTMLElement>(".graview-ground");
-    if (!box || !into) return null;
-    const mine = box.getBoundingClientRect();
-    const ground = into.getBoundingClientRect();
-    return { into, left: mine.left - ground.left, bottom: ground.bottom - mine.top + 6 };
-  };
+  const more = useRef<HTMLButtonElement>(null);
+  const list = useRef<HTMLUListElement>(null);
+  useTopLayer(list, open, more, { align: "start" });
   const plural = (kind: string) => store.schema.tryDefinition(kind)?.plural ?? `${kind}s`;
   const count = (kind: string) => store.graph.allNodes().filter((node) => node.kind === kind).length;
   const here = (kind: string) => !view.overview && view.focusId === aggregateId(kind);
@@ -67,7 +62,6 @@ export function BeyondCard({ kinds }: { kinds: readonly string[] }) {
       const target = event.target as Element | null;
       if (target?.closest(".graview-beyond-list, .graview-beyond")) return;
       setOpen(false);
-      setAnchor(null);
     };
     const key = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -114,6 +108,7 @@ export function BeyondCard({ kinds }: { kinds: readonly string[] }) {
       data-graview-beyond-open={open ? "" : undefined}
     >
       <button
+        ref={more}
         type="button"
         className="graview-beyond-more"
         data-testid="beyond-more"
@@ -123,23 +118,23 @@ export function BeyondCard({ kinds }: { kinds: readonly string[] }) {
         onPointerDown={(event) => event.stopPropagation()}
         onClick={(event) => {
           event.stopPropagation();
-          const next = !open;
-          setAnchor(next ? place() : null);
-          setOpen(next);
+          setOpen(!open);
         }}
       >
         <span className="graview-beyond-count">+{going.length}</span>
         <span className="graview-beyond-word">more</span>
         <span className="graview-beyond-chevron" aria-hidden="true">{open ? "▾" : "▴"}</span>
       </button>
-      {open && anchor ? createPortal(
+      {open ? (
         <ul
+          ref={list}
           className="graview-beyond-list"
           role="menu"
           aria-label="The other districts"
           data-testid="beyond-list"
           data-graview-overlay=""
-          style={{ left: anchor.left, bottom: anchor.bottom }}
+          popover="manual"
+          style={POPOVER_STYLE}
           onPointerDown={(event) => event.stopPropagation()}
         >
           {kinds.map((kind) => (
@@ -158,17 +153,6 @@ export function BeyondCard({ kinds }: { kinds: readonly string[] }) {
               >
                 <span className="graview-beyond-name">{plural(kind)}</span>
                 <span className="graview-beyond-tally">{here(kind) ? "here" : count(kind)}</span>
-              </button>
-            </li>
-          ))}
-        </ul>,
-        anchor.into,
-      ) : open ? (
-        <ul className="graview-beyond-list" role="menu" aria-label="The other districts" data-testid="beyond-list">
-          {kinds.map((kind) => (
-            <li key={kind} role="none">
-              <button type="button" role="menuitem" data-graview-pick={kindCardId(kind)} onClick={() => choose(kind)}>
-                {plural(kind)}
               </button>
             </li>
           ))}

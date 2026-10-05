@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { useSelection, useViolations } from "@graview/react/provider";
+import { POPOVER_STYLE, useSelection, useTopLayer, useViolations } from "@graview/react/provider";
 import { useEffect, useRef, useState } from "react";
 import { closeToTrigger } from "../popover.js";
 
@@ -27,6 +27,10 @@ export function Standing({
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLDivElement | null>(null);
   const count = violations.length;
+  // In the top layer, hung from the button (FR-76).
+  const button = useRef<HTMLButtonElement | null>(null);
+  const pane = useRef<HTMLOListElement | null>(null);
+  useTopLayer(pane, open && count > 0, button);
 
   /*
    * Click away or press Escape to close.
@@ -54,6 +58,7 @@ export function Standing({
   return (
     <div ref={anchor} style={{ position: "relative" }}>
       <button
+        ref={button}
         type="button"
         data-testid="standing"
         aria-expanded={open}
@@ -90,15 +95,14 @@ export function Standing({
 
       {open && count > 0 ? (
         <ol
+          ref={pane}
           data-testid="problems"
           // A popover over the scene: Escape is this popover's while it is
           // open, and the ladder underneath waits for the next press.
           data-graview-overlay=""
+          popover="manual"
           style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            right: 0,
-            zIndex: 20,
+            ...POPOVER_STYLE,
             width: 300,
             maxHeight: "min(48cqh, 420px)",
             overflow: "auto",

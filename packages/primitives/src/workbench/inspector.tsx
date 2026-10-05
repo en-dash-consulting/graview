@@ -1,7 +1,7 @@
-import { failureWords, humaniseField, InvalidArguments, nounOf, withArticle, type AnySchema } from "@graview/core";
+import { failureWords, humaniseField, InvalidArguments, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
 import { useSubject } from "../companion.js";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
-import { useAffordances, useApplyAffordance, useGraview, useSelection } from "@graview/react";
+import { POPOVER_STYLE, useAffordances, useApplyAffordance, useGraview, useSelection, useTopLayer } from "@graview/react";
 import { loadPins, togglePin, type Affordance, type PinOverrides } from "@graview/tools";
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnswerArgs, nameOf } from "./answer-args.js";
@@ -116,7 +116,8 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
 
   const [box, setBox] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   useLayoutEffect(() => {
-    const parent = asideRef.current?.offsetParent;
+    // In the top layer the menu has no offset parent; the box it was opened over is still its parent.
+    const parent = asideRef.current?.offsetParent ?? asideRef.current?.parentElement;
     // Held while the pane exists, because the keyboard needs somewhere to
     // land at the moment it stops existing.
     if (parent instanceof HTMLElement) scene.current = parent;
@@ -310,6 +311,10 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
    */
   const railed = placement === "rail" && !atPointer;
   const standDown = (placement === "rail" && atPointer) || (placement === "menu" && !atPointer);
+  // The menu at the pointer stands in the top layer, at the point it was opened (FR-76).
+  const pointAt = useRef(menuAt);
+  pointAt.current = menuAt;
+  useTopLayer(asideRef, atPointer && placement === "menu", () => (pointAt.current ? { x: pointAt.current.x, y: pointAt.current.y } : null), { align: "start" });
 
   /*
    * Whether the picture has room for a rail beside it. Measured from the
@@ -498,6 +503,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
       // node names this pane repeats.
       data-graview-offstage=""
       data-testid={atPointer ? "context-menu" : "inspector-strip"}
+      {...(atPointer ? { popover: "manual" as const } : {})}
       // Focusable only programmatically: the fallback home when the act
       // somebody was standing on is no longer offered.
       tabIndex={-1}
@@ -515,16 +521,17 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
         flexDirection: "column",
         gap: 7,
       } : {
-        position: "absolute",
         /*
          * Above the jacked-in page, not only above the scene.
          *
          * Lifting a view out to read it left you with no way to act on it —
          * the strip was behind the full page, so a jacked-in node was
          * read-only by accident. The actions are the same derived ones; only
-         * the backdrop changed.
+         * the backdrop changed. The strip stands on the rails' rung, over the
+         * scene and everything in it; the menu at the pointer is a menu, in
+         * the top layer (FR-76).
          */
-        zIndex: 60,
+        ...(atPointer ? POPOVER_STYLE : { position: "absolute" as const, zIndex: layer("rail") }),
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
@@ -539,10 +546,8 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
         boxShadow: "var(--graview-lift-high)",
         ...(atPointer
           ? {
-              // Clamped so a right click near an edge does not open a menu
-              // half off the screen.
-              left: Math.min(menuAt.x - (box?.left ?? 0), Math.max(8, (box?.width ?? window.innerWidth) - 320)),
-              top: Math.min(menuAt.y - (box?.top ?? 0), Math.max(8, (box?.height ?? window.innerHeight) - 260)),
+              // Placed at the pointer and kept to the viewport by `useTopLayer`,
+              // so a right click near an edge does not open a menu half off the screen.
               width: 300,
               maxHeight: "min(52cqh, 420px)",
               overflow: "auto",

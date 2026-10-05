@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { useAttention, useGraview, useSelection } from "@graview/react/provider";
+import { POPOVER_STYLE, useAttention, useGraview, useSelection, useTopLayer } from "@graview/react/provider";
 import { kindCardId, withFocus, withOverview, withSelection } from "@graview/layout/view";
 import {
   configuredResponder,
@@ -288,6 +288,9 @@ export function ChatPanel<S extends AnySchema>({
    */
   const panel = useRef<HTMLDivElement | null>(null);
   const kept = useRef<HTMLElement | null>(null);
+  // On the bar it is a popover, in the top layer and hung from its pill (FR-76); in a rail it is part of the rail.
+  const pill = useRef<HTMLButtonElement | null>(null);
+  useTopLayer(panel, open && !inside, pill);
   useLayoutEffect(() => {
     const was = kept.current;
     if (!was || was.isConnected || document.activeElement !== document.body) return;
@@ -368,6 +371,7 @@ export function ChatPanel<S extends AnySchema>({
     >
       {inside ? null : (
         <button
+          ref={pill}
           type="button"
           data-testid={testId}
           aria-expanded={open}
@@ -387,7 +391,7 @@ export function ChatPanel<S extends AnySchema>({
             kept.current = event.target as HTMLElement;
           }}
           data-testid={`${testId}-panel`}
-          {...(inside ? {} : { "data-graview-offstage": "", "data-graview-overlay": "" })}
+          {...(inside ? {} : { "data-graview-offstage": "", "data-graview-overlay": "", popover: "manual" as const })}
           data-graview-anchor={inside ? "rail" : "bar"}
           style={{
             ...(inside
@@ -405,10 +409,7 @@ export function ChatPanel<S extends AnySchema>({
                   minHeight: "min-content",
                 }
               : {
-                  position: "absolute" as const,
-                  top: "calc(100% + 6px)",
-                  right: 0,
-                  zIndex: 30,
+                  ...POPOVER_STYLE,
                   width: 320,
                   borderRadius: 10,
                   border: "1px solid var(--graview-edge)",

@@ -1,9 +1,9 @@
 import { humaniseField, labelOf, nameOfAuthor, type AnySchema } from "@graview/core";
-import { useGraview } from "@graview/react/provider";
+import { POPOVER_STYLE, useGraview, useTopLayer } from "@graview/react/provider";
 import { LadderSetting } from "./ladder.js";
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Seats } from "./seats.js";
-import { closeToTrigger, keepInside } from "./popover.js";
+import { closeToTrigger } from "./popover.js";
 
 /**
  * WHO YOU ARE AT THIS KEYBOARD, AND WHAT YOU SET FOR YOURSELF.
@@ -113,11 +113,10 @@ export function Profile<S extends AnySchema>({
    * pane says who you are from the principal alone rather than inventing a
    * name.
    */
-  // Inside an embed the pane stays inside the embed's box (see `keepInside`).
+  // In the top layer, hung from the button and kept to the viewport (FR-76).
   const pane = useRef<HTMLElement | null>(null);
-  useLayoutEffect(() => {
-    if (open) keepInside(pane.current);
-  }, [open]);
+  const button = useRef<HTMLButtonElement | null>(null);
+  useTopLayer(pane, open, button);
   const me = principal.id === undefined ? undefined : store.graph.getNode(principal.id);
   const name =
     me === undefined
@@ -130,6 +129,7 @@ export function Profile<S extends AnySchema>({
   return (
     <div ref={anchor} style={{ position: "relative" }}>
       <button
+        ref={button}
         type="button"
         data-testid="profile-button"
         aria-expanded={open}
@@ -207,12 +207,10 @@ export function Profile<S extends AnySchema>({
           data-testid="profile"
           data-graview-offstage=""
           data-graview-overlay=""
+          popover="manual"
           hidden={!open}
           style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            right: 0,
-            zIndex: 20,
+            ...POPOVER_STYLE,
             width: 280,
             maxWidth: "calc(100vw - 32px)",
             maxHeight: "min(62cqh, 520px)",

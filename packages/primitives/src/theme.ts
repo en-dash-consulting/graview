@@ -40,7 +40,7 @@ import type { Brand, Scheme, ThemeTokens } from "@graview/core";
  * without reaching into the UI package.
  */
 export { DARK, LIGHT, SCHEMES } from "@graview/core";
-import { SCHEMES, kitVariables, resolveKit } from "@graview/core";
+import { SCHEMES, kitVariables, layer, layerVariables, resolveKit, SCENE_LAYERS } from "@graview/core";
 import { SPEC_VIEW_CSS } from "./spec-css.js";
 
 
@@ -285,6 +285,8 @@ function sheet(scheme: Scheme, brand: Brand, options: ThemeCssOptions): string {
   return `${root} {
 ${themeVariables(tokens)}
 ${kitVariables(kit)}
+${/* THE LAYER LADDER (FR-76): every rung a surface may stand on, written once. */ ""}
+${layerVariables()}
   --graview-font-body: ${body};
   --graview-font-display: ${brand.typography?.display ?? body};
   --graview-font-mono: ${brand.typography?.mono ?? 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace'};
@@ -353,6 +355,11 @@ ${/* How far above the stack the camera is, 0..1 — REGISTERED so it can
 ${/* The ground: a slow wash, so depth has something to recede into. */ ""}
 .graview-ground {
   position: relative;
+  ${/* THE SCENE'S RUNG, AND A STACKING CONTEXT OF ITS OWN (FR-76): the
+     plots, the cards, the lines and the zoom are ordered among themselves
+     (SCENE_LAYERS) and none of them can stand over a rail beside it. */ ""}
+  isolation: isolate;
+  z-index: ${layer("scene")};
   background: var(--graview-wash), var(--graview-ground);
   --graview-altitude: 0;
   transition: --graview-altitude 640ms cubic-bezier(0.33, 0, 0.2, 1);
@@ -472,7 +479,7 @@ ${/* A card on the kinds plane.
   transform: translateY(-4px) scale(1.05);
   box-shadow: var(--graview-lift-high);
   position: relative;
-  z-index: 3;
+  z-index: ${SCENE_LAYERS.lines};
 }
 ${/* From altitude a district is a village on its plot, not a card: hovering
    it must not raise a white panel over the buildings. The lift stays in
@@ -530,7 +537,7 @@ ${/* THE GROUND UNDER A DISTRICT: its plot, drawn. Four lattice corners in
    lattice fades in with; a hand-placed district's kerb is dashed, which is
    the pinned mark on the ground rather than a box over the drawing. */ ""}
 .graview-plots {
-  z-index: 0;
+  z-index: ${SCENE_LAYERS.plots};
   opacity: var(--graview-altitude);
   transition: opacity 640ms cubic-bezier(0.33, 0, 0.2, 1);
 }
@@ -686,7 +693,7 @@ ${/* A DRIVE-IN: a dark screen standing on the plot, and the showings under
   left: 50%;
   top: 42px;
   transform: translateX(-50%);
-  z-index: 3;
+  z-index: ${SCENE_LAYERS.lines};
   display: grid;
   justify-items: center;
   gap: 4px;
@@ -810,7 +817,7 @@ ${/* THE RAIL A BILLBOARD IS MOVED BY: a title bar, in the board's own frame
      a window onto the picture, and its bar reads as the window's. */ ""}
   background: var(--graview-panel-muted);
   border-bottom: 1px solid var(--graview-edge);
-  z-index: 3;
+  z-index: ${SCENE_LAYERS.lines};
 }
 [data-graview-altitude] [data-graview-screen] .graview-screen-title {
   flex: 1 1 auto;
@@ -862,7 +869,7 @@ ${/* THE OTHERS: people and their agents in the city, each a small figure in
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 6;
+  z-index: ${SCENE_LAYERS.occupants};
 }
 .graview-figure {
   position: absolute;
@@ -1026,7 +1033,7 @@ ${/* WHAT KIND OF THING THIS IS, astride the focus panel's top-right edge —
   position: absolute;
   top: -9px;
   right: 14px;
-  z-index: 2;
+  z-index: ${SCENE_LAYERS.tag};
   display: var(--graview-kit-tags, inline-flex);
   align-items: center;
   gap: 5px;
@@ -1174,7 +1181,7 @@ ${/* The panel stands above the card, inside the scene, and never clips: the
      painted over a panel drawn on plane two, and a menu under a card is
      no menu. Above the zoom control too, which is the only other thing
      that stands on the ground. */ ""}
-  z-index: 60;
+  z-index: ${layer("popover")};
   margin: 0;
   padding: 6px;
   list-style: none;
@@ -1266,7 +1273,7 @@ ${/* A SEARCH OVER THE CITY. The districts the words found are lit and say how
   transition: opacity 160ms ease;
 }
 .graview-kind-card[data-graview-emphasis="lit"] {
-  z-index: 1;
+  z-index: ${SCENE_LAYERS.stage};
 }
 .graview-kind-card[data-graview-emphasis="lit"] .graview-kind-face {
   border-color: var(--graview-accent) !important;
@@ -1437,7 +1444,7 @@ ${/* A SIGNPOST at the plot's front corner. From altitude the nameplate stood
   padding: 3px 11px !important;
   border-radius: 999px !important;
   box-shadow: var(--graview-lift-low) !important;
-  z-index: 2;
+  z-index: ${SCENE_LAYERS.tag};
 }
 [data-graview-altitude] [data-graview-plot] .graview-kind-face {
   top: calc(var(--graview-front-y) - 22px) !important;
@@ -1483,7 +1490,7 @@ ${/* ZOOM, in the ground's corner: the way a map carries its own. Two
   right: 16px;
   bottom: 16px;
   ${/* Above the occupants: a robot walking past a control must not cover it. */ ""}
-  z-index: 8;
+  z-index: ${SCENE_LAYERS.zoom};
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -1684,7 +1691,7 @@ ${/* THE SEAT'S MARK on what it just wrote: its own glyph, in its own hue, at
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 7;
+  z-index: ${SCENE_LAYERS.seatMarks};
 }
 .graview-seat-mark {
   position: absolute;

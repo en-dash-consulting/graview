@@ -1,4 +1,4 @@
-import type { AnySchema } from "@graview/core";
+import { layer, type AnySchema } from "@graview/core";
 import { Scene, useGraview, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
 import type { Responder, ToolCall } from "@graview/tools";
 import { useCallback, useLayoutEffect, useState, type ReactNode, useRef } from "react";
@@ -203,7 +203,7 @@ export function Shell<S extends AnySchema>({
           background: "var(--graview-bar)",
           backdropFilter: "blur(14px)",
           position: "relative",
-          zIndex: 20,
+          zIndex: layer("rail"),
           // Never clipped: the profile, the standing and the activity hang
           // their panes from this bar, and a clip here cut them off at the
           // bar's foot. The places row keeps its own overflow.

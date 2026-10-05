@@ -259,6 +259,8 @@ export type { ReadableField } from "./schema/define-node.js";
 export { TEXT_PAIRS } from "./theme/types.js";
 export { checkKitContrast, connectorHueColour, connectorKitFor, DEFAULT_KIT, kitVariables, resolveKit } from "./theme/kit.js";
 export type { ConnectorKit, ConnectorRoute, Kit, KitContrastFinding, KitEndCap, KitOverrides, KitStrokePattern } from "./theme/kit.js";
+export { layer, layerProperty, layerVariables, LAYERS, LOCAL_LAYERS, SCENE_LAYERS } from "./theme/layers.js";
+export type { Layer } from "./theme/layers.js";
 export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";
 export { recordsOf, sees, sightedKinds } from "./permissions/sight.js";

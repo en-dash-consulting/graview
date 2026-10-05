@@ -1,5 +1,5 @@
 import { humaniseField, isWithheld, nameOfAuthor, viaSaid, type AnySchema, type Author } from "@graview/core";
-import { useGraph, useGraview } from "@graview/react/provider";
+import { POPOVER_STYLE, useGraph, useGraview, useTopLayer } from "@graview/react/provider";
 import type { ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chip, VISUALLY_HIDDEN } from "../primitives/index.js";
@@ -235,6 +235,10 @@ export function ActivityRail({
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLDivElement | null>(null);
   const running = calls.some((call) => call.phase === "running");
+  // In the top layer, hung from the button (FR-76).
+  const button = useRef<HTMLButtonElement | null>(null);
+  const pane = useRef<HTMLElement | null>(null);
+  useTopLayer(pane, open, button);
 
   /*
    * A POPOVER FROM THE BAR, not a rail pinned over the scene.
@@ -266,6 +270,7 @@ export function ActivityRail({
   return (
     <div ref={anchor} style={{ position: "relative" }}>
       <button
+        ref={button}
         type="button"
         data-testid="activity-button"
         aria-expanded={open}
@@ -308,15 +313,14 @@ export function ActivityRail({
       {open ? (
         // A labelled region, not an aside: it opens from the bar, inside the banner (FR-40).
         <section
+          ref={pane}
           aria-label="Activity"
           data-testid="activity"
           data-graview-offstage=""
           data-graview-overlay=""
+          popover="manual"
           style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            right: 0,
-            zIndex: 20,
+            ...POPOVER_STYLE,
             width: 300,
             maxHeight: "min(52cqh, 460px)",
             overflow: "auto",

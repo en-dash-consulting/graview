@@ -1,4 +1,4 @@
-import { beginning, toIso, touchWeights } from "@graview/core";
+import { beginning, SCENE_LAYERS, toIso, touchWeights } from "@graview/core";
 import type { AnySchema } from "@graview/core";
 import {
   aggregateId,
@@ -985,7 +985,7 @@ export function Scene<S extends AnySchema>({
           data-graview-world=""
           style={{
             position: "relative",
-            zIndex: 1,
+            zIndex: SCENE_LAYERS.stage,
             width: result.width,
             height: result.height,
             overflow: "hidden",
@@ -1004,7 +1004,7 @@ export function Scene<S extends AnySchema>({
           style={{
             display: "block",
             position: "relative",
-            zIndex: 1,
+            zIndex: SCENE_LAYERS.stage,
             width: result.width,
             height: result.height,
           }}

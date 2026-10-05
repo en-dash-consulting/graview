@@ -1,5 +1,5 @@
 import { figureSvg, formFields, humaniseField, labelOf, type AnySchema, type Finding, type FormField, type Store } from "@graview/core";
-import { useGraview } from "@graview/react";
+import { POPOVER_STYLE, useGraview, useTopLayer } from "@graview/react";
 import {
   describeSource,
   proposalKey,
@@ -76,6 +76,10 @@ export function StudioAgentPanel({
   /** What the person changed on each proposal before keeping it, by proposal key. */
   const [edits, setEdits] = useState<ReadonlyMap<string, Record<string, unknown>>>(new Map());
   const anchor = useRef<HTMLDivElement | null>(null);
+  // In the top layer, hung from its pill (FR-76).
+  const pill = useRef<HTMLButtonElement | null>(null);
+  const pane = useRef<HTMLDivElement | null>(null);
+  useTopLayer(pane, open, pill);
 
   const statusToken = useRef(0);
   /*
@@ -226,6 +230,7 @@ export function StudioAgentPanel({
   return (
     <div ref={anchor} style={{ position: "relative" }}>
       <button
+        ref={pill}
         type="button"
         data-testid={testId}
         aria-expanded={open}
@@ -239,14 +244,13 @@ export function StudioAgentPanel({
 
       {open ? (
         <div
+          ref={pane}
           data-testid={`${testId}-panel`}
           data-graview-offstage=""
           data-graview-overlay=""
+          popover="manual"
           style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            right: 0,
-            zIndex: 45,
+            ...POPOVER_STYLE,
             width: 360,
             display: "grid",
             gridTemplateRows: "auto 1fr auto",

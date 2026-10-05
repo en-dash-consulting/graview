@@ -50,3 +50,5 @@ export type { DrawnOptions, DrawnSize } from "./drawn.js";
 export { createMotionStore, useSceneStill } from "./motion.js";
 export type { MotionStore } from "./motion.js";
 export { landingIn, useTheKeyboardLandsSomewhere } from "./keyboard.js";
+export { inTopLayer, placePane, POPOVER_STYLE, POPOVERS, useTopLayer } from "./popover.js";
+export type { PlaceOptions, PopoverAnchor, PopoverName } from "./popover.js";
