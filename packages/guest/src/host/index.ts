@@ -12,5 +12,14 @@ export type { KitLinks, KitRefusal, KitRefusalReason, KitRenderer, KitRendererOp
 export type { GuestKitElement, Kit, KitComponent, KitEvent, KitProperty, KitPropertyType, KitTone } from "../kit.js";
 export { guestView } from "./react.js";
 export type { GuestViewOptions } from "./react.js";
+/*
+ * A worker view as a place (FR-91): registered for its kind, or drawn as
+ * the home's body, with its host's half fetched when it is first drawn.
+ */
+export { registerWorkerView, workerHome, workerView } from "./worker-react.js";
+export type { WorkerHomeContext, WorkerViewDefinition } from "./worker-react.js";
+export { checkManifest, manifestActs, workerViewProps } from "./manifest.js";
+export type { ManifestAct, WorkerViewManifest, WorkerViewPropsInput } from "./manifest.js";
+export type { MountWorkerViewOptions, WorkerView, WorkerViewFailure, WorkerViewLimits } from "./view.js";
 export { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN } from "../protocol.js";
 export type { GuestProps } from "../protocol.js";

@@ -319,4 +319,4 @@ export const hardening: Hardening = "WorkerGlobalScope" in globalThis ? harden(g
 if (hardening.stuck.length > 0) throw new Error(`The view's worker could not be hardened: ${hardening.stuck.join(", ")} would not go.`);
 
 export { view as graview };
-export type { GuestAnswer, GuestProps } from "../protocol.js";
+export type { GuestAnswer, GuestProps, GuestTheme } from "../protocol.js";

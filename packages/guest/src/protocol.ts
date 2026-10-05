@@ -91,6 +91,25 @@ export interface GuestAct {
 }
 
 /**
+ * THE APP'S LOOK, AS A WORKER VIEW IS HANDED IT (FR-91): the scheme the app
+ * is drawn in now — the app's own toggle, not the system's preference —
+ * and the tokens a view draws with, as CSS colours and font stacks. The
+ * same tokens reach a view's stylesheet as `--graview-*` custom
+ * properties; these are for what a view computes.
+ */
+export interface GuestTheme {
+  readonly scheme: "light" | "dark";
+  readonly accent: string;
+  readonly ground: string;
+  readonly panel: string;
+  readonly ink: string;
+  readonly inkMuted: string;
+  readonly edge: string;
+  readonly fontBody: string;
+  readonly fontMono: string;
+}
+
+/**
  * WHAT A GUEST VIEW IS HANDED: the plain-data half of `ViewProps`, read
  * from the store as the viewer sees it. A record the viewer may not see is
  * not in it — not as a node, a member, an edge or an id in `implicated`.
@@ -113,6 +132,8 @@ export interface GuestProps {
   readonly flagged?: readonly string[];
   /** The acts the viewer may run here: what the guest may ask for. */
   readonly acts: readonly GuestAct[];
+  /** The app's look now, for a worker view (FR-91): pushed again when the app's scheme changes. */
+  readonly theme?: GuestTheme;
 }
 
 /** Why the host did not apply an act the guest asked for. */

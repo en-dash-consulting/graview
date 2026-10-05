@@ -1,4 +1,4 @@
-import { PermissionDeniedError, type AnySchema, type Principal, type Store } from "@graview/core";
+import { labelOf, PermissionDeniedError, type AnySchema, type Principal, type Store } from "@graview/core";
 import type { GuestAct, GuestAnswer, GuestEdge, GuestNode, GuestProps, GuestRefusal, HostMessage } from "../protocol.js";
 
 /**
@@ -70,6 +70,12 @@ export interface GuestHostOptions<S extends AnySchema> {
   readonly limiter?: GuestLimiter;
   /** The clock, for tests. */
   readonly now?: () => number;
+  /**
+   * What the guest is handed, when the host builds it another way: a worker
+   * view's, cut to its manifest (FR-91). The viewer's sight, from the input,
+   * by default.
+   */
+  readonly props?: () => GuestProps;
 }
 
 /** How much one frame may still ask: each call spends one, and says whether there was one to spend. */
@@ -121,6 +127,16 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 /**
+ * A record as a guest is handed it: plain data, with its `label` as the host
+ * labels it (the kind's own `label`, else its label field, else its id) —
+ * the field `GuestNode` always promised and a guest had to work out itself.
+ */
+export function plainNode<S extends AnySchema>(store: Store<S>, node: unknown): GuestNode {
+  const copy = structuredClone(node) as GuestNode & Record<string, unknown>;
+  return { ...copy, label: labelOf(store.schema.tryDefinition(copy.kind), copy as never) };
+}
+
+/**
  * THE HOST'S HALF OF ONE FRAME, without the DOM: what to push, and what to
  * make of what comes back. `mountGuestView` wires it to an iframe; a test
  * can drive it with plain objects.
@@ -133,9 +149,10 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
   /* Read through the viewer's sight every time: the store moves, and what they may see moves with it. */
   const seen = () => options.store.seenBy(options.principal);
 
-  const plain = (node: unknown): GuestNode => structuredClone(node) as GuestNode;
+  const plain = (node: unknown): GuestNode => plainNode(options.store, node);
 
   const props = (): GuestProps => {
+    if (options.props) return options.props();
     const store = seen();
     const graph = store.graph;
     const input = options.input?.() ?? {};

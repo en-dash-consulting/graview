@@ -32,20 +32,10 @@ export const URL_PROPERTIES = [
   "-webkit-mask-image", "filter", "clip-path", "shape-outside", "offset-path", "fill", "stroke", "marker", "--custom",
 ];
 
-const TOKENS = (scheme) => {
-  const { DARK, LIGHT, TYPOGRAPHY } = scheme;
-  const block = (tokens) =>
-    `--graview-ground:${tokens.ground};--graview-panel:${tokens.panel};--graview-ink:${tokens.ink};--graview-ink-muted:${tokens.inkMuted};--graview-edge:${tokens.edge};--graview-accent:${tokens.accent};--graview-font-body:${TYPOGRAPHY.body};--graview-font-mono:${TYPOGRAPHY.mono};`;
-  return `[data-graview-scheme="light"]{${block(LIGHT)}color-scheme:light}[data-graview-scheme="dark"]{${block(DARK)}color-scheme:dark}`;
-};
-
-export async function openSuite({ repoRoot, build, browser, claim, report, POLICY, ENGINE, HOST, GUEST, HOST_PORT, GUEST_PORT, ATTACKER_PORT, SHOWROOM }) {
-  const ATTACKER = `http://127.0.0.1:${ATTACKER_PORT}`;
-  const core = await import(resolve(repoRoot, "packages/core/dist/index.js"));
+/** A view as the open kit runs one: its runtime first, then its own code, one strict classic script. */
+export function viewScriptOf(repoRoot, build) {
   const viewRuntime = resolve(repoRoot, "packages/guest/dist/worker/view.js");
-
-  /* A view as FR-90 runs one: its runtime first, then its own code, one strict classic script. */
-  const viewScript = async (code) =>
+  return async (code) =>
     (
       await build({
         stdin: { contents: `import ${JSON.stringify(viewRuntime)};\n${code}`, resolveDir: repoRoot, loader: "js" },
@@ -58,6 +48,19 @@ export async function openSuite({ repoRoot, build, browser, claim, report, POLIC
         logLevel: "silent",
       })
     ).outputFiles[0].text;
+}
+
+const TOKENS = (scheme) => {
+  const { DARK, LIGHT, TYPOGRAPHY } = scheme;
+  const block = (tokens) =>
+    `--graview-ground:${tokens.ground};--graview-panel:${tokens.panel};--graview-ink:${tokens.ink};--graview-ink-muted:${tokens.inkMuted};--graview-edge:${tokens.edge};--graview-accent:${tokens.accent};--graview-font-body:${TYPOGRAPHY.body};--graview-font-mono:${TYPOGRAPHY.mono};`;
+  return `[data-graview-scheme="light"]{${block(LIGHT)}color-scheme:light}[data-graview-scheme="dark"]{${block(DARK)}color-scheme:dark}`;
+};
+
+export async function openSuite({ repoRoot, build, browser, claim, report, POLICY, ENGINE, HOST, GUEST, HOST_PORT, GUEST_PORT, ATTACKER_PORT, SHOWROOM }) {
+  const ATTACKER = `http://127.0.0.1:${ATTACKER_PORT}`;
+  const core = await import(resolve(repoRoot, "packages/core/dist/index.js"));
+  const viewScript = viewScriptOf(repoRoot, build);
 
   const showcaseJs = await viewScript(`
 graview.style(\`
@@ -149,7 +152,7 @@ ${SHOWROOM}
 const failures = [];
 const views = {};
 for (const [name, script] of [["showcase", SHOWCASE], ["escapes", ESCAPES], ["prober", PROBER]]) {
-  views[name] = mountWorkerView(document.getElementById(name), { worker: { script }, view: name, store, principal: bethan, input: all, onFailure: (reason, detail) => failures.push([name, reason, detail]) });
+  views[name] = mountWorkerView(document.getElementById(name), { manifest: { name, attach: "car", cardinality: "many", reads: { kinds: ["shopper"] } }, worker: { script }, store, principal: bethan, onFailure: (reason, detail) => failures.push([name, reason, detail]) });
 }
 window.__host = {
   ...host,

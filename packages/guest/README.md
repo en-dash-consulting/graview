@@ -192,3 +192,38 @@ an SVG image in an `img` runs no script and loads nothing. No `<script>`,
 `refused`, with why. `guest-sandbox --transport=open` serves a page with no
 content security policy, tries every way out, and finds no request leaving
 it in Chromium, WebKit or Firefox.
+
+### A worker view is a place
+
+A worker view says what it is and what it may touch in a manifest the host
+enforces:
+
+```ts
+import { registerWorkerView, workerHome } from "@graview/guest/host";
+
+const packages = {
+  manifest: { name: "packages", title: "The packages", attach: "package", cardinality: "many",
+    reads: { kinds: ["offer"], edges: ["includes"] }, acts: ["set-standing"] },
+  worker: { script },
+  author: "Made by Claude for Nick",
+};
+views: (schema, registry) => registerWorkerView(registry, packages),   // the embed's views
+pages.surface("home", workerHome(frontPage));                         // a view of the home
+```
+
+It is handed the viewer's sight and nothing more, cut to the kind it
+attaches to (the members the face hands it, or every one the viewer sees)
+and the kinds and edges it reads: a record the viewer may not see is in
+none of it, and a kind it did not ask to read is not handed to it however
+visible. Every record's `label` is filled as the host labels it — for a
+frame guest too. A titled view is a named place on the Graview face and
+the pages face, by its title; whatever the registry drew for that kind
+before is drawn if the view fails. With `attach: "home"`, `workerHome`
+makes it the routed face's home. Its props carry the app's look as a
+`GuestTheme` — the scheme, the accent, ground, panel, ink, muted ink and
+edge colours, and the body and mono fonts — read off the region it is
+drawn in, and the host
+pushes again when the app's own toggle changes the scheme, whatever the
+system prefers. `checkManifest` says what in a manifest names a kind, an
+edge or an act the app does not declare, and the host refuses to start
+such a view (`onFailure` hears `manifest`).

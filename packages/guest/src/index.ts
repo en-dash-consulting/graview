@@ -9,6 +9,7 @@ export type {
   GuestEvent,
   GuestNode,
   GuestProps,
+  GuestTheme,
   GuestReady,
   GuestRefusal,
   GuestRequest,
