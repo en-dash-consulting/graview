@@ -114,10 +114,14 @@ export const HTML_ELEMENTS: Readonly<Record<string, OpenElement>> = {
   input: {
     empty: true,
     attributes: {
-      /* Never password or file (a view does not ask for either), image (it has a src), hidden or submit. */
+      /*
+       * Never password or file (a view does not ask for either), image (it has a src), hidden or submit.
+       * No `list`: a suggestion the person picks from a view's `<datalist>` is typed by the browser, trusted,
+       * and would pass the view's words off as theirs (FR-92).
+       */
       type: { oneOf: ["text", "search", "number", "range", "checkbox", "radio", "date", "time", "datetime-local", "month", "week", "color", "email", "tel", "url"] },
       name: "text", value: "text", placeholder: "text", min: "text", max: "text", step: "text", checked: "boolean", disabled: "boolean",
-      readonly: "boolean", required: "boolean", maxlength: "number", minlength: "number", size: "number", list: "text", pattern: "text",
+      readonly: "boolean", required: "boolean", maxlength: "number", minlength: "number", size: "number", pattern: "text",
       multiple: "boolean", inputmode: "text", enterkeyhint: "text",
     },
   },
@@ -129,7 +133,6 @@ export const HTML_ELEMENTS: Readonly<Record<string, OpenElement>> = {
   fieldset: { attributes: { disabled: "boolean", name: "text" } },
   legend: none,
   output: { attributes: { for: "text", name: "text" } },
-  datalist: none,
   meter: { attributes: { value: "number", min: "number", max: "number", low: "number", high: "number", optimum: "number" } },
   progress: { attributes: { value: "number", max: "number" } },
   // images, held in the drawing: data: or the host's own blob:
@@ -196,9 +199,9 @@ export const SVG_ELEMENTS: Readonly<Record<string, OpenElement>> = {
  * anything not above is refused — but the names a reader looks for.
  */
 export const NEVER_DRAWN = {
-  html: ["script", "iframe", "frame", "frameset", "object", "embed", "applet", "portal", "link", "meta", "base", "style", "form", "template", "slot", "noscript", "audio", "video", "source", "track", "picture", "canvas", "dialog", "main", "html", "head", "body", "title"],
+  html: ["script", "iframe", "frame", "frameset", "object", "embed", "applet", "portal", "link", "meta", "base", "style", "form", "template", "slot", "noscript", "audio", "video", "source", "track", "picture", "canvas", "dialog", "datalist", "main", "html", "head", "body", "title"],
   svg: ["image", "feImage", "filter", "foreignObject", "a", "script", "style", "animate", "animateMotion", "animateTransform", "set", "discard", "view", "switch", "cursor", "font-face"],
-  attributes: ["src (outside img)", "href", "xlink:href (outside a #fragment)", "srcset", "sizes", "action", "formaction", "ping", "poster", "background", "on*", "popover", "popovertarget", "autofocus", "accesskey", "contenteditable", "is", "nonce", "autocomplete", "form"],
+  attributes: ["src (outside img)", "href", "xlink:href (outside a #fragment)", "srcset", "sizes", "action", "formaction", "ping", "poster", "background", "on*", "popover", "popovertarget", "autofocus", "accesskey", "contenteditable", "is", "nonce", "autocomplete", "form", "list"],
 } as const;
 
 /** Roles that would make a view speak as the app's own chrome or notices. */

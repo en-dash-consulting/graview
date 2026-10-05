@@ -92,6 +92,8 @@ describe("the attributes a view may not set", () => {
     ["input", { type: "password" }],
     ["input", { type: "file" }],
     ["input", { autocomplete: "cc-number" }],
+    /* A suggestion from a view's list is typed by the browser, trusted: the view's words as the person's. */
+    ["input", { list: "hints" }],
     ["div", { style: "background: url(https://attacker.example/inline)" }],
     ["div", { style: "position: fixed; inset: 0" }],
     ["div", { popover: "manual" }],
