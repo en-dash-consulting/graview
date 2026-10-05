@@ -1,5 +1,5 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
-import type { GuestDomEvent, GuestPlace, GuestTheme } from "../protocol.js";
+import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import { checkManifest, workerViewProps, type WorkerViewManifest } from "./manifest.js";
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
@@ -7,24 +7,67 @@ import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worke
 import { judgeCodeAct } from "./writes.js";
 import { createLinks, type Destination } from "./links.js";
 
-/** Why a worker view is not shown, for a host that draws something else in its place. */
+/**
+ * Why a worker view is not shown (FR-94). Past any limit the host stops
+ * the worker, draws the plain face of what the view was shown in its place
+ * (or the host's own `fallback`), and says why.
+ */
 export type WorkerViewFailure =
   /** Its manifest names a kind, an edge or an act the app does not declare (FR-91): it was never started. */
   | "manifest"
+  /** Its code is longer than `maxSourceBytes`: it was never started. */
+  | "source"
   /** The page's policy refused the worker, or it failed before it said ready. */
   | "refused"
+  /** It threw before it drew anything. */
+  | "error"
   /** It never said ready in `readyMs`, or its runtime went `silentMs` without answering the host's heartbeat. */
   | "silent"
   /** It drew more than `maxNodes`. */
-  | "budget";
+  | "nodes"
+  /** It sent more than `messages` messages in `messageWindowMs`. */
+  | "flood"
+  /** It took longer than `pushMs` to draw what it was shown. */
+  | "slow";
 
 export interface WorkerViewLimits extends GuestLimits {
+  /** The longest a view's code may be, in bytes as UTF-8. 256 000 by default. */
+  readonly maxSourceBytes?: number;
   /** The most nodes the view may draw at once. 5 000 by default. */
   readonly maxNodes?: number;
   /** How long it has to say ready, in milliseconds. 5 000 by default. */
   readonly readyMs?: number;
   /** How long its runtime may go without answering the host's heartbeat, once ready. 5 000 by default. */
   readonly silentMs?: number;
+  /**
+   * How long the view may take over one push of what it is shown — its
+   * listeners' own time, as its runtime measures it, and the time until the
+   * runtime says it has drawn, as the host measures it — in milliseconds.
+   * 1 000 by default. Time the host's own page was held up is not counted.
+   */
+  readonly pushMs?: number;
+}
+
+/** What each limit is, said to a person. */
+function why(reason: WorkerViewFailure, limits: Required<Pick<WorkerViewLimits, "maxSourceBytes" | "maxNodes" | "messages" | "messageWindowMs" | "pushMs" | "silentMs">>, detail?: string): string {
+  switch (reason) {
+    case "manifest":
+      return detail ?? "Its manifest names something this app does not have.";
+    case "source":
+      return `Its code is longer than the ${limits.maxSourceBytes.toLocaleString("en-US")} bytes a view may be.`;
+    case "refused":
+      return `This page could not start it${detail ? `: ${detail}` : "."}`;
+    case "error":
+      return `It failed before it drew anything${detail ? `: ${detail}` : "."}`;
+    case "silent":
+      return `It stopped answering for ${limits.silentMs.toLocaleString("en-US")} ms.`;
+    case "nodes":
+      return `It drew more than the ${limits.maxNodes.toLocaleString("en-US")} things a view may draw.`;
+    case "flood":
+      return `It sent more than ${limits.messages} messages in ${limits.messageWindowMs.toLocaleString("en-US")} ms.`;
+    case "slow":
+      return `It took longer than ${limits.pushMs.toLocaleString("en-US")} ms to draw what it was shown.`;
+  }
 }
 
 export interface MountWorkerViewOptions<S extends AnySchema> {
@@ -53,8 +96,16 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    */
   readonly theme?: () => GuestTheme;
   readonly limits?: WorkerViewLimits;
-  /** The view is not going to be shown, and why. */
+  /** The view is not going to be shown, and why: the reason, and a sentence saying it. */
   readonly onFailure?: (reason: WorkerViewFailure, detail?: string) => void;
+  /**
+   * What is drawn in the view's place when it fails. By default the host
+   * draws the plain face of what the view was shown — its title, each
+   * record's label, and why the view was stopped — in the region; `false`
+   * leaves the region empty for a host that draws its own (the React
+   * registrations draw the kind's own face).
+   */
+  readonly fallback?: false | ((region: HTMLElement, reason: WorkerViewFailure, detail: string) => void);
   /** The page's origin, for a `blob:` image of its own. `location.origin` by default. */
   readonly origin?: string;
   /** Who made it, said under the region (ADR 0007: "Made by Claude for Nick"). Nothing by default. */
@@ -136,6 +187,16 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
 
   const stats: GuestStats = { applied: 0, refused: 0, dropped: 0 };
   const limiter = createGuestLimiter(options.limits);
+  const limits = {
+    maxSourceBytes: options.limits?.maxSourceBytes ?? 256_000,
+    maxNodes: options.limits?.maxNodes ?? 5_000,
+    messages: options.limits?.messages ?? 120,
+    messageWindowMs: options.limits?.messageWindowMs ?? 1_000,
+    pushMs: options.limits?.pushMs ?? 1_000,
+    silentMs: options.limits?.silentMs ?? 5_000,
+  };
+  /* What the view was last shown: the plain face drawn in its place, if it fails. */
+  let lastProps: GuestProps | undefined;
   let session: GuestHost | undefined;
   let started: StartedWorker | undefined;
   let drawing: OpenDrawing | undefined;
@@ -152,24 +213,67 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     counted = { ...now };
   };
   let unwatch = () => {};
+  /* The interval that times each push (FR-94), once the view is ready. */
+  let timing = 0;
   const stop = () => {
     tally();
     session?.dispose();
     session = undefined;
     started?.stop();
     unwatch();
+    window.clearInterval(timing);
   };
   const fail = (reason: WorkerViewFailure, detail?: string) => {
     if (failed) return;
     failed = true;
     stop();
     drawing?.dispose();
-    options.onFailure?.(reason, detail);
+    const said = why(reason, limits, detail);
+    region.setAttribute("data-worker-view-failed", reason);
+    if (options.fallback !== false) (options.fallback ?? plainFace)(region, reason, said);
+    options.onFailure?.(reason, said);
+  };
+  /**
+   * THE PLAIN FACE, drawn by the host from what the view was shown and
+   * nothing of the view's: its title, each record by its label, and why it
+   * was stopped. What a reader sees in place of a view that went past its
+   * limits.
+   */
+  const plainFace = (_: HTMLElement, reason: WorkerViewFailure, said: string) => {
+    const props = lastProps ?? (() => {
+      try {
+        return workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}) });
+      } catch {
+        return undefined;
+      }
+    })();
+    const face = document.createElement("div");
+    face.setAttribute("data-graview-fallback", reason);
+    face.style.cssText = "padding:12px;display:grid;gap:6px;color:var(--graview-ink, inherit);font-family:var(--graview-font-body, inherit)";
+    const title = document.createElement("strong");
+    title.textContent = manifest.title ?? manifest.name;
+    const list = document.createElement("ul");
+    list.style.cssText = "margin:0;padding-left:1.2em";
+    for (const node of [...(props?.node ? [props.node] : []), ...(props?.nodes ?? [])]) {
+      const item = document.createElement("li");
+      item.textContent = node.label ?? node.id;
+      list.appendChild(item);
+    }
+    const note = document.createElement("p");
+    note.style.cssText = "margin:0;font-size:0.8125rem;color:var(--graview-ink-muted, inherit)";
+    note.textContent = `This view was stopped. ${said}`;
+    face.append(title, list, note);
+    shadow.replaceChildren(face);
   };
 
   const findings = checkManifest(manifest, options.store);
   if (findings.length > 0) {
     queueMicrotask(() => fail("manifest", findings.join(" ")));
+    return handle();
+  }
+  const bytes = "script" in options.worker ? new TextEncoder().encode(options.worker.script).length : 0;
+  if (bytes > limits.maxSourceBytes) {
+    queueMicrotask(() => fail("source"));
     return handle();
   }
 
@@ -202,6 +306,35 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
 
   let port: MessagePort | undefined;
   const send = (message: GuestDomEvent) => port?.postMessage(message);
+  /* Anything drawn yet: a view that throws after it drew goes on; one that throws before has failed. */
+  let drew = false;
+
+  /*
+   * TIME PER PUSH (FR-94). Each push of what the view is shown is timed
+   * from when the host sends it to when the runtime says it has drawn it,
+   * and the runtime says how long the view's own listeners took. Past
+   * `pushMs` either way, the view is stopped as slow. A view that spins in
+   * its listener never says it has drawn; the host's own page being held
+   * up is not the view's time.
+   */
+  const clock = window.performance;
+  const pending = new Map<number, number>();
+  let ticked = clock.now();
+  const every = Math.max(10, Math.min(250, Math.floor(limits.pushMs / 4)));
+  const startTiming = () => {
+    if (timing) return;
+    ticked = clock.now();
+    timing = window.setInterval(() => {
+      const at = clock.now();
+      const held = at - ticked > every * 2 ? at - ticked - every : 0;
+      ticked = at;
+      for (const [push, sent] of pending) {
+        const since = sent + held;
+        pending.set(push, since);
+        if (at - since >= limits.pushMs) return fail("slow");
+      }
+    }, every);
+  };
   const draw = (one: ["render", unknown] | ["style", string]) => {
     if (failed) return;
     if (!drawing) return void waiting.push(one);
@@ -223,7 +356,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     drawing = createOpenDrawing(shadow, {
       origin: options.origin ?? window.location.origin,
       ...(options.limits?.maxNodes !== undefined ? { maxNodes: options.limits.maxNodes } : {}),
-      onOverBudget: () => fail("budget"),
+      onOverBudget: () => fail("nodes"),
       send,
       onFieldSet: (field) => reader.filled(field),
       onAttribute: (element, name) => {
@@ -266,21 +399,38 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     silentMs: options.limits?.silentMs ?? 5_000,
     onDropped: () => (stats.dropped += 1),
     onStop: (reason, detail) => fail(reason, detail),
+    onError: (detail) => {
+      if (!drew) fail("error", detail);
+    },
     onReady: (nonce, given) => {
       port = given;
+      startTiming();
       const live = createGuestHost({
         store: options.store,
         principal: options.principal,
         view: manifest.name,
         nonce,
-        send: (message) => given.postMessage(message),
+        send: (message) => {
+          if (message.type === "props" && typeof message.push === "number") pending.set(message.push, clock.now());
+          given.postMessage(message);
+        },
         props: () => {
           const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), ...(options.places ? { places: options.places() } : {}) });
           shown = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
+          lastProps = props;
           return props;
         },
         judgeAct: (name, args) => judgeCodeAct(options.store, manifest, name, args),
-        onRender: (records) => draw(["render", records]),
+        onRender: (records) => {
+          drew = true;
+          draw(["render", records]);
+        },
+        onPushed: (push, ms) => {
+          pending.delete(push);
+          if (ms >= limits.pushMs) fail("slow");
+        },
+        /* Past the message allowance, a view is stopped, not read on (FR-94). */
+        onFlood: () => fail("flood"),
         onStyle: (css) => draw(["style", css]),
         onNavigate: (record) => void links.go({ record }),
         onNavigatePlace: (place) => void links.go({ place }),

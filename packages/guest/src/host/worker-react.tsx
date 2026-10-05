@@ -40,12 +40,14 @@ interface MountProps {
   /** Changes when the app's scheme does: the view is pushed its look again. */
   readonly scheme?: string;
   readonly onFailure: (reason: WorkerViewFailure, detail?: string) => void;
+  /** The host draws nothing in a failed view's place: the component draws the kind's own face instead. */
+  readonly drawsItsOwn?: boolean;
   /** Changes when what the view is drawn over does. */
   readonly tick?: unknown;
 }
 
 /** The region a worker view is drawn in, mounted when it is drawn; the host's half is fetched then. */
-function WorkerViewMount({ definition, store, principal, input, goTo, places, scheme, onFailure, tick }: MountProps) {
+function WorkerViewMount({ definition, store, principal, input, goTo, places, scheme, onFailure, drawsItsOwn, tick }: MountProps) {
   const holder = useRef<HTMLDivElement>(null);
   const mounted = useRef<WorkerView | null>(null);
   const latest = useRef({ input, goTo, places, onFailure });
@@ -66,6 +68,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
         onNavigate: (to) => ("record" in to ? latest.current.goTo?.record(to.record) : latest.current.goTo?.place(to.place)),
         places: () => latest.current.places?.() ?? [],
         onFailure: (reason, detail) => latest.current.onFailure(reason, detail),
+        ...(drawsItsOwn ? { fallback: false as const } : {}),
         ...(definition.limits ? { limits: definition.limits } : {}),
         ...(definition.author ? { author: definition.author } : {}),
       });
@@ -96,7 +99,8 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     const latest = useRef(props);
     latest.current = props;
     if (!graview) return null;
-    if (failed) return Fallback ? <Fallback {...props} /> : <p data-worker-view-failed={failed}>{definition.manifest.title ?? definition.manifest.name} could not be shown.</p>;
+    /* Past its limits, the kind's own face — what the registry drew there before — in its place (FR-94). */
+    if (failed && Fallback) return <Fallback {...props} />;
     return (
       <WorkerViewMount
         definition={definition}
@@ -107,6 +111,7 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
         places={() => graview.views.places()}
         scheme={graview.scheme}
         tick={props}
+        drawsItsOwn={Fallback !== undefined}
         onFailure={(reason) => setFailed(reason)}
       />
     );
@@ -149,7 +154,7 @@ export function workerHome(definition: WorkerViewDefinition, options: { readonly
     const graview = useGraviewIfAny<AnySchema>();
     const goTo = useGoTo();
     const [failed, setFailed] = useState<WorkerViewFailure | null>(null);
-    if (failed) return Fallback ? <Fallback context={context} /> : <p data-worker-view-failed={failed}>{definition.manifest.title ?? definition.manifest.name} could not be shown.</p>;
+    if (failed && Fallback) return <Fallback context={context} />;
     return (
       <WorkerViewMount
         definition={definition}
@@ -157,6 +162,7 @@ export function workerHome(definition: WorkerViewDefinition, options: { readonly
         principal={context.principal ?? graview?.principal ?? { kind: "human" }}
         goTo={goTo}
         {...(graview ? { places: () => graview.views.places(), scheme: graview.scheme } : {})}
+        drawsItsOwn={Fallback !== undefined}
         onFailure={(reason) => setFailed(reason)}
       />
     );

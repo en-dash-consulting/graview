@@ -272,3 +272,18 @@ the pages face each goes to its own address — through `useGoTo` in
 `@graview/react`, which the routed face provides. The kit's `gv-link`
 keeps `links.origins`: it is the kit's one deliberate way out, to the
 origins a host lists, and an open-kit view has none.
+
+### Limits, and what is drawn in a view's place
+
+The host caps a view's code (`maxSourceBytes`, 256 000 by default), the
+nodes it draws (`maxNodes`, 5 000), the messages it sends (`messages` in
+`messageWindowMs`, 120 a second) and the time it takes over each push of
+what it is shown (`pushMs`, 1 000 ms: the view's listeners as its runtime
+times them, and the wait for the runtime to say it drew, as the host times
+it), beside the heartbeat's `silentMs`. Past any of them the worker is
+terminated, the plain face of what the view was shown — its title and each
+record by its label, drawn by the host — is drawn in the region, and
+`onFailure` hears why: `source`, `nodes`, `flood`, `slow`, `silent`,
+`error` (it threw before it drew), `refused` or `manifest`, with a sentence
+saying it. A host draws its own in its place with `fallback`; the React
+registrations draw whatever the registry drew for the kind before.

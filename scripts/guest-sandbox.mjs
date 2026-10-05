@@ -29,6 +29,9 @@
  *           reads, every way but a person's press, and are refused; a
  *           person's press with what they typed applies
  *           (scripts/lib/guest-writes-suite.mjs).
+ *   limits  a view past its limits (FR-94): one spins, one floods, one draws
+ *           100 000 nodes, one is too long; each is stopped and the plain
+ *           face drawn in its place (scripts/lib/guest-limits-suite.mjs).
  *   worker  a classic worker the host starts from a blob: URL, inside a
  *           chat's widget framed the way Claude or ChatGPT frames one
  *           (scripts/lib/widget-policies.mjs, from Graview Cloud's spike);
@@ -58,6 +61,7 @@ import { localize, POLICIES, proxyPage } from "./lib/widget-policies.mjs";
 import { openSuite, viewScriptOf } from "./lib/guest-open-suite.mjs";
 import { placeSuite } from "./lib/guest-place-suite.mjs";
 import { writesSuite } from "./lib/guest-writes-suite.mjs";
+import { limitsSuite } from "./lib/guest-limits-suite.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(resolve(repoRoot, "package.json"));
@@ -70,7 +74,7 @@ const arg = (name) => process.argv.find((one) => one.startsWith(`--${name}=`))?.
 if (!arg("transport") && !arg("engine") && !arg("policy")) {
   /* `--quick` (GRAVIEW_QUICK): one engine per transport and policy, crossed so both engines still run. */
   const runs = process.env.GRAVIEW_QUICK
-    ? [["--transport=frame", "--engine=chromium"], ["--transport=worker", "--policy=claude", "--engine=chromium"], ["--transport=worker", "--policy=chatgpt", "--engine=webkit"], ["--transport=open", "--policy=page", "--engine=firefox"], ["--transport=place", "--engine=chromium"], ["--transport=writes", "--engine=webkit"]]
+    ? [["--transport=frame", "--engine=chromium"], ["--transport=worker", "--policy=claude", "--engine=chromium"], ["--transport=worker", "--policy=chatgpt", "--engine=webkit"], ["--transport=open", "--policy=page", "--engine=firefox"], ["--transport=place", "--engine=chromium"], ["--transport=writes", "--engine=webkit"], ["--transport=limits", "--engine=firefox"]]
     : [
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=frame", `--engine=${engine}`]),
         ...["claude", "chatgpt"].flatMap((policy) => ["chromium", "webkit"].map((engine) => ["--transport=worker", `--policy=${policy}`, `--engine=${engine}`])),
@@ -78,6 +82,7 @@ if (!arg("transport") && !arg("engine") && !arg("policy")) {
         ["--transport=open", "--policy=claude", "--engine=chromium"],
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=place", `--engine=${engine}`]),
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=writes", `--engine=${engine}`]),
+        ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=limits", `--engine=${engine}`]),
       ];
   let failed = 0;
   for (const run of runs) {
@@ -92,7 +97,7 @@ if (!arg("transport") && !arg("engine") && !arg("policy")) {
 const TRANSPORT = arg("transport") ?? "frame";
 const ENGINE = arg("engine") ?? "chromium";
 const POLICY = arg("policy") ?? (TRANSPORT === "open" ? "page" : "claude");
-if (!["frame", "worker", "open", "place", "writes"].includes(TRANSPORT)) throw new Error(`--transport is frame, worker, open, place or writes, not ${TRANSPORT}`);
+if (!["frame", "worker", "open", "place", "writes", "limits"].includes(TRANSPORT)) throw new Error(`--transport is frame, worker, open, place, writes or limits, not ${TRANSPORT}`);
 if (TRANSPORT === "worker" && !POLICIES[POLICY]) throw new Error(`--policy is one of ${Object.keys(POLICIES).join(", ")}, not ${POLICY}`);
 if (TRANSPORT === "open" && POLICY !== "page" && !POLICIES[POLICY]) throw new Error(`--policy is page or one of ${Object.keys(POLICIES).join(", ")}, not ${POLICY}`);
 const HOST_PORT = portFor("guest-host");
@@ -101,7 +106,7 @@ const SILENT_MS = 1_500;
 const GUEST_PORT = portFor("guest-sandbox");
 const HOST = `http://127.0.0.1:${HOST_PORT}`;
 const GUEST = `http://localhost:${GUEST_PORT}`;
-const VERDICT = `docs/guest-sandbox${TRANSPORT === "frame" ? "" : TRANSPORT === "place" || TRANSPORT === "writes" ? `-${TRANSPORT}` : `-${TRANSPORT}-${POLICY}`}${ENGINE === "chromium" ? "" : `-${ENGINE}`}.json`;
+const VERDICT = `docs/guest-sandbox${TRANSPORT === "frame" ? "" : ["place", "writes", "limits"].includes(TRANSPORT) ? `-${TRANSPORT}` : `-${TRANSPORT}-${POLICY}`}${ENGINE === "chromium" ? "" : `-${ENGINE}`}.json`;
 
 const bundle = async (contents, format = "esm") =>
   (
@@ -847,6 +852,7 @@ const browser = await playwright[ENGINE].launch();
 let servers = [];
 try {
   if (TRANSPORT === "frame") await frameSuite();
+  else if (TRANSPORT === "limits") await limitsSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript: viewScriptOf(repoRoot, build) });
   else if (TRANSPORT === "writes") await writesSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript: viewScriptOf(repoRoot, build) });
   else if (TRANSPORT === "place") await placeSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript: viewScriptOf(repoRoot, build) });
   else if (TRANSPORT === "open") await openSuite({ repoRoot, build, browser, claim, report, POLICY, ENGINE, HOST, GUEST, HOST_PORT, GUEST_PORT, ATTACKER_PORT: portFor("guest-attacker"), SHOWROOM });
