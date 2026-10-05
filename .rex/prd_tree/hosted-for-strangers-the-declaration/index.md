@@ -19,11 +19,11 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 |-------|--------|
 | [/graview/export calls exportBundle with its arguments the wrong way round](./graview-export-calls-exportbundle-with.md) | completed |
 | [A batch preview is judged as the batch would be: author, via and admit, and the ops as they would be logged (FR-56)](./a-batch-preview-is-judged-as-the-batch.md) | completed |
-| [A classic-worker build: the guest worker entry and a guest bundle need no module worker (FR-71)](./a-classic-worker-build-for-guests.md) | pending |
+| [A classic-worker build: the guest worker entry and a guest bundle need no module worker (FR-71)](./a-classic-worker-build-for-guests.md) | completed |
 | [A compacted log keeps who made each record, so an own sight survives a restart](./a-compacted-log-keeps-who-made-each.md) | completed |
 | [A conformance kit: fixtures any host runs against a version to prove it reads, compiles and derives the same](./a-conformance-kit-fixtures-any-host.md) | completed |
 | [A document can say a kind's glance fields, and the compiler stops asking for what it cannot say (FR-39)](./a-document-can-say-a-kind-s-glance.md) | completed |
-| [A hardened guest worker runtime: every global outside an allowlist removed before guest code runs (FR-70)](./a-hardened-guest-worker-runtime.md) | pending |
+| [A hardened guest worker runtime: every global outside an allowlist removed before guest code runs (FR-70)](./a-hardened-guest-worker-runtime.md) | completed |
 | [A host can ask up front what the studio will not edit: uneditable(document) (FR-62)](./a-host-can-ask-up-front-what-the.md) | completed |
 | [A host that keeps the declaration chooses who sees the studio (FR-59)](./a-host-that-keeps-the-declaration.md) | completed |
 | [A host's own work has a seat: a system principal the policy lets through, and authors named by their own name](./a-host-s-own-work-has-a-seat-a-system.md) | completed |
@@ -57,7 +57,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Embed knows what its host can keep: the studio hidden or handed to the host, and a size budget](./embed-knows-what-its-host-can-keep-the.md) | completed |
 | [Embed reports what went wrong and how long it took, without what was on screen](./embed-reports-what-went-wrong-and-how.md) | completed |
 | [Every harness honours GRAVIEW_PORT_BASE, so a second checkout can run any of them](./every-harness-honours-graview-port.md) | completed |
-| [Guest views in a worker: @graview/guest's worker entry and a host that takes a worker source (FR-68)](./guest-views-in-a-worker.md) | pending |
+| [Guest views in a worker: @graview/guest's worker entry and a host that takes a worker source (FR-68)](./guest-views-in-a-worker.md) | completed |
 | [Guest views: someone else's React in a sandboxed frame that can only ask, under the viewer's seat](./guest-views-someone-else-s-react-in-a.md) | completed |
 | [MCP for remote hosts: Streamable HTTP, honest tool hints, and other people's words marked as data](./mcp-for-remote-hosts-streamable-http.md) | completed |
 | [Migrations that keep data: declared renames and type coercion in steps and migrationBetween](./migrations-that-keep-data-declared.md) | completed |
@@ -75,7 +75,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Templates as data: graview create and graview apply take a template made anywhere](./templates-as-data-graview-create-and.md) | completed |
 | [The channel is the host's word: the live handler takes via from the seat, never from the client (FR-52)](./the-channel-is-the-host-s-word-the.md) | completed |
 | [The companion is a top-level landmark or none, so axe's landmark-complementary-is-top-level holds (FR-40)](./the-companion-is-a-top-level-landmark.md) | completed |
-| [The component kit as remote elements, declared once for both sides (FR-69)](./the-component-kit-as-remote-elements.md) | pending |
+| [The component kit as remote elements, declared once for both sides (FR-69)](./the-component-kit-as-remote-elements.md) | completed |
 | [The declaration is a document: one JSON object compiles into the same app defineApp declares](./the-declaration-is-a-document-one-json.md) | completed |
 | [The embed loads the studio eagerly when the studio is the whole page (FR-63)](./the-embed-loads-the-studio-eagerly.md) | completed |
 | [The embed's stylesheet stays inside its box: every scoped themeCss rule is under the scope (FR-64)](./the-embed-s-stylesheet-stays-inside-its-box.md) | completed |
