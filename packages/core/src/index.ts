@@ -308,6 +308,20 @@ export type {
 
 // Views — the cardinality x fidelity matrix.
 export { createViewRegistry, FIDELITIES, placeSlug } from "./views/types.js";
+// Declared lenses that draw (FR-79), the arrangement (FR-80) and every place an app has.
+export {
+  SHIPPED_LENSES,
+  SHIPPED_LENS_NAMES,
+  arrangementFindings,
+  bindsOf,
+  declaredLenses,
+  isShippedLens,
+  openingOf,
+  orderKinds,
+  placesOf,
+  requiredRolesOf,
+} from "./places.js";
+export type { AppPlace, DeclaredLenses, DrawnLens, Opening, PagesArrangement, PlaceFinding, ShippedLensName, UndrawnLens } from "./places.js";
 export { FIGURES, FIGURE_NAMES, figureBrief, figureFaults, figureSvg } from "./schema/figures.js";
 export type { Figure } from "./schema/figures.js";
 export type {

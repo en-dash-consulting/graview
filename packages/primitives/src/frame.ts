@@ -22,3 +22,4 @@ export { Standing } from "./workbench/standing.js";
 export { descentTarget } from "./workbench/back-out.js";
 export { fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews } from "./view-doors.js";
 export { useWidth, VISUALLY_HIDDEN } from "./primitives/index.js";
+export { fetchDeclaredLenses, registerDeclaredLenses } from "./declared-lens-doors.js";

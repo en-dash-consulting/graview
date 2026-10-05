@@ -1,5 +1,8 @@
 import type { AnySchema } from "@graview/core";
-import { BrowserRouter, MemoryRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
+import { openingOf } from "@graview/core";
+import { pathOfPlace } from "./page-places.js";
+import { pluralSlug } from "./registry.js";
 import { useEffect, useLayoutEffect, useRef, type ComponentType, type ReactNode } from "react";
 import { GraviewProvider, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen } from "@graview/react/provider";
 import { PageAsk } from "./ask.js";
@@ -137,6 +140,23 @@ function ScrollReset() {
   return <span ref={mark} hidden data-graview-scroll-reset="" />;
 }
 
+/**
+ * WHERE THE APP OPENS (FR-80). A reader who arrives at the home of an app
+ * whose declaration names `pages.first` is taken there instead — a place
+ * to its page, a kind to its list — once: the arrival is replaced, so Back
+ * leaves the app rather than bouncing, and the masthead and every link to
+ * the home still go home.
+ */
+function Opening<S extends AnySchema>({ context, Home }: { readonly context: PageContext<S>; readonly Home: PageComponent<S> }) {
+  const location = useLocation();
+  // The address the reader arrived at is the router's first entry, which no navigation made.
+  const arriving = location.key === "default";
+  const opening = arriving ? openingOf(context.views?.arrangement?.()?.first, context.store.schema, context.views?.places() ?? []) : undefined;
+  const to =
+    opening?.to === "place" ? pathOfPlace(context, opening.place) : opening?.to === "kind" ? `/${pluralSlug(context.store.schema, opening.kind)}` : undefined;
+  return to ? <Navigate to={to} replace /> : <Home context={context} />;
+}
+
 export function PagesRoutes<S extends AnySchema>({
   context,
   registry,
@@ -177,7 +197,7 @@ export function PagesRoutes<S extends AnySchema>({
           const Page = component as PageComponent<S>;
           return <Route key={path} path={path} element={<Page context={inside} />} />;
         })}
-        <Route path="/" element={<Home context={inside} />} />
+        <Route path="/" element={<Opening context={inside} Home={Home} />} />
         <Route path="/problems" element={<Problems context={inside} />} />
         {/* What the words find, anywhere: the Find box's matcher at an address. */}
         <Route path="/search" element={<DefaultSearchPage context={inside} />} />

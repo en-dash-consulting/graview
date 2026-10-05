@@ -198,3 +198,6 @@ export type { PlanLens, PlanLensOptions, PlanLensState, PlanViewProps } from "./
 export { THUMBNAIL_BUDGET } from "./default-views.js";
 export { withMore } from "./lens/more.js";
 export { fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews } from "./view-doors.js";
+// A declared lens draws (FR-79): each titled lens a place, from the declaration alone; the arrangement beside them (FR-80).
+export { fetchDeclaredLenses, registerDeclaredLenses } from "./declared-lens-doors.js";
+export { declaredViews } from "./declared-views.js";

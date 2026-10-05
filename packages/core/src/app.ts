@@ -9,6 +9,7 @@ import type { Primitive } from "./graph/primitives.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { ViewRegistry } from "./views/types.js";
 import type { ViewSpecsByKind } from "./document/views.js";
+import type { PagesArrangement } from "./places.js";
 
 /**
  * Everything one application declares, in one object. `graview check` and
@@ -54,8 +55,30 @@ export type EntityBinding =
   | { readonly field: string; readonly on: string };
 
 export interface LensDeclaration {
+  /** Which lens: one the framework ships (`SHIPPED_LENSES`) or one this app wrote. */
   readonly name: string;
-  readonly requiredRoles: readonly string[];
+  /**
+   * The roles it requires. A shipped lens knows its own, so a declaration
+   * of one may leave them out (`requiredRolesOf`).
+   */
+  readonly requiredRoles?: readonly string[];
+  /**
+   * A DECLARED LENS DRAWS (FR-79). Given a title, a shipped lens is a named
+   * place over the kinds it binds — a pill on the bar, a drive-in from
+   * altitude, a page at `/places/<as>` — drawn by the framework from this
+   * declaration alone, with no registration in the app's UI. Without one
+   * it is bindings the checker holds.
+   */
+  readonly title?: string;
+  /** The kind it is a place over, when its bindings do not say (the reach lens) or say several. */
+  readonly on?: string;
+  /**
+   * What the lens's factory takes beyond its roles, as data — a calendar's
+   * `range`, a timeline's `columns`, a coverage's `rowGroup`.
+   * `SHIPPED_LENSES[name].options` lists each lens's; anything that cannot
+   * be data is derived where it is drawn.
+   */
+  readonly options?: Readonly<Record<string, unknown>>;
   /**
    * WHERE THE REUSE WAS PROVED — for a lens this app wrote.
    *
@@ -128,6 +151,13 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    * existed, which is the usual way that assumption gets found.
    */
   readonly lenses?: readonly LensDeclaration[];
+  /**
+   * HOW THE HOME IS ARRANGED AND WHERE THE APP OPENS (FR-80): the kinds in
+   * order, the kinds the home leaves off, and the place it opens on. Both
+   * faces honour it — the routed face's gallery and nav, the city's order —
+   * and `graview check` names a kind or place it cannot find.
+   */
+  readonly pages?: PagesArrangement;
   /**
    * Who may run what. Declared on the app so `graview check` can read it —
    * a mutation no role can ever run and a role that may do nothing are both

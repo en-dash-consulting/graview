@@ -1,4 +1,4 @@
-import { nodeRefArgs } from "@graview/core";
+import { nodeRefArgs, placeSlug, requiredRolesOf } from "@graview/core";
 import { documentOf, fieldSpecOf } from "@graview/core/document";
 import type { AnyMutationDefinition, AnySchema, GraphEdge, GraphSnapshot, GraviewApp, InvariantDefinition } from "@graview/core";
 import type { z } from "zod";
@@ -224,13 +224,15 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
   });
 
   for (const lens of app.lenses ?? []) {
-    const id = `lens:${lens.name}`;
+    // Two lenses of one name are two places when each has its own title (FR-79).
+    const id = lensNodeId(lens);
+    const requires = requiredRolesOf(lens);
     nodes.push({
       id,
       kind: "lens",
       label: lens.name,
       ...(lens.binds ? { binds: lens.binds } : {}),
-      ...(lens.requiredRoles.length > 0 ? { requires: [...lens.requiredRoles] } : {}),
+      ...(requires.length > 0 ? { requires: [...requires] } : {}),
     });
   }
 
@@ -251,3 +253,8 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
 }
 
 export type { z };
+
+/** A lens's node id in the studio: its name, and its title's address word when it has one. */
+export function lensNodeId(lens: { readonly name: string; readonly title?: string }): string {
+  return lens.title ? `lens:${lens.name}:${placeSlug(lens.title)}` : `lens:${lens.name}`;
+}

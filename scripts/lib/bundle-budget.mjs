@@ -63,13 +63,20 @@ export const BUDGETS = [
      * loads first is the frame — measured at 747_000 / 190_229 — and the
      * faces are their own chunks.
      *
-     * Raised from 780_000 / 200_000 when the rule language came to compute
-     * what pages need (FR-83): computed fields, worked out for the seat a
-     * record is drawn for, and the words, and and plural formatters.
-     * Measured at 778_647 / 201_962.
+     * Gzipped raised from 200_000 when a declared lens came to draw (FR-79)
+     * and the arrangement to be honoured (FR-80): the frame registers each
+     * titled lens as a place and reads where the app opens, which is
+     * `declaredLenses` and `openingOf` in what a page loads first — the
+     * factories themselves are a chunk fetched when a lens is first drawn.
+     * Measured at 773_663 / 200_080.
+     *
+     * Raised again when the rule language came to compute what pages need
+     * (FR-83): computed fields, worked out for the seat a record is drawn
+     * for, and the words, and and plural formatters. With both, measured at
+     * 791_069 / 206_781.
      */
-    minified: 790_000,
-    gzipped: 205_000,
+    minified: 800_000,
+    gzipped: 210_000,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -98,12 +105,19 @@ export const BUDGETS = [
      * minified (1_289_095 from 1_300_584), and about 2.5 kB larger gzipped
      * (372_654 from 370_200), because six chunks are each gzipped alone.
      *
-     * Raised from 1_310_000 / 380_000 when the rule language came to
-     * compute what pages need (FR-83): measured at 1_314_832 / 382_332, from
-     * 1_302_133 / 377_358.
+     * Raised from 1_310_000 / 380_000 when a declared lens came to draw
+     * (FR-79): the six shipped factories — timeline, calendar, coverage,
+     * board, plan and reach — were shaken out of every embed while only an
+     * app's own views could draw them, and now a document's lenses draw
+     * through them. They are a chunk of their own, fetched when the first
+     * lens is drawn, so no face loads them before it needs one. Measured at
+     * 1_388_501 / 407_629.
+     *
+     * Raised again when the rule language came to compute what pages need
+     * (FR-83): with both, measured at 1_399_742 / 412_177.
      */
-    minified: 1_325_000,
-    gzipped: 386_000,
+    minified: 1_410_000,
+    gzipped: 416_000,
     load: "all",
   },
   {
@@ -121,13 +135,13 @@ export const BUDGETS = [
      * put away): measured at 1_297_634 / 373_048, with every face at
      * 1_302_133 / 377_358.
      *
-     * Raised with every face to 1_325_000 / 386_000 when the rule language
-     * came to compute what pages need (FR-83): measured at 1_310_361 /
-     * 377_887.
+     * Raised with every face when the rule language came to compute what
+     * pages need (FR-83) and a declared lens came to draw (FR-79).
      */
     entry: `import { mount } from "@graview/embed"; import { StudioPlace } from "@graview/studio"; globalThis.mount = (element, options) => mount(element, { ...options, studio: { onApply() {}, place: StudioPlace } });`,
-    minified: 1_325_000,
-    gzipped: 386_000,
+    // Raised with every face's when a declared lens came to draw (FR-79) and the rule language came to compute what pages need (FR-83): the studio reaches the lenses through `@graview/primitives`, so here they load with it. With both, measured at 1_393_930 / 407_048.
+    minified: 1_410_000,
+    gzipped: 416_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
@@ -213,7 +227,14 @@ export async function bundleSize(repo, entry, load = "all") {
   });
   const outputs = result.metafile.outputs;
   const name = (path) => relative(join(repo, "out"), join(repo, path));
-  const entryChunk = Object.keys(outputs).find((path) => outputs[path].entryPoint !== undefined);
+  /*
+   * THE PAGE'S OWN ENTRY, by name. Every chunk fetched by `import()` is an
+   * entry point to esbuild too, and the first output carrying one was taken
+   * for the page's: a new door (the declared lenses, FR-79) moved the
+   * studio's chunk to the front of the list, and the page was measured as
+   * though it began there.
+   */
+  const entryChunk = Object.keys(outputs).find((path) => outputs[path].entryPoint === "<stdin>");
   // What a page loads first: the entry, and every chunk it imports outright, never one it imports when asked.
   const loaded = new Set();
   const visit = (path) => {

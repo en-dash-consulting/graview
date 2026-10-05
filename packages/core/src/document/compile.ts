@@ -790,6 +790,8 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
     ...(brand ? { brand } : {}),
     ...(document.modules ? { modules: document.modules as never } : {}),
     ...(document.lenses ? { lenses: document.lenses as never } : {}),
+    // The arrangement is the app's (FR-80): every face reads it beside the places.
+    ...(document.pages ? { pages: document.pages as never } : {}),
     ...(document.settings ? { settings: document.settings as never } : {}),
     // The document's views are the declaration's view specs (FR-03): data the framework draws.
     ...(document.views && Object.keys(document.views).length > 0 ? { viewSpecs: document.views as never } : {}),

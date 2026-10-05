@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { Companion, Inspector, OverviewButton, Places, ShowInstallation, type CompanionMode } from "@graview/primitives";
+import { Companion, Inspector, OverviewButton, Places, ShowInstallation, type CompanionMode } from "@graview/primitives/scene";
 import { Scene } from "@graview/react";
 import { AUTO_SCENE_HEIGHT } from "./frame.js";
 
