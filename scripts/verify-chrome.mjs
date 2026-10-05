@@ -128,7 +128,8 @@ async function openOne(page, entry) {
     if ((await trigger.count()) === 0 || !(await trigger.isEnabled())) return false;
     try {
       if (entry.opens === "typing") {
-        await trigger.click({ timeout: 3000 });
+        // Reached the way the keys reach it, so no press on the box is pending when the harness presses away.
+        await trigger.focus({ timeout: 3000 });
         await page.keyboard.type("a");
       } else await trigger.click({ timeout: 3000 });
     } catch {
@@ -189,18 +190,127 @@ async function closeAll(page) {
   }
 }
 
-/** Every popover of the registry this page draws, opened and asked of the browser. */
+/** Whether a popover's pane is open: drawn, not hidden, and in the top layer. */
+function isOpen(page, entry) {
+  return page.evaluate((testId) => {
+    const pane = document.querySelector(`[data-testid="${testId}"]`);
+    if (!pane || pane.hidden || pane.getBoundingClientRect().height === 0) return false;
+    try {
+      return pane.matches(":popover-open");
+    } catch {
+      return true;
+    }
+  }, entry.pane);
+}
+
+/** Where the keyboard is, said against a popover: in its pane, on its trigger, on a card (the acts' way back), or elsewhere. */
+function keyboardAt(page, entry) {
+  return page.evaluate(({ pane, trigger }) => {
+    const active = document.activeElement;
+    const element = document.querySelector(`[data-testid="${pane}"]`);
+    return {
+      inPane: element !== null && element.contains(active),
+      onTrigger: trigger !== null && active?.getAttribute("data-testid") === trigger,
+      onCard: active?.closest?.("[data-graview-view]") !== null && active?.closest?.("[data-graview-view]") !== undefined,
+      onBody: active === null || active === document.body,
+      at: active ? `${active.tagName.toLowerCase()}${active.getAttribute("data-testid") ? `[${active.getAttribute("data-testid")}]` : ""}` : null,
+    };
+  }, { pane: entry.pane, trigger: entry.trigger });
+}
+
+/** A point on the page that is no control, no card and no popover: somewhere a press is "away". */
+function bareGround(page) {
+  return page.evaluate(() => {
+    const busy = "button, a, input, select, textarea, summary, label, [tabindex], [popover], [data-graview-view], [role=dialog]";
+    for (const y of [6, 14, 24, 36, 48]) {
+      for (let x = Math.round(innerWidth * 0.5); x < innerWidth - 4; x += 13) {
+        const hit = document.elementFromPoint(x, y);
+        if (hit && !hit.closest(busy)) return { x, y };
+      }
+      for (let x = Math.round(innerWidth * 0.5); x > 4; x -= 13) {
+        const hit = document.elementFromPoint(x, y);
+        if (hit && !hit.closest(busy)) return { x, y };
+      }
+    }
+    return { x: 2, y: 2 };
+  });
+}
+
+/** How far the pane hangs from what opened it: the gap between the trigger's edge and the pane's, above or below. */
+function hanging(page, entry) {
+  return page.evaluate(({ pane, trigger }) => {
+    const element = document.querySelector(`[data-testid="${pane}"]`);
+    const from = trigger ? document.querySelector(`[data-testid="${trigger}"]`) : null;
+    if (!element || !from) return null;
+    const p = element.getBoundingClientRect();
+    const t = from.getBoundingClientRect();
+    const gap = p.top >= t.bottom - 1 ? p.top - t.bottom : t.top - p.bottom;
+    const overlapsAcross = p.right > t.left - 1 && p.left < t.right + 1;
+    return { gap: Math.round(gap), overlapsAcross, below: p.top >= t.bottom - 1 };
+  }, { pane: entry.pane, trigger: entry.trigger });
+}
+
+/**
+ * Every popover of the registry this page draws, opened and asked of the
+ * browser: what is on top (FR-76), then the family's habits (FR-77).
+ */
 async function everyPopoverOn(page, where, size, seen) {
   const results = {};
+  const drawn = [];
   for (const [name, entry] of Object.entries(POPOVERS)) {
     if (!(await openOne(page, entry))) {
       results[name] = { drawn: false };
       continue;
     }
+    drawn.push(name);
     const said = await standing(page, entry.pane);
     const ok = said !== null && said.topLayer && said.centre.inside && said.lastRow.inside && said.inTheViewport;
-    results[name] = { drawn: true, ...said, ok };
+    /* FR-77: the keyboard goes in on open (a combobox's stays in its box), and it hangs from its trigger. */
+    const opened = await keyboardAt(page, entry);
+    const tookTheKeyboard = entry.focus === "into" ? opened.inPane : opened.onTrigger;
+    const hangs = await hanging(page, entry);
+    const anchored = entry.trigger === null ? true : hangs !== null && hangs.gap <= 12 && hangs.overlapsAcross;
+    /* Escape closes it and the keyboard goes back. */
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(150);
+    const escaped = { open: await isOpen(page, entry), keyboard: await keyboardAt(page, entry) };
+    const backAfterEscape = entry.trigger === null ? escaped.keyboard.onCard : escaped.keyboard.onTrigger;
+    /* A press on bare ground closes it, and the keyboard goes back (a combobox's goes where the press put it). */
+    let away = { open: true, keyboard: null };
+    /*
+     * A combobox's box: after an Escape the Shell gives the keyboard back to
+     * the box it was in for a moment (`useTheKeyboardLandsSomewhere`), which
+     * would open its list again; the press away is made once that is over.
+     */
+    if (entry.focus !== "into") await page.waitForTimeout(2700);
+    if (await openOne(page, entry)) {
+      const ground = await bareGround(page);
+      await page.mouse.click(ground.x, ground.y);
+      await page.waitForTimeout(200);
+      away = { open: await isOpen(page, entry), keyboard: await keyboardAt(page, entry), at: ground };
+    }
+    const backAfterAway = entry.focus !== "into" ? true : entry.trigger === null ? away.keyboard?.onCard === true : away.keyboard?.onTrigger === true;
+    const family = {
+      tookTheKeyboard,
+      anchored,
+      escapeCloses: !escaped.open,
+      escapeGivesTheKeyboardBack: backAfterEscape,
+      aPressAwayCloses: !away.open,
+      aPressAwayGivesTheKeyboardBack: backAfterAway,
+    };
+    results[name] = { drawn: true, ...said, ok, opened, hangs, escaped, away, family, familyOk: Object.values(family).every(Boolean) };
     (seen[name] ??= []).push(`${where} ${size.width}×${size.height}`);
+    await closeAll(page);
+  }
+  /* Opening one closes any other: each drawn popover opened while the one before it is open. */
+  for (const [index, name] of drawn.entries()) {
+    const before = drawn[(index + drawn.length - 1) % drawn.length];
+    if (before === name) continue;
+    if (!(await openOne(page, POPOVERS[before]))) continue;
+    if (!(await openOne(page, POPOVERS[name]))) continue;
+    const both = { [before]: await isOpen(page, POPOVERS[before]), [name]: await isOpen(page, POPOVERS[name]) };
+    results[name].closesTheOneBefore = { before, ...both, ok: both[name] && !both[before] };
+    results[name].familyOk = results[name].familyOk && results[name].closesTheOneBefore.ok;
     await closeAll(page);
   }
   return results;
@@ -239,6 +349,13 @@ try {
       .map(([name, said]) => `${name} on ${where}: ${JSON.stringify(said)}`),
   );
   report.checks.everyPopoverStandsOverEverythingWithTheSeatOpen = { faces, failures, ok: failures.length === 0 };
+  /* ---- FR-77: every popover drawn keeps the family's habits */
+  const strays = Object.entries(faces).flatMap(([where, one]) =>
+    Object.entries(one.popovers)
+      .filter(([, said]) => said.drawn && !said.familyOk)
+      .map(([name, said]) => `${name} on ${where}: ${JSON.stringify({ family: said.family, closesTheOneBefore: said.closesTheOneBefore, opened: said.opened, escaped: said.escaped, away: said.away, hangs: said.hangs })}`),
+  );
+  report.checks.everyPopoverBehavesAsOneFamily = { strays, ok: strays.length === 0 };
   /* Every popover a face draws was opened somewhere: the registry is the list, so a new one is driven without anybody adding it here. */
   const unseen = Object.entries(POPOVERS)
     .filter(([name, entry]) => entry.drawn.some((face) => face === "shell" || face === "embed") && !seen[name])

@@ -1,5 +1,5 @@
 import { figureSvg, formFields, humaniseField, labelOf, type AnySchema, type Finding, type FormField, type Store } from "@graview/core";
-import { POPOVER_STYLE, useGraview, useTopLayer } from "@graview/react";
+import { POPOVER_STYLE, useGraview, usePopover } from "@graview/react";
 import {
   describeSource,
   proposalKey,
@@ -69,17 +69,15 @@ export function StudioAgentPanel({
   readonly testId?: string;
 }) {
   const { principal, intelligence: config } = useGraview<StudioSchema>();
-  const [open, setOpen] = useState(false);
+  /* One of the family (FR-77): in the top layer, hung from its pill; Escape or a press elsewhere in the studio closes it. */
+  const popover = usePopover("studio-ask");
+  const open = popover.open;
   const [settings, setSettings] = useState(false);
   const [warmth, setWarmth] = useState<LocalStatus | null>(null);
   useEffect(() => setWarmth(null), [config]);
   /** What the person changed on each proposal before keeping it, by proposal key. */
   const [edits, setEdits] = useState<ReadonlyMap<string, Record<string, unknown>>>(new Map());
   const anchor = useRef<HTMLDivElement | null>(null);
-  // In the top layer, hung from its pill (FR-76).
-  const pill = useRef<HTMLButtonElement | null>(null);
-  const pane = useRef<HTMLDivElement | null>(null);
-  useTopLayer(pane, open, pill);
 
   const statusToken = useRef(0);
   /*
@@ -230,11 +228,10 @@ export function StudioAgentPanel({
   return (
     <div ref={anchor} style={{ position: "relative" }}>
       <button
-        ref={pill}
         type="button"
         data-testid={testId}
-        aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
+        {...popover.trigger}
+        onClick={popover.toggle}
         title="Ask for a change to this declaration in words, see what the checker makes of it, and keep or discard it"
         style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 11px", fontSize: "0.875rem" }}
       >
@@ -244,11 +241,9 @@ export function StudioAgentPanel({
 
       {open ? (
         <div
-          ref={pane}
+          {...popover.pane}
           data-testid={`${testId}-panel`}
           data-graview-offstage=""
-          data-graview-overlay=""
-          popover="manual"
           style={{
             ...POPOVER_STYLE,
             width: 360,

@@ -1,6 +1,6 @@
 import { actsOn, counted, type AnySchema, type Hit } from "@graview/core";
 import { aggregateId, kindCardId, withFocus, withJackIn, withOverview, withoutSearch, withQuery, withSelection, withWithin } from "@graview/layout/view";
-import { POPOVER_STYLE, useFound, useGraview, useKit, useTopLayer, useViolations } from "@graview/react/provider";
+import { POPOVER_STYLE, useFound, useGraview, useKit, usePopover, useViolations } from "@graview/react/provider";
 import { hueFor } from "@graview/render";
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
@@ -140,14 +140,27 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
 
   const announce = found ? spoken(found.byKind, found.hits, store.schema) : "";
   const expanded = open && q.trim().length > 0;
-  // The list stands in the top layer, hung from the box (FR-76): no rail or pane is ever drawn over what it found.
-  const list = useRef<HTMLDivElement | null>(null);
-  useTopLayer(list, expanded, input);
+  /*
+   * The list is one of the family (FR-77): in the top layer, hung from the
+   * box, and the only popover open — opening another closes it, and it
+   * closes the one before it. The keyboard stays in the box, as a
+   * combobox's does; its rows are `aria-activedescendant`.
+   */
+  const popover = usePopover("find", {
+    open: expanded,
+    onOpenChange: (next) => {
+      if (!next) setOpen(false);
+    },
+  });
 
   return (
     <div style={{ position: "relative", minWidth: 0, flex: "1 1 auto" }} data-testid="find">
       <input
-        ref={input}
+        ref={(element) => {
+          input.current = element;
+          popover.trigger.ref(element);
+        }}
+        data-graview-popover-trigger="find"
         type="search"
         role="combobox"
         aria-label="Find anything"
@@ -204,9 +217,8 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
         {q.trim() ? announce : ""}
       </span>
       <div
-        ref={list}
+        {...popover.pane}
         id={strip}
-        popover="manual"
         role="listbox"
         aria-label={q ? `What “${q}” finds` : "What the words find"}
         data-testid="find-strip"

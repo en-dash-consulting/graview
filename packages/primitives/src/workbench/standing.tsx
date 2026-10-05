@@ -1,7 +1,6 @@
 import type { AnySchema } from "@graview/core";
-import { POPOVER_STYLE, useSelection, useTopLayer, useViolations } from "@graview/react/provider";
-import { useEffect, useRef, useState } from "react";
-import { closeToTrigger } from "../popover.js";
+import { POPOVER_STYLE, usePopover, useSelection, useViolations } from "@graview/react/provider";
+import { useState } from "react";
 
 
 /**
@@ -24,46 +23,27 @@ export function Standing({
 }) {
   const violations = useViolations<AnySchema>();
   const { set } = useSelection();
-  const [open, setOpen] = useState(false);
-  const anchor = useRef<HTMLDivElement | null>(null);
   const count = violations.length;
-  // In the top layer, hung from the button (FR-76).
-  const button = useRef<HTMLButtonElement | null>(null);
-  const pane = useRef<HTMLOListElement | null>(null);
-  useTopLayer(pane, open && count > 0, button);
-
   /*
-   * Click away or press Escape to close.
-   *
-   * A popover that only closes by pressing the thing that opened it is a
-   * popover you end up dragging around the screen, and this one sits over
-   * the scene.
+   * ONE OF THE FAMILY (FR-77): Escape or a press anywhere else closes it
+   * and gives the keyboard back to Standing; opening it closes any other
+   * popover. A popover that only closes by pressing the thing that opened
+   * it is a popover you end up dragging around the screen, and this one
+   * sits over the scene. Open only while there is something broken: the
+   * last repair closes it.
    */
-  useEffect(() => {
-    if (!open) return;
-    const away = (event: MouseEvent) => {
-      if (!anchor.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeToTrigger(anchor.current, () => setOpen(false));
-    };
-    document.addEventListener("mousedown", away);
-    document.addEventListener("keydown", key);
-    return () => {
-      document.removeEventListener("mousedown", away);
-      document.removeEventListener("keydown", key);
-    };
-  }, [open]);
+  const [asked, setAsked] = useState(false);
+  const popover = usePopover("problems", { open: asked && count > 0, onOpenChange: setAsked });
+  const open = popover.open;
 
   return (
-    <div ref={anchor} style={{ position: "relative" }}>
+    <div style={{ position: "relative" }}>
       <button
-        ref={button}
         type="button"
         data-testid="standing"
-        aria-expanded={open}
+        {...popover.trigger}
         disabled={count === 0}
-        onClick={() => setOpen((current) => !current)}
+        onClick={popover.toggle}
         title={count === 0 ? clean : "Open what is broken, and what would fix it"}
         style={{
           display: "inline-flex",
@@ -93,14 +73,10 @@ export function Standing({
         {compact && count === 0 ? <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }}>{clean}</span> : count === 0 ? clean : `${count} ${count === 1 ? "problem" : "problems"}`}
       </button>
 
-      {open && count > 0 ? (
+      {open ? (
         <ol
-          ref={pane}
+          {...popover.pane}
           data-testid="problems"
-          // A popover over the scene: Escape is this popover's while it is
-          // open, and the ladder underneath waits for the next press.
-          data-graview-overlay=""
-          popover="manual"
           style={{
             ...POPOVER_STYLE,
             width: 300,
@@ -130,7 +106,7 @@ export function Standing({
                 type="button"
                 onClick={() => {
                   set(violation.nodeIds);
-                  setOpen(false);
+                  popover.setOpen(false);
                 }}
                 style={{
                   width: "100%",

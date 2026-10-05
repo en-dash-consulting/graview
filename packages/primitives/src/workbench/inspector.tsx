@@ -1,7 +1,7 @@
 import { failureWords, humaniseField, InvalidArguments, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
 import { useSubject } from "../companion.js";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
-import { POPOVER_STYLE, useAffordances, useApplyAffordance, useGraview, useSelection, useTopLayer } from "@graview/react";
+import { POPOVER_STYLE, useAffordances, useApplyAffordance, useGraview, usePopover, useSelection } from "@graview/react";
 import { loadPins, togglePin, type Affordance, type PinOverrides } from "@graview/tools";
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnswerArgs, nameOf } from "./answer-args.js";
@@ -282,27 +282,6 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
    * under a double-click. Floating is the only answer that moves nothing.
    */
 
-  /*
-   * A menu at the pointer closes the way a menu does. The strip does not —
-   * it is not covering anything and clearing the selection is what the × is
-   * for.
-   */
-  useEffect(() => {
-    if (!menuAt) return;
-    const away = () => setMenuAt(null);
-    const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuAt(null);
-    };
-    // A frame later, or the click that opened it closes it again.
-    const timer = setTimeout(() => document.addEventListener("mousedown", away), 0);
-    document.addEventListener("keydown", key);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener("mousedown", away);
-      document.removeEventListener("keydown", key);
-    };
-  }, [menuAt, setMenuAt]);
-
   const atPointer = menuAt !== null;
   /*
    * In the companion's rail the pane is a SECTION, and the pointer popover
@@ -311,10 +290,28 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
    */
   const railed = placement === "rail" && !atPointer;
   const standDown = (placement === "rail" && atPointer) || (placement === "menu" && !atPointer);
-  // The menu at the pointer stands in the top layer, at the point it was opened (FR-76).
+  /*
+   * A MENU AT THE POINTER IS ONE OF THE FAMILY (FR-77), and closes the way a
+   * menu does: Escape, or a press anywhere else, and the keyboard goes back
+   * to the card it was opened on; opening it closes any other popover. It
+   * stands in the top layer at the point it was opened, kept to the
+   * viewport. The strip does not close that way — it is not covering
+   * anything, and clearing the selection is what the × is for.
+   */
   const pointAt = useRef(menuAt);
   pointAt.current = menuAt;
-  useTopLayer(asideRef, atPointer && placement === "menu", () => (pointAt.current ? { x: pointAt.current.x, y: pointAt.current.y } : null), { align: "start" });
+  const popover = usePopover("acts", {
+    open: atPointer && placement === "menu",
+    onOpenChange: (next) => {
+      if (!next) setMenuAt(null);
+    },
+    at: () => (pointAt.current ? { x: pointAt.current.x, y: pointAt.current.y } : null),
+    returnTo: () => {
+      const on = pointAt.current?.on;
+      return on ? document.querySelector<HTMLElement>(`[data-graview-view="${CSS.escape(on)}"]`) : null;
+    },
+    align: "start",
+  });
 
   /*
    * Whether the picture has room for a rail beside it. Measured from the
@@ -495,7 +492,11 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
   if (standDown) return null;
   return (
     <section
-      ref={asideRef}
+      {...(atPointer ? popover.pane : {})}
+      ref={(element: HTMLElement | null) => {
+        asideRef.current = element;
+        if (atPointer) popover.pane.ref(element);
+      }}
       aria-label="Inspector"
       // In the seat's rail it is a part of the seat, not a landmark inside one (FR-40).
       role={railed ? "group" : undefined}
@@ -503,7 +504,6 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
       // node names this pane repeats.
       data-graview-offstage=""
       data-testid={atPointer ? "context-menu" : "inspector-strip"}
-      {...(atPointer ? { popover: "manual" as const } : {})}
       // Focusable only programmatically: the fallback home when the act
       // somebody was standing on is no longer offered.
       tabIndex={-1}
@@ -546,7 +546,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
         boxShadow: "var(--graview-lift-high)",
         ...(atPointer
           ? {
-              // Placed at the pointer and kept to the viewport by `useTopLayer`,
+              // Placed at the pointer and kept to the viewport by `usePopover`,
               // so a right click near an edge does not open a menu half off the screen.
               width: 300,
               maxHeight: "min(52cqh, 420px)",

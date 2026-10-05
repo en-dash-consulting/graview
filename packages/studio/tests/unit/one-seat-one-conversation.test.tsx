@@ -63,9 +63,18 @@ async function converse(host: HTMLElement, id: string, words: string) {
   await act(async () => new Promise((resolve) => setTimeout(resolve, 20)));
 }
 
+/**
+ * Opens the surface's panel if it is shut. Both are popovers of one family
+ * (FR-77): opening one closes the other, and the conversation outlives it.
+ */
+async function opened(host: HTMLElement, id: string): Promise<Element> {
+  if (!host.querySelector(`[data-testid="${id}-panel"]`)) await act(async () => host.querySelector<HTMLButtonElement>(`[data-testid="${id}"]`)!.click());
+  return host.querySelector(`[data-testid="${id}-panel"]`)!;
+}
+
 /** What a conversation looks like, whichever surface holds it. */
-const shape = (host: HTMLElement, id: string) => {
-  const panel = host.querySelector(`[data-testid="${id}-panel"]`)!;
+const shape = async (host: HTMLElement, id: string) => {
+  const panel = await opened(host, id);
   return {
     turns: panel.querySelectorAll("ol > li").length,
     said: [...panel.querySelectorAll("ol > li > p")].map((p) => p.textContent),
@@ -107,7 +116,7 @@ describe("the app's seat and the studio's seat are one conversation", () => {
     await converse(chat.host, "chat", "add milk and eggs");
     await converse(declaration.host, "studio-agent", "a meal kind with how many it serves");
 
-    const before = [shape(chat.host, "chat"), shape(declaration.host, "studio-agent")];
+    const before = [await shape(chat.host, "chat"), await shape(declaration.host, "studio-agent")];
     for (const surface of before) {
       // The person, then the seat — the seat's words as prose, not a second bubble.
       expect(surface.turns).toBe(2);
@@ -115,11 +124,13 @@ describe("the app's seat and the studio's seat are one conversation", () => {
       expect(surface.applyAll).toBe(true);
     }
 
+    await opened(chat.host, "chat");
     await act(async () => chat.host.querySelector<HTMLButtonElement>('[data-testid="chat-apply-all"]')!.click());
+    await opened(declaration.host, "studio-agent");
     await act(async () => declaration.host.querySelector<HTMLButtonElement>('[data-testid="studio-agent-apply-all"]')!.click());
     await act(async () => new Promise((resolve) => setTimeout(resolve, 20)));
 
-    const after = [shape(chat.host, "chat"), shape(declaration.host, "studio-agent")];
+    const after = [await shape(chat.host, "chat"), await shape(declaration.host, "studio-agent")];
     expect(after[0]!.applied).toEqual(["✓ Add Milk", "✓ Add Eggs"]);
     expect(after[1]!.applied).toHaveLength(2);
     for (const surface of after) {

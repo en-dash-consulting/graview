@@ -1,9 +1,8 @@
 import { humaniseField, labelOf, nameOfAuthor, type AnySchema } from "@graview/core";
-import { POPOVER_STYLE, useGraview, useTopLayer } from "@graview/react/provider";
+import { POPOVER_STYLE, useGraview, usePopover } from "@graview/react/provider";
 import { LadderSetting } from "./ladder.js";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Seats } from "./seats.js";
-import { closeToTrigger } from "./popover.js";
 
 /**
  * WHO YOU ARE AT THIS KEYBOARD, AND WHAT YOU SET FOR YOURSELF.
@@ -72,37 +71,16 @@ export function Profile<S extends AnySchema>({
   readonly keeping?: ReactNode;
 }) {
   const { store, principal, seats, people, settings, settingValues, chooseSetting, sharing, hostAnswers } = useGraview<S>();
-  const [open, setOpen] = useState(false);
-  const anchor = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const away = (event: MouseEvent) => {
-      const target = event.target as Node | null;
-      if (anchor.current?.contains(target)) return;
-      /*
-       * A CONTROL IN HERE MAY OPEN SOMETHING BIGGER THAN HERE.
-       *
-       * The studio is a full-screen dialog portalled to the body, and its
-       * button lives in this pane. Treating the first press inside the
-       * studio as "away" closed the pane, which unmounted the button, which
-       * took the portal with it — the studio opened and vanished on the
-       * next click. Anything that is itself a dialog or an overlay is not
-       * away from the thing that opened it.
-       */
-      if (target instanceof Element && target.closest('[role="dialog"], [data-graview-overlay]')) return;
-      setOpen(false);
-    };
-    const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeToTrigger(anchor.current, () => setOpen(false));
-    };
-    document.addEventListener("mousedown", away);
-    document.addEventListener("keydown", key);
-    return () => {
-      document.removeEventListener("mousedown", away);
-      document.removeEventListener("keydown", key);
-    };
-  }, [open]);
+  /*
+   * ONE OF THE FAMILY (FR-77): opening it closes any other popover, the
+   * keyboard goes in, Escape or a press outside closes it and gives the
+   * keyboard back to the button, and it hangs from the button in the top
+   * layer, turned over or scrolling so no row is under the viewport's edge.
+   * A press inside a dialog it opened (the studio, from "keeping") is not a
+   * press away from it.
+   */
+  const popover = usePopover("profile");
+  const open = popover.open;
 
   /*
    * The person's own record, WHERE THERE IS ONE.
@@ -113,10 +91,6 @@ export function Profile<S extends AnySchema>({
    * pane says who you are from the principal alone rather than inventing a
    * name.
    */
-  // In the top layer, hung from the button and kept to the viewport (FR-76).
-  const pane = useRef<HTMLElement | null>(null);
-  const button = useRef<HTMLButtonElement | null>(null);
-  useTopLayer(pane, open, button);
   const me = principal.id === undefined ? undefined : store.graph.getNode(principal.id);
   const name =
     me === undefined
@@ -127,13 +101,12 @@ export function Profile<S extends AnySchema>({
   const roles = principal.roles ?? [];
 
   return (
-    <div ref={anchor} style={{ position: "relative" }}>
+    <div style={{ position: "relative" }}>
       <button
-        ref={button}
         type="button"
         data-testid="profile-button"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+        {...popover.trigger}
+        onClick={popover.toggle}
         title="Who you are signed in as, and your own settings"
         style={{
           display: "inline-flex",
@@ -200,14 +173,10 @@ export function Profile<S extends AnySchema>({
         * what axe's `landmark-complementary-is-top-level` refuses (FR-40).
         */}
       <section
-          ref={(element) => {
-            pane.current = element;
-          }}
+          {...popover.pane}
           aria-label="Profile"
           data-testid="profile"
           data-graview-offstage=""
-          data-graview-overlay=""
-          popover="manual"
           hidden={!open}
           style={{
             ...POPOVER_STYLE,

@@ -1,10 +1,9 @@
 import { humaniseField, isWithheld, nameOfAuthor, viaSaid, type AnySchema, type Author } from "@graview/core";
-import { POPOVER_STYLE, useGraph, useGraview, useTopLayer } from "@graview/react/provider";
+import { POPOVER_STYLE, useGraph, useGraview, usePopover } from "@graview/react/provider";
 import type { ToolCall } from "@graview/tools";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Chip, VISUALLY_HIDDEN } from "../primitives/index.js";
 import { nameOf } from "./answer-args.js";
-import { closeToTrigger } from "../popover.js";
 
 
 export interface Change {
@@ -232,13 +231,7 @@ export function ActivityRail({
 }) {
   const changes = useRecentChanges();
   const { store, principal, seats, people } = useGraview<AnySchema>();
-  const [open, setOpen] = useState(false);
-  const anchor = useRef<HTMLDivElement | null>(null);
   const running = calls.some((call) => call.phase === "running");
-  // In the top layer, hung from the button (FR-76).
-  const button = useRef<HTMLButtonElement | null>(null);
-  const pane = useRef<HTMLElement | null>(null);
-  useTopLayer(pane, open, button);
 
   /*
    * A POPOVER FROM THE BAR, not a rail pinned over the scene.
@@ -246,35 +239,22 @@ export function ActivityRail({
    * It was in the way because it was always there, and moving it around the
    * corners did not change that. What happened is chrome — it belongs with
    * the other chrome, opening on demand, in the same language as the problems
-   * list. The one thing that must stay visible without opening anything is
-   * that an agent is mid-turn, and that is a dot on the button.
+   * list, and one of the same family (FR-77). The one thing that must stay
+   * visible without opening anything is that an agent is mid-turn, and that
+   * is a dot on the button.
    */
-  useEffect(() => {
-    if (!open) return;
-    const away = (event: MouseEvent) => {
-      if (!anchor.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeToTrigger(anchor.current, () => setOpen(false));
-    };
-    document.addEventListener("mousedown", away);
-    document.addEventListener("keydown", key);
-    return () => {
-      document.removeEventListener("mousedown", away);
-      document.removeEventListener("keydown", key);
-    };
-  }, [open]);
+  const popover = usePopover("activity");
+  const open = popover.open;
 
   if (seat === undefined && calls.length === 0 && changes.length === 0 && !remembers) return null;
 
   return (
-    <div ref={anchor} style={{ position: "relative" }}>
+    <div style={{ position: "relative" }}>
       <button
-        ref={button}
         type="button"
         data-testid="activity-button"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+        {...popover.trigger}
+        onClick={popover.toggle}
         title={running ? "An agent is working" : "What has happened"}
         style={{
           display: "inline-flex",
@@ -313,12 +293,10 @@ export function ActivityRail({
       {open ? (
         // A labelled region, not an aside: it opens from the bar, inside the banner (FR-40).
         <section
-          ref={pane}
+          {...popover.pane}
           aria-label="Activity"
           data-testid="activity"
           data-graview-offstage=""
-          data-graview-overlay=""
-          popover="manual"
           style={{
             ...POPOVER_STYLE,
             width: 300,
