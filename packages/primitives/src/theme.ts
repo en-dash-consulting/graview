@@ -40,7 +40,8 @@ import type { Brand, Scheme, ThemeTokens } from "@graview/core";
  * without reaching into the UI package.
  */
 export { DARK, LIGHT, SCHEMES } from "@graview/core";
-import { SCHEMES, kitVariables, layer, layerVariables, resolveKit, SCENE_LAYERS } from "@graview/core";
+import { isoShade, SCHEMES, kitVariables, layer, layerVariables, resolveKit, SCENE_LAYERS, shapeOf, TYPOGRAPHY, typographyOf } from "@graview/core";
+import type { IsoFace, IsoWash } from "@graview/core";
 import { SPEC_VIEW_CSS } from "./spec-css.js";
 
 
@@ -54,10 +55,8 @@ import { SPEC_VIEW_CSS } from "./spec-css.js";
  */
 export const GRAVIEW_BRAND: Brand = {
   name: "Graview",
-  typography: {
-    body: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
-    mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
-  },
+  // The framework's own faces (`TYPOGRAPHY` in @graview/core), named here so the brand reads as any other.
+  typography: { body: TYPOGRAPHY.body, mono: TYPOGRAPHY.mono },
   schemes: SCHEMES,
 };
 
@@ -248,6 +247,11 @@ function splitSelectors(list: string): string[] {
   return out;
 }
 
+/** A face of the iso lighting as the saturation and lightness of an `hsl()` whose hue is the kind's. */
+const face = (f: IsoFace): string => `${f.saturation}% ${f.lightness}%`;
+/** A translucent one, with its alpha. */
+const wash = (f: IsoWash): string => `${face(f)} / ${f.alpha}`;
+
 function sheet(scheme: Scheme, brand: Brand, options: ThemeCssOptions): string {
   const tokens = brand.schemes[scheme];
   const root = options.scope ?? ":root";
@@ -276,26 +280,30 @@ function sheet(scheme: Scheme, brand: Brand, options: ThemeCssOptions): string {
    * stylesheet, which is the rule an embed must not break.
    */
   const motionRoot = ":root";
-  const radius = brand.shape?.radius ?? 12;
-  const density = brand.shape?.density ?? 1;
-  const body =
-    brand.typography?.body ??
-    'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif';
+  /*
+   * Shape, type and the iso lighting are @graview/core's (`SHAPE`,
+   * `TYPOGRAPHY`, `isoShade`), resolved against the brand — read here, never
+   * restated, so a host that dresses its own pages from core cannot drift
+   * from this sheet (FR-73).
+   */
+  const shape = shapeOf(brand);
+  const type = typographyOf(brand);
+  const iso = isoShade(scheme);
   const kit = resolveKit(brand.kit);
   return `${root} {
 ${themeVariables(tokens)}
 ${kitVariables(kit)}
 ${/* THE LAYER LADDER (FR-76): every rung a surface may stand on, written once. */ ""}
 ${layerVariables()}
-  --graview-font-body: ${body};
-  --graview-font-display: ${brand.typography?.display ?? body};
-  --graview-font-mono: ${brand.typography?.mono ?? 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace'};
+  --graview-font-body: ${type.body};
+  --graview-font-display: ${type.display};
+  --graview-font-mono: ${type.mono};
   ${/* Shape, as tokens, so a component never has to know whose product it is. */ ""}
-  --graview-radius: ${radius}px;
-  --graview-radius-sm: ${Math.max(2, Math.round(radius * 0.72))}px;
-  --graview-pad: ${Math.round(15 * density)}px;
-  --graview-pad-sm: ${Math.round(10 * density)}px;
-  --graview-gap: ${Math.round(7 * density)}px;
+  --graview-radius: ${shape.radius}px;
+  --graview-radius-sm: ${shape.radiusSmall}px;
+  --graview-pad: ${shape.pad}px;
+  --graview-pad-sm: ${shape.padSmall}px;
+  --graview-gap: ${shape.gap}px;
   color-scheme: ${scheme};
 }
 
@@ -542,8 +550,8 @@ ${/* THE GROUND UNDER A DISTRICT: its plot, drawn. Four lattice corners in
   transition: opacity 640ms cubic-bezier(0.33, 0, 0.2, 1);
 }
 .graview-plot-tile {
-  fill: hsl(var(--graview-hue, 200) 45% ${scheme === "light" ? "58%" : "48%"} / ${scheme === "light" ? "0.12" : "0.2"});
-  stroke: hsl(var(--graview-hue, 200) 40% ${scheme === "light" ? "48%" : "62%"} / 0.55);
+  fill: hsl(var(--graview-hue, 200) ${wash(iso.plot)});
+  stroke: hsl(var(--graview-hue, 200) ${wash(iso.plotEdge)});
   stroke-width: 1;
   stroke-linejoin: round;
   pointer-events: auto;
@@ -1335,15 +1343,15 @@ ${/* A district STANDS: an isometric block — roof, two shaded walls — whose
   });
 }
 .graview-iso-roof {
-  fill: hsl(var(--graview-hue, 200) ${scheme === "light" ? "48% 82%" : "42% 32%"});
-  stroke: ${scheme === "light" ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.14)"};
+  fill: hsl(var(--graview-hue, 200) ${face(iso.roof)});
+  stroke: ${iso.roofEdge};
   stroke-width: 1;
 }
 .graview-iso-right {
-  fill: hsl(var(--graview-hue, 200) ${scheme === "light" ? "40% 66%" : "40% 21%"});
+  fill: hsl(var(--graview-hue, 200) ${face(iso.right)});
 }
 .graview-iso-left {
-  fill: hsl(var(--graview-hue, 200) ${scheme === "light" ? "34% 55%" : "38% 13%"});
+  fill: hsl(var(--graview-hue, 200) ${face(iso.left)});
 }
 
 ${/* WHERE THE KIND HAS ITS OWN DRAWING, the drawing is the building.

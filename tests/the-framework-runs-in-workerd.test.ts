@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -107,6 +108,15 @@ describe.skipIf(!mf)("core, tools and ship's runtime entry, in workerd", () => {
     expect(answer.via).toBe("mcp:Claude");
   });
 
+  it("draws a picture of an app from a document and from a declared app, with no DOM in the isolate (FR-74)", async () => {
+    const answer = await json<{ dom: string; fromDocument: string; fromApp: string }>(mf!.dispatchFetch("http://worker/thumbnail"));
+    expect(answer.dom).toBe("undefined");
+    expect(answer.fromDocument).toMatch(/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"[^>]* viewBox="[^"]+"/);
+    expect(answer.fromDocument).toContain("<title>Errands: 2 kinds");
+    expect(answer.fromDocument).toContain('data-scheme="dark"');
+    expect(answer.fromApp).toContain('data-kind="task"');
+  });
+
   it("serves the WIRE from a Durable Object whose store is its own SQLite, and keeps what was applied", async () => {
     const seat = { "content-type": "application/json", "x-graview-seat": "u1", "x-graview-roles": "keeper" };
     const before = await json<{ snapshot: { nodes: { id: string; done: boolean }[] } }>(mf!.dispatchFetch("http://worker/graview/state", { headers: seat }));
@@ -144,5 +154,29 @@ describe.skipIf(!mf)("the SQL adapter passes the sqlite adapter's tests against 
   it("ran every case the contract has, not none", () => {
     expect(cases.adapter.length).toBeGreaterThanOrEqual(6);
     expect(cases.sql.length).toBeGreaterThanOrEqual(3);
+  });
+});
+
+/*
+ * AND IN PLAIN NODE (FR-74). The published document entry, imported by a
+ * bare `node` with nothing but its own globals — no DOM, no test runner's
+ * environment — draws the same picture twice, byte for byte.
+ */
+describe("a picture of an app, in plain Node", () => {
+  it("is drawn by the published entry with no DOM globals, and the same both times", () => {
+    const entry = resolve(root, "packages/core/dist/document/index.js");
+    const script = `
+      const { sceneThumbnail } = await import(${JSON.stringify(new URL(`file://${entry}`).href)});
+      const doc = { format: "graview-document", formatVersion: 1, name: "Errands", kinds: { errand: { fields: { label: { type: "string", required: true } } } } };
+      const a = sceneThumbnail(doc, { scheme: "light" });
+      const b = sceneThumbnail(JSON.stringify(doc), { scheme: "light" });
+      process.stdout.write(JSON.stringify({ dom: [typeof document, typeof window, typeof HTMLElement], same: a === b, svg: a }));
+    `;
+    const run = spawnSync(process.execPath, ["--input-type=module", "-e", script], { encoding: "utf8" });
+    expect(run.stderr).toBe("");
+    const answer = JSON.parse(run.stdout) as { dom: string[]; same: boolean; svg: string };
+    expect(answer.dom).toEqual(["undefined", "undefined", "undefined"]);
+    expect(answer.same).toBe(true);
+    expect(answer.svg).toContain("<title>Errands: one kind, errands</title>");
   });
 });
