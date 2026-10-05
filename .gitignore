@@ -1,17 +1,17 @@
-.n-dx.local.json
-.rex/n-dx_workflow.md
-.rex/execution-log*.jsonl
+.ndx/config.local.json
+.ndx/rex/n-dx_workflow.md
+.ndx/rex/execution-log*.jsonl
 node_modules/
 dist/
 *.tsbuildinfo
 coverage/
 .DS_Store
 apps/*/generated/
-.rex/.backups/
-.n-dx-web.port
-.rex/.cache/
+.ndx/rex/.backups/
+.ndx/web.port
+.ndx/rex/.cache/
 .generated/
-.n-dx-web.pid
+.ndx/web.pid
 apps/.studio-rehearsal/
 
 # Machine-specific or logged, not metadata: the codex MCP config carries
@@ -21,7 +21,7 @@ claude_commands.log
 
 # Sourcevision's narration log writes absolute paths on every run; the
 # analysis beside it is committed, the log of producing it is not.
-.sourcevision/.cache/narration.log
+.ndx/sourcevision/.cache/narration.log
 
 # The discography example builds its page into build/ (dist/ is the declaration).
 apps/discography/build/
@@ -35,3 +35,5 @@ apps/gauntlet/build/
 # compaction archive the file adapter writes beside them are derived.
 apps/*/data/**/epochs.json
 apps/*/data/**/archive/
+ndx-export/
+.ndx/sourcevision/.cache/analyze-progress.json
