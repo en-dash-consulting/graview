@@ -5,146 +5,203 @@
 <zone>
 
 Zone: Build & CI Scripts (`scripts`)
-Files: 47, Cohesion: 1.00, Coupling: 0.00
+Files: 65, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Build, packaging, and CI scripts: run-a11y.mjs, audit-ui.mjs, eval-elm.mjs (+44 more)
-Entry points: scripts/lib/journeys.mjs
-Lines: 15775
+Description: Build, packaging, and CI scripts: vite.config.ts, vite.config.ts, vite.config.ts (+62 more)
+Entry points: scripts/lib/bundle-budget.mjs, scripts/lib/hosted-page.mjs, scripts/lib/journeys.mjs, scripts/lib/ports.mjs, scripts/lib/readme-exports.mjs, scripts/lib/surfaces.mjs
+Lines: 18159
 
 </zone>
 
 <files>
 
+apps/discography/vite.config.ts (TypeScript, 40 lines, config)
+apps/gauntlet/vite.config.ts (TypeScript, 39 lines, config)
+apps/launcher/vite.config.ts (TypeScript, 72 lines, config)
+apps/rota/vite.config.ts (TypeScript, 55 lines, config)
+apps/seedbed/vite.config.ts (TypeScript, 45 lines, config)
 apps/todo/scripts/run-a11y.mjs (JavaScript, 0 lines, build)
-scripts/audit-ui.mjs (JavaScript, 986 lines, build)
+apps/todo/vite.config.ts (TypeScript, 36 lines, config)
+scripts/audit-ui.mjs (JavaScript, 987 lines, build)
+scripts/conformance-fixtures.mjs (JavaScript, 133 lines, build)
 scripts/eval-elm.mjs (JavaScript, 225 lines, build)
-scripts/inspect-pack.mjs (JavaScript, 118 lines, build)
+scripts/guest-sandbox.mjs (JavaScript, 283 lines, build)
+scripts/inspect-pack.mjs (JavaScript, 159 lines, build)
+scripts/lib/bundle-budget.mjs (JavaScript, 191 lines, build)
 scripts/lib/engine.mjs (JavaScript, 89 lines, build)
-scripts/lib/journeys.mjs (JavaScript, 1201 lines, build)
+scripts/lib/graview-sources.mjs (JavaScript, 26 lines, build)
+scripts/lib/hosted-page.mjs (JavaScript, 202 lines, build)
+scripts/lib/journeys.mjs (JavaScript, 1349 lines, build)
 scripts/lib/ledger.mjs (JavaScript, 88 lines, build)
 scripts/lib/places.mjs (JavaScript, 24 lines, build)
+scripts/lib/ports.mjs (JavaScript, 95 lines, build)
+scripts/lib/readme-exports.mjs (JavaScript, 87 lines, build)
 scripts/lib/serve.mjs (JavaScript, 81 lines, build)
+scripts/lib/surfaces.mjs (JavaScript, 50 lines, build)
 scripts/lib/tarballs.mjs (JavaScript, 53 lines, build)
 scripts/lib/watch-acknowledged.mjs (JavaScript, 25 lines, build)
-scripts/lib/watch.mjs (JavaScript, 319 lines, build)
-scripts/progression.mjs (JavaScript, 275 lines, build)
-scripts/rehearse-studio.mjs (JavaScript, 310 lines, build)
-scripts/require-changeset.mjs (JavaScript, 73 lines, build)
+scripts/lib/watch.mjs (JavaScript, 391 lines, build)
+scripts/progression.mjs (JavaScript, 276 lines, build)
+scripts/rehearse-studio.mjs (JavaScript, 332 lines, build)
+scripts/release-approve.mjs (JavaScript, 159 lines, build)
+scripts/release-stage.mjs (JavaScript, 58 lines, build)
+scripts/require-changeset.mjs (JavaScript, 98 lines, build)
 scripts/site-artifact.mjs (JavaScript, 50 lines, build)
 scripts/site-css.mjs (JavaScript, 53 lines, build)
 scripts/site-docs.mjs (JavaScript, 810 lines, build)
 scripts/site-numbers.mjs (JavaScript, 135 lines, build)
 scripts/site-progression.mjs (JavaScript, 105 lines, build)
-scripts/smoke-create.mjs (JavaScript, 690 lines, build)
+scripts/smoke-create.mjs (JavaScript, 691 lines, build)
 scripts/smoke-install.mjs (JavaScript, 366 lines, build)
-scripts/survey-ui.mjs (JavaScript, 471 lines, build)
-scripts/verify-all.mjs (JavaScript, 276 lines, build)
-scripts/verify-calendar.mjs (JavaScript, 440 lines, build)
-scripts/verify-chat.mjs (JavaScript, 383 lines, build)
-scripts/verify-companion.mjs (JavaScript, 396 lines, build)
-scripts/verify-desk.mjs (JavaScript, 209 lines, build)
-scripts/verify-engines.mjs (JavaScript, 381 lines, build)
-scripts/verify-gauntlet.mjs (JavaScript, 575 lines, build)
-scripts/verify-journeys.mjs (JavaScript, 398 lines, build)
-scripts/verify-lines.mjs (JavaScript, 256 lines, build)
-scripts/verify-menu.mjs (JavaScript, 459 lines, build)
-scripts/verify-navigation.mjs (JavaScript, 1012 lines, build)
-scripts/verify-pages.mjs (JavaScript, 851 lines, build)
-scripts/verify-panning.mjs (JavaScript, 439 lines, build)
+scripts/survey-ui.mjs (JavaScript, 472 lines, build)
+scripts/verify-all.mjs (JavaScript, 299 lines, build)
+scripts/verify-calendar.mjs (JavaScript, 441 lines, build)
+scripts/verify-chat.mjs (JavaScript, 384 lines, build)
+scripts/verify-companion.mjs (JavaScript, 397 lines, build)
+scripts/verify-desk.mjs (JavaScript, 210 lines, build)
+scripts/verify-engines.mjs (JavaScript, 382 lines, build)
+scripts/verify-gauntlet.mjs (JavaScript, 604 lines, build)
+scripts/verify-hosted-page.mjs (JavaScript, 60 lines, build)
+scripts/verify-journeys.mjs (JavaScript, 400 lines, build)
+scripts/verify-lines.mjs (JavaScript, 286 lines, build)
+scripts/verify-menu.mjs (JavaScript, 460 lines, build)
+scripts/verify-navigation.mjs (JavaScript, 1013 lines, build)
+scripts/verify-pages.mjs (JavaScript, 852 lines, build)
+scripts/verify-panning.mjs (JavaScript, 440 lines, build)
 scripts/verify-products.mjs (JavaScript, 111 lines, build)
-scripts/verify-remember.mjs (JavaScript, 330 lines, build)
-scripts/verify-rota.mjs (JavaScript, 361 lines, build)
-scripts/verify-scale.mjs (JavaScript, 312 lines, build)
-scripts/verify-seat.mjs (JavaScript, 388 lines, build)
-scripts/verify-served.mjs (JavaScript, 197 lines, build)
-scripts/verify-shrunk.mjs (JavaScript, 221 lines, build)
+scripts/verify-remember.mjs (JavaScript, 331 lines, build)
+scripts/verify-rota.mjs (JavaScript, 362 lines, build)
+scripts/verify-scale.mjs (JavaScript, 313 lines, build)
+scripts/verify-seat.mjs (JavaScript, 389 lines, build)
+scripts/verify-served.mjs (JavaScript, 198 lines, build)
+scripts/verify-shrunk.mjs (JavaScript, 222 lines, build)
 scripts/verify-site.mjs (JavaScript, 437 lines, build)
-scripts/verify-studio.mjs (JavaScript, 530 lines, build)
-scripts/verify-watch.mjs (JavaScript, 78 lines, build)
-scripts/verify-who.mjs (JavaScript, 188 lines, build)
+scripts/verify-studio.mjs (JavaScript, 791 lines, build)
+scripts/verify-watch.mjs (JavaScript, 124 lines, build)
+scripts/verify-who.mjs (JavaScript, 202 lines, build)
+scripts/write-framework-version.mjs (JavaScript, 21 lines, build)
 
 </files>
 
 <imports>
 
 Internal:
+  apps/discography/vite.config.ts → scripts/lib/ports.mjs {moved}
+  apps/gauntlet/vite.config.ts → scripts/lib/ports.mjs {moved}
+  apps/launcher/vite.config.ts → scripts/lib/ports.mjs {DESK_SERVES, moved, portsFor}
+  apps/rota/vite.config.ts → scripts/lib/ports.mjs {moved}
+  apps/seedbed/vite.config.ts → scripts/lib/ports.mjs {moved}
   apps/todo/scripts/run-a11y.mjs → scripts/lib/serve.mjs {serving}
+  apps/todo/vite.config.ts → scripts/lib/ports.mjs {moved}
   scripts/audit-ui.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/audit-ui.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/audit-ui.mjs → scripts/lib/serve.mjs {serving}
+  scripts/inspect-pack.mjs → scripts/lib/bundle-budget.mjs {measureBudgets}
+  scripts/inspect-pack.mjs → scripts/lib/readme-exports.mjs {exportsOf, unexported}
+  scripts/lib/bundle-budget.mjs → scripts/lib/graview-sources.mjs {graviewSources}
   scripts/lib/engine.mjs → scripts/lib/watch.mjs {watched}
   scripts/lib/watch.mjs → scripts/lib/watch-acknowledged.mjs {acknowledgedBy}
   scripts/progression.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/progression.mjs → scripts/lib/ports.mjs {portFor}
   scripts/progression.mjs → scripts/lib/serve.mjs {serving}
   scripts/rehearse-studio.mjs → scripts/lib/engine.mjs {launchEngine}
+  scripts/rehearse-studio.mjs → scripts/lib/ports.mjs {portFor}
+  scripts/require-changeset.mjs → scripts/lib/surfaces.mjs {saysCompatibility, surfacesTouched}
   scripts/smoke-create.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/smoke-create.mjs → scripts/lib/ports.mjs {portFor}
   scripts/smoke-create.mjs → scripts/lib/tarballs.mjs {packTarballs, pinToTarballs}
   scripts/survey-ui.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/survey-ui.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/survey-ui.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-all.mjs → scripts/lib/ledger.mjs {updateLedger}
+  scripts/verify-all.mjs → scripts/lib/ports.mjs {portFor}
   scripts/verify-all.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-all.mjs → scripts/lib/watch.mjs {watchFile}
   scripts/verify-calendar.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-calendar.mjs → scripts/lib/places.mjs {pressPlace}
+  scripts/verify-calendar.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-calendar.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-chat.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-chat.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-chat.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-companion.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-companion.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-companion.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-desk.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-desk.mjs → scripts/lib/ports.mjs {at, movedIn, portFor}
   scripts/verify-desk.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-engines.mjs → scripts/lib/engine.mjs {ENGINES, launchEngine}
+  scripts/verify-engines.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-engines.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-gauntlet.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-gauntlet.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-gauntlet.mjs → scripts/lib/serve.mjs {serving}
+  scripts/verify-hosted-page.mjs → scripts/lib/hosted-page.mjs {HOSTED_PAGE_BUDGET, measureHostedPage}
   scripts/verify-journeys.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
-  scripts/verify-journeys.mjs → scripts/lib/journeys.mjs {DeadEnd, frictionOf, inStore, JOBS, Person, planJobs, readDeclaration, regressionsOf, storeHookInPage, VARIANTS, variantKey}
+  scripts/verify-journeys.mjs → scripts/lib/journeys.mjs {appsNamed, DeadEnd, frictionOf, inStore, JOBS, Person, planJobs, readDeclaration, regressionsOf, storeHookInPage, VARIANTS, variantKey}
   scripts/verify-journeys.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-journeys.mjs → scripts/lib/watch.mjs {takeViolations}
   scripts/verify-lines.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-lines.mjs → scripts/lib/ports.mjs {portFor}
   scripts/verify-lines.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-menu.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-menu.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-menu.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-navigation.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-navigation.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-navigation.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-pages.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-pages.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-pages.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-panning.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-panning.mjs → scripts/lib/ports.mjs {portFor}
   scripts/verify-panning.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-remember.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-remember.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-remember.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-rota.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-rota.mjs → scripts/lib/places.mjs {pressPlace}
+  scripts/verify-rota.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-rota.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-scale.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-scale.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-seat.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-seat.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-seat.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-served.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-served.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-served.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-shrunk.mjs → scripts/lib/engine.mjs {launchCanaryGpu}
+  scripts/verify-shrunk.mjs → scripts/lib/ports.mjs {portFor}
   scripts/verify-shrunk.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-site.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-studio.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-studio.mjs → scripts/lib/graview-sources.mjs {graviewSources}
+  scripts/verify-studio.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-studio.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-watch.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-watch.mjs → scripts/lib/watch.mjs {takeViolations}
   scripts/verify-who.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-who.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-who.mjs → scripts/lib/serve.mjs {serving}
 
 Incoming (other zones → this zone):
-  ← tests: tests/journeys.test.ts → scripts/lib/journeys.mjs
+  ← tests: tests/a-hosted-page-keeps-to-its-budget.test.ts → scripts/lib/hosted-page.mjs; tests/changesets.test.ts → scripts/lib/surfaces.mjs; tests/every-harness-honours-the-port-base.test.ts → scripts/lib/ports.mjs; tests/journeys.test.ts → scripts/lib/journeys.mjs; tests/readme-exports.test.ts → scripts/lib/readme-exports.mjs; tests/the-desk-points-at-the-moved-ports.test.ts → scripts/lib/ports.mjs; tests/the-embed-keeps-to-its-budget.test.ts → scripts/lib/bundle-budget.mjs
 
 </imports>
 
 <findings>
 
 [observation] [info] High cohesion (1) — files are tightly interconnected
+[suggestion] [info] Zone "scripts" has files across 9 directories — consider consolidating under a dedicated directory
 
 </findings>
 
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 1126 internal calls, 0 outgoing, 5 incoming (cohesion: 1, coupling: 0)
+- Zone "scripts" has files across 9 directories — consider consolidating under a dedicated directory
+- [call graph] 1549 internal calls, 0 outgoing, 56 incoming (cohesion: 1, coupling: 0)
 
 </insights>
 
@@ -152,18 +209,21 @@ Incoming (other zones → this zone):
 
 Cross-dependencies between sub-zones:
   scripts/lib → scripts/scripts: 3
-  scripts/scripts → scripts/lib: 2
+  scripts/scripts → scripts/watch: 2
+  scripts/watch → scripts/scripts: 3
 
 </sub-crossings>
 
 <sub-zones>
 
-This zone has 4 sub-zone(s):
+This zone has 5 sub-zone(s):
 
-- **Lib** (`scripts/lib`): 5 files, cohesion 0.62, coupling 0.38
-- **Scripts** (`scripts/scripts`): 32 files, cohesion 0.95, coupling 0.05
-- **Scripts 2** (`scripts/scripts-2`): 4 files, cohesion 0, coupling 0
-- **Site** (`scripts/site`): 6 files, cohesion 0, coupling 0
+- **Lib** (`scripts/lib`): 5 files, cohesion 0.73, coupling 0.27
+- **Build And Verify** (`scripts/scripts`): 42 files, cohesion 0.95, coupling 0.05
+  - Has 4 nested sub-zone(s)
+- **Scripts 2** (`scripts/scripts-2`): 5 files, cohesion 0, coupling 0
+- **Site** (`scripts/site`): 8 files, cohesion 0, coupling 0
+- **Watch** (`scripts/watch`): 5 files, cohesion 0.62, coupling 0.38
 
 Detailed sub-zone context available in `zones/{sub-zone-id}/context.md`
 

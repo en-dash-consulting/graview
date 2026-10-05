@@ -7,7 +7,7 @@
 Zone: Core Sync (`core-sync`)
 Files: 3, Cohesion: 0.33, Coupling: 0.67
 Risk: critical (score: 0.67)
-Description: 3 files, mostly utilities and types; entry points engine.ts, google-calendar.ts, types.ts; imports Core and Core Ops; imported by Core.
+Description: 3 files, mostly utilities and types; entry points engine.ts, google-calendar.ts, types.ts; imports Core and Core Graph; imported by Core.
 Entry points: packages/core/src/sync/engine.ts, packages/core/src/sync/google-calendar.ts, packages/core/src/sync/types.ts
 Lines: 801
 
@@ -29,8 +29,8 @@ Internal:
   packages/core/src/sync/google-calendar.ts → packages/core/src/sync/types.ts {RemoteAck, RemoteChange, RemoteSystem, RemoteWrite, SyncMapping}
 
 Outgoing (this zone → other zones):
-  → core: packages/core/src/sync/engine.ts → packages/core/src/graph/types.ts; packages/core/src/sync/engine.ts → packages/core/src/schema/schema.ts; packages/core/src/sync/engine.ts → packages/core/src/store.ts
-  → core-ops: packages/core/src/sync/types.ts → packages/core/src/ops/types.ts
+  → core: packages/core/src/sync/engine.ts → packages/core/src/schema/schema.ts; packages/core/src/sync/engine.ts → packages/core/src/store.ts; packages/core/src/sync/types.ts → packages/core/src/ops/types.ts
+  → core-graph: packages/core/src/sync/engine.ts → packages/core/src/graph/types.ts
 
 Incoming (other zones → this zone):
   ← core: packages/core/src/index.ts → packages/core/src/sync/engine.ts; packages/core/src/index.ts → packages/core/src/sync/engine.ts; packages/core/src/index.ts → packages/core/src/sync/google-calendar.ts; packages/core/src/index.ts → packages/core/src/sync/google-calendar.ts; packages/core/src/index.ts → packages/core/src/sync/types.ts; packages/core/src/index.ts → packages/core/src/sync/types.ts; packages/core/src/sync/conflict.ts → packages/core/src/sync/engine.ts

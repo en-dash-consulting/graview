@@ -5,25 +5,29 @@
 <zone>
 
 Zone: Primitives (`primitives`)
-Files: 51, Cohesion: 1.00, Coupling: 0.00
+Files: 59, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 51 files, mostly components and utilities; entry points index.ts, coverage.tsx, arrange-bar.tsx; imported by Packages.
-Entry points: packages/primitives/src/arrange-bar.tsx, packages/primitives/src/chat.tsx, packages/primitives/src/index.ts, packages/primitives/src/ladder.tsx, packages/primitives/src/lens/coverage.tsx
-Lines: 18753
+Description: 59 files, mostly components and utilities; entry points index.ts, coverage.tsx, theme.ts; imported by Packages.
+Entry points: packages/primitives/src/arrange-bar.tsx, packages/primitives/src/chat.tsx, packages/primitives/src/index.ts, packages/primitives/src/ladder.tsx, packages/primitives/src/lens/coverage.tsx, packages/primitives/src/theme.ts
+Lines: 19800
 
 </zone>
 
 <files>
 
-packages/primitives/src/arrange-bar.tsx (TypeScript, 436 lines, source)
-packages/primitives/src/chat.tsx (TypeScript, 609 lines, source)
-packages/primitives/src/companion.tsx (TypeScript, 631 lines, source)
+packages/primitives/src/arrange-bar.tsx (TypeScript, 456 lines, source)
+packages/primitives/src/arrangement.ts (TypeScript, 26 lines, source)
+packages/primitives/src/chat.tsx (TypeScript, 611 lines, source)
+packages/primitives/src/companion.tsx (TypeScript, 654 lines, source)
 packages/primitives/src/connections.tsx (TypeScript, 173 lines, source)
-packages/primitives/src/default-views.tsx (TypeScript, 1082 lines, source)
+packages/primitives/src/default-view.tsx (TypeScript, 57 lines, source)
+packages/primitives/src/default-views.tsx (TypeScript, 1148 lines, source)
 packages/primitives/src/editable.tsx (TypeScript, 364 lines, source)
 packages/primitives/src/figure.tsx (TypeScript, 102 lines, source)
-packages/primitives/src/find.tsx (TypeScript, 370 lines, source)
-packages/primitives/src/index.ts (TypeScript, 192 lines, source)
+packages/primitives/src/find.tsx (TypeScript, 372 lines, source)
+packages/primitives/src/frame.ts (TypeScript, 21 lines, source)
+packages/primitives/src/framework-views.ts (TypeScript, 21 lines, source)
+packages/primitives/src/index.ts (TypeScript, 197 lines, source)
 packages/primitives/src/installation.tsx (TypeScript, 54 lines, source)
 packages/primitives/src/ladder.tsx (TypeScript, 141 lines, source)
 packages/primitives/src/lens/arranging.tsx (TypeScript, 102 lines, source)
@@ -35,7 +39,7 @@ packages/primitives/src/lens/calendar-placing.ts (TypeScript, 122 lines, source)
 packages/primitives/src/lens/calendar-spans.ts (TypeScript, 189 lines, source)
 packages/primitives/src/lens/calendar-view.tsx (TypeScript, 452 lines, source)
 packages/primitives/src/lens/calendar.tsx (TypeScript, 43 lines, source)
-packages/primitives/src/lens/coverage.tsx (TypeScript, 1116 lines, source)
+packages/primitives/src/lens/coverage.tsx (TypeScript, 1127 lines, source)
 packages/primitives/src/lens/horizon.ts (TypeScript, 26 lines, source)
 packages/primitives/src/lens/more.tsx (TypeScript, 28 lines, source)
 packages/primitives/src/lens/plan-lens.tsx (TypeScript, 40 lines, source)
@@ -45,25 +49,29 @@ packages/primitives/src/lens/plan.tsx (TypeScript, 25 lines, source)
 packages/primitives/src/lens/reach.tsx (TypeScript, 159 lines, source)
 packages/primitives/src/lens/timeline.tsx (TypeScript, 725 lines, source)
 packages/primitives/src/markup.ts (TypeScript, 24 lines, source)
-packages/primitives/src/places.tsx (TypeScript, 280 lines, source)
+packages/primitives/src/pages.ts (TypeScript, 19 lines, source)
+packages/primitives/src/places.tsx (TypeScript, 283 lines, source)
 packages/primitives/src/popover.ts (TypeScript, 52 lines, source)
 packages/primitives/src/primitives/index.tsx (TypeScript, 731 lines, source)
-packages/primitives/src/profile.tsx (TypeScript, 414 lines, source)
-packages/primitives/src/quick-relations.tsx (TypeScript, 224 lines, source)
-packages/primitives/src/relation-key.tsx (TypeScript, 265 lines, source)
+packages/primitives/src/profile.tsx (TypeScript, 418 lines, source)
+packages/primitives/src/quick-relations.tsx (TypeScript, 226 lines, source)
+packages/primitives/src/relation-key.tsx (TypeScript, 267 lines, source)
 packages/primitives/src/seat.tsx (TypeScript, 414 lines, source)
 packages/primitives/src/seats.tsx (TypeScript, 87 lines, source)
-packages/primitives/src/seeding.tsx (TypeScript, 994 lines, source)
-packages/primitives/src/shell.tsx (TypeScript, 292 lines, source)
-packages/primitives/src/theme.ts (TypeScript, 1739 lines, source)
+packages/primitives/src/seeding.tsx (TypeScript, 1013 lines, source)
+packages/primitives/src/shell.tsx (TypeScript, 328 lines, source)
+packages/primitives/src/spec-css.ts (TypeScript, 30 lines, source)
+packages/primitives/src/spec-views.tsx (TypeScript, 412 lines, source)
+packages/primitives/src/theme.ts (TypeScript, 1852 lines, source)
+packages/primitives/src/view-doors.tsx (TypeScript, 76 lines, source)
 packages/primitives/src/wordmark.tsx (TypeScript, 71 lines, source)
-packages/primitives/src/workbench/activity.tsx (TypeScript, 481 lines, source)
+packages/primitives/src/workbench/activity.tsx (TypeScript, 507 lines, source)
 packages/primitives/src/workbench/agent-seat.tsx (TypeScript, 203 lines, source)
-packages/primitives/src/workbench/answer-args.tsx (TypeScript, 389 lines, source)
+packages/primitives/src/workbench/answer-args.tsx (TypeScript, 430 lines, source)
 packages/primitives/src/workbench/back-out.tsx (TypeScript, 288 lines, source)
 packages/primitives/src/workbench/following.tsx (TypeScript, 36 lines, source)
 packages/primitives/src/workbench/index.tsx (TypeScript, 23 lines, source)
-packages/primitives/src/workbench/inspector.tsx (TypeScript, 1146 lines, source)
+packages/primitives/src/workbench/inspector.tsx (TypeScript, 1156 lines, source)
 packages/primitives/src/workbench/standing.tsx (TypeScript, 159 lines, source)
 packages/primitives/src/workbench/trail.tsx (TypeScript, 287 lines, source)
 
@@ -72,17 +80,21 @@ packages/primitives/src/workbench/trail.tsx (TypeScript, 287 lines, source)
 <imports>
 
 Internal:
+  packages/primitives/src/arrange-bar.tsx → packages/primitives/src/arrangement.ts {arrangementOf, withArrangement}
   packages/primitives/src/chat.tsx → packages/primitives/src/companion.tsx {useSubject}
   packages/primitives/src/chat.tsx → packages/primitives/src/popover.ts {closeToTrigger}
   packages/primitives/src/chat.tsx → packages/primitives/src/seat.tsx {describeSource, proposalKey, SeatComposer, SeatHeader, SeatSettings, SeatThread, Settled, useSeatConversation}
   packages/primitives/src/chat.tsx → packages/primitives/src/workbench/index.tsx {AnswerArgs}
   packages/primitives/src/companion.tsx → packages/primitives/src/chat.tsx {ChatPanel}
+  packages/primitives/src/companion.tsx → packages/primitives/src/primitives/index.tsx {VISUALLY_HIDDEN}
   packages/primitives/src/companion.tsx → packages/primitives/src/quick-relations.tsx {QuickRelations}
   packages/primitives/src/companion.tsx → packages/primitives/src/relation-key.tsx {RelationKey}
   packages/primitives/src/companion.tsx → packages/primitives/src/workbench/index.tsx {Inspector}
   packages/primitives/src/connections.tsx → packages/primitives/src/default-views.tsx {hueFor}
   packages/primitives/src/connections.tsx → packages/primitives/src/primitives/index.tsx {Chip}
-  packages/primitives/src/default-views.tsx → packages/primitives/src/arrange-bar.tsx {ArrangeBar, arrangementOf, withArrangement}
+  packages/primitives/src/default-view.tsx → packages/primitives/src/default-views.tsx {registerDefaultViews}
+  packages/primitives/src/default-views.tsx → packages/primitives/src/arrange-bar.tsx {*}
+  packages/primitives/src/default-views.tsx → packages/primitives/src/arrangement.ts {arrangementOf, withArrangement}
   packages/primitives/src/default-views.tsx → packages/primitives/src/connections.tsx {Connections}
   packages/primitives/src/default-views.tsx → packages/primitives/src/editable.tsx {EditableTitle, Fields}
   packages/primitives/src/default-views.tsx → packages/primitives/src/figure.tsx {hasFigure, KindFigure}
@@ -90,7 +102,16 @@ Internal:
   packages/primitives/src/figure.tsx → packages/primitives/src/default-views.tsx {hueFor}
   packages/primitives/src/figure.tsx → packages/primitives/src/markup.ts {useMarkup}
   packages/primitives/src/find.tsx → packages/primitives/src/primitives/index.tsx {VISUALLY_HIDDEN}
-  packages/primitives/src/index.ts → packages/primitives/src/arrange-bar.tsx {ArrangeBar, arrangementCaption, arrangementOf, sayCondition, withArrangement}
+  packages/primitives/src/frame.ts → packages/primitives/src/primitives/index.tsx {useWidth, VISUALLY_HIDDEN}
+  packages/primitives/src/frame.ts → packages/primitives/src/profile.tsx {Profile}
+  packages/primitives/src/frame.ts → packages/primitives/src/theme.ts {DARK, GRAVIEW_BRAND, LIGHT, SCHEMES, themeCss, themeVariables}
+  packages/primitives/src/frame.ts → packages/primitives/src/theme.ts {Brand, Scheme, ThemeCssOptions, ThemeTokens}
+  packages/primitives/src/frame.ts → packages/primitives/src/view-doors.tsx {fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews}
+  packages/primitives/src/frame.ts → packages/primitives/src/workbench/back-out.tsx {descentTarget}
+  packages/primitives/src/frame.ts → packages/primitives/src/workbench/standing.tsx {Standing}
+  packages/primitives/src/framework-views.ts → packages/primitives/src/default-views.tsx {registerDefaultViews}
+  packages/primitives/src/framework-views.ts → packages/primitives/src/spec-views.tsx {registerViewSpecs}
+  packages/primitives/src/index.ts → packages/primitives/src/arrange-bar.tsx {ArrangeBar, arrangementCaption, arrangementOf, roundSteps, sayCondition, withArrangement}
   packages/primitives/src/index.ts → packages/primitives/src/arrange-bar.tsx {ArrangeBarProps}
   packages/primitives/src/index.ts → packages/primitives/src/chat.tsx {ChatPanel}
   packages/primitives/src/index.ts → packages/primitives/src/chat.tsx {ChatPanelProps}
@@ -98,6 +119,7 @@ Internal:
   packages/primitives/src/index.ts → packages/primitives/src/companion.tsx {CompanionProps, Subject}
   packages/primitives/src/index.ts → packages/primitives/src/connections.tsx {Connections}
   packages/primitives/src/index.ts → packages/primitives/src/connections.tsx {ConnectionsProps}
+  packages/primitives/src/index.ts → packages/primitives/src/default-view.tsx {DefaultView, DefaultViewElsewhere, defaultViewsOf}
   packages/primitives/src/index.ts → packages/primitives/src/default-views.tsx {rosterOf, hueFor, registerDefaultViews, THUMBNAIL_BUDGET}
   packages/primitives/src/index.ts → packages/primitives/src/editable.tsx {EditableTitle, EditableValue, Fields, humanise}
   packages/primitives/src/index.ts → packages/primitives/src/figure.tsx {hasFigure, KindFigure}
@@ -133,8 +155,11 @@ Internal:
   packages/primitives/src/index.ts → packages/primitives/src/seeding.tsx {BeginProps, DoorProps, IntakeProps, PlanReviewProps}
   packages/primitives/src/index.ts → packages/primitives/src/shell.tsx {Shell}
   packages/primitives/src/index.ts → packages/primitives/src/shell.tsx {ShellProps}
+  packages/primitives/src/index.ts → packages/primitives/src/spec-views.tsx {compileBlocks, registerViewSpecs, safeHref, SpecBlocks, SpecView, SPEC_VIEW_CSS, useSpecContext}
+  packages/primitives/src/index.ts → packages/primitives/src/spec-views.tsx {SpecBlock, SpecContext}
   packages/primitives/src/index.ts → packages/primitives/src/theme.ts {DARK, GRAVIEW_BRAND, LIGHT, SCHEMES, themeCss, themeVariables}
   packages/primitives/src/index.ts → packages/primitives/src/theme.ts {Brand, Scheme, ThemeCssOptions, ThemeTokens}
+  packages/primitives/src/index.ts → packages/primitives/src/view-doors.tsx {fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews}
   packages/primitives/src/index.ts → packages/primitives/src/wordmark.tsx {Wordmark}
   packages/primitives/src/index.ts → packages/primitives/src/workbench/index.tsx {ActivityRail, StartFresh, AgentSeat, AnswerArgs, BackOut, Backtrack, Inspector, nameOf, OverviewButton, descentTarget, Standing, Trail, UndoTurn, useRecentChanges}
   packages/primitives/src/index.ts → packages/primitives/src/workbench/index.tsx {AgentSeatProps, Change}
@@ -193,6 +218,14 @@ Internal:
   packages/primitives/src/lens/timeline.tsx → packages/primitives/src/lens/arranging.tsx {useArranging}
   packages/primitives/src/lens/timeline.tsx → packages/primitives/src/lens/more.tsx {withMore}
   packages/primitives/src/lens/timeline.tsx → packages/primitives/src/primitives/index.tsx {Chip, Panel, Roster}
+  packages/primitives/src/pages.ts → packages/primitives/src/arrange-bar.tsx {ArrangeBar, arrangementCaption, arrangementOf, withArrangement}
+  packages/primitives/src/pages.ts → packages/primitives/src/arrange-bar.tsx {ArrangeBarProps}
+  packages/primitives/src/pages.ts → packages/primitives/src/default-view.tsx {DefaultViewElsewhere}
+  packages/primitives/src/pages.ts → packages/primitives/src/figure.tsx {KindFigure}
+  packages/primitives/src/pages.ts → packages/primitives/src/ladder.tsx {LadderSetting}
+  packages/primitives/src/pages.ts → packages/primitives/src/markup.ts {useMarkup}
+  packages/primitives/src/pages.ts → packages/primitives/src/relation-key.tsx {RelationMark}
+  packages/primitives/src/places.tsx → packages/primitives/src/primitives/index.tsx {VISUALLY_HIDDEN}
   packages/primitives/src/profile.tsx → packages/primitives/src/ladder.tsx {LadderSetting}
   packages/primitives/src/profile.tsx → packages/primitives/src/popover.ts {closeToTrigger, keepInside}
   packages/primitives/src/profile.tsx → packages/primitives/src/seats.tsx {Seats}
@@ -208,10 +241,16 @@ Internal:
   packages/primitives/src/shell.tsx → packages/primitives/src/profile.tsx {Profile}
   packages/primitives/src/shell.tsx → packages/primitives/src/wordmark.tsx {Wordmark}
   packages/primitives/src/shell.tsx → packages/primitives/src/workbench/index.tsx {ActivityRail, BackOut, Backtrack, Inspector, OverviewButton, FollowingLine, Standing, Trail}
+  packages/primitives/src/spec-views.tsx → packages/primitives/src/default-view.tsx {DefaultView}
+  packages/primitives/src/spec-views.tsx → packages/primitives/src/figure.tsx {KindFigure}
+  packages/primitives/src/spec-views.tsx → packages/primitives/src/primitives/index.tsx {Panel}
+  packages/primitives/src/spec-views.tsx → packages/primitives/src/spec-css.ts {SPEC_VIEW_CSS}
+  packages/primitives/src/theme.ts → packages/primitives/src/spec-css.ts {SPEC_VIEW_CSS}
+  packages/primitives/src/view-doors.tsx → packages/primitives/src/framework-views.ts {*}
   packages/primitives/src/wordmark.tsx → packages/primitives/src/markup.ts {useMarkup}
   packages/primitives/src/wordmark.tsx → packages/primitives/src/theme.ts {GRAVIEW_BRAND}
   packages/primitives/src/workbench/activity.tsx → packages/primitives/src/popover.ts {closeToTrigger}
-  packages/primitives/src/workbench/activity.tsx → packages/primitives/src/primitives/index.tsx {Chip}
+  packages/primitives/src/workbench/activity.tsx → packages/primitives/src/primitives/index.tsx {Chip, VISUALLY_HIDDEN}
   packages/primitives/src/workbench/activity.tsx → packages/primitives/src/workbench/answer-args.tsx {nameOf}
   packages/primitives/src/workbench/answer-args.tsx → packages/primitives/src/relation-key.tsx {relationWords}
   packages/primitives/src/workbench/index.tsx → packages/primitives/src/workbench/activity.tsx {*}
@@ -223,12 +262,13 @@ Internal:
   packages/primitives/src/workbench/index.tsx → packages/primitives/src/workbench/standing.tsx {*}
   packages/primitives/src/workbench/index.tsx → packages/primitives/src/workbench/trail.tsx {*}
   packages/primitives/src/workbench/inspector.tsx → packages/primitives/src/companion.tsx {useSubject}
+  packages/primitives/src/workbench/inspector.tsx → packages/primitives/src/primitives/index.tsx {VISUALLY_HIDDEN}
   packages/primitives/src/workbench/inspector.tsx → packages/primitives/src/workbench/answer-args.tsx {AnswerArgs, nameOf}
   packages/primitives/src/workbench/standing.tsx → packages/primitives/src/popover.ts {closeToTrigger}
   packages/primitives/src/workbench/trail.tsx → packages/primitives/src/workbench/answer-args.tsx {nameOf}
 
 Incoming (other zones → this zone):
-  ← tests-primitives-unit: packages/primitives/tests/unit/a-calendar-draws-every-kind-it-is-bound-to.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-card-s-acts-are-one-key-away.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-cell-is-an-edge.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-chip-says-what-it-is.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-companion-names-its-subject.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-district-offers-what-it-can-do.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-district-stands-as-its-figure.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-lens-arranges-before-it-draws.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-lens-keeps-the-horizon.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-lens-keeps-the-horizon.test.tsx → packages/primitives/src/lens/coverage.tsx; packages/primitives/tests/unit/a-line-is-named-in-its-words.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-mark-can-say-so.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-matrix-the-page-can-hold.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-matrix-the-page-can-hold.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-panel-that-scrolls-is-a-stop.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-plan-places-by-shape.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-question-stands-at-its-node.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-roster-you-can-read.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-select-keeps-its-floor-in-webkit.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-thumbnail-is-a-picture.test.tsx → packages/primitives/src/arrange-bar.tsx; packages/primitives/tests/unit/a-thumbnail-is-a-picture.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-value-stays-in-its-cell.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/back-out.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/board.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/calendar.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/calendar.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/chat.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/coverage.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/edge-inspector.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/escape-gives-the-keyboard-back.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/every-size-is-the-readers.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/find-says-which-is-which.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/handles-can-be-told-apart.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/installation.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/no-control-under-a-fingertip.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/nothing-withheld-is-hidden.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/one-request-one-press.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/one-row-arranges-every-surface.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/places.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/primitives.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/quick-relations.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/rename-in-place.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/shell.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/shell.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-door-keeps-the-keyboard.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-doors-drawn.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-drawing-stays-put.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-drive-in-marquee.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-find-box-keeps-room-to-type.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-key-stays-in-its-rail.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-kit-is-in-the-theme.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-ladder-is-a-setting.test.tsx → packages/primitives/src/chat.tsx; packages/primitives/tests/unit/the-ladder-is-a-setting.test.tsx → packages/primitives/src/ladder.tsx; packages/primitives/tests/unit/the-pane-keeps-its-hands-off.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-readers-own-text-size.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-seat-under-a-policy.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-shell-hands-the-seat-its-own-answer.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-way-in.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/two-changes-before-one-redraw.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/undo-turn.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/what-it-finds-wrong.test.tsx → packages/primitives/src/index.ts
+  ← tests-primitives-unit: packages/primitives/tests/unit/a-calendar-draws-every-kind-it-is-bound-to.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-card-s-acts-are-one-key-away.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-cell-is-an-edge.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-chip-says-what-it-is.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-companion-names-its-subject.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-coverage-path-gets-there.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-district-offers-what-it-can-do.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-district-stands-as-its-figure.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-filter-says-a-value-as-the-record-does.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-lens-arranges-before-it-draws.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-lens-keeps-the-horizon.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-lens-keeps-the-horizon.test.tsx → packages/primitives/src/lens/coverage.tsx; packages/primitives/tests/unit/a-line-is-named-in-its-words.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-list-has-room-for-its-numbers.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-list-narrows-by-price-and-make.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-mark-can-say-so.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-matrix-the-page-can-hold.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-matrix-the-page-can-hold.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-panel-that-scrolls-is-a-stop.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-plan-places-by-shape.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-question-stands-at-its-node.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-roster-you-can-read.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-scoped-theme-styles-nothing-outside-its-box.test.ts → packages/primitives/src/theme.ts; packages/primitives/tests/unit/a-select-keeps-its-floor-in-webkit.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-thumbnail-is-a-picture.test.tsx → packages/primitives/src/arrange-bar.tsx; packages/primitives/tests/unit/a-thumbnail-is-a-picture.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-typed-list-is-a-list.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/a-value-stays-in-its-cell.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/back-out.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/board.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/calendar.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/calendar.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/chat.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/coverage.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/edge-inspector.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/escape-gives-the-keyboard-back.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/every-size-is-the-readers.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/find-says-which-is-which.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/handles-can-be-told-apart.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/installation.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/no-control-under-a-fingertip.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/nothing-withheld-is-hidden.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/one-request-one-press.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/one-row-arranges-every-surface.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/places.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/primitives.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/quick-relations.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/rename-in-place.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/shell.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/shell.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-door-keeps-the-keyboard.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-doors-drawn.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-drawing-stays-put.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-drive-in-marquee.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-find-box-keeps-room-to-type.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-key-stays-in-its-rail.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-kit-is-in-the-theme.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-ladder-is-a-setting.test.tsx → packages/primitives/src/chat.tsx; packages/primitives/tests/unit/the-ladder-is-a-setting.test.tsx → packages/primitives/src/ladder.tsx; packages/primitives/tests/unit/the-next-question-takes-the-keyboard.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-pane-keeps-its-hands-off.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-rail-shows-a-change-you-cannot-see.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-readers-own-text-size.test.ts → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-seat-under-a-policy.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-shell-hands-the-seat-its-own-answer.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-way-in.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/the-workbench-has-headings.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/two-changes-before-one-redraw.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/undo-turn.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/waiting-for-what-is-missing.test.tsx → packages/primitives/src/index.ts; packages/primitives/tests/unit/what-it-finds-wrong.test.tsx → packages/primitives/src/index.ts
 
 </imports>
 
@@ -241,32 +281,31 @@ Incoming (other zones → this zone):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 382 internal calls, 0 outgoing, 200 incoming (cohesion: 1, coupling: 0)
+- [call graph] 446 internal calls, 0 outgoing, 217 incoming (cohesion: 1, coupling: 0)
 
 </insights>
 
 <sub-crossings>
 
 Cross-dependencies between sub-zones:
-  primitives/lens → primitives/src: 5
-  primitives/plan → primitives/src: 2
+  primitives/lens → primitives/src: 1
+  primitives/lens → primitives/src-lens: 4
+  primitives/plan → primitives/src-lens: 2
   primitives/primitives → primitives/src: 1
-  primitives/primitives → primitives/src-2: 2
-  primitives/primitives → primitives/src-workbench: 2
-  primitives/primitives → primitives/workbench: 1
-  primitives/src → primitives/lens: 2
-  primitives/src → primitives/plan: 2
-  primitives/src → primitives/primitives: 7
-  primitives/src → primitives/src-2: 3
-  primitives/src → primitives/src-workbench: 8
-  primitives/src → primitives/workbench: 1
-  primitives/src-workbench → primitives/primitives: 1
-  primitives/src-workbench → primitives/src: 3
-  primitives/src-workbench → primitives/src-2: 2
+  primitives/primitives → primitives/src-lens: 3
+  primitives/src → primitives/primitives: 1
+  primitives/src → primitives/src-lens: 6
+  primitives/src-lens → primitives/lens: 2
+  primitives/src-lens → primitives/plan: 2
+  primitives/src-lens → primitives/primitives: 8
+  primitives/src-lens → primitives/src: 13
+  primitives/src-lens → primitives/src-workbench: 10
+  primitives/src-workbench → primitives/primitives: 4
+  primitives/src-workbench → primitives/src-lens: 4
   primitives/src-workbench → primitives/workbench: 4
   primitives/workbench → primitives/primitives: 1
   primitives/workbench → primitives/src: 1
-  primitives/workbench → primitives/src-2: 1
+  primitives/workbench → primitives/src-lens: 3
 
 </sub-crossings>
 
@@ -276,11 +315,11 @@ This zone has 7 sub-zone(s):
 
 - **Lens** (`primitives/lens`): 7 files, cohesion 0.86, coupling 0.14
 - **Plan** (`primitives/plan`): 4 files, cohesion 0.8, coupling 0.2
-- **Primitives** (`primitives/primitives`): 4 files, cohesion 0.33, coupling 0.67
-- **Src** (`primitives/src`): 18 files, cohesion 0.75, coupling 0.25
-- **Src 2** (`primitives/src-2`): 5 files, cohesion 0.5, coupling 0.5
-- **Studio Interface Kit** (`primitives/src-workbench`): 8 files, cohesion 0.44, coupling 0.56
-- **Workbench** (`primitives/workbench`): 5 files, cohesion 0.47, coupling 0.53
+- **Primitives** (`primitives/primitives`): 9 files, cohesion 0.51, coupling 0.49
+- **Src** (`primitives/src`): 7 files, cohesion 0.38, coupling 0.63
+- **Src Lens** (`primitives/src-lens`): 21 files, cohesion 0.64, coupling 0.36
+- **Src Workbench** (`primitives/src-workbench`): 7 files, cohesion 0.38, coupling 0.63
+- **Workbench** (`primitives/workbench`): 4 files, cohesion 0.4, coupling 0.6
 
 Detailed sub-zone context available in `zones/{sub-zone-id}/context.md`
 

@@ -1,0 +1,22 @@
+{
+  "id": "tools/src-2",
+  "name": "Src 2",
+  "description": "6 files, primarily TypeScript",
+  "files": [
+    "packages/tools/src/figure.ts",
+    "packages/tools/src/index.ts",
+    "packages/tools/src/local.ts",
+    "packages/tools/src/providers/lens.ts",
+    "packages/tools/src/rungs.ts",
+    "packages/tools/src/space.ts"
+  ],
+  "entryPoints": [
+    "packages/tools/src/index.ts",
+    "packages/tools/src/local.ts",
+    "packages/tools/src/rungs.ts"
+  ],
+  "cohesion": 0.25,
+  "coupling": 0.75,
+  "fileCount": 6,
+  "lineCount": 868
+}

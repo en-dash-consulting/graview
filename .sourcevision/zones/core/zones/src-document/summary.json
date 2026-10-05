@@ -1,0 +1,33 @@
+{
+  "id": "core/src-document",
+  "name": "Src Document",
+  "description": "12 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/conformance/fixtures.ts",
+    "packages/core/src/conformance/index.ts",
+    "packages/core/src/document/compile.ts",
+    "packages/core/src/document/expr/evaluate.ts",
+    "packages/core/src/document/rules.ts",
+    "packages/core/src/document/template.ts",
+    "packages/core/src/index.ts",
+    "packages/core/src/intelligence-bridge.ts",
+    "packages/core/src/presence.ts",
+    "packages/core/src/refusal.ts",
+    "packages/core/src/studio-door.ts",
+    "packages/core/src/temporal/effectivity.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/conformance/fixtures.ts",
+    "packages/core/src/conformance/index.ts",
+    "packages/core/src/document/compile.ts",
+    "packages/core/src/document/expr/evaluate.ts",
+    "packages/core/src/document/rules.ts",
+    "packages/core/src/document/template.ts",
+    "packages/core/src/index.ts",
+    "packages/core/src/presence.ts"
+  ],
+  "cohesion": 0.34,
+  "coupling": 0.66,
+  "fileCount": 12,
+  "lineCount": 3423
+}

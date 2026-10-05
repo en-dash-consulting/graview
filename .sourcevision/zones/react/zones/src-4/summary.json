@@ -1,0 +1,22 @@
+{
+  "id": "react/src-4",
+  "name": "Src 4",
+  "description": "5 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/drawn.ts",
+    "packages/react/src/keyboard.ts",
+    "packages/react/src/local-intelligence.ts",
+    "packages/react/src/motion.ts",
+    "packages/react/src/provider.ts"
+  ],
+  "entryPoints": [
+    "packages/react/src/drawn.ts",
+    "packages/react/src/keyboard.ts",
+    "packages/react/src/local-intelligence.ts",
+    "packages/react/src/motion.ts"
+  ],
+  "cohesion": 0.35,
+  "coupling": 0.65,
+  "fileCount": 5,
+  "lineCount": 455
+}

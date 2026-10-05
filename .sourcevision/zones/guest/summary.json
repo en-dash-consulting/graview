@@ -1,0 +1,31 @@
+{
+  "id": "guest",
+  "name": "Guest",
+  "description": "8 files, mostly entry points and services; entry points index.ts, protocol.ts, index.ts; imported by Packages.",
+  "files": [
+    "packages/guest/src/guest.ts",
+    "packages/guest/src/host/frame.ts",
+    "packages/guest/src/host/index.ts",
+    "packages/guest/src/host/react.tsx",
+    "packages/guest/src/host/session.ts",
+    "packages/guest/src/index.ts",
+    "packages/guest/src/protocol.ts",
+    "packages/guest/src/react.ts"
+  ],
+  "entryPoints": [
+    "packages/guest/src/host/index.ts",
+    "packages/guest/src/index.ts",
+    "packages/guest/src/protocol.ts"
+  ],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 8,
+  "lineCount": 778,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

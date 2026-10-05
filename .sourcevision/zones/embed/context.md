@@ -5,32 +5,50 @@
 <zone>
 
 Zone: Embed (`embed`)
-Files: 3, Cohesion: 1.00, Coupling: 0.00
+Files: 8, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 3 files, mostly components and utilities; entry points index.ts; imported by Packages.
-Entry points: packages/embed/src/index.ts
-Lines: 626
+Description: 8 files, mostly components and utilities; entry points index.ts, pages.tsx; imported by Packages.
+Entry points: packages/embed/src/index.ts, packages/embed/src/pages.tsx
+Lines: 1495
 
 </zone>
 
 <files>
 
-packages/embed/src/embed.tsx (TypeScript, 598 lines, source)
+packages/embed/src/embed.tsx (TypeScript, 611 lines, source)
 packages/embed/src/fonts.ts (TypeScript, 25 lines, source)
-packages/embed/src/index.ts (TypeScript, 3 lines, source)
+packages/embed/src/frame.tsx (TypeScript, 594 lines, source)
+packages/embed/src/index.ts (TypeScript, 6 lines, source)
+packages/embed/src/pages-content.tsx (TypeScript, 53 lines, source)
+packages/embed/src/pages.tsx (TypeScript, 138 lines, source)
+packages/embed/src/picture-face.tsx (TypeScript, 33 lines, source)
+packages/embed/src/scene-face.tsx (TypeScript, 35 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/embed/src/embed.tsx → packages/embed/src/fonts.ts {fontsLink}
-  packages/embed/src/index.ts → packages/embed/src/embed.tsx {Embed, faceOf, hostScheme, mount, mountWhenNear}
-  packages/embed/src/index.ts → packages/embed/src/embed.tsx {EmbedFace, EmbedHandle, EmbedOptions, EmbedProps}
+  packages/embed/src/embed.tsx → packages/embed/src/frame.tsx {AUTO_SCENE_HEIGHT, FaceBoundary, providerProps, storeOf, Strip, useErrorReport, useFrame, useIntrinsicHeight, useReady, useViews}
+  packages/embed/src/embed.tsx → packages/embed/src/frame.tsx {EmbedFace, EmbedHostContext, FrameOptions}
+  packages/embed/src/embed.tsx → packages/embed/src/pages-content.tsx {*}
+  packages/embed/src/embed.tsx → packages/embed/src/picture-face.tsx {*}
+  packages/embed/src/embed.tsx → packages/embed/src/scene-face.tsx {*}
+  packages/embed/src/frame.tsx → packages/embed/src/fonts.ts {fontsLink}
+  packages/embed/src/index.ts → packages/embed/src/embed.tsx {AUTO_SCENE_HEIGHT, Embed, faceOf, mount, mountWhenNear, preload}
+  packages/embed/src/index.ts → packages/embed/src/embed.tsx {EmbedHandle, EmbedOptions, EmbedProps, EmbedStudio}
   packages/embed/src/index.ts → packages/embed/src/fonts.ts {fontsLink, familiesOf}
+  packages/embed/src/index.ts → packages/embed/src/frame.tsx {hostScheme}
+  packages/embed/src/index.ts → packages/embed/src/frame.tsx {EmbedError, EmbedErrorWhere, EmbedFace, EmbedHostContext, EmbedReady, EmbedRemote, FrameOptions}
+  packages/embed/src/pages-content.tsx → packages/embed/src/frame.tsx {FrameOptions}
+  packages/embed/src/pages.tsx → packages/embed/src/frame.tsx {hostScheme}
+  packages/embed/src/pages.tsx → packages/embed/src/frame.tsx {FaceBoundary, providerProps, storeOf, Strip, useErrorReport, useFrame, useIntrinsicHeight, useReady, useViews}
+  packages/embed/src/pages.tsx → packages/embed/src/frame.tsx {EmbedHostContext, FrameOptions, EmbedError, EmbedErrorWhere, EmbedReady, EmbedRemote}
+  packages/embed/src/pages.tsx → packages/embed/src/pages-content.tsx {PagesContent}
+  packages/embed/src/scene-face.tsx → packages/embed/src/frame.tsx {AUTO_SCENE_HEIGHT}
 
 Incoming (other zones → this zone):
-  ← tests-embed-unit: packages/embed/tests/unit/a-seat-change-keeps-the-store.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/embed.test.ts → packages/embed/src/index.ts; packages/embed/tests/unit/one-name-said-once.test.tsx → packages/embed/src/index.ts
+  ← tests-embed-unit: packages/embed/tests/unit/a-face-is-fetched-as-it-is-drawn.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-face-is-fetched-as-it-is-drawn.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-refuses-in-its-own-words.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-refuses-in-its-own-words.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-says-who-is-offered-the-studio.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-says-who-is-offered-the-studio.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-that-refuses-is-heard.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-that-refuses-is-heard.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-seat-change-keeps-the-store.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-studio-in-a-hosts-page-draws-no-main.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-studio-in-a-hosts-page-draws-no-main.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-holds-inside-a-chat-widget.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-holds-inside-a-chat-widget.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-knows-what-its-host-can-keep.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-knows-what-its-host-can-keep.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-reports-what-went-wrong.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-reports-what-went-wrong.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/embed.test.ts → packages/embed/src/index.ts; packages/embed/tests/unit/one-name-said-once.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/people-are-named-without-a-seat.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/people-are-named-without-a-seat.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-seat-is-a-region-not-a-landmark-inside-one.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-seat-is-a-region-not-a-landmark-inside-one.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-studio-handed-in-is-drawn-at-once.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-studio-is-fetched-only-when-it-is-on.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-workbench-names-itself.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-workbench-names-itself.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/views-reach-every-face.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/views-reach-every-face.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/views-reach-every-face.test.tsx → packages/embed/src/pages.tsx
 
 </imports>
 
@@ -43,6 +61,6 @@ Incoming (other zones → this zone):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 13 internal calls, 0 outgoing, 3 incoming (cohesion: 1, coupling: 0)
+- [call graph] 52 internal calls, 0 outgoing, 28 incoming (cohesion: 1, coupling: 0)
 
 </insights>

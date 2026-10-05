@@ -1,7 +1,7 @@
 {
   "id": "apps/promo",
   "name": "Promo",
-  "description": "34 files, primarily TypeScript",
+  "description": "32 files, primarily TypeScript",
   "files": [
     "apps/promo/src/Composition.tsx",
     "apps/promo/src/FeedComposition.tsx",
@@ -34,13 +34,11 @@
     "apps/promo/src/scenes/OutroBumper.tsx",
     "apps/promo/src/scenes/RelationsDemo.tsx",
     "apps/promo/src/scenes/SettleLockup.tsx",
-    "apps/promo/src/theme.ts",
-    "apps/spike/src/main.ts",
-    "apps/spike/src/three-planes.ts"
+    "apps/promo/src/theme.ts"
   ],
   "entryPoints": [],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 34,
-  "lineCount": 4641
+  "fileCount": 32,
+  "lineCount": 4459
 }

@@ -5,19 +5,18 @@
 <zone>
 
 Zone: Workbench (`primitives/workbench`)
-Files: 5, Cohesion: 0.47, Coupling: 0.53
-Description: 5 files, primarily TypeScript
-Entry points: packages/primitives/src/relation-key.tsx, packages/primitives/src/workbench/activity.tsx, packages/primitives/src/workbench/answer-args.tsx, packages/primitives/src/workbench/inspector.tsx, packages/primitives/src/workbench/trail.tsx
-Lines: 2568
+Files: 4, Cohesion: 0.40, Coupling: 0.60
+Description: 4 files, primarily TypeScript
+Entry points: packages/primitives/src/workbench/activity.tsx, packages/primitives/src/workbench/answer-args.tsx, packages/primitives/src/workbench/inspector.tsx, packages/primitives/src/workbench/trail.tsx
+Lines: 2380
 
 </zone>
 
 <files>
 
-packages/primitives/src/relation-key.tsx (TypeScript, 265 lines, source)
-packages/primitives/src/workbench/activity.tsx (TypeScript, 481 lines, source)
-packages/primitives/src/workbench/answer-args.tsx (TypeScript, 389 lines, source)
-packages/primitives/src/workbench/inspector.tsx (TypeScript, 1146 lines, source)
+packages/primitives/src/workbench/activity.tsx (TypeScript, 507 lines, source)
+packages/primitives/src/workbench/answer-args.tsx (TypeScript, 430 lines, source)
+packages/primitives/src/workbench/inspector.tsx (TypeScript, 1156 lines, source)
 packages/primitives/src/workbench/trail.tsx (TypeScript, 287 lines, source)
 
 </files>
@@ -26,7 +25,6 @@ packages/primitives/src/workbench/trail.tsx (TypeScript, 287 lines, source)
 
 Internal:
   packages/primitives/src/workbench/activity.tsx → packages/primitives/src/workbench/answer-args.tsx {nameOf}
-  packages/primitives/src/workbench/answer-args.tsx → packages/primitives/src/relation-key.tsx {relationWords}
   packages/primitives/src/workbench/inspector.tsx → packages/primitives/src/workbench/answer-args.tsx {AnswerArgs, nameOf}
   packages/primitives/src/workbench/trail.tsx → packages/primitives/src/workbench/answer-args.tsx {nameOf}
 

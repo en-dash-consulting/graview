@@ -1,0 +1,25 @@
+{
+  "id": "tests-guest-unit",
+  "name": "Tests Guest Unit",
+  "description": "Non-source files in packages: a-guest-is-shown-only-what-the-viewer-may-see.test.ts, a-guest-talks-only-over-its-port.test.ts, a-guests-act-is-the-viewers-click.test.tsx (+3 more)",
+  "files": [
+    "packages/guest/tests/unit/a-guest-is-shown-only-what-the-viewer-may-see.test.ts",
+    "packages/guest/tests/unit/a-guest-talks-only-over-its-port.test.ts",
+    "packages/guest/tests/unit/a-guests-act-is-the-viewers-click.test.tsx",
+    "packages/guest/tests/unit/a-hostile-guest-changes-nothing.test.ts",
+    "packages/guest/tests/unit/showroom.ts",
+    "packages/guest/tests/unit/the-frame-is-sandboxed-and-answers-only-its-own.test.ts"
+  ],
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 6,
+  "lineCount": 538,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

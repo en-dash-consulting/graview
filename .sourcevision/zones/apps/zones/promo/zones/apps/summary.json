@@ -1,0 +1,20 @@
+{
+  "id": "apps/promo/apps",
+  "name": "Brand Design System",
+  "description": "4 files, primarily TypeScript",
+  "files": [
+    "apps/promo/src/components/TypePlate.tsx",
+    "apps/promo/src/scenes/OpenBrand.tsx",
+    "apps/promo/src/scenes/SettleLockup.tsx",
+    "apps/promo/src/theme.ts"
+  ],
+  "entryPoints": [
+    "apps/promo/src/scenes/OpenBrand.tsx",
+    "apps/promo/src/scenes/SettleLockup.tsx",
+    "apps/promo/src/theme.ts"
+  ],
+  "cohesion": 0.2,
+  "coupling": 0.8,
+  "fileCount": 4,
+  "lineCount": 371
+}

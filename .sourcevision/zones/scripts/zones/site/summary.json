@@ -1,18 +1,20 @@
 {
   "id": "scripts/site",
   "name": "Site",
-  "description": "6 files, primarily JavaScript",
+  "description": "8 files, primarily JavaScript",
   "files": [
+    "scripts/conformance-fixtures.mjs",
+    "scripts/eval-elm.mjs",
+    "scripts/guest-sandbox.mjs",
+    "scripts/release-approve.mjs",
+    "scripts/release-stage.mjs",
+    "scripts/site-artifact.mjs",
     "scripts/site-css.mjs",
-    "scripts/site-docs.mjs",
-    "scripts/site-numbers.mjs",
-    "scripts/site-progression.mjs",
-    "scripts/smoke-install.mjs",
-    "scripts/verify-products.mjs"
+    "scripts/site-docs.mjs"
   ],
   "entryPoints": [],
   "cohesion": 0,
   "coupling": 0,
-  "fileCount": 6,
-  "lineCount": 1580
+  "fileCount": 8,
+  "lineCount": 1771
 }

@@ -8,13 +8,13 @@ Zone: Apps Spike (`spike`)
 Files: 1, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: Project configuration and manifest files: vite.config.ts
-Lines: 12
+Lines: 14
 
 </zone>
 
 <files>
 
-apps/spike/vite.config.ts (TypeScript, 12 lines, config)
+apps/spike/vite.config.ts (TypeScript, 14 lines, config)
 
 </files>
 

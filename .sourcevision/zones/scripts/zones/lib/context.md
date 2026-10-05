@@ -5,29 +5,29 @@
 <zone>
 
 Zone: Lib (`scripts/lib`)
-Files: 5, Cohesion: 0.62, Coupling: 0.38
+Files: 5, Cohesion: 0.73, Coupling: 0.27
 Description: 5 files, primarily JavaScript
-Entry points: scripts/lib/journeys.mjs, scripts/lib/watch.mjs
-Lines: 2021
+Entry points: scripts/lib/bundle-budget.mjs, scripts/lib/readme-exports.mjs
+Lines: 1254
 
 </zone>
 
 <files>
 
-scripts/lib/journeys.mjs (JavaScript, 1201 lines, build)
-scripts/lib/watch-acknowledged.mjs (JavaScript, 25 lines, build)
-scripts/lib/watch.mjs (JavaScript, 319 lines, build)
-scripts/verify-journeys.mjs (JavaScript, 398 lines, build)
-scripts/verify-watch.mjs (JavaScript, 78 lines, build)
+scripts/inspect-pack.mjs (JavaScript, 159 lines, build)
+scripts/lib/bundle-budget.mjs (JavaScript, 191 lines, build)
+scripts/lib/graview-sources.mjs (JavaScript, 26 lines, build)
+scripts/lib/readme-exports.mjs (JavaScript, 87 lines, build)
+scripts/verify-studio.mjs (JavaScript, 791 lines, build)
 
 </files>
 
 <imports>
 
 Internal:
-  scripts/lib/watch.mjs → scripts/lib/watch-acknowledged.mjs {acknowledgedBy}
-  scripts/verify-journeys.mjs → scripts/lib/journeys.mjs {DeadEnd, frictionOf, inStore, JOBS, Person, planJobs, readDeclaration, regressionsOf, storeHookInPage, VARIANTS, variantKey}
-  scripts/verify-journeys.mjs → scripts/lib/watch.mjs {takeViolations}
-  scripts/verify-watch.mjs → scripts/lib/watch.mjs {takeViolations}
+  scripts/inspect-pack.mjs → scripts/lib/bundle-budget.mjs {measureBudgets}
+  scripts/inspect-pack.mjs → scripts/lib/readme-exports.mjs {exportsOf, unexported}
+  scripts/lib/bundle-budget.mjs → scripts/lib/graview-sources.mjs {graviewSources}
+  scripts/verify-studio.mjs → scripts/lib/graview-sources.mjs {graviewSources}
 
 </imports>

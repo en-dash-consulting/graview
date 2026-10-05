@@ -1,7 +1,7 @@
 {
   "id": "apps-discography",
   "name": "Discography",
-  "description": "13 files, mostly components and schemas; entry points app.ts, tracklist.tsx; imported by Apps.",
+  "description": "13 files, mostly components and schemas; entry points app.ts, tracklist.tsx, seats.ts; imported by Tests and Apps.",
   "files": [
     "apps/discography/src/domain/app.ts",
     "apps/discography/src/domain/brand.ts",
@@ -19,6 +19,7 @@
   ],
   "entryPoints": [
     "apps/discography/src/domain/app.ts",
+    "apps/discography/src/ui/seats.ts",
     "apps/discography/src/ui/tracklist.tsx"
   ],
   "cohesion": 1,

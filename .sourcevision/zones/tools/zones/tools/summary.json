@@ -1,0 +1,18 @@
+{
+  "id": "tools/tools",
+  "name": "Document Edit Tools",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/tools/src/edit.ts",
+    "packages/tools/src/frame.ts",
+    "packages/tools/src/pins.ts"
+  ],
+  "entryPoints": [
+    "packages/tools/src/edit.ts",
+    "packages/tools/src/pins.ts"
+  ],
+  "cohesion": 0.44,
+  "coupling": 0.56,
+  "fileCount": 3,
+  "lineCount": 246
+}

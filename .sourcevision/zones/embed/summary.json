@@ -1,19 +1,25 @@
 {
   "id": "embed",
   "name": "Embed",
-  "description": "3 files, mostly components and utilities; entry points index.ts; imported by Packages.",
+  "description": "8 files, mostly components and utilities; entry points index.ts, pages.tsx; imported by Packages.",
   "files": [
     "packages/embed/src/embed.tsx",
     "packages/embed/src/fonts.ts",
-    "packages/embed/src/index.ts"
+    "packages/embed/src/frame.tsx",
+    "packages/embed/src/index.ts",
+    "packages/embed/src/pages-content.tsx",
+    "packages/embed/src/pages.tsx",
+    "packages/embed/src/picture-face.tsx",
+    "packages/embed/src/scene-face.tsx"
   ],
   "entryPoints": [
-    "packages/embed/src/index.ts"
+    "packages/embed/src/index.ts",
+    "packages/embed/src/pages.tsx"
   ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 3,
-  "lineCount": 626,
+  "fileCount": 8,
+  "lineCount": 1495,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

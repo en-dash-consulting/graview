@@ -8,7 +8,7 @@ Zone: Scene (`react/scene`)
 Files: 8, Cohesion: 0.44, Coupling: 0.56
 Description: 8 files, primarily TypeScript
 Entry points: packages/react/src/picking.ts, packages/react/src/rails.ts, packages/react/src/scene-helpers.tsx, packages/react/src/scene-root.tsx, packages/react/src/view-host.tsx
-Lines: 2677
+Lines: 2679
 
 </zone>
 
@@ -20,8 +20,8 @@ packages/react/src/rails.ts (TypeScript, 13 lines, source)
 packages/react/src/scene-camera.ts (TypeScript, 147 lines, source)
 packages/react/src/scene-hand.ts (TypeScript, 381 lines, source)
 packages/react/src/scene-helpers.tsx (TypeScript, 117 lines, source)
-packages/react/src/scene-root.tsx (TypeScript, 1132 lines, source)
-packages/react/src/view-host.tsx (TypeScript, 644 lines, source)
+packages/react/src/scene-root.tsx (TypeScript, 1133 lines, source)
+packages/react/src/view-host.tsx (TypeScript, 645 lines, source)
 
 </files>
 

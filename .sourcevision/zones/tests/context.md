@@ -5,19 +5,33 @@
 <zone>
 
 Zone: Tests (`tests`)
-Files: 4, Cohesion: 1.00, Coupling: 0.00
+Files: 18, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in tests: changesets.test.ts, journeys.test.ts, setup.test.ts (+1 more)
-Lines: 335
+Description: Non-source files in tests: a-declaration-as-a-document.test.ts, a-document-runs-without-code.test.ts, a-hosted-page-keeps-to-its-budget.test.ts (+15 more)
+Lines: 1553
 
 </zone>
 
 <files>
 
-tests/changesets.test.ts (TypeScript, 26 lines, test)
-tests/journeys.test.ts (TypeScript, 74 lines, test)
+tests/a-declaration-as-a-document.test.ts (TypeScript, 40 lines, test)
+tests/a-document-runs-without-code.test.ts (TypeScript, 101 lines, test)
+tests/a-hosted-page-keeps-to-its-budget.test.ts (TypeScript, 81 lines, test)
+tests/a-kind-is-counted-by-its-noun.test.ts (TypeScript, 48 lines, test)
+tests/a-refusal-never-names-your-own-role.test.ts (TypeScript, 47 lines, test)
+tests/an-app-aliases-what-the-framework-imports.test.ts (TypeScript, 53 lines, test)
+tests/changesets.test.ts (TypeScript, 53 lines, test)
+tests/document-compile.test.ts (TypeScript, 193 lines, test)
+tests/every-harness-honours-the-port-base.test.ts (TypeScript, 59 lines, test)
+tests/journeys.test.ts (TypeScript, 128 lines, test)
+tests/readme-exports.test.ts (TypeScript, 24 lines, test)
 tests/setup.test.ts (TypeScript, 120 lines, test)
 tests/site.test.ts (TypeScript, 115 lines, test)
+tests/the-desk-points-at-the-moved-ports.test.ts (TypeScript, 60 lines, test)
+tests/the-embed-keeps-to-its-budget.test.ts (TypeScript, 82 lines, test)
+tests/the-framework-runs-in-workerd.test.ts (TypeScript, 148 lines, test)
+tests/the-studio-is-not-for-everyone.test.ts (TypeScript, 38 lines, test)
+tests/workerd/worker.ts (TypeScript, 163 lines, test)
 
 </files>
 
@@ -25,7 +39,11 @@ tests/site.test.ts (TypeScript, 115 lines, test)
 
 
 Outgoing (this zone → other zones):
-  → scripts: tests/journeys.test.ts → scripts/lib/journeys.mjs
+  → apps: tests/a-refusal-never-names-your-own-role.test.ts → apps/rota/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/rota/src/ui/app.tsx; tests/the-desk-points-at-the-moved-ports.test.ts → apps/launcher/src/domain/survey.ts
+  → apps-discography: tests/a-refusal-never-names-your-own-role.test.ts → apps/discography/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/discography/src/ui/seats.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/discography/src/domain/app.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/discography/src/ui/seats.ts
+  → apps-gauntlet: tests/a-refusal-never-names-your-own-role.test.ts → apps/gauntlet/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/gauntlet/src/ui/seats.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/gauntlet/src/domain/app.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/gauntlet/src/ui/seats.ts
+  → scripts: tests/a-hosted-page-keeps-to-its-budget.test.ts → scripts/lib/hosted-page.mjs; tests/changesets.test.ts → scripts/lib/surfaces.mjs; tests/every-harness-honours-the-port-base.test.ts → scripts/lib/ports.mjs; tests/journeys.test.ts → scripts/lib/journeys.mjs; tests/readme-exports.test.ts → scripts/lib/readme-exports.mjs; tests/the-desk-points-at-the-moved-ports.test.ts → scripts/lib/ports.mjs; tests/the-embed-keeps-to-its-budget.test.ts → scripts/lib/bundle-budget.mjs
+  → tests-core: tests/workerd/worker.ts → packages/core/tests/support/adapter-contract.ts; tests/workerd/worker.ts → packages/core/tests/support/adapter-contract.ts
 
 </imports>
 
@@ -38,6 +56,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 39 internal calls, 5 outgoing, 0 incoming (cohesion: 0.89, coupling: 0.11)
+- [call graph] 98 internal calls, 64 outgoing, 0 incoming (cohesion: 0.6, coupling: 0.4)
 
 </insights>

@@ -12,8 +12,8 @@
     "packages/react/src/view-boundary.tsx",
     "packages/react/src/view-registry.ts"
   ],
-  "cohesion": 0.33,
-  "coupling": 0.67,
+  "cohesion": 0.29,
+  "coupling": 0.71,
   "fileCount": 3,
-  "lineCount": 750
+  "lineCount": 782
 }

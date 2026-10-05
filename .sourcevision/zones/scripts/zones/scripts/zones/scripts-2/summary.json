@@ -1,0 +1,18 @@
+{
+  "id": "scripts/scripts/scripts-2",
+  "name": "Scripts 2",
+  "description": "6 files, primarily JavaScript",
+  "files": [
+    "scripts/progression.mjs",
+    "scripts/rehearse-studio.mjs",
+    "scripts/smoke-create.mjs",
+    "scripts/verify-lines.mjs",
+    "scripts/verify-panning.mjs",
+    "scripts/verify-site.mjs"
+  ],
+  "entryPoints": [],
+  "cohesion": 0,
+  "coupling": 1,
+  "fileCount": 6,
+  "lineCount": 2462
+}

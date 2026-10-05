@@ -1,0 +1,26 @@
+{
+  "id": "capabilities-formats",
+  "name": "Capabilities Formats",
+  "description": "3 files, mostly utilities; entry points capabilities.ts, formats.ts, version.ts; imports Core Graph and Core; imported by Core.",
+  "files": [
+    "packages/core/src/capabilities.ts",
+    "packages/core/src/formats.ts",
+    "packages/core/src/version.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/capabilities.ts",
+    "packages/core/src/formats.ts",
+    "packages/core/src/version.ts"
+  ],
+  "cohesion": 0.55,
+  "coupling": 0.45,
+  "fileCount": 3,
+  "lineCount": 137,
+  "riskMetrics": {
+    "cohesion": 0.55,
+    "coupling": 0.45,
+    "riskScore": 0.44999999999999996,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

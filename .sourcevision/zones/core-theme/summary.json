@@ -1,0 +1,32 @@
+{
+  "id": "core-theme",
+  "name": "Core Theme",
+  "description": "6 files, mostly utilities and types; entry points types.ts, brand.ts, derive.ts; imports Core; imported by Core and Core Cli.",
+  "files": [
+    "packages/core/src/cli/check/brand.ts",
+    "packages/core/src/theme/contrast.ts",
+    "packages/core/src/theme/derive.ts",
+    "packages/core/src/theme/kit.ts",
+    "packages/core/src/theme/palettes.ts",
+    "packages/core/src/theme/types.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/cli/check/brand.ts",
+    "packages/core/src/theme/contrast.ts",
+    "packages/core/src/theme/derive.ts",
+    "packages/core/src/theme/kit.ts",
+    "packages/core/src/theme/palettes.ts",
+    "packages/core/src/theme/types.ts"
+  ],
+  "cohesion": 0.64,
+  "coupling": 0.36,
+  "fileCount": 6,
+  "lineCount": 1078,
+  "riskMetrics": {
+    "cohesion": 0.64,
+    "coupling": 0.36,
+    "riskScore": 0.36,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

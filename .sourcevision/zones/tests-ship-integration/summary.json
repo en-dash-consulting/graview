@@ -1,0 +1,35 @@
+{
+  "id": "tests-ship-integration",
+  "name": "Tests Ship Integration",
+  "description": "Non-source files in packages: a-client-that-falls-behind-adopts-the-servers-state.test.ts, a-declaration-swap-carries-the-hosts-wiring.test.ts, a-live-client-a-host-can-observe.test.ts (+13 more)",
+  "files": [
+    "packages/ship/tests/integration/a-client-that-falls-behind-adopts-the-servers-state.test.ts",
+    "packages/ship/tests/integration/a-declaration-swap-carries-the-hosts-wiring.test.ts",
+    "packages/ship/tests/integration/a-live-client-a-host-can-observe.test.ts",
+    "packages/ship/tests/integration/a-live-wire.test.ts",
+    "packages/ship/tests/integration/a-refusal-says-why-on-the-wire.test.ts",
+    "packages/ship/tests/integration/a-socket-holds-presence-without-a-heartbeat.test.ts",
+    "packages/ship/tests/integration/a-view-claims-its-channel-on-the-wire.test.ts",
+    "packages/ship/tests/integration/a-visitor-who-goes-is-said-to-go.test.ts",
+    "packages/ship/tests/integration/a-wait-is-read-in-the-unit-it-is-said-in.test.ts",
+    "packages/ship/tests/integration/an-app-held-read-only-says-so.test.ts",
+    "packages/ship/tests/integration/busy-is-not-refused.test.ts",
+    "packages/ship/tests/integration/serve.test.ts",
+    "packages/ship/tests/integration/the-declaration-changes-under-open-tabs.test.ts",
+    "packages/ship/tests/integration/the-local-store-takes-the-hosts-policy.test.ts",
+    "packages/ship/tests/integration/unavailable-is-waited-out.test.ts",
+    "packages/ship/tests/integration/version-skew-on-the-wire.test.ts"
+  ],
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 16,
+  "lineCount": 3358,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

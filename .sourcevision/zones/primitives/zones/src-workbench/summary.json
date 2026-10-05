@@ -1,14 +1,13 @@
 {
   "id": "primitives/src-workbench",
-  "name": "Studio Interface Kit",
-  "description": "8 files, primarily TypeScript",
+  "name": "Src Workbench",
+  "description": "7 files, primarily TypeScript",
   "files": [
     "packages/primitives/src/find.tsx",
     "packages/primitives/src/installation.tsx",
     "packages/primitives/src/places.tsx",
     "packages/primitives/src/shell.tsx",
     "packages/primitives/src/workbench/agent-seat.tsx",
-    "packages/primitives/src/workbench/back-out.tsx",
     "packages/primitives/src/workbench/following.tsx",
     "packages/primitives/src/workbench/index.tsx"
   ],
@@ -19,8 +18,8 @@
     "packages/primitives/src/shell.tsx",
     "packages/primitives/src/workbench/index.tsx"
   ],
-  "cohesion": 0.44,
-  "coupling": 0.56,
-  "fileCount": 8,
-  "lineCount": 1546
+  "cohesion": 0.38,
+  "coupling": 0.63,
+  "fileCount": 7,
+  "lineCount": 1299
 }

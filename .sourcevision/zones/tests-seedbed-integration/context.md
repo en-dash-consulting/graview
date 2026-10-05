@@ -8,7 +8,7 @@ Zone: Tests Seedbed Integration (`tests-seedbed-integration`)
 Files: 4, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: Non-source files in apps: acceptance.test.tsx, chapters.test.ts, design-keyboard.test.tsx (+1 more)
-Lines: 854
+Lines: 857
 
 </zone>
 
@@ -17,7 +17,7 @@ Lines: 854
 apps/seedbed/tests/integration/acceptance.test.tsx (TypeScript, 149 lines, test)
 apps/seedbed/tests/integration/chapters.test.ts (TypeScript, 341 lines, test)
 apps/seedbed/tests/integration/design-keyboard.test.tsx (TypeScript, 77 lines, test)
-apps/seedbed/tests/integration/embed.test.tsx (TypeScript, 287 lines, test)
+apps/seedbed/tests/integration/embed.test.tsx (TypeScript, 290 lines, test)
 
 </files>
 
@@ -25,7 +25,7 @@ apps/seedbed/tests/integration/embed.test.tsx (TypeScript, 287 lines, test)
 
 
 Outgoing (this zone → other zones):
-  → apps-seedbed: apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/app.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/schema.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/app.tsx; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/views.tsx
+  → apps: apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/app.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/schema.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/app.tsx; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/views.tsx
 
 </imports>
 

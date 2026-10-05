@@ -1026,14 +1026,14 @@
     {
       "path": "apps/launcher/src/domain/survey.ts",
       "archetype": "model",
-      "confidence": 0.65,
+      "confidence": 0.7,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "model",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.65",
-          "weight": 0.65
+          "detail": "Domain folder structure indicates a domain model defining survey data shape and operations",
+          "weight": 0.7
         }
       ]
     },
@@ -1876,14 +1876,14 @@
     {
       "path": "apps/seedbed/src/domain/chapters.ts",
       "archetype": "model",
-      "confidence": 0.64,
+      "confidence": 0.54,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "model",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.64",
-          "weight": 0.64
+          "detail": "Jev jev-1.13.0 chose with probability 0.54",
+          "weight": 0.54
         }
       ]
     },
@@ -2386,6 +2386,20 @@
       ]
     },
     {
+      "path": "packages/core/src/capabilities.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
       "path": "packages/core/src/city.ts",
       "archetype": "utility",
       "confidence": 0.7,
@@ -2642,6 +2656,20 @@
       ]
     },
     {
+      "path": "packages/core/src/cli/check/views.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
       "path": "packages/core/src/cli/create.ts",
       "archetype": "utility",
       "confidence": 0.7,
@@ -2707,7 +2735,356 @@
       ]
     },
     {
+      "path": "packages/core/src/conformance/fixtures.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/conformance/index.ts",
+      "archetype": "entrypoint",
+      "secondaryArchetypes": [
+        "utility"
+      ],
+      "confidence": 0.8,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "entrypoint",
+          "signalKind": "filename",
+          "detail": "filename \"index.ts\" matches ^index\\.[tj]sx?$",
+          "weight": 0.8
+        },
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/canonical.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/compile.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/diff.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/edit.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/expr/analyze.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/expr/evaluate.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/expr/index.ts",
+      "archetype": "entrypoint",
+      "secondaryArchetypes": [
+        "utility"
+      ],
+      "confidence": 0.8,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "entrypoint",
+          "signalKind": "filename",
+          "detail": "filename \"index.ts\" matches ^index\\.[tj]sx?$",
+          "weight": 0.8
+        },
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/expr/parse.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/expr/print.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/findings.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/graview-template.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/index.ts",
+      "archetype": "entrypoint",
+      "secondaryArchetypes": [
+        "utility"
+      ],
+      "confidence": 0.8,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "entrypoint",
+          "signalKind": "filename",
+          "detail": "filename \"index.ts\" matches ^index\\.[tj]sx?$",
+          "weight": 0.8
+        },
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/migrate.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/patch.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/rules.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/schema.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/template.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/to-document.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/upgrade.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/document/views.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
       "path": "packages/core/src/extend.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/formats.ts",
       "archetype": "utility",
       "confidence": 0.7,
       "source": "algorithmic",
@@ -2837,6 +3214,20 @@
       ]
     },
     {
+      "path": "packages/core/src/integrity.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
       "path": "packages/core/src/intelligence-bridge.ts",
       "archetype": "utility",
       "confidence": 0.7,
@@ -2884,6 +3275,20 @@
           "signalKind": "filename",
           "detail": "filename \"types.ts\" matches ^types\\.[tj]sx?$",
           "weight": 0.9
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/labels.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
         }
       ]
     },
@@ -2995,7 +3400,49 @@
       ]
     },
     {
+      "path": "packages/core/src/mutations/words.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
       "path": "packages/core/src/ops/log.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/ops/revisions.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/ops/served.ts",
       "archetype": "utility",
       "confidence": 0.7,
       "source": "algorithmic",
@@ -3046,7 +3493,49 @@
       ]
     },
     {
+      "path": "packages/core/src/ops/withheld.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/ops/writers.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
       "path": "packages/core/src/permissions/policy.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/permissions/sight.ts",
       "archetype": "utility",
       "confidence": 0.7,
       "source": "algorithmic",
@@ -3084,6 +3573,20 @@
     },
     {
       "path": "packages/core/src/persistence/memory.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/persistence/sql.ts",
       "archetype": "utility",
       "confidence": 0.7,
       "source": "algorithmic",
@@ -3148,7 +3651,35 @@
       ]
     },
     {
+      "path": "packages/core/src/refusal.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
       "path": "packages/core/src/scaffold/domain.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/scaffold/from-template.ts",
       "archetype": "utility",
       "confidence": 0.7,
       "source": "algorithmic",
@@ -3310,6 +3841,29 @@
       ]
     },
     {
+      "path": "packages/core/src/schema/path.ts",
+      "archetype": "utility",
+      "secondaryArchetypes": [
+        "schema"
+      ],
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        },
+        {
+          "archetypeId": "schema",
+          "signalKind": "directory",
+          "detail": "path contains \"/schema/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
       "path": "packages/core/src/schema/schema.ts",
       "archetype": "utility",
       "secondaryArchetypes": [
@@ -3363,7 +3917,44 @@
       ]
     },
     {
+      "path": "packages/core/src/schema/zod.ts",
+      "archetype": "utility",
+      "secondaryArchetypes": [
+        "schema"
+      ],
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        },
+        {
+          "archetypeId": "schema",
+          "signalKind": "directory",
+          "detail": "path contains \"/schema/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
       "path": "packages/core/src/search.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/seen.ts",
       "archetype": "utility",
       "confidence": 0.7,
       "source": "algorithmic",
@@ -3591,6 +4182,34 @@
       ]
     },
     {
+      "path": "packages/core/src/validate-graph.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/core/src/version.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "directory",
+          "detail": "path contains \"/core/\"",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
       "path": "packages/core/src/views/types.ts",
       "archetype": "types",
       "secondaryArchetypes": [
@@ -3705,6 +4324,20 @@
       ]
     },
     {
+      "path": "packages/embed/src/frame.tsx",
+      "archetype": "component",
+      "confidence": 0.4,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "component",
+          "signalKind": "filename",
+          "detail": "filename \"frame.tsx\" matches \\.[tj]sx$",
+          "weight": 0.4
+        }
+      ]
+    },
+    {
       "path": "packages/embed/src/index.ts",
       "archetype": "entrypoint",
       "confidence": 0.8,
@@ -3715,6 +4348,62 @@
           "signalKind": "filename",
           "detail": "filename \"index.ts\" matches ^index\\.[tj]sx?$",
           "weight": 0.8
+        }
+      ]
+    },
+    {
+      "path": "packages/embed/src/pages-content.tsx",
+      "archetype": "component",
+      "confidence": 0.4,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "component",
+          "signalKind": "filename",
+          "detail": "filename \"pages-content.tsx\" matches \\.[tj]sx$",
+          "weight": 0.4
+        }
+      ]
+    },
+    {
+      "path": "packages/embed/src/pages.tsx",
+      "archetype": "component",
+      "confidence": 0.4,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "component",
+          "signalKind": "filename",
+          "detail": "filename \"pages.tsx\" matches \\.[tj]sx$",
+          "weight": 0.4
+        }
+      ]
+    },
+    {
+      "path": "packages/embed/src/picture-face.tsx",
+      "archetype": "component",
+      "confidence": 0.4,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "component",
+          "signalKind": "filename",
+          "detail": "filename \"picture-face.tsx\" matches \\.[tj]sx$",
+          "weight": 0.4
+        }
+      ]
+    },
+    {
+      "path": "packages/embed/src/scene-face.tsx",
+      "archetype": "component",
+      "confidence": 0.4,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "component",
+          "signalKind": "filename",
+          "detail": "filename \"scene-face.tsx\" matches \\.[tj]sx$",
+          "weight": 0.4
         }
       ]
     },
@@ -3747,6 +4436,118 @@
       ]
     },
     {
+      "path": "packages/guest/src/guest.ts",
+      "archetype": "entrypoint",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "entrypoint",
+          "signalKind": "path",
+          "detail": "Main entry point for the guest package",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/guest/src/host/frame.ts",
+      "archetype": "service",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "service",
+          "signalKind": "path",
+          "detail": "Host-side frame coordination and setup for the guest-view protocol",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/guest/src/host/index.ts",
+      "archetype": "entrypoint",
+      "confidence": 0.8,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "entrypoint",
+          "signalKind": "filename",
+          "detail": "filename \"index.ts\" matches ^index\\.[tj]sx?$",
+          "weight": 0.8
+        }
+      ]
+    },
+    {
+      "path": "packages/guest/src/host/react.tsx",
+      "archetype": "component",
+      "confidence": 0.4,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "component",
+          "signalKind": "filename",
+          "detail": "filename \"react.tsx\" matches \\.[tj]sx$",
+          "weight": 0.4
+        }
+      ]
+    },
+    {
+      "path": "packages/guest/src/host/session.ts",
+      "archetype": "service",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "service",
+          "signalKind": "path",
+          "detail": "Session management and lifecycle on the host side",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/guest/src/index.ts",
+      "archetype": "entrypoint",
+      "confidence": 0.8,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "entrypoint",
+          "signalKind": "filename",
+          "detail": "filename \"index.ts\" matches ^index\\.[tj]sx?$",
+          "weight": 0.8
+        }
+      ]
+    },
+    {
+      "path": "packages/guest/src/protocol.ts",
+      "archetype": "schema",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "schema",
+          "signalKind": "path",
+          "detail": "Guest-view protocol message shapes and validation (per file header)",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/guest/src/react.ts",
+      "archetype": "gateway",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "gateway",
+          "signalKind": "path",
+          "detail": "Re-exports React utilities adapted for guest context",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
       "path": "packages/layout/src/band.ts",
       "archetype": "utility",
       "confidence": 0.7,
@@ -3755,7 +4556,7 @@
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Layout algorithm for band positioning and sizing",
+          "detail": "Layout primitives for bands — shared geometry without UI coupling",
           "weight": 0.7
         }
       ]
@@ -3833,14 +4634,14 @@
     {
       "path": "packages/layout/src/layout.ts",
       "archetype": "utility",
-      "confidence": 0.55,
+      "confidence": 0.7,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.55",
-          "weight": 0.55
+          "detail": "Layout algorithm and city geometry (pure math, not UI)",
+          "weight": 0.7
         }
       ]
     },
@@ -3873,6 +4674,20 @@
       ]
     },
     {
+      "path": "packages/layout/src/sizes.ts",
+      "archetype": "types",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "types",
+          "signalKind": "path",
+          "detail": "Sizing constants shared between layout and views",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
       "path": "packages/layout/src/types.ts",
       "archetype": "types",
       "confidence": 0.9,
@@ -3897,6 +4712,43 @@
           "signalKind": "path",
           "detail": "View state management for URL routing and navigation history",
           "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/layout/src/view.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "path",
+          "detail": "View positioning and geometry separate from layout algorithm",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/pages/src/ask-companion.tsx",
+      "archetype": "page",
+      "secondaryArchetypes": [
+        "component"
+      ],
+      "confidence": 0.8,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "component",
+          "signalKind": "filename",
+          "detail": "filename \"ask-companion.tsx\" matches \\.[tj]sx$",
+          "weight": 0.4
+        },
+        {
+          "archetypeId": "page",
+          "signalKind": "directory",
+          "detail": "path contains \"/pages/\"",
+          "weight": 0.8
         }
       ]
     },
@@ -4332,6 +5184,20 @@
       ]
     },
     {
+      "path": "packages/primitives/src/arrangement.ts",
+      "archetype": "utility",
+      "confidence": 0.51,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "path",
+          "detail": "Jev jev-1.13.0 chose with probability 0.51",
+          "weight": 0.51
+        }
+      ]
+    },
+    {
       "path": "packages/primitives/src/chat.tsx",
       "archetype": "component",
       "confidence": 0.4,
@@ -4369,6 +5235,20 @@
           "archetypeId": "component",
           "signalKind": "filename",
           "detail": "filename \"connections.tsx\" matches \\.[tj]sx$",
+          "weight": 0.4
+        }
+      ]
+    },
+    {
+      "path": "packages/primitives/src/default-view.tsx",
+      "archetype": "component",
+      "confidence": 0.4,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "component",
+          "signalKind": "filename",
+          "detail": "filename \"default-view.tsx\" matches \\.[tj]sx$",
           "weight": 0.4
         }
       ]
@@ -4426,6 +5306,34 @@
           "signalKind": "filename",
           "detail": "filename \"find.tsx\" matches \\.[tj]sx$",
           "weight": 0.4
+        }
+      ]
+    },
+    {
+      "path": "packages/primitives/src/frame.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "path",
+          "detail": "Frame rendering primitives — geometry without workbench dependencies",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/primitives/src/framework-views.ts",
+      "archetype": "component",
+      "confidence": 0.64,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "component",
+          "signalKind": "path",
+          "detail": "Jev jev-1.13.0 chose with probability 0.64",
+          "weight": 0.64
         }
       ]
     },
@@ -4738,6 +5646,20 @@
       ]
     },
     {
+      "path": "packages/primitives/src/pages.ts",
+      "archetype": "page",
+      "confidence": 0.59,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "page",
+          "signalKind": "path",
+          "detail": "Jev jev-1.13.0 chose with probability 0.59",
+          "weight": 0.59
+        }
+      ]
+    },
+    {
       "path": "packages/primitives/src/places.tsx",
       "archetype": "component",
       "confidence": 0.4,
@@ -4887,6 +5809,34 @@
       ]
     },
     {
+      "path": "packages/primitives/src/spec-css.ts",
+      "archetype": "types",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "types",
+          "signalKind": "path",
+          "detail": "CSS specifications and constants",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/primitives/src/spec-views.tsx",
+      "archetype": "component",
+      "confidence": 0.4,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "component",
+          "signalKind": "filename",
+          "detail": "filename \"spec-views.tsx\" matches \\.[tj]sx$",
+          "weight": 0.4
+        }
+      ]
+    },
+    {
       "path": "packages/primitives/src/theme.ts",
       "archetype": "types",
       "confidence": 0.7,
@@ -4895,8 +5845,22 @@
         {
           "archetypeId": "types",
           "signalKind": "path",
-          "detail": "Visual system design constants, color schemes, and depth definitions",
+          "detail": "Visual design tokens and color system definitions",
           "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/primitives/src/view-doors.tsx",
+      "archetype": "component",
+      "confidence": 0.4,
+      "source": "algorithmic",
+      "evidence": [
+        {
+          "archetypeId": "component",
+          "signalKind": "filename",
+          "detail": "filename \"view-doors.tsx\" matches \\.[tj]sx$",
+          "weight": 0.4
         }
       ]
     },
@@ -5051,14 +6015,28 @@
     },
     {
       "path": "packages/react/src/activity.ts",
-      "archetype": "service",
+      "archetype": "hook",
       "confidence": 0.7,
       "source": "llm",
       "evidence": [
         {
-          "archetypeId": "service",
+          "archetypeId": "hook",
           "signalKind": "path",
-          "detail": "Activity tracking and orchestration in React binding",
+          "detail": "Custom React hook for activity tracking or monitoring",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/react/src/affordances.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "path",
+          "detail": "Utilities determining available UI affordances and actions",
           "weight": 0.7
         }
       ]
@@ -5066,14 +6044,14 @@
     {
       "path": "packages/react/src/animation.ts",
       "archetype": "utility",
-      "confidence": 0.66,
+      "confidence": 0.62,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.66",
-          "weight": 0.66
+          "detail": "Jev jev-1.13.0 chose with probability 0.62",
+          "weight": 0.62
         }
       ]
     },
@@ -5135,15 +6113,15 @@
     },
     {
       "path": "packages/react/src/drawn.ts",
-      "archetype": "utility",
-      "confidence": 0.7,
+      "archetype": "component",
+      "confidence": 0.49,
       "source": "llm",
       "evidence": [
         {
-          "archetypeId": "utility",
+          "archetypeId": "component",
           "signalKind": "path",
-          "detail": "Rendering state infrastructure for the React binding",
-          "weight": 0.7
+          "detail": "Jev jev-1.13.0 chose with probability 0.49",
+          "weight": 0.49
         }
       ]
     },
@@ -5164,14 +6142,14 @@
     {
       "path": "packages/react/src/hooks.ts",
       "archetype": "hook",
-      "confidence": 0.97,
+      "confidence": 0.95,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "hook",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.97",
-          "weight": 0.97
+          "detail": "Jev jev-1.13.0 chose with probability 0.95",
+          "weight": 0.95
         }
       ]
     },
@@ -5317,15 +6295,29 @@
     },
     {
       "path": "packages/react/src/presence.ts",
-      "archetype": "service",
+      "archetype": "utility",
       "confidence": 0.7,
       "source": "llm",
       "evidence": [
         {
-          "archetypeId": "service",
+          "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Coordinates presence state updates and synchronization in React context",
+          "detail": "Presence-related utilities and helpers for React components",
           "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/react/src/provider.ts",
+      "archetype": "component",
+      "confidence": 0.73,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "component",
+          "signalKind": "path",
+          "detail": "Jev jev-1.13.0 chose with probability 0.73",
+          "weight": 0.73
         }
       ]
     },
@@ -5359,17 +6351,9 @@
     },
     {
       "path": "packages/react/src/robot.ts",
-      "archetype": "service",
-      "confidence": 0.7,
-      "source": "llm",
-      "evidence": [
-        {
-          "archetypeId": "service",
-          "signalKind": "path",
-          "detail": "Orchestrates robot/automation behaviors within React bindings",
-          "weight": 0.7
-        }
-      ]
+      "archetype": null,
+      "confidence": 0,
+      "source": "algorithmic"
     },
     {
       "path": "packages/react/src/routes.ts",
@@ -5401,15 +6385,15 @@
     },
     {
       "path": "packages/react/src/scene-hand.ts",
-      "archetype": "component",
-      "confidence": 0.74,
+      "archetype": "utility",
+      "confidence": 0.7,
       "source": "llm",
       "evidence": [
         {
-          "archetypeId": "component",
+          "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.74",
-          "weight": 0.74
+          "detail": "Scene and hand interaction helper functions and utilities",
+          "weight": 0.7
         }
       ]
     },
@@ -5486,14 +6470,14 @@
     {
       "path": "packages/react/src/settings.ts",
       "archetype": "config",
-      "confidence": 0.73,
+      "confidence": 0.76,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "config",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.73",
-          "weight": 0.73
+          "detail": "Jev jev-1.13.0 chose with probability 0.76",
+          "weight": 0.76
         }
       ]
     },
@@ -5528,14 +6512,14 @@
     {
       "path": "packages/react/src/view-registry.ts",
       "archetype": "utility",
-      "confidence": 0.62,
+      "confidence": 0.61,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.62",
-          "weight": 0.62
+          "detail": "Jev jev-1.13.0 chose with probability 0.61",
+          "weight": 0.61
         }
       ]
     },
@@ -5694,14 +6678,14 @@
     {
       "path": "packages/ship/src/browser-adapter.ts",
       "archetype": "utility",
-      "confidence": 0.62,
+      "confidence": 0.64,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.62",
-          "weight": 0.62
+          "detail": "Jev jev-1.13.0 chose with probability 0.64",
+          "weight": 0.64
         }
       ]
     },
@@ -5714,7 +6698,7 @@
         {
           "archetypeId": "entrypoint",
           "signalKind": "path",
-          "detail": "Browser entry point re-exporting @graview/ship APIs safe for bundled page code",
+          "detail": "Explicit browser entry point exporting filesystem-free APIs for bundled apps",
           "weight": 0.7
         }
       ]
@@ -5755,43 +6739,57 @@
     },
     {
       "path": "packages/ship/src/export.ts",
-      "archetype": "service",
-      "confidence": 0.7,
+      "archetype": "entrypoint",
+      "confidence": 0.54,
       "source": "llm",
       "evidence": [
         {
-          "archetypeId": "service",
+          "archetypeId": "entrypoint",
           "signalKind": "path",
-          "detail": "Export operation orchestration and coordination",
-          "weight": 0.7
+          "detail": "Jev jev-1.13.0 chose with probability 0.54",
+          "weight": 0.54
         }
       ]
     },
     {
       "path": "packages/ship/src/file-adapter.ts",
       "archetype": "utility",
-      "confidence": 0.68,
+      "confidence": 0.65,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.68",
-          "weight": 0.68
+          "detail": "Jev jev-1.13.0 chose with probability 0.65",
+          "weight": 0.65
+        }
+      ]
+    },
+    {
+      "path": "packages/ship/src/handler.ts",
+      "archetype": "route-handler",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "route-handler",
+          "signalKind": "path",
+          "detail": "HTTP request handler for the ship server",
+          "weight": 0.7
         }
       ]
     },
     {
       "path": "packages/ship/src/health.ts",
       "archetype": "utility",
-      "confidence": 0.44,
+      "confidence": 0.53,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.44",
-          "weight": 0.44
+          "detail": "Jev jev-1.13.0 chose with probability 0.53",
+          "weight": 0.53
         }
       ]
     },
@@ -5806,6 +6804,48 @@
           "signalKind": "filename",
           "detail": "filename \"index.ts\" matches ^index\\.[tj]sx?$",
           "weight": 0.8
+        }
+      ]
+    },
+    {
+      "path": "packages/ship/src/live-protocol.ts",
+      "archetype": "schema",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "schema",
+          "signalKind": "path",
+          "detail": "Runtime protocol definitions for live/real-time synchronization",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/ship/src/live.ts",
+      "archetype": "service",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "service",
+          "signalKind": "path",
+          "detail": "Service layer implementing live features and real-time synchronization",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/ship/src/meta.ts",
+      "archetype": "types",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "types",
+          "signalKind": "path",
+          "detail": "Metadata constants and type definitions",
+          "weight": 0.7
         }
       ]
     },
@@ -5825,15 +6865,15 @@
     },
     {
       "path": "packages/ship/src/open-store.ts",
-      "archetype": "service",
-      "confidence": 0.7,
+      "archetype": "store",
+      "confidence": 0.46,
       "source": "llm",
       "evidence": [
         {
-          "archetypeId": "service",
+          "archetypeId": "store",
           "signalKind": "path",
-          "detail": "Store access and initialization service coordinating data persistence",
-          "weight": 0.7
+          "detail": "Jev jev-1.13.0 chose with probability 0.46",
+          "weight": 0.46
         }
       ]
     },
@@ -5868,28 +6908,56 @@
     {
       "path": "packages/ship/src/remote.ts",
       "archetype": "service",
-      "confidence": 0.48,
+      "confidence": 0.58,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "service",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.48",
-          "weight": 0.48
+          "detail": "Jev jev-1.13.0 chose with probability 0.58",
+          "weight": 0.58
+        }
+      ]
+    },
+    {
+      "path": "packages/ship/src/runtime.ts",
+      "archetype": "entrypoint",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "entrypoint",
+          "signalKind": "path",
+          "detail": "Explicit runtime entry point for server-side JavaScript runtimes",
+          "weight": 0.7
+        }
+      ]
+    },
+    {
+      "path": "packages/ship/src/seat-headers.ts",
+      "archetype": "schema",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "schema",
+          "signalKind": "path",
+          "detail": "HTTP header structure definitions for seat identification",
+          "weight": 0.7
         }
       ]
     },
     {
       "path": "packages/ship/src/serve.ts",
       "archetype": "service",
-      "confidence": 0.45,
+      "confidence": 0.7,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "service",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.45",
-          "weight": 0.45
+          "detail": "Service layer implementing the store server and HTTP serving",
+          "weight": 0.7
         }
       ]
     },
@@ -5909,31 +6977,23 @@
     },
     {
       "path": "packages/ship/src/source-edit.ts",
-      "archetype": "utility",
-      "confidence": 0.68,
+      "archetype": "service",
+      "confidence": 0.7,
       "source": "llm",
       "evidence": [
         {
-          "archetypeId": "utility",
+          "archetypeId": "service",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.68",
-          "weight": 0.68
+          "detail": "Service layer orchestrating source edit operations",
+          "weight": 0.7
         }
       ]
     },
     {
       "path": "packages/ship/src/steps.ts",
-      "archetype": "model",
-      "confidence": 0.7,
-      "source": "llm",
-      "evidence": [
-        {
-          "archetypeId": "model",
-          "signalKind": "path",
-          "detail": "Migration step definitions — data structures for op-log migrations within the ship persistence layer",
-          "weight": 0.7
-        }
-      ]
+      "archetype": null,
+      "confidence": 0,
+      "source": "algorithmic"
     },
     {
       "path": "packages/ship/src/studio-door.ts",
@@ -5966,6 +7026,20 @@
           "signalKind": "path",
           "detail": "Jev jev-1.13.0 chose with probability 0.48",
           "weight": 0.48
+        }
+      ]
+    },
+    {
+      "path": "packages/ship/src/websocket.ts",
+      "archetype": "utility",
+      "confidence": 0.58,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "path",
+          "detail": "Jev jev-1.13.0 chose with probability 0.58",
+          "weight": 0.58
         }
       ]
     },
@@ -6020,7 +7094,7 @@
         {
           "archetypeId": "service",
           "signalKind": "path",
-          "detail": "Studio agent orchestrator — handles agent operations (apply, sync-seed, WIRE contract) for graph editing",
+          "detail": "Service layer for agent tool surface and operations",
           "weight": 0.7
         }
       ]
@@ -6032,16 +7106,30 @@
       "source": "algorithmic"
     },
     {
-      "path": "packages/studio/src/from-declaration.ts",
+      "path": "packages/studio/src/edits.ts",
       "archetype": "utility",
-      "confidence": 0.64,
+      "confidence": 0.51,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.64",
-          "weight": 0.64
+          "detail": "Jev jev-1.13.0 chose with probability 0.51",
+          "weight": 0.51
+        }
+      ]
+    },
+    {
+      "path": "packages/studio/src/from-declaration.ts",
+      "archetype": "utility",
+      "confidence": 0.68,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "path",
+          "detail": "Jev jev-1.13.0 chose with probability 0.68",
+          "weight": 0.68
         }
       ]
     },
@@ -6096,7 +7184,7 @@
         {
           "archetypeId": "schema",
           "signalKind": "path",
-          "detail": "Studio meta-schema — runtime validation schema for the declaration graph structure",
+          "detail": "Defines the meta-schema for the studio's declaration model",
           "weight": 0.7
         }
       ]
@@ -6104,14 +7192,14 @@
     {
       "path": "packages/studio/src/migration.ts",
       "archetype": "utility",
-      "confidence": 0.48,
+      "confidence": 0.54,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.48",
-          "weight": 0.48
+          "detail": "Jev jev-1.13.0 chose with probability 0.54",
+          "weight": 0.54
         }
       ]
     },
@@ -6158,7 +7246,7 @@
         {
           "archetypeId": "service",
           "signalKind": "path",
-          "detail": "Studio service layer — main orchestration module (createStudio entry point) coordinating graph editing",
+          "detail": "Core studio service orchestrating the declaration graph and editing interface",
           "weight": 0.7
         }
       ]
@@ -6166,28 +7254,42 @@
     {
       "path": "packages/studio/src/to-declaration.ts",
       "archetype": "utility",
-      "confidence": 0.66,
+      "confidence": 0.74,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.66",
-          "weight": 0.66
+          "detail": "Jev jev-1.13.0 chose with probability 0.74",
+          "weight": 0.74
+        }
+      ]
+    },
+    {
+      "path": "packages/studio/src/uneditable.ts",
+      "archetype": "types",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "types",
+          "signalKind": "path",
+          "detail": "Defines constraints and types for which declaration elements cannot be edited",
+          "weight": 0.7
         }
       ]
     },
     {
       "path": "packages/studio/src/write-in-place.ts",
       "archetype": "utility",
-      "confidence": 0.68,
+      "confidence": 0.64,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.68",
-          "weight": 0.68
+          "detail": "Jev jev-1.13.0 chose with probability 0.64",
+          "weight": 0.64
         }
       ]
     },
@@ -6208,28 +7310,42 @@
     {
       "path": "packages/tools/src/agent/adapters.ts",
       "archetype": "utility",
-      "confidence": 0.62,
+      "confidence": 0.58,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.62",
-          "weight": 0.62
+          "detail": "Jev jev-1.13.0 chose with probability 0.58",
+          "weight": 0.58
         }
       ]
     },
     {
       "path": "packages/tools/src/agent/tools.ts",
       "archetype": "utility",
-      "confidence": 0.62,
+      "confidence": 0.5,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.62",
-          "weight": 0.62
+          "detail": "Jev jev-1.13.0 chose with probability 0.5",
+          "weight": 0.5
+        }
+      ]
+    },
+    {
+      "path": "packages/tools/src/agent/untrusted.ts",
+      "archetype": "utility",
+      "confidence": 0.54,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "path",
+          "detail": "Jev jev-1.13.0 chose with probability 0.54",
+          "weight": 0.54
         }
       ]
     },
@@ -6278,28 +7394,28 @@
     {
       "path": "packages/tools/src/derive.ts",
       "archetype": "utility",
-      "confidence": 0.66,
+      "confidence": 0.64,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.66",
-          "weight": 0.66
+          "detail": "Jev jev-1.13.0 chose with probability 0.64",
+          "weight": 0.64
         }
       ]
     },
     {
       "path": "packages/tools/src/edit.ts",
       "archetype": "utility",
-      "confidence": 0.74,
+      "confidence": 0.73,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.74",
-          "weight": 0.74
+          "detail": "Jev jev-1.13.0 chose with probability 0.73",
+          "weight": 0.73
         }
       ]
     },
@@ -6314,6 +7430,20 @@
           "signalKind": "path",
           "detail": "Jev jev-1.13.0 chose with probability 0.5",
           "weight": 0.5
+        }
+      ]
+    },
+    {
+      "path": "packages/tools/src/frame.ts",
+      "archetype": "types",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "types",
+          "signalKind": "path",
+          "detail": "Defines the frame interface and type contract that every face's tools must satisfy",
+          "weight": 0.7
         }
       ]
     },
@@ -6333,15 +7463,15 @@
     },
     {
       "path": "packages/tools/src/intelligence.ts",
-      "archetype": "utility",
-      "confidence": 0.53,
+      "archetype": "service",
+      "confidence": 0.7,
       "source": "llm",
       "evidence": [
         {
-          "archetypeId": "utility",
+          "archetypeId": "service",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.53",
-          "weight": 0.53
+          "detail": "Provides agent reasoning and intelligence capabilities for tools",
+          "weight": 0.7
         }
       ]
     },
@@ -6354,7 +7484,7 @@
         {
           "archetypeId": "service",
           "signalKind": "path",
-          "detail": "Local implementation of tool providers",
+          "detail": "Provides local execution and state management for tool operations",
           "weight": 0.7
         }
       ]
@@ -6374,16 +7504,44 @@
       ]
     },
     {
-      "path": "packages/tools/src/mcp-stdio.ts",
+      "path": "packages/tools/src/mcp-http.ts",
       "archetype": "utility",
-      "confidence": 0.61,
+      "confidence": 0.45,
       "source": "llm",
       "evidence": [
         {
           "archetypeId": "utility",
           "signalKind": "path",
-          "detail": "Jev jev-1.13.0 chose with probability 0.61",
-          "weight": 0.61
+          "detail": "Jev jev-1.13.0 chose with probability 0.45",
+          "weight": 0.45
+        }
+      ]
+    },
+    {
+      "path": "packages/tools/src/mcp-protocol.ts",
+      "archetype": "utility",
+      "confidence": 0.55,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "path",
+          "detail": "Jev jev-1.13.0 chose with probability 0.55",
+          "weight": 0.55
+        }
+      ]
+    },
+    {
+      "path": "packages/tools/src/mcp-stdio.ts",
+      "archetype": "utility",
+      "confidence": 0.51,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "path",
+          "detail": "Jev jev-1.13.0 chose with probability 0.51",
+          "weight": 0.51
         }
       ]
     },
@@ -6508,16 +7666,24 @@
         {
           "archetypeId": "service",
           "signalKind": "path",
-          "detail": "Provides structural analysis and derived affordances for the agent tool surface in @graview/tools, orchestrating access to graph structure information",
+          "detail": "Provides structure-related tool functionality and derivations",
           "weight": 0.7
         }
       ]
     },
     {
       "path": "packages/tools/src/questions.ts",
-      "archetype": null,
-      "confidence": 0,
-      "source": "algorithmic"
+      "archetype": "service",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "service",
+          "signalKind": "path",
+          "detail": "Service for generating and managing model questions and queries",
+          "weight": 0.7
+        }
+      ]
     },
     {
       "path": "packages/tools/src/run.ts",
@@ -6534,10 +7700,24 @@
       ]
     },
     {
-      "path": "packages/tools/src/space.ts",
+      "path": "packages/tools/src/rungs.ts",
       "archetype": null,
       "confidence": 0,
       "source": "algorithmic"
+    },
+    {
+      "path": "packages/tools/src/space.ts",
+      "archetype": "utility",
+      "confidence": 0.7,
+      "source": "llm",
+      "evidence": [
+        {
+          "archetypeId": "utility",
+          "signalKind": "path",
+          "detail": "Provides validation utilities for checking model proposals against spatial constraints",
+          "weight": 0.7
+        }
+      ]
     },
     {
       "path": "packages/tools/src/types.ts",
@@ -6569,26 +7749,26 @@
     }
   ],
   "summary": {
-    "totalClassified": 375,
-    "totalUnclassified": 17,
+    "totalClassified": 455,
+    "totalUnclassified": 18,
     "byArchetype": {
-      "schema": 20,
-      "model": 8,
-      "entrypoint": 42,
-      "component": 113,
-      "types": 19,
+      "schema": 23,
+      "model": 7,
+      "entrypoint": 50,
+      "component": 124,
+      "types": 24,
       "config": 3,
-      "utility": 125,
-      "service": 21,
-      "route-handler": 3,
-      "store": 2,
-      "page": 17,
-      "hook": 1,
-      "gateway": 1
+      "utility": 172,
+      "service": 22,
+      "route-handler": 4,
+      "gateway": 2,
+      "store": 3,
+      "page": 19,
+      "hook": 2
     },
     "bySource": {
-      "algorithmic": 259,
-      "llm": 133
+      "algorithmic": 313,
+      "llm": 160
     }
   }
 }

@@ -5,24 +5,55 @@
 <zone>
 
 Zone: Tests Ship Unit (`tests-ship-unit`)
-Files: 10, Cohesion: 1.00, Coupling: 0.00
+Files: 41, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in packages: a-migration-is-data.test.ts, browser-adapter.test.ts, default-content-moves-without-a-wipe.test.ts (+7 more)
-Lines: 1476
+Description: Non-source files in packages: a-batch-is-answered-only-to-its-author.test.ts, a-batch-tag-belongs-to-its-first-seat.test.ts, a-build-per-socket-and-a-host-protocol.test.ts (+38 more)
+Lines: 5845
 
 </zone>
 
 <files>
 
+packages/ship/tests/unit/a-batch-is-answered-only-to-its-author.test.ts (TypeScript, 139 lines, test)
+packages/ship/tests/unit/a-batch-tag-belongs-to-its-first-seat.test.ts (TypeScript, 99 lines, test)
+packages/ship/tests/unit/a-build-per-socket-and-a-host-protocol.test.ts (TypeScript, 101 lines, test)
+packages/ship/tests/unit/a-change-is-heard-once-it-is-written.test.ts (TypeScript, 143 lines, test)
+packages/ship/tests/unit/a-compacted-log-keeps-who-made-each-record.test.ts (TypeScript, 115 lines, test)
+packages/ship/tests/unit/a-declaration-number-is-the-hosts.test.ts (TypeScript, 77 lines, test)
+packages/ship/tests/unit/a-failed-flush-is-never-acked.test.ts (TypeScript, 162 lines, test)
+packages/ship/tests/unit/a-handler-takes-every-protocol-option.test.ts (TypeScript, 125 lines, test)
+packages/ship/tests/unit/a-host-admits-a-call-by-what-it-would-do.test.ts (TypeScript, 139 lines, test)
+packages/ship/tests/unit/a-host-routes-its-own-requests.test.ts (TypeScript, 129 lines, test)
+packages/ship/tests/unit/a-live-connection-survives-the-host-sleeping.test.ts (TypeScript, 238 lines, test)
+packages/ship/tests/unit/a-long-lived-log-compacts-behind-an-undo-horizon.test.ts (TypeScript, 179 lines, test)
 packages/ship/tests/unit/a-migration-is-data.test.ts (TypeScript, 77 lines, test)
-packages/ship/tests/unit/browser-adapter.test.ts (TypeScript, 237 lines, test)
-packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts (TypeScript, 182 lines, test)
-packages/ship/tests/unit/ship.test.ts (TypeScript, 250 lines, test)
+packages/ship/tests/unit/a-refusal-in-a-persons-words.test.ts (TypeScript, 82 lines, test)
+packages/ship/tests/unit/a-seat-is-seen-once-and-a-withheld-batch-says-nobody.test.ts (TypeScript, 155 lines, test)
+packages/ship/tests/unit/a-seat-is-served-its-view-at-about-the-cost-of-the-whole-store.test.ts (TypeScript, 143 lines, test)
+packages/ship/tests/unit/a-seat-the-host-lost-is-opened-again.test.ts (TypeScript, 177 lines, test)
+packages/ship/tests/unit/a-served-store-trusts-headers-on-request.test.ts (TypeScript, 18 lines, test)
+packages/ship/tests/unit/a-socket-fits-its-attachment.test.ts (TypeScript, 103 lines, test)
+packages/ship/tests/unit/a-socket-holds-its-presence-whoever-rebuilt-it.test.ts (TypeScript, 73 lines, test)
+packages/ship/tests/unit/a-store-opened-to-verify.test.ts (TypeScript, 83 lines, test)
+packages/ship/tests/unit/a-via-claim-the-host-judges.test.ts (TypeScript, 141 lines, test)
+packages/ship/tests/unit/browser-adapter.test.ts (TypeScript, 253 lines, test)
+packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts (TypeScript, 183 lines, test)
+packages/ship/tests/unit/each-declaration-version-begins-an-epoch.test.ts (TypeScript, 176 lines, test)
+packages/ship/tests/unit/migrations-that-keep-data.test.ts (TypeScript, 42 lines, test)
+packages/ship/tests/unit/no-unseen-id-leaves-the-wire.test.ts (TypeScript, 359 lines, test)
+packages/ship/tests/unit/presence-a-host-can-add-to.test.ts (TypeScript, 225 lines, test)
+packages/ship/tests/unit/ship.test.ts (TypeScript, 345 lines, test)
 packages/ship/tests/unit/the-browser-entry.test.ts (TypeScript, 78 lines, test)
+packages/ship/tests/unit/the-channel-is-the-hosts-word.test.ts (TypeScript, 124 lines, test)
 packages/ship/tests/unit/the-decision-door.test.ts (TypeScript, 88 lines, test)
 packages/ship/tests/unit/the-local-door.test.ts (TypeScript, 131 lines, test)
 packages/ship/tests/unit/the-studio-door.test.ts (TypeScript, 230 lines, test)
-packages/ship/tests/unit/the-wire-is-a-contract.test.ts (TypeScript, 115 lines, test)
+packages/ship/tests/unit/the-three-entries-agree.test.ts (TypeScript, 91 lines, test)
+packages/ship/tests/unit/the-wire-answers-through-a-fetch-handler.test.ts (TypeScript, 194 lines, test)
+packages/ship/tests/unit/the-wire-is-a-contract.test.ts (TypeScript, 117 lines, test)
+packages/ship/tests/unit/the-wire-serves-a-store-the-host-holds.test.ts (TypeScript, 124 lines, test)
+packages/ship/tests/unit/turning-a-module-off-and-on-is-in-history.test.ts (TypeScript, 107 lines, test)
+packages/ship/tests/unit/what-a-seat-may-not-see-never-leaves-the-store.test.ts (TypeScript, 192 lines, test)
 packages/ship/tests/unit/who-is-here-between-tabs.test.ts (TypeScript, 88 lines, test)
 
 </files>
@@ -31,7 +62,8 @@ packages/ship/tests/unit/who-is-here-between-tabs.test.ts (TypeScript, 88 lines,
 
 
 Outgoing (this zone → other zones):
-  → ship: packages/ship/tests/unit/a-migration-is-data.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/a-migration-is-data.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/browser-adapter.test.ts → packages/ship/src/browser.ts; packages/ship/tests/unit/browser-adapter.test.ts → packages/ship/src/browser.ts; packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/ship.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/the-decision-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-local-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-local-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-studio-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-wire-is-a-contract.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/the-wire-is-a-contract.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/who-is-here-between-tabs.test.ts → packages/ship/src/presence.ts
+  → ship: packages/ship/tests/unit/a-batch-is-answered-only-to-its-author.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-batch-is-answered-only-to-its-author.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-batch-tag-belongs-to-its-first-seat.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-batch-tag-belongs-to-its-first-seat.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-build-per-socket-and-a-host-protocol.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/a-build-per-socket-and-a-host-protocol.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/a-change-is-heard-once-it-is-written.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-change-is-heard-once-it-is-written.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-compacted-log-keeps-who-made-each-record.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/a-declaration-number-is-the-hosts.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/a-declaration-number-is-the-hosts.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/a-failed-flush-is-never-acked.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/a-failed-flush-is-never-acked.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/a-handler-takes-every-protocol-option.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-handler-takes-every-protocol-option.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-host-admits-a-call-by-what-it-would-do.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-host-admits-a-call-by-what-it-would-do.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-host-routes-its-own-requests.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-host-routes-its-own-requests.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-live-connection-survives-the-host-sleeping.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-live-connection-survives-the-host-sleeping.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-long-lived-log-compacts-behind-an-undo-horizon.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/a-migration-is-data.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/a-migration-is-data.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/a-refusal-in-a-persons-words.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-refusal-in-a-persons-words.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-seat-is-seen-once-and-a-withheld-batch-says-nobody.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-seat-is-seen-once-and-a-withheld-batch-says-nobody.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-seat-is-served-its-view-at-about-the-cost-of-the-whole-store.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-seat-is-served-its-view-at-about-the-cost-of-the-whole-store.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-seat-the-host-lost-is-opened-again.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-seat-the-host-lost-is-opened-again.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-served-store-trusts-headers-on-request.test.ts → packages/ship/src/cli.ts; packages/ship/tests/unit/a-socket-fits-its-attachment.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-socket-fits-its-attachment.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-socket-holds-its-presence-whoever-rebuilt-it.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-socket-holds-its-presence-whoever-rebuilt-it.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/a-store-opened-to-verify.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/a-via-claim-the-host-judges.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/a-via-claim-the-host-judges.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/browser-adapter.test.ts → packages/ship/src/browser.ts; packages/ship/tests/unit/browser-adapter.test.ts → packages/ship/src/browser.ts; packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/each-declaration-version-begins-an-epoch.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/migrations-that-keep-data.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/migrations-that-keep-data.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/migrations-that-keep-data.test.ts → packages/ship/src/snapshot.ts; packages/ship/tests/unit/no-unseen-id-leaves-the-wire.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/no-unseen-id-leaves-the-wire.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/presence-a-host-can-add-to.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/presence-a-host-can-add-to.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/ship.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/the-channel-is-the-hosts-word.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/the-channel-is-the-hosts-word.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/the-decision-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-local-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-local-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-studio-door.test.ts → packages/ship/src/dev.ts; packages/ship/tests/unit/the-wire-answers-through-a-fetch-handler.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/the-wire-is-a-contract.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/the-wire-is-a-contract.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/the-wire-serves-a-store-the-host-holds.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/the-wire-serves-a-store-the-host-holds.test.ts → packages/ship/src/runtime.ts; packages/ship/tests/unit/turning-a-module-off-and-on-is-in-history.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/what-a-seat-may-not-see-never-leaves-the-store.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/what-a-seat-may-not-see-never-leaves-the-store.test.ts → packages/ship/src/index.ts; packages/ship/tests/unit/who-is-here-between-tabs.test.ts → packages/ship/src/presence.ts
+  → tests-core: packages/ship/tests/unit/no-unseen-id-leaves-the-wire.test.ts → packages/core/tests/support/unseen-worlds.ts; packages/ship/tests/unit/no-unseen-id-leaves-the-wire.test.ts → packages/core/tests/support/unseen-worlds.ts
 
 </imports>
 
@@ -44,6 +76,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 69 internal calls, 139 outgoing, 0 incoming (cohesion: 0.33, coupling: 0.67)
+- [call graph] 530 internal calls, 376 outgoing, 0 incoming (cohesion: 0.58, coupling: 0.42)
 
 </insights>

@@ -5,9 +5,9 @@
 <zone>
 
 Zone: Promo (`apps/promo`)
-Files: 34, Cohesion: 1.00, Coupling: 0.00
-Description: 34 files, primarily TypeScript
-Lines: 4641
+Files: 32, Cohesion: 1.00, Coupling: 0.00
+Description: 32 files, primarily TypeScript
+Lines: 4459
 
 </zone>
 
@@ -45,8 +45,6 @@ apps/promo/src/scenes/OutroBumper.tsx (TypeScript, 21 lines, source)
 apps/promo/src/scenes/RelationsDemo.tsx (TypeScript, 763 lines, source)
 apps/promo/src/scenes/SettleLockup.tsx (TypeScript, 99 lines, source)
 apps/promo/src/theme.ts (TypeScript, 80 lines, source)
-apps/spike/src/main.ts (TypeScript, 20 lines, source)
-apps/spike/src/three-planes.ts (TypeScript, 162 lines, source)
 
 </files>
 
@@ -146,31 +144,36 @@ Internal:
   apps/promo/src/scenes/SettleLockup.tsx → apps/promo/src/camera.ts {beatOpacity}
   apps/promo/src/scenes/SettleLockup.tsx → apps/promo/src/motion.ts {fadeIn, springProgress}
   apps/promo/src/scenes/SettleLockup.tsx → apps/promo/src/theme.ts {beats, colors, fonts, tagline}
-  apps/spike/src/main.ts → apps/spike/src/three-planes.ts {mountThreePlanes}
 
 </imports>
 
 <sub-crossings>
 
 Cross-dependencies between sub-zones:
-  apps/promo/components → apps/promo/promo: 16
+  apps/promo/apps → apps/promo/promo: 5
+  apps/promo/components → apps/promo/apps: 6
+  apps/promo/components → apps/promo/promo: 10
   apps/promo/components → apps/promo/scenes: 2
-  apps/promo/feed → apps/promo/promo: 8
+  apps/promo/feed → apps/promo/apps: 1
+  apps/promo/feed → apps/promo/promo: 7
+  apps/promo/promo → apps/promo/apps: 8
   apps/promo/promo → apps/promo/scenes: 1
-  apps/promo/scenes → apps/promo/promo: 10
+  apps/promo/scenes → apps/promo/apps: 3
+  apps/promo/scenes → apps/promo/promo: 7
+  apps/promo/src → apps/promo/apps: 1
   apps/promo/src → apps/promo/components: 1
   apps/promo/src → apps/promo/feed: 8
-  apps/promo/src → apps/promo/promo: 1
 
 </sub-crossings>
 
 <sub-zones>
 
-This zone has 5 sub-zone(s):
+This zone has 6 sub-zone(s):
 
+- **Brand Design System** (`apps/promo/apps`): 4 files, cohesion 0.2, coupling 0.8
 - **Components** (`apps/promo/components`): 5 files, cohesion 0.3, coupling 0.7
 - **Feed** (`apps/promo/feed`): 8 files, cohesion 0.53, coupling 0.47
-- **Promo** (`apps/promo/promo`): 15 files, cohesion 0.63, coupling 0.38
+- **Promo** (`apps/promo/promo`): 9 files, cohesion 0.41, coupling 0.59
 - **Scenes Components** (`apps/promo/scenes`): 3 files, cohesion 0.24, coupling 0.76
 - **Src** (`apps/promo/src`): 3 files, cohesion 0.29, coupling 0.71
 

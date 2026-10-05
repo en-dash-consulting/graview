@@ -1,9 +1,10 @@
 {
   "id": "react",
   "name": "React",
-  "description": "36 files, mostly components and utilities; entry points index.ts, local-intelligence.ts, picking.ts; imported by Packages.",
+  "description": "38 files, mostly components and utilities; entry points index.ts, local-intelligence.ts, picking.ts; imported by Packages.",
   "files": [
     "packages/react/src/activity.ts",
+    "packages/react/src/affordances.ts",
     "packages/react/src/animation.ts",
     "packages/react/src/captions.ts",
     "packages/react/src/channels.ts",
@@ -23,6 +24,7 @@
     "packages/react/src/plots.tsx",
     "packages/react/src/pointer.ts",
     "packages/react/src/presence.ts",
+    "packages/react/src/provider.ts",
     "packages/react/src/rails.ts",
     "packages/react/src/resolved-view.tsx",
     "packages/react/src/robot.ts",
@@ -59,8 +61,8 @@
   ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 36,
-  "lineCount": 10042,
+  "fileCount": 38,
+  "lineCount": 10240,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,
