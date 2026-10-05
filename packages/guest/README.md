@@ -84,7 +84,7 @@ limits. A second ready from the same worker is dropped. Once it is ready,
 the host sends a heartbeat over the port and the worker's runtime answers
 it; a worker that goes `limits.silentMs` (5 000 by default) without an
 answer — a guest spinning in `while (true)` — is terminated, and
-`onFailure` hears `silent`. A guest that is busy but yields is kept. What the guest draws
+the host is told `silent`. A guest that is busy but yields is kept. What the guest draws
 comes over the port as Remote DOM mutation records, and the host draws only
 the kit (`GUEST_KIT`), with `createKitRenderer`. Both are
 `@graview/guest/host/worker`, apart from the frame's host, so a page that
