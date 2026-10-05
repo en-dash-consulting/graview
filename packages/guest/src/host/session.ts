@@ -1,4 +1,4 @@
-import { labelOf, PermissionDeniedError, type AnySchema, type Principal, type Store } from "@graview/core";
+import { PermissionDeniedError, type AnySchema, type Principal, type Store } from "@graview/core";
 import type { GuestAct, GuestAnswer, GuestEdge, GuestNode, GuestProps, GuestRefusal, HostMessage } from "../protocol.js";
 
 /**
@@ -149,7 +149,10 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  */
 export function plainNode<S extends AnySchema>(store: Store<S>, node: unknown): GuestNode {
   const copy = structuredClone(node) as GuestNode & Record<string, unknown>;
-  return { ...copy, label: labelOf(store.schema.tryDefinition(copy.kind), copy as never) };
+  /* `labelOf`'s rule, said here: core's module for it carries zod, which a page drawing guests need not load. */
+  const definition = store.schema.tryDefinition(copy.kind) as { label?: (node: never) => string } | undefined;
+  const own = copy["label"];
+  return { ...copy, label: definition?.label ? definition.label(copy as never) : typeof own === "string" && own.length > 0 ? own : copy.id };
 }
 
 /**

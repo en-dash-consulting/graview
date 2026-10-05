@@ -4,13 +4,13 @@ import { useEffect, useRef, useState, type ComponentType } from "react";
 import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
 import type { GuestViewInput } from "./session.js";
-import type { WorkerView, WorkerViewFailure, WorkerViewLimits } from "./view.js";
-import type { GuestWorkerSource } from "./worker-start.js";
+import type { WorkerView, WorkerViewCode, WorkerViewFailure, WorkerViewLimits } from "./view.js";
 
 /** A worker view as an app registers it: its manifest, its code, and how far it may go. */
 export interface WorkerViewDefinition {
   readonly manifest: WorkerViewManifest;
-  readonly worker: GuestWorkerSource;
+  /** Its code: `{ source }`, a plain script against the `graview` global (FR-96), or a whole worker script. */
+  readonly worker: WorkerViewCode;
   readonly limits?: WorkerViewLimits;
   /** Who made it, said under it ("Made by Claude for Nick"). */
   readonly author?: string;

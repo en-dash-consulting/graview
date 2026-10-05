@@ -1,4 +1,4 @@
-import { formFields, type AnySchema, type Store } from "@graview/core";
+import type { AnySchema, Store } from "@graview/core";
 import type { WorkerViewManifest } from "./manifest.js";
 import { entryFor, refuse, type Judged, type Press, type PressedField } from "./writes.js";
 
@@ -117,7 +117,8 @@ export function judgePress<S extends AnySchema>(store: Store<S>, manifest: Worke
     if (name in args) return refuse("malformed", `“${name}” is both the bound record and a constant.`);
     args[name] = value;
   }
-  const declared = new Set(formFields(mutation.input).map((field) => field.name));
+  /* The act's arguments, by name: its input object's own keys. */
+  const declared = new Set(Object.keys((mutation.input as { shape?: Record<string, unknown> } | undefined)?.shape ?? {}));
   const seen = new Set<string>();
   for (const field of press.fields) {
     if (!declared.has(field.name) || field.name in args) continue;

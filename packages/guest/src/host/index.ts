@@ -23,6 +23,8 @@ export type { ManifestAct, WorkerViewManifest, WorkerViewPropsInput } from "./ma
 /* Writes that cannot leak (FR-92): when an act from a view's code may apply at all. */
 export { judgeCodeAct, sightIsTotal } from "./writes.js";
 export type { Judged, Press, PressedField } from "./writes.js";
-export type { MountWorkerViewOptions, WorkerView, WorkerViewFailure, WorkerViewLimits } from "./view.js";
+export type { MountWorkerViewOptions, WorkerView, WorkerViewCode, WorkerViewFailure, WorkerViewLimits } from "./view.js";
+/* A view with no build (FR-96): what in its source keeps it from running. */
+export { checkViewSource } from "./view-source.js";
 export { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN } from "../protocol.js";
 export type { GuestProps } from "../protocol.js";

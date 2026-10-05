@@ -154,10 +154,17 @@ export const BUDGETS = [
      * when a worker view is drawn — while `@graview/guest/host` re-exported
      * them, esbuild put them in what the page loads first (16_898 / 6_652).
      * Remote DOM is in neither. Measured at 6_482 / 3_118.
+     *
+     * Raised from 8_000 / 4_000 when a worker view became a place (FR-91,
+     * FR-92, FR-96): `@graview/guest/host` registers one (`registerWorkerView`,
+     * `workerHome`) and judges what it may be handed, ask and run
+     * (`checkManifest`, `workerViewProps`, `judgeCodeAct`, `checkViewSource`)
+     * without a worker. Measured at 11_561 / 5_139; the worker's host and
+     * the open kit are still fetched only when a view is drawn.
      */
     entry: `import { guestView, mountGuestView } from "@graview/guest/host"; globalThis.host = { guestView, mountGuestView };`,
-    minified: 8_000,
-    gzipped: 4_000,
+    minified: 13_000,
+    gzipped: 6_000,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -173,10 +180,13 @@ export const BUDGETS = [
      * time a worker view draws — the next budget — so a page that draws only
      * the kit's guests carries none of them. Measured at 15_229 / 5_727, with
      * `mountWorkerView`'s own few lines and the start the two share.
+     *
+     * Gzipped raised from 6_000 when `mountWorkerView` learned its manifest,
+     * write rules, links and limits (FR-91–FR-94): measured at 15_950 / 6_304.
      */
     entry: `import { mountGuestWorker } from "@graview/guest/host/worker"; globalThis.mount = mountGuestWorker;`,
-    minified: 16_000,
-    gzipped: 6_000,
+    minified: 18_000,
+    gzipped: 7_000,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -187,10 +197,17 @@ export const BUDGETS = [
      * draws: the open kit's tables, the CSS Syntax tokenizer, parser and
      * sanitiser, the element and attribute judge, and the renderer into a
      * shadow root. Measured at 41_547 / 14_294.
+     *
+     * Raised from 46_000 / 16_000 when a view needed no build (FR-96): the
+     * host now holds the view's runtime as text — Remote DOM's polyfill, the
+     * hardening, the channel, the `graview` global, about 62 kB and 21 kB
+     * gzipped — fetched only when it first starts a view from its source,
+     * and the press reader and links (FR-92, FR-93). Measured at
+     * 116_242 / 41_276.
      */
     entry: `import { mountWorkerView } from "@graview/guest/host/worker"; globalThis.mount = mountWorkerView;`,
-    minified: 46_000,
-    gzipped: 16_000,
+    minified: 122_000,
+    gzipped: 44_000,
     load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },

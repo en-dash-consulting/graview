@@ -6,6 +6,7 @@
  * (scripts/fixtures/offers-app.ts, LifeLogics Offers in miniature), with
  * the package lens registered as a worker view whose manifest attaches it
  * to `package`, reads `offer` and `includes`, and titles it "The packages".
+ * Both views are plain scripts, run with no build (FR-96).
  * Lin, of the client, may see the packages and only the offers made to her
  * firm; Erin, staff, sees every offer. The claims: the lens is a place by
  * its title on the Graview face and on the pages face; it lists each
@@ -23,9 +24,10 @@ import { graviewSources } from "./graview-sources.mjs";
 export const PACKAGES_MANIFEST = { name: "packages", title: "The packages", attach: "package", cardinality: "many", reads: { kinds: ["offer"], edges: ["includes"] } };
 export const NOTES_MANIFEST = { name: "notes", title: "What we heard", attach: "signal", cardinality: "many" };
 
-export async function placeSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript }) {
-  const packagesJs = await viewScript(readFileSync(resolve(repoRoot, "scripts/fixtures/views/packages.js"), "utf8"));
-  const notesJs = await viewScript(readFileSync(resolve(repoRoot, "scripts/fixtures/views/notes.js"), "utf8"));
+export async function placeSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT }) {
+  /* Plain sources, as a chat writes them (FR-96): the host puts the runtime in front of each. */
+  const packagesJs = readFileSync(resolve(repoRoot, "scripts/fixtures/views/packages.js"), "utf8");
+  const notesJs = readFileSync(resolve(repoRoot, "scripts/fixtures/views/notes.js"), "utf8");
   const out = mkdtempSync(join(tmpdir(), "graview-guest-place-"));
   await build({
     stdin: {
@@ -35,8 +37,8 @@ import { registerWorkerView } from "@graview/guest/host";
 import { erin, lin, offersApp, offersSeed } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/offers-app.ts"))};
 const asked = new URLSearchParams(location.search);
 window.__failures = [];
-const definition = { manifest: ${JSON.stringify(PACKAGES_MANIFEST)}, worker: { script: window.PACKAGES }, author: "Made by Claude for Nick" };
-const notes = { manifest: ${JSON.stringify(NOTES_MANIFEST)}, worker: { script: window.NOTES } };
+const definition = { manifest: ${JSON.stringify(PACKAGES_MANIFEST)}, worker: { source: window.PACKAGES }, author: "Made by Claude for Nick" };
+const notes = { manifest: ${JSON.stringify(NOTES_MANIFEST)}, worker: { source: window.NOTES } };
 window.__handle = mount(document.getElementById("app"), {
   app: offersApp,
   seed: offersSeed,

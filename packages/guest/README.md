@@ -153,12 +153,13 @@ keeps it safe is what it can reach, not what it can draw: it runs in the
 same hardened classic worker, and the host draws what it says into a
 shadow root inside a region of the host's own — `contain: layout paint
 style`, `isolation: isolate`, `overflow: clip` — keeping only what the open
-kit allows (`@graview/guest/worker/view` is the view's runtime).
+kit allows. The view is one plain script with no imports and no build;
+the host puts the view's runtime in front of it.
 
 ```ts
 import { mountWorkerView } from "@graview/guest/host/worker";
 
-const view = mountWorkerView(element, { worker: { script }, view: "packages", store, principal,
+const view = mountWorkerView(element, { manifest, worker: { source }, store, principal,
   onFailure: (reason, detail) => showTheTierOneFace(reason, detail) });
 ```
 
@@ -204,7 +205,7 @@ import { registerWorkerView, workerHome } from "@graview/guest/host";
 const packages = {
   manifest: { name: "packages", title: "The packages", attach: "package", cardinality: "many",
     reads: { kinds: ["offer"], edges: ["includes"] }, acts: ["set-standing"] },
-  worker: { script },
+  worker: { source },
   author: "Made by Claude for Nick",
 };
 views: (schema, registry) => registerWorkerView(registry, packages),   // the embed's views
@@ -287,3 +288,21 @@ record by its label, drawn by the host — is drawn in the region, and
 `error` (it threw before it drew), `refused` or `manifest`, with a sentence
 saying it. A host draws its own in its place with `fallback`; the React
 registrations draw whatever the registry drew for the kind before.
+
+### A view with no build
+
+A view is handed over as its plain source, `{ source }`: one script
+against the `graview` global, with no imports, no bundler and no copy of
+the protocol. The host puts the view's runtime in front of it — Remote
+DOM's polyfill, the hardening, the channel and the global, which the host
+holds as one classic script and fetches only when it first starts a view —
+and runs both as one strict classic worker. A module worker is not an
+option: a `blob:` one is refused in an opaque origin. The hardened worker
+has no `eval`, no function constructor and no `importScripts`, so the one
+way left to load code is `import()`, which is syntax: a source whose text
+says `import` anywhere, even in a string or a comment, is refused before it
+runs (`checkViewSource` says why), and so is one that exports. `{ script }`
+still takes a whole worker script built against `@graview/guest/worker/view`.
+How to write one — the manifest, what may be drawn, the theme's tokens, the
+write rules, links and limits, with a list lens and a home worked through —
+is the `graview-worker-view` skill (`graview skills install`).

@@ -5,7 +5,11 @@ import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
 import { judgeCodeAct } from "./writes.js";
+import { checkViewSource, viewScript } from "./view-source.js";
 import { createLinks, type Destination } from "./links.js";
+
+/** A worker view's code: its own source, which the host makes a worker of, or a whole worker script. */
+export type WorkerViewCode = GuestWorkerSource | { readonly source: string };
 
 /**
  * Why a worker view is not shown (FR-94). Past any limit the host stops
@@ -54,7 +58,7 @@ function why(reason: WorkerViewFailure, limits: Required<Pick<WorkerViewLimits, 
     case "manifest":
       return detail ?? "Its manifest names something this app does not have.";
     case "source":
-      return `Its code is longer than the ${limits.maxSourceBytes.toLocaleString("en-US")} bytes a view may be.`;
+      return detail ?? `Its code is longer than the ${limits.maxSourceBytes.toLocaleString("en-US")} bytes a view may be.`;
     case "refused":
       return `This page could not start it${detail ? `: ${detail}` : "."}`;
     case "error":
@@ -73,8 +77,13 @@ function why(reason: WorkerViewFailure, limits: Required<Pick<WorkerViewLimits, 
 export interface MountWorkerViewOptions<S extends AnySchema> {
   /** What the view is and may touch (FR-91): its name, title, what it attaches to, what it reads, what it may ask. */
   readonly manifest: WorkerViewManifest;
-  /** The view's code: a classic script, its runtime first (`@graview/guest/worker/view`). */
-  readonly worker: GuestWorkerSource;
+  /**
+   * The view's code. `{ source }` is a plain script against the `graview`
+   * global, with no imports and no build (FR-96): the host puts the runtime
+   * in front of it. `{ script }` or `{ url }` is a whole worker script
+   * already, its runtime first (`@graview/guest/worker/view`).
+   */
+  readonly worker: WorkerViewCode;
   readonly store: Store<S>;
   /** The viewer: what is pushed is what they may see, and what is asked for is applied as them. */
   readonly principal: Principal;
@@ -271,9 +280,16 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     queueMicrotask(() => fail("manifest", findings.join(" ")));
     return handle();
   }
-  const bytes = "script" in options.worker ? new TextEncoder().encode(options.worker.script).length : 0;
+  const code = options.worker;
+  const bytes = "source" in code ? new TextEncoder().encode(code.source).length : "script" in code ? new TextEncoder().encode(code.script).length : 0;
   if (bytes > limits.maxSourceBytes) {
     queueMicrotask(() => fail("source"));
+    return handle();
+  }
+  /* A view's own source may load nothing (FR-96): refused before it runs, with why. */
+  const unloadable = "source" in code ? checkViewSource(code.source) : [];
+  if (unloadable.length > 0) {
+    queueMicrotask(() => fail("source", unloadable.join(" ")));
     return handle();
   }
 
@@ -391,8 +407,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     for (const one of waiting.splice(0)) draw(one);
   });
 
-  started = startWorker(window, {
-    source: options.worker,
+  const begin = (source: GuestWorkerSource) => (started = startWorker(window, {
+    source,
     name: manifest.name,
     limiter,
     readyMs: options.limits?.readyMs ?? 5_000,
@@ -446,7 +462,15 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       };
       push();
     },
-  });
+  }));
+  if ("source" in code) {
+    void viewScript(code.source).then(
+      (script) => {
+        if (!failed) begin({ script });
+      },
+      () => fail("refused", "the view's runtime could not be loaded"),
+    );
+  } else begin(code);
 
   return handle();
 
