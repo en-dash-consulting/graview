@@ -454,6 +454,13 @@ const draw = () => {
     draw();
   });
   card.append(ask);
+  // A link to the one origin the host lists, and one elsewhere (links.origins).
+  for (const href of ["https://recipes.example/golf", "https://elsewhere.example/golf"]) {
+    const link = document.createElement("gv-link");
+    link.setAttribute("href", href);
+    link.textContent = "the recipe";
+    card.append(link);
+  }
   const said = document.createElement("gv-text");
   said.textContent = JSON.stringify({ seen, answers });
   card.append(said);
@@ -632,7 +639,7 @@ try {
   control.module = "threw " + error.name;
 }
 const guests = {
-  card: mountGuestWorker(document.getElementById("card"), { worker: { script: CARD }, view: "card", store, principal: bethan, input: all, onNavigate: (id) => went.push(id), onFailure: (reason) => failures.push(["card", reason]) }),
+  card: mountGuestWorker(document.getElementById("card"), { worker: { script: CARD }, view: "card", store, principal: bethan, input: all, links: { origins: ["https://recipes.example"] }, onNavigate: (id) => went.push(id), onFailure: (reason) => failures.push(["card", reason]) }),
   hostile: mountGuestWorker(document.getElementById("hostile"), { worker: { script: HOSTILE }, view: "hostile", store, principal: bethan, input: all, limits: { acts: 5 }, onNavigate: (id) => went.push(id), onFailure: (reason) => failures.push(["hostile", reason]) }),
   prober: mountGuestWorker(document.getElementById("prober"), { worker: { script: PROBER }, view: "prober", store, principal: bethan, input: all, onFailure: (reason) => failures.push(["prober", reason]) }),
 };
@@ -727,6 +734,9 @@ window.__host = {
   claim("what was not drawn was written down as refused", ["script", "iframe", "img", "a", "gv-evil"].every((name) => host.refused.hostile.some((one) => one.reason === "element" && one.element === name)), host.refused.hostile);
   const links = await widget.evaluate(() => [...document.querySelectorAll("#hostile a")].map((one) => one.getAttribute("href")));
   claim("a link the guest gave a javascript:, http: or data: address was drawn with none", links.length === 3 && links.every((href) => href === null) && host.refused.hostile.filter((one) => one.reason === "url").length === 3, { links, refused: host.refused.hostile.filter((one) => one.reason === "url") });
+  const cardLinks = await widget.evaluate(() => [...document.querySelectorAll("#card a")].map((one) => ({ href: one.getAttribute("href"), rel: one.getAttribute("rel"), referrerpolicy: one.getAttribute("referrerpolicy"), target: one.getAttribute("target") })));
+  claim("a link the card drew opens apart from the chat: noopener noreferrer, no referrer, a new tab", cardLinks.length === 2 && cardLinks.every((one) => one.rel === "noopener noreferrer" && one.referrerpolicy === "no-referrer" && one.target === "_blank"), cardLinks);
+  claim("a link to an origin the host does not list was drawn with no href, and one it lists with its own", cardLinks[0]?.href === "https://recipes.example/golf" && cardLinks[1]?.href === null && host.refused.card.some((one) => one.reason === "url"), { cardLinks, refused: host.refused.card });
   claim("a second ready, and a forged act, were dropped unread", host.stats.hostile.dropped >= 2, host.stats);
   claim("no guest reached the chat's origin", secretHits.length === 0, secretHits);
   await hardeningClaims(probed);

@@ -3,6 +3,7 @@ import { useGraview, type ViewComponent, type ViewProps } from "@graview/react/p
 import { useEffect, useRef } from "react";
 import { mountGuestView, type GuestFrame } from "./frame.js";
 import type { GuestLimits, GuestViewInput } from "./session.js";
+import type { KitLinks } from "./kit.js";
 import type { GuestWorkerSource } from "./worker.js";
 
 export interface GuestViewOptions {
@@ -19,6 +20,8 @@ export interface GuestViewOptions {
   /** Where the frame first stands before the guest asks for a height. 160px by default. */
   readonly height?: number;
   readonly limits?: GuestLimits;
+  /** Where a worker guest's links may go (`mountGuestWorker`'s `links`). Any `https:` address by default. */
+  readonly links?: KitLinks;
 }
 
 const inputOf = (props: ViewProps<AnySchema>): GuestViewInput => ({
@@ -69,6 +72,7 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
             input: () => inputOf(latest.current),
             onNavigate: (id) => setSelection([id]),
             ...(options.limits ? { limits: options.limits } : {}),
+            ...(options.links ? { links: options.links } : {}),
           });
           frame.current = drawn;
         });

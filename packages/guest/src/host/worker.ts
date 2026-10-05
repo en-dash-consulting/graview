@@ -1,7 +1,7 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import type { Kit } from "../kit.js";
 import { GUEST_PROTOCOL, isGuestReady, type HostHello } from "../protocol.js";
-import { createKitRenderer, GUEST_KIT_CSS, type KitRefusal, type KitRenderer } from "./kit.js";
+import { createKitRenderer, GUEST_KIT_CSS, type KitLinks, type KitRefusal, type KitRenderer } from "./kit.js";
 import { mintNonce } from "./nonce.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 
@@ -44,6 +44,13 @@ export interface MountGuestWorkerOptions<S extends AnySchema> {
   readonly onFailure?: (reason: GuestWorkerFailure) => void;
   /** The kit it may draw from. `GUEST_KIT` by default. */
   readonly kit?: Kit;
+  /**
+   * Where the guest's links may go: `{ origins: ["https://recipes.example"] }`
+   * draws a link only to one of them, and any other with no `href`. Any
+   * `https:` address by default. Every link opens with `noopener
+   * noreferrer` and no referrer, in a new tab unless the kit says otherwise.
+   */
+  readonly links?: KitLinks;
   /** The container's accessible name. The view's name by default. */
   readonly title?: string;
 }
@@ -135,6 +142,7 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
     port = channel.port1;
     const draw = createKitRenderer(container, {
       ...(options.kit ? { kit: options.kit } : {}),
+      ...(options.links ? { links: options.links } : {}),
       onEvent: (listener, detail) => channel.port1.postMessage({ type: "event", listener, ...(detail !== undefined ? { detail } : {}) }),
       ...(options.limits?.maxNodes !== undefined ? { maxNodes: options.limits.maxNodes } : {}),
       onOverBudget: () => fail("budget"),
@@ -213,6 +221,6 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
 }
 
 export { createKitRenderer, GUEST_KIT_CSS, hostAttribute, kitValue } from "./kit.js";
-export type { KitRefusal, KitRefusalReason, KitRenderer, KitRendererOptions } from "./kit.js";
-export { GUEST_KIT, KIT_TONES } from "../kit.js";
+export type { KitLinks, KitRefusal, KitRefusalReason, KitRenderer, KitRendererOptions } from "./kit.js";
+export { GUEST_KIT, KIT_LINK_TARGETS, KIT_TONES } from "../kit.js";
 export type { GuestKitElement, Kit, KitComponent, KitEvent, KitProperty, KitPropertyType, KitTone } from "../kit.js";

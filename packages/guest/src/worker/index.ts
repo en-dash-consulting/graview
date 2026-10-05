@@ -106,7 +106,7 @@ export function connectGuest(): WorkerGuest {
 
 export { GUEST_GLOBALS, INERT, LANGUAGE, OBJECT_PROTOTYPE, PLATFORM, POLYFILLED_DOM } from "./harden.js";
 export type { Hardening } from "./harden.js";
-export { GUEST_KIT, KIT_TONES } from "../kit.js";
+export { GUEST_KIT, KIT_LINK_TARGETS, KIT_TONES } from "../kit.js";
 export type { GuestKitElement, Kit, KitComponent, KitEvent, KitProperty, KitPropertyType, KitTone } from "../kit.js";
 export type { Guest } from "../channel.js";
 export type { GuestAct, GuestAnswer, GuestEdge, GuestNode, GuestProps, GuestRefusal } from "../protocol.js";

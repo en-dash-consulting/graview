@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { createKitRenderer, type KitRefusal } from "../../src/host/kit.js";
+import { createKitRenderer, type KitLinks, type KitRefusal } from "../../src/host/kit.js";
 import { GUEST_KIT, KIT_HOST_ATTRIBUTES, KIT_HOST_EVENTS, KIT_HOST_TAGS, type Kit, type KitComponent } from "../../src/kit.js";
 
 /**
@@ -20,10 +20,10 @@ let ids = 0;
 const element = (name: string, more: Record<string, unknown> = {}) => ({ id: `n${(ids += 1)}`, type: 1, element: name, children: [], ...more });
 const text = (data: string) => ({ id: `n${(ids += 1)}`, type: 3, data });
 
-function drawn(kit: Kit = GUEST_KIT) {
+function drawn(kit: Kit = GUEST_KIT, links?: KitLinks) {
   const into = document.createElement("div");
   const raised: { listener: number; detail?: string }[] = [];
-  const renderer = createKitRenderer(into, { kit, onEvent: (listener, detail) => raised.push({ listener, ...(detail !== undefined ? { detail } : {}) }) });
+  const renderer = createKitRenderer(into, { kit, ...(links ? { links } : {}), onEvent: (listener, detail) => raised.push({ listener, ...(detail !== undefined ? { detail } : {}) }) });
   return { into, renderer, raised };
 }
 
@@ -46,6 +46,8 @@ const FIXED = new Set(["data-gv", "class", "rel", "target", "referrerpolicy", "t
 const chosen = (node: Element) => [...node.attributes].map((one) => one.name).filter((name) => !FIXED.has(name));
 
 const NOT_IN_THE_KIT = ["script", "iframe", "img", "object", "embed", "a", "form", "style", "link", "div", "svg", "gv-evil", "graview-root"];
+/** Addresses a host that lists `https://example.org` and `https://recipes.example` must not draw. */
+const ELSEWHERE = ["https://evil.example/", "https://example.org.evil.example/", "https://example.org:8443/", "https://user@evil.example/", "https://evil.example/https://example.org/", "https://sub.example.org/"];
 const NOT_HTTPS = ["javascript:alert(1)", " JavaScript:alert(1)", "data:text/html,<script>alert(1)</script>", "http://example.org/", "blob:https://example.org/0a6c", "/relative/path", "relative", "//example.org/protocol-relative", "vbscript:msgbox", "file:///etc/passwd", "https:", "ftp://example.org/"];
 
 describe("the kit, as the host draws it", () => {
@@ -158,6 +160,42 @@ describe("the kit, as the host draws it", () => {
           expect(node.hasAttribute("href")).toBe(false);
         }
       });
+
+      it("(e) opens apart from the host, if it is a link: noopener noreferrer, no referrer, and a new tab unless the kit says otherwise", () => {
+        const { into, renderer } = drawn();
+        const properties = Object.fromEntries(Object.keys(component.properties).map((key) => [key, goodValue(component, key)]));
+        renderer.apply([[INSERT, "~", element(name, { properties }), 0]]);
+        const node = into.firstElementChild!;
+        if (component.host !== "a") {
+          // A url is drawn only on a link, so nothing else is ever navigable.
+          expect(Object.values(component.properties).some((property) => property.type === "url")).toBe(false);
+          expect(node.hasAttribute("href")).toBe(false);
+          return;
+        }
+        expect(node.getAttribute("rel")).toBe("noopener noreferrer");
+        expect(node.getAttribute("referrerpolicy")).toBe("no-referrer");
+        expect(node.getAttribute("target")).toBe(component.target ?? "_blank");
+      });
+
+      it("(e) given the host's origins, draws only an address on one of them, and the rest with no href", () => {
+        const urls = Object.keys(component.properties).filter((key) => component.properties[key]!.type === "url");
+        const { into, renderer } = drawn(GUEST_KIT, { origins: ["https://example.org", "https://recipes.example/any/path"] });
+        renderer.apply([[INSERT, "~", element(name, { id: "it" }), 0]]);
+        const node = into.firstElementChild!;
+        for (const key of urls) {
+          for (const good of ["https://example.org/a?b#c", "https://recipes.example/card", "HTTPS://EXAMPLE.ORG/upper"]) {
+            renderer.apply([[UPDATE, "it", key, good, PROPERTY]]);
+            expect(node.getAttribute("href")).toBe(new URL(good).href);
+          }
+          for (const outside of ELSEWHERE) {
+            renderer.apply([[UPDATE, "it", key, "https://example.org/", PROPERTY]]);
+            renderer.apply([[UPDATE, "it", key, outside, PROPERTY]]);
+            expect(node.hasAttribute("href")).toBe(false);
+          }
+        }
+        expect(refusedAs(renderer.refused, "url").length).toBe(urls.length * ELSEWHERE.length);
+        expect(renderer.refused.every((one) => one.reason === "url")).toBe(true);
+      });
     });
   }
 
@@ -178,6 +216,31 @@ describe("the kit, as the host draws it", () => {
     renderer.apply([[INSERT, "~", element("gv-evil", { properties: { onclick: "alert(1)" } }), 0]]);
     expect(into.querySelector("iframe")).toBeNull();
     expect(into.innerHTML).not.toContain("onload");
+  });
+
+  it("draws a link where the kit says it opens, and refuses a kit that says anywhere else or puts a url off a link", () => {
+    const kit: Kit = {
+      "gv-here": { host: "a", target: "_self", properties: { href: { type: "url" } }, events: {}, children: "text" },
+      "gv-top": { host: "a", target: "_top" as never, properties: { href: { type: "url" } }, events: {}, children: "text" },
+      "gv-off": { host: "div", properties: { href: { type: "url" } }, events: {}, children: "text" },
+      "gv-place": { host: "span", target: "_self", properties: {}, events: {}, children: "text" },
+    };
+    const { into, renderer } = drawn(kit);
+    for (const name of Object.keys(kit)) renderer.apply([[INSERT, "~", element(name, { properties: { href: "https://example.org/" } }), into.childNodes.length]]);
+    const links = into.querySelectorAll("a");
+    expect(links).toHaveLength(1);
+    expect(links[0]!.getAttribute("target")).toBe("_self");
+    expect(links[0]!.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(refusedAs(renderer.refused, "element").map((one) => one.element)).toEqual(["gv-top", "gv-off", "gv-place"]);
+  });
+
+  it("draws no link at all for a host that lists no origins, and takes only https: origins from the list", () => {
+    const none = drawn(GUEST_KIT, { origins: [] });
+    none.renderer.apply([[INSERT, "~", element("gv-link", { properties: { href: "https://example.org/" } }), 0]]);
+    expect(none.into.querySelector("a")!.hasAttribute("href")).toBe(false);
+    const odd = drawn(GUEST_KIT, { origins: ["http://example.org", "example.org", "javascript:alert(1)", "*", "https://ok.example"] });
+    for (const href of ["https://example.org/", "https://ok.example/x"]) odd.renderer.apply([[INSERT, "~", element("gv-link", { properties: { href } }), odd.into.childNodes.length]]);
+    expect([...odd.into.querySelectorAll("a")].map((one) => one.getAttribute("href"))).toEqual([null, "https://ok.example/x"]);
   });
 
   it("refuses a record it does not know, and a node it was never sent", () => {

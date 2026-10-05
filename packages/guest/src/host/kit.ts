@@ -1,4 +1,4 @@
-import { GUEST_KIT, KIT_HOST_ATTRIBUTES, KIT_HOST_EVENTS, KIT_HOST_TAGS, KIT_MAX_TEXT, type Kit, type KitComponent, type KitProperty } from "../kit.js";
+import { GUEST_KIT, KIT_HOST_ATTRIBUTES, KIT_HOST_EVENTS, KIT_HOST_TAGS, KIT_LINK_TARGETS, KIT_MAX_TEXT, type Kit, type KitComponent, type KitProperty } from "../kit.js";
 
 /*
  * THE HOST'S HALF OF THE KIT (FR-68, FR-69): Remote DOM mutation records
@@ -35,7 +35,7 @@ export type KitRefusalReason =
   | "attribute"
   /** A value of the wrong type for its declaration. */
   | "value"
-  /** A `url` that is not an absolute `https:` URL. */
+  /** A `url` that is not an absolute `https:` URL, or is not on an origin the host lists (`links.origins`). */
   | "url"
   /** A child its component may not hold. */
   | "child"
@@ -52,9 +52,22 @@ export interface KitRefusal {
   readonly name?: string;
 }
 
+/** What a host lets a guest's links go to. */
+export interface KitLinks {
+  /**
+   * The only origins a link may go to (`https://recipes.example`); a link
+   * anywhere else is drawn with no `href`, as a non-`https:` one is. An
+   * entry that is not an `https:` URL is ignored, and an empty list draws
+   * no link at all. Without it, any `https:` address is drawn.
+   */
+  readonly origins: readonly string[];
+}
+
 export interface KitRendererOptions {
   /** The kit to draw from. `GUEST_KIT` by default. */
   readonly kit?: Kit;
+  /** Where the guest's links may go. Any `https:` address by default. */
+  readonly links?: KitLinks;
   /** The viewer raised a declared event on something the guest drew: call its listener. */
   readonly onEvent: (listener: number, detail?: string) => void;
   /** The most nodes a guest may have drawn at once. 2 000 by default. */
@@ -129,10 +142,18 @@ export function kitValue(property: KitProperty, value: unknown): { readonly ok: 
   return { ok: true, value };
 }
 
-/** Whether a kit's component draws only what the closed lists allow: a kit is held to them as a guest is. */
+/**
+ * Whether a kit's component draws only what the closed lists allow: a kit
+ * is held to them as a guest is. A `url` is drawn only on a link, so
+ * nothing else a guest draws is navigable, and a link opens only where
+ * `KIT_LINK_TARGETS` allows.
+ */
 function sound(component: KitComponent): boolean {
+  const link = component.host === "a";
   return (
     (KIT_HOST_TAGS as readonly string[]).includes(component.host) &&
+    (component.target === undefined || (link && (KIT_LINK_TARGETS as readonly string[]).includes(component.target))) &&
+    Object.values(component.properties).every((property) => property.type !== "url" || link) &&
     Object.values(component.properties).every((property) => property.as === undefined || (property.type !== "url" && (KIT_HOST_ATTRIBUTES as readonly string[]).includes(property.as))) &&
     Object.values(component.events).every((event) => (KIT_HOST_EVENTS as readonly string[]).includes(event.from))
   );
@@ -151,6 +172,19 @@ export function createKitRenderer(into: HTMLElement, options: KitRendererOptions
   const byId = new Map<string, Drawn>();
   const root: Drawn = { dom: into, name: ROOT_ID, component: { host: "div", properties: {}, events: {}, children: "any" }, children: [], listeners: new Map(), id: ROOT_ID };
   byId.set(ROOT_ID, root);
+  /* The origins a link may go to, as the URL parser says them; an entry that is not https: is no origin. */
+  const origins = options.links
+    ? new Set(
+        options.links.origins.flatMap((origin) => {
+          try {
+            const parsed = new URL(origin);
+            return parsed.protocol === "https:" && parsed.hostname !== "" ? [parsed.origin] : [];
+          } catch {
+            return [];
+          }
+        }),
+      )
+    : undefined;
   let size = 0;
   let listening = 0;
   let over = false;
@@ -165,7 +199,9 @@ export function createKitRenderer(into: HTMLElement, options: KitRendererOptions
     const component = drawn.component!;
     if (!own(component.properties, name)) return refuse({ reason: "property", element: drawn.name!, name });
     const property = component.properties[name]!;
-    const judged = kitValue(property, value);
+    const valued = kitValue(property, value);
+    /* An https: address outside the host's origins is drawn as a bad one is: with no href. */
+    const judged = valued.ok && property.type === "url" && origins && typeof valued.value === "string" && !origins.has(new URL(valued.value).origin) ? ({ ok: false, reason: "url" } as const) : valued;
     const element = drawn.dom as HTMLElement;
     const attribute = hostAttribute(name, property);
     if (!judged.ok) {
@@ -255,7 +291,7 @@ export function createKitRenderer(into: HTMLElement, options: KitRendererOptions
     element.className = `graview-guest-${name.replace(/^gv-/, "")}`;
     if (component.host === "a") {
       element.setAttribute("rel", "noopener noreferrer");
-      element.setAttribute("target", "_blank");
+      element.setAttribute("target", component.target ?? "_blank");
       element.setAttribute("referrerpolicy", "no-referrer");
     }
     if (component.host === "button") element.setAttribute("type", "button");

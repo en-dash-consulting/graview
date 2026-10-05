@@ -110,7 +110,11 @@ The kit is one declaration for both sides: each component's host element,
 typed properties, events and children. The worker's remote elements are made
 from it, and the host draws from it alone. An element outside it, a property
 or event it does not declare, a value of another type, and a link that is
-not an absolute `https:` URL are not drawn, and `refused` says why.
+not an absolute `https:` URL are not drawn, and `refused` says why. A link
+opens with `rel="noopener noreferrer"` and no referrer, in a new tab unless
+the kit says `target: "_self"`; a host that passes
+`links: { origins: ["https://recipes.example"] }` draws a link only to one
+of those origins, and any other with no `href`.
 
 Before the guest runs, the worker entry hardens the worker's global: every
 name outside `GUEST_GLOBALS` goes, from the global and every prototype on its
