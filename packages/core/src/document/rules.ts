@@ -3,21 +3,25 @@ import { defineInvariant, RuleBudgetError, type AnyGraphNode, type AnySchema, ty
 import { evaluateExpr, ExprBudgetError, ExprEvalError, type KindShape } from "./expr/evaluate.js";
 import { parseExpr } from "./expr/parse.js";
 import { parseTemplate, renderTemplate } from "./template.js";
+import { parsedComputed } from "./computed.js";
 
 /**
  * What every kind of a COMPILED schema holds, for the rule language to read
  * names against: its fields, and its relations with their cardinality (a
- * relation of one reads as that record, a relation of many as a set). The
+ * relation of one reads as that record, a relation of many as a set), and
+ * its computed fields, parsed (FR-83). The
  * document compiler builds the same from a document; this reads it from any
  * declaration, TypeScript or document alike.
  */
 export function shapesOfSchema(schema: AnySchema): Map<string, KindShape> {
   const shapes = new Map<string, KindShape>();
   for (const kind of schema.kinds as readonly string[]) {
-    const definition = schema.tryDefinition(kind) as { fields?: { shape?: Record<string, unknown> }; edges?: Record<string, { cardinality?: "one" | "many" }> } | undefined;
+    const definition = schema.tryDefinition(kind) as ({ fields?: { shape?: Record<string, unknown> }; edges?: Record<string, { cardinality?: "one" | "many" }> } & Parameters<typeof parsedComputed>[0]) | undefined;
+    const computed = parsedComputed(definition);
     shapes.set(kind, {
       fields: new Set(Object.keys(definition?.fields?.shape ?? {})),
       edges: new Map(Object.entries(definition?.edges ?? {}).map(([name, edge]) => [name, edge.cardinality ?? "many"])),
+      ...(computed ? { computed } : {}),
     });
   }
   return shapes;

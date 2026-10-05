@@ -62,9 +62,14 @@ export const BUDGETS = [
      * it is first drawn, with the framework's own views (FR-57): what a page
      * loads first is the frame — measured at 747_000 / 190_229 — and the
      * faces are their own chunks.
+     *
+     * Raised from 780_000 / 200_000 when the rule language came to compute
+     * what pages need (FR-83): computed fields, worked out for the seat a
+     * record is drawn for, and the words, and and plural formatters.
+     * Measured at 778_647 / 201_962.
      */
-    minified: 780_000,
-    gzipped: 200_000,
+    minified: 790_000,
+    gzipped: 205_000,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -92,9 +97,13 @@ export const BUDGETS = [
      * fetched as it is drawn (FR-57): every face is about 11 kB smaller
      * minified (1_289_095 from 1_300_584), and about 2.5 kB larger gzipped
      * (372_654 from 370_200), because six chunks are each gzipped alone.
+     *
+     * Raised from 1_310_000 / 380_000 when the rule language came to
+     * compute what pages need (FR-83): measured at 1_314_832 / 382_332, from
+     * 1_302_133 / 377_358.
      */
-    minified: 1_310_000,
-    gzipped: 380_000,
+    minified: 1_325_000,
+    gzipped: 386_000,
     load: "all",
   },
   {
@@ -111,10 +120,14 @@ export const BUDGETS = [
      * FR-78: the popover family, the host's actions and notices, the seat
      * put away): measured at 1_297_634 / 373_048, with every face at
      * 1_302_133 / 377_358.
+     *
+     * Raised with every face to 1_325_000 / 386_000 when the rule language
+     * came to compute what pages need (FR-83): measured at 1_310_361 /
+     * 377_887.
      */
     entry: `import { mount } from "@graview/embed"; import { StudioPlace } from "@graview/studio"; globalThis.mount = (element, options) => mount(element, { ...options, studio: { onApply() {}, place: StudioPlace } });`,
-    minified: 1_310_000,
-    gzipped: 380_000,
+    minified: 1_325_000,
+    gzipped: 386_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

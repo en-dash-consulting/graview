@@ -68,6 +68,8 @@ under its routes, which buys three things at once:
 Everything a page shows is a derivation the scene also uses: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is
 or who may take it** — it strikes through what the seat may not, and says why.
+A record's facts include its `computed` fields, worked out from what the seat
+may see: a price never counts a discount the seat cannot see.
 
 **At a phone's width this face is the answer.** The scene still holds there —
 districts stay legible, panels scroll — but
