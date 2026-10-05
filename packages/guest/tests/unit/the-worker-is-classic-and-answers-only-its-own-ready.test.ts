@@ -104,7 +104,7 @@ describe("a worker guest's host", () => {
     const port = worker!.posted[0]!.transfer[0] as MessagePort;
     const heard: unknown[] = [];
     port.onmessage = (event) => heard.push(event.data);
-    await settle();
+    for (let i = 0; i < 50 && heard.length === 0; i += 1) await settle();
     expect(heard[0]).toMatchObject({ type: "props", props: { view: "card", node: { id: "car:golf" } } });
     guest.dispose();
   });

@@ -423,6 +423,13 @@ for (const name of ["script", "iframe", "img", "a", "gv-evil"]) {
   evil.textContent = "evil";
   card.append(evil);
 }
+// In the kit, with addresses no host may draw as a link (FR-69).
+for (const href of ["javascript:alert(1)", "http://127.0.0.1/insecure", "data:text/html,hi"]) {
+  const link = document.createElement("gv-link");
+  link.setAttribute("href", href);
+  link.textContent = "a link";
+  card.append(link);
+}
 const said = document.createElement("gv-text");
 said.textContent = JSON.stringify(heard);
 card.append(said);
@@ -527,6 +534,8 @@ window.__host = {
   const drawnTags = [...html.matchAll(/<([a-z][a-z0-9-]*)/g)].map((match) => match[1]);
   claim("nothing outside the kit was drawn", !drawnTags.some((tag) => ["script", "iframe", "img", "gv-evil"].includes(tag)) && !html.includes("/secret") && !html.includes("evil"), [...new Set(drawnTags)]);
   claim("what was not drawn was written down as refused", ["script", "iframe", "img", "a", "gv-evil"].every((name) => host.refused.hostile.some((one) => one.reason === "element" && one.element === name)), host.refused.hostile);
+  const links = await widget.evaluate(() => [...document.querySelectorAll("#hostile a")].map((one) => one.getAttribute("href")));
+  claim("a link the guest gave a javascript:, http: or data: address was drawn with none", links.length === 3 && links.every((href) => href === null) && host.refused.hostile.filter((one) => one.reason === "url").length === 3, { links, refused: host.refused.hostile.filter((one) => one.reason === "url") });
   claim("a second ready, and a forged act, were dropped unread", host.stats.hostile.dropped >= 2, host.stats);
   claim("no guest reached the chat's origin", secretHits.length === 0, secretHits);
   claim("the host page throws nothing", report.pageErrors.length === 0, report.pageErrors);

@@ -1,4 +1,4 @@
-import { GUEST_KIT, KIT_MAX_TEXT, type Kit, type KitComponent, type KitProperty } from "../kit.js";
+import { GUEST_KIT, KIT_HOST_ATTRIBUTES, KIT_HOST_EVENTS, KIT_HOST_TAGS, KIT_MAX_TEXT, type Kit, type KitComponent, type KitProperty } from "../kit.js";
 
 /*
  * THE HOST'S HALF OF THE KIT (FR-68, FR-69): Remote DOM mutation records
@@ -93,14 +93,47 @@ export function hostAttribute(name: string, property: KitProperty): string {
   return property.type === "url" ? "href" : (property.as ?? `data-gv-${name.toLowerCase()}`);
 }
 
+/** The longest string property, in characters. */
+const MAX_PROPERTY = 2_000;
+
 /**
- * A value as the host draws it, or a refusal: the declared type, and for a
- * `url`, an absolute `https:` URL. `null` clears the property.
+ * A value as the host draws it, or a refusal: exactly the declared type —
+ * a string for `string`, a finite number for `number`, a boolean for
+ * `boolean`, one of the list for `oneOf` — and for a `url`, a string that
+ * parses as an absolute `https:` URL with a host. `null` clears it.
  */
 export function kitValue(property: KitProperty, value: unknown): { readonly ok: true; readonly value: string | boolean | null } | { readonly ok: false; readonly reason: "value" | "url" } {
   if (value === null || value === undefined) return { ok: true, value: null };
-  if (typeof value === "object" || typeof value === "function" || typeof value === "symbol") return { ok: false, reason: "value" };
-  return { ok: true, value: property.type === "boolean" ? Boolean(value) : String(value) };
+  const type = property.type;
+  if (type === "boolean") return typeof value === "boolean" ? { ok: true, value } : { ok: false, reason: "value" };
+  if (type === "number") return typeof value === "number" && Number.isFinite(value) ? { ok: true, value: String(value) } : { ok: false, reason: "value" };
+  if (typeof value !== "string" || value.length > MAX_PROPERTY) return { ok: false, reason: type === "url" ? "url" : "value" };
+  if (typeof type === "object") return type.oneOf.includes(value) ? { ok: true, value } : { ok: false, reason: "value" };
+  if (type === "url") {
+    /*
+     * Absolute, https:, with a host, and said exactly as it parses: no
+     * relative path the page's own base would resolve, no scheme-relative
+     * `//`, no `javascript:` behind a space or in capitals.
+     */
+    let parsed: URL;
+    try {
+      parsed = new URL(value);
+    } catch {
+      return { ok: false, reason: "url" };
+    }
+    if (parsed.protocol !== "https:" || parsed.hostname === "" || !/^https:\/\//i.test(value)) return { ok: false, reason: "url" };
+    return { ok: true, value: parsed.href };
+  }
+  return { ok: true, value };
+}
+
+/** Whether a kit's component draws only what the closed lists allow: a kit is held to them as a guest is. */
+function sound(component: KitComponent): boolean {
+  return (
+    (KIT_HOST_TAGS as readonly string[]).includes(component.host) &&
+    Object.values(component.properties).every((property) => property.as === undefined || (property.type !== "url" && (KIT_HOST_ATTRIBUTES as readonly string[]).includes(property.as))) &&
+    Object.values(component.events).every((event) => (KIT_HOST_EVENTS as readonly string[]).includes(event.from))
+  );
 }
 
 /**
@@ -198,7 +231,7 @@ export function createKitRenderer(into: HTMLElement, options: KitRendererOptions
       return placeholder();
     }
     const name = String(raw["element"]);
-    if (!own(kit, name)) {
+    if (!own(kit, name) || !sound(kit[name]!)) {
       refuse({ reason: "element", element: name });
       return placeholder();
     }
