@@ -8,6 +8,7 @@ import {
   type ViewState,
   kindsOfAggregate,
 } from "@graview/layout/view";
+import { layer } from "@graview/core";
 import { useGraview, useJackIn, useNavigation, useSelection } from "@graview/react/provider";
 import { useEffect } from "react";
 
@@ -223,7 +224,7 @@ export function OverviewButton() {
         position: "absolute",
         top: 14,
         right: 14,
-        zIndex: 5,
+        zIndex: layer("overview"),
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",

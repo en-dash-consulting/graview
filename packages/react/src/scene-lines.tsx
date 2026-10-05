@@ -1,4 +1,4 @@
-import type { AnySchema, GraphReader, NodeOfSchema } from "@graview/core";
+import { SCENE_LAYERS, type AnySchema, type GraphReader, type NodeOfSchema } from "@graview/core";
 import { type InterpolatedLayout, edgeSelectionId, edgeOfSelection } from "@graview/layout";
 import { CONNECTOR_DASH, connectorStroke, styleFor } from "@graview/render";
 import { useMemo, useLayoutEffect, useState } from "react";
@@ -562,7 +562,7 @@ function SelectionTies<S extends AnySchema>({
         // Over the views: these lines START on an element inside one, and a
         // line into the shelf that dives behind the focus card en route says
         // nothing.
-        zIndex: 3,
+        zIndex: SCENE_LAYERS.lines,
       }}
     >
       {lines.map((line) => {
@@ -724,7 +724,7 @@ export function RelationCaptions({
   return (
     <div
       aria-hidden="true"
-      style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 3 }}
+      style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: SCENE_LAYERS.lines }}
     >
       {runs.map((run) => {
         /*

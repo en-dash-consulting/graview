@@ -381,18 +381,24 @@ try {
       };
     });
     /*
-     * THE PROFILE STAYS IN THE EMBED (W-119). It hung from its button's
-     * right edge, 280 wide: in a 350-wide embed it began off the screen,
-     * and the embed's own `overflow: hidden` cut it.
+     * THE PROFILE IS WHOLE AND ON TOP (W-119, FR-76). It hung from its
+     * button's right edge, 280 wide: in a 350-wide embed it began off the
+     * screen, and the embed's own `overflow: hidden` cut it. It stands in
+     * the browser's top layer now, kept to the viewport rather than to the
+     * embed's box: wholly on screen, and nothing drawn over its middle.
      */
     await narrow.click('#here [data-testid="profile-button"]');
     await narrow.waitForTimeout(400);
     b.profileInEmbed = await narrow.evaluate(() => {
-      const box = document.querySelector("#here").getBoundingClientRect();
       const pane = document.querySelector('#here [data-testid="profile"]');
       if (!pane) return { pane: false };
       const r = pane.getBoundingClientRect();
-      return { pane: true, inside: r.left >= box.left - 1 && r.right <= box.right + 1 && r.top >= box.top - 1 && r.bottom <= box.bottom + 1 };
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return {
+        pane: true,
+        inside: r.left >= -1 && r.right <= document.documentElement.clientWidth + 1 && r.top >= -1 && r.bottom <= innerHeight + 1,
+        onTop: hit !== null && pane.contains(hit),
+      };
     });
     await narrow.close();
 
@@ -611,8 +617,8 @@ try {
 const b = report.browser;
 const clean = (violations) => Array.isArray(violations) && violations.length === 0;
 report.verdict = {
-  // The profile pane opens inside a narrow embed's box, not off its side (W-119).
-  theProfileStaysInTheEmbed: b.profileInEmbed?.pane === true && b.profileInEmbed?.inside === true,
+  // The profile pane opens wholly on screen and on top in a narrow embed, not off its side or cut by its box (W-119, FR-76).
+  theProfileIsWholeAndOnTop: b.profileInEmbed?.pane === true && b.profileInEmbed?.inside === true && b.profileInEmbed?.onTop === true,
   theScaffoldWroteAProject: (report.npm.tree ?? []).length === 20,
   itInstalledFromTheTarballsWithNpm: report.npm.installed === true && report.npm.lockfile === true,
   itsOwnVerifyPassed: report.npm.verified === true,

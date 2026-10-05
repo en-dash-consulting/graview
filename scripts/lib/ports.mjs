@@ -43,6 +43,8 @@ export const OWN = {
   "rehearsal-model": 5286,
   /** The host's page `verify-studio` mounts the studio into through the embed, as Graview Cloud's builder does. */
   "studio-host": 5287,
+  /** The host's page `verify-chrome` mounts the embed into, with a host's own actions, notices and the seat put away. */
+  "chrome-host": 5288,
   /** The OpenAI-shaped stand-in `verify-studio` points the studio's remote model at. */
   "studio-model": 5289,
 };

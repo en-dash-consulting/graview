@@ -1101,6 +1101,39 @@ const app = await fetchAndCompile();        // the host's own round trips, meanw
 await faceReady;
 const handle = mount(root, { app, face });  // drawn in this commit</code></pre></div>
 <p>What this asks of the framework, and what it adds: the theme scopes to the element (<code>themeCss(scheme, brand, { scope })</code>) rather than the document, every rule of it held inside that element, so nothing of the host's is restyled; the panes size against the picture's own box (<code>cqh</code>) rather than the viewport; the routed face runs on a memory router, so the host page's address is never touched; the brand's fonts are fetched by the embed rather than assumed. The store is in memory and starts from the seed on every mount, unless the host hands it one.</p>
+<h3>What stands over what</h3>
+<p>Every popover, menu and list of suggestions the embed draws — the profile, the problems, the districts a row could not hold, a card's acts at the pointer — opens in the browser's top layer, hung from what opened it and kept to the viewport, so nothing in the embed (the seat's rail, the altitude control, the scene) and nothing on the host's page stands over it. It is still inside the embed's element, so the scoped theme reaches it and nothing of it lands on the host. Everything that stays on screen takes a rung of one ladder, written once as custom properties on the embed's element: the scene, then the altitude control, then the rails and floating controls, then popovers, dialogs and notices, <code>--graview-layer-scene</code> through <code>--graview-layer-toast</code>. A host that lays something of its own over the embed reads the rung it means rather than guessing a number.</p>
+<h3>The host's own actions</h3>
+<p>A host's links about the app and the person — "Change the app", "Your apps", "Report this app" — go in the strip's profile menu, under who is signed in, rather than in a menu of the host's own laid over the scene:</p>
+<div class="code" data-scroller><pre><code>mount(root, {
+  app,
+  hostActions: [
+    { label: "Change the app", href: `/apps/${id}/change` },
+    { label: "Your apps", href: "/apps" },
+    { label: "Report this app", href: `/report?app=${slug}`, target: "_blank" },
+    { label: "Sign out", onSelect: () =&gt; signOut() },   // a press rather than a link
+  ],
+});</code></pre></div>
+<p>Each is a stop for the keyboard in the menu, in the order given, drawn in the embed's own scheme; a press closes the menu. The whole-page Shell takes the same host actions.</p>
+<h3>The seat, put away</h3>
+<p>The seat's rail — the subject, its acts, its relations, the conversation — stands as a column at the picture's left edge. A reader puts it away to a slim tab from its header and opens it again from the tab, by the pointer or the keyboard, and what they chose is remembered for the app (in <code>memory</code>, or the page's storage, wherever the browser allows it). Put away, the picture and its controls take the whole width but the tab, and the city lays out into it. Narrower than a laptop, the open rail lies over the picture instead of taking a column of it; on a phone it is a sheet along the bottom. The host says where it starts:</p>
+<div class="code" data-scroller><pre><code>mount(root, { app, companion: "collapsed" });   // "open" (the default), "collapsed" or "hidden"</code></pre></div>
+<p>The reader's own choice wins over <code>"open"</code> and <code>"collapsed"</code>; <code>"hidden"</code> is the host's to make, and draws no rail and no tab at all.</p>
+<h3>The host's notices</h3>
+<p>What the host has to say while the app is open — a newer version, the connection gone, the app held while a repair is checked, a conflict to settle, a refusal — it says in the app's own notices rather than in elements of its own fixed over the app:</p>
+<div class="code" data-scroller><pre><code>const offline = handle.notify({ kind: "banner", sentence: "Offline — changes will be sent when you reconnect.", tone: "warn" });
+offline.update({ sentence: "Back online.", tone: "good" });
+offline.dismiss();
+
+handle.notify({ kind: "toast", sentence: `The app was changed — now version ${version}` });
+handle.notify({
+  kind: "toast",
+  sentence: conflict.sentence,
+  tone: "warn",
+  actions: [{ label: "Keep theirs", onSelect: conflict.keepTheirs }, { label: "Use mine", onSelect: conflict.useMine }],
+});
+handle.notify({ id: "newer", kind: "banner", sentence: "A newer version is available.", action: { label: "Reload", onSelect: () =&gt; location.reload() } });</code></pre></div>
+<p>A toast goes by itself after six seconds (<code>timeout</code> says otherwise, <code>false</code> keeps it), unless it carries an action, when it waits for one; a banner stays until it is dismissed. A notice said again under the same <code>id</code> takes the place of the one before. An action is a press (onSelect) or a link (<code>href</code>), and either closes the notice; every notice also has a dismiss control. Banners are drawn at the top of the picture and toasts at its foot, in the framework's floating panel and the embed's scheme, in the top layer and kept over any popover that opens after them; each is said aloud as it arrives, and one whose tone is bad is said as an alert. <code>@graview/embed/pages</code> has the same <code>notify</code>; a React host drawing <code>&lt;Embed&gt;</code> makes a board with <code>createNoticeBoard()</code>, passes it as <code>notices</code>, and says things on it.</p>
 <h3>What went wrong, and how long it took</h3>
 <div class="code" data-scroller><pre><code>mount(root, {
   app,
@@ -1135,9 +1168,9 @@ handle.setPeople(next);                     // an agent who first acted after th
 <p>Nothing touches <code>localStorage</code> or <code>sessionStorage</code> without a fallback, so a frame that throws on either still mounts. <code>scheme: "auto"</code> (the default) follows the host context, then the page's <code>data-theme</code> stamp, then the system's preference, each as it changes. Presence a channel reports is dropped once its last word is older than <code>REMOTE_PRESENCE_TTL_MS</code>, whether or not the channel says the person left. A host that builds presence itself keys each participant with <code>participantKey({ kind, id, session })</code> from <code>@graview/core</code>, the op log's own <code>kind:id:session</code>.</p>
     </section>
     <section id="api" aria-labelledby="h-api">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (9)</h2></div>
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (10)</h2></div>
       <p class="sm dim">Read off the package's own barrel, so this is what is there today.</p>
-      <ul class="names"><li><code>AUTO_SCENE_HEIGHT</code></li><li><code>Embed</code></li><li><code>faceOf</code></li><li><code>familiesOf</code></li><li><code>fontsLink</code></li><li><code>hostScheme</code></li><li><code>mount</code></li><li><code>mountWhenNear</code></li><li><code>preload</code></li></ul>
+      <ul class="names"><li><code>AUTO_SCENE_HEIGHT</code></li><li><code>createNoticeBoard</code></li><li><code>Embed</code></li><li><code>faceOf</code></li><li><code>familiesOf</code></li><li><code>fontsLink</code></li><li><code>hostScheme</code></li><li><code>mount</code></li><li><code>mountWhenNear</code></li><li><code>preload</code></li></ul>
     </section>
 
   </main>

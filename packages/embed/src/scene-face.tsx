@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { Companion, Inspector, OverviewButton, Places, ShowInstallation } from "@graview/primitives";
+import { Companion, Inspector, OverviewButton, Places, ShowInstallation, type CompanionMode } from "@graview/primitives";
 import { Scene } from "@graview/react";
 import { AUTO_SCENE_HEIGHT } from "./frame.js";
 
@@ -11,13 +11,13 @@ import { AUTO_SCENE_HEIGHT } from "./frame.js";
  */
 
 /** The picture: the scene, the way up, one panel on the frame, and the inspector. */
-export function SceneFace<S extends AnySchema>({ auto }: { readonly auto: boolean }) {
+export function SceneFace<S extends AnySchema>({ auto, companion, rememberAs }: { readonly auto: boolean; readonly companion?: CompanionMode; readonly rememberAs?: string }) {
   return (
     <div data-embed-content="" style={{ position: "relative", flex: auto ? `0 0 ${AUTO_SCENE_HEIGHT}px` : "1 1 auto", minHeight: 0, containerType: "size" }}>
       <Scene renderer="dom" />
       <OverviewButton />
       {/* One panel on the frame — the acts, the relations, the seat, the key. */}
-      <Companion<S> />
+      <Companion<S> {...(companion ? { start: companion } : {})} {...(rememberAs ? { rememberAs } : {})} />
       <Inspector placement="menu" />
     </div>
   );

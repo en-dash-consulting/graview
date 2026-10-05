@@ -1,4 +1,4 @@
-import { beginning, toIso, touchWeights } from "@graview/core";
+import { beginning, SCENE_LAYERS, toIso, touchWeights } from "@graview/core";
 import type { AnySchema } from "@graview/core";
 import {
   aggregateId,
@@ -139,7 +139,7 @@ export function Scene<S extends AnySchema>({
     selection,
     setSelection,
     setMenuAt,
-    emphasis, hiddenKinds, registerScene, pointer, brand, noteMoved, robots } = useGraview<S>();
+    emphasis, hiddenKinds, registerScene, pointer, brand, noteMoved, robots, railLeft } = useGraview<S>();
   const found = useFound();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -254,7 +254,7 @@ export function Scene<S extends AnySchema>({
       // the only thing on the right is the altitude control's corner. A
       // 360px frame that kept a fifth of itself for panes nobody drew there
       // gave a focused lens 145 pixels, which is not a lens, it is a spine.
-      inset: railInset(size?.width ?? 1200),
+      inset: railInset(size?.width ?? 1200, railLeft),
       // The reader's own text size, which the cards are sized in: the city
       // grows with the words rather than holding them at a fixed 230×97.
       unit,
@@ -295,7 +295,7 @@ export function Scene<S extends AnySchema>({
           }
         : {}),
     }),
-    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, screenHeight],
+    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, screenHeight, railLeft],
   );
   /*
    * THE CAMERA IS NOT A MOVE. A drive-in on the far side of a large city
@@ -985,7 +985,7 @@ export function Scene<S extends AnySchema>({
           data-graview-world=""
           style={{
             position: "relative",
-            zIndex: 1,
+            zIndex: SCENE_LAYERS.stage,
             width: result.width,
             height: result.height,
             overflow: "hidden",
@@ -1004,7 +1004,7 @@ export function Scene<S extends AnySchema>({
           style={{
             display: "block",
             position: "relative",
-            zIndex: 1,
+            zIndex: SCENE_LAYERS.stage,
             width: result.width,
             height: result.height,
           }}

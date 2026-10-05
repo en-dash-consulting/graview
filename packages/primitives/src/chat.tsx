@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { useAttention, useGraview, useSelection } from "@graview/react/provider";
+import { POPOVER_STYLE, useAttention, useGraview, usePopover, useSelection } from "@graview/react/provider";
 import { kindCardId, withFocus, withOverview, withSelection } from "@graview/layout/view";
 import {
   configuredResponder,
@@ -18,7 +18,6 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSubject } from "./companion.js";
 import { describeSource, proposalKey, SeatComposer, SeatHeader, SeatSettings, SeatThread, Settled, useSeatConversation } from "./seat.js";
 import { AnswerArgs } from "./workbench/index.js";
-import { closeToTrigger } from "./popover.js";
 
 /**
  * A SEAT YOU CAN TALK TO.
@@ -78,9 +77,12 @@ export function ChatPanel<S extends AnySchema>({
   /* The chat writes as the tab's seat when one has sat down, so the two are one robot — in this tab's own session. */
   const who = seatWho ?? "chat";
   const author = useMemo(() => ({ kind: "agent" as const, id: who, session }), [who, session]);
-  const [shown, setOpen] = useState(false);
-  // Inside the rail there is nothing to open: the rail is what opens.
-  const open = inside || shown;
+  /*
+   * On a bar of its own it is a popover of the family (FR-77); inside the
+   * rail there is nothing to open: the rail is what opens.
+   */
+  const popover = usePopover("chat", { popover: !inside });
+  const open = inside || popover.open;
   const [settings, setSettings] = useState(false);
   /*
    * THE LADDER IS A SETTING — the provider's, chosen in the profile pane
@@ -95,8 +97,6 @@ export function ChatPanel<S extends AnySchema>({
     registerHostAnswers(respond !== undefined);
     return () => registerHostAnswers(false);
   }, [respond, registerHostAnswers]);
-  const anchor = useRef<HTMLDivElement | null>(null);
-
   const runtime = useMemo(
     () =>
       createToolRuntime(store, {
@@ -144,23 +144,6 @@ export function ChatPanel<S extends AnySchema>({
    * body while it followed the pointer; the seat has no body now and the
    * companion on the frame is where it speaks.
    */
-
-  // Escape and click-away close it — it floats over the scene.
-  useEffect(() => {
-    if (!open) return;
-    const away = (event: MouseEvent) => {
-      if (!anchor.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeToTrigger(anchor.current, () => setOpen(false));
-    };
-    document.addEventListener("mousedown", away);
-    document.addEventListener("keydown", key);
-    return () => {
-      document.removeEventListener("mousedown", away);
-      document.removeEventListener("keydown", key);
-    };
-  }, [open]);
 
   const conversation = useSeatConversation({
     /*
@@ -352,7 +335,6 @@ export function ChatPanel<S extends AnySchema>({
 
   return (
     <div
-      ref={anchor}
       style={
         inside
           ? /*
@@ -370,8 +352,8 @@ export function ChatPanel<S extends AnySchema>({
         <button
           type="button"
           data-testid={testId}
-          aria-expanded={open}
-          onClick={() => setOpen((current) => !current)}
+          {...popover.trigger}
+          onClick={popover.toggle}
           title="Talk to the seat: ask about anything here, or say a change in words"
           style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "0.875rem" }}
         >
@@ -382,12 +364,15 @@ export function ChatPanel<S extends AnySchema>({
 
       {open ? (
         <div
-          ref={panel}
           onFocus={(event) => {
             kept.current = event.target as HTMLElement;
           }}
           data-testid={`${testId}-panel`}
-          {...(inside ? {} : { "data-graview-offstage": "", "data-graview-overlay": "" })}
+          {...(inside ? {} : { ...popover.pane, "data-graview-offstage": "" })}
+          ref={(element: HTMLDivElement | null) => {
+            panel.current = element;
+            if (!inside) popover.pane.ref(element);
+          }}
           data-graview-anchor={inside ? "rail" : "bar"}
           style={{
             ...(inside
@@ -405,10 +390,7 @@ export function ChatPanel<S extends AnySchema>({
                   minHeight: "min-content",
                 }
               : {
-                  position: "absolute" as const,
-                  top: "calc(100% + 6px)",
-                  right: 0,
-                  zIndex: 30,
+                  ...POPOVER_STYLE,
                   width: 320,
                   borderRadius: 10,
                   border: "1px solid var(--graview-edge)",

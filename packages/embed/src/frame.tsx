@@ -1,6 +1,6 @@
 import { Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { PageComponent, PageRegistry } from "@graview/pages";
-import { Profile, Standing, themeCss, useWidth } from "@graview/primitives/frame";
+import { createNoticeBoard, Notices, Profile, Standing, themeCss, useWidth, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -156,6 +156,20 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
   readonly onIntrinsicHeight?: (height: number) => void;
   /** What Standing says when nothing is wrong. */
   readonly standing?: string;
+  /**
+   * THE HOST'S OWN ACTIONS (FR-72): "Your apps", "Change the app", "Report
+   * this app" — links (or presses, with `onSelect`) drawn in the strip's
+   * profile menu, under who is signed in, reached by the keyboard like
+   * everything else in it. Nothing of the host's needs to stand over the
+   * scene.
+   */
+  readonly hostActions?: readonly HostAction[];
+  /**
+   * THE BOARD THE HOST NOTICES ARE SAID ON (FR-75). `mount` makes one and
+   * hands its `notify` back on the handle; a React host drawing `<Embed>`
+   * makes its own with `createNoticeBoard()` and says things on it.
+   */
+  readonly notices?: NoticeBoard;
   /**
    * TOLD WHAT WENT WRONG (FR-24). A view, a page or the strip that throws
    * is contained where it threw, the rest of the embed keeps working, and
@@ -365,6 +379,17 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
   return { rootRef, scope, css, scheme, store, presence, brand, auto: height === "auto", height };
 }
 
+/**
+ * THE HOST'S NOTICES, over the face (FR-75): banners at the top of the
+ * picture, toasts at its foot, said aloud. The board is the host's when it
+ * gave one, else the frame's own.
+ */
+export function FrameNotices({ rootRef, board }: { readonly rootRef: { readonly current: HTMLElement | null }; readonly board: NoticeBoard | undefined }) {
+  const [own] = useState(() => board ?? createNoticeBoard());
+  const anchor = useCallback(() => rootRef.current?.querySelector<HTMLElement>("[data-embed-content]") ?? rootRef.current, [rootRef]);
+  return <Notices board={board ?? own} anchor={anchor} />;
+}
+
 /** What the provider under every face is handed from the options, beside the store and the views. */
 export function providerProps<S extends AnySchema>(props: FrameOptions<S>, presence: PresenceChannel | undefined, brand: Brand | undefined) {
   return {
@@ -394,6 +419,7 @@ export function Strip({
   seats,
   principal,
   onSeat,
+  hostActions,
 }: {
   /** The face switcher, where there is more than one face. */
   faces?: ReactNode;
@@ -403,6 +429,8 @@ export function Strip({
   seats?: FrameOptions["seats"] | undefined;
   principal?: Principal | undefined;
   onSeat?: ((principal: Principal) => void) | undefined;
+  /** The host's own actions, in the profile menu (FR-72). */
+  hostActions?: readonly HostAction[] | undefined;
 }) {
   const { brand } = useGraview();
   const sameSeat = (a: Principal | undefined, b: Principal) => a !== undefined && a.id === b.id && a.kind === b.kind;
@@ -443,7 +471,7 @@ export function Strip({
       {/* Who is at the keyboard, and the reader's own settings. The seats
           keep their own control beside it, because the HOST owns which one
           is taken here — the pane says who that turned out to be. */}
-      <Profile />
+      <Profile {...(hostActions ? { hostActions } : {})} />
       {seats && seats.length > 1 && compact ? (
         <select
           aria-label="Seat"

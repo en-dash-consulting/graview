@@ -2,6 +2,8 @@ import type { AnySchema, Brand, GraviewApp, Person, Place, Principal, Store } fr
 import { EMPTY_VIEW, aggregateId, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
 import { VISUALLY_HIDDEN, descentTarget, fetchFrameworkViews, frameworkViewDoors, useWidth } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
+import type { CompanionMode } from "@graview/primitives";
+import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { ErrorReportContext, GraviewProvider, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { createElement, lazy, Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -9,6 +11,7 @@ import { flushSync } from "react-dom";
 import {
   AUTO_SCENE_HEIGHT,
   FaceBoundary,
+  FrameNotices,
   providerProps,
   storeOf,
   Strip,
@@ -35,6 +38,7 @@ import {
 type PagesContentProps = Parameters<typeof import("./pages-content.js").PagesContent<AnySchema>>[0];
 type PictureFaceProps = Parameters<typeof import("./picture-face.js").PictureFace<AnySchema>>[0];
 type SceneControlsProps = Parameters<typeof import("./scene-face.js").SceneControls>[0];
+type SceneFaceProps = Parameters<typeof import("./scene-face.js").SceneFace<AnySchema>>[0];
 
 /**
  * A FACE BEHIND A DOOR: fetched the first time it is drawn, or before that
@@ -64,7 +68,7 @@ function door<P extends object>(load: () => Promise<ComponentType<P>>) {
 
 /* Each face draws the framework's own views, so it fetches them beside its own chunk (`frameworkViewDoors`). */
 const withViews = <T,>(face: Promise<T>): Promise<T> => Promise.all([face, fetchFrameworkViews()]).then(([loaded]) => loaded);
-const scene = door(() => withViews(import("./scene-face.js").then((face) => face.SceneFace as ComponentType<{ auto: boolean }>)));
+const scene = door(() => withViews(import("./scene-face.js").then((face) => face.SceneFace as ComponentType<SceneFaceProps>)));
 const sceneControls = door(() => import("./scene-face.js").then((face) => face.SceneControls as ComponentType<SceneControlsProps>));
 const pages = door(() => withViews(import("./pages-content.js").then((face) => face.PagesContent as ComponentType<PagesContentProps>)));
 const picture = door(() => withViews(import("./picture-face.js").then((face) => face.PictureFace as ComponentType<PictureFaceProps>)));
@@ -163,6 +167,14 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOpti
    * as the pages that stand in for it), each time the face changes.
    */
   readonly onDrawn?: (face: EmbedFace) => void;
+  /**
+   * HOW THE SEAT'S RAIL STARTS (FR-78): `"open"` (the default), `"collapsed"`
+   * to a slim tab at the picture's edge, or `"hidden"`. The reader can put
+   * it away and open it again; what they chose is remembered for the app
+   * (in `memory`, or the page's storage) over this start — except
+   * `"hidden"`, which is the host's to say.
+   */
+  readonly companion?: CompanionMode;
 }
 
 /** The studio an embed offers, for a host that keeps the declaration itself. */
@@ -289,12 +301,13 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
         */}
       {heading !== false && shown !== "pages" ? <HeadingAt level={heading}>{props.label ?? app.name}</HeadingAt> : null}
       <ErrorReportContext.Provider value={report}>
+      <FrameNotices rootRef={rootRef} board={props.notices} />
       <FaceBoundary module="@graview/react" report={report} content>
       <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)}>
         <Faces face={shown} stop={stop} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} />
         {toggle && shown !== "picture" ? (
           <FaceBoundary module="@graview/embed" report={report}>
-            <EmbedStrip app={app} studio={props.studio} face={shown} narrow={narrow} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} report={report} />
+            <EmbedStrip app={app} studio={props.studio} face={shown} narrow={narrow} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} hostActions={props.hostActions} report={report} />
           </FaceBoundary>
         ) : null}
         <FaceBoundary key={shown} module={shown === "pages" || shown === "picture" ? "@graview/pages" : "@graview/react"} report={report} content>
@@ -304,7 +317,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
             ) : shown === "pages" ? (
               <PagesContent store={store as never} views={views as never} presence={presence} auto={auto} brand={brand} props={props as never} />
             ) : (
-              <SceneFace auto={auto} />
+              <SceneFace auto={auto} rememberAs={app.name} {...(props.companion ? { companion: props.companion } : {})} />
             )}
             <Drawn asked={face} shown={shown} onDrawn={drawn} />
           </Suspense>
@@ -362,8 +375,11 @@ function EmbedStrip({
   seats,
   principal,
   onSeat,
+  hostActions,
   report,
 }: {
+  /** The host's own actions, for the profile menu (FR-72). */
+  hostActions?: EmbedOptions["hostActions"] | undefined;
   /** The declaration this embed is running, for the way into the studio. */
   app: GraviewApp<AnySchema>;
   /** Where the studio's own boundary reports. */
@@ -392,6 +408,7 @@ function EmbedStrip({
       seats={seats}
       principal={principal}
       onSeat={onSeat}
+      hostActions={hostActions}
       faces={faces.map((candidate) => (
         <button
           key={candidate.id}
@@ -479,6 +496,13 @@ export interface EmbedHandle {
    * after `mount`, and after `setFace`.
    */
   drawn(): Promise<void>;
+  /**
+   * SAYS SOMETHING IN THE APP'S OWN NOTICES (FR-75): a toast that goes by
+   * itself, or a banner that stays until it is cleared, in the framework's
+   * floating panel over the face, on the ladder's top rung, and aloud. The
+   * handle it returns changes it in place or clears it.
+   */
+  notify(notice: Notice): NoticeHandle;
   readonly store: Store<AnySchema>;
   unmount(): void;
 }
@@ -500,6 +524,7 @@ interface Setters {
  */
 export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedOptions<S>): EmbedHandle {
   const store = options.store ?? options.remote?.store ?? storeOf(options.app, options.seed);
+  const board = options.notices ?? createNoticeBoard();
   let setters: Setters | null = null;
   // Which face is asked for, which is drawn, and who is waiting for the one asked for.
   let asked: EmbedFace = options.face ?? faceOf(options.stop);
@@ -527,6 +552,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
       <Embed<S>
         {...options}
         store={store as never}
+        notices={board}
         face={face}
         {...(stop !== undefined ? { stop } : {})}
         {...(principal ? { principal } : {})}
@@ -561,6 +587,13 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setBrand: (brand) => flushSync(() => setters?.brand(brand)),
     /* Drawn is the face asked for — below `pagesBelow`, drawn as the pages that stand in for it. */
     drawn: () => (drawnFace === asked ? Promise.resolve() : new Promise<void>((resolve) => waiting.push(resolve))),
+    notify: (notice) => {
+      let said: NoticeHandle | undefined;
+      flushSync(() => {
+        said = board.notify(notice);
+      });
+      return said!;
+    },
     unmount: () => root.unmount(),
   };
 }

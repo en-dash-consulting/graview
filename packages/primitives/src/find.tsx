@@ -1,6 +1,6 @@
 import { actsOn, counted, type AnySchema, type Hit } from "@graview/core";
 import { aggregateId, kindCardId, withFocus, withJackIn, withOverview, withoutSearch, withQuery, withSelection, withWithin } from "@graview/layout/view";
-import { useFound, useGraview, useKit, useViolations } from "@graview/react/provider";
+import { POPOVER_STYLE, useFound, useGraview, useKit, usePopover, useViolations } from "@graview/react/provider";
 import { hueFor } from "@graview/render";
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
@@ -140,11 +140,27 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
 
   const announce = found ? spoken(found.byKind, found.hits, store.schema) : "";
   const expanded = open && q.trim().length > 0;
+  /*
+   * The list is one of the family (FR-77): in the top layer, hung from the
+   * box, and the only popover open — opening another closes it, and it
+   * closes the one before it. The keyboard stays in the box, as a
+   * combobox's does; its rows are `aria-activedescendant`.
+   */
+  const popover = usePopover("find", {
+    open: expanded,
+    onOpenChange: (next) => {
+      if (!next) setOpen(false);
+    },
+  });
 
   return (
     <div style={{ position: "relative", minWidth: 0, flex: "1 1 auto" }} data-testid="find">
       <input
-        ref={input}
+        ref={(element) => {
+          input.current = element;
+          popover.trigger.ref(element);
+        }}
+        data-graview-popover-trigger="find"
         type="search"
         role="combobox"
         aria-label="Find anything"
@@ -201,6 +217,7 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
         {q.trim() ? announce : ""}
       </span>
       <div
+        {...popover.pane}
         id={strip}
         role="listbox"
         aria-label={q ? `What “${q}” finds` : "What the words find"}
@@ -315,9 +332,7 @@ function spoken(byKind: Readonly<Record<string, number>>, hits: readonly Hit[], 
 }
 
 const STRIP: CSSProperties = {
-  position: "absolute",
-  top: "calc(100% + 6px)",
-  right: 0,
+  ...POPOVER_STYLE,
   width: "min(26rem, calc(100vw - 24px))",
   maxHeight: "min(60vh, 28rem)",
   overflowY: "auto",
@@ -329,16 +344,11 @@ const STRIP: CSSProperties = {
   borderLeft: "1px solid var(--graview-edge)",
   borderRadius: 10,
   boxShadow: "0 10px 28px rgb(0 0 0 / 0.18)",
-  zIndex: 40,
   padding: "4px 0",
 };
 
-/** On a phone the strip is a sheet under the bar, the screen's full width. */
+/** On a phone the strip is a sheet under the box, the screen's full width (placed by `useTopLayer`). */
 const SHEET: CSSProperties = {
-  position: "fixed",
-  top: "auto",
-  left: 0,
-  right: 0,
   width: "100vw",
   maxHeight: "55vh",
   borderRadius: 0,

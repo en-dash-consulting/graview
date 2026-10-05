@@ -57,6 +57,97 @@ touched; the brand's fonts are fetched by the embed rather than assumed. The
 store is in memory and starts from the seed on every mount, unless the host
 hands it one.
 
+## What stands over what
+
+Every popover, menu and list of suggestions the embed draws — the profile,
+the problems, the districts a row could not hold, a card's acts at the
+pointer — opens in the browser's top layer, hung from what opened it and
+kept to the viewport, so nothing in the embed (the seat's rail, the
+altitude control, the scene) and nothing on the host's page stands over it.
+It is still inside the embed's element, so the scoped theme reaches it and
+nothing of it lands on the host. Everything that stays on screen takes a
+rung of one ladder, written once as custom properties on the embed's
+element: the scene, then the altitude control, then the rails and floating
+controls, then popovers, dialogs and notices, `--graview-layer-scene`
+through `--graview-layer-toast`. A host that lays something of its own over
+the embed reads the rung it means rather than guessing a number.
+
+## The host's own actions
+
+A host's links about the app and the person — "Change the app", "Your
+apps", "Report this app" — go in the strip's profile menu, under who is
+signed in, rather than in a menu of the host's own laid over the scene:
+
+```ts
+mount(root, {
+  app,
+  hostActions: [
+    { label: "Change the app", href: `/apps/${id}/change` },
+    { label: "Your apps", href: "/apps" },
+    { label: "Report this app", href: `/report?app=${slug}`, target: "_blank" },
+    { label: "Sign out", onSelect: () => signOut() },   // a press rather than a link
+  ],
+});
+```
+
+Each is a stop for the keyboard in the menu, in the order given, drawn in
+the embed's own scheme; a press closes the menu. The whole-page Shell takes
+the same host actions.
+
+## The seat, put away
+
+The seat's rail — the subject, its acts, its relations, the conversation —
+stands as a column at the picture's left edge. A reader puts it away to a
+slim tab from its header and opens it again from the tab, by the pointer
+or the keyboard, and what they chose is remembered for the app (in
+`memory`, or the page's storage, wherever the browser allows it). Put
+away, the picture and its controls take the whole width but the tab, and
+the city lays out into it. Narrower than a laptop, the open rail lies over
+the picture instead of taking a column of it; on a phone it is a sheet
+along the bottom. The host says where it starts:
+
+```ts
+mount(root, { app, companion: "collapsed" });   // "open" (the default), "collapsed" or "hidden"
+```
+
+The reader's own choice wins over `"open"` and `"collapsed"`; `"hidden"` is
+the host's to make, and draws no rail and no tab at all.
+
+## The host's notices
+
+What the host has to say while the app is open — a newer version, the
+connection gone, the app held while a repair is checked, a conflict to
+settle, a refusal — it says in the app's own notices rather than in
+elements of its own fixed over the app:
+
+```ts
+const offline = handle.notify({ kind: "banner", sentence: "Offline — changes will be sent when you reconnect.", tone: "warn" });
+offline.update({ sentence: "Back online.", tone: "good" });
+offline.dismiss();
+
+handle.notify({ kind: "toast", sentence: `The app was changed — now version ${version}` });
+handle.notify({
+  kind: "toast",
+  sentence: conflict.sentence,
+  tone: "warn",
+  actions: [{ label: "Keep theirs", onSelect: conflict.keepTheirs }, { label: "Use mine", onSelect: conflict.useMine }],
+});
+handle.notify({ id: "newer", kind: "banner", sentence: "A newer version is available.", action: { label: "Reload", onSelect: () => location.reload() } });
+```
+
+A toast goes by itself after six seconds (`timeout` says otherwise, `false`
+keeps it), unless it carries an action, when it waits for one; a banner stays
+until it is dismissed. A notice said again under the same `id` takes the
+place of the one before. An action is a press (onSelect) or a link
+(`href`), and either closes the notice; every notice also has a dismiss
+control. Banners are drawn at the top of the picture and toasts at its
+foot, in the framework's floating panel and the embed's scheme, in the
+top layer and kept over any popover that opens after them; each is said
+aloud as it arrives, and one whose tone is bad is said as an alert.
+`@graview/embed/pages` has the same `notify`; a React host drawing
+`<Embed>` makes a board with `createNoticeBoard()`, passes it as
+`notices`, and says things on it.
+
 ## What went wrong, and how long it took
 
 ```ts

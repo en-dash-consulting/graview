@@ -1,9 +1,8 @@
 import { humaniseField, labelOf, nameOfAuthor, type AnySchema } from "@graview/core";
-import { useGraview } from "@graview/react/provider";
+import { POPOVER_STYLE, useGraview, usePopover } from "@graview/react/provider";
 import { LadderSetting } from "./ladder.js";
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Seats } from "./seats.js";
-import { closeToTrigger, keepInside } from "./popover.js";
 
 /**
  * WHO YOU ARE AT THIS KEYBOARD, AND WHAT YOU SET FOR YOURSELF.
@@ -56,6 +55,7 @@ export function Profile<S extends AnySchema>({
    * and the block they sit in hides itself when they do.
    */
   keeping,
+  hostActions = NO_HOST_ACTIONS,
   compact = false,
 }: {
   /** Just the mark: the name is the title. For a bar without the room. */
@@ -70,39 +70,20 @@ export function Profile<S extends AnySchema>({
   readonly onScheme?: (scheme: "light" | "dark") => void;
   readonly profileHref?: (userId: string) => string;
   readonly keeping?: ReactNode;
+  /** The host's own ways out and about: its links, drawn under who you are (FR-72). */
+  readonly hostActions?: readonly HostAction[];
 }) {
   const { store, principal, seats, people, settings, settingValues, chooseSetting, sharing, hostAnswers } = useGraview<S>();
-  const [open, setOpen] = useState(false);
-  const anchor = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const away = (event: MouseEvent) => {
-      const target = event.target as Node | null;
-      if (anchor.current?.contains(target)) return;
-      /*
-       * A CONTROL IN HERE MAY OPEN SOMETHING BIGGER THAN HERE.
-       *
-       * The studio is a full-screen dialog portalled to the body, and its
-       * button lives in this pane. Treating the first press inside the
-       * studio as "away" closed the pane, which unmounted the button, which
-       * took the portal with it — the studio opened and vanished on the
-       * next click. Anything that is itself a dialog or an overlay is not
-       * away from the thing that opened it.
-       */
-      if (target instanceof Element && target.closest('[role="dialog"], [data-graview-overlay]')) return;
-      setOpen(false);
-    };
-    const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeToTrigger(anchor.current, () => setOpen(false));
-    };
-    document.addEventListener("mousedown", away);
-    document.addEventListener("keydown", key);
-    return () => {
-      document.removeEventListener("mousedown", away);
-      document.removeEventListener("keydown", key);
-    };
-  }, [open]);
+  /*
+   * ONE OF THE FAMILY (FR-77): opening it closes any other popover, the
+   * keyboard goes in, Escape or a press outside closes it and gives the
+   * keyboard back to the button, and it hangs from the button in the top
+   * layer, turned over or scrolling so no row is under the viewport's edge.
+   * A press inside a dialog it opened (the studio, from "keeping") is not a
+   * press away from it.
+   */
+  const popover = usePopover("profile");
+  const open = popover.open;
 
   /*
    * The person's own record, WHERE THERE IS ONE.
@@ -113,11 +94,6 @@ export function Profile<S extends AnySchema>({
    * pane says who you are from the principal alone rather than inventing a
    * name.
    */
-  // Inside an embed the pane stays inside the embed's box (see `keepInside`).
-  const pane = useRef<HTMLElement | null>(null);
-  useLayoutEffect(() => {
-    if (open) keepInside(pane.current);
-  }, [open]);
   const me = principal.id === undefined ? undefined : store.graph.getNode(principal.id);
   const name =
     me === undefined
@@ -128,12 +104,12 @@ export function Profile<S extends AnySchema>({
   const roles = principal.roles ?? [];
 
   return (
-    <div ref={anchor} style={{ position: "relative" }}>
+    <div style={{ position: "relative" }}>
       <button
         type="button"
         data-testid="profile-button"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+        {...popover.trigger}
+        onClick={popover.toggle}
         title="Who you are signed in as, and your own settings"
         style={{
           display: "inline-flex",
@@ -200,19 +176,13 @@ export function Profile<S extends AnySchema>({
         * what axe's `landmark-complementary-is-top-level` refuses (FR-40).
         */}
       <section
-          ref={(element) => {
-            pane.current = element;
-          }}
+          {...popover.pane}
           aria-label="Profile"
           data-testid="profile"
           data-graview-offstage=""
-          data-graview-overlay=""
           hidden={!open}
           style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            right: 0,
-            zIndex: 20,
+            ...POPOVER_STYLE,
             width: 280,
             maxWidth: "calc(100vw - 32px)",
             maxHeight: "min(62cqh, 520px)",
@@ -280,6 +250,51 @@ export function Profile<S extends AnySchema>({
               </span>
             ) : null}
           </div>
+
+          {/*
+            * THE HOST'S OWN ACTIONS (FR-72), under who you are: "Your apps",
+            * "Change the app", "Report this app" — the host's, about the app
+            * and the person, where a person looks for exactly that. Graview
+            * Cloud kept them in a menu of its own fixed over the scene's
+            * corner, because the embed had nowhere to put them. A link is a
+            * link (opened where the host says), and a press closes the menu.
+            */}
+          {hostActions.length > 0 ? (
+            <ul role="list" aria-label="From the host" data-testid="host-actions" style={{ ...ruled, margin: 0, paddingLeft: 0, listStyle: "none", display: "grid", gap: 2 }}>
+              {hostActions.map((action) => (
+                <li key={action.label}>
+                  {action.href !== undefined ? (
+                    <a
+                      href={action.href}
+                      data-testid="host-action"
+                      className="graview-host-action"
+                      {...(action.target ? { target: action.target, rel: "noopener" } : {})}
+                      onClick={() => {
+                        action.onSelect?.();
+                        popover.setOpen(false);
+                      }}
+                      style={hostRow}
+                    >
+                      {action.label}
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      data-testid="host-action"
+                      className="graview-host-action"
+                      onClick={() => {
+                        popover.setOpen(false);
+                        action.onSelect?.();
+                      }}
+                      style={{ ...hostRow, width: "100%", textAlign: "left", border: "none", background: "none", boxShadow: "none", font: "inherit", cursor: "pointer" }}
+                    >
+                      {action.label}
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : null}
 
           {/*
             * THE WAYS INTO THE APP ITSELF — under who you are, because that
@@ -399,6 +414,32 @@ export function Profile<S extends AnySchema>({
     </div>
   );
 }
+
+/**
+ * ONE OF A HOST'S OWN ACTIONS, in the profile menu (FR-72): a link
+ * (`href`, and `target` if it opens elsewhere) or a press (`onSelect`).
+ * Given both, the link is followed and `onSelect` is told.
+ */
+export interface HostAction {
+  readonly label: string;
+  readonly href?: string;
+  readonly target?: string;
+  readonly onSelect?: () => void;
+}
+
+const NO_HOST_ACTIONS: readonly HostAction[] = [];
+
+/** A row of the host's: a full fingertip, the ink of the pane, the accent when the keyboard is on it. */
+const hostRow = {
+  display: "flex",
+  alignItems: "center",
+  minHeight: 28,
+  padding: "2px 8px",
+  borderRadius: 7,
+  fontSize: "0.875rem",
+  color: "var(--graview-ink)",
+  textDecoration: "none",
+};
 
 const eyebrow = {
   fontSize: "0.75rem",

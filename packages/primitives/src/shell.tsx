@@ -1,12 +1,13 @@
-import type { AnySchema } from "@graview/core";
+import { layer, type AnySchema } from "@graview/core";
 import { Scene, useGraview, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
 import type { Responder, ToolCall } from "@graview/tools";
 import { useCallback, useLayoutEffect, useState, type ReactNode, useRef } from "react";
-import { Companion } from "./companion.js";
+import { Companion, type CompanionMode } from "./companion.js";
 import { VISUALLY_HIDDEN, useWidth } from "./primitives/index.js";
 import { FindBox } from "./find.js";
 import { ShowInstallation } from "./installation.js";
-import { Profile } from "./profile.js";
+import { Profile, type HostAction } from "./profile.js";
+import { Notices, type NoticeBoard } from "./notices.js";
 import { Places } from "./places.js";
 import {
   ActivityRail,
@@ -85,6 +86,24 @@ export interface ShellProps<S extends AnySchema> {
    * and the cycle would be real rather than a typing accident.
    */
   readonly studio?: ReactNode;
+  /**
+   * THE HOST'S OWN ACTIONS (FR-72): links or presses drawn in the profile
+   * menu under who is signed in — a hosting service's "Your apps", say.
+   */
+  readonly hostActions?: readonly HostAction[];
+  /**
+   * HOW THE SEAT'S RAIL STARTS (FR-78): `"open"` (the default), `"collapsed"`
+   * to a slim tab, or `"hidden"`. The reader can put it away and open it
+   * again, and what they chose is remembered for the app (by the brand's
+   * name) over this start — except `"hidden"`, which is the app's to say.
+   */
+  readonly companion?: CompanionMode;
+  /**
+   * A BOARD OF NOTICES (FR-75), made with `createNoticeBoard()`: what the
+   * app or its host says on it is drawn over the scene — banners at its
+   * top, toasts at its foot — and said aloud.
+   */
+  readonly notices?: NoticeBoard;
 }
 
 /** The narrowest the Find box gets at a desk: room for a word, not a sliver. */
@@ -106,6 +125,9 @@ export function Shell<S extends AnySchema>({
   chat = true,
   profileHref,
   studio,
+  hostActions,
+  companion,
+  notices,
 }: ShellProps<S>) {
   const { brand, view } = useGraview<S>();
   // Below a laptop's width the standing and the profile keep their marks and
@@ -115,6 +137,9 @@ export function Shell<S extends AnySchema>({
   // An act that removes what the keyboard stood on lands it on what still stands.
   const shell = useRef<HTMLDivElement>(null);
   useTheKeyboardLandsSomewhere(shell);
+  // The picture the notices are drawn over (FR-75).
+  const picture = useRef<HTMLElement>(null);
+  const scene = useCallback(() => picture.current, []);
   // The standing's sentence goes first — the app's own places are worth
   // more than "everything is in order" said in words — and the name behind
   // the profile's mark goes at a laptop's width.
@@ -203,7 +228,7 @@ export function Shell<S extends AnySchema>({
           background: "var(--graview-bar)",
           backdropFilter: "blur(14px)",
           position: "relative",
-          zIndex: 20,
+          zIndex: layer("rail"),
           // Never clipped: the profile, the standing and the activity hang
           // their panes from this bar, and a clip here cut them off at the
           // bar's foot. The places row keeps its own overflow.
@@ -284,6 +309,7 @@ export function Shell<S extends AnySchema>({
             onScheme={onScheme}
             compact={compact}
             {...(profileHref ? { profileHref } : {})}
+            {...(hostActions ? { hostActions } : {})}
             keeping={
               <>
                 <ShowInstallation<S> />
@@ -301,6 +327,7 @@ export function Shell<S extends AnySchema>({
       {/* Focusable only programmatically: where the keyboard lands when the
           pane it was in stops existing (see `Inspector`). */}
       <main
+        ref={picture}
         tabIndex={-1}
         style={{ position: "relative", flex: "1 1 auto", minHeight: 0, containerType: "size", outline: "none" }}
       >
@@ -318,11 +345,14 @@ export function Shell<S extends AnySchema>({
         <Companion<S>
           chat={chat !== false}
           onCall={onCall}
+          {...(companion ? { start: companion } : {})}
+          rememberAs={brand?.name ?? "graview"}
           {...(typeof chat === "object" && chat.respond ? { respond: chat.respond } : {})}
         />
         {/* The same pane at the pointer: right-click is the context menu, and it is this. */}
         <Inspector placement="menu" />
       </main>
+      {notices ? <Notices board={notices} anchor={scene} /> : null}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { figureSvg, formFields, humaniseField, labelOf, type AnySchema, type Finding, type FormField, type Store } from "@graview/core";
-import { useGraview } from "@graview/react";
+import { POPOVER_STYLE, useGraview, usePopover } from "@graview/react";
 import {
   describeSource,
   proposalKey,
@@ -69,7 +69,9 @@ export function StudioAgentPanel({
   readonly testId?: string;
 }) {
   const { principal, intelligence: config } = useGraview<StudioSchema>();
-  const [open, setOpen] = useState(false);
+  /* One of the family (FR-77): in the top layer, hung from its pill; Escape or a press elsewhere in the studio closes it. */
+  const popover = usePopover("studio-ask");
+  const open = popover.open;
   const [settings, setSettings] = useState(false);
   const [warmth, setWarmth] = useState<LocalStatus | null>(null);
   useEffect(() => setWarmth(null), [config]);
@@ -228,8 +230,8 @@ export function StudioAgentPanel({
       <button
         type="button"
         data-testid={testId}
-        aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
+        {...popover.trigger}
+        onClick={popover.toggle}
         title="Ask for a change to this declaration in words, see what the checker makes of it, and keep or discard it"
         style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 11px", fontSize: "0.875rem" }}
       >
@@ -239,14 +241,11 @@ export function StudioAgentPanel({
 
       {open ? (
         <div
+          {...popover.pane}
           data-testid={`${testId}-panel`}
           data-graview-offstage=""
-          data-graview-overlay=""
           style={{
-            position: "absolute",
-            top: "calc(100% + 6px)",
-            right: 0,
-            zIndex: 45,
+            ...POPOVER_STYLE,
             width: 360,
             display: "grid",
             gridTemplateRows: "auto 1fr auto",

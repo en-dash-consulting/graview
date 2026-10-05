@@ -1,4 +1,4 @@
-import { resolveKit, type AnySchema } from "@graview/core";
+import { layer, resolveKit, type AnySchema } from "@graview/core";
 import { kitConnector, useGraph, useGraview, useGraviewIfAny, useKit, useNavigation, useSelection } from "@graview/react/provider";
 import {
   CONNECTOR_DASH,
@@ -101,7 +101,7 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
          */
         left: 16,
         top: 14,
-        zIndex: 5,
+        zIndex: layer("rail"),
         display: "grid",
         gap: 1,
         padding: "8px 10px",

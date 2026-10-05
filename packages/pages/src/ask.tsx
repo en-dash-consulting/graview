@@ -1,4 +1,4 @@
-import { labelOf, type AnySchema } from "@graview/core";
+import { labelOf, layer, type AnySchema } from "@graview/core";
 import { aggregateId, kindCardId } from "@graview/layout/view";
 import { useGraviewIfAny } from "@graview/react/provider";
 import { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from "react";
@@ -47,7 +47,7 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
           position: "fixed",
           left: 16,
           bottom: 16,
-          zIndex: 30,
+          zIndex: layer("rail"),
           display: "inline-flex",
           alignItems: "center",
           gap: 6,
@@ -80,7 +80,7 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
             top: 0,
             bottom: 0,
             width: "min(320px, 100vw)",
-            zIndex: 29,
+            zIndex: layer("rail"),
             pointerEvents: "none",
           }}
         >

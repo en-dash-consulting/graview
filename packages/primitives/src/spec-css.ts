@@ -1,3 +1,5 @@
+import { LOCAL_LAYERS } from "@graview/core";
+
 /** The stylesheet the blocks are drawn with: classes over the theme's tokens, and nothing a spec can reach. */
 export const SPEC_VIEW_CSS = `
 .graview-spec { display: flex; flex-direction: column; gap: 6px; min-width: 0; color: var(--graview-ink); }
@@ -18,7 +20,7 @@ export const SPEC_VIEW_CSS = `
 .graview-spec-field { display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; min-width: 0; font-size: 0.875rem; line-height: 1.4; }
 .graview-spec-label { color: var(--graview-ink-muted); }
 .graview-spec-value { min-width: 0; color: var(--graview-ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.graview-spec-link { position: relative; z-index: 1; color: var(--graview-accent); text-decoration: underline; }
+.graview-spec-link { position: relative; z-index: ${LOCAL_LAYERS.raised}; color: var(--graview-accent); text-decoration: underline; }
 .graview-spec-progress { display: grid; gap: 4px; font-size: 0.8125rem; }
 .graview-spec-track { display: block; height: 6px; border-radius: 999px; background: var(--graview-edge); overflow: hidden; }
 .graview-spec-fill { display: block; height: 100%; background: var(--graview-accent); }

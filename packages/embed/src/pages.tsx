@@ -10,7 +10,8 @@ import { createViews, type ReactViewRegistry } from "@graview/react/provider";
 const pagesViews = <S extends AnySchema>(schema: S, specs: Parameters<typeof registerViewSpecs>[2]): ReactViewRegistry<S> =>
   registerViewSpecs(registerDefaultViews(schema, createViews(schema)), schema, specs) as unknown as ReactViewRegistry<S>;
 import { flushSync } from "react-dom";
-import { FaceBoundary, providerProps, storeOf, Strip, useErrorReport, useFrame, useIntrinsicHeight, useReady, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
+import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
+import { FaceBoundary, FrameNotices, providerProps, storeOf, Strip, useErrorReport, useFrame, useIntrinsicHeight, useReady, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
 
 /**
  * THE PAGES AND NOTHING ELSE (FR-19). `@graview/embed/pages` mounts the
@@ -51,11 +52,12 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
     >
       <style>{css}</style>
       <ErrorReportContext.Provider value={report}>
+        <FrameNotices rootRef={rootRef} board={props.notices} />
         <FaceBoundary module="@graview/react" report={report} content>
           <GraviewProvider store={store} views={views} scheme={scheme} {...providerProps(props, presence, brand)}>
             {toggle ? (
               <FaceBoundary module="@graview/embed" report={report}>
-                <Strip standing={standing} seats={props.seats} principal={props.principal} onSeat={props.onSeat} />
+                <Strip standing={standing} seats={props.seats} principal={props.principal} onSeat={props.onSeat} hostActions={props.hostActions} />
               </FaceBoundary>
             ) : null}
             <FaceBoundary module="@graview/pages" report={report} content>
@@ -80,6 +82,8 @@ export interface PagesEmbedHandle {
   setHostContext(context: EmbedHostContext): void;
   /** Re-dress the embed: another brand, or the same brand with a different kit. */
   setBrand(brand: Brand | undefined): void;
+  /** Says something in the app's own notices (FR-75): a toast, or a banner that stays until it is cleared. */
+  notify(notice: Notice): NoticeHandle;
   readonly store: Store<AnySchema>;
   unmount(): void;
 }
@@ -90,6 +94,7 @@ export interface PagesEmbedHandle {
  */
 export function mount<S extends AnySchema>(element: HTMLElement, options: PagesEmbedOptions<S>): PagesEmbedHandle {
   const store = options.store ?? options.remote?.store ?? storeOf(options.app, options.seed);
+  const board = options.notices ?? createNoticeBoard();
   let set: {
     scheme(scheme: Scheme): void;
     seat(principal: Principal): void;
@@ -110,6 +115,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
       <PagesEmbed<S>
         {...options}
         store={store as never}
+        notices={board}
         {...(principal ? { principal } : {})}
         {...(seats ? { seats } : {})}
         {...(people ? { people } : {})}
@@ -130,9 +136,19 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     setPeople: (people) => flushSync(() => set?.people(people)),
     setHostContext: (context) => flushSync(() => set?.hostContext(context)),
     setBrand: (brand) => flushSync(() => set?.brand(brand)),
+    notify: (notice) => {
+      let said: NoticeHandle | undefined;
+      flushSync(() => {
+        said = board.notify(notice);
+      });
+      return said!;
+    },
     unmount: () => root.unmount(),
   };
 }
 
 export { hostScheme } from "./frame.js";
 export type { EmbedError, EmbedErrorWhere, EmbedHostContext, EmbedReady, EmbedRemote } from "./frame.js";
+export type { HostAction } from "@graview/primitives/frame";
+export { createNoticeBoard } from "@graview/primitives/frame";
+export type { Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "@graview/primitives/frame";

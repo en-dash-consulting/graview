@@ -1,4 +1,4 @@
-import { labelOf, type AnySchema } from "@graview/core";
+import { labelOf, layer, type AnySchema } from "@graview/core";
 import { kindsOfAggregate } from "@graview/layout/view";
 import { useGraph, useGraview, useSelection } from "@graview/react/provider";
 import { useMemo } from "react";
@@ -144,7 +144,7 @@ export function QuickRelations<S extends AnySchema>({ inside = false }: { readon
               position: "absolute",
               left: 16,
               top: 14,
-              zIndex: 5,
+              zIndex: layer("rail"),
               display: "grid",
               gap: 5,
               maxWidth: "min(250px, 21cqw)",

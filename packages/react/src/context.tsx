@@ -168,6 +168,17 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly actsDoor: ActsDoor | null;
   registerActsDoor(door: ActsDoor | null): void;
   /**
+   * HOW MUCH OF THE PICTURE'S LEFT EDGE THE SEAT TAKES (FR-78), lent by the
+   * companion as it opens, closes and is put away: null while it stands as
+   * a column (the scene keeps its proportional rail, `railInset`), a number
+   * of pixels when it is a tab or an overlay or gone, so the city lays out
+   * into the room the seat is not using.
+   */
+  readonly railLeft: number | null;
+  registerRail(left: number | null): void;
+  /** Where the reader's own choices are kept: the host's, or the page's storage when it gave none. */
+  readonly memory?: ReaderMemory;
+  /**
    * WHO IS WHERE. The others on this map, by participant; whose stop this
    * tab is adopting; how this tab is seen; and this tab's own session —
    * the third part of every participant key, on its ops and its figure alike.
@@ -479,6 +490,7 @@ export function GraviewProvider<S extends AnySchema>({
   const homeView = useRef<ViewState>(initialView ?? EMPTY_VIEW).current;
   const [menuAt, setMenuAt] = useState<PointerMenu | null>(null);
   const [actsDoor, registerActsDoor] = useState<ActsDoor | null>(null);
+  const [railLeft, registerRail] = useState<number | null>(null);
   /*
    * The scene's handle, held in a ref: where things are changes every frame
    * of a tween, and a context value that changed with it would re-render
@@ -810,6 +822,9 @@ export function GraviewProvider<S extends AnySchema>({
       registerSeatWho,
       actsDoor,
       registerActsDoor,
+      railLeft,
+      registerRail,
+      ...(memory ? { memory } : {}),
       who: others,
       following,
       follow,
@@ -855,6 +870,8 @@ export function GraviewProvider<S extends AnySchema>({
       seatWho,
       registerSeatWho,
       actsDoor,
+      railLeft,
+      memory,
       others,
       following,
       follow,

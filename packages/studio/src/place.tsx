@@ -1,4 +1,4 @@
-import { INSTALLATION_MODULE, type AnySchema, type CheckResult, type GraviewApp, type MigrationDeclaration, type Store } from "@graview/core";
+import { INSTALLATION_MODULE, layer, type AnySchema, type CheckResult, type GraviewApp, type MigrationDeclaration, type Store } from "@graview/core";
 import type { DocumentEdit, Finding, GraviewDocument } from "@graview/core/document";
 import { EMPTY_VIEW, withWithin } from "@graview/layout";
 import { GraviewProvider, Scene, createViews, useGraview, useNavigation, useTheKeyboardLandsSomewhere } from "@graview/react";
@@ -385,11 +385,12 @@ function StudioOverlay<S extends AnySchema>({
         /*
          * OVER EVERYTHING IN THE BOX. Boxed, the studio is drawn from the
          * embed's strip, which comes before the embed's own picture, and the
-         * picture's seat sits at the same 40 and its menu at 60: later in the
+         * picture's seat once sat at the studio's own number: later in the
          * page and no lower, the embed's seat was drawn over the studio and
-         * took its presses. A modal dialog is above what it covers.
+         * took its presses. A modal dialog is above what it covers — the
+         * ladder's dialog rung, over every rail (FR-76).
          */
-        zIndex: within === "page" ? 40 : 100,
+        zIndex: layer("dialog"),
         display: "flex",
         flexDirection: "column",
         background: "var(--graview-ground-deep)",

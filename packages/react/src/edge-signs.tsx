@@ -1,4 +1,4 @@
-import type { AnySchema } from "@graview/core";
+import { SCENE_LAYERS, type AnySchema } from "@graview/core";
 import { districtsPastTheEdge, type Layout, type PastTheEdge } from "@graview/layout";
 import type { CSSProperties, ReactElement } from "react";
 
@@ -82,7 +82,7 @@ export function EdgeSigns({
 
 const SIGN: CSSProperties = {
   position: "absolute",
-  zIndex: 3,
+  zIndex: SCENE_LAYERS.lines,
   minHeight: 28,
   maxWidth: "40%",
   padding: "3px 10px",

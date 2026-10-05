@@ -1,4 +1,4 @@
-import { counted, labelOf, nounOf, walkKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { counted, labelOf, LOCAL_LAYERS, nounOf, walkKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
 import { useGraview, type ViewProps } from "@graview/react";
 import { onTheHorizon } from "./horizon.js";
 import { useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
@@ -648,7 +648,7 @@ export function CoverageView<S extends AnySchema>({
             flex: "0 0 auto",
             position: "sticky",
             top: 0,
-            zIndex: 2,
+            zIndex: LOCAL_LAYERS.over,
             background: "var(--graview-panel)",
             /* The names lean up out of their own boxes; without this the
                panel's edge takes the top off the longest of them. */
@@ -663,7 +663,7 @@ export function CoverageView<S extends AnySchema>({
               alignSelf: "stretch",
               position: "sticky",
               left: 0,
-              zIndex: 1,
+              zIndex: LOCAL_LAYERS.raised,
               background: "var(--graview-panel)",
             }}
           />
@@ -824,7 +824,7 @@ export function CoverageView<S extends AnySchema>({
                          sideways, for the same reason the column's does. */
                       position: stacked ? "static" : "sticky",
                       left: 0,
-                      zIndex: 1,
+                      zIndex: LOCAL_LAYERS.raised,
                       background: "var(--graview-panel)",
                       display: "flex",
                       alignItems: "center",
