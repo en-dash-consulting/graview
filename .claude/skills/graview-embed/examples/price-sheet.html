@@ -1,0 +1,79 @@
+<!doctype html>
+<!--
+  A frame guest: each package with the offers it includes, painted from the
+  app's theme, a press that notes something as the viewer, links to the
+  offers, and its own height. No build: the client is inlined where it says
+  so, from @graview/guest/client.js (or GUEST_CLIENT, @graview/guest/client).
+
+  Registered as:
+    views.register("package", { cardinality: "many", fidelity: "full" },
+      guestView({ url, name: "prices", title: "The price sheet", reads: { kinds: ["offer"], edges: ["includes"] } }),
+      { title: "The price sheet" });
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>The price sheet</title>
+  <style>
+    body { margin: 0; padding: 12px; font: 15px/1.4 system-ui, sans-serif; }
+    .package { padding: 8px 12px; margin: 0 0 8px; border-radius: 8px; border: 1px solid; }
+    .package h2 { margin: 0 0 4px; font-size: 1rem; }
+    a { cursor: pointer; text-decoration: underline; margin-right: 8px; }
+    button { font: inherit; padding: 4px 10px; border-radius: 6px; border: 1px solid; background: transparent; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <main id="app"></main>
+  <script>/* @graview/guest/client.js, inlined here */</script>
+  <script>
+    const guest = GraviewGuest.connect();
+    const money = (n) => "$" + Math.round(n).toLocaleString("en-US");
+    /* What the last press came to: kept across pushes, since the act itself pushes again. */
+    let said = "";
+
+    guest.subscribe((props) => {
+      const theme = props.theme;
+      document.body.style.background = theme.panel;
+      document.body.style.color = theme.ink;
+      document.body.style.fontFamily = theme.fontBody;
+
+      const byId = new Map(props.nodes.map((node) => [node.id, node]));
+      const offersOf = (id) => props.edges.filter((edge) => edge.kind === "includes" && edge.from === id).map((edge) => byId.get(edge.to));
+      const app = document.getElementById("app");
+      app.replaceChildren();
+
+      for (const pkg of props.nodes.filter((node) => node.kind === "package")) {
+        const section = document.createElement("section");
+        section.className = "package";
+        section.style.borderColor = pkg.standing === "recommended" ? theme.accent : theme.edge;
+        const title = document.createElement("h2");
+        const offers = offersOf(pkg.id);
+        title.textContent = `${pkg.label} — ${money(offers.reduce((sum, offer) => sum + offer.list * offer.units, 0))}`;
+        section.append(title);
+        for (const offer of offers) {
+          const link = document.createElement("a");
+          link.textContent = offer.label;
+          link.style.color = theme.accent;
+          link.addEventListener("click", () => guest.navigate(offer.id));
+          section.append(link);
+        }
+        app.append(section);
+      }
+
+      if (props.acts.some((act) => act.name === "add-note")) {
+        const note = document.createElement("button");
+        note.textContent = said || "Note that we compared prices";
+        note.style.color = theme.accent;
+        note.addEventListener("click", async () => {
+          const answer = await guest.act("add-note", { label: "Compared the packages on price" });
+          said = answer.ok ? "Noted." : answer.message;
+          note.textContent = said;
+        });
+        app.append(note);
+      }
+
+      guest.size(document.documentElement.scrollHeight);
+    });
+  </script>
+</body>
+</html>

@@ -60,7 +60,12 @@
     "./cli": {
       "types": "./dist/cli.d.ts",
       "default": "./dist/cli.js"
-    }
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "default": "./dist/client.js"
+    },
+    "./client.js": "./client.js"
   },
   "scripts": {
     "build": "tsc -b"
@@ -85,6 +90,7 @@
   },
   "files": [
     "dist",
+    "client.js",
     "README.md"
   ],
   "sideEffects": [

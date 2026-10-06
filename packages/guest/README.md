@@ -91,6 +91,34 @@ title, the guest is a place on both faces: listed by `placesOf`, at
 the scene. `props.places` lists the app's places, and
 `guest.navigate({ place: "the-packages" })` goes to one.
 
+### One client, served or inlined
+
+`@graview/guest/client.js` is the frame guest's client as one prebuilt
+classic script (2.4 kB). It leaves one global, `GraviewGuest`, and
+`GraviewGuest.connect()` is `connectGuest()`. A host serves it at a path of
+its own, or inlines its text where a frame's policy allows inline script
+alone, as Graview Cloud serves an uploaded view (`script-src
+'unsafe-inline'`). `GUEST_CLIENT` from `@graview/guest/client` is that
+text, and `GUEST_CLIENT_SHA256` its hash for a policy that names it.
+
+```html
+<main id="app"></main>
+<script>/* GUEST_CLIENT */</script>
+<script>
+  const guest = GraviewGuest.connect();
+  guest.subscribe((props) => {
+    document.body.style.background = props.theme.panel;
+    app.replaceChildren(...props.nodes.map((node) => Object.assign(document.createElement("p"), { textContent: node.label })));
+    guest.size(document.documentElement.scrollHeight);
+  });
+</script>
+```
+
+How to write one, with a worked example, is the `graview-embed` skill.
+`guest-sandbox --transport=client` serves a guest of a few lines under that
+policy and finds it renders, acts, navigates, resizes and follows the
+app's toggle in Chromium, WebKit and Firefox.
+
 ## In a worker
 
 Where a frame cannot be nested — a chat's widget, whose sandbox will not

@@ -1070,7 +1070,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
       <h1 id="h-what">@graview/guest</h1>
       <p class="lede" style="margin-top: 18px;">Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.</p>
       <div class="cta"><div class="cta-line"><code>pnpm add @graview/guest</code><button type="button" class="copy" data-copy="pnpm add @graview/guest">Copy</button></div></div>
-      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/guest</code>, <code>@graview/guest/react</code>, <code>@graview/guest/host</code>, <code>@graview/guest/host/worker</code>, <code>@graview/guest/host/views</code>, <code>@graview/guest/headless</code>, <code>@graview/guest/headless/node</code>, <code>@graview/guest/worker</code>, <code>@graview/guest/worker/view</code>, <code>@graview/guest/build</code>, <code>@graview/guest/cli</code></p>
+      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/guest</code>, <code>@graview/guest/react</code>, <code>@graview/guest/host</code>, <code>@graview/guest/host/worker</code>, <code>@graview/guest/host/views</code>, <code>@graview/guest/headless</code>, <code>@graview/guest/headless/node</code>, <code>@graview/guest/worker</code>, <code>@graview/guest/worker/view</code>, <code>@graview/guest/build</code>, <code>@graview/guest/cli</code>, <code>@graview/guest/client</code>, <code>@graview/guest/client.js</code></p>
     </section>
     <section id="readme" aria-labelledby="h-readme">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-readme">What it is</h2></div>
@@ -1105,6 +1105,19 @@ views.home(guestView({ url: frontUrl, name: "front", reads: { kinds: ["package"]
 <p>A guest is handed what it is drawn over and the edges among those records. With <code>reads</code> it is also handed every record of the kinds it reads and every edge of the edges it reads between the records it holds, as the viewer sees them (<code>readAcross</code>, the rule a worker view's manifest uses too). A guest over packages that reads <code>offer</code> and <code>includes</code> gets each package's offers, and an offer the viewer may not see is in none of it. Drawn as the home (<code>views.home</code>), a guest is drawn over nothing and sees what it reads: it is the routed home's body, and the landing over the scene.</p>
 <p>Its props carry <code>theme</code>, a <code>GuestTheme</code>: the scheme, the accent, ground, panel, ink, muted ink and edge colours, and the body and mono fonts, read off the element the frame is drawn in. The scheme is the app's own (the embed's <code>data-graview-scheme</code>), not the system's, and the host pushes again when the app's toggle changes it. <code>mountGuestView</code> takes <code>reads</code>, <code>theme</code> and <code>places</code> too.</p>
 <p><code>title</code> names the frame for assistive technology. Registered with the same title, the guest is a place on both faces: listed by <code>placesOf</code>, at <code>/places/the-price-sheet</code> on the routed face and <code>#view=the-price-sheet</code> in the scene. <code>props.places</code> lists the app's places, and <code>guest.navigate({ place: "the-packages" })</code> goes to one.</p>
+<h4>One client, served or inlined</h4>
+<p><code>@graview/guest/client.js</code> is the frame guest's client as one prebuilt classic script (2.4 kB). It leaves one global, <code>GraviewGuest</code>, and <code>GraviewGuest.connect()</code> is <code>connectGuest()</code>. A host serves it at a path of its own, or inlines its text where a frame's policy allows inline script alone, as Graview Cloud serves an uploaded view (<code>script-src 'unsafe-inline'</code>). <code>GUEST_CLIENT</code> from <code>@graview/guest/client</code> is that text, and <code>GUEST_CLIENT_SHA256</code> its hash for a policy that names it.</p>
+<div class="code" data-scroller><pre><code>&lt;main id="app"&gt;&lt;/main&gt;
+&lt;script&gt;/* GUEST_CLIENT */&lt;/script&gt;
+&lt;script&gt;
+  const guest = GraviewGuest.connect();
+  guest.subscribe((props) =&gt; {
+    document.body.style.background = props.theme.panel;
+    app.replaceChildren(...props.nodes.map((node) =&gt; Object.assign(document.createElement("p"), { textContent: node.label })));
+    guest.size(document.documentElement.scrollHeight);
+  });
+&lt;/script&gt;</code></pre></div>
+<p>How to write one, with a worked example, is the <code>graview-embed</code> skill. <code>guest-sandbox --transport=client</code> serves a guest of a few lines under that policy and finds it renders, acts, navigates, resizes and follows the app's toggle in Chromium, WebKit and Firefox.</p>
 <h3>In a worker</h3>
 <p>Where a frame cannot be nested — a chat's widget, whose sandbox will not frame another origin — the same guest runs in a classic Web Worker the host starts from a <code>blob:</code> URL, and draws in the host's page from a component kit.</p>
 <div class="code" data-scroller><pre><code>import { mountGuestWorker } from "@graview/guest/host/worker";

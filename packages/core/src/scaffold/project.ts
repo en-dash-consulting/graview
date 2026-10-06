@@ -488,6 +488,8 @@ export default defineConfig({
       "@graview/guest/headless/node": framework("guest/src/headless/node.ts"),
       "@graview/guest/headless": framework("guest/src/headless/index.ts"),
       "@graview/guest/cli": framework("guest/src/cli.ts"),
+      "@graview/guest/client.js": framework("guest/client.js"),
+      "@graview/guest/client": framework("guest/src/client.ts"),
       "@graview/guest/host": framework("guest/src/host/index.ts"),
       "@graview/guest/react": framework("guest/src/react.ts"),
       "@graview/guest/worker/view": framework("guest/src/worker/view.ts"),

@@ -35,6 +35,7 @@
       "@graview/guest/headless/node": ["./packages/guest/src/headless/node.ts"],
       "@graview/guest/headless": ["./packages/guest/src/headless/index.ts"],
       "@graview/guest/cli": ["./packages/guest/src/cli.ts"],
+      "@graview/guest/client": ["./packages/guest/src/client.ts"],
       "@graview/guest/host": ["./packages/guest/src/host/index.ts"],
       "@graview/guest/react": ["./packages/guest/src/react.ts"],
       "@graview/guest/build": ["./packages/guest/src/build.ts"],
