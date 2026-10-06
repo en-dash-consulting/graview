@@ -17,6 +17,7 @@ import {
   useFound,
   useGraview,
   useKit,
+  useNameWidth,
   useNavigation,
   useReached,
   useSelection,
@@ -439,6 +440,8 @@ export function registerDefaultViews<S extends AnySchema>(
        * descending; pressing the one already showing walks up to it.
        */
       const showings = view.overview && !hiddenKinds.has(String(kind)) ? views.places().filter((place) => place.kind === String(kind)) : [];
+      // The names measured as the scene measured them, so the room kept under the signpost is the room the layout made.
+      const nameWidth = useNameWidth();
       const showingNow = props.focused ? (view.within?.["view"] ?? showings[0]?.as) : undefined;
       const broken = members.filter((member) => props.flagged?.includes(member.id)).length;
       const trouble = broken > 0;
@@ -558,10 +561,10 @@ export function registerDefaultViews<S extends AnySchema>(
              * building is sized from the card's height, and the layout grew
              * the card by the marquee's band — so the building grew into the
              * band and the showings stood on its roof. The band's height is
-             * the layout's own estimate, and the building sizes from what is
-             * left.
+             * the layout's own, from the names as the scene measured them,
+             * and the building sizes from what is left.
              */
-            ["--graview-marquee-room" as string]: showings.length > 0 ? `${marqueeHeightFor(showings.map((place) => place.title), 132) + (figure ? 4 : 42)}px` : "0px",
+            ["--graview-marquee-room" as string]: showings.length > 0 ? `${marqueeHeightFor(showings.map((place) => place.title), 132, nameWidth) + (figure ? 4 : 42)}px` : "0px",
           }}
         >
           {/*

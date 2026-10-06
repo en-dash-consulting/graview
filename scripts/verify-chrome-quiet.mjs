@@ -64,6 +64,10 @@ const ORG_SEED = resolve(repoRoot, "scripts/fixtures/quiet/org.seed.json");
 const VENDORS = resolve(repoRoot, "scripts/fixtures/quiet/vendor-shortlist.template.json");
 const ORG_PLACES = JSON.parse(readFileSync(ORG, "utf8")).lenses.map((lens) => lens.title);
 
+/** A wide display face every engine here has on macOS, with wide fallbacks: an average letter well over the 7.1 px the marquee was estimated at. */
+const WIDE_FONT = '"Arial Black", "Verdana", "DejaVu Sans", sans-serif';
+/** Place names nineteen letters long: one line at the estimate's average letter, two in the wide face. */
+const EDGE_NAMES = ["Where the work goes", "Who answers to whom", "What the work costs", "The lines held firm", "Strengths by person", "Skills by the level", "Who owns which part", "The handoff runways"];
 const DESK = { width: 1280, height: 800 };
 const PHONE = { width: 390, height: 844 };
 /** The most pills Cloud's brief allows on the two screens it named (FR-117). */
@@ -98,10 +102,20 @@ async function buildHost() {
         import vendors from ${JSON.stringify(VENDORS)};
         const asked = new URLSearchParams(location.search);
         const isOrg = asked.get("doc") === "org";
-        const compiled = compileDocumentWithoutCheck(isOrg ? org : vendors.document, { today: () => "2026-10-02" });
+        /*
+         * In the wide face, the org's places are named at the edge of a line: nineteen
+         * letters, one line at an average letter's width and two in a wide face, so a
+         * room sized for the average runs short by a line a name.
+         */
+        const edgeNames = ${JSON.stringify(EDGE_NAMES)};
+        const document_ = isOrg && asked.get("font") === "wide" ? { ...org, lenses: org.lenses.map((lens, i) => ({ ...lens, title: edgeNames[i % edgeNames.length] })) } : isOrg ? org : vendors.document;
+        const compiled = compileDocumentWithoutCheck(document_, { today: () => "2026-10-02" });
         if (!compiled.ok) throw new Error("the document did not compile");
         const withIds = (seed) => ({ nodes: seed.nodes, edges: seed.edges.map((edge, i) => ({ id: edge.id ?? "e" + i, ...edge })) });
+        /* A brand whose body face is a wide display face: what the place tiles are measured in (FR-118). */
+        const wide = asked.get("font") === "wide" ? { brand: { ...(compiled.app.brand ?? {}), name: compiled.app.name, typography: { body: ${JSON.stringify(WIDE_FONT)} } } } : {};
         window.__handle = mount(document.getElementById("app"), {
+          ...wide,
           app: compiled.app,
           seed: withIds(isOrg ? orgSeed : vendors.seed),
           face: asked.get("face") ?? "graview",
@@ -269,7 +283,7 @@ function measure() {
 
 const host = await buildHost();
 const errors = [];
-const results = { screens: [], tiles: [], skillRows: [], boards: [] };
+const results = { screens: [], tiles: [], skillRows: [], boards: [], marquees: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -376,6 +390,46 @@ try {
         await close();
       }
 
+      /*
+       * ---- FR-118: a district's names keep to the room the city made for them, in a wide brand face.
+       * The room under a signpost is sized before the names are drawn; sized for an average
+       * letter, a wider face ran the column past its district into the one below. Each
+       * marquee's foot stays inside its own district, and no name stands on another's.
+       */
+      for (const font of ["", "wide"]) {
+        const { page, close } = await open(`doc=org&face=graview${font ? `&font=${font}` : ""}`, DESK);
+        await page.evaluate(() => document.fonts?.ready);
+        await page.waitForTimeout(600);
+        const marquees = await page.evaluate(() => {
+          const box = (el) => {
+            const b = el.getBoundingClientRect();
+            return { left: b.left, top: b.top, right: b.right, bottom: b.bottom };
+          };
+          const meets = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+          const drawn = [...document.querySelectorAll('[data-testid^="drive-in-"]')].filter((el) => el.getBoundingClientRect().height > 2);
+          const names = drawn.flatMap((el) => [...el.querySelectorAll(".graview-drive-in-thumb-title")].map((title) => ({ owner: el, title: title.textContent.trim(), box: box(title) })));
+          return {
+            font: getComputedStyle(drawn[0]?.querySelector(".graview-drive-in-thumb-title") ?? document.body).fontFamily,
+            seen: drawn.map((el) => {
+              const card = el.closest("[data-graview-view]");
+              const marquee = box(el.querySelector(".graview-drive-in-marquee") ?? el);
+              const district = card ? box(card) : null;
+              const mine = names.filter((name) => name.owner === el);
+              return {
+                district: el.getAttribute("data-testid"),
+                names: mine.length,
+                /* The column's foot against its district's: past it is the next district's ground. */
+                over: district ? Math.round(marquee.bottom - district.bottom) : null,
+                /* Names of this marquee that stand on a name of another one. */
+                onAnother: mine.filter((name) => names.some((other) => other.owner !== el && meets(name.box, other.box))).map((name) => name.title),
+              };
+            }),
+          };
+        });
+        results.marquees.push({ engine, scheme, font: font || "default", ...marquees });
+        await close();
+      }
+
       /* ---- FR-117: no card on a status board wears its own column's status */
       for (const face of ["graview", "pages"]) {
         const viewport = DESK;
@@ -417,6 +471,17 @@ try {
   report.checks.everyPlaceTileInTheOrgScenesSaysItsWholeName = {
     seen: results.tiles,
     ok: results.tiles.length > 0 && results.tiles.every((one) => (one.viewport.startsWith(`${DESK.width}`) ? one.tiles.length >= ORG_PLACES.length : one.tiles.length > 0) && one.tiles.every((tile) => tile.whole)),
+  };
+  report.checks.aDistrictsNamesKeepToTheirRoomInAWideBrandFace = {
+    seen: results.marquees,
+    ok:
+      results.marquees.length === engines.length * SCHEMES.length * 2 &&
+      results.marquees.every(
+        (one) =>
+          one.seen.length > 0 &&
+          one.seen.reduce((sum, marquee) => sum + marquee.names, 0) >= ORG_PLACES.length &&
+          one.seen.every((marquee) => marquee.names > 0 && marquee.over !== null && marquee.over <= 1 && marquee.onAnother.length === 0),
+      ),
   };
   report.checks.aSkillRowKeepsItsLevelAndProgressWholeOnBothFaces = { seen: results.skillRows, ok: results.skillRows.length === engines.length * SCHEMES.length * 2 && results.skillRows.every((one) => one.badge === "Lv 3" && one.badgeWhole && one.progress === "3 of 5" && one.progressWhole) };
   report.checks.noBoardCardWearsItsOwnColumnsStatus = { seen: results.boards, ok: results.boards.length > 0 && results.boards.every((one) => one.columns >= 3 && one.worn.length === 0) };

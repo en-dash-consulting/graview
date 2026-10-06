@@ -123,6 +123,30 @@ describe("the marquee takes the room its names take", () => {
     expect(long).toBe(10 + 3 * 16 + 6);
     expect(marqueeHeightFor([], 132)).toBe(0);
   });
+
+  /*
+   * A name sized for an average letter is a line short in a wide face: the
+   * room under the signpost is sized from the names as they are drawn, when
+   * the page can measure them, and never comes out under the estimate.
+   */
+  it("takes the lines a wide face wraps a name onto, measured, and never fewer than the estimate", async () => {
+    const { marqueeHeightFor } = await import("../../src/layout.js");
+    const name = "Where the work goes"; // 19 letters: one line at 7.1 px a letter
+    const average = (text: string) => text.length * 7.1;
+    const wide = (text: string) => text.length * 10; // a wide display face
+    const narrow = (text: string) => text.length * 4;
+    expect(marqueeHeightFor([name], 132)).toBe(10 + 24);
+    expect(marqueeHeightFor([name], 132, average)).toBe(10 + 24);
+    // "Where the work" is 140 px, past the 138 the column holds: two lines, at the marquee's 16.25 px line.
+    expect(marqueeHeightFor([name], 132, wide)).toBe(10 + Math.ceil(2 * 16.25) + 6);
+    expect(marqueeHeightFor([name, name, name], 132, wide)).toBe(10 + 3 * (Math.ceil(2 * 16.25) + 6) + 2 * 2);
+    // Words break where the browser breaks them: three short words that each fit, but not together.
+    expect(marqueeHeightFor(["aaaaaaaaaa bbbbbbbbbb"], 132, wide)).toBe(10 + Math.ceil(2 * 16.25) + 6);
+    // A word wider than the column breaks anywhere, onto as many lines as it needs.
+    expect(marqueeHeightFor(["x".repeat(30)], 132, wide)).toBe(10 + Math.ceil(3 * 16.25) + 6);
+    // A narrow face never takes fewer lines than the estimate (the pixel is the measured line, 16.25 not 16).
+    expect(marqueeHeightFor(["What the slices of the founder's load call for"], 132, narrow)).toBe(marqueeHeightFor(["What the slices of the founder's load call for"], 132) + 1);
+  });
 });
 
 describe("zooming by hand", () => {
