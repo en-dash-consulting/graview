@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { arrange, arrangeable, createSchema, defineNode, Graph, parseArrangement } from "../../src/index.js";
+import { arrange, arrangeable, parseArrangement } from "../../src/arrange.js";
+import { createSchema, defineNode, Graph } from "../../src/index.js";
 
 /**
  * "SUVs UNDER £25,000, A KIA OR A HYUNDAI." A car shopper's first minute,

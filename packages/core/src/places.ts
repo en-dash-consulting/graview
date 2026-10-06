@@ -1,5 +1,5 @@
 import type { GraviewApp, LensDeclaration } from "./app.js";
-import { parseArrangement } from "./arrange.js";
+import { parseArrangement } from "./arrangement.js";
 import { defOf } from "./schema/zod.js";
 import type { AnySchema } from "./schema/schema.js";
 import { placeSlug, type Place } from "./views/types.js";

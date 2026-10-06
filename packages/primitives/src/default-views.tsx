@@ -1,5 +1,5 @@
+import { arrange } from "@graview/core/arrange";
 import {
-  arrange,
   describeNode,
   humaniseField,
   labelOf,

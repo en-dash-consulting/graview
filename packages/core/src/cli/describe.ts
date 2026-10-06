@@ -1,4 +1,4 @@
-import { arrangeable } from "../arrange.js";
+import { arrangeable } from "../arrangement.js";
 import { searchableFields } from "../search.js";
 import { capabilitiesOf, describeCapability, type GraviewApp, type IntelligenceProviderDeclaration } from "../app.js";
 import { beginning } from "../beginning.js";

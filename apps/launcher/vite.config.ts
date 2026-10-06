@@ -29,6 +29,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@graview/core/blocks": fileURLToPath(new URL("../../packages/core/src/blocks.ts", import.meta.url)),
+      "@graview/core/arrange": fileURLToPath(new URL("../../packages/core/src/arrange.ts", import.meta.url)),
       "@graview/core/check": fileURLToPath(new URL("../../packages/core/src/check.ts", import.meta.url)),
       "@graview/core/scene": fileURLToPath(new URL("../../packages/core/src/scene.ts", import.meta.url)),
       "@graview/core/figures": fileURLToPath(new URL("../../packages/core/src/figures.ts", import.meta.url)),

@@ -1,4 +1,5 @@
-import { arrangeable, createSchema, defineNode, Graph, parseArrangement } from "@graview/core";
+import { arrangeable, parseArrangement } from "@graview/core/arrange";
+import { createSchema, defineNode, Graph } from "@graview/core";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";

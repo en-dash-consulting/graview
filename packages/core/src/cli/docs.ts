@@ -1,4 +1,4 @@
-import { arrangeable } from "../arrange.js";
+import { arrangeable } from "../arrangement.js";
 import { searchableFields } from "../search.js";
 import type { GraviewApp } from "../app.js";
 import { deriveMutations } from "../mutations/derive-edits.js";

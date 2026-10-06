@@ -1,7 +1,5 @@
+import { arrangeAllows, arrangeable, formatArrangement } from "@graview/core/arrange";
 import {
-  arrangeAllows,
-  arrangeable,
-  formatArrangement,
   labelOf,
   valueWords,
   type AnySchema,

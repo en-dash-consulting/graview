@@ -1,4 +1,5 @@
-import { admitArrangement, arrange, arrangeable, formatArrangement, humaniseField, labelOf, parseArrangement, type Arrangement, type Principal, type Violation } from "@graview/core";
+import { admitArrangement, arrange, arrangeable, formatArrangement, parseArrangement } from "@graview/core/arrange";
+import { humaniseField, labelOf, type Arrangement, type Principal, type Violation } from "@graview/core";
 import { ArrangeBar, KindFigure, useMarkup } from "@graview/primitives";
 import {
   DerivedForm,

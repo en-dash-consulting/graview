@@ -1,4 +1,4 @@
-import type { ArrangementWords } from "./arrange.js";
+import type { ArrangementWords } from "./arrangement.js";
 import type { InvariantDefinition } from "./invariants/types.js";
 import type { AnyMutationDefinition } from "./mutations/types.js";
 import type { Policy } from "./permissions/types.js";

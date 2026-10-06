@@ -1,18 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import {
-  admitArrangement,
-  arrange,
-  arrangeable,
-  arrangeAllows,
-  bucketStart,
-  createSchema,
-  defineNode,
-  formatArrangement,
-  Graph,
-  isoDate,
-  parseArrangement,
-} from "../../src/index.js";
+import { admitArrangement, arrange, arrangeable, arrangeAllows, bucketStart, formatArrangement, parseArrangement } from "../../src/arrange.js";
+import { createSchema, defineNode, Graph, isoDate } from "../../src/index.js";
 import { awkwardApp } from "../../src/testing.js";
 
 /**
