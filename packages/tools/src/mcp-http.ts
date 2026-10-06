@@ -35,6 +35,8 @@ export interface McpHttpOptions<S extends AnySchema> {
   readonly readOnly?: boolean;
   readonly places?: ToolRuntimeOptions<S>["places"];
   readonly derive?: ToolRuntimeOptions<S>["derive"];
+  /** The app `describe_place` describes: its home, lenses, views and arrangement (FR-89). */
+  readonly app?: ToolRuntimeOptions<S>["app"];
   /** What a refused request's `WWW-Authenticate` says, e.g. `Bearer resource_metadata="…"`. `Bearer` when unsaid. */
   readonly challenge?: string;
   /**
@@ -101,6 +103,7 @@ export function createMcpHttpHandler<S extends AnySchema>(options: McpHttpOption
       ...(options.readOnly ? { readOnly: true } : {}),
       ...(options.places ? { places: options.places } : {}),
       ...(options.derive ? { derive: options.derive } : {}),
+      ...(options.app ? { app: options.app } : {}),
     });
     const adapter = createMcpAdapter(runtime);
     const told = async (message: JsonRpcRequest): Promise<void> => {

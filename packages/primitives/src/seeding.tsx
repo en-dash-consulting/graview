@@ -14,6 +14,7 @@ import {
   dependentsOf,
   deriveAffordances,
   firstJsonObject,
+  resolveProposal,
   validateProposals,
   without,
   type Affordance,
@@ -923,17 +924,27 @@ export function Door<S extends AnySchema>({ provider, prompt, photos = [], onPro
 
   const read = (text: string) => {
     const answer = firstJsonObject(text) as { proposals?: readonly PlannedCall[] } | null;
-    const proposals = Array.isArray(answer?.proposals) ? answer!.proposals : [];
+    /*
+     * A model names things the way a person does, so a label that means
+     * exactly one node is read as that node before the gate sees it — as
+     * the seat reads it. `resolveProposal` keeps the rest of the call.
+     */
+    const proposals = (Array.isArray(answer?.proposals) ? answer!.proposals : []).map(
+      (proposal) => resolveProposal(store, proposal) as PlannedCall,
+    );
     const kept = validateProposals(store, proposals, declared?.may) as readonly PlannedCall[];
     if (kept.length === 0) {
       setSaid("Nothing in that answer was a call this app knows, so nothing was taken from it.");
       return;
     }
     setSaid(null);
-    onProposals(
-      /* `as` and `why` are the model's own and survive validation. */
-      kept.map((call, index) => ({ ...call, ...(proposals[index]?.as ? { as: proposals[index]!.as } : {}) })),
-    );
+    /*
+     * `as`, `why` and `confidence` are the model's own and survive
+     * validation: the gate keeps or drops each call whole. Reading them
+     * back by position from the answer handed a call the name of whichever
+     * call had stood in its place before the gate dropped one.
+     */
+    onProposals(kept);
   };
 
   if (!declared) return null;

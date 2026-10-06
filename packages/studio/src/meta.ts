@@ -1,5 +1,5 @@
 import { createSchema, defineNode, nodeRef, type AnyMutationDefinition, type GraviewApp } from "@graview/core";
-import { renameIn, type DeclaredKinds } from "@graview/core/document";
+import { renameIn, type DeclaredKinds, type NameChange } from "@graview/core/document";
 import { z } from "zod";
 
 /*
@@ -79,6 +79,31 @@ export const fieldNode = defineNode("field", {
   },
   label: (node) => node.label,
   display: { labels: { label: "name" } },
+});
+
+/*
+ * A VALUE A KIND WORKS OUT (FR-83), a node like a field is. Without one the
+ * studio read an app's computed fields as nothing and handed the app back
+ * without them, so a glance that said one named nothing and a card that
+ * showed one drew a dash. Its own edge to its kind, not a field's `of`: a
+ * computed field is no field — no act writes it, no form asks for it.
+ */
+export const computedNode = defineNode("computed", {
+  description: "A value a kind works out from what it holds, in the rule language — read like a field, never stored or written.",
+  plural: "computed fields",
+  fields: z.object({
+    label,
+    /** What it is worked out as: `list * units`, `sum(out('includes'), list * units)`. */
+    expr: z.string().min(1),
+    /** The words it is shown by, where its name does not say it — the declaration's own `label`. */
+    shownAs: z.string().optional(),
+    description: z.string().optional(),
+  }),
+  edges: {
+    "computed-on": { to: ["kind"], cardinality: "one", description: "the kind that works it out", inverse: "what it works out" },
+  },
+  label: (node) => node.label,
+  display: { labels: { label: "name", expr: "worked out as", shownAs: "shown as" } },
 });
 
 export const edgeNode = defineNode("edge", {
@@ -267,7 +292,7 @@ export const brandNode = defineNode("brand", {
   display: { labels: { label: "name", body: "body typeface", display: "display typeface" } },
 });
 
-export const STUDIO_SCHEMA = createSchema([kindNode, fieldNode, edgeNode, actNode, ruleNode, roleNode, grantNode, sightNode, lensNode, brandNode]);
+export const STUDIO_SCHEMA = createSchema([kindNode, fieldNode, computedNode, edgeNode, actNode, ruleNode, roleNode, grantNode, sightNode, lensNode, brandNode]);
 export type StudioSchema = typeof STUDIO_SCHEMA;
 
 /*
@@ -336,7 +361,12 @@ export const renameKind = act("rename-kind", {
   input: z.object({ id: nodeRef(["kind"]), label: z.string().min(1) }),
   describe: (args, graph) => `Rename ${(graph.getNode(args.id) as { label?: string } | undefined)?.label ?? args.id} to ${args.label}`,
   apply(ctx, args) {
-    ctx.patchNode(args.id, { label: slug(args.label) });
+    const from = nameOf(ctx, args.id);
+    const to = slug(args.label);
+    const kinds = declaredKinds(ctx.graph as never);
+    ctx.patchNode(args.id, { label: to });
+    // A computed field that sweeps the kind by name (`all('party')`) follows it, by the rule language's own walk.
+    if (from !== to) renameComputed(ctx, kinds, { what: "kind", from, to });
   },
 });
 
@@ -354,7 +384,7 @@ export const removeKind = act("remove-kind", {
      * graph as it stood, so removing a field and then its kind would say
      * "remove the of edge" twice.
      */
-    const gone = [args.id, ...ctx.graph.in(args.id, "of").map((node) => node.id), ...ctx.graph.in(args.id, "from-kind").map((node) => node.id)];
+    const gone = [args.id, ...ctx.graph.in(args.id, "of").map((node) => node.id), ...ctx.graph.in(args.id, "computed-on").map((node) => node.id), ...ctx.graph.in(args.id, "from-kind").map((node) => node.id)];
     const going = new Set(gone);
     const touched = new Map<string, { kind: string; from: string; to: string }>();
     for (const edge of ctx.graph.allEdges()) {
@@ -456,8 +486,23 @@ export const renameField = act("rename-field", {
       }
       if (Object.keys(patch).length > 0) ctx.patchNode(rule.id, patch as never);
     }
+    // And every computed field that reads it, on this kind or walking to it from another (FR-83).
+    renameComputed(ctx, kinds, change);
   },
 });
+
+/** Every computed field's expression with a name changed, read from the kind that works it out. */
+function renameComputed(ctx: Ctx, kinds: DeclaredKinds, change: NameChange): void {
+  for (const computed of ctx.graph.nodesOfKind("computed") as readonly { id: string; expr?: unknown }[]) {
+    if (typeof computed.expr !== "string") continue;
+    const owner = ctx.graph.out(computed.id, "computed-on")[0] as { label?: string } | undefined;
+    if (!owner?.label) continue;
+    // The kind as `kinds` names it: read before the change.
+    const over = change.what === "kind" && owner.label === change.to ? change.from : owner.label;
+    const next = renameIn(kinds, over, { expression: computed.expr }, change);
+    if (next !== undefined && next !== computed.expr) ctx.patchNode(computed.id, { expr: next } as never);
+  }
+}
 
 export const removeField = act("remove-field", {
   title: "Remove the field",

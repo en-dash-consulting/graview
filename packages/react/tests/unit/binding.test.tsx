@@ -198,6 +198,18 @@ describe("the scene", () => {
     expect(html).toContain('data-graview-connector="assigned-to"');
   });
 
+  it("says which two things each connector joins, in the edge's direction", () => {
+    const html = render(<Scene renderer="dom" />, {
+      ...EMPTY_VIEW,
+      focusId: "week-1",
+      relation: "person",
+      expanded: [kindCardId("duty")],
+    });
+    const line = /<path data-graview-connector="assigned-to"[^>]*>/.exec(html)?.[0] ?? "";
+    expect(line).toContain('data-graview-from="ana"');
+    expect(line).toContain('data-graview-to="morning"');
+  });
+
   /*
    * THE KIT IS THE BRAND'S SAY over the lines: a kind it keeps quiet is not
    * drawn, its route is one of the declared strategies, its colour is what
@@ -499,5 +511,20 @@ describe("a selection, mapped onto what is drawn", () => {
     expect((html.match(/class="graview-road"/g) ?? []).length).toBeGreaterThan(0);
     // A line in the air says only what a road cannot: nothing is chosen, so nothing is drawn.
     expect(opacities(html)).toEqual([]);
+  });
+
+  it("says which two plots each road joins, by the ids the plots carry", () => {
+    /*
+     * A road is drawn between two districts, and a design that lights the
+     * roads touching a district needs to know which: by the same id the
+     * plot wears, so `[data-graview-plot=x]` and `[data-graview-from=x]`
+     * are one selector's worth of work, not a path parsed back to points.
+     */
+    const html = graview();
+    const road = /<g class="graview-road"[^>]*>/.exec(html)?.[0] ?? "";
+    expect(road).toContain('data-graview-road="assigned-to"');
+    const ends = [/data-graview-from="([^"]*)"/.exec(road)?.[1], /data-graview-to="([^"]*)"/.exec(road)?.[1]];
+    expect(ends.sort()).toEqual([kindCardId("duty"), kindCardId("person")]);
+    for (const end of ends) expect(html).toContain(`data-graview-plot="${end}"`);
   });
 });
