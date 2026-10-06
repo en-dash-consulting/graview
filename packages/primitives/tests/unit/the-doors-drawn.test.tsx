@@ -120,6 +120,40 @@ describe("a door", () => {
     await act(async () => root.unmount());
   });
 
+  it("keeps each call's own name when a call before it was dropped", async () => {
+    /*
+     * The gate drops what the app does not know, and the names a plan uses
+     * to point one call at another belong to the call that said them — not
+     * to whichever call ended up in its place once the gate was through.
+     */
+    const taken: PlannedCall[][] = [];
+    const root = await draw(store([{ name: "surveyor", kind: "llm", reach: ["paste"] }]), (p) =>
+      taken.push([...p]),
+    );
+    const paste = host.querySelector<HTMLTextAreaElement>('[data-testid="door-paste"]')!;
+    await act(async () => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!;
+      setter.call(
+        paste,
+        JSON.stringify({
+          proposals: [
+            { mutation: "invent-a-thing", as: "ghost", args: {} },
+            { mutation: "stake-out", as: "lawn", args: { label: "Back Lawn" }, why: "the big one", confidence: 0.9 },
+            { mutation: "stake-out", args: { label: "Side Bed" }, why: "the small one" },
+          ],
+        }),
+      );
+      paste.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="door-read"]')!.click());
+    expect(taken).toHaveLength(1);
+    expect(taken[0]).toEqual([
+      { mutation: "stake-out", as: "lawn", args: { label: "Back Lawn" }, why: "the big one", confidence: 0.9 },
+      { mutation: "stake-out", args: { label: "Side Bed" }, why: "the small one" },
+    ]);
+    await act(async () => root.unmount());
+  });
+
   it("says so rather than silently taking nothing, when the answer names no act", async () => {
     const root = await draw(store([{ name: "surveyor", kind: "llm", reach: ["paste"] }]));
     const paste = host.querySelector<HTMLTextAreaElement>('[data-testid="door-paste"]')!;

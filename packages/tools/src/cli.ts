@@ -180,13 +180,13 @@ export async function mcp(argv: readonly string[]): Promise<number> {
      * exist yet.
      */
     const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), ...(app.intelligence ? { intelligence: app.intelligence } : {}) });
-    const adapter = createMcpAdapter(createToolRuntime(store, { author: principal, readOnly, places: () => app.views?.places?.() ?? [] }));
+    const adapter = createMcpAdapter(createToolRuntime(store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [] }));
     process.stdout.write(`${JSON.stringify({ tools: adapter.listTools() }, null, 2)}\n`);
     return 0;
   }
 
   const host = await openHost(app, argv, principal, "mcp");
-  const runtime = createToolRuntime(host.store, { author: principal, readOnly, places: () => app.views?.places?.() ?? [] });
+  const runtime = createToolRuntime(host.store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [] });
   const inner = createMcpAdapter(runtime);
   say(`graview mcp: ${app.name} as ${principal.id} on ${host.where} — ${inner.listTools().length} tools\n`);
 

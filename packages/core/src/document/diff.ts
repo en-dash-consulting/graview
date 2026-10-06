@@ -111,8 +111,9 @@ export function diffDocuments(before: GraviewDocument, after: GraviewDocument): 
     if (!same(was.label, now.label) || !same(was.describe, now.describe)) sentences.push(`How ${withArticle(kind)} is labelled changes.`);
     // A glance follows its fields: a rename or a removal is already said, so only a different choice is.
     const movedTo = new Map(Object.entries(now.fields).flatMap(([field, f]) => ((f as { renamedFrom?: string }).renamedFrom ? [[(f as { renamedFrom: string }).renamedFrom, field] as const] : [])));
-    const wasGlance = (was.glance ?? []).map((field) => movedTo.get(field) ?? field).filter((field) => now.fields[field]);
+    const wasGlance = (was.glance ?? []).map((field) => movedTo.get(field) ?? field).filter((field) => now.fields[field] || now.computed?.[field] !== undefined);
     if (!same(wasGlance, now.glance ?? [])) sentences.push(`What a glance at ${withArticle(kind)} says changes.`);
+    sentences.push(...computedSentences(now.plural ?? was.plural ?? `${kind}s`, was.computed, now.computed));
   }
   for (const [section, noun] of [["acts", "act"], ["rules", "rule"]] as const) {
     const a = before[section] ?? {};
@@ -124,7 +125,9 @@ export function diffDocuments(before: GraviewDocument, after: GraviewDocument): 
   if (!same(before.policy, after.policy) || !same(before.roles, after.roles)) sentences.push("Who may do what changes.");
   if (!same(before.brand, after.brand)) sentences.push("The app's colours change.");
   sentences.push(...viewSentences(before, after));
-  for (const k of ["lenses", "pages", "modules", "settings", "description"] as const) if (!same(before[k], after[k])) sentences.push(`The app's ${k} change.`);
+  sentences.push(...lensSentences(before.lenses ?? [], after.lenses ?? []));
+  sentences.push(...pagesSentences(before.pages, after.pages));
+  for (const k of ["modules", "settings", "description"] as const) if (!same(before[k], after[k])) sentences.push(`The app's ${k} change.`);
 
   const breaking = removedKinds.length + removedFields.length + retypedFields.length + droppedOptions.length + removedEdges.length + newlyRequired.length > 0;
   return { sentences, breaking, removedKinds, removedFields, retypedFields, droppedOptions, removedEdges, newlyRequired, unchanged: sentences.length === 0 };
@@ -149,8 +152,61 @@ function viewSentences(before: GraviewDocument, after: GraviewDocument): string[
   }
   // The home view (FR-81), which is no kind's.
   const home = [homeOf(before), homeOf(after)] as const;
-  if (!same(home[0], home[1])) sentences.push(home[0] === undefined ? "The home gets a view of its own." : home[1] === undefined ? "The home goes back to Graview's own." : "How the home looks changes.");
+  if (!same(home[0], home[1])) sentences.push(home[0] === undefined ? "The front page gets a view of its own." : home[1] === undefined ? "The front page goes back to Graview's own." : "The front page changes.");
   return sentences;
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** What a kind works out, compared (FR-83, FR-84): "Packages work out "net".", in the kind's own plural. */
+function computedSentences(plural: string, was: Record<string, unknown> | undefined, now: Record<string, unknown> | undefined): string[] {
+  const out: string[] = [];
+  const said = cap(plural);
+  const exprOf = (c: unknown) => (typeof c === "string" ? c : (c as { expr?: string } | undefined)?.expr);
+  for (const name of keys(now)) {
+    if (was?.[name] === undefined) out.push(`${said} work out "${name}".`);
+    else if (exprOf(was[name]) !== exprOf(now![name])) out.push(`How ${plural.charAt(0).toLowerCase()}${plural.slice(1)} work out "${name}" changes.`);
+    else if (!same(typeof was[name] === "string" ? { expr: was[name] } : was[name], typeof now![name] === "string" ? { expr: now![name] } : now![name])) out.push(`${said}' "${name}" is described differently.`);
+  }
+  for (const name of keys(was)) if (now?.[name] === undefined) out.push(`${said} no longer work out "${name}".`);
+  return out;
+}
+
+type LooseLens = Record<string, unknown>;
+const lensKey = (lens: LooseLens, index: number) => (typeof lens["title"] === "string" ? `${lens["title"]}|${String(lens["on"] ?? "")}` : `#${index}:${String(lens["name"] ?? "")}`);
+const lensName = (lens: LooseLens) => (typeof lens["title"] === "string" ? `A lens "${lens["title"]}"` : `A ${String(lens["name"] ?? "")} lens`);
+
+/** The lenses, compared by title: "A lens "The packages" is added." */
+function lensSentences(before: readonly LooseLens[], after: readonly LooseLens[]): string[] {
+  const out: string[] = [];
+  const was = new Map(before.map((lens, i) => [lensKey(lens, i), lens]));
+  const now = new Map(after.map((lens, i) => [lensKey(lens, i), lens]));
+  for (const [key, lens] of now) {
+    const old = was.get(key);
+    if (!old) out.push(`${lensName(lens)} is added.`);
+    else if (!same(old, lens)) out.push(`${lensName(lens).replace(/^A lens/, "The lens").replace(/^A /, "The ")} changes.`);
+  }
+  for (const [key, lens] of was) if (!now.has(key)) out.push(`${lensName(lens).replace(/^A lens/, "The lens").replace(/^A /, "The ")} is removed.`);
+  const order = (lenses: readonly LooseLens[]) => lenses.map(lensKey).filter((key) => was.has(key) && now.has(key));
+  if (out.length === 0 && !same(order(before), order(after))) out.push("The lenses are put in a different order.");
+  return out;
+}
+
+type Arrangement = { order?: readonly string[]; hide?: readonly string[]; first?: string } | undefined;
+
+/** The arrangement (FR-80), compared part by part. */
+function pagesSentences(before: Arrangement, after: Arrangement): string[] {
+  if (same(before, after)) return [];
+  const out: string[] = [];
+  if (!same(before?.order, after?.order)) out.push(after?.order && after.order.length > 0 ? `The kinds are put in a new order: ${after.order.join(", ")}.` : "The kinds go back to the order they were declared in.");
+  if (!same(before?.hide, after?.hide)) {
+    const hidden = after?.hide ?? [];
+    const shown = (before?.hide ?? []).filter((kind) => !hidden.includes(kind));
+    const newly = hidden.filter((kind) => !(before?.hide ?? []).includes(kind));
+    if (newly.length > 0) out.push(`The front page leaves off ${newly.join(", ")}.`);
+    if (shown.length > 0) out.push(`The front page shows ${shown.join(", ")} again.`);
+  }
+  if (!same(before?.first, after?.first)) out.push(after?.first === undefined || after.first.trim().toLowerCase() === "home" ? "The app opens at its home." : `The app opens on "${after.first}".`);
+  if (out.length === 0) out.push("The app's pages change.");
+  return out;
+}

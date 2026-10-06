@@ -11,6 +11,8 @@ import { sayFindings } from "../document/findings.js";
 import { isGraviewTemplate } from "../document/graview-template.js";
 import { create, CREATE_USAGE } from "./create.js";
 import { describeApp } from "./describe.js";
+import { describePlace } from "../document/describe-place.js";
+import { Store } from "../store.js";
 import { generateAgentsMd, generateLlmsTxt } from "./docs.js";
 import { figureBrief, figureFaults, FIGURE_NAMES, FIGURES } from "../schema/figures.js";
 import { scaffoldLens, validateLensOptions, type LensScaffoldOptions } from "../scaffold/lens.js";
@@ -33,11 +35,13 @@ ${CREATE_USAGE}
   graview docs <entry> [--out <dir>] [--views <module>]
       Writes llms.txt and agents.md next to the entry, or into <dir>.
 
-  graview describe <entry> [--as <role>] [--views <module>]
+  graview describe <entry> [--as <role>] [--views <module>] [--place <slug|id>]
       Reads the app out: what a blank installation meets and in what order,
       what is drawn and what falls back, the hues, what a seat may do, how a
       model is reached, what is judged. The rung between check and a browser
       — "run it and look" for something that cannot see.
+      --place <slug|id> [--seed <snapshot.json>] [--width <px>] [--id <who>] says what one
+      place shows that seat instead: headings, figures, lists and problems.
 
   graview lens <name> --roles a,b,c [--binds fields|entities] [--dir <dir>]
       Writes a lens that compiles: the role check that fails loudly, the
@@ -263,6 +267,22 @@ export async function main(argv: string[]): Promise<number> {
        */
       const app = await loadViews(await loadApp(entry), flag(argv, "--views"));
       const role = flag(argv, "--as");
+      const place = flag(argv, "--place");
+      if (place !== undefined) {
+        // One place, as one seat sees it, over the seed it is handed (FR-89).
+        const seedFile = flag(argv, "--seed");
+        const snapshot = seedFile ? JSON.parse(readFileSync(resolve(seedFile), "utf8")) : undefined;
+        const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], ...(app.policy ? { policy: app.policy } : {}), ...(snapshot ? { snapshot } : {}) });
+        const width = Number(flag(argv, "--width") ?? "1440");
+        const principal = role ? { kind: "human" as const, id: flag(argv, "--id") ?? role, roles: [role] } : { kind: "system" as const, id: "graview-describe" };
+        const said = describePlace(store as never, principal, place, { app: app as never, width: Number.isFinite(width) && width > 0 ? width : 1440 });
+        if (!said.ok) {
+          process.stderr.write(`${said.error} The places are: ${said.places.join(", ")}.\n`);
+          return 1;
+        }
+        process.stdout.write(`${said.description.text}\n`);
+        return 0;
+      }
       process.stdout.write(
         `${describeApp(app, role ? { as: { kind: "human", id: role, roles: [role] } } : {})}\n`,
       );

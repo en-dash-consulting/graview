@@ -126,9 +126,15 @@ export const BUDGETS = [
      * (FR-81, FR-82): headlines, figures and lists of records drawn by their
      * own cards, the home's landing over the scene, and the vocabulary that
      * checks them. Measured at 1_420_964 / 418_572.
+     *
+     * Raised again when every part of a document came to have an edit
+     * (FR-84) and a place came to be described without a browser (FR-89):
+     * the studio's editDocument rewrites lenses, the home, pages and
+     * computed fields, and the chat seat's tools carry describePlace.
+     * Measured at 1_450_367 / 427_424.
      */
-    minified: 1_430_000,
-    gzipped: 424_000,
+    minified: 1_460_000,
+    gzipped: 432_000,
     load: "all",
   },
   {
@@ -152,8 +158,9 @@ export const BUDGETS = [
     entry: `import { mount } from "@graview/embed"; import { StudioPlace } from "@graview/studio"; globalThis.mount = (element, options) => mount(element, { ...options, studio: { onApply() {}, place: StudioPlace } });`,
     // Raised with every face's when a declared lens came to draw (FR-79) and the rule language came to compute what pages need (FR-83): the studio reaches the lenses through `@graview/primitives`, so here they load with it. With both, measured at 1_393_930 / 407_048.
     // Raised with every face's again when the home and a view came to be written from blocks (FR-81, FR-82): measured at 1_414_220 / 413_619.
-    minified: 1_430_000,
-    gzipped: 424_000,
+    // And with every face's when every part of a document came to have an edit (FR-84) and a place a description (FR-89): measured at 1_443_642 / 422_491.
+    minified: 1_460_000,
+    gzipped: 432_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
