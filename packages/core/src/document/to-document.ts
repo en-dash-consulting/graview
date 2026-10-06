@@ -66,8 +66,18 @@ function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { readonly why
       if (checks.some((check) => check?.["format"] === "regex" && DATE.test(String((check?.["pattern"] as RegExp | undefined)?.source ?? "")))) return { spec: { type: "date", ...base } };
       return { spec: { type: "string", ...base } };
     }
-    case "number":
-      return { spec: { type: checks.some((check) => check?.["format"] === "safeint" || check?.["format"] === "int") ? "integer" : "number", ...base } };
+    case "number": {
+      // Its range, where the declaration bounds it inclusively (FR-114): `.min(1).max(5)`, `.multipleOf(0.5)`.
+      const range: { min?: number; max?: number; step?: number } = {};
+      for (const check of checks) {
+        const value = check?.["value"];
+        if (typeof value !== "number") continue;
+        if (check?.["check"] === "greater_than" && check["inclusive"]) range.min = Math.max(range.min ?? value, value);
+        else if (check?.["check"] === "less_than" && check["inclusive"]) range.max = Math.min(range.max ?? value, value);
+        else if (check?.["check"] === "multiple_of") range.step = value;
+      }
+      return { spec: { type: checks.some((check) => check?.["format"] === "safeint" || check?.["format"] === "int") ? "integer" : "number", ...range, ...base } };
+    }
     case "boolean":
       return { spec: { type: "boolean", ...base } };
     case "enum": {

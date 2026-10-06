@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
-import { diffDocuments, editDocument, planMigration, readDocument, type GraviewDocument } from "../../src/document/index.js";
-import { formFields, mutationToolSchema, refusalOf, Store, type AnySchema, type GraviewApp } from "../../src/index.js";
+import { diffDocuments, editDocument, planMigration, readDocument, toDocument, type GraviewDocument } from "../../src/document/index.js";
+import { createSchema, defineApp, defineNode, formFields, mutationToolSchema, refusalOf, Store, z, type AnySchema, type GraviewApp } from "../../src/index.js";
 import { argShape } from "../../src/mutations/node-ref.js";
 
 /**
@@ -92,6 +92,15 @@ describe("the check reads a range", () => {
       "shape at kinds.component.fields.y.step",
       "shape at kinds.strength.fields.level.max",
     ]);
+  });
+});
+
+describe("a TypeScript field's bounds", () => {
+  it("are the range of the document written from it", () => {
+    const place = defineNode("place", { fields: z.object({ label: z.string().min(1), x: z.number().min(0).max(1), rating: z.number().int().min(1).max(5).multipleOf(1), loose: z.number().gt(0) }) });
+    const { document } = toDocument(defineApp({ name: "Places", schema: createSchema([place]) }));
+    expect(document.kinds["place"]!.fields).toMatchObject({ x: { type: "number", min: 0, max: 1 }, rating: { type: "integer", min: 1, max: 5, step: 1 }, loose: { type: "number" } });
+    expect(document.kinds["place"]!.fields["loose"]).not.toHaveProperty("min");
   });
 });
 
