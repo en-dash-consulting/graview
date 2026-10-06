@@ -123,26 +123,15 @@ export function useMarqueeNameWidth(within: RefObject<Element | null>, rootPx: n
     if (said.length > 0 && said !== face) setFace(said);
   });
   useEffect(() => {
-    const fonts = typeof document === "undefined" ? undefined : document.fonts;
-    if (!fonts?.addEventListener) return;
-    const again = () => setLoaded((n) => n + 1);
-    fonts.addEventListener("loadingdone", again);
-    void fonts.ready?.then(again, () => {});
-    return () => fonts.removeEventListener("loadingdone", again);
+    void document.fonts?.ready.then(() => setLoaded(1));
   }, []);
   return useMemo(() => {
-    if (face === null || typeof document === "undefined") return undefined;
-    const context = document.createElement("canvas").getContext("2d");
+    const context = face === null ? null : document.createElement("canvas").getContext("2d");
     if (!context) return undefined;
     // The marquee's 0.8125rem, at the weight of the showing that is pressed: the wider of the two it is drawn in.
     context.font = `600 ${0.8125 * rootPx}px ${face}`;
-    if (!(context.measureText("Mm").width > 0)) return undefined;
-    const held = new Map<string, number>();
-    return (text: string) => {
-      let width = held.get(text);
-      if (width === undefined) held.set(text, (width = context.measureText(text).width));
-      return width;
-    };
+    // jsdom's canvas measures nothing: the estimate is the answer there.
+    return context.measureText("M").width > 0 ? (text: string) => context.measureText(text).width : undefined;
     // `loaded` is in the list on purpose: a face that has loaded since measures differently.
   }, [face, rootPx, loaded]);
 }
