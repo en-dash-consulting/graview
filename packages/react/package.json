@@ -12,6 +12,10 @@
     "./provider": {
       "types": "./dist/provider.d.ts",
       "default": "./dist/provider.js"
+    },
+    "./drawing": {
+      "types": "./dist/drawing.d.ts",
+      "default": "./dist/drawing.js"
     }
   },
   "scripts": {

@@ -100,20 +100,7 @@ export type {
 } from "./invariants/types.js";
 
 // Arrangement — what a kind can be sorted, filtered and grouped by, and the grammar that carries it.
-export {
-  admitArrangement,
-  arrange,
-  arrangeable,
-  arrangeAllows,
-  asksForThePast,
-  bucketStart,
-  conditionHolds,
-  edgesOf,
-  formatArrangement,
-  matches,
-  NO_ARRANGEMENT,
-  parseArrangement,
-} from "./arrange.js";
+// Its functions are `@graview/core/arrange`'s, fetched with the list that arranges; a declaration names its types.
 export type {
   Arrangeable,
   ArrangeContext,
@@ -131,7 +118,7 @@ export type {
   OfferType,
   Sort,
   SortDirection,
-} from "./arrange.js";
+} from "./arrangement.js";
 
 // Search — one matcher finds a record, a kind, a place, an act or a rule; the graph is the result list.
 export {

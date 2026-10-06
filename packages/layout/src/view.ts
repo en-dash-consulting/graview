@@ -8,9 +8,13 @@
  * bands, the interpolation — which only the scene uses: a provider that
  * read the view state from it carried the city into a page that drew the
  * pages. The provider, the default views and the embed import from here.
+ *
+ * A label's fit is not here, only the estimate of a line's width: only the
+ * scene fits a label, and a file this entry reaches is in a page's first
+ * chunk whenever any chunk uses it.
  */
 export * from "./view-state.js";
 export { aggregateId, AGGREGATE_PREFIX, BAND_PREFIX, isAggregateId, isBandAggregate, KIND_PREFIX, kindCardId, kindOfCard, kindsOf, kindsOfAggregate, withJackIn } from "./ids.js";
 export { MARQUEE_GAP, marqueeHeightFor, ROSTER_CHROME, ROSTER_KEPT, ROSTER_MOST, ROSTER_ROW, rosterHeight, rosterRows, MARQUEE_WIDTH, type NameWidth } from "./sizes.js";
-export { areaOf, boxOf, centroidOf, estimateWidth, fitLabel, overlaps, spanAt } from "./label-fit.js";
-export type { FitOptions, FitPoint, FittedLabel, LabelBox, Measure } from "./label-fit.js";
+export { estimateWidth } from "./estimate.js";
+export type { Measure } from "./estimate.js";

@@ -10,13 +10,19 @@
  * views, the routed face — imports from here, and the scene is fetched
  * with the face that draws it. Nothing in this module's files may import
  * the scene's, or `@graview/react`.
+ *
+ * And no more than the frame draws with: a bundler places a whole file in
+ * the first chunk when the first chunk can reach it and any chunk uses it,
+ * so what only a drawn view uses — the measured text, the kit's connector,
+ * the boundary, the emphasis sets, the editable fields, the others placed —
+ * is `@graview/react/drawing`'s, fetched with the face that draws it.
  */
 export { GraviewProvider, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
 export { GoToContext, useGoTo } from "./go.js";
 export type { GoTo } from "./go.js";
 export type { ActsDoor, AdministeredModule, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode } from "./context.js";
-export { anchorOf, AUDIENCE_ROW, HEARTBEAT_MS, placeOthers, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState } from "./presence.js";
-export type { Placed, PresenceInputs, PresenceState } from "./presence.js";
+export { HEARTBEAT_MS, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState } from "./presence.js";
+export type { PresenceInputs, PresenceState } from "./presence.js";
 export { foldRobots, participantOf, standingFor, VISIT_EACH_UP_TO } from "./robot.js";
 export type { RobotEvent, RobotMode, RobotState, SeatNote } from "./robot.js";
 export { createPointerStore } from "./pointer.js";
@@ -25,27 +31,13 @@ export { applySettings, honourSetting, loadSetting, rememberSetting } from "./se
 export type { ReaderMemory } from "./settings.js";
 export { createViews, DEFAULT_VIEW, isDefaultView, layerViews, markDefaultView } from "./view-registry.js";
 export type { Cardinality, Fidelity, ReactViewRegistry, ViewCell, ViewComponent, ViewProps } from "./view-registry.js";
-export { ErrorReportContext, ViewBoundary } from "./view-boundary.js";
-export type { ErrorReport, ViewBoundaryProps } from "./view-boundary.js";
-export { ACTIVITY_HOLD_MS, markActivity, useActivity, useAttention } from "./activity.js";
+export { ErrorReportContext } from "./error-report.js";
+export type { ErrorReport } from "./error-report.js";
+export { ACTIVITY_HOLD_MS, markActivity } from "./activity.js";
 export type { ActivityMark, Attention, Manner, ToolCallLike } from "./activity.js";
-export {
-  NOTHING_FOUND,
-  useBacktrack,
-  useEditableFields,
-  useFlagged,
-  useImplicated,
-  useJackIn,
-  useNavigation,
-  useReached,
-  useSelection,
-  useViolations,
-} from "./hooks.js";
+export { useBacktrack, useJackIn, useNavigation, useSelection, useViolations } from "./hooks.js";
 export { useLocalIntelligence } from "./local-intelligence.js";
 export type { Ask, LocalIntelligence } from "./local-intelligence.js";
-export { kitConnector, useKit } from "./kit.js";
-export { useDrawnSize, useNameWidth, useTextMeasure } from "./drawn.js";
-export type { DrawnOptions, DrawnSize } from "./drawn.js";
 export { createMotionStore, useSceneStill } from "./motion.js";
 export type { MotionStore } from "./motion.js";
 export { landingIn, useTheKeyboardLandsSomewhere } from "./keyboard.js";

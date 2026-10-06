@@ -33,7 +33,8 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { useActivity, type ActivityMark } from "./activity.js";
+import type { ActivityMark } from "./activity.js";
+import { useActivity } from "./attention.js";
 import { useAnimatedLayout, useSeatWork, useTouched } from "./animation.js";
 import { SeatMarks } from "./seat-marks.js";
 import { useViolations } from "./hooks.js";

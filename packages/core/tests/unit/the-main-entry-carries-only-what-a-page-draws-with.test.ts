@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import * as arrange from "../../src/arrange.js";
 import * as blocks from "../../src/blocks.js";
 import * as check from "../../src/check.js";
 import * as document from "../../src/document/index.js";
@@ -17,6 +18,7 @@ import * as scene from "../../src/scene.js";
  * that drifts back to a barrel is a name every hosted page pays for again.
  */
 const OFF_THE_PAGE = {
+  "@graview/core/arrange": { from: arrange, names: ["admitArrangement", "arrange", "arrangeable", "arrangeAllows", "asksForThePast", "bucketStart", "conditionHolds", "edgesOf", "formatArrangement", "matches", "NO_ARRANGEMENT", "parseArrangement"] },
   "@graview/core/blocks": { from: blocks, names: ["compileBlocks", "fieldSpecsOf", "isTallBlock", "resolveBlocks", "safeHref", "sayNumber", "computedNames", "computedValues", "withComputed"] },
   "@graview/core/check": { from: check, names: ["checkApp", "formatFindings", "compileDocument", "instantiateTemplate", "describeApp", "generateAgentsMd", "generateLlmsTxt"] },
   "@graview/core/scene": { from: scene, names: ["BLOCK", "cityExtent", "cityMap", "heightOf", "MAX_SIDE", "plotsOverlap", "roadsOf", "sharedEdges", "sideFor", "toIso", "villageCap", "villageOf", "sceneDistricts", "sceneThumbnail"] },

@@ -69,9 +69,12 @@ These are pinned by tests, not by convention:
   draws with.** A hosted page imports both up front, so the checker
   (`checkApp`, `compileDocument`, `describeApp`) lives on
   `@graview/core/check`, the city and `sceneThumbnail` on `/scene`, the
-  shipped drawings on `/figures`, a view's block resolver on `/blocks`, and
-  a status board's reach on `/describe`
+  shipped drawings on `/figures`, a view's block resolver on `/blocks`,
+  a status board's reach on `/describe`, and arranging a list on `/arrange`
   (`packages/core/tests/unit/the-main-entry-carries-only-what-a-page-draws-with.test.ts`).
+  Likewise what only a drawn view uses is `@graview/react/drawing`'s, not
+  `/provider`'s, and `@graview/tools/edit`'s, not `/frame`'s
+  (`packages/react/tests/unit/the-provider-carries-only-what-the-frame-draws-with.test.ts`).
   The hosted page's first load has a budget (`tests/a-hosted-page-keeps-to-its-budget.test.ts`).
 
 ## Commands
@@ -133,8 +136,9 @@ pinned at 1.49.1 on purpose.
   records the change.
 - **Public API is `src/index.ts` → `exports` in `package.json`**, with the
   entries listed there (core's `./document`, `./check`, `./scene`,
-  `./figures`, `./blocks`, `./describe`, `./conformance`, `./scaffold`,
-  `./testing`; layout's `./view`; react's `./provider`; embed's `./pages`;
+  `./figures`, `./blocks`, `./describe`, `./arrange`, `./conformance`, `./scaffold`,
+  `./testing`; layout's `./view`; react's `./provider` and `./drawing`;
+  tools' `./frame` and `./edit`; embed's `./pages`;
   `./cli`, `./browser`, `./dev`, `./gpu`, `./sqlite` and the rest). `files` is an allowlist and
   `scripts/inspect-pack.mjs` asserts against the real tarball.
 - **Node 22.** Top-level await in the scaffolded app, and the engines field

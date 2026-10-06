@@ -1,5 +1,6 @@
 import { fieldWords, humaniseField as humanise, readableFields, type AnySchema } from "@graview/core";
-import { useEditableFields, useGraview, useNode } from "@graview/react/provider";
+import { useEditableFields } from "@graview/react/drawing";
+import { useGraview, useNode } from "@graview/react/provider";
 import type { EditableField } from "@graview/tools";
 import { useEffect, useRef, useState } from "react";
 

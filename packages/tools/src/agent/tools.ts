@@ -20,7 +20,6 @@ import {
   type RefCandidate,
   type Store,
 } from "@graview/core";
-import { describePlace } from "@graview/core/describe";
 import { computedValues } from "@graview/core/blocks";
 import { authorship, markComputed, markGraph, markHits, markNode } from "./untrusted.js";
 import {
@@ -647,6 +646,12 @@ export function createToolRuntime<S extends AnySchema>(
         case "describe_place": {
           const app = options.app ?? ({ name: "", schema: store.schema } as unknown as GraviewApp<S>);
           const width = typeof args["width"] === "number" && Number.isFinite(args["width"]) && args["width"] > 0 ? args["width"] : 1440;
+          /*
+           * The describer is fetched when a place is first asked about, not
+           * with the seat: a page whose assistant is never asked carries
+           * none of it (FR-112's coverage made it a few kB).
+           */
+          const { describePlace } = await import("@graview/core/describe");
           // Described for this seat: what it may see, and nothing else (FR-55).
           const said = describePlace(store, principal, String(args["place"] ?? ""), { app, width });
           if (!said.ok) return { ok: false, error: `${said.error} The places are: ${said.places.join(", ")}.` };

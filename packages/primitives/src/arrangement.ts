@@ -1,4 +1,5 @@
-import { formatArrangement, parseArrangement, type Arrangement } from "@graview/core";
+import { formatArrangement, parseArrangement } from "@graview/core/arrange";
+import type { Arrangement } from "@graview/core";
 import { withWithin, type ViewState } from "@graview/layout/view";
 
 /*

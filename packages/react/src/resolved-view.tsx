@@ -2,7 +2,8 @@ import { counted, type AnySchema, type Fidelity, type NodeOfSchema } from "@grav
 import { aggregateId, isAggregateId, kindCardId, kindOfCard, withFocus } from "@graview/layout/view";
 import { PLANE_STYLES } from "@graview/render";
 import { memo, useMemo, useRef, type ReactNode } from "react";
-import { useFlagged, useImplicated, useNavigation } from "./hooks.js";
+import { useFlagged, useImplicated } from "./emphasis.js";
+import { useNavigation } from "./hooks.js";
 import { useFound, useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
 import { POPOVER_STYLE, usePopover } from "./popover.js";
 import { ViewBoundary } from "./view-boundary.js";

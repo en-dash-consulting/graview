@@ -1,10 +1,10 @@
-import { createSchema, defineNode, Graph, isoDate, parseArrangement } from "@graview/core";
+import { parseArrangement, arrangeable } from "@graview/core/arrange";
+import { createSchema, defineNode, Graph, isoDate } from "@graview/core";
 import { EMPTY_VIEW } from "@graview/layout";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { ArrangeBar, arrangementOf, sayCondition, withArrangement } from "../../src/index.js";
-import { arrangeable } from "@graview/core";
 
 /**
  * One control row, drawn from the declaration, for every surface that
