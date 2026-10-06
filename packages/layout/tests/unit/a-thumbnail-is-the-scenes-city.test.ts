@@ -107,6 +107,23 @@ describe("a thumbnail is the Scene's city", () => {
     });
   }
 
+  /*
+   * FR-107. Fitted to what stands, a district fills its whole block, but
+   * from the corner the layout gives its plot: the map's corners are the
+   * Scene's in both fits.
+   */
+  it("fitted to what stands, starts every district at the corner the layout gives its plot", () => {
+    const app = compiled(template("renovation.gdd.json"));
+    const counts = Object.fromEntries((app.schema.kinds as readonly string[]).map((kind, i) => [kind, [3, 0, 7, 1][i % 4]!]));
+    const placed = layout(populated(app, counts), app.schema as never, { ...EMPTY_VIEW, overview: true }, { width: 1280, height: 800, cityOrder: sceneOrder(app) });
+    const svg = sceneThumbnail(app, { counts, fit: "content" });
+    for (const kind of app.schema.kinds as readonly string[]) {
+      const plot = placed.nodes.find((node) => node.id === kindCardId(kind))!.plot!;
+      const first = svg.match(new RegExp(`data-kind="${kind}">.*?points="([^ "]+)`))![1];
+      expect(first, kind).toBe(`${(plot.col - plot.row) * 20},${(plot.col + plot.row) * 10}`);
+    }
+  });
+
   it("follows a brand's declared accents for a kind's hue, as the Scene's plots do", () => {
     const app = compiled(fixture("vendors.gdd.json"));
     const branded: GraviewApp = { ...app, brand: { name: "Vendors", schemes: app.brand?.schemes ?? ({} as never), accents: { vendor: 30 } } };
