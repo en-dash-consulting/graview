@@ -304,6 +304,41 @@ function SelectionTies<S extends AnySchema>({
   if (!stage) return [];
 
   /*
+   * A CHOSEN CROSSING IS NOT A FAN OF ITS ENDS' EDGES (FR-111).
+   *
+   * Choosing a coverage cell selects what it joins — Ryan, SEO and the
+   * strength between them — and the lens draws the cell's own lines to its
+   * row and its column. The ends' other relations are not the question, and
+   * drawn from here they ran to the strengths' district, a stand-in for
+   * records the picture does not draw. Only a record on the path that has a
+   * card of its own on the stage gets a line, from the cell.
+   */
+  const crossing = [...(stageRef.current?.querySelectorAll("[data-graview-joins]") ?? [])].find((el) => {
+    if (el.closest("[data-graview-offstage]")) return false;
+    try {
+      const ids = JSON.parse(el.getAttribute("data-graview-joins") ?? "[]") as string[];
+      return ids.length === selection.length && ids.every((id) => selection.includes(id));
+    } catch {
+      return false;
+    }
+  });
+  if (crossing) {
+    const cellBox = visibleRect(crossing, stageRef.current!);
+    if (!cellBox) return [];
+    const joined: TieLine[] = [];
+    for (const id of selection) {
+      const card = nodes.find((node) => node.id === id);
+      if (!card) continue;
+      const box = measureVisible(stageRef.current, card.id, overview) ?? drawnBox(card, scheme);
+      const route = box ? tieRoute(cellBox, box) : null;
+      if (!box || !route) continue;
+      const edge = [...store.graph.allEdges()].find((one) => (one.from === id && selection.includes(one.to)) || (one.to === id && selection.includes(one.from)));
+      joined.push({ key: `join:${id}`, kind: edge?.kind ?? "", endX: route.to.x, endY: route.to.y, ...route, fromBox: cellBox, toBox: box, proxy: false, edgeId: edge ? edgeSelectionId(edge.kind, edge.from, edge.to) : null });
+    }
+    return joined;
+  }
+
+  /*
    * The ELEMENT standing for an id, when the view drew one: a pick target,
    * or a board slot (an occupied slot's pick is its occupant, but the slot
    * itself is still a place a tie can land on).

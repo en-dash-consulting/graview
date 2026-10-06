@@ -186,3 +186,57 @@ describe("FR-89: each LifeLogics place says, at a phone's width, the words its f
     expect(describePlace(store, partner, "offer-workshop", { app }).ok).toBe(false);
   });
 });
+
+/*
+ * FR-112: A COVERAGE IS DESCRIBED AS IT IS DRAWN. The Strengths lens crosses
+ * people with skills through a strength record. What the grid draws — its
+ * rows and its column heads in order, each filled crossing, and the header's
+ * count of what is missing — is what `describePlace` says, for an owner and
+ * for a guest who cannot see strengths and so is drawn no crossing at all.
+ */
+describe("FR-112: the Strengths coverage says, row by row and column by column, what its grid draws", () => {
+  const orgDocument = JSON.parse(readFileSync(new URL("org-strengths.gdd.json", fixtures), "utf8"));
+  const orgSeed = JSON.parse(readFileSync(new URL("org-strengths.seed.json", fixtures), "utf8"));
+  const org = compileDocument(orgDocument, { today: () => "2026-10-06" });
+  if (!org.ok) throw new Error(JSON.stringify(org.findings.filter((f) => f.severity === "error")));
+  const orgApp = org.app as GraviewApp<AnySchema>;
+  const orgStore = new Store<AnySchema>({ schema: orgApp.schema as AnySchema, mutations: orgApp.mutations ?? [], policy: orgApp.policy!, snapshot: orgSeed as never });
+  const drawnBy = (principal: Principal) => {
+    const lensOf = declaredLenses(orgApp).drawn.find((one) => one.title === "Strengths")!;
+    const Lens = declaredLensView(lensOf) as ViewComponent<AnySchema>;
+    return renderToStaticMarkup(
+      <GraviewProvider store={orgStore} views={declaredViews(orgApp)} initialView={EMPTY_VIEW} principal={principal}>
+        <Lens cardinality="many" fidelity="full" mode="fullscreen" selected={false} label="Strengths" />
+      </GraviewProvider>,
+    );
+  };
+  const describedAs = (principal: Principal) => {
+    const result = describePlace(orgStore, principal, "strengths", { app: orgApp, width: 390, today: "2026-10-06" });
+    if (!result.ok) throw new Error(result.error);
+    return result.description;
+  };
+
+  for (const [who, principal] of [
+    ["an owner", { kind: "human", id: "u:owner", roles: ["owner"] }],
+    ["a guest who cannot see strengths", { kind: "human", id: "u:guest", roles: ["guest"] }],
+  ] as const) {
+    it(`as ${who}`, () => {
+      const html = drawnBy(principal);
+      const description = describedAs(principal);
+      // Rows: each row's name, in the grid's order.
+      const rows = [...html.matchAll(/data-graview-pick="[^"]+" data-graview-emphasis="\w+" title="([^"]+)"(?! data-graview-column)/g)].map((m) => m[1]);
+      expect(description.parts.filter((part) => part.t === "field").map((part) => (part as { label: string }).label)).toEqual(rows);
+      // Columns: each head, in the grid's order, as the description's groups.
+      const heads = [...html.matchAll(/title="([^"]+)" data-graview-column="([^"]+)"/g)].map((m) => [m[2], m[1]]);
+      const groups = description.parts.flatMap((part) => (part.t === "list" ? part.groups : []));
+      expect(groups.map((group) => group.heading?.replace(/ \(\d+\)$/, ""))).toEqual(heads.map(([, label]) => label));
+      // Every filled crossing the grid draws is a row under its column, and nothing else is.
+      const crossings = [...html.matchAll(/data-graview-joins="([^"]+)"/g)].map((m) => (JSON.parse(m[1]!.replace(/&quot;/g, '"')) as string[]).slice(0, 2).join("×")).sort();
+      const saidCrossings = groups.flatMap((group, index) => group.items.map((item) => `${item.id}×${heads[index]![0]}`)).sort();
+      expect(saidCrossings).toEqual(crossings);
+      // What is missing, counted as the header counts it.
+      const meta = html.match(/(\d+ (?:person|people) with no skill)/)?.[1];
+      expect(description.text).toContain(`${meta}:`);
+    });
+  }
+});
