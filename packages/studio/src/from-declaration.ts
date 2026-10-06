@@ -1,5 +1,5 @@
 import { nodeRefArgs, placeSlug, requiredRolesOf } from "@graview/core";
-import { documentOf, fieldSpecOf } from "@graview/core/document";
+import { computedOf, documentOf, fieldSpecOf } from "@graview/core/document";
 import type { AnyMutationDefinition, AnySchema, GraphEdge, GraphSnapshot, GraviewApp, InvariantDefinition } from "@graview/core";
 import type { z } from "zod";
 import { DECLARED_KIND, type FieldType } from "./meta.js";
@@ -103,6 +103,19 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
         ...(def.display?.labels?.[name] ? { description: def.display.labels[name] } : {}),
       });
       edges.push({ kind: "of", from: id, to: kindId(def.kind) });
+    }
+    // What the kind works out, each a node of its own in declaration order (FR-83).
+    for (const [name, computed] of computedOf(def)) {
+      const id = `computed:${def.kind}.${name}`;
+      nodes.push({
+        id,
+        kind: "computed",
+        label: name,
+        expr: computed.expr,
+        ...(computed.label ? { shownAs: computed.label } : {}),
+        ...(computed.description ? { description: computed.description } : {}),
+      });
+      edges.push({ kind: "computed-on", from: id, to: kindId(def.kind) });
     }
     for (const [name, edge] of Object.entries(def.edges)) {
       const id = `edge:${def.kind}.${name}`;

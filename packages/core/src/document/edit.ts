@@ -17,8 +17,11 @@ import {
   type FieldType,
   type GraviewDocument,
 } from "./schema.js";
-import { parseTemplate, TemplateError, type TemplatePart } from "./template.js";
-import { VIEW_SLOTS } from "./views.js";
+import { SHIPPED_LENSES, isShippedLens, SHIPPED_LENS_NAMES } from "../places.js";
+import { placeSlug } from "../views/types.js";
+import { computedOf, validateComputed } from "./computed.js";
+import { parseTemplate, templateBraces, TemplateError, type TemplatePart } from "./template.js";
+import { validateViews, VIEW_SLOTS } from "./views.js";
 
 /*
  * STRUCTURAL EDITS — a closed vocabulary for changing what an app declares.
@@ -77,6 +80,11 @@ export const EDIT_OPS = [
   "set-describe",
   "set-view",
   "set-glance",
+  "add-lens",
+  "remove-lens",
+  "set-home",
+  "arrange-pages",
+  "set-computed",
 ] as const;
 export type EditOp = (typeof EDIT_OPS)[number];
 
@@ -93,6 +101,7 @@ const kindName = z.string().regex(NAME, 'kind names are lower-case words joined 
 const fieldName = z.string().regex(FIELD_NAME, 'field names are one word or camelCase, like "dueDate"');
 const edgeName = z.string().regex(EDGE_NAME, 'relation names are one camelCase word, like "tendedBy"');
 const actName = z.string().regex(NAME, 'act names are lower-case words joined by hyphens, like "mark-paid"');
+const lensTitle = z.string().min(1).max(80);
 
 const SHAPES: Record<EditOp, z.ZodType> = {
   "add-kind": z.object({ op: z.literal("add-kind"), kind: kindName, act: z.boolean().optional() }).passthrough(),
@@ -115,8 +124,41 @@ const SHAPES: Record<EditOp, z.ZodType> = {
   "set-brand": z.object({ op: z.literal("set-brand"), accent: z.union([z.string(), z.null()]), name: z.string().min(1).max(60).optional() }).strict(),
   "set-label": z.object({ op: z.literal("set-label"), kind: kindName, field: fieldName.optional(), label: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
   "set-describe": z.object({ op: z.literal("set-describe"), kind: kindName, describe: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
-  "set-view": z.object({ op: z.literal("set-view"), kind: kindName, slot: z.enum(VIEW_SLOTS), blocks: z.union([z.array(z.unknown()).min(1), z.null()]) }).strict(),
+  // A kind's slot; the front page (`slot: "home"`, no kind); or a blocks lens's blocks, by its title (FR-84).
+  "set-view": z.object({ op: z.literal("set-view"), kind: kindName.optional(), slot: z.enum([...VIEW_SLOTS, "home"]).optional(), lens: lensTitle.optional(), blocks: z.union([z.array(z.unknown()).min(1), z.null()]) }).strict(),
   "set-glance": z.object({ op: z.literal("set-glance"), kind: kindName, fields: z.array(fieldName).max(20) }).strict(),
+  "add-lens": z
+    .object({
+      op: z.literal("add-lens"),
+      title: lensTitle,
+      lens: z.string().min(1).max(40).optional(),
+      on: kindName.optional(),
+      bindings: z.record(z.string(), z.unknown()).optional(),
+      options: z.record(z.string(), z.unknown()).optional(),
+      at: z.number().int().min(0).optional(),
+      replace: lensTitle.optional(),
+    })
+    .strict(),
+  "remove-lens": z.object({ op: z.literal("remove-lens"), title: lensTitle, on: kindName.optional() }).strict(),
+  "set-home": z.object({ op: z.literal("set-home"), blocks: z.union([z.array(z.unknown()).min(1), z.null()]) }).strict(),
+  "arrange-pages": z
+    .object({
+      op: z.literal("arrange-pages"),
+      order: z.union([z.array(kindName).max(40), z.null()]).optional(),
+      hide: z.union([z.array(kindName).max(40), z.null()]).optional(),
+      first: z.union([z.string().min(1).max(80), z.null()]).optional(),
+    })
+    .strict(),
+  "set-computed": z
+    .object({
+      op: z.literal("set-computed"),
+      kind: kindName,
+      name: fieldName,
+      expr: z.union([z.string().min(1).max(2000), z.null()]).optional(),
+      label: z.union([z.string().min(1).max(60), z.null()]).optional(),
+      description: z.union([z.string().min(1).max(500), z.null()]).optional(),
+    })
+    .strict(),
 };
 
 // ── the document as something to change ──────────────────────────────────────
@@ -173,6 +215,9 @@ function kindsOf(doc: Doc, e: Expr, ctx: Kinds): Kinds {
       if (e.fn === "in" && lit) return sources(doc, lit);
       if (e.fn === "all" && lit) return new Set([lit]);
       if (e.fn === "if" && e.args.length === 3) return union(kindsOf(doc, e.args[1]!, ctx), kindsOf(doc, e.args[2]!, ctx));
+      // A set handed through: its first, in an order, or the first of several that is not empty.
+      if ((e.fn === "first" || e.fn === "sort") && e.args[0]) return kindsOf(doc, e.args[0], ctx);
+      if (e.fn === "either") return e.args.reduce<Kinds>((all, arg) => union(all, kindsOf(doc, arg, ctx)), NONE);
       return NONE;
     }
     default:
@@ -233,8 +278,9 @@ function mapNames(doc: Doc, e: Expr, ctx: Kinds, rename: (site: Site) => string)
         if ((x.fn === "out" || x.fn === "in" || x.fn === "all") && literal !== undefined && x.args.length === 1) {
           const name = rename({ role: x.fn === "all" ? "kind" : "edge", kinds: NONE, name: literal });
           args = name === literal ? [...x.args] : [{ ...first!, value: name } as Expr];
-        } else if ((x.fn === "every" || x.fn === "some") && x.args.length === 2) {
-          args = [go(x.args[0]!, at), go(x.args[1]!, kindsOf(doc, x.args[0]!, at))];
+        } else if (((x.fn === "every" || x.fn === "some") && x.args.length === 2) || (x.fn === "sort" && x.args.length >= 2)) {
+          // Read once per member, with the member as its subject: its names are the members'.
+          args = [go(x.args[0]!, at), go(x.args[1]!, kindsOf(doc, x.args[0]!, at)), ...x.args.slice(2).map((a) => go(a, at))];
         } else if ((x.fn === "sum" || x.fn === "min" || x.fn === "max") && x.args.length === 2) {
           const second = x.args[1]!;
           const members = kindsOf(doc, x.args[0]!, at);
@@ -243,7 +289,7 @@ function mapNames(doc: Doc, e: Expr, ctx: Kinds, rename: (site: Site) => string)
             const was = second.t === "ident" ? second.name : (second.value as string);
             const name = rename({ role: "field", kinds: members, name: was });
             if (name !== was) field = second.t === "ident" ? { ...second, name } : { ...second, value: name };
-          } else field = go(second, at);
+          } else field = go(second, members); // sum(out('includes'), list * units): each member's own list and units
           args = [go(x.args[0]!, at), field];
         } else args = x.args.map((a) => go(a, at));
         return args.every((a, n) => a === x.args[n]) ? x : { ...x, args };
@@ -264,7 +310,8 @@ function renamer(doc: Doc, r: Rename): (site: Site) => string {
       if (site.role === "name" && site.name === r.from && kindsIn(doc, site.kinds).some((k) => doc.kinds[k].edges?.[r.from])) return r.to;
       return site.name;
     }
-    if ((site.role === "name" || site.role === "field") && site.name === r.from && hasKind(site.kinds, r.kind) && doc.kinds[r.kind]?.fields?.[r.from]) return r.to;
+    // A field, or a computed field (FR-83): read by the same bare name.
+    if ((site.role === "name" || site.role === "field") && site.name === r.from && hasKind(site.kinds, r.kind) && (doc.kinds[r.kind]?.fields?.[r.from] || doc.kinds[r.kind]?.computed?.[r.from] !== undefined)) return r.to;
     return site.name;
   };
 }
@@ -296,21 +343,31 @@ function parts(source: string): readonly TemplatePart[] | null {
   }
 }
 
-/** A template with the rename applied inside its braces; the words around them are kept. */
+/**
+ * A template with the rename applied inside its braces; the words around them
+ * are kept, and so is what each brace says after its bar — `| money`,
+ * `| plural: 'front'` — exactly as it was written.
+ */
 function rewriteTemplate(doc: Doc, source: string, ctx: Kinds, r: Rename, prose?: (text: string) => string): string {
   const ps = parts(source);
   if (!ps) return source;
+  const braces = templateBraces(source);
   let changed = false;
+  let brace = 0;
   const out = ps.map((p) => {
     if (p.text !== undefined) {
       const t = prose ? prose(p.text) : p.text;
       if (t !== p.text) changed = true;
       return t;
     }
+    const { inner, bar } = braces[brace++]!;
     const next = mapNames(doc, p.expr!, ctx, renamer(doc, r));
-    if (next === p.expr) return `{${p.source}${p.format ? `|${p.format}` : ""}}`;
+    if (next === p.expr) return `{${inner}}`;
     changed = true;
-    return `{${printExpr(next)}${p.format ? `|${p.format}` : ""}}`;
+    const tail = bar >= 0 ? inner.slice(bar) : "";
+    const lead = /^\s*/.exec(inner)![0];
+    const gap = bar >= 0 ? /\s*$/.exec(inner.slice(0, bar))![0] : /\s*$/.exec(inner)![0];
+    return `{${lead}${printExpr(next)}${gap}${tail}}`;
   });
   return changed ? out.join("") : source;
 }
@@ -528,20 +585,8 @@ class Editor {
         this.said.push(e.describe === null ? `A ${e.kind} has no summary line.` : `A ${e.kind}'s summary line reads "${e.describe}".`);
         return;
       }
-      case "set-view": {
-        if (!this.kind(i, e.kind)) return;
-        const views = (this.doc.views ??= {});
-        if (e.blocks === null) {
-          if (views[e.kind]) delete views[e.kind][e.slot];
-          if (views[e.kind] && Object.keys(views[e.kind]).length === 0) delete views[e.kind];
-          if (Object.keys(views).length === 0) delete this.doc.views;
-          this.said.push(`A ${e.kind} ${e.slot} goes back to Graview's own look.`);
-        } else {
-          (views[e.kind] ??= {})[e.slot] = e.blocks;
-          this.said.push(`A ${e.kind} ${e.slot} gets a look of its own (${e.blocks.length} block${e.blocks.length === 1 ? "" : "s"}).`);
-        }
-        return;
-      }
+      case "set-view":
+        return this.setView(i, e);
       case "set-glance": {
         // What a glance at one says (FR-39): fields of this kind, each once, in the order given; none takes the choice away.
         const spec = this.kind(i, e.kind);
@@ -564,7 +609,235 @@ class Editor {
         }
         return;
       }
+      case "add-lens":
+        return this.addLens(i, e);
+      case "remove-lens":
+        return this.removeLens(i, e);
+      case "set-home":
+        return this.setHome(i, e.blocks);
+      case "arrange-pages":
+        return this.arrangePages(i, e);
+      case "set-computed":
+        return this.setComputed(i, e);
     }
+  }
+
+  // ── views, the front page, lenses, the arrangement, what is worked out (FR-84) ──
+
+  /** Blocks checked where they will stand: an error refuses the edit at that path, so a chat is told before anything is previewed. */
+  private blocksHold(i: number, at: string): boolean {
+    const found = validateViews(this.doc as GraviewDocument).filter((f) => f.severity === "error" || f.path.startsWith("lenses."));
+    const here = found.filter((f) => f.path === at || f.path.startsWith(`${at}.`));
+    for (const f of here) this.fail(i, `blocks${f.path.slice(at.length)}`, f.message, f.fix);
+    return here.length === 0;
+  }
+
+  private setView(i: number, e: Doc) {
+    if (e.lens !== undefined) {
+      if (e.kind !== undefined || e.slot !== undefined) return this.fail(i, "lens", "a lens's blocks are set by its title alone; leave out kind and slot");
+      const index = this.lensIndex(i, e.lens);
+      if (index < 0) return;
+      const lens = this.doc.lenses[index];
+      if (lens.name !== "blocks") return this.fail(i, "lens", `"${e.lens}" is drawn by the ${String(lens.name)} lens, not from blocks`, "add-lens with replace to draw it from blocks instead");
+      if (e.blocks === null) return this.fail(i, "blocks", "a blocks lens is its blocks; remove-lens takes it away");
+      const was = lens.options?.blocks;
+      lens.options = { ...(lens.options ?? {}), blocks: e.blocks };
+      if (!this.blocksHold(i, `lenses.${index}.options.blocks`)) return;
+      this.said.push(`The lens "${e.lens}" is drawn from ${blockWords(e.blocks)}${was ? " now" : ""}.`);
+      return;
+    }
+    if (e.slot === "home") {
+      if (e.kind !== undefined) return this.fail(i, "kind", "the front page is no kind's; leave out kind");
+      return this.setHome(i, e.blocks);
+    }
+    if (e.kind === undefined || e.slot === undefined) return this.fail(i, e.kind === undefined ? "kind" : "slot", 'set-view names a kind and a slot ("card", "row" or "page"), the front page (slot "home"), or a lens by its title');
+    if (!this.kind(i, e.kind)) return;
+    const views = (this.doc.views ??= {});
+    if (Array.isArray(views[e.kind])) return this.fail(i, "kind", `"${e.kind}" here is the front page's blocks, not a kind's views`);
+    const noun = nounOf(this.doc, e.kind);
+    if (e.blocks === null) {
+      if (views[e.kind]) delete views[e.kind][e.slot];
+      if (views[e.kind] && Object.keys(views[e.kind]).length === 0) delete views[e.kind];
+      if (Object.keys(views).length === 0) delete this.doc.views;
+      this.said.push(`${cap(withA(noun))} ${e.slot} goes back to Graview's own look.`);
+      return;
+    }
+    (views[e.kind] ??= {})[e.slot] = e.blocks;
+    if (!this.blocksHold(i, `views.${e.kind}.${e.slot}`)) return;
+    this.said.push(`${cap(withA(noun))} ${e.slot} gets a look of its own: ${blockWords(e.blocks)}.`);
+  }
+
+  private setHome(i: number, blocks: unknown[] | null) {
+    const views = (this.doc.views ??= {});
+    if (views.home !== undefined && !Array.isArray(views.home)) return this.fail(i, "blocks", "this app has a kind called home, whose views stand where the front page's blocks would");
+    const had = Array.isArray(views.home);
+    if (blocks === null) {
+      delete views.home;
+      if (Object.keys(views).length === 0) delete this.doc.views;
+      this.said.push(had ? "The front page goes back to Graview's own." : "The front page was already Graview's own.");
+      return;
+    }
+    views.home = blocks;
+    if (!this.blocksHold(i, "views.home")) return;
+    this.said.push(had ? `The front page changes: ${blockWords(blocks)}.` : `The front page gets a view of its own: ${blockWords(blocks)}.`);
+  }
+
+  /** The lens a title names (and an `on`, when two lenses share a title), or -1 having said why. */
+  private lensIndex(i: number, title: string, on?: string, path = "title"): number {
+    const lenses: Doc[] = this.doc.lenses ?? [];
+    const matches = lenses.flatMap((lens, index) => (isObject(lens) && typeof lens["title"] === "string" && (lens["title"] === title || placeSlug(lens["title"]) === placeSlug(title)) && (on === undefined || lensStandsOn(lens, on)) ? [index] : []));
+    if (matches.length === 1) return matches[0]!;
+    const titles = lenses.flatMap((lens) => (isObject(lens) && typeof lens["title"] === "string" ? [`"${lens["title"]}"`] : []));
+    if (matches.length === 0) this.fail(i, path, `there is no lens "${title}"${titles.length ? `; the lenses are ${titles.join(", ")}` : ""}`);
+    else this.fail(i, "on", `${matches.length} lenses are called "${title}"; say which kind it stands on with "on"`);
+    return -1;
+  }
+
+  private addLens(i: number, e: Doc) {
+    const name: string = e.lens ?? "blocks";
+    if (!isShippedLens(name)) return this.fail(i, "lens", `"${name}" is not a lens Graview draws`, `one of ${SHIPPED_LENS_NAMES.join(", ")}`);
+    if (e.on !== undefined && !this.kind(i, e.on)) return;
+    const lenses: Doc[] = (this.doc.lenses ??= []);
+    let at = lenses.length;
+    let was: Doc | undefined;
+    if (e.replace !== undefined) {
+      at = this.lensIndex(i, e.replace, e.on, "replace");
+      if (at < 0) return;
+      was = lenses[at];
+    }
+    const lens: Doc = { name, title: e.title, ...(e.on !== undefined ? { on: e.on } : {}), ...(e.bindings !== undefined ? { bindings: e.bindings } : {}), ...(e.options !== undefined ? { options: e.options } : {}) };
+    // A title is an address: one lens a title on a kind.
+    const clash = lenses.findIndex((other, index) => index !== at && isObject(other) && typeof other["title"] === "string" && placeSlug(other["title"]) === placeSlug(e.title) && (e.on === undefined || other["on"] === undefined || other["on"] === e.on));
+    if (clash >= 0) return this.fail(i, "title", `there is already a lens called "${String(lenses[clash]["title"])}"`, 'give it its own title, or say "replace" with the title of the lens it takes the place of');
+    if (name === "blocks") {
+      if (e.on === undefined) return this.fail(i, "on", "a lens drawn from blocks says which kind it is a place of", 'say "on": "<kind>"');
+      if (!Array.isArray(e.options?.blocks) || e.options.blocks.length === 0) return this.fail(i, "options.blocks", 'a lens drawn from blocks has blocks: "options": {"blocks": [{"headline": "…"}, {"list": "all(\'<kind>\')", "as": "card"}]}');
+    }
+    if (was) lenses[at] = lens;
+    else lenses.splice(e.at === undefined ? lenses.length : Math.min(e.at, lenses.length), 0, lens);
+    const index = was ? at : lenses.indexOf(lens);
+    if (name === "blocks" && !this.blocksHold(i, `lenses.${index}.options.blocks`)) return;
+    const over = lens.on ?? kindsBound(lens)[0];
+    const where = over ? `, over ${pluralWords(this.doc, over)}` : "";
+    if (!was) {
+      this.said.push(`A lens "${e.title}" is added${where}.`);
+      return;
+    }
+    const retitled = was["title"] !== e.title;
+    // Where the app opens follows a lens it named, by its new title (FR-80).
+    let follows = "";
+    if (retitled && namesLens(this.doc.pages?.first, String(was["title"]))) {
+      this.doc.pages.first = e.title;
+      follows = "; the app still opens on it";
+    }
+    this.said.push(retitled ? `The lens "${String(was["title"])}" is now "${e.title}"${where}${follows}.` : `The lens "${e.title}" changes${where}.`);
+  }
+
+  private removeLens(i: number, e: Doc) {
+    const index = this.lensIndex(i, e.title, e.on);
+    if (index < 0) return;
+    const said = this.removeLensAt(index);
+    this.said.push(`${cap(said.replace(/ \(the app opens at its home again\)$/, ""))} is removed${said.endsWith("again)") ? "; the app opens at its home again" : ""}.`);
+  }
+
+  private arrangePages(i: number, e: Doc) {
+    if (e.order === undefined && e.hide === undefined && e.first === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide" or "first"');
+    const kinds = Object.keys(this.doc.kinds);
+    for (const part of ["order", "hide"] as const) {
+      for (const [n, kind] of (e[part] ?? []).entries()) {
+        if (!kinds.includes(kind)) return this.fail(i, `${part}.${n}`, `"${kind}" is not a kind this app has; it has ${kinds.join(", ")}`);
+        if (e[part].indexOf(kind) !== n) return this.fail(i, `${part}.${n}`, `"${kind}" is named twice`);
+      }
+    }
+    if (typeof e.first === "string" && !this.opens(e.first)) {
+      const titles = (this.doc.lenses ?? []).flatMap((lens: Doc) => (isObject(lens) && typeof lens["title"] === "string" ? [`"${lens["title"]}"`] : []));
+      return this.fail(i, "first", `"${e.first}" is not a place, a kind or "home"`, `name a place (${titles.join(", ") || "none is declared"}), a kind (${kinds.join(", ")}) or "home"`);
+    }
+    const pages = (this.doc.pages ??= {});
+    const said: string[] = [];
+    if (e.order !== undefined) {
+      if (e.order === null || e.order.length === 0) {
+        delete pages.order;
+        said.push("the kinds go back to the order they were declared in");
+      } else {
+        pages.order = [...e.order];
+        said.push(`${listOf(e.order.map((k: string) => pluralWords(this.doc, k)))} come first, in that order`);
+      }
+    }
+    if (e.hide !== undefined) {
+      if (e.hide === null || e.hide.length === 0) {
+        delete pages.hide;
+        said.push("the front page shows every kind");
+      } else {
+        pages.hide = [...e.hide];
+        said.push(`the front page leaves off ${listOf(e.hide.map((k: string) => pluralWords(this.doc, k)))}`);
+      }
+    }
+    if (e.first !== undefined) {
+      if (e.first === null || e.first.trim().toLowerCase() === "home") {
+        if (e.first === null) delete pages.first;
+        else pages.first = e.first;
+        said.push("the app opens at its home");
+      } else {
+        pages.first = e.first;
+        said.push(`the app opens on "${e.first}"`);
+      }
+    }
+    if (Object.keys(pages).length === 0) delete this.doc.pages;
+    this.said.push(`${cap(listOf(said))}.`);
+  }
+
+  /** Whether `first` names something the app can open on: home, a kind or its plural, a titled lens. */
+  private opens(first: string): boolean {
+    const word = first.trim();
+    if (word.toLowerCase() === "home" || word === "/") return true;
+    if (this.doc.kinds[word]) return true;
+    if (Object.keys(this.doc.kinds).some((k) => placeSlug(pluralWords(this.doc, k)) === placeSlug(word))) return true;
+    return (this.doc.lenses ?? []).some((lens: Doc) => isObject(lens) && typeof lens["title"] === "string" && namesLens(word, lens["title"]));
+  }
+
+  private setComputed(i: number, e: Doc) {
+    const spec = this.kind(i, e.kind);
+    if (!spec) return;
+    const name: string = e.name;
+    const plural = cap(pluralWords(this.doc, e.kind));
+    const existing = spec.computed?.[name];
+    if (e.expr === null) {
+      if (existing === undefined) return this.fail(i, "name", `${e.kind} works out nothing called "${name}"${spec.computed ? `; it works out ${Object.keys(spec.computed).join(", ")}` : ""}`);
+      const gone = this.dropComputed(e.kind, name).slice(1);
+      this.said.push(`${plural} no longer work out "${name}"${gone.length ? `; ${listOf(gone)} ${gone.length === 1 ? "goes" : "go"} with it` : ""}.`);
+      return;
+    }
+    if (existing === undefined) {
+      if (e.expr === undefined) return this.fail(i, "expr", `to work out "${name}", give its expression, like "list * units"`);
+      if (spec.fields[name] || spec.edges?.[name]) return this.fail(i, "name", `${e.kind} already has a ${spec.fields[name] ? "field" : "relation"} called "${name}"`);
+      if (KEYWORDS.has(name)) return this.fail(i, "name", `"${name}" is a word the rule language keeps; pick another name`);
+      if (Object.keys(spec.computed ?? {}).length >= 20) return this.fail(i, "name", "a kind works out at most 20 computed fields");
+    }
+    const was: Doc = existing === undefined ? {} : typeof existing === "string" ? { expr: existing } : { ...existing };
+    const next: Doc = { ...was };
+    if (e.expr !== undefined) next.expr = e.expr;
+    for (const key of ["label", "description"] as const) {
+      if (e[key] === null) delete next[key];
+      else if (e[key] !== undefined) next[key] = e[key];
+    }
+    try {
+      parseExpr(next.expr);
+    } catch (err) {
+      if (err instanceof ExprSyntaxError) return this.fail(i, "expr", `${err.sentence} (at character ${err.at + 1})`);
+      throw err;
+    }
+    // Kept short where it was said short: a bare expression is the same field as { expr }.
+    (spec.computed ??= {})[name] = next.label === undefined && next.description === undefined ? next.expr : next;
+    const findings = validateComputed(
+      new Map(Object.entries(this.doc.kinds).map(([kind, k]: [string, Doc]) => [kind, { fields: new Set(Object.keys(k.fields)), edges: new Set(Object.keys(k.edges ?? {})), computed: computedOf(k) }])),
+      (kind, n) => `kinds.${kind}.computed.${n}`,
+    ).filter((f) => f.severity === "error" && f.path === `kinds.${e.kind}.computed.${name}`);
+    for (const f of findings) this.fail(i, "expr", f.message, f.fix);
+    if (findings.length > 0) return;
+    if (existing === undefined) this.said.push(`${plural} work out "${name}": ${next.expr}${next.label ? `, shown as "${next.label}"` : ""}.`);
+    else if (was.expr !== next.expr) this.said.push(`How ${pluralWords(this.doc, e.kind)} work out "${name}" changes: ${next.expr}.`);
+    else this.said.push(`${plural}' "${name}" is ${next.label ? `shown as "${next.label}"` : "shown by its name"}${next.description ? `, described as "${next.description}"` : ""}.`);
   }
 
   // ── kinds ──
@@ -620,8 +893,15 @@ class Editor {
     for (const f of this.fills) if (f.kind === from) (f as { kind: string }).kind = to;
     if (e.noun) spec.noun = e.noun;
     else if (spec.noun === words(from) || spec.noun === from) spec.noun = words(to);
+    const pluralWas: string = spec.plural ?? `${words(from)}s`;
     if (e.plural) spec.plural = e.plural;
     else if (spec.plural && (spec.plural === `${words(from)}s` || spec.plural === `${from}s`)) spec.plural = `${words(to)}s`;
+    // Where the app opens, when it named the kind by its plural, follows the plural (FR-80).
+    const pluralNow: string = spec.plural ?? `${words(to)}s`;
+    if (typeof this.doc.pages?.first === "string" && placeSlug(this.doc.pages.first) === placeSlug(pluralWas) && placeSlug(pluralWas) !== placeSlug(pluralNow)) {
+      this.doc.pages.first = pluralNow;
+      touched.push("where the app opens");
+    }
     // Acts named for the kind follow it: add-vendor → add-supplier.
     for (const name of Object.keys(this.doc.acts ?? {})) {
       const act = this.doc.acts[name];
@@ -650,6 +930,7 @@ class Editor {
       this.dropRelation(kind, edge, went);
       for (const what of went) if (!gone.includes(what)) gone.push(what);
     }
+    const removedPlural: string = this.doc.kinds[kind].plural ?? `${words(kind)}s`;
     delete this.doc.kinds[kind];
     this.kindOrigin.delete(kind);
     // Relations that only led to it go with it.
@@ -677,7 +958,7 @@ class Editor {
         gone.push(`rule ${name}`);
       }
     }
-    if (this.doc.views?.[kind]) {
+    if (this.doc.views?.[kind] && !Array.isArray(this.doc.views[kind])) {
       delete this.doc.views[kind];
       if (Object.keys(this.doc.views).length === 0) delete this.doc.views;
     }
@@ -686,16 +967,31 @@ class Editor {
       this.doc.policy.sees = this.doc.policy.sees.map((s: Doc) => ({ ...s, kinds: s.kinds.filter((k: string) => k !== kind) })).filter((s: Doc) => s.kinds.length > 0);
       if (this.doc.policy.sees.length === 0) delete this.doc.policy.sees;
     }
-    for (const lens of this.doc.lenses ?? []) {
-      if (isObject(lens["bindings"])) delete (lens["bindings"] as Doc)[kind];
-      if (lens["on"] === kind) delete lens["on"];
+    /*
+     * What sweeps the kind (`all('offer')`) goes as what names a removed
+     * field does: computed fields that work it out, blocks on the front page,
+     * in other kinds' views and in blocks lenses. A lens that stood on the
+     * kind, or drew by it, goes, and `pages.first` with it when it named it.
+     */
+    const swept: Rename = { t: "kind", from: kind, to: "\u0000" };
+    for (const [other, spec] of Object.entries(this.doc.kinds) as [string, Doc][]) {
+      for (const [name, c] of Object.entries(spec.computed ?? {}) as [string, Doc][]) {
+        if (exprMentions(this.doc, typeof c === "string" ? c : c.expr, new Set([other]), swept)) gone.push(...this.dropComputed(other, name));
+      }
     }
-    // The arrangement names kinds (FR-80): a kind that is gone is no longer ordered or hidden.
+    gone.push(...this.pruneViews(swept), ...this.pruneLenses(swept));
+    // The arrangement names kinds (FR-80): a kind that is gone is no longer ordered or hidden, nor where the app opens.
     if (this.doc.pages) {
       for (const part of ["order", "hide"] as const) {
         const named = this.doc.pages[part];
         if (Array.isArray(named)) this.doc.pages[part] = named.filter((k: string) => k !== kind);
       }
+      const first = this.doc.pages.first;
+      if (typeof first === "string" && (first === kind || placeSlug(first) === placeSlug(removedPlural))) {
+        delete this.doc.pages.first;
+        gone.push("where the app opens (it opens at its home again)");
+      }
+      if (Object.keys(this.doc.pages).length === 0) delete this.doc.pages;
     }
     for (const f of [...this.fills]) if (f.kind === kind) this.fills.splice(this.fills.indexOf(f), 1);
     this.said.push(`The ${kind} kind is removed, and every ${kind} with it${gone.length ? `; so are ${listOf(gone)}` : ""}.`);
@@ -822,6 +1118,7 @@ class Editor {
     if (!spec.fields[field]) return void this.field(i, kind, field);
     if (Object.keys(spec.fields).length === 1) return this.fail(i, "field", `${kind} keeps at least one field; remove the kind instead`);
     const r: Rename = { t: "field", kind, from: field, to: "\u0000" };
+    if (this.lensesDrawnBy(i, r)) return;
     const gone = this.dropMentions(r);
     delete spec.fields[field];
     this.fieldOrigin.delete(`${kind}.${field}`);
@@ -889,6 +1186,8 @@ class Editor {
     const spec = this.kind(i, kind);
     if (!spec) return;
     if (!spec.edges?.[relation]) return this.fail(i, "relation", `${kind} has no relation "${relation}"`);
+    const others = [...(sources(this.doc, relation) as Set<string>)].filter((k) => k !== kind);
+    if (others.length === 0 && this.lensesDrawnBy(i, { t: "edge", from: relation, to: "\u0000" })) return;
     const gone: string[] = [];
     this.dropRelation(kind, relation, gone);
     this.said.push(`The "${relation}" relation from ${kind} is removed, with every link of that kind${gone.length ? `; ${listOf(gone)} ${gone.length === 1 ? "goes" : "go"} with it` : ""}.`);
@@ -992,6 +1291,14 @@ class Editor {
         }
       }
       if (r.t === "kind") for (const e of Object.values(spec.edges ?? {}) as Doc[]) if (Array.isArray(e.to) && e.to.includes(r.from)) e.to = e.to.map((t: string) => (t === r.from ? r.to : t));
+      // What it works out (FR-83): each expression read from this kind's records, renamed in the tree.
+      for (const [name, c] of Object.entries(spec.computed ?? {}) as [string, Doc][]) {
+        const was = typeof c === "string" ? c : c.expr;
+        const next = exprAt(was, here)!;
+        if (next === was) continue;
+        spec.computed[name] = typeof c === "string" ? next : { ...c, expr: next };
+        touched.push(`${kind}'s ${name}`);
+      }
     }
 
     // Acts: what they act on and make, the fields they write, guards, refusals, computed values.
@@ -1023,7 +1330,7 @@ class Editor {
           if (t.where === "sets") act.sets = renamed;
           else act.effects[t.index!].set = renamed;
         }
-        if (act.writes && hasKind(on, r.kind) && act.writes.includes(r.from)) {
+        if (act.writes && (hasKind(on, r.kind) || act.creates === r.kind) && act.writes.includes(r.from)) {
           act.writes = act.writes.map((w: string) => (w === r.from ? r.to : w));
           args.set(r.from, r.to);
         }
@@ -1105,45 +1412,43 @@ class Editor {
       if (JSON.stringify(doc.policy) !== before) touched.push("the policy");
     }
 
-    // Views.
+    // Views: each kind's slots, and the home's blocks, which are about no one record (FR-81).
     if (doc.views) {
-      if (r.t === "kind" && doc.views[r.from]) {
+      if (r.t === "kind" && doc.views[r.from] && !Array.isArray(doc.views[r.from])) {
         const views: Doc = {};
         for (const [k, v] of Object.entries(doc.views)) views[k === r.from ? r.to : k] = v;
         doc.views = views;
       }
       for (const [kind, slots] of Object.entries(doc.views) as [string, Doc][]) {
-        const ctx = new Set([r.t === "kind" && kind === r.to ? r.from : kind]);
+        if (kind === "home" && Array.isArray(slots)) {
+          const before = JSON.stringify(slots);
+          doc.views.home = mapBlocks(slots, (b) => rewriteBlock(doc, b, NONE, r, null));
+          if (JSON.stringify(doc.views.home) !== before) touched.push("the front page");
+          continue;
+        }
+        const was = r.t === "kind" && kind === r.to ? r.from : kind;
+        const ctx = new Set([was]);
         for (const slot of VIEW_SLOTS) {
           if (!Array.isArray(slots[slot])) continue;
           const before = JSON.stringify(slots[slot]);
-          slots[slot] = mapBlocks(slots[slot], (b) => rewriteBlock(doc, b, ctx, r, kind));
+          slots[slot] = mapBlocks(slots[slot], (b) => rewriteBlock(doc, b, ctx, r, was));
           if (JSON.stringify(slots[slot]) !== before) touched.push(`the ${kind} ${slot}`);
         }
       }
     }
 
-    // Lenses bind kinds (keys) to fields (values).
+    // Lenses: the kinds they stand on, what they bind, what they are told, and what a blocks lens says.
     for (const lens of doc.lenses ?? []) {
-      const bindings = lens["bindings"];
-      if (!isObject(bindings)) continue;
-      const before = JSON.stringify(bindings);
-      if (r.t === "kind" && r.from in bindings) {
-        bindings[r.to] = bindings[r.from];
-        delete bindings[r.from];
-      }
-      if (r.t === "kind" && lens["on"] === r.from) lens["on"] = r.to;
-      if (r.t === "field" && isObject(bindings[r.kind])) {
-        const b = bindings[r.kind] as Record<string, unknown>;
-        for (const [k, v] of Object.entries(b)) if (v === r.from) b[k] = r.to;
-      }
-      if (JSON.stringify(bindings) !== before) touched.push(`the lens ${String(lens["name"] ?? "")}`.trim());
+      const before = JSON.stringify(lens);
+      rewriteLens(doc, lens, r);
+      if (JSON.stringify(lens) !== before) touched.push(lens["title"] ? `the lens "${String(lens["title"])}"` : `the ${String(lens["name"] ?? "")} lens`);
     }
 
-    // Pages name kinds.
+    // Pages name kinds: in the order, the kinds the home leaves off, and where the app opens (FR-80).
     if (r.t === "kind" && doc.pages) {
       const before = JSON.stringify(doc.pages);
-      doc.pages = deepSwap(doc.pages, r.from, r.to);
+      for (const part of ["order", "hide"] as const) if (Array.isArray(doc.pages[part])) doc.pages[part] = doc.pages[part].map((k: string) => (k === r.from ? r.to : k));
+      if (doc.pages.first === r.from) doc.pages.first = r.to;
       if (JSON.stringify(doc.pages) !== before) touched.push("the pages");
     }
     return touched;
@@ -1154,7 +1459,7 @@ class Editor {
    * it, rules that judge it, view blocks that show it; templates that show it fall
    * back to Graview's own. Returns what went, as words.
    */
-  private dropMentions(r: Rename): string[] {
+  private dropMentions(r: Rename, worked = false): string[] {
     const doc = this.doc;
     const gone: string[] = [];
     for (const [kind, spec] of Object.entries(doc.kinds) as [string, Doc][]) {
@@ -1165,18 +1470,25 @@ class Editor {
         }
       }
     }
+    // What a kind works out from it cannot be worked out, and goes — with what reads that in turn (FR-83).
+    for (const [kind, spec] of Object.entries(doc.kinds) as [string, Doc][]) {
+      for (const [name, c] of Object.entries(spec.computed ?? {}) as [string, Doc][]) {
+        if (r.t === "field" && r.kind === kind && r.from === name) continue;
+        if (exprMentions(doc, typeof c === "string" ? c : c.expr, new Set([kind]), r)) gone.push(...this.dropComputed(kind, name));
+      }
+    }
     for (const [name, act] of Object.entries(doc.acts ?? {}) as [string, Doc][]) {
       const on = subjectKinds(act);
       let uses = exprMentions(doc, act.allowedWhen, on, r) || templateMentions(doc, act.refusal, on, r);
       if (r.t === "edge") uses ||= act.connects === r.from || act.severs === r.from || (act.effects ?? []).some((e: Doc) => e.connect === r.from || e.sever === r.from);
-      if (r.t === "field") {
+      if (r.t === "field" && !worked) {
         // An act that sets other things too loses only this field; one that did nothing else goes.
         for (const t of setTargets(act)) {
           if (!hasKind(t.kinds, r.kind) || t.kinds === "*") continue;
           if (r.from in t.set) delete t.set[r.from];
           for (const v of Object.values(t.set)) if (isObject(v) && typeof v["expr"] === "string" && exprMentions(doc, v["expr"], t.kinds, r)) uses = true;
         }
-        if (act.writes && hasKind(on, r.kind) && act.writes.includes(r.from)) {
+        if (act.writes && (hasKind(on, r.kind) || act.creates === r.kind) && act.writes.includes(r.from)) {
           act.writes = act.writes.filter((w: string) => w !== r.from);
           if (act.writes.length === 0) delete act.writes;
         }
@@ -1202,27 +1514,163 @@ class Editor {
       }
     }
     if (doc.rules && Object.keys(doc.rules).length === 0) delete doc.rules;
-    if (doc.views) {
-      for (const [kind, slots] of Object.entries(doc.views) as [string, Doc][]) {
-        for (const slot of VIEW_SLOTS) {
-          if (!Array.isArray(slots[slot])) continue;
-          const before = JSON.stringify(slots[slot]);
-          slots[slot] = mapBlocks(slots[slot], (b) => (blockMentions(doc, b, new Set([kind]), r, kind) ? null : b));
-          if (slots[slot].length === 0) delete slots[slot];
-          if (JSON.stringify(slots[slot]) !== before) gone.push(`part of the ${kind} ${slot}`);
-        }
-        if (Object.keys(slots).length === 0) delete doc.views[kind];
-      }
-      if (Object.keys(doc.views).length === 0) delete doc.views;
-    }
-    for (const lens of doc.lenses ?? []) {
-      const bindings = lens["bindings"];
-      if (r.t === "field" && isObject(bindings) && isObject(bindings[r.kind])) {
-        const b = bindings[r.kind] as Record<string, unknown>;
-        for (const [k, v] of Object.entries(b)) if (v === r.from) delete b[k];
-      }
-    }
+    gone.push(...this.pruneViews(r));
+    gone.push(...this.pruneLenses(r));
     return gone;
+  }
+
+  /** Computed fields being dropped, so a cycle among them ends. */
+  private readonly dropping = new Set<string>();
+
+  /** A computed field goes, and everything that reads it: views, glances, templates, rules, and computed fields of its own. */
+  private dropComputed(kind: string, name: string): string[] {
+    const key = `${kind}.${name}`;
+    if (this.dropping.has(key) || this.doc.kinds[kind]?.computed?.[name] === undefined) return [];
+    this.dropping.add(key);
+    const gone = [`${kind}'s ${name}`, ...this.dropMentions({ t: "field", kind, from: name, to: "\u0000" }, true)];
+    const spec = this.doc.kinds[kind];
+    if (spec) {
+      delete spec.computed[name];
+      if (Object.keys(spec.computed).length === 0) delete spec.computed;
+      if (spec.glance?.includes(name)) {
+        spec.glance = spec.glance.filter((field: string) => field !== name);
+        if (spec.glance.length === 0) delete spec.glance;
+      }
+    }
+    this.dropping.delete(key);
+    return gone;
+  }
+
+  /** View blocks that show what is going: every kind's slots, the home, and each blocks lens's blocks are pruned (see pruneBlock). */
+  private pruneViews(r: Rename): string[] {
+    const doc = this.doc;
+    const gone: string[] = [];
+    if (!doc.views) return gone;
+    for (const [kind, slots] of Object.entries(doc.views) as [string, Doc][]) {
+      if (kind === "home" && Array.isArray(slots)) {
+        const before = JSON.stringify(slots);
+        doc.views.home = mapBlocks(slots, (b) => pruneBlock(doc, b, NONE, r, null));
+        if (JSON.stringify(doc.views.home) !== before) gone.push("part of the front page");
+        if (doc.views.home.length === 0) delete doc.views.home;
+        continue;
+      }
+      for (const slot of VIEW_SLOTS) {
+        if (!Array.isArray(slots[slot])) continue;
+        const before = JSON.stringify(slots[slot]);
+        slots[slot] = mapBlocks(slots[slot], (b) => pruneBlock(doc, b, new Set([kind]), r, kind));
+        if (JSON.stringify(slots[slot]) !== before) gone.push(`part of the ${kind} ${slot}`);
+        if (slots[slot].length === 0) delete slots[slot];
+      }
+      if (Object.keys(slots).length === 0) delete doc.views[kind];
+    }
+    if (Object.keys(doc.views).length === 0) delete doc.views;
+    return gone;
+  }
+
+  /**
+   * Lenses, after a removal. A binding to what is going is dropped; a lens
+   * that can no longer draw — a role it draws by is gone, it stood on a
+   * removed kind, its blocks are all gone — goes, and so does `pages.first`
+   * when it named it. (`remove-field` and `remove-relation` are refused
+   * before they get here when a lens draws by the thing: see lensesDrawnBy.)
+   */
+  private pruneLenses(r: Rename): string[] {
+    const doc = this.doc;
+    const gone: string[] = [];
+    const lenses: Doc[] = doc.lenses ?? [];
+    const leaving: number[] = [];
+    lenses.forEach((lens, index) => {
+      if (!isObject(lens)) return;
+      let draws = true;
+      const bindings = lens["bindings"];
+      const required = requiredRoles(lens);
+      if (isObject(bindings)) {
+        if (lensBinds(lens) === "entities") {
+          for (const [role, b] of Object.entries(bindings)) {
+            if (!isObject(b)) continue;
+            const hit =
+              (r.t === "kind" && b["kind"] === r.from) ||
+              (r.t === "edge" && (b["edge"] === r.from || (Array.isArray(b["path"]) && b["path"].includes(r.from)))) ||
+              (r.t === "field" && b["field"] === r.from && roleKind(bindings, role) === r.kind);
+            if (!hit) continue;
+            if (required.includes(role) || r.t === "kind") draws = false;
+            else delete bindings[role];
+          }
+        } else {
+          if (r.t === "kind" && isObject(bindings[r.from])) {
+            delete bindings[r.from];
+            if (!Object.values(bindings).some(isObject)) draws = false;
+          }
+          if (r.t === "field" && isObject(bindings[r.kind])) {
+            const b = bindings[r.kind] as Record<string, unknown>;
+            for (const [role, v] of Object.entries(b)) if (v === r.from) {
+              if (required.includes(role)) draws = false;
+              else delete b[role];
+            }
+          }
+        }
+      }
+      if (r.t === "kind" && lens["on"] === r.from) draws = false;
+      const options = lens["options"];
+      if (isObject(options)) {
+        if (Array.isArray(options["blocks"])) {
+          const blocks = mapBlocks(options["blocks"], (b) => pruneBlock(doc, b, NONE, r, null));
+          if (blocks.length === 0) draws = false;
+          options["blocks"] = blocks;
+        }
+        for (const [key, value] of Object.entries(options)) if (key !== "blocks" && value === r.from && (r.t !== "field" || lensStandsOn(lens, r.kind))) delete options[key];
+      }
+      if (!draws) leaving.push(index);
+    });
+    for (const index of leaving.reverse()) gone.push(this.removeLensAt(index));
+    return gone.reverse();
+  }
+
+  /**
+   * THE LENSES THAT DRAW BY A FIELD OR A RELATION — a role the lens cannot
+   * draw without (a timeline's start, a coverage's link). Removing one is
+   * refused, with a finding naming each lens and role: whether to drop the
+   * picture or bind it to something else is the person's to say.
+   */
+  private lensesDrawnBy(i: number, r: Rename): boolean {
+    let refused = false;
+    (this.doc.lenses ?? []).forEach((lens: Doc, index: number) => {
+      if (!isObject(lens) || !isObject(lens["bindings"])) return;
+      const bindings = lens["bindings"] as Record<string, unknown>;
+      const required = requiredRoles(lens);
+      const title = String(lens["title"] ?? lens["name"] ?? index);
+      const roles: string[] = [];
+      if (lensBinds(lens) === "entities") {
+        for (const [role, b] of Object.entries(bindings)) {
+          if (!isObject(b) || !required.includes(role)) continue;
+          if (r.t === "field" && b["field"] === r.from && roleKind(bindings, role) === r.kind) roles.push(role);
+          if (r.t === "edge" && (b["edge"] === r.from || (Array.isArray(b["path"]) && b["path"].includes(r.from)))) roles.push(role);
+        }
+      } else if (r.t === "field" && isObject(bindings[r.kind])) {
+        for (const [role, v] of Object.entries(bindings[r.kind] as Record<string, unknown>)) if (v === r.from && required.includes(role)) roles.push(role);
+      }
+      for (const role of roles) {
+        refused = true;
+        const what = r.t === "field" ? `${r.kind}'s ${r.from}` : `the "${r.from}" relation`;
+        this.fail(i, "", `the lens "${title}" (lenses.${index}) draws by its ${role}, which is ${what}, and cannot draw without it`, `remove the lens first ({"op": "remove-lens", "title": "${title}"}), or bind ${role} to something else`);
+      }
+    });
+    return refused;
+  }
+
+  /** Remove the lens at an index; `pages.first` that named it is dropped, so the app opens at its home. */
+  private removeLensAt(index: number): string {
+    const lens = this.doc.lenses[index];
+    const title = lens?.["title"] ? String(lens["title"]) : undefined;
+    this.doc.lenses.splice(index, 1);
+    if (this.doc.lenses.length === 0) delete this.doc.lenses;
+    let said = title ? `the lens "${title}"` : `the ${String(lens?.["name"] ?? "")} lens`;
+    if (title && this.doc.pages?.first !== undefined && namesLens(this.doc.pages.first, title)) {
+      delete this.doc.pages.first;
+      if (Object.keys(this.doc.pages).length === 0) delete this.doc.pages;
+      said += " (the app opens at its home again)";
+    }
+    return said;
   }
 }
 
@@ -1247,12 +1695,6 @@ function swapToken(name: string, from: string, to: string): string {
   return name;
 }
 
-function deepSwap(v: unknown, from: string, to: string): unknown {
-  if (v === from) return to;
-  if (Array.isArray(v)) return v.map((x) => deepSwap(x, from, to));
-  if (isObject(v)) return Object.fromEntries(Object.entries(v).map(([k, x]) => [k === from ? to : k, deepSwap(x, from, to)]));
-  return v;
-}
 
 const listOf = (xs: readonly string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`);
 
@@ -1273,9 +1715,153 @@ function mapBlocks(blocks: unknown[], f: (b: Record<string, unknown>) => Record<
   return out;
 }
 
-function rewriteBlock(doc: Doc, b: Record<string, unknown>, ctx: Kinds, r: Rename, kind: string): Record<string, unknown> {
+// ── words for what changed ───────────────────────────────────────────────────
+
+const cap = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+const withA = (noun: string) => `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;
+const nounOf = (doc: Doc, kind: string): string => doc.kinds[kind]?.noun ?? words(kind);
+/** A kind's plural as a person reads it: "packages", "people and teams". */
+function pluralWords(doc: Doc, kind: string): string {
+  const plural: string | undefined = doc.kinds[kind]?.plural;
+  return plural ? plural.charAt(0).toLowerCase() + plural.slice(1) : `${words(kind)}s`;
+}
+/** The kinds a lens binds, for saying where it stands. */
+function kindsBound(lens: Doc): string[] {
+  const bindings = lens["bindings"];
+  if (!isObject(bindings)) return [];
+  if (lensBinds(lens) === "entities") return Object.values(bindings).flatMap((b) => (isObject(b) && typeof b["kind"] === "string" ? [b["kind"]] : []));
+  return Object.keys(bindings).filter((k) => isObject(bindings[k]));
+}
+/** What a list of blocks is, in words: "a headline, a figure and a list of records". */
+function blockWords(blocks: readonly unknown[]): string {
+  const said = blocks.map((b) => {
+    if (!isObject(b)) return "a block";
+    if ("list" in b) return "a list of records";
+    if ("headline" in b) return "a headline";
+    if ("figure" in b) return b["figure"] === true ? "its picture" : "a figure";
+    if ("title" in b) return "a title";
+    if ("text" in b) return "words";
+    if ("badge" in b) return "a badge";
+    if ("field" in b) return `its ${String(b["field"])}`;
+    if ("progress" in b) return "a progress bar";
+    if ("group" in b) return "a group";
+    if ("when" in b) return "a condition";
+    if ("divider" in b) return "a divider";
+    return "a block";
+  });
+  return listOf(said);
+}
+
+// ── lenses as a change sees them ─────────────────────────────────────────────
+
+/** How a lens binds: a kind's fields to its roles, or kinds, relations and fields to its roles, or nothing. */
+function lensBinds(lens: Doc): "fields" | "entities" | "nothing" {
+  if (lens["binds"] === "fields" || lens["binds"] === "entities") return lens["binds"];
+  const name = String(lens["name"] ?? "");
+  return isShippedLens(name) ? SHIPPED_LENSES[name].binds : "fields";
+}
+
+/** The roles a lens cannot draw without: its own, or the shipped lens's. */
+function requiredRoles(lens: Doc): readonly string[] {
+  if (Array.isArray(lens["requiredRoles"])) return lens["requiredRoles"] as string[];
+  const name = String(lens["name"] ?? "");
+  return isShippedLens(name) ? SHIPPED_LENSES[name].requiredRoles : [];
+}
+
+/** For a lens that binds kinds: the kind a role's field is read from — the kind its `on` role binds, else the first kind bound. */
+function roleKind(bindings: Record<string, unknown>, role: string): string | undefined {
+  const b = bindings[role];
+  if (isObject(b) && typeof b["kind"] === "string") return b["kind"];
+  const on = isObject(b) && typeof b["on"] === "string" ? bindings[b["on"]] : undefined;
+  if (isObject(on) && typeof on["kind"] === "string") return on["kind"];
+  const first = Object.values(bindings).find((x) => isObject(x) && typeof x["kind"] === "string") as Record<string, unknown> | undefined;
+  return first?.["kind"] as string | undefined;
+}
+
+/** Whether a lens stands on a kind: its `on`, a kind it binds fields of, or a kind a role binds. */
+function lensStandsOn(lens: Doc, kind: string): boolean {
+  if (lens["on"] === kind) return true;
+  const bindings = lens["bindings"];
+  if (!isObject(bindings)) return false;
+  if (lensBinds(lens) === "entities") return Object.values(bindings).some((b) => isObject(b) && b["kind"] === kind);
+  return isObject(bindings[kind]);
+}
+
+/** Whether `pages.first` names this lens: by its title, or by its address word. */
+const namesLens = (first: unknown, title: string): boolean => typeof first === "string" && (first.trim() === title || placeSlug(first) === placeSlug(title));
+
+/**
+ * A rename, wherever a lens says the name: the kind it stands `on`, the
+ * kinds and fields its bindings name, the plain words its options give
+ * (a coverage's `rowGroup`, a board's `fillFrom`), and every expression and
+ * template of a blocks lens — through the parser, as everywhere else.
+ */
+function rewriteLens(doc: Doc, lens: Doc, r: Rename): void {
+  if (r.t === "kind" && lens["on"] === r.from) lens["on"] = r.to;
+  const bindings = lens["bindings"];
+  if (isObject(bindings)) {
+    if (lensBinds(lens) === "entities") {
+      // Which kind each role's field is read from, before the change moves anything.
+      const kindOf = new Map(Object.keys(bindings).map((role) => [role, roleKind(bindings, role)]));
+      for (const [role, b] of Object.entries(bindings)) {
+        if (!isObject(b)) continue;
+        if (r.t === "kind" && b["kind"] === r.from) b["kind"] = r.to;
+        if (r.t === "edge" && b["edge"] === r.from) b["edge"] = r.to;
+        if (r.t === "edge" && Array.isArray(b["path"])) b["path"] = b["path"].map((step: unknown) => (step === r.from ? r.to : step));
+        if (r.t === "field" && b["field"] === r.from && kindOf.get(role) === r.kind) b["field"] = r.to;
+      }
+    } else {
+      if (r.t === "kind" && r.from in bindings) lens["bindings"] = Object.fromEntries(Object.entries(bindings).map(([k, v]) => [k === r.from ? r.to : k, v]));
+      if (r.t === "field" && isObject(bindings[r.kind])) {
+        const b = bindings[r.kind] as Record<string, unknown>;
+        for (const [k, v] of Object.entries(b)) if (v === r.from) b[k] = r.to;
+      }
+    }
+  }
+  const options = lens["options"];
+  if (isObject(options)) {
+    for (const [key, value] of Object.entries(options)) {
+      if (key === "blocks" && Array.isArray(value)) options["blocks"] = mapBlocks(value, (b) => rewriteBlock(doc, b, NONE, r, null));
+      else if (value === r.from && (r.t !== "field" || lensStandsOn(lens, r.kind))) options[key] = r.to;
+    }
+  }
+}
+
+/** The kinds a list block's records are, read from its source before the change: what its sort key and group are read from. */
+function listMembers(doc: Doc, source: unknown, ctx: Kinds): Kinds {
+  if (typeof source !== "string") return NONE;
+  try {
+    return kindsOf(doc, parseExpr(source), ctx);
+  } catch (err) {
+    if (err instanceof ExprSyntaxError) return NONE;
+    throw err;
+  }
+}
+
+/** A list's sort (`"net"`, or `{ by, direction }`) and group (`"type"`, or `{ by, headings }`): the key each names, read per member. */
+const keyOf = (v: unknown): string | undefined => (typeof v === "string" ? v : isObject(v) && typeof v["by"] === "string" ? v["by"] : undefined);
+const withKey = (v: unknown, key: string): unknown => (typeof v === "string" ? key : { ...(v as Record<string, unknown>), by: key });
+
+/**
+ * One block with a rename applied wherever it names: templates (a title, a
+ * text, a badge, a headline), expressions (a figure, a tone, a condition, a
+ * progress), a list's source, and its sort key and group — read from the
+ * records the list lists, not the record the view is about — and a field
+ * block's field. `kind` is the kind the blocks are about; null for the home
+ * and a blocks lens.
+ */
+function rewriteBlock(doc: Doc, b: Record<string, unknown>, ctx: Kinds, r: Rename, kind: string | null): Record<string, unknown> {
   const next = { ...b };
-  for (const key of ["title", "text", "badge"]) if (typeof next[key] === "string") next[key] = rewriteTemplate(doc, next[key] as string, ctx, r);
+  for (const key of ["title", "text", "badge", "headline"]) if (typeof next[key] === "string") next[key] = rewriteTemplate(doc, next[key] as string, ctx, r);
+  if (typeof next["figure"] === "string") next["figure"] = rewriteExpr(doc, next["figure"], ctx, r);
+  if (typeof next["list"] === "string") {
+    const members = listMembers(doc, next["list"], ctx);
+    next["list"] = rewriteExpr(doc, next["list"], ctx, r);
+    const sort = keyOf(next["sort"]);
+    if (sort !== undefined) next["sort"] = withKey(next["sort"], rewriteExpr(doc, sort, members, r));
+    const group = keyOf(next["group"]);
+    if (group !== undefined) next["group"] = withKey(next["group"], renamer(doc, r)({ role: "field", kinds: members, name: group }));
+  }
   if (isObject(next["tone"]) && typeof next["tone"]["expr"] === "string") next["tone"] = { expr: rewriteExpr(doc, next["tone"]["expr"], ctx, r) };
   if (typeof next["when"] === "string") next["when"] = rewriteExpr(doc, next["when"], ctx, r);
   if (isObject(next["progress"])) {
@@ -1287,13 +1873,30 @@ function rewriteBlock(doc: Doc, b: Record<string, unknown>, ctx: Kinds, r: Renam
   return next;
 }
 
-function blockMentions(doc: Doc, b: Record<string, unknown>, ctx: Kinds, r: Rename, kind: string): boolean {
-  if (r.t === "field" && r.kind === kind && b["field"] === r.from) return true;
-  for (const key of ["title", "text", "badge"]) if (typeof b[key] === "string" && templateMentions(doc, b[key] as string, ctx, r)) return true;
-  if (isObject(b["tone"]) && exprMentions(doc, b["tone"]["expr"] as string, ctx, r)) return true;
-  if (typeof b["when"] === "string" && exprMentions(doc, b["when"], ctx, r)) return true;
-  if (isObject(b["progress"])) for (const k of ["value", "max"]) if (exprMentions(doc, (b["progress"] as Record<string, string>)[k], ctx, r)) return true;
-  return false;
+/**
+ * One block, with what a removal takes from it: the block goes when what it
+ * shows cannot be shown (its template, its figure, its list's records, its
+ * condition names the thing); a list keeps its records and loses only an
+ * order or a grouping by a field that is gone.
+ */
+function pruneBlock(doc: Doc, b: Record<string, unknown>, ctx: Kinds, r: Rename, kind: string | null): Record<string, unknown> | null {
+  if (r.t === "field" && r.kind === kind && b["field"] === r.from) return null;
+  for (const key of ["title", "text", "badge", "headline"]) if (typeof b[key] === "string" && templateMentions(doc, b[key] as string, ctx, r)) return null;
+  if (typeof b["figure"] === "string" && exprMentions(doc, b["figure"], ctx, r)) return null;
+  if (isObject(b["tone"]) && exprMentions(doc, b["tone"]["expr"] as string, ctx, r)) return null;
+  if (typeof b["when"] === "string" && exprMentions(doc, b["when"], ctx, r)) return null;
+  if (isObject(b["progress"])) for (const k of ["value", "max"]) if (exprMentions(doc, (b["progress"] as Record<string, string>)[k], ctx, r)) return null;
+  if (typeof b["list"] === "string") {
+    if (exprMentions(doc, b["list"], ctx, r)) return null;
+    const members = listMembers(doc, b["list"], ctx);
+    const next = { ...b };
+    const sort = keyOf(b["sort"]);
+    if (sort !== undefined && exprMentions(doc, sort, members, r)) delete next["sort"];
+    const group = keyOf(b["group"]);
+    if (group !== undefined && renamer(doc, r)({ role: "field", kinds: members, name: group }) !== group) delete next["group"];
+    return next;
+  }
+  return b;
 }
 
 /**
