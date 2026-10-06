@@ -1,4 +1,5 @@
-import { INSTALLATION_MODULE, layer, type AnySchema, type CheckResult, type GraviewApp, type MigrationDeclaration, type Store } from "@graview/core";
+import { INSTALLATION_MODULE, layer, type AnySchema, type GraviewApp, type MigrationDeclaration, type Store } from "@graview/core";
+import type { CheckResult } from "@graview/core/check";
 import type { DocumentEdit, Finding, GraviewDocument } from "@graview/core/document";
 import { EMPTY_VIEW, withWithin } from "@graview/layout";
 import { GraviewProvider, Scene, createViews, useGraview, useNavigation, useTheKeyboardLandsSomewhere } from "@graview/react";

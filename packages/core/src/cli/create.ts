@@ -3,7 +3,8 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFi
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { LINKED_PACKAGES, scaffoldProject, validateScaffoldOptions, type ScaffoldOptions } from "../scaffold/index.js";
-import { instantiateTemplate, type GraviewTemplate } from "../document/graview-template.js";
+import type { GraviewTemplate } from "../document/graview-template.js";
+import { instantiateTemplate } from "../document/instantiate-template.js";
 
 /**
  * `graview create <dir>`: a product on Graview, started.

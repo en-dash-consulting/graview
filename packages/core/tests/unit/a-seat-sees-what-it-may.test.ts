@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { bindSchema, checkApp, createSchema, defineApp, defineNode, nodeRef, Store, type Policy, type Principal } from "../../src/index.js";
+import { bindSchema, createSchema, defineApp, defineNode, nodeRef, Store, type Policy, type Principal } from "../../src/index.js";
+import { checkApp } from "../../src/check.js";
 
 /**
  * A SEAT SEES WHAT IT MAY. A policy said who may DO each act and nothing

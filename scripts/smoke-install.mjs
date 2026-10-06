@@ -127,13 +127,13 @@ try {
   createSchema,
   defineApp,
   defineNode,
-  checkApp,
   nodeRef,
   Store,
   DARK,
   LIGHT,
   type Violation,
 } from "@graview/core";
+import { checkApp } from "@graview/core/check";
 import { EMPTY_VIEW, layout } from "@graview/layout";
 import { deriveAffordances, createToolRuntime } from "@graview/tools";
 import { planFrame } from "@graview/render";

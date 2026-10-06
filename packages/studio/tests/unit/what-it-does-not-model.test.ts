@@ -1,4 +1,5 @@
-import { checkApp, createSchema, defineApp, defineMutation, defineNode, nodeRef } from "@graview/core";
+import { createSchema, defineApp, defineMutation, defineNode, nodeRef } from "@graview/core";
+import { checkApp } from "@graview/core/check";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createStudio } from "../../src/index.js";

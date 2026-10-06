@@ -1,4 +1,5 @@
-import { figureSvg, type AnySchema, type Brand, type Schema } from "@graview/core";
+import { type AnySchema, type Brand, type Schema } from "@graview/core";
+import { figureSvg } from "@graview/core/figures";
 
 import { useMarkup } from "./markup.js";
 import { hueFor } from "./default-views.js";

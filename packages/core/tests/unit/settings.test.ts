@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { checkApp, createSchema, defineApp, defineNode, motion, readerSettings, textSize } from "../../src/index.js";
+import { createSchema, defineApp, defineNode, motion, readerSettings, textSize } from "../../src/index.js";
+import { checkApp } from "../../src/check.js";
 import { z } from "zod";
 
 /**

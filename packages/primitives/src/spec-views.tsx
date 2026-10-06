@@ -1,19 +1,6 @@
 import { labelOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
-import {
-  compileBlocks,
-  fieldSpecsOf,
-  isTallBlock,
-  resolveBlocks,
-  shapesOfSchema,
-  type BlockContext,
-  type FieldSpec,
-  type KindShape,
-  type ResolvedBlock,
-  type ResolvedList,
-  type SpecBlock,
-  type ViewSlot,
-  type ViewSpecsByKind,
-} from "@graview/core/document";
+import { compileBlocks, fieldSpecsOf, isTallBlock, resolveBlocks, type BlockContext, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
+import { shapesOfSchema, type FieldSpec, type KindShape, type ViewSlot, type ViewSpecsByKind } from "@graview/core/document";
 import { useGraph, useGraview, ViewModeProvider, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { createContext, useContext, type MouseEvent, type ReactNode } from "react";
 import { DefaultView } from "./default-view.js";
@@ -47,7 +34,7 @@ import { Panel } from "./primitives/index.js";
  */
 
 export { SPEC_VIEW_CSS } from "./spec-css.js";
-export { compileBlocks, safeHref, sayNumber, type SpecBlock } from "@graview/core/document";
+export { compileBlocks, safeHref, sayNumber, type SpecBlock } from "@graview/core/blocks";
 
 /** Everything a spec reads to draw one record: what core resolves from, and the kind's picture. */
 export interface SpecContext extends BlockContext {

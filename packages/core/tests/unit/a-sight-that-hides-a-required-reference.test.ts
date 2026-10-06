@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { checkApp, createSchema, defineApp, defineNode, nodeRef, type Policy } from "../../src/index.js";
+import { createSchema, defineApp, defineNode, nodeRef, type Policy } from "../../src/index.js";
+import { checkApp } from "../../src/check.js";
 
 /**
  * A SIGHT THAT HIDES A REQUIRED REFERENCE (FR-55). A record whose required

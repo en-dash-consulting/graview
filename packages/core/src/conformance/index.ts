@@ -1,5 +1,5 @@
 import { checkApp } from "../cli/check.js";
-import { compileDocument } from "../document/compile.js";
+import { compileDocument } from "../document/compile-checked.js";
 import type { GraviewDocument } from "../document/schema.js";
 import type { GraviewApp } from "../app.js";
 import { snapshotHash } from "../integrity.js";

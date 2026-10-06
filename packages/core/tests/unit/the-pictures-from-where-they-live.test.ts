@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createSchema, createViewRegistry, defineApp, defineNode, describeApp } from "../../src/index.js";
+import { createSchema, createViewRegistry, defineApp, defineNode } from "../../src/index.js";
+import { describeApp } from "../../src/check.js";
 import { withViews } from "../../src/cli/index.js";
 
 /**

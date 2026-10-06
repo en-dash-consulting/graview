@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
-  checkApp,
   createSchema,
   declareInstallation,
   defineApp,
@@ -10,6 +9,7 @@ import {
   type AnySchema,
   type GraviewApp,
 } from "../../src/index.js";
+import { checkApp } from "../../src/check.js";
 
 /**
  * A MODULE YOU CAN NEVER TURN OFF SHOULD NOT BE WARNED ABOUT.

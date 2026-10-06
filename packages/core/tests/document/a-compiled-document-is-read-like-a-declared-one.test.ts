@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { argShape, defineNode, descriptionOf, formFields, mutationToolSchema, nodeRef, nodeRefArgs, z } from "../../src/index.js";
-import { compileDocument, readDocument } from "../../src/document/index.js";
+import { readDocument } from "../../src/document/index.js";
+import { compileDocument } from "../../src/check.js";
 
 /**
  * A COMPILED DOCUMENT IS READ LIKE A DECLARED ONE. The framework builds a

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { Store, type AnySchema, type GraviewApp, type Principal } from "@graview/core";
 import { describePlace, type DescribedPart, type PlaceDescription } from "@graview/core/describe";
-import { compileDocument } from "@graview/core/document";
+import { compileDocument } from "@graview/core/check";
 import { describe, expect, it, vi } from "vitest";
 import type { WorkerViewManifest } from "../../src/host/manifest.js";
 import { headlessScript, runWorkerViewHeadless, type HeadlessPayload, type HeadlessResult, type RunWorkerViewHeadlessOptions } from "../../src/headless/index.js";

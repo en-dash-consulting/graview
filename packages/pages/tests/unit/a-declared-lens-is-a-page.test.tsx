@@ -2,8 +2,8 @@
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { checkApp, declaredLenses, describeApp, placesOf, Store, type AnySchema, type GraviewApp } from "@graview/core";
-import { compileDocument } from "@graview/core/document";
+import { declaredLenses, placesOf, Store, type AnySchema, type GraviewApp } from "@graview/core";
+import { checkApp, describeApp, compileDocument } from "@graview/core/check";
 import { declaredViews, fetchDeclaredLenses } from "@graview/primitives";
 import { act } from "react";
 import { createRoot } from "react-dom/client";

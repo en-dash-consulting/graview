@@ -1,5 +1,6 @@
-import { checkApp, diffSnapshots, isEmptyDiff, Store, type AnySchema, type Batch, type CheckResult, type GraphSnapshot, type GraviewApp, type MigrationDeclaration, type MutationCall, type Principal } from "@graview/core";
-import { compileDocument, documentOf, toDocument, warning, type CompiledDocument, type RefusedDocument, type DocumentEdit, type EditOutcome, type Fill, type Finding, type GraviewDocument } from "@graview/core/document";
+import { diffSnapshots, isEmptyDiff, Store, type AnySchema, type Batch, type GraphSnapshot, type GraviewApp, type MigrationDeclaration, type MutationCall, type Principal } from "@graview/core";
+import { checkApp, type CheckResult, compileDocument } from "@graview/core/check";
+import { documentOf, toDocument, warning, type CompiledDocument, type RefusedDocument, type DocumentEdit, type EditOutcome, type Fill, type Finding, type GraviewDocument } from "@graview/core/document";
 import { resolveProposal } from "@graview/tools";
 import { documentAfter, documentEdits } from "./edits.js";
 import { declarationToGraph } from "./from-declaration.js";

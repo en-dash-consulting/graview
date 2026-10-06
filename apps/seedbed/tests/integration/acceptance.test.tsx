@@ -1,4 +1,4 @@
-import { checkApp } from "@graview/core";
+import { checkApp } from "@graview/core/check";
 import { deriveAffordances, createToolRuntime, llmIntelligence, templateIntelligence } from "@graview/tools";
 import { EMPTY_VIEW, kindCardId, layout } from "@graview/layout";
 import { GraviewProvider, Scene } from "@graview/react";

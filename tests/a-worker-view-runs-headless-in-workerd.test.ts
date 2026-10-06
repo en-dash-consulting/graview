@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { Store, type AnySchema, type GraviewApp, type Principal } from "@graview/core";
-import { compileDocument } from "@graview/core/document";
+import { compileDocument } from "@graview/core/check";
 import { runWorkerViewHeadless, type HeadlessPayload, type HeadlessRun } from "@graview/guest/headless";
 import { describe, expect, it } from "vitest";
 

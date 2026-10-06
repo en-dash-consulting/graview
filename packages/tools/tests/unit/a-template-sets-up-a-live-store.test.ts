@@ -1,7 +1,7 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { compileDocument } from "@graview/core/document";
+import { compileDocument } from "@graview/core/check";
 import { createFileAdapter, openStore } from "@graview/ship";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { apply } from "../../src/cli.js";

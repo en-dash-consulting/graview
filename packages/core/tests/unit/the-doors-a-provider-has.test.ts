@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { type AnySchema, checkApp, createSchema, defineApp, defineNode, generateLlmsTxt, type GraviewApp } from "../../src/index.js";
+import { type AnySchema, createSchema, defineApp, defineNode, type GraviewApp } from "../../src/index.js";
+import { checkApp, generateLlmsTxt } from "../../src/check.js";
 
 /**
  * A PROVIDER CAN SAY HOW IT IS REACHED.

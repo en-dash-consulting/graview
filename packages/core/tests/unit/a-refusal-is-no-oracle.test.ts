@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MissingRecordError, refusalOf, Store, type AnySchema, type Principal } from "../../src/index.js";
-import { compileDocument } from "../../src/document/index.js";
+import { compileDocument } from "../../src/check.js";
 import { FIXTURES } from "../../src/conformance/index.js";
 import { MUTATIONS, policyOf, SCHEMA } from "../support/unseen-worlds.js";
 

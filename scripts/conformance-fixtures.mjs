@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const core = (path) => import(resolve(root, "packages/core/dist", path));
 const { FRAMEWORK_VERSION, Store } = await core("index.js");
-const { compileDocument } = await core("document/index.js");
+const { compileDocument } = await core("check.js");
 const { FIXTURES, ANNOUNCED, THIS_BUILD } = await core("conformance/index.js");
 
 const readJson = (path) => JSON.parse(readFileSync(resolve(root, path), "utf8"));

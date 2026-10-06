@@ -1,4 +1,4 @@
-import { figureFaults, FIGURE_NAMES, FIGURES } from "@graview/core";
+import { figureFaults, FIGURE_NAMES, FIGURES } from "@graview/core/figures";
 import type { Completion } from "./intelligence.js";
 
 /**

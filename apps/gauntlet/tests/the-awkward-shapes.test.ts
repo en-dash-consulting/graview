@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { checkApp, labelOf, isCurrent, nounOf } from "@graview/core";
+import { labelOf, isCurrent, nounOf } from "@graview/core";
+import { checkApp } from "@graview/core/check";
 import { deriveAffordances } from "@graview/tools";
 import { describe, expect, it } from "vitest";
 import { createStore, gauntletApp } from "../src/domain/app.js";

@@ -1,4 +1,6 @@
-import { figureSvg, formFields, humaniseField, labelOf, type AnySchema, type Finding, type FormField, type Store } from "@graview/core";
+import { formFields, humaniseField, labelOf, type AnySchema, type FormField, type Store } from "@graview/core";
+import { figureSvg } from "@graview/core/figures";
+import type { Finding } from "@graview/core/check";
 import { POPOVER_STYLE, useGraview, usePopover } from "@graview/react";
 import {
   describeSource,

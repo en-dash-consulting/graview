@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   bindSchema,
-  checkApp,
   createSchema,
   defineApp,
   defineNode,
@@ -14,6 +13,7 @@ import {
   takesAnId,
   type Policy,
 } from "../../src/index.js";
+import { checkApp } from "../../src/check.js";
 
 /**
  * Two things an agent redesigning a live graph needs and no app declared:

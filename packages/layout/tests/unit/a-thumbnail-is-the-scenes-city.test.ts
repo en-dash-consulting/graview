@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { beginning, Graph, hueFor, sceneDistricts, Store, villageCap, villageOf, type GraviewApp } from "@graview/core";
-import { compileDocumentWithoutCheck, sceneThumbnail, type GraviewDocument } from "@graview/core/document";
+import { beginning, Graph, hueFor, Store, type GraviewApp } from "@graview/core";
+import { sceneDistricts, villageCap, villageOf, sceneThumbnail } from "@graview/core/scene";
+import { compileDocumentWithoutCheck, type GraviewDocument } from "@graview/core/document";
 import { describe, expect, it } from "vitest";
 import { EMPTY_VIEW, kindCardId, layout } from "../../src/index.js";
 

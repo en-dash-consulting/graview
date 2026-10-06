@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { PermissionDeniedError, Store, type AnyGraphNode, type AnySchema } from "@graview/core";
 import { createToolRuntime } from "@graview/tools";
 import { describe, expect, it } from "vitest";
-import { compileDocument, sayFindings, type CompiledDocument } from "@graview/core/document";
+import { sayFindings, type CompiledDocument } from "@graview/core/document";
+import { compileDocument } from "@graview/core/check";
 
 const vendors = JSON.parse(readFileSync(new URL("../packages/core/tests/document/fixtures/vendors.gdd.json", import.meta.url), "utf8"));
 const TODAY = "2026-10-02";

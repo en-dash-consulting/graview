@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { checkApp, createSchema, defineApp, defineNode, z } from "@graview/core";
-import { compileDocument, toDocument, type ViewSpecsByKind } from "@graview/core/document";
+import { createSchema, defineApp, defineNode, z } from "@graview/core";
+import { checkApp, compileDocument } from "@graview/core/check";
+import { toDocument, type ViewSpecsByKind } from "@graview/core/document";
 import { describe, expect, it } from "vitest";
 
 /**

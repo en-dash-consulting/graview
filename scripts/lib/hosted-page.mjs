@@ -34,11 +34,17 @@ export const FACE_DOORS = {
  * scene's own rules moved to the scene face and the frame's measures and
  * descent to files of their own (FR-104), and it is 589 079 bytes
  * (575 KB); Cloud's own shell built from the same sources agreed, 596.0 KB
- * before and 573.7 KB after, its own code in it. The claim is that figure with 10 KB of
- * headroom, so the room is spent on purpose: a feature that needs it raises
- * this number in the same change and says why.
+ * before and 573.7 KB after, its own code in it.
+ *
+ * Then what only a fetched face, an agent's seat or the checker uses left
+ * the barrels the page imports up front for subpaths of their own —
+ * `@graview/core/blocks`, `/check`, `/scene` and `/figures` — since a
+ * bundler places a whole module in every chunk that can reach it: 575 357
+ * bytes (562 KB). The claim is that figure with 10 KB of headroom, so the
+ * room is spent on purpose: a feature that needs it raises this number in
+ * the same change and says why.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 585 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 572 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";

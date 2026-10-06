@@ -41,7 +41,7 @@ product is for, and it is four seams, all of which the framework ships.
 ## Do this
 
 1. **Write the prompt from the graph.** What kinds exist, what acts exist and
-   what they take — `generateLlmsTxt(app)` writes that — plus what is already
+   what they take — `generateLlmsTxt(app)` from `@graview/core/check` writes that — plus what is already
    there. A model that cannot see the graph invents a second Back Lawn.
 
 2. **Ask for proposals, not prose.** One JSON object with a `proposals` array

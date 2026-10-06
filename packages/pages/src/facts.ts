@@ -11,7 +11,7 @@ import {
   type Violation,
 } from "@graview/core";
 import { deriveAffordances, type AffordanceSet } from "@graview/tools";
-import { withComputed } from "@graview/core/document";
+import { withComputed } from "@graview/core/blocks";
 
 /**
  * Everything a record page says, derived ONCE.

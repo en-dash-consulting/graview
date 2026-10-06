@@ -21,7 +21,7 @@ import {
   type Store,
 } from "@graview/core";
 import { describePlace } from "@graview/core/describe";
-import { computedValues } from "@graview/core/document";
+import { computedValues } from "@graview/core/blocks";
 import { authorship, markComputed, markGraph, markHits, markNode } from "./untrusted.js";
 import {
   deriveAffordances,

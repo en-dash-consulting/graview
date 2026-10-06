@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { checkApp } from "../../src/cli/check.js";
 import { createSchema, defineApp, defineMutation, defineNode, nodeRef, z } from "../../src/index.js";
-import { compileDocument, type Finding } from "../../src/document/index.js";
+import { type Finding } from "../../src/document/index.js";
+import { compileDocument } from "../../src/check.js";
 
 /**
  * FR-105. THE CHECK WARNS WHEN AN ACT READS A KIND SOME ROLE THAT MAY RUN

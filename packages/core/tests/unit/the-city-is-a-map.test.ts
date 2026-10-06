@@ -1,19 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
+import { createSchema, defineApp, defineNode } from "../../src/index.js";
 import {
   BLOCK,
-  checkApp,
   cityExtent,
   cityMap,
-  createSchema,
-  defineApp,
-  defineNode,
-  describeApp,
   plotsOverlap,
   roadsOf,
   sideFor,
   toIso,
-} from "../../src/index.js";
+} from "../../src/scene.js";
+import { checkApp, describeApp } from "../../src/check.js";
 
 /**
  * THE CITY IS A MAP DRAWN FROM THE DECLARATION.

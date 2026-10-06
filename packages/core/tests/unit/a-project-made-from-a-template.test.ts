@@ -6,7 +6,7 @@ import { create, type CreateIo } from "../../src/cli/create.js";
 import { main } from "../../src/cli/index.js";
 import type { Diagnostic } from "typescript";
 import { describeApp } from "../../src/cli/describe.js";
-import { compileDocument } from "../../src/document/index.js";
+import { compileDocument } from "../../src/check.js";
 import { scaffoldProject } from "../../src/scaffold/index.js";
 
 /**

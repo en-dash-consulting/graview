@@ -8,10 +8,8 @@ import {
   defineApp,
   defineInvariant,
   defineNode,
-  describeApp,
   describeSearched,
   fold,
-  generateLlmsTxt,
   Graph,
   isoDate,
   parseQuery,
@@ -21,6 +19,7 @@ import {
   type Hit,
   type Principal,
 } from "../../src/index.js";
+import { describeApp, generateLlmsTxt } from "../../src/check.js";
 import { awkwardApp, awkwardGraph } from "../../src/testing.js";
 
 /**

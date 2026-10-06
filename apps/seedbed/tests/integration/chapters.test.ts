@@ -1,5 +1,6 @@
 import { createStudio } from "@graview/studio";
-import { checkApp, permits, Store } from "@graview/core";
+import { permits, Store } from "@graview/core";
+import { checkApp } from "@graview/core/check";
 import { EMPTY_VIEW, kindCardId, layout } from "@graview/layout";
 import { describe, expect, it } from "vitest";
 import { CHAPTERS, chapterFromSearch } from "../../src/domain/chapters.js";

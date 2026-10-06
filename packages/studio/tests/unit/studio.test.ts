@@ -1,4 +1,5 @@
-import { bindSchema, checkApp, createSchema, DARK, defineApp, defineInvariant, defineNode, LIGHT, nodeRef, Store, type GraphSnapshot, type Principal, type Violation } from "@graview/core";
+import { bindSchema, createSchema, DARK, defineApp, defineInvariant, defineNode, LIGHT, nodeRef, Store, type GraphSnapshot, type Principal, type Violation } from "@graview/core";
+import { checkApp } from "@graview/core/check";
 import { EMPTY_VIEW, KIND_PREFIX, kindCardId, layout } from "@graview/layout";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";

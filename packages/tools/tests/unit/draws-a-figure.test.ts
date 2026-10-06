@@ -1,4 +1,4 @@
-import { figureFaults } from "@graview/core";
+import { figureFaults } from "@graview/core/figures";
 import { describe, expect, it } from "vitest";
 import { drawFigure, FIGURE_STYLE, nearestFigure, onlyTheSvg } from "../../src/index.js";
 

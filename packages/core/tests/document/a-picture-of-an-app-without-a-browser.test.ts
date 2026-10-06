@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createSchema, defineApp, defineNode, hueFor, isoShade, sceneDistricts, villageCap, z } from "../../src/index.js";
+import { createSchema, defineApp, defineNode, hueFor, isoShade, z } from "../../src/index.js";
+import { sceneDistricts, villageCap, sceneThumbnail } from "../../src/scene.js";
 import { hsl } from "../../src/theme/contrast.js";
-import { compileDocumentWithoutCheck, sceneThumbnail, type GraviewDocument } from "../../src/document/index.js";
+import { compileDocumentWithoutCheck, type GraviewDocument } from "../../src/document/index.js";
 
 /*
  * FR-74. A host listing apps draws each one as the Scene draws it from

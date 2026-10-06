@@ -1,4 +1,5 @@
-import { bindSchema, checkApp, createSchema, defineApp, defineInvariant, defineMutation, defineNode, isoDate, nodeRef } from "@graview/core";
+import { bindSchema, createSchema, defineApp, defineInvariant, defineMutation, defineNode, isoDate, nodeRef } from "@graview/core";
+import { checkApp } from "@graview/core/check";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";

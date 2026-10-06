@@ -28,7 +28,7 @@ const port = portFor("seedbed");
 
 // The chapters themselves, from the compiled app: the same objects the page opens.
 const { CHAPTERS } = await import(pathToFileURL(resolve(repoRoot, "apps/seedbed/dist/domain/chapters.js")).href);
-const { checkApp } = await import(pathToFileURL(resolve(repoRoot, "packages/core/dist/index.js")).href);
+const { checkApp } = await import(pathToFileURL(resolve(repoRoot, "packages/core/dist/check.js")).href);
 const { aggregateId } = await import(pathToFileURL(resolve(repoRoot, "packages/layout/dist/index.js")).href);
 
 /**

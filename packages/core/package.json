@@ -17,6 +17,22 @@
       "types": "./dist/describe.d.ts",
       "default": "./dist/describe.js"
     },
+    "./figures": {
+      "types": "./dist/figures.d.ts",
+      "default": "./dist/figures.js"
+    },
+    "./scene": {
+      "types": "./dist/scene.d.ts",
+      "default": "./dist/scene.js"
+    },
+    "./check": {
+      "types": "./dist/check.d.ts",
+      "default": "./dist/check.js"
+    },
+    "./blocks": {
+      "types": "./dist/blocks.d.ts",
+      "default": "./dist/blocks.js"
+    },
     "./conformance": {
       "types": "./dist/conformance/index.d.ts",
       "default": "./dist/conformance/index.js"

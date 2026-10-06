@@ -1,6 +1,6 @@
 import { bindSchema, createSchema, defineApp, defineMutation, defineNode, nodeRef, Store, type AnySchema, type GraviewApp } from "@graview/core";
 import { FIXTURES } from "@graview/core/conformance";
-import { compileDocument } from "@graview/core/document";
+import { compileDocument } from "@graview/core/check";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createToolRuntime, toolDefinitions } from "../../src/index.js";

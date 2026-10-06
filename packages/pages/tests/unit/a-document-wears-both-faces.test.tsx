@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Store } from "@graview/core";
-import { compileDocument } from "@graview/core/document";
+import { compileDocument } from "@graview/core/check";
 import { EMPTY_VIEW } from "@graview/layout";
 import { PagesApp } from "@graview/pages";
 import { registerDefaultViews } from "@graview/primitives";

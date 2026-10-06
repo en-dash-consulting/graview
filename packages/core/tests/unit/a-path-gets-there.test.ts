@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { checkApp, createSchema, defineApp, defineNode, walkKinds } from "../../src/index.js";
+import { createSchema, defineApp, defineNode, walkKinds } from "../../src/index.js";
+import { checkApp } from "../../src/check.js";
 
 /**
  * A PATH GETS THERE. "Offers by showroom" was bound offers → cars →

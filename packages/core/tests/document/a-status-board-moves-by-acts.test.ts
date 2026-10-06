@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { compileDocument, editDocument, type GraviewDocument } from "../../src/document/index.js";
+import { editDocument, type GraviewDocument } from "../../src/document/index.js";
+import { compileDocument } from "../../src/check.js";
 import { describePlace } from "../../src/document/describe-place.js";
 import { checkApp } from "../../src/cli/check.js";
 import { describeApp } from "../../src/cli/describe.js";

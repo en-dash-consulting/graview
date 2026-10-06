@@ -1,4 +1,5 @@
-import { compileDocument, documentHash, documentOf, toDocument } from "@graview/core/document";
+import { documentHash, documentOf, toDocument } from "@graview/core/document";
+import { compileDocument } from "@graview/core/check";
 import { describe, expect, it } from "vitest";
 import { declared, template, TEMPLATES, throughTheStudio, type Call } from "./templates.js";
 

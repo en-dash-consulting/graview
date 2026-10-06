@@ -1,4 +1,5 @@
-import { bindSchema, checkApp, createSchema, DARK, defineApp, defineNode, LIGHT, nodeRef, Store } from "@graview/core";
+import { bindSchema, createSchema, DARK, defineApp, defineNode, LIGHT, nodeRef, Store } from "@graview/core";
+import { checkApp } from "@graview/core/check";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";

@@ -1,21 +1,19 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { Store, type AnyGraphNode, type AnySchema, type GraviewApp, type GraphReader, type Principal } from "../../src/index.js";
+import { compileBlocks, fieldSpecsOf, resolveBlocks } from "../../src/blocks.js";
 import {
-  compileBlocks,
-  compileDocument,
   editDocument,
   evaluateExpr,
   ExprBudgetError,
-  fieldSpecsOf,
   NodeSet,
   parseExpr,
   parseTemplate,
   printExpr,
-  resolveBlocks,
   shapesOfSchema,
   type CompiledDocument,
 } from "../../src/document/index.js";
+import { compileDocument } from "../../src/check.js";
 
 /**
  * FR-101. A WALK FROM EVERY MEMBER OF A SET. `out(S, 'edge')` and

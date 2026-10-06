@@ -193,7 +193,8 @@ describe("arranging", () => {
 
 describe("the checker and the readers", () => {
   it("warns about an order role the kind lacks, notes a lens arrangement the bound kind cannot take, and says what can be arranged", async () => {
-    const { checkApp, defineApp } = await import("../../src/index.js");
+    const { defineApp } = await import("../../src/index.js");
+    const { checkApp } = await import("../../src/check.js");
     const { describeApp } = await import("../../src/cli/describe.js");
     const { generateLlmsTxt } = await import("../../src/cli/docs.js");
     const lost = defineNode("lost", { fields: z.object({ label: z.string() }), fieldRoles: { order: "priority" } });

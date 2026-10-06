@@ -49,8 +49,9 @@ any other.
    `{ from, to, title, apply }` to append to the app's migrations (the new
    app already carries it and the bumped version).
 
-   **Opened on a document** (`createStudio(compileDocument(d).app)`), the
-   studio hands back a document, not TypeScript. `studio.edits()` is the
+   **Opened on a document** (`createStudio(compileDocument(d).app)`, with
+   `compileDocument` from `@graview/core/check`), the studio hands back a
+   document, not TypeScript. `studio.edits()` is the
    change as `editDocument`'s own ops (`add-field`, `rename-field`,
    `set-required`, `set-options`, `add-relation`, `remove-act`, `add-rule`
    …); `studio.document()` is the opened document with them applied, every

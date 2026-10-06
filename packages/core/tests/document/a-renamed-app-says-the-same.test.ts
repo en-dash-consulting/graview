@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { Store, type AnySchema, type GraviewApp, type Principal } from "../../src/index.js";
 import { describePlace } from "../../src/describe.js";
-import { compileDocument, editDocument, type GraviewDocument } from "../../src/document/index.js";
+import { editDocument, type GraviewDocument } from "../../src/document/index.js";
+import { compileDocument } from "../../src/check.js";
 
 /**
  * FR-84 and FR-89 together: a rename is only a rename. LifeLogics with

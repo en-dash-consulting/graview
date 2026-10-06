@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import { checkApp } from "../../src/cli/check.js";
 import { describePlace, type DescribedPart } from "../../src/describe.js";
 import { createSchema, defineApp, defineNode, Store, z, type AnySchema, type AnyGraphNode, type GraviewApp, type Principal } from "../../src/index.js";
-import { compileBlocks, compileDocument, diffDocuments, editDocument, fieldSpecsOf, formatMoney, resolveBlocks, shapesOfSchema, toDocument, type ResolvedBlock } from "../../src/document/index.js";
+import { compileBlocks, fieldSpecsOf, resolveBlocks, type ResolvedBlock } from "../../src/blocks.js";
+import { diffDocuments, editDocument, formatMoney, shapesOfSchema, toDocument } from "../../src/document/index.js";
+import { compileDocument } from "../../src/check.js";
 
 /**
  * FR-100. CURRENCY ON ANY MONEY. A figure and a field shown as money take a
