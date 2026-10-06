@@ -1,6 +1,6 @@
 import type { GraviewApp } from "./app.js";
 import { beginning } from "./beginning.js";
-import { cityMap, type Plot } from "./city.js";
+import { cityMap, villageCap, villageOf, type Building, type Plot } from "./city.js";
 import type { AnySchema } from "./schema/schema.js";
 import { hueFor } from "./theme/derive.js";
 
@@ -13,6 +13,14 @@ import { hueFor } from "./theme/derive.js";
  * brand's accents). Those three are all declaration — no graph, no DOM, no
  * window size — so a host listing apps can ask for them in Node or a worker
  * and get the same corners the live Scene puts them on.
+ *
+ * Given counts, each district is sized as the live Scene sizes it (FR-103):
+ * its plot's side from how many stand there (`sideFor`), and the village on
+ * it from the same `villageOf` the Scene's plots draw — one building per
+ * member on the plot's sub-lattice, back to front, up to what the plot
+ * holds, the rest a number. Counts carry no ids, so a building's height is
+ * drawn from its kind and ordinal where the Scene's is drawn from the
+ * member's id: the same ground, the same feet, other roofs.
  */
 
 export interface SceneDistrict {
@@ -25,6 +33,10 @@ export interface SceneDistrict {
   readonly plot: Plot;
   /** How many stand on it, as given; 0 when nothing was said. */
   readonly count: number;
+  /** The buildings standing on its plot, one per member up to what the plot holds, where the Scene stands them. Empty with no members. */
+  readonly village: readonly Building[];
+  /** Members past what the plot holds: what the Scene writes on the kerb as `+n`. */
+  readonly rest: number;
 }
 
 export interface SceneDistrictOptions {
@@ -45,13 +57,20 @@ export function sceneDistricts<S extends AnySchema>(app: GraviewApp<S>, options:
     .filter((kind) => map.has(kind))
     .map((kind) => {
       const definition = app.schema.tryDefinition(kind) as { plural?: string } | undefined;
-      const count = counts[kind];
+      const given = counts[kind];
+      const count = typeof given === "number" && Number.isFinite(given) && given > 0 ? Math.floor(given) : 0;
+      const plot = map.get(kind)!;
+      // Ids for the members are the kind and an ordinal: counts carry no ids, and the same count must stand the same village.
+      const shown = Math.min(count, villageCap(plot.side));
+      const { buildings } = villageOf(plot, Array.from({ length: shown }, (_, i) => `${kind}#${i}`));
       return {
         kind,
         label: definition?.plural ?? `${kind}s`,
         hue: Math.round(hueFor(kind, accents)),
-        plot: map.get(kind)!,
-        count: typeof count === "number" && Number.isFinite(count) && count > 0 ? Math.floor(count) : 0,
+        plot,
+        count,
+        village: buildings,
+        rest: count - buildings.length,
       };
     });
 }

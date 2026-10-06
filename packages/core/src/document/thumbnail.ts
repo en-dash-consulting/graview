@@ -1,5 +1,5 @@
 import type { GraviewApp } from "../app.js";
-import { toIso, villageCap, villageOf } from "../city.js";
+import { toIso } from "../city.js";
 import { sceneDistricts, type SceneDistrict } from "../scene-districts.js";
 import { coloursIn, hsl, type Rgba } from "../theme/contrast.js";
 import { isoShade, type IsoFace } from "../theme/look.js";
@@ -18,7 +18,8 @@ import type { GraviewDocument } from "./schema.js";
  * kind's plot where the Scene puts it (`sceneDistricts`, the same map, walk
  * and hue), in the Scene's own lighting (`isoShade`), standing a block for
  * the district, or one building per member when a host passes counts —
- * placed by the same `villageOf` the Scene's village uses.
+ * the village `sceneDistricts` stands, placed by the same `villageOf` the
+ * Scene's plots use, on a plot sized by the same count (FR-103).
  *
  * It is pure: no DOM, no React, no clock, no randomness. The same document
  * and options give the same bytes, in Node, a worker or a page.
@@ -36,10 +37,11 @@ export interface SceneThumbnailOptions {
   readonly width?: number;
   readonly height?: number;
   /**
-   * How many of each kind stand today, from a snapshot. A district with
-   * members draws its village, one building each up to what the plot holds;
-   * one without draws a single block. Counts move a plot's size, never its
-   * corner, exactly as in the Scene.
+   * How many of each kind stand today, from a snapshot. Each district is
+   * sized as the live Scene sizes it (FR-103): its plot's side from its
+   * count, and its village, one building per member up to what the plot
+   * holds, where the Scene's plots stand them. One without members draws a
+   * single block. Counts move a plot's size, never its corner.
    */
   readonly counts?: Readonly<Record<string, number>>;
   /** Fill the picture with the scheme's ground. Default true; false leaves it transparent for a host's own surface. */
@@ -89,24 +91,35 @@ function block(col: number, row: number, footprint: number, height: number, hue:
   const shade = isoShade(scheme);
   const half = footprint / 2;
   const rise = footprint * CELL * 0.5 * height;
+  /*
+   * Whole units, a fortieth of a cell: under a third of a pixel at the
+   * smallest scale a village is drawn at, and half the bytes of a tenth.
+   * Rounded before the faces are written, so each face closes exactly.
+   */
   const at = (c: number, r: number, lift = 0): Point => {
     const p = toIso(c, r, CELL);
-    return { x: p.x, y: p.y - lift };
+    return { x: Math.round(p.x), y: Math.round(p.y - lift) };
   };
   const back = at(col - half, row - half, rise);
   const right = at(col + half, row - half, rise);
   const front = at(col + half, row + half, rise);
   const left = at(col - half, row + half, rise);
-  const frontFoot = at(col + half, row + half);
-  const leftFoot = at(col - half, row + half);
-  const rightFoot = at(col + half, row - half);
   const edge = coloursIn(shade.roofEdge)[0]!;
+  /*
+   * Each face a path from one corner, the rest relative: a wall is two
+   * corners of the roof and the drop to the ground, a roof the diamond.
+   * A village is hundreds of these, so a corner is written once.
+   */
+  const to = (a: Point, b: Point) => `${fmt(b.x - a.x)} ${fmt(b.y - a.y)}`;
+  const from = (p: Point) => `M${fmt(p.x)} ${fmt(p.y)}`;
+  const fall = Math.round(rise);
+  const drop = `v${fall}`;
   return {
     svg:
-      `<polygon fill="${face(hue, shade.left)}" points="${points([left, front, frontFoot, leftFoot])}"/>` +
-      `<polygon fill="${face(hue, shade.right)}" points="${points([front, right, rightFoot, frontFoot])}"/>` +
-      `<polygon fill="${face(hue, shade.roof)}" stroke="${hex(edge)}" points="${points([back, right, front, left])}"/>`,
-    reach: [back, right, left, frontFoot, leftFoot, rightFoot],
+      `<path fill="${face(hue, shade.left)}" d="${from(left)}l${to(left, front)}${drop}l${to(front, left)}z"/>` +
+      `<path fill="${face(hue, shade.right)}" d="${from(front)}l${to(front, right)}${drop}l${to(right, front)}z"/>` +
+      `<path fill="${face(hue, shade.roof)}" stroke="${hex(edge)}" d="${from(back)}l${to(back, right)}l${to(right, front)}l${to(front, left)}z"/>`,
+    reach: [back, right, left, { x: front.x, y: front.y + fall }, { x: left.x, y: left.y + fall }, { x: right.x, y: right.y + fall }],
   };
 }
 
@@ -118,23 +131,20 @@ interface Standing {
 
 /*
  * HOW MUCH VILLAGE A THUMBNAIL CAN SHOW. The Scene stands one building per
- * member; at a card's size a big app's buildings are a pixel across and
- * hundreds of them are only bytes. So a village is drawn while a building
- * is still a few pixels wide and the picture holds at most this many; past
- * either, each populated district stands as one block, taller for more —
- * the same district on the same plot, seen from further away.
+ * member, and so does the picture, while a building is still a few pixels
+ * wide and the picture holds at most this many: twelve districts each as
+ * full as a plot holds (12 × 24), in about 50 KB. Past either, each
+ * populated district stands as one block, taller for more — the same
+ * district on the same plot, seen from further away.
  */
 const VILLAGE_MIN_PX = 4;
-const MOST_BUILDINGS = 160;
+const MOST_BUILDINGS = 300;
 
 /** What stands on one district: its village when it has members and room to show them, else one block for the district itself. */
 function standing(district: SceneDistrict, scheme: Scheme, village: boolean): Standing[] {
-  const { plot, hue, kind, count } = district;
+  const { plot, hue, count } = district;
   if (count > 0 && village) {
-    const shown = Math.min(count, villageCap(plot.side));
-    // Ids for the members are the kind and an ordinal: a snapshot's counts carry no ids, and the same count must draw the same village.
-    const { buildings } = villageOf(plot, Array.from({ length: shown }, (_, i) => `${kind}#${i}`));
-    return buildings.map((b) => ({ depth: b.col + b.row, ...block(b.col, b.row, b.footprint, b.height, hue, scheme) }));
+    return district.village.map((b) => ({ depth: b.col + b.row, ...block(b.col, b.row, b.footprint, b.height, hue, scheme) }));
   }
   const centre = { col: plot.col + plot.side / 2, row: plot.row + plot.side / 2 };
   const height = 1.25 + Math.min(1.25, Math.log2(1 + count) * 0.2);
@@ -189,7 +199,7 @@ export function sceneThumbnail(source: ThumbnailSource, options: SceneThumbnailO
   /* Whether the villages are drawn: a building a few pixels wide at the scale the plots alone are fitted at, and not too many of them. */
   const ground0 = bounds(all);
   const scale = Math.min(width / (ground0.maxX - ground0.minX + CELL * 1.2), height / (ground0.maxY - ground0.minY + CELL * 1.8));
-  const buildings = districts.reduce((sum, d) => sum + Math.min(d.count, villageCap(d.plot.side)), 0);
+  const buildings = districts.reduce((sum, d) => sum + d.village.length, 0);
   const smallest = Math.min(Infinity, ...districts.filter((d) => d.count > 0).map((d) => (d.plot.side / (d.plot.side + 1)) * 0.62 * CELL * scale));
   const village = buildings <= MOST_BUILDINGS && smallest >= VILLAGE_MIN_PX;
   const stands: Standing[] = districts.flatMap((district) => standing(district, scheme, village));
