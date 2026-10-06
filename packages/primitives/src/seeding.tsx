@@ -930,10 +930,13 @@ export function Door<S extends AnySchema>({ provider, prompt, photos = [], onPro
       return;
     }
     setSaid(null);
-    onProposals(
-      /* `as` and `why` are the model's own and survive validation. */
-      kept.map((call, index) => ({ ...call, ...(proposals[index]?.as ? { as: proposals[index]!.as } : {}) })),
-    );
+    /*
+     * `as`, `why` and `confidence` are the model's own and survive
+     * validation: the gate keeps or drops each call whole. Reading them
+     * back by position from the answer handed a call the name of whichever
+     * call had stood in its place before the gate dropped one.
+     */
+    onProposals(kept);
   };
 
   if (!declared) return null;
