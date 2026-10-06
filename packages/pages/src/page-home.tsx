@@ -1,4 +1,6 @@
 import { isCurrent, type AnySchema } from "@graview/core";
+import type { ViewProps } from "@graview/react/provider";
+import type { ComponentType } from "react";
 import { Link } from "react-router-dom";
 import { kindMap } from "./facts.js";
 import { pluralSlug } from "./registry.js";
@@ -11,6 +13,7 @@ import {
   h2,
   lede,
   link,
+  homeKinds,
   liveKinds,
   plain,
   pluralOf,
@@ -41,7 +44,8 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   useStoreTick(store);
   const violations = store.violations(invariantContext);
   const recent = [...store.log.all()].slice(-5).reverse();
-  const kinds = liveKinds(store, context.principal);
+  // In the declaration's order, less what it leaves off the home (FR-80).
+  const kinds = homeKinds(context);
   const counted = kinds.map((kind) => ({
     kind,
     members: store.graph
@@ -77,7 +81,30 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
           )
           .join(", ")
           .replace(/, ([^,]*)$/, " and $1")}.`;
-  const live = new Set(kinds);
+  /*
+   * THE HOME'S OWN VIEW (FR-81). A declaration that writes its home as
+   * blocks gets them here in place of this body — the shell stays — once
+   * there is anything this seat can see. An empty graph keeps the way in
+   * below: blocks about records that do not exist yet would be a page of
+   * dashes, and the beginning is what an empty installation needs.
+   */
+  const HomeView = context.views?.homeView?.() as ComponentType<ViewProps<S>> | undefined;
+  const anything = (store.schema.kinds as readonly string[]).some((kind) => store.graph.nodesOfKind(kind as never).length > 0);
+  if (HomeView && anything) {
+    return (
+      <PageMain context={context} style={wide}>
+        <div style={{ display: "grid", gap: 12 }} data-testid="home-view">
+          {violations.length > 0 ? (
+            <Link to="/problems" style={{ ...link, color: "var(--graview-warn)" }}>
+              {violations.length} {violations.length === 1 ? "problem" : "problems"} — see what is broken, and what would fix it
+            </Link>
+          ) : null}
+          <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} />
+        </div>
+      </PageMain>
+    );
+  }
+  const live = new Set(liveKinds(store, context.principal));
   const relations = kindMap(store).relations.filter((relation) => live.has(relation.from) && (relation.to === "*" || live.has(relation.to)));
 
   return (

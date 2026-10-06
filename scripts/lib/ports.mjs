@@ -45,6 +45,8 @@ export const OWN = {
   "studio-host": 5287,
   /** The host's page `verify-chrome` mounts the embed into, with a host's own actions, notices and the seat put away. */
   "chrome-host": 5288,
+  /** The host's page `verify-declared` mounts a document's declared lenses and arrangement into (FR-79, FR-80). */
+  "declared-host": 5284,
   /** The OpenAI-shaped stand-in `verify-studio` points the studio's remote model at. */
   "studio-model": 5289,
 };

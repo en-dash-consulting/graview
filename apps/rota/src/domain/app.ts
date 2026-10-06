@@ -25,36 +25,60 @@ export const rotaApp = defineApp({
   modules: rotaInstallation.modules,
   settings: readerSettings(),
   brand: rotaBrand,
+  /*
+   * FIVE PICTURES OF ONE ROSTER, declared and drawn (FR-79) — not one of
+   * them written or registered in the UI. Each has a title, so it is a
+   * place; the framework draws it from these lines. The week is the last
+   * over the shifts, so it is what their district draws when an address
+   * names no picture.
+   */
   lenses: [
+    {
+      /*
+       * AND THE QUARTER, which is how a rota is actually planned. Nobody
+       * schedules volunteers a fortnight at a time: cover is worked out a
+       * season ahead. The same lens and binding as the fortnight, one grain
+       * coarser — a week per cell, thirteen of them.
+       */
+      name: "calendar",
+      title: "The quarter",
+      bindings: { shift: { start: "on", label: "label" } },
+      options: { range: "quarter", today: "2026-09-14" },
+    },
+    {
+      /* The fortnight, over the dates the shifts actually fall on — opened as a list, by where they happen. */
+      name: "calendar",
+      title: "The fortnight",
+      bindings: { shift: { start: "on", label: "label" } },
+      arrangedBy: { group: "held-at" },
+      options: { range: "month", today: "2026-09-14" },
+    },
+    {
+      /* The week, from the household's own timeline: minutes of a day in
+         named columns, answered with this app's own fields. */
+      name: "timeline",
+      title: "The week",
+      bindings: { shift: { start: "from", end: "until", column: "day" } },
+    },
     {
       /*
        * WHO IS COVERING WHAT, as a grid. The coverage lens was written for a
        * requirements matrix; pointed at volunteers and shifts it says, in a
        * picture, which shift nobody has taken — which is the one question a
-       * roster is for. It has never heard of a shift.
+       * roster is for. It has never heard of a shift. It stands over the
+       * volunteers, whose district it is the picture of.
        */
       name: "coverage",
-      binds: "entities",
-      requiredRoles: ["rows", "columns", "link"],
+      title: "Who is covering what",
+      on: "volunteer",
       bindings: {
         rows: { kind: "shift" },
         columns: { kind: "volunteer" },
         link: { edge: "covered-by" },
       },
     },
-    {
-      /* The week, from the household's own timeline: minutes of a day in
-         named columns, answered with this app's own fields. */
-      name: "timeline",
-      requiredRoles: ["start", "end"],
-      bindings: { shift: { start: "from", end: "until", column: "day" } },
-    },
-    {
-      /* And the month, over the dates the shifts actually fall on. */
-      name: "calendar",
-      requiredRoles: ["start"],
-      bindings: { shift: { start: "on", label: "label" } },
-    },
+    /* And what each role reaches, for the seat that keeps the installation. */
+    { name: "reach", title: "Who may do what", on: "user" },
   ],
   /*
    * A ROSTER THAT WAS STORED BEFORE THE RULE EXISTED still opens.

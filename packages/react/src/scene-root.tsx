@@ -1,4 +1,4 @@
-import { beginning, SCENE_LAYERS, toIso, touchWeights } from "@graview/core";
+import { beginning, orderKinds, SCENE_LAYERS, toIso, touchWeights } from "@graview/core";
 import type { AnySchema } from "@graview/core";
 import {
   aggregateId,
@@ -268,11 +268,15 @@ export function Scene<S extends AnySchema>({
        * its kinds in, read from the store's own acts. The declaration's
        * order, so the map is the declaration's map.
        */
-      cityOrder: beginning({
-        name: "scene",
-        schema: store.schema,
-        mutations: store.allMutations().filter((mutation) => !mutation.derived),
-      }).order.map((entry) => entry.kind),
+      cityOrder: orderKinds(
+        beginning({
+          name: "scene",
+          schema: store.schema,
+          mutations: store.allMutations().filter((mutation) => !mutation.derived),
+        }).order.map((entry) => entry.kind),
+        // Unless the declaration orders its kinds itself (FR-80): then the city walks them in that order.
+        views.arrangement?.()?.order,
+      ),
       /*
        * THE SHOWINGS, by kind: the named places the registry holds, so a
        * focused picture stands on its kind's plot as a screen from altitude.

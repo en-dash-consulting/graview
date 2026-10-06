@@ -3,7 +3,7 @@ import { kindFacts, recordFacts } from "@graview/pages";
 import { describe, expect, it } from "vitest";
 import { rotaApp } from "../../src/domain/app.js";
 import { rotaPolicy } from "../../src/domain/policy.js";
-import { coverage } from "../../src/ui/views.js";
+import { coverage, rotaViews } from "../../src/ui/views.js";
 import { createRotaUiStore, EXAMPLE_TODAY, SEATS } from "../../src/ui/app.js";
 
 /**
@@ -44,6 +44,8 @@ describe("a roster is enough to show the whole platform", () => {
        * one time — which is what a note is.
        */
       "blank-graph-unreachable",
+      // Said once for each calendar that reads `on` as the start: the quarter and the fortnight.
+      "lens-binding-disagrees-with-field-role",
       "lens-binding-disagrees-with-field-role",
     ]);
     expect(rotaApp.version).toBe(3);
@@ -209,5 +211,19 @@ describe("the policy the store refuses with is the one declared", () => {
     expect(rotaPolicy.roles).toEqual(expect.arrayContaining(["coordinator", "volunteer", "viewer"]));
     // An act added tomorrow is refused until somebody decides who may run it.
     expect(rotaPolicy.grants.every((grant) => grant.mutations !== "*")).toBe(true);
+  });
+});
+
+describe("its pictures are declared, not registered (FR-79)", () => {
+  it("draws every declared lens as a place, by its title, over the kind it was drawn over by hand", () => {
+    expect(rotaViews().places().map((place) => [place.kind, place.title])).toEqual([
+      ["shift", "The quarter"],
+      ["shift", "The fortnight"],
+      ["shift", "The week"],
+      ["volunteer", "Who is covering what"],
+      ["user", "Who may do what"],
+    ]);
+    // The week is still what the shifts' district draws when an address names no picture.
+    expect(rotaViews().resolve("shift", { cardinality: "many", fidelity: "full" })?.title).toBe("The week");
   });
 });

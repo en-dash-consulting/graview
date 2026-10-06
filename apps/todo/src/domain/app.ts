@@ -44,7 +44,39 @@ export const todoApp = defineApp({
    */
   settings: readerSettings(),
   brand: thingsBrand,
+  /*
+   * THREE PICTURES, DECLARED AND DRAWN (FR-79). Each lens here has a title,
+   * so it is a place — a pill on the bar, a drive-in from altitude, a page
+   * at /pages/places/<name> — and the framework draws it from these lines
+   * alone: the UI registers none of them. The week is declared last, so it
+   * is what the tasks' district draws when an address names no picture.
+   */
   lenses: [
+    {
+      /*
+       * WHO MAY DO WHAT, as a picture of the people. The reach lens reads
+       * the policy the store refuses with — the same function, not a second
+       * copy — and draws what each role reaches. A member never sees it,
+       * because a member never sees the people.
+       */
+      name: "reach",
+      title: "Who may do what",
+      on: "user",
+    },
+    {
+      /*
+       * The calendar, over the same tasks, answering the other question.
+       *
+       * The week is minutes of a day in named columns and cannot say "due
+       * on the 14th of next month". The day it opens on is the one the
+       * example is written around, so a harness photographs the same month
+       * twice; a product would leave `today` out and open on the real one.
+       */
+      name: "calendar",
+      title: "The month",
+      bindings: { task: { start: "due", done: "done" } },
+      options: { range: "month", today: "2026-09-01" },
+    },
     {
       /*
        * The timeline, written for a household's week, reused here unchanged.
@@ -52,25 +84,11 @@ export const todoApp = defineApp({
        * This app says only which of ITS fields are `start` and `end` — the
        * lens has never heard of a task. That reuse is the framework's central
        * claim, and it is worth seeing in the smallest app rather than only in
-       * the ones built to prove it.
+       * the ones built to prove it. Its columns are the values `day` takes.
        */
       name: "timeline",
-      requiredRoles: ["start", "end"],
+      title: "The week",
       bindings: { task: { start: "plannedAt", end: "plannedUntil", column: "day" } },
-    },
-    {
-      /*
-       * The calendar, over the same tasks, answering the other question.
-       *
-       * The week is minutes of a day in named columns and cannot say "due
-       * on the 14th of next month". Declared here as well as bound in the
-       * view, so `graview check` reads the binding the way it reads every
-       * other starter's: a role bound to a field this kind does not declare
-       * is a finding rather than an empty calendar nobody can explain.
-       */
-      name: "calendar",
-      requiredRoles: ["start"],
-      bindings: { task: { start: "due", done: "done" } },
     },
   ],
 });

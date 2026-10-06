@@ -62,9 +62,27 @@ export const BUDGETS = [
      * it is first drawn, with the framework's own views (FR-57): what a page
      * loads first is the frame — measured at 747_000 / 190_229 — and the
      * faces are their own chunks.
+     *
+     * Gzipped raised from 200_000 when a declared lens came to draw (FR-79)
+     * and the arrangement to be honoured (FR-80): the frame registers each
+     * titled lens as a place and reads where the app opens, which is
+     * `declaredLenses` and `openingOf` in what a page loads first — the
+     * factories themselves are a chunk fetched when a lens is first drawn.
+     * Measured at 773_663 / 200_080.
+     *
+     * Raised again when the rule language came to compute what pages need
+     * (FR-83): computed fields, worked out for the seat a record is drawn
+     * for, and the words, and and plural formatters. With both, measured at
+     * 791_069 / 206_781.
+     *
+     * Raised again when the home and a view came to be written from blocks
+     * (FR-81, FR-82): the document's vocabulary for headlines, figures and
+     * lists (what the frame checks a document it compiles against) and the
+     * blocks' stylesheet, in what a page loads first. Measured at
+     * 802_562 / 209_988.
      */
-    minified: 780_000,
-    gzipped: 200_000,
+    minified: 815_000,
+    gzipped: 215_000,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -92,9 +110,25 @@ export const BUDGETS = [
      * fetched as it is drawn (FR-57): every face is about 11 kB smaller
      * minified (1_289_095 from 1_300_584), and about 2.5 kB larger gzipped
      * (372_654 from 370_200), because six chunks are each gzipped alone.
+     *
+     * Raised from 1_310_000 / 380_000 when a declared lens came to draw
+     * (FR-79): the six shipped factories — timeline, calendar, coverage,
+     * board, plan and reach — were shaken out of every embed while only an
+     * app's own views could draw them, and now a document's lenses draw
+     * through them. They are a chunk of their own, fetched when the first
+     * lens is drawn, so no face loads them before it needs one. Measured at
+     * 1_388_501 / 407_629.
+     *
+     * Raised again when the rule language came to compute what pages need
+     * (FR-83): with both, measured at 1_399_742 / 412_177.
+     *
+     * Raised again when the home and a view came to be written from blocks
+     * (FR-81, FR-82): headlines, figures and lists of records drawn by their
+     * own cards, the home's landing over the scene, and the vocabulary that
+     * checks them. Measured at 1_420_964 / 418_572.
      */
-    minified: 1_310_000,
-    gzipped: 380_000,
+    minified: 1_430_000,
+    gzipped: 424_000,
     load: "all",
   },
   {
@@ -111,10 +145,15 @@ export const BUDGETS = [
      * FR-78: the popover family, the host's actions and notices, the seat
      * put away): measured at 1_297_634 / 373_048, with every face at
      * 1_302_133 / 377_358.
+     *
+     * Raised with every face when the rule language came to compute what
+     * pages need (FR-83) and a declared lens came to draw (FR-79).
      */
     entry: `import { mount } from "@graview/embed"; import { StudioPlace } from "@graview/studio"; globalThis.mount = (element, options) => mount(element, { ...options, studio: { onApply() {}, place: StudioPlace } });`,
-    minified: 1_310_000,
-    gzipped: 380_000,
+    // Raised with every face's when a declared lens came to draw (FR-79) and the rule language came to compute what pages need (FR-83): the studio reaches the lenses through `@graview/primitives`, so here they load with it. With both, measured at 1_393_930 / 407_048.
+    // Raised with every face's again when the home and a view came to be written from blocks (FR-81, FR-82): measured at 1_414_220 / 413_619.
+    minified: 1_430_000,
+    gzipped: 424_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
@@ -200,7 +239,14 @@ export async function bundleSize(repo, entry, load = "all") {
   });
   const outputs = result.metafile.outputs;
   const name = (path) => relative(join(repo, "out"), join(repo, path));
-  const entryChunk = Object.keys(outputs).find((path) => outputs[path].entryPoint !== undefined);
+  /*
+   * THE PAGE'S OWN ENTRY, by name. Every chunk fetched by `import()` is an
+   * entry point to esbuild too, and the first output carrying one was taken
+   * for the page's: a new door (the declared lenses, FR-79) moved the
+   * studio's chunk to the front of the list, and the page was measured as
+   * though it began there.
+   */
+  const entryChunk = Object.keys(outputs).find((path) => outputs[path].entryPoint === "<stdin>");
   // What a page loads first: the entry, and every chunk it imports outright, never one it imports when asked.
   const loaded = new Set();
   const visit = (path) => {
