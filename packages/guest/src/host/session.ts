@@ -50,12 +50,22 @@ export interface GuestHostOptions<S extends AnySchema> {
   readonly onNavigate?: (id: string) => void;
   /** The guest asked for a height. */
   readonly onSize?: (height: number) => void;
+  /** The guest asked to go to a named place of the app, one `places` lists (FR-93). */
+  readonly onNavigatePlace?: (as: string) => void;
+  /** The app's named places, by slug: where a guest may ask to go besides a record. */
+  readonly places?: () => readonly string[];
   /**
    * A worker guest's drawing (FR-68): its Remote DOM mutation records, for
    * the kit's renderer to draw what the kit allows of. Without it, a
    * `render` is dropped unread: a frame guest draws in its own document.
    */
   readonly onRender?: (records: readonly unknown[]) => void;
+  /** An open-kit view's stylesheet (FR-90). Without it, a `style` is dropped unread. */
+  readonly onStyle?: (css: string) => void;
+  /** An open-kit view's runtime has drawn a push (FR-94). Without it, a `pushed` is dropped unread. */
+  readonly onPushed?: (push: number, ms: number) => void;
+  /** A message came past the allowance: the host stops a view that floods, rather than reading on (FR-94). */
+  readonly onFlood?: () => void;
   readonly limits?: GuestLimits;
   /**
    * The frame's limiter, when the frame outlives this session: a guest
@@ -64,6 +74,18 @@ export interface GuestHostOptions<S extends AnySchema> {
   readonly limiter?: GuestLimiter;
   /** The clock, for tests. */
   readonly now?: () => number;
+  /**
+   * What the guest is handed, when the host builds it another way: a worker
+   * view's, cut to its manifest (FR-91). The viewer's sight, from the input,
+   * by default.
+   */
+  readonly props?: () => GuestProps;
+  /**
+   * The rules an act the guest asks for from its own code is held to before
+   * the store is asked: a worker view's manifest and write rules (FR-92).
+   * Its answer names the act to apply and the arguments, or a refusal.
+   */
+  readonly judgeAct?: (name: string, args: Readonly<Record<string, unknown>>) => { readonly ok: true; readonly name: string; readonly args: Record<string, unknown> } | { readonly ok: false; readonly reason: GuestRefusal; readonly message: string };
 }
 
 /** How much one frame may still ask: each call spends one, and says whether there was one to spend. */
@@ -85,6 +107,12 @@ export interface GuestStats {
 export interface GuestHost {
   /** Hand the host one message from the frame's port. */
   receive(data: unknown): void;
+  /**
+   * An act a press asked for, already judged by the host's write rules
+   * (FR-92): applied as the viewer, through the view, under the view's
+   * allowance, in the press's own handler.
+   */
+  pressed(judged: { readonly ok: true; readonly name: string; readonly args: Record<string, unknown> } | { readonly ok: false; readonly reason: GuestRefusal; readonly message: string }): { readonly ok: true; readonly intent: string } | { readonly ok: false; readonly reason: GuestRefusal; readonly message: string };
   /** Push what the viewer sees now. Called on every change to the store, and by a host when the view's input moves. */
   push(): void;
   readonly stats: Readonly<GuestStats>;
@@ -115,6 +143,19 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 /**
+ * A record as a guest is handed it: plain data, with its `label` as the host
+ * labels it (the kind's own `label`, else its label field, else its id) —
+ * the field `GuestNode` always promised and a guest had to work out itself.
+ */
+export function plainNode<S extends AnySchema>(store: Store<S>, node: unknown): GuestNode {
+  const copy = structuredClone(node) as GuestNode & Record<string, unknown>;
+  /* `labelOf`'s rule, said here: core's module for it carries zod, which a page drawing guests need not load. */
+  const definition = store.schema.tryDefinition(copy.kind) as { label?: (node: never) => string } | undefined;
+  const own = copy["label"];
+  return { ...copy, label: definition?.label ? definition.label(copy as never) : typeof own === "string" && own.length > 0 ? own : copy.id };
+}
+
+/**
  * THE HOST'S HALF OF ONE FRAME, without the DOM: what to push, and what to
  * make of what comes back. `mountGuestView` wires it to an iframe; a test
  * can drive it with plain objects.
@@ -127,9 +168,10 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
   /* Read through the viewer's sight every time: the store moves, and what they may see moves with it. */
   const seen = () => options.store.seenBy(options.principal);
 
-  const plain = (node: unknown): GuestNode => structuredClone(node) as GuestNode;
+  const plain = (node: unknown): GuestNode => plainNode(options.store, node);
 
   const props = (): GuestProps => {
+    if (options.props) return options.props();
     const store = seen();
     const graph = store.graph;
     const input = options.input?.() ?? {};
@@ -169,8 +211,11 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
   };
 
   let disposed = false;
+  let pushes = 0;
   const push = () => {
-    if (!disposed) options.send({ type: "props", props: props() });
+    if (disposed) return;
+    pushes += 1;
+    options.send({ type: "props", props: props(), push: pushes });
   };
 
   /* Every change to the store is a push, coalesced: a batch of five ops is one message, not five. */
@@ -184,15 +229,22 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
     });
   });
 
-  const answer = (id: string | number, reason: GuestRefusal, message: string) => {
+  /** What became of an act, applied or not: the one place an act is applied, from code or from a press. */
+  type Outcome = { readonly ok: true; readonly intent: string } | { readonly ok: false; readonly reason: GuestRefusal; readonly message: string };
+  const refused = (reason: GuestRefusal, message: string): Outcome => {
     stats.refused += 1;
-    options.send({ type: "answer", id, ok: false, reason, message } satisfies GuestAnswer);
+    return { ok: false, reason, message };
   };
-
-  const act = (id: string | number, name: unknown, args: unknown) => {
-    if (typeof name !== "string" || !isRecord(args)) return answer(id, "malformed", "An act is asked for by name, with its arguments as an object.");
-    if (!limiter.act()) return answer(id, "rate-limited", "Too many acts asked for at once; this one was not applied.");
-    if (!options.store.allMutations().some((mutation) => mutation.name === name)) return answer(id, "unknown-act", "There is no act by that name here.");
+  const run = (name: string, args: Record<string, unknown>, judged?: (name: string, args: Readonly<Record<string, unknown>>) => { readonly ok: true; readonly name: string; readonly args: Record<string, unknown> } | { readonly ok: false; readonly reason: GuestRefusal; readonly message: string }): Outcome => {
+    if (!limiter.act()) return refused("rate-limited", "Too many acts asked for at once; this one was not applied.");
+    /* A worker view's manifest and its write rules (FR-92), before the store is asked. */
+    if (judged) {
+      const said = judged(name, args);
+      if (!said.ok) return refused(said.reason, said.message);
+      name = said.name;
+      args = said.args;
+    }
+    if (!options.store.allMutations().some((mutation) => mutation.name === name)) return refused("unknown-act", "There is no act by that name here.");
     try {
       /*
        * THE VIEWER'S CLICK, NOT THE GUEST'S: the store judges the viewer's
@@ -201,12 +253,21 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
        */
       const result = options.store.apply({ name, args }, { author: options.principal, via });
       stats.applied += 1;
-      options.send({ type: "answer", id, ok: true, intent: result.intent });
+      return { ok: true, intent: result.intent };
     } catch (error) {
-      if (error instanceof PermissionDeniedError) return answer(id, "refused", error.refusal.message);
+      if (error instanceof PermissionDeniedError) return refused("refused", error.refusal.message);
       /* An act's own error can name what it read; the guest is told only that it did not happen. */
-      return answer(id, "failed", "The act could not be applied.");
+      return refused("failed", "The act could not be applied.");
     }
+  };
+
+  const act = (id: string | number, name: unknown, args: unknown) => {
+    if (typeof name !== "string" || !isRecord(args)) {
+      stats.refused += 1;
+      return options.send({ type: "answer", id, ok: false, reason: "malformed", message: "An act is asked for by name, with its arguments as an object." } satisfies GuestAnswer);
+    }
+    const outcome = run(name, args, options.judgeAct);
+    options.send(outcome.ok ? ({ type: "answer", id, ok: true, intent: outcome.intent } satisfies GuestAnswer) : ({ type: "answer", id, ok: false, reason: outcome.reason, message: outcome.message } satisfies GuestAnswer));
   };
 
   return {
@@ -214,6 +275,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       if (disposed) return;
       if (!limiter.message()) {
         stats.dropped += 1;
+        options.onFlood?.();
         return;
       }
       if (!isRecord(data) || data.nonce !== options.nonce) {
@@ -221,6 +283,11 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
         return;
       }
       if (data.type === "act" && (typeof data.id === "string" || typeof data.id === "number")) return act(data.id, data.name, data.args);
+      if (data.type === "navigate" && typeof data.place === "string") {
+        if (options.places?.().includes(data.place)) options.onNavigatePlace?.(data.place);
+        else stats.dropped += 1;
+        return;
+      }
       if (data.type === "navigate" && typeof data.to === "string") {
         if (seen().graph.has(data.to)) options.onNavigate?.(data.to);
         else stats.dropped += 1;
@@ -230,6 +297,14 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
         options.onRender(data.records);
         return;
       }
+      if (data.type === "style" && typeof data.css === "string" && options.onStyle) {
+        options.onStyle(data.css);
+        return;
+      }
+      if (data.type === "pushed" && typeof data.push === "number" && typeof data.ms === "number" && options.onPushed) {
+        options.onPushed(data.push, data.ms);
+        return;
+      }
       if (data.type === "size" && typeof data.height === "number" && Number.isFinite(data.height)) {
         options.onSize?.(Math.max(0, Math.min(maxHeight, Math.round(data.height))));
         return;
@@ -237,6 +312,14 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       stats.dropped += 1;
     },
     push,
+    pressed(judged) {
+      if (disposed) return { ok: false, reason: "refused", message: "The view has gone." };
+      if (!judged.ok) {
+        stats.refused += 1;
+        return judged;
+      }
+      return run(judged.name, judged.args);
+    },
     get stats() {
       return stats;
     },

@@ -12,5 +12,10 @@ export type { KitLinks, KitRefusal, KitRefusalReason, KitRenderer, KitRendererOp
 export type { GuestKitElement, Kit, KitComponent, KitEvent, KitProperty, KitPropertyType, KitTone } from "../kit.js";
 export { guestView } from "./react.js";
 export type { GuestViewOptions } from "./react.js";
+/*
+ * A worker view as a place (FR-91–FR-96) — registering one, and judging
+ * what it may be handed, ask and run — is `@graview/guest/host/views`, so a
+ * page that draws only frames carries none of it.
+ */
 export { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN } from "../protocol.js";
 export type { GuestProps } from "../protocol.js";

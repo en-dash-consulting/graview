@@ -99,12 +99,14 @@ const nameOf = (key: string | symbol) => (typeof key === "symbol" ? `[${key.desc
 
 /**
  * HARDEN A WORKER'S GLOBAL before guest code runs. Called once by the
- * worker entry, after Remote DOM's polyfill and the kit are in place.
+ * worker entry, after Remote DOM's polyfill and the kit are in place; an
+ * open-kit view's runtime (worker/view.ts) keeps its `graview` too.
  */
-export function harden(scope: typeof globalThis = globalThis): Hardening {
+export function harden(scope: typeof globalThis = globalThis, kept: readonly string[] = []): Hardening {
   const removed: string[] = [];
   const stuck: string[] = [];
-  const allowed = new Set<string | symbol>([...LANGUAGE, ...POLYFILLED_DOM, ...PLATFORM, "constructor", Symbol.toStringTag]);
+  /* `kept`: what a runtime put on the global for its guest (an open-kit view's `graview`), frozen with the rest. */
+  const allowed = new Set<string | symbol>([...LANGUAGE, ...POLYFILLED_DOM, ...PLATFORM, ...kept, "constructor", Symbol.toStringTag]);
   /* A name on the inert list stays only if it will not go and holds a number that cannot be changed. */
   const inert = (at: object, key: string | symbol) => {
     const descriptor = Reflect.getOwnPropertyDescriptor(at, key);

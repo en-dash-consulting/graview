@@ -44,9 +44,17 @@ export const BUDGETS = [
      * Lowered from 950_000 / 252_000 when the framework built its own
      * schemas in zod/mini and the routed face stopped reaching the workbench
      * through its imports (FR-57): measured at 500_379 / 163_300.
+     *
+     * Measured at 504_624 / 168_114 once the open kit (FR-90–FR-96) met
+     * main's declared lenses, home view, language and describe (FR-79–FR-89);
+     * the budget just above it.
+     *
+     * Raised when a form came to name its parts (#80): its look moved from
+     * style attributes to rules an app's own selector outranks, a few hundred
+     * bytes of stylesheet. Measured at 508_120 / 169_327.
      */
-    minified: 530_000,
-    gzipped: 175_000,
+    minified: 512_000,
+    gzipped: 171_000,
     load: "first",
   },
   {
@@ -80,9 +88,13 @@ export const BUDGETS = [
      * lists (what the frame checks a document it compiles against) and the
      * blocks' stylesheet, in what a page loads first. Measured at
      * 802_562 / 209_988.
+     *
+     * Measured at 803_922 / 210_422 once the open kit (FR-90–FR-96) met
+     * main's declared lenses, home view, language and describe (FR-79–FR-89);
+     * the budget just above it.
      */
-    minified: 815_000,
-    gzipped: 215_000,
+    minified: 808_000,
+    gzipped: 211_500,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -132,9 +144,13 @@ export const BUDGETS = [
      * the studio's editDocument rewrites lenses, the home, pages and
      * computed fields, and the chat seat's tools carry describePlace.
      * Measured at 1_450_367 / 427_424.
+     *
+     * Measured at 1_450_743 / 427_673 once the open kit (FR-90–FR-96) met
+     * main's declared lenses, home view, language and describe (FR-79–FR-89);
+     * the budget just above it.
      */
-    minified: 1_460_000,
-    gzipped: 432_000,
+    minified: 1_458_000,
+    gzipped: 430_000,
     load: "all",
   },
   {
@@ -154,13 +170,17 @@ export const BUDGETS = [
      *
      * Raised with every face when the rule language came to compute what
      * pages need (FR-83) and a declared lens came to draw (FR-79).
+     *
+     * Measured at 1_444_037 / 422_721 once the open kit (FR-90–FR-96) met
+     * main's declared lenses, home view, language and describe (FR-79–FR-89);
+     * the budget just above it.
      */
     entry: `import { mount } from "@graview/embed"; import { StudioPlace } from "@graview/studio"; globalThis.mount = (element, options) => mount(element, { ...options, studio: { onApply() {}, place: StudioPlace } });`,
     // Raised with every face's when a declared lens came to draw (FR-79) and the rule language came to compute what pages need (FR-83): the studio reaches the lenses through `@graview/primitives`, so here they load with it. With both, measured at 1_393_930 / 407_048.
     // Raised with every face's again when the home and a view came to be written from blocks (FR-81, FR-82): measured at 1_414_220 / 413_619.
     // And with every face's when every part of a document came to have an edit (FR-84) and a place a description (FR-89): measured at 1_443_642 / 422_491.
-    minified: 1_460_000,
-    gzipped: 432_000,
+    minified: 1_452_000,
+    gzipped: 425_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
@@ -170,10 +190,14 @@ export const BUDGETS = [
      * The guest half a frame guest bundles (FR-04): the protocol and the
      * channel, nothing of the framework, and none of Remote DOM, which only
      * a worker guest needs (FR-68). Measured at 1_578 / 845.
+     *
+     * Measured at 1_677 / 876 once the open kit (FR-90–FR-96) met
+     * main's declared lenses, home view, language and describe (FR-79–FR-89);
+     * the budget just above it.
      */
     entry: `import { connectGuest } from "@graview/guest"; globalThis.connect = connectGuest;`,
-    minified: 3_000,
-    gzipped: 1_500,
+    minified: 2_000,
+    gzipped: 1_000,
     load: "all",
     lacks: ["@graview/core", "@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -184,9 +208,13 @@ export const BUDGETS = [
      * elements, the component kit, the hardening and the channel. Graview
      * Cloud's spike measured the polyfill and elements alone at 46.9 kB
      * minified, 15.5 kB gzipped. Measured at 55_935 / 18_726, with the hardening.
+     *
+     * Measured at 57_832 / 19_463 once the open kit (FR-90–FR-96) met
+     * main's declared lenses, home view, language and describe (FR-79–FR-89);
+     * the budget just above it.
      */
     entry: `import { connectGuest } from "@graview/guest/worker"; globalThis.connect = connectGuest;`,
-    minified: 60_000,
+    minified: 59_000,
     gzipped: 20_000,
     load: "all",
     lacks: ["@graview/core"],
@@ -200,10 +228,39 @@ export const BUDGETS = [
      * when a worker view is drawn — while `@graview/guest/host` re-exported
      * them, esbuild put them in what the page loads first (16_898 / 6_652).
      * Remote DOM is in neither. Measured at 6_482 / 3_118.
+     *
+     * Measured at 7_443 / 3_546 once a worker view became a place (FR-91):
+     * registering and judging one is `@graview/guest/host/views`, apart, so
+     * a page that draws only frames carries none of it — the next budget.
+     *
+     * Measured at 7_443 / 3_545 once the open kit (FR-90–FR-96) met
+     * main's declared lenses, home view, language and describe (FR-79–FR-89);
+     * the budget just above it.
      */
     entry: `import { guestView, mountGuestView } from "@graview/guest/host"; globalThis.host = { guestView, mountGuestView };`,
     minified: 8_000,
     gzipped: 4_000,
+    load: "first",
+    lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
+  },
+  {
+    name: "the guest host, registering a worker view",
+    /*
+     * `@graview/guest/host/views` (FR-91, FR-92, FR-96): registering a worker
+     * view for its kind or the home, and judging with no worker what it may
+     * be handed, ask and run (`checkManifest`, `workerViewProps`,
+     * `judgeCodeAct`, `checkViewSource`), with the frame's host it shares a
+     * session with. The worker's host and the open kit are fetched when a
+     * view is drawn. Measured at 11_181 / 4_945.
+     *
+     * Measured at 11_797 / 5_125 once the open kit (FR-90–FR-96) met
+     * main's declared lenses, home view, language and describe (FR-79–FR-89);
+     * the budget just above it. At 11_870 / 5_156 once a home view registers
+     * as the home's own view (FR-81) on both faces.
+     */
+    entry: `import { registerWorkerView, workerHome } from "@graview/guest/host/views"; globalThis.views = { registerWorkerView, workerHome };`,
+    minified: 12_000,
+    gzipped: 5_500,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -213,12 +270,68 @@ export const BUDGETS = [
      * `@graview/guest/host/worker` (FR-68, FR-69): the worker's host and the
      * kit's renderer, which read Remote DOM's records without Remote DOM.
      * Measured at 13_578 / 5_097.
+     *
+     * What a page loads first, since the open kit (FR-90): the open kit's
+     * sanitiser and renderer are a chunk of their own, fetched the first
+     * time a worker view draws — the next budget — so a page that draws only
+     * the kit's guests carries none of them. Measured at 15_229 / 5_727, with
+     * `mountWorkerView`'s own few lines and the start the two share.
+     *
+     * Gzipped raised from 6_000 when `mountWorkerView` learned its manifest,
+     * write rules, links and limits (FR-91–FR-94): measured at 15_950 / 6_304.
+     *
+     * Measured at 16_215 / 6_438 once the open kit (FR-90–FR-96) met
+     * main's declared lenses, home view, language and describe (FR-79–FR-89);
+     * the budget just above it.
      */
     entry: `import { mountGuestWorker } from "@graview/guest/host/worker"; globalThis.mount = mountGuestWorker;`,
-    minified: 16_000,
-    gzipped: 6_000,
+    minified: 17_000,
+    gzipped: 6_500,
+    load: "first",
+    lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
+  },
+  {
+    name: "the guest host, drawing a worker view on the open kit",
+    /*
+     * `mountWorkerView` (FR-90) and everything it fetches when a view first
+     * draws: the open kit's tables, the CSS Syntax tokenizer, parser and
+     * sanitiser, the element and attribute judge, and the renderer into a
+     * shadow root. Measured at 41_547 / 14_294.
+     *
+     * Raised from 46_000 / 16_000 when a view needed no build (FR-96): the
+     * host now holds the view's runtime as text — Remote DOM's polyfill, the
+     * hardening, the channel, the `graview` global, about 62 kB and 21 kB
+     * gzipped — fetched only when it first starts a view from its source,
+     * and the press reader and links (FR-92, FR-93). Measured at
+     * 116_242 / 41_276.
+     *
+     * Measured at 118_250 / 41_953 once the open kit (FR-90–FR-96) met
+     * main's declared lenses, home view, language and describe (FR-79–FR-89);
+     * the budget just above it.
+     */
+    entry: `import { mountWorkerView } from "@graview/guest/host/worker"; globalThis.mount = mountWorkerView;`,
+    minified: 119_000,
+    gzipped: 42_500,
     load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
+  },
+  {
+    name: "a worker view's runtime",
+    /*
+     * `@graview/guest/worker/view` (FR-90): Remote DOM's polyfill, the
+     * hardening, the channel, the `graview` global with its morphing render,
+     * and the open kit's tables for telling an author what will not be
+     * drawn — no components. Measured at 59_440 / 20_322.
+     *
+     * Measured at 59_541 / 20_383 once the open kit (FR-90–FR-96) met
+     * main's declared lenses, home view, language and describe (FR-79–FR-89);
+     * the budget just above it.
+     */
+    entry: `import { graview } from "@graview/guest/worker/view"; globalThis.graview = graview;`,
+    minified: 60_000,
+    gzipped: 20_500,
+    load: "all",
+    lacks: ["@graview/core"],
   },
 ];
 

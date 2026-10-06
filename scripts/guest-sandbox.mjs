@@ -15,6 +15,26 @@
  *           hostile guest reads the host's cookie and storage, reaches into
  *           the parent, navigates the top window, opens a popup and fetches
  *           the host's API.
+ *   open    a worker view on the open kit (FR-90): HTML, SVG and CSS drawn
+ *           into a shadow root on the app's own page, served with no CSP
+ *           (`--policy=page`) so the open kit alone holds the network back,
+ *           in Chromium, WebKit and Firefox; and inside Claude's widget
+ *           (scripts/lib/guest-open-suite.mjs).
+ *   place   a worker view as a place (FR-91): the embed, over the offers
+ *           fixture, with the package lens registered by its manifest, on
+ *           the Graview face and the pages face, in light and in dark
+ *           (scripts/lib/guest-place-suite.mjs).
+ *   writes  writes that cannot leak (FR-92): views running for a member who
+ *           may see what another may not try to write it where the other
+ *           reads, every way but a person's press, and are refused; a
+ *           person's press with what they typed applies
+ *           (scripts/lib/guest-writes-suite.mjs).
+ *   limits  a view past its limits (FR-94): one spins, one floods, one draws
+ *           100 000 nodes, one is too long; each is stopped and the plain
+ *           face drawn in its place (scripts/lib/guest-limits-suite.mjs).
+ *   plain   a view with no build (FR-96): the graview-worker-view skill's
+ *           two examples and the package lens, handed over as plain source
+ *           (scripts/lib/guest-plain-suite.mjs).
  *   worker  a classic worker the host starts from a blob: URL, inside a
  *           chat's widget framed the way Claude or ChatGPT frames one
  *           (scripts/lib/widget-policies.mjs, from Graview Cloud's spike);
@@ -28,6 +48,7 @@
  *   node scripts/guest-sandbox.mjs                       every transport, policy and engine, one after another
  *   node scripts/guest-sandbox.mjs --transport=frame --engine=webkit
  *   node scripts/guest-sandbox.mjs --transport=worker --policy=claude --engine=chromium
+ *   node scripts/guest-sandbox.mjs --transport=open --policy=page --engine=firefox
  *
  * Needs `pnpm build` (it bundles packages/guest/dist and packages/core/dist).
  */
@@ -40,6 +61,11 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { portFor } from "./lib/ports.mjs";
 import { localize, POLICIES, proxyPage } from "./lib/widget-policies.mjs";
+import { openSuite, viewScriptOf } from "./lib/guest-open-suite.mjs";
+import { placeSuite } from "./lib/guest-place-suite.mjs";
+import { writesSuite } from "./lib/guest-writes-suite.mjs";
+import { limitsSuite } from "./lib/guest-limits-suite.mjs";
+import { plainSuite } from "./lib/guest-plain-suite.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(resolve(repoRoot, "package.json"));
@@ -52,10 +78,16 @@ const arg = (name) => process.argv.find((one) => one.startsWith(`--${name}=`))?.
 if (!arg("transport") && !arg("engine") && !arg("policy")) {
   /* `--quick` (GRAVIEW_QUICK): one engine per transport and policy, crossed so both engines still run. */
   const runs = process.env.GRAVIEW_QUICK
-    ? [["--transport=frame", "--engine=chromium"], ["--transport=worker", "--policy=claude", "--engine=chromium"], ["--transport=worker", "--policy=chatgpt", "--engine=webkit"]]
+    ? [["--transport=frame", "--engine=chromium"], ["--transport=worker", "--policy=claude", "--engine=chromium"], ["--transport=worker", "--policy=chatgpt", "--engine=webkit"], ["--transport=open", "--policy=page", "--engine=firefox"], ["--transport=place", "--engine=chromium"], ["--transport=writes", "--engine=webkit"], ["--transport=limits", "--engine=firefox"], ["--transport=plain", "--engine=chromium"]]
     : [
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=frame", `--engine=${engine}`]),
         ...["claude", "chatgpt"].flatMap((policy) => ["chromium", "webkit"].map((engine) => ["--transport=worker", `--policy=${policy}`, `--engine=${engine}`])),
+        ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=open", "--policy=page", `--engine=${engine}`]),
+        ["--transport=open", "--policy=claude", "--engine=chromium"],
+        ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=place", `--engine=${engine}`]),
+        ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=writes", `--engine=${engine}`]),
+        ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=limits", `--engine=${engine}`]),
+        ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=plain", `--engine=${engine}`]),
       ];
   let failed = 0;
   for (const run of runs) {
@@ -69,16 +101,17 @@ if (!arg("transport") && !arg("engine") && !arg("policy")) {
 
 const TRANSPORT = arg("transport") ?? "frame";
 const ENGINE = arg("engine") ?? "chromium";
-const POLICY = arg("policy") ?? "claude";
-if (!["frame", "worker"].includes(TRANSPORT)) throw new Error(`--transport is frame or worker, not ${TRANSPORT}`);
+const POLICY = arg("policy") ?? (TRANSPORT === "open" ? "page" : "claude");
+if (!["frame", "worker", "open", "place", "writes", "limits", "plain"].includes(TRANSPORT)) throw new Error(`--transport is frame, worker, open, place, writes, limits or plain, not ${TRANSPORT}`);
 if (TRANSPORT === "worker" && !POLICIES[POLICY]) throw new Error(`--policy is one of ${Object.keys(POLICIES).join(", ")}, not ${POLICY}`);
+if (TRANSPORT === "open" && POLICY !== "page" && !POLICIES[POLICY]) throw new Error(`--policy is page or one of ${Object.keys(POLICIES).join(", ")}, not ${POLICY}`);
 const HOST_PORT = portFor("guest-host");
 /* The watchdog's limit for the spinner and the busy guest: short, so the run stays short. */
 const SILENT_MS = 1_500;
 const GUEST_PORT = portFor("guest-sandbox");
 const HOST = `http://127.0.0.1:${HOST_PORT}`;
 const GUEST = `http://localhost:${GUEST_PORT}`;
-const VERDICT = `docs/guest-sandbox${TRANSPORT === "worker" ? `-worker-${POLICY}` : ""}${ENGINE === "chromium" ? "" : `-${ENGINE}`}.json`;
+const VERDICT = `docs/guest-sandbox${TRANSPORT === "frame" ? "" : ["place", "writes", "limits", "plain"].includes(TRANSPORT) ? `-${TRANSPORT}` : `-${TRANSPORT}-${POLICY}`}${ENGINE === "chromium" ? "" : `-${ENGINE}`}.json`;
 
 const bundle = async (contents, format = "esm") =>
   (
@@ -129,7 +162,7 @@ const host = {
 `;
 
 const secretHits = [];
-const report = { at: new Date().toISOString(), transport: TRANSPORT, engine: ENGINE, ...(TRANSPORT === "worker" ? { policy: POLICIES[POLICY].label } : {}), claims: {}, pageErrors: [] };
+const report = { at: new Date().toISOString(), transport: TRANSPORT, engine: ENGINE, ...(TRANSPORT === "worker" || TRANSPORT === "open" ? { policy: POLICIES[POLICY]?.label ?? "the app's own page, with no content security policy" } : {}), claims: {}, pageErrors: [] };
 const claim = (name, ok, detail) => {
   report.claims[name] = { ok: Boolean(ok), ...(detail === undefined ? {} : { detail }) };
   process.stdout.write(`${ok ? "ok  " : "FAIL"} ${name}${ok ? "" : ` — ${JSON.stringify(detail)}`}\n`);
@@ -553,6 +586,27 @@ guest.subscribe(() => {
 `);
 
   /*
+   * THE BUILDER (FR-94's draw budget): under the node cap, it builds a group
+   * of 1 000 badges, takes it away and builds it again, a hundred times a
+   * message, every 20 ms. The page must stop it as slow, and keep time.
+   */
+  const builderJs = await built("builder", `
+import { connectGuest } from "@graview/guest/worker";
+const guest = connectGuest();
+let started = false;
+guest.subscribe(() => {
+  if (started) return;
+  started = true;
+  const group = document.createElement("gv-group");
+  for (let i = 0; i < 1000; i += 1) group.appendChild(document.createElement("gv-badge"));
+  const said = document.createElement("gv-text");
+  said.textContent = "building";
+  guest.root.replaceChildren(said);
+  setInterval(() => { for (let i = 0; i < 100; i += 1) { guest.root.appendChild(group); group.remove(); } }, 20);
+});
+`);
+
+  /*
    * THE PROBER (FR-70): inside a hardened guest worker, everything a guest
    * might try to get back what hardening took. What it finds it draws, as
    * the kit's text; it has no other way out.
@@ -706,7 +760,18 @@ const guests = {
   prober: mountGuestWorker(document.getElementById("prober"), { worker: { script: PROBER }, view: "prober", store, principal: bethan, input: all, onFailure: (reason) => failures.push(["prober", reason]) }),
   spinner: mountGuestWorker(document.getElementById("spinner"), { worker: { script: SPINNER }, view: "spinner", store, principal: bethan, input: all, limits: { silentMs: ${SILENT_MS} }, onFailure: failed("spinner") }),
   busy: mountGuestWorker(document.getElementById("busy"), { worker: { script: BUSY }, view: "busy", store, principal: bethan, input: all, limits: { silentMs: ${SILENT_MS} }, onFailure: failed("busy") }),
+  builder: mountGuestWorker(document.getElementById("builder"), { worker: { script: BUILDER }, view: "builder", store, principal: bethan, input: all, onFailure: failed("builder") }),
 };
+/* The widget's own timer while the builder builds, from when it drew until half a second after it was stopped. */
+const building = { last: performance.now(), longest: 0, ticks: 0 };
+setInterval(() => {
+  const at = performance.now();
+  if (document.querySelector("#builder [data-gv]") && (failedAt.builder === undefined || at - failedAt.builder < 500)) {
+    building.longest = Math.max(building.longest, at - building.last);
+    building.ticks += 1;
+  }
+  building.last = at;
+}, 50);
 window.__host = {
   ...host,
   started,
@@ -715,14 +780,14 @@ window.__host = {
   errors,
   origin: self.origin,
   stats: () => ({ card: { ...guests.card.stats }, hostile: { ...guests.hostile.stats } }),
-  watchdog: () => ({ failedAt, drewAt, pulse, spinnerStopped: guests.spinner.worker === undefined, busyRunning: guests.busy.worker !== undefined }),
+  watchdog: () => ({ failedAt, drewAt, pulse, spinnerStopped: guests.spinner.worker === undefined, busyRunning: guests.busy.worker !== undefined, building, builderStopped: guests.builder.worker === undefined }),
   refused: () => ({ card: guests.card.refused, hostile: guests.hostile.refused }),
 };
 `,
     "iife",
   );
-  const inline = `const CARD = ${JSON.stringify(cardJs)}; const HOSTILE = ${JSON.stringify(hostileJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPINNER = ${JSON.stringify(spinnerJs)}; const BUSY = ${JSON.stringify(busyJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
-  const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Graview view</title></head><body><main><div id="card"></div><div id="hostile"></div><div id="prober"></div><div id="spinner"></div><div id="busy"></div></main><script>${inline}</script></body></html>`;
+  const inline = `const CARD = ${JSON.stringify(cardJs)}; const HOSTILE = ${JSON.stringify(hostileJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPINNER = ${JSON.stringify(spinnerJs)}; const BUSY = ${JSON.stringify(busyJs)}; const BUILDER = ${JSON.stringify(builderJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
+  const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Graview view</title></head><body><main><div id="card"></div><div id="hostile"></div><div id="prober"></div><div id="spinner"></div><div id="busy"></div><div id="builder"></div></main><script>${inline}</script></body></html>`;
 
   const hostHtml = `<!doctype html><html><head><meta charset="utf-8"><title>Chat</title></head><body><iframe id="proxy" title="Widget" style="width:720px;height:600px;border:0" src="${GUEST}/proxy/${POLICY}.html"></iframe></body></html>`;
   servers = [
@@ -782,9 +847,9 @@ window.__host = {
   const control = await widget.evaluate(() => window.__host.control.module);
   report.findings = { ...report.findings, moduleBlobWorker: control };
   /* The spinner is stopped on purpose, after it started; it is the watchdog's claim below. */
-  const startFailures = host.failures.filter(([name]) => name !== "spinner");
+  const startFailures = host.failures.filter(([name]) => name !== "spinner" && name !== "builder");
   if (POLICY === "claude" && ENGINE === "chromium") claim("here a module worker from a blob: URL is refused, and the classic guests started", control !== "ran" && startFailures.length === 0, { module: control });
-  claim("every guest was started as a classic worker from a blob: URL", host.started.length === 5 && host.started.every((one) => one.url === "blob:" && one.type === "classic"), host.started);
+  claim("every guest was started as a classic worker from a blob: URL", host.started.length === 6 && host.started.every((one) => one.url === "blob:" && one.type === "classic"), host.started);
   claim("no guest failed to start", startFailures.length === 0, host.failures);
   claim("the card was drawn in the widget's page, from the kit", /<section[^>]*data-gv="card"/.test(html) && /<strong[^>]*>Golf<\/strong>/.test(html) && /<button[^>]*data-gv="button"/.test(html), html.slice(0, 300));
   protocolClaims({
@@ -813,6 +878,11 @@ window.__host = {
   claim(`a guest that spins after ready is stopped as silent within limits.silentMs (${SILENT_MS} ms) and one interval of it`, JSON.stringify(host.failures.filter(([name]) => name === "spinner")) === JSON.stringify([["spinner", "silent"]]) && watchdog.spinnerStopped && spun >= SILENT_MS - SILENT_MS / 4 && spun <= SILENT_MS + SILENT_MS / 4 + 250, { spun, ...watchdog });
   claim("the widget's page kept its own timer while a guest spun, never more than 250 ms between 50 ms ticks", watchdog.pulse.ticks > 20 && watchdog.pulse.longest < 250, watchdog.pulse);
   claim(`a guest that is busy but yields, for three times silentMs, is kept`, !host.failures.some(([name]) => name === "busy") && watchdog.busyRunning, { failures: host.failures, busyRunning: watchdog.busyRunning });
+  claim(
+    "a guest that builds and takes away a thousand badges a hundred times a message is stopped as slow, and the widget's timer kept time while it built, never more than 250 ms between 50 ms ticks",
+    host.failures.some(([name, reason]) => name === "builder" && reason === "slow") && watchdog.builderStopped && watchdog.building.ticks > 0 && watchdog.building.longest < 250,
+    { failures: host.failures.filter(([name]) => name === "builder"), building: watchdog.building, stopped: watchdog.builderStopped },
+  );
   await hardeningClaims(probed);
   claim("the host page throws nothing", report.pageErrors.length === 0, report.pageErrors);
   report.stats = host.stats;
@@ -824,6 +894,11 @@ const browser = await playwright[ENGINE].launch();
 let servers = [];
 try {
   if (TRANSPORT === "frame") await frameSuite();
+  else if (TRANSPORT === "plain") await plainSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT });
+  else if (TRANSPORT === "limits") await limitsSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript: viewScriptOf(repoRoot, build) });
+  else if (TRANSPORT === "writes") await writesSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript: viewScriptOf(repoRoot, build) });
+  else if (TRANSPORT === "place") await placeSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT });
+  else if (TRANSPORT === "open") await openSuite({ repoRoot, build, browser, claim, report, POLICY, ENGINE, HOST, GUEST, HOST_PORT, GUEST_PORT, ATTACKER_PORT: portFor("guest-attacker"), SHOWROOM });
   else await workerSuite();
 } finally {
   await browser.close();

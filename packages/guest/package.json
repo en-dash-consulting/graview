@@ -33,9 +33,17 @@
       "types": "./dist/host/worker.d.ts",
       "default": "./dist/host/worker.js"
     },
+    "./host/views": {
+      "types": "./dist/host/views.d.ts",
+      "default": "./dist/host/views.js"
+    },
     "./worker": {
       "types": "./dist/worker/index.d.ts",
       "default": "./dist/worker/index.js"
+    },
+    "./worker/view": {
+      "types": "./dist/worker/view.d.ts",
+      "default": "./dist/worker/view.js"
     },
     "./build": {
       "types": "./dist/build.d.ts",

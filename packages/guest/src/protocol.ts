@@ -12,6 +12,7 @@
  *   host  → guest    { type: "props", props }                        (over the port, whenever what it sees moves)
  *   guest → host     { type: "act", nonce, id, name, args }          (over the port: ask for an act)
  *   guest → host     { type: "navigate", nonce, to }                 (over the port: go to a record)
+ *   guest → host     { type: "navigate", nonce, place }              (over the port: go to a named place of the app, by its slug)
  *   guest → host     { type: "size", nonce, height }                 (over the port: the height it wants)
  *   host  → guest    { type: "answer", id, ok, … }                   (over the port: what became of an act)
  *
@@ -26,6 +27,18 @@
  *
  * A frame guest never sends `render`; a host that is not drawing a worker
  * drops it unread.
+ *
+ * A WORKER VIEW ON THE OPEN KIT (FR-90) draws HTML, SVG and CSS rather than
+ * the kit's components, so its records name native elements and their
+ * attributes, and it says two things more and hears one:
+ *
+ *   guest → host     { type: "style", nonce, css }                   (over the port: its one stylesheet)
+ *   guest → host     { type: "pushed", nonce, push, ms }             (over the port: the runtime has drawn push `push`, in `ms`)
+ *   host  → guest    { type: "dom-event", target, event, … }         (over the port: the viewer clicked, typed or chose on what it drew)
+ *
+ * The host draws a stylesheet only as the open kit allows (host/css.ts),
+ * and numbers each props push (`push`) so the runtime can say when it has
+ * drawn it.
  *
  * A worker's host also watches that the worker is alive. Its runtime — not
  * the guest's code, which can stop it only by blocking its own event loop —
@@ -79,6 +92,25 @@ export interface GuestAct {
 }
 
 /**
+ * THE APP'S LOOK, AS A WORKER VIEW IS HANDED IT (FR-91): the scheme the app
+ * is drawn in now — the app's own toggle, not the system's preference —
+ * and the tokens a view draws with, as CSS colours and font stacks. The
+ * same tokens reach a view's stylesheet as `--graview-*` custom
+ * properties; these are for what a view computes.
+ */
+export interface GuestTheme {
+  readonly scheme: "light" | "dark";
+  readonly accent: string;
+  readonly ground: string;
+  readonly panel: string;
+  readonly ink: string;
+  readonly inkMuted: string;
+  readonly edge: string;
+  readonly fontBody: string;
+  readonly fontMono: string;
+}
+
+/**
  * WHAT A GUEST VIEW IS HANDED: the plain-data half of `ViewProps`, read
  * from the store as the viewer sees it. A record the viewer may not see is
  * not in it — not as a node, a member, an edge or an id in `implicated`.
@@ -101,6 +133,17 @@ export interface GuestProps {
   readonly flagged?: readonly string[];
   /** The acts the viewer may run here: what the guest may ask for. */
   readonly acts: readonly GuestAct[];
+  /** The app's look now, for a worker view (FR-91): pushed again when the app's scheme changes. */
+  readonly theme?: GuestTheme;
+  /** The app's named places, for a worker view to link to by slug (FR-93): never an address outside the app. */
+  readonly places?: readonly GuestPlace[];
+}
+
+/** A named place of the app: a picture by its title, and the slug a link names it by. */
+export interface GuestPlace {
+  readonly as: string;
+  readonly title: string;
+  readonly kind: string;
 }
 
 /** Why the host did not apply an act the guest asked for. */
@@ -114,7 +157,19 @@ export type GuestRefusal =
   /** The request was not one the protocol knows. */
   | "malformed"
   /** The act ran and threw: its arguments did not fit, or its own rule said no. */
-  | "failed";
+  | "failed"
+  /** A worker view asked for an act its manifest does not name (FR-92). */
+  | "undeclared"
+  /**
+   * A worker view asked for an act from its own code, in an app where some
+   * members may not see some records: there, an act applies only from the
+   * viewer's own press on what the view drew (FR-92).
+   */
+  | "press-only"
+  /** A press would have carried a field's value the view filled in, not one the viewer typed (FR-92). */
+  | "untyped"
+  /** A press was bound (`data-record`) to a record the view was not shown, or to an act that takes none (FR-92). */
+  | "unbound";
 
 export type GuestAnswer =
   | { readonly type: "answer"; readonly id: string | number; readonly ok: true; readonly intent: string }
@@ -149,16 +204,61 @@ export interface HostHeartbeat {
   readonly beat: number;
 }
 
-export type HostMessage = { readonly type: "props"; readonly props: GuestProps } | GuestAnswer | GuestEvent | HostHeartbeat;
+/**
+ * What the viewer did on something an open-kit view drew (FR-90): which
+ * node (the view's own id for it), and what the host read off it — a
+ * field's `value` and `checked`, a key's name — never anything of the
+ * host's page.
+ */
+export interface GuestDomEvent {
+  readonly type: "dom-event";
+  /** The view's id for the node it happened on. */
+  readonly target: string;
+  /** `click`, `input`, `change`, `keydown` or `toggle`. */
+  readonly event: string;
+  readonly value?: string;
+  readonly checked?: boolean;
+  readonly key?: string;
+  /**
+   * What became of the act the press was bound to (`data-act`), when it
+   * was: applied by the host in the press's own handler, before the view
+   * heard of it (FR-92).
+   */
+  readonly pressed?: GuestPressed;
+}
+
+/** The answer to a press bound to an act: the act's name, and whether it applied or why not. */
+export interface GuestPressed {
+  /** What the view called it (`data-act`). */
+  readonly as: string;
+  readonly ok: boolean;
+  readonly intent?: string;
+  readonly reason?: GuestRefusal;
+  readonly message?: string;
+}
+
+export type HostMessage =
+  /** `push` numbers it, for a worker view's runtime to say when it has drawn it (FR-94). */
+  | { readonly type: "props"; readonly props: GuestProps; readonly push?: number }
+  | GuestAnswer
+  | GuestEvent
+  | GuestDomEvent
+  | HostHeartbeat;
 
 export type GuestRequest =
   | { readonly type: "act"; readonly nonce: string; readonly id: string | number; readonly name: string; readonly args: Readonly<Record<string, unknown>> }
   | { readonly type: "navigate"; readonly nonce: string; readonly to: string }
+  /** Go to a named place of this app, by its slug (FR-93): a worker view's links stay in the app. */
+  | { readonly type: "navigate"; readonly nonce: string; readonly place: string }
   | { readonly type: "size"; readonly nonce: string; readonly height: number }
   /** A worker guest's drawing: Remote DOM mutation records, with each listener sent as `{ listener: id }`. */
   | { readonly type: "render"; readonly nonce: string; readonly records: readonly unknown[] }
   /** The runtime's answer to a heartbeat, with the beat it was asked. */
-  | { readonly type: "heartbeat"; readonly nonce: string; readonly beat: number };
+  | { readonly type: "heartbeat"; readonly nonce: string; readonly beat: number }
+  /** An open-kit view's one stylesheet (FR-90): the host draws what the open kit allows of it. */
+  | { readonly type: "style"; readonly nonce: string; readonly css: string }
+  /** An open-kit view's runtime has drawn props push `push`, its listeners taking `ms` (FR-94). */
+  | { readonly type: "pushed"; readonly nonce: string; readonly push: number; readonly ms: number };
 
 /** Whether a window message is a guest saying it is ready. */
 export function isGuestReady(data: unknown): data is GuestReady {

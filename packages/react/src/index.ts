@@ -1,4 +1,6 @@
 export { GraviewProvider, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
+export { GoToContext, useGoTo } from "./go.js";
+export type { GoTo } from "./go.js";
 export { Figure, Occupants, PersonFigure } from "./occupants.js";
 export { anchorOf, AUDIENCE_ROW, HEARTBEAT_MS, placeOthers, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState } from "./presence.js";
 export type { Placed, PresenceInputs, PresenceState } from "./presence.js";
