@@ -2,7 +2,7 @@ import type { AnySchema } from "@graview/core";
 import { useGraview, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useEffect, useRef } from "react";
 import { mountGuestView, type GuestFrame } from "./frame.js";
-import type { GuestLimits, GuestViewInput } from "./session.js";
+import type { GuestLimits, GuestReads, GuestViewInput } from "./session.js";
 import type { KitLinks } from "./kit.js";
 import type { GuestWorkerSource } from "./worker.js";
 
@@ -17,6 +17,12 @@ export interface GuestViewOptions {
   readonly worker?: GuestWorkerSource;
   /** The view's name: what the rail says an act came through. */
   readonly name: string;
+  /**
+   * The other kinds and the edges a frame guest is shown, beyond what it is
+   * drawn over (FR-85), as the viewer sees them. A guest drawn as the home
+   * (`views.home(guestView(…))`) is drawn over nothing, and sees what it reads.
+   */
+  readonly reads?: GuestReads;
   /** Where the frame first stands before the guest asks for a height. 160px by default. */
   readonly height?: number;
   readonly limits?: GuestLimits;
@@ -88,6 +94,7 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
         store,
         principal,
         input: () => inputOf(latest.current),
+        ...(options.reads ? { reads: options.reads } : {}),
         onNavigate: (id) => setSelection([id]),
         ...(options.limits ? { limits: options.limits } : {}),
       });

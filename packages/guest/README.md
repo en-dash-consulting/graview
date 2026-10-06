@@ -57,7 +57,25 @@ entries import nothing of the framework, so a guest bundle carries none of it.
 `GuestProps` is the plain-data half of `ViewProps` — `node`, `nodes`, the
 `edges` among them, `label`, `fidelity`, `cardinality`, `mode`, `selected`,
 `implicated`, `flagged` — and `acts`, the acts the viewer may run. A record
-the viewer may not see is in none of them.
+the viewer may not see is in none of them. Every record's `label` is
+filled as the host labels it.
+
+### What a frame guest reads
+
+```ts
+views.register("package", { cardinality: "many", fidelity: "full" },
+  guestView({ url, name: "prices", reads: { kinds: ["offer"], edges: ["includes"] } }));
+views.home(guestView({ url: frontUrl, name: "front", reads: { kinds: ["package"] } }));
+```
+
+A guest is handed what it is drawn over and the edges among those records.
+With `reads` it is also handed every record of the kinds it reads and
+every edge of the edges it reads between the records it holds, as the
+viewer sees them (`readAcross`, the rule a worker view's manifest uses
+too). A guest over packages that reads `offer` and `includes` gets each
+package's offers, and an offer the viewer may not see is in none of it.
+Drawn as the home (`views.home`), a guest is drawn over nothing and sees
+what it reads: it is the routed home's body, and the landing over the scene.
 
 ## In a worker
 

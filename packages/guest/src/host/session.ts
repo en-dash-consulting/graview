@@ -33,6 +33,31 @@ export interface GuestLimits {
   readonly maxHeight?: number;
 }
 
+/** The other kinds and the edges a guest is shown, beyond what it is drawn over (FR-85, FR-91). */
+export interface GuestReads {
+  readonly kinds?: readonly string[];
+  readonly edges?: readonly string[];
+}
+
+/**
+ * WHAT A GUEST READS ACROSS KINDS, AS THE VIEWER SEES IT (FR-85, FR-91):
+ * every record of the kinds it reads that is not already among `shown`,
+ * and every edge of the kinds it reads between two records it is handed.
+ * `graph` is the viewer's own (`seenBy`), so an unseen record is in
+ * neither. One rule for a frame guest and a worker view alike.
+ */
+export function readAcross(graph: { nodesOfKind(kind: never): readonly { readonly id: string }[]; outEdges(id: string): readonly { readonly kind: string; readonly from: string; readonly to: string }[] }, shown: ReadonlySet<string>, reads: GuestReads | undefined): { readonly nodes: readonly unknown[]; readonly edges: readonly GuestEdge[] } {
+  const nodes = new Map<string, unknown>();
+  for (const kind of reads?.kinds ?? []) for (const node of graph.nodesOfKind(kind as never)) if (!shown.has(node.id)) nodes.set(node.id, node);
+  const all = new Set([...shown, ...nodes.keys()]);
+  const kinds = new Set(reads?.edges ?? []);
+  const edges: GuestEdge[] = [];
+  if (kinds.size > 0) {
+    for (const id of all) for (const edge of graph.outEdges(id)) if (kinds.has(edge.kind) && all.has(edge.to)) edges.push({ kind: edge.kind, from: edge.from, to: edge.to });
+  }
+  return { nodes: [...nodes.values()], edges };
+}
+
 export interface GuestHostOptions<S extends AnySchema> {
   /** The store, or the store as the viewer sees it: the host reads it through `seenBy(principal)` either way. */
   readonly store: Store<S>;
@@ -46,6 +71,13 @@ export interface GuestHostOptions<S extends AnySchema> {
   send(message: HostMessage): void;
   /** What is drawn where the guest is, read on every push. */
   readonly input?: () => GuestViewInput;
+  /**
+   * The other kinds and the edges the guest is shown, beyond the records it
+   * is drawn over (FR-85): each record of those kinds and each edge of
+   * those kinds among what it is handed, as the viewer sees them. With
+   * none, a guest sees its own records and the edges among them.
+   */
+  readonly reads?: GuestReads;
   /** The guest asked to go to a record the viewer may see. */
   readonly onNavigate?: (id: string) => void;
   /** The guest asked for a height. */
@@ -187,6 +219,11 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
         if (shown.has(edge.to)) edges.push({ kind: edge.kind, from: edge.from, to: edge.to });
       }
     }
+    /* What it reads across kinds, as the viewer sees it, beside its own (FR-85). */
+    const read = readAcross(graph, shown, options.reads);
+    const said = new Set(edges.map((edge) => `${edge.kind} ${edge.from} ${edge.to}`));
+    for (const edge of read.edges) if (!said.has(`${edge.kind} ${edge.from} ${edge.to}`)) edges.push(edge);
+    const listed = read.nodes.length > 0 ? [...(nodes ?? []), ...read.nodes] : nodes;
     const visible = (ids: readonly string[] | undefined) => ids?.filter((id) => graph.has(id));
     const acts: GuestAct[] = store.permittedMutations(options.principal).map((mutation) => ({
       name: mutation.name,
@@ -197,7 +234,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
     return {
       view: options.view,
       ...(node ? { node: plain(node) } : {}),
-      ...(nodes ? { nodes: nodes.map(plain) } : {}),
+      ...(listed ? { nodes: listed.map(plain) } : {}),
       edges,
       ...(input.label !== undefined ? { label: input.label } : {}),
       ...(input.fidelity !== undefined ? { fidelity: input.fidelity } : {}),

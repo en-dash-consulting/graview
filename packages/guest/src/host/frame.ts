@@ -1,7 +1,7 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type HostHello } from "../protocol.js";
 import { mintNonce } from "./nonce.js";
-import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
+import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestReads, type GuestStats, type GuestViewInput } from "./session.js";
 
 export interface MountGuestViewOptions<S extends AnySchema> {
   /** Where the guest's code is served. Where that is, and its CSP, are the host's business. */
@@ -13,6 +13,12 @@ export interface MountGuestViewOptions<S extends AnySchema> {
   readonly principal: Principal;
   /** What is drawn where the guest is. */
   readonly input?: () => GuestViewInput;
+  /**
+   * The other kinds and the edges the guest is shown, beyond what it is
+   * drawn over (FR-85): `{ kinds: ["offer"], edges: ["includes"] }` hands a
+   * guest over packages each package's offers, as the viewer sees them.
+   */
+  readonly reads?: GuestReads;
   readonly onNavigate?: (id: string) => void;
   /** The guest asked for a height. By default the frame takes it. */
   readonly onSize?: (height: number) => void;
@@ -103,6 +109,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       nonce,
       send: (message) => channel.port1.postMessage(message),
       ...(options.input ? { input: options.input } : {}),
+      ...(options.reads ? { reads: options.reads } : {}),
       ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
       onSize: options.onSize ?? ((height) => (iframe.style.height = `${height}px`)),
       ...(options.limits ? { limits: options.limits } : {}),
