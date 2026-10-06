@@ -21,7 +21,10 @@
  *   escape    `position: fixed` and `sticky`, `:host` and `::slotted`, the
  *             top layer (`popover`, `<dialog>`), `autofocus`, `accesskey`,
  *             and `<form>`, whose submission is a navigation.
- *   speak     `role="alert"` and the landmark roles the app's own chrome uses,
+ *   speak     `role="alert"`, the landmark roles the app's own chrome uses
+ *             and the elements that carry them (`<nav>`, `<header>`,
+ *             `<footer>`, `<aside>`, `<search>` are drawn as `<div>`, `<output>`
+ *             as `<span>`, and a `<section>` is never named),
  *             `aria-live="assertive"`, and password and file inputs.
  *
  * The host draws from this declaration (host/open-render.ts, with
@@ -114,10 +117,14 @@ export const HTML_ELEMENTS: Readonly<Record<string, OpenElement>> = {
   input: {
     empty: true,
     attributes: {
-      /* Never password or file (a view does not ask for either), image (it has a src), hidden or submit. */
+      /*
+       * Never password or file (a view does not ask for either), image (it has a src), hidden or submit.
+       * No `list`: a suggestion the person picks from a view's `<datalist>` is typed by the browser, trusted,
+       * and would pass the view's words off as theirs (FR-92).
+       */
       type: { oneOf: ["text", "search", "number", "range", "checkbox", "radio", "date", "time", "datetime-local", "month", "week", "color", "email", "tel", "url"] },
       name: "text", value: "text", placeholder: "text", min: "text", max: "text", step: "text", checked: "boolean", disabled: "boolean",
-      readonly: "boolean", required: "boolean", maxlength: "number", minlength: "number", size: "number", list: "text", pattern: "text",
+      readonly: "boolean", required: "boolean", maxlength: "number", minlength: "number", size: "number", pattern: "text",
       multiple: "boolean", inputmode: "text", enterkeyhint: "text",
     },
   },
@@ -128,8 +135,7 @@ export const HTML_ELEMENTS: Readonly<Record<string, OpenElement>> = {
   label: { attributes: { for: "text" } },
   fieldset: { attributes: { disabled: "boolean", name: "text" } },
   legend: none,
-  output: { attributes: { for: "text", name: "text" } },
-  datalist: none,
+  output: none,
   meter: { attributes: { value: "number", min: "number", max: "number", low: "number", high: "number", optimum: "number" } },
   progress: { attributes: { value: "number", max: "number" } },
   // images, held in the drawing: data: or the host's own blob:
@@ -196,13 +202,27 @@ export const SVG_ELEMENTS: Readonly<Record<string, OpenElement>> = {
  * anything not above is refused — but the names a reader looks for.
  */
 export const NEVER_DRAWN = {
-  html: ["script", "iframe", "frame", "frameset", "object", "embed", "applet", "portal", "link", "meta", "base", "style", "form", "template", "slot", "noscript", "audio", "video", "source", "track", "picture", "canvas", "dialog", "main", "html", "head", "body", "title"],
+  html: ["script", "iframe", "frame", "frameset", "object", "embed", "applet", "portal", "link", "meta", "base", "style", "form", "template", "slot", "noscript", "audio", "video", "source", "track", "picture", "canvas", "dialog", "datalist", "main", "html", "head", "body", "title"],
   svg: ["image", "feImage", "filter", "foreignObject", "a", "script", "style", "animate", "animateMotion", "animateTransform", "set", "discard", "view", "switch", "cursor", "font-face"],
-  attributes: ["src (outside img)", "href", "xlink:href (outside a #fragment)", "srcset", "sizes", "action", "formaction", "ping", "poster", "background", "on*", "popover", "popovertarget", "autofocus", "accesskey", "contenteditable", "is", "nonce", "autocomplete", "form"],
+  attributes: ["src (outside img)", "href", "xlink:href (outside a #fragment)", "srcset", "sizes", "action", "formaction", "ping", "poster", "background", "on*", "popover", "popovertarget", "autofocus", "accesskey", "contenteditable", "is", "nonce", "autocomplete", "form", "list"],
 } as const;
 
 /** Roles that would make a view speak as the app's own chrome or notices. */
-export const REFUSED_ROLES = ["alert", "alertdialog", "dialog", "banner", "main", "navigation", "contentinfo", "application", "status", "log", "marquee", "timer"] as const;
+export const REFUSED_ROLES = ["alert", "alertdialog", "dialog", "banner", "main", "navigation", "contentinfo", "complementary", "search", "form", "region", "application", "status", "log", "marquee", "timer"] as const;
+
+/**
+ * Elements whose own role is a landmark or a notice's, drawn as an element
+ * with none: what they hold is drawn, but they speak as the app's chrome
+ * (`<nav>` is a navigation landmark, `<header>` a banner, `<output>` a
+ * status) to assistive technology. Setting a role on them cannot cover it:
+ * `role="none"` on a focusable or named element is ignored, and the
+ * landmark comes back. A view's stylesheet reaches them by class, not by
+ * these names.
+ */
+export const HTML_DRAWN_AS: Readonly<Record<string, string>> = { nav: "div", header: "div", footer: "div", aside: "div", search: "div", output: "span" };
+
+/** Attributes that would name an element: a named `<section>` is a region landmark, so a section is never named. */
+export const UNNAMED_ELEMENTS: Readonly<Record<string, readonly string[]>> = { section: ["aria-label", "aria-labelledby", "title"] };
 
 /** `aria-*`, by pattern. */
 export function isAriaAttribute(name: string): boolean {
@@ -303,10 +323,13 @@ export const CSS_AT_RULES: readonly string[] = ["media", "supports", "container"
  */
 export const CSS_KEYWORD_PROPERTIES: Readonly<Record<string, readonly string[]>> = {
   position: ["static", "relative", "absolute"],
+  /* Never `base-select`: a customizable select's picker is drawn in the top layer, over the whole page, styled by the view (Chrome 135+). */
+  appearance: ["auto", "none", "menulist-button", "textfield"],
+  "-webkit-appearance": ["auto", "none", "menulist-button", "textfield"],
 };
 
 /** Selectors a view's stylesheet may not write: each reaches past the view's own tree. */
-export const CSS_REFUSED_SELECTORS: readonly string[] = ["host", "host-context", "slotted", "part", "backdrop", "view-transition", "view-transition-group", "view-transition-image-pair", "view-transition-old", "view-transition-new"];
+export const CSS_REFUSED_SELECTORS: readonly string[] = ["host", "host-context", "slotted", "part", "backdrop", "picker", "view-transition", "view-transition-group", "view-transition-image-pair", "view-transition-old", "view-transition-new"];
 
 /** The largest stylesheet, in characters, a view may give. */
 export const OPEN_MAX_STYLESHEET = 64_000;

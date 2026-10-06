@@ -73,6 +73,13 @@ unlisted functions; `position: fixed` or `sticky`; `:host`. What the host
 leaves out it lists in `refused`; `graview.refused` is the runtime's own
 early word on the last render.
 
+A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside`
+and `search` are drawn as `div`, and `output` as `span`, each with what it
+holds. They lose their landmark or status role, and a selector for them in
+your stylesheet still matches. A `section` is never named (no `aria-label`
+or `title`), so it stays out of the landmarks. `role` takes no landmark or
+notice's role (`navigation`, `region`, `status`, `alert`, …).
+
 **Draw with the app's tokens**, so light and dark follow the app's own
 toggle: `var(--graview-panel)`, `--graview-ground`, `--graview-ink`,
 `--graview-ink-muted`, `--graview-edge`, `--graview-accent`,
@@ -102,15 +109,20 @@ named for the act's arguments and typed by the person:
 
 A field the view filled (`value="…"`) is the view's until the person
 empties it, and a press carrying it is refused. Do not prefill. A view
-may empty a field after a press. The press is applied before the view
+may empty a field after a press. A radio or a select is the person's
+pick, not their words: its value goes only if it is one the act declares
+(an enum's option) or a record the view was shown. The press is applied before the view
 hears it; read `event.pressed`.
 
 ## Limits
 
-About 256 kB of source, 5 000 drawn nodes, 120 messages a second, and
-1 000 ms per push. Past any of them the view is stopped and the plain face
+About 256 kB of source, 5 000 drawn nodes, 120 messages a second,
+1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face
 of its records is drawn instead, with why. Draw summaries, not every row
-of a huge set.
+of a huge set. Work a view schedules with timers between pushes is not
+timed per push. It can keep its own worker busy for just under the
+heartbeat's 5 s at a time; the page stays responsive, but the person's CPU
+does not, so never spin.
 
 ## Worked examples
 

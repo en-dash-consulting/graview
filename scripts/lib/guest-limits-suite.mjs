@@ -4,8 +4,9 @@
  *
  * Five views over the offers fixture, each past one limit: one spins in
  * its listener for a push, one spins later where no push is waiting, one
- * floods the host with messages, one draws 100 000 nodes, and one is longer
- * than a view may be. Each is stopped within its limit and an interval of
+ * floods the host with messages, one draws 100 000 nodes, one sends few
+ * messages that each hold thousands of long styles for the host to judge,
+ * and one is longer than a view may be. Each is stopped within its limit and an interval of
  * it, its worker terminated, the plain face of what it was shown drawn in
  * its place, and the reason said — while the page's own timer keeps time.
  * A sixth view, well behaved, is kept.
@@ -30,6 +31,8 @@ export async function limitsSuite({ repoRoot, build, browser, claim, report, HOS
     /* 100 000 nodes in one render. */
     /* A hundred lists of a thousand: the polyfill appends in time proportional to a parent's children, so one list of 100 000 would test the polyfill, not the host. */
     nodes: `graview.onProps(() => { const lists = []; for (let l = 0; l < 100; l += 1) { const list = document.createElement("ul"); for (let i = 0; i < 1000; i += 1) list.appendChild(document.createElement("li")); lists.push(list); } graview.render(lists); });`,
+    /* Few messages and few nodes, but each message thousands of records the host must judge: a long style, set again and again on one element. */
+    churn: `let once = false; graview.onProps((props) => { ${draw} if (!once) { once = true; const el = document.createElement("div"); graview.render([el]); const long = "margin: 1px; color: red; ".repeat(150); let n = 0; setInterval(() => { for (let i = 0; i < 2000; i += 1) el.setAttribute("style", long + "padding: " + (n += 1) % 50 + "px"); }, 20); } });`,
     /* Longer than a view may be. */
     long: `const padding = "${"padding ".repeat(40_000)}"; graview.onProps((props) => { ${draw} graview.style(padding.slice(0, 0)); });`,
     /* Well behaved, for the control. */
@@ -102,13 +105,18 @@ window.__host = {
     const tab = await context.newPage();
     tab.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
     await tab.goto(`${HOST}/`, { waitUntil: "load" });
-    await tab.waitForFunction(() => ["spin", "later", "flood", "nodes", "long"].every((name) => window.__host.failures[name]), null, { timeout: 40_000 }).catch(() => {});
+    await tab.waitForFunction(() => ["spin", "later", "flood", "nodes", "long", "churn"].every((name) => window.__host.failures[name]), null, { timeout: 40_000, polling: 250 }).catch(() => {});
     await tab.waitForTimeout(500);
-    const host = await tab.evaluate(() => ({ failures: window.__host.failures, running: window.__host.running(), faces: window.__host.faces(), notes: window.__host.notes(), drawn: window.__host.drawn(), pulse: window.__host.pulse }));
+    /* A page a view has frozen answers nothing: given 15 s, its silence is the finding. */
+    const silent = { failures: {}, running: {}, faces: {}, notes: {}, drawn: {}, pulse: { ticks: 0, longest: Infinity, frozen: true } };
+    const host = await Promise.race([
+      tab.evaluate(() => ({ failures: window.__host.failures, running: window.__host.running(), faces: window.__host.faces(), notes: window.__host.notes(), drawn: window.__host.drawn(), pulse: window.__host.pulse })),
+      new Promise((done) => setTimeout(() => done(silent), 15_000)),
+    ]);
     report.limits = host;
     const stopped = (name, reason, within) => {
       const failure = host.failures[name];
-      const ok = failure?.reason === reason && failure.at <= within && host.running[name] === false && host.faces[name].includes("A way in") && host.faces[name].includes("Team coaching") && typeof failure.detail === "string" && host.notes[name]?.includes(failure.detail);
+      const ok = failure?.reason === reason && failure.at <= within && host.running[name] === false && host.faces[name]?.includes("A way in") && host.faces[name]?.includes("Team coaching") && typeof failure.detail === "string" && host.notes[name]?.includes(failure.detail);
       return { ok, detail: { failure, running: host.running[name], face: host.faces[name], note: host.notes[name] } };
     };
     const spin = stopped("spin", "slow", 5_000 + PUSH_MS + 250);
@@ -121,6 +129,8 @@ window.__host = {
     claim("a view that draws 100 000 nodes is stopped at 5 000, its plain face drawn and the reason said (its time per push raised, so the node cap is what stops it)", nodes.ok, nodes.detail);
     const long = stopped("long", "source", 1_000);
     claim("a view longer than a view may be is never started, its plain face drawn and the reason said", long.ok, long.detail);
+    const churn = stopped("churn", "slow", 5_000);
+    claim("a view that sends, in few messages, more to draw than the host may draw in its time is stopped as slow, its plain face drawn and the reason said", churn.ok, { ...churn.detail, pulse: host.pulse });
     claim("a view within its limits is kept, and draws", host.running.good === true && !host.failures.good && host.drawn.good === "6 records", { running: host.running.good, failure: host.failures.good, drawn: host.drawn.good });
     claim("the page's own timer kept time while views spun, never more than 250 ms between 50 ms ticks", host.pulse.ticks > 20 && host.pulse.longest < 250, host.pulse);
     claim("the page throws nothing", report.pageErrors.length === 0, report.pageErrors);

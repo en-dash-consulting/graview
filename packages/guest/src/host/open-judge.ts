@@ -1,10 +1,12 @@
 import {
+  HTML_DRAWN_AS,
   HTML_ELEMENTS,
   OPEN_MAX_ATTRIBUTE,
   OPEN_MAX_GEOMETRY,
   OPEN_MAX_IMAGE,
   REFUSED_ROLES,
   SVG_ELEMENTS,
+  UNNAMED_ELEMENTS,
   openAttribute,
   svgElementName,
   type OpenAttribute,
@@ -46,14 +48,16 @@ export interface OpenRefusal {
 }
 
 /** An element as the host draws it, or a refusal. */
-export function judgeElement(name: string, parent: OpenNamespace): { readonly namespace: OpenNamespace; readonly name: string } | { readonly refused: OpenRefusal } {
+export function judgeElement(name: string, parent: OpenNamespace): { readonly namespace: OpenNamespace; readonly name: string; readonly as?: string } | { readonly refused: OpenRefusal } {
   if (parent === "svg") {
     const canonical = svgElementName(name);
     return canonical ? { namespace: "svg", name: canonical } : { refused: { reason: "element", element: name } };
   }
   const lower = name.toLowerCase();
   if (lower === "svg") return { namespace: "svg", name: "svg" };
-  return Object.prototype.hasOwnProperty.call(HTML_ELEMENTS, lower) ? { namespace: "html", name: lower } : { refused: { reason: "element", element: name } };
+  if (!Object.prototype.hasOwnProperty.call(HTML_ELEMENTS, lower)) return { refused: { reason: "element", element: name } };
+  /* A landmark's or a notice's element is drawn as one with no role of its own (HTML_DRAWN_AS), and says what it was asked to be (`data-graview-as`). */
+  return Object.prototype.hasOwnProperty.call(HTML_DRAWN_AS, lower) ? { namespace: "html", name: HTML_DRAWN_AS[lower]!, as: lower } : { namespace: "html", name: lower };
 }
 
 /** Whether an element holds nothing (`img`, `input`, `br`). */
@@ -86,6 +90,8 @@ export function judgeAttribute(
 ): { readonly name: string; readonly value: string | null; readonly dropped?: readonly OpenRefusal[] } | { readonly refused: OpenRefusal } {
   const found = openAttribute(namespace, element, name);
   if (!found) return { refused: { reason: "attribute", element, name } };
+  /* A named section is a region landmark: a section is never named, so it stays a section. */
+  if (namespace === "html" && UNNAMED_ELEMENTS[element]?.includes(found.name)) return { refused: { reason: "attribute", element, name } };
   if (value === null) return { name: found.name, value: null };
   const judged = judgeValue(found.name, found.kind, value, context);
   if ("refused" in judged) return { refused: { ...judged.refused, element } };

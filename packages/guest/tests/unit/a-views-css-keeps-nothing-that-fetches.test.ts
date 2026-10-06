@@ -112,7 +112,43 @@ const CASES: Record<string, string> = {
   "::slotted": `::slotted(*) { position: fixed }`,
   ":host-context": `:host-context(body) { display: none }`,
   "::part": `::part(x) { color: red }`,
+  /* A CDC or CDO between the colon and the name: never judged as `:host`, and once dropped from what was written back, read as it. */
+  "a selector reaching the host past a CDC": `:-->host { contain: none !important; overflow: visible !important; position: static !important }`,
+  "a selector reaching the host past a CDO": `:<!--host { translate: 0 -400px !important }`,
+  "::slotted past a CDC": `::-->slotted(*) { color: red }`,
+  ":host-context past a CDC, nested": `.x { @media screen { :-->host-context(body) { display: none } } }`,
+  "::part past a CDC, in @supports": `@supports selector(::-->part(x)) { .x { color: red } }`,
 };
+
+describe("a view's selectors for the elements the host draws as another", () => {
+  it("reads nav, header, footer, aside, search and output as what the host draws them as", () => {
+    expect(sanitizeStylesheet(`.package header { display: flex } NAV > a, :is(footer, aside) .x, search:hover, output.big { color: red }`).css).toBe(
+      `.package [data-graview-as="header"] { display: flex; }\n[data-graview-as="nav"] > a, :is([data-graview-as="footer"], [data-graview-as="aside"]) .x, [data-graview-as="search"]:hover, [data-graview-as="output"].big { color: red; }`,
+    );
+  });
+  it("leaves a class, an id, a pseudo-class and an attribute of the same name alone", () => {
+    expect(sanitizeStylesheet(`.header, #nav, a:nav, [title=header] { color: red }`).css).toBe(`.header, #nav, a:nav, [title=header] { color: red; }`);
+  });
+  it("reads them so nested, too", () => {
+    expect(sanitizeStylesheet(`.package { header { margin: 0 } }`).css).toBe(`.package { [data-graview-as="header"] { margin: 0; } }`);
+  });
+});
+
+describe("a customizable select's picker, which is drawn in the top layer over the whole page", () => {
+  it("keeps no appearance: base-select, in any spelling", () => {
+    for (const css of [`select { appearance: base-select }`, `select { -webkit-appearance: base-select }`, `select { APPEARANCE: Base-Select !important }`, `select { appearance: var(--a) }`]) {
+      expect(sanitizeStylesheet(css).css, css).not.toMatch(/base-select|var\(/i);
+    }
+  });
+  it("keeps no ::picker(select) rule", () => {
+    const said = sanitizeStylesheet(`::picker(select) { inset: 0; width: 100vw; height: 100vh; background: red } select::picker(select) { margin: 0 }`);
+    expect(said.css).not.toMatch(/picker/i);
+    expect(said.refused).toContainEqual({ reason: "selector", name: "picker" });
+  });
+  it("still draws the appearances that stay in the region", () => {
+    expect(sanitizeStylesheet(`select { appearance: none } input { -webkit-appearance: textfield }`).css).toBe(`select { appearance: none; }\ninput { -webkit-appearance: textfield; }`);
+  });
+});
 
 describe("a hostile stylesheet", () => {
   for (const [name, css] of Object.entries(CASES)) {

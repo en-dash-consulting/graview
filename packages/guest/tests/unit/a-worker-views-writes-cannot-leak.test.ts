@@ -258,3 +258,72 @@ describe("sights off: there is nothing to leak", () => {
     expect(judgeCodeAct(open(), manifest, "recommend", { packageId: "package:later", standing: "later" })).toEqual({ ok: true, name: "set-standing", args: { packageId: "package:later", standing: "recommended" } });
   });
 });
+
+/**
+ * A PICK AMONG WORDS THE VIEW WROTE. A radio's value and a select's options
+ * are the view's words; the person only picks one. A pick is the person's
+ * as a choice, never as what the words say: Erin choosing "Yes" on a radio
+ * whose value the view set to the cost would otherwise write the cost into
+ * the summary Lin reads, as though Erin had typed it. A pick is taken as
+ * the argument only when it is one of the values the app itself declares
+ * for it (an enum or a literal), or a record the view was shown.
+ */
+describe("sights on: a person's pick carries no word of the view's", () => {
+  const picking = { ...manifest, acts: ["set-summary", "set-standing"] } satisfies WorkerViewManifest;
+  function choices(store: Store<never>, fields: unknown[], act: string, record = "package:start") {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const shadow = host.attachShadow({ mode: "open" });
+    const told: GuestDomEvent[] = [];
+    const session = createGuestHost({ store, principal: erin, view: picking.name, nonce: "n", send: () => {}, props: () => workerViewProps(store, erin, { manifest: picking }), judgeAct: (name, args) => judgeCodeAct(store, picking, name, args) });
+    const reader = createPressReader(() => true);
+    const shown = new Set((workerViewProps(store, erin, { manifest: picking }).nodes ?? []).map((node) => node.id));
+    const drawing = createOpenDrawing(shadow, {
+      origin: "null",
+      send: (message) => told.push(message),
+      onFieldSet: (field) => reader.filled(field),
+      before: (event, at, root) => {
+        reader.heard(event, at);
+        const press = reader.press(event, at, root);
+        if (!press) return;
+        return { pressed: { as: press.as, ...session.pressed(judgePress(store, picking, shown, press)) } };
+      },
+    });
+    drawing.apply([[INSERT, "~", element("fieldset", {}, [...fields, element("button", { "data-act": act, "data-record": record }, [text("Save")])]), 0]]);
+    return { shadow, press: () => shadow.querySelector("button")!.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true })), last: () => told.filter((one) => one.pressed).at(-1)?.pressed };
+  }
+
+  it("refuses a radio the person picked whose value is the view's own words", () => {
+    const store = sighted();
+    const view = choices(store as never, [element("label", {}, [element("input", { type: "radio", name: "summary", value: SECRET }), text("Yes, that's right")])], "set-summary");
+    view.shadow.querySelector("input")!.click();
+    view.press();
+    expect(view.last()).toMatchObject({ ok: false, reason: "untyped" });
+    expect(summaryOf(store as never)).not.toContain(SECRET);
+  });
+
+  it("refuses an option the person picked whose value is the view's own words", () => {
+    const store = sighted();
+    const view = choices(store as never, [element("select", { name: "summary" }, [element("option", { value: "" }, [text("Choose")]), element("option", { value: `Costs ${SECRET}` }, [text("Looks good")])])], "set-summary");
+    const select = view.shadow.querySelector("select")!;
+    select.selectedIndex = 1;
+    select.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+    select.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+    view.press();
+    expect(view.last()).toMatchObject({ ok: false, reason: "untyped" });
+    expect(summaryOf(store as never)).not.toContain(SECRET);
+  });
+
+  it("applies a pick that is one of the values the app declares for it", () => {
+    const store = sighted();
+    const view = choices(
+      store as never,
+      ["recommended", "alternative", "later"].map((standing) => element("input", { type: "radio", name: "standing", value: standing })),
+      "set-standing",
+    );
+    view.shadow.querySelectorAll("input")[2]!.click();
+    view.press();
+    expect(view.last()).toMatchObject({ ok: true });
+    expect((store.seenBy(lin).graph.getNode("package:start") as unknown as { standing: string }).standing).toBe("later");
+  });
+});

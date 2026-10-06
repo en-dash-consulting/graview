@@ -5,6 +5,7 @@ import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
 import { judgeCodeAct } from "./writes.js";
+import { createDrawBudget } from "./draw-budget.js";
 import { checkViewSource, viewScript } from "./view-source.js";
 import { createLinks, type Destination } from "./links.js";
 
@@ -50,6 +51,12 @@ export interface WorkerViewLimits extends GuestLimits {
    * 1 000 by default. Time the host's own page was held up is not counted.
    */
   readonly pushMs?: number;
+  /**
+   * The most of any one second the host's page may spend drawing what the
+   * view sent, in milliseconds: past it the batch is left undrawn and the
+   * view is stopped as slow. 100 by default.
+   */
+  readonly drawMs?: number;
 }
 
 /** What each limit is, said to a person. */
@@ -203,6 +210,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     messageWindowMs: options.limits?.messageWindowMs ?? 1_000,
     pushMs: options.limits?.pushMs ?? 1_000,
     silentMs: options.limits?.silentMs ?? 5_000,
+    drawMs: options.limits?.drawMs ?? 100,
   };
   /* What the view was last shown: the plain face drawn in its place, if it fails. */
   let lastProps: GuestProps | undefined;
@@ -351,11 +359,14 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       }
     }, every);
   };
+  /* The host's own time drawing the view, at most `drawMs` of any second (draw-budget.ts): past it, the view is slow. */
+  const budget = createDrawBudget(limits.drawMs, () => clock.now());
   const draw = (one: ["render", unknown] | ["style", string]) => {
     if (failed) return;
     if (!drawing) return void waiting.push(one);
-    if (one[0] === "render") drawing.apply(one[1]);
-    else drawing.style(one[1]);
+    const live = drawing;
+    const within = budget.draw((spent) => (one[0] === "render" ? live.apply(one[1], spent) : (live.style(one[1]), true)));
+    if (!within) fail("slow");
   };
   /* Links stay in the app (FR-93): a record the viewer may see, or a place the app has. */
   const links = createLinks({

@@ -28,7 +28,7 @@ import { natives } from "./natives.js";
 import "@remote-dom/core/polyfill";
 import { RemoteRootElement, remoteId } from "@remote-dom/core/elements";
 import { openGuest } from "../channel.js";
-import { HTML_ELEMENTS, openAttribute, svgElementName } from "../open-kit.js";
+import { HTML_ELEMENTS, UNNAMED_ELEMENTS, openAttribute, svgElementName } from "../open-kit.js";
 import type { GuestAnswer, GuestDomEvent, GuestPressed, GuestProps, HostMessage } from "../protocol.js";
 import { harden, type Hardening } from "./harden.js";
 import { createListenerLedger } from "./listeners.js";
@@ -247,7 +247,9 @@ function precheck(node: Node, svg: boolean, said: Set<string>): void {
       said.add(`<${name}>`);
       continue;
     }
-    for (const attribute of element.getAttributeNames()) if (!openAttribute(inSvg ? "svg" : "html", canonical, attribute)) said.add(`${canonical} ${attribute}`);
+    for (const attribute of element.getAttributeNames()) {
+      if (!openAttribute(inSvg ? "svg" : "html", canonical, attribute) || (!inSvg && UNNAMED_ELEMENTS[canonical]?.includes(attribute.toLowerCase()))) said.add(`${canonical} ${attribute}`);
+    }
     precheck(element, inSvg, said);
   }
 }

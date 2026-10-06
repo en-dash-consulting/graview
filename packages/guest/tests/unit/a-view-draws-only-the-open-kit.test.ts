@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import { createOpenRenderer } from "../../src/host/open-render.js";
-import { HTML_ELEMENTS, NEVER_DRAWN, SVG_ELEMENTS, SVG_NAMESPACE } from "../../src/open-kit.js";
+import { HTML_DRAWN_AS, HTML_ELEMENTS, NEVER_DRAWN, SVG_ELEMENTS, SVG_NAMESPACE } from "../../src/open-kit.js";
 
 /**
  * A WORKER VIEW DRAWS ONLY THE OPEN KIT (FR-90). A view's runtime says what
@@ -71,6 +71,25 @@ describe("the elements a view may not draw", () => {
   });
 });
 
+describe("the elements that speak as the app's chrome", () => {
+  for (const [name, as] of [["nav", "div"], ["header", "div"], ["footer", "div"], ["aside", "div"], ["search", "div"], ["output", "span"]] as const) {
+    it(`draws <${name}> as <${as}>, which has no landmark or notice's role, with what it holds`, () => {
+      const { into } = draw(element(name, { class: "bar", id: "x", tabindex: "0", "aria-label": "Back door" }, [text("held")]));
+      expect(into.querySelector(name)).toBeNull();
+      const drawn = into.querySelector(as)!;
+      expect(drawn.className).toBe("bar");
+      expect(drawn.textContent).toBe("held");
+      expect(drawn.hasAttribute("role")).toBe(false);
+    });
+  }
+  it("draws a section unnamed, and keeps it a section", () => {
+    const { into } = draw(element("section", { class: "grid", "aria-label": "Notices", title: "Updates" }, [text("held")]));
+    const section = into.querySelector("section")!;
+    expect(section.className).toBe("grid");
+    expect(section.hasAttribute("aria-label") || section.hasAttribute("title")).toBe(false);
+  });
+});
+
 describe("the attributes a view may not set", () => {
   const cases: [string, Record<string, string>][] = [
     ["img", { src: "https://attacker.example/img.png" }],
@@ -92,6 +111,8 @@ describe("the attributes a view may not set", () => {
     ["input", { type: "password" }],
     ["input", { type: "file" }],
     ["input", { autocomplete: "cc-number" }],
+    /* A suggestion from a view's list is typed by the browser, trusted: the view's words as the person's. */
+    ["input", { list: "hints" }],
     ["div", { style: "background: url(https://attacker.example/inline)" }],
     ["div", { style: "position: fixed; inset: 0" }],
     ["div", { popover: "manual" }],
@@ -102,6 +123,15 @@ describe("the attributes a view may not set", () => {
     ["div", { is: "x-loader" }],
     ["div", { role: "alert" }],
     ["div", { role: "banner" }],
+    ["div", { role: "complementary" }],
+    ["div", { role: "search" }],
+    ["div", { role: "form" }],
+    ["div", { role: "region" }],
+    ["div", { role: "none navigation" }],
+    /* A named section is a region landmark. */
+    ["section", { "aria-label": "Notices" }],
+    ["section", { "aria-labelledby": "x" }],
+    ["section", { title: "Updates" }],
     ["div", { "aria-live": "assertive" }],
     ["div", { tabindex: "5" }],
     ["table", { background: "https://attacker.example/table.png" }],
@@ -149,11 +179,11 @@ describe("the attributes a view may not set", () => {
 });
 
 describe("what a view may draw", () => {
-  it("draws every HTML element of the kit, as that element", () => {
+  it("draws every HTML element of the kit, as that element or as the one with no landmark's role it is drawn as", () => {
     const names = Object.keys(HTML_ELEMENTS);
     const { into, renderer } = draw(...names.map((name) => element(name)));
     expect(renderer.refused).toEqual([]);
-    expect([...into.children].map((one) => one.localName)).toEqual(names);
+    expect([...into.children].map((one) => one.localName)).toEqual(names.map((name) => HTML_DRAWN_AS[name] ?? name));
   });
   it("draws every SVG element of the kit in SVG's namespace, in its own case, whatever case it was sent in", () => {
     const names = Object.keys(SVG_ELEMENTS).filter((name) => name !== "svg");

@@ -57,6 +57,7 @@ export const NOT_EXPORTS = new Map([
   ["messageWindowMs", "a limit of a guest's host, not an export"],
   ["pushMs", "a limit of mountWorkerView, not an export"],
   ["silentMs", "a limit of mountGuestWorker and mountWorkerView, not an export"],
+  ["drawMs", "a limit of mountGuestWorker and mountWorkerView, not an export"],
   ["importScripts", "a worker global, which a guest's worker does not have"],
 ]);
 

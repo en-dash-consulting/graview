@@ -3,6 +3,7 @@ import type { Kit } from "../kit.js";
 import { createKitRenderer, GUEST_KIT_CSS, type KitLinks, type KitRefusal, type KitRenderer } from "./kit.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
+import { createDrawBudget } from "./draw-budget.js";
 
 export type { GuestWorkerSource } from "./worker-start.js";
 
@@ -17,7 +18,9 @@ export type GuestWorkerFailure =
    */
   | "silent"
   /** It drew more than `maxNodes`; it was stopped. */
-  | "budget";
+  | "budget"
+  /** What it sent took the page longer than `drawMs` of a second to draw; it was stopped, and the rest left undrawn. */
+  | "slow";
 
 export interface MountGuestWorkerOptions<S extends AnySchema> {
   readonly worker: GuestWorkerSource;
@@ -46,6 +49,12 @@ export interface MountGuestWorkerOptions<S extends AnySchema> {
      * up (a long task, a throttled background tab) is not counted.
      */
     readonly silentMs?: number;
+    /**
+     * The most of any one second the host's page may spend drawing what the
+     * guest sent, in milliseconds: past it the batch is left undrawn, the
+     * worker is stopped and `onFailure` hears `slow`. 100 by default.
+     */
+    readonly drawMs?: number;
   };
   /** The guest is not going to be shown, and why: the host can show something else in its place. */
   readonly onFailure?: (reason: GuestWorkerFailure) => void;
@@ -104,6 +113,7 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
 
   const stats: GuestStats = { applied: 0, refused: 0, dropped: 0 };
   const limiter = createGuestLimiter(options.limits);
+  const budget = createDrawBudget(options.limits?.drawMs ?? 100, () => window.performance.now());
   let session: GuestHost | undefined;
   let renderer: KitRenderer | undefined;
   let started: StartedWorker | undefined;
@@ -155,7 +165,10 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
         view: options.view,
         nonce,
         send: (message) => port.postMessage(message),
-        onRender: (records) => draw.apply(records),
+        /* The host's own time drawing the guest, at most `drawMs` of any second (draw-budget.ts). */
+        onRender: (records) => {
+          if (!budget.draw((spent) => draw.apply(records, spent))) fail("slow");
+        },
         ...(options.input ? { input: options.input } : {}),
         ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
         onSize: options.onSize ?? ((height) => (container.style.minHeight = `${height}px`)),
