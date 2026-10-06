@@ -454,9 +454,12 @@ else say(result.reason, result.detail);            // "act": It asks for the act
 ```
 
 The reasons are the page's (`source`, `manifest`, `error`, `nodes`,
-`flood`, `slow`, `refused`) and two of a headless run's own: `act`, an act
-asked for from the view's code or bound to a press (`data-act`) that its
-manifest does not name, and `isolate`, the host's isolate could not run it.
+`flood`, `slow`; never the page's `start`, as nothing is started in a
+worker) and three of a headless run's own: `refused`, the isolate could
+not be hardened or something called the script's entry before the host
+did; `act`, an act asked for from the view's code or bound to a press
+(`data-act`) that its manifest does not name; and `isolate`, the host's
+isolate could not run it.
 Nothing is applied: an act the view asks for is written down in the
 transcript and answered with a refusal.
 
