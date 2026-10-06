@@ -297,10 +297,14 @@ export const BUDGETS = [
      * shares with a frame reads across kinds and pushes a frame's theme and
      * places (FR-85–FR-87), and the app's look is read and watched by one
      * module both hosts use (host/theme.ts).
+     *
+     * Raised from 17_000 / 6_750 at 18_305 / 7_358 when a worker that does
+     * not start says `start` (FR-102): the page's policy violation heard,
+     * the directive it lacks named, the page's console told once.
      */
     entry: `import { mountGuestWorker } from "@graview/guest/host/worker"; globalThis.mount = mountGuestWorker;`,
-    minified: 17_000,
-    gzipped: 6_750,
+    minified: 18_750,
+    gzipped: 7_500,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -328,10 +332,14 @@ export const BUDGETS = [
      * headless run, FR-95) and a guest may navigate to a place (FR-87),
      * and the host reads the app's look from one module (FR-86); the budget
      * just above it.
+     *
+     * Raised at 120_766 / 42_999 when a view that does not start says
+     * `start` (FR-102), with the directive its page lacks; the budget just
+     * above it.
      */
     entry: `import { mountWorkerView } from "@graview/guest/host/worker"; globalThis.mount = mountWorkerView;`,
-    minified: 119_750,
-    gzipped: 42_500,
+    minified: 121_250,
+    gzipped: 43_250,
     load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
