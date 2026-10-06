@@ -1,5 +1,51 @@
 # graview
 
+## 0.1.10
+
+### Patch Changes
+
+- 4c8a2d1: A worker view can be run once, headless, and say what it drew (FR-95). Graview Cloud checks a chat's view before it applies it, and could not run one anywhere but a person's browser. `runWorkerViewHeadless({ manifest, source, store, principal, run })`, from the new entry `@graview/guest/headless`, checks the manifest against the app and the source against what a view may say. It hands the view the seat's sight cut to its manifest (FR-91), runs it with no network and no DOM, and says what it drew in `describePlace`'s shape (FR-89, `drawnBy: "view:<name>"`): headings, text, figures, fields, and lists with each record's title and what its row or card says. Or it says why the view will not do, with the page's reasons (`source`, `manifest`, `error`, `nodes`, `flood`, `slow`, `refused`) and two of its own: `act`, an act asked for from the view's code or bound to a press (`data-act`) that its manifest does not name, and `isolate`. Nothing is applied: an act the view asks for is written down and answered with a refusal.
+  
+  It never runs a view in the host's own context. The host supplies the isolate: `run` is handed one script and one JSON string (`HeadlessPayload`), loads the script where it chooses, calls the global the script leaves with the string, and hands back the string it resolves with. Nothing but text crosses, and without a `run` the helper throws; there is no in-process fallback. The script is a headless runtime, `headless/runtime.generated.ts`, built from `src/headless/runtime.ts` by `pnpm guest:runtime` and held current by a test, then the view. Before the view is read it makes the isolate a worker's: the same `graview` global a worker's runtime makes, now `worker/view-global.ts` and shared by both, over a transcript rather than a port; a console that writes to the transcript; timers that never fire; and everything outside the worker's allowlist taken from the global. workerd marks its global's classes with a symbol it will not let go, which holds a primitive and hands back nothing, so `harden` takes `{ primitivesStay: true }` for a headless run; a worker in a page is hardened as before. What the view sent is judged again on the host, from the transcript alone, by the open kit's own renderer drawing into a tree of plain objects (`drawTranscript`, `describeDrawing`, `judgeTranscript`).
+  
+  `@graview/guest/headless/node` is a `run` for Node, `nodeIsolate()`: a worker thread with a heap ceiling and a V8 context made from nothing, with code from strings and WebAssembly refused and a deadline that covers the microtasks a view queues. `graview view check <view.js> --app <app> --manifest <manifest.json> [--seed <file>] [--as <id>] [--roles a,b] [--width <px>] [--json]` runs it from a terminal, from the new `@graview/guest/cli`, which `graview` dispatches to. `graview` now depends on `@graview/guest`. A linked project made by `graview create` aliases the three new entries.
+  
+  A unit test writes LifeLogics' four declared lenses again as worker views and runs each headless for the owner and for the delivery partner. Each shows the records, titles and headings `describePlace` says the declared lens shows the same seat. A view that throws, draws past `maxNodes`, sends past `messages`, is longer than `maxSourceBytes`, spins at its top line or in its promise turns, takes longer than `pushMs`, or names an act or a kind its manifest or app does not have, is a failure naming it. The isolate is handed text alone, the host's global is left as it was, and the entry bundles for a browser with no way to run code in the page. A second test runs the payload in workerd through Miniflare, with every outbound request refused and written down: a LifeLogics lens says what it drew for the partner, and a view that tries `fetch`, a WebSocket and the function constructor finds none of them, and no request leaves. The `graview-worker-view` skill now says to run `graview view check` as a member with narrow sight and on an empty seed. `capabilities().shipped` names FR-95. The worker view's runtime is 59,926 B minified, 20,596 B gzipped now that its global is made over a way out the runtime hands it; its budget is raised to 60,500 and 20,750, each saying why. The headless entry is not loaded by any page.
+  
+  Compatibility: the declaration and check finding codes are unchanged; `PlaceDescription.drawnBy` gains `` `view:${string}` `` for a description a headless run makes. The wire: `capabilities().shipped` gains `FR-95`. Ops, stored formats and tool schemas are unchanged.
+- Updated dependencies [6b7edf9]
+- Updated dependencies [4ae597b]
+- Updated dependencies [f9d5951]
+- Updated dependencies [c3e2c1d]
+- Updated dependencies [77a9fdc]
+- Updated dependencies [9cba01f]
+- Updated dependencies [a2c8c06]
+- Updated dependencies [c9830fd]
+- Updated dependencies [6809372]
+- Updated dependencies [77a9fdc]
+- Updated dependencies [b50f25c]
+- Updated dependencies [bce0e4e]
+- Updated dependencies [660dd52]
+- Updated dependencies [ea06b89]
+- Updated dependencies [9710a44]
+- Updated dependencies [3047796]
+- Updated dependencies [d4cab17]
+- Updated dependencies [58f71f9]
+- Updated dependencies [2e46ab9]
+- Updated dependencies [4c8a2d1]
+- Updated dependencies [5703a27]
+- Updated dependencies [fc6ddca]
+- Updated dependencies [17b908c]
+- Updated dependencies [6e3b089]
+- Updated dependencies [6852b7d]
+- Updated dependencies [b67367a]
+- Updated dependencies [7307a0c]
+  - @graview/core@0.1.10
+  - @graview/skills@0.1.10
+  - @graview/guest@0.1.10
+  - @graview/tools@0.1.10
+  - @graview/ship@0.1.10
+
 ## 0.1.9
 
 ### Patch Changes
