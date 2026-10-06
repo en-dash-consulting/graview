@@ -19,6 +19,10 @@
  *   the hidden kind, and the hidden kind is still reached by link, by the
  *   nav and by search.
  *
+ * And a status board (FR-97, `tasks.gdd.json`): its columns on both faces,
+ * a card moved by the keyboard and by a drag (the act, run as the owner)
+ * and undone; a viewer without the act offered no move.
+ *
  *   node scripts/verify-declared.mjs [--engine=chromium|webkit|firefox]
  */
 import { createServer } from "node:http";
@@ -39,6 +43,22 @@ const TITLES = JSON.parse(readFileSync(DOCUMENT, "utf8")).lenses.map((lens) => l
 const LIFELOGICS = resolve(repoRoot, "packages/core/tests/document/fixtures/lifelogics.gdd.json");
 const LIFELOGICS_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/lifelogics.seed.json");
 const LENSES = JSON.parse(readFileSync(LIFELOGICS, "utf8")).lenses.map((lens) => lens.title);
+/** A status board (FR-97): tasks by status, moved by the act that sets it; an owner who may run it, a viewer who may not and sees only their own. */
+const TASKS = resolve(repoRoot, "packages/core/tests/document/fixtures/tasks.gdd.json");
+const TASKS_SEED = {
+  nodes: [
+    { id: "t1", kind: "task", label: "Write the brief", status: "todo" },
+    { id: "t2", kind: "task", label: "Book the hall", status: "doing" },
+    { id: "t3", kind: "task", label: "Order the chairs", status: "todo" },
+    { id: "t4", kind: "task", label: "Send the invitations", status: "done" },
+    { id: "p1", kind: "person", label: "Ada" },
+    { id: "p2", kind: "person", label: "Grace" },
+  ],
+  edges: [
+    { id: "e1", kind: "assigned-to", from: "t1", to: "p2" },
+    { id: "e2", kind: "assigned-to", from: "t2", to: "p2" },
+  ],
+};
 const SIZES = [
   { width: 1440, height: 900 },
   { width: 390, height: 844 },
@@ -83,16 +103,22 @@ async function buildHost() {
         import hall from ${JSON.stringify(DOCUMENT)};
         import lifelogics from ${JSON.stringify(LIFELOGICS)};
         import lifelogicsSeed from ${JSON.stringify(LIFELOGICS_SEED)};
+        import tasks from ${JSON.stringify(TASKS)};
         const asked = new URLSearchParams(location.search);
         const proposal = asked.get("doc") === "lifelogics";
-        const compiled = compileDocumentWithoutCheck(proposal ? lifelogics : hall, { today: () => "2026-09-01" });
+        const board = asked.get("doc") === "tasks";
+        const compiled = compileDocumentWithoutCheck(proposal ? lifelogics : board ? tasks : hall, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
-          seed: proposal ? lifelogicsSeed : ${JSON.stringify(SEED)},
+          seed: proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : ${JSON.stringify(SEED)},
           face: asked.get("face") ?? "scene",
           ...(asked.get("path") ? { path: asked.get("path") } : {}),
-          principal: proposal ? { kind: "human", id: "u:owner", roles: ["owner"] } : { kind: "human", id: "m1", roles: ["keeper"] },
+          principal: proposal
+            ? { kind: "human", id: "u:owner", roles: ["owner"] }
+            : board
+              ? asked.get("as") === "viewer" ? { kind: "human", id: "p2", roles: ["viewer"] } : { kind: "human", id: "p1", roles: ["owner"] }
+              : { kind: "human", id: "m1", roles: ["keeper"] },
           label: "The hall",
           heading: false,
           height: "100%",
@@ -381,6 +407,117 @@ try {
       note: note.listed,
       ok: JSON.stringify(pack.listed) === JSON.stringify(["offer-workshop", "offer-analysis", "offer-suite", "offer-advice"]) && JSON.stringify(note.listed) === JSON.stringify(["offer-workshop", "offer-analysis"]) && !pack.spills && !note.spills,
     };
+  }
+
+  {
+    /*
+     * FR-97: a status board, on both faces, at a desk and a phone, in both
+     * schemes. Its columns in the field's order; a card moved with the
+     * keyboard is the act, run as the owner, and its Undo puts it back; a
+     * viewer whose policy has no such act is offered no move, and sees only
+     * their own tasks, counted.
+     */
+    const columnsOf = (page, within) =>
+      page.evaluate((selector) => {
+        const board = document.querySelector(selector);
+        return {
+          present: board !== null,
+          columns: board ? [...board.querySelectorAll("[data-graview-column]")].map((column) => [column.getAttribute("data-graview-column"), column.querySelector('[data-testid="columns-count"]')?.textContent?.trim(), [...column.querySelectorAll("[data-graview-listed]")].map((card) => card.getAttribute("data-graview-listed")).sort()]) : [],
+          moves: board ? board.querySelectorAll('[data-testid="columns-move"]').length : 0,
+          spills: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+        };
+      }, within);
+    const STARTS = JSON.stringify([["todo", "2", ["t1", "t3"]], ["doing", "1", ["t2"]], ["done", "1", ["t4"]]]);
+    const MOVED = JSON.stringify([["todo", "1", ["t3"]], ["doing", "2", ["t1", "t2"]], ["done", "1", ["t4"]]]);
+    const THEIRS = JSON.stringify([["todo", "1", ["t1"]], ["doing", "1", ["t2"]], ["done", "0", []]]);
+    const boards = {};
+    const viewers = {};
+    for (const size of SIZES) {
+      for (const scheme of SCHEMES) {
+        for (const [face, query, within] of [
+          ["pages", `doc=tasks&face=pages&path=${encodeURIComponent("/places/the-board")}`, '[data-testid="place-lens"] [data-testid="columns-lens"]'],
+          ["scene", "doc=tasks&face=scene", '.graview-ground [data-testid="columns-lens"]'],
+        ]) {
+          const at = `${face} ${size.width}×${size.height} ${scheme}`;
+          const page = await open(query, size, scheme);
+          await page.waitForSelector(`${within} [data-graview-column]`, { timeout: 15_000 }).catch(() => {});
+          const before = await columnsOf(page, within);
+          // The keyboard: the card's Move button, Enter opens the columns it may go to, Enter on the first (Doing) moves it.
+          const button = page.locator(`${within} [data-columns-move="t1"] > button`);
+          let keyboard = { reached: false };
+          if ((await button.count()) > 0) {
+            await button.focus();
+            await page.keyboard.press("Enter");
+            await page.waitForTimeout(150);
+            const offered = await page.evaluate((selector) => [...document.querySelectorAll(`${selector} [data-columns-move="t1"] [role="menuitem"]`)].map((item) => item.textContent), within);
+            const focusedFirst = await page.evaluate(() => document.activeElement?.getAttribute("role") === "menuitem" && document.activeElement?.textContent === "Doing");
+            await page.keyboard.press("Enter");
+            await page.waitForTimeout(400);
+            const after = await columnsOf(page, within);
+            const kept = await page.evaluate(() => document.activeElement?.closest("[data-columns-move]")?.getAttribute("data-columns-move") ?? document.activeElement?.tagName ?? null);
+            const said = await page.evaluate((selector) => document.querySelector(`${selector} [data-testid="columns-said"]`)?.textContent ?? "", within);
+            // Undo, by the keyboard too: the board's own Undo, focused and pressed.
+            await page.locator(`${within} [data-testid="columns-undo"]`).focus();
+            await page.keyboard.press("Enter");
+            await page.waitForTimeout(400);
+            const undone = await columnsOf(page, within);
+            keyboard = { reached: true, offered, focusedFirst, after: after.columns, kept, said, undone: undone.columns };
+          }
+          await shoot(page, `board-${face}-${size.width}-${scheme}`);
+          await page.close();
+          boards[at] = { before, keyboard };
+          const viewer = await open(`${query}&as=viewer`, size, scheme);
+          await viewer.waitForSelector(`${within} [data-graview-column]`, { timeout: 15_000 }).catch(() => {});
+          viewers[at] = await columnsOf(viewer, within);
+          await viewer.close();
+        }
+      }
+    }
+    report.checks.aStatusBoardDrawsOnBothFacesInTheFieldsOrder = {
+      boards: Object.fromEntries(Object.entries(boards).map(([at, board]) => [at, board.before])),
+      ok: Object.values(boards).every(({ before }) => before.present && JSON.stringify(before.columns) === STARTS && before.moves === 4 && !before.spills),
+    };
+    report.checks.aCardMovedByTheKeyboardIsTheActAndUndoPutsItBack = {
+      boards: Object.fromEntries(Object.entries(boards).map(([at, board]) => [at, board.keyboard])),
+      ok: Object.values(boards).every(
+        ({ keyboard }) =>
+          keyboard.reached &&
+          JSON.stringify(keyboard.offered) === JSON.stringify(["Doing", "Done"]) &&
+          keyboard.focusedFirst &&
+          JSON.stringify(keyboard.after) === MOVED &&
+          keyboard.kept === "t1" &&
+          keyboard.said.includes("Moved “Write the brief” to Doing.") &&
+          JSON.stringify(keyboard.undone) === STARTS,
+      ),
+    };
+    report.checks.aViewerWithoutTheActSeesNoMoveAndOnlyTheirOwnCounted = {
+      viewers,
+      ok: Object.values(viewers).every((seen) => seen.present && seen.moves === 0 && JSON.stringify(seen.columns) === THEIRS && !seen.spills),
+    };
+
+    // Dragging a card onto a column is the same act; on the routed face, at a desk.
+    const page = await open(`doc=tasks&face=pages&path=${encodeURIComponent("/places/the-board")}`, SIZES[0]);
+    const within = '[data-testid="place-lens"] [data-testid="columns-lens"]';
+    await page.waitForSelector(`${within} [data-graview-column]`, { timeout: 15_000 }).catch(() => {});
+    let dragged = { tried: false };
+    try {
+      await page.dragAndDrop(`${within} [data-graview-listed="t3"]`, `${within} [data-graview-column="done"]`);
+      await page.waitForTimeout(400);
+      dragged = { tried: true, ...(await columnsOf(page, within)) };
+    } catch (error) {
+      dragged = { tried: true, error: String(error) };
+    }
+    await page.close();
+    report.checks.aCardDraggedOntoAColumnIsTheSameAct = {
+      dragged,
+      ok: JSON.stringify(dragged.columns) === JSON.stringify([["todo", "1", ["t1"]], ["doing", "1", ["t2"]], ["done", "2", ["t3", "t4"]]]),
+    };
+
+    // From altitude, the board is a drive-in on its kind's district, as every declared place is.
+    const city = await open("doc=tasks&face=graview");
+    const marquees = await city.evaluate(() => [...document.querySelectorAll('[data-testid^="drive-in-"] .graview-drive-in-thumb-press')].map((press) => press.getAttribute("aria-label") ?? ""));
+    await city.close();
+    report.checks.aStatusBoardIsADriveInFromAltitude = { marquees, ok: marquees.some((label) => label.includes("The board")) };
   }
 
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
