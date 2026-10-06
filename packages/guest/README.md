@@ -57,7 +57,67 @@ entries import nothing of the framework, so a guest bundle carries none of it.
 `GuestProps` is the plain-data half of `ViewProps` — `node`, `nodes`, the
 `edges` among them, `label`, `fidelity`, `cardinality`, `mode`, `selected`,
 `implicated`, `flagged` — and `acts`, the acts the viewer may run. A record
-the viewer may not see is in none of them.
+the viewer may not see is in none of them. Every record's `label` is
+filled as the host labels it, and `theme` and `places` are the app's.
+
+### What a frame guest reads, its look, and its place
+
+```ts
+views.register("package", { cardinality: "many", fidelity: "full" },
+  guestView({ url, name: "prices", title: "The price sheet", reads: { kinds: ["offer"], edges: ["includes"] } }),
+  { title: "The price sheet" });
+views.home(guestView({ url: frontUrl, name: "front", reads: { kinds: ["package"] } }));
+```
+
+A guest is handed what it is drawn over and the edges among those records.
+With `reads` it is also handed every record of the kinds it reads and
+every edge of the edges it reads between the records it holds, as the
+viewer sees them (`readAcross`, the rule a worker view's manifest uses
+too). A guest over packages that reads `offer` and `includes` gets each
+package's offers, and an offer the viewer may not see is in none of it.
+Drawn as the home (`views.home`), a guest is drawn over nothing and sees
+what it reads: it is the routed home's body, and the landing over the scene.
+
+Its props carry `theme`, a `GuestTheme`: the scheme, the accent, ground,
+panel, ink, muted ink and edge colours, and the body and mono fonts, read
+off the element the frame is drawn in. The scheme is the app's own (the
+embed's `data-graview-scheme`), not the system's, and the host pushes
+again when the app's toggle changes it. `mountGuestView` takes `reads`,
+`theme` and `places` too.
+
+`title` names the frame for assistive technology. Registered with the same
+title, the guest is a place on both faces: listed by `placesOf`, at
+`/places/the-price-sheet` on the routed face and `#view=the-price-sheet` in
+the scene. `props.places` lists the app's places, and
+`guest.navigate({ place: "the-packages" })` goes to one.
+
+### One client, served or inlined
+
+`@graview/guest/client.js` is the frame guest's client as one prebuilt
+classic script (2.4 kB). It leaves one global, `GraviewGuest`, and
+`GraviewGuest.connect()` is `connectGuest()`. A host serves it at a path of
+its own, or inlines its text where a frame's policy allows inline script
+alone, as Graview Cloud serves an uploaded view (`script-src
+'unsafe-inline'`). `GUEST_CLIENT` from `@graview/guest/client` is that
+text, and `GUEST_CLIENT_SHA256` its hash for a policy that names it.
+
+```html
+<main id="app"></main>
+<script>/* GUEST_CLIENT */</script>
+<script>
+  const guest = GraviewGuest.connect();
+  guest.subscribe((props) => {
+    document.body.style.background = props.theme.panel;
+    app.replaceChildren(...props.nodes.map((node) => Object.assign(document.createElement("p"), { textContent: node.label })));
+    guest.size(document.documentElement.scrollHeight);
+  });
+</script>
+```
+
+How to write one, with a worked example, is the `graview-embed` skill.
+`guest-sandbox --transport=client` serves a guest of a few lines under that
+policy and finds it renders, acts, navigates, resizes and follows the
+app's toggle in Chromium, WebKit and Firefox.
 
 ## In a worker
 
@@ -325,3 +385,61 @@ still takes a whole worker script built against `@graview/guest/worker/view`.
 How to write one — the manifest, what may be drawn, the theme's tokens, the
 write rules, links and limits, with a list lens and a home worked through —
 is the `graview-worker-view` skill (`graview skills install`).
+
+### Run a view headless, and say what it drew
+
+Before a view is applied, a host can run it once with no network and no
+DOM, against one member's sight, and be told what it drew in the words
+`describePlace` says a place in (`@graview/core/describe`): its headings,
+text, figures and fields, and its lists with each record's title and what
+its row or card says. Or it is told why the view will not do.
+
+```ts
+import { runWorkerViewHeadless } from "@graview/guest/headless";
+
+const result = await runWorkerViewHeadless({ manifest, source, store, principal, run });
+if (result.ok) say(result.description.text);       // "The packages (/places/the-packages) — as partner …"
+else say(result.reason, result.detail);            // "act": It asks for the act "buy", which its manifest does not name.
+```
+
+The reasons are the page's (`source`, `manifest`, `error`, `nodes`,
+`flood`, `slow`, `refused`) and two of a headless run's own: `act`, an act
+asked for from the view's code or bound to a press (`data-act`) that its
+manifest does not name, and `isolate`, the host's isolate could not run it.
+Nothing is applied: an act the view asks for is written down in the
+transcript and answered with a refusal.
+
+A view never runs in the host's own context. The host supplies the
+isolate: `run` is handed one script and one JSON string (`HeadlessPayload`),
+loads the script into an isolate of its choosing, calls the global it
+leaves (`graviewHeadless`) with the string, and hands back the string it
+resolves with. Nothing but text crosses. There is no default, and without
+a `run` the helper throws. The script is the headless runtime, then the
+view. It makes the isolate a worker's before the view is read: the same
+`graview` global over a transcript, a console that writes to it, timers
+that never fire, and everything outside the worker's allowlist taken from
+the global. Then the view's top line runs and it is pushed what it is
+shown, once. What it sent is judged again in the host's context, from the
+transcript alone, by the open kit's own renderer drawing into a tree of
+plain objects (`drawTranscript`, `describeDrawing`), so the isolate's word
+is not taken for what the view drew.
+
+`nodeIsolate` from `@graview/guest/headless/node` is a `run` for Node: a
+worker thread with a heap ceiling and a context made from nothing (no
+`process`, `require`, `fetch` or timers; no code from strings), with a
+deadline that covers the microtasks the view queues. In workerd, the
+script is one module of a worker of its own with no outbound network, and
+the host's module, loaded first, keeps `Response` to answer with:
+
+```js
+// before.js
+const Made = Response; export const answer = (text) => new Made(text);
+// host.js
+import { answer } from "./before.js"; import "./view.js";   // view.js is payload.script
+const run = globalThis.graviewHeadless;
+export default { async fetch(request) { return answer(await run(await request.text())); } };
+```
+
+`graview view check view.js --app app.js --manifest manifest.json --seed
+seed.json --roles partner` does the same from a terminal, with
+`nodeIsolate`.

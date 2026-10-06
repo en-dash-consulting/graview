@@ -95,6 +95,17 @@ export interface Hardening {
   readonly worker?: false;
 }
 
+export interface HardenOptions {
+  /**
+   * A symbol-keyed property an engine will not let go may stay when it
+   * holds a primitive that cannot change: it hands back nothing. workerd
+   * marks its global's classes so (`[cloudflare:internal-class]`, a
+   * symbol); a headless run there keeps them (FR-95). A worker in a page
+   * keeps none: its engines have none, and the sandbox suite says so.
+   */
+  readonly primitivesStay?: boolean;
+}
+
 const nameOf = (key: string | symbol) => (typeof key === "symbol" ? `[${key.description ?? "symbol"}]` : key);
 
 /**
@@ -102,7 +113,7 @@ const nameOf = (key: string | symbol) => (typeof key === "symbol" ? `[${key.desc
  * worker entry, after Remote DOM's polyfill and the kit are in place; an
  * open-kit view's runtime (worker/view.ts) keeps its `graview` too.
  */
-export function harden(scope: typeof globalThis = globalThis, kept: readonly string[] = []): Hardening {
+export function harden(scope: typeof globalThis = globalThis, kept: readonly string[] = [], options: HardenOptions = {}): Hardening {
   const removed: string[] = [];
   const stuck: string[] = [];
   /* `kept`: what a runtime put on the global for its guest (an open-kit view's `graview`), frozen with the rest. */
@@ -110,7 +121,9 @@ export function harden(scope: typeof globalThis = globalThis, kept: readonly str
   /* A name on the inert list stays only if it will not go and holds a number that cannot be changed. */
   const inert = (at: object, key: string | symbol) => {
     const descriptor = Reflect.getOwnPropertyDescriptor(at, key);
-    return (INERT as readonly (string | symbol)[]).includes(key) && descriptor !== undefined && "value" in descriptor && typeof descriptor.value === "number" && !descriptor.writable && !descriptor.configurable;
+    if (descriptor === undefined || !("value" in descriptor) || descriptor.writable || descriptor.configurable) return false;
+    if (options.primitivesStay && typeof key === "symbol" && (typeof descriptor.value !== "object" || descriptor.value === null) && typeof descriptor.value !== "function") return true;
+    return (INERT as readonly (string | symbol)[]).includes(key) && typeof descriptor.value === "number";
   };
   const global = scope as unknown as Record<string | symbol, unknown>;
 

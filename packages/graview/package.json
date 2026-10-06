@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@graview/core": "workspace:*",
+    "@graview/guest": "workspace:*",
     "@graview/ship": "workspace:*",
     "@graview/skills": "workspace:*",
     "@graview/tools": "workspace:*"

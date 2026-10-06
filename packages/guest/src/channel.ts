@@ -20,8 +20,12 @@ export interface Guest {
   subscribe(listener: (props: GuestProps) => void): () => void;
   /** Ask for an act by name. Resolves with the host's answer; never rejects for a refusal. */
   act(name: string, args?: Readonly<Record<string, unknown>>): Promise<GuestAnswer>;
-  /** Ask the host to go to a record. A record the viewer may not see goes nowhere. */
-  navigate(to: string): void;
+  /**
+   * Ask the host to go to a record, by its id, or to one of the app's named
+   * places (`{ place: slug }`, one `props.places` lists). A record the viewer
+   * may not see, and a place the app does not have, go nowhere.
+   */
+  navigate(to: string | { readonly place: string }): void;
   /** Ask for a height, in CSS pixels. */
   size(height: number): void;
   /** Ask for the height of an element whenever it changes. Returns the stop. In a worker, where nothing is laid out, it does nothing. */
@@ -124,7 +128,8 @@ export function openGuest(
       });
     },
     navigate(to) {
-      send({ type: "navigate", to });
+      if (typeof to === "string") send({ type: "navigate", to });
+      else if (to && typeof to.place === "string") send({ type: "navigate", place: to.place });
     },
     size(height) {
       send({ type: "size", height });

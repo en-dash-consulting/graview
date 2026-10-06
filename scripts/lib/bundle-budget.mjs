@@ -236,10 +236,16 @@ export const BUDGETS = [
      * Measured at 7_443 / 3_545 once the open kit (FR-90–FR-96) met
      * main's declared lenses, home view, language and describe (FR-79–FR-89);
      * the budget just above it.
+     *
+     * Measured at 10_520 / 4_871 once a frame guest reads across kinds
+     * (FR-85, `readAcross`), is handed the app's look and pushed again on
+     * its toggle (FR-86, host/theme.ts: 1_037 B), and goes where the face
+     * goes (FR-87, `useGoTo`: 1_268 B of @graview/react a page drawing the
+     * app carries already); the budget just above it.
      */
     entry: `import { guestView, mountGuestView } from "@graview/guest/host"; globalThis.host = { guestView, mountGuestView };`,
-    minified: 8_000,
-    gzipped: 4_000,
+    minified: 11_000,
+    gzipped: 5_000,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -256,10 +262,13 @@ export const BUDGETS = [
      * Measured at 11_797 / 5_125 once the open kit (FR-90–FR-96) met
      * main's declared lenses, home view, language and describe (FR-79–FR-89);
      * the budget just above it. At 11_870 / 5_156 once a home view registers
-     * as the home's own view (FR-81) on both faces.
+     * as the home's own view (FR-81) on both faces. At 12_442 / 5_350 once
+     * what a view reads across kinds is one rule for frames and worker
+     * views alike (`readAcross`, FR-85) and the session it shares with a
+     * frame pushes a frame's theme and places (FR-86, FR-87).
      */
     entry: `import { registerWorkerView, workerHome } from "@graview/guest/host/views"; globalThis.views = { registerWorkerView, workerHome };`,
-    minified: 12_000,
+    minified: 12_750,
     gzipped: 5_500,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
@@ -283,10 +292,15 @@ export const BUDGETS = [
      * Measured at 16_215 / 6_438 once the open kit (FR-90–FR-96) met
      * main's declared lenses, home view, language and describe (FR-79–FR-89);
      * the budget just above it.
+     *
+     * Gzipped raised from 6_500 at 16_870 / 6_688, once the session it
+     * shares with a frame reads across kinds and pushes a frame's theme and
+     * places (FR-85–FR-87), and the app's look is read and watched by one
+     * module both hosts use (host/theme.ts).
      */
     entry: `import { mountGuestWorker } from "@graview/guest/host/worker"; globalThis.mount = mountGuestWorker;`,
     minified: 17_000,
-    gzipped: 6_500,
+    gzipped: 6_750,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -308,9 +322,15 @@ export const BUDGETS = [
      * Measured at 118_250 / 41_953 once the open kit (FR-90–FR-96) met
      * main's declared lenses, home view, language and describe (FR-79–FR-89);
      * the budget just above it.
+     *
+     * Measured at 119_352 / 42_411 once the view's runtime makes its global
+     * over a way out it is handed (worker/view-global.ts, shared with a
+     * headless run, FR-95) and a guest may navigate to a place (FR-87),
+     * and the host reads the app's look from one module (FR-86); the budget
+     * just above it.
      */
     entry: `import { mountWorkerView } from "@graview/guest/host/worker"; globalThis.mount = mountWorkerView;`,
-    minified: 119_000,
+    minified: 119_750,
     gzipped: 42_500,
     load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
@@ -326,10 +346,15 @@ export const BUDGETS = [
      * Measured at 59_541 / 20_383 once the open kit (FR-90–FR-96) met
      * main's declared lenses, home view, language and describe (FR-79–FR-89);
      * the budget just above it.
+     *
+     * Measured at 59_926 / 20_596 once the global was made over a way out
+     * the runtime hands it (worker/view-global.ts), so a headless run
+     * (FR-95) hands a view the same global over a transcript: the budget
+     * just above it.
      */
     entry: `import { graview } from "@graview/guest/worker/view"; globalThis.graview = graview;`,
-    minified: 60_000,
-    gzipped: 20_500,
+    minified: 60_500,
+    gzipped: 20_750,
     load: "all",
     lacks: ["@graview/core"],
   },

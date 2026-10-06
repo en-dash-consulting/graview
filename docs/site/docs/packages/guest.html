@@ -1070,7 +1070,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
       <h1 id="h-what">@graview/guest</h1>
       <p class="lede" style="margin-top: 18px;">Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.</p>
       <div class="cta"><div class="cta-line"><code>pnpm add @graview/guest</code><button type="button" class="copy" data-copy="pnpm add @graview/guest">Copy</button></div></div>
-      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/guest</code>, <code>@graview/guest/react</code>, <code>@graview/guest/host</code>, <code>@graview/guest/host/worker</code>, <code>@graview/guest/host/views</code>, <code>@graview/guest/worker</code>, <code>@graview/guest/worker/view</code>, <code>@graview/guest/build</code></p>
+      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/guest</code>, <code>@graview/guest/react</code>, <code>@graview/guest/host</code>, <code>@graview/guest/host/worker</code>, <code>@graview/guest/host/views</code>, <code>@graview/guest/headless</code>, <code>@graview/guest/headless/node</code>, <code>@graview/guest/worker</code>, <code>@graview/guest/worker/view</code>, <code>@graview/guest/build</code>, <code>@graview/guest/cli</code>, <code>@graview/guest/client</code>, <code>@graview/guest/client.js</code></p>
     </section>
     <section id="readme" aria-labelledby="h-readme">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-readme">What it is</h2></div>
@@ -1096,7 +1096,28 @@ if (!answer.ok) show(answer.message);   // the policy's own sentence
 guest.navigate(id);
 guest.autoSize();</code></pre></div>
 <p>In React, <code>useGuest()</code> from <code>@graview/guest/react</code> is the same connection: <code>{ props, act, navigate, size }</code>, re-rendering on every push. The guest entries import nothing of the framework, so a guest bundle carries none of it.</p>
-<p><code>GuestProps</code> is the plain-data half of <code>ViewProps</code> — <code>node</code>, <code>nodes</code>, the <code>edges</code> among them, <code>label</code>, <code>fidelity</code>, <code>cardinality</code>, <code>mode</code>, <code>selected</code>, <code>implicated</code>, <code>flagged</code> — and <code>acts</code>, the acts the viewer may run. A record the viewer may not see is in none of them.</p>
+<p><code>GuestProps</code> is the plain-data half of <code>ViewProps</code> — <code>node</code>, <code>nodes</code>, the <code>edges</code> among them, <code>label</code>, <code>fidelity</code>, <code>cardinality</code>, <code>mode</code>, <code>selected</code>, <code>implicated</code>, <code>flagged</code> — and <code>acts</code>, the acts the viewer may run. A record the viewer may not see is in none of them. Every record's <code>label</code> is filled as the host labels it, and <code>theme</code> and <code>places</code> are the app's.</p>
+<h4>What a frame guest reads, its look, and its place</h4>
+<div class="code" data-scroller><pre><code>views.register("package", { cardinality: "many", fidelity: "full" },
+  guestView({ url, name: "prices", title: "The price sheet", reads: { kinds: ["offer"], edges: ["includes"] } }),
+  { title: "The price sheet" });
+views.home(guestView({ url: frontUrl, name: "front", reads: { kinds: ["package"] } }));</code></pre></div>
+<p>A guest is handed what it is drawn over and the edges among those records. With <code>reads</code> it is also handed every record of the kinds it reads and every edge of the edges it reads between the records it holds, as the viewer sees them (<code>readAcross</code>, the rule a worker view's manifest uses too). A guest over packages that reads <code>offer</code> and <code>includes</code> gets each package's offers, and an offer the viewer may not see is in none of it. Drawn as the home (<code>views.home</code>), a guest is drawn over nothing and sees what it reads: it is the routed home's body, and the landing over the scene.</p>
+<p>Its props carry <code>theme</code>, a <code>GuestTheme</code>: the scheme, the accent, ground, panel, ink, muted ink and edge colours, and the body and mono fonts, read off the element the frame is drawn in. The scheme is the app's own (the embed's <code>data-graview-scheme</code>), not the system's, and the host pushes again when the app's toggle changes it. <code>mountGuestView</code> takes <code>reads</code>, <code>theme</code> and <code>places</code> too.</p>
+<p><code>title</code> names the frame for assistive technology. Registered with the same title, the guest is a place on both faces: listed by <code>placesOf</code>, at <code>/places/the-price-sheet</code> on the routed face and <code>#view=the-price-sheet</code> in the scene. <code>props.places</code> lists the app's places, and <code>guest.navigate({ place: "the-packages" })</code> goes to one.</p>
+<h4>One client, served or inlined</h4>
+<p><code>@graview/guest/client.js</code> is the frame guest's client as one prebuilt classic script (2.4 kB). It leaves one global, <code>GraviewGuest</code>, and <code>GraviewGuest.connect()</code> is <code>connectGuest()</code>. A host serves it at a path of its own, or inlines its text where a frame's policy allows inline script alone, as Graview Cloud serves an uploaded view (<code>script-src 'unsafe-inline'</code>). <code>GUEST_CLIENT</code> from <code>@graview/guest/client</code> is that text, and <code>GUEST_CLIENT_SHA256</code> its hash for a policy that names it.</p>
+<div class="code" data-scroller><pre><code>&lt;main id="app"&gt;&lt;/main&gt;
+&lt;script&gt;/* GUEST_CLIENT */&lt;/script&gt;
+&lt;script&gt;
+  const guest = GraviewGuest.connect();
+  guest.subscribe((props) =&gt; {
+    document.body.style.background = props.theme.panel;
+    app.replaceChildren(...props.nodes.map((node) =&gt; Object.assign(document.createElement("p"), { textContent: node.label })));
+    guest.size(document.documentElement.scrollHeight);
+  });
+&lt;/script&gt;</code></pre></div>
+<p>How to write one, with a worked example, is the <code>graview-embed</code> skill. <code>guest-sandbox --transport=client</code> serves a guest of a few lines under that policy and finds it renders, acts, navigates, resizes and follows the app's toggle in Chromium, WebKit and Firefox.</p>
 <h3>In a worker</h3>
 <p>Where a frame cannot be nested — a chat's widget, whose sandbox will not frame another origin — the same guest runs in a classic Web Worker the host starts from a <code>blob:</code> URL, and draws in the host's page from a component kit.</p>
 <div class="code" data-scroller><pre><code>import { mountGuestWorker } from "@graview/guest/host/worker";
@@ -1168,6 +1189,23 @@ pages.surface("home", workerHome(frontPage));                         // a view 
 <p>What is left: work a view schedules with timers between pushes is not timed per push. A view that busies its own worker for just under <code>silentMs</code>, answers the heartbeat, and does it again can hold a core of the reader's machine for as long as it is shown. That is the worker's thread, not the page's; the page stays responsive.</p>
 <h4>A view with no build</h4>
 <p>A view is handed over as its plain source, <code>{ source }</code>: one script against the <code>graview</code> global, with no imports, no bundler and no copy of the protocol. The host puts the view's runtime in front of it — Remote DOM's polyfill, the hardening, the channel and the global, which the host holds as one classic script and fetches only when it first starts a view — and runs both as one strict classic worker. A module worker is not an option: a <code>blob:</code> one is refused in an opaque origin. The hardened worker has no <code>eval</code>, no function constructor and no <code>importScripts</code>, so the one way left to load code is <code>import()</code>, which is syntax: a source whose text says <code>import</code> anywhere, even in a string or a comment, is refused before it runs (<code>checkViewSource</code> says why), and so is one that exports. <code>{ script }</code> still takes a whole worker script built against <code>@graview/guest/worker/view</code>. How to write one — the manifest, what may be drawn, the theme's tokens, the write rules, links and limits, with a list lens and a home worked through — is the <code>graview-worker-view</code> skill (<code>graview skills install</code>).</p>
+<h4>Run a view headless, and say what it drew</h4>
+<p>Before a view is applied, a host can run it once with no network and no DOM, against one member's sight, and be told what it drew in the words <code>describePlace</code> says a place in (<code>@graview/core/describe</code>): its headings, text, figures and fields, and its lists with each record's title and what its row or card says. Or it is told why the view will not do.</p>
+<div class="code" data-scroller><pre><code>import { runWorkerViewHeadless } from "@graview/guest/headless";
+
+const result = await runWorkerViewHeadless({ manifest, source, store, principal, run });
+if (result.ok) say(result.description.text);       // "The packages (/places/the-packages) — as partner …"
+else say(result.reason, result.detail);            // "act": It asks for the act "buy", which its manifest does not name.</code></pre></div>
+<p>The reasons are the page's (<code>source</code>, <code>manifest</code>, <code>error</code>, <code>nodes</code>, <code>flood</code>, <code>slow</code>, <code>refused</code>) and two of a headless run's own: <code>act</code>, an act asked for from the view's code or bound to a press (<code>data-act</code>) that its manifest does not name, and <code>isolate</code>, the host's isolate could not run it. Nothing is applied: an act the view asks for is written down in the transcript and answered with a refusal.</p>
+<p>A view never runs in the host's own context. The host supplies the isolate: <code>run</code> is handed one script and one JSON string (<code>HeadlessPayload</code>), loads the script into an isolate of its choosing, calls the global it leaves (<code>graviewHeadless</code>) with the string, and hands back the string it resolves with. Nothing but text crosses. There is no default, and without a <code>run</code> the helper throws. The script is the headless runtime, then the view. It makes the isolate a worker's before the view is read: the same <code>graview</code> global over a transcript, a console that writes to it, timers that never fire, and everything outside the worker's allowlist taken from the global. Then the view's top line runs and it is pushed what it is shown, once. What it sent is judged again in the host's context, from the transcript alone, by the open kit's own renderer drawing into a tree of plain objects (<code>drawTranscript</code>, <code>describeDrawing</code>), so the isolate's word is not taken for what the view drew.</p>
+<p><code>nodeIsolate</code> from <code>@graview/guest/headless/node</code> is a <code>run</code> for Node: a worker thread with a heap ceiling and a context made from nothing (no <code>process</code>, <code>require</code>, <code>fetch</code> or timers; no code from strings), with a deadline that covers the microtasks the view queues. In workerd, the script is one module of a worker of its own with no outbound network, and the host's module, loaded first, keeps <code>Response</code> to answer with:</p>
+<div class="code" data-scroller><pre><code>// before.js
+const Made = Response; export const answer = (text) =&gt; new Made(text);
+// host.js
+import { answer } from "./before.js"; import "./view.js";   // view.js is payload.script
+const run = globalThis.graviewHeadless;
+export default { async fetch(request) { return answer(await run(await request.text())); } };</code></pre></div>
+<p><code>graview view check view.js --app app.js --manifest manifest.json --seed seed.json --roles partner</code> does the same from a terminal, with <code>nodeIsolate</code>.</p>
     </section>
     <section id="api" aria-labelledby="h-api">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (6)</h2></div>

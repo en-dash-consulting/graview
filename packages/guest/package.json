@@ -37,6 +37,14 @@
       "types": "./dist/host/views.d.ts",
       "default": "./dist/host/views.js"
     },
+    "./headless": {
+      "types": "./dist/headless/index.d.ts",
+      "default": "./dist/headless/index.js"
+    },
+    "./headless/node": {
+      "types": "./dist/headless/node.d.ts",
+      "default": "./dist/headless/node.js"
+    },
     "./worker": {
       "types": "./dist/worker/index.d.ts",
       "default": "./dist/worker/index.js"
@@ -48,7 +56,16 @@
     "./build": {
       "types": "./dist/build.d.ts",
       "default": "./dist/build.js"
-    }
+    },
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "default": "./dist/cli.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "default": "./dist/client.js"
+    },
+    "./client.js": "./client.js"
   },
   "scripts": {
     "build": "tsc -b"
@@ -73,6 +90,7 @@
   },
   "files": [
     "dist",
+    "client.js",
     "README.md"
   ],
   "sideEffects": [

@@ -97,6 +97,42 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     sentence, tone, action })`, not a toast of your own fixed over the app:
     it is drawn in the framework's panel, on top, and read aloud.
 
+## A view of your own, in a frame
+
+The other way round: somebody's HTML page drawn inside the app as a view
+of a kind or as the home, in a frame sandboxed to scripts alone. Register
+it with `guestView` from `@graview/guest/host`:
+
+```ts
+views.register("package", { cardinality: "many", fidelity: "full" },
+  guestView({ url, name: "prices", title: "The price sheet", reads: { kinds: ["offer"], edges: ["includes"] } }),
+  { title: "The price sheet" });   // a place on both faces, by its title
+views.home(guestView({ url: frontUrl, name: "front", reads: { kinds: ["package"] } }));
+```
+
+The page needs no build. Inline `@graview/guest/client.js` (or serve it at
+a path of your own) and connect:
+
+- `GraviewGuest.connect()` returns the guest. `guest.subscribe(fn)` is
+  called with every push of `props`.
+- `props.nodes` holds the records it is drawn over and those of the kinds
+  it `reads`, each with `id`, `kind`, `label` and its fields; `props.edges`
+  the links among them (`{ kind, from, to }`). Only what the viewer may see.
+- `props.theme` is the app's look: `scheme`, `accent`, `ground`, `panel`,
+  `ink`, `inkMuted`, `edge`, `fontBody`, `fontMono`. Paint from it; it is
+  pushed again when the app's toggle changes, whatever the system prefers.
+- `guest.act(name, args)` asks for an act; it is applied as the viewer,
+  `via: "view:<name>"`, and resolves `{ ok, intent }` or `{ ok: false,
+  message }`, the policy's own sentence. `props.acts` lists what they may run.
+- `guest.navigate(id)` goes to a record; `guest.navigate({ place: slug })`
+  to one of `props.places`.
+- `guest.size(px)` asks for a height; the frame takes it.
+
+`examples/price-sheet.html` is a whole one: each package with its offers,
+painted from the theme, a press that notes something, links to the offers,
+and its own height. It runs under `default-src 'none'; script-src
+'unsafe-inline'`, the policy Graview Cloud serves an uploaded view with.
+
 ## Worked examples
 
 - `apps/seedbed/src/site-embed.ts` — the docs site's chapters, many to a

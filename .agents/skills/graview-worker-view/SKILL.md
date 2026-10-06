@@ -149,18 +149,27 @@ scene, and the app's declared home is drawn if it fails.
    the declaration it reads. `checkManifest(manifest, store)` and
    `checkViewSource(source)` from `@graview/guest/host/views` must both say
    nothing.
-2. Open the place on both faces, as a member who may see less than you.
-   Is anything shown that they should not see? Does the region carry no
-   `data-worker-view-failed`?
-3. Toggle the app to dark. Does the view restyle?
-4. Press each bound button with typed words, then again with a field the
+2. Run it headless, with no network, as a member who may see less than
+   you, over a seed: `graview view check view.js --app <app> --manifest
+   manifest.json --seed <seed.json> --roles <role>`. It prints what the
+   view drew, said as `graview describe` says a place, or why it will not
+   do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act
+   its manifest does not name), `manifest` or `source`. Run it on an empty
+   seed too. In code, `runWorkerViewHeadless` from
+   `@graview/guest/headless` does the same in an isolate you supply.
+3. Open the place on both faces as that member. Is anything shown that
+   they should not see? Does the region carry no `data-worker-view-failed`?
+4. Toggle the app to dark. Does the view restyle?
+5. Press each bound button with typed words, then again with a field the
    view filled. The first applies and the second is refused.
 
 ## What the check cannot see
 
 `graview check` judges the declaration, not the script. It cannot see a
 view that throws on an empty graph, draws the wrong number, or takes too
-long on a big one. Only running it does: an empty app, a full one, and a
-member with narrow sight. Nor can it see a view that misleads. The host
+long on a big one. Only running it does: `graview view check` on an empty
+app, a full one, and a member with narrow sight. A headless run is one
+push with timers that never fire, and nothing laid out, so it cannot see
+an animation or a layout that breaks at 390; the faces can. Nor can it see a view that misleads. The host
 keeps it from reaching or leaking anything, not from arranging what the
 person may see badly.

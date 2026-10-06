@@ -1,6 +1,6 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
-import { plainNode, type GuestViewInput } from "./session.js";
+import { plainNode, readAcross, type GuestViewInput } from "./session.js";
 
 /*
  * A WORKER VIEW IS A PLACE, WITH A MANIFEST THE HOST ENFORCES (FR-91).
@@ -109,17 +109,13 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
           })
         : graph.nodesOfKind(attached as never)
       : [];
-  const read = (manifest.reads?.kinds ?? []).filter((kind) => kind !== attached || manifest.cardinality === "one").flatMap((kind) => graph.nodesOfKind(kind as never));
+  /* What it reads across kinds (session.ts's `readAcross`, the frame guest's rule too): a view of many never reads more of its own kind than the face handed it. */
+  const ownIds = new Set([...own, ...members].map((one) => one.id));
+  const read = readAcross(graph, ownIds, { kinds: (manifest.reads?.kinds ?? []).filter((kind) => kind !== attached || manifest.cardinality === "one"), edges: manifest.reads?.edges ?? [] });
   const listed = new Map<string, unknown>();
-  for (const one of [...members, ...read]) if (!own.some((mine) => mine.id === one.id)) listed.set(one.id, one);
+  for (const one of [...members, ...(read.nodes as typeof members)]) if (!own.some((mine) => mine.id === one.id)) listed.set(one.id, one);
   const shown = new Set([...own.map((one) => one.id), ...listed.keys()]);
-  const edgeKinds = new Set(manifest.reads?.edges ?? []);
-  const edges: GuestEdge[] = [];
-  for (const id of shown) {
-    for (const edge of graph.outEdges(id)) {
-      if (edgeKinds.has(edge.kind) && shown.has(edge.to)) edges.push({ kind: edge.kind, from: edge.from, to: edge.to });
-    }
-  }
+  const edges: GuestEdge[] = [...read.edges];
   const declared = new Set(manifestActs(manifest).map((one) => one.act));
   const acts: GuestAct[] = store
     .permittedMutations(principal)

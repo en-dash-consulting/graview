@@ -1124,12 +1124,13 @@ pages.surface("home", workerHome({ manifest: front, worker: { source: frontSourc
 <h3>Then find out whether it worked</h3>
 <ol>
 <li><code>graview check</code> the app the view names: a manifest is only as sound as the declaration it reads. <code>checkManifest(manifest, store)</code> and <code>checkViewSource(source)</code> from <code>@graview/guest/host/views</code> must both say nothing.</li>
-<li>Open the place on both faces, as a member who may see less than you. Is anything shown that they should not see? Does the region carry no <code>data-worker-view-failed</code>?</li>
+<li>Run it headless, with no network, as a member who may see less than you, over a seed: `graview view check view.js --app &lt;app&gt; --manifest manifest.json --seed &lt;seed.json&gt; --roles &lt;role&gt;`. It prints what the view drew, said as <code>graview describe</code> says a place, or why it will not do: <code>error</code> (what it threw), <code>nodes</code>, <code>flood</code>, <code>slow</code>, <code>act</code> (an act its manifest does not name), <code>manifest</code> or <code>source</code>. Run it on an empty seed too. In code, <code>runWorkerViewHeadless</code> from <code>@graview/guest/headless</code> does the same in an isolate you supply.</li>
+<li>Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no <code>data-worker-view-failed</code>?</li>
 <li>Toggle the app to dark. Does the view restyle?</li>
 <li>Press each bound button with typed words, then again with a field the view filled. The first applies and the second is refused.</li>
 </ol>
 <h3>What the check cannot see</h3>
-<p><code>graview check</code> judges the declaration, not the script. It cannot see a view that throws on an empty graph, draws the wrong number, or takes too long on a big one. Only running it does: an empty app, a full one, and a member with narrow sight. Nor can it see a view that misleads. The host keeps it from reaching or leaking anything, not from arranging what the person may see badly.</p>
+<p><code>graview check</code> judges the declaration, not the script. It cannot see a view that throws on an empty graph, draws the wrong number, or takes too long on a big one. Only running it does: <code>graview view check</code> on an empty app, a full one, and a member with narrow sight. A headless run is one push with timers that never fire, and nothing laid out, so it cannot see an animation or a layout that breaks at 390; the faces can. Nor can it see a view that misleads. The host keeps it from reaching or leaking anything, not from arranging what the person may see badly.</p>
     </section>
 
   </main>
