@@ -306,10 +306,13 @@ export const CSS_AT_RULES: readonly string[] = ["media", "supports", "container"
  */
 export const CSS_KEYWORD_PROPERTIES: Readonly<Record<string, readonly string[]>> = {
   position: ["static", "relative", "absolute"],
+  /* Never `base-select`: a customizable select's picker is drawn in the top layer, over the whole page, styled by the view (Chrome 135+). */
+  appearance: ["auto", "none", "menulist-button", "textfield"],
+  "-webkit-appearance": ["auto", "none", "menulist-button", "textfield"],
 };
 
 /** Selectors a view's stylesheet may not write: each reaches past the view's own tree. */
-export const CSS_REFUSED_SELECTORS: readonly string[] = ["host", "host-context", "slotted", "part", "backdrop", "view-transition", "view-transition-group", "view-transition-image-pair", "view-transition-old", "view-transition-new"];
+export const CSS_REFUSED_SELECTORS: readonly string[] = ["host", "host-context", "slotted", "part", "backdrop", "picker", "view-transition", "view-transition-group", "view-transition-image-pair", "view-transition-old", "view-transition-new"];
 
 /** The largest stylesheet, in characters, a view may give. */
 export const OPEN_MAX_STYLESHEET = 64_000;

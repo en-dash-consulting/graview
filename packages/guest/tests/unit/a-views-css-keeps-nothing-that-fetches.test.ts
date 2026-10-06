@@ -120,6 +120,22 @@ const CASES: Record<string, string> = {
   "::part past a CDC, in @supports": `@supports selector(::-->part(x)) { .x { color: red } }`,
 };
 
+describe("a customizable select's picker, which is drawn in the top layer over the whole page", () => {
+  it("keeps no appearance: base-select, in any spelling", () => {
+    for (const css of [`select { appearance: base-select }`, `select { -webkit-appearance: base-select }`, `select { APPEARANCE: Base-Select !important }`, `select { appearance: var(--a) }`]) {
+      expect(sanitizeStylesheet(css).css, css).not.toMatch(/base-select|var\(/i);
+    }
+  });
+  it("keeps no ::picker(select) rule", () => {
+    const said = sanitizeStylesheet(`::picker(select) { inset: 0; width: 100vw; height: 100vh; background: red } select::picker(select) { margin: 0 }`);
+    expect(said.css).not.toMatch(/picker/i);
+    expect(said.refused).toContainEqual({ reason: "selector", name: "picker" });
+  });
+  it("still draws the appearances that stay in the region", () => {
+    expect(sanitizeStylesheet(`select { appearance: none } input { -webkit-appearance: textfield }`).css).toBe(`select { appearance: none; }\ninput { -webkit-appearance: textfield; }`);
+  });
+});
+
 describe("a hostile stylesheet", () => {
   for (const [name, css] of Object.entries(CASES)) {
     it(`keeps nothing that reaches out: ${name}`, () => {
