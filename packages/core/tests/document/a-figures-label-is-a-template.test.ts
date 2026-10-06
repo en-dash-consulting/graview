@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { describePlace, type DescribedPart } from "../../src/describe.js";
 import { Store, type AnySchema, type GraviewApp, type Principal } from "../../src/index.js";
-import { compileBlocks, compileDocument, editDocument, fieldSpecsOf, resolveBlocks, shapesOfSchema, type Finding } from "../../src/document/index.js";
+import { compileBlocks, fieldSpecsOf, resolveBlocks } from "../../src/blocks.js";
+import { compileDocument, editDocument, shapesOfSchema, type Finding } from "../../src/document/index.js";
 
 /**
  * FR-99. A FIGURE'S LABEL IS A TEMPLATE, like a headline's text:

@@ -454,6 +454,7 @@ export default defineConfig({
      */
     alias: {
       "@graview/core/testing": framework("core/src/testing.ts"),
+      "@graview/core/blocks": framework("core/src/blocks.ts"),
       "@graview/core/describe": framework("core/src/describe.ts"),
       "@graview/core/document": framework("core/src/document/index.ts"),
       "@graview/core/conformance": framework("core/src/conformance/index.ts"),

@@ -18,7 +18,7 @@ import {
   type Arrangement,
   type Condition,
 } from "@graview/core";
-import { withComputed } from "@graview/core/document";
+import { withComputed } from "@graview/core/blocks";
 import { isDefaultView, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";

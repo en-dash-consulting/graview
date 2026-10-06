@@ -10,7 +10,7 @@ import {
   type NodeOfSchema,
   violationsTouching,
 } from "@graview/core";
-import { withComputed } from "@graview/core/document";
+import { withComputed } from "@graview/core/blocks";
 import { aggregateId, kindCardId, marqueeHeightFor, rosterRows, withFocus, withJackIn, withOverview, withPast, withWithin } from "@graview/layout/view";
 import {
   createViews,

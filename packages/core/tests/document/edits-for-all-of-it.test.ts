@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { Store, type AnySchema, type Principal } from "../../src/index.js";
-import { compileDocument, computedValues, diffDocuments, documentHash, editDocument, type Finding, type GraviewDocument } from "../../src/document/index.js";
+import { computedValues } from "../../src/blocks.js";
+import { compileDocument, diffDocuments, documentHash, editDocument, type Finding, type GraviewDocument } from "../../src/document/index.js";
 import { placesOf } from "../../src/places.js";
 
 /**

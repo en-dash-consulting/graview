@@ -7,8 +7,6 @@ export { parseTemplate, renderTemplate, formatValue, formatMoney, FORMATTERS } f
 export type { TemplatePart, Formatter, Money, RenderContext } from "./template.js";
 export { homeOf, validateViews, validateViewSpecs, viewsOf, FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, VIEW_SLOTS, VIEW_TONES, VIEW_FIELD_FORMATS, MAX_VIEW_DEPTH, MAX_VIEW_BLOCKS } from "./views.js";
 export type { FigureFormat, HomeView, ListGroup, ListSort, ToneSpec, ViewBlock, ViewSpecs, ViewSpecsByKind, ViewSlot, ViewTone, ViewFieldFormat } from "./views.js";
-export { compileBlocks, fieldSpecsOf, isTallBlock, resolveBlocks, safeHref, sayNumber } from "./blocks.js";
-export type { BlockContext, ResolvedBlock, ResolvedList, SpecBlock } from "./blocks.js";
 export * from "./expr/index.js";
 export { diffDocuments } from "./diff.js";
 export type { DocumentDiff } from "./diff.js";
@@ -23,8 +21,6 @@ export type { Upgrade, Upgraded } from "./upgrade.js";
 export { expressionRule, shapesOfSchema } from "./rules.js";
 export { computedOf, validateComputed } from "./computed.js";
 export type { ComputedEntry, ComputedKind } from "./computed.js";
-export { computedNames, computedValues, withComputed } from "./computed-values.js";
-export type { ComputedRecord, ComputedValues, PlainComputed } from "./computed-values.js";
 export type { ExpressionRuleSpec } from "./rules.js";
 export { documentOf, fieldSpecOf, toDocument } from "./to-document.js";
 export { instantiateTemplate, isGraviewTemplate, readGraviewTemplate, templateSeedPrimitives, TemplateSpec, TEMPLATE_FORMAT, TEMPLATE_FORMAT_VERSION, TEMPLATE_QUESTION_TYPES } from "./graview-template.js";
