@@ -19,4 +19,4 @@ export type { GuestViewOptions } from "./react.js";
  * page that draws only frames carries none of it.
  */
 export { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN } from "../protocol.js";
-export type { GuestProps, GuestTheme } from "../protocol.js";
+export type { GuestPlace, GuestProps, GuestTheme } from "../protocol.js";

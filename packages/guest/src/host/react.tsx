@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { useGraview, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { useGoTo, useGraview, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useEffect, useRef } from "react";
 import { mountGuestView, type GuestFrame } from "./frame.js";
 import type { GuestLimits, GuestReads, GuestViewInput } from "./session.js";
@@ -17,6 +17,12 @@ export interface GuestViewOptions {
   readonly worker?: GuestWorkerSource;
   /** The view's name: what the rail says an act came through. */
   readonly name: string;
+  /**
+   * What it is called (FR-87): the frame's accessible name, and — handed to
+   * `register(kind, cell, view, { title })` as well — the place it is on both
+   * faces. The view's name by default.
+   */
+  readonly title?: string;
   /**
    * The other kinds and the edges a frame guest is shown, beyond what it is
    * drawn over (FR-85), as the viewer sees them. A guest drawn as the home
@@ -51,12 +57,16 @@ const inputOf = (props: ViewProps<AnySchema>): GuestViewInput => ({
  * It draws an iframe sandboxed to scripts alone — or, given `worker`
  * rather than `url`, a classic worker drawing the component kit — pushes
  * the view's props as the seat at the keyboard sees them, applies what the
- * guest asks for as that seat, and goes to a record by selecting it.
+ * guest asks for as that seat, and goes to a record or a place where the
+ * face goes (`useGoTo`): its page on the routed face, chosen in the scene.
  */
 export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
   if ((options.url === undefined) === (options.worker === undefined)) throw new Error(`guestView "${options.name}" takes a url or a worker, one of the two`);
   function GuestView(props: ViewProps<AnySchema>) {
-    const { store, principal, setSelection } = useGraview<AnySchema>();
+    const { store, principal, setSelection, views } = useGraview<AnySchema>();
+    const goTo = useGoTo();
+    const going = useRef(goTo);
+    going.current = goTo;
     const holder = useRef<HTMLDivElement>(null);
     const frame = useRef<Pick<GuestFrame, "update" | "dispose"> | null>(null);
     const latest = useRef(props);
@@ -91,11 +101,14 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
       const mounted = mountGuestView(element, {
         url: options.url!,
         view: options.name,
+        ...(options.title ? { title: options.title } : {}),
         store,
         principal,
         input: () => inputOf(latest.current),
         ...(options.reads ? { reads: options.reads } : {}),
-        onNavigate: (id) => setSelection([id]),
+        places: () => views.places(),
+        onNavigate: (id) => going.current.record(id),
+        onNavigatePlace: (as) => going.current.place(as),
         ...(options.limits ? { limits: options.limits } : {}),
       });
       mounted.iframe.style.height = `${options.height ?? 160}px`;
@@ -104,7 +117,7 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
         mounted.dispose();
         frame.current = null;
       };
-    }, [store, principal, setSelection]);
+    }, [store, principal, setSelection, views]);
     useEffect(() => frame.current?.update(), [props]);
     return <div ref={holder} data-guest={options.name} />;
   }

@@ -91,16 +91,16 @@ describe("mountGuestView", () => {
 });
 
 describe("a frame guest attached to the home", () => {
-  it("is the routed home's body", async () => {
+  it("is the routed home's body, its frame named by its title", async () => {
     const views = createViews(offersApp.schema);
-    views.home?.(guestView({ url: "https://cards.example/front.html", name: "front", reads: { kinds: ["package"] } }) as never);
+    views.home?.(guestView({ url: "https://cards.example/front.html", name: "front", title: "The front page", reads: { kinds: ["package"] } }) as never);
     const host = document.createElement("div");
     document.body.appendChild(host);
     const root = createRoot(host);
     await act(async () => root.render(<PagesApp context={{ store: store() as unknown as Store<AnySchema>, views: views as never, principal: lin }} initialPath="/" />));
     const frame = host.querySelector<HTMLIFrameElement>('[data-testid="home-view"] iframe[data-guest-view="front"]');
     expect(frame).not.toBeNull();
-    expect(frame!.getAttribute("title")).toBe("front");
+    expect(frame!.getAttribute("title")).toBe("The front page");
     expect(frame!.getAttribute("sandbox")).toBe("allow-scripts");
     expect(host.querySelector('[data-testid="standing"]')).toBeNull();
     await act(async () => root.unmount());

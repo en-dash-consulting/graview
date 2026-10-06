@@ -1,5 +1,5 @@
 import { PermissionDeniedError, type AnySchema, type Principal, type Store } from "@graview/core";
-import type { GuestAct, GuestAnswer, GuestEdge, GuestNode, GuestProps, GuestRefusal, GuestTheme, HostMessage } from "../protocol.js";
+import type { GuestAct, GuestAnswer, GuestEdge, GuestNode, GuestPlace, GuestProps, GuestRefusal, GuestTheme, HostMessage } from "../protocol.js";
 
 /**
  * What the host knows of the place a guest view is drawn: `ViewProps` as
@@ -88,6 +88,8 @@ export interface GuestHostOptions<S extends AnySchema> {
   readonly onNavigatePlace?: (as: string) => void;
   /** The app's named places, by slug: where a guest may ask to go besides a record. */
   readonly places?: () => readonly string[];
+  /** The app's named places as a guest is told of them (`props.places`), when the host builds the props. */
+  readonly placesShown?: () => readonly GuestPlace[];
   /**
    * A worker guest's drawing (FR-68): its Remote DOM mutation records, for
    * the kit's renderer to draw what the kit allows of. Without it, a
@@ -247,6 +249,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       ...(input.flagged ? { flagged: visible(input.flagged) } : {}),
       acts,
       ...(options.theme ? { theme: options.theme() } : {}),
+      ...(options.placesShown ? { places: options.placesShown().map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
     };
   };
 

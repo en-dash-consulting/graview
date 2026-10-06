@@ -58,13 +58,14 @@ entries import nothing of the framework, so a guest bundle carries none of it.
 `edges` among them, `label`, `fidelity`, `cardinality`, `mode`, `selected`,
 `implicated`, `flagged` — and `acts`, the acts the viewer may run. A record
 the viewer may not see is in none of them. Every record's `label` is
-filled as the host labels it, and `theme` is the app's.
+filled as the host labels it, and `theme` and `places` are the app's.
 
-### What a frame guest reads, and its look
+### What a frame guest reads, its look, and its place
 
 ```ts
 views.register("package", { cardinality: "many", fidelity: "full" },
-  guestView({ url, name: "prices", reads: { kinds: ["offer"], edges: ["includes"] } }));
+  guestView({ url, name: "prices", title: "The price sheet", reads: { kinds: ["offer"], edges: ["includes"] } }),
+  { title: "The price sheet" });
 views.home(guestView({ url: frontUrl, name: "front", reads: { kinds: ["package"] } }));
 ```
 
@@ -81,8 +82,14 @@ Its props carry `theme`, a `GuestTheme`: the scheme, the accent, ground,
 panel, ink, muted ink and edge colours, and the body and mono fonts, read
 off the element the frame is drawn in. The scheme is the app's own (the
 embed's `data-graview-scheme`), not the system's, and the host pushes
-again when the app's toggle changes it. `mountGuestView` takes `reads`
-and `theme` too.
+again when the app's toggle changes it. `mountGuestView` takes `reads`,
+`theme` and `places` too.
+
+`title` names the frame for assistive technology. Registered with the same
+title, the guest is a place on both faces: listed by `placesOf`, at
+`/places/the-price-sheet` on the routed face and `#view=the-price-sheet` in
+the scene. `props.places` lists the app's places, and
+`guest.navigate({ place: "the-packages" })` goes to one.
 
 ## In a worker
 

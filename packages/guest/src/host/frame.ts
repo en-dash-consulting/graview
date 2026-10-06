@@ -1,5 +1,5 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
-import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type GuestTheme, type HostHello } from "../protocol.js";
+import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type GuestPlace, type GuestTheme, type HostHello } from "../protocol.js";
 import { mintNonce } from "./nonce.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestReads, type GuestStats, type GuestViewInput } from "./session.js";
 import { readTheme, watchTheme } from "./theme.js";
@@ -27,7 +27,11 @@ export interface MountGuestViewOptions<S extends AnySchema> {
    * prefers.
    */
   readonly theme?: () => GuestTheme;
+  /** The app's named places: what the guest is told of (`props.places`), and may ask to go to by slug. None by default. */
+  readonly places?: () => readonly GuestPlace[];
   readonly onNavigate?: (id: string) => void;
+  /** The guest asked to go to one of `places`, by its slug. */
+  readonly onNavigatePlace?: (as: string) => void;
   /** The guest asked for a height. By default the frame takes it. */
   readonly onSize?: (height: number) => void;
   readonly limits?: GuestLimits;
@@ -131,6 +135,8 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       ...(options.input ? { input: options.input } : {}),
       ...(options.reads ? { reads: options.reads } : {}),
       theme,
+      ...(options.places ? { places: () => options.places!().map((place) => place.as), placesShown: options.places } : {}),
+      ...(options.onNavigatePlace ? { onNavigatePlace: options.onNavigatePlace } : {}),
       ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
       onSize: options.onSize ?? ((height) => (iframe.style.height = `${height}px`)),
       ...(options.limits ? { limits: options.limits } : {}),
