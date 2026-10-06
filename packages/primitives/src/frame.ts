@@ -12,7 +12,8 @@
  * Nothing in this module's files may import a barrel: not this package's,
  * and not `@graview/react` (`@graview/react/provider` instead).
  */
-export { DARK, GRAVIEW_BRAND, LIGHT, SCHEMES, themeCss, themeVariables } from "./theme.js";
+/* The sheet without the scene's own rules: the scene face draws those (`sceneCss`, from `./scene`) — FR-104. */
+export { DARK, GRAVIEW_BRAND, LIGHT, SCHEMES, themeBaseCss, themeVariables } from "./theme.js";
 export type { Brand, Scheme, ThemeCssOptions, ThemeTokens } from "./theme.js";
 export { Profile } from "./profile.js";
 export type { HostAction } from "./profile.js";

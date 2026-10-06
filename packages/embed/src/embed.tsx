@@ -318,7 +318,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
             ) : shown === "pages" ? (
               <PagesContent store={store as never} views={views as never} presence={presence} auto={auto} brand={brand} props={props as never} />
             ) : (
-              <SceneFace auto={auto} rememberAs={app.name} {...(props.companion ? { companion: props.companion } : {})} />
+              <SceneFace auto={auto} rememberAs={app.name} scheme={scheme} scope={scope} {...(props.companion ? { companion: props.companion } : {})} />
             )}
             <Drawn asked={face} shown={shown} onDrawn={drawn} />
           </Suspense>

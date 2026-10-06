@@ -109,7 +109,8 @@ export type {
 } from "./primitives/index.js";
 
 // The visual system: tokens, and the stylesheet an app drops in.
-export { DARK, GRAVIEW_BRAND, LIGHT, SCHEMES, themeCss, themeVariables } from "./theme.js";
+export { DARK, GRAVIEW_BRAND, LIGHT, SCHEMES, themeBaseCss, themeVariables } from "./theme.js";
+export { sceneCss, themeCss } from "./scene-css.js";
 export type { Brand, Scheme, ThemeCssOptions, ThemeTokens } from "./theme.js";
 
 // Generic views for every cell, derived from the declaration.

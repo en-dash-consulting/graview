@@ -40,8 +40,7 @@ import type { Brand, Scheme, ThemeTokens } from "@graview/core";
  * without reaching into the UI package.
  */
 export { DARK, LIGHT, SCHEMES } from "@graview/core";
-import { isoShade, SCHEMES, kitVariables, layer, layerVariables, resolveKit, SCENE_LAYERS, shapeOf, TYPOGRAPHY, typographyOf } from "@graview/core";
-import type { IsoFace, IsoWash } from "@graview/core";
+import { SCHEMES, kitVariables, layer, layerVariables, resolveKit, SCENE_LAYERS, shapeOf, TYPOGRAPHY, typographyOf } from "@graview/core";
 import { SPEC_VIEW_CSS } from "./spec-css.js";
 
 
@@ -148,12 +147,20 @@ function stillness(asking: string, within: string): string {
  * <style> (FR-57). As a JS comment in an empty interpolation the words stay
  * where they explain the rule, and a minifier folds them away.
  */
-export function themeCss(
+/*
+ * THE SHEET WITHOUT THE SCENE (FR-104). What every face draws on: the
+ * tokens, the type, the panels, the views as data, motion. The scene's own
+ * rules — the districts from altitude, the plots, the village, the roads,
+ * the billboards, the bands — are `sceneCss` (scene-css.ts), which the
+ * scene face draws beside it, so a page that opens on the pages face
+ * carries none of them. `themeCss` is the two together, in that order.
+ */
+export function themeBaseCss(
   scheme: Scheme = "dark",
   brand: Brand = GRAVIEW_BRAND,
   options: ThemeCssOptions = {},
 ): string {
-  const css = sheet(scheme, brand, options);
+  const css = baseSheet(scheme, brand, options);
   return options.scope === undefined ? css : withinTheBox(css, options.scope);
 }
 
@@ -173,7 +180,7 @@ export function themeCss(
  * keyframes) names no element and is left as it is; @media and @supports
  * are walked into.
  */
-function withinTheBox(css: string, scope: string): string {
+export function withinTheBox(css: string, scope: string): string {
   const under = `:where(${scope}) `;
   const at = (selector: string) =>
     selector === scope ||
@@ -247,12 +254,7 @@ function splitSelectors(list: string): string[] {
   return out;
 }
 
-/** A face of the iso lighting as the saturation and lightness of an `hsl()` whose hue is the kind's. */
-const face = (f: IsoFace): string => `${f.saturation}% ${f.lightness}%`;
-/** A translucent one, with its alpha. */
-const wash = (f: IsoWash): string => `${face(f)} / ${f.alpha}`;
-
-function sheet(scheme: Scheme, brand: Brand, options: ThemeCssOptions): string {
+export function baseSheet(scheme: Scheme, brand: Brand, options: ThemeCssOptions): string {
   const tokens = brand.schemes[scheme];
   const root = options.scope ?? ":root";
   const surface = options.scope ?? "html, body";
@@ -288,7 +290,6 @@ function sheet(scheme: Scheme, brand: Brand, options: ThemeCssOptions): string {
    */
   const shape = shapeOf(brand);
   const type = typographyOf(brand);
-  const iso = isoShade(scheme);
   const kit = resolveKit(brand.kit);
   return `${root} {
 ${themeVariables(tokens)}
@@ -478,9 +479,6 @@ ${/* A card on the kinds plane.
      floats above the card and the block stands up out of it. */ ""}
   overflow: clip;
 }
-[data-graview-altitude] .graview-kind-card {
-  overflow: visible;
-}
 .graview-kind-card:hover,
 .graview-kind-card:focus-within {
   height: auto;
@@ -488,15 +486,6 @@ ${/* A card on the kinds plane.
   box-shadow: var(--graview-lift-high);
   position: relative;
   z-index: ${SCENE_LAYERS.lines};
-}
-${/* From altitude a district is a village on its plot, not a card: hovering
-   it must not raise a white panel over the buildings. The lift stays in
-   the stack, where the card is a card. */ ""}
-[data-graview-altitude] .graview-kind-card:hover,
-[data-graview-altitude] .graview-kind-card:focus-within {
-  transform: none;
-  box-shadow: none;
-  background: transparent;
 }
 
 ${/* FROM ALTITUDE the ground is an ISOMETRIC LATTICE — diamond cells at the
@@ -538,79 +527,6 @@ ${/* DRAWN AS TILES, one cell each. A repeating gradient at the lattice's
   -webkit-mask-image: linear-gradient(to top, #000 42%, rgba(0,0,0,0.35) 70%, transparent 92%);
 }
 
-${/* THE GROUND UNDER A DISTRICT: its plot, drawn. Four lattice corners in
-   the kind's hue, a kerb, a cast shadow toward the light — the arithmetic
-   the layout already did, made visible, so a district stands on land
-   rather than floating on a hatch. Fades in with the altitude number the
-   lattice fades in with; a hand-placed district's kerb is dashed, which is
-   the pinned mark on the ground rather than a box over the drawing. */ ""}
-.graview-plots {
-  z-index: ${SCENE_LAYERS.plots};
-  opacity: var(--graview-altitude);
-  transition: opacity 640ms cubic-bezier(0.33, 0, 0.2, 1);
-}
-.graview-plot-tile {
-  fill: hsl(var(--graview-hue, 200) ${wash(iso.plot)});
-  stroke: hsl(var(--graview-hue, 200) ${wash(iso.plotEdge)});
-  stroke-width: 1;
-  stroke-linejoin: round;
-  pointer-events: auto;
-  cursor: pointer;
-  filter: drop-shadow(${scheme === "light" ? "5px 4px 6px rgba(20,30,32,0.14)" : "6px 5px 8px rgba(0,0,0,0.4)"});
-  transition: fill 170ms ease;
-}
-.graview-plot-tile:hover {
-  fill: hsl(var(--graview-hue, 200) 45% ${scheme === "light" ? "58%" : "48%"} / ${scheme === "light" ? "0.2" : "0.3"});
-}
-.graview-plot[data-graview-pinned] .graview-plot-tile {
-  stroke-dasharray: 4 3;
-}
-${/* THE VILLAGE on the tile: one small iso building per member in the kind's
-   own faces (the same roof and walls the block had), a flagged member's roof
-   in the warning colour, a selected member's building lit in the accent.
-   Architecture, not controls: the tile under them takes the click. */ ""}
-.graview-village { pointer-events: none; }
-.graview-building polygon { stroke-width: 0.8; }
-.graview-building[data-graview-flagged] .graview-iso-roof { fill: var(--graview-warn); stroke: var(--graview-warn); }
-.graview-building[data-graview-selected] polygon { stroke: var(--graview-accent); stroke-width: 1.4; }
-.graview-building[data-graview-selected] .graview-iso-roof { fill: color-mix(in oklab, var(--graview-accent) 45%, var(--graview-panel)); }
-.graview-village-rest {
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
-  fill: var(--graview-ink-muted);
-}
-${/* THE ROADS between plots: the lattice's own two legs from kerb to kerb, a
-   bed between two edges in the ground's ink. Under the tiles and the
-   buildings, over the fields. A road the legend is asking about comes up
-   in the accent. */ ""}
-.graview-road-edge {
-  fill: none;
-  stroke: var(--graview-ink);
-  stroke-opacity: ${scheme === "light" ? "0.28" : "0.4"};
-  stroke-width: 7;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-.graview-road-bed {
-  fill: none;
-  stroke: var(--graview-ground);
-  stroke-width: 5;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-.graview-road[data-graview-lit] .graview-road-edge {
-  stroke: var(--graview-accent);
-  stroke-opacity: 0.9;
-}
-${/* FIELDS. From altitude the ground darkens a shade toward the near edge and
-   fades to the page at the horizon, so the lattice is land with a distance
-   rather than paper with a pattern. */ ""}
-.graview-ground[data-graview-altitude] {
-  background:
-    linear-gradient(to top, color-mix(in oklab, var(--graview-ground) ${scheme === "light" ? "93%" : "88%"}, var(--graview-ink)) 0%, var(--graview-ground) 78%),
-    var(--graview-ground);
-}
-
 ${/* THE KEEPER'S BLOCK IN THE PROFILE, which hides itself when it is empty.
    Both controls inside it draw nothing for a seat that may not administer,
    and a heading with nothing under it is worse than no heading — so the
@@ -624,72 +540,11 @@ ${/* A host's own action in the profile (FR-72): a row of the pane, lit where th
   background: var(--graview-wash);
   color: var(--graview-accent);
 }
-
-${/* THE OPEN CHEVRON APPEARS WHEN REACHED FOR. Drawn on every plate at
-   altitude it was noise times the number of districts; it shows on hover,
-   on keyboard focus, and while the district is open — and stays a real
-   button in between, so Tab still finds it and Enter still opens. */ ""}
-[data-graview-altitude] .graview-kind-open {
-  opacity: 0.5;
-  transition: opacity 150ms ease;
-}
-${/* Quiet: the chevron alone until reached for. Never opacity zero — a
-   button nobody can see is a button a driven browser cannot press either,
-   and Tab must land on something that looks like something. */ ""}
-[data-graview-altitude] .graview-kind-open-word {
-  display: none;
-}
-[data-graview-altitude] .graview-kind-card:hover .graview-kind-open,
-[data-graview-altitude] .graview-kind-card:focus-within .graview-kind-open,
-[data-graview-altitude] .graview-kind-open[aria-expanded="true"] {
-  opacity: 1;
-}
-[data-graview-altitude] .graview-kind-card:hover .graview-kind-open-word,
-[data-graview-altitude] .graview-kind-card:focus-within .graview-kind-open-word,
-[data-graview-altitude] .graview-kind-open[aria-expanded="true"] .graview-kind-open-word {
-  display: inline;
-}
 ${/* The district-open control and its roster: altitude-only chrome. Inside
    the stack expanding dissolves a card, so the control does not exist
    there. A full fingertip even though the glyph is small — the audit holds
    every control to 24px. */ ""}
 .graview-kind-open { display: none; }
-[data-graview-altitude] .graview-kind-open {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  ${/* A FINGERTIP, AND THE READER'S FINGERTIP IF IT IS BIGGER. 24px is the
-     floor audit-ui holds every control to; 1.5rem is the same 24 at the
-     default text size and grows with a reader who asked for more, so the
-     control never drifts under the words it sits beside. A max() rather than
-     either one alone: rem alone drops below the fingertip at a smaller
-     setting, px alone ignores the setting altogether. */ ""}
-  min-height: max(1.5rem, 24px);
-  padding: 1px 9px;
-  margin: -3px 0;
-  border-radius: 999px;
-  border: 1px solid var(--graview-edge);
-  background: var(--graview-panel);
-  box-shadow: none;
-  color: var(--graview-ink-muted);
-  cursor: pointer;
-  ${/* IN REM, LIKE EVERY OTHER SIZE HERE. At 10px this control's words were
-     the one piece of text in the framework that ignored the reader's text
-     size completely: set to Largest, every name on the screen doubled and
-     "open" stayed ten pixels tall. A size a person chose and a control that
-     will not take it is the accessibility setting failing on its own
-     surface. */ ""}
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  line-height: 1;
-  white-space: nowrap;
-}
-[data-graview-altitude] .graview-kind-open:hover {
-  color: var(--graview-accent);
-  border-color: var(--graview-accent-dim);
-}
 ${/* The roster reads as a LIST, one member a row — chips wrapping at their
    own widths read as spilled tiles, and a district's population is a roll
    call, not a mosaic. */ ""}
@@ -800,68 +655,6 @@ ${/* The press: the whole frame, laid over the picture and the title rather than
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-${/* THE BILLBOARD'S FULL-SCREEN CONTROL: the one way down from a picture. */ ""}
-${/* THE RAIL A BILLBOARD IS MOVED BY: a title bar, in the board's own frame
-   ink, along its top edge. Positioned like the full-screen control beside
-   it — the host wraps its children, so the rail is a grandchild of the
-   screen box and a child selector never reaches it. Wide enough to be an
-   easy target, short enough that the picture underneath is still what you
-   see, and present only at altitude, because only up there is the board
-   standing on a plot it could be moved around. */ ""}
-.graview-screen-grip {
-  display: none;
-}
-[data-graview-altitude] [data-graview-screen] .graview-screen-grip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  ${/* Drawn height, not CSS height: a district's plane is scaled down at
-     altitude, and 14 here reached the screen as an eight-pixel strip that
-     took three attempts to catch. */ ""}
-  height: 32px;
-  padding: 0 6px 0 12px;
-  box-sizing: border-box;
-  cursor: grab;
-  ${/* A title bar in the panel's own colours, not a grey strip: the board is
-     a window onto the picture, and its bar reads as the window's. */ ""}
-  background: var(--graview-panel-muted);
-  border-bottom: 1px solid var(--graview-edge);
-  z-index: ${SCENE_LAYERS.lines};
-}
-[data-graview-altitude] [data-graview-screen] .graview-screen-title {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--graview-ink);
-}
-[data-graview-altitude] [data-graview-screen] .graview-screen-grip:active {
-  cursor: grabbing;
-}
-.graview-screen-fullscreen {
-  flex: 0 0 auto;
-  min-height: max(1.5rem, 24px);
-  padding: 1px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--graview-edge);
-  background: var(--graview-panel);
-  color: var(--graview-accent);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-  box-shadow: none;
-}
-.graview-screen-fullscreen:hover:not(:disabled) {
-  border-color: var(--graview-accent);
 }
 .graview-drive-in-marquee > button.graview-drive-in-thumb {
   font-size: 0.75rem;
@@ -1004,255 +797,6 @@ ${/* Off the visible ground: an indicator at the border, pointing at it. */ ""}
   margin-top: 7px;
   animation: graview-settle 240ms ease backwards;
 }
-[data-graview-altitude] .graview-kind-members > [data-graview-pick] {
-  width: 100%;
-  box-sizing: border-box;
-  justify-content: flex-start;
-  max-width: none;
-}
-${/* An OPENED district is a PANEL, not a pill with a list stuffed in it:
-   name and count share the header line, the roster sits under a hairline,
-   and the block behind fades — the plate IS the district while it is
-   open, so no roof pokes out above the roster. */ ""}
-[data-graview-altitude] .graview-kind-face[data-graview-opened] {
-  ${/* A header that WRAPS rather than a grid that squeezes: the name's column
-     was minmax(0, 1fr) beside the count's auto, so "VEHICLES" beside
-     "291 · +29 past · close" got 25 pixels and the count was drawn over it. */ ""}
-  display: flex !important;
-  flex-wrap: wrap;
-  justify-content: flex-start !important;
-  align-items: baseline !important;
-  column-gap: 10px;
-  row-gap: 2px;
-  border-radius: 12px !important;
-  padding: 10px 12px 11px !important;
-  width: 236px;
-  max-width: 236px;
-  box-shadow: var(--graview-lift-high) !important;
-}
-[data-graview-altitude] .graview-kind-face[data-graview-opened] .graview-kind-members {
-  flex: 1 0 100%;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--graview-edge);
-}
-[data-graview-altitude] .graview-kind-block[data-graview-opened] {
-  opacity: calc(var(--graview-altitude) * 0.22);
-}
-
-${/* WHAT KIND OF THING THIS IS, astride the focus panel's top-right edge —
-   the kind's dot and its name, the same thread the chips and the legend
-   carry. Scene chrome, so no view has to remember to say it. */ ""}
-.graview-kind-tag {
-  position: absolute;
-  top: -9px;
-  right: 14px;
-  z-index: ${SCENE_LAYERS.tag};
-  display: var(--graview-kit-tags, inline-flex);
-  align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  ${/* The kind's own hue on the border and the words, so the tag and the
-     district it belongs to read as one thread. */ ""}
-  border: 1px solid hsl(var(--graview-hue, 200) 45% var(--graview-tint-lightness) / 0.55);
-  color: hsl(var(--graview-hue, 200) 45% calc(var(--graview-tint-lightness) + ${scheme === "light" ? "-32%" : "28%"}));
-  background: var(--graview-float);
-  box-shadow: var(--graview-lift-low);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--graview-ink-faint);
-  pointer-events: none;
-}
-
-${/* A LINE UNDER THE POINTER says it will take the press: the invisible hit
-   run ghosts in, so editability is discoverable by hovering the relation
-   itself rather than by rumor. */ ""}
-.graview-edge-hit:hover {
-  stroke: var(--graview-accent);
-  opacity: 0.3;
-}
-
-${/* THE DISTRICTS THE ROW COULD NOT HOLD.
-   Not a district: no figure, no count, no tint of its own. A card that is
-   one control — how many more, and a press — and, open, a panel above the
-   row naming every district with what it holds. Solid rather than dashed
-   and faded: a dashed, translucent card read as a placeholder, and the only
-   way to five districts should not look like something that failed to load. */ ""}
-${/* A RELATION THE BAND COULD NOT HOLD: a group with its count and first names,
-   or the door to the rest. A card like the others, never the kind's lens small. */ ""}
-.graview-band-group {
-  display: grid;
-  align-content: center;
-  gap: 2px;
-  height: 100%;
-  ${/* A card you press, held to the floor every pressable piece of chrome keeps. */ ""}
-  min-height: max(1.75rem, 28px);
-  box-sizing: border-box;
-  padding: 6px 10px;
-  border-radius: var(--graview-radius-sm, 8px);
-  border: 1px solid var(--graview-edge);
-  background: var(--graview-panel);
-  color: var(--graview-ink);
-  overflow: hidden;
-  cursor: pointer;
-}
-.graview-band-group[data-graview-band="picture"] {
-  border-style: dashed;
-}
-.graview-band-group[data-graview-emphasis="lit"] {
-  border-color: var(--graview-accent);
-}
-.graview-band-group[data-graview-emphasis="dimmed"] {
-  opacity: 0.5;
-}
-.graview-band-group-head {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  min-width: 0;
-}
-.graview-band-group-name {
-  flex: 1;
-  min-width: 0;
-  font-weight: 600;
-  font-size: 0.9375rem;
-  line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.graview-band-group-open {
-  font-size: 0.75rem;
-  color: var(--graview-accent);
-}
-.graview-band-group-names {
-  font-size: 0.8125rem;
-  line-height: 1.3;
-  color: var(--graview-ink-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.graview-band-group-count {
-  color: var(--graview-ink);
-  font-variant-numeric: tabular-nums;
-}
-.graview-beyond {
-  position: relative;
-  height: 100%;
-  box-sizing: border-box;
-  border-radius: var(--graview-radius-sm, 8px);
-  border: 1px solid var(--graview-edge);
-  background: var(--graview-panel);
-}
-.graview-beyond-more {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  height: 100%;
-  min-height: max(1.75rem, 28px);
-  padding: var(--graview-pad-sm, 8px);
-  box-sizing: border-box;
-  border: none;
-  border-radius: inherit;
-  background: none;
-  color: var(--graview-ink-muted);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.875rem;
-  text-align: left;
-}
-.graview-beyond-more:hover,
-.graview-beyond[data-graview-beyond-open] .graview-beyond-more {
-  color: var(--graview-accent);
-  background: var(--graview-wash);
-}
-.graview-beyond-count {
-  font-family: var(--graview-font-display);
-  font-size: 1.1875rem;
-  line-height: 1;
-  color: inherit;
-}
-.graview-beyond-word {
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.graview-beyond-chevron {
-  margin-left: auto;
-  font-size: 0.8125rem;
-}
-${/* The panel stands above the card, inside the scene, and never clips: the
-   card's box is a district's height, which holds a count and not a list. */ ""}
-.graview-beyond-list {
-  position: absolute;
-  left: 0;
-  bottom: calc(100% + 6px);
-  ${/* On the ground, over every plane — the focused card on plane zero
-     painted over a panel drawn on plane two, and a menu under a card is
-     no menu. Above the zoom control too, which is the only other thing
-     that stands on the ground. */ ""}
-  z-index: ${layer("popover")};
-  margin: 0;
-  padding: 6px;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  ${/* Its own width, not the ground's: portalled, a percentage here is the
-     whole scene. */ ""}
-  min-width: 200px;
-  max-width: min(280px, 92%);
-  max-height: 60vh;
-  overflow: auto;
-  border-radius: var(--graview-radius-sm, 8px);
-  border: 1px solid var(--graview-edge);
-  background: var(--graview-panel);
-  box-shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.45);
-}
-.graview-beyond-list button {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  ${/* A FINGERTIP WHERE IT IS ACTUALLY DRAWN, not where it was designed.
-     Every other control in this sheet is floored at 24 and the audit divides
-     by the plane's scale before judging it, which is right for a control
-     that sits ON a large target: the chip's disclosure is small, and the
-     card behind it is the size of a card. These names are not that. They are
-     the ONLY way to the districts the row could not hold, and plane two is
-     drawn at 0.90 — so a designed 24 meets a finger as 21.7. Designed at 28
-     it is drawn at 25, which is the number the floor was always about. */ ""}
-  min-height: max(1.75rem, 28px);
-  padding: 0 8px;
-  border: none;
-  border-radius: var(--graview-radius-sm, 6px);
-  background: none;
-  color: var(--graview-ink);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.875rem;
-  text-align: left;
-  overflow-wrap: anywhere;
-  white-space: nowrap;
-}
-.graview-beyond-list button:hover {
-  color: var(--graview-accent);
-  background: var(--graview-wash);
-}
-.graview-beyond-list button[aria-current] {
-  color: var(--graview-ink-muted);
-  cursor: default;
-}
-.graview-beyond-tally {
-  margin-left: auto;
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--graview-ink-faint);
-}
 
 ${/* The way into the archive, on the card that fed it: quiet, but a real
    control at a real size. */ ""}
@@ -1342,17 +886,6 @@ ${/* A district STANDS: an isometric block — roof, two shaded walls — whose
     scheme === "light" ? "10px 7px 14px rgba(20,30,32,0.28)" : "12px 8px 18px rgba(0,0,0,0.6)"
   });
 }
-.graview-iso-roof {
-  fill: hsl(var(--graview-hue, 200) ${face(iso.roof)});
-  stroke: ${iso.roofEdge};
-  stroke-width: 1;
-}
-.graview-iso-right {
-  fill: hsl(var(--graview-hue, 200) ${face(iso.right)});
-}
-.graview-iso-left {
-  fill: hsl(var(--graview-hue, 200) ${face(iso.left)});
-}
 
 ${/* WHERE THE KIND HAS ITS OWN DRAWING, the drawing is the building.
    Same footprint as the block, same ground line, same cast shadow — the
@@ -1435,175 +968,6 @@ ${/* From altitude the card's face becomes the district's NAMEPLATE: an
   transition: border-radius 640ms cubic-bezier(0.33, 0, 0.2, 1),
     padding 640ms cubic-bezier(0.33, 0, 0.2, 1),
     box-shadow 640ms ease;
-}
-${/* A SIGNPOST at the plot's front corner. From altitude the nameplate stood
-   at the top of the card — over the back row of the village — and the
-   screen had to clear it. It is planted at the front vertex of the tile
-   now, on a short post, where a sign stands at the entrance to a place;
-   the scene says where that vertex is in --graview-front-y. */ ""}
-[data-graview-altitude] .graview-kind-face {
-  position: absolute !important;
-  left: 50% !important;
-  top: 2% !important;
-  transform: translateX(-50%);
-  width: max-content;
-  ${/* Wider than the block when the name is: a label overflows its building
-     the way a map label does. "REQUIRE / MENTS" on two lines does not. */ ""}
-  max-width: none;
-  white-space: nowrap;
-  height: auto !important;
-  flex-direction: row !important;
-  align-items: baseline !important;
-  gap: 7px !important;
-  padding: 3px 11px !important;
-  border-radius: 999px !important;
-  box-shadow: var(--graview-lift-low) !important;
-  z-index: ${SCENE_LAYERS.tag};
-}
-[data-graview-altitude] [data-graview-plot] .graview-kind-face {
-  top: calc(var(--graview-front-y) - 22px) !important;
-}
-[data-graview-altitude] [data-graview-plot] .graview-kind-face::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  width: 1px;
-  height: 10px;
-  background: var(--graview-ink-faint);
-}
-${/* A landmark WITHOUT a plot — a nested card — keeps its plate floating
-   above the drawing rather than across its head; one on a plot stands at
-   the signpost like every other district (the rule above). */ ""}
-[data-graview-altitude] [data-graview-landmark]:not([data-graview-plot] *) .graview-kind-face {
-  top: 0 !important;
-  transform: translate(-50%, calc(-100% - 7px));
-}
-${/* The drive-in's board hangs UNDER the signpost, in the ground the layout
-   reserved for it below the tile's front corner, not over the village. */ ""}
-[data-graview-altitude] .graview-drive-in {
-  top: calc(var(--graview-front-y, 42px) + 12px);
-}
-${/* An OPENED district's listing takes the ground under the signpost; the
-   board steps up over the village, which the listing covers anyway. */ ""}
-[data-graview-altitude] .graview-kind-face[data-graview-opened] ~ .graview-drive-in {
-  top: calc(var(--graview-front-y, 42px) - 22px - var(--graview-marquee-room, 0px) + 8px);
-}
-${/* THE LANDMARK STANDS IN THE SQUARE: its feet at the plot's centre, among
-   the buildings, rather than at the card's bottom edge — which, once the
-   card grew for a board, was out in the road in front of the village. */ ""}
-[data-graview-altitude] [data-graview-plot] .graview-kind-landmark {
-  bottom: auto;
-  top: calc(var(--graview-centre-y, 50%) + 10px);
-  transform: translate(-50%, -100%) scale(calc(0.55 + var(--graview-altitude) * 0.45));
-}
-${/* ZOOM, in the ground's corner: the way a map carries its own. Two
-   fingertip-sized buttons and the level between them, shown from altitude. */ ""}
-.graview-zoom {
-  position: absolute;
-  right: 16px;
-  bottom: 16px;
-  ${/* Above the occupants: a robot walking past a control must not cover it. */ ""}
-  z-index: ${SCENE_LAYERS.zoom};
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px;
-  border-radius: 999px;
-  border: 1px solid var(--graview-edge);
-  background: var(--graview-panel);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-}
-.graview-zoom-button {
-  min-width: 32px;
-  min-height: 32px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--graview-ink);
-  font: inherit;
-  font-size: 1.0625rem;
-  line-height: 1;
-  cursor: pointer;
-}
-.graview-zoom-button:hover:not(:disabled) {
-  background: var(--graview-edge);
-}
-.graview-zoom-button:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-.graview-zoom-level {
-  min-width: 3.2em;
-  text-align: center;
-  font-size: 0.8125rem;
-  color: var(--graview-ink-faint);
-  font-variant-numeric: tabular-nums;
-}
-
-${/* THE SCREEN IS A BILLBOARD at the back of the village: a frame, and two
-   posts into the ground at its foot. */ ""}
-${/* On the NATURAL BOX, which is the picture now: the layout cuts the
-   billboard to what the lens drew (measured by the scene), never shorter
-   than a screen's worth — so the box is the picture, and an empty lens is a
-   header over an empty screen rather than a strip floating over the
-   village. The frame used to sit on the drawing itself, from the days the
-   box was as tall as the window with the picture in its top third. It
-   carries the panel's own ground so the empty part of a screen is a screen
-   and not the field showing through a frame. */ ""}
-[data-graview-altitude] [data-graview-screen] > [data-graview-natural],
-[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag) {
-  outline: 2px solid color-mix(in oklab, var(--graview-ink) 60%, var(--graview-panel));
-  outline-offset: 0;
-  background: var(--graview-panel);
-}
-[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag) {
-  position: relative;
-}
-[data-graview-altitude] [data-graview-screen] > [data-graview-natural]::before,
-[data-graview-altitude] [data-graview-screen] > [data-graview-natural]::after,
-[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag)::before,
-[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag)::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  width: 3px;
-  height: 16px;
-  background: color-mix(in oklab, var(--graview-ink) 60%, var(--graview-panel));
-}
-[data-graview-altitude] [data-graview-screen] > [data-graview-natural]::before,
-[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag)::before { left: 22%; }
-[data-graview-altitude] [data-graview-screen] > [data-graview-natural]::after,
-[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag)::after { right: 22%; }
-
-${/* A thing inside a view that is itself a thing: an event in a calendar, a
-   person in a list. It has to look reachable, and it has to SHOW focus —
-   these are the primary way anyone moves through the graph, so a keyboard
-   user who cannot see where they are is stuck. */ ""}
-${/* A card someone dragged into place. Marked, not decorated: a dotted tie to
-   say this position is held rather than computed. */ ""}
-${/* On the CHILD, not the host: the host is the layout's box, and a view
-   that sizes to its content (a zoomed record, a fit panel) fills only part
-   of it — a dashed box around the empty remainder read as a drawing
-   mistake, not a mark. */ ""}
-${/* And never on the natural box either — a view drawn scaled sits inside a
-   box the size of the whole scene, and the mark belongs on the drawing, not
-   on the box; nor on the kind tag, which is a label and not the thing. */ ""}
-[data-graview-pinned] > :not([data-graview-natural]):not(.graview-kind-tag),
-[data-graview-pinned] > [data-graview-natural] > * {
-  outline: 1px dashed var(--graview-edge-bright);
-  outline-offset: 3px;
-  border-radius: 12px;
-}
-${/* AND NOT FROM ALTITUDE, where a district is a village on a plot and its
-   card is a box with nothing drawn in it: the dashed outline was the only
-   visible part, so a hand-placed district read as an empty rounded
-   rectangle sitting on the ground — several of them, in a picture that had
-   no rectangles in it. The plot's own kerb goes dashed up here, which is
-   the same fact said where the district actually is. */ ""}
-[data-graview-altitude] [data-graview-pinned] > :not([data-graview-natural]):not(.graview-kind-tag),
-[data-graview-altitude] [data-graview-pinned] > [data-graview-natural] > * {
-  outline: none;
 }
 
 [data-graview-pick] {
@@ -1688,13 +1052,6 @@ ${/* WHAT YOU CAN PRESS IS WHAT YOU CAN SEE.
 [data-graview-stage="dom"] [data-graview-view] > [data-graview-natural] {
   pointer-events: none;
 }
-[data-graview-stage="dom"] [data-graview-view] > :not([data-graview-natural]),
-[data-graview-stage="dom"] [data-graview-view] > [data-graview-natural] > * {
-  pointer-events: auto;
-}
-[data-graview-view][data-graview-selected] {
-  filter: drop-shadow(0 0 14px var(--graview-accent-dim));
-}
 
 ${/* A node implicated by the last change, whoever made it. The pulse is the
    same for a human edit and an agent edit, because the diff is. */ ""}
@@ -1771,46 +1128,11 @@ ${/* A QUESTION THE SEAT ASKED, standing at the node it is about: it says
   35%  { box-shadow: 0 0 26px 3px var(--graview-accent-dim); }
   100% { box-shadow: 0 0 0 0 transparent; }
 }
-[data-graview-touched] > * {
-  animation: graview-touched 1100ms cubic-bezier(0.22, 1, 0.36, 1);
-  border-radius: 10px;
-}
-
-${/* ------------------------------------------------------------ watching
- *
- * From outside the plane stack, activity has somewhere to HAPPEN: a kind
- * lights where an edit landed, an edge pulses where a relation was made or
- * broken, and a flag appears where a rule started failing. All of it is
- * derived from the op log — author, intent, reads and writes — and all of it
- * is drawn by these rules rather than by a frame loop, which is why watching
- * costs nothing while nothing is happening.
- *
- * Who moved is carried in HUE, not in a badge. A person is the accent the
- * whole interface already uses for "you did this"; an agent is a colder cast,
- * so a turn it took on its own is distinguishable at a glance from one you
- * directed; both at once takes both.
- */ ""}
-[data-graview-activity] {
-  --graview-activity: var(--graview-accent);
-}
-[data-graview-activity="autonomous"] {
-  --graview-activity: hsl(212 72% 62%);
-}
-[data-graview-activity="co-edited"] {
-  --graview-activity: hsl(280 60% 66%);
-}
-[data-graview-activity="rule"] {
-  --graview-activity: var(--graview-warn);
-}
 
 @keyframes graview-landed {
   0%   { box-shadow: 0 0 0 0 var(--graview-activity); opacity: 0.55; }
   30%  { box-shadow: 0 0 30px 4px var(--graview-activity); opacity: 1; }
   100% { box-shadow: 0 0 0 0 transparent; opacity: 1; }
-}
-[data-graview-view][data-graview-wrote] > * {
-  animation: graview-landed 900ms cubic-bezier(0.22, 1, 0.36, 1);
-  border-radius: 10px;
 }
 
 ${/* What an agent READ is the half a diff cannot show, and the half that says
@@ -1821,20 +1143,6 @@ ${/* What an agent READ is the half a diff cannot show, and the half that says
   25%  { outline-color: var(--graview-activity); }
   100% { outline-color: transparent; }
 }
-[data-graview-view][data-graview-read] > :not([data-graview-natural]):not(.graview-kind-tag),
-[data-graview-view][data-graview-read] > [data-graview-natural] > * {
-  outline: 1px dashed transparent;
-  outline-offset: 3px;
-  border-radius: 10px;
-  animation: graview-considered 1800ms ease-out;
-}
-
-${/* A rule that has just begun to fail. It outlives the edit that caused it,
-   because the problem does. */ ""}
-[data-graview-view][data-graview-broke] > * {
-  box-shadow: 0 0 0 1px var(--graview-warn), 0 0 22px -6px var(--graview-warn);
-  border-radius: 10px;
-}
 
 ${/* A relation made or broken: both ends were written, so the line between
    them is the thing that changed. */ ""}
@@ -1842,9 +1150,6 @@ ${/* A relation made or broken: both ends were written, so the line between
   0%   { stroke-opacity: 0.28; stroke-width: 1.4; }
   30%  { stroke-opacity: 1; stroke-width: 3; }
   100% { stroke-opacity: 0.28; stroke-width: 1.4; }
-}
-[data-graview-connector][data-graview-activity] {
-  animation: graview-relation 1200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 ${/*

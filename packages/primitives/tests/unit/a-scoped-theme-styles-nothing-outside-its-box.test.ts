@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { GRAVIEW_BRAND, themeCss } from "../../src/theme.js";
+import { GRAVIEW_BRAND } from "../../src/theme.js";
+import { themeCss } from "../../src/scene-css.js";
 
 /*
  * FR-64. The embed renders `themeCss(…, { scope })` into its own <style>, and

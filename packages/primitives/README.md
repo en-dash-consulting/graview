@@ -22,4 +22,8 @@ the schema, the invariants and the op log.
 
 **Visual system** — `themeCss(scheme, brand)`. Two schemes that are not
 inversions of each other: dark loses luminance, light loses contrast and gains
-haze. A brand supplies its own and `graview check` measures it.
+haze. A brand supplies its own and `graview check` measures it. The sheet is
+two halves: `themeBaseCss`, what every face draws on, and `sceneCss`, the
+rules only the scene draws (the districts from altitude, the plots, the
+village, the billboards), which an embed's scene face draws beside it so a
+page on the pages face carries none of them.
