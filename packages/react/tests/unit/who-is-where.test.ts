@@ -1,7 +1,7 @@
 import type { Presence } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import type { DrawnBox } from "../../src/context.js";
-import { anchorOf, AUDIENCE_ROW, placeOthers } from "../../src/presence.js";
+import { anchorOf, AUDIENCE_ROW, placeOthers } from "../../src/placement.js";
 
 /**
  * THE OTHERS, PLACED ON YOUR OWN MAP. A presence is a stop, never a

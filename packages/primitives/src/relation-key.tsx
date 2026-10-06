@@ -1,5 +1,6 @@
 import { layer, resolveKit, type AnySchema } from "@graview/core";
-import { kitConnector, useGraph, useGraview, useGraviewIfAny, useKit, useNavigation, useSelection } from "@graview/react/provider";
+import { kitConnector, useKit } from "@graview/react/drawing";
+import { useGraph, useGraview, useGraviewIfAny, useNavigation, useSelection } from "@graview/react/provider";
 import {
   CONNECTOR_DASH,
   connectorStroke,

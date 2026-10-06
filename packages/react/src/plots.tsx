@@ -3,7 +3,7 @@ import { BLOCK, roadsOf, toIso, villageOf, type Building, type Plot } from "@gra
 import { kindCardId, kindOfCard, type InterpolatedLayout } from "@graview/layout";
 import { memo, useCallback, useMemo, useRef, type CSSProperties, type ReactElement } from "react";
 import { useGraview } from "./context.js";
-import { useFlagged } from "./hooks.js";
+import { useFlagged } from "./emphasis.js";
 
 /*
  * THE GROUND UNDER A DISTRICT. The layout gives every district a plot on

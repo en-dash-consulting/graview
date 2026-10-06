@@ -1,7 +1,7 @@
 import { presenceName } from "@graview/core";
 import type { ReactElement } from "react";
 import { useGraview, type DrawnBox } from "./context.js";
-import { placeOthers } from "./presence.js";
+import { placeOthers } from "./placement.js";
 import type { RobotState } from "./robot.js";
 
 /**

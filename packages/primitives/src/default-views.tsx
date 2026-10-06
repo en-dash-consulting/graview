@@ -12,13 +12,12 @@ import {
 } from "@graview/core";
 import { withComputed } from "@graview/core/blocks";
 import { aggregateId, kindCardId, marqueeHeightFor, rosterRows, withFocus, withJackIn, withOverview, withPast, withWithin } from "@graview/layout/view";
+import { useKit, useReached } from "@graview/react/drawing";
 import {
   createViews,
   useFound,
   useGraview,
-  useKit,
   useNavigation,
-  useReached,
   useSelection,
   useViolations,
   isDefaultView,

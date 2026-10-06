@@ -1,5 +1,6 @@
 import type { AnySchema } from "@graview/core";
-import { POPOVER_STYLE, useAttention, useGraview, usePopover, useSelection } from "@graview/react/provider";
+import { useAttention } from "@graview/react/drawing";
+import { POPOVER_STYLE, useGraview, usePopover, useSelection } from "@graview/react/provider";
 import { kindCardId, withFocus, withOverview, withSelection } from "@graview/layout/view";
 import {
   configuredResponder,
