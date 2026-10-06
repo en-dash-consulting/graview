@@ -61,6 +61,7 @@ export function stopAtAddress(basePath: string | undefined): string | undefined 
  */
 export function AddressBar({
   basePath,
+  pagesWere,
   shown,
   onFace,
   toggle,
@@ -68,6 +69,8 @@ export function AddressBar({
   places,
 }: {
   readonly basePath: string | undefined;
+  /** The page the routed face had before a new declaration (FR-116), for the toggle to go back to. */
+  readonly pagesWere?: string | undefined;
   readonly shown: EmbedFace;
   readonly onFace: ((face: EmbedFace) => void) | undefined;
   /** Where the strip's toggle is handed this bar's way of changing face. */
@@ -79,7 +82,7 @@ export function AddressBar({
   const latest = useRef({ shown, view, onFace });
   latest.current = { shown, view, onFace };
   // The page the routed face was on when the scene was asked for, to go back to by the toggle.
-  const pagesAt = useRef("/");
+  const pagesAt = useRef(pagesWere ?? "/");
   const leaving = () => {
     pagesAt.current = `${pathWithin(window.location.pathname, basePath) ?? "/"}${window.location.search}`;
   };

@@ -100,6 +100,36 @@ page the routed face opens (the path within the app, and `"push"`,
 `"replace"` or `"pop"`), and `handle.setPath(path)` sends it back to one
 when the host's own Back arrives.
 
+## When the declaration changes
+
+A chat that changes the app hands the host a new compiled app and a new
+store. `handle.setApp(app, store)` swaps them under the reader (or
+`setApp(app, remote)`, whose presence comes with it), and the reader stays
+where they were:
+
+```ts
+remote.onDeclaration((next) => handle.setApp(latestApp, next));
+```
+
+The face, the place or record open on Pages, and the scene's stop and
+focus are kept. What the change took away falls back to its nearest
+parent: a removed record to its kind's list (or, in the scene, its kind's
+group); a removed kind or place to the home; a lens gone from the scene to
+its kind's group, or the home when the kind went too. Under address
+routing the address stays the source of truth, and one that names
+something gone is replaced, not pushed. The seat, the seats, the people,
+the scheme, the brand and the notices stay; the faces are drawn again, so
+an open menu, a scroll position and a half-typed field do not. `drawn()`
+resolves once the new app is on the page.
+
+A host that must remount reads the place first and hands it back:
+
+```ts
+const at = handle.where();           // { face, path, stop, kind? }
+handle.unmount();
+handle = mount(root, { app, store, at });
+```
+
 ## What stands over what
 
 Every popover, menu and list of suggestions the embed draws — the profile,

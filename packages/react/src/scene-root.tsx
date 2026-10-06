@@ -754,13 +754,18 @@ export function Scene<S extends AnySchema>({
        * being thrown into a detail view to do it costs you the context that
        * made the decision obvious. Travel is the deliberate second gesture.
        */
-      onPick={(id, additive) =>
+      onPick={(id, additive, joins) =>
         setSelection((current) =>
-          additive
-            ? current.includes(id)
-              ? current.filter((other) => other !== id)
-              : [...current, id]
-            : [id],
+          /* A mark of a relation chooses what it joins (FR-111): a coverage cell, its row, its column and the records between. */
+          joins
+            ? additive
+              ? [...new Set([...current, ...joins])]
+              : [...joins]
+            : additive
+              ? current.includes(id)
+                ? current.filter((other) => other !== id)
+                : [...current, id]
+              : [id],
         )
       }
       /*

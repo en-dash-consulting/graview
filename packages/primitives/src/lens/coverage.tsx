@@ -1,7 +1,7 @@
 import { counted, labelOf, LOCAL_LAYERS, nounOf, walkKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
 import { useGraview, type ViewProps } from "@graview/react";
 import { onTheHorizon } from "./horizon.js";
-import { useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel, Roster, useWidth } from "../primitives/index.js";
 
@@ -523,6 +523,8 @@ export function CoverageView<S extends AnySchema>({
   const under = useColumnsUnderTheNames();
   const box = useRef<HTMLDivElement>(null);
   const width = useWidth(box);
+  /* The crossing last chosen here, by what it joins (FR-111). */
+  const [chosen, choose] = useState<readonly string[] | null>(null);
   /*
    * The whole graph's rows and columns, not the aggregate's members.
    *
@@ -576,6 +578,11 @@ export function CoverageView<S extends AnySchema>({
 
   const lit = new Set(implicated);
   const broken = new Set(flagged);
+  /*
+   * DRAWN TO ITS ENDS WHILE IT IS STILL WHAT IS CHOSEN: every id it joins
+   * still reached by the selection, the scene's or the page's.
+   */
+  const joined = chosen !== null && chosen.every((id) => lit.has(id)) ? chosen : null;
   // Lifted out, the matrix is the PAGE — the same argument the board makes:
   // a picture whose content is a two-dimensional arrangement is exactly the
   // thing a card-sized box was cramping.
@@ -614,7 +621,16 @@ export function CoverageView<S extends AnySchema>({
       <div
         ref={box}
         data-coverage-shape={stacked ? "stacked" : "matrix"}
+        /*
+         * A press on a crossing chooses what it joins; a press anywhere else
+         * here lets it go. The press carries on to the face, which selects.
+         */
+        onClick={(event) => choose(joinsAt(event.target))}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") choose(joinsAt(event.target));
+        }}
         style={{
+          position: "relative",
           display: "flex",
           flexDirection: "column",
           flex: "1 1 auto",
@@ -885,9 +901,10 @@ export function CoverageView<S extends AnySchema>({
                     }}
                   >
                     {grid.columns.map((column) => {
-                      const filled = grid.cells.some(
+                      const crossing = grid.cells.find(
                         (cell) => cell.rowId === row.id && cell.columnId === column.id,
                       );
+                      const filled = crossing !== undefined;
                       return (
                         <div
                           key={column.id}
@@ -926,6 +943,14 @@ export function CoverageView<S extends AnySchema>({
                                     : lit.has(column.id) && lit.has(row.id)
                                       ? "lit"
                                       : "dimmed",
+                                /*
+                                 * WHAT THE CROSSING JOINS (FR-111): its row, its
+                                 * column, and the records on the path between
+                                 * them. Choosing it chooses those; wearing only
+                                 * the column's id, Ryan × SEO chose SEO, and its
+                                 * line went to the strengths' district.
+                                 */
+                                "data-graview-joins": JSON.stringify(joinsOf(crossing)),
                               }
                             : {})}
                           title={
@@ -973,8 +998,110 @@ export function CoverageView<S extends AnySchema>({
             );
           })}
         </div>
+        {joined ? <JoinLines box={box} joins={joined} shape={`${stacked ? "stacked" : "matrix"} ${width ?? ""}`} /> : null}
       </div>
     </Panel>
+  );
+}
+
+/** What a crossing joins: its row, its column, and the records on the path between them. */
+const joinsOf = (cell: CoverageCell): readonly string[] => [cell.rowId, cell.columnId, ...(cell.via ?? [])];
+
+/** The ids the crossing under an event joins, or nothing when the event was not on one. */
+function joinsAt(target: EventTarget | null): readonly string[] | null {
+  const said = (target as Element | null)?.closest?.("[data-graview-joins]")?.getAttribute("data-graview-joins");
+  if (!said) return null;
+  try {
+    const ids: unknown = JSON.parse(said);
+    return Array.isArray(ids) && ids.every((id) => typeof id === "string") ? ids : null;
+  } catch {
+    return null;
+  }
+}
+
+const clamp = (value: number, low: number, high: number) => Math.min(high, Math.max(low, value));
+
+/** Where an element's words are drawn; its own box where they cannot be measured. */
+function wordsOf(element: Element): { left: number; right: number; top: number; bottom: number } {
+  const box = element.getBoundingClientRect();
+  const range = typeof document.createRange === "function" ? document.createRange() : null;
+  range?.selectNodeContents(element);
+  const words = typeof range?.getBoundingClientRect === "function" ? range.getBoundingClientRect() : null;
+  return words && words.width > 0 && words.height > 0 ? words : box;
+}
+type JoinLine = { readonly id: string; readonly x1: number; readonly y1: number; readonly x2: number; readonly y2: number };
+
+/**
+ * A CHOSEN CROSSING, DRAWN TO WHAT IT JOINS (FR-111).
+ *
+ * From the cell to the row's name and to the column's head — the nearest
+ * point of each — inside the picture, so it scrolls with the grid, on the
+ * scene and on a page alike. Only to a drawing of the thing itself, never
+ * to a mark: a record on the path this picture does not draw gets no line,
+ * and nothing is drawn to a district standing in for it. A stacked grid
+ * names the column inside the cell, so there its line is the row's.
+ */
+function JoinLines({ box, joins, shape }: { readonly box: { readonly current: HTMLDivElement | null }; readonly joins: readonly string[]; readonly shape: string }) {
+  const [lines, setLines] = useState<readonly JoinLine[]>([]);
+  const key = JSON.stringify(joins);
+  useLayoutEffect(() => {
+    const root = box.current;
+    if (!root || typeof window === "undefined") return;
+    const measure = () => {
+      const origin = root.getBoundingClientRect();
+      // A scene draws the picture scaled; the lines are in the picture's own pixels.
+      const scale = root.offsetWidth > 0 && origin.width > 0 ? origin.width / root.offsetWidth : 1;
+      const cell = [...root.querySelectorAll("[data-graview-joins]")].find((el) => el.getAttribute("data-graview-joins") === key);
+      if (!cell) {
+        setLines([]);
+        return;
+      }
+      const from = cell.getBoundingClientRect();
+      const out: JoinLine[] = [];
+      for (const id of JSON.parse(key) as string[]) {
+        const drawing = [...root.querySelectorAll("[data-graview-pick]")].find((el) => el.getAttribute("data-graview-pick") === id && !el.closest("[data-graview-mark]"));
+        if (!drawing) continue;
+        // To the words, not the box they stand in: a row's name is a few letters at the left of a wide label.
+        const to = wordsOf(drawing);
+        const x2 = clamp(from.left + from.width / 2, to.left, to.right);
+        const y2 = clamp(from.top + from.height / 2, to.top, to.bottom);
+        const x1 = clamp(x2, from.left, from.right);
+        const y1 = clamp(y2, from.top, from.bottom);
+        out.push({ id, x1: (x1 - origin.left) / scale, y1: (y1 - origin.top) / scale, x2: (x2 - origin.left) / scale, y2: (y2 - origin.top) / scale });
+      }
+      setLines(out);
+    };
+    measure();
+    // A sticky name stays put while the grid slides under it: measured again on a scroll.
+    let queued = 0;
+    const again = () => {
+      if (queued === 0)
+        queued = requestAnimationFrame(() => {
+          queued = 0;
+          measure();
+        });
+    };
+    document.addEventListener("scroll", again, { capture: true, passive: true });
+    window.addEventListener("resize", again, { passive: true });
+    return () => {
+      document.removeEventListener("scroll", again, { capture: true });
+      window.removeEventListener("resize", again);
+      if (queued !== 0) cancelAnimationFrame(queued);
+    };
+  }, [box, key, shape]);
+  return (
+    <svg
+      aria-hidden="true"
+      data-coverage-join={key}
+      style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", overflow: "visible", pointerEvents: "none", zIndex: LOCAL_LAYERS.over }}
+    >
+      {lines.map((line) => (
+        <g key={line.id} data-coverage-join-to={line.id}>
+          <line x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2} stroke="var(--graview-accent)" strokeWidth={1.6} strokeLinecap="round" />
+          <circle cx={line.x2} cy={line.y2} r={2.6} fill="var(--graview-accent)" />
+        </g>
+      ))}
+    </svg>
   );
 }
 

@@ -3,6 +3,7 @@ import { declaredLenses, orderKinds, placesOf, type AppPlace } from "../places.j
 import type { AnySchema } from "../schema/schema.js";
 import { fieldWords, isCurrent, labelOf, readableFields } from "../schema/define-node.js";
 import { columnMoves, columnOf, statusColumns } from "../columns.js";
+import { coverageParts } from "./describe-coverage.js";
 import { compileBlocks, fieldSpecsOf, resolveBlocks, type BlockContext, type ResolvedBlock } from "./blocks.js";
 import { withComputed } from "./computed-values.js";
 import { shapesOfSchema } from "./rules.js";
@@ -282,6 +283,10 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
         const ways = columns.filter((column) => column.value !== null && by.has(column.value)).map((column) => `to ${column.label} by ${[...by.get(column.value!)!].join(" or ")}`);
         parts.push({ t: "text", text: ways.length > 0 ? `Moves: ${ways.join("; ")}.` : "Moves: none for this seat." });
       }
+    } else if (lens?.lens === "coverage") {
+      // A coverage grid (FR-112): each row's columns and through what, each column's count, and who has none.
+      drawnBy = "lens:coverage";
+      parts = coverageParts(schema, graph, lens.options as unknown as Parameters<typeof coverageParts>[2]);
     } else if (lens) {
       // A picture's geometry is not words: say what it is over, and the records it draws.
       drawnBy = `lens:${lens.lens}`;
