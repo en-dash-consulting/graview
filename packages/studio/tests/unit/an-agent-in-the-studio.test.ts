@@ -3,11 +3,11 @@ import {
   createSchema,
   defineInvariant,
   defineNode,
-  figureFaults,
   nodeRef,
   type GraviewApp,
   type Principal,
 } from "@graview/core";
+import { figureFaults } from "@graview/core/figures";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { resolveProposal } from "@graview/tools";

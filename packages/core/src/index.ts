@@ -322,8 +322,6 @@ export {
   requiredRolesOf,
 } from "./places.js";
 export type { AppPlace, DeclaredLenses, DrawnLens, Opening, PagesArrangement, PlaceFinding, ShippedLensName, UndrawnLens } from "./places.js";
-export { FIGURES, FIGURE_NAMES, figureBrief, figureFaults, figureSvg } from "./schema/figures.js";
-export type { Figure } from "./schema/figures.js";
 export type {
   Cardinality,
   Fidelity,
