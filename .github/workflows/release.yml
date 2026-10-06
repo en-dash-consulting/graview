@@ -78,9 +78,9 @@ jobs:
         if: steps.state.outputs.pending == 'true'
         uses: changesets/action@v2
         with:
-          version: pnpm version-packages
-          title: "Version packages"
-          commit: "Version packages"
+          version-script: pnpm version-packages
+          pr-title: "Version packages"
+          commit-message: "Version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
