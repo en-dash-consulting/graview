@@ -1,5 +1,5 @@
 import { Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
-import type { PageComponent, PageRegistry } from "@graview/pages";
+import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { createNoticeBoard, Notices, Profile, registerDeclaredLenses, Standing, themeBaseCss, useWidth, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
@@ -67,8 +67,36 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
   readonly app: GraviewApp<S>;
   /** The graph to open with. Nothing means the empty city. */
   readonly seed?: { readonly nodes: readonly unknown[]; readonly edges: readonly unknown[] };
-  /** For the pages face: the path to open, within the app's own routes. */
+  /**
+   * For the pages face: the path to open, within the app's own routes. Set
+   * again (`setPath`), the face goes there. Under `routing: "address"` the
+   * address the page was loaded at is where the face opens instead.
+   */
   readonly path?: string;
+  /**
+   * WHO OWNS THE ADDRESS BAR (FR-106). `"memory"`, the default, is for an
+   * embed inside somebody else's page — an article, a chat's widget: the
+   * routed face keeps its own history in memory and never touches
+   * `location` or `history`. `"address"` is for a host whose page IS the
+   * app: the routed face reads its route from the address under `basePath`
+   * and pushes each page, so a place, a record and the home can be linked,
+   * reloaded and shared, and the scene keeps its stop in the fragment, as
+   * the whole-page Shell does.
+   */
+  readonly routing?: "memory" | "address";
+  /**
+   * Where the app is served under address routing: `/` (the default) or a
+   * path of the host's own, `/apps/<id>/`. A trailing slash is the same base.
+   */
+  readonly basePath?: string;
+  /**
+   * TOLD WHERE THE ROUTED FACE WENT (FR-106): its path within the app's own
+   * routes, with its search, each time it changes after arrival, and how
+   * (`"push"`, `"replace"` or `"pop"`). Under memory routing it is how a host
+   * that keeps its own history learns of a page, handing a path back with
+   * `setPath` when its own Back arrives.
+   */
+  readonly onNavigate?: (path: string, how: NavigationHow) => void;
   readonly principal?: Principal;
   /**
    * WHO ELSE IS HERE, if the host wants that: an embed broadcasts nothing

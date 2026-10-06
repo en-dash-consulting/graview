@@ -96,6 +96,18 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     host's own news through `handle.notify({ kind: "toast" | "banner",
     sentence, tone, action })`, not a toast of your own fixed over the app:
     it is drawn in the framework's panel, on top, and read aloud.
+12. **When the page IS the app, hand it the address bar.** The default,
+    `routing: "memory"`, never touches the host's `location` or `history`
+    — right in an article. A host whose whole page is the app passes
+    `routing: "address"` (and `basePath: "/apps/a1/"` when it is not served
+    at `/`), and answers every address under the base with the one page:
+    `<base>/places/<as>`, `<base>/<plural>/<id>` and the home are the routed
+    face's pages, pushed and reloadable; the scene keeps its stop in the
+    fragment (`<base>#overview=1`); the face toggle is a step Back undoes.
+    `faceAtAddress(options)` is the face an address opens on, and
+    `addressOf(place, { basePath })` (`@graview/core`) spells a place's
+    link. A host that keeps its own history stays on memory, hears
+    `onNavigate(path, how)` and answers its own Back with `setPath(path)`.
 
 ## A view of your own, in a frame
 

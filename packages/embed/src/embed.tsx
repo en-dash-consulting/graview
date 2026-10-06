@@ -5,6 +5,7 @@ import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } fro
 import type { CompanionMode } from "@graview/primitives";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { ErrorReportContext, GraviewProvider, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
+import { AddressBar, faceAtAddress, stopAtAddress } from "./address.js";
 import { createElement, lazy, Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
@@ -128,7 +129,8 @@ const StudioPlace = lazy(() => import("@graview/studio").then((studio) => ({ def
  * one element. So the theme is scoped to that element, the panes size
  * against the picture's own box, the routed face runs on a memory router,
  * the store lives in memory and starts from the seed, and the view state is
- * a prop rather than a URL. Everything else — the scene, the rails, the
+ * a prop rather than a URL — unless the host's page IS the app and it hands
+ * over the address bar (`routing: "address"`, FR-106). Everything else — the scene, the rails, the
  * inspector, the pages — is the framework's own, unchanged.
  */
 
@@ -250,8 +252,10 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
   const { rootRef, scope, css, scheme, store, presence, brand, auto, height } = useFrame(props);
   const views = useViews<S>(props, frameworkViewDoors) as never;
   const kinds = app.schema.kinds as readonly string[];
-  // The first view only: after it, where the reader goes is theirs.
-  const initialView = useMemo(() => viewFor(face, stop, kinds, (views as ReactViewRegistry<S>).places(), openingView(views as ReactViewRegistry<S>, app.schema)), []);
+  const address = props.routing === "address";
+  // The first view only: after it, where the reader goes is theirs. Under address routing, a stop in the fragment is where it starts.
+  const initialView = useMemo(() => viewFor(face, (address ? stopAtAddress(props.basePath) : undefined) ?? stop, kinds, (views as ReactViewRegistry<S>).places(), openingView(views as ReactViewRegistry<S>, app.schema)), []);
+  const toggled = useRef<((face: EmbedFace) => void) | undefined>(undefined);
   /*
    * NARROW, THE PAGES (FR-13). Below `pagesBelow` the scene and the Graview
    * give way to the routed face, and come back when there is room: the
@@ -306,9 +310,11 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
       <FaceBoundary module="@graview/react" report={report} content>
       <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)}>
         <Faces face={shown} stop={stop} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} />
+        {/* THE ADDRESS BAR, when the host's page is the app (FR-106): the face follows it, and the scene, drawn, keeps its stop in the fragment. */}
+        {address ? <AddressBar basePath={props.basePath} shown={shown} onFace={props.onFace} toggle={toggled} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} /> : null}
         {toggle && shown !== "picture" ? (
           <FaceBoundary module="@graview/embed" report={report}>
-            <EmbedStrip app={app} studio={props.studio} face={shown} narrow={narrow} onFace={props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} hostActions={props.hostActions} report={report} />
+            <EmbedStrip app={app} studio={props.studio} face={shown} narrow={narrow} onFace={address ? (next) => toggled.current?.(next) : props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} hostActions={props.hostActions} report={report} />
           </FaceBoundary>
         ) : null}
         <FaceBoundary key={shown} module={shown === "pages" || shown === "picture" ? "@graview/pages" : "@graview/react"} report={report} content>
@@ -318,7 +324,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
             ) : shown === "pages" ? (
               <PagesContent store={store as never} views={views as never} presence={presence} auto={auto} brand={brand} props={props as never} />
             ) : (
-              <SceneFace auto={auto} rememberAs={app.name} scheme={scheme} scope={scope} {...(props.companion ? { companion: props.companion } : {})} />
+              <SceneFace address={address} auto={auto} rememberAs={app.name} scheme={scheme} scope={scope} {...(props.companion ? { companion: props.companion } : {})} />
             )}
             <Drawn asked={face} shown={shown} onDrawn={drawn} />
           </Suspense>
@@ -479,6 +485,11 @@ function StudioOnTheStrip({ app, studio }: { readonly app: GraviewApp<AnySchema>
 export interface EmbedHandle {
   setFace(face: EmbedFace): void;
   setStop(stop: string): void;
+  /**
+   * Sends the routed face to a path within the app's own routes (FR-106): a
+   * host that keeps its own history hands back the path its Back arrived at.
+   */
+  setPath(path: string): void;
   setScheme(scheme: Scheme): void;
   /** Put another principal at the keyboard; the store and its history stay. */
   setSeat(principal: Principal): void;
@@ -511,6 +522,7 @@ export interface EmbedHandle {
 interface Setters {
   face(face: EmbedFace): void;
   stop(stop: string): void;
+  path(path: string): void;
   scheme(scheme: Scheme): void;
   seat(principal: Principal): void;
   seats(seats: EmbedOptions["seats"]): void;
@@ -528,7 +540,9 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
   const board = options.notices ?? createNoticeBoard();
   let setters: Setters | null = null;
   // Which face is asked for, which is drawn, and who is waiting for the one asked for.
-  let asked: EmbedFace = options.face ?? faceOf(options.stop);
+  // Under address routing, the face the address names (FR-106).
+  const opening = faceAtAddress(options);
+  let asked: EmbedFace = opening;
   let drawnFace: EmbedFace | null = null;
   let waiting: (() => void)[] = [];
   const onDrawn = (face: EmbedFace) => {
@@ -540,15 +554,16 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     for (const resolve of done) resolve();
   };
   function Host() {
-    const [face, setFace] = useState<EmbedFace>(options.face ?? faceOf(options.stop));
+    const [face, setFace] = useState<EmbedFace>(opening);
     const [stop, setStop] = useState<string | undefined>(options.stop);
+    const [path, setPath] = useState<string | undefined>(options.path);
     const [scheme, setScheme] = useState<Scheme | "auto">(options.scheme ?? "auto");
     const [principal, setSeat] = useState<Principal | undefined>(options.principal);
     const [seats, setSeats] = useState<EmbedOptions["seats"]>(options.seats);
     const [people, setPeople] = useState<readonly Person[] | undefined>(options.people);
     const [hostContext, setHostContext] = useState<EmbedHostContext | undefined>(options.hostContext);
     const [brand, setBrand] = useState<Brand | undefined>(options.brand);
-    setters = { face: setFace, stop: setStop, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand };
+    setters = { face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand };
     return (
       <Embed<S>
         {...options}
@@ -556,6 +571,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         notices={board}
         face={face}
         {...(stop !== undefined ? { stop } : {})}
+        {...(path !== undefined ? { path } : {})}
         {...(principal ? { principal } : {})}
         {...(seats ? { seats } : {})}
         {...(people ? { people } : {})}
@@ -580,6 +596,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
       flushSync(() => setters?.face(face));
     },
     setStop: (stop) => flushSync(() => setters?.stop(stop)),
+    setPath: (path) => flushSync(() => setters?.path(path)),
     setScheme: (scheme) => flushSync(() => setters?.scheme(scheme)),
     setSeat: (principal) => flushSync(() => setters?.seat(principal)),
     setSeats: (seats) => flushSync(() => setters?.seats(seats)),

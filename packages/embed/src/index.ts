@@ -1,6 +1,7 @@
 export { AUTO_SCENE_HEIGHT, Embed, faceOf, mount, mountWhenNear, preload } from "./embed.js";
 export type { EmbedHandle, EmbedOptions, EmbedProps, EmbedStudio } from "./embed.js";
 export { hostScheme } from "./frame.js";
+export { faceAtAddress } from "./address.js";
 export type { EmbedError, EmbedErrorWhere, EmbedFace, EmbedHostContext, EmbedReady, EmbedRemote, FrameOptions } from "./frame.js";
 export type { HostAction } from "@graview/primitives/frame";
 export type { CompanionMode } from "@graview/primitives";

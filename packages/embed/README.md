@@ -54,9 +54,51 @@ element (`themeBaseCss(scheme, brand, { scope })`, and the scene's own rules,
 rule of it held inside that element, so nothing of the host's is restyled; the
 panes size against the picture's own box (`cqh`) rather than the viewport;
 the routed face runs on a memory router, so the host page's address is never
-touched; the brand's fonts are fetched by the embed rather than assumed. The
+touched (unless the host's page is the app: see below); the brand's fonts are fetched by the embed rather than assumed. The
 store is in memory and starts from the seed on every mount, unless the host
 hands it one.
+
+## When the page is the app: the address bar
+
+A host whose whole page is the app — Graview Cloud's hosted app is one —
+hands the routed face the address bar, so a place, a record and the home can
+be linked, reloaded and shared:
+
+```ts
+const handle = mount(root, {
+  app, store,
+  face: innerWidth < 768 ? "pages" : "graview",  // where a bare address opens
+  routing: "address",                            // the default is "memory"
+  basePath: "/apps/a1/",                          // where the app is served; "/" by default
+});
+```
+
+The host answers every address under the base with the same page. The
+address then says which face is drawn and where on it, as the whole-page
+Shell spells it:
+
+| Address | Drawn |
+|---|---|
+| `/apps/a1/places/the-board`, `/apps/a1/tasks/t1` | the routed face, at that page |
+| `/apps/a1#overview=1`, `/apps/a1#focus=t1` | the scene, at that stop (the Graview at altitude) |
+| `/apps/a1` | the routed face's home, or on arrival the host's `face` |
+
+Each page the routed face opens is pushed, and Back returns. The scene
+keeps its stop in the fragment the way the Shell does: a step is pushed,
+moving the furniture replaces. The face toggle pushes the address of the
+face it goes to, so Back undoes it, and the page you left is where the
+toggle returns you. A reload stays where it was. `faceAtAddress(options)`
+is the face an address opens on, for a host that renders `<Embed>` itself.
+`placesOf(app)` gives each place's `address` within the app, and
+`addressOf(place, { basePath })` from `@graview/core` gives it under the
+base, spelled as the face's own links are (`pathWithin` reads one back).
+
+`routing: "memory"`, the default, is for somebody else's page: it never
+writes `history` and leaves `location` as it was. A host that keeps its
+own history stays on memory routing: `onNavigate(path, how)` is told each
+page the routed face opens (the path within the app, and `"push"`,
+`"replace"` or `"pop"`), and `handle.setPath(path)` sends it back to one
+when the host's own Back arrives.
 
 ## What stands over what
 

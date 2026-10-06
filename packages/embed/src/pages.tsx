@@ -72,6 +72,8 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
 
 export interface PagesEmbedHandle {
   setScheme(scheme: Scheme): void;
+  /** Sends the pages to a path within the app's own routes (FR-106), for a host that keeps its own history. */
+  setPath(path: string): void;
   /** Put another principal at the keyboard; the store and its history stay. */
   setSeat(principal: Principal): void;
   /** Offer other seats, or none: a seat switcher is drawn only for two or more. */
@@ -102,15 +104,17 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     people(people: readonly Person[]): void;
     hostContext(context: EmbedHostContext): void;
     brand(brand: Brand | undefined): void;
+    path(path: string): void;
   } | null = null;
   function Host() {
     const [scheme, setScheme] = useState<Scheme | "auto">(options.scheme ?? "auto");
+    const [path, setPath] = useState<string | undefined>(options.path);
     const [principal, setSeat] = useState<Principal | undefined>(options.principal);
     const [seats, setSeats] = useState<PagesEmbedOptions["seats"]>(options.seats);
     const [people, setPeople] = useState<readonly Person[] | undefined>(options.people);
     const [hostContext, setHostContext] = useState<EmbedHostContext | undefined>(options.hostContext);
     const [brand, setBrand] = useState<Brand | undefined>(options.brand);
-    set = { scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand };
+    set = { path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand };
     return (
       <PagesEmbed<S>
         {...options}
@@ -121,6 +125,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
         {...(people ? { people } : {})}
         {...(hostContext ? { hostContext } : {})}
         {...(brand ? { brand } : {})}
+        {...(path !== undefined ? { path } : {})}
         scheme={scheme}
         onSeat={setSeat}
       />
@@ -131,6 +136,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
   return {
     store: store as never,
     setScheme: (scheme) => flushSync(() => set?.scheme(scheme)),
+    setPath: (path) => flushSync(() => set?.path(path)),
     setSeat: (principal) => flushSync(() => set?.seat(principal)),
     setSeats: (seats) => flushSync(() => set?.seats(seats)),
     setPeople: (people) => flushSync(() => set?.people(people)),

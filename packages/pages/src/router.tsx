@@ -54,6 +54,53 @@ export interface PagesAppProps<S extends AnySchema> {
    * renders is what a browser renders.
    */
   readonly initialPath?: string;
+  /**
+   * TOLD WHERE THE FACE WENT (FR-106): the path, basename-relative with its
+   * search, each time it changes after arrival — and how, `"push"`,
+   * `"replace"` or `"pop"` — so a host that keeps its own history can.
+   */
+  readonly onNavigate?: (path: string, how: NavigationHow) => void;
+  /**
+   * WHERE THE HOST NOW SENDS IT (FR-106): basename-relative, like
+   * `initialPath`. The face goes there whenever this changes — a host that
+   * keeps its own history hands back the path its own Back arrived at.
+   */
+  readonly path?: string;
+}
+
+/** How the face arrived where it is: a new entry, a replaced one, or Back and Forward. */
+export type NavigationHow = "push" | "replace" | "pop";
+
+/**
+ * Says where the face went to a host that asked, and goes where the host
+ * sends it. Inside the router, whichever router it is.
+ */
+function Reported({ onNavigate, path }: { readonly onNavigate: PagesAppProps<AnySchema>["onNavigate"]; readonly path: string | undefined }) {
+  const location = useLocation();
+  const type = useNavigationType();
+  const navigate = useNavigate();
+  const here = `${location.pathname}${location.search}`;
+  const told = useRef(onNavigate);
+  told.current = onNavigate;
+  // The address the face arrived at is no navigation, so it is not reported.
+  const last = useRef<string | null>(null);
+  useEffect(() => {
+    const was = last.current;
+    last.current = here;
+    if (was === null) return;
+    // The router tidying the entry it arrived on is no step: the same address, replaced or popped, is not said.
+    if (here === was && type !== "PUSH") return;
+    told.current?.(here, type === "POP" ? "pop" : type === "REPLACE" ? "replace" : "push");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
+  const asked = useRef(path);
+  useEffect(() => {
+    if (path === undefined || path === asked.current) return;
+    asked.current = path;
+    if (path !== here) navigate(path);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path]);
+  return null;
 }
 
 function KindSwitch<S extends AnySchema>({
@@ -268,6 +315,8 @@ export function PagesApp<S extends AnySchema>({
   registry,
   basename,
   initialPath,
+  onNavigate,
+  path,
 }: PagesAppProps<S>) {
   /*
    * WHAT THE SEAT MAY SEE. Every page reads `context.store`; under a policy
@@ -278,7 +327,12 @@ export function PagesApp<S extends AnySchema>({
   const viewed = given.store.seenBy(given.principal ?? { kind: "human" });
   const context = viewed === given.store ? given : { ...given, store: viewed };
   useTheWatchKnowsWhatIsUnseen(given.store, given.principal);
-  const routed = <PagesRoutes context={context} {...(registry ? { registry } : {})} />;
+  const routed = (
+    <>
+      {onNavigate || path !== undefined ? <Reported onNavigate={onNavigate} path={path} /> : null}
+      <PagesRoutes context={context} {...(registry ? { registry } : {})} />
+    </>
+  );
   /*
    * A PROVIDER UNDER THE PAGES when the app handed over its views, so a lens
    * drawn on a page finds the store, the seat and the registry its hooks ask

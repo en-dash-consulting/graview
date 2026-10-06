@@ -116,9 +116,16 @@ export const BUDGETS = [
      * and a bundler places a whole module in every chunk that can reach it —
      * so the checker (41 kB) and the document compiler it reaches (47 kB)
      * rode in what the page loads first. Measured at 692_174 / 176_515.
+     *
+     * Raised when a host whose page is the app came to hand the routed face
+     * the address bar (FR-106): the face follows the address, and a place's
+     * address is spelled under a base path, up front because a face is
+     * chosen by it before one is fetched. The scene's fragment sync moved to
+     * a module of its own, fetched with the scene. Measured at 694_569 /
+     * 177_383.
      */
-    minified: 693_500,
-    gzipped: 177_000,
+    minified: 695_000,
+    gzipped: 177_500,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -183,9 +190,12 @@ export const BUDGETS = [
      * measured at 1_461_953 / 431_507.
      *
      * With both, measured at 1_474_169 / 435_839.
+     *
+     * Gzipped raised with the address bar (FR-106), its sync a chunk of
+     * its own: measured at 1_478_987 / 438_466.
      */
     minified: 1_480_000,
-    gzipped: 438_000,
+    gzipped: 439_000,
     load: "all",
   },
   {

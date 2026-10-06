@@ -321,6 +321,8 @@ export {
   placesOf,
   requiredRolesOf,
 } from "./places.js";
+// A place's address under a host's base path, and back (FR-106).
+export { addressOf, basePathOf, pathWithin } from "./address.js";
 export type { AppPlace, DeclaredLenses, DrawnLens, Opening, PagesArrangement, PlaceFinding, ShippedLensName, UndrawnLens } from "./places.js";
 export type {
   Cardinality,

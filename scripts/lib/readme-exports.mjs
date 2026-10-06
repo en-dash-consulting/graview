@@ -15,6 +15,9 @@ import ts from "typescript";
 /** Names written in backticks that are not exports, and why. */
 export const NOT_EXPORTS = new Map([
   ["localStorage", "a browser global"],
+  ["basePath", "an option of the embed's mount and of addressOf, not an export"],
+  ["onNavigate", "an option of the embed's mount and a prop of PagesApp, not an export"],
+  ["setPath", "a method of the embed's handle, not an export"],
   ["sessionStorage", "a browser global"],
   ["Request", "a web platform global, every runtime's"],
   ["Response", "a web platform global, every runtime's"],
