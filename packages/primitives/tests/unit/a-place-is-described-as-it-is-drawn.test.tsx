@@ -36,7 +36,8 @@ const partner: Principal = { kind: "human", id: "party-delivery", roles: ["partn
 
 function draw(principal: Principal, children: ReactNode) {
   return renderToStaticMarkup(
-    <GraviewProvider store={store} views={declaredViews(app)} initialView={EMPTY_VIEW} principal={principal}>
+    // The app's brand, as an embed hands it over: it carries the app's currency (FR-100).
+    <GraviewProvider store={store} views={declaredViews(app)} initialView={EMPTY_VIEW} principal={principal} {...(app.brand ? { brand: app.brand } : {})}>
       {children}
     </GraviewProvider>,
   );

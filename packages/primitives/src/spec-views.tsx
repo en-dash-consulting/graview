@@ -278,7 +278,7 @@ function SpecList({ list }: { readonly list: ResolvedList }) {
 
 /** Blocks about no one record — the home's body, a blocks lens — drawn under the provider, from the graph its seat may see. */
 export function SpecPlace({ blocks, heading = 2, firstHeading, slot }: { readonly blocks: readonly SpecBlock[]; readonly heading?: number; readonly firstHeading?: number; readonly slot: "home" | "place" }) {
-  const { store } = useGraview();
+  const { store, brand } = useGraview();
   useGraph();
   const ctx: SpecContext = {
     node: null,
@@ -287,6 +287,8 @@ export function SpecPlace({ blocks, heading = 2, firstHeading, slot }: { readonl
     kinds: shapesFor(store.schema as AnySchema),
     fields: {},
     today: today(),
+    // The app's currency and locale are its brand's (FR-100).
+    ...(brand ? { money: brand } : {}),
     heading,
     ...(firstHeading !== undefined ? { firstHeading } : {}),
     budget: SWEEP_BUDGET,
@@ -332,6 +334,7 @@ export function useSpecContext(node: AnyGraphNode): SpecContext {
     fields: fieldsFor(schema, node.kind),
     ...(definition ? { definition } : {}),
     today: today(),
+    ...(brand ? { money: brand } : {}),
     figure: () => <KindFigure kind={node.kind} schema={schema} {...(brand ? { brand } : {})} size={22} />,
   };
 }

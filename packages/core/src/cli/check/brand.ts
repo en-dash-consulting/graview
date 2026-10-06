@@ -44,6 +44,26 @@ export function checkAccents<S extends AnySchema>(ctx: CheckContext<S>): void {
       });
     }
   }
+  /*
+   * THE APP'S MONEY (FR-100). A currency or a locale the runtime cannot
+   * format with is said as a plain number everywhere — a brand decision
+   * that looks applied and is not — so it is refused here by name.
+   */
+  const { currency, locale } = app.brand ?? {};
+  const formats = (options: Intl.NumberFormatOptions, at?: string) => {
+    try {
+      new Intl.NumberFormat(at ?? "en-US", options);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  if (currency !== undefined && (!/^[A-Z]{3}$/.test(currency) || !formats({ style: "currency", currency }))) {
+    add({ severity: "error", code: "brand-currency", where: "brand.currency", message: `"${currency}" is not a currency's three-letter code, so money would be said with no symbol.`, fix: 'Use an ISO 4217 code, like "USD", "EUR" or "GBP".' });
+  }
+  if (locale !== undefined && !formats({}, locale)) {
+    add({ severity: "error", code: "brand-locale", where: "brand.locale", message: `"${locale}" is not a locale, so money could not be written for it.`, fix: 'Use a language tag, like "en-US" or "de-DE".' });
+  }
 }
 
 export function checkPalette<S extends AnySchema>(ctx: CheckContext<S>): void {

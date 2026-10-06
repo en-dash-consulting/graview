@@ -64,7 +64,7 @@ export type ViewBlock =
     }
   | { readonly text: string; readonly tone?: ToneSpec }
   | { readonly badge: string; readonly tone?: ToneSpec }
-  | { readonly field: string; readonly as?: ViewFieldFormat; readonly label?: string }
+  | { readonly field: string; readonly as?: ViewFieldFormat; readonly currency?: string; readonly label?: string }
   | { readonly progress: { readonly value: string; readonly max: string }; readonly label?: string }
   | { readonly group: readonly ViewBlock[]; readonly direction?: "row" | "column" }
   | { readonly when: string; readonly show: readonly ViewBlock[] }
@@ -91,7 +91,7 @@ const BLOCK_KEYS: Readonly<Record<string, readonly string[]>> = {
   list: ["sort", "limit", "group", "empty", "as"],
   text: ["tone"],
   badge: ["tone"],
-  field: ["as", "label"],
+  field: ["as", "currency", "label"],
   progress: ["label"],
   group: ["direction"],
   when: ["show"],
@@ -101,7 +101,7 @@ const BLOCK_KEYS: Readonly<Record<string, readonly string[]>> = {
 };
 const BLOCK_TYPES = Object.keys(BLOCK_KEYS);
 const SHAPES =
-  '{"title": "{name}"}, {"headline": "{count(all(\'offer\'))} offers"}, {"figure": expr, "as"?: "number"|"money"|"percent", "currency"?, "label"?}, {"list": expr, "sort"?, "limit"?, "group"?, "empty"?, "as"?: "card"|"row"}, {"text": "…", "tone"?}, {"badge": "{status}", "tone"?}, {"field": "quote", "as"?, "label"?}, {"progress": {"value": expr, "max": expr}, "label"?}, {"group": [blocks], "direction"?: "row"|"column"}, {"when": expr, "show": [blocks]}, {"divider": true}, {"figure": true}';
+  '{"title": "{name}"}, {"headline": "{count(all(\'offer\'))} offers"}, {"figure": expr, "as"?: "number"|"money"|"percent", "currency"?, "label"?}, {"list": expr, "sort"?, "limit"?, "group"?, "empty"?, "as"?: "card"|"row"}, {"text": "…", "tone"?}, {"badge": "{status}", "tone"?}, {"field": "quote", "as"?, "currency"?, "label"?}, {"progress": {"value": expr, "max": expr}, "label"?}, {"group": [blocks], "direction"?: "row"|"column"}, {"when": expr, "show": [blocks]}, {"divider": true}, {"figure": true}';
 
 /** The view specs of a document that has been read, by kind; empty when it has none. The home view is no kind's: see `homeOf`. */
 export function viewsOf(document: GraviewDocument): Readonly<Record<string, ViewSpecs>> {
@@ -257,6 +257,7 @@ function oneBlock(raw: unknown, path: string, depth: number, scope: Scope): void
         scope.findings.push(error("view-field", `${path}.field`, `${scope.kind} has no field ${typeof value === "string" ? `"${value}"` : "by that name"}`, edge ? `"${value}" is a relation; show it with {"text": "{${value}.name}"}` : undefined));
       }
       if ("as" in raw && !(VIEW_FIELD_FORMATS as readonly unknown[]).includes(raw["as"])) scope.findings.push(error("view-format", `${path}.as`, `"${String(raw["as"])}" is not a way to show a field`, `use one of ${VIEW_FIELD_FORMATS.join(", ")}`));
+      currency(raw, path, scope, "field");
       if ("label" in raw) label(raw["label"], `${path}.label`, scope);
       return;
     }
@@ -298,12 +299,16 @@ function oneBlock(raw: unknown, path: string, depth: number, scope: Scope): void
 function figureBlock(raw: Record<string, unknown>, path: string, scope: Scope): void {
   expression(raw["figure"], `${path}.figure`, scope);
   if ("as" in raw && !(FIGURE_FORMATS as readonly unknown[]).includes(raw["as"])) scope.findings.push(error("view-format", `${path}.as`, `"${String(raw["as"])}" is not a way to say a figure`, `use one of ${FIGURE_FORMATS.join(", ")}`));
-  if ("currency" in raw) {
-    if (typeof raw["currency"] !== "string" || !/^[A-Z]{3}$/.test(raw["currency"])) scope.findings.push(error("view-currency", `${path}.currency`, 'a currency is its three-letter code, like "USD" or "EUR"'));
-    else if (raw["as"] !== "money") scope.findings.push(error("view-currency", `${path}.currency`, "a currency belongs on a figure shown as money", 'add "as": "money"'));
-  }
+  currency(raw, path, scope, "figure");
   // A figure's label is a template, like a headline (FR-99): "{name}, net".
   if ("label" in raw) template(raw["label"], `${path}.label`, scope);
+}
+
+/** A currency on money (FR-100): its three-letter code, on a figure or a field shown as money. Without one, the app's `brand.currency`. */
+function currency(raw: Record<string, unknown>, path: string, scope: Scope, what: string): void {
+  if (!("currency" in raw)) return;
+  if (typeof raw["currency"] !== "string" || !/^[A-Z]{3}$/.test(raw["currency"])) scope.findings.push(error("view-currency", `${path}.currency`, 'a currency is its three-letter code, like "USD" or "EUR"'));
+  else if (raw["as"] !== "money") scope.findings.push(error("view-currency", `${path}.currency`, `a currency belongs on a ${what} shown as money`, 'add "as": "money"'));
 }
 
 /**
@@ -434,28 +439,57 @@ function listBlock(raw: Record<string, unknown>, path: string, scope: Scope): vo
         const headings = group["headings"];
         if (!isObject(headings) || Object.values(headings).some((words) => typeof words !== "string" || words.length === 0 || words.length > 80)) {
           scope.findings.push(error("list-group", `${path}.group.headings`, 'headings are words per choice, like {"pain": "What hurts"}, at most 80 characters each'));
-        } else {
-          if (choices) for (const choice of Object.keys(headings)) if (!choices.includes(choice)) scope.findings.push(error("list-group", `${path}.group.headings.${choice}`, `"${choice}" is not one of ${by}'s choices`, `use ${choices.join(", ")}`));
-          for (const [choice, words] of Object.entries(headings)) braces(words, `${path}.group.headings.${choice}`, scope, "a group's heading");
+        } else if (choices) {
+          for (const choice of Object.keys(headings)) if (!choices.includes(choice)) scope.findings.push(error("list-group", `${path}.group.headings.${choice}`, `"${choice}" is not one of ${by}'s choices`, `use ${choices.join(", ")}`));
         }
       }
     }
   }
   if ("empty" in raw && (typeof raw["empty"] !== "string" || raw["empty"].length === 0 || raw["empty"].length > 200)) scope.findings.push(error("list-empty", `${path}.empty`, "what an empty list says is a sentence, at most 200 characters"));
-  else braces(raw["empty"], `${path}.empty`, scope, "what an empty list says");
   if ("as" in raw && !(LIST_AS as readonly unknown[]).includes(raw["as"])) scope.findings.push(error("list-as", `${path}.as`, `a list draws each record as its "card" or its "row", not "${String(raw["as"])}"`));
 }
 
 function label(value: unknown, path: string, scope: Scope): void {
   if (typeof value !== "string" || value.length === 0 || value.length > 60) scope.findings.push(error("view-label", path, "a label is a few words, at most 60 characters"));
-  else braces(value, path, scope, "a field's label");
 }
 
-/** Braces in words that are no template would be drawn as written (FR-99): said at the block's path, never drawn raw unannounced. */
-function braces(value: unknown, path: string, scope: Scope, what: string): void {
-  if (typeof value === "string" && /[{}]/.test(value)) {
-    scope.findings.push(warning("view-braces", path, `${what} is words, not a template, so "${value}" would be drawn with its braces`, 'say it without braces, or say the value in a text block: {"text": "… {name} …"}'));
+/**
+ * BRACES IN WORDS THAT ARE NO TEMPLATE (FR-99). A field's label, what an
+ * empty list says and a group's heading are drawn as written, so a `{name}`
+ * in one would be drawn with its braces; each is said, at its block's path,
+ * as a `view-braces` warning. Asked by the check (`compileDocument`,
+ * `checkApp`) and not by a page compiling what its host already checked,
+ * so the page does not carry it. `views` is a document's `views` or a
+ * declaration's `viewSpecs` at `at`; `home` a declaration's home view.
+ */
+export function viewBraces(views: unknown, at: string, home?: unknown, lenses?: unknown): Finding[] {
+  const found: Finding[] = [];
+  const words = (value: unknown, path: string, what: string) => {
+    if (typeof value === "string" && /[{}]/.test(value)) found.push(warning("view-braces", path, `${what} is words, not a template, so "${value}" would be drawn with its braces`, 'say it without braces, or say the value in a text block: {"text": "… {name} …"}'));
+  };
+  const blocks = (list: unknown, path: string): void => {
+    if (!Array.isArray(list)) return;
+    list.forEach((raw: unknown, i) => {
+      if (!isObject(raw)) return;
+      const at = `${path}.${i}`;
+      if ("field" in raw) words(raw["label"], `${at}.label`, "a field's label");
+      if ("list" in raw) {
+        const headings = isObject(raw["group"]) ? raw["group"]["headings"] : undefined;
+        if (isObject(headings)) for (const [choice, heading] of Object.entries(headings)) words(heading, `${at}.group.headings.${choice}`, "a group's heading");
+        words(raw["empty"], `${at}.empty`, "what an empty list says");
+      } else blocks(raw["group"], `${at}.group`);
+      blocks(raw["show"], `${at}.show`);
+    });
+  };
+  if (isObject(views)) {
+    for (const [kind, specs] of Object.entries(views)) {
+      if (Array.isArray(specs)) blocks(specs, `${at}.${kind}`);
+      else if (isObject(specs)) for (const slot of VIEW_SLOTS) blocks(specs[slot], `${at}.${kind}.${slot}`);
+    }
   }
+  blocks(home, "home");
+  if (Array.isArray(lenses)) lenses.forEach((lens: unknown, i) => isObject(lens) && lens["name"] === "blocks" && isObject(lens["options"]) && blocks(lens["options"]["blocks"], `lenses.${i}.options.blocks`));
+  return found;
 }
 
 /** Blocks about no one record — the home, a blocks lens — checked at `at`. */

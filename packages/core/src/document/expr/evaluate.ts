@@ -202,12 +202,11 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     const b = run(e.right, subject);
     // Sets meet, join and part (FR-101): each record once, in the order the left side has them, then the right's.
     if (e.op === "&" || e.op === "|" || (e.op === "-" && (a instanceof NodeSet || b instanceof NodeSet))) {
-      const left = asSet(a, e.at, e.op);
-      const right = asSet(b, e.at, e.op);
-      spend(left.nodes.length + right.nodes.length, e.at);
-      if (e.op === "|") return distinct([...left.nodes, ...right.nodes]);
-      const inRight = new Set(right.nodes.map((n) => n.id));
-      return distinct(left.nodes.filter((n) => inRight.has(n.id) === (e.op === "&")));
+      const left = asSet(a, e.at, e.op).nodes;
+      const right = asSet(b, e.at, e.op).nodes;
+      spend(left.length + right.length, e.at);
+      const inRight = new Set(right.map((n) => n.id));
+      return distinct(e.op === "|" ? [...left, ...right] : left.filter((n) => inRight.has(n.id) === (e.op === "&")));
     }
     switch (e.op) {
       case "==":
@@ -263,13 +262,12 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
         const walk = (id: string, edge: string) => (e.fn === "out" ? ctx.graph.out(id, edge) : ctx.graph.in(id, edge));
         // A walk from every member of a set (FR-101): out(S, 'edge') reaches each record once, in the order first reached.
         if (e.args.length === 2) {
-          const from = asSet(arg(0), e.at, e.fn);
+          const from = asSet(arg(0), e.at, e.fn).nodes;
           const edge = word(1);
-          spend(from.nodes.length, e.at);
           return distinct(
-            from.nodes.flatMap((node) => {
+            from.flatMap((node) => {
               const reached = walk(node.id, edge);
-              spend(reached.length, e.at);
+              spend(reached.length + 1, e.at);
               return reached;
             }),
           );

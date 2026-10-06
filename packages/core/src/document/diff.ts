@@ -123,7 +123,12 @@ export function diffDocuments(before: GraviewDocument, after: GraviewDocument): 
     for (const n of keys(b)) if (n in a && !same((a as Record<string, unknown>)[n], (b as Record<string, unknown>)[n])) sentences.push(`The ${noun} "${(b as Record<string, { title?: string }>)[n]!.title ?? n}" changes.`);
   }
   if (!same(before.policy, after.policy) || !same(before.roles, after.roles)) sentences.push("Who may do what changes.");
-  if (!same(before.brand, after.brand)) sentences.push("The app's colours change.");
+  if (!same(before.brand?.accent, after.brand?.accent) || !same(before.brand?.name, after.brand?.name)) sentences.push("The app's colours change.");
+  // The app's money (FR-100), said apart from its colours.
+  if (!same(before.brand?.currency, after.brand?.currency) || !same(before.brand?.locale, after.brand?.locale)) {
+    const currency = after.brand?.currency;
+    sentences.push(currency ? `Money is said in ${currency}${after.brand?.locale ? `, written for ${after.brand.locale}` : ""}.` : "Money is said with no currency.");
+  }
   sentences.push(...viewSentences(before, after));
   sentences.push(...lensSentences(before.lenses ?? [], after.lenses ?? []));
   sentences.push(...pagesSentences(before.pages, after.pages));

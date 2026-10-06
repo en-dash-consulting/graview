@@ -190,9 +190,17 @@ export const PolicySpec = z.strictObject({
 });
 export type PolicySpec = z.infer<typeof PolicySpec>;
 
+/**
+ * The installation's look and its money: an accent colour the palette is
+ * derived from, and the currency and locale a sum is said in wherever a
+ * block names none (FR-100). Any of them may stand alone.
+ */
 export const BrandSpec = z.strictObject({
-  accent: z.string().check(z.regex(/^#[0-9a-fA-F]{6}$/, 'an accent is a colour like "#c2577a"')),
+  accent: z.optional(z.string().check(z.regex(/^#[0-9a-fA-F]{6}$/, 'an accent is a colour like "#c2577a"'))),
   name: z.optional(str(1, 60)),
+  currency: z.optional(z.string().check(z.regex(/^[A-Z]{3}$/, 'a currency is its three-letter code, like "USD" or "EUR"'))),
+  // A language tag ("en-US", "de-DE"); `graview check` says when it is none (`brand-locale`).
+  locale: z.optional(str(2, 35)),
 });
 
 const loose = z.record(z.string(), z.unknown());

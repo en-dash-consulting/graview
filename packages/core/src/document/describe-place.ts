@@ -131,6 +131,8 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     fields: node ? fieldSpecsOf(schema, node.kind) : {},
     ...(node && schema.tryDefinition(node.kind) ? { definition: schema.tryDefinition(node.kind) as BlockContext["definition"] } : {}),
     today,
+    // Money is said as the faces say it: in the app's brand currency (FR-100).
+    ...(app.brand ? { money: app.brand } : {}),
     heading,
     ...(firstHeading !== undefined ? { firstHeading } : {}),
     ...(node ? {} : { budget: SWEEP_BUDGET }),

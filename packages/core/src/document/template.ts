@@ -134,7 +134,8 @@ export function parseTemplate(template: string): readonly TemplatePart[] {
   return parts;
 }
 
-const EMPTY_GRAPH: GraphReader = {
+/** A graph with nothing in it: what an expression walks when it is handed none. */
+export const EMPTY_GRAPH: GraphReader = {
   getNode: () => undefined,
   allNodes: () => [],
   allEdges: () => [],
@@ -147,8 +148,31 @@ const EMPTY_GRAPH: GraphReader = {
 };
 
 /** A value as words, through a formatter: the one place templates and view specs say a value. */
-export function formatValue(value: Value, format: Formatter | undefined, today: string, args: readonly string[] = []): string {
-  return show(value, format, today, args);
+export function formatValue(value: Value, format: Formatter | undefined, today: string, args: readonly string[] = [], money?: Money): string {
+  return show(value, format, today, args, money);
+}
+
+/**
+ * HOW AN APP SAYS MONEY (FR-100): the currency a sum is in when a block
+ * names none, and the locale its figures are written for — the app's
+ * `brand.currency` and `brand.locale`. Without a currency a sum is a
+ * number in figures, as it always was.
+ */
+export interface Money {
+  readonly currency?: string;
+  readonly locale?: string;
+}
+
+/** A sum of money in words: "$21,000", "21.000 €" — whole sums without cents, others with two. */
+export function formatMoney(value: number, money: Money = {}): string {
+  const whole = Number.isInteger(value);
+  const digits = { maximumFractionDigits: whole ? 0 : 2, minimumFractionDigits: whole ? 0 : 2 };
+  try {
+    return new Intl.NumberFormat(money.locale ?? "en-US", money.currency ? { style: "currency", currency: money.currency, ...digits } : digits).format(value);
+  } catch {
+    // A currency or locale the runtime does not know is said as a plain number, never a thrown page.
+    return value.toLocaleString("en-US", digits);
+  }
 }
 
 const ONES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
@@ -176,7 +200,7 @@ function pluralOf(noun: string): string {
 /** What a record is called in a sentence: its name, title or label, else its id. */
 const called = (n: AnyGraphNode): string => String(n["name"] ?? n["title"] ?? n["label"] ?? n.id);
 
-function show(value: Value, format: Formatter | undefined, today: string, args: readonly string[] = []): string {
+function show(value: Value, format: Formatter | undefined, today: string, args: readonly string[] = [], money?: Money): string {
   if (format === "plural") {
     const count = value instanceof NodeSet ? value.nodes.length : Array.isArray(value) ? value.length : typeof value === "number" ? value : null;
     if (count === null || args[0] === undefined) return "—";
@@ -186,7 +210,7 @@ function show(value: Value, format: Formatter | undefined, today: string, args: 
   if (value instanceof NodeSet) return format === "count" ? String(value.nodes.length) : format === "and" ? joined(value.nodes.map(called)) : value.nodes.map(called).join(", ");
   if (Array.isArray(value)) {
     if (format === "count") return String(value.length);
-    const each = value.map((v) => show(v as Value, undefined, today));
+    const each = value.map((v) => show(v as Value, undefined, today, [], money));
     return format === "and" ? joined(each) : each.join(", ");
   }
   if (typeof value === "object") return called(value as AnyGraphNode);
@@ -194,7 +218,7 @@ function show(value: Value, format: Formatter | undefined, today: string, args: 
     case "words":
       return typeof value === "number" ? inWords(value) : String(value);
     case "money":
-      return typeof value === "number" ? value.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: Number.isInteger(value) ? 0 : 2 }) : String(value);
+      return typeof value === "number" ? formatMoney(value, money) : String(value);
     case "percent":
       return typeof value === "number" ? `${Math.round(value * 100)}%` : String(value);
     case "upper":
@@ -222,6 +246,8 @@ export interface RenderContext {
   readonly today?: string;
   /** The steps each part may take; 500 unless the surface says (a home sweeps whole kinds). */
   readonly budget?: number;
+  /** The app's currency and locale, for `{x | money}` (FR-100). */
+  readonly money?: Money;
 }
 
 /** Render a parsed template. A part that cannot be judged renders as "—" rather than failing the whole sentence. */
@@ -239,7 +265,7 @@ export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContex
           budget: ctx.budget ?? 500,
           ...(ctx.bindings ? { bindings: ctx.bindings } : {}),
         });
-        return show(value, part.format, today, part.formatArgs);
+        return show(value, part.format, today, part.formatArgs, ctx.money);
       } catch (error) {
         if (error instanceof ExprEvalError) return "—";
         throw error;

@@ -4,6 +4,7 @@
   "name": "A proposal",
   "description": "LifeLogics' proposal app rebuilt as data: its front page and its four lenses drawn from the closed block set, with invented content. What was heard, the offers that answer it, the packages they make, and what we do not know yet.",
   "roles": ["owner", "partner"],
+  "brand": { "currency": "USD" },
   "kinds": {
     "party": {
       "noun": "party",
@@ -200,7 +201,7 @@
         { "when": "standing == 'recommended'", "show": [{ "badge": "Recommended", "tone": "accent" }] },
         { "text": "{summary}" },
         { "list": "out('includes')", "as": "row", "empty": "Nothing in this package yet." },
-        { "figure": "net", "as": "money", "currency": "USD", "label": "After the discount" }
+        { "figure": "net", "as": "money", "label": "After the discount" }
       ],
       "card": [
         { "title": "{name}" },
@@ -212,7 +213,7 @@
       "page": [
         { "headline": "What is in it" },
         { "list": "out('includes')", "as": "row", "empty": "Nothing in this package yet." },
-        { "figure": "net", "as": "money", "currency": "USD", "label": "After the discount" },
+        { "figure": "net", "as": "money", "label": "After the discount" },
         { "figure": "count(out(out('includes'), 'answers') & out(first(all('party') where role == 'client'), 'needs'))", "label": "of the {count(out(first(all('party') where role == 'client'), 'needs'))} things they need, answered" }
       ]
     },

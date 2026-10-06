@@ -39,7 +39,7 @@ import {
 } from "./schema.js";
 import { parseTemplate, renderTemplate, TemplateError, type TemplatePart } from "./template.js";
 import { upgradeDocument } from "./upgrade.js";
-import { homeOf, validateViews, viewsOf } from "./views.js";
+import { homeOf, validateViews, viewBraces, viewsOf } from "./views.js";
 import { computedOf, parsedComputed, validateComputed, workedOutAlone } from "./computed.js";
 
 /*
@@ -489,7 +489,8 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
   const compiled = compileDocumentWithoutCheck(raw, options);
   if (!compiled.ok) return compiled;
   const { app, document } = compiled;
-  const findings: Finding[] = [...compiled.findings];
+  // Braces in a block's plain words (FR-99): asked here, with the checker, and not of a page that compiles without it.
+  const findings: Finding[] = [...compiled.findings, ...viewBraces(document.views, "views", undefined, document.lenses)];
   const check = checkApp(app);
   for (const f of check.findings) {
     const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: f.message, ...(f.fix ? { fix: f.fix } : {}) } as const;
@@ -518,6 +519,8 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
   const today = options.today ?? (() => new Date().toISOString().slice(0, 10));
   const shapes = kindShapes(document);
   const edges = edgeIndex(document);
+  // What `{x | money}` says in a label, a sentence or a refusal: the app's currency and locale (FR-100).
+  const { accent, name: wordmark, ...money } = document.brand ?? {};
 
   // ── kinds ────────────────────────────────────────────────────────────────
   const definitions = Object.entries(document.kinds).map(([kind, spec]) => {
@@ -552,8 +555,8 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
       ...(spec.plural ? { plural: spec.plural } : {}),
       ...(spec.noun ? { noun: spec.noun } : {}),
       ...(spec.description ? { description: spec.description } : {}),
-      ...(labelParts ? { label: (node: { id: string }) => renderTemplate(labelParts, { node: node as AnyGraphNode, kinds: shapes, today: today() }) || node.id } : {}),
-      ...(describeParts ? { describe: (node: { id: string }) => renderTemplate(describeParts, { node: node as AnyGraphNode, kinds: shapes, today: today() }) } : {}),
+      ...(labelParts ? { label: (node: { id: string }) => renderTemplate(labelParts, { node: node as AnyGraphNode, kinds: shapes, today: today(), money }) || node.id } : {}),
+      ...(describeParts ? { describe: (node: { id: string }) => renderTemplate(describeParts, { node: node as AnyGraphNode, kinds: shapes, today: today(), money }) } : {}),
       ...(spec.lifecycle ? { lifecycle: { field: spec.lifecycle.field, retired: spec.lifecycle.retired } } : {}),
       ...(spec.figure ? { figure: spec.figure } : {}),
       ...(spec.computed && Object.keys(spec.computed).length > 0 ? { computed: spec.computed } : {}),
@@ -628,7 +631,7 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
               throw e;
             }
             if (allowed !== true) {
-              throw new Refused(refusal ? renderTemplate(refusal, { node: subject, kinds: shapes, graph, bindings, today: today() }) : `"${title}" is not allowed for ${labelFor(subject)} right now`);
+              throw new Refused(refusal ? renderTemplate(refusal, { node: subject, kinds: shapes, graph, bindings, today: today(), money }) : `"${title}" is not allowed for ${labelFor(subject)} right now`);
             }
           }
           const made = new Map<string, string>();
@@ -741,7 +744,7 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
           invariant: name,
           ...(subject ? { subjectId: subject.id } : {}),
           label: title,
-          message: (says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: today() }) : subject ? `${labelFor(subject)}: ${title}` : title),
+          message: (says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: today(), money }) : subject ? `${labelFor(subject)}: ${title}` : title),
           nodeIds: subject ? [subject.id] : [],
           repairs: repairList,
         },
@@ -784,10 +787,11 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
 
   let brand: Brand | undefined;
   if (document.brand) {
-    const derived = brandFromAccent({ accent: document.brand.accent, base: SCHEMES as never });
-    if (derived.ok) brand = { name: document.brand.name ?? document.name, schemes: derived.schemes };
+    const derived = accent ? brandFromAccent({ accent, base: SCHEMES as never }) : undefined;
     // A colour that cannot be read is not a reason to refuse an app: it wears the default colours and says why.
-    else findings.push(warning("brand", "brand.accent", `that accent cannot make a readable brand, so the app keeps Graview's colours: ${derived.why}`, "pick a colour further from orange-red, or a darker one"));
+    if (derived && !derived.ok) findings.push(warning("brand", "brand.accent", `that accent cannot make a readable brand, so the app keeps Graview's colours: ${derived.why}`, "pick a colour further from orange-red, or a darker one"));
+    // The app's money stands with or without an accent (FR-100).
+    if (!derived || derived.ok || money.currency || money.locale) brand = { name: wordmark ?? document.name, schemes: derived?.ok ? derived.schemes : (SCHEMES as Brand["schemes"]), ...money };
   }
   if (hasErrors(findings)) return { ok: false, findings };
 

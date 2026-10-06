@@ -121,7 +121,15 @@ const SHAPES: Record<EditOp, z.ZodType> = {
   "remove-act": z.object({ op: z.literal("remove-act"), act: actName }).strict(),
   "add-rule": z.object({ op: z.literal("add-rule"), rule: actName, replace: z.boolean().optional() }).passthrough(),
   "remove-rule": z.object({ op: z.literal("remove-rule"), rule: actName }).strict(),
-  "set-brand": z.object({ op: z.literal("set-brand"), accent: z.union([z.string(), z.null()]), name: z.string().min(1).max(60).optional() }).strict(),
+  "set-brand": z
+    .object({
+      op: z.literal("set-brand"),
+      accent: z.union([z.string(), z.null()]).optional(),
+      name: z.string().min(1).max(60).optional(),
+      currency: z.union([z.string(), z.null()]).optional(),
+      locale: z.union([z.string(), z.null()]).optional(),
+    })
+    .strict(),
   "set-label": z.object({ op: z.literal("set-label"), kind: kindName, field: fieldName.optional(), label: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
   "set-describe": z.object({ op: z.literal("set-describe"), kind: kindName, describe: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
   // A kind's slot; the front page (`slot: "home"`, no kind); or a blocks lens's blocks, by its title (FR-84).
@@ -559,14 +567,37 @@ class Editor {
         return;
       }
       case "set-brand": {
+        // The colours and the money (FR-100) are set apart: what an edit does not name stays as it was.
+        const brand: Record<string, unknown> = { ...(this.doc.brand ?? {}) };
         if (e.accent === null) {
-          delete this.doc.brand;
+          delete brand["accent"];
           this.said.push("The app goes back to Graview's colours.");
-        } else {
+        } else if (e.accent !== undefined) {
           if (!/^#[0-9a-fA-F]{6}$/.test(e.accent)) return this.fail(i, "accent", 'an accent is a colour like "#c2577a"');
-          this.doc.brand = { accent: e.accent, ...(e.name ? { name: e.name } : this.doc.brand?.name ? { name: this.doc.brand.name } : {}) };
+          brand["accent"] = e.accent;
           this.said.push(`The app's accent colour becomes ${e.accent}.`);
         }
+        if (e.currency === null) {
+          delete brand["currency"];
+          this.said.push("Money is said with no currency.");
+        } else if (e.currency !== undefined) {
+          if (!/^[A-Z]{3}$/.test(e.currency)) return this.fail(i, "currency", 'a currency is its three-letter code, like "USD" or "EUR"');
+          brand["currency"] = e.currency;
+          this.said.push(`Money is said in ${e.currency}.`);
+        }
+        if (e.locale === null) delete brand["locale"];
+        else if (e.locale !== undefined) {
+          if (!/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(e.locale)) return this.fail(i, "locale", 'a locale is a language tag, like "en-US" or "de-DE"');
+          brand["locale"] = e.locale;
+          this.said.push(`Money is written for ${e.locale}.`);
+        }
+        if (e.name) {
+          brand["name"] = e.name;
+          this.said.push(`The app's wordmark says ${e.name}.`);
+        }
+        // A brand that holds only a name holds nothing to apply.
+        if (Object.keys(brand).every((key) => key === "name")) delete this.doc.brand;
+        else this.doc.brand = brand;
         return;
       }
       case "set-label": {

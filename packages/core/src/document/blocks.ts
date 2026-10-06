@@ -4,7 +4,7 @@ import { fieldWords, valueWords } from "../schema/define-node.js";
 import { evaluateExpr, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import { parseExpr, type Expr } from "./expr/parse.js";
 import type { FieldSpec } from "./schema.js";
-import { formatValue, parseTemplate, type TemplatePart } from "./template.js";
+import { EMPTY_GRAPH, formatMoney, formatValue, parseTemplate, type Money, type TemplatePart } from "./template.js";
 import { fieldSpecOf } from "./to-document.js";
 import { FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, VIEW_FIELD_FORMATS, VIEW_TONES, type FigureFormat, type ViewBlock, type ViewTone } from "./views.js";
 
@@ -32,7 +32,7 @@ type Tone = ViewTone | { readonly expr: Parsed<Expr> };
 export type SpecBlock =
   | { readonly t: "title"; readonly parts: Parsed<readonly TemplatePart[]> }
   | { readonly t: "text" | "badge"; readonly parts: Parsed<readonly TemplatePart[]>; readonly tone?: Tone }
-  | { readonly t: "field"; readonly field: string; readonly as?: (typeof VIEW_FIELD_FORMATS)[number]; readonly label?: string }
+  | { readonly t: "field"; readonly field: string; readonly as?: (typeof VIEW_FIELD_FORMATS)[number]; readonly currency?: string; readonly label?: string }
   /** A figure's and a meter's label is a template, read like a headline (FR-99). */
   | { readonly t: "progress"; readonly value: Parsed<Expr>; readonly max: Parsed<Expr>; readonly label?: Parsed<readonly TemplatePart[]> }
   | { readonly t: "group"; readonly blocks: readonly SpecBlock[]; readonly direction: "row" | "column" }
@@ -123,12 +123,12 @@ export function compileBlocks(blocks: readonly ViewBlock[] | readonly unknown[],
     const tone = toneOf(block["tone"]);
     const label = typeof block["label"] === "string" ? block["label"] : undefined;
     const has = (key: string) => Object.prototype.hasOwnProperty.call(block, key);
+    const currency = typeof block["currency"] === "string" && /^[A-Z]{3}$/.test(block["currency"]) ? block["currency"] : undefined;
     // A list first: its `group` is how it is grouped, not a group block.
     if (has("list")) return [listOf(block)];
     if (has("headline")) return [{ t: "headline", parts: template(block["headline"]) }];
     if (has("figure") && typeof block["figure"] === "string") {
       const as = (FIGURE_FORMATS as readonly unknown[]).includes(block["as"]) ? (block["as"] as FigureFormat) : undefined;
-      const currency = typeof block["currency"] === "string" && /^[A-Z]{3}$/.test(block["currency"]) ? block["currency"] : undefined;
       return [{ t: "number", value: expr(block["figure"]), ...(as ? { as } : {}), ...(currency ? { currency } : {}), ...(label ? { label: template(label) } : {}) }];
     }
     if (has("title")) return [{ t: "title", parts: template(block["title"]) }];
@@ -136,7 +136,7 @@ export function compileBlocks(blocks: readonly ViewBlock[] | readonly unknown[],
     if (has("badge")) return [{ t: "badge", parts: template(block["badge"]), ...(tone ? { tone } : {}) }];
     if (has("field")) {
       const as = (VIEW_FIELD_FORMATS as readonly unknown[]).includes(block["as"]) ? (block["as"] as (typeof VIEW_FIELD_FORMATS)[number]) : undefined;
-      return [{ t: "field", field: String(block["field"]), ...(as ? { as } : {}), ...(label ? { label } : {}) }];
+      return [{ t: "field", field: String(block["field"]), ...(as ? { as } : {}), ...(currency ? { currency } : {}), ...(label ? { label } : {}) }];
     }
     if (has("progress")) {
       const p = (block["progress"] ?? {}) as { value?: unknown; max?: unknown };
@@ -171,6 +171,8 @@ export interface BlockContext {
   /** How the declaration says a field and its values (`display.labels`, `display.format`). */
   readonly definition?: Parameters<typeof valueWords>[0];
   readonly today: string;
+  /** The app's currency and locale (`brand.currency`, `brand.locale`): what money is said in where a block names no currency (FR-100). */
+  readonly money?: Money;
 }
 
 /** A block worked out: what a face draws and a describer says. `problem` is what could not be worked out, in words. */
@@ -213,18 +215,6 @@ const NOTHING = "—";
 /** The allowance a card's template gets: a card is drawn many times a frame. */
 const BUDGET = 500;
 
-const EMPTY_GRAPH: GraphReader = {
-  getNode: () => undefined,
-  allNodes: () => [],
-  allEdges: () => [],
-  nodesOfKind: () => [],
-  edgesOfKind: () => [],
-  out: () => [],
-  in: () => [],
-  neighbors: () => [],
-  has: () => false,
-} as unknown as GraphReader;
-
 type Judged = { readonly ok: true; readonly value: Value } | { readonly ok: false; readonly problem: string };
 
 function judge(expr: Parsed<Expr>, ctx: BlockContext): Judged {
@@ -248,7 +238,7 @@ function say(parts: Parsed<readonly TemplatePart[]>, ctx: BlockContext): { reado
         problem ??= `{${part.source ?? ""}}: ${judged.problem}`;
         return NOTHING;
       }
-      return formatValue(judged.value, part.format, ctx.today, part.formatArgs);
+      return formatValue(judged.value, part.format, ctx.today, part.formatArgs, ctx.money);
     })
     .join("");
   return problem ? { text, problem } : { text };
@@ -272,10 +262,10 @@ export function safeHref(value: unknown): string | undefined {
   }
 }
 
-function fieldText(key: string, value: unknown, ctx: BlockContext, as: (typeof VIEW_FIELD_FORMATS)[number] | undefined): string {
+function fieldText(key: string, value: unknown, ctx: BlockContext, as: (typeof VIEW_FIELD_FORMATS)[number] | undefined, currency?: string): string {
   if (value === null || value === undefined || value === "") return NOTHING;
   if (typeof value === "boolean") return value ? "yes" : "no";
-  if (as) return formatValue(value as Value, as, ctx.today);
+  if (as) return formatValue(value as Value, as, ctx.today, [], currency ? { ...ctx.money, currency } : ctx.money);
   const spec = ctx.fields[key];
   if (ctx.definition?.display?.format?.[key]) return valueWords(ctx.definition, key, value);
   if (spec?.type === "date") return formatValue(value as Value, "date", ctx.today);
@@ -286,13 +276,11 @@ function fieldText(key: string, value: unknown, ctx: BlockContext, as: (typeof V
   return String(value);
 }
 
-/** A figure's words: a number in figures, money (in a currency when it names one) or a fraction as a percent. */
-export function sayNumber(value: string | number | boolean, as: FigureFormat | undefined, currency: string | undefined, today: string): string {
+/** A figure's words: a number in figures, money (in the currency it names, else the app's — FR-100) or a fraction as a percent. */
+export function sayNumber(value: string | number | boolean, as: FigureFormat | undefined, currency: string | undefined, today: string, money?: Money): string {
   if (typeof value !== "number") return String(value);
-  if (as === "money" && currency) {
-    return safely(() => value.toLocaleString("en-US", { style: "currency", currency, maximumFractionDigits: Number.isInteger(value) ? 0 : 2, minimumFractionDigits: Number.isInteger(value) ? 0 : 2 })) ?? formatValue(value, "money", today);
-  }
-  if (as === "money" || as === "percent") return formatValue(value, as, today);
+  if (as === "money") return formatMoney(value, currency ? { ...money, currency } : money);
+  if (as === "percent") return formatValue(value, as, today);
   return value.toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
 
@@ -327,7 +315,7 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Resolv
         else raw = judged.value !== null && typeof judged.value === "object" ? formatValue(judged.value, undefined, ctx.today) : judged.value;
       } else raw = Object.prototype.hasOwnProperty.call(ctx.node, block.field) ? ctx.node[block.field] : undefined;
       const href = ctx.fields[block.field]?.type === "url" && block.as === undefined ? safeHref(raw) : undefined;
-      const text = safely(() => fieldText(block.field, raw, ctx, block.as)) ?? NOTHING;
+      const text = safely(() => fieldText(block.field, raw, ctx, block.as, block.currency)) ?? NOTHING;
       return withProblem({ t: "field", field: block.field, label, text, ...(href ? { href } : {}) }, problem);
     }
     case "progress": {
@@ -360,7 +348,7 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Resolv
     }
     case "number": {
       const judged = judge(block.value, ctx);
-      const text = !judged.ok || judged.value === null || typeof judged.value === "object" ? NOTHING : sayNumber(judged.value, block.as, block.currency, ctx.today);
+      const text = !judged.ok || judged.value === null || typeof judged.value === "object" ? NOTHING : sayNumber(judged.value, block.as, block.currency, ctx.today, ctx.money);
       const said = block.label ? say(block.label, ctx) : undefined;
       return withProblem({ t: "number", text, ...(said ? { label: said.text } : {}) }, judged.ok ? said?.problem : judged.problem);
     }
