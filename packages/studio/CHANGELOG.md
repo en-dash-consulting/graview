@@ -1,5 +1,47 @@
 # @graview/studio
 
+## 0.1.10
+
+### Patch Changes
+
+- 6b7edf9: A declared lens draws (FR-79). A document's `lenses` were accepted and drew nothing, and so were a TypeScript app's: a lens drew only because the app's own UI called `createTimelineLens(…)` and registered the result with a title, so a chat that wrote a lens into a document made something nobody would ever see. A `lenses` entry now takes a `title`, an `on` (the kind it stands on, when its bindings do not say) and data-only `options`, and a shipped lens with a title is a place: a pill on the bar, a drive-in from altitude and a page at `/places/<as>`, registered over each kind it stands on at many × full and many × summary. `declaredLenses(app)` in `@graview/core` decides which lenses draw, with which factory options resolved from the bindings, and why the rest do not; `SHIPPED_LENSES` names the six it maps — `timeline`, `calendar`, `coverage`, `board`, `plan`, `reach` — with their roles and the options each takes. `registerDeclaredLenses(registry, app)` in `@graview/primitives` (and `@graview/primitives/frame`) registers each as a door to the shipped factory, fetched when a lens is first drawn (`fetchDeclaredLenses`), and `declaredViews(app)` is the defaults, the view specs and the declared lenses in one registry. The embed calls it for every app it mounts, so a document's lenses draw with no views at all. What a factory needs that cannot be data is derived: a timeline's columns from the values its `column` field takes (or `options.columns`), its axis words from its extent, a calendar's `today` from the reader's own clock unless `options.today` names one. `graview check` says why a titled lens cannot draw, at its path — `lens-cannot-draw`, `lens-option-unknown`, `lens-title-taken`, `lens-not-shipped`, every one a warning — and a shipped lens needs no `requiredRoles` or `binds` of its own (`requiredRolesOf`, `bindsOf`). `plan` joins the shipped names in the checker and in `graview describe`, which now says which declared lenses draw, over what, at which address, and why a titled one does not. `placesOf(app)` lists every place an app has — the home, each lens, each kind — as `{ slug, title, kind, cardinality, address, stop, lens?, hidden?, first? }`, for a host to list. Apps/todo, apps/rota, apps/gauntlet and apps/discography declare their shipped lenses with titles and register none of them by hand. The studio keeps two lenses of one name apart by their titles. `@graview/primitives/scene` is a new subpath (the companion, the inspector, the places bar), which the embed's scene face and the pages' assistant import so that a face which draws no lens does not carry the six factories; `@graview/primitives/pages` also exports `registerDefaultViews` and `registerViewSpecs`. The bundle budgets for every face and for the studio handed in rise to 1_400_000 / 412_000, and what a page without the studio loads first to 203_000 gzipped, said in `scripts/lib/bundle-budget.mjs`, which now measures from the page's own entry rather than the first chunk esbuild lists. A hosted page carries 563 KB up front. Unit tests compile a document declaring one lens of each shipped type and find each drawn by its title on the embed's bar and at its page, `check` and `describe` agreeing with the one list; `verify-declared` does it in a browser. The `graview-lens` skill says to declare a shipped lens rather than register it. `capabilities().shipped` names FR-79.
+  
+  Compatibility: the declaration and check finding codes — additive within `graview-document@1`: `title`, `on` and `options` are new optional fields of a `lenses` entry, and `requiredRoles` is optional on `LensDeclaration`. The new codes are warnings, never errors, and a declaration that checked clean before still does; a check's `where` names a titled lens by its title. The wire — `capabilities().shipped` gains `FR-79`. Ops, stored formats and tool schemas are unchanged. `ViewRegistry` gains optional `arrange` and `arrangement`, so a hand-built registry needs neither.
+- 17b908c: Edits for all of it (FR-84). A chat that builds an app proposes `editDocument` edits, and everything FR-79–83 added to a document now has one. `add-lens` adds a titled lens (a blocks lens by default; `replace` changes or retitles one, `at` puts one back where it was), `remove-lens` takes one away, `set-home` writes the front page, `arrange-pages` sets `order`, `hide` and `first` (`null` clears each), and `set-computed` adds, changes or removes a computed field. `set-view` also takes `slot: "home"` and `lens: "<title>"`, and every op that sets blocks checks them where they will stand, so a block that cannot be drawn is refused at its own path before anything is previewed. Each op says what it did ("A lens "The parties" is added, over parties.", "The front page changes: a headline, a figure and a list of records.", "Packages work out "offers": …"), and `diffDocuments` says lenses, the front page, the arrangement and computed fields in words of its own rather than "The app's lenses change." A rename now reaches every place that names the thing: computed expressions, the front page's blocks, each lens's `on`, bindings (fields, and an entity lens's kinds, relations and fields), plain-word options and blocks, `pages.order`/`hide`/`first` (a plural or a retitled lens included), and a list's sort key and group, which are read from the records it lists. Every rewrite goes through the rule language's parser, and a template keeps what it said after the bar (`| plural: 'front'`). Two walks were wrong and are fixed: `sum(S, list * units)` and `sort(S, key)` read their second argument from the members, and an act that `creates` a kind follows a rename of the fields it `writes`. A removal rewrites away what names the thing. A block that shows it goes, a list grouped or sorted by it keeps its records, and a computed field that reads it goes along with whatever reads that in turn. A lens that stood on a removed kind goes, and `pages.first` goes with it when it named that lens. The one refusal is a field or relation a lens draws by (a timeline's `start`, a coverage's `link`), which is refused with a finding naming each lens and role. The studio models computed fields as nodes (`computed`, joined to their kind by `computed-on`), so an app opened and handed back, or written back as TypeScript, keeps them, and a studio rename rewrites their expressions. The `graview-studio` skill lists the new ops. `capabilities().shipped` names FR-84.
+  
+  Compatibility: the declaration and check finding codes are additive within `graview-document@1`. `EDIT_OPS` gains `add-lens`, `remove-lens`, `set-home`, `arrange-pages` and `set-computed`, and `set-view`'s `kind` and `slot` become optional beside `lens` and `slot: "home"`. `set-view` now refuses blocks that `graview check` would call errors, which before were accepted here and refused only at compile. Removing a field or relation a titled lens requires is now refused; before, it dropped the binding and left a lens that could not draw. `diffDocuments` sentences for lenses, pages and the home are new words ("The front page changes." where it said "How the home looks changes."), and a glance naming a computed field no longer reads as changed. The wire: `capabilities().shipped` gains `FR-84`. Ops, stored formats and tool schemas are unchanged.
+- Updated dependencies [39a3983]
+- Updated dependencies [7d77ff7]
+- Updated dependencies [6b7edf9]
+- Updated dependencies [cbe1cc6]
+- Updated dependencies [fff6319]
+- Updated dependencies [4ae597b]
+- Updated dependencies [f9d5951]
+- Updated dependencies [c3e2c1d]
+- Updated dependencies [77a9fdc]
+- Updated dependencies [6809372]
+- Updated dependencies [fff6319]
+- Updated dependencies [03733a0]
+- Updated dependencies [77a9fdc]
+- Updated dependencies [3047796]
+- Updated dependencies [d4cab17]
+- Updated dependencies [58f71f9]
+- Updated dependencies [2e46ab9]
+- Updated dependencies [4c8a2d1]
+- Updated dependencies [5703a27]
+- Updated dependencies [fc6ddca]
+- Updated dependencies [17b908c]
+- Updated dependencies [6e3b089]
+- Updated dependencies [6852b7d]
+- Updated dependencies [7307a0c]
+  - @graview/primitives@0.1.10
+  - @graview/core@0.1.10
+  - @graview/react@0.1.10
+  - @graview/pages@0.1.10
+  - @graview/tools@0.1.10
+  - @graview/layout@0.1.10
+  - @graview/ship@0.1.10
+
 ## 0.1.9
 
 ### Patch Changes

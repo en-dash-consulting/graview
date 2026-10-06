@@ -1,5 +1,12 @@
 # create-graview
 
+## 0.1.10
+
+### Patch Changes
+
+- Updated dependencies [4c8a2d1]
+  - graview@0.1.10
+
 ## 0.1.9
 
 ### Patch Changes
