@@ -134,9 +134,14 @@ export const BUDGETS = [
      * swap. Measured at 696_428 / 178_422.
      *
      * Measured at 696_668 / 178_474 with the pull requests of this round together.
+     *
+     * Gzipped raised when a pill came to mean a choice or a state (FR-117)
+     * and a name to be said whole (FR-118): a kind's mark is its plot in
+     * miniature, clipped to an iso tile, in the chip and the figure the
+     * frame's profile draws. Measured at 696_582 / 178_525 over FR-116.
      */
     minified: 699_500,
-    gzipped: 178_500,
+    gzipped: 178_600,
     load: "first",
     lacks: ["@graview/studio"],
   },
