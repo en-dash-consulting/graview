@@ -1,5 +1,5 @@
 import type { GraviewApp } from "../app.js";
-import { toIso } from "../city.js";
+import { heightOf, MAX_SIDE, toIso, villageCap, villageOf, type Plot } from "../city.js";
 import { sceneDistricts, type SceneDistrict } from "../scene-districts.js";
 import { coloursIn, hsl, type Rgba } from "../theme/contrast.js";
 import { isoShade, type IsoFace } from "../theme/look.js";
@@ -48,6 +48,27 @@ export interface SceneThumbnailOptions {
   readonly background?: boolean;
   /** The accessible name. Default: the app's name and what it holds. */
   readonly title?: string;
+  /**
+   * What the picture is fitted to (FR-107). `"map"`, the default, is the
+   * Scene's map as it stands: each plot the size its count gives it, the
+   * streets between at their width — faithful, and at a card's size mostly
+   * ground. `"content"` is what stands, for a tile: each district fills its
+   * whole block on the same corner (the most its plot grows to), the
+   * picture is cropped to the plots and their buildings with a narrow
+   * margin, and each district stands a few blocks it can show at this size
+   * rather than one speck per record (see `minBuilding`). The corners, the
+   * iso lattice, the order and the hues are the Scene's in both.
+   */
+  readonly fit?: "map" | "content";
+  /**
+   * The narrowest a building's roof may be drawn, in the picture's own
+   * pixels. A district whose buildings would be narrower stands fewer,
+   * larger ones. Fitted to the map (default 4) that is its village, one
+   * building per member, else one block for the district. Fitted to the
+   * content (default 16) it is its village when the picture is big enough,
+   * else one block per member up to five, taller for more, else one block.
+   */
+  readonly minBuilding?: number;
 }
 
 /** What the thumbnail can be drawn from: a declaration document (an object or its JSON), or an app already compiled or declared. */
@@ -140,15 +161,118 @@ interface Standing {
 const VILLAGE_MIN_PX = 4;
 const MOST_BUILDINGS = 300;
 
+/** One block for the district itself, at its plot's centre, taller for more members: the district seen from furthest away. */
+function landmark(plot: Plot, district: SceneDistrict, scheme: Scheme): Standing {
+  const centre = { col: plot.col + plot.side / 2, row: plot.row + plot.side / 2 };
+  const height = 1.25 + Math.min(1.25, Math.log2(1 + district.count) * 0.2);
+  return { depth: centre.col + centre.row, ...block(centre.col, centre.row, plot.side * 0.56, height, district.hue, scheme) };
+}
+
 /** What stands on one district: its village when it has members and room to show them, else one block for the district itself. */
 function standing(district: SceneDistrict, scheme: Scheme, village: boolean): Standing[] {
-  const { plot, hue, count } = district;
+  const { hue, count } = district;
   if (count > 0 && village) {
     return district.village.map((b) => ({ depth: b.col + b.row, ...block(b.col, b.row, b.footprint, b.height, hue, scheme) }));
   }
-  const centre = { col: plot.col + plot.side / 2, row: plot.row + plot.side / 2 };
-  const height = 1.25 + Math.min(1.25, Math.log2(1 + count) * 0.2);
-  return [{ depth: centre.col + centre.row, ...block(centre.col, centre.row, plot.side * 0.56, height, hue, scheme) }];
+  return [landmark(district.plot, district, scheme)];
+}
+
+/*
+ * FITTED TO WHAT STANDS (FR-107). At a card's size a plot one or two cells
+ * on a side, five cells from the next, is a speck, and a building per
+ * record on it is a speck on a speck. So a fitted picture stands each
+ * district on its whole block — the most its plot grows to, from the same
+ * corner — and stands on it what can be seen at this size, the first rung
+ * whose every roof is at least `minBuilding` pixels wide:
+ *
+ *   village  the Scene's own, one building per member on the whole block,
+ *            when the picture is big enough (members past five only);
+ *   few      one block per member up to five, on the block's three-by-three
+ *            sub-lattice, spread across it, taller for more past five;
+ *   one      one block for the district, as the faithful picture's fallback.
+ */
+const FEW = 5;
+/** A building on a card-sized tile reads as a building from about here: Cloud's own tile art stands blocks 20–30 px wide. */
+const FITTED_MIN_PX = 16;
+/*
+ * Where one to five blocks stand on a three-by-three sub-lattice of the
+ * block. The back corner (0,0), the middle and the front corner (2,2) are
+ * one above another on the screen, so two blocks stand side by side at the
+ * left and right corners rather than in a column, and more fill the corners
+ * before the middle.
+ */
+const FEW_CELLS: readonly (readonly (readonly [number, number])[])[] = [
+  [[1, 1]],
+  [
+    [2, 0],
+    [0, 2],
+  ],
+  [
+    [0, 0],
+    [2, 0],
+    [0, 2],
+  ],
+  [
+    [0, 0],
+    [2, 0],
+    [0, 2],
+    [2, 2],
+  ],
+  [
+    [0, 0],
+    [2, 0],
+    [1, 1],
+    [0, 2],
+    [2, 2],
+  ],
+];
+type Rung = "village" | "few" | "one";
+
+/** The district on its whole block: the same corner, the largest side. */
+const wholeBlock = (plot: Plot): Plot => ({ col: plot.col, row: plot.row, side: MAX_SIDE });
+
+function standingFitted(district: SceneDistrict, scheme: Scheme, rung: Rung): { readonly stands: Standing[]; readonly narrowest: number } {
+  const plot = wholeBlock(district.plot);
+  const { hue, count, kind } = district;
+  if (rung === "village" && count > FEW) {
+    const { buildings } = villageOf(plot, Array.from({ length: Math.min(count, villageCap(plot.side)) }, (_, i) => `${kind}#${i}`));
+    return { stands: buildings.map((b) => ({ depth: b.col + b.row, ...block(b.col, b.row, b.footprint, b.height, hue, scheme) })), narrowest: buildings[0]?.footprint ?? Infinity };
+  }
+  if (rung === "one") {
+    const one = landmark(plot, district, scheme);
+    return { stands: [one], narrowest: plot.side * 0.56 };
+  }
+  const pitch = plot.side / 3;
+  const footprint = pitch * 0.8;
+  // Past five, the five grow taller with the count, as the one block does.
+  const taller = count > FEW ? Math.min(0.8, Math.log2(count / FEW) * 0.25) : 0;
+  const stands = FEW_CELLS[Math.max(1, Math.min(FEW, count)) - 1]!.map(([c, r], i) => {
+    const col = plot.col + (c + 0.5) * pitch;
+    const row = plot.row + (r + 0.5) * pitch;
+    const height = count === 0 ? 0.6 : 0.7 + heightOf(`${kind}#${i}`) * 0.6 + taller;
+    return { depth: col + row, ...block(col, row, footprint, height, hue, scheme) };
+  });
+  return { stands, narrowest: footprint };
+}
+
+/** The view box: the drawing's own bounds with `pad` of air, widened on its shorter side to the picture's proportion so the city is centred, never stretched. */
+function frame(all: readonly Point[], pad: number, width: number, height: number): { minX: number; maxX: number; minY: number; maxY: number } {
+  const box = bounds(all);
+  let minX = box.minX - pad;
+  let maxX = box.maxX + pad;
+  let minY = box.minY - pad;
+  let maxY = box.maxY + pad;
+  const want = width / height;
+  if ((maxX - minX) / (maxY - minY) < want) {
+    const grow = ((maxY - minY) * want - (maxX - minX)) / 2;
+    minX -= grow;
+    maxX += grow;
+  } else {
+    const grow = ((maxX - minX) / want - (maxY - minY)) / 2;
+    minY -= grow;
+    maxY += grow;
+  }
+  return { minX, maxX, minY, maxY };
 }
 
 /** The box that holds every point, or one cell of ground when there are none. */
@@ -182,11 +306,16 @@ export function sceneThumbnail(source: ThumbnailSource, options: SceneThumbnailO
   const ground = coloursIn(tokens.ground)[0] ?? coloursIn(SCHEMES[scheme].ground)[0]!;
   const roofEdge = coloursIn(shade.roofEdge)[0]!;
 
+  const fitted = options.fit === "content";
+  const given = options.minBuilding;
+  const minBuilding = typeof given === "number" && Number.isFinite(given) && given >= 0 ? given : fitted ? FITTED_MIN_PX : VILLAGE_MIN_PX;
+
   /* The plots first, then everything standing on them back to front, so a near block is drawn over a far one. */
   const tiles: string[] = [];
   const all: Point[] = [];
   for (const district of districts) {
-    const { plot, hue } = district;
+    const { hue } = district;
+    const plot = fitted ? wholeBlock(district.plot) : district.plot;
     const corners = [toIso(plot.col, plot.row, CELL), toIso(plot.col + plot.side, plot.row, CELL), toIso(plot.col + plot.side, plot.row + plot.side, CELL), toIso(plot.col, plot.row + plot.side, CELL)];
     all.push(...corners);
     const fill = hsl(hue, shade.plot.saturation / 100, shade.plot.lightness / 100);
@@ -196,34 +325,38 @@ export function sceneThumbnail(source: ThumbnailSource, options: SceneThumbnailO
         `<polygon fill="${hex(fill)}" stroke="${hex(kerb)}" points="${points(corners)}"/></g>`,
     );
   }
-  /* Whether the villages are drawn: a building a few pixels wide at the scale the plots alone are fitted at, and not too many of them. */
-  const ground0 = bounds(all);
-  const scale = Math.min(width / (ground0.maxX - ground0.minX + CELL * 1.2), height / (ground0.maxY - ground0.minY + CELL * 1.8));
-  const buildings = districts.reduce((sum, d) => sum + d.village.length, 0);
-  const smallest = Math.min(Infinity, ...districts.filter((d) => d.count > 0).map((d) => (d.plot.side / (d.plot.side + 1)) * 0.62 * CELL * scale));
-  const village = buildings <= MOST_BUILDINGS && smallest >= VILLAGE_MIN_PX;
-  const stands: Standing[] = districts.flatMap((district) => standing(district, scheme, village));
-  for (const one of stands) all.push(...one.reach);
-  stands.sort((a, b) => a.depth - b.depth);
-
-  /* The view box is the drawing's own bounds with air around it; an empty app is one cell of ground. */
-  const box = bounds(all);
-  const pad = CELL * 0.6;
-  let minX = box.minX - pad;
-  let maxX = box.maxX + pad;
-  let minY = box.minY - pad;
-  let maxY = box.maxY + pad;
-  // Widen the shorter side so the box has the picture's own proportion: the city is centred, never stretched.
-  const want = width / height;
-  if ((maxX - minX) / (maxY - minY) < want) {
-    const grow = ((maxY - minY) * want - (maxX - minX)) / 2;
-    minX -= grow;
-    maxX += grow;
+  let stands: Standing[] = [];
+  let view: ReturnType<typeof frame> | undefined;
+  if (fitted) {
+    /*
+     * The first rung whose narrowest roof is minBuilding wide at the scale
+     * the finished picture is drawn at — plots, buildings and a narrow
+     * margin — and not more buildings than a picture holds.
+     */
+    const pad = CELL * 0.4;
+    const rungs: readonly Rung[] = ["village", "few", "one"];
+    for (const rung of rungs) {
+      const drawn = districts.map((district) => standingFitted(district, scheme, rung));
+      stands = drawn.flatMap((d) => d.stands);
+      view = frame([...all, ...stands.flatMap((s) => s.reach)], pad, width, height);
+      const scale = width / (view.maxX - view.minX);
+      // Less the unit a corner can lose to rounding: a block's corners are written in whole units.
+      const narrowest = (Math.min(Infinity, ...drawn.map((d) => d.narrowest)) * CELL - 1) * scale;
+      if (rung === "one" || (narrowest >= minBuilding && stands.length <= MOST_BUILDINGS)) break;
+    }
   } else {
-    const grow = ((maxX - minX) / want - (maxY - minY)) / 2;
-    minY -= grow;
-    maxY += grow;
+    /* Whether the villages are drawn: a building a few pixels wide at the scale the plots alone are fitted at, and not too many of them. */
+    const ground0 = bounds(all);
+    const scale = Math.min(width / (ground0.maxX - ground0.minX + CELL * 1.2), height / (ground0.maxY - ground0.minY + CELL * 1.8));
+    const buildings = districts.reduce((sum, d) => sum + d.village.length, 0);
+    const smallest = Math.min(Infinity, ...districts.filter((d) => d.count > 0).map((d) => (d.plot.side / (d.plot.side + 1)) * 0.62 * CELL * scale));
+    const village = buildings <= MOST_BUILDINGS && smallest >= minBuilding;
+    stands = districts.flatMap((district) => standing(district, scheme, village));
+    /* The view box is the drawing's own bounds with air around it; an empty app is one cell of ground. */
+    view = frame([...all, ...stands.flatMap((s) => s.reach)], CELL * 0.6, width, height);
   }
+  stands.sort((a, b) => a.depth - b.depth);
+  const { minX, maxX, minY, maxY } = view ?? frame(all, CELL * 0.6, width, height);
   const viewBox = `${fmt(minX)} ${fmt(minY)} ${fmt(maxX - minX)} ${fmt(maxY - minY)}`;
 
   const name = app?.name ?? (typeof source === "object" && source !== null && typeof (source as { name?: unknown }).name === "string" ? (source as { name: string }).name : "An app");

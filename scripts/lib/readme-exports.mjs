@@ -61,7 +61,8 @@ export const NOT_EXPORTS = new Map([
   ["readyMs", "a limit of mountGuestWorker and mountWorkerView, not an export"],
   ["importScripts", "a worker global, which a guest's worker does not have"],
   ["GraviewGuest", "the one global @graview/guest/client.js leaves in a frame guest's page, not an export"],
-  ["graviewHeadless", "the global a headless script leaves in its isolate for the host to call (HEADLESS_ENTRY), not an export"],
+  ["minBuilding", "an option of sceneThumbnail, not an export"],
+  ["graviewHeadless","the global a headless script leaves in its isolate for the host to call (HEADLESS_ENTRY), not an export"],
 ]);
 
 /** The API-shaped names a README puts in backticks: `name`, `name()`, `Name`. */
