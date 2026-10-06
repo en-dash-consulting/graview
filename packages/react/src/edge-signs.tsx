@@ -95,7 +95,8 @@ const SIGN: CSSProperties = {
   color: "var(--graview-ink)",
   background: "var(--graview-panel)",
   border: "1px solid var(--graview-edge)",
-  borderRadius: 999,
+  // A sign naming a relation, not a choice: a sign's corners, not a capsule (FR-117).
+  borderRadius: 6,
   boxShadow: "0 2px 8px rgb(0 0 0 / 0.12)",
   cursor: "pointer",
 };

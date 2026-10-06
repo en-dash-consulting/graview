@@ -145,11 +145,13 @@ ${/* Quiet: the chevron alone until reached for. Never opacity zero — a
      either one alone: rem alone drops below the fingertip at a smaller
      setting, px alone ignores the setting altogether. */ ""}
   min-height: max(1.5rem, 24px);
-  padding: 1px 9px;
+  padding: 1px 6px;
   margin: -3px 0;
-  border-radius: 999px;
-  border: 1px solid var(--graview-edge);
-  background: var(--graview-panel);
+  ${/* A QUIET BUTTON (FR-117): the chevron and, reached for, its word —
+     never a capsule beside a name that is no longer one. */ ""}
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
   box-shadow: none;
   color: var(--graview-ink-muted);
   cursor: pointer;
@@ -167,7 +169,7 @@ ${/* Quiet: the chevron alone until reached for. Never opacity zero — a
 }
 [data-graview-altitude] .graview-kind-open:hover {
   color: var(--graview-accent);
-  border-color: var(--graview-accent-dim);
+  text-decoration: underline;
 }
 ${/* THE BILLBOARD'S FULL-SCREEN CONTROL: the one way down from a picture. */ ""}
 ${/* THE RAIL A BILLBOARD IS MOVED BY: a title bar, in the board's own frame
@@ -252,6 +254,10 @@ ${/* An OPENED district is a PANEL, not a pill with a list stuffed in it:
   column-gap: 10px;
   row-gap: 2px;
   border-radius: 12px !important;
+  ${/* Open, the name is a panel's header again: the panel's own ground and edge. */ ""}
+  background: var(--graview-panel) !important;
+  border-color: var(--graview-edge) !important;
+  text-shadow: none;
   padding: 10px 12px 11px !important;
   width: 236px;
   max-width: 236px;
@@ -279,7 +285,8 @@ ${/* WHAT KIND OF THING THIS IS, astride the focus panel's top-right edge —
   align-items: center;
   gap: 5px;
   padding: 2px 8px;
-  border-radius: 999px;
+  ${/* A label, not a choice: a tab's corners rather than a capsule (FR-117). */ ""}
+  border-radius: 4px;
   ${/* The kind's own hue on the border and the words, so the tag and the
      district it belongs to read as one thread. */ ""}
   border: 1px solid hsl(var(--graview-hue, 200) 45% var(--graview-tint-lightness) / 0.55);
@@ -510,10 +517,27 @@ ${/* A SIGNPOST at the plot's front corner. From altitude the nameplate stood
   flex-direction: row !important;
   align-items: baseline !important;
   gap: 7px !important;
-  padding: 3px 11px !important;
-  border-radius: 999px !important;
-  box-shadow: var(--graview-lift-low) !important;
+  padding: 3px 4px !important;
+  ${/* TEXT ON THE PLOT, NOT A CAPSULE (FR-117). Every district's name stood
+     in a pill — "PEOPLE 2 ◆ open ▾" — so the city read as a row of buttons
+     and the one capsule that meant "press" did not stand out. A map writes
+     a district's name on the ground: the words, haloed in the ground's own
+     colour so a lattice line or a roof under them never cuts a letter. */ ""}
+  border-color: transparent !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  text-shadow: 0 0 3px var(--graview-ground), 0 0 6px var(--graview-ground), 0 0 10px var(--graview-ground);
   z-index: ${SCENE_LAYERS.tag};
+}
+${/* How much of it is in trouble, as the name's baseline rather than a bar over a capsule. */ ""}
+[data-graview-altitude] .graview-kind-face > [data-graview-tally] {
+  top: auto !important;
+  bottom: 0;
+  height: 2px !important;
+}
+[data-graview-altitude] .graview-kind-face > [data-graview-tally]:not([data-graview-broken]) {
+  opacity: 0;
 }
 [data-graview-altitude] [data-graview-plot] .graview-kind-face {
   top: calc(var(--graview-front-y) - 22px) !important;
@@ -564,16 +588,17 @@ ${/* ZOOM, in the ground's corner: the way a map carries its own. Two
   align-items: center;
   gap: 2px;
   padding: 2px;
-  border-radius: 999px;
-  border: 1px solid var(--graview-edge);
-  background: var(--graview-panel);
+  ${/* Quiet, as a map's own zoom is: a plain float, not a capsule (FR-117). */ ""}
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--graview-float, var(--graview-panel));
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 .graview-zoom-button {
   min-width: 32px;
   min-height: 32px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 6px;
   background: transparent;
   color: var(--graview-ink);
   font: inherit;

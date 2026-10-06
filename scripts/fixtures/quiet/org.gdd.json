@@ -1,0 +1,470 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "En Dash Org",
+  "description": "Who owns which slice of the work, what each person is strong at, and what is being handed off.",
+  "kinds": {
+    "person": {
+      "noun": "person",
+      "plural": "people",
+      "description": "Someone at En Dash.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "role": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "text"
+        }
+      },
+      "edges": {
+        "has": {
+          "to": [
+            "strength"
+          ],
+          "cardinality": "many",
+          "description": "a strength they have",
+          "inverse": "whose strength"
+        }
+      }
+    },
+    "component": {
+      "noun": "component",
+      "plural": "components",
+      "description": "An ownership slice of the founder's load.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "ownership": {
+          "type": "enum",
+          "options": [
+            "founder",
+            "shared",
+            "handoff",
+            "elsewhere"
+          ],
+          "default": "founder",
+          "required": true
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "edges": {
+        "ownedBy": {
+          "to": [
+            "person"
+          ],
+          "cardinality": "many",
+          "description": "who owns it",
+          "inverse": "what they own"
+        },
+        "constrainedBy": {
+          "to": [
+            "constraint"
+          ],
+          "cardinality": "many",
+          "description": "a hard line it keeps",
+          "inverse": "what it bounds"
+        }
+      }
+    },
+    "skill": {
+      "noun": "skill",
+      "plural": "skills",
+      "description": "Something a slice of work calls for.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    "strength": {
+      "noun": "strength",
+      "plural": "strengths",
+      "description": "A person's level in a skill.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "level": {
+          "type": "integer",
+          "default": 1
+        }
+      },
+      "edges": {
+        "inSkill": {
+          "to": [
+            "skill"
+          ],
+          "cardinality": "one",
+          "description": "the skill it is in",
+          "inverse": "who is strong in it"
+        }
+      }
+    },
+    "constraint": {
+      "noun": "constraint",
+      "plural": "constraints",
+      "description": "A hard line or a preference the design keeps.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "hardness": {
+          "type": "enum",
+          "options": [
+            "hard",
+            "preference"
+          ],
+          "default": "hard",
+          "required": true
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-person": {
+      "title": "Add a person",
+      "creates": "person",
+      "description": "Add someone at En Dash."
+    },
+    "add-component": {
+      "title": "Add a component",
+      "creates": "component",
+      "description": "Name a slice of the founder's load."
+    },
+    "add-skill": {
+      "title": "Add a skill",
+      "creates": "skill",
+      "description": "Name something a slice of work calls for."
+    },
+    "add-constraint": {
+      "title": "Add a constraint",
+      "creates": "constraint",
+      "description": "Name a hard line the design keeps."
+    },
+    "note-strength": {
+      "title": "Note a strength",
+      "on": "person",
+      "args": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "level": {
+          "type": "integer"
+        }
+      },
+      "effects": [
+        {
+          "create": "strength",
+          "as": "new",
+          "set": {
+            "name": "$name",
+            "level": "$level"
+          }
+        },
+        {
+          "connect": "has",
+          "from": "$subject",
+          "to": "$new"
+        }
+      ],
+      "description": "Record something this person is strong at, and how strong."
+    },
+    "set-level": {
+      "title": "Set the level",
+      "on": "strength",
+      "writes": [
+        "level"
+      ],
+      "description": "Say how strong this strength is, from 1 to 5."
+    },
+    "in-skill": {
+      "title": "File under a skill",
+      "on": "strength",
+      "connects": "inSkill",
+      "description": "Say which skill a strength is in.",
+      "fromTheOtherEnd": "Add a strength in this skill"
+    },
+    "assign-owner": {
+      "title": "Assign an owner",
+      "on": "component",
+      "connects": "ownedBy",
+      "description": "Say who owns this slice.",
+      "fromTheOtherEnd": "Give them a component"
+    },
+    "set-ownership": {
+      "title": "Set the ownership",
+      "on": "component",
+      "sets": {
+        "ownership": "$ownership"
+      },
+      "description": "Move a slice to any ownership state."
+    },
+    "bind-constraint": {
+      "title": "Bind a constraint",
+      "on": "component",
+      "connects": "constrainedBy",
+      "description": "Say which hard line this slice keeps.",
+      "fromTheOtherEnd": "Bind a component to this line"
+    },
+    "drop-strength": {
+      "title": "Drop a strength",
+      "on": "person",
+      "severs": "has",
+      "description": "Take a strength off this person.",
+      "fromTheOtherEnd": "Take off its person"
+    },
+    "out-of-skill": {
+      "title": "Take out of its skill",
+      "on": "strength",
+      "severs": "inSkill",
+      "description": "Take a strength out of its skill.",
+      "fromTheOtherEnd": "Take a strength out of this skill"
+    },
+    "release-owner": {
+      "title": "Release an owner",
+      "on": "component",
+      "severs": "ownedBy",
+      "description": "Take an owner off this slice.",
+      "fromTheOtherEnd": "Give up a component"
+    },
+    "unbind-constraint": {
+      "title": "Unbind a constraint",
+      "on": "component",
+      "severs": "constrainedBy",
+      "description": "Free a slice from a line.",
+      "fromTheOtherEnd": "Free a component from this line"
+    }
+  },
+  "roles": [
+    "owner"
+  ],
+  "policy": {
+    "grants": [
+      {
+        "roles": [
+          "owner"
+        ],
+        "mutations": "*"
+      }
+    ]
+  },
+  "brand": {
+    "accent": "#3a5a8c"
+  },
+  "views": {
+    "strength": {
+      "row": [
+        {
+          "title": "{in('has')|and} — {out('inSkill')|and}"
+        },
+        {
+          "badge": "Lv {level}",
+          "tone": "accent"
+        },
+        {
+          "progress": {
+            "value": "level",
+            "max": "5"
+          },
+          "label": "Progress"
+        }
+      ]
+    },
+    "skill": {
+      "card": [
+        {
+          "title": "{name}"
+        },
+        {
+          "list": "in('inSkill')",
+          "as": "row",
+          "empty": "Nobody is strong in it yet."
+        }
+      ]
+    },
+    "component": {
+      "card": [
+        {
+          "title": "{name}"
+        },
+        {
+          "badge": "{ownership}"
+        }
+      ]
+    },
+    "constraint": {
+      "row": [
+        {
+          "title": "{name}"
+        },
+        {
+          "badge": "{hardness}"
+        }
+      ]
+    }
+  },
+  "lenses": [
+    {
+      "name": "board",
+      "title": "Load map",
+      "bindings": {
+        "slots": {
+          "kind": "component"
+        },
+        "x": {
+          "field": "x",
+          "on": "slots"
+        },
+        "y": {
+          "field": "y",
+          "on": "slots"
+        },
+        "fill": {
+          "edge": "ownedBy"
+        }
+      },
+      "options": {
+        "zones": [
+          {
+            "label": "Founder",
+            "from": 0,
+            "to": 0.5
+          },
+          {
+            "label": "Partners",
+            "from": 0.5,
+            "to": 1
+          }
+        ],
+        "emptyLabel": "Nobody yet"
+      }
+    },
+    {
+      "name": "coverage",
+      "title": "Who owns what",
+      "bindings": {
+        "rows": {
+          "kind": "person"
+        },
+        "columns": {
+          "kind": "component"
+        },
+        "link": {
+          "edge": "ownedBy"
+        }
+      }
+    },
+    {
+      "name": "coverage",
+      "title": "Strengths",
+      "bindings": {
+        "rows": {
+          "kind": "person"
+        },
+        "columns": {
+          "kind": "skill"
+        },
+        "link": {
+          "path": [
+            "inSkill",
+            "has"
+          ]
+        }
+      }
+    },
+    {
+      "name": "blocks",
+      "title": "Skills and levels",
+      "on": "skill",
+      "options": {
+        "blocks": [
+          {
+            "headline": "{count(all('skill')) | words} {count(all('skill')) | plural: 'skill'}, and who is strong in each"
+          },
+          {
+            "list": "all('skill')",
+            "sort": "name",
+            "as": "card",
+            "empty": "No skills yet."
+          }
+        ]
+      }
+    },
+    {
+      "name": "blocks",
+      "title": "Nick's plate",
+      "on": "component",
+      "options": {
+        "blocks": [
+          {
+            "headline": "What Nick still owns alone"
+          },
+          {
+            "list": "all('component') where ownership == 'founder'",
+            "as": "row",
+            "empty": "Nothing on Nick's plate alone."
+          }
+        ]
+      }
+    },
+    {
+      "name": "columns",
+      "title": "Handoff runway",
+      "bindings": {
+        "component": {
+          "column": "ownership"
+        }
+      }
+    },
+    {
+      "name": "blocks",
+      "title": "Hard lines",
+      "on": "constraint",
+      "options": {
+        "blocks": [
+          {
+            "headline": "The lines the design keeps"
+          },
+          {
+            "list": "all('constraint')",
+            "group": "hardness",
+            "as": "row",
+            "empty": "No lines drawn yet."
+          }
+        ]
+      }
+    },
+    {
+      "name": "blocks",
+      "title": "What slices call for",
+      "on": "component",
+      "options": {
+        "blocks": [
+          {
+            "headline": "Each slice and the lines it keeps"
+          },
+          {
+            "list": "all('component')",
+            "as": "card",
+            "empty": "No slices yet."
+          }
+        ]
+      }
+    }
+  ]
+}

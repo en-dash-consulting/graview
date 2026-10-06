@@ -190,6 +190,6 @@ reads the interface or an agent reads a tool schema.
 - Whether the interface is any good. Run it. Run it at the size it will have: seed a
   real catalogue, not a dozen rows. The scene draws what a person can read — a
   relation too long for its band is grouped by its best arrangement or closes
-  on "+N more", and a thumbnail draws its 12 most relevant members — so a
+  on "+N more", and a district says its places by name — so a
   thousand records are a picture, not a smear. What that hides is yours to
   judge: whether the groups are the ones a person would ask for.

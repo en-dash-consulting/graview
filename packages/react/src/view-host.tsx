@@ -632,9 +632,10 @@ export function SceneViewHost({
         >
           <span
             style={{
-              width: 6,
+              // The kind's plot in miniature, as every kind mark is (FR-117).
+              width: 9,
               height: 6,
-              borderRadius: 999,
+              clipPath: "polygon(50% 0, 100% 50%, 50% 100%, 0 50%)",
               flex: "0 0 auto",
               background: `hsl(${Math.round(hueFor(node.kind, hostBrand?.accents))} 55% var(--graview-tint-lightness) / 0.9)`,
             }}

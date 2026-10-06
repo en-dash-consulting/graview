@@ -1,5 +1,5 @@
 import { marqueeHeightFor, ROSTER_ROW, ROSTER_KEPT, ROSTER_CHROME, rosterRows, rosterHeight } from "./sizes.js";
-export { THUMB_ONE, THUMB_TWO, marqueeHeightFor, ROSTER_ROW, ROSTER_MOST, rosterRows, rosterHeight } from "./sizes.js";
+export { MARQUEE_WIDTH, marqueeHeightFor, ROSTER_ROW, ROSTER_MOST, rosterRows, rosterHeight } from "./sizes.js";
 import { isCurrent, type AnySchema, type GraphReader, type NodeOfSchema } from "@graview/core";
 import { toIso } from "@graview/core/scene";
 import {

@@ -207,9 +207,10 @@ export function QuickRelations<S extends AnySchema>({ inside = false }: { readon
                 <span
                   aria-hidden="true"
                   style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: 999,
+                    // The kind's plot in miniature, as every kind mark is (FR-117).
+                    width: 10,
+                    height: 6,
+                    clipPath: "polygon(50% 0, 100% 50%, 50% 100%, 0 50%)",
                     flex: "0 0 auto",
                     background: `hsl(${hue} 55% var(--graview-tint-lightness) / 0.9)`,
                   }}

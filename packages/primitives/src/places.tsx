@@ -1,14 +1,14 @@
 import type { AnySchema, Place } from "@graview/core";
 import { aggregateId, withFocus, withOverview, withWithin } from "@graview/layout/view";
 import { useGraview, useNavigation } from "@graview/react/provider";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type WheelEvent } from "react";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
 
 /**
- * THE NAMED PLACES, as pills.
+ * THE NAMED PLACES, as text tabs.
  *
  * A group view registered with a title is somewhere to go: "Who tends what"
- * over the gardeners, "What grows where" over the plots. Each pill is the
+ * over the gardeners, "What grows where" over the plots. Each tab is the
  * stop that shows it — the group in focus, on the ground — and is pressed
  * while you are there. Nothing renders for an app with no named places, so
  * the bar of an app that never registered a lens is exactly as it was.
@@ -16,12 +16,17 @@ import { VISUALLY_HIDDEN } from "./primitives/index.js";
  * This exists because a lens was only reachable by focusing the group it
  * was registered on: click into one member and the picture was gone, with
  * nothing on the screen to say it had ever been there.
- */
-/**
- * The named pictures over the graph, as pills — or, `compact`, as one
- * select. Eight pills wrapped to four rows on a phone-width embed and took
- * half its height before the picture began; a select says the same eight
- * places in one row and opens to the same stops.
+ *
+ * TABS, NOT PILLS, AND NOT A MENU (FR-117, FR-118). The places were a row of
+ * capsules that handed what it could not hold to a "+N more" select — and,
+ * on a phone, one select for all of them. En Dash Org's eight places were
+ * eight capsules on a desk, cut to "What slices call for" at 54 of its 107
+ * pixels, and on a phone a name you had to open a menu to read. A capsule
+ * means "press this to choose" or "this is its state"; the places are the
+ * app's own navigation, read at a glance, so they are words on one line with
+ * the current one underlined, and a row longer than its room scrolls rather
+ * than cutting a name or hiding it behind a press. Every name is whole,
+ * everywhere, and the place you are on is scrolled into view.
  */
 export function Places<S extends AnySchema>({ compact = false }: { compact?: boolean } = {}) {
   const { views, hiddenKinds } = useGraview<S>();
@@ -32,252 +37,125 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
    * The reach lens registered over the people is "Who may do what" — a
    * picture of the installation, named on the bar. A member may not
    * administer the installation, so its kinds are not drawn for them
-   * anywhere; the pill was drawn anyway, and pressing it focused a district
+   * anywhere; the tab was drawn anyway, and pressing it focused a district
    * that is not there. The kinds a seat is kept from are already worked out
    * once, for the scene and the shelf; the bar reads the same answer.
    */
   const places = views.places().filter((place) => !hiddenKinds.has(place.kind));
-  /* Hooks first, before any early return: a bar whose places arrive a
-     render later must not change how many hooks it calls. */
-  const row = useRef<HTMLElement>(null);
-  // The pills, measured each time the row is fitted (their widths change when the font arrives).
-  const pills = useRef<(HTMLButtonElement | null)[]>([]);
-  const more = useRef<HTMLSelectElement | null>(null);
-  const [shown, setShown] = useState(places.length);
-  const MORE = 92;
-  /* Which place you are on, so the menu keeps room for its name when it holds it. */
-  const current = places.findIndex(
-    (place) =>
-      !view.overview &&
-      view.focusId === aggregateId(place.kind) &&
-      (view.within?.["view"] === undefined
-        ? places.filter((other) => other.kind === place.kind).at(-1)?.as === place.as
-        : view.within["view"] === place.as),
-  );
-  useLayoutEffect(() => {
-    const element = row.current;
-    if (!element || typeof ResizeObserver === "undefined") return;
-    const measure = () => {
-      // The ROOM is the region the row stands in, not the row's own width:
-      // the row shrinks to what it shows, and measuring it could only ever
-      // agree with what was already shown.
-      const room = (element.parentElement ?? element).getBoundingClientRect().width - 8;
-      /*
-       * READ NOW, NOT WHEN THE PILL MOUNTED. The widths were taken in each
-       * pill's ref as it mounted — in the fallback face, before the brand's
-       * font arrived — and the font made every pill wider without making the
-       * row fit again: seedbed's places ran seven pixels past their edge on
-       * every screen measured early, and a fix to the reserve below did not
-       * touch it. The pills are measured on each fit, and watched.
-       */
-      const sizes = pills.current.map((pill) => pill?.getBoundingClientRect().width ?? 0);
-      /*
-       * AND THE MENU AS IT IS DRAWN. Standing on a place the menu holds, the
-       * menu shows that place's name in a select's padding and chevron —
-       * 144 pixels for "The rotation", whose pill is 106 — and the 14 kept
-       * for it was a guess that ran the row seven pixels past its edge. Where
-       * the menu is showing a held place, what it adds to that place's pill
-       * is measured; until then, forty.
-       */
-      const menu = more.current;
-      const showing = menu ? places.findIndex((place) => `${place.kind}:${place.as}` === menu.value) : -1;
-      const chrome = menu && showing >= 0 && sizes[showing] ? Math.max(14, menu.getBoundingClientRect().width - sizes[showing]) : 40;
-      if (pills.current.filter(Boolean).length < places.length) return;
-      let used = 0;
-      let fit = 0;
-      for (let i = 0; i < places.length; i += 1) {
-        const next = used + (sizes[i] ?? 0) + (i > 0 ? 2 : 0);
-        /*
-         * THE MORE MENU IS AS WIDE AS WHAT IT SAYS. Standing on a place it
-         * holds, the select shows that place's name, not "+2 more" — and
-         * "The rotation" is wider than the 92 pixels kept for it, so the
-         * row ran seven pixels past its own edge. Keep room for the name of
-         * the place you are on when it would be in the menu; otherwise the
-         * menu says "+N more", and 92 holds that.
-         */
-        const reserve =
-          i < places.length - 1 ? Math.max(MORE, current > i ? (sizes[current] ?? 0) + chrome : 0) : 0;
-        if (next + reserve > room) break;
-        used = next;
-        fit = i + 1;
-      }
-      setShown((was) => (was === fit ? was : fit));
-    };
-    measure();
-    const watch = new ResizeObserver(measure);
-    watch.observe(element.parentElement ?? element);
-    for (const pill of pills.current) if (pill) watch.observe(pill);
-    if (more.current) watch.observe(more.current);
-    return () => watch.disconnect();
-  }, [places.length, current]);
-  if (places.length === 0) return null;
   /*
    * Which picture a group draws when the address names none: the LAST
    * registration for the cell, because that is what the registry resolves
-   * to and a pill must agree with what is actually on screen.
+   * to and a tab must agree with what is actually on screen.
    */
-  const isDefault = (all: readonly Place[], place: Place): boolean =>
-    all.filter((other) => other.kind === place.kind).at(-1)?.as === place.as;
+  const isDefault = (all: readonly Place[], place: Place): boolean => all.filter((other) => other.kind === place.kind).at(-1)?.as === place.as;
   const showing = view.within?.["view"];
-  const isHere = (place: Place) =>
-    !view.overview &&
-    view.focusId === aggregateId(place.kind) &&
-    (showing === undefined ? isDefault(places, place) : showing === place.as);
-  const goTo = (place: Place) =>
-    go(withWithin(withOverview(withFocus(view, aggregateId(place.kind)), false), "view", place.as));
-  if (compact) {
-    const here = places.find(isHere);
-    return (
-      <select
-        aria-label="Places"
-        data-testid="places"
-        value={here ? `${here.kind}:${here.as}` : ""}
-        onChange={(event) => {
-          const place = places.find((candidate) => `${candidate.kind}:${candidate.as}` === event.target.value);
-          if (place) goTo(place);
-        }}
-        style={{
-          minHeight: 28,
-          maxWidth: "100%",
-          padding: "3px 8px",
-          borderRadius: 999,
-          fontSize: "0.875rem",
-          borderWidth: 1,
-          borderStyle: "solid",
-          borderColor: here ? "var(--graview-accent)" : "var(--graview-edge)",
-          color: here ? "var(--graview-accent)" : "var(--graview-ink-muted)",
-          backgroundColor: "var(--graview-panel)",
-          // WebKit ignores the floor on a native select (W-121): the look off, a chevron drawn.
-          paddingRight: 24,
-          appearance: "none",
-          WebkitAppearance: "none",
-          backgroundImage: "linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%)",
-          backgroundPosition: "calc(100% - 13px) 55%, calc(100% - 9px) 55%",
-          backgroundSize: "4px 4px, 4px 4px",
-          backgroundRepeat: "no-repeat",
-        }}
-      >
-        <option value="">Places…</option>
-        {places.map((place) => (
-          <option key={`${place.kind}:${place.as}`} value={`${place.kind}:${place.as}`} data-place-kind={place.kind}>
-            {place.title}
-          </option>
-        ))}
-      </select>
-    );
-  }
+  const isHere = (place: Place) => !view.overview && view.focusId === aggregateId(place.kind) && (showing === undefined ? isDefault(places, place) : showing === place.as);
+  const here = places.find(isHere);
+  const row = useRef<HTMLElement>(null);
+  /* The place you are on, in view: a row that scrolls never hides the tab that says where you are. */
+  useEffect(() => {
+    const element = row.current?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    const scroller = row.current;
+    if (!element || !scroller || scroller.scrollWidth <= scroller.clientWidth) return;
+    const left = element.offsetLeft - scroller.offsetLeft;
+    if (left < scroller.scrollLeft || left + element.offsetWidth > scroller.scrollLeft + scroller.clientWidth) {
+      scroller.scrollLeft = Math.max(0, left - 24);
+    }
+  }, [here?.as, here?.kind, places.length]);
   /*
-   * ONE ROW, WHATEVER THE WIDTH. The places are the app's own navigation
-   * and read as one control — a segmented row with the current picture
-   * filled — rather than a run of loose pills. What the row cannot hold
-   * goes into a "More" menu at its end instead of wrapping the bar into a
-   * second line: the bar is one line, and the picture starts under it.
+   * WHICH EDGE HAS MORE. A row that scrolls says so by fading the edge with
+   * more beyond it, so a name at that edge reads as continuing rather than
+   * cut — and the fade goes when there is nothing more that way.
    */
-  const rest = places.slice(shown);
-  const restHere = rest.find(isHere);
+  const [more, setMore] = useState<"" | "start" | "end" | "both">("");
+  useEffect(() => {
+    const scroller = row.current;
+    if (!scroller) return;
+    const read = () => {
+      const start = scroller.scrollLeft > 1;
+      const end = scroller.scrollLeft + scroller.clientWidth < scroller.scrollWidth - 1;
+      const next = start && end ? "both" : start ? "start" : end ? "end" : "";
+      setMore((was) => (was === next ? was : next));
+    };
+    read();
+    scroller.addEventListener("scroll", read, { passive: true });
+    const watch = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(read);
+    watch?.observe(scroller);
+    return () => {
+      scroller.removeEventListener("scroll", read);
+      watch?.disconnect();
+    };
+  }, [places.length]);
+  if (places.length === 0) return null;
+  const fade = more === "" ? undefined : `linear-gradient(to right, ${more === "end" ? "#000" : "transparent"} 0, #000 28px, #000 calc(100% - 28px), ${more === "start" ? "#000" : "transparent"} 100%)`;
+  const goTo = (place: Place) => go(withWithin(withOverview(withFocus(view, aggregateId(place.kind)), false), "view", place.as));
+  /* A mouse's wheel scrolls the row sideways when the row is longer than its room: a desk has no swipe. */
+  const onWheel = (event: WheelEvent<HTMLElement>) => {
+    const scroller = event.currentTarget;
+    if (scroller.scrollWidth <= scroller.clientWidth || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+    scroller.scrollLeft += event.deltaY;
+  };
   return (
     <nav
       ref={row}
       aria-label="Places"
       data-testid="places"
+      data-graview-places={compact ? "row" : "inline"}
+      className="graview-places"
+      onWheel={onWheel}
       style={{
-        position: "relative",
         display: "flex",
-        alignItems: "center",
+        alignItems: "stretch",
         gap: 2,
-        padding: 3,
         minWidth: 0,
         maxWidth: "100%",
-        borderRadius: 999,
-        border: "1px solid var(--graview-edge)",
-        background: "var(--graview-panel-muted)",
-        overflow: "hidden",
+        // Its own row on a phone, the room that is left on a desk; either way it scrolls rather than cuts.
+        flex: compact ? "1 1 100%" : "1 1 12rem",
+        overflowX: "auto",
+        overflowY: "hidden",
+        scrollbarWidth: "none",
+        overscrollBehaviorX: "contain",
+        ...(fade ? { maskImage: fade, WebkitMaskImage: fade } : {}),
       }}
+      data-graview-more={more || undefined}
     >
       {/* A heading for the region (FR-25), named as its landmark is; out of the row's flow. */}
       <h2 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>Places</h2>
-      {places.map((place, index) => {
-        const here = isHere(place);
+      {places.map((place) => {
+        const pressed = isHere(place);
         return (
           <button
             key={`${place.kind}:${place.as}`}
-            ref={(el) => {
-              pills.current[index] = el;
-            }}
             type="button"
-            aria-pressed={here}
+            aria-pressed={pressed}
             data-testid={`place-${place.as}`}
             data-place-kind={place.kind}
+            className="graview-place-tab"
             title={`${place.title} — a picture over the ${place.kind}s`}
             onClick={() => goTo(place)}
             style={{
-              // A full fingertip whatever the brand's line height: Groundskeeper's
-              // pills measured 22px and its audit counted every one.
-              minHeight: 28,
-              padding: "3px 13px",
-              borderRadius: 999,
-              fontSize: "0.875rem",
-              fontWeight: here ? 600 : 500,
-              borderWidth: 1,
-              borderStyle: "solid",
+              // A full fingertip whatever the brand's line height.
+              minHeight: 32,
+              padding: "4px 10px",
+              margin: 0,
+              border: 0,
+              // The place you are on is underlined: a baseline, not a capsule.
+              borderBottom: `2px solid ${pressed ? "var(--graview-accent)" : "transparent"}`,
+              borderRadius: 0,
+              background: "transparent",
               boxShadow: "none",
+              fontSize: "0.875rem",
+              fontWeight: pressed ? 600 : 500,
               whiteSpace: "nowrap",
               flex: "0 0 auto",
-              color: here ? "var(--graview-ink)" : "var(--graview-ink-muted)",
-              background: here ? "var(--graview-panel)" : "transparent",
-              borderColor: here ? "var(--graview-edge)" : "transparent",
-              // Measured at full width, then parked off the row's left edge
-              // if the row cannot hold it: still measurable, never part of
-              // anything's scrollable overflow (which only extends rightward),
-              // so no box on the bar reads as cut.
-              ...(index >= shown ? { position: "absolute" as const, left: -9999, top: 0, visibility: "hidden" as const } : {}),
+              cursor: "pointer",
+              color: pressed ? "var(--graview-ink)" : "var(--graview-ink-muted)",
             }}
           >
             {place.title}
           </button>
         );
       })}
-      {rest.length > 0 ? (
-        <select
-          ref={more}
-          aria-label="More places"
-          data-testid="places-more"
-          value={restHere ? `${restHere.kind}:${restHere.as}` : ""}
-          onChange={(event) => {
-            const place = rest.find((candidate) => `${candidate.kind}:${candidate.as}` === event.target.value);
-            if (place) goTo(place);
-          }}
-          style={{
-            minHeight: 28,
-            padding: "3px 22px 3px 12px",
-            borderRadius: 999,
-            fontSize: "0.875rem",
-            fontWeight: restHere ? 600 : 500,
-            borderWidth: 1,
-            borderStyle: "solid",
-            flex: "0 0 auto",
-            color: restHere ? "var(--graview-ink)" : "var(--graview-ink-muted)",
-            // backgroundColor, not background: the shorthand beside the chevron's
-            // backgroundImage and friends is overwritten by them on every change of place.
-            backgroundColor: restHere ? "var(--graview-panel)" : "transparent",
-            // The browser's own arrow is wide and grey; a small chevron of the text's colour instead.
-            appearance: "none",
-            WebkitAppearance: "none",
-            backgroundImage: "linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%)",
-            backgroundPosition: "calc(100% - 13px) 55%, calc(100% - 9px) 55%",
-            backgroundSize: "4px 4px, 4px 4px",
-            backgroundRepeat: "no-repeat",
-            borderColor: restHere ? "var(--graview-edge)" : "transparent",
-          }}
-        >
-          <option value="">{restHere ? restHere.title : `+${rest.length} more`}</option>
-          {rest.map((place) => (
-            <option key={`${place.kind}:${place.as}`} value={`${place.kind}:${place.as}`}>
-              {place.title}
-            </option>
-          ))}
-        </select>
-      ) : null}
     </nav>
   );
 }

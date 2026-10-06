@@ -71,6 +71,8 @@ const CHAIN = [
   ["studio", "verify-studio.mjs"],
   // The embed's chrome as one family: every popover over everything, the host's actions, the seat put away, the host's notices (FR-72, FR-75–FR-78).
   ["chrome", "verify-chrome.mjs"],
+  // Fewer pills and no name cut off, on Cloud's two apps, in three engines (FR-113, FR-117, FR-118).
+  ["quiet", "verify-chrome-quiet.mjs"],
   // A document's declared lenses drawn as places on both faces, and its arrangement honoured, with no view of the host's (FR-79, FR-80).
   ["declared", "verify-declared.mjs"],
   // A host whose page is the app hands the routed face the address bar, in three engines; an article's embed never touches it (FR-106).

@@ -155,7 +155,8 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
                   ...plain,
                   gap: 8,
                   padding: "6px 14px 6px 10px",
-                  borderRadius: 999,
+                  // A way to a kind's list is a small card, not a capsule: capsules are for choices and states (FR-117).
+                  borderRadius: 8,
                   border: "1px solid var(--graview-edge-bright)",
                   background: "var(--graview-panel)",
                 }}

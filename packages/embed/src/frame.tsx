@@ -552,7 +552,7 @@ export function Strip({
                   fontSize: "0.875rem",
                   borderWidth: 1,
                   borderStyle: "solid",
-                  borderColor: pressed ? "var(--graview-accent)" : "var(--graview-edge)",
+                  borderColor: pressed ? "var(--graview-accent)" : "transparent",
                   color: pressed ? "var(--graview-accent)" : "var(--graview-ink-muted)",
                   background: pressed ? "var(--graview-panel)" : "transparent",
                 }}

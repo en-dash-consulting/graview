@@ -1,0 +1,16 @@
+{
+  "nodes": [
+    { "id": "ryan", "kind": "person", "name": "Ryan", "role": "Partner, growth" },
+    { "id": "seo", "kind": "skill", "name": "Search engine optimisation" },
+    { "id": "ryan-seo", "kind": "strength", "name": "Ryan SEO", "level": 3 },
+    { "id": "pipeline", "kind": "component", "name": "Pipeline and proposals", "ownership": "shared", "x": 0.25, "y": 0.3 },
+    { "id": "os", "kind": "component", "name": "Operating system design", "ownership": "handoff", "x": 0.7, "y": 0.6 },
+    { "id": "no-hierarchy", "kind": "constraint", "name": "No default hierarchy", "hardness": "hard" }
+  ],
+  "edges": [
+    { "kind": "has", "from": "ryan", "to": "ryan-seo" },
+    { "kind": "inSkill", "from": "ryan-seo", "to": "seo" },
+    { "kind": "ownedBy", "from": "pipeline", "to": "ryan" },
+    { "kind": "constrainedBy", "from": "os", "to": "no-hierarchy" }
+  ]
+}

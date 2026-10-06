@@ -970,7 +970,8 @@ export function CoverageView<S extends AnySchema>({
                                   alignItems: "center",
                                   gap: 6,
                                   padding: "2px 9px 2px 7px",
-                                  borderRadius: 999,
+                                  // A labelled cell, not a choice: a cell's corners, not a capsule (FR-117).
+                                  borderRadius: 6,
                                   border: "1px solid var(--graview-edge)",
                                   fontSize: "0.75rem",
                                   color: filled ? "var(--graview-ink)" : "var(--graview-ink-faint)",
@@ -1119,7 +1120,8 @@ function cellStyle(
     return {
       width: 5,
       height: 5,
-      borderRadius: 999,
+      // The empty cell's tick is the filled cell's square, small: the matrix speaks in one shape.
+      borderRadius: 1,
       background: rowIsMissing ? "var(--graview-warn)" : "var(--graview-edge)",
       opacity: rowIsMissing ? 0.5 : 1,
     };
