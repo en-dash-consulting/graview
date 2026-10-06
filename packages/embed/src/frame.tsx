@@ -370,8 +370,11 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
     // The root is the embed's own region and already wears the label; the
     // sweep names what is INSIDE it — a named section is a region too, and
     // the seat is one (FR-40).
+    // A landmark that already says which picture it is in — a board's column, "Vendors by status · Researching, 0" (FR-109) — keeps its name.
     const sweep = () =>
-      root.querySelectorAll("aside, nav, main, header, footer, section[aria-label]:not([role]), [role=region], [role=complementary], [role=navigation]").forEach(name);
+      root.querySelectorAll("aside, nav, main, header, footer, section[aria-label]:not([role]), [role=region], [role=complementary], [role=navigation]").forEach((el) => {
+        if (!el.hasAttribute("data-graview-named-by-lens")) name(el);
+      });
     sweep();
     const observer = new MutationObserver(sweep);
     observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["aria-label"] });

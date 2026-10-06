@@ -119,7 +119,7 @@ export function createColumnsLens<S extends AnySchema>(options: ColumnsOptions):
         </Panel>
       );
     }
-    const picture = <ColumnsBoard boards={boards} />;
+    const picture = <ColumnsBoard boards={boards} title={title} />;
     // On a page the page's own heading already says what it is; in the scene it is a card, as every lens is.
     return withMore(
       props,
@@ -144,7 +144,7 @@ interface Said {
   readonly id?: string;
 }
 
-function ColumnsBoard({ boards }: { readonly boards: readonly Board[] }) {
+function ColumnsBoard({ boards, title }: { readonly boards: readonly Board[]; readonly title: string }) {
   const { store, principal } = useGraview<AnySchema>();
   const root = useRef<HTMLDivElement | null>(null);
   const [said, setSaid] = useState<Said | null>(null);
@@ -211,7 +211,9 @@ function ColumnsBoard({ boards }: { readonly boards: readonly Board[] }) {
                   data-graview-column={value}
                   data-droppable={droppable || undefined}
                   data-over={(droppable && over === value) || undefined}
-                  aria-label={`${column.label}, ${count}`}
+                  // The lens first (FR-109): a phone's screen reader says a region by its name alone, and "Researching, 0" does not say which board — nor does the app's name, so an embed leaves this one as it is.
+                  aria-label={`${title} · ${column.label}, ${count}`}
+                  data-graview-named-by-lens=""
                   onDragOver={(event) => {
                     if (!droppable) return;
                     event.preventDefault();
