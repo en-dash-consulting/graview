@@ -43,8 +43,20 @@ export const discographyApp = defineApp({
    */
   settings: readerSettings(),
   lenses: [
-    { name: "coverage", binds: "entities", requiredRoles: ["rows", "columns", "link"], bindings: { rows: { kind: "song" }, columns: { kind: "theme" }, link: { edge: "about" } } },
-    { name: "calendar", requiredRoles: ["start"], bindings: { album: { start: "released" } } },
+    /* What each song is about: songs down the side, themes across — a place the framework draws from this line (FR-79). */
+    { name: "coverage", title: "What the songs are about", bindings: { rows: { kind: "song" }, columns: { kind: "theme" }, link: { edge: "about" } } },
+    /*
+     * The releases, on the calendar, across the whole career: it opens where
+     * the catalogue starts (the first release is October 1997) and looks out
+     * thirty years, to the last. Eight years from 2023 showed a career that
+     * had barely begun and four empty years to come.
+     */
+    {
+      name: "calendar",
+      title: "The releases",
+      bindings: { album: { start: "released" } },
+      options: { today: "1997-01-01", range: "years", horizon: { years: 30, title: "The career" } },
+    },
     {
       name: "tracklist",
       binds: "entities",

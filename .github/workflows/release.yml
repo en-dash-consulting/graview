@@ -1,31 +1,31 @@
 # Releases, through changesets.
 #
-# 1. A pull request merged to main with a `.changeset/` file runs this.
-# 2. It opens or updates the "Version packages" pull request: the bumps and
-#    the changelog entries, reviewable before anything is released.
-# 3. Merging that pull request runs this again with nothing pending, and the
-#    packages are STAGED on npm (`scripts/release-stage.mjs`) — not published.
-# 4. A person approves them with their second factor, from main:
-#    `pnpm release:approve` approves each, waits for npm to serve them, then
-#    pushes a tag and writes a GitHub release for each.
+# 1. A pull request merged to main with a `.changeset/` file runs this. The
+#    `version` job opens or updates the "Version packages" pull request: the
+#    bumps and the changelog entries, reviewable before anything is released.
+#    A pull request opened by this workflow's token starts no workflow of its
+#    own, so the job then dispatches CI on its branch; the checks main's rules
+#    require are then on it like any other pull request.
+# 2. Merging that pull request runs this again with nothing pending and a
+#    version npm does not have, so the `publish` job starts — and waits. It
+#    runs in the `npm` environment, whose required reviewer approves it once in
+#    GitHub. That approval is the release: nothing reaches npm before it.
+# 3. Approved, the job builds and tests, checks the last Nightly on main is
+#    green, publishes every package by npm trusted publishing
+#    (`scripts/release-publish.mjs`), then tags each and writes a GitHub release.
 #
-# The thirteen packages are one changesets `fixed` group, so they share a
+# The fourteen packages are one changesets `fixed` group, so they share a
 # version and `graview create` can write `^<version>` for every one of them
 # and name a version that exists.
 #
-# Staging is by npm Trusted Publishing (OIDC): no long-lived token in this
-# repository. Each package carries its own trusted-publisher configuration at
-# npmjs.com pointing at this repository, this file, and the "npm" environment
-# — per package, not per scope, set only on a package that already exists —
-# and it allows `npm stage publish` and nothing else: merging to main is not
-# by itself a release, a person with the second factor is. (0.1.0 and 0.1.2
-# were published by hand; a direct `npm publish` from here is refused with
-# "OIDC permission denied for this action", which is what 0.1.1 met.)
+# Trusted publishing (OIDC): no long-lived token in this repository. Each
+# package's trusted publisher on npmjs.com names this repository, this file and
+# the "npm" environment, and allows publish (`node scripts/release-trust.mjs`
+# sets that). A brand-new package has no trusted publisher until it exists, so
+# its first version is published by hand.
 #
-# changesets/action@v2, not v1: v1 learned what was published by scraping
-# `New tag:` lines that @changesets/cli v3 no longer prints, and so pushed no
-# tags and made no releases while reporting green. v2 reads the CLI's
-# CHANGESETS_OUTPUT side-channel instead.
+# A merge with no changesets and every version already on npm (a PRD change, a
+# fix to a script) runs only the `version` job, which finds nothing to do.
 
 name: Release
 
@@ -38,22 +38,74 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
+  version:
     runs-on: ubuntu-latest
-    environment: npm
-    timeout-minutes: 20
+    timeout-minutes: 15
     permissions:
       contents: write
       pull-requests: write
-      id-token: write
-      # Reads the last Nightly's conclusion before a publish.
-      actions: read
-
+      # Dispatches CI on the Version packages branch.
+      actions: write
+    outputs:
+      pending: ${{ steps.state.outputs.pending }}
+      unpublished: ${{ steps.state.outputs.unpublished }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
 
+      - name: What there is to do
+        id: state
+        run: |
+          set -euo pipefail
+          if ls .changeset/*.md 2>/dev/null | grep -qv README.md; then PENDING=true; else PENDING=false; fi
+          VERSION=$(node -p "require('./packages/graview/package.json').version")
+          if npm view "graview@${VERSION}" version >/dev/null 2>&1; then UNPUBLISHED=false; else UNPUBLISHED=true; fi
+          echo "Changesets pending: ${PENDING}; graview@${VERSION} unpublished: ${UNPUBLISHED}"
+          echo "pending=${PENDING}" >> "$GITHUB_OUTPUT"
+          echo "unpublished=${UNPUBLISHED}" >> "$GITHUB_OUTPUT"
+
+      # changesets/action@v2, not v1: v1 learned what was published by scraping
+      # `New tag:` lines that @changesets/cli v3 no longer prints. Here it only
+      # versions; publishing is the next job's.
+      - name: Open or update the Version packages pull request
+        if: steps.state.outputs.pending == 'true'
+        uses: changesets/action@v2
+        with:
+          version: pnpm version-packages
+          title: "Version packages"
+          commit: "Version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run CI on it
+        if: steps.state.outputs.pending == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run ci.yml --ref changeset-release/main
+
+  publish:
+    needs: version
+    if: needs.version.outputs.pending == 'false' && needs.version.outputs.unpublished == 'true'
+    runs-on: ubuntu-latest
+    # The required reviewer on this environment is the release's one approval.
+    environment: npm
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      id-token: write
+      # Reads the last Nightly's conclusion before a publish.
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -63,7 +115,7 @@ jobs:
 
       # Trusted publishing and provenance need npm 11.5.1 or later; node 22
       # ships 10.x. Pinned to 11.15.0 because 11.16.0 broke `npm info`
-      # against npmjs.org metadata, which `changeset publish` relies on.
+      # against npmjs.org metadata.
       - name: npm that can do trusted publishing
         run: npm install -g npm@11.15.0
 
@@ -76,22 +128,16 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
 
-      # A publish run (no changesets left: the Version packages pull request
-      # was just merged) waits on the browser harnesses. The last finished
-      # Nightly on main must be green; a run with changesets only opens or
-      # updates the pull request, and is not held.
+      # The browser harnesses are the Nightly's: the last finished one on main
+      # must be green before anything is published.
       - name: The last nightly on main holds
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          if ls .changeset/*.md 2>/dev/null | grep -qv README.md; then
-            echo "Changesets pending: this run versions, it does not publish."
-            exit 0
-          fi
           RESULT=$(gh run list --workflow nightly.yml --branch main --status completed --limit 1 --json conclusion,headSha,url --jq '.[0] // empty | "\(.conclusion) \(.headSha[0:8]) \(.url)"')
           if [ -z "$RESULT" ]; then
-            echo "::error::no finished Nightly on main — run it (Actions → Nightly → Run workflow) before publishing"
+            echo "::error::no finished Nightly on main — run it (Actions → Nightly → Run workflow), then re-run this job"
             exit 1
           fi
           echo "Last nightly: $RESULT"
@@ -100,40 +146,34 @@ jobs:
             *) echo "::error::the last Nightly on main is not green: $RESULT"; exit 1 ;;
           esac
 
-      - name: Version packages, or publish them
-        id: changesets
-        uses: changesets/action@v2
-        with:
-          version-script: pnpm version-packages
-          # Stages; `pnpm release:approve` is what makes them live.
-          publish-script: node scripts/release-stage.mjs
-          pr-title: "Version packages"
-          commit-message: "Version packages"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish, tag and release
         env:
-          # No NPM_TOKEN: the runner's OIDC token is exchanged for a
-          # short-lived staging credential, and the tarballs carry provenance.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          node scripts/release-publish.mjs
 
       - name: The tags and releases match what npm has
-        # Only on a publish run. Fails when npm has this version but origin
-        # lacks a tag or GitHub lacks a release for any package. A staged
-        # version is not on npm yet, so a run that only staged passes here;
-        # the next run after `pnpm release:approve` is the one that checks.
-        if: steps.changesets.outputs.has-changesets == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           VERSION=$(node -p "require('./packages/graview/package.json').version")
-          if ! npm view "graview@${VERSION}" version >/dev/null 2>&1; then
-            echo "graview@${VERSION} is not on npm; nothing to verify."
-            exit 0
-          fi
           FAILED=0
           for dir in packages/*/; do
             NAME=$(node -p "require('./${dir}package.json').name")
             TAG="${NAME}@${VERSION}"
+            # npm takes a few minutes to serve a version it has just taken.
+            SERVED=0
+            for TRY in $(seq 1 30); do
+              if npm view "${TAG}" version --prefer-online >/dev/null 2>&1; then SERVED=1; break; fi
+              sleep 20
+            done
+            if [ "$SERVED" = 0 ]; then
+              echo "::error::${TAG} is not on npm after ten minutes"; FAILED=1
+            fi
             if ! git ls-remote --tags origin "refs/tags/${TAG}" | grep -q .; then
               echo "::error::no tag ${TAG} on origin"; FAILED=1
             fi

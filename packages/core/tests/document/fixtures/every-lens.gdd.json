@@ -1,0 +1,78 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "The hall",
+  "description": "A volunteer hall: its shifts, who covers them, its seats and its rooms.",
+  "kinds": {
+    "shift": {
+      "noun": "shift",
+      "plural": "shifts",
+      "fields": {
+        "label": { "type": "string", "required": true },
+        "day": { "type": "enum", "options": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"], "default": "mon", "required": true },
+        "from": { "type": "integer", "description": "minutes into the day it starts" },
+        "until": { "type": "integer", "description": "minutes into the day it ends" },
+        "on": { "type": "date" }
+      },
+      "edges": {
+        "covered-by": { "to": ["volunteer"], "cardinality": "many", "description": "who covers it", "inverse": "shifts they cover" }
+      }
+    },
+    "volunteer": {
+      "noun": "volunteer",
+      "plural": "volunteers",
+      "fields": { "label": { "type": "string", "required": true } }
+    },
+    "seat": {
+      "noun": "seat",
+      "plural": "seats",
+      "fields": {
+        "label": { "type": "string", "required": true },
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      },
+      "edges": {
+        "taken-by": { "to": ["volunteer"], "cardinality": "one", "description": "who sits there", "inverse": "where they sit" }
+      }
+    },
+    "room": {
+      "noun": "room",
+      "plural": "rooms",
+      "fields": {
+        "label": { "type": "string", "required": true },
+        "outline": { "type": "list", "of": "number" }
+      }
+    },
+    "member": {
+      "noun": "member",
+      "plural": "members",
+      "fields": { "label": { "type": "string", "required": true } }
+    }
+  },
+  "acts": {
+    "add-shift": { "title": "Add a shift", "creates": "shift", "description": "Put a shift on the rota." },
+    "add-volunteer": { "title": "Add a volunteer", "creates": "volunteer", "description": "Someone who covers shifts." },
+    "add-seat": { "title": "Add a seat", "creates": "seat", "description": "A seat in the hall." },
+    "add-room": { "title": "Add a room", "creates": "room", "description": "A room of the building." },
+    "add-member": { "title": "Add a member", "creates": "member", "description": "Somebody who keeps the hall." },
+    "cover": { "title": "Cover", "on": "shift", "connects": "covered-by", "description": "Say who covers a shift." },
+    "sit": { "title": "Sit", "on": "seat", "connects": "taken-by", "description": "Say who sits in a seat." }
+  },
+  "roles": ["keeper", "volunteer"],
+  "policy": {
+    "grants": [
+      { "roles": ["keeper"], "mutations": "*" },
+      { "roles": ["volunteer"], "mutations": ["cover"] }
+    ]
+  },
+  "lenses": [
+    { "name": "timeline", "title": "The week", "bindings": { "shift": { "start": "from", "end": "until", "column": "day" } } },
+    { "name": "calendar", "title": "The month", "bindings": { "shift": { "start": "on" } }, "options": { "range": "month", "today": "2026-09-01" } },
+    { "name": "coverage", "title": "Who covers what", "bindings": { "rows": { "kind": "shift" }, "columns": { "kind": "volunteer" }, "link": { "edge": "covered-by" } } },
+    { "name": "board", "title": "The floor", "bindings": { "slots": { "kind": "seat" }, "x": { "field": "x", "on": "slots" }, "y": { "field": "y", "on": "slots" }, "fill": { "edge": "taken-by" } } },
+    { "name": "plan", "title": "The building", "bindings": { "regions": { "kind": "room" }, "outline": { "field": "outline", "on": "regions" } } },
+    { "name": "reach", "title": "Who may do what", "on": "member" },
+    { "name": "blocks", "title": "Who keeps the hall", "on": "member", "options": { "blocks": [{ "headline": "{count(all('member')) | words} {count(all('member')) | plural: 'member'}" }, { "list": "all('member')", "sort": "label", "as": "row", "empty": "Nobody yet." }] } }
+  ],
+  "pages": { "order": ["volunteer", "seat", "shift"], "hide": ["room"], "first": "The floor" }
+}

@@ -37,7 +37,16 @@ if (location.pathname.startsWith("/pages")) {
 - `/problems` — every broken rule with its repairs.
 
 The shell is one row — pictures (home), kinds, Map, Problems — scrolling
-sideways on a phone. Shell and gallery are 1160px wide; read pages, 760.
+sideways on a phone.
+
+**Arrange it in the declaration**: `pages: { order: ["offer",
+"package"], hide: ["party"], first: "The offers" }`. `order` sets the
+gallery, nav and city; `hide` takes kinds off the home only; `first` (a
+place, a kind or `"home"`) is where both faces open.
+`placesOf(app)` lists every place.
+**Home as data** (FR-81): `home`, blocks as in `graview-node-kind`
+(`views.home`), replaces this body and stands over the scene at
+home; an empty graph keeps the way in.
 
 **Hand it `views`** (the scene's registry, plus `settings`/`presence`) —
 `graview create` does — and the face puts the scene's provider
@@ -68,11 +77,9 @@ under its routes, which buys three things at once:
 Everything a page shows is a derivation the scene also uses: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is
 or who may take it** — it strikes through what the seat may not, and says why.
+A record's facts include its `computed` fields, from what the seat may see.
 
-**At a phone's width this face is the answer.** The scene still holds there —
-districts stay legible, panels scroll — but
-a 134px card in a 390px viewport is a city through a letterbox. `Shell`
-carries `pagesHref`.
+**At a phone's width this face is the answer.** `Shell` carries `pagesHref`.
 
 ## Rung one: a page in the app's own words
 
@@ -191,10 +198,9 @@ pnpm build && npx graview check ./dist/domain/app.js   # the declaration is stil
 pnpm test                                               # render every page you registered
 ```
 
-Render each registered page with `PagesApp` and `initialPath` in a test —
-`apps/seedbed/tests/integration/chapters.test.ts` does. Then open it: a
-design that passes its tests and reads like an admin panel has replaced
-nothing.
+Render each registered page with `PagesApp` and `initialPath` in a test
+(`apps/seedbed/tests/integration/chapters.test.ts`). Then open it: a design
+that passes its tests and reads like an admin panel has replaced nothing.
 
 ## What the check cannot see
 

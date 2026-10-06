@@ -1,4 +1,5 @@
 import type { AnySchema, KindOfSchema } from "../schema/schema.js";
+import type { PagesArrangement } from "../places.js";
 
 /** One node, or a group of them standing in for a kind. */
 export type Cardinality = "one" | "many";
@@ -108,6 +109,24 @@ export interface ViewRegistry<S extends AnySchema, V = unknown> {
    */
   registrations(): readonly ViewRegistration<V>[];
   kindsWithViews(): readonly string[];
+  /**
+   * THE DECLARATION'S ARRANGEMENT OF ITS PLACES (FR-80), held where the
+   * places are held: every face that reads the places reads this beside
+   * them — the routed face's gallery and nav, the city's order, the view
+   * an app opens on. `arrange` sets it (the last word wins); a registry
+   * that was never arranged answers undefined, and every face keeps the
+   * declaration's own order.
+   */
+  arrange?(arrangement: PagesArrangement | undefined): ViewRegistry<S, V>;
+  arrangement?(): PagesArrangement | undefined;
+  /**
+   * THE HOME'S OWN VIEW (FR-81), which no kind owns: what both faces draw
+   * as the home's body in place of the derived one, once there is
+   * something to show. `home` sets it (the last word wins); a registry
+   * that was never given one answers undefined and the home is derived.
+   */
+  home?(view: V | undefined): ViewRegistry<S, V>;
+  homeView?(): V | undefined;
 }
 
 const key = (kind: string, cell: ViewCell, as = "") =>
@@ -134,7 +153,20 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
   /** Every registration, in the order it was made. */
   const order: ViewRegistration<V>[] = [];
 
+  let arranged: PagesArrangement | undefined;
+  let homeView: V | undefined;
+
   const registry: ViewRegistry<S, V> = {
+    arrange(arrangement) {
+      if (arrangement !== undefined) arranged = arrangement;
+      return registry;
+    },
+    arrangement: () => arranged,
+    home(view) {
+      if (view !== undefined) homeView = view;
+      return registry;
+    },
+    homeView: () => homeView,
     register(kind, cell, view, meta) {
       const registration: ViewRegistration<V> = {
         kind,

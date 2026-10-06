@@ -147,8 +147,39 @@ viewSpecs: { fixture: {
 one line a member is among many (a focused group, the list page), and `page`
 above the default record. Tones are `good`, `warn`, `bad`, `neutral` and
 `accent`, the theme's own. Nothing in a spec runs: no CSS, no markup, and the
-only link drawn is an http(s) `url` field's own value. The scaffold's
-`views()` draws them (`registerViewSpecs`); so does the embed, by itself.
+only link drawn is an http(s) `url` field's own value, or a listed record.
+The scaffold's `views()` draws them (`registerViewSpecs`); so does the embed.
+
+Three blocks say more (FR-81, FR-82): `{ headline: "{count(out('includes'))}
+offers" }`; `{ figure: "net", as: "money", currency: "USD", label: "…" }`
+(`number`, `money`, `percent`; `figure: true` is still the picture); and
+`{ list: "out('includes')", as: "row", sort: { by: "net", direction: "desc" },
+limit: 5, group: { by: "type", headings: { pain: "What hurts" } }, empty:
+"None yet." }` — records by a walk or `all('kind')`, each drawn by its own
+card or row and a link; `direction: "choices"` is a choice's declared order.
+Lists show only what the seat sees, and nest three deep, then say names.
+
+## Worked out, not stored
+
+A value that follows from others is declared once, never kept in step by
+hand. `computed` names it and says it in the rule language:
+
+```ts
+computed: {
+  net: { expr: "sum(out('includes'), list * units) * (100 - either(first(all('party') where role == 'client').discount, 0)) / 100", label: "After the discount" },
+}
+```
+
+Every template, view spec, rule, sum and sort reads `net` like a field
+(`{ field: "net", as: "money" }`, `sort(all('package'), [standing, net], 'desc')`);
+no act or edit form offers it, and an act that sets one is refused. It is
+worked out over the graph the reader holds, so a seat is served one from what
+it may see. A glance may name one; a `label` or `describe` only one worked out
+from the record alone (no graph is in hand). Templates say counts in words: `{n | words}` ("three"),
+`{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C").
+The check refuses a cycle (`computed-cycle`), a name that is already a field
+(`computed-clash`) and work that grows with the cube of the graph
+(`computed-cost`, a warning at the square).
 
 ## Then find out whether it worked
 

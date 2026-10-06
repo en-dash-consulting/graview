@@ -471,6 +471,7 @@ export default defineConfig({
       "@graview/react": framework("react/src/index.ts"),
       "@graview/primitives/frame": framework("primitives/src/frame.ts"),
       "@graview/primitives/pages": framework("primitives/src/pages.ts"),
+      "@graview/primitives/scene": framework("primitives/src/scene.ts"),
       "@graview/primitives": framework("primitives/src/index.ts"),
       "@graview/pages": framework("pages/src/index.ts"),
       // The browser entry, so the file adapter's node:fs never meets the bundler.

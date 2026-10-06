@@ -1,4 +1,4 @@
-import type { GraviewApp } from "@graview/core";
+import { bindsOf, type GraviewApp } from "@graview/core";
 import { rotaApp } from "@graview/rota";
 import { seedbedApp } from "@graview/seedbed";
 import { todoApp } from "@graview/todo";
@@ -217,7 +217,7 @@ export const CAPABILITIES: readonly Capability[] = [
     id: "cap-entity-lens",
     label: "A lens binding kinds and edges",
     area: "lens",
-    holds: (app) => (app.lenses ?? []).some((lens) => lens.binds === "entities"),
+    holds: (app) => (app.lenses ?? []).some((lens) => bindsOf(lens) === "entities"),
     shownIn: "rota",
     stop: "#focus=aggregate:volunteer",
   },

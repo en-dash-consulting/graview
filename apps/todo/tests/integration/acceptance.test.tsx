@@ -2,11 +2,20 @@ import { deriveAffordances, createToolRuntime } from "@graview/tools";
 import { EMPTY_VIEW, layout } from "@graview/layout";
 import { GraviewProvider, Scene } from "@graview/react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { todoApp } from "../../src/domain/app.js";
 import { todoSchema } from "../../src/domain/schema.js";
 import { EXAMPLE_TODAY, HOME, INITIAL_VIEW, PLACES, createTodoUiStore } from "../../src/ui/app.js";
-import { todoViews, weekLens } from "../../src/ui/views.js";
+import { todoViews } from "../../src/ui/views.js";
+import { declaredLenses } from "@graview/core";
+import { createTimelineLens, fetchDeclaredLenses, type TimelineOptions } from "@graview/primitives";
+
+// The declared lenses are fetched as they are first drawn; a static render draws them only once they are here.
+beforeAll(() => fetchDeclaredLenses());
+
+/** The week, made from the declaration the way the framework draws it (FR-79): the app registers none. */
+const declaredWeek = declaredLenses(todoApp).drawn.find((lens) => lens.lens === "timeline")!;
+const weekLens = createTimelineLens(declaredWeek.options as unknown as TimelineOptions);
 
 /**
  * The example, held to the same standard as the apps built to prove things.
@@ -34,7 +43,20 @@ describe("a todo list is enough to show the whole shape", () => {
     expect(todoApp.schema.kinds).toEqual(["list", "task", "rule", "reason", "user", "invitation"]);
     expect(todoApp.mutations?.length).toBeGreaterThan(5);
     expect(todoApp.invariants?.length).toBe(3);
-    expect(todoApp.lenses?.[0]?.name).toBe("timeline");
+    expect(todoApp.lenses?.map((lens) => lens.name)).toEqual(["reach", "calendar", "timeline"]);
+  });
+
+  it("draws its declared lenses as places with no registration of its own (FR-79)", () => {
+    /*
+     * The week, the month and who may do what are declared, with titles,
+     * and the UI registers none of them: they are on the bar because the
+     * declaration says so. The week is the tasks' default picture, as it
+     * was when the app registered it last by hand.
+     */
+    const views = todoViews();
+    expect(views.places().map((place) => place.title)).toEqual(expect.arrayContaining(["Who may do what", "The month", "The week", "The lists", "What is left"]));
+    expect(declaredWeek.options["columns"]).toEqual(["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map((id) => ({ id, label: id.toUpperCase() })));
+    expect(views.resolve("task", { cardinality: "many", fidelity: "full" })?.title).toBe("The week");
   });
 
   it("reuses a lens written for a household's week, unchanged", () => {
