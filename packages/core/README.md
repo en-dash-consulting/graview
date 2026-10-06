@@ -7,7 +7,10 @@ Everything a Graview app declares, and the checker that verifies it.
 - **Graph** — nodes and edges, with a tracked reader so a mutation records
   what it read as well as what it wrote.
 - **Mutations** — `defineMutation`. Every change is a typed, named,
-  describable act; nothing writes the graph directly.
+  describable act; nothing writes the graph directly. Each kind gets a
+  derived `edit-<kind>` offering the fields no other act writes; it takes
+  only those, and an act refused as asked throws an `ActRefusal` whose
+  `reason` and `sentence` a host can show (`refusalOf` reads one).
 - **Invariants** — rules that judge the graph and name the mutations that
   would repair them. That naming is the seam derived affordances ride on.
 - **Operation log** — the graph is a fold over it. Author, intent, reads and
@@ -31,6 +34,12 @@ Everything a Graview app declares, and the checker that verifies it.
   back out. Rules say what must hold in a small, budgeted language
   (`expressionRule`). Every command that takes an entry takes
   `--document <file>`. A view's blocks resolve with `@graview/core/blocks`.
+  A number field may say its range (`min`, `max`, `step`), which every form,
+  tool and apply honours; an act's `connects` links from whichever end
+  of the relation its subject is, `replaces` severs the links it supersedes and set the record at the
+  other end (`setsOther`). `editDocument`, `diffDocuments` and
+  `planMigration` change a document and say what the change does to stored
+  data.
 - **The city** — `@graview/core/scene`: `sceneThumbnail` draws a document
   (or an app) as the Scene draws it from altitude — the same districts on
   the same map, in their hues — as one SVG string, with no DOM, for a host
@@ -45,6 +54,9 @@ Everything a Graview app declares, and the checker that verifies it.
   the block resolver are on the subpaths above because a bundler places a
   whole module in every chunk that can reach it: a hosted page imports both
   barrels up front, and would otherwise carry them before a face is fetched.
+- **A place's address** — `addressOf(place, { basePath })` spells a place
+  from `placesOf` as the routed face links to it under a host's base path,
+  `pathWithin` reads an address back, and `basePathOf` normalises a base.
 - **Conformance** — `@graview/core/conformance`: fixtures a host runs against
   a version (`conformance()`) to prove it reads, compiles and derives the same.
 - **A status board's moves** — `@graview/core/describe`: `columnReach` says
