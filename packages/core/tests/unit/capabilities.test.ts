@@ -50,7 +50,7 @@ describe("capabilities()", () => {
       .filter((file) => file.endsWith(".md") && file !== "README.md")
       .map((file) => readFileSync(resolve(root, ".changeset", file), "utf8").split("---").slice(2).join("---"));
     const headed = pending.map((text) => text.match(/\((FR-\d+)\)/)?.[1]).filter((id): id is string => id !== undefined);
-    const gained = new Set(pending.flatMap((text) => [...text.matchAll(/`capabilities\(\)\.shipped` gains ([^.]*)\./g)].flatMap((match) => match[1].match(/FR-\d+/g) ?? [])));
+    const gained = new Set(pending.flatMap((text) => [...text.matchAll(/`capabilities\(\)\.shipped` gains ([^.]*)\./g)].flatMap((match) => (match[1] ?? "").match(/FR-\d+/g) ?? [])));
     expect(headed.filter((id) => !gained.has(id))).toEqual([]);
     expect([...gained].filter((id) => !capabilities().shipped.includes(id))).toEqual([]);
   });

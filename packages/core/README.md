@@ -37,7 +37,7 @@ Everything a Graview app declares, and the checker that verifies it.
   A number field may say its range (`min`, `max`, `step`), which every form,
   tool and apply honours; an act's `connects` links from whichever end
   of the relation its subject is, `replaces` severs the links it supersedes and set the record at the
-  other end (`setsOther`). `editDocument`, `diffDocuments` and
+  other end (its "setsOther" key). `editDocument`, `diffDocuments` and
   `planMigration` change a document and say what the change does to stored
   data.
 - **The city** — `@graview/core/scene`: `sceneThumbnail` draws a document
