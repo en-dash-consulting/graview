@@ -145,6 +145,8 @@ ${/* Quiet: the chevron alone until reached for. Never opacity zero — a
      either one alone: rem alone drops below the fingertip at a smaller
      setting, px alone ignores the setting altogether. */ ""}
   min-height: max(1.5rem, 24px);
+  ${/* And as wide: at rest it is the chevron alone, 21px across without this. */ ""}
+  min-width: max(1.5rem, 24px);
   padding: 1px 6px;
   margin: -3px 0;
   ${/* A QUIET BUTTON (FR-117): the chevron and, reached for, its word —

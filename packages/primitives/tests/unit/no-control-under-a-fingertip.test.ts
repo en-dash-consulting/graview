@@ -73,6 +73,19 @@ describe("the chrome the framework draws", () => {
     }
   });
 
+  it("gives the district's disclosure a fingertip's width as well as its height, now it is only a chevron at rest", () => {
+    /*
+     * FR-117 took the capsule off it and its sides from 9px to 6px: at rest
+     * it is the chevron alone, and audit-ui measured "open ▾" at 21×24 on
+     * every district — three pixels under the floor its own comment names.
+     * A height floor alone does not hold a button whose words are hidden.
+     */
+    const [selector, body] = rules(css).filter(pressable).find(([selector]) => selector.includes("graview-kind-open")) ?? ["", ""];
+    const said = /min-width:\s*([^;]+);/.exec(body)?.[1]?.trim();
+    expect(said, `${selector} declares no width floor`).toBeDefined();
+    expect(pixels(said!), `${selector} floors at ${said}`).toBeGreaterThanOrEqual(24);
+  });
+
   it("floors every pressable rule that names one at a fingertip", () => {
     const under: string[] = [];
     for (const [selector, body] of rules(css).filter(pressable)) {

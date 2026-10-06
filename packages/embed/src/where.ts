@@ -1,6 +1,6 @@
 import { addressOf, pathWithin, placeSlug, type AnySchema, type GraviewApp, type Place, type Store } from "@graview/core";
 import { aggregateId, AGGREGATE_PREFIX, fromUrl, kindOfCard, toUrl, withFocus, type ViewState } from "@graview/layout/view";
-import { stopAtAddress } from "./address.js";
+import { faceAtAddress, stopAtAddress } from "./address.js";
 import type { EmbedProps } from "./embed.js";
 import type { EmbedFace } from "./frame.js";
 
@@ -98,8 +98,10 @@ export function settleAt(props: Pick<EmbedProps<AnySchema>, "at" | "app" | "rout
   if (props.routing !== "address" || typeof window === "undefined") return settle(given, props.app, store, places, routes);
   const { pathname, search, hash } = window.location;
   const within = pathWithin(pathname, props.basePath);
-  const onPages = given.face === "pages";
-  const asked = { ...given, ...(within === null ? {} : onPages ? { path: within + search } : { stop: stopAtAddress(props.basePath) ?? given.stop }) };
+  // The face too is the address's: a place handed back on the scene, at an address that names a page, is settled as that page.
+  const face = faceAtAddress({ routing: "address", ...(props.basePath === undefined ? {} : { basePath: props.basePath }), face: given.face });
+  const onPages = face === "pages";
+  const asked = { ...given, face, ...(within === null ? {} : onPages ? { path: within + search } : { stop: stopAtAddress(props.basePath) ?? given.stop }) };
   const settled = settle(asked, props.app, store, places, routes);
   const next = onPages
     ? settled.path === asked.path ? null : addressOf(settled.path, props.basePath === undefined ? {} : { basePath: props.basePath })

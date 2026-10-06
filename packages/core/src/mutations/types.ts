@@ -111,6 +111,14 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    */
   readonly writes?: readonly string[];
   /**
+   * Fields of records OTHER than the subject this mutation writes, by kind:
+   * a document act's `setsOther` (FR-115), or a `set` on the record at an
+   * end of a link it makes. Not the subject's, so not in `writes`; but a
+   * field another act sets is not one a derived edit offers freely
+   * (`fieldWriters` counts these).
+   */
+  readonly writesOther?: Readonly<Record<string, readonly string[]>>;
+  /**
    * Fields of the SUBJECT this mutation sets to a fixed value, whatever it
    * is told: `mark-fixed` sets `status` to `"fixed"`. A named step, read as
    * one — a status board offers it as the move to that value's column

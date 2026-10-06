@@ -98,7 +98,8 @@ export function brandFromAccent(options: AccentBrandOptions): DerivedBrand | Ref
      * as little as it takes. If it has to move further than this, the colour
      * has stopped being recognisably theirs and the honest answer is to ask.
      */
-    const readable = nearestReadable(base, panel, scheme, 4.5);
+    // Text on the panel and, with no capsule under it, on the ground itself (FR-117): it has to clear both.
+    const readable = nearestReadable(base, [panel, ground], scheme, 4.5);
     if (!readable) {
       missing.add(`accent (${scheme})`);
       reasons.push(
@@ -191,7 +192,7 @@ function hueGap(a: number, b: number): number {
 const MAX_SHIFT = 0.3;
 
 /**
- * The lightness nearest the brand's own that clears the ratio on this ground.
+ * The lightness nearest the brand's own that clears the ratio on every one of these grounds.
  *
  * Searched from the original outwards rather than from an end, so a colour
  * that already works is left exactly alone and one that does not is moved the
@@ -200,7 +201,7 @@ const MAX_SHIFT = 0.3;
  */
 function nearestReadable(
   base: { h: number; s: number; l: number },
-  ground: Rgba,
+  grounds: readonly Rgba[],
   scheme: Scheme,
   ratio: number,
 ): { h: number; s: number; l: number } | null {
@@ -210,7 +211,7 @@ function nearestReadable(
     const second = up ? base.l - step / 100 : base.l + step / 100;
     for (const l of [first, second]) {
       if (l < 0 || l > 1) continue;
-      if (contrast(hsl(base.h, base.s, l), ground) >= ratio) return { ...base, l };
+      if (grounds.every((ground) => contrast(hsl(base.h, base.s, l), ground) >= ratio)) return { ...base, l };
     }
   }
   return null;

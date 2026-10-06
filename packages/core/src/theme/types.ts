@@ -163,6 +163,11 @@ export const TEXT_PAIRS: readonly TextPair[] = [
   { ink: "inkFaint", on: "float", over: "ground", requires: 4.5, where: "a hint in the strip" },
   { ink: "accent", on: "panel", over: "ground", requires: 4.5, where: "a selected label" },
   { ink: "accent", on: "float", over: "ground", requires: 4.5, where: "a pending action" },
+  // Words with no capsule under them (FR-117): written on the ground itself, or on the bar.
+  { ink: "ink", on: "ground", requires: 4.5, where: "a district's name, written on the ground" },
+  { ink: "accent", on: "ground", requires: 4.5, where: "the showing a drive-in is on, and a link on a page" },
+  { ink: "inkMuted", on: "bar", over: "ground", requires: 4.5, where: "a place on the bar you are not on" },
+  { ink: "inkMuted", on: "ground", requires: 4.5, where: "a district's open control, and the other pictures on a place's page" },
   { ink: "accentInk", on: "accent", requires: 4.5, where: "text on a filled accent" },
   { ink: "warn", on: "panel", over: "ground", requires: 4.5, where: "a problem count" },
   { ink: "warn", on: "panelWarning", over: "ground", requires: 4.5, where: "a warning inside a flagged panel" },

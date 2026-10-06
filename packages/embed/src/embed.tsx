@@ -269,7 +269,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   const views = useViews<S>(props, frameworkViewDoors) as never;
   const kinds = app.schema.kinds as readonly string[];
   const address = props.routing === "address";
-  const at = useMemo(() => (props.at ? settling!.settleAt(props as never, store as never, (views as ReactViewRegistry<S>).places()) : undefined), []);
+  const at = useMemo(() => (props.at ? settling!.settleAt(props as never, store.seenBy(principal ?? { kind: "human" }) as never, (views as ReactViewRegistry<S>).places()) : undefined), []);
   // The first view only: after it, where the reader goes is theirs. Under address routing, a stop in the fragment is where it starts.
   const initialView = useMemo(() => viewFor(face, at?.stop ?? (address ? stopAtAddress(props.basePath) : undefined) ?? stop, kinds, (views as ReactViewRegistry<S>).places(), openingView(views as ReactViewRegistry<S>, app.schema)), []);
   /*

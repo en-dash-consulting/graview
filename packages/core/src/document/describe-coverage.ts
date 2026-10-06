@@ -61,8 +61,13 @@ export function coverageGrid(schema: AnySchema, graph: GraphReader, options: Cov
     for (const edge of edges) {
       const adjacency = onward.get(edge.kind);
       if (!adjacency) continue;
-      adjacency.set(edge.from, [...(adjacency.get(edge.from) ?? []), edge.to]);
-      adjacency.set(edge.to, [...(adjacency.get(edge.to) ?? []), edge.from]);
+      // Pushed, not copied: a record with ten thousand links is ten thousand steps, not fifty million.
+      const out = adjacency.get(edge.from);
+      if (out) out.push(edge.to);
+      else adjacency.set(edge.from, [edge.to]);
+      const back = adjacency.get(edge.to);
+      if (back) back.push(edge.from);
+      else adjacency.set(edge.to, [edge.from]);
     }
     const seen = new Set<string>();
     for (const column of columnNodes) {
@@ -134,8 +139,19 @@ export function coverageParts(schema: AnySchema, graph: GraphReader, options: Co
   ];
   const labelOfColumn = new Map(columns.map((column) => [column.node.id, column.label]));
   const order = new Map(columns.map((column, index) => [column.node.id, index]));
+  // Each row's crossings and each column's rows, gathered once: every row searching every crossing was the square of the grid.
+  const byRow = new Map<string, (typeof cells)[number][]>();
+  const byColumn = new Map<string, Set<string>>();
+  for (const cell of cells) {
+    const mine = byRow.get(cell.rowId);
+    if (mine) mine.push(cell);
+    else byRow.set(cell.rowId, [cell]);
+    const linked = byColumn.get(cell.columnId);
+    if (linked) linked.add(cell.rowId);
+    else byColumn.set(cell.columnId, new Set([cell.rowId]));
+  }
   for (const row of rows) {
-    const mine = cells.filter((cell) => cell.rowId === row.node.id).sort((a, b) => order.get(a.columnId)! - order.get(b.columnId)!);
+    const mine = [...(byRow.get(row.node.id) ?? [])].sort((a, b) => order.get(a.columnId)! - order.get(b.columnId)!);
     const said = mine.map((cell) => {
       const via = cell.via.map(joining).filter((one): one is string => one !== null);
       return `${labelOfColumn.get(cell.columnId)}${via.length > 0 ? ` (${via.join("; ")})` : ""}`;
@@ -147,7 +163,7 @@ export function coverageParts(schema: AnySchema, graph: GraphReader, options: Co
     as: "name",
     columns: 1,
     groups: columns.map((column) => {
-      const linked = new Set(cells.filter((cell) => cell.columnId === column.node.id).map((cell) => cell.rowId));
+      const linked = byColumn.get(column.node.id) ?? new Set<string>();
       const items = rows.filter((row) => linked.has(row.node.id)).map((row) => name(row.node));
       return { heading: `${column.label} (${items.length})`, items };
     }),

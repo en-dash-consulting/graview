@@ -50,8 +50,12 @@ describe("capabilities()", () => {
       .filter((file) => file.endsWith(".md") && file !== "README.md")
       .map((file) => readFileSync(resolve(root, ".changeset", file), "utf8").split("---").slice(2).join("---"));
     const headed = pending.map((text) => text.match(/\((FR-\d+)\)/)?.[1]).filter((id): id is string => id !== undefined);
-    const gained = new Set(pending.flatMap((text) => [...text.matchAll(/`capabilities\(\)\.shipped` gains ([^.]*)\./g)].flatMap((match) => (match[1] ?? "").match(/FR-\d+/g) ?? [])));
-    expect(headed.filter((id) => !gained.has(id))).toEqual([]);
+    const gains = (text: string) => [...text.matchAll(/`capabilities\(\)\.shipped` gains ([^.]*)\./g)].flatMap((match) => (match[1] ?? "").match(/FR-\d+/g) ?? []);
+    const gained = new Set(pending.flatMap(gains));
+    // A changeset that fixes a seam an earlier version already announced is headed by it too;
+    // that announcement is in the changelog, versioned, rather than waiting.
+    const announced = new Set(gains(readFileSync(resolve(root, "packages/core/CHANGELOG.md"), "utf8")));
+    expect(headed.filter((id) => !gained.has(id) && !announced.has(id))).toEqual([]);
     expect([...gained].filter((id) => !capabilities().shipped.includes(id))).toEqual([]);
   });
 });
