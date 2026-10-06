@@ -60,8 +60,10 @@ export const BUDGETS = [
      * With an address for a host's page (FR-106), fitted thumbnails (FR-107) and named steps (FR-108): measured at 497_188 / 168_599.
      *
      * Raised when a coverage cell came to be chosen where it is (FR-111) and a coverage grid to be described (FR-112): the describer the page's assistant reaches says a grid row by row, about 3.4 kB minified. Measured at 500_990 / 169_958.
+     *
+     * Measured at 502_168 / 170_317 with the pull requests of this round together.
      */
-    minified: 502_000,
+    minified: 504_500,
     gzipped: 171_000,
     load: "first",
   },
@@ -135,13 +137,23 @@ export const BUDGETS = [
      *
      * Measured at 696_668 / 178_474 with the pull requests of this round together.
      *
+     * Raised when an act's refusal became a type a host can show (FR-110:
+     * `ActRefusal`, read by `refusalOf`, and an argument an act does not
+     * take said with those it does) and a number's range came to be asked
+     * for with its step (FR-114), all in `@graview/core`'s index, which the
+     * frame imports up front. Measured at 695_208 / 177_613.
+     *
+     * Measured at 697_235 / 178_688 with the pull requests of this round together.
+     *
      * Gzipped raised when a pill came to mean a choice or a state (FR-117)
      * and a name to be said whole (FR-118): a kind's mark is its plot in
      * miniature, clipped to an iso tile, in the chip and the figure the
      * frame's profile draws. Measured at 696_582 / 178_525 over FR-116.
+     *
+     * Measured at 697_149 / 178_706 with the pull requests of this round together.
      */
-    minified: 699_500,
-    gzipped: 178_600,
+    minified: 700_000,
+    gzipped: 179_500,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -218,9 +230,16 @@ export const BUDGETS = [
      * (FR-116), its rules a chunk of their own: measured at 1_484_982 / 441_299.
      *
      * Measured at 1_492_342 / 443_906 with the pull requests of this round together.
+     *
+     * Raised when acts came to say what they set (FR-110, FR-114, FR-115):
+     * a typed act refusal and a number's range in core, the document
+     * compiler's other end of a link, the studio's kept range. Measured at
+     * 1_488_359 / 441_473.
+     *
+     * Measured at 1_500_408 / 446_644 with the pull requests of this round together.
      */
-    minified: 1_498_500,
-    gzipped: 446_000,
+    minified: 1_506_500,
+    gzipped: 448_500,
     load: "all",
   },
   {
@@ -258,8 +277,9 @@ export const BUDGETS = [
     // And with every face's for FR-99, FR-100, FR-101 and FR-105: measured at 1_455_251 / 426_587.
     // With both, measured at 1_458_930 / 427_760.
     // And with every face's when a coverage cell came to draw to what it joins (FR-111) and a coverage grid to be described (FR-112): measured at 1_472_916 / 432_823.
-    minified: 1_481_500,
-    gzipped: 438_000,
+    // And when acts came to say what they set (FR-110, FR-114, FR-115: writes read off an act, a number's range, the other end of a link): the document compiler loads with the studio. Measured at 1_473_024 / 432_613.
+    minified: 1_489_500,
+    gzipped: 441_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

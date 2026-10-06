@@ -114,7 +114,8 @@ export type ArgShape =
    * workshop could not be made and the talk could not be given its slot.
    */
   | { readonly type: "date"; readonly time?: true }
-  | { readonly type: "number"; readonly min?: number; readonly max?: number }
+  /** A number, and its range where it says one: `step` is what its values are whole multiples of (FR-114), 1 for a whole number. */
+  | { readonly type: "number"; readonly min?: number; readonly max?: number; readonly step?: number }
   | { readonly type: "choice"; readonly options: readonly string[] }
   /**
    * YES OR NO — an argument that takes a boolean.
@@ -188,7 +189,10 @@ export function describeArg(schema: unknown): ArgShape {
   if (type === "number") {
     let min: number | undefined;
     let max: number | undefined;
+    let step: number | undefined;
     for (const check of checks) {
+      if (check.check === "multiple_of" && typeof check.value === "number") step = check.value;
+      else if (check.check === "number_format" && (check.format === "safeint" || check.format === "int32" || check.format === "uint32")) step ??= 1;
       const range = check.check === "number_format" && check.format ? NUMBER_FORMAT_RANGES[check.format] : undefined;
       const low = range ? range[0] : check.check === "greater_than" && check.inclusive && typeof check.value === "number" ? check.value : undefined;
       const high = range ? range[1] : check.check === "less_than" && check.inclusive && typeof check.value === "number" ? check.value : undefined;
@@ -199,6 +203,7 @@ export function describeArg(schema: unknown): ArgShape {
       type: "number",
       ...(min === undefined ? {} : { min }),
       ...(max === undefined ? {} : { max }),
+      ...(step === undefined ? {} : { step }),
     };
   }
 

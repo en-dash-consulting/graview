@@ -1,5 +1,6 @@
 import { UNSET, type GraphEdge, type Primitive } from "../index.js";
 import { canonicalize } from "./canonical.js";
+import { hasRange, outsideRange, rangeWords } from "./range.js";
 import type { FieldSpec, FieldType, GraviewDocument } from "./schema.js";
 
 /*
@@ -73,7 +74,8 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 export function coerce(value: unknown, from: FieldType, to: FieldSpec): unknown {
   if (value === undefined || value === null) return undefined;
   const type = to.type;
-  if (from === type && type !== "enum" && type !== "list") return value;
+  // A number with a range (FR-114) is judged against it, whatever it was before.
+  if (from === type && type !== "enum" && type !== "list" && !hasRange(to)) return value;
   const asText = (v: unknown) => (typeof v === "string" ? v : typeof v === "number" || typeof v === "boolean" ? String(v) : undefined);
   switch (type) {
     case "string":
@@ -85,7 +87,7 @@ export function coerce(value: unknown, from: FieldType, to: FieldSpec): unknown 
     case "number":
     case "integer": {
       const n = typeof value === "number" ? value : typeof value === "string" && value.trim() !== "" ? Number(value.replace(/[, _]/g, "")) : NaN;
-      if (!Number.isFinite(n)) return undefined;
+      if (!Number.isFinite(n) || outsideRange(n, to, "") !== undefined) return undefined;
       return type === "integer" ? (Number.isInteger(n) ? n : undefined) : n;
     }
     case "boolean": {
@@ -184,7 +186,7 @@ export function planMigration(before: GraviewDocument, after: GraviewDocument, g
         value = coerce(old, was[src]!.type, spec);
         if (value === undefined) {
           counts.cleared++;
-          note(`${newKind}'s ${field}: value(s) that do not fit ${spec.type}${spec.type === "enum" ? " options" : ""} cleared`);
+          note(`${newKind}'s ${field}: value(s) that do not fit ${spec.type === "enum" ? "its options" : hasRange(spec) ? `${rangeWords(spec)}` : spec.type} cleared`);
         } else if (src !== field) {
           counts.moved++;
           note(`${newKind}'s ${src} renamed to ${field}, values kept`);

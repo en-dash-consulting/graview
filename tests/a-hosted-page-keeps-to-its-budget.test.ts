@@ -54,8 +54,8 @@ describe("a hosted page", () => {
     // 1,075 KB up front, measured this way before FR-57: the face fetched as it is drawn does not hide the bytes, it leaves them out.
     // Raised from 800 KB when the home and a view came to be written from blocks (FR-81, FR-82): the scene before it draws measured
     // 817_424 bytes before them and 836_810 with them (the pages 785_745 and 804_522) — the blocks' renderer, their vocabulary and the landing.
-    // 850 KB since FR-106–FR-108 together: the scene face measured 860_295 B before it draws.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(850 * 1024);
+    // 860 KB since FR-110–FR-116 together: the scene face measured 870_479 B before it draws (it was 860_295 at 850).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(860 * 1024);
   });
 
   it("carries no studio, up front or when asked: the shell stubs it out", () => {

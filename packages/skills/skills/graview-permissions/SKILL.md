@@ -103,7 +103,9 @@ yesterday and now the button is gone.
    `{ roles: "*", kinds: ["car"] }` is the shop window; `own: true` keeps a
    kind to a seat's own records — theirs, joined to theirs, or made by
    them. A served store sends a seat only what it sees, withholds the rest
-   of the log in place, and refuses an act that names a record it may not.
+   of the log in place, and refuses an act that names a record it may not —
+   a document's act that sets the record at the other end of a link
+   (`setsOther`) too: that record is its `to`, refused as missing.
    A record whose required reference names a kind its seat may not see is
    withheld whole (`sight-hides-required-ref` says which role loses which
    kind): let the role see the target, or make the field optional.
@@ -130,7 +132,8 @@ button they cannot press. Report the output.
 
 `act-reads-hidden-kind` (a warning, FR-105) names an act, a role that may run
 it and a kind that role may not see, which the act reads: its condition, its
-refusal or a value it sets in a document; what it declares it `reads` in
+refusal, a value it sets in a document (on its subject or the other record)
+or the links it `replaces`; what it declares it `reads` in
 TypeScript (`reads: ["memo"]` — an `apply` is never read, so say it). The
 store hides the records; the act's answer can still tell that one exists.
 Let the role see the kind, keep the act from it, or read only what it sees.

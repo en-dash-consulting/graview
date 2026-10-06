@@ -60,6 +60,10 @@ export const FieldSpec = z
     default: z.optional(z.unknown()),
     unit: z.optional(str(undefined, 12)),
     format: z.optional(z.enum(["money", "percent", "duration"])),
+    /** A number's range (FR-114): the least and the most it may be, and the step its values are whole multiples of (JSON Schema's `multipleOf`). */
+    min: z.optional(z.number()),
+    max: z.optional(z.number()),
+    step: z.optional(z.number()),
     /** The name this field had in the previous version: its values move instead of being dropped. */
     renamedFrom: z.optional(z.string().check(z.regex(FIELD_NAME))),
   })
@@ -136,6 +140,18 @@ export const ActSpec = z.strictObject({
   writes: z.optional(some(fieldName, 1)),
   connects: z.optional(edgeName),
   severs: z.optional(edgeName),
+  /**
+   * Fields set on the record at the OTHER end of what the act connects or
+   * severs — its `$to` (FR-115): `"setsOther": { "ownership": "shared" }`.
+   * Values as `sets` takes them; an expression reads that record's fields.
+   */
+  setsOther: z.optional(z.record(fieldName, ValueSpec)),
+  /**
+   * The subject's links severed before it connects (FR-115): `true`, those
+   * of the relation it connects; or the relations named, each at the
+   * subject's own end. The link being made is kept.
+   */
+  replaces: z.optional(z.union([z.literal(true), some(edgeName, 1, 10)])),
   removes: z.optional(z.literal(true)),
   args: z.optional(z.record(fieldName, FieldSpec)),
   effects: z.optional(some(EffectSpec, 1, 20)),

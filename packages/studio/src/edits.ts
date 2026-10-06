@@ -63,7 +63,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
   const ownerOf = (read: Read, field: Node) => read.out(field.id, "of")[0];
   const declaredOn = (read: Read, edge: Node) => read.out(edge.id, "from-kind")[0];
   /** The document's own words for a field the studio opened on. */
-  const specOf = (kind: string, field: string) => document.kinds[kind]?.fields[field] as { type: string; format?: string; unit?: string; of?: string } | undefined;
+  const specOf = (kind: string, field: string) => document.kinds[kind]?.fields[field] as { type: string; format?: string; unit?: string; of?: string; min?: number; max?: number; step?: number } | undefined;
 
   const fieldsBefore = new Map(was.ofKind("field").map((node) => [node.id, node]));
   const fieldsAfter = new Map(now.ofKind("field").map((node) => [node.id, node]));

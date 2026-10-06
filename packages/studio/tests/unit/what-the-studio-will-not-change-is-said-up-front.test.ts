@@ -51,6 +51,20 @@ describe("uneditable(document) (FR-62)", () => {
     expect(outcome.findings[0]!.message).toContain("shown as money");
   });
 
+  it("a number's range (FR-114) is kept, said, and stops a retype, which would let it go", () => {
+    const document = structuredClone(vendors) as GraviewDocument;
+    (document.kinds["vendor"]!.fields as Record<string, unknown>)["rating"] = { type: "integer", min: 1, max: 5 };
+    const said = uneditable(document).find((finding) => finding.path === "kinds.vendor.fields.rating")!;
+    expect([said.code, said.message]).toEqual(["studio-keeps-range", "vendor's rating is taken from 1 to 5; the studio keeps that as it is and will not change it, nor retype the field"]);
+    const compiled = compileDocumentWithoutCheck(document);
+    if (!compiled.ok) throw new Error(JSON.stringify(compiled.findings));
+    const studio = createStudio(compiled.app, { document });
+    studio.store.apply({ name: "set-required", args: { id: "field:vendor.rating", required: true } });
+    const kept = studio.document();
+    if (!kept?.ok) throw new Error(JSON.stringify(kept?.findings));
+    expect(kept.document.kinds["vendor"]!.fields["rating"]).toEqual({ type: "integer", min: 1, max: 5, required: true });
+  });
+
   it("a document that keeps nothing of the kind says nothing", () => {
     const document = structuredClone(vendors) as GraviewDocument;
     delete (document.kinds["vendor"]!.fields["quote"] as { format?: string }).format;
