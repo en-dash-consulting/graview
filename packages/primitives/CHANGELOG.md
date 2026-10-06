@@ -1,5 +1,25 @@
 # @graview/primitives
 
+## 0.1.13
+
+### Patch Changes
+
+- 2b05a64: A status board's column says the lens it is in (FR-109). Each column is a region, and its accessible name now starts with the lens's title: a column of "Vendors by status" is announced "Vendors by status · Researching, 0" where it was "Researching, 0", so a screen reader on a phone, which reads a region by its name alone, says which board a column belongs to. An embed names every landmark inside it after itself ("Views wedding · …"); a column marked `data-graview-named-by-lens` already says which picture it is in, and the embed leaves its name as it is, so the column is not "Views wedding · Researching, 0". The title is the declared lens's `title` on both faces, and "Board" for a columns lens registered without one. `verify-declared` asks each column by its role on both faces, at a desk and a phone, in both schemes.
+  
+  Compatibility: unchanged for stored data, ops, tool schemas and the wire. A test or a host that found a column region by its old name ("Todo, 2") finds it by the new one ("The board · Todo, 2"); `data-graview-column` is unchanged. Every other landmark in an embed is still named after the embed. `capabilities().shipped` gains `FR-109`.
+- 8bc3c59: A named step is a move on a status board (FR-108). An act that sets the board's field to a value of its own — `book` setting `status` to `"booked"`, `mark-fixed` setting it to `"fixed"` and stamping `fixedOn: $today` — is now offered as the move to that value's column, called with the record alone, and run as declared, so everything it also records is recorded and one undo takes it all back. It is offered only where the seat may run it (`store.permits`) and where it would run for that card: the call is compiled against the graph without being applied, so its `allowedWhen` is judged by the rule language under its budget, and a refusal is no move. A step that needs more than the record (a reason, a date, another record) is not offered. Where a named step reaches a column, only named steps do: the step wins over a free `set-<field>` act told the value, and where the step's condition does not hold for a card the free act does not stand in for it, so a drag never skips a guard. A free act still reaches the columns no step does. In Cloud's vendor shortlist without `set-status`, a researching vendor offers Contacted (by `mark-contacted`), Booked (by `book`) and Declined (by `decline`), and a declined one offers only Contacted (by `reopen`); in the bug bash, a move to Fixed stamps `fixedOn`. A mutation carries the constants it sets on its subject as `sets` (`{ status: "fixed" }`), worked out from a document act's `sets` and declared by a TypeScript one as it declares `writes`. `columnReach` (from `@graview/core/describe`) says which acts reach which column for any seat, and `columnSteps` lists a field's named steps. `graview describe` says it column by column ("moves a vendor to Contacted by "Mark as contacted" or "Reopen", to Booked by "Book" and to Declined by "Decline" … Nothing moves a vendor to Researching from the board."), `describePlace` says the moves one seat's board offers ("Moves: to Contacted by "Mark as contacted"; …", or "Moves: none for this seat."), and `graview check` notes `lens-column-unreached` at the binding when some of a board's columns are reached by no act. The `graview-lens` skill says so.
+  
+  Compatibility: unchanged for stored data, ops and the wire. A board offers more moves where a declaration has named steps: an act that sets the column field to a constant, which FR-97 never offered, now moves a card, and a free `set-<field>` act no longer reaches a column a named step reaches. `MutationDefinitionSpec` gains an optional `sets`; a declaration without it reads as before. `columnActs` still lists the free acts. `capabilities().shipped` gains `FR-108`.
+- Updated dependencies [2b05a64]
+- Updated dependencies [8bc3c59]
+- Updated dependencies [4d3c1f9]
+- Updated dependencies [ed5444b]
+  - @graview/core@0.1.13
+  - @graview/react@0.1.13
+  - @graview/layout@0.1.13
+  - @graview/render@0.1.13
+  - @graview/tools@0.1.13
+
 ## 0.1.12
 
 ### Patch Changes
