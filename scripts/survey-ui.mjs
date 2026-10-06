@@ -235,6 +235,8 @@ const measure = () => {
       if (style.webkitLineClamp && style.webkitLineClamp !== "none") return false;
       // A scroll region can be scrolled to, so it is not lost either.
       if (style.overflowY === "auto" || style.overflowY === "scroll") return false;
+      // And sideways: the places are tabs that scroll (FR-117), wider than their room on purpose.
+      if ((style.overflowX === "auto" || style.overflowX === "scroll") && el.scrollHeight <= el.clientHeight + 2) return false;
       // The stage clips the city on purpose from altitude: flown closer, the
       // city runs past the window and the ground says how far the camera
       // reaches (data-graview-reach) — a district past the edge is panned to.
