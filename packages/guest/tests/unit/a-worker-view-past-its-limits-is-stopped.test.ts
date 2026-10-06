@@ -109,6 +109,21 @@ describe("a worker view past its limits", () => {
     expect(view.shadow.querySelectorAll("li").length).toBeLessThan(20);
   });
 
+  it("is stopped as slow when one message holds more to draw than the host may draw in drawMs, and the rest is left undrawn", async () => {
+    const { view, failures, worker, say } = started({ drawMs: 50 });
+    const long = "margin: 1px; color: red; ".repeat(150);
+    const records: unknown[] = [[0, "~", { id: "churn", type: 1, element: "div", attributes: {}, children: [] }, 0]];
+    for (let i = 0; i < 5_000; i += 1) records.push([3, "churn", "style", `${long}padding: ${i % 50}px`, 2]);
+    const began = performance.now();
+    say!({ type: "render", records });
+    await until(() => failures.length > 0, 5_000);
+    expect(failures[0]).toMatchObject({ reason: "slow" });
+    expect(worker!.terminated).toBe(true);
+    expect(face(view)).toContain("The whole thing");
+    /* The page was held for about drawMs, not for the 5 000 style records. */
+    expect(performance.now() - began).toBeLessThan(1_000);
+  });
+
   it("is stopped when it floods the host with messages, at the allowance", async () => {
     const { failures, worker, say } = started({ messages: 20, messageWindowMs: 1_000 });
     for (let i = 0; i < 500; i += 1) say!({ type: "style", css: `.x${i} { color: red }` });

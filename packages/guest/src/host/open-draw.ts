@@ -44,8 +44,8 @@ export interface OpenDrawingOptions {
 export type ViewRefusal = OpenRefusal | { readonly reason: "css"; readonly name: "stylesheet"; readonly css: CssRefusal };
 
 export interface OpenDrawing {
-  /** Draw one batch of the view's mutation records. */
-  apply(records: unknown): void;
+  /** Draw one batch of the view's mutation records; false if `spent` stopped it partway (OpenRenderer.apply). */
+  apply(records: unknown, spent?: () => boolean): boolean;
   /** Draw the view's one stylesheet, as the open kit allows it. */
   style(css: string): void;
   readonly renderer: OpenRenderer;
@@ -114,7 +114,7 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
   shadow.addEventListener("toggle", hear, true);
 
   return {
-    apply: (records) => renderer.apply(records),
+    apply: (records, spent) => renderer.apply(records, spent),
     style(given) {
       const judged = sanitizeStylesheet(given);
       for (const one of judged.refused) {

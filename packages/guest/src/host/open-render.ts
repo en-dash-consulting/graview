@@ -39,7 +39,12 @@ export interface OpenRendererOptions extends JudgeContext {
 }
 
 export interface OpenRenderer {
-  apply(records: unknown): void;
+  /**
+   * Draw one batch. `spent`, asked between records, says the host's time
+   * for drawing this view has run out: the rest of the batch is not drawn,
+   * and `apply` says false.
+   */
+  apply(records: unknown, spent?: () => boolean): boolean;
   /** What was refused, oldest first (the last 200). */
   readonly refused: readonly OpenRefusal[];
   /** How many nodes are drawn. */
@@ -236,9 +241,17 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
   };
 
   return {
-    apply(records) {
-      if (!Array.isArray(records)) return refuse({ reason: "record" });
-      for (const record of records) one(record);
+    apply(records, spent) {
+      if (!Array.isArray(records)) {
+        refuse({ reason: "record" });
+        return true;
+      }
+      for (let index = 0; index < records.length; index += 1) {
+        /* Asked every 32 records: often enough that no batch holds the page past its budget by much. */
+        if (spent && index % 32 === 0 && spent()) return false;
+        one(records[index]);
+      }
+      return true;
     },
     get refused() {
       return refused;
