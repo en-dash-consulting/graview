@@ -119,6 +119,15 @@ export interface Brand {
    * both to them.
    */
   readonly figures?: Readonly<Record<string, string>>;
+  /**
+   * THE APP'S MONEY (FR-100): the currency a sum is said in wherever a
+   * block names none — a figure or a field shown as money, and a
+   * template's `{x | money}` — as its three-letter code ("USD", "EUR").
+   * Absent, a sum is a number in figures with no symbol.
+   */
+  readonly currency?: string;
+  /** The locale money is written for ("en-US", "de-DE"); "en-US" when absent. */
+  readonly locale?: string;
 }
 
 /**

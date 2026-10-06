@@ -80,6 +80,13 @@ somebody with a bright office files a bug — so the framework measures it.
    (`kit-contrast-below-aa`); a kind kept quiet is still on the inspector.
    An embed's `handle.setBrand({ ...brand, kit })` re-dresses it live.
 
+7. **Say its money.** `currency: "EUR"` and `locale: "de-DE"` on the brand
+   (a document's `brand` may carry them alone, without an accent) are what
+   a sum is said in wherever a block names none: a figure or a field shown
+   as money, and `{net | money}` in a template — "21.000 €". A block's own
+   `currency` wins. `graview check` refuses a code or a locale it cannot
+   write (`brand-currency`, `brand-locale`). Without one, sums are numbers.
+
 ## Styling by conversation
 
 This skill is built to be DRIVEN IN NATURAL LANGUAGE — "warmer", "more

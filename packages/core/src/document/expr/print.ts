@@ -22,6 +22,8 @@ const LEVEL: Readonly<Record<BinaryOp, number>> = {
   ">": 4,
   ">=": 4,
   in: 4,
+  "|": 4.4,
+  "&": 4.6,
   "+": 5,
   "-": 5,
   "*": 6,
@@ -75,8 +77,8 @@ function bare(e: Expr): string {
       const l = LEVEL[e.op];
       const op = WORD[e.op] ?? e.op;
       // Comparisons do not chain; the arithmetic and logic operators lean left.
-      const left = l === 4 ? print(e.left, 5) : print(e.left, l);
-      const right = l === 4 ? print(e.right, 5) : print(e.right, l + 1);
+      const left = l === 4 ? print(e.left, 4.4) : print(e.left, l);
+      const right = l === 4 ? print(e.right, 4.4) : print(e.right, l === 4.4 ? 4.6 : l === 4.6 ? 5 : l + 1);
       return `${left} ${op} ${right}`;
     }
     case "call":

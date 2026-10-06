@@ -1,4 +1,5 @@
-import { validateViewSpecs } from "../../document/views.js";
+import { documentOf } from "../../document/to-document.js";
+import { validateViewSpecs, viewBraces } from "../../document/views.js";
 import type { AnySchema } from "../../schema/schema.js";
 import type { CheckContext } from "./context.js";
 
@@ -22,6 +23,8 @@ export function checkViewSpecs<S extends AnySchema>(ctx: CheckContext<S>): void 
     ...(app.home !== undefined ? { home: app.home } : {}),
     ...(blockLenses ? { lenses: app.lenses } : {}),
   });
+  // Braces in a block's plain words (FR-99); a document's are said by compileDocument, at its own paths.
+  if (!documentOf(app)) findings.push(...viewBraces(app.viewSpecs, "viewSpecs", app.home, app.lenses));
   for (const finding of findings) {
     add({
       severity: finding.severity,

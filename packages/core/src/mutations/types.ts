@@ -111,6 +111,18 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    */
   readonly writes?: readonly string[];
   /**
+   * Node KINDS this mutation's own logic reads — what `apply` and
+   * `describe` look at in the graph beyond the records it is handed.
+   *
+   * Declared, like `writes`, because a TypeScript body cannot be read
+   * without running it. `graview check` warns when a role that may run the
+   * act may not see a kind it reads (`act-reads-hidden-kind`, FR-105): the
+   * act's refusal, or what it writes, can tell that seat a record it may not
+   * see exists. A document's act needs no such list — its condition, its
+   * refusal and its effects are read for it.
+   */
+  readonly reads?: readonly string[];
+  /**
    * The app saying "this is the act of this product". A pinned mutation
    * ranks above its unpinned peers wherever actions are offered — never
    * above a rule's repairs, never out of the destructive tail — and sits
