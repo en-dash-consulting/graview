@@ -106,6 +106,32 @@
       ]
     },
     "set-level": { "title": "Set the level", "on": "strength", "writes": ["level"], "description": "Say how strong a strength is." },
+    "assign-ownership": {
+      "title": "Assign ownership",
+      "description": "Give a person clear ownership of a component (decision rights and outcomes), in place of whoever owned it or was proposed for it.",
+      "fromTheOtherEnd": "Own this",
+      "on": "component",
+      "connects": "owns",
+      "replaces": ["owns", "proposedOwner"],
+      "sets": { "ownership": { "expr": "if(to == 'person-nick', 'nick_owns', 'owned_elsewhere')" } }
+    },
+    "propose-owner": {
+      "title": "Propose an owner",
+      "description": "Name who might take a component — without inventing a reporting line.",
+      "fromTheOtherEnd": "Propose me for this",
+      "on": "component",
+      "connects": "proposedOwner",
+      "replaces": true,
+      "sets": { "ownership": "proposed_handoff" }
+    },
+    "share-ownership": {
+      "title": "Share ownership",
+      "description": "Own a component alongside whoever owns it, and mark it shared.",
+      "fromTheOtherEnd": "Share this",
+      "on": "person",
+      "connects": "owns",
+      "setsOther": { "ownership": "shared" }
+    },
     "update-component-status": { "title": "Update ownership status", "on": "component", "writes": ["ownership"], "description": "Set whether Nick still owns it, it is shared, proposed for handoff, or owned elsewhere." },
     "resolve-question": { "title": "Resolve question", "on": "open-question", "sets": { "status": "resolved" }, "description": "Mark an open question resolved — it leaves the picture, not the record." },
     "bind-constraint": { "title": "Bind a constraint", "on": "component", "connects": "constrainedBy", "description": "Say a component is bounded by a design constraint.", "fromTheOtherEnd": "Bound this component" },

@@ -41,6 +41,7 @@ import { parseTemplate, renderTemplate, TemplateError, type TemplatePart } from 
 import { upgradeDocument } from "./upgrade.js";
 import { homeOf, validateViews, viewsOf } from "./views.js";
 import { outsideRange } from "./range.js";
+import { farEnd } from "./far-end.js";
 import { computedOf, parsedComputed, validateComputed, workedOutAlone } from "./computed.js";
 
 /*
@@ -162,10 +163,31 @@ export function kindShapes(document: GraviewDocument): Map<string, KindShape> {
   return shapes;
 }
 
+/**
+ * What `replaces` means (FR-115): before the act connects, the subject's
+ * links of these relations are severed — each at the subject's own end —
+ * all but the link the act is making. Only an act's shorthand says it.
+ */
+export interface ReplaceEffect {
+  readonly replace: readonly string[];
+  /** The relation the act connects: its link to `$to` is the one kept. */
+  readonly keep: string;
+}
+
+/** An effect as an act means it: one a document lists, or what a shorthand alone says. */
+export type ActEffect = EffectSpec | ReplaceEffect;
+
 /** The effects an act's shorthands mean, in order. */
-export function effectsOf(act: ActSpec, document: GraviewDocument): readonly EffectSpec[] {
+export function effectsOf(act: ActSpec, document: GraviewDocument): readonly ActEffect[] {
   // Shorthands first, then any listed effects: an act may say "writes quote" and also set a status.
-  const effects: EffectSpec[] = [];
+  const effects: ActEffect[] = [];
+  const subject = asArray(act.on);
+  // A relation joins its subject from whichever end the declaration puts it (FR-115): `owns` on a component links from the person given.
+  const link = (relation: string, verb: "connect" | "sever"): EffectSpec => {
+    const reversed = farEnd(document.kinds, relation, subject)?.reversed === true;
+    const [from, to] = reversed ? ["$to", "$subject"] : ["$subject", "$to"];
+    return verb === "connect" ? { connect: relation, from, to } : { sever: relation, from, to };
+  };
   if (act.creates) {
     const kind = document.kinds[act.creates];
     const set: Record<string, ValueSpec> = {};
@@ -177,8 +199,13 @@ export function effectsOf(act: ActSpec, document: GraviewDocument): readonly Eff
   if (act.sets) effects.push({ set: act.sets });
   // An act that makes a record already asks for each of its fields: `writes` beside `creates` (and no `on`) names some of them again, not a subject.
   if (act.writes && !(act.creates && act.on === undefined)) effects.push({ set: Object.fromEntries(act.writes.map((f) => [f, `$${f}`])) });
-  if (act.connects) effects.push({ connect: act.connects, from: "$subject", to: "$to" });
-  if (act.severs) effects.push({ sever: act.severs, from: "$subject", to: "$to" });
+  if (act.connects) {
+    if (act.replaces) effects.push({ replace: act.replaces === true ? [act.connects] : [...act.replaces], keep: act.connects });
+    effects.push(link(act.connects, "connect"));
+  }
+  if (act.severs) effects.push(link(act.severs, "sever"));
+  // What it sets on the record at the other end (FR-115): that record is its `$to`.
+  if (act.setsOther && (act.connects || act.severs)) effects.push({ set: act.setsOther, target: "$to" });
   if (act.removes) effects.push({ remove: "$subject" });
   if (act.effects) effects.push(...act.effects.filter((e) => !(act.creates && "set" in e && !("create" in e) && refName(e.target) === "new")));
   return effects;
@@ -211,6 +238,45 @@ function tryTemplate(source: string, path: string, findings: Finding[]): readonl
     }
     throw e;
   }
+}
+
+/**
+ * What an act says of the other end of what it connects (FR-115): a
+ * `setsOther` needs a relation to have an other end, and sets fields that
+ * record has; a `replaces` needs a link it is making, and names relations
+ * that join the subject to the kinds that link does.
+ */
+function otherEndFindings(name: string, act: ActSpec, document: GraviewDocument): Finding[] {
+  const out: Finding[] = [];
+  const at = `acts.${name}`;
+  const subject = asArray(act.on);
+  const relation = act.connects ?? act.severs;
+  const end = relation ? farEnd(document.kinds, relation, subject) : undefined;
+  if (act.setsOther) {
+    if (!relation) out.push(error("act-sets-other", `${at}.setsOther`, `"${name}" sets the record at the other end of what it connects, and connects nothing`, 'say what it "connects" (or "severs"), or set its subject with "sets"'));
+    else if (end && end.kinds !== "*") {
+      for (const field of Object.keys(act.setsOther)) {
+        for (const kind of end.kinds) {
+          const spec = document.kinds[kind];
+          if (!spec || spec.fields[field]) continue;
+          if (spec.computed?.[field] !== undefined) out.push(error("computed-written", `${at}.setsOther.${field}`, `${kind}'s ${field} is worked out, not written: no act can set it`, "set the stored fields it is worked out from"));
+          else out.push(error("act-field", `${at}.setsOther.${field}`, `${kind} has no field "${field}"`));
+        }
+      }
+    }
+  }
+  if (act.replaces) {
+    if (!act.connects) out.push(error("act-replaces", `${at}.replaces`, `"${name}" replaces the links of what it connects, and connects nothing`, 'say what it "connects", or sever with "severs"'));
+    else if (act.replaces !== true && end && end.kinds !== "*") {
+      const toward = end.kinds;
+      for (const other of act.replaces) {
+        const there = farEnd(document.kinds, other, subject);
+        if (!there) out.push(error("act-edge", `${at}.replaces`, `"${other}" is not a relation any kind declares`));
+        else if (there.kinds !== "*" && !there.kinds.some((kind) => toward.includes(kind))) out.push(error("act-replaces", `${at}.replaces`, `"${other}" does not join ${subject.join(" or ")} to ${withArticle(toward[0] ?? "record")}, so "${name}" has no such links to replace`));
+      }
+    }
+  }
+  return out;
 }
 
 /** The document's own sentences: references that do not resolve, expressions that do not parse. */
@@ -312,6 +378,7 @@ function validate(document: GraviewDocument): Finding[] {
     });
     if (act.allowedWhen) tryExpr(act.allowedWhen, `${at}.allowedWhen`, findings);
     if (act.refusal) tryTemplate(act.refusal, `${at}.refusal`, findings);
+    findings.push(...otherEndFindings(name, act, document));
   }
 
   for (const [name, rule] of Object.entries(document.rules ?? {})) {
@@ -432,10 +499,12 @@ interface ActArg {
 }
 
 /** The arguments an act asks for: declared ones, then whatever its effects reference. */
-function argsOf(name: string, act: ActSpec, effects: readonly EffectSpec[], document: GraviewDocument, edges: Map<string, EdgeInfo>): Map<string, ActArg> {
+function argsOf(name: string, act: ActSpec, effects: readonly ActEffect[], document: GraviewDocument, edges: Map<string, EdgeInfo>): Map<string, ActArg> {
   const args = new Map<string, ActArg>();
   const subjectKinds = asArray(act.on);
   const created = new Map<string, string>();
+  /** The kinds a record argument names, by argument: what a `set` on it (a `setsOther`) is checked against. */
+  const named = new Map<string, readonly string[]>();
   const usesSubject =
     subjectKinds.length > 0 ||
     effects.some((e) => ("remove" in e && refName(e.remove) === "subject") || ("from" in e && (refName(e.from) === "subject" || refName(e.to) === "subject")) || ("set" in e && !("create" in e) && refName(e.target ?? "$subject") === "subject"));
@@ -473,11 +542,12 @@ function argsOf(name: string, act: ActSpec, effects: readonly EffectSpec[], docu
         const arg = refName(value);
         if (!arg) continue;
         const kinds = end === "to" ? edge?.to ?? "*" : edge?.from ?? "*";
+        if (kinds !== "*" && !named.has(arg)) named.set(arg, kinds);
         note(arg, () => ({ schema: refTo(kinds === "*" ? "*" : kinds), required: true }));
       }
     } else if ("set" in effect) {
       const target = refName(effect.target ?? "$subject");
-      const targetKind = target === "subject" ? subjectKinds[0] : created.get(target ?? "");
+      const targetKind = target === "subject" ? subjectKinds[0] : (created.get(target ?? "") ?? named.get(target ?? "")?.[0]);
       if (target && target !== "subject" && !created.has(target)) note(target, () => ({ schema: refTo("*"), required: true }));
       for (const [field, value] of Object.entries(effect.set)) {
         const arg = refName(value);
@@ -573,10 +643,11 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
     const title = act.title ?? name.replace(/-/g, " ");
     const guard = act.allowedWhen ? parseExpr(act.allowedWhen) : undefined;
     const refusal = act.refusal ? parseTemplate(act.refusal) : undefined;
-    const destructive = act.destructive ?? effects.some((e) => "remove" in e || "sever" in e);
+    const destructive = act.destructive ?? effects.some((e) => "remove" in e || "sever" in e || "replace" in e);
     const creates = [...new Set(effects.flatMap((e) => ("create" in e ? [e.create] : [])))];
     const connects = [...new Set(effects.flatMap((e) => ("connect" in e ? [e.connect] : [])))];
-    const severs = [...new Set(effects.flatMap((e) => ("sever" in e ? [e.sever] : [])))];
+    // What it may sever: what it says it severs, and what it replaces (FR-115).
+    const severs = [...new Set(effects.flatMap((e) => ("sever" in e ? [e.sever] : "replace" in e ? e.replace : [])))];
     // An act WRITES only what it sets on its subject; setting fields on a record it just made is part of making it.
     const writes = [...new Set(effects.flatMap((e) => ("set" in e && !("create" in e) && (refName(e.target ?? "$subject") === "subject") ? Object.keys(e.set) : [])))];
     // What it sets on its subject to a fixed value, whatever it is told — a named step (FR-108), resolved as `apply` resolves a literal.
@@ -698,6 +769,16 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
               const id = String(resolve(effect.remove, undefined) ?? "");
               if (!graph.has(id)) throw new Refused(`there is no record "${id}"`);
               context.removeNode(id);
+            } else if ("replace" in effect && subject) {
+              // The subject's links of each relation, at its own end, severed — all but the one being made (FR-115).
+              const kept = input["to"];
+              for (const relation of effect.replace) {
+                const fromSubject = edges.get(relation)?.from.includes(subject.kind) ?? true;
+                for (const other of fromSubject ? graph.out(subject.id, relation) : graph.in(subject.id, relation)) {
+                  if (relation === effect.keep && other.id === kept) continue;
+                  context.removeEdge(fromSubject ? { kind: relation, from: subject.id, to: other.id } : { kind: relation, from: other.id, to: subject.id });
+                }
+              }
             }
           }
         },

@@ -5,6 +5,7 @@ import { printExpr } from "./expr/print.js";
 import { error, type Finding } from "./findings.js";
 import { coerce } from "./migrate.js";
 import { outsideRange, rangeWords } from "./range.js";
+import { farEnd } from "./far-end.js";
 import {
   ActSpec,
   EDGE_NAME,
@@ -419,15 +420,20 @@ function proseSwap(from: string, to: string): (text: string) => string {
 
 const subjectKinds = (act: Doc): Kinds => (act.on ? new Set(asArray(act.on)) : NONE);
 
-/** The kinds each `set` in an act writes to: its subject, a record it made, or (for a `$ref` target) any kind. */
-function setTargets(act: Doc): { set: Record<string, unknown>; kinds: Kinds; where: "sets" | "writes" | "effect" | "create"; index?: number }[] {
-  const out: { set: Record<string, unknown>; kinds: Kinds; where: "sets" | "writes" | "effect" | "create"; index?: number }[] = [];
+/** The kinds each `set` in an act writes to: its subject, a record it made, the other end of what it connects (FR-115), or (for a `$ref` target) any kind. */
+function setTargets(act: Doc, doc?: Doc): { set: Record<string, unknown>; kinds: Kinds; where: "sets" | "setsOther" | "writes" | "effect" | "create"; index?: number }[] {
+  const out: { set: Record<string, unknown>; kinds: Kinds; where: "sets" | "setsOther" | "writes" | "effect" | "create"; index?: number }[] = [];
   const made = new Map<string, string>();
   if (act.creates) made.set("new", act.creates);
   (act.effects ?? []).forEach((e: Doc) => {
     if (e.create && e.as) made.set(e.as, e.create);
   });
   if (act.sets) out.push({ set: act.sets, kinds: subjectKinds(act), where: "sets" });
+  if (act.setsOther) {
+    const relation = act.connects ?? act.severs;
+    const end = doc && relation ? farEnd(doc.kinds, relation, asArray(act.on)) : undefined;
+    out.push({ set: act.setsOther, kinds: end && end.kinds !== "*" ? new Set(end.kinds) : "*", where: "setsOther" });
+  }
   (act.effects ?? []).forEach((e: Doc, index: number) => {
     if (e.create) out.push({ set: e.set ?? {}, kinds: new Set([e.create]), where: "create", index });
     else if (e.set) {
@@ -1198,7 +1204,7 @@ class Editor {
     }
     // An act that sets a dropped option cannot stand.
     for (const [name, act] of Object.entries(this.doc.acts ?? {}) as [string, Doc][]) {
-      for (const t of setTargets(act)) if (hasKind(t.kinds, e.kind) && typeof t.set[e.field] === "string" && remove.includes(t.set[e.field] as string)) {
+      for (const t of setTargets(act, this.doc)) if (hasKind(t.kinds, e.kind) && typeof t.set[e.field] === "string" && remove.includes(t.set[e.field] as string)) {
         this.removeActQuietly(name);
         out.push(`the act ${name} (it set that option) is removed`);
         break;
@@ -1409,6 +1415,7 @@ class Editor {
       if (r.t === "edge") {
         if (act.connects === r.from) act.connects = r.to;
         if (act.severs === r.from) act.severs = r.to;
+        if (Array.isArray(act.replaces)) act.replaces = act.replaces.map((e: string) => (e === r.from ? r.to : e));
         for (const e of act.effects ?? []) {
           if (e.connect === r.from) e.connect = r.to;
           if (e.sever === r.from) e.sever = r.to;
@@ -1416,13 +1423,14 @@ class Editor {
       }
       if (r.t === "field") {
         const args = new Map<string, string>();
-        for (const t of setTargets(act)) {
+        for (const t of setTargets(act, doc)) {
           if (!hasKind(t.kinds, r.kind) || !(r.from in t.set)) continue;
           if (t.kinds === "*" && Object.entries(doc.kinds).some(([k, s]: [string, Doc]) => k !== r.kind && s.fields[r.from])) continue;
           const renamed: Record<string, unknown> = {};
           for (const [k, v] of Object.entries(t.set)) renamed[k === r.from ? r.to : k] = k === r.from && v === `$${r.from}` ? `$${r.to}` : v;
           if (t.set[r.from] === `$${r.from}`) args.set(r.from, r.to);
           if (t.where === "sets") act.sets = renamed;
+          else if (t.where === "setsOther") act.setsOther = renamed;
           else act.effects[t.index!].set = renamed;
         }
         if (act.writes && (hasKind(on, r.kind) || act.creates === r.kind) && act.writes.includes(r.from)) {
@@ -1446,7 +1454,7 @@ class Editor {
       const guard = exprAt(act.allowedWhen, on);
       if (guard !== undefined) act.allowedWhen = argRename?.has(r.from) && r.t === "field" && !hasKind(on, r.kind) ? rewriteBinding(guard, r.from, r.to) : guard;
       if (act.refusal !== undefined) act.refusal = tmplAt(act.refusal, on);
-      for (const t of setTargets(act)) for (const [k, v] of Object.entries(t.set)) if (isObject(v) && typeof v["expr"] === "string") (t.set as Doc)[k] = { expr: exprAt(v["expr"], t.kinds === "*" ? on : t.kinds) };
+      for (const t of setTargets(act, doc)) for (const [k, v] of Object.entries(t.set)) if (isObject(v) && typeof v["expr"] === "string") (t.set as Doc)[k] = { expr: exprAt(v["expr"], t.kinds === "*" ? on : t.kinds) };
       if (JSON.stringify(act) !== before) {
         if (prose) {
           if (act.title) act.title = prose(act.title);
@@ -1576,9 +1584,14 @@ class Editor {
       const on = subjectKinds(act);
       let uses = exprMentions(doc, act.allowedWhen, on, r) || templateMentions(doc, act.refusal, on, r);
       if (r.t === "edge") uses ||= act.connects === r.from || act.severs === r.from || (act.effects ?? []).some((e: Doc) => e.connect === r.from || e.sever === r.from);
+      // A relation it only replaced goes from the list; one that replaced nothing else goes with it (FR-115).
+      if (r.t === "edge" && !uses && Array.isArray(act.replaces) && act.replaces.includes(r.from)) {
+        act.replaces = act.replaces.filter((e: string) => e !== r.from);
+        if (act.replaces.length === 0) delete act.replaces;
+      }
       if (r.t === "field" && !worked) {
         // An act that sets other things too loses only this field; one that did nothing else goes.
-        for (const t of setTargets(act)) {
+        for (const t of setTargets(act, doc)) {
           if (!hasKind(t.kinds, r.kind) || t.kinds === "*") continue;
           if (r.from in t.set) delete t.set[r.from];
           for (const v of Object.values(t.set)) if (isObject(v) && typeof v["expr"] === "string" && exprMentions(doc, v["expr"], t.kinds, r)) uses = true;
@@ -1590,6 +1603,7 @@ class Editor {
         if (act.args?.[r.from] && act.creates !== r.kind) delete act.args[r.from];
         if (act.args && Object.keys(act.args).length === 0) delete act.args;
         if (act.sets && Object.keys(act.sets).length === 0) delete act.sets;
+        if (act.setsOther && Object.keys(act.setsOther).length === 0) delete act.setsOther;
         const doesSomething = act.creates || act.writes || act.sets || act.connects || act.severs || act.removes || (act.effects ?? []).some((e: Doc) => e.create || e.connect || e.sever || e.remove || (e.set && Object.keys(e.set).length > 0));
         if (!doesSomething) uses = true;
         else if (act.effects) {
