@@ -384,9 +384,13 @@ main { display: grid; gap: 16px; padding: 16px; }
       !/:\s*host/i.test(spoofed.sheet) && spoofed.at === "bar" && /paint|content|strict/.test(spoofed.contain) && spoofed.overflow === "clip",
       spoofed,
     );
-    /* What each engine's accessibility tree says of what the view drew: its own region is a region, and nothing under it a landmark or a notice. */
+    /*
+     * What each engine's accessibility tree says of what the view drew: its own region is a region, and nothing under it a landmark or a notice.
+     * Read on the app's own page: inside a chat's cross-origin frame (`--policy=claude`) Playwright's snapshot does not reach the out-of-process
+     * frame, and what the view's elements are drawn as does not depend on the frame they are in.
+     */
     const region = await app.evaluateHandle(() => document.querySelector("#speaker [data-worker-view]"));
-    const tree = await tab.accessibility.snapshot({ root: region, interestingOnly: false });
+    const tree = proxied ? undefined : await tab.accessibility.snapshot({ root: region, interestingOnly: false });
     const roles = [];
     const walk = (node) => {
       for (const child of node?.children ?? []) {
@@ -403,7 +407,7 @@ main { display: grid; gap: 16px; padding: 16px; }
       return header && { tag: header.localName, color: getComputedStyle(header).color };
     });
     claim("a view's own rule for header still styles what it drew, drawn as a div", styled?.tag === "div" && styled.color === "rgb(1, 2, 3)", styled);
-    claim(
+    if (!proxied) claim(
       "nothing a view draws speaks with a landmark or a notice's role in the accessibility tree (nav, header, footer, aside, search, a named section, output, or role=…), and its words are still drawn",
       tree?.role !== undefined && spoken.length === 0 && ["Main menu", "The app", "Footer", "Aside", "Search", "Named by title", "Saved", "Presentational"].every((words) => said.includes(words)),
       { root: tree?.role, spoken, roles: [...new Set(roles)] },
