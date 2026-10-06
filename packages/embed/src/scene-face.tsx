@@ -2,7 +2,7 @@ import type { AnySchema } from "@graview/core";
 import type { Scheme } from "@graview/core";
 import { Companion, HomeLanding, Inspector, OverviewButton, Places, sceneCss, ShowInstallation, type CompanionMode } from "@graview/primitives/scene";
 import { useMemo } from "react";
-import { Scene } from "@graview/react";
+import { Scene, UrlSync } from "@graview/react";
 import { AUTO_SCENE_HEIGHT } from "./frame.js";
 
 /*
@@ -13,7 +13,15 @@ import { AUTO_SCENE_HEIGHT } from "./frame.js";
  */
 
 /** The picture: the scene, the way up, one panel on the frame, and the inspector. */
-export function SceneFace<S extends AnySchema>({ auto, companion, rememberAs, scheme, scope }: { readonly auto: boolean; readonly companion?: CompanionMode; readonly rememberAs?: string; readonly scheme: Scheme; readonly scope: string }) {
+export function SceneFace<S extends AnySchema>({ address = false, auto, companion, rememberAs, scheme, scope }: {
+  /** The host's page is the app (FR-106): the scene keeps its stop in the fragment, as the whole-page Shell does. */
+  readonly address?: boolean;
+  readonly auto: boolean;
+  readonly companion?: CompanionMode;
+  readonly rememberAs?: string;
+  readonly scheme: Scheme;
+  readonly scope: string;
+}) {
   /*
    * THE SCENE'S OWN RULES, drawn with the scene (FR-104): after the frame's
    * sheet, where they stand in `themeCss`, so a page that never draws the
@@ -23,6 +31,7 @@ export function SceneFace<S extends AnySchema>({ auto, companion, rememberAs, sc
   return (
     <div data-embed-content="" style={{ position: "relative", flex: auto ? `0 0 ${AUTO_SCENE_HEIGHT}px` : "1 1 auto", minHeight: 0, containerType: "size" }}>
       <style>{css}</style>
+      {address ? <UrlSync /> : null}
       <Scene renderer="dom" />
       <OverviewButton />
       {/* The home's own view, when the declaration writes one, over the picture at home (FR-81). */}

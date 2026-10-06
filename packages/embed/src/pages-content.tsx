@@ -1,4 +1,5 @@
 import type { AnySchema, Brand, PresenceChannel, Store } from "@graview/core";
+import { basePathOf } from "@graview/core";
 import { PagesApp } from "@graview/pages";
 import type { ReactViewRegistry } from "@graview/react/provider";
 import type { FrameOptions } from "./frame.js";
@@ -45,7 +46,16 @@ export function PagesContent<S extends AnySchema>({
             ...(props.people ? { people: props.people } : {}),
           }}
           {...(props.pages ? { registry: props.pages } : {})}
-          initialPath={props.path ?? "/"}
+          /*
+           * WHO OWNS THE ADDRESS (FR-106): somebody else's page keeps the face
+           * in memory; a host whose page is the app hands it the address bar,
+           * and the face is mounted at its base path.
+           */
+          {...(props.routing === "address"
+            ? basePathOf(props.basePath) === "" ? {} : { basename: basePathOf(props.basePath) }
+            : { initialPath: props.path ?? "/" })}
+          {...(props.path !== undefined ? { path: props.path } : {})}
+          {...(props.onNavigate ? { onNavigate: props.onNavigate } : {})}
         />
       </div>
     </div>

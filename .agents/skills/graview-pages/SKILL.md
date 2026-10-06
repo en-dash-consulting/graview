@@ -188,8 +188,8 @@ What every design must keep doing:
 
 ## On somebody else's page
 
-The embed mounts the app — this face included (`face: "pages"`, `path`) —
-into one element of any page. That is its own skill: `graview-embed`.
+The embed mounts the app — this face included (`face: "pages"`, `path`,
+`routing`) — into one element of any page. Its own skill: `graview-embed`.
 
 ## Then find out whether it worked
 

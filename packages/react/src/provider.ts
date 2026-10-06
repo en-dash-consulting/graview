@@ -30,7 +30,6 @@ export type { ErrorReport, ViewBoundaryProps } from "./view-boundary.js";
 export { ACTIVITY_HOLD_MS, markActivity, useActivity, useAttention } from "./activity.js";
 export type { ActivityMark, Attention, Manner, ToolCallLike } from "./activity.js";
 export {
-  adjustment,
   NOTHING_FOUND,
   useBacktrack,
   useEditableFields,
@@ -40,8 +39,6 @@ export {
   useNavigation,
   useReached,
   useSelection,
-  UrlSync,
-  useUrlSync,
   useViolations,
 } from "./hooks.js";
 export { useLocalIntelligence } from "./local-intelligence.js";

@@ -73,6 +73,8 @@ const CHAIN = [
   ["chrome", "verify-chrome.mjs"],
   // A document's declared lenses drawn as places on both faces, and its arrangement honoured, with no view of the host's (FR-79, FR-80).
   ["declared", "verify-declared.mjs"],
+  // A host whose page is the app hands the routed face the address bar, in three engines; an article's embed never touches it (FR-106).
+  ["address", "verify-address.mjs"],
   // The studio's whole path, on a scratch copy of seedbed: said, rewritten, written, compiled, migrated.
   ["rehearsal", "rehearse-studio.mjs"],
   ["remember", "verify-remember.mjs"],

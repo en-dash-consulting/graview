@@ -56,9 +56,11 @@ export const BUDGETS = [
      * Lowered when the scene's own rules came to be drawn by the scene face
      * and the frame's measures moved to a file of their own (FR-104): a
      * page on the pages face carries neither. Measured at 495_604 / 167_798.
+     *
+     * With an address for a host's page (FR-106), fitted thumbnails (FR-107) and named steps (FR-108): measured at 497_188 / 168_599.
      */
-    minified: 497_000,
-    gzipped: 168_500,
+    minified: 500_000,
+    gzipped: 170_000,
     load: "first",
   },
   {
@@ -116,9 +118,16 @@ export const BUDGETS = [
      * and a bundler places a whole module in every chunk that can reach it —
      * so the checker (41 kB) and the document compiler it reaches (47 kB)
      * rode in what the page loads first. Measured at 692_174 / 176_515.
+     *
+     * Raised when a host whose page is the app came to hand the routed face
+     * the address bar (FR-106): the face follows the address, and a place's
+     * address is spelled under a base path, up front because a face is
+     * chosen by it before one is fetched. The scene's fragment sync moved to
+     * a module of its own, fetched with the scene. Measured at 694_569 /
+     * 177_383.
      */
-    minified: 693_500,
-    gzipped: 177_000,
+    minified: 695_000,
+    gzipped: 177_500,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -183,9 +192,14 @@ export const BUDGETS = [
      * measured at 1_461_953 / 431_507.
      *
      * With both, measured at 1_474_169 / 435_839.
+     *
+     * Gzipped raised with the address bar (FR-106), its sync a chunk of
+     * its own: measured at 1_478_987 / 438_466.
+     *
+     * With FR-106, FR-107 and FR-108 together: measured at 1_480_900 / 439_089.
      */
-    minified: 1_480_000,
-    gzipped: 438_000,
+    minified: 1_486_000,
+    gzipped: 441_000,
     load: "all",
   },
   {
@@ -209,6 +223,8 @@ export const BUDGETS = [
      * Measured at 1_444_037 / 422_721 once the open kit (FR-90–FR-96) met
      * main's declared lenses, home view, language and describe (FR-79–FR-89);
      * the budget just above it.
+     *
+     * With FR-106, FR-107 and FR-108 together: measured at 1_465_563 / 430_201.
      */
     entry: `import { mount } from "@graview/embed"; import { StudioPlace } from "@graview/studio"; globalThis.mount = (element, options) => mount(element, { ...options, studio: { onApply() {}, place: StudioPlace } });`,
     // Raised with every face's when a declared lens came to draw (FR-79) and the rule language came to compute what pages need (FR-83): the studio reaches the lenses through `@graview/primitives`, so here they load with it. With both, measured at 1_393_930 / 407_048.
@@ -217,8 +233,8 @@ export const BUDGETS = [
     // And with every face's when a status board came to draw (FR-97): measured at 1_451_370 / 425_210, from 1_447_691 / 424_068.
     // And with every face's for FR-99, FR-100, FR-101 and FR-105: measured at 1_455_251 / 426_587.
     // With both, measured at 1_458_930 / 427_760.
-    minified: 1_464_000,
-    gzipped: 430_000,
+    minified: 1_470_000,
+    gzipped: 432_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

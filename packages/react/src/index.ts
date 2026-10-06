@@ -58,15 +58,13 @@ export type { Ask, LocalIntelligence } from "./local-intelligence.js";
 export { kitConnector, useKit } from "./kit.js";
 export { clipPolyline, latticePoints, orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
 export { bandRows, channelRoute } from "./channels.js";
+export { adjustment, UrlSync, useUrlSync } from "./url-sync.js";
 export {
-  adjustment,
   useBacktrack,
   useEditableFields,
   useJackIn,
   useNavigation,
   useSelection,
-  UrlSync,
-  useUrlSync,
 } from "./hooks.js";
 export { useDrawnSize, useTextMeasure } from "./drawn.js";
 export type { DrawnOptions, DrawnSize } from "./drawn.js";

@@ -1,0 +1,327 @@
+#!/usr/bin/env node
+/**
+ * A HOST THAT OWNS THE PAGE GIVES THE ROUTED FACE THE ADDRESS BAR (FR-106).
+ *
+ * Graview Cloud's page IS the app, and the embed's routed face ran on a
+ * memory router: a place could not be linked, reloaded or shared. This
+ * mounts the embed the way Cloud's shell does — `mount` over a compiled
+ * document, the Graview on a desk and the pages on a phone, the strip's
+ * toggle on — with `routing: "address"` under a base path of the host's own
+ * (`/apps/a1/`), on a server that answers every address under it with the
+ * one page. And the same embed in somebody else's article, on the default
+ * memory routing. Then it asks each engine, at a desk and a phone:
+ *
+ *   loading <base>/places/the-board opens that place;
+ *   opening a record from the list changes the address, one entry a step;
+ *   Back returns to the list, and to the place before it;
+ *   a reload stays on the record;
+ *   a deep link to a record opens it;
+ *   the face toggle is a step Back undoes, the scene's stop in the fragment,
+ *   and a reload of the scene stays on the scene;
+ *   the embed in an article never writes `history` and leaves `location` as it was.
+ *
+ *   node scripts/verify-address.mjs [--engine=chromium|webkit|firefox]   (all three by default)
+ */
+import { createServer } from "node:http";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { ENGINES, launchEngine } from "./lib/engine.mjs";
+import { graviewSources } from "./lib/graview-sources.mjs";
+import { at, portFor } from "./lib/ports.mjs";
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const asked = process.argv.find((arg) => arg.startsWith("--engine="))?.slice("--engine=".length);
+const engines = asked ? [asked] : ENGINES;
+const TASKS = resolve(repoRoot, "packages/core/tests/document/fixtures/tasks.gdd.json");
+const SEED = {
+  nodes: [
+    { id: "t1", kind: "task", label: "Write the brief", status: "todo" },
+    { id: "t2", kind: "task", label: "Book the hall", status: "doing" },
+    { id: "p1", kind: "person", label: "Ada" },
+  ],
+  edges: [],
+};
+const BASE = "/apps/a1";
+const SIZES = [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+];
+const report = { at: new Date().toISOString(), engines, base: `${BASE}/`, checks: {} };
+
+const page = (body) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>A host's page</title>
+<style>body{margin:0;font:16px/1.4 Georgia,serif;background:#faf8f2;color:#222}#app{position:relative;height:100vh}article #app{height:640px}</style></head>
+<body>${body}<script type="module" src="/entry.js"></script></body></html>`;
+/** The hosted app: the page is the app, as Cloud's is. */
+const APP_PAGE = page(`<div id="app"></div>`);
+/** Somebody else's article, with the app as a picture in it. */
+const ARTICLE_PAGE = page(`<main><article><h1>An article</h1><p>Before the picture.</p><div id="app"></div><p>After it.</p></article></main>`);
+
+async function buildHost() {
+  const require = createRequire(import.meta.url);
+  const esbuild = require("esbuild");
+  const out = mkdtempSync(join(tmpdir(), "graview-address-host-"));
+  await esbuild.build({
+    stdin: {
+      contents: `
+        import { mount } from "@graview/embed";
+        import { compileDocumentWithoutCheck } from "@graview/core/document";
+        import tasks from ${JSON.stringify(TASKS)};
+        const compiled = compileDocumentWithoutCheck(tasks, { today: () => "2026-09-01" });
+        if (!compiled.ok) throw new Error("the document did not compile");
+        const article = location.pathname.startsWith("/article");
+        window.__navigated = [];
+        window.__handle = mount(document.getElementById("app"), {
+          app: compiled.app,
+          seed: ${JSON.stringify(SEED)},
+          principal: { kind: "human", id: "p1", roles: ["owner"] },
+          // As Cloud's shell: the Graview on a desk, the pages on a phone.
+          face: article ? "pages" : window.innerWidth < 768 ? "pages" : "graview",
+          toggle: true,
+          label: "The tasks",
+          heading: article ? 2 : 1,
+          height: "100%",
+          fonts: false,
+          studio: false,
+          onNavigate: (path, how) => window.__navigated.push([path, how]),
+          ...(article ? {} : { routing: "address", basePath: "${BASE}/" }),
+        });
+        window.__handle.drawn().then(() => { window.__ready = true; });`,
+      resolveDir: resolve(repoRoot, "packages/embed"),
+      loader: "js",
+    },
+    bundle: true,
+    splitting: true,
+    format: "esm",
+    platform: "browser",
+    outdir: out,
+    entryNames: "entry",
+    define: { "process.env.NODE_ENV": '"development"' },
+    plugins: [graviewSources(repoRoot)],
+    logLevel: "silent",
+  });
+  const host = createServer((request, response) => {
+    const path = decodeURIComponent((request.url ?? "/").split("?")[0]);
+    const file = join(out, path.replace(/^\/+/, ""));
+    if (path.endsWith(".js") && file.startsWith(out) && existsSync(file)) {
+      response.writeHead(200, { "content-type": "text/javascript" });
+      response.end(readFileSync(file));
+      return;
+    }
+    // Every address under the base is the one page, as a host that owns the page answers it.
+    if (path === BASE || path.startsWith(`${BASE}/`)) {
+      response.writeHead(200, { "content-type": "text/html" });
+      response.end(APP_PAGE);
+      return;
+    }
+    if (path === "/article.html") {
+      response.writeHead(200, { "content-type": "text/html" });
+      response.end(ARTICLE_PAGE);
+      return;
+    }
+    response.writeHead(404);
+    response.end();
+  });
+  await new Promise((ready) => host.listen(portFor("address-host"), ready));
+  return { stop: () => (host.close(), rmSync(out, { recursive: true, force: true })) };
+}
+
+const host = await buildHost();
+const errors = [];
+const results = {};
+let browser;
+try {
+  for (const engine of engines) {
+    browser = await launchEngine(engine, { headless: !process.argv.includes("--headed") });
+    for (const viewport of SIZES) {
+      const where = `${engine} ${viewport.width}×${viewport.height}`;
+      const context = await browser.newContext({ viewport });
+      const tab = await context.newPage();
+      tab.on("pageerror", (error) => errors.push(`${where}: ${error.message}`));
+      const ready = async () => {
+        await tab.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+        await tab.waitForTimeout(500);
+      };
+      const go = async (path) => {
+        await tab.goto(`${at("address-host")}${path}`, { waitUntil: "load" });
+        await ready();
+      };
+      const state = () =>
+        tab.evaluate(() => ({
+          path: location.pathname,
+          hash: location.hash,
+          fragment: location.href.includes("#"),
+          length: history.length,
+          face: document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed") ?? null,
+          heading: document.querySelector("[data-graview-face=pages] h1")?.textContent?.trim() ?? null,
+          place: document.querySelector('[data-testid="place-lens"]') !== null,
+        }));
+      const settled = async () => {
+        await tab.waitForTimeout(600);
+        return state();
+      };
+      /*
+       * A reload as the reader does it. Playwright's own reload in Firefox
+       * adds an entry to the session history that no page wrote, so Back
+       * after it lands on the same address: the page's own reload does not.
+       */
+      const reload = async () => {
+        await Promise.all([tab.waitForEvent("load"), tab.evaluate(() => location.reload())]);
+        await ready();
+      };
+      const follow = async (href) => {
+        await tab.click(`[data-graview-face=pages] a[href="${href}"]`, { timeout: 10_000 });
+        return settled();
+      };
+      const one = {};
+      results[where] = one;
+      try {
+        // A place, by its address.
+        await go(`${BASE}/places/the-board`);
+        one.place = await state();
+        // Opening a record: to the list by its address, then the record by its link.
+        one.list = await follow(`${BASE}/tasks`);
+        one.record = await follow(`${BASE}/tasks/t1`);
+        // Back, twice: the list, then the place.
+        await tab.goBack();
+        one.backToList = await settled();
+        await tab.goBack();
+        one.backToPlace = await settled();
+        await tab.goForward();
+        await tab.goForward();
+        one.forwardToRecord = await settled();
+        one.told = await tab.evaluate(() => window.__navigated);
+        // A reload stays put.
+        await reload();
+        one.reloaded = await state();
+        // A deep link to a record.
+        await go(`${BASE}/tasks/t2`);
+        one.deep = await state();
+        // The face toggle, from the place: the scene, its stop in the fragment, and Back.
+        await go(`${BASE}/places/the-board`);
+        one.beforeToggle = await state();
+        await tab.click('[data-testid="embed-face-scene"]');
+        one.toScene = await settled();
+        await reload();
+        one.sceneReloaded = await state();
+        await tab.goBack();
+        one.toggleUndone = await settled();
+        await tab.goForward();
+        one.toggleRedone = await settled();
+        await tab.click('[data-testid="embed-face-pages"]');
+        one.backToPages = await settled();
+      } catch (error) {
+        one.error = String(error?.message ?? error);
+      }
+      await context.close();
+
+      // Somebody else's article: the history and the address are the article's, never the embed's.
+      const article = await browser.newContext({ viewport });
+      await article.addInitScript(() => {
+        window.__writes = [];
+        for (const name of ["pushState", "replaceState"]) {
+          const original = history[name].bind(history);
+          history[name] = (...args) => {
+            window.__writes.push([name, String(args[2] ?? "")]);
+            return original(...args);
+          };
+        }
+      });
+      const reader = await article.newPage();
+      reader.on("pageerror", (error) => errors.push(`${where} article: ${error.message}`));
+      const quiet = {};
+      results[`${where} article`] = quiet;
+      try {
+        await reader.goto(`${at("address-host")}/article.html?from=somewhere#the-picture`, { waitUntil: "load" });
+        await reader.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+        await reader.waitForTimeout(500);
+        const where = () => reader.evaluate(() => ({ href: location.href, length: history.length, writes: window.__writes.length, heading: document.querySelector("[data-graview-face=pages] h1")?.textContent?.trim() ?? null }));
+        quiet.before = await where();
+        await reader.click('[data-graview-face=pages] a[href="/tasks"]', { timeout: 10_000 });
+        await reader.waitForTimeout(400);
+        await reader.click('[data-graview-face=pages] a[href="/tasks/t1"]', { timeout: 10_000 });
+        await reader.waitForTimeout(400);
+        quiet.onRecord = await where();
+        await reader.click('[data-testid="embed-face-scene"]');
+        await reader.waitForTimeout(800);
+        await reader.click('[data-testid="embed-face-pages"]');
+        await reader.waitForTimeout(600);
+        quiet.after = await where();
+        quiet.writes = await reader.evaluate(() => window.__writes);
+      } catch (error) {
+        quiet.error = String(error?.message ?? error);
+      }
+      await article.close();
+    }
+    await browser.close();
+    browser = undefined;
+  }
+
+  const every = (test) => Object.entries(results).filter(([name]) => !name.endsWith("article")).every(([, one]) => !one.error && test(one));
+  const pick = (key) => Object.fromEntries(Object.entries(results).filter(([name]) => !name.endsWith("article")).map(([name, one]) => [name, one.error ? { error: one.error } : one[key]]));
+  report.checks.loadingAPlaceAddressOpensThatPlace = { seen: pick("place"), ok: every(({ place }) => place.face === "pages" && place.place && place.heading === "The board" && place.path === `${BASE}/places/the-board`) };
+  report.checks.openingARecordChangesTheAddress = {
+    seen: pick("record"),
+    ok: every(({ place, list, record }) => list.path === `${BASE}/tasks` && record.path === `${BASE}/tasks/t1` && record.heading === "Write the brief" && list.length === place.length + 1 && record.length === list.length + 1),
+  };
+  report.checks.backReturnsToWhereYouWere = {
+    seen: Object.fromEntries(Object.entries(pick("backToList")).map(([name, seen]) => [name, { list: seen, place: results[name].backToPlace, forward: results[name].forwardToRecord }])),
+    ok: every(({ backToList, backToPlace, forwardToRecord }) => backToList.path === `${BASE}/tasks` && /^tasks$/i.test(backToList.heading ?? "") && backToPlace.path === `${BASE}/places/the-board` && backToPlace.place && forwardToRecord.heading === "Write the brief"),
+  };
+  report.checks.aReloadStaysPut = { seen: pick("reloaded"), ok: every(({ reloaded, forwardToRecord }) => reloaded.length === forwardToRecord.length && reloaded.path === `${BASE}/tasks/t1` && reloaded.face === "pages" && reloaded.heading === "Write the brief") };
+  report.checks.aDeepLinkToARecordOpensIt = { seen: pick("deep"), ok: every(({ deep }) => deep.face === "pages" && deep.heading === "Book the hall") };
+  report.checks.theFaceToggleIsAStepBackUndoes = {
+    seen: Object.fromEntries(Object.entries(pick("toScene")).map(([name, seen]) => [name, { before: results[name].beforeToggle, scene: seen, reloaded: results[name].sceneReloaded, undone: results[name].toggleUndone, redone: results[name].toggleRedone, pages: results[name].backToPages }])),
+    ok: every(
+      ({ beforeToggle, toScene, sceneReloaded, toggleUndone, toggleRedone, backToPages }) =>
+        toScene.face !== "pages" &&
+        toScene.path === BASE &&
+        toScene.fragment &&
+        toScene.length === beforeToggle.length + 1 &&
+        sceneReloaded.face !== "pages" &&
+        sceneReloaded.hash === toScene.hash &&
+        toggleUndone.face === "pages" &&
+        toggleUndone.path === `${BASE}/places/the-board` &&
+        toggleUndone.place &&
+        toggleRedone.face !== "pages" &&
+        toggleRedone.hash === toScene.hash &&
+        backToPages.face === "pages" &&
+        backToPages.path === `${BASE}/places/the-board` &&
+        !backToPages.fragment,
+    ),
+  };
+  report.checks.aHostThatKeepsItsOwnHistoryIsToldEachPage = {
+    seen: pick("told"),
+    ok: every(({ told }) => told.some(([path, how]) => path === "/tasks/t1" && how === "push") && told.some(([path, how]) => path === "/tasks" && how === "pop") && told.some(([path, how]) => path === "/places/the-board" && how === "pop")),
+  };
+  const articles = Object.entries(results).filter(([name]) => name.endsWith("article"));
+  report.checks.anEmbedInAnArticleNeverTouchesTheAddressOrTheHistory = {
+    seen: Object.fromEntries(articles),
+    ok:
+      articles.length === engines.length * SIZES.length &&
+      articles.every(
+        ([, quiet]) =>
+          !quiet.error &&
+          quiet.onRecord.heading === "Write the brief" &&
+          quiet.writes.length === 0 &&
+          [quiet.onRecord, quiet.after].every((seen) => seen.href === quiet.before.href && seen.length === quiet.before.length),
+      ),
+  };
+  report.checks.noPageThrew = { errors, ok: errors.length === 0 };
+  report.passed = Object.values(report.checks).every((check) => check.ok);
+} catch (error) {
+  report.error = String(error?.stack ?? error);
+  report.passed = false;
+} finally {
+  await browser?.close();
+  host.stop();
+}
+
+mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
+writeFileSync(resolve(repoRoot, "docs/address.json"), `${JSON.stringify(report, null, 2)}\n`);
+for (const [name, check] of Object.entries(report.checks)) process.stdout.write(`${check.ok ? "ok  " : "FAIL"} ${name}\n`);
+if (report.error) process.stdout.write(`${report.error}\n`);
+process.stdout.write("wrote docs/address.json\n");
+process.exit(report.passed ? 0 : 1);
