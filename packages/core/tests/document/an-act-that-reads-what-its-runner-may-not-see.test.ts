@@ -71,7 +71,7 @@ describe("a document's act that reads what a role that may run it cannot see", (
     const seen = structuredClone(DEALS);
     seen.policy.sees[1]!.kinds.push("memo");
     expect(hidden(compileDocument(seen).findings)).toEqual([]);
-    const kept = structuredClone(DEALS) as typeof DEALS & { policy: { grants: unknown[] } };
+    const kept = structuredClone(DEALS) as unknown as { policy: { grants: unknown[] } };
     kept.policy.grants = [{ roles: ["owner"], mutations: "*" }, { roles: ["agent"], mutations: ["rename-deal"] }];
     expect(hidden(compileDocument(kept).findings)).toEqual([]);
   });

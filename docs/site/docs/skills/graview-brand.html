@@ -1101,6 +1101,9 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 </ol>
 <p>``<code>ts    kit: {      connectors: {        all: { route: "orthogonal" },                       // curve | straight | orthogonal        byEdge: { "tended-by": { colour: "#1d3f8a", pattern: "dashed" }, "grows-in": { visible: false } },      },      captions: { visible: true }, grid: { visible: false }, lattice: { size: 46 },      tags: { visible: true }, emphasis: { dim: 0.34 }, marks: { flag: "⚠" },    },    </code>``</p>
 <p>A route or a pattern is a named strategy, one case in one file    (<code>@graview/react</code> <code>routes.ts</code>, <code>@graview/render</code> <code>connectors.ts</code>), so    the next one is one more case. <code>graview check</code> holds an explicit line    colour to 3:1 against both grounds in both schemes    (<code>kit-contrast-below-aa</code>); a kind kept quiet is still on the inspector.    An embed's <code>handle.setBrand({ ...brand, kit })</code> re-dresses it live.</p>
+<ol>
+<li><strong>Say its money.</strong> <code>currency: "EUR"</code> and <code>locale: "de-DE"</code> on the brand (a document's <code>brand</code> may carry them alone, without an accent) are what a sum is said in wherever a block names none: a figure or a field shown as money, and <code>{net | money}</code> in a template — "21.000 €". A block's own <code>currency</code> wins. <code>graview check</code> refuses a code or a locale it cannot write (<code>brand-currency</code>, <code>brand-locale</code>). Without one, sums are numbers.</li>
+</ol>
 <h3>Styling by conversation</h3>
 <p>This skill is built to be DRIVEN IN NATURAL LANGUAGE — "warmer", "more editorial", "our green is #1B4332", "make people amber and money green" — because the whole look is one serialisable declaration:</p>
 <ul>

@@ -92,9 +92,16 @@ export const BUDGETS = [
      * Measured at 803_922 / 210_422 once the open kit (FR-90–FR-96) met
      * main's declared lenses, home view, language and describe (FR-79–FR-89);
      * the budget just above it.
+     *
+     * Raised when a label became a template (FR-99), money came to be said
+     * in the app's currency (FR-100), a walk came to start from a set
+     * (FR-101) and the check came to read what an act reads (FR-105): the
+     * frame compiles a document with the checker, so its new questions
+     * (`act-reads-hidden-kind`, the brand's money, braces in plain words)
+     * load with it. Measured at 809_880 / 212_418.
      */
-    minified: 808_000,
-    gzipped: 211_500,
+    minified: 811_000,
+    gzipped: 213_000,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -148,9 +155,13 @@ export const BUDGETS = [
      * Measured at 1_450_743 / 427_673 once the open kit (FR-90–FR-96) met
      * main's declared lenses, home view, language and describe (FR-79–FR-89);
      * the budget just above it.
+     *
+     * Raised with the embed's own for FR-99, FR-100, FR-101 and FR-105, and
+     * the studio's set-brand that sets the money apart from the colours:
+     * measured at 1_461_953 / 431_507.
      */
-    minified: 1_458_000,
-    gzipped: 430_000,
+    minified: 1_463_000,
+    gzipped: 432_500,
     load: "all",
   },
   {
@@ -179,8 +190,9 @@ export const BUDGETS = [
     // Raised with every face's when a declared lens came to draw (FR-79) and the rule language came to compute what pages need (FR-83): the studio reaches the lenses through `@graview/primitives`, so here they load with it. With both, measured at 1_393_930 / 407_048.
     // Raised with every face's again when the home and a view came to be written from blocks (FR-81, FR-82): measured at 1_414_220 / 413_619.
     // And with every face's when every part of a document came to have an edit (FR-84) and a place a description (FR-89): measured at 1_443_642 / 422_491.
-    minified: 1_452_000,
-    gzipped: 425_000,
+    // And with every face's for FR-99, FR-100, FR-101 and FR-105: measured at 1_455_251 / 426_587.
+    minified: 1_456_500,
+    gzipped: 427_500,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
