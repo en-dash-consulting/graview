@@ -84,7 +84,11 @@ limits. A second ready from the same worker is dropped. Once it is ready,
 the host sends a heartbeat over the port and the worker's runtime answers
 it; a worker that goes `limits.silentMs` (5 000 by default) without an
 answer — a guest spinning in `while (true)` — is terminated, and
-the host is told `silent`. A guest that is busy but yields is kept. What the guest draws
+the host is told `silent`. A guest that is busy but yields is kept. The
+host also counts its own time drawing what the guest sends. Over any one
+second it spends at most `limits.drawMs` (100 by default). Past it, the
+rest of the batch is left undrawn, the worker is terminated, and the host
+is told `slow`. What the guest draws
 comes over the port as Remote DOM mutation records, and the host draws only
 the kit (`GUEST_KIT`), with `createKitRenderer`. Both are
 `@graview/guest/host/worker`, apart from the frame's host, so a page that
@@ -286,7 +290,8 @@ nodes it draws (`maxNodes`, 5 000), the messages it sends (`messages` in
 `messageWindowMs`, 120 a second) and the time it takes over each push of
 what it is shown (`pushMs`, 1 000 ms: the view's listeners as its runtime
 times them, and the wait for the runtime to say it drew, as the host times
-it), beside the heartbeat's `silentMs`. Past any of them the worker is
+it), beside the heartbeat's `silentMs`, and the page's own time drawing
+what the view sends (`drawMs`, 100 ms of any second). Past any of them the worker is
 terminated, the plain face of what the view was shown — its title and each
 record by its label, drawn by the host — is drawn in the region, and
 `onFailure` hears why: `source`, `nodes`, `flood`, `slow`, `silent`,

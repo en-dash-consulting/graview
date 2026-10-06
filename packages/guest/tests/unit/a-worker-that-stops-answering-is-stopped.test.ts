@@ -82,8 +82,34 @@ function started(answer: "at-once" | "never" | { readonly after: number } | "wro
     if (answer === "at-once" || answer === "wrong-nonce") port.postMessage(reply);
     else if (answer !== "never") setTimeout(() => port.postMessage(reply), answer.after);
   };
-  return { guest, worker, failures, beats, readyAt: performance.now() };
+  const say = (message: Record<string, unknown>) => port.postMessage({ ...message, nonce: hello.nonce });
+  return { guest, worker, failures, beats, say, readyAt: performance.now() };
 }
+
+/**
+ * THE HOST'S OWN TIME, DRAWING A KIT GUEST (FR-94's draw budget, for the
+ * kit's worker). Under the node cap a guest may still ask the page to build
+ * a subtree, take it away and build it again, hundreds of times in one
+ * message — the ids come free once it is removed — and the page draws it
+ * all on its main thread. Over any one second the host spends at most
+ * `drawMs` drawing a guest; past it the batch is left undrawn and the
+ * guest is stopped as slow.
+ */
+describe("the host's time drawing a worker guest", () => {
+  it("stops a guest whose one message asks for more building than drawMs allows, and leaves the rest undrawn", async () => {
+    const { worker, failures, say } = started("at-once", { drawMs: 50, maxNodes: 2_000 });
+    const tree = { id: "t", type: 1, element: "gv-group", properties: {}, children: Array.from({ length: 1_000 }, (_, index) => ({ id: `t${index}`, type: 1, element: "gv-badge", properties: {}, children: [] })) };
+    const records: unknown[] = [];
+    for (let i = 0; i < 100; i += 1) records.push([0, "~", tree, 0], [1, "~", 0]);
+    const began = performance.now();
+    say({ type: "render", records });
+    await until(() => failures.length > 0, 5_000);
+    expect(failures.map((one) => one.reason)).toEqual(["slow"]);
+    expect(worker.terminated).toBe(true);
+    /* The page was held for about drawMs, not for 100 000 nodes built and taken away. */
+    expect(performance.now() - began).toBeLessThan(1_000);
+  });
+});
 
 describe("the host's watchdog over a worker guest", () => {
   it("stops a worker whose runtime never answers within silentMs of its ready, and says silent", async () => {

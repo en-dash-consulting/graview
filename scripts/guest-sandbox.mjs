@@ -586,6 +586,27 @@ guest.subscribe(() => {
 `);
 
   /*
+   * THE BUILDER (FR-94's draw budget): under the node cap, it builds a group
+   * of 1 000 badges, takes it away and builds it again, a hundred times a
+   * message, every 20 ms. The page must stop it as slow, and keep time.
+   */
+  const builderJs = await built("builder", `
+import { connectGuest } from "@graview/guest/worker";
+const guest = connectGuest();
+let started = false;
+guest.subscribe(() => {
+  if (started) return;
+  started = true;
+  const group = document.createElement("gv-group");
+  for (let i = 0; i < 1000; i += 1) group.appendChild(document.createElement("gv-badge"));
+  const said = document.createElement("gv-text");
+  said.textContent = "building";
+  guest.root.replaceChildren(said);
+  setInterval(() => { for (let i = 0; i < 100; i += 1) { guest.root.appendChild(group); group.remove(); } }, 20);
+});
+`);
+
+  /*
    * THE PROBER (FR-70): inside a hardened guest worker, everything a guest
    * might try to get back what hardening took. What it finds it draws, as
    * the kit's text; it has no other way out.
@@ -739,7 +760,18 @@ const guests = {
   prober: mountGuestWorker(document.getElementById("prober"), { worker: { script: PROBER }, view: "prober", store, principal: bethan, input: all, onFailure: (reason) => failures.push(["prober", reason]) }),
   spinner: mountGuestWorker(document.getElementById("spinner"), { worker: { script: SPINNER }, view: "spinner", store, principal: bethan, input: all, limits: { silentMs: ${SILENT_MS} }, onFailure: failed("spinner") }),
   busy: mountGuestWorker(document.getElementById("busy"), { worker: { script: BUSY }, view: "busy", store, principal: bethan, input: all, limits: { silentMs: ${SILENT_MS} }, onFailure: failed("busy") }),
+  builder: mountGuestWorker(document.getElementById("builder"), { worker: { script: BUILDER }, view: "builder", store, principal: bethan, input: all, onFailure: failed("builder") }),
 };
+/* The widget's own timer while the builder builds, from when it drew until half a second after it was stopped. */
+const building = { last: performance.now(), longest: 0, ticks: 0 };
+setInterval(() => {
+  const at = performance.now();
+  if (document.querySelector("#builder [data-gv]") && (failedAt.builder === undefined || at - failedAt.builder < 500)) {
+    building.longest = Math.max(building.longest, at - building.last);
+    building.ticks += 1;
+  }
+  building.last = at;
+}, 50);
 window.__host = {
   ...host,
   started,
@@ -748,14 +780,14 @@ window.__host = {
   errors,
   origin: self.origin,
   stats: () => ({ card: { ...guests.card.stats }, hostile: { ...guests.hostile.stats } }),
-  watchdog: () => ({ failedAt, drewAt, pulse, spinnerStopped: guests.spinner.worker === undefined, busyRunning: guests.busy.worker !== undefined }),
+  watchdog: () => ({ failedAt, drewAt, pulse, spinnerStopped: guests.spinner.worker === undefined, busyRunning: guests.busy.worker !== undefined, building, builderStopped: guests.builder.worker === undefined }),
   refused: () => ({ card: guests.card.refused, hostile: guests.hostile.refused }),
 };
 `,
     "iife",
   );
-  const inline = `const CARD = ${JSON.stringify(cardJs)}; const HOSTILE = ${JSON.stringify(hostileJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPINNER = ${JSON.stringify(spinnerJs)}; const BUSY = ${JSON.stringify(busyJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
-  const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Graview view</title></head><body><main><div id="card"></div><div id="hostile"></div><div id="prober"></div><div id="spinner"></div><div id="busy"></div></main><script>${inline}</script></body></html>`;
+  const inline = `const CARD = ${JSON.stringify(cardJs)}; const HOSTILE = ${JSON.stringify(hostileJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPINNER = ${JSON.stringify(spinnerJs)}; const BUSY = ${JSON.stringify(busyJs)}; const BUILDER = ${JSON.stringify(builderJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
+  const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Graview view</title></head><body><main><div id="card"></div><div id="hostile"></div><div id="prober"></div><div id="spinner"></div><div id="busy"></div><div id="builder"></div></main><script>${inline}</script></body></html>`;
 
   const hostHtml = `<!doctype html><html><head><meta charset="utf-8"><title>Chat</title></head><body><iframe id="proxy" title="Widget" style="width:720px;height:600px;border:0" src="${GUEST}/proxy/${POLICY}.html"></iframe></body></html>`;
   servers = [
@@ -815,9 +847,9 @@ window.__host = {
   const control = await widget.evaluate(() => window.__host.control.module);
   report.findings = { ...report.findings, moduleBlobWorker: control };
   /* The spinner is stopped on purpose, after it started; it is the watchdog's claim below. */
-  const startFailures = host.failures.filter(([name]) => name !== "spinner");
+  const startFailures = host.failures.filter(([name]) => name !== "spinner" && name !== "builder");
   if (POLICY === "claude" && ENGINE === "chromium") claim("here a module worker from a blob: URL is refused, and the classic guests started", control !== "ran" && startFailures.length === 0, { module: control });
-  claim("every guest was started as a classic worker from a blob: URL", host.started.length === 5 && host.started.every((one) => one.url === "blob:" && one.type === "classic"), host.started);
+  claim("every guest was started as a classic worker from a blob: URL", host.started.length === 6 && host.started.every((one) => one.url === "blob:" && one.type === "classic"), host.started);
   claim("no guest failed to start", startFailures.length === 0, host.failures);
   claim("the card was drawn in the widget's page, from the kit", /<section[^>]*data-gv="card"/.test(html) && /<strong[^>]*>Golf<\/strong>/.test(html) && /<button[^>]*data-gv="button"/.test(html), html.slice(0, 300));
   protocolClaims({
@@ -846,6 +878,11 @@ window.__host = {
   claim(`a guest that spins after ready is stopped as silent within limits.silentMs (${SILENT_MS} ms) and one interval of it`, JSON.stringify(host.failures.filter(([name]) => name === "spinner")) === JSON.stringify([["spinner", "silent"]]) && watchdog.spinnerStopped && spun >= SILENT_MS - SILENT_MS / 4 && spun <= SILENT_MS + SILENT_MS / 4 + 250, { spun, ...watchdog });
   claim("the widget's page kept its own timer while a guest spun, never more than 250 ms between 50 ms ticks", watchdog.pulse.ticks > 20 && watchdog.pulse.longest < 250, watchdog.pulse);
   claim(`a guest that is busy but yields, for three times silentMs, is kept`, !host.failures.some(([name]) => name === "busy") && watchdog.busyRunning, { failures: host.failures, busyRunning: watchdog.busyRunning });
+  claim(
+    "a guest that builds and takes away a thousand badges a hundred times a message is stopped as slow, and the widget's timer kept time while it built, never more than 250 ms between 50 ms ticks",
+    host.failures.some(([name, reason]) => name === "builder" && reason === "slow") && watchdog.builderStopped && watchdog.building.ticks > 0 && watchdog.building.longest < 250,
+    { failures: host.failures.filter(([name]) => name === "builder"), building: watchdog.building, stopped: watchdog.builderStopped },
+  );
   await hardeningClaims(probed);
   claim("the host page throws nothing", report.pageErrors.length === 0, report.pageErrors);
   report.stats = host.stats;
