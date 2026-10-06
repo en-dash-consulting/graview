@@ -133,6 +133,13 @@ painted from the theme, a press that notes something, links to the offers,
 and its own height. It runs under `default-src 'none'; script-src
 'unsafe-inline'`, the policy Graview Cloud serves an uploaded view with.
 
+A worker view (`registerWorkerView`) runs in a worker the host starts from
+a `blob:` URL, so a host page with a Content-Security-Policy says
+`worker-src blob:` and `style-src 'unsafe-inline'`. Without them each view
+draws its plain face, `onFailure` hears `start` naming the directive, and
+the console says so once. A host that allows no `blob:` serves `viewScript`
+from its own origin and passes `worker: { url }` (the guest README).
+
 ## Worked examples
 
 - `apps/seedbed/src/site-embed.ts` — the docs site's chapters, many to a

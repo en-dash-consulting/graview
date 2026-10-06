@@ -9,12 +9,16 @@ export type { GuestWorkerSource } from "./worker-start.js";
 
 /** Why a worker guest is not shown, for a host that falls back to something else. */
 export type GuestWorkerFailure =
-  /** The page's policy refused the worker, or it failed before it said ready. */
-  | "refused"
   /**
-   * It never said ready in `readyMs`, or after it did, its runtime went
-   * `silentMs` without answering the host's heartbeat: its event loop is
-   * blocked (a `while (true)`), and it was stopped.
+   * It never started (FR-102): the page's policy refused the worker (its
+   * Content-Security-Policy needs `worker-src blob:`), it failed before it
+   * said ready, or it did not say ready in `readyMs`. The detail says which.
+   */
+  | "start"
+  /**
+   * It said ready, then its runtime went `silentMs` without answering the
+   * host's heartbeat: its event loop is blocked (a `while (true)`), and it
+   * was stopped.
    */
   | "silent"
   /** It drew more than `maxNodes`; it was stopped. */
@@ -56,8 +60,8 @@ export interface MountGuestWorkerOptions<S extends AnySchema> {
      */
     readonly drawMs?: number;
   };
-  /** The guest is not going to be shown, and why: the host can show something else in its place. */
-  readonly onFailure?: (reason: GuestWorkerFailure) => void;
+  /** The guest is not going to be shown, and why, once: the host can show something else in its place. `detail` says why it did not start. */
+  readonly onFailure?: (reason: GuestWorkerFailure, detail?: string) => void;
   /** The kit it may draw from. `GUEST_KIT` by default. */
   readonly kit?: Kit;
   /**
@@ -134,12 +138,12 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
     session = undefined;
     started?.stop();
   };
-  const fail = (reason: GuestWorkerFailure) => {
+  const fail = (reason: GuestWorkerFailure, detail?: string) => {
     if (failed) return;
     failed = true;
     stop();
     renderer?.dispose();
-    options.onFailure?.(reason);
+    options.onFailure?.(reason, detail);
   };
 
   started = startWorker(window, {
@@ -149,7 +153,7 @@ export function mountGuestWorker<S extends AnySchema>(element: HTMLElement, opti
     readyMs: options.limits?.readyMs ?? 5_000,
     silentMs: options.limits?.silentMs ?? 5_000,
     onDropped: () => (stats.dropped += 1),
-    onStop: (reason) => fail(reason),
+    onStop: (reason, detail) => fail(reason, detail),
     onReady: (nonce, port) => {
       const draw = createKitRenderer(container, {
         ...(options.kit ? { kit: options.kit } : {}),

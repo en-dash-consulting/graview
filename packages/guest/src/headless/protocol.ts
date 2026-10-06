@@ -46,7 +46,11 @@ export interface HeadlessTranscript {
   readonly messages: number;
 }
 
-/** Why a headless run says a view will not do. The live host's reasons (`WorkerViewFailure`), and two of its own. */
+/**
+ * Why a headless run says a view will not do: the live host's reasons
+ * (`WorkerViewFailure`) but `start`, which a run with no worker to start
+ * cannot meet; `refused`, the isolate's own refusal to run it; and two more.
+ */
 export type HeadlessFailureReason =
   | "manifest"
   | "source"

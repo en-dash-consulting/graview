@@ -4,14 +4,19 @@ import type { GuestLimiter } from "./session.js";
 
 /**
  * Where a worker guest's code comes from: a URL the host already holds (a
- * `blob:` URL, typically), or the script's text, which the host makes into
- * a `blob:` URL itself. A chat's widget receives the text through a tool
- * call and never fetches it.
+ * `blob:` URL, typically, or a script the host serves from its own origin),
+ * or the script's text, which the host makes into a `blob:` URL itself. A
+ * chat's widget receives the text through a tool call and never fetches it.
  */
 export type GuestWorkerSource = { readonly url: string } | { readonly script: string };
 
-/** Why the worker is not running, as the watchdog and the start say it. */
-export type WorkerStop = "refused" | "silent";
+/**
+ * Why the worker is not running, as the start and the watchdog say it.
+ * `start`: it never said ready — the page's policy refused it, it failed
+ * before its first line ran, or `readyMs` passed. `silent`: it said ready,
+ * then went `silentMs` without answering the heartbeat.
+ */
+export type WorkerStop = "start" | "silent";
 
 export interface StartedWorker {
   readonly worker: Worker | undefined;
@@ -34,10 +39,55 @@ export interface StartWorkerOptions {
   readonly onDropped: () => void;
   /** It said ready: here is its nonce and the host's end of its port, the hello already sent. */
   readonly onReady: (nonce: string, port: MessagePort) => void;
-  /** It never started, or stopped answering: it has been stopped. `detail` is the engine's own words, when it gave some. */
+  /**
+   * It never started (`start`), or stopped answering (`silent`): it has
+   * been stopped, and this is said once. `detail` says why it did not
+   * start: the directive the page's policy lacks, the engine's own words,
+   * or the time it was given.
+   */
   readonly onStop: (reason: WorkerStop, detail?: string) => void;
   /** It threw, uncaught, after it said ready: the engine's words for it. */
   readonly onError?: (detail: string) => void;
+}
+
+/*
+ * WHAT A PAGE'S POLICY MUST ALLOW (FR-102). The engines refuse a worker
+ * three ways: Chromium and WebKit throw a SecurityError from `new Worker`;
+ * Firefox makes the worker, fires `securitypolicyviolation` on the document
+ * and then `error` on the worker with no message. The directive is
+ * `worker-src`, or `script-src` on a page with no `worker-src`, or
+ * `default-src` on a page with neither.
+ */
+const warned = new WeakSet<object>();
+
+/** The source a refused URL needed: `blob:` for a `blob:` URL, else the URL's origin. */
+function sourceOf(url: string, window: Window): string {
+  if (url.startsWith("blob:")) return "blob:";
+  try {
+    return new URL(url, window.location.href).origin;
+  } catch {
+    return url;
+  }
+}
+
+/** The sentence for a start the page's policy refused; the page's console is told once, however many views it refuses. */
+function refusedByPolicy(window: Window, url: string, directive?: string): string {
+  const source = sourceOf(url, window);
+  const said = `this page's Content-Security-Policy${directive ? ` (${directive})` : ""} does not allow a worker from ${source}: it needs worker-src ${source}`;
+  if (!warned.has(window)) {
+    warned.add(window);
+    (window as Window & { console?: Console }).console?.warn?.(
+      `Graview: worker views cannot start on this page, because ${said}. A host that will not allow ${source} serves each view's whole script from its own origin and passes worker: { url } (the @graview/guest README, "What the host page allows").`,
+    );
+  }
+  return said;
+}
+
+/** Whether a policy violation is about this worker's URL: a `blob:` URL is reported as its scheme alone. */
+function aboutUrl(blocked: string, url: string): boolean {
+  if (blocked === "") return true;
+  if (url.startsWith("blob:")) return blocked.startsWith("blob");
+  return url.startsWith(blocked) || blocked.startsWith(url);
 }
 
 /**
@@ -47,6 +97,13 @@ export interface StartWorkerOptions {
  * a heartbeat its runtime must answer, so a worker whose event loop is
  * blocked is stopped. Shared by the kit's guest (`mountGuestWorker`) and the
  * open kit's view (`mountWorkerView`).
+ *
+ * A WORKER THAT DOES NOT START SAYS `start` (FR-102), once: `new Worker`
+ * threw, it erred before it said ready, or `readyMs` passed with no ready.
+ * Each runtime says ready before a line of the guest runs, so no ready is
+ * no start. When the page's policy was the cause — a SecurityError, or a
+ * `securitypolicyviolation` the page reported for it — the sentence names
+ * the directive it lacks.
  */
 export function startWorker(window: Window & typeof globalThis, options: StartWorkerOptions): StartedWorker {
   const made = "script" in options.source ? window.URL.createObjectURL(new window.Blob([options.source.script], { type: "text/javascript" })) : undefined;
@@ -63,6 +120,18 @@ export function startWorker(window: Window & typeof globalThis, options: StartWo
   const clock = window.performance;
   let heard = clock.now();
 
+  /* A policy violation on the page while this worker starts: Firefox's one sign that the policy, not the script, refused it. */
+  let violated: string | undefined;
+  const violation = (event: Event) => {
+    const said = event as Event & { effectiveDirective?: string; violatedDirective?: string; blockedURI?: string };
+    const directive = String(said.effectiveDirective || said.violatedDirective || "").split(" ")[0]!;
+    if (!/^(worker-src|script-src|script-src-elem|child-src|default-src)$/.test(directive)) return;
+    if (aboutUrl(String(said.blockedURI ?? ""), url)) violated = directive;
+  };
+  const page = window.document;
+  page?.addEventListener("securitypolicyviolation", violation);
+  const unhear = () => page?.removeEventListener("securitypolicyviolation", violation);
+
   const stop = () => {
     if (stopped) return;
     stopped = true;
@@ -71,6 +140,7 @@ export function startWorker(window: Window & typeof globalThis, options: StartWo
     worker = undefined;
     window.clearTimeout(silence);
     window.clearInterval(watchdog);
+    unhear();
     if (made) window.URL.revokeObjectURL(made);
   };
   const halt = (reason: WorkerStop, detail?: string) => {
@@ -81,6 +151,7 @@ export function startWorker(window: Window & typeof globalThis, options: StartWo
 
   const begin = () => {
     window.clearTimeout(silence);
+    unhear();
     nonce = mintNonce();
     const channel = new window.MessageChannel();
     port = channel.port1;
@@ -110,17 +181,32 @@ export function startWorker(window: Window & typeof globalThis, options: StartWo
   try {
     /* Classic, on purpose: a module worker from a blob: URL is refused in an opaque origin (Chromium), which is where a chat's widget runs. */
     worker = new window.Worker(url, { name: options.name });
-  } catch {
+  } catch (error) {
     worker = undefined;
+    const thrown = error as { name?: unknown; message?: unknown } | null;
+    const detail = thrown?.name === "SecurityError" ? refusedByPolicy(window, url, violated) : `the worker could not be made: ${String(thrown?.message ?? error)}`;
+    queueMicrotask(() => halt("start", detail));
   }
-  if (!worker) {
-    queueMicrotask(() => halt("refused"));
-  } else {
-    silence = window.setTimeout(() => halt("silent"), options.readyMs);
+  if (worker) {
+    silence = window.setTimeout(() => halt("start", `it never said it was ready in ${options.readyMs.toLocaleString("en-US")} ms`), options.readyMs);
     worker.onerror = (event: ErrorEvent) => {
       const said = typeof event.message === "string" && event.message !== "" ? event.message : undefined;
-      if (!ready) halt("refused", said);
-      else options.onError?.(said ?? "an error");
+      if (ready) return void options.onError?.(said ?? "an error");
+      window.clearTimeout(silence);
+      /* Decided a task later, so a violation the page reports after the error (the order is the engine's) is heard. */
+      window.setTimeout(
+        () =>
+          !ready &&
+          halt(
+            "start",
+            violated
+              ? refusedByPolicy(window, url, violated)
+              : said
+                ? `it failed before it said ready: ${said}`
+                : "it failed before it said ready, and the engine gave no reason (a page policy that refuses it, or a script that does not load)",
+          ),
+        0,
+      );
     };
     worker.onmessage = (event: MessageEvent) => {
       /*

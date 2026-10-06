@@ -159,6 +159,9 @@ scene, and the app's declared home is drawn if it fails.
    `@graview/guest/headless` does the same in an isolate you supply.
 3. Open the place on both faces as that member. Is anything shown that
    they should not see? Does the region carry no `data-worker-view-failed`?
+   `start` there means the view never ran: a page with a
+   Content-Security-Policy needs `worker-src blob:` and `style-src
+   'unsafe-inline'`, and the note under the plain face names what it lacks.
 4. Toggle the app to dark. Does the view restyle?
 5. Press each bound button with typed words, then again with a field the
    view filled. The first applies and the second is refused.

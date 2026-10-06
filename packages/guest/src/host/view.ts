@@ -23,11 +23,15 @@ export type WorkerViewFailure =
   | "manifest"
   /** Its code is longer than `maxSourceBytes`: it was never started. */
   | "source"
-  /** The page's policy refused the worker, or it failed before it said ready. */
-  | "refused"
-  /** It threw before it drew anything. */
+  /**
+   * It never started (FR-102): the page's policy refused the worker (its
+   * Content-Security-Policy needs `worker-src blob:`), it failed before it
+   * said ready, or it did not say ready in `readyMs`. The sentence says which.
+   */
+  | "start"
+  /** It threw, once started, before it drew anything. */
   | "error"
-  /** It never said ready in `readyMs`, or its runtime went `silentMs` without answering the host's heartbeat. */
+  /** It said ready, then its runtime went `silentMs` without answering the host's heartbeat. */
   | "silent"
   /** It drew more than `maxNodes`. */
   | "nodes"
@@ -67,8 +71,8 @@ function why(reason: WorkerViewFailure, limits: Required<Pick<WorkerViewLimits, 
       return detail ?? "Its manifest names something this app does not have.";
     case "source":
       return detail ?? `Its code is longer than the ${limits.maxSourceBytes.toLocaleString("en-US")} bytes a view may be.`;
-    case "refused":
-      return `This page could not start it${detail ? `: ${detail}` : "."}`;
+    case "start":
+      return `It could not start${detail ? `: ${detail}.` : "."}`;
     case "error":
       return `It failed before it drew anything${detail ? `: ${detail}` : "."}`;
     case "silent":
@@ -451,7 +455,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       (script) => {
         if (!failed) begin({ script });
       },
-      () => fail("refused", "the view's runtime could not be loaded"),
+      () => fail("start", "the view's runtime could not be loaded"),
     );
   } else begin(code);
 

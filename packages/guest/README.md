@@ -129,7 +129,7 @@ starts from a `blob:` URL, and draws in the host's page from a component kit.
 import { mountGuestWorker } from "@graview/guest/host/worker";
 
 const guest = mountGuestWorker(element, { worker: { script }, view: "recipe-card", store, principal,
-  onFailure: (reason) => showTheTierOneCard(reason) });   // refused, silent, or budget
+  onFailure: (reason, detail) => showTheTierOneCard(reason) });   // start, silent, slow or budget
 
 views.register("recipe", { fidelity: "full", cardinality: "one" },
   guestView({ worker: { script }, name: "recipe-card" }));
@@ -144,7 +144,9 @@ limits. A second ready from the same worker is dropped. Once it is ready,
 the host sends a heartbeat over the port and the worker's runtime answers
 it; a worker that goes `limits.silentMs` (5 000 by default) without an
 answer — a guest spinning in `while (true)` — is terminated, and
-the host is told `silent`. A guest that is busy but yields is kept. The
+the host is told `silent`. A worker that never says ready — the page
+refused it, it failed before its first line ran, or it was not ready in
+`limits.readyMs` — is `start` (see "What the host page allows"). A guest that is busy but yields is kept. The
 host also counts its own time drawing what the guest sends. Over any one
 second it spends at most `limits.drawMs` (100 by default). Past it, the
 rest of the batch is left undrawn, the worker is terminated, and the host
@@ -346,6 +348,55 @@ the pages face each goes to its own address — through `useGoTo` in
 keeps `links.origins`: it is the kit's one deliberate way out, to the
 origins a host lists, and an open-kit view has none.
 
+### What the host page allows
+
+A worker guest, on the kit or the open kit, starts from a `blob:` URL the
+host makes of its script. The page's Content-Security-Policy has to allow
+that, and an open-kit view's stylesheet:
+
+```
+worker-src blob:; style-src 'unsafe-inline'
+```
+
+With no `worker-src`, the browser reads `script-src` instead (and
+`default-src` with neither), so a page that says `script-src 'self'` and
+no `worker-src` refuses every view. Nothing else is needed for the worker:
+it runs none of the page's scripts and has no network to allow. An
+open-kit view's stylesheet is a `<style>` in its region's shadow root, and
+the kit's CSS one in the page's head, hence `style-src 'unsafe-inline'`.
+An image a view draws is a `data:` image or a `blob:` of the page's own,
+so `img-src data: blob:` if views draw images.
+
+A page that refuses the worker is told so. Chromium and WebKit throw from
+`new Worker` and Firefox fires `error` on it. Either way `onFailure` hears
+`start` once for each view, with a sentence naming the directive (`it needs
+worker-src blob:`). The plain face is drawn in the view's place, and the
+page's console is told once however many views it refuses. `start` is also
+a worker that failed before it said ready, or was not ready in
+`limits.readyMs` (5 000 by default). Each runtime says ready before a line
+of the view runs, so a worker with no ready never started. `silent` is a
+worker that said ready and then stopped answering. `registerWorkerView`
+takes `onFailure` too, for a host that reports it.
+
+A host that will not allow `blob:` serves each view's whole script from
+its own origin under `worker-src 'self'`, and passes `worker: { url }`:
+
+```ts
+import { checkViewSource, viewScript } from "@graview/guest/host/views";
+
+// On the server: the runtime, then the view, as the host would have made it.
+if (checkViewSource(source).length === 0) serve(`/views/${name}.js`, await viewScript(source));
+// On the page:
+mountWorkerView(element, { manifest, worker: { url: `/views/${name}.js` }, store, principal });
+```
+
+The server checks the source then, since the page never holds its text,
+and `maxSourceBytes` is the server's to keep. A kit guest takes
+`worker: { url }` the same way. `guest-sandbox --transport=limits` serves
+all three pages in Chromium, WebKit and Firefox: the policy above draws, a
+page without it reports `start` once a view, and the served script draws
+under `worker-src 'self'`.
+
 ### Limits, and what is drawn in a view's place
 
 The host caps a view's code (`maxSourceBytes`, 256 000 by default), the
@@ -358,8 +409,8 @@ what the view sends (`drawMs`, 100 ms of any second). Past any of them the worke
 terminated, the plain face of what the view was shown — its title and each
 record by its label, drawn by the host — is drawn in the region, and
 `onFailure` hears why: `source`, `nodes`, `flood`, `slow`, `silent`,
-`error` (it threw before it drew), `refused` or `manifest`, with a sentence
-saying it. A host draws its own in its place with `fallback`; the React
+`error` (it threw before it drew), `start` (it never started) or
+`manifest`, with a sentence saying it, once. A host draws its own in its place with `fallback`; the React
 registrations draw whatever the registry drew for the kind before.
 
 What is left: work a view schedules with timers between pushes is not
