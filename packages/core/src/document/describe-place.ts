@@ -1,7 +1,8 @@
 import type { AnyGraphNode, GraphReader, GraviewApp, Principal, Store } from "../index.js";
 import { declaredLenses, orderKinds, placesOf, type AppPlace } from "../places.js";
 import type { AnySchema } from "../schema/schema.js";
-import { isCurrent, labelOf, readableFields } from "../schema/define-node.js";
+import { fieldWords, isCurrent, labelOf, readableFields } from "../schema/define-node.js";
+import { columnOf, statusColumns } from "../columns.js";
 import { compileBlocks, fieldSpecsOf, resolveBlocks, type BlockContext, type ResolvedBlock } from "./blocks.js";
 import { withComputed } from "./computed-values.js";
 import { shapesOfSchema } from "./rules.js";
@@ -251,6 +252,29 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     } else if (lens?.lens === "blocks") {
       drawnBy = "lens:blocks";
       parts = say(resolveBlocks(compileBlocks((lens.options["blocks"] as readonly unknown[]) ?? []), base(null, 2)), 0, `lenses.${lens.index}.options.blocks`);
+    } else if (lens?.lens === "columns") {
+      /*
+       * A STATUS BOARD (FR-97) is groups in words: each column a heading with
+       * how many it holds, in the field's declared order, and under it each
+       * record by its card — the seat's own records, so a count is what that
+       * seat's board shows.
+       */
+      drawnBy = "lens:columns";
+      const bindings = (lens.options["bindings"] ?? {}) as Readonly<Record<string, { readonly column?: string }>>;
+      for (const kind of Object.keys(bindings)) {
+        const field = bindings[kind]?.column;
+        if (!field) continue;
+        const columns = statusColumns(schema, kind, field);
+        const members = graph.nodesOfKind(kind).filter((node) => isCurrent(schema.tryDefinition(kind), node));
+        if (Object.keys(bindings).length > 1) parts.push({ t: "heading", level: 2, text: pluralOf(schema, kind, 2).replace(/^./, (c) => c.toUpperCase()) });
+        parts.push({ t: "text", text: `${members.length} ${pluralOf(schema, kind, members.length)} in columns by ${fieldWords(schema.tryDefinition(kind), field).toLowerCase()}.` });
+        const groups = columns
+          .map((column) => ({ column, items: members.filter((node) => columnOf(node as Record<string, unknown>, field, columns) === column.value).map((node) => item(node, "card", 1)) }))
+          // The column of records with no value is there only while something is in it.
+          .filter(({ column, items }) => column.value !== null || items.length > 0)
+          .map(({ column, items }) => ({ heading: `${column.label} (${items.length})`, items }));
+        parts.push({ t: "list", as: "card", columns: 1, groups });
+      }
     } else if (lens) {
       // A picture's geometry is not words: say what it is over, and the records it draws.
       drawnBy = `lens:${lens.lens}`;
