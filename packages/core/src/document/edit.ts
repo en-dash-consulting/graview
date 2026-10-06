@@ -121,7 +121,15 @@ const SHAPES: Record<EditOp, z.ZodType> = {
   "remove-act": z.object({ op: z.literal("remove-act"), act: actName }).strict(),
   "add-rule": z.object({ op: z.literal("add-rule"), rule: actName, replace: z.boolean().optional() }).passthrough(),
   "remove-rule": z.object({ op: z.literal("remove-rule"), rule: actName }).strict(),
-  "set-brand": z.object({ op: z.literal("set-brand"), accent: z.union([z.string(), z.null()]), name: z.string().min(1).max(60).optional() }).strict(),
+  "set-brand": z
+    .object({
+      op: z.literal("set-brand"),
+      accent: z.union([z.string(), z.null()]).optional(),
+      name: z.string().min(1).max(60).optional(),
+      currency: z.union([z.string(), z.null()]).optional(),
+      locale: z.union([z.string(), z.null()]).optional(),
+    })
+    .strict(),
   "set-label": z.object({ op: z.literal("set-label"), kind: kindName, field: fieldName.optional(), label: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
   "set-describe": z.object({ op: z.literal("set-describe"), kind: kindName, describe: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
   // A kind's slot; the front page (`slot: "home"`, no kind); or a blocks lens's blocks, by its title (FR-84).
@@ -211,6 +219,10 @@ function kindsOf(doc: Doc, e: Expr, ctx: Kinds): Kinds {
       return kindsOf(doc, e.set, ctx);
     case "call": {
       const lit = e.args[0]?.t === "lit" && typeof e.args[0].value === "string" ? e.args[0].value : undefined;
+      // A walk from every member of a set (FR-101): its relation is its second word.
+      const walked = e.args.length === 2 && e.args[1]?.t === "lit" && typeof e.args[1].value === "string" ? e.args[1].value : undefined;
+      if (e.fn === "out" && walked) return targets(doc, kindsOf(doc, e.args[0]!, ctx), walked);
+      if (e.fn === "in" && walked) return sources(doc, walked);
       if (e.fn === "out" && lit) return targets(doc, "*", lit);
       if (e.fn === "in" && lit) return sources(doc, lit);
       if (e.fn === "all" && lit) return new Set([lit]);
@@ -278,6 +290,11 @@ function mapNames(doc: Doc, e: Expr, ctx: Kinds, rename: (site: Site) => string)
         if ((x.fn === "out" || x.fn === "in" || x.fn === "all") && literal !== undefined && x.args.length === 1) {
           const name = rename({ role: x.fn === "all" ? "kind" : "edge", kinds: NONE, name: literal });
           args = name === literal ? [...x.args] : [{ ...first!, value: name } as Expr];
+        } else if ((x.fn === "out" || x.fn === "in") && x.args.length === 2 && x.args[1]!.t === "lit" && typeof x.args[1]!.value === "string") {
+          // out(S, 'edge'): the set is read where the walk stands, and its relation renamed like any walk's (FR-101).
+          const relation = x.args[1]! as Extract<Expr, { t: "lit" }>;
+          const name = rename({ role: "edge", kinds: NONE, name: relation.value as string });
+          args = [go(first!, at), name === relation.value ? relation : { ...relation, value: name }];
         } else if (((x.fn === "every" || x.fn === "some") && x.args.length === 2) || (x.fn === "sort" && x.args.length >= 2)) {
           // Read once per member, with the member as its subject: its names are the members'.
           args = [go(x.args[0]!, at), go(x.args[1]!, kindsOf(doc, x.args[0]!, at)), ...x.args.slice(2).map((a) => go(a, at))];
@@ -550,14 +567,37 @@ class Editor {
         return;
       }
       case "set-brand": {
+        // The colours and the money (FR-100) are set apart: what an edit does not name stays as it was.
+        const brand: Record<string, unknown> = { ...(this.doc.brand ?? {}) };
         if (e.accent === null) {
-          delete this.doc.brand;
+          delete brand["accent"];
           this.said.push("The app goes back to Graview's colours.");
-        } else {
+        } else if (e.accent !== undefined) {
           if (!/^#[0-9a-fA-F]{6}$/.test(e.accent)) return this.fail(i, "accent", 'an accent is a colour like "#c2577a"');
-          this.doc.brand = { accent: e.accent, ...(e.name ? { name: e.name } : this.doc.brand?.name ? { name: this.doc.brand.name } : {}) };
+          brand["accent"] = e.accent;
           this.said.push(`The app's accent colour becomes ${e.accent}.`);
         }
+        if (e.currency === null) {
+          delete brand["currency"];
+          this.said.push("Money is said with no currency.");
+        } else if (e.currency !== undefined) {
+          if (!/^[A-Z]{3}$/.test(e.currency)) return this.fail(i, "currency", 'a currency is its three-letter code, like "USD" or "EUR"');
+          brand["currency"] = e.currency;
+          this.said.push(`Money is said in ${e.currency}.`);
+        }
+        if (e.locale === null) delete brand["locale"];
+        else if (e.locale !== undefined) {
+          if (!/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(e.locale)) return this.fail(i, "locale", 'a locale is a language tag, like "en-US" or "de-DE"');
+          brand["locale"] = e.locale;
+          this.said.push(`Money is written for ${e.locale}.`);
+        }
+        if (e.name) {
+          brand["name"] = e.name;
+          this.said.push(`The app's wordmark says ${e.name}.`);
+        }
+        // A brand that holds only a name holds nothing to apply.
+        if (Object.keys(brand).every((key) => key === "name")) delete this.doc.brand;
+        else this.doc.brand = brand;
         return;
       }
       case "set-label": {
@@ -1880,6 +1920,8 @@ function rewriteBlock(doc: Doc, b: Record<string, unknown>, ctx: Kinds, r: Renam
   const next = { ...b };
   for (const key of ["title", "text", "badge", "headline"]) if (typeof next[key] === "string") next[key] = rewriteTemplate(doc, next[key] as string, ctx, r);
   if (typeof next["figure"] === "string") next["figure"] = rewriteExpr(doc, next["figure"], ctx, r);
+  // A figure's and a meter's label is a template (FR-99); a field's is words.
+  if ((typeof next["figure"] === "string" || "progress" in next) && typeof next["label"] === "string") next["label"] = rewriteTemplate(doc, next["label"], ctx, r);
   if (typeof next["list"] === "string") {
     const members = listMembers(doc, next["list"], ctx);
     next["list"] = rewriteExpr(doc, next["list"], ctx, r);
@@ -1912,6 +1954,11 @@ function pruneBlock(doc: Doc, b: Record<string, unknown>, ctx: Kinds, r: Rename,
   if (isObject(b["tone"]) && exprMentions(doc, b["tone"]["expr"] as string, ctx, r)) return null;
   if (typeof b["when"] === "string" && exprMentions(doc, b["when"], ctx, r)) return null;
   if (isObject(b["progress"])) for (const k of ["value", "max"]) if (exprMentions(doc, (b["progress"] as Record<string, string>)[k], ctx, r)) return null;
+  // A label that says what is gone goes; the figure or meter stays (FR-99).
+  if ((typeof b["figure"] === "string" || "progress" in b) && typeof b["label"] === "string" && templateMentions(doc, b["label"], ctx, r)) {
+    const { label: _gone, ...kept } = b;
+    return kept;
+  }
   if (typeof b["list"] === "string") {
     if (exprMentions(doc, b["list"], ctx, r)) return null;
     const members = listMembers(doc, b["list"], ctx);

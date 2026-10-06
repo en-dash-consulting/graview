@@ -128,6 +128,13 @@ unreachable), `role-may-do-nothing`, `grant-unknown-mutation` and
 and the person who finds them otherwise is the person standing in front of a
 button they cannot press. Report the output.
 
+`act-reads-hidden-kind` (a warning, FR-105) names an act, a role that may run
+it and a kind that role may not see, which the act reads: its condition, its
+refusal or a value it sets in a document; what it declares it `reads` in
+TypeScript (`reads: ["memo"]` — an `apply` is never read, so say it). The
+store hides the records; the act's answer can still tell that one exists.
+Let the role see the kind, keep the act from it, or read only what it sees.
+
 **And try it.** Two tests that matter more than the check:
 
 ```ts

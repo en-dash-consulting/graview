@@ -84,7 +84,13 @@ and `S where cond`; `count`, `exists`, `every`/`some(S, cond)`;
 (`sum(out('includes'), list * units)`); `sort(S, key, 'asc'|'desc')` (a list
 key sorts by its first value, then its next), `first(S)` for one record,
 `either(a, b)` for the first that is something; `if`, `present`, `len`,
-dates. A kind's `computed` fields read like stored ones. Every evaluation
+dates. `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set
+and give each record reached once; sets meet with `&`, join with `|` and part
+with `-` — LifeLogics' coverage is one figure,
+`count(out(out('includes'), 'answers') & out(client, 'needs'))`, each step
+read from what the seat may see. (Inside a template's braces, a `|` within
+brackets joins; the last bar outside them is the formatter's.) A kind's
+`computed` fields read like stored ones. Every evaluation
 has a step budget: a rule that reads too much is `over-budget`, never a hang.
 
 ## The horizon

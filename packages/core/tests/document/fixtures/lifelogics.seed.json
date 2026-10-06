@@ -46,6 +46,11 @@
     { "id": "e21", "kind": "includes", "from": "pkg-later", "to": "offer-advice" },
     { "id": "e22", "kind": "about", "from": "q-budget", "to": "party-client" },
     { "id": "e23", "kind": "about", "from": "q-ci", "to": "offer-suite" },
-    { "id": "e24", "kind": "concerns", "from": "note-slow", "to": "people-eng" }
+    { "id": "e24", "kind": "concerns", "from": "note-slow", "to": "people-eng" },
+    { "id": "e25", "kind": "needs", "from": "party-client", "to": "note-slow" },
+    { "id": "e26", "kind": "needs", "from": "party-client", "to": "note-tests" },
+    { "id": "e27", "kind": "needs", "from": "party-client", "to": "note-ai" },
+    { "id": "e28", "kind": "needs", "from": "party-client", "to": "note-pilot" },
+    { "id": "e29", "kind": "needs", "from": "party-client", "to": "note-records" }
   ]
 }

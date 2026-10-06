@@ -189,7 +189,7 @@ describe("FR-83's gap: a kind's glance, label and describe may name a computed f
     const app = compiled();
     const offer = app.schema.tryDefinition("offer") as unknown as { display: { glance: string[] }; describe: (node: unknown) => string };
     expect(offer.display.glance).toContain("netEach");
-    expect(offer.describe({ id: "o", kind: "offer", summary: "Two days.", list: 12_000, units: 2 })).toBe("Two days. 24,000 at list.");
+    expect(offer.describe({ id: "o", kind: "offer", summary: "Two days.", list: 12_000, units: 2 })).toBe("Two days. $24,000 at list."); // in the app's currency (FR-100)
   });
 
   it("refuses a label that names a computed field worked out from beyond the record: a label has no graph to read", () => {
