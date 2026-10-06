@@ -1,0 +1,49 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "The org",
+  "description": "Who is strong at what: people, skills, and the strengths between them.",
+  "kinds": {
+    "person": {
+      "noun": "person",
+      "plural": "people",
+      "fields": { "label": { "type": "string", "required": true } },
+      "edges": {
+        "has": { "to": ["strength"], "cardinality": "many", "description": "their strengths", "inverse": "whose strength it is" }
+      }
+    },
+    "skill": {
+      "noun": "skill",
+      "plural": "skills",
+      "fields": { "label": { "type": "string", "required": true } }
+    },
+    "strength": {
+      "noun": "strength",
+      "plural": "strengths",
+      "fields": {
+        "label": { "type": "string", "required": true },
+        "level": { "type": "integer", "description": "how strong, from 1 to 5" }
+      },
+      "edges": {
+        "inSkill": { "to": ["skill"], "cardinality": "one", "description": "the skill it is in", "inverse": "the strengths in it" }
+      }
+    }
+  },
+  "acts": {
+    "add-person": { "title": "Add a person", "creates": "person", "description": "Somebody in the org." },
+    "add-skill": { "title": "Add a skill", "creates": "skill", "description": "Something somebody can be strong at." },
+    "add-strength": { "title": "Add a strength", "creates": "strength", "description": "How strong somebody is at a skill." }
+  },
+  "roles": ["owner", "guest"],
+  "policy": {
+    "grants": [{ "roles": ["owner"], "mutations": "*" }],
+    "sees": [
+      { "roles": ["owner"], "kinds": ["person", "skill", "strength"] },
+      { "roles": ["guest"], "kinds": ["person", "skill"] }
+    ]
+  },
+  "lenses": [
+    { "name": "coverage", "title": "Strengths", "bindings": { "rows": { "kind": "person" }, "columns": { "kind": "skill" }, "link": { "path": ["inSkill", "has"] } } }
+  ],
+  "pages": { "first": "Strengths" }
+}

@@ -11,7 +11,7 @@ import {
 } from "react";
 import type { ActivityMark } from "./activity.js";
 import { useGraview } from "./context.js";
-import { pickedFrom, usePickTargets } from "./picking.js";
+import { joinedFrom, pickedFrom, usePickTargets } from "./picking.js";
 import { WHO } from "./where-drawn.js";
 import { cssTransform, planeShadow } from "./scene-helpers.js";
 import type { SceneNode } from "./scene-root.js";
@@ -38,8 +38,8 @@ interface HostProps {
   readonly canvasHeight: number;
   readonly selected: boolean;
   onSelect(additive: boolean): void;
-  /** A view marked an inner element with `data-graview-pick`. */
-  onPick(id: string, additive: boolean): void;
+  /** A view marked an inner element with `data-graview-pick`; `joins`, when the mark stands for a relation (FR-111). */
+  onPick(id: string, additive: boolean, joins?: readonly string[]): void;
   /** The deliberate second gesture: go into the thing that was picked. */
   onTravel(id: string): void;
   /**
@@ -414,7 +414,7 @@ export function SceneViewHost({
         const picked = pickedFrom(event.target);
         if (picked && picked !== node.id) {
           event.stopPropagation();
-          onPick(picked, additive);
+          onPick(picked, additive, joinedFrom(event.target) ?? undefined);
           return;
         }
         onSelect(additive);
@@ -486,9 +486,12 @@ export function SceneViewHost({
          * travels. The keyboard needs the same two-step the pointer has, and
          * a modifier would have been a worse answer than repeating yourself.
          */
-        const already = selection.length === 1 && selection[0] === picked;
+        const joins = joinedFrom(event.target);
+        const already = joins
+          ? selection.length === joins.length && joins.every((id) => selection.includes(id))
+          : selection.length === 1 && selection[0] === picked;
         if (already && !event.metaKey && !event.shiftKey) onTravel(picked);
-        else onPick(picked, event.metaKey || event.shiftKey);
+        else onPick(picked, event.metaKey || event.shiftKey, joins ?? undefined);
       }}
       onContextMenu={(event) => {
         const picked = pickedFrom(event.target);
@@ -501,7 +504,7 @@ export function SceneViewHost({
          * (and quietly raised People on the way).
          */
         const on = picked && picked !== node.id ? picked : node.id;
-        onPick(on, false);
+        onPick(on, false, (on === picked ? joinedFrom(event.target) : null) ?? undefined);
         /*
          * The menu is about THIS, and says so. Without the name the
          * derivation could only rank by the selection, and a rule that
