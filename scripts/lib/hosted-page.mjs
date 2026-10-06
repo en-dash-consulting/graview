@@ -40,11 +40,21 @@ export const FACE_DOORS = {
  * the barrels the page imports up front for subpaths of their own —
  * `@graview/core/blocks`, `/check`, `/scene` and `/figures` — since a
  * bundler places a whole module in every chunk that can reach it: 575 357
- * bytes (562 KB). The claim is that figure with 10 KB of headroom, so the
- * room is spent on purpose: a feature that needs it raises this number in
- * the same change and says why.
+ * bytes (562 KB), and this round's features brought it to 583 715 (570 KB).
+ *
+ * Graview Cloud's shell holds itself to 595 KB with ~25 KB of its own on
+ * top of this page, so the page has to stay near 565 KB for Cloud to have
+ * room. Then what only a drawn view uses left the entries the frame imports
+ * up front — the measured text, the kit's connector, the boundary, the
+ * emphasis sets and the others placed (`@graview/react/drawing`), the
+ * fields edited in place (`@graview/tools/edit`), the reader's pins, a
+ * label's fit, and the arranging of a list (`@graview/core/arrange`) — and
+ * it is 568 306 bytes (555 KB); Cloud's shell built from the same sources
+ * measured 569 KB before and 554 KB after, against its 595. The claim is
+ * that figure with 8 KB of headroom, so the room is spent on purpose: a
+ * feature that needs it raises this number in the same change and says why.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 572 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 563 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
