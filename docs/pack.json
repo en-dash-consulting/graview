@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-06T02:46:33.140Z",
+  "at": "2026-10-06T02:49:31.222Z",
   "packages": {
     "@graview/core": {
       "files": 535,
@@ -18,12 +18,12 @@
     },
     "graview": {
       "files": 11,
-      "tarballBytes": 4892,
+      "tarballBytes": 4891,
       "ok": true
     },
     "@graview/guest": {
       "files": 147,
-      "tarballBytes": 172286,
+      "tarballBytes": 172538,
       "ok": true
     },
     "@graview/layout": {
@@ -43,7 +43,7 @@
     },
     "@graview/react": {
       "files": 163,
-      "tarballBytes": 228869,
+      "tarballBytes": 228870,
       "ok": true
     },
     "@graview/render": {
@@ -58,7 +58,7 @@
     },
     "@graview/skills": {
       "files": 28,
-      "tarballBytes": 53313,
+      "tarballBytes": 53388,
       "ok": true
     },
     "@graview/studio": {
@@ -68,7 +68,7 @@
     },
     "@graview/tools": {
       "files": 131,
-      "tarballBytes": 174730,
+      "tarballBytes": 174729,
       "ok": true
     }
   },
@@ -212,8 +212,8 @@
     {
       "name": "the guest host, registering a worker view",
       "load": "first",
-      "minified": 11797,
-      "gzipped": 5125,
+      "minified": 11870,
+      "gzipped": 5156,
       "chunks": 3,
       "budget": {
         "minified": 12000,

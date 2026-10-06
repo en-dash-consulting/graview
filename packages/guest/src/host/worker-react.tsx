@@ -129,7 +129,17 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
  */
 export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry<S>, definition: WorkerViewDefinition): ReactViewRegistry<S> {
   const { manifest } = definition;
-  if (manifest.attach === "home") throw new Error(`The worker view "${manifest.name}" is the home's body: draw it with workerHome, on the home.`);
+  if (manifest.attach === "home") {
+    /*
+     * THE HOME'S OWN VIEW (FR-81): drawn by both faces — the routed home's
+     * body, and the landing over the scene when it is at home — in place of
+     * the home the app declared, which is drawn if the view fails.
+     */
+    if (!views.home) throw new Error(`The worker view "${manifest.name}" is the home's body: draw it with workerHome, on the home.`);
+    const declared = views.homeView?.() as ViewComponent<AnySchema> | undefined;
+    views.home(workerView(definition, declared ? { fallback: declared } : {}) as unknown as ViewComponent<S>);
+    return views;
+  }
   const cell = { cardinality: manifest.cardinality, fidelity: "full" } as const;
   const before = (views.lookup(manifest.attach, cell) ?? views.resolve(manifest.attach, cell)?.view) as ViewComponent<AnySchema> | undefined;
   views.register(manifest.attach as KindOfSchema<S>, cell, workerView(definition, before ? { fallback: before } : {}) as unknown as ViewComponent<S>, manifest.title ? { title: manifest.title } : undefined);

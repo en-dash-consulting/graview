@@ -139,6 +139,10 @@ views: (schema, registry) => registerWorkerView(registry, { manifest, worker: { 
 pages.surface("home", workerHome({ manifest: front, worker: { source: frontSource } }));
 ```
 
+A view with `attach: "home"` given to `registerWorkerView` is the home's own
+view on both faces. It is the routed home's body and the landing over the
+scene, and the app's declared home is drawn if it fails.
+
 ## Then find out whether it worked
 
 1. `graview check` the app the view names: a manifest is only as sound as

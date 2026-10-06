@@ -111,7 +111,15 @@ describe("registering a worker view", () => {
     expect(views.places()).toEqual([{ kind: "package", title: "The packages", as: "the-packages" }]);
     expect(views.lookup("package", { cardinality: "many", fidelity: "full" })).not.toBe(before);
   });
-  it("draws a home view on the home, not on a kind", () => {
-    expect(() => registerWorkerView(createViews(offersApp.schema), { ...definition, manifest: { ...packages, attach: "home" } })).toThrow(/workerHome/);
+  it("draws a home view as the home's own view (FR-81) on both faces, over the home the app declared, and on no kind", () => {
+    const views = createViews(offersApp.schema);
+    const declared = () => null;
+    views.home?.(declared);
+    registerWorkerView(views, { ...definition, manifest: { ...packages, attach: "home" } });
+    const home = views.homeView?.();
+    expect(home).toBeDefined();
+    expect(home).not.toBe(declared);
+    expect(views.places()).toEqual([]);
+    expect(views.lookup("package", { cardinality: "many", fidelity: "full" })).toBeUndefined();
   });
 });

@@ -228,8 +228,11 @@ none of it, and a kind it did not ask to read is not handed to it however
 visible. Every record's `label` is filled as the host labels it — for a
 frame guest too. A titled view is a named place on the Graview face and
 the pages face, by its title; whatever the registry drew for that kind
-before is drawn if the view fails. With `attach: "home"`, `workerHome`
-makes it the routed face's home. Its props carry the app's look as a
+before is drawn if the view fails. With `attach: "home"`,
+`registerWorkerView` makes it the home's own view (FR-81). That is the
+routed home's body and the landing over the scene when it is at home, in
+place of the home the app declared, which is drawn if the view fails.
+`workerHome` makes it the routed face's whole home surface instead. Its props carry the app's look as a
 `GuestTheme` — the scheme, the accent, ground, panel, ink, muted ink and
 edge colours, and the body and mono fonts — read off the region it is
 drawn in, and the host

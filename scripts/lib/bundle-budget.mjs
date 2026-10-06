@@ -251,7 +251,8 @@ export const BUDGETS = [
      *
      * Measured at 11_797 / 5_125 once the open kit (FR-90–FR-96) met
      * main's declared lenses, home view, language and describe (FR-79–FR-89);
-     * the budget just above it.
+     * the budget just above it. At 11_870 / 5_156 once a home view registers
+     * as the home's own view (FR-81) on both faces.
      */
     entry: `import { registerWorkerView, workerHome } from "@graview/guest/host/views"; globalThis.views = { registerWorkerView, workerHome };`,
     minified: 12_000,
