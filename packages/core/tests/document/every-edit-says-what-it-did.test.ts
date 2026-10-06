@@ -27,11 +27,21 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "set-describe": { op: "set-describe", kind: "vendor", describe: "{status}" },
   "set-view": { op: "set-view", kind: "vendor", slot: "card", blocks: [{ title: "{name}" }] },
   "set-glance": { op: "set-glance", kind: "vendor", fields: ["status", "quote"] },
+  "add-lens": { op: "add-lens", title: "The shortlist", on: "vendor", options: { blocks: [{ headline: "{count(all('vendor')) | words} vendors" }, { list: "all('vendor')", sort: "name", as: "row" }] } },
+  "remove-lens": { op: "remove-lens", title: "The shortlist" },
+  "set-home": { op: "set-home", blocks: [{ headline: "The wedding" }, { figure: "sum(all('vendor'), quote)", as: "money", currency: "USD", label: "Quoted so far" }] },
+  "arrange-pages": { op: "arrange-pages", order: ["vendor", "category"], first: "vendors" },
+  "set-computed": { op: "set-computed", kind: "category", name: "spent", expr: "sum(in('fills'), quote)", label: "Quoted" },
 };
+/** An edit that needs something the fixture does not have, and what to do first. */
+const FIRST: Partial<Record<(typeof EDIT_OPS)[number], Record<string, unknown>>> = { "remove-lens": ONE_OF_EACH["add-lens"] };
 
 describe("every edit says what it did", () => {
   it.each(EDIT_OPS.map((op) => [op]))("%s", (op) => {
-    const outcome = editDocument(vendors, [ONE_OF_EACH[op]]);
+    const first = FIRST[op];
+    const base = first ? editDocument(vendors, [first]) : undefined;
+    if (base && !base.ok) throw new Error(JSON.stringify(base.findings));
+    const outcome = editDocument(base?.ok ? base.document : vendors, [ONE_OF_EACH[op]]);
     if (!outcome.ok) throw new Error(JSON.stringify(outcome.findings));
     expect(outcome.said.length).toBeGreaterThan(0);
     for (const sentence of outcome.said) expect(sentence).toMatch(/\S.*[.)]$/);
