@@ -92,12 +92,33 @@ for (const one of packages) {
     console.log(`have release ${tag}`);
     continue;
   }
-  const changelog = readFileSync(join(root, "packages", one.dir, "CHANGELOG.md"), "utf8");
-  const section = changelog.split(/^## /m).find((part) => part.startsWith(`${version}\n`))?.slice(version.length + 1).trim();
   const notes = join(out, `notes-${one.dir}.md`);
   if (WEIGHED.has(one.name)) weight ??= (await hostedPageNotes(root)) ?? "";
-  writeFileSync(notes, [section || `Released with the rest of Graview ${version}.`, WEIGHED.has(one.name) ? weight : ""].filter(Boolean).join("\n\n"));
+  writeFileSync(notes, [releaseNotes(one), WEIGHED.has(one.name) ? weight : ""].filter(Boolean).join("\n\n"));
   run("gh", ["release", "create", tag, "--verify-tag", "--title", tag, "--notes-file", notes, one.name === "graview" ? "--latest" : "--latest=false"]);
   console.log(`released  ${tag}`);
 }
 console.log(`\nGraview ${version} is live: ${packages.length} packages, tagged and released.`);
+
+/**
+ * A release's notes are its changelog section, and the section of every
+ * version before it that never reached npm: a Version packages merge that
+ * was never released (0.1.13) leaves its changes under its own heading, and
+ * they ship in the next version that is. Each such section is said under its
+ * own heading, so a reader of the release sees everything it brings.
+ */
+function releaseNotes(one) {
+  const changelog = readFileSync(join(root, "packages", one.dir, "CHANGELOG.md"), "utf8");
+  const sections = changelog
+    .split(/^## /m)
+    .slice(1)
+    .map((part) => ({ version: part.slice(0, part.indexOf("\n")).trim(), body: part.slice(part.indexOf("\n") + 1).trim() }));
+  const at = sections.findIndex((section) => section.version === version);
+  if (at < 0) return `Released with the rest of Graview ${version}.`;
+  const said = [sections[at].body];
+  for (const earlier of sections.slice(at + 1)) {
+    if (onNpm(one.name, earlier.version)) break;
+    said.push(`## ${earlier.version} (never published; released in ${version})\n\n${earlier.body}`);
+  }
+  return said.filter(Boolean).join("\n\n");
+}
