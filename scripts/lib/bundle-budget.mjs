@@ -52,9 +52,13 @@ export const BUDGETS = [
      * Raised when a form came to name its parts (#80): its look moved from
      * style attributes to rules an app's own selector outranks, a few hundred
      * bytes of stylesheet. Measured at 508_120 / 169_327.
+     *
+     * Lowered when the scene's own rules came to be drawn by the scene face
+     * and the frame's measures moved to a file of their own (FR-104): a
+     * page on the pages face carries neither. Measured at 495_604 / 167_798.
      */
-    minified: 512_000,
-    gzipped: 171_000,
+    minified: 497_000,
+    gzipped: 168_500,
     load: "first",
   },
   {
@@ -99,9 +103,13 @@ export const BUDGETS = [
      * frame compiles a document with the checker, so its new questions
      * (`act-reads-hidden-kind`, the brand's money, braces in plain words)
      * load with it. Measured at 809_880 / 212_418.
+     *
+     * Lowered when the scene's own rules moved out of the frame's sheet into
+     * the scene face, and the frame stopped reaching the primitives' index
+     * and the scene's way back (FR-104). Measured at 787_572 / 207_729.
      */
-    minified: 811_000,
-    gzipped: 213_000,
+    minified: 789_000,
+    gzipped: 208_500,
     load: "first",
     lacks: ["@graview/studio"],
   },

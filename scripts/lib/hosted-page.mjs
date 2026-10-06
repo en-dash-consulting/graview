@@ -28,15 +28,17 @@ export const FACE_DOORS = {
 /*
  * Bytes, minified. A page over either is over.
  *
- * Cloud's brief set 600 KB, and the page stood at 610 365 bytes (596 KB)
- * against it (FR-104). The scene's own rules moved to the scene face and
- * the frame's measures and descent to files of their own, and it is
- * 587 548 bytes (574 KB); Cloud's own shell built from these sources agreed
- * at 572 KB, its own code in it. The claim is that figure with 10 KB of
+ * Cloud's brief set 600 KB, and the page stood at 611 900 bytes (598 KB)
+ * against it once the columns lens, template labels, currency, walks from
+ * a set and the hidden-kind check had landed (FR-97–FR-101, FR-105). The
+ * scene's own rules moved to the scene face and the frame's measures and
+ * descent to files of their own (FR-104), and it is 589 079 bytes
+ * (575 KB); Cloud's own shell built from the same sources agreed, 596.0 KB
+ * before and 573.7 KB after, its own code in it. The claim is that figure with 10 KB of
  * headroom, so the room is spent on purpose: a feature that needs it raises
  * this number in the same change and says why.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 584 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 585 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";

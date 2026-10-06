@@ -31,7 +31,7 @@ describe("a hosted page", () => {
     for (const name of ["react-dom", "zod", "@graview/core", "@graview/embed", "@graview/ship"]) expect(Object.keys(measured.upFront.packages)).toContain(name);
   });
 
-  it("carries at most 584 KB minified up front: 574 KB, with 10 KB of headroom under Cloud's 600", () => {
+  it("carries at most 585 KB minified up front: 575 KB, with 10 KB of headroom under Cloud's 600", () => {
     expect(measured.upFront.minified, `${Math.round(measured.upFront.minified / 1024)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
     expect(measured.over).toBe(false);
   });
@@ -79,8 +79,8 @@ describe("a hosted page", () => {
     expect(packageOf("<stdin>")).toBe("(the page)");
   });
 
-  it("holds its budget's numbers: 584 KB up front, under the 600 Cloud's brief set, and 150 KB of it zod's", () => {
-    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 584 * 1024, zod: 150 * 1024 });
+  it("holds its budget's numbers: 585 KB up front, under the 600 Cloud's brief set, and 150 KB of it zod's", () => {
+    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 585 * 1024, zod: 150 * 1024 });
   });
 
   it("carries none of the scene's own rules up front: the scene face draws them, and fetches them as it is drawn (FR-104)", () => {
