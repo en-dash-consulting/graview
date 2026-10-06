@@ -134,6 +134,8 @@ the reuse test beside it, red on purpose.
    with a `title` is a PLACE the framework draws with no registration — a
    pill, a drive-in, a page at `/places/<as>`:
    `{ name: "calendar", title: "The month", bindings: { task: { start: "due" } }, options: { range: "month" } }`.
+   A status board: `{ name: "columns", title: "The board", bindings: { task:
+   { column: "status" } } }`; a card moves only by an act that sets `status`.
    `on` names the kind when the bindings do not (reach; a coverage over its
    columns), and `options` are data (`SHIPPED_LENSES[name].options`). A lens
    you wrote is registered with a title as the fourth argument:

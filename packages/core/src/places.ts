@@ -33,6 +33,13 @@ export const SHIPPED_LENSES = {
    * picture no shipped lens draws.
    */
   blocks: { binds: "nothing", requiredRoles: [], options: ["blocks"] },
+  /**
+   * A STATUS BOARD (FR-97): a kind's records in columns by one choice field
+   * — `bindings: { task: { column: "status" } }` — in the field's declared
+   * order, each drawn by its card, and moved between columns only by an act
+   * the seat may run that sets the field (`columnMoves`).
+   */
+  columns: { binds: "fields", requiredRoles: ["column"], options: [] },
 } as const satisfies Record<string, { binds: "fields" | "entities" | "nothing"; requiredRoles: readonly string[]; options: readonly string[] }>;
 
 export type ShippedLensName = keyof typeof SHIPPED_LENSES;
@@ -192,6 +199,16 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
           options["columns"] = values.map((value) => ({ id: value, label: value.toUpperCase() }));
         }
         if (options["extent"] === undefined) options["extent"] = 1440;
+      }
+      if (lens.name === "columns") {
+        // A board's columns are a field's choices: a field of free text or numbers has no columns to stand in.
+        for (const kind of bound) {
+          const field = (bindings[kind] as Record<string, unknown>)["column"];
+          if (typeof field !== "string" || !fieldsOf(kind).includes(field)) return; // the binding check says so, as an error
+          if (enumValues(app.schema, kind, field).length === 0) {
+            return bad(`${at}.bindings.${kind}.column`, `its column field "${field}" is not a choice`, `Bind "column" to a choice field of ${kind}, like a status.`);
+          }
+        }
       }
       if (lens.name === "calendar" && options["today"] !== undefined && !(typeof options["today"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(options["today"]))) {
         return bad(`${at}.options.today`, "its today is not a date", `Write it as "YYYY-MM-DD", or leave it out and the calendar opens on the day it is drawn.`);

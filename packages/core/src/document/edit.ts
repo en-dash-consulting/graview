@@ -753,6 +753,7 @@ class Editor {
       if (e.on === undefined) return this.fail(i, "on", "a lens drawn from blocks says which kind it is a place of", 'say "on": "<kind>"');
       if (!Array.isArray(e.options?.blocks) || e.options.blocks.length === 0) return this.fail(i, "options.blocks", 'a lens drawn from blocks has blocks: "options": {"blocks": [{"headline": "…"}, {"list": "all(\'<kind>\')", "as": "card"}]}');
     }
+    if (name === "columns" && !this.columnsHold(i, e.bindings)) return;
     if (was) lenses[at] = lens;
     else lenses.splice(e.at === undefined ? lenses.length : Math.min(e.at, lenses.length), 0, lens);
     const index = was ? at : lenses.indexOf(lens);
@@ -771,6 +772,31 @@ class Editor {
       follows = "; the app still opens on it";
     }
     this.said.push(retitled ? `The lens "${String(was["title"])}" is now "${e.title}"${where}${follows}.` : `The lens "${e.title}" changes${where}.`);
+  }
+
+  /**
+   * A STATUS BOARD'S BINDINGS (FR-97), held before it is added: each kind it
+   * binds is a kind, and its `column` is a field of that kind whose values
+   * are choices — the columns. Refused at the binding's path otherwise, so a
+   * chat is told which word to change rather than shown an empty board.
+   */
+  private columnsHold(i: number, bindings: unknown): boolean {
+    const example = '"bindings": {"<kind>": {"column": "<a choice field, like status>"}}';
+    if (!isObject(bindings) || Object.keys(bindings).length === 0) return (this.fail(i, "bindings", "a board binds a kind's choice field to its columns", example), false);
+    for (const [kind, roles] of Object.entries(bindings)) {
+      if (!isObject(this.doc.kinds[kind])) return (this.fail(i, `bindings.${kind}`, `"${kind}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`), false);
+      const field = isObject(roles) ? roles["column"] : undefined;
+      const fields = this.doc.kinds[kind].fields as Record<string, Doc>;
+      if (typeof field !== "string") return (this.fail(i, `bindings.${kind}.column`, `the board does not say which field of ${kind} its columns are`, example), false);
+      if (!(field in fields)) return (this.fail(i, `bindings.${kind}.column`, `${kind} has no field "${field}"; it has ${Object.keys(fields).join(", ")}`), false);
+      if (fields[field]["type"] !== "enum") {
+        const choices = Object.keys(fields).filter((one) => fields[one]["type"] === "enum");
+        return (this.fail(i, `bindings.${kind}.column`, `${kind}'s ${field} is not a choice, so it has no columns`, choices.length > 0 ? `bind one of ${choices.join(", ")}` : `give ${kind} a choice field first: add-field with "type": "enum" and its "options", in the order the columns go`), false);
+      }
+      const others = Object.keys(roles as Doc).filter((role) => role !== "column");
+      if (others.length > 0) return (this.fail(i, `bindings.${kind}.${others[0]}`, `a board binds only "column"`), false);
+    }
+    return true;
   }
 
   private removeLens(i: number, e: Doc) {

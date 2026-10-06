@@ -156,12 +156,19 @@ export const BUDGETS = [
      * main's declared lenses, home view, language and describe (FR-79–FR-89);
      * the budget just above it.
      *
+     * Raised when a status board came to draw (FR-97): the columns factory
+     * in the lenses' chunk, the board's columns and moves in core, and the
+     * studio's add-lens holding its bindings. Measured at 1_466_613 /
+     * 433_321, from 1_454_397 / 429_026.
+     *
      * Raised with the embed's own for FR-99, FR-100, FR-101 and FR-105, and
      * the studio's set-brand that sets the money apart from the colours:
      * measured at 1_461_953 / 431_507.
+     *
+     * With both, measured at 1_474_169 / 435_839.
      */
-    minified: 1_463_000,
-    gzipped: 432_500,
+    minified: 1_480_000,
+    gzipped: 438_000,
     load: "all",
   },
   {
@@ -190,9 +197,11 @@ export const BUDGETS = [
     // Raised with every face's when a declared lens came to draw (FR-79) and the rule language came to compute what pages need (FR-83): the studio reaches the lenses through `@graview/primitives`, so here they load with it. With both, measured at 1_393_930 / 407_048.
     // Raised with every face's again when the home and a view came to be written from blocks (FR-81, FR-82): measured at 1_414_220 / 413_619.
     // And with every face's when every part of a document came to have an edit (FR-84) and a place a description (FR-89): measured at 1_443_642 / 422_491.
+    // And with every face's when a status board came to draw (FR-97): measured at 1_451_370 / 425_210, from 1_447_691 / 424_068.
     // And with every face's for FR-99, FR-100, FR-101 and FR-105: measured at 1_455_251 / 426_587.
-    minified: 1_456_500,
-    gzipped: 427_500,
+    // With both, measured at 1_458_930 / 427_760.
+    minified: 1_464_000,
+    gzipped: 430_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

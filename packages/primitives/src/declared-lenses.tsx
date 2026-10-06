@@ -3,6 +3,7 @@ import type { ViewComponent, ViewProps } from "@graview/react/provider";
 import { createBoardLens, type BoardOptions } from "./lens/board.js";
 import type { CalendarOptions } from "./lens/calendar-options.js";
 import { createCalendarLens } from "./lens/calendar-view.js";
+import { createColumnsLens, type ColumnsOptions } from "./lens/columns.js";
 import { createCoverageLens, type CoverageOptions } from "./lens/coverage.js";
 import { createPlanLens } from "./lens/plan-lens.js";
 import type { PlanLensOptions } from "./lens/plan-state.js";
@@ -59,6 +60,8 @@ function made(lens: DrawnLens): ViewComponent<AnySchema> {
       return createPlanLens<AnySchema>(options as unknown as PlanLensOptions).View as ViewComponent<AnySchema>;
     case "reach":
       return reachLens.View as ViewComponent<AnySchema>;
+    case "columns":
+      return createColumnsLens<AnySchema>(options as unknown as ColumnsOptions).View as ViewComponent<AnySchema>;
     case "blocks":
       return blocksLens(compileBlocks(Array.isArray(options["blocks"]) ? (options["blocks"] as readonly unknown[]) : []));
   }
