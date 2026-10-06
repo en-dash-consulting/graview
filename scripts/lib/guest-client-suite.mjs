@@ -29,6 +29,19 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { graviewSources } from "./graview-sources.mjs";
 
+/*
+ * Wait inside a frame served under the view's policy by asking from Node.
+ * Playwright's waitForFunction polls by evaluating a string in the page,
+ * which Firefox counts as eval and the frame's script-src refuses.
+ */
+async function until(frame, test, timeout = 10_000) {
+  for (const end = Date.now() + timeout; Date.now() < end; ) {
+    if (await frame.evaluate(test).catch(() => false)) return true;
+    await new Promise((done) => setTimeout(done, 100));
+  }
+  return false;
+}
+
 /** Graview Cloud's policy for an uploaded view: inline script, and nothing else to load. */
 export const VIEW_POLICY = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'";
 
@@ -63,6 +76,7 @@ export async function clientSuite({ repoRoot, build, browser, claim, report, HOS
 import { mount } from "@graview/embed";
 import { guestView } from "@graview/guest/host";
 import { lin, offersApp, offersSeed } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/offers-app.ts"))};
+
 const asked = new URLSearchParams(location.search);
 window.__handle = mount(document.getElementById("app"), {
   app: offersApp,
@@ -188,7 +202,7 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     const lightPanel = await token("--graview-panel");
     claim("it is painted from props.theme in the app's light panel", first.scheme === "light" && first.background === lightPanel, { background: first.background, lightPanel });
     await tab.evaluate(() => window.__handle.setScheme("dark"));
-    await prices.waitForFunction(() => window.__seen.at(-1)?.theme?.scheme === "dark", null, { timeout: 10_000 }).catch(() => {});
+    await until(prices, () => window.__seen.at(-1)?.theme?.scheme === "dark");
     const dark = await drawn(prices);
     const darkPanel = await token("--graview-panel");
     const system = await tab.evaluate(() => matchMedia("(prefers-color-scheme: dark)").matches);
@@ -200,7 +214,7 @@ window.__handle.drawn().then(() => { window.__ready = true; });
 
     // ── it acts ──
     await prices.click("button");
-    await prices.waitForFunction(() => document.querySelector("button")?.textContent !== "Note that we compared prices", null, { timeout: 10_000 }).catch(() => {});
+    await until(prices, () => document.querySelector("button")?.textContent !== "Note that we compared prices");
     const answer = await prices.evaluate(() => document.querySelector("button")?.textContent);
     const last = await tab.evaluate(() => {
       const op = window.__handle.store.log.all().at(-1);
