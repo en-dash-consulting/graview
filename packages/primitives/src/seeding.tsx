@@ -14,6 +14,7 @@ import {
   dependentsOf,
   deriveAffordances,
   firstJsonObject,
+  resolveProposal,
   validateProposals,
   without,
   type Affordance,
@@ -471,6 +472,38 @@ const planRefName = (value: unknown): string | undefined =>
  * the actions strip gives a seat that may not act. Applying is one press and
  * one turn, so taking it back is one press too.
  */
+/*
+ * THE REVIEW'S PARTS SAY WHAT THEY ARE, and their look is a rule rather
+ * than a style attribute, so a product dressing its review reaches them with
+ * `[data-graview-part="plan-apply"]` and no `!important`. Written at the
+ * weight of two elements: above the theme's bare `button` rule, which
+ * arrives later as an adopted sheet and would otherwise win the tie, and
+ * below any attribute or class an app writes.
+ */
+const PLAN_REVIEW_CSS = `
+ol li:where([data-graview-part="plan-row"][data-plan-refused]),
+ol li:where([data-graview-part="plan-row"][data-plan-declined]) {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+li > button:where([data-graview-part="plan-decline"]) {
+  margin-left: 8px;
+  min-height: max(1.5rem, 24px);
+  padding: 0 8px;
+  font-size: 0.8125rem;
+  text-decoration: none;
+}
+div:where([data-graview-part="plan-actions"]) {
+  display: flex;
+  gap: 8px;
+}
+div > button:where([data-graview-part="plan-apply"]),
+div > button:where([data-graview-part="plan-discard"]) {
+  min-height: max(1.5rem, 24px);
+  padding: 2px 12px;
+}
+`;
+
 export function PlanReview<S extends AnySchema>(props: PlanReviewProps<S>) {
   return (
     <Lifted what="PlanReview" {...(props.store ? { store: props.store } : {})} {...(props.principal ? { principal: props.principal } : {})}>
@@ -571,6 +604,7 @@ function PlanReviewInside<S extends AnySchema>({
 
   return (
     <Frame>
+      <style>{PLAN_REVIEW_CSS}</style>
       {header}
       {anySure ? (
         <p data-testid="plan-least-sure" style={{ margin: "0 0 .4rem", fontSize: "0.8125rem", ...MUTED_TEXT }}>
@@ -609,7 +643,7 @@ function PlanReviewInside<S extends AnySchema>({
               data-plan-row={row.key}
               data-plan-refused={refused ? "" : undefined}
               data-plan-declined={out && !refused ? "" : undefined}
-              style={out ? { textDecoration: "line-through", opacity: 0.6 } : undefined}
+              data-graview-part="plan-row"
             >
               <span>{shown.get(row.key)!.text}</span>
               {first.call.why ? <span style={{ ...MUTED_TEXT }}> — {first.call.why}</span> : null}
@@ -627,6 +661,7 @@ function PlanReviewInside<S extends AnySchema>({
                 <button
                   type="button"
                   data-testid={`plan-decline-${name}`}
+                  data-graview-part="plan-decline"
                   title={
                     goesWith.length > 0
                       ? `Declining this also drops ${goesWith.length} that point at it`
@@ -637,13 +672,6 @@ function PlanReviewInside<S extends AnySchema>({
                       current.includes(name) ? current.filter((one) => one !== name) : [...current, name],
                     )
                   }
-                  style={{
-                    marginLeft: 8,
-                    minHeight: "max(1.5rem, 24px)",
-                    padding: "0 8px",
-                    fontSize: "0.8125rem",
-                    textDecoration: "none",
-                  }}
                 >
                   {declined.includes(name) ? "Keep it" : "Not this"}
                 </button>
@@ -682,10 +710,11 @@ function PlanReviewInside<S extends AnySchema>({
             : `Done — ${done.applied} applied as one turn.`}
         </p>
       ) : (
-        <div style={{ display: "flex", gap: 8 }}>
+        <div data-graview-part="plan-actions">
           <button
             type="button"
             data-testid="plan-apply"
+            data-graview-part="plan-apply"
             disabled={kept.ready.length === 0}
             onClick={() => {
               const result = applyPlan(store, kept, {
@@ -710,12 +739,11 @@ function PlanReviewInside<S extends AnySchema>({
               });
               onApplied?.(result.batch, result.applied);
             }}
-            style={{ minHeight: "max(1.5rem, 24px)", padding: "2px 12px" }}
           >
             Apply {kept.ready.length === 1 ? "it" : "all"}
           </button>
           {onDiscard ? (
-            <button type="button" data-testid="plan-discard" onClick={onDiscard} style={{ minHeight: "max(1.5rem, 24px)", padding: "2px 12px" }}>
+            <button type="button" data-testid="plan-discard" data-graview-part="plan-discard" onClick={onDiscard}>
               Discard
             </button>
           ) : null}
@@ -923,7 +951,14 @@ export function Door<S extends AnySchema>({ provider, prompt, photos = [], onPro
 
   const read = (text: string) => {
     const answer = firstJsonObject(text) as { proposals?: readonly PlannedCall[] } | null;
-    const proposals = Array.isArray(answer?.proposals) ? answer!.proposals : [];
+    /*
+     * A model names things the way a person does, so a label that means
+     * exactly one node is read as that node before the gate sees it — as
+     * the seat reads it. `resolveProposal` keeps the rest of the call.
+     */
+    const proposals = (Array.isArray(answer?.proposals) ? answer!.proposals : []).map(
+      (proposal) => resolveProposal(store, proposal) as PlannedCall,
+    );
     const kept = validateProposals(store, proposals, declared?.may) as readonly PlannedCall[];
     if (kept.length === 0) {
       setSaid("Nothing in that answer was a call this app knows, so nothing was taken from it.");

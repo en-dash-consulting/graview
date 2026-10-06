@@ -26,77 +26,128 @@ import { useState, type ReactNode } from "react";
  * same shapes; this is those shapes given room.
  */
 
-const field: React.CSSProperties = {
-  display: "grid",
-  // A track the width it was given: see the note on `column` in pages.tsx.
-  gridTemplateColumns: "minmax(0, 1fr)",
-  minWidth: 0,
-  gap: 4,
-};
-const labelStyle: React.CSSProperties = {
-  fontSize: "0.8125rem",
-  color: "var(--graview-ink-muted)",
-};
-const controlStyle: React.CSSProperties = {
-  font: "inherit",
-  /*
-   * A TARGET IN EVERY ENGINE, not only in the one it was measured in.
-   *
-   * Padding and line height alone came to 24 in Chromium and to 22 in
-   * WebKit, which has its own intrinsic metrics for a `select` and rounds
-   * nothing up for anybody. So every picker on the routed face was under
-   * the WCAG 2.2 minimum in the browser iOS ships, and the check that says
-   * so (`verify-pages`' `bigEnoughToHit`) only ever ran there through
-   * `pnpm engines`.
-   */
-  minHeight: 24,
-  /*
-   * NEVER WIDER THAN ITS FIELD. A select is as wide as its longest option,
-   * and a picker over 320 vehicles ("2027 Mercedes-Benz GLE AMG 53 4MATIC+
-   * Coupe") was 618 pixels on a 390 phone, and the whole page scrolled
-   * sideways. It shrinks to its track and cuts the option inside its box.
-   */
-  minWidth: 0,
-  maxWidth: "100%",
-  textOverflow: "ellipsis",
-  boxSizing: "border-box",
-  padding: "7px 10px",
-  borderRadius: 8,
-  border: "1px solid var(--graview-edge)",
-  background: "var(--graview-panel)",
-  color: "var(--graview-ink)",
-};
-
-/**
- * A PICKER THAT STILL LOOKS LIKE ONE.
+/*
+ * EACH PART SAYS WHAT IT IS, and its look is a rule rather than a style
+ * attribute.
  *
- * WebKit ignores an author's padding and minimum height on a `select` while
- * the native appearance is on — so every picker on the routed face came out
- * 22 pixels tall in the browser iOS ships, under the 24 WCAG 2.2 asks for,
- * while the same element measured 35 in Chromium. Turning the appearance off
- * is what makes the box the size it was asked to be, and it takes the
- * platform's chevron with it; this puts one back, in the ink the scheme is
- * already using.
+ * Every field, label, picker and submit was styled inline, and an inline
+ * style beats every selector there is — so a product's design could
+ * restyle a form only with `!important`. Each part now wears
+ * `data-graview-part` (and each field `data-graview-field`, its control),
+ * and the defaults below are written at the weight of ONE ELEMENT —
+ * `input:where([data-graview-part="control"])` — so the theme's bare
+ * `button` rule still loses to them as it lost to the inline style, and an
+ * app's `[data-graview-part="control"]` wins outright.
  */
-const pickerStyle: React.CSSProperties = { ...controlStyle, appearance: "none", paddingRight: 28 };
+const FORM_CSS = `
+form:where([data-graview-part="form"]) {
+  /* A grid item of the section above it and a grid container for the
+     fields below: both halves are allowed to be narrower than what is in
+     them, or a big enough text size pushes the page sideways. See the note
+     on \`column\` in pages.tsx. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  gap: 12px;
+}
+label:where([data-graview-part="field"]) {
+  display: grid;
+  /* A track the width it was given: see the note on \`column\` in pages.tsx. */
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  gap: 4px;
+}
+label:where([data-graview-part="field"][data-graview-field="boolean"]) {
+  grid-auto-flow: column;
+  justify-content: start;
+  align-items: center;
+}
+span:where([data-graview-part="label"]),
+legend:where([data-graview-part="label"]),
+p:where([data-graview-part="unasked"]) {
+  font-size: 0.8125rem;
+  color: var(--graview-ink-muted);
+}
+p:where([data-graview-part="unasked"]) { margin: 0; }
+input:where([data-graview-part="control"]:not([type="checkbox"])),
+select:where([data-graview-part="control"]) {
+  font: inherit;
+  /* A TARGET IN EVERY ENGINE, not only in the one it was measured in.
+     Padding and line height alone came to 24 in Chromium and to 22 in
+     WebKit, which has its own intrinsic metrics for a \`select\` and rounds
+     nothing up for anybody. So every picker on the routed face was under
+     the WCAG 2.2 minimum in the browser iOS ships, and the check that says
+     so (\`verify-pages\`' \`bigEnoughToHit\`) only ever ran there through
+     \`pnpm engines\`. */
+  min-height: 24px;
+  /* NEVER WIDER THAN ITS FIELD. A select is as wide as its longest option,
+     and a picker over 320 vehicles ("2027 Mercedes-Benz GLE AMG 53 4MATIC+
+     Coupe") was 618 pixels on a 390 phone, and the whole page scrolled
+     sideways. It shrinks to its track and cuts the option inside its box. */
+  min-width: 0;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--graview-edge);
+  background: var(--graview-panel);
+  color: var(--graview-ink);
+}
+/* A PICKER THAT STILL LOOKS LIKE ONE.
+   WebKit ignores an author's padding and minimum height on a \`select\`
+   while the native appearance is on — so every picker on the routed face
+   came out 22 pixels tall in the browser iOS ships, under the 24 WCAG 2.2
+   asks for, while the same element measured 35 in Chromium. Turning the
+   appearance off is what makes the box the size it was asked to be, and it
+   takes the platform's chevron with it; the chevron is put back, in the ink
+   the scheme is already using. */
+span:where([data-graview-part="picker"]) {
+  position: relative;
+  display: grid;
+  min-width: 0;
+}
+span:where([data-graview-part="picker"]) > select:where([data-graview-part="control"]) {
+  appearance: none;
+  padding-right: 28px;
+}
+span:where([data-graview-part="chevron"]) {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  line-height: 1;
+  color: var(--graview-ink-muted);
+  pointer-events: none;
+}
+fieldset:where([data-graview-part="group"]) {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--graview-edge);
+  border-radius: 10px;
+  padding: 12px;
+}
+fieldset:where([data-graview-part="group"][data-graview-field="list"]) { gap: 8px; }
+div:where([data-graview-part="item"]) {
+  display: flex;
+  gap: 8px;
+  align-items: end;
+}
+button:where([data-graview-part="add"]),
+button:where([data-graview-part="submit"]) { justify-self: start; }
+p:where([data-graview-part="refused"]) {
+  margin: 0;
+  color: var(--graview-warn);
+  font-size: 0.875rem;
+}
+`;
 
 function Picker({ children }: { children: React.ReactNode }) {
   return (
-    <span style={{ position: "relative", display: "grid", minWidth: 0 }}>
+    <span data-graview-part="picker">
       {children}
-      <span
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          right: 10,
-          top: "50%",
-          transform: "translateY(-50%)",
-          fontSize: "0.75rem",
-          lineHeight: 1,
-          color: "var(--graview-ink-muted)",
-          pointerEvents: "none",
-        }}
-      >
+      <span aria-hidden="true" data-graview-part="chevron">
         ▾
       </span>
     </span>
@@ -144,22 +195,22 @@ function Control<S extends AnySchema>({
     case "text":
     case "date":
       return (
-        <label style={field}>
-          <span style={labelStyle}>{title}</span>
+        <label data-graview-part="field" data-graview-field={spec.control}>
+          <span data-graview-part="label">{title}</span>
           <input
             type={spec.control === "date" ? (spec.time ? "datetime-local" : "date") : "text"}
             name={spec.name}
             required={!spec.optional}
             value={typeof value === "string" ? value : ""}
             onChange={(event) => onChange(event.target.value)}
-            style={controlStyle}
+            data-graview-part="control"
           />
         </label>
       );
     case "number":
       return (
-        <label style={field}>
-          <span style={labelStyle}>{title}</span>
+        <label data-graview-part="field" data-graview-field={spec.control}>
+          <span data-graview-part="label">{title}</span>
           <input
             type="number"
             name={spec.name}
@@ -170,33 +221,34 @@ function Control<S extends AnySchema>({
             onChange={(event) =>
               onChange(event.target.value === "" ? undefined : Number(event.target.value))
             }
-            style={controlStyle}
+            data-graview-part="control"
           />
         </label>
       );
     case "boolean":
       return (
-        <label style={{ ...field, gridAutoFlow: "column", justifyContent: "start", alignItems: "center" }}>
+        <label data-graview-part="field" data-graview-field="boolean">
           <input
             type="checkbox"
             name={spec.name}
             checked={value === true}
             onChange={(event) => onChange(event.target.checked)}
+            data-graview-part="control"
           />
-          <span style={labelStyle}>{title}</span>
+          <span data-graview-part="label">{title}</span>
         </label>
       );
     case "choice":
       return (
-        <label style={field}>
-          <span style={labelStyle}>{title}</span>
+        <label data-graview-part="field" data-graview-field={spec.control}>
+          <span data-graview-part="label">{title}</span>
           <Picker>
             <select
               name={spec.name}
               required={!spec.optional}
               value={typeof value === "string" ? value : ""}
               onChange={(event) => onChange(event.target.value || undefined)}
-              style={pickerStyle}
+              data-graview-part="control"
             >
               <option value="">—</option>
               {(spec.options ?? []).map((option) => (
@@ -242,15 +294,15 @@ function Control<S extends AnySchema>({
         : all;
       const told = tellApart(candidates as never, (kind) => store.schema.tryDefinition(kind as never));
       return (
-        <label style={field}>
-          <span style={labelStyle}>{title}</span>
+        <label data-graview-part="field" data-graview-field={spec.control}>
+          <span data-graview-part="label">{title}</span>
           <Picker>
             <select
               name={spec.name}
               required={!spec.optional}
               value={typeof value === "string" ? value : ""}
               onChange={(event) => onChange(event.target.value || undefined)}
-              style={pickerStyle}
+              data-graview-part="control"
             >
               <option value="">—</option>
               {candidates.map((candidate) => {
@@ -271,8 +323,8 @@ function Control<S extends AnySchema>({
     case "group": {
       const held = (value ?? {}) as Record<string, unknown>;
       return (
-        <fieldset style={{ display: "grid", gap: 10, border: "1px solid var(--graview-edge)", borderRadius: 10, padding: 12 }}>
-          <legend style={labelStyle}>{title}</legend>
+        <fieldset data-graview-part="group" data-graview-field={spec.control}>
+          <legend data-graview-part="label">{title}</legend>
           {spec.fields.map((child) => (
             <Control
               key={child.name}
@@ -293,14 +345,14 @@ function Control<S extends AnySchema>({
       const chosen = typeof held[spec.tag] === "string" ? (held[spec.tag] as string) : "";
       const arm = spec.options.find((option) => option.value === chosen);
       return (
-        <fieldset style={{ display: "grid", gap: 10, border: "1px solid var(--graview-edge)", borderRadius: 10, padding: 12 }}>
-          <legend style={labelStyle}>{title}</legend>
-          <label style={field}>
-            <span style={labelStyle}>{humaniseField(spec.tag)}</span>
+        <fieldset data-graview-part="group" data-graview-field={spec.control}>
+          <legend data-graview-part="label">{title}</legend>
+          <label data-graview-part="field" data-graview-field="choice">
+            <span data-graview-part="label">{humaniseField(spec.tag)}</span>
             <select
               value={chosen}
               onChange={(event) => onChange({ [spec.tag]: event.target.value })}
-              style={controlStyle}
+              data-graview-part="control"
             >
               <option value="">—</option>
               {spec.options.map((option) => (
@@ -328,10 +380,10 @@ function Control<S extends AnySchema>({
     case "list": {
       const items = Array.isArray(value) ? (value as unknown[]) : [];
       return (
-        <fieldset style={{ display: "grid", gap: 8, border: "1px solid var(--graview-edge)", borderRadius: 10, padding: 12 }}>
-          <legend style={labelStyle}>{title}</legend>
+        <fieldset data-graview-part="group" data-graview-field="list">
+          <legend data-graview-part="label">{title}</legend>
           {items.map((item, index) => (
-            <div key={index} style={{ display: "flex", gap: 8, alignItems: "end" }}>
+            <div key={index} data-graview-part="item">
               <div style={{ flex: 1 }}>
                 <Control
                   store={store}
@@ -343,12 +395,12 @@ function Control<S extends AnySchema>({
                   words={words}
                 />
               </div>
-              <button type="button" onClick={() => onChange(items.filter((_, at) => at !== index))}>
+              <button type="button" data-graview-part="remove" onClick={() => onChange(items.filter((_, at) => at !== index))}>
                 remove
               </button>
             </div>
           ))}
-          <button type="button" onClick={() => onChange([...items, undefined])} style={{ justifySelf: "start" }}>
+          <button type="button" data-graview-part="add" onClick={() => onChange([...items, undefined])}>
             add another
           </button>
         </fieldset>
@@ -358,7 +410,7 @@ function Control<S extends AnySchema>({
       // Named rather than silently dropped: an argument the form cannot
       // honestly render is a missing control to build, not a hidden field.
       return (
-        <p style={{ ...labelStyle, margin: 0 }}>
+        <p data-graview-part="unasked">
           “{humaniseField(spec.name)}” needs a structured answer this form cannot ask for yet.
         </p>
       );
@@ -445,12 +497,9 @@ export function DerivedForm<S extends AnySchema>({
           setFailed(failureWords(store.schema, store.allMutations(), error));
         }
       }}
-      // A form is a grid item of the section above it and a grid container
-      // for the fields below: both halves have to be allowed to be narrower
-      // than what is in them, or a big enough text size pushes the page
-      // sideways. See the note on `column` in pages.tsx.
-      style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", minWidth: 0, gap: 12 }}
+      data-graview-part="form"
     >
+      <style>{FORM_CSS}</style>
       {fields.map((spec) => (
         <Control
           key={spec.name}
@@ -464,11 +513,11 @@ export function DerivedForm<S extends AnySchema>({
         />
       ))}
       {failed ? (
-        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: "0.875rem" }}>
+        <p data-testid="refused" data-graview-part="refused" role="alert">
           {failed}
         </p>
       ) : null}
-      <button type="submit" style={{ justifySelf: "start" }}>
+      <button type="submit" data-graview-part="submit">
         {label ?? mutation.title ?? mutation.name}
       </button>
     </form>
