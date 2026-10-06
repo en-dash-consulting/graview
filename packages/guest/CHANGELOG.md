@@ -1,5 +1,23 @@
 # @graview/guest
 
+## 0.1.11
+
+### Patch Changes
+
+- 617b432: A host page is told what a worker view needs, and a view the page will not start says `start` (FR-102). A worker view starts from a `blob:` URL, so a page whose Content-Security-Policy has no `worker-src` falls back to `script-src`, and that refuses it. Graview Cloud's app page did this, and every open-kit view drew its plain face with no word of the policy. The engines refuse in three ways. Chromium and WebKit throw a SecurityError from `new Worker`. Firefox makes the worker, reports a `securitypolicyviolation` on the document, and fires `error` on the worker with no message. A worker that never ran a line also never says ready. `startWorker` now hears all three, and the violation as well, so in Firefox the policy is told apart from a script that failed. Each is the new reason `start`, said once for each view, with a sentence that names the directive when the policy was the cause ("it needs worker-src blob:"). The plain face is drawn, and the page's console is told once however many views it refuses. `start` replaces `refused`. It also takes in a worker that never said ready in `readyMs`, which was `silent`. `silent` now means only a worker that said ready and then stopped answering. `mountGuestWorker`'s `onFailure` now gets the sentence as well, and `registerWorkerView` takes an `onFailure` of its own. The guest README gains "What the host page allows": `worker-src blob:` and `style-src 'unsafe-inline'`, and why nothing else is needed. For a host that allows no `blob:`, it gives the alternative. The host serves each view's whole script from its own origin with `viewScript`, now exported from `@graview/guest/host/views`, under `worker-src 'self'`, and passes `worker: { url }`. `guest-sandbox --transport=limits` serves three pages in Chromium, WebKit and Firefox. The README's policy starts two views and draws their stylesheet. A page with no `worker-src` and no `blob:` in `script-src` reports `start` once for each view, names `worker-src blob:` under each plain face, and warns once. The served script draws under `worker-src 'self'`. The `graview-worker-view` and `graview-embed` skills say what the page needs.
+  
+  Compatibility: `WorkerViewFailure` and `GuestWorkerFailure` lose `refused` and gain `start`. A worker that never says ready is `start`, not `silent`. A host that branched on either changes the name. `capabilities().shipped` gains `FR-102`. Ops, stored formats, wire messages, check codes and tool schemas are unchanged.
+- Updated dependencies [e6f90e0]
+- Updated dependencies [e6594bb]
+- Updated dependencies [fc50abf]
+- Updated dependencies [31a6383]
+- Updated dependencies [617b432]
+- Updated dependencies [a738797]
+- Updated dependencies [e567a7b]
+- Updated dependencies [a190947]
+  - @graview/core@0.1.11
+  - @graview/react@0.1.11
+
 ## 0.1.10
 
 ### Patch Changes
