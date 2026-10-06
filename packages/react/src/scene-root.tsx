@@ -293,7 +293,7 @@ export function Scene<S extends AnySchema>({
         (held[place.kind] ??= []).push({ as: place.as, title: place.title, ...(place.across ? { across: place.across } : {}) });
         return held;
       }, {}),
-      ...(nameWidth ? { nameWidth } : {}),
+      nameWidth,
       ...(size
         ? {
             width: size.width,
