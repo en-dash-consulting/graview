@@ -74,7 +74,9 @@ app sets:
   to draw its shape, never the population (it is 58 pixels wide; a matrix
   of 12 × 12 is 144 cells where 24 × 24 was 576). It is a picture of the
   lens, not the lens, and the thumbnails mount one per frame once the
-  scene is still.
+  scene is still. (Since FR-118, in 0.1.14, there are no thumbnails: a
+  drive-in's marquee says its showings by name, and the lens is drawn
+  only on the billboard, at its own size, once a showing is pressed.)
 - **An opened district, a Group view, a village** keep the caps they have
   (16, 6, 24) — they were already right.
 - **A focused picture** — a lens drawn full size — is the person's chosen

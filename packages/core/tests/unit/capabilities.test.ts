@@ -41,4 +41,17 @@ describe("capabilities()", () => {
   it("lists exactly the FR ids the changesets say they shipped", () => {
     expect([...capabilities().shipped].sort()).toEqual([...named()].sort());
   });
+
+  it("is told, by a changeset waiting to ship, of the seam each such changeset is headed by", () => {
+    // A host retires its interim when it reads "`capabilities().shipped` gains" in the
+    // changelog, so the seam a changeset is about is announced in those words — by it or
+    // by a changeset of the same release — and is in the list the build says.
+    const pending = readdirSync(resolve(root, ".changeset"))
+      .filter((file) => file.endsWith(".md") && file !== "README.md")
+      .map((file) => readFileSync(resolve(root, ".changeset", file), "utf8").split("---").slice(2).join("---"));
+    const headed = pending.map((text) => text.match(/\((FR-\d+)\)/)?.[1]).filter((id): id is string => id !== undefined);
+    const gained = new Set(pending.flatMap((text) => [...text.matchAll(/`capabilities\(\)\.shipped` gains ([^.]*)\./g)].flatMap((match) => (match[1] ?? "").match(/FR-\d+/g) ?? [])));
+    expect(headed.filter((id) => !gained.has(id))).toEqual([]);
+    expect([...gained].filter((id) => !capabilities().shipped.includes(id))).toEqual([]);
+  });
 });

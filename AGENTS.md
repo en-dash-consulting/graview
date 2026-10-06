@@ -65,6 +65,14 @@ These are pinned by tests, not by convention:
   (`packages/core/src/scaffold/project.ts`) — that is `GRAVIEW_PACKAGES`
   plus `skills` and `graview`. Add a package a product depends on to
   `GRAVIEW_PACKAGES`; the scaffolder writes it into new projects.
+- **`@graview/core` and `@graview/core/document` carry only what a page
+  draws with.** A hosted page imports both up front, so the checker
+  (`checkApp`, `compileDocument`, `describeApp`) lives on
+  `@graview/core/check`, the city and `sceneThumbnail` on `/scene`, the
+  shipped drawings on `/figures`, a view's block resolver on `/blocks`, and
+  a status board's reach on `/describe`
+  (`packages/core/tests/unit/the-main-entry-carries-only-what-a-page-draws-with.test.ts`).
+  The hosted page's first load has a budget (`tests/a-hosted-page-keeps-to-its-budget.test.ts`).
 
 ## Commands
 
@@ -92,7 +100,7 @@ pnpm skills                    # install the authoring skills into .claude/skill
 
 The harnesses drive dev servers on fixed ports, so run **one harness chain
 at a time** per checkout; a second checkout (a worktree) runs its servers
-outside 5190–5399 by setting `GRAVIEW_PORT_BASE` (5600 puts todo on 5603:
+outside 5190–5289 by setting `GRAVIEW_PORT_BASE` (5600 puts todo on 5603:
 every port moves to base + (port − 5190), through `scripts/lib/ports.mjs`,
 and no harness writes a port of its own; the apps' vite configs move
 with it, and the desk links to and probes the moved ports), and a harness only borrows a
@@ -124,8 +132,10 @@ pinned at 1.49.1 on purpose.
   deprecated aliases for a package nobody depends on yet; the changelog
   records the change.
 - **Public API is `src/index.ts` → `exports` in `package.json`**, with the
-  entries listed there (`./cli`, `./browser`, `./dev`, `./gpu`, `./sqlite`,
-  `./scaffold`, `./testing`). `files` is an allowlist and
+  entries listed there (core's `./document`, `./check`, `./scene`,
+  `./figures`, `./blocks`, `./describe`, `./conformance`, `./scaffold`,
+  `./testing`; layout's `./view`; react's `./provider`; embed's `./pages`;
+  `./cli`, `./browser`, `./dev`, `./gpu`, `./sqlite` and the rest). `files` is an allowlist and
   `scripts/inspect-pack.mjs` asserts against the real tarball.
 - **Node 22.** Top-level await in the scaffolded app, and the engines field
   on every package.
@@ -147,6 +157,15 @@ npmjs.com names repository `en-dash-consulting/graview`, workflow
 brand-new package can't have a trusted publisher until it exists, so its
 first version is published by hand.
 
+The `publish` job runs only when no changeset is pending, so a Version
+packages merge followed by more changesets is released with the next one:
+0.1.13 was versioned and never published, and ships inside 0.1.14. Each
+GitHub release's notes carry the changelog sections of the versions before
+it that npm never had. A `Compatibility:` line on every changeset that
+touches a surface (`scripts/lib/surfaces.mjs`) is what `docs/stability.md`
+promises a host, and `capabilities().shipped` names the FR ids the
+changesets announce.
+
 `main` is protected by a ruleset: changes arrive by pull request, `verify`
 and `changeset` must pass, and nothing force-pushes or deletes it.
 License: Elastic License 2.0, at the root and in every tarball.
@@ -164,6 +183,8 @@ License: Elastic License 2.0, at the root and in every tarball.
 | `docs/site/` | The docs site; `docs/site/chapters.js` is built from `apps/seedbed` |
 | `docs/walkthrough.md` | The stage-by-stage walk from `graview create` to a seamless app, with findings |
 | `.changeset/README.md` | The versioning convention |
+| `docs/stability.md` | What a version may change on the five surfaces a host holds it to |
+| `scripts/lib/ports.mjs` | Every port a harness serves on, moved together by `GRAVIEW_PORT_BASE` |
 
 ## Project management tooling (n-dx)
 

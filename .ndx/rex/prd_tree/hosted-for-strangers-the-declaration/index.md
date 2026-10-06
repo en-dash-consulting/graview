@@ -22,9 +22,9 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A classic-worker build: the guest worker entry and a guest bundle need no module worker (FR-71)](./a-classic-worker-build-the-guest.md) | completed |
 | [A compacted log keeps who made each record, so an own sight survives a restart](./a-compacted-log-keeps-who-made-each.md) | completed |
 | [A conformance kit: fixtures any host runs against a version to prove it reads, compiles and derives the same](./a-conformance-kit-fixtures-any-host.md) | completed |
-| [A coverage cell over a path selects what it joins (FR-111)](./a-coverage-cell-over-a-path-selects.md) | pending |
+| [A coverage cell over a path selects what it joins (FR-111)](./a-coverage-cell-over-a-path-selects.md) | completed |
 | [A declared lens draws: a lenses entry maps to the shipped factory and is a named place (FR-79)](./a-declared-lens-draws-a-lenses-entry.md) | completed |
-| [A derived edit offers every field nothing else really sets, and refuses what it can't take (FR-110)](./a-derived-edit-offers-every-field.md) | pending |
+| [A derived edit offers every field nothing else really sets, and refuses what it can't take (FR-110)](./a-derived-edit-offers-every-field.md) | completed |
 | [A document can say a kind's glance fields, and the compiler stops asking for what it cannot say (FR-39)](./a-document-can-say-a-kind-s-glance.md) | completed |
 | [A figure's label is a template, and check flags braces in any non-template string (FR-99)](./a-figure-s-label-is-a-template-and.md) | completed |
 | [A guest view can be a named place: guestView takes a title (FR-87)](./a-guest-view-can-be-a-named-place.md) | completed |
@@ -47,11 +47,11 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A log can be folded from a base: epochs across declaration changes](./a-log-can-be-folded-from-a-base-epochs.md) | completed |
 | [A long-lived log compacts behind an undo horizon](./a-long-lived-log-compacts-behind-an.md) | completed |
 | [A member drawn as a row is a cell a view can claim](./a-member-drawn-as-a-row-is-a-cell-a.md) | completed |
-| [A name is never cut off where it's the thing to read (FR-118)](./a-name-is-never-cut-off-where-it-s-the.md) | pending |
+| [A name is never cut off where it's the thing to read (FR-118)](./a-name-is-never-cut-off-where-it-s-the.md) | completed |
 | [A named step is a move: an act that sets the column field to a constant offers a move to that column (FR-108)](./a-named-step-is-a-move-an-act-that.md) | completed |
-| [A number field may say its range: min, max and step (FR-114)](./a-number-field-may-say-its-range-min.md) | pending |
+| [A number field may say its range: min, max and step (FR-114)](./a-number-field-may-say-its-range-min.md) | completed |
 | [A picture of an app without a browser: sceneThumbnail(document, { scheme }) as an SVG string (FR-74)](./a-picture-of-an-app-without-a-browser.md) | completed |
-| [A pill means press this to choose, or a state (FR-117)](./a-pill-means-press-this-to-choose-or-a.md) | pending |
+| [A pill means press this to choose, or a state (FR-117)](./a-pill-means-press-this-to-choose-or-a.md) | completed |
 | [A repair reads a declared default, so a record a coerce would keep is patched rather than dropped (FR-50)](./a-repair-reads-a-declared-default-so-a.md) | completed |
 | [A rule language the framework interprets: total, budgeted, and read like a sentence](./a-rule-language-the-framework.md) | completed |
 | [A seat's first state read after a wake costs what it did before FR-55](./a-seat-s-first-state-read-after-a-wake.md) | pending |
@@ -76,10 +76,10 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Backpressure distinct from refusal: busy with retryAfter, and the client re-sends (FR-45)](./backpressure-distinct-from-refusal.md) | completed |
 | [Check warns when an act reads a kind some role that may run it cannot see (FR-105)](./check-warns-when-an-act-reads-a-kind.md) | completed |
 | [Currency on any money: field as money takes currency, and an app default applies (FR-100)](./currency-on-any-money-field-as-money.md) | completed |
-| [Declared acts can do what the org app's mutations do: set the other end, replace links, choose by condition (FR-115)](./declared-acts-can-do-what-the-org-app.md) | pending |
+| [Declared acts can do what the org app's mutations do: set the other end, replace links, choose by condition (FR-115)](./declared-acts-can-do-what-the-org-app.md) | completed |
 | [Derived tools say what they do, are safe to name, and an act named like a read tool can still be run](./derived-tools-say-what-they-do-are.md) | completed |
 | [Describe a place without a browser: describePlace for a chat to check its own work (FR-89)](./describe-a-place-without-a-browser.md) | completed |
-| [describePlace says a coverage grid (FR-112)](./describeplace-says-a-coverage-grid-fr.md) | pending |
+| [describePlace says a coverage grid (FR-112)](./describeplace-says-a-coverage-grid-fr.md) | completed |
 | [Edits for lenses, the home, pages, computed fields and the new blocks (FR-84)](./edits-for-lenses-the-home-pages.md) | completed |
 | [Embed hands its views to the routed face too](./embed-hands-its-views-to-the-routed.md) | completed |
 | [Embed holds inside a chat's widget: no storage assumed, its own height reported, the host's scheme taken](./embed-holds-inside-a-chat-s-widget-no.md) | completed |
@@ -102,7 +102,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Refusal reasons a program can branch on: forbidden, missing, invalid, limit, with wouldNeed (FR-46)](./refusal-reasons-a-program-can-branch.md) | completed |
 | [Registering one view layers over the defaults instead of replacing them, and a default can be wrapped](./registering-one-view-layers-over-the.md) | completed |
 | [Room on the hosted page: weight by entry in release notes, and headroom under 600 KB (FR-104)](./room-on-the-hosted-page-weight-by.md) | completed |
-| [Rows in a nested list keep their small blocks whole (FR-113)](./rows-in-a-nested-list-keep-their-small.md) | pending |
+| [Rows in a nested list keep their small blocks whole (FR-113)](./rows-in-a-nested-list-keep-their-small.md) | completed |
 | [Run a worker view headless and describe it, in an isolated environment (FR-95)](./run-a-worker-view-headless-and.md) | completed |
 | [Say what a host page needs for worker views, and say when it is missing (FR-102)](./say-what-a-host-page-needs-for-worker.md) | completed |
 | [sceneThumbnail sizes districts by counts the way the live Scene does (FR-103)](./scenethumbnail-sizes-districts-by.md) | completed |
@@ -111,7 +111,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Stored data checked against its declaration: validateGraph, and repairs as ordinary ops](./stored-data-checked-against-its.md) | completed |
 | [Stored formats carry their version, and the next major brings the steps to read the last one](./stored-formats-carry-their-version-and.md) | completed |
 | [Structural edits as a vocabulary: add, rename, retype, remove — and a rename rewrites every reference](./structural-edits-as-a-vocabulary-add.md) | completed |
-| [Swap the app under a mounted embed without losing the reader's place (FR-116)](./swap-the-app-under-a-mounted-embed.md) | pending |
+| [Swap the app under a mounted embed without losing the reader's place (FR-116)](./swap-the-app-under-a-mounted-embed.md) | completed |
 | [Templates as data: graview create and graview apply take a template made anywhere](./templates-as-data-graview-create-and.md) | completed |
 | [The AI rail can be put away: collapse to a tab, overlay when narrow, and a host's starting state (FR-78)](./the-ai-rail-can-be-put-away-collapse.md) | completed |
 | [The channel is the host's word: the live handler takes via from the seat, never from the client (FR-52)](./the-channel-is-the-host-s-word-the.md) | completed |
