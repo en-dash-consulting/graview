@@ -24,6 +24,22 @@ export function pickedFrom(target: EventTarget | null): string | null {
 }
 
 /**
+ * WHAT A MARK JOINS, when it stands for a relation rather than a thing
+ * (FR-111): a coverage cell says `data-graview-joins='["<row>","<column>",
+ * …the records on the path]'`, and choosing it chooses all of them.
+ */
+export function joinedFrom(target: EventTarget | null): readonly string[] | null {
+  const said = (target as HTMLElement | null)?.closest?.("[data-graview-pick]")?.getAttribute("data-graview-joins");
+  if (!said) return null;
+  try {
+    const ids: unknown = JSON.parse(said);
+    return Array.isArray(ids) && ids.length > 0 && ids.every((id) => typeof id === "string") ? ids : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Makes every `data-graview-pick` element inside a host a real control.
  *
  * Having made clicking the primary way to move through the graph, leaving

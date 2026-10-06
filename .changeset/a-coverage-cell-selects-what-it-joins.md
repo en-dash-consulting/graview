@@ -1,0 +1,10 @@
+---
+"@graview/core": patch
+"@graview/primitives": patch
+"@graview/react": patch
+"@graview/pages": patch
+---
+
+A coverage cell over a path selects what it joins (FR-111). A filled cell wore only its column's id, so on a Strengths lens that crosses people with skills through a `strength` record, choosing Ryan × SEO selected SEO, and its line ran to the collapsed strengths' district — a stand-in for records the picture does not draw. A filled cell now says what it joins (`data-graview-joins`: its row, its column and the records on the path, `["p-ryan","sk-seo","st-ryan-seo"]`), and choosing it selects exactly those: on the Graview face the scene's selection is the three (`onPick` carries the joins; shift or ⌘ adds them), and on the routed face's `/places/<as>` the picture stays where it is, lit with its row and its column, instead of going to the column's page — the row's and the column's names still go to their pages. The lens draws the crossing's own lines, from the cell to the row's name and to the column's head, ending on each, inside the picture so they scroll with it; a stacked grid on a phone names the column inside the cell, so there the line is the row's. A record on the path gets a line only where it is drawn as itself, and nothing is drawn to a district: the scene's selection lines give way to a chosen crossing, and draw from the cell only to a joined record that has a card of its own on the stage. `verify-declared` chooses Ryan × SEO on both faces at 1440×900 and 390×844 and asks that each line ends on what it names and that no line goes to a district.
+
+Compatibility: unchanged for stored data, ops, tool schemas and the wire. A filled coverage cell keeps `data-graview-pick` (the column's id) and gains `data-graview-joins`; a host or test that read the scene's selection after a cell press reads the row, the column and the joining records where it read the column. The routed face's place page no longer navigates on a cell press. `capabilities().shipped` gains `FR-111`.

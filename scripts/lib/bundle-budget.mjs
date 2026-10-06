@@ -58,9 +58,11 @@ export const BUDGETS = [
      * page on the pages face carries neither. Measured at 495_604 / 167_798.
      *
      * With an address for a host's page (FR-106), fitted thumbnails (FR-107) and named steps (FR-108): measured at 497_188 / 168_599.
+     *
+     * Raised when a coverage cell came to be chosen where it is (FR-111) and a coverage grid to be described (FR-112): the describer the page's assistant reaches says a grid row by row, about 3.4 kB minified. Measured at 500_990 / 169_958.
      */
-    minified: 500_000,
-    gzipped: 170_000,
+    minified: 502_000,
+    gzipped: 171_000,
     load: "first",
   },
   {
@@ -197,9 +199,11 @@ export const BUDGETS = [
      * its own: measured at 1_478_987 / 438_466.
      *
      * With FR-106, FR-107 and FR-108 together: measured at 1_480_900 / 439_089.
+     *
+     * With a coverage cell drawn to what it joins (FR-111) and a coverage grid described (FR-112): measured at 1_488_256 / 441_710.
      */
-    minified: 1_486_000,
-    gzipped: 441_000,
+    minified: 1_490_000,
+    gzipped: 443_000,
     load: "all",
   },
   {
@@ -233,8 +237,9 @@ export const BUDGETS = [
     // And with every face's when a status board came to draw (FR-97): measured at 1_451_370 / 425_210, from 1_447_691 / 424_068.
     // And with every face's for FR-99, FR-100, FR-101 and FR-105: measured at 1_455_251 / 426_587.
     // With both, measured at 1_458_930 / 427_760.
-    minified: 1_470_000,
-    gzipped: 432_000,
+    // And with every face's when a coverage cell came to draw to what it joins (FR-111) and a coverage grid to be described (FR-112): measured at 1_472_916 / 432_823.
+    minified: 1_475_000,
+    gzipped: 434_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
