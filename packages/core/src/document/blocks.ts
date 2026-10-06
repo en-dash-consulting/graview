@@ -33,13 +33,14 @@ export type SpecBlock =
   | { readonly t: "title"; readonly parts: Parsed<readonly TemplatePart[]> }
   | { readonly t: "text" | "badge"; readonly parts: Parsed<readonly TemplatePart[]>; readonly tone?: Tone }
   | { readonly t: "field"; readonly field: string; readonly as?: (typeof VIEW_FIELD_FORMATS)[number]; readonly label?: string }
-  | { readonly t: "progress"; readonly value: Parsed<Expr>; readonly max: Parsed<Expr>; readonly label?: string }
+  /** A figure's and a meter's label is a template, read like a headline (FR-99). */
+  | { readonly t: "progress"; readonly value: Parsed<Expr>; readonly max: Parsed<Expr>; readonly label?: Parsed<readonly TemplatePart[]> }
   | { readonly t: "group"; readonly blocks: readonly SpecBlock[]; readonly direction: "row" | "column" }
   | { readonly t: "when"; readonly when: Parsed<Expr>; readonly show: readonly SpecBlock[] }
   | { readonly t: "divider" }
   | { readonly t: "figure" }
   | { readonly t: "headline"; readonly parts: Parsed<readonly TemplatePart[]> }
-  | { readonly t: "number"; readonly value: Parsed<Expr>; readonly as?: FigureFormat; readonly currency?: string; readonly label?: string }
+  | { readonly t: "number"; readonly value: Parsed<Expr>; readonly as?: FigureFormat; readonly currency?: string; readonly label?: Parsed<readonly TemplatePart[]> }
   | {
       readonly t: "list";
       /** The records, in their order: a `sort` by a key is part of the expression, `sort(<list>, <key>, <direction>)`. */
@@ -128,7 +129,7 @@ export function compileBlocks(blocks: readonly ViewBlock[] | readonly unknown[],
     if (has("figure") && typeof block["figure"] === "string") {
       const as = (FIGURE_FORMATS as readonly unknown[]).includes(block["as"]) ? (block["as"] as FigureFormat) : undefined;
       const currency = typeof block["currency"] === "string" && /^[A-Z]{3}$/.test(block["currency"]) ? block["currency"] : undefined;
-      return [{ t: "number", value: expr(block["figure"]), ...(as ? { as } : {}), ...(currency ? { currency } : {}), ...(label ? { label } : {}) }];
+      return [{ t: "number", value: expr(block["figure"]), ...(as ? { as } : {}), ...(currency ? { currency } : {}), ...(label ? { label: template(label) } : {}) }];
     }
     if (has("title")) return [{ t: "title", parts: template(block["title"]) }];
     if (has("text")) return [{ t: "text", parts: template(block["text"]), ...(tone ? { tone } : {}) }];
@@ -139,7 +140,7 @@ export function compileBlocks(blocks: readonly ViewBlock[] | readonly unknown[],
     }
     if (has("progress")) {
       const p = (block["progress"] ?? {}) as { value?: unknown; max?: unknown };
-      return [{ t: "progress", value: expr(p.value), max: expr(p.max), ...(label ? { label } : {}) }];
+      return [{ t: "progress", value: expr(p.value), max: expr(p.max), ...(label ? { label: template(label) } : {}) }];
     }
     if (has("group")) return [{ t: "group", blocks: compileBlocks(block["group"] as readonly unknown[], depth + 1), direction: block["direction"] === "row" ? "row" : "column" }];
     if (has("when")) return [{ t: "when", when: expr(block["when"]), show: compileBlocks(block["show"] as readonly unknown[], depth + 1) }];
@@ -332,12 +333,13 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Resolv
     case "progress": {
       const value = judge(block.value, ctx);
       const max = judge(block.max, ctx);
-      const label = block.label ?? "Progress";
-      const problem = !value.ok ? value.problem : !max.ok ? max.problem : undefined;
+      const said = block.label ? say(block.label, ctx) : { text: "Progress" };
+      const label = said.text;
+      const problem = !value.ok ? value.problem : !max.ok ? max.problem : said.problem;
       if (!(value.ok && max.ok && typeof value.value === "number" && typeof max.value === "number" && Number.isFinite(value.value) && Number.isFinite(max.value) && max.value > 0)) {
         return withProblem({ t: "progress", label, text: NOTHING }, problem);
       }
-      return { t: "progress", label, value: value.value, max: max.value, text: `${formatValue(value.value, undefined, ctx.today)} of ${formatValue(max.value, undefined, ctx.today)}` };
+      return withProblem({ t: "progress", label, value: value.value, max: max.value, text: `${formatValue(value.value, undefined, ctx.today)} of ${formatValue(max.value, undefined, ctx.today)}` }, problem);
     }
     case "group":
       return { t: "group", direction: block.direction, blocks: resolveBlocks(block.blocks, ctx) };
@@ -359,7 +361,8 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Resolv
     case "number": {
       const judged = judge(block.value, ctx);
       const text = !judged.ok || judged.value === null || typeof judged.value === "object" ? NOTHING : sayNumber(judged.value, block.as, block.currency, ctx.today);
-      return withProblem({ t: "number", text, ...(block.label ? { label: block.label } : {}) }, judged.ok ? undefined : judged.problem);
+      const said = block.label ? say(block.label, ctx) : undefined;
+      return withProblem({ t: "number", text, ...(said ? { label: said.text } : {}) }, judged.ok ? said?.problem : judged.problem);
     }
     case "list":
       return resolveList(block, ctx);

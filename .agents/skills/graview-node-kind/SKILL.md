@@ -151,8 +151,9 @@ only link drawn is an http(s) `url` field's own value, or a listed record.
 The scaffold's `views()` draws them (`registerViewSpecs`); so does the embed.
 
 Three blocks say more (FR-81, FR-82): `{ headline: "{count(out('includes'))}
-offers" }`; `{ figure: "net", as: "money", currency: "USD", label: "…" }`
-(`number`, `money`, `percent`; `figure: true` is still the picture); and
+offers" }`; `{ figure: "net", as: "money", label: "{name}, net" }`
+(`number`, `money`, `percent`; the label is a template; `figure: true` is
+still the picture); and
 `{ list: "out('includes')", as: "row", sort: { by: "net", direction: "desc" },
 limit: 5, group: { by: "type", headings: { pain: "What hurts" } }, empty:
 "None yet." }` — records by a walk or `all('kind')`, each drawn by its own

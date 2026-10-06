@@ -1,6 +1,6 @@
 import { analyzeExpr } from "./expr/analyze.js";
 import { ExprSyntaxError, parseExpr, type Expr } from "./expr/parse.js";
-import { error, type Finding } from "./findings.js";
+import { error, warning, type Finding } from "./findings.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { GraviewDocument } from "./schema.js";
 import { fieldSpecOf } from "./to-document.js";
@@ -267,7 +267,8 @@ function oneBlock(raw: unknown, path: string, depth: number, scope: Scope): void
         expression(value["value"], `${path}.progress.value`, scope);
         expression(value["max"], `${path}.progress.max`, scope);
       }
-      if ("label" in raw) label(raw["label"], `${path}.label`, scope);
+      // A meter's label is a template, like a figure's (FR-99).
+      if ("label" in raw) template(raw["label"], `${path}.label`, scope);
       return;
     }
     case "group":
@@ -301,7 +302,8 @@ function figureBlock(raw: Record<string, unknown>, path: string, scope: Scope): 
     if (typeof raw["currency"] !== "string" || !/^[A-Z]{3}$/.test(raw["currency"])) scope.findings.push(error("view-currency", `${path}.currency`, 'a currency is its three-letter code, like "USD" or "EUR"'));
     else if (raw["as"] !== "money") scope.findings.push(error("view-currency", `${path}.currency`, "a currency belongs on a figure shown as money", 'add "as": "money"'));
   }
-  if ("label" in raw) label(raw["label"], `${path}.label`, scope);
+  // A figure's label is a template, like a headline (FR-99): "{name}, net".
+  if ("label" in raw) template(raw["label"], `${path}.label`, scope);
 }
 
 /**
@@ -425,18 +427,28 @@ function listBlock(raw: Record<string, unknown>, path: string, scope: Scope): vo
         const headings = group["headings"];
         if (!isObject(headings) || Object.values(headings).some((words) => typeof words !== "string" || words.length === 0 || words.length > 80)) {
           scope.findings.push(error("list-group", `${path}.group.headings`, 'headings are words per choice, like {"pain": "What hurts"}, at most 80 characters each'));
-        } else if (choices) {
-          for (const choice of Object.keys(headings)) if (!choices.includes(choice)) scope.findings.push(error("list-group", `${path}.group.headings.${choice}`, `"${choice}" is not one of ${by}'s choices`, `use ${choices.join(", ")}`));
+        } else {
+          if (choices) for (const choice of Object.keys(headings)) if (!choices.includes(choice)) scope.findings.push(error("list-group", `${path}.group.headings.${choice}`, `"${choice}" is not one of ${by}'s choices`, `use ${choices.join(", ")}`));
+          for (const [choice, words] of Object.entries(headings)) braces(words, `${path}.group.headings.${choice}`, scope, "a group's heading");
         }
       }
     }
   }
   if ("empty" in raw && (typeof raw["empty"] !== "string" || raw["empty"].length === 0 || raw["empty"].length > 200)) scope.findings.push(error("list-empty", `${path}.empty`, "what an empty list says is a sentence, at most 200 characters"));
+  else braces(raw["empty"], `${path}.empty`, scope, "what an empty list says");
   if ("as" in raw && !(LIST_AS as readonly unknown[]).includes(raw["as"])) scope.findings.push(error("list-as", `${path}.as`, `a list draws each record as its "card" or its "row", not "${String(raw["as"])}"`));
 }
 
 function label(value: unknown, path: string, scope: Scope): void {
   if (typeof value !== "string" || value.length === 0 || value.length > 60) scope.findings.push(error("view-label", path, "a label is a few words, at most 60 characters"));
+  else braces(value, path, scope, "a field's label");
+}
+
+/** Braces in words that are no template would be drawn as written (FR-99): said at the block's path, never drawn raw unannounced. */
+function braces(value: unknown, path: string, scope: Scope, what: string): void {
+  if (typeof value === "string" && /[{}]/.test(value)) {
+    scope.findings.push(warning("view-braces", path, `${what} is words, not a template, so "${value}" would be drawn with its braces`, 'say it without braces, or say the value in a text block: {"text": "… {name} …"}'));
+  }
 }
 
 /** Blocks about no one record — the home, a blocks lens — checked at `at`. */

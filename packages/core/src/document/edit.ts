@@ -1854,6 +1854,8 @@ function rewriteBlock(doc: Doc, b: Record<string, unknown>, ctx: Kinds, r: Renam
   const next = { ...b };
   for (const key of ["title", "text", "badge", "headline"]) if (typeof next[key] === "string") next[key] = rewriteTemplate(doc, next[key] as string, ctx, r);
   if (typeof next["figure"] === "string") next["figure"] = rewriteExpr(doc, next["figure"], ctx, r);
+  // A figure's and a meter's label is a template (FR-99); a field's is words.
+  if ((typeof next["figure"] === "string" || "progress" in next) && typeof next["label"] === "string") next["label"] = rewriteTemplate(doc, next["label"], ctx, r);
   if (typeof next["list"] === "string") {
     const members = listMembers(doc, next["list"], ctx);
     next["list"] = rewriteExpr(doc, next["list"], ctx, r);
@@ -1886,6 +1888,11 @@ function pruneBlock(doc: Doc, b: Record<string, unknown>, ctx: Kinds, r: Rename,
   if (isObject(b["tone"]) && exprMentions(doc, b["tone"]["expr"] as string, ctx, r)) return null;
   if (typeof b["when"] === "string" && exprMentions(doc, b["when"], ctx, r)) return null;
   if (isObject(b["progress"])) for (const k of ["value", "max"]) if (exprMentions(doc, (b["progress"] as Record<string, string>)[k], ctx, r)) return null;
+  // A label that says what is gone goes; the figure or meter stays (FR-99).
+  if ((typeof b["figure"] === "string" || "progress" in b) && typeof b["label"] === "string" && templateMentions(doc, b["label"], ctx, r)) {
+    const { label: _gone, ...kept } = b;
+    return kept;
+  }
   if (typeof b["list"] === "string") {
     if (exprMentions(doc, b["list"], ctx, r)) return null;
     const members = listMembers(doc, b["list"], ctx);
