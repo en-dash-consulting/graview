@@ -111,6 +111,14 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    */
   readonly writes?: readonly string[];
   /**
+   * Fields of the SUBJECT this mutation sets to a fixed value, whatever it
+   * is told: `mark-fixed` sets `status` to `"fixed"`. A named step, read as
+   * one — a status board offers it as the move to that value's column
+   * (FR-108). A document's act has it worked out from its `sets`; a
+   * mutation written in TypeScript says it, as it says `writes`.
+   */
+  readonly sets?: Readonly<Record<string, string | number | boolean>>;
+  /**
    * Node KINDS this mutation's own logic reads — what `apply` and
    * `describe` look at in the graph beyond the records it is handed.
    *

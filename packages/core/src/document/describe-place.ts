@@ -2,7 +2,7 @@ import type { AnyGraphNode, GraphReader, GraviewApp, Principal, Store } from "..
 import { declaredLenses, orderKinds, placesOf, type AppPlace } from "../places.js";
 import type { AnySchema } from "../schema/schema.js";
 import { fieldWords, isCurrent, labelOf, readableFields } from "../schema/define-node.js";
-import { columnOf, statusColumns } from "../columns.js";
+import { columnMoves, columnOf, statusColumns } from "../columns.js";
 import { compileBlocks, fieldSpecsOf, resolveBlocks, type BlockContext, type ResolvedBlock } from "./blocks.js";
 import { withComputed } from "./computed-values.js";
 import { shapesOfSchema } from "./rules.js";
@@ -276,6 +276,11 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
           .filter(({ column, items }) => column.value !== null || items.length > 0)
           .map(({ column, items }) => ({ heading: `${column.label} (${items.length})`, items }));
         parts.push({ t: "list", as: "card", columns: 1, groups });
+        // The moves this seat's board offers (FR-108), column by column, each by the act it runs — read from its own cards, so a step's condition counts.
+        const by = new Map<string, Set<string>>();
+        for (const node of members) for (const move of columnMoves(store, principal, node as never, field, columns)) by.set(move.to, (by.get(move.to) ?? new Set()).add(`"${move.title}"`));
+        const ways = columns.filter((column) => column.value !== null && by.has(column.value)).map((column) => `to ${column.label} by ${[...by.get(column.value!)!].join(" or ")}`);
+        parts.push({ t: "text", text: ways.length > 0 ? `Moves: ${ways.join("; ")}.` : "Moves: none for this seat." });
       }
     } else if (lens) {
       // A picture's geometry is not words: say what it is over, and the records it draws.

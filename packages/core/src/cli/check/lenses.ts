@@ -16,6 +16,8 @@ import type { AnySchema } from "../../schema/schema.js";
 import type { CheckContext } from "./context.js";
 import { arrangementFindings, bindsOf, declaredLenses, isShippedLens, requiredRolesOf } from "../../places.js";
 import { fieldOf } from "./context.js";
+import { columnReach } from "../../columns.js";
+import { deriveMutations } from "../../mutations/derive-edits.js";
 
 export function checkShippedLenses<S extends AnySchema>(ctx: CheckContext<S>): void {
   const { app, add } = ctx;
@@ -292,8 +294,32 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
  * to refuse an app that used to compile, and every one is at its path.
  */
 export function checkDeclaredLenses<S extends AnySchema>(ctx: CheckContext<S>): void {
-  for (const finding of declaredLenses(ctx.app).findings) {
+  const declared = declaredLenses(ctx.app);
+  for (const finding of declared.findings) {
     ctx.add({ severity: finding.severity, code: finding.code, where: finding.path, message: finding.message, fix: finding.fix });
+  }
+  /*
+   * A STATUS BOARD WITH A COLUMN NOTHING MOVES A CARD INTO (FR-108): a note,
+   * not a warning — a column a record only starts in, or only an import
+   * sets, is a design — but one the author should have chosen.
+   */
+  const own = ctx.app.mutations ?? [];
+  const acts = [...own, ...deriveMutations(ctx.app.schema, own)];
+  for (const lens of declared.drawn.filter((one) => one.lens === "columns")) {
+    for (const [kind, roles] of Object.entries((lens.options["bindings"] ?? {}) as Record<string, { column?: string }>)) {
+      if (!roles.column) continue;
+      const reach = columnReach(ctx.app.schema, acts, kind, roles.column);
+      const unreached = reach.filter((one) => one.by === "none");
+      // A board nothing moves on at all is a picture of where things stand, and `describe` says so; the note is for the gaps in one that moves.
+      if (unreached.length === 0 || unreached.length === reach.length) continue;
+      ctx.add({
+        severity: "note",
+        code: "lens-column-unreached",
+        where: `lenses.${lens.index}.bindings.${kind}.column`,
+        message: `"${lens.title}" has ${unreached.length === 1 ? "a column" : "columns"} no act moves a card into: ${unreached.map((one) => one.label).join(", ")}.`,
+        fix: `Give ${kind} an act that sets ${roles.column} to ${unreached.map((one) => `"${one.value}"`).join(" or ")} (a named step), or one that takes the ${roles.column} it is given.`,
+      });
+    }
   }
 }
 

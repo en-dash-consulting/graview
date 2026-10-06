@@ -19,9 +19,10 @@ import { withMore } from "./more.js";
  * link to itself, as a listed record is everywhere else.
  *
  * MOVING A CARD IS AN ACT, NOT A FEATURE OF THE LENS. The moves a seat is
- * offered are the acts the declaration already has that set the field and
- * can be told the value, which this seat's policy lets it run
- * (`columnMoves`). A move runs that act as the seat, through the store: it
+ * offered are the acts the declaration already has that set the field —
+ * a named step to its own column where its condition holds for the card,
+ * otherwise an act told the value — which this seat's policy lets it run
+ * (`columnMoves`, FR-108). A move runs that act as the seat, through the store: it
  * is in the log with its author, and one undo puts the card back. A seat
  * with no such act sees no control to move anything — not a disabled one.
  * Two ways to move, the same act: drag a card onto a column, or press its
