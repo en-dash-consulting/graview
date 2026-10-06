@@ -560,6 +560,15 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
     const severs = [...new Set(effects.flatMap((e) => ("sever" in e ? [e.sever] : [])))];
     // An act WRITES only what it sets on its subject; setting fields on a record it just made is part of making it.
     const writes = [...new Set(effects.flatMap((e) => ("set" in e && !("create" in e) && (refName(e.target ?? "$subject") === "subject") ? Object.keys(e.set) : [])))];
+    // What it sets on its subject to a fixed value, whatever it is told — a named step (FR-108), resolved as `apply` resolves a literal.
+    const sets: Record<string, string | number | boolean> = {};
+    for (const e of effects) {
+      if (!("set" in e) || "create" in e || refName(e.target ?? "$subject") !== "subject") continue;
+      for (const [field, v] of Object.entries(e.set ?? {})) {
+        if ((typeof v === "string" && refName(v) === undefined) || typeof v === "number" || typeof v === "boolean") sets[field] = typeof v === "string" && v.startsWith("$$") ? v.slice(1) : v;
+        else delete sets[field];
+      }
+    }
     /*
      * Twice is once when nothing is made and every value set is given
      * (a literal or an argument), never computed from what is there.
@@ -586,6 +595,7 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
         ...(connects.length > 0 ? { connects } : {}),
         ...(severs.length > 0 ? { severs } : {}),
         ...(writes.length > 0 ? { writes } : {}),
+        ...(Object.keys(sets).length > 0 ? { sets } : {}),
         describe: (input: Record<string, unknown>, graph: GraphReader) => {
           const subject = typeof input[SUBJECT_ARG] === "string" ? graph.getNode(input[SUBJECT_ARG] as string) : undefined;
           const what = subject ? labelFor(subject) : Object.values(input).find((v) => typeof v === "string");

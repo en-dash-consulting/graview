@@ -1,0 +1,326 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Bug bash",
+  "description": "Everything found broken before a launch or a handover, where it is, how bad it is, and who is fixing it.",
+  "kinds": {
+    "issue": {
+      "noun": "issue",
+      "plural": "issues",
+      "description": "Something that's broken or not finished.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "severity": {
+          "type": "enum",
+          "options": [
+            "blocker",
+            "major",
+            "minor",
+            "cosmetic"
+          ],
+          "default": "minor",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "open",
+            "fixing",
+            "fixed",
+            "won't fix"
+          ],
+          "default": "open",
+          "required": true
+        },
+        "steps": {
+          "type": "text",
+          "description": "how to see it happen"
+        },
+        "fixedOn": {
+          "type": "date",
+          "label": "Fixed on"
+        }
+      },
+      "glance": [
+        "title",
+        "severity",
+        "status"
+      ],
+      "describe": "{severity} · {status}",
+      "edges": {
+        "area": {
+          "to": [
+            "area"
+          ],
+          "cardinality": "one",
+          "description": "where it is",
+          "inverse": "issues here"
+        },
+        "owner": {
+          "to": [
+            "person"
+          ],
+          "cardinality": "one",
+          "description": "who is fixing it",
+          "inverse": "their issues"
+        }
+      }
+    },
+    "area": {
+      "noun": "area",
+      "plural": "areas",
+      "description": "A part of the thing being checked: a screen, a feature, a room.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    "person": {
+      "noun": "person",
+      "plural": "people",
+      "description": "Someone who fixes things.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-issue": {
+      "title": "Report an issue",
+      "creates": "issue",
+      "description": "Write down something broken, and how bad it is."
+    },
+    "report-here": {
+      "title": "Report an issue here",
+      "on": "area",
+      "args": {
+        "title": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "effects": [
+        {
+          "create": "issue",
+          "as": "new",
+          "set": {
+            "title": "$title",
+            "severity": "$severity",
+            "steps": "$steps"
+          }
+        },
+        {
+          "connect": "area",
+          "from": "$new",
+          "to": "$subject"
+        }
+      ],
+      "description": "Write down something broken in this area, how bad it is and how to see it."
+    },
+    "set-severity": {
+      "title": "Change how bad",
+      "on": "issue",
+      "writes": [
+        "severity"
+      ],
+      "description": "Say how bad an issue is: blocker, major, minor or cosmetic."
+    },
+    "start-fixing": {
+      "title": "Start fixing",
+      "on": "issue",
+      "sets": {
+        "status": "fixing"
+      },
+      "description": "Record that someone is working on an issue."
+    },
+    "mark-fixed": {
+      "title": "Fixed",
+      "on": "issue",
+      "sets": {
+        "status": "fixed",
+        "fixedOn": "$today"
+      },
+      "description": "Record that an issue is fixed, and when."
+    },
+    "wont-fix": {
+      "title": "Won't fix",
+      "on": "issue",
+      "sets": {
+        "status": "won't fix"
+      },
+      "description": "Decide an issue is not worth fixing."
+    },
+    "reopen": {
+      "title": "Reopen",
+      "on": "issue",
+      "sets": {
+        "status": "open"
+      },
+      "description": "Reopen an issue that came back or was closed too soon."
+    },
+    "move-to-area": {
+      "title": "Move to an area",
+      "on": "issue",
+      "connects": "area",
+      "description": "Say which area an issue is in.",
+      "fromTheOtherEnd": "Move one of our issues here"
+    },
+    "take-out-of-area": {
+      "title": "Take out of its area",
+      "on": "issue",
+      "severs": "area",
+      "description": "Say an issue is not in the area it was filed under.",
+      "fromTheOtherEnd": "Take an issue out of here"
+    },
+    "give-to": {
+      "title": "Give to someone",
+      "on": "issue",
+      "connects": "owner",
+      "description": "Say who is fixing an issue, in place of whoever was.",
+      "fromTheOtherEnd": "Give them one of our issues"
+    },
+    "take-off": {
+      "title": "Take off them",
+      "on": "issue",
+      "severs": "owner",
+      "description": "Take a person off an issue.",
+      "fromTheOtherEnd": "Take an issue off them"
+    },
+    "add-area": {
+      "title": "Add an area",
+      "creates": "area",
+      "description": "Add a part of the thing being checked, to group issues by."
+    },
+    "add-person": {
+      "title": "Add a person",
+      "creates": "person",
+      "description": "Add someone who fixes things."
+    }
+  },
+  "rules": {
+    "blocker-has-owner": {
+      "title": "Every open blocker has somebody on it",
+      "description": "A blocker nobody owns is the one still open on launch day.",
+      "over": "issue",
+      "when": "severity == 'blocker' && (status == 'open' || status == 'fixing')",
+      "require": "present(owner)",
+      "says": "{title} is a blocker and nobody owns it",
+      "repairs": [
+        {
+          "act": "give-to",
+          "label": "Give it to someone"
+        }
+      ]
+    },
+    "fixing-has-owner": {
+      "title": "An issue being fixed says who is fixing it",
+      "over": "issue",
+      "when": "status == 'fixing' && severity != 'blocker'",
+      "require": "present(owner)",
+      "says": "{title} is being fixed but nobody's name is on it",
+      "repairs": [
+        {
+          "act": "give-to",
+          "label": "Say who's fixing it"
+        },
+        {
+          "act": "reopen",
+          "label": "Nobody is; reopen it"
+        }
+      ]
+    }
+  },
+  "roles": [
+    "owner",
+    "editor",
+    "viewer"
+  ],
+  "policy": {
+    "grants": [
+      {
+        "roles": [
+          "owner",
+          "editor"
+        ],
+        "mutations": "*",
+        "describe": "Owners and editors may do everything; viewers can look."
+      }
+    ]
+  },
+  "brand": {
+    "accent": "#4a5a70"
+  },
+  "lenses": [
+    {
+      "name": "columns",
+      "title": "Issues by status",
+      "bindings": {
+        "issue": {
+          "column": "status"
+        }
+      }
+    },
+    {
+      "name": "coverage",
+      "title": "Bugs by area",
+      "binds": "entities",
+      "requiredRoles": [
+        "rows",
+        "columns",
+        "link"
+      ],
+      "bindings": {
+        "rows": {
+          "kind": "issue"
+        },
+        "columns": {
+          "kind": "area"
+        },
+        "link": {
+          "edge": "area"
+        }
+      }
+    },
+    {
+      "name": "coverage",
+      "title": "Who has what",
+      "binds": "entities",
+      "requiredRoles": [
+        "rows",
+        "columns",
+        "link"
+      ],
+      "bindings": {
+        "rows": {
+          "kind": "issue"
+        },
+        "columns": {
+          "kind": "person"
+        },
+        "link": {
+          "edge": "owner"
+        }
+      }
+    },
+    {
+      "name": "calendar",
+      "title": "Fixed, by day",
+      "requiredRoles": [
+        "start"
+      ],
+      "bindings": {
+        "issue": {
+          "start": "fixedOn"
+        }
+      }
+    }
+  ]
+}

@@ -34,7 +34,11 @@ Everything a Graview app declares, and the checker that verifies it.
 - **The city** — `@graview/core/scene`: `sceneThumbnail` draws a document
   (or an app) as the Scene draws it from altitude — the same districts on
   the same map, in their hues — as one SVG string, with no DOM, for a host
-  listing apps; `sceneDistricts` is the same answer as data. A kind's
+  listing apps; `sceneDistricts` is the same answer as data. At a card's
+  size, `fit: "content"` fits it to what stands: each district on its whole
+  block from the same corner, cropped to the plots, with a few blocks no
+  narrower than `minBuilding` pixels (16 by default) rather than a speck per
+  record. A kind's
   figures are `@graview/core/figures`.
 - **What a page loads first** — `@graview/core` and `@graview/core/document`
   hold only what a page draws with. The checker, the city, the figures and
@@ -43,6 +47,11 @@ Everything a Graview app declares, and the checker that verifies it.
   barrels up front, and would otherwise carry them before a face is fetched.
 - **Conformance** — `@graview/core/conformance`: fixtures a host runs against
   a version (`conformance()`) to prove it reads, compiles and derives the same.
+- **A status board's moves** — `@graview/core/describe`: `columnReach` says
+  which acts move a card to which column — the named steps that set the
+  field to that column's value, or else an act told the value — and
+  `columnMoves` the ones one seat may run on one record, its conditions
+  judged.
 
 ```sh
 npx graview create my-app          # a product on Graview, started (also: npm create graview)

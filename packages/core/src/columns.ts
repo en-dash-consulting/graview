@@ -1,3 +1,4 @@
+import { compileMutation } from "./mutations/define-mutation.js";
 import { fieldsWrittenBy, subjectKindsOf } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import type { Principal } from "./permissions/types.js";
@@ -81,41 +82,92 @@ export interface ColumnMove {
  * THE MOVES A SEAT MAY MAKE WITH ONE RECORD, derived from the acts rather
  * than invented by the lens.
  *
- * A move to a column is offered only where an act the declaration has —
- * declared, or the derived edit of the kind when nothing else writes the
- * field — says it writes the field (`writes`, read as the checker reads
- * it), stands on this record's kind, and can be TOLD the value: its input
- * takes the record as its subject and the value under the field's own
- * name, and nothing else it requires. "Finish" writes the status and has
- * no opinion you can hand it, so it moves nothing here. Then the store is
- * asked whether this seat may run that exact call (`store.permits`, the
- * answer `apply` would give). A seat with no such act has no moves, and a
- * board drawn for it offers none. The first act that can make a move is
- * the one it runs, in the order the declaration gives them; declared acts
- * before the derived edit.
+ * Two kinds of act move a card, read from the declaration (`columnReach`):
+ *
+ *  - A NAMED STEP (FR-108) sets the field to one value whatever it is told
+ *    — `book`, `mark-fixed`, `reopen` — and is the move to that value's
+ *    column. It is called with the record alone, so a step that needs
+ *    anything else the board cannot supply (a reason, a date, another
+ *    record) is not offered.
+ *  - A FREE ACT writes the field (`writes`, read as the checker reads it)
+ *    and can be TOLD the value: its input takes the record as its subject
+ *    and the value under the field's own name, and nothing else it
+ *    requires — `set-status`, or the kind's derived edit when nothing
+ *    declared writes the field.
+ *
+ * A column a named step reaches is reached ONLY by its steps: the step
+ * wins over a free act, and where the step's condition does not hold for
+ * this record the free act does not stand in for it — the condition, and
+ * what the step also records, are never skipped by a drag.
+ *
+ * Each candidate call is then asked two things, in the order of the acts
+ * (declared order, the derived edit last): may this seat run it
+ * (`store.permits`, the answer `apply` would give), and would it run for
+ * THIS record — compiled against the graph without applying, so its
+ * `allowedWhen` is judged by the rule language under its budget and a
+ * refusal is no move. The first that passes is the move; a seat with no
+ * such act has no moves, and a board drawn for it offers none. The cost is
+ * at most one compile per act per column per card, and a column stops at
+ * the first act that passes.
  */
 export function columnMoves<S extends AnySchema>(store: Store<S>, principal: Principal, record: { readonly id: string; readonly kind: string } & Readonly<Record<string, unknown>>, field: string, columns: readonly StatusColumn[] = statusColumns(store.schema, record.kind, field)): readonly ColumnMove[] {
-  const acts = columnActs(store.schema, store.allMutations(), record.kind, field);
+  const reach = columnReach(store.schema, store.allMutations(), record.kind, field, columns);
   const here = columnOf(record, field, columns);
   const moves: ColumnMove[] = [];
-  for (const column of columns) {
-    if (column.value === null || column.value === here) continue;
+  for (const { value, by, acts } of reach) {
+    if (value === here) continue;
     for (const act of acts) {
-      const call: MutationCall = { name: act.name, args: { [act.subject!.arg]: record.id, [field]: column.value } };
-      if (!(act.input as unknown as { safeParse(value: unknown): { success: boolean } }).safeParse(call.args).success) continue;
+      const args: Record<string, unknown> = by === "step" ? { [act.subject!.arg]: record.id } : { [act.subject!.arg]: record.id, [field]: value };
+      const call: MutationCall = { name: act.name, args };
+      if (!(act.input as unknown as { safeParse(value: unknown): { success: boolean } }).safeParse(args).success) continue;
       if (!store.permits(call, principal).ok) continue;
-      moves.push({ to: column.value, call, title: act.title ?? act.name });
+      try {
+        compileMutation(store.graph, act, args);
+      } catch {
+        continue;
+      }
+      moves.push({ to: value, call, title: act.title ?? act.name });
       break;
     }
   }
   return moves;
 }
 
+/** One column, and the acts that may move a record into it: its named steps, or else the free acts that take the value. */
+export interface ColumnReach<S extends AnySchema = AnySchema> {
+  readonly value: string;
+  readonly label: string;
+  /** `step` when named steps reach it (and only they do), `value` when free acts are told the value, `none` when nothing does. */
+  readonly by: "step" | "value" | "none";
+  readonly acts: readonly AnyMutationDefinition<S>[];
+}
+
 /**
- * The acts that could move a record of this kind between columns, for any
- * seat: they write the field, stand on the kind, and take the value under
- * the field's own name. Declared acts first, then the derived edit. What
- * `graview describe` names, and what `columnMoves` asks the policy about.
+ * WHICH ACTS REACH WHICH COLUMN, for any seat (FR-108): each column with a
+ * value, with the named steps that set the field to it, in declared order —
+ * or, where no step does, the free acts that take the value (`columnActs`).
+ * What `graview describe` says column by column, and what `columnMoves`
+ * asks the policy and the record about.
+ */
+export function columnReach<S extends AnySchema>(schema: S, mutations: readonly AnyMutationDefinition<S>[], kind: string, field: string, columns: readonly StatusColumn[] = statusColumns(schema, kind, field)): readonly ColumnReach<S>[] {
+  const steps = columnSteps(schema, mutations, kind, field);
+  const free = columnActs(schema, mutations, kind, field);
+  return columns.flatMap((column): ColumnReach<S>[] => {
+    if (column.value === null) return [];
+    const here = steps.filter((act) => act.sets?.[field] === column.value);
+    return [{ value: column.value, label: column.label, by: here.length > 0 ? "step" : free.length > 0 ? "value" : "none", acts: here.length > 0 ? here : free }];
+  });
+}
+
+/** The named steps of a kind's field: acts that stand on the kind and set the field to a value of their own (`sets`), in declared order. */
+export function columnSteps<S extends AnySchema>(schema: S, mutations: readonly AnyMutationDefinition<S>[], kind: string, field: string): readonly AnyMutationDefinition<S>[] {
+  return mutations.filter((mutation) => mutation.subject !== undefined && mutation.derived === undefined && typeof mutation.sets?.[field] === "string" && subjectKindsOf(schema, mutation).includes(kind));
+}
+
+/**
+ * The free acts that could move a record of this kind between columns, for
+ * any seat: they write the field, stand on the kind, and take the value
+ * under the field's own name. Declared acts first, then the derived edit.
  */
 export function columnActs<S extends AnySchema>(schema: S, mutations: readonly AnyMutationDefinition<S>[], kind: string, field: string): readonly AnyMutationDefinition<S>[] {
   const definition = schema.tryDefinition(kind);

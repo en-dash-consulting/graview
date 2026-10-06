@@ -1,0 +1,4728 @@
+[
+ {
+  "id": "bug-bash",
+  "counts": {
+   "area": 1,
+   "person": 1,
+   "issue": 3
+  },
+  "document": {
+   "format": "graview-document",
+   "formatVersion": 1,
+   "name": "Bug bash",
+   "description": "Everything found broken before a launch or a handover, where it is, how bad it is, and who is fixing it.",
+   "kinds": {
+    "issue": {
+     "noun": "issue",
+     "plural": "issues",
+     "description": "Something that's broken or not finished.",
+     "fields": {
+      "title": {
+       "type": "string",
+       "required": true
+      },
+      "severity": {
+       "type": "enum",
+       "options": [
+        "blocker",
+        "major",
+        "minor",
+        "cosmetic"
+       ],
+       "default": "minor",
+       "required": true
+      },
+      "status": {
+       "type": "enum",
+       "options": [
+        "open",
+        "fixing",
+        "fixed",
+        "won't fix"
+       ],
+       "default": "open",
+       "required": true
+      },
+      "steps": {
+       "type": "text",
+       "description": "how to see it happen"
+      },
+      "fixedOn": {
+       "type": "date",
+       "label": "Fixed on"
+      }
+     },
+     "glance": [
+      "title",
+      "severity",
+      "status"
+     ],
+     "describe": "{severity} · {status}",
+     "edges": {
+      "area": {
+       "to": [
+        "area"
+       ],
+       "cardinality": "one",
+       "description": "where it is",
+       "inverse": "issues here"
+      },
+      "owner": {
+       "to": [
+        "person"
+       ],
+       "cardinality": "one",
+       "description": "who is fixing it",
+       "inverse": "their issues"
+      }
+     }
+    },
+    "area": {
+     "noun": "area",
+     "plural": "areas",
+     "description": "A part of the thing being checked: a screen, a feature, a room.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      }
+     }
+    },
+    "person": {
+     "noun": "person",
+     "plural": "people",
+     "description": "Someone who fixes things.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      }
+     }
+    }
+   },
+   "acts": {
+    "add-issue": {
+     "title": "Report an issue",
+     "creates": "issue",
+     "description": "Write down something broken, and how bad it is."
+    },
+    "report-here": {
+     "title": "Report an issue here",
+     "on": "area",
+     "args": {
+      "title": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "issue",
+       "as": "new",
+       "set": {
+        "title": "$title",
+        "severity": "$severity",
+        "steps": "$steps"
+       }
+      },
+      {
+       "connect": "area",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Write down something broken in this area, how bad it is and how to see it."
+    },
+    "set-severity": {
+     "title": "Change how bad",
+     "on": "issue",
+     "writes": [
+      "severity"
+     ],
+     "description": "Say how bad an issue is: blocker, major, minor or cosmetic."
+    },
+    "start-fixing": {
+     "title": "Start fixing",
+     "on": "issue",
+     "sets": {
+      "status": "fixing"
+     },
+     "description": "Record that someone is working on an issue."
+    },
+    "mark-fixed": {
+     "title": "Fixed",
+     "on": "issue",
+     "sets": {
+      "status": "fixed",
+      "fixedOn": "$today"
+     },
+     "description": "Record that an issue is fixed, and when."
+    },
+    "wont-fix": {
+     "title": "Won't fix",
+     "on": "issue",
+     "sets": {
+      "status": "won't fix"
+     },
+     "description": "Decide an issue is not worth fixing."
+    },
+    "reopen": {
+     "title": "Reopen",
+     "on": "issue",
+     "sets": {
+      "status": "open"
+     },
+     "description": "Reopen an issue that came back or was closed too soon."
+    },
+    "move-to-area": {
+     "title": "Move to an area",
+     "on": "issue",
+     "connects": "area",
+     "description": "Say which area an issue is in.",
+     "fromTheOtherEnd": "Move one of our issues here"
+    },
+    "take-out-of-area": {
+     "title": "Take out of its area",
+     "on": "issue",
+     "severs": "area",
+     "description": "Say an issue is not in the area it was filed under.",
+     "fromTheOtherEnd": "Take an issue out of here"
+    },
+    "give-to": {
+     "title": "Give to someone",
+     "on": "issue",
+     "connects": "owner",
+     "description": "Say who is fixing an issue, in place of whoever was.",
+     "fromTheOtherEnd": "Give them one of our issues"
+    },
+    "take-off": {
+     "title": "Take off them",
+     "on": "issue",
+     "severs": "owner",
+     "description": "Take a person off an issue.",
+     "fromTheOtherEnd": "Take an issue off them"
+    },
+    "add-area": {
+     "title": "Add an area",
+     "creates": "area",
+     "description": "Add a part of the thing being checked, to group issues by."
+    },
+    "add-person": {
+     "title": "Add a person",
+     "creates": "person",
+     "description": "Add someone who fixes things."
+    },
+    "set-status": {
+     "title": "Set the status",
+     "on": "issue",
+     "sets": {
+      "status": "$status"
+     },
+     "description": "Move it to any status, as a status board does. The named steps stay for what they also record."
+    }
+   },
+   "rules": {
+    "blocker-has-owner": {
+     "title": "Every open blocker has somebody on it",
+     "description": "A blocker nobody owns is the one still open on launch day.",
+     "over": "issue",
+     "when": "severity == 'blocker' && (status == 'open' || status == 'fixing')",
+     "require": "present(owner)",
+     "says": "{title} is a blocker and nobody owns it",
+     "repairs": [
+      {
+       "act": "give-to",
+       "label": "Give it to someone"
+      }
+     ]
+    },
+    "fixing-has-owner": {
+     "title": "An issue being fixed says who is fixing it",
+     "over": "issue",
+     "when": "status == 'fixing' && severity != 'blocker'",
+     "require": "present(owner)",
+     "says": "{title} is being fixed but nobody's name is on it",
+     "repairs": [
+      {
+       "act": "give-to",
+       "label": "Say who's fixing it"
+      },
+      {
+       "act": "reopen",
+       "label": "Nobody is; reopen it"
+      }
+     ]
+    }
+   },
+   "roles": [
+    "owner",
+    "editor",
+    "viewer"
+   ],
+   "policy": {
+    "grants": [
+     {
+      "roles": [
+       "owner",
+       "editor"
+      ],
+      "mutations": "*",
+      "describe": "Owners and editors may do everything; viewers can look."
+     }
+    ]
+   },
+   "brand": {
+    "accent": "#4a5a70"
+   },
+   "lenses": [
+    {
+     "name": "columns",
+     "title": "Issues by status",
+     "bindings": {
+      "issue": {
+       "column": "status"
+      }
+     }
+    },
+    {
+     "name": "coverage",
+     "title": "Bugs by area",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "issue"
+      },
+      "columns": {
+       "kind": "area"
+      },
+      "link": {
+       "edge": "area"
+      }
+     }
+    },
+    {
+     "name": "coverage",
+     "title": "Who has what",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "issue"
+      },
+      "columns": {
+       "kind": "person"
+      },
+      "link": {
+       "edge": "owner"
+      }
+     }
+    },
+    {
+     "name": "calendar",
+     "title": "Fixed, by day",
+     "requiredRoles": [
+      "start"
+     ],
+     "bindings": {
+      "issue": {
+       "start": "fixedOn"
+      }
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "club-season",
+  "counts": {
+   "fixture": 1,
+   "player": 2,
+   "availability": 2
+  },
+  "document": {
+   "format": "graview-document",
+   "formatVersion": 1,
+   "name": "Club season",
+   "description": "The season's fixtures, the players in the squad, and who has said they can play in each.",
+   "kinds": {
+    "fixture": {
+     "noun": "fixture",
+     "plural": "fixtures",
+     "description": "A match on the calendar, against an opponent.",
+     "fields": {
+      "opponent": {
+       "type": "string",
+       "required": true
+      },
+      "date": {
+       "type": "date"
+      },
+      "home": {
+       "type": "boolean",
+       "description": "whether we are playing at home"
+      },
+      "needed": {
+       "type": "integer",
+       "required": true,
+       "default": 11,
+       "label": "Players needed"
+      },
+      "status": {
+       "type": "enum",
+       "options": [
+        "upcoming",
+        "played",
+        "cancelled"
+       ],
+       "default": "upcoming",
+       "required": true
+      },
+      "result": {
+       "type": "string"
+      }
+     },
+     "glance": [
+      "opponent",
+      "date",
+      "status"
+     ],
+     "describe": "{date|date} · {status}",
+     "lifecycle": {
+      "field": "status",
+      "retired": [
+       "cancelled"
+      ]
+     }
+    },
+    "player": {
+     "noun": "player",
+     "plural": "players",
+     "description": "Someone in the squad.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "position": {
+       "type": "string"
+      },
+      "phone": {
+       "type": "string"
+      }
+     }
+    },
+    "availability": {
+     "noun": "availability",
+     "plural": "availabilities",
+     "description": "One player's answer for one fixture: can they play?",
+     "fields": {
+      "answer": {
+       "type": "enum",
+       "options": [
+        "available",
+        "maybe",
+        "unavailable"
+       ],
+       "default": "available",
+       "required": true
+      },
+      "note": {
+       "type": "string"
+      }
+     },
+     "label": "{answer}",
+     "edges": {
+      "for-fixture": {
+       "to": [
+        "fixture"
+       ],
+       "cardinality": "one",
+       "description": "the fixture this answer is for",
+       "inverse": "availability"
+      },
+      "by-player": {
+       "to": [
+        "player"
+       ],
+       "cardinality": "one",
+       "description": "the player who answered",
+       "inverse": "their availability"
+      }
+     }
+    }
+   },
+   "acts": {
+    "add-fixture": {
+     "title": "Add a fixture",
+     "creates": "fixture",
+     "description": "Put a match on the calendar, with how many players it needs."
+    },
+    "add-player": {
+     "title": "Add a player",
+     "creates": "player",
+     "description": "Add someone to the squad."
+    },
+    "mark-available": {
+     "title": "Mark someone's answer",
+     "on": "fixture",
+     "effects": [
+      {
+       "create": "availability",
+       "as": "new",
+       "set": {
+        "answer": "$answer"
+       }
+      },
+      {
+       "connect": "for-fixture",
+       "from": "$new",
+       "to": "$subject"
+      },
+      {
+       "connect": "by-player",
+       "from": "$new",
+       "to": "$player"
+      }
+     ],
+     "description": "Record whether a player can make this fixture: available, maybe or unavailable.",
+     "fromTheOtherEnd": "Mark their answer for a fixture"
+    },
+    "can-play": {
+     "title": "Can play",
+     "on": "availability",
+     "sets": {
+      "answer": "available"
+     },
+     "description": "Change an answer to available."
+    },
+    "cannot-play": {
+     "title": "Can't play",
+     "on": "availability",
+     "sets": {
+      "answer": "unavailable"
+     },
+     "description": "Change an answer to unavailable."
+    },
+    "set-needed": {
+     "title": "Change players needed",
+     "on": "fixture",
+     "writes": [
+      "needed"
+     ],
+     "description": "Say how many players a fixture needs."
+    },
+    "mark-played": {
+     "title": "Played",
+     "on": "fixture",
+     "sets": {
+      "status": "played",
+      "result": "$result"
+     },
+     "description": "Record that a fixture was played, with the result if you like."
+    },
+    "cancel-fixture": {
+     "title": "Cancel",
+     "on": "fixture",
+     "sets": {
+      "status": "cancelled"
+     },
+     "description": "Cancel a fixture; it drops out of view but is not deleted."
+    },
+    "answer-for": {
+     "title": "Say which fixture",
+     "on": "availability",
+     "connects": "for-fixture",
+     "description": "Say which fixture an answer is for.",
+     "fromTheOtherEnd": "Move an answer to this fixture"
+    },
+    "unlink-fixture": {
+     "title": "Take off its fixture",
+     "on": "availability",
+     "severs": "for-fixture",
+     "description": "Take an answer off the fixture it was for, so it no longer counts.",
+     "fromTheOtherEnd": "Take an answer off this fixture"
+    },
+    "answer-by": {
+     "title": "Say whose answer",
+     "on": "availability",
+     "connects": "by-player",
+     "description": "Say which player gave an answer.",
+     "fromTheOtherEnd": "Give them this answer"
+    },
+    "unlink-player": {
+     "title": "Take off its player",
+     "on": "availability",
+     "severs": "by-player",
+     "description": "Take an answer off the player it was recorded for.",
+     "fromTheOtherEnd": "Take an answer off them"
+    },
+    "set-status": {
+     "title": "Set the status",
+     "on": "fixture",
+     "sets": {
+      "status": "$status"
+     },
+     "description": "Move it to any status, as a status board does. The named steps stay for what they also record."
+    }
+   },
+   "rules": {
+    "fixture-has-enough-players": {
+     "title": "Every upcoming fixture has enough players",
+     "description": "Finding out on the morning that you are two short is how matches are forfeited.",
+     "over": "fixture",
+     "when": "status == 'upcoming'",
+     "require": "count(in('for-fixture') where answer == 'available') >= needed",
+     "says": "{opponent} is short of players: {count(in('for-fixture') where answer == 'available')} of {needed} available",
+     "repairs": [
+      {
+       "act": "mark-available",
+       "label": "Mark someone available"
+      },
+      {
+       "act": "set-needed",
+       "label": "Change players needed"
+      }
+     ]
+    },
+    "past-fixture-recorded": {
+     "title": "Past fixtures are recorded",
+     "description": "A season's record is only as good as the results written down.",
+     "over": "fixture",
+     "when": "status == 'upcoming' && present(date)",
+     "require": "date >= today()",
+     "says": "{opponent} was {date|relative} — record how it went",
+     "repairs": [
+      {
+       "act": "mark-played",
+       "label": "Record it as played"
+      },
+      {
+       "act": "cancel-fixture",
+       "label": "It was cancelled"
+      }
+     ]
+    }
+   },
+   "roles": [
+    "owner",
+    "editor",
+    "viewer"
+   ],
+   "policy": {
+    "grants": [
+     {
+      "roles": [
+       "owner",
+       "editor"
+      ],
+      "mutations": "*",
+      "describe": "Owners and editors may do everything; viewers can look."
+     }
+    ]
+   },
+   "brand": {
+    "accent": "#0f6e5c"
+   },
+   "lenses": [
+    {
+     "name": "columns",
+     "title": "Fixtures by status",
+     "bindings": {
+      "fixture": {
+       "column": "status"
+      }
+     }
+    },
+    {
+     "name": "calendar",
+     "title": "The fixtures",
+     "requiredRoles": [
+      "start"
+     ],
+     "bindings": {
+      "fixture": {
+       "start": "date"
+      }
+     }
+    },
+    {
+     "name": "coverage",
+     "title": "Who's available",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "fixture"
+      },
+      "columns": {
+       "kind": "player"
+      },
+      "link": {
+       "path": [
+        "by-player",
+        "for-fixture"
+       ]
+      }
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "content-calendar",
+  "counts": {
+   "channel": 1,
+   "person": 1,
+   "slot": 2,
+   "piece": 1
+  },
+  "document": {
+   "format": "graview-document",
+   "formatVersion": 1,
+   "name": "Content calendar",
+   "description": "The slots we publish in, the pieces going into them, and who is making each.",
+   "kinds": {
+    "slot": {
+     "noun": "slot",
+     "plural": "slots",
+     "description": "A date something should go out on a channel, like Tuesday's post or the monthly newsletter.",
+     "fields": {
+      "title": {
+       "type": "string",
+       "required": true
+      },
+      "date": {
+       "type": "date",
+       "required": true
+      }
+     },
+     "describe": "{date|relative}",
+     "edges": {
+      "channel": {
+       "to": [
+        "channel"
+       ],
+       "cardinality": "one",
+       "description": "where it goes out",
+       "inverse": "its slots"
+      }
+     }
+    },
+    "piece": {
+     "noun": "piece",
+     "plural": "pieces",
+     "description": "Something we're making to publish: a post, an email, a video.",
+     "fields": {
+      "title": {
+       "type": "string",
+       "required": true
+      },
+      "status": {
+       "type": "enum",
+       "options": [
+        "idea",
+        "drafting",
+        "ready",
+        "published"
+       ],
+       "default": "idea",
+       "required": true
+      },
+      "link": {
+       "type": "url"
+      },
+      "notes": {
+       "type": "text"
+      }
+     },
+     "glance": [
+      "title",
+      "status"
+     ],
+     "describe": "{status}",
+     "edges": {
+      "scheduled": {
+       "to": [
+        "slot"
+       ],
+       "cardinality": "one",
+       "description": "the slot it goes out in",
+       "inverse": "what's going out"
+      },
+      "owner": {
+       "to": [
+        "person"
+       ],
+       "cardinality": "one",
+       "description": "who is making it",
+       "inverse": "their pieces"
+      }
+     }
+    },
+    "channel": {
+     "noun": "channel",
+     "plural": "channels",
+     "description": "A place we publish, like the blog, the newsletter or a social account.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      }
+     }
+    },
+    "person": {
+     "noun": "person",
+     "plural": "people",
+     "description": "Someone who writes, films or edits.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      }
+     }
+    }
+   },
+   "acts": {
+    "add-channel": {
+     "title": "Add a channel",
+     "creates": "channel",
+     "description": "Add a place you publish."
+    },
+    "add-slot": {
+     "title": "Add a slot",
+     "creates": "slot",
+     "description": "Add a date something should go out."
+    },
+    "add-slot-here": {
+     "title": "Add a slot on this channel",
+     "on": "channel",
+     "args": {
+      "title": {
+       "type": "string",
+       "required": true
+      },
+      "date": {
+       "type": "date",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "slot",
+       "as": "new",
+       "set": {
+        "title": "$title",
+        "date": "$date"
+       }
+      },
+      {
+       "connect": "channel",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add a date something should go out on this channel."
+    },
+    "move-date": {
+     "title": "Move the date",
+     "on": "slot",
+     "writes": [
+      "date"
+     ],
+     "description": "Move a slot to another day."
+    },
+    "set-channel": {
+     "title": "Put on a channel",
+     "on": "slot",
+     "connects": "channel",
+     "description": "Say which channel a slot goes out on.",
+     "fromTheOtherEnd": "Put one of our slots here"
+    },
+    "clear-channel": {
+     "title": "Take off its channel",
+     "on": "slot",
+     "severs": "channel",
+     "description": "Say a slot no longer goes out on the channel it was on.",
+     "fromTheOtherEnd": "Take a slot off this channel"
+    },
+    "add-piece": {
+     "title": "Add a piece",
+     "creates": "piece",
+     "description": "Add an idea or a piece in progress, before it has a slot."
+    },
+    "add-piece-here": {
+     "title": "Add a piece for this slot",
+     "on": "slot",
+     "args": {
+      "title": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "piece",
+       "as": "new",
+       "set": {
+        "title": "$title"
+       }
+      },
+      {
+       "connect": "scheduled",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add something to go out in this slot."
+    },
+    "schedule": {
+     "title": "Schedule",
+     "on": "piece",
+     "connects": "scheduled",
+     "description": "Put a piece in a slot, in place of whichever slot it had.",
+     "fromTheOtherEnd": "Put one of our pieces here"
+    },
+    "unschedule": {
+     "title": "Unschedule",
+     "on": "piece",
+     "severs": "scheduled",
+     "description": "Take a piece out of its slot; it stays on the list.",
+     "fromTheOtherEnd": "Take a piece out of this slot"
+    },
+    "start-drafting": {
+     "title": "Start drafting",
+     "on": "piece",
+     "sets": {
+      "status": "drafting"
+     },
+     "description": "Record that someone has started making a piece."
+    },
+    "mark-ready": {
+     "title": "Mark ready",
+     "on": "piece",
+     "sets": {
+      "status": "ready"
+     },
+     "description": "Record that a piece is done and ready to go out."
+    },
+    "publish": {
+     "title": "Published",
+     "on": "piece",
+     "sets": {
+      "status": "published"
+     },
+     "description": "Record that a piece has gone out."
+    },
+    "add-person": {
+     "title": "Add a person",
+     "creates": "person",
+     "description": "Add someone who makes pieces."
+    },
+    "give-to": {
+     "title": "Give to someone",
+     "on": "piece",
+     "connects": "owner",
+     "description": "Say who is making a piece, in place of whoever was.",
+     "fromTheOtherEnd": "Give them one of our pieces"
+    },
+    "take-off": {
+     "title": "Take off them",
+     "on": "piece",
+     "severs": "owner",
+     "description": "Take a person off a piece.",
+     "fromTheOtherEnd": "Take a piece off them"
+    },
+    "set-status": {
+     "title": "Set the status",
+     "on": "piece",
+     "sets": {
+      "status": "$status"
+     },
+     "description": "Move it to any status, as a status board does. The named steps stay for what they also record."
+    }
+   },
+   "rules": {
+    "slot-has-something": {
+     "title": "Every coming slot has something scheduled",
+     "description": "An empty slot found on the morning is a scramble; found a week out, it's a plan.",
+     "over": "slot",
+     "when": "date >= today()",
+     "require": "exists(in('scheduled'))",
+     "says": "Nothing is scheduled for {title}, {date|relative}",
+     "repairs": [
+      {
+       "act": "add-piece-here",
+       "label": "Add a piece for it"
+      },
+      {
+       "act": "remove-slot",
+       "label": "Drop the slot"
+      }
+     ]
+    },
+    "piece-has-owner": {
+     "title": "Every unpublished piece has somebody making it",
+     "over": "piece",
+     "when": "status != 'published'",
+     "require": "present(owner)",
+     "says": "Nobody is making {title}",
+     "repairs": [
+      {
+       "act": "give-to",
+       "label": "Give it to someone"
+      }
+     ]
+    }
+   },
+   "roles": [
+    "owner",
+    "editor",
+    "viewer"
+   ],
+   "policy": {
+    "grants": [
+     {
+      "roles": [
+       "owner",
+       "editor"
+      ],
+      "mutations": "*",
+      "describe": "Owners and editors may do everything; viewers can look."
+     }
+    ]
+   },
+   "brand": {
+    "accent": "#9b3f8f"
+   },
+   "lenses": [
+    {
+     "name": "columns",
+     "title": "Pieces by status",
+     "bindings": {
+      "piece": {
+       "column": "status"
+      }
+     }
+    },
+    {
+     "name": "calendar",
+     "title": "The calendar",
+     "requiredRoles": [
+      "start"
+     ],
+     "bindings": {
+      "slot": {
+       "start": "date"
+      }
+     }
+    },
+    {
+     "name": "coverage",
+     "title": "What goes out where",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "piece"
+      },
+      "columns": {
+       "kind": "channel"
+      },
+      "link": {
+       "path": [
+        "channel",
+        "scheduled"
+       ]
+      }
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "event-run-of-show",
+  "counts": {
+   "slot": 1,
+   "place": 1,
+   "person": 1,
+   "session": 2
+  },
+  "document": {
+   "format": "graview-document",
+   "formatVersion": 1,
+   "name": "Event run-of-show",
+   "description": "The sessions of the day, the time slots they fill, the rooms they happen in, and who is running each one.",
+   "kinds": {
+    "slot": {
+     "noun": "slot",
+     "plural": "slots",
+     "description": "A block of time in the day, like 09:30 or after lunch.",
+     "fields": {
+      "time": {
+       "type": "string",
+       "required": true,
+       "description": "when it starts, like 09:30"
+      },
+      "day": {
+       "type": "string",
+       "description": "which day, if the event runs over several"
+      }
+     },
+     "label": "{time}"
+    },
+    "session": {
+     "noun": "session",
+     "plural": "sessions",
+     "description": "One part of the programme: a talk, a workshop, a break, a raffle.",
+     "fields": {
+      "title": {
+       "type": "string",
+       "required": true
+      },
+      "status": {
+       "type": "enum",
+       "options": [
+        "planned",
+        "confirmed",
+        "cancelled"
+       ],
+       "default": "planned",
+       "required": true
+      },
+      "expected": {
+       "type": "integer",
+       "label": "Expected",
+       "description": "how many people we expect"
+      },
+      "notes": {
+       "type": "text"
+      }
+     },
+     "glance": [
+      "title",
+      "status",
+      "expected"
+     ],
+     "describe": "{status}",
+     "lifecycle": {
+      "field": "status",
+      "retired": [
+       "cancelled"
+      ]
+     },
+     "edges": {
+      "during": {
+       "to": [
+        "slot"
+       ],
+       "cardinality": "one",
+       "description": "the slot it happens in",
+       "inverse": "sessions in it"
+      },
+      "lead": {
+       "to": [
+        "person"
+       ],
+       "cardinality": "one",
+       "description": "who is running it on the day",
+       "inverse": "sessions they run"
+      },
+      "venue": {
+       "to": [
+        "place"
+       ],
+       "cardinality": "one",
+       "description": "the room or space it happens in",
+       "inverse": "sessions here"
+      }
+     }
+    },
+    "person": {
+     "noun": "person",
+     "plural": "people",
+     "description": "Someone running part of the day: a host, a speaker, a volunteer.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "phone": {
+       "type": "string"
+      },
+      "email": {
+       "type": "email"
+      }
+     }
+    },
+    "place": {
+     "noun": "place",
+     "plural": "places",
+     "description": "A room or space sessions happen in.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "capacity": {
+       "type": "integer",
+       "description": "how many people it holds"
+      }
+     }
+    }
+   },
+   "acts": {
+    "add-slot": {
+     "title": "Add a slot",
+     "creates": "slot",
+     "description": "Add a block of time to the day."
+    },
+    "add-session": {
+     "title": "Add a session",
+     "creates": "session",
+     "description": "Add a part of the programme, before you know when or where it happens."
+    },
+    "add-session-here": {
+     "title": "Add a session in this slot",
+     "on": "slot",
+     "args": {
+      "title": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "session",
+       "as": "new",
+       "set": {
+        "title": "$title"
+       }
+      },
+      {
+       "connect": "during",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add a session that happens in this slot, by its title."
+    },
+    "confirm": {
+     "title": "Confirm",
+     "on": "session",
+     "sets": {
+      "status": "confirmed"
+     },
+     "description": "Mark a session as confirmed: it is definitely happening."
+    },
+    "cancel": {
+     "title": "Cancel",
+     "on": "session",
+     "sets": {
+      "status": "cancelled"
+     },
+     "description": "Cancel a session; it drops out of view but is not deleted."
+    },
+    "reinstate": {
+     "title": "Put back in the programme",
+     "on": "session",
+     "sets": {
+      "status": "planned"
+     },
+     "description": "Bring a cancelled session back as planned."
+    },
+    "set-expected": {
+     "title": "Set expected numbers",
+     "on": "session",
+     "writes": [
+      "expected"
+     ],
+     "description": "Say how many people you expect at a session."
+    },
+    "schedule": {
+     "title": "Put in a slot",
+     "on": "session",
+     "connects": "during",
+     "description": "Say which slot a session happens in, in place of any other.",
+     "fromTheOtherEnd": "Put one of our sessions in this slot"
+    },
+    "unschedule": {
+     "title": "Take out of its slot",
+     "on": "session",
+     "severs": "during",
+     "description": "Take a session out of its slot without cancelling it.",
+     "fromTheOtherEnd": "Take a session out of this slot"
+    },
+    "give-lead": {
+     "title": "Give it an owner",
+     "on": "session",
+     "connects": "lead",
+     "description": "Say who is running a session on the day, in place of whoever was.",
+     "fromTheOtherEnd": "Give them one of our sessions to run"
+    },
+    "drop-lead": {
+     "title": "Take its owner off",
+     "on": "session",
+     "severs": "lead",
+     "description": "Take a person off running a session.",
+     "fromTheOtherEnd": "Take a session off them"
+    },
+    "hold-in": {
+     "title": "Hold in a place",
+     "on": "session",
+     "connects": "venue",
+     "description": "Say which room or space a session happens in.",
+     "fromTheOtherEnd": "Hold one of our sessions here"
+    },
+    "clear-venue": {
+     "title": "Take out of its place",
+     "on": "session",
+     "severs": "venue",
+     "description": "Say a session no longer happens in the room it was in.",
+     "fromTheOtherEnd": "Move a session out of here"
+    },
+    "add-person": {
+     "title": "Add a person",
+     "creates": "person",
+     "description": "Add someone who is running part of the day."
+    },
+    "add-place": {
+     "title": "Add a place",
+     "creates": "place",
+     "description": "Add a room or space, with how many it holds if you know."
+    },
+    "set-capacity": {
+     "title": "Set how many it holds",
+     "on": "place",
+     "writes": [
+      "capacity"
+     ],
+     "description": "Say how many people a room or space holds."
+    },
+    "set-status": {
+     "title": "Set the status",
+     "on": "session",
+     "sets": {
+      "status": "$status"
+     },
+     "description": "Move it to any status, as a status board does. The named steps stay for what they also record."
+    }
+   },
+   "rules": {
+    "session-has-an-owner": {
+     "title": "Every session has someone running it",
+     "description": "On the day, a session nobody owns is the one that starts late with no microphone.",
+     "over": "session",
+     "when": "status != 'cancelled'",
+     "require": "present(lead)",
+     "says": "Nobody is running {title}",
+     "repairs": [
+      {
+       "act": "give-lead",
+       "label": "Give it an owner"
+      },
+      {
+       "act": "cancel",
+       "label": "Cancel it"
+      }
+     ]
+    },
+    "session-fits-its-place": {
+     "title": "Sessions fit the rooms they are in",
+     "description": "Sixty people expected in a room for forty is a fire officer's problem.",
+     "over": "session",
+     "when": "status != 'cancelled' && present(expected) && present(venue)",
+     "require": "venue.capacity == null || expected <= venue.capacity",
+     "says": "{title} expects {expected} but {venue.name} holds {venue.capacity}",
+     "repairs": [
+      {
+       "act": "hold-in",
+       "label": "Move it to a bigger room"
+      },
+      {
+       "act": "set-expected",
+       "label": "Change the numbers"
+      }
+     ]
+    }
+   },
+   "roles": [
+    "owner",
+    "editor",
+    "viewer"
+   ],
+   "policy": {
+    "grants": [
+     {
+      "roles": [
+       "owner",
+       "editor"
+      ],
+      "mutations": "*",
+      "describe": "Owners and editors may do everything; viewers can look."
+     }
+    ]
+   },
+   "brand": {
+    "accent": "#8f3f9b"
+   },
+   "lenses": [
+    {
+     "name": "columns",
+     "title": "Sessions by status",
+     "bindings": {
+      "session": {
+       "column": "status"
+      }
+     }
+    },
+    {
+     "name": "coverage",
+     "title": "Rooms and sessions",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "session"
+      },
+      "columns": {
+       "kind": "place"
+      },
+      "link": {
+       "edge": "venue"
+      }
+     }
+    },
+    {
+     "name": "coverage",
+     "title": "Who runs what",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "session"
+      },
+      "columns": {
+       "kind": "person"
+      },
+      "link": {
+       "edge": "lead"
+      }
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "hiring-loop",
+  "counts": {
+   "candidate": 1,
+   "interviewer": 1,
+   "interview": 2,
+   "feedback": 1
+  },
+  "document": {
+   "format": "graview-document",
+   "formatVersion": 1,
+   "name": "Hiring loop",
+   "description": "The people we're interviewing for a role, each interview in their loop, and what the interviewers thought.",
+   "kinds": {
+    "candidate": {
+     "noun": "candidate",
+     "plural": "candidates",
+     "description": "Someone we're considering for the role.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "role": {
+       "type": "string",
+       "description": "the job they are up for"
+      },
+      "stage": {
+       "type": "enum",
+       "options": [
+        "applied",
+        "screening",
+        "interviewing",
+        "offer",
+        "hired",
+        "rejected"
+       ],
+       "default": "applied",
+       "required": true
+      },
+      "email": {
+       "type": "email"
+      },
+      "notes": {
+       "type": "text"
+      }
+     },
+     "glance": [
+      "name",
+      "role",
+      "stage"
+     ],
+     "describe": "{role} · {stage}"
+    },
+    "interview": {
+     "noun": "interview",
+     "plural": "interviews",
+     "description": "One conversation in a candidate's loop: a screen, a technical round, a chat with the team.",
+     "fields": {
+      "title": {
+       "type": "string",
+       "required": true
+      },
+      "date": {
+       "type": "date",
+       "description": "when it happens"
+      }
+     },
+     "describe": "{date|relative}",
+     "edges": {
+      "candidate": {
+       "to": [
+        "candidate"
+       ],
+       "cardinality": "one",
+       "description": "who is being interviewed",
+       "inverse": "their interviews"
+      },
+      "interviewer": {
+       "to": [
+        "interviewer"
+       ],
+       "cardinality": "one",
+       "description": "who runs the interview",
+       "inverse": "interviews they run"
+      }
+     }
+    },
+    "interviewer": {
+     "noun": "interviewer",
+     "plural": "interviewers",
+     "description": "Someone on our side who interviews and writes feedback.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "email": {
+       "type": "email"
+      }
+     }
+    },
+    "feedback": {
+     "noun": "feedback",
+     "plural": "feedback",
+     "description": "What an interviewer thought after an interview, and whether they'd hire.",
+     "fields": {
+      "summary": {
+       "type": "string",
+       "required": true
+      },
+      "verdict": {
+       "type": "enum",
+       "options": [
+        "strong yes",
+        "yes",
+        "no",
+        "strong no"
+       ],
+       "required": true
+      },
+      "notes": {
+       "type": "text"
+      }
+     },
+     "describe": "{verdict}",
+     "edges": {
+      "about": {
+       "to": [
+        "interview"
+       ],
+       "cardinality": "one",
+       "description": "the interview it is about",
+       "inverse": "feedback on it"
+      }
+     }
+    }
+   },
+   "acts": {
+    "add-candidate": {
+     "title": "Add a candidate",
+     "creates": "candidate",
+     "description": "Add someone who has applied or been put forward for the role."
+    },
+    "screen": {
+     "title": "Move to screening",
+     "on": "candidate",
+     "sets": {
+      "stage": "screening"
+     },
+     "description": "Start the first conversation with a candidate."
+    },
+    "start-interviews": {
+     "title": "Start interviews",
+     "on": "candidate",
+     "sets": {
+      "stage": "interviewing"
+     },
+     "description": "Move a candidate into the interview loop."
+    },
+    "make-offer": {
+     "title": "Make an offer",
+     "on": "candidate",
+     "sets": {
+      "stage": "offer"
+     },
+     "description": "Record that we have offered a candidate the role."
+    },
+    "hire": {
+     "title": "Hired",
+     "on": "candidate",
+     "sets": {
+      "stage": "hired"
+     },
+     "description": "Record that a candidate accepted and is joining."
+    },
+    "reject": {
+     "title": "Reject",
+     "on": "candidate",
+     "sets": {
+      "stage": "rejected"
+     },
+     "description": "Record that we are not going ahead with a candidate."
+    },
+    "schedule-interview": {
+     "title": "Schedule an interview",
+     "on": "candidate",
+     "args": {
+      "title": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "interview",
+       "as": "new",
+       "set": {
+        "title": "$title",
+        "date": "$date"
+       }
+      },
+      {
+       "connect": "candidate",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add an interview to this candidate's loop, with what it is and when."
+    },
+    "add-interview": {
+     "title": "Add an interview",
+     "creates": "interview",
+     "description": "Add an interview before you know whose loop it belongs to."
+    },
+    "set-date": {
+     "title": "Set the date",
+     "on": "interview",
+     "writes": [
+      "date"
+     ],
+     "description": "Say when an interview happens, or move it."
+    },
+    "set-candidate": {
+     "title": "Put in a candidate's loop",
+     "on": "interview",
+     "connects": "candidate",
+     "description": "Say which candidate an interview is with.",
+     "fromTheOtherEnd": "Add one of our interviews to their loop"
+    },
+    "clear-candidate": {
+     "title": "Take out of the loop",
+     "on": "interview",
+     "severs": "candidate",
+     "description": "Say an interview no longer belongs to the candidate it was with.",
+     "fromTheOtherEnd": "Take an interview out of their loop"
+    },
+    "add-interviewer": {
+     "title": "Add an interviewer",
+     "creates": "interviewer",
+     "description": "Add someone on our side who runs interviews."
+    },
+    "assign-interviewer": {
+     "title": "Give to an interviewer",
+     "on": "interview",
+     "connects": "interviewer",
+     "description": "Say who runs an interview, in place of whoever did.",
+     "fromTheOtherEnd": "Give them one of our interviews"
+    },
+    "unassign-interviewer": {
+     "title": "Take off the interviewer",
+     "on": "interview",
+     "severs": "interviewer",
+     "description": "Take an interviewer off an interview.",
+     "fromTheOtherEnd": "Take an interview off them"
+    },
+    "write-feedback": {
+     "title": "Write the feedback",
+     "on": "interview",
+     "args": {
+      "summary": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "feedback",
+       "as": "new",
+       "set": {
+        "summary": "$summary",
+        "verdict": "$verdict",
+        "notes": "$notes"
+       }
+      },
+      {
+       "connect": "about",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Write up an interview: a one-line summary, a verdict, and any notes."
+    },
+    "add-feedback": {
+     "title": "Add feedback",
+     "creates": "feedback",
+     "description": "Add feedback before saying which interview it is about."
+    },
+    "attach-feedback": {
+     "title": "Say which interview",
+     "on": "feedback",
+     "connects": "about",
+     "description": "Say which interview a piece of feedback is about.",
+     "fromTheOtherEnd": "Attach some of our feedback here"
+    },
+    "detach-feedback": {
+     "title": "Take off its interview",
+     "on": "feedback",
+     "severs": "about",
+     "description": "Say a piece of feedback is not about the interview it was attached to.",
+     "fromTheOtherEnd": "Take feedback off this interview"
+    },
+    "set-stage": {
+     "title": "Set the stage",
+     "on": "candidate",
+     "sets": {
+      "stage": "$stage"
+     },
+     "description": "Move it to any stage, as a status board does. The named steps stay for what they also record."
+    }
+   },
+   "rules": {
+    "interview-has-feedback": {
+     "title": "Every interview is written up within two days",
+     "description": "Feedback written a week later is a memory of a memory, and the candidate is still waiting.",
+     "over": "interview",
+     "when": "present(date) && days(date, today()) >= 2",
+     "require": "exists(in('about'))",
+     "says": "{title} was {date|relative} and nobody has written feedback",
+     "repairs": [
+      {
+       "act": "write-feedback",
+       "label": "Write the feedback"
+      }
+     ]
+    },
+    "interview-has-interviewer": {
+     "title": "Every interview has somebody running it",
+     "over": "interview",
+     "require": "present(interviewer)",
+     "says": "Nobody is running {title}",
+     "repairs": [
+      {
+       "act": "assign-interviewer",
+       "label": "Give it to an interviewer"
+      }
+     ]
+    }
+   },
+   "roles": [
+    "owner",
+    "editor",
+    "viewer"
+   ],
+   "policy": {
+    "grants": [
+     {
+      "roles": [
+       "owner",
+       "editor"
+      ],
+      "mutations": "*",
+      "describe": "Owners and editors may do everything; viewers can look."
+     }
+    ]
+   },
+   "brand": {
+    "accent": "#0f766e"
+   },
+   "lenses": [
+    {
+     "name": "columns",
+     "title": "Candidates by stage",
+     "bindings": {
+      "candidate": {
+       "column": "stage"
+      }
+     }
+    },
+    {
+     "name": "calendar",
+     "title": "Interviews",
+     "requiredRoles": [
+      "start"
+     ],
+     "bindings": {
+      "interview": {
+       "start": "date"
+      }
+     }
+    },
+    {
+     "name": "coverage",
+     "title": "Who interviews whom",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "candidate"
+      },
+      "columns": {
+       "kind": "interviewer"
+      },
+      "link": {
+       "path": [
+        "interviewer",
+        "candidate"
+       ]
+      }
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "household-chores",
+  "counts": {
+   "area": 1,
+   "person": 1,
+   "chore": 2
+  },
+  "document": {
+   "format": "graview-document",
+   "formatVersion": 1,
+   "name": "Household chores",
+   "description": "The jobs that keep a home running, who's on each this week, and when each was last done.",
+   "kinds": {
+    "chore": {
+     "noun": "chore",
+     "plural": "chores",
+     "description": "A job that comes round again, like the dishes or the bins.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "often": {
+       "type": "enum",
+       "options": [
+        "daily",
+        "weekly",
+        "fortnightly",
+        "monthly"
+       ],
+       "default": "weekly",
+       "required": true,
+       "label": "How often"
+      },
+      "lastDone": {
+       "type": "date",
+       "label": "Last done"
+      },
+      "minutes": {
+       "type": "integer",
+       "description": "roughly how long it takes"
+      }
+     },
+     "glance": [
+      "name",
+      "often",
+      "lastDone"
+     ],
+     "describe": "{often} · last done {lastDone|relative}",
+     "edges": {
+      "assigned": {
+       "to": [
+        "person"
+       ],
+       "cardinality": "one",
+       "description": "who is on this chore this week",
+       "inverse": "their chores"
+      },
+      "in-area": {
+       "to": [
+        "area"
+       ],
+       "cardinality": "one",
+       "description": "the part of the home it belongs to",
+       "inverse": "chores here"
+      }
+     }
+    },
+    "person": {
+     "noun": "person",
+     "plural": "people",
+     "description": "Someone who lives here and shares the work.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      }
+     }
+    },
+    "area": {
+     "noun": "area",
+     "plural": "areas",
+     "description": "A part of the home, like the kitchen or the garden.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      }
+     }
+    }
+   },
+   "acts": {
+    "add-chore": {
+     "title": "Add a chore",
+     "creates": "chore",
+     "description": "Add a job that comes round again, and how often."
+    },
+    "add-chore-here": {
+     "title": "Add a chore in this area",
+     "on": "area",
+     "args": {
+      "name": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "chore",
+       "as": "new",
+       "set": {
+        "name": "$name",
+        "often": "$often"
+       }
+      },
+      {
+       "connect": "in-area",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add a chore that belongs to this part of the home, by name, and how often it comes round."
+    },
+    "give-chore": {
+     "title": "Add a chore for them",
+     "on": "person",
+     "args": {
+      "name": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "chore",
+       "as": "new",
+       "set": {
+        "name": "$name",
+        "often": "$often"
+       }
+      },
+      {
+       "connect": "assigned",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add a new chore and put this person on it."
+    },
+    "done-today": {
+     "title": "Done it today",
+     "on": "chore",
+     "sets": {
+      "lastDone": "$today"
+     },
+     "description": "Record that a chore was done today."
+    },
+    "set-often": {
+     "title": "Change how often",
+     "on": "chore",
+     "writes": [
+      "often"
+     ],
+     "description": "Say how often a chore comes round: daily, weekly, fortnightly or monthly."
+    },
+    "assign": {
+     "title": "Give to someone",
+     "on": "chore",
+     "connects": "assigned",
+     "description": "Put someone on a chore this week, in place of whoever had it.",
+     "fromTheOtherEnd": "Give them one of our chores"
+    },
+    "unassign": {
+     "title": "Take off them",
+     "on": "chore",
+     "severs": "assigned",
+     "description": "Take a person off a chore.",
+     "fromTheOtherEnd": "Take a chore off them"
+    },
+    "move-chore": {
+     "title": "Move to an area",
+     "on": "chore",
+     "connects": "in-area",
+     "description": "Say which part of the home a chore belongs to.",
+     "fromTheOtherEnd": "Move one of our chores here"
+    },
+    "add-person": {
+     "title": "Add a person",
+     "creates": "person",
+     "description": "Add someone who lives here and shares the work."
+    },
+    "add-area": {
+     "title": "Add an area",
+     "creates": "area",
+     "description": "Add a part of the home to group chores by."
+    },
+    "take-out-of-area": {
+     "title": "Take out of its area",
+     "on": "chore",
+     "severs": "in-area",
+     "description": "Say a chore no longer belongs to the area it was in.",
+     "fromTheOtherEnd": "Take one of our chores out of here"
+    }
+   },
+   "rules": {
+    "chore-has-someone": {
+     "title": "Every chore has somebody on it",
+     "description": "A chore that is everyone's job is nobody's.",
+     "over": "chore",
+     "require": "present(assigned)",
+     "says": "Nobody is on {name} this week",
+     "repairs": [
+      {
+       "act": "assign",
+       "label": "Give it to someone"
+      }
+     ]
+    },
+    "chore-not-overdue": {
+     "title": "Chores are done as often as they come round",
+     "over": "chore",
+     "when": "present(lastDone)",
+     "require": "days(lastDone, today()) <= if(often == 'daily', 1, if(often == 'weekly', 7, if(often == 'fortnightly', 14, 31)))",
+     "says": "{name} is overdue — last done {lastDone|relative}",
+     "repairs": [
+      {
+       "act": "done-today",
+       "label": "Done it today"
+      }
+     ]
+    }
+   },
+   "roles": [
+    "owner",
+    "editor",
+    "viewer"
+   ],
+   "policy": {
+    "grants": [
+     {
+      "roles": [
+       "owner",
+       "editor"
+      ],
+      "mutations": "*",
+      "describe": "Owners and editors may do everything; viewers can look."
+     }
+    ]
+   },
+   "brand": {
+    "accent": "#7a4fb0"
+   },
+   "lenses": [
+    {
+     "name": "coverage",
+     "title": "Whose chores",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "chore"
+      },
+      "columns": {
+       "kind": "person"
+      },
+      "link": {
+       "edge": "assigned"
+      }
+     }
+    },
+    {
+     "name": "calendar",
+     "title": "Last done",
+     "requiredRoles": [
+      "start"
+     ],
+     "bindings": {
+      "chore": {
+       "start": "lastDone"
+      }
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "job-search",
+  "counts": {
+   "company": 1,
+   "role": 2,
+   "step": 2,
+   "contact": 1
+  },
+  "document": {
+   "format": "graview-document",
+   "formatVersion": 1,
+   "name": "Job search",
+   "description": "The roles we're going for, the companies behind them, who we know there, and what happens next.",
+   "kinds": {
+    "company": {
+     "noun": "company",
+     "plural": "companies",
+     "description": "An organisation we might work for.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "site": {
+       "type": "url"
+      },
+      "notes": {
+       "type": "text"
+      }
+     }
+    },
+    "role": {
+     "noun": "role",
+     "plural": "roles",
+     "description": "A job we are interested in or have applied for, and how far along it is.",
+     "fields": {
+      "title": {
+       "type": "string",
+       "required": true
+      },
+      "status": {
+       "type": "enum",
+       "options": [
+        "interested",
+        "applied",
+        "interviewing",
+        "offer",
+        "accepted",
+        "rejected",
+        "withdrawn"
+       ],
+       "default": "interested",
+       "required": true
+      },
+      "applied": {
+       "type": "date",
+       "label": "Applied on",
+       "description": "the day the application went in"
+      },
+      "salary": {
+       "type": "number",
+       "format": "money"
+      },
+      "link": {
+       "type": "url",
+       "description": "the job advert"
+      },
+      "notes": {
+       "type": "text"
+      }
+     },
+     "glance": [
+      "title",
+      "status",
+      "salary"
+     ],
+     "describe": "{status}",
+     "lifecycle": {
+      "field": "status",
+      "retired": [
+       "rejected",
+       "withdrawn"
+      ]
+     },
+     "edges": {
+      "at": {
+       "to": [
+        "company"
+       ],
+       "cardinality": "one",
+       "description": "the company hiring for this role",
+       "inverse": "roles there"
+      }
+     }
+    },
+    "step": {
+     "noun": "step",
+     "plural": "steps",
+     "description": "The next thing to do for a role: a follow-up, an interview, a task to send back.",
+     "fields": {
+      "what": {
+       "type": "string",
+       "required": true
+      },
+      "due": {
+       "type": "date"
+      },
+      "done": {
+       "type": "boolean",
+       "default": false
+      }
+     },
+     "describe": "due {due|relative}",
+     "edges": {
+      "about": {
+       "to": [
+        "role"
+       ],
+       "cardinality": "one",
+       "description": "the role this step moves forward",
+       "inverse": "next steps"
+      }
+     }
+    },
+    "contact": {
+     "noun": "contact",
+     "plural": "contacts",
+     "description": "Someone we know, or have spoken to, at a company.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "email": {
+       "type": "email"
+      },
+      "position": {
+       "type": "string",
+       "description": "their job, like \"Design manager\""
+      },
+      "notes": {
+       "type": "text"
+      }
+     },
+     "glance": [
+      "name",
+      "position",
+      "email"
+     ],
+     "describe": "{position}",
+     "edges": {
+      "works-at": {
+       "to": [
+        "company"
+       ],
+       "cardinality": "one",
+       "description": "where they work",
+       "inverse": "people we know there"
+      }
+     }
+    }
+   },
+   "acts": {
+    "add-company": {
+     "title": "Add a company",
+     "creates": "company",
+     "description": "Add an organisation you might want to work for."
+    },
+    "add-role": {
+     "title": "Add a role",
+     "creates": "role",
+     "description": "Add a job you are interested in, before choosing its company."
+    },
+    "add-role-here": {
+     "title": "Add a role at this company",
+     "on": "company",
+     "args": {
+      "title": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "role",
+       "as": "new",
+       "set": {
+        "title": "$title",
+        "link": "$link"
+       }
+      },
+      {
+       "connect": "at",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add a job this company is hiring for, by title, with a link to the advert if you have one."
+    },
+    "log-application": {
+     "title": "Log an application",
+     "args": {
+      "title": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "role",
+       "as": "new",
+       "set": {
+        "title": "$title",
+        "status": "applied",
+        "applied": "$today"
+       }
+      }
+     ],
+     "description": "Record a role you applied for today, by title."
+    },
+    "apply": {
+     "title": "Mark as applied",
+     "on": "role",
+     "sets": {
+      "status": "applied",
+      "applied": "$today"
+     },
+     "allowedWhen": "status == 'interested'",
+     "refusal": "{title} is already past applying",
+     "description": "Say you sent the application today; the clock for a next step starts now."
+    },
+    "start-interviewing": {
+     "title": "Interviewing",
+     "on": "role",
+     "sets": {
+      "status": "interviewing"
+     },
+     "allowedWhen": "status == 'applied' || status == 'interested'",
+     "refusal": "{title} is not waiting on an interview",
+     "description": "Say this role has moved to interviews."
+    },
+    "got-offer": {
+     "title": "Got an offer",
+     "on": "role",
+     "sets": {
+      "status": "offer"
+     },
+     "description": "Say this role made you an offer."
+    },
+    "accept-offer": {
+     "title": "Accept",
+     "on": "role",
+     "sets": {
+      "status": "accepted"
+     },
+     "allowedWhen": "status == 'offer'",
+     "refusal": "{title} has not made an offer yet",
+     "description": "Say you accepted this role's offer."
+    },
+    "rejected": {
+     "title": "Rejected",
+     "on": "role",
+     "sets": {
+      "status": "rejected"
+     },
+     "description": "Say this role turned you down; it drops out of view but is not deleted."
+    },
+    "withdraw": {
+     "title": "Withdraw",
+     "on": "role",
+     "sets": {
+      "status": "withdrawn"
+     },
+     "description": "Say you pulled out of this role; it drops out of view but is not deleted."
+    },
+    "set-salary": {
+     "title": "Set the salary",
+     "on": "role",
+     "writes": [
+      "salary"
+     ],
+     "description": "Record the salary advertised or offered."
+    },
+    "add-next-step": {
+     "title": "Plan the next step",
+     "on": "role",
+     "args": {
+      "what": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "step",
+       "as": "new",
+       "set": {
+        "what": "$what",
+        "due": "$due"
+       }
+      },
+      {
+       "connect": "about",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add the next thing to do for this role, like a follow-up email, with a due date if there is one."
+    },
+    "complete-step": {
+     "title": "Done",
+     "on": "step",
+     "sets": {
+      "done": true
+     },
+     "allowedWhen": "done != true",
+     "refusal": "{what} is already done",
+     "description": "Mark a step as done."
+    },
+    "set-due": {
+     "title": "Change the due date",
+     "on": "step",
+     "writes": [
+      "due"
+     ],
+     "description": "Set or move the date a step is due."
+    },
+    "attach-step": {
+     "title": "Attach to a role",
+     "on": "step",
+     "connects": "about",
+     "description": "Say which role a step is for.",
+     "fromTheOtherEnd": "Attach one of our steps to this role"
+    },
+    "file-role": {
+     "title": "Set the company",
+     "on": "role",
+     "connects": "at",
+     "description": "Say which company is hiring for a role.",
+     "fromTheOtherEnd": "Add one of our roles to this company"
+    },
+    "add-contact": {
+     "title": "Add a contact",
+     "creates": "contact",
+     "description": "Add someone you know or have spoken to."
+    },
+    "add-contact-here": {
+     "title": "Add someone we know here",
+     "on": "company",
+     "args": {
+      "name": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "contact",
+       "as": "new",
+       "set": {
+        "name": "$name",
+        "email": "$email",
+        "position": "$position"
+       }
+      },
+      {
+       "connect": "works-at",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add a person who works at this company, by name, with their email and job if you have them."
+    },
+    "set-workplace": {
+     "title": "Set where they work",
+     "on": "contact",
+     "connects": "works-at",
+     "description": "Say which company a contact works at.",
+     "fromTheOtherEnd": "Add one of our contacts here"
+    },
+    "unfile-role": {
+     "title": "Clear the company",
+     "on": "role",
+     "severs": "at",
+     "description": "Say a role is not at the company it was filed under.",
+     "fromTheOtherEnd": "Take one of our roles off this company"
+    },
+    "detach-step": {
+     "title": "Detach from its role",
+     "on": "step",
+     "severs": "about",
+     "description": "Take a step off the role it was for.",
+     "fromTheOtherEnd": "Detach a step from this role"
+    },
+    "clear-workplace": {
+     "title": "Clear where they work",
+     "on": "contact",
+     "severs": "works-at",
+     "description": "Say a contact no longer works at the company they were filed under.",
+     "fromTheOtherEnd": "Say someone no longer works here"
+    },
+    "set-status": {
+     "title": "Set the status",
+     "on": "role",
+     "sets": {
+      "status": "$status"
+     },
+     "description": "Move it to any status, as a status board does. The named steps stay for what they also record."
+    }
+   },
+   "rules": {
+    "application-has-next-step": {
+     "title": "A live application always has a next step",
+     "description": "Applications go quiet; a week without a planned step means it is time to follow up.",
+     "over": "role",
+     "when": "status == 'applied' || status == 'interviewing'",
+     "require": "exists(in('about') where done != true) || !present(applied) || days(applied, today()) < 7",
+     "says": "{title} has had no next step for a week",
+     "repairs": [
+      {
+       "act": "add-next-step",
+       "label": "Plan the next step"
+      }
+     ]
+    },
+    "step-on-time": {
+     "title": "Steps are done by their due date",
+     "over": "step",
+     "when": "done != true && present(due)",
+     "require": "due >= today()",
+     "says": "{what} was due {due|relative}",
+     "repairs": [
+      {
+       "act": "complete-step",
+       "label": "Mark it done"
+      },
+      {
+       "act": "set-due",
+       "label": "Move the date"
+      }
+     ]
+    }
+   },
+   "roles": [
+    "owner",
+    "editor",
+    "viewer"
+   ],
+   "policy": {
+    "grants": [
+     {
+      "roles": [
+       "owner",
+       "editor"
+      ],
+      "mutations": "*",
+      "describe": "Owners and editors may do everything; viewers can look."
+     }
+    ]
+   },
+   "brand": {
+    "accent": "#4b5bb5"
+   },
+   "lenses": [
+    {
+     "name": "columns",
+     "title": "Roles by status",
+     "bindings": {
+      "role": {
+       "column": "status"
+      }
+     }
+    },
+    {
+     "name": "calendar",
+     "title": "Dates",
+     "requiredRoles": [
+      "start"
+     ],
+     "bindings": {
+      "step": {
+       "start": "due"
+      },
+      "role": {
+       "start": "applied"
+      }
+     }
+    },
+    {
+     "name": "coverage",
+     "title": "Roles by company",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "role"
+      },
+      "columns": {
+       "kind": "company"
+      },
+      "link": {
+       "edge": "at"
+      }
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "reading-list",
+  "counts": {
+   "question": 2,
+   "source": 1,
+   "claim": 1
+  },
+  "document": {
+   "format": "graview-document",
+   "formatVersion": 1,
+   "name": "Reading list and research",
+   "description": "What we're trying to find out, what we're reading, and what each source actually says.",
+   "kinds": {
+    "question": {
+     "noun": "question",
+     "plural": "questions",
+     "description": "Something we are trying to find out.",
+     "fields": {
+      "question": {
+       "type": "string",
+       "required": true
+      },
+      "status": {
+       "type": "enum",
+       "options": [
+        "open",
+        "answered",
+        "dropped"
+       ],
+       "default": "open",
+       "required": true
+      },
+      "answer": {
+       "type": "text",
+       "description": "what we concluded, in a sentence or two"
+      }
+     },
+     "describe": "{status}",
+     "lifecycle": {
+      "field": "status",
+      "retired": [
+       "dropped"
+      ]
+     }
+    },
+    "source": {
+     "noun": "source",
+     "plural": "sources",
+     "description": "Something to read, watch or listen to: a paper, a book, an article, a talk.",
+     "fields": {
+      "title": {
+       "type": "string",
+       "required": true
+      },
+      "author": {
+       "type": "string"
+      },
+      "year": {
+       "type": "integer"
+      },
+      "link": {
+       "type": "url"
+      },
+      "status": {
+       "type": "enum",
+       "options": [
+        "to-read",
+        "reading",
+        "read"
+       ],
+       "default": "to-read",
+       "required": true
+      },
+      "notes": {
+       "type": "text"
+      }
+     },
+     "glance": [
+      "title",
+      "author",
+      "status"
+     ],
+     "describe": "{author} · {status}",
+     "edges": {
+      "informs": {
+       "to": [
+        "question"
+       ],
+       "cardinality": "many",
+       "description": "the questions this source speaks to",
+       "inverse": "sources behind it"
+      }
+     }
+    },
+    "claim": {
+     "noun": "claim",
+     "plural": "claims",
+     "description": "One thing a source says, in our words, and how far we trust it.",
+     "fields": {
+      "statement": {
+       "type": "string",
+       "required": true
+      },
+      "confidence": {
+       "type": "enum",
+       "options": [
+        "weak",
+        "moderate",
+        "strong"
+       ]
+      },
+      "page": {
+       "type": "string",
+       "description": "where in the source, like \"p. 12\" or \"14:30\""
+      }
+     },
+     "describe": "{confidence}",
+     "edges": {
+      "cites": {
+       "to": [
+        "source"
+       ],
+       "cardinality": "one",
+       "description": "the source that makes this claim",
+       "inverse": "claims it makes"
+      },
+      "bears-on": {
+       "to": [
+        "question"
+       ],
+       "cardinality": "many",
+       "description": "the questions this claim helps answer",
+       "inverse": "claims about it"
+      }
+     }
+    }
+   },
+   "acts": {
+    "add-question": {
+     "title": "Add a question",
+     "creates": "question",
+     "description": "Add something you are trying to find out."
+    },
+    "answer-question": {
+     "title": "Mark as answered",
+     "on": "question",
+     "sets": {
+      "status": "answered",
+      "answer": "$answer"
+     },
+     "allowedWhen": "status == 'open'",
+     "refusal": "“{question}” is not open",
+     "description": "Say a question is answered, with the answer in a sentence or two."
+    },
+    "drop-question": {
+     "title": "Drop",
+     "on": "question",
+     "sets": {
+      "status": "dropped"
+     },
+     "description": "Stop pursuing a question; it drops out of view but is not deleted."
+    },
+    "reopen-question": {
+     "title": "Reopen",
+     "on": "question",
+     "sets": {
+      "status": "open"
+     },
+     "allowedWhen": "status != 'open'",
+     "refusal": "“{question}” is already open",
+     "description": "Put a question back on the list of things we are trying to find out."
+    },
+    "add-source": {
+     "title": "Add a source",
+     "creates": "source",
+     "description": "Add something to read, watch or listen to."
+    },
+    "add-source-for": {
+     "title": "Add a source for this question",
+     "on": "question",
+     "args": {
+      "title": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "source",
+       "as": "new",
+       "set": {
+        "title": "$title",
+        "author": "$author",
+        "link": "$link"
+       }
+      },
+      {
+       "connect": "informs",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add a source that speaks to this question, by title, with its author and link if you have them."
+    },
+    "start-reading": {
+     "title": "Start reading",
+     "on": "source",
+     "sets": {
+      "status": "reading"
+     },
+     "allowedWhen": "status == 'to-read'",
+     "refusal": "{title} is already started",
+     "description": "Say you have started on a source."
+    },
+    "finish-reading": {
+     "title": "Finished",
+     "on": "source",
+     "sets": {
+      "status": "read"
+     },
+     "description": "Say you have finished a source."
+    },
+    "inform": {
+     "title": "Speaks to a question",
+     "on": "source",
+     "connects": "informs",
+     "description": "Say a source speaks to one of the questions.",
+     "fromTheOtherEnd": "Add one of our sources behind this question"
+    },
+    "uninform": {
+     "title": "No longer speaks to a question",
+     "on": "source",
+     "severs": "informs",
+     "description": "Say a source turned out not to speak to a question.",
+     "fromTheOtherEnd": "Take a source off this question"
+    },
+    "add-claim": {
+     "title": "Add a claim",
+     "creates": "claim",
+     "description": "Add one thing a source says, in your own words."
+    },
+    "add-claim-from": {
+     "title": "Note a claim this source makes",
+     "on": "source",
+     "args": {
+      "statement": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "claim",
+       "as": "new",
+       "set": {
+        "statement": "$statement",
+        "confidence": "$confidence",
+        "page": "$page"
+       }
+      },
+      {
+       "connect": "cites",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Note one thing this source says, in your own words, with how far you trust it and where it says it."
+    },
+    "cite": {
+     "title": "Cite a source",
+     "on": "claim",
+     "connects": "cites",
+     "description": "Say which source makes a claim.",
+     "fromTheOtherEnd": "Attribute one of our claims to this source"
+    },
+    "bear-on": {
+     "title": "Bears on a question",
+     "on": "claim",
+     "connects": "bears-on",
+     "description": "Say a claim helps answer one of the questions.",
+     "fromTheOtherEnd": "Add one of our claims to this question"
+    },
+    "set-confidence": {
+     "title": "Set confidence",
+     "on": "claim",
+     "writes": [
+      "confidence"
+     ],
+     "description": "Say how far you trust a claim: weak, moderate or strong."
+    },
+    "uncite": {
+     "title": "Remove its source",
+     "on": "claim",
+     "severs": "cites",
+     "description": "Say a claim does not come from the source it was attributed to.",
+     "fromTheOtherEnd": "Take a claim off this source"
+    },
+    "no-longer-bears-on": {
+     "title": "No longer bears on a question",
+     "on": "claim",
+     "severs": "bears-on",
+     "description": "Say a claim does not help answer a question after all.",
+     "fromTheOtherEnd": "Take a claim off this question"
+    },
+    "set-status": {
+     "title": "Set the status",
+     "on": "source",
+     "sets": {
+      "status": "$status"
+     },
+     "description": "Move it to any status, as a status board does. The named steps stay for what they also record."
+    }
+   },
+   "rules": {
+    "question-has-a-source": {
+     "title": "Every open question has a source behind it",
+     "description": "A question nothing on the reading list speaks to is where the reading should go next.",
+     "over": "question",
+     "when": "status == 'open'",
+     "require": "exists(in('informs'))",
+     "says": "Nothing on the list speaks to “{question}” yet",
+     "repairs": [
+      {
+       "act": "add-source-for",
+       "label": "Add a source"
+      },
+      {
+       "act": "drop-question",
+       "label": "Drop the question"
+      }
+     ]
+    },
+    "claim-has-a-source": {
+     "title": "Every claim cites a source",
+     "over": "claim",
+     "require": "present(cites)",
+     "says": "“{statement}” has no source behind it",
+     "repairs": [
+      {
+       "act": "cite",
+       "label": "Cite a source"
+      }
+     ]
+    },
+    "answer-has-a-claim": {
+     "title": "An answered question has a claim behind its answer",
+     "over": "question",
+     "when": "status == 'answered'",
+     "require": "exists(in('bears-on'))",
+     "says": "“{question}” is marked answered but no claim backs the answer",
+     "repairs": [
+      {
+       "act": "reopen-question",
+       "label": "Reopen it"
+      }
+     ]
+    }
+   },
+   "roles": [
+    "owner",
+    "editor",
+    "viewer"
+   ],
+   "policy": {
+    "grants": [
+     {
+      "roles": [
+       "owner",
+       "editor"
+      ],
+      "mutations": "*",
+      "describe": "Owners and editors may do everything; viewers can look."
+     }
+    ]
+   },
+   "brand": {
+    "accent": "#2f7a4f"
+   },
+   "lenses": [
+    {
+     "name": "columns",
+     "title": "Sources by status",
+     "bindings": {
+      "source": {
+       "column": "status"
+      }
+     }
+    },
+    {
+     "name": "coverage",
+     "title": "Sources against questions",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "source"
+      },
+      "columns": {
+       "kind": "question"
+      },
+      "link": {
+       "edge": "informs"
+      }
+     }
+    },
+    {
+     "name": "coverage",
+     "title": "Claims against questions",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "claim"
+      },
+      "columns": {
+       "kind": "question"
+      },
+      "link": {
+       "edge": "bears-on"
+      }
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "renovation",
+  "counts": {
+   "room": 1,
+   "purchase": 2,
+   "task": 2,
+   "trade": 1
+  },
+  "document": {
+   "format": "graview-document",
+   "formatVersion": 1,
+   "name": "Renovation",
+   "description": "The rooms we're redoing, the work in each, what we have to buy, and who's doing it.",
+   "kinds": {
+    "room": {
+     "noun": "room",
+     "plural": "rooms",
+     "description": "A room or area being worked on, with what we can spend on it.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "budget": {
+       "type": "number",
+       "format": "money",
+       "description": "the most we want to spend on purchases for this room"
+      }
+     }
+    },
+    "task": {
+     "noun": "task",
+     "plural": "tasks",
+     "description": "A piece of work, like tiling the floor or moving a socket.",
+     "fields": {
+      "title": {
+       "type": "string",
+       "required": true
+      },
+      "status": {
+       "type": "enum",
+       "options": [
+        "todo",
+        "doing",
+        "done"
+       ],
+       "default": "todo",
+       "required": true
+      },
+      "due": {
+       "type": "date"
+      },
+      "notes": {
+       "type": "text"
+      }
+     },
+     "glance": [
+      "title",
+      "status",
+      "due"
+     ],
+     "describe": "{status}",
+     "lifecycle": {
+      "field": "status",
+      "retired": [
+       "done"
+      ]
+     },
+     "edges": {
+      "in-room": {
+       "to": [
+        "room"
+       ],
+       "cardinality": "one",
+       "description": "the room this work happens in",
+       "inverse": "tasks in it"
+      },
+      "needs": {
+       "to": [
+        "purchase"
+       ],
+       "cardinality": "many",
+       "description": "what has to arrive before this work can happen",
+       "inverse": "tasks waiting on it"
+      },
+      "done-by": {
+       "to": [
+        "trade"
+       ],
+       "cardinality": "one",
+       "description": "who is doing the work",
+       "inverse": "their tasks"
+      }
+     }
+    },
+    "purchase": {
+     "noun": "purchase",
+     "plural": "purchases",
+     "description": "Something to buy: materials, fixtures, appliances.",
+     "fields": {
+      "item": {
+       "type": "string",
+       "required": true
+      },
+      "status": {
+       "type": "enum",
+       "options": [
+        "to-order",
+        "ordered",
+        "delivered"
+       ],
+       "default": "to-order",
+       "required": true
+      },
+      "cost": {
+       "type": "number",
+       "format": "money"
+      },
+      "supplier": {
+       "type": "string"
+      },
+      "link": {
+       "type": "url"
+      }
+     },
+     "glance": [
+      "item",
+      "status",
+      "cost"
+     ],
+     "describe": "{status} · {cost|money}",
+     "edges": {
+      "for-room": {
+       "to": [
+        "room"
+       ],
+       "cardinality": "one",
+       "description": "the room whose budget this comes out of",
+       "inverse": "purchases for it"
+      }
+     }
+    },
+    "trade": {
+     "noun": "tradesperson",
+     "plural": "trades",
+     "description": "A builder, plumber, electrician or anyone else doing the work.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "craft": {
+       "type": "string",
+       "description": "what they do, like \"plumber\""
+      },
+      "phone": {
+       "type": "string"
+      },
+      "email": {
+       "type": "email"
+      },
+      "quote": {
+       "type": "number",
+       "format": "money"
+      }
+     },
+     "glance": [
+      "name",
+      "craft",
+      "quote"
+     ],
+     "describe": "{craft}"
+    }
+   },
+   "acts": {
+    "add-room": {
+     "title": "Add a room",
+     "creates": "room",
+     "description": "Add a room or area being worked on, optionally with a budget."
+    },
+    "set-room-budget": {
+     "title": "Set the budget",
+     "on": "room",
+     "writes": [
+      "budget"
+     ],
+     "description": "Set or change the most you want to spend on purchases for this room."
+    },
+    "add-task": {
+     "title": "Add a task",
+     "creates": "task",
+     "description": "Add a piece of work, before choosing its room."
+    },
+    "add-task-here": {
+     "title": "Add a task in this room",
+     "on": "room",
+     "args": {
+      "title": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "task",
+       "as": "new",
+       "set": {
+        "title": "$title",
+        "due": "$due"
+       }
+      },
+      {
+       "connect": "in-room",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add a piece of work in this room, by title, with a due date if there is one."
+    },
+    "start-task": {
+     "title": "Start",
+     "on": "task",
+     "sets": {
+      "status": "doing"
+     },
+     "allowedWhen": "status == 'todo'",
+     "refusal": "{title} has already started",
+     "description": "Say work on a task has begun."
+    },
+    "finish-task": {
+     "title": "Done",
+     "on": "task",
+     "sets": {
+      "status": "done"
+     },
+     "description": "Say a task is finished; it drops out of view but is not deleted."
+    },
+    "add-purchase": {
+     "title": "Add a purchase",
+     "creates": "purchase",
+     "description": "Add something to buy, before choosing its room."
+    },
+    "add-purchase-for-task": {
+     "title": "Add something this task needs",
+     "on": "task",
+     "args": {
+      "item": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "purchase",
+       "as": "new",
+       "set": {
+        "item": "$item",
+        "cost": "$cost",
+        "supplier": "$supplier"
+       }
+      },
+      {
+       "connect": "needs",
+       "from": "$subject",
+       "to": "$new"
+      }
+     ],
+     "description": "Add a thing to buy that this task cannot start without, by name, with cost and supplier if known."
+    },
+    "add-purchase-for-room": {
+     "title": "Add a purchase for this room",
+     "on": "room",
+     "args": {
+      "item": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "purchase",
+       "as": "new",
+       "set": {
+        "item": "$item",
+        "cost": "$cost",
+        "supplier": "$supplier"
+       }
+      },
+      {
+       "connect": "for-room",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add a thing to buy that comes out of this room's budget."
+    },
+    "mark-ordered": {
+     "title": "Mark as ordered",
+     "on": "purchase",
+     "sets": {
+      "status": "ordered"
+     },
+     "allowedWhen": "status == 'to-order'",
+     "refusal": "{item} is already ordered",
+     "description": "Say a purchase has been ordered."
+    },
+    "mark-delivered": {
+     "title": "Mark as delivered",
+     "on": "purchase",
+     "sets": {
+      "status": "delivered"
+     },
+     "description": "Say a purchase has arrived on site."
+    },
+    "set-cost": {
+     "title": "Set the cost",
+     "on": "purchase",
+     "writes": [
+      "cost"
+     ],
+     "description": "Record what a purchase costs."
+    },
+    "charge-to-room": {
+     "title": "Charge to a room",
+     "on": "purchase",
+     "connects": "for-room",
+     "description": "Say which room's budget a purchase comes out of.",
+     "fromTheOtherEnd": "Charge one of our purchases to this room"
+    },
+    "needs-purchase": {
+     "title": "Waits on a purchase",
+     "on": "task",
+     "connects": "needs",
+     "description": "Say a task cannot start until a purchase arrives.",
+     "fromTheOtherEnd": "Say a task is waiting on this"
+    },
+    "no-longer-needs": {
+     "title": "No longer waits on a purchase",
+     "on": "task",
+     "severs": "needs",
+     "description": "Say a task no longer waits on a purchase.",
+     "fromTheOtherEnd": "Say a task no longer waits on this"
+    },
+    "move-task": {
+     "title": "Move to a room",
+     "on": "task",
+     "connects": "in-room",
+     "description": "Say which room a task happens in.",
+     "fromTheOtherEnd": "Move one of our tasks to this room"
+    },
+    "add-trade": {
+     "title": "Add a tradesperson",
+     "creates": "trade",
+     "description": "Add a builder, plumber, electrician or anyone else doing the work."
+    },
+    "assign-trade": {
+     "title": "Give to a tradesperson",
+     "on": "task",
+     "connects": "done-by",
+     "description": "Say who is doing a task.",
+     "fromTheOtherEnd": "Give them one of our tasks"
+    },
+    "uncharge": {
+     "title": "Take off a room's budget",
+     "on": "purchase",
+     "severs": "for-room",
+     "description": "Stop charging a purchase to a room's budget.",
+     "fromTheOtherEnd": "Take a purchase off this room's budget"
+    },
+    "take-out-of-room": {
+     "title": "Take out of its room",
+     "on": "task",
+     "severs": "in-room",
+     "description": "Say a task no longer belongs to the room it was in.",
+     "fromTheOtherEnd": "Take one of our tasks out of this room"
+    },
+    "unassign-trade": {
+     "title": "Take off a tradesperson",
+     "on": "task",
+     "severs": "done-by",
+     "description": "Say a tradesperson is no longer doing a task.",
+     "fromTheOtherEnd": "Take a task off them"
+    },
+    "set-status": {
+     "title": "Set the status",
+     "on": "task",
+     "sets": {
+      "status": "$status"
+     },
+     "description": "Move it to any status, as a status board does. The named steps stay for what they also record."
+    }
+   },
+   "rules": {
+    "order-what-work-waits-on": {
+     "title": "Nothing waits on a purchase not yet ordered",
+     "description": "A tiler booked for Monday with no tiles ordered is a lost week.",
+     "over": "purchase",
+     "when": "status == 'to-order'",
+     "require": "!exists(in('needs') where status != 'done')",
+     "says": "{item} isn't ordered yet — waiting on it: {in('needs') where status != 'done'}",
+     "repairs": [
+      {
+       "act": "mark-ordered",
+       "label": "Mark it ordered"
+      }
+     ]
+    },
+    "room-within-budget": {
+     "title": "A room's purchases fit its budget",
+     "over": "room",
+     "when": "present(budget)",
+     "require": "sum(in('for-room'), 'cost') <= budget",
+     "says": "{name} is over its {budget|money} budget",
+     "repairs": [
+      {
+       "act": "set-room-budget",
+       "label": "Raise the budget"
+      }
+     ]
+    }
+   },
+   "roles": [
+    "owner",
+    "editor",
+    "viewer"
+   ],
+   "policy": {
+    "grants": [
+     {
+      "roles": [
+       "owner",
+       "editor"
+      ],
+      "mutations": "*",
+      "describe": "Owners and editors may do everything; viewers can look."
+     }
+    ]
+   },
+   "brand": {
+    "accent": "#3d5a80"
+   },
+   "lenses": [
+    {
+     "name": "columns",
+     "title": "Tasks by status",
+     "bindings": {
+      "task": {
+       "column": "status"
+      }
+     }
+    },
+    {
+     "name": "coverage",
+     "title": "Tasks by room",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "task"
+      },
+      "columns": {
+       "kind": "room"
+      },
+      "link": {
+       "edge": "in-room"
+      }
+     }
+    },
+    {
+     "name": "coverage",
+     "title": "Who does what",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "task"
+      },
+      "columns": {
+       "kind": "trade"
+      },
+      "link": {
+       "edge": "done-by"
+      }
+     }
+    },
+    {
+     "name": "calendar",
+     "title": "What's due",
+     "requiredRoles": [
+      "start"
+     ],
+     "bindings": {
+      "task": {
+       "start": "due"
+      }
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "small-inventory",
+  "counts": {
+   "location": 1,
+   "item": 2,
+   "movement": 3
+  },
+  "document": {
+   "format": "graview-document",
+   "formatVersion": 1,
+   "name": "Small inventory",
+   "description": "The things you keep in stock, where each is kept, and every time some came in or went out.",
+   "kinds": {
+    "item": {
+     "noun": "item",
+     "plural": "items",
+     "description": "Something you keep a stock of, like printer paper or jars of honey.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "unit": {
+       "type": "string",
+       "description": "what you count it in, like boxes or jars"
+      },
+      "reorderAt": {
+       "type": "integer",
+       "label": "Reorder at",
+       "description": "restock when it gets down to this many"
+      },
+      "supplier": {
+       "type": "string"
+      },
+      "link": {
+       "type": "url"
+      }
+     },
+     "glance": [
+      "name",
+      "unit",
+      "reorderAt"
+     ],
+     "edges": {
+      "kept-in": {
+       "to": [
+        "location"
+       ],
+       "cardinality": "one",
+       "description": "where it is kept",
+       "inverse": "items kept here"
+      }
+     }
+    },
+    "location": {
+     "noun": "location",
+     "plural": "locations",
+     "description": "Somewhere things are kept: a shelf, a cupboard, a van.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      }
+     }
+    },
+    "movement": {
+     "noun": "movement",
+     "plural": "movements",
+     "description": "Some of an item coming in (a delivery) or going out (used or sold). Stock is what they add up to.",
+     "fields": {
+      "change": {
+       "type": "integer",
+       "required": true,
+       "description": "how many came in (positive) or went out (negative)"
+      },
+      "reason": {
+       "type": "enum",
+       "options": [
+        "received",
+        "used",
+        "sold",
+        "counted"
+       ],
+       "default": "received",
+       "required": true
+      },
+      "on": {
+       "type": "date"
+      },
+      "note": {
+       "type": "string"
+      }
+     },
+     "glance": [
+      "change",
+      "reason",
+      "on"
+     ],
+     "label": "{reason} {change}",
+     "describe": "{on|date}",
+     "edges": {
+      "of": {
+       "to": [
+        "item"
+       ],
+       "cardinality": "one",
+       "description": "the item it moved",
+       "inverse": "movements"
+      }
+     }
+    }
+   },
+   "acts": {
+    "add-item": {
+     "title": "Add an item",
+     "creates": "item",
+     "description": "Start keeping track of something you stock, and when to reorder it."
+    },
+    "add-location": {
+     "title": "Add a location",
+     "creates": "location",
+     "description": "Add somewhere things are kept."
+    },
+    "add-item-here": {
+     "title": "Add an item kept here",
+     "on": "location",
+     "args": {
+      "name": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "item",
+       "as": "new",
+       "set": {
+        "name": "$name",
+        "reorderAt": "$reorderAt"
+       }
+      },
+      {
+       "connect": "kept-in",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add an item that is kept in this location, by name, and when to reorder it."
+    },
+    "receive": {
+     "title": "Some came in",
+     "on": "item",
+     "args": {
+      "amount": {
+       "type": "integer",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "movement",
+       "as": "new",
+       "set": {
+        "change": "$amount",
+        "reason": "received",
+        "on": "$today"
+       }
+      },
+      {
+       "connect": "of",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Record a delivery or restock: how many came in today."
+    },
+    "use": {
+     "title": "Some went out",
+     "on": "item",
+     "args": {
+      "amount": {
+       "type": "integer",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "movement",
+       "as": "new",
+       "set": {
+        "change": {
+         "expr": "0 - amount"
+        },
+        "reason": "used",
+        "on": "$today"
+       }
+      },
+      {
+       "connect": "of",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Record some of an item used or sold today: how many went out."
+    },
+    "set-reorder-point": {
+     "title": "Set when to reorder",
+     "on": "item",
+     "writes": [
+      "reorderAt"
+     ],
+     "description": "Say how low an item may get before it needs restocking."
+    },
+    "store-in": {
+     "title": "Keep somewhere",
+     "on": "item",
+     "connects": "kept-in",
+     "description": "Say where an item is kept, in place of wherever it was.",
+     "fromTheOtherEnd": "Keep one of our items here"
+    },
+    "take-out-of-location": {
+     "title": "Take out of its location",
+     "on": "item",
+     "severs": "kept-in",
+     "description": "Say an item is no longer kept where it was.",
+     "fromTheOtherEnd": "Take an item out of here"
+    },
+    "add-movement": {
+     "title": "Record a movement",
+     "creates": "movement",
+     "description": "Record stock coming in or going out, before saying which item it was."
+    },
+    "attribute-movement": {
+     "title": "Say which item",
+     "on": "movement",
+     "connects": "of",
+     "description": "Say which item a movement was of.",
+     "fromTheOtherEnd": "Record a movement against this item"
+    },
+    "detach-movement": {
+     "title": "Take off its item",
+     "on": "movement",
+     "severs": "of",
+     "description": "Take a movement off the item it was recorded against, so it no longer counts.",
+     "fromTheOtherEnd": "Take a movement off this item"
+    }
+   },
+   "rules": {
+    "stock-above-reorder-point": {
+     "title": "Nothing runs below its reorder point",
+     "description": "The time to reorder is before the last box goes, not after.",
+     "over": "item",
+     "when": "present(reorderAt)",
+     "require": "sum(in('of'), 'change') > reorderAt",
+     "says": "{name} is down to {sum(in('of'), 'change')} — reorder at {reorderAt}",
+     "repairs": [
+      {
+       "act": "receive",
+       "label": "Record a delivery"
+      },
+      {
+       "act": "set-reorder-point",
+       "label": "Change when to reorder"
+      }
+     ]
+    },
+    "stock-not-negative": {
+     "title": "Stock never goes below none",
+     "description": "Using more than you had means a delivery or a count went unrecorded.",
+     "over": "item",
+     "require": "sum(in('of'), 'change') >= 0",
+     "says": "{name} shows {sum(in('of'), 'change')} in stock — a delivery or a count is missing",
+     "repairs": [
+      {
+       "act": "receive",
+       "label": "Record what came in"
+      }
+     ]
+    }
+   },
+   "roles": [
+    "owner",
+    "editor",
+    "viewer"
+   ],
+   "policy": {
+    "grants": [
+     {
+      "roles": [
+       "owner",
+       "editor"
+      ],
+      "mutations": "*",
+      "describe": "Owners and editors may do everything; viewers can look."
+     }
+    ]
+   },
+   "brand": {
+    "accent": "#5b6b2f"
+   },
+   "lenses": [
+    {
+     "name": "coverage",
+     "title": "Where things are",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "item"
+      },
+      "columns": {
+       "kind": "location"
+      },
+      "link": {
+       "edge": "kept-in"
+      }
+     }
+    },
+    {
+     "name": "calendar",
+     "title": "Movements",
+     "requiredRoles": [
+      "start"
+     ],
+     "bindings": {
+      "movement": {
+       "start": "on"
+      }
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "trip-planner",
+  "counts": {
+   "day": 3,
+   "booking": 1,
+   "stop": 1,
+   "traveller": 1
+  },
+  "document": {
+   "format": "graview-document",
+   "formatVersion": 1,
+   "name": "Trip planner",
+   "description": "The days of a trip, where we sleep each night, what we've booked, and who's coming.",
+   "kinds": {
+    "day": {
+     "noun": "day",
+     "plural": "days",
+     "description": "One day of the trip, and whether we spend the night away.",
+     "fields": {
+      "title": {
+       "type": "string",
+       "required": true,
+       "description": "what to call the day, like \"Fri 14 May\" or \"Day 2\""
+      },
+      "date": {
+       "type": "date"
+      },
+      "overnight": {
+       "type": "boolean",
+       "default": true,
+       "label": "Staying the night",
+       "description": "whether we sleep away this night; false on the day we go home"
+      },
+      "notes": {
+       "type": "text"
+      }
+     },
+     "glance": [
+      "title",
+      "date",
+      "overnight"
+     ],
+     "describe": "{date|date}"
+    },
+    "booking": {
+     "noun": "booking",
+     "plural": "bookings",
+     "description": "Something reserved or still to reserve: a place to stay, a train, a table, a tour.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "type": {
+       "type": "enum",
+       "options": [
+        "stay",
+        "transport",
+        "activity",
+        "other"
+       ],
+       "default": "stay",
+       "required": true
+      },
+      "status": {
+       "type": "enum",
+       "options": [
+        "idea",
+        "held",
+        "confirmed",
+        "cancelled"
+       ],
+       "default": "idea",
+       "required": true
+      },
+      "cost": {
+       "type": "number",
+       "format": "money"
+      },
+      "reference": {
+       "type": "string",
+       "description": "the confirmation or booking number"
+      },
+      "link": {
+       "type": "url"
+      }
+     },
+     "glance": [
+      "name",
+      "status",
+      "cost"
+     ],
+     "describe": "{type} · {status}",
+     "lifecycle": {
+      "field": "status",
+      "retired": [
+       "cancelled"
+      ]
+     },
+     "edges": {
+      "covers": {
+       "to": [
+        "day"
+       ],
+       "cardinality": "many",
+       "description": "the days (nights, for a stay) this booking covers",
+       "inverse": "bookings for it"
+      },
+      "includes": {
+       "to": [
+        "traveller"
+       ],
+       "cardinality": "many",
+       "description": "who this booking is for",
+       "inverse": "their bookings"
+      }
+     }
+    },
+    "stop": {
+     "noun": "stop",
+     "plural": "stops",
+     "description": "A place we mean to go or a thing we mean to do on a given day.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "time": {
+       "type": "string",
+       "description": "roughly when, like \"10:00\" or \"after lunch\""
+      },
+      "place": {
+       "type": "string",
+       "description": "an address or area"
+      },
+      "notes": {
+       "type": "text"
+      }
+     },
+     "glance": [
+      "name",
+      "time",
+      "place"
+     ],
+     "describe": "{time}",
+     "edges": {
+      "during": {
+       "to": [
+        "day"
+       ],
+       "cardinality": "one",
+       "description": "the day this stop happens on",
+       "inverse": "stops that day"
+      }
+     }
+    },
+    "traveller": {
+     "noun": "traveller",
+     "plural": "travellers",
+     "description": "Someone coming on the trip.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "email": {
+       "type": "email"
+      },
+      "phone": {
+       "type": "string"
+      }
+     }
+    }
+   },
+   "acts": {
+    "add-day": {
+     "title": "Add a day",
+     "creates": "day",
+     "description": "Add a day to the trip; it is assumed we sleep away that night unless you say it is the day home."
+    },
+    "go-home": {
+     "title": "Mark as the day home",
+     "on": "day",
+     "sets": {
+      "overnight": false
+     },
+     "description": "Say this is the day we travel home, so it needs nowhere to sleep."
+    },
+    "stay-over": {
+     "title": "We stay the night",
+     "on": "day",
+     "sets": {
+      "overnight": true
+     },
+     "description": "Say we sleep away on this day's night after all."
+    },
+    "book-stay": {
+     "title": "Add a place to stay this night",
+     "on": "day",
+     "args": {
+      "name": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "booking",
+       "as": "new",
+       "set": {
+        "name": "$name",
+        "type": "stay",
+        "cost": "$cost"
+       }
+      },
+      {
+       "connect": "covers",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add a hotel, flat or campsite for this day's night, by name, with its cost if you know it."
+    },
+    "add-stop-to-day": {
+     "title": "Add a stop to this day",
+     "on": "day",
+     "args": {
+      "name": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "stop",
+       "as": "new",
+       "set": {
+        "name": "$name",
+        "time": "$time"
+       }
+      },
+      {
+       "connect": "during",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add somewhere to go or something to do on this day."
+    },
+    "add-booking": {
+     "title": "Add a booking",
+     "creates": "booking",
+     "description": "Add something reserved or still to reserve, before deciding which days it covers."
+    },
+    "confirm": {
+     "title": "Confirm",
+     "on": "booking",
+     "sets": {
+      "status": "confirmed"
+     },
+     "allowedWhen": "status != 'cancelled'",
+     "refusal": "{name} was cancelled; add it again if it is back on",
+     "description": "Mark a booking as confirmed once it is paid for or guaranteed."
+    },
+    "hold": {
+     "title": "Mark as held",
+     "on": "booking",
+     "sets": {
+      "status": "held"
+     },
+     "allowedWhen": "status == 'idea'",
+     "refusal": "{name} is already further along than held",
+     "description": "Mark a booking as provisionally held, not yet confirmed."
+    },
+    "cancel": {
+     "title": "Cancel",
+     "on": "booking",
+     "sets": {
+      "status": "cancelled"
+     },
+     "description": "Mark a booking as cancelled; it drops out of view but is not deleted."
+    },
+    "set-reference": {
+     "title": "Add the booking reference",
+     "on": "booking",
+     "writes": [
+      "reference"
+     ],
+     "description": "Record the confirmation number, so anyone can find the booking at the desk."
+    },
+    "cover-day": {
+     "title": "Covers a day",
+     "on": "booking",
+     "connects": "covers",
+     "description": "Say which day (or night) a booking is for.",
+     "fromTheOtherEnd": "Attach one of our bookings to this day"
+    },
+    "uncover-day": {
+     "title": "No longer covers a day",
+     "on": "booking",
+     "severs": "covers",
+     "description": "Take a day off a booking.",
+     "fromTheOtherEnd": "Detach a booking from this day"
+    },
+    "include-traveller": {
+     "title": "Put a traveller on it",
+     "on": "booking",
+     "connects": "includes",
+     "description": "Say a booking is for this traveller.",
+     "fromTheOtherEnd": "Put them on one of our bookings"
+    },
+    "exclude-traveller": {
+     "title": "Take a traveller off it",
+     "on": "booking",
+     "severs": "includes",
+     "description": "Say a booking is no longer for this traveller.",
+     "fromTheOtherEnd": "Take them off a booking"
+    },
+    "add-stop": {
+     "title": "Add a stop",
+     "creates": "stop",
+     "description": "Add somewhere to go or something to do, before choosing its day."
+    },
+    "move-stop": {
+     "title": "Move to a day",
+     "on": "stop",
+     "connects": "during",
+     "description": "Put a stop on a day, or move it to a different one.",
+     "fromTheOtherEnd": "Move one of our stops to this day"
+    },
+    "add-traveller": {
+     "title": "Add a traveller",
+     "creates": "traveller",
+     "description": "Add someone who is coming on the trip."
+    },
+    "unschedule-stop": {
+     "title": "Take off its day",
+     "on": "stop",
+     "severs": "during",
+     "description": "Take a stop off the day it was planned for, leaving it unscheduled.",
+     "fromTheOtherEnd": "Take one of our stops off this day"
+    },
+    "set-status": {
+     "title": "Set the status",
+     "on": "booking",
+     "sets": {
+      "status": "$status"
+     },
+     "description": "Move it to any status, as a status board does. The named steps stay for what they also record."
+    }
+   },
+   "rules": {
+    "every-night-has-a-bed": {
+     "title": "Every night away has somewhere to sleep",
+     "description": "A day we stay away needs a stay booking that is not cancelled.",
+     "over": "day",
+     "when": "overnight == true",
+     "require": "some(in('covers'), type == 'stay' && status != 'cancelled')",
+     "says": "{title} has nowhere to sleep booked",
+     "repairs": [
+      {
+       "act": "book-stay",
+       "label": "Add a place to stay"
+      },
+      {
+       "act": "go-home",
+       "label": "It's the day we go home"
+      }
+     ]
+    },
+    "confirmed-has-reference": {
+     "title": "A confirmed booking has its reference",
+     "over": "booking",
+     "when": "status == 'confirmed'",
+     "require": "present(reference)",
+     "says": "{name} is confirmed but has no booking reference",
+     "repairs": [
+      {
+       "act": "set-reference",
+       "label": "Add the reference"
+      }
+     ]
+    }
+   },
+   "roles": [
+    "owner",
+    "editor",
+    "viewer"
+   ],
+   "policy": {
+    "grants": [
+     {
+      "roles": [
+       "owner",
+       "editor"
+      ],
+      "mutations": "*",
+      "describe": "Owners and editors may do everything; viewers can look."
+     }
+    ]
+   },
+   "brand": {
+    "accent": "#1f6f8b"
+   },
+   "lenses": [
+    {
+     "name": "columns",
+     "title": "Bookings by status",
+     "bindings": {
+      "booking": {
+       "column": "status"
+      }
+     }
+    },
+    {
+     "name": "calendar",
+     "title": "The days",
+     "requiredRoles": [
+      "start"
+     ],
+     "bindings": {
+      "day": {
+       "start": "date"
+      }
+     }
+    },
+    {
+     "name": "coverage",
+     "title": "Bookings by day",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "booking"
+      },
+      "columns": {
+       "kind": "day"
+      },
+      "link": {
+       "edge": "covers"
+      }
+     }
+    },
+    {
+     "name": "coverage",
+     "title": "Who's booked on what",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "booking"
+      },
+      "columns": {
+       "kind": "traveller"
+      },
+      "link": {
+       "edge": "includes"
+      }
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "vendor-shortlist",
+  "counts": {
+   "category": 2,
+   "vendor": 4
+  },
+  "document": {
+   "format": "graview-document",
+   "formatVersion": 1,
+   "name": "Vendor shortlist",
+   "description": "Who we might hire, what they quoted, and who's booked.",
+   "kinds": {
+    "category": {
+     "noun": "category",
+     "plural": "categories",
+     "description": "A kind of vendor we need exactly one of, like a venue or a photographer, with what we can spend on it.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "budget": {
+       "type": "number",
+       "format": "money",
+       "description": "the most we want to spend on this category"
+      }
+     }
+    },
+    "vendor": {
+     "noun": "vendor",
+     "plural": "vendors",
+     "description": "A business we might hire, and where we are with them.",
+     "fields": {
+      "name": {
+       "type": "string",
+       "required": true
+      },
+      "status": {
+       "type": "enum",
+       "options": [
+        "researching",
+        "contacted",
+        "booked",
+        "declined"
+       ],
+       "default": "researching",
+       "required": true
+      },
+      "quote": {
+       "type": "number",
+       "format": "money",
+       "description": "what they quoted us"
+      },
+      "due": {
+       "type": "date",
+       "description": "when they need an answer"
+      },
+      "contact": {
+       "type": "email",
+       "description": "who to write to"
+      },
+      "site": {
+       "type": "url"
+      },
+      "notes": {
+       "type": "text"
+      }
+     },
+     "glance": [
+      "name",
+      "status",
+      "quote"
+     ],
+     "describe": "{status} · {quote|money}",
+     "lifecycle": {
+      "field": "status",
+      "retired": [
+       "declined"
+      ]
+     },
+     "edges": {
+      "fills": {
+       "to": [
+        "category"
+       ],
+       "cardinality": "one",
+       "description": "the category this vendor would fill",
+       "inverse": "vendors for it"
+      }
+     }
+    }
+   },
+   "acts": {
+    "add-category": {
+     "title": "Add a category",
+     "creates": "category",
+     "description": "Start tracking a kind of vendor you need, optionally with a budget for it."
+    },
+    "set-budget": {
+     "title": "Set the budget",
+     "on": "category",
+     "writes": [
+      "budget"
+     ],
+     "description": "Set or change the most you want to spend on this category."
+    },
+    "add-vendor": {
+     "title": "Add a vendor",
+     "creates": "vendor",
+     "description": "Add a vendor you are considering, before you know which category they fill."
+    },
+    "add-to-category": {
+     "title": "Add a vendor to this category",
+     "on": "category",
+     "args": {
+      "name": {
+       "type": "string",
+       "required": true
+      }
+     },
+     "effects": [
+      {
+       "create": "vendor",
+       "as": "new",
+       "set": {
+        "name": "$name"
+       }
+      },
+      {
+       "connect": "fills",
+       "from": "$new",
+       "to": "$subject"
+      }
+     ],
+     "description": "Add a vendor you are considering for this category, by name."
+    },
+    "set-quote": {
+     "title": "Set the quote",
+     "on": "vendor",
+     "writes": [
+      "quote"
+     ],
+     "description": "Record what a vendor quoted, in the app's currency."
+    },
+    "mark-contacted": {
+     "title": "Mark as contacted",
+     "on": "vendor",
+     "sets": {
+      "status": "contacted"
+     },
+     "allowedWhen": "status == 'researching'",
+     "refusal": "{name} is already past the first conversation",
+     "description": "Note that you have reached out to this vendor."
+    },
+    "book": {
+     "title": "Book",
+     "on": "vendor",
+     "sets": {
+      "status": "booked"
+     },
+     "allowedWhen": "status != 'declined'",
+     "refusal": "{name} was declined; reopen them first",
+     "description": "Mark a vendor as booked once you have committed to them."
+    },
+    "decline": {
+     "title": "Decline",
+     "on": "vendor",
+     "sets": {
+      "status": "declined"
+     },
+     "description": "Mark a vendor as declined; they drop out of view but are not deleted."
+    },
+    "reopen": {
+     "title": "Reopen",
+     "on": "vendor",
+     "sets": {
+      "status": "contacted"
+     },
+     "allowedWhen": "status == 'declined'",
+     "refusal": "{name} is not declined",
+     "description": "Bring a declined vendor back into consideration."
+    },
+    "file-under": {
+     "title": "File under a category",
+     "on": "vendor",
+     "connects": "fills",
+     "description": "Say which category a vendor is for.",
+     "fromTheOtherEnd": "Add one of our vendors"
+    },
+    "unfile": {
+     "title": "Take out of its category",
+     "on": "vendor",
+     "severs": "fills",
+     "description": "Take a vendor out of the category they were filed under.",
+     "fromTheOtherEnd": "Take a vendor out of this category"
+    },
+    "set-status": {
+     "title": "Set the status",
+     "on": "vendor",
+     "sets": {
+      "status": "$status"
+     },
+     "description": "Move it to any status, as a status board does. The named steps stay for what they also record."
+    }
+   },
+   "rules": {
+    "one-booked-per-category": {
+     "title": "One vendor booked per category",
+     "description": "Two booked photographers is a double payment waiting to happen.",
+     "over": "category",
+     "require": "count(in('fills') where status == 'booked') <= 1",
+     "says": "{name} has more than one vendor booked"
+    },
+    "booked-needs-quote": {
+     "title": "A booked vendor has a quote",
+     "description": "Committing without a number is how budgets drift.",
+     "over": "vendor",
+     "when": "status == 'booked'",
+     "require": "quote != null",
+     "says": "{name} is booked but has no quote",
+     "repairs": [
+      {
+       "act": "set-quote",
+       "label": "Add the quote"
+      }
+     ]
+    },
+    "within-budget": {
+     "title": "Booked vendors fit the category's budget",
+     "over": "category",
+     "when": "present(budget)",
+     "require": "sum(in('fills') where status == 'booked', 'quote') <= budget",
+     "says": "{name} is over its {budget|money} budget",
+     "repairs": [
+      {
+       "act": "set-budget",
+       "label": "Raise the budget"
+      }
+     ]
+    }
+   },
+   "roles": [
+    "owner",
+    "editor",
+    "viewer"
+   ],
+   "policy": {
+    "grants": [
+     {
+      "roles": [
+       "owner",
+       "editor"
+      ],
+      "mutations": "*",
+      "describe": "Owners and editors may do everything; viewers can look."
+     }
+    ]
+   },
+   "brand": {
+    "accent": "#a8456a"
+   },
+   "views": {
+    "vendor": {
+     "card": [
+      {
+       "title": "{name}"
+      },
+      {
+       "badge": "{status}",
+       "tone": {
+        "expr": "if(status == 'booked', 'good', if(status == 'declined', 'bad', if(status == 'contacted', 'accent', 'neutral')))"
+       }
+      },
+      {
+       "field": "quote",
+       "as": "money"
+      },
+      {
+       "field": "due",
+       "as": "relative"
+      }
+     ]
+    }
+   },
+   "lenses": [
+    {
+     "name": "columns",
+     "title": "Vendors by status",
+     "bindings": {
+      "vendor": {
+       "column": "status"
+      }
+     }
+    },
+    {
+     "name": "coverage",
+     "title": "Vendors by category",
+     "binds": "entities",
+     "requiredRoles": [
+      "rows",
+      "columns",
+      "link"
+     ],
+     "bindings": {
+      "rows": {
+       "kind": "vendor"
+      },
+      "columns": {
+       "kind": "category"
+      },
+      "link": {
+       "edge": "fills"
+      }
+     }
+    },
+    {
+     "name": "calendar",
+     "title": "Deadlines",
+     "requiredRoles": [
+      "start"
+     ],
+     "bindings": {
+      "vendor": {
+       "start": "due"
+      }
+     }
+    }
+   ]
+  }
+ }
+]

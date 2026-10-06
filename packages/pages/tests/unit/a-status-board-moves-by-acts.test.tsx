@@ -82,6 +82,14 @@ describe("a status board on the routed face", () => {
     await done();
   });
 
+  it("names each column region by the lens's title first, so a screen reader on a phone says which board it is in (FR-109)", async () => {
+    const { host, done } = await rendered(OWNER);
+    // A section with a name is a region: the role a screen reader's landmarks list reads.
+    const regions = [...host.querySelectorAll<HTMLElement>("section[aria-label], [role=region][aria-label]")].filter((region) => region.hasAttribute("data-graview-column")).map((region) => region.getAttribute("aria-label"));
+    expect(regions).toEqual(["The board · Todo, 2", "The board · Doing, 1", "The board · Done, 1"]);
+    await done();
+  });
+
   it("moves a card with the keyboard by running the act as the viewer, and one undo puts it back", async () => {
     const { host, store, columns, done } = await rendered(OWNER);
     const button = host.querySelector<HTMLButtonElement>('[data-columns-move="t1"] > button')!;
