@@ -1,6 +1,7 @@
 import type { AnySchema } from "@graview/core";
 import { kindCardId } from "@graview/layout/view";
-import { useAttention, useGraview } from "@graview/react/provider";
+import { useAttention } from "@graview/react/drawing";
+import { useGraview } from "@graview/react/provider";
 import {
   createInAppAdapter,
   createToolRuntime,

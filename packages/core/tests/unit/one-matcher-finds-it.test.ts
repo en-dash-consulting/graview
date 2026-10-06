@@ -1,24 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import {
-  actsOn,
-  arrange,
-  bindSchema,
-  createSchema,
-  defineApp,
-  defineInvariant,
-  defineNode,
-  describeSearched,
-  fold,
-  Graph,
-  isoDate,
-  parseQuery,
-  search,
-  searchableFields,
-  Store,
-  type Hit,
-  type Principal,
-} from "../../src/index.js";
+import { arrange } from "../../src/arrange.js";
+import { actsOn, bindSchema, createSchema, defineApp, defineInvariant, defineNode, describeSearched, fold, Graph, isoDate, parseQuery, search, searchableFields, Store, type Hit, type Principal } from "../../src/index.js";
 import { describeApp, generateLlmsTxt } from "../../src/check.js";
 import { awkwardApp, awkwardGraph } from "../../src/testing.js";
 

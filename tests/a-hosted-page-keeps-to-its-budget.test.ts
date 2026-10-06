@@ -31,7 +31,7 @@ describe("a hosted page", () => {
     for (const name of ["react-dom", "zod", "@graview/core", "@graview/embed", "@graview/ship"]) expect(Object.keys(measured.upFront.packages)).toContain(name);
   });
 
-  it("carries at most 572 KB minified up front: 562 KB, with 10 KB of headroom under Cloud's 600", () => {
+  it("carries at most 563 KB minified up front: 555 KB, with 8 KB of headroom, so Cloud's shell keeps room for its own under its 595", () => {
     expect(measured.upFront.minified, `${Math.round(measured.upFront.minified / 1024)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
     expect(measured.over).toBe(false);
   });
@@ -80,8 +80,8 @@ describe("a hosted page", () => {
     expect(packageOf("<stdin>")).toBe("(the page)");
   });
 
-  it("holds its budget's numbers: 572 KB up front, under the 600 Cloud's brief set, and 150 KB of it zod's", () => {
-    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 572 * 1024, zod: 150 * 1024 });
+  it("holds its budget's numbers: 563 KB up front, under the 595 Cloud's shell holds itself to, and 150 KB of it zod's", () => {
+    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 563 * 1024, zod: 150 * 1024 });
   });
 
   /*
@@ -97,6 +97,32 @@ describe("a hosted page", () => {
       expect(modules).not.toContain(module);
     }
     expect(modules.filter((module) => module.startsWith("core/src/cli/"))).toEqual([]);
+  });
+
+  it("carries nothing up front that only a drawn view uses: those are @graview/react/drawing, /tools/edit and /core/arrange, reached only by what is fetched", () => {
+    const modules = Object.keys(measured.upFront.modules);
+    for (const module of [
+      "react/src/drawn.ts",
+      "react/src/kit.ts",
+      "react/src/view-boundary.tsx",
+      "react/src/emphasis.ts",
+      "react/src/editable-fields.ts",
+      "react/src/placement.ts",
+      "react/src/attention.ts",
+      "react/src/picking.ts",
+      "tools/src/edit.ts",
+      "tools/src/pins.ts",
+      "layout/src/label-fit.ts",
+      "core/src/arranging.ts",
+    ]) {
+      expect(modules).not.toContain(module);
+    }
+    expect(Object.keys(measured.upFront.packages)).not.toContain("@graview/render");
+  });
+
+  it("fetches the describer when a place is first asked about, not with the assistant's seat", () => {
+    expect(Object.keys(measured.upFront.modules)).not.toContain("core/src/document/describe-place.ts");
+    expect(measured.whenAsked.doors.map((door) => door.module)).toContain("core/src/describe.ts");
   });
 
   it("carries none of the scene's own rules up front: the scene face draws them, and fetches them as it is drawn (FR-104)", () => {

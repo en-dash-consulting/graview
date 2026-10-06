@@ -1,4 +1,5 @@
-import { admitArrangement, arrange, arrangeable, formatArrangement, labelOf, parseArrangement, tellApart, type Arrangement } from "@graview/core";
+import { admitArrangement, arrange, arrangeable, formatArrangement, parseArrangement } from "@graview/core/arrange";
+import { labelOf, tellApart, type Arrangement } from "@graview/core";
 import { ArrangeBar } from "@graview/primitives";
 import {
   createPageRegistry,

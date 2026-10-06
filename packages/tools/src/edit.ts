@@ -1,3 +1,10 @@
+/*
+ * `@graview/tools/edit` — THE FIELDS A RECORD LETS A READER CHANGE, where
+ * they are shown. Also exported from `@graview/tools`; its own entry so a
+ * drawn record reaches it without the providers, the chat and the agent's
+ * tool surface that `@graview/tools` reaches, and out of `/frame`, which
+ * every page imports before anything is drawn.
+ */
 import {
   argShape,
   fieldsWrittenBy,

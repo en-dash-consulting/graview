@@ -1,10 +1,10 @@
+import { arrangeable } from "@graview/core/arrange";
 import { createSchema, defineNode, isoDate, Store } from "@graview/core";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { PagesApp, type PageContext } from "../../src/index.js";
 import { arrangementFromSearch } from "../../src/page-list.js";
-import { arrangeable } from "@graview/core";
 
 /**
  * A list you arranged is a link you can send. The list page reads sort,

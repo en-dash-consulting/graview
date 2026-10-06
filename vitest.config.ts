@@ -20,6 +20,7 @@ export default defineConfig({
       // The command lines, reached by the packages that dispatch to one another.
       "@graview/core/cli": fileURLToPath(new URL("./packages/core/src/cli/index.ts", import.meta.url)),
       "@graview/core/blocks": fileURLToPath(new URL("./packages/core/src/blocks.ts", import.meta.url)),
+      "@graview/core/arrange": fileURLToPath(new URL("./packages/core/src/arrange.ts", import.meta.url)),
       "@graview/core/check": fileURLToPath(new URL("./packages/core/src/check.ts", import.meta.url)),
       "@graview/core/scene": fileURLToPath(new URL("./packages/core/src/scene.ts", import.meta.url)),
       "@graview/core/figures": fileURLToPath(new URL("./packages/core/src/figures.ts", import.meta.url)),
@@ -32,6 +33,7 @@ export default defineConfig({
       "@graview/layout": src("layout"),
       "@graview/tools/cli": fileURLToPath(new URL("./packages/tools/src/cli.ts", import.meta.url)),
       "@graview/tools/frame": fileURLToPath(new URL("./packages/tools/src/frame.ts", import.meta.url)),
+      "@graview/tools/edit": fileURLToPath(new URL("./packages/tools/src/edit.ts", import.meta.url)),
       "@graview/tools": src("tools"),
       // The subpath first, or the bare-name alias swallows it.
       "@graview/render/gpu": fileURLToPath(
@@ -39,6 +41,7 @@ export default defineConfig({
       ),
       "@graview/render": src("render"),
       "@graview/react/provider": fileURLToPath(new URL("./packages/react/src/provider.ts", import.meta.url)),
+      "@graview/react/drawing": fileURLToPath(new URL("./packages/react/src/drawing.ts", import.meta.url)),
       "@graview/react": src("react"),
       "@graview/primitives/frame": fileURLToPath(new URL("./packages/primitives/src/frame.ts", import.meta.url)),
       "@graview/primitives/pages": fileURLToPath(new URL("./packages/primitives/src/pages.ts", import.meta.url)),

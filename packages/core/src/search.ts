@@ -1,4 +1,4 @@
-import { arrangeable, asksForThePast, conditionHolds, type ArrangeContext, type ArrangeGraph, type Condition } from "./arrange.js";
+import { arrangeable, asksForThePast, conditionHolds, type ArrangeContext, type ArrangeGraph, type Condition } from "./arrangement.js";
 import { describeArg } from "./mutations/node-ref.js";
 import type { Operation } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";

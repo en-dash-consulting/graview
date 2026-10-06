@@ -1,4 +1,5 @@
-import { arrange, arrangeable, fieldWords, humaniseField, type AnySchema, type ArrangeGraph, type ArrangeNode, type DateBucket, type GraphReader } from "@graview/core";
+import { arrange, arrangeable } from "@graview/core/arrange";
+import { fieldWords, humaniseField, type AnySchema, type ArrangeGraph, type ArrangeNode, type DateBucket, type GraphReader } from "@graview/core";
 import { aggregateId, BAND_PREFIX, isBandAggregate } from "./ids.js";
 export { BAND_PREFIX, isBandAggregate } from "./ids.js";
 import type { Aggregate, Opens, Via } from "./types.js";
