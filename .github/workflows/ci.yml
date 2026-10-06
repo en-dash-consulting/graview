@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
   pull_request:
+  # The release workflow dispatches this on the Version packages branch: a pull
+  # request its own token opened starts no workflow, and main's rules need
+  # these checks on every pull request.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}

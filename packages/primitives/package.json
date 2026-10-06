@@ -1,6 +1,6 @@
 {
   "name": "@graview/primitives",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,6 +16,10 @@
     "./pages": {
       "types": "./dist/pages.d.ts",
       "default": "./dist/pages.js"
+    },
+    "./scene": {
+      "types": "./dist/scene.d.ts",
+      "default": "./dist/scene.js"
     }
   },
   "scripts": {

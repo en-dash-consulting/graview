@@ -9,6 +9,8 @@ import {
   type Principal,
   type Store,
   nameOfAuthor,
+  orderKinds,
+  type PagesArrangement,
 } from "@graview/core";
 
 
@@ -199,6 +201,21 @@ export const liveKinds = <S extends AnySchema>(store: Store<S>, principal?: Prin
   return (store.schema.kinds as readonly string[]).filter(
     (kind) => !store.modules.disabledKinds.has(kind) && !kept.has(kind),
   );
+};
+
+/**
+ * The kinds this face lists, in the declaration's order (FR-80): the kinds
+ * `pages.order` names first, the rest as declared.
+ */
+type Arranged<S extends AnySchema> = { readonly store: Store<S>; readonly principal?: Principal; readonly views?: { arrangement?(): PagesArrangement | undefined } };
+
+export const arrangedKinds = <S extends AnySchema>(context: Arranged<S>): readonly string[] =>
+  orderKinds(liveKinds(context.store, context.principal), context.views?.arrangement?.()?.order);
+
+/** The kinds the home shows: arranged, less the ones `pages.hide` leaves off it — which keep their lists, links and search. */
+export const homeKinds = <S extends AnySchema>(context: Arranged<S>): readonly string[] => {
+  const hidden = new Set(context.views?.arrangement?.()?.hide ?? []);
+  return arrangedKinds(context).filter((kind) => !hidden.has(kind));
 };
 
 export const capitalise = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);

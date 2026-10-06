@@ -39,7 +39,8 @@ import {
 } from "./schema.js";
 import { parseTemplate, renderTemplate, TemplateError, type TemplatePart } from "./template.js";
 import { upgradeDocument } from "./upgrade.js";
-import { validateViews } from "./views.js";
+import { homeOf, validateViews, viewsOf } from "./views.js";
+import { computedOf, parsedComputed, validateComputed, workedOutAlone } from "./computed.js";
 
 /*
  * A DOCUMENT, COMPILED.
@@ -150,9 +151,11 @@ function edgeIndex(document: GraviewDocument): Map<string, EdgeInfo> {
 export function kindShapes(document: GraviewDocument): Map<string, KindShape> {
   const shapes = new Map<string, KindShape>();
   for (const [kind, spec] of Object.entries(document.kinds)) {
+    const computed = parsedComputed(spec);
     shapes.set(kind, {
       fields: new Set(Object.keys(spec.fields)),
       edges: new Map(Object.entries(spec.edges ?? {}).map(([name, e]) => [name, e.cardinality ?? "many"])),
+      ...(computed ? { computed } : {}),
     });
   }
   return shapes;
@@ -224,8 +227,10 @@ function validate(document: GraviewDocument): Finding[] {
       if (spec.fields[name]) findings.push(error("edge-field-clash", `${at}.edges.${name}`, `"${name}" is both a field and a relation of ${kind}`, "rename one of them"));
     }
     if (spec.lifecycle && !spec.fields[spec.lifecycle.field]) findings.push(error("lifecycle-field", `${at}.lifecycle.field`, `${kind} has no field "${spec.lifecycle.field}"`));
+    // A glance may say a computed field: the surfaces that draw a glance work it out over the seat's graph (FR-83).
+    const computedHere = (name: string) => spec.computed !== undefined && Object.prototype.hasOwnProperty.call(spec.computed, name);
     for (const field of spec.glance ?? []) {
-      if (!spec.fields[field]) findings.push(error("glance-field", `${at}.glance`, `a glance at ${kind} is to say "${field}", and ${kind} has no field called that`, `use one of: ${Object.keys(spec.fields).join(", ")}`));
+      if (!spec.fields[field] && !computedHere(field)) findings.push(error("glance-field", `${at}.glance`, `a glance at ${kind} is to say "${field}", and ${kind} has no field or computed field called that`, `use one of: ${[...Object.keys(spec.fields), ...Object.keys(spec.computed ?? {})].join(", ")}`));
     }
     for (const key of ["label", "describe"] as const) {
       const source = spec[key];
@@ -234,7 +239,13 @@ function validate(document: GraviewDocument): Finding[] {
       for (const part of parts ?? []) {
         if (!part.expr) continue;
         for (const name of analyzeExpr(part.expr).names) {
-          if (!spec.fields[name]) findings.push(error("template-field", `${at}.${key}`, `${kind} has no field "${name}" for its ${key} to show`, key === "label" ? "a label can only show the record's own fields" : undefined));
+          if (spec.fields[name]) continue;
+          // A computed field worked out from the record alone is said like a field; one that reads beyond it cannot be, with no graph in hand.
+          if (computedHere(name)) {
+            if (!workedOutAlone(spec, name)) findings.push(error("template-field", `${at}.${key}`, `${kind}'s ${name} is worked out from beyond the record, and a ${key} is said with no graph to read`, `show it in a view instead, or name a computed field worked out from ${kind}'s own fields`));
+            continue;
+          }
+          findings.push(error("template-field", `${at}.${key}`, `${kind} has no field "${name}" for its ${key} to show`, key === "label" ? "a label can only show the record's own fields and what they work out" : undefined));
         }
       }
     }
@@ -251,7 +262,11 @@ function validate(document: GraviewDocument): Finding[] {
     const subjectKinds = asArray(act.on);
     const effects = effectsOf(act, document);
     if (act.creates && act.on === undefined && act.writes && kinds.has(act.creates)) {
-      for (const field of act.writes) if (!document.kinds[act.creates]!.fields[field]) findings.push(error("act-field", `${at}.writes`, `${act.creates} has no field "${field}"`));
+      for (const field of act.writes) {
+        if (document.kinds[act.creates]!.fields[field]) continue;
+        if (document.kinds[act.creates]!.computed?.[field] !== undefined) findings.push(error("computed-written", `${at}.writes`, `${act.creates}'s ${field} is worked out, not written: no act can set it`, "write the stored fields it is worked out from"));
+        else findings.push(error("act-field", `${at}.writes`, `${act.creates} has no field "${field}"`));
+      }
     }
     if (effects.length === 0) findings.push(error("act-empty", at, `"${name}" does nothing`, "give it effects or a shorthand such as sets or creates"));
     const created = new Map<string, string>();
@@ -260,7 +275,13 @@ function validate(document: GraviewDocument): Finding[] {
       const where = act.effects && i >= shorthands ? `${at}.effects.${i - shorthands}` : at;
       if ("create" in effect) {
         if (!kinds.has(effect.create)) findings.push(error("act-kind", `${where}.create`, `"${effect.create}" is not a kind this document declares`));
-        else for (const field of Object.keys(effect.set ?? {})) if (!document.kinds[effect.create]!.fields[field]) findings.push(error("act-field", `${where}.set.${field}`, `${effect.create} has no field "${field}"`));
+        else {
+          for (const field of Object.keys(effect.set ?? {})) {
+            if (document.kinds[effect.create]!.fields[field]) continue;
+            if (document.kinds[effect.create]!.computed?.[field] !== undefined) findings.push(error("computed-written", `${where}.set.${field}`, `${effect.create}'s ${field} is worked out, not written: no act can set it`, "set the stored fields it is worked out from"));
+            else findings.push(error("act-field", `${where}.set.${field}`, `${effect.create} has no field "${field}"`));
+          }
+        }
         if (effect.as) created.set(effect.as, effect.create);
       } else if ("connect" in effect || "sever" in effect) {
         const edgeName = "connect" in effect ? effect.connect : effect.sever;
@@ -271,7 +292,11 @@ function validate(document: GraviewDocument): Finding[] {
         const targetKinds = target === "subject" ? subjectKinds : created.has(target ?? "") ? [created.get(target!)!] : [];
         if (target === "subject" && subjectKinds.length === 0) findings.push(error("act-subject", `${at}.on`, `"${name}" changes "$subject" but does not say which kinds it is "on"`));
         for (const field of Object.keys(effect.set)) {
-          for (const kind of targetKinds) if (kinds.has(kind) && !document.kinds[kind]!.fields[field]) findings.push(error("act-field", `${where}.set.${field}`, `${kind} has no field "${field}"`));
+          for (const kind of targetKinds) {
+            if (!kinds.has(kind) || document.kinds[kind]!.fields[field]) continue;
+            if (document.kinds[kind]!.computed?.[field] !== undefined) findings.push(error("computed-written", `${where}.set.${field}`, `${kind}'s ${field} is worked out, not written: no act can set it`, "set the stored fields it is worked out from"));
+            else findings.push(error("act-field", `${where}.set.${field}`, `${kind} has no field "${field}"`));
+          }
         }
       } else if ("remove" in effect) {
         if (refName(effect.remove) === "subject" && subjectKinds.length === 0) findings.push(error("act-subject", `${at}.on`, `"${name}" removes "$subject" but does not say which kinds it is "on"`));
@@ -297,7 +322,7 @@ function validate(document: GraviewDocument): Finding[] {
       const shape = analyzeExpr(expr);
       for (const n of shape.names) {
         if (rule.over === "graph") findings.push(error("rule-name", `${at}.${key}`, `"${n}" means nothing in a rule over the whole graph`, "name a kind in \"over\", or use all('kind')"));
-        else if (spec && !spec.fields[n] && !spec.edges?.[n]) {
+        else if (spec && !spec.fields[n] && !spec.edges?.[n] && spec.computed?.[n] === undefined) {
           const hyphenated = Object.keys(spec.edges ?? {}).find((e) => e.includes("-") && e.split("-").includes(n));
           findings.push(error("rule-name", `${at}.${key}`, `${rule.over} has no field or relation called "${n}"`, hyphenated ? `"${hyphenated}" reads as a subtraction in a rule; rename the relation to one camelCase word, like "${hyphenated.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase())}"` : undefined));
         }
@@ -326,6 +351,12 @@ function validate(document: GraviewDocument): Finding[] {
     });
   }
   findings.push(...validateViews(document));
+  findings.push(
+    ...validateComputed(
+      new Map(Object.entries(document.kinds).map(([kind, spec]) => [kind, { fields: new Set(Object.keys(spec.fields)), edges: new Set(Object.keys(spec.edges ?? {})), computed: computedOf(spec) }])),
+      (kind, name) => `kinds.${kind}.computed.${name}`,
+    ),
+  );
   return findings;
 }
 
@@ -462,6 +493,8 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
   const check = checkApp(app);
   for (const f of check.findings) {
     const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: f.message, ...(f.fix ? { fix: f.fix } : {}) } as const;
+    // The document already said it, at the same path (a blocks lens's words are held by both): once is enough.
+    if (compiled.findings.some((said) => said.code === f.code && said.path === finding.path)) continue;
     findings.push(f.code === "glance-unchosen" ? inDocumentWords(finding, f.where, document) : finding);
   }
   if (hasErrors(findings)) return { ok: false, findings };
@@ -493,7 +526,12 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
     const labelSource = spec.label ?? (defaultLabelField(spec) ? `{${defaultLabelField(spec)}}` : undefined);
     const labelParts = labelSource ? parseTemplate(labelSource) : undefined;
     const describeParts = spec.describe ? parseTemplate(spec.describe) : undefined;
-    const labels = Object.fromEntries(Object.entries(spec.fields).filter(([, f]) => f.label).map(([n, f]) => [n, f.label!]));
+    const computed = computedOf(spec);
+    // A computed field's words are said like a field's: its label, where it has one.
+    const labels = Object.fromEntries([
+      ...Object.entries(spec.fields).filter(([, f]) => f.label).map(([n, f]) => [n, f.label!]),
+      ...[...computed].filter(([, c]) => c.label).map(([n, c]) => [n, c.label!]),
+    ]);
     // Defaults stay out of the zod schema (hydration must not invent values) and ride beside it, for a repair to read.
     const defaults = Object.fromEntries(Object.entries(spec.fields).filter(([, f]) => f.default !== undefined).map(([n, f]) => [n, f.default]));
     const edgeDecls = Object.fromEntries(
@@ -518,6 +556,7 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
       ...(describeParts ? { describe: (node: { id: string }) => renderTemplate(describeParts, { node: node as AnyGraphNode, kinds: shapes, today: today() }) } : {}),
       ...(spec.lifecycle ? { lifecycle: { field: spec.lifecycle.field, retired: spec.lifecycle.retired } } : {}),
       ...(spec.figure ? { figure: spec.figure } : {}),
+      ...(spec.computed && Object.keys(spec.computed).length > 0 ? { computed: spec.computed } : {}),
       ...(Object.keys(labels).length > 0 || spec.glance ? { display: { ...(Object.keys(labels).length > 0 ? { labels } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}) } } : {}),
       ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
     } as never);
@@ -761,9 +800,13 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
     ...(brand ? { brand } : {}),
     ...(document.modules ? { modules: document.modules as never } : {}),
     ...(document.lenses ? { lenses: document.lenses as never } : {}),
+    // The arrangement is the app's (FR-80): every face reads it beside the places.
+    ...(document.pages ? { pages: document.pages as never } : {}),
     ...(document.settings ? { settings: document.settings as never } : {}),
     // The document's views are the declaration's view specs (FR-03): data the framework draws.
-    ...(document.views && Object.keys(document.views).length > 0 ? { viewSpecs: document.views as never } : {}),
+    ...(Object.keys(viewsOf(document)).length > 0 ? { viewSpecs: viewsOf(document) as never } : {}),
+    // And its home view, about no one record, is the app's home (FR-81).
+    ...(homeOf(document) ? { home: homeOf(document) as never } : {}),
     version: document.version ?? 1,
   };
 

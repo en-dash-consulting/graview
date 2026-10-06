@@ -4,7 +4,7 @@ import { VISUALLY_HIDDEN, descentTarget, fetchFrameworkViews, frameworkViewDoors
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import type { CompanionMode } from "@graview/primitives";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
-import { ErrorReportContext, GraviewProvider, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
+import { ErrorReportContext, GraviewProvider, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { createElement, lazy, Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
@@ -229,8 +229,9 @@ export interface EmbedProps<S extends AnySchema = AnySchema> extends EmbedOption
  * `data-stop="#view=the-season"` landed at the default view with the
  * season's pill unpressed: the pasted-link problem, one level up again.
  */
-function viewFor(face: EmbedFace, stop: string | undefined, kinds: readonly string[], places: readonly Place[]): ViewState {
-  const parsed = stop ? fromUrl(stop) : EMPTY_VIEW;
+function viewFor(face: EmbedFace, stop: string | undefined, kinds: readonly string[], places: readonly Place[], opening?: ViewState): ViewState {
+  // No stop: where the declaration says the app opens (FR-80), else nowhere in particular.
+  const parsed = stop ? fromUrl(stop) : (opening ?? EMPTY_VIEW);
   const named = parsed.within?.["view"];
   const place = named !== undefined && !parsed.focusId ? places.find((candidate) => candidate.as === named) : undefined;
   const asked = place ? { ...parsed, focusId: aggregateId(place.kind) } : parsed;
@@ -250,7 +251,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
   const views = useViews<S>(props, frameworkViewDoors) as never;
   const kinds = app.schema.kinds as readonly string[];
   // The first view only: after it, where the reader goes is theirs.
-  const initialView = useMemo(() => viewFor(face, stop, kinds, (views as ReactViewRegistry<S>).places()), []);
+  const initialView = useMemo(() => viewFor(face, stop, kinds, (views as ReactViewRegistry<S>).places(), openingView(views as ReactViewRegistry<S>, app.schema)), []);
   /*
    * NARROW, THE PAGES (FR-13). Below `pagesBelow` the scene and the Graview
    * give way to the routed face, and come back when there is room: the

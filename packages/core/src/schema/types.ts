@@ -173,7 +173,27 @@ export interface NodeDefinitionSpec<
    * person's storage.
    */
   readonly plot?: { readonly col: number; readonly row: number };
+  /**
+   * VALUES WORKED OUT, NOT WRITTEN (FR-83): a name and an expression of the
+   * rule language (`@graview/core/document`), read like a stored field by
+   * every template, view spec, rule, sum and sort — `net: "sum(out('includes'),
+   * list * units)"`. Never stored and never writable: no act or edit form
+   * offers one. Evaluated on demand over the graph the reader holds, under
+   * the reader's step budget, so a seat is served one worked out from what
+   * it may see. `graview check` judges each, and a cycle among them.
+   */
+  readonly computed?: Readonly<Record<string, ComputedField>>;
 }
+
+/** A computed field: its expression, or the expression with the words it is shown by. */
+export type ComputedField =
+  | string
+  | {
+      readonly expr: string;
+      /** What it is called on screen, where its name does not say it. */
+      readonly label?: string;
+      readonly description?: string;
+    };
 
 export interface LifecycleDeclaration {
   /** The field that carries the node's currency. */

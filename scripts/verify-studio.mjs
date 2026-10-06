@@ -138,7 +138,8 @@ async function inAHostsPage(browser, report) {
     statically.add(path);
     for (const one of outputs[path].imports) if (one.kind === "import-statement" && outputs[one.path]) reach(one.path);
   };
-  reach(Object.keys(outputs).find((path) => outputs[path].entryPoint !== undefined));
+  // From the page's own entry: every lazy chunk is an entry point too, and esbuild lists them in no promised order.
+  reach(Object.keys(outputs).find((path) => outputs[path].entryPoint === "<stdin>"));
   const first = new Set([...statically].map(name));
   writeFileSync(
     join(out, "index.html"),

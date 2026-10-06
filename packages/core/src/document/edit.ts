@@ -686,7 +686,17 @@ class Editor {
       this.doc.policy.sees = this.doc.policy.sees.map((s: Doc) => ({ ...s, kinds: s.kinds.filter((k: string) => k !== kind) })).filter((s: Doc) => s.kinds.length > 0);
       if (this.doc.policy.sees.length === 0) delete this.doc.policy.sees;
     }
-    for (const lens of this.doc.lenses ?? []) if (isObject(lens["bindings"])) delete (lens["bindings"] as Doc)[kind];
+    for (const lens of this.doc.lenses ?? []) {
+      if (isObject(lens["bindings"])) delete (lens["bindings"] as Doc)[kind];
+      if (lens["on"] === kind) delete lens["on"];
+    }
+    // The arrangement names kinds (FR-80): a kind that is gone is no longer ordered or hidden.
+    if (this.doc.pages) {
+      for (const part of ["order", "hide"] as const) {
+        const named = this.doc.pages[part];
+        if (Array.isArray(named)) this.doc.pages[part] = named.filter((k: string) => k !== kind);
+      }
+    }
     for (const f of [...this.fills]) if (f.kind === kind) this.fills.splice(this.fills.indexOf(f), 1);
     this.said.push(`The ${kind} kind is removed, and every ${kind} with it${gone.length ? `; so are ${listOf(gone)}` : ""}.`);
   }
@@ -1122,6 +1132,7 @@ class Editor {
         bindings[r.to] = bindings[r.from];
         delete bindings[r.from];
       }
+      if (r.t === "kind" && lens["on"] === r.from) lens["on"] = r.to;
       if (r.t === "field" && isObject(bindings[r.kind])) {
         const b = bindings[r.kind] as Record<string, unknown>;
         for (const [k, v] of Object.entries(b)) if (v === r.from) b[k] = r.to;

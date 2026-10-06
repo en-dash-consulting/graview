@@ -18,22 +18,29 @@ export const gauntletApp = defineApp({
   policy,
   brand: gauntletBrand,
   settings: readerSettings(),
+  /*
+   * TWO PICTURES, DECLARED AND DRAWN (FR-79): each titled, so each is a
+   * place the framework draws from these lines; the UI registers neither.
+   * The timetable is declared last, so it is what the talks' district draws
+   * when an address names no picture.
+   */
   lenses: [
+    /* What the talks are about, at real size: thousands of rows, forty-eight columns (W-122). */
+    {
+      name: "coverage",
+      title: "What the talks are about",
+      bindings: { rows: { kind: "talk" }, columns: { kind: "topic" }, link: { edge: "about" } },
+    },
     /*
-     * A CALENDAR OVER TWO KINDS: talks and workshops, each by its own start.
-     * The calendar every other app declares binds one kind (W-144).
+     * A CALENDAR OVER TWO KINDS: talks and workshops, each by its own start
+     * (W-144). It opens on the week of the latest edition — two hundred
+     * talks in three days — and looks out over the ten years.
      */
     {
       name: "calendar",
-      requiredRoles: ["start"],
+      title: "The timetable",
       bindings: { talk: { start: "startsAt" }, workshop: { start: "startsAt" } },
-    },
-    /* What the talks are about, at real size: thousands of rows. */
-    {
-      name: "coverage",
-      binds: "entities",
-      requiredRoles: ["rows", "columns", "link"],
-      bindings: { rows: { kind: "talk" }, columns: { kind: "topic" }, link: { edge: "about" } },
+      options: { today: "2026-09-28", range: "week", horizon: { years: 10, title: "Ten editions" } },
     },
   ],
 });
