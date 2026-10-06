@@ -55,7 +55,8 @@ export function analyzeExpr(expr: Expr): ExprShape {
         return;
       case "call": {
         functions.add(e.fn);
-        const first = e.args[0];
+        // A walk names its relation first, or second after the set it walks from (FR-101).
+        const first = (e.fn === "out" || e.fn === "in") && e.args.length === 2 ? e.args[1] : e.args[0];
         const literal = first?.t === "lit" && typeof first.value === "string" ? first.value : undefined;
         if (e.fn === "all" && literal) sweeps.push(literal);
         if ((e.fn === "out" || e.fn === "in") && literal) edges.push(literal);

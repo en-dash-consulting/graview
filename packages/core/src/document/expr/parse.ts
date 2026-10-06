@@ -18,7 +18,8 @@ export type Expr =
   | { readonly t: "call"; readonly fn: string; readonly args: readonly Expr[]; readonly at: number }
   | { readonly t: "where"; readonly set: Expr; readonly filter: Expr; readonly at: number };
 
-export type BinaryOp = "||" | "&&" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "in" | "+" | "-" | "*" | "/" | "%";
+/** `&`, `|` and `-` between sets of records meet, join and part them (FR-101); `-` between numbers subtracts. */
+export type BinaryOp = "||" | "&&" | "==" | "!=" | "<" | "<=" | ">" | ">=" | "in" | "|" | "&" | "+" | "-" | "*" | "/" | "%";
 
 export class ExprSyntaxError extends Error {
   constructor(
@@ -37,7 +38,7 @@ type Token =
   | { readonly k: "op"; readonly v: string; readonly at: number }
   | { readonly k: "end"; readonly at: number };
 
-const OPERATORS = ["||", "&&", "==", "!=", "<=", ">=", "<", ">", "!", "+", "-", "*", "/", "%", "(", ")", "[", "]", ",", "."];
+const OPERATORS = ["||", "&&", "==", "!=", "<=", ">=", "<", ">", "!", "|", "&", "+", "-", "*", "/", "%", "(", ")", "[", "]", ",", "."];
 const WORD_OPERATORS: Readonly<Record<string, string>> = { and: "&&", or: "||", not: "!" };
 export const MAX_EXPRESSION_LENGTH = 2000;
 
@@ -222,14 +223,17 @@ export function parseExpr(source: string): Expr {
 
   const product = binaryLevel(["*", "/", "%"], unary);
   const sum = binaryLevel(["+", "-"], product);
+  // Sets meet tighter than they join, and both bind tighter than a comparison: count(a & b | c) > 2.
+  const meet = binaryLevel(["&"], sum);
+  const join = binaryLevel(["|"], meet);
   const comparison = (): Expr => {
-    const left = sum();
+    const left = join();
     const t = peek();
     const op =
       t.k === "op" && ["==", "!=", "<", "<=", ">", ">="].includes(t.v) ? (t.v as BinaryOp) : t.k === "id" && t.v === "in" ? "in" : undefined;
     if (!op) return left;
     pos++;
-    return { t: "binary", op, left, right: sum(), at: t.at };
+    return { t: "binary", op, left, right: join(), at: t.at };
   };
   const negation = (): Expr => {
     const t = peek();

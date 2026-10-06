@@ -211,6 +211,10 @@ function kindsOf(doc: Doc, e: Expr, ctx: Kinds): Kinds {
       return kindsOf(doc, e.set, ctx);
     case "call": {
       const lit = e.args[0]?.t === "lit" && typeof e.args[0].value === "string" ? e.args[0].value : undefined;
+      // A walk from every member of a set (FR-101): its relation is its second word.
+      const walked = e.args.length === 2 && e.args[1]?.t === "lit" && typeof e.args[1].value === "string" ? e.args[1].value : undefined;
+      if (e.fn === "out" && walked) return targets(doc, kindsOf(doc, e.args[0]!, ctx), walked);
+      if (e.fn === "in" && walked) return sources(doc, walked);
       if (e.fn === "out" && lit) return targets(doc, "*", lit);
       if (e.fn === "in" && lit) return sources(doc, lit);
       if (e.fn === "all" && lit) return new Set([lit]);
@@ -278,6 +282,11 @@ function mapNames(doc: Doc, e: Expr, ctx: Kinds, rename: (site: Site) => string)
         if ((x.fn === "out" || x.fn === "in" || x.fn === "all") && literal !== undefined && x.args.length === 1) {
           const name = rename({ role: x.fn === "all" ? "kind" : "edge", kinds: NONE, name: literal });
           args = name === literal ? [...x.args] : [{ ...first!, value: name } as Expr];
+        } else if ((x.fn === "out" || x.fn === "in") && x.args.length === 2 && x.args[1]!.t === "lit" && typeof x.args[1]!.value === "string") {
+          // out(S, 'edge'): the set is read where the walk stands, and its relation renamed like any walk's (FR-101).
+          const relation = x.args[1]! as Extract<Expr, { t: "lit" }>;
+          const name = rename({ role: "edge", kinds: NONE, name: relation.value as string });
+          args = [go(first!, at), name === relation.value ? relation : { ...relation, value: name }];
         } else if (((x.fn === "every" || x.fn === "some") && x.args.length === 2) || (x.fn === "sort" && x.args.length >= 2)) {
           // Read once per member, with the member as its subject: its names are the members'.
           args = [go(x.args[0]!, at), go(x.args[1]!, kindsOf(doc, x.args[0]!, at)), ...x.args.slice(2).map((a) => go(a, at))];

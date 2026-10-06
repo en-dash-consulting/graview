@@ -30,10 +30,11 @@ export interface TemplatePart {
   readonly formatArgs?: readonly string[];
 }
 
-/** Where the formatter begins: the last bar that is not inside quotes and not half of `||`. */
+/** Where the formatter begins: the last bar that is not inside quotes or brackets — `count(a | b)` joins two sets (FR-101) — and not half of `||`. */
 export function filterBar(inner: string): number {
   let quote: string | undefined;
   let bar = -1;
+  let depth = 0;
   for (let i = 0; i < inner.length; i++) {
     const c = inner[i]!;
     if (quote) {
@@ -42,7 +43,9 @@ export function filterBar(inner: string): number {
       continue;
     }
     if (c === "'" || c === '"') quote = c;
-    else if (c === "|") {
+    else if (c === "(" || c === "[") depth++;
+    else if (c === ")" || c === "]") depth--;
+    else if (c === "|" && depth === 0) {
       if (inner[i + 1] === "|") i++;
       else bar = i;
     }

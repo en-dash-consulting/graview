@@ -339,9 +339,16 @@ function listedKinds(expr: Expr, scope: Scope): readonly string[] | undefined {
         const first = e.args[0];
         const word = first?.t === "lit" && typeof first.value === "string" ? first.value : undefined;
         if (e.fn === "all") return word !== undefined && scope.kinds.has(word) ? [word] : undefined;
+        // A walk from every member of a set (FR-101): out(S, 'edge') reaches what the relation leads to from S's kinds.
+        const walked = e.args.length === 2 && e.args[1]?.t === "lit" && typeof e.args[1].value === "string" ? e.args[1].value : undefined;
+        if (e.fn === "out" && walked !== undefined) {
+          const from = visit(first!);
+          return from ? targetsFrom(from, walked) : undefined;
+        }
         if (e.fn === "out") return word !== undefined && scope.kind !== null ? targetsFrom([scope.kind], word) : undefined;
         if (e.fn === "in") {
-          const sources = word !== undefined ? scope.vocabulary.sources(word) : [];
+          const relation = walked ?? word;
+          const sources = relation !== undefined ? scope.vocabulary.sources(relation) : [];
           return sources.length > 0 ? sources : undefined;
         }
         if ((e.fn === "sort" || e.fn === "first") && first) return visit(first);

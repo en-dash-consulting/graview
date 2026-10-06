@@ -58,6 +58,12 @@ export class ExprBudgetError extends ExprEvalError {}
 const isNode = (v: Value): v is AnyGraphNode =>
   v !== null && typeof v === "object" && !Array.isArray(v) && !(v instanceof NodeSet) && typeof (v as AnyGraphNode).id === "string";
 
+/** Each record once, in the order first given. */
+const distinct = (nodes: readonly AnyGraphNode[]): NodeSet => {
+  const seen = new Set<string>();
+  return new NodeSet(nodes.filter((n) => !seen.has(n.id) && seen.add(n.id)));
+};
+
 const describe = (v: Value): string =>
   v === null ? "nothing" : v instanceof NodeSet ? "a set of records" : Array.isArray(v) ? "a list" : isNode(v) ? "a record" : typeof v === "string" ? "a word" : typeof v;
 
@@ -194,6 +200,15 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     if (e.op === "||") return truthy(run(e.left, subject), e.at, "each side of or") || truthy(run(e.right, subject), e.at, "each side of or");
     const a = run(e.left, subject);
     const b = run(e.right, subject);
+    // Sets meet, join and part (FR-101): each record once, in the order the left side has them, then the right's.
+    if (e.op === "&" || e.op === "|" || (e.op === "-" && (a instanceof NodeSet || b instanceof NodeSet))) {
+      const left = asSet(a, e.at, e.op);
+      const right = asSet(b, e.at, e.op);
+      spend(left.nodes.length + right.nodes.length, e.at);
+      if (e.op === "|") return distinct([...left.nodes, ...right.nodes]);
+      const inRight = new Set(right.nodes.map((n) => n.id));
+      return distinct(left.nodes.filter((n) => inRight.has(n.id) === (e.op === "&")));
+    }
     switch (e.op) {
       case "==":
         return equal(a, b);
@@ -244,10 +259,24 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     switch (e.fn) {
       case "out":
       case "in": {
-        arity(1);
+        arity(1, 2);
+        const walk = (id: string, edge: string) => (e.fn === "out" ? ctx.graph.out(id, edge) : ctx.graph.in(id, edge));
+        // A walk from every member of a set (FR-101): out(S, 'edge') reaches each record once, in the order first reached.
+        if (e.args.length === 2) {
+          const from = asSet(arg(0), e.at, e.fn);
+          const edge = word(1);
+          spend(from.nodes.length, e.at);
+          return distinct(
+            from.nodes.flatMap((node) => {
+              const reached = walk(node.id, edge);
+              spend(reached.length, e.at);
+              return reached;
+            }),
+          );
+        }
         const edge = word(0);
         if (!subject) throw new ExprEvalError(`${e.fn}('${edge}') needs a record to start from`, e.at);
-        const nodes = e.fn === "out" ? ctx.graph.out(subject.id, edge) : ctx.graph.in(subject.id, edge);
+        const nodes = walk(subject.id, edge);
         spend(nodes.length, e.at);
         return new NodeSet(nodes);
       }

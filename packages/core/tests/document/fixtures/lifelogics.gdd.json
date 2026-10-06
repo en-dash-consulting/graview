@@ -16,6 +16,9 @@
         "discount": { "type": "number", "label": "Discount", "description": "Percent off list, for a client that qualifies." },
         "discountReason": { "type": "string", "label": "Why" }
       },
+      "edges": {
+        "needs": { "to": ["signal"], "description": "what the client needs answered", "inverse": "the parties that need this" }
+      },
       "describe": "{name} ({role})"
     },
     "stakeholder": {
@@ -203,12 +206,14 @@
         { "title": "{name}" },
         { "text": "{summary}" },
         { "field": "net", "as": "money" },
-        { "text": "{count(out('includes')) | words} {count(out('includes')) | plural: 'offer'}: {out('includes') | and}" }
+        { "text": "{count(out('includes')) | words} {count(out('includes')) | plural: 'offer'}: {out('includes') | and}" },
+        { "figure": "count(out(out('includes'), 'answers') & out(first(all('party') where role == 'client'), 'needs'))", "label": "of the {count(out(first(all('party') where role == 'client'), 'needs'))} things they need, answered" }
       ],
       "page": [
         { "headline": "What is in it" },
         { "list": "out('includes')", "as": "row", "empty": "Nothing in this package yet." },
-        { "figure": "net", "as": "money", "currency": "USD", "label": "After the discount" }
+        { "figure": "net", "as": "money", "currency": "USD", "label": "After the discount" },
+        { "figure": "count(out(out('includes'), 'answers') & out(first(all('party') where role == 'client'), 'needs'))", "label": "of the {count(out(first(all('party') where role == 'client'), 'needs'))} things they need, answered" }
       ]
     },
     "signal": {
