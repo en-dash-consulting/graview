@@ -11,8 +11,8 @@ import { createCalendarLens, Places } from "../../src/index.js";
 
 /**
  * A SELECT KEEPS ITS FLOOR IN WEBKIT. WebKit draws a native select at its own
- * height and ignores min-height: the bar's compact Places picker measured
- * 175×22 and the diary's Range picker 79×21 on a phone in Safari — under the
+ * height and ignores min-height: the bar's compact Places picker (a select
+ * until FR-117 made the places words) measured 175×22 and the diary's Range picker 79×21 on a phone in Safari — under the
  * 24 a target needs (the W-121 lesson, on two more selects). The native look
  * off is what holds the floor; jsdom draws nothing, so this holds that.
  */
@@ -23,14 +23,14 @@ const views = () => createViews(schema).register("drive", { cardinality: "many",
 const store = () => new Store({ schema, mutations: [], snapshot: { nodes: [{ id: "d1", kind: "drive", label: "Ada", on: "2026-09-30" }] as never, edges: [] } });
 
 describe("the selects a phone gets", () => {
-  it("the bar's compact Places picker has the native look off", () => {
+  it("the bar's places on a phone are no select at all: words that scroll, each a fingertip tall (FR-117)", () => {
     const html = renderToStaticMarkup(
       <GraviewProvider store={store()} views={views()} initialView={EMPTY_VIEW}>
         <Places compact />
       </GraviewProvider>,
     );
-    const style = html.match(/<select[^>]*style="([^"]*)"/)?.[1] ?? "";
-    expect(style).toContain("appearance:none");
+    expect(html).not.toContain("<select");
+    expect(html).toMatch(/<button[^>]*data-testid="place-the-diary"[^>]*style="[^"]*min-height:32px/);
   });
 
   it("the calendar's Range picker, at a phone's width, has the native look off", async () => {

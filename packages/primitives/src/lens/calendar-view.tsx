@@ -320,6 +320,9 @@ function CalendarView<S extends AnySchema>({
                */
               style={{
                 ...stepStyle,
+                // The range is a choice, so it keeps a choice's capsule (FR-117).
+                borderRadius: 999,
+                borderColor: "var(--graview-edge)",
                 background: undefined,
                 backgroundColor: "transparent",
                 marginLeft: "auto",
@@ -350,6 +353,8 @@ function CalendarView<S extends AnySchema>({
                 onClick={() => show(candidate)}
                 style={{
                   ...stepStyle,
+                  borderRadius: 999,
+                  borderColor: "var(--graview-edge)",
                   // The range names are the framework's own words and read as
                   // buttons capitalised; the horizon's name is the APP's, and
                   // "The rotation" is not "The Rotation".

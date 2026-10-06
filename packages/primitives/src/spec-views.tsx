@@ -41,7 +41,29 @@ export interface SpecContext extends BlockContext {
   readonly figure?: () => ReactNode;
 }
 
+/*
+ * WHAT THE SURROUNDINGS ALREADY SAY (FR-117). A card standing in a status
+ * board's "Contacted" column wore a "contacted" badge, and a row under a
+ * grouped list's "Hard" heading said "hard" again: a state badge is the one
+ * pill that earns its place, and repeated where its context already says it
+ * it is the pill that teaches a reader to stop reading pills. Whoever draws a
+ * record under a heading that names a value says so here; a badge whose
+ * words are that value, and a field block of that field, are not drawn.
+ * A list inside the card is about other records, so it starts afresh.
+ */
+export interface AlreadySaid {
+  /** The field the context names a value of — a board's column field. */
+  readonly field?: string;
+  /** The value, and its words as the heading says them. */
+  readonly values: readonly string[];
+}
+export const SaidAround = createContext<AlreadySaid | null>(null);
+const sameWords = (a: string, b: string) => a.trim().toLowerCase().replace(/[_-]+/g, " ") === b.trim().toLowerCase().replace(/[_-]+/g, " ");
+
 function Resolved({ block }: { readonly block: ResolvedBlock }): ReactNode {
+  const said = useContext(SaidAround);
+  if (said && block.t === "badge" && said.values.some((value) => sameWords(value, block.text))) return null;
+  if (said && block.t === "field" && said.field !== undefined && block.field === said.field) return null;
   switch (block.t) {
     case "title":
       return <strong className="graview-spec-title">{block.text}</strong>;
@@ -169,7 +191,7 @@ export const SpecLinks = createContext<SpecLinkTo | null>(null);
 /** The steps a list or a figure about no one record may take: it sweeps whole kinds. */
 const SWEEP_BUDGET = 5_000;
 
-function Listed({ node, as, depth }: { readonly node: AnyGraphNode; readonly as: "card" | "row"; readonly depth: number }) {
+function Listed({ node, as, depth, said = null }: { readonly node: AnyGraphNode; readonly as: "card" | "row"; readonly depth: number; readonly said?: AlreadySaid | null }) {
   const { store, views } = useGraview();
   const label = labelOf(store.schema.tryDefinition(node.kind), node);
   const View = views.lookup(node.kind as never, { cardinality: "one", fidelity: as === "card" ? "summary" : "glyph" }) as ViewComponent<AnySchema> | undefined;
@@ -179,7 +201,9 @@ function Listed({ node, as, depth }: { readonly node: AnyGraphNode; readonly as:
         // A listed card is a card on a page as in the scene: drawn as the scene draws it.
         <ViewModeProvider mode="scene">
           <ListDepth.Provider value={depth}>
-            <View node={node as never} cardinality="one" fidelity={as === "card" ? "summary" : "glyph"} mode="scene" selected={false} />
+            <SaidAround.Provider value={said}>
+              <View node={node as never} cardinality="one" fidelity={as === "card" ? "summary" : "glyph"} mode="scene" selected={false} />
+            </SaidAround.Provider>
           </ListDepth.Provider>
         </ViewModeProvider>
       ) : (
@@ -222,7 +246,7 @@ function SpecList({ list }: { readonly list: ResolvedList }) {
   const { store } = useGraview();
   if (list.failed) return <p className="graview-spec-text">—</p>;
   if (list.members.length === 0) return list.empty ? <p className="graview-spec-text graview-spec-empty">{list.empty}</p> : null;
-  const listOf = (members: readonly AnyGraphNode[]) =>
+  const listOf = (members: readonly AnyGraphNode[], said: AlreadySaid | null = null) =>
     depth > MAX_LIST_DEPTH ? (
       // Too deep to draw views: the names, each a link.
       <ul className="graview-spec-list" data-as="names">
@@ -236,7 +260,7 @@ function SpecList({ list }: { readonly list: ResolvedList }) {
     ) : (
       <ul className="graview-spec-list" data-as={list.as}>
         {members.map((node) => (
-          <Listed key={node.id} node={node} as={list.as} depth={depth} />
+          <Listed key={node.id} node={node} as={list.as} depth={depth} said={said} />
         ))}
       </ul>
     );
@@ -255,7 +279,7 @@ function SpecList({ list }: { readonly list: ResolvedList }) {
       {list.groups.map((group) => (
         <section key={group.value ?? ""} className="graview-spec-list-group" data-graview-group={group.value ?? ""}>
           {group.heading ? <Heading className="graview-spec-list-heading">{group.heading}</Heading> : null}
-          {listOf(group.members)}
+          {listOf(group.members, group.value !== null ? { values: [group.value, ...(group.heading ? [group.heading] : [])] } : null)}
         </section>
       ))}
       {tail}

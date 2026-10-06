@@ -4,7 +4,7 @@ import { useGraph, useGraview, ViewModeProvider, type ViewComponent, type ViewPr
 import { useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactElement } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel } from "../primitives/index.js";
-import { ListedLink } from "../spec-views.js";
+import { ListedLink, SaidAround } from "../spec-views.js";
 import { withMore } from "./more.js";
 
 /**
@@ -244,6 +244,8 @@ function ColumnsBoard({ boards, title }: { readonly boards: readonly Board[]; re
                     <p className="graview-columns-empty">Nothing here.</p>
                   ) : (
                     <ul className="graview-columns-cards">
+                      {/* The column says the card's state; the card does not say it again (FR-117). */}
+                      <SaidAround.Provider value={column.value === null ? null : { field: board.field, values: [column.value, column.label] }}>
                       {cards.map((card) => {
                         const moves = movesOf(card, board);
                         return (
@@ -257,6 +259,7 @@ function ColumnsBoard({ boards, title }: { readonly boards: readonly Board[]; re
                           />
                         );
                       })}
+                      </SaidAround.Provider>
                     </ul>
                   )}
                 </section>

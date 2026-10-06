@@ -204,7 +204,9 @@ export function OverviewButton() {
         gap: 7,
         height: 38,
         padding: "0 13px 0 11px",
-        borderRadius: 999,
+        // A quiet button on the picture, not a capsule: the scene's one way up or down (FR-117).
+        borderRadius: 8,
+        borderColor: "transparent",
         fontSize: "0.875rem",
         whiteSpace: "nowrap",
         background: "var(--graview-float)",
@@ -212,9 +214,7 @@ export function OverviewButton() {
         // The number the mark rides. Inline, like the ground's own, so the
         // theme's transition on the class carries it between the two.
         ["--graview-altitude" as string]: overview ? 1 : 0,
-        ...(overview
-          ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" }
-          : {}),
+        ...(overview ? { color: "var(--graview-accent)" } : {}),
       }}
     >
       {/* The mark: three kinds and the relations between them — the Graview —

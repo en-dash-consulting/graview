@@ -115,6 +115,22 @@ side by side. Never edit a component to achieve a look a token can carry —
 if a look genuinely needs one, that is a missing token to raise, not a fork
 to make.
 
+## What a capsule means
+
+One rule across the faces: a capsule (a pill) is a choice the reader can
+make — the face switch, a range, a setting, where the one chosen wears it —
+or a record's state badge. Nothing else is one. A record is a card (a chip
+has a card's corners), a field is its label and its value, the places are
+text tabs that scroll with the current one underlined, a district's name is
+text on its plot, a drive-in says its showings by name, and the scene's
+"Down to …", zoom and the seat's suggestions are quiet. A badge whose
+context already says it is not drawn: no card wears its own board column's
+status, no row its group's heading. Names wrap before they are cut, and a
+badge or a progress label never truncates. Do not brand your way back to a
+row of capsules: a host styling the old markup finds `nav[data-testid=
+"places"]` holding `button.graview-place-tab` (no "More" select), and a
+kind's mark is its plot in miniature, not a dot.
+
 ## Worked example
 
 - `apps/todo/src/domain/brand.ts` — "Things" from one accent, one mark and one

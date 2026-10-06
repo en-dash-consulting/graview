@@ -52,14 +52,19 @@ export function KindFigure<S extends AnySchema>({
         {...(title === undefined ? {} : { role: "img", "aria-label": title })}
         data-graview-figure={kind}
         data-graview-figure-kind="dot"
+        /*
+         * THE KIND'S PLOT, IN MINIATURE. A kind with no drawing stands in the
+         * city as its plot — a tile of the iso ground — so its mark is that
+         * tile, flat and small: the same shape a reader finds the kind by from
+         * altitude, rather than a round dot that read as one more pill (FR-117).
+         */
         style={{
           display: "inline-block",
-          width: Math.round(size * 0.62),
-          height: Math.round(size * 0.62),
-          borderRadius: "50%",
+          width: Math.round(size * 0.8),
+          height: Math.round(size * 0.5),
           flex: "0 0 auto",
           background: `hsl(${hue} 55% 52%)`,
-          boxShadow: `0 0 0 3px hsl(${hue} 55% 52% / 0.18)`,
+          clipPath: "polygon(50% 0, 100% 50%, 50% 100%, 0 50%)",
         }}
       />
     );

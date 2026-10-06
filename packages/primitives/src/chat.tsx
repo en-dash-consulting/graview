@@ -547,7 +547,8 @@ export function ChatPanel<S extends AnySchema>({
           ) : null}
           {/* What it can answer about what is in front of you, before anybody types. */}
           {(offer ?? []).length > 0 && conversation.turns.length === 0 ? (
-            <div data-testid={`${testId}-offers`} style={{ display: "flex", flexWrap: "wrap", gap: 4, padding: "0 8px 6px" }}>
+            /* Suggestions are a quiet way in, not choices the reader must weigh: words to press, not capsules (FR-117). */
+            <div data-testid={`${testId}-offers`} style={{ display: "flex", flexWrap: "wrap", gap: "0 12px", padding: "0 8px 6px" }}>
               {(offer ?? []).slice(0, 3).map((question) => (
                 <button
                   key={question}
@@ -555,7 +556,7 @@ export function ChatPanel<S extends AnySchema>({
                   data-testid={`${testId}-offer`}
                   disabled={conversation.busy}
                   onClick={() => void conversation.send(question)}
-                  style={{ font: "inherit", fontSize: "0.75rem", minHeight: 24, padding: "0 8px", borderRadius: 999 }}
+                  style={{ font: "inherit", fontSize: "0.8125rem", minHeight: 24, padding: "0 2px", border: 0, borderRadius: 4, background: "transparent", boxShadow: "none", color: "var(--graview-accent)", textDecoration: "underline", textUnderlineOffset: 3, cursor: "pointer" }}
                 >
                   {question}
                 </button>

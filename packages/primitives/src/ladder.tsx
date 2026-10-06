@@ -63,7 +63,8 @@ export function LadderSetting() {
                 fontSize: "0.875rem",
                 borderWidth: 1,
                 borderStyle: "solid",
-                borderColor: chosen ? "var(--graview-accent)" : "var(--graview-edge)",
+                // The one chosen wears the capsule — it is the setting's state; the others are words to choose (FR-117).
+                borderColor: chosen ? "var(--graview-accent)" : "transparent",
                 color: chosen ? "var(--graview-accent)" : "var(--graview-ink-muted)",
                 background: chosen ? "var(--graview-panel)" : "transparent",
               }}

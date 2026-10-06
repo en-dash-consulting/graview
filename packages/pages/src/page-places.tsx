@@ -181,7 +181,8 @@ function KindOnPage<S extends AnySchema>({ context, kind }: { context: PageConte
             style={{
               fontSize: "1.0625rem",
               padding: "8px 14px",
-              borderRadius: 999,
+              // A record is a card (FR-117).
+              borderRadius: 8,
               border: "1px solid var(--graview-edge-bright)",
               background: "var(--graview-ground)",
               color: "var(--graview-ink)",
@@ -507,7 +508,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         </p>
         {siblings.length > 0 ? (
           /* THE OTHER PICTURES, one press away: the gallery's hop, on the picture itself. */
-          <nav aria-label="Other pictures" data-testid="sibling-pictures" style={{ display: "flex", flexWrap: "wrap", gap: 8, paddingTop: 4 }}>
+          <nav aria-label="Other pictures" data-testid="sibling-pictures" style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", paddingTop: 4 }}>
             {siblings.map((other) => (
               <Link
                 key={placeKey(other)}
@@ -515,9 +516,10 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
                 style={{
                   ...plain,
                   fontSize: "0.9375rem",
-                  padding: "4px 12px",
-                  borderRadius: 999,
-                  border: "1px solid var(--graview-edge-bright)",
+                  // The other pictures are words to follow, as the places are on the bar: links, not capsules (FR-117).
+                  padding: "4px 2px",
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
                   color: "var(--graview-ink-muted)",
                 }}
               >

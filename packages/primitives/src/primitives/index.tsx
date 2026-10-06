@@ -412,7 +412,12 @@ export function Chip({ label, hue, selected, title, pickId, emphasis }: ChipProp
         minHeight: 24,
         boxSizing: "border-box",
         padding: "3px 9px",
-        borderRadius: 999,
+        /*
+         * A RECORD IS A CARD, NOT A CAPSULE (FR-117). A capsule says "press
+         * to choose" or "this is its state"; a chip stands for a thing, so it
+         * has a card's corners at a chip's size.
+         */
+        borderRadius: 6,
         fontSize: "0.8125rem",
         lineHeight: 1.5,
         whiteSpace: "nowrap",
@@ -462,9 +467,10 @@ export function Chip({ label, hue, selected, title, pickId, emphasis }: ChipProp
         <span
           aria-hidden="true"
           style={{
-            width: 6,
+            // The kind's plot in miniature, as every kind mark is (see KindFigure).
+            width: 9,
             height: 6,
-            borderRadius: 999,
+            clipPath: "polygon(50% 0, 100% 50%, 50% 100%, 0 50%)",
             flex: "0 0 auto",
             marginRight: 6,
             background: `hsl(${tint} 55% var(--graview-tint-lightness) / 0.9)`,

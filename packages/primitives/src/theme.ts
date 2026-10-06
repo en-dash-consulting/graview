@@ -548,9 +548,16 @@ ${/* The district-open control and its roster: altitude-only chrome. Inside
 ${/* The roster reads as a LIST, one member a row — chips wrapping at their
    own widths read as spilled tiles, and a district's population is a roll
    call, not a mosaic. */ ""}
+${/* THE PLACES, as text tabs (FR-117): the place you are on underlined, the
+   others the ink's quieter shade until reached for; a row longer than its
+   room scrolls, with no bar drawn under it. */ ""}
+.graview-places::-webkit-scrollbar { display: none; }
+.graview-place-tab:hover { color: var(--graview-ink) !important; border-bottom-color: var(--graview-edge-bright, var(--graview-edge)) !important; }
+.graview-place-tab[aria-pressed="true"]:hover { border-bottom-color: var(--graview-accent) !important; }
+.graview-place-tab:focus-visible { outline: 2px solid var(--graview-accent); outline-offset: -2px; }
 ${/* A DRIVE-IN: a dark screen standing on the plot, and the showings under
    it as a marquee of real buttons. Only from altitude; the same list the
-   Places pills carry, drawn where the pictures live. */ ""}
+   places tabs carry, drawn where the pictures live. */ ""}
 .graview-drive-in {
   ${/* Its own block under the nameplate, never a row inside the pill: the
      pill is one line of name and count, and a marquee flattened into it

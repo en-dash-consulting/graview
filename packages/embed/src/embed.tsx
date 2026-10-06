@@ -430,7 +430,8 @@ function EmbedStrip({
             fontSize: "0.875rem",
             borderWidth: 1,
             borderStyle: "solid",
-            borderColor: candidate.pressed ? "var(--graview-accent)" : "var(--graview-edge)",
+            // The face you are on wears the capsule; the other is a word to press (FR-117).
+            borderColor: candidate.pressed ? "var(--graview-accent)" : "transparent",
             color: candidate.pressed ? "var(--graview-accent)" : "var(--graview-ink-muted)",
             background: candidate.pressed ? "var(--graview-panel)" : "transparent",
           }}

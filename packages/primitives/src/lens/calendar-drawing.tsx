@@ -17,15 +17,16 @@ export function Step({ label, glyph, onPress }: { label: string; glyph: string; 
   );
 }
 
+/* A step through time is a quiet button: words to press, no capsule round them (FR-117). */
 export const stepStyle = {
   minHeight: 24,
   minWidth: 24,
   padding: "2px 9px",
-  borderRadius: 999,
+  borderRadius: 6,
   fontSize: "0.8125rem",
   borderWidth: 1,
   borderStyle: "solid" as const,
-  borderColor: "var(--graview-edge)",
+  borderColor: "transparent",
   color: "var(--graview-ink-muted)",
   background: "transparent",
 };
