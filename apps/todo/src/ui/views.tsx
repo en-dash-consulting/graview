@@ -7,14 +7,12 @@ import {
   Fields,
   Panel,
   Roster,
-  createCalendarLens,
-  createTimelineLens,
   hueFor,
-  reachLens,
+  registerDeclaredLenses,
   registerDefaultViews,
 } from "@graview/primitives";
+import { todoApp } from "../domain/app.js";
 import { todoSchema, type TodoSchema } from "../domain/schema.js";
-import { EXAMPLE_TODAY } from "./when.js";
 
 type S = TodoSchema;
 type ListNode = { id: string; label: string; order: number };
@@ -29,40 +27,6 @@ type TaskNode = { id: string; label: string; done: boolean; due?: string };
  * two places where the generic answer is genuinely worse than a specific one,
  * and nothing else.
  */
-
-const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
-
-/**
- * The week, through the household example's calendar lens — unchanged.
- *
- * The lens knows nothing about tasks. It asks for a start, an end and a
- * column; this app answers with a due date, a due date plus an estimate, and
- * the weekday that date falls on. That is the whole integration, and it is the
- * framework's central claim shown in the smallest app rather than only in the
- * ones built to prove it.
- */
-export const weekLens = createTimelineLens<S>({
-  bindings: { task: { start: "plannedAt", end: "plannedUntil", column: "day" } },
-  columns: DAYS.map((id) => ({ id, label: id.toUpperCase() })),
-  extent: 1440,
-  format: (at) => `${String(Math.floor(at / 60)).padStart(2, "0")}:${String(at % 60).padStart(2, "0")}`,
-});
-
-/**
- * THE MONTH, through the framework's calendar lens — over real dates.
- *
- * The week is minutes of a day in named columns, which cannot say "this is
- * due on the 14th of next month". Same app, same tasks, a second question:
- * what is coming up, and when. The lens has never heard of a task; this app
- * says which of its fields is the date and which says the thing is finished.
- */
-export const monthLens = createCalendarLens<S>({
-  bindings: { task: { start: "due", done: "done" } },
-  // The day the example is written around — read at the edge and threaded
-  // in, never from the clock, so a harness photographs the same month twice.
-  today: EXAMPLE_TODAY,
-  range: "month",
-});
 
 /** A task: the one card where "done" has to be visible without reading. */
 function TaskView({ node, fidelity, selected, mode, flagged }: ViewProps<S, "task">) {
@@ -343,22 +307,6 @@ const ListsView = ((props: ViewProps<S>) => {
 }) as ViewComponent<S>;
 
 /**
- * The week, from the lens, with a name a person would use.
- *
- * "Tasks" is the schema's plural machinery showing through; the thing on
- * screen is the week ahead.
- */
-const WeekView = ((props: ViewProps<S>) => (
-  <weekLens.View {...props} label="The week ahead" />
-)) as ViewComponent<S>;
-
-/** The same tasks, by the date they are due rather than the hour they fill. */
-const MonthView = ((props: ViewProps<S>) => (
-  <monthLens.View {...props} label="What is coming up" />
-)) as ViewComponent<S>;
-
-
-/**
  * WHAT IS LEFT, DRAWN — the one picture here that is not boxes.
  *
  * The week and the month lay tasks out; this one plots them. How much is
@@ -494,18 +442,7 @@ function BurndownView({ nodes }: ViewProps<S, "task">) {
 
 export function todoViews() {
   const registry = registerDefaultViews(todoSchema, createViews(todoSchema));
-  return registry
-    /*
-     * WHO MAY DO WHAT, as a picture of the people.
-     *
-     * The reach lens reads the policy the store refuses with — the same
-     * function, not a second copy — and draws what each role reaches. It
-     * arrives as an ordinary named view over the people, which makes it a
-     * PLACE: the bar lists it by name, and pressing it is a stop with a URL.
-     * A member never sees it, because a member never sees the people.
-     */
-    .register("user", { cardinality: "many", fidelity: "full" }, reachLens.View, { title: "Who may do what" })
-    .register("user", { cardinality: "many", fidelity: "summary" }, reachLens.View, { title: "Who may do what" })
+  const own = registry
     .register("task", { cardinality: "one", fidelity: "full" }, TaskView)
     .register("task", { cardinality: "one", fidelity: "summary" }, TaskView)
     .register("task", { cardinality: "one", fidelity: "glyph" }, TaskView)
@@ -517,26 +454,19 @@ export function todoViews() {
     .register("list", { cardinality: "many", fidelity: "full" }, ListsView, { title: "The lists" })
     .register("list", { cardinality: "many", fidelity: "summary" }, ListsView, { title: "The lists" })
     /*
-     * TWO PICTURES OF ONE PILE OF TASKS, each a place with its own name.
-     *
-     * The week says what today looks like, in minutes of a day. The month
-     * says what is coming, over real dates. Neither can answer the other's
-     * question, and until a kind could have more than one place the app had
-     * to choose. The week is registered LAST, so it is what the district
-     * draws when the address names no picture — the month is one press away
-     * and says so on the bar.
-     */
-    .register("task", { cardinality: "many", fidelity: "full" }, MonthView, { title: "The month" })
-    .register("task", { cardinality: "many", fidelity: "summary" }, MonthView, { title: "The month" })
-    /*
      * And a third that is DRAWN rather than laid out: see `BurndownView`.
      * A place like any other — the bar lists it, the routed face gives it a
      * page — which is the whole claim, that a page carries what the picture
      * needs and not only what the DOM can express.
      */
     .register("task", { cardinality: "many", fidelity: "full" }, BurndownView, { title: "What is left" })
-    .register("task", { cardinality: "many", fidelity: "summary" }, BurndownView, { title: "What is left" })
-    .register("task", { cardinality: "many", fidelity: "full" }, WeekView, { title: "The week" })
-    .register("task", { cardinality: "many", fidelity: "summary" }, WeekView, { title: "The week" });
+    .register("task", { cardinality: "many", fidelity: "summary" }, BurndownView, { title: "What is left" });
+  /*
+   * THE WEEK, THE MONTH AND WHO MAY DO WHAT are not registered here: the
+   * declaration names them (`lenses` in domain/app.ts) and the framework
+   * draws each as a place. Laid over last, so the week — declared last —
+   * is what the tasks' district draws when an address names no picture.
+   */
+  return registerDeclaredLenses(own, todoApp);
 }
 

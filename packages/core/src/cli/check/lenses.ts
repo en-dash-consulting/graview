@@ -14,6 +14,7 @@ import type { AnySchema } from "../../schema/schema.js";
  * and never a failure.
  */
 import type { CheckContext } from "./context.js";
+import { arrangementFindings, bindsOf, declaredLenses, isShippedLens, requiredRolesOf } from "../../places.js";
 import { fieldOf } from "./context.js";
 
 export function checkShippedLenses<S extends AnySchema>(ctx: CheckContext<S>): void {
@@ -30,9 +31,8 @@ export function checkShippedLenses<S extends AnySchema>(ctx: CheckContext<S>): v
    * enforce it either. It can make sure the question gets asked out loud
    * every time somebody runs a check, which is most of the distance.
    */
-  const SHIPPED_LENSES = new Set(["timeline", "coverage", "board", "calendar", "reach"]);
   const authored = (app.lenses ?? [])
-    .filter((lens) => !SHIPPED_LENSES.has(lens.name))
+    .filter((lens) => !isShippedLens(lens.name))
     /* A lens that says where its reuse was proved has answered this. */
     .filter((lens) => lens.provenBy === undefined);
   if (authored.length > 0) {
@@ -66,14 +66,14 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
      * reported every role as an undeclared node kind, which is a confident
      * and completely wrong diagnosis — the sort a checker earns distrust for.
      */
-    if (lens.binds === "entities") {
+    if (bindsOf(lens) === "entities") {
       const bindings = (lens.bindings ?? {}) as Record<string, Record<string, unknown>>;
-      for (const role of lens.requiredRoles) {
+      for (const role of requiredRolesOf(lens)) {
         if (!(role in bindings)) {
           add({
             severity: "error",
             code: "lens-role-unbound",
-            where: `lens "${lens.name}" bindings`,
+            where: `lens "${lens.title ?? lens.name}" bindings`,
             message: `Lens "${lens.name}" requires role "${role}", which nothing binds.`,
             fix: `Add ${role}: { kind: "<node kind>" }, { edge: "<edge kind>" } or { path: ["<edge>", …] }.`,
           });
@@ -101,7 +101,7 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
             add({
               severity: "error",
               code: "lens-binding-empty-path",
-              where: `lens "${lens.name}" bindings.${role}`,
+              where: `lens "${lens.title ?? lens.name}" bindings.${role}`,
               message: `Role "${role}" binds an empty path, which reaches nothing.`,
               fix: `Name the edge kinds from the column end to the row end, e.g. path: ["covers", "applies", "addresses"].`,
             });
@@ -120,7 +120,7 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
               add({
                 severity: "error",
                 code: "lens-binding-path-misses",
-                where: `lens "${lens.name}" bindings.${role}`,
+                where: `lens "${lens.title ?? lens.name}" bindings.${role}`,
                 message: backwards
                   ? `Role "${role}" walks from the rows to the columns: from "${ends.columns}" it reaches nothing, so every row would read as uncovered.`
                   : `Role "${role}" cannot get from "${ends.columns}" to "${ends.rows}"${walked.ok ? "" : `: "${String(path[walked.at])}" does not touch where the walk has got to`}.`,
@@ -135,7 +135,7 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
               add({
                 severity: "error",
                 code: "lens-binding-undeclared-edge",
-                where: `lens "${lens.name}" bindings.${role}`,
+                where: `lens "${lens.title ?? lens.name}" bindings.${role}`,
                 message: `Role "${role}" walks through "${String(step)}", which no defineNode declares as an edge.`,
                 fix: `Use one of: ${[...edgeKinds].join(", ")}.`,
               });
@@ -146,7 +146,7 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
           add({
             severity: "error",
             code: "lens-binding-undeclared-kind",
-            where: `lens "${lens.name}" bindings.${role}`,
+            where: `lens "${lens.title ?? lens.name}" bindings.${role}`,
             message: `Role "${role}" names kind "${kind}", which no defineNode declares.`,
             fix: `Use one of: ${[...kinds].join(", ")}.`,
           });
@@ -155,7 +155,7 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
           add({
             severity: "error",
             code: "lens-binding-undeclared-edge",
-            where: `lens "${lens.name}" bindings.${role}`,
+            where: `lens "${lens.title ?? lens.name}" bindings.${role}`,
             message: `Role "${role}" names edge "${edge}", which no defineNode declares.`,
             fix: `Use one of: ${[...edgeKinds].join(", ")}.`,
           });
@@ -167,7 +167,7 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
             add({
               severity: "error",
               code: "lens-binding-fieldless-owner",
-              where: `lens "${lens.name}" bindings.${role}`,
+              where: `lens "${lens.title ?? lens.name}" bindings.${role}`,
               message: `Role "${role}" binds field "${field}" but does not say which role's kind it belongs to.`,
               fix: `Add on: "<role that binds a kind>".`,
             });
@@ -179,7 +179,7 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
               add({
                 severity: "error",
                 code: "lens-binding-missing-field",
-                where: `lens "${lens.name}" bindings.${role}`,
+                where: `lens "${lens.title ?? lens.name}" bindings.${role}`,
                 message: `Role "${role}" maps to field "${field}", which "${ownerKind}" does not declare.`,
                 fix: `Point it at one of: ${Object.keys(shape).join(", ")}.`,
               });
@@ -190,7 +190,7 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
           add({
             severity: "error",
             code: "lens-binding-empty",
-            where: `lens "${lens.name}" bindings.${role}`,
+            where: `lens "${lens.title ?? lens.name}" bindings.${role}`,
             message: `Role "${role}" binds nothing.`,
             fix: `Give it { kind: "<node kind>" }, { edge: "<edge kind>" }, { path: ["<edge>", …] } or { field: "<field>", on: "<role>" }.`,
           });
@@ -205,7 +205,7 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
         add({
           severity: "error",
           code: "lens-binding-undeclared-kind",
-          where: `lens "${lens.name}" bindings`,
+          where: `lens "${lens.title ?? lens.name}" bindings`,
           message: `Binds roles for "${kind}", which no defineNode declares.`,
           fix: `Use one of: ${[...kinds].join(", ")}.`,
         });
@@ -228,7 +228,7 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
           add({
             severity: "error",
             code: "lens-binding-not-a-field",
-            where: `lens "${lens.name}" bindings.${kind}.${role}`,
+            where: `lens "${lens.title ?? lens.name}" bindings.${kind}.${role}`,
             message: `Role "${role}" is bound to ${JSON.stringify(bound)}, which is neither a field name nor { field, is }.`,
             fix: `Use a field name, or { field: "<field>", is: ["<value>", …] }.`,
           });
@@ -238,18 +238,18 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
           add({
             severity: "error",
             code: "lens-binding-missing-field",
-            where: `lens "${lens.name}" bindings.${kind}.${role}`,
+            where: `lens "${lens.title ?? lens.name}" bindings.${kind}.${role}`,
             message: `Role "${role}" maps to field "${field}", which "${kind}" does not declare.`,
             fix: `Point it at one of: ${Object.keys(shape).join(", ")}.`,
           });
         }
       }
-      for (const role of lens.requiredRoles) {
+      for (const role of requiredRolesOf(lens)) {
         if (!(role in bindings)) {
           add({
             severity: "error",
             code: "lens-role-unbound",
-            where: `lens "${lens.name}" bindings.${kind}`,
+            where: `lens "${lens.title ?? lens.name}" bindings.${kind}`,
             message: `Lens "${lens.name}" requires role "${role}", which "${kind}" does not bind.`,
             fix: `Add ${role}: "<field name>" to the bindings for "${kind}".`,
           });
@@ -275,11 +275,31 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
         add({
           severity: "note",
           code: "lens-binding-disagrees-with-field-role",
-          where: `lens "${lens.name}" bindings.${kind}.${role}`,
+          where: `lens "${lens.title ?? lens.name}" bindings.${kind}.${role}`,
           message: `The lens binds "${role}" to "${field}"; defineNode("${kind}").fieldRoles binds it to "${declared}". A lens reads bindings and everything else reads fieldRoles, so the picture and the sentence will answer differently.`,
           fix: `Point both at the same field — or keep them apart deliberately, which is right when two lenses mean different things by one role name (a day and a time of day both being a "start").`,
         });
       }
     }
+  }
+}
+
+/**
+ * A DECLARED LENS THAT SHOULD DRAW, AND DOES NOT (FR-79). The reasons come
+ * from `declaredLenses`, the one place that decides what draws — so the
+ * checker, `describe` and the picture cannot disagree about why a place is
+ * missing. Warnings, never errors: a lens that cannot draw is not a reason
+ * to refuse an app that used to compile, and every one is at its path.
+ */
+export function checkDeclaredLenses<S extends AnySchema>(ctx: CheckContext<S>): void {
+  for (const finding of declaredLenses(ctx.app).findings) {
+    ctx.add({ severity: finding.severity, code: finding.code, where: finding.path, message: finding.message, fix: finding.fix });
+  }
+}
+
+/** What `pages` names that is not there: a kind in `order` or `hide`, a place for `first` (FR-80). */
+export function checkPagesArrangement<S extends AnySchema>(ctx: CheckContext<S>): void {
+  for (const finding of arrangementFindings(ctx.app)) {
+    ctx.add({ severity: finding.severity, code: finding.code, where: finding.path, message: finding.message, fix: finding.fix });
   }
 }

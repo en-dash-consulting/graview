@@ -11,7 +11,7 @@
  * with the face that draws it. Nothing in this module's files may import
  * the scene's, or `@graview/react`.
  */
-export { GraviewProvider, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
+export { GraviewProvider, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
 export type { ActsDoor, AdministeredModule, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode } from "./context.js";
 export { anchorOf, AUDIENCE_ROW, HEARTBEAT_MS, placeOthers, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState } from "./presence.js";
 export type { Placed, PresenceInputs, PresenceState } from "./presence.js";

@@ -68,12 +68,15 @@ describe("null propagates, and every production says what it does with it", () =
     ["contains(due, 'x')", false], ["contains('x', due)", false], ["startsWith(due, 'x')", false], ["startsWith('x', due)", false],
     ["lower(due)", null], ["date(due)", null], ["days(due, today())", null], ["hours(due, now())", null],
     ["if(hours, 1, 2)", 2], ["today()", "2026-10-02"], ["now()", "2026-10-02T12:00:00Z"],
+    // FR-83: a per-member expression of nothing is left out; the first of nothing is nothing; nothing sorts to nothing; either skips nothing
+    ["sum(all('task') where hours == null, hours * 2)", 0], ["max(all('task') where hours == null, hours + 1)", null],
+    ["first(out('for'))", null], ["first(out('for')).name", null], ["count(sort(out('for'), name, 'desc'))", 0], ["either(hours, due, null)", null],
   ])("%s → %j", (source, expected) => {
     expect(on(source)).toEqual(expected);
   });
 
   it("names every function the language knows, and a test above reaches each with nothing", () => {
-    expect([...FUNCTIONS].sort()).toEqual(["all", "contains", "count", "date", "days", "every", "exists", "hours", "if", "in", "len", "lower", "max", "min", "now", "out", "present", "some", "startsWith", "sum", "today"]);
+    expect([...FUNCTIONS].sort()).toEqual(["all", "contains", "count", "date", "days", "either", "every", "exists", "first", "hours", "if", "in", "len", "lower", "max", "min", "now", "out", "present", "some", "sort", "startsWith", "sum", "today"]);
   });
 });
 
@@ -96,7 +99,7 @@ function expression(next: () => number, depth: number): string {
     case 3: return `${pick(["not ", "-"])}${sub()}`;
     case 4: return `${pick(["count", "exists"])}(${set()})`;
     case 5: return `${pick(["every", "some"])}(${set()}, ${sub()})`;
-    case 6: return `${pick(["sum", "min", "max"])}(${set()}, 'hours')`;
+    case 6: return next() < 0.5 ? `${pick(["sum", "min", "max"])}(${set()}, ${pick(["'hours'", "hours * 2", sub()])})` : next() < 0.5 ? `first(sort(${set()}, ${sub()}, ${pick(["'asc'", "'desc'"])}))` : `either(${sub()}, ${sub()})`;
     case 7: return `${pick(["present", "len", "lower", "date"])}(${sub()})`;
     default: return `${pick(["contains", "startsWith", "days", "hours"])}(${sub()}, ${sub()})`;
   }

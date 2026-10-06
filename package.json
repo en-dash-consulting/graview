@@ -61,7 +61,7 @@
     "who": "node scripts/verify-who.mjs",
     "studio:rehearse": "node scripts/rehearse-studio.mjs",
     "version-packages": "changeset version && node scripts/write-framework-version.mjs",
-    "release:approve": "node scripts/release-approve.mjs"
+    "release:trust": "node scripts/release-trust.mjs"
   },
   "devDependencies": {
     "@astermind/astermind-elm": "^2.1.1",

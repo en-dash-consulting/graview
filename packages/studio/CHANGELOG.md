@@ -1,5 +1,31 @@
 # @graview/studio
 
+## 0.1.9
+
+### Patch Changes
+
+- 4e1d6e3: Every popover opens over everything, and everything else stands on one ladder (FR-76). On a hosted app the profile menu opened under the seat's rail and could not be read: each surface picked its own `z-index` in one stacking context, the profile and the problems 20, the rail 40, the altitude control 5, the zoom 8, a menu 60, the studio 100. Now the transient surfaces — the profile, the problems, the activity, the Find box's suggestions, the districts a row could not hold, a card's acts at the pointer, `ChatPanel`'s pill and the studio's own seat — are shown with `showPopover()` in the browser's top layer, which Playwright's Chromium, WebKit and Firefox all have: drawn over every rail, the scene and anything on a host's page, whatever `z-index`, `overflow: hidden` or `backdrop-filter` their ancestors carry, and still inside the element they opened in, so an embed's scoped theme reaches them and nothing lands on the host. In the top layer a pane is placed by what opened it (`useTopLayer` and `placePane` in `@graview/react`): under it, or over it where there is more room above, kept to the viewport, and no taller than the room it has, so what it holds scrolls inside it. Where `showPopover` is missing the pane stands on the ladder's popover rung. Everything that stays on screen takes a named rung from one ladder written once in `@graview/core` (`LAYERS`, `layer(name)`): scene, overview, rail, popover, dialog, toast, which `themeCss` writes on its root or an embed's box as `--graview-layer-<rung>`. The scene's ground is a stacking context of its own, so what orders its plots, cards, lines, figures and zoom (`SCENE_LAYERS`) can never climb over a rail. `POPOVERS` in `@graview/react` names every popover in the family with what opens it and its pane. A test reads every source file of every package and finds no `z-index` written as a number outside the ladder; `verify-chrome` opens every popover of the registry on the embed's Graview and pages faces and on the Shell, at 1440×900 and 390×844 with the seat open, and finds the pane in the top layer, inside the viewport, and under the browser's own `elementFromPoint` at its middle and at its last row. `capabilities().shipped` names FR-76.
+  
+  Compatibility: the wire — `capabilities().shipped` gains `FR-76`, nothing else on it moves. Ops, stored formats, check codes and tool schemas are unchanged.
+- 7597e22: Every popover behaves as one family (FR-77). Each had its own habits: the profile closed on a press outside it, the districts on a pointer down, the menu at the pointer a frame late and the studio's seat only by its own pill; one gave the keyboard back to its button and the next left it on `<body>`; none moved the keyboard in when it opened; and two could be open at once. `usePopover(name)` in `@graview/react` is the one way, and every popover in `POPOVERS` uses it — the profile, the problems, the activity, the Find box's list, the districts, a card's acts at the pointer, `ChatPanel`'s pill and the studio's seat. Opening one closes any other, page-wide. The keyboard goes to the pane's first control, or to the pane, except under the Find box, whose list is a combobox's and keeps the keyboard in the box. Escape closes it and so does a press anywhere that is not the pane, its trigger or a dialog the pane opened (the studio, from the profile), and the keyboard goes back to the trigger — or, for the menu at the pointer, to the card it was opened on — when it was inside the pane or the press left it on nothing. It hangs from its trigger in the top layer (FR-76), turned over when there is more room above and no taller than the room it has, so no row of it is under the viewport's edge; the profile's settings ran past the bottom of the screen. The hook hands the trigger `aria-expanded` and `aria-controls` and the pane its id, `popover="manual"` and `data-graview-popover`; it takes `open` and `onOpenChange` where somebody else holds the state (the provider's menu, the Find box's own rule for its list), `at` and `returnTo` where there is no trigger, and `popover: false` where the same component is part of something else (`ChatPanel` in the seat's rail). A unit test is generated over the registry: every popover closes another when it opens, takes the keyboard in, closes on Escape and on a press outside and gives the keyboard back, and stays open on a press inside. `verify-chrome` holds every popover each face draws to the same, in the browser, on the embed's faces and the Shell, in Chromium, WebKit and Firefox. `capabilities().shipped` names FR-77.
+  
+  Compatibility: the wire — `capabilities().shipped` gains `FR-77`, nothing else on it moves. Ops, stored formats, check codes and tool schemas are unchanged.
+- Updated dependencies [0ecda3f]
+- Updated dependencies [b5a4bfc]
+- Updated dependencies [e811d26]
+- Updated dependencies [d953bf9]
+- Updated dependencies [4e1d6e3]
+- Updated dependencies [7597e22]
+- Updated dependencies [1aba73e]
+- Updated dependencies [e4f7b67]
+  - @graview/react@0.1.9
+  - @graview/primitives@0.1.9
+  - @graview/core@0.1.9
+  - @graview/pages@0.1.9
+  - @graview/layout@0.1.9
+  - @graview/ship@0.1.9
+  - @graview/tools@0.1.9
+
 ## 0.1.8
 
 ### Patch Changes

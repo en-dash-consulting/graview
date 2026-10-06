@@ -1,7 +1,7 @@
 import { withArticle } from "../schema/define-node.js";
 import { canonicalize } from "./canonical.js";
 import type { GraviewDocument } from "./schema.js";
-import { VIEW_SLOTS, viewsOf } from "./views.js";
+import { homeOf, VIEW_SLOTS, viewsOf } from "./views.js";
 
 /*
  * WHAT A CHANGE TO THE APP MEANS, IN WORDS — and whether data would move.
@@ -147,6 +147,9 @@ function viewSentences(before: GraviewDocument, after: GraviewDocument): string[
       else sentences.push(`How ${a} ${noun} ${slot} looks changes.`);
     }
   }
+  // The home view (FR-81), which is no kind's.
+  const home = [homeOf(before), homeOf(after)] as const;
+  if (!same(home[0], home[1])) sentences.push(home[0] === undefined ? "The home gets a view of its own." : home[1] === undefined ? "The home goes back to Graview's own." : "How the home looks changes.");
   return sentences;
 }
 

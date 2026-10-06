@@ -62,6 +62,31 @@ naming a mutation is why selecting an out-of-balance set of duties surfaces
    needing an argument lists it, and the framework offers real candidates for
    it — the interface never wires up a picker per mutation.
 
+## A rule said in words
+
+When what must hold is a sentence about the graph, say it in the rule
+language instead of a function — `expressionRule` from
+`@graview/core/document` makes the invariant, and the studio and a document
+can read it:
+
+```ts
+export const pricedPackages = expressionRule("priced-packages", {
+  over: "package",
+  require: "net > 0",
+  says: "{name} costs nothing after the discount",
+  repairs: ["edit-package"],
+});
+```
+
+Fields and one-edge hops by name, `out('edge')`, `in('edge')`, `all('kind')`
+and `S where cond`; `count`, `exists`, `every`/`some(S, cond)`;
+`sum`/`min`/`max(S, expr)` with an expression per member
+(`sum(out('includes'), list * units)`); `sort(S, key, 'asc'|'desc')` (a list
+key sorts by its first value, then its next), `first(S)` for one record,
+`either(a, b)` for the first that is something; `if`, `present`, `len`,
+dates. A kind's `computed` fields read like stored ones. Every evaluation
+has a step budget: a rule that reads too much is `over-budget`, never a hang.
+
 ## The horizon
 
 A scoped invariant judges only CURRENT subjects — nodes retired under their
