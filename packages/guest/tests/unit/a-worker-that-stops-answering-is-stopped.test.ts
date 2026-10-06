@@ -70,6 +70,8 @@ function started(answer: "at-once" | "never" | { readonly after: number } | "wro
   });
   live.push(guest);
   const worker = FakeWorker.made.at(-1)!;
+  // The clock starts as the guest says it is ready, before anything this test sets up after it.
+  const readyAt = performance.now();
   worker.say({ graview: "guest-ready", protocol: GUEST_PROTOCOL });
   const hello = worker.posted[0]!.message as HostHello;
   const port = worker.posted[0]!.transfer[0] as MessagePort;
@@ -82,7 +84,7 @@ function started(answer: "at-once" | "never" | { readonly after: number } | "wro
     if (answer === "at-once" || answer === "wrong-nonce") port.postMessage(reply);
     else if (answer !== "never") setTimeout(() => port.postMessage(reply), answer.after);
   };
-  return { guest, worker, failures, beats, readyAt: performance.now() };
+  return { guest, worker, failures, beats, readyAt };
 }
 
 describe("the host's watchdog over a worker guest", () => {
