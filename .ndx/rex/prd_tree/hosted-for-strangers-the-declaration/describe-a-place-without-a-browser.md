@@ -2,7 +2,10 @@
 id: "04830254-bdf1-4882-875a-9be6db061135"
 level: "feature"
 title: "Describe a place without a browser: describePlace for a chat to check its own work (FR-89)"
-status: "pending"
+status: "completed"
+startedAt: "2026-10-06T03:56:09.000Z"
+completedAt: "2026-10-06T03:56:09.000Z"
+endedAt: "2026-10-06T03:56:09.000Z"
 priority: "high"
 tags:
   - "graview-cloud"
@@ -13,5 +16,5 @@ acceptanceCriteria:
   - "describePlace(store, principal, place, { width }) returns what a named place (home, lens, record page) shows that viewer: headings, figures, lists with items, problems, as structured data and plain text; sight applied"
   - "The LifeLogics front page and its four lenses describe at phone width in words that match what draws"
 description: "A chat building interfaces from a phone needs to check what it made without a browser."
-lastModified: "2026-10-05T20:03:32.950Z"
+lastModified: "2026-10-06T03:56:09.000Z"
 ---
