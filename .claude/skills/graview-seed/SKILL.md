@@ -75,7 +75,7 @@ pnpm build:domain && npx graview describe ./dist/domain/app.js
    not a review.
 
 5. **Write the prompt from the graph, not from your head.** The model needs
-   the kinds, the acts and their arguments — which `generateLlmsTxt(app)`
+   the kinds, the acts and their arguments — which `generateLlmsTxt(app)` (`@graview/core/check`)
    already writes — plus what is already there, so it does not propose a
    second Back Lawn.
 

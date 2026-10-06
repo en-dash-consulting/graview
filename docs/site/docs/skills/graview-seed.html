@@ -1100,7 +1100,7 @@ chain.unreachable;  // what nothing here can make — often right, always worth 
 <li><strong>Show it before you run it.</strong> <code>&lt;PlanReview plan={plan} declinable /&gt;</code> draws the plan in the order it will run, counts what it makes, and strikes refusals through with their reason. <code>declinable</code> lets a person drop one — and declining the area declines the tree standing in it, said beside the entry BEFORE the press (<code>dependentsOf</code>, <code>without</code>). A seeding nobody read is a seeding nobody can trust, and a review nobody can disagree with is not a review.</li>
 </ol>
 <ol>
-<li><strong>Write the prompt from the graph, not from your head.</strong> The model needs the kinds, the acts and their arguments — which <code>generateLlmsTxt(app)</code> already writes — plus what is already there, so it does not propose a second Back Lawn.</li>
+<li><strong>Write the prompt from the graph, not from your head.</strong> The model needs the kinds, the acts and their arguments — which <code>generateLlmsTxt(app)</code> (<code>@graview/core/check</code>) already writes — plus what is already there, so it does not propose a second Back Lawn.</li>
 </ol>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code>pnpm build:domain &amp;&amp; npx graview check ./dist/domain/app.js

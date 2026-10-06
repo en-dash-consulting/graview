@@ -21,15 +21,26 @@ Everything a Graview app declares, and the checker that verifies it.
   resolved for a brand by `shapeOf` and `typographyOf` — so a page outside
   the app can dress as one without importing a stylesheet.
 - **`graview check`** — reads a declaration and reports what is wrong with it,
-  in terms an agent can act on.
+  in terms an agent can act on. In code it is `@graview/core/check`:
+  `checkApp`, `describeApp`, the agent docs (`generateLlmsTxt`), and
+  `compileDocument`, a document compiled and checked.
 - **Documents** — `@graview/core/document`: a whole app as one JSON object,
-  compiled by `compileDocument` into the same app `defineApp` declares and
-  never run as code; `toDocument` writes an app back out. Rules say what must
-  hold in a small, budgeted language (`expressionRule`). Every command that
-  takes an entry takes `--document <file>`. `sceneThumbnail` draws a
-  document (or an app) as the Scene draws it from altitude — the same
-  districts on the same map, in their hues — as one SVG string, with no DOM,
-  for a host listing apps; `sceneDistricts` is the same answer as data.
+  compiled by `compileDocumentWithoutCheck` into the same app `defineApp`
+  declares and never run as code (`compileDocument` from
+  `@graview/core/check` also asks the checker); `toDocument` writes an app
+  back out. Rules say what must hold in a small, budgeted language
+  (`expressionRule`). Every command that takes an entry takes
+  `--document <file>`. A view's blocks resolve with `@graview/core/blocks`.
+- **The city** — `@graview/core/scene`: `sceneThumbnail` draws a document
+  (or an app) as the Scene draws it from altitude — the same districts on
+  the same map, in their hues — as one SVG string, with no DOM, for a host
+  listing apps; `sceneDistricts` is the same answer as data. A kind's
+  figures are `@graview/core/figures`.
+- **What a page loads first** — `@graview/core` and `@graview/core/document`
+  hold only what a page draws with. The checker, the city, the figures and
+  the block resolver are on the subpaths above because a bundler places a
+  whole module in every chunk that can reach it: a hosted page imports both
+  barrels up front, and would otherwise carry them before a face is fetched.
 - **Conformance** — `@graview/core/conformance`: fixtures a host runs against
   a version (`conformance()`) to prove it reads, compiles and derives the same.
 
