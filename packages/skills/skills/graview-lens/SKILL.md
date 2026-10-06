@@ -53,11 +53,10 @@ the reuse test beside it, red on purpose.
      (`{ session: { start: "start", end: "end" } }`). The timeline.
    - **entities** — roles onto whole kinds and edges
      (`{ rows: { kind: "skill" }, link: { edge: "develops" } }`). The matrix.
-     A relationship that IS a node — a concern addressed by a practice,
-     applied by a routine, covering a ground — binds
-     `link: { path: ["covers", "applies", "addresses"] }`, column end first;
-     each cell then carries the nodes it walked through, which is what you
-     actually want to press.
+     A relationship that IS a node — a person's strength in a skill — binds
+     `link: { path: ["inSkill", "has"] }`, column end first; each cell
+     carries the nodes it walked through: choosing it selects its row, its
+     column and them, and `describePlace` says each row's columns through them.
 
 3. **Fail loudly on a bad binding.** Throw a named error saying which role and
    what was missing. A lens that renders empty when misbound costs an hour.
