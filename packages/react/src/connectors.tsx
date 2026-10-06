@@ -904,6 +904,9 @@ export function Connectors({
             <path
               data-graview-connector={connector.kind}
               data-graview-edges={strand.edges.length}
+              /* What each end lands on, in the edge's direction: the drawn node, or a member drawn inside it. */
+              data-graview-from={strand.fromAnchor}
+              data-graview-to={strand.toAnchor}
               data-graview-lit={lit || undefined}
               data-graview-activity={liveOf?.(connector)?.manner}
               opacity={opacity * (connector.opacity ?? 1)}
