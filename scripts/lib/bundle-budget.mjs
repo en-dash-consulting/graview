@@ -322,10 +322,15 @@ export const BUDGETS = [
      * Measured at 59_541 / 20_383 once the open kit (FR-90–FR-96) met
      * main's declared lenses, home view, language and describe (FR-79–FR-89);
      * the budget just above it.
+     *
+     * Measured at 59_926 / 20_596 once the global was made over a way out
+     * the runtime hands it (worker/view-global.ts), so a headless run
+     * (FR-95) hands a view the same global over a transcript: the budget
+     * just above it.
      */
     entry: `import { graview } from "@graview/guest/worker/view"; globalThis.graview = graview;`,
-    minified: 60_000,
-    gzipped: 20_500,
+    minified: 60_500,
+    gzipped: 20_750,
     load: "all",
     lacks: ["@graview/core"],
   },

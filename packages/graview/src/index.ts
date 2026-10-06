@@ -8,7 +8,7 @@ import { main as core, USAGE as CORE_USAGE } from "@graview/core/cli";
  * or `graview check` from inside a project that has it as a devDependency.
  * It owns no logic. Every subcommand lives in the package whose concern it
  * is — the generator and the checker in core, `serve` and `sync-seed` in
- * ship, `mcp` and `apply` in tools, `skills` in skills — and this
+ * ship, `mcp` and `apply` in tools, `skills` in skills, `view` in guest — and this
  * dispatches to it, so a project made with `graview
  * create` and one made by calling core's own CLI are the same project.
  *
@@ -36,6 +36,10 @@ export async function main(given: readonly string[]): Promise<number> {
     const { skills } = await import("@graview/skills/cli");
     return skills(rest);
   }
+  if (command === "view") {
+    const { view } = await import("@graview/guest/cli");
+    return view(rest);
+  }
   if (!command || command === "--help" || command === "-h" || command === "help") {
     process.stdout.write(await usage());
     return 0;
@@ -48,5 +52,6 @@ async function usage(): Promise<string> {
   const { SERVE_USAGE } = await import("@graview/ship/cli");
   const { MCP_USAGE } = await import("@graview/tools/cli");
   const { SKILLS_USAGE } = await import("@graview/skills/cli");
-  return `${CORE_USAGE}\n${SERVE_USAGE}\n${MCP_USAGE}\n${SKILLS_USAGE}`;
+  const { VIEW_USAGE } = await import("@graview/guest/cli");
+  return `${CORE_USAGE}\n${SERVE_USAGE}\n${MCP_USAGE}\n${SKILLS_USAGE}\n${VIEW_USAGE}`;
 }

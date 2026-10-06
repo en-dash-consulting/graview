@@ -1,0 +1,1 @@
+{ "name": "packages", "title": "The packages", "attach": "package", "cardinality": "many", "reads": { "kinds": ["offer"], "edges": ["includes"] } }

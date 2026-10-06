@@ -325,3 +325,61 @@ still takes a whole worker script built against `@graview/guest/worker/view`.
 How to write one — the manifest, what may be drawn, the theme's tokens, the
 write rules, links and limits, with a list lens and a home worked through —
 is the `graview-worker-view` skill (`graview skills install`).
+
+### Run a view headless, and say what it drew
+
+Before a view is applied, a host can run it once with no network and no
+DOM, against one member's sight, and be told what it drew in the words
+`describePlace` says a place in (`@graview/core/describe`): its headings,
+text, figures and fields, and its lists with each record's title and what
+its row or card says. Or it is told why the view will not do.
+
+```ts
+import { runWorkerViewHeadless } from "@graview/guest/headless";
+
+const result = await runWorkerViewHeadless({ manifest, source, store, principal, run });
+if (result.ok) say(result.description.text);       // "The packages (/places/the-packages) — as partner …"
+else say(result.reason, result.detail);            // "act": It asks for the act "buy", which its manifest does not name.
+```
+
+The reasons are the page's (`source`, `manifest`, `error`, `nodes`,
+`flood`, `slow`, `refused`) and two of a headless run's own: `act`, an act
+asked for from the view's code or bound to a press (`data-act`) that its
+manifest does not name, and `isolate`, the host's isolate could not run it.
+Nothing is applied: an act the view asks for is written down in the
+transcript and answered with a refusal.
+
+A view never runs in the host's own context. The host supplies the
+isolate: `run` is handed one script and one JSON string (`HeadlessPayload`),
+loads the script into an isolate of its choosing, calls the global it
+leaves (`graviewHeadless`) with the string, and hands back the string it
+resolves with. Nothing but text crosses. There is no default, and without
+a `run` the helper throws. The script is the headless runtime, then the
+view. It makes the isolate a worker's before the view is read: the same
+`graview` global over a transcript, a console that writes to it, timers
+that never fire, and everything outside the worker's allowlist taken from
+the global. Then the view's top line runs and it is pushed what it is
+shown, once. What it sent is judged again in the host's context, from the
+transcript alone, by the open kit's own renderer drawing into a tree of
+plain objects (`drawTranscript`, `describeDrawing`), so the isolate's word
+is not taken for what the view drew.
+
+`nodeIsolate` from `@graview/guest/headless/node` is a `run` for Node: a
+worker thread with a heap ceiling and a context made from nothing (no
+`process`, `require`, `fetch` or timers; no code from strings), with a
+deadline that covers the microtasks the view queues. In workerd, the
+script is one module of a worker of its own with no outbound network, and
+the host's module, loaded first, keeps `Response` to answer with:
+
+```js
+// before.js
+const Made = Response; export const answer = (text) => new Made(text);
+// host.js
+import { answer } from "./before.js"; import "./view.js";   // view.js is payload.script
+const run = globalThis.graviewHeadless;
+export default { async fetch(request) { return answer(await run(await request.text())); } };
+```
+
+`graview view check view.js --app app.js --manifest manifest.json --seed
+seed.json --roles partner` does the same from a terminal, with
+`nodeIsolate`.

@@ -78,8 +78,8 @@ export interface PlaceDescription {
   readonly seat: string;
   readonly width: number;
   readonly variant: "phone" | "wide";
-  /** What draws it: the app's blocks, the framework's derived page, a shipped lens, or a record's page. */
-  readonly drawnBy: "blocks" | "derived" | "record" | `lens:${string}`;
+  /** What draws it: the app's blocks, the framework's derived page, a shipped lens, a record's page, or a worker view run headless (FR-95). */
+  readonly drawnBy: "blocks" | "derived" | "record" | `lens:${string}` | `view:${string}`;
   readonly parts: readonly DescribedPart[];
   readonly problems: readonly DescribedProblem[];
   /** The same, as plain text a chat can quote. */

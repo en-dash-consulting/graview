@@ -59,6 +59,7 @@ export const NOT_EXPORTS = new Map([
   ["silentMs", "a limit of mountGuestWorker and mountWorkerView, not an export"],
   ["drawMs", "a limit of mountGuestWorker and mountWorkerView, not an export"],
   ["importScripts", "a worker global, which a guest's worker does not have"],
+  ["graviewHeadless", "the global a headless script leaves in its isolate for the host to call (HEADLESS_ENTRY), not an export"],
 ]);
 
 /** The API-shaped names a README puts in backticks: `name`, `name()`, `Name`. */

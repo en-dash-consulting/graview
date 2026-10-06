@@ -2,8 +2,9 @@ import { readFileSync } from "node:fs";
 import { Script } from "node:vm";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain .mjs module of the scripts, with no declarations.
-import { GENERATED, viewRuntimeModule } from "../../../../scripts/guest-view-runtime.mjs";
+import { GENERATED, GENERATED_HEADLESS, headlessRuntimeModule, viewRuntimeModule } from "../../../../scripts/guest-view-runtime.mjs";
 import { GUEST_BUNDLE_BANNER } from "../../src/build.js";
+import { HEADLESS_RUNTIME } from "../../src/headless/runtime.generated.js";
 import { VIEW_RUNTIME } from "../../src/host/view-runtime.generated.js";
 import { checkViewSource, viewScript } from "../../src/host/view-source.js";
 
@@ -29,6 +30,13 @@ describe("the runtime the host holds", () => {
     expect(() => new Script(VIEW_RUNTIME)).not.toThrow();
     expect(VIEW_RUNTIME.startsWith('"use strict";')).toBe(true);
     expect(VIEW_RUNTIME).not.toMatch(/\bimport\s*\(|\bimportScripts\b/);
+  });
+
+  it("and a headless run's (FR-95) is current with its source too, one strict classic script that loads nothing", async () => {
+    expect(readFileSync(GENERATED_HEADLESS, "utf8")).toBe(await headlessRuntimeModule(GUEST_BUNDLE_BANNER));
+    expect(() => new Script(HEADLESS_RUNTIME)).not.toThrow();
+    expect(HEADLESS_RUNTIME.startsWith('"use strict";')).toBe(true);
+    expect(HEADLESS_RUNTIME).not.toMatch(/\bimport\s*\(|\bimportScripts\b/);
   });
 });
 
