@@ -133,6 +133,17 @@ describe("a range changed by an edit", () => {
     expect(plan.primitives).toEqual([{ op: "patch-node", id: "strength-fit-judgement", before: { level: 5 }, after: { level: expect.anything() } }]);
   });
 
+  it("a migration that clears a required value says the record will need it, as its graph would refuse the record without one", () => {
+    const required = structuredClone(base);
+    required.kinds["strength"]!.fields["level"] = { ...required.kinds["strength"]!.fields["level"]!, required: true };
+    const outcome = editDocument(required, [{ op: "set-range", kind: "strength", field: "level", max: 4 }]);
+    if (!outcome.ok) throw new Error("refused");
+    const plan = planMigration(required, outcome.document, seed);
+    expect(plan.counts.cleared).toBe(1);
+    expect(plan.missingRequired).toBe(1);
+    expect(plan.words).toContain("1 required value would be missing; those records need it filled in.");
+  });
+
   it("is refused on a field that is not a number, or with a default it would leave outside", () => {
     const refused = (edits: unknown[]) => {
       const outcome = editDocument(base, edits);

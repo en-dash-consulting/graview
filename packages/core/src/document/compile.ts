@@ -606,6 +606,27 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
     const severs = [...new Set(effects.flatMap((e) => ("sever" in e ? [e.sever] : "replace" in e ? e.replace : [])))];
     // An act WRITES only what it sets on its subject; setting fields on a record it just made is part of making it.
     const writes = [...new Set(effects.flatMap((e) => ("set" in e && !("create" in e) && (refName(e.target ?? "$subject") === "subject") ? Object.keys(e.set) : [])))];
+    /*
+     * And what it sets on the record at an end of a link it makes or breaks
+     * (FR-115's `setsOther`), by that end's kinds: not the subject's, but a
+     * field another act sets, so no derived edit offers it freely.
+     */
+    const ends = new Map<string, readonly string[]>();
+    for (const e of effects) {
+      if (!("connect" in e) && !("sever" in e)) continue;
+      const edge = edges.get("connect" in e ? e.connect : e.sever);
+      for (const [end, value] of [["from", e.from], ["to", e.to]] as const) {
+        const ref = refName(value);
+        const kinds = end === "to" ? edge?.to : edge?.from;
+        if (ref && ref !== "subject" && kinds && kinds !== "*") ends.set(ref, [...new Set([...(ends.get(ref) ?? []), ...kinds])]);
+      }
+    }
+    const writesOther: Record<string, string[]> = {};
+    for (const e of effects) {
+      if (!("set" in e) || "create" in e) continue;
+      const target = refName(e.target ?? "$subject");
+      for (const kind of (target && target !== "subject" && ends.get(target)) || []) writesOther[kind] = [...new Set([...(writesOther[kind] ?? []), ...Object.keys(e.set)])];
+    }
     // What it sets on its subject to a fixed value, whatever it is told — a named step (FR-108), resolved as `apply` resolves a literal.
     const sets: Record<string, string | number | boolean> = {};
     for (const e of effects) {
@@ -642,6 +663,7 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
         ...(severs.length > 0 ? { severs } : {}),
         // Said even when empty (FR-110): a document act's writes are read off it, so nothing guesses them from its arguments' names.
         writes,
+        ...(Object.keys(writesOther).length > 0 ? { writesOther } : {}),
         ...(Object.keys(sets).length > 0 ? { sets } : {}),
         describe: (input: Record<string, unknown>, graph: GraphReader) => {
           const subject = typeof input[SUBJECT_ARG] === "string" ? graph.getNode(input[SUBJECT_ARG] as string) : undefined;

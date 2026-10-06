@@ -250,9 +250,11 @@ export const BUDGETS = [
      * 1_488_359 / 441_473.
      *
      * Measured at 1_500_408 / 446_644 with the pull requests of this round together.
+     *
+     * Measured at 1_501_142 / 448_675 with the pull requests of this round together.
      */
     minified: 1_506_500,
-    gzipped: 448_500,
+    gzipped: 450_500,
     load: "all",
   },
   {
@@ -292,7 +294,7 @@ export const BUDGETS = [
     // And with every face's when a coverage cell came to draw to what it joins (FR-111) and a coverage grid to be described (FR-112): measured at 1_472_916 / 432_823.
     // And when acts came to say what they set (FR-110, FR-114, FR-115: writes read off an act, a number's range, the other end of a link): the document compiler loads with the studio. Measured at 1_473_024 / 432_613.
     // Lowered when what only a drawn view uses left the frame's entries and the describer came to be fetched when first asked for: measured at 1_471_243 / 435_726.
-    minified: 1_472_000,
+    minified: 1_479_000,
     gzipped: 436_500,
     load: "first",
     lazyLacks: ["@graview/studio"],

@@ -218,4 +218,22 @@ describe("a new app under address routing", () => {
     expect(fromUrl(window.location.hash).focusId).toBe("aggregate:task");
     expect(handle.where().face).toBe("scene");
   });
+
+  /*
+   * THE ADDRESS IS THE SOURCE OF TRUTH, including for which face it names.
+   * A host that remounts with the `at` it read before a reload can hand
+   * back the scene while the address now names a page: the page the
+   * address names is the one settled, and no scene fragment is written
+   * onto a page's address.
+   */
+  it("settles the page the address names when the place handed back was on another face", async () => {
+    const { host, handle } = await open(
+      { face: "scene", routing: "address", basePath: "/apps/a1", at: { face: "scene", path: "/", stop: "#focus=t2", kind: "task" } },
+      "/apps/a1/tasks/t9",
+    );
+    expect(handle.where().face).toBe("pages");
+    expect(window.location.pathname).toBe("/apps/a1/tasks");
+    expect(window.location.hash).toBe("");
+    expect(heading(host)).toBe("Tasks");
+  });
 });

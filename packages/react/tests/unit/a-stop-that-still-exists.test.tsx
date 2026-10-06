@@ -163,4 +163,28 @@ describe("a stop that still exists", () => {
     expect(at.latest().selection).toEqual([group]);
     await at.stop();
   });
+
+  /*
+   * THE STOP AN APP OPENED ON IS ITS HOME, and the home is where a gone
+   * focus falls back to. When the opening stop itself named the record —
+   * an embed handed `#focus=<id>`, or an address (FR-106) whose record was
+   * since removed or is one the seat may not see — the fallback put the
+   * dead id straight back, the next resolution took it out again, and the
+   * page never stopped re-rendering.
+   */
+  it("opens on a stop whose record is not there, and lands where the app opens instead", async () => {
+    const store = made();
+    const at = await stand(store, { ...EMPTY_VIEW, focusId: "item:gone" });
+    expect(at.latest().view.focusId).not.toBe("item:gone");
+    await at.stop();
+  });
+
+  it("leaves the focus somewhere when the record the app opened on is removed", async () => {
+    const store = made();
+    const at = await stand(store, { ...EMPTY_VIEW, focusId: "item:deposit" });
+    expect(at.latest().view.focusId).toBe("item:deposit");
+    await at.apply("drop", { id: "item:deposit" });
+    expect(at.latest().view.focusId).not.toBe("item:deposit");
+    await at.stop();
+  });
 });

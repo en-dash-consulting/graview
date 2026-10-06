@@ -77,3 +77,26 @@ describe("the derived edit's arguments", () => {
     expect(refusalOf(error)).toEqual({ reason: "invalid", sentence: "Nothing to change — give at least one of name, role, notes a value." });
   });
 });
+
+describe("a field an act sets on the record at the other end of a link (FR-115's setsOther)", () => {
+  const doc = {
+    format: "graview-document",
+    formatVersion: 1,
+    name: "Sharing",
+    kinds: {
+      person: { fields: { name: { type: "string", required: true } }, edges: { owns: { to: ["thing"] } } },
+      thing: { fields: { name: { type: "string", required: true }, state: { type: "enum", options: ["open", "shared"], default: "open" } } },
+    },
+    acts: {
+      "add-person": { creates: "person" },
+      "add-thing": { creates: "thing" },
+      share: { on: "person", connects: "owns", setsOther: { state: "shared" } },
+    },
+  };
+
+  it("is written by that act, so the derived edit of the other kind does not offer it", () => {
+    const app = compiled(doc);
+    expect(app.mutations!.find((m) => m.name === "share")).toMatchObject({ writes: [], writesOther: { thing: ["state"] } });
+    expect(unwrittenFields(app.schema, app.mutations ?? [], "thing")).toEqual(["name"]);
+  });
+});

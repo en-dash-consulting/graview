@@ -213,11 +213,11 @@ export function planMigration(before: GraviewDocument, after: GraviewDocument, g
       counts.filled++;
       note(`${newKind}'s ${fill.field} filled in${fill.from !== undefined ? ` from ${fill.from}` : ""}`);
     }
-    // Only a requirement this change brings counts: a record that already lacked a required value is not made worse.
+    // Only what this change brings counts: a requirement new to the field, or a required value it clears (a narrowed range, a dropped option). A record that already lacked one is not made worse.
     for (const [field, spec] of Object.entries(now)) {
       if (!spec.required || next[field] !== undefined) continue;
       const src = sourceField(was, field, spec as FieldSpec & { renamedFrom?: string });
-      if (!src || !was[src]!.required) missingRequired++;
+      if (!src || !was[src]!.required || (node[src] !== undefined && node[src] !== null)) missingRequired++;
     }
     for (const field of Object.keys(was)) {
       const kept = Object.entries(now).some(([f, spec]) => sourceField(was, f, spec as FieldSpec & { renamedFrom?: string }) === field);

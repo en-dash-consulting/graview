@@ -72,15 +72,23 @@ export function fieldWriters<S extends AnySchema>(
   mutations: readonly AnyMutationDefinition<S>[],
 ): ReadonlyMap<string, ReadonlyMap<string, readonly string[]>> {
   const writers = new Map<string, Map<string, string[]>>();
+  const add = (kind: string, field: string, name: string) => {
+    const byField = writers.get(kind) ?? new Map<string, string[]>();
+    if (byField.get(field)?.includes(name)) return;
+    byField.set(field, [...(byField.get(field) ?? []), name]);
+    writers.set(kind, byField);
+  };
   for (const mutation of mutations) {
     for (const kind of subjectKindsOf(schema, mutation)) {
       const definition = schema.tryDefinition(kind);
       if (!definition) continue;
-      for (const field of fieldsWrittenBy(mutation, definition)) {
-        const byField = writers.get(kind) ?? new Map<string, string[]>();
-        byField.set(field, [...(byField.get(field) ?? []), mutation.name]);
-        writers.set(kind, byField);
-      }
+      for (const field of fieldsWrittenBy(mutation, definition)) add(kind, field, mutation.name);
+    }
+    // What it sets on a record other than its subject (FR-115's `setsOther`) is that record's field written too.
+    for (const [kind, fields] of Object.entries(mutation.writesOther ?? {})) {
+      const declared = schema.tryDefinition(kind)?.fields.shape as Record<string, unknown> | undefined;
+      if (!declared) continue;
+      for (const field of fields) if (field in declared) add(kind, field, mutation.name);
     }
   }
   return writers;
