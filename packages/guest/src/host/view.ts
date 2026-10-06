@@ -8,6 +8,7 @@ import { judgeCodeAct } from "./writes.js";
 import { createDrawBudget } from "./draw-budget.js";
 import { checkViewSource, viewScript } from "./view-source.js";
 import { createLinks, type Destination } from "./links.js";
+import { readTheme, watchTheme } from "./theme.js";
 
 /** A worker view's code: its own source, which the host makes a worker of, or a whole worker script. */
 export type WorkerViewCode = GuestWorkerSource | { readonly source: string };
@@ -142,27 +143,7 @@ export interface WorkerView {
   dispose(): void;
 }
 
-const TOKENS: readonly (readonly [keyof Omit<GuestTheme, "scheme">, string])[] = [
-  ["accent", "--graview-accent"],
-  ["ground", "--graview-ground"],
-  ["panel", "--graview-panel"],
-  ["ink", "--graview-ink"],
-  ["inkMuted", "--graview-ink-muted"],
-  ["edge", "--graview-edge"],
-  ["fontBody", "--graview-font-body"],
-  ["fontMono", "--graview-font-mono"],
-];
-
-/** The app's look as the region inherits it: its tokens, and the app's scheme — its own toggle, not the system's. */
-export function readTheme(region: Element): GuestTheme {
-  const window = region.ownerDocument.defaultView!;
-  const style = window.getComputedStyle(region);
-  const stamped = region.closest("[data-graview-scheme]")?.getAttribute("data-graview-scheme");
-  const said = stamped === "dark" || stamped === "light" ? stamped : /\bdark\b/.test(style.colorScheme ?? "") ? "dark" : /\blight\b/.test(style.colorScheme ?? "") ? "light" : window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  const theme = { scheme: said } as { -readonly [K in keyof GuestTheme]: GuestTheme[K] };
-  for (const [key, variable] of TOKENS) theme[key] = style.getPropertyValue(variable).trim();
-  return theme;
-}
+export { readTheme };
 
 /**
  * MOUNT A WORKER VIEW ON THE OPEN KIT (FR-90), AS A PLACE WITH A MANIFEST
@@ -317,16 +298,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   const looked = () => {
     if (session && JSON.stringify(theme()) !== pushed) push();
   };
-  if (typeof window.MutationObserver === "function") {
-    const watch = new window.MutationObserver(looked);
-    watch.observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ["data-graview-scheme", "data-theme"] });
-    const media = window.matchMedia?.("(prefers-color-scheme: dark)");
-    media?.addEventListener?.("change", looked);
-    unwatch = () => {
-      watch.disconnect();
-      media?.removeEventListener?.("change", looked);
-    };
-  }
+  unwatch = watchTheme(document, looked);
 
   let port: MessagePort | undefined;
   const send = (message: GuestDomEvent) => port?.postMessage(message);

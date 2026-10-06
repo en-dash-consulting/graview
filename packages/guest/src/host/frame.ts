@@ -1,7 +1,8 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
-import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type HostHello } from "../protocol.js";
+import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type GuestTheme, type HostHello } from "../protocol.js";
 import { mintNonce } from "./nonce.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestReads, type GuestStats, type GuestViewInput } from "./session.js";
+import { readTheme, watchTheme } from "./theme.js";
 
 export interface MountGuestViewOptions<S extends AnySchema> {
   /** Where the guest's code is served. Where that is, and its CSP, are the host's business. */
@@ -19,6 +20,13 @@ export interface MountGuestViewOptions<S extends AnySchema> {
    * guest over packages each package's offers, as the viewer sees them.
    */
   readonly reads?: GuestReads;
+  /**
+   * The app's look now (FR-86). Read off the element the frame is drawn in
+   * by default — its `--graview-*` tokens, and the app's own scheme — and
+   * pushed again when the app's toggle changes it, whatever the system
+   * prefers.
+   */
+  readonly theme?: () => GuestTheme;
   readonly onNavigate?: (id: string) => void;
   /** The guest asked for a height. By default the frame takes it. */
   readonly onSize?: (height: number) => void;
@@ -78,6 +86,18 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
     counted = { ...now };
   };
 
+  /* The app's look, kept up (FR-86): pushed again when what the frame would be handed has changed. */
+  const theme = () => options.theme?.() ?? readTheme(element);
+  let pushed = "";
+  const push = () => {
+    if (!session) return;
+    pushed = JSON.stringify(theme());
+    session.push();
+  };
+  const unwatch = watchTheme(document, () => {
+    if (session && JSON.stringify(theme()) !== pushed) push();
+  });
+
   const end = () => {
     tally();
     session?.dispose();
@@ -110,6 +130,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       send: (message) => channel.port1.postMessage(message),
       ...(options.input ? { input: options.input } : {}),
       ...(options.reads ? { reads: options.reads } : {}),
+      theme,
       ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
       onSize: options.onSize ?? ((height) => (iframe.style.height = `${height}px`)),
       ...(options.limits ? { limits: options.limits } : {}),
@@ -127,20 +148,21 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
      * nonce: what the viewer may see comes over the port.
      */
     iframe.contentWindow!.postMessage(hello, "*", [channel.port2]);
-    live.push();
+    push();
   };
   window.addEventListener("message", onMessage);
   element.appendChild(iframe);
 
   return {
     iframe,
-    update: () => session?.push(),
+    update: push,
     get stats() {
       tally();
       return stats;
     },
     dispose() {
       end();
+      unwatch();
       window.removeEventListener("message", onMessage);
       iframe.remove();
     },

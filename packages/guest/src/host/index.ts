@@ -2,6 +2,7 @@ export { mountGuestView } from "./frame.js";
 export type { GuestFrame, MountGuestViewOptions } from "./frame.js";
 export { createGuestHost, createGuestLimiter, readAcross } from "./session.js";
 export type { GuestHost, GuestHostOptions, GuestLimiter, GuestLimits, GuestReads, GuestStats, GuestViewInput } from "./session.js";
+export { readTheme } from "./theme.js";
 /*
  * A worker guest's host — mountGuestWorker and the kit's renderer — is
  * `@graview/guest/host/worker`, not here: a page that draws only frames
@@ -18,4 +19,4 @@ export type { GuestViewOptions } from "./react.js";
  * page that draws only frames carries none of it.
  */
 export { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN } from "../protocol.js";
-export type { GuestProps } from "../protocol.js";
+export type { GuestProps, GuestTheme } from "../protocol.js";

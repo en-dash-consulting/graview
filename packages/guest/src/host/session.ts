@@ -1,5 +1,5 @@
 import { PermissionDeniedError, type AnySchema, type Principal, type Store } from "@graview/core";
-import type { GuestAct, GuestAnswer, GuestEdge, GuestNode, GuestProps, GuestRefusal, HostMessage } from "../protocol.js";
+import type { GuestAct, GuestAnswer, GuestEdge, GuestNode, GuestProps, GuestRefusal, GuestTheme, HostMessage } from "../protocol.js";
 
 /**
  * What the host knows of the place a guest view is drawn: `ViewProps` as
@@ -78,6 +78,8 @@ export interface GuestHostOptions<S extends AnySchema> {
    * none, a guest sees its own records and the edges among them.
    */
   readonly reads?: GuestReads;
+  /** The app's look now, pushed as `theme` (FR-86). Read again on every push. */
+  readonly theme?: () => GuestTheme;
   /** The guest asked to go to a record the viewer may see. */
   readonly onNavigate?: (id: string) => void;
   /** The guest asked for a height. */
@@ -244,6 +246,7 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       ...(input.implicated ? { implicated: visible(input.implicated) } : {}),
       ...(input.flagged ? { flagged: visible(input.flagged) } : {}),
       acts,
+      ...(options.theme ? { theme: options.theme() } : {}),
     };
   };
 

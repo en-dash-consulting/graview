@@ -58,9 +58,9 @@ entries import nothing of the framework, so a guest bundle carries none of it.
 `edges` among them, `label`, `fidelity`, `cardinality`, `mode`, `selected`,
 `implicated`, `flagged` — and `acts`, the acts the viewer may run. A record
 the viewer may not see is in none of them. Every record's `label` is
-filled as the host labels it.
+filled as the host labels it, and `theme` is the app's.
 
-### What a frame guest reads
+### What a frame guest reads, and its look
 
 ```ts
 views.register("package", { cardinality: "many", fidelity: "full" },
@@ -76,6 +76,13 @@ too). A guest over packages that reads `offer` and `includes` gets each
 package's offers, and an offer the viewer may not see is in none of it.
 Drawn as the home (`views.home`), a guest is drawn over nothing and sees
 what it reads: it is the routed home's body, and the landing over the scene.
+
+Its props carry `theme`, a `GuestTheme`: the scheme, the accent, ground,
+panel, ink, muted ink and edge colours, and the body and mono fonts, read
+off the element the frame is drawn in. The scheme is the app's own (the
+embed's `data-graview-scheme`), not the system's, and the host pushes
+again when the app's toggle changes it. `mountGuestView` takes `reads`
+and `theme` too.
 
 ## In a worker
 
