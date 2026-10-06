@@ -22,6 +22,10 @@ this package serves lists, records, forms, problems and history as ordinary link
 - **Two faces, one application.** Record pages link to their spatial stop
   (`spatialHref(id)`); the scene links to the pages; the ids are shared. See
   `apps/todo` for both faces mounted from one declaration (`/` scene, `/pages` routed).
+- **The host may own the history.** `basename` mounts the face under a path;
+  `onNavigate(path, how)` tells a host each page the face opens (`"push"`,
+  `"replace"` or `"pop"`), and `path` sends it back to one, so a host that
+  keeps its own history keeps the face's too.
 - **Mobile is an acceptance criterion.** `pnpm pages` runs the phone-width harness
   (390×844): no sideways scroll, named links, labelled controls, and a derived form that
   actually applies.
