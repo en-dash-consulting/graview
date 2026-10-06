@@ -1,0 +1,115 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "En Dash Org",
+  "description": "Who owns which slice of founder load, under which constraints, feeding which revenue bets — recreated from org-graview as a document.",
+  "kinds": {
+    "person": {
+      "noun": "person",
+      "plural": "People",
+      "description": "Someone at En Dash: a partner, dasher, or lead — not a reporting-line node.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "role": { "type": "string", "required": true },
+        "notes": { "type": "text" }
+      },
+      "describe": "{name} — {role}",
+      "glance": ["name", "role"],
+      "edges": {
+        "owns": { "to": ["component"], "description": "components this person owns (several owners mean shared)", "inverse": "who owns this" },
+        "proposedOwner": { "to": ["component"], "description": "components proposed for this person to take on", "inverse": "proposed owner" },
+        "strengths": { "to": ["strength"], "description": "what this person is strong at", "inverse": "who is strong at this" }
+      }
+    },
+    "component": {
+      "noun": "component",
+      "plural": "Components",
+      "description": "An ownership slice of the business: decision rights and outcome accountability.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "code": { "type": "string", "description": "the short disc label on the load map" },
+        "summary": { "type": "text" },
+        "ownership": { "type": "enum", "options": ["nick_owns", "shared", "proposed_handoff", "owned_elsewhere"], "default": "nick_owns", "required": true },
+        "area": { "type": "enum", "options": ["pipeline", "delivery", "os", "finance", "product", "people", "voice", "infra"], "required": true },
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      },
+      "describe": "{name} ({ownership})",
+      "glance": ["name", "ownership", "area"],
+      "edges": {
+        "constrainedBy": { "to": ["constraint"], "description": "design constraints that bound this slice", "inverse": "components this bounds" },
+        "feeds": { "to": ["revenue-stream"], "description": "revenue streams this slice feeds", "inverse": "what feeds this stream" }
+      }
+    },
+    "constraint": {
+      "noun": "constraint",
+      "plural": "Constraints",
+      "description": "A design hard line or preference for how En Dash's OS should work.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "text": { "type": "text", "required": true },
+        "strength": { "type": "enum", "options": ["hard", "preference"], "default": "hard", "required": true }
+      },
+      "glance": ["name", "strength"]
+    },
+    "revenue-stream": {
+      "noun": "revenue stream",
+      "plural": "Revenue streams",
+      "description": "A revenue bet: contracts, discoveries, trainings, product, OSS.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "summary": { "type": "text" },
+        "maturity": { "type": "enum", "options": ["core", "growing", "nascent"], "default": "nascent", "required": true }
+      },
+      "glance": ["name", "maturity"]
+    },
+    "open-question": {
+      "noun": "open question",
+      "plural": "Open questions",
+      "description": "An unresolved design question about En Dash's operating system.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "detail": { "type": "text" },
+        "status": { "type": "enum", "options": ["open", "parked", "resolved"], "default": "open", "required": true }
+      },
+      "glance": ["name", "status"],
+      "lifecycle": { "field": "status", "retired": ["resolved"] },
+      "edges": {
+        "involves": { "to": ["person", "component"], "description": "who or what this question involves", "inverse": "open questions involving this" }
+      }
+    },
+    "strength": {
+      "noun": "strength",
+      "plural": "Strengths",
+      "description": "Something a person is strong at, and how strong.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "level": { "type": "integer", "description": "how strong, from 1 to 5" }
+      },
+      "glance": ["name", "level"]
+    }
+  },
+  "acts": {
+    "add-person": { "title": "Add a person", "creates": "person", "description": "Bring someone into the org context graph." },
+    "add-component": { "title": "Add a component", "creates": "component", "description": "Declare a new ownership slice of the load map." },
+    "add-constraint": { "title": "Add a constraint", "creates": "constraint", "description": "Record a design hard line or preference for the OS." },
+    "add-revenue-stream": { "title": "Add a revenue stream", "creates": "revenue-stream", "description": "Name a way En Dash makes (or wants to make) money." },
+    "record-open-question": { "title": "Record an open question", "creates": "open-question", "description": "Capture an unresolved design question so it stays visible." },
+    "note-strength": {
+      "title": "Note a strength",
+      "on": "person",
+      "description": "Say what this person is strong at.",
+      "args": { "name": { "type": "string", "required": true }, "level": { "type": "integer" } },
+      "effects": [
+        { "create": "strength", "as": "new", "set": { "name": "$name", "level": "$level" } },
+        { "connect": "strengths", "from": "$subject", "to": "$new" }
+      ]
+    },
+    "set-level": { "title": "Set the level", "on": "strength", "writes": ["level"], "description": "Say how strong a strength is." },
+    "update-component-status": { "title": "Update ownership status", "on": "component", "writes": ["ownership"], "description": "Set whether Nick still owns it, it is shared, proposed for handoff, or owned elsewhere." },
+    "resolve-question": { "title": "Resolve question", "on": "open-question", "sets": { "status": "resolved" }, "description": "Mark an open question resolved — it leaves the picture, not the record." },
+    "bind-constraint": { "title": "Bind a constraint", "on": "component", "connects": "constrainedBy", "description": "Say a component is bounded by a design constraint.", "fromTheOtherEnd": "Bound this component" },
+    "link-feeds": { "title": "Feeds revenue", "on": "component", "connects": "feeds", "description": "Say a component feeds a revenue stream.", "fromTheOtherEnd": "Fed by this component" },
+    "involve-in-question": { "title": "Involve in question", "on": "open-question", "connects": "involves", "description": "Attach a person or component to an open question.", "fromTheOtherEnd": "Ask about this" }
+  }
+}

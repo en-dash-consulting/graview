@@ -35,7 +35,18 @@ export interface Announcement {
   readonly what: string;
 }
 
-export const ANNOUNCED: readonly Announcement[] = [];
+export const ANNOUNCED: readonly Announcement[] = [
+  {
+    fixture: "document:vendors",
+    version: "0.1.14",
+    what: "FR-110: edit-category takes name — add-to-category makes a vendor named $name and no longer counts as writing the category's name — and edit-category and edit-vendor refuse an argument they do not take (additionalProperties: false).",
+  },
+  {
+    fixture: "document:two-lines",
+    version: "0.1.14",
+    what: "FR-110: edit-chore refuses an argument it does not take (additionalProperties: false).",
+  },
+];
 
 export const FIXTURES: readonly ConformanceFixture[] = [
   {
@@ -413,11 +424,16 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "edit-category": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
               "minLength": 1,
               "description": "Id of a node (category)."
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 500
             },
             "budget": {
               "type": "number"
@@ -430,6 +446,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "edit-vendor": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -543,6 +560,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "edit-chore": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",

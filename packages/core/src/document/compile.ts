@@ -20,6 +20,7 @@ import {
 } from "../index.js";
 import * as z from "../schema/zod.js";
 import { refTo } from "../mutations/node-ref.js";
+import { ActRefusal } from "../refused.js";
 import { analyzeExpr } from "./expr/analyze.js";
 import { rememberDocument } from "./to-document.js";
 import { evaluateExpr, ExprBudgetError, ExprEvalError, type KindShape, type Value } from "./expr/evaluate.js";
@@ -477,7 +478,8 @@ function argsOf(name: string, act: ActSpec, effects: readonly EffectSpec[], docu
   return args;
 }
 
-class Refused extends Error {}
+/** An act's own refusal: the framework's typed one (FR-110), which a host shows rather than calling it a failure. */
+const Refused = ActRefusal;
 
 /**
  * A DOCUMENT COMPILED WITHOUT THE FRAMEWORK'S CHECKER: its own sentences
@@ -594,7 +596,8 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
         ...(creates.length > 0 ? { creates } : {}),
         ...(connects.length > 0 ? { connects } : {}),
         ...(severs.length > 0 ? { severs } : {}),
-        ...(writes.length > 0 ? { writes } : {}),
+        // Said even when empty (FR-110): a document act's writes are read off it, so nothing guesses them from its arguments' names.
+        writes,
         ...(Object.keys(sets).length > 0 ? { sets } : {}),
         describe: (input: Record<string, unknown>, graph: GraphReader) => {
           const subject = typeof input[SUBJECT_ARG] === "string" ? graph.getNode(input[SUBJECT_ARG] as string) : undefined;
@@ -828,7 +831,7 @@ export function inDocumentWords(finding: Finding, where: string, document: Gravi
   return { ...finding, path: `kinds.${kind}.glance`, fix: `Say which: "glance": [${first.map((field) => `"${field}"`).join(", ")}] on kinds.${kind} — the facts a person compares one by, at a glance.` };
 }
 
-export { Refused as ActRefusal };
+export { ActRefusal };
 
 /** Every `renamedFrom` that names nothing in the version before: the values it was meant to carry would be lost. */
 function renamesFromNothing(document: GraviewDocument, previous: GraviewDocument): Finding[] {
