@@ -39,6 +39,7 @@ import {
   checkArrangement,
   checkViewSpecs,
   checkComputed,
+  checkHiddenReads,
 } from "./check/index.js";
 import type { CheckContext } from "./check/context.js";
 
@@ -114,6 +115,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   checkPagesArrangement(ctx);
   checkViewSpecs(ctx);
   checkComputed(ctx);
+  checkHiddenReads(ctx);
 
   const errors = findings.filter((f) => f.severity === "error").length;
   const notes = findings.filter((f) => f.severity === "note").length;
