@@ -8,6 +8,7 @@ import type { AnySchema } from "../schema/schema.js";
 import { hueFor } from "../theme/derive.js";
 import { withArticle } from "../schema/define-node.js";
 import { declaredLenses, isShippedLens, placesOf } from "../places.js";
+import { columnActs } from "../columns.js";
 import { computedOf } from "../document/computed.js";
 
 /**
@@ -129,6 +130,18 @@ export function describeApp<S extends AnySchema>(
         }),
       )}.`,
     );
+  }
+  // A status board (FR-97) moves a card only by an act; say which, so nobody expects a drag the policy will not run.
+  for (const lens of lensesDeclared.drawn.filter((one) => one.lens === "columns")) {
+    for (const [kind, roles] of Object.entries((lens.options["bindings"] ?? {}) as Record<string, { column?: string }>)) {
+      if (!roles.column) continue;
+      const movers = columnActs(app.schema, acts, kind, roles.column).map((act) => `"${act.title ?? act.name}"`);
+      lines.push(
+        movers.length > 0
+          ? `  "${lens.title}" moves ${withArticle(app.schema.tryDefinition(kind)?.noun ?? kind)} to another column by ${list(movers)}, for a seat its policy lets run it; any other seat is offered no move.`
+          : `  "${lens.title}" offers no move: no act sets the ${roles.column} of ${withArticle(app.schema.tryDefinition(kind)?.noun ?? kind)} to a value it is given.`,
+      );
+    }
   }
   for (const lens of lensesDeclared.undrawn) {
     if (lens.title) lines.push(`  "${lens.title}" does not draw: ${lens.why}.`);

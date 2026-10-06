@@ -1,0 +1,48 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "The tasks",
+  "description": "A small team's tasks, on a board by where each one stands.",
+  "kinds": {
+    "task": {
+      "noun": "task",
+      "plural": "tasks",
+      "fields": {
+        "label": { "type": "string", "required": true },
+        "status": { "type": "enum", "options": ["todo", "doing", "done"], "default": "todo", "required": true },
+        "due": { "type": "date" }
+      },
+      "edges": {
+        "assigned-to": { "to": ["person"], "cardinality": "one", "description": "who does it", "inverse": "what they do" }
+      }
+    },
+    "person": {
+      "noun": "person",
+      "plural": "people",
+      "fields": { "label": { "type": "string", "required": true } }
+    }
+  },
+  "acts": {
+    "add-task": { "title": "Add a task", "creates": "task", "description": "Put a task on the board." },
+    "add-person": { "title": "Add a person", "creates": "person", "description": "Somebody on the team." },
+    "set-status": {
+      "title": "Set the status",
+      "on": "task",
+      "description": "Say where a task stands.",
+      "args": { "status": { "type": "enum", "options": ["todo", "doing", "done"], "required": true } },
+      "sets": { "status": "$status" }
+    },
+    "assign": { "title": "Assign", "on": "task", "connects": "assigned-to", "description": "Say who does a task." }
+  },
+  "roles": ["owner", "viewer"],
+  "policy": {
+    "grants": [{ "roles": ["owner"], "mutations": "*" }],
+    "sees": [
+      { "roles": ["owner"], "kinds": ["task", "person"] },
+      { "roles": ["viewer"], "kinds": ["person"] },
+      { "roles": ["viewer"], "kinds": ["task"], "own": true }
+    ]
+  },
+  "lenses": [{ "name": "columns", "title": "The board", "bindings": { "task": { "column": "status" } } }],
+  "pages": { "first": "The board" }
+}

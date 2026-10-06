@@ -204,7 +204,7 @@ function Listed({ node, as, depth }: { readonly node: AnyGraphNode; readonly as:
 }
 
 /** The whole item is the way to its record: a link stretched over it, under any link the item draws itself. */
-function ListedLink({ node, label }: { readonly node: AnyGraphNode; readonly label: string }) {
+export function ListedLink({ node, label }: { readonly node: AnyGraphNode; readonly label: string }) {
   const links = useContext(SpecLinks);
   if (links) {
     return (
