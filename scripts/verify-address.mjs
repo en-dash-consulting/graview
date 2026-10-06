@@ -18,7 +18,11 @@
  *   a deep link to a record opens it;
  *   the face toggle is a step Back undoes, the scene's stop in the fragment,
  *   and a reload of the scene stays on the scene;
- *   the embed in an article never writes `history` and leaves `location` as it was.
+ *   the embed in an article never writes `history` and leaves `location` as it was;
+ *   and across a new declaration (`setApp`, FR-116), in an article and at an
+ *   address: a place open on Pages stays open, the scene keeps its focus on a
+ *   record, a reader on a kind the change removed lands on the home, and the
+ *   article's history is never written.
  *
  *   node scripts/verify-address.mjs [--engine=chromium|webkit|firefox]   (all three by default)
  */
@@ -36,6 +40,10 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const asked = process.argv.find((arg) => arg.startsWith("--engine="))?.slice("--engine=".length);
 const engines = asked ? [asked] : ENGINES;
 const TASKS = resolve(repoRoot, "packages/core/tests/document/fixtures/tasks.gdd.json");
+const PROPOSAL = resolve(repoRoot, "packages/core/tests/document/fixtures/lifelogics.gdd.json");
+const PROPOSAL_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/lifelogics.seed.json");
+/** Where the proposal is served under address routing, for the new declarations (FR-116). */
+const SWAP_BASE = "/apps/a2";
 const SEED = {
   nodes: [
     { id: "t1", kind: "task", label: "Write the brief", status: "todo" },
@@ -68,11 +76,70 @@ async function buildHost() {
       contents: `
         import { mount } from "@graview/embed";
         import { compileDocumentWithoutCheck } from "@graview/core/document";
+        import { Store } from "@graview/core";
         import tasks from ${JSON.stringify(TASKS)};
-        const compiled = compileDocumentWithoutCheck(tasks, { today: () => "2026-09-01" });
-        if (!compiled.ok) throw new Error("the document did not compile");
+        import proposal from ${JSON.stringify(PROPOSAL)};
+        import proposalSeed from ${JSON.stringify(PROPOSAL_SEED)};
+        const compile = (document) => {
+          const compiled = compileDocumentWithoutCheck(document, { today: () => "2026-09-01" });
+          if (!compiled.ok) throw new Error("the document did not compile");
+          return compiled.app;
+        };
+        const compiled = { app: compile(tasks) };
         const article = location.pathname.startsWith("/article");
         window.__navigated = [];
+        /*
+         * A NEW DECLARATION UNDER THE READER (FR-116): the proposal, then the
+         * same with its views changed (a new home block, a new place), or with
+         * a kind taken away — each with a store of its own, as a chat's change
+         * hands the host a new compiled app and a new store.
+         */
+        const swapping = location.pathname.startsWith("/swap") || location.pathname.startsWith("${SWAP_BASE}");
+        if (swapping) {
+          const mentions = (value, word) => JSON.stringify(value).includes(word);
+          const changed = {
+            views: (d) => ({ ...d, views: { ...d.views, home: [{ headline: "A changed home" }, ...d.views.home] }, lenses: [...d.lenses, { name: "blocks", title: "The parties", on: "party", options: { blocks: [{ headline: "Who is in it" }] } }] }),
+            "no-questions": (d) => {
+              const { question: _q, ...kinds } = d.kinds;
+              const { question: _v, ...views } = d.views;
+              return {
+                ...d,
+                kinds,
+                pages: { ...d.pages, order: d.pages.order.filter((kind) => kind !== "question") },
+                lenses: d.lenses.filter((lens) => lens.on !== "question"),
+                views: { ...views, home: views.home.filter((block) => !mentions(block, "question")) },
+                policy: { ...d.policy, sees: d.policy.sees.map((sees) => ({ ...sees, kinds: sees.kinds.filter((kind) => kind !== "question") })) },
+              };
+            },
+          };
+          const storeFor = (app) => {
+            const kinds = app.schema.kinds;
+            const nodes = proposalSeed.nodes.filter((node) => kinds.includes(node.kind));
+            const ids = new Set(nodes.map((node) => node.id));
+            return new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: { nodes, edges: proposalSeed.edges.filter((edge) => ids.has(edge.from) && ids.has(edge.to)) } });
+          };
+          const first = compile(proposal);
+          const asked = new URLSearchParams(location.search);
+          window.__handle = mount(document.getElementById("app"), {
+            app: first,
+            store: storeFor(first),
+            principal: { kind: "human", id: "owner", roles: ["owner"] },
+            face: asked.get("face") ?? "pages",
+            ...(asked.get("path") ? { path: asked.get("path") } : {}),
+            ...(asked.get("stop") ? { stop: asked.get("stop") } : {}),
+            toggle: true,
+            height: "100%",
+            fonts: false,
+            studio: false,
+            ...(location.pathname.startsWith("/swap") ? {} : { routing: "address", basePath: "${SWAP_BASE}/" }),
+          });
+          window.__swap = (which) => {
+            const app = compile(changed[which](proposal));
+            window.__handle.setApp(app, storeFor(app));
+            return window.__handle.drawn();
+          };
+          window.__handle.drawn().then(() => { window.__ready = true; });
+        } else {
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
           seed: ${JSON.stringify(SEED)},
@@ -88,7 +155,8 @@ async function buildHost() {
           onNavigate: (path, how) => window.__navigated.push([path, how]),
           ...(article ? {} : { routing: "address", basePath: "${BASE}/" }),
         });
-        window.__handle.drawn().then(() => { window.__ready = true; });`,
+        window.__handle.drawn().then(() => { window.__ready = true; });
+        }`,
       resolveDir: resolve(repoRoot, "packages/embed"),
       loader: "js",
     },
@@ -111,12 +179,12 @@ async function buildHost() {
       return;
     }
     // Every address under the base is the one page, as a host that owns the page answers it.
-    if (path === BASE || path.startsWith(`${BASE}/`)) {
+    if (path === BASE || path.startsWith(`${BASE}/`) || path === SWAP_BASE || path.startsWith(`${SWAP_BASE}/`)) {
       response.writeHead(200, { "content-type": "text/html" });
       response.end(APP_PAGE);
       return;
     }
-    if (path === "/article.html") {
+    if (path === "/article.html" || path === "/swap.html") {
       response.writeHead(200, { "content-type": "text/html" });
       response.end(ARTICLE_PAGE);
       return;
@@ -131,6 +199,10 @@ async function buildHost() {
 const host = await buildHost();
 const errors = [];
 const results = {};
+/** What each engine saw across a new declaration (FR-116). */
+const swaps = {};
+/** The focus a stop names. */
+const fromStop = (stop) => new URLSearchParams(String(stop ?? "").replace(/^#/, "")).get("focus");
 let browser;
 try {
   for (const engine of engines) {
@@ -255,9 +327,101 @@ try {
       }
       await article.close();
     }
+
+    /*
+     * A NEW DECLARATION UNDER THE READER (FR-116), at a desk: the reader on
+     * a place, on the scene focused on a record, on a kind the change takes
+     * away — in an article (memory routing) and on a page that is the app
+     * (address routing). `setApp` hands over the new app and store.
+     */
+    const swapped = {};
+    swaps[engine] = swapped;
+    try {
+      const context = await browser.newContext({ viewport: SIZES[0] });
+      await context.addInitScript(() => {
+        window.__writes = [];
+        for (const name of ["pushState", "replaceState"]) {
+          const original = history[name].bind(history);
+          history[name] = (...args) => {
+            window.__writes.push([name, String(args[2] ?? "")]);
+            return original(...args);
+          };
+        }
+      });
+      const tab = await context.newPage();
+      tab.on("pageerror", (error) => errors.push(`${engine} swap: ${error.message}`));
+      const look = () =>
+        tab.evaluate(() => ({
+          href: location.href,
+          path: location.pathname,
+          hash: location.hash,
+          length: history.length,
+          writes: window.__writes.length,
+          face: document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed") ?? null,
+          heading: document.querySelector("[data-graview-face=pages] h1")?.textContent?.trim() ?? null,
+          focused: document.querySelector('[data-graview-plane="0"]')?.dataset.graviewView ?? null,
+          where: window.__handle.where(),
+        }));
+      const open = async (address) => {
+        await tab.goto(`${at("address-host")}${address}`, { waitUntil: "load" });
+        await tab.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+        await tab.waitForTimeout(600);
+        return look();
+      };
+      const change = async (which) => {
+        await tab.evaluate((name) => window.__swap(name), which);
+        await tab.waitForTimeout(800);
+        return look();
+      };
+      const pair = async (address, which) => {
+        const before = await open(address);
+        const after = await change(which);
+        return { before, after };
+      };
+      swapped.placeInArticle = await pair(`/swap.html?face=pages&path=${encodeURIComponent("/places/the-packages")}`, "views");
+      swapped.placeAtAddress = await pair(`${SWAP_BASE}/places/the-packages`, "views");
+      swapped.focusInArticle = await pair(`/swap.html?face=scene&stop=${encodeURIComponent("#focus=pkg-start")}`, "views");
+      swapped.focusAtAddress = await pair(`${SWAP_BASE}#focus=pkg-start`, "views");
+      swapped.goneInArticle = await pair(`/swap.html?face=pages&path=${encodeURIComponent("/open-questions")}`, "no-questions");
+      swapped.goneAtAddress = await pair(`${SWAP_BASE}/open-questions`, "no-questions");
+      await context.close();
+    } catch (error) {
+      swapped.error = String(error?.message ?? error);
+    }
     await browser.close();
     browser = undefined;
   }
+
+  // FR-116: what each engine saw across a new declaration.
+  const swapsOk = (test) => Object.keys(swaps).length === engines.length && Object.values(swaps).every((one) => !one.error && test(one));
+  const memoryQuiet = ({ before, after }) => after.writes === 0 && after.href === before.href && after.length === before.length;
+  report.checks.aPlaceOnPagesIsStillOpenAfterANewDeclaration = {
+    seen: Object.fromEntries(Object.entries(swaps).map(([name, one]) => [name, one.error ? { error: one.error } : { article: one.placeInArticle, address: one.placeAtAddress }])),
+    ok: swapsOk(({ placeInArticle, placeAtAddress }) =>
+      [placeInArticle, placeAtAddress].every(({ before, after }) => before.heading === "The packages" && after.heading === "The packages" && after.face === "pages" && after.where.path === "/places/the-packages") &&
+      placeAtAddress.after.path === `${SWAP_BASE}/places/the-packages` &&
+      placeAtAddress.after.length === placeAtAddress.before.length,
+    ),
+  };
+  report.checks.theSceneFocusedOnARecordKeepsItsFocus = {
+    seen: Object.fromEntries(Object.entries(swaps).map(([name, one]) => [name, one.error ? { error: one.error } : { article: one.focusInArticle, address: one.focusAtAddress }])),
+    ok: swapsOk(({ focusInArticle, focusAtAddress }) =>
+      [focusInArticle, focusAtAddress].every(({ before, after }) => before.focused === "pkg-start" && after.focused === "pkg-start" && after.face === "scene" && fromStop(after.where.stop) === "pkg-start") &&
+      fromStop(focusAtAddress.after.hash) === "pkg-start",
+    ),
+  };
+  report.checks.aReaderOnAKindTheChangeRemovedLandsOnTheHome = {
+    seen: Object.fromEntries(Object.entries(swaps).map(([name, one]) => [name, one.error ? { error: one.error } : { article: one.goneInArticle, address: one.goneAtAddress }])),
+    ok: swapsOk(({ goneInArticle, goneAtAddress }) =>
+      [goneInArticle, goneAtAddress].every(({ before, after }) => before.heading === "Open questions" && after.face === "pages" && after.where.path === "/" && after.heading !== null && after.heading !== "Open questions") &&
+      goneAtAddress.after.path === SWAP_BASE &&
+      goneAtAddress.after.length === goneAtAddress.before.length,
+    ),
+  };
+  report.checks.inMemoryRoutingANewDeclarationTouchesNoHistory = {
+    seen: Object.fromEntries(Object.entries(swaps).map(([name, one]) => [name, one.error ? { error: one.error } : { place: one.placeInArticle?.after, focus: one.focusInArticle?.after, gone: one.goneInArticle?.after }])),
+    ok: swapsOk((one) => [one.placeInArticle, one.focusInArticle, one.goneInArticle].every(memoryQuiet)),
+  };
 
   const every = (test) => Object.entries(results).filter(([name]) => !name.endsWith("article")).every(([, one]) => !one.error && test(one));
   const pick = (key) => Object.fromEntries(Object.entries(results).filter(([name]) => !name.endsWith("article")).map(([name, one]) => [name, one.error ? { error: one.error } : one[key]]));

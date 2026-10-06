@@ -24,6 +24,11 @@
  * and undone; a viewer without the act offered no move; each column a
  * region announced by the lens's title first (FR-109).
  *
+ * And a coverage over a path (FR-111, `org-strengths.gdd.json`): people by
+ * skills through a strength record. Choosing Ryan × SEO selects what the
+ * cell joins and draws to Ryan's row and SEO's column, on both faces, at a
+ * desk and a phone — and nothing is drawn to the strengths' district.
+ *
  *   node scripts/verify-declared.mjs [--engine=chromium|webkit|firefox]
  */
 import { createServer } from "node:http";
@@ -60,6 +65,9 @@ const TASKS_SEED = {
     { id: "e2", kind: "assigned-to", from: "t2", to: "p2" },
   ],
 };
+/** People by skills, through a strength (FR-111): the Strengths lens, as Graview Cloud's org app declares it. */
+const STRENGTHS = resolve(repoRoot, "packages/core/tests/document/fixtures/org-strengths.gdd.json");
+const STRENGTHS_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/org-strengths.seed.json");
 const SIZES = [
   { width: 1440, height: 900 },
   { width: 390, height: 844 },
@@ -105,17 +113,20 @@ async function buildHost() {
         import lifelogics from ${JSON.stringify(LIFELOGICS)};
         import lifelogicsSeed from ${JSON.stringify(LIFELOGICS_SEED)};
         import tasks from ${JSON.stringify(TASKS)};
+        import strengths from ${JSON.stringify(STRENGTHS)};
+        import strengthsSeed from ${JSON.stringify(STRENGTHS_SEED)};
         const asked = new URLSearchParams(location.search);
         const proposal = asked.get("doc") === "lifelogics";
         const board = asked.get("doc") === "tasks";
-        const compiled = compileDocumentWithoutCheck(proposal ? lifelogics : board ? tasks : hall, { today: () => "2026-09-01" });
+        const org = asked.get("doc") === "strengths";
+        const compiled = compileDocumentWithoutCheck(proposal ? lifelogics : board ? tasks : org ? strengths : hall, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
-          seed: proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : ${JSON.stringify(SEED)},
+          seed: proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : ${JSON.stringify(SEED)},
           face: asked.get("face") ?? "scene",
           ...(asked.get("path") ? { path: asked.get("path") } : {}),
-          principal: proposal
+          principal: proposal || org
             ? { kind: "human", id: "u:owner", roles: ["owner"] }
             : board
               ? asked.get("as") === "viewer" ? { kind: "human", id: "p2", roles: ["viewer"] } : { kind: "human", id: "p1", roles: ["owner"] }
@@ -529,6 +540,81 @@ try {
     const marquees = await city.evaluate(() => [...document.querySelectorAll('[data-testid^="drive-in-"] .graview-drive-in-thumb-press')].map((press) => press.getAttribute("aria-label") ?? ""));
     await city.close();
     report.checks.aStatusBoardIsADriveInFromAltitude = { marquees, ok: marquees.some((label) => label.includes("The board")) };
+  }
+
+  {
+    /*
+     * FR-111: a coverage cell over a path selects what it joins. The
+     * Strengths lens crosses people with skills through a strength record;
+     * choosing Ryan × SEO drew its line to the strengths' district. Now it
+     * selects Ryan, SEO and the strength, and the lens draws from the cell
+     * to Ryan's name and SEO's head — each line ending on the drawing it
+     * names. A phone's grid is stacked, its column's name inside the cell:
+     * there the line is Ryan's, and the chosen cell itself says SEO.
+     */
+    const chosen = {};
+    for (const size of SIZES) {
+      for (const [face, query, within] of [
+        ["scene", "doc=strengths&face=scene", ".graview-ground"],
+        ["pages", `doc=strengths&face=pages&path=${encodeURIComponent("/places/strengths")}`, '[data-testid="place-lens"]'],
+      ]) {
+        const at = `${face} ${size.width}×${size.height}`;
+        const page = await open(query, size);
+        const cell = page.locator(`${within} [data-graview-joins]`).first();
+        if ((await cell.count()) === 0) {
+          chosen[at] = { cell: false };
+          await page.close();
+          continue;
+        }
+        const joins = JSON.parse((await cell.getAttribute("data-graview-joins")) ?? "[]");
+        await cell.click();
+        await page.waitForTimeout(900);
+        chosen[at] = await page.evaluate(({ selector, joins }) => {
+          const root = document.querySelector(selector);
+          const shape = root?.querySelector("[data-coverage-shape]")?.getAttribute("data-coverage-shape") ?? null;
+          const drawingOf = (id) => [...(root?.querySelectorAll("[data-graview-pick]") ?? [])].find((el) => el.getAttribute("data-graview-pick") === id && !el.closest("[data-graview-mark]"));
+          const lines = [...(root?.querySelectorAll("[data-coverage-join-to]") ?? [])].map((line) => {
+            const id = line.getAttribute("data-coverage-join-to");
+            const end = line.querySelector("circle")?.getBoundingClientRect();
+            const to = drawingOf(id)?.getBoundingClientRect();
+            const x = end ? end.left + end.width / 2 : NaN;
+            const y = end ? end.top + end.height / 2 : NaN;
+            // The line ends ON the drawing of the thing it names.
+            const lands = to ? x >= to.left - 3 && x <= to.right + 3 && y >= to.top - 3 && y <= to.bottom + 3 : false;
+            return { id, lands };
+          });
+          const emphasis = (id) => drawingOf(id)?.getAttribute("data-graview-emphasis") ?? null;
+          const cell = [...(root?.querySelectorAll("[data-graview-joins]") ?? [])].find((el) => el.getAttribute("data-graview-joins") === JSON.stringify(joins));
+          return {
+            joins,
+            shape,
+            lines,
+            ryan: emphasis("p-ryan"),
+            seo: emphasis("sk-seo"),
+            val: emphasis("p-val"),
+            cellSays: cell?.textContent?.trim() ?? "",
+            proxies: document.querySelectorAll("[data-graview-tie-proxy]").length,
+            heading: document.querySelector("[data-graview-embed] h1")?.textContent?.trim() ?? null,
+          };
+        }, { selector: within, joins });
+        await shoot(page, `strengths-${face}-${size.width}`);
+        await page.close();
+      }
+    }
+    const reaches = (seen, id) => seen.lines?.some((line) => line.id === id && line.lands);
+    report.checks.aCoverageCellOverAPathSelectsWhatItJoins = {
+      chosen,
+      ok: Object.entries(chosen).every(
+        ([at, seen]) =>
+          JSON.stringify(seen.joins) === JSON.stringify(["p-ryan", "sk-seo", "st-ryan-seo"]) &&
+          seen.ryan === "lit" &&
+          seen.val === "dimmed" &&
+          reaches(seen, "p-ryan") &&
+          (seen.shape === "stacked" ? seen.cellSays.includes("SEO") : reaches(seen, "sk-seo") && seen.seo === "lit") &&
+          (!at.startsWith("pages") || seen.heading === "Strengths"),
+      ),
+    };
+    report.checks.aChosenCellDrawsNothingToADistrict = { proxies: Object.fromEntries(Object.entries(chosen).map(([at, seen]) => [at, seen.proxies])), ok: Object.values(chosen).every((seen) => seen.proxies === 0) };
   }
 
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };

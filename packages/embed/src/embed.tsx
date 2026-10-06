@@ -1,12 +1,13 @@
-import type { AnySchema, Brand, GraviewApp, Person, Place, Principal, Store } from "@graview/core";
-import { EMPTY_VIEW, aggregateId, fromUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
+import { pathWithin, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
+import { EMPTY_VIEW, aggregateId, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
 import { VISUALLY_HIDDEN, descentTarget, fetchFrameworkViews, frameworkViewDoors, useWidth } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import type { CompanionMode } from "@graview/primitives";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { ErrorReportContext, GraviewProvider, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { AddressBar, faceAtAddress, stopAtAddress } from "./address.js";
-import { createElement, lazy, Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { createContext, createElement, lazy, Suspense, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import type { EmbedWhere } from "./where.js";
 import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
 import {
@@ -23,6 +24,7 @@ import {
   useViews,
   type EmbedFace,
   type EmbedHostContext,
+  type EmbedRemote,
   type FrameOptions,
 } from "./frame.js";
 
@@ -177,6 +179,13 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOpti
    * `"hidden"`, which is the host's to say.
    */
   readonly companion?: CompanionMode;
+  /**
+   * WHERE TO OPEN, AS `handle.where()` SAID IT (FR-116): the face, the page
+   * on Pages and the scene's stop, over `face`, `path` and `stop`, settled
+   * in this app — what it no longer has falls back to its nearest parent. A
+   * host that must remount on a new declaration hands the old place back here.
+   */
+  readonly at?: EmbedWhere;
 }
 
 /** The studio an embed offers, for a host that keeps the declaration itself. */
@@ -248,13 +257,38 @@ export function faceOf(stop: string | undefined): EmbedFace {
 }
 
 export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
-  const { app, face = faceOf(props.stop), stop, toggle = true, standing = "Everything is in order", principal, heading = 2 } = props;
+  const [, ready] = useState(false);
+  const arrived = useCallback(() => ready(true), []);
+  // A place handed back is settled before the embed draws: until the rules for it are here, nothing stands in the element.
+  return props.at && !settling ? <Settling onReady={arrived} /> : <Drawing<S> {...props} />;
+}
+
+function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
+  const { app, face = props.at?.face ?? faceOf(props.stop), stop, toggle = true, standing = "Everything is in order", principal, heading = 2 } = props;
   const { rootRef, scope, css, scheme, store, presence, brand, auto, height } = useFrame(props);
   const views = useViews<S>(props, frameworkViewDoors) as never;
   const kinds = app.schema.kinds as readonly string[];
   const address = props.routing === "address";
+  const at = useMemo(() => (props.at ? settling!.settleAt(props as never, store as never, (views as ReactViewRegistry<S>).places()) : undefined), []);
   // The first view only: after it, where the reader goes is theirs. Under address routing, a stop in the fragment is where it starts.
-  const initialView = useMemo(() => viewFor(face, (address ? stopAtAddress(props.basePath) : undefined) ?? stop, kinds, (views as ReactViewRegistry<S>).places(), openingView(views as ReactViewRegistry<S>, app.schema)), []);
+  const initialView = useMemo(() => viewFor(face, at?.stop ?? (address ? stopAtAddress(props.basePath) : undefined) ?? stop, kinds, (views as ReactViewRegistry<S>).places(), openingView(views as ReactViewRegistry<S>, app.schema)), []);
+  /*
+   * THE PAGE ON PAGES, KEPT (FR-116): where the routed face is, or last was,
+   * so the scene and back is the same page, and `where()` can say it. Under
+   * memory routing the routed face opens on it; under address routing the
+   * address is where it is.
+   */
+  const pagesAt = useRef<{ path: string; asked: string | undefined }>(undefined as never);
+  pagesAt.current ??= { path: at?.path ?? (address ? (face === "pages" ? (pathWithin(window.location.pathname, props.basePath) ?? "/") + window.location.search : "/") : (props.path ?? "/")), asked: props.path };
+  if (props.path !== pagesAt.current.asked) pagesAt.current = { path: props.path ?? "/", asked: props.path };
+  const told = useRef(props.onNavigate);
+  told.current = props.onNavigate;
+  const onNavigate = useCallback((path: string, how: Parameters<NonNullable<EmbedProps["onNavigate"]>>[1]) => {
+    pagesAt.current.path = path;
+    told.current?.(path, how);
+  }, []);
+  const whereabouts = useContext(Whereabouts);
+  if (whereabouts) whereabouts.pages = () => pagesAt.current.path;
   const toggled = useRef<((face: EmbedFace) => void) | undefined>(undefined);
   /*
    * NARROW, THE PAGES (FR-13). Below `pagesBelow` the scene and the Graview
@@ -267,11 +301,11 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
   useIntrinsicHeight(rootRef, shown, props.onIntrinsicHeight);
   const report = useErrorReport(props.onError, shown);
   const ready = useReady(props.onReady, shown);
-  const told = useRef(props.onDrawn);
-  told.current = props.onDrawn;
+  const drawnTold = useRef(props.onDrawn);
+  drawnTold.current = props.onDrawn;
   const drawn = useCallback((asked: EmbedFace, drew: EmbedFace) => {
     ready(drew);
-    told.current?.(asked);
+    drawnTold.current?.(asked);
   }, [ready]);
 
   /*
@@ -310,8 +344,9 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
       <FaceBoundary module="@graview/react" report={report} content>
       <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)}>
         <Faces face={shown} stop={stop} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} />
+        {whereabouts ? <Watch into={whereabouts} /> : null}
         {/* THE ADDRESS BAR, when the host's page is the app (FR-106): the face follows it, and the scene, drawn, keeps its stop in the fragment. */}
-        {address ? <AddressBar basePath={props.basePath} shown={shown} onFace={props.onFace} toggle={toggled} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} /> : null}
+        {address ? <AddressBar pagesWere={at?.path} basePath={props.basePath} shown={shown} onFace={props.onFace} toggle={toggled} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} /> : null}
         {toggle && shown !== "picture" ? (
           <FaceBoundary module="@graview/embed" report={report}>
             <EmbedStrip app={app} studio={props.studio} face={shown} narrow={narrow} onFace={address ? (next) => toggled.current?.(next) : props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} hostActions={props.hostActions} report={report} />
@@ -322,7 +357,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
             {shown === "picture" ? (
               <PictureFace store={store as never} views={views as never} as={(stop ? fromUrl(stop).within?.["view"] : undefined) ?? ""} />
             ) : shown === "pages" ? (
-              <PagesContent store={store as never} views={views as never} presence={presence} auto={auto} brand={brand} props={props as never} />
+              <PagesContent store={store as never} views={views as never} presence={presence} auto={auto} brand={brand} props={{ ...props, onNavigate, ...(address ? {} : { path: pagesAt.current.path }) } as never} />
             ) : (
               <SceneFace address={address} auto={auto} rememberAs={app.name} scheme={scheme} scope={scope} {...(props.companion ? { companion: props.companion } : {})} />
             )}
@@ -334,6 +369,33 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
       </ErrorReportContext.Provider>
     </section>
   );
+}
+
+/** What `mount` reads `where()` from: the scene's view, and the page on Pages. */
+interface Whereabouts {
+  view?: ViewState;
+  pages?: () => string;
+}
+const Whereabouts = createContext<Whereabouts | null>(null);
+
+/** Keeps the scene's view where `where()` can read it. */
+function Watch({ into }: { readonly into: Whereabouts }) {
+  into.view = useNavigation().view;
+  return null;
+}
+
+/*
+ * SETTLING A PLACE IN A NEW APP, fetched when one is handed over (FR-116):
+ * a declaration changes rarely, and a page that never swaps one never loads
+ * the rules for what falls back to what.
+ */
+let settling: typeof import("./where.js") | undefined;
+const fetchSettling = () => import("./where.js").then((module) => void (settling = module));
+
+/** Stands in for the embed while the rules for a handed-back place arrive, then draws it. */
+function Settling({ onReady }: { readonly onReady: () => void }) {
+  useLayoutEffect(() => void fetchSettling().then(onReady), [onReady]);
+  return null;
 }
 
 /** A heading at a level the host chose, heard and not seen. */
@@ -483,6 +545,21 @@ function StudioOnTheStrip({ app, studio }: { readonly app: GraviewApp<AnySchema>
 }
 
 export interface EmbedHandle {
+  /**
+   * WHERE THE READER IS (FR-116): the face, the page on Pages (or the one it
+   * last had) and the scene's stop — for a host that must remount to hand
+   * back as `mount(…, { at })`.
+   */
+  where(): EmbedWhere;
+  /**
+   * A NEW DECLARATION UNDER THE READER (FR-116): the app and its store — or a
+   * remote, whose presence comes with it — swapped in place. The face, the
+   * page on Pages and the scene's stop are kept; what the app no longer has
+   * falls back to its nearest parent. The seat, the seats, the people, the
+   * scheme, the brand asked for and the notices stay; what is drawn is drawn
+   * again, so an open menu, a scroll and a half-typed field do not.
+   */
+  setApp(app: GraviewApp<AnySchema>, store: Store<AnySchema> | EmbedRemote<AnySchema>): void;
   setFace(face: EmbedFace): void;
   setStop(stop: string): void;
   /**
@@ -520,6 +597,7 @@ export interface EmbedHandle {
 }
 
 interface Setters {
+  app(swap: Swap): void;
   face(face: EmbedFace): void;
   stop(stop: string): void;
   path(path: string): void;
@@ -531,17 +609,34 @@ interface Setters {
   brand(brand: Brand | undefined): void;
 }
 
+/** A new declaration and where the reader was, for the next drawing of the embed. */
+interface Swap {
+  readonly app: GraviewApp<AnySchema>;
+  readonly remote: EmbedRemote<AnySchema>;
+  readonly at: EmbedWhere;
+  readonly n: number;
+}
+
+/** The options with a new declaration in them: where the reader was stands for the path and the stop the host first gave. */
+function swapped<S extends AnySchema>({ path: _path, stop: _stop, ...options }: EmbedOptions<S>, swap: Swap): EmbedOptions<S> {
+  return { ...options, app: swap.app as never, at: swap.at, ...(swap.remote.presence ? { presence: swap.remote.presence } : {}) };
+}
+
 /**
  * Mounts an app into an element and hands back the controls. The first
  * render is synchronous, so what comes back is already on the page.
  */
 export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedOptions<S>): EmbedHandle {
-  const store = options.store ?? options.remote?.store ?? storeOf(options.app, options.seed);
+  let store: Store<AnySchema> = (options.store ?? options.remote?.store ?? storeOf(options.app, options.seed)) as never;
   const board = options.notices ?? createNoticeBoard();
   let setters: Setters | null = null;
+  const here: Whereabouts = {};
+  let swaps = 0;
+  // A new declaration on its way (FR-116): `drawn()` waits for it.
+  let swapping: Promise<void> = Promise.resolve();
   // Which face is asked for, which is drawn, and who is waiting for the one asked for.
   // Under address routing, the face the address names (FR-106).
-  const opening = faceAtAddress(options);
+  const opening = faceAtAddress({ ...options, ...(options.at ? { face: options.at.face } : {}) });
   let asked: EmbedFace = opening;
   let drawnFace: EmbedFace | null = null;
   let waiting: (() => void)[] = [];
@@ -563,10 +658,19 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     const [people, setPeople] = useState<readonly Person[] | undefined>(options.people);
     const [hostContext, setHostContext] = useState<EmbedHostContext | undefined>(options.hostContext);
     const [brand, setBrand] = useState<Brand | undefined>(options.brand);
-    setters = { face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand };
+    const [swap, setSwap] = useState<Swap | undefined>(undefined);
+    setters = {
+      app: (next) => {
+        setSwap(next);
+        setPath(undefined);
+        setStop(undefined);
+      },
+      face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand };
     return (
+      <Whereabouts.Provider value={here}>
       <Embed<S>
-        {...options}
+        key={swap?.n ?? 0}
+        {...(swap ? swapped(options, swap) : options)}
         store={store as never}
         notices={board}
         face={face}
@@ -585,12 +689,32 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         onSeat={setSeat}
         onDrawn={onDrawn}
       />
+      </Whereabouts.Provider>
     );
   }
+  const where = (): EmbedWhere => {
+    const focus = here.view?.focusId;
+    const kind = focus ? store.graph.getNode(focus)?.kind : undefined;
+    return { face: asked, path: here.pages?.() ?? options.path ?? "/", stop: here.view ? toUrl(here.view) : (options.stop ?? "#"), ...(kind ? { kind } : {}) };
+  };
   const root: Root = createRoot(element);
   flushSync(() => root.render(<Host />));
   return {
-    store: store as never,
+    get store() {
+      return store;
+    },
+    where,
+    setApp: (app, given) => {
+      const remote: EmbedRemote<AnySchema> = "graph" in given ? { store: given } : given;
+      // The app on the page stays drawn until the rules for settling the place in the new one are here.
+      const swap = () => {
+        const at = where();
+        store = remote.store;
+        flushSync(() => setters?.app({ app, remote, at, n: ++swaps }));
+      };
+      if (settling) swap();
+      else swapping = swapping.then(fetchSettling).then(swap);
+    },
     setFace: (face) => {
       asked = face;
       flushSync(() => setters?.face(face));
@@ -604,7 +728,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setHostContext: (context) => flushSync(() => setters?.hostContext(context)),
     setBrand: (brand) => flushSync(() => setters?.brand(brand)),
     /* Drawn is the face asked for — below `pagesBelow`, drawn as the pages that stand in for it. */
-    drawn: () => (drawnFace === asked ? Promise.resolve() : new Promise<void>((resolve) => waiting.push(resolve))),
+    drawn: () => swapping.then(() => (drawnFace === asked ? undefined : new Promise<void>((resolve) => waiting.push(resolve)))),
     notify: (notice) => {
       let said: NoticeHandle | undefined;
       flushSync(() => {

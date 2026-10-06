@@ -1,0 +1,14 @@
+{
+  "nodes": [
+    { "id": "p-ryan", "kind": "person", "label": "Ryan" },
+    { "id": "p-val", "kind": "person", "label": "Val" },
+    { "id": "sk-seo", "kind": "skill", "label": "SEO" },
+    { "id": "sk-copy", "kind": "skill", "label": "Copywriting" },
+    { "id": "sk-design", "kind": "skill", "label": "Design" },
+    { "id": "st-ryan-seo", "kind": "strength", "label": "Ryan SEO", "level": 3 }
+  ],
+  "edges": [
+    { "id": "e-has", "kind": "has", "from": "p-ryan", "to": "st-ryan-seo" },
+    { "id": "e-in", "kind": "inSkill", "from": "st-ryan-seo", "to": "sk-seo" }
+  ]
+}

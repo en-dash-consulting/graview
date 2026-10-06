@@ -74,7 +74,7 @@ function overOf<S extends AnySchema>(store: Store<S>, kind: string, across?: str
  * promise every lens makes. Nothing here is a copy of a lens: it is the
  * lens.
  */
-function LensOnPage<S extends AnySchema>({ context, place }: { context: PageContext<S>; place: Place }) {
+function LensOnPage<S extends AnySchema>({ context, place, chosen }: { context: PageContext<S>; place: Place; chosen?: readonly string[] }) {
   const { store, views, invariantContext } = context;
   const registration = views?.resolve(place.kind, { cardinality: "many", fidelity: "full" }, place.as);
   const View = registration?.view as ComponentType<ViewProps<S>> | undefined;
@@ -95,6 +95,7 @@ function LensOnPage<S extends AnySchema>({ context, place }: { context: PageCont
         cardinality="many"
         mode="fullscreen"
         selected={false}
+        {...(chosen && chosen.length > 0 ? { implicated: chosen } : {})}
         {...(flagged.length > 0 ? { flagged } : {})}
       />
     </ViewBoundary>
@@ -454,6 +455,8 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
   const navigate = useNavigate();
   const [search] = useSearchParams();
   const asked = decodeURIComponent(params["as"] ?? "");
+  /* A crossing chosen on the picture, by what it joins (FR-111): the picture lights it and draws to its ends. */
+  const [chosen, choose] = useState<{ readonly at: string; readonly ids: readonly string[] } | null>(null);
   const of = search.get("of");
   const places = placesOf(context);
   const place = places.find((candidate) => candidate.as === asked && (!of || pluralSlug(store.schema, candidate.kind) === of));
@@ -548,6 +551,25 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         onClick={(event) => {
           const picked = (event.target as HTMLElement | null)?.closest("[data-graview-pick]");
           const id = picked?.getAttribute("data-graview-pick");
+          /*
+           * A MARK OF A RELATION IS CHOSEN WHERE IT IS (FR-111). A coverage
+           * cell is the crossing of two records, not a page of either: it
+           * went to the column's page, so Ryan × SEO opened SEO. It stays,
+           * lit with its row and its column; their names go to their pages.
+           */
+          const joins = picked?.getAttribute("data-graview-joins");
+          if (joins) {
+            try {
+              const ids: unknown = JSON.parse(joins);
+              if (Array.isArray(ids) && ids.every((one) => typeof one === "string")) {
+                event.preventDefault();
+                choose({ at: placeKey(place), ids });
+                return;
+              }
+            } catch {
+              // Not a list of ids: the mark is a plain pick.
+            }
+          }
           if (!id) return;
           const node = store.graph.getNode(id);
           if (!node) return;
@@ -555,7 +577,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
           navigate(recordPath(store.schema, node.kind, id));
         }}
       >
-        <LensOnPage context={context} place={place} />
+        <LensOnPage context={context} place={place} {...(chosen?.at === placeKey(place) ? { chosen: chosen.ids } : {})} />
       </div>
       {/* The acts, at a reading width: a form as wide as a gallery is a form nobody can scan. */}
       <div style={{ maxWidth: 760, display: "grid", gap: 40 }}>
