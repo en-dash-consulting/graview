@@ -40,6 +40,7 @@ import {
 import { parseTemplate, renderTemplate, TemplateError, type TemplatePart } from "./template.js";
 import { upgradeDocument } from "./upgrade.js";
 import { homeOf, validateViews, viewsOf } from "./views.js";
+import { outsideRange } from "./range.js";
 import { computedOf, parsedComputed, validateComputed, workedOutAlone } from "./computed.js";
 
 /*
@@ -253,6 +254,9 @@ function validate(document: GraviewDocument): Finding[] {
       if (f.default !== undefined && f.type === "enum" && !f.options?.includes(String(f.default))) {
         findings.push(error("default-option", `${at}.fields.${field}.default`, `"${String(f.default)}" is not one of ${field}'s options`));
       }
+      // A default is a value the field takes, so it is inside the field's range (FR-114).
+      const outside = f.default !== undefined ? outsideRange(f.default, f, field) : undefined;
+      if (outside) findings.push(error("default-range", `${at}.fields.${field}.default`, outside));
     }
   }
 
@@ -376,11 +380,17 @@ function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
       schema = z.string().check(z.maxLength(20_000));
       break;
     case "number":
-      schema = z.number();
+    case "integer": {
+      // Its range (FR-114) is the schema's: every form, tool and apply reads it from here.
+      const range = [
+        ...(spec.type === "integer" ? [z.int()] : []),
+        ...(spec.min === undefined ? [] : [z.gte(spec.min)]),
+        ...(spec.max === undefined ? [] : [z.lte(spec.max)]),
+        ...(spec.step === undefined ? [] : [z.multipleOf(spec.step)]),
+      ];
+      schema = range.length > 0 ? z.number().check(...range) : z.number();
       break;
-    case "integer":
-      schema = z.number().check(z.int());
-      break;
+    }
     case "boolean":
       schema = z.boolean();
       break;
@@ -433,9 +443,16 @@ function argsOf(name: string, act: ActSpec, effects: readonly EffectSpec[], docu
 
   const declared = act.args ?? {};
   const writesOnlyOne = act.writes?.length === 1;
-  const note = (arg: string, schema: () => ActArg) => {
+  /*
+   * A declared argument that fills a number field and says no range of its
+   * own is asked for within the field's (FR-114): the form will not take
+   * what the record would refuse.
+   */
+  const withRangeOf = (d: FieldSpec, fed: FieldSpec | undefined): FieldSpec =>
+    fed && d.type === fed.type && d.min === undefined && d.max === undefined && d.step === undefined ? { ...d, ...(fed.min === undefined ? {} : { min: fed.min }), ...(fed.max === undefined ? {} : { max: fed.max }), ...(fed.step === undefined ? {} : { step: fed.step }) } : d;
+  const note = (arg: string, schema: () => ActArg, fed?: FieldSpec) => {
     if (arg === SUBJECT_ARG || BUILTIN_REFS.has(arg) || created.has(arg) || args.has(arg)) return;
-    const d = declared[arg];
+    const d = declared[arg] ? withRangeOf(declared[arg], fed) : undefined;
     args.set(arg, d ? { schema: fieldSchema(d, !d.required), required: Boolean(d.required) } : schema());
   };
   for (const effect of effects) {
@@ -446,7 +463,7 @@ function argsOf(name: string, act: ActSpec, effects: readonly EffectSpec[], docu
         const spec = kind?.fields[field];
         if (arg && spec) {
           const required = Boolean(spec.required) && spec.default === undefined;
-          note(arg, () => ({ schema: fieldSchema(spec, !required), required }));
+          note(arg, () => ({ schema: fieldSchema(spec, !required), required }), spec);
         }
       }
       if (effect.as) created.set(effect.as, effect.create);
@@ -466,7 +483,7 @@ function argsOf(name: string, act: ActSpec, effects: readonly EffectSpec[], docu
         const arg = refName(value);
         if (!arg) continue;
         const spec = targetKind ? document.kinds[targetKind]?.fields[field] : undefined;
-        note(arg, () => (spec ? { schema: fieldSchema(spec, !writesOnlyOne), required: writesOnlyOne } : { schema: z.optional(z.unknown()), required: false }));
+        note(arg, () => (spec ? { schema: fieldSchema(spec, !writesOnlyOne), required: writesOnlyOne } : { schema: z.optional(z.unknown()), required: false }), spec);
       }
     } else if ("remove" in effect) {
       const arg = refName(effect.remove);

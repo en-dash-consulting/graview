@@ -60,6 +60,10 @@ export const FieldSpec = z
     default: z.optional(z.unknown()),
     unit: z.optional(str(undefined, 12)),
     format: z.optional(z.enum(["money", "percent", "duration"])),
+    /** A number's range (FR-114): the least and the most it may be, and the step its values are whole multiples of (JSON Schema's `multipleOf`). */
+    min: z.optional(z.number()),
+    max: z.optional(z.number()),
+    step: z.optional(z.number()),
     /** The name this field had in the previous version: its values move instead of being dropped. */
     renamedFrom: z.optional(z.string().check(z.regex(FIELD_NAME))),
   })
@@ -68,6 +72,10 @@ export const FieldSpec = z
       if (f.type === "enum" && !f.options) ctx.addIssue({ code: "custom", message: 'an enum field lists its "options"', path: ["options"] });
       if (f.type !== "enum" && f.options) ctx.addIssue({ code: "custom", message: '"options" belongs only on an enum field', path: ["options"] });
       if (f.type !== "list" && f.of) ctx.addIssue({ code: "custom", message: '"of" belongs only on a list field', path: ["of"] });
+      const numeric = f.type === "number" || f.type === "integer";
+      for (const key of ["min", "max", "step"] as const) if (!numeric && f[key] !== undefined) ctx.addIssue({ code: "custom", message: `"${key}" belongs only on a number or integer field`, path: [key] });
+      if (numeric && f.min !== undefined && f.max !== undefined && f.min > f.max) ctx.addIssue({ code: "custom", message: `"max" (${f.max}) is below "min" (${f.min})`, path: ["max"] });
+      if (numeric && f.step !== undefined && !(f.step > 0)) ctx.addIssue({ code: "custom", message: '"step" is more than zero, like 1 or 0.5', path: ["step"] });
     }),
   );
 export type FieldSpec = z.infer<typeof FieldSpec>;

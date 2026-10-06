@@ -337,6 +337,7 @@ export function AnswerArgs({
             value={draft}
             {...(shape.type === "number" && shape.min !== undefined ? { min: shape.min } : {})}
             {...(shape.type === "number" && shape.max !== undefined ? { max: shape.max } : {})}
+            {...(shape.type === "number" && shape.step !== undefined ? { step: shape.step } : {})}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Escape") onCancel();

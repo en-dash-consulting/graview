@@ -1,5 +1,6 @@
 import { withArticle } from "../schema/define-node.js";
 import { canonicalize } from "./canonical.js";
+import { narrows, rangeWords } from "./range.js";
 import type { GraviewDocument } from "./schema.js";
 import { homeOf, VIEW_SLOTS, viewsOf } from "./views.js";
 
@@ -22,6 +23,8 @@ export interface DocumentDiff {
   readonly droppedOptions: readonly { readonly kind: string; readonly field: string; readonly options: readonly string[] }[];
   readonly removedEdges: readonly { readonly kind: string; readonly edge: string }[];
   readonly newlyRequired: readonly { readonly kind: string; readonly field: string }[];
+  /** Number fields whose range no longer takes a value it took (FR-114): records outside it are cleared. */
+  readonly narrowedRanges: readonly { readonly kind: string; readonly field: string }[];
   readonly unchanged: boolean;
 }
 
@@ -37,6 +40,7 @@ export function diffDocuments(before: GraviewDocument, after: GraviewDocument): 
   const droppedOptions: { kind: string; field: string; options: string[] }[] = [];
   const removedEdges: { kind: string; edge: string }[] = [];
   const newlyRequired: { kind: string; field: string }[] = [];
+  const narrowedRanges: { kind: string; field: string }[] = [];
 
   if (before.name !== after.name) sentences.push(`The app is renamed from "${before.name}" to "${after.name}".`);
   // A kind declared `renamedFrom` an old one continues it: compared as the same kind, said as a rename.
@@ -88,7 +92,13 @@ export function diffDocuments(before: GraviewDocument, after: GraviewDocument): 
         newlyRequired.push({ kind, field });
         sentences.push(`${kind}'s ${field} becomes required; records without one will need it.`);
       }
-      if (!same({ ...old, type: 0, options: 0, required: 0, renamedFrom: 0 }, { ...f, type: 0, options: 0, required: 0, renamedFrom: 0 })) sentences.push(`${kind}'s ${field} is described differently.`);
+      // Its range (FR-114), said as the values it takes; a narrower one clears what it no longer takes.
+      if (old.type === f.type && (old.min !== f.min || old.max !== f.max || old.step !== f.step)) {
+        const narrower = narrows(old, f);
+        if (narrower) narrowedRanges.push({ kind, field });
+        sentences.push(`${kind}'s ${field} now takes ${rangeWords(f)}, where it took ${rangeWords(old)}${narrower ? "; values outside it are cleared" : ""}.`);
+      }
+      if (!same({ ...old, type: 0, options: 0, required: 0, renamedFrom: 0, min: 0, max: 0, step: 0 }, { ...f, type: 0, options: 0, required: 0, renamedFrom: 0, min: 0, max: 0, step: 0 })) sentences.push(`${kind}'s ${field} is described differently.`);
     }
     for (const field of keys(was.fields)) {
       if (!now.fields[field] && ![...renamed.values()].includes(field)) {
@@ -134,8 +144,8 @@ export function diffDocuments(before: GraviewDocument, after: GraviewDocument): 
   sentences.push(...pagesSentences(before.pages, after.pages));
   for (const k of ["modules", "settings", "description"] as const) if (!same(before[k], after[k])) sentences.push(`The app's ${k} change.`);
 
-  const breaking = removedKinds.length + removedFields.length + retypedFields.length + droppedOptions.length + removedEdges.length + newlyRequired.length > 0;
-  return { sentences, breaking, removedKinds, removedFields, retypedFields, droppedOptions, removedEdges, newlyRequired, unchanged: sentences.length === 0 };
+  const breaking = removedKinds.length + removedFields.length + retypedFields.length + droppedOptions.length + removedEdges.length + newlyRequired.length + narrowedRanges.length > 0;
+  return { sentences, breaking, removedKinds, removedFields, retypedFields, droppedOptions, removedEdges, newlyRequired, narrowedRanges, unchanged: sentences.length === 0 };
 }
 
 /** How the look of each kind changes, slot by slot: "How a vendor card looks changes." */

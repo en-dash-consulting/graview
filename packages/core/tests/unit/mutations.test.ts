@@ -28,8 +28,8 @@ describe("an argument says what sort of answer it wants", () => {
     expect(argShape(input, "date")).toEqual({ type: "date" });
   });
 
-  it("carries a number's declared bounds", () => {
-    expect(argShape(input, "at")).toEqual({ type: "number", min: 0, max: 1439 });
+  it("carries a number's declared bounds, and a whole number's step of 1", () => {
+    expect(argShape(input, "at")).toEqual({ type: "number", min: 0, max: 1439, step: 1 });
   });
 
   it("turns an enum into the choices themselves", () => {

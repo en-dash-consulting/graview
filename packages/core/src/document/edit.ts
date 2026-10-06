@@ -4,6 +4,7 @@ import { ExprSyntaxError, parseExpr } from "./expr/parse.js";
 import { printExpr } from "./expr/print.js";
 import { error, type Finding } from "./findings.js";
 import { coerce } from "./migrate.js";
+import { outsideRange, rangeWords } from "./range.js";
 import {
   ActSpec,
   EDGE_NAME,
@@ -65,6 +66,7 @@ export const EDIT_OPS = [
   "rename-field",
   "retype-field",
   "set-options",
+  "set-range",
   "set-required",
   "set-default",
   "remove-field",
@@ -111,6 +113,7 @@ const SHAPES: Record<EditOp, z.ZodType> = {
   "rename-field": z.object({ op: z.literal("rename-field"), kind: kindName, field: fieldName, to: fieldName }).strict(),
   "retype-field": z.object({ op: z.literal("retype-field"), kind: kindName, field: fieldName, type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1).max(80)).min(1).max(100).optional(), of: z.enum(["string", "number", "date"]).optional(), format: z.enum(["money", "percent", "duration"]).optional() }).strict(),
   "set-options": z.object({ op: z.literal("set-options"), kind: kindName, field: fieldName, add: z.array(z.string().min(1).max(80)).optional(), remove: z.array(z.string().min(1).max(80)).optional() }).strict(),
+  "set-range": z.object({ op: z.literal("set-range"), kind: kindName, field: fieldName, min: z.union([z.number(), z.null()]).optional(), max: z.union([z.number(), z.null()]).optional(), step: z.union([z.number().positive(), z.null()]).optional() }).strict(),
   "set-required": z.object({ op: z.literal("set-required"), kind: kindName, field: fieldName, required: z.boolean() }).strict(),
   "set-default": z.object({ op: z.literal("set-default"), kind: kindName, field: fieldName, default: z.unknown() }).strict(),
   "remove-field": z.object({ op: z.literal("remove-field"), kind: kindName, field: fieldName }).strict(),
@@ -524,6 +527,8 @@ class Editor {
         return this.retypeField(i, e);
       case "set-options":
         return this.setOptions(i, e);
+      case "set-range":
+        return this.setRange(i, e);
       case "set-required": {
         const f = this.field(i, e.kind, e.field);
         if (!f) return;
@@ -540,6 +545,8 @@ class Editor {
           this.said.push(`${e.kind}'s ${e.field} has no default now.`);
         } else {
           if (f.type === "enum" && !(f.options ?? []).includes(e.default)) return this.fail(i, "default", `"${String(e.default)}" is not one of ${e.field}'s options (${(f.options ?? []).join(", ")})`);
+          const outside = outsideRange(e.default, f, e.field);
+          if (outside) return this.fail(i, "default", outside);
           f.default = e.default;
           this.said.push(`${e.kind}'s ${e.field} starts as ${JSON.stringify(e.default)} on new records.`);
         }
@@ -1144,9 +1151,31 @@ class Editor {
     else delete f.of;
     if (e.format) f.format = e.format;
     else if (e.type !== "number" && e.type !== "integer") delete f.format;
+    // A range is a number's (FR-114): a field that is no longer one lets it go.
+    if (e.type !== "number" && e.type !== "integer") for (const key of ["min", "max", "step"]) delete f[key];
     if (f.default !== undefined && coerce(f.default, was, f) === undefined) delete f.default;
     else if (f.default !== undefined) f.default = coerce(f.default, was, f);
     this.said.push(`${e.kind}'s ${e.field} changes from ${was} to ${e.type}; values that convert are kept.`);
+  }
+
+  /** A number's range (FR-114): a key given sets it, `null` clears it, one left out stays. */
+  private setRange(i: number, e: Doc) {
+    const f = this.field(i, e.kind, e.field);
+    if (!f) return;
+    if (f.type !== "number" && f.type !== "integer") return this.fail(i, "field", `${e.field} is ${f.type === "integer" ? "an" : "a"} ${f.type}, not a number; a range belongs on a number or integer field`);
+    const next: Doc = { ...f };
+    for (const key of ["min", "max", "step"]) {
+      if (e[key] === null) delete next[key];
+      else if (e[key] !== undefined) next[key] = e[key];
+    }
+    if (next.min !== undefined && next.max !== undefined && next.min > next.max) return this.fail(i, "max", `the most (${next.max}) is below the least (${next.min})`);
+    const outside = next.default !== undefined ? outsideRange(next.default, next, e.field) : undefined;
+    if (outside) return this.fail(i, "default", `${e.field}'s default, ${outside.replace(/ is /, ", is ")}; change the default first`);
+    for (const key of ["min", "max", "step"]) {
+      if (next[key] === undefined) delete f[key];
+      else f[key] = next[key];
+    }
+    this.said.push(`${e.kind}'s ${e.field} takes ${rangeWords(f)}.`);
   }
 
   private setOptions(i: number, e: Doc) {

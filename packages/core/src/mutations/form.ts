@@ -44,6 +44,8 @@ export interface ScalarField {
   readonly options?: readonly string[];
   readonly min?: number;
   readonly max?: number;
+  /** What a number's values are whole multiples of (FR-114): an input's `step`. */
+  readonly step?: number;
 }
 
 /** Classic or mini alike: the definition is read with `defOf`, never through `_def`, which mini has not got. */
@@ -141,6 +143,7 @@ export function formField(name: string, schema: unknown): FormField {
       optional,
       ...(scalar.min === undefined ? {} : { min: scalar.min }),
       ...(scalar.max === undefined ? {} : { max: scalar.max }),
+      ...(scalar.step === undefined ? {} : { step: scalar.step }),
     };
   }
   if (scalar.type === "choice") return { control: "choice", name, optional, options: scalar.options };
