@@ -883,7 +883,7 @@ export const JOBS = {
       const before = await inStore(page, ctx.kinds, (store, kind) => store.graph.allNodes().filter((node) => node.kind === kind).length, job.kind);
       if (ctx.face === "scene") {
         if (prep.subject) {
-          // The record itself, not its copy in a lens's thumbnail, which is drawn but inert.
+          // The record itself, not its copy in a lens drawn small as a picture, which is inert.
           const pick = page
             .locator(`[data-graview-pick="${escapeAttr(prep.subject.id)}"]:not([inert] *):not([aria-hidden="true"] *)`)
             .filter({ visible: true })

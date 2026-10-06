@@ -180,12 +180,9 @@ try {
     await page.waitForTimeout(1200);
     return page;
   };
-  /** The places the bar names, pills and the menu's options alike. */
+  /** The places the bar names: its tabs, one row that scrolls rather than folding into a menu (FR-117). */
   const placesOnTheBar = (page) =>
-    page.evaluate(() => [
-      ...[...document.querySelectorAll('[data-testid="places"] button[data-testid^="place-"]')].map((pill) => pill.textContent?.trim() ?? ""),
-      ...[...document.querySelectorAll('[data-testid="places-more"] option')].map((option) => option.textContent?.trim() ?? "").filter((text) => text && !/^more/i.test(text)),
-    ]);
+    page.evaluate(() => [...document.querySelectorAll('[data-testid="places"] .graview-place-tab')].map((tab) => tab.textContent?.trim() ?? ""));
 
   /* ---- FR-79 on the Graview face: every lens a pill, and a drive-in from altitude */
   {

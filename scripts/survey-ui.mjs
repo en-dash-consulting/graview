@@ -217,7 +217,7 @@ const measure = () => {
       if (style.display === "none") return false;
       if (style.textOverflow === "ellipsis") return false;
       // A crop that is hidden from assistive tech is a decision too: a lens drawn
-      // small in a drive-in's thumbnail is cut to its frame on purpose.
+      // small as a picture (a gallery's thumbnail) is cut to its frame on purpose.
       if (el.getAttribute("aria-hidden") === "true" || el.closest('[aria-hidden="true"]')) return false;
       /*
        * VISUALLY HIDDEN IS A DECISION TOO.
@@ -287,7 +287,7 @@ const measure = () => {
   const unnamed = within("button, [role=button], a, select, input")
     .filter((el) => {
       // A picture drawn small is inert and hidden from assistive tech: its
-      // controls are not controls (the drive-in's thumbnails, W-118).
+      // controls are not controls (a gallery's thumbnails, W-118).
       if (el.closest('[inert], [aria-hidden="true"]')) return false;
       const name =
         el.getAttribute("aria-label") ??
@@ -353,7 +353,7 @@ const measure = () => {
     repeatedText: (() => {
       const seen = new Map();
       for (const el of within("h1,h2,h3,strong,dt")) {
-        // A lens drawn small in a drive-in's thumbnail repeats its own
+        // A lens drawn small as a picture repeats its own
         // headings by construction, and is hidden from assistive tech.
         if (el.closest('[aria-hidden="true"]')) continue;
         const text = (el.textContent ?? "").trim();

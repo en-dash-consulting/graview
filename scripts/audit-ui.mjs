@@ -427,7 +427,7 @@ const audit = () => {
   /* Two cards drawn on top of one another. Views are siblings on a stage and
      the layout is supposed to keep them apart; where it does not, one card is
      literally hiding another's content. */
-  // A lens drawn small on a drive-in's board is a picture: what it holds is
+  // A lens drawn small as a picture (a gallery's thumbnail) is inert: what it holds is
   // inert, so nothing in it is a control, a mark or a board of this screen.
   const pictured = (el) => el.closest('[inert], [aria-hidden="true"]') !== null;
   const views = [...document.querySelectorAll("[data-graview-view]")].filter(visible).filter((el) => !pictured(el));
@@ -701,7 +701,7 @@ const audit = () => {
     // A string that is not on screen cannot repeat on it: altitude-only
     // controls exist in the tree at display none inside the stack.
     if (!visible(el)) continue;
-    // A lens drawn small in a drive-in's thumbnail repeats its own words by construction.
+    // A place tile's name is drawn aria-hidden beside the press that says it; a picture hidden from assistive tech repeats by construction.
     if (el.closest('[aria-hidden="true"]')) continue;
     /*
      * A RAISED card duplicating its origin's title is the design, not the

@@ -40,6 +40,7 @@
  *   node scripts/verify-chrome-quiet.mjs [--engine=chromium|webkit|firefox] [--shots=<dir>] [--quick]
  */
 import { createServer } from "node:http";
+import { pressPlace } from "./lib/places.mjs";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
@@ -429,28 +430,9 @@ try {
   host.stop();
 }
 
-/** Goes to a place on the Graview face the way a person does: by its name in the places. */
+/** Goes to a place on the Graview face the way a person does: by its tab on the bar. Throws if the bar does not name it. */
 async function goToPlace(page, title) {
-  const button = page.locator(`[data-testid="places"] button:has-text("${title}"), [data-testid="places"] [role="menuitem"]:has-text("${title}"), [data-testid="places"] a:has-text("${title}")`).first();
-  if ((await button.count()) > 0 && (await button.isVisible())) {
-    await button.click();
-  } else {
-    const opener = page.locator('[data-testid="places-menu"], [data-testid="places-more"]').first();
-    if ((await opener.count()) > 0) {
-      const tag = await opener.evaluate((element) => element.tagName.toLowerCase());
-      if (tag === "select") {
-        const value = await opener.evaluate((select, title) => [...select.options].find((option) => option.textContent.trim() === title)?.value ?? "", title);
-        await opener.selectOption(value);
-      } else {
-        await opener.click();
-        await page.locator(`[role="menuitem"]:has-text("${title}"), [role="menuitemradio"]:has-text("${title}")`).first().click();
-      }
-    } else {
-      const compact = page.locator('select[data-testid="places"]');
-      const value = await compact.evaluate((select, title) => [...select.options].find((option) => option.textContent.trim() === title)?.value ?? "", title);
-      await compact.selectOption(value);
-    }
-  }
+  await pressPlace(page, title);
   // The pointer off the bar, so no tab is drawn hovered in a screenshot.
   await page.mouse.move(2, (page.viewportSize()?.height ?? 800) - 2);
   await page.waitForTimeout(1500);

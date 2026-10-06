@@ -487,11 +487,19 @@ try {
     })),
   );
   const noteDriveIn = await drive.evaluate(() => document.querySelector('[data-testid="drive-in-reason"]') !== null);
-  /* The pictures on the board are pictures: nothing drawn inside one can take focus. */
-  const liveInsideAPicture = await drive.evaluate(() =>
-    [...document.querySelectorAll('[data-testid="drive-in-task"] .graview-drive-in-thumb-picture *')].filter(
-      (el) => el.matches("button, a, input, select, textarea, [tabindex]") && !el.closest("[inert]"),
-    ).length,
+  /*
+   * Each place tile on the marquee says its place's whole name in words
+   * (FR-118) and holds exactly one control, its press: the name is text a
+   * person reads, never a second control or a lens drawn small. Counted
+   * per tile, so a marquee with no tiles has nothing to pass on.
+   */
+  const tiles = await drive.evaluate(() =>
+    [...document.querySelectorAll('[data-testid="drive-in-task"] .graview-drive-in-thumb')].map((tile) => ({
+      name: tile.querySelector(".graview-drive-in-thumb-title")?.textContent?.trim() ?? "",
+      label: tile.querySelector(".graview-drive-in-thumb-press")?.getAttribute("aria-label") ?? "",
+      controls: [...tile.querySelectorAll("button, a, input, select, textarea, [tabindex]")].filter((el) => !el.closest("[inert]")).length,
+      pictures: tile.querySelectorAll("svg, canvas, img, [data-graview-view]").length,
+    })),
   );
   /* Switch showings at altitude: focus the tasks' month by the marquee, rise stays. */
   await drive.evaluate(() => {
@@ -547,7 +555,7 @@ try {
   const plotX = standing.screen ? standing.screen.x + standing.screen.width / 2 : null;
   report.driveIn = {
     marquee,
-    liveInsideAPicture,
+    tiles,
     leavingBefore: before,
     midSwitch,
     afterSwitch,
@@ -864,12 +872,13 @@ report.verdict = {
   everyRelationIsCaptionedOnce:
     report.steps.length > 0 &&
     report.steps.every((step) => new Set(step.captions ?? []).size === (step.captions ?? []).length),
-  // A kind with named pictures has a drive-in whose showings are real, labelled, focusable buttons; a kind with only defaults has none.
+  // A kind with named pictures has a drive-in whose showings are real, labelled, focusable buttons, each in a tile that says its name whole and holds no other control or picture; a kind with only defaults has none.
   aDriveInHasAMarquee:
     (report.driveIn?.marquee?.length ?? 0) >= 2 &&
     report.driveIn.marquee.every((button) => /^Tasks: /.test(button.label ?? "") && button.focusable) &&
     report.driveIn?.noteDriveIn === false &&
-    report.driveIn?.liveInsideAPicture === 0,
+    (report.driveIn?.tiles?.length ?? 0) === report.driveIn.marquee.length &&
+    report.driveIn.tiles.every((tile) => tile.name.length > 0 && tile.label === `Tasks: ${tile.name}` && tile.controls === 1 && tile.pictures === 0),
   // Ctrl+wheel from altitude zooms the city — the cell grows — and says so in the corner.
   theWheelZoomsTheCity:
     (report.camera?.zoomedIn?.cell ?? 0) > (report.camera?.start?.cell ?? 0) * 1.1 &&
