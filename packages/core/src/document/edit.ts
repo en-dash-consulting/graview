@@ -1061,7 +1061,7 @@ class Editor {
       if (x.kind === kind && x.from === field) (x as { from: string }).from = to;
     }
     const prose = proseSwap(field, to);
-    if (f.label) f.label = prose(f.label);
+    // A label is what the field is called on screen because its name does not say it: a rename leaves it as written ("List price, per unit" is not "Price price, per unit").
     if (f.description) f.description = prose(f.description);
     this.said.push(`${kind}'s ${field} is renamed to ${to}; its values are kept${touched.length ? `, and ${listOf(touched)} now say${touched.length === 1 ? "s" : ""} ${to}` : ""}.`);
   }

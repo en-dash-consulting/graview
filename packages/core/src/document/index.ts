@@ -7,6 +7,8 @@ export { parseTemplate, renderTemplate, formatValue, FORMATTERS } from "./templa
 export type { TemplatePart, Formatter, RenderContext } from "./template.js";
 export { homeOf, validateViews, validateViewSpecs, viewsOf, FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, VIEW_SLOTS, VIEW_TONES, VIEW_FIELD_FORMATS, MAX_VIEW_DEPTH, MAX_VIEW_BLOCKS } from "./views.js";
 export type { FigureFormat, HomeView, ListGroup, ListSort, ToneSpec, ViewBlock, ViewSpecs, ViewSpecsByKind, ViewSlot, ViewTone, ViewFieldFormat } from "./views.js";
+export { compileBlocks, fieldSpecsOf, isTallBlock, resolveBlocks, safeHref, sayNumber } from "./blocks.js";
+export type { BlockContext, ResolvedBlock, ResolvedList, SpecBlock } from "./blocks.js";
 export * from "./expr/index.js";
 export { diffDocuments } from "./diff.js";
 export type { DocumentDiff } from "./diff.js";
