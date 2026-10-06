@@ -101,8 +101,8 @@ the reuse test beside it, red on purpose.
    which is the worst failure a lens has. The framework's own board lens had
    this exact bug.
 
-   **`budget` is the most to draw.** A drive-in thumbnail hands a lens its 12
-   most relevant members with `budget` and `total`: hold what you read from
+   **`budget` is the most to draw.** A host may hand a lens its most
+   relevant members with `budget` and `total`: hold what you read from
    the store to it too, and say "+N more" (`withMore` does). A real catalogue
    is thousands; a lens that draws them all at 6% stalls the city.
 
@@ -132,7 +132,7 @@ the reuse test beside it, red on purpose.
 
 9. **Declare a shipped lens; register only your own.** A `lenses` entry
    with a `title` is a PLACE the framework draws with no registration — a
-   pill, a drive-in, a page at `/places/<as>`:
+   tab on the bar, its name on the district, a page at `/places/<as>`:
    `{ name: "calendar", title: "The month", bindings: { task: { start: "due" } }, options: { range: "month" } }`.
    A status board: `{ name: "columns", title: "The board", bindings: { task:
    { column: "status" } } }`; a card moves only by an act setting `status`

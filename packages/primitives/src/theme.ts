@@ -41,6 +41,7 @@ import type { Brand, Scheme, ThemeTokens } from "@graview/core";
  */
 export { DARK, LIGHT, SCHEMES } from "@graview/core";
 import { SCHEMES, kitVariables, layer, layerVariables, resolveKit, SCENE_LAYERS, shapeOf, TYPOGRAPHY, typographyOf } from "@graview/core";
+import { MARQUEE_GAP, MARQUEE_WIDTH } from "@graview/layout/view";
 import { SPEC_VIEW_CSS } from "./spec-css.js";
 
 
@@ -578,100 +579,62 @@ ${/* A DRIVE-IN: a dark screen standing on the plot, and the showings under
 [data-graview-landmark] .graview-drive-in {
   top: 4px;
 }
+${/* THE SHOWINGS, BY NAME (FR-118): a column of names hanging off the
+   signpost's post, each whole and wrapped rather than cut, the one showing
+   now marked by the post's rule in the accent. Words on the ground, haloed
+   in the ground's colour like the district's own name — no capsules, no
+   pictures drawn too small to read. */ ""}
 .graview-drive-in-marquee {
   display: grid;
-  gap: 4px;
-  grid-template-columns: repeat(2, 58px);
-  justify-content: center;
+  gap: ${MARQUEE_GAP}px;
+  width: ${MARQUEE_WIDTH}px;
+  justify-items: stretch;
 }
-.graview-drive-in-marquee[data-graview-thumbs="one"] {
-  grid-template-columns: 120px;
-}
-${/* THE LENSES AS PICTURES: each showing is its lens drawn small — the real
-   component at a fraction of its size, cut to a thumbnail — with its name
-   under it. The picture takes no pointer; the button around it does. */ ""}
 .graview-drive-in-thumb {
   position: relative;
-  display: grid;
-  gap: 2px;
-  justify-items: center;
-  padding: 2px;
-  min-height: max(1.75rem, 28px);
-  border-radius: 6px;
-  border: 1px solid var(--graview-edge);
-  background: var(--graview-panel);
+  display: block;
+  box-sizing: border-box;
+  min-height: max(1.5rem, 24px);
+  padding: 3px 6px 3px 10px;
+  border-left: 2px solid var(--graview-edge-bright, var(--graview-edge));
   color: var(--graview-ink);
   font: inherit;
+  text-align: left;
 }
 .graview-drive-in-thumb[data-graview-pressed] {
-  border-color: var(--graview-accent);
+  border-left-color: var(--graview-accent);
   color: var(--graview-accent);
 }
-${/* The press: the whole frame, laid over the picture and the title rather than
-   around them, so the lens drawn small never sits inside a button. */ ""}
+${/* The press: the whole name, laid over it. */ ""}
 .graview-drive-in-thumb-press {
   position: absolute;
-  inset: -1px;
-  ${/* It fills its frame, and says the frame's floor itself: a target is sized where it is declared. */ ""}
-  min-height: max(1.75rem, 28px);
+  inset: 0;
+  min-height: max(1.5rem, 24px);
   margin: 0;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: 0 4px 4px 0;
   background: transparent;
   box-shadow: none;
   cursor: pointer;
-  ${/* The card's own floor, stated: it covers the card, and the card is at least this tall. */ ""}
-  min-height: max(1.75rem, 28px);
+}
+.graview-drive-in-thumb-press:hover {
+  background: color-mix(in srgb, var(--graview-accent) 8%, transparent);
 }
 .graview-drive-in-thumb-press:focus-visible {
   outline: 2px solid var(--graview-accent);
   outline-offset: 1px;
 }
-.graview-drive-in-thumb-picture {
-  display: block;
-  position: relative;
-  width: 54px;
-  height: 34px;
-  overflow: hidden;
-  border-radius: 3px;
-  background: var(--graview-panel);
-  pointer-events: none;
-}
-[data-graview-thumbs="one"] .graview-drive-in-thumb-picture {
-  width: 116px;
-  height: 70px;
-}
-.graview-drive-in-thumb-natural {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 960px;
-  transform: scale(0.05625);
-  transform-origin: 0 0;
-}
-[data-graview-thumbs="one"] .graview-drive-in-thumb-natural {
-  transform: scale(0.1208);
-}
 .graview-drive-in-thumb-title {
-  font-size: 0.75rem;
-  line-height: 1.2;
-  white-space: nowrap;
-  ${/* Its own frame's width: two pictures share the marquee, and two names
-     each allowed the width of one picture ran into each other. */ ""}
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  text-shadow: 0 0 3px var(--graview-ground), 0 0 6px var(--graview-ground);
 }
-.graview-drive-in-marquee > button.graview-drive-in-thumb {
-  font-size: 0.75rem;
-  line-height: 1.2;
-  min-height: max(1.75rem, 28px);
-  cursor: pointer;
-}
-.graview-drive-in-marquee > button[aria-pressed="true"] {
-  border-color: var(--graview-accent);
-  color: var(--graview-accent);
+.graview-drive-in-thumb[data-graview-pressed] .graview-drive-in-thumb-title {
+  font-weight: 600;
 }
 
 ${/* THE OTHERS: people and their agents in the city, each a small figure in

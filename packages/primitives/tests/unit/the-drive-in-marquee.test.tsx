@@ -75,17 +75,14 @@ describe("the marquee", () => {
     await unmount();
   });
 
-  it("draws each showing as a small picture of its lens, named", async () => {
+  it("says each showing by its whole name, and draws no lens too small to read (FR-118)", async () => {
     const { host, unmount } = await mounted({ ...EMPTY_VIEW, overview: true });
-    // Thumbnails mount one a frame, once the scene is still.
-    await act(async () => new Promise((resolve) => setTimeout(resolve, 80)));
     const thumbs = [...host.querySelectorAll('[data-testid="drive-in-task"] .graview-drive-in-thumb')];
     expect(thumbs).toHaveLength(2);
-    // The lens itself, drawn small: the Week component's own words are in the thumbnail.
-    expect(thumbs[0]!.querySelector(".graview-drive-in-thumb-picture")?.textContent).toContain("the week");
-    expect(thumbs[0]!.querySelector(".graview-drive-in-thumb-title")?.textContent).toBe("The week");
-    // A picture, not a panel: the small lens is inert, so nothing drawn in it is a second control.
-    expect(thumbs[0]!.querySelector(".graview-drive-in-thumb-picture")?.hasAttribute("inert")).toBe(true);
+    expect(thumbs.map((thumb) => thumb.querySelector(".graview-drive-in-thumb-title")?.textContent)).toEqual(["The week", "The month"]);
+    // The marquee says the names; the picture is the billboard's, at its own size.
+    expect(host.querySelector('[data-testid="drive-in-task"]')!.textContent).not.toContain("the week");
+    expect(host.querySelector(".graview-drive-in-thumb-picture")).toBeNull();
     await unmount();
   });
 

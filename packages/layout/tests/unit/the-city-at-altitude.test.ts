@@ -111,14 +111,16 @@ describe("the city at altitude", () => {
   });
 });
 
-describe("the marquee takes the room its buttons take", () => {
-  it("is one row for short titles and grows a row when they wrap", async () => {
+describe("the marquee takes the room its names take", () => {
+  it("is a line a showing, and more for a name too long for one (FR-118)", async () => {
     const { marqueeHeightFor } = await import("../../src/layout.js");
-    // One showing is one big thumbnail; three are two rows of small ones.
+    // A name is a fingertip tall however short; one longer than the column wraps onto more lines rather than being cut.
     const one = marqueeHeightFor(["The week"], 132);
     const three = marqueeHeightFor(["The quarter", "The fortnight", "The week"], 132);
-    expect(one).toBe(10 + 72 + 16);
-    expect(three).toBe(10 + 2 * (36 + 16) + 4);
+    const long = marqueeHeightFor(["What the slices of the founder's load call for"], 132);
+    expect(one).toBe(10 + 24);
+    expect(three).toBe(10 + 3 * 24 + 2 * 2);
+    expect(long).toBe(10 + 3 * 16 + 6);
     expect(marqueeHeightFor([], 132)).toBe(0);
   });
 });

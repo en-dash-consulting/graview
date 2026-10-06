@@ -19,7 +19,6 @@ import {
   useKit,
   useNavigation,
   useReached,
-  useSceneStill,
   useSelection,
   useViolations,
   isDefaultView,
@@ -27,7 +26,7 @@ import {
   type ViewComponent,
   type ViewProps,
  markDefaultView } from "@graview/react/provider";
-import { lazy, memo, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { lazy, Suspense } from "react";
 import { arrangementOf, withArrangement } from "./arrangement.js";
 /*
  * THE ROW THAT ARRANGES A DISTRICT, fetched when a district is opened full
@@ -98,163 +97,6 @@ export function rosterOf(names: readonly string[], rows: number): { readonly col
   // The count line needs no row of its own: it is part of the room reserved.
   return { columns, shown: Math.min(names.length, room) };
 }
-
-/**
- * How many members a drive-in's thumbnail hands its lens: enough for its
- * shape, never the population. A thumbnail is 58 pixels wide: twelve rows
- * is already more than it can show, and a matrix of 12 × 12 is 144 cells
- * where 24 × 24 was 576.
- */
-export const THUMBNAIL_BUDGET = 12;
-
-/*
- * ONE THUMBNAIL A FRAME. A city of districts with named pictures would build
- * them all in the frame the scene came to rest in — four lenses in one long
- * task. Each waits its turn, one per animation frame.
- */
-const turns: (() => void)[] = [];
-let turning = false;
-function takeTurn(mount: () => void): () => void {
-  turns.push(mount);
-  const next = () => {
-    const run = turns.shift();
-    if (!run) {
-      turning = false;
-      return;
-    }
-    run();
-    requestAnimationFrame(next);
-  };
-  if (!turning && typeof requestAnimationFrame !== "undefined") {
-    turning = true;
-    requestAnimationFrame(next);
-  } else if (typeof requestAnimationFrame === "undefined") next();
-  return () => {
-    const at = turns.indexOf(mount);
-    if (at >= 0) turns.splice(at, 1);
-  };
-}
-
-/**
- * The members worth drawing when not all can be: the flagged first, then
- * the most connected, in their own order otherwise — the same reading the
- * relation band's relevance gives (docs/scale.md).
- */
-function mostRelevant<N extends { readonly id: string }>(
-  members: readonly N[],
-  budget: number,
-  flagged: readonly string[] | undefined,
-  graph: { neighbors(id: string): readonly unknown[] },
-): readonly N[] {
-  if (members.length <= budget) return members;
-  const trouble = new Set(flagged ?? []);
-  return members
-    .map((node, index) => ({ node, index, trouble: trouble.has(node.id) ? 0 : 1, ties: -graph.neighbors(node.id).length }))
-    .sort((a, b) => a.trouble - b.trouble || a.ties - b.ties || a.index - b.index)
-    .slice(0, budget)
-    .sort((a, b) => a.index - b.index)
-    .map((entry) => entry.node);
-}
-
-/**
- * DRAWN WHEN SEEN, AND WHEN STILL. A thumbnail off the screen, or built
- * while the camera flies, spends a frame on a picture nobody can read. It
- * mounts the first time it is on screen with the scene at rest, and then
- * stays — unmounting on every flight would rebuild it on every landing.
- */
-function WhenSeen({ children }: { readonly children: ReactNode }) {
-  const still = useSceneStill();
-  const box = useRef<HTMLSpanElement>(null);
-  const [seen, setSeen] = useState(false);
-  const [shown, setShown] = useState(false);
-  useEffect(() => {
-    const element = box.current;
-    if (!element || seen) return;
-    if (typeof IntersectionObserver === "undefined") {
-      setSeen(true);
-      return;
-    }
-    const watch = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) setSeen(true);
-    }, { rootMargin: "120px" });
-    watch.observe(element);
-    return () => watch.disconnect();
-  }, [seen]);
-  useEffect(() => {
-    if (!seen || !still || shown) return;
-    return takeTurn(() => setShown(true));
-  }, [seen, still, shown]);
-  return (
-    /*
-     * A real box, not `display: contents`: an element with no box never
-     * intersects anything. And a box as tall as a picture, not one pixel:
-     * drawn at a twentieth of its size a pixel is a twentieth of one, which
-     * the browser counts as no area at all — the Albums district's two
-     * pictures waited forever while the Artists one, drawn twice as large,
-     * was seen.
-     */
-    <span ref={box} style={{ display: "block", minHeight: shown ? undefined : 360 }} data-graview-thumbnail={shown ? "drawn" : "waiting"}>
-      {shown ? children : null}
-    </span>
-  );
-}
-
-/**
- * A LENS DRAWN SMALL, AND ONLY WHEN WHAT IT DRAWS CHANGES.
- *
- * The board renders the real component for every showing a kind has, and
- * the card around it re-renders on every frame of a flight — so choosing
- * a picture re-drew three matrices and a calendar sixty times a second
- * while the camera moved, which is where "slow and glitchy" came from.
- * Nothing about a thumbnail depends on the size of the card it sits in:
- * memoised on what it actually draws, the flight costs one render each.
- */
-const Picture = memo(
-  function Picture<S extends AnySchema>({
-    lens: Lens,
-    nodes,
-    label,
-    flagged,
-    budget,
-    total,
-  }: {
-    readonly lens: (props: ViewProps<S>) => ReactNode;
-    readonly nodes: readonly NodeOfSchema<S>[];
-    readonly label: string;
-    readonly flagged?: readonly string[];
-    readonly budget?: number;
-    readonly total?: number;
-  }) {
-    return (
-      <Lens
-        nodes={nodes}
-        label={label}
-        {...(budget !== undefined ? { budget } : {})}
-        {...(total !== undefined ? { total } : {})}
-        fidelity="full"
-        cardinality="many"
-        mode="scene"
-        selected={false}
-        {...(flagged ? { flagged } : {})}
-      />
-    );
-  },
-  (was, now) =>
-    was.lens === now.lens &&
-    was.label === now.label &&
-    was.total === now.total &&
-    was.nodes.length === now.nodes.length &&
-    was.nodes.every((node, at) => node === now.nodes[at]) &&
-    (was.flagged ?? []).length === (now.flagged ?? []).length &&
-    (was.flagged ?? []).every((id, at) => id === (now.flagged ?? [])[at]),
-) as <S extends AnySchema>(props: {
-  readonly lens: (props: ViewProps<S>) => ReactNode;
-  readonly nodes: readonly NodeOfSchema<S>[];
-  readonly label: string;
-  readonly flagged?: readonly string[];
-  readonly budget?: number;
-  readonly total?: number;
-}) => ReactNode;
 
 /** How many members a pile draws as rows before it says how many more. */
 const ROWS_SHOWN = 8;
@@ -586,7 +428,7 @@ export function registerDefaultViews<S extends AnySchema>(
       const flag = useKit().marks.flag;
       const { selection } = useSelection();
       const { toggle, view, go } = useNavigation();
-      const { views, hiddenKinds, store } = useGraview<S>();
+      const { views, hiddenKinds } = useGraview<S>();
       /*
        * THE DRIVE-IN'S MARQUEE. A kind with a named picture has a drive-in
        * from altitude: a dark screen on its plot and, under it, the showings
@@ -598,12 +440,6 @@ export function registerDefaultViews<S extends AnySchema>(
        */
       const showings = view.overview && !hiddenKinds.has(String(kind)) ? views.places().filter((place) => place.kind === String(kind)) : [];
       const showingNow = props.focused ? (view.within?.["view"] ?? showings[0]?.as) : undefined;
-      // A thumbnail is a picture of the lens, not the lens: its most relevant members, never the population.
-      const thumbnailMembers = useMemo(
-        () => (showings.length > 0 ? mostRelevant(members, THUMBNAIL_BUDGET, props.flagged, store.graph) : []),
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [showings.length, members, props.flagged, store],
-      );
       const broken = members.filter((member) => props.flagged?.includes(member.id)).length;
       const trouble = broken > 0;
       const accent = props.focused || props.raised;
@@ -1070,46 +906,22 @@ export function registerDefaultViews<S extends AnySchema>(
               onDoubleClick={(event) => event.stopPropagation()}
             >
               {/*
-                * THE LENSES, AS PICTURES. Each showing is a small live version
-                * of its lens — the same component, drawn at a thirteenth and
-                * cut to a thumbnail — under its name, so a person can see
-                * what a picture IS before choosing it. Pressing one STAYS
-                * ALOFT: the kind is focused with that showing, the billboard
-                * on its plot shows it, and the camera flies closer. Leaving
-                * the graview is the billboard's own full-screen control.
+                * THE SHOWINGS, BY NAME (FR-118). A marquee says what is
+                * showing in letters a person can read from the street. Each
+                * showing was its lens drawn at a seventeenth of its size, cut
+                * to a 54-pixel thumbnail with its name under it — "Who o…",
+                * "Strengt…", a picture of a place nobody could read and a name
+                * cut short. The picture is the billboard's, at its own size,
+                * once a showing is pressed; the marquee says each name whole,
+                * wrapped onto a second line rather than cut. Pressing one
+                * STAYS ALOFT: the kind is focused with that showing, the
+                * billboard on its plot shows it, and the camera flies closer.
                 */}
               <div className="graview-drive-in-marquee" role="group" aria-label={`${plural}: pictures`} data-graview-thumbs={showings.length === 1 ? "one" : "two"}>
                 {showings.map((place) => {
                   const showing = showingNow === place.as;
-                  const registration = views.resolve(String(kind), { cardinality: "many", fidelity: "full" }, place.as);
-                  const Lens = registration?.view as ((p: ViewProps<S>) => ReactNode) | undefined;
                   return (
-                    /*
-                     * A FRAME HOLDING A PICTURE AND A BUTTON, not a button
-                     * holding a picture. The lens drawn small keeps its own
-                     * controls — a calendar's Previous and Next — and a
-                     * button inside a button is invalid HTML however inert
-                     * the inner one is: React said so on every chapter
-                     * with a calendar. The press lies over the picture, so
-                     * the whole thumbnail is still one target.
-                     */
                     <div key={place.as} className="graview-drive-in-thumb" data-graview-pressed={showing || undefined}>
-                      <span className="graview-drive-in-thumb-picture" aria-hidden="true" inert>
-                        {Lens ? (
-                          <span className="graview-drive-in-thumb-natural">
-                            <WhenSeen>
-                              <Picture
-                                lens={Lens}
-                                nodes={thumbnailMembers}
-                                label={place.title}
-                                budget={THUMBNAIL_BUDGET}
-                                total={members.length}
-                                {...(props.flagged ? { flagged: props.flagged } : {})}
-                              />
-                            </WhenSeen>
-                          </span>
-                        ) : null}
-                      </span>
                       <span className="graview-drive-in-thumb-title" aria-hidden="true">{place.title}</span>
                       <button
                         type="button"

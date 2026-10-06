@@ -6,29 +6,25 @@
  */
 
 /*
- * THE ROOM A DRIVE-IN'S MARQUEE TAKES under the nameplate: its showings as
- * buttons, wrapped to the card's width. It was one fixed row, and Rota's
- * three long titles wrapped to three and stood on the landmark below. The
- * estimate is the pill's own metrics — eleven-pixel type, eight of padding
- * a side, a four-pixel gap, a twenty-eight-pixel row — so the band is the
- * height the buttons will actually take, and nothing else moves.
+ * The showings are NAMES now (FR-118): one per line, each whole, wrapped
+ * onto a second line rather than cut — a thumbnail of the lens at a
+ * seventeenth of its size said nothing anybody could read, and cut the
+ * name under it to fit. A line is 13-pixel type in a column `MARQUEE_WIDTH`
+ * wide less its padding; a name is a fingertip tall however short.
  */
-/*
- * The showings are PICTURES now: one thumbnail per lens with its name
- * under it — a single showing at 120×72, two or more in two columns of
- * 58×36 — so the band is the rows of thumbnails they make. `cardWidth` is
- * kept for the call sites; the columns are fixed by the thumbnail size.
- */
-export const THUMB_ONE = { width: 120, height: 72 };
-export const THUMB_TWO = { width: 58, height: 36 };
-export const THUMB_TITLE = 16;
-export const MARQUEE_GAP = 4;
+export const MARQUEE_WIDTH = 156;
+export const MARQUEE_GAP = 2;
+/** The width a showing's name has to wrap in: the column less its rule and padding. */
+const NAME_ROOM = MARQUEE_WIDTH - 18;
+/** About an average letter's width at 13 pixels. */
+const LETTER = 7.1;
+const LINE = 16;
+/** A name's height: its lines, and never under a fingertip. */
+const nameHeight = (title: string) => Math.max(24, Math.ceil((title.length * LETTER) / NAME_ROOM) * LINE + 6);
 export function marqueeHeightFor(titles: readonly string[], cardWidth: number): number {
   void cardWidth;
   if (titles.length === 0) return 0;
-  if (titles.length === 1) return 10 + THUMB_ONE.height + THUMB_TITLE;
-  const rows = Math.ceil(titles.length / 2);
-  return 10 + rows * (THUMB_TWO.height + THUMB_TITLE) + (rows - 1) * MARQUEE_GAP;
+  return 10 + titles.reduce((sum, title) => sum + nameHeight(title), 0) + (titles.length - 1) * MARQUEE_GAP;
 }
 
 /**

@@ -83,7 +83,7 @@ export function useArranging<S extends AnySchema>(props: ViewProps<S>, options: 
     flagged: new Set(props.flagged ?? []),
   });
 
-  // No row on a picture with a budget: a drive-in's thumbnail is a picture of the lens, with no controls.
+  // No row on a picture with a budget: a lens handed a few of its members is a picture of itself, with no controls.
   const bar =
     kind && allow !== false && props.fidelity === "full" && props.budget === undefined && subject.length > 1 ? (
       <ArrangeBar
