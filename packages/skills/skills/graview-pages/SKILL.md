@@ -56,9 +56,7 @@ under its routes, which buys three things at once:
   the kind's members, siblings one press away, the beginning acts beneath)
   and the gallery again. A kind's page lists its pictures; a pick in a lens
   travels to the record. A kind's own row (one × glyph) is each line of its
-  list, and its own page view (one × full) heads its record. A card in a
-  board's column, or a row under its group's heading, drops a badge that
-  repeats that value.
+  list, and its own page view (one × full) heads its record.
 - `/map` — `kindMap(store)`: every declared relation in its words with
   its live count, also a section on the home page. A kind's list says what
   it relates to and arranges itself in the shared words (`?sort=due:desc`,
