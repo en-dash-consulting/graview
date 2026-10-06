@@ -40,7 +40,6 @@ import {
 import { parseTemplate, renderTemplate, TemplateError, type TemplatePart } from "./template.js";
 import { upgradeDocument } from "./upgrade.js";
 import { homeOf, validateViews, viewsOf } from "./views.js";
-import { outsideRange } from "./range.js";
 import { farEnd } from "./far-end.js";
 import { computedOf, parsedComputed, validateComputed, workedOutAlone } from "./computed.js";
 
@@ -240,45 +239,6 @@ function tryTemplate(source: string, path: string, findings: Finding[]): readonl
   }
 }
 
-/**
- * What an act says of the other end of what it connects (FR-115): a
- * `setsOther` needs a relation to have an other end, and sets fields that
- * record has; a `replaces` needs a link it is making, and names relations
- * that join the subject to the kinds that link does.
- */
-function otherEndFindings(name: string, act: ActSpec, document: GraviewDocument): Finding[] {
-  const out: Finding[] = [];
-  const at = `acts.${name}`;
-  const subject = asArray(act.on);
-  const relation = act.connects ?? act.severs;
-  const end = relation ? farEnd(document.kinds, relation, subject) : undefined;
-  if (act.setsOther) {
-    if (!relation) out.push(error("act-sets-other", `${at}.setsOther`, `"${name}" sets the record at the other end of what it connects, and connects nothing`, 'say what it "connects" (or "severs"), or set its subject with "sets"'));
-    else if (end && end.kinds !== "*") {
-      for (const field of Object.keys(act.setsOther)) {
-        for (const kind of end.kinds) {
-          const spec = document.kinds[kind];
-          if (!spec || spec.fields[field]) continue;
-          if (spec.computed?.[field] !== undefined) out.push(error("computed-written", `${at}.setsOther.${field}`, `${kind}'s ${field} is worked out, not written: no act can set it`, "set the stored fields it is worked out from"));
-          else out.push(error("act-field", `${at}.setsOther.${field}`, `${kind} has no field "${field}"`));
-        }
-      }
-    }
-  }
-  if (act.replaces) {
-    if (!act.connects) out.push(error("act-replaces", `${at}.replaces`, `"${name}" replaces the links of what it connects, and connects nothing`, 'say what it "connects", or sever with "severs"'));
-    else if (act.replaces !== true && end && end.kinds !== "*") {
-      const toward = end.kinds;
-      for (const other of act.replaces) {
-        const there = farEnd(document.kinds, other, subject);
-        if (!there) out.push(error("act-edge", `${at}.replaces`, `"${other}" is not a relation any kind declares`));
-        else if (there.kinds !== "*" && !there.kinds.some((kind) => toward.includes(kind))) out.push(error("act-replaces", `${at}.replaces`, `"${other}" does not join ${subject.join(" or ")} to ${withArticle(toward[0] ?? "record")}, so "${name}" has no such links to replace`));
-      }
-    }
-  }
-  return out;
-}
-
 /** The document's own sentences: references that do not resolve, expressions that do not parse. */
 function validate(document: GraviewDocument): Finding[] {
   const findings: Finding[] = [];
@@ -320,9 +280,6 @@ function validate(document: GraviewDocument): Finding[] {
       if (f.default !== undefined && f.type === "enum" && !f.options?.includes(String(f.default))) {
         findings.push(error("default-option", `${at}.fields.${field}.default`, `"${String(f.default)}" is not one of ${field}'s options`));
       }
-      // A default is a value the field takes, so it is inside the field's range (FR-114).
-      const outside = f.default !== undefined ? outsideRange(f.default, f, field) : undefined;
-      if (outside) findings.push(error("default-range", `${at}.fields.${field}.default`, outside));
     }
   }
 
@@ -378,7 +335,6 @@ function validate(document: GraviewDocument): Finding[] {
     });
     if (act.allowedWhen) tryExpr(act.allowedWhen, `${at}.allowedWhen`, findings);
     if (act.refusal) tryTemplate(act.refusal, `${at}.refusal`, findings);
-    findings.push(...otherEndFindings(name, act, document));
   }
 
   for (const [name, rule] of Object.entries(document.rules ?? {})) {

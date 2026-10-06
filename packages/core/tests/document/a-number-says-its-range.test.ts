@@ -87,10 +87,10 @@ describe("the check reads a range", () => {
     doc.kinds["person"]!.fields["role"] = { type: "string", min: 1 };
     doc.kinds["strength"]!.fields["level"] = { type: "integer", min: 5, max: 1 };
     doc.kinds["component"]!.fields["y"] = { type: "number", step: 0 };
-    expect(readDocument(doc).findings.map((f) => `${f.code} at ${f.path}`)).toEqual([
-      "shape at kinds.person.fields.role.min",
-      "shape at kinds.component.fields.y.step",
-      "shape at kinds.strength.fields.level.max",
+    expect(compileDocument(doc).findings.filter((f) => f.severity === "error").map((f) => `${f.code} at ${f.path}`)).toEqual([
+      "field-range at kinds.person.fields.role.min",
+      "field-range at kinds.component.fields.y.step",
+      "field-range at kinds.strength.fields.level.max",
     ]);
   });
 });

@@ -266,7 +266,7 @@ describe("the document says the new act language, and refuses it where it cannot
   const errors = (acts: Record<string, unknown>) => {
     const doc = structuredClone(org) as GraviewDocument & { acts: Record<string, unknown> };
     Object.assign(doc.acts, acts);
-    return readDocument(doc).findings.filter((f) => f.severity === "error").map((f) => `${f.code} at ${f.path}: ${f.message}`);
+    return compileDocument(doc).findings.filter((f) => f.severity === "error").map((f) => `${f.code} at ${f.path}: ${f.message}`);
   };
 
   it("refuses setsOther without a relation, and a field the other end has not got", () => {
