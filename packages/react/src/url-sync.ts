@@ -28,7 +28,9 @@ export function UrlSync(): null {
 }
 
 export function useUrlSync(): void {
-  const { view, setView, views } = useGraview();
+  const { view, setView, views, principal } = useGraview();
+  /* Who the page is seated as, by what decides what it sees: a change of it resolves the stop rather than travelling. */
+  const seat = `${principal.kind}:${principal.id}:${(principal.roles ?? []).join(",")}:${principal.onBehalfOf?.id ?? ""}`;
 
   /*
    * A STOP THAT NAMES A PLACE AND NOT ITS GROUP STILL GOES THERE.
@@ -83,8 +85,11 @@ export function useUrlSync(): void {
 
   const landed = useRef(false);
   const written = useRef<ViewState | null>(null);
+  const seated = useRef(seat);
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const reseated = seated.current !== seat;
+    seated.current = seat;
     const next = toUrl(view);
     // Only write when the view actually changed, or the back stack fills with
     // duplicates and the back button stops meaning anything. The baseline
@@ -119,7 +124,14 @@ export function useUrlSync(): void {
      * the stop you are on, so it replaces: the address stays shareable and
      * Back still means the place you were before you started fiddling.
      */
-    if (adjustment(written.current, view)) {
+    /*
+     * CHANGING THE SEAT IS NOT TRAVELLING. A seat that may not see the
+     * focused record has its stop resolved to where the app opens, in the
+     * render that changed the seat. Pushed, Back landed on the record's
+     * address, which the seat cannot see, which fell back again — an entry
+     * that went nowhere. The address is tidied to where the page now is.
+     */
+    if (reseated || adjustment(written.current, view)) {
       window.history.replaceState({ graview: trail.at }, "", next);
       written.current = view;
       return;
@@ -130,7 +142,7 @@ export function useUrlSync(): void {
     // browser does.
     trail.depth = trail.at;
     trail.tell();
-  }, [view]);
+  }, [view, seat]);
 }
 
 /**
