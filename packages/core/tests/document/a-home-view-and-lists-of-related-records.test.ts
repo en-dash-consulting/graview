@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { checkApp } from "../../src/cli/check.js";
 import { describeApp } from "../../src/cli/describe.js";
 import { createSchema, declaredLenses, defineApp, defineNode, placesOf, z, type GraviewApp } from "../../src/index.js";
-import { compileDocument, toDocument, validateViewSpecs, type Finding } from "../../src/document/index.js";
+import { toDocument, validateViewSpecs, type Finding } from "../../src/document/index.js";
+import { compileDocument } from "../../src/check.js";
 
 /**
  * FR-81 and FR-82, as data: a home view from the closed block set —

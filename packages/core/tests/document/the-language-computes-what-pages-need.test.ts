@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { checkApp, createSchema, defineNode, deriveMutations, describeApp, Graph, Store, z, type AnyGraphNode, type AnySchema, type GraviewApp, type Principal } from "../../src/index.js";
+import { createSchema, defineNode, deriveMutations, Graph, Store, z, type AnyGraphNode, type AnySchema, type GraviewApp, type Principal } from "../../src/index.js";
+import { checkApp, describeApp, compileDocument } from "../../src/check.js";
 import { computedValues } from "../../src/blocks.js";
 import {
-  compileDocument,
   evaluateExpr,
   ExprBudgetError,
   ExprEvalError,

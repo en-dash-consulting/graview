@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   bindSchema,
-  checkApp,
   createSchema,
   defineApp,
   defineNode,
@@ -11,6 +10,7 @@ import {
   isCurrent,
   type Violation,
 } from "../../src/index.js";
+import { checkApp } from "../../src/check.js";
 
 /**
  * The horizon: a kind declares when its nodes stop being current, and every

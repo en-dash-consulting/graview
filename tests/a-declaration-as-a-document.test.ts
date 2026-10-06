@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describeApp, type InvariantDefinition } from "@graview/core";
-import { canonicalize, compileDocument, toDocument } from "@graview/core/document";
+import { type InvariantDefinition } from "@graview/core";
+import { describeApp, compileDocument } from "@graview/core/check";
+import { canonicalize, toDocument } from "@graview/core/document";
 import { todoApp } from "@graview/todo";
 import { describe, expect, it } from "vitest";
 

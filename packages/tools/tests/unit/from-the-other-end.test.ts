@@ -1,4 +1,5 @@
-import { bindSchema, checkApp, createSchema, defineNode, nodeRef, Store } from "@graview/core";
+import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
+import { checkApp } from "@graview/core/check";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { deriveAffordances, defaultProviders } from "../../src/index.js";

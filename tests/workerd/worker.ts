@@ -25,7 +25,7 @@ import {
   nodeRef,
   z,
 } from "@graview/core";
-import { sceneThumbnail } from "@graview/core/document";
+import { sceneThumbnail } from "@graview/core/scene";
 import { createToolRuntime } from "@graview/tools";
 import { createStoreHandler, liveProtocol, openStore, type LiveSocketState, type StoreHandler } from "@graview/ship/runtime";
 import { adapterCases, householdTables, sqlCases, type SqlHandle } from "../../packages/core/tests/support/adapter-contract.js";

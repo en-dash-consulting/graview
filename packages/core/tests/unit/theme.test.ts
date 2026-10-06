@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   brandFromAccent,
-  checkApp,
   checkContrast,
   coloursIn,
   composite,
@@ -13,6 +12,7 @@ import {
   TEXT_PAIRS,
   type ThemeTokens,
 } from "../../src/index.js";
+import { checkApp } from "../../src/check.js";
 
 /**
  * A brand is a DECLARATION, so it can be checked before it ships.

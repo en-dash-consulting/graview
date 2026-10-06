@@ -1,6 +1,6 @@
 export * from "./schema.js";
 export * from "./findings.js";
-export { compileDocument, compileDocumentWithoutCheck, readDocument, effectsOf, kindShapes, ActRefusal } from "./compile.js";
+export { compileDocumentWithoutCheck, readDocument, effectsOf, kindShapes, ActRefusal } from "./compile.js";
 export type { CompiledDocument, RefusedDocument, CompileOptions } from "./compile.js";
 export { canonicalize, documentHash } from "./canonical.js";
 export { parseTemplate, renderTemplate, formatValue, formatMoney, FORMATTERS } from "./template.js";
@@ -23,8 +23,6 @@ export { computedOf, validateComputed } from "./computed.js";
 export type { ComputedEntry, ComputedKind } from "./computed.js";
 export type { ExpressionRuleSpec } from "./rules.js";
 export { documentOf, fieldSpecOf, toDocument } from "./to-document.js";
-export { instantiateTemplate, isGraviewTemplate, readGraviewTemplate, templateSeedPrimitives, TemplateSpec, TEMPLATE_FORMAT, TEMPLATE_FORMAT_VERSION, TEMPLATE_QUESTION_TYPES } from "./graview-template.js";
+export { isGraviewTemplate, readGraviewTemplate, templateSeedPrimitives, TemplateSpec, TEMPLATE_FORMAT, TEMPLATE_FORMAT_VERSION, TEMPLATE_QUESTION_TYPES } from "./graview-template.js";
 export type { GraviewTemplate, InstantiatedTemplate, RefusedTemplate, TemplateCall, TemplateQuestion, TemplateSeed, TemplateSeedNode, TemplateSetupStep } from "./graview-template.js";
 export type { ToDocumentResult } from "./to-document.js";
-export { sceneThumbnail } from "./thumbnail.js";
-export type { SceneThumbnailOptions, ThumbnailSource } from "./thumbnail.js";

@@ -2,20 +2,22 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   bindSchema,
-  checkApp,
   createSchema,
   defineApp,
   defineMutation,
   defineNode,
-  formatFindings,
-  generateAgentsMd,
-  generateLlmsTxt,
   nodeRef,
   type AnyMutationDefinition,
   type AnySchema,
   type GraviewApp,
   type LensDeclaration,
 } from "../../src/index.js";
+import {
+  checkApp,
+  formatFindings,
+  generateAgentsMd,
+  generateLlmsTxt,
+} from "../../src/check.js";
 
 const person = defineNode("person", {
   fields: z.object({ label: z.string() }),

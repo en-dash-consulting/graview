@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { compileDocument, diffDocuments, editDocument, losesData, parseExpr, planMigration, printExpr, readDocument, type Expr, type GraviewDocument } from "../../src/document/index.js";
+import { diffDocuments, editDocument, losesData, parseExpr, planMigration, printExpr, readDocument, type Expr, type GraviewDocument } from "../../src/document/index.js";
+import { compileDocument } from "../../src/check.js";
 
 const template = JSON.parse(readFileSync(new URL("./fixtures/vendor-shortlist.template.json", import.meta.url), "utf8"));
 const vendors = readDocument(template.document).document!;

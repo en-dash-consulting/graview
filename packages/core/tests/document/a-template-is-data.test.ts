@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { Store } from "../../src/index.js";
-import { instantiateTemplate, isGraviewTemplate, readGraviewTemplate, templateSeedPrimitives } from "../../src/document/index.js";
+import { isGraviewTemplate, readGraviewTemplate, templateSeedPrimitives } from "../../src/document/index.js";
+import { instantiateTemplate } from "../../src/check.js";
 
 /**
  * FR-08. A template is a document, the questions that set it up, what the

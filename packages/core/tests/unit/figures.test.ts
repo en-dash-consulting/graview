@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { checkApp, createSchema, DARK, defineApp, defineNode, figureBrief, figureFaults, FIGURES, figureSvg, LIGHT } from "../../src/index.js";
+import { createSchema, DARK, defineApp, defineNode, figureBrief, figureFaults, FIGURES, figureSvg, LIGHT } from "../../src/index.js";
+import { checkApp } from "../../src/check.js";
 
 /**
  * A FIGURE THAT CANNOT BE DRAWN IS A BLANK NOBODY EXPLAINS.

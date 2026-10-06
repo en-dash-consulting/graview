@@ -6,10 +6,10 @@ import {
   createViewRegistry,
   defineApp,
   defineNode,
-  describeApp,
   nodeRef,
   SCHEMES,
 } from "../../src/index.js";
+import { describeApp } from "../../src/check.js";
 
 /**
  * "RUN IT AND LOOK" IS THE ONE INSTRUCTION AN AGENT CANNOT FOLLOW.

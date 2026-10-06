@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   bindSchema,
-  checkApp,
   createSchema,
   defineApp,
   defineNode,
@@ -10,6 +9,7 @@ import {
   Store,
   type Violation,
 } from "../../src/index.js";
+import { checkApp } from "../../src/check.js";
 
 /**
  * Modules: named parts of a declaration a workspace can turn on and off.

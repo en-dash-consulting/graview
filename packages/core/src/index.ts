@@ -395,20 +395,9 @@ export type {
   LocalBridgeAsk,
   LocalBridgeStatus,
 } from "./intelligence-bridge.js";
-export { describeApp } from "./cli/describe.js";
-export type { DescribeOptions } from "./cli/describe.js";
 export { beginning } from "./beginning.js";
 export type { Beginning, KindBeginning } from "./beginning.js";
 export { defineApp } from "./app.js";
 export type { EntityBinding, GraviewApp, LensDeclaration } from "./app.js";
-export { checkApp, formatFindings } from "./cli/check.js";
-export type { CheckResult, Finding, Severity } from "./cli/check.js";
-export { generateAgentsMd, generateLlmsTxt } from "./cli/docs.js";
-
-// The city: a map drawn from the declaration, in lattice cells.
-export { BLOCK, cityExtent, cityMap, heightOf, MAX_SIDE, plotsOverlap, roadsOf, sharedEdges, sideFor, toIso, villageCap, villageOf } from "./city.js";
-export type { Building, CityHints, CityMap, Plot, Road } from "./city.js";
-export { sceneDistricts } from "./scene-districts.js";
-export type { SceneDistrict, SceneDistrictOptions } from "./scene-districts.js";
 export { foldPresence, nextExpiry, parseParticipant, participantKey, PRESENCE_TTL_MS, presenceName, presenceStands, REMOTE_PRESENCE_TTL_MS, samePresence, VISITOR_PRESENCE_TTL_MS } from "./presence.js";
 export type { Participant, Presence, PresenceChannel, PresenceRobot } from "./presence.js";

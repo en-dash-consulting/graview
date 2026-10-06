@@ -1,4 +1,4 @@
-import { checkApp } from "@graview/core";
+import { checkApp } from "@graview/core/check";
 import { kindFacts, recordFacts } from "@graview/pages";
 import { describe, expect, it } from "vitest";
 import { rotaApp } from "../../src/domain/app.js";

@@ -158,13 +158,13 @@ describe.skipIf(!mf)("the SQL adapter passes the sqlite adapter's tests against 
 });
 
 /*
- * AND IN PLAIN NODE (FR-74). The published document entry, imported by a
+ * AND IN PLAIN NODE (FR-74). The published scene entry, imported by a
  * bare `node` with nothing but its own globals — no DOM, no test runner's
  * environment — draws the same picture twice, byte for byte.
  */
 describe("a picture of an app, in plain Node", () => {
   it("is drawn by the published entry with no DOM globals, and the same both times", () => {
-    const entry = resolve(root, "packages/core/dist/document/index.js");
+    const entry = resolve(root, "packages/core/dist/scene.js");
     const script = `
       const { sceneThumbnail } = await import(${JSON.stringify(new URL(`file://${entry}`).href)});
       const doc = { format: "graview-document", formatVersion: 1, name: "Errands", kinds: { errand: { fields: { label: { type: "string", required: true } } } } };

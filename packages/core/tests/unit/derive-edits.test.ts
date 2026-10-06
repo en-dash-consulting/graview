@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   bindSchema,
-  checkApp,
   createSchema,
   defineApp,
   deriveEditMutations,
@@ -15,6 +14,7 @@ import {
   type GraviewApp,
   type Policy,
 } from "../../src/index.js";
+import { checkApp } from "../../src/check.js";
 
 /**
  * A field you could set at creation, you can change — through a derived,

@@ -1,4 +1,5 @@
-import { cityExtent, cityMap, toIso, type AnySchema, type CityMap, type Plot } from "@graview/core";
+import { type AnySchema } from "@graview/core";
+import { cityExtent, cityMap, toIso, type CityMap, type Plot } from "@graview/core/scene";
 import type { CityFrame, Layout } from "./types.js";
 
 /**

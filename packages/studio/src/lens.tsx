@@ -1,4 +1,5 @@
-import { checkApp, type AnySchema, type GraphSnapshot, type GraviewApp } from "@graview/core";
+import { type AnySchema, type GraphSnapshot, type GraviewApp } from "@graview/core";
+import { checkApp } from "@graview/core/check";
 import { useGraview, type ViewComponent, type ViewProps } from "@graview/react";
 import { useMemo, type ReactElement } from "react";
 import { graphToDeclaration } from "./to-declaration.js";

@@ -275,7 +275,7 @@ export default ${ids.appVar};
 /* ---------------------------------------------------------------- tests */
 
 export function domainTest(ids: Ids): string {
-  return `import { checkApp } from "@graview/core";
+  return `import { checkApp } from "@graview/core/check";
 import { kindCardId } from "@graview/layout";
 import { deriveAffordances } from "@graview/tools";
 import { describe, expect, it } from "vitest";

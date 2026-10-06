@@ -1,4 +1,5 @@
-import { BLOCK, hueFor, roadsOf, toIso, villageOf, type Brand, type Building, type Plot } from "@graview/core";
+import { hueFor, type Brand } from "@graview/core";
+import { BLOCK, roadsOf, toIso, villageOf, type Building, type Plot } from "@graview/core/scene";
 import { kindCardId, kindOfCard, type InterpolatedLayout } from "@graview/layout";
 import { memo, useCallback, useMemo, useRef, type CSSProperties, type ReactElement } from "react";
 import { useGraview } from "./context.js";
@@ -250,8 +251,8 @@ const PlotTile = memo(function PlotTile({
  * WHERE THE MEMBERS STAND is @graview/core's (`villageOf`), so a picture
  * drawn without a browser (`sceneThumbnail`) puts them where this does.
  */
-export { heightOf, villageCap, villageOf } from "@graview/core";
-export type { Building } from "@graview/core";
+export { heightOf, villageCap, villageOf } from "@graview/core/scene";
+export type { Building } from "@graview/core/scene";
 
 /** The three faces of one building on the canvas, from its foot cell. */
 export function buildingFaces(building: Building, city: City, pan: Point): { readonly roof: string; readonly left: string; readonly right: string; readonly top: Point } {

@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Store, type AnySchema, type GraviewApp, type Principal } from "@graview/core";
-import { compileDocument } from "@graview/core/document";
+import { compileDocument } from "@graview/core/check";
 import { declaredViews, fetchDeclaredLenses } from "@graview/primitives";
 import { act } from "react";
 import { createRoot } from "react-dom/client";

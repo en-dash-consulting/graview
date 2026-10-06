@@ -37,7 +37,8 @@ describe("the kit", () => {
   });
 });
 
-import { checkApp, createSchema, defineApp, defineNode } from "../../src/index.js";
+import { createSchema, defineApp, defineNode } from "../../src/index.js";
+import { checkApp } from "../../src/check.js";
 import { z } from "zod";
 
 describe("graview check holds the kit's colours to the ground", () => {

@@ -1,4 +1,5 @@
-import { beginning, orderKinds, SCENE_LAYERS, toIso, touchWeights } from "@graview/core";
+import { beginning, orderKinds, SCENE_LAYERS, touchWeights } from "@graview/core";
+import { toIso } from "@graview/core/scene";
 import type { AnySchema } from "@graview/core";
 import {
   aggregateId,

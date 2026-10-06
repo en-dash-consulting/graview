@@ -1,4 +1,5 @@
-import { compileDocument, editDocument, parseExpr, printExpr, toDocument, type GraviewDocument } from "@graview/core/document";
+import { editDocument, parseExpr, printExpr, toDocument, type GraviewDocument } from "@graview/core/document";
+import { compileDocument } from "@graview/core/check";
 import { describe, expect, it } from "vitest";
 import { createStudio } from "../../src/index.js";
 import { DECLARED_KIND } from "../../src/meta.js";

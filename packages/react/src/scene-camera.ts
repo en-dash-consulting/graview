@@ -1,4 +1,4 @@
-import { toIso } from "@graview/core";
+import { toIso } from "@graview/core/scene";
 import { cameraLimit, kindCardId, kindsOfAggregate, type InterpolatedLayout, type Layout, type ViewState } from "@graview/layout";
 import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 

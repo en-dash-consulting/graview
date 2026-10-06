@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { checkApp, createSchema, defineApp, defineNode, labelOf, readableFields } from "../../src/index.js";
+import { createSchema, defineApp, defineNode, labelOf, readableFields } from "../../src/index.js";
+import { checkApp } from "../../src/check.js";
 
 /**
  * A GLANCE SAYS WHAT THE DECLARATION CHOSE. Every card in the showroom

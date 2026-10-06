@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { declaredLenses, Store, type AnySchema, type GraviewApp, type Principal } from "@graview/core";
 import { describePlace, type DescribedPart, type PlaceDescription } from "@graview/core/describe";
-import { compileDocument } from "@graview/core/document";
+import { compileDocument } from "@graview/core/check";
 import { EMPTY_VIEW } from "@graview/layout";
 import { declaredViews } from "@graview/primitives";
 import { GraviewProvider, type ViewComponent } from "@graview/react";

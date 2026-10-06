@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { entryArg, loadApp } from "@graview/core/cli";
-import { instantiateTemplate, sayFindings, templateSeedPrimitives } from "@graview/core/document";
+import { instantiateTemplate } from "@graview/core/check";
+import { sayFindings, templateSeedPrimitives } from "@graview/core/document";
 import { Store, type AnySchema, type GraviewApp, type MutationCall, type Operation, type Principal } from "@graview/core";
 import { backendFrom, openRemote, openStore, type RemoteStore } from "@graview/ship";
 import { createMcpAdapter } from "./agent/adapters.js";

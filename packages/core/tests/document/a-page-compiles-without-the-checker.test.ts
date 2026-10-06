@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { compileDocument, compileDocumentWithoutCheck } from "../../src/document/index.js";
+import { compileDocumentWithoutCheck } from "../../src/document/index.js";
+import { compileDocument } from "../../src/check.js";
 
 /**
  * A PAGE COMPILES WITHOUT THE CHECKER. `compileDocument` judges a document

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { GraphReader } from "../index.js";
 import type { Primitive } from "../graph/primitives.js";
-import { compileDocument, type CompileOptions, type CompiledDocument } from "./compile.js";
+import type { CompiledDocument } from "./compile.js";
 import { analyzeExpr } from "./expr/analyze.js";
 import { evaluateExpr, ExprEvalError, type Value } from "./expr/evaluate.js";
 import { ExprSyntaxError, parseExpr } from "./expr/parse.js";
@@ -155,45 +155,6 @@ export interface RefusedTemplate {
   readonly findings: readonly Finding[];
 }
 
-/**
- * A template, made ready to install: its shape read, its document compiled
- * through the same compiler every document goes through, the answers held to
- * the questions, the setup expanded, and the example content judged against
- * the compiled schema. Everything is judged before anything happens; what
- * comes back is data a store applies.
- *
- * Setup may only create things or act on nothing: an answer can name a
- * category, never "the category made two steps ago".
- */
-export function instantiateTemplate(raw: unknown, answers: Readonly<Record<string, unknown>> = {}, options: CompileOptions = {}): InstantiatedTemplate | RefusedTemplate {
-  const read = readGraviewTemplate(raw);
-  if (!read.ok) return read;
-  const template = read.template;
-
-  const compiled = compileDocument(template.document, options);
-  if (!compiled.ok) return { ok: false, findings: compiled.findings.map((f) => ({ ...f, path: f.path ? `document.${f.path}` : "document" })) };
-
-  const authoring = checkTemplate(template, compiled);
-  if (authoring.length > 0) return { ok: false, findings: authoring };
-
-  const resolved = resolveAnswers(template.questions, answers);
-  if (!resolved.ok) return { ok: false, findings: resolved.findings };
-
-  const setup = expandSetup(template, resolved.answers);
-  if (!setup.ok) return { ok: false, findings: setup.findings };
-
-  const today = options.today?.() ?? new Date().toISOString().slice(0, 10);
-  return {
-    ok: true,
-    template,
-    document: compiled.document,
-    compiled,
-    answers: resolved.answers,
-    setup: setup.calls,
-    ...(template.seed ? { seed: shiftSeed({ ...template.seed, nodes: template.seed.nodes.map((n) => withDefaults(n, compiled.document)) }, compiled.document, today) } : {}),
-  };
-}
-
 /** The example content as primitives, for a store to apply as one batch of its own. */
 export function templateSeedPrimitives(seed: TemplateSeed, document: GraviewDocument): Primitive[] {
   return [
@@ -255,7 +216,7 @@ function coerceAnswer(q: TemplateQuestion, value: unknown): { readonly ok: true;
   }
 }
 
-function resolveAnswers(questions: readonly TemplateQuestion[], answers: Readonly<Record<string, unknown>>): { readonly ok: true; readonly answers: Record<string, unknown> } | { readonly ok: false; readonly findings: Finding[] } {
+export function resolveAnswers(questions: readonly TemplateQuestion[], answers: Readonly<Record<string, unknown>>): { readonly ok: true; readonly answers: Record<string, unknown> } | { readonly ok: false; readonly findings: Finding[] } {
   const findings: Finding[] = [];
   const out: Record<string, unknown> = {};
   const known = new Set(questions.map((q) => q.id));
@@ -327,7 +288,7 @@ const EMPTY_GRAPH: GraphReader = {
 };
 
 /** What a template's author got wrong, independent of anybody's answers. */
-function checkTemplate(template: GraviewTemplate, compiled: CompiledDocument): Finding[] {
+export function checkTemplate(template: GraviewTemplate, compiled: CompiledDocument): Finding[] {
   const findings: Finding[] = [];
   const acts = new Set((compiled.app.mutations ?? []).map((m) => m.name));
   const questions = new Map(template.questions.map((q) => [q.id, q]));
@@ -367,7 +328,7 @@ function checkTemplate(template: GraviewTemplate, compiled: CompiledDocument): F
   return findings;
 }
 
-function expandSetup(template: GraviewTemplate, answers: Readonly<Record<string, unknown>>): { readonly ok: true; readonly calls: TemplateCall[] } | { readonly ok: false; readonly findings: Finding[] } {
+export function expandSetup(template: GraviewTemplate, answers: Readonly<Record<string, unknown>>): { readonly ok: true; readonly calls: TemplateCall[] } | { readonly ok: false; readonly findings: Finding[] } {
   const calls: TemplateCall[] = [];
   const findings: Finding[] = [];
   const intent = `Set up from ${template.title}`;
@@ -427,7 +388,7 @@ function checkSeed(seed: TemplateSeed, compiled: CompiledDocument): Finding[] {
   return findings;
 }
 
-function withDefaults(node: TemplateSeedNode, document: GraviewDocument): TemplateSeedNode {
+export function withDefaults(node: TemplateSeedNode, document: GraviewDocument): TemplateSeedNode {
   const defaults: Record<string, unknown> = {};
   for (const [field, spec] of Object.entries(document.kinds[node.kind]?.fields ?? {})) if (spec.default !== undefined) defaults[field] = spec.default;
   return { ...defaults, ...node };
@@ -436,7 +397,7 @@ function withDefaults(node: TemplateSeedNode, document: GraviewDocument): Templa
 const DAY = 86_400_000;
 
 /** Every date in the examples moved by the days between their anchor and today. */
-function shiftSeed(seed: TemplateSeed, document: GraviewDocument, today: string): TemplateSeed {
+export function shiftSeed(seed: TemplateSeed, document: GraviewDocument, today: string): TemplateSeed {
   if (!seed.anchor) return seed;
   const days = Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${seed.anchor}T00:00:00Z`)) / DAY);
   if (!days) return seed;

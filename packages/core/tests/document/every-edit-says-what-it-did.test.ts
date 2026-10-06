@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { compileDocument, EDIT_OPS, editDocument, readDocument } from "../../src/document/index.js";
+import { EDIT_OPS, editDocument, readDocument } from "../../src/document/index.js";
+import { compileDocument } from "../../src/check.js";
 
 /** FR-34: every edit in the vocabulary says what it did, and the document it leaves still compiles. */
 const vendors = readDocument(JSON.parse(readFileSync(new URL("./fixtures/vendors.gdd.json", import.meta.url), "utf8"))).document!;

@@ -1,4 +1,4 @@
-import { checkApp } from "@graview/core";
+import { checkApp } from "@graview/core/check";
 import { kindCardId } from "@graview/layout";
 import { deriveAffordances } from "@graview/tools";
 import { describe, expect, it } from "vitest";

@@ -2,18 +2,16 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   bindSchema,
-  checkApp,
   createSchema,
   defineApp,
   defineNode,
-  describeApp,
-  generateLlmsTxt,
   nodeRef,
   type AnySchema,
   type GraviewApp,
   providerCan,
   undecidableArguments,
 } from "../../src/index.js";
+import { checkApp, describeApp, generateLlmsTxt } from "../../src/check.js";
 
 /**
  * A DECISION PROVIDER IS A THIRD KIND.

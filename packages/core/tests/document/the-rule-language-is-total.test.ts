@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createSchema, defineNode, Graph, Store, z } from "../../src/index.js";
 import {
-  compileDocument,
   evaluateExpr,
   ExprEvalError,
   ExprSyntaxError,
@@ -10,6 +9,7 @@ import {
   printExpr,
   type KindShape,
 } from "../../src/document/index.js";
+import { compileDocument } from "../../src/check.js";
 
 /**
  * FR-07. The rule language is total: every production and function says what

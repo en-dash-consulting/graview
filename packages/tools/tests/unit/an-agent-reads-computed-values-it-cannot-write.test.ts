@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { Store, type AnySchema, type Principal } from "@graview/core";
-import { compileDocument } from "@graview/core/document";
+import { compileDocument } from "@graview/core/check";
 import { describe, expect, it } from "vitest";
 import { createToolRuntime } from "../../src/index.js";
 

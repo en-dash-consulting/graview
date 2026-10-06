@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { Store, type AnySchema, type GraviewApp, type Principal } from "@graview/core";
 import type { PlaceDescription } from "@graview/core/describe";
-import { compileDocument } from "@graview/core/document";
+import { compileDocument } from "@graview/core/check";
 import { describe, expect, it } from "vitest";
 import { createMcpAdapter, createToolRuntime, toolDefinitions } from "../../src/index.js";
 

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  checkApp,
   createSchema,
   declareInstallation,
   defineApp,
@@ -9,6 +8,7 @@ import {
   Store,
   type Principal,
 } from "../../src/index.js";
+import { checkApp } from "../../src/check.js";
 
 /*
  * The installation is in the graph: users and invitations are nodes, the

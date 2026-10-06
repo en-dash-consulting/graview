@@ -1,4 +1,5 @@
-import { createSchema, defineNode, Graph, toIso } from "@graview/core";
+import { createSchema, defineNode, Graph } from "@graview/core";
+import { toIso } from "@graview/core/scene";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { EMPTY_VIEW, interpolate, kindCardId, layout, withWithin } from "../../src/index.js";

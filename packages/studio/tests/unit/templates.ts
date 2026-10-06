@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
-import { compileDocument, editDocument, type DocumentEdit, type GraviewDocument } from "@graview/core/document";
+import { editDocument, type DocumentEdit, type GraviewDocument } from "@graview/core/document";
+import { compileDocument } from "@graview/core/check";
 import { createStudio } from "../../src/index.js";
 
 /*

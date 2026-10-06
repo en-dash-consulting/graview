@@ -1,4 +1,4 @@
-import { toIso } from "@graview/core";
+import { toIso } from "@graview/core/scene";
 import { describe, expect, it } from "vitest";
 import { buildingFaces, heightOf, roadBetween, streetPoints, tileCorners, toLattice, villageCap, villageOf } from "../../src/plots.js";
 

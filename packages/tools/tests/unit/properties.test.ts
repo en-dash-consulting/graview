@@ -1,4 +1,5 @@
-import { checkApp, Graph, Store } from "@graview/core";
+import { Graph, Store } from "@graview/core";
+import { checkApp } from "@graview/core/check";
 import { awkwardApp, awkwardGraph } from "@graview/core/testing";
 import { kindCardId } from "@graview/layout";
 import { describe, expect, it } from "vitest";

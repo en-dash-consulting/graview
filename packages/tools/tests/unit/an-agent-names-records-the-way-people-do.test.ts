@@ -1,6 +1,6 @@
 import { Store, type AnySchema, type GraviewApp, type Principal } from "@graview/core";
 import { FIXTURES } from "@graview/core/conformance";
-import { compileDocument } from "@graview/core/document";
+import { compileDocument } from "@graview/core/check";
 import { describe, expect, it } from "vitest";
 import { createToolRuntime } from "../../src/index.js";
 

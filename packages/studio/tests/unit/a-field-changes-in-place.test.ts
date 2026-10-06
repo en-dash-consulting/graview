@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { checkApp } from "@graview/core";
+import { checkApp } from "@graview/core/check";
 import { compileDocumentWithoutCheck, type GraviewDocument } from "@graview/core/document";
 import { describe, expect, it } from "vitest";
 import { createStudio, STUDIO_MUTATIONS, studioApp } from "../../src/index.js";

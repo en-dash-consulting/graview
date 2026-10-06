@@ -2,7 +2,6 @@ import {
   RuleBudgetError,
   withArticle,
   brandFromAccent,
-  checkApp,
   createSchema,
   defineInvariant,
   defineMutation,
@@ -39,7 +38,7 @@ import {
 } from "./schema.js";
 import { parseTemplate, renderTemplate, TemplateError, type TemplatePart } from "./template.js";
 import { upgradeDocument } from "./upgrade.js";
-import { homeOf, validateViews, viewBraces, viewsOf } from "./views.js";
+import { homeOf, validateViews, viewsOf } from "./views.js";
 import { computedOf, parsedComputed, validateComputed, workedOutAlone } from "./computed.js";
 
 /*
@@ -481,28 +480,6 @@ function argsOf(name: string, act: ActSpec, effects: readonly EffectSpec[], docu
 class Refused extends Error {}
 
 /**
- * A document, compiled and judged: its own sentences, then the framework's
- * `checkApp` over the app it compiles to — what a host does with a document
- * it is handed, and what `graview check` says of one.
- */
-export function compileDocument(raw: unknown, options: CompileOptions = {}): CompiledDocument | RefusedDocument {
-  const compiled = compileDocumentWithoutCheck(raw, options);
-  if (!compiled.ok) return compiled;
-  const { app, document } = compiled;
-  // Braces in a block's plain words (FR-99): asked here, with the checker, and not of a page that compiles without it.
-  const findings: Finding[] = [...compiled.findings, ...viewBraces(document.views, "views", undefined, document.lenses)];
-  const check = checkApp(app);
-  for (const f of check.findings) {
-    const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: f.message, ...(f.fix ? { fix: f.fix } : {}) } as const;
-    // The document already said it, at the same path (a blocks lens's words are held by both): once is enough.
-    if (compiled.findings.some((said) => said.code === f.code && said.path === finding.path)) continue;
-    findings.push(f.code === "glance-unchosen" ? inDocumentWords(finding, f.where, document) : finding);
-  }
-  if (hasErrors(findings)) return { ok: false, findings };
-  return { ...compiled, findings };
-}
-
-/**
  * A DOCUMENT COMPILED WITHOUT THE FRAMEWORK'S CHECKER: its own sentences
  * still judged, `checkApp` not asked. For a page drawing a document its host
  * has already judged — Graview Cloud's shell compiles in the browser what the
@@ -820,7 +797,7 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
 }
 
 /** Map a framework check's "where" (a kind, an act, a rule by name) back to a document path when we can. */
-function frameworkPath(where: string, document: GraviewDocument): string {
+export function frameworkPath(where: string, document: GraviewDocument): string {
   const word = where.split(/[\s:·]/).find((w) => w.length > 0) ?? where;
   if (document.kinds[word]) return `kinds.${word}`;
   if (document.acts?.[word]) return `acts.${word}`;
@@ -833,7 +810,7 @@ function frameworkPath(where: string, document: GraviewDocument): string {
  * document's author writes `kinds.<kind>.glance` (FR-39) — the same choice
  * and the same first three, in the words of the format they hold.
  */
-function inDocumentWords(finding: Finding, where: string, document: GraviewDocument): Finding {
+export function inDocumentWords(finding: Finding, where: string, document: GraviewDocument): Finding {
   const kind = /^defineNode\("([^"]+)"\)/.exec(where)?.[1];
   const spec = kind ? document.kinds[kind] : undefined;
   if (!kind || !spec) return finding;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { type AnySchema, beginning, bindSchema, checkApp, createSchema, defineApp, defineNode, type GraviewApp, nodeRef } from "../../src/index.js";
+import { type AnySchema, beginning, bindSchema, createSchema, defineApp, defineNode, type GraviewApp, nodeRef } from "../../src/index.js";
+import { checkApp } from "../../src/check.js";
 
 /**
  * THE ORDER THINGS MUST BE MADE IN, WHICH THE DECLARATION ALREADY STATES.

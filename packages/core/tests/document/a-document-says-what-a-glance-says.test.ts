@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { compileDocument, diffDocuments, editDocument, toDocument, type GraviewDocument } from "../../src/document/index.js";
+import { diffDocuments, editDocument, toDocument, type GraviewDocument } from "../../src/document/index.js";
+import { compileDocument } from "../../src/check.js";
 import { createSchema, defineApp, defineNode } from "../../src/index.js";
 
 /**

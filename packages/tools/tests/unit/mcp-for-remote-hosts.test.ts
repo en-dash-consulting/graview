@@ -1,6 +1,6 @@
 import { Store, type AnySchema, type GraviewApp, type Principal } from "@graview/core";
 import { FIXTURES } from "@graview/core/conformance";
-import { compileDocument } from "@graview/core/document";
+import { compileDocument } from "@graview/core/check";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { describe, expect, it } from "vitest";

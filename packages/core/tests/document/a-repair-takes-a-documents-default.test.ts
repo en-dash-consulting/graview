@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { createSchema, defineNode, repairPlan, Store, UNSET, validateGraph, z, type GraphFinding, type GraphSnapshot } from "../../src/index.js";
-import { compileDocument, toDocument } from "../../src/document/index.js";
+import { toDocument } from "../../src/document/index.js";
+import { compileDocument } from "../../src/check.js";
 
 /**
  * FR-50. A document's `default` is applied when a record is made, never put
