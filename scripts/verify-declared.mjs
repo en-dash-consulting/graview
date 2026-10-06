@@ -21,7 +21,8 @@
  *
  * And a status board (FR-97, `tasks.gdd.json`): its columns on both faces,
  * a card moved by the keyboard and by a drag (the act, run as the owner)
- * and undone; a viewer without the act offered no move.
+ * and undone; a viewer without the act offered no move; each column a
+ * region announced by the lens's title first (FR-109).
  *
  *   node scripts/verify-declared.mjs [--engine=chromium|webkit|firefox]
  */
@@ -442,6 +443,12 @@ try {
           const page = await open(query, size, scheme);
           await page.waitForSelector(`${within} [data-graview-column]`, { timeout: 15_000 }).catch(() => {});
           const before = await columnsOf(page, within);
+          // FR-109: each column is a region named by its lens first, as a screen reader on a phone announces it — asked by role, so the name is the one computed.
+          const regions = page.locator(within).getByRole("region");
+          const named = {
+            names: await regions.evaluateAll((all) => all.filter((one) => one.hasAttribute("data-graview-column")).map((one) => one.getAttribute("aria-label"))),
+            found: await page.locator(within).getByRole("region", { name: "The board · Todo, 2", exact: true }).count(),
+          };
           // The keyboard: the card's Move button, Enter opens the columns it may go to, Enter on the first (Doing) moves it.
           const button = page.locator(`${within} [data-columns-move="t1"] > button`);
           let keyboard = { reached: false };
@@ -465,7 +472,7 @@ try {
           }
           await shoot(page, `board-${face}-${size.width}-${scheme}`);
           await page.close();
-          boards[at] = { before, keyboard };
+          boards[at] = { before, keyboard, named };
           const viewer = await open(`${query}&as=viewer`, size, scheme);
           await viewer.waitForSelector(`${within} [data-graview-column]`, { timeout: 15_000 }).catch(() => {});
           viewers[at] = await columnsOf(viewer, within);
@@ -476,6 +483,10 @@ try {
     report.checks.aStatusBoardDrawsOnBothFacesInTheFieldsOrder = {
       boards: Object.fromEntries(Object.entries(boards).map(([at, board]) => [at, board.before])),
       ok: Object.values(boards).every(({ before }) => before.present && JSON.stringify(before.columns) === STARTS && before.moves === 4 && !before.spills),
+    };
+    report.checks.aColumnIsAnnouncedByItsLensFirst = {
+      boards: Object.fromEntries(Object.entries(boards).map(([at, board]) => [at, board.named])),
+      ok: Object.values(boards).every(({ named }) => JSON.stringify(named.names) === JSON.stringify(["The board · Todo, 2", "The board · Doing, 1", "The board · Done, 1"]) && named.found === 1),
     };
     report.checks.aCardMovedByTheKeyboardIsTheActAndUndoPutsItBack = {
       boards: Object.fromEntries(Object.entries(boards).map(([at, board]) => [at, board.keyboard])),

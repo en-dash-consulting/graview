@@ -47,6 +47,11 @@ Everything a Graview app declares, and the checker that verifies it.
   barrels up front, and would otherwise carry them before a face is fetched.
 - **Conformance** — `@graview/core/conformance`: fixtures a host runs against
   a version (`conformance()`) to prove it reads, compiles and derives the same.
+- **A status board's moves** — `@graview/core/describe`: `columnReach` says
+  which acts move a card to which column — the named steps that set the
+  field to that column's value, or else an act told the value — and
+  `columnMoves` the ones one seat may run on one record, its conditions
+  judged.
 
 ```sh
 npx graview create my-app          # a product on Graview, started (also: npm create graview)

@@ -19,9 +19,10 @@ import { withMore } from "./more.js";
  * link to itself, as a listed record is everywhere else.
  *
  * MOVING A CARD IS AN ACT, NOT A FEATURE OF THE LENS. The moves a seat is
- * offered are the acts the declaration already has that set the field and
- * can be told the value, which this seat's policy lets it run
- * (`columnMoves`). A move runs that act as the seat, through the store: it
+ * offered are the acts the declaration already has that set the field —
+ * a named step to its own column where its condition holds for the card,
+ * otherwise an act told the value — which this seat's policy lets it run
+ * (`columnMoves`, FR-108). A move runs that act as the seat, through the store: it
  * is in the log with its author, and one undo puts the card back. A seat
  * with no such act sees no control to move anything — not a disabled one.
  * Two ways to move, the same act: drag a card onto a column, or press its
@@ -118,7 +119,7 @@ export function createColumnsLens<S extends AnySchema>(options: ColumnsOptions):
         </Panel>
       );
     }
-    const picture = <ColumnsBoard boards={boards} />;
+    const picture = <ColumnsBoard boards={boards} title={title} />;
     // On a page the page's own heading already says what it is; in the scene it is a card, as every lens is.
     return withMore(
       props,
@@ -143,7 +144,7 @@ interface Said {
   readonly id?: string;
 }
 
-function ColumnsBoard({ boards }: { readonly boards: readonly Board[] }) {
+function ColumnsBoard({ boards, title }: { readonly boards: readonly Board[]; readonly title: string }) {
   const { store, principal } = useGraview<AnySchema>();
   const root = useRef<HTMLDivElement | null>(null);
   const [said, setSaid] = useState<Said | null>(null);
@@ -210,7 +211,9 @@ function ColumnsBoard({ boards }: { readonly boards: readonly Board[] }) {
                   data-graview-column={value}
                   data-droppable={droppable || undefined}
                   data-over={(droppable && over === value) || undefined}
-                  aria-label={`${column.label}, ${count}`}
+                  // The lens first (FR-109): a phone's screen reader says a region by its name alone, and "Researching, 0" does not say which board — nor does the app's name, so an embed leaves this one as it is.
+                  aria-label={`${title} · ${column.label}, ${count}`}
+                  data-graview-named-by-lens=""
                   onDragOver={(event) => {
                     if (!droppable) return;
                     event.preventDefault();

@@ -8,7 +8,7 @@ import type { AnySchema } from "../schema/schema.js";
 import { hueFor } from "../theme/derive.js";
 import { withArticle } from "../schema/define-node.js";
 import { declaredLenses, isShippedLens, placesOf } from "../places.js";
-import { columnActs } from "../columns.js";
+import { columnReach } from "../columns.js";
 import { computedOf } from "../document/computed.js";
 
 /**
@@ -135,11 +135,21 @@ export function describeApp<S extends AnySchema>(
   for (const lens of lensesDeclared.drawn.filter((one) => one.lens === "columns")) {
     for (const [kind, roles] of Object.entries((lens.options["bindings"] ?? {}) as Record<string, { column?: string }>)) {
       if (!roles.column) continue;
-      const movers = columnActs(app.schema, acts, kind, roles.column).map((act) => `"${act.title ?? act.name}"`);
+      // Column by column (FR-108): a named step is the move to its value's column; a free act reaches the rest.
+      const noun = app.schema.tryDefinition(kind)?.noun ?? kind;
+      const reach = columnReach(app.schema, acts, kind, roles.column);
+      const named = (some: readonly { readonly title?: string; readonly name: string }[]) => some.map((act) => `"${act.title ?? act.name}"`);
+      const or = (words: readonly string[]) => (words.length < 2 ? words.join("") : `${words.slice(0, -1).join(", ")} or ${words.at(-1)}`);
+      const stepped = reach.filter((one) => one.by === "step");
+      const free = reach.find((one) => one.by === "value");
+      const unreached = reach.filter((one) => one.by === "none");
+      const ways = [...stepped.map((one) => `to ${one.label} by ${or(named(one.acts))}`), ...(free ? [`to ${stepped.length > 0 ? "any other" : "another"} column by ${list(named(free.acts))}`] : [])];
+      if (ways.length === 0) {
+        lines.push(`  "${lens.title}" offers no move: no act sets the ${roles.column} of ${withArticle(noun)} to a value of its own or a value it is given.`);
+        continue;
+      }
       lines.push(
-        movers.length > 0
-          ? `  "${lens.title}" moves ${withArticle(app.schema.tryDefinition(kind)?.noun ?? kind)} to another column by ${list(movers)}, for a seat its policy lets run it; any other seat is offered no move.`
-          : `  "${lens.title}" offers no move: no act sets the ${roles.column} of ${withArticle(app.schema.tryDefinition(kind)?.noun ?? kind)} to a value it is given.`,
+        `  "${lens.title}" moves ${withArticle(noun)} ${list(ways)}, for a seat its policy lets run it${stepped.length > 0 ? ` and where the act's condition holds for that ${noun}` : ""}; any other seat is offered no move.${unreached.length > 0 ? ` Nothing moves ${withArticle(noun)} to ${list(unreached.map((one) => one.label))} from the board.` : ""}`,
       );
     }
   }

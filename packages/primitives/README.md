@@ -16,7 +16,9 @@ the word, the occupants inside it — when any code is longer; `arrange:
 "shelf"` lays a board whose x and y are categories out as headed bands. The
 status board (`columns`) draws a choice field's values as columns, in their
 declared order, and moves a card — by the keyboard or a drag — only by an act
-the seat may run that sets that field.
+the seat may run that sets that field: a named step such as "Book" to its own
+column, where its condition holds for that card, and otherwise an act told the
+value.
 
 **Workbench** — the parts of an interface that are not about the domain: what
 is selected and what can be done with it, whether the rules hold, what just

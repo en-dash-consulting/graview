@@ -96,10 +96,18 @@ describe("a move between columns is an act the seat may run", () => {
     expect(columnMoves(store, VIEWER, store.graph.getNode("t1") as never, "status")).toEqual([]);
   });
 
-  it("is not offered by an act that writes the field but cannot be told the value", () => {
+  it("is offered by an act that sets the field to a value of its own, as the move to that column (FR-108)", () => {
     const finishing = structuredClone(tasks) as GraviewDocument & { acts: Record<string, unknown> };
     delete finishing.acts["set-status"];
     finishing.acts["finish"] = { title: "Finish", on: "task", sets: { status: "done" } };
+    const store = storeOf(compiled(finishing));
+    expect(columnMoves(store, OWNER, store.graph.getNode("t1") as never, "status")).toEqual([{ to: "done", call: { name: "finish", args: { id: "t1" } }, title: "Finish" }]);
+  });
+
+  it("is not offered by an act that sets the field but needs more than the record to run", () => {
+    const finishing = structuredClone(tasks) as GraviewDocument & { acts: Record<string, unknown> };
+    delete finishing.acts["set-status"];
+    finishing.acts["finish"] = { title: "Finish", on: "task", args: { why: { type: "string", required: true } }, sets: { status: "done" } };
     const store = storeOf(compiled(finishing));
     expect(columnMoves(store, OWNER, store.graph.getNode("t1") as never, "status")).toEqual([]);
   });
