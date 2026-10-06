@@ -46,6 +46,16 @@ for the agent, stop: that path is the one that will drift.
    names counted as reads. Reading the whole graph to scan it is the move a
    person with a search box never makes.
 
+   **Ask what a place shows with `describe_place`, before you say done.**
+   `{ place: "home" | "<slug>" | "<record id>", width: 390 }` returns the
+   headings, figures, lists (each record's title and what its card or row
+   says), group headings, empty words and problems this seat would see, as
+   data and text. It reads what the faces draw from (`describePlace`, from
+   `@graview/core/describe`), so it is not a guess. Hand the runtime the
+   app (`createToolRuntime(store, { app })`, `createMcpHttpHandler({ app })`)
+   or it says only kinds and records. On a checkout:
+   `graview describe <entry> --place home --seed seed.json --as partner --width 390`.
+
 6. **Prefer `get_affordances` over composing calls by hand.** The tool
    descriptions say so, and it matters: derived affordances cannot name an
    action that does not exist or is not legal on this selection.

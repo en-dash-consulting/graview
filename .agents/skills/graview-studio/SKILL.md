@@ -64,6 +64,16 @@ any other.
    what it keeps but will not change: `uneditable(document)` is one note
    per format, unit or list item type (`kinds.vendor.fields.quote`).
 
+   Without the studio, `editDocument` covers the rest of a document too:
+   `add-lens` (`replace` retitles; `at` puts one back), `remove-lens`,
+   `set-home`, `arrange-pages` (`order`, `hide`, `first`; `null` clears),
+   `set-computed` (`expr: null` removes it and what reads it), and
+   `set-view` for a kind's slot, `slot: "home"`, or `lens: "<title>"`.
+   Blocks are checked as they are set. A rename reaches lenses, the home,
+   pages and computed expressions through the parser; removing a field or
+   relation a lens draws by is refused, naming the lens. Computed fields
+   are studio nodes, kept on hand-back and written-back TypeScript.
+
 4. **Write it back.** `studio.files({ schemaVar: "gardenSchema" })` is
    `src/domain/schema.ts`, `mutations.ts`, `invariants.ts` and, with roles,
    `policy.ts` — the files `graview create` writes. Shape is what a graph

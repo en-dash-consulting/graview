@@ -66,6 +66,27 @@ const bool = (node: Node, key: string): boolean => node[key] === true;
 const list = (node: Node, key: string): string[] | undefined => (Array.isArray(node[key]) ? (node[key] as unknown[]).map(String) : undefined);
 const name = (node: Node): string => str(node, "label") ?? node.id;
 
+/** A computed field as a declaration writes it: the expression alone, or with the words it is shown by. */
+export type ComputedWritten = string | { readonly expr: string; readonly label?: string; readonly description?: string };
+
+/**
+ * What a kind works out, from its computed nodes (FR-83), in the order they
+ * were read: the short form — just the expression — where nothing else is
+ * said, as a declaration writes it. Undefined when it works out nothing.
+ */
+export function computedFor(graph: { in(to: string, kind: string): readonly ({ readonly id: string } & Record<string, unknown>)[] }, kind: { readonly id: string }): Record<string, ComputedWritten> | undefined {
+  const out: Record<string, ComputedWritten> = {};
+  for (const node of graph.in(kind.id, "computed-on")) {
+    const expr = typeof node["expr"] === "string" ? node["expr"] : undefined;
+    const called = typeof node["label"] === "string" ? node["label"] : undefined;
+    if (!expr || !called) continue;
+    const shownAs = typeof node["shownAs"] === "string" ? node["shownAs"] : undefined;
+    const description = typeof node["description"] === "string" ? node["description"] : undefined;
+    out[called] = shownAs || description ? { expr, ...(shownAs ? { label: shownAs } : {}), ...(description ? { description } : {}) } : expr;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
 /** The zod type a studio field declares. */
 export function zodFor(type: FieldType, required: boolean, options?: readonly string[]): z.ZodType {
   const base: z.ZodType =
@@ -139,6 +160,7 @@ function kept(
   base: GraviewApp<AnySchema> | undefined,
   kind: string,
   shape: Record<string, z.ZodType>,
+  worked: ReadonlySet<string> = new Set(),
 ): Record<string, unknown> {
   const was = base?.schema?.tryDefinition?.(kind) as
     | {
@@ -158,16 +180,17 @@ function kept(
   // A name built from fields ("2027 Subaru Forester Sport") is the checkout's function, carried
   // while the kind has no `label` field of its own to fall back on.
   const naming = typeof was.label === "function" && !here("label") ? { label: was.label } : undefined;
-  const narrow = <T,>(record: Record<string, T> | undefined): Record<string, T> | undefined => {
+  const narrow = <T,>(record: Record<string, T> | undefined, also: ReadonlySet<string> = new Set()): Record<string, T> | undefined => {
     if (!record) return undefined;
-    const left = Object.fromEntries(Object.entries(record).filter(([field]) => here(field)));
+    const left = Object.fromEntries(Object.entries(record).filter(([field]) => here(field) || also.has(field)));
     return Object.keys(left).length > 0 ? left : undefined;
   };
-  const labels = narrow(was.display?.labels);
+  // A computed field is said by its words too, while it is worked out.
+  const labels = narrow(was.display?.labels, worked);
   const format = narrow(was.display?.format);
   const hide = was.display?.hide?.filter(here);
   // What a glance says, while its fields do (W-169: the round trip dropped it).
-  const glance = was.display?.glance?.filter(here);
+  const glance = was.display?.glance?.filter((field) => here(field) || worked.has(field));
   const display =
     labels || format || (hide && hide.length > 0) || (glance && glance.length > 0)
       ? {
@@ -250,6 +273,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     const lifecycleField = str(kind, "lifecycleField");
     const retired = list(kind, "retired");
     const hasLabel = "label" in shape;
+    const computed = computedFor(read, kind);
     return defineNode(name(kind), {
       fields: z.object(shape),
       edges,
@@ -259,8 +283,9 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       ...(hasLabel ? { label: (node: { id: string } & Record<string, unknown>) => String(node["label"] ?? node.id) } : {}),
       ...(lifecycleField && retired ? { lifecycle: { field: lifecycleField, retired: retired[0] === "date" ? ("date" as const) : retired } } : {}),
       ...(str(kind, "figure") ? { figure: str(kind, "figure")! } : {}),
-      // What the studio has no act for is CARRIED, not dropped.
-      ...kept(base, name(kind), shape),
+      ...(computed ? { computed } : {}),
+      // What the studio has no act for is CARRIED, not dropped — a glance may say a computed field too.
+      ...kept(base, name(kind), shape, new Set(Object.keys(computed ?? {}))),
     } as never);
   });
   const schema = createSchema(definitions as never) as AnySchema;

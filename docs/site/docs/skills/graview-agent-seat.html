@@ -1093,6 +1093,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <ol>
 <li><strong>Find by name with <code>search_graph</code>, before <code>get_graph</code>.</strong> It is the Find box's matcher: hits with why they matched, <code>key:value</code> conditions (<code>done:false</code>, <code>is:any</code> for the past, <code>kind:task</code>), and the records it names counted as reads. Reading the whole graph to scan it is the move a person with a search box never makes.</li>
 </ol>
+<p><strong>Ask what a place shows with <code>describe_place</code>, before you say done.</strong>    <code>{ place: "home" | "&lt;slug&gt;" | "&lt;record id&gt;", width: 390 }</code> returns the    headings, figures, lists (each record's title and what its card or row    says), group headings, empty words and problems this seat would see, as    data and text. It reads what the faces draw from (<code>describePlace</code>, from    <code>@graview/core/describe</code>), so it is not a guess. Hand the runtime the    app (<code>createToolRuntime(store, { app })</code>, <code>createMcpHttpHandler({ app })</code>)    or it says only kinds and records. On a checkout:    <code>graview describe &lt;entry&gt; --place home --seed seed.json --as partner --width 390</code>.</p>
 <ol>
 <li><strong>Prefer <code>get_affordances</code> over composing calls by hand.</strong> The tool descriptions say so, and it matters: derived affordances cannot name an action that does not exist or is not legal on this selection.</li>
 </ol>
