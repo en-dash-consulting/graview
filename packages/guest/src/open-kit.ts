@@ -21,7 +21,10 @@
  *   escape    `position: fixed` and `sticky`, `:host` and `::slotted`, the
  *             top layer (`popover`, `<dialog>`), `autofocus`, `accesskey`,
  *             and `<form>`, whose submission is a navigation.
- *   speak     `role="alert"` and the landmark roles the app's own chrome uses,
+ *   speak     `role="alert"`, the landmark roles the app's own chrome uses
+ *             and the elements that carry them (`<nav>`, `<header>`,
+ *             `<footer>`, `<aside>`, `<search>` are drawn as `<div>`, `<output>`
+ *             as `<span>`, and a `<section>` is never named),
  *             `aria-live="assertive"`, and password and file inputs.
  *
  * The host draws from this declaration (host/open-render.ts, with
@@ -132,7 +135,7 @@ export const HTML_ELEMENTS: Readonly<Record<string, OpenElement>> = {
   label: { attributes: { for: "text" } },
   fieldset: { attributes: { disabled: "boolean", name: "text" } },
   legend: none,
-  output: { attributes: { for: "text", name: "text" } },
+  output: none,
   meter: { attributes: { value: "number", min: "number", max: "number", low: "number", high: "number", optimum: "number" } },
   progress: { attributes: { value: "number", max: "number" } },
   // images, held in the drawing: data: or the host's own blob:
@@ -205,7 +208,21 @@ export const NEVER_DRAWN = {
 } as const;
 
 /** Roles that would make a view speak as the app's own chrome or notices. */
-export const REFUSED_ROLES = ["alert", "alertdialog", "dialog", "banner", "main", "navigation", "contentinfo", "application", "status", "log", "marquee", "timer"] as const;
+export const REFUSED_ROLES = ["alert", "alertdialog", "dialog", "banner", "main", "navigation", "contentinfo", "complementary", "search", "form", "region", "application", "status", "log", "marquee", "timer"] as const;
+
+/**
+ * Elements whose own role is a landmark or a notice's, drawn as an element
+ * with none: what they hold is drawn, but they speak as the app's chrome
+ * (`<nav>` is a navigation landmark, `<header>` a banner, `<output>` a
+ * status) to assistive technology. Setting a role on them cannot cover it:
+ * `role="none"` on a focusable or named element is ignored, and the
+ * landmark comes back. A view's stylesheet reaches them by class, not by
+ * these names.
+ */
+export const HTML_DRAWN_AS: Readonly<Record<string, string>> = { nav: "div", header: "div", footer: "div", aside: "div", search: "div", output: "span" };
+
+/** Attributes that would name an element: a named `<section>` is a region landmark, so a section is never named. */
+export const UNNAMED_ELEMENTS: Readonly<Record<string, readonly string[]>> = { section: ["aria-label", "aria-labelledby", "title"] };
 
 /** `aria-*`, by pattern. */
 export function isAriaAttribute(name: string): boolean {

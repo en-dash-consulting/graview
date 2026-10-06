@@ -16,7 +16,9 @@
  *             own path on an attacker's server;
  *   prober    what the view's own worker can still reach after hardening;
  *   spoofer   a stylesheet that spells `:host` past a CDC or CDO, to lift
- *             the region's containment and paint over the app's own bar.
+ *             the region's containment and paint over the app's own bar;
+ *   speaker   landmarks and notices by element, by role and by a named
+ *             section, read back from each engine's accessibility tree.
  *
  * The page is served with NO content security policy (`--policy=page`), so
  * nothing but the open kit stands between a view and the network: every
@@ -144,6 +146,17 @@ graview.style(\`
 graview.onProps(() => graview.render(graview.html\`<div class="cover" id="cover">The app's own bar, drawn by a view</div>\`));
 `);
 
+  /* A view that tries to speak with the app's landmarks and notices: by element, by role, and by naming a section. */
+  const speakerJs = await viewScript(`
+graview.style(".said header { color: rgb(1, 2, 3); }");
+graview.onProps(() => graview.render(graview.html\`
+  <div class="said"><nav id="said-nav">Main menu</nav><header>The app</header></div><footer>Footer</footer><aside>Aside</aside><search>Search</search>
+  <section aria-label="Notices">Named by aria-label</section><section title="Updates">Named by title</section><output>Saved</output>
+  <div role="complementary">c</div><div role="search">s</div><div role="form" aria-label="Sign in">f</div><div role="region" aria-label="Region">r</div>
+  <div role="status">st</div><div role="log">lg</div><nav role="none" tabindex="0" aria-label="Back door">Presentational, but focusable and named</nav>
+  <p id="said-done">said</p>\`));
+`);
+
   const proberJs = await viewScript(`
 const out = {};
 out.absent = Object.fromEntries(["fetch", "XMLHttpRequest", "WebSocket", "EventSource", "importScripts", "indexedDB", "caches", "BroadcastChannel", "Worker", "SharedWorker", "Blob", "URL", "eval"].map((name) => [name, !(name in self)]));
@@ -163,7 +176,7 @@ import { mountWorkerView } from "./packages/guest/dist/host/worker.js";
 ${SHOWROOM}
 const failures = [];
 const views = {};
-for (const [name, script] of [["showcase", SHOWCASE], ["escapes", ESCAPES], ["prober", PROBER], ["spoofer", SPOOFER]]) {
+for (const [name, script] of [["showcase", SHOWCASE], ["escapes", ESCAPES], ["prober", PROBER], ["spoofer", SPOOFER], ["speaker", SPEAKER]]) {
   views[name] = mountWorkerView(document.getElementById(name), { manifest: { name, attach: "car", cardinality: "many", reads: { kinds: ["shopper"] } }, worker: { script }, store, principal: bethan, onFailure: (reason, detail) => failures.push([name, reason, detail]) });
 }
 window.__host = {
@@ -185,14 +198,14 @@ window.__host = {
       define: { "process.env.NODE_ENV": '"production"' },
     })
   ).outputFiles[0].text;
-  const inline = `const SHOWCASE = ${JSON.stringify(showcaseJs)}; const ESCAPES = ${JSON.stringify(escapesJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPOOFER = ${JSON.stringify(spooferJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
+  const inline = `const SHOWCASE = ${JSON.stringify(showcaseJs)}; const ESCAPES = ${JSON.stringify(escapesJs)}; const PROBER = ${JSON.stringify(proberJs)}; const SPOOFER = ${JSON.stringify(spooferJs)}; const SPEAKER = ${JSON.stringify(speakerJs)};\n${widgetJs}`.replace(/<\/script/gi, "<\\/script");
   const widgetHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>The app</title><style>${TOKENS(core)}
 body { margin: 0; background: var(--graview-ground); color: var(--graview-ink); font-family: var(--graview-font-body); }
 #bar { height: 48px; display: flex; align-items: center; padding: 0 12px; border-bottom: 1px solid var(--graview-edge); }
 main { display: grid; gap: 16px; padding: 16px; }
 #showcase, #escapes, #prober { border: 1px dashed var(--graview-edge); }
 .probe-panel { background-color: var(--graview-panel); border-top: 1px solid var(--graview-edge); color: var(--graview-accent); }
-</style></head><body data-graview-scheme="light"><header id="bar">The app's own bar</header><main><div id="showcase"></div><div id="escapes"></div><div id="prober"></div><div id="spoofer"></div></main><footer id="foot" class="probe-panel">The app's own footer</footer><script>${inline}</script></body></html>`;
+</style></head><body data-graview-scheme="light"><header id="bar">The app's own bar</header><main><div id="showcase"></div><div id="escapes"></div><div id="prober"></div><div id="spoofer"></div><div id="speaker"></div></main><footer id="foot" class="probe-panel">The app's own footer</footer><script>${inline}</script></body></html>`;
 
   const attacker = { requests: [], connections: 0 };
   const servers = [
@@ -251,6 +264,7 @@ main { display: grid; gap: 16px; padding: 16px; }
     await waitFor("escapes", "#overlay-sheet", "the escapes");
     await waitFor("prober", "#probed", "the prober");
     await waitFor("spoofer", "#cover", "the spoofer");
+    await waitFor("speaker", "#said-done", "the speaker");
     /* Long enough for anything kept to have been fetched: images, fonts, a preconnect. */
     await tab.waitForTimeout(1_500);
 
@@ -369,6 +383,30 @@ main { display: grid; gap: 16px; padding: 16px; }
       "a view's stylesheet never reaches its region's :host, however the selector is spelled (:-->host, :<!--host), and the app's bar stays on top",
       !/:\s*host/i.test(spoofed.sheet) && spoofed.at === "bar" && /paint|content|strict/.test(spoofed.contain) && spoofed.overflow === "clip",
       spoofed,
+    );
+    /* What each engine's accessibility tree says of what the view drew: its own region is a region, and nothing under it a landmark or a notice. */
+    const region = await app.evaluateHandle(() => document.querySelector("#speaker [data-worker-view]"));
+    const tree = await tab.accessibility.snapshot({ root: region, interestingOnly: false });
+    const roles = [];
+    const walk = (node) => {
+      for (const child of node?.children ?? []) {
+        roles.push(child.role);
+        walk(child);
+      }
+    };
+    walk(tree);
+    const SPEAKING = ["navigation", "banner", "contentinfo", "complementary", "search", "region", "form", "main", "landmark", "status", "alert", "alertdialog", "dialog", "log", "marquee", "timer", "application"];
+    const spoken = roles.filter((role) => SPEAKING.includes(String(role).toLowerCase()));
+    const said = await app.evaluate(() => document.querySelector("#speaker [data-worker-view]").shadowRoot.querySelector("[data-graview-view-root]").textContent);
+    const styled = await app.evaluate(() => {
+      const header = document.querySelector("#speaker [data-worker-view]").shadowRoot.querySelector('[data-graview-as="header"]');
+      return header && { tag: header.localName, color: getComputedStyle(header).color };
+    });
+    claim("a view's own rule for header still styles what it drew, drawn as a div", styled?.tag === "div" && styled.color === "rgb(1, 2, 3)", styled);
+    claim(
+      "nothing a view draws speaks with a landmark or a notice's role in the accessibility tree (nav, header, footer, aside, search, a named section, output, or role=…), and its words are still drawn",
+      tree?.role !== undefined && spoken.length === 0 && ["Main menu", "The app", "Footer", "Aside", "Search", "Named by title", "Saved", "Presentational"].every((words) => said.includes(words)),
+      { root: tree?.role, spoken, roles: [...new Set(roles)] },
     );
     const refused = await app.evaluate(() => window.__host.refused().escapes);
     claim("what was not drawn was written down as refused", refused.length >= URL_PROPERTIES.length + 8, { count: refused.length });

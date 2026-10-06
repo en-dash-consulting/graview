@@ -73,6 +73,13 @@ unlisted functions; `position: fixed` or `sticky`; `:host`. What the host
 leaves out it lists in `refused`; `graview.refused` is the runtime's own
 early word on the last render.
 
+A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside`
+and `search` are drawn as `div`, and `output` as `span`, each with what it
+holds. They lose their landmark or status role, and a selector for them in
+your stylesheet still matches. A `section` is never named (no `aria-label`
+or `title`), so it stays out of the landmarks. `role` takes no landmark or
+notice's role (`navigation`, `region`, `status`, `alert`, …).
+
 **Draw with the app's tokens**, so light and dark follow the app's own
 toggle: `var(--graview-panel)`, `--graview-ground`, `--graview-ink`,
 `--graview-ink-muted`, `--graview-edge`, `--graview-accent`,

@@ -176,6 +176,8 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
       return placeholder();
     }
     const element = document.createElementNS(judged.namespace === "svg" ? SVG_NAMESPACE : HTML_NAMESPACE, judged.name);
+    /* A `<nav>` drawn as a `<div>` says so, and the view's `nav` selectors are read as `[data-graview-as="nav"]` (host/css.ts). */
+    if (judged.as) element.setAttribute("data-graview-as", judged.as);
     const drawn: Drawn = { dom: element, name: judged.name, namespace: judged.namespace, children: [], id, parent };
     byId.set(id, drawn);
     ids.set(element, id);

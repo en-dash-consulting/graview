@@ -120,6 +120,20 @@ const CASES: Record<string, string> = {
   "::part past a CDC, in @supports": `@supports selector(::-->part(x)) { .x { color: red } }`,
 };
 
+describe("a view's selectors for the elements the host draws as another", () => {
+  it("reads nav, header, footer, aside, search and output as what the host draws them as", () => {
+    expect(sanitizeStylesheet(`.package header { display: flex } NAV > a, :is(footer, aside) .x, search:hover, output.big { color: red }`).css).toBe(
+      `.package [data-graview-as="header"] { display: flex; }\n[data-graview-as="nav"] > a, :is([data-graview-as="footer"], [data-graview-as="aside"]) .x, [data-graview-as="search"]:hover, [data-graview-as="output"].big { color: red; }`,
+    );
+  });
+  it("leaves a class, an id, a pseudo-class and an attribute of the same name alone", () => {
+    expect(sanitizeStylesheet(`.header, #nav, a:nav, [title=header] { color: red }`).css).toBe(`.header, #nav, a:nav, [title=header] { color: red; }`);
+  });
+  it("reads them so nested, too", () => {
+    expect(sanitizeStylesheet(`.package { header { margin: 0 } }`).css).toBe(`.package { [data-graview-as="header"] { margin: 0; } }`);
+  });
+});
+
 describe("a customizable select's picker, which is drawn in the top layer over the whole page", () => {
   it("keeps no appearance: base-select, in any spelling", () => {
     for (const css of [`select { appearance: base-select }`, `select { -webkit-appearance: base-select }`, `select { APPEARANCE: Base-Select !important }`, `select { appearance: var(--a) }`]) {

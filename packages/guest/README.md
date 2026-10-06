@@ -190,7 +190,12 @@ an SVG image in an `img` runs no script and loads nothing. No `<script>`,
 `<iframe>`, `<object>`, `<embed>`, `<link>`, `<meta>`, `<base>`, `<style>`,
 `<form>`, SVG `<image>` or `<foreignObject>`, no `src`, `href`, `srcset`,
 `formaction` or `on*` attribute is drawn; what is not drawn is in
-`refused`, with why. `guest-sandbox --transport=open` serves a page with no
+`refused`, with why. A view never speaks as the app's chrome. `<nav>`,
+`<header>`, `<footer>`, `<aside>` and `<search>` are drawn as `<div>`, and
+`<output>` as `<span>`. Each holds what it held and is marked
+`data-graview-as`, and the view's selectors for those names are read as
+that attribute. A `<section>` is never named, and `role` takes no landmark
+or notice's role. `guest-sandbox --transport=open` serves a page with no
 content security policy, tries every way out, and finds no request leaving
 it in Chromium, WebKit or Firefox.
 

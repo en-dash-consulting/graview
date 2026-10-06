@@ -5,6 +5,7 @@ import {
   CSS_KEYWORD_PROPERTIES,
   CSS_PROPERTIES,
   CSS_REFUSED_SELECTORS,
+  HTML_DRAWN_AS,
   OPEN_MAX_STYLESHEET,
 } from "../open-kit.js";
 
@@ -865,6 +866,27 @@ function judgeCondition(prelude: readonly ComponentValue[], at: string, refuse: 
   return walk(prelude) ? serializeValues(prelude).trim() : undefined;
 }
 
+/**
+ * A selector with its type selectors for the elements the host draws as
+ * another (`HTML_DRAWN_AS`: `nav`, `header`, `output`, …) read as the
+ * attribute the host gives them: `.package header` is
+ * `.package [data-graview-as="header"]`, so a view styles them as it wrote.
+ * A type selector is an ident that no `:`, `.` or `|` stands before, outside
+ * an attribute's brackets.
+ */
+function asDrawn(values: readonly ComponentValue[]): ComponentValue[] {
+  return values.map((value, index) => {
+    const before = values[index - 1];
+    const named = before?.type === ":" || (before?.type === "delim" && (before.value === "." || before.value === "|"));
+    if (value.type === "ident" && !named && Object.prototype.hasOwnProperty.call(HTML_DRAWN_AS, lower(value.value))) {
+      return { type: "block", open: "[", value: [{ type: "ident", value: "data-graview-as" }, { type: "delim", value: "=" }, { type: "string", value: lower(value.value) }] };
+    }
+    if (value.type === "func") return { type: "func", name: value.name, value: asDrawn(value.value) };
+    if (value.type === "block" && value.open === "(") return { type: "block", open: "(", value: asDrawn(value.value) };
+    return value;
+  });
+}
+
 function judgeRule(rule: Rule, refuse: (refusal: CssRefusal) => void, depth: number, within: "sheet" | "style" | "keyframes"): string | undefined {
   if (depth > MAX_DEPTH) {
     refuse({ reason: "unreadable", name: "nesting" });
@@ -881,7 +903,7 @@ function judgeRule(rule: Rule, refuse: (refusal: CssRefusal) => void, depth: num
       return `${serializeValues(rule.prelude).trim()} { ${judgeBlock(rule.block, refuse, depth)} }`;
     }
     if (!judgeSelector(rule.prelude, refuse)) return undefined;
-    const selector = serializeValues(rule.prelude).trim();
+    const selector = serializeValues(asDrawn(rule.prelude)).trim();
     if (selector === "") {
       refuse({ reason: "unreadable", name: "selector" });
       return undefined;
