@@ -299,6 +299,12 @@ record by its label, drawn by the host — is drawn in the region, and
 saying it. A host draws its own in its place with `fallback`; the React
 registrations draw whatever the registry drew for the kind before.
 
+What is left: work a view schedules with timers between pushes is not
+timed per push. A view that busies its own worker for just under
+`silentMs`, answers the heartbeat, and does it again can hold a core of the
+reader's machine for as long as it is shown. That is the worker's thread,
+not the page's; the page stays responsive.
+
 ### A view with no build
 
 A view is handed over as its plain source, `{ source }`: one script

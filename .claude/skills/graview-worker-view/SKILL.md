@@ -119,7 +119,10 @@ hears it; read `event.pressed`.
 About 256 kB of source, 5 000 drawn nodes, 120 messages a second,
 1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face
 of its records is drawn instead, with why. Draw summaries, not every row
-of a huge set.
+of a huge set. Work a view schedules with timers between pushes is not
+timed per push. It can keep its own worker busy for just under the
+heartbeat's 5 s at a time; the page stays responsive, but the person's CPU
+does not, so never spin.
 
 ## Worked examples
 
