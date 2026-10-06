@@ -31,7 +31,7 @@ describe("a hosted page", () => {
     for (const name of ["react-dom", "zod", "@graview/core", "@graview/embed", "@graview/ship"]) expect(Object.keys(measured.upFront.packages)).toContain(name);
   });
 
-  it("carries at most 585 KB minified up front: 575 KB, with 10 KB of headroom under Cloud's 600", () => {
+  it("carries at most 572 KB minified up front: 562 KB, with 10 KB of headroom under Cloud's 600", () => {
     expect(measured.upFront.minified, `${Math.round(measured.upFront.minified / 1024)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
     expect(measured.over).toBe(false);
   });
@@ -79,8 +79,23 @@ describe("a hosted page", () => {
     expect(packageOf("<stdin>")).toBe("(the page)");
   });
 
-  it("holds its budget's numbers: 585 KB up front, under the 600 Cloud's brief set, and 150 KB of it zod's", () => {
-    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 585 * 1024, zod: 150 * 1024 });
+  it("holds its budget's numbers: 572 KB up front, under the 600 Cloud's brief set, and 150 KB of it zod's", () => {
+    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 572 * 1024, zod: 150 * 1024 });
+  });
+
+  /*
+   * WHAT ONLY A FETCHED FACE USES IS NOT REACHABLE FROM WHAT THE PAGE
+   * IMPORTS UP FRONT. esbuild places a whole module in every chunk that can
+   * reach it, so a name exported from a barrel the page imports (`@graview/core`,
+   * `@graview/core/document`) rides in the first chunk as soon as anything
+   * lazy uses it. These left for subpaths of their own; none may come back.
+   */
+  it("carries no block resolver, city, figure or checker up front: they are @graview/core/blocks, /scene, /figures and /check, reached only by what is fetched", () => {
+    const modules = Object.keys(measured.upFront.modules);
+    for (const module of ["core/src/document/blocks.ts", "core/src/document/computed-values.ts", "core/src/city.ts", "core/src/scene-districts.ts", "core/src/document/thumbnail.ts", "core/src/schema/figures.ts"]) {
+      expect(modules).not.toContain(module);
+    }
+    expect(modules.filter((module) => module.startsWith("core/src/cli/"))).toEqual([]);
   });
 
   it("carries none of the scene's own rules up front: the scene face draws them, and fetches them as it is drawn (FR-104)", () => {

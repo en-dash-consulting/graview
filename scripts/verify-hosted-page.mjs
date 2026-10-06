@@ -7,7 +7,7 @@
  * locales cut to English, the studio stubbed out (lib/hosted-page.mjs) — and
  * writes docs/hosted-page.json: what the page loads up front, package by
  * package, what each door it opens only when asked costs, and two claims:
- * at most 585 KB minified up front, at most 150 KB of it zod's — and
+ * at most 572 KB minified up front, at most 150 KB of it zod's — and
  * docs/hosted-page.md, the same by package as the release notes carry it.
  *
  * No browser and no port: it reads esbuild's metafile, so it runs first.

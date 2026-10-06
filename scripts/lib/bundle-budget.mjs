@@ -107,9 +107,18 @@ export const BUDGETS = [
      * Lowered when the scene's own rules moved out of the frame's sheet into
      * the scene face, and the frame stopped reaching the primitives' index
      * and the scene's way back (FR-104). Measured at 787_572 / 207_729.
+     *
+     * Lowered when what only a fetched face, an agent's seat or the checker
+     * uses left `@graview/core`'s barrels for subpaths of their own
+     * (`/blocks`, `/check`, `/scene`, `/figures`). The frame never compiled
+     * with the checker: the studio, fetched only when it is drawn, asked for
+     * `checkApp` through `@graview/core`, which the frame imports up front,
+     * and a bundler places a whole module in every chunk that can reach it —
+     * so the checker (41 kB) and the document compiler it reaches (47 kB)
+     * rode in what the page loads first. Measured at 692_174 / 176_515.
      */
-    minified: 789_000,
-    gzipped: 208_500,
+    minified: 693_500,
+    gzipped: 177_000,
     load: "first",
     lacks: ["@graview/studio"],
   },
