@@ -53,7 +53,7 @@ export interface WorkerViewLimits extends GuestLimits {
   /**
    * The most of any one second the host's page may spend drawing what the
    * view sent, in milliseconds: past it the batch is left undrawn and the
-   * view is stopped as slow. 200 by default.
+   * view is stopped as slow. 100 by default.
    */
   readonly drawMs?: number;
 }
@@ -209,7 +209,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     messageWindowMs: options.limits?.messageWindowMs ?? 1_000,
     pushMs: options.limits?.pushMs ?? 1_000,
     silentMs: options.limits?.silentMs ?? 5_000,
-    drawMs: options.limits?.drawMs ?? 200,
+    drawMs: options.limits?.drawMs ?? 100,
   };
   /* What the view was last shown: the plain face drawn in its place, if it fails. */
   let lastProps: GuestProps | undefined;

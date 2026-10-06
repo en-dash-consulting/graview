@@ -110,7 +110,7 @@ hears it; read `event.pressed`.
 ## Limits
 
 About 256 kB of source, 5 000 drawn nodes, 120 messages a second,
-1 000 ms per push, and 200 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face
+1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face
 of its records is drawn instead, with why. Draw summaries, not every row
 of a huge set.
 

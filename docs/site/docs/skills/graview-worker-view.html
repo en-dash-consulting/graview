@@ -1112,7 +1112,7 @@ graview.navigate("offer:7")     // a record; graview.navigate({ place: "the-pack
 &lt;/fieldset&gt;</code></pre></div>
 <p>A field the view filled (<code>value="…"</code>) is the view's until the person empties it, and a press carrying it is refused. Do not prefill. A view may empty a field after a press. A radio or a select is the person's pick, not their words: its value goes only if it is one the act declares (an enum's option) or a record the view was shown. The press is applied before the view hears it; read <code>event.pressed</code>.</p>
 <h3>Limits</h3>
-<p>About 256 kB of source, 5 000 drawn nodes, 120 messages a second, 1 000 ms per push, and 200 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face of its records is drawn instead, with why. Draw summaries, not every row of a huge set.</p>
+<p>About 256 kB of source, 5 000 drawn nodes, 120 messages a second, 1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face of its records is drawn instead, with why. Draw summaries, not every row of a huge set.</p>
 <h3>Worked examples</h3>
 <p><code>examples/offers-list.js</code> is a list lens: rows linking to their records, and a note typed and pressed in. <code>examples/front-page.js</code> is a home: a headline, a figure, an SVG ring and cards linking to a place. Each opens with its manifest.</p>
 <h3>Registering it</h3>
