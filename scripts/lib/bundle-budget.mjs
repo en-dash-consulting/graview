@@ -125,9 +125,15 @@ export const BUDGETS = [
      * chosen by it before one is fetched. The scene's fragment sync moved to
      * a module of its own, fetched with the scene. Measured at 694_569 /
      * 177_383.
+     *
+     * Raised when an act's refusal became a type a host can show (FR-110:
+     * `ActRefusal`, read by `refusalOf`, and an argument an act does not
+     * take said with those it does) and a number's range came to be asked
+     * for with its step (FR-114), all in `@graview/core`'s index, which the
+     * frame imports up front. Measured at 695_208 / 177_613.
      */
-    minified: 695_000,
-    gzipped: 177_500,
+    minified: 696_000,
+    gzipped: 178_000,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -197,9 +203,14 @@ export const BUDGETS = [
      * its own: measured at 1_478_987 / 438_466.
      *
      * With FR-106, FR-107 and FR-108 together: measured at 1_480_900 / 439_089.
+     *
+     * Raised when acts came to say what they set (FR-110, FR-114, FR-115):
+     * a typed act refusal and a number's range in core, the document
+     * compiler's other end of a link, the studio's kept range. Measured at
+     * 1_488_359 / 441_473.
      */
-    minified: 1_486_000,
-    gzipped: 441_000,
+    minified: 1_490_000,
+    gzipped: 442_000,
     load: "all",
   },
   {
@@ -233,8 +244,9 @@ export const BUDGETS = [
     // And with every face's when a status board came to draw (FR-97): measured at 1_451_370 / 425_210, from 1_447_691 / 424_068.
     // And with every face's for FR-99, FR-100, FR-101 and FR-105: measured at 1_455_251 / 426_587.
     // With both, measured at 1_458_930 / 427_760.
-    minified: 1_470_000,
-    gzipped: 432_000,
+    // And when acts came to say what they set (FR-110, FR-114, FR-115: writes read off an act, a number's range, the other end of a link): the document compiler loads with the studio. Measured at 1_473_024 / 432_613.
+    minified: 1_476_000,
+    gzipped: 434_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
