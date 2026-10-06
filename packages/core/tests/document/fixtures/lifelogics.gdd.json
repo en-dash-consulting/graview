@@ -1,0 +1,237 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "A proposal",
+  "description": "LifeLogics' proposal app rebuilt as data: its front page and its four lenses drawn from the closed block set, with invented content. What was heard, the offers that answer it, the packages they make, and what we do not know yet.",
+  "roles": ["owner", "partner"],
+  "kinds": {
+    "party": {
+      "noun": "party",
+      "plural": "Parties",
+      "description": "A firm in the proposal: the prime, the delivery partner, or the client. The client carries the discount.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "role": { "type": "enum", "options": ["prime", "delivery", "client"], "required": true },
+        "summary": { "type": "text", "label": "Who they are" },
+        "discount": { "type": "number", "label": "Discount", "description": "Percent off list, for a client that qualifies." },
+        "discountReason": { "type": "string", "label": "Why" }
+      },
+      "describe": "{name} ({role})"
+    },
+    "stakeholder": {
+      "noun": "person or team",
+      "plural": "People and teams",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "role": { "type": "string", "label": "Role" }
+      }
+    },
+    "signal": {
+      "noun": "note",
+      "plural": "What we heard",
+      "description": "One thing heard on the call, read in public, or inferred by us.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "type": { "type": "enum", "options": ["pain", "opportunity", "ask", "fact"], "required": true, "label": "Kind of note" },
+        "source": { "type": "enum", "options": ["call-notes", "public", "our-read"], "required": true, "label": "Where it came from" },
+        "meaning": { "type": "text", "label": "What it means" }
+      },
+      "edges": {
+        "concerns": { "to": ["stakeholder"], "description": "who this is about", "inverse": "what was noted about this" }
+      },
+      "glance": ["type", "source"]
+    },
+    "offer": {
+      "noun": "offer",
+      "plural": "Offers",
+      "description": "A piece of work that could be offered, with what it produces and what it costs at list.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "stage": { "type": "enum", "options": ["start", "later"], "required": true, "label": "When" },
+        "mode": { "type": "enum", "options": ["training", "strategy", "build", "advisory"], "required": true, "label": "Kind of work" },
+        "summary": { "type": "text", "label": "What it is" },
+        "outcome": { "type": "text", "label": "What they get" },
+        "duration": { "type": "string", "label": "How long" },
+        "list": { "type": "number", "required": true, "label": "List price, per unit", "format": "money" },
+        "unit": { "type": "enum", "options": ["fixed", "cycle", "month"], "required": true, "label": "Priced" },
+        "units": { "type": "integer", "required": true, "label": "Units assumed" }
+      },
+      "edges": {
+        "answers": { "to": ["signal"], "description": "what this answers", "inverse": "the offers that answer this" },
+        "serves": { "to": ["stakeholder"], "description": "who this is for", "inverse": "the offers aimed at them" },
+        "delivered-by": { "to": ["party"], "description": "who delivers this", "inverse": "what this firm delivers" }
+      },
+      "computed": {
+        "total": { "expr": "list * units", "label": "At list, in all" },
+        "netEach": { "expr": "list * (100 - either(first(all('party') where role == 'client').discount, 0)) / 100", "label": "After the discount, each" },
+        "net": { "expr": "total * (100 - either(first(all('party') where role == 'client').discount, 0)) / 100", "label": "After the discount" }
+      },
+      "glance": ["mode", "duration", "netEach"],
+      "describe": "{summary} {total | money} at list."
+    },
+    "package": {
+      "noun": "package",
+      "plural": "Packages",
+      "description": "A set of offers put forward together, so sets can be compared on price and on what they cover.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "standing": { "type": "enum", "options": ["recommended", "alternative", "later"], "required": true, "label": "Standing" },
+        "summary": { "type": "text", "label": "The idea" }
+      },
+      "edges": {
+        "includes": { "to": ["offer"], "description": "the offers in this package", "inverse": "the packages this is in" }
+      },
+      "computed": {
+        "list": { "expr": "sum(out('includes'), list * units)", "label": "At list" },
+        "net": { "expr": "list * (100 - either(first(all('party') where role == 'client').discount, 0)) / 100", "label": "After the discount" }
+      },
+      "glance": ["standing", "net"]
+    },
+    "question": {
+      "noun": "question",
+      "plural": "Open questions",
+      "description": "Something we do not know yet that the proposal depends on.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "detail": { "type": "text", "label": "Why it matters" },
+        "status": { "type": "enum", "options": ["open", "answered"], "required": true, "default": "open", "label": "Status" },
+        "answer": { "type": "text", "label": "The answer" }
+      },
+      "edges": {
+        "about": { "to": ["signal", "stakeholder", "offer", "party"], "description": "what this question is about", "inverse": "the open questions about this" }
+      },
+      "lifecycle": { "field": "status", "retired": ["answered"] }
+    }
+  },
+  "acts": {
+    "add-offer": { "title": "Add an offer", "creates": "offer", "writes": ["name", "stage", "mode", "list", "unit", "units"] },
+    "add-note": { "title": "Note something we heard", "creates": "signal", "writes": ["name", "type", "source", "meaning"] }
+  },
+  "pages": {
+    "order": ["offer", "package", "signal", "question", "party", "stakeholder"],
+    "hide": ["stakeholder"]
+  },
+  "lenses": [
+    {
+      "name": "blocks",
+      "title": "The offers",
+      "on": "offer",
+      "options": {
+        "blocks": [
+          { "text": "{count(all('offer') where stage == 'start') | words} ways in and {count(all('offer') where stage == 'later') | words} for afterwards, each at list and after the discount." },
+          { "list": "all('offer')", "group": { "by": "stage", "headings": { "start": "The way in", "later": "For afterwards" } }, "as": "card", "empty": "No offers yet." }
+        ]
+      }
+    },
+    {
+      "name": "blocks",
+      "title": "The packages",
+      "on": "package",
+      "options": {
+        "blocks": [
+          { "text": "The same offers in {count(all('package')) | words} sets, compared on price." },
+          { "list": "all('package')", "sort": { "by": "standing", "direction": "choices" }, "as": "row", "empty": "No packages yet." }
+        ]
+      }
+    },
+    {
+      "name": "blocks",
+      "title": "What we heard",
+      "on": "signal",
+      "options": {
+        "blocks": [
+          { "text": "{count(all('signal') where type != 'fact') | words} things that ask for a reply, and the facts around them." },
+          {
+            "list": "all('signal')",
+            "group": { "by": "type", "headings": { "pain": "What hurts", "opportunity": "What they could do", "ask": "What they asked for", "fact": "What is simply true" } },
+            "as": "row",
+            "empty": "Nothing heard yet."
+          }
+        ]
+      }
+    },
+    {
+      "name": "blocks",
+      "title": "Open questions",
+      "on": "question",
+      "options": {
+        "blocks": [
+          { "text": "{count(all('question') where status == 'open') | words} things we do not know yet that the proposal depends on." },
+          { "list": "all('question') where status == 'open'", "sort": "name", "as": "card", "empty": "Nothing is open." }
+        ]
+      }
+    }
+  ],
+  "views": {
+    "home": [
+      { "text": "{first(all('party') where role == 'prime').name} with {first(all('party') where role == 'delivery').name}, for {first(all('party') where role == 'client').name}" },
+      { "headline": "A small start, on {count(all('offer') where stage == 'start') | words} {count(all('offer') where stage == 'start') | plural: 'front'}." },
+      { "text": "{sort(all('offer') where stage == 'start', name) | and}. A proposal still being thought through." },
+      { "figure": "first(all('package') where standing == 'recommended').net", "as": "money", "currency": "USD", "label": "The package we recommend, after the discount" },
+      { "list": "all('package') where standing == 'recommended'", "as": "card", "limit": 1 },
+      { "headline": "The offers" },
+      { "text": "{count(all('offer') where stage == 'start') | words} ways in and {count(all('offer') where stage == 'later') | words} for afterwards." },
+      { "list": "all('offer')", "group": { "by": "stage", "headings": { "start": "The way in", "later": "For afterwards" } }, "as": "card", "empty": "No offers yet." },
+      { "headline": "Open questions" },
+      { "list": "all('question') where status == 'open'", "sort": "name", "as": "row", "limit": 5, "empty": "Nothing is open." }
+    ],
+    "offer": {
+      "card": [
+        { "title": "{name}" },
+        { "badge": "{mode}", "tone": "accent" },
+        { "text": "{duration}" },
+        { "text": "{summary}" },
+        { "text": "{outcome}", "tone": "accent" },
+        { "text": "For {out('serves') | and}. Answers {count(out('answers')) | words} of the things we heard." },
+        { "figure": "netEach", "as": "money", "currency": "USD", "label": "Each, after the discount" },
+        { "text": "{list | money} at list, less {either(first(all('party') where role == 'client').discount, 0)}%. {net | money} over {units | words} {units | plural: 'unit'}." }
+      ],
+      "row": [
+        { "title": "{name}" },
+        { "text": "× {units}, {total | money} at list" }
+      ]
+    },
+    "package": {
+      "row": [
+        { "title": "{name}" },
+        { "when": "standing == 'recommended'", "show": [{ "badge": "Recommended", "tone": "accent" }] },
+        { "text": "{summary}" },
+        { "list": "out('includes')", "as": "row", "empty": "Nothing in this package yet." },
+        { "figure": "net", "as": "money", "currency": "USD", "label": "After the discount" }
+      ],
+      "card": [
+        { "title": "{name}" },
+        { "text": "{summary}" },
+        { "field": "net", "as": "money" },
+        { "text": "{count(out('includes')) | words} {count(out('includes')) | plural: 'offer'}: {out('includes') | and}" }
+      ],
+      "page": [
+        { "headline": "What is in it" },
+        { "list": "out('includes')", "as": "row", "empty": "Nothing in this package yet." },
+        { "figure": "net", "as": "money", "currency": "USD", "label": "After the discount" }
+      ]
+    },
+    "signal": {
+      "row": [
+        { "title": "{name}" },
+        { "text": "{meaning}" },
+        { "when": "type != 'fact'", "show": [{ "list": "in('answers')", "as": "row", "empty": "No offer answers this yet." }] }
+      ]
+    },
+    "question": {
+      "card": [
+        { "title": "{name}" },
+        { "text": "{detail}" },
+        { "when": "exists(out('about'))", "show": [{ "text": "About {out('about') | and}." }] }
+      ]
+    }
+  },
+  "policy": {
+    "grants": [{ "roles": "*", "mutations": "*" }],
+    "sees": [
+      { "roles": ["owner"], "kinds": ["party", "stakeholder", "signal", "offer", "package", "question"] },
+      { "roles": ["partner"], "kinds": ["stakeholder", "signal", "package", "question"] },
+      { "roles": ["partner"], "kinds": ["offer"], "own": true }
+    ]
+  }
+}

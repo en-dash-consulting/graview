@@ -25,6 +25,14 @@ export const SHIPPED_LENSES = {
   board: { binds: "entities", requiredRoles: ["slots", "x", "y", "fill"], options: ["fillFrom", "slotCode", "zones", "aspect", "emptyLabel", "pickTarget", "arranging", "arrange"] },
   plan: { binds: "entities", requiredRoles: ["regions", "outline"], options: ["hues", "aspect", "undrawnLabel", "strayLabel", "draw", "place", "help"] },
   reach: { binds: "nothing", requiredRoles: [], options: [] },
+  /**
+   * A PLACE DRAWN FROM BLOCKS (FR-81): `options.blocks` is a list from the
+   * closed set the home and every card are written in — headlines, figures,
+   * lists of records drawn by their own cards and rows — about no one
+   * record, standing on the kind its `on` names. The data-only way to a
+   * picture no shipped lens draws.
+   */
+  blocks: { binds: "nothing", requiredRoles: [], options: ["blocks"] },
 } as const satisfies Record<string, { binds: "fields" | "entities" | "nothing"; requiredRoles: readonly string[]; options: readonly string[] }>;
 
 export type ShippedLensName = keyof typeof SHIPPED_LENSES;
@@ -224,6 +232,10 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
         }
       }
       stands = [main];
+    } else if (lens.name === "blocks") {
+      // A place drawn from blocks stands where it is told, and draws what its blocks say (their words are checked with the views).
+      if (!lens.on) return bad(`${at}.on`, "it does not say which kind it stands on", `Say "on": "<the kind it is a place of>".`);
+      if (!Array.isArray(options["blocks"]) || options["blocks"].length === 0) return bad(`${at}.options.blocks`, "it has no blocks to draw", `Say "options": { "blocks": [{ "headline": "…" }, { "list": "all('<kind>')", "as": "card" }] }.`);
     } else {
       // The reach lens draws the policy, over the people: it stands where it is told, or on the people.
       const people = ["user", "person", "member"].find((kind) => kinds.has(kind));

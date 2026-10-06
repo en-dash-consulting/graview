@@ -119,6 +119,14 @@ export interface ViewRegistry<S extends AnySchema, V = unknown> {
    */
   arrange?(arrangement: PagesArrangement | undefined): ViewRegistry<S, V>;
   arrangement?(): PagesArrangement | undefined;
+  /**
+   * THE HOME'S OWN VIEW (FR-81), which no kind owns: what both faces draw
+   * as the home's body in place of the derived one, once there is
+   * something to show. `home` sets it (the last word wins); a registry
+   * that was never given one answers undefined and the home is derived.
+   */
+  home?(view: V | undefined): ViewRegistry<S, V>;
+  homeView?(): V | undefined;
 }
 
 const key = (kind: string, cell: ViewCell, as = "") =>
@@ -146,6 +154,7 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
   const order: ViewRegistration<V>[] = [];
 
   let arranged: PagesArrangement | undefined;
+  let homeView: V | undefined;
 
   const registry: ViewRegistry<S, V> = {
     arrange(arrangement) {
@@ -153,6 +162,11 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
       return registry;
     },
     arrangement: () => arranged,
+    home(view) {
+      if (view !== undefined) homeView = view;
+      return registry;
+    },
+    homeView: () => homeView,
     register(kind, cell, view, meta) {
       const registration: ViewRegistration<V> = {
         kind,

@@ -31,7 +31,7 @@ export interface TemplatePart {
 }
 
 /** Where the formatter begins: the last bar that is not inside quotes and not half of `||`. */
-function filterBar(inner: string): number {
+export function filterBar(inner: string): number {
   let quote: string | undefined;
   let bar = -1;
   for (let i = 0; i < inner.length; i++) {
@@ -82,6 +82,26 @@ export class TemplateError extends Error {
   constructor(readonly sentence: string) {
     super(sentence);
   }
+}
+
+/**
+ * The braces of a template, in order: each `{…}` as written, with where its
+ * formatter begins inside it — so a rewrite can change an expression and
+ * keep what was said after the bar, spaces and quoted words included.
+ */
+export function templateBraces(template: string): readonly { readonly inner: string; readonly bar: number }[] {
+  const out: { inner: string; bar: number }[] = [];
+  let i = 0;
+  while (i < template.length) {
+    const open = template.indexOf("{", i);
+    if (open < 0) break;
+    const close = template.indexOf("}", open);
+    if (close < 0) break;
+    const inner = template.slice(open + 1, close);
+    out.push({ inner, bar: filterBar(inner) });
+    i = close + 1;
+  }
+  return out;
 }
 
 export function parseTemplate(template: string): readonly TemplatePart[] {
@@ -197,6 +217,8 @@ export interface RenderContext {
   readonly graph?: GraphReader;
   readonly bindings?: Readonly<Record<string, Value>>;
   readonly today?: string;
+  /** The steps each part may take; 500 unless the surface says (a home sweeps whole kinds). */
+  readonly budget?: number;
 }
 
 /** Render a parsed template. A part that cannot be judged renders as "—" rather than failing the whole sentence. */
@@ -211,7 +233,7 @@ export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContex
           subject: ctx.node,
           kinds: ctx.kinds,
           today,
-          budget: 500,
+          budget: ctx.budget ?? 500,
           ...(ctx.bindings ? { bindings: ctx.bindings } : {}),
         });
         return show(value, part.format, today, part.formatArgs);

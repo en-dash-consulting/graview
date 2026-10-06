@@ -71,6 +71,7 @@ export {
 export type { SeatAnswer, SeatOutcome, SeatTurn } from "./seat.js";
 export { Wordmark } from "./wordmark.js";
 export { Places } from "./places.js";
+export { HomeLanding } from "./home-landing.js";
 export { FindBox } from "./find.js";
 export { ShowInstallation } from "./installation.js";
 export { Seats } from "./seats.js";
@@ -114,7 +115,8 @@ export type { Brand, Scheme, ThemeCssOptions, ThemeTokens } from "./theme.js";
 // Generic views for every cell, derived from the declaration.
 export { hueFor, registerDefaultViews } from "./default-views.js";
 // Views as data (FR-03), and the default for a cell drawn inside a view of your own (FR-36).
-export { compileBlocks, registerViewSpecs, safeHref, SpecBlocks, SpecView, SPEC_VIEW_CSS, useSpecContext } from "./spec-views.js";
+export { compileBlocks, MAX_LIST_DEPTH, registerViewSpecs, safeHref, sayNumber, SpecBlocks, SpecLinks, SpecPlace, SpecView, SPEC_VIEW_CSS, useSpecContext } from "./spec-views.js";
+export type { SpecLinkTo } from "./spec-views.js";
 export type { SpecBlock, SpecContext } from "./spec-views.js";
 export { DefaultView, DefaultViewElsewhere, defaultViewsOf } from "./default-view.js";
 export { hasFigure, KindFigure } from "./figure.js";
@@ -199,5 +201,5 @@ export { THUMBNAIL_BUDGET } from "./default-views.js";
 export { withMore } from "./lens/more.js";
 export { fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews } from "./view-doors.js";
 // A declared lens draws (FR-79): each titled lens a place, from the declaration alone; the arrangement beside them (FR-80).
-export { fetchDeclaredLenses, registerDeclaredLenses } from "./declared-lens-doors.js";
+export { fetchDeclaredLenses, fetchHomeView, registerDeclaredLenses } from "./declared-lens-doors.js";
 export { declaredViews } from "./declared-views.js";

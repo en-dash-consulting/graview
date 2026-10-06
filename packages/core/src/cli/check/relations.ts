@@ -188,7 +188,8 @@ export function checkActsFromEnds<S extends AnySchema>(ctx: CheckContext<S>, wri
       const hidden = new Set(definition.display?.hide ?? []);
       const readable = Object.keys(shape).filter((key) => key !== "label" && !hidden.has(key));
       for (const key of definition.display?.glance ?? []) {
-        if (key in shape) continue;
+        // A computed field is a glance's to say too: the surfaces work it out over the seat's graph (FR-83).
+        if (key in shape || Object.prototype.hasOwnProperty.call((definition as { computed?: object }).computed ?? {}, key)) continue;
         add({
           severity: "error",
           code: "glance-unknown-field",

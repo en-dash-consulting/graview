@@ -18,6 +18,7 @@ import {
   type Arrangement,
   type Condition,
 } from "@graview/core";
+import { withComputed } from "@graview/core/document";
 import { isDefaultView, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -168,7 +169,9 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
         </li>
       );
     }
-    const said = glance(node as Record<string, unknown>, definition, label);
+    // A glance may say a computed field (FR-83), worked out over what this seat sees.
+    const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(store.schema, store.graph as never, node as never) : node;
+    const said = glance(read as Record<string, unknown>, definition, label);
     // Found by the words in a field rather than the name: say which, as the Find box does.
     const why = typed.words ? matchNode(definition, node, typed.words) : undefined;
     return (

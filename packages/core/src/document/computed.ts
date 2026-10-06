@@ -163,3 +163,29 @@ function cycleFrom(start: string, reads: ReadonlyMap<string, readonly string[]>)
   };
   return walk(start);
 }
+
+/**
+ * WHETHER A COMPUTED FIELD IS WORKED OUT FROM ITS RECORD ALONE — its stored
+ * fields and other such computed fields, no relation walked and no kind
+ * swept. A label and a describe are said with no graph in hand (a label
+ * function is handed the record and nothing else), so they may name a
+ * computed field only when this is true: `total = list * units` is said
+ * rightly anywhere, and a price after a discount read from another record
+ * would be said wrongly everywhere.
+ */
+export function workedOutAlone(definition: { readonly fields: ReadonlySet<string> | Readonly<Record<string, unknown>>; readonly computed?: Readonly<Record<string, ComputedField>> } | undefined, name: string, seen: ReadonlySet<string> = new Set()): boolean {
+  const entry = computedOf(definition).get(name);
+  if (!entry || seen.has(name)) return false;
+  let expr: Expr;
+  try {
+    expr = parseExpr(entry.expr);
+  } catch {
+    return false;
+  }
+  const shape = analyzeExpr(expr);
+  if (shape.edges.length > 0 || shape.sweeps.length > 0 || [...shape.functions].some((fn) => fn === "out" || fn === "in" || fn === "all")) return false;
+  const fields = definition!.fields;
+  const isField = (n: string) => (fields instanceof Set ? fields.has(n) : Object.prototype.hasOwnProperty.call(fields, n));
+  const next = new Set([...seen, name]);
+  return [...shape.names].every((n) => isField(n) || workedOutAlone(definition, n, next));
+}

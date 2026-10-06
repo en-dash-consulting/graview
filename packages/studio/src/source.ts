@@ -1,5 +1,6 @@
 import type { AnyMutationDefinition, GraphEdge, GraphSnapshot, AnySchema, GraviewApp } from "@graview/core";
 import { fieldTypeOf } from "./from-declaration.js";
+import { computedFor } from "./to-declaration.js";
 import type { FieldType } from "./meta.js";
 import { printZod, type ZodUses } from "./zod-source.js";
 
@@ -234,6 +235,20 @@ export function kindLines(
   if (lifecycleField && retired) lines.push(`  lifecycle: { field: ${q(lifecycleField)}, retired: ${retired[0] === "date" ? '"date"' : `[${retired.map(q).join(", ")}]`} },`);
   // The drawing is part of the declaration, so it is part of the file.
   if (str(kind, "figure")) lines.push(`  figure: ${q(str(kind, "figure")!)},`);
+  // What the kind works out (FR-83), as an app writes it: the expression, or the expression with its words.
+  const computed = computedFor(read, kind);
+  if (computed) {
+    lines.push(`  computed: {`);
+    for (const [called, spec] of Object.entries(computed)) {
+      const key = /^[a-z_$][\w$]*$/i.test(called) ? called : q(called);
+      lines.push(
+        typeof spec === "string"
+          ? `    ${key}: ${q(spec)},`
+          : `    ${key}: { expr: ${q(spec.expr)}${spec.label ? `, label: ${q(spec.label)}` : ""}${spec.description ? `, description: ${q(spec.description)}` : ""} },`,
+      );
+    }
+    lines.push(`  },`);
+  }
   /*
    * WHAT THE STUDIO DOES NOT MODEL, IT WRITES BACK ANYWAY.
    *
@@ -245,7 +260,8 @@ export function kindLines(
    * be written is a `format` function; the file SAYS SO where it finds
    * one rather than losing it silently.
    */
-  lines.push(...carried(base, label(kind), new Set(fields.map((field) => field.name)), keptFormats));
+  // A glance or a label may name a computed field: carried while it is worked out.
+  lines.push(...carried(base, label(kind), new Set([...fields.map((field) => field.name), ...Object.keys(computed ?? {})]), keptFormats));
   lines.push(`});`);
   return lines;
 }

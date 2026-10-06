@@ -12,6 +12,7 @@
     "paths": {
       "@graview/core/testing": ["./packages/core/src/testing.ts"],
       "@graview/core/cli": ["./packages/core/src/cli/index.ts"],
+      "@graview/core/describe": ["./packages/core/src/describe.ts"],
       "@graview/core/document": ["./packages/core/src/document/index.ts"],
       "@graview/core/conformance": ["./packages/core/src/conformance/index.ts"],
       "@graview/core": ["./packages/core/src/index.ts"],
