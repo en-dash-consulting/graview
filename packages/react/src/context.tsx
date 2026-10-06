@@ -695,9 +695,18 @@ export function GraviewProvider<S extends AnySchema>({
        * picture.
        */
       if (!resolved.overview && resolved.focusId === null) {
-        if (homeView.focusId !== null) {
-          resolved = { ...resolved, focusId: homeView.focusId };
-        } else if (homeView.overview === true) {
+        /*
+         * A HOME THAT IS GONE IS NO HOME. The stop an app opened on is its
+         * home, and it may name a record — an embed handed `#focus=<id>`,
+         * an address (FR-106) — that was since removed or that this seat
+         * may not see. Falling back to it put the dead id straight back,
+         * the next resolution took it out again, and the page re-rendered
+         * for ever; such a home gives way to where the app opens.
+         */
+        const home = homeView.focusId !== null && !stillThere(homeView.focusId) ? (openingView(views, given.schema) ?? { ...EMPTY_VIEW, overview: true }) : homeView;
+        if (home.focusId !== null && stillThere(home.focusId)) {
+          resolved = { ...resolved, focusId: home.focusId };
+        } else if (home.overview === true) {
           // An app that OPENS from altitude has no in-stack default:
           // falling out of the overview with nothing to focus lands back
           // on the overview, so Escape at the outermost place is a no-op
@@ -707,7 +716,7 @@ export function GraviewProvider<S extends AnySchema>({
       }
       return resolved;
     },
-    [withoutWhatIsGone, store, homeView, who],
+    [withoutWhatIsGone, stillThere, store, homeView, who, views, given.schema],
   );
 
   /*
