@@ -29,4 +29,28 @@ export const SPEC_VIEW_CSS = `
 .graview-spec-row .graview-spec-group { flex-wrap: nowrap; }
 .graview-spec-divider { width: 100%; margin: 2px 0; border: 0; border-top: 1px solid var(--graview-edge); }
 .graview-spec-figure { display: inline-flex; width: 22px; height: 22px; }
+.graview-spec-row[data-graview-tall] { flex-direction: column; align-items: stretch; white-space: normal; overflow: visible; border-radius: 10px; padding: 8px 12px; }
+.graview-spec-row[data-graview-tall] > * { overflow: visible; white-space: normal; }
+.graview-spec-row[data-graview-tall] .graview-spec-badge { align-self: flex-start; }
+.graview-spec-home, .graview-spec-place { gap: 14px; }
+.graview-spec-headline { margin: 0; font-family: var(--graview-font-display, inherit); font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; overflow-wrap: anywhere; font-size: 1.125rem; }
+.graview-spec-headline[data-level="1"] { font-size: clamp(1.75rem, 5vw, 2.75rem); line-height: 1.05; text-wrap: balance; }
+.graview-spec-headline[data-level="2"] { font-size: clamp(1.25rem, 3vw, 1.625rem); margin-top: 8px; }
+.graview-spec-number { display: grid; gap: 2px; justify-items: start; }
+.graview-spec-number-value { font-family: var(--graview-font-display, inherit); font-weight: 600; font-size: 1.75rem; line-height: 1.05; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
+.graview-spec-card .graview-spec-number-value, .graview-spec-row .graview-spec-number-value { font-size: 1.25rem; }
+.graview-spec-number .graview-spec-label { font-size: 0.8125rem; }
+.graview-spec-listing { display: grid; gap: 10px; min-width: 0; position: relative; z-index: ${LOCAL_LAYERS.raised}; }
+.graview-spec-list-group { display: grid; gap: 8px; min-width: 0; }
+.graview-spec-list-heading { margin: 6px 0 0; font-family: var(--graview-font-display, inherit); font-size: 1rem; font-weight: 600; padding-bottom: 4px; border-bottom: 1px solid var(--graview-edge-bright, var(--graview-edge)); }
+.graview-spec-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; min-width: 0; }
+.graview-spec-list[data-as="card"] { grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 10px; }
+.graview-spec-list[data-as="names"] { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.graview-spec-item { position: relative; min-width: 0; }
+.graview-spec-item-name { font-size: 0.875rem; font-weight: 600; }
+.graview-spec-item-link { all: unset; position: absolute; inset: 0; min-height: 24px; border-radius: 10px; cursor: pointer; }
+.graview-spec-item-link:hover { background: color-mix(in srgb, var(--graview-accent) 6%, transparent); }
+.graview-spec-item-link:focus-visible { outline: 2px solid var(--graview-accent); outline-offset: 2px; }
+.graview-spec-item .graview-spec-listing { z-index: ${LOCAL_LAYERS.raised}; }
+.graview-spec-empty, .graview-spec-more { color: var(--graview-ink-muted); }
 `;

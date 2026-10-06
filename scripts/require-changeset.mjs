@@ -20,6 +20,14 @@ import { fileURLToPath } from "node:url";
 import { saysCompatibility, surfacesTouched } from "./lib/surfaces.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+
+// The Version packages pull request is where changesets are spent: it bumps
+// every package and removes the changesets that asked for it.
+const head = process.env["GITHUB_HEAD_REF"] || process.env["GITHUB_REF_NAME"] || "";
+if (head.startsWith("changeset-release/")) {
+  process.stdout.write("The Version packages pull request spends changesets; it needs none of its own.\n");
+  process.exit(0);
+}
 const base = process.argv[2] ?? process.env["GITHUB_BASE_REF"] ?? "main";
 
 const git = (...args) =>

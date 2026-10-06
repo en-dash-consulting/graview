@@ -11,13 +11,13 @@ import type {
   Store,
   ViewRegistry,
 } from "@graview/core";
-import { search, tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen, touchWeights } from "@graview/core";
+import { openingOf, search, tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen, touchWeights, type Place, type PagesArrangement } from "@graview/core";
 import { loadIntelligenceConfig, saveIntelligenceConfig, type AffordanceProvider, type IntelligenceConfig } from "@graview/tools/frame";
 import { honourSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout/view";
-import { EMPTY_VIEW, edgeOfSelection, isBandAggregate, kindOfCard, kindsOfAggregate, withFocus, withSelection } from "@graview/layout/view";
+import { EMPTY_VIEW, aggregateId, edgeOfSelection, isBandAggregate, kindOfCard, kindsOfAggregate, withFocus, withSelection } from "@graview/layout/view";
 import {
   createContext,
   useCallback,
@@ -484,10 +484,16 @@ export function GraviewProvider<S extends AnySchema>({
     () => (presence ? [...appSettings, ...PRESENCE_SETTINGS] : appSettings),
     [appSettings, presence],
   );
+  /*
+   * WHERE THE APP OPENS: the view it was handed, else the place its
+   * declaration names first (FR-80, `pages.first`), else nowhere in
+   * particular.
+   */
+  const [opening] = useState<ViewState | undefined>(() => initialView ?? openingView(views, given.schema));
   const [internalView, setInternalView] = useState<ViewState>(() =>
-    withSelection(initialView ?? EMPTY_VIEW, initialSelection ?? initialView?.selection ?? []),
+    withSelection(opening ?? EMPTY_VIEW, initialSelection ?? opening?.selection ?? []),
   );
-  const homeView = useRef<ViewState>(initialView ?? EMPTY_VIEW).current;
+  const homeView = useRef<ViewState>(opening ?? EMPTY_VIEW).current;
   const [menuAt, setMenuAt] = useState<PointerMenu | null>(null);
   const [actsDoor, registerActsDoor] = useState<ActsDoor | null>(null);
   const [railLeft, registerRail] = useState<number | null>(null);
@@ -1080,4 +1086,20 @@ const NO_POINT = (): ScenePoint | null => null;
 export function useScenePointer(): ScenePoint | null {
   const { pointer } = useGraview();
   return useSyncExternalStore(pointer.subscribe, pointer.snapshot, NO_POINT);
+}
+
+/**
+ * THE VIEW A DECLARATION OPENS ON (FR-80): `pages.first` as the registry
+ * holds it, resolved against the places beside it — a place is its kind's
+ * picture by that name, a kind is its district, and the home (or nothing)
+ * is the app's own default. Undefined when there is nothing to say.
+ */
+export function openingView(
+  views: { places(): readonly Place[]; arrangement?(): PagesArrangement | undefined },
+  schema: AnySchema,
+): ViewState | undefined {
+  const opening = openingOf(views.arrangement?.()?.first, schema, views.places());
+  if (!opening || opening.to === "home") return undefined;
+  if (opening.to === "place") return { ...EMPTY_VIEW, focusId: aggregateId(opening.place.kind), within: { view: opening.place.as } };
+  return { ...EMPTY_VIEW, focusId: aggregateId(opening.kind) };
 }

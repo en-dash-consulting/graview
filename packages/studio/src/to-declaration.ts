@@ -1,4 +1,5 @@
 import {
+  bindsOf,
   createSchema,
   defineInvariant,
   defineNode,
@@ -19,7 +20,7 @@ import {
 import { expressionRule } from "@graview/core/document";
 import { z } from "zod";
 import { DECLARED_KIND, type FieldType } from "./meta.js";
-import { fieldTypeOf } from "./from-declaration.js";
+import { fieldTypeOf, lensNodeId } from "./from-declaration.js";
 
 /*
  * THE GRAPH READ BACK AS A DECLARATION. Kinds become `defineNode`, fields
@@ -412,11 +413,11 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     return { ok: true, bindings: out as LensDeclaration["bindings"] };
   };
 
-  const baseLenses = new Map((base?.lenses ?? []).map((lens) => [lens.name, lens]));
+  const baseLenses = new Map((base?.lenses ?? []).map((lens) => [lensNodeId(lens), lens]));
   const lenses: LensDeclaration[] = read.ofKind("lens").flatMap((lens) => {
-    const kept = baseLenses.get(name(lens));
+    const kept = baseLenses.get(lens.id) ?? (base?.lenses ?? []).find((one) => one.name === name(lens) && !one.title);
     const requiredRoles = list(lens, "requires") ?? [];
-    const binds = (str(lens, "binds") as "fields" | "entities" | undefined) ?? kept?.binds ?? "fields";
+    const binds = (str(lens, "binds") as "fields" | "entities" | undefined) ?? (kept ? bindsOf(kept) : "fields");
     const followed = followBindings(kept?.bindings, binds);
     if (!followed.ok) return [];
     return [
@@ -426,6 +427,8 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
         requiredRoles,
         ...(str(lens, "binds") ? { binds: str(lens, "binds") as "fields" | "entities" } : {}),
         ...(followed.bindings ? { bindings: followed.bindings } : {}),
+        // The kind a declared lens stands on follows a rename like its bindings (FR-79).
+        ...(kept?.on ? { on: follow(kept.on) } : {}),
       },
     ];
   });

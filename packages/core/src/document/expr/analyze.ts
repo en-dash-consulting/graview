@@ -12,6 +12,16 @@ export interface ExprShape {
   readonly edges: readonly string[];
 }
 
+/**
+ * The argument of a function that is read once PER MEMBER of the set before
+ * it, with that member as its subject: every(S, cond), some(S, cond),
+ * sum/min/max(S, expr) and sort(S, key, …). Its bare names are the
+ * members', not the subject's.
+ */
+export function perMember(e: Extract<Expr, { t: "call" }>, i: number): boolean {
+  return i === 1 && ["every", "some", "sum", "min", "max", "sort"].includes(e.fn);
+}
+
 /** What an expression touches, without running it — for `graview check`-style findings. */
 export function analyzeExpr(expr: Expr): ExprShape {
   const names = new Set<string>();
@@ -49,13 +59,51 @@ export function analyzeExpr(expr: Expr): ExprShape {
         const literal = first?.t === "lit" && typeof first.value === "string" ? first.value : undefined;
         if (e.fn === "all" && literal) sweeps.push(literal);
         if ((e.fn === "out" || e.fn === "in") && literal) edges.push(literal);
-        const lazy = e.fn === "every" || e.fn === "some";
-        const fieldOfMembers = (e.fn === "sum" || e.fn === "min" || e.fn === "max") && e.args[1]?.t === "ident";
-        e.args.forEach((x, i) => (fieldOfMembers && i === 1 ? undefined : visit(x, inWhere || (lazy && i === 1))));
+        e.args.forEach((x, i) => visit(x, inWhere || perMember(e, i)));
         return;
       }
     }
   };
   visit(expr, false);
   return { names, functions, unknownFunctions: [...functions].filter((f) => !known.has(f)), sweeps, edges };
+}
+
+/**
+ * HOW AN EXPRESSION'S WORK GROWS WITH THE GRAPH, as a power of its size:
+ * 0 reads a record and its neighbours, 1 sweeps a kind (`all('offer')`),
+ * 2 sweeps a kind once for every member of a sweep. A per-member argument
+ * costs once per member, so its degree ADDS to its set's; anything else
+ * costs the most of its parts. Relations are walked, not swept: a record's
+ * neighbours are its own, however large the graph.
+ *
+ * `computedDegree(name)` is what reading a name costs when it is a computed
+ * field (a bare name is the subject's; `x.name` and a per-member name may
+ * be any kind's, so the caller answers with the dearest of that name).
+ */
+export function costDegree(expr: Expr, computedDegree: (name: string, bare: boolean) => number): number {
+  const degree = (e: Expr, bare: boolean): number => {
+    switch (e.t) {
+      case "lit":
+        return 0;
+      case "ident":
+        return computedDegree(e.name, bare);
+      case "list":
+        return Math.max(0, ...e.items.map((x) => degree(x, bare)));
+      case "member":
+        return degree(e.object, bare) + computedDegree(e.name, false);
+      case "unary":
+        return degree(e.operand, bare);
+      case "binary":
+        return Math.max(degree(e.left, bare), degree(e.right, bare));
+      case "where":
+        return degree(e.set, bare) + degree(e.filter, false);
+      case "call": {
+        const own = e.fn === "all" ? 1 : 0;
+        const set = e.args[0] ? degree(e.args[0], bare) : 0;
+        const rest = e.args.map((x, i) => (i === 0 ? 0 : perMember(e, i) ? set + degree(x, false) : degree(x, bare)));
+        return Math.max(own, set, ...rest);
+      }
+    }
+  };
+  return degree(expr, true);
 }

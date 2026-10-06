@@ -10,6 +10,7 @@ import {
   type NodeOfSchema,
   violationsTouching,
 } from "@graview/core";
+import { withComputed } from "@graview/core/document";
 import { aggregateId, kindCardId, marqueeHeightFor, rosterRows, withFocus, withJackIn, withOverview, withPast, withWithin } from "@graview/layout/view";
 import {
   createViews,
@@ -432,7 +433,10 @@ export function registerDefaultViews<S extends AnySchema>(
       if (!node) return null;
       // The same question the record on a page asks, answered by the same
       // function — they used to answer it separately and diverge.
-      const fields = readableFields(node, definition, {
+      // A glance may say a computed field (FR-83): worked out over the graph this seat sees.
+      const { store } = useGraview<S>();
+      const read = (definition as { computed?: object } | undefined)?.computed ? (withComputed(store.schema as AnySchema, store.graph as never, node as never) as typeof node) : node;
+      const fields = readableFields(read, definition, {
         limit: 3,
         said: [labelOf(definition, node)],
         glance: true,

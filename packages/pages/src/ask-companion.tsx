@@ -4,4 +4,4 @@
  * name, not as `import("@graview/primitives")`: a namespace fetched whole
  * keeps every export of the package alive, the lenses with it.
  */
-export { Companion } from "@graview/primitives";
+export { Companion } from "@graview/primitives/scene";

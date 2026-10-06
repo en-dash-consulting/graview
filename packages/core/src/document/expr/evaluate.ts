@@ -24,6 +24,12 @@ export interface KindShape {
   readonly fields: ReadonlySet<string>;
   /** Edge kinds declared FROM this kind, and whether each holds one target. */
   readonly edges: ReadonlyMap<string, "one" | "many">;
+  /**
+   * Values worked out rather than stored (FR-83), by name: read like a field,
+   * evaluated with the record as their subject, from the same budget as the
+   * expression that reads them.
+   */
+  readonly computed?: ReadonlyMap<string, Expr>;
 }
 
 export interface EvalContext {
@@ -64,10 +70,37 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
   };
   const today = ctx.today ?? new Date().toISOString().slice(0, 10);
   const now = ctx.now ?? new Date().toISOString();
+  /*
+   * A COMPUTED FIELD IS WORKED OUT ONCE PER EVALUATION, and never while it
+   * is being worked out: a cycle the check could not see (across kinds,
+   * through a relation) is a sentence here, not a stack overflow. Its own
+   * expression sees the record's fields and nothing an act was handed.
+   */
+  const worked = new Map<string, Value>();
+  const working = new Set<string>();
+  let bindings = ctx.bindings;
+  const computed = (node: AnyGraphNode, name: string, expr: Expr, at: number): Value => {
+    const key = `${node.id}\u0000${name}`;
+    if (worked.has(key)) return worked.get(key)!;
+    if (working.has(key)) throw new ExprEvalError(`"${name}" of ${withArticle(node.kind)} depends on itself`, at);
+    working.add(key);
+    const outer = bindings;
+    bindings = undefined;
+    try {
+      const value = run(expr, node);
+      worked.set(key, value);
+      return value;
+    } finally {
+      bindings = outer;
+      working.delete(key);
+    }
+  };
 
   const field = (node: AnyGraphNode, name: string, at: number): Value => {
     spend(1, at);
     const shape = ctx.kinds.get(node.kind);
+    const worksOut = shape?.computed?.get(name);
+    if (worksOut) return computed(node, name, worksOut, at);
     // A record's OWN values only: `constructor` or `__proto__` is not a field of anything, and reading one would hand a template a function.
     const own = Object.prototype.hasOwnProperty.call(node, name);
     if (shape?.fields.has(name) || own) {
@@ -126,7 +159,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
       case "list":
         return e.items.map((item) => run(item, subject));
       case "ident": {
-        const bound = ctx.bindings && Object.prototype.hasOwnProperty.call(ctx.bindings, e.name) ? ctx.bindings[e.name] : undefined;
+        const bound = bindings && Object.prototype.hasOwnProperty.call(bindings, e.name) ? bindings[e.name] : undefined;
         if (bound !== undefined) return bound;
         if (subject) return field(subject, e.name, e.at);
         throw new ExprEvalError(`"${e.name}" means nothing in a rule over the whole graph`, e.at);
@@ -243,19 +276,50 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
       case "max": {
         arity(2);
         const set = asSet(arg(0), e.at, e.fn);
-        // The field may be quoted or bare: sum(S, 'quote') and sum(S, quote) mean the same.
+        spend(set.nodes.length, e.at);
+        /*
+         * Each member's value: a field named bare or quoted — sum(S, quote),
+         * sum(S, 'quote') — or any expression read with the member as its
+         * subject: sum(out('includes'), list * units).
+         */
         const second = e.args[1]!;
-        const name = second.t === "ident" ? second.name : word(1);
+        const quoted = second.t === "lit" && typeof second.value === "string" ? second.value : undefined;
+        const what = second.t === "ident" ? `'${second.name}'` : quoted !== undefined ? `'${quoted}'` : "…";
         const values = set.nodes
-          .map((n) => field(n, name, e.at))
+          .map((n) => (second.t === "ident" ? field(n, second.name, e.at) : quoted !== undefined ? field(n, quoted, e.at) : withSubject(n, second)))
           .filter((v): v is number => {
             if (v === null) return false;
-            if (typeof v !== "number") throw new ExprEvalError(`${e.fn}(…, '${name}') needs a number field, and found ${describe(v)}`, e.at);
+            if (typeof v !== "number") throw new ExprEvalError(`${e.fn}(…, ${what}) needs a number for each member, and found ${describe(v)}`, e.at);
             return true;
           });
         if (e.fn === "sum") return values.reduce((s, v) => s + v, 0);
         if (values.length === 0) return null;
         return e.fn === "min" ? Math.min(...values) : Math.max(...values);
+      }
+      case "first": {
+        arity(1);
+        return asSet(arg(0), e.at, "first").nodes[0] ?? null;
+      }
+      case "sort": {
+        arity(2, 3);
+        const set = asSet(arg(0), e.at, "sort");
+        const direction = e.args.length === 3 ? arg(2) : "asc";
+        if (direction !== "asc" && direction !== "desc") throw new ExprEvalError("sort(…) goes 'asc' or 'desc'", e.at);
+        const n = set.nodes.length;
+        // Each member's key, then the comparisons: n log n of them, paid for before they are made.
+        spend(n + n * Math.ceil(Math.log2(n + 1)), e.at);
+        const keyed = set.nodes.map((node, i) => ({ node, i, key: withSubject(node, e.args[1]!) }));
+        const sign = direction === "desc" ? -1 : 1;
+        keyed.sort((a, b) => compareKeys(a.key, b.key, sign, e.at) || a.i - b.i);
+        return new NodeSet(keyed.map((k) => k.node));
+      }
+      case "either": {
+        if (e.args.length < 1) throw new ExprEvalError("either(…) takes at least one argument", e.at);
+        for (let i = 0; i < e.args.length; i++) {
+          const v = arg(i);
+          if (v !== null && !(v instanceof NodeSet && v.nodes.length === 0)) return v;
+        }
+        return null;
       }
       case "present": {
         arity(1);
@@ -318,11 +382,32 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     }
   }
 
+  /*
+   * ORDER, for sort(…): numbers by size, words alphabetically, false before
+   * true, dates as the words they are written in, a list by its first value
+   * and then its next. Nothing sorts last whichever way, so "the top one"
+   * is never a record with no value.
+   */
+  function compareKeys(a: Value, b: Value, sign: number, at: number): number {
+    if (a === null || b === null) return a === b ? 0 : a === null ? 1 : -1;
+    if (Array.isArray(a) && Array.isArray(b)) {
+      for (let i = 0; i < Math.max(a.length, b.length); i++) {
+        const c = compareKeys((a[i] ?? null) as Value, (b[i] ?? null) as Value, sign, at);
+        if (c !== 0) return c;
+      }
+      return 0;
+    }
+    const kind = (v: Value) => (typeof v === "number" || typeof v === "string" || typeof v === "boolean" ? typeof v : describe(v));
+    if (kind(a) !== kind(b) || typeof a === "object" || typeof b === "object") throw new ExprEvalError(`sort(…) cannot put ${describe(a)} and ${describe(b)} in order`, at);
+    if (typeof a === "string") return sign * (a < (b as string) ? -1 : a > (b as string) ? 1 : 0);
+    return sign * (Number(a) - Number(b));
+  }
+
   return run(expr, ctx.subject);
 }
 
 /** The names of every function the language knows — the check reports any other. */
 export const FUNCTIONS = [
   "out", "in", "all", "count", "exists", "every", "some", "sum", "min", "max", "present", "len",
-  "contains", "startsWith", "lower", "today", "now", "date", "days", "hours", "if",
+  "contains", "startsWith", "lower", "today", "now", "date", "days", "hours", "if", "first", "sort", "either",
 ] as const;

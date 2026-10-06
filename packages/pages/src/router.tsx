@@ -1,12 +1,35 @@
 import type { AnySchema } from "@graview/core";
-import { BrowserRouter, MemoryRouter, Route, Routes } from "react-router-dom";
-import { useEffect, useLayoutEffect, useRef, type ComponentType, type ReactNode } from "react";
+import { BrowserRouter, MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
+import { openingOf } from "@graview/core";
+import { pathOfPlace } from "./page-places.js";
+import { pluralSlug } from "./registry.js";
+import { useEffect, useLayoutEffect, useMemo, useRef, type ComponentType, type ReactNode } from "react";
 import { GraviewProvider, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen } from "@graview/react/provider";
 import { PageAsk } from "./ask.js";
 import { FaceControlsRoot } from "./face-controls.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
-import { useLocation, useNavigationType, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
+import { SpecLinks } from "@graview/primitives/pages";
+import { recordPath } from "./registry.js";
+
+/**
+ * WHERE A LISTED RECORD LEADS ON THIS FACE (FR-81, FR-82): a list block in a
+ * home, a lens, a card or a row draws each record as a link, and here a
+ * link is the record's own address, followed by the router.
+ */
+function RecordLinks<S extends AnySchema>({ context, children }: { readonly context: PageContext<S>; readonly children: ReactNode }) {
+  const navigate = useNavigate();
+  const schema = context.store.schema;
+  const value = useMemo(
+    () => ({
+      href: (node: { readonly id: string; readonly kind: string }) => recordPath(schema, node.kind, node.id),
+      go: (node: { readonly id: string; readonly kind: string }) => navigate(recordPath(schema, node.kind, node.id)),
+    }),
+    [schema, navigate],
+  );
+  return <SpecLinks.Provider value={value}>{children}</SpecLinks.Provider>;
+}
 
 /**
  * The routed face, assembled: `/` home, `/:plural` a list per kind,
@@ -137,6 +160,23 @@ function ScrollReset() {
   return <span ref={mark} hidden data-graview-scroll-reset="" />;
 }
 
+/**
+ * WHERE THE APP OPENS (FR-80). A reader who arrives at the home of an app
+ * whose declaration names `pages.first` is taken there instead — a place
+ * to its page, a kind to its list — once: the arrival is replaced, so Back
+ * leaves the app rather than bouncing, and the masthead and every link to
+ * the home still go home.
+ */
+function Opening<S extends AnySchema>({ context, Home }: { readonly context: PageContext<S>; readonly Home: PageComponent<S> }) {
+  const location = useLocation();
+  // The address the reader arrived at is the router's first entry, which no navigation made.
+  const arriving = location.key === "default";
+  const opening = arriving ? openingOf(context.views?.arrangement?.()?.first, context.store.schema, context.views?.places() ?? []) : undefined;
+  const to =
+    opening?.to === "place" ? pathOfPlace(context, opening.place) : opening?.to === "kind" ? `/${pluralSlug(context.store.schema, opening.kind)}` : undefined;
+  return to ? <Navigate to={to} replace /> : <Home context={context} />;
+}
+
 export function PagesRoutes<S extends AnySchema>({
   context,
   registry,
@@ -166,6 +206,7 @@ export function PagesRoutes<S extends AnySchema>({
     // The routed face holds the keyboard the way the scene does, and offers Find and the way back, whichever shell an app draws.
     <FaceRoot context={context} registry={registry}>
     <Shell context={context}>
+    <RecordLinks context={context}>
       <ScrollReset />
       <Routes>
         {/*
@@ -177,7 +218,7 @@ export function PagesRoutes<S extends AnySchema>({
           const Page = component as PageComponent<S>;
           return <Route key={path} path={path} element={<Page context={inside} />} />;
         })}
-        <Route path="/" element={<Home context={inside} />} />
+        <Route path="/" element={<Opening context={inside} Home={Home} />} />
         <Route path="/problems" element={<Problems context={inside} />} />
         {/* What the words find, anywhere: the Find box's matcher at an address. */}
         <Route path="/search" element={<DefaultSearchPage context={inside} />} />
@@ -191,6 +232,7 @@ export function PagesRoutes<S extends AnySchema>({
           element={<KindSwitch context={inside} registry={registry} page="record" />}
         />
       </Routes>
+    </RecordLinks>
     </Shell>
     </FaceRoot>
   );
