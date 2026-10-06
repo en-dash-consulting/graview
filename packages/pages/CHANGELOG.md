@@ -1,5 +1,23 @@
 # @graview/pages
 
+## 0.1.11
+
+### Patch Changes
+
+- Updated dependencies [e6f90e0]
+- Updated dependencies [e6594bb]
+- Updated dependencies [fc50abf]
+- Updated dependencies [31a6383]
+- Updated dependencies [617b432]
+- Updated dependencies [a738797]
+- Updated dependencies [e567a7b]
+- Updated dependencies [a190947]
+  - @graview/core@0.1.11
+  - @graview/primitives@0.1.11
+  - @graview/layout@0.1.11
+  - @graview/react@0.1.11
+  - @graview/tools@0.1.11
+
 ## 0.1.10
 
 ### Patch Changes
