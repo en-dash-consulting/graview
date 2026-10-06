@@ -20,6 +20,7 @@ import {
   type RefCandidate,
   type Store,
 } from "@graview/core";
+import { describePlace } from "@graview/core/describe";
 import { computedValues } from "@graview/core/document";
 import { authorship, markComputed, markGraph, markHits, markNode } from "./untrusted.js";
 import {
@@ -120,6 +121,12 @@ export interface ToolRuntimeOptions<S extends AnySchema> {
    * whoever built the runtime beside a view registry can.
    */
   readonly places?: readonly Place[] | (() => readonly Place[]);
+  /**
+   * The app whose places `describe_place` describes: its home, its lenses,
+   * its views and its arrangement (FR-89). Without it a seat can still be
+   * told what a kind's list, a record's page and the derived home show.
+   */
+  readonly app?: GraviewApp<S>;
 }
 
 const read = (title: string): ToolAnnotations => ({ title, readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
@@ -208,6 +215,23 @@ const READ_TOOLS: readonly ToolDefinition[] = [
     },
     mutating: false,
     annotations: read("Ask what can be done"),
+  },
+  {
+    name: "describe_place",
+    title: "Say what a place shows",
+    description:
+      "Say what one place of the app shows you, as a person in your seat would see it: its headings, its figures as drawn, its lists with each record's title and what its card or row says, the headings a list is grouped under, what an empty list says, and any block that could not be worked out. Pass a place's slug (\"home\", a lens's address like \"the-offers\", a kind's like \"offers\") or a record's id, and width 390 for a phone. Use it after a change to check what somebody now sees, instead of guessing.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        place: { type: "string", description: "\"home\", a place's slug, or a record's id." },
+        width: { type: "number", description: "The screen's width in CSS pixels; 390 is a phone, 1440 when unsaid." },
+      },
+      required: ["place"],
+      additionalProperties: false,
+    },
+    mutating: false,
+    annotations: read("Say what a place shows"),
   },
   {
     name: "preview_mutation",
@@ -618,6 +642,25 @@ export function createToolRuntime<S extends AnySchema>(
             // answer names them, so looking at it looked at them.
             reads: [id, ...out.map((edge) => edge.to), ...inbound.map((edge) => edge.from)],
           };
+        }
+
+        case "describe_place": {
+          const app = options.app ?? ({ name: "", schema: store.schema } as unknown as GraviewApp<S>);
+          const width = typeof args["width"] === "number" && Number.isFinite(args["width"]) && args["width"] > 0 ? args["width"] : 1440;
+          // Described for this seat: what it may see, and nothing else (FR-55).
+          const said = describePlace(store, principal, String(args["place"] ?? ""), { app, width });
+          if (!said.ok) return { ok: false, error: `${said.error} The places are: ${said.places.join(", ")}.` };
+          const reads = new Set<string>();
+          const walk = (parts: readonly unknown[]) => {
+            for (const part of parts as { t: string; groups?: { items: { id: string; parts: unknown[] }[] }[] }[]) {
+              for (const group of part.groups ?? []) for (const item of group.items) {
+                reads.add(item.id);
+                walk(item.parts);
+              }
+            }
+          };
+          walk(said.description.parts);
+          return { ok: true, data: said.description, reads: [...reads] };
         }
 
         case "get_violations": {
