@@ -2,7 +2,10 @@
 id: "0ead790b-f7bc-4dac-be5e-1fd64923894f"
 level: "feature"
 title: "A home view from the closed block set: headline, figure and list (FR-81)"
-status: "pending"
+status: "completed"
+startedAt: "2026-10-06T03:56:09.000Z"
+completedAt: "2026-10-06T03:56:09.000Z"
+endedAt: "2026-10-06T03:56:09.000Z"
 priority: "high"
 tags:
   - "graview-cloud"
@@ -14,5 +17,5 @@ acceptanceCriteria:
   - "Blocks headline (template), figure (expression, formatter, label) and list (records by expression; sort by key and direction, or declared choice order; limit; group by field with per-choice headings; empty words; as card | row, each linked)"
   - "A data-only front page draws on both faces: a headline with a computed count, a money figure computed across records, and a list of one chosen record drawn by its card; an empty graph still gets the begin-here flow"
 description: "VIEW_SLOTS is card, row and page; views.home is refused; the home is always derived."
-lastModified: "2026-10-05T20:03:32.950Z"
+lastModified: "2026-10-06T03:56:09.000Z"
 ---

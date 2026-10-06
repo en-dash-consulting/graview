@@ -2,7 +2,10 @@
 id: "99a1bcc2-ab82-408b-90bd-f3e9035fafe0"
 level: "feature"
 title: "The language computes what pages need: expressions in aggregates, first and sort, computed fields, template filters (FR-83)"
-status: "pending"
+status: "completed"
+startedAt: "2026-10-06T03:56:09.000Z"
+completedAt: "2026-10-06T03:56:09.000Z"
+endedAt: "2026-10-06T03:56:09.000Z"
 priority: "high"
 tags:
   - "graview-cloud"
@@ -15,5 +18,5 @@ acceptanceCriteria:
   - "Template filters words and and, plus a plural helper"
   - "LifeLogics' package net and 'recommended package, else top by standing then net' are each one declared expression; the offer card's 'Answers N of the things we heard' is a template; the cost check still refuses unbounded work"
 description: "sum takes a field name not an expression; no pick, no sort, no computed fields."
-lastModified: "2026-10-05T20:03:32.950Z"
+lastModified: "2026-10-06T03:56:09.000Z"
 ---

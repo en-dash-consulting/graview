@@ -2,7 +2,10 @@
 id: "75bf0747-56bd-4408-8793-6eb832a7e98c"
 level: "feature"
 title: "A guest view can be a named place: guestView takes a title (FR-87)"
-status: "pending"
+status: "completed"
+startedAt: "2026-10-06T03:56:09.000Z"
+completedAt: "2026-10-06T03:56:09.000Z"
+endedAt: "2026-10-06T03:56:09.000Z"
 priority: "low"
 tags:
   - "graview-cloud"
@@ -14,5 +17,5 @@ acceptanceCriteria:
   - "guestView({ …, title }) forwards the title to the frame's accessible name, and register(…, { title }) makes it a place on both faces"
   - "A titled guest view appears as a place by that title with an address (in.view=<slug>)"
 description: "guestView takes no title. For owner-uploaded frames; the worker form is FR-91."
-lastModified: "2026-10-05T20:03:32.950Z"
+lastModified: "2026-10-06T03:56:09.000Z"
 ---

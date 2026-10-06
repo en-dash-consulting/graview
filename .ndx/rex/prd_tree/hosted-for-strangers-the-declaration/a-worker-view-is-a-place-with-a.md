@@ -2,7 +2,10 @@
 id: "c45e1f45-05e1-4570-82c7-7d2893fa8dbf"
 level: "feature"
 title: "A worker view is a place, with a manifest the host enforces (FR-91)"
-status: "pending"
+status: "completed"
+startedAt: "2026-10-06T03:56:09.000Z"
+completedAt: "2026-10-06T03:56:09.000Z"
+endedAt: "2026-10-06T03:56:09.000Z"
 priority: "high"
 tags:
   - "graview-cloud"
@@ -15,5 +18,5 @@ acceptanceCriteria:
   - "A manifest { name, title?, attach: kind | \"home\", cardinality, reads?, acts? }; props are the viewer's sight limited to reads, with label filled; a titled view is a named place on both faces; attach home makes it the home body; theme tokens in props, pushed again on toggle"
   - "The LifeLogics package lens as a worker view reads offers and includes, is a place titled 'The packages' on both faces, lists each package's offers; an unseen offer is absent; toggling the scheme restyles it"
 description: "FR-85, FR-86 and FR-87 folded in for workers."
-lastModified: "2026-10-05T20:03:32.950Z"
+lastModified: "2026-10-06T03:56:09.000Z"
 ---

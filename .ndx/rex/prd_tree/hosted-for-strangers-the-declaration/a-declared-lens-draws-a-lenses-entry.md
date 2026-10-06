@@ -2,7 +2,10 @@
 id: "1dd2559a-2f18-4b2b-827c-3ce8f07d5807"
 level: "feature"
 title: "A declared lens draws: a lenses entry maps to the shipped factory and is a named place (FR-79)"
-status: "pending"
+status: "completed"
+startedAt: "2026-10-06T03:56:09.000Z"
+completedAt: "2026-10-06T03:56:09.000Z"
+endedAt: "2026-10-06T03:56:09.000Z"
 priority: "high"
 tags:
   - "graview-cloud"
@@ -14,5 +17,5 @@ acceptanceCriteria:
   - "Options that can't be data get derived defaults; check validates bindings and options; plan joins the shipped names in check and describe"
   - "A document declaring one lens of each type shows each by title on the Graview face (pills, drive-in) and the Pages face (/places/:as); check and describe agree with what draws; a TypeScript app's declared lenses draw without its own registration code"
 description: "Document lenses draw nothing and neither do TypeScript ones: only check and describe read app.lenses; a TS app's lens draws only because its UI code registers it."
-lastModified: "2026-10-05T20:03:32.950Z"
+lastModified: "2026-10-06T03:56:09.000Z"
 ---
