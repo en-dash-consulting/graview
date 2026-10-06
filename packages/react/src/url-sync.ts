@@ -30,7 +30,7 @@ export function UrlSync(): null {
 export function useUrlSync(): void {
   const { view, setView, views, principal } = useGraview();
   /* Who the page is seated as, by what decides what it sees: a change of it resolves the stop rather than travelling. */
-  const seat = `${principal.kind}:${principal.id}:${(principal.roles ?? []).join(",")}:${principal.onBehalfOf?.id ?? ""}`;
+  const seat = JSON.stringify(principal);
 
   /*
    * A STOP THAT NAMES A PLACE AND NOT ITS GROUP STILL GOES THERE.

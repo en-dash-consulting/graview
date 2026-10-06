@@ -1,5 +1,5 @@
 import { estimateWidth, type Measure } from "@graview/layout/view";
-import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 
 /**
  * WHAT A DRAWING CAN HONESTLY CLAIM TO BE, at the size it was actually given.
@@ -113,35 +113,30 @@ export function useTextMeasure(faceVariable = "--graview-font-body", fallback = 
  * its heavier weight, again once the brand's fonts have loaded. Undefined
  * where nothing can measure (no canvas, jsdom): the layout estimates.
  */
-export function useMarqueeNameWidth(within: RefObject<Element | null>, rootPx: number): ((text: string) => number) | undefined {
-  const [face, setFace] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(0);
-  useLayoutEffectIfAny(() => {
-    const element = within.current;
-    if (element === null || typeof getComputedStyle !== "function") return;
-    const said = getComputedStyle(element).fontFamily.trim();
-    if (said.length > 0 && said !== face) setFace(said);
-  });
+export function useMarqueeNameWidth(within: RefObject<Element | null>, rootPx: number, dressed?: unknown): ((text: string) => number) | undefined {
+  // Measured once the page's fonts are ready (and the scene's element is there), and again when it is dressed anew.
+  const [ready, setReady] = useState(false);
   useEffect(() => {
-    void document.fonts?.ready.then(() => setLoaded(1));
+    void (document.fonts?.ready ?? Promise.resolve()).then(() => setReady(true));
   }, []);
   return useMemo(() => {
-    const context = face === null ? null : document.createElement("canvas").getContext("2d");
+    const element = within.current;
+    const context = ready && element ? document.createElement("canvas").getContext("2d") : null;
     if (!context) return undefined;
     // The marquee's 0.8125rem, at the weight of the showing that is pressed: the wider of the two it is drawn in.
-    context.font = `600 ${0.8125 * rootPx}px ${face}`;
+    context.font = `600 ${0.8125 * rootPx}px ${getComputedStyle(element!).fontFamily}`;
     // jsdom's canvas measures nothing: the estimate is the answer there.
     return context.measureText("M").width > 0 ? (text: string) => context.measureText(text).width : undefined;
-    // `loaded` is in the list on purpose: a face that has loaded since measures differently.
-  }, [face, rootPx, loaded]);
+  }, [ready, rootPx, dressed]);
 }
 
-/** The scene's measure of a marquee name, handed to the districts that draw one, so the room a district keeps is the room the layout made. */
-export const NameWidthContext = createContext<((text: string) => number) | undefined>(undefined);
-/** How wide a showing's name is drawn here, or undefined where the scene could not measure (the estimate is then the answer). */
-export function useNameWidth(): ((text: string) => number) | undefined {
-  return useContext(NameWidthContext);
+/**
+ * The room a district's marquee takes for these names, as the scene's layout
+ * made it — handed down by the scene, so a district keeps exactly the room
+ * the city reserved, and a page that draws no city carries none of it.
+ */
+export const MarqueeRoomContext = createContext<((titles: readonly string[]) => number) | undefined>(undefined);
+/** The scene's room for a marquee of these names, or undefined outside a scene (there is no marquee there). */
+export function useMarqueeRoom(): ((titles: readonly string[]) => number) | undefined {
+  return useContext(MarqueeRoomContext);
 }
-
-/** A layout effect where there is a layout, an ordinary one on a server; every render, as the face can change under it. */
-const useLayoutEffectIfAny = typeof document === "undefined" ? useEffect : useLayoutEffect;

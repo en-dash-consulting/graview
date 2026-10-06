@@ -107,10 +107,9 @@ the reuse test beside it, red on purpose.
 
 8. **Take an arrangement, and say what you have no place for.** Every
    picture over a kind can be sorted, filtered and grouped from the
-   declaration alone — `arrangeable(schema, kind)`, from
-   `@graview/core/arrange` (not the main entry), offers the fields by
-   type, the edges by far end, the lifecycle and the standing — and the
-   choice travels in the stop as `in.sort`, `in.filter`, `in.group` and
+   declaration alone — `arrangeable(schema, kind)` (`@graview/core/arrange`)
+   offers the fields by type, the edges by far end, the lifecycle and the
+   standing — and the stop carries it as `in.sort`, `in.filter`, `in.group` and
    `in.q`, beside the calendar's own `in.at`. In your lens's component:
 
    ```tsx

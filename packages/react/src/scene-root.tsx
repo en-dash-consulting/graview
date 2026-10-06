@@ -8,6 +8,7 @@ import {
   kindOfCard,
   kindsOf,
   layout,
+  marqueeHeightFor,
   withFocus,
   withOverview,
   withPan,
@@ -39,7 +40,7 @@ import { useAnimatedLayout, useSeatWork, useTouched } from "./animation.js";
 import { SeatMarks } from "./seat-marks.js";
 import { useViolations } from "./hooks.js";
 import { useFound, useGraph, useGraview } from "./context.js";
-import { NameWidthContext, useMarqueeNameWidth } from "./drawn.js";
+import { MarqueeRoomContext, useMarqueeNameWidth } from "./drawn.js";
 import { isDefaultView } from "./view-registry.js";
 import { Plots } from "./plots.js";
 import { Occupants } from "./occupants.js";
@@ -149,7 +150,9 @@ export function Scene<S extends AnySchema>({
   const size = useElementSize(wrapperRef);
   const unit = useRootUnit();
   // The marquee's names measured in the face the scene draws them in (FR-118), for the room under each signpost.
-  const nameWidth = useMarqueeNameWidth(wrapperRef, unit);
+  const nameWidth = useMarqueeNameWidth(wrapperRef, unit, brand);
+  // The room the layout reserves for a marquee of those names, handed to the districts that draw one (132: the district's own width, unused).
+  const marqueeRoom = useMemo(() => (titles: readonly string[]) => marqueeHeightFor(titles, 132, nameWidth), [nameWidth]);
 
   // Pinch and ctrl+wheel: altitude from the ground, zoom about the pointer from above; the plain wheel pans. See scene-hand.ts.
   const { zoomAbout, panBy } = useWheelAndPinch({ stage: wrapperRef, view, setView });
@@ -897,7 +900,7 @@ export function Scene<S extends AnySchema>({
   ));
 
   return (
-    <NameWidthContext.Provider value={nameWidth}>
+    <MarqueeRoomContext.Provider value={marqueeRoom}>
     <div
       ref={wrapperRef}
       className={`graview-ground${className ? ` ${className}` : ""}`}
@@ -1145,6 +1148,6 @@ export function Scene<S extends AnySchema>({
       />
       {children}
     </div>
-    </NameWidthContext.Provider>
+    </MarqueeRoomContext.Provider>
   );
 }

@@ -29,21 +29,18 @@ const LINE = 16;
 export type NameWidth = (text: string) => number;
 /** The lines a name wraps onto in the column, word by word as the browser breaks it; a word wider than the column breaks anywhere. */
 function linesFor(title: string, width: NameWidth): number {
-  const space = width(" ");
-  let lines = 1;
-  let used = 0;
-  for (const word of title.split(/\s+/).filter(Boolean)) {
+  // The first word always starts a line; a word wider than the column breaks anywhere, onto whole lines and the rest.
+  let lines = 0;
+  let used = NAME_ROOM;
+  for (const word of title.split(" ")) {
     const wide = width(word);
-    const needed = used === 0 ? wide : used + space + wide;
-    if (needed <= NAME_ROOM) {
-      used = needed;
-      continue;
+    const after = used + width(" ") + wide;
+    if (after <= NAME_ROOM) used = after;
+    else {
+      const spans = Math.ceil(wide / NAME_ROOM) || 1;
+      lines += spans;
+      used = wide - (spans - 1) * NAME_ROOM;
     }
-    if (used > 0) lines += 1;
-    // A word longer than the column breaks anywhere: whole lines of it, and the rest on the last.
-    const spans = Math.max(1, Math.ceil(wide / NAME_ROOM));
-    lines += spans - 1;
-    used = wide - (spans - 1) * NAME_ROOM;
   }
   return lines;
 }
