@@ -30,7 +30,7 @@ const hostile = {
 } as unknown as GraviewDocument;
 
 /** The tags a thumbnail is made of. Anything else in it is markup that got through. */
-const TAGS = new Set(["svg", "title", "rect", "g", "polygon"]);
+const TAGS = new Set(["svg", "title", "rect", "g", "polygon", "path"]);
 const tagsIn = (svg: string): string[] => [...svg.matchAll(/<\/?([A-Za-z!?][^\s/>]*)/g)].map((m) => m[1]!);
 
 /** Every hex a hue's face is drawn in, in a scheme — what the Scene's `hsl(var(--graview-hue) S% L%)` resolves to. */
@@ -115,6 +115,24 @@ describe("a picture of an app without a browser", () => {
     expect(sceneThumbnail(vendors, { counts: { vendor: 5 } })).toContain("<title>vendors: 5</title>");
     // Nonsense counts are no members, not a crash.
     expect(blocks(sceneThumbnail(vendors, { counts: { vendor: -3, category: Number.NaN } }))).toBe(2);
+  });
+
+  it("stands the Scene's village on every populated district of a twelve-kind app, rather than a block for each (FR-103)", () => {
+    // No edges between them, so the map packs them around the first block rather than down one street.
+    const kinds = Array.from({ length: 12 }, (_, i) =>
+      defineNode(`kind${String(i).padStart(2, "0")}`, {
+        fields: z.object({ label: z.string() }),
+      }),
+    );
+    const twelve = defineApp({ name: "Twelve", schema: createSchema(kinds as never) });
+    const counts = Object.fromEntries(kinds.map((k) => [k.kind, 40]));
+    const svg = sceneThumbnail(twelve, { counts });
+    const roofs = (svg.match(/stroke="#ffffff"/g) ?? []).length;
+    expect(roofs).toBe(12 * villageCap(4));
+    // Every district's buildings, as many as sceneDistricts says stand there.
+    expect(sceneDistricts(twelve, { counts }).reduce((sum, d) => sum + d.village.length, 0)).toBe(roofs);
+    // 51 194 bytes when this was written: whole units and relative faces, about 170 bytes a building.
+    expect(svg.length).toBeLessThan(52 * 1024);
   });
 
   it("draws an empty app as a quiet ground, and a document that does not compile as one that says so", () => {

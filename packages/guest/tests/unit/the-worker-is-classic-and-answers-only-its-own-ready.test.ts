@@ -113,7 +113,7 @@ describe("a worker guest's host", () => {
     FakeWorker.refuse = true;
     const { guest, failures } = mounted();
     await settle();
-    expect(failures).toEqual(["refused"]);
+    expect(failures).toEqual(["start"]);
     expect(guest.worker).toBeUndefined();
   });
 
@@ -122,7 +122,7 @@ describe("a worker guest's host", () => {
     const { worker, failures } = mounted({ limits: { readyMs: 50 } });
     vi.advanceTimersByTime(60);
     vi.useRealTimers();
-    expect(failures).toEqual(["silent"]);
+    expect(failures).toEqual(["start"]);
     expect(worker!.terminated).toBe(true);
   });
 });

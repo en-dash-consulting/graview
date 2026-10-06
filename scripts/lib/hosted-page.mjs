@@ -25,8 +25,20 @@ export const FACE_DOORS = {
   pages: ["embed/src/pages-content.tsx", "primitives/src/framework-views.ts"],
 };
 
-/** Bytes, minified. A page over either is over. */
-export const HOSTED_PAGE_BUDGET = { minified: 600 * 1024, zod: 150 * 1024 };
+/*
+ * Bytes, minified. A page over either is over.
+ *
+ * Cloud's brief set 600 KB, and the page stood at 611 900 bytes (598 KB)
+ * against it once the columns lens, template labels, currency, walks from
+ * a set and the hidden-kind check had landed (FR-97–FR-101, FR-105). The
+ * scene's own rules moved to the scene face and the frame's measures and
+ * descent to files of their own (FR-104), and it is 589 079 bytes
+ * (575 KB); Cloud's own shell built from the same sources agreed, 596.0 KB
+ * before and 573.7 KB after, its own code in it. The claim is that figure with 10 KB of
+ * headroom, so the room is spent on purpose: a feature that needs it raises
+ * this number in the same change and says why.
+ */
+export const HOSTED_PAGE_BUDGET = { minified: 585 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -89,6 +101,14 @@ const noStudio = {
   },
 };
 
+/** Every import the page makes only when asked, left out: what the first chunk needs for itself, and no more. */
+const leaveDoorsShut = {
+  name: "leave-doors-shut",
+  setup(b) {
+    b.onResolve({ filter: /.*/ }, (args) => (args.kind === "dynamic-import" ? { path: args.path, external: true } : undefined));
+  },
+};
+
 /** `@graview/*` from the workspace's sources, with the package's `sideEffects` as its tarball declares it. */
 function workspaceSources(repo) {
   return {
@@ -122,8 +142,13 @@ export function packageOf(input) {
   return "(the page)";
 }
 
-/** Bundle the hosted page as Cloud bundles it, and say what it carries up front and what only when asked. */
-export async function measureHostedPage(repo, entry = HOSTED_PAGE_ENTRY) {
+/**
+ * Bundle the hosted page as Cloud bundles it, and say what it carries up
+ * front and what only when asked. `eagerOnly` leaves every door shut (each
+ * dynamic import external): what the first chunk needs for itself.
+ * `files` is the chunks as built, for a reader of the code itself.
+ */
+export async function measureHostedPage(repo, entry = HOSTED_PAGE_ENTRY, { minify = true, eagerOnly = false } = {}) {
   const require = createRequire(join(repo, "packages", "embed", "package.json"));
   const esbuild = require("esbuild");
   const result = await esbuild.build({
@@ -133,14 +158,14 @@ export async function measureHostedPage(repo, entry = HOSTED_PAGE_ENTRY) {
     splitting: true,
     platform: "browser",
     target: "es2022",
-    minify: true,
+    minify,
     metafile: true,
     write: false,
     outdir: join(repo, "out"),
     entryNames: "[name].[hash]",
     chunkNames: "chunk.[hash]",
     define: { "process.env.NODE_ENV": '"production"' },
-    plugins: [englishOnly, noStudio, workspaceSources(repo)],
+    plugins: [...(eagerOnly ? [leaveDoorsShut] : []), englishOnly, noStudio, workspaceSources(repo)],
     logLevel: "silent",
   });
   const outputs = result.metafile.outputs;
@@ -195,6 +220,7 @@ export async function measureHostedPage(repo, entry = HOSTED_PAGE_ENTRY) {
     beforeDrawn: faces,
     budget: HOSTED_PAGE_BUDGET,
     metafile: result.metafile,
+    files: result.outputFiles,
     over: minified > HOSTED_PAGE_BUDGET.minified || zod > HOSTED_PAGE_BUDGET.zod,
   };
 }

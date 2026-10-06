@@ -1116,6 +1116,7 @@ views.home(guestView({ url: frontUrl, name: "front", reads: { kinds: ["package"]
 <li><code>guest.size(px)</code> asks for a height; the frame takes it.</li>
 </ul>
 <p><code>examples/price-sheet.html</code> is a whole one: each package with its offers, painted from the theme, a press that notes something, links to the offers, and its own height. It runs under <code>default-src 'none'; script-src 'unsafe-inline'</code>, the policy Graview Cloud serves an uploaded view with.</p>
+<p>A worker view (<code>registerWorkerView</code>) runs in a worker the host starts from a <code>blob:</code> URL, so a host page with a Content-Security-Policy says <code>worker-src blob:</code> and <code>style-src 'unsafe-inline'</code>. Without them each view draws its plain face, <code>onFailure</code> hears <code>start</code> naming the directive, and the console says so once. A host that allows no <code>blob:</code> serves <code>viewScript</code> from its own origin and passes <code>worker: { url }</code> (the guest README).</p>
 <h3>Worked examples</h3>
 <ul>
 <li><code>apps/seedbed/src/site-embed.ts</code> — the docs site's chapters, many to a page, mounted as the reader nears them, the rota's seats on the strip</li>

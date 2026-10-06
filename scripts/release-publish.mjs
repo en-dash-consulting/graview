@@ -9,7 +9,9 @@
  * npm trusted publishing (the job's OIDC token; no long-lived token anywhere),
  * with provenance. Then a `<name>@<version>` tag for each at HEAD is pushed,
  * and a GitHub release is written from the package's changelog section, the
- * CLI's marked latest. Each step skips what is already done, so a run that
+ * CLI's marked latest. The `graview` and `@graview/embed` releases also say
+ * what the hosted page weighs up front, by package, and its headroom
+ * (lib/hosted-page-notes.mjs, FR-104). Each step skips what is already done, so a run that
  * stopped part way is finished by running it again.
  *
  * The human gate is the environment's required reviewer, not a second factor
@@ -22,6 +24,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { hostedPageNotes } from "./lib/hosted-page-notes.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 const out = mkdtempSync(join(tmpdir(), "graview-publish-"));
@@ -80,6 +83,9 @@ for (const tag of tags) {
   }
 }
 run("git", ["push", "origin", ...tags.map((tag) => `refs/tags/${tag}`)]);
+/* The hosted page's weight, measured once, under the releases Graview Cloud reads (FR-104). */
+const WEIGHED = new Set(["graview", "@graview/embed"]);
+let weight;
 for (const one of packages) {
   const tag = `${one.name}@${version}`;
   if (spawnSync("gh", ["release", "view", tag], { cwd: root, stdio: "ignore" }).status === 0) {
@@ -89,7 +95,8 @@ for (const one of packages) {
   const changelog = readFileSync(join(root, "packages", one.dir, "CHANGELOG.md"), "utf8");
   const section = changelog.split(/^## /m).find((part) => part.startsWith(`${version}\n`))?.slice(version.length + 1).trim();
   const notes = join(out, `notes-${one.dir}.md`);
-  writeFileSync(notes, section || `Released with the rest of Graview ${version}.`);
+  if (WEIGHED.has(one.name)) weight ??= (await hostedPageNotes(root)) ?? "";
+  writeFileSync(notes, [section || `Released with the rest of Graview ${version}.`, WEIGHED.has(one.name) ? weight : ""].filter(Boolean).join("\n\n"));
   run("gh", ["release", "create", tag, "--verify-tag", "--title", tag, "--notes-file", notes, one.name === "graview" ? "--latest" : "--latest=false"]);
   console.log(`released  ${tag}`);
 }

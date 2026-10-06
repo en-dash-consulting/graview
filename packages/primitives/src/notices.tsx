@@ -1,7 +1,7 @@
 import { layer } from "@graview/core";
 import { inTopLayer, raiseOverPopovers } from "@graview/react/provider";
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
-import { VISUALLY_HIDDEN } from "./primitives/index.js";
+import { VISUALLY_HIDDEN } from "./primitives/measure.js";
 
 /**
  * A HOST SPEAKS IN THE APP'S OWN NOTICES (FR-75).

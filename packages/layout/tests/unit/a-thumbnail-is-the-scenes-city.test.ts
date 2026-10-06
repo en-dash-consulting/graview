@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { beginning, Graph, hueFor, sceneDistricts, Store, type GraviewApp } from "@graview/core";
+import { beginning, Graph, hueFor, sceneDistricts, Store, villageCap, villageOf, type GraviewApp } from "@graview/core";
 import { compileDocumentWithoutCheck, sceneThumbnail, type GraviewDocument } from "@graview/core/document";
 import { describe, expect, it } from "vitest";
 import { EMPTY_VIEW, kindCardId, layout } from "../../src/index.js";
@@ -63,6 +63,46 @@ describe("a thumbnail is the Scene's city", () => {
       const svg = sceneThumbnail(app, { counts });
       expect([...svg.matchAll(/data-kind="([^"]+)"/g)].map((m) => m[1])).toEqual(districts.map((d) => d.kind));
       for (const district of districts) expect(district.hue).toBe(Math.round(hueFor(district.kind, app.brand?.accents)));
+    });
+  }
+
+  /*
+   * FR-103. Counts size each district the way the live Scene does: the
+   * plot's side, and the village standing on it — one building per member
+   * on the plot's sub-lattice, back to front, up to what the plot holds and
+   * the rest a number. Held here against the layout the Scene runs, with
+   * its own members, at no members, one, many, the most a plot holds, and
+   * past it. Only a building's height differs: the Scene's comes from the
+   * member's id, and counts carry no ids.
+   */
+  const LEVELS: [string, number][] = [
+    ["no members", 0],
+    ["one member", 1],
+    ["many members", 7],
+    ["as many as a plot holds", villageCap(4)],
+    ["more than a plot holds", 60],
+  ];
+  for (const [said, n] of LEVELS) {
+    it(`stands each district's village where the Scene stands it, with ${said} (${n})`, () => {
+      const app = compiled(template("household-chores.gdd.json"));
+      const kinds = app.schema.kinds as readonly string[];
+      const counts = Object.fromEntries(kinds.map((kind, i) => [kind, i === 0 ? n : 2]));
+      const placed = layout(populated(app, counts), app.schema as never, { ...EMPTY_VIEW, overview: true }, { width: 1280, height: 800, cityOrder: sceneOrder(app) });
+      const districts = sceneDistricts(app, { counts });
+      let standing = 0;
+      for (const district of districts) {
+        const card = placed.nodes.find((node) => node.id === kindCardId(district.kind))!;
+        expect(district.plot, district.kind).toEqual(card.plot);
+        /* What the Scene's Plots draw on that card's plot, from its own members (plots.tsx). */
+        const scene = villageOf(card.plot!, card.aggregate?.memberIds ?? []);
+        const foot = (b: { col: number; row: number; footprint: number }) => [b.col, b.row, b.footprint];
+        expect(district.village.map(foot), district.kind).toEqual(scene.buildings.map(foot));
+        expect(district.rest, district.kind).toBe(scene.rest);
+        standing += district.village.length === 0 ? 1 : district.village.length;
+      }
+      // The picture stands exactly those: a block has one roof, and only a roof is stroked white in daylight.
+      const svg = sceneThumbnail(app, { counts });
+      expect((svg.match(/stroke="#ffffff"/g) ?? []).length).toBe(standing);
     });
   }
 

@@ -3,7 +3,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { LAYERS, SCENE_LAYERS } from "../packages/core/src/theme/layers.js";
-import { themeCss } from "../packages/primitives/src/theme.js";
+import { themeCss } from "../packages/primitives/src/scene-css.js";
 
 /**
  * ONE LADDER ORDERS EVERY SURFACE (FR-76).

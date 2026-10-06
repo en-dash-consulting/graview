@@ -14,6 +14,12 @@ export interface WorkerViewDefinition {
   readonly limits?: WorkerViewLimits;
   /** Who made it, said under it ("Made by Claude for Nick"). */
   readonly author?: string;
+  /**
+   * Each drawing of it that is not going to be shown, and why, once (FR-102):
+   * the reason and a sentence saying it. A page whose policy refuses its
+   * worker hears `start`, the sentence naming the directive.
+   */
+  readonly onFailure?: (reason: WorkerViewFailure, detail?: string) => void;
 }
 
 const inputOf = (props: ViewProps<AnySchema>): GuestViewInput => ({
@@ -112,7 +118,10 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
         scheme={graview.scheme}
         tick={props}
         drawsItsOwn={Fallback !== undefined}
-        onFailure={(reason) => setFailed(reason)}
+        onFailure={(reason, detail) => {
+          setFailed(reason);
+          definition.onFailure?.(reason, detail);
+        }}
       />
     );
   }
@@ -173,7 +182,10 @@ export function workerHome(definition: WorkerViewDefinition, options: { readonly
         goTo={goTo}
         {...(graview ? { places: () => graview.views.places(), scheme: graview.scheme } : {})}
         drawsItsOwn={Fallback !== undefined}
-        onFailure={(reason) => setFailed(reason)}
+        onFailure={(reason, detail) => {
+          setFailed(reason);
+          definition.onFailure?.(reason, detail);
+        }}
       />
     );
   }

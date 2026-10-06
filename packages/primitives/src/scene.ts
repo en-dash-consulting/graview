@@ -11,6 +11,8 @@
  * imports from here, and the factories come with the first lens that is
  * drawn (`fetchDeclaredLenses`).
  */
+/* The scene's own rules, drawn by the scene face after the frame's sheet (FR-104). */
+export { sceneCss } from "./scene-css.js";
 export { Companion } from "./companion.js";
 export type { CompanionMode } from "./companion.js";
 export { Inspector } from "./workbench/inspector.js";

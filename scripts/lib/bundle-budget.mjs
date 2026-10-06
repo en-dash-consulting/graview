@@ -52,9 +52,13 @@ export const BUDGETS = [
      * Raised when a form came to name its parts (#80): its look moved from
      * style attributes to rules an app's own selector outranks, a few hundred
      * bytes of stylesheet. Measured at 508_120 / 169_327.
+     *
+     * Lowered when the scene's own rules came to be drawn by the scene face
+     * and the frame's measures moved to a file of their own (FR-104): a
+     * page on the pages face carries neither. Measured at 495_604 / 167_798.
      */
-    minified: 512_000,
-    gzipped: 171_000,
+    minified: 497_000,
+    gzipped: 168_500,
     load: "first",
   },
   {
@@ -99,9 +103,13 @@ export const BUDGETS = [
      * frame compiles a document with the checker, so its new questions
      * (`act-reads-hidden-kind`, the brand's money, braces in plain words)
      * load with it. Measured at 809_880 / 212_418.
+     *
+     * Lowered when the scene's own rules moved out of the frame's sheet into
+     * the scene face, and the frame stopped reaching the primitives' index
+     * and the scene's way back (FR-104). Measured at 787_572 / 207_729.
      */
-    minified: 811_000,
-    gzipped: 213_000,
+    minified: 789_000,
+    gzipped: 208_500,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -318,10 +326,14 @@ export const BUDGETS = [
      * shares with a frame reads across kinds and pushes a frame's theme and
      * places (FR-85–FR-87), and the app's look is read and watched by one
      * module both hosts use (host/theme.ts).
+     *
+     * Raised from 17_000 / 6_750 at 18_305 / 7_358 when a worker that does
+     * not start says `start` (FR-102): the page's policy violation heard,
+     * the directive it lacks named, the page's console told once.
      */
     entry: `import { mountGuestWorker } from "@graview/guest/host/worker"; globalThis.mount = mountGuestWorker;`,
-    minified: 17_000,
-    gzipped: 6_750,
+    minified: 18_750,
+    gzipped: 7_500,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -349,10 +361,14 @@ export const BUDGETS = [
      * headless run, FR-95) and a guest may navigate to a place (FR-87),
      * and the host reads the app's look from one module (FR-86); the budget
      * just above it.
+     *
+     * Raised at 120_766 / 42_999 when a view that does not start says
+     * `start` (FR-102), with the directive its page lacks; the budget just
+     * above it.
      */
     entry: `import { mountWorkerView } from "@graview/guest/host/worker"; globalThis.mount = mountWorkerView;`,
-    minified: 119_750,
-    gzipped: 42_500,
+    minified: 121_250,
+    gzipped: 43_250,
     load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },

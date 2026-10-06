@@ -1,6 +1,6 @@
 import { Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { PageComponent, PageRegistry } from "@graview/pages";
-import { createNoticeBoard, Notices, Profile, registerDeclaredLenses, Standing, themeCss, useWidth, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
+import { createNoticeBoard, Notices, Profile, registerDeclaredLenses, Standing, themeBaseCss, useWidth, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -336,7 +336,8 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
   const told = props.hostContext?.theme;
   const followed = useHostScheme(askedScheme === "auto" && told === undefined);
   const scheme: Scheme = askedScheme === "auto" ? (told ?? followed) : askedScheme;
-  const css = useMemo(() => themeCss(scheme, brand, { scope: `.${scope}` }), [scheme, brand, scope]);
+  /* Every face's sheet; the scene face draws the scene's own rules beside it (`sceneCss`, FR-104). */
+  const css = useMemo(() => themeBaseCss(scheme, brand, { scope: `.${scope}` }), [scheme, brand, scope]);
 
   // The brand's fonts, fetched once per family set, without the host's help.
   useEffect(() => {

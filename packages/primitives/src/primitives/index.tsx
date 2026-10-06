@@ -1,5 +1,9 @@
 import { useViewMode } from "@graview/react/provider";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useWidth, VISUALLY_HIDDEN } from "./measure.js";
+
+/* Their own file, so the frame reaches them without this one (FR-104): `@graview/primitives/frame`. */
+export { useWidth, VISUALLY_HIDDEN };
 
 /**
  * A rich primitive set, not a visualization library.
@@ -108,29 +112,6 @@ function useOverflowing(ref: { current: HTMLElement | null }): boolean {
     // has to stay true across those without every caller remembering to say so.
   });
   return overflowing;
-}
-
-/**
- * THE ROOM A VIEW HAS, in pixels, or null before the first measurement.
- *
- * A lens is drawn into whatever box the layout gives it — the focus card
- * in a 360px embed, a billboard, a page's column — and the ones that laid
- * themselves out for a desk (a 316px label column, seven day columns) were
- * unreadable in half of them. The width is the fact they need to choose a
- * shape by; this is the one place it is read.
- */
-export function useWidth(ref: { current: HTMLElement | null }): number | null {
-  const [width, setWidth] = useState<number | null>(null);
-  useEffect(() => {
-    const element = ref.current;
-    if (!element || typeof ResizeObserver === "undefined") return;
-    const read = () => setWidth(Math.round(element.getBoundingClientRect().width));
-    read();
-    const observer = new ResizeObserver(read);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [ref]);
-  return width;
 }
 
 /** The default container: a titled box. Most views are one of these. */
@@ -370,25 +351,6 @@ export function Prose({ children, style }: { readonly children: ReactNode; reado
   );
 }
 
-/**
- * Present to a screen reader, absent to the eye — the one idiom, written
- * once.
- *
- * Written out by hand in two places, which meant two shapes for the same
- * decision and no way for a harness to tell either of them from a caption
- * that had genuinely been cut off. `scripts/survey-ui.mjs` reported both as
- * "overflowing" on every screen of every app, twenty lines of noise that a
- * real clipped caption would have hidden behind.
- */
-export const VISUALLY_HIDDEN = {
-  position: "absolute",
-  width: 1,
-  height: 1,
-  overflow: "hidden",
-  clip: "rect(0 0 0 0)",
-  clipPath: "inset(50%)",
-  whiteSpace: "nowrap",
-} as const satisfies CSSProperties;
 
 export interface ChipProps {
   readonly label: ReactNode;
