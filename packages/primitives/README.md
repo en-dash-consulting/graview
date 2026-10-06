@@ -20,6 +20,19 @@ the seat may run that sets that field: a named step such as "Book" to its own
 column, where its condition holds for that card, and otherwise an act told the
 value.
 
+A coverage cell over a path selects what it joins — its row, its column and
+the records between (`data-graview-joins`) — and draws the crossing's lines to
+the row's name and the column's head.
+
+**One rule for what looks pressable.** A capsule is a choice the reader can
+make, or a record's state badge, and nothing else is one: in a set of choices
+the chosen one wears it and the rest are words to press. The places
+(`Places`) are text tabs that scroll, the current one underlined, at every
+width. A name is never cut where it is the thing to read: a row wraps before
+it cuts its badge or progress, a drive-in's marquee says its showings by
+name, and what is cut on purpose carries its whole name as its title and
+accessible name.
+
 **Workbench** — the parts of an interface that are not about the domain: what
 is selected and what can be done with it, whether the rules hold, what just
 happened and how to take it back, how to back out of a view. All derived from
