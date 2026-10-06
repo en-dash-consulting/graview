@@ -209,6 +209,10 @@ export function EditableValue<S extends AnySchema>({
                   : "date"
                 : "text"
           }
+          // The field's range, as every form asks for it (FR-114).
+          {...(editable.shape.type === "number" && editable.shape.min !== undefined ? { min: editable.shape.min } : {})}
+          {...(editable.shape.type === "number" && editable.shape.max !== undefined ? { max: editable.shape.max } : {})}
+          {...(editable.shape.type === "number" && editable.shape.step !== undefined ? { step: editable.shape.step } : {})}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           onBlur={() => done(coerce(editable, draft), { left: true })}
