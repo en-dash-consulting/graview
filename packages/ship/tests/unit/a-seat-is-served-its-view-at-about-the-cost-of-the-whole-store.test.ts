@@ -84,13 +84,19 @@ const timed = (run: () => unknown): number => {
   return performance.now() - started;
 };
 
+/*
+ * A shared runner's clock is noisy: another job on the machine can land on any one sample. Each
+ * claim is measured again, up to twice, before it fails; a read that really cost more fails all three.
+ */
+const MEASURED_AGAIN = { retry: 2 };
+
 describe("a seat is served its view at about the cost of the whole store", () => {
   const { snapshot, log } = history(2000);
   // What a host holds after a wake: the store opened from what it keeps.
   const woken = () => new Store<AnySchema>({ schema: schemaOfAll, mutations, policy, snapshot, log, validate: false });
   const read = (live: LiveProtocol<AnySchema>, seat: Principal) => JSON.stringify(live.state({ seat, via: "web" }).body);
 
-  it("makes the protocol on a wake for a small part of one whole-store read", () => {
+  it("makes the protocol on a wake for a small part of one whole-store read", MEASURED_AGAIN, () => {
     const made: number[] = [];
     const whole: number[] = [];
     for (let round = 0; round < 9; round++) {
@@ -102,7 +108,7 @@ describe("a seat is served its view at about the cost of the whole store", () =>
     expect(fastest(made) / fastest(whole), `made ${fastest(made).toFixed(2)} ms, a whole read ${fastest(whole).toFixed(2)} ms`).toBeLessThan(0.1);
   });
 
-  it("serves a planner and an owner their state, read again and after the log grew, for at most 1.75 whole-store reads", () => {
+  it("serves a planner and an owner their state, read again and after the log grew, for at most 1.75 whole-store reads", MEASURED_AGAIN, () => {
     const times: Record<string, number[]> = { system: [], "system, after the log grew": [], planner: [], owner: [], "planner, after the log grew": [], "planner, first after a wake": [] };
     // A round first that is not counted: the first of anything in a process is the compiler's.
     for (let round = 0; round < 12; round++) {
