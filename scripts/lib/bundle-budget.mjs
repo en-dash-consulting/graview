@@ -48,9 +48,13 @@ export const BUDGETS = [
      * Measured at 504_624 / 168_114 once the open kit (FR-90–FR-96) met
      * main's declared lenses, home view, language and describe (FR-79–FR-89);
      * the budget just above it.
+     *
+     * Raised when a form came to name its parts (#80): its look moved from
+     * style attributes to rules an app's own selector outranks, a few hundred
+     * bytes of stylesheet. Measured at 508_120 / 169_327.
      */
-    minified: 508_000,
-    gzipped: 169_000,
+    minified: 512_000,
+    gzipped: 171_000,
     load: "first",
   },
   {
