@@ -1,6 +1,7 @@
 import { documentOf } from "../../document/to-document.js";
 import { parseExpr, type Expr } from "../../document/expr/parse.js";
 import { perMember } from "../../document/expr/analyze.js";
+import { farEnd } from "../../document/far-end.js";
 import { parseTemplate } from "../../document/template.js";
 import { nodeRefKinds } from "../../mutations/node-ref.js";
 import { withArticle } from "../../schema/define-node.js";
@@ -124,6 +125,32 @@ function documentActReads(act: Record<string, unknown>, schema: AnySchema): Map<
   };
   values(act["sets"], "a value it sets");
   for (const effect of (act["effects"] as unknown[] | undefined) ?? []) values((effect as { set?: unknown }).set, "a value it sets");
+  /*
+   * THE OTHER END (FR-115). A value set on the record at the other end of
+   * what the act connects is worked out standing on that record; and the
+   * links an act replaces name the records at their far ends, whose kinds
+   * it reads to sever them.
+   */
+  const declared = Object.fromEntries(schema.definitions.map((definition) => [definition.kind, { edges: (definition as { edges?: Record<string, { to: readonly string[] | "*" }> }).edges ?? {} }]));
+  const relation = (act["connects"] ?? act["severs"]) as string | undefined;
+  const end = relation ? farEnd(declared, relation, from) : undefined;
+  const sets = act["setsOther"];
+  if (end && sets && typeof sets === "object") {
+    const there = end.kinds === "*" ? (schema.kinds as readonly string[]) : end.kinds;
+    for (const value of Object.values(sets)) {
+      if (!value || typeof value !== "object" || !("expr" in value) || typeof value.expr !== "string") continue;
+      try {
+        kindsRead(parseExpr(value.expr), there, schema, reads, "a value it sets on the other record");
+      } catch {
+        // The compile's to refuse.
+      }
+    }
+  }
+  const replaces = act["replaces"];
+  for (const replaced of replaces === true && relation ? [relation] : Array.isArray(replaces) ? (replaces as string[]) : []) {
+    const other = farEnd(declared, replaced, from);
+    for (const kind of other && other.kinds !== "*" ? other.kinds : []) if (!reads.has(kind)) reads.set(kind, "the links it replaces");
+  }
   return reads;
 }
 

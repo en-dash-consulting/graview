@@ -542,6 +542,10 @@ function Argument<S extends AnySchema>({
       <input
         type="number"
         data-testid={testId}
+        // The field's range, as every form asks for it (FR-114).
+        {...(field.min === undefined ? {} : { min: field.min })}
+        {...(field.max === undefined ? {} : { max: field.max })}
+        {...(field.step === undefined ? {} : { step: field.step })}
         value={typeof value === "number" ? value : ""}
         onChange={(event) => onChange(event.target.value === "" ? undefined : Number(event.target.value))}
         style={box}

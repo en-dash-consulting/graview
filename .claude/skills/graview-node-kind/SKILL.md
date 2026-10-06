@@ -24,12 +24,9 @@ agent tool that walks the graph.
      fields: z.object({
        // A NAME, and bounded. Every derived surface draws `label` — on a
        // card, in a list, on a plan — and `z.string().min(1)` permits a
-       // paragraph. That is fine while a person is typing it; a model asked
-       // to survey a garden wrote "Pea-gravel corner with river-rock
-       // border, log seats and a fire bowl", which is a true sentence and a
-       // terrible name, and it was never told otherwise because the prompt
-       // is generated from this file. `graview check` notes
-       // `label-unbounded` on any kind a declared provider may create.
+       // paragraph: a model surveying a garden named a corner with a whole
+       // sentence, because the prompt is generated from this file.
+       // `graview check` notes `label-unbounded` where a provider creates.
        label: z.string().min(1).max(60),
        kickOff: z.string(),
        opponent: z.string(),
@@ -80,7 +77,10 @@ agent tool that walks the graph.
    editable where it is shown and logged like any other. Two declarations
    shape it. `writes: ["done"]` on a mutation says which fields it sets when
    its arguments do not (`finish()` writing `done`) — and a mutation whose
-   argument merely shares a field's name should say `writes: []`. `fixed:
+   argument merely shares a field's name should say `writes: []` (a
+   document's act is read, not guessed); the edit refuses an argument it
+   does not take. A number's bounds (`.int().min(1).max(5)`; a document's
+   `min`, `max`, `step`) bound every form, tool and apply. `fixed:
    { text: "the client's words, as sent" }` on the kind says a field never
    changes, and why; the sentence is the documentation. The checker warns
    `field-without-writer` when a field is still out of everyone's reach,

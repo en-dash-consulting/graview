@@ -1,7 +1,7 @@
 export * from "./schema.js";
 export * from "./findings.js";
 export { compileDocumentWithoutCheck, readDocument, effectsOf, kindShapes, ActRefusal } from "./compile.js";
-export type { CompiledDocument, RefusedDocument, CompileOptions } from "./compile.js";
+export type { ActEffect, CompiledDocument, RefusedDocument, CompileOptions, ReplaceEffect } from "./compile.js";
 export { canonicalize, documentHash } from "./canonical.js";
 export { parseTemplate, renderTemplate, formatValue, formatMoney, FORMATTERS } from "./template.js";
 export type { TemplatePart, Formatter, Money, RenderContext } from "./template.js";

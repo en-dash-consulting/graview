@@ -1,6 +1,7 @@
 import { MissingRecordError } from "./graph/graph.js";
 import { UndoBlockedError } from "./ops/undo.js";
 import { PermissionDeniedError } from "./permissions/types.js";
+import { ActRefusal } from "./refused.js";
 
 /**
  * WHY A CHANGE WAS REFUSED, AS A CODE A PROGRAM CAN BRANCH ON (FR-46).
@@ -48,6 +49,8 @@ export function refusalOf(error: unknown): WireRefusal {
     return { reason: "forbidden", sentence, ...(roles.length > 0 ? { wouldNeed: [...roles] } : {}) };
   }
   if (error instanceof MissingRecordError) return { reason: "missing", sentence };
+  // An act's own refusal says its reason (FR-110).
+  if (error instanceof ActRefusal) return { reason: error.reason, sentence: error.sentence };
   if (error instanceof UndoBlockedError) return { reason: error.check.reason ?? "invalid", sentence };
   return { reason: "invalid", sentence };
 }

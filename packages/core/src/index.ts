@@ -84,6 +84,7 @@ export { FRAMEWORK_VERSION } from "./version.js";
 export { capabilities, WIRE_PROTOCOL } from "./capabilities.js";
 export type { Capabilities } from "./capabilities.js";
 export { REFUSAL_REASONS, refusalOf } from "./refusal.js";
+export { ActRefusal } from "./refused.js";
 export type { RefusalReason, WireRefusal } from "./refusal.js";
 export { assertReadable, FORMATS, formatStamp, NewerFormatError, upgradeOp, upgradeSnapshot } from "./formats.js";
 export type { FormatName, FormatStamp } from "./formats.js";

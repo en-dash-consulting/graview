@@ -217,6 +217,7 @@ function Control<S extends AnySchema>({
             required={!spec.optional}
             {...(spec.min === undefined ? {} : { min: spec.min })}
             {...(spec.max === undefined ? {} : { max: spec.max })}
+            {...(spec.step === undefined ? {} : { step: spec.step })}
             value={typeof value === "number" ? value : ""}
             onChange={(event) =>
               onChange(event.target.value === "" ? undefined : Number(event.target.value))

@@ -119,7 +119,20 @@ export function compileMutation<S extends AnySchema>(
     requested === undefined ? rawArgs : withoutId(rawArgs as Record<string, unknown>),
   );
   if (!parsed.success) {
-    throw new InvalidArguments(definition.name, parsed.error.issues);
+    /*
+     * AN ARGUMENT THE ACT DOES NOT TAKE is said with those it does (FR-110):
+     * "does not take "colour"; it takes "id", "name"" — a caller that
+     * misspelt one learns the spelling, not zod's "Unrecognized key".
+     */
+    const takes = Object.keys((definition.input as { shape?: Record<string, unknown> }).shape ?? {});
+    throw new InvalidArguments(
+      definition.name,
+      parsed.error.issues.map((issue) =>
+        issue.code === "unrecognized_keys" && takes.length > 0
+          ? { ...issue, message: `does not take ${issue.keys.map((key) => `"${key}"`).join(", ")}; it takes ${takes.map((key) => `"${key}"`).join(", ")}` }
+          : issue,
+      ),
+    );
   }
   const args = parsed.data as Record<string, unknown>;
 

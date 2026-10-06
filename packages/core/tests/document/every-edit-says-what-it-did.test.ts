@@ -13,6 +13,7 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "rename-field": { op: "rename-field", kind: "vendor", field: "quote", to: "price" },
   "retype-field": { op: "retype-field", kind: "vendor", field: "notes", type: "text" },
   "set-options": { op: "set-options", kind: "vendor", field: "status", add: ["shortlisted"] },
+  "set-range": { op: "set-range", kind: "vendor", field: "quote", min: 0 },
   "set-required": { op: "set-required", kind: "vendor", field: "notes", required: false },
   "set-default": { op: "set-default", kind: "category", field: "budget", default: 0 },
   "remove-field": { op: "remove-field", kind: "vendor", field: "notes" },

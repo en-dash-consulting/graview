@@ -4,6 +4,7 @@ import { humaniseField, nounOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
 import { nodeRefArgs, refTo } from "./node-ref.js";
+import { ActRefusal } from "../refused.js";
 import type { AnyMutationDefinition } from "./types.js";
 
 /**
@@ -41,6 +42,14 @@ export function subjectKindsOf<S extends AnySchema>(
 /**
  * Which fields a mutation writes on a given subject kind: its declaration
  * when it has one, the name-match guess when it does not.
+ *
+ * THE GUESS IS ONLY FOR WHAT CANNOT BE READ (FR-110). A document's act
+ * always says its `writes` — read off what its sets and effects set on its
+ * subject, `[]` when that is nothing — so it is never guessed: an act that
+ * makes a strength named `$name` does not write its person's name. Only a
+ * TypeScript mutation that declares no `writes` is guessed at, because its
+ * `apply` cannot be read without running it; there an argument named
+ * exactly like a field of the subject is taken to write it.
  */
 export function fieldsWrittenBy<S extends AnySchema>(
   mutation: AnyMutationDefinition<S>,
@@ -151,7 +160,8 @@ export function deriveEditMutations<S extends AnySchema>(
       description: `Change what was set when this ${noun} was made: ${said.join(", ")}.`,
       subject: { kinds: [kind], arg: "id" },
       writes: fields,
-      input: z.object({
+      // Strict (FR-110): an argument it does not take is refused, naming those it does — never dropped, leaving nothing to change.
+      input: z.strictObject({
         id: refTo([kind]),
         ...Object.fromEntries(fields.map((field) => [field, z.optional(withoutDefault(shape[field]!))])),
       }) as never,
@@ -188,7 +198,7 @@ export function deriveEditMutations<S extends AnySchema>(
           if (value !== undefined) patch[field] = value;
         }
         if (Object.keys(patch).length === 0) {
-          throw new Error(`Nothing to change — give at least one of ${said.join(", ")} a value.`);
+          throw new ActRefusal(`Nothing to change — give at least one of ${said.join(", ")} a value.`);
         }
         ctx.patchNode((args as { id: string }).id, patch);
       },
