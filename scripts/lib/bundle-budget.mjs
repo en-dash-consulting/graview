@@ -127,9 +127,16 @@ export const BUDGETS = [
      * chosen by it before one is fetched. The scene's fragment sync moved to
      * a module of its own, fetched with the scene. Measured at 694_569 /
      * 177_383.
+     *
+     * Raised when a new declaration came to keep the reader's place (FR-116):
+     * the handle reads where the reader is and swaps the app in place; the
+     * rules for what falls back to what are a chunk fetched on the first
+     * swap. Measured at 696_428 / 178_422.
+     *
+     * Measured at 696_668 / 178_474 with the pull requests of this round together.
      */
-    minified: 695_000,
-    gzipped: 177_500,
+    minified: 699_500,
+    gzipped: 178_500,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -201,9 +208,14 @@ export const BUDGETS = [
      * With FR-106, FR-107 and FR-108 together: measured at 1_480_900 / 439_089.
      *
      * With a coverage cell drawn to what it joins (FR-111) and a coverage grid described (FR-112): measured at 1_488_256 / 441_710.
+     *
+     * Gzipped raised when a new declaration came to keep the reader's place
+     * (FR-116), its rules a chunk of their own: measured at 1_484_982 / 441_299.
+     *
+     * Measured at 1_492_342 / 443_906 with the pull requests of this round together.
      */
-    minified: 1_490_000,
-    gzipped: 443_000,
+    minified: 1_498_500,
+    gzipped: 446_000,
     load: "all",
   },
   {
@@ -229,6 +241,9 @@ export const BUDGETS = [
      * the budget just above it.
      *
      * With FR-106, FR-107 and FR-108 together: measured at 1_465_563 / 430_201.
+     *
+     * Gzipped raised when a new declaration came to keep the reader's place
+     * (FR-116): measured at 1_467_894 / 433_401.
      */
     entry: `import { mount } from "@graview/embed"; import { StudioPlace } from "@graview/studio"; globalThis.mount = (element, options) => mount(element, { ...options, studio: { onApply() {}, place: StudioPlace } });`,
     // Raised with every face's when a declared lens came to draw (FR-79) and the rule language came to compute what pages need (FR-83): the studio reaches the lenses through `@graview/primitives`, so here they load with it. With both, measured at 1_393_930 / 407_048.
@@ -238,8 +253,8 @@ export const BUDGETS = [
     // And with every face's for FR-99, FR-100, FR-101 and FR-105: measured at 1_455_251 / 426_587.
     // With both, measured at 1_458_930 / 427_760.
     // And with every face's when a coverage cell came to draw to what it joins (FR-111) and a coverage grid to be described (FR-112): measured at 1_472_916 / 432_823.
-    minified: 1_475_000,
-    gzipped: 434_000,
+    minified: 1_481_500,
+    gzipped: 438_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
