@@ -3,6 +3,8 @@ import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
 // @ts-expect-error — a plain .mjs module, without types.
 import { HOSTED_PAGE_BUDGET, measureHostedPage, packageOf } from "../scripts/lib/hosted-page.mjs";
+// @ts-expect-error — a plain .mjs module, without types.
+import { hostedPageMarkdown } from "../scripts/lib/hosted-page-notes.mjs";
 
 /**
  * A HOSTED PAGE KEEPS TO ITS BUDGET (FR-57). Graview Cloud's shell —
@@ -29,7 +31,7 @@ describe("a hosted page", () => {
     for (const name of ["react-dom", "zod", "@graview/core", "@graview/embed", "@graview/ship"]) expect(Object.keys(measured.upFront.packages)).toContain(name);
   });
 
-  it("carries at most 600 KB minified up front", () => {
+  it("carries at most 584 KB minified up front: 574 KB, with 10 KB of headroom under Cloud's 600", () => {
     expect(measured.upFront.minified, `${Math.round(measured.upFront.minified / 1024)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
     expect(measured.over).toBe(false);
   });
@@ -77,7 +79,27 @@ describe("a hosted page", () => {
     expect(packageOf("<stdin>")).toBe("(the page)");
   });
 
-  it("holds its budget's numbers as Cloud's brief set them: 600 KB up front, 150 KB of it zod's", () => {
-    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 600 * 1024, zod: 150 * 1024 });
+  it("holds its budget's numbers: 584 KB up front, under the 600 Cloud's brief set, and 150 KB of it zod's", () => {
+    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 584 * 1024, zod: 150 * 1024 });
+  });
+
+  it("carries none of the scene's own rules up front: the scene face draws them, and fetches them as it is drawn (FR-104)", () => {
+    expect(Object.keys(measured.upFront.modules)).not.toContain("primitives/src/scene-css.ts");
+    expect(measured.beforeDrawn.scene.packages["@graview/primitives"]).toBeGreaterThan(measured.upFront.packages["@graview/primitives"]!);
+  });
+
+  it("carries the frame's measures without the primitives' index, and its descent without the scene's way back (FR-104)", () => {
+    const modules = Object.keys(measured.upFront.modules);
+    expect(modules).toContain("primitives/src/primitives/measure.ts");
+    expect(modules).not.toContain("primitives/src/primitives/index.tsx");
+    expect(modules).not.toContain("primitives/src/workbench/back-out.tsx");
+  });
+
+  it("says its weight by package as the release notes carry it: a table that sums to the page, and the headroom (FR-104)", () => {
+    const notes = hostedPageMarkdown(measured) as string;
+    const rows = [...notes.matchAll(/^\| (?!Package|---|\*\*Total)([^|]+) \| ([\d.]+) \|$/gm)];
+    expect(rows.map((row) => row[1])).toEqual(Object.keys(measured.upFront.packages));
+    expect(notes).toContain(`**Total** | **${(measured.upFront.minified / 1024).toFixed(1)}**`);
+    expect(notes).toContain(`**${((HOSTED_PAGE_BUDGET.minified - measured.upFront.minified) / 1024).toFixed(1)} KB of headroom**`);
   });
 });

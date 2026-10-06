@@ -1125,7 +1125,7 @@ pages.surface("home", workerHome({ manifest: front, worker: { source: frontSourc
 <ol>
 <li><code>graview check</code> the app the view names: a manifest is only as sound as the declaration it reads. <code>checkManifest(manifest, store)</code> and <code>checkViewSource(source)</code> from <code>@graview/guest/host/views</code> must both say nothing.</li>
 <li>Run it headless, with no network, as a member who may see less than you, over a seed: `graview view check view.js --app &lt;app&gt; --manifest manifest.json --seed &lt;seed.json&gt; --roles &lt;role&gt;`. It prints what the view drew, said as <code>graview describe</code> says a place, or why it will not do: <code>error</code> (what it threw), <code>nodes</code>, <code>flood</code>, <code>slow</code>, <code>act</code> (an act its manifest does not name), <code>manifest</code> or <code>source</code>. Run it on an empty seed too. In code, <code>runWorkerViewHeadless</code> from <code>@graview/guest/headless</code> does the same in an isolate you supply.</li>
-<li>Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no <code>data-worker-view-failed</code>?</li>
+<li>Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no <code>data-worker-view-failed</code>? <code>start</code> there means the view never ran: a page with a Content-Security-Policy needs <code>worker-src blob:</code> and `style-src 'unsafe-inline'`, and the note under the plain face names what it lacks.</li>
 <li>Toggle the app to dark. Does the view restyle?</li>
 <li>Press each bound button with typed words, then again with a field the view filled. The first applies and the second is refused.</li>
 </ol>
