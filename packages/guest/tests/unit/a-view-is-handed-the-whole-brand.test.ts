@@ -8,7 +8,7 @@ import { bethan, showroom } from "./showroom.js";
 /**
  * A VIEW IS HANDED THE WHOLE BRAND, LOGO INCLUDED (FR-127).
  *
- * A view got the colours and the body and mono fonts, and drew headings and
+ * A view got the colors and the body and mono fonts, and drew headings and
  * the app's name its own way: nothing said what the app's wordmark is
  * drawn in, how round its panels are, or what its logo looks like, and a
  * view may load nothing, so a logo the app keeps at a path of its own was

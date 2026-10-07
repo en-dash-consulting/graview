@@ -49,7 +49,7 @@ graview.onProps((props) => {
 export const SVG_A = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="24" viewBox="0 0 48 24"><rect width="48" height="24" rx="4" fill="#0b6e4f"/><path d="M8 12h32" stroke="#fff" stroke-width="4"/></svg>`;
 export const SVG_B = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="15" r="14" fill="#8a3b12"/></svg>`;
 
-/** A real PNG, `width` × `height`, of one colour: what Cloud keeps at /graview/assets/<sha256>.png. */
+/** A real PNG, `width` × `height`, of one color: what Cloud keeps at /graview/assets/<sha256>.png. */
 function png(width, height, [r, g, b]) {
   const table = Array.from({ length: 256 }, (_, n) => {
     let c = n;

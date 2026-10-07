@@ -79,7 +79,7 @@ Drawn as the home (`views.home`), a guest is drawn over nothing and sees
 what it reads: it is the routed home's body, and the landing over the scene.
 
 Its props carry `theme`, a `GuestTheme`: the scheme, the accent, ground,
-panel, ink, muted ink and edge colours, the body, display and mono fonts
+panel, ink, muted ink and edge colors, the body, display and mono fonts
 and the radius, read off the element the frame is drawn in; and the brand's
 `name` and `logo` (FR-127). The logo is a `data:` image the host made from
 the brand's inline SVG, or from an address on the page's own origin it
@@ -300,7 +300,7 @@ routed home's body and the landing over the scene when it is at home, in
 place of the home the app declared, which is drawn if the view fails.
 `workerHome` makes it the routed face's whole home surface instead. Its props carry the app's look as a
 `GuestTheme` — the scheme, the accent, ground, panel, ink, muted ink and
-edge colours, the body, display and mono fonts and the radius — read off
+edge colors, the body, display and mono fonts and the radius — read off
 the region it is drawn in, with the brand's `name` and `logo` (FR-127):
 a `blob:` URL of the host's page the host made from the logo, or a
 `data:` image where the page's policy refuses `blob:` images (ChatGPT's

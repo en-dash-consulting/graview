@@ -134,7 +134,7 @@ a path of your own) and connect:
 - `props.nodes` holds the records it is drawn over and those of the kinds
   it `reads`, each with `id`, `kind`, `label` and its fields; `props.edges`
   the links among them (`{ kind, from, to }`). Only what the viewer may see.
-- `props.theme` is the app's look: `scheme`, colours, `fontDisplay`,
+- `props.theme` is the app's look: `scheme`, colors, `fontDisplay`,
   `radius`, `name`, and `logo` (a `data:` image; serve with `img-src
   data:`). Paint from it; it is pushed again when the app's toggle or brand
   changes, whatever the system prefers.

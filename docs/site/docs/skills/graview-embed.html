@@ -1112,7 +1112,7 @@ views.home(guestView({ url: frontUrl, name: "front", reads: { kinds: ["package"]
 <ul>
 <li><code>GraviewGuest.connect()</code> returns the guest. <code>guest.subscribe(fn)</code> is called with every push of <code>props</code>.</li>
 <li><code>props.nodes</code> holds the records it is drawn over and those of the kinds it <code>reads</code>, each with <code>id</code>, <code>kind</code>, <code>label</code> and its fields; <code>props.edges</code> the links among them (<code>{ kind, from, to }</code>). Only what the viewer may see.</li>
-<li><code>props.theme</code> is the app's look: <code>scheme</code>, colours, <code>fontDisplay</code>, <code>radius</code>, <code>name</code>, and <code>logo</code> (a <code>data:</code> image; serve with `img-src data:`). Paint from it; it is pushed again when the app's toggle or brand changes, whatever the system prefers.</li>
+<li><code>props.theme</code> is the app's look: <code>scheme</code>, colors, <code>fontDisplay</code>, <code>radius</code>, <code>name</code>, and <code>logo</code> (a <code>data:</code> image; serve with `img-src data:`). Paint from it; it is pushed again when the app's toggle or brand changes, whatever the system prefers.</li>
 <li><code>guest.act(name, args)</code> asks for an act; it is applied as the viewer, <code>via: "view:&lt;name&gt;"</code>, and resolves <code>{ ok, intent }</code> or `{ ok: false, message }<code>, the policy's own sentence. </code>props.acts` lists what they may run.</li>
 <li><code>guest.navigate(id)</code> goes to a record; <code>guest.navigate({ place: slug })</code> to one of <code>props.places</code>.</li>
 <li><code>guest.size(px)</code> asks for a height; the frame takes it.</li>
