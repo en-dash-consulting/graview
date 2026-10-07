@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ComponentType } from "react";
 import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
 import type { GuestViewInput } from "./session.js";
+import type { GuestBrand } from "./theme.js";
 import type { WorkerView, WorkerViewCode, WorkerViewFailure, WorkerViewLimits } from "./view.js";
 
 /** A worker view as an app registers it: its manifest, its code, and how far it may go. */
@@ -45,6 +46,8 @@ interface MountProps {
   readonly places?: () => readonly GuestPlace[];
   /** Changes when the app's scheme does: the view is pushed its look again. */
   readonly scheme?: string;
+  /** The app's brand (FR-127): its name and logo, pushed again when it changes. */
+  readonly brand?: GuestBrand | undefined;
   readonly onFailure: (reason: WorkerViewFailure, detail?: string) => void;
   /** The host draws nothing in a failed view's place: the component draws the kind's own face instead. */
   readonly drawsItsOwn?: boolean;
@@ -53,11 +56,11 @@ interface MountProps {
 }
 
 /** The region a worker view is drawn in, mounted when it is drawn; the host's half is fetched then. */
-function WorkerViewMount({ definition, store, principal, input, goTo, places, scheme, onFailure, drawsItsOwn, tick }: MountProps) {
+function WorkerViewMount({ definition, store, principal, input, goTo, places, scheme, brand, onFailure, drawsItsOwn, tick }: MountProps) {
   const holder = useRef<HTMLDivElement>(null);
   const mounted = useRef<WorkerView | null>(null);
-  const latest = useRef({ input, goTo, places, onFailure });
-  latest.current = { input, goTo, places, onFailure };
+  const latest = useRef({ input, goTo, places, onFailure, brand });
+  latest.current = { input, goTo, places, onFailure, brand };
   useEffect(() => {
     const element = holder.current;
     if (!element) return;
@@ -73,6 +76,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
         /* Links stay in the app (FR-93): a record or a place, on whichever face the view is drawn. */
         onNavigate: (to) => ("record" in to ? latest.current.goTo?.record(to.record) : latest.current.goTo?.place(to.place)),
         places: () => latest.current.places?.() ?? [],
+        brand: () => latest.current.brand,
         onFailure: (reason, detail) => latest.current.onFailure(reason, detail),
         ...(drawsItsOwn ? { fallback: false as const } : {}),
         ...(definition.limits ? { limits: definition.limits } : {}),
@@ -85,7 +89,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
       mounted.current = null;
     };
   }, [definition, store, principal]);
-  useEffect(() => mounted.current?.update(), [scheme, tick]);
+  useEffect(() => mounted.current?.update(), [scheme, brand, tick]);
   return <div ref={holder} data-worker-view-place={definition.manifest.name} />;
 }
 
@@ -116,6 +120,7 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
         goTo={goTo}
         places={() => graview.views.places()}
         scheme={graview.scheme}
+        brand={graview.brand}
         tick={props}
         drawsItsOwn={Fallback !== undefined}
         onFailure={(reason, detail) => {
@@ -180,7 +185,7 @@ export function workerHome(definition: WorkerViewDefinition, options: { readonly
         store={context.store}
         principal={context.principal ?? graview?.principal ?? { kind: "human" }}
         goTo={goTo}
-        {...(graview ? { places: () => graview.views.places(), scheme: graview.scheme } : {})}
+        {...(graview ? { places: () => graview.views.places(), scheme: graview.scheme, brand: graview.brand } : {})}
         drawsItsOwn={Fallback !== undefined}
         onFailure={(reason, detail) => {
           setFailed(reason);

@@ -63,7 +63,9 @@ const inputOf = (props: ViewProps<AnySchema>): GuestViewInput => ({
 export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
   if ((options.url === undefined) === (options.worker === undefined)) throw new Error(`guestView "${options.name}" takes a url or a worker, one of the two`);
   function GuestView(props: ViewProps<AnySchema>) {
-    const { store, principal, setSelection, views } = useGraview<AnySchema>();
+    const { store, principal, setSelection, views, brand } = useGraview<AnySchema>();
+    const branded = useRef(brand);
+    branded.current = brand;
     const goTo = useGoTo();
     const going = useRef(goTo);
     going.current = goTo;
@@ -107,6 +109,7 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
         input: () => inputOf(latest.current),
         ...(options.reads ? { reads: options.reads } : {}),
         places: () => views.places(),
+        brand: () => branded.current,
         onNavigate: (id) => going.current.record(id),
         onNavigatePlace: (as) => going.current.place(as),
         ...(options.limits ? { limits: options.limits } : {}),
@@ -118,7 +121,7 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
         frame.current = null;
       };
     }, [store, principal, setSelection, views]);
-    useEffect(() => frame.current?.update(), [props]);
+    useEffect(() => frame.current?.update(), [props, brand]);
     return <div ref={holder} data-guest={options.name} />;
   }
   GuestView.displayName = `GuestView(${options.name})`;

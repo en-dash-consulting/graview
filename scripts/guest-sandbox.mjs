@@ -39,6 +39,11 @@
  *           inlined under Graview Cloud's view policy, reading across
  *           kinds, painted from the app's theme, a place by its title, and
  *           the home's body (scripts/lib/guest-client-suite.mjs).
+ *   brand   a worker view drawing the app's whole brand (FR-127): its
+ *           name and display face beside the app's wordmark, its radius,
+ *           its logo byte for byte, and all of it again after the host
+ *           re-dresses the app — on the app's own page and inside Claude's
+ *           and ChatGPT's widgets (scripts/lib/guest-brand-suite.mjs).
  *   worker  a classic worker the host starts from a blob: URL, inside a
  *           chat's widget framed the way Claude or ChatGPT frames one
  *           (scripts/lib/widget-policies.mjs, from Graview Cloud's spike);
@@ -71,6 +76,7 @@ import { writesSuite } from "./lib/guest-writes-suite.mjs";
 import { limitsSuite } from "./lib/guest-limits-suite.mjs";
 import { plainSuite } from "./lib/guest-plain-suite.mjs";
 import { clientSuite } from "./lib/guest-client-suite.mjs";
+import { brandSuite } from "./lib/guest-brand-suite.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(resolve(repoRoot, "package.json"));
@@ -83,7 +89,7 @@ const arg = (name) => process.argv.find((one) => one.startsWith(`--${name}=`))?.
 if (!arg("transport") && !arg("engine") && !arg("policy")) {
   /* `--quick` (GRAVIEW_QUICK): one engine per transport and policy, crossed so both engines still run. */
   const runs = process.env.GRAVIEW_QUICK
-    ? [["--transport=frame", "--engine=chromium"], ["--transport=worker", "--policy=claude", "--engine=chromium"], ["--transport=worker", "--policy=chatgpt", "--engine=webkit"], ["--transport=open", "--policy=page", "--engine=firefox"], ["--transport=place", "--engine=chromium"], ["--transport=writes", "--engine=webkit"], ["--transport=limits", "--engine=firefox"], ["--transport=plain", "--engine=chromium"], ["--transport=client", "--engine=webkit"]]
+    ? [["--transport=frame", "--engine=chromium"], ["--transport=worker", "--policy=claude", "--engine=chromium"], ["--transport=worker", "--policy=chatgpt", "--engine=webkit"], ["--transport=open", "--policy=page", "--engine=firefox"], ["--transport=place", "--engine=chromium"], ["--transport=writes", "--engine=webkit"], ["--transport=limits", "--engine=firefox"], ["--transport=plain", "--engine=chromium"], ["--transport=client", "--engine=webkit"], ["--transport=brand", "--policy=chatgpt", "--engine=firefox"]]
     : [
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=frame", `--engine=${engine}`]),
         ...["claude", "chatgpt"].flatMap((policy) => ["chromium", "webkit"].map((engine) => ["--transport=worker", `--policy=${policy}`, `--engine=${engine}`])),
@@ -94,6 +100,7 @@ if (!arg("transport") && !arg("engine") && !arg("policy")) {
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=limits", `--engine=${engine}`]),
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=plain", `--engine=${engine}`]),
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=client", `--engine=${engine}`]),
+        ...["page", "claude", "chatgpt"].flatMap((policy) => ["chromium", "webkit", "firefox"].map((engine) => ["--transport=brand", `--policy=${policy}`, `--engine=${engine}`])),
       ];
   let failed = 0;
   for (const run of runs) {
@@ -107,10 +114,10 @@ if (!arg("transport") && !arg("engine") && !arg("policy")) {
 
 const TRANSPORT = arg("transport") ?? "frame";
 const ENGINE = arg("engine") ?? "chromium";
-const POLICY = arg("policy") ?? (TRANSPORT === "open" ? "page" : "claude");
-if (!["frame", "worker", "open", "place", "writes", "limits", "plain", "client"].includes(TRANSPORT)) throw new Error(`--transport is frame, worker, open, place, writes, limits, plain or client, not ${TRANSPORT}`);
+const POLICY = arg("policy") ?? (TRANSPORT === "open" || TRANSPORT === "brand" ? "page" : "claude");
+if (!["frame", "worker", "open", "place", "writes", "limits", "plain", "client", "brand"].includes(TRANSPORT)) throw new Error(`--transport is frame, worker, open, place, writes, limits, plain, client or brand, not ${TRANSPORT}`);
 if (TRANSPORT === "worker" && !POLICIES[POLICY]) throw new Error(`--policy is one of ${Object.keys(POLICIES).join(", ")}, not ${POLICY}`);
-if (TRANSPORT === "open" && POLICY !== "page" && !POLICIES[POLICY]) throw new Error(`--policy is page or one of ${Object.keys(POLICIES).join(", ")}, not ${POLICY}`);
+if ((TRANSPORT === "open" || TRANSPORT === "brand") && POLICY !== "page" && !POLICIES[POLICY]) throw new Error(`--policy is page or one of ${Object.keys(POLICIES).join(", ")}, not ${POLICY}`);
 const HOST_PORT = portFor("guest-host");
 /* The watchdog's limit for the spinner and the busy guest: short, so the run stays short. */
 const SILENT_MS = 1_500;
@@ -168,7 +175,7 @@ const host = {
 `;
 
 const secretHits = [];
-const report = { at: new Date().toISOString(), transport: TRANSPORT, engine: ENGINE, ...(TRANSPORT === "worker" || TRANSPORT === "open" ? { policy: POLICIES[POLICY]?.label ?? "the app's own page, with no content security policy" } : {}), claims: {}, pageErrors: [] };
+const report = { at: new Date().toISOString(), transport: TRANSPORT, engine: ENGINE, ...(TRANSPORT === "worker" || TRANSPORT === "open" || TRANSPORT === "brand" ? { policy: POLICIES[POLICY]?.label ?? "the app's own page, with no content security policy" } : {}), claims: {}, pageErrors: [] };
 const claim = (name, ok, detail) => {
   report.claims[name] = { ok: Boolean(ok), ...(detail === undefined ? {} : { detail }) };
   process.stdout.write(`${ok ? "ok  " : "FAIL"} ${name}${ok ? "" : ` — ${JSON.stringify(detail)}`}\n`);
@@ -904,6 +911,7 @@ try {
   else if (TRANSPORT === "client") await clientSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, GUEST, GUEST_PORT });
   else if (TRANSPORT === "limits") await limitsSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript: viewScriptOf(repoRoot, build) });
   else if (TRANSPORT === "writes") await writesSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript: viewScriptOf(repoRoot, build) });
+  else if (TRANSPORT === "brand") await brandSuite({ repoRoot, build, browser, claim, report, POLICY, HOST, GUEST, HOST_PORT, GUEST_PORT });
   else if (TRANSPORT === "place") await placeSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT });
   else if (TRANSPORT === "open") await openSuite({ repoRoot, build, browser, claim, report, POLICY, ENGINE, HOST, GUEST, HOST_PORT, GUEST_PORT, ATTACKER_PORT: portFor("guest-attacker"), SHOWROOM });
   else await workerSuite();
