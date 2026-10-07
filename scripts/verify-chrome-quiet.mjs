@@ -701,9 +701,9 @@ function theBar() {
     const style = getComputedStyle(element);
     return style.display !== "none" && style.visibility !== "hidden";
   };
-  const parts = header ? [".graview-app-bar-app", ".graview-app-bar-places", ".graview-app-bar-tools"].map((selector) => header.querySelector(selector)).filter(shown) : [];
+  const parts = header ? [".graview-bar-app", ".graview-bar-places", ".graview-bar-tools"].map((selector) => header.querySelector(selector)).filter(shown) : [];
   const tops = [...new Set(parts.map((part) => Math.round(part.getBoundingClientRect().top / 4)))].sort((a, b) => a - b);
-  const places = header?.querySelector(".graview-app-bar-places");
+  const places = header?.querySelector(".graview-bar-places");
   const secondRowIsThePlaces = tops.length === 2 && shown(places) && Math.round(places.getBoundingClientRect().top / 4) === tops[1];
   /* Rows of navigation over the content that are not the bar: a masthead, a nav of pages, a Find bar of the face's own, the old strip. */
   const others = root ? [...root.querySelectorAll('[data-testid="masthead"], [data-testid="shell-nav"], [data-testid="face-find-bar"], [data-testid="embed-faces"], [data-embed-strip]')].filter(shown) : [];
@@ -726,7 +726,7 @@ function theBar() {
   }
   /* Find boxes of the app's own — a lens may carry a box for its own words, which is the picture's, not the bar's. */
   const findBoxes = [...document.querySelectorAll('input[type="search"]')].filter((one) => shown(one) && (header?.contains(one) || /^(Find anything|Narrow this list)$/.test(one.getAttribute("aria-label") ?? ""))).length + (shown(header?.querySelector('[data-testid="app-find-open"]')) ? 1 : 0);
-  const tools = header ? [...header.querySelectorAll('.graview-app-bar-tools > *')].flatMap((one) => (one.matches("button, a, input") ? [one] : [...one.querySelectorAll("button, a, input")])).filter(shown).map((one) => ({ name: one.getAttribute("aria-label") ?? one.textContent.trim(), height: Math.round(one.getBoundingClientRect().height), named: Boolean((one.getAttribute("aria-label") ?? "").trim()) })) : [];
+  const tools = header ? [...header.querySelectorAll('.graview-bar-tools > *')].flatMap((one) => (one.matches("button, a, input") ? [one] : [...one.querySelectorAll("button, a, input")])).filter(shown).map((one) => ({ name: one.getAttribute("aria-label") ?? one.textContent.trim(), height: Math.round(one.getBoundingClientRect().height), named: Boolean((one.getAttribute("aria-label") ?? "").trim()) })) : [];
   const saysSceneOrPages = root ? [...root.querySelectorAll("button, a, [role=tab], [role=button]")].filter(shown).map((one) => (one.getAttribute("aria-label") ?? one.textContent ?? "").trim()).filter((words) => /\b(scene|pages)\b/i.test(words)) : [];
   return { rows: tops.length, secondRowIsThePlaces, bars: header ? 1 + others.length : others.length, contentUnderTheBar, headings, name, repeated, findBoxes, tools, saysSceneOrPages };
 }

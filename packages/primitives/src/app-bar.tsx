@@ -105,35 +105,35 @@ export interface BarGo {
 export const TOOL = 30;
 
 const BAR_CSS = `
-.graview-app-bar{container-type:inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px solid var(--graview-edge);color:var(--graview-ink);font-family:var(--graview-font-body,system-ui)}
-.graview-app-bar-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"app places tools";align-items:stretch;column-gap:20px;padding:0 16px;min-height:48px}
-.graview-app-bar-app{grid-area:app;display:flex;align-items:center;min-width:0}
-.graview-app-bar-name{margin:0;min-width:0;display:flex;font-family:var(--graview-font-display,var(--graview-font-body,system-ui));font-size:.9375rem;font-weight:600;line-height:1.3;letter-spacing:-.005em}
-.graview-app-bar-home{display:inline-flex;align-items:center;gap:8px;min-width:0;min-height:30px;color:var(--graview-ink);text-decoration:none;font:inherit;letter-spacing:inherit;overflow-wrap:anywhere}
-.graview-app-bar-more{display:grid;min-width:200px;max-width:calc(100vw - 32px);margin:0;padding:4px;list-style:none;border-radius:10px;border:1px solid var(--graview-edge);background:var(--graview-float);box-shadow:var(--graview-lift-high)}
-.graview-app-bar-more[hidden]{display:none}
-.graview-app-bar-item{display:flex;align-items:center;width:100%;min-height:32px;padding:0 10px;border:0;border-left:2px solid transparent;border-radius:7px;background:none;box-shadow:none;font:inherit;font-size:.875rem;text-align:left;text-decoration:none;color:var(--graview-ink);cursor:pointer}
-.graview-app-bar-item[aria-current="page"]{font-weight:600;border-left-color:var(--graview-accent)}
-.graview-app-bar-places{grid-area:places;display:flex;align-items:stretch;min-width:0}
-.graview-app-bar-tools{grid-area:tools;display:flex;align-items:center;gap:8px;min-width:0}
-.graview-app-bar-find{display:flex;align-items:center;width:15rem;min-width:0}
-.graview-app-bar-find-open{display:none;align-items:center;justify-content:center}
-.graview-app-bar-tab{display:inline-flex;align-items:center;gap:4px;padding:0 10px;margin:0;border:0;border-bottom:2px solid transparent;border-radius:0;background:none;box-shadow:none;font:inherit;font-size:.875rem;line-height:1.2;white-space:nowrap;color:var(--graview-ink-muted);text-decoration:none;cursor:pointer;flex:0 0 auto}
-.graview-app-bar-tab:hover{color:var(--graview-ink)}
-.graview-app-bar-tab[aria-current="page"]{color:var(--graview-ink);border-bottom-color:var(--graview-accent);font-weight:600}
-.graview-app-bar-tab:focus-visible{outline:2px solid var(--graview-accent);outline-offset:-4px}
-.graview-app-bar-measure{position:absolute;visibility:hidden;pointer-events:none;display:flex;white-space:nowrap;height:0;overflow:hidden}
+.graview-bar{container-type:inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px solid var(--graview-edge);color:var(--graview-ink);font-family:var(--graview-font-body,system-ui)}
+.graview-bar-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"app places tools";align-items:stretch;column-gap:20px;padding:0 16px;min-height:48px}
+.graview-bar-app{grid-area:app;display:flex;align-items:center;min-width:0}
+.graview-bar-name{margin:0;min-width:0;display:flex;font-family:var(--graview-font-display,var(--graview-font-body,system-ui));font-size:.9375rem;font-weight:600;line-height:1.3;letter-spacing:-.005em}
+.graview-bar-home{display:inline-flex;align-items:center;gap:8px;min-width:0;min-height:30px;color:var(--graview-ink);text-decoration:none;font:inherit;letter-spacing:inherit;overflow-wrap:anywhere}
+.graview-bar-more{display:grid;min-width:200px;max-width:calc(100vw - 32px);margin:0;padding:4px;list-style:none;border-radius:10px;border:1px solid var(--graview-edge);background:var(--graview-float);box-shadow:var(--graview-lift-high)}
+.graview-bar-more[hidden]{display:none}
+.graview-bar-item{display:flex;align-items:center;width:100%;min-height:32px;padding:0 10px;border:0;border-left:2px solid transparent;border-radius:7px;background:none;box-shadow:none;font:inherit;font-size:.875rem;text-align:left;text-decoration:none;color:var(--graview-ink);cursor:pointer}
+.graview-bar-item[aria-current="page"]{font-weight:600;border-left-color:var(--graview-accent)}
+.graview-bar-places{grid-area:places;display:flex;align-items:stretch;min-width:0}
+.graview-bar-tools{grid-area:tools;display:flex;align-items:center;gap:8px;min-width:0}
+.graview-bar-find{display:flex;align-items:center;width:15rem;min-width:0}
+.graview-bar-find-open{display:none;align-items:center;justify-content:center}
+.graview-bar-tab{display:inline-flex;align-items:center;gap:4px;padding:0 10px;margin:0;border:0;border-bottom:2px solid transparent;border-radius:0;background:none;box-shadow:none;font:inherit;font-size:.875rem;line-height:1.2;white-space:nowrap;color:var(--graview-ink-muted);text-decoration:none;cursor:pointer;flex:0 0 auto}
+.graview-bar-tab:hover{color:var(--graview-ink)}
+.graview-bar-tab[aria-current="page"]{color:var(--graview-ink);border-bottom-color:var(--graview-accent);font-weight:600}
+.graview-bar-tab:focus-visible{outline:2px solid var(--graview-accent);outline-offset:-4px}
+.graview-bar-measure{position:absolute;visibility:hidden;pointer-events:none;display:flex;white-space:nowrap;height:0;overflow:hidden}
 @container (max-width: 639px){
-.graview-app-bar-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"app tools" "places places";padding:0 12px;min-height:0;column-gap:12px}
-.graview-app-bar-app,.graview-app-bar-tools{min-height:48px}
-.graview-app-bar-places{border-top:1px solid var(--graview-edge);margin:0 -12px;padding:0 2px;min-height:40px}
-.graview-app-bar-find{display:none;width:auto;flex:1 1 auto}
-.graview-app-bar-find-open{display:inline-flex}
-.graview-app-bar[data-finding] .graview-app-bar-app{display:none}
-.graview-app-bar[data-finding] .graview-app-bar-row{grid-template-areas:"tools tools" "places places"}
-.graview-app-bar[data-finding] .graview-app-bar-tools{flex:1 1 auto}
-.graview-app-bar[data-finding] .graview-app-bar-find{display:flex}
-.graview-app-bar[data-finding] .graview-app-bar-find-open{display:none}
+.graview-bar-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"app tools" "places places";padding:0 12px;min-height:0;column-gap:12px}
+.graview-bar-app,.graview-bar-tools{min-height:48px}
+.graview-bar-places{border-top:1px solid var(--graview-edge);margin:0 -12px;padding:0 2px;min-height:40px}
+.graview-bar-find{display:none;width:auto;flex:1 1 auto}
+.graview-bar-find-open{display:inline-flex}
+.graview-bar[data-finding] .graview-bar-app{display:none}
+.graview-bar[data-finding] .graview-bar-row{grid-template-areas:"tools tools" "places places"}
+.graview-bar[data-finding] .graview-bar-tools{flex:1 1 auto}
+.graview-bar[data-finding] .graview-bar-find{display:flex}
+.graview-bar[data-finding] .graview-bar-find-open{display:none}
 }`;
 
 /** A tool's own box: one size, square, its name in words for whoever cannot see the mark. */
@@ -227,23 +227,22 @@ export function AppBar({
   return (
     <header
       ref={bar}
-      className="graview-app-bar"
+      className="graview-bar"
       data-testid="app-bar"
       data-graview-app-bar=""
-      {...(compact ? { "data-compact": "" } : {})}
       {...(finding && compact ? { "data-finding": "" } : {})}
     >
       <style>{BAR_CSS}</style>
-      <div className="graview-app-bar-row">
-        <div className="graview-app-bar-app">
-          <Heading className="graview-app-bar-name">
+      <div className="graview-bar-row">
+        <div className="graview-bar-app">
+          <Heading className="graview-bar-name">
             <a
               href={home.href ?? "#"}
               onClick={press(home.go)}
               data-testid="app-home"
               {...(home.current ? { "aria-current": "page" as const } : {})}
               title={`${name} — home`}
-              className="graview-app-bar-home"
+              className="graview-bar-home"
             >
               <AppMark brand={brand} size={20} />
               <span data-testid="app-name">{name}</span>
@@ -251,12 +250,12 @@ export function AppBar({
           </Heading>
         </div>
         <BarPlaces places={places} current={current} reach={reach} />
-        <div className="graview-app-bar-tools">
+        <div className="graview-bar-tools">
           {find ? (
             <>
               <button
                 type="button"
-                className="graview-app-bar-find-open"
+                className="graview-bar-find-open"
                 data-testid="app-find-open"
                 aria-label="Find"
                 title="Find"
@@ -267,7 +266,7 @@ export function AppBar({
               </button>
               <div
                 ref={setSlot}
-                className="graview-app-bar-find"
+                className="graview-bar-find"
                 data-testid="app-find"
                 onBlur={(event) => {
                   // Put away on a phone when the keyboard leaves it with nothing typed.
@@ -348,7 +347,7 @@ function BarPlaces({ places, current, reach }: { readonly places: readonly BarPl
     watch.observe(element);
     return () => watch.disconnect();
   }, [signature, currentAt]);
-  if (places.length === 0) return <div className="graview-app-bar-places" data-testid="app-places" ref={row as never} />;
+  if (places.length === 0) return <div className="graview-bar-places" data-testid="app-places" ref={row as never} />;
   // The place you are on is on the row: in the last tab's room when it is one the row could not otherwise hold.
   const shown = currentAt >= fits && fits > 0 ? [...places.slice(0, fits - 1), places[currentAt]!] : places.slice(0, fits);
   const rest = places.filter((place) => !shown.includes(place));
@@ -356,7 +355,7 @@ function BarPlaces({ places, current, reach }: { readonly places: readonly BarPl
     const here = place.key === current;
     const href = reach.href?.(place.path);
     const common = {
-      className: inMenu ? "graview-app-bar-item" : "graview-app-bar-tab",
+      className: inMenu ? "graview-bar-item" : "graview-bar-tab",
       "data-testid": `app-place-${place.key}`,
       "data-place-path": place.path,
       ...(here ? { "aria-current": "page" as const } : {}),
@@ -379,15 +378,15 @@ function BarPlaces({ places, current, reach }: { readonly places: readonly BarPl
     );
   };
   return (
-    <nav ref={row} className="graview-app-bar-places" aria-label="The app’s places" data-testid="app-places" style={{ position: "relative" }}>
+    <nav ref={row} className="graview-bar-places" aria-label="The app’s places" data-testid="app-places" style={{ position: "relative" }}>
       {/* The row as it would be, measured and never seen: how many tabs the room holds. */}
-      <div ref={measure} className="graview-app-bar-measure" aria-hidden="true">
+      <div ref={measure} className="graview-bar-measure" aria-hidden="true">
         {places.map((place) => (
-          <span key={place.key} className="graview-app-bar-tab" style={{ fontWeight: 600 }}>
+          <span key={place.key} className="graview-bar-tab" style={{ fontWeight: 600 }}>
             {place.label}
           </span>
         ))}
-        <span className="graview-app-bar-tab">
+        <span className="graview-bar-tab">
           More
           <Chevron />
         </span>
@@ -397,7 +396,7 @@ function BarPlaces({ places, current, reach }: { readonly places: readonly BarPl
         <span style={{ position: "relative", display: "inline-flex" }}>
           <button
             type="button"
-            className="graview-app-bar-tab"
+            className="graview-bar-tab"
             data-testid="app-places-more"
             {...popover.trigger}
             onClick={popover.toggle}
@@ -411,7 +410,7 @@ function BarPlaces({ places, current, reach }: { readonly places: readonly BarPl
             data-testid="app-places-more-list"
             aria-label="More places"
             hidden={!popover.open}
-            className="graview-app-bar-more"
+            className="graview-bar-more"
             style={POPOVER_STYLE}
           >
             {rest.map((place) => (

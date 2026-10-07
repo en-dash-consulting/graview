@@ -689,7 +689,7 @@ try {
       const gallery = document.querySelector('[data-testid="gallery"]');
       const cards = [...document.querySelectorAll('[data-testid="place-card"], [data-testid="kind-card"]')];
       const tops = cards.map((card) => Math.round(card.getBoundingClientRect().top));
-      const navTops = [...document.querySelectorAll('[data-testid="app-places"] .graview-app-bar-tab')].map((a) => Math.round(a.getBoundingClientRect().top));
+      const navTops = [...document.querySelectorAll('[data-testid="app-places"] .graview-bar-tab')].map((a) => Math.round(a.getBoundingClientRect().top));
       return {
         headerThenGallery: sections[0]?.tagName === "HEADER" && sections[1] === gallery,
         cards: cards.length,
