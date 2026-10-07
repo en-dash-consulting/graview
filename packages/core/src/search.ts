@@ -1,3 +1,4 @@
+import { addressOf } from "./address.js";
 import { arrangeable, asksForThePast, conditionHolds, type ArrangeContext, type ArrangeGraph, type Condition } from "./arrangement.js";
 import { describeArg } from "./mutations/node-ref.js";
 import type { Operation } from "./ops/types.js";
@@ -5,8 +6,9 @@ import type { Principal } from "./permissions/types.js";
 import { humaniseField, isCurrent, labelOf, readableFields, tellApart } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
+import { hidesFrom, seesId } from "./seen.js";
 import type { Store } from "./store.js";
-import type { Place } from "./views/types.js";
+import { placeSlug, type Place } from "./views/types.js";
 
 /**
  * SEARCH IS ONE SEAM, and the graph is the result list.
@@ -49,6 +51,12 @@ export type Hit =
       readonly flagged: boolean;
       /** What tells it apart from another hit of the same name — "single" beside "album". */
       readonly apart?: string;
+      /**
+       * Its record's path on the routed face, as the face's own record link
+       * spells it — `/<plural>/<id>`, the id encoded — under `basePath`
+       * when one is given, as `addressOf` spells it (FR-129).
+       */
+      readonly address: string;
     }
   | {
       readonly about: "kind";
@@ -58,6 +66,8 @@ export type Hit =
       readonly why: Why;
       /** How many node hits are of this kind. */
       readonly count: number;
+      /** Its list on the routed face: `/<plural>`, under `basePath` when given. */
+      readonly address: string;
     }
   | {
       readonly about: "place";
@@ -66,6 +76,8 @@ export type Hit =
       /** The place's name in a stop. */
       readonly as: string;
       readonly why: Why;
+      /** Its address on the routed face, as `placesOf` gives it — `/places/<as>`, with `?of=` when two kinds share the name — under `basePath` when given. */
+      readonly address: string;
     }
   | {
       readonly about: "act";
@@ -145,6 +157,8 @@ export interface SearchOptions {
   readonly kinds?: readonly string[];
   /** Most hits returned; counts are taken before it. 50 when unsaid. */
   readonly limit?: number;
+  /** The host's base path for the routed face (`/apps/<id>/`): every hit's `address` is under it, as `addressOf` spells it. */
+  readonly basePath?: string;
 }
 
 /*
@@ -339,6 +353,9 @@ export function touchWeights(ops: readonly Operation[]): ReadonlyMap<string, num
 
 const pluralOf = (definition: AnyNodeDefinition | undefined, kind: string) => definition?.plural ?? `${humaniseField(kind)}s`;
 
+/** A kind's list on the routed face, as its router addresses it: the declared plural, else the kind and an s, as a slug. */
+const listPath = (definition: AnyNodeDefinition | undefined, kind: string) => `/${placeSlug(definition?.plural ?? `${kind}s`)}`;
+
 /** Whether the words name this kind: its id, its singular in words, or its plural. */
 function kindStrength(schema: AnySchema, kind: string, words: readonly string[]): { strength: Exclude<MatchStrength, "field">; field: string; text: string } | undefined {
   const definition = schema.tryDefinition(kind);
@@ -431,6 +448,14 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
     for (const neighbour of store.graph.neighbors(id)) near.add(neighbour.id);
   }
   // The same words mean the same thing in a search box and in a list page's filter.
+  /*
+   * WHAT THIS SEAT SEES, RECORD BY RECORD. A kind it sees none of is never
+   * searched; a kind it sees only its own of (`own`) is searched only
+   * through what is its own, so a hit — and the address it carries — never
+   * names a record the seat may not open.
+   */
+  const sighted = hidesFrom(store, principal) ? seesId(store, principal) : undefined;
+  const at = (path: string) => addressOf(path, options.basePath === undefined ? {} : { basePath: options.basePath });
   const ctx: ArrangeContext = { schema, graph: store.graph as unknown as ArrangeGraph, flagged, ...(today ? { today } : {}) };
 
   const ranked: Ranked[] = [];
@@ -450,6 +475,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
     for (const node of store.graph.nodesOfKind(kind as never) as unknown as ({ id: string; kind: string } & Record<string, unknown>)[]) {
       const current = isCurrent(definition, node, today);
       if (!past && !namesThePast && !current) continue;
+      if (sighted && !sighted(node.id)) continue;
       if (onlyPast && current) continue;
       if (!own.every((condition) => conditionHolds(ctx, node, condition))) continue;
       if (isWords.includes("flagged") && !flagged.has(node.id)) continue;
@@ -464,7 +490,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
       const label = labelOf(definition, node);
       byKind[kind] = (byKind[kind] ?? 0) + 1;
       ranked.push({
-        hit: { about: "node", id: node.id, kind, label, why, current, flagged: flagged.has(node.id) },
+        hit: { about: "node", id: node.id, kind, label, why, current, flagged: flagged.has(node.id), address: at(`${listPath(definition, kind)}/${encodeURIComponent(node.id)}`) },
         tier: TIER[why.strength],
         inKind: kind === options.inKind ? 0 : 1,
         near: near.has(node.id) ? 0 : 1,
@@ -501,15 +527,19 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
       if (!match) continue;
       const label = pluralOf(schema.tryDefinition(kind), kind);
       const why: Why = { field: match.field, reading: match.field === "plural" ? "Plural" : "Kind", fragment: match.text, strength: match.strength };
-      ranked.push(declared({ about: "kind", kind, label, why, count: byKind[kind] ?? 0 }, match.strength, label, `kind:${kind}`));
+      ranked.push(declared({ about: "kind", kind, label, why, count: byKind[kind] ?? 0, address: at(listPath(schema.tryDefinition(kind), kind)) }, match.strength, label, `kind:${kind}`));
     }
 
-    for (const place of options.places ?? []) {
+    const places = options.places ?? [];
+    for (const place of places) {
       if (!kinds.includes(place.kind) || (place.across && kept.has(place.across))) continue;
       const strength = strengthOf(place.title, words);
       if (!strength) continue;
       const why: Why = { field: "title", reading: "Title", fragment: place.title, strength };
-      ranked.push(declared({ about: "place", kind: place.kind, title: place.title, as: place.as, why }, strength, place.title, `place:${place.kind}:${place.as}`));
+      // A name two kinds' pictures share says which kind's, as placesOf spells it.
+      const of = places.some((other) => other.as === place.as && other.kind !== place.kind) ? listPath(schema.tryDefinition(place.kind), place.kind).slice(1) : undefined;
+      const address = at(`/places/${encodeURIComponent(place.as)}${of ? `?of=${encodeURIComponent(of)}` : ""}`);
+      ranked.push(declared({ about: "place", kind: place.kind, title: place.title, as: place.as, why, address }, strength, place.title, `place:${place.kind}:${place.as}`));
     }
 
     for (const rule of store.allInvariants()) {

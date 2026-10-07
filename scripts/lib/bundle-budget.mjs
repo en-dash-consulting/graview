@@ -75,9 +75,13 @@ export const BUDGETS = [
      * Raised again when every act came to refuse an argument it does not
      * take (FR-121): the page's store holds a call to its act's shape before
      * the input parses, about 0.4 kB. Measured at 488_607 / 165_764.
+     *
+     * Raised when a search hit came to say its address and search to judge
+     * sight record by record (FR-129): the Find box on every page is that
+     * search, about 0.6 kB. Measured at 489_185 / 166_114.
      */
-    minified: 489_000,
-    gzipped: 166_000,
+    minified: 489_500,
+    gzipped: 166_300,
     load: "first",
   },
   {
