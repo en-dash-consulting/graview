@@ -87,6 +87,42 @@ somebody with a bright office files a bug — so the framework measures it.
    `currency` wins. `graview check` refuses a code or a locale it cannot
    write (`brand-currency`, `brand-locale`). Without one, sums are numbers.
 
+## A document's brand
+
+A document (`graview-document@1`) holds the same brand as data, every key
+optional, and an edit for each — `set-brand` (`null` clears a key),
+`set-name`, `set-description` (drawn as the line under the name):
+
+```json
+"brand": {
+  "name": "En Dash", "accent": "#0f6e5c",
+  "logo": { "src": "/graview/assets/<sha256>.svg", "alt": "En Dash Consulting" },
+  "favicon": "/graview/assets/<sha256>.svg",
+  "typography": { "display": "system-serif", "body": "system-sans" },
+  "shape": { "radius": 6, "density": 0.9 },
+  "accents": { "workshop": 168 }, "scheme": "dark"
+}
+```
+
+- **A mark** is inline SVG or a path on the app's own host — never another
+  origin. It is drawn as given (`currentColor` takes the accent), so an SVG
+  with a script, a handler, `foreignObject` or anything it loads is refused
+  (`brand-mark`), never rewritten. On Cloud, `add_image` answers the path.
+- **A face** is `system-serif`, `system-sans`, `system-mono`, a face every
+  system has (Georgia, Menlo), or a web font on `DOCUMENT_FONTS`; one named
+  by its address is refused (`brand-font`). The host decides where web
+  fonts load from.
+- **An accent** must read as given in light: `set-brand` refuses one that
+  does not with the pair, its ratio and the shade that would pass — "#e6c200
+  text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the
+  shade it names.
+- **The icon** is set only by a face that owns the page; an embed on
+  somebody else's page leaves theirs alone unless the host passes
+  `favicon: true`.
+
+`describe_place("home")` says the masthead: the name, the line under it,
+and the logo by its alt text.
+
 ## Styling by conversation
 
 This skill is built to be DRIVEN IN NATURAL LANGUAGE — "warmer", "more
@@ -142,9 +178,10 @@ kind's mark is its plot in miniature, not a dot.
 pnpm build && npx graview check ./dist/domain/app.js
 ```
 
-`theme-contrast-below-aa` names the exact token pair, the scheme and where it
-is drawn — "a field name", "text on a filled accent" — because "your theme has
-a contrast problem" is not something anyone can act on.
+`theme-contrast-below-aa` names the exact token pair as colors, the scheme,
+its ratio and where it is drawn — "a field name", "text on a filled accent" —
+and the shade of that ink that would pass, because "your theme has a contrast
+problem" is not something anyone can act on.
 `theme-token-unreadable` reports a value the checker could not parse rather
 than passing it silently, which is the failure mode a contrast check exists to
 prevent.

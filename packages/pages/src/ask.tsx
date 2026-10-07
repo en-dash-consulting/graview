@@ -40,6 +40,8 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
       <button
         type="button"
         data-testid="page-ask"
+        // At the foot: a notice placed there stands above it (FR-133).
+        data-graview-foot=""
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
         title="Talk to the seat about this page"

@@ -1104,6 +1104,23 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <ol>
 <li><strong>Say its money.</strong> <code>currency: "EUR"</code> and <code>locale: "de-DE"</code> on the brand (a document's <code>brand</code> may carry them alone, without an accent) are what a sum is said in wherever a block names none: a figure or a field shown as money, and <code>{net | money}</code> in a template — "21.000 €". A block's own <code>currency</code> wins. <code>graview check</code> refuses a code or a locale it cannot write (<code>brand-currency</code>, <code>brand-locale</code>). Without one, sums are numbers.</li>
 </ol>
+<h3>A document's brand</h3>
+<p>A document (<code>graview-document@1</code>) holds the same brand as data, every key optional, and an edit for each — <code>set-brand</code> (<code>null</code> clears a key), <code>set-name</code>, <code>set-description</code> (drawn as the line under the name):</p>
+<div class="code" data-scroller><pre><code>"brand": {
+  "name": "En Dash", "accent": "#0f6e5c",
+  "logo": { "src": "/graview/assets/&lt;sha256&gt;.svg", "alt": "En Dash Consulting" },
+  "favicon": "/graview/assets/&lt;sha256&gt;.svg",
+  "typography": { "display": "system-serif", "body": "system-sans" },
+  "shape": { "radius": 6, "density": 0.9 },
+  "accents": { "workshop": 168 }, "scheme": "dark"
+}</code></pre></div>
+<ul>
+<li><strong>A mark</strong> is inline SVG or a path on the app's own host — never another origin. It is drawn as given (<code>currentColor</code> takes the accent), so an SVG with a script, a handler, <code>foreignObject</code> or anything it loads is refused (<code>brand-mark</code>), never rewritten. On Cloud, <code>add_image</code> answers the path.</li>
+<li><strong>A face</strong> is <code>system-serif</code>, <code>system-sans</code>, <code>system-mono</code>, a face every system has (Georgia, Menlo), or a web font on <code>DOCUMENT_FONTS</code>; one named by its address is refused (<code>brand-font</code>). The host decides where web fonts load from.</li>
+<li><strong>An accent</strong> must read as given in light: <code>set-brand</code> refuses one that does not with the pair, its ratio and the shade that would pass — "#e6c200 text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the shade it names.</li>
+<li><strong>The icon</strong> is set only by a face that owns the page; an embed on somebody else's page leaves theirs alone unless the host passes <code>favicon: true</code>.</li>
+</ul>
+<p><code>describe_place("home")</code> says the masthead: the name, the line under it, and the logo by its alt text.</p>
 <h3>Styling by conversation</h3>
 <p>This skill is built to be DRIVEN IN NATURAL LANGUAGE — "warmer", "more editorial", "our green is #1B4332", "make people amber and money green" — because the whole look is one serializable declaration:</p>
 <ul>
@@ -1123,7 +1140,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 </ul>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code>pnpm build &amp;&amp; npx graview check ./dist/domain/app.js</code></pre></div>
-<p><code>theme-contrast-below-aa</code> names the exact token pair, the scheme and where it is drawn — "a field name", "text on a filled accent" — because "your theme has a contrast problem" is not something anyone can act on. <code>theme-token-unreadable</code> reports a value the checker could not parse rather than passing it silently, which is the failure mode a contrast check exists to prevent.</p>
+<p><code>theme-contrast-below-aa</code> names the exact token pair as colors, the scheme, its ratio and where it is drawn — "a field name", "text on a filled accent" — and the shade of that ink that would pass, because "your theme has a contrast problem" is not something anyone can act on. <code>theme-token-unreadable</code> reports a value the checker could not parse rather than passing it silently, which is the failure mode a contrast check exists to prevent.</p>
 <p><strong>And look at it, in both schemes.</strong> The checker measures contrast and nothing else. Run the app with <code>?theme=light</code> and <code>?theme=dark</code>, and run axe against both — the framework's harnesses do this and report zero violations, which is the bar a branded installation should also clear.</p>
 <h3>What the check cannot see</h3>
 <ul>

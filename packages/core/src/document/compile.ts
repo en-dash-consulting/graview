@@ -1,4 +1,4 @@
-import { brandFromAccent, SCHEMES, type Brand } from "../index.js";
+import { brandOf } from "./brand.js";
 import { ActRefusal } from "../refused.js";
 import { analyzeExpr } from "./expr/analyze.js";
 import type { KindShape } from "./expr/evaluate.js";
@@ -63,6 +63,12 @@ export interface CompileOptions {
    * nothing, and the values it was meant to keep would be dropped (FR-22).
    */
   readonly previous?: GraviewDocument;
+  /**
+   * Web fonts this host serves itself, beyond `DOCUMENT_FONTS` (FR-124):
+   * a document's `brand.typography` may name these too. Read by the
+   * checked compile (`@graview/core/check`); a page draws what it is given.
+   */
+  readonly fonts?: readonly string[];
 }
 
 const BUILTIN_REFS = new Set(["subject", "now", "today"]);
@@ -544,15 +550,8 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
   }
 
   // ── brand, views ─────────────────────────────────────────────────────────
-  let brand: Brand | undefined;
-  if (document.brand) {
-    const { accent, name: wordmark, ...money } = document.brand;
-    const derived = accent ? brandFromAccent({ accent, base: SCHEMES as never }) : undefined;
-    // A color that cannot be read is not a reason to refuse an app: it wears the default colors and says why.
-    if (derived && !derived.ok) findings.push(warning("brand", "brand.accent", `that accent cannot make a readable brand, so the app keeps Graview's colors: ${derived.why}`, "pick a color further from orange-red, or a darker one"));
-    // The app's money stands with or without an accent (FR-100).
-    if (!derived || derived.ok || money.currency || money.locale) brand = { name: wordmark ?? document.name, schemes: derived?.ok ? derived.schemes : (SCHEMES as Brand["schemes"]), ...money };
-  }
+  // Every document's: the app is called what its document calls it, with the line under it (FR-124, FR-125).
+  const brand = brandOf(document, findings);
   const viewSpecs = viewsOf(document);
   const home = homeOf(document);
 
@@ -564,7 +563,7 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
     edges: [...edges].map(([name, { from, to, cardinality }]): readonly [string, EdgePlan] => [name, { from, to, cardinality }]),
     acts,
     rules,
-    ...(brand ? { brand } : {}),
+    brand,
     ...(Object.keys(viewSpecs).length > 0 ? { viewSpecs } : {}),
     ...(home ? { home } : {}),
   };

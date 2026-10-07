@@ -1,4 +1,6 @@
 import { checkBrandContrast } from "../../theme/derive.js";
+import { passingShade, ratioWords } from "../../theme/accent.js";
+import { TEXT_PAIRS } from "../../theme/types.js";
 import { checkKitContrast, resolveKit } from "../../theme/kit.js";
 import type { Scheme } from "../../theme/types.js";
 import type { AnySchema } from "../../schema/schema.js";
@@ -90,12 +92,16 @@ export function checkPalette<S extends AnySchema>(ctx: CheckContext<S>): void {
         });
         continue;
       }
+      // The pair as colors, its ratio, and a shade that would pass (FR-126): a sentence somebody can act on.
+      const tokens = app.brand.schemes[finding.scheme] as unknown as Record<string, string>;
+      const pair = TEXT_PAIRS.find((one) => one.ink === finding.ink && one.on === finding.on);
+      const shade = passingShade(String(tokens[finding.ink]), String(tokens[finding.on]), finding.requires, pair?.over ? String(tokens[pair.over]) : undefined);
       add({
         severity: "error",
         code: "theme-contrast-below-aa",
         where: `brand.schemes.${finding.scheme}: ${finding.ink} on ${finding.on}`,
-        message: `${finding.ratio}:1 where ${finding.requires}:1 is required — ${finding.where}.`,
-        fix: `Darken or lighten "${finding.ink}", or change the ground it sits on.`,
+        message: `${tokens[finding.ink]} text (${finding.ink}) on ${tokens[finding.on]} (${finding.on}) is ${ratioWords(finding.ratio)}; ${finding.requires}:1 is needed — ${finding.where}.`,
+        fix: shade ? `${shade} would pass as "${finding.ink}".` : `Darken or lighten "${finding.ink}", or change the ground it sits on.`,
       });
     }
     /*

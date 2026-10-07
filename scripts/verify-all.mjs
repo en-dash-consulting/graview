@@ -73,6 +73,8 @@ const CHAIN = [
   ["chrome", "verify-chrome.mjs"],
   // Fewer pills and no name cut off, on Cloud's two apps, in three engines (FR-113, FR-117, FR-118).
   ["quiet", "verify-chrome-quiet.mjs"],
+  // The whole brand from the document — logo, faces, shape, scheme, icon, the line under the name — on both faces, in three engines (FR-124, FR-125).
+  ["brand", "verify-brand.mjs"],
   // A document's declared lenses drawn as places on both faces, and its arrangement honored, with no view of the host's (FR-79, FR-80).
   ["declared", "verify-declared.mjs"],
   // A host whose page is the app hands the routed face the address bar, in three engines; an article's embed never touches it (FR-106).

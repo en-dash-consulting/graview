@@ -1047,6 +1047,8 @@ export function Scene<S extends AnySchema>({
         /* SCENE FURNITURE in the ground's other corner: the way a map carries its own zoom. */
         <div
           className="graview-zoom"
+          // At the picture's foot: a notice placed there stands above it (FR-133).
+          data-graview-foot=""
           role="group"
           aria-label="Zoom"
           onPointerDown={(event) => event.stopPropagation()}

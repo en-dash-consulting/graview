@@ -1,4 +1,4 @@
-import type { Brand } from "@graview/core";
+import { isSystemFamily, type Brand } from "@graview/core";
 
 /**
  * The families a brand names, in the order it names them — the first family
@@ -10,7 +10,8 @@ export function familiesOf(brand: Brand | undefined): readonly string[] {
   const out: string[] = [];
   for (const stack of stacks) {
     const first = stack?.split(",")[0]?.trim().replace(/^["']|["']$/g, "");
-    if (!first || first.startsWith("ui-") || first === "system-ui" || first.startsWith("-apple")) continue;
+    // A face the reader's system has (Georgia, Menlo, a `system-serif` stack) is never fetched (FR-124).
+    if (!first || isSystemFamily(first)) continue;
     if (!out.includes(first)) out.push(first);
   }
   return out;
