@@ -67,8 +67,16 @@ export const BUDGETS = [
      * imports (`@graview/react/drawing`, `@graview/tools/edit`,
      * `@graview/core/arrange`) and the describer came to be fetched when the
      * assistant is first asked about a place: measured at 487_223 / 165_379.
+     *
+     * Raised when the assistant's tools came to say why a call was refused
+     * (FR-119): the page's agent runtime reads a refusal with `refusalOf`,
+     * about 0.5 kB minified. Measured at 488_176 / 165_609.
+     *
+     * Raised again when every act came to refuse an argument it does not
+     * take (FR-121): the page's store holds a call to its act's shape before
+     * the input parses, about 0.4 kB. Measured at 488_607 / 165_764.
      */
-    minified: 488_000,
+    minified: 489_000,
     gzipped: 166_000,
     load: "first",
   },
@@ -166,9 +174,14 @@ export const BUDGETS = [
      * chunk uses it. Measured at 681_770 / 172_990.
      *
      * Measured at 682_731 / 173_310 with the pull requests of this round together.
+     *
+     * Gzipped raised when a refusal came to say whether the act's own rule
+     * said no (FR-119) and every act to refuse an argument it does not take
+     * (FR-121), in `@graview/core`'s index and the agent runtime the frame
+     * imports up front. Measured at 683_560 / 173_530.
      */
     minified: 685_500,
-    gzipped: 173_500,
+    gzipped: 174_000,
     load: "first",
     lacks: ["@graview/studio"],
   },
