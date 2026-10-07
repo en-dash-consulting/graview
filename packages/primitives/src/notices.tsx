@@ -1,6 +1,7 @@
 import { layer } from "@graview/core";
 import { inTopLayer, raiseOverPopovers } from "@graview/react/provider";
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { FOOT_MOVED, placeAtTheFoot, placeAtTheTop } from "./notice-place.js";
 import { VISUALLY_HIDDEN } from "./primitives/measure.js";
 
 /**
@@ -14,9 +15,11 @@ import { VISUALLY_HIDDEN } from "./primitives/measure.js";
  * to draw. A toast says something and goes; a banner stays until it is
  * cleared; either may carry the acts that answer it. They are drawn in the
  * floating panel's look, on the ladder's top rung — in the top layer,
- * raised again over any popover that opens after them — at the top
- * (banners) and the foot (toasts) of the picture they are about, and each
- * is said aloud: politely, or as an alert when its tone is bad.
+ * raised again over any popover that opens after them — over the picture
+ * they are about and never in its flow (FR-133): banners at its top, just
+ * under the bar, and toasts at its foot, at the middle on a phone and the
+ * left on a desk, clear of what stands there. Each is said aloud:
+ * politely, or as an alert when its tone is bad.
  */
 export type NoticeTone = "info" | "good" | "warn" | "bad";
 
@@ -142,23 +145,21 @@ function Stack({ notices, at, anchor, board }: { readonly notices: readonly Held
         // The toast rung holds it over every rail where the top layer is not there.
       }
     }
-    const place = () => {
-      const box = anchor()?.getBoundingClientRect() ?? { left: 0, right: innerWidth, top: 0, bottom: innerHeight };
-      const view = { width: document.documentElement.clientWidth || innerWidth, height: innerHeight };
-      const left = Math.max(0, box.left);
-      const right = Math.min(view.width, box.right);
-      element.style.left = `${Math.round(left + (right - left) / 2)}px`;
-      if (at === "top") element.style.top = `${Math.round(Math.max(8, box.top + 12))}px`;
-      else element.style.bottom = `${Math.round(Math.max(8, view.height - box.bottom + 16))}px`;
-    };
+    const place = () => (at === "top" ? placeAtTheTop : placeAtTheFoot)(element, anchor());
     place();
     const unraise = raiseOverPopovers(element);
     addEventListener("resize", place);
     addEventListener("scroll", place, true);
+    // Placed again when what stands at the foot comes, moves or goes, and when a notice joins the stack.
+    if (at === "foot") addEventListener(FOOT_MOVED, place);
+    const grows = typeof ResizeObserver === "function" ? new ResizeObserver(place) : null;
+    grows?.observe(element);
     return () => {
       unraise();
+      grows?.disconnect();
       removeEventListener("resize", place);
       removeEventListener("scroll", place, true);
+      removeEventListener(FOOT_MOVED, place);
       if (element.isConnected && inTopLayer(element)) {
         try {
           element.hidePopover();
@@ -186,8 +187,9 @@ function Stack({ notices, at, anchor, board }: { readonly notices: readonly Held
         background: "none",
         overflow: "visible",
         zIndex: layer("toast"),
-        translate: "-50% 0",
         width: "max-content",
+        // Its own height: under the popover's `fit-content`, WebKit stands a grid as tall as the screen.
+        height: "auto",
         maxWidth: "min(560px, calc(100vw - 32px))",
         display: "grid",
         gap: 8,
