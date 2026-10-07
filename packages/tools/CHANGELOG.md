@@ -1,5 +1,22 @@
 # @graview/tools
 
+## 0.1.15
+
+### Patch Changes
+
+- 6a5fb11: A rule's refusal says so (FR-119). From Graview Cloud: `ActRefusal`'s reason defaulted to `invalid`, and an `allowedWhen` refusal ("{name} is already resolved") kept that default — the same reason as "Nothing to change" — so a host could not tell "the rules say no" from "you sent the wrong thing", and Cloud said "refused" for both. `REFUSAL_REASONS` gains a sixth code, `refused`: an act's own rule said no to a call that was well formed. A document act's `allowedWhen` refuses with it, with its `refusal` sentence or without one, and so does a condition or a value its rule language could not work out; `ActRefusal`'s reason is `refused` unless it names another, so a TypeScript mutation says its rule's no with `throw new ActRefusal(sentence)`. `invalid` stays for the call as sent: its arguments, a call that changes nothing (`edit-person { id }`), a subject of the wrong kind; a bare `Error` from a mutation stays `invalid`, since nothing can tell a rule from a slip. `refusalOf` reads it; the live socket's `refused`, `POST /graview/ops` and `openRemote`'s `onRefusal` and `RemoteRefusedError` carry it unchanged; an agent tool's refused answer now says `reason` (and `wouldNeed`) beside its `error`, and the MCP adapter and `graview mcp` say both as `structuredContent`. A status board still offers no move a step's condition refuses, and a preview refuses as the apply does. The agent-seat skill says to branch on the reason. The pages face's budget rises from 488,000 to 488,500 bytes minified, since the page's agent runtime now reads a refusal with `refusalOf` (about 0.5 kB).
+  
+  Compatibility: additive on the wire — a new refusal code within protocol 1, so `WIRE_PROTOCOL` does not move; a client that predates `refused` treats it as it treats every code but `unavailable`, final and taken back. Breaking for a program that matched `invalid` to catch a document act's `allowedWhen` refusal, or a TypeScript mutation's `ActRefusal` that named no reason: both now say `refused`. `ToolResult`'s failure gains optional `reason` and `wouldNeed`, and `McpToolResult` optional `structuredContent`. `capabilities().shipped` gains FR-119.
+- Updated dependencies [817082f]
+- Updated dependencies [d4fb72e]
+- Updated dependencies [6a5fb11]
+- Updated dependencies [a8b8153]
+- Updated dependencies [fffebfd]
+- Updated dependencies [efab5b2]
+- Updated dependencies [9fc2bd8]
+  - @graview/core@0.1.15
+  - @graview/ship@0.1.15
+
 ## 0.1.14
 
 ### Patch Changes
