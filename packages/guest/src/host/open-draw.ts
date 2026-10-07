@@ -8,7 +8,7 @@ import { createOpenRenderer, type OpenRenderer } from "./open-render.js";
  * stylesheet in a shadow root the host owns, and the viewer's clicks,
  * typing and choices on what was drawn told to the view. This module is
  * what `mountWorkerView` fetches when it first draws an open-kit view, so a
- * page that draws none loads none of the sanitiser.
+ * page that draws none loads none of the sanitizer.
  */
 
 /** The host's own rules for the region: what a view's stylesheet cannot reach, because it cannot write `:host`. */

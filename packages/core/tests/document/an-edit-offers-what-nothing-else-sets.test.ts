@@ -63,9 +63,9 @@ describe("an act that makes a record on another kind, with an argument named lik
 describe("the derived edit's arguments", () => {
   it("refuses an argument it does not take as invalid, naming the arguments it does take", () => {
     const store = storeOf(compiled());
-    const error = refused(() => store.apply({ name: "edit-person", args: { id: "person-john", colour: "red" } }));
+    const error = refused(() => store.apply({ name: "edit-person", args: { id: "person-john", color: "red" } }));
     expect(refusalOf(error).reason).toBe("invalid");
-    expect(refusalOf(error).sentence).toContain('does not take "colour"; it takes "id", "name", "role", "notes"');
+    expect(refusalOf(error).sentence).toContain('does not take "color"; it takes "id", "name", "role", "notes"');
     expect(store.graph.getNode("person-john")).toMatchObject({ name: "John Halberstadt" });
   });
 

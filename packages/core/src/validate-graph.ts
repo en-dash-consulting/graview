@@ -3,7 +3,7 @@ import { UNSET, type Primitive } from "./graph/primitives.js";
 import { edgeId, type AnyGraphNode, type GraphEdge, type GraphSnapshot } from "./graph/types.js";
 import { evaluate } from "./invariants/engine.js";
 import type { EvaluateOptions, InvariantDefinition } from "./invariants/types.js";
-import { humaniseField, labelOf } from "./schema/define-node.js";
+import { humanizeField, labelOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 
 /**
@@ -210,7 +210,7 @@ export function validateGraph<S extends AnySchema>(
         code: "node-shape",
         id: node.id,
         detail: field,
-        message: `${name}: ${humaniseField(field)} does not fit what ${node.kind} declares`,
+        message: `${name}: ${humanizeField(field)} does not fit what ${node.kind} declares`,
         repair,
       });
     }

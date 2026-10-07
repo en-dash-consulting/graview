@@ -3,7 +3,7 @@ import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
 import { diffSnapshots, EMPTY_DIFF, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
-import { invert, normalise, writesOf, type Primitive } from "./graph/primitives.js";
+import { invert, normalize, writesOf, type Primitive } from "./graph/primitives.js";
 import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
 import { nodeRefArgs, type NodeRefArg } from "./mutations/node-ref.js";
 import type { GraphSnapshot } from "./graph/types.js";
@@ -112,7 +112,7 @@ export interface StoreOptions<S extends AnySchema> {
    *
    * `may` was a promise made in the declaration, verified by `graview check`
    * — every name in it is a real act — and enforced by nothing. The tool
-   * runtime honoured it for proposals that went through the tool runtime; a
+   * runtime honored it for proposals that went through the tool runtime; a
    * survey applied by the app's own code went through `store.apply`, where
    * there was no `may` at all, so an agent principal could run any act its
    * ROLES allowed whatever the declaration said it was for.
@@ -260,7 +260,7 @@ export const MODULES_AUTHOR: Author = { kind: "system", id: "modules", name: "Mo
  */
 const putsBack = (op: Operation): boolean => op.mutation === null && op.undoes === undefined;
 
-/** A violation's identity across judgements: the rule, what it is about, and what it says. */
+/** A violation's identity across judgments: the rule, what it is about, and what it says. */
 export function violationKey(v: Violation): string {
   return `${v.invariant}|${v.subjectId ?? ""}|${v.message}`;
 }
@@ -1153,13 +1153,13 @@ export class Store<S extends AnySchema> {
           ...(options.intent !== undefined ? { batchIntent: options.intent } : {}),
           mutation: call,
           /*
-           * NORMALISED on the way into the record: a patch that clears a
+           * NORMALIZED on the way into the record: a patch that clears a
            * field says so with a value rather than with an absence, or the
            * instruction is lost the moment the op is written to JSON and the
-           * inverse quietly does nothing. See `normalise` in primitives.ts.
+           * inverse quietly does nothing. See `normalize` in primitives.ts.
            */
-          primitives: compiled.primitives.map(normalise),
-          inverse: [...compiled.primitives].reverse().map(normalise).map(invert),
+          primitives: compiled.primitives.map(normalize),
+          inverse: [...compiled.primitives].reverse().map(normalize).map(invert),
           reads: compiled.reads,
           writes: compiled.writes,
           // Which records its sentence read, so a reader who may not see one is not handed the sentence (FR-55).
@@ -1293,7 +1293,7 @@ export class Store<S extends AnySchema> {
     const taken = new Set(this.log.all().map((op) => op.id));
     let batch: string | undefined;
     const built: Operation[] = ops.map((made, index) => {
-      const primitives = made.primitives.map(normalise);
+      const primitives = made.primitives.map(normalize);
       const op: Operation = {
         id: made.id ?? this.nextId(),
         seq: this.log.length + index,
@@ -1345,7 +1345,7 @@ export class Store<S extends AnySchema> {
     const before = this.violations();
     const rollback = this.graph.snapshot();
     const intent = options.intent ?? "Apply a change";
-    const recorded = primitives.map(normalise);
+    const recorded = primitives.map(normalize);
     const ops: Operation[] = [];
     if (recorded.length > 0) {
       const op: Operation = {

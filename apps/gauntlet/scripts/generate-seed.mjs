@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * THE PROGRAMME'S SEED: ten editions of a conference and the next one in
+ * THE PROGRAM'S SEED: ten editions of a conference and the next one in
  * review, generated, deterministic, and committed as `src/data/seed.json`.
  *
  *   node apps/gauntlet/scripts/generate-seed.mjs           write it
@@ -98,12 +98,12 @@ const ROOMS = [
   // AWKWARD (W-141): "Aula" is the beginning of "Aula Magna", and "Hall 1" of "Hall 10".
   ["Hauptgebäude", "Aula", 420],
   ["Hauptgebäude", "Aula Magna", 1200],
-  ["Exhibition Centre", "Hall 1", 900],
-  ["Exhibition Centre", "Hall 10", 160],
-  ["Exhibition Centre", "Hall 11", 160],
-  ["Exhibition Centre", "Hall 12", 140],
+  ["Exhibition Center", "Hall 1", 900],
+  ["Exhibition Center", "Hall 10", 160],
+  ["Exhibition Center", "Hall 11", 160],
+  ["Exhibition Center", "Hall 12", 140],
   // AWKWARD (W-137, W-146): a room whose name is a sentence.
-  ["North Wing", "The Margaret Hamilton Lecture Theatre (North Wing, Level −1, step-free via Lift C)", 310],
+  ["North Wing", "The Margaret Hamilton Lecture Theater (North Wing, Level −1, step-free via Lift C)", 310],
   ["North Wing", "The Grace Hopper Seminar Room (North Wing, Level 2, opposite the cloakroom)", 48],
   ["Bâtiment Est", "Salle Émile-Durkheim", 90],
   ["Bâtiment Est", "Salle Marie-Skłodowska-Curie", 90],
@@ -354,7 +354,7 @@ for (let year = 2017; year <= 2026; year++) {
     talk({ title: longTitle(), format: "talk", status: "withdrawn", presenters, proposer, about: subjects() });
   }
 
-  // Workshops the day before, two of them cancelled: the calendar's second kind.
+  // Workshops the day before, two of them canceled: the calendar's second kind.
   const eve = day(first, -1);
   for (let i = 0; i < 12; i++) {
     const label = `Hands-on: ${pick(OPENINGS).replace(/[:,]? [^ ]+$/, "")}`.slice(0, 118);
@@ -366,7 +366,7 @@ for (let year = 2017; year <= 2026; year++) {
       label,
       startsAt: at(eve, i % 2 === 0 ? 9 * 60 : 14 * 60),
       capacity,
-      status: i < 2 ? "cancelled" : capacity === room.seats ? "full" : "planned",
+      status: i < 2 ? "canceled" : capacity === room.seats ? "full" : "planned",
     });
     edge("held-in", id, room.id);
     for (const speaker of new Set([skewed(speakerDraw), ...(chance(0.4) ? [skewed(speakerDraw)] : [])])) edge("led-by", id, speaker);
@@ -382,11 +382,11 @@ for (let i = 0; i < 150; i++) {
   talk({ title: chance(0.1) ? pick(PLAIN) : longTitle(), format: chance(0.1) ? "lightning" : "talk", status: i < 20 ? "accepted" : "submitted", presenters, proposer, about: subjects() });
 }
 /*
- * TWO OPEN VIOLATIONS, on purpose: talks the committee pencilled in for
+ * TWO OPEN VIOLATIONS, on purpose: talks the committee penciled in for
  * 2027 before a session existed for them. A graph of real size with
  * nothing wrong in it is as tame as one with five records.
  */
-for (const [title, minutes] of [["Keynote: The Next Ten Years of the Programme", 9 * 60], ["Keynote: The Next Ten Years of the Programme, Revisited", 16 * 60]]) {
+for (const [title, minutes] of [["Keynote: The Next Ten Years of the Program", 9 * 60], ["Keynote: The Next Ten Years of the Program, Revisited", 16 * 60]]) {
   talk({ title, format: "keynote", status: "scheduled", startsAt: at(day(next, 0), minutes), presenters: [speakers[0]], proposer: speakers[0], about: [] });
 }
 // And one workshop that sells more places than its room has seats.

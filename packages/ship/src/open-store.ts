@@ -296,7 +296,7 @@ export async function openStore<S extends AnySchema>(
   adapter.saveMeta?.(scope, { version: target, ...formatStamp() });
 
   /*
-   * Writes are SERIALISED: a second diff's ops never land before the
+   * Writes are SERIALIZED: a second diff's ops never land before the
    * first's snapshot, and a failure is reported rather than swallowed —
    * an app that thinks it persisted and did not is the worst quiet state.
    */

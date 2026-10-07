@@ -118,7 +118,7 @@ export function RotaApp({
  *
  * It asks the framework what is wrong rather than deciding out here what
  * "covered" means, then applies the repair the rule itself named — and
- * chooses the volunteer with the most room left, which is a judgement about
+ * chooses the volunteer with the most room left, which is a judgment about
  * rosters rather than about graphs and therefore belongs in this app.
  *
  * Its acts run through the same tool surface a person's do, so its turns are
@@ -162,7 +162,7 @@ function FillTheGaps({ onCall }: { onCall: (call: ToolCall) => void }) {
 /**
  * Whoever has the most room left against what they said they could do.
  *
- * A judgement about rosters, not about graphs: the framework can say which
+ * A judgment about rosters, not about graphs: the framework can say which
  * shifts are uncovered and who could legally take one, and it should not
  * have an opinion about who to ask. Ties go to the lowest id, so the seat's
  * turn is the same turn twice.

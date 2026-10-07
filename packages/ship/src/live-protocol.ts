@@ -93,7 +93,7 @@ export interface LiveSocketState {
 }
 
 /**
- * A SOCKET AS A HOST'S JUDGEMENT IS HANDED IT (`build`, `viaOf`): its
+ * A SOCKET AS A HOST'S JUDGMENT IS HANDED IT (`build`, `viaOf`): its
  * seat resolved to the principal, its channel, and the host's build it
  * was opened under.
  */

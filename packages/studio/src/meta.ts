@@ -54,7 +54,7 @@ export const kindNode = defineNode("kind", {
      * only a checkout could make: `drawFigure` could draw one and the CLI
      * could print one, but the studio read declarations that had figures
      * and gave back declarations that did not — so opening the studio on a
-     * drawn app and applying would have rubbed every drawing out. Modelled
+     * drawn app and applying would have rubbed every drawing out. Modeled
      * here, it survives the round trip and becomes something an agent may
      * propose.
      */
@@ -180,7 +180,7 @@ export const ruleNode = defineNode("rule", {
      */
     derivedRepairs: z.array(z.string()).optional(),
     /**
-     * THE JUDGEMENT, IN WORDS (FR-07): what must hold, in the rule language —
+     * THE JUDGMENT, IN WORDS (FR-07): what must hold, in the rule language —
      * `quote != null`, `count(in('fills') where status == 'booked') <= 1`.
      * A rule that has one is judged by the studio and by the files it
      * writes; one without is the checkout's to judge in code.
@@ -208,7 +208,7 @@ export const roleNode = defineNode("role", {
    * own fields and kinds, not something a person can hold. Reading both into
    * this kind put "columns" and "start" in the studio's ROLES district
    * beside "coordinator", and wrote them into the policy the studio hands
-   * back — so `permits` would have recognised "columns" as a seat somebody
+   * back — so `permits` would have recognized "columns" as a seat somebody
    * could be granted. They are the lens's own field now.
    */
   description: "A role a seat may hold.",
@@ -694,7 +694,7 @@ export const removeAct = act("remove-act", {
 
 export const addRule = act("add-rule", {
   title: "Add a rule",
-  description: "Hold a kind to a rule: what must hold, in the rule language (`quote != null`), and what a broken one says. Without a judgement the checkout writes one in code.",
+  description: "Hold a kind to a rule: what must hold, in the rule language (`quote != null`), and what a broken one says. Without a judgment the checkout writes one in code.",
   subject: { kinds: ["kind"], arg: "kind" },
   creates: ["rule"],
   connects: ["over"],

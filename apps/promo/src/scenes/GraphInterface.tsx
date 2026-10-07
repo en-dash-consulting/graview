@@ -14,7 +14,7 @@ import { beats, colors, fonts } from "../theme";
 const ACTIONS = ["open", "travel", "raise", "inspect"] as const;
 const CAPTIONS = [
   { field: "status", value: "selected" },
-  { field: "neighbours", value: "4 raised" },
+  { field: "neighbors", value: "4 raised" },
   { field: "edge", value: "depends →" },
 ] as const;
 const EDGE_LABELS = [
@@ -51,7 +51,7 @@ export const GraphInterface: React.FC = () => {
   const edgesIn = fadeIn(frame, 84, 16);
   const edgesOut = fadeOut(frame, localDur - 32, 18);
   const edgesOp = edgesIn * edgesOut;
-  const neighbourRise = springProgress(frame, fps, 74, "snap");
+  const neighborRise = springProgress(frame, fps, 74, "snap");
 
   // Center iso crossfade: lists → zoomed mid-beat
   const centerA =
@@ -93,7 +93,7 @@ export const GraphInterface: React.FC = () => {
             const depth = interpolate(p, [0, 2], [0.8, 0.3]);
             const blur = dofBlur(depth, focusPull, 3.5);
             const raise =
-              p === 1 ? neighbourRise * 12 : p === 2 ? neighbourRise * 6 : 0;
+              p === 1 ? neighborRise * 12 : p === 2 ? neighborRise * 6 : 0;
             return (
               <div
                 key={p}
@@ -106,7 +106,7 @@ export const GraphInterface: React.FC = () => {
                   marginLeft: -380,
                   marginTop: -210,
                   borderRadius: 20,
-                  border: `1px solid rgba(0,229,185,${0.1 + p * 0.06 + neighbourRise * 0.05})`,
+                  border: `1px solid rgba(0,229,185,${0.1 + p * 0.06 + neighborRise * 0.05})`,
                   background: `linear-gradient(145deg, rgba(14,26,54,0.22), rgba(0,23,105,0.12))`,
                   backdropFilter: "blur(10px)",
                   boxShadow: `0 ${16 + p * 8}px ${40 + p * 12}px rgba(0,0,0,0.28)`,
@@ -388,7 +388,7 @@ export const GraphInterface: React.FC = () => {
         label="drill · training"
       />
       <SurveyInsert
-        src="survey/todo-travelled-dark.png"
+        src="survey/todo-traveled-dark.png"
         appearAt={86}
         disappearAt={localDur - 10}
         corner="mr"

@@ -12,7 +12,7 @@ import { registerDefaultViews } from "../../src/index.js";
 
 /**
  * THE DRIVE-IN'S MARQUEE. From altitude a kind with a named picture draws
- * its showings on its district card as real, labelled buttons; a kind
+ * its showings on its district card as real, labeled buttons; a kind
  * with only untitled defaults draws none; in the stack there is no
  * marquee at all. Pressing a showing focuses the kind with it and
  * descends in one gesture.
@@ -55,7 +55,7 @@ async function mounted(view: ViewState, onView?: (next: ViewState) => void) {
 }
 
 describe("the marquee", () => {
-  it("draws the showings as labelled buttons from altitude, and none for a kind with only untitled defaults", async () => {
+  it("draws the showings as labeled buttons from altitude, and none for a kind with only untitled defaults", async () => {
     const { host, unmount } = await mounted({ ...EMPTY_VIEW, overview: true });
     const marquee = host.querySelector('[data-testid="drive-in-task"]')!;
     expect(marquee).not.toBeNull();

@@ -198,7 +198,7 @@ const openProfile = async (page) => {
   /*
    * AND A PRESS ON A NAME CHOOSES THAT NAME'S COLUMN. The label leans across
    * the boxes of the columns after it, which were painted over it, so a
-   * press on a name picked a neighbour about half the time. Every point
+   * press on a name picked a neighbor about half the time. Every point
    * along every visible label, asked what a press there would pick.
    */
   const pressed = await page.evaluate(() => {
@@ -210,7 +210,7 @@ const openProfile = async (page) => {
     for (const head of document.querySelectorAll("[data-graview-column]")) {
       const span = head.querySelector(":scope > span");
       if (!span || getComputedStyle(span).visibility === "hidden") continue;
-      // Along the words' own centre line: turned 58 degrees about the foot.
+      // Along the words' own center line: turned 58 degrees about the foot.
       const box = span.getBoundingClientRect();
       const a = (58 * Math.PI) / 180;
       const foot = { x: box.left + span.offsetHeight * Math.sin(a), y: box.bottom };

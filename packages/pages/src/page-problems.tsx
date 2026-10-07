@@ -208,8 +208,8 @@ export { violationsTouching };
 
 /**
  * The face's own type and spacing, for a page an app writes itself. A
- * custom record page that had to copy these to look like its neighbours
+ * custom record page that had to copy these to look like its neighbors
  * would drift from them by the second release; one object, shared, is how
- * a heavily customised face stays one face.
+ * a heavily customized face stays one face.
  */
 export const pageStyles = { column, h1, h2, eyebrow, lede, quiet, rule, link, plain, button } as const;

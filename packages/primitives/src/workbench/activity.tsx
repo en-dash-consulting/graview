@@ -1,4 +1,4 @@
-import { humaniseField, isWithheld, nameOfAuthor, viaSaid, type AnySchema, type Author } from "@graview/core";
+import { humanizeField, isWithheld, nameOfAuthor, viaSaid, type AnySchema, type Author } from "@graview/core";
 import { POPOVER_STYLE, useGraph, useGraview, usePopover } from "@graview/react/provider";
 import type { ToolCall } from "@graview/tools";
 import { useMemo, useState, type ReactNode } from "react";
@@ -291,7 +291,7 @@ export function ActivityRail({
         </div>
       ) : null}
       {open ? (
-        // A labelled region, not an aside: it opens from the bar, inside the banner (FR-40).
+        // A labeled region, not an aside: it opens from the bar, inside the banner (FR-40).
         <section
           {...popover.pane}
           aria-label="Activity"
@@ -368,13 +368,13 @@ export function ActivityRail({
                       * identifier read out in the one place a person looks
                       * to see what an agent just did — the same smell as a
                       * card named by its node id. A call that names no
-                      * declared mutation (a read tool) is still humanised
+                      * declared mutation (a read tool) is still humanized
                       * rather than printed raw.
                       */}
                     <span style={{ color: "var(--graview-ink)" }}>
                       {call.mutating ? "changed" : "read"} ·{" "}
                       {store.allMutations().find((mutation) => mutation.name === call.name)?.title ??
-                        humaniseField(call.name)}
+                        humanizeField(call.name)}
                     </span>
                   </div>
                   {/*
@@ -385,7 +385,7 @@ export function ActivityRail({
                     */}
                   {!call.mutating && call.reads && call.reads.length > 0 ? (
                     <div data-testid="activity-reads" style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 12 }}>
-                      {/* Once each: a neighbourhood read lists a node joined to it twice twice. */}
+                      {/* Once each: a neighborhood read lists a node joined to it twice twice. */}
                       {[...new Set(call.reads)].slice(0, 3).map((id) => (
                         <Chip key={id} label={nameOf(store, id)} pickId={id} />
                       ))}

@@ -29,7 +29,7 @@ import { declaredValues, entryFor, refuse, type Judged, type Press, type Pressed
  *     value and a select's options are the view's, so a picked one goes
  *     only as a value the app itself declares for the argument (an enum's,
  *     a literal's) or a record the view was shown. Otherwise a radio
- *     labelled "Yes" whose value is a hidden record's text would carry it.
+ *     labeled "Yes" whose value is a hidden record's text would carry it.
  */
 
 const FIELD = new Set(["input", "select", "textarea"]);

@@ -104,7 +104,7 @@ const questions: Record<string, Question> = {
   "rule:named:b": { type: "noul", instructions: "Every thing has a name. Is this so?" },
   "rule:named:a": { type: "noul", instructions: "Every thing has a name. Is this so?" },
   "repair:named:b": { type: "choice", instructions: "Which repair?", criteria: { rename: "Rename it", "rename:2": "Rename it otherwise" } },
-  "field:thing.colour": { type: "choice", instructions: "Which colour?", criteria: { red: null, blue: null } },
+  "field:thing.color": { type: "choice", instructions: "Which color?", criteria: { red: null, blue: null } },
 };
 
 describe("a decision on the other rungs", () => {
@@ -113,18 +113,18 @@ describe("a decision on the other rungs", () => {
     expect(decided.answers["rule:named:b"]).toEqual({ type: "noul", noul: 0 });
     expect(decided.answers["rule:named:a"]).toEqual({ type: "noul", noul: 1 });
     expect(decided.answers["repair:named:b"]).toMatchObject({ type: "choice", choice: "rename", confidence: 1 });
-    expect(decided.unanswered).toEqual(["field:thing.colour"]);
+    expect(decided.unanswered).toEqual(["field:thing.color"]);
   });
 
   it("is decided by a model behind the parse-and-refuse layer: held to the options, refused otherwise", async () => {
     const decide = completionDecide(async () =>
-      'Sure: {"rule:named:b":{"noul":0.2},"rule:named:a":{"noul":0.9},"repair:named:b":{"choice":"rename","confidence":0.8},"field:thing.colour":{"choice":"blue","confidence":0.7}}',
+      'Sure: {"rule:named:b":{"noul":0.2},"rule:named:a":{"noul":0.9},"repair:named:b":{"choice":"rename","confidence":0.8},"field:thing.color":{"choice":"blue","confidence":0.7}}',
     );
     const decided = await decide({}, questions);
-    expect(decided.answers["field:thing.colour"]).toMatchObject({ type: "choice", choice: "blue", confidence: 0.7, probabilities: { blue: 0.7, red: expect.closeTo(0.3, 5) } });
+    expect(decided.answers["field:thing.color"]).toMatchObject({ type: "choice", choice: "blue", confidence: 0.7, probabilities: { blue: 0.7, red: expect.closeTo(0.3, 5) } });
     expect(decided.answers["rule:named:b"]).toEqual({ type: "noul", noul: 0.2 });
-    const refusing = completionDecide(async () => '{"field:thing.colour":{"choice":"green"}}');
-    await expect(refusing({}, { "field:thing.colour": questions["field:thing.colour"]! })).rejects.toThrow(/did not answer "field:thing.colour"/);
+    const refusing = completionDecide(async () => '{"field:thing.color":{"choice":"green"}}');
+    await expect(refusing({}, { "field:thing.color": questions["field:thing.color"]! })).rejects.toThrow(/did not answer "field:thing.color"/);
     const scoring = completionDecide(async () => '{"s":{"level":2,"confidence":0.6}}');
     const scored = await scoring({}, { s: { type: "score", instructions: "?", criteria: ["a", "b", "c"] } });
     expect(scored.answers["s"]).toMatchObject({ type: "score", legend: { "0": "a", "1": "b", "2": "c" } });

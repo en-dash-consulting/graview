@@ -98,7 +98,7 @@ export function planFrame(
   const draws: ViewDraw[] = [];
   const geometry: GeometryReport[] = [];
   const placements: Omit<Placement, "element">[] = [];
-  const centres = new Map<string, { x: number; y: number }>();
+  const centers = new Map<string, { x: number; y: number }>();
 
   // Back to front: the deepest plane is drawn first so the focus plane lands
   // on top of it. Sorting explicitly means callers may hand views over in any
@@ -135,7 +135,7 @@ export function planFrame(
       height: view.height,
       depth: view.plane,
     });
-    centres.set(view.id, {
+    centers.set(view.id, {
       x: transform[12] + width / 2,
       y: transform[13] + height / 2,
     });
@@ -143,8 +143,8 @@ export function planFrame(
 
   const connectorDraws: ConnectorDraw[] = [];
   for (const connector of connectors) {
-    const from = centres.get(connector.from);
-    const to = centres.get(connector.to);
+    const from = centers.get(connector.from);
+    const to = centers.get(connector.to);
     // A connector to something off-scene is a line into nowhere.
     if (!from || !to) continue;
     connectorDraws.push({
@@ -183,7 +183,7 @@ function styleAt(plane: number): PlaneStyle {
 
 /**
  * Whether a view needs recapturing, and why. Fidelity decides, not plane
- * index — and the split is load-bearing rather than an optimisation:
+ * index — and the split is load-bearing rather than an optimization:
  * capture costs ~0.016 ms per node up to about 128 live captures a frame and
  * then falls off a cliff (see docs/platform-findings.md).
  *

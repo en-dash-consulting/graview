@@ -147,7 +147,7 @@ describe("one declaration plus one adapter is a deployment", () => {
 
     const first = await openStore({ app, adapter });
     first.store.apply({ name: "add-plot", args: { label: "One", beds: 3 } });
-    // Writes are serialised and async: the handoff is flush, then close.
+    // Writes are serialized and async: the handoff is flush, then close.
     await first.flush();
     first.close();
 

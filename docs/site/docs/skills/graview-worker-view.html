@@ -68,7 +68,7 @@ img { max-width: 100%; }
   --rule:      #D9DCE5;
   --rule-2:    #E6E8EE;
 
-  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+  /* En Dash's own two colors, taken from the mark: navy and mint. Mint is a
      brilliant #00E5B9 that only reads on the navy, so it carries the dark
      theme and the navy carries the light one. */
   --navy:      #001769;
@@ -190,7 +190,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Windows High Contrast throws the palette away, so anything carrying meaning
-   in a border or a fill has to say so in system colours too. */
+   in a border or a fill has to say so in system colors too. */
 @media (forced-colors: active) {
   .code, .term, .endash, .lens figure { border-color: CanvasText; }
   .caveat { border-left-color: LinkText; }
@@ -1099,7 +1099,7 @@ graview.act(name, args)         // ask for an act: resolves { ok, intent } or { 
 graview.navigate("offer:7")     // a record; graview.navigate({ place: "the-packages" }) a place</code></pre></div>
 <p><code>props</code> holds <code>nodes</code> (each with its <code>id</code>, <code>kind</code>, <code>label</code> and fields), <code>edges</code> (<code>{ kind, from, to }</code> among them), <code>node</code> for a view of one, <code>label</code> (its title), <code>acts</code>, <code>places</code> (<code>{ as, title }</code>), and <code>theme</code> (<code>scheme</code>, <code>accent</code>, <code>panel</code>, <code>ink</code>, <code>fontDisplay</code>, <code>radius</code> …, the app's <code>name</code>, and its <code>logo</code> as a URL the host made: draw it with <code>&lt;img src="${props.theme.logo}"&gt;</code>, never a URL of your own). <code>render</code> keeps what it can, by element and by <code>data-key</code> or <code>id</code>, so give repeated rows a <code>data-key</code>: a field being typed in keeps its text across a push. An event carries <code>value</code>, <code>checked</code>, <code>key</code>, and <code>pressed</code> for a bound press.</p>
 <h3>What it may draw</h3>
-<p>HTML's sectioning, headings, text, lists, tables, <code>details</code>/<code>summary</code>, <code>button</code>, <code>input</code>, <code>select</code>, <code>textarea</code>, <code>label</code>, <code>fieldset</code>, <code>meter</code>, <code>progress</code> and <code>img</code>. SVG's <code>svg</code>, <code>g</code>, shapes, <code>path</code>, <code>text</code>, gradients, <code>clipPath</code>, <code>mask</code>, <code>marker</code>, <code>pattern</code>, <code>symbol</code> and <code>use href="#id"</code>. Attributes: <code>id</code>, <code>class</code>, <code>style</code>, <code>title</code>, <code>role</code>, <code>aria-*</code>, <code>data-*</code>, and each element's own. CSS for layout, grid, flex, colour, type, transitions, <code>@keyframes</code>, <code>@media</code>, <code>@supports</code> and <code>@container</code>.</p>
+<p>HTML's sectioning, headings, text, lists, tables, <code>details</code>/<code>summary</code>, <code>button</code>, <code>input</code>, <code>select</code>, <code>textarea</code>, <code>label</code>, <code>fieldset</code>, <code>meter</code>, <code>progress</code> and <code>img</code>. SVG's <code>svg</code>, <code>g</code>, shapes, <code>path</code>, <code>text</code>, gradients, <code>clipPath</code>, <code>mask</code>, <code>marker</code>, <code>pattern</code>, <code>symbol</code> and <code>use href="#id"</code>. Attributes: <code>id</code>, <code>class</code>, <code>style</code>, <code>title</code>, <code>role</code>, <code>aria-*</code>, <code>data-*</code>, and each element's own. CSS for layout, grid, flex, color, type, transitions, <code>@keyframes</code>, <code>@media</code>, <code>@supports</code> and <code>@container</code>.</p>
 <p>Never drawn: <code>script</code>, <code>iframe</code>, <code>object</code>, <code>embed</code>, <code>link</code>, <code>meta</code>, <code>base</code>, <code>style</code>, <code>form</code>, <code>video</code>, <code>canvas</code>, SVG <code>image</code> and <code>foreignObject</code>; any <code>href</code>, <code>srcset</code> or <code>on*</code> attribute; <code>src</code> except on <code>img</code>, as a <code>data:</code> image. In CSS: <code>url()</code> except <code>url(#id)</code> on <code>fill</code>, <code>stroke</code>, <code>clip-path</code> or <code>marker</code>; <code>@import</code>; <code>@font-face</code>; <code>image-set()</code>, <code>attr()</code> and other unlisted functions; <code>position: fixed</code> or <code>sticky</code>; <code>:host</code>. What the host leaves out it lists in <code>refused</code>; <code>graview.refused</code> is the runtime's own early word on the last render.</p>
 <p>A view never speaks as the app's chrome. <code>nav</code>, <code>header</code>, <code>footer</code>, <code>aside</code> and <code>search</code> are drawn as <code>div</code>, and <code>output</code> as <code>span</code>, each with what it holds. They lose their landmark or status role, and a selector for them in your stylesheet still matches. A <code>section</code> is never named (no <code>aria-label</code> or <code>title</code>), so it stays out of the landmarks. <code>role</code> takes no landmark or notice's role (<code>navigation</code>, <code>region</code>, <code>status</code>, <code>alert</code>, …).</p>
 <p><strong>Draw with the app's tokens</strong>, so light and dark follow the app's own toggle: <code>var(--graview-panel)</code>, <code>--graview-ground</code>, <code>--graview-ink</code>, <code>--graview-ink-muted</code>, <code>--graview-edge</code>, <code>--graview-accent</code>, <code>--graview-font-body</code>, <code>--graview-font-display</code> (headings, as the app's), <code>--graview-font-mono</code>, <code>--graview-radius</code>. A brand change pushes <code>theme</code> again. Presentation attributes do not take <code>var()</code>; put paints in the stylesheet (<code>.bar { fill: var(--graview-accent) }</code>).</p>
@@ -1227,7 +1227,7 @@ document.querySelectorAll("[data-copy]").forEach(function (button) {
   --rule:      #D9DCE5;
   --rule-2:    #E6E8EE;
 
-  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+  /* En Dash's own two colors, taken from the mark: navy and mint. Mint is a
      brilliant #00E5B9 that only reads on the navy, so it carries the dark
      theme and the navy carries the light one. */
   --navy:      #001769;
@@ -1349,7 +1349,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Windows High Contrast throws the palette away, so anything carrying meaning
-   in a border or a fill has to say so in system colours too. */
+   in a border or a fill has to say so in system colors too. */
 @media (forced-colors: active) {
   .code, .term, .endash, .lens figure { border-color: CanvasText; }
   .caveat { border-left-color: LinkText; }

@@ -109,7 +109,7 @@ describe("the store behind HTTP", () => {
     /*
      * The browser store carries the same policy, so the refusal is
      * immediate and in the same words — the server never hears about it.
-     * That is the right behaviour and worth pinning: a design where every
+     * That is the right behavior and worth pinning: a design where every
      * refusal cost a round trip would make a policy feel like latency.
      */
     const remote = await openRemote({ app, url: served.url, principal: READER, pollMs: 0 });
@@ -173,7 +173,7 @@ describe("the store behind HTTP", () => {
     /*
      * A seat's plan lands as `applyAll` and its undo as `undo`. The first
      * version patched `apply` alone, so a robot's plans stayed in the
-     * browser that made them while its presses travelled. Both go now,
+     * browser that made them while its presses traveled. Both go now,
      * judged on the server as the same seat.
      */
     const one = await openRemote({ app, url: served.url, principal: KEEPER, pollMs: 0 });

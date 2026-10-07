@@ -297,10 +297,10 @@ export function PlanView<S extends AnySchema>({
     /*
      * THE NAME GOES IN THE CORNER, NOT ACROSS THE MIDDLE.
      *
-     * A name set large and centred looks like a title and behaves like a
+     * A name set large and centered looks like a title and behaves like a
      * wall: it owns the widest part of the shape, which is exactly where
      * the things standing in that shape are, so twenty-two markers had
-     * nowhere to put their own names and went unlabelled. Every site plan
+     * nowhere to put their own names and went unlabeled. Every site plan
      * ever drawn does the opposite — the area is named quietly along its
      * top edge, and the middle is left for what is in it.
      */
@@ -383,7 +383,7 @@ export function PlanView<S extends AnySchema>({
     }
 
     /*
-     * TWENTY-TWO COLOURED DOTS AND NO WORDS is not a map of anything. The
+     * TWENTY-TWO COLORED DOTS AND NO WORDS is not a map of anything. The
      * first survey drew exactly that, and every one of them was reachable,
      * announced and pickable — and unreadable, because knowing a thing is
      * THERE is not knowing what it is.
@@ -654,7 +654,7 @@ export function PlanView<S extends AnySchema>({
         <text x={view.x + view.w - S * 0.028} y={view.y + S * 0.034} fontSize={S * 0.022} textAnchor="middle" fill="var(--graview-ink)" opacity={0.55}>
           N
         </text>
-        {/* Centre-canvas only while the canvas is empty; over a drawn site
+        {/* Center-canvas only while the canvas is empty; over a drawn site
             the same words go in the tool row rather than across the labels. */}
         {hint !== null && map.regions.length === 0 ? (
           <text
@@ -776,7 +776,7 @@ export function PlanView<S extends AnySchema>({
           * They were drawn inside each region's own group, which put every
           * later region and all twenty-two markers on top of them: the
           * picture came back reading "rick patio with gravel joints" and
-          * "louse elevation", with a coloured dot sitting exactly where the
+          * "louse elevation", with a colored dot sitting exactly where the
           * B and the H should have been. A name is the one thing on this
           * drawing that must survive everything else, so it is painted
           * after everything else.
@@ -797,7 +797,7 @@ export function PlanView<S extends AnySchema>({
               fill="var(--graview-ink)"
               opacity={anyEmphasis && emphasis === undefined ? 0.34 : 1}
               /* Painted stroke-first so a label stays legible wherever it
-                 lands — over a dark fill, over a neighbour's edge, over
+                 lands — over a dark fill, over a neighbor's edge, over
                  another label. Without it the name of the ground is the
                  first thing the picture loses. */
               stroke="var(--graview-panel)"
@@ -832,7 +832,7 @@ export function PlanView<S extends AnySchema>({
         * name and says nothing has renamed somebody's ground. And a dense
         * corner where three things stand within a few pixels of each other
         * will always have markers that could not be named without writing
-        * over their neighbours — so those are here too, by the colour they
+        * over their neighbors — so those are here too, by the color they
         * were drawn in.
         *
         * Only those. A key repeating seven names already legible on the

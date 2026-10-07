@@ -221,7 +221,7 @@ export function localCompletion(
  * A conversation is not the only thing a model is good for: drawing a
  * kind's figure is one prompt and one answer, judged by the checker's own
  * function. Both reach the same configured provider through this, so there
- * is one place a key is read and one place a rung is honoured — and a
+ * is one place a key is read and one place a rung is honored — and a
  * keyless config answers `undefined` rather than a completion that throws,
  * so a caller can say what it will do INSTEAD of drawing.
  */
@@ -307,12 +307,12 @@ export function configuredResponder<S extends AnySchema>(
    * answer with no proposals never replaces a reading that had them.
    */
   const groundedFirst =
-    (modelled: Responder<S>, name: string): Responder<S> =>
+    (modeled: Responder<S>, name: string): Responder<S> =>
     async (store, text, context) => {
       const known = await floor(store, text, context);
       if (known.grounded) return note(known, "(from the graph)");
       try {
-        const answered = await modelled(store, text, {
+        const answered = await modeled(store, text, {
           ...context,
           ...(known.proposals.length > 0 ? { reading: known.proposals } : {}),
         });
@@ -352,7 +352,7 @@ export function configuredResponder<S extends AnySchema>(
       ...(config.local?.model ? { model: config.local.model } : {}),
       ...(hooks.onStatus ? { onStatus: hooks.onStatus } : {}),
     });
-    const modelled = groundedFirst(llmResponder<S>({ complete: local.complete }), "the local model");
+    const modeled = groundedFirst(llmResponder<S>({ complete: local.complete }), "the local model");
     return honest(async (store, text, context) => {
       if (!local.ready()) {
         local.warm();
@@ -361,7 +361,7 @@ export function configuredResponder<S extends AnySchema>(
           ? note(answered, "(from the graph)")
           : note(answered, "(the local model is warming — the graph answered meanwhile)");
       }
-      return modelled(store, text, context);
+      return modeled(store, text, context);
     });
   }
 

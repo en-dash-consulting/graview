@@ -196,7 +196,7 @@ window.__handle.drawn().then(() => { window.__ready = true; });
       const inside = frame ? await frame.evaluate(() => ({ seen: window.__seen?.length ?? null, client: typeof GraviewGuest, body: document.body.innerHTML.slice(0, 300) })).catch((error) => String(error)) : "no frame";
       throw new Error(`${name} never drew: ${JSON.stringify({ inside, frames: tab.frames().map((one) => one.url()), errors: report.pageErrors, violations })}`);
     };
-    /* A token as the browser computes a colour, read off the embed's own root. */
+    /* A token as the browser computes a color, read off the embed's own root. */
     const token = (name) =>
       tab.evaluate((variable) => {
         const value = getComputedStyle(document.querySelector("[data-graview-scheme]")).getPropertyValue(variable).trim();

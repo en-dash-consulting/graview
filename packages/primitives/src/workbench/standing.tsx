@@ -107,6 +107,6 @@ const tone = (violations: readonly { readonly status?: string }[]): string =>
   violations.some((violation) => violation.status === "could-not-judge" || violation.status === "over-budget") ? "var(--graview-bad)" : "var(--graview-warn)";
 
 /** The dot itself: eight pixels in the tone of the rules. */
-export function StandingDot({ tone: colour }: { readonly tone: string }) {
-  return <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: 999, flex: "0 0 auto", background: colour }} />;
+export function StandingDot({ tone: color }: { readonly tone: string }) {
+  return <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: 999, flex: "0 0 auto", background: color }} />;
 }

@@ -126,7 +126,7 @@ describe("the list leads with the thing you clicked", () => {
   });
 
   it("keeps the rule's own order among the clicked thing's repairs", () => {
-    // The rule names a new date before finishing; that is a judgement.
+    // The rule names a new date before finishing; that is a judgment.
     const derived = labels(deriveAffordances(store(), ["t-b"], { focus: "t-b" }));
     expect(derived.indexOf("A new date for Pay the deposit")).toBeLessThan(
       derived.indexOf("Finish Pay the deposit"),

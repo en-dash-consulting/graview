@@ -32,7 +32,7 @@ this package serves lists, records, forms, problems and history as ordinary link
   `"replace"` or `"pop"`), and `path` sends it back to one, so a host that
   keeps its own history keeps the face's too.
 - **Mobile is an acceptance criterion.** `pnpm pages` runs the phone-width harness
-  (390×844): no sideways scroll, named links, labelled controls, and a derived form that
+  (390×844): no sideways scroll, named links, labeled controls, and a derived form that
   actually applies.
 
 - **It lands on a gallery.** The home opens with the standing as its headline — "2 gardeners,

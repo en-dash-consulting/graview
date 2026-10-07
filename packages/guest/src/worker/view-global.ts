@@ -56,7 +56,7 @@ export interface GraviewView {
   act(name: string, args?: Readonly<Record<string, unknown>>): Promise<GuestAnswer>;
   navigate(to: string | { readonly place: string }): void;
   html(strings: TemplateStringsArray, ...values: unknown[]): Html;
-  /** What the host will not draw of the last render, as the open kit says it: an author's early word, not the host's judgement. */
+  /** What the host will not draw of the last render, as the open kit says it: an author's early word, not the host's judgment. */
   readonly refused: readonly string[];
   readonly hardening: Hardening;
 }

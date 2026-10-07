@@ -265,7 +265,7 @@ describe("installing them", () => {
    * it could not load. Nothing in a build noticed, because every check was
    * about a scratch directory.
    *
-   * Run `pnpm skills` when this fails. It is a copy, not a judgement.
+   * Run `pnpm skills` when this fails. It is a copy, not a judgment.
    */
   it("keeps this repository's own installed copies current", () => {
     const root = resolve(SKILLS_DIR, "../../..");

@@ -74,7 +74,7 @@ export function createMcpHttpHandler<S extends AnySchema>(options: McpHttpOption
   return async (request) => {
     const principal = await options.authenticate(request);
     if (!principal) {
-      return rpcError(401, -32001, "Not signed in: this server answers only a caller its host recognises.", {
+      return rpcError(401, -32001, "Not signed in: this server answers only a caller its host recognizes.", {
         "www-authenticate": options.challenge ?? "Bearer",
       });
     }

@@ -665,7 +665,7 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
         try {
           asking = await seat();
         } catch {
-          // A poller the host does not recognise is still told whether the store is well.
+          // A poller the host does not recognize is still told whether the store is well.
         }
       }
       return send(200, {

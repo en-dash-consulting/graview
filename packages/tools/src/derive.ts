@@ -124,7 +124,7 @@ export function deriveAffordances<S extends AnySchema>(
    * rest of the selection offers (see `focusRank`). Repairs come FIRST
    * within each of those halves: a broken rule outranks any preference,
    * and between two of a rule's own repairs the RULE's order stands —
-   * naming "give it a new date" before "finish it" is a judgement, and a
+   * naming "give it a new date" before "finish it" is a judgment, and a
    * pin is not entitled to overrule it. Below the repairs, pins rank before
    * the rest (a person's own pin before the app's declared one), and a
    * deterministic usage boost — decayed recency and frequency read off the
@@ -299,7 +299,7 @@ export function deriveAffordances<S extends AnySchema>(
    * ONE RANK, STAMPED ONCE. The strip, the pointer menu, the record page's
    * acts and an agent's tool list all read these arrays; a surface that
    * regroups them can still say which entry the derivation put first rather
-   * than deciding for itself and contradicting its neighbour. Withheld acts
+   * than deciding for itself and contradicting its neighbor. Withheld acts
    * continue the same numbering, because "last, and still shown" is where
    * the order puts them.
    */

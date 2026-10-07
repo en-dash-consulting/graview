@@ -1,4 +1,4 @@
-import { humaniseField, type AnySchema, type AnyGraphNode, type Violation } from "@graview/core";
+import { humanizeField, type AnySchema, type AnyGraphNode, type Violation } from "@graview/core";
 import { useGraview } from "@graview/react/provider";
 import { LadderSetting } from "./ladder.js";
 import type { HostAction } from "./profile.js";
@@ -95,7 +95,7 @@ export function ProfilePane<S extends AnySchema>({
                   absence of a permission system. */}
               {roles.length > 0
                 ? // A role in words — "Sales manager", never "sales-manager".
-                  roles.map((role) => humaniseField(role)).join(", ")
+                  roles.map((role) => humanizeField(role)).join(", ")
                 : me === undefined
                   ? "This app has no sign-in; everything here is yours."
                   : "No role in particular"}

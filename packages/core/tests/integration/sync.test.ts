@@ -200,7 +200,7 @@ describe("taking what changed there", () => {
     expect((live.graph.getNode("school") as { start: string }).start).toBe("08:30");
   });
 
-  it("RECOGNISES AN ECHO of its own write and does not re-apply it", async () => {
+  it("RECOGNIZES AN ECHO of its own write and does not re-apply it", async () => {
     /*
      * The loop that breaks naive two-way sync. We pushed; the remote told us
      * the version our push produced; the next pull hands that version back as
@@ -500,7 +500,7 @@ describe("the Google Calendar transport", () => {
         "end.dateTime": "2026-09-01T15:00:00Z",
       },
     });
-    // A cancelled event is a DELETION, not a record that stopped appearing.
+    // A canceled event is a DELETION, not a record that stopped appearing.
     expect(changes[1]).toMatchObject({ id: "evt-2", deleted: true });
     // And the first pull asks for deleted events, or one would be
     // indistinguishable from an event we never had.

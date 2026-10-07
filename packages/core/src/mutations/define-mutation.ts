@@ -57,7 +57,7 @@ export function argumentsTaken(definition: { readonly creates?: readonly string[
   return takesAnId(definition) ? [...keys, "id"] : keys;
 }
 
-/** "does not take "colour"; it takes "id", "quote"" — the one sentence for an argument an act does not take. */
+/** "does not take "color"; it takes "id", "quote"" — the one sentence for an argument an act does not take. */
 const doesNotTake = (stray: readonly string[], takes: readonly string[]): string =>
   `does not take ${stray.map((key) => `"${key}"`).join(", ")}; it takes ${takes.length > 0 ? takes.map((key) => `"${key}"`).join(", ") : "nothing"}`;
 
@@ -139,11 +139,11 @@ export function compileMutation<S extends AnySchema>(
   /*
    * AN ARGUMENT THE ACT DOES NOT TAKE IS REFUSED, by every act (FR-121; a
    * derived edit since FR-110). A plain `z.object` strips what it does not
-   * declare, so `set-quote { id, quote, colour }` set the quote and said
-   * nothing of the colour; the framework holds the act to its shape here,
+   * declare, so `set-quote { id, quote, color }` set the quote and said
+   * nothing of the color; the framework holds the act to its shape here,
    * at the one boundary every call crosses, so no product changes its
    * input. An argument given as `undefined` is no argument. Said with those
-   * it does take — a caller that misspelt one learns the spelling.
+   * it does take — a caller that misspelled one learns the spelling.
    */
   const taken = argumentsTaken(definition);
   if (taken && typeof given === "object" && given !== null && !Array.isArray(given)) {

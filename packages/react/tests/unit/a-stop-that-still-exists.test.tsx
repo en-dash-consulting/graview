@@ -17,7 +17,7 @@ import { GraviewProvider, createViews, useNavigation, useSelection } from "../..
  * severing a relation left its own pane open, offering the act that severed
  * it — which refused with "Cannot remove missing edge handled-by
  * item:pay-the-deposit person:ada-nowak", the graph's own words in front of
- * a person — and dropping the record you had travelled into left a focus
+ * a person — and dropping the record you had traveled into left a focus
  * nothing could lay out.
  */
 const item = defineNode("item", {
@@ -131,7 +131,7 @@ describe("a stop that still exists", () => {
 
   it("leaves the focus somewhere when the record it names is removed", async () => {
     const store = made();
-    // The app's home is the items group; travelling in and dropping the
+    // The app's home is the items group; traveling in and dropping the
     // record must land back there rather than on an id nothing can lay out.
     const at = await stand(store, { ...EMPTY_VIEW, focusId: "aggregate:item" });
     await at.travelTo("item:deposit");

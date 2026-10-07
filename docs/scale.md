@@ -1,6 +1,6 @@
 # Scale: a picture draws what a person can read
 
-A design, written 2026-09-29, from a real catalogue rather than a fixture.
+A design, written 2026-09-29, from a real catalog rather than a fixture.
 Tech N9ne's discography from MusicBrainz — 1,177 songs, 568 artists, 479
 releases, about 5,000 edges — is small for a real domain and broke the scene.
 This is what was measured, what a person should see instead, how the scene
@@ -19,7 +19,7 @@ recorder with vsync off (so a frame is as long as the work in it):
 | home (altitude), drag | 21,340 | 5 | 19 | 18 ms | 520 ms |
 | descend to the ground | 21,760 | 6 | 19 | 319 ms | 539 ms |
 | ground, pan | 635 | 6 | 7 | 0.2 ms | 19 ms |
-| focus Tech N9ne (1,100 neighbours), pan | 12,036 | 1,259 | 4,433 | 928 ms | 1,524 ms |
+| focus Tech N9ne (1,100 neighbors), pan | 12,036 | 1,259 | 4,433 | 928 ms | 1,524 ms |
 | select a song there | 9,836 | 1,259 | 2,223 | 965 ms | 3,908 ms |
 | type "the" in Find there | 12,458 | 1,259 | 4,433 | 996 ms | 1,471 ms |
 
@@ -30,10 +30,10 @@ Where it goes (from reading the code, then confirmed by the counts):
   members: the artists' card alone was 11,944 elements — "who worked with
   whom" drawn at 6% size. That is the smear under the cards in the
   screenshot that started this.
-- **Plane 1 is uncapped.** Every neighbour of the focus is a host; 1,100
+- **Plane 1 is uncapped.** Every neighbor of the focus is a host; 1,100
   of them wrap into ~275 rows whose height goes negative (`rowH` has no
   floor). Each gets a line; the line layer clips every strand against every
-  box (65 samples × all obstacles), so it is quadratic in the neighbours.
+  box (65 samples × all obstacles), so it is quadratic in the neighbors.
 - **A transition re-renders the scene every frame.** `useAnimatedLayout`
   sets React state per animation frame for 520 ms; the lines, captions and
   pick targets measure the DOM in layout effects on every one of those
@@ -80,7 +80,7 @@ app sets:
 - **An opened district, a Group view, a village** keep the caps they have
   (16, 6, 24) — they were already right.
 - **A focused picture** — a lens drawn full size — is the person's chosen
-  view, and the lens owns its drawing. The built-in lenses honour a
+  view, and the lens owns its drawing. The built-in lenses honor a
   `budget` in their props and say "+N"; an app's lens is told the budget
   and the lens skill says what to do with it.
 
@@ -89,7 +89,7 @@ so nothing appears or disappears while the scene is moving.
 
 ### Over budget, the band groups
 
-When the neighbours of the focus do not fit, the band does not shrink them
+When the neighbors of the focus do not fit, the band does not shrink them
 to confetti. Within each relation (the runs the band already has, one per
 edge kind and direction), it groups the far ends by the best of what their
 declaration already offers — `arrangeable(kind).groups`:
@@ -156,7 +156,7 @@ In order, each step measured before the next is taken:
    fades out as a transition starts and in when it lands (it cannot be
    right mid-flight anyway — both ends are moving). Pick targets are
    re-collected when a view's content changes, not after every render.
-3. **Hosts are memoised** on what they draw, and their callbacks are
+3. **Hosts are memoized** on what they draw, and their callbacks are
    stable, so a frame that moves them re-renders position only.
 4. **The linear algorithms:** `connectorsFor` bundles with a map, not a
    copied array; `interpolate` looks members up by id; a host's signature
@@ -171,7 +171,7 @@ In order, each step measured before the next is taken:
 
 ## What proves it
 
-A harness, `scripts/verify-scale.mjs`, against a real catalogue in the
+A harness, `scripts/verify-scale.mjs`, against a real catalog in the
 repository (`apps/discography`, Tech N9ne from MusicBrainz, CC0), writing
 `docs/scale.json`:
 
@@ -191,7 +191,7 @@ repository (`apps/discography`, Tech N9ne from MusicBrainz, CC0), writing
 
 ## What shipped
 
-The same catalogue, the same recorder, `docs/scale.json`. All eight claims
+The same catalog, the same recorder, `docs/scale.json`. All eight claims
 hold; "first" is the one frame the new stop lands in (the longest frame in
 the 100 ms after the gesture — with vsync off the recording's own first
 frame comes before the gesture has happened).
@@ -230,7 +230,7 @@ Where the build departed from the design, and why:
   was the point. `contain` on hosts was not needed and was not added.
 - **Lines hide while the scene moves** rather than fading: with both ends
   in flight they cannot be right, and a fade is a paint every frame.
-- **Hosts were not memoised further.** Bounded at 36 at the hub, and with
+- **Hosts were not memoized further.** Bounded at 36 at the hub, and with
   the signature keyed by count and hash, the render was no longer where the
   frame went; stable callbacks were left for when a stop needs them.
 - **The gate was not taken.** With the rest done every transition's p95

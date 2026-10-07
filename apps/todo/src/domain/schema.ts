@@ -1,4 +1,4 @@
-import { createSchema, defineNode, effectivity, isoDate, summarise } from "@graview/core";
+import { createSchema, defineNode, effectivity, isoDate, summarize } from "@graview/core";
 import { todoInstallation } from "./installation.js";
 import { z } from "zod";
 
@@ -155,7 +155,7 @@ export const reason = defineNode("reason", {
   fixed: { text: "the argument as it was made, kept in the words it was made in" },
   plural: "Reasons",
   // Shortened at a word boundary, and the full text is the heading on a page.
-  label: (node) => summarise(node.text),
+  label: (node) => summarize(node.text),
   figure: "note",
   edges: {
     explains: {

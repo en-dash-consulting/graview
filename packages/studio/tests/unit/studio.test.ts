@@ -173,7 +173,7 @@ describe("the declaration is a graph", () => {
      *
      * So the edge from a rule to the kind it judges resolved to the district
      * it started from, and the scene drew it as a loop: a dotted circle
-     * labelled OVER, saying a rule judges a rule.
+     * labeled OVER, saying a rule judges a rule.
      */
     const ruleKind = defineNode("rule", {
       fields: z.object({ label: z.string().min(1), spec: z.object({ type: z.literal("all-tended") }) }),

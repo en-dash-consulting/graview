@@ -58,7 +58,7 @@ export function useAnimatedLayout(
   const frame = useRef<number | null>(null);
   /*
    * WHEN THIS FLIGHT BEGAN, kept across restarts. A new target arriving
-   * mid-flight — the camera re-centring a frame after a click, a host
+   * mid-flight — the camera re-centering a frame after a click, a host
    * reporting a size, a wheel's worth of events — used to start a fresh
    * tween from the live frame with the whole duration and the ease-in from
    * zero, so a stream of them moved the scene a hair a frame and never

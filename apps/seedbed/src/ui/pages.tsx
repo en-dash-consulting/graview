@@ -16,7 +16,7 @@ import type { SeedbedSchema } from "../domain/schema.js";
 type S = SeedbedSchema;
 
 /**
- * THE OTHER FACE, CUSTOMISED. The routed pages are derived from the
+ * THE OTHER FACE, CUSTOMIZED. The routed pages are derived from the
  * declaration — lists, records, forms, problems — and every one of them can
  * be replaced per kind, or per surface, with a page the app writes. This is
  * the plot's record page in the garden's own words: the beds, the caretaker,

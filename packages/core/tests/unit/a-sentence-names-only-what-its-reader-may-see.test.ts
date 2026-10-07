@@ -7,7 +7,7 @@ import { MUTATIONS, oracle, policyOf, rng, SCHEMA, storeAt, world } from "../sup
  * A SENTENCE NAMES ONLY WHAT ITS READER MAY SEE (FR-55).
  *
  * An op's sentence is made by its act's `describe`, which reads the graph:
- * "Drop d:barn in favour of Freya Davies". Two ways it reached a seat that
+ * "Drop d:barn in favor of Freya Davies". Two ways it reached a seat that
  * may not see Freya: the own-words exception excused another author's
  * call because the op's primitives carried a value the seat had written
  * (its own guess, `ref: "b:freya"`), and a sentence that read a hidden

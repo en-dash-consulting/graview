@@ -88,7 +88,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
      * A SENTENCE THAT OPENS WITH AN INSTRUCTION IS NOT A QUESTION.
      *
      * The branches below answer questions about the declaration, and they
-     * recognised them by the words they contained rather than by what the
+     * recognized them by the words they contained rather than by what the
      * sentence was doing. "Add a Meal kind, with the name of the food and
      * how many people it feeds" contains "kind" and "how many", so it was
      * answered with an inventory of the kinds — and answered as a FACT,
@@ -277,7 +277,7 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
      * "add a new Role for Participant" — and it must be THE FLOOR that
      * answers it, not a model.
      *
-     * The graph responder only recognises an act when the message contains
+     * The graph responder only recognizes an act when the message contains
      * its title exactly, so "add a new role" missed "Add a role", the floor
      * returned an ungrounded answer, and the on-device model got the turn.
      * It proposed `add-role` with no label at all, which the store then

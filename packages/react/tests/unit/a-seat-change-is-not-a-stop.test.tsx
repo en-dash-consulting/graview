@@ -13,7 +13,7 @@ import { createViews, GraviewProvider, UrlSync, useGraview } from "../../src/ind
  * CHANGING THE SEAT IS NOT GOING SOMEWHERE.
  *
  * A page focused on a record its new seat may not see falls back to where
- * the app opens — the stop is resolved, not travelled to. Pushed, that
+ * the app opens — the stop is resolved, not traveled to. Pushed, that
  * fallback put an entry in the history whose Back landed on the record's
  * address, which the seat cannot see, which fell back again: a Back that
  * went nowhere. A seat change replaces the stop it resolves.

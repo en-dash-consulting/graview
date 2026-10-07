@@ -30,7 +30,7 @@ const textSize: SettingDeclaration = {
   name: "text-size",
   title: "Text size",
   description: "How large the words are.",
-  honoured: "root-font-size",
+  honored: "root-font-size",
   options: [
     { value: "100%", label: "As your browser has it" },
     { value: "125%", label: "Larger" },
@@ -136,7 +136,7 @@ describe("an embed in a sandboxed frame", () => {
     await mounting({ seed, face: "pages", memory });
     expect(read).toContain("graview:setting:text-size");
     expect(kept.get("graview:session"), "this tab's session, kept by the host").toMatch(/\w+/);
-    // The remembered answer was honoured: the root wears the larger size.
+    // The remembered answer was honored: the root wears the larger size.
     expect(document.documentElement.style.fontSize).toBe("125%");
     document.documentElement.style.fontSize = "";
   });

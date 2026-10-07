@@ -3,7 +3,7 @@
  * What would actually go in the tarball.
  *
  * A `files` allowlist is a claim, and the way it fails is silent: a stray
- * pattern ships `src/`, or a build artefact nobody meant to publish rides
+ * pattern ships `src/`, or a build artifact nobody meant to publish rides
  * along, and nobody notices until a stranger's `node_modules` is twice the
  * size it should be. `npm pack --dry-run --json` says exactly what would be
  * included, so this asserts against that rather than against the manifest.
@@ -128,7 +128,7 @@ for (const name of readdirSync(packagesDir).sort()) {
 
 /*
  * WHAT EACH README NAMES, SOME TARBALL EXPORTS (FR-15). Across packages,
- * because a README rightly names its neighbours' API (ship's names
+ * because a README rightly names its neighbors' API (ship's names
  * `defineApp`); judged against what was packed, not what is in src.
  */
 const exported = exportsOf(unpacked.flatMap((one) => one.declarations));

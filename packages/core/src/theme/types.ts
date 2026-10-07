@@ -6,7 +6,7 @@ import type { KitOverrides } from "./kit.js";
  * components that read them live. The contract lives here for the same reason
  * the schema does: `graview check` reads declarations, and a theme is a
  * declaration. A custom palette can be wrong in ways nobody notices — a
- * secondary text colour that clears 4.5:1 on a dark ground and fails badly on
+ * secondary text color that clears 4.5:1 on a dark ground and fails badly on
  * paper — and contrast is a property the framework can verify rather than
  * trust.
  */
@@ -33,7 +33,7 @@ export interface ThemeTokens {
    * A STATUS THAT IS GOOD, AND ONE THAT IS BAD: booked, paid, passing;
    * overdue, refused, failing. The accent means "selected" and the warning
    * means "a rule is broken", and a badge that meant neither invented a
-   * colour of its own and checked it by hand, if at all. Text colours,
+   * color of its own and checked it by hand, if at all. Text colors,
    * held to 4.5:1 on a panel and on the ground like every other ink.
    */
   readonly good: string;
@@ -58,7 +58,7 @@ export interface ThemeTokens {
  *
  * Palette, wordmark and typography together, because they are one decision:
  * a brand handing over a hex code has not given you a theme, and a brand
- * handing over a logo without a colour has not either.
+ * handing over a logo without a color has not either.
  */
 export interface Brand {
   /** The product name, shown where the framework shows a wordmark. */
@@ -67,7 +67,7 @@ export interface Brand {
    * A logo, as an inline SVG string or a URL.
    *
    * Inline is preferred and is what `currentColor` support is for: a logo
-   * that inherits the ink colour works in both schemes without two files.
+   * that inherits the ink color works in both schemes without two files.
    */
   readonly logo?: string;
   /**
@@ -105,7 +105,7 @@ export interface Brand {
    *
    * The third axis of an identity, and the one that was missing: with only a
    * palette and a wordmark, four apps built on this looked like the same
-   * application four times in different colours. A bid desk is square and
+   * application four times in different colors. A bid desk is square and
    * dense; a household planner is round and roomy. Neither is a component
    * change — both are one number.
    */
@@ -120,7 +120,7 @@ export interface Brand {
    *
    * The default is a stable hash — fine for "each kind looks like itself",
    * useless for "our people are warm amber and our money is green". Declared
-   * here it reaches every surface that colours by kind (chips, districts,
+   * here it reaches every surface that colors by kind (chips, districts,
    * calendars) through one lookup, and `graview check` refuses a key that
    * names no declared kind — a silent typo would just quietly hash instead.
    */

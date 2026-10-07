@@ -78,7 +78,7 @@ function TaskView({ node, fidelity, selected, mode, flagged }: ViewProps<S, "tas
 /**
  * One list, on its own.
  *
- * Reached by travelling to a list, or drawn beside a task as the list it is
+ * Reached by traveling to a list, or drawn beside a task as the list it is
  * on. The generic card would show its fields — and a list's only field besides
  * its name is an ordering key, which the declaration hides, so the generic
  * answer is an empty box with a title. What a list IS, from outside, is how

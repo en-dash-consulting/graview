@@ -44,7 +44,7 @@ describe("the city at altitude", () => {
   it("has the same shape at 1280 and at 390: one scale, one translate", () => {
     const wide = districts(1280, 800);
     const phone = districts(390, 640);
-    const centre = (card: { x: number; y: number; width: number; height: number }) => ({ x: card.x + card.width / 2, y: card.y + card.height / 2 });
+    const center = (card: { x: number; y: number; width: number; height: number }) => ({ x: card.x + card.width / 2, y: card.y + card.height / 2 });
     const pairs = [
       [kindCardId("week"), kindCardId("duty")],
       [kindCardId("duty"), kindCardId("person")],
@@ -52,8 +52,8 @@ describe("the city at altitude", () => {
     ] as const;
     const vectors = (cards: typeof wide) =>
       pairs.map(([a, b]) => {
-        const ca = centre(cards.find((card) => card.id === a)!);
-        const cb = centre(cards.find((card) => card.id === b)!);
+        const ca = center(cards.find((card) => card.id === a)!);
+        const cb = center(cards.find((card) => card.id === b)!);
         return { dx: cb.x - ca.x, dy: cb.y - ca.y };
       });
     const w = vectors(wide);
@@ -150,19 +150,19 @@ describe("the marquee takes the room its names take", () => {
 });
 
 describe("zooming by hand", () => {
-  it("keeps the point under the pointer still: the pan moves against the scaling about the centre", () => {
-    const centre = { x: 800, y: 470 };
+  it("keeps the point under the pointer still: the pan moves against the scaling about the center", () => {
+    const center = { x: 800, y: 470 };
     const camera = { x: -120, y: 40 };
     const pan = { x: 30, y: -10 };
     const pointer = { x: 1100, y: 700 };
     const ratio = 1.5;
-    const next = panForZoom(pan, camera, pointer, centre, ratio);
+    const next = panForZoom(pan, camera, pointer, center, ratio);
     // The city point under the pointer, before and after, in the city's own (unscaled) frame.
-    const before = { x: (pointer.x - pan.x - camera.x - centre.x), y: (pointer.y - pan.y - camera.y - centre.y) };
-    const after = { x: (pointer.x - next.x - camera.x - centre.x) / ratio, y: (pointer.y - next.y - camera.y - centre.y) / ratio };
+    const before = { x: (pointer.x - pan.x - camera.x - center.x), y: (pointer.y - pan.y - camera.y - center.y) };
+    const after = { x: (pointer.x - next.x - camera.x - center.x) / ratio, y: (pointer.y - next.y - camera.y - center.y) / ratio };
     expect(after.x).toBeCloseTo(before.x, 6);
     expect(after.y).toBeCloseTo(before.y, 6);
-    // Zooming about the centre itself moves nothing.
-    expect(panForZoom(pan, camera, { x: centre.x + pan.x + camera.x, y: centre.y + pan.y + camera.y }, centre, 2)).toEqual(pan);
+    // Zooming about the center itself moves nothing.
+    expect(panForZoom(pan, camera, { x: center.x + pan.x + camera.x, y: center.y + pan.y + camera.y }, center, 2)).toEqual(pan);
   });
 });

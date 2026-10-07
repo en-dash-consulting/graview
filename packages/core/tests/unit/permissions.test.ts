@@ -122,7 +122,7 @@ describe("who may do what", () => {
    * "shown when an action is withheld, so a refusal can say something
    * useful" — and nothing read it. Every refusal on every surface was a
    * mutation id and a list of role names: what the declaration says, not what
-   * the organisation means.
+   * the organization means.
    */
   it("repeats the policy's own sentence, which is why the grant has one", () => {
     const verdict = store().permits({ name: "reassign", args: { id: "d1" } }, child);

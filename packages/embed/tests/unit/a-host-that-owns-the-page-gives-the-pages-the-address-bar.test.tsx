@@ -167,7 +167,7 @@ describe("address routing under a base path", () => {
   it("keeps the scene at the overview's address with its stop in the fragment, and a tab is an entry Back undoes (FR-132)", async () => {
     const { host } = await at("/apps/a1/", { routing: "address", basePath: "/apps/a1", face: "graview" });
     expect(face(host)).toBe("graview");
-    // Arriving is not travelling: the scene tidies its own address in place — to its place's.
+    // Arriving is not traveling: the scene tidies its own address in place — to its place's.
     expect(window.location.pathname).toBe("/apps/a1/places/overview");
     expect(window.location.hash).toBe("#overview=1");
     expect(host.querySelector('[data-testid="app-place-overview"]')?.getAttribute("aria-current")).toBe("page");

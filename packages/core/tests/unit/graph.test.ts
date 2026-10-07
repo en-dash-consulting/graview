@@ -60,7 +60,7 @@ describe("Graph", () => {
     }
     expect(said).toContain("Late");
     expect(said).toContain("duty");
-    // The field, humanised, and the validator's sentence about it.
+    // The field, humanized, and the validator's sentence about it.
     expect(said).toContain("At: ");
     expect(said).toContain("expected number");
     // And nothing of the dump: no issue objects, no codes, no paths.

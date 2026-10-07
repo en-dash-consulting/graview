@@ -1,4 +1,4 @@
-import { humaniseField, labelOf, type Violation } from "@graview/core";
+import { humanizeField, labelOf, type Violation } from "@graview/core";
 import { KindFigure, useMarkup } from "@graview/primitives";
 import {
   createPageRegistry,
@@ -554,7 +554,7 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
       {facts.links.map((group) => (
         <section key={`${group.edgeKind}:${group.direction}`} className="ro-section">
           <header>
-            <h2 className="ro-h2">{capitalise(group.description ?? humaniseField(group.edgeKind))}</h2>
+            <h2 className="ro-h2">{capitalize(group.description ?? humanizeField(group.edgeKind))}</h2>
           </header>
           <ul className="ro-list">
             {group.targets.map((target) => (
@@ -728,7 +728,7 @@ function InPlace({
       }}
     >
       {shape.type === "choice" ? (
-        <select autoFocus value={draft} onChange={(event) => setDraft(event.target.value)} aria-label={humaniseField(field)}>
+        <select autoFocus value={draft} onChange={(event) => setDraft(event.target.value)} aria-label={humanizeField(field)}>
           {shape.options.map((option) => (
             <option key={option} value={option}>
               {option}
@@ -740,7 +740,7 @@ function InPlace({
           autoFocus
           type={shape.type === "date" ? "date" : shape.type === "number" ? "number" : "text"}
           value={draft}
-          aria-label={humaniseField(field)}
+          aria-label={humanizeField(field)}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Escape") setEditing(false);
@@ -943,7 +943,7 @@ const plural = (store: Ctx["store"], kind: string): string =>
 const slugOf = (store: Ctx["store"], kind: string): string =>
   plural(store, kind).toLowerCase().replace(/[^a-z0-9]+/g, "-");
 const article = (kind: string): string => (/^[aeiou]/i.test(kind) ? `an ${kind}` : `a ${kind}`);
-const capitalise = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
+const capitalize = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 
 function subjectArgOf(store: Ctx["store"], mutation: string): string {
   return store.allMutations().find((candidate) => candidate.name === mutation)?.subject?.arg ?? "id";

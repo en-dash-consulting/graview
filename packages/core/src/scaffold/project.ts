@@ -643,7 +643,7 @@ ${pnpm ? "      - uses: pnpm/action-setup@v4\n" : ""}      - uses: actions/setup
       # test: the rule fires, and its repair resolves it.
       # build, then check: everything tsc cannot see — a repair naming a
       # mutation nobody registered, a palette pair below AA. Errors fail
-      # the build; warnings are a judgement call.
+      # the build; warnings are a judgment call.
       - run: ${pnpm ? "pnpm verify" : "npm run verify"}
 `;
 }

@@ -77,7 +77,7 @@ export const APPS: readonly AppEntry[] = [
 export interface Capability {
   readonly id: string;
   readonly label: string;
-  readonly area: "lens" | "declaration" | "behaviour";
+  readonly area: "lens" | "declaration" | "behavior";
   /** Answered from the declaration alone — never from a hand-kept list. */
   readonly holds: (app: GraviewApp) => boolean;
   /**
@@ -120,7 +120,7 @@ export const CAPABILITIES: readonly Capability[] = [
   {
     id: "cap-repairs",
     label: "Rules that name their repairs",
-    area: "behaviour",
+    area: "behavior",
     holds: (app) => (app.invariants ?? []).some((invariant) => (invariant.repairs ?? []).length > 0),
     shownIn: "rota",
     stop: "#focus=aggregate:shift&sel=s-fri-repair",
@@ -159,7 +159,7 @@ export const CAPABILITIES: readonly Capability[] = [
   {
     id: "cap-optional-view",
     label: "A kind with no view of its own",
-    area: "behaviour",
+    area: "behavior",
     // Every app leaves at least one kind on the generic views — the claim
     // the primitives layer rests on, and worth watching rather than
     // assuming. Answered from the declaration: a kind the app never
@@ -226,7 +226,7 @@ export const CAPABILITIES: readonly Capability[] = [
   {
     id: "cap-routed-face",
     label: "A routed face, derived",
-    area: "behaviour",
+    area: "behavior",
     // Every app has one for free; the declaration cannot say so, which is
     // exactly what makes it worth a stop rather than a sentence.
     holds: () => true,
@@ -236,7 +236,7 @@ export const CAPABILITIES: readonly Capability[] = [
   {
     id: "cap-own-design",
     label: "A face of the app's own",
-    area: "behaviour",
+    area: "behavior",
     // Things and Rota replace every routed surface; the seedbed replaces
     // them in its thirteenth chapter. Not derivable from the declaration —
     // a design is a registry, not a field — so it is named where it is.
@@ -291,7 +291,7 @@ export const CAPABILITIES: readonly Capability[] = [
   {
     id: "cap-embed",
     label: "On somebody else's page",
-    area: "behaviour",
+    area: "behavior",
     // A mount is a call, not a declaration — so this one names where it is
     // rather than pretending to be derivable.
     holds: () => true,
@@ -303,7 +303,7 @@ export const CAPABILITIES: readonly Capability[] = [
   {
     id: "cap-remote-adapter",
     label: "It remembers in this browser",
-    area: "behaviour",
+    area: "behavior",
     // Every app opens through `open()` with ship's browser adapter — the
     // declaration does not say so, and the desk reads declarations, which
     // is why this one is named where it is instead.
@@ -322,7 +322,7 @@ export const CAPABILITIES: readonly Capability[] = [
   {
     id: "cap-server-persistence",
     label: "Data in a folder you can open",
-    area: "behaviour",
+    area: "behavior",
     /*
      * SERVER-SIDE PERSISTENCE, answered from the declaration rather than
      * asserted: an app that declares a `version` and its migrations is an
@@ -356,7 +356,7 @@ export const CAPABILITIES: readonly Capability[] = [
   {
     id: "cap-studio",
     label: "The declaration, open in the app",
-    area: "behaviour",
+    area: "behavior",
     // The studio is offered wherever there is a seat that may administer,
     // or wherever nothing is administered at all — which is every app.
     holds: () => true,

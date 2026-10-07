@@ -8,12 +8,12 @@ import { adjustment } from "../../src/index.js";
  * Every stop in a Graview app is a URL, and `adjustment` is what decides
  * whether a change pushes an entry or merely tidies the one you are on. Two
  * doors were missing from it, and both failed the same quiet way: the
- * address updated, no entry was pushed, the arrows stayed grey, and one
+ * address updated, no entry was pushed, the arrows stayed gray, and one
  * Back left the app instead of the door.
  */
 const at = { ...EMPTY_VIEW, focusId: "aggregate:shift" };
 
-describe("what counts as travelling", () => {
+describe("what counts as traveling", () => {
   it("counts showing a module — the installation is a place you go", () => {
     const shown = withShown(at, "installation", true);
     expect(adjustment(at, shown)).toBe(false);
@@ -27,7 +27,7 @@ describe("what counts as travelling", () => {
   });
 
   /*
-   * Changing WHICH PICTURE a group is drawn as is travelling — the map and
+   * Changing WHICH PICTURE a group is drawn as is traveling — the map and
    * the regimen are two places over one city, a link can name either, and
    * Back out of the map has to land on the one you came from rather than on
    * the stop before the group was ever opened.

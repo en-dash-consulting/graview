@@ -146,7 +146,7 @@ export function evaluate<S extends AnySchema>(
     }
 
     /*
-     * The horizon applies to judgement, not just display: a retired subject
+     * The horizon applies to judgment, not just display: a retired subject
      * is only examined by invariants that opted into the past. Graph-scoped
      * invariants read whatever they read — they have no subject to retire.
      */

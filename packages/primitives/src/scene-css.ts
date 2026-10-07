@@ -38,10 +38,10 @@ ${/* From altitude a district is a village on its plot, not a card: hovering
 }
 
 ${/* THE GROUND UNDER A DISTRICT: its plot, drawn. Four lattice corners in
-   the kind's hue, a kerb, a cast shadow toward the light — the arithmetic
+   the kind's hue, a curb, a cast shadow toward the light — the arithmetic
    the layout already did, made visible, so a district stands on land
    rather than floating on a hatch. Fades in with the altitude number the
-   lattice fades in with; a hand-placed district's kerb is dashed, which is
+   lattice fades in with; a hand-placed district's curb is dashed, which is
    the pinned mark on the ground rather than a box over the drawing. */ ""}
 .graview-plots {
   z-index: ${SCENE_LAYERS.plots};
@@ -66,7 +66,7 @@ ${/* THE GROUND UNDER A DISTRICT: its plot, drawn. Four lattice corners in
 }
 ${/* THE VILLAGE on the tile: one small iso building per member in the kind's
    own faces (the same roof and walls the block had), a flagged member's roof
-   in the warning colour, a selected member's building lit in the accent.
+   in the warning color, a selected member's building lit in the accent.
    Architecture, not controls: the tile under them takes the click. */ ""}
 .graview-village { pointer-events: none; }
 .graview-building polygon { stroke-width: 0.8; }
@@ -78,7 +78,7 @@ ${/* THE VILLAGE on the tile: one small iso building per member in the kind's
   letter-spacing: 0.06em;
   fill: var(--graview-ink-muted);
 }
-${/* THE ROADS between plots: the lattice's own two legs from kerb to kerb, a
+${/* THE ROADS between plots: the lattice's own two legs from curb to curb, a
    bed between two edges in the ground's ink. Under the tiles and the
    buildings, over the fields. A road the legend is asking about comes up
    in the accent. */ ""}
@@ -200,7 +200,7 @@ ${/* THE RAIL A BILLBOARD IS MOVED BY: a title bar, in the board's own frame
   padding: 0 6px 0 12px;
   box-sizing: border-box;
   cursor: grab;
-  ${/* A title bar in the panel's own colours, not a grey strip: the board is
+  ${/* A title bar in the panel's own colors, not a gray strip: the board is
      a window onto the picture, and its bar reads as the window's. */ ""}
   background: var(--graview-panel-muted);
   border-bottom: 1px solid var(--graview-edge);
@@ -439,7 +439,7 @@ ${/* The panel stands above the card, inside the scene, and never clips: the
   display: flex;
   flex-direction: column;
   gap: 1px;
-  ${/* Its own width, not the ground's: portalled, a percentage here is the
+  ${/* Its own width, not the ground's: portaled, a percentage here is the
      whole scene. */ ""}
   min-width: 200px;
   max-width: min(280px, 92%);
@@ -525,7 +525,7 @@ ${/* A SIGNPOST at the plot's front corner. From altitude the nameplate stood
      in a pill — "PEOPLE 2 ◆ open ▾" — so the city read as a row of buttons
      and the one capsule that meant "press" did not stand out. A map writes
      a district's name on the ground: the words, haloed in the ground's own
-     colour so a lattice line or a roof under them never cuts a letter. */ ""}
+     color so a lattice line or a roof under them never cuts a letter. */ ""}
   border-color: transparent !important;
   border-radius: 0 !important;
   background: none !important;
@@ -571,12 +571,12 @@ ${/* An OPENED district's listing takes the ground under the signpost; the
 [data-graview-altitude] .graview-kind-face[data-graview-opened] ~ .graview-drive-in {
   top: calc(var(--graview-front-y, 42px) - 22px - var(--graview-marquee-room, 0px) + 8px);
 }
-${/* THE LANDMARK STANDS IN THE SQUARE: its feet at the plot's centre, among
+${/* THE LANDMARK STANDS IN THE SQUARE: its feet at the plot's center, among
    the buildings, rather than at the card's bottom edge — which, once the
    card grew for a board, was out in the road in front of the village. */ ""}
 [data-graview-altitude] [data-graview-plot] .graview-kind-landmark {
   bottom: auto;
-  top: calc(var(--graview-centre-y, 50%) + 10px);
+  top: calc(var(--graview-center-y, 50%) + 10px);
   transform: translate(-50%, -100%) scale(calc(0.55 + var(--graview-altitude) * 0.45));
 }
 ${/* ZOOM, in the ground's corner: the way a map carries its own. Two
@@ -682,7 +682,7 @@ ${/* AND NOT FROM ALTITUDE, where a district is a village on a plot and its
    card is a box with nothing drawn in it: the dashed outline was the only
    visible part, so a hand-placed district read as an empty rounded
    rectangle sitting on the ground — several of them, in a picture that had
-   no rectangles in it. The plot's own kerb goes dashed up here, which is
+   no rectangles in it. The plot's own curb goes dashed up here, which is
    the same fact said where the district actually is. */ ""}
 [data-graview-altitude] [data-graview-pinned] > :not([data-graview-natural]):not(.graview-kind-tag),
 [data-graview-altitude] [data-graview-pinned] > [data-graview-natural] > * {

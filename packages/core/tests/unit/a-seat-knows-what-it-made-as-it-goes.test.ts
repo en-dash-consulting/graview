@@ -3,10 +3,10 @@ import { z } from "zod";
 import { bindSchema, createSchema, defineNode, OperationLog, recordsOf, seesId, Store, type Operation, type Policy, type Principal } from "../../src/index.js";
 
 /**
- * FR-51. A record a seat made is its own, and the judgement of what it sees
+ * FR-51. A record a seat made is its own, and the judgment of what it sees
  * knows so as the log moves: one taken before a commit knows, after it, the
  * record just made is its maker's (a room filters an act's own ack with the
- * judgement it took before the act). And who made each record is kept as
+ * judgment it took before the act). And who made each record is kept as
  * the log goes, not read again from the whole log after every commit, so a
  * sighted room's cost per commit is the commit's, not the log's.
  */
@@ -45,8 +45,8 @@ const op = (seq: number, primitives: Operation["primitives"], author: Principal 
 });
 const adds = (id: string) => [{ op: "add-node" as const, node: { id, kind: "note", label: id } as never }];
 
-describe("a judgement of what a seat sees follows the log (FR-51 a)", () => {
-  it("knows a record made after the judgement was taken is its maker's own", () => {
+describe("a judgment of what a seat sees follows the log (FR-51 a)", () => {
+  it("knows a record made after the judgment was taken is its maker's own", () => {
     const store = make();
     const adaSees = seesId(store, ada);
     const boSees = seesId(store, bo);

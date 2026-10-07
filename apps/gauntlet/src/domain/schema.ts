@@ -2,7 +2,7 @@ import { createSchema, defineNode, isoDate } from "@graview/core";
 import { z } from "@graview/core";
 
 /**
- * THE PROGRAMME OF A CONFERENCE, TEN YEARS OF IT — AND BUILT TO BE AWKWARD.
+ * THE PROGRAM OF A CONFERENCE, TEN YEARS OF IT — AND BUILT TO BE AWKWARD.
  *
  * Every other example here is tame: short unique ASCII names, one kind with
  * a `label` field, one person, seats that may do everything, a few dozen
@@ -27,7 +27,7 @@ import { z } from "@graview/core";
  *   between one pair (W-101);
  * - relations that hold one (`proposed-by`, `in-session`, `held-in`,
  *   `chaired-by`) read from their declaring end (W-135);
- * - talks withdrawn and rejected, workshops cancelled: a lifecycle with
+ * - talks withdrawn and rejected, workshops canceled: a lifecycle with
  *   retired members (W-105);
  * - a calendar over talks AND workshops (W-144), and a policy that refuses
  *   a volunteer almost everything (W-115), sat at by people and an agent
@@ -43,7 +43,7 @@ const dateTime = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "expected Y
 
 /** Something a person stands up and says, for twenty minutes or for five. */
 export const talk = defineNode("talk", {
-  description: "A talk submitted to the programme: given, scheduled, still in review, withdrawn or turned down.",
+  description: "A talk submitted to the program: given, scheduled, still in review, withdrawn or turned down.",
   fields: z.object({
     // Not `label`: a talk has a title, and the kind says so.
     title: z.string().min(1).max(160),
@@ -142,12 +142,12 @@ export const session = defineNode("session", {
 
 /** Half a day with a laptop open, for a room of twenty. */
 export const workshop = defineNode("workshop", {
-  description: "A hands-on session with a capacity: planned, full or cancelled.",
+  description: "A hands-on session with a capacity: planned, full or canceled.",
   fields: z.object({
     label: z.string().min(1).max(160),
     startsAt: dateTime,
     capacity: z.number().int().min(1).max(500),
-    status: z.enum(["planned", "full", "cancelled"]),
+    status: z.enum(["planned", "full", "canceled"]),
   }),
   edges: {
     /*
@@ -174,7 +174,7 @@ export const workshop = defineNode("workshop", {
   plural: "Workshops",
   label: (node) => node.label,
   fieldRoles: { start: "startsAt" },
-  lifecycle: { field: "status", retired: ["cancelled"] },
+  lifecycle: { field: "status", retired: ["canceled"] },
 });
 
 /** Somewhere to sit and listen. */

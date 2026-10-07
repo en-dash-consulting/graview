@@ -27,7 +27,7 @@ export interface RobotState {
   readonly participant: string;
   /** The seat's own name, for its label. */
   readonly who: string;
-  /** What it stands at: a node id, `kind:<kind>` for a whole neighbourhood, or null for its dock. */
+  /** What it stands at: a node id, `kind:<kind>` for a whole neighborhood, or null for its dock. */
   readonly at: string | null;
   readonly mode: RobotMode;
   /** What it is saying, if anything: a reply, a refusal, a question, a stop reason. */
@@ -87,7 +87,7 @@ const walked = (trail: readonly string[], at: string | null): readonly string[] 
 
 /**
  * Where a set of ids puts the robot: the one thing, or — past a handful —
- * the neighbourhood, because a figure sprinting between eleven cards says
+ * the neighborhood, because a figure sprinting between eleven cards says
  * less than one standing where the work is. `kindOf` reads a node's kind so
  * a set of one kind becomes that kind's plot.
  */

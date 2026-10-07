@@ -11,16 +11,16 @@ export interface ConnectorStyle {
   readonly pattern: StrokePattern;
   readonly width: number;
   readonly cap: EndCap;
-  /** Degrees around the colour wheel; the renderer maps it into its own palette. */
+  /** Degrees around the color wheel; the renderer maps it into its own palette. */
   readonly hue: number;
   readonly opacity: number;
-  /** An explicit CSS colour from the brand's kit; absent, the hue paints it. */
-  readonly colour?: string;
+  /** An explicit CSS color from the brand's kit; absent, the hue paints it. */
+  readonly color?: string;
 }
 
 /**
  * The treatments a derived style may take. Deliberately distinguishable by
- * shape as well as by hue: colour alone is not a way to tell two relationships
+ * shape as well as by hue: color alone is not a way to tell two relationships
  * apart.
  */
 const PATTERNS: readonly StrokePattern[] = ["solid", "dashed", "dotted", "double", "tapered"];
@@ -105,9 +105,9 @@ export const CONNECTOR_DASH: Readonly<Record<StrokePattern, string | undefined>>
   tapered: "10 3 3 3",
 };
 
-/** The colour a connector of this kind is stroked in, on either surface. */
+/** The color a connector of this kind is stroked in, on either surface. */
 export function connectorStroke(style: ConnectorStyle): string {
-  return style.colour ?? `hsl(${Math.round(style.hue)} 55% 62%)`;
+  return style.color ?? `hsl(${Math.round(style.hue)} 55% 62%)`;
 }
 
 /**

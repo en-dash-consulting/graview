@@ -1388,7 +1388,7 @@ async function opening<S extends AnySchema>(
    *
    * And a refusal takes the optimism back. The alternative — leaving the
    * hopeful change on screen and logging the refusal to a console — is the
-   * one behaviour that would make this whole design a lie: the interface
+   * one behavior that would make this whole design a lie: the interface
    * would be showing a graph the server does not have.
    */
   const appliedAll = store.applyAll.bind(store);
@@ -1466,7 +1466,7 @@ async function opening<S extends AnySchema>(
    * `applyAll` is a whole gesture — a seat's plan lands as one batch — and
    * `undo` is a take-back. The first version patched `apply` alone, so a
    * robot's plans and undos stayed in the browser that made them while its
-   * single presses travelled: two windows on one roster disagreed about
+   * single presses traveled: two windows on one roster disagreed about
    * exactly the changes an agent had made.
    */
   store.applyAll = ((calls, applyOptions) => {

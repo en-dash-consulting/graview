@@ -1,6 +1,6 @@
 import { GraphError } from "../graph/graph.js";
 import type { AnySchema } from "../schema/schema.js";
-import { fieldWords, humaniseField } from "../schema/define-node.js";
+import { fieldWords, humanizeField } from "../schema/define-node.js";
 
 /** The parts of a mutation that say which kinds its arguments fill. */
 interface Filling {
@@ -34,10 +34,10 @@ export function argumentWords(
     return {
       // A kind's `label` is its name: "Label *" is the field's key, not a word for it.
       label: declared ?? (name === "label" ? "Name" : fieldWords(definition, name)),
-      option: (value) => (format ? format(value) : humaniseField(value)),
+      option: (value) => (format ? format(value) : humanizeField(value)),
     };
   }
-  return { label: name === "label" ? "Name" : humaniseField(name), option: (value) => humaniseField(value) };
+  return { label: name === "label" ? "Name" : humanizeField(name), option: (value) => humanizeField(value) };
 }
 
 /** Arguments a mutation refused, each with where it was and what was wrong. */

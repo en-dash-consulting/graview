@@ -25,7 +25,7 @@ interface Related<N> {
  * What plane 1 shows.
  *
  * With a single node focused and no relation named, plane 1 is that node's
- * whole NEIGHBOURHOOD — everything one edge away, in either direction,
+ * whole NEIGHBORHOOD — everything one edge away, in either direction,
  * grouped by edge kind. This is the default because the alternative is an
  * empty plane, and an empty plane is exactly what makes selecting a thing
  * feel like it did nothing: the graph knows who does this run, which
@@ -33,7 +33,7 @@ interface Related<N> {
  * until the reader guesses the right edge kind is hiding the product behind
  * a menu.
  *
- * A named `relation` then acts as a FILTER on that neighbourhood — or, when
+ * A named `relation` then acts as a FILTER on that neighborhood — or, when
  * it names no edge from the focus, as a kind to raise wholesale. "Show me
  * People" and "show me what this is assigned to" stay the same gesture.
  */
@@ -54,14 +54,14 @@ export function relatedNodes<S extends AnySchema>(
       const node = graph.getNode(otherId);
       if (!node) continue;
       // The first edge to reach a node names the relationship. Two edges to
-      // the same neighbour is a rarity; picking the first by the sorted walk
+      // the same neighbor is a rarity; picking the first by the sorted walk
       // keeps the caption stable rather than flickering between them.
       if (found.has(otherId)) continue;
       const direction = edge.from === focus.id ? "out" : "in";
       const owner = direction === "out" ? focus.kind : node.kind;
       /*
        * READ FROM THE END YOU ARE STANDING ON. An edge has one direction
-       * and two readings; the caption over a neighbour is how the relation
+       * and two readings; the caption over a neighbor is how the relation
        * reads from the FOCUS. A gardener's plot was captioned "who looks
        * after it" — the plot's words — as though the plot looked after her.
        * An incoming edge takes the declaration's `inverse`; without one,
@@ -86,7 +86,7 @@ export function relatedNodes<S extends AnySchema>(
 
   /*
    * WHAT THE FOCUS JUDGES. A rule has no edges; what it is about is what
-   * its violations name. Those are its neighbourhood, captioned as such,
+   * its violations name. Those are its neighborhood, captioned as such,
    * and a relation naming a kind filters them the way it filters edges.
    */
   if (focus) {

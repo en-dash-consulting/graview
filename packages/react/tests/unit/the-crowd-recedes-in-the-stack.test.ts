@@ -36,7 +36,7 @@ describe("how strongly a line is drawn inside the stack", () => {
   });
 
   it("carries a line's own declared opacity through every step", () => {
-    // A relation a brand made faint stays fainter than its neighbours.
+    // A relation a brand made faint stays fainter than its neighbors.
     const faint = stackOpacity({ edgeChosen: false, lit: false, anyLit: false, own: 0.2, kit });
     expect(faint).toBeLessThan(stackOpacity({ edgeChosen: false, lit: false, anyLit: false, own: 0.9, kit }));
   });
@@ -45,11 +45,11 @@ describe("how strongly a line is drawn inside the stack", () => {
     // Two altitudes, one picture: an untouched line should not be twice as
     // loud down here as it is up there.
     const here = stackOpacity({ edgeChosen: false, lit: false, anyLit: true, own: 1, kit });
-    const up = altitudeOpacity({ emphasised: false, stressed: false, anyChosen: true, mine: false, touches: false });
+    const up = altitudeOpacity({ emphasized: false, stressed: false, anyChosen: true, mine: false, touches: false });
     expect(here).toBeCloseTo(up, 2);
   });
 
-  it("puts the chosen edge above its own neighbours", () => {
+  it("puts the chosen edge above its own neighbors", () => {
     expect(stackOpacity({ edgeChosen: true, lit: true, anyLit: true, own, kit })).toBeGreaterThan(
       stackOpacity({ edgeChosen: false, lit: true, anyLit: true, own, kit }),
     );

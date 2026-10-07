@@ -5,7 +5,7 @@
  * Vehicles, another does not — and "comment out the import" is not a thing a
  * hosted product can offer. A module is a declared subset of the app's
  * surface: node kinds, mutations, invariants. The enabled set is plain
- * serialisable config, which is what lets a platform bind it to entitlements.
+ * serializable config, which is what lets a platform bind it to entitlements.
  *
  * Two rules keep this honest. Anything no module claims is CORE and always
  * on — an app pays for the concept only where it opts in. And disabling

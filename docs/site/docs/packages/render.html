@@ -68,7 +68,7 @@ img { max-width: 100%; }
   --rule:      #D9DCE5;
   --rule-2:    #E6E8EE;
 
-  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+  /* En Dash's own two colors, taken from the mark: navy and mint. Mint is a
      brilliant #00E5B9 that only reads on the navy, so it carries the dark
      theme and the navy carries the light one. */
   --navy:      #001769;
@@ -190,7 +190,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Windows High Contrast throws the palette away, so anything carrying meaning
-   in a border or a fill has to say so in system colours too. */
+   in a border or a fill has to say so in system colors too. */
 @media (forced-colors: active) {
   .code, .term, .endash, .lens figure { border-color: CanvasText; }
   .caveat { border-left-color: LinkText; }
@@ -1077,7 +1077,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <p>The spatial renderer: three planes, an affine transform per plane, and connectors drawn in SVG over the scene.</p>
 <h3>Two paths, and which one ships</h3>
 <p><strong>The DOM path is what ships.</strong> Each view is an ordinary element with a CSS <code>matrix3d</code> — the same affine transform the GPU path uses, applied by the browser. It is fully interactive, fully accessible, and every claim this project makes about the interface is verified against it.</p>
-<p><strong>The GPU capture path is EXPERIMENTAL.</strong> It rasterises each view's DOM subtree with <code>CanvasDrawElement</code> and composites the textures with per-plane blur, which is the part a shader is genuinely better at. It needs Chrome Canary with <code>--enable-blink-features=CanvasDrawElement</code>.</p>
+<p><strong>The GPU capture path is EXPERIMENTAL.</strong> It rasterizes each view's DOM subtree with <code>CanvasDrawElement</code> and composites the textures with per-plane blur, which is the part a shader is genuinely better at. It needs Chrome Canary with <code>--enable-blink-features=CanvasDrawElement</code>.</p>
 <p>It used to bring the renderer process down on a click. That is fixed. The cause was not the click: a plain hover over a captured view killed it just as reliably, and a keyboard selection of the same node did not. What is fatal is the browser's own hit-test descending into a <code>layoutsubtree</code> canvas child, so on this path the hosts carry <code>pointer-events: none</code> and <code>PointerRouter</code> answers instead — which it had to anyway, because <code>updateElementGeometry</code> does not redirect hit-testing in this build. <code>scripts/verify-capture.mjs</code> holds the claim: the pointer survives, a click still reaches the node that was drawn, and the keyboard still reaches the views.</p>
 <p>It stays experimental for a different reason: capture falls off a cliff past ~128 live captures a frame, and every other claim this project makes is verified against the DOM path.</p>
 <p>It is published rather than withheld because <code>@graview/react</code> depends on this package for the plane model, the transforms and the frame planner, all of which both paths share. Opting into the capture path is an explicit <code>attachRenderer</code> — nothing reaches it by accident.</p>
@@ -1189,7 +1189,7 @@ document.querySelectorAll("[data-copy]").forEach(function (button) {
   --rule:      #D9DCE5;
   --rule-2:    #E6E8EE;
 
-  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+  /* En Dash's own two colors, taken from the mark: navy and mint. Mint is a
      brilliant #00E5B9 that only reads on the navy, so it carries the dark
      theme and the navy carries the light one. */
   --navy:      #001769;
@@ -1311,7 +1311,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Windows High Contrast throws the palette away, so anything carrying meaning
-   in a border or a fill has to say so in system colours too. */
+   in a border or a fill has to say so in system colors too. */
 @media (forced-colors: active) {
   .code, .term, .endash, .lens figure { border-color: CanvasText; }
   .caveat { border-left-color: LinkText; }

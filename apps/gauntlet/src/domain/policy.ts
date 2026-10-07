@@ -1,16 +1,16 @@
 import type { Policy } from "@graview/core";
 
 /**
- * WHO MAY DO WHAT on the programme, and most of it is refused.
+ * WHO MAY DO WHAT on the program, and most of it is refused.
  *
- * - the CHAIR runs the programme: everything.
+ * - the CHAIR runs the program: everything.
  * - a REVIEWER decides on talks and says what they are about.
  * - a VOLUNTEER checks speakers in and looks after rooms — and is refused
  *   every other act, which on a talk is a dozen of them (W-115: every
  *   harness's narrower seat used to be refused three or fewer).
  * - the SCHEDULER, an agent, moves talks into slots and sessions into rooms.
- * - a visitor holds no role, and reads — the programme, not the staff
- *   behind it: who is on staff is the programme's own people's to see
+ * - a visitor holds no role, and reads — the program, not the staff
+ *   behind it: who is on staff is the program's own people's to see
  *   (`sees`), so the watch's "shown-what-is-not-theirs" has a seat to hold
  *   in every harness that sits the visitor down (the seventh walk).
  *
@@ -20,11 +20,11 @@ import type { Policy } from "@graview/core";
 export const policy: Policy = {
   roles: ["chair", "reviewer", "volunteer", "scheduler"],
   sees: [
-    { roles: "*", kinds: ["talk", "speaker", "session", "workshop", "room", "topic"], describe: "The programme is everybody's to see." },
-    { roles: ["chair", "reviewer", "volunteer", "scheduler"], kinds: ["staff"], describe: "The programme's own people see who is on staff." },
+    { roles: "*", kinds: ["talk", "speaker", "session", "workshop", "room", "topic"], describe: "The program is everybody's to see." },
+    { roles: ["chair", "reviewer", "volunteer", "scheduler"], kinds: ["staff"], describe: "The program's own people see who is on staff." },
   ],
   grants: [
-    { roles: ["chair"], mutations: "*", describe: "The programme chair runs the programme." },
+    { roles: ["chair"], mutations: "*", describe: "The program chair runs the program." },
     {
       roles: ["reviewer"],
       mutations: ["accept-talk", "reject-talk", "tag", "untag"],

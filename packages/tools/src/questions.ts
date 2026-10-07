@@ -1,7 +1,7 @@
 import {
   fieldWriters,
   formFields,
-  humaniseField,
+  humanizeField,
   nounOf,
   labelOf,
   readableFields,
@@ -20,7 +20,7 @@ import {
  *
  * A Graview declaration already types every question worth asking. A
  * `z.enum` is a Choice whose criteria are its own options; a `nodeRef` is a
- * Choice over the live nodes of that kind, labelled the way every surface
+ * Choice over the live nodes of that kind, labeled the way every surface
  * labels them; a `z.boolean` and an invariant are a truth with the rule as
  * what "yes" means; a bounded number is a Score over its own levels. None
  * of it is written by hand, for the same reason no agent tool is: two
@@ -128,7 +128,7 @@ function describedAs(schema: unknown): string | undefined {
 }
 
 const say = (field: FormField, description: string | undefined, of: string): string =>
-  description ?? `${humaniseField(field.name)} of ${of}.`;
+  description ?? `${humanizeField(field.name)} of ${of}.`;
 
 /**
  * One scalar control as one question, or nothing when the control has no
@@ -147,11 +147,11 @@ function questionFor<S extends AnySchema>(
       if (!field.options?.length) return undefined;
       const criteria: Record<string, string | null> = {};
       for (const option of field.options) criteria[option] = null;
-      return { type: "choice", instructions: `Which ${humaniseField(field.name).toLowerCase()}? ${say(field, description, of)}`, criteria };
+      return { type: "choice", instructions: `Which ${humanizeField(field.name).toLowerCase()}? ${say(field, description, of)}`, criteria };
     }
     case "node": {
       /*
-       * THE LIVE NODES OF THAT KIND, labelled by labelOf: the same word a
+       * THE LIVE NODES OF THAT KIND, labeled by labelOf: the same word a
        * card shows, a chat names and a tool describes. The option name is
        * the id, because the answer has to be a call's argument; the
        * meaning beside it is what the model reads.
@@ -163,13 +163,13 @@ function questionFor<S extends AnySchema>(
         criteria[node.id] = `${withArticle(nounOf(store.schema.tryDefinition(node.kind as string), node.kind as string))}: ${labelOf(store.schema.tryDefinition(node.kind as string), node)}`;
       }
       if (Object.keys(criteria).length === 0) return undefined;
-      return { type: "choice", instructions: `Which ${humaniseField(field.name).toLowerCase()}? ${say(field, description, of)}`, criteria };
+      return { type: "choice", instructions: `Which ${humanizeField(field.name).toLowerCase()}? ${say(field, description, of)}`, criteria };
     }
     case "boolean":
       return {
         type: "noul",
-        instructions: `${humaniseField(field.name)}: ${description ?? `is this true of ${of}?`}`,
-        criteria: { true: `${humaniseField(field.name)} holds.`, false: `${humaniseField(field.name)} does not hold.` },
+        instructions: `${humanizeField(field.name)}: ${description ?? `is this true of ${of}?`}`,
+        criteria: { true: `${humanizeField(field.name)} holds.`, false: `${humanizeField(field.name)} does not hold.` },
       };
     case "number": {
       if (field.min === undefined || field.max === undefined) return undefined;
@@ -179,13 +179,13 @@ function questionFor<S extends AnySchema>(
       for (let level = field.min; level <= field.max; level++) {
         levels.push(
           level === field.min
-            ? `${humaniseField(field.name)} ${level} of ${field.max}: the least.`
+            ? `${humanizeField(field.name)} ${level} of ${field.max}: the least.`
             : level === field.max
-              ? `${humaniseField(field.name)} ${level} of ${field.max}: the most.`
-              : `${humaniseField(field.name)} ${level} of ${field.max}.`,
+              ? `${humanizeField(field.name)} ${level} of ${field.max}: the most.`
+              : `${humanizeField(field.name)} ${level} of ${field.max}.`,
         );
       }
-      return { type: "score", instructions: `How much ${humaniseField(field.name).toLowerCase()}? ${say(field, description, of)}`, criteria: levels };
+      return { type: "score", instructions: `How much ${humanizeField(field.name).toLowerCase()}? ${say(field, description, of)}`, criteria: levels };
     }
     default:
       return undefined;
@@ -282,7 +282,7 @@ export function questionsForInvariant<S extends AnySchema>(
     | InvariantDefinition<S>
     | undefined;
   if (!invariant) return [];
-  const rule = invariant.description ?? invariant.label ?? humaniseField(invariant.name);
+  const rule = invariant.description ?? invariant.label ?? humanizeField(invariant.name);
   const subject = violation?.subjectId;
   const suffix = subject ? `:${subject}` : "";
   const out: DerivedQuestion[] = [

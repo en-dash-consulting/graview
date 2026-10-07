@@ -215,7 +215,7 @@ describe("when a load starts fresh", () => {
     expect(browserStartsFresh({ search: "?remember=1&fresh=1" }, { webdriver: true })).toBe(true);
   });
 
-  it("drops the fresh flag from the address once honoured, keeping the rest", () => {
+  it("drops the fresh flag from the address once honored, keeping the rest", () => {
     const replaced: string[] = [];
     forgetFreshParam({
       location: { href: "http://x/?today=2026-09-01&fresh=1#focus=t1" },

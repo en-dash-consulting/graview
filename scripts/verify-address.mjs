@@ -135,7 +135,7 @@ async function buildHost() {
             face: asked.get("face") ?? "pages",
             ...(asked.get("path") ? { path: asked.get("path") } : {}),
             ...(asked.get("stop") ? { stop: asked.get("stop") } : {}),
-            // As Cloud's shell mounts it: labelled with the app's name, its heading a page's h1.
+            // As Cloud's shell mounts it: labeled with the app's name, its heading a page's h1.
             ...(asked.get("named") ? { label: first.name, heading: 1 } : {}),
             bar: true,
             height: "100%",

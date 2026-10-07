@@ -337,7 +337,7 @@ const css = readFileSync(at("docs/site/site.css"), "utf8").trimEnd();
 
 /**
  * Every docs page is the same document with different content in it. The
- * head comes off the landing page so the fonts, the icon and the colour
+ * head comes off the landing page so the fonts, the icon and the color
  * scheme cannot drift; `..` gets the stylesheet and the mark right from one
  * directory down.
  */
@@ -577,7 +577,7 @@ async function build() {
     body:
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">What <code>graview check</code> says</h1>\n` +
-      `      <p class="lede" style="margin-top: 18px;">${codes.length} findings, read out of the checker's own source. An <strong>error</strong> should fail your build. A <strong>warning</strong> is a judgement call. A <strong>note</strong> is a question worth answering once.</p>\n` +
+      `      <p class="lede" style="margin-top: 18px;">${codes.length} findings, read out of the checker's own source. An <strong>error</strong> should fail your build. A <strong>warning</strong> is a judgment call. A <strong>note</strong> is a question worth answering once.</p>\n` +
       `    </section>\n` +
       ["error", "warning", "note"].map((severity) => {
         const mine = codes.filter((c) => c.severity === severity);

@@ -86,7 +86,7 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    *
    * An act that declares what it connects or severs is offered from either
    * endpoint — standing on a person, "take this one off the run" is the
-   * natural thing to say. The button there was labelled with `title`, which
+   * natural thing to say. The button there was labeled with `title`, which
    * is written from the subject's side: "Hand it to someone", offered on the
    * person, reads as handing the PERSON to someone.
    *

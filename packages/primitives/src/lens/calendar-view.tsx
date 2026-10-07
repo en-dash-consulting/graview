@@ -356,7 +356,7 @@ function CalendarView<S extends AnySchema>({
                   borderRadius: 999,
                   borderColor: "var(--graview-edge)",
                   // The range names are the framework's own words and read as
-                  // buttons capitalised; the horizon's name is the APP's, and
+                  // buttons capitalized; the horizon's name is the APP's, and
                   // "The rotation" is not "The Rotation".
                   ...(candidate === "years" ? {} : { textTransform: "capitalize" as const }),
                   ...(candidate === range

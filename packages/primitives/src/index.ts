@@ -48,7 +48,7 @@ export type { Arranging, ArrangingOptions } from "./lens/arranging.js";
 export type { ArrangeBarProps } from "./arrange-bar.js";
 export { Connections } from "./connections.js";
 export type { ConnectionsProps } from "./connections.js";
-export { EditableTitle, EditableValue, Fields, humanise } from "./editable.js";
+export { EditableTitle, EditableValue, Fields, humanize } from "./editable.js";
 export { Companion, COMPANION_OVERLAY_BELOW, COMPANION_TAB, useSubject } from "./companion.js";
 export type { CompanionMode, CompanionProps, Subject } from "./companion.js";
 export { RelationKey, RelationMark, relationWords } from "./relation-key.js";

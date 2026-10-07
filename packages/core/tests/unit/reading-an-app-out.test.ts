@@ -102,27 +102,27 @@ describe("reading an app out", () => {
 
   /*
    * THE HUE FAULT, in its general form: not "the unit is wrong" but "these
-   * kinds will read as one colour", which is what a person sees.
+   * kinds will read as one color", which is what a person sees.
    */
-  it("says when two kinds will be drawn in the same colour", () => {
+  it("says when two kinds will be drawn in the same color", () => {
     const near = defineApp({
       name: "grounds",
       schema,
       mutations: [stakeOut],
       brand: { name: "Grounds", schemes: SCHEMES, accents: { zone: 120, feature: 124 } },
     });
-    expect(describeApp(near)).toContain("will read as one colour");
+    expect(describeApp(near)).toContain("will read as one color");
     const apart = defineApp({
       name: "grounds",
       schema,
       mutations: [stakeOut],
       brand: { name: "Grounds", schemes: SCHEMES, accents: { zone: 120, feature: 300 } },
     });
-    expect(describeApp(apart)).not.toContain("will read as one colour");
+    expect(describeApp(apart)).not.toContain("will read as one color");
   });
 
   /*
-   * THE LENS FAULT'S NEIGHBOUR: a declaration whose pictures live in the UI
+   * THE LENS FAULT'S NEIGHBOR: a declaration whose pictures live in the UI
    * package is invisible to every tool outside a browser. Saying WHICH of
    * "there are none" and "I cannot see them" this is, is the whole value.
    */

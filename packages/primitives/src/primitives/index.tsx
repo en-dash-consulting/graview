@@ -30,7 +30,7 @@ export interface PanelProps {
    * A focused single node was drawn as a 500-pixel white rectangle with four
    * lines of text in the top corner — an empty page with a debug dump in it.
    * A week's calendar genuinely wants the whole box; one nap does not. The
-   * scene centres a fitted panel in its band, so a short one reads as
+   * scene centers a fitted panel in its band, so a short one reads as
    * deliberate rather than as a rendering that failed halfway.
    */
   readonly fit?: boolean;
@@ -64,12 +64,12 @@ const TONES: Record<NonNullable<PanelProps["tone"]>, CSSProperties> = {
 };
 
 /**
- * Secondary text: a COLOUR, never an opacity.
+ * Secondary text: a COLOR, never an opacity.
  *
  * `opacity: 0.7` on small text reads as "quieter" and computes as whatever
  * the background happens to be — which is how four elements here landed at
  * 3.32:1 against a 4.5:1 requirement without anyone choosing an unreadable
- * colour. A token composites against a known ground and can be checked.
+ * color. A token composites against a known ground and can be checked.
  * axe-core checks it on every run of `scripts/run-a11y.mjs`.
  */
 export const MUTED_TEXT: CSSProperties = { color: "var(--graview-ink-muted, #55514a)" };
@@ -354,7 +354,7 @@ export function Prose({ children, style }: { readonly children: ReactNode; reado
 
 export interface ChipProps {
   readonly label: ReactNode;
-  /** Degrees around the colour wheel, as `hueFor` gives them. Kind-derived, so it is stable per kind. */
+  /** Degrees around the color wheel, as `hueFor` gives them. Kind-derived, so it is stable per kind. */
   readonly hue?: number;
   readonly selected?: boolean;
   readonly title?: string;
@@ -372,14 +372,14 @@ export interface ChipProps {
    * Every lens the framework ships says this on its own marks, and the skill
    * asks an app's lens to say it too — while the primitive an app would
    * naturally reach for could not. A lens built out of `Roster` therefore had
-   * pick targets that were emphasised by opacity alone, which is a claim
+   * pick targets that were emphasized by opacity alone, which is a claim
    * about a picture that nothing can check: not a test, not `audit-ui`'s
    * `halfSaid`, and not a person reading the tree.
    */
   readonly emphasis?: "lit" | "dimmed" | "plain";
 }
 
-/** One small labelled thing. The glyph-fidelity workhorse. */
+/** One small labeled thing. The glyph-fidelity workhorse. */
 export function Chip({ label, hue, selected, title, pickId, emphasis }: ChipProps) {
   // A cut chip must be able to say the rest somewhere, or cutting it loses
   // information rather than tidying it. Whether it is cut is the container's
@@ -422,7 +422,7 @@ export function Chip({ label, hue, selected, title, pickId, emphasis }: ChipProp
         lineHeight: 1.5,
         whiteSpace: "nowrap",
         /*
-         * A chip is a SMALL labelled thing. One that is a thousand pixels wide
+         * A chip is a SMALL labeled thing. One that is a thousand pixels wide
          * is not a chip, it is a sentence with a border — which is what a
          * rationale rendered at glyph fidelity became, overflowing its card by
          * 938 pixels and out into the scene.
@@ -568,7 +568,7 @@ export interface AxisProps {
   readonly extent: number;
 }
 
-/** Labelled ticks along one dimension. The timeline's hours and days. */
+/** Labeled ticks along one dimension. The timeline's hours and days. */
 export function Axis({ ticks, orientation = "vertical", extent }: AxisProps) {
   const horizontal = orientation === "horizontal";
   return (
@@ -641,7 +641,7 @@ export function Grid({ columns, extent, gutter = 46, children }: GridProps) {
           marginLeft: gutter,
           // Column rules and hour rules, drawn as a background rather than as
           // elements: a measured surface costs nothing and adds no nodes for
-          // the capture pass to rasterise.
+          // the capture pass to rasterize.
           backgroundImage: `repeating-linear-gradient(to right, var(--graview-edge) 0 1px, transparent 1px calc(100% / ${columns.length})), repeating-linear-gradient(to bottom, var(--graview-edge) 0 1px, transparent 1px 12.5%)`,
           backgroundSize: `100% 100%, 100% 100%`,
         }}

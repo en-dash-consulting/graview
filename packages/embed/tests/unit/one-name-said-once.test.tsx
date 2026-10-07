@@ -13,7 +13,7 @@ beforeAll(() => preload());
 /**
  * ONE NAME, SAID ONCE. The embed prefixes every landmark inside it with its
  * own label; a picture whose panel was named the same as the embed — "The
- * pipeline" in an embed labelled "The pipeline" — became "The pipeline ·
+ * pipeline" in an embed labeled "The pipeline" — became "The pipeline ·
  * The pipeline".
  */
 const car = defineNode("car", { fields: z.object({ label: z.string() }), plural: "Cars" });
@@ -42,7 +42,7 @@ describe("an embed's landmarks", () => {
 
   it("does not leave a second region of the embed's own name", async () => {
     // The pipeline lens's scroll panel is a region named by its title; in an
-    // embed labelled the same, it is the embed's region, not another one.
+    // embed labeled the same, it is the embed's region, not another one.
     const Scroller: PageComponent<typeof schema> = ({ context }) => (
       <PageMain context={context}>
         <div role="region" tabIndex={0} aria-label="Lot">the lot</div>

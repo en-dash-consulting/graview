@@ -157,10 +157,10 @@ done. If you have a custom undo path, check it goes through `store.undo`.
 
 ## What the check cannot see
 
-- Whether the roles match how the organisation actually works. That is a
+- Whether the roles match how the organization actually works. That is a
   conversation, not a declaration.
 - Whether a withheld action's message helps. It names the roles that could;
   whether that is useful depends on whether a person knows who holds them.
-- Whether the principal is who they say they are. Graview authorises; it does
+- Whether the principal is who they say they are. Graview authorizes; it does
   not authenticate. Wire that to your own identity provider and pass the result
   in as the principal.

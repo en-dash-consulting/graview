@@ -220,7 +220,7 @@ describe("applying a plan", () => {
  * A review a person cannot disagree with is not a review, and a model
  * confident about eleven things and wrong about the twelfth is the normal
  * case — where the twelfth is very often the one the other four point at.
- * The cascade is the app's own idea, generalised: everything here knows what
+ * The cascade is the app's own idea, generalized: everything here knows what
  * points at what, because the plan's references say so.
  */
 describe("declining one thing", () => {

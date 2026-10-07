@@ -1,5 +1,5 @@
 import { admitArrangement, arrange, arrangeable, formatArrangement, parseArrangement } from "@graview/core/arrange";
-import { humaniseField, labelOf, type Arrangement, type Principal, type Violation } from "@graview/core";
+import { humanizeField, labelOf, type Arrangement, type Principal, type Violation } from "@graview/core";
 import { ArrangeBar, KindFigure, useMarkup } from "@graview/primitives";
 import {
   DerivedForm,
@@ -43,7 +43,7 @@ type Ctx = PageContext<S>;
  * registry makes.
  *
  * Every size is in `rem`, so the reader's own text size carries here as it
- * does everywhere else; every control clears 24px; every colour is mixed
+ * does everywhere else; every control clears 24px; every color is mixed
  * from the brand's own tokens, so the palette is the one `graview check`
  * already measured rather than a second one invented here.
  */
@@ -105,7 +105,7 @@ const CSS = `
  * list, its section and the whole main column to 500px inside a 320px
  * phone. At the reader's own 200% text size that is every row. minmax(0,
  * 1fr) and min-width: 0 say what is actually true: the column is the
- * column, and what does not fit ellipsises or wraps.
+ * column, and what does not fit ellipsizes or wraps.
  */
 .th-section { margin-top: 2.2rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; min-width: 0; }
 .th-section > header { display: flex; align-items: baseline; gap: 0.8rem; flex-wrap: wrap; min-width: 0; }
@@ -163,7 +163,7 @@ const CSS = `
 .th-btn.on { border-color: var(--graview-accent); color: var(--graview-ink); background: var(--th-tint); }
 .th-btn.act { border-color: var(--graview-accent); color: var(--graview-accent); }
 /* A REPAIR BELONGS TO THE PROBLEM IT REPAIRS. On the warning ground the
-   accent measures 4.47:1 — under AA — and reading as the app's own colour
+   accent measures 4.47:1 — under AA — and reading as the app's own color
    rather than as this card's was wrong anyway. */
 .th-card.bad .th-btn.act { border-color: var(--graview-warn); color: var(--graview-ink); }
 .th-btn[disabled] { cursor: default; opacity: 0.5; }
@@ -606,7 +606,7 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
       {facts.links.map((group) => (
         <section key={`${group.edgeKind}:${group.direction}`} className="th-section">
           <header>
-            <h2 className="th-h2">{capitalise(group.description ?? humaniseField(group.edgeKind))}</h2>
+            <h2 className="th-h2">{capitalize(group.description ?? humanizeField(group.edgeKind))}</h2>
           </header>
           <ul className="th-list">
             {group.targets.map((target) => (
@@ -886,7 +886,7 @@ function InPlace({
           autoFocus
           type={shape.type === "date" ? "date" : shape.type === "number" ? "number" : "text"}
           value={draft}
-          aria-label={humaniseField(field)}
+          aria-label={humanizeField(field)}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Escape") setEditing(false);
@@ -1097,7 +1097,7 @@ const pluralSlugOf = (store: Ctx["store"], kind: string): string =>
 
 const article = (kind: string): string => (/^[aeiou]/i.test(kind) ? `an ${kind}` : `a ${kind}`);
 
-const capitalise = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
+const capitalize = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 
 function subjectArgOf(store: Ctx["store"], mutation: string): string {
   return store.allMutations().find((candidate) => candidate.name === mutation)?.subject?.arg ?? "id";

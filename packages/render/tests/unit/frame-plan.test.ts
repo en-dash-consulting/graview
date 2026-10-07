@@ -27,7 +27,7 @@ import { packUniform } from "../../src/gpu.js";
  *
  * `planFrame` is the whole policy layer — which fidelity captures, what draws
  * in what order, where each view lands, what each connector looks like — so
- * testing it here is testing the renderer's behaviour, not a stand-in for it.
+ * testing it here is testing the renderer's behavior, not a stand-in for it.
  * The submission path that turns a plan into draw calls is verified once, in
  * a real browser, by apps/spike.
  */
@@ -78,7 +78,7 @@ describe("capture budget policy", () => {
     // texture is indistinguishable from a live one.
     expect(planFrame([view("c", 2)], [], { ...CANVAS, capturedAt }).captures).toEqual([]);
     // But a stale one shows last week's number for ever, so a real content
-    // change still has to be honoured.
+    // change still has to be honored.
     expect(
       planFrame([view("c", 2, { dirty: true })], [], { ...CANVAS, capturedAt }).captures,
     ).toEqual([{ viewId: "c", reason: "changed" }]);
@@ -184,7 +184,7 @@ describe("connectors carry meaning", () => {
     to,
   });
 
-  it("joins the centres of two drawn views", () => {
+  it("joins the centers of two drawn views", () => {
     const plan = planFrame(
       [view("a", 0, { x: 0, y: 0 }), view("b", 0, { x: 500, y: 300 })],
       [connector("e1", "assigned-to", "a", "b")],

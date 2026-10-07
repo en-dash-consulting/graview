@@ -1,6 +1,6 @@
 import {
   invert,
-  normalise,
+  normalize,
   writesOf,
   type AnySchema,
   type Operation,
@@ -108,7 +108,7 @@ export function contentOperation(
     readonly now?: () => string;
   } = {},
 ): Operation | null {
-  const primitives = primitivesForSteps(steps, live).map(normalise);
+  const primitives = primitivesForSteps(steps, live).map(normalize);
   if (primitives.length === 0) return null;
   const now = options.now ?? (() => new Date().toISOString());
   const at = now();

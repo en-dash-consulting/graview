@@ -6,7 +6,7 @@ import { describeApp } from "../../src/cli/describe.js";
 import { declaredLenses, placesOf, SHIPPED_LENS_NAMES, type GraviewApp } from "../../src/index.js";
 
 /**
- * A DECLARED LENS IS A PLACE (FR-79), AND THE ARRANGEMENT IS HONOURED (FR-80).
+ * A DECLARED LENS IS A PLACE (FR-79), AND THE ARRANGEMENT IS HONORED (FR-80).
  *
  * Before, a document's `lenses` were accepted and drew nothing, and `pages`
  * was accepted and never compiled: a chat could write a lens and nobody
@@ -75,8 +75,8 @@ describe("a declared lens that cannot draw says why, at its path", () => {
   };
 
   it("names an option the lens does not take", () => {
-    expect(findingsOf([{ name: "calendar", title: "The month", bindings: { shift: { start: "on" } }, options: { colour: "red" } }])).toEqual([
-      expect.objectContaining({ code: "lens-option-unknown", path: "lenses.0.options.colour", severity: "warning" }),
+    expect(findingsOf([{ name: "calendar", title: "The month", bindings: { shift: { start: "on" } }, options: { color: "red" } }])).toEqual([
+      expect.objectContaining({ code: "lens-option-unknown", path: "lenses.0.options.color", severity: "warning" }),
     ]);
   });
 

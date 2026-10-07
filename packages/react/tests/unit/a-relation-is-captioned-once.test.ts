@@ -3,7 +3,7 @@ import { captionRuns, type CaptionEntry } from "../../src/captions.js";
 
 /**
  * A RELATION IS CAPTIONED ONCE, over the row it starts in, and never over
- * another relation's caption or under the rail. The neighbourhood of an
+ * another relation's caption or under the rail. The neighborhood of an
  * artist who is featured on two songs and produced four, sorted by id the
  * way the frame is.
  */
@@ -53,7 +53,7 @@ describe("the captions over a relation band", () => {
 });
 
 describe("a long caption beside short ones", () => {
-  it("borrows the room its neighbours do not need, so its words are not cut", () => {
+  it("borrows the room its neighbors do not need, so its words are not cut", () => {
     const runs = captionRuns(
       [
         card("about|out", "what it is about", 280, 100),

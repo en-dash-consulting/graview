@@ -126,7 +126,7 @@ agent tool that walks the graph.
   `graview check` holds a figure to, and prints the line to paste. Then look
   at it at twenty pixels, which is the size a chip gives it.
 - **A declared hue** in the brand (`accents: { fixture: 210 }`) if this kind
-  should wear a chosen colour rather than a stable hash — every chip dot,
+  should wear a chosen color rather than a stable hash — every chip dot,
   district roof and the focus tag follow.
 
 ## How it looks, as data
@@ -209,7 +209,7 @@ Say so rather than implying otherwise:
 
 - Whether the kind is a *kind* at all, or should have been a field on an
   existing one. The test: does anything point AT it, and does it have a life of
-  its own? A colour is a field. A fixture is a kind.
+  its own? A color is a field. A fixture is a kind.
 - Whether the default views read well. Run the app and look.
 - Whether the plural reads naturally in a sentence — "3 Fixtures" is fine,
   "3 Person" is not.

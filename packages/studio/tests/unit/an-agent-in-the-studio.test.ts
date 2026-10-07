@@ -139,7 +139,7 @@ describe("words become proposed acts, never writes", () => {
 
   it("names a new role from the sentence, rather than proposing an act with no name", async () => {
     /*
-     * The exact sentence that failed: the floor did not recognise it, an
+     * The exact sentence that failed: the floor did not recognize it, an
      * on-device model took the turn and proposed `add-role` with no label,
      * and the store refused it for the arguments.
      */

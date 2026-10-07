@@ -11,7 +11,7 @@ import { gauntletSchema, type GauntletSchema } from "./schema.js";
  * shape in place (`tests/the-awkward-shapes.test.ts`).
  */
 export const gauntletApp = defineApp({
-  name: "Programme",
+  name: "Program",
   schema: gauntletSchema,
   mutations,
   invariants,

@@ -33,7 +33,7 @@ describe("the shipped figures", () => {
       expect(art, name).toContain('viewBox="0 0 24 24"');
       expect(art, name).toContain('stroke="currentColor"');
       expect(art, name).toContain('fill="none"');
-      // Never a badge: no text, no gradient, no literal colour anywhere.
+      // Never a badge: no text, no gradient, no literal color anywhere.
       expect(art, name).not.toMatch(/<text|<image|gradient|#[0-9a-f]{3,6}/i);
     }
   });
@@ -55,7 +55,7 @@ describe("what a figure has to be", () => {
     expect(codes('<svg><path stroke="currentColor" d="M0 0"/></svg>')).toContain("figure-undrawable");
   });
 
-  it("refuses a literal colour, which is invisible in one of the two schemes", () => {
+  it("refuses a literal color, which is invisible in one of the two schemes", () => {
     const faults = figureFaults('<svg viewBox="0 0 24 24"><path stroke="#333" d="M0 0"/></svg>');
     expect(faults.join(" ")).toContain("#333");
     expect(faults.join(" ")).toContain("currentColor");
@@ -110,7 +110,7 @@ describe("the brief a figure is drawn from", () => {
     /* Each of these is a fault figureFaults reports, said before the fact. */
     expect(brief).toContain('viewBox="0 0 24 24"');
     expect(brief).toContain("currentColor");
-    expect(brief).toContain("no literal colour anywhere");
+    expect(brief).toContain("no literal color anywhere");
     expect(brief).toContain("READ AT TWENTY PIXELS");
   });
 

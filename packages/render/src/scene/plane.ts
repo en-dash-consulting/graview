@@ -29,7 +29,7 @@ export interface PlaneStyle {
   readonly scale: number;
   /** Gaussian radius in texels. */
   readonly blur: number;
-  /** 0 = full contrast, 1 = fully dissolved into the ground colour. */
+  /** 0 = full contrast, 1 = fully dissolved into the ground color. */
   readonly falloff: number;
   /** Drop-shadow opacity separating this plane from the one behind it. */
   readonly shadow: number;
@@ -44,7 +44,7 @@ export type Scheme = "light" | "dark";
  *
  * Not the dark numbers inverted. In daylight a distant thing loses CONTRAST
  * and gains haze; it does not lose light, and it does not blur much — the eye
- * reads distance from washed-out colour and a softer cast shadow. Reusing the
+ * reads distance from washed-out color and a softer cast shadow. Reusing the
  * dark blur here made receded planes look out of focus rather than far away.
  */
 export const LIGHT_PLANE_STYLES: Readonly<Record<PlaneIndex, PlaneStyle>> = {
@@ -113,7 +113,7 @@ export function mixStyles(a: PlaneStyle, b: PlaneStyle, t: number): PlaneStyle {
  * Position is layout's, untouched. The plane contributes only treatment —
  * scale, and through the shader blur, falloff and shadow.
  *
- * An earlier version scaled positions about the canvas centre as well, so a
+ * An earlier version scaled positions about the canvas center as well, so a
  * receded plane pulled inward. It looked plausible and was wrong: layout no
  * longer knew where anything would end up, so connectors drawn from layout
  * coordinates missed the views they connected. One owner per concern —

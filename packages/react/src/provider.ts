@@ -27,7 +27,7 @@ export { foldRobots, participantOf, standingFor, VISIT_EACH_UP_TO } from "./robo
 export type { RobotEvent, RobotMode, RobotState, SeatNote } from "./robot.js";
 export { createPointerStore } from "./pointer.js";
 export type { PointerStore, ScenePoint } from "./pointer.js";
-export { applySettings, honourSetting, loadSetting, rememberSetting } from "./settings.js";
+export { applySettings, honorSetting, loadSetting, rememberSetting } from "./settings.js";
 export type { ReaderMemory } from "./settings.js";
 export { createViews, DEFAULT_VIEW, isDefaultView, layerViews, markDefaultView } from "./view-registry.js";
 export type { Cardinality, Fidelity, ReactViewRegistry, ViewCell, ViewComponent, ViewProps } from "./view-registry.js";

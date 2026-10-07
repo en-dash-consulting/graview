@@ -333,9 +333,9 @@ describe("a compiled app the page cannot read is refused, so the shell compiles 
     // A record that is not there is the store's to say, before the act runs: `missing`, from both alike.
     expect(both("book", { id: "nobody" })).toMatchObject({ ok: false, reason: "missing" });
     expect(both("book", { id: "category-1" })).toMatchObject({ ok: false, reason: "invalid" });
-    const stray = both("set-quote", { id: "vendor-2", quote: 10, colour: "red" });
+    const stray = both("set-quote", { id: "vendor-2", quote: 10, color: "red" });
     expect(stray.ok).toBe(false);
-    expect(stray.sentence).toContain("colour");
+    expect(stray.sentence).toContain("color");
     expect(both("edit-vendor", { id: "vendor-2" })).toMatchObject({ ok: false, reason: "invalid" });
     const strict = (app: GraviewApp<AnySchema>) => (app.mutations ?? []).map((m) => [m.name, mutationToolSchema(m as never).inputSchema["additionalProperties"]]);
     expect(strict(rebuilt.app as GraviewApp<AnySchema>)).toEqual(strict(vendors.app as GraviewApp<AnySchema>));

@@ -32,7 +32,7 @@ export const FIGURE_STYLE = `You are drawing one figure for a kind of thing in a
 The house style, and every rule matters:
 - ONE SVG element, with one viewBox of "0 0 24 24" and nothing outside it.
 - Line art only: stroke="currentColor", stroke-width="1.4", fill="none",
-  stroke-linecap="round", stroke-linejoin="round". Never a literal colour,
+  stroke-linecap="round", stroke-linejoin="round". Never a literal color,
   never a fill, never a gradient, never text.
 - Drawn from the same three-quarter isometric angle as an architect's
   blueprint: the thing seen from slightly above and to one side, with the
@@ -89,7 +89,7 @@ The kind is called "${kind}".${description ? `\nIt is described as: ${descriptio
 /**
  * The SVG out of whatever a model wrapped it in.
  *
- * Models fence code, apologise first and explain afterwards; none of that
+ * Models fence code, apologize first and explain afterwards; none of that
  * is a reason to refuse a good drawing, and none of it is something to
  * store in a declaration.
  */

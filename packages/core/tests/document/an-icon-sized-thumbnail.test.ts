@@ -73,7 +73,7 @@ describe("an icon-sized thumbnail (FR-130)", () => {
       expect(districts.map((d) => d.kind).sort(), t.id).toEqual(Object.keys(t.document.kinds).sort());
       for (const district of districts) expect(district.paths, `${t.id}: ${district.kind}`).toHaveLength(4);
       expect(svg, t.id).not.toMatch(/stroke|<line|<polyline/);
-      // The hues the Scene gives the kinds: each district's plot is its own colour, and none is another's.
+      // The hues the Scene gives the kinds: each district's plot is its own color, and none is another's.
       const fills = districts.map((d) => d.plot.fill);
       expect(new Set(fills).size, t.id).toBe(fills.length);
     }

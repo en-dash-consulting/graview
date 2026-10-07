@@ -1,4 +1,4 @@
-import { fieldWords, humaniseField as humanise, readableFields, type AnySchema } from "@graview/core";
+import { fieldWords, humanizeField as humanize, readableFields, type AnySchema } from "@graview/core";
 import { useEditableFields } from "@graview/react/drawing";
 import { useGraview, useNode } from "@graview/react/provider";
 import type { EditableField } from "@graview/tools";
@@ -141,7 +141,7 @@ export function EditableValue<S extends AnySchema>({
     return (
       <span
         role="group"
-        aria-label={`Change ${humanise(field).toLowerCase()}`}
+        aria-label={`Change ${humanize(field).toLowerCase()}`}
         data-graview-field={field}
         style={{ display: "inline-flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}
         onKeyDown={(event) => {
@@ -183,7 +183,7 @@ export function EditableValue<S extends AnySchema>({
       {editable.shape.type === "choice" ? (
         <select
           ref={input as { current: HTMLSelectElement | null }}
-          aria-label={humanise(field)}
+          aria-label={humanize(field)}
           data-graview-field={field}
           value={draft}
           onChange={(event) => done(event.target.value)}
@@ -199,7 +199,7 @@ export function EditableValue<S extends AnySchema>({
       ) : (
         <input
           ref={input as { current: HTMLInputElement | null }}
-          aria-label={humanise(field)}
+          aria-label={humanize(field)}
           data-graview-field={field}
           type={
             editable.shape.type === "number"
@@ -258,7 +258,7 @@ function coerce(field: EditableField, draft: string): unknown {
  * A field name, in words. Re-exported from the framework so a view that wants
  * only this does not have to reach past the primitive that uses it.
  */
-export { humanise };
+export { humanize };
 
 /**
  * A node's own fields, shown as a definition list and editable in place.
@@ -288,7 +288,7 @@ export function Fields<S extends AnySchema>({
   /** Fields to drop by NAME, where a value comparison would not catch it. */
   readonly hide?: readonly string[];
   readonly limit?: number;
-  /** Overrides for the humanised default, by field name. */
+  /** Overrides for the humanized default, by field name. */
   readonly labels?: Readonly<Record<string, string>>;
   readonly shown?: readonly (string | undefined)[];
 }) {

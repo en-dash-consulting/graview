@@ -68,7 +68,7 @@ img { max-width: 100%; }
   --rule:      #D9DCE5;
   --rule-2:    #E6E8EE;
 
-  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+  /* En Dash's own two colors, taken from the mark: navy and mint. Mint is a
      brilliant #00E5B9 that only reads on the navy, so it carries the dark
      theme and the navy carries the light one. */
   --navy:      #001769;
@@ -190,7 +190,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Windows High Contrast throws the palette away, so anything carrying meaning
-   in a border or a fill has to say so in system colours too. */
+   in a border or a fill has to say so in system colors too. */
 @media (forced-colors: active) {
   .code, .term, .endash, .lens figure { border-color: CanvasText; }
   .caveat { border-left-color: LinkText; }
@@ -1080,7 +1080,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <li><strong>Open the store through ship</strong>, not by hand:</li>
 </ol>
 <p>```ts    import { createFileAdapter, openStore } from "@graview/ship";</p>
-<p>const opened = await openStore({ app, adapter: createFileAdapter("./data") });    // opened.store is an ordinary Store; every applied diff is appended to    // the log and the snapshot rewritten, serialised in order. Hand off with    // <code>await opened.flush()</code> before close/exit — writes are async.    // One writer per scope: opening it twice interleaves and clobbers.    ```</p>
+<p>const opened = await openStore({ app, adapter: createFileAdapter("./data") });    // opened.store is an ordinary Store; every applied diff is appended to    // the log and the snapshot rewritten, serialized in order. Hand off with    // <code>await opened.flush()</code> before close/exit — writes are async.    // One writer per scope: opening it twice interleaves and clobbers.    ```</p>
 <p>The file adapter is deliberately readable: <code>snapshot.json</code>, append-only    <code>log.jsonl</code>, <code>meta.json</code> with the stored schema version. The core's    sqlite adapter is the scale answer.</p>
 <p><strong>In the page, with no server</strong>, the browser adapter stores the same    three things in <code>localStorage</code> and slots into the same call — import it    from <code>@graview/ship/browser</code> so the bundler never meets <code>node:fs</code>:</p>
 <p>```ts    import { browserStartsFresh, createBrowserAdapter, forgetFreshParam, openStore }      from "@graview/ship/browser";</p>
@@ -1217,7 +1217,7 @@ document.querySelectorAll("[data-copy]").forEach(function (button) {
   --rule:      #D9DCE5;
   --rule-2:    #E6E8EE;
 
-  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+  /* En Dash's own two colors, taken from the mark: navy and mint. Mint is a
      brilliant #00E5B9 that only reads on the navy, so it carries the dark
      theme and the navy carries the light one. */
   --navy:      #001769;
@@ -1339,7 +1339,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Windows High Contrast throws the palette away, so anything carrying meaning
-   in a border or a fill has to say so in system colours too. */
+   in a border or a fill has to say so in system colors too. */
 @media (forced-colors: active) {
   .code, .term, .endash, .lens figure { border-color: CanvasText; }
   .caveat { border-left-color: LinkText; }

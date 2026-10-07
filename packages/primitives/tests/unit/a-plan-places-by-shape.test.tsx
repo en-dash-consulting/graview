@@ -84,8 +84,8 @@ describe("a plan built over a building, which is not what it was written for", (
   });
 
   it("refuses a binding that names a kind nothing declares", () => {
-    expect(() => buildPlanLens(nodes as never, edges, { ...options, regions: "storey" }, schema as never)).toThrow(
-      /No kind is declared for "storey"/,
+    expect(() => buildPlanLens(nodes as never, edges, { ...options, regions: "story" }, schema as never)).toThrow(
+      /No kind is declared for "story"/,
     );
   });
 });

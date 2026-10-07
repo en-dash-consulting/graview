@@ -136,7 +136,7 @@ graview.onProps(() => {
 });
 `);
 
-  /* A view that reaches its own region's host by a marker the sanitiser drops (`:-->host`), lifts the region's containment and paints over the app's bar. */
+  /* A view that reaches its own region's host by a marker the sanitizer drops (`:-->host`), lifts the region's containment and paints over the app's bar. */
   const spooferJs = await viewScript(`
 graview.style(\`
 :-->host { contain: none !important; overflow: visible !important; position: static !important; isolation: auto !important; }

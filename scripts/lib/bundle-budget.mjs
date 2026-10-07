@@ -119,7 +119,7 @@ export const BUDGETS = [
      * faces are their own chunks.
      *
      * Gzipped raised from 200_000 when a declared lens came to draw (FR-79)
-     * and the arrangement to be honoured (FR-80): the frame registers each
+     * and the arrangement to be honored (FR-80): the frame registers each
      * titled lens as a place and reads where the app opens, which is
      * `declaredLenses` and `openingOf` in what a page loads first — the
      * factories themselves are a chunk fetched when a lens is first drawn.
@@ -284,7 +284,7 @@ export const BUDGETS = [
      * 433_321, from 1_454_397 / 429_026.
      *
      * Raised with the embed's own for FR-99, FR-100, FR-101 and FR-105, and
-     * the studio's set-brand that sets the money apart from the colours:
+     * the studio's set-brand that sets the money apart from the colors:
      * measured at 1_461_953 / 431_507.
      *
      * With both, measured at 1_474_169 / 435_839.
@@ -477,7 +477,7 @@ export const BUDGETS = [
      * Measured at 13_578 / 5_097.
      *
      * What a page loads first, since the open kit (FR-90): the open kit's
-     * sanitiser and renderer are a chunk of their own, fetched the first
+     * sanitizer and renderer are a chunk of their own, fetched the first
      * time a worker view draws — the next budget — so a page that draws only
      * the kit's guests carries none of them. Measured at 15_229 / 5_727, with
      * `mountWorkerView`'s own few lines and the start the two share.
@@ -509,7 +509,7 @@ export const BUDGETS = [
     /*
      * `mountWorkerView` (FR-90) and everything it fetches when a view first
      * draws: the open kit's tables, the CSS Syntax tokenizer, parser and
-     * sanitiser, the element and attribute judge, and the renderer into a
+     * sanitizer, the element and attribute judge, and the renderer into a
      * shadow root. Measured at 41_547 / 14_294.
      *
      * Raised from 46_000 / 16_000 when a view needed no build (FR-96): the

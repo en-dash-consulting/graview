@@ -69,7 +69,7 @@ export interface ScaffoldOptions {
   readonly packageManager?: "pnpm" | "npm";
   /** The dev server's port. */
   readonly port?: number;
-  /** The brand accent, as a hex colour. */
+  /** The brand accent, as a hex color. */
   readonly accent?: string;
   /**
    * THE LAYOUT EVERY REAL PRODUCT ENDS UP WITH: a workspace root with the

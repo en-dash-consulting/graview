@@ -86,7 +86,7 @@ const APPS = {
       },
       // The screen you land on by DOUBLE CLICKING, which is the one nobody
       // designs and everybody meets.
-      travelled: async (page) => {
+      traveled: async (page) => {
         await page.dblclick('[data-graview-pick="t-deposit"]');
       },
       // The go-deeper gesture again, on the focus itself: ZOOMS it to most
@@ -205,7 +205,7 @@ const measure = () => {
    * Content cut WITHOUT SAYING SO.
    *
    * The first version flagged any element wider than its box, which meant
-   * every deliberately ellipsised label — a matrix column head, a clamped
+   * every deliberately ellipsized label — a matrix column head, a clamped
    * description — was reported as a defect while the real one, a rotated
    * header shaved by a single pixel at the top, was not. An ellipsis is a
    * decision; a hard edge with text behind it is a bug.
@@ -361,7 +361,7 @@ const measure = () => {
         seen.set(text, (seen.get(text) ?? 0) + 1);
       }
       /*
-       * A crumb naming the thing you travelled to is not a duplicate — that
+       * A crumb naming the thing you traveled to is not a duplicate — that
        * is a breadcrumb beside a heading, which is how every document works.
        * What is a duplicate is chrome naming a PLACE the picture under it
        * also names, and that is what this is looking for.
@@ -463,7 +463,7 @@ process.stdout.write(`\n${report.shots.length - flagged} of ${report.shots.lengt
  * These were advisory for as long as twenty of twenty-six screens carried
  * one: the wordmark's own visually-hidden `h1` counted as a cut caption on
  * every screen of every app, so the `??` column was noise and a real cut
- * would have sat in the middle of it unnoticed. With the idiom recognised
+ * would have sat in the middle of it unnoticed. With the idiom recognized
  * for what it is, every screen is clean — and a count nobody has to read
  * past is a count that can be enforced.
  *

@@ -1,4 +1,4 @@
-import { describeNode, humaniseField, isWithheld, type AnySchema } from "@graview/core";
+import { describeNode, humanizeField, isWithheld, type AnySchema } from "@graview/core";
 import { DefaultViewElsewhere } from "@graview/primitives/pages";
 import { isDefaultView, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
@@ -25,7 +25,7 @@ import {
   whoDid,
 } from "./page-typography.js";
 import { PageMain, PageTitle } from "./page-shell.js";
-import { capitalise } from "./page-typography.js";
+import { capitalize } from "./page-typography.js";
 
 
 /**
@@ -189,7 +189,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             * something the heading does not.
             */}
           <p style={eyebrow}>{listed(store, group)}</p>
-          <h2 style={h2}>{group.description ? capitalise(group.description) : humaniseField(group.edgeKind)}</h2>
+          <h2 style={h2}>{group.description ? capitalize(group.description) : humanizeField(group.edgeKind)}</h2>
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexWrap: "wrap", gap: "6px 18px" }}>
             {group.targets.map((target) => (
               <li key={target.id} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>

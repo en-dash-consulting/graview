@@ -47,7 +47,7 @@ function pixels(value: string): number | undefined {
   return Math.max(...sizes);
 }
 
-/** A rule that makes something pressable rather than merely coloured. */
+/** A rule that makes something pressable rather than merely colored. */
 const pressable = ([, body]: readonly [string, string]) => /cursor:\s*pointer/.test(body);
 
 describe("the chrome the framework draws", () => {
@@ -57,7 +57,7 @@ describe("the chrome the framework draws", () => {
 
   it("gives the district's disclosure and its past-horizon a full fingertip", () => {
     /* The rules that make them pressable — not the `display: none` that
-       hides the disclosure inside the stack, nor the hover colours. */
+       hides the disclosure inside the stack, nor the hover colors. */
     const controls = rules(css)
       .filter(pressable)
       .filter(

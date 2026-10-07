@@ -27,7 +27,7 @@ import { hueFor } from "./default-views.js";
  */
 const MOST_MEMBERS = 5;
 /*
- * ONE kind, not a stack of them. Two labelled rows of wrapping chips read
+ * ONE kind, not a stack of them. Two labeled rows of wrapping chips read
  * as debris; the single kind that touches the view most — the people of a
  * week, the players of a board — is the quick-select that earns the
  * corner. Everything else already has a district and a legend.

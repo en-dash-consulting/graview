@@ -53,7 +53,7 @@ export const SHARE_WHERE: SettingDeclaration = {
   name: "share-where",
   title: "Where you are",
   description: "Whether the others here see which stop you are on.",
-  honoured: "root-attribute",
+  honored: "root-attribute",
   options: [
     { value: "shared", label: "Shown" },
     { value: "private", label: "Hidden" },
@@ -63,8 +63,8 @@ export const SHARE_WHERE: SettingDeclaration = {
 export const SHARE_OVER: SettingDeclaration = {
   name: "share-over",
   title: "What you point at",
-  description: "Whether the others see the thing under your pointer, outlined in your colour.",
-  honoured: "root-attribute",
+  description: "Whether the others see the thing under your pointer, outlined in your color.",
+  honored: "root-attribute",
   // Four labels, all different: two pairs reading "Seen / Private" put the
   // same word twice on the pane, which the audit counts as the repeat it is.
   options: [

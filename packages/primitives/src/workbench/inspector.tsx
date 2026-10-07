@@ -1,4 +1,4 @@
-import { failureWords, humaniseField, InvalidArguments, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
+import { failureWords, humanizeField, InvalidArguments, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
 import { useSubject } from "../companion.js";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { POPOVER_STYLE, useAffordances, useApplyAffordance, useGraview, usePopover, useSelection } from "@graview/react";
@@ -12,9 +12,9 @@ import { VISUALLY_HIDDEN } from "../primitives/index.js";
  * What is selected, what is true about it, and what can legally be done —
  * as a LEFT PANE beside the focus.
  *
- * It has lived bottom-right (a 340px column over the scene), bottom-centre
+ * It has lived bottom-right (a 340px column over the scene), bottom-center
  * (a strip that sat on the kinds shelf), and now where the room actually
- * is: the left gutter beside a centred focus, which every state leaves
+ * is: the left gutter beside a centered focus, which every state leaves
  * open, which a widened or zoomed view only makes wider, and which covers
  * neither the shelf below nor the picture you are acting on. In the
  * Graview the relation key holds the top of the same rail and this pane
@@ -366,7 +366,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
    *
    * It should not when the page you are looking at IS that thing: the document
    * has a heading, and the same string twice on one screen reads as a mistake
-   * even when both are correct. The same holds after travelling — the focus
+   * even when both are correct. The same holds after traveling — the focus
    * panel already carries the name at full size, and the strip repeating it
    * from the bottom of the window read as a stale leftover of the previous
    * stop.
@@ -589,7 +589,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
               // otherwise — measured from the scene's own top, and no lower
               // than a short box can afford.
               top: view.overview ? "min(296px, 38cqh)" : 44,
-              // Inside the gutter beside a 1040-wide centred focus at the
+              // Inside the gutter beside a 1040-wide centered focus at the
               // surveyed width, so the pane sits NEXT to the picture rather
               // than on its title.
               width: 236,
@@ -852,7 +852,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
                     : "this mix of kinds"
               } — ${withheld.length} action${withheld.length === 1 ? "" : "s"} withheld.`
             : edge
-              ? `Nothing can be done with this line yet — nothing this app declares makes or breaks “${store.schema.edge(edge.kind)?.description ?? humaniseField(edge.kind).toLowerCase()}”.`
+              ? `Nothing can be done with this line yet — nothing this app declares makes or breaks “${store.schema.edge(edge.kind)?.description ?? humanizeField(edge.kind).toLowerCase()}”.`
               : `Nothing can be done with ${
                   subjectKinds.length === 1 ? withArticle(nounOf(store.schema.tryDefinition(subjectKinds[0]!), subjectKinds[0]!)) : "this mix of kinds"
                 } yet — nothing this app declares acts on ${subjectKinds.length === 1 ? "it" : "them"}.`}
@@ -940,7 +940,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
                       // Longhands, always present: a `border` shorthand with a
                       // `borderColor` that comes and goes as the act is
                       // opened and applied is a React warning on every
-                      // rerender, and the colour is the only part that moves.
+                      // rerender, and the color is the only part that moves.
                       borderWidth: 1,
                       borderStyle: "solid",
                       borderColor:
@@ -1023,7 +1023,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
                       /*
                        * WHOSE pin, said in the ink: the person's in the
                        * accent, the app's in quiet body ink. Two filled
-                       * stars in one colour left no way to tell which pin
+                       * stars in one color left no way to tell which pin
                        * was yours to regret.
                        */
                       color:

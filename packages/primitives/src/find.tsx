@@ -18,7 +18,7 @@ import { VISUALLY_HIDDEN } from "./primitives/index.js";
  *
  * `/` or ⌘K reaches it from anywhere; Escape clears the words; Back returns
  * to a search the way it returns to any stop. There is no palette over a
- * greyed-out app: the picture is the answer and the strip is its index.
+ * grayed-out app: the picture is the answer and the strip is its index.
  */
 
 /** One row of the strip: a hit, and the id the listbox knows it by. */

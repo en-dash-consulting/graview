@@ -22,7 +22,7 @@ describe("the declaration", () => {
 
 import seed from "../src/data/seed.json";
 
-describe("the rules, on Tech N9ne's real catalogue", () => {
+describe("the rules, on Tech N9ne's real catalog", () => {
   const seeded = () => createStore({ snapshot: seed as never });
 
   it("hold over the whole discography, from MusicBrainz", () => {
