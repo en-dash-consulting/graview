@@ -37,6 +37,16 @@
  *   every place tile in the org app's scene says its whole name (FR-118);
  *   no card on a status board wears its own column's status (FR-117).
  *
+ * And ONE PLACE SAYS HOW MANY PROBLEMS THERE ARE (FR-122). Cloud's vendor
+ * template, fresh, breaks three rules, and its Pages home on a phone said
+ * so three times above the fold: "3 problems" on the bar, "Problems 3" in
+ * the page's tabs, "3 problems — see what is broken" under the headline.
+ * Counted here as a person reads them — every visible text above the fold
+ * that says the number and is about the problems — on the Pages home and
+ * the Graview face, at a phone's size and a desk's: exactly once. The bar's
+ * count keeps its accessible name, and the problems it opens are still
+ * reached from the keyboard.
+ *
  *   node scripts/verify-chrome-quiet.mjs [--engine=chromium|webkit|firefox] [--shots=<dir>] [--quick]
  */
 import { createServer } from "node:http";
@@ -283,7 +293,7 @@ function measure() {
 
 const host = await buildHost();
 const errors = [];
-const results = { screens: [], tiles: [], skillRows: [], boards: [], marquees: [] };
+const results = { screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -459,6 +469,22 @@ try {
         results.boards.push({ engine, scheme, face, ...worn });
         await close();
       }
+
+      /* ---- FR-122: the number of problems, said once above the fold */
+      for (const face of ["pages", "graview"]) {
+        for (const viewport of [PHONE, DESK]) {
+          const { page, close } = await open(`doc=vendors&face=${face}`, viewport);
+          if (SHOTS && engine === "chromium") await page.screenshot({ path: join(SHOTS, `vendors-${face}-${viewport.width}-problems-${scheme}.png`) });
+          results.problemCounts.push({ engine, scheme, face, viewport: `${viewport.width}×${viewport.height}`, ...(await page.evaluate(problemCountSaid)) });
+          await close();
+        }
+      }
+      /* ---- FR-122: the bar's count still opens the problems, from the keyboard alone */
+      {
+        const { page, close } = await open("doc=vendors&face=pages", PHONE);
+        results.problemsByKeyboard.push({ engine, scheme, ...(await problemsByKeyboard(page)) });
+        await close();
+      }
     }
     await browser.close();
     browser = null;
@@ -485,6 +511,14 @@ try {
   };
   report.checks.aSkillRowKeepsItsLevelAndProgressWholeOnBothFaces = { seen: results.skillRows, ok: results.skillRows.length === engines.length * SCHEMES.length * 2 && results.skillRows.every((one) => one.badge === "Lv 3" && one.badgeWhole && one.progress === "3 of 5" && one.progressWhole) };
   report.checks.noBoardCardWearsItsOwnColumnsStatus = { seen: results.boards, ok: results.boards.length > 0 && results.boards.every((one) => one.columns >= 3 && one.worn.length === 0) };
+  report.checks.theProblemCountIsSaidOnceAboveTheFold = {
+    seen: results.problemCounts,
+    ok: results.problemCounts.length === engines.length * SCHEMES.length * 4 && results.problemCounts.every((one) => one.count > 0 && one.said.length === 1),
+  };
+  report.checks.theBarsProblemCountIsNamedAndOpensFromTheKeyboard = {
+    seen: results.problemsByKeyboard,
+    ok: results.problemsByKeyboard.length === engines.length * SCHEMES.length && results.problemsByKeyboard.every((one) => one.named && one.reached && one.opened),
+  };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);
 } catch (error) {
@@ -493,6 +527,61 @@ try {
 } finally {
   await browser?.close();
   host.stop();
+}
+
+/**
+ * How many times the page says the number of problems where a person sees
+ * it without scrolling (FR-122). The number is the one the bar's Standing
+ * says; a text says it when it holds that number, standing alone, and is
+ * about the problems — its own words name them, or it is inside the control
+ * or link that leads to them.
+ */
+function problemCountSaid() {
+  const standing = [...document.querySelectorAll('button[data-testid="standing"]')].find((one) => /\d+ problems?/.test(one.textContent));
+  const count = Number(standing?.textContent.match(/(\d+) problems?/)?.[1] ?? 0);
+  const said = [];
+  if (count === 0) return { count, said };
+  const number = new RegExp(`(^|\\D)${count}(\\D|$)`);
+  const shown = (element) => {
+    const box = element.getBoundingClientRect();
+    if (box.width < 2 || box.height < 2) return false;
+    if (box.bottom <= 0 || box.top >= innerHeight || box.right <= 0 || box.left >= innerWidth) return false;
+    if (typeof element.checkVisibility === "function" && !element.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return false;
+    for (let up = element.parentElement; up && up !== document.documentElement; up = up.parentElement) {
+      const style = getComputedStyle(up);
+      const boxes = ["hidden", "clip", "auto", "scroll"];
+      if (!boxes.includes(style.overflowX) && !boxes.includes(style.overflowY)) continue;
+      const edge = up.getBoundingClientRect();
+      if (box.bottom <= edge.top || box.top >= edge.bottom || box.right <= edge.left || box.left >= edge.right) return false;
+    }
+    return true;
+  };
+  const leadsToProblems = 'a[href$="/problems"], a[href*="/problems?"], button[data-testid="standing"]';
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const text = node.textContent.trim();
+    const element = node.parentElement;
+    if (!text || !element || !number.test(text) || !shown(element)) continue;
+    const leading = element.closest("a, button") ?? element;
+    if (/problem/i.test(text) || element.closest(leadsToProblems) !== null) said.push({ text: leading.textContent.trim().replace(/\s+/g, " ").slice(0, 80), where: leading.getAttribute("data-testid") ?? leading.tagName.toLowerCase() });
+  }
+  return { count, said };
+}
+
+/** The bar's Standing: its accessible name says the count, Tab reaches it, and Enter opens the problems it counts. */
+async function problemsByKeyboard(page) {
+  const named = await page.evaluate(() => {
+    const standing = document.querySelector('button[data-testid="standing"]');
+    return standing !== null && /\d+ problems?/.test(standing.getAttribute("aria-label") ?? standing.textContent ?? "");
+  });
+  let reached = false;
+  for (let step = 0; step < 60 && !reached; step++) {
+    await page.keyboard.press("Tab");
+    reached = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") === "standing");
+  }
+  if (reached) await page.keyboard.press("Enter");
+  const opened = reached && (await page.waitForSelector('[data-testid="problems"] li', { timeout: 5000 }).then(() => true, () => false));
+  return { named, reached, opened };
 }
 
 /** Goes to a place on the Graview face the way a person does: by its tab on the bar. Throws if the bar does not name it. */

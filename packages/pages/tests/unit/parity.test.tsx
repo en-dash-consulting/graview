@@ -163,7 +163,9 @@ describe("the routed face renders from the declaration", () => {
     const html = app("/");
     expect(html).toContain("People");
     expect(html).toContain("Duties");
-    expect(html).toContain("1 problem");
+    // The count is the tab's; the home says what to do about it (FR-122).
+    expect(html).toContain("A rule is broken — see what, and what would fix it");
+    expect(html).toContain('data-testid="problems-count"');
   });
 
   it("a list page marks trouble and links each record", () => {

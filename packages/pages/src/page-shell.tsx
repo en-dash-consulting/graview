@@ -141,7 +141,8 @@ export function DefaultShell<S extends AnySchema>({
               "/problems",
               <>
                 Problems
-                {problems > 0 ? (
+                {/* The count, said once (FR-122): here, unless a bar above already says it. */}
+                {problems > 0 && !context.standingAbove ? (
                   <span
                     data-testid="problems-count"
                     style={{

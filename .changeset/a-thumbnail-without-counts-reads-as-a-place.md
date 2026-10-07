@@ -1,0 +1,7 @@
+---
+"@graview/core": patch
+---
+
+A thumbnail fitted to what stands reads as a place with no counts (FR-120). Graview Cloud has no per-kind counts for a live app's tile, and `sceneThumbnail(source, { fit: "content" })` without them stood one block in the middle of every district, so every app drew as the same row of blocks. Without `counts`, each district now stands three blocks on its whole block's three-by-three sub-lattice: which three cells, and how tall each block is, are drawn from the kind's name, no two in one column on the screen or sharing a wall, so districts differ from each other and apps from each other. The map is the counted picture's: on Cloud's twelve templates at 264 × 132 every district's plot is the same polygon, corner for corner, in the same hue and order as with the seeds' counts, and every block is at least 16 px wide. A test measures that from the SVG string, holds that no two districts of a template stand the same three blocks and no two templates draw alike, and pins the other pictures' bytes. Counts given, a count of nothing included, draw as before.
+
+Compatibility: a fitted picture drawn without `counts` has more blocks than it did, and different bytes; a host that compares or caches those bytes sees them change once. The default `fit: "map"` picture, and any picture given `counts`, is byte for byte as before. `SceneThumbnailOptions` is unchanged. `capabilities().shipped` gains `FR-120`. Ops, stored formats, wire messages, check codes and tool schemas are unchanged.

@@ -39,7 +39,9 @@ this package serves lists, records, forms, problems and history as ordinary link
   drawn anyway, as a contact sheet of its members, so a new app lands on a gallery on its
   first afternoon. The kinds follow as one row of counts, the relations as one line that
   opens `/map`, and Recently stays short at the foot. The shell is one row of navigation
-  that scrolls sideways on a phone; a new address opens at its top.
+  that scrolls sideways on a phone; a new address opens at its top. How many problems there
+  are is said once: by the embed's bar when the face has one, else by the Problems tab; the
+  home says only that rules are broken and links to what would fix them.
 - **It reads like the product's own site.** A list opens with the plural and its
   description, a record with its title and its kind's `describe`, controls receding below
   the content. Typography rides the brand's display and body faces at a real scale; the

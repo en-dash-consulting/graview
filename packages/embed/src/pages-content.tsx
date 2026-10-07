@@ -37,6 +37,8 @@ export function PagesContent<S extends AnySchema>({
           context={{
             store,
             embedded: true,
+            /* The strip above says how many problems there are; the face does not say it again (FR-122). */
+            ...(props.toggle !== false ? { standingAbove: true } : {}),
             views,
             settings: props.app.settings ?? [],
             ...(presence ? { presence } : {}),

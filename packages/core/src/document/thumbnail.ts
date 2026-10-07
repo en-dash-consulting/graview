@@ -41,7 +41,10 @@ export interface SceneThumbnailOptions {
    * sized as the live Scene sizes it (FR-103): its plot's side from its
    * count, and its village, one building per member up to what the plot
    * holds, where the Scene's plots stand them. One without members draws a
-   * single block. Counts move a plot's size, never its corner.
+   * single block. Counts move a plot's size, never its corner. Fitted to
+   * the content with no counts at all, each district stands three blocks
+   * placed and raised by its kind's name (FR-120), so a live app with no
+   * snapshot still reads as a place, and as itself.
    */
   readonly counts?: Readonly<Record<string, number>>;
   /** Fill the picture with the scheme's ground. Default true; false leaves it transparent for a host's own surface. */
@@ -228,12 +231,37 @@ const FEW_CELLS: readonly (readonly (readonly [number, number])[])[] = [
 ];
 type Rung = "village" | "few" | "one";
 
+/*
+ * A PLACE WITH NO COUNTS (FR-120). A host listing live apps has no counts
+ * for a tile, and one block in the middle of every district made every app
+ * the same row of blocks. Told nothing, a district stands three, on cells
+ * of the same sub-lattice chosen by its kind's name, raised by it as the
+ * counted blocks are by their ordinals: the same map, a different village
+ * on each district. No two of the three share a column on the screen or a
+ * wall on the ground, so none stands hidden behind or fused to another.
+ */
+const UNSAID = 3;
+const UNSAID_CELLS: readonly (readonly (readonly [number, number])[])[] = (() => {
+  const cells: (readonly [number, number])[] = [];
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) cells.push([c, r]);
+  const choices: (readonly [number, number])[][] = [];
+  for (let a = 0; a < cells.length; a++)
+    for (let b = a + 1; b < cells.length; b++)
+      for (let d = b + 1; d < cells.length; d++) {
+        const three = [cells[a]!, cells[b]!, cells[d]!];
+        const apart = three.every(([c, r], i) => three.slice(i + 1).every(([c2, r2]) => Math.abs(c - c2) + Math.abs(r - r2) >= 2));
+        if (apart && new Set(three.map(([c, r]) => c - r)).size === UNSAID) choices.push(three);
+      }
+  return choices;
+})();
+
 /** The district on its whole block: the same corner, the largest side. */
 const wholeBlock = (plot: Plot): Plot => ({ col: plot.col, row: plot.row, side: MAX_SIDE });
 
-function standingFitted(district: SceneDistrict, scheme: Scheme, rung: Rung): { readonly stands: Standing[]; readonly narrowest: number } {
+function standingFitted(district: SceneDistrict, scheme: Scheme, rung: Rung, said: boolean): { readonly stands: Standing[]; readonly narrowest: number } {
   const plot = wholeBlock(district.plot);
   const { hue, count, kind } = district;
+  const unsaid = !said && count === 0;
   if (rung === "village" && count > FEW) {
     const { buildings } = villageOf(plot, Array.from({ length: Math.min(count, villageCap(plot.side)) }, (_, i) => `${kind}#${i}`));
     return { stands: buildings.map((b) => ({ depth: b.col + b.row, ...block(b.col, b.row, b.footprint, b.height, hue, scheme) })), narrowest: buildings[0]?.footprint ?? Infinity };
@@ -246,10 +274,11 @@ function standingFitted(district: SceneDistrict, scheme: Scheme, rung: Rung): { 
   const footprint = pitch * 0.8;
   // Past five, the five grow taller with the count, as the one block does.
   const taller = count > FEW ? Math.min(0.8, Math.log2(count / FEW) * 0.25) : 0;
-  const stands = FEW_CELLS[Math.max(1, Math.min(FEW, count)) - 1]!.map(([c, r], i) => {
+  const cells = unsaid ? UNSAID_CELLS[Math.floor(heightOf(`${kind}#place`) * UNSAID_CELLS.length)]! : FEW_CELLS[Math.max(1, Math.min(FEW, count)) - 1]!;
+  const stands = cells.map(([c, r], i) => {
     const col = plot.col + (c + 0.5) * pitch;
     const row = plot.row + (r + 0.5) * pitch;
-    const height = count === 0 ? 0.6 : 0.7 + heightOf(`${kind}#${i}`) * 0.6 + taller;
+    const height = unsaid ? 0.7 + heightOf(`${kind}#${i}`) * 0.6 : count === 0 ? 0.6 : 0.7 + heightOf(`${kind}#${i}`) * 0.6 + taller;
     return { depth: col + row, ...block(col, row, footprint, height, hue, scheme) };
   });
   return { stands, narrowest: footprint };
@@ -336,7 +365,7 @@ export function sceneThumbnail(source: ThumbnailSource, options: SceneThumbnailO
     const pad = CELL * 0.4;
     const rungs: readonly Rung[] = ["village", "few", "one"];
     for (const rung of rungs) {
-      const drawn = districts.map((district) => standingFitted(district, scheme, rung));
+      const drawn = districts.map((district) => standingFitted(district, scheme, rung, options.counts !== undefined));
       stands = drawn.flatMap((d) => d.stands);
       view = frame([...all, ...stands.flatMap((s) => s.reach)], pad, width, height);
       const scale = width / (view.maxX - view.minX);
