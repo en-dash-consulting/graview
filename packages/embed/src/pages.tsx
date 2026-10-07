@@ -84,6 +84,10 @@ export interface PagesEmbedHandle {
   setHostContext(context: EmbedHostContext): void;
   /** Re-dress the embed: another brand, or the same brand with a different kit. */
   setBrand(brand: Brand | undefined): void;
+  /** What the embed is called (FR-128): its accessible name, and the name each landmark inside is said after. */
+  setLabel(label: string): void;
+  /** The host's own actions in the profile menu (FR-72), now. */
+  setHostActions(actions: PagesEmbedOptions["hostActions"]): void;
   /** Says something in the app's own notices (FR-75): a toast, or a banner that stays until it is cleared. */
   notify(notice: Notice): NoticeHandle;
   readonly store: Store<AnySchema>;
@@ -105,6 +109,8 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     hostContext(context: EmbedHostContext): void;
     brand(brand: Brand | undefined): void;
     path(path: string): void;
+    label(label: string): void;
+    hostActions(actions: PagesEmbedOptions["hostActions"]): void;
   } | null = null;
   function Host() {
     const [scheme, setScheme] = useState<Scheme | "auto">(options.scheme ?? "auto");
@@ -114,7 +120,9 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     const [people, setPeople] = useState<readonly Person[] | undefined>(options.people);
     const [hostContext, setHostContext] = useState<EmbedHostContext | undefined>(options.hostContext);
     const [brand, setBrand] = useState<Brand | undefined>(options.brand);
-    set = { path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand };
+    const [label, setLabel] = useState<string | undefined>(options.label);
+    const [hostActions, setHostActions] = useState<PagesEmbedOptions["hostActions"]>(options.hostActions);
+    set = { path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand, label: setLabel, hostActions: setHostActions };
     return (
       <PagesEmbed<S>
         {...options}
@@ -126,6 +134,8 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
         {...(hostContext ? { hostContext } : {})}
         {...(brand ? { brand } : {})}
         {...(path !== undefined ? { path } : {})}
+        label={label}
+        hostActions={hostActions}
         scheme={scheme}
         onSeat={setSeat}
       />
@@ -142,6 +152,8 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: PagesE
     setPeople: (people) => flushSync(() => set?.people(people)),
     setHostContext: (context) => flushSync(() => set?.hostContext(context)),
     setBrand: (brand) => flushSync(() => set?.brand(brand)),
+    setLabel: (label) => flushSync(() => set?.label(label)),
+    setHostActions: (actions) => flushSync(() => set?.hostActions(actions)),
     notify: (notice) => {
       let said: NoticeHandle | undefined;
       flushSync(() => {

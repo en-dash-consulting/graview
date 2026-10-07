@@ -392,22 +392,24 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
     document.head.appendChild(link);
   }, [brand, fonts]);
 
-  // Landmarks inside, named after the embed — kept so through re-renders.
+  // Landmarks inside, named after the embed — kept so through re-renders, and through a new label (FR-128).
+  const namedAfter = useRef<string | undefined>(undefined);
   useLayoutEffect(() => {
     const root = rootRef.current;
+    const before = namedAfter.current;
+    namedAfter.current = label;
     if (!root || !label) return;
     const name = (el: Element) => {
-      const own = el.getAttribute("aria-label") ?? "";
-      if (own.startsWith(`${label} · `)) return;
+      const said = el.getAttribute("aria-label") ?? "";
+      // The last label's part of a name was the embed's, not the landmark's own.
+      const own = before && before !== label ? (said.startsWith(`${before} · `) ? said.slice(before.length + 3) : said === before ? "" : said) : said;
       // Named the same thing: "The pipeline · The pipeline" is one name said
       // twice, not a place inside a place. A region of that name IS the
       // embed's region, so it stops being a second landmark (two regions of
       // one name is axe's `landmark-unique`) and stays a named group.
-      if (own === label) {
-        if (el.getAttribute("role") === "region" || (el.tagName === "SECTION" && !el.hasAttribute("role"))) el.setAttribute("role", "group");
-        return;
-      }
-      el.setAttribute("aria-label", own ? `${label} · ${own}` : label);
+      if (own === label && (el.getAttribute("role") === "region" || (el.tagName === "SECTION" && !el.hasAttribute("role")))) el.setAttribute("role", "group");
+      const next = own.startsWith(`${label} · `) || own === label ? own : own ? `${label} · ${own}` : label;
+      if (next !== said) el.setAttribute("aria-label", next);
     };
     // The root is the embed's own region and already wears the label; the
     // sweep names what is INSIDE it — a named section is a region too, and

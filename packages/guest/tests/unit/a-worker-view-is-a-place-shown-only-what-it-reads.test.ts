@@ -18,7 +18,7 @@ import type { GuestProps, GuestTheme } from "../../src/protocol.js";
  */
 const store = () => new Store({ schema: offersApp.schema, mutations: offersApp.mutations ?? [], policy: offersApp.policy!, snapshot: offersSeed as never });
 const packages: WorkerViewManifest = { name: "packages", title: "The packages", attach: "package", cardinality: "many", reads: { kinds: ["offer"], edges: ["includes"] } };
-const theme: GuestTheme = { scheme: "dark", accent: "#6fdcea", ground: "#080d12", panel: "rgba(20, 31, 39, 0.94)", ink: "#e8f3f6", inkMuted: "#9fb6bf", edge: "rgba(126, 196, 214, 0.20)", fontBody: "system-ui", fontMono: "ui-monospace" };
+const theme: GuestTheme = { scheme: "dark", accent: "#6fdcea", ground: "#080d12", panel: "rgba(20, 31, 39, 0.94)", ink: "#e8f3f6", inkMuted: "#9fb6bf", edge: "rgba(126, 196, 214, 0.20)", fontBody: "system-ui", fontDisplay: "Georgia, serif", fontMono: "ui-monospace", radius: "12px" };
 const ids = (props: GuestProps) => (props.nodes ?? []).map((node) => node.id).sort();
 
 describe("what a worker view is handed", () => {

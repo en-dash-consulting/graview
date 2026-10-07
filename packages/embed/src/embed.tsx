@@ -559,8 +559,17 @@ export interface EmbedHandle {
    * falls back to its nearest parent. The seat, the seats, the people, the
    * scheme, the brand asked for and the notices stay; what is drawn is drawn
    * again, so an open menu, a scroll and a half-typed field do not.
+   *
+   * THE NEW APP'S NAME (FR-128): a `label` that was the app's own name
+   * follows the app, so a renamed app says its new name — the embed's
+   * accessible name, its heading, each landmark inside — without a reload;
+   * a label the host chose stays. `{ label }` says which.
    */
-  setApp(app: GraviewApp<AnySchema>, store: Store<AnySchema> | EmbedRemote<AnySchema>): void;
+  setApp(app: GraviewApp<AnySchema>, store: Store<AnySchema> | EmbedRemote<AnySchema>, options?: { readonly label?: string }): void;
+  /** What the embed is called (FR-128): its accessible name, its heading, and the name each landmark inside is said after. */
+  setLabel(label: string): void;
+  /** The host's own actions in the profile menu (FR-72), now. */
+  setHostActions(actions: EmbedOptions["hostActions"]): void;
   setFace(face: EmbedFace): void;
   setStop(stop: string): void;
   /**
@@ -608,6 +617,8 @@ interface Setters {
   people(people: readonly Person[]): void;
   hostContext(context: EmbedHostContext): void;
   brand(brand: Brand | undefined): void;
+  label(label: string | undefined): void;
+  hostActions(actions: EmbedOptions["hostActions"]): void;
 }
 
 /** A new declaration and where the reader was, for the next drawing of the embed. */
@@ -633,6 +644,9 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
   let setters: Setters | null = null;
   const here: Whereabouts = {};
   let swaps = 0;
+  // What the embed is called, and the app it was called after (FR-128).
+  let label = options.label;
+  let named: GraviewApp<AnySchema> = options.app as never;
   // A new declaration on its way (FR-116): `drawn()` waits for it.
   let swapping: Promise<void> = Promise.resolve();
   // Which face is asked for, which is drawn, and who is waiting for the one asked for.
@@ -659,6 +673,8 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     const [people, setPeople] = useState<readonly Person[] | undefined>(options.people);
     const [hostContext, setHostContext] = useState<EmbedHostContext | undefined>(options.hostContext);
     const [brand, setBrand] = useState<Brand | undefined>(options.brand);
+    const [called, setCalled] = useState<string | undefined>(options.label);
+    const [hostActions, setHostActions] = useState<EmbedOptions["hostActions"]>(options.hostActions);
     const [swap, setSwap] = useState<Swap | undefined>(undefined);
     setters = {
       app: (next) => {
@@ -666,7 +682,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         setPath(undefined);
         setStop(undefined);
       },
-      face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand };
+      face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand, label: setCalled, hostActions: setHostActions };
     return (
       <Whereabouts.Provider value={here}>
       <Embed<S>
@@ -682,6 +698,8 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         {...(people ? { people } : {})}
         {...(hostContext ? { hostContext } : {})}
         {...(brand ? { brand } : {})}
+        label={called}
+        hostActions={hostActions}
         scheme={scheme}
         onFace={(next) => {
           asked = next;
@@ -705,13 +723,19 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
       return store;
     },
     where,
-    setApp: (app, given) => {
+    setApp: (app, given, asked) => {
       const remote: EmbedRemote<AnySchema> = "graph" in given ? { store: given } : given;
       // The app on the page stays drawn until the rules for settling the place in the new one are here.
       const swap = () => {
         const at = where();
         store = remote.store;
-        flushSync(() => setters?.app({ app, remote, at, n: ++swaps }));
+        // A label that was the app's own name is the new app's (FR-128); one the host chose stays, unless it says another.
+        label = asked?.label ?? (label === named.name ? app.name : label);
+        named = app;
+        flushSync(() => {
+          setters?.label(label);
+          setters?.app({ app, remote, at, n: ++swaps });
+        });
       };
       if (settling) swap();
       else swapping = swapping.then(fetchSettling).then(swap);
@@ -728,6 +752,11 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setPeople: (people) => flushSync(() => setters?.people(people)),
     setHostContext: (context) => flushSync(() => setters?.hostContext(context)),
     setBrand: (brand) => flushSync(() => setters?.brand(brand)),
+    setLabel: (given) => {
+      label = given;
+      flushSync(() => setters?.label(given));
+    },
+    setHostActions: (actions) => flushSync(() => setters?.hostActions(actions)),
     /* Drawn is the face asked for — below `pagesBelow`, drawn as the pages that stand in for it. */
     drawn: () => swapping.then(() => (drawnFace === asked ? undefined : new Promise<void>((resolve) => waiting.push(resolve)))),
     notify: (notice) => {

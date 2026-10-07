@@ -8,7 +8,7 @@ import { judgeCodeAct } from "./writes.js";
 import { createDrawBudget } from "./draw-budget.js";
 import { checkViewSource, viewScript } from "./view-source.js";
 import { createLinks, type Destination } from "./links.js";
-import { readTheme, watchTheme } from "./theme.js";
+import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand } from "./theme.js";
 
 /** A worker view's code: its own source, which the host makes a worker of, or a whole worker script. */
 export type WorkerViewCode = GuestWorkerSource | { readonly source: string };
@@ -116,6 +116,13 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * (the embed's), else its `color-scheme`.
    */
   readonly theme?: () => GuestTheme;
+  /**
+   * The app's brand (FR-127): its name, and its logo as a `blob:` URL of
+   * this page the host made — from an inline SVG, or an address on the
+   * page's own origin it fetched — or a `data:` image where the page's
+   * policy refuses `blob:` images. Pushed again when it changes (`update`).
+   */
+  readonly brand?: () => GuestBrand | undefined;
   readonly limits?: WorkerViewLimits;
   /** The view is not going to be shown, and why: the reason, and a sentence saying it. */
   readonly onFailure?: (reason: WorkerViewFailure, detail?: string) => void;
@@ -293,7 +300,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
    * (the embed stamps `data-graview-scheme`, a page `data-theme`) and the
    * system's preference, and pushes when the look it reads has changed.
    */
-  const theme = () => options.theme?.() ?? readTheme(region);
+  const logo = createGuestLogo(window, () => looked(), "blob");
+  const theme = () => themeWithBrand(() => options.theme?.() ?? readTheme(region), options.brand, logo);
   let pushed = "";
   const push = () => {
     pushed = JSON.stringify(theme());
@@ -302,7 +310,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   const looked = () => {
     if (session && JSON.stringify(theme()) !== pushed) push();
   };
-  unwatch = watchTheme(document, looked);
+  const unwatchTheme = watchTheme(document, looked);
+  unwatch = () => {
+    unwatchTheme();
+    logo.dispose();
+  };
 
   let port: MessagePort | undefined;
   const send = (message: GuestDomEvent) => port?.postMessage(message);

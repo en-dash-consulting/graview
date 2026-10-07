@@ -61,7 +61,9 @@ Everything a Graview app declares, and the checker that verifies it.
   narrower than `minBuilding` pixels (16 by default) rather than a speck per
   record. Without counts — a live app with no snapshot — each district stands
   three blocks placed and raised by its kind's name, so every app still looks
-  like itself. A kind's
+  like itself. `size: "icon"` draws it as a tab's icon: 32 by 32, each
+  district on its block in its hue with one block on it, readable at 16
+  pixels and about a kilobyte — a standalone SVG to serve as a favicon. A kind's
   figures are `@graview/core/figures`.
 - **What a page loads first** — `@graview/core` and `@graview/core/document`
   hold only what a page draws with. The checker, the city, the figures and
@@ -71,6 +73,9 @@ Everything a Graview app declares, and the checker that verifies it.
 - **A place's address** — `addressOf(place, { basePath })` spells a place
   from `placesOf` as the routed face links to it under a host's base path,
   `pathWithin` reads an address back, and `basePathOf` normalises a base.
+  A `search` hit says its own: a record, a kind's list or a place carries
+  `address`, spelled the same way under the `basePath` it is given, and a
+  seat finds only the records its sight lets it open.
 - **Conformance** — `@graview/core/conformance`: fixtures a host runs against
   a version (`conformance()`) to prove it reads, compiles and derives the same.
 - **A status board's moves** — `@graview/core/describe`: `columnReach` says

@@ -125,6 +125,15 @@ the scheme, the brand and the notices stay; the faces are drawn again, so
 an open menu, a scroll position and a half-typed field do not. `drawn()`
 resolves once the new app is on the page.
 
+A renamed app says its new name at once (FR-128). A `label` that was the
+app's own name — as a host that mounts with `label: app.name` gives it —
+follows the new app: the embed's accessible name, the workbench's heading
+and each landmark inside say the new name, and the wordmark is the new
+app's brand. A label the host chose ("Chapter 13") stays;
+`setApp(app, store, { label })` gives another, and `handle.setLabel(label)`
+renames the embed in place. `handle.setHostActions(actions)` changes the
+host's own actions in the profile menu the same way.
+
 A host that must remount reads the place first and hands it back:
 
 ```ts

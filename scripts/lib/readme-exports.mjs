@@ -19,6 +19,8 @@ export const NOT_EXPORTS = new Map([
   ["onNavigate", "an option of the embed's mount and a prop of PagesApp, not an export"],
   ["setPath", "a method of the embed's handle, not an export"],
   ["setApp", "a method of the embed's handle, not an export (FR-116)"],
+  ["setLabel", "a method of the embed's handle, not an export (FR-128)"],
+  ["setHostActions", "a method of the embed's handle, not an export (FR-128)"],
   ["sessionStorage", "a browser global"],
   ["Request", "a web platform global, every runtime's"],
   ["Response", "a web platform global, every runtime's"],

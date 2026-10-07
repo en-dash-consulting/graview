@@ -76,13 +76,19 @@ export const BUDGETS = [
      * take (FR-121): the page's store holds a call to its act's shape before
      * the input parses, about 0.4 kB. Measured at 488_607 / 165_764.
      *
+     * Raised when a search hit came to say its address and search to judge
+     * sight record by record (FR-129): the Find box on every page is that
+     * search, about 0.6 kB. Measured at 489_185 / 166_114.
+     *
      * Raised when the document came to hold the whole brand (FR-124–FR-126):
      * the app's mark, name and the line under it drawn by one component
      * (`AppTitle`), a mark judged before it is put in the page, the faces a
      * document names resolved to their stacks, the page's icon. Measured at 492_055 / 167_339.
+     *
+     * Measured at 492_993 / 167_725 with the pull requests of this round together.
      */
-    minified: 492_500,
-    gzipped: 167_500,
+    minified: 495_000,
+    gzipped: 168_500,
     load: "first",
   },
   {
@@ -189,8 +195,10 @@ export const BUDGETS = [
      * the app's mark, name and the line under it drawn by one component
      * (`AppTitle`), a mark judged before it is put in the page, the faces a
      * document names resolved to their stacks, the page's icon. Measured at 690_993 / 177_026.
+     *
+     * Measured at 691_831 / 177_426 with the pull requests of this round together.
      */
-    minified: 691_500,
+    minified: 695_000,
     gzipped: 177_500,
     load: "first",
     lacks: ["@graview/studio"],
@@ -282,9 +290,11 @@ export const BUDGETS = [
      * the app's mark, name and the line under it drawn by one component
      * (`AppTitle`), a mark judged before it is put in the page, the faces a
      * document names resolved to their stacks, the page's icon. Measured at 1_517_860 / 455_408.
+     *
+     * Measured at 1_518_689 / 455_813 with the pull requests of this round together.
      */
-    minified: 1_518_500,
-    gzipped: 455_750,
+    minified: 1_525_000,
+    gzipped: 458_000,
     load: "all",
   },
   {
@@ -325,7 +335,7 @@ export const BUDGETS = [
     // And when acts came to say what they set (FR-110, FR-114, FR-115: writes read off an act, a number's range, the other end of a link): the document compiler loads with the studio. Measured at 1_473_024 / 432_613.
     // Lowered when what only a drawn view uses left the frame's entries and the describer came to be fetched when first asked for: measured at 1_471_243 / 435_726.
     // Raised when the document came to hold the whole brand (FR-124–FR-126): the app's mark, name and subtitle in one component, a mark judged before it is drawn, the page's icon. Measured at 1_488_861 / 442_563.
-    minified: 1_489_500,
+    minified: 1_496_000,
     gzipped: 443_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
@@ -388,10 +398,14 @@ export const BUDGETS = [
      * its toggle (FR-86, host/theme.ts: 1_037 B), and goes where the face
      * goes (FR-87, `useGoTo`: 1_268 B of @graview/react a page drawing the
      * app carries already); the budget just above it.
+     *
+     * Measured at 11_931 / 5_544 once a guest is handed the brand's name
+     * and logo (FR-127): the host makes the logo into a URL the guest can
+     * show without loading anything (host/theme.ts, `createGuestLogo`).
      */
     entry: `import { guestView, mountGuestView } from "@graview/guest/host"; globalThis.host = { guestView, mountGuestView };`,
-    minified: 11_000,
-    gzipped: 5_000,
+    minified: 12_100,
+    gzipped: 5_700,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -482,10 +496,14 @@ export const BUDGETS = [
      * Raised at 120_766 / 42_999 when a view that does not start says
      * `start` (FR-102), with the directive its page lacks; the budget just
      * above it.
+     *
+     * Raised at 122_122 / 43_558 when a view is handed the brand's name and
+     * logo (FR-127), the logo made a `blob:` of the page or, where its
+     * policy refuses one, a `data:` image; the budget just above it.
      */
     entry: `import { mountWorkerView } from "@graview/guest/host/worker"; globalThis.mount = mountWorkerView;`,
-    minified: 121_250,
-    gzipped: 43_250,
+    minified: 122_600,
+    gzipped: 43_800,
     load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
