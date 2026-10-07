@@ -1,5 +1,6 @@
 import { checkApp } from "../cli/check.js";
 import { actFindings } from "./act-findings.js";
+import { brandFindings } from "./brand-check.js";
 import { compileDocumentWithoutCheck, frameworkPath, inDocumentWords, readDocument, type CompiledDocument, type CompileOptions, type RefusedDocument } from "./compile.js";
 import { hasErrors, type Finding } from "./findings.js";
 import { viewBraces } from "./views.js";
@@ -24,10 +25,13 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
     return read ? { ok: false, findings: [...compiled.findings, ...actFindings(read)] } : compiled;
   }
   const { app, document } = compiled;
-  const own = actFindings(document);
+  // What the brand may hold (FR-124): a mark that could act or load, a face from off the list.
+  const own = [...actFindings(document), ...brandFindings(document.brand, options.fonts ? { fonts: options.fonts } : {})];
   if (hasErrors(own)) return { ok: false, findings: [...compiled.findings, ...own] };
   // Braces in a block's plain words (FR-99): asked here, with the checker, and not of a page that compiles without it.
-  const findings: Finding[] = [...compiled.findings, ...own, ...viewBraces(document.views, "views", undefined, document.lenses)];
+  // The checker's sentence for an accent (FR-126) says what the compile's did, and more: once is enough.
+  const said = own.some((f) => f.code === "brand-accent") ? compiled.findings.filter((f) => !(f.code === "brand" && f.path === "brand.accent")) : compiled.findings;
+  const findings: Finding[] = [...said, ...own, ...viewBraces(document.views, "views", undefined, document.lenses)];
   const check = checkApp(app);
   for (const f of check.findings) {
     const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: f.message, ...(f.fix ? { fix: f.fix } : {}) } as const;

@@ -38,6 +38,10 @@ is selected and what can be done with it, whether the rules hold, what just
 happened and how to take it back, how to back out of a view. All derived from
 the schema, the invariants and the op log.
 
+**The app, said once** — `AppTitle`: the brand's mark (`AppMark`, drawn as
+given, never an SVG that could act), its name, and the line under it, which
+every face's title is drawn with; `useFavicon` for a face that owns the page.
+
 **Visual system** — `themeCss(scheme, brand)`. Two schemes that are not
 inversions of each other: dark loses luminance, light loses contrast and gains
 haze. A brand supplies its own and `graview check` measures it. The sheet is

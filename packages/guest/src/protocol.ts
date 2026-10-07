@@ -107,7 +107,20 @@ export interface GuestTheme {
   readonly inkMuted: string;
   readonly edge: string;
   readonly fontBody: string;
+  /** Headings and the wordmark (FR-127): `--graview-font-display`. */
+  readonly fontDisplay: string;
   readonly fontMono: string;
+  /** A panel's corner (FR-127): `--graview-radius`, as a CSS length. */
+  readonly radius: string;
+  /** The app's name, as its wordmark says it (FR-127). Absent when the app has no brand. */
+  readonly name?: string;
+  /**
+   * The brand's logo (FR-127), for `<img src>`: a `blob:` URL of the host's
+   * page for a worker view, a `data:` image for a frame — the host made it,
+   * so the view loads nothing. Absent when the brand has none, or names one
+   * on another origin.
+   */
+  readonly logo?: string;
 }
 
 /**

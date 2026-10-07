@@ -17,3 +17,4 @@ export type { Judged, Press, PressedField } from "./writes.js";
 export { checkViewSource, viewScript } from "./view-source.js";
 export type { MountWorkerViewOptions, WorkerView, WorkerViewCode, WorkerViewFailure, WorkerViewLimits } from "./view.js";
 export type { GuestPlace, GuestTheme } from "../protocol.js";
+export type { GuestBrand } from "./theme.js";

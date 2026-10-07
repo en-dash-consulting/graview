@@ -54,7 +54,10 @@ element (`themeBaseCss(scheme, brand, { scope })`, and the scene's own rules,
 rule of it held inside that element, so nothing of the host's is restyled; the
 panes size against the picture's own box (`cqh`) rather than the viewport;
 the routed face runs on a memory router, so the host page's address is never
-touched (unless the host's page is the app: see below); the brand's fonts are fetched by the embed rather than assumed. The
+touched (unless the host's page is the app: see below); the brand's fonts are fetched by the embed rather than assumed. The page's icon is
+the host's: only a host whose page is the app passes `favicon: true` to wear
+the brand's (FR-124), and an app that prefers dark is drawn dark until the host
+stamps a scheme of its own. The
 store is in memory and starts from the seed on every mount, unless the host
 hands it one.
 
@@ -121,6 +124,15 @@ something gone is replaced, not pushed. The seat, the seats, the people,
 the scheme, the brand and the notices stay; the faces are drawn again, so
 an open menu, a scroll position and a half-typed field do not. `drawn()`
 resolves once the new app is on the page.
+
+A renamed app says its new name at once (FR-128). A `label` that was the
+app's own name — as a host that mounts with `label: app.name` gives it —
+follows the new app: the embed's accessible name, the workbench's heading
+and each landmark inside say the new name, and the wordmark is the new
+app's brand. A label the host chose ("Chapter 13") stays;
+`setApp(app, store, { label })` gives another, and `handle.setLabel(label)`
+renames the embed in place. `handle.setHostActions(actions)` changes the
+host's own actions in the profile menu the same way.
 
 A host that must remount reads the place first and hands it back:
 

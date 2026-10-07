@@ -1,6 +1,6 @@
-import { Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
+import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { createNoticeBoard, Notices, Profile, registerDeclaredLenses, Standing, themeBaseCss, useWidth, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
+import { AppTitle, createNoticeBoard, Notices, Profile, registerDeclaredLenses, Standing, themeBaseCss, useFavicon, useWidth, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -166,6 +166,13 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
   readonly views?: (schema: S, registry: ReactViewRegistry<S>) => ReactViewRegistry<S>;
   /** The strip (the faces, Standing, who is here) above the picture. Default on. */
   readonly toggle?: boolean;
+  /**
+   * THE PAGE'S ICON (FR-124): `true` when the host's page IS the app (a
+   * hosted app on its own address), so the page wears the brand's
+   * favicon while the embed is mounted. Off by default: an embed on
+   * somebody else's page never changes that page's icon.
+   */
+  readonly favicon?: boolean;
   /** Fetch the brand's fonts. Default on; off when the host already has them. */
   readonly fonts?: boolean;
   /**
@@ -252,11 +259,15 @@ export function storeOf<S extends AnySchema>(app: GraviewApp<S>, seed: FrameOpti
   } as never);
 }
 
-/** The host page's scheme: an explicit `data-theme`, else the system's preference. */
-export function hostScheme(): Scheme {
-  if (typeof document === "undefined") return "light";
+/**
+ * The host page's scheme: an explicit `data-theme`, else the scheme the
+ * app prefers (`brand.scheme`, FR-124), else the system's preference.
+ */
+export function hostScheme(preferred?: Scheme | "auto"): Scheme {
+  if (typeof document === "undefined") return preferred === "dark" ? "dark" : "light";
   const stamped = document.documentElement.dataset["theme"];
   if (stamped === "dark" || stamped === "light") return stamped;
+  if (preferred === "dark" || preferred === "light") return preferred;
   return typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
@@ -266,11 +277,11 @@ export function hostScheme(): Scheme {
  * its own toggle is pressed (or a widget's glue, when the chat says the
  * theme changed) left the embed in the other one.
  */
-function useHostScheme(follow: boolean): Scheme {
-  const [scheme, setScheme] = useState<Scheme>(() => hostScheme());
+function useHostScheme(follow: boolean, preferred?: Scheme | "auto"): Scheme {
+  const [scheme, setScheme] = useState<Scheme>(() => hostScheme(preferred));
   useEffect(() => {
     if (!follow || typeof document === "undefined") return;
-    const read = () => setScheme(hostScheme());
+    const read = () => setScheme(hostScheme(preferred));
     read();
     const stamped = new MutationObserver(read);
     stamped.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
@@ -280,7 +291,7 @@ function useHostScheme(follow: boolean): Scheme {
       stamped.disconnect();
       media?.removeEventListener?.("change", read);
     };
-  }, [follow]);
+  }, [follow, preferred]);
   return scheme;
 }
 
@@ -362,10 +373,13 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
   const store = useMemo(() => props.store ?? props.remote?.store ?? storeOf(app, seed), [props.store, props.remote, app, seed]);
   const presence = props.presence ?? props.remote?.presence;
   const told = props.hostContext?.theme;
-  const followed = useHostScheme(askedScheme === "auto" && told === undefined);
+  const followed = useHostScheme(askedScheme === "auto" && told === undefined, brand?.scheme);
   const scheme: Scheme = askedScheme === "auto" ? (told ?? followed) : askedScheme;
   /* Every face's sheet; the scene face draws the scene's own rules beside it (`sceneCss`, FR-104). */
   const css = useMemo(() => themeBaseCss(scheme, brand, { scope: `.${scope}` }), [scheme, brand, scope]);
+
+  // The page's icon, only when the host said its page is the app's (FR-124).
+  useFavicon(props.favicon ? faviconHref(brand) : undefined);
 
   // The brand's fonts, fetched once per family set, without the host's help.
   useEffect(() => {
@@ -378,22 +392,24 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
     document.head.appendChild(link);
   }, [brand, fonts]);
 
-  // Landmarks inside, named after the embed — kept so through re-renders.
+  // Landmarks inside, named after the embed — kept so through re-renders, and through a new label (FR-128).
+  const namedAfter = useRef<string | undefined>(undefined);
   useLayoutEffect(() => {
     const root = rootRef.current;
+    const before = namedAfter.current;
+    namedAfter.current = label;
     if (!root || !label) return;
     const name = (el: Element) => {
-      const own = el.getAttribute("aria-label") ?? "";
-      if (own.startsWith(`${label} · `)) return;
+      const said = el.getAttribute("aria-label") ?? "";
+      // The last label's part of a name was the embed's, not the landmark's own.
+      const own = before && before !== label ? (said.startsWith(`${before} · `) ? said.slice(before.length + 3) : said === before ? "" : said) : said;
       // Named the same thing: "The pipeline · The pipeline" is one name said
       // twice, not a place inside a place. A region of that name IS the
       // embed's region, so it stops being a second landmark (two regions of
       // one name is axe's `landmark-unique`) and stays a named group.
-      if (own === label) {
-        if (el.getAttribute("role") === "region" || (el.tagName === "SECTION" && !el.hasAttribute("role"))) el.setAttribute("role", "group");
-        return;
-      }
-      el.setAttribute("aria-label", own ? `${label} · ${own}` : label);
+      if (own === label && (el.getAttribute("role") === "region" || (el.tagName === "SECTION" && !el.hasAttribute("role")))) el.setAttribute("role", "group");
+      const next = own.startsWith(`${label} · `) || own === label ? own : own ? `${label} · ${own}` : label;
+      if (next !== said) el.setAttribute("aria-label", next);
     };
     // The root is the embed's own region and already wears the label; the
     // sweep names what is INSIDE it — a named section is a region too, and
@@ -497,7 +513,8 @@ export function Strip({
       }}
     >
       <span style={{ fontFamily: "var(--graview-font-display)", letterSpacing: "0.12em", textTransform: "uppercase", fontSize: "0.75rem", marginRight: 6 }}>
-        {brand?.name ?? "Graview"}
+        {/* The app's mark and the line under its name at a desk's width; at a phone's, the name alone, so the strip keeps to its rows (FR-117). */}
+        <AppTitle brand={compact && brand ? { ...brand, logo: undefined } : brand} name={brand?.name ?? "Graview"} subtitle={!compact} size={16} />
       </span>
       {faces}
       {scene?.(compact)}

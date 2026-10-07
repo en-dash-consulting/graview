@@ -70,6 +70,28 @@ export interface Brand {
    * that inherits the ink colour works in both schemes without two files.
    */
   readonly logo?: string;
+  /**
+   * What the logo says to someone who cannot see it (FR-124): the app's
+   * name when absent. Drawn beside the name, the logo is said only when
+   * this says more than the name does.
+   */
+  readonly logoAlt?: string;
+  /**
+   * The page's icon (FR-124), in the same forms as the logo: inline SVG or
+   * a same-origin path. Set only by a face that owns the whole page — the
+   * Shell, the routed face on its own, an embed told `favicon: true` —
+   * never by an embed on somebody else's page. `faviconHref` says it as an
+   * address.
+   */
+  readonly favicon?: string;
+  /** A line under the name (FR-125): a document's `description`. */
+  readonly subtitle?: string;
+  /**
+   * THE SCHEME THE APP PREFERS (FR-124), when the reader has not chosen:
+   * "auto" (the default) follows the system's. A host's own `data-theme`
+   * stamp, or a scheme the host asks for, is a choice and wins.
+   */
+  readonly scheme?: Scheme | "auto";
   readonly typography?: {
     /** Applied to everything. Include a real fallback stack. */
     readonly body?: string;

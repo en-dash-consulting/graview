@@ -217,6 +217,11 @@ export {
 export type { ContrastFinding, Rgba } from "./theme/contrast.js";
 export { DARK, LIGHT, SCHEMES } from "./theme/palettes.js";
 export { isoShade, SHAPE, shapeOf, TYPOGRAPHY, typographyOf } from "./theme/look.js";
+export { faviconHref, isInlineSvg, markHref, markProblem, MAX_INLINE_SVG, svgProblem } from "./theme/marks.js";
+export { DOCUMENT_FONTS, familiesIn, fontProblem, isSystemFamily, stackOf, SYSTEM_FONTS, SYSTEM_STACKS } from "./theme/fonts.js";
+export type { SystemStack } from "./theme/fonts.js";
+export { accentProblem, documentSchemes, passingShade } from "./theme/accent.js";
+export type { AccentRefusal } from "./theme/accent.js";
 export type { IsoFace, IsoShade, IsoWash, ResolvedShape, ResolvedTypography } from "./theme/look.js";
 export { googleCalendar, googleCalendarMapping } from "./sync/google-calendar.js";
 export type { Fetcher, GoogleCalendarOptions } from "./sync/google-calendar.js";

@@ -47,12 +47,15 @@ graph itself is the result list.
   so an agent finds by name instead of `get_graph` and a scan, and the MCP
   host gets it for free.
 - **Policy-honest.** A hit for something the seat may not see
-  (`kindsKeptFrom`) is not a hit.
+  (`kindsKeptFrom`, and record by record the policy's `sees`) is not a hit.
+- **Every hit that is somewhere says where.** A record, a kind's list and a
+  place carry `address`: their path on the routed face, as its own links
+  spell it, under a host's `basePath` when one is given (FR-129).
 
 ## The matcher (core, headless)
 
 ```ts
-search(store, query, options?: { principal?, from?: string[] /* the subject */, limit?, today? })
+search(store, query, options?: { principal?, from?: string[] /* the subject */, limit?, today?, basePath? })
   → { hits: Hit[]; searched: { kinds: string[]; past: boolean }; conditions: Condition[]; words: string }
 ```
 
@@ -60,9 +63,9 @@ A `Hit` is one of:
 
 | about | what it names | why it is shown |
 |---|---|---|
-| `node` | a record | label or a field contains the words; `why` names the field and the matching fragment |
-| `kind` | a district | the words are its plural or singular |
-| `place` | a titled group view | the words are in its title |
+| `node` | a record, at `address` (`/<plural>/<id>`) | label or a field contains the words; `why` names the field and the matching fragment |
+| `kind` | a district, at `address` (`/<plural>`) | the words are its plural or singular |
+| `place` | a titled group view, at `address` (`/places/<as>`) | the words are in its title |
 | `act` | a mutation | the words are its title; offered with a subject when one node hit is chosen |
 | `rule` | an invariant | the words are its name or label |
 

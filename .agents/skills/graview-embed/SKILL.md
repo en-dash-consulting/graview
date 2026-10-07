@@ -95,8 +95,7 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     not drawn); the reader's own choice is remembered over it. Say the
     host's own news through `handle.notify({ kind: "toast" | "banner",
     sentence, tone, action })`, not a toast of your own fixed over the app:
-    it is drawn in the framework's panel, on top, read aloud, over the
-    app's foot (left on a desk, middle on a phone), moving nothing.
+    it floats at the app's foot, read aloud, moving nothing.
 12. **When the page IS the app, hand it the address bar.** The default,
     `routing: "memory"`, never touches the host's `location` or `history`
     — right in an article. A host whose whole page is the app passes
@@ -110,8 +109,8 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     link. A host that keeps its own history stays on memory, hears
     `onNavigate(path, how)` and answers its own Back with `setPath(path)`.
 13. **A changed app keeps the reader's place.** `handle.setApp(app,
-    store)`, not a remount, keeps the face, the page and the stop; what
-    the change removed falls back to its parent. To remount, pass
+    store)`, not a remount, keeps the face, the page and the stop, and a
+    `label` that was the app's name takes the new name. To remount, pass
     `handle.where()` back as `mount(…, { at })`.
 
 ## A view of your own, in a frame
@@ -135,9 +134,10 @@ a path of your own) and connect:
 - `props.nodes` holds the records it is drawn over and those of the kinds
   it `reads`, each with `id`, `kind`, `label` and its fields; `props.edges`
   the links among them (`{ kind, from, to }`). Only what the viewer may see.
-- `props.theme` is the app's look: `scheme`, `accent`, `ground`, `panel`,
-  `ink`, `inkMuted`, `edge`, `fontBody`, `fontMono`. Paint from it; it is
-  pushed again when the app's toggle changes, whatever the system prefers.
+- `props.theme` is the app's look: `scheme`, colors, `fontDisplay`,
+  `radius`, `name`, and `logo` (a `data:` image; serve with `img-src
+  data:`). Paint from it; it is pushed again when the app's toggle or brand
+  changes, whatever the system prefers.
 - `guest.act(name, args)` asks for an act; it is applied as the viewer,
   `via: "view:<name>"`, and resolves `{ ok, intent }` or `{ ok: false,
   message }`, the policy's own sentence. `props.acts` lists what they may run.

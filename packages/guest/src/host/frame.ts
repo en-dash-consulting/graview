@@ -2,7 +2,7 @@ import type { AnySchema, Principal, Store } from "@graview/core";
 import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type GuestPlace, type GuestTheme, type HostHello } from "../protocol.js";
 import { mintNonce } from "./nonce.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestReads, type GuestStats, type GuestViewInput } from "./session.js";
-import { readTheme, watchTheme } from "./theme.js";
+import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand } from "./theme.js";
 
 export interface MountGuestViewOptions<S extends AnySchema> {
   /** Where the guest's code is served. Where that is, and its CSP, are the host's business. */
@@ -27,6 +27,13 @@ export interface MountGuestViewOptions<S extends AnySchema> {
    * prefers.
    */
   readonly theme?: () => GuestTheme;
+  /**
+   * The app's brand (FR-127): its name, and its logo, handed as a `data:`
+   * image the host made — an inline SVG, or an address on the page's own
+   * origin the host fetched — since a frame is another origin. Pushed
+   * again when it changes (`update`).
+   */
+  readonly brand?: () => GuestBrand | undefined;
   /** The app's named places: what the guest is told of (`props.places`), and may ask to go to by slug. None by default. */
   readonly places?: () => readonly GuestPlace[];
   readonly onNavigate?: (id: string) => void;
@@ -91,7 +98,8 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
   };
 
   /* The app's look, kept up (FR-86): pushed again when what the frame would be handed has changed. */
-  const theme = () => options.theme?.() ?? readTheme(element);
+  const logo = createGuestLogo(window as Window & typeof globalThis, () => push(), "data");
+  const theme = () => themeWithBrand(() => options.theme?.() ?? readTheme(element), options.brand, logo);
   let pushed = "";
   const push = () => {
     if (!session) return;
@@ -169,6 +177,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
     dispose() {
       end();
       unwatch();
+      logo.dispose();
       window.removeEventListener("message", onMessage);
       iframe.remove();
     },
