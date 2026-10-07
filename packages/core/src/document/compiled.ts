@@ -273,8 +273,14 @@ export function appFrom(compiled: unknown, options: AppFromOptions = {}): Compil
     sameNames(document.rules, plan.rules) &&
     Array.isArray(plan.edges) &&
     Array.isArray(plan.findings);
-  if (!whole) return { ok: false, findings: [error("compiled-shape", "", "this compiled app's parts do not match its document", "compile the document instead")] };
-  return build(plan, options);
+  const torn = { ok: false as const, findings: [error("compiled-shape", "", "this compiled app's parts do not match its document", "compile the document instead")] };
+  if (!whole) return torn;
+  // One torn on its way — a plan that is not there, a list that is not one — is refused as torn, never thrown out of the page.
+  try {
+    return build(plan, options);
+  } catch {
+    return torn;
+  }
 }
 
 /** The app, from a compiled document: the second half of compiling one, and all of `appFrom`. */

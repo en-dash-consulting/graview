@@ -1,0 +1,6 @@
+---
+"@graview/core": patch
+---
+A document refuses a field or relation named for what every object already has. Field and relation names are one camelCase word, and `constructor`, `toString`, `valueOf`, `hasOwnProperty` and the rest of `Object.prototype` are such words; the reader looked a kind's fields up by name, so every kind "had" them. An act that set `toString` on a kind with no such field compiled, and every call then failed with "declared.safeParse is not a function"; a kind that declared a `constructor` field compiled and could never make or change a record; and a relation called `toString` was refused as clashing with a field nobody declared. Each such name is now refused by path as `shape`: "every object already has this name — choose another". Kinds, acts, rules and roles may still be called `constructor`.
+
+Compatibility: no document that worked is refused: a field so named could not be written, and a relation so named never compiled. Check codes, ops, stored formats, the wire and tool schemas are unchanged.

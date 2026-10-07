@@ -72,6 +72,9 @@ These are pinned by tests, not by convention:
   shipped drawings on `/figures`, a view's block resolver on `/blocks`,
   a status board's reach on `/describe`, and arranging a list on `/arrange`
   (`packages/core/tests/unit/the-main-entry-carries-only-what-a-page-draws-with.test.ts`).
+  A page its host hands a compiled app imports `@graview/core/compiled`
+  and nothing from `/document` up front, which would bring the compiler
+  back (`pnpm verify hosted`).
   Likewise what only a drawn view uses is `@graview/react/drawing`'s, not
   `/provider`'s, and `@graview/tools/edit`'s, not `/frame`'s
   (`packages/react/tests/unit/the-provider-carries-only-what-the-frame-draws-with.test.ts`).
@@ -135,7 +138,7 @@ pinned at 1.49.1 on purpose.
   deprecated aliases for a package nobody depends on yet; the changelog
   records the change.
 - **Public API is `src/index.ts` → `exports` in `package.json`**, with the
-  entries listed there (core's `./document`, `./check`, `./scene`,
+  entries listed there (core's `./document`, `./compiled`, `./check`, `./scene`,
   `./figures`, `./blocks`, `./describe`, `./arrange`, `./conformance`, `./scaffold`,
   `./testing`; layout's `./view`; react's `./provider` and `./drawing`;
   tools' `./frame` and `./edit`; embed's `./pages`;

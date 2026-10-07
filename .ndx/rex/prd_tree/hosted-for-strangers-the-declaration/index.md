@@ -33,7 +33,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A hardened guest worker runtime: every global outside an allowlist removed before guest code runs (FR-70)](./a-hardened-guest-worker-runtime-every.md) | completed |
 | [A home view from the closed block set: headline, figure and list (FR-81)](./a-home-view-from-the-closed-block-set.md) | completed |
 | [A host can ask up front what the studio will not edit: uneditable(document) (FR-62)](./a-host-can-ask-up-front-what-the.md) | completed |
-| [A host can hand the page a compiled app, so the page no longer carries the compiler (FR-123)](./a-host-can-hand-the-page-a-compiled.md) | pending |
+| [A host can hand the page a compiled app, so the page no longer carries the compiler (FR-123)](./a-host-can-hand-the-page-a-compiled.md) | completed |
 | [A host can read Graview's shape and type: SHAPE, TYPOGRAPHY and isoShade(scheme) from core (FR-73)](./a-host-can-read-graview-s-shape-and.md) | completed |
 | [A host's own work has a seat: a system principal the policy lets through, and authors named by their own name](./a-host-s-own-work-has-a-seat-a-system.md) | completed |
 | [A host's refusal can say its own sentence, and an Apply with no edits says so before the host is asked (FR-65)](./a-host-s-refusal-can-say-its-own.md) | completed |
@@ -55,7 +55,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A pill means press this to choose, or a state (FR-117)](./a-pill-means-press-this-to-choose-or-a.md) | completed |
 | [A repair reads a declared default, so a record a coerce would keep is patched rather than dropped (FR-50)](./a-repair-reads-a-declared-default-so-a.md) | completed |
 | [A rule language the framework interprets: total, budgeted, and read like a sentence](./a-rule-language-the-framework.md) | completed |
-| [A rule's refusal says so: reason refused, not invalid (FR-119)](./a-rule-s-refusal-says-so-reason.md) | pending |
+| [A rule's refusal says so: reason refused, not invalid (FR-119)](./a-rule-s-refusal-says-so-reason.md) | completed |
 | [A seat's first state read after a wake costs what it did before FR-55](./a-seat-s-first-state-read-after-a-wake.md) | completed |
 | [A stability contract a host can hold the framework to: what a version may change, a changelog that says so, and capabilities() naming the seams it ships](./a-stability-contract-a-host-can-hold.md) | completed |
 | [A status board: a shipped columns lens over a choice field (FR-97)](./a-status-board-a-shipped-columns-lens.md) | completed |
@@ -64,7 +64,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A store can prove its own fold: a deterministic snapshot hash and store.verify()](./a-store-can-prove-its-own-fold-a.md) | completed |
 | [A studio mounted into part of a page draws no main, so a host page has no framework landmark violations (FR-58)](./a-studio-mounted-into-part-of-a-page.md) | completed |
 | [A thumbnail fitted to what stands: fit to content and a legible minimum building (FR-107)](./a-thumbnail-fitted-to-what-stands-fit.md) | completed |
-| [A thumbnail reads as a place with no counts (FR-120)](./a-thumbnail-reads-as-a-place-with-no.md) | pending |
+| [A thumbnail reads as a place with no counts (FR-120)](./a-thumbnail-reads-as-a-place-with-no.md) | completed |
 | [A view can list related records: a list block with a walk as its source (FR-82)](./a-view-can-list-related-records-a-list.md) | completed |
 | [A walk from every member of a set: out()/in() over a set return the distinct union, costed (FR-101)](./a-walk-from-every-member-of-a-set-out.md) | completed |
 | [A worker view is a place, with a manifest the host enforces (FR-91)](./a-worker-view-is-a-place-with-a.md) | completed |
@@ -88,7 +88,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Embed holds inside a chat's widget: no storage assumed, its own height reported, the host's scheme taken](./embed-holds-inside-a-chat-s-widget-no.md) | completed |
 | [Embed knows what its host can keep: the studio hidden or handed to the host, and a size budget](./embed-knows-what-its-host-can-keep-the.md) | completed |
 | [Embed reports what went wrong and how long it took, without what was on screen](./embed-reports-what-went-wrong-and-how.md) | completed |
-| [Every act refuses an argument it doesn't take (FR-121)](./every-act-refuses-an-argument-it-doesn.md) | pending |
+| [Every act refuses an argument it doesn't take (FR-121)](./every-act-refuses-an-argument-it-doesn.md) | completed |
 | [Every harness honours GRAVIEW_PORT_BASE, so a second checkout can run any of them](./every-harness-honours-graview-port.md) | completed |
 | [/graview/export calls exportBundle with its arguments the wrong way round](./graview-export-calls-exportbundle-with.md) | completed |
 | [Guest views in a worker: @graview/guest's worker entry and a host that takes a worker source (FR-68)](./guest-views-in-a-worker-graview-guest.md) | completed |
@@ -99,7 +99,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Migrations that keep data: declared renames and type coercion in steps and migrationBetween](./migrations-that-keep-data-declared.md) | completed |
 | [Modules reach the host: the enabled set is passed to opened, served and remote stores, and turning one off is in history](./modules-reach-the-host-the-enabled-set.md) | completed |
 | [One guest client, served not copied: a prebuilt classic script and an authoring guide (FR-88)](./one-guest-client-served-not-copied-a.md) | completed |
-| [One place says how many problems there are (FR-122)](./one-place-says-how-many-problems-there.md) | pending |
+| [One place says how many problems there are (FR-122)](./one-place-says-how-many-problems-there.md) | completed |
 | [openRemote's runtime entry exports the observable-client types, and read-only MCP calls can show presence](./openremote-s-runtime-entry-exports-the.md) | completed |
 | [pages is a real arrangement: order, hide and first, compiled and honoured on both faces (FR-80)](./pages-is-a-real-arrangement-order-hide.md) | completed |
 | [Presence a host can add to: kind, name, onBehalfOf, announce for socketless visitors, and welcome.participant (FR-47)](./presence-a-host-can-add-to-kind-name.md) | completed |
