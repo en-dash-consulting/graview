@@ -1,5 +1,49 @@
 # @graview/embed
 
+## 0.1.14
+
+### Patch Changes
+
+- cc50785: A new declaration keeps the reader's place (FR-116). When a chat changes an app, the host has a new compiled app and a new store, and `mount` was the only way to hand them to the embed. Graview Cloud remounted on the face the reader was on, but not on what they were looking at: the place or record open on Pages went back to the home, and the scene lost its stop and focus. The embed's handle now has `setApp(app, store)`, which swaps them in place; given a remote instead of a store, its presence comes with it. The face, the page open on Pages and the scene's stop and focus are kept. What the change took away falls back to its nearest parent: a removed record goes to its kind's list (in the scene, its kind's group), and a removed kind or place goes to the home. A lens gone from the scene goes to its kind's group, or to the home when the kind went too. Under address routing the address stays the source of truth, and one that names something gone is replaced, never pushed; under memory routing nothing touches `history` or `location`. The seat, the seats, the people, the scheme, the brand and the notices stay across the swap. The faces are drawn again, so an open menu, a scroll position and a half-typed field do not. `handle.where()` reads the place as `{ face, path, stop, kind }`, and a host that must remount hands it back with `mount(…, { at })`, where it is settled in the new app the same way. Memory routing now also returns to the page Pages was on after a trip to the scene, as address routing already did. The rules for settling a place are a chunk of their own, fetched the first time a declaration changes: Cloud's hosted page loads 566.7 KB up front, where it loaded about 565, against the same 572 KB budget. `pnpm verify address` now holds four more claims in Chromium, WebKit and Firefox: a place on Pages is still open after a new declaration, the scene focused on a record keeps its focus, a reader on a kind the change removed lands on the home, and in memory routing a new declaration writes no history.
+  
+  Compatibility: `EmbedHandle` gains `where()` and `setApp()`, `EmbedOptions` gains `at`, and `@graview/embed` exports the `EmbedWhere` type; `handle.store` is now the store the embed currently draws. `capabilities().shipped` gains `FR-116`. Ops, stored formats, wire messages, check codes and tool schemas are unchanged.
+- 8c43964: A pill means "press this to choose", or a state (FR-117). Building En Dash Org on Graview Cloud ended in one verdict: "too many pills, and too much cut-off text, on every face". When everything is a capsule, nothing reads as the thing to press, and a state badge, the one pill that earns its place, no longer stood out. Now one rule holds on every face. A capsule is a choice the reader can make, or a record's state badge, and nothing else is one. In a set of choices (the face switch, a calendar's range, the "Answers come from" setting, the embed's seats), the one chosen wears the capsule and the others are words to press. The places are text tabs that scroll, with the current one underlined, on a desk and on a phone alike. They are tabs rather than a menu because the places are the app's own navigation, read at a glance: a menu hides every name behind a press, and tabs keep every name whole and on screen. The tabs scroll sideways, a mouse wheel included, and the edge with more beyond it fades. The place you are on is scrolled into view, and each tab is a button the keyboard reaches. The "+N more" select and the phone's single select are gone. A district's name in the scene is text on its plot, haloed in the ground's colour, and its trouble bar is the name's baseline. The open control beside it is a quiet chevron. The scene's "Up" / "Down to …", the zoom control, the seat's suggestions and a calendar's previous, today and next are quiet buttons or links. A record is a card. A chip, a coverage cell's label, a relation's sign on a line and a kind's link on the routed home have a card's corners. A place page's other pictures are links. A kind's mark is its plot in miniature, a small iso tile in the kind's hue, rather than a round dot. A badge is not drawn where its context already says it. No card on a status board wears its own column's status, and a row under a grouped list's heading does not repeat that heading's value. The same goes for a field block of the board's own field. Other badges and blocks are drawn as before. A new harness, `pnpm verify quiet`, mounts the embed over the org app and Cloud's vendor template, as Cloud mounts it. It counts pills by Cloud's own definition: a visible element under 34 px tall, with a corner radius of at least half its height and a fill or a border. It runs in Chromium, WebKit and Firefox at 390×844 and 1280×800, in both schemes. The org app's desk Graview face goes from 39 pills to 4, and the vendor template's phone Pages home from 34 to 7. On the vendor template's desk Graview face it is 20 to 4, and on the org app's phone "Skills and levels" 12 to 7. No board card wears its own column's status, where four did. Cloud's hosted page loads 580 402 bytes up front (567 KB), where it loaded 580 510, so the design pass is 108 bytes smaller up front. The embed without the studio is 696 582 / 178 525 bytes first, where it was 696 428 / 178 422, and its gzipped budget is now 178 600.
+  
+  Compatibility: `Places` renders `nav[data-testid="places"]` holding `button.graview-place-tab[data-testid="place-<as>"]` (with `aria-pressed`) at every width. The `places-more` select and the compact `select[data-testid="places"]` are gone, and `compact` now puts the tabs on a row of their own. At altitude, `.graview-kind-face` has no capsule: no background, border or radius, and `[data-graview-tally]` is drawn at its foot. `.graview-kind-open`, `.graview-zoom`, `.graview-zoom-button`, `.graview-altitude-control` and `.graview-kind-tag` are no longer capsules. `Chip` has a 6 px radius. A kind's mark with no figure (`[data-graview-figure-kind="dot"]`) is a clipped iso tile, no longer a circle. The columns lens and a grouped list tell the cards they draw which value their heading already says; there is nothing new to import. `capabilities().shipped` gains `FR-113`, `FR-117` and `FR-118`. Ops, stored formats, wire messages, check codes and tool schemas are unchanged.
+- 72d2a95: A place handed back to the embed is settled as its seat sees the app (FR-116, FR-55). `setApp` and `mount(…, { at })` keep a record that is still there and send one that is gone to its kind's list on Pages, or its kind's group in the scene. "Still there" was asked of the whole store. A record the seat may not see was kept and one that does not exist was dropped. Under address routing the reader writes the address, so the next new declaration told that seat which guessed ids were real: `/people/<id>` stayed when the record existed and became `/people` when it did not. The place is now settled against the store as the seat is served it, so a record it may not see falls back exactly as an absent one does.
+  
+  Compatibility: unchanged for ops, stored formats, the wire, the declaration and check finding codes, and tool schemas.
+- 1bfd44a: Under address routing, a place handed back to the embed is settled on the face the address names (FR-106, FR-116). `mount(…, { at })` already opened on the face in the address bar, but it settled the place as if it were on the face `at` said. A host that remounts after a reload with the `at` it read earlier can hand back the scene while the address names a page. The page in the address was then left unsettled, so a record since removed showed as missing instead of falling back to its kind's list. The scene's stop was also written onto the page's address as a fragment. The address now decides the face as well as the place, and a page it names is settled like any other.
+  
+  Compatibility: unchanged for ops, stored formats, the wire, the declaration and check finding codes, and tool schemas.
+- Updated dependencies [f842422]
+- Updated dependencies [fc42f1e]
+- Updated dependencies [860223c]
+- Updated dependencies [1e7eba5]
+- Updated dependencies [0cee289]
+- Updated dependencies [3f02759]
+- Updated dependencies [5a236ea]
+- Updated dependencies [cc50785]
+- Updated dependencies [1712959]
+- Updated dependencies [45842b7]
+- Updated dependencies [8c43964]
+- Updated dependencies [f16cfbc]
+- Updated dependencies [63dfe90]
+- Updated dependencies [b8c4527]
+- Updated dependencies [ab91f13]
+- Updated dependencies [b9435aa]
+- Updated dependencies [05b0a95]
+- Updated dependencies [196033b]
+- Updated dependencies [6ac06de]
+- Updated dependencies [bd69456]
+  - @graview/core@0.1.14
+  - @graview/primitives@0.1.14
+  - @graview/react@0.1.14
+  - @graview/pages@0.1.14
+  - @graview/layout@0.1.14
+  - @graview/studio@0.1.14
+  - @graview/tools@0.1.14
+
 ## 0.1.13
 
 ### Patch Changes

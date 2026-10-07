@@ -1,7 +1,0 @@
----
-"@graview/primitives": patch
----
-
-A row in a nested list keeps its small blocks whole (FR-113). A row was a capsule holding a title, a badge and a progress block on one line, and every one of them was cut with an ellipsis. In En Dash Org's "Skills and levels", at a phone's width, the level badge drew as "L…" and the progress label as "3 of". Now a row is a line of its list. Its badge and progress keep their own width. The title takes what is left and wraps. A row too narrow for all of it wraps onto a second line before anything is cut. In a row, the progress block is its label, its bar and its value on one line. A badge is as wide as its words, and only words longer than the whole line wrap. A row standing on its own is a card with the panel's corners. Inside a list of rows it is a line with a hairline under it. Measured on the org app at 390×844, in Chromium, WebKit and Firefox and in both schemes, "Lv 3" and "3 of 5" are whole on both faces, where they were cut on both before.
-
-Compatibility: `.graview-spec-row` is no longer a capsule: no `border-radius: 999px`, no `white-space: nowrap`, no `overflow: hidden`, and its children no longer carry `text-overflow: ellipsis`. `.graview-spec-badge` no longer clips with an ellipsis. A host stylesheet that relied on a row staying one line must allow it to wrap. Ops, stored formats, wire messages, check codes and tool schemas are unchanged.

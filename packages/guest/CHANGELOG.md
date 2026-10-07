@@ -1,5 +1,31 @@
 # @graview/guest
 
+## 0.1.14
+
+### Patch Changes
+
+- 9e14b97: The README names `refused` as a headless run's own reason, not the page's. A page that cannot start a view says `start` (FR-102); a headless run says `refused` when its isolate could not be hardened or something called the script's entry before the host did, and the README listed it among the page's reasons.
+  
+  Compatibility: unchanged — the README only.
+- Updated dependencies [f842422]
+- Updated dependencies [fc42f1e]
+- Updated dependencies [860223c]
+- Updated dependencies [1e7eba5]
+- Updated dependencies [0cee289]
+- Updated dependencies [3f02759]
+- Updated dependencies [cc50785]
+- Updated dependencies [45842b7]
+- Updated dependencies [8c43964]
+- Updated dependencies [63dfe90]
+- Updated dependencies [b8c4527]
+- Updated dependencies [ab91f13]
+- Updated dependencies [b9435aa]
+- Updated dependencies [05b0a95]
+- Updated dependencies [6ac06de]
+- Updated dependencies [bd69456]
+  - @graview/core@0.1.14
+  - @graview/react@0.1.14
+
 ## 0.1.13
 
 ### Patch Changes
