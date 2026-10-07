@@ -10,7 +10,8 @@ Everything a Graview app declares, and the checker that verifies it.
   describable act; nothing writes the graph directly. Each kind gets a
   derived `edit-<kind>` offering the fields no other act writes; it takes
   only those, and an act refused as asked throws an `ActRefusal` whose
-  `reason` and `sentence` a host can show (`refusalOf` reads one).
+  `reason` and `sentence` a host can show (`refusalOf` reads one):
+  `refused` when the act's own rule says no, `invalid` for the call as sent.
 - **Invariants** — rules that judge the graph and name the mutations that
   would repair them. That naming is the seam derived affordances ride on.
 - **Operation log** — the graph is a fold over it. Author, intent, reads and

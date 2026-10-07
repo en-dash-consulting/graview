@@ -6,6 +6,7 @@ import {
   nodeRefArgs,
   permits,
   permittedMutations,
+  refusalOf,
   resolveModules,
   search,
   sha256Hex,
@@ -18,6 +19,7 @@ import {
   type Place,
   type Principal,
   type RefCandidate,
+  type RefusalReason,
   type Store,
 } from "@graview/core";
 import { computedValues } from "@graview/core/blocks";
@@ -91,6 +93,15 @@ export type ToolResult<S extends AnySchema> =
   | {
       readonly ok: false;
       readonly error: string;
+      /**
+       * Why, as a code an agent can branch on (`refusalOf`, FR-46): `refused`
+       * when the act's own rule said no (FR-119), `invalid` for the call as
+       * sent, `forbidden`, `missing`. Absent when no act was judged — a name
+       * that resolved to nothing or to several, a tool that is not there.
+       */
+      readonly reason?: RefusalReason;
+      /** The roles that could, when the policy knows them. */
+      readonly wouldNeed?: readonly string[];
       /** The argument a name could not be resolved for, when that is why. */
       readonly argument?: string;
       /** The records a name could mean, when it could mean several. */
@@ -540,7 +551,7 @@ export function createToolRuntime<S extends AnySchema>(
         const withheld = actNamed(name);
         if (withheld) {
           const verdict = store.permits({ name: withheld, args }, principal);
-          if (!verdict.ok) return { ok: false, error: verdict.refusal.message };
+          if (!verdict.ok) return { ok: false, error: verdict.refusal.message, reason: "forbidden" };
         }
         return {
           ok: false,
@@ -551,6 +562,7 @@ export function createToolRuntime<S extends AnySchema>(
         return {
           ok: false,
           error: `"${name}" changes the graph, and this seat is read-only.`,
+          reason: "forbidden",
         };
       }
 
@@ -702,7 +714,7 @@ export function createToolRuntime<S extends AnySchema>(
           if ("ok" in named) return named;
           // A preview reads what it acts on: one naming a record this seat may not see is refused as one naming nothing (FR-55).
           const missing = store.missingFor({ name: act, args: named.args }, principal);
-          if (missing) return { ok: false, error: missing.message };
+          if (missing) return { ok: false, error: missing.message, reason: "missing" };
           const preview = answerSeenBy(store, principal, store.preview({ name: act, args: named.args }, undefined, { author: principal }));
           return { ok: true, data: named.resolved.length > 0 ? { ...preview, resolved: named.resolved } : preview };
         }
@@ -725,9 +737,13 @@ export function createToolRuntime<S extends AnySchema>(
           return { ok: false, error: `Unknown tool "${name}".` };
       }
     } catch (error) {
+      // The sentence it always said, and the reason a program branches on (FR-119).
+      const { reason, wouldNeed } = refusalOf(error);
       return {
         ok: false,
         error: error instanceof Error ? error.message : String(error),
+        reason,
+        ...(wouldNeed ? { wouldNeed } : {}),
       };
     }
   };

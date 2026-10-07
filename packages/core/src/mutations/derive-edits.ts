@@ -206,7 +206,7 @@ export function deriveEditMutations<S extends AnySchema>(
           if (value !== undefined) patch[field] = value;
         }
         if (Object.keys(patch).length === 0) {
-          throw new ActRefusal(`Nothing to change — give at least one of ${said.join(", ")} a value.`);
+          throw new ActRefusal(`Nothing to change — give at least one of ${said.join(", ")} a value.`, "invalid");
         }
         ctx.patchNode((args as { id: string }).id, patch);
       },

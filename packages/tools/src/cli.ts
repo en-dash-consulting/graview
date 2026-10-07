@@ -4,7 +4,7 @@ import { entryArg, loadApp } from "@graview/core/cli";
 import { instantiateTemplate } from "@graview/core/check";
 import { sayFindings, templateSeedPrimitives } from "@graview/core/document";
 import { Store, type AnySchema, type GraviewApp, type MutationCall, type Operation, type Principal } from "@graview/core";
-import { backendFrom, openRemote, openStore, type RemoteStore } from "@graview/ship";
+import { backendFrom, openRemote, openStore, type RemoteRefusal, type RemoteStore } from "@graview/ship";
 import { createMcpAdapter } from "./agent/adapters.js";
 import { createToolRuntime } from "./agent/tools.js";
 import { serveMcpStdio } from "./mcp-stdio.js";
@@ -93,8 +93,8 @@ export interface Host<S extends AnySchema> {
   settled(): Promise<void>;
   /** Brings a remote graph up to date before a read; nothing to do locally. */
   refresh(): Promise<void>;
-  /** The server's refusals since the last look, in the policy's words. */
-  refusals(): string[];
+  /** The server's refusals since the last look: each sentence in the policy's words, and its reason (FR-119). */
+  refusals(): RemoteRefusal[];
   close(): Promise<void>;
 }
 
@@ -108,8 +108,8 @@ export async function openHost<S extends AnySchema>(
   const url = flag(argv, "--remote-url");
   if (url) {
     const remote: RemoteStore<S> = await openRemote({ app, url, principal, headers: headersFrom(argv), pollMs: 0, via });
-    let heard: string[] = [];
-    remote.onRefusal((reason) => heard.push(reason));
+    let heard: RemoteRefusal[] = [];
+    remote.onRefusal((_sentence, refusal) => heard.push(refusal));
     return {
       store: remote.store,
       where: url,
@@ -206,7 +206,11 @@ export async function mcp(argv: readonly string[]): Promise<number> {
       const result = await inner.callTool(name, args);
       await host.settled();
       const refused = host.refusals();
-      if (refused.length > 0) return { content: [{ type: "text" as const, text: refused.join("\n") }], isError: true };
+      if (refused.length > 0) {
+        const first = refused[0]!;
+        const text = refused.map((refusal) => refusal.sentence).join("\n");
+        return { content: [{ type: "text" as const, text }], structuredContent: { reason: first.reason, error: text, ...(first.wouldNeed ? { wouldNeed: first.wouldNeed } : {}) }, isError: true };
+      }
       return result;
     },
   };
@@ -439,7 +443,7 @@ async function finish<S extends AnySchema>(host: Host<S>, since: number, extra: 
   await host.settled();
   const refused = host.refusals();
   if (refused.length > 0) {
-    say(`graview apply: ${refused.join("\n")}\n`);
+    say(`graview apply: ${refused.map((refusal) => refusal.sentence).join("\n")}\n`);
     return 1;
   }
   const landed = host.store.log.all().slice(since);

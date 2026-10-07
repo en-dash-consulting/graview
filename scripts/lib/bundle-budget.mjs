@@ -67,8 +67,12 @@ export const BUDGETS = [
      * imports (`@graview/react/drawing`, `@graview/tools/edit`,
      * `@graview/core/arrange`) and the describer came to be fetched when the
      * assistant is first asked about a place: measured at 487_223 / 165_379.
+     *
+     * Raised when the assistant's tools came to say why a call was refused
+     * (FR-119): the page's agent runtime reads a refusal with `refusalOf`,
+     * about 0.5 kB minified. Measured at 488_176 / 165_609.
      */
-    minified: 488_000,
+    minified: 488_500,
     gzipped: 166_000,
     load: "first",
   },
