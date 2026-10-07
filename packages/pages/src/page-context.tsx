@@ -56,6 +56,13 @@ export interface PageContext<S extends AnySchema> {
    */
   readonly framed?: boolean;
   /**
+   * Whether a bar above the face already says how many problems there are
+   * and opens them — the embed's strip, with its Standing. The count is
+   * said in one place (FR-122): with a bar above, the shell's Problems tab
+   * names the page without a number of its own.
+   */
+  readonly standingAbove?: boolean;
+  /**
    * THE APP'S PICTURES. The view registry the scene draws from; given, every
    * registered place is a page on this face too — an index at `/places`,
    * each lens at `/places/<as>` — the home leads with them, each kind's page

@@ -18,6 +18,8 @@ export interface McpContent {
 
 export interface McpToolResult {
   readonly content: readonly McpContent[];
+  /** A refusal's reason beside its sentence (FR-119), for a client that branches rather than reads. */
+  readonly structuredContent?: { readonly reason: string; readonly error: string; readonly wouldNeed?: readonly string[] };
   readonly isError?: boolean;
 }
 
@@ -49,7 +51,11 @@ export function createMcpAdapter<S extends AnySchema>(runtime: ToolRuntime<S>) {
     ): Promise<McpToolResult> {
       const result = await runtime.call(name, args);
       if (!result.ok) {
-        return { content: [{ type: "text", text: result.error }], isError: true };
+        return {
+          content: [{ type: "text", text: result.error }],
+          ...(result.reason ? { structuredContent: { reason: result.reason, error: result.error, ...(result.wouldNeed ? { wouldNeed: result.wouldNeed } : {}) } } : {}),
+          isError: true,
+        };
       }
       return {
         content: [

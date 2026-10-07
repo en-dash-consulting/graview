@@ -225,6 +225,13 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
 
 const argSchema = (arg: ArgPlan): z.ZodMiniType => ("field" in arg ? fieldSchema(arg.field, arg.optional) : "ref" in arg ? refTo(arg.ref) : z.optional(z.unknown()));
 
+/*
+ * An act's own refusal is the framework's typed one (FR-110), which a host
+ * shows rather than calling it a failure. Its condition, and a value it
+ * could not work out, are `refused` (FR-119); a call naming what is not
+ * there, or a subject of the wrong kind, says `invalid` — the call as sent.
+ */
+
 /** The compiled app each app was built from, so it can be handed on. */
 const PLANS = new WeakMap<object, CompiledApp>();
 
@@ -370,8 +377,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
           const graph = context.graph as unknown as GraphReader;
           const subjectId = typeof input[SUBJECT_ARG] === "string" ? (input[SUBJECT_ARG] as string) : undefined;
           const subject = subjectId ? graph.getNode(subjectId) : undefined;
-          if (subjectId && !subject) throw new ActRefusal(`there is no record "${subjectId}"`);
-          if (subject && subjectKinds.length > 0 && !subjectKinds.includes(subject.kind)) throw new ActRefusal(`"${title}" acts on ${subjectKinds.join(" or ")}, not on ${withArticle(subject.kind)}`);
+          if (subjectId && !subject) throw new ActRefusal(`there is no record "${subjectId}"`, "invalid");
+          if (subject && subjectKinds.length > 0 && !subjectKinds.includes(subject.kind)) throw new ActRefusal(`"${title}" acts on ${subjectKinds.join(" or ")}, not on ${withArticle(subject.kind)}`, "invalid");
           const bindings: Record<string, Value> = {};
           for (const [k, v] of Object.entries(input)) if (v !== undefined) bindings[k] = v as Value;
           if (guard && subject) {
@@ -421,8 +428,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               const kind = "connect" in effect ? effect.connect : effect.sever;
               const from = String(resolve(effect.from, undefined) ?? "");
               const to = String(resolve(effect.to, undefined) ?? "");
-              if (!graph.has(from) && ![...made.values()].includes(from)) throw new ActRefusal(`there is no record "${from}"`);
-              if (!graph.has(to) && ![...made.values()].includes(to)) throw new ActRefusal(`there is no record "${to}"`);
+              if (!graph.has(from) && ![...made.values()].includes(from)) throw new ActRefusal(`there is no record "${from}"`, "invalid");
+              if (!graph.has(to) && ![...made.values()].includes(to)) throw new ActRefusal(`there is no record "${to}"`, "invalid");
               if ("connect" in effect) {
                 if (edges.get(kind)?.cardinality === "one") for (const existing of graph.out(from, kind)) if (existing.id !== to) context.removeEdge({ kind, from, to: existing.id });
                 if (!graph.out(from, kind).some((n) => n.id === to)) context.addEdge({ kind, from, to });
@@ -432,7 +439,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
             } else if ("set" in effect) {
               const targetId = String(resolve(effect.target ?? "$subject", undefined) ?? "");
               const target = graph.getNode(targetId);
-              if (!target && ![...made.values()].includes(targetId)) throw new ActRefusal(`there is no record "${targetId}"`);
+              if (!target && ![...made.values()].includes(targetId)) throw new ActRefusal(`there is no record "${targetId}"`, "invalid");
               const patch: Record<string, unknown> = {};
               for (const [field, value] of Object.entries(effect.set)) {
                 const v = resolve(value, target);
@@ -441,7 +448,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               if (Object.keys(patch).length > 0) context.patchNode(targetId, patch);
             } else if ("remove" in effect) {
               const id = String(resolve(effect.remove, undefined) ?? "");
-              if (!graph.has(id)) throw new ActRefusal(`there is no record "${id}"`);
+              if (!graph.has(id)) throw new ActRefusal(`there is no record "${id}"`, "invalid");
               context.removeNode(id);
             } else if ("replace" in effect && subject) {
               // The subject's links of each relation, at its own end, severed — all but the one being made (FR-115).

@@ -8,9 +8,11 @@ Everything a Graview app declares, and the checker that verifies it.
   what it read as well as what it wrote.
 - **Mutations** — `defineMutation`. Every change is a typed, named,
   describable act; nothing writes the graph directly. Each kind gets a
-  derived `edit-<kind>` offering the fields no other act writes; it takes
-  only those, and an act refused as asked throws an `ActRefusal` whose
-  `reason` and `sentence` a host can show (`refusalOf` reads one).
+  derived `edit-<kind>` offering the fields no other act writes. Every act
+  refuses an argument it does not take, naming those it does, and an act
+  refused as asked throws an `ActRefusal` whose
+  `reason` and `sentence` a host can show (`refusalOf` reads one):
+  `refused` when the act's own rule says no, `invalid` for the call as sent.
 - **Invariants** — rules that judge the graph and name the mutations that
   would repair them. That naming is the seam derived affordances ride on.
 - **Operation log** — the graph is a fold over it. Author, intent, reads and
@@ -51,7 +53,9 @@ Everything a Graview app declares, and the checker that verifies it.
   size, `fit: "content"` fits it to what stands: each district on its whole
   block from the same corner, cropped to the plots, with a few blocks no
   narrower than `minBuilding` pixels (16 by default) rather than a speck per
-  record. A kind's
+  record. Without counts — a live app with no snapshot — each district stands
+  three blocks placed and raised by its kind's name, so every app still looks
+  like itself. A kind's
   figures are `@graview/core/figures`.
 - **What a page loads first** — `@graview/core` and `@graview/core/document`
   hold only what a page draws with. The checker, the city, the figures and

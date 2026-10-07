@@ -5,7 +5,7 @@ import { describePlace } from "../../src/describe.js";
 import { appFrom, COMPILED_FORMAT, compileDocumentWithoutCheck, documentHash, serializeCompiled, toDocument, type CompiledDocument, type GraviewDocument } from "../../src/document/index.js";
 import * as compiledEntry from "../../src/compiled.js";
 import { checkApp } from "../../src/cli/check.js";
-import { formFields, mutationToolSchema, placesOf, Store, type AnySchema, type FormField, type GraviewApp, type Principal } from "../../src/index.js";
+import { formFields, mutationToolSchema, placesOf, refusalOf, Store, type AnySchema, type FormField, type GraviewApp, type Principal } from "../../src/index.js";
 import { todoApp } from "../../../../apps/todo/src/domain/app.js";
 import { seedbedApp } from "../../../../apps/seedbed/src/domain/app.js";
 import { rotaApp } from "../../../../apps/rota/src/domain/app.js";
@@ -157,7 +157,7 @@ function run(store: Store<AnySchema>, name: string, args: Record<string, unknown
     const result = store.apply({ name, args }, { author: { kind: "human", id: "everyone", roles } });
     return { ok: true, ops: result.ops.map(({ id: _id, batch: _batch, ...op }) => op) };
   } catch (error) {
-    return { ok: false, refused: error instanceof Error ? `${error.constructor.name}: ${error.message}` : String(error) };
+    return { ok: false, refused: error instanceof Error ? `${error.constructor.name}: ${error.message}` : String(error), ...refusalOf(error) };
   }
 }
 
@@ -308,6 +308,38 @@ describe("a compiled app the page cannot read is refused, so the shell compiles 
     const broken = await compiledEntry.appFromOrCompile({ compiled: { format: "graview-compiled@0" }, document: { format: "graview-document" } });
     expect(broken.ok).toBe(false);
     expect(compiledEntry.sayFindings(broken.findings)).toContain("✗");
+  });
+
+  /*
+   * THE SAME REFUSALS, FOR THE SAME REASONS (FR-119, FR-121): a guard's
+   * refusal is `refused`, in its own words; a record that is not there is
+   * `missing`; a subject of the wrong kind and a derived edit given nothing to change are
+   * `invalid`; and an argument an act does not take is refused by both apps
+   * alike, never dropped.
+   */
+  it("refuses as the compiled app does: the same reason, the same sentence, the same strictness", () => {
+    const rebuilt = appFrom(wire);
+    if (!rebuilt.ok) throw new Error("the vendors compiled app builds");
+    const seed = seedOf(vendors.document);
+    const a = storeOf(vendors.app as GraviewApp<AnySchema>, seed);
+    const b = storeOf(rebuilt.app as GraviewApp<AnySchema>, seed);
+    const both = (name: string, args: Record<string, unknown>) => {
+      const answer = run(b, name, args, ["owner"]);
+      expect(answer, `${name} ${JSON.stringify(args)}`).toEqual(run(a, name, args, ["owner"]));
+      return answer as { ok: boolean; reason?: string; sentence?: string };
+    };
+    expect(both("decline", { id: "vendor-1" }).ok).toBe(true);
+    expect(both("book", { id: "vendor-1" })).toMatchObject({ ok: false, reason: "refused", sentence: "Record 1 was declined; reopen them first" });
+    // A record that is not there is the store's to say, before the act runs: `missing`, from both alike.
+    expect(both("book", { id: "nobody" })).toMatchObject({ ok: false, reason: "missing" });
+    expect(both("book", { id: "category-1" })).toMatchObject({ ok: false, reason: "invalid" });
+    const stray = both("set-quote", { id: "vendor-2", quote: 10, colour: "red" });
+    expect(stray.ok).toBe(false);
+    expect(stray.sentence).toContain("colour");
+    expect(both("edit-vendor", { id: "vendor-2" })).toMatchObject({ ok: false, reason: "invalid" });
+    const strict = (app: GraviewApp<AnySchema>) => (app.mutations ?? []).map((m) => [m.name, mutationToolSchema(m as never).inputSchema["additionalProperties"]]);
+    expect(strict(rebuilt.app as GraviewApp<AnySchema>)).toEqual(strict(vendors.app as GraviewApp<AnySchema>));
+    expect(strict(rebuilt.app as GraviewApp<AnySchema>).every(([, closed]) => closed === false)).toBe(true);
   });
 
   it("is reached from @graview/core/compiled, which carries no compiler", () => {

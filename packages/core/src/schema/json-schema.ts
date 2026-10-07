@@ -1,5 +1,5 @@
 import * as z from "./zod.js";
-import { takesAnId } from "../mutations/define-mutation.js";
+import { argumentsTaken, takesAnId } from "../mutations/define-mutation.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
 import type { AnySchema } from "./schema.js";
 import type { AnyNodeDefinition } from "./types.js";
@@ -90,6 +90,8 @@ export function mutationToolSchema(mutation: {
     };
     base["properties"] = properties;
   }
+  // An act refuses an argument it does not take (FR-121), and its tool says so.
+  if (argumentsTaken(mutation)) base["additionalProperties"] = false;
   for (const ref of refs) {
     const property = properties[ref.name];
     if (!property) continue;
