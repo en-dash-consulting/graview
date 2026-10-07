@@ -25,6 +25,8 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "add-rule": { op: "add-rule", rule: "named", over: "vendor", require: "len(name) > 0" },
   "remove-rule": { op: "remove-rule", rule: "within-budget" },
   "set-brand": { op: "set-brand", accent: "#2f6f4e" },
+  "set-name": { op: "set-name", name: "Our wedding" },
+  "set-description": { op: "set-description", description: "Who we hire." },
   "set-label": { op: "set-label", kind: "vendor", label: "{name} ({status})" },
   "set-describe": { op: "set-describe", kind: "vendor", describe: "{status}" },
   "set-view": { op: "set-view", kind: "vendor", slot: "card", blocks: [{ title: "{name}" }] },

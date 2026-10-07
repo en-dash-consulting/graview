@@ -17,4 +17,4 @@ export { describePlace, placeText } from "./document/describe-place.js";
  */
 export { columnActs, columnMoves, columnOf, columnReach, columnSteps, statusColumns } from "./columns.js";
 export type { ColumnMove, ColumnReach, StatusColumn } from "./columns.js";
-export type { DescribedItem, DescribedPart, DescribedProblem, DescribePlaceOptions, DescribePlaceResult, PlaceDescription } from "./document/describe-place.js";
+export type { DescribedItem, DescribedMasthead, DescribedPart, DescribedProblem, DescribePlaceOptions, DescribePlaceResult, PlaceDescription } from "./document/describe-place.js";

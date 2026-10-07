@@ -25,6 +25,8 @@ import { computedOf, validateComputed } from "./computed.js";
 import type { TemplatePart } from "./template.js";
 import { parseTemplate, templateBraces, TemplateError } from "./template-parse.js";
 import { validateViews, VIEW_SLOTS } from "./views.js";
+import { brandFindings } from "./brand-check.js";
+import { accentProblem } from "../theme/accent.js";
 
 /*
  * STRUCTURAL EDITS — a closed vocabulary for changing what an app declares.
@@ -80,6 +82,8 @@ export const EDIT_OPS = [
   "add-rule",
   "remove-rule",
   "set-brand",
+  "set-name",
+  "set-description",
   "set-label",
   "set-describe",
   "set-view",
@@ -130,11 +134,20 @@ const SHAPES: Record<EditOp, z.ZodType> = {
     .object({
       op: z.literal("set-brand"),
       accent: z.union([z.string(), z.null()]).optional(),
-      name: z.string().min(1).max(60).optional(),
+      name: z.union([z.string().min(1).max(60), z.null()]).optional(),
       currency: z.union([z.string(), z.null()]).optional(),
       locale: z.union([z.string(), z.null()]).optional(),
+      // The rest of the brand (FR-124, FR-125): each as the document holds it, null to clear it.
+      logo: z.union([z.string().min(1), z.object({ src: z.string().min(1), alt: z.string().min(1).max(120).optional() }).strict(), z.null()]).optional(),
+      favicon: z.union([z.string().min(1), z.null()]).optional(),
+      typography: z.union([z.object({ display: z.union([z.string().min(1).max(200), z.null()]).optional(), body: z.union([z.string().min(1).max(200), z.null()]).optional(), mono: z.union([z.string().min(1).max(200), z.null()]).optional() }).strict(), z.null()]).optional(),
+      shape: z.union([z.object({ radius: z.union([z.number().min(0).max(32), z.null()]).optional(), density: z.union([z.number().min(0.75).max(1.5), z.null()]).optional() }).strict(), z.null()]).optional(),
+      accents: z.union([z.record(z.string(), z.union([z.number().min(0).max(360), z.null()])), z.null()]).optional(),
+      scheme: z.union([z.enum(["light", "dark", "auto"]), z.null()]).optional(),
     })
     .strict(),
+  "set-name": z.object({ op: z.literal("set-name"), name: z.string().min(1).max(80) }).strict(),
+  "set-description": z.object({ op: z.literal("set-description"), description: z.union([z.string().min(1).max(500), z.null()]) }).strict(),
   "set-label": z.object({ op: z.literal("set-label"), kind: kindName, field: fieldName.optional(), label: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
   "set-describe": z.object({ op: z.literal("set-describe"), kind: kindName, describe: z.union([z.string().min(1).max(300), z.null()]) }).strict(),
   // A kind's slot; the front page (`slot: "home"`, no kind); or a blocks lens's blocks, by its title (FR-84).
@@ -473,6 +486,92 @@ class Editor {
     this.findings.push(error("edit", `edits.${i}${path ? `.${path}` : ""}`, message, fix));
   }
 
+  /**
+   * THE BRAND, KEY BY KEY (FR-100, FR-124, FR-125): what an edit names is
+   * set, null clears it, and what it does not name stays as it was. Each
+   * is judged as `graview check` judges it — a mark that could act or load,
+   * a face off the list — and an accent that does not read as given is
+   * refused with the pair, the ratio and a shade that would (FR-126).
+   */
+  private setBrand(i: number, e: Doc) {
+    const brand: Record<string, any> = clone(this.doc.brand ?? {});
+    const at = `edits.${i}`;
+    const judged = brandFindings(
+      { ...(typeof e.logo === "string" || isObject(e.logo) ? { logo: e.logo } : {}), ...(typeof e.favicon === "string" ? { favicon: e.favicon } : {}), ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}) },
+      { at },
+    );
+    if (judged.length > 0) return void this.findings.push(...judged);
+    if (e.accent === null) {
+      delete brand["accent"];
+      this.said.push("The app goes back to Graview's colours.");
+    } else if (e.accent !== undefined) {
+      if (!/^#[0-9a-fA-F]{6}$/.test(e.accent)) return this.fail(i, "accent", 'an accent is a colour like "#c2577a"');
+      const refused = accentProblem(e.accent);
+      if (refused) return this.fail(i, "accent", refused.sentence, refused.suggestion ? `{"op": "set-brand", "accent": "${refused.suggestion}"}` : "pick a colour of another hue");
+      brand["accent"] = e.accent;
+      this.said.push(`The app's accent colour becomes ${e.accent}.`);
+    }
+    if (e.currency === null) {
+      delete brand["currency"];
+      this.said.push("Money is said with no currency.");
+    } else if (e.currency !== undefined) {
+      if (!/^[A-Z]{3}$/.test(e.currency)) return this.fail(i, "currency", 'a currency is its three-letter code, like "USD" or "EUR"');
+      brand["currency"] = e.currency;
+      this.said.push(`Money is said in ${e.currency}.`);
+    }
+    if (e.locale === null) delete brand["locale"];
+    else if (e.locale !== undefined) {
+      if (!/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(e.locale)) return this.fail(i, "locale", 'a locale is a language tag, like "en-US" or "de-DE"');
+      brand["locale"] = e.locale;
+      this.said.push(`Money is written for ${e.locale}.`);
+    }
+    if (e.name === null) {
+      delete brand["name"];
+      this.said.push("The wordmark says the app's name.");
+    } else if (e.name !== undefined) {
+      brand["name"] = e.name;
+      this.said.push(`The app's wordmark says ${e.name}.`);
+    }
+    for (const [key, what] of [["logo", "logo"], ["favicon", "page icon"]] as const) {
+      if (e[key] === undefined) continue;
+      const had = brand[key] !== undefined;
+      if (e[key] === null) delete brand[key];
+      else brand[key] = e[key];
+      this.said.push(e[key] === null ? `The app has no ${what}.` : had ? `The ${what} changes.` : `The app gets a ${what}.`);
+    }
+    const merge = (key: "typography" | "shape" | "accents", say: (part: string, value: unknown) => string, cleared: string) => {
+      if (e[key] === undefined) return;
+      if (e[key] === null) {
+        delete brand[key];
+        this.said.push(cleared);
+        return;
+      }
+      const into: Record<string, unknown> = { ...(brand[key] ?? {}) };
+      for (const [part, value] of Object.entries(e[key] as Record<string, unknown>)) {
+        if (value === null) delete into[part];
+        else into[part] = value;
+        this.said.push(say(part, value));
+      }
+      if (Object.keys(into).length === 0) delete brand[key];
+      else brand[key] = into;
+    };
+    const ROLE: Record<string, string> = { display: "Headings", body: "Body text", mono: "Code" };
+    merge("typography", (role, value) => (value === null ? `${ROLE[role]} go${role === "display" ? "" : "es"} back to Graview's face.` : `${ROLE[role]} ${role === "display" ? "are" : "is"} now set in ${value}.`), "Words go back to Graview's faces.");
+    merge("shape", (part, value) => (part === "radius" ? (value === null ? "Corners go back to Graview's own." : `Corners are now ${value}px.`) : value === null ? "Spacing goes back to Graview's own." : `Spacing is now ${value} times Graview's own.`), "Corners and spacing go back to Graview's own.");
+    if (isObject(e.accents)) {
+      const unknown = Object.keys(e.accents).find((kind) => !this.doc.kinds[kind]);
+      if (unknown) return this.fail(i, "accents", `"${unknown}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`);
+    }
+    merge("accents", (kind, hue) => (hue === null ? `${cap(kind)} goes back to its own hue.` : `${cap(kind)} is drawn at hue ${hue}°.`), "Every kind goes back to its own hue.");
+    if (e.scheme !== undefined) {
+      if (e.scheme === null || e.scheme === "auto") delete brand["scheme"];
+      else brand["scheme"] = e.scheme;
+      this.said.push(e.scheme === "light" || e.scheme === "dark" ? `The app opens ${e.scheme} when the reader has not chosen.` : "The app follows the reader's system for light and dark.");
+    }
+    if (Object.keys(brand).length === 0) delete this.doc.brand;
+    else this.doc.brand = brand;
+  }
+
   private kind(i: number, kind: string): Doc | undefined {
     const spec = this.doc.kinds[kind];
     if (!spec) this.fail(i, "kind", `"${kind}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`);
@@ -580,38 +679,17 @@ class Editor {
         this.said.push(`The rule "${title}" is removed.`);
         return;
       }
-      case "set-brand": {
-        // The colours and the money (FR-100) are set apart: what an edit does not name stays as it was.
-        const brand: Record<string, unknown> = { ...(this.doc.brand ?? {}) };
-        if (e.accent === null) {
-          delete brand["accent"];
-          this.said.push("The app goes back to Graview's colours.");
-        } else if (e.accent !== undefined) {
-          if (!/^#[0-9a-fA-F]{6}$/.test(e.accent)) return this.fail(i, "accent", 'an accent is a colour like "#c2577a"');
-          brand["accent"] = e.accent;
-          this.said.push(`The app's accent colour becomes ${e.accent}.`);
-        }
-        if (e.currency === null) {
-          delete brand["currency"];
-          this.said.push("Money is said with no currency.");
-        } else if (e.currency !== undefined) {
-          if (!/^[A-Z]{3}$/.test(e.currency)) return this.fail(i, "currency", 'a currency is its three-letter code, like "USD" or "EUR"');
-          brand["currency"] = e.currency;
-          this.said.push(`Money is said in ${e.currency}.`);
-        }
-        if (e.locale === null) delete brand["locale"];
-        else if (e.locale !== undefined) {
-          if (!/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(e.locale)) return this.fail(i, "locale", 'a locale is a language tag, like "en-US" or "de-DE"');
-          brand["locale"] = e.locale;
-          this.said.push(`Money is written for ${e.locale}.`);
-        }
-        if (e.name) {
-          brand["name"] = e.name;
-          this.said.push(`The app's wordmark says ${e.name}.`);
-        }
-        // A brand that holds only a name holds nothing to apply.
-        if (Object.keys(brand).every((key) => key === "name")) delete this.doc.brand;
-        else this.doc.brand = brand;
+      case "set-brand":
+        return this.setBrand(i, e);
+      case "set-name": {
+        this.doc.name = e.name;
+        this.said.push(`The app is now called "${e.name}".`);
+        return;
+      }
+      case "set-description": {
+        if (e.description === null) delete this.doc.description;
+        else this.doc.description = e.description;
+        this.said.push(e.description === null ? "The app has no line under its name." : `The line under the app's name reads "${e.description}".`);
         return;
       }
       case "set-label": {
