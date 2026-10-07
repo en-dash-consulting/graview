@@ -22,10 +22,10 @@ this package serves lists, records, forms, problems and history as ordinary link
 - **One bar, and the scene a place.** The shell is the one app bar (FR-131): the app's mark
   and name — the page's one heading, the way home — its places as tabs (the overview, each
   picture, each kind's list, the connections; "More" for what the row cannot hold), and Find,
-  the standing and the person. The overview is the scene (FR-132), at `sceneHref` on a face
+  the standing and the person. The overview is the scene (FR-132), at the scene's own address on a face
   that owns its page; a record and a picture say "On the overview ↗", to their stop there.
-  Under an embed's bar (`barAbove`) the shell draws none of it, and the face's Find goes in
-  that bar. Each page's own title is said a level under the app's name (`titleLevel`). See
+  Under an embed's bar the shell draws none of it, and the face's Find goes in
+  that bar. Each page's own title is said a level under the app's name. See
   `apps/todo` for both mounted from one declaration (`/` scene, `/pages` routed).
 - **The host may own the history.** `basename` mounts the face under a path;
   `onNavigate(path, how)` tells a host each page the face opens (`"push"`,
