@@ -8,8 +8,9 @@ Everything a Graview app declares, and the checker that verifies it.
   what it read as well as what it wrote.
 - **Mutations** — `defineMutation`. Every change is a typed, named,
   describable act; nothing writes the graph directly. Each kind gets a
-  derived `edit-<kind>` offering the fields no other act writes; it takes
-  only those, and an act refused as asked throws an `ActRefusal` whose
+  derived `edit-<kind>` offering the fields no other act writes. Every act
+  refuses an argument it does not take, naming those it does, and an act
+  refused as asked throws an `ActRefusal` whose
   `reason` and `sentence` a host can show (`refusalOf` reads one):
   `refused` when the act's own rule says no, `invalid` for the call as sent.
 - **Invariants** — rules that judge the graph and name the mutations that

@@ -41,6 +41,26 @@ export function takesAnId(definition: { readonly creates?: readonly string[] | u
   return shape === undefined || !("id" in shape);
 }
 
+/**
+ * THE ARGUMENTS AN ACT TAKES, WHEN THE FRAMEWORK HOLDS IT TO THEM (FR-121):
+ * the keys of a plain `z.object` input — which zod would strip silently —
+ * and, on an act that creates, the `id` of the record it makes. Undefined
+ * for an input its author said otherwise of: `z.strictObject` refuses by
+ * itself, and `z.looseObject` or a `catchall` keeps what it is not told
+ * about, on purpose; and for an input that is not an object's shape.
+ */
+export function argumentsTaken(definition: { readonly creates?: readonly string[] | undefined; readonly input: unknown }): readonly string[] | undefined {
+  const input = definition.input as { readonly shape?: Record<string, unknown>; readonly _zod?: { readonly def?: { readonly type?: string; readonly catchall?: unknown } } };
+  const def = input._zod?.def;
+  if (def?.type !== "object" || def.catchall !== undefined || !input.shape) return undefined;
+  const keys = Object.keys(input.shape);
+  return takesAnId(definition) ? [...keys, "id"] : keys;
+}
+
+/** "does not take "colour"; it takes "id", "quote"" — the one sentence for an argument an act does not take. */
+const doesNotTake = (stray: readonly string[], takes: readonly string[]): string =>
+  `does not take ${stray.map((key) => `"${key}"`).join(", ")}; it takes ${takes.length > 0 ? takes.map((key) => `"${key}"`).join(", ") : "nothing"}`;
+
 function requestedId(rawArgs: unknown): string | undefined {
   if (typeof rawArgs !== "object" || rawArgs === null) return undefined;
   const id = (rawArgs as Record<string, unknown>)["id"];
@@ -115,22 +135,29 @@ export function compileMutation<S extends AnySchema>(
    * its next call, needs exactly the id it asked for or an honest no.
    */
   const requested = takesAnId(definition) ? requestedId(rawArgs) : undefined;
-  const parsed = definition.input.safeParse(
-    requested === undefined ? rawArgs : withoutId(rawArgs as Record<string, unknown>),
-  );
+  const given = requested === undefined ? rawArgs : withoutId(rawArgs as Record<string, unknown>);
+  /*
+   * AN ARGUMENT THE ACT DOES NOT TAKE IS REFUSED, by every act (FR-121; a
+   * derived edit since FR-110). A plain `z.object` strips what it does not
+   * declare, so `set-quote { id, quote, colour }` set the quote and said
+   * nothing of the colour; the framework holds the act to its shape here,
+   * at the one boundary every call crosses, so no product changes its
+   * input. An argument given as `undefined` is no argument. Said with those
+   * it does take — a caller that misspelt one learns the spelling.
+   */
+  const taken = argumentsTaken(definition);
+  if (taken && typeof given === "object" && given !== null && !Array.isArray(given)) {
+    const stray = Object.keys(given).filter((key) => !taken.includes(key) && (given as Record<string, unknown>)[key] !== undefined);
+    if (stray.length > 0) throw new InvalidArguments(definition.name, [{ path: [], message: doesNotTake(stray, taken) }]);
+  }
+  const parsed = definition.input.safeParse(given);
   if (!parsed.success) {
-    /*
-     * AN ARGUMENT THE ACT DOES NOT TAKE is said with those it does (FR-110):
-     * "does not take "colour"; it takes "id", "name"" — a caller that
-     * misspelt one learns the spelling, not zod's "Unrecognized key".
-     */
+    // A strict input's own refusal of an argument (a derived edit's), said the same way.
     const takes = Object.keys((definition.input as { shape?: Record<string, unknown> }).shape ?? {});
     throw new InvalidArguments(
       definition.name,
       parsed.error.issues.map((issue) =>
-        issue.code === "unrecognized_keys" && takes.length > 0
-          ? { ...issue, message: `does not take ${issue.keys.map((key) => `"${key}"`).join(", ")}; it takes ${takes.map((key) => `"${key}"`).join(", ")}` }
-          : issue,
+        issue.code === "unrecognized_keys" && takes.length > 0 ? { ...issue, message: doesNotTake(issue.keys, takes) } : issue,
       ),
     );
   }

@@ -46,6 +46,16 @@ export const ANNOUNCED: readonly Announcement[] = [
     version: "0.1.14",
     what: "FR-110: edit-chore refuses an argument it does not take (additionalProperties: false).",
   },
+  {
+    fixture: "document:vendors",
+    version: "0.1.15",
+    what: "FR-121: every act refuses an argument it does not take — add-category, add-vendor, add-to-category, set-quote, book, decline, file-under, unfile and remove-category and remove-vendor say additionalProperties: false.",
+  },
+  {
+    fixture: "document:two-lines",
+    version: "0.1.15",
+    what: "FR-121: add-chore and remove-chore refuse an argument they do not take (additionalProperties: false).",
+  },
 ];
 
 export const FIXTURES: readonly ConformanceFixture[] = [
@@ -259,6 +269,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "add-category": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "name": {
               "type": "string",
@@ -280,6 +291,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "add-vendor": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "name": {
               "type": "string",
@@ -319,6 +331,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "add-to-category": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -338,6 +351,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "set-quote": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -356,6 +370,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "book": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -370,6 +385,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "decline": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -384,6 +400,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "file-under": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -404,6 +421,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "unfile": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -474,6 +492,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "remove-category": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -488,6 +507,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "remove-vendor": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -539,6 +559,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "add-chore": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "title": {
               "type": "string",
@@ -582,6 +603,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "remove-chore": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",

@@ -120,7 +120,10 @@ rather than merely absent from the schema.
 beside its sentence (MCP's `structuredContent` too): `forbidden`, `missing`,
 `invalid` for the call as sent, `refused` when the act's own rule said no. A
 TypeScript mutation says its rule's no with `throw new ActRefusal(sentence)`;
-a bare `Error` is `invalid`, since nothing can tell it from a slip.
+a bare `Error` is `invalid`, since nothing can tell it from a slip. Every act
+refuses an argument it does not take, naming those it does (a creating act
+takes `id` too), and its tool says `additionalProperties: false`; write
+`z.looseObject` only for an act that means to keep the rest.
 
 ## What the check cannot see
 
