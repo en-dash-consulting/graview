@@ -205,7 +205,7 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
         } else {
           bytes = await fetch(src).then(async (response) => [...new Uint8Array(await response.arrayBuffer())]).catch((error) => `unread: ${error}`);
         }
-        const pageHeading = document.querySelector("[data-graview-face=pages] h1");
+        const pageHeading = document.querySelector("[data-graview-face=pages] [data-graview-page-title]");
         const wordmark = [...document.querySelectorAll("[data-graview-embed] a, [data-graview-embed] span")].find((one) => !region.contains(one) && one.textContent.trim() === heading.textContent && one.children.length <= 1);
         return {
           name: heading.textContent,

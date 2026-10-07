@@ -33,10 +33,12 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
    the fragment the app writes — `#overview=1`, `#focus=agg:plot`,
    `#view=the-week` — so a link you copied from the app is an embed's
    starting point. `face` follows the stop unless you name one.
-2. **Pick the face for the page.** `"scene"` and `"graview"` are the app;
-   `"pages"` is the routed face, opened at `path`; `"picture"` is ONE named
-   lens alone (`stop: "#view=the-week"`), no bar and no rail — a page
-   about a lens shows the lens. `toggle: false` drops the strip too.
+2. **Pick the face for the page.** One app bar stands over every face:
+   the name, the places — the overview (the scene) among them — Find,
+   the standing and the person. `"scene"` and
+   `"graview"` open on the overview; `"pages"` on `path`; `"picture"` is
+   ONE named lens alone (`stop: "#view=the-week"`), no bar and no rail.
+   `bar: false` drops the bar.
 3. **Name it.** Two embeds on one page carry the same landmarks — the
    relation key, the inspector, the pages' navigation — and a landmark must
    be unique by role and name. `label` names every one of them after the
@@ -45,9 +47,9 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
    `data-theme` stamp; `setScheme` follows a host toggle; `fonts: false`
    when the host already loads them; `brand` / `setBrand` to dress it.
 5. **Make the policy felt, if the page is about it.** `seats` lists the
-   principals a reader may take — each a label and a `Principal` — on the
-   strip; the acts, the pages and the strip narrow the moment one sits
-   down, and `setSeat` does it from the host. See `graview-permissions`.
+   principals a reader may take — each a label and a `Principal` — in the
+   person's menu; the acts and the pages narrow the moment one sits down,
+   and `setSeat` does it from the host. See `graview-permissions`.
 6. **Many on one page: mount when near.** `mountWhenNear(elements,
    mountOne)` mounts each as the reader scrolls toward it, so a page of
    sixteen chapters costs one at a time. Share a `store` between embeds
@@ -63,10 +65,9 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
    to the default draws it inside itself with `<DefaultView {...props} />`
    (`@graview/primitives`); on the record page, which is the default, that
    draws nothing. `@graview/embed/pages` takes `views` too.
-9. **Say its name at the right level.** The workbench names itself in a
-   heading for readers moving by headings: `heading: 1` when the page is
-   the app, the default `2` inside an article, `false` when your heading
-   already says it.
+9. **Say its name at the right level.** The bar says the app's name once,
+   as a heading: `heading: 1` when the page is the app, the default `2`
+   inside an article, `false` when your heading already says it.
 10. **In a chat's widget, let the frame be sized from the embed.** `height:
     "auto"` with `onIntrinsicHeight` tells the host the height to give it;
     `hostContext: { theme }` takes the chat's theme; `pagesBelow` swaps the
@@ -87,8 +88,8 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     `handle.drawn()` waits for it.
 11. **Put the host's own furniture inside the embed, never over it.**
     `hostActions: [{ label, href }]` (or `onSelect` for a press) draws the
-    host's links — "Your apps", "Report this app" — in the strip's profile
-    menu, under who is signed in, reached by the keyboard. Every popover
+    host's links — "Your apps", "Report this app" — in the person's menu,
+    under who is signed in, reached by the keyboard. Every popover
     the embed draws stands in the browser's top layer, so a host needs no
     `z-index` override and nothing fixed over the scene. `companion:
     "collapsed"` starts the seat's rail put away to a slim tab (`"hidden"`:
@@ -102,8 +103,8 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     `routing: "address"` (and `basePath: "/apps/a1/"` when it is not served
     at `/`), and answers every address under the base with the one page:
     `<base>/places/<as>`, `<base>/<plural>/<id>` and the home are the routed
-    face's pages, pushed and reloadable; the scene keeps its stop in the
-    fragment (`<base>#overview=1`); the face toggle is a step Back undoes.
+    face's pages, pushed and reloadable; the scene is the overview,
+    `<base>/places/overview#overview=1`; a tab is a step Back undoes.
     `faceAtAddress(options)` is the face an address opens on, and
     `addressOf(place, { basePath })` (`@graview/core`) spells a place's
     link. A host that keeps its own history stays on memory, hears

@@ -145,7 +145,7 @@ is a product:
 
 ```tsx
 createPageRegistry<S, PageComponent<S>>(schema)
-  .surface("shell", Shell)        // the frame around every route: nav, masthead, standing
+  .surface("shell", Shell)        // the frame around every route: the app bar, the foot
   .surface("home", Home)
   .surface("problems", Problems)
   .register("plot", "list", Plots).register("plot", "record", PlotRecord)

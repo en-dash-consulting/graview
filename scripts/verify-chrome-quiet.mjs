@@ -525,7 +525,7 @@ try {
         for (const viewport of [DESK, PHONE]) {
           for (const doc of ["vendors", "org"]) {
             const { page, close } = await open(`doc=${doc}&face=${face}&heading=1`, viewport);
-            if (SHOTS && engine === "chromium") await page.screenshot({ path: join(SHOTS, `bar-${doc}-${face}-${viewport.width}-${scheme}.png`) });
+            if (SHOTS) await page.screenshot({ path: join(SHOTS, `bar-${doc}-${face}-${viewport.width}-${scheme}-${engine}.png`) });
             results.bars.push({ engine, scheme, doc, face, viewport: `${viewport.width}×${viewport.height}`, phone: viewport === PHONE, ...(await page.evaluate(theBar)) });
             await close();
           }
@@ -843,7 +843,7 @@ async function noticesFloat(page, face, engine, shot) {
     const content = document.querySelector("[data-embed-content]") ?? document.body;
     const heading = [...content.querySelectorAll("h1, h2, h3, [role=heading]")].find(shown) ?? null;
     const item = [...content.querySelectorAll("li, [role=listitem], [data-graview-view]")].find(shown) ?? null;
-    const bar = document.querySelector("[data-embed-strip]");
+    const bar = document.querySelector("[data-graview-app-bar]");
     for (const [name, element] of [["bar", bar], ["heading", heading], ["item", item]]) element?.setAttribute("data-notices-watch", name);
     const field = document.createElement("input");
     field.setAttribute("aria-label", "The host's own field");

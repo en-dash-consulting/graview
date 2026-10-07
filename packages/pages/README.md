@@ -19,9 +19,14 @@ this package serves lists, records, forms, problems and history as ordinary link
   discriminated unions as a type picker plus that arm's fields, arrays as repeatable rows —
   and `DerivedForm` renders it. Nothing renderable is hand-written; anything unrenderable
   says so instead of hiding.
-- **Two faces, one application.** Record pages link to their spatial stop
-  (`spatialHref(id)`); the scene links to the pages; the ids are shared. See
-  `apps/todo` for both faces mounted from one declaration (`/` scene, `/pages` routed).
+- **One bar, and the scene a place.** The shell is the one app bar (FR-131): the app's mark
+  and name — the page's one heading, the way home — its places as tabs (the overview, each
+  picture, each kind's list, the connections; "More" for what the row cannot hold), and Find,
+  the standing and the person. The overview is the scene (FR-132), at `sceneHref` on a face
+  that owns its page; a record and a picture say "On the overview ↗", to their stop there.
+  Under an embed's bar (`barAbove`) the shell draws none of it, and the face's Find goes in
+  that bar. Each page's own title is said a level under the app's name (`titleLevel`). See
+  `apps/todo` for both mounted from one declaration (`/` scene, `/pages` routed).
 - **The host may own the history.** `basename` mounts the face under a path;
   `onNavigate(path, how)` tells a host each page the face opens (`"push"`,
   `"replace"` or `"pop"`), and `path` sends it back to one, so a host that
@@ -38,10 +43,10 @@ this package serves lists, records, forms, problems and history as ordinary link
   lens is a page at `/places/<as>` and a card on the home; a kind with no titled lens is
   drawn anyway, as a contact sheet of its members, so a new app lands on a gallery on its
   first afternoon. The kinds follow as one row of counts, the relations as one line that
-  opens `/map`, and Recently stays short at the foot. The shell is one row of navigation
-  that scrolls sideways on a phone; a new address opens at its top. How many problems there
-  are is said once: by the embed's bar when the face has one, else by the Problems tab; the
-  home says only that rules are broken and links to what would fix them.
+  opens `/map` ("Connections"), and Recently stays short at the foot. The app bar is one row
+  on a desk and two on a phone; a new address opens at its top. How many problems there are
+  is said once, by the bar's standing; the home says only that rules are broken and links
+  to what would fix them.
 - **It reads like the product's own site.** A list opens with the plural and its
   description, a record with its title and its kind's `describe`, controls receding below
   the content. Typography rides the brand's display and body faces at a real scale; the
