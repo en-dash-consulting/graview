@@ -9,7 +9,7 @@ tags:
 source: "Nick, 2026-10-02: \"anything you find that should be factored into the graview framework, go ahead and capture those in the graview repo\" — from the Graview Cloud refinement, ../graview-cloud/docs/framework-requirements.md"
 startedAt: "2026-10-03T16:25:57.725Z"
 description: "Graview Cloud (../graview-cloud) is a host of many apps for people who are not us: they make apps from a ChatGPT or Claude conversation, from templates, and share them by URL to work on together, live, with their agents. Reading the framework for it found what one deployment would also want and the framework does not yet have. THE DECLARATION IS CODE: defineApp is a TypeScript module, every host path import()s it, and serveStore re-runs mutation.apply and invariant.evaluate on the server, so a host of strangers' apps would run strangers' code beside other strangers' data. The studio already holds a declaration as a JSON graph and writes act bodies from data; it cannot judge a rule. THE WIRE POLLS: openRemote polls /graview/since every 800 ms; there is no push, no rebase of pending optimistic calls, and concurrent patches are last-writer-wins. THE SEAT IS A HEADER: the default seatOf trusts x-graview-seat and labels every remote caller human, so an agent reaching a served store over graview mcp --remote-url is logged as a person. THE WIRE IS NODE: serveStore is node:http only and MCP is stdio only. POSITION: each item below is a public seam a self-hoster wants too; Cloud carries interim implementations on public APIs (marked INTERIM(FR-xx) there) and deletes them as these land. Out of scope here, and staying in Cloud: tenancy, accounts, OAuth servers, billing, quotas, the multi-app connector. Related and already tracked: 'What a seat may not see never leaves the store' (d6f8b50f), which Cloud needs at critical priority."
-lastModified: "2026-10-06T20:49:02.606Z"
+lastModified: "2026-10-07T14:07:03.672Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
 
@@ -33,6 +33,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A hardened guest worker runtime: every global outside an allowlist removed before guest code runs (FR-70)](./a-hardened-guest-worker-runtime-every.md) | completed |
 | [A home view from the closed block set: headline, figure and list (FR-81)](./a-home-view-from-the-closed-block-set.md) | completed |
 | [A host can ask up front what the studio will not edit: uneditable(document) (FR-62)](./a-host-can-ask-up-front-what-the.md) | completed |
+| [A host can hand the page a compiled app, so the page no longer carries the compiler (FR-123)](./a-host-can-hand-the-page-a-compiled.md) | pending |
 | [A host can read Graview's shape and type: SHAPE, TYPOGRAPHY and isoShade(scheme) from core (FR-73)](./a-host-can-read-graview-s-shape-and.md) | completed |
 | [A host's own work has a seat: a system principal the policy lets through, and authors named by their own name](./a-host-s-own-work-has-a-seat-a-system.md) | completed |
 | [A host's refusal can say its own sentence, and an Apply with no edits says so before the host is asked (FR-65)](./a-host-s-refusal-can-say-its-own.md) | completed |
@@ -54,7 +55,8 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A pill means press this to choose, or a state (FR-117)](./a-pill-means-press-this-to-choose-or-a.md) | completed |
 | [A repair reads a declared default, so a record a coerce would keep is patched rather than dropped (FR-50)](./a-repair-reads-a-declared-default-so-a.md) | completed |
 | [A rule language the framework interprets: total, budgeted, and read like a sentence](./a-rule-language-the-framework.md) | completed |
-| [A seat's first state read after a wake costs what it did before FR-55](./a-seat-s-first-state-read-after-a-wake.md) | pending |
+| [A rule's refusal says so: reason refused, not invalid (FR-119)](./a-rule-s-refusal-says-so-reason.md) | pending |
+| [A seat's first state read after a wake costs what it did before FR-55](./a-seat-s-first-state-read-after-a-wake.md) | completed |
 | [A stability contract a host can hold the framework to: what a version may change, a changelog that says so, and capabilities() naming the seams it ships](./a-stability-contract-a-host-can-hold.md) | completed |
 | [A status board: a shipped columns lens over a choice field (FR-97)](./a-status-board-a-shipped-columns-lens.md) | completed |
 | [A store can adopt the server's whole state, with pending batches applied again on top (FR-53)](./a-store-can-adopt-the-server-s-whole.md) | completed |
@@ -62,6 +64,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A store can prove its own fold: a deterministic snapshot hash and store.verify()](./a-store-can-prove-its-own-fold-a.md) | completed |
 | [A studio mounted into part of a page draws no main, so a host page has no framework landmark violations (FR-58)](./a-studio-mounted-into-part-of-a-page.md) | completed |
 | [A thumbnail fitted to what stands: fit to content and a legible minimum building (FR-107)](./a-thumbnail-fitted-to-what-stands-fit.md) | completed |
+| [A thumbnail reads as a place with no counts (FR-120)](./a-thumbnail-reads-as-a-place-with-no.md) | pending |
 | [A view can list related records: a list block with a walk as its source (FR-82)](./a-view-can-list-related-records-a-list.md) | completed |
 | [A walk from every member of a set: out()/in() over a set return the distinct union, costed (FR-101)](./a-walk-from-every-member-of-a-set-out.md) | completed |
 | [A worker view is a place, with a manifest the host enforces (FR-91)](./a-worker-view-is-a-place-with-a.md) | completed |
@@ -85,6 +88,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Embed holds inside a chat's widget: no storage assumed, its own height reported, the host's scheme taken](./embed-holds-inside-a-chat-s-widget-no.md) | completed |
 | [Embed knows what its host can keep: the studio hidden or handed to the host, and a size budget](./embed-knows-what-its-host-can-keep-the.md) | completed |
 | [Embed reports what went wrong and how long it took, without what was on screen](./embed-reports-what-went-wrong-and-how.md) | completed |
+| [Every act refuses an argument it doesn't take (FR-121)](./every-act-refuses-an-argument-it-doesn.md) | pending |
 | [Every harness honours GRAVIEW_PORT_BASE, so a second checkout can run any of them](./every-harness-honours-graview-port.md) | completed |
 | [/graview/export calls exportBundle with its arguments the wrong way round](./graview-export-calls-exportbundle-with.md) | completed |
 | [Guest views in a worker: @graview/guest's worker entry and a host that takes a worker source (FR-68)](./guest-views-in-a-worker-graview-guest.md) | completed |
@@ -95,6 +99,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Migrations that keep data: declared renames and type coercion in steps and migrationBetween](./migrations-that-keep-data-declared.md) | completed |
 | [Modules reach the host: the enabled set is passed to opened, served and remote stores, and turning one off is in history](./modules-reach-the-host-the-enabled-set.md) | completed |
 | [One guest client, served not copied: a prebuilt classic script and an authoring guide (FR-88)](./one-guest-client-served-not-copied-a.md) | completed |
+| [One place says how many problems there are (FR-122)](./one-place-says-how-many-problems-there.md) | pending |
 | [openRemote's runtime entry exports the observable-client types, and read-only MCP calls can show presence](./openremote-s-runtime-entry-exports-the.md) | completed |
 | [pages is a real arrangement: order, hide and first, compiled and honoured on both faces (FR-80)](./pages-is-a-real-arrangement-order-hide.md) | completed |
 | [Presence a host can add to: kind, name, onBehalfOf, announce for socketless visitors, and welcome.participant (FR-47)](./presence-a-host-can-add-to-kind-name.md) | completed |
