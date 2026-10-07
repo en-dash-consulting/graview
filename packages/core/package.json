@@ -13,6 +13,10 @@
       "types": "./dist/document/index.d.ts",
       "default": "./dist/document/index.js"
     },
+    "./compiled": {
+      "types": "./dist/compiled.d.ts",
+      "default": "./dist/compiled.js"
+    },
     "./describe": {
       "types": "./dist/describe.d.ts",
       "default": "./dist/describe.js"

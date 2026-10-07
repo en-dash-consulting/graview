@@ -4,7 +4,8 @@ import { error, warning, type Finding } from "./findings.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { GraviewDocument } from "./schema.js";
 import { fieldSpecOf } from "./to-document.js";
-import { parseTemplate, TemplateError, type TemplatePart } from "./template.js";
+import type { TemplatePart } from "./template.js";
+import { parseTemplate, TemplateError } from "./template-parse.js";
 
 /*
  * VIEW SPECS — Tier 1 custom UI, as data (ADR 0004, docs/declaration-document.md).

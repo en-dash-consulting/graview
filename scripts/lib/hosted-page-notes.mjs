@@ -11,12 +11,12 @@
  * (release-publish.mjs) measures again and puts it under the `graview` and
  * `@graview/embed` releases' notes.
  */
-import { measureHostedPage } from "./hosted-page.mjs";
+import { HOSTED_PAGE_COMPILED_ENTRY, measureHostedPage } from "./hosted-page.mjs";
 
 const kb = (bytes) => (bytes / 1024).toFixed(1);
 
 /** The measurement as a Markdown section: a heading, a sentence, the table by package, and the faces. */
-export function hostedPageMarkdown(measured, { heading = "###" } = {}) {
+export function hostedPageMarkdown(measured, { heading = "###", handed } = {}) {
   const { upFront, beforeDrawn, budget } = measured;
   const headroom = budget.minified - upFront.minified;
   const rows = Object.entries(upFront.packages).map(([name, bytes]) => `| ${name} | ${kb(bytes)} |`);
@@ -32,13 +32,15 @@ export function hostedPageMarkdown(measured, { heading = "###" } = {}) {
     "",
     `Before a face draws, with what it fetches as it is first drawn: the scene ${kb(beforeDrawn.scene.minified)} KB (${kb(beforeDrawn.scene.fetched)} KB fetched), the pages ${kb(beforeDrawn.pages.minified)} KB (${kb(beforeDrawn.pages.fetched)} KB fetched).`,
     "",
+    ...(handed ? [`Handed the compiled app its server made (\`appFromOrCompile\` from \`@graview/core/compiled\`, FR-123), the same page loads **${kb(handed.upFront.minified)} KB** up front — ${kb(upFront.minified - handed.upFront.minified)} KB less, with no compiler in it.`, ""] : []),
   ].join("\n");
 }
 
 /** Measure the page from the repository's sources and render it; undefined when it cannot be measured (the notes go out without it). */
 export async function hostedPageNotes(repo, options) {
   try {
-    return hostedPageMarkdown(await measureHostedPage(repo), options);
+    const [measured, handed] = await Promise.all([measureHostedPage(repo), measureHostedPage(repo, HOSTED_PAGE_COMPILED_ENTRY)]);
+    return hostedPageMarkdown(measured, { ...options, handed });
   } catch (error) {
     process.stderr.write(`the hosted page could not be measured for the notes: ${error instanceof Error ? error.message : String(error)}\n`);
     return undefined;

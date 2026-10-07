@@ -15,7 +15,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { HOSTED_PAGE_BUDGET, measureHostedPage } from "./lib/hosted-page.mjs";
+import { COMPILER_MODULES, HOSTED_PAGE_BUDGET, HOSTED_PAGE_COMPILED_BUDGET, HOSTED_PAGE_COMPILED_ENTRY, measureHostedPage } from "./lib/hosted-page.mjs";
 import { hostedPageMarkdown } from "./lib/hosted-page-notes.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -31,10 +31,15 @@ const { upFront, whenAsked } = measured;
  * and the page reaches every file of `@graview/core` through its index.
  */
 const own = await measureHostedPage(repoRoot, undefined, { eagerOnly: true });
+// The same shell handed the compiled app its server made (FR-123): no compiler up front.
+const handed = await measureHostedPage(repoRoot, HOSTED_PAGE_COMPILED_ENTRY);
+const compilerUpFront = COMPILER_MODULES.filter((module) => Object.keys(handed.upFront.modules).includes(module));
 const checks = {
   atMostTheBudgetMinifiedUpFront: { kb: kb(upFront.minified), budgetKb: kb(HOSTED_PAGE_BUDGET.minified), ok: upFront.minified <= HOSTED_PAGE_BUDGET.minified },
   atMost150KbOfZodUpFront: { kb: kb(upFront.zod), budgetKb: kb(HOSTED_PAGE_BUDGET.zod), ok: upFront.zod <= HOSTED_PAGE_BUDGET.zod },
   theStudioIsNotCarried: { ok: !Object.keys(upFront.packages).includes("@graview/studio") && !Object.keys(whenAsked.packages).includes("@graview/studio") },
+  handedACompiledAppAtMostItsBudgetUpFront: { kb: kb(handed.upFront.minified), budgetKb: kb(HOSTED_PAGE_COMPILED_BUDGET.minified), ok: handed.upFront.minified <= HOSTED_PAGE_COMPILED_BUDGET.minified },
+  handedACompiledAppCarriesNoCompilerUpFront: { carried: compilerUpFront, ok: compilerUpFront.length === 0 && handed.whenAsked.doors.some((door) => door.module === "core/src/document/compile.ts") },
 };
 const passed = Object.values(checks).every((check) => check.ok);
 const verdict = {
@@ -48,6 +53,7 @@ const verdict = {
     packagesKb: inKb(whenAsked.packages),
     doors: whenAsked.doors.map((door) => ({ module: door.module, kb: kb(door.minified), packagesKb: inKb(door.packages) })),
   },
+  handedACompiledApp: { kb: kb(handed.upFront.minified), savedKb: kb(upFront.minified - handed.upFront.minified), packagesKb: inKb(handed.upFront.packages) },
   // What each face fetches as it is first drawn, on top of what is up front: not one of the claims, said so a face moved out of the first chunk is not called smaller.
   beforeEachFaceDraws: {
     ...Object.fromEntries(Object.entries(measured.beforeDrawn).map(([face, one]) => [face, { kb: kb(one.minified), fetchedKb: kb(one.fetched) }])),
@@ -56,7 +62,7 @@ const verdict = {
 };
 mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
 writeFileSync(resolve(repoRoot, "docs/hosted-page.json"), `${JSON.stringify(verdict, null, 2)}\n`, "utf8");
-writeFileSync(resolve(repoRoot, "docs/hosted-page.md"), hostedPageMarkdown(measured, { heading: "#" }), "utf8");
+writeFileSync(resolve(repoRoot, "docs/hosted-page.md"), hostedPageMarkdown(measured, { heading: "#", handed }), "utf8");
 
 for (const [name, check] of Object.entries(checks)) process.stdout.write(`${check.ok ? "ok  " : "FAIL"} ${name}${check.kb !== undefined ? ` — ${check.kb} KB (at most ${check.budgetKb} KB)` : ""}\n`);
 process.stdout.write(
@@ -65,6 +71,7 @@ process.stdout.write(
     .join(", ")}\n`,
 );
 process.stdout.write(`the first chunk's own need: ${kb(own.upFront.minified)} KB; the other ${kb(upFront.minified - own.upFront.minified)} KB up front is code only a door uses, reached through an index\n`);
+process.stdout.write(`handed the compiled app (FR-123): ${kb(handed.upFront.minified)} KB up front, ${kb(upFront.minified - handed.upFront.minified)} KB less\n`);
 for (const door of whenAsked.doors) process.stdout.write(`when asked: ${door.module} +${kb(door.minified)} KB\n`);
 for (const [face, one] of Object.entries(measured.beforeDrawn)) process.stdout.write(`before the ${face} face draws: ${kb(one.minified)} KB (${kb(one.fetched)} KB of it fetched as it is drawn)\n`);
 process.stdout.write(`${passed ? "a hosted page holds to its budget" : "a hosted page is over its budget"}: ${kb(upFront.minified)} KB up front, ${kb(upFront.zod)} KB of it zod\n`);

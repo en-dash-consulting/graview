@@ -22,7 +22,8 @@ import {
 import { SHIPPED_LENSES, isShippedLens, SHIPPED_LENS_NAMES } from "../places.js";
 import { placeSlug } from "../views/types.js";
 import { computedOf, validateComputed } from "./computed.js";
-import { parseTemplate, templateBraces, TemplateError, type TemplatePart } from "./template.js";
+import type { TemplatePart } from "./template.js";
+import { parseTemplate, templateBraces, TemplateError } from "./template-parse.js";
 import { validateViews, VIEW_SLOTS } from "./views.js";
 
 /*

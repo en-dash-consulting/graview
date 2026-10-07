@@ -1,29 +1,7 @@
-import {
-  RuleBudgetError,
-  withArticle,
-  brandFromAccent,
-  createSchema,
-  defineInvariant,
-  defineMutation,
-  defineNode,
-  SCHEMES,
-  type AnyGraphNode,
-  type AnyMutationDefinition,
-  type Brand,
-  type GraphReader,
-  type GraviewApp,
-  type InvariantDefinition,
-  type MutationContext,
-  type Policy,
-  type Repair,
-  type Violation,
-} from "../index.js";
-import * as z from "../schema/zod.js";
-import { refTo } from "../mutations/node-ref.js";
+import { brandFromAccent, SCHEMES, type Brand } from "../index.js";
 import { ActRefusal } from "../refused.js";
 import { analyzeExpr } from "./expr/analyze.js";
-import { rememberDocument } from "./to-document.js";
-import { evaluateExpr, ExprBudgetError, ExprEvalError, type KindShape, type Value } from "./expr/evaluate.js";
+import type { KindShape } from "./expr/evaluate.js";
 import { ExprSyntaxError, parseExpr, type Expr } from "./expr/parse.js";
 import { error, hasErrors, warning, type Finding } from "./findings.js";
 import {
@@ -33,15 +11,32 @@ import {
   type EffectSpec,
   type FieldSpec,
   type GraviewDocument,
-  type KindSpec,
-  type SightSpec,
   type ValueSpec,
 } from "./schema.js";
-import { parseTemplate, renderTemplate, TemplateError, type TemplatePart } from "./template.js";
+import type { TemplatePart } from "./template.js";
+import { parseTemplate, TemplateError } from "./template-parse.js";
 import { upgradeDocument } from "./upgrade.js";
 import { homeOf, validateViews, viewsOf } from "./views.js";
 import { farEnd } from "./far-end.js";
 import { computedOf, parsedComputed, validateComputed, workedOutAlone } from "./computed.js";
+import {
+  build,
+  COMPILED_FORMAT,
+  defaultLabelField,
+  refName,
+  SUBJECT_ARG,
+  type ActEffect,
+  type ActPlan,
+  type ArgPlan,
+  type CompiledApp,
+  type CompiledDocument,
+  type EdgePlan,
+  type KindPlan,
+  type RefusedDocument,
+  type RulePlan,
+} from "./compiled.js";
+
+export type { ActEffect, CompiledDocument, RefusedDocument, ReplaceEffect } from "./compiled.js";
 
 /*
  * A DOCUMENT, COMPILED.
@@ -53,23 +48,11 @@ import { computedOf, parsedComputed, validateComputed, workedOutAlone } from "./
  * `graview check`) it derives from this too. Nothing here evaluates a string
  * as code: acts are a closed set of effects, rules and guards are the rule
  * language, labels are templates.
+ *
+ * Two halves (FR-123): this module reads and judges a document and says
+ * what it compiles to as data, `CompiledApp`; `compiled.ts` builds the app
+ * from that data, and is all a page handed a compiled app carries.
  */
-
-export interface CompiledDocument {
-  readonly ok: true;
-  readonly app: GraviewApp;
-  readonly document: GraviewDocument;
-  /** Notes and warnings — never errors, or this would not be ok. */
-  readonly findings: readonly Finding[];
-  /** Who sees which kinds — the policy's `sees`, as the document said it. */
-  readonly sights: readonly SightSpec[] | undefined;
-  readonly kinds: ReadonlyMap<string, KindShape>;
-}
-
-export interface RefusedDocument {
-  readonly ok: false;
-  readonly findings: readonly Finding[];
-}
 
 export interface CompileOptions {
   /** The clock rules read as today(); injectable for tests. */
@@ -83,7 +66,6 @@ export interface CompileOptions {
 }
 
 const BUILTIN_REFS = new Set(["subject", "now", "today"]);
-const SUBJECT_ARG = "id";
 
 /** Parse and validate without compiling — the document's own sentences, before the framework's. */
 export function readDocument(raw: unknown): { readonly document?: GraviewDocument; readonly findings: readonly Finding[] } {
@@ -162,20 +144,6 @@ export function kindShapes(document: GraviewDocument): Map<string, KindShape> {
   return shapes;
 }
 
-/**
- * What `replaces` means (FR-115): before the act connects, the subject's
- * links of these relations are severed — each at the subject's own end —
- * all but the link the act is making. Only an act's shorthand says it.
- */
-export interface ReplaceEffect {
-  readonly replace: readonly string[];
-  /** The relation the act connects: its link to `$to` is the one kept. */
-  readonly keep: string;
-}
-
-/** An effect as an act means it: one a document lists, or what a shorthand alone says. */
-export type ActEffect = EffectSpec | ReplaceEffect;
-
 /** The effects an act's shorthands mean, in order. */
 export function effectsOf(act: ActSpec, document: GraviewDocument): readonly ActEffect[] {
   // Shorthands first, then any listed effects: an act may say "writes quote" and also set a status.
@@ -209,8 +177,6 @@ export function effectsOf(act: ActSpec, document: GraviewDocument): readonly Act
   if (act.effects) effects.push(...act.effects.filter((e) => !(act.creates && "set" in e && !("create" in e) && refName(e.target) === "new")));
   return effects;
 }
-
-const refName = (v: unknown): string | undefined => (typeof v === "string" && /^\$[A-Za-z][A-Za-z0-9]*$/.test(v) ? v.slice(1) : undefined);
 
 function tryExpr(source: string, path: string, findings: Finding[]): Expr | undefined {
   try {
@@ -387,76 +353,9 @@ function validate(document: GraviewDocument): Finding[] {
   return findings;
 }
 
-/*
- * A FIELD'S SCHEMA, in zod/mini (schema/zod.ts): a page that compiles a
- * document in the browser pays for the checks it calls, not for classic
- * zod whole (FR-57). The checks, their messages and their definitions are
- * the ones classic's methods make.
- */
-function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
-  let schema: z.ZodMiniType;
-  switch (spec.type) {
-    case "string":
-      schema = z.string().check(z.maxLength(500));
-      break;
-    case "text":
-      schema = z.string().check(z.maxLength(20_000));
-      break;
-    case "number":
-    case "integer": {
-      // Its range (FR-114) is the schema's: every form, tool and apply reads it from here.
-      const range = [
-        ...(spec.type === "integer" ? [z.int()] : []),
-        ...(spec.min === undefined ? [] : [z.gte(spec.min)]),
-        ...(spec.max === undefined ? [] : [z.lte(spec.max)]),
-        ...(spec.step === undefined ? [] : [z.multipleOf(spec.step)]),
-      ];
-      schema = range.length > 0 ? z.number().check(...range) : z.number();
-      break;
-    }
-    case "boolean":
-      schema = z.boolean();
-      break;
-    case "date":
-      schema = z.string().check(z.regex(/^\d{4}-\d{2}-\d{2}$/, "a date like 2026-10-02"));
-      break;
-    case "datetime":
-      schema = z.string().check(z.refine((s: string) => !Number.isNaN(Date.parse(s)), "a date and time like 2026-10-02T14:30:00Z"));
-      break;
-    case "enum":
-      schema = z.enum(spec.options as [string, ...string[]]);
-      break;
-    case "list":
-      schema = z.array(spec.of === "number" ? z.number() : spec.of === "date" ? z.string().check(z.regex(/^\d{4}-\d{2}-\d{2}$/)) : z.string().check(z.maxLength(500))).check(z.maxLength(200));
-      break;
-    case "url":
-      schema = z.url();
-      break;
-    case "email":
-      schema = z.email();
-      break;
-  }
-  if (spec.description) schema = schema.check(z.describe(spec.description));
-  return optional ? z.optional(schema) : schema;
-}
-
-/** What one of these is called, when the kind says nothing: the first required word-ish field. */
-function defaultLabelField(spec: KindSpec): string | undefined {
-  const entries = Object.entries(spec.fields);
-  return (
-    entries.find(([, f]) => f.required && (f.type === "string" || f.type === "text"))?.[0] ??
-    entries.find(([, f]) => f.type === "string")?.[0]
-  );
-}
-
-interface ActArg {
-  readonly schema: z.ZodMiniType;
-  readonly required: boolean;
-}
-
 /** The arguments an act asks for: declared ones, then whatever its effects reference. */
-function argsOf(name: string, act: ActSpec, effects: readonly ActEffect[], document: GraviewDocument, edges: Map<string, EdgeInfo>): Map<string, ActArg> {
-  const args = new Map<string, ActArg>();
+function argsOf(act: ActSpec, effects: readonly ActEffect[], document: GraviewDocument, edges: Map<string, EdgeInfo>): Map<string, ArgPlan> {
+  const args = new Map<string, ArgPlan>();
   const subjectKinds = asArray(act.on);
   const created = new Map<string, string>();
   /** The kinds a record argument names, by argument: what a `set` on it (a `setsOther`) is checked against. */
@@ -464,7 +363,7 @@ function argsOf(name: string, act: ActSpec, effects: readonly ActEffect[], docum
   const usesSubject =
     subjectKinds.length > 0 ||
     effects.some((e) => ("remove" in e && refName(e.remove) === "subject") || ("from" in e && (refName(e.from) === "subject" || refName(e.to) === "subject")) || ("set" in e && !("create" in e) && refName(e.target ?? "$subject") === "subject"));
-  if (usesSubject) args.set(SUBJECT_ARG, { schema: refTo(subjectKinds.length > 0 ? subjectKinds : "*"), required: true });
+  if (usesSubject) args.set(SUBJECT_ARG, { ref: subjectKinds.length > 0 ? subjectKinds : "*", required: true });
 
   const declared = act.args ?? {};
   const writesOnlyOne = act.writes?.length === 1;
@@ -475,10 +374,10 @@ function argsOf(name: string, act: ActSpec, effects: readonly ActEffect[], docum
    */
   const withRangeOf = (d: FieldSpec, fed: FieldSpec | undefined): FieldSpec =>
     fed && d.type === fed.type && d.min === undefined && d.max === undefined && d.step === undefined ? { ...d, ...(fed.min === undefined ? {} : { min: fed.min }), ...(fed.max === undefined ? {} : { max: fed.max }), ...(fed.step === undefined ? {} : { step: fed.step }) } : d;
-  const note = (arg: string, schema: () => ActArg, fed?: FieldSpec) => {
+  const note = (arg: string, schema: () => ArgPlan, fed?: FieldSpec) => {
     if (arg === SUBJECT_ARG || BUILTIN_REFS.has(arg) || created.has(arg) || args.has(arg)) return;
     const d = declared[arg] ? withRangeOf(declared[arg], fed) : undefined;
-    args.set(arg, d ? { schema: fieldSchema(d, !d.required), required: Boolean(d.required) } : schema());
+    args.set(arg, d ? { field: d, optional: !d.required, required: Boolean(d.required) } : schema());
   };
   for (const effect of effects) {
     if ("create" in effect) {
@@ -488,7 +387,7 @@ function argsOf(name: string, act: ActSpec, effects: readonly ActEffect[], docum
         const spec = kind?.fields[field];
         if (arg && spec) {
           const required = Boolean(spec.required) && spec.default === undefined;
-          note(arg, () => ({ schema: fieldSchema(spec, !required), required }), spec);
+          note(arg, () => ({ field: spec, optional: !required, required }), spec);
         }
       }
       if (effect.as) created.set(effect.as, effect.create);
@@ -499,35 +398,26 @@ function argsOf(name: string, act: ActSpec, effects: readonly ActEffect[], docum
         if (!arg) continue;
         const kinds = end === "to" ? edge?.to ?? "*" : edge?.from ?? "*";
         if (kinds !== "*" && !named.has(arg)) named.set(arg, kinds);
-        note(arg, () => ({ schema: refTo(kinds === "*" ? "*" : kinds), required: true }));
+        note(arg, () => ({ ref: kinds, required: true }));
       }
     } else if ("set" in effect) {
       const target = refName(effect.target ?? "$subject");
       const targetKind = target === "subject" ? subjectKinds[0] : (created.get(target ?? "") ?? named.get(target ?? "")?.[0]);
-      if (target && target !== "subject" && !created.has(target)) note(target, () => ({ schema: refTo("*"), required: true }));
+      if (target && target !== "subject" && !created.has(target)) note(target, () => ({ ref: "*", required: true }));
       for (const [field, value] of Object.entries(effect.set)) {
         const arg = refName(value);
         if (!arg) continue;
         const spec = targetKind ? document.kinds[targetKind]?.fields[field] : undefined;
-        note(arg, () => (spec ? { schema: fieldSchema(spec, !writesOnlyOne), required: writesOnlyOne } : { schema: z.optional(z.unknown()), required: false }), spec);
+        note(arg, () => (spec ? { field: spec, optional: !writesOnlyOne, required: writesOnlyOne } : { any: true, required: false }), spec);
       }
     } else if ("remove" in effect) {
       const arg = refName(effect.remove);
-      if (arg) note(arg, () => ({ schema: refTo("*"), required: true }));
+      if (arg) note(arg, () => ({ ref: "*", required: true }));
     }
   }
-  for (const [arg, d] of Object.entries(declared)) if (!args.has(arg)) args.set(arg, { schema: fieldSchema(d, !d.required), required: Boolean(d.required) });
-  void name;
+  for (const [arg, d] of Object.entries(declared)) if (!args.has(arg)) args.set(arg, { field: d, optional: !d.required, required: Boolean(d.required) });
   return args;
 }
-
-/**
- * An act's own refusal: the framework's typed one (FR-110), which a host
- * shows rather than calling it a failure. Its condition, and a value it
- * could not work out, are `refused` (FR-119); a call naming what is not
- * there, or a subject of the wrong kind, says `invalid` — the call as sent.
- */
-const Refused = ActRefusal;
 
 /**
  * A DOCUMENT COMPILED WITHOUT THE FRAMEWORK'S CHECKER: its own sentences
@@ -543,67 +433,38 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
   const document = read.document;
   const findings: Finding[] = [...read.findings];
   if (options.previous) findings.push(...renamesFromNothing(document, options.previous));
-  const today = options.today ?? (() => new Date().toISOString().slice(0, 10));
-  const shapes = kindShapes(document);
+  const plan = planOf(document, findings);
+  if (hasErrors(plan.findings)) return { ok: false, findings: plan.findings };
+  return build(plan, options);
+}
+
+/**
+ * The first half of compiling (FR-123): what a document that has been read
+ * and judged compiles to, as data — each template and expression parsed,
+ * each act's arguments and effects said, the brand derived. `findings` is
+ * added to (a brand that cannot be read is a warning) and carried.
+ */
+function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
   const edges = edgeIndex(document);
-  // What `{x | money}` says in a label, a sentence or a refusal: the app's currency and locale (FR-100).
-  const { accent, name: wordmark, ...money } = document.brand ?? {};
 
   // ── kinds ────────────────────────────────────────────────────────────────
-  const definitions = Object.entries(document.kinds).map(([kind, spec]) => {
-    const shape: Record<string, z.ZodMiniType> = {};
-    for (const [field, f] of Object.entries(spec.fields)) shape[field] = fieldSchema(f, !f.required);
-    const labelSource = spec.label ?? (defaultLabelField(spec) ? `{${defaultLabelField(spec)}}` : undefined);
-    const labelParts = labelSource ? parseTemplate(labelSource) : undefined;
-    const describeParts = spec.describe ? parseTemplate(spec.describe) : undefined;
-    const computed = computedOf(spec);
-    // A computed field's words are said like a field's: its label, where it has one.
-    const labels = Object.fromEntries([
-      ...Object.entries(spec.fields).filter(([, f]) => f.label).map(([n, f]) => [n, f.label!]),
-      ...[...computed].filter(([, c]) => c.label).map(([n, c]) => [n, c.label!]),
-    ]);
-    // Defaults stay out of the zod schema (hydration must not invent values) and ride beside it, for a repair to read.
-    const defaults = Object.fromEntries(Object.entries(spec.fields).filter(([, f]) => f.default !== undefined).map(([n, f]) => [n, f.default]));
-    const edgeDecls = Object.fromEntries(
-      Object.entries(spec.edges ?? {}).map(([n, e]) => [
-        n,
-        {
-          to: e.to,
-          ...(e.cardinality ? { cardinality: e.cardinality } : {}),
-          ...(e.description ? { description: e.description } : {}),
-          ...(e.inverse ? { inverse: e.inverse } : {}),
-          ...(e.appendOnly ? { appendOnly: e.appendOnly } : {}),
-        },
-      ]),
-    );
-    return defineNode(kind, {
-      fields: z.object(shape) as never,
-      edges: edgeDecls,
-      ...(spec.plural ? { plural: spec.plural } : {}),
-      ...(spec.noun ? { noun: spec.noun } : {}),
-      ...(spec.description ? { description: spec.description } : {}),
-      ...(labelParts ? { label: (node: { id: string }) => renderTemplate(labelParts, { node: node as AnyGraphNode, kinds: shapes, today: today(), money }) || node.id } : {}),
-      ...(describeParts ? { describe: (node: { id: string }) => renderTemplate(describeParts, { node: node as AnyGraphNode, kinds: shapes, today: today(), money }) } : {}),
-      ...(spec.lifecycle ? { lifecycle: { field: spec.lifecycle.field, retired: spec.lifecycle.retired } } : {}),
-      ...(spec.figure ? { figure: spec.figure } : {}),
-      ...(spec.computed && Object.keys(spec.computed).length > 0 ? { computed: spec.computed } : {}),
-      ...(Object.keys(labels).length > 0 || spec.glance ? { display: { ...(Object.keys(labels).length > 0 ? { labels } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}) } } : {}),
-      ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
-    } as never);
-  });
-  const schema = createSchema(definitions as never);
+  const kinds: Record<string, KindPlan> = {};
+  for (const [kind, spec] of Object.entries(document.kinds)) {
+    const labelField = defaultLabelField(spec);
+    const labelSource = spec.label ?? (labelField ? `{${labelField}}` : undefined);
+    const computed = parsedComputed(spec);
+    kinds[kind] = {
+      ...(labelSource ? { label: parseTemplate(labelSource) } : {}),
+      ...(spec.describe ? { describe: parseTemplate(spec.describe) } : {}),
+      ...(computed ? { computed: [...computed] } : {}),
+    };
+  }
 
   // ── acts ─────────────────────────────────────────────────────────────────
-  const mutations: AnyMutationDefinition[] = [];
+  const acts: Record<string, ActPlan> = {};
   for (const [name, act] of Object.entries(document.acts ?? {})) {
     const effects = effectsOf(act, document);
-    const args = argsOf(name, act, effects, document, edges);
-    const shape: Record<string, z.ZodMiniType> = {};
-    for (const [arg, a] of args) shape[arg] = a.schema;
-    const subjectKinds = asArray(act.on);
-    const title = act.title ?? name.replace(/-/g, " ");
-    const guard = act.allowedWhen ? parseExpr(act.allowedWhen) : undefined;
-    const refusal = act.refusal ? parseTemplate(act.refusal) : undefined;
+    const args = argsOf(act, effects, document, edges);
     const destructive = act.destructive ?? effects.some((e) => "remove" in e || "sever" in e || "replace" in e);
     const creates = [...new Set(effects.flatMap((e) => ("create" in e ? [e.create] : [])))];
     const connects = [...new Set(effects.flatMap((e) => ("connect" in e ? [e.connect] : [])))];
@@ -653,242 +514,62 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
       if (!("set" in effect) || !effect.set) continue;
       for (const v of Object.values(effect.set)) if (v && typeof v === "object" && !Array.isArray(v) && "expr" in v) exprs.set(v.expr, parseExpr(v.expr));
     }
-
-    mutations.push(
-      defineMutation(name, {
-        input: z.object(shape) as never,
-        title,
-        ...(act.description ? { description: act.description } : {}),
-        ...(act.fromTheOtherEnd ? { fromTheOtherEnd: act.fromTheOtherEnd } : {}),
-        ...(args.has(SUBJECT_ARG) ? { subject: { kinds: subjectKinds.length > 0 ? subjectKinds : "*", arg: SUBJECT_ARG } } : {}),
-        ...(destructive ? { destructive: true } : {}),
-        ...(idempotent ? { idempotent: true } : {}),
-        ...(creates.length > 0 ? { creates } : {}),
-        ...(connects.length > 0 ? { connects } : {}),
-        ...(severs.length > 0 ? { severs } : {}),
-        // Said even when empty (FR-110): a document act's writes are read off it, so nothing guesses them from its arguments' names.
-        writes,
-        ...(Object.keys(writesOther).length > 0 ? { writesOther } : {}),
-        ...(Object.keys(sets).length > 0 ? { sets } : {}),
-        describe: (input: Record<string, unknown>, graph: GraphReader) => {
-          const subject = typeof input[SUBJECT_ARG] === "string" ? graph.getNode(input[SUBJECT_ARG] as string) : undefined;
-          const what = subject ? labelFor(subject) : Object.values(input).find((v) => typeof v === "string");
-          return what ? `${title}: ${String(what)}` : title;
-        },
-        apply(context: MutationContext<never>, input: Record<string, unknown>) {
-          const graph = context.graph as unknown as GraphReader;
-          const subjectId = typeof input[SUBJECT_ARG] === "string" ? (input[SUBJECT_ARG] as string) : undefined;
-          const subject = subjectId ? graph.getNode(subjectId) : undefined;
-          if (subjectId && !subject) throw new Refused(`there is no record "${subjectId}"`, "invalid");
-          if (subject && subjectKinds.length > 0 && !subjectKinds.includes(subject.kind)) throw new Refused(`"${title}" acts on ${subjectKinds.join(" or ")}, not on ${withArticle(subject.kind)}`, "invalid");
-          const bindings: Record<string, Value> = {};
-          for (const [k, v] of Object.entries(input)) if (v !== undefined) bindings[k] = v as Value;
-          if (guard && subject) {
-            let allowed: Value;
-            try {
-              allowed = evaluateExpr(guard, { graph, subject, kinds: shapes, bindings, today: today() });
-            } catch (e) {
-              if (e instanceof ExprEvalError) throw new Refused(`"${title}" could not be judged: ${e.sentence}`);
-              throw e;
-            }
-            if (allowed !== true) {
-              throw new Refused(refusal ? renderTemplate(refusal, { node: subject, kinds: shapes, graph, bindings, today: today(), money }) : `"${title}" is not allowed for ${labelFor(subject)} right now`);
-            }
-          }
-          const made = new Map<string, string>();
-          const resolve = (value: ValueSpec, current: AnyGraphNode | undefined): unknown => {
-            if (value && typeof value === "object" && !Array.isArray(value) && "expr" in value) {
-              try {
-                return evaluateExpr(exprs.get(value.expr)!, { graph, subject: current ?? subject ?? null, kinds: shapes, bindings, today: today() });
-              } catch (e) {
-                if (e instanceof ExprEvalError) throw new Refused(`"${title}" could not work out a value: ${e.sentence}`);
-                throw e;
-              }
-            }
-            const ref = refName(value);
-            if (ref === undefined) return typeof value === "string" && value.startsWith("$$") ? value.slice(1) : value;
-            if (ref === "subject") return subjectId;
-            if (ref === "now") return new Date().toISOString();
-            if (ref === "today") return today();
-            if (made.has(ref)) return made.get(ref);
-            return input[ref];
-          };
-          for (const effect of effects) {
-            if ("create" in effect) {
-              const kind = document.kinds[effect.create]!;
-              const node: Record<string, unknown> = { kind: effect.create };
-              for (const [field, f] of Object.entries(kind.fields)) if (f.default !== undefined) node[field] = f.default;
-              for (const [field, value] of Object.entries(effect.set ?? {})) {
-                const v = resolve(value, undefined);
-                if (v !== undefined) node[field] = v;
-              }
-              const labelField = defaultLabelField(kind);
-              const id = context.freshId(String((labelField && node[labelField]) ?? effect.create), effect.create);
-              context.addNode({ id, ...node } as never);
-              if (effect.as) made.set(effect.as, id);
-            } else if ("connect" in effect || "sever" in effect) {
-              const kind = "connect" in effect ? effect.connect : effect.sever;
-              const from = String(resolve(effect.from, undefined) ?? "");
-              const to = String(resolve(effect.to, undefined) ?? "");
-              if (!graph.has(from) && ![...made.values()].includes(from)) throw new Refused(`there is no record "${from}"`, "invalid");
-              if (!graph.has(to) && ![...made.values()].includes(to)) throw new Refused(`there is no record "${to}"`, "invalid");
-              if ("connect" in effect) {
-                if (edges.get(kind)?.cardinality === "one") for (const existing of graph.out(from, kind)) if (existing.id !== to) context.removeEdge({ kind, from, to: existing.id });
-                if (!graph.out(from, kind).some((n) => n.id === to)) context.addEdge({ kind, from, to });
-              } else {
-                context.removeEdge({ kind, from, to });
-              }
-            } else if ("set" in effect) {
-              const targetId = String(resolve(effect.target ?? "$subject", undefined) ?? "");
-              const target = graph.getNode(targetId);
-              if (!target && ![...made.values()].includes(targetId)) throw new Refused(`there is no record "${targetId}"`, "invalid");
-              const patch: Record<string, unknown> = {};
-              for (const [field, value] of Object.entries(effect.set)) {
-                const v = resolve(value, target);
-                if (v !== undefined) patch[field] = v;
-              }
-              if (Object.keys(patch).length > 0) context.patchNode(targetId, patch);
-            } else if ("remove" in effect) {
-              const id = String(resolve(effect.remove, undefined) ?? "");
-              if (!graph.has(id)) throw new Refused(`there is no record "${id}"`, "invalid");
-              context.removeNode(id);
-            } else if ("replace" in effect && subject) {
-              // The subject's links of each relation, at its own end, severed — all but the one being made (FR-115).
-              const kept = input["to"];
-              for (const relation of effect.replace) {
-                const fromSubject = edges.get(relation)?.from.includes(subject.kind) ?? true;
-                for (const other of fromSubject ? graph.out(subject.id, relation) : graph.in(subject.id, relation)) {
-                  if (relation === effect.keep && other.id === kept) continue;
-                  context.removeEdge(fromSubject ? { kind: relation, from: subject.id, to: other.id } : { kind: relation, from: other.id, to: subject.id });
-                }
-              }
-            }
-          }
-        },
-      } as never) as AnyMutationDefinition,
-    );
-  }
-
-  function labelFor(node: AnyGraphNode): string {
-    const definition = (schema as unknown as { tryDefinition(kind: string): { label?: (n: unknown) => string } | undefined }).tryDefinition(node.kind);
-    return definition?.label?.(node) ?? node.id;
+    acts[name] = {
+      title: act.title ?? name.replace(/-/g, " "),
+      effects,
+      args: [...args],
+      ...(act.allowedWhen ? { guard: parseExpr(act.allowedWhen) } : {}),
+      ...(act.refusal ? { refusal: parseTemplate(act.refusal) } : {}),
+      exprs: [...exprs],
+      destructive,
+      idempotent,
+      creates,
+      connects,
+      severs,
+      writes,
+      writesOther,
+      sets,
+    };
   }
 
   // ── rules ────────────────────────────────────────────────────────────────
-  const invariants: InvariantDefinition[] = [];
+  const rules: Record<string, RulePlan> = {};
   for (const [name, rule] of Object.entries(document.rules ?? {})) {
-    const require = parseExpr(rule.require);
-    const when = rule.when ? parseExpr(rule.when) : undefined;
-    const says = rule.says ? parseTemplate(rule.says) : undefined;
-    const title = rule.title ?? name.replace(/-/g, " ");
-    const repairs = rule.repairs ?? [];
-    const judge = (graph: GraphReader, subject: AnyGraphNode | null): Violation[] => {
-      const ctx = { graph, subject, kinds: shapes, today: today() };
-      let holds: boolean;
-      /*
-       * A RULE THAT CANNOT ANSWER IS THE ENGINE'S TO SAY (FR-29). Out of
-       * budget it throws RuleBudgetError, and the violation's status is
-       * `over-budget`; any other mistake (a word added to a number) is
-       * `could-not-judge`. Both name the rule and its subject, and neither
-       * is a hang or a crash that takes the other rules down.
-       */
-      try {
-        if (when && evaluateExpr(when, ctx) !== true) return [];
-        holds = evaluateExpr(require, ctx) === true;
-      } catch (e) {
-        if (e instanceof ExprBudgetError) throw new RuleBudgetError(e.sentence);
-        if (e instanceof ExprEvalError) throw new Error(e.sentence);
-        throw e;
-      }
-      if (holds) return [];
-      const repairList: Repair[] = repairs.flatMap((r) => {
-        const act = document.acts?.[r.act];
-        const args: Record<string, unknown> = {};
-        if (subject && (act?.on || /^(edit|remove)-/.test(r.act))) args[SUBJECT_ARG] = subject.id;
-        for (const [k, v] of Object.entries(r.args ?? {})) args[k] = refName(v) === "subject" ? subject?.id : v;
-        const declared = act ? argsOf(r.act, act, effectsOf(act, document), document, edges) : new Map<string, ActArg>();
-        const missing = [...declared].filter(([k, a]) => a.required && args[k] === undefined).map(([k]) => k);
-        return [{ mutation: r.act, label: r.label ?? act?.title ?? r.act.replace(/-/g, " "), args, ...(missing.length > 0 ? { missing } : {}) }];
-      });
-      return [
-        {
-          invariant: name,
-          ...(subject ? { subjectId: subject.id } : {}),
-          label: title,
-          message: (says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: today(), money }) : subject ? `${labelFor(subject)}: ${title}` : title),
-          nodeIds: subject ? [subject.id] : [],
-          repairs: repairList,
-        },
-      ];
+    rules[name] = {
+      title: rule.title ?? name.replace(/-/g, " "),
+      require: parseExpr(rule.require),
+      ...(rule.when ? { when: parseExpr(rule.when) } : {}),
+      ...(rule.says ? { says: parseTemplate(rule.says) } : {}),
     };
-    invariants.push(
-      (rule.over === "graph"
-        ? defineInvariant(name, {
-            scope: "graph",
-            label: title,
-            judgement: { require: rule.require, ...(rule.when ? { when: rule.when } : {}), ...(rule.says ? { says: rule.says } : {}) },
-            ...(rule.description ? { description: rule.description } : {}),
-            ...(repairs.length > 0 ? { repairs: repairs.map((r) => r.act) } : {}),
-            evaluate: ({ graph }: { graph: unknown }) => judge(graph as GraphReader, null),
-          } as never)
-        : defineInvariant(name, {
-            scope: { kind: rule.over },
-            label: title,
-            judgement: { require: rule.require, ...(rule.when ? { when: rule.when } : {}), ...(rule.says ? { says: rule.says } : {}) },
-            ...(rule.description ? { description: rule.description } : {}),
-            ...(repairs.length > 0 ? { repairs: repairs.map((r) => r.act) } : {}),
-            evaluate: ({ graph, subject }: { graph: unknown; subject: unknown }) => judge(graph as GraphReader, subject as AnyGraphNode),
-          } as never)) as InvariantDefinition,
-    );
   }
 
-  // ── policy, brand, the rest ──────────────────────────────────────────────
-  /*
-   * WHO SEES WHAT is the app's, in the framework's one meaning (FR-02):
-   * absent, everybody sees everything; present, a kind no sight names is
-   * seen by nobody but the system, and `own` is the principal's own records.
-   */
-  const policy: Policy | undefined = document.policy
-    ? {
-        grants: document.policy.grants as Policy["grants"],
-        ...(document.policy.sees ? { sees: document.policy.sees as Policy["sees"] } : {}),
-        ...(document.roles ? { roles: document.roles } : {}),
-      }
-    : undefined;
-
+  // ── brand, views ─────────────────────────────────────────────────────────
   let brand: Brand | undefined;
   if (document.brand) {
+    const { accent, name: wordmark, ...money } = document.brand;
     const derived = accent ? brandFromAccent({ accent, base: SCHEMES as never }) : undefined;
     // A colour that cannot be read is not a reason to refuse an app: it wears the default colours and says why.
     if (derived && !derived.ok) findings.push(warning("brand", "brand.accent", `that accent cannot make a readable brand, so the app keeps Graview's colours: ${derived.why}`, "pick a colour further from orange-red, or a darker one"));
     // The app's money stands with or without an accent (FR-100).
     if (!derived || derived.ok || money.currency || money.locale) brand = { name: wordmark ?? document.name, schemes: derived?.ok ? derived.schemes : (SCHEMES as Brand["schemes"]), ...money };
   }
-  if (hasErrors(findings)) return { ok: false, findings };
+  const viewSpecs = viewsOf(document);
+  const home = homeOf(document);
 
-  const app: GraviewApp = {
-    name: document.name,
-    schema,
-    mutations,
-    invariants,
-    ...(policy ? { policy } : {}),
+  return {
+    format: COMPILED_FORMAT,
+    document,
+    findings,
+    kinds,
+    edges: [...edges].map(([name, { from, to, cardinality }]): readonly [string, EdgePlan] => [name, { from, to, cardinality }]),
+    acts,
+    rules,
     ...(brand ? { brand } : {}),
-    ...(document.modules ? { modules: document.modules as never } : {}),
-    ...(document.lenses ? { lenses: document.lenses as never } : {}),
-    // The arrangement is the app's (FR-80): every face reads it beside the places.
-    ...(document.pages ? { pages: document.pages as never } : {}),
-    ...(document.settings ? { settings: document.settings as never } : {}),
-    // The document's views are the declaration's view specs (FR-03): data the framework draws.
-    ...(Object.keys(viewsOf(document)).length > 0 ? { viewSpecs: viewsOf(document) as never } : {}),
-    // And its home view, about no one record, is the app's home (FR-81).
-    ...(homeOf(document) ? { home: homeOf(document) as never } : {}),
-    version: document.version ?? 1,
+    ...(Object.keys(viewSpecs).length > 0 ? { viewSpecs } : {}),
+    ...(home ? { home } : {}),
   };
-
-  // `toDocument(app)` gives this document back, byte for byte.
-  rememberDocument(app, document);
-  return { ok: true, app, document, findings, sights: document.policy?.sees, kinds: shapes };
 }
+
 
 /** Map a framework check's "where" (a kind, an act, a rule by name) back to a document path when we can. */
 export function frameworkPath(where: string, document: GraviewDocument): string {

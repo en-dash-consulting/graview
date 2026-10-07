@@ -4,7 +4,8 @@ import { fieldWords, valueWords } from "../schema/define-node.js";
 import { evaluateExpr, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import { parseExpr, type Expr } from "./expr/parse.js";
 import type { FieldSpec } from "./schema.js";
-import { EMPTY_GRAPH, formatMoney, formatValue, parseTemplate, type Money, type TemplatePart } from "./template.js";
+import { EMPTY_GRAPH, formatMoney, formatValue, type Money, type TemplatePart } from "./template.js";
+import { parseTemplate } from "./template-parse.js";
 import { fieldSpecOf } from "./to-document.js";
 import { FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, VIEW_FIELD_FORMATS, VIEW_TONES, type FigureFormat, type ViewBlock, type ViewTone } from "./views.js";
 

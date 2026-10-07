@@ -1,6 +1,7 @@
 import type { AnySchema, GraviewApp, InvariantDefinition, Policy } from "../index.js";
 import { descriptionOf } from "../schema/zod.js";
 import { error, warning, type Finding } from "./findings.js";
+import { documentOf } from "./remembered.js";
 import { FORMAT, FORMAT_VERSION, type FieldSpec, type GraviewDocument, type KindSpec, type RuleSpec } from "./schema.js";
 
 /**
@@ -22,17 +23,7 @@ export interface ToDocumentResult {
   readonly findings: readonly Finding[];
 }
 
-const COMPILED_FROM = new WeakMap<object, GraviewDocument>();
-
-/** Remembered by the compiler: the document an app was compiled from. */
-export function rememberDocument(app: object, document: GraviewDocument): void {
-  COMPILED_FROM.set(app, document);
-}
-
-/** The document an app was compiled from, if it was. */
-export function documentOf(app: object): GraviewDocument | undefined {
-  return COMPILED_FROM.get(app);
-}
+export { documentOf, rememberDocument } from "./remembered.js";
 
 type ZodLike = { readonly _zod?: { readonly def?: Record<string, unknown> } };
 const defOf = (schema: unknown): Record<string, unknown> | undefined => (schema as ZodLike | undefined)?._zod?.def;

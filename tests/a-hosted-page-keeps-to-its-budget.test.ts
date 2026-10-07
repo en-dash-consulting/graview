@@ -2,7 +2,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
 // @ts-expect-error — a plain .mjs module, without types.
-import { HOSTED_PAGE_BUDGET, measureHostedPage, packageOf } from "../scripts/lib/hosted-page.mjs";
+import { COMPILER_MODULES, HOSTED_PAGE_BUDGET, HOSTED_PAGE_COMPILED_BUDGET, HOSTED_PAGE_COMPILED_ENTRY, measureHostedPage, packageOf } from "../scripts/lib/hosted-page.mjs";
 // @ts-expect-error — a plain .mjs module, without types.
 import { hostedPageMarkdown } from "../scripts/lib/hosted-page-notes.mjs";
 
@@ -22,9 +22,10 @@ type Measured = {
 };
 
 let measured: Measured;
+let handed: Measured;
 beforeAll(async () => {
-  measured = (await measureHostedPage(repo)) as Measured;
-}, 60_000);
+  [measured, handed] = (await Promise.all([measureHostedPage(repo), measureHostedPage(repo, HOSTED_PAGE_COMPILED_ENTRY)])) as [Measured, Measured];
+}, 120_000);
 
 describe("a hosted page", () => {
   it("is measured as Cloud's shell is built: React, zod and the framework that draws the app are in what it loads up front", () => {
@@ -143,5 +144,34 @@ describe("a hosted page", () => {
     expect(rows.map((row) => row[1])).toEqual(Object.keys(measured.upFront.packages));
     expect(notes).toContain(`**Total** | **${(measured.upFront.minified / 1024).toFixed(1)}**`);
     expect(notes).toContain(`**${((HOSTED_PAGE_BUDGET.minified - measured.upFront.minified) / 1024).toFixed(1)} KB of headroom**`);
+  });
+});
+
+/**
+ * HANDED A COMPILED APP, THE PAGE CARRIES NO COMPILER (FR-123). Graview
+ * Cloud compiles a document on its server at every change; its shell then
+ * compiled it again in the page. Handed `serializeCompiled(compileDocument(doc))`
+ * beside the document, the shell builds the app with `appFromOrCompile` from
+ * `@graview/core/compiled`, and fetches the compiler only for a compiled app
+ * it cannot read (one cached from another build).
+ */
+describe("a hosted page handed a compiled app", () => {
+  it(`carries at most ${HOSTED_PAGE_COMPILED_BUDGET.minified / 1024} KB minified up front`, () => {
+    expect(handed.upFront.minified, `${(handed.upFront.minified / 1024).toFixed(1)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_COMPILED_BUDGET.minified);
+  });
+
+  it("carries no compiler up front: no reader, validator, expression or template parser, view checker or document schema", () => {
+    const modules = Object.keys(handed.upFront.modules);
+    expect(COMPILER_MODULES.filter((module: string) => modules.includes(module))).toEqual([]);
+    // What it does carry, to run the app: the builder, the evaluator and the renderer.
+    for (const module of ["core/src/document/compiled.ts", "core/src/document/expr/evaluate.ts", "core/src/document/template.ts"]) expect(modules).toContain(module);
+  });
+
+  it("fetches the compiler only when it must compile after all", () => {
+    expect(handed.whenAsked.doors.map((door) => door.module)).toContain("core/src/document/compile.ts");
+  });
+
+  it("is at least 40 KB lighter up front than the page that compiles the document itself", () => {
+    expect(measured.upFront.minified - handed.upFront.minified, `${((measured.upFront.minified - handed.upFront.minified) / 1024).toFixed(1)} KB`).toBeGreaterThanOrEqual(40 * 1024);
   });
 });
