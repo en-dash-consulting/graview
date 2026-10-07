@@ -6,15 +6,14 @@ import { Link, useParams } from "react-router-dom";
 import { useRef, useState } from "react";
 import { rankedRepairs, recordFacts } from "./facts.js";
 import { DerivedForm } from "./form.js";
-import { placeHref, pluralSlug, recordPath, spatialHref } from "./registry.js";
-import { type PageContext, useStoreTick } from "./page-context.js";
+import { pluralSlug, recordPath } from "./registry.js";
+import { OverviewLink, type PageContext, useStoreTick } from "./page-context.js";
 import { pathOfPlace, placeKey, placesOf } from "./page-places.js";
 import { Repairs } from "./page-problems.js";
 import {
   KindMark,
   button,
   eyebrow,
-  h1,
   h2,
   lede,
   link,
@@ -25,7 +24,7 @@ import {
   rule,
   whoDid,
 } from "./page-typography.js";
-import { PageMain } from "./page-shell.js";
+import { PageMain, PageTitle } from "./page-shell.js";
 import { capitalise } from "./page-typography.js";
 
 
@@ -51,7 +50,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   if (!facts) {
     return (
       <PageMain context={context}>
-        <h1 style={h1}>Nothing lives at this address.</h1>
+        <PageTitle context={context}>Nothing lives at this address.</PageTitle>
       </PageMain>
     );
   }
@@ -91,11 +90,9 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             {pluralOf(store, facts.kind)}
           </Link>
         </p>
-        <h1 style={h1}>{facts.label}</h1>
+        <PageTitle context={context}>{facts.label}</PageTitle>
         {described && described !== facts.label ? <p style={lede}>{described}</p> : null}
-        <a href={spatialHref(id)} style={{ ...link, ...quiet }} data-testid="spatial-link">
-          See it in the scene ↗
-        </a>
+        <OverviewLink context={context} stop={`#focus=${encodeURIComponent(id)}`} style={{ ...link, ...quiet }} data-testid="spatial-link" />
         {placesOf(context).some((place) => place.kind === facts.kind || place.across === facts.kind) ? (
           /* WHERE IT IS SEEN: the pictures this kind of thing appears in, each as a page and as a stop in the scene. */
           <p style={{ ...quiet, margin: 0 }} data-testid="seen-in">
@@ -108,9 +105,9 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   <Link to={pathOfPlace(context, place)} style={link}>
                     {place.title}
                   </Link>{" "}
-                  <a href={placeHref(place.as, context.sceneHref ?? "/")} style={{ ...link, ...quiet }} title={`${place.title}, in the scene`}>
+                  <OverviewLink context={context} stop={`#view=${encodeURIComponent(place.as)}`} style={{ ...link, ...quiet }} title={`${place.title}, on the overview`}>
                     ↗
-                  </a>
+                  </OverviewLink>
                 </span>
               ))}
           </p>

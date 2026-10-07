@@ -48,7 +48,7 @@ describe("an address under a base path", () => {
     const task = defineNode("task", { fields: z.object({ label: z.string() }), plural: "Tasks" });
     const app = defineApp({ name: "Errands", schema: createSchema([task]), mutations: [] });
     const places = placesOf(app);
-    expect(places.map((place) => addressOf(place, { basePath: "/apps/a1/" }))).toEqual(["/apps/a1", "/apps/a1/tasks"]);
+    expect(places.map((place) => addressOf(place, { basePath: "/apps/a1/" }))).toEqual(["/apps/a1", "/apps/a1/places/overview", "/apps/a1/tasks"]);
     for (const place of places) expect(pathWithin(addressOf(place, { basePath: "/apps/a1" }).split("?")[0]!, "/apps/a1")).toBe(place.address.split("?")[0]);
   });
 });

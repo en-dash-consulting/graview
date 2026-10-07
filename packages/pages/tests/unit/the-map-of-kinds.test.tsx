@@ -79,8 +79,10 @@ describe("the map of kinds", () => {
     const home = draw("/");
     expect(home).not.toContain('data-testid="kind-map"');
     expect(home).toContain('data-testid="map-link"');
-    expect(home).toContain("How it fits together · 2 relations");
-    expect(home).toContain(">Map<");
+    expect(home).toContain("Connections · 2 relations");
+    // Named once, in a reader's word, on the bar and the home alike (FR-132).
+    expect(home).toContain(">Connections<");
+    expect(home).not.toContain(">Map<");
   });
 
   it("says on a kind's page what it relates to, and groups the list by a relation from the address", () => {
@@ -89,7 +91,8 @@ describe("the map of kinds", () => {
     expect(plain).toContain('href="/people"');
     expect(plain).toContain('href="/weeks"');
     expect(plain).toContain('data-testid="arrange-group"');
-    const grouped = draw("/duties?by=does");
+    const drawn = draw("/duties?by=does");
+    const grouped = drawn.slice(drawn.indexOf("<main"));
     expect(grouped).toContain('data-grouped="does"');
     expect(grouped.match(/data-testid="list-group"/g)).toHaveLength(2);
     expect(grouped.indexOf("Ana")).toBeLessThan(grouped.indexOf("Bo"));

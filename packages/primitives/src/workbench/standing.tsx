@@ -1,6 +1,10 @@
 import type { AnySchema } from "@graview/core";
 import { POPOVER_STYLE, usePopover, useSelection, useViolations } from "@graview/react/provider";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
+import { toolStyle } from "../app-bar.js";
+
+const ProblemRows = lazy(() => import("../bar-panes.js").then((panes) => ({ default: panes.ProblemRows })));
+const fetchRows = () => void import("../bar-panes.js");
 
 
 /**
@@ -14,12 +18,9 @@ import { useState } from "react";
  */
 export function Standing({
   clean = "All rules hold",
-  compact = false,
 }: {
-  /** What to say when nothing is broken, in the app's own words. */
+  /** What to say when nothing is broken, in the app's own words: the tool's name, and what it says on hover. */
   readonly clean?: string;
-  /** Just the dot: the sentence is the title. For a bar without the room. */
-  readonly compact?: boolean;
 }) {
   const violations = useViolations<AnySchema>();
   const { set } = useSelection();
@@ -35,42 +36,31 @@ export function Standing({
   const [asked, setAsked] = useState(false);
   const popover = usePopover("problems", { open: asked && count > 0, onOpenChange: setAsked });
   const open = popover.open;
+  const said = standingWords(count, clean);
 
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative", display: "inline-flex" }}>
+      {/*
+        * ONE OF THE BAR'S TOOLS (FR-131): a dot in the tone of the rules —
+        * good, or the warning's, or the bad's when a rule could not even be
+        * judged — and a number only when one is broken. The words are its
+        * name and its hover; it stays reachable when all is well, so a reader
+        * moving by keyboard hears that too.
+        */}
       <button
         type="button"
         data-testid="standing"
         {...popover.trigger}
-        disabled={count === 0}
-        onClick={popover.toggle}
-        title={count === 0 ? clean : "Open what is broken, and what would fix it"}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 7,
-          fontSize: "0.875rem",
-          whiteSpace: "nowrap",
-          ...(compact && count === 0 ? { minWidth: 28, minHeight: 28, padding: 0 } : {}),
-          // The longhand both ways: switching between a `border` shorthand
-          // and `borderColor` across renders is a React warning, and the
-          // width and style already come from the button rule in the theme.
-          borderColor: count === 0 ? "transparent" : "var(--graview-warn)",
-          ...(count === 0 ? { background: "none", opacity: 1 } : { color: "var(--graview-warn)" }),
-        }}
+        aria-disabled={count === 0 ? true : undefined}
+        aria-label={said}
+        onClick={count === 0 ? undefined : popover.toggle}
+        onPointerEnter={count === 0 ? undefined : fetchRows}
+        onFocus={count === 0 ? undefined : fetchRows}
+        title={said}
+        style={{ ...toolStyle, padding: count === 0 ? 0 : "0 8px", cursor: count === 0 ? "default" : "pointer", color: count === 0 ? "var(--graview-ink-muted)" : tone(violations), fontVariantNumeric: "tabular-nums", fontWeight: 600 }}
       >
-        <span
-          aria-hidden="true"
-          style={{
-            width: 7,
-            height: 7,
-            borderRadius: 999,
-            flex: "0 0 auto",
-            background: count === 0 ? "var(--graview-edge-bright)" : "var(--graview-warn)",
-          }}
-        />
-        {compact && count === 0 ? <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }}>{clean}</span> : count === 0 ? clean : `${count} ${count === 1 ? "problem" : "problems"}`}
+        <StandingDot tone={count === 0 ? "var(--graview-good)" : tone(violations)} />
+        {count > 0 ? <span aria-hidden="true">{count}</span> : null}
       </button>
 
       {open ? (
@@ -92,48 +82,31 @@ export function Standing({
             boxShadow: "var(--graview-lift-high)",
           }}
         >
-          {violations.map((violation, index) => (
-            <li
-              key={`${violation.invariant}:${index}`}
-              style={{
-                // A hairline between rows, not a card around each. Bordered
-                // buttons inside a bordered panel is two boxes doing one job,
-                // and it made a two-item list look like a dialog.
-                borderTop: index === 0 ? "none" : "1px solid var(--graview-edge)",
+          <Suspense fallback={null}>
+            <ProblemRows
+              violations={violations}
+              pick={(violation) => {
+                set(violation.nodeIds);
+                popover.setOpen(false);
               }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  set(violation.nodeIds);
-                  popover.setOpen(false);
-                }}
-                style={{
-                  width: "100%",
-                  textAlign: "left",
-                  fontSize: "0.8125rem",
-                  lineHeight: 1.4,
-                  padding: "7px 8px",
-                  border: "1px solid transparent",
-                  background: "none",
-                  boxShadow: "none",
-                  borderRadius: 7,
-                }}
-              >
-                <span style={{ display: "block", color: "var(--graview-ink)" }}>
-                  {violation.message}
-                </span>
-                <span style={{ color: "var(--graview-ink-faint)", fontSize: "0.75rem" }}>
-                  {violation.label}
-                  {violation.repairs.length > 0
-                    ? ` · ${violation.repairs.length} ${violation.repairs.length === 1 ? "way" : "ways"} to fix`
-                    : ""}
-                </span>
-              </button>
-            </li>
-          ))}
+            />
+          </Suspense>
         </ol>
       ) : null}
     </div>
   );
+}
+
+/** What the standing says: its name, and its hover (FR-131). */
+export function standingWords(count: number, clean: string): string {
+  return count === 0 ? clean : `${count} ${count === 1 ? "problem" : "problems"} — open what is broken, and what would fix it`;
+}
+
+/** A broken rule is a warning; a rule that could not be judged at all is bad. */
+const tone = (violations: readonly { readonly status?: string }[]): string =>
+  violations.some((violation) => violation.status === "could-not-judge" || violation.status === "over-budget") ? "var(--graview-bad)" : "var(--graview-warn)";
+
+/** The dot itself: eight pixels in the tone of the rules. */
+export function StandingDot({ tone: colour }: { readonly tone: string }) {
+  return <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: 999, flex: "0 0 auto", background: colour }} />;
 }

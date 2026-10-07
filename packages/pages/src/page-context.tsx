@@ -1,5 +1,5 @@
-import type { AnySchema, Brand, Person, Principal, Store, PresenceChannel, SettingDeclaration } from "@graview/core";
-import { useCallback, useRef, useSyncExternalStore } from "react";
+import { overviewTitle, type AnySchema, type Brand, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration } from "@graview/core";
+import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { ReactViewRegistry } from "@graview/react/provider";
 
 
@@ -56,12 +56,25 @@ export interface PageContext<S extends AnySchema> {
    */
   readonly framed?: boolean;
   /**
-   * Whether a bar above the face already says how many problems there are
-   * and opens them — the embed's strip, with its Standing. The count is
-   * said in one place (FR-122): with a bar above, the shell's Problems tab
-   * names the page without a number of its own.
+   * WHETHER THE APP BAR IS ABOVE THE FACE (FR-131): the embed's, which says
+   * the app's name, its places, Find, the standing and the person. The
+   * derived shell then draws no header of its own — nothing on the bar is
+   * said twice — and the face's Find box goes in the bar.
    */
-  readonly standingAbove?: boolean;
+  readonly barAbove?: boolean;
+  /**
+   * The level each page's own title is said at (FR-131): one below the
+   * app's name on the bar — `2` when the bar's is the page's `h1`, the
+   * default; deeper when the host says the app's name lower down.
+   */
+  readonly titleLevel?: 2 | 3 | 4 | 5 | 6;
+  /**
+   * THE WAY TO THE OVERVIEW FROM A PAGE (FR-132), when the scene is drawn by
+   * whoever holds this face: handed a stop, it goes there. Without it a
+   * face that owns its page links to `sceneHref`, and an embedded one that
+   * draws no scene offers none.
+   */
+  readonly overview?: (stop: string) => void;
   /**
    * THE APP'S PICTURES. The view registry the scene draws from; given, every
    * registered place is a page on this face too — an index at `/places`,
@@ -76,6 +89,54 @@ export interface PageContext<S extends AnySchema> {
   readonly settings?: readonly SettingDeclaration[];
   /** Who else is here, for the same provider. */
   readonly presence?: PresenceChannel;
+}
+
+/**
+ * WHERE A THING STANDS ON THE OVERVIEW (FR-132): a link from a page to the
+ * scene at a stop — a record in focus, a picture in place. Through the
+ * embed's own way when the face is in one that draws the scene; to the
+ * scene's address when the face owns its page; nowhere, and nothing drawn,
+ * when there is no scene to go to.
+ */
+export function OverviewLink<S extends AnySchema>({
+  context,
+  stop,
+  title,
+  style,
+  children,
+  ...rest
+}: {
+  readonly context: PageContext<S>;
+  readonly stop: string;
+  readonly title?: string;
+  readonly style?: CSSProperties;
+  readonly children?: ReactNode;
+} & Record<`data-${string}`, string>) {
+  const label = overviewTitle(context.views?.arrangement?.());
+  const words = children ?? `On ${label === "Overview" ? "the overview" : label.replace(/^The /, "the ")} ↗`;
+  if (context.overview) {
+    const go = context.overview;
+    return (
+      <a
+        href={stop}
+        {...rest}
+        {...(title ? { title } : {})}
+        style={style}
+        onClick={(event) => {
+          event.preventDefault();
+          go(stop);
+        }}
+      >
+        {words}
+      </a>
+    );
+  }
+  if (context.embedded) return null;
+  return (
+    <a href={`${context.sceneHref ?? "/"}${stop}`} {...rest} {...(title ? { title } : {})} style={style}>
+      {words}
+    </a>
+  );
 }
 
 /** The way back to the example, for a face whose browser remembers. */

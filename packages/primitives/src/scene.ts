@@ -19,4 +19,6 @@ export { Inspector } from "./workbench/inspector.js";
 export { OverviewButton } from "./workbench/back-out.js";
 export { Places } from "./places.js";
 export { ShowInstallation } from "./installation.js";
+export { FindBox } from "./find.js";
 export { HomeLanding } from "./home-landing.js";
+export { viewsCss } from "./views-css.js";

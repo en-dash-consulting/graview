@@ -57,8 +57,8 @@ describe("@graview/embed/pages", () => {
     const root = host.querySelector("[data-graview-embed]");
     expect(root?.getAttribute("data-graview-embed")).toBe("pages");
     expect(host.textContent).toContain("Tasks");
-    expect(host.querySelector("[data-testid=embed-faces]"), "the strip").not.toBeNull();
-    expect(host.querySelector("[data-testid=embed-face-scene]")).toBeNull();
+    expect(host.querySelector("[data-testid=app-bar]"), "the bar").not.toBeNull();
+    expect(host.querySelector("[data-testid=app-place-overview]")).toBeNull();
     expect(host.querySelector("[data-testid=studio-place]")).toBeNull();
     await act(async () => handle.setHostContext({ theme: "dark" }));
     expect(root?.getAttribute("data-graview-scheme")).toBe("dark");
@@ -93,7 +93,7 @@ describe("an embed's studio", () => {
     const hidden = await mounting({ studio: false });
     // As long as the offered one took to arrive, and then some: it is not late, it is not coming.
     await act(async () => new Promise((resolve) => setTimeout(resolve, 50)));
-    expect(hidden.host.querySelector("[data-testid=embed-faces]"), "the strip is still there").not.toBeNull();
+    expect(hidden.host.querySelector("[data-testid=app-bar]"), "the bar is still there").not.toBeNull();
     expect(hidden.host.querySelector("[data-testid=studio-place]")).toBeNull();
   });
 

@@ -56,9 +56,10 @@ describe("a chapter, embedded", () => {
     // the document element for the whole browser, so a scoped stylesheet asks
     // about it and applies inside its own box — which owns nothing outside.
     expect(style).not.toContain(":root {");
-    expect(element.querySelector('[data-testid="embed-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
-    expect(element.querySelector('[data-testid="embed-face-graview"]')).toBeNull();
-    expect(element.querySelector('[data-testid="standing"]')?.textContent).toContain("Everything is in order");
+    // The overview is the place you are on, one tab of the app's (FR-132); no switch says "Scene" or "Pages".
+    expect(element.querySelector('[data-testid="app-place-overview"]')?.getAttribute("aria-current")).toBe("page");
+    expect([...element.querySelectorAll("button, a")].some((control) => /^(Scene|Pages)$/.test(control.textContent?.trim() ?? ""))).toBe(false);
+    expect(element.querySelector('[data-testid="standing"]')?.getAttribute("aria-label")).toContain("Everything is in order");
     handle.unmount();
     expect(element.innerHTML).toBe("");
   });
@@ -71,8 +72,8 @@ describe("a chapter, embedded", () => {
     expect(element.querySelector("[data-graview-altitude]")).toBeNull();
     expect(element.querySelectorAll("[data-graview-view]").length).toBeGreaterThan(0);
     handle.setFace("pages");
-    expect(element.querySelector('[data-testid="shell-nav"]')).not.toBeNull();
-    expect(element.textContent).toContain("Plots");
+    expect(element.querySelector('[data-graview-face="pages"]')).not.toBeNull();
+    expect(element.querySelector('[data-testid="app-places"]')?.textContent).toContain("Plots");
     handle.setStop("#focus=plot-2");
     handle.setFace("scene");
     expect(element.querySelector('[data-graview-view="plot-2"]')).not.toBeNull();
@@ -93,7 +94,7 @@ describe("a chapter, embedded", () => {
     // The lens, at full size, over the gardeners — and no strip, no scene, no rail around it.
     expect(element.querySelector('[data-testid="embed-picture"]')).not.toBeNull();
     expect(element.textContent).toContain("Who tends what");
-    expect(element.querySelector('[data-testid="embed-face-pages"]')).toBeNull();
+    expect(element.querySelector('[data-testid="app-home"]')).toBeNull();
     expect(element.querySelector("[data-graview-view]")).toBeNull();
     handle.unmount();
   });
@@ -115,11 +116,14 @@ describe("a chapter, embedded", () => {
       principal: chapter.principal,
       views: (schema) => seedbedViews(schema, { lens: true, board: true }),
     });
-    expect(element.querySelector('[data-testid="place-who-tends-what"]')?.getAttribute("aria-pressed")).toBe("true");
+    // The scene goes to the group the place is a picture of, with the place showing.
+    const stop = new URLSearchParams(handle.where().stop.slice(1));
+    expect(stop.get("focus")).toBe("aggregate:gardener");
+    expect(stop.get("in.view")).toBe("who-tends-what");
     handle.unmount();
   });
 
-  it("names the lenses on the strip, and a lens is a place you can get back to", async () => {
+  it("names the lenses on the bar, each a place of its own, and the overview a press away (FR-131, FR-132)", async () => {
     const element = into();
     const handle = mount(element, {
       app: chapter.app,
@@ -129,24 +133,20 @@ describe("a chapter, embedded", () => {
       principal: chapter.principal,
       views: (schema) => seedbedViews(schema, { lens: true, board: true }),
     });
-    const place = () => element.querySelector<HTMLButtonElement>('[data-testid="place-who-tends-what"]');
-    expect(place()?.textContent).toBe("Who tends what");
-    expect(element.querySelector('[data-testid="place-what-grows-where"]')?.textContent).toBe("What grows where");
-    expect(place()?.getAttribute("aria-pressed")).toBe("true");
-    // Into a gardener: the grid is gone, and the strip still says where it is.
-    handle.setStop("#focus=ravi");
-    // A fresh scene, as the face test does: the mounted one lands on the
-    // next frame, which a static test never gets.
-    handle.setFace("pages");
-    handle.setFace("scene");
-    expect(place()?.getAttribute("aria-pressed")).toBe("false");
-    expect(element.querySelector('[data-graview-view="ravi"]')).not.toBeNull();
-    // Pressing the place is the way back. (No face toggle here: a face
-    // change re-applies the handle's last stop, which is the point of it.)
-    place()?.click();
-    // A click's update lands on the next microtask; the handle's own calls flush at once.
+    const tab = (key: string) => element.querySelector<HTMLElement>(`[data-testid="app-place-${key}"]`);
+    expect(tab("place:gardener:who-tends-what")?.textContent).toBe("Who tends what");
+    expect(tab("place:plot:what-grows-where")?.textContent).toBe("What grows where");
+    expect(tab("overview")?.getAttribute("aria-current")).toBe("page");
+    // A lens's tab is its page, under the same bar.
+    tab("place:gardener:who-tends-what")?.click();
     await Promise.resolve();
-    expect(place()?.getAttribute("aria-pressed")).toBe("true");
+    expect(element.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed")).toBe("pages");
+    expect(element.querySelector("[data-graview-page-title]")?.textContent).toBe("Who tends what");
+    expect(tab("place:gardener:who-tends-what")?.getAttribute("aria-current")).toBe("page");
+    // And the overview is one press back.
+    tab("overview")?.click();
+    await Promise.resolve();
+    expect(element.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed")).toBe("scene");
     handle.unmount();
   });
 
@@ -161,12 +161,13 @@ describe("a chapter, embedded", () => {
       principal: seven.principal,
       seats: seven.seats,
     });
-    const seat = (id: string) => element.querySelector<HTMLButtonElement>(`[data-testid="embed-seat-${id}"]`);
+    // Who sits is the person on the bar (FR-131); the seats are in their menu.
+    const sitting = () => element.querySelector('[data-testid="profile-button"]')?.getAttribute("aria-label") ?? "";
     // Ravi, a gardener, is at the keyboard: welcoming a gardener is the coordinator's.
-    expect(seat("ravi")?.getAttribute("aria-pressed")).toBe("true");
+    expect(sitting()).toMatch(/^Ravi/);
     expect(element.querySelector('[data-testid="withheld"]')?.textContent).toContain("coordinator can");
     handle.setSeat(seatOf(seven, "june"));
-    expect(seat("june")?.getAttribute("aria-pressed")).toBe("true");
+    expect(sitting()).toMatch(/^June/);
     expect(element.querySelector('[data-testid="withheld"]')).toBeNull();
     expect(element.querySelector('[data-testid="form-add-gardener"]')).not.toBeNull();
     handle.unmount();
@@ -227,7 +228,7 @@ describe("a chapter, embedded", () => {
     expect(rootOf(one).getAttribute("aria-label")).toBe("Chapter 13");
     expect(rootOf(two).getAttribute("aria-label")).toBe("Chapter 1");
     // Everything the embed drew is inside it.
-    expect(one.querySelectorAll('[data-testid="embed-faces"]')[0]?.closest("section")).toBe(rootOf(one));
+    expect(one.querySelectorAll('[data-testid="app-bar"]')[0]?.closest("section")).toBe(rootOf(one));
     first.unmount();
     second.unmount();
   });

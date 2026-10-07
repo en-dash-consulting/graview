@@ -16,6 +16,8 @@ export const POPOVERS = {
   profile: { trigger: "profile-button", pane: "profile", opens: "press", focus: "into", drawn: ["shell", "embed"] },
   /** What is broken, from Standing, on the bar and the strip. */
   problems: { trigger: "standing", pane: "problems", opens: "press", focus: "into", drawn: ["shell", "embed"] },
+  /** The app's places the bar's row could not hold, from "More" (FR-131). */
+  places: { trigger: "app-places-more", pane: "app-places-more-list", opens: "press", focus: "into", drawn: ["embed"] },
   /** What has happened, from the bar. */
   activity: { trigger: "activity-button", pane: "activity", opens: "press", focus: "into", drawn: ["shell"] },
   /** What the words find, under the Find box. */

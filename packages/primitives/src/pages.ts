@@ -17,7 +17,12 @@ export { KindFigure } from "./figure.js";
 export { LadderSetting } from "./ladder.js";
 export { useMarkup } from "./markup.js";
 export { AppMark, AppTitle, useFavicon } from "./app-title.js";
+export { AppBar, BarFindContext, barPlaceAt, barPlaces, OVERVIEW_KEY, TOOL, toolStyle, useBarFind } from "./app-bar.js";
+export type { BarFind, BarGo, BarPlace } from "./app-bar.js";
 export { RelationMark } from "./relation-key.js";
 // The framework's own views and the declaration's specs, for a routed face that registers them outright (`@graview/embed/pages`) without reaching every lens through the package's main entry.
 export { registerDefaultViews } from "./default-views.js";
-export { registerViewSpecs, SpecLinks } from "./spec-views.js";
+export { HeadingsUnder, registerViewSpecs, SpecLinks } from "./spec-views.js";
+export { StandingDot, standingWords } from "./workbench/standing.js";
+export { Profile } from "./profile.js";
+export { viewsCss } from "./views-css.js";

@@ -58,7 +58,7 @@ describe("the pictures on pages", () => {
   it("lands on the gallery: the standing as the headline, then every picture, large and live, before anything else", () => {
     const html = draw("/");
     const at = (text: string) => html.indexOf(text);
-    expect(html).toContain('data-testid="standing">2 tasks and 1 note.</h1>');
+    expect(html).toContain('data-testid="standing">2 tasks and 1 note.</h2>');
     expect(html).toContain('data-testid="gallery"');
     expect(html.match(/data-testid="place-card"/g)).toHaveLength(2);
     expect(html).toContain(`href="${placePath("the-board")}"`);
@@ -113,28 +113,34 @@ describe("the pictures on pages", () => {
     expect(html).toContain('data-testid="place-stop"');
     expect(html).toContain('href="/#view=the-week"');
     expect(html).toContain("All tasks as a list");
-    // The other pictures, one press away — and not this one.
-    expect(html).toContain('data-testid="sibling-pictures"');
-    expect(html).toContain(`href="${placePath("the-board")}"`);
-    expect(html.match(new RegExp(`href="${placePath("the-week")}"`, "g"))).toBeNull();
+    // The other pictures, one press away — and not this one, which the bar marks as where you are.
+    const page = html.slice(html.indexOf("<main"));
+    expect(page).toContain('data-testid="sibling-pictures"');
+    expect(page).toContain(`href="${placePath("the-board")}"`);
+    expect(page.match(new RegExp(`href="${placePath("the-week")}"`, "g"))).toBeNull();
+    expect(html).toMatch(/data-testid="app-place-place:task:the-week"[^>]*aria-current="page"/);
   });
 
   it("says so when no picture is called that", () => {
     expect(draw("/places/the-year")).toContain("No picture is called that");
   });
 
-  it("has one row of navigation: the pictures first, then the kinds, then Problems", () => {
+  it("has one row of navigation on the one bar: the overview, then each picture, then the kinds (FR-131, FR-132)", () => {
     const html = draw("/");
-    const nav = html.slice(html.indexOf('data-testid="shell-nav"'), html.indexOf("</nav>"));
+    const nav = html.slice(html.indexOf('data-testid="app-places"'), html.indexOf("</nav>"));
     const at = (text: string) => nav.indexOf(text);
-    expect(at(">Pictures<")).toBeGreaterThan(-1);
-    expect(at(">Pictures<")).toBeLessThan(at(">Tasks<"));
-    expect(at(">Tasks<")).toBeLessThan(at("Problems"));
-    // The pictures are the home, not a second row of the nav.
-    expect(html).not.toContain('aria-label="Pictures"');
+    expect(at(">Overview<")).toBeGreaterThan(-1);
+    expect(at(">Overview<")).toBeLessThan(at(">The board<"));
+    expect(at(">The board<")).toBeLessThan(at(">Tasks<"));
+    // The home is the app's name, said once as the heading; the problems are the standing's to open.
+    expect(nav).not.toContain(">Pictures<");
+    expect(nav).not.toContain("Problems");
+    expect(html).toMatch(/<h1[^>]*><a[^>]*data-testid="app-home"[^>]*aria-current="page"/);
     expect(html.match(/<nav /g)).toHaveLength(1);
-    // Without any picture the first tab is simply the home.
-    expect(draw("/", false)).toContain(">Home<");
+    // Without any picture the tabs are the overview and the kinds.
+    const plain = draw("/", false);
+    expect(plain).toContain(">Overview<");
+    expect(plain).not.toContain(">The board<");
   });
 
   it("gives a kind's page its own pictures, by name", () => {

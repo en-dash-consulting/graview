@@ -44,7 +44,7 @@ describe("a guest view registered with a title", () => {
     const frame = host.querySelector<HTMLIFrameElement>('iframe[data-guest-view="prices"]');
     expect(frame).not.toBeNull();
     expect(frame!.getAttribute("title")).toBe("The price sheet");
-    expect(host.querySelector("main h1")?.textContent).toBe("The price sheet");
+    expect(host.querySelector("[data-graview-page-title]")?.textContent).toBe("The price sheet");
     await act(async () => root.unmount());
     host.remove();
   });

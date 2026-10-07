@@ -145,11 +145,6 @@ export function Shell<S extends AnySchema>({
   // The picture the notices are drawn over (FR-75).
   const picture = useRef<HTMLElement>(null);
   const scene = useCallback(() => picture.current, []);
-  // The standing's sentence goes first — the app's own places are worth
-  // more than "everything is in order" said in words — and the name behind
-  // the profile's mark goes at a laptop's width.
-  const quiet = barWidth !== null && barWidth < 1560;
-  const compact = barWidth !== null && barWidth < 1100;
   /*
    * A PHONE GETS TWO ROWS. One row that hides what it cannot hold is the
    * failure the old bar was built against: at 390 a scaffolded app had no
@@ -249,20 +244,16 @@ export function Shell<S extends AnySchema>({
               only makes them visible, because nobody should have to know that. */}
           <Backtrack />
           {pagesHref ? (
-            // THE TWO FACES, as one switch: the scene, and the same app as pages.
-            <div role="group" aria-label="Face" data-testid="faces" style={{ display: "inline-flex", padding: 3, gap: 2, borderRadius: 999, border: "1px solid var(--graview-edge)", background: "var(--graview-panel-muted)", flex: "0 0 auto" }}>
-              <span aria-current="page" style={{ display: "inline-flex", alignItems: "center", minHeight: 26, padding: "2px 11px", borderRadius: 999, fontSize: "0.8125rem", fontWeight: 600, color: "var(--graview-ink)", background: "var(--graview-panel)", border: "1px solid var(--graview-edge)" }}>
-                Scene
-              </span>
-              <a
-                href={pagesHref}
-                data-testid="pages-link"
-                title="The same app, as ordinary pages"
-                style={{ display: "inline-flex", alignItems: "center", minHeight: 26, padding: "2px 11px", borderRadius: 999, fontSize: "0.8125rem", fontWeight: 500, color: "var(--graview-ink-muted)", textDecoration: "none" }}
-              >
-                Pages
-              </a>
-            </div>
+            /*
+             * THE SAME RECORDS, AS LISTS (FR-132). The scene is the app's
+             * overview, one of its places; its lists live on the routed
+             * face, whose bar names the overview beside them. A switch that
+             * said "Scene" and "Pages" named two modes a reader never asked
+             * for.
+             */
+            <a href={pagesHref} data-testid="pages-link" title="Every kind of record, as a list" style={{ display: "inline-flex", alignItems: "center", minHeight: 30, padding: "0 4px", fontSize: "0.875rem", color: "var(--graview-ink-muted)", textDecoration: "none", flex: "0 0 auto" }}>
+              Lists
+            </a>
           ) : null}
           {nav}
           <Trail home={home} {...(homeLabel !== undefined ? { homeLabel } : {})} />
@@ -299,7 +290,7 @@ export function Shell<S extends AnySchema>({
             minWidth: 0,
           }}
         >
-          <Standing clean={standing} compact={quiet} />
+          <Standing clean={standing} />
           <FollowingLine />
           <ActivityRail remembers={remembers} calls={calls} seat={seat?.(onCall)} />
           {/*
@@ -312,7 +303,6 @@ export function Shell<S extends AnySchema>({
           <Profile<S>
             scheme={scheme}
             onScheme={onScheme}
-            compact={compact}
             {...(profileHref ? { profileHref } : {})}
             {...(hostActions ? { hostActions } : {})}
             keeping={

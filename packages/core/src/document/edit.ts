@@ -173,6 +173,7 @@ const SHAPES: Record<EditOp, z.ZodType> = {
       order: z.union([z.array(kindName).max(40), z.null()]).optional(),
       hide: z.union([z.array(kindName).max(40), z.null()]).optional(),
       first: z.union([z.string().min(1).max(80), z.null()]).optional(),
+      overview: z.union([z.string().min(1).max(40), z.null()]).optional(),
     })
     .strict(),
   "set-computed": z
@@ -899,7 +900,7 @@ class Editor {
   }
 
   private arrangePages(i: number, e: Doc) {
-    if (e.order === undefined && e.hide === undefined && e.first === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide" or "first"');
+    if (e.order === undefined && e.hide === undefined && e.first === undefined && e.overview === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide", "first" or "overview"');
     const kinds = Object.keys(this.doc.kinds);
     for (const part of ["order", "hide"] as const) {
       for (const [n, kind] of (e[part] ?? []).entries()) {
@@ -939,6 +940,16 @@ class Editor {
       } else {
         pages.first = e.first;
         said.push(`the app opens on "${e.first}"`);
+      }
+    }
+    if (e.overview !== undefined) {
+      // What the scene is called on the bar (FR-132); its address stays /places/overview.
+      if (e.overview === null || e.overview.trim() === "" || e.overview.trim() === "Overview") {
+        delete pages.overview;
+        said.push("the overview is called Overview");
+      } else {
+        pages.overview = e.overview.trim();
+        said.push(`the overview is called "${pages.overview}"`);
       }
     }
     if (Object.keys(pages).length === 0) delete this.doc.pages;

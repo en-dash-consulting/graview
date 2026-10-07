@@ -96,7 +96,7 @@ function PlotPage({ context }: { context: PageContext<S> }) {
   return (
     <PageMain context={context}>
       <h1 style={pageStyles.h1}>{facts.label}</h1>
-      <a href={spatialHref(id)}>See it in the scene ↗</a>
+      <a href={spatialHref(id)}>On the overview ↗</a>
       <DerivedForm store={store} mutation={sow} prefilled={{ plotId: id }} />
     </PageMain>
   );

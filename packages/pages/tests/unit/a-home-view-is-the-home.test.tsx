@@ -44,11 +44,12 @@ describe("the home view on the routed face", () => {
   it("replaces the derived home's body, under the shell, with the page's heading its first headline", async () => {
     const { host, done } = await rendered("/");
     expect(host.querySelector('[data-testid="home-view"]')).not.toBeNull();
-    expect(host.querySelector("main h1")?.textContent).toBe("A small start, on three fronts.");
+    // Its level-1 headline is said under the app's name on the bar (FR-131).
+    expect(host.querySelector("main h2")?.textContent).toBe("A small start, on three fronts.");
     expect(host.querySelector('[data-testid="standing"]')).toBeNull();
     expect(host.textContent).toContain("$21,000");
-    // The shell stays.
-    expect(host.querySelector('[data-testid="masthead"]')).not.toBeNull();
+    // The shell stays: the one bar, with the app's name as the page's heading.
+    expect(host.querySelector('[data-testid="app-home"]')).not.toBeNull();
     await done();
   });
 
@@ -90,7 +91,7 @@ describe("lists of related records on the routed face", () => {
 
   it("a blocks lens is a page of its own", async () => {
     const { host, done } = await rendered("/places/what-we-heard");
-    expect(host.querySelector("main h1")?.textContent).toContain("What we heard");
+    expect(host.querySelector("[data-graview-page-title]")?.textContent).toContain("What we heard");
     expect(host.textContent).toContain("What hurts");
     await done();
   });

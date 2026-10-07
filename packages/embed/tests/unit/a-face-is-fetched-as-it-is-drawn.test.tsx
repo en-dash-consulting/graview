@@ -52,7 +52,7 @@ describe("a face fetched as it is drawn", () => {
     const { host, handle, done } = await mounted({ face: "pages", onReady: (one) => ready.push(one) });
     // The frame is the embed's own: its region, its strip, its theme.
     expect(host.querySelector("[data-graview-embed=pages]")).not.toBeNull();
-    expect(host.querySelector("[data-testid=embed-faces]")).not.toBeNull();
+    expect(host.querySelector("[data-testid=app-bar]")).not.toBeNull();
     // And the face is on its way, not yet drawn: its chunk is fetched as it is first drawn.
     expect(host.querySelector("[aria-busy=true]")).not.toBeNull();
     expect(ready).toEqual([]);

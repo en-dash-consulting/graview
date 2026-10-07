@@ -166,8 +166,8 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
           <b>{problems === 0 ? "The garden keeps its agreements." : `${problems} ${problems === 1 ? "agreement is" : "agreements are"} not kept.`}</b>
           {garden.growing.length} growing, {garden.past.length} past, {garden.gardeners.length} {garden.gardeners.length === 1 ? "gardener" : "gardeners"}.
           <br />
-          <a href={sceneHref} className="sb-scene" title="The same garden, as a scene">
-            Open the scene ↗
+          <a href={sceneHref} className="sb-scene" title="The whole garden at once, drawn as a map">
+            Overview ↗
           </a>
         </p>
       </aside>
@@ -576,7 +576,7 @@ function PlotRecord({ context }: { context: Ctx }) {
           {plot.growing.length > 0 ? ` Growing now: ${plot.growing.map((p) => p.label).join(", ")}.` : " Nothing is growing."}
         </p>
         <p style={{ margin: "10px 0 0" }}>
-          <a href={spatialHref(id)} className="sb-scene" data-testid="spatial-link">See it in the scene ↗</a>
+          <a href={spatialHref(id)} className="sb-scene" data-testid="spatial-link">On the overview ↗</a>
         </p>
       </header>
       {untended ? (

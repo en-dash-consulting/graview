@@ -15,9 +15,9 @@ import { Link, useSearchParams } from "react-router-dom";
 import { kindFacts } from "./facts.js";
 import { DerivedForm } from "./form.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
-import { PageMain } from "./page-shell.js";
+import { PageMain, PageTitle } from "./page-shell.js";
 import { pathOfPlace, placesOf } from "./page-places.js";
-import { DISPLAY, KindMark, eyebrow, h1, h2, lede, link, plain, pluralOf, quiet, rule } from "./page-typography.js";
+import { DISPLAY, KindMark, eyebrow, h2, lede, link, plain, pluralOf, quiet, rule } from "./page-typography.js";
 import { pluralSlug, recordPath } from "./registry.js";
 
 /**
@@ -51,13 +51,13 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
     <PageMain context={context}>
       <header style={{ display: "grid", gap: 12 }}>
         <p style={eyebrow}>Search</p>
-        <h1 style={h1} data-testid="search-heading">
+        <PageTitle context={context} data-testid="search-heading">
           {asked.length === 0
             ? "Find anything by its name"
             : found.hits.length === 0
               ? <>Nothing here is called “{asked}”.</>
               : <>{countSentence(store, found.byKind)} for “{asked}”</>}
-        </h1>
+        </PageTitle>
         {asked.length > 0 ? (
           <p style={{ ...quiet, margin: 0 }} data-testid="search-searched">
             {describeSearched(store.schema, found.searched)}

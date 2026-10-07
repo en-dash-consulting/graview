@@ -59,7 +59,8 @@ async function rename(handle: EmbedHandle, name: string, options?: { readonly la
 }
 
 const region = (host: HTMLElement) => host.querySelector("section[data-graview-embed]")!.getAttribute("aria-label");
-const workbenchHeading = (host: HTMLElement) => host.querySelector("section[data-graview-embed] > h1")?.textContent;
+/** The app's name, said once as the heading — on the app bar, on every face (FR-131). */
+const workbenchHeading = (host: HTMLElement) => host.querySelector("[data-graview-app-bar] h1")?.textContent;
 const wordmarks = (host: HTMLElement, name: string) => [...host.querySelectorAll("a, span")].filter((one) => one.textContent?.trim() === name && one.children.length <= 1).length;
 /** The landmarks inside, each named after the embed. */
 const inside = (host: HTMLElement) => [...host.querySelectorAll("section[data-graview-embed] nav[aria-label], section[data-graview-embed] main[aria-label], section[data-graview-embed] [role=region][aria-label]")].map((one) => one.getAttribute("aria-label")!);
@@ -70,7 +71,7 @@ describe("an app renamed under the reader", () => {
     expect(region(host)).toBe("Errands");
     await rename(handle, "Chores");
     expect(region(host)).toBe("Chores");
-    if (face === "graview") expect(workbenchHeading(host)).toBe("Chores");
+    expect(workbenchHeading(host)).toBe("Chores");
     expect(wordmarks(host, "Chores")).toBeGreaterThan(0);
     expect(wordmarks(host, "Errands")).toBe(0);
     for (const name of inside(host)) expect(name.startsWith("Errands")).toBe(false);
@@ -82,11 +83,11 @@ describe("an app renamed under the reader", () => {
     expect(region(host)).toBe("Chapter 13");
   });
 
-  it("takes the label setApp is handed", async () => {
+  it("takes the label setApp is handed, and the bar's heading says the app's new name", async () => {
     const { host, handle } = await open({ face: "graview", label: "Chapter 13", heading: 2 });
     await rename(handle, "Chores", { label: "Chapter 14" });
     expect(region(host)).toBe("Chapter 14");
-    expect(host.querySelector("section[data-graview-embed] > h2")?.textContent).toBe("Chapter 14");
+    expect(host.querySelector("[data-graview-app-bar] h2")?.textContent).toBe("Chores");
   });
 });
 
@@ -123,6 +124,8 @@ describe("handle.setHostActions", () => {
     const { host, handle } = await open({ face: "pages", hostActions: [{ label: "Your apps", href: "https://cloud.example/apps" }] });
     await act(async () => handle.setHostActions([{ label: "Change Chores", href: "https://cloud.example/apps/chores" }]));
     await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="profile-button"]')!.click());
+    // What is behind the person is fetched when it is first reached for (FR-131).
+    for (let tries = 0; tries < 40 && !host.querySelector('[data-testid="profile"] [data-testid="host-action"]'); tries += 1) await act(async () => new Promise((wait) => setTimeout(wait, 25)));
     const links = [...host.querySelectorAll('[data-testid="profile"] [data-testid="host-action"]')].map((link) => link.textContent);
     expect(links).toEqual(["Change Chores"]);
   });

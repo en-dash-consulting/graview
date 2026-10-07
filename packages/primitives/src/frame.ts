@@ -17,10 +17,12 @@ export { DARK, GRAVIEW_BRAND, LIGHT, SCHEMES, themeBaseCss, themeVariables } fro
 export type { Brand, Scheme, ThemeCssOptions, ThemeTokens } from "./theme.js";
 export { Profile } from "./profile.js";
 export { AppMark, AppTitle, useFavicon } from "./app-title.js";
+export { AppBar, BarFindContext, barPlaceAt, barPlaces, OVERVIEW_KEY, TOOL, toolStyle, useBarFind } from "./app-bar.js";
+export type { BarFind, BarGo, BarPlace } from "./app-bar.js";
 export type { HostAction } from "./profile.js";
 export { createNoticeBoard, Notices, TOAST_MS } from "./notices.js";
 export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "./notices.js";
-export { Standing } from "./workbench/standing.js";
+export { Standing, StandingDot, standingWords } from "./workbench/standing.js";
 export { descentTarget } from "./workbench/descent.js";
 export { fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews } from "./view-doors.js";
 export { useWidth, VISUALLY_HIDDEN } from "./primitives/measure.js";

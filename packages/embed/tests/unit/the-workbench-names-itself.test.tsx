@@ -39,19 +39,25 @@ describe("the workbench names itself", () => {
     });
   });
 
-  it("in an h2 by default, by the embed's label", async () => {
+  it("in an h2 by default, the app's own name on the bar, whatever the embed's label", async () => {
     await mounted({ face: "scene", label: "The notes" }, (host) => {
       expect(host.querySelector("h1")).toBeNull();
-      expect(host.querySelector("h2")?.textContent).toBe("The notes");
+      expect(host.querySelector("[data-graview-app-bar] h2")?.textContent).toBe("Field notes");
+      expect(host.querySelector("section[data-graview-embed]")?.getAttribute("aria-label")).toBe("The notes");
     });
   });
 
-  it("not at all when the host's own heading names it, nor twice on the pages face", async () => {
+  it("not at all when the host's own heading names it, and once on the pages face, each page's title a level below (FR-131)", async () => {
     await mounted({ face: "scene", heading: false }, (host) => {
       expect([...host.querySelectorAll("h1, h2")].map((h) => h.textContent)).not.toContain("Field notes");
     });
     await mounted({ face: "pages", heading: 1 }, (host) => {
-      expect(host.querySelectorAll("h1")).toHaveLength(1);
+      expect([...host.querySelectorAll("h1")].map((h) => h.textContent)).toEqual(["Field notes"]);
+      expect(host.querySelector("[data-graview-page-title]")?.tagName).toBe("H2");
+    });
+    await mounted({ face: "pages" }, (host) => {
+      expect(host.querySelector("[data-graview-app-bar] h2")?.textContent).toBe("Field notes");
+      expect(host.querySelector("[data-graview-page-title]")?.tagName).toBe("H3");
     });
   });
 });

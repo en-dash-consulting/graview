@@ -71,7 +71,7 @@ const key = (target: Element, name: string) => target.dispatchEvent(new Keyboard
 describe("a status board on the routed face", () => {
   it("draws the field's choices as columns in declared order, each record by its card", async () => {
     const { host, columns, done } = await rendered(OWNER);
-    expect(host.querySelector("h1")?.textContent).toContain("The board");
+    expect(host.querySelector("[data-graview-page-title]")?.textContent).toContain("The board");
     expect(columns()).toEqual([
       ["todo", "2", ["t1", "t3"]],
       ["doing", "1", ["t2"]],

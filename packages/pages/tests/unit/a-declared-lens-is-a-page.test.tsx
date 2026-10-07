@@ -72,27 +72,27 @@ describe("a document's declared lenses, on the routed face", () => {
     for (const place of declaredViews(app).places()) {
       const { host, done } = await rendered(`/places/${place.as}`);
       expect(host.querySelector('[data-testid="place-lens"]'), place.title).not.toBeNull();
-      expect(host.querySelector("h1")?.textContent).toContain(place.title);
+      expect(host.querySelector("[data-graview-page-title]")?.textContent).toContain(place.title);
       // Drawn: the lens put something of its own in the frame.
       expect(host.querySelector('[data-testid="place-lens"]')?.children.length ?? 0, place.title).toBeGreaterThan(0);
       await done();
     }
   });
 
-  it("opens on the place pages.first names, and the masthead still goes home", async () => {
+  it("opens on the place pages.first names, and the app's name on the bar still goes home", async () => {
     const { host, done } = await rendered("/");
-    expect(host.querySelector("h1")?.textContent).toContain("The floor");
-    await act(async () => (host.querySelector('[data-testid="masthead"]') as HTMLAnchorElement).click());
+    expect(host.querySelector("[data-graview-page-title]")?.textContent).toContain("The floor");
+    await act(async () => (host.querySelector('[data-testid="app-home"]') as HTMLAnchorElement).click());
     expect(host.querySelector('[data-testid="standing"]')).not.toBeNull();
     await done();
   });
 
   it("orders the nav and the home's kinds as declared, leaves a hidden kind off the home and keeps it at its address", async () => {
     const { host, done } = await rendered("/problems");
-    const nav = [...host.querySelectorAll('[data-testid="shell-nav"] a')].map((a) => a.textContent ?? "");
-    const kinds = nav.filter((text) => /^(volunteers|seats|shifts|rooms|members)$/.test(text));
-    expect(kinds).toEqual(["volunteers", "seats", "shifts", "rooms", "members"]);
-    await act(async () => (host.querySelector('[data-testid="masthead"]') as HTMLAnchorElement).click());
+    const nav = [...host.querySelectorAll('[data-testid="app-places"] a')].map((a) => a.textContent ?? "");
+    const kinds = nav.filter((text) => /^(Volunteers|Seats|Shifts|Rooms|Members)$/.test(text));
+    expect(kinds).toEqual(["Volunteers", "Seats", "Shifts", "Rooms", "Members"]);
+    await act(async () => (host.querySelector('[data-testid="app-home"]') as HTMLAnchorElement).click());
     const counted = [...host.querySelectorAll('[data-testid="kinds"] li a')].map((a) => a.getAttribute("href"));
     expect(counted).toEqual(["/volunteers", "/seats", "/shifts", "/members"]);
     await done();

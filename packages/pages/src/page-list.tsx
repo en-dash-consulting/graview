@@ -28,7 +28,6 @@ import {
   KindMark,
   eyebrow,
   glance,
-  h1,
   h2,
   lede,
   link,
@@ -37,7 +36,7 @@ import {
   quiet,
   rule,
 } from "./page-typography.js";
-import { PageMain } from "./page-shell.js";
+import { PageMain, PageTitle } from "./page-shell.js";
 import { capitalise } from "./page-typography.js";
 
 
@@ -56,7 +55,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
   if (!kind) {
     return (
       <PageMain context={context}>
-        <h1 style={h1}>No such kind of thing here.</h1>
+        <PageTitle context={context}>No such kind of thing here.</PageTitle>
       </PageMain>
     );
   }
@@ -204,7 +203,7 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
             ? "None yet"
             : `${members.length} ${members.length === 1 ? nounOf(definition, kind) : plural.toLowerCase()}`}
         </p>
-        <h1 style={h1}>{plural}</h1>
+        <PageTitle context={context}>{plural}</PageTitle>
         {definition?.description ? <p style={lede}>{definition.description}</p> : null}
         {relations.length > 0 ? (
           /* The roads out of this district: each relation this kind takes part in, with the far end named and linked. */

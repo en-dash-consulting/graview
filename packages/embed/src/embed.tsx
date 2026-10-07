@@ -1,26 +1,28 @@
-import { pathWithin, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
+import { addressOf, OVERVIEW_PATH, pathWithin, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
 import { EMPTY_VIEW, aggregateId, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
-import { VISUALLY_HIDDEN, descentTarget, fetchFrameworkViews, frameworkViewDoors, useWidth } from "@graview/primitives/frame";
+import { BarFindContext, barPlaceAt, barPlaces, descentTarget, fetchFrameworkViews, frameworkViewDoors, OVERVIEW_KEY, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import type { CompanionMode } from "@graview/primitives";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { ErrorReportContext, GraviewProvider, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { AddressBar, faceAtAddress, stopAtAddress } from "./address.js";
-import { createContext, createElement, lazy, Suspense, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { createContext, createElement, lazy, Suspense, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { EmbedWhere } from "./where.js";
 import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
 import {
   AUTO_SCENE_HEIGHT,
   FaceBoundary,
+  FrameBar,
   FrameNotices,
   providerProps,
   storeOf,
-  Strip,
   useErrorReport,
   useFrame,
   useIntrinsicHeight,
   useReady,
+  titleBelow,
+  useSteering,
   useViews,
   type EmbedFace,
   type EmbedHostContext,
@@ -33,14 +35,13 @@ import {
  * outright, so a page that drew the pages carried the scene, the companion
  * and the inspector, and one that drew the scene carried the routed face
  * and its router — Graview Cloud's hosted page loaded 1.1 MB before the app
- * drew. The frame, the strip and the provider are here; each face is a
+ * drew. The frame, the bar and the provider are here; each face is a
  * chunk of its own, fetched as it is first drawn, and the frame stands
  * empty for that one request. The studio is the scene's, fetched only when
  * it is offered (`./scene-face.tsx`).
  */
 type PagesContentProps = Parameters<typeof import("./pages-content.js").PagesContent<AnySchema>>[0];
 type PictureFaceProps = Parameters<typeof import("./picture-face.js").PictureFace<AnySchema>>[0];
-type SceneControlsProps = Parameters<typeof import("./scene-face.js").SceneControls>[0];
 type SceneFaceProps = Parameters<typeof import("./scene-face.js").SceneFace<AnySchema>>[0];
 
 /**
@@ -72,11 +73,11 @@ function door<P extends object>(load: () => Promise<ComponentType<P>>) {
 /* Each face draws the framework's own views, so it fetches them beside its own chunk (`frameworkViewDoors`). */
 const withViews = <T,>(face: Promise<T>): Promise<T> => Promise.all([face, fetchFrameworkViews()]).then(([loaded]) => loaded);
 const scene = door(() => withViews(import("./scene-face.js").then((face) => face.SceneFace as ComponentType<SceneFaceProps>)));
-const sceneControls = door(() => import("./scene-face.js").then((face) => face.SceneControls as ComponentType<SceneControlsProps>));
+const sceneKeeping = door(() => import("./scene-face.js").then((face) => face.SceneKeeping as ComponentType<object>));
 const pages = door(() => withViews(import("./pages-content.js").then((face) => face.PagesContent as ComponentType<PagesContentProps>)));
 const picture = door(() => withViews(import("./picture-face.js").then((face) => face.PictureFace as ComponentType<PictureFaceProps>)));
 const SceneFace = scene.Face;
-const SceneControls = sceneControls.Face;
+const SceneKeeping = sceneKeeping.Face;
 const PagesContent = pages.Face;
 const PictureFace = picture.Face;
 
@@ -89,7 +90,7 @@ const PictureFace = picture.Face;
  */
 export function preload(...faces: readonly EmbedFace[]): Promise<void> {
   const asked = faces.length > 0 ? faces : (["scene", "pages", "picture"] as const);
-  const doors = new Set<{ fetch(): Promise<void> }>(asked.flatMap((face): { fetch(): Promise<void> }[] => (face === "pages" ? [pages] : face === "picture" ? [picture] : [scene, sceneControls])));
+  const doors = new Set<{ fetch(): Promise<void> }>(asked.flatMap((face): { fetch(): Promise<void> }[] => (face === "pages" ? [pages] : face === "picture" ? [picture] : [scene, sceneKeeping])));
   return Promise.all([...doors].map((one) => one.fetch())).then(() => undefined);
 }
 
@@ -117,9 +118,9 @@ function Arriving({ auto, scene }: { readonly auto: boolean; readonly scene: boo
  * THE STUDIO, WHEN IT IS TURNED ON. Imported outright, it was about 104 kB
  * minified of every embed — `studio: false` included, which never draws
  * it. A product's bundler splits it off here, and a page fetches it only
- * when an embed offers the studio; until it arrives, the strip simply has
- * no studio on it yet. A host that hands it in (`studio.place`, FR-63) has
- * it drawn on the strip in the frame's own render.
+ * when an embed offers the studio; until it arrives, the person's menu
+ * simply has no studio in it yet. A host that hands it in (`studio.place`,
+ * FR-63) has it drawn in the frame's own render.
  */
 const StudioPlace = lazy(() => import("@graview/studio").then((studio) => ({ default: studio.StudioPlace })));
 
@@ -139,26 +140,33 @@ const StudioPlace = lazy(() => import("@graview/studio").then((studio) => ({ def
 export { AUTO_SCENE_HEIGHT };
 
 export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOptions<S> {
-  /** Which face to open on. Omitted, the stop decides: altitude opens the Graview, anything else the scene. */
+  /**
+   * Which face to open on. Omitted, the path and the stop decide: the
+   * overview's path (`/places/overview`) or a stop opens the scene — at
+   * altitude, the Graview — and any other path the routed face. The scene
+   * is the app's overview, one of its places (FR-132).
+   */
   readonly face?: EmbedFace;
   /** The scene's view state, as the fragment the app itself would put in its address bar. */
   readonly stop?: string;
   /**
-   * THE WORKBENCH'S HEADING (FR-25): the level the embed's name is said at,
-   * for a reader moving by headings — `1` when the host's page is the app,
-   * `2` (the default) inside somebody else's article, `false` when the
-   * host's own heading already names it. The pages face brings its own.
+   * THE APP'S NAME AS A HEADING (FR-25, FR-131): the level the app bar says
+   * the name at, for a reader moving by headings — `1` when the host's page
+   * is the app, `2` (the default) inside somebody else's article, `false`
+   * when the host's own heading already names it. Each page's own title is
+   * said under it, at the level below the app's.
    */
   readonly heading?: 1 | 2 | 3 | 4 | 5 | 6 | false;
   /**
-   * Below this width the scene and the Graview give way to the pages face,
-   * and come back above it. A phone's chat is no place for a map. Off by default.
+   * Below this width the scene and the Graview give way to the routed face,
+   * and come back above it — unless the reader asks for the overview on the
+   * bar, which is then drawn whatever the width. Off by default.
    */
   readonly pagesBelow?: number;
   /**
-   * WHAT BECOMES OF THE STUDIO (FR-19). Offered by default, for the seat
-   * that keeps the app, writing through a dev server's door or handing
-   * over files. `false` leaves it off the strip: a hosted reader cannot
+   * WHAT BECOMES OF THE STUDIO (FR-19). Offered by default, in the
+   * person's menu for the seat that keeps the app, writing through a dev
+   * server's door or handing over files. `false` leaves it out: a hosted reader cannot
    * save a declaration, so is not offered one to change. `{ onApply }`
    * keeps it and hands the host what the checker passed, writing nothing
    * itself: the host makes it a proposal, a version, a review.
@@ -224,9 +232,9 @@ export interface EmbedStudio {
 }
 
 export interface EmbedProps<S extends AnySchema = AnySchema> extends EmbedOptions<S> {
-  /** Called when the strip's switcher is pressed; the host decides the face. */
+  /** Called when the bar moves between the overview and a page (FR-132); the host decides the face. */
   readonly onFace?: (face: EmbedFace) => void;
-  /** Called when a seat on the strip is pressed; the host decides who sits. */
+  /** Called when a seat is taken in the person's menu; the host decides who sits. */
   readonly onSeat?: (principal: Principal) => void;
 }
 
@@ -251,8 +259,13 @@ function viewFor(face: EmbedFace, stop: string | undefined, kinds: readonly stri
   return asked;
 }
 
-/** The face a stop implies: a stop at altitude opens the Graview. */
-export function faceOf(stop: string | undefined): EmbedFace {
+/**
+ * The face a path and a stop imply: a path on the routed face that is not
+ * the overview's opens the pages; otherwise a stop at altitude opens the
+ * Graview, and anything else the scene.
+ */
+export function faceOf(stop: string | undefined, path?: string): EmbedFace {
+  if (path !== undefined && path !== "" && !isOverview(path)) return "pages";
   return stop && fromUrl(stop).overview ? "graview" : "scene";
 }
 
@@ -264,7 +277,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
 }
 
 function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
-  const { app, face = props.at?.face ?? faceOf(props.stop), stop, toggle = true, standing = "Everything is in order", principal, heading = 2 } = props;
+  const { app, face = props.at?.face ?? faceOf(props.stop, props.path), stop, bar = true, standing = "Everything is in order", principal, heading = 2 } = props;
   const { rootRef, scope, css, scheme, store, presence, brand, auto, height } = useFrame(props);
   const views = useViews<S>(props, frameworkViewDoors) as never;
   const kinds = app.schema.kinds as readonly string[];
@@ -273,31 +286,54 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   // The first view only: after it, where the reader goes is theirs. Under address routing, a stop in the fragment is where it starts.
   const initialView = useMemo(() => viewFor(face, at?.stop ?? (address ? stopAtAddress(props.basePath) : undefined) ?? stop, kinds, (views as ReactViewRegistry<S>).places(), openingView(views as ReactViewRegistry<S>, app.schema)), []);
   /*
-   * THE PAGE ON PAGES, KEPT (FR-116): where the routed face is, or last was,
-   * so the scene and back is the same page, and `where()` can say it. Under
-   * memory routing the routed face opens on it; under address routing the
-   * address is where it is.
+   * THE PAGE ON THE ROUTED FACE, KEPT (FR-116): where it is, or last was,
+   * so the overview and back is the same page, and `where()` can say it.
+   * Under memory routing the routed face opens on it; under address routing
+   * the address is where it is. The overview's own address is never a
+   * page of the routed face: it is the scene (FR-132).
    */
   const pagesAt = useRef<{ path: string; asked: string | undefined }>(undefined as never);
-  pagesAt.current ??= { path: at?.path ?? (address ? (face === "pages" ? (pathWithin(window.location.pathname, props.basePath) ?? "/") + window.location.search : "/") : (props.path ?? "/")), asked: props.path };
-  if (props.path !== pagesAt.current.asked) pagesAt.current = { path: props.path ?? "/", asked: props.path };
+  const pageOf = (path: string | undefined): string => (path === undefined || isOverview(path) ? "/" : path);
+  pagesAt.current ??= { path: pageOf(at?.path ?? (address ? (face === "pages" ? (pathWithin(window.location.pathname, props.basePath) ?? "/") + window.location.search : "/") : props.path)), asked: props.path };
+  if (props.path !== pagesAt.current.asked) pagesAt.current = { path: pageOf(props.path), asked: props.path };
   const told = useRef(props.onNavigate);
   told.current = props.onNavigate;
   const onNavigate = useCallback((path: string, how: Parameters<NonNullable<EmbedProps["onNavigate"]>>[1]) => {
     pagesAt.current.path = path;
     told.current?.(path, how);
   }, []);
+  // Where the routed face is, said by its router as it moves, for the bar's tabs (FR-131).
+  const { at: pageAt, setAt: setPageAt, steering } = useSteering(pagesAt.current.path);
   const whereabouts = useContext(Whereabouts);
   if (whereabouts) whereabouts.pages = () => pagesAt.current.path;
-  const toggled = useRef<((face: EmbedFace) => void) | undefined>(undefined);
+  const toggled = useRef<((face: EmbedFace, path?: string, stop?: string) => void) | undefined>(undefined);
   /*
    * NARROW, THE PAGES (FR-13). Below `pagesBelow` the scene and the Graview
    * give way to the routed face, and come back when there is room: the
-   * face the host asked for is kept, only what is drawn changes.
+   * face the host asked for is kept, only what is drawn changes — until the
+   * reader asks for the overview themselves, which is then drawn whatever
+   * the width (FR-132).
    */
   const width = useWidth(rootRef);
-  const narrow = props.pagesBelow !== undefined && width !== null && width < props.pagesBelow && (face === "scene" || face === "graview");
+  const [overviewAsked, setOverviewAsked] = useState(false);
+  const narrow = props.pagesBelow !== undefined && width !== null && width < props.pagesBelow && (face === "scene" || face === "graview") && !overviewAsked;
   const shown: EmbedFace = narrow ? "pages" : face;
+  if (whereabouts) whereabouts.shown = shown;
+  // The scene's face the reader was last on, to go back to from a page: the Graview at altitude, or the scene.
+  const sceneFace = useRef<EmbedFace>(face === "graview" ? "graview" : "scene");
+  if (shown === "scene" || shown === "graview") sceneFace.current = shown;
+  /*
+   * THE OVERVIEW'S ADDRESS IS ITS PLACE'S (FR-132). Under address routing
+   * the scene is at `<base>/places/overview`, its stop in the fragment; a
+   * link to a stop at the bare base — every link written before the scene
+   * was a place — opens it, and the address is tidied to the place's.
+   */
+  useState(() => {
+    if (!address || typeof window === "undefined" || shown === "pages" || shown === "picture") return;
+    const { pathname, search, hash } = window.location;
+    if (pathWithin(pathname, props.basePath) !== "/") return;
+    window.history.replaceState(window.history.state, "", `${addressOf(OVERVIEW_PATH, props.basePath === undefined ? {} : { basePath: props.basePath })}${search}${hash}`);
+  });
   useIntrinsicHeight(rootRef, shown, props.onIntrinsicHeight);
   const report = useErrorReport(props.onError, shown);
   const ready = useReady(props.onReady, shown);
@@ -307,12 +343,56 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     ready(drew);
     drawnTold.current?.(asked);
   }, [ready]);
+  const [barFind, setBarFind] = useState<BarFind | null>(null);
+  const places = (views as ReactViewRegistry<S>).places();
+
+  /*
+   * MOVING BETWEEN THE OVERVIEW AND A PAGE (FR-132): one press on a tab.
+   * Under address routing the address goes first, as a step Back undoes;
+   * under memory routing the host is told the face, and — as for any page —
+   * the path, the overview's being `/places/overview`.
+   */
+  const latest = useRef({ shown, onFace: props.onFace });
+  latest.current = { shown, onFace: props.onFace };
+  const toFace = useCallback((next: EmbedFace, path?: string, stop?: string) => {
+    if (address) {
+      toggled.current?.(next, path, stop);
+      return;
+    }
+    latest.current.onFace?.(next);
+    told.current?.(next === "pages" ? (path ?? pagesAt.current.path) : OVERVIEW_PATH, "push");
+  }, [address]);
+  const [overviewStop, setOverviewStop] = useState<string | undefined>(undefined);
+  const toOverview = useCallback((stop?: string) => {
+    if (latest.current.shown !== "pages") return;
+    setOverviewAsked(true);
+    setOverviewStop(stop);
+    if (face === "scene" || face === "graview") {
+      // Narrow, the scene was standing aside for the pages: the reader asked for it.
+      if (address) window.history.pushState(null, "", `${addressOf(OVERVIEW_PATH, props.basePath === undefined ? {} : { basePath: props.basePath })}${stop ?? ""}`);
+      else told.current?.(OVERVIEW_PATH, "push");
+      return;
+    }
+    toFace(sceneFace.current, undefined, stop);
+  }, [address, face, props.basePath, toFace]);
+  const toPage = useCallback((path: string) => {
+    if (latest.current.shown === "pages") {
+      steering.go.current?.(path);
+      return;
+    }
+    pagesAt.current.path = path;
+    setPageAt(path);
+    toFace("pages", path);
+  }, [steering, setPageAt, toFace]);
+  const barPlacesHere = barPlaces({ store: store as never, principal, views: views as never, overview: true });
+  const onPages = shown === "pages";
+  const hrefOf = address ? (path: string) => addressOf(path, props.basePath === undefined ? {} : { basePath: props.basePath }) : undefined;
 
   /*
    * THE EMBED IS ITSELF A LANDMARK.
    *
    * `label` named every landmark INSIDE ("Chapter 13 · Places") and left the
-   * root a plain div — so on somebody else's page the strip, the seats and
+   * root a plain div — so on somebody else's page the bar, the seats and
    * the picture sat outside any landmark at all (axe `region`), and a reader
    * moving by landmark could not reach the app, let alone tell two of them
    * apart at the top. A named region is what the label was for.
@@ -333,37 +413,61 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
       style={{ position: "relative", height, minHeight: auto ? 0 : 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" }}
     >
       <style>{css}</style>
-      {/*
-        * THE WORKBENCH SAYS ITS NAME IN A HEADING (FR-25). A screen reader
-        * moving by headings found nothing in the scene; the pages face has
-        * its own, so it is not said twice there.
-        */}
-      {heading !== false && shown !== "pages" ? <HeadingAt level={heading}>{props.label ?? app.name}</HeadingAt> : null}
       <ErrorReportContext.Provider value={report}>
       <FrameNotices rootRef={rootRef} board={props.notices} />
       <FaceBoundary module="@graview/react" report={report} content>
-      <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)}>
-        <Faces face={shown} stop={stop} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} />
+      <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>
+        <Faces face={shown} stop={overviewStop ?? stop} kinds={kinds} places={places} />
         {whereabouts ? <Watch into={whereabouts} /> : null}
         {/* THE ADDRESS BAR, when the host's page is the app (FR-106): the face follows it, and the scene, drawn, keeps its stop in the fragment. */}
-        {address ? <AddressBar pagesWere={at?.path} basePath={props.basePath} shown={shown} onFace={props.onFace} toggle={toggled} kinds={kinds} places={(views as ReactViewRegistry<S>).places()} /> : null}
-        {toggle && shown !== "picture" ? (
+        {address ? <AddressBar pagesWere={at?.path} basePath={props.basePath} shown={shown} onFace={props.onFace} toggle={toggled} kinds={kinds} places={places} /> : null}
+        {/*
+          * THE ONE APP BAR (FR-131): the app's name, said once as the
+          * heading — the workbench says its name to a reader moving by
+          * headings (FR-25) — its places with the overview among them,
+          * Find, the standing and the person. Not on a picture alone.
+          */}
+        {bar && shown !== "picture" ? (
           <FaceBoundary module="@graview/embed" report={report}>
-            <EmbedStrip app={app} studio={props.studio} face={shown} narrow={narrow} onFace={address ? (next) => toggled.current?.(next) : props.onFace} standing={standing} seats={props.seats} principal={principal} onSeat={props.onSeat} hostActions={props.hostActions} report={report} />
+            <FrameBar
+              name={brand?.name ?? app.name}
+              heading={heading}
+              places={barPlacesHere}
+              current={onPages ? barPlaceAt(barPlacesHere, pageAt) : OVERVIEW_KEY}
+              home={{ ...(hrefOf ? { href: hrefOf("/") } : {}), go: () => toPage("/"), current: onPages && pageAt.split("?")[0] === "/" }}
+              reach={{ ...(hrefOf ? { href: hrefOf } : {}), go: (place) => (place.key === OVERVIEW_KEY ? toOverview() : toPage(place.path)) }}
+              standing={standing}
+              hostActions={props.hostActions}
+              keeping={onPages ? undefined : <Keeping app={app} studio={props.studio} report={report} />}
+              onFind={setBarFind}
+            />
           </FaceBoundary>
         ) : null}
+        <BarFindContext.Provider value={barFind}>
         <FaceBoundary key={shown} module={shown === "pages" || shown === "picture" ? "@graview/pages" : "@graview/react"} report={report} content>
           <Suspense fallback={<Arriving auto={auto} scene={shown !== "pages" && shown !== "picture"} />}>
             {shown === "picture" ? (
-              <PictureFace store={store as never} views={views as never} as={(stop ? fromUrl(stop).within?.["view"] : undefined) ?? ""} />
+              <PictureFace scope={scope} store={store as never} views={views as never} as={(stop ? fromUrl(stop).within?.["view"] : undefined) ?? ""} />
             ) : shown === "pages" ? (
-              <PagesContent store={store as never} views={views as never} presence={presence} auto={auto} brand={brand} props={{ ...props, onNavigate, ...(address ? {} : { path: pagesAt.current.path }) } as never} />
+              <PagesContent
+                store={store as never}
+                views={views as never}
+                presence={presence}
+                auto={auto}
+                brand={brand}
+                steering={steering}
+                overview={toOverview}
+                scope={scope}
+                titleLevel={titleBelow(heading)}
+                props={{ ...props, onNavigate, ...(address ? {} : { path: pagesAt.current.path }) } as never}
+              />
             ) : (
               <SceneFace address={address} auto={auto} rememberAs={app.name} scheme={scheme} scope={scope} {...(props.companion ? { companion: props.companion } : {})} />
             )}
             <Drawn asked={face} shown={shown} onDrawn={drawn} />
           </Suspense>
         </FaceBoundary>
+        </BarFindContext.Provider>
       </GraviewProvider>
       </FaceBoundary>
       </ErrorReportContext.Provider>
@@ -371,10 +475,14 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   );
 }
 
-/** What `mount` reads `where()` from: the scene's view, and the page on Pages. */
+/** Whether a path on the routed face is the overview's own (FR-132). */
+const isOverview = (path: string): boolean => path.split(/[?#]/)[0] === OVERVIEW_PATH;
+
+/** What `mount` reads `where()` from: the scene's view, the page on the routed face, and the face drawn. */
 interface Whereabouts {
   view?: ViewState;
   pages?: () => string;
+  shown?: EmbedFace;
 }
 const Whereabouts = createContext<Whereabouts | null>(null);
 
@@ -396,12 +504,6 @@ const fetchSettling = () => import("./where.js").then((module) => void (settling
 function Settling({ onReady }: { readonly onReady: () => void }) {
   useLayoutEffect(() => void fetchSettling().then(onReady), [onReady]);
   return null;
-}
-
-/** A heading at a level the host chose, heard and not seen. */
-function HeadingAt({ level, children }: { readonly level: 1 | 2 | 3 | 4 | 5 | 6; readonly children: ReactNode }) {
-  const Tag = `h${level}` as const;
-  return <Tag style={{ ...VISUALLY_HIDDEN, margin: 0 }}>{children}</Tag>;
 }
 
 /** Keeps the scene's view in step with the face and stop props. */
@@ -433,102 +535,32 @@ function Faces({ face, stop, kinds, places }: { face: EmbedFace; stop: string | 
   return null;
 }
 
-/** The strip, with the scene's faces and its own controls. */
-function EmbedStrip({
-  app,
-  studio,
-  face,
-  narrow = false,
-  onFace,
-  standing,
-  seats,
-  principal,
-  onSeat,
-  hostActions,
-  report,
-}: {
-  /** The host's own actions, for the profile menu (FR-72). */
-  hostActions?: EmbedOptions["hostActions"] | undefined;
-  /** The declaration this embed is running, for the way into the studio. */
-  app: GraviewApp<AnySchema>;
-  /** Where the studio's own boundary reports. */
-  report: ErrorReport;
-  studio?: EmbedOptions["studio"] | undefined;
-  face: EmbedFace;
-  /** Narrower than `pagesBelow`: the pages are the only face there is room for, so there is nothing to switch. */
-  narrow?: boolean;
-  onFace?: ((face: EmbedFace) => void) | undefined;
-  standing: string;
-  seats?: EmbedOptions["seats"] | undefined;
-  principal?: Principal | undefined;
-  onSeat?: ((principal: Principal) => void) | undefined;
-}) {
-  // Two faces, not three: altitude is the scene's own control, on the
-  // picture, and a third pill for it here said the same thing twice.
-  const faces: readonly { id: EmbedFace; label: string; title: string; pressed: boolean }[] = narrow
-    ? []
-    : [
-        { id: "scene", label: "Scene", title: "The picture — rise and descend on it", pressed: face !== "pages" },
-        { id: "pages", label: "Pages", title: "The same app as ordinary pages", pressed: face === "pages" },
-      ];
+/**
+ * THE WAYS INTO THE APP, in the person's menu on the overview, for the seat
+ * that keeps it: the installation's own districts, and the app's own
+ * declaration — inside the embed's box, because a studio that escaped onto
+ * somebody else's page would be the rudest thing this package could do.
+ */
+function Keeping({ app, studio, report }: { readonly app: GraviewApp<AnySchema>; readonly studio: EmbedOptions["studio"] | undefined; readonly report: ErrorReport }) {
   return (
-    <Strip
-      standing={standing}
-      seats={seats}
-      principal={principal}
-      onSeat={onSeat}
-      hostActions={hostActions}
-      faces={faces.map((candidate) => (
-        <button
-          key={candidate.id}
-          type="button"
-          aria-pressed={candidate.pressed}
-          data-testid={`embed-face-${candidate.id}`}
-          title={candidate.title}
-          onClick={() => onFace?.(candidate.id)}
-          style={{
-            padding: "3px 11px",
-            borderRadius: 999,
-            fontSize: "0.875rem",
-            borderWidth: 1,
-            borderStyle: "solid",
-            // The face you are on wears the capsule; the other is a word to press (FR-117).
-            borderColor: candidate.pressed ? "var(--graview-accent)" : "transparent",
-            color: candidate.pressed ? "var(--graview-accent)" : "var(--graview-ink-muted)",
-            background: candidate.pressed ? "var(--graview-panel)" : "transparent",
-          }}
-        >
-          {candidate.label}
-        </button>
-      ))}
-      scene={
-        face === "pages"
-          ? undefined
-          : (compact) => (
-              <>
-                <Suspense fallback={null}>
-                  <SceneControls compact={compact} />
-                </Suspense>
-                {/* And the app's own declaration, for the seat that keeps it — inside
-                    the embed's box, because a studio that escaped onto somebody
-                    else's page would be the rudest thing this package could do. */}
-                {studio !== false ? (
-                  <FaceBoundary module="@graview/studio" report={report}>
-                    <StudioOnTheStrip app={app} studio={studio} />
-                  </FaceBoundary>
-                ) : null}
-              </>
-            )
-      }
-    />
+    <>
+      <Suspense fallback={null}>
+        <SceneKeeping />
+      </Suspense>
+      {studio !== false ? (
+        <FaceBoundary module="@graview/studio" report={report}>
+          <StudioOnTheBar app={app} studio={studio} />
+        </FaceBoundary>
+      ) : null}
+    </>
   );
 }
 
 /**
- * The studio's place on the strip: the one the host handed in, drawn at
- * once (FR-63), or the embed's own, fetched when it is first drawn.
+ * The studio's place in the person's menu: the one the host handed in, drawn
+ * at once (FR-63), or the embed's own, fetched when it is first drawn.
  */
-function StudioOnTheStrip({ app, studio }: { readonly app: GraviewApp<AnySchema>; readonly studio: EmbedStudio | undefined }) {
+function StudioOnTheBar({ app, studio }: { readonly app: GraviewApp<AnySchema>; readonly studio: EmbedStudio | undefined }) {
   const props = {
     app,
     within: "box" as const,
@@ -547,9 +579,10 @@ function StudioOnTheStrip({ app, studio }: { readonly app: GraviewApp<AnySchema>
 
 export interface EmbedHandle {
   /**
-   * WHERE THE READER IS (FR-116): the face, the page on Pages (or the one it
-   * last had) and the scene's stop — for a host that must remount to hand
-   * back as `mount(…, { at })`.
+   * WHERE THE READER IS (FR-116): the face, the path of the place they are
+   * on — the overview's (`/places/overview`) on the scene (FR-132) — and the
+   * scene's stop, for a host that must remount to hand back as
+   * `mount(…, { at })`.
    */
   where(): EmbedWhere;
   /**
@@ -573,8 +606,9 @@ export interface EmbedHandle {
   setFace(face: EmbedFace): void;
   setStop(stop: string): void;
   /**
-   * Sends the routed face to a path within the app's own routes (FR-106): a
-   * host that keeps its own history hands back the path its Back arrived at.
+   * Goes to a path within the app's own routes (FR-106): a host that keeps
+   * its own history hands back the path its Back arrived at. The overview's
+   * path (`/places/overview`) is the scene (FR-132); any other is a page.
    */
   setPath(path: string): void;
   setScheme(scheme: Scheme): void;
@@ -651,7 +685,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
   let swapping: Promise<void> = Promise.resolve();
   // Which face is asked for, which is drawn, and who is waiting for the one asked for.
   // Under address routing, the face the address names (FR-106).
-  const opening = faceAtAddress({ ...options, ...(options.at ? { face: options.at.face } : {}) });
+  const opening = faceAtAddress({ ...options, face: options.at?.face ?? options.face ?? faceOf(options.stop, options.path) });
   let asked: EmbedFace = opening;
   let drawnFace: EmbedFace | null = null;
   let waiting: (() => void)[] = [];
@@ -714,7 +748,9 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
   const where = (): EmbedWhere => {
     const focus = here.view?.focusId;
     const kind = focus ? store.graph.getNode(focus)?.kind : undefined;
-    return { face: asked, path: here.pages?.() ?? options.path ?? "/", stop: here.view ? toUrl(here.view) : (options.stop ?? "#"), ...(kind ? { kind } : {}) };
+    // On the scene the place is the overview, and its stop rides on it (FR-132).
+    const onScene = (here.shown ?? asked) === "scene" || (here.shown ?? asked) === "graview";
+    return { face: asked, path: onScene ? OVERVIEW_PATH : (here.pages?.() ?? options.path ?? "/"), stop: here.view ? toUrl(here.view) : (options.stop ?? "#"), ...(kind ? { kind } : {}) };
   };
   const root: Root = createRoot(element);
   flushSync(() => root.render(<Host />));
@@ -745,7 +781,22 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
       flushSync(() => setters?.face(face));
     },
     setStop: (stop) => flushSync(() => setters?.stop(stop)),
-    setPath: (path) => flushSync(() => setters?.path(path)),
+    setPath: (path) =>
+      flushSync(() => {
+        // The overview's path is the scene; any other path is a page (FR-132).
+        if (isOverview(path)) {
+          if (asked === "pages" || asked === "picture") {
+            asked = "scene";
+            setters?.face("scene");
+          }
+          return;
+        }
+        setters?.path(path);
+        if (asked !== "pages") {
+          asked = "pages";
+          setters?.face("pages");
+        }
+      }),
     setScheme: (scheme) => flushSync(() => setters?.scheme(scheme)),
     setSeat: (principal) => flushSync(() => setters?.seat(principal)),
     setSeats: (seats) => flushSync(() => setters?.seats(seats)),

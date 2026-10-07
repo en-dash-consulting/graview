@@ -237,7 +237,7 @@ function lensSentences(before: readonly LooseLens[], after: readonly LooseLens[]
   return out;
 }
 
-type Arrangement = { order?: readonly string[]; hide?: readonly string[]; first?: string } | undefined;
+type Arrangement = { order?: readonly string[]; hide?: readonly string[]; first?: string; overview?: string } | undefined;
 
 /** The arrangement (FR-80), compared part by part. */
 function pagesSentences(before: Arrangement, after: Arrangement): string[] {
@@ -252,6 +252,7 @@ function pagesSentences(before: Arrangement, after: Arrangement): string[] {
     if (shown.length > 0) out.push(`The front page shows ${shown.join(", ")} again.`);
   }
   if (!same(before?.first, after?.first)) out.push(after?.first === undefined || after.first.trim().toLowerCase() === "home" ? "The app opens at its home." : `The app opens on "${after.first}".`);
+  if (!same(before?.overview, after?.overview)) out.push(after?.overview === undefined ? "The overview is called Overview again." : `The overview is called "${after.overview}".`);
   if (out.length === 0) out.push("The app's pages change.");
   return out;
 }

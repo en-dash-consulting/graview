@@ -32,6 +32,8 @@ async function opened(mounter: typeof mount, options: Partial<EmbedOptions>, run
     handle = mounter(host, { app, fonts: false, ...options } as EmbedOptions) as EmbedHandle;
   });
   await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="profile-button"]')!.click());
+  // What is behind the person is fetched when it is first reached for (FR-131).
+  for (let tries = 0; tries < 40 && !host.textContent?.includes("Signed in as"); tries += 1) await act(async () => new Promise((wait) => setTimeout(wait, 25)));
   try {
     run(host);
   } finally {

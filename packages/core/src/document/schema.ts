@@ -267,6 +267,8 @@ export const PagesSpec = z.looseObject({
   order: z.optional(z.array(z.string())),
   hide: z.optional(z.array(z.string())),
   first: z.optional(z.string()),
+  /* What the scene is called on the bar (FR-132); "Overview" when unsaid. */
+  overview: z.optional(z.string().check(z.minLength(1), z.maxLength(40))),
 });
 
 export const DocumentSpec = z.strictObject({

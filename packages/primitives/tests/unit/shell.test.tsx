@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { AgentSeat, registerDefaultViews, Shell } from "../../src/index.js";
+import { ProfilePane } from "../../src/bar-panes.js";
 
 /**
  * The shell is the one file every app used to write and get slightly wrong.
@@ -29,6 +30,14 @@ const render = (props: Partial<Parameters<typeof Shell<typeof schema>>[0]> = {})
       brand={{ name: "Field Notes" } as never}
     >
       <Shell<typeof schema> scheme="light" onScheme={() => {}} {...props} />
+    </GraviewProvider>,
+  );
+
+/** What is behind the person, as it draws once fetched. */
+const pane = (part: "top" | "rest") =>
+  renderToStaticMarkup(
+    <GraviewProvider store={store()} views={registerDefaultViews(schema, createViews(schema))} initialView={{ ...EMPTY_VIEW, overview: true }}>
+      <ProfilePane part={part} name="Somebody" me={undefined} scheme="light" onScheme={() => {}} hostActions={[]} close={() => {}} />
     </GraviewProvider>,
   );
 
@@ -60,14 +69,14 @@ describe("the shell", () => {
    */
   it("keeps the scheme, the installation and the studio behind the profile rather than on the bar", () => {
     const html = render({ studio: <button type="button" data-testid="studio-place">Studio</button> });
-    // One scheme control, and it is the pair inside the pane.
+    // One scheme control, and it is the pair inside the pane — fetched when the person is first reached for (FR-131).
     expect(html).not.toContain('data-testid="scheme"');
-    expect(html).toContain('data-testid="profile-scheme-light"');
+    expect(pane("rest")).toContain('data-testid="profile-scheme-light"');
     // The keeper's ways in are in the pane, which is mounted and hidden.
     expect(html).toContain('data-testid="profile-keeping"');
     expect(html).toContain('data-testid="studio-place"');
-    // And the gear says the settings are there before it is opened.
-    expect(html).toContain('data-testid="profile-gear"');
+    // And the person is one tool on the bar, named for who it is and what is behind it.
+    expect(html).toMatch(/data-testid="profile-button"[^>]*aria-label="[^"]+ — you, your seat and your settings"/);
   });
 
   it("names the seat's roles in words, never their ids", () => {
@@ -79,7 +88,7 @@ describe("the shell", () => {
         initialView={{ ...EMPTY_VIEW, overview: true }}
         principal={{ kind: "human", id: "dana", roles: ["sales-manager"] }}
       >
-        <Shell<typeof schema> scheme="light" onScheme={() => {}} />
+        <ProfilePane part="top" name="Dana" me={undefined} hostActions={[]} close={() => {}} />
       </GraviewProvider>,
     );
     expect(html).toContain(">Sales manager<");

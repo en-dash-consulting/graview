@@ -42,7 +42,6 @@ import type { Brand, Scheme, ThemeTokens } from "@graview/core";
 export { DARK, LIGHT, SCHEMES } from "@graview/core";
 import { SCHEMES, kitVariables, layer, layerVariables, resolveKit, SCENE_LAYERS, shapeOf, TYPOGRAPHY, typographyOf } from "@graview/core";
 import { MARQUEE_GAP, MARQUEE_WIDTH } from "@graview/layout/view";
-import { SPEC_VIEW_CSS } from "./spec-css.js";
 
 
 /**
@@ -150,11 +149,13 @@ function stillness(asking: string, within: string): string {
  */
 /*
  * THE SHEET WITHOUT THE SCENE (FR-104). What every face draws on: the
- * tokens, the type, the panels, the views as data, motion. The scene's own
- * rules — the districts from altitude, the plots, the village, the roads,
- * the billboards, the bands — are `sceneCss` (scene-css.ts), which the
- * scene face draws beside it, so a page that opens on the pages face
- * carries none of them. `themeCss` is the two together, in that order.
+ * tokens, the type, the panels, motion. The scene's own rules — the
+ * districts from altitude, the plots, the village, the roads, the
+ * billboards, the bands — are `sceneCss` (scene-css.ts), which the scene
+ * face draws beside it, so a page that opens on the pages face carries none
+ * of them; and the blocks a view spec is drawn with are `viewsCss`, which
+ * every face that draws a view draws beside it (FR-131), so the frame
+ * stands — the bar, the notices — before them. `themeCss` is all three.
  */
 export function themeBaseCss(
   scheme: Scheme = "dark",
@@ -1143,8 +1144,5 @@ ${/*
   .graview-figure { transition: none; }
 ${stillness(`${motionRoot}:not([data-graview-motion='full'])`, text)}
 }
-${stillness(`${motionRoot}[data-graview-motion='reduce']`, text)}
-
-${/* VIEWS AS DATA (FR-03): the blocks a view spec is drawn with, over the tokens above. */ ""}
-${SPEC_VIEW_CSS}`;
+${stillness(`${motionRoot}[data-graview-motion='reduce']`, text)}`;
 }

@@ -1,7 +1,9 @@
 import type { AnySchema } from "@graview/core";
 import type { Scheme } from "@graview/core";
-import { Companion, HomeLanding, Inspector, OverviewButton, Places, sceneCss, ShowInstallation, type CompanionMode } from "@graview/primitives/scene";
+import { Companion, FindBox, HomeLanding, Inspector, OverviewButton, sceneCss, ShowInstallation, viewsCss, type CompanionMode } from "@graview/primitives/scene";
+import { useBarFind } from "@graview/primitives/frame";
 import { useMemo } from "react";
+import { createPortal } from "react-dom";
 import { Scene, UrlSync } from "@graview/react";
 import { AUTO_SCENE_HEIGHT } from "./frame.js";
 
@@ -27,7 +29,9 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, companio
    * sheet, where they stand in `themeCss`, so a page that never draws the
    * scene never carries them.
    */
-  const css = useMemo(() => sceneCss(scheme, { scope: `.${scope}` }), [scheme, scope]);
+  const css = useMemo(() => `${viewsCss({ scope: `.${scope}` })}\n${sceneCss(scheme, { scope: `.${scope}` })}`, [scheme, scope]);
+  // The scene's Find — its hits are the picture's — in the app bar's place for it (FR-131).
+  const find = useBarFind();
   return (
     <div data-embed-content="" style={{ position: "relative", flex: auto ? `0 0 ${AUTO_SCENE_HEIGHT}px` : "1 1 auto", minHeight: 0, containerType: "size" }}>
       <style>{css}</style>
@@ -39,17 +43,12 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, companio
       {/* One panel on the frame — the acts, the relations, the seat, the key. */}
       <Companion<S> {...(companion ? { start: companion } : {})} {...(rememberAs ? { rememberAs } : {})} />
       <Inspector placement="menu" />
+      {find ? createPortal(<FindBox<S> compact={find.compact} />, find.slot) : null}
     </div>
   );
 }
 
-/** The scene's own controls on the strip: the named pictures, and the installation. */
-export function SceneControls({ compact }: { readonly compact: boolean }) {
-  return (
-    <>
-      {/* The named pictures over the graph — a lens is somewhere to go, by name. */}
-      <Places compact={compact} />
-      <ShowInstallation />
-    </>
-  );
+/** The ways into the installation itself, in the person's menu on the overview, for the seat that keeps it. */
+export function SceneKeeping() {
+  return <ShowInstallation />;
 }

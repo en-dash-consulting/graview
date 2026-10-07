@@ -5,13 +5,12 @@ import { ViewBoundary } from "@graview/react/drawing";
 import { isDefaultView, type ViewProps } from "@graview/react/provider";
 import { useLayoutEffect, useRef, useState, type ComponentType } from "react";
 import { DerivedForm } from "./form.js";
-import { placeHref, placePath, pluralSlug, recordPath } from "./registry.js";
-import { type PageContext, useStoreTick } from "./page-context.js";
+import { placePath, pluralSlug, recordPath } from "./registry.js";
+import { OverviewLink, type PageContext, useStoreTick } from "./page-context.js";
 import {
   DISPLAY,
   KindMark,
   eyebrow,
-  h1,
   h2,
   lede,
   link,
@@ -24,7 +23,7 @@ import {
   rule,
   wide,
 } from "./page-typography.js";
-import { PageMain } from "./page-shell.js";
+import { PageMain, PageTitle } from "./page-shell.js";
 
 
 /** The app's pictures this seat may see: registered places whose kind is live here. */
@@ -425,7 +424,7 @@ export function DefaultPlacesPage<S extends AnySchema>({ context }: { context: P
     <PageMain context={context} style={wide}>
       <header style={{ display: "grid", gap: 12 }}>
         <p style={eyebrow}>{places.length === 0 ? "None of its own yet" : `${places.length} ${places.length === 1 ? "picture" : "pictures"}`}</p>
-        <h1 style={h1}>Pictures</h1>
+        <PageTitle context={context}>Pictures</PageTitle>
         <p style={lede}>
           {places.length === 0
             ? "Nothing here has a picture of its own yet, so each kind is drawn as the scene draws it. Title a group view and it appears here by name."
@@ -451,7 +450,7 @@ export function DefaultPlacesPage<S extends AnySchema>({ context }: { context: P
  * thing means going to it.
  */
 export function DefaultPlacePage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
-  const { store, brand, principal, sceneHref = "/" } = context;
+  const { store, brand, principal } = context;
   useStoreTick(store);
   const params = useParams();
   const navigate = useNavigate();
@@ -465,7 +464,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
   if (!place) {
     return (
       <PageMain context={context}>
-        <h1 style={h1}>No picture is called that.</h1>
+        <PageTitle context={context}>No picture is called that.</PageTitle>
         <p style={lede}>
           <Link to="/places" style={link}>
             The pictures there are →
@@ -492,7 +491,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
             {pictureOf(store, place)}
           </Link>
         </p>
-        <h1 style={h1}>{place.title}</h1>
+        <PageTitle context={context}>{place.title}</PageTitle>
         {/*
           * WHAT THE PICTURE IS, NOT WHAT ONE OF ITS MEMBERS IS: how much is
           * in it, and — over two kinds — what it is across. The kind's own
@@ -503,9 +502,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
           {overOf(store, place.kind, place.across)}.
         </p>
         <p style={{ ...quiet, margin: 0, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 16px" }}>
-          <a href={placeHref(place.as, sceneHref)} style={{ ...link, ...quiet }} data-testid="place-stop">
-            See it in the scene ↗
-          </a>
+          <OverviewLink context={context} stop={`#view=${encodeURIComponent(place.as)}`} style={{ ...link, ...quiet }} data-testid="place-stop" />
           <Link to={`/${pluralSlug(store.schema, place.kind)}`} style={{ ...link, ...quiet }}>
             All {plural.toLowerCase()} as a list →
           </Link>

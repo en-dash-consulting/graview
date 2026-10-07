@@ -68,8 +68,8 @@ describe("an error inside a face", () => {
     expect(JSON.stringify(reported), "nothing that was on screen").not.toContain("Post the letter");
 
     // The strip, and the other face, still work.
-    expect(host.querySelector("[data-testid=embed-faces]")).not.toBeNull();
-    await act(async () => host.querySelector<HTMLButtonElement>("[data-testid=embed-face-pages]")!.click());
+    expect(host.querySelector("[data-testid=app-bar]")).not.toBeNull();
+    await act(async () => host.querySelector<HTMLButtonElement>("[data-testid=app-home]")!.click());
     expect(host.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed")).toBe("pages");
     expect(host.textContent).toContain("Tasks");
     void handle;
@@ -86,8 +86,8 @@ describe("an error inside a face", () => {
     const said = host.querySelector("[data-graview-face-error]");
     expect(said, "the face says it could not draw").not.toBeNull();
     expect(said?.textContent).not.toContain("Post the letter");
-    expect(host.querySelector("[data-testid=embed-faces]"), "the strip").not.toBeNull();
-    await act(async () => host.querySelector<HTMLButtonElement>("[data-testid=embed-face-scene]")!.click());
+    expect(host.querySelector("[data-testid=app-bar]"), "the bar").not.toBeNull();
+    await act(async () => host.querySelector<HTMLButtonElement>("[data-testid=app-place-overview]")!.click());
     expect(host.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed")).toBe("scene");
     expect(host.querySelector("[data-graview-face-error]")).toBeNull();
   });

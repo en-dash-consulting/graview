@@ -283,7 +283,7 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
         >
           {/* Two faces, one declaration — and the way across, from either. */}
           <a href={context.sceneHref ?? "/"} className="th-btn">
-            See it in the scene ↗
+            On the overview ↗
           </a>
           {/*
             * AND THE WAY OUT OF A REMEMBERED STORE.
@@ -567,7 +567,7 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
         </h1>
         <p className="th-lede">
           <a className="th-btn" data-testid="spatial-link" href={spatialHref(id)}>
-            See it in the scene ↗
+            On the overview ↗
           </a>
         </p>
       </header>

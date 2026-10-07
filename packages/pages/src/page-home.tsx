@@ -8,8 +8,6 @@ import { type PageContext, useStoreTick } from "./page-context.js";
 import { Gallery } from "./page-places.js";
 import {
   KindMark,
-  eyebrow,
-  h1,
   h2,
   lede,
   link,
@@ -22,7 +20,7 @@ import {
   whoDid,
   wide,
 } from "./page-typography.js";
-import { PageMain } from "./page-shell.js";
+import { PageMain, PageTitle } from "./page-shell.js";
 
 
 /**
@@ -116,9 +114,10 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   return (
     <PageMain context={context} style={wide}>
       <header style={{ display: "grid", gap: 12 }}>
-        <p style={eyebrow}>{brand?.name ?? "Graview"}</p>
+        {/* The app is named once, on the bar (FR-131); the line under its name is said here, where it is about the app. */}
+        {brand?.subtitle ? <p style={{ ...quiet, margin: 0 }} data-testid="app-subtitle">{brand.subtitle}</p> : null}
         {/* THE NUMBERS ARE THE HEADLINE: what is here, said once, as big as the page says anything. */}
-        <h1 style={h1} data-testid="standing">{summary}</h1>
+        <PageTitle context={context} data-testid="standing">{summary}</PageTitle>
         <p style={{ ...lede, display: "grid", gap: 4 }} data-testid="standing-card">
           {present.length === 0 && beginning ? (
             <span>
@@ -147,7 +146,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
           <h2 style={h2}>What is here</h2>
           {relations.length > 0 ? (
             <Link to="/map" style={{ ...link, ...quiet, marginLeft: "auto" }} data-testid="map-link">
-              How it fits together · {relations.length === 1 ? "1 relation" : `${relations.length} relations`} →
+              Connections · {relations.length === 1 ? "1 relation" : `${relations.length} relations`} →
             </Link>
           ) : null}
         </div>
