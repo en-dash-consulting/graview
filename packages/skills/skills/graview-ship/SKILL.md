@@ -153,8 +153,9 @@ own rehearsal (`pnpm smoke`) does exactly this from packed tarballs —
    build the app in the page with `appFromOrCompile({ compiled, document })`
    from `@graview/core/compiled` — never `@graview/core/document`, which
    brings the compiler back into the first chunk. A compiled app of another
-   format (`graview-compiled@1` today) is refused by name and the document
-   compiled instead; `pnpm verify hosted` says what the page carries.
+   format (`graview-compiled@1` today), or made from another document than
+   the one beside it, is not built and the document is compiled instead;
+   `pnpm verify hosted` says what the page carries.
 
 ## The boundary
 
