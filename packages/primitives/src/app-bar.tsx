@@ -108,8 +108,8 @@ const BAR_CSS = `
 .graview-app-bar{container-type:inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px solid var(--graview-edge);color:var(--graview-ink);font-family:var(--graview-font-body,system-ui)}
 .graview-app-bar-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"app places tools";align-items:stretch;column-gap:20px;padding:0 16px;min-height:48px}
 .graview-app-bar-app{grid-area:app;display:flex;align-items:center;min-width:0}
-.graview-app-bar-name{margin:0;min-width:0;font:inherit;display:flex}
-.graview-app-bar-home{display:inline-flex;align-items:center;gap:8px;min-width:0;min-height:30px;color:var(--graview-ink);text-decoration:none;font-family:var(--graview-font-display,inherit);font-size:.9375rem;font-weight:600;letter-spacing:-.005em;overflow-wrap:anywhere}
+.graview-app-bar-name{margin:0;min-width:0;display:flex;font-family:var(--graview-font-display,var(--graview-font-body,system-ui));font-size:.9375rem;font-weight:600;line-height:1.3;letter-spacing:-.005em}
+.graview-app-bar-home{display:inline-flex;align-items:center;gap:8px;min-width:0;min-height:30px;color:var(--graview-ink);text-decoration:none;font:inherit;letter-spacing:inherit;overflow-wrap:anywhere}
 .graview-app-bar-more{display:grid;min-width:200px;max-width:calc(100vw - 32px);margin:0;padding:4px;list-style:none;border-radius:10px;border:1px solid var(--graview-edge);background:var(--graview-float);box-shadow:var(--graview-lift-high)}
 .graview-app-bar-more[hidden]{display:none}
 .graview-app-bar-item{display:flex;align-items:center;width:100%;min-height:32px;padding:0 10px;border:0;border-left:2px solid transparent;border-radius:7px;background:none;box-shadow:none;font:inherit;font-size:.875rem;text-align:left;text-decoration:none;color:var(--graview-ink);cursor:pointer}

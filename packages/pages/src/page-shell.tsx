@@ -149,7 +149,8 @@ export function PageTitle<S extends AnySchema>({
   children,
   ...rest
 }: { context: PageContext<S>; children?: ReactNode } & Record<`data-${string}`, string>) {
-  const Tag = `h${context.titleLevel ?? 2}` as "h2";
+  // Under a shell of the app's own, which says the app however it likes, a page's title is its h1 again.
+  const Tag = `h${context.titleLevel ?? (context.framed ? 1 : 2)}` as "h2";
   return (
     <Tag style={h1} data-graview-page-title="" {...rest}>
       {children}

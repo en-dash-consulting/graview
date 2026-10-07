@@ -65,9 +65,10 @@ export interface PageContext<S extends AnySchema> {
   /**
    * The level each page's own title is said at (FR-131): one below the
    * app's name on the bar — `2` when the bar's is the page's `h1`, the
-   * default; deeper when the host says the app's name lower down.
+   * default; deeper when the host says the app's name lower down; `1`
+   * under a shell of the app's own that says no heading of its own.
    */
-  readonly titleLevel?: 2 | 3 | 4 | 5 | 6;
+  readonly titleLevel?: 1 | 2 | 3 | 4 | 5 | 6;
   /**
    * THE WAY TO THE OVERVIEW FROM A PAGE (FR-132), when the scene is drawn by
    * whoever holds this face: handed a stop, it goes there. Without it a

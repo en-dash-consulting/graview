@@ -31,7 +31,7 @@ function RecordLinks<S extends AnySchema>({ context, children }: { readonly cont
   // A view's own headlines are said under the page's title, which is said under the app's name (FR-131).
   return (
     <SpecLinks.Provider value={value}>
-      <HeadingsUnder.Provider value={(context.titleLevel ?? 2) - 1}>{children}</HeadingsUnder.Provider>
+      <HeadingsUnder.Provider value={(context.titleLevel ?? (context.framed ? 1 : 2)) - 1}>{children}</HeadingsUnder.Provider>
     </SpecLinks.Provider>
   );
 }
@@ -308,7 +308,7 @@ export function PagesRoutes<S extends AnySchema>({
     <FaceRoot context={context} registry={registry}>
     <GoesByAddress context={context}>
     <Shell context={context}>
-    <RecordLinks context={context}>
+    <RecordLinks context={inside}>
       <ScrollReset />
       <Routes>
         {/*
