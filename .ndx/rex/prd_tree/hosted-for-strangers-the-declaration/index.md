@@ -9,7 +9,7 @@ tags:
 source: "Nick, 2026-10-02: \"anything you find that should be factored into the graview framework, go ahead and capture those in the graview repo\" — from the Graview Cloud refinement, ../graview-cloud/docs/framework-requirements.md"
 startedAt: "2026-10-03T16:25:57.725Z"
 description: "Graview Cloud (../graview-cloud) is a host of many apps for people who are not us: they make apps from a ChatGPT or Claude conversation, from templates, and share them by URL to work on together, live, with their agents. Reading the framework for it found what one deployment would also want and the framework does not yet have. THE DECLARATION IS CODE: defineApp is a TypeScript module, every host path import()s it, and serveStore re-runs mutation.apply and invariant.evaluate on the server, so a host of strangers' apps would run strangers' code beside other strangers' data. The studio already holds a declaration as a JSON graph and writes act bodies from data; it cannot judge a rule. THE WIRE POLLS: openRemote polls /graview/since every 800 ms; there is no push, no rebase of pending optimistic calls, and concurrent patches are last-writer-wins. THE SEAT IS A HEADER: the default seatOf trusts x-graview-seat and labels every remote caller human, so an agent reaching a served store over graview mcp --remote-url is logged as a person. THE WIRE IS NODE: serveStore is node:http only and MCP is stdio only. POSITION: each item below is a public seam a self-hoster wants too; Cloud carries interim implementations on public APIs (marked INTERIM(FR-xx) there) and deletes them as these land. Out of scope here, and staying in Cloud: tenancy, accounts, OAuth servers, billing, quotas, the multi-app connector. Related and already tracked: 'What a seat may not see never leaves the store' (d6f8b50f), which Cloud needs at critical priority."
-lastModified: "2026-10-07T14:07:03.672Z"
+lastModified: "2026-10-07T17:42:39.129Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
 
@@ -22,6 +22,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A classic-worker build: the guest worker entry and a guest bundle need no module worker (FR-71)](./a-classic-worker-build-the-guest.md) | completed |
 | [A compacted log keeps who made each record, so an own sight survives a restart](./a-compacted-log-keeps-who-made-each.md) | completed |
 | [A conformance kit: fixtures any host runs against a version to prove it reads, compiles and derives the same](./a-conformance-kit-fixtures-any-host.md) | completed |
+| [A contrast refusal names the pair and the ratio, with a fix (FR-126)](./a-contrast-refusal-names-the-pair-and.md) | pending |
 | [A coverage cell over a path selects what it joins (FR-111)](./a-coverage-cell-over-a-path-selects.md) | completed |
 | [A declared lens draws: a lenses entry maps to the shipped factory and is a named place (FR-79)](./a-declared-lens-draws-a-lenses-entry.md) | completed |
 | [A derived edit offers every field nothing else really sets, and refuses what it can't take (FR-110)](./a-derived-edit-offers-every-field.md) | completed |
@@ -56,6 +57,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A repair reads a declared default, so a record a coerce would keep is patched rather than dropped (FR-50)](./a-repair-reads-a-declared-default-so-a.md) | completed |
 | [A rule language the framework interprets: total, budgeted, and read like a sentence](./a-rule-language-the-framework.md) | completed |
 | [A rule's refusal says so: reason refused, not invalid (FR-119)](./a-rule-s-refusal-says-so-reason.md) | completed |
+| [A search hit says its address (FR-129)](./a-search-hit-says-its-address-fr-129.md) | pending |
 | [A seat's first state read after a wake costs what it did before FR-55](./a-seat-s-first-state-read-after-a-wake.md) | completed |
 | [A stability contract a host can hold the framework to: what a version may change, a changelog that says so, and capabilities() naming the seams it ships](./a-stability-contract-a-host-can-hold.md) | completed |
 | [A status board: a shipped columns lens over a choice field (FR-97)](./a-status-board-a-shipped-columns-lens.md) | completed |
@@ -72,6 +74,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [An act's own logic cannot tell a seat whether a hidden record exists](./an-act-s-own-logic-cannot-tell-a-seat.md) | pending |
 | [An agent acts for someone, through something: delegation and channel on every op, and seat headers trusted only on request](./an-agent-acts-for-someone-through.md) | completed |
 | [An edit can set a kind's glance (set-glance), and the studio renames display.glance with its field](./an-edit-can-set-a-kind-s-glance-set.md) | completed |
+| [An icon-sized thumbnail: sceneThumbnail size icon at 32x32 (FR-130)](./an-icon-sized-thumbnail-scenethumbnail.md) | pending |
 | [An open kit for worker views: a declared HTML/SVG/CSS allowlist, with everything that can fetch or escape removed (FR-90)](./an-open-kit-for-worker-views-a.md) | completed |
 | [An open page is told the app takes no changes for now, and when it does again (FR-66)](./an-open-page-is-told-the-app-takes-no.md) | completed |
 | [An optimistic client can roll back: Store.rebase, a public notify, and batch ids that never collide across clients](./an-optimistic-client-can-roll-back.md) | completed |
@@ -98,6 +101,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [MCP for remote hosts: Streamable HTTP, honest tool hints, and other people's words marked as data](./mcp-for-remote-hosts-streamable-http.md) | completed |
 | [Migrations that keep data: declared renames and type coercion in steps and migrationBetween](./migrations-that-keep-data-declared.md) | completed |
 | [Modules reach the host: the enabled set is passed to opened, served and remote stores, and turning one off is in history](./modules-reach-the-host-the-enabled-set.md) | completed |
+| [Named edits for the brand, the name and the subtitle (FR-125)](./named-edits-for-the-brand-the-name-and.md) | pending |
 | [One guest client, served not copied: a prebuilt classic script and an authoring guide (FR-88)](./one-guest-client-served-not-copied-a.md) | completed |
 | [One place says how many problems there are (FR-122)](./one-place-says-how-many-problems-there.md) | completed |
 | [openRemote's runtime entry exports the observable-client types, and read-only MCP calls can show presence](./openremote-s-runtime-entry-exports-the.md) | completed |
@@ -112,6 +116,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Say what a host page needs for worker views, and say when it is missing (FR-102)](./say-what-a-host-page-needs-for-worker.md) | completed |
 | [sceneThumbnail sizes districts by counts the way the live Scene does (FR-103)](./scenethumbnail-sizes-districts-by.md) | completed |
 | [SECURITY: the seat view serves no unseen record's id, in field values, primitives, reads, writes or args (FR-55)](./security-the-seat-view-serves-no.md) | completed |
+| [setApp takes the new label, so a renamed app says its new name without a reload (FR-128)](./setapp-takes-the-new-label-so-a.md) | pending |
 | [Sights follow the log: seesId's judgement, an appended-op creator index, and the ambiguous refusal names the kind (FR-51)](./sights-follow-the-log-seesid-s.md) | completed |
 | [Stored data checked against its declaration: validateGraph, and repairs as ordinary ops](./stored-data-checked-against-its.md) | completed |
 | [Stored formats carry their version, and the next major brings the steps to read the last one](./stored-formats-carry-their-version-and.md) | completed |
@@ -123,6 +128,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The companion is a top-level landmark or none, so axe's landmark-complementary-is-top-level holds (FR-40)](./the-companion-is-a-top-level-landmark.md) | completed |
 | [The component kit as remote elements, declared once for both sides (FR-69)](./the-component-kit-as-remote-elements.md) | completed |
 | [The declaration is a document: one JSON object compiles into the same app defineApp declares](./the-declaration-is-a-document-one-json.md) | completed |
+| [The document holds the whole brand: logo, favicon, typography, shape, accents and a preferred scheme (FR-124)](./the-document-holds-the-whole-brand.md) | pending |
 | [The embed has a place for a host's own actions, in the bar's profile menu (FR-72)](./the-embed-has-a-place-for-a-host-s-own.md) | completed |
 | [The embed has one layering system: popovers in the top layer, persistent surfaces on one ladder (FR-76)](./the-embed-has-one-layering-system.md) | completed |
 | [The embed loads the studio eagerly when the studio is the whole page (FR-63)](./the-embed-loads-the-studio-eagerly.md) | completed |
@@ -143,6 +149,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The workbench has a heading: an h1 naming the app, and headings for its regions](./the-workbench-has-a-heading-an-h1.md) | completed |
 | [Version skew on the wire: build strings, a reload answer, carried calls, and a codec name (FR-44)](./version-skew-on-the-wire-build-strings.md) | completed |
 | [Views as data: a card, a row and a badge declared rather than written, and drawn by the framework](./views-as-data-a-card-a-row-and-a-badge.md) | completed |
+| [Views get the whole theme, logo included (FR-127)](./views-get-the-whole-theme-logo.md) | pending |
 | [What main can do, npm can do: 0.1.0 has no sights, so publish what the walks built](./what-main-can-do-npm-can-do-0-1-0-has.md) | completed |
 | [Write a worker view with no build and no copied protocol (FR-96)](./write-a-worker-view-with-no-build-and.md) | completed |
 | [Writes from a worker view that can't leak: manifest acts, and presses the host saw (FR-92)](./writes-from-a-worker-view-that-can-t.md) | completed |
