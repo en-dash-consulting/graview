@@ -81,6 +81,7 @@ export { Seats } from "./seats.js";
 export { Profile } from "./profile.js";
 export type { HostAction } from "./profile.js";
 export { createNoticeBoard, Notices, TOAST_MS } from "./notices.js";
+export { FOOT_MOVED, FOOT_OBSTACLES, NARROW_PICTURE, placeAtTheFoot, placeAtTheTop } from "./notice-place.js";
 export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "./notices.js";
 export { buildReach, ReachView, reachLens } from "./lens/reach.js";
 export type { Reach, ReachCell } from "./lens/reach.js";

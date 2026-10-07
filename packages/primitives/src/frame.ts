@@ -21,6 +21,7 @@ export { AppBar, BarFindContext, barPlaceAt, barPlaces, OVERVIEW_KEY, TOOL, tool
 export type { BarFind, BarGo, BarPlace } from "./app-bar.js";
 export type { HostAction } from "./profile.js";
 export { createNoticeBoard, Notices, TOAST_MS } from "./notices.js";
+export { FOOT_MOVED, FOOT_OBSTACLES, NARROW_PICTURE, placeAtTheFoot, placeAtTheTop } from "./notice-place.js";
 export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "./notices.js";
 export { Standing, StandingDot, standingWords } from "./workbench/standing.js";
 export { descentTarget } from "./workbench/descent.js";

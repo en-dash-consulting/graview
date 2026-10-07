@@ -26,3 +26,5 @@ export { HeadingsUnder, registerViewSpecs, SpecLinks } from "./spec-views.js";
 export { StandingDot, standingWords } from "./workbench/standing.js";
 export { Profile } from "./profile.js";
 export { viewsCss } from "./views-css.js";
+// Where a notice stands over a picture, clear of what stands at its foot (FR-133): the routed face's way back is one.
+export { FOOT_MOVED, FOOT_OBSTACLES, NARROW_PICTURE, placeAtTheFoot, placeAtTheTop } from "./notice-place.js";

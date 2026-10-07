@@ -57,7 +57,25 @@
  * that says "Scene" or "Pages"; and the overview and a list one press on a
  * tab apart, by pointer and by keyboard.
  *
- *   node scripts/verify-chrome-quiet.mjs [--engine=chromium|webkit|firefox] [--shots=<dir>] [--quick]
+ * And NOTICES FLOAT, AND NEVER MOVE THE PAGE (FR-133). Nick, with an app
+ * open in place on a desk: the top "is … broken when there's a
+ * notification". The way back ("Take back “Mark done: Could Val lead…”")
+ * opened a band of its own under the embed's strip, pushed the page down
+ * and cut its sentence off. On the vendor template's Pages face and Graview
+ * face, at 390×844 and 1280×800, a change is made, so the way back comes,
+ * and the host says a toast with an Undo and a banner. Nothing on the page
+ * moves: no layout shift is reported (Chromium's PerformanceObserver), and
+ * in every engine the bar, the first heading and the first list item keep
+ * their boxes to the pixel. Each notice is in the viewport, at the foot's
+ * middle on a phone and its left on a desk (the banner at the top, under
+ * the bar), over nothing at the foot and over no other notice, its whole
+ * sentence read or wrapped (no text leaf cut, FR-118's measure), said
+ * politely, and its act a real button the keyboard reaches without the
+ * notice having taken the focus.
+ *
+ *   node scripts/verify-chrome-quiet.mjs [--engine=chromium|webkit|firefox] [--shots=<dir>] [--quick] [--notices]
+ *
+ * `--notices` measures only the notices (FR-133), for iterating on them.
  */
 import { createServer } from "node:http";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -78,6 +96,10 @@ const SCHEMES = QUICK ? ["light"] : ["light", "dark"];
 const SHOTS = process.argv.find((arg) => arg.startsWith("--shots="))?.slice("--shots=".length);
 /** `--probe`: say every pill and every cut text, not only how many. */
 const PROBE = process.argv.includes("--probe");
+/** `--notices`: only the notices (FR-133). */
+const ONLY_NOTICES = process.argv.includes("--notices");
+/** What a notice says here: a sentence as long as a real change's, which must wrap on a phone rather than be cut. */
+const LONG_VENDOR = "Could Val lead the Thursday tasting while Sam is away for the fortnight";
 const ORG = resolve(repoRoot, "scripts/fixtures/quiet/org.gdd.json");
 const ORG_SEED = resolve(repoRoot, "scripts/fixtures/quiet/org.seed.json");
 const VENDORS = resolve(repoRoot, "scripts/fixtures/quiet/vendor-shortlist.template.json");
@@ -302,7 +324,7 @@ function measure() {
 
 const host = await buildHost();
 const errors = [];
-const results = { screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], bars: [], overviewPresses: [] };
+const results = { screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], overviewPresses: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -326,6 +348,16 @@ try {
           const link = links.find(said);
           return link ? new URL(link.getAttribute("href"), location.href).pathname.replace(/^.*(\/places\/)/, "$1") : null;
         }, title);
+
+      /* ---- FR-133: notices float over the page and never move it */
+      for (const face of ["pages", "graview"]) {
+        for (const viewport of [PHONE, DESK]) {
+          const { page, close } = await open(`doc=vendors&face=${face}`, viewport);
+          results.notices.push({ engine, scheme, face, viewport: `${viewport.width}×${viewport.height}`, ...(await noticesFloat(page, face, engine, `${face}-${viewport.width}-${scheme}`)) });
+          await close();
+        }
+      }
+      if (ONLY_NOTICES) continue;
 
       /* ---- the four screens Cloud measured */
       for (const screen of SCREENS) {
@@ -570,6 +602,36 @@ try {
     seen: results.overviewPresses,
     ok: results.overviewPresses.length === engines.length * SCHEMES.length * 2 && results.overviewPresses.every((one) => one.toOverview && one.overviewMarked && one.toList && one.listMarked && one.backToOverview && one.byKeyboard),
   };
+  /* FR-133 */
+  const notices = results.notices;
+  const allNotices = notices.length === engines.length * SCHEMES.length * 4;
+  report.checks.aNoticeMovesNothingOnThePage = {
+    seen: notices.map(({ engine, scheme, face, viewport, moved, shift, shifted, kept }) => ({ engine, scheme, face, viewport, moved, shift, ...(shifted.length > 0 ? { shifted } : {}), kept })),
+    ok: allNotices && notices.every((one) => one.kept.bar === true && one.kept.heading !== false && one.kept.item === true && one.moved <= 0.5 && (one.shift === null || one.shift === 0)),
+  };
+  report.checks.theWayBackComesOnThePagesFace = {
+    seen: notices.filter((one) => one.face === "pages").map(({ engine, scheme, viewport, wayBack }) => ({ engine, scheme, viewport, wayBack })),
+    ok: allNotices && notices.filter((one) => one.face === "pages").every((one) => one.wayBack !== null && one.wayBack.fixed && one.wayBack.whole),
+  };
+  report.checks.aNoticeStandsAtTheFootsMiddleOnAPhoneAndItsLeftOnADesk = {
+    seen: notices.map(({ engine, scheme, face, viewport, placed }) => ({ engine, scheme, face, viewport, placed })),
+    ok: allNotices && notices.every((one) => one.placed.length >= 2 && one.placed.every((notice) => notice.inView && notice.where === notice.asked)),
+  };
+  report.checks.noNoticeCoversAnotherOrWhatStandsAtTheFoot = {
+    seen: notices.map(({ engine, scheme, face, viewport, covers }) => ({ engine, scheme, face, viewport, covers })),
+    ok: allNotices && notices.every((one) => one.covers.length === 0),
+  };
+  report.checks.aNoticesWholeSentenceIsReadOrWrapped = {
+    seen: notices.map(({ engine, scheme, face, viewport, cut, lines }) => ({ engine, scheme, face, viewport, cut, lines })),
+    ok: allNotices && notices.every((one) => one.cut.length === 0),
+  };
+  report.checks.aNoticeIsSaidPolitelyAndItsActIsAButtonTheKeyboardReaches = {
+    seen: notices.map(({ engine, scheme, face, viewport, said, act }) => ({ engine, scheme, face, viewport, said, act })),
+    ok: allNotices && notices.every((one) => one.said.polite && one.said.wayBack !== false && one.act.button && one.act.focusStayed && one.act.reached),
+  };
+  if (ONLY_NOTICES) {
+    for (const name of Object.keys(report.checks)) if (!/Notice|WayBack/.test(name)) delete report.checks[name];
+  }
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);
 } catch (error) {
@@ -726,6 +788,209 @@ async function problemsByKeyboard(page) {
   if (reached) await page.keyboard.press("Enter");
   const opened = reached && (await page.waitForSelector('[data-testid="problems"] li', { timeout: 5000 }).then(() => true, () => false));
   return { named, reached, opened };
+}
+
+/**
+ * NOTICES FLOAT, AND NEVER MOVE THE PAGE (FR-133). The page's boxes before
+ * and after a change (which brings the way back, on the Pages face), a toast
+ * with an Undo and a banner; the layout shift Chromium reports in between;
+ * and each notice: where it stands, what it covers, whether its sentence is
+ * whole, whether it was said, and whether its act is a button the keyboard
+ * reaches without the focus having moved.
+ */
+async function noticesFloat(page, face, engine, shot) {
+  /*
+   * The change first, and the page let settle: what a change does to the
+   * page is the change's, not its notice's. The way back it brings is held
+   * out of sight while the page is measured, then let come with the toast
+   * and the banner — so whatever moves after that is a notice's doing.
+   */
+  await page.evaluate((name) => {
+    window.__handle.store.apply({ name: "add-vendor", args: { name } }, { author: { kind: "human", id: "u:owner", roles: ["owner"] } });
+  }, LONG_VENDOR);
+  await page.waitForTimeout(1500);
+  const before = await page.evaluate(() => {
+    const dock = document.querySelector('[data-testid="face-undo-dock"]');
+    if (dock) {
+      window.__dockDisplay = dock.style.display;
+      dock.style.display = "none";
+    }
+    /* The layout shifts from here on, as Chromium reports them; null where the engine reports none. */
+    window.__shifts = null;
+    try {
+      if (PerformanceObserver.supportedEntryTypes?.includes("layout-shift")) {
+        window.__shifts = [];
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) {
+            if (entry.hadRecentInput) continue;
+            /* What moved, by its test id or its tag: a person reading the verdict needs to know what jumped. */
+            const moved = (entry.sources ?? []).map((source) => {
+              const node = source.node?.nodeType === 1 ? source.node : source.node?.parentElement;
+              const named = node?.closest?.("[data-testid]");
+              return `${node?.tagName?.toLowerCase() ?? "?"}${named ? ` in ${named.getAttribute("data-testid")}` : ""}`;
+            });
+            window.__shifts.push({ value: entry.value, moved });
+          }
+        }).observe({ type: "layout-shift" });
+      }
+    } catch {
+      window.__shifts = null;
+    }
+    const shown = (element) => {
+      const box = element.getBoundingClientRect();
+      return box.width > 1 && box.height > 1 && box.bottom > 0 && box.top < innerHeight && box.right > 0 && box.left < innerWidth;
+    };
+    const content = document.querySelector("[data-embed-content]") ?? document.body;
+    const heading = [...content.querySelectorAll("h1, h2, h3, [role=heading]")].find(shown) ?? null;
+    const item = [...content.querySelectorAll("li, [role=listitem], [data-graview-view]")].find(shown) ?? null;
+    const bar = document.querySelector("[data-embed-strip]");
+    for (const [name, element] of [["bar", bar], ["heading", heading], ["item", item]]) element?.setAttribute("data-notices-watch", name);
+    const field = document.createElement("input");
+    field.setAttribute("aria-label", "The host's own field");
+    field.setAttribute("data-notices-field", "");
+    field.style.cssText = "position:fixed;left:-200px;top:0;width:100px";
+    /* First on the page, so Tab goes forward from it into the embed in every engine (Firefox does not wrap back from the end). */
+    document.body.insertBefore(field, document.body.firstChild);
+    field.focus();
+    const boxes = {};
+    for (const element of document.querySelectorAll("[data-notices-watch]")) {
+      const box = element.getBoundingClientRect();
+      boxes[element.getAttribute("data-notices-watch")] = { left: box.left, top: box.top, width: box.width, height: box.height };
+    }
+    return boxes;
+  });
+  await page.waitForTimeout(100);
+  await page.evaluate((name) => {
+    const dock = document.querySelector('[data-testid="face-undo-dock"]');
+    if (dock) dock.style.display = window.__dockDisplay;
+    window.__handle.notify({ kind: "toast", sentence: `Saved “${name}” to the shortlist, with its quote and its date`, action: { label: "Undo", onSelect: () => {} } });
+    window.__handle.notify({ kind: "banner", sentence: "Offline — changes will be sent when you reconnect.", tone: "warn" });
+  }, LONG_VENDOR);
+  await page.waitForTimeout(700);
+  if (SHOTS) {
+    mkdirSync(SHOTS, { recursive: true });
+    await page.screenshot({ path: join(SHOTS, `notices-${engine}-${shot}.png`) });
+  }
+  const after = await page.evaluate((face) => {
+    const boxes = {};
+    for (const element of document.querySelectorAll("[data-notices-watch]")) {
+      const box = element.getBoundingClientRect();
+      boxes[element.getAttribute("data-notices-watch")] = { left: box.left, top: box.top, width: box.width, height: box.height };
+    }
+    const shift = window.__shifts === null ? null : Math.round(window.__shifts.reduce((sum, one) => sum + one.value, 0) * 10000) / 10000;
+    const shifted = window.__shifts === null ? [] : [...new Set(window.__shifts.flatMap((one) => one.moved))];
+    const view = { width: document.documentElement.clientWidth, height: innerHeight };
+    const anchor = (document.querySelector("[data-embed-content]") ?? document.body).getBoundingClientRect();
+    const narrow = Math.min(view.width, anchor.right) - Math.max(0, anchor.left) < 640;
+    const middle = (Math.max(0, anchor.left) + Math.min(view.width, anchor.right)) / 2;
+    const dock = document.querySelector('[data-testid="face-undo-dock"]');
+    const dockShown = dock !== null && dock.getBoundingClientRect().height > 1;
+    /* Each notice a person sees: the toast's and the banner's cards, and the way back. */
+    const notices = [
+      ...[...document.querySelectorAll('[data-testid="notices-toasts"] [data-testid="notice"]')].map((element) => ({ name: "toast", element, at: "foot" })),
+      ...[...document.querySelectorAll('[data-testid="notices-banners"] [data-testid="notice"]')].map((element) => ({ name: "banner", element, at: "top" })),
+      ...(dockShown ? [{ name: "the way back", element: dock.querySelector('[data-testid="page-undo"]'), at: "foot" }] : []),
+    ];
+    /* Beside a tall panel at the left of a desk's picture (the seat), "left" is its right edge. */
+    const tallAtLeft = [...document.querySelectorAll("[data-graview-foot], [data-testid='companion']")]
+      .map((one) => one.getBoundingClientRect())
+      .filter((one) => one.height > (anchor.bottom - anchor.top) * 0.4 && one.left <= anchor.left + 20 && one.width > 0)
+      .reduce((edge, one) => Math.max(edge, one.right), Math.max(0, anchor.left));
+    const placed = notices.map(({ name, element, at }) => {
+      const box = element.getBoundingClientRect();
+      const center = box.left + box.width / 2;
+      const asked = at === "top" ? "top middle" : narrow ? "foot middle" : "foot left";
+      const where =
+        at === "top"
+          ? box.top >= anchor.top - 1 && box.top <= anchor.top + 24 && Math.abs(center - middle) <= 3 ? "top middle" : `at ${Math.round(box.left)},${Math.round(box.top)}`
+          : box.bottom > view.height * 0.5 && narrow && Math.abs(center - middle) <= 3
+            ? "foot middle"
+            : box.bottom > view.height * 0.5 && !narrow && box.left >= tallAtLeft && box.left <= tallAtLeft + 24
+              ? "foot left"
+              : `at ${Math.round(box.left)},${Math.round(box.top)}`;
+      return { name, asked, where, box: { left: Math.round(box.left), top: Math.round(box.top), width: Math.round(box.width), height: Math.round(box.height) }, inView: box.left >= 0 && box.top >= 0 && box.right <= view.width + 0.5 && box.bottom <= view.height + 0.5 };
+    });
+    /* What covers what: a notice over another, or over a control at the foot. */
+    const meets = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+    const covers = [];
+    const rects = notices.map(({ name, element }) => ({ name, box: element.getBoundingClientRect(), element }));
+    for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) if (meets(rects[i].box, rects[j].box)) covers.push(`${rects[i].name} over ${rects[j].name}`);
+    const standing = [...document.querySelectorAll("[data-graview-foot], [data-testid='companion'], [data-testid='page-ask']")].filter((one) => one !== dock && !dock?.contains(one));
+    for (const { name, box, element } of rects) {
+      for (const one of standing) {
+        if (one.contains(element)) continue;
+        const other = one.getBoundingClientRect();
+        if (other.width > 0 && other.height > 0 && meets(box, other)) covers.push(`${name} over ${one.getAttribute("data-testid") ?? one.className}`);
+      }
+    }
+    /* FR-118's measure: a text leaf in a notice cut by CSS or by a box that clips it. */
+    const cut = [];
+    const lines = {};
+    const range = document.createRange();
+    for (const { name, element } of notices) {
+      for (const leaf of [element, ...element.querySelectorAll("*")]) {
+        if (![...leaf.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim())) continue;
+        const style = getComputedStyle(leaf);
+        const clamped = style.webkitLineClamp && style.webkitLineClamp !== "none";
+        const clips = style.textOverflow === "ellipsis" || ["hidden", "clip"].includes(style.overflowX) || clamped;
+        if (clips && (leaf.scrollWidth > leaf.clientWidth + 1 || (clamped && leaf.scrollHeight > leaf.clientHeight + 1))) cut.push({ notice: name, say: leaf.textContent.trim().slice(0, 60) });
+        range.selectNodeContents(leaf);
+        const text = range.getBoundingClientRect();
+        for (let up = leaf.parentElement; up && up !== document.body; up = up.parentElement) {
+          const clip = getComputedStyle(up);
+          if (!["hidden", "clip"].includes(clip.overflowX) && !["hidden", "clip"].includes(clip.overflowY)) continue;
+          const edge = up.getBoundingClientRect();
+          if (text.left < edge.left - 2 || text.right > edge.right + 2 || text.top < edge.top - 2 || text.bottom > edge.bottom + 2) {
+            cut.push({ notice: name, say: leaf.textContent.trim().slice(0, 60), by: "geometry" });
+            break;
+          }
+        }
+        if (leaf.textContent.trim().length > 30) lines[name] = Math.round(text.height / Number.parseFloat(style.lineHeight || "20"));
+      }
+    }
+    const toastAct = document.querySelector('[data-testid="notices-toasts"] [data-testid="notice-action"]');
+    const polite = document.querySelector('[data-testid="notices-said"]');
+    const wayBackSaid = [...document.querySelectorAll('[role="status"]')].some((one) => one.textContent.includes("Take back"));
+    const wayBack = dockShown
+      ? (() => {
+          const button = dock.querySelector('[data-testid="page-undo"]');
+          return { fixed: getComputedStyle(dock).position === "fixed", whole: (button?.title ?? "").includes("Take back") && (button?.textContent ?? "").includes("Could Val lead"), text: button?.textContent ?? "" };
+        })()
+      : null;
+    return {
+      boxes,
+      shift,
+      shifted,
+      placed,
+      covers,
+      cut,
+      lines,
+      wayBack: face === "pages" ? wayBack : undefined,
+      said: { polite: polite?.getAttribute("aria-live") === "polite" && polite.textContent.length > 0, wayBack: face === "pages" ? wayBackSaid : null },
+      act: { button: toastAct?.tagName === "BUTTON", focusStayed: document.activeElement?.hasAttribute("data-notices-field") === true },
+    };
+  }, face);
+  /* The act, from the keyboard: Tab from the host's field until the toast's Undo has the focus. */
+  let reached = false;
+  for (let step = 0; step < 80 && !reached; step++) {
+    await page.keyboard.press("Tab");
+    reached = await page.evaluate(() => document.activeElement?.closest('[data-testid="notices-toasts"]') !== null && document.activeElement?.getAttribute("data-testid") === "notice-action");
+  }
+  const kept = {};
+  let moved = 0;
+  for (const name of ["bar", "heading", "item"]) {
+    const a = before[name];
+    const b = after.boxes[name];
+    /* The Graview face draws no heading in its picture: there, a heading not drawn before or after is not one that moved. */
+    if (a === undefined && b === undefined && name === "heading" && face === "graview") {
+      kept[name] = "none drawn";
+      continue;
+    }
+    kept[name] = a !== undefined && b !== undefined && ["left", "top", "width", "height"].every((side) => Math.abs(a[side] - b[side]) <= 0.5);
+    if (a && b) moved = Math.max(moved, ...["left", "top", "width", "height"].map((side) => Math.abs(a[side] - b[side])));
+  }
+  const { boxes: _boxes, ...rest } = after;
+  return { ...rest, kept, moved: Math.round(moved * 100) / 100, act: { ...after.act, reached }, ...(face === "pages" ? {} : { wayBack: undefined }) };
 }
 
 /**
