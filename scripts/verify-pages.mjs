@@ -42,7 +42,8 @@ const hygiene = (page) =>
   page.evaluate(() => ({
     noSideScroll: document.documentElement.scrollWidth <= window.innerWidth + 1,
     hasH1: document.querySelectorAll("h1, header a").length > 0,
-    namedLinks: [...document.querySelectorAll("a")].every((a) => (a.textContent ?? "").trim().length > 0),
+    // Named in words or by `aria-label`: the bar's standing is a dot whose name is its words (FR-131).
+    namedLinks: [...document.querySelectorAll("a")].every((a) => (a.textContent ?? "").trim().length > 0 || (a.getAttribute("aria-label") ?? "").trim().length > 0),
     /*
      * A NAME, however it is given. A wrapping label is the common way and
      * an `aria-label` is the other one — it is what a screen reader
@@ -342,13 +343,13 @@ try {
   // The HEADING is the name, so the heading is where the name is changed —
   // `readableFields` leaves the label out of the facts because it is
   // already the heading.
-  await desk2.locator('h1 [data-graview-editable="rename"]').first().click();
+  await desk2.locator(':is([data-graview-page-title], h1) [data-graview-editable="rename"]').first().click();
   await desk2.waitForSelector('[data-testid="edit-label"] input', { timeout: 10_000 });
   await desk2.fill('[data-testid="edit-label"] input', "Pay the deposit today");
   await desk2.click('[data-testid="edit-label"] button[type="submit"]');
   await desk2.waitForTimeout(600);
   const edited = await desk2.evaluate(() => ({
-    heading: document.querySelector("h1")?.textContent?.trim() ?? null,
+    heading: (document.querySelector("[data-graview-page-title]") ?? document.querySelector("main h1"))?.textContent?.trim() ?? null,
     stillAForm: document.querySelector('[data-testid="edit-label"]') !== null,
   }));
   report.checks.aRecordEditsWhereItIsShown = {
@@ -688,7 +689,7 @@ try {
       const gallery = document.querySelector('[data-testid="gallery"]');
       const cards = [...document.querySelectorAll('[data-testid="place-card"], [data-testid="kind-card"]')];
       const tops = cards.map((card) => Math.round(card.getBoundingClientRect().top));
-      const navTops = [...document.querySelectorAll('[data-testid="shell-nav"] a')].map((a) => Math.round(a.getBoundingClientRect().top));
+      const navTops = [...document.querySelectorAll('[data-testid="app-places"] .graview-app-bar-tab')].map((a) => Math.round(a.getBoundingClientRect().top));
       return {
         headerThenGallery: sections[0]?.tagName === "HEADER" && sections[1] === gallery,
         cards: cards.length,
