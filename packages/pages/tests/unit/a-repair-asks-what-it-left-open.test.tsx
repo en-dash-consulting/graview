@@ -59,7 +59,11 @@ describe("a repair that leaves one argument open, on the routed face", () => {
       input.form!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     });
     await act(async () => draw());
-    await act(async () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+    // The keyboard is handed back after the form goes, a frame or more later: on a busy
+    // machine one frame is not enough, so wait for it (up to two seconds) rather than for a frame.
+    for (const end = Date.now() + 2000; document.activeElement === document.body && Date.now() < end; ) {
+      await act(async () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+    }
     expect(store.graph.getNode("kerosene")).toMatchObject({ label: "Kerosene", released: "2023-04-14" });
     expect(document.activeElement).not.toBe(document.body);
     await act(async () => root.unmount());
