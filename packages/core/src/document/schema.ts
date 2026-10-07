@@ -15,6 +15,8 @@ import * as z from "../schema/zod.js";
 export const FORMAT = "graview-document";
 export const FORMAT_VERSION = 1;
 export const MAX_DOCUMENT_BYTES = 256 * 1024;
+/** The most a brand's logo or page icon may be, written inline (FR-124). */
+const MARK_MAX = 64 * 1024;
 
 /** kebab-case: kinds, acts, rules, edges, roles, modules. */
 export const NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
@@ -226,7 +228,25 @@ export const BrandSpec = z.strictObject({
   currency: z.optional(z.string().check(z.regex(/^[A-Z]{3}$/, 'a currency is its three-letter code, like "USD" or "EUR"'))),
   // A language tag ("en-US", "de-DE"); `graview check` says when it is none (`brand-locale`).
   locale: z.optional(str(2, 35)),
+  /*
+   * THE REST OF THE BRAND (FR-124), each optional and each checked by
+   * `graview check` (`brand-mark`, `brand-font`): a logo and a page icon —
+   * inline SVG, or a path on the app's own host — the faces words are set
+   * in, how round and how roomy, a hue per kind, and the scheme it prefers.
+   */
+  logo: z.optional(z.union([str(1, MARK_MAX), z.strictObject({ src: str(1, MARK_MAX), alt: z.optional(str(1, 120)) })])),
+  favicon: z.optional(str(1, MARK_MAX)),
+  typography: z.optional(z.strictObject({ display: z.optional(str(1, 200)), body: z.optional(str(1, 200)), mono: z.optional(str(1, 200)) })),
+  shape: z.optional(
+    z.strictObject({
+      radius: z.optional(z.number().check(z.minimum(0), z.maximum(32))),
+      density: z.optional(z.number().check(z.minimum(0.75), z.maximum(1.5))),
+    }),
+  ),
+  accents: z.optional(z.record(z.string(), z.number().check(z.minimum(0), z.maximum(360)))),
+  scheme: z.optional(z.enum(["light", "dark", "auto"])),
 });
+export type BrandSpec = z.infer<typeof BrandSpec>;
 
 const loose = z.record(z.string(), z.unknown());
 

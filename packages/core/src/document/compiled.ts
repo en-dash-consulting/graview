@@ -25,6 +25,7 @@ import { error, type Finding } from "./findings.js";
 import type { EffectSpec, FieldSpec, GraviewDocument, KindSpec, SightSpec, ValueSpec } from "./schema.js";
 import { renderTemplate, type TemplatePart } from "./template.js";
 import { rememberDocument } from "./remembered.js";
+import { moneyOf } from "./brand.js";
 import type { HomeView, ViewSpecsByKind } from "./views.js";
 
 /*
@@ -298,7 +299,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     });
   }
   // What `{x | money}` says in a label, a sentence or a refusal: the app's currency and locale (FR-100).
-  const { accent: _accent, name: _wordmark, ...money } = document.brand ?? {};
+  const money = moneyOf(document);
 
   // ── kinds ────────────────────────────────────────────────────────────────
   const definitions = Object.entries(document.kinds).map(([kind, spec]) => {

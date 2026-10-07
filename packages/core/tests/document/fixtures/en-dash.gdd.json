@@ -1,0 +1,56 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "En Dash Workshops",
+  "description": "Workshops, who came, and what each one left behind.",
+  "kinds": {
+    "workshop": {
+      "noun": "workshop",
+      "plural": "workshops",
+      "fields": {
+        "title": { "type": "string", "required": true },
+        "status": { "type": "enum", "options": ["planned", "held"], "default": "planned", "required": true },
+        "held": { "type": "date" }
+      },
+      "edges": {
+        "attendedBy": { "to": ["person"], "description": "who came", "inverse": "the workshops they came to" }
+      }
+    },
+    "person": {
+      "noun": "person",
+      "plural": "people",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "organisation": { "type": "string" }
+      }
+    }
+  },
+  "acts": {
+    "add-workshop": { "title": "Add a workshop", "creates": "workshop", "description": "Put a workshop on the calendar." },
+    "add-person": { "title": "Add a person", "creates": "person", "description": "Somebody who came, or will." },
+    "hold": { "title": "Hold it", "on": "workshop", "description": "Say the workshop was held.", "sets": { "status": "held" } },
+    "attend": { "title": "Came", "on": "workshop", "connects": "attendedBy", "description": "Say who came." }
+  },
+  "roles": ["owner"],
+  "policy": { "grants": [{ "roles": ["owner"], "mutations": "*" }] },
+  "views": {
+    "home": [
+      { "headline": "Workshops by En Dash" },
+      { "figure": "count(all('workshop'))", "label": "workshops so far" },
+      { "list": "all('workshop')", "as": "card", "empty": "No workshops yet." }
+    ]
+  },
+  "brand": {
+    "name": "En Dash",
+    "accent": "#0f6e5c",
+    "logo": {
+      "src": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 48 24\" width=\"48\" height=\"24\"><rect x=\"4\" y=\"10\" width=\"40\" height=\"4\" rx=\"2\" fill=\"currentColor\"></rect></svg>",
+      "alt": "En Dash Consulting"
+    },
+    "favicon": "/graview/assets/5f0c6e0c2d9a4b1e8f7a6c3d2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a.svg",
+    "typography": { "display": "system-serif", "body": "system-sans", "mono": "system-mono" },
+    "shape": { "radius": 6, "density": 0.9 },
+    "accents": { "workshop": 168, "person": 32 },
+    "scheme": "dark"
+  }
+}

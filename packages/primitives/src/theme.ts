@@ -334,6 +334,8 @@ ${/* Headings and the wordmark take the display face when a brand supplies one,
    and the body face when it does not — so a brand with one font is not asked
    to name it twice. */ ""}
 h1, h2, h3, h4, .graview-wordmark { font-family: var(--graview-font-display); }
+${/* The app's mark (FR-124) is as tall as the box it is drawn in; its own width follows. */ ""}
+.graview-logo > svg { display: block; height: 100%; width: auto; }
 code, kbd, samp { font-family: var(--graview-font-mono); }
 
 ${/*

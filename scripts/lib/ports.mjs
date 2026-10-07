@@ -51,6 +51,8 @@ export const OWN = {
   "declared-host": 5284,
   /** The host's page `verify-address` serves an app at under a base path, and an article beside it (FR-106). */
   "address-host": 5278,
+  /** The host's page `verify-brand` mounts the En Dash document into, to see the whole brand drawn on both faces (FR-124, FR-125). */
+  "brand-host": 5276,
   /** The host's page `verify-chrome-quiet` mounts the org app and Cloud's vendor template into, to count pills and cut-off names (FR-113, FR-117, FR-118). */
   "quiet-host": 5277,
   /** The OpenAI-shaped stand-in `verify-studio` points the studio's remote model at. */

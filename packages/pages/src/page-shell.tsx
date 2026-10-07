@@ -1,4 +1,5 @@
-import { LadderSetting, useMarkup } from "@graview/primitives/pages";
+import { AppTitle, LadderSetting, useFavicon } from "@graview/primitives/pages";
+import { faviconHref } from "@graview/core";
 import type { AnySchema } from "@graview/core";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
@@ -27,7 +28,8 @@ export function DefaultShell<S extends AnySchema>({
 }) {
   const { store, brand, sceneHref = "/", invariantContext } = context;
   useStoreTick(store);
-  const logo = useMarkup(brand?.logo);
+  // On its own the routed face owns the page, and wears the brand's icon; embedded, the host's page keeps its own (FR-124).
+  useFavicon(context.embedded ? undefined : faviconHref(brand));
   const location = useLocation();
   const problems = store.violations(invariantContext).length;
   const current = (path: string) =>
@@ -95,16 +97,8 @@ export function DefaultShell<S extends AnySchema>({
                 minHeight: 32,
               }}
             >
-              {brand?.logo ? (
-                <span
-                  aria-hidden="true"
-                  style={{ display: "inline-flex", color: "var(--graview-accent)" }}
-                  // The logo is the brand's own markup, declared by the
-                  // installation — not supplied by a user.
-                  dangerouslySetInnerHTML={logo}
-                />
-              ) : null}
-              {brand?.name ?? "Graview"}
+              {/* The mark, the name, and on the home the line under it (FR-124, FR-125). */}
+              <AppTitle brand={brand} name={brand?.name ?? "Graview"} subtitle={current("/")} size={26} />
             </Link>
             <PageFind context={context} />
             <a
