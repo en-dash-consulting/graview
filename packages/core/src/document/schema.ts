@@ -21,6 +21,14 @@ export const NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 /** Field names are identifiers so a rule can say them bare: `quote != null`. */
 export const FIELD_NAME = /^[a-z][A-Za-z0-9]*$/;
 const RESERVED_FIELDS = new Set(["id", "kind"]);
+/**
+ * What every object already answers to — `constructor`, `toString` and the
+ * rest of `Object.prototype` — is no field's or relation's name: a record's
+ * fields and a kind's relations are looked up by name, and one of these is
+ * "there" on every record whether it was declared or not.
+ */
+const inherited = (n: string) => n in Object.prototype;
+const notInherited = z.refine<string>((n: string) => !inherited(n), "every object already has this name — choose another");
 
 /** At least `min` and at most `max` long: a string's characters, a list's items. */
 const sized = (min?: number, max?: number) => [...(min === undefined ? [] : [z.minLength(min)]), ...(max === undefined ? [] : [z.maxLength(max)])];
@@ -34,12 +42,13 @@ const name = (what: string) => z.string().check(z.regex(NAME, `${what} names are
  * `tended-by.name` would read as a subtraction.
  */
 export const EDGE_NAME = /^(?:[a-z][a-z0-9]*(?:-[a-z0-9]+)*|[a-z][A-Za-z0-9]*)$/;
-const edgeName = z.string().check(z.regex(EDGE_NAME, 'relation names are one camelCase word, like "tendedBy"'));
+const edgeName = z.string().check(z.regex(EDGE_NAME, 'relation names are one camelCase word, like "tendedBy"'), notInherited);
 const fieldName = z
   .string()
   .check(
     z.regex(FIELD_NAME, 'field names are one word or camelCase, like "dueDate" — rules say them bare'),
     z.refine((n: string) => !RESERVED_FIELDS.has(n), 'a field cannot be called "id" or "kind" — the framework keeps those; try "type" or "category"'),
+    notInherited,
   );
 const sentence = str(1, 500);
 const expression = str(1, 2000);
