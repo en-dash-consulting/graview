@@ -72,6 +72,15 @@ export interface SceneThumbnailOptions {
    * else one block per member up to five, taller for more, else one block.
    */
   readonly minBuilding?: number;
+  /**
+   * `"icon"` draws the app as a tab's icon (FR-130): 32 × 32, each
+   * district on its whole block in its hue with one block standing on it,
+   * no strokes, readable at 16 px, under 1.5 KB, and named by the app's
+   * name alone — a standalone SVG a host serves as a favicon. `width`,
+   * `height`, `fit` and `minBuilding` do not apply; counts raise a
+   * district's block as they raise its one block on a tile.
+   */
+  readonly size?: "icon";
 }
 
 /** What the thumbnail can be drawn from: a declaration document (an object or its JSON), or an app already compiled or declared. */
@@ -315,6 +324,74 @@ function bounds(all: readonly Point[]): { minX: number; maxX: number; minY: numb
   };
 }
 
+/*
+ * AN ICON (FR-130). A tab is 16 pixels, and every app's was the same cube
+ * in its accent. At that size a village is a smudge and a street is
+ * nothing, so the icon keeps what still reads: each district on its whole
+ * block, from the corner the Scene gives it, in its hue — the plot solid,
+ * in its kerb's colour, since the Scene's 12% wash is invisible at 16 px —
+ * and one block on it, taller for more. Its coordinates are the
+ * icon's own pixels, to a tenth, so the whole picture is a kilobyte.
+ */
+const ICON = 32;
+
+function sceneIcon(app: GraviewApp | null, name: string, districts: readonly SceneDistrict[], scheme: Scheme, options: SceneThumbnailOptions): string {
+  const shade = isoShade(scheme);
+  const tokens = (app?.brand?.schemes ?? SCHEMES)[scheme] ?? SCHEMES[scheme];
+  const ground = coloursIn(tokens.ground)[0] ?? coloursIn(SCHEMES[scheme].ground)[0]!;
+
+  /* In lattice units first: each district's diamond and the block at its centre, as the landmark stands it. */
+  const drawn = districts.map((district) => {
+    const plot = wholeBlock(district.plot);
+    const at = (c: number, r: number, lift = 0): Point => {
+      const p = toIso(c, r, CELL);
+      return { x: p.x, y: p.y - lift };
+    };
+    const ground4 = [at(plot.col, plot.row), at(plot.col + plot.side, plot.row), at(plot.col + plot.side, plot.row + plot.side), at(plot.col, plot.row + plot.side)];
+    const centre = { col: plot.col + plot.side / 2, row: plot.row + plot.side / 2 };
+    const half = (plot.side * 0.56) / 2;
+    const rise = plot.side * 0.56 * CELL * 0.5 * (1.25 + Math.min(1.25, Math.log2(1 + district.count) * 0.2));
+    const foot = [at(centre.col - half, centre.row - half), at(centre.col + half, centre.row - half), at(centre.col + half, centre.row + half), at(centre.col - half, centre.row + half)];
+    const roof = foot.map((p) => ({ x: p.x, y: p.y - rise }));
+    const [back, right, front, left] = roof as [Point, Point, Point, Point];
+    const [, rightFoot, frontFoot, leftFoot] = foot as [Point, Point, Point, Point];
+    return {
+      district,
+      plot: ground4,
+      left: [left, front, frontFoot, leftFoot],
+      right: [front, right, rightFoot, frontFoot],
+      roof: [back, right, front, left],
+      depth: centre.col + centre.row,
+    };
+  });
+  const view = frame(drawn.flatMap((d) => [...d.plot, ...d.roof]), CELL * 0.25, ICON, ICON);
+  const scale = ICON / (view.maxX - view.minX);
+  const path = (fill: string, list: readonly Point[]) => `<path fill="${fill}" d="M${list.map((p) => `${fmt((p.x - view.minX) * scale)} ${fmt((p.y - view.minY) * scale)}`).join(" ")}z"/>`;
+
+  const groups = [...drawn]
+    .sort((a, b) => a.depth - b.depth)
+    .map((d) => {
+      const hue = d.district.hue;
+      const kerb = shade.plotEdge;
+      return (
+        `<g data-kind="${escapeSvg(d.district.kind)}">` +
+        path(face(hue, kerb), d.plot) +
+        path(face(hue, shade.left), d.left) +
+        path(face(hue, shade.right), d.right) +
+        path(face(hue, shade.roof), d.roof) +
+        `</g>`
+      );
+    });
+  const background = options.background === false ? "" : `<rect width="${ICON}" height="${ICON}" fill="${hex(ground)}"/>`;
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${ICON}" height="${ICON}" viewBox="0 0 ${ICON} ${ICON}" role="img" data-scheme="${scheme}">` +
+    `<title>${escapeSvg(options.title ?? name)}</title>` +
+    background +
+    groups.join("") +
+    `</svg>`
+  );
+}
+
 /**
  * The Scene of an app from altitude, as a standalone SVG string: each
  * kind's plot on the declaration's own map in its hue, with a block or its
@@ -330,6 +407,8 @@ export function sceneThumbnail(source: ThumbnailSource, options: SceneThumbnailO
   const height = Math.max(8, Math.round(options.height ?? 132));
   const app = appOf(source);
   const districts = app ? sceneDistricts(app, options.counts ? { counts: options.counts } : {}) : [];
+  const name = app?.name ?? (typeof source === "object" && source !== null && typeof (source as { name?: unknown }).name === "string" ? (source as { name: string }).name : "An app");
+  if (options.size === "icon") return sceneIcon(app, name, districts, scheme, options);
   const shade = isoShade(scheme);
   const tokens = (app?.brand?.schemes ?? SCHEMES)[scheme] ?? SCHEMES[scheme];
   const ground = coloursIn(tokens.ground)[0] ?? coloursIn(SCHEMES[scheme].ground)[0]!;
@@ -388,7 +467,6 @@ export function sceneThumbnail(source: ThumbnailSource, options: SceneThumbnailO
   const { minX, maxX, minY, maxY } = view ?? frame(all, CELL * 0.6, width, height);
   const viewBox = `${fmt(minX)} ${fmt(minY)} ${fmt(maxX - minX)} ${fmt(maxY - minY)}`;
 
-  const name = app?.name ?? (typeof source === "object" && source !== null && typeof (source as { name?: unknown }).name === "string" ? (source as { name: string }).name : "An app");
   const title =
     options.title ??
     (app
