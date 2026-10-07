@@ -20,8 +20,8 @@ export function fromLayout(
     x: node.x,
     y: node.y,
     // Whole-pixel boxes. A fractional size reallocates the texture on every
-    // frame of a transition and desynchronises it from the element the
-    // browser actually rasterises.
+    // frame of a transition and desynchronizes it from the element the
+    // browser actually rasterizes.
     width: Math.round(node.width),
     height: Math.round(node.height),
     // Mid-fade counts as dirty: the pixels on screen are not the pixels this

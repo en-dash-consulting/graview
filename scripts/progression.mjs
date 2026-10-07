@@ -145,7 +145,7 @@ try {
         const right = Math.min(innerWidth, Math.max(...rects.map((r) => r.right)) + pad);
         const top = Math.max(0, Math.min(...rects.map((r) => r.top)) - pad);
         const bottom = Math.min(innerHeight, Math.max(...rects.map((r) => r.bottom)) + pad);
-        // At least a readable width, centred on what is drawn. The bar is not
+        // At least a readable width, centered on what is drawn. The bar is not
         // in the picture: the caption quotes what Standing said.
         const minW = 640;
         const width = Math.max(minW, right - left);

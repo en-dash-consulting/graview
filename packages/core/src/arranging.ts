@@ -1,4 +1,4 @@
-import { humaniseField, labelOf, tellApart } from "./schema/define-node.js";
+import { humanizeField, labelOf, tellApart } from "./schema/define-node.js";
 import { matchNode, parseQuery } from "./search.js";
 import {
   arrangeable,
@@ -210,14 +210,14 @@ export function arrange<N extends ArrangeNode>(nodes: readonly N[], arrangement:
   const first = ordered[0];
   const definition = first ? ctx.schema.tryDefinition(first.kind) : undefined;
   const shape = (definition?.fields.shape ?? {}) as Record<string, unknown>;
-  const reading = definition ? readingOf(definition, grouping.by) : humaniseField(grouping.by);
+  const reading = definition ? readingOf(definition, grouping.by) : humanizeField(grouping.by);
   const isField = grouping.by in shape;
   const type = isField ? fieldType(shape[grouping.by]) : undefined;
   const edgeReading = edgesOf(ctx.schema, first?.kind ?? "").find((offer) => offer.key === grouping.by)?.label;
   // "No due date" for a field; an edge reads as a sentence, so "Without the list it is on".
   const none = isField
     ? `No ${reading.toLowerCase()}`
-    : `Without ${(edgeReading ?? humaniseField(grouping.by)).toLowerCase()}`;
+    : `Without ${(edgeReading ?? humanizeField(grouping.by)).toLowerCase()}`;
 
   /*
    * Two far ends of one name — a single and its album, both "Blue Hour" —

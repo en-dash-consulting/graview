@@ -11,7 +11,7 @@ import { Chip, Panel, Roster, useWidth } from "../primitives/index.js";
  * The timeline answers "when". This answers "did we miss anything", which is
  * a different question with a different natural picture — a bipartite mapping
  * rather than an interval. Requirements against deliverables, tests against
- * behaviours, controls against risks, skills against drills: the shape recurs
+ * behaviors, controls against risks, skills against drills: the shape recurs
  * everywhere two sets of things are supposed to correspond, and the failure
  * is always the same two pictures.
  *
@@ -68,7 +68,7 @@ export interface CoverageOptions extends CoverageRoles {
    * Grouping by a field only works when "must be covered" is a property the
    * row carries. Often it is a property of the GRAPH: a skill matters
    * because some position in the formation requires it, not because someone
-   * labelled it important. A third app needed exactly that, and adding it
+   * labeled it important. A third app needed exactly that, and adding it
    * left the other two untouched because they never set it.
    */
   readonly requiredVia?: { readonly edge: string };
@@ -450,7 +450,7 @@ const HEADER_ANGLE = 58;
 /*
  * And long enough for a column's own wording, for the same reason: "Design
  * system contributions" and "Prescription journey remediation" were both
- * ellipsised, which turns the header strip into a row of guesses.
+ * ellipsized, which turns the header strip into a row of guesses.
  */
 const HEADER_MAX = 176;
 const RISE = Math.sin((HEADER_ANGLE * Math.PI) / 180);
@@ -488,7 +488,7 @@ const HEADER_OVERHANG = Math.ceil(HEADER_MAX * RUN);
  * Full fidelity draws the matrix. Summary drops it entirely for a coverage
  * bar and the names of what is missing — fidelity SWITCHING rather than
  * scaling, the same discipline the timeline keeps, because a matrix shrunk to
- * a third of its size is a grey rectangle and a list of two names is not.
+ * a third of its size is a gray rectangle and a list of two names is not.
  */
 /*
  * WHAT IS MISSING, IN THE DECLARATION'S WORDS. The header said "3
@@ -594,7 +594,7 @@ export function CoverageView<S extends AnySchema>({
    * — a matrix with names and no cells. The names take a share of the
    * width rather than a fixed run; and where the columns still would not
    * fit at a fingertip each, the matrix stacks: each row is its name and
-   * then its cells as labelled marks that wrap, which is a different
+   * then its cells as labeled marks that wrap, which is a different
    * drawing of the same facts rather than a smaller one.
    */
   const labelWidth = width === null ? ROW_LABEL_WIDTH : Math.max(96, Math.min(ROW_LABEL_WIDTH, Math.round(width * 0.36)));
@@ -692,7 +692,7 @@ export function CoverageView<S extends AnySchema>({
                  * SAID, NOT ONLY PAINTED. The column head already went faint
                  * when a selection reached past it; the row labels said so in
                  * the tree and the columns and cells did not, so half this
-                 * picture's emphasis existed only as a colour — checkable by
+                 * picture's emphasis existed only as a color — checkable by
                  * nothing, and absent from what a screen reader can reach.
                  */
                 data-graview-emphasis={
@@ -712,7 +712,7 @@ export function CoverageView<S extends AnySchema>({
                    * THE NAME IS THE TARGET, NOT THE BOX IT STANDS IN. The
                    * label leans up and to the right, across the boxes of
                    * the columns after it, and those were painted over it:
-                   * a press on a name picked a neighbour more often than
+                   * a press on a name picked a neighbor more often than
                    * not. The box lets presses through; the label takes them.
                    */
                   pointerEvents: "none",
@@ -830,7 +830,7 @@ export function CoverageView<S extends AnySchema>({
                   <div
                     data-graview-pick={row.id}
                     // Emphasis in the DOM as well as in the paint, so what a
-                    // selection lights is a fact rather than a colour.
+                    // selection lights is a fact rather than a color.
                     data-graview-emphasis={lit.size === 0 ? "plain" : dim ? "dimmed" : "lit"}
                     title={row.label}
                     style={{
@@ -961,7 +961,7 @@ export function CoverageView<S extends AnySchema>({
                           style={
                             stacked
                               ? {
-                                  // A labelled mark: the column's name beside its cell,
+                                  // A labeled mark: the column's name beside its cell,
                                   // since there is no header strip to read it off.
                                   flex: "0 0 auto",
                                   minHeight: 24,
@@ -970,7 +970,7 @@ export function CoverageView<S extends AnySchema>({
                                   alignItems: "center",
                                   gap: 6,
                                   padding: "2px 9px 2px 7px",
-                                  // A labelled cell, not a choice: a cell's corners, not a capsule (FR-117).
+                                  // A labeled cell, not a choice: a cell's corners, not a capsule (FR-117).
                                   borderRadius: 6,
                                   border: "1px solid var(--graview-edge)",
                                   fontSize: "0.75rem",

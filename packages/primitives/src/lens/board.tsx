@@ -258,7 +258,7 @@ export function BoardView<S extends AnySchema>({
    * WHY a thing is marked, not only that it is.
    *
    * A slot drawn in the warning tone with nothing to explain it is the worst
-   * kind of mark: "why is Hana a different colour?" is the question it
+   * kind of mark: "why is Hana a different color?" is the question it
    * provokes, and the honest answer — the LEFT MIDFIELD position demands a
    * skill the week does not train — is nothing to do with Hana at all. The
    * violation messages are already computed; the picture just never read
@@ -563,7 +563,7 @@ export function BoardView<S extends AnySchema>({
         }
         /*
          * Emphasis in the DOM as well as in the paint. A claim about
-         * a picture that exists only as a colour cannot be checked by
+         * a picture that exists only as a color cannot be checked by
          * anything — not a test, not a person reading the tree.
          */
         data-graview-emphasis={lit.size === 0 ? "plain" : dim ? "dimmed" : "lit"}
@@ -605,9 +605,9 @@ export function BoardView<S extends AnySchema>({
           >
             {slot.code}
             {/*
-              * A MARK, not only a tint. Colour alone says "this one is
+              * A MARK, not only a tint. Color alone says "this one is
               * different" and leaves the reader to guess at what and at
-              * whom; it is also the one channel a person with a colour
+              * whom; it is also the one channel a person with a color
               * deficiency does not have. The badge sits on the disc
               * because the disc is the slot. Never on a hole: a dashed
               * ring has already said it.
@@ -730,14 +730,14 @@ export function BoardView<S extends AnySchema>({
       }
       {...(page ? { style: { flex: "1 1 auto", minHeight: 0, height: "100%" } } : {})}
     >
-      {/* Centred: the focus band is as wide as the widest view an app has,
+      {/* Centered: the focus band is as wide as the widest view an app has,
           and an arrangement hugging the left edge of it reads as unfinished
           rather than as a board with a bench beside it. */}
       {/*
         * An arrangement SCALES to the box it is given.
         *
         * A fixed pitch is the one thing a board must not have: on a short
-        * screen it ran past its band and the defence disappeared, which for
+        * screen it ran past its band and the defense disappeared, which for
         * a view whose entire content is "where things are" is the worst
         * possible failure. Height drives it and the aspect ratio follows, so
         * the formation stays a formation at any size. A shelf has no aspect:
@@ -844,8 +844,8 @@ export function BoardView<S extends AnySchema>({
           * The zone names live OUTSIDE the field.
           *
           * Inside, they were absolutely positioned at the top-left of each
-          * band — which is exactly where a left back stands. "DEFENCE" and
-          * the LB slot were drawn on top of each other and read "DEFENCELB",
+          * band — which is exactly where a left back stands. "DEFENSE" and
+          * the LB slot were drawn on top of each other and read "DEFENSELB",
           * and no arrangement of insets fixes that, because where the slots
           * go is the DOMAIN's decision and the label has no claim on it. A
           * rail beside the field can never collide with anything, and the

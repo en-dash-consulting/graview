@@ -88,8 +88,8 @@ because "I read both and they look the same" is a different claim.
 
 ## What the check cannot see
 
-- Whether you modelled the domain or transcribed the database. The symptom is
+- Whether you modeled the domain or transcribed the database. The symptom is
   edges named after columns.
-- Whether behaviour the old system had is gone. Only the parity test knows.
+- Whether behavior the old system had is gone. Only the parity test knows.
 - Whether the port is worth finishing. A port that has not made anything
   clearer by the third kind is telling you something.

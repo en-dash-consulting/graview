@@ -68,7 +68,7 @@ img { max-width: 100%; }
   --rule:      #D9DCE5;
   --rule-2:    #E6E8EE;
 
-  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+  /* En Dash's own two colors, taken from the mark: navy and mint. Mint is a
      brilliant #00E5B9 that only reads on the navy, so it carries the dark
      theme and the navy carries the light one. */
   --navy:      #001769;
@@ -190,7 +190,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Windows High Contrast throws the palette away, so anything carrying meaning
-   in a border or a fill has to say so in system colours too. */
+   in a border or a fill has to say so in system colors too. */
 @media (forced-colors: active) {
   .code, .term, .endash, .lens figure { border-color: CanvasText; }
   .caveat { border-left-color: LinkText; }
@@ -1102,7 +1102,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 </ol>
 <p><strong>Drawing in SVG? The framework sets the role; you set the <code>aria-label</code>.</strong>    A <code>&lt;g&gt;</code>, <code>&lt;polygon&gt;</code>, <code>&lt;circle&gt;</code>, <code>&lt;rect&gt;</code>, <code>&lt;path&gt;</code>, <code>&lt;ellipse&gt;</code>,    <code>&lt;polyline&gt;</code>, <code>&lt;line&gt;</code> or <code>&lt;use&gt;</code> carrying the mark becomes a button like    any <code>&lt;span&gt;</code> — but a shape has no text inside it to be named by, so    without a label it is a stop that announces nothing, which is worse for a    keyboard than not being reachable at all. Name it after the thing it    stands for.</p>
 <ol>
-<li><strong>Read <code>implicated</code> and <code>flagged</code>.</strong> Empty means "no emphasis", NOT "nothing is related". Expose what you decide as <code>data-graview-emphasis</code> so it can be checked — a claim about a picture that exists only as a colour cannot be checked by anything, not a test and not a person reading the tree.</li>
+<li><strong>Read <code>implicated</code> and <code>flagged</code>.</strong> Empty means "no emphasis", NOT "nothing is related". Expose what you decide as <code>data-graview-emphasis</code> so it can be checked — a claim about a picture that exists only as a color cannot be checked by anything, not a test and not a person reading the tree.</li>
 </ol>
 <ol>
 <li><strong>Render at three fidelities.</strong> <code>glyph</code> is a chip; <code>summary</code> is denser content, not the same content scaled down; <code>full</code> is the picture.</li>
@@ -1110,7 +1110,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <ol>
 <li><strong><code>nodes</code> is THE GROUP'S MEMBERS, and nothing else.</strong> A lens mounted over a kind's <code>many</code> cell receives that kind's members in <code>ViewProps.nodes</code> — not the graph. Every interesting lens draws more than one kind (a board has slots and occupants, a matrix has rows and columns, a map has regions and markers), and every other kind comes from <code>store.graph</code>, narrowed back to <code>nodes</code> for the group's own kind so the scene's horizon still applies. Built from <code>nodes</code> alone, a map drew every piece of ground with nothing standing in it: no error, no empty state, a complete, tidy, wrong picture, which is the worst failure a lens has. The framework's own board lens had this exact bug.</li>
 </ol>
-<p><strong><code>budget</code> is the most to draw.</strong> A host may hand a lens a few    members with <code>budget</code> and <code>total</code>: hold what you read from    the store to it too, and say "+N more" (<code>withMore</code> does). A real catalogue    is thousands; a lens that draws them all at 6% stalls the city.</p>
+<p><strong><code>budget</code> is the most to draw.</strong> A host may hand a lens a few    members with <code>budget</code> and <code>total</code>: hold what you read from    the store to it too, and say "+N more" (<code>withMore</code> does). A real catalog    is thousands; a lens that draws them all at 6% stalls the city.</p>
 <ol>
 <li><strong>Take an arrangement, and say what you have no place for.</strong> Every picture over a kind can be sorted, filtered and grouped from the declaration alone — <code>arrangeable(schema, kind)</code> (<code>@graview/core/arrange</code>) offers the fields by type, the edges by far end, the lifecycle and the standing — and the stop carries it as <code>in.sort</code>, <code>in.filter</code>, <code>in.group</code> and <code>in.q</code>, beside the calendar's own <code>in.at</code>. In your lens's component:</li>
 </ol>
@@ -1139,7 +1139,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <ul>
 <li>Whether the picture is legible. Run it and look, in both schemes.</li>
 <li>Whether it survives being drawn small. The Graview renders the focused view at natural size and scales it; <code>pnpm shrunk</code> measures whether it clips.</li>
-<li>Whether the roles you chose generalise, or merely rename your own fields.</li>
+<li>Whether the roles you chose generalize, or merely rename your own fields.</li>
 </ul>
     </section>
 
@@ -1237,7 +1237,7 @@ document.querySelectorAll("[data-copy]").forEach(function (button) {
   --rule:      #D9DCE5;
   --rule-2:    #E6E8EE;
 
-  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+  /* En Dash's own two colors, taken from the mark: navy and mint. Mint is a
      brilliant #00E5B9 that only reads on the navy, so it carries the dark
      theme and the navy carries the light one. */
   --navy:      #001769;
@@ -1359,7 +1359,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Windows High Contrast throws the palette away, so anything carrying meaning
-   in a border or a fill has to say so in system colours too. */
+   in a border or a fill has to say so in system colors too. */
 @media (forced-colors: active) {
   .code, .term, .endash, .lens figure { border-color: CanvasText; }
   .caveat { border-left-color: LinkText; }

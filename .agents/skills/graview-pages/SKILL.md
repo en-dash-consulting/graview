@@ -171,7 +171,7 @@ What every design must keep doing:
   reaches for `store.graph`. The scene's lens reads the same model.
 - **Style through the theme's tokens** (`--graview-ground`, `-panel`, `-ink`,
   `-edge`, `-warn`, `-accent`, `-font-display`, `-font-body`), tinted with
-  `color-mix` for the design's own paper. Never a colour that works in one
+  `color-mix` for the design's own paper. Never a color that works in one
   scheme only.
 - **Keep landmarks and targets honest.** One `main` — a `section` when
   `context.embedded`, and UNNAMED, or a page holding two embeds has two

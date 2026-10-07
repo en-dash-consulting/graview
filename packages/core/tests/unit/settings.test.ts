@@ -4,7 +4,7 @@ import { checkApp } from "../../src/check.js";
 import { z } from "zod";
 
 /**
- * A SETTING NOBODY CAN HONOUR IS A CONTROL THAT DOES NOTHING.
+ * A SETTING NOBODY CAN HONOR IS A CONTROL THAT DOES NOTHING.
  *
  * The profile pane draws exactly what the app declares, and the shell knows
  * exactly two ways to carry one answer to every surface. Which means the
@@ -27,9 +27,9 @@ describe("the settings a reader may change", () => {
 
   it("refuses a setting nothing knows how to apply", () => {
     const result = withSettings([
-      { ...textSize(), honoured: "telepathy" as never },
+      { ...textSize(), honored: "telepathy" as never },
     ]);
-    expect(codes(result)).toContain("setting-not-honourable");
+    expect(codes(result)).toContain("setting-not-honorable");
     expect(result.ok).toBe(false);
   });
 

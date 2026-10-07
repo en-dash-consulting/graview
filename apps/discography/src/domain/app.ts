@@ -47,7 +47,7 @@ export const discographyApp = defineApp({
     { name: "coverage", title: "What the songs are about", bindings: { rows: { kind: "song" }, columns: { kind: "theme" }, link: { edge: "about" } } },
     /*
      * The releases, on the calendar, across the whole career: it opens where
-     * the catalogue starts (the first release is October 1997) and looks out
+     * the catalog starts (the first release is October 1997) and looks out
      * thirty years, to the last. Eight years from 2023 showed a career that
      * had barely begun and four empty years to come.
      */

@@ -62,7 +62,7 @@ export interface CompositorDeps {
 }
 
 export interface CompositorOptions {
-  /** The ground colour receded planes drift toward. Defaults to a warm off-white. */
+  /** The ground color receded planes drift toward. Defaults to a warm off-white. */
   readonly ground?: readonly [number, number, number];
   /** Stand the pointer router down once a browser redirects hit-testing itself. */
   readonly platformHandlesHitTesting?: boolean;
@@ -360,7 +360,7 @@ export class Compositor {
   }
 
   private ensureResources(device: GPUDevice, view: SceneView): ViewResources {
-    // CEIL, not round. The browser rasterises an element of height 399.4 into
+    // CEIL, not round. The browser rasterizes an element of height 399.4 into
     // 400 rows, and a 399-row texture makes the copy fail validation — which
     // it does silently, leaving the view with whatever was in the texture
     // before, or nothing at all. Allocate at least what can arrive.

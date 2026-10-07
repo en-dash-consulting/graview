@@ -188,7 +188,7 @@ const watchFrames = (page) =>
  * Not the hand: a pan is clamped to what the city actually reaches, and
  * todo's whole city fits the window, so dragging it moves nothing at all
  * and that is right. Not the URL either: in the stack the pan is not
- * serialised at all, which was true of the code this replaced as well.
+ * serialized at all, which was true of the code this replaced as well.
  *
  * What must hold is that LETTING GO CHANGES NOTHING — the picture where the
  * gesture left it and the picture a moment later are the same picture. The

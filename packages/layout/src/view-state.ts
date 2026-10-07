@@ -118,7 +118,7 @@ const num = (value: string): number | null => {
 };
 
 /**
- * Serialises a view to a URL fragment. Keys are sorted and lists are sorted,
+ * Serializes a view to a URL fragment. Keys are sorted and lists are sorted,
  * so the same view always produces the same string — which is what makes
  * "did the view change?" a string comparison and history entries stable.
  */
@@ -240,7 +240,7 @@ function round(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-/** Two views are the same stop when they serialise the same. */
+/** Two views are the same stop when they serialize the same. */
 export function sameView(a: ViewState, b: ViewState): boolean {
   return toUrl(a) === toUrl(b);
 }
@@ -295,7 +295,7 @@ export function edgeOfSelection(id: string): EdgeRef | null {
  * A pin and a pan adjust the picture you are looking at: this card a little
  * to the left, the whole scene nudged up. They are stored by node id and in
  * canvas pixels, which say nothing once the picture is a different one — the
- * card you dragged as the focus is a neighbour at the next stop, and holding
+ * card you dragged as the focus is a neighbor at the next stop, and holding
  * it at the focus's old coordinates draws it over the new focus. So a new
  * stop starts where the layout puts things: changing the focus, rising or
  * descending, and zooming in or out all leave the moves behind. The old stop
@@ -401,7 +401,7 @@ export function withPast(state: ViewState, past: boolean): ViewState {
 
 /**
  * Change what is selected. An empty selection leaves no key behind — the
- * default state serialises to the default URL.
+ * default state serializes to the default URL.
  */
 export function withSelection(state: ViewState, selection: readonly string[]): ViewState {
   if (selection.length === 0) {

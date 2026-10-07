@@ -82,7 +82,7 @@ describe("a roster is enough to show the whole platform", () => {
   it("declares a kit the checker has measured", () => {
     // Not that it is pretty — that it can be SEEN. The first two greens
     // this app tried were refused at 2.67:1 and 2.49:1 on the light ground.
-    expect(rotaApp.brand?.kit?.connectors?.byEdge?.["covered-by"]?.colour).toBe("#2f7a63");
+    expect(rotaApp.brand?.kit?.connectors?.byEdge?.["covered-by"]?.color).toBe("#2f7a63");
     expect(checkApp(rotaApp).findings.filter((f) => f.code.startsWith("kit-"))).toEqual([]);
   });
 });
@@ -95,7 +95,7 @@ describe("the rules fire on the roster it ships with", () => {
     expect(violations.length).toBeGreaterThan(0);
     const repair = violations[0]!.repairs.find((one) => one.mutation === "cover")!;
     // A rota that assigned somebody on your behalf is the one thing an
-    // organiser would never forgive it for.
+    // organizer would never forgive it for.
     expect(repair.missing).toEqual(["volunteerId"]);
   });
 

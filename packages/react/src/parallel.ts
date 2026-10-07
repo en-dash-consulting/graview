@@ -8,7 +8,7 @@
  * that severs it" was false for it.
  *
  * Lines sharing both ends fan out: each is bowed by its own offset about
- * the shared curve, centred so the bundle stays where one line would be.
+ * the shared curve, centered so the bundle stays where one line would be.
  * Returns the offset, in pixels along the curve's normal, for each line.
  */
 export function parallelOffsets(

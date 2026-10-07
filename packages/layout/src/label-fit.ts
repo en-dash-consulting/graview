@@ -5,7 +5,7 @@ import { estimateWidth, type Measure } from "./estimate.js";
  *
  * Every drawn surface in this framework eventually has to write a word
  * inside a shape — a district, a region on a plan, a band on a calendar —
- * and every one of them starts by centring the text at one size and hoping.
+ * and every one of them starts by centering the text at one size and hoping.
  * That works for as long as the names are short, which is for as long as a
  * person is typing them.
  *
@@ -13,7 +13,7 @@ import { estimateWidth, type Measure } from "./estimate.js";
  * called things like "Pea-gravel corner with river-rock border, log seats
  * and a fire bowl". The map drew each at one size across the middle of its
  * shape: three ran off the canvas, two were struck through by a
- * neighbour's outline, and nothing failed — every test passed, the
+ * neighbor's outline, and nothing failed — every test passed, the
  * accessibility tree was perfect, and the picture said "rick patio with
  * gravel joints". Agent-authored labels are not an edge case; they are the
  * normal case for anything with an intelligence provider in it.
@@ -50,7 +50,7 @@ export function spanAt(outline: readonly FitPoint[], y: number): { readonly x0: 
   }
   crossings.sort((p, q) => p - q);
   let best = { x0: 0, x1: 0 };
-  /* Pairs, not neighbours: odd gaps are inside the shape, even ones are not. */
+  /* Pairs, not neighbors: odd gaps are inside the shape, even ones are not. */
   for (let i = 0; i + 1 < crossings.length; i += 2) {
     const run = { x0: crossings[i]!, x1: crossings[i + 1]! };
     if (run.x1 - run.x0 > best.x1 - best.x0) best = run;
@@ -85,7 +85,7 @@ export function areaOf(outline: readonly FitPoint[]): number {
  *
  * An L-shaped region with six corners has four of them bunched at one end,
  * and averaging drags the label off the shape entirely — onto the
- * neighbour, where it reads as that neighbour's name. The fallback keeps a
+ * neighbor, where it reads as that neighbor's name. The fallback keeps a
  * degenerate shape from producing a NaN that silently removes the label.
  */
 export function centroidOf(outline: readonly FitPoint[]): FitPoint {

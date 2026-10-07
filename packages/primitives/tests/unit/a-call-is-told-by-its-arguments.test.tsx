@@ -72,11 +72,11 @@ describe("a call in the activity", () => {
   });
 
   it("draws a read's records once each, when it came to one by two roads", async () => {
-    /* A neighbourhood read lists each edge's far end, so a node joined to
+    /* A neighborhood read lists each edge's far end, so a node joined to
        another twice reports it twice. */
     const store = new Store({ schema, mutations: [addEquipment] });
     const calls: readonly ToolCall[] = [
-      { name: "neighbours", args: { id: "trailer" }, mutating: false, phase: "ok", at: "2026-10-04T10:00:00.000Z", reads: ["trailer", "extractor", "extractor"] },
+      { name: "neighbors", args: { id: "trailer" }, mutating: false, phase: "ok", at: "2026-10-04T10:00:00.000Z", reads: ["trailer", "extractor", "extractor"] },
     ];
     const said: string[] = [];
     vi.spyOn(console, "error").mockImplementation((...parts: unknown[]) => void said.push(parts.map(String).join(" ")));

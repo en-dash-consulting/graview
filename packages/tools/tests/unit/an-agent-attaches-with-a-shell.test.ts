@@ -75,7 +75,7 @@ afterEach(async () => {
 });
 
 describe("MCP over stdio, against a folder", () => {
-  it("initialises, lists the seat's tools, lands a mutation in the store on disk, and says no in the policy's words", async () => {
+  it("initializes, lists the seat's tools, lands a mutation in the store on disk, and says no in the policy's words", async () => {
     root = mkdtempSync(join(tmpdir(), "graview-mcp-"));
     const keeper = seatFrom(["--as", "cursor", "--roles", "keeper"], "graview-mcp");
     expect(keeper).toEqual({ kind: "agent", id: "cursor", roles: ["keeper"] });

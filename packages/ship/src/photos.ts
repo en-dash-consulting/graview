@@ -13,7 +13,7 @@ import type { GraphReader } from "@graview/core";
  * gutter.
  *
  * That is a trap this package sets and therefore a trap this package should
- * spring. Three defences, in order:
+ * spring. Three defenses, in order:
  *
  * 1. **Downscale before anything is stored** (`downscale`, in
  *    `@graview/primitives` where a canvas is at hand). Nothing a model is

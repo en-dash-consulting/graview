@@ -47,7 +47,7 @@ export const tracksInOrder = defineInvariant("tracks-in-order", {
   repairs: ["edit-song"],
   evaluate({ graph, subject }): Violation[] {
     /*
-     * The song's home, as the catalogue numbers it: among its albums, EPs
+     * The song's home, as the catalog numbers it: among its albums, EPs
      * and mixtapes if it has any, otherwise among all its releases, the
      * earliest with a full date. A release known only by its year is a home
      * only when none of the candidates has a date; on the same day, every
@@ -119,7 +119,7 @@ export const singleBeforeAlbum = defineInvariant("single-before-album", {
 });
 
 /*
- * "A single leads its album" is not kept: in a real catalogue singles follow
+ * "A single leads its album" is not kept: in a real catalog singles follow
  * their album all the time (K.O.D.'s "Show Me a God" came two weeks after it),
  * so the rule flagged the discography rather than a mistake in it.
  */

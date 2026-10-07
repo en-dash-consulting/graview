@@ -60,7 +60,7 @@ export function validateScaffoldOptions(options: ScaffoldOptions): readonly stri
     problems.push(`the port ${String(options.port)} is not a port`);
   }
   if (options.accent !== undefined && !/^#[0-9a-fA-F]{6}$/.test(options.accent)) {
-    problems.push(`the accent "${options.accent}" must be a six-digit hex colour like #2e7d32`);
+    problems.push(`the accent "${options.accent}" must be a six-digit hex color like #2e7d32`);
   }
   return problems;
 }
@@ -73,7 +73,7 @@ export type Ids = {
   spokenPlural: string;
   /** The kind spoken with its article: "an item", "a work order". */
   aSpoken: string;
-  /** The same, capitalised for the head of a sentence. */
+  /** The same, capitalized for the head of a sentence. */
   ASpoken: string;
   Kind: string;
   Plural: string;

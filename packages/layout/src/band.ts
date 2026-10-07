@@ -1,5 +1,5 @@
 import { arrange, arrangeable } from "@graview/core/arrange";
-import { fieldWords, humaniseField, type AnySchema, type ArrangeGraph, type ArrangeNode, type DateBucket, type GraphReader } from "@graview/core";
+import { fieldWords, humanizeField, type AnySchema, type ArrangeGraph, type ArrangeNode, type DateBucket, type GraphReader } from "@graview/core";
 import { aggregateId, BAND_PREFIX, isBandAggregate } from "./ids.js";
 export { BAND_PREFIX, isBandAggregate } from "./ids.js";
 import type { Aggregate, Opens, Via } from "./types.js";
@@ -7,7 +7,7 @@ import type { Aggregate, Opens, Via } from "./types.js";
 /*
  * THE BAND DRAWS WHAT A PERSON CAN READ (docs/scale.md).
  *
- * The relation band held every neighbour of the focus: an artist with 1,100
+ * The relation band held every neighbor of the focus: an artist with 1,100
  * songs put 1,100 cards in it, wrapped into rows whose height went negative,
  * each with a line, and the scene fell to a frame a second. The band has a
  * budget from the room it has — cards of a readable width, at most two rows
@@ -80,14 +80,14 @@ export function bandAggregateWords(id: string, schema: AnySchema): string | null
   if (!isBandAggregate(id)) return null;
   const [kind = "", first = "", second = "", part = ""] = id.slice(BAND_PREFIX.length).split("|");
   const definition = schema.definitions.find((one) => one.kind === kind);
-  const plural = definition?.plural ?? humaniseField(`${kind}s`);
+  const plural = definition?.plural ?? humanizeField(`${kind}s`);
   const relation =
     first === "raised"
       ? null
       : (() => {
           const declared = schema.definitions.map((one) => one.edges[first]).find(Boolean);
           const said = second === "in" ? declared?.inverse : declared?.description;
-          return (said ?? humaniseField(first)).toLowerCase();
+          return (said ?? humanizeField(first)).toLowerCase();
         })();
   const [by = "", key = ""] = part.split("=");
   const field = by.split(":")[0]!;

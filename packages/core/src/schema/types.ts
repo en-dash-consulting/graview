@@ -99,7 +99,7 @@ export interface NodeDefinitionSpec<
   readonly display?: {
     /** Field names never shown to a person. Ordering keys, internal ids. */
     readonly hide?: readonly string[];
-    /** Overrides the humanised default for a field's label. */
+    /** Overrides the humanized default for a field's label. */
     readonly labels?: Readonly<Record<string, string>>;
     /** Turns a stored value into the words for it. */
     readonly format?: Readonly<Record<string, (value: unknown) => string>>;

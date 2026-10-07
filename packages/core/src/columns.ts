@@ -50,7 +50,7 @@ export function choiceOf(schema: AnySchema, kind: string, field: string): Choice
 
 /**
  * THE COLUMNS, IN THE FIELD'S DECLARED ORDER — "todo, doing, done" as the
- * declaration lists them, never alphabetised — each said as the declaration
+ * declaration lists them, never alphabetized — each said as the declaration
  * says the value. When a record may have no value, a last column holds
  * those ("No status"), as a grouped list puts its "No …" group last: the
  * board's columns are the work's order, and the unsorted pile follows it.

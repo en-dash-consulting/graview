@@ -86,7 +86,7 @@ export const HEADLESS_RUNTIME: string = ${JSON.stringify(script)};
 `;
 }
 
-/** The client's notice: what it is, where it came from, and its licence. */
+/** The client's notice: what it is, where it came from, and its license. */
 const CLIENT_BANNER = `/*! @graview/guest/client.js — a frame guest's client (GraviewGuest.connect). Generated from src/client-script.ts. Elastic License 2.0. */`;
 
 /** The frame guest's client (FR-88): the classic script, and the module that holds it as text with its hash. */

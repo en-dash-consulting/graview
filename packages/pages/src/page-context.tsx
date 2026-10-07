@@ -9,7 +9,7 @@ import type { ReactViewRegistry } from "@graview/react/provider";
  * Traditional on purpose — lists, records, links, forms, the paradigms
  * people already know — but in the POSTURE of a good web page rather than a
  * back office: every route opens with the thing itself, titled in the
- * brand's display face and summarised in the app's own declared words, and
+ * brand's display face and summarized in the app's own declared words, and
  * the controls recede beneath the content. Nothing here is a template for
  * any one app. It is all read off the declaration, which is what lets one
  * component set read as a household's week, a bid document and a team

@@ -60,7 +60,7 @@ export function hidesFrom(store: Judged, principal: Principal): boolean {
  * an edge it no longer has; and a string that names no record at all (a
  * label in a call's arguments) is nothing to keep from anybody.
  *
- * THE JUDGEMENT FOLLOWS THE STORE (FR-51). It reads the policy, the
+ * THE JUDGMENT FOLLOWS THE STORE (FR-51). It reads the policy, the
  * modules that are off and who made each record as it is asked, not as it
  * was taken: one taken before a commit and asked after it knows the record
  * just made is its maker's own. Asking costs nothing more for that — who
@@ -129,7 +129,7 @@ function optionalIn(schema: Judged["schema"]): (kind: string, field: string) => 
 }
 
 /**
- * WHAT ONE SEAT IS SERVED (FR-55) — the judgement every surface built on
+ * WHAT ONE SEAT IS SERVED (FR-55) — the judgment every surface built on
  * the seat view reads, so a snapshot, a log, an answer and the wire cannot
  * disagree about it.
  *
@@ -150,15 +150,15 @@ export function seatLens(store: Judged, principal: Principal): SeatLens {
 }
 
 /** What a pinned lens judged: each id's sight and whether each is served, kept for a reading that goes on (`logSeenBy`). */
-interface Judgements {
+interface Judgments {
   readonly judged: Map<string, boolean>;
   readonly shown: Map<string, boolean>;
   /** Strings it was asked about that named no record then: one a record takes later is a name it must judge again. */
   readonly unnamed?: Set<string>;
 }
 
-/** A seat's lens, and a way to pin it over judgements the caller keeps. */
-function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens; readonly pinWith: (memo: Judgements) => SeatLens } {
+/** A seat's lens, and a way to pin it over judgments the caller keeps. */
+function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens; readonly pinWith: (memo: Judgments) => SeatLens } {
   const optional = optionalIn(store.schema);
   /*
    * A SEAT IS SERVED ITS OWN WORDS (FR-55). A field whose value this seat
@@ -177,7 +177,7 @@ function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens
    * is asked, or one pinned to now (`pin`), which judges each id and each
    * record once and is thrown away after the reading it was made for.
    */
-  const over = (sees: (id: string) => boolean, writers: () => Writers, now: () => number, kindOf: (id: string) => string | undefined, pinned?: Judgements): SeatLens => {
+  const over = (sees: (id: string) => boolean, writers: () => Writers, now: () => number, kindOf: (id: string) => string | undefined, pinned?: Judgments): SeatLens => {
     const servedWith = <N extends { readonly id: string; readonly kind: string }>(node: N, writer: FieldWriter): N | undefined => {
       if (!sees(node.id)) return undefined;
       let without: string[] | undefined;
@@ -250,7 +250,7 @@ function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens
     };
     return lens;
   };
-  function pinWith(memo: Judgements): SeatLens {
+  function pinWith(memo: Judgments): SeatLens {
     // Who wrote what is read only when a field names what the seat may not see: a seat that sees all of it never asks.
     let writers: Writers | undefined;
     const at = length();
@@ -290,7 +290,7 @@ interface ServedLog {
   readonly length: number;
   readonly last: Operation | undefined;
   readonly ops: readonly Operation[];
-  readonly judgements: Judgements;
+  readonly judgments: Judgments;
 }
 
 const SERVED_LOGS = new WeakMap<object, Map<string, ServedLog>>();
@@ -346,8 +346,8 @@ export function logSeenBy(store: Judged, principal: Principal): readonly Operati
     let still = true;
     const touched = touchedIds(added);
     for (const id of touched) {
-      const sight = held.judgements.judged.get(id);
-      const served = held.judgements.shown.get(id);
+      const sight = held.judgments.judged.get(id);
+      const served = held.judgments.shown.get(id);
       if ((sight !== undefined && now.sees(id) !== sight) || (served !== undefined && now.shows(id) !== served)) {
         still = false;
         break;
@@ -364,15 +364,15 @@ export function logSeenBy(store: Judged, principal: Principal): readonly Operati
     }
     if (still) {
       // What the old ops read stands: the new ones are judged over it, and what they read is kept with it.
-      const ops = [...held.ops, ...redact(added, pinWith(held.judgements))];
-      const served: ServedLog = { horizon, off, length, last: all.at(-1), ops, judgements: held.judgements };
+      const ops = [...held.ops, ...redact(added, pinWith(held.judgments))];
+      const served: ServedLog = { horizon, off, length, last: all.at(-1), ops, judgments: held.judgments };
       seats.set(key, served);
       return ops;
     }
   }
-  const judgements: Judgements = { judged: new Map(), shown: new Map(), unnamed };
-  const ops = redact(all, pinWith(judgements));
-  seats.set(key, { horizon, off, length, last: all.at(-1), ops, judgements });
+  const judgments: Judgments = { judged: new Map(), shown: new Map(), unnamed };
+  const ops = redact(all, pinWith(judgments));
+  seats.set(key, { horizon, off, length, last: all.at(-1), ops, judgments });
   return ops;
 }
 
@@ -532,7 +532,7 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
   const lens = seatLens(store as never, principal);
   /**
    * HOW ONE READING JUDGES: a single record by the lens, which follows the
-   * store; a whole graph, a snapshot or a neighbourhood by the lens pinned
+   * store; a whole graph, a snapshot or a neighborhood by the lens pinned
    * for that one reading, each id and record judged once in it.
    */
   const judging = (seat: SeatLens) => {
@@ -559,7 +559,7 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
    * so a seat's own records stay its own past a compaction) only for the
    * records in that base — a record the seat is not served is not named in
    * the map either, by its id or by its maker's (FR-55). The store keeps
-   * the whole map for its own judgement.
+   * the whole map for its own judgment.
    */
   const servedEpoch = <E extends { readonly seq: number; readonly base: GraphSnapshot; readonly creators?: Readonly<Record<string, string>> }>(epoch: E): E => {
     const base = servedGraph(epoch.base, epoch.seq);

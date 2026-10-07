@@ -31,14 +31,14 @@ somebody with a bright office files a bug — so the framework measures it.
    };
    ```
 
-2. **Expect the refusal path to be real.** No single colour can be accent TEXT
+2. **Expect the refusal path to be real.** No single color can be accent TEXT
    in both schemes — 4.5:1 on white needs a lightness under about 0.18 and
    4.5:1 on a dark panel needs one over about 0.24, and those do not overlap.
    So `brandFromAccent` keeps the hue and saturation, which are the brand's,
    and moves the lightness the smallest distance that clears AA. When that
-   distance is far enough that the colour has stopped being theirs, it refuses
+   distance is far enough that the color has stopped being theirs, it refuses
    and names what to supply. **Do not catch that and carry on with a guess** —
-   shipping a colour they did not choose under their own name is worse than
+   shipping a color they did not choose under their own name is worse than
    asking.
 
 3. **Hand it to `themeCss` and to the provider.**
@@ -48,7 +48,7 @@ somebody with a bright office files a bug — so the framework measures it.
 
 4. **Declare it on the app too:** `defineApp({ ..., brand })`.
 
-5. **Colour the kinds themselves.** Every surface that colours by kind —
+5. **Color the kinds themselves.** Every surface that colors by kind —
    chips, districts, calendar spans, rosters — reads `brand.accents`, a hue
    in degrees per kind, before falling back to the stable hash:
 
@@ -66,7 +66,7 @@ somebody with a bright office files a bug — so the framework measures it.
    kit: {
      connectors: {
        all: { route: "orthogonal" },                       // curve | straight | orthogonal
-       byEdge: { "tended-by": { colour: "#1d3f8a", pattern: "dashed" }, "grows-in": { visible: false } },
+       byEdge: { "tended-by": { color: "#1d3f8a", pattern: "dashed" }, "grows-in": { visible: false } },
      },
      captions: { visible: true }, grid: { visible: false }, lattice: { size: 46 },
      tags: { visible: true }, emphasis: { dim: 0.34 }, marks: { flag: "⚠" },
@@ -76,7 +76,7 @@ somebody with a bright office files a bug — so the framework measures it.
    A route or a pattern is a named strategy, one case in one file
    (`@graview/react` `routes.ts`, `@graview/render` `connectors.ts`), so
    the next one is one more case. `graview check` holds an explicit line
-   colour to 3:1 against both grounds in both schemes
+   color to 3:1 against both grounds in both schemes
    (`kit-contrast-below-aa`); a kind kept quiet is still on the inspector.
    An embed's `handle.setBrand({ ...brand, kit })` re-dresses it live.
 
@@ -127,7 +127,7 @@ and the logo by its alt text.
 
 This skill is built to be DRIVEN IN NATURAL LANGUAGE — "warmer", "more
 editorial", "our green is #1B4332", "make people amber and money green" —
-because the whole look is one serialisable declaration:
+because the whole look is one serializable declaration:
 
 - **palette** → change `accent` (or supply explicit scheme tokens) and let
   `brandFromAccent` move lightness the minimum distance that clears AA;
@@ -140,7 +140,7 @@ because the whole look is one serialisable declaration:
   `@graview/core`; a page outside the app dressed to match reads
   `shapeOf(brand)`, `typographyOf(brand)` and `isoShade(scheme)`, never
   copied numbers);
-- **kind colours** → `accents` hues per kind;
+- **kind colors** → `accents` hues per kind;
 - **per-kind layout** → register a view over the registry cell, the same
   authoring move as everything else (see graview-node-kind).
 

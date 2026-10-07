@@ -10,7 +10,7 @@ connectors drawn in SVG over the scene.
 browser. It is fully interactive, fully accessible, and every claim this
 project makes about the interface is verified against it.
 
-**The GPU capture path is EXPERIMENTAL.** It rasterises each view's DOM
+**The GPU capture path is EXPERIMENTAL.** It rasterizes each view's DOM
 subtree with `CanvasDrawElement` and composites the textures with per-plane
 blur, which is the part a shader is genuinely better at. It needs Chrome Canary
 with `--enable-blink-features=CanvasDrawElement`.

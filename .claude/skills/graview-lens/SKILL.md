@@ -83,7 +83,7 @@ the reuse test beside it, red on purpose.
 
 5. **Read `implicated` and `flagged`.** Empty means "no emphasis", NOT "nothing
    is related". Expose what you decide as `data-graview-emphasis` so it can be
-   checked — a claim about a picture that exists only as a colour cannot be
+   checked — a claim about a picture that exists only as a color cannot be
    checked by anything, not a test and not a person reading the tree.
 
 6. **Render at three fidelities.** `glyph` is a chip; `summary` is denser
@@ -102,7 +102,7 @@ the reuse test beside it, red on purpose.
 
    **`budget` is the most to draw.** A host may hand a lens a few
    members with `budget` and `total`: hold what you read from
-   the store to it too, and say "+N more" (`withMore` does). A real catalogue
+   the store to it too, and say "+N more" (`withMore` does). A real catalog
    is thousands; a lens that draws them all at 6% stalls the city.
 
 8. **Take an arrangement, and say what you have no place for.** Every
@@ -197,4 +197,4 @@ than a lens, and that is a legitimate thing to have written.
 - Whether the picture is legible. Run it and look, in both schemes.
 - Whether it survives being drawn small. The Graview renders the focused view
   at natural size and scales it; `pnpm shrunk` measures whether it clips.
-- Whether the roles you chose generalise, or merely rename your own fields.
+- Whether the roles you chose generalize, or merely rename your own fields.

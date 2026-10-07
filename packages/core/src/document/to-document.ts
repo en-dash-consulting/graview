@@ -166,15 +166,15 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
   // Rules: one judged in words is a document rule; one judged in code is named.
   const rules: Record<string, RuleSpec> = {};
   for (const rule of (app.invariants ?? []) as readonly InvariantDefinition[]) {
-    if (!rule.judgement) {
+    if (!rule.judgment) {
       findings.push(error("rule-is-code", `rules.${rule.name}`, `the rule "${rule.name}" is judged by a function, which a document cannot carry`, "say what must hold in the rule language (expressionRule)"));
       continue;
     }
     rules[rule.name] = {
       over: rule.scope === "graph" ? "graph" : rule.scope.kind,
-      require: rule.judgement.require,
-      ...(rule.judgement.when ? { when: rule.judgement.when } : {}),
-      ...(rule.judgement.says ? { says: rule.judgement.says } : {}),
+      require: rule.judgment.require,
+      ...(rule.judgment.when ? { when: rule.judgment.when } : {}),
+      ...(rule.judgment.says ? { says: rule.judgment.says } : {}),
       ...(rule.label ? { title: rule.label } : {}),
       ...(rule.description ? { description: rule.description } : {}),
       ...(rule.repairs && rule.repairs.length > 0 ? { repairs: rule.repairs.map((act) => ({ act })) } : {}),
@@ -192,7 +192,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     }
     return [{ ...grant, mutations: kept }];
   });
-  if (app.brand) findings.push(warning("brand-is-a-palette", "brand", "the brand is a full palette; a document carries one accent colour and derives the rest", 'say { "accent": "#…" }'));
+  if (app.brand) findings.push(warning("brand-is-a-palette", "brand", "the brand is a full palette; a document carries one accent color and derives the rest", 'say { "accent": "#…" }'));
   if ((app.migrations ?? []).length > 0) findings.push(error("migration-is-code", "migrations", "the app's migrations are functions; a document's are ship steps", "write each as steps (stepsMigration)"));
 
   const document = {

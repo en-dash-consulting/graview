@@ -46,11 +46,11 @@ export function rankKinds<S extends AnySchema>(
   if (focusKinds.size === 0) return UNRANKED;
 
   const kinds = schema.kinds as readonly string[];
-  const neighbours = new Map<string, Set<string>>();
+  const neighbors = new Map<string, Set<string>>();
   const link = (a: string, b: string) => {
     if (a === b) return;
-    (neighbours.get(a) ?? neighbours.set(a, new Set()).get(a)!).add(b);
-    (neighbours.get(b) ?? neighbours.set(b, new Set()).get(b)!).add(a);
+    (neighbors.get(a) ?? neighbors.set(a, new Set()).get(a)!).add(b);
+    (neighbors.get(b) ?? neighbors.set(b, new Set()).get(b)!).add(a);
   };
   for (const kind of kinds) {
     const definition = schema.tryDefinition(kind);
@@ -79,13 +79,13 @@ export function rankKinds<S extends AnySchema>(
     // Schema order, so which primary a kind hangs off is deterministic when
     // more than one could claim it.
     for (const kind of [...frontier].sort((a, b) => kinds.indexOf(a) - kinds.indexOf(b))) {
-      for (const neighbour of [...(neighbours.get(kind) ?? [])].sort(
+      for (const neighbor of [...(neighbors.get(kind) ?? [])].sort(
         (a, b) => kinds.indexOf(a) - kinds.indexOf(b),
       )) {
-        if (distance.has(neighbour)) continue;
-        distance.set(neighbour, step);
-        if (step === 2) reachedFrom.set(neighbour, kind);
-        next.push(neighbour);
+        if (distance.has(neighbor)) continue;
+        distance.set(neighbor, step);
+        if (step === 2) reachedFrom.set(neighbor, kind);
+        next.push(neighbor);
       }
     }
     frontier = next;

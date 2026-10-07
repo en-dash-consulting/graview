@@ -571,7 +571,7 @@ try {
   report.linked.verified = true;
   report.linked.checkSaid = checkerSentence(run("pnpm", ["check"], linked));
   report.linked.hyphenatedKind = readFileSync(resolve(linked, "src/domain/mutations.ts"), "utf8").includes('"add-work-order"');
-  report.linked.gitInitialised = existsSync(resolve(linked, ".git/HEAD"));
+  report.linked.gitInitialized = existsSync(resolve(linked, ".git/HEAD"));
   report.linked.ciChecksOutTheFramework = readFileSync(resolve(linked, ".github/workflows/ci.yml"), "utf8").includes("repository: en-dash-consulting/graview");
 
   // And the linked dev server in a browser: the aliases into the framework's
@@ -680,7 +680,7 @@ report.verdict = {
     report.linked.verified === true && report.linked.skills === true && (report.linked.checkSaid ?? "").includes("no problems found"),
   aHyphenatedKindWorksEndToEnd: report.linked.hyphenatedKind === true && report.linked.verified === true,
   aLinkedProjectIsARepositoryWhoseCiCanBuildTheFramework:
-    report.linked.gitInitialised === true && report.linked.ciChecksOutTheFramework === true,
+    report.linked.gitInitialized === true && report.linked.ciChecksOutTheFramework === true,
   ...(withBrowser
     ? {
         theLinkedDevServerRunsInABrowser:

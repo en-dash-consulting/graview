@@ -5,7 +5,7 @@ import { foldRobots, participantOf, standingFor, type RobotState } from "../../s
  * WHERE THE ROBOT STANDS IS DERIVED. A read puts it at what it read, a
  * write at what it wrote, a refusal at the gate with the policy's words,
  * a question on the node's doorstep; rest sends it home; more than a
- * handful of targets and it stands at the neighbourhood instead. Only an
+ * handful of targets and it stands at the neighborhood instead. Only an
  * agent has a body. The fold is pure, so this is the whole contract.
  */
 const seat = { kind: "agent", id: "tidy", session: "ui" } as const;
@@ -32,7 +32,7 @@ describe("the robot's standing", () => {
     expect(foldRobots(none, { type: "read", author: { kind: "rule" }, ids: ["t-1"], at: 1 }, kindOf).size).toBe(0);
   });
 
-  it("stands at the neighbourhood rather than sprinting between many targets", () => {
+  it("stands at the neighborhood rather than sprinting between many targets", () => {
     expect(standingFor(["t-1", "t-2", "t-3", "t-4"], kindOf)).toBe("t-1");
     expect(standingFor(["t-1", "t-2", "t-3", "t-4", "t-5"], kindOf)).toBe("kind:task");
     expect(standingFor(["t-1", "l-1", "t-2", "t-3", "t-4"], kindOf)).toBe("t-1");

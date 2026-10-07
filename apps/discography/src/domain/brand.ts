@@ -2,7 +2,7 @@ import { brandFromAccent, DARK, LIGHT, type Brand } from "@graview/core";
 
 /**
  * One accent, and both schemes derived from it. `graview check` measures
- * every text pair against AA rather than trusting the colour; if the accent
+ * every text pair against AA rather than trusting the color; if the accent
  * cannot label a pending action legibly, the derivation says which pair
  * failed and why instead of shipping it.
  */
@@ -29,13 +29,13 @@ export const discographyBrand: Brand = {
     mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
   },
   shape: { radius: 10, density: 1 },
-  // Colour-by-kind, declared rather than hashed: one hue per kind.
+  // Color-by-kind, declared rather than hashed: one hue per kind.
   accents: { song: 150, album: 30, artist: 280, theme: 200, era: 330 },
   schemes: derived.schemes,
   kit: {
     connectors: {
       all: { route: "orthogonal" },
-      byEdge: { features: { colour: "#d0582a", pattern: "dashed" }, about: { visible: false } },
+      byEdge: { features: { color: "#d0582a", pattern: "dashed" }, about: { visible: false } },
     },
   },
 };

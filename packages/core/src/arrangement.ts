@@ -1,5 +1,5 @@
 import { describeArg } from "./mutations/node-ref.js";
-import { humaniseField, isCurrent } from "./schema/define-node.js";
+import { humanizeField, isCurrent } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
 
@@ -40,7 +40,7 @@ export interface Condition {
   readonly value: string;
 }
 
-/** How wide a date group is. A year and a decade are what a catalogue of thirty years reads by. */
+/** How wide a date group is. A year and a decade are what a catalog of thirty years reads by. */
 export type DateBucket = "day" | "week" | "month" | "year" | "decade";
 
 export interface Grouping {
@@ -72,7 +72,7 @@ export type OfferType = "text" | "number" | "date" | "boolean" | "choice";
 /** One thing a kind can be sorted, filtered or grouped by, in the declaration's own words. */
 export interface ArrangeOffer {
   readonly key: string;
-  /** The words for it: the field's reading, the edge kind humanised, or the reserved word's sentence. */
+  /** The words for it: the field's reading, the edge kind humanized, or the reserved word's sentence. */
   readonly label: string;
   readonly about: "label" | "field" | "edge" | "is";
   readonly type?: OfferType;
@@ -95,7 +95,7 @@ export interface Arrangeable {
 
 /** The words for a field, after the declaration's own `display.labels`. */
 export function readingOf(definition: AnyNodeDefinition, field: string): string {
-  return definition.display?.labels?.[field] ?? humaniseField(field);
+  return definition.display?.labels?.[field] ?? humanizeField(field);
 }
 
 export function fieldType(schema: unknown): OfferType | undefined {
@@ -119,7 +119,7 @@ export function edgesOf(schema: AnySchema, kind: string): readonly ArrangeOffer[
   for (const [edgeKind, declared] of Object.entries(definition?.edges ?? {})) {
     offers.set(edgeKind, {
       key: edgeKind,
-      label: declared.description ? capitalise(declared.description) : humaniseField(edgeKind),
+      label: declared.description ? capitalize(declared.description) : humanizeField(edgeKind),
       about: "edge",
       far: declared.to === "*" ? [...(schema.kinds as readonly string[])] : [...declared.to],
     });
@@ -131,7 +131,7 @@ export function edgesOf(schema: AnySchema, kind: string): readonly ArrangeOffer[
       if (declared.to !== "*" && !(declared.to as readonly string[]).includes(kind)) continue;
       offers.set(edgeKind, {
         key: edgeKind,
-        label: declared.inverse ? capitalise(declared.inverse) : humaniseField(edgeKind),
+        label: declared.inverse ? capitalize(declared.inverse) : humanizeField(edgeKind),
         about: "edge",
         far: [other.kind],
       });
@@ -140,7 +140,7 @@ export function edgesOf(schema: AnySchema, kind: string): readonly ArrangeOffer[
   return [...offers.values()];
 }
 
-const capitalise = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
+const capitalize = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 
 const IS_WORDS = ["current", "past", "any", "flagged", "clear"] as const;
 

@@ -271,7 +271,7 @@ describe("the document says the new act language, and refuses it where it cannot
 
   it("refuses setsOther without a relation, and a field the other end has not got", () => {
     expect(errors({ "x-a": { on: "person", setsOther: { ownership: "shared" } } })).toEqual(['act-empty at acts.x-a: "x-a" does nothing', 'act-sets-other at acts.x-a.setsOther: "x-a" sets the record at the other end of what it connects, and connects nothing']);
-    expect(errors({ "x-b": { on: "person", connects: "owns", setsOther: { colour: "red" } } })).toEqual(['act-field at acts.x-b.setsOther.colour: component has no field "colour"']);
+    expect(errors({ "x-b": { on: "person", connects: "owns", setsOther: { color: "red" } } })).toEqual(['act-field at acts.x-b.setsOther.color: component has no field "color"']);
   });
 
   it("refuses replaces without a connects, or naming a relation the subject is not at that end of", () => {

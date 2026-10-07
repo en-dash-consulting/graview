@@ -52,7 +52,7 @@ const app = defineApp({ name: "carrier", schema: createSchema([task]), mutations
 /*
  * WHO SEES WHAT had no act in the studio, and a storefront written back
  * without it showed every customer to everybody (the seventh walk, W-170).
- * It is modelled now (FR-02), and still comes back as it went in.
+ * It is modeled now (FR-02), and still comes back as it went in.
  */
 const guarded = defineApp({
   name: "carrier",

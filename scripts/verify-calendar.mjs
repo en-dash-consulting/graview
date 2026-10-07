@@ -337,7 +337,7 @@ try {
    * A NEW PICTURE IS A NEW CHANCE TO BE UNREADABLE. Forty-eight cells in a
    * grid is the densest thing this framework draws, and a phone is where
    * density goes wrong: read by axe at 390 and 1280 in both schemes, at the
-   * reader's own text size, and with their motion setting honoured.
+   * reader's own text size, and with their motion setting honored.
    */
   const axeSource = readFileSync(resolve(repoRoot, "node_modules/axe-core/axe.min.js"), "utf8");
   const horizons = [
@@ -414,7 +414,7 @@ try {
     };
   });
   await still.close();
-  report.checks.theReaderSSettingsAreHonoured = {
+  report.checks.theReaderSSettingsAreHonored = {
     ...reflow,
     ...motion,
     ok:

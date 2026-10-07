@@ -145,7 +145,7 @@ packaging steps you do not need. What earns its place:
 - **`graview check`** — everything `tsc` cannot see: a repair naming a mutation
   nobody registered, a lens role bound to a missing field, a role that may do
   nothing, a palette pair below AA. **Fail the build on errors.** Warnings are
-  a judgement call; errors are not.
+  a judgment call; errors are not.
 - **Headless tests** — the domain tier has no DOM in it. Test that your rules
   fire on graphs that break them and that their repairs resolve them; that is
   the test that catches a real regression.
@@ -182,13 +182,13 @@ reads the interface or an agent reads a tool schema.
 ## What the check cannot see
 
 - Whether your kinds are the right kinds. The test for each: does anything
-  point AT it, and does it have a life of its own? A colour is a field. A
+  point AT it, and does it have a life of its own? A color is a field. A
   fixture is a kind.
 - Whether your mutations are the acts a person would name. They are the labels
   in the strip and the instructions in an agent's tool schema, so an opaque one
   costs twice.
 - Whether the interface is any good. Run it. Run it at the size it will have: seed a
-  real catalogue, not a dozen rows. The scene draws what a person can read — a
+  real catalog, not a dozen rows. The scene draws what a person can read — a
   relation too long for its band is grouped by its best arrangement or closes
   on "+N more", and a district says its places by name — so a
   thousand records are a picture, not a smear. What that hides is yours to

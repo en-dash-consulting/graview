@@ -8,7 +8,7 @@ import type { CheckContext } from "./context.js";
  *
  * A view spec names fields, relations and tones, and every one of those
  * names is a promise about the schema: a card that shows `{quote}` on a
- * kind with no quote draws "—" for ever, and `"tone": "green"` is a colour
+ * kind with no quote draws "—" for ever, and `"tone": "green"` is a color
  * the kit does not have. The document path refuses both before it
  * compiles; a TypeScript declaration is asked the same questions here, in
  * the same words, at the same paths (`viewSpecs.<kind>.<slot>.<block>`).

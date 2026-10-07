@@ -1,4 +1,4 @@
-import { argumentWords, humaniseField, labelOf, nounOf, tellApart, type AnySchema, type Store } from "@graview/core";
+import { argumentWords, humanizeField, labelOf, nounOf, tellApart, type AnySchema, type Store } from "@graview/core";
 import { relationWords } from "../relation-key.js";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { useGraview } from "@graview/react/provider";
@@ -114,7 +114,7 @@ export function AnswerArgs({
    * This listed the first ten and stopped. A property with twenty-two
    * practices on it offered ten of them under "Name something that helps",
    * and the other twelve could not be chosen at all — not behind a control,
-   * not summarised as "+12", simply absent, with the panel looking exactly
+   * not summarized as "+12", simply absent, with the panel looking exactly
    * as it would if ten were all there were.
    *
    * Ten is still the right number to SHOW; a wall of forty chips is its own
@@ -180,7 +180,7 @@ export function AnswerArgs({
    */
   const asking =
     parameter.kinds && parameter.kinds.length > 0 && !parameter.kinds.includes("*")
-      ? parameter.kinds.map((kind) => humaniseField(nounOf(store.schema.tryDefinition(kind), kind))).join(" or ")
+      ? parameter.kinds.map((kind) => humanizeField(nounOf(store.schema.tryDefinition(kind), kind))).join(" or ")
       : words.label;
   const step =
     affordance.open.length > 1
@@ -327,7 +327,7 @@ export function AnswerArgs({
             type={shape.type === "date" ? (shape.time ? "datetime-local" : "date") : shape.type === "number" ? "number" : "text"}
             /*
              * A FIELD IS ASKED FOR IN WORDS. `dependsOn` and `label` are the
-             * declaration's identifiers; the pages face has always humanised
+             * declaration's identifiers; the pages face has always humanized
              * them ("Depends on", "Label") and the scene asked with the raw
              * key, so the same act read two ways on the two faces.
              */

@@ -7,7 +7,7 @@ import { createTree, type TreeElement } from "./tree.js";
  * A VIEW'S DRAWING, DRAWN WITH NO DOM (FR-95): the records a view sent, in
  * order, through the open kit's own renderer and judge (host/open-render.ts,
  * host/open-judge.ts) into a tree of plain objects, and its stylesheet
- * through the same sanitiser a page uses. What a page would refuse is
+ * through the same sanitizer a page uses. What a page would refuse is
  * refused here, by the same code, and written down the same way.
  */
 

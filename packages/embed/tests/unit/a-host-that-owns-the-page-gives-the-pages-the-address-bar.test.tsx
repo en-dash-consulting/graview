@@ -155,7 +155,7 @@ describe("address routing under a base path", () => {
   it("keeps the scene's stop in the fragment, and the face toggle is an entry Back undoes", async () => {
     const { host } = await at("/apps/a1/", { routing: "address", basePath: "/apps/a1", face: "graview" });
     expect(face(host)).toBe("graview");
-    // Arriving is not travelling: the scene tidies its own address in place.
+    // Arriving is not traveling: the scene tidies its own address in place.
     expect(window.location.hash).toBe("#overview=1");
     const length = window.history.length;
     await click(host.querySelector('[data-testid="embed-face-pages"]'));

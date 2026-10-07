@@ -12,7 +12,7 @@ import { nameOf } from "./answer-args.js";
 /**
  * Back and forward, because every stop here is a URL.
  *
- * Travelling into a task changes `focusId`, which changes the address, which
+ * Traveling into a task changes `focusId`, which changes the address, which
  * means the browser's own back button already works — and that is exactly the
  * problem: the person using the app has to KNOW that its navigation is the
  * browser's. On a screen you reached by double-clicking, the only way out was

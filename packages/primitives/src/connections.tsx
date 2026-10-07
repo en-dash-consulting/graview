@@ -14,7 +14,7 @@ import { hueFor } from "./default-views.js";
  *
  * Derived entirely from the schema and the graph, so a kind nobody wrote a
  * view for still shows its relationships, and a new edge kind appears here
- * the moment it is declared. Each neighbour is a `data-graview-pick` target,
+ * the moment it is declared. Each neighbor is a `data-graview-pick` target,
  * so the scene routes a click on it to that node.
  */
 export interface ConnectionsProps {
@@ -78,13 +78,13 @@ export function Connections({ id, max = 8, empty }: ConnectionsProps) {
               {group.label}
             </h2>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {shown.map((neighbourId) => {
-                const node = store.graph.getNode(neighbourId);
+              {shown.map((neighborId) => {
+                const node = store.graph.getNode(neighborId);
                 if (!node) return null;
                 return (
                   <Chip
-                    key={neighbourId}
-                    pickId={neighbourId}
+                    key={neighborId}
+                    pickId={neighborId}
                     hue={hueFor(node.kind)}
                     title={`Go to the ${nounOf(store.schema.tryDefinition(node.kind), node.kind)}`}
                     label={labelOf(store.schema.tryDefinition(node.kind), node)}
@@ -101,7 +101,7 @@ export function Connections({ id, max = 8, empty }: ConnectionsProps) {
 }
 
 /**
- * Neighbours grouped by the edge that reaches them.
+ * Neighbors grouped by the edge that reaches them.
  *
  * An outbound edge is described by the focus's own declaration; an inbound
  * one by the declaration of whatever points at it. Both are the schema

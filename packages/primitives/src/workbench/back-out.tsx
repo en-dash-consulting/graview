@@ -127,7 +127,7 @@ export function BackOut({ home }: { readonly home: string | null }) {
  *
  * The framework's own name for the view of the whole thing, which is the
  * right name: everything else here is a lens over part of the graph, and this
- * is the graph. It is a TOGGLE and presents as one: labelled "Graview" from
+ * is the graph. It is a TOGGLE and presents as one: labeled "Graview" from
  * the ground (the place it takes you) and "Focus" from altitude (the way back
  * down), with the pressed state saying the same thing to a screen reader.
  *
@@ -187,7 +187,7 @@ export function OverviewButton() {
        * own altitude control.
        *
        * It has lived in two wrong places: floating over the scene as a
-       * labelled pill ("awkwardly slammed on top", twice), and then in the
+       * labeled pill ("awkwardly slammed on top", twice), and then in the
        * command bar, where it spent prime chrome on a control that is about
        * the CANVAS, not the app. The bar is for what the app is; rising and
        * descending is something you do to the picture, so the control sits

@@ -9,7 +9,7 @@ import type { Principal } from "@graview/core";
  * has printed a machine name.
  */
 export const SEATS = [
-  { label: "Ingrid Ødegård, programme chair", principal: { kind: "human", id: "u-4f1c9a", roles: ["chair"] } },
+  { label: "Ingrid Ødegård, program chair", principal: { kind: "human", id: "u-4f1c9a", roles: ["chair"] } },
   { label: "Tomás Ó Briain, reviewer", principal: { kind: "human", id: "u-9b27e0", roles: ["reviewer"] } },
   { label: "Aiyana Whitehorse, volunteer", principal: { kind: "human", id: "u-02d8c4", roles: ["volunteer"] } },
   { label: "The scheduling assistant", principal: { kind: "agent", id: "agent-sched-7", roles: ["scheduler"] } },

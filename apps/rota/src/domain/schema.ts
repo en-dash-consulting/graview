@@ -8,7 +8,7 @@ import { rotaInstallation } from "./installation.js";
  * Things is the example nobody has to be taught and Seedbed is the one that
  * grows a chapter at a time; neither is what a person would actually ship.
  * Rota is: a domain with a real relation in it, three roles who want
- * different things, rules an organiser would argue about, a brand of its
+ * different things, rules an organizer would argue about, a brand of its
  * own, a stored history that outlives a deployment, and a face somebody
  * would put in front of a committee.
  *

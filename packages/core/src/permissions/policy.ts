@@ -1,6 +1,6 @@
 import type { AnyMutationDefinition } from "../mutations/types.js";
 import type { AnySchema } from "../schema/schema.js";
-import { humaniseField, withArticle } from "../schema/define-node.js";
+import { humanizeField, withArticle } from "../schema/define-node.js";
 import type { Grant, Policy, Principal, Refusal } from "./types.js";
 
 const matches = (allowed: readonly string[] | "*", value: string): boolean =>
@@ -49,7 +49,7 @@ export interface PolicyWords {
 
 /** "a sales manager", "a sales manager or a salesperson". */
 function rolesSaid(roles: readonly string[]): string {
-  const spoken = roles.map((role) => withArticle(humaniseField(role).toLowerCase()));
+  const spoken = roles.map((role) => withArticle(humanizeField(role).toLowerCase()));
   return spoken.length <= 1 ? (spoken[0] ?? "") : `${spoken.slice(0, -1).join(", ")} or ${spoken[spoken.length - 1]}`;
 }
 
@@ -174,7 +174,7 @@ function said(
  * "shown when an action is withheld, so a refusal can say something useful"
  * — and nothing read it. Every refusal in every surface was assembled from a
  * mutation id and a list of role names, which is what the declaration says,
- * not what the organisation means. The sentences of the grants that WOULD
+ * not what the organization means. The sentences of the grants that WOULD
  * allow this are the ones worth repeating.
  */
 export function whyNot(policy: Policy, mutation: string, kind?: string): readonly string[] {

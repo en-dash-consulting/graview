@@ -305,7 +305,7 @@ describe("a node is never an island", () => {
     expect(html).toContain("who does the run");
   });
 
-  it("makes each neighbour a target, so reaching it is one click", () => {
+  it("makes each neighbor a target, so reaching it is one click", () => {
     const html = renderScene({ ...EMPTY_VIEW, focusId: "ana" });
     expect(html).toContain('data-graview-pick="morning"');
   });

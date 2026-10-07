@@ -1,5 +1,5 @@
 import { RelationMark } from "@graview/primitives/pages";
-import { humaniseField, labelOf, type AnySchema, type Store } from "@graview/core";
+import { humanizeField, labelOf, type AnySchema, type Store } from "@graview/core";
 import { Link } from "react-router-dom";
 import { kindMap, type KindRelation } from "./facts.js";
 import { useGraviewIfAny } from "@graview/react/provider";
@@ -7,7 +7,7 @@ import { pluralSlug, recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
 import { KindMark, eyebrow, h1, h2, lede, link, liveKinds, plain, pluralOf, quiet, rule } from "./page-typography.js";
 import { PageMain } from "./page-shell.js";
-import { capitalise } from "./page-typography.js";
+import { capitalize } from "./page-typography.js";
 
 
 /** "anything" for a relation the declaration leaves open. */
@@ -37,11 +37,11 @@ function RelationLine<S extends AnySchema>({ context, relation }: { context: Pag
       <span style={{ display: "grid", gap: 1 }}>
         <span>
           {/* The map of the declaration names each relation by its name, between its two ends, on purpose: its words follow. */}
-          {end(from)} <span style={quiet} data-graview-speaks-ids="">{humaniseField(relation.edgeKind)}</span> {end(to)}
+          {end(from)} <span style={quiet} data-graview-speaks-ids="">{humanizeField(relation.edgeKind)}</span> {end(to)}
         </span>
         {relation.description || relation.inverse ? (
           <span style={{ ...quiet, fontSize: "0.9375rem" }}>
-            {relation.description ? capitalise(relation.description) : null}
+            {relation.description ? capitalize(relation.description) : null}
             {relation.description && relation.inverse ? " · " : null}
             {relation.inverse ? `from the other end, ${relation.inverse}` : null}
           </span>

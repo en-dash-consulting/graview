@@ -94,7 +94,7 @@ export interface GuestAct {
 /**
  * THE APP'S LOOK, AS A WORKER VIEW IS HANDED IT (FR-91): the scheme the app
  * is drawn in now — the app's own toggle, not the system's preference —
- * and the tokens a view draws with, as CSS colours and font stacks. The
+ * and the tokens a view draws with, as CSS colors and font stacks. The
  * same tokens reach a view's stylesheet as `--graview-*` custom
  * properties; these are for what a view computes.
  */

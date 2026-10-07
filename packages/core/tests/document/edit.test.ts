@@ -298,6 +298,6 @@ describe("additions and settings", () => {
     expect(refused([{ op: "rename-everything" }])).toMatch(/^edits\.0\.op: "rename-everything" is not an edit/);
     expect(refused([{ op: "add-field", kind: "venue", field: "x", type: "string" }])).toMatch(/"venue" is not a kind this app has/);
     expect(refused([{ op: "rename-field", kind: "vendor", field: "quote", to: "price", extra: 1 }])).toMatch(/"extra" is not part of rename-field/);
-    expect(refused([{ op: "add-field", kind: "vendor", field: "x", type: "colour" }])).toMatch(/^edits\.0\.type/);
+    expect(refused([{ op: "add-field", kind: "vendor", field: "x", type: "color" }])).toMatch(/^edits\.0\.type/);
   });
 });

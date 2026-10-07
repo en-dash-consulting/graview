@@ -18,9 +18,9 @@ import type { Scheme, ThemeTokens } from "./types.js";
  * - **Light** is daylight and paper. Things at depth lose CONTRAST and gain
  *   haze — real atmospheric perspective — and separation comes from soft cast
  *   shadow, the way objects on a desk separate. Inverting the dark scheme
- *   would give grey-on-grey mush, because glow does not exist in daylight.
+ *   would give gray-on-gray mush, because glow does not exist in daylight.
  *
- * One rule holds across both: **secondary text is a colour, never an
+ * One rule holds across both: **secondary text is a color, never an
  * opacity.** Opacity composites against whatever is behind and fails contrast
  * silently. `checkContrast` measures every pair on both, and axe-core checks
  * the rendered result on every run of the a11y harness.

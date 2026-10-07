@@ -5,7 +5,7 @@ import { declared, ownerOf, template, TEMPLATES, throughEditDocument, throughThe
 
 /*
  * RENAMING A FIELD A RULE NAMES IS ONE EDIT. editDocument's rename-field
- * rewrites every rule that reads the field — its judgement, its sentence,
+ * rewrites every rule that reads the field — its judgment, its sentence,
  * the prose around it, the act named for it (`set-budget` becomes
  * `set-cap`) — and the studio's rename rewrites its own copy of the rule.
  * The two copies differed in their words, so the studio said the rule

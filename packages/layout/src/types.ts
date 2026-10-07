@@ -193,7 +193,7 @@ export interface Connector {
    * A line into a group is a bundle, and a bundle that only knew its count
    * could not be unpicked: the week's panel draws each session as its own
    * span, and a renderer that can see the span wants to start the session's
-   * line THERE rather than at the panel's centre. That needs the real ends
+   * line THERE rather than at the panel's center. That needs the real ends
    * of each edge, not just the drawn ends of the line. `single` is the
    * one-edge case of this, kept because a line that stands for one edge is
    * the only honest thing to select.
@@ -201,7 +201,7 @@ export interface Connector {
   readonly edges: readonly { readonly from: string; readonly to: string }[];
   readonly from: string;
   readonly to: string;
-  /** Endpoints in layout space, centre to centre. */
+  /** Endpoints in layout space, center to center. */
   readonly x1: number;
   readonly y1: number;
   readonly x2: number;
@@ -290,7 +290,7 @@ export interface LayoutOptions {
    * with a relation named, every node of that kind wholesale — and its
    * card said nothing was connected while the picture showed twelve. What
    * a rule is about is derivable from its violations; the scene supplies
-   * them here so the layout can draw them as its neighbourhood.
+   * them here so the layout can draw them as its neighborhood.
    */
   readonly judged?: Readonly<Record<string, readonly string[]>>;
   /**
@@ -307,7 +307,7 @@ export interface LayoutOptions {
   /**
    * Room the picture must leave for chrome that lives ON the scene — the
    * left rail at altitude, where the relation key and the inspector sit.
-   * The ring and the focused card centre within what is left, so a
+   * The ring and the focused card center within what is left, so a
    * district is never drawn under a pane. Nothing is reserved by default.
    */
   readonly inset?: { readonly left?: number; readonly right?: number };
@@ -347,9 +347,9 @@ export interface LayoutOptions {
    * natural pixels, measured by whoever renders it. A lens is laid out in a
    * box as tall as the window so it never scrolls, but a short lens fills
    * only the top of it — and a billboard sized to the whole box stood its
-   * picture a village's height above the kerb, floating over the next
+   * picture a village's height above the curb, floating over the next
    * district with empty room beneath. Cut to what is drawn, the picture's
-   * foot is on the kerb. Absent (or not yet measured): the whole box.
+   * foot is on the curb. Absent (or not yet measured): the whole box.
    */
   readonly screenHeight?: number;
   /**

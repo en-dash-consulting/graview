@@ -11,7 +11,7 @@ import type { CityFrame, Layout } from "./types.js";
  * ONE translate, so the city keeps its shape at every width, rather than
  * the per-axis stretch a ring needed to fill a wide canvas — and how big
  * each district card is drawn: nearer rows larger, as the ring drew the
- * near side of the ellipse larger, with the reader's unit honoured and
+ * near side of the ellipse larger, with the reader's unit honored and
  * given back only as far as the cards need to keep off each other.
  */
 
@@ -60,8 +60,8 @@ export function collides(
   );
 }
 
-/** The centre of a plot's diamond, in lattice pixels at `cell`. */
-const centreOf = (plot: Plot, cell: number) => toIso(plot.col + plot.side / 2, plot.row + plot.side / 2, cell);
+/** The center of a plot's diamond, in lattice pixels at `cell`. */
+const centerOf = (plot: Plot, cell: number) => toIso(plot.col + plot.side / 2, plot.row + plot.side / 2, cell);
 
 export function placeCity(
   cards: readonly CityCard[],
@@ -102,7 +102,7 @@ export function placeCity(
   /*
    * ONE SCALE. The map's bounding diamond, at one pixel per cell, is
    * fitted into the room the canvas has once a card's own size is taken
-   * off each edge — a card is centred on its plot and must not leave the
+   * off each edge — a card is centered on its plot and must not leave the
    * canvas. The cell is then the same on both axes, which is the whole
    * point: a city that was squashed to fit a wide window and stretched to
    * fit a tall one had no shape of its own.
@@ -132,19 +132,19 @@ export function placeCity(
     const originX = cx - ((minX + maxX) / 2) * cell + shift.x + nudge;
     const originY = cy - ((minY + maxY) / 2) * cell + shift.y;
     const size = { width: base.width * asked, height: base.height * asked };
-    const rows = cards.map((card) => centreOf(map.get(card.kind)!, cell).y);
+    const rows = cards.map((card) => centerOf(map.get(card.kind)!, cell).y);
     const lowest = Math.max(...rows);
     const highest = Math.min(...rows);
     return cards.map((card) => {
       const plot = map.get(card.kind)!;
-      const centre = centreOf(plot, cell);
+      const center = centerOf(plot, cell);
       /*
        * NEARNESS FROM THE ROW. Lower on the ground is nearer the viewer,
        * exactly as the bottom of the ring was: 1 there, 0 at the top, and
        * the depth number everything else reads (`1 − near·0.65`) is
        * unchanged so the plane styles and the altitude opacity are too.
        */
-      const near = lowest === highest ? 0.5 : (centre.y - highest) / (lowest - highest);
+      const near = lowest === highest ? 0.5 : (center.y - highest) / (lowest - highest);
       const grow = 0.85 + near * 0.45;
       const width = size.width * grow;
       const base = Math.max(minHeight, size.height * grow);
@@ -157,15 +157,15 @@ export function placeCity(
        * bounds to the map's extent for exactly this reason.
        */
       /*
-       * The NAMEPLATE is centred on the plot; what hangs under it — a
+       * The NAMEPLATE is centered on the plot; what hangs under it — a
        * marquee, an opened listing — grows DOWNWARD, so the top of the card
        * stays where the plot's far half is, and a screen standing at the
        * far edge is never covered by its own district's growth.
        */
       return {
         id: card.id,
-        x: originX + centre.x - width / 2,
-        y: originY + centre.y - base / 2,
+        x: originX + center.x - width / 2,
+        y: originY + center.y - base / 2,
         width,
         height,
         depth: 1 - near * 0.65,
@@ -186,9 +186,9 @@ export function placeCity(
    */
   /*
    * THE CITY SLIDES ASIDE for the picture in the middle, when there is one.
-   * A district on the map's own centre stands exactly where the live view
-   * stands, and no amount of growing moves it — scaling about the centre
-   * keeps the centre where it is. So the map is tried in place first, and
+   * A district on the map's own center stands exactly where the live view
+   * stands, and no amount of growing moves it — scaling about the center
+   * keeps the center where it is. So the map is tried in place first, and
    * then shifted: by the width of what it must clear, right, left, down,
    * up, and the diagonals — the first shift with every district on ground
    * of its own is the one kept. No picture in the middle means no shift.
@@ -276,8 +276,8 @@ export function placeCity(
     settled = settle(cell, asked, openedShare);
   }
   /*
-   * BESIDE THE RAILS, NOT UNDER THEM. The map is centred on its lattice's
-   * bounding diamond, and the districts are not: a card is centred on its
+   * BESIDE THE RAILS, NOT UNDER THEM. The map is centered on its lattice's
+   * bounding diamond, and the districts are not: a card is centered on its
    * plot and the plots do not fill the diamond, so a city grown just wide
    * enough for its names stood twenty-five pixels left of the room it
    * fitted — and the leftmost district under the inspector. When the
@@ -333,7 +333,7 @@ export function placeCity(
  * the scene off the edge of its own window is not panning, it is dropping
  * it — and as far as the city reaches when the city is bigger than the
  * window: every district is reachable, none is lost. Symmetric about the
- * centre so the same limit serves both directions, and read by the scene
+ * center so the same limit serves both directions, and read by the scene
  * and by the tests alike, so "reachable" means one thing.
  */
 export function cameraLimit(result: { readonly width: number; readonly height: number; readonly city?: CityFrame }): { readonly x: number; readonly y: number } {
@@ -394,8 +394,8 @@ export function districtsPastTheEdge(result: Pick<Layout, "nodes" | "width" | "h
 
 /**
  * THE PAN THAT KEEPS THE POINT UNDER THE POINTER STILL when the city is
- * zoomed. The city is placed about the canvas's centre, so scaling its cell
- * by `ratio` moves every point away from (or toward) the centre; the pan
+ * zoomed. The city is placed about the canvas's center, so scaling its cell
+ * by `ratio` moves every point away from (or toward) the center; the pan
  * moves the opposite way by the pointer's share of that, and what was under
  * the finger stays under it. Whole offset in, pan out: the camera's own
  * flight is part of where the city is, and only the pan is the person's.
@@ -404,11 +404,11 @@ export function panForZoom(
   pan: { readonly x: number; readonly y: number },
   camera: { readonly x: number; readonly y: number },
   pointer: { readonly x: number; readonly y: number },
-  centre: { readonly x: number; readonly y: number },
+  center: { readonly x: number; readonly y: number },
   ratio: number,
 ): { readonly x: number; readonly y: number } {
   return {
-    x: pan.x + (pointer.x - pan.x - camera.x - centre.x) * (1 - ratio),
-    y: pan.y + (pointer.y - pan.y - camera.y - centre.y) * (1 - ratio),
+    x: pan.x + (pointer.x - pan.x - camera.x - center.x) * (1 - ratio),
+    y: pan.y + (pointer.y - pan.y - camera.y - center.y) * (1 - ratio),
   };
 }

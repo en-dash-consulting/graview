@@ -11,7 +11,7 @@ import { useEffect, useMemo } from "react";
 /**
  * What the lines mean.
  *
- * From the Graview the relations ARE the content, drawn with a colour and a
+ * From the Graview the relations ARE the content, drawn with a color and a
  * stroke pattern per edge kind — and nothing said which was which. A picture
  * of a domain whose only legend is "these are different from each other"
  * answers the shape of the question and not the question.
@@ -38,7 +38,7 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
   /*
    * One pass over the edges, not one per relation.
    *
-   * `allEdges()` materialises a fresh array every call, and this component
+   * `allEdges()` materializes a fresh array every call, and this component
    * re-renders on every diff — so scanning once per edge kind, plus again for
    * the counts, rebuilt the whole edge list six times per mutation while the
    * Graview was open.
@@ -236,7 +236,7 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
 
 /**
  * What a relation is called where a person reads it: the declaration's
- * description, capitalised, and which kinds it runs between in their
+ * description, capitalized, and which kinds it runs between in their
  * plurals — "The vehicle it is for", "Deals → Vehicles". The edge's name is
  * the source's word for it and only stands in when nothing else was said.
  */

@@ -66,7 +66,10 @@ describe("the seat can be put away", () => {
     expect($("companion-dock")!.getAttribute("aria-expanded")).toBe("true");
     expect(rail).toBeNull();
 
-    act(() => $("companion-dock")!.click());
+    act(() => {
+      $("companion-dock")!.focus();
+      $("companion-dock")!.click();
+    });
     expect($("companion")!.getAttribute("data-graview-companion-mode")).toBe("collapsed");
     expect($("companion-tab")!.getAttribute("aria-expanded")).toBe("false");
     expect(document.activeElement).toBe($("companion-tab"));
@@ -75,11 +78,28 @@ describe("the seat can be put away", () => {
     expect(rail).toBe(8);
     expect(memory.kept.get("graview:companion:Field notes")).toBe("collapsed");
 
-    act(() => $("companion-tab")!.click());
+    act(() => {
+      $("companion-tab")!.focus();
+      $("companion-tab")!.click();
+    });
     expect($("companion")!.getAttribute("data-graview-companion-mode")).toBe("open");
     expect(document.activeElement).toBe($("companion-dock"));
     expect(frame.style.paddingLeft).toBe("");
     expect(memory.kept.get("graview:companion:Field notes")).toBe("open");
+  });
+
+  it("leaves the reader's keyboard where it is when a host's script presses the control", () => {
+    draw(undefined, memoryOf());
+    const outside = document.createElement("button");
+    document.body.appendChild(outside);
+    outside.focus();
+    act(() => $("companion-dock")!.click());
+    expect($("companion")!.getAttribute("data-graview-companion-mode")).toBe("collapsed");
+    expect(document.activeElement).toBe(outside);
+    act(() => $("companion-tab")!.click());
+    expect($("companion")!.getAttribute("data-graview-companion-mode")).toBe("open");
+    expect(document.activeElement).toBe(outside);
+    outside.remove();
   });
 
   it("starts where the host says, and where the reader left it over that", () => {

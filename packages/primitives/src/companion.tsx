@@ -91,7 +91,7 @@ export function useSubject<S extends AnySchema>(): Subject {
      * rail's header, its acts and its relations flickered through the
      * whole map on the way. The pointer says what you are looking at when
      * YOU move it over a picture that is still — so while a hand is down,
-     * and while the scene is still travelling, the question is not asked.
+     * and while the scene is still traveling, the question is not asked.
      */
     const stillMoving = () =>
       typeof document !== "undefined" && document.querySelector("[data-graview-reach]") !== null
@@ -495,7 +495,7 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
    * a complementary landmark, drawn inside the Shell's main and inside an
    * embed's own region, so axe's `landmark-complementary-is-top-level`
    * failed on every hosted app at every size. It lives in the picture it is
-   * about, so it is a labelled region there, and what it holds are groups.
+   * about, so it is a labeled region there, and what it holds are groups.
    */
   if (mode === "hidden" && !framed) return null;
   if (tabbed && !open) {
@@ -536,8 +536,8 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
           aria-expanded={false}
           aria-label={`Open the seat — about ${subject.name}`}
           title={`Open the seat — about ${subject.name}`}
-          onClick={() => {
-            followTo.current = "dock";
+          onClick={(event) => {
+            if (document.activeElement === event.currentTarget) followTo.current = "dock";
             setOpen(true);
           }}
           style={{ display: "grid", justifyItems: "center", gap: 8, width: 28, minHeight: 28, padding: "6px 0", borderRadius: 8, fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}
@@ -636,8 +636,9 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
         data-testid="companion-dock"
         aria-expanded={open}
         onClick={(event) => {
-          // Put away from the header where there is a tab to put it away to, the keyboard lands on the tab.
-          if (open && !narrow) followTo.current = "tab";
+          // Put away from the header where there is a tab to put it away to, the keyboard lands on the tab —
+          // when the keyboard was on the header. A press a host's script makes leaves the reader's keyboard where it is.
+          if (open && !narrow && document.activeElement === event.currentTarget) followTo.current = "tab";
           setOpen(!open);
           /*
            * Put away from the keyboard (a click no pointer made), the

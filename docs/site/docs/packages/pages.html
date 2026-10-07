@@ -68,7 +68,7 @@ img { max-width: 100%; }
   --rule:      #D9DCE5;
   --rule-2:    #E6E8EE;
 
-  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+  /* En Dash's own two colors, taken from the mark: navy and mint. Mint is a
      brilliant #00E5B9 that only reads on the navy, so it carries the dark
      theme and the navy carries the light one. */
   --navy:      #001769;
@@ -190,7 +190,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Windows High Contrast throws the palette away, so anything carrying meaning
-   in a border or a fill has to say so in system colours too. */
+   in a border or a fill has to say so in system colors too. */
 @media (forced-colors: active) {
   .code, .term, .endash, .lens figure { border-color: CanvasText; }
   .caveat { border-left-color: LinkText; }
@@ -1080,7 +1080,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <li><strong>Forms are derived.</strong> <code>formFields</code> (in <code>@graview/core</code>) walks a mutation's zod input into a control tree — scalars, dates, node pickers over real candidates, nested objects, discriminated unions as a type picker plus that arm's fields, arrays as repeatable rows — and <code>DerivedForm</code> renders it. Nothing renderable is hand-written; anything unrenderable says so instead of hiding.</li>
 <li><strong>Two faces, one application.</strong> Record pages link to their spatial stop (<code>spatialHref(id)</code>); the scene links to the pages; the ids are shared. See <code>apps/todo</code> for both faces mounted from one declaration (<code>/</code> scene, <code>/pages</code> routed).</li>
 <li><strong>The host may own the history.</strong> <code>basename</code> mounts the face under a path; <code>onNavigate(path, how)</code> tells a host each page the face opens (<code>"push"</code>, <code>"replace"</code> or <code>"pop"</code>), and <code>path</code> sends it back to one, so a host that keeps its own history keeps the face's too.</li>
-<li><strong>Mobile is an acceptance criterion.</strong> <code>pnpm pages</code> runs the phone-width harness (390×844): no sideways scroll, named links, labelled controls, and a derived form that actually applies.</li>
+<li><strong>Mobile is an acceptance criterion.</strong> <code>pnpm pages</code> runs the phone-width harness (390×844): no sideways scroll, named links, labeled controls, and a derived form that actually applies.</li>
 </ul>
 <ul>
 <li><strong>It lands on a gallery.</strong> The home opens with the standing as its headline — "2 gardeners, 3 plots and 1 planting.", or "Nothing here yet." and which act begins it — then every picture the app has as a large live card, two across at a desk and one on a phone: the lens itself, drawn inert at a scale measured from the card, captioned with its name and how much it is over. Handed the scene's view registry (<code>views</code> in the context), every titled lens is a page at <code>/places/&lt;as&gt;</code> and a card on the home; a kind with no titled lens is drawn anyway, as a contact sheet of its members, so a new app lands on a gallery on its first afternoon. The kinds follow as one row of counts, the relations as one line that opens <code>/map</code>, and Recently stays short at the foot. The shell is one row of navigation that scrolls sideways on a phone; a new address opens at its top. How many problems there are is said once: by the embed's bar when the face has one, else by the Problems tab; the home says only that rules are broken and links to what would fix them.</li>
@@ -1188,7 +1188,7 @@ document.querySelectorAll("[data-copy]").forEach(function (button) {
   --rule:      #D9DCE5;
   --rule-2:    #E6E8EE;
 
-  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+  /* En Dash's own two colors, taken from the mark: navy and mint. Mint is a
      brilliant #00E5B9 that only reads on the navy, so it carries the dark
      theme and the navy carries the light one. */
   --navy:      #001769;
@@ -1310,7 +1310,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Windows High Contrast throws the palette away, so anything carrying meaning
-   in a border or a fill has to say so in system colours too. */
+   in a border or a fill has to say so in system colors too. */
 @media (forced-colors: active) {
   .code, .term, .endash, .lens figure { border-color: CanvasText; }
   .caveat { border-left-color: LinkText; }

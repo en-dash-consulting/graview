@@ -4,7 +4,7 @@
  * A timeline places by time. A matrix places by two sets. A board places by
  * coordinates on its own nodes. This places by an OUTLINE — a closed shape
  * the domain gave a region — and that is a different picture from all three,
- * because the thing you recognise ground by is its shape and its neighbours,
+ * because the thing you recognize ground by is its shape and its neighbors,
  * not its position in a list.
  *
  * It knows nothing about grass. It knows there are regions, each with an

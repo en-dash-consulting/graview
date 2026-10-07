@@ -18,7 +18,7 @@ here requires a service.
 
    const opened = await openStore({ app, adapter: createFileAdapter("./data") });
    // opened.store is an ordinary Store; every applied diff is appended to
-   // the log and the snapshot rewritten, serialised in order. Hand off with
+   // the log and the snapshot rewritten, serialized in order. Hand off with
    // `await opened.flush()` before close/exit — writes are async.
    // One writer per scope: opening it twice interleaves and clobbers.
    ```

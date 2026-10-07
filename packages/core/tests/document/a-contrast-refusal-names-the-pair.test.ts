@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { accentProblem, brandFromAccent, coloursIn, contrast, defineApp, defineNode, LIGHT, SCHEMES, z } from "../../src/index.js";
+import { accentProblem, brandFromAccent, colorsIn, contrast, defineApp, defineNode, LIGHT, SCHEMES, z } from "../../src/index.js";
 import { editDocument, type GraviewDocument } from "../../src/document/index.js";
 import { checkApp, compileDocument } from "../../src/check.js";
 import { createSchema } from "../../src/schema/schema.js";
@@ -30,13 +30,13 @@ describe("set-brand refuses an accent that does not read, naming the pair, the r
   const suggestion = accentProblem("#e6c200")!.suggestion!;
   it("suggests the nearest shade of the same hue, by lightness alone, which reads where the accent did not", () => {
     const hueOf = (hex: string) => {
-      const { r, g, b } = coloursIn(hex)[0]!;
+      const { r, g, b } = colorsIn(hex)[0]!;
       const max = Math.max(r, g, b);
       const min = Math.min(r, g, b);
       return ((g - b) / (max - min)) * 60;
     };
     expect(Math.abs(hueOf(suggestion) - hueOf("#e6c200"))).toBeLessThan(2);
-    expect(contrast(coloursIn(suggestion)[0]!, coloursIn(SCHEMES.light.ground)[0]!)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(colorsIn(suggestion)[0]!, colorsIn(SCHEMES.light.ground)[0]!)).toBeGreaterThanOrEqual(4.5);
     expect(outcome.ok ? "" : outcome.findings[0]!.fix).toBe(`{"op": "set-brand", "accent": "${suggestion}"}`);
   });
 

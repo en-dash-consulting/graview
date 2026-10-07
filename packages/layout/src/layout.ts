@@ -105,7 +105,7 @@ function shelf(
   }));
 }
 
-/** Lays a row of equal boxes out, centred on the canvas. */
+/** Lays a row of equal boxes out, centered on the canvas. */
 function row(
   count: number,
   size: { width: number; height: number },
@@ -139,7 +139,7 @@ export function layout<S extends AnySchema>(
   const opts: typeof DEFAULT_OPTIONS & LayoutOptions = { ...DEFAULT_OPTIONS, ...options };
   /*
    * THE SPAN: the canvas less the rail reserved for chrome. Every card is
-   * sized and centred within it, in every mode — the inspector and the
+   * sized and centered within it, in every mode — the inspector and the
    * quick relations live on the left edge whether the picture is the whole
    * domain or one thing, and a lens that takes the full focus width was
    * drawn under them. The reported width stays the canvas's own.
@@ -266,9 +266,9 @@ export function layout<S extends AnySchema>(
   const band = zoomed
     ? focus !== undefined
       ? {
-          // A zoomed RECORD is a reading column with its neighbourhood
+          // A zoomed RECORD is a reading column with its neighborhood
           // under it at full size: the column does not need the height a
-          // dense picture does, and a neighbourhood squeezed into a sliver
+          // dense picture does, and a neighborhood squeezed into a sliver
           // clipped its own cards.
           focusY: opts.height * 0.03,
           focusH: opts.height * 0.58,
@@ -516,7 +516,7 @@ export function layout<S extends AnySchema>(
       id: state.focusId,
       kind: focus ? focus.kind : focusKinds[0]!,
       plane: 0,
-      // Centred in the span the city uses, so the picture and its city agree.
+      // Centered in the span the city uses, so the picture and its city agree.
       x: stamp.x,
       y: stamp.y,
       width: overviewW,
@@ -572,12 +572,12 @@ export function layout<S extends AnySchema>(
   // --------------------------------------------------- plane 1: relations
   /*
    * A run of one or two cards takes wider ones. The cap exists to fit a
-   * crowd; holding a lone neighbour to crowd width drew one small slip in
+   * crowd; holding a lone neighbor to crowd width drew one small slip in
    * the middle distance of an otherwise empty band, with its caption
    * stretched past both its edges.
    */
   /*
-   * A CROWD WRAPS. Twelve neighbours in one row gave each a slot 57 pixels
+   * A CROWD WRAPS. Twelve neighbors in one row gave each a slot 57 pixels
    * wide under a chip 150 wide, and the band was a heap of overlapping
    * labels with the lines between them cut to confetti. A slot is never
    * narrower than a chip can be read in; past that the band takes another
@@ -973,7 +973,7 @@ export function layout<S extends AnySchema>(
 
   /*
    * A secondary kind is drawn SMALLER and further back inside its own slot,
-   * sitting on the same baseline as its neighbours. Same row, same order,
+   * sitting on the same baseline as its neighbors. Same row, same order,
    * different weight — the eye reads the primaries first without anything
    * having moved.
    */
@@ -1026,7 +1026,7 @@ export function layout<S extends AnySchema>(
     const width = Math.max(Math.min(slotW, DISTRICT_MIN_WIDTH * unit), slotW * shrink);
     const height = Math.max(CARD_MIN_HEIGHT * unit, slotH * shrink);
     slotOf.set(item.id, {
-      // Centred across the slot it was allotted, sitting on its baseline.
+      // Centered across the slot it was allotted, sitting on its baseline.
       x: position.x + (slotW - width) / 2,
       y: position.y + (slotH - height),
       depth: item.rank === "secondary" ? recede(position.depth, 0.5) : position.depth,
@@ -1073,7 +1073,7 @@ export function layout<S extends AnySchema>(
        * on it.
        *
        * Overlap is capped at just under half a card, because a card whose
-       * MIDDLE is covered cannot be clicked — the point at the centre belongs
+       * MIDDLE is covered cannot be clicked — the point at the center belongs
        * to whatever is drawn over it. Where several share a parent they
        * shrink to fit rather than piling up.
        */
@@ -1090,11 +1090,11 @@ export function layout<S extends AnySchema>(
        * AND THE STEP HAS TO CLEAR THE PLANE'S OWN SHRINK.
        *
        * A fan is laid out in layout units and DRAWN at the kinds plane's
-       * scale, about each card's centre — so the drawn gap between two
+       * scale, about each card's center — so the drawn gap between two
        * tucks is `step − scale` of a card. At 0.86 against a plane drawn at
        * 0.78 that was eight per cent of air; drawn at 0.9 so the words can
        * be read, the same 0.86 became six pixels of one card sitting on the
-       * next, and a pile that covers its neighbour's label is the thing
+       * next, and a pile that covers its neighbor's label is the thing
        * this number was lowered to stop.
        */
       const step = 0.98;
@@ -1112,7 +1112,7 @@ export function layout<S extends AnySchema>(
        * The whole fan fits the parent's slot plus its gap, never more.
        *
        * At 1.02 of the parent's width the fan of two spread to 1.86 widths,
-       * centred — so it spilled almost half a card into the slot on either
+       * centered — so it spilled almost half a card into the slot on either
        * side, and "PLAYERS" ran into "UNAVAILABILITY" while every automated
        * check counted the pile as deliberate. A tuck that leaves its
        * parent's ground is not tucked behind anything.
@@ -1124,7 +1124,7 @@ export function layout<S extends AnySchema>(
        * room — it is the space that keeps one district off the next. With
        * the kinds plane drawn at 78% the spill fitted anyway; drawn at 90%
        * so its words can be read, the outermost tuck reached into the
-       * neighbour and the audit counted the two as one pile. A tuck that
+       * neighbor and the audit counted the two as one pile. A tuck that
        * leaves its parent's ground is not tucked behind anything.
        */
       const width = Math.max(
@@ -1145,7 +1145,7 @@ export function layout<S extends AnySchema>(
          *
          * Sixteen pixels of the tuck's bottom sit behind the parent's top
          * edge — enough to read as "behind that one" at any card size,
-         * little enough that the tuck's own label and its centre stay
+         * little enough that the tuck's own label and its center stay
          * clickable above the edge. The parent paints over the overlap, so
          * its name and its trouble bar are never covered.
          *
@@ -1224,8 +1224,8 @@ export function layout<S extends AnySchema>(
 
   /*
    * THE SCREEN STANDS ON ITS PLOT. Anchored to the plot's far edge — the
-   * top vertex of its diamond — centred on the plot, sized by the plot's
-   * side so a bigger neighbourhood has a bigger screen, floored so its
+   * top vertex of its diamond — centered on the plot, sized by the plot's
+   * side so a bigger neighborhood has a bigger screen, floored so its
    * words can be read, and shrunk only as a last resort until it covers
    * no other district's nameplate. A picture over two kinds stands on the
    * road between their plots. The same natural size and shrink as before:
@@ -1238,10 +1238,10 @@ export function layout<S extends AnySchema>(
     if (own) {
       const cornerOf = (plot: { col: number; row: number; side: number }) => {
         const top = toIso(plot.col, plot.row, frame.cell);
-        const centre = toIso(plot.col + plot.side / 2, plot.row + plot.side / 2, frame.cell);
+        const center = toIso(plot.col + plot.side / 2, plot.row + plot.side / 2, frame.cell);
         return {
           top: { x: frame.originX + top.x, y: frame.originY + top.y },
-          centre: { x: frame.originX + centre.x, y: frame.originY + centre.y },
+          center: { x: frame.originX + center.x, y: frame.originY + center.y },
         };
       };
       const mine = cornerOf(own);
@@ -1251,12 +1251,12 @@ export function layout<S extends AnySchema>(
        * landed on the other village with its own district's signpost and
        * board buried under it: the lens read as the drills', not the
        * skills'. Its rows are its kind; it stands at that village's back
-       * kerb, and the road to the other kind is already on the ground.
+       * curb, and the road to the other kind is already on the ground.
        */
       void other;
-      const anchorX = mine.centre.x;
+      const anchorX = mine.center.x;
       /*
-       * Its foot is on the plot's far kerb — the back vertex of the diamond.
+       * Its foot is on the plot's far curb — the back vertex of the diamond.
        * The nameplate no longer stands there (it is a signpost at the front
        * corner from altitude), so the screen needs no clearance above its
        * own card: it is a billboard at the back of the village.
@@ -1293,7 +1293,7 @@ export function layout<S extends AnySchema>(
       const others = [...placed.values()].filter((node) => node.plane === 2 && node.id !== kindCardId(screenKind!));
       const boxAt = (w: number) => {
         const h = w * aspect;
-        // Its foot on the kerb, wherever that is: a billboard held inside the
+        // Its foot on the curb, wherever that is: a billboard held inside the
         // window's top slid down over its own village; the camera brings it in.
         const y = anchorBottom - h;
         return { x: anchorX - w / 2, y, width: w, height: h };
@@ -1326,9 +1326,9 @@ export function layout<S extends AnySchema>(
         /*
          * A BILLBOARD CAN BE MOVED, ON A LEASH.
          *
-         * Its home is the back kerb of its own plot, which is where it
+         * Its home is the back curb of its own plot, which is where it
          * belongs: a picture of a kind, standing on that kind's land. But a
-         * board planted to the millimetre is furniture, and a person wants
+         * board planted to the millimeter is furniture, and a person wants
          * to nudge it off whatever it is covering.
          *
          * So a pin moves it, and the leash is what keeps it a picture OF

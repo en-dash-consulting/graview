@@ -3,7 +3,7 @@
  * A picture draws what a person can read, at a real size (docs/scale.md).
  *
  * The fixtures were a few dozen nodes, and every harness passed while a real
- * catalogue — Tech N9ne's discography, 1,177 songs, 568 artists, 479
+ * catalog — Tech N9ne's discography, 1,177 songs, 568 artists, 479
  * releases, about 5,000 edges — drew 21,000 elements at altitude and panned
  * at one frame a second around its hub. This drives apps/discography's
  * PRODUCTION build (dev-mode React would exaggerate every number) and
@@ -192,7 +192,7 @@ try {
    * THE BAND READS, measured on what is drawn. The first cut held every
    * other claim here while its captions sat on the cards of the row above,
    * its group cards were cut to their names and a chip ran over its
-   * neighbour — the harness counted hosts and never looked at them.
+   * neighbor — the harness counted hosts and never looked at them.
    */
   const readable = () =>
     page.evaluate(() => {

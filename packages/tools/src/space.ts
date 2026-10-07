@@ -11,7 +11,7 @@
  * be drawn inside it and a thing must be placed inside the area it stands
  * in. Nothing looked. The answer came back as seven full-width horizontal
  * bands stacked down the page, every one of them lying across its
- * neighbours, and the app accepted it line for line and drew it.
+ * neighbors, and the app accepted it line for line and drew it.
  *
  * A stated rule nobody enforces is worse than no rule: it tells the model it
  * got away with something, and it tells the person the answer was checked.
@@ -34,7 +34,7 @@ export type Ring = readonly SpacePoint[];
  *
  * A point exactly ON an edge is decided by which edge the ray happens to
  * cross, so one side of a shape reads in and the other out. That is the
- * standard behaviour of this algorithm and it is fine for what this is for —
+ * standard behavior of this algorithm and it is fine for what this is for —
  * a model's coordinates are never exactly on a line — but it is not a thing
  * to build on.
  */

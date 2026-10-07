@@ -252,7 +252,7 @@ export function SeatThread({
           <li key={index} style={{ display: "grid", gap: 6, justifyItems: turn.role === "person" ? "end" : "start" }}>
             {/*
               * THE PERSON IN A BUBBLE, THE SEAT IN PROSE. Two boxes that
-              * differed by a shade of grey read as one voice talking to
+              * differed by a shade of gray read as one voice talking to
               * itself; the seat's words sit on the panel like any other
               * text there, and what it did sits under them.
               */}

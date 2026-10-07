@@ -14,7 +14,7 @@ import { useMemo } from "react";
  * clicks land on the SAME node, and the re-render the first click caused had
  * already replaced it — so double-clicking a district on its figure selected
  * the card and went nowhere, while double-clicking the same card an inch to
- * the left travelled into it.
+ * the left traveled into it.
  *
  * One hook rather than a `useMemo` at each of the five call sites, because
  * the next person to write innerHTML will copy whichever they find.

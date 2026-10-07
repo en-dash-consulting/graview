@@ -27,6 +27,6 @@ What is specific to Claude Code:
   Playwright's WebKit hangs on `newPage` past 1.49.1 on this macOS, which
   is why the pin exists.
 - **Verdicts are files.** After a harness, read `docs/<name>.json` and report
-  the claim that failed by name rather than summarising the log.
+  the claim that failed by name rather than summarizing the log.
 - **Changesets.** Write one with every package change, `patch` unless told
   otherwise, in the same voice as the existing ones in `.changeset/`.

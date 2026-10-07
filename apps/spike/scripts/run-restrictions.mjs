@@ -93,10 +93,10 @@ const PAGE = (markup) => `<!doctype html><meta charset="utf-8"><style>body{margi
           if (opaque === 0) {
             window.__result = "captured but fully transparent - nothing was drawn";
           } else if (seen.size <= 1) {
-            window.__result = "captured, but a single flat colour - a fill, or a solid image";
+            window.__result = "captured, but a single flat color - a fill, or a solid image";
           } else {
             window.__result =
-              "captured with content (" + seen.size + " distinct colours, " + pct + "% opaque)";
+              "captured with content (" + seen.size + " distinct colors, " + pct + "% opaque)";
           }
         });
       };

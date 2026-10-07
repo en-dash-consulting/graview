@@ -177,7 +177,7 @@ function Desk({
   const showing = useShowing();
   const demo = useOpened(showing);
   const desk = useDesk();
-  /* The page's colours are whoever is on screen: a mounted app in its own brand, the desk in the framework's. */
+  /* The page's colors are whoever is on screen: a mounted app in its own brand, the desk in the framework's. */
   const brand = showing ? demo?.brand : undefined;
   useEffect(() => applyScheme(scheme, brand), [scheme, brand]);
   const [calls, setCalls] = useState<readonly ToolCall[]>([]);

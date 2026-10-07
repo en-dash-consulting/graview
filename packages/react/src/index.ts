@@ -12,7 +12,7 @@ export type { RobotEvent, RobotMode, RobotState, SeatNote } from "./robot.js";
 export type { ActsDoor, AdministeredModule, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode } from "./context.js";
 export { createPointerStore } from "./pointer.js";
 export type { PointerStore, ScenePoint } from "./pointer.js";
-export { applySettings, honourSetting, loadSetting, rememberSetting } from "./settings.js";
+export { applySettings, honorSetting, loadSetting, rememberSetting } from "./settings.js";
 export type { ReaderMemory } from "./settings.js";
 
 export { createViews, DEFAULT_VIEW, isDefaultView, layerViews, markDefaultView } from "./view-registry.js";

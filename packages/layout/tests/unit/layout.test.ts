@@ -204,7 +204,7 @@ describe("stability", () => {
     const after = layout(mutated, schema, pinned);
     const boAfter = after.nodes.find((n) => n.id === "bo");
     expect([boAfter?.x, boAfter?.y]).toEqual([12, 34]);
-    // The unpinned neighbours did move — the pin is an override, not a freeze.
+    // The unpinned neighbors did move — the pin is an override, not a freeze.
     expect(after.nodes.find((n) => n.id === "ana")?.x).not.toBe(
       before.nodes.find((n) => n.id === "ana")?.x,
     );
@@ -221,7 +221,7 @@ describe("every stop is a URL", () => {
     expect(fromUrl(toUrl(state))).toEqual(state);
   });
 
-  it("serialises the same view to the same string, whatever the order", () => {
+  it("serializes the same view to the same string, whatever the order", () => {
     const a = toggleExpanded(toggleExpanded(EMPTY_VIEW, "b"), "a");
     const b = toggleExpanded(toggleExpanded(EMPTY_VIEW, "a"), "b");
     expect(toUrl(a)).toBe(toUrl(b));
@@ -356,9 +356,9 @@ describe("interpolation", () => {
   });
 });
 
-describe("a focused node surfaces its neighbourhood", () => {
+describe("a focused node surfaces its neighborhood", () => {
   /*
-   * The behaviour this file exists to pin down: clicking a thing shows what
+   * The behavior this file exists to pin down: clicking a thing shows what
    * it is caught up in. Plane 1 used to stay EMPTY until the reader guessed
    * an edge kind, which is why selecting an event read as "nothing
    * happened".
@@ -380,7 +380,7 @@ describe("a focused node surfaces its neighbourhood", () => {
     expect(byId.get("cass")?.via?.description).toBe("who is along for it");
   });
 
-  it("groups the neighbourhood by edge kind, so a caption spans a run", () => {
+  it("groups the neighborhood by edge kind, so a caption spans a run", () => {
     const result = layout(graph(), schema, view({ focusId: "morning" }));
     const kinds = result.nodes
       .filter((node) => node.plane === 1)
@@ -500,14 +500,14 @@ describe("the kinds plane is a constant map", () => {
 });
 
 describe("a rail reserved for chrome, at altitude", () => {
-  it("keeps every district clear of the reserved left rail, and centres within the rest", () => {
+  it("keeps every district clear of the reserved left rail, and centers within the rest", () => {
     const rail = 264;
     const result = layout(graph(), schema, view({ overview: true }), { width: 1280, height: 800, inset: { left: rail } });
     const cards = result.nodes.filter((node) => node.aggregate);
     expect(cards.length).toBeGreaterThan(2);
     for (const card of cards) expect(card.x, card.id).toBeGreaterThanOrEqual(rail);
-    const centre = cards.reduce((sum, card) => sum + card.x + card.width / 2, 0) / cards.length;
-    expect(Math.abs(centre - (rail + (1280 - rail) / 2))).toBeLessThan(40);
+    const center = cards.reduce((sum, card) => sum + card.x + card.width / 2, 0) / cards.length;
+    expect(Math.abs(center - (rail + (1280 - rail) / 2))).toBeLessThan(40);
   });
 
   it("keeps the nearest district whole in a short canvas", () => {
@@ -658,7 +658,7 @@ describe("a card is the size of the words in it", () => {
   it("gives ground back rather than growing past the room it has", () => {
     /*
      * Sixty-four pixels to the rem is four times the browser's own — far
-     * more than the ring can honour with this many districts — so the cards
+     * more than the ring can honor with this many districts — so the cards
      * take what is left and stop. Bigger than they were, and never so big
      * that the picture stops being a picture.
      */
@@ -1118,7 +1118,7 @@ describe("a line that stands for one edge says so", () => {
     /*
      * A line into a group used to know only that it was a bundle. The week
      * draws each of its sessions as a span, and a line to a drill should
-     * start at the session's span rather than at the panel's centre — which
+     * start at the session's span rather than at the panel's center — which
      * needs the real ends of each edge, not just the drawn ends of the line.
      */
     const mutated = graph();
@@ -1151,7 +1151,7 @@ describe("a line that stands for one edge says so", () => {
   /*
    * `ctx.freshId(label, kind)` mints "item:buy-milk" — so every scaffolded
    * app's node ids carry the separator this id is built out of. Split three
-   * ways they came back as five, the selection was not recognised as an edge
+   * ways they came back as five, the selection was not recognized as an edge
    * at all, and a clicked line opened a pane titled with the raw address
    * saying nothing could be done with it.
    */
@@ -1281,7 +1281,7 @@ describe("a move belongs to the stop it was made at", () => {
   /*
    * A pin is stored by node id in canvas pixels, which mean nothing once
    * the picture is a different one: the card dragged as the focus was held
-   * at the focus's old coordinates as a neighbour of the next stop, drawn
+   * at the focus's old coordinates as a neighbor of the next stop, drawn
    * straight over the new focus. A new stop starts where the layout puts
    * things; the old stop's address still carries the arrangement.
    */
@@ -1343,7 +1343,7 @@ describe("a relation is captioned from the focus", () => {
 
 /*
  * WHAT A NODE JUDGES, and a CROWD in the band. A rule has no edges; its
- * violations name what it is about, and those are its neighbourhood. And a
+ * violations name what it is about, and those are its neighborhood. And a
  * band never squeezes a slot below a chip's width: past that it wraps.
  */
 describe("the relation band", () => {
@@ -1369,7 +1369,7 @@ describe("the relation band", () => {
     }
   });
 
-  it("raises what the focus judges as its neighbourhood, captioned, and a named kind filters it", () => {
+  it("raises what the focus judges as its neighborhood, captioned, and a named kind filters it", () => {
     const g = Graph.from(schema, {
       nodes: [
         { id: "rule-1", kind: "week", label: "A rule" },

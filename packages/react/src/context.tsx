@@ -13,7 +13,7 @@ import type {
 } from "@graview/core";
 import { openingOf, search, tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen, touchWeights, type Place, type PagesArrangement } from "@graview/core";
 import { loadIntelligenceConfig, saveIntelligenceConfig, type AffordanceProvider, type IntelligenceConfig } from "@graview/tools/frame";
-import { honourSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
+import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout/view";
@@ -600,7 +600,7 @@ export function GraviewProvider<S extends AnySchema>({
   );
   useEffect(() => {
     for (const setting of settings) {
-      honourSetting(setting, settingValues[setting.name] ?? setting.initial);
+      honorSetting(setting, settingValues[setting.name] ?? setting.initial);
     }
   }, [settings, settingValues]);
   const chooseSetting = useCallback(
@@ -754,7 +754,7 @@ export function GraviewProvider<S extends AnySchema>({
       /*
        * Resolved against the PREVIOUS state, not the render-time view.
        *
-       * Two writes in one gesture are ordinary — travelling also selects,
+       * Two writes in one gesture are ordinary — traveling also selects,
        * going home also clears — and React batches them into one commit.
        * Resolving both against the same stale render made the second write
        * silently discard the first: the travel never happened, only its

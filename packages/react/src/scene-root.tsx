@@ -160,7 +160,7 @@ export function Scene<S extends AnySchema>({
   // `nodes` is a cached snapshot that only changes when the graph does, so
   // the layout is recomputed exactly when the picture could have changed.
   const nodes = useGraph<S>();
-  // What each subject's violations name, so a rule's neighbourhood is what it judges.
+  // What each subject's violations name, so a rule's neighborhood is what it judges.
   const violations = useViolations<S>();
   const judged = useMemo(() => {
     const map: Record<string, string[]> = {};
@@ -201,7 +201,7 @@ export function Scene<S extends AnySchema>({
    * THE BILLBOARD IS CUT TO ITS PICTURE. The lens draws in a box as tall as
    * the window; the screen's host reports how much of it the lens actually
    * used, and the layout sizes the billboard to that — so the picture's foot
-   * is on the kerb instead of a village's height above it. Whole pixels,
+   * is on the curb instead of a village's height above it. Whole pixels,
    * and only a change re-lays the city.
    */
   /*
@@ -440,10 +440,10 @@ export function Scene<S extends AnySchema>({
     steer();
     setZoom(next);
     const box = wrapperRef.current?.getBoundingClientRect();
-    const centre = { x: result.width / 2, y: result.height / 2 };
-    const pointer = box && clientX !== undefined && clientY !== undefined ? { x: clientX - box.left, y: clientY - box.top } : centre;
+    const center = { x: result.width / 2, y: result.height / 2 };
+    const pointer = box && clientX !== undefined && clientY !== undefined ? { x: clientX - box.left, y: clientY - box.top } : center;
     const ratio = next / current;
-    setView((current) => withPan(current, panForZoom(current.pan ?? { x: 0, y: 0 }, cameraLive.current, pointer, centre, ratio)));
+    setView((current) => withPan(current, panForZoom(current.pan ?? { x: 0, y: 0 }, cameraLive.current, pointer, center, ratio)));
     noteMoved();
   };
   panBy.current = (dx, dy) => {
@@ -704,7 +704,7 @@ export function Scene<S extends AnySchema>({
       {...(node.plot && frame.city && Math.round(node.plane) === 2
         ? {
             frontY: frame.city.originY + panned.y + toIso(node.plot.col + node.plot.side / 2, node.plot.row + node.plot.side, frame.city.cell).y - node.y,
-            centreY: frame.city.originY + panned.y + toIso(node.plot.col + node.plot.side / 2, node.plot.row + node.plot.side / 2, frame.city.cell).y - node.y,
+            centerY: frame.city.originY + panned.y + toIso(node.plot.col + node.plot.side / 2, node.plot.row + node.plot.side / 2, frame.city.cell).y - node.y,
           }
         : {})}
       {...(node.screenOf !== undefined ? { screen: true, ...(node.id === screenId ? { onDrawnHeight: noteScreenHeight } : {}) } : {})}
@@ -854,7 +854,7 @@ export function Scene<S extends AnySchema>({
          * the same distance.
          */
         /*
-         * A TITLE BAR, not a grey strip with a pill floating over it: the
+         * A TITLE BAR, not a gray strip with a pill floating over it: the
          * picture's name on the left, the one way down on the right, and
          * the whole bar the handle that moves the board.
          */
@@ -931,7 +931,7 @@ export function Scene<S extends AnySchema>({
       onClick={(event) => {
         if (swallow.current) return;
         const target = event.target as HTMLElement;
-        // The panes are labelled sections now, not asides (FR-40); chrome is chrome either way.
+        // The panes are labeled sections now, not asides (FR-40); chrome is chrome either way.
         if (target.closest("[data-graview-view], button, aside, section[aria-label], [data-graview-offstage], a, input, select")) return;
         setSelection([]);
         setMenuAt(null);

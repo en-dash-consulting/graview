@@ -15,7 +15,7 @@ import { Chip, Panel, Roster } from "../primitives/index.js";
  *
  * Time is NOT a framework concern. This lens declares the field ROLES it
  * needs and an app maps its own fields onto them, which keeps recurrence and
- * calendar maths inside the app that already owns them.
+ * calendar math inside the app that already owns them.
  */
 
 export interface TimelineRoles {
@@ -114,7 +114,7 @@ export function activeWindow(
   /*
    * Whole units, always.
    *
-   * Centring a short window halves an odd number and hands the app's own
+   * Centering a short window halves an odd number and hands the app's own
    * formatter a fraction, which then renders "14:7.5". The household example never saw it
    * because its formatter happened to floor; a third app's did not, and the
    * fix belongs here rather than in every formatter that will ever exist.
@@ -201,7 +201,7 @@ export function placeOnTimeline<S extends AnySchema>(
    * Only the first two are errors. Treating the third as one meant a single
    * unplanned task threw and took the whole week down with it. The schema is
    * what separates 2 from 3; without one, the presence of the key is the best
-   * available guess and the old behaviour stands.
+   * available guess and the old behavior stands.
    */
   const declared = schema?.tryDefinition(node.kind)?.fields.shape as
     | Record<string, unknown>
@@ -255,7 +255,7 @@ export interface TimelineViewProps<S extends AnySchema> extends ViewProps<S> {
 type Emphasis = "plain" | "lit" | "dimmed";
 
 /**
- * A span's colour, given how it relates to the selection.
+ * A span's color, given how it relates to the selection.
  *
  * Recession here is DESATURATION and a quieter edge, never text opacity: a
  * dimmed span still has to be readable, and dropping opacity on small text
@@ -302,7 +302,7 @@ const GUTTER = 52;
  * At `full` fidelity it draws the grid; at `summary` one chip per column with
  * its count; at `glyph` a single count. That is fidelity SWITCHING rather
  * than scaling, which is what keeps a receded calendar legible instead of
- * turning it into grey mush.
+ * turning it into gray mush.
  */
 export function TimelineView<S extends AnySchema>({
   nodes,
@@ -413,10 +413,10 @@ export function TimelineView<S extends AnySchema>({
                   position: "absolute",
                   left: -(GUTTER - 8),
                   /*
-                   * Every label is centred on its rule except the last, which
+                   * Every label is centered on its rule except the last, which
                    * SITS ON TOP of it.
                    *
-                   * The final rule is at 100%, so a centred label hangs eight
+                   * The final rule is at 100%, so a centered label hangs eight
                    * pixels below the grid — enough to make the panel's
                    * scroller report content it cannot show, which puts a
                    * scroll region on a calendar that fits. It also reads
@@ -510,7 +510,7 @@ function Column({
              *
              * "Selecting a rule lights what it judges" is a claim about the
              * picture, and a claim about a picture that exists only as a
-             * colour cannot be checked by anything — not a test, not a person
+             * color cannot be checked by anything — not a test, not a person
              * reading the tree. The attribute costs nothing and makes it a
              * fact.
              */
@@ -542,7 +542,7 @@ function Column({
                 ...spanEmphasis(emphasisOf(span.id), hue(span)),
                 ...(brokenIds.has(span.id)
                   ? {
-                      // A warn-coloured spine down the leading edge: visible
+                      // A warn-colored spine down the leading edge: visible
                       // at a glance across a whole week, and it does not
                       // touch the label's contrast.
                       borderLeft: "3px solid var(--graview-warn)",
@@ -552,7 +552,7 @@ function Column({
               }}
             >
               {/* A bar too short to hold a line of text keeps its name in the
-                  tooltip rather than spilling it across its neighbours. */}
+                  tooltip rather than spilling it across its neighbors. */}
               {height >= 3.4 ? span.label : null}
             </div>
           </div>

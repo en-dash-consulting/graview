@@ -27,7 +27,7 @@ import { fieldTypeOf, lensNodeId } from "./from-declaration.js";
  * become zod, edges become edge declarations, acts become mutations, rules
  * become invariants, roles and grants a policy — an app the checker can
  * judge and the store can run. Where the checkout wrote an act's body or a
- * rule's judgement by hand, the base app supplies it by name; an act the
+ * rule's judgment by hand, the base app supplies it by name; an act the
  * studio declared gets a body written from what it says (create, connect,
  * sever, write), and a rule the studio declared judges nothing until the
  * checkout gives it a body.
@@ -333,8 +333,8 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     const scope = bool(rule, "wholeGraph") || !over ? ("graph" as const) : { kind: kindName.get(over.id) ?? name(over) };
     const description = str(rule, "description");
     /*
-     * A judgement in words is judged — the studio's own rule and the
-     * checkout's alike, since the words are the judgement (FR-07).
+     * A judgment in words is judged — the studio's own rule and the
+     * checkout's alike, since the words are the judgment (FR-07).
      */
     const require = str(rule, "require");
     if (require) {
@@ -356,7 +356,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     return defineInvariant(ruleName, {
       scope,
       label: ruleName,
-      description: description ?? `${ruleName}: declared in the studio; the checkout gives it a judgement.`,
+      description: description ?? `${ruleName}: declared in the studio; the checkout gives it a judgment.`,
       ...(repairs.length > 0 ? { repairs } : {}),
       ...(bool(rule, "judgesPast") ? { judgesPast: true } : {}),
       // Declared, not yet judged: a rule with no body holds nothing wrong.

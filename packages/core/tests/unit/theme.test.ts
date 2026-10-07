@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
   brandFromAccent,
   checkContrast,
-  coloursIn,
+  colorsIn,
   composite,
   contrast,
   createSchema,
@@ -19,7 +19,7 @@ import { checkApp } from "../../src/check.js";
  *
  * The interesting failure is not an ugly theme, it is one that looks fine in
  * the scheme whoever made it was using. Dark and light are not inversions of
- * each other: a secondary colour that clears 4.5:1 on a dark ground can fail
+ * each other: a secondary color that clears 4.5:1 on a dark ground can fail
  * badly on paper, and nobody notices until somebody with a bright office
  * files a bug.
  */
@@ -76,15 +76,15 @@ const light: ThemeTokens = {
   float: "#ffffff",
 };
 
-describe("reading a colour", () => {
+describe("reading a color", () => {
   it("reads hex, rgb and hsl alike", () => {
-    expect(coloursIn("#ffffff")[0]).toMatchObject({ r: 255, g: 255, b: 255, a: 1 });
-    expect(coloursIn("rgba(0, 0, 0, 0.5)")[0]).toMatchObject({ r: 0, g: 0, b: 0, a: 0.5 });
-    expect(coloursIn("hsl(0 100% 50%)")[0]).toMatchObject({ r: 255, g: 0, b: 0 });
+    expect(colorsIn("#ffffff")[0]).toMatchObject({ r: 255, g: 255, b: 255, a: 1 });
+    expect(colorsIn("rgba(0, 0, 0, 0.5)")[0]).toMatchObject({ r: 0, g: 0, b: 0, a: 0.5 });
+    expect(colorsIn("hsl(0 100% 50%)")[0]).toMatchObject({ r: 255, g: 0, b: 0 });
   });
 
   it("reads EVERY stop of a gradient, because text lands on all of them", () => {
-    const stops = coloursIn("linear-gradient(rgba(14,22,29,0.96), rgba(8,13,18,0.97))");
+    const stops = colorsIn("linear-gradient(rgba(14,22,29,0.96), rgba(8,13,18,0.97))");
     expect(stops).toHaveLength(2);
   });
 
@@ -150,7 +150,7 @@ describe("one accent is not a theme", () => {
 
   it("keeps the brand's hue and moves only its lightness, per scheme", () => {
     /*
-     * No single colour can be accent TEXT in both schemes: 4.5:1 on white
+     * No single color can be accent TEXT in both schemes: 4.5:1 on white
      * needs a lightness under about 0.18 and 4.5:1 on a dark panel needs one
      * over about 0.24, and those do not overlap. "The brand's accent" is one
      * hue with two lightnesses, and a framework that simply took the hex
@@ -162,16 +162,16 @@ describe("one accent is not a theme", () => {
     // Readable in BOTH, which is the only claim that matters.
     expect(checkContrast(built.schemes.dark)).toEqual([]);
     expect(checkContrast(built.schemes.light)).toEqual([]);
-    // And still the same colour: the dark one is lighter, not different.
+    // And still the same color: the dark one is lighter, not different.
     expect(built.schemes.dark.accent).not.toBe(built.schemes.light.accent);
   });
 
-  it("leaves a colour that already works exactly alone", () => {
+  it("leaves a color that already works exactly alone", () => {
     const built = brandFromAccent({ accent: light.accent, base });
     expect(built.ok).toBe(true);
     if (!built.ok) return;
-    expect(coloursIn(built.schemes.light.accent)[0]).toMatchObject(
-      coloursIn(light.accent)[0]!,
+    expect(colorsIn(built.schemes.light.accent)[0]).toMatchObject(
+      colorsIn(light.accent)[0]!,
     );
   });
 
@@ -182,11 +182,11 @@ describe("one accent is not a theme", () => {
     expect(built.schemes.light.accentInk).toBe("#ffffff");
   });
 
-  it("REFUSES when reaching legibility would stop it being the brand's colour", () => {
+  it("REFUSES when reaching legibility would stop it being the brand's color", () => {
     /*
-     * A pale brand yellow is a perfectly good logo colour and an unreadable
+     * A pale brand yellow is a perfectly good logo color and an unreadable
      * label on white. It can be made readable — by darkening it until it is
-     * brown, which is not their colour any more. Shipping that under their
+     * brown, which is not their color any more. Shipping that under their
      * name is worse than saying so.
      */
     const built = brandFromAccent({ accent: "#ffe066", base });
@@ -196,7 +196,7 @@ describe("one accent is not a theme", () => {
     expect(built.why).toContain("supply one for light");
   });
 
-  it("refuses a warning colour that shares the accent's hue", () => {
+  it("refuses a warning color that shares the accent's hue", () => {
     // Two roles that look alike is worse than an ugly pair, because one of
     // them means "something is broken".
     const built = brandFromAccent({
@@ -209,7 +209,7 @@ describe("one accent is not a theme", () => {
     expect(built.missing.some((name) => name.startsWith("warn"))).toBe(true);
   });
 
-  it("refuses a value that is not a colour at all", () => {
+  it("refuses a value that is not a color at all", () => {
     const built = brandFromAccent({ accent: "brand-blue", base });
     expect(built.ok).toBe(false);
     if (built.ok) return;

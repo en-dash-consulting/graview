@@ -55,7 +55,7 @@ const WIDTHS = [1440, 390];
 const MAY_ACT_ON_A_TALK = ["chair", "reviewer", "agent"];
 const SCHEMES = QUICK ? ["light"] : ["light", "dark"];
 /*
- * Who is on staff is the programme's own people's to see
+ * Who is on staff is the program's own people's to see
  * (apps/gauntlet/src/domain/policy.ts, `sees`): the visitor, with no role,
  * is shown six districts, and a staff member is kept from it on both faces.
  */

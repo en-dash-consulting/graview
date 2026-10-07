@@ -10,10 +10,10 @@
  * - **Light** is daylight and paper. Things at depth lose CONTRAST and gain
  *   haze — real atmospheric perspective — and separation comes from soft
  *   cast shadow, the way objects on a desk separate. Inverting the dark
- *   scheme would give grey-on-grey mush, because glow does not exist in
+ *   scheme would give gray-on-gray mush, because glow does not exist in
  *   daylight.
  *
- * One rule holds across both: **secondary text is a colour, never an
+ * One rule holds across both: **secondary text is a color, never an
  * opacity.** Opacity composites against whatever is behind and fails contrast
  * silently. axe-core checks this on every run of `scripts/run-a11y.mjs`.
  */
@@ -23,7 +23,7 @@
  *
  * A theme is a declaration, and `graview check` reads declarations — so a
  * brand's palette can be verified before it ships rather than after somebody
- * files a bug about grey-on-grey. What lives here is the two the framework
+ * files a bug about gray-on-gray. What lives here is the two the framework
  * ships with, and they are ordinary declared themes: there is no special case
  * for the built-ins, which is the only way to know a third party's theme goes
  * through the same path.
@@ -105,7 +105,7 @@ export interface ThemeCssOptions {
   /**
    * A selector to scope the theme to — an embed's root element — instead of
    * the document. The tokens land on that element and the ground, type and
-   * colour that `html, body` would have taken land there too, so a Graview
+   * color that `html, body` would have taken land there too, so a Graview
    * inside somebody else's page is themed without touching their page.
    *
    * Every other rule is held inside the box as well (FR-64): a selector is
@@ -122,7 +122,7 @@ export interface ThemeCssOptions {
  * whichever root selector is asking for them.
  *
  * Motion is removed; the INFORMATION is not. A steady ring in the mover's
- * colour says the same thing the pulse did, and someone who cannot take the
+ * color says the same thing the pulse did, and someone who cannot take the
  * animation still gets to watch the system work.
  */
 function stillness(asking: string, within: string): string {
@@ -268,7 +268,7 @@ export function baseSheet(scheme: Scheme, brand: Brand, options: ThemeCssOptions
    * instead of 16. A 0.78125rem label was 10.9px, not the 12.5 it was
    * written as, and a reader who had set their browser to 20px got 17.5.
    * Worse, it made the root font size unusable as the one place a text-size
-   * setting can be honoured, because the stylesheet was already occupying
+   * setting can be honored, because the stylesheet was already occupying
    * it. The body is sized; the root is left exactly as the person has it.
    */
   const text = options.scope ?? "body";
@@ -278,7 +278,7 @@ export function baseSheet(scheme: Scheme, brand: Brand, options: ThemeCssOptions
    * On the document element, always — it is a fact about the person, not
    * about one embed. A scoped stylesheet therefore asks about the document
    * and applies WITHIN its own box, so an embed on somebody else's page
-   * still honours a Graview host's setting without restyling anything of
+   * still honors a Graview host's setting without restyling anything of
    * the host's. Nothing is emitted at `:root { ... }` in a scoped
    * stylesheet, which is the rule an embed must not break.
    */
@@ -403,7 +403,7 @@ ${/* The ring of three kinds tightens to one ring around one node. */ ""}
 .graview-altitude-mark-apex {
   transform: translateY(calc(2.6px * var(--graview-altitude)));
 }
-${/* The two wings gather into the centre and give their ink to the apex. */ ""}
+${/* The two wings gather into the center and give their ink to the apex. */ ""}
 .graview-altitude-mark-wing {
   opacity: calc(0.75 * (1 - var(--graview-altitude)));
 }
@@ -452,7 +452,7 @@ ${/* Content that scrolls inside a panel, and SAYS SO.
   background-attachment: local, local, scroll, scroll;
 }
 ${/* "There is more of this", said by the ground: a few pixels of the panel's
- * own colour over the last row, stuck to the bottom of what scrolls. */ ""}
+ * own color over the last row, stuck to the bottom of what scrolls. */ ""}
 .graview-scroll[data-graview-overflowing]::after {
   content: "";
   position: sticky;
@@ -501,7 +501,7 @@ ${/* DRAWN AS TILES, one cell each. A repeating gradient at the lattice's
    city's cells were: a plot stood beside the grid, not on it. Each tile is
    one cell wide and half a cell tall — the diamond's bounding box — with
    the tile's two diagonals drawn across it, which is the whole lattice:
-   corners and centres of the tiles are its vertices, and a tile corner is
+   corners and centers of the tiles are its vertices, and a tile corner is
    pinned where the city's cell (0,0) meets the canvas. The far weave is the
    same tile at half size. */ ""}
 .graview-ground::after {
@@ -584,7 +584,7 @@ ${/* A DRIVE-IN: a dark screen standing on the plot, and the showings under
 ${/* THE SHOWINGS, BY NAME (FR-118): a column of names hanging off the
    signpost's post, each whole and wrapped rather than cut, the one showing
    now marked by the post's rule in the accent. Words on the ground, haloed
-   in the ground's colour like the district's own name — no capsules, no
+   in the ground's color like the district's own name — no capsules, no
    pictures drawn too small to read. */ ""}
 .graview-drive-in-marquee {
   display: grid;
@@ -737,7 +737,7 @@ ${/* More than a row can hold, and the anonymous: a number where they stand. */ 
   white-space: nowrap;
   pointer-events: auto;
 }
-${/* What somebody else is pointing at, outlined in their colour. */ ""}
+${/* What somebody else is pointing at, outlined in their color. */ ""}
 .graview-presence-over {
   position: absolute;
   border: 2px solid hsl(var(--graview-hue, 200) 55% 52%);
@@ -843,7 +843,7 @@ ${/* A district STANDS: an isometric block — roof, two shaded walls — whose
 .graview-kind-block {
   display: block;
   ${/* Architecture, not a control: clicks fall through to the card, and an
-     invisible in-stack block must never sit over a neighbour's tuck. */ ""}
+     invisible in-stack block must never sit over a neighbor's tuck. */ ""}
   pointer-events: none;
   position: absolute;
   left: 8%;

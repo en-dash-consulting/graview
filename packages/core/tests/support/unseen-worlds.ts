@@ -57,7 +57,7 @@ export const credit = defineMutation("credit", {
   subject: { kinds: [...ANY], arg: "id" },
   writes: ["title"],
   input: z.object({ id: nodeRef([...ANY]), because: z.string() }),
-  describe: (args, graph) => `Credit ${titleOf(graph, args.id)} in favour of ${titleOf(graph, args.because)}`,
+  describe: (args, graph) => `Credit ${titleOf(graph, args.id)} in favor of ${titleOf(graph, args.because)}`,
   apply(ctx, args) {
     ctx.patchNode(args.id, { title: `Credited ${args.id}` });
   },
@@ -76,12 +76,12 @@ export const tag = defineMutation("tag", {
     ctx.patchNode(args.id, { title: `Tagged ${args.id}` });
   },
 });
-/** Drop a record in favour of another: it removes the record, and its sentence quotes the other's title. */
+/** Drop a record in favor of another: it removes the record, and its sentence quotes the other's title. */
 export const drop = defineMutation("drop", {
   title: "Drop",
   subject: { kinds: [...ANY], arg: "id" },
   input: z.object({ id: nodeRef([...ANY]), because: z.string() }),
-  describe: (args, graph) => `Drop ${args.id} in favour of ${titleOf(graph, args.because)}`,
+  describe: (args, graph) => `Drop ${args.id} in favor of ${titleOf(graph, args.because)}`,
   apply(ctx, args) {
     ctx.removeNode(args.id);
   },
@@ -292,7 +292,7 @@ export function unsaidUnseen(w: World, ops: readonly Operation[] = w.ops): strin
   return unseenIds(w).filter((id) => !said.has(id));
 }
 
-/** Whether a payload, as it would be serialised, holds `id` as a whole string anywhere — a value or a key. */
+/** Whether a payload, as it would be serialized, holds `id` as a whole string anywhere — a value or a key. */
 export function mentions(payload: unknown, id: string): boolean {
   return JSON.stringify(payload).includes(JSON.stringify(id));
 }

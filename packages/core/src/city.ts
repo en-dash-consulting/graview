@@ -3,7 +3,7 @@ import type { AnySchema } from "./schema/schema.js";
 /**
  * THE CITY IS A MAP DRAWN FROM THE DECLARATION.
  *
- * A kind is a neighbourhood, and where it stands is decided by the
+ * A kind is a neighborhood, and where it stands is decided by the
  * declaration alone — never by today's data, never by what looks nice.
  * Same declaration, same map; add a kind and every existing plot stays
  * where it was; a kind that grows takes a bigger block on the same corner.
@@ -14,13 +14,13 @@ import type { AnySchema } from "./schema/schema.js";
  * down-right along one diagonal, `row` down-left along the other; a plot
  * occupies `side × side` cells from its corner. Plots sit on a block grid
  * one `BLOCK` apart, so a plot growing to its largest side never reaches
- * its neighbour: the street between is the cell left over.
+ * its neighbor: the street between is the cell left over.
  *
  * Placement walks the kinds in the order the declaration says a blank
  * installation fills them (`beginning(app).order`, or sorted ids when
  * nobody said), puts the first at the origin, and puts each next kind in
  * the free block adjacent to the placed kind it shares the most declared
- * edges with — ties by id — spiralling outward when the near blocks are
+ * edges with — ties by id — spiraling outward when the near blocks are
  * taken. A kind declaring `plot` is put exactly there.
  */
 
@@ -89,7 +89,7 @@ const blockKey = (col: number, row: number): string => `${Math.floor(col / BLOCK
 
 /**
  * Blocks around `(col,row)` at Manhattan distance `d`, in a stable order:
- * the four cardinal neighbours first (down-right, down-left, up-left,
+ * the four cardinal neighbors first (down-right, down-left, up-left,
  * up-right), then the rest clockwise. Deterministic, so the walk is.
  */
 function ringAround(col: number, row: number, d: number): { col: number; row: number }[] {
@@ -182,7 +182,7 @@ export function roadsOf(schema: AnySchema, map: CityMap): readonly Road[] {
 /**
  * Two plots overlap when their blocks do — the checker's question about
  * hand-laid plots, asked at the block size so a plot growing to its
- * largest side can never reach a neighbour.
+ * largest side can never reach a neighbor.
  */
 export function plotsOverlap(a: { readonly col: number; readonly row: number }, b: { readonly col: number; readonly row: number }): boolean {
   return Math.abs(a.col - b.col) < BLOCK && Math.abs(a.row - b.row) < BLOCK;
@@ -267,7 +267,7 @@ export interface Building {
  * sub-lattice, back to front so the near ones are drawn last; the middle
  * of the plot is the village square, where the nameplate and the kind's
  * landmark stand, so no building is under them. Past the cap the rest are
- * a number on the kerb.
+ * a number on the curb.
  */
 export function villageOf(plot: { readonly col: number; readonly row: number; readonly side: number }, memberIds: readonly string[]): { readonly buildings: readonly Building[]; readonly rest: number } {
   const n = plot.side + 1;

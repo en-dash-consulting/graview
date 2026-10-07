@@ -1,6 +1,6 @@
 import {
   formFields,
-  humaniseField,
+  humanizeField,
   nounOf,
   tellApart,
   labelOf,
@@ -239,7 +239,7 @@ export function graphResponder<S extends AnySchema>(
           : undefined;
         return spec?.control === "node" && !spec.kinds.includes("*")
           ? spec.kinds.map((kind) => nounOf(store.schema.tryDefinition(kind), kind)).join(" or ")
-          : humaniseField(field).toLowerCase();
+          : humanizeField(field).toLowerCase();
       };
       const wants = [
         ...new Set(
@@ -332,7 +332,7 @@ export function graphResponder<S extends AnySchema>(
      * who-relation — "who does the run", "who is there" — so following it
      * from the right node answers without knowing what a run is. The right
      * node is chosen honestly: the referent itself when it is timed, else
-     * the referent's neighbour that best matches the question's remaining
+     * the referent's neighbor that best matches the question's remaining
      * words and any day named.
      */
     const DAY_WORDS: Record<string, string> = {
@@ -363,7 +363,7 @@ export function graphResponder<S extends AnySchema>(
         .join("");
       return said || null;
     };
-    const neighboursOf = (id: string) => {
+    const neighborsOf = (id: string) => {
       const out: ({ id: string; kind: string } & Record<string, unknown>)[] = [];
       for (const edge of store.graph.allEdges()) {
         const other = edge.from === id ? edge.to : edge.to === id ? edge.from : null;
@@ -374,7 +374,7 @@ export function graphResponder<S extends AnySchema>(
       return out;
     };
     /**
-     * The question's subjects, best first: the referent's neighbours ranked
+     * The question's subjects, best first: the referent's neighbors ranked
      * by how many of the question's words their name shares and — when a
      * day is named — how exactly they sit on that day. An exact day FIELD
      * outranks a days array that merely contains it: "tuesday" means the
@@ -386,7 +386,7 @@ export function graphResponder<S extends AnySchema>(
       const first = referents[0];
       if (!first) return [];
       const scored: { node: (typeof referents)[number]; score: number }[] = [];
-      for (const candidate of neighboursOf(first.id)) {
+      for (const candidate of neighborsOf(first.id)) {
         let score = 0;
         const squeezed = squeeze(name(candidate));
         for (const token of tokens) {
@@ -441,8 +441,8 @@ export function graphResponder<S extends AnySchema>(
           )) {
             /*
              * Whoever declared the edge, the who-things are the nodes on
-             * the OTHER side of the subject — in-neighbours when the edge
-             * points at the subject, out-neighbours when it points away —
+             * the OTHER side of the subject — in-neighbors when the edge
+             * points at the subject, out-neighbors when it points away —
              * and the sentence is whichever declared line says "who".
              */
             const forward = /\bwho\b/i.test(spec.description ?? "");
@@ -489,7 +489,7 @@ export function graphResponder<S extends AnySchema>(
       /*
        * Each fact as it reads on its own, its LABEL lower-cased to sit in
        * brackets — "explicit: no", "year 2026" — and never its value: "tesla"
-       * is a make somebody spelt with a capital. A bare value says what it
+       * is a make somebody spelled with a capital. A bare value says what it
        * is, "make Tesla", "phone (555) 298-1878", or a VIN reads as noise.
        */
       const quietly = (label: string) => (label === label.toUpperCase() ? label : label.charAt(0).toLowerCase() + label.slice(1));

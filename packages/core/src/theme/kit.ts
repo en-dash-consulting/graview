@@ -1,17 +1,17 @@
-import { coloursIn, contrast, hsl, type Rgba } from "./contrast.js";
+import { colorsIn, contrast, hsl, type Rgba } from "./contrast.js";
 import type { ThemeTokens } from "./types.js";
 
 /*
  * THE KIT: everything the scene draws that is not a view, declared.
  *
  * Connectors, captions, the ground's grid and lattice, the kind tags, the
- * marks — each is a named entry with what a brand may set (colour,
+ * marks — each is a named entry with what a brand may set (color,
  * visibility, weight) and, where a shape is a choice, a named strategy with
  * one implementation today and room for the next. A connector's route is
  * "curve" now; "straight" and "orthogonal" are cases in one file, not a
  * rework of the scene. A stroke's pattern is one of five dashes. Nothing
  * here is a literal in the scene: the scene asks the kit, the theme turns
- * the kit into custom properties, and the checker holds the kit's colours
+ * the kit into custom properties, and the checker holds the kit's colors
  * to the same contrast the text is held to.
  */
 
@@ -25,8 +25,8 @@ export interface ConnectorKit {
   readonly route: ConnectorRoute;
   /** Drawn at all. An edge kind a brand keeps quiet is still selectable from the inspector. */
   readonly visible: boolean;
-  /** An explicit CSS colour; absent, the kind's own hue. */
-  readonly colour?: string;
+  /** An explicit CSS color; absent, the kind's own hue. */
+  readonly color?: string;
   readonly pattern?: KitStrokePattern;
   readonly width?: number;
   readonly cap?: KitEndCap;
@@ -37,10 +37,10 @@ export interface Kit {
   readonly connectors: {
     /** Every edge kind, unless `byEdge` says otherwise. */
     readonly all: ConnectorKit;
-    /** Per edge kind: colour, visibility, pattern — whatever this kind wants differently. */
+    /** Per edge kind: color, visibility, pattern — whatever this kind wants differently. */
     readonly byEdge: Readonly<Record<string, Partial<ConnectorKit>>>;
   };
-  /** The words over a neighbourhood: the edge's own reading. */
+  /** The words over a neighborhood: the edge's own reading. */
   readonly captions: { readonly visible: boolean };
   /** The fine square measure under the scene on the ground. */
   readonly grid: { readonly visible: boolean; readonly size: number };
@@ -131,7 +131,7 @@ export function kitVariables(kit: Kit): string {
 
 export interface KitContrastFinding {
   readonly edgeKind: string | "*";
-  readonly colour: string;
+  readonly color: string;
   readonly ratio: number;
   readonly requires: number;
   readonly unreadable?: string;
@@ -140,34 +140,34 @@ export interface KitContrastFinding {
 }
 
 /**
- * A connector's colour must be told from the ground it crosses: 3:1, the
+ * A connector's color must be told from the ground it crosses: 3:1, the
  * floor for graphics, on both the ground and the deeper ground the
- * altitude view uses. Only explicit colours are judged — a kind's own hue
+ * altitude view uses. Only explicit colors are judged — a kind's own hue
  * is the theme's to keep readable.
  */
 export function checkKitContrast(kit: Kit, tokens: ThemeTokens): readonly KitContrastFinding[] {
   const findings: KitContrastFinding[] = [];
   const grounds = ([["ground", tokens.ground], ["deep ground", tokens.groundDeep]] as const)
-    .map(([name, value]) => ({ name, colour: coloursIn(value)[0] }))
-    .filter((one): one is { name: "ground" | "deep ground"; colour: Rgba } => one.colour !== undefined);
-  const judge = (edgeKind: string | "*", colour: string | undefined) => {
-    if (!colour) return;
-    const ink = coloursIn(colour)[0];
+    .map(([name, value]) => ({ name, color: colorsIn(value)[0] }))
+    .filter((one): one is { name: "ground" | "deep ground"; color: Rgba } => one.color !== undefined);
+  const judge = (edgeKind: string | "*", color: string | undefined) => {
+    if (!color) return;
+    const ink = colorsIn(color)[0];
     if (!ink) {
-      findings.push({ edgeKind, colour, ratio: 0, requires: 3, unreadable: colour });
+      findings.push({ edgeKind, color, ratio: 0, requires: 3, unreadable: color });
       return;
     }
     for (const ground of grounds) {
-      const ratio = Math.round(contrast(ink, ground.colour) * 100) / 100;
-      if (ratio < 3) findings.push({ edgeKind, colour, ratio, requires: 3, ground: ground.name });
+      const ratio = Math.round(contrast(ink, ground.color) * 100) / 100;
+      if (ratio < 3) findings.push({ edgeKind, color, ratio, requires: 3, ground: ground.name });
     }
   };
-  judge("*", kit.connectors.all.colour);
-  for (const [edgeKind, connector] of Object.entries(kit.connectors.byEdge)) judge(edgeKind, connector.colour);
+  judge("*", kit.connectors.all.color);
+  for (const [edgeKind, connector] of Object.entries(kit.connectors.byEdge)) judge(edgeKind, connector.color);
   return findings;
 }
 
-/** The kind's own hue (degrees) as the theme paints a connector, for callers that want the same colour elsewhere. */
-export function connectorHueColour(hue: number): Rgba {
+/** The kind's own hue (degrees) as the theme paints a connector, for callers that want the same color elsewhere. */
+export function connectorHueColor(hue: number): Rgba {
   return hsl(hue, 55, 62);
 }

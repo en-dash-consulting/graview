@@ -33,7 +33,7 @@ describe("a declaration as a document", () => {
     // Every act written as a body, and every rule judged in code, is named — none is dropped in silence.
     const named = new Set(findings.map((finding) => finding.path));
     for (const act of todoApp.mutations ?? []) if (!(act as { derived?: unknown }).derived) expect(named, act.name).toContain(`acts.${act.name}`);
-    for (const rule of (todoApp.invariants ?? []) as readonly InvariantDefinition[]) if (!rule.judgement) expect(named, rule.name).toContain(`rules.${rule.name}`);
+    for (const rule of (todoApp.invariants ?? []) as readonly InvariantDefinition[]) if (!rule.judgment) expect(named, rule.name).toContain(`rules.${rule.name}`);
     // And what it could say compiles: the kinds, the relations, the policy.
     const compiled = compileDocument(document);
     expect(compiled.ok, JSON.stringify(compiled.findings.filter((finding) => finding.severity === "error"))).toBe(true);

@@ -47,7 +47,7 @@ export function checkFigures<S extends AnySchema>(ctx: CheckContext<S>): void {
    *
    * Every fault here looks fine in the file and fails on a screen: art with
    * no `viewBox` cannot be sized by anything that draws it, a literal
-   * colour ignores the scheme and the kind's hue — and is therefore
+   * color ignores the scheme and the kind's hue — and is therefore
    * invisible in one of the two, which nobody notices until somebody
    * switches — and a name that is not in the shipped set is a silent gap
    * where a drawing should be.

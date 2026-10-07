@@ -5,7 +5,7 @@
  * see them.
  *
  * The flag has changed spelling more than once during the origin trial, so
- * every known spelling is passed; a build that does not recognise one ignores
+ * every known spelling is passed; a build that does not recognize one ignores
  * it. If the API still is not there, the report says so — an absent answer is
  * recorded as absent rather than assumed.
  *

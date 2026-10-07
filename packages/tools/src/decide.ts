@@ -9,7 +9,7 @@ import type { Question } from "./questions.js";
  *
  * A decision provider answers a typed question exactly. The two rungs
  * either side of it can answer the same question, worse: the graph by its
- * own rules — a rule's truth is whatever the store's judgement says, a
+ * own rules — a rule's truth is whatever the store's judgment says, a
  * repair is one the violation named — and a model with the whole
  * parse-and-refuse layer behind it, which is what a decision provider
  * makes unnecessary and what this file has to carry so the LLM rung can

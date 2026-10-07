@@ -26,7 +26,7 @@ studio.decline("proposal:1");                     // undo, like any turn of an a
 title, is a place: what the checker says, judged on every change.
 
 What a graph can carry is the declaration's shape. An act's hand-written
-body and a rule's judgement are code: the studio keeps the checkout's by
+body and a rule's judgment are code: the studio keeps the checkout's by
 name, writes a body for an act it declared from what the act says (create,
 connect, sever, write), and writes a rule it declared as one that judges
 nothing until the checkout gives it an `evaluate`.

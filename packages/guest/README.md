@@ -245,7 +245,7 @@ graview.on("click", ".card", (event) => { /* … */ });
 What may be drawn is one declaration, read by both sides: most of HTML's
 sectioning, text, lists, tables, `details`, buttons, fields and `img`;
 SVG's shapes, paths, text, gradients, clip paths, masks, markers and `use`
-of `#id`; and CSS for layout, grid, flex, colour, type, transitions,
+of `#id`; and CSS for layout, grid, flex, color, type, transitions,
 keyframes, media and container queries, with the app's theme tokens
 (`--graview-*`) inherited, light or dark as the app is. The stylesheet,
 every `style` attribute and every SVG paint are read with the CSS Syntax

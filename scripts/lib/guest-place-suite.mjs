@@ -112,7 +112,7 @@ window.__handle.drawn().then(() => { window.__ready = true; });
         };
       });
     };
-    /* A token as a colour, the way the browser computes one, read off the embed's own root. */
+    /* A token as a color, the way the browser computes one, read off the embed's own root. */
     const token = (name) =>
       tab.evaluate((variable) => {
         const value = getComputedStyle(document.querySelector("[data-graview-scheme]")).getPropertyValue(variable).trim();
@@ -132,7 +132,7 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     await open("face=pages&path=/places/the-packages");
     const pages = await lens();
     const start = pages.packages.find((one) => one.id === "package:start");
-    claim('on the pages face the worker view is the place "The packages", labelled as its title and with its author said', /The packages$/.test(pages.label) && pages.heading === "The packages" && pages.author === "Made by Claude for Nick", pages);
+    claim('on the pages face the worker view is the place "The packages", labeled as its title and with its author said', /The packages$/.test(pages.label) && pages.heading === "The packages" && pages.author === "Made by Claude for Nick", pages);
     claim("it lists each package's offers, from the offers and the includes edges it reads", pages.packages.length === 3 && JSON.stringify(start?.offers) === JSON.stringify(["Team coaching", "AI strategy sprint"]) && pages.packages.find((one) => one.id === "package:later")?.offers.join() === "Copernicus build", pages.packages);
     claim("an offer Lin may not see is not in what the view was handed or drew", !pages.text.includes("Internal margin review"), pages.packages);
     claim("it was handed only the kind it attaches to and the kind it reads", pages.kinds === "offer package", pages.kinds);

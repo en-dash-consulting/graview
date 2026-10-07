@@ -6,7 +6,7 @@ import { areaOf, boxOf, centroidOf, estimateWidth, fitLabel, overlaps, spanAt } 
  *
  * Found by a product whose plan drew seven model-written names at one size
  * across the middle of their shapes. Three ran off the canvas, two were
- * struck through by a neighbour's outline, and nothing failed: every test
+ * struck through by a neighbor's outline, and nothing failed: every test
  * passed, the accessibility tree was perfect, and the picture said "rick
  * patio with gravel joints".
  */
