@@ -145,8 +145,10 @@ describe("FR-89: each LifeLogics place says, at a phone's width, the words its f
 
   it("says the front page as text a chat can quote: headings, figures as drawn, lists under their headings", () => {
     const text = described(owner, "home").text;
-    expect(text.split("\n").slice(0, 6)).toEqual([
+    expect(text.split("\n").slice(0, 7)).toEqual([
       "Home (/) — as owner, 390 wide (phone).",
+      // The masthead, as both faces draw it over the home (FR-125): the app's name and the line under it.
+      `Masthead: A proposal — ${app.brand!.subtitle}`,
       "North Pier Advisory with Keel Engineering, for Harbour Health",
       "# A small start, on three fronts.",
       "A suite they trust, Codebase analysis and Two-day workshop. A proposal still being thought through.",

@@ -70,6 +70,7 @@ export {
 } from "./seat.js";
 export type { SeatAnswer, SeatOutcome, SeatTurn } from "./seat.js";
 export { Wordmark } from "./wordmark.js";
+export { AppMark, AppTitle, useFavicon } from "./app-title.js";
 export { Places } from "./places.js";
 export { HomeLanding } from "./home-landing.js";
 export { FindBox } from "./find.js";

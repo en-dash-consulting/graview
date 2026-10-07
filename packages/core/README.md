@@ -24,7 +24,13 @@ Everything a Graview app declares, and the checker that verifies it.
   checker that measures a brand's palette before it ships. The rest of the
   look is data beside them — `SHAPE`, `TYPOGRAPHY` and `isoShade(scheme)`,
   resolved for a brand by `shapeOf` and `typographyOf` — so a page outside
-  the app can dress as one without importing a stylesheet.
+  the app can dress as one without importing a stylesheet. A document's
+  brand holds the rest of it too (FR-124): a logo and a page icon, judged
+  by `svgProblem` and `markProblem` under the same rules as Graview Cloud's
+  images; faces named from `SYSTEM_STACKS`, the system's own and
+  `DOCUMENT_FONTS`, judged by `fontProblem`; and an accent that does not
+  read as given is refused by `accentProblem` with the pair, its ratio and
+  a shade that would pass (FR-126).
 - **`graview check`** — reads a declaration and reports what is wrong with it,
   in terms an agent can act on. In code it is `@graview/core/check`:
   `checkApp`, `describeApp`, the agent docs (`generateLlmsTxt`), and

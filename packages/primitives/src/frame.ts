@@ -16,6 +16,7 @@
 export { DARK, GRAVIEW_BRAND, LIGHT, SCHEMES, themeBaseCss, themeVariables } from "./theme.js";
 export type { Brand, Scheme, ThemeCssOptions, ThemeTokens } from "./theme.js";
 export { Profile } from "./profile.js";
+export { AppMark, AppTitle, useFavicon } from "./app-title.js";
 export type { HostAction } from "./profile.js";
 export { createNoticeBoard, Notices, TOAST_MS } from "./notices.js";
 export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "./notices.js";

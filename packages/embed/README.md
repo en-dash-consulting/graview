@@ -54,7 +54,10 @@ element (`themeBaseCss(scheme, brand, { scope })`, and the scene's own rules,
 rule of it held inside that element, so nothing of the host's is restyled; the
 panes size against the picture's own box (`cqh`) rather than the viewport;
 the routed face runs on a memory router, so the host page's address is never
-touched (unless the host's page is the app: see below); the brand's fonts are fetched by the embed rather than assumed. The
+touched (unless the host's page is the app: see below); the brand's fonts are fetched by the embed rather than assumed. The page's icon is
+the host's: only a host whose page is the app passes `favicon: true` to wear
+the brand's (FR-124), and an app that prefers dark is drawn dark until the host
+stamps a scheme of its own. The
 store is in memory and starts from the seed on every mount, unless the host
 hands it one.
 

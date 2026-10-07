@@ -8,6 +8,7 @@ import { compileBlocks, fieldSpecsOf, resolveBlocks, type BlockContext, type Res
 import { withComputed } from "./computed-values.js";
 import { shapesOfSchema } from "./rules.js";
 import type { KindShape } from "./expr/evaluate.js";
+import { isInlineSvg, markHref } from "../theme/marks.js";
 
 /*
  * WHAT A PLACE SHOWS, WITHOUT A BROWSER (FR-89).
@@ -74,7 +75,20 @@ export interface DescribedProblem {
   readonly says: string;
 }
 
+/**
+ * THE APP'S MASTHEAD, as the home draws it on both faces (FR-124, FR-125):
+ * its name, the line under it, and its logo — said by its alt text, and
+ * whether it is drawn from SVG written inline or from a path.
+ */
+export interface DescribedMasthead {
+  readonly name: string;
+  readonly subtitle?: string;
+  readonly logo?: { readonly alt: string; readonly drawn: "inline SVG" | "image"; readonly src?: string };
+}
+
 export interface PlaceDescription {
+  /** On the home: what its masthead says (FR-125). */
+  readonly masthead?: DescribedMasthead;
   readonly place: { readonly slug: string; readonly title: string; readonly kind: string | null; readonly address: string };
   /** Who it was described for: the seat's roles, or "the system". */
   readonly seat: string;
@@ -221,6 +235,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
   }
 
   let parts: DescribedPart[] = [];
+  let masthead: DescribedMasthead | undefined;
   let drawnBy: PlaceDescription["drawnBy"];
   let described: PlaceDescription["place"];
   if (record) {
@@ -238,6 +253,14 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     described = { slug: at.slug, title: at.title, kind: at.kind, address: at.address };
     const lens = at.lens ? declaredLenses(app as never).drawn.find((one) => one.as === at.slug && (at.kind === null || one.kinds.includes(at.kind))) : undefined;
     if (at.kind === null) {
+      const brand = app.brand;
+      const name = brand?.name ?? app.name;
+      const logo = brand?.logo && markHref(brand.logo) ? brand.logo : undefined;
+      masthead = {
+        name,
+        ...(brand?.subtitle ? { subtitle: brand.subtitle } : {}),
+        ...(logo ? { logo: { alt: brand?.logoAlt ?? name, ...(isInlineSvg(logo) ? { drawn: "inline SVG" as const } : { drawn: "image" as const, src: logo }) } } : {}),
+      };
       if (app.home) {
         drawnBy = "blocks";
         // On the routed face the home is the page: its first headline is the page's own h1.
@@ -304,7 +327,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
   }
   const seat = principal.kind === "system" ? "the system" : (principal.roles ?? []).length > 0 ? (principal.roles ?? []).join(", ") : principal.kind;
   const variant = width < PHONE ? "phone" : "wide";
-  const description: Omit<PlaceDescription, "text"> = { place: described, seat, width, variant, drawnBy: drawnBy!, parts, problems };
+  const description: Omit<PlaceDescription, "text"> = { ...(masthead ? { masthead } : {}), place: described, seat, width, variant, drawnBy: drawnBy!, parts, problems };
   return { ok: true, description: { ...description, text: placeText(description) } };
 }
 
@@ -318,6 +341,8 @@ function pluralOf(schema: AnySchema, kind: string, count: number): string {
 /** A description as plain text: a heading as `#`s, a list's records as bullets under their group's heading, indented by depth. */
 export function placeText(description: Omit<PlaceDescription, "text">): string {
   const lines: string[] = [`${description.place.title} (${description.place.address}) — as ${description.seat}, ${description.width} wide (${description.variant}).`];
+  const top = description.masthead;
+  if (top) lines.push(`Masthead: ${top.logo ? `the logo ("${top.logo.alt}", ${top.logo.drawn === "image" ? top.logo.src : "inline SVG"}), ` : ""}${top.name}${top.subtitle ? ` — ${top.subtitle}` : ""}`);
   const walk = (parts: readonly DescribedPart[], indent: string) => {
     for (const part of parts) {
       switch (part.t) {

@@ -79,9 +79,16 @@ export const BUDGETS = [
      * Raised when a search hit came to say its address and search to judge
      * sight record by record (FR-129): the Find box on every page is that
      * search, about 0.6 kB. Measured at 489_185 / 166_114.
+     *
+     * Raised when the document came to hold the whole brand (FR-124–FR-126):
+     * the app's mark, name and the line under it drawn by one component
+     * (`AppTitle`), a mark judged before it is put in the page, the faces a
+     * document names resolved to their stacks, the page's icon. Measured at 492_055 / 167_339.
+     *
+     * Measured at 492_993 / 167_725 with the pull requests of this round together.
      */
-    minified: 489_500,
-    gzipped: 166_300,
+    minified: 495_000,
+    gzipped: 168_500,
     load: "first",
   },
   {
@@ -183,9 +190,16 @@ export const BUDGETS = [
      * said no (FR-119) and every act to refuse an argument it does not take
      * (FR-121), in `@graview/core`'s index and the agent runtime the frame
      * imports up front. Measured at 683_560 / 173_530.
+     *
+     * Raised when the document came to hold the whole brand (FR-124–FR-126):
+     * the app's mark, name and the line under it drawn by one component
+     * (`AppTitle`), a mark judged before it is put in the page, the faces a
+     * document names resolved to their stacks, the page's icon. Measured at 690_993 / 177_026.
+     *
+     * Measured at 691_831 / 177_426 with the pull requests of this round together.
      */
-    minified: 685_500,
-    gzipped: 174_000,
+    minified: 695_000,
+    gzipped: 177_500,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -271,9 +285,16 @@ export const BUDGETS = [
      * Measured at 1_500_408 / 446_644 with the pull requests of this round together.
      *
      * Measured at 1_501_142 / 448_675 with the pull requests of this round together.
+     *
+     * Raised when the document came to hold the whole brand (FR-124–FR-126):
+     * the app's mark, name and the line under it drawn by one component
+     * (`AppTitle`), a mark judged before it is put in the page, the faces a
+     * document names resolved to their stacks, the page's icon. Measured at 1_517_860 / 455_408.
+     *
+     * Measured at 1_518_689 / 455_813 with the pull requests of this round together.
      */
-    minified: 1_506_500,
-    gzipped: 450_500,
+    minified: 1_525_000,
+    gzipped: 458_000,
     load: "all",
   },
   {
@@ -313,8 +334,9 @@ export const BUDGETS = [
     // And with every face's when a coverage cell came to draw to what it joins (FR-111) and a coverage grid to be described (FR-112): measured at 1_472_916 / 432_823.
     // And when acts came to say what they set (FR-110, FR-114, FR-115: writes read off an act, a number's range, the other end of a link): the document compiler loads with the studio. Measured at 1_473_024 / 432_613.
     // Lowered when what only a drawn view uses left the frame's entries and the describer came to be fetched when first asked for: measured at 1_471_243 / 435_726.
-    minified: 1_479_000,
-    gzipped: 438_500,
+    // Raised when the document came to hold the whole brand (FR-124–FR-126): the app's mark, name and subtitle in one component, a mark judged before it is drawn, the page's icon. Measured at 1_488_861 / 442_563.
+    minified: 1_496_000,
+    gzipped: 443_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

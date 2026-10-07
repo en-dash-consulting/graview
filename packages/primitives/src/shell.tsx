@@ -21,6 +21,8 @@ import {
   Trail,
 } from "./workbench/index.js";
 import { Wordmark } from "./wordmark.js";
+import { useFavicon } from "./app-title.js";
+import { faviconHref } from "@graview/core";
 
 /**
  * The shell: everything an application's window holds that is not about
@@ -131,6 +133,8 @@ export function Shell<S extends AnySchema>({
   notices,
 }: ShellProps<S>) {
   const { brand, view } = useGraview<S>();
+  // The Shell owns the whole page, so the page wears the brand's icon (FR-124).
+  useFavicon(faviconHref(brand));
   // Below a laptop's width the standing and the profile keep their marks and
   // give up their words; the words are their titles either way.
   const bar = useRef<HTMLElement>(null);

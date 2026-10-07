@@ -53,8 +53,12 @@ export const FACE_DOORS = {
  * measured 569 KB before and 554 KB after, against its 595. The claim is
  * that figure with 8 KB of headroom, so the room is spent on purpose: a
  * feature that needs it raises this number in the same change and says why.
+ * The whole brand in the document (FR-124–FR-128) raised it to 567 KB:
+ * the page measured 565 KB with them. That is temporary — the one app bar
+ * (FR-131/FR-132) replaces the title, the Scene/Pages switch and "Open the
+ * scene" with less, and brings this back down to 563 KB or below.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 563 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 567 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -118,8 +122,11 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * the browser; Cloud's shell built from the same sources measured 554.8 KB
  * compiling and 511.4 KB handed the compiled app. The claim is that figure
  * with about 7 KB of headroom, spent on purpose as the other budget's is.
+ * Raised to 523 KB for the whole brand in the document (FR-124–FR-128),
+ * measured at 521.0 KB; the one app bar (FR-131/FR-132) brings it back to
+ * 515 KB or below.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 520 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 523 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [
