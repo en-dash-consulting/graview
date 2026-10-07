@@ -14,7 +14,7 @@ import { bethan, showroom } from "./showroom.js";
  * `props.theme` matches the app in a browser is `guest-sandbox
  * --transport=client`.
  */
-const DARK = { accent: "#6fdcea", ground: "#080d12", panel: "#141f27", ink: "#e8f3f6", inkMuted: "#9fb6bf", edge: "#1d3a44", fontBody: "Inter, system-ui", fontMono: "ui-monospace" };
+const DARK = { accent: "#6fdcea", ground: "#080d12", panel: "#141f27", ink: "#e8f3f6", inkMuted: "#9fb6bf", edge: "#1d3a44", fontBody: "Inter, system-ui", fontDisplay: "Georgia, serif", fontMono: "ui-monospace", radius: "4px" };
 
 function frameIn(scheme: "light" | "dark") {
   const app = document.createElement("div");

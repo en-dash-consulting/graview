@@ -134,9 +134,10 @@ a path of your own) and connect:
 - `props.nodes` holds the records it is drawn over and those of the kinds
   it `reads`, each with `id`, `kind`, `label` and its fields; `props.edges`
   the links among them (`{ kind, from, to }`). Only what the viewer may see.
-- `props.theme` is the app's look: `scheme`, `accent`, `ground`, `panel`,
-  `ink`, `inkMuted`, `edge`, `fontBody`, `fontMono`. Paint from it; it is
-  pushed again when the app's toggle changes, whatever the system prefers.
+- `props.theme` is the app's look: `scheme`, colours, `fontDisplay`,
+  `radius`, `name`, and `logo` (a `data:` image; serve with `img-src
+  data:`). Paint from it; it is pushed again when the app's toggle or brand
+  changes, whatever the system prefers.
 - `guest.act(name, args)` asks for an act; it is applied as the viewer,
   `via: "view:<name>"`, and resolves `{ ok, intent }` or `{ ok: false,
   message }`, the policy's own sentence. `props.acts` lists what they may run.

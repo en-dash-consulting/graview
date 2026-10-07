@@ -49,7 +49,9 @@ graview.navigate("offer:7")     // a record; graview.navigate({ place: "the-pack
 `props` holds `nodes` (each with its `id`, `kind`, `label` and fields),
 `edges` (`{ kind, from, to }` among them), `node` for a view of one,
 `label` (its title), `acts`, `places` (`{ as, title }`), and `theme`
-(`scheme`, `accent`, `panel`, `ink` …). `render` keeps what it can, by
+(`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's
+`name`, and its `logo` as a URL the host made: draw it with
+`<img src="${props.theme.logo}">`, never a URL of your own). `render` keeps what it can, by
 element and by `data-key` or `id`, so give repeated rows a `data-key`: a
 field being typed in keeps its text across a push. An event carries
 `value`, `checked`, `key`, and `pressed` for a bound press.
@@ -83,7 +85,9 @@ notice's role (`navigation`, `region`, `status`, `alert`, …).
 **Draw with the app's tokens**, so light and dark follow the app's own
 toggle: `var(--graview-panel)`, `--graview-ground`, `--graview-ink`,
 `--graview-ink-muted`, `--graview-edge`, `--graview-accent`,
-`--graview-font-body`, `--graview-font-mono`. Presentation attributes do
+`--graview-font-body`, `--graview-font-display` (headings, as the
+app's), `--graview-font-mono`, `--graview-radius`. A brand change pushes
+`theme` again. Presentation attributes do
 not take `var()`; put paints in the stylesheet (`.bar { fill: var(--graview-accent) }`).
 
 ## Links

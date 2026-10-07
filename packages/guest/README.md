@@ -79,11 +79,15 @@ Drawn as the home (`views.home`), a guest is drawn over nothing and sees
 what it reads: it is the routed home's body, and the landing over the scene.
 
 Its props carry `theme`, a `GuestTheme`: the scheme, the accent, ground,
-panel, ink, muted ink and edge colours, and the body and mono fonts, read
-off the element the frame is drawn in. The scheme is the app's own (the
-embed's `data-graview-scheme`), not the system's, and the host pushes
-again when the app's toggle changes it. `mountGuestView` takes `reads`,
-`theme` and `places` too.
+panel, ink, muted ink and edge colours, the body, display and mono fonts
+and the radius, read off the element the frame is drawn in; and the brand's
+`name` and `logo` (FR-127). The logo is a `data:` image the host made from
+the brand's inline SVG, or from an address on the page's own origin it
+fetched (another origin's logo is not handed), so the guest loads nothing;
+its policy needs `img-src data:` to show it. The scheme is the app's own
+(the embed's `data-graview-scheme`), not the system's, and the host pushes
+again when the app's toggle or brand changes. `mountGuestView` takes
+`reads`, `theme`, `brand` and `places` too.
 
 `title` names the frame for assistive technology. Registered with the same
 title, the guest is a place on both faces: listed by `placesOf`, at
@@ -296,10 +300,13 @@ routed home's body and the landing over the scene when it is at home, in
 place of the home the app declared, which is drawn if the view fails.
 `workerHome` makes it the routed face's whole home surface instead. Its props carry the app's look as a
 `GuestTheme` — the scheme, the accent, ground, panel, ink, muted ink and
-edge colours, and the body and mono fonts — read off the region it is
-drawn in, and the host
+edge colours, the body, display and mono fonts and the radius — read off
+the region it is drawn in, with the brand's `name` and `logo` (FR-127):
+a `blob:` URL of the host's page the host made from the logo, or a
+`data:` image where the page's policy refuses `blob:` images (ChatGPT's
+does), so `<img src="${props.theme.logo}">` loads nothing. The host
 pushes again when the app's own toggle changes the scheme, whatever the
-system prefers. `checkManifest` says what in a manifest names a kind, an
+system prefers, and when the brand changes, revoking the last logo's URL. `checkManifest` says what in a manifest names a kind, an
 edge or an act the app does not declare, and the host refuses to start
 such a view (`onFailure` hears `manifest`).
 

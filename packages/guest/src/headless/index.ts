@@ -137,7 +137,9 @@ export const HEADLESS_THEME: GuestTheme = {
   inkMuted: "#4f6470",
   edge: "rgba(20, 33, 43, 0.14)",
   fontBody: "system-ui, sans-serif",
+  fontDisplay: "system-ui, sans-serif",
   fontMono: "ui-monospace, monospace",
+  radius: "12px",
 };
 
 const failed = (reason: HeadlessFailureReason, detail: string, transcript?: HeadlessTranscript): HeadlessFailure => ({ ok: false, reason, detail, ...(transcript ? { transcript } : {}) });

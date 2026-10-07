@@ -372,10 +372,14 @@ export const BUDGETS = [
      * its toggle (FR-86, host/theme.ts: 1_037 B), and goes where the face
      * goes (FR-87, `useGoTo`: 1_268 B of @graview/react a page drawing the
      * app carries already); the budget just above it.
+     *
+     * Measured at 11_931 / 5_544 once a guest is handed the brand's name
+     * and logo (FR-127): the host makes the logo into a URL the guest can
+     * show without loading anything (host/theme.ts, `createGuestLogo`).
      */
     entry: `import { guestView, mountGuestView } from "@graview/guest/host"; globalThis.host = { guestView, mountGuestView };`,
-    minified: 11_000,
-    gzipped: 5_000,
+    minified: 12_100,
+    gzipped: 5_700,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -466,10 +470,14 @@ export const BUDGETS = [
      * Raised at 120_766 / 42_999 when a view that does not start says
      * `start` (FR-102), with the directive its page lacks; the budget just
      * above it.
+     *
+     * Raised at 122_122 / 43_558 when a view is handed the brand's name and
+     * logo (FR-127), the logo made a `blob:` of the page or, where its
+     * policy refuses one, a `data:` image; the budget just above it.
      */
     entry: `import { mountWorkerView } from "@graview/guest/host/worker"; globalThis.mount = mountWorkerView;`,
-    minified: 121_250,
-    gzipped: 43_250,
+    minified: 122_600,
+    gzipped: 43_800,
     load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
