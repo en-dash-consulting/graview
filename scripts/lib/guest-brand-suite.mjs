@@ -161,7 +161,11 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
   try {
     const context = await browser.newContext({ viewport: { width: 1280, height: 1100 }, colorScheme: "light" });
     const requests = [];
-    context.on("request", (request) => requests.push(request.url()));
+    const logoRequests = [];
+    context.on("request", (request) => {
+      requests.push(request.url());
+      if (request.url().endsWith(PNG_PATH)) logoRequests.push({ type: request.resourceType(), url: request.url() });
+    });
     const tab = await context.newPage();
     tab.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
     await tab.goto(`${HOST}/`, { waitUntil: "load" });
@@ -249,8 +253,30 @@ window.__rebrand = () => window.__handle.setBrand(brands.second);
     claim("it followed the brand by being pushed it, not redrawn: the same region and the same image element, one push more", after.marked && after.pushes > before.pushes, { marked: after.marked, pushes: [before.pushes, after.pushes] });
     if (revoked !== null) claim("the last logo's blob: URL is let go once the new one is drawn", revoked === true, { url: before.src });
     if (secondLogo.logo === PNG_PATH) {
-      const logoRequests = requests.filter((url) => url.endsWith(PNG_PATH));
-      claim("the PNG at the page's own address was fetched once, by the host: the view loaded nothing", asked.length === 1 && logoRequests.length === 1, { served: asked, requests: logoRequests });
+      /*
+       * Since FR-124/FR-125 the app draws its own mark — the strip's and the
+       * routed face's title, `AppTitle` — and a mark that is a path is an
+       * `<img>` at that path, so the page itself asks for the PNG as an
+       * image (each engine folds the page's images of one address into one
+       * request). That is the app showing its logo, not the view loading
+       * one, and the asset is served `no-store` here, so no cache joins it
+       * to the host's fetch. What holds: the host fetched the bytes once (one
+       * `fetch`), every other request is an image the app's own marks
+       * account for, and nothing in the view names the address.
+       */
+      const fetched = logoRequests.filter((one) => one.type === "fetch");
+      const imaged = logoRequests.filter((one) => one.type === "image");
+      const marks = await app.evaluate((path) => {
+        const region = document.querySelector('[data-worker-view="masthead"]');
+        const drawn = [...document.querySelectorAll("img")].filter((image) => image.getAttribute("src") === path);
+        const inView = [...region.shadowRoot.querySelectorAll("*")].filter((one) => [...one.attributes].some((attribute) => attribute.value.includes(path))).length;
+        return { appMarks: drawn.filter((image) => image.getAttribute("data-testid") === "app-mark" && !region.contains(image)).length, otherImages: drawn.length - drawn.filter((image) => image.getAttribute("data-testid") === "app-mark" && !region.contains(image)).length, inView };
+      }, PNG_PATH);
+      claim(
+        "the PNG at the page's own address was fetched once, by the host: the view loaded nothing",
+        fetched.length === 1 && imaged.length + fetched.length === logoRequests.length && (imaged.length === 0 || marks.appMarks > 0) && marks.otherImages === 0 && marks.inView === 0 && asked.length === logoRequests.length,
+        { served: asked, requests: logoRequests, ...marks },
+      );
     }
     const elsewhere = requests.filter((url) => /^https?:/.test(url) && !url.startsWith(`${HOST}/`) && !url.startsWith(`${GUEST}/proxy/`) && !url.endsWith(PNG_PATH) && !url.endsWith("/favicon.ico"));
     claim("nothing else was requested", elsewhere.length === 0, elsewhere);
