@@ -101,6 +101,8 @@ async function buildHost() {
         if (swapping) {
           const mentions = (value, word) => JSON.stringify(value).includes(word);
           const changed = {
+            // A chat's set-name (FR-128): the same app, called something else.
+            renamed: (d) => ({ ...d, name: "A proposal, renamed" }),
             views: (d) => ({ ...d, views: { ...d.views, home: [{ headline: "A changed home" }, ...d.views.home] }, lenses: [...d.lenses, { name: "blocks", title: "The parties", on: "party", options: { blocks: [{ headline: "Who is in it" }] } }] }),
             "no-questions": (d) => {
               const { question: _q, ...kinds } = d.kinds;
@@ -130,6 +132,8 @@ async function buildHost() {
             face: asked.get("face") ?? "pages",
             ...(asked.get("path") ? { path: asked.get("path") } : {}),
             ...(asked.get("stop") ? { stop: asked.get("stop") } : {}),
+            // As Cloud's shell mounts it: labelled with the app's name, its heading a page's h1.
+            ...(asked.get("named") ? { label: first.name, heading: 1 } : {}),
             toggle: true,
             height: "100%",
             fonts: false,
@@ -423,6 +427,30 @@ try {
       swapped.focusAtAddress = await pair(`${SWAP_BASE}#focus=pkg-start`, "views");
       swapped.goneInArticle = await pair(`/swap.html?face=pages&path=${encodeURIComponent("/open-questions")}`, "no-questions");
       swapped.goneAtAddress = await pair(`${SWAP_BASE}/open-questions`, "no-questions");
+      /* What the embed says it is called, on every surface that says it: its region, the workbench's heading, and the wordmark. */
+      const called = () =>
+        tab.evaluate(() => {
+          const embed = document.querySelector("section[data-graview-embed]");
+          const says = (name) => [...embed.querySelectorAll("a, span, h1, p")].filter((one) => one.textContent.trim() === name && one.children.length <= 1).length;
+          const heading = [...embed.children].find((one) => one.tagName === "H1");
+          return {
+            face: embed.getAttribute("data-graview-embed"),
+            region: embed.getAttribute("aria-label"),
+            heading: heading?.textContent ?? null,
+            landmarks: [...embed.querySelectorAll("nav[aria-label], main[aria-label], [role=region][aria-label]")].map((one) => one.getAttribute("aria-label")),
+            old: says("A proposal"),
+            renamed: says("A proposal, renamed"),
+            sameDocument: window.__sameDocument === true,
+          };
+        });
+      for (const [key, address] of [["renamedOnPages", "/swap.html?face=pages&named=1"], ["renamedOnScene", "/swap.html?face=scene&named=1"]]) {
+        await open(address);
+        const before = await called();
+        await tab.evaluate(() => (window.__sameDocument = true));
+        await tab.evaluate((name) => window.__swap(name), "renamed");
+        await tab.waitForTimeout(800);
+        swapped[key] = { before, after: await called() };
+      }
       await context.close();
     } catch (error) {
       swapped.error = String(error?.message ?? error);
@@ -455,6 +483,17 @@ try {
       [goneInArticle, goneAtAddress].every(({ before, after }) => before.heading === "Open questions" && after.face === "pages" && after.where.path === "/" && after.heading !== null && after.heading !== "Open questions") &&
       goneAtAddress.after.path === SWAP_BASE &&
       goneAtAddress.after.length === goneAtAddress.before.length,
+    ),
+  };
+  // FR-128: a renamed app says its new name, on both faces, with no reload.
+  report.checks.aRenamedAppSaysItsNewNameOnBothFacesWithoutAReload = {
+    seen: Object.fromEntries(Object.entries(swaps).map(([name, one]) => [name, one.error ? { error: one.error } : { pages: one.renamedOnPages, scene: one.renamedOnScene }])),
+    ok: swapsOk(({ renamedOnPages, renamedOnScene }) =>
+      [renamedOnPages, renamedOnScene].every(({ before, after }) => before.region === "A proposal" && before.old > 0 && after.sameDocument && after.region === "A proposal, renamed" && after.old === 0 && after.renamed > 0 && after.landmarks.every((name) => !name.startsWith("A proposal ·"))) &&
+      renamedOnPages.after.face === "pages" &&
+      renamedOnScene.after.face !== "pages" &&
+      renamedOnScene.before.heading === "A proposal" &&
+      renamedOnScene.after.heading === "A proposal, renamed",
     ),
   };
   report.checks.inMemoryRoutingANewDeclarationTouchesNoHistory = {

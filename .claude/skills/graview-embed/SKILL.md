@@ -109,8 +109,8 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     link. A host that keeps its own history stays on memory, hears
     `onNavigate(path, how)` and answers its own Back with `setPath(path)`.
 13. **A changed app keeps the reader's place.** `handle.setApp(app,
-    store)`, not a remount, keeps the face, the page and the stop; what
-    the change removed falls back to its parent. To remount, pass
+    store)`, not a remount, keeps the face, the page and the stop, and a
+    `label` that was the app's name takes the new name. To remount, pass
     `handle.where()` back as `mount(…, { at })`.
 
 ## A view of your own, in a frame
