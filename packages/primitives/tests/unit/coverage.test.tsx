@@ -146,7 +146,7 @@ describe("an empty graph is a picture, not a crash", () => {
 });
 
 /*
- * WHAT A SELECTION LIGHTS IS A FACT, NOT A COLOUR.
+ * WHAT A SELECTION LIGHTS IS A FACT, NOT A COLOR.
  *
  * The row labels said their emphasis in the tree; the column heads and the
  * filled cells only painted it — so half the marks in the picture made a
@@ -284,7 +284,7 @@ describe("an edge declared from the row towards the column", () => {
  *
  * "Is this concern covered on this ground?" is a two-hop question with a node
  * in the middle, and the node in the middle is where the cadence and the
- * season window live. The workarounds were all bad: denormalise an edge and
+ * season window live. The workarounds were all bad: denormalize an edge and
  * keep two sources of truth in step by hand; draw a weaker question than the
  * rule answers; or reimplement a shipped lens with one extra hop.
  */

@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
  * drawn in the accent there, and the accent `brandFromAccent` derives was
  * only ever tuned to clear 4.5:1 on the panel — white in the light scheme,
  * a shade lighter than the warm paper of the ground. A green, a teal, a
- * blue or a grey accent landed at 4.1–4.3:1 on the ground, under AA, and
+ * blue or a gray accent landed at 4.1–4.3:1 on the ground, under AA, and
  * `graview check` said nothing, because the pair was not on its list.
  */
 const ACCENTS = ["#e11d48", "#16a34a", "#7c3aed", "#0ea5e9", "#888888", "#2a9d8f", "#0c6e78"];

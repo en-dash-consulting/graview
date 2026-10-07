@@ -22,7 +22,7 @@ beforeAll(() => preload());
  * the key and the quick relations were asides inside IT. axe's
  * `landmark-complementary-is-top-level` failed on every hosted app at every
  * size and scheme. The seat lives in the picture it is about, so it is a
- * labelled region there, and what it holds are named groups of it.
+ * labeled region there, and what it holds are named groups of it.
  */
 const person = defineNode("person", {
   fields: z.object({ label: z.string() }),

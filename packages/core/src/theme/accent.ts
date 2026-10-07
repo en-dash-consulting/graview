@@ -1,4 +1,4 @@
-import { coloursIn, composite, contrast, hsl, rgbToHsl, type Rgba } from "./contrast.js";
+import { colorsIn, composite, contrast, hsl, rgbToHsl, type Rgba } from "./contrast.js";
 import { brandFromAccent, type DerivedBrand, type RefusedBrand } from "./derive.js";
 import { SCHEMES } from "./palettes.js";
 
@@ -48,8 +48,8 @@ export function documentSchemes(accent: string): DerivedBrand | RefusedBrand {
 
 /** The first pair this color fails as given in the light scheme, or null when it reads. */
 function lightFailure(color: Rgba): Omit<AccentRefusal, "sentence" | "suggestion"> | null {
-  const ground = coloursIn(SCHEMES.light.ground)[0]!;
-  const panel = composite(coloursIn(SCHEMES.light.panel)[0]!, ground);
+  const ground = colorsIn(SCHEMES.light.ground)[0]!;
+  const panel = composite(colorsIn(SCHEMES.light.panel)[0]!, ground);
   const onPanel = contrast(color, panel);
   const onGround = contrast(color, ground);
   if (Math.min(onPanel, onGround) < AA) {
@@ -72,7 +72,7 @@ function passes(color: Rgba): boolean {
  * needed — #8a7400 would pass."`
  */
 export function accentProblem(accent: string): AccentRefusal | null {
-  const color = coloursIn(accent)[0];
+  const color = colorsIn(accent)[0];
   if (!color) return { sentence: `"${accent}" is not a color; an accent is one like "#c2577a".`, pair: { text: accent, on: "" }, ratio: 0, requires: AA };
   const failure = lightFailure(color);
   const derived = failure ? undefined : documentSchemes(accent);
@@ -97,7 +97,7 @@ function nearestPassing(color: Rgba): string | undefined {
       if (l < 0 || l > 1) continue;
       const shade = hsl(base.h, base.s, l);
       // Said as hex, so judged as hex: the color a chat sends back is this one, rounded.
-      const rounded = coloursIn(hex(shade))[0]!;
+      const rounded = colorsIn(hex(shade))[0]!;
       if (passes(rounded)) return hex(rounded);
     }
   }
@@ -110,15 +110,15 @@ function nearestPassing(color: Rgba): string | undefined {
  * fix a contrast finding says (FR-126). Undefined when none does.
  */
 export function passingShade(ink: string, on: string, requires: number, over?: string): string | undefined {
-  const color = coloursIn(ink)[0];
-  const ground = coloursIn(on)[0];
+  const color = colorsIn(ink)[0];
+  const ground = colorsIn(on)[0];
   if (!color || !ground) return undefined;
-  const solid = composite(ground, (over ? coloursIn(over)[0] : undefined) ?? WHITE);
+  const solid = composite(ground, (over ? colorsIn(over)[0] : undefined) ?? WHITE);
   const base = rgbToHsl(color);
   for (let step = 0; step <= 200; step++) {
     for (const l of [base.l - step / 200, base.l + step / 200]) {
       if (l < 0 || l > 1) continue;
-      const shade = coloursIn(hex(hsl(base.h, base.s, l)))[0]!;
+      const shade = colorsIn(hex(hsl(base.h, base.s, l)))[0]!;
       if (contrast(shade, solid) >= requires) return hex(shade);
     }
   }

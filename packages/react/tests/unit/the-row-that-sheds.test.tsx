@@ -62,7 +62,7 @@ const scene = async (width: number) => {
   const said = {
     districts: host.querySelectorAll("[data-graview-view^='kind:']").length,
     beyond: card ? Number(card.getAttribute("data-graview-beyond")) : 0,
-    /* The panel is portalled onto the ground, so it is read off the host. */
+    /* The panel is portaled onto the ground, so it is read off the host. */
     names: card ? [...host.querySelectorAll(".graview-beyond-list .graview-beyond-name")].map((el) => el.textContent) : [],
     label: host.querySelector("[data-graview-view='kinds:beyond']")?.getAttribute("aria-label") ?? null,
     picks: card ? [...host.querySelectorAll(".graview-beyond-list [data-graview-pick]")].map((el) => el.getAttribute("data-graview-pick")) : [],

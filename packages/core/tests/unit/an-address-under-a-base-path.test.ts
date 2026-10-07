@@ -10,7 +10,7 @@ import { addressOf, basePathOf, createSchema, defineApp, defineNode, pathWithin,
  * back.
  */
 describe("an address under a base path", () => {
-  it("normalises a base: a leading slash, no trailing one, and the root as nothing", () => {
+  it("normalizes a base: a leading slash, no trailing one, and the root as nothing", () => {
     expect(basePathOf(undefined)).toBe("");
     expect(basePathOf("")).toBe("");
     expect(basePathOf("/")).toBe("");

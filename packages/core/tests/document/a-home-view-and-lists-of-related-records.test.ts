@@ -92,10 +92,10 @@ describe("FR-81: a home view from the closed block set", () => {
         { list: "all('offer')", sort: { by: "net", direction: "up" } },
         { list: "all('offer')", sort: { by: "net", direction: "choices" } },
         { list: "all('offer')", group: "name" },
-        { list: "all('offer')", group: "colour" },
+        { list: "all('offer')", group: "color" },
         { list: "all('offer')", limit: 0 },
         { list: "all('offer')", as: "tile" },
-        { list: "all('offer')", sort: "colour" },
+        { list: "all('offer')", sort: "color" },
       ]),
     );
     expect(found.map((f) => [f.code, f.path])).toEqual([
@@ -203,7 +203,7 @@ describe("FR-83's gap: a kind's glance, label and describe may name a computed f
 
   it("refuses a glance naming neither a field nor a computed field", () => {
     const doc = structuredClone(lifelogics);
-    doc.kinds.offer.glance = ["mode", "colour"];
+    doc.kinds.offer.glance = ["mode", "color"];
     expect(errors(doc).map((f) => f.code)).toEqual(["glance-field"]);
   });
 });

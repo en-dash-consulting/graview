@@ -13,7 +13,7 @@ const box = (x: number, y: number, width = 100, height = 30) => ({ x, y, width, 
 describe("tieRoute", () => {
   it("stitches stacked rows along their right edge, in the gutter", () => {
     // Two rows in one list column: same x-range, one above the other. The
-    // old centre-to-centre vertical ran THROUGH every row between them.
+    // old center-to-center vertical ran THROUGH every row between them.
     const stitched = tieRoute(box(0, 0), box(0, 200))!;
     expect(stitched.mode).toBe("stacked");
     // Both anchors sit on the right edges, and the control bows further
@@ -25,7 +25,7 @@ describe("tieRoute", () => {
 
   it("keeps the stitch for ADJACENT rows instead of dropping the line", () => {
     // A row and the row directly beneath it — 5px apart. The waits-for tie
-    // between neighbouring tasks used to vanish entirely here.
+    // between neighboring tasks used to vanish entirely here.
     const stitched = tieRoute(box(0, 0), box(0, 35))!;
     expect(stitched).not.toBeNull();
     expect(stitched.mode).toBe("stacked");

@@ -139,7 +139,7 @@ socket as on the routes, and so does its id (FR-55): no record id the seat may n
 anything it is sent — a welcome, ops, an ack, a conflict, a route's answer. A seen record's
 field that names a hidden one is cleared, or, when the record cannot do without that field,
 the record is withheld from the seat whole; a withheld op keeps no hidden id in any
-primitive. `seatLens(store, principal)` is that judgement, the one every surface reads.
+primitive. `seatLens(store, principal)` is that judgment, the one every surface reads.
 
 A host that hibernates — a Durable Object wakes on a message with no closure left — holds
 each socket's state itself. `liveProtocol({ store })` (from `@graview/ship/runtime`) is the
@@ -336,7 +336,7 @@ any batch not shaped as a `Store` mints it, `batch:<tag>:<n>` or `undo:<tag>:<n>
 shape. A host's own store mints there too with `new Store({ batchIds: serverBatchIds() })`,
 so nothing a host lands itself — a migration, a seed, an agent's RPC — is in a batch a client
 could have named first; `createStoreHandler` does this for the store it opens.
-`authoredBy(author, seat)` is the judgement of "the same seat". A batch's tag belongs to the
+`authoredBy(author, seat)` is the judgment of "the same seat". A batch's tag belongs to the
 first seat that landed under it, so nobody names another client's next batch
 (`batch:<her tag>:<n+1>`) before she does: a batch under somebody else's tag is refused
 `invalid`, and so is one under the store's own minting tag (`store.batchTag`), so even a held

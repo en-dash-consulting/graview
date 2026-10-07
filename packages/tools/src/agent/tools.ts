@@ -111,7 +111,7 @@ export type ToolResult<S extends AnySchema> =
 export interface ToolRuntimeOptions<S extends AnySchema> {
   /**
    * Who this seat acts as. A principal is an author with roles, so the seat's
-   * attribution and its authorisation are the same fact — there is no way to
+   * attribution and its authorization are the same fact — there is no way to
    * write as one participant and be permitted as another.
    */
   readonly author?: Principal;
@@ -371,7 +371,7 @@ function toolNames(acts: readonly string[]): ReadonlyMap<string, string> {
   return names;
 }
 
-const humanised = (name: string): string => {
+const humanized = (name: string): string => {
   const words = name.replace(/[-_]+/g, " ").trim();
   return words.length === 0 ? name : words[0]!.toUpperCase() + words.slice(1);
 };
@@ -379,7 +379,7 @@ const humanised = (name: string): string => {
 /** One act as the tool a model is offered: its schema, its title and what it does. */
 function actTool(mutation: AnyMutationDefinition, name: string): ToolDefinition {
   const tool = mutationToolSchema(mutation);
-  const title = tool.title ?? humanised(mutation.name);
+  const title = tool.title ?? humanized(mutation.name);
   const description = tool.nodeRefs.length > 0 ? `${tool.description}${/[.!?]$/.test(tool.description) ? "" : "."} ${BY_NAME}` : tool.description;
   return {
     name,
@@ -649,7 +649,7 @@ export function createToolRuntime<S extends AnySchema>(
                 .filter((violation) => violation.nodeIds.includes(id)),
               ...(resolved ? { resolved: [resolved] } : {}),
             },
-            // Asking about a node is asking about its neighbourhood: the
+            // Asking about a node is asking about its neighborhood: the
             // answer names them, so looking at it looked at them.
             reads: [id, ...out.map((edge) => edge.to), ...inbound.map((edge) => edge.from)],
           };

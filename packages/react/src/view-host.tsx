@@ -22,8 +22,8 @@ interface HostProps {
   readonly touched: boolean;
   /** From altitude: how far below this box's top the plot's front vertex lies, so the nameplate can stand there as a signpost. */
   readonly frontY?: number;
-  /** From altitude: how far below this box's top the plot's centre lies, where the landmark stands in the square. */
-  readonly centreY?: number;
+  /** From altitude: how far below this box's top the plot's center lies, where the landmark stands in the square. */
+  readonly centerY?: number;
   /** From altitude: this box is the focused place's screen, a billboard on its plot. */
   readonly screen?: boolean;
   /** For a screen: how tall the lens actually drew in its natural box, so the billboard can be cut to it. */
@@ -68,7 +68,7 @@ export function SceneViewHost({
   useDom,
   touched,
   frontY,
-  centreY,
+  centerY,
   screen,
   onDrawnHeight,
   crowded,
@@ -109,7 +109,7 @@ export function SceneViewHost({
         return labelOf(hostStore.schema.tryDefinition(node.kind), graphNode as never);
       })();
   /*
-   * The tag hugs the PANEL, not the band slot. A host flex-centres a
+   * The tag hugs the PANEL, not the band slot. A host flex-centers a
    * panel shorter than its slot, so a fixed top offset hung the tag in
    * open ground above the card it names — measured against the drawn
    * child instead, the same lesson every measured surface here learned.
@@ -150,7 +150,7 @@ export function SceneViewHost({
       if (!child) return;
       /*
        * Drawn boxes, in the host's own units. Offsets would ignore the
-       * natural box's centring and shrink (the stamp at altitude) and land
+       * natural box's centering and shrink (the stamp at altitude) and land
        * the tag mid-card; a box difference includes them, and dividing by
        * the host's drawn scale takes the plane's scale back out.
        */
@@ -294,7 +294,7 @@ export function SceneViewHost({
          */
         ["--graview-lift-low" as string]: planeShadow(style.shadow, scheme),
         ...(frontY !== undefined ? { ["--graview-front-y" as string]: `${frontY.toFixed(1)}px` } : {}),
-        ...(centreY !== undefined ? { ["--graview-centre-y" as string]: `${centreY.toFixed(1)}px` } : {}),
+        ...(centerY !== undefined ? { ["--graview-center-y" as string]: `${centerY.toFixed(1)}px` } : {}),
       }
     : // The GPU path does NOT fade the host: the shader owns opacity there,
       // and applying it in both places made an entering view fade as
@@ -558,7 +558,7 @@ export function SceneViewHost({
         // end up with usable paint records — five views captured completely
         // blank because of it. Giving each its own box keeps them distinct
         // for the capture. The GPU still draws each wherever its plane
-        // transform says; this only decides what gets rasterised.
+        // transform says; this only decides what gets rasterized.
         // Nearer planes paint over further ones — and an OPENED district
         // comes to the front outright: its roster grows over whatever is
         // beside it, and a chip half-hidden behind the live view is a chip
@@ -567,13 +567,13 @@ export function SceneViewHost({
         left: useDom ? 0 : Math.round(node.x),
         top: useDom ? 0 : Math.round(node.y),
         // Whole pixels, matching what the renderer allocates a texture for.
-        // A host of height 399.4 rasterises into 400 rows; a texture sized
+        // A host of height 399.4 rasterizes into 400 rows; a texture sized
         // from the rounded 399 rejects the copy, and the view keeps whatever
         // was in the texture before — silently.
         width: Math.round(node.width),
         height: Math.round(node.height),
         boxSizing: "border-box",
-        // A view that sizes to its content is centred in the box the layout
+        // A view that sizes to its content is centered in the box the layout
         // gave it, rather than pinned to the top with the remainder left as
         // dead white space.
         display: "flex",
@@ -584,7 +584,7 @@ export function SceneViewHost({
     >
       {natural ? (
         /*
-         * Centred on the slot and scaled about its own middle, so the
+         * Centered on the slot and scaled about its own middle, so the
          * proportions the view chose survive a slot that does not share them.
          * `position: absolute` keeps the natural box out of the host's flow —
          * it must not be able to push the host's own geometry around, since

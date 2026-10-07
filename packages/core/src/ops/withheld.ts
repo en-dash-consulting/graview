@@ -41,7 +41,7 @@ export function touchedBy(primitive: Primitive): readonly string[] {
 }
 
 /**
- * WHAT ONE SEAT IS SERVED (FR-55): the judgement a log is redacted by.
+ * WHAT ONE SEAT IS SERVED (FR-55): the judgment a log is redacted by.
  * `sees` is the seat's sight — the ids it may be told. `shows` is what it
  * is served: a record it sees, unless a field the record cannot do without
  * names one it may not see. `served` is a record as the seat receives it,
@@ -63,7 +63,7 @@ export interface SeatLens {
   /** The store's graph now and the log that led to it, so an op is judged where it stood (`serveAlong`). */
   readonly timeline?: Timeline;
   /**
-   * THIS LENS AS OF NOW, ITS JUDGEMENTS KEPT: each id judged once, each
+   * THIS LENS AS OF NOW, ITS JUDGMENTS KEPT: each id judged once, each
    * record served once, for one reading of a store that does not change
    * while it is read — a log redacted, a snapshot served. A lens follows
    * the store as it is asked (FR-51); a pinned one is thrown away after the
@@ -73,7 +73,7 @@ export interface SeatLens {
   /**
    * WHETHER ANYTHING IS KEPT FROM THIS SEAT AT ALL (`hidesFrom`), when the
    * lens can say. When nothing is, a log is served to it as it is (FR-67):
-   * no judgement of what a record or a link was can withhold an op from a
+   * no judgment of what a record or a link was can withhold an op from a
    * seat that may see everything.
    */
   readonly hides?: () => boolean;

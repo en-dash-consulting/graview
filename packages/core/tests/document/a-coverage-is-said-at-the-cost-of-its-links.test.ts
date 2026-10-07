@@ -9,7 +9,7 @@ import { Store, type AnySchema, type GraviewApp, type Principal } from "../../sr
  *
  * `describePlace` reads a coverage grid over a path itself, and it read it
  * in time that grew with the square of the grid: each step's adjacency was
- * rebuilt by copying a record's whole list of neighbours for every link it
+ * rebuilt by copying a record's whole list of neighbors for every link it
  * had, and every row and every column searched every filled crossing. One
  * skill everybody is strong at is a single record with ten thousand links —
  * a normal org's "Communication" — and it took seconds to say. The lens

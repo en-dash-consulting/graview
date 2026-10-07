@@ -74,7 +74,7 @@ export function checkPalette<S extends AnySchema>(ctx: CheckContext<S>): void {
    * A palette that cannot be read.
    *
    * The two shipped schemes are not inversions of each other, and a brand
-   * that supplies one colour and lets the rest be derived can end up with
+   * that supplies one color and lets the rest be derived can end up with
    * text that clears AA in the dark and fails badly on paper. Contrast is
    * measurable, so it is checked rather than trusted — and the failure names
    * the exact token PAIR and where it is drawn, because "your theme has a
@@ -87,7 +87,7 @@ export function checkPalette<S extends AnySchema>(ctx: CheckContext<S>): void {
           severity: "warning",
           code: "theme-token-unreadable",
           where: `brand.schemes.${finding.scheme}.${finding.on === finding.ink ? finding.ink : finding.on}`,
-          message: `Could not read "${finding.unreadable}" as a colour, so the pair ${finding.ink} on ${finding.on} was not checked.`,
+          message: `Could not read "${finding.unreadable}" as a color, so the pair ${finding.ink} on ${finding.on} was not checked.`,
           fix: "Use a hex, rgb() or hsl() value, or a gradient built from them.",
         });
         continue;
@@ -105,7 +105,7 @@ export function checkPalette<S extends AnySchema>(ctx: CheckContext<S>): void {
       });
     }
     /*
-     * The kit's colours are held to the same standard as the text's, at the
+     * The kit's colors are held to the same standard as the text's, at the
      * graphics floor: a line a brand paints explicitly must be told from
      * the ground it crosses, on both grounds, in both schemes.
      */
@@ -114,15 +114,15 @@ export function checkPalette<S extends AnySchema>(ctx: CheckContext<S>): void {
       const unreadable = new Set<string>();
       for (const scheme of Object.keys(app.brand.schemes) as Scheme[]) {
         for (const finding of checkKitContrast(kit, app.brand.schemes[scheme])) {
-          const where = `brand.kit.connectors.${finding.edgeKind === "*" ? "all" : `byEdge.${finding.edgeKind}`}.colour`;
+          const where = `brand.kit.connectors.${finding.edgeKind === "*" ? "all" : `byEdge.${finding.edgeKind}`}.color`;
           if (finding.unreadable !== undefined) {
             if (unreadable.has(where)) continue;
             unreadable.add(where);
             add({
               severity: "warning",
-              code: "kit-colour-unreadable",
+              code: "kit-color-unreadable",
               where,
-              message: `Could not read "${finding.unreadable}" as a colour, so the line was not checked against the ground.`,
+              message: `Could not read "${finding.unreadable}" as a color, so the line was not checked against the ground.`,
               fix: "Use a hex, rgb() or hsl() value.",
             });
             continue;
@@ -133,7 +133,7 @@ export function checkPalette<S extends AnySchema>(ctx: CheckContext<S>): void {
             where: `${where} in ${scheme}`,
             // WHICH ground: the same line fails the scene's ground and the deeper one under a district, and two errors saying "the ground" read as one said twice.
             message: `${finding.ratio}:1 against the ${finding.ground ?? "ground"} of the ${scheme} scheme, where ${finding.requires}:1 is required for a line to be seen.`,
-            fix: `Darken or lighten "${finding.colour}", or drop it and let the kind's own hue paint the line.`,
+            fix: `Darken or lighten "${finding.color}", or drop it and let the kind's own hue paint the line.`,
           });
         }
       }

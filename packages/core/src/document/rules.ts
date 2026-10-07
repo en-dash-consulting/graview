@@ -38,7 +38,7 @@ function shapesOf(graph: GraphReader): Map<string, KindShape> {
   return shapes;
 }
 
-/** A rule whose judgement is written in the rule language rather than as a function. */
+/** A rule whose judgment is written in the rule language rather than as a function. */
 export interface ExpressionRuleSpec {
   /** The kind it judges, one violation per record; or the whole graph, at most one. */
   readonly over: string | "graph";
@@ -57,7 +57,7 @@ export interface ExpressionRuleSpec {
 
 /**
  * A RULE THAT SAYS WHAT MUST HOLD, AND IS JUDGED (FR-07). The studio and a
- * checkout write a rule's judgement in the rule language instead of a
+ * checkout write a rule's judgment in the rule language instead of a
  * function the studio cannot see; this makes it the invariant the engine
  * runs. A syntax error is thrown here, when the rule is made — never later,
  * while judging. Out of budget is `over-budget`; any other mistake while
@@ -99,7 +99,7 @@ export function expressionRule(
   };
   const common = {
     label: title,
-    judgement: { require: spec.require, ...(spec.when ? { when: spec.when } : {}), ...(spec.says ? { says: spec.says } : {}) },
+    judgment: { require: spec.require, ...(spec.when ? { when: spec.when } : {}), ...(spec.says ? { says: spec.says } : {}) },
     ...(spec.description ? { description: spec.description } : {}),
     ...(spec.repairs && spec.repairs.length > 0 ? { repairs: [...spec.repairs] } : {}),
     ...(spec.judgesPast ? { judgesPast: true } : {}),

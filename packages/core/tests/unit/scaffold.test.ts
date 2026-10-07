@@ -307,7 +307,7 @@ describe("what it refuses", () => {
     ]);
     expect(validateScaffoldOptions({ name: "X", kind: "Note" })[0]).toMatch(/must be a slug/);
     expect(validateScaffoldOptions({ name: "X", kind: "node" })[0]).toMatch(/the framework uses for itself/);
-    expect(validateScaffoldOptions({ name: "X", accent: "green" })[0]).toMatch(/hex colour/);
+    expect(validateScaffoldOptions({ name: "X", accent: "green" })[0]).toMatch(/hex color/);
     expect(validateScaffoldOptions({ name: "X", plural: "Bad Plural" })[0]).toMatch(/plural .* must be a slug/);
     expect(validateScaffoldOptions({ name: "X", port: 70000 })[0]).toMatch(/not a port/);
     expect(validateScaffoldOptions({ name: "Field Notes", kind: "note" })).toEqual([]);

@@ -1,6 +1,6 @@
 import {
   checkContrast,
-  coloursIn,
+  colorsIn,
   composite,
   contrast,
   hsl,
@@ -10,16 +10,16 @@ import {
 import type { Scheme, ThemeTokens } from "./types.js";
 
 /**
- * A brand hands over one accent colour. What can be made of it, and what
+ * A brand hands over one accent color. What can be made of it, and what
  * cannot.
  *
  * The two schemes here are not inversions of each other — dark loses
  * luminance, light loses contrast and gains haze — so "derive the other one"
- * is not a colour operation. What an accent CAN determine is everything
+ * is not a color operation. What an accent CAN determine is everything
  * keyed to it: its dim companion, its glow, the lit edge, the wash. What it
  * cannot determine is the ground family (warm paper or cool slate is a
  * decision, not a consequence), the ink that has to clear AA against that
- * ground, and the warning colour, which must stay distinguishable from the
+ * ground, and the warning color, which must stay distinguishable from the
  * accent rather than derived from it.
  *
  * So this derives what it can from a neutral base and REFUSES, naming what
@@ -29,7 +29,7 @@ import type { Scheme, ThemeTokens } from "./types.js";
  * interface.
  */
 export interface AccentBrandOptions {
-  /** The one colour a brand always has. Hex, rgb() or hsl(). */
+  /** The one color a brand always has. Hex, rgb() or hsl(). */
   readonly accent: string;
   /**
    * Text drawn ON the accent — a filled button. Derived as black or white
@@ -54,8 +54,8 @@ export interface RefusedBrand {
   readonly why: string;
 }
 
-const rgba = (colour: Rgba, alpha: number) =>
-  `rgba(${Math.round(colour.r)}, ${Math.round(colour.g)}, ${Math.round(colour.b)}, ${alpha})`;
+const rgba = (color: Rgba, alpha: number) =>
+  `rgba(${Math.round(color.r)}, ${Math.round(color.g)}, ${Math.round(color.b)}, ${alpha})`;
 
 const BLACK: Rgba = { r: 0, g: 0, b: 0, a: 1 };
 const WHITE: Rgba = { r: 255, g: 255, b: 255, a: 1 };
@@ -65,12 +65,12 @@ const WHITE: Rgba = { r: 255, g: 255, b: 255, a: 1 };
  * missing.
  */
 export function brandFromAccent(options: AccentBrandOptions): DerivedBrand | RefusedBrand {
-  const accent = coloursIn(options.accent)[0];
+  const accent = colorsIn(options.accent)[0];
   if (!accent) {
     return {
       ok: false,
       missing: ["accent"],
-      why: `"${options.accent}" is not a colour this can read. Use a hex, rgb() or hsl() value.`,
+      why: `"${options.accent}" is not a color this can read. Use a hex, rgb() or hsl() value.`,
     };
   }
 
@@ -81,21 +81,21 @@ export function brandFromAccent(options: AccentBrandOptions): DerivedBrand | Ref
 
   for (const scheme of ["dark", "light"] as const) {
     const neutral = options.base[scheme];
-    const ground = coloursIn(neutral.ground)[0] ?? (scheme === "dark" ? BLACK : WHITE);
-    const panel = composite(coloursIn(neutral.panel)[0] ?? WHITE, ground);
+    const ground = colorsIn(neutral.ground)[0] ?? (scheme === "dark" ? BLACK : WHITE);
+    const panel = composite(colorsIn(neutral.panel)[0] ?? WHITE, ground);
 
     /*
-     * The accent is used as TEXT, and no single colour can be text in both
+     * The accent is used as TEXT, and no single color can be text in both
      * schemes.
      *
      * 4.5:1 on white needs a lightness under about 0.18; 4.5:1 on a dark
      * panel needs one over about 0.24. Those do not overlap, which is why
      * "the brand's accent" is one hue with two lightnesses rather than one
-     * colour — and why a framework that simply took the hex would have
+     * color — and why a framework that simply took the hex would have
      * shipped an unreadable label in one scheme or the other.
      *
      * So the hue and the saturation are the brand's; the lightness is moved
-     * as little as it takes. If it has to move further than this, the colour
+     * as little as it takes. If it has to move further than this, the color
      * has stopped being recognisably theirs and the honest answer is to ask.
      */
     // Text on the panel and, with no capsule under it, on the ground itself (FR-117): it has to clear both.
@@ -110,7 +110,7 @@ export function brandFromAccent(options: AccentBrandOptions): DerivedBrand | Ref
       reasons.push(
         `reaching 4.5:1 on the ${scheme} panel would move the accent's lightness by ${Math.round(
           Math.abs(readable.l - base.l) * 100,
-        )} points, which is far enough that it stops being the same colour — supply one for ${scheme}`,
+        )} points, which is far enough that it stops being the same color — supply one for ${scheme}`,
       );
     }
     const tone = readable ?? base;
@@ -119,7 +119,7 @@ export function brandFromAccent(options: AccentBrandOptions): DerivedBrand | Ref
     const chosenInk =
       options.accentInk?.[scheme] ??
       (contrast(WHITE, shown) >= contrast(BLACK, shown) ? "#ffffff" : "#000000");
-    const inkOnAccent = contrast(coloursIn(chosenInk)[0] ?? WHITE, shown);
+    const inkOnAccent = contrast(colorsIn(chosenInk)[0] ?? WHITE, shown);
     if (inkOnAccent + 0.005 < 4.5) {
       missing.add(`accentInk (${scheme})`);
       reasons.push(
@@ -147,15 +147,15 @@ export function brandFromAccent(options: AccentBrandOptions): DerivedBrand | Ref
     };
 
     /*
-     * A warning colour must not be mistakable for the accent. Two roles that
+     * A warning color must not be mistakable for the accent. Two roles that
      * look alike is a worse failure than an ugly pair, because one of them
      * means "something is broken".
      */
-    const warn = coloursIn(schemes[scheme].warn)[0];
+    const warn = colorsIn(schemes[scheme].warn)[0];
     if (warn && hueGap(rgbToHsl(warn).h, tone.h) < 25) {
       missing.add(`warn (${scheme})`);
       reasons.push(
-        `the warning colour shares the accent's hue in ${scheme}, so "something is broken" looks like "this is selected"`,
+        `the warning color shares the accent's hue in ${scheme}, so "something is broken" looks like "this is selected"`,
       );
     }
   }
@@ -167,17 +167,17 @@ export function brandFromAccent(options: AccentBrandOptions): DerivedBrand | Ref
 }
 
 /**
- * The smallest alpha at which a colour laid on a ground clears a ratio, or
+ * The smallest alpha at which a color laid on a ground clears a ratio, or
  * the preferred one if that is already enough.
  *
  * Searched rather than solved because compositing then luminance is not
  * invertible in closed form, and a hundred steps is cheap for something that
  * runs once per theme.
  */
-function visibleAlpha(colour: Rgba, ground: Rgba, preferred: number, ratio: number): number {
+function visibleAlpha(color: Rgba, ground: Rgba, preferred: number, ratio: number): number {
   for (let step = Math.round(preferred * 100); step <= 100; step++) {
     const alpha = step / 100;
-    if (contrast(composite({ ...colour, a: alpha }, ground), ground) >= ratio) return alpha;
+    if (contrast(composite({ ...color, a: alpha }, ground), ground) >= ratio) return alpha;
   }
   return 1;
 }
@@ -188,13 +188,13 @@ function hueGap(a: number, b: number): number {
   return gap > 180 ? 360 - gap : gap;
 }
 
-/** As much lightness as a brand's colour may be moved and still be theirs. */
+/** As much lightness as a brand's color may be moved and still be theirs. */
 const MAX_SHIFT = 0.3;
 
 /**
  * The lightness nearest the brand's own that clears the ratio on every one of these grounds.
  *
- * Searched from the original outwards rather than from an end, so a colour
+ * Searched from the original outwards rather than from an end, so a color
  * that already works is left exactly alone and one that does not is moved the
  * smallest distance that helps. Dark schemes are searched upward first and
  * light ones downward, since that is the direction that will win.

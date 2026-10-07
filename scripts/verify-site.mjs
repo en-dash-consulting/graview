@@ -9,7 +9,7 @@
  * for years because nobody measures it.
  *
  * Ten widths, both schemes, plus the things axe cannot see: keyboard order,
- * reduced motion, forced colours, text-only zoom, and whether every live
+ * reduced motion, forced colors, text-only zoom, and whether every live
  * Graview on it is there at every width.
  *
  *   node scripts/verify-site.mjs
@@ -369,7 +369,7 @@ try {
   report.criteria.theKitRedressesTheLiveGarden = Object.values(report.kit).every(Boolean);
   await page.locator('#kit-form input[name="tended-visible"]').check().catch(() => {});
   await page.locator('#kit-form input[name="tended-painted"]').check().catch(() => {});
-  await page.locator('#kit-form input[name="tended-colour"]').fill("#f4f4f4").catch(() => {});
+  await page.locator('#kit-form input[name="tended-color"]').fill("#f4f4f4").catch(() => {});
   await page.waitForTimeout(300);
   report.criteria.theKitsVerdictIsTheCheckers = await page.evaluate(() => document.getElementById("kit-verdict")?.textContent?.includes("kit-contrast-below-aa") ?? false);
 
@@ -381,7 +381,7 @@ try {
   // The opener's own Graview is on screen at load, so its cards are the
   // thing to ask: under reduced motion the theme turns their transitions off.
   await reduced.waitForFunction(() => document.querySelector("[data-graview-view]") !== null, null, { timeout: 20_000 }).catch(() => {});
-  report.criteria.reducedMotionIsHonoured = await reduced.evaluate(() => {
+  report.criteria.reducedMotionIsHonored = await reduced.evaluate(() => {
     const card = document.querySelector("[data-graview-view]");
     return (
       card !== null &&
@@ -394,7 +394,7 @@ try {
   const forced = await browser.newPage({ viewport: { width: 1280, height: 900 }, forcedColors: "active" });
   await arrive(forced, pageAt("index.html"));
   await forced.waitForTimeout(400);
-  report.criteria.forcedColoursKeepTheMeaningfulMarks = await forced.evaluate(
+  report.criteria.forcedColorsKeepTheMeaningfulMarks = await forced.evaluate(
     () => getComputedStyle(document.querySelector(".head .tick")).forcedColorAdjust === "none",
   );
   await forced.close();

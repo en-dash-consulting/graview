@@ -8,7 +8,7 @@ import { printZod, type ZodUses } from "./zod-source.js";
  * THE DECLARATION WRITTEN BACK AS CODE — the same files `graview create`
  * writes into `src/domain/`, so the studio and the checkout never disagree
  * about the shape of the app. Shape is what a graph can carry: a rule's
- * judgement and an act's hand-written body are code, and the files say
+ * judgment and an act's hand-written body are code, and the files say
  * where the checkout's own must be kept.
  */
 
@@ -24,7 +24,7 @@ export interface SourceOptions {
   /** The exported schema's variable name; `graview create` uses `<camel>Schema`. */
   readonly schemaVar?: string;
   /**
-   * The app the studio opened on. A judgement and a hand-written body are
+   * The app the studio opened on. A judgment and a hand-written body are
    * code the studio cannot write; for a rule or an act the checkout
    * already has, the file says so LOUDLY — a stub that throws naming what
    * belongs there — rather than a stub that quietly holds. Every rule the
@@ -380,7 +380,7 @@ export function ruleLines(read: Read, rule: Node, kept: boolean): string[] {
   const repairs = [...read.out(rule.id, "repairs").map(label), ...(list(rule, "derivedRepairs") ?? [])];
   const whole = bool(rule, "wholeGraph") || !over;
   /*
-   * A JUDGEMENT IN WORDS IS WRITTEN AS WORDS (FR-07): the checkout runs the
+   * A JUDGMENT IN WORDS IS WRITTEN AS WORDS (FR-07): the checkout runs the
    * same rule the studio judged, through the same `expressionRule`, instead
    * of a stub that holds nothing or throws.
    */
@@ -413,10 +413,10 @@ export function ruleLines(read: Read, rule: Node, kept: boolean): string[] {
      * rule that holds when it should not is a lie the interface tells
      * with a green light. So it throws, naming what belongs here.
      */
-    lines.push(`    // The checkout's own judgement belongs here: the studio cannot write what it never saw.`);
-    lines.push(`    throw new Error(${q(`${ruleName}: the checkout's evaluate belongs here — the studio cannot write a judgement`)});`);
+    lines.push(`    // The checkout's own judgment belongs here: the studio cannot write what it never saw.`);
+    lines.push(`    throw new Error(${q(`${ruleName}: the checkout's evaluate belongs here — the studio cannot write a judgment`)});`);
   } else {
-    lines.push(`    // The judgement: return a violation per subject that breaks the rule.`);
+    lines.push(`    // The judgment: return a violation per subject that breaks the rule.`);
     lines.push(`    return [];`);
   }
   lines.push(`  },`);
@@ -501,7 +501,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
     ``,
     `/*`,
     ` * ${name}'s rules, as the studio declares them: what each judges and what`,
-    ` * repairs it. A judgement is code — a rule the studio declared holds`,
+    ` * repairs it. A judgment is code — a rule the studio declared holds`,
     ` * nothing wrong until its evaluate says otherwise; a rule the checkout`,
     ` * already judges keeps the checkout's evaluate.`,
     ` */`,

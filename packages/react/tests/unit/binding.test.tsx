@@ -212,7 +212,7 @@ describe("the scene", () => {
 
   /*
    * THE KIT IS THE BRAND'S SAY over the lines: a kind it keeps quiet is not
-   * drawn, its route is one of the declared strategies, its colour is what
+   * drawn, its route is one of the declared strategies, its color is what
    * the brand said. All of it arrives through the brand on the provider —
    * nothing in the scene reads a literal.
    */
@@ -230,12 +230,12 @@ describe("the scene", () => {
       expect(dressed({ connectors: { byEdge: { "assigned-to": { visible: false } } } })).not.toContain('data-graview-connector="assigned-to"');
     });
 
-    it("routes with elbows or a chord on request, and paints the brand's colour", () => {
+    it("routes with elbows or a chord on request, and paints the brand's color", () => {
       const path = (html: string) => /<path data-graview-connector="assigned-to"[^>]*>/.exec(html)?.[0] ?? "";
       expect(path(dressed({}))).toMatch(/ d="M [^"]* Q /);
       expect(path(dressed({ connectors: { all: { route: "orthogonal" } } }))).toMatch(/ d="M [^"]* L /);
       expect(path(dressed({ connectors: { all: { route: "orthogonal" } } }))).not.toMatch(/ Q /);
-      expect(path(dressed({ connectors: { byEdge: { "assigned-to": { colour: "#1d3f8a", pattern: "dotted" } } } }))).toContain('stroke="#1d3f8a"');
+      expect(path(dressed({ connectors: { byEdge: { "assigned-to": { color: "#1d3f8a", pattern: "dotted" } } } }))).toContain('stroke="#1d3f8a"');
     });
   });
 
@@ -401,7 +401,7 @@ describe("a node with a natural size is drawn scaled, not re-laid-out", () => {
   });
 
   it("scales on the capture path too, so both renderers draw the same picture", () => {
-    // The GPU path rasterises the host subtree; the scale is part of the paint
+    // The GPU path rasterizes the host subtree; the scale is part of the paint
     // rather than something the shader has to know about.
     expect(graview("gpu")).toContain("data-graview-natural");
   });
@@ -435,7 +435,7 @@ describe("selection is part of the stop", () => {
     expect(html).toContain("sel=ana%2Cbo");
   });
 
-  it("still honours initialSelection, folding it into the view", () => {
+  it("still honors initialSelection, folding it into the view", () => {
     const html = renderToStaticMarkup(
       <GraviewProvider
         store={store()}

@@ -71,11 +71,11 @@ export function analyzeExpr(expr: Expr): ExprShape {
 
 /**
  * HOW AN EXPRESSION'S WORK GROWS WITH THE GRAPH, as a power of its size:
- * 0 reads a record and its neighbours, 1 sweeps a kind (`all('offer')`),
+ * 0 reads a record and its neighbors, 1 sweeps a kind (`all('offer')`),
  * 2 sweeps a kind once for every member of a sweep. A per-member argument
  * costs once per member, so its degree ADDS to its set's; anything else
  * costs the most of its parts. Relations are walked, not swept: a record's
- * neighbours are its own, however large the graph.
+ * neighbors are its own, however large the graph.
  *
  * `computedDegree(name)` is what reading a name costs when it is a computed
  * field (a bare name is the subject's; `x.name` and a per-member name may

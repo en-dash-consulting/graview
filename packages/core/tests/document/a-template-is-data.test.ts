@@ -43,9 +43,9 @@ describe("a template made in Graview Cloud", () => {
   });
 
   it("refuses an answer to no question, and a setup act the document lacks, in sentences with a path", () => {
-    const unknown = instantiateTemplate(raw, { colour: "teal" });
+    const unknown = instantiateTemplate(raw, { color: "teal" });
     expect(unknown.ok).toBe(false);
-    if (!unknown.ok) expect(unknown.findings.map((f) => f.path)).toEqual(["answers.colour"]);
+    if (!unknown.ok) expect(unknown.findings.map((f) => f.path)).toEqual(["answers.color"]);
 
     const wrongAct = instantiateTemplate({ ...raw, setup: [{ act: "add-venue", args: {} }] });
     expect(wrongAct.ok).toBe(false);

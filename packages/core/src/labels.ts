@@ -15,7 +15,7 @@ import type { AnySchema } from "./schema/schema.js";
  *
  * The index is kept per kind as sorted keys, so a prefix is a binary search
  * and a walk over what matches: resolution costs the matches, not a scan of
- * every record. It follows the graph's own diffs, relabelling only what
+ * every record. It follows the graph's own diffs, relabeling only what
  * changed.
  */
 

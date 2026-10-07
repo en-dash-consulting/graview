@@ -124,7 +124,7 @@ describe("a kind's fields as questions", () => {
 });
 
 describe("an act's arguments as questions", () => {
-  it("makes a Choice over the live nodes of a kind, labelled the way every surface labels them", () => {
+  it("makes a Choice over the live nodes of a kind, labeled the way every surface labels them", () => {
     const asked = questionsForMutation(store(), "contend-with", { zoneId: "lawn" });
     expect(asked.map((q) => q.id)).toEqual(["arg:contend-with.concernId"]);
     expect(asked[0]!.question).toEqual({

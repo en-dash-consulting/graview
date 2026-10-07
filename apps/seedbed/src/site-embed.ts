@@ -30,7 +30,7 @@ declare global {
       handles: Map<HTMLElement, EmbedHandle>;
       /** Dress one mounted chapter in a kit: the chapter's own brand with the kit laid over it. */
       dress: typeof dress;
-      /** What `graview check` would say about a kit's colours against this chapter's grounds. */
+      /** What `graview check` would say about a kit's colors against this chapter's grounds. */
       kitFindings: typeof kitFindings;
     };
   }
@@ -88,7 +88,7 @@ export function dress(element: HTMLElement, n: number, kit: KitOverrides): void 
   handle.setBrand({ ...brand, kit });
 }
 
-/** The kit's colours judged against the chapter's grounds, as `graview check` judges them. */
+/** The kit's colors judged against the chapter's grounds, as `graview check` judges them. */
 export function kitFindings(n: number, kit: KitOverrides): readonly { readonly edgeKind: string; readonly scheme: "light" | "dark"; readonly ratio: number; readonly requires: number; readonly unreadable?: string }[] {
   const chapter = CHAPTERS[n - 1];
   const brand = chapter?.app.brand ?? SEEDBED_BRAND;

@@ -14,7 +14,7 @@ import { checkApp } from "../../src/check.js";
 
 /**
  * The horizon: a kind declares when its nodes stop being current, and every
- * derived surface — counts, judgement — aggregates over "now" by default,
+ * derived surface — counts, judgment — aggregates over "now" by default,
  * with the past one deliberate step away rather than gone.
  */
 
@@ -60,7 +60,7 @@ describe("isCurrent", () => {
   });
 });
 
-describe("the horizon applies to judgement", () => {
+describe("the horizon applies to judgment", () => {
   const bound = bindSchema(schema);
   const flag = (name: string, judgesPast?: boolean) =>
     bound.defineInvariant(name, {

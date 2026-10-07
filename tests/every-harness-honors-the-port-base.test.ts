@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { at, moved, movedIn, OWN, portFor } from "../scripts/lib/ports.mjs";
 
 /**
- * EVERY HARNESS HONOURS GRAVIEW_PORT_BASE. A second checkout — a worktree
+ * EVERY HARNESS HONORS GRAVIEW_PORT_BASE. A second checkout — a worktree
  * an agent works in — runs its dev servers on `GRAVIEW_PORT_BASE + (port −
  * 5190)`, so two checkouts can run harnesses at once. A harness that wrote
  * its port into a URL drove the first checkout's server from the second,

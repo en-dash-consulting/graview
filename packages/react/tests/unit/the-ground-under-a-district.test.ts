@@ -57,7 +57,7 @@ describe("a district is a village", () => {
 
   it("keeps the square in the middle free and draws back to front", () => {
     const { buildings } = villageOf({ col: 10, row: 20, side: 2 }, ids(8));
-    // The middle cell of a 3×3 sub-lattice is (1,1): its centre is the plot's centre, and nobody stands there.
+    // The middle cell of a 3×3 sub-lattice is (1,1): its center is the plot's center, and nobody stands there.
     expect(buildings.some((b) => Math.abs(b.col - 11) < 1e-9 && Math.abs(b.row - 21) < 1e-9)).toBe(false);
     for (let i = 1; i < buildings.length; i++) {
       expect(buildings[i]!.col + buildings[i]!.row).toBeGreaterThanOrEqual(buildings[i - 1]!.col + buildings[i - 1]!.row - 1e-9);
@@ -81,7 +81,7 @@ describe("a district is a village", () => {
   });
 });
 
-describe("a road runs kerb to kerb", () => {
+describe("a road runs curb to curb", () => {
   const city = { cell: 40, originX: 500, originY: 300 };
   const pan = { x: 0, y: 0 };
 
@@ -92,14 +92,14 @@ describe("a road runs kerb to kerb", () => {
     expect(back.row).toBeCloseTo(3, 6);
   });
 
-  it("starts at one plot's kerb and ends at the other's, not at their centres", () => {
+  it("starts at one plot's curb and ends at the other's, not at their centers", () => {
     const a = { col: 0, row: 0, side: 2 };
     const b = { col: 10, row: 0, side: 2 };
     const road = roadBetween(a, b, city, pan);
     expect(road.length).toBeGreaterThanOrEqual(2);
     const first = toLattice(road[0]!, city, pan);
     const last = toLattice(road[road.length - 1]!, city, pan);
-    // The road leaves a across its front kerb (row 2) and enters b across its near kerb (col 10).
+    // The road leaves a across its front curb (row 2) and enters b across its near curb (col 10).
     expect(first.row).toBeCloseTo(2, 1);
     expect(last.col).toBeCloseTo(10, 1);
   });

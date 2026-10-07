@@ -11,7 +11,7 @@ import { argShape } from "../../src/mutations/node-ref.js";
  *   "level": { "type": "integer", "min": 1, "max": 5 }
  *
  * The range is the field's, so everything that asks for or takes the
- * field honours it: a form's control (min, max, step), an agent's tool
+ * field honors it: a form's control (min, max, step), an agent's tool
  * (minimum, maximum, multipleOf), and the store, which refuses a value
  * outside it as invalid. The check says when a default is outside it; an
  * edit op says it; a diff and a migration read it.

@@ -46,7 +46,7 @@ Counts are primary / also.
 | `data-shape-not-in-fixtures` | Correct on tame data and wrong on real data: empty, accented, duplicate, case, long, sharing a prefix, minted ids, real size — where no visible rule names the symptom | the gauntlet's data | 9 / 40 |
 | `round-trip-loses-something` | Something true before a step is lost or stale after it: written as JSON, reloaded, written back by the studio, remounted, or removed from under the stop that named it | the gauntlet through the studio's round trip (`the-round-trip-keeps-the-checkouts-words.test.ts`) and `pnpm verify remember`, and the watch failing on a page error or an address that resolves to nothing — none yet on the gauntlet | 12 / 1 |
 | `what-a-project-copies-is-wrong` | What a project starts from or copies — the scaffold's output, a skill's code or prose, a worked example, a generic type — does not compile, does not run, needs a cast, or teaches the defect | `skills.test.ts`, `scaffold.test.ts` (every generated file parses) and `pnpm smoke:create`; nothing compiles and runs a skill's code blocks against the gauntlet — none yet | 14 / 12 |
-| `accessibility-tree-wrong` | What assistive technology reads is wrong: a heading skipped or missing, a landmark missing, doubled or named twice, invalid nesting, a group with no name — or emphasis or a problem that is only a colour | the watch's axe pass, with audit-ui's `halfSaid` and "a problem painted but not said" | 13 / 1 |
+| `accessibility-tree-wrong` | What assistive technology reads is wrong: a heading skipped or missing, a landmark missing, doubled or named twice, invalid nesting, a group with no name — or emphasis or a problem that is only a color | the watch's axe pass, with audit-ui's `halfSaid` and "a problem painted but not said" | 13 / 1 |
 | `says-something-untrue` | A picture, count, caption, hint, search or sentence states what the graph and the declaration do not: a lens dropping or inventing members, "holds" above a violation, a promise with nothing under it, another seat's work called "you" | none yet — needs one: the gauntlet's lenses, counts and chat answers checked against the graph | 16 / 6 |
 | `no-way-to-do-a-job` | A job the declaration plainly implies has no control on any face, so it cannot be done at all — not refused, not hidden, simply never derived: a list narrowed by a number or by a word field's values | the journeys, one job per shape the declaration has (`narrow` since the seventh walk); a job they do not derive is the hole | 1 / 0 |
 | `shown-what-is-not-theirs` | A seat is shown a record the declaration does not let it see — another customer's name, email or question — on any surface: a page, a card, a count, a picker, Find, the history, a problem | the watch: no screen shows the name or address of a record the seat at the keyboard may not see (`shown-what-is-not-theirs`); the gauntlet keeps its staff from its visitor | 2 / 1 |
@@ -146,7 +146,7 @@ at the end of every stage.
 - class: machine-words-shown
 - expected: the accessibility tree names every card — the card that reads
   "Buy milk" is called "Buy milk"
-- actual: every view host is a `role="group"`, and a record's was labelled
+- actual: every view host is a `role="group"`, and a record's was labeled
   with its node id: `aria-label="item:buy-milk"`. Districts were right (their
   plural); records were the identifier. axe is silent about this — the card
   IS named, just not with a name — so nothing caught it.
@@ -162,7 +162,7 @@ at the end of every stage.
 - stage: A · face: scene · width: 1280 · scheme: both
 - class: machine-words-shown (also: faces-disagree)
 - expected: one act reads the same way on both faces
-- actual: the strip's ask labelled its field `label` (aria-label and
+- actual: the strip's ask labeled its field `label` (aria-label and
   placeholder both the raw identifier), and an editor opened in place was
   named `label` too, while the same act on `/pages` said "Label". A second
   kind's `dependsOn` would have read `dependsOn` on one face and "Depends on"
@@ -278,7 +278,7 @@ at the end of every stage.
   it
 - status: fixed in "walkthrough: B · a relation's caption is an h2" ·
   criterion added: audit-ui `headings` (any jump of more than one level).
-  Verified failing without the fix: `?? todo/travelled  headings skip a
+  Verified failing without the fix: `?? todo/traveled  headings skip a
   level: h1 → h4 at "why this is here"`. A heading is counted whether or not
   it is painted — the shell's h1 is clipped to a pixel on purpose, and
   measuring its box was what hid the jump on the first attempt.
@@ -375,7 +375,7 @@ at the end of every stage.
   `"#focus=t-deposit&overview=1&expand=kind%3Atask"`-shaped and the verdict
   read false.
 
-### W-014 · Half a lens's emphasis exists only as a colour
+### W-014 · Half a lens's emphasis exists only as a color
 - stage: D · face: scene · width: 1280 and 390 · scheme: both
 - class: accessibility-tree-wrong
 - expected: every mark the lens draws is a pick target; selection lights it
@@ -601,7 +601,7 @@ at the end of every stage.
 - expected: nothing is hidden and nothing refuses on press; a seat the policy
   refuses says so
 - actual: with the narrower seat at the keyboard, the starter seat was
-  disabled and labelled "There is something here already" — its idle text,
+  disabled and labeled "There is something here already" — its idle text,
   which is a different answer to a different question. The real reason ("Not
   yours to do from this seat. The store refuses add-item…") was in a `title`
   on the DISABLED button, unreachable from a keyboard and needing a hover
@@ -641,7 +641,7 @@ at the end of every stage.
   `packages/core/tests/unit/op-log.test.ts` had no mutation that clears a
   field
 - status: fixed in "walkthrough: G · remove this field, said out loud" ·
-  `UNSET` is the instruction as a value, normalised in on the way into every
+  `UNSET` is the instruction as a value, normalized in on the way into every
   operation. Criteria added: ship "keeps its inverse through JSON, which
   cannot carry undefined" (fails without the fix: `expected ['beds'] to
   deeply equal ['beds','size']`) and core "keeps a cleared field's
@@ -763,7 +763,7 @@ at the end of every stage.
 - expected: nothing in either embed escapes its box, and chrome does not sit
   on content
 - actual: the strip is placed as a left rail 236 wide at x=14, sized for the
-  gutter beside a centred focus on a wide screen. In a 350-wide embed there
+  gutter beside a centered focus on a wide screen. In a 350-wide embed there
   is no gutter: measured, the pane covered 85% of the very card it was about
   (22375 of 26320 square pixels), and a click meant for the picture landed on
   "Close it". Docking it to the bottom instead moved the problem: from
@@ -818,7 +818,7 @@ at the end of every stage.
 - where it belongs: `scripts/audit-ui.mjs`
 - status: fixed in "walkthrough: I · one narrow screen" · a state may now ask
   for its own window, and `seedbed/narrow` is 390×620 with a record
-  travelled into. Verified: with the rail forced back to its wide placement
+  traveled into. Verified: with the rail forced back to its wide placement
   the screen reads `?? seedbed/narrow  strip covers 1`, and clean with the
   fix.
 
@@ -849,7 +849,7 @@ The shapes that came up again, and the new ones:
   refused (W-047).
 - **A machine's words in front of a person.** The validator's issue JSON in
   the activity rail (W-049), a bare list of candidate names with no question
-  over it (W-039), an act labelled from the wrong end of its tie (W-040).
+  over it (W-039), an act labeled from the wrong end of its tie (W-040).
 - **Chrome that does not fit.** The command bar off the edge of a phone with
   undo inside it (W-037), and the ring collapsing onto itself in the shorter
   scene that fix produced (W-038).
@@ -904,7 +904,7 @@ The shapes that came up again, and the new ones:
   criterion covered the scaffold's output only
 - status: fixed in "walkthrough: A · six sentences the framework writes
   about a kind" · all six go through `withArticle`, and the multi-kind
-  variant humanises each kind. Criterion added:
+  variant humanizes each kind. Criterion added:
   `packages/tools/tests/unit/says-the-kind.test.ts` — a vowel-initial kind
   and a hyphenated one, checking the act's reason, the selection's reason
   and the chat's sentence, plus a source guard that fails on any
@@ -1095,13 +1095,13 @@ The shapes that came up again, and the new ones:
   the question is a named group over the candidates (`role="group"`,
   `aria-labelledby`), each candidate carries it in its own accessible name
   ("Owner: Ana"), and every place the parameter is named goes through
-  `humaniseField`. A single text field still names itself and is not given a
+  `humanizeField`. A single text field still names itself and is not given a
   heading saying the same word again. Criterion added:
   `packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx` — three
   cases over both branches. Verified failing without the fix: the group is
   absent and the counter reads "label · 1 of 2".
 
-### W-040 · An act offered on the far end of its tie is labelled from the near end
+### W-040 · An act offered on the far end of its tie is labeled from the near end
 - stage: B · face: both · width: any · scheme: both
 - class: wrong-end-of-a-relation
 - expected: a control that changes the graph says what pressing it would do,
@@ -1109,7 +1109,7 @@ The shapes that came up again, and the new ones:
 - actual: an act declaring `connects` or `severs` is offered from EITHER
   endpoint — that is deliberate and right, "take this one off the run" is
   the natural thing to say standing on the person. The button there was
-  labelled `mutation.title`, which is written from the SUBJECT's side. On the
+  labeled `mutation.title`, which is written from the SUBJECT's side. On the
   owner's record and in the owner's strip, "Hand it to someone" reads as
   handing the owner to someone. The framework's own two example apps had it
   too, found the moment the check existed: todo offered "Move it to another
@@ -1145,11 +1145,11 @@ The shapes that came up again, and the new ones:
   its pages record — marked, not tinted
 - actual: the district's chips get "⚠" in their own label and the routed
   record page carries the rule's sentence. The FOCUSED record — the biggest
-  drawing of the same thing, the one you travelled to — was drawn on the
+  drawing of the same thing, the one you traveled to — was drawn on the
   warning ground and said nothing else: measured, the only difference between
   a broken record and a whole one was `rgb(253, 244, 234)` against
   `rgb(255, 255, 255)`. No words, no mark, nothing in the accessibility tree.
-  W-014's shape ("half a lens's emphasis exists only as a colour") one view
+  W-014's shape ("half a lens's emphasis exists only as a color") one view
   along. The framework's own todo app had it too, in its own `TaskView`.
 - where it belongs: `packages/primitives/src/primitives/index.tsx` (the
   `Panel` that carries the tone) and
@@ -1159,7 +1159,7 @@ The shapes that came up again, and the new ones:
   for exactly this class — emphasis painted and not said — and it only ever
   looked at `data-graview-emphasis`, which is the lens's claim, not the
   rule's
-- status: fixed in "walkthrough: C · a problem that is only a colour" ·
+- status: fixed in "walkthrough: C · a problem that is only a color" ·
   `Panel` carries the mark with the tone — a visible ⚠ beside the title and a
   sentence in the accessibility tree — so every view that draws a flagged
   record inherits it, including an app's own, because a contract only some
@@ -1169,7 +1169,7 @@ The shapes that came up again, and the new ones:
   count of what is broken rather than from the shade, and comparing against
   the theme's warning ground specifically — "not the default ground" catches
   every muted card in the app and says nothing about problems. Verified
-  failing without the fix, naming `t-deposit` in `todo/travelled`.
+  failing without the fix, naming `t-deposit` in `todo/traveled`.
 
 ### W-042 · A lens built from the framework's own primitives cannot say what it lights
 - stage: D · face: scene · width: any · scheme: both
@@ -1181,7 +1181,7 @@ The shapes that came up again, and the new ones:
   its emphasis, and neither has `Roster`, whose `pick` makes every chip a
   target. The three shipped lenses all say it on elements of their own, so
   nothing had noticed. Writing Walk's own lens, the natural primitive for "a
-  list of nodes" produced pick targets emphasised by opacity alone — a claim
+  list of nodes" produced pick targets emphasized by opacity alone — a claim
   about a picture that nothing can check: not a test, not `audit-ui`'s
   `halfSaid`, and not a person reading the tree. A contract only the
   framework's own views can keep is not a contract.
@@ -1238,10 +1238,10 @@ The shapes that came up again, and the new ones:
   of every app: 20 of 26 screens flagged, permanently. A count whose whole
   job is to make one real cut visible had twenty lines of noise in front of
   it. Noticed by adding a second instance of the idiom (W-041's "Implicated
-  in a problem"), which took `todo/travelled` from 1 to 2 — the first useful
+  in a problem"), which took `todo/traveled` from 1 to 2 — the first useful
   thing that count had said in a long time, and it was about my own sentence.
   The idiom was also written out longhand in two places, so there were two
-  shapes for one decision and nothing could recognise either.
+  shapes for one decision and nothing could recognize either.
 - where it belongs: `scripts/survey-ui.mjs`, and
   `packages/primitives/src/primitives/index.tsx` (the idiom, written once)
 - harness that should have caught it: the survey is the harness; its own
@@ -1308,7 +1308,7 @@ The shapes that came up again, and the new ones:
 - where it belongs: `packages/pages/src/pages.tsx`
 - harness that should have caught it: `audit-ui` measures exactly this and
   runs on the scene only; `pnpm pages` drives the routed face at phone width
-  and checked side-scroll, headings, link names and labelled inputs — never a
+  and checked side-scroll, headings, link names and labeled inputs — never a
   control's size
 - status: fixed in "walkthrough: E · a control on a page is a target too" ·
   `StartFreshLink` and `pageStyles.plain` both carry the 24px minimum, and
@@ -1400,7 +1400,7 @@ The shapes that came up again, and the new ones:
   validator's issues becomes `<Field in words>: <its own sentence>` — every
   issue already carries a readable message and the path it is about; nothing
   else in that object is for a person. Criteria extended: both tests now
-  assert the node's NAME, the field humanised, and that no issue object,
+  assert the node's NAME, the field humanized, and that no issue object,
   code or path appears. Verified failing without the fix.
 
 ### W-050 · The reader's own text size never reaches the app
@@ -1667,10 +1667,10 @@ The shapes, in the order of how much they cost:
   scaffold's own mutations do, and so does every example in
   `graview-node-kind` — so this is what the far end of every tie in every
   new project says. The routed face gets it right on the same act, and has
-  the rule written down in `formFields`: "A node picker is labelled by what
+  the rule written down in `formFields`: "A node picker is labeled by what
   it PICKS — 'List', not 'List id': the argument's name is an implementation
   detail, and the kinds it accepts are the declaration's own word for the
-  thing." The strip had `humaniseField(parameter.name)` and nothing else.
+  thing." The strip had `humanizeField(parameter.name)` and nothing else.
 - where it belongs: `packages/primitives/src/workbench/index.tsx`
   (`AnswerArgs`)
 - harness that should have caught it: W-039's own criterion,
@@ -1680,7 +1680,7 @@ The shapes, in the order of how much they cost:
   word, so it could not tell which of the two was being read
 - status: fixed in "walkthrough: B · a picker named by what it picks" · a
   parameter that names node kinds is asked for by those kinds, exactly as
-  the routed face does it; anything else is still the humanised argument.
+  the routed face does it; anything else is still the humanized argument.
   Criterion added to the same file: "names a node picker by what it picks,
   never by the argument" — the act pressed from the far end, where the open
   argument is `id` and the kinds are `item`. Verified failing without the
@@ -1736,7 +1736,7 @@ The shapes, in the order of how much they cost:
   seat and then reads the rail — for the signature on the ops and for the
   seat's own label, never for the call rows between them
 - status: fixed in "walkthrough: C · what the agent did, in the act's own
-  words" · the declared mutation's `title`, falling back to the humanised
+  words" · the declared mutation's `title`, falling back to the humanized
   name for a read tool that is not a mutation. Criterion added to
   `verify-seat`: "the rail says what the act is called, not what it is
   registered as" — every call row must begin with a capital and carry no
@@ -1792,7 +1792,7 @@ The shapes, in the order of how much they cost:
   `data-graview-pick` and only one of them said anything: the slot's disc.
   The NAMES under a slot holding several occupants (each its own target
   since the fan-out fix), the bench's chips ("Not in"), and every row of the
-  key that names the flagged slots were all emphasised by opacity alone.
+  key that names the flagged slots were all emphasized by opacity alone.
   `audit-ui`'s `halfSaid` reports `aggregate:plot: 1 of 2 marks` the moment
   a screen is taken at the lens — which is a claim about a picture that
   nothing could check, in the framework's own worked example of the
@@ -1800,7 +1800,7 @@ The shapes, in the order of how much they cost:
 - where it belongs: `packages/primitives/src/lens/board.tsx`
 - harness that should have caught it: `scripts/audit-ui.mjs`'s `halfSaid`,
   which exists for exactly this and has since W-014. Every state it takes
-  reached a picture by focusing a group or travelling; not one of them was
+  reached a picture by focusing a group or traveling; not one of them was
   AT a lens, so the two lenses registered with a title — what
   `graview-lens` tells an app to write — had never been on a screen it
   measured.
@@ -2307,7 +2307,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 ### W-075 · The chat captions a relation from the wrong end
 - stage: C · face: scene (the chat) · width: any · scheme: both
 - class: wrong-end-of-a-relation (also: faces-disagree)
-- expected: "the caption over a neighbour must be the focus's reading" —
+- expected: "the caption over a neighbor must be the focus's reading" —
   the chat's account of a node reads each tie from the end that node is at
 - actual: "what is Ada Nowak seeing to?" → `Ada Nowak — a person. who is
   seeing to it: Pay the deposit.` — the ITEM's caption in the person's
@@ -2386,7 +2386,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 - stage: B (the studio) · face: neither — the declaration
 - class: round-trip-loses-something
 - expected: a rule the checkout judges goes on judging, or the file says
-  plainly that it cannot write the judgement
+  plainly that it cannot write the judgment
 - actual: `invariants.ts` came back with `evaluate() { return []; }` for
   `closed-in-order` and `every-item-handled` — both rules the checkout
   wrote, both now holding on every graph — under a header comment reading
@@ -2413,7 +2413,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
   files it wrote"). Criterion: written-back asserts `kept` on both files,
   the kept label, the loud failure before the bodies are back, and a
   running checkout after. Verified failing without the fix (`expected
-  undefined to deeply equal ['labelled-things: evaluate']`). In Walk: the
+  undefined to deeply equal ['labeled-things: evaluate']`). In Walk: the
   regenerated copy fails loudly naming both rules and every act, and
   verifies clean once their bodies are put back where the files say.
 
@@ -2612,12 +2612,12 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
   the keyboard, and names the other seat", and `whose-work.test.tsx` on the
   routed face's home for both seats. Verified failing without the fix.
 
-### W-086 · A rule's neighbourhood is every task, twelve to a row, while its card says nothing is connected
+### W-086 · A rule's neighborhood is every task, twelve to a row, while its card says nothing is connected
 - stage: B/C · face: scene · width: 1280 · scheme: light · found by Nick in the todo app at `#focus=rule-order&relation=task&zoom=1`
 - class: layout-collision-or-overflow (also: says-something-untrue, data-shape-not-in-fixtures)
 - expected: focusing a rule and raising Tasks shows the tasks the rule finds
   wrong, captioned as such, with the card's connections agreeing; a band of
-  many neighbours stays readable
+  many neighbors stays readable
 - actual: a rule has no edges, so a named relation fell through to "raise
   the kind wholesale": all twelve tasks in one row, each in a slot 57 pixels
   wide under a chip 150 wide — overlapping labels, and the depends-on lines
@@ -2629,10 +2629,10 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 - harness that should have caught it: `audit-ui` measures same-plane card
   collisions, but no todo state ever focused a rule or raised a crowd; every
   raised state had three chips or fewer
-- status: fixed in "a rule's neighbourhood is what it finds wrong, and a crowd wraps" ·
+- status: fixed in "a rule's neighborhood is what it finds wrong, and a crowd wraps" ·
   the layout takes `judged` (subject → the ids its violations name, supplied
   by the scene from `store.violations()`) and draws them as the focus's
-  neighbourhood captioned "what it finds wrong", filtered by a named kind
+  neighborhood captioned "what it finds wrong", filtered by a named kind
   like an edge would be; the band never gives a slot less than three
   quarters of a relation card's width and wraps into rows past that; the
   connections panel lists what a node finds wrong as a group. Criteria:
@@ -2665,7 +2665,7 @@ alone in Firefox was 15 of 15 clean and every later engines run held.
 - actual: W-088's rule fired for a band card too — a list card at summary draws its tasks as chips, so "the far end is drawn inside the near host" silenced every line but the ones the card hid, and the picture read as one task linked to Today until Today was selected and its lines lit. A moment on the timeline was a dot and a time, so a calendar of moments — which a to-do list mostly is — read as a column of times. The example's Today list held tasks planned on Monday and Tuesday with today a Tuesday. And three someday tasks with no time were one line from their list into the middle of the week, anchored on the panel because the calendar drew none of them.
 - where it belongs: `packages/react/src/scene.tsx` (the strands), `packages/primitives/src/lens/timeline.tsx` (the moment), `apps/todo/src/data/example.json`
 - harness that should have caught it: `verify-navigation` had the lists-in-focus stop (W-088) but not the week-in-focus one; the timeline's test asserted a moment's time and never its name
-- status: fixed in "the focus that draws both ends has drawn the relation; a moment has a name" · only the FOCUS restating a relation silences a line, a band card summarising its members does not; a line to a member the focus's view does not draw is not drawn; a moment carries its name between its time and its dot, cut with an ellipsis before the time gives way; Today's tasks are on Tuesday. Criteria: verify-navigation `aCardsChipsDoNotSilenceItsLines` (nine entries on the week, at least nine lines), primitives timeline test asserts the moment's name.
+- status: fixed in "the focus that draws both ends has drawn the relation; a moment has a name" · only the FOCUS restating a relation silences a line, a band card summarizing its members does not; a line to a member the focus's view does not draw is not drawn; a moment carries its name between its time and its dot, cut with an ellipsis before the time gives way; Today's tasks are on Tuesday. Criteria: verify-navigation `aCardsChipsDoNotSilenceItsLines` (nine entries on the week, at least nine lines), primitives timeline test asserts the moment's name.
 
 ## The fifth walk — a Discography (2026-09-28)
 
@@ -2767,8 +2767,8 @@ two singles and thirty-five songs.
   left rail, left of the right one
 - actual: with five kinds (songs, albums, artists, themes, eras) the Eras
   district stood at x=241 with the rail ending at 264; its nameplate read
-  "RAS 1". The city is centred on its lattice's bounding diamond, and the
-  cards are centred on their plots, which do not fill it; once the city grew
+  "RAS 1". The city is centered on its lattice's bounding diamond, and the
+  cards are centered on their plots, which do not fill it; once the city grew
   to give every name its ground it was exactly as wide as the room and 25px
   left of it. The "how much is off the edge" measure counted a card under
   the rail as seen, so nothing tried to move it.
@@ -2797,27 +2797,27 @@ two singles and thirty-five songs.
   first row. A caption was a run of CONSECUTIVE nodes in the frame, and the
   frame is sorted by id, so After Midnight (featured), Blue Hour (produced),
   Rent Is Due (featured) made three runs. Keyed by edge kind alone, the two
-  "features" captions shared a React key; after travelling to the album
+  "features" captions shared a React key; after traveling to the album
   "Blue Hour", five stale "THEIR SONGS" captions from the artist stayed on
   top of the album's cards for as long as it was open. A narrow run
-  borrowed 300px whatever stood beside it, so neighbouring captions lay
+  borrowed 300px whatever stood beside it, so neighboring captions lay
   across each other, clamped to the stage rather than the rails.
 - where it belongs: `packages/react/src/scene-lines.tsx`
   (`RelationCaptions`), now placing through `packages/react/src/captions.ts`
-- harness that should have caught it: nothing captioned a neighbourhood with
-  two relations whose members interleave by id; todo's neighbourhoods are
+- harness that should have caught it: nothing captioned a neighborhood with
+  two relations whose members interleave by id; todo's neighborhoods are
   one relation each
 - status: fixed in "walkthrough: B · a relation is captioned once" · entries
   are grouped by relation and end (`edgeKind|direction`) whatever their
   order, each captioned once over the first row it stands in, borrowing at
-  most half the gutter to each neighbour and never past the rails; keys are
+  most half the gutter to each neighbor and never past the rails; keys are
   unique. Criteria: react `a-relation-is-captioned-once.test.ts` (one
-  caption per relation however sorted; spans its first row; neighbours
+  caption per relation however sorted; spans its first row; neighbors
   never overlap; out from under the rail) and verify-navigation
   `everyRelationIsCaptionedOnce` at every stop it walks. A first cut of the
   fix split every gutter in half and so cut "THE ARTIST WHOSE SONG I…"
-  between two short neighbours; a caption now borrows as far as its
-  neighbours' own words do not reach ("a long caption beside short ones").
+  between two short neighbors; a caption now borrows as far as its
+  neighbors' own words do not reach ("a long caption beside short ones").
 
 ### W-096 · A song's card reads "8 · 4:27 · Yes"
 - stage: B · face: both · width: any · scheme: both
@@ -3361,7 +3361,7 @@ two singles and thirty-five songs.
   card is a frame holding the inert picture and its name, and the press is
   a button laid over the whole card (`graview-drive-in-thumb-press`).
   Criterion: `the-drive-in-marquee.test.tsx` with a lens that has a button
-  of its own: no `button button`, and the presses are labelled (verified
+  of its own: no `button button`, and the presses are labeled (verified
   failing without the fix); verify-navigation reads the presses by class.
   With the picture no longer inside a button, `survey`'s "unnamed controls"
   counted the inert thumbnail's own search field (named by its `<label>`,
@@ -3374,7 +3374,7 @@ two singles and thirty-five songs.
 - expected: "nothing in either embed escapes its box: menus, inspector,
   popovers"
 - actual: the profile pane hangs from its button's right edge and is 280
-  wide. On the embed's strip the button sits left of centre, so at 1280 the
+  wide. On the embed's strip the button sits left of center, so at 1280 the
   pane ran from x=149 with the embed starting at 288, and at 390 it began at
   x=−119; it also ran 150px below the embed's bottom. The embed's root is
   `overflow: hidden`, so the text-size and motion settings were cut in half.
@@ -3417,7 +3417,7 @@ two singles and thirty-five songs.
   a place's page and the ask at 390, the arrange bar's sort, group and
   filter selects measured 188×22, 355×22 and 313×22. WebKit draws a native
   select at its own height and ignores the `min-height: 32` the bar gives
-  it; Chromium and Firefox honour it. The pages' own pickers learned this in
+  it; Chromium and Firefox honor it. The pages' own pickers learned this in
   the third walk (W-067, `appearance: none`); the arrange bar, written after,
   did not, and the only harness that measures it in WebKit is the engines
   run nobody had run since.
@@ -3426,14 +3426,14 @@ two singles and thirty-five songs.
   does — in WebKit, through `pnpm engines`
 - status: fixed in "walkthrough: I · an arranging select keeps its floor in
   WebKit" · the bar's selects drop the native appearance, so the floor
-  holds, with the chevron drawn in the text's colour. Criterion: the
+  holds, with the chevron drawn in the text's color. Criterion: the
   existing `verify-pages --engine=webkit` (`bigEnoughToHit` empty; failing
   before the fix with the three selects above), run by `pnpm engines`.
 
-### W-122 · A coverage over a real catalogue never finishes drawing
+### W-122 · A coverage over a real catalog never finishes drawing
 - stage: D (after the walk, on real data) · face: scene · width: 1440 · scheme: light
 - class: data-shape-not-in-fixtures
-- expected: the Discography opens on Tech N9ne's real catalogue — 1,177 songs,
+- expected: the Discography opens on Tech N9ne's real catalog — 1,177 songs,
   568 artists, 479 releases from MusicBrainz — as it did on the fixture
 - actual: the page's main thread never yielded; the "who worked with whom"
   coverage (artists by artists) drew every cell, 568 × 568, a third of a
@@ -3591,7 +3591,7 @@ vehicles, dozens of customers and deals.
 - harness that should have caught it: `the-key-stays-in-its-rail.test.tsx`
   measured the key's width, never read what it says
 - status: fixed in "walkthrough: B · the key says what a line means" · each
-  row reads the declaration's description, capitalised, over the kinds it
+  row reads the declaration's description, capitalized, over the kinds it
   runs between in their plurals ("Deals → Vehicles"); `relationWords`
   exported. Criterion: `the-key-stays-in-its-rail.test.tsx` "names a
   relation in its declaration's words and its two ends, never by the edge's
@@ -3626,7 +3626,7 @@ vehicles, dozens of customers and deals.
 - actual: the kind is `staff`, plural "Staff" — the dealership's word — and
   the only singular a declaration could give was the id. The strip offered
   "Change the staff …" and "Remove the staff" on Mei Lin Chow; the routed
-  face's picker was labelled "Staff", search said "a staff called …", the
+  face's picker was labeled "Staff", search said "a staff called …", the
   chat "Mei Lin Chow — a staff". Every domain with a mass noun meets it:
   staff, equipment, inventory, personnel, livestock.
 - where it belongs: `packages/core/src/schema` (`noun`, `nounOf`),
@@ -3674,7 +3674,7 @@ vehicles, dozens of customers and deals.
   the edge kind" — a selected line says what it means
 - actual: select the line from Priya Raman to North lot: the menu reads
   "Works at · relation · where they work · Priya Raman → North lot". The
-  heading was `humaniseField(edge.kind)`. On this domain that reads "For
+  heading was `humanizeField(edge.kind)`. On this domain that reads "For
   vehicle", "Takes in", "Drives", "Services" — the source's names for
   relations whose words the declaration gives. The sentence under the
   heading then restated the description.
@@ -3683,7 +3683,7 @@ vehicles, dozens of customers and deals.
 - harness that should have caught it: none reads the heading of a selected
   line; `verify-menu` checks the line's acts
 - status: fixed in "walkthrough: B · a line is named in its words" · a
-  line's name is its description, capitalised (`relationWords`); the line
+  line's name is its description, capitalized (`relationWords`); the line
   under it is the other end's reading ("From North lot: who works here").
   Criterion: `a-line-is-named-in-its-words.test.ts` (verified failing
   without the fix: `expected 'Works at' to be 'Where they work'`);
@@ -3879,7 +3879,7 @@ vehicles, dozens of customers and deals.
 - harness that should have caught it: `conversation.test.ts`'s fixtures
   are lower-case words and unique names
 - status: fixed in "walkthrough: C · the chat on a real lot" · a fact's
-  label is lower-cased, never its value, and a bare value is labelled
+  label is lower-cased, never its value, and a bare value is labeled
   ("make Tesla", "phone (555) 298-1878"); a found list tells two of one
   name apart and says each kind by its noun; a name several records share
   is not taken as one referent — the words find them all. Criterion:
@@ -4059,7 +4059,7 @@ vehicles, dozens of customers and deals.
   "the log says the button, not the act"), and so does the seat
 - actual: change the Tesla's price in place: the card reads "Price
   $49,900" and Activity reads "you Change 2026 Tesla Model Y Performance:
-  price → 49900" — the derived edit's `describe` wrote the humanised field
+  price → 49900" — the derived edit's `describe` wrote the humanized field
   name and `JSON.stringify` of the value, past the declaration's own
   `display.labels` and `display.format` (a condition would have read
   `"cpo"`). The profile pane, open beside it, named the seat "Dana
@@ -4069,7 +4069,7 @@ vehicles, dozens of customers and deals.
 - harness that should have caught it: `verify-remember` reloads and reads
   that the edit is in the log, not what the log says
 - status: fixed in "walkthrough: G · a change in the record's words" · the
-  change is said with the field's label and format; roles are humanised.
+  change is said with the field's label and format; roles are humanized.
   Criteria: core `a-change-in-the-records-words.test.ts` and `shell.test.tsx`
   "names the seat's roles in words, never their ids" (both verified failing
   without the fix). The edit survived the reload; the rail said
@@ -4079,7 +4079,7 @@ vehicles, dozens of customers and deals.
 - stage: H · face: embed · width: 1280 and 390 · scheme: dark
 - class: accessibility-tree-wrong
 - expected: "two embeds have two landmark names" — and each is said once
-- actual: the second embed is labelled "The pipeline" and opens on the
+- actual: the second embed is labeled "The pipeline" and opens on the
   pipeline lens, whose panel scroll region is named by its title, "The
   pipeline". The embed prefixes every landmark inside with its own label,
   so the region was announced as "The pipeline · The pipeline".
@@ -4157,7 +4157,7 @@ vehicles, dozens of customers and deals.
 
 The seventh walk took the other side of the sixth's lot: what a member of
 the public uses. Vehicles to browse and filter by make, model, trim, year,
-price, mileage, body style, colour and condition; a car's own page; a
+price, mileage, body style, color and condition; a car's own page; a
 shortlist; test drives booked at a location and a slot; trade-in valuations;
 finance and lease enquiries; questions to the store; offers and reviews —
 with an anonymous shopper, a signed-in shopper and the store's staff as
@@ -4210,7 +4210,7 @@ built and passed its tests (244 files, 1730 tests).
 - impact: costs a job — "make a car" and "sign up": every field of the form is named by its argument's key and every choice by its raw value, and a mistyped email is answered with the act's id and the field's key; the journeys could not finish "Making a shopper" in any of eight ways
 - class: machine-words-shown (also: faces-disagree)
 - expected: a form asks in the words the record it makes will show: "VIN", "Body style", "SUV", "Plug-in hybrid", a shopper's "Name"; and says what was wrong in those words
-- actual: the routed form and the scene's ask both humanised the argument's key ("Vin", "Body", "Label") and printed a choice's raw value ("suv", "plug-in-hybrid", "approved"), while the car's own page, one press later, said "VIN", "Body style", "SUV", "Approved used" from the kind's `display`. A refused argument showed `Invalid arguments for mutation "sign-up" email: Invalid email address`. The watch caught the last of these; it had no way to catch the rest — a choice value was never one of the names it learned, and a single humanised word ("Vin", "suv") passes for prose
+- actual: the routed form and the scene's ask both humanized the argument's key ("Vin", "Body", "Label") and printed a choice's raw value ("suv", "plug-in-hybrid", "approved"), while the car's own page, one press later, said "VIN", "Body style", "SUV", "Approved used" from the kind's `display`. A refused argument showed `Invalid arguments for mutation "sign-up" email: Invalid email address`. The watch caught the last of these; it had no way to catch the rest — a choice value was never one of the names it learned, and a single humanized word ("Vin", "suv") passes for prose
 - where it belongs: `packages/core/src/mutations/words.ts` (new: `argumentWords`, `failureWords`, `InvalidArguments`), `packages/pages/src/form.tsx`, `packages/primitives/src/workbench/answer-args.tsx`, `inspector.tsx`, `packages/pages/src/page-problems.tsx`; the watch: `packages/core/src/watched.ts`, `scripts/lib/watch.mjs`
 - harness that should have caught it: the watch's `machine-words-shown`, which learned kinds, fields, edges, acts and roles but no choice values, and matched only identifiers with a hyphen, colon or capital inside
 - status: fixed in "walkthrough: B · a form asks in the record's words" · the watch now learns every choice value as a name, and the key's own words wherever the declaration says otherwise, caught where they are all a label or an option says. Criteria: `verify-watch` `aKeysOwnWordsAreCaught` and `aWordInASentenceIsNotAKey`; `packages/pages/tests/unit/a-form-asks-in-the-records-words.test.tsx` (the form's two cases verified failing without the fix). The widened rule then caught a cousin on every list page with a choice — the arrange bar's "Only…" filter offered "suv", "front-desk", "requested" — fixed in "A list's filter says a value as the record does" (`valueWords`; `a-filter-says-a-value-as-the-record-does.test.tsx`, verified failing without it)
@@ -4249,14 +4249,14 @@ built and passed its tests (244 files, 1730 tests).
 - stage: B (the shopper's side: browsing and filtering the stock) · face: pages and scene · width: 1280 and 390 · scheme: light
 - impact: blocks a job — "narrow the cars by price" (and by mileage, year or make): a shopper's first minute on any dealer's site, on neither face, in any way
 - class: no-way-to-do-a-job (new) (also: data-shape-not-in-fixtures)
-- expected: a list can be kept to the records at most or at least a number, and to the values a word field holds (a make, a colour), in the declaration's words: "Price: at most £25,000", "Make: Kia"
+- expected: a list can be kept to the records at most or at least a number, and to the values a word field holds (a make, a color), in the declaration's words: "Price: at most £25,000", "Make: Kia"
 - actual: the arrangement offered filters for a choice, a yes or no, a date, an edge and the standing — and nothing for a number or a word. A list of 301 cars could be sorted by price but never kept under one, and "Kia" only typed into the narrowing box, which matched any word. No class on the list fit: nothing was offered and refused, hidden, or untrue; the job had simply never been derived
 - where it belongs: `packages/core/src/arrange.ts` (offers and `conditionHolds`), `packages/primitives/src/arrange-bar.tsx` (round steps through what the list holds, a word field's values)
 - harness that should have caught it: the journeys, which derived seven jobs (make, find, change, relate, undo, repair, refused) and none that narrows a list
 - status: fixed in "walkthrough: B · a list narrows by a number and by a word" · numbers take `at-most:` and `at-least:` from four round steps through the list's spread; a word field with up to sixty values offers them by name. The class's check is the journeys' new `narrow` job, derived wherever a made kind has a number. Criteria: journeys `narrow` on walk7, done in all eight ways (verified "“Only…” offers no year to narrow the cars by" in all eight without the fix); `packages/core/tests/unit/a-number-and-a-word-narrow-a-list.test.ts`, `packages/primitives/tests/unit/a-list-narrows-by-price-and-make.test.tsx` (verified failing without it); `tests/journeys.test.ts` "narrowing a list"
 
 ### W-163 · Anybody who opens the showroom is shown every customer's name, email and finance question
-- stage: B (the policy, seen from the kerb) · face: pages and scene · width: 1280 and 390 · scheme: light
+- stage: B (the policy, seen from the curb) · face: pages and scene · width: 1280 and 390 · scheme: light
 - impact: blocks a job — the storefront cannot be put in front of the public at all: somebody browsing, signed in as nobody, read the home page's sixty-four shoppers with their email addresses, every car's "The shoppers who shortlisted it", every finance and lease enquiry with its deposit and monthly payment, and every booked test drive; a signed-in shopper read everybody else's
 - class: shown-what-is-not-theirs (new) (also: data-shape-not-in-fixtures)
 - expected: the shop window — cars, showrooms, offers, reviews — is everybody's; a shopper, their test drives, trade-ins and questions are theirs and the store's
@@ -4290,7 +4290,7 @@ built and passed its tests (244 files, 1730 tests).
 - impact: cosmetic — a hole in a known class's check: over the list of cars, six relations named by their edges' keys
 - class: machine-words-shown (also: wrong-end-of-a-relation)
 - expected: each relation in its own words from this end — "The showroom it is at", "The test drives booked in it" — as the record page and the arrange bar already say them
-- actual: the list page's relation row printed `humaniseField(edgeKind)` beside the far end's plural, and kept the words in a `title`; a list of one said the kind's id ("1 vehicle"). The watch caught neither: an edge name humanised is one or two plain words
+- actual: the list page's relation row printed `humanizeField(edgeKind)` beside the far end's plural, and kept the words in a `title`; a list of one said the kind's id ("1 vehicle"). The watch caught neither: an edge name humanized is one or two plain words
 - where it belongs: `packages/pages/src/page-list.tsx`; the watch: `packages/core/src/watched.ts`
 - harness that should have caught it: the watch's `machine-words-shown`
 - status: fixed in "walkthrough: B · a relation says its own words" · the watch is now told an edge's spoken name wherever the edge has words of its own, caught where it is all an element says (with the kinds' nouns and plurals counted as declared words). Criterion: `packages/pages/tests/unit/a-relation-says-its-own-words.test.tsx` (both cases verified failing without the fix)

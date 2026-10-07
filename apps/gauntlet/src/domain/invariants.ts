@@ -35,7 +35,7 @@ export const aWorkshopFitsItsRoom = defineInvariant("a-workshop-fits-its-room", 
   scope: { kind: "workshop" },
   repairs: ["hold-in", "edit-workshop"],
   evaluate({ graph, subject }): Violation[] {
-    if (subject.status === "cancelled") return [];
+    if (subject.status === "canceled") return [];
     return graph
       .out(subject.id, "held-in")
       .flatMap((room) => (room.kind === "room" && subject.capacity > room.seats ? [room] : []))

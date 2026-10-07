@@ -340,7 +340,7 @@ export function usePopover(name: PopoverName, options: PopoverOptions = {}): Pop
       if (pane?.contains(target) || triggerRef.current?.contains(target)) return;
       /*
        * A CONTROL IN HERE MAY OPEN SOMETHING BIGGER THAN HERE: the studio is
-       * a dialog its button in the profile opens, portalled to the body, and
+       * a dialog its button in the profile opens, portaled to the body, and
        * a press inside it is not a press away from the pane that opened it.
        * A dialog the pane itself stands in (the studio's own seat) is not
        * that: a press elsewhere in it is away.

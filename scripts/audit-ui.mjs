@@ -104,11 +104,11 @@ const APPS = {
     // band arithmetic sat unseen: nothing ever measured a raised relation.
     raised: async (p) => { await p.click('[data-graview-view="kind:list"]'); },
     /*
-     * A RULE'S NEIGHBOURHOOD, and a CROWD in the band. A focused rule with
+     * A RULE'S NEIGHBORHOOD, and a CROWD in the band. A focused rule with
      * "Tasks" raised showed every task, twelve in slots 57 pixels wide under
      * chips 150 wide, while its card said nothing was connected. The first
      * state is what a rule judges; the second is a kind raised wholesale on
-     * a node with no edge or judgement of it, twelve chips that must wrap.
+     * a node with no edge or judgment of it, twelve chips that must wrap.
      */
     judged: async (p) => {
       await p.goto(`${at("todo")}/?theme=light&today=2026-09-01#focus=rule-order&relation=task&zoom=1`, { waitUntil: "load" });
@@ -138,10 +138,10 @@ const APPS = {
         window.__menuOpenedOn = "Redirect the post";
       });
     },
-    travelled: async (p) => { await p.dblclick('[data-graview-pick="t-deposit"]'); },
+    traveled: async (p) => { await p.dblclick('[data-graview-pick="t-deposit"]'); },
     /*
      * THE CITY WITH ITS FIGURES, at altitude. Every kind is drawn the same
-     * way without one — a coloured dot, a plural, an iso block — and a
+     * way without one — a colored dot, a plural, an iso block — and a
      * figure is what makes one of them a person and another a plot of
      * ground. Counted at both schemes, because the art is `currentColor`
      * and takes the scheme: a drawing that only reads in one is the fault
@@ -244,7 +244,7 @@ const APPS = {
       await p.waitForTimeout(900);
     },
     /* A shift nobody has taken, selected: the repair asks WHO rather than
-       choosing, which is the one thing an organiser would never forgive. */
+       choosing, which is the one thing an organizer would never forgive. */
     gap: async (p) => {
       await p.goto(`${at("rota")}/?theme=light&today=2026-09-14&fresh=1#focus=aggregate:shift&sel=s-fri-repair`, { waitUntil: "load" });
       await p.waitForFunction(() => "__rotaReady" in window, null, { timeout: 60_000 });
@@ -520,7 +520,7 @@ const audit = () => {
   }
 
   /*
-   * EMPHASIS THAT IS ONLY A COLOUR.
+   * EMPHASIS THAT IS ONLY A COLOR.
    *
    * A lens says what a selection lights with `data-graview-emphasis`, so the
    * claim is a fact rather than a shade. The coverage grid said it on its row
@@ -539,12 +539,12 @@ const audit = () => {
   }
 
   /*
-   * A PROBLEM THAT IS ONLY A COLOUR.
+   * A PROBLEM THAT IS ONLY A COLOR.
    *
    * The same rule as `halfSaid`, for the other claim a view makes with a
    * shade. A record implicated in a broken rule is drawn with the warning
    * tone — and the focused record, the biggest drawing of it and the one you
-   * travelled to, said nothing else: no words, no mark, nothing in the
+   * traveled to, said nothing else: no words, no mark, nothing in the
    * accessibility tree. The district's chips carry a "⚠" in their own label
    * and the routed record page carries the rule's sentence, so the scene was
    * the one place the problem existed purely as a tint.
@@ -782,7 +782,7 @@ const audit = () => {
     for (const v of views) {
       if (Number(v.dataset.graviewPlane) >= 2) continue;
       // The PANEL someone can see, not the band slot the layout allotted:
-      // a host is the full band with the view centred inside it, and the
+      // a host is the full band with the view centered inside it, and the
       // strip sitting on a slot's empty margin covers nothing.
       const inner = v.querySelector('[data-graview-primitive="panel"], .graview-kind-card') ?? v;
       const b = box(inner);

@@ -7,7 +7,7 @@ import { useEffect } from "react";
  * WHOLE contract: whatever surface the view is drawn on routes the gesture to
  * that node. Which surface is the part that was wrong — the rule lived inside
  * the scene's host, so a view lifted out into a full page kept its marks and
- * lost its behaviour. Every chip on it was a button-shaped thing that did
+ * lost its behavior. Every chip on it was a button-shaped thing that did
  * nothing, which is precisely the "I clicked it and nothing happened" the
  * marks exist to prevent.
  *

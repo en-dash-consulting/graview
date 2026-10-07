@@ -18,7 +18,7 @@ import {
  * request made from the app's origin. Matching text for `url(` misses
  * `u\72l(`, `url/**\/(`, a bad-url and an escaped at-keyword, so this is
  * the CSS Syntax Level 3 tokenizer, followed by its parser (rules, at-rules,
- * blocks, declarations, nesting), and the sanitiser works on what the
+ * blocks, declarations, nesting), and the sanitizer works on what the
  * browser would see: escapes decoded, comments gone, every function by its
  * real name. Nothing the view wrote reaches the page as it was written —
  * the output is made from the tokens again, with a comment between any two
@@ -522,7 +522,7 @@ function parse(css: string): ComponentValue[] {
   return out;
 }
 
-// ── serialisation ───────────────────────────────────────────────────────────
+// ── serialization ───────────────────────────────────────────────────────────
 
 /** CSSOM's "serialize an identifier". */
 export function serializeIdent(value: string): string {
@@ -669,7 +669,7 @@ export function serializeValues(values: readonly ComponentValue[]): string {
   return out;
 }
 
-// ── the sanitiser ───────────────────────────────────────────────────────────
+// ── the sanitizer ───────────────────────────────────────────────────────────
 
 /** Why part of a view's CSS was not kept. */
 export type CssRefusalReason =
@@ -710,7 +710,7 @@ const propertyName = (name: string) => lower(name);
  * A value as it may be drawn for `property`, or the reason it may not:
  * every function on the allowlist, every `url()` a fragment on a paint,
  * nothing unreadable. `var()` is wrapped in whitespace, so no browser that
- * substitutes by text can glue it to its neighbour.
+ * substitutes by text can glue it to its neighbor.
  */
 function judgeValue(property: string | undefined, values: readonly ComponentValue[], refuse: (refusal: CssRefusal) => void): ComponentValue[] | undefined {
   const out: ComponentValue[] = [];

@@ -1,6 +1,6 @@
 # Tech N9ne's discography, from MusicBrainz
 
-`src/data/seed.json` is Tech N9ne's real catalogue, built from
+`src/data/seed.json` is Tech N9ne's real catalog, built from
 [MusicBrainz](https://musicbrainz.org) (core data CC0), fetched 2026-09-29:
 
 - every release group credited to him (albums, EPs, compilations, mixtapes,

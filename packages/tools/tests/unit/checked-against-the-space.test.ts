@@ -8,7 +8,7 @@ import { across, inside, within } from "../../src/index.js";
  * inside another must be drawn inside it and a thing must be placed inside
  * the area it stands in. Nothing looked. A survey came back as seven
  * full-width bands stacked down the page, every one lying across its
- * neighbours, and the app accepted it line for line.
+ * neighbors, and the app accepted it line for line.
  */
 
 const band = (x: number, y: number, w: number, h: number) => [
@@ -29,7 +29,7 @@ describe("where a thing is", () => {
     /*
      * Ray casting decides a point exactly on an edge by which edge the ray
      * happens to cross, so one side of a shape reads in and the other out.
-     * That is the standard behaviour and it is fine for what this is for —
+     * That is the standard behavior and it is fine for what this is for —
      * a model's coordinates are never exactly on a line — but it is not a
      * thing to build on, so it is written down rather than asserted away.
      */

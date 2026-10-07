@@ -9,11 +9,11 @@ import { checkApp } from "../../src/check.js";
  * first that the heading did not already say. A shopper compares cars by
  * price and mileage, and had to open each one to read them (the seventh walk).
  */
-const fields = z.object({ vin: z.string(), year: z.number(), make: z.string(), model: z.string(), body: z.string(), colour: z.string(), price: z.number(), mileage: z.number() });
+const fields = z.object({ vin: z.string(), year: z.number(), make: z.string(), model: z.string(), body: z.string(), color: z.string(), price: z.number(), mileage: z.number() });
 const money = (value: unknown) => `£${Number(value).toLocaleString("en-GB")}`;
 const chosen = defineNode("car", { fields, plural: "Cars", label: (node) => `${node.year} ${node.make} ${node.model}`, display: { format: { price: money }, glance: ["price", "mileage", "body"] } });
 const unchosen = defineNode("van", { fields, plural: "Vans", label: (node) => `${node.year} ${node.make} ${node.model}` });
-const node = { id: "car:1", kind: "car", vin: "DRCD05TU2R88P6N6D", year: 2017, make: "Audi", model: "Q5", body: "SUV", colour: "Atlas Blue", price: 18995, mileage: 61000 };
+const node = { id: "car:1", kind: "car", vin: "DRCD05TU2R88P6N6D", year: 2017, make: "Audi", model: "Q5", body: "SUV", color: "Atlas Blue", price: 18995, mileage: 61000 };
 
 describe("a glance at a record", () => {
   it("says the fields the declaration chose for it, in its order", () => {

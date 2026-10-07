@@ -12,7 +12,7 @@ import { createStoreHandler, openRemote, seatHeaders, type RemoteStore } from ".
  * sight: an app's owners see everything) had the owner of a sighted app
  * refused in the browser for a record the room would have let them change.
  * `localApp` shapes the app the local store is built from — the first one
- * and every one `resolveApp` gives — so local judgement matches the host's.
+ * and every one `resolveApp` gives — so local judgment matches the host's.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string().min(1) }), plural: "Tasks", label: (node) => node.label });
 const rename = () =>

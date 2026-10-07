@@ -20,7 +20,7 @@ const dateTime = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "expected Y
 
 export const submitTalk = defineMutation("submit-talk", {
   title: "Submit a talk",
-  description: "Propose a talk to the programme, presented by the speaker who proposes it.",
+  description: "Propose a talk to the program, presented by the speaker who proposes it.",
   creates: ["talk"],
   input: z.object({
     title: z.string().min(1).max(160),
@@ -38,7 +38,7 @@ export const submitTalk = defineMutation("submit-talk", {
 
 export const acceptTalk = defineMutation("accept-talk", {
   title: "Accept it",
-  description: "Accept a submitted talk onto the programme.",
+  description: "Accept a submitted talk onto the program.",
   subject: { kinds: ["talk"], arg: "id" },
   writes: ["status"],
   input: z.object({ id: nodeRef(["talk"]) }),
@@ -50,7 +50,7 @@ export const acceptTalk = defineMutation("accept-talk", {
 
 export const rejectTalk = defineMutation("reject-talk", {
   title: "Turn it down",
-  description: "Turn a submitted talk down. It leaves the programme, never the record.",
+  description: "Turn a submitted talk down. It leaves the program, never the record.",
   subject: { kinds: ["talk"], arg: "id" },
   writes: ["status"],
   input: z.object({ id: nodeRef(["talk"]) }),
@@ -62,7 +62,7 @@ export const rejectTalk = defineMutation("reject-talk", {
 
 export const withdrawTalk = defineMutation("withdraw-talk", {
   title: "Withdraw it",
-  description: "Take a talk off the programme at the speaker's request.",
+  description: "Take a talk off the program at the speaker's request.",
   subject: { kinds: ["talk"], arg: "id" },
   writes: ["status"],
   input: z.object({ id: nodeRef(["talk"]) }),
@@ -237,7 +237,7 @@ export const cancelWorkshop = defineMutation("cancel-workshop", {
   input: z.object({ id: nodeRef(["workshop"]) }),
   describe: (args, graph) => `Cancel ${nameOf(graph, args.id)}`,
   apply(ctx, args) {
-    ctx.patchNode(args.id, { status: "cancelled" });
+    ctx.patchNode(args.id, { status: "canceled" });
   },
 });
 

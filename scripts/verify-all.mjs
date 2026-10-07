@@ -75,7 +75,7 @@ const CHAIN = [
   ["quiet", "verify-chrome-quiet.mjs"],
   // The whole brand from the document — logo, faces, shape, scheme, icon, the line under the name — on both faces, in three engines (FR-124, FR-125).
   ["brand", "verify-brand.mjs"],
-  // A document's declared lenses drawn as places on both faces, and its arrangement honoured, with no view of the host's (FR-79, FR-80).
+  // A document's declared lenses drawn as places on both faces, and its arrangement honored, with no view of the host's (FR-79, FR-80).
   ["declared", "verify-declared.mjs"],
   // A host whose page is the app hands the routed face the address bar, in three engines; an article's embed never touches it (FR-106).
   ["address", "verify-address.mjs"],
@@ -86,7 +86,7 @@ const CHAIN = [
   // Whether a person can do each app's core jobs on both faces, and what it costs; fails only on a regression.
   ["journeys", "verify-journeys.mjs"],
   ["panning", "verify-panning.mjs"],
-  // A real catalogue, built for production: what a person can read, at sixty frames a second.
+  // A real catalog, built for production: what a person can read, at sixty frames a second.
   ["scale", "verify-scale.mjs"],
   // The example built to be awkward, driven into every face, width, scheme and seat it has.
   ["survey", "survey-ui.mjs"],

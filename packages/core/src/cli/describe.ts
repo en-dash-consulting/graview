@@ -22,7 +22,7 @@ import { computedOf } from "../document/computed.js";
  * thing: a hue in the wrong unit, so every surface drew red; a lens built
  * from the wrong node set, so every piece of ground drew empty; a policy
  * declared with no principal supplied, so every act in the product was
- * refused; a colour that was not a token, so the contrast guarantee did not
+ * refused; a color that was not a token, so the contrast guarantee did not
  * apply.
  *
  * Every one of those is visible in a DESCRIPTION. The interface here is
@@ -256,7 +256,7 @@ export function describeApp<S extends AnySchema>(
 
   /*
    * THE HUES, IN DEGREES. Six kinds all landing within a few degrees of each
-   * other is a city drawn in one colour, which reads as a rendering fault
+   * other is a city drawn in one color, which reads as a rendering fault
    * and is a declaration the author can change.
    */
   const hues = kinds.map((kind) => ({ kind, hue: Math.round(hueFor(kind, app.brand?.accents)) }));
@@ -265,7 +265,7 @@ export function describeApp<S extends AnySchema>(
   );
   lines.push(
     `Hues: ${hues.map((entry) => `${entry.kind} ${entry.hue}°`).join(", ")}.` +
-      (crowded.length > 1 ? ` ${list(crowded.map((entry) => entry.kind))} are within 12° of each other and will read as one colour.` : ""),
+      (crowded.length > 1 ? ` ${list(crowded.map((entry) => entry.kind))} are within 12° of each other and will read as one color.` : ""),
   );
 
   /*

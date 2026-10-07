@@ -8,7 +8,7 @@ import { useGraview } from "./context.js";
  *
  * The brand declares a kit; the scene never reads the brand. It asks for
  * one edge kind's connector — the kit's `all`, the kind's own entry over
- * it — and gets the render style with the kit's colour, pattern, weight
+ * it — and gets the render style with the kit's color, pattern, weight
  * and cap laid over the hash-derived treatment. A kind the kit keeps quiet
  * is `visible: false`, and the scene draws nothing for it.
  */
@@ -24,7 +24,7 @@ export function useKit(): Kit {
 export function kitConnector(kit: Kit, kind: string): { readonly connector: ConnectorKit; readonly style: ConnectorStyle } {
   const connector = connectorKitFor(kit, kind);
   const over: Partial<ConnectorStyle> = {
-    ...(connector.colour !== undefined ? { colour: connector.colour } : {}),
+    ...(connector.color !== undefined ? { color: connector.color } : {}),
     ...(connector.pattern !== undefined ? { pattern: connector.pattern } : {}),
     ...(connector.width !== undefined ? { width: connector.width } : {}),
     ...(connector.cap !== undefined ? { cap: connector.cap } : {}),

@@ -9,7 +9,7 @@ import { Graph } from "@graview/core";
 
 /**
  * A LENS HANDED FEWER THAN THERE ARE SAYS HOW MANY MORE (docs/scale.md),
- * and a menu of far ends holds the most connected, never the catalogue. (A
+ * and a menu of far ends holds the most connected, never the catalog. (A
  * drive-in's thumbnail handed its lens the most relevant twelve; since
  * FR-118 a drive-in says its showings by name and draws no lens small.)
  */
@@ -29,7 +29,7 @@ describe("a built-in lens handed fewer than there are", () => {
 
 describe("the row's menu of far ends", () => {
   // A release's "only…" listed every song: 1,177 options in every row that offered it.
-  it("holds the most connected, never the whole catalogue", () => {
+  it("holds the most connected, never the whole catalog", () => {
     const release = defineNode("release", { fields: z.object({ label: z.string() }), edges: { tracks: { to: ["song"], description: "the songs on it", inverse: "the releases it is on" } }, plural: "Releases" });
     const both = createSchema([song, release]);
     const graph = Graph.from(both, {

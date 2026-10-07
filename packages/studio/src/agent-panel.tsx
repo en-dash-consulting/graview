@@ -1,4 +1,4 @@
-import { formFields, humaniseField, labelOf, type AnySchema, type FormField, type Store } from "@graview/core";
+import { formFields, humanizeField, labelOf, type AnySchema, type FormField, type Store } from "@graview/core";
 import { figureSvg } from "@graview/core/figures";
 import type { Finding } from "@graview/core/check";
 import { POPOVER_STYLE, useGraview, usePopover } from "@graview/react";
@@ -373,7 +373,7 @@ function Offered<S extends AnySchema>({
   const wanted = refused
     ? fields
         .filter((field) => !field.optional && (offer.args[field.name] === undefined || offer.args[field.name] === ""))
-        .map((field) => humaniseField(field.name).toLowerCase())
+        .map((field) => humanizeField(field.name).toLowerCase())
     : [];
   /*
    * AND AN ARGUMENT THAT NAMES SOMETHING NOT THERE YET SAYS THAT.
@@ -389,7 +389,7 @@ function Offered<S extends AnySchema>({
         .filter((field) => field.control === "node")
         .map((field) => ({ field, value: offer.args[field.name] }))
         .filter(({ value }) => typeof value === "string" && value.length > 0 && !store.graph.getNode(value))
-        .map(({ field, value }) => `${humaniseField(field.name).toLowerCase()} "${String(value)}"`)
+        .map(({ field, value }) => `${humanizeField(field.name).toLowerCase()} "${String(value)}"`)
     : [];
 
   return (
@@ -476,7 +476,7 @@ function Argument<S extends AnySchema>({
   readonly testId: string;
   readonly onChange: (value: unknown) => void;
 }) {
-  const label = humaniseField(field.name);
+  const label = humanizeField(field.name);
   const box: React.CSSProperties = {
     font: "inherit",
     fontSize: "0.8125rem",

@@ -70,7 +70,7 @@ const control: CSSProperties = {
  * under the 24 a target needs, measured by a check that had only ever run
  * in Chromium (the third walk's lesson, in the fifth). With the native
  * appearance off the floor holds, and the chevron is drawn in the text's
- * colour the way the places menu draws it.
+ * color the way the places menu draws it.
  */
 const choice: CSSProperties = {
   ...control,
@@ -108,7 +108,7 @@ const chip: CSSProperties = {
 /** The far ends an edge condition may name, from the graph. */
 /**
  * The far ends a menu offers to narrow by. A menu is for choosing, not for
- * reading a catalogue: past FAR_ENDS it holds the most connected (the ones a
+ * reading a catalog: past FAR_ENDS it holds the most connected (the ones a
  * person most likely means), and the search reaches the rest — a select of
  * 1,177 songs was 1,177 elements in every row that offered it (docs/scale.md).
  */
@@ -396,7 +396,7 @@ function AddCondition({
         }
       }
     } else if (offer.type === "text") {
-      // A word field by the values it holds — a make, a colour — when they are few enough to be a list rather than a name each.
+      // A word field by the values it holds — a make, a color — when they are few enough to be a list rather than a name each.
       const held = [...new Set(heldValues(graph, offers.kind, offer.key).filter((value): value is string => typeof value === "string" && value.length > 0 && !value.includes(",")))].sort((a, b) => a.localeCompare(b));
       if (held.length >= 2 && held.length <= WORD_VALUES) {
         for (const word of held) entries.push({ value: `${offer.key}:${word}`, label: word, group: offer.label, condition: { key: offer.key, value: word } });

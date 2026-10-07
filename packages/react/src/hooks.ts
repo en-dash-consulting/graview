@@ -42,7 +42,7 @@ export function useViolations<S extends AnySchema>() {
  *
  * Every caller — the scene, Find, the standing, and each picture on the
  * ground — evaluated every invariant over the whole graph for itself, and a
- * picture evaluates when it mounts. On a catalogue of a thousand songs that
+ * picture evaluates when it mounts. On a catalog of a thousand songs that
  * was tens of milliseconds for each card a stop brought in (docs/scale.md).
  * The store says when the graph changes; until it does, the answer holds.
  */
@@ -121,7 +121,7 @@ if (typeof window !== "undefined") {
  * Whether there is anywhere to go, and the way to go there.
  *
  * Every stop in a Graview app is a URL — that was the point of view state
- * being serialisable — so back and forward are the BROWSER's, and this only
+ * being serializable — so back and forward are the BROWSER's, and this only
  * makes them visible. An interface whose navigation is the browser's should
  * not require the person using it to know that.
  */

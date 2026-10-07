@@ -213,7 +213,7 @@ export function useSceneDrag({
      * that starts on a billboard moves the view, unless it started on the
      * rail, which is the one part of a billboard that means "move the
      * board". A district's own card keeps its drag, because placing a
-     * district by hand is a real gesture with a dashed kerb to show for it.
+     * district by hand is a real gesture with a dashed curb to show for it.
      */
     if (node.screenOf !== undefined && !(event.target as HTMLElement).closest("[data-graview-grip]")) {
       panFrom(event);
@@ -243,7 +243,7 @@ export function useSceneDrag({
       /*
        * Capture only once it IS a drag. Taken on pointer-down it redirected
        * the click and double-click that followed to the host, and
-       * double-clicking a task opened the card instead of travelling into it.
+       * double-clicking a task opened the card instead of traveling into it.
        */
       (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
     }

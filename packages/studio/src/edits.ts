@@ -34,7 +34,7 @@ export interface StudioEdits {
 const str = (node: Node, key: string): string | undefined => (typeof node[key] === "string" ? (node[key] as string) : undefined);
 const strings = (node: Node, key: string): string[] | undefined => (Array.isArray(node[key]) ? (node[key] as unknown[]).map(String) : undefined);
 const same = (a: unknown, b: unknown): boolean => canonicalize(a ?? null) === canonicalize(b ?? null);
-/** An expression as the rule language prints it, so `||` and `or` are one judgement. */
+/** An expression as the rule language prints it, so `||` and `or` are one judgment. */
 const printed = (text: string | undefined): string | undefined => {
   if (text === undefined) return undefined;
   try {
@@ -310,7 +310,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
     const kept = mid.rules?.[name];
     if (!kept) continue; // the edits took it with what it judged
     /*
-     * A judgement that reads a renamed field was rewritten by the studio
+     * A judgment that reads a renamed field was rewritten by the studio
      * AND by the edit; compared as the rule language prints it, the two
      * agree and nothing more is said. One the studio changed besides is the
      * rule given again whole, with the document's own repairs kept.

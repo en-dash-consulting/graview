@@ -28,7 +28,7 @@ export type Primitive =
  * after a reload and leave the field exactly where it was.
  *
  * `UNSET` is that instruction as a value. It survives JSON, it survives an
- * export bundle, and `normalise` puts it in front of every primitive on its
+ * export bundle, and `normalize` puts it in front of every primitive on its
  * way into an operation so nobody writing a mutation has to know.
  */
 export const UNSET = "\u0000graview:unset";
@@ -41,7 +41,7 @@ export const isUnset = (value: unknown): boolean => value === undefined || value
  * absence. Applied where primitives become operations, so the log, the
  * adapters and the export all carry the same instruction.
  */
-export function normalise(primitive: Primitive): Primitive {
+export function normalize(primitive: Primitive): Primitive {
   if (primitive.op !== "patch-node") return primitive;
   const said = (fields: Readonly<Record<string, unknown>>): Record<string, unknown> =>
     Object.fromEntries(

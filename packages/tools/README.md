@@ -4,7 +4,7 @@ What can legally be done with a selection, and the agent surface that shares it.
 
 Nobody authors an affordance. Providers notice things — a violation and the
 repairs it names, a mutation whose subject accepts every selected kind, a
-neighbour all but one of them share — and the results merge into one ranked
+neighbor all but one of them share — and the results merge into one ranked
 set. An LLM is one optional provider among these rather than the mechanism.
 
 `createToolRuntime` generates a tool per mutation from the same declarations,

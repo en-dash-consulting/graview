@@ -30,7 +30,7 @@ const plotsOf = (svg: string) =>
     corners: m[3]!.split(" ").map((p) => p.split(",").map(Number) as [number, number]),
   }));
 
-/** Every roof as written: the back corner, then the diamond, in the drawing's units. Its centre and its height off the ground (the wall's drop). */
+/** Every roof as written: the back corner, then the diamond, in the drawing's units. Its center and its height off the ground (the wall's drop). */
 function roofsOf(svg: string) {
   const walls = [...svg.matchAll(/d="M(-?[\d.]+) (-?[\d.]+)l(-?[\d.]+) (-?[\d.]+)v(\d+)/g)].map((m) => Number(m[5]));
   const roofs = [...svg.matchAll(/<path fill="#[0-9a-f]{6}" stroke="#[0-9a-f]{6}" d="M(-?[\d.]+) (-?[\d.]+)l(-?[\d.]+) (-?[\d.]+)l(-?[\d.]+) (-?[\d.]+)l(-?[\d.]+) (-?[\d.]+)z"/g)].map((m) => {
@@ -53,7 +53,7 @@ function inside(point: { x: number; y: number }, corners: readonly (readonly [nu
   return Math.abs(point.x - cx) / hw + Math.abs(point.y - cy) / hh <= 1;
 }
 
-/** Which plot each roof stands on: its foot is a rise below its centre. */
+/** Which plot each roof stands on: its foot is a rise below its center. */
 const districtsOf = (svg: string) => {
   const plots = plotsOf(svg);
   const roofs = roofsOf(svg);

@@ -14,7 +14,7 @@
  */
 export const ACKNOWLEDGED = [];
 
-/** The acknowledgement that covers this violation, if one does. */
+/** The acknowledgment that covers this violation, if one does. */
 export function acknowledgedBy(script, violation) {
   return ACKNOWLEDGED.find(
     (entry) =>

@@ -7,12 +7,12 @@ import { Chip, Roster } from "../../src/index.js";
  * OWN CLAIM.
  *
  * `graview-lens` step 5: "Expose what you decide as `data-graview-emphasis`
- * so it can be checked — a claim about a picture that exists only as a colour
+ * so it can be checked — a claim about a picture that exists only as a color
  * cannot be checked by anything, not a test and not a person reading the
  * tree." The three shipped lenses all say it, on elements of their own. The
  * primitive an app would naturally reach for to draw a list of nodes —
  * `Roster`, whose `pick` makes every chip a target — had no way to say it, so
- * an app's lens got pick targets emphasised by opacity alone and `audit-ui`'s
+ * an app's lens got pick targets emphasized by opacity alone and `audit-ui`'s
  * `halfSaid` would report the view as half-said the moment anything else in
  * it spoke.
  *

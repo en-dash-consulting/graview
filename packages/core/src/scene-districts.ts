@@ -35,7 +35,7 @@ export interface SceneDistrict {
   readonly count: number;
   /** The buildings standing on its plot, one per member up to what the plot holds, where the Scene stands them. Empty with no members. */
   readonly village: readonly Building[];
-  /** Members past what the plot holds: what the Scene writes on the kerb as `+n`. */
+  /** Members past what the plot holds: what the Scene writes on the curb as `+n`. */
   readonly rest: number;
 }
 

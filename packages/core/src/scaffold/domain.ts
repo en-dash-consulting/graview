@@ -12,7 +12,7 @@ export function schemaTs(ids: Ids): string {
 import { z } from "@graview/core";
 
 /**
- * The first kind. Model one thing well before modelling the domain: the
+ * The first kind. Model one thing well before modeling the domain: the
  * loop that matters on day one is declare → \`graview check\` → look at it →
  * declare more.
  */
@@ -186,7 +186,7 @@ export function brandTs(ids: Ids): string {
 
 /**
  * One accent, and both schemes derived from it. \`graview check\` measures
- * every text pair against AA rather than trusting the colour; if the accent
+ * every text pair against AA rather than trusting the color; if the accent
  * cannot label a pending action legibly, the derivation says which pair
  * failed and why instead of shipping it.
  */
@@ -213,7 +213,7 @@ export const ${ids.brandVar}: Brand = {
     mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
   },
   shape: { radius: 10, density: 1 },
-  // Colour-by-kind, declared rather than hashed: one hue per kind.
+  // Color-by-kind, declared rather than hashed: one hue per kind.
   accents: { "${ids.kind}": 150 },
   schemes: derived.schemes,
 };

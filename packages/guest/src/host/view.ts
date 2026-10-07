@@ -168,7 +168,7 @@ export { readTheme };
  * What it is handed is the viewer's sight cut to its manifest, with the
  * app's look, pushed again when the app's scheme changes. A manifest that
  * names what the app does not declare is refused before a worker starts.
- * The sanitiser is fetched the first time a view draws, so a page that
+ * The sanitizer is fetched the first time a view draws, so a page that
  * mounts none loads none of it.
  */
 export function mountWorkerView<S extends AnySchema>(element: HTMLElement, options: MountWorkerViewOptions<S>): WorkerView {

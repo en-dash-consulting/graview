@@ -29,7 +29,7 @@ export const seedbedBrand: Brand = {
   },
   shape: { radius: 12, density: 1 },
   /*
-   * Colour-by-kind, declared instead of hashed: gardeners warm, plots
+   * Color-by-kind, declared instead of hashed: gardeners warm, plots
    * earthen, plantings green, rules slate — the map reads like a garden
    * rather than like a hash function. One entry per kind; every chip,
    * district and roster follows.

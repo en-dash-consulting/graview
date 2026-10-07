@@ -1,5 +1,5 @@
 /*
- * The capture path: rasterise a DOM subtree into a texture and composite the
+ * The capture path: rasterize a DOM subtree into a texture and composite the
  * textures with per-plane blur.
  *
  * A separate entry because its declarations name WebGPU globals, which are

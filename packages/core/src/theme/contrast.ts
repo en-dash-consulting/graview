@@ -45,11 +45,11 @@ function fromFunction(text: string): Rgba | null {
   return { ...hslToRgb(h, s > 1 ? s / 100 : s, l > 1 ? l / 100 : l), a: a ?? 1 };
 }
 
-/** sRGB back to HSL, so a colour can be moved in lightness and stay itself. */
-export function rgbToHsl(colour: Rgba): { h: number; s: number; l: number } {
-  const r = colour.r / 255;
-  const g = colour.g / 255;
-  const b = colour.b / 255;
+/** sRGB back to HSL, so a color can be moved in lightness and stay itself. */
+export function rgbToHsl(color: Rgba): { h: number; s: number; l: number } {
+  const r = color.r / 255;
+  const g = color.g / 255;
+  const b = color.b / 255;
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   const l = (max + min) / 2;
@@ -94,14 +94,14 @@ function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: n
 }
 
 /**
- * Every colour a token value mentions.
+ * Every color a token value mentions.
  *
- * A gradient is not one colour and pretending otherwise is how a check passes
+ * A gradient is not one color and pretending otherwise is how a check passes
  * on a value it never looked at. `bar` and `float` are gradients in both
  * built-in schemes; a pair drawn on one owes its contrast against the WORST
  * stop, because that is where the text will be at some point along it.
  */
-export function coloursIn(value: string): Rgba[] {
+export function colorsIn(value: string): Rgba[] {
   const found: Rgba[] = [];
   for (const token of value.matchAll(FUNC)) {
     const parsed = fromFunction(token[0]!);
@@ -114,7 +114,7 @@ export function coloursIn(value: string): Rgba[] {
   return found;
 }
 
-/** One colour laid over another, straight alpha. */
+/** One color laid over another, straight alpha. */
 export function composite(over: Rgba, under: Rgba): Rgba {
   const a = over.a + under.a * (1 - over.a);
   if (a === 0) return { r: 0, g: 0, b: 0, a: 0 };
@@ -127,9 +127,9 @@ function channel(value: number): number {
   return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
 }
 
-export function luminance(colour: Rgba): number {
+export function luminance(color: Rgba): number {
   return (
-    0.2126 * channel(colour.r) + 0.7152 * channel(colour.g) + 0.0722 * channel(colour.b)
+    0.2126 * channel(color.r) + 0.7152 * channel(color.g) + 0.0722 * channel(color.b)
   );
 }
 
@@ -161,8 +161,8 @@ export function checkContrast(tokens: ThemeTokens): readonly ContrastFinding[] {
   for (const pair of TEXT_PAIRS) {
     const inkValue = String(tokens[pair.ink]);
     const onValue = String(tokens[pair.on]);
-    const inks = coloursIn(inkValue);
-    const grounds = coloursIn(onValue);
+    const inks = colorsIn(inkValue);
+    const grounds = colorsIn(onValue);
     if (inks.length === 0 || grounds.length === 0) {
       findings.push({
         ink: pair.ink,
@@ -174,7 +174,7 @@ export function checkContrast(tokens: ThemeTokens): readonly ContrastFinding[] {
       });
       continue;
     }
-    const backdrop = pair.over ? coloursIn(String(tokens[pair.over]))[0] : undefined;
+    const backdrop = pair.over ? colorsIn(String(tokens[pair.over]))[0] : undefined;
     const opaque = backdrop ?? { r: 255, g: 255, b: 255, a: 1 };
 
     // The worst stop of a gradient and the worst ink of a multi-stop value:

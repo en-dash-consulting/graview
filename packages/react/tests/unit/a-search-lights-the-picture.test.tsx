@@ -75,7 +75,7 @@ describe("the words light the picture", () => {
   });
 });
 
-describe("typing is not travelling", () => {
+describe("typing is not traveling", () => {
   const at = { ...EMPTY_VIEW, focusId: "aggregate:duty" };
   it("replaces the address for every keystroke of the Find box", () => {
     expect(adjustment(at, withQuery(at, "v"))).toBe(true);

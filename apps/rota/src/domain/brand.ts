@@ -10,7 +10,7 @@ import { brandFromAccent, DARK, LIGHT, type Brand } from "@graview/core";
  * one relation this app has say what it is.
  *
  * The first accent was a burnt orange, and `brandFromAccent` refused it in
- * both schemes: "the warning colour shares the accent's hue, so 'something
+ * both schemes: "the warning color shares the accent's hue, so 'something
  * is broken' looks like 'this is selected'". On a roster whose whole job is
  * to make an uncovered shift obvious, that is the worst possible collision
  * — and it is exactly the kind nobody catches by eye at noon. A deep sage
@@ -48,9 +48,9 @@ export const rotaBrand: Brand = {
    *
    * One relation, and it means one thing — somebody is covering something —
    * so it is drawn as a direct line with an arrow, in the brand's own
-   * colour, rather than as an anonymous curve. The ground keeps its lattice
+   * color, rather than as an anonymous curve. The ground keeps its lattice
    * and loses its grid, because a roster is a thing on a wall and not
-   * graph paper. `graview check` measures the declared colour against both
+   * graph paper. `graview check` measures the declared color against both
    * grounds in both schemes, so a line nobody can see is a finding rather
    * than a decision somebody made once at noon.
    */
@@ -58,7 +58,7 @@ export const rotaBrand: Brand = {
     connectors: {
       all: { route: "straight" },
       byEdge: {
-        "covered-by": { colour: "#2f7a63", pattern: "solid", width: 2, cap: "arrow" },
+        "covered-by": { color: "#2f7a63", pattern: "solid", width: 2, cap: "arrow" },
       },
     },
     grid: { visible: false },

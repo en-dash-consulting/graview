@@ -141,7 +141,7 @@ export function StudioPlace<S extends AnySchema>({
    *
    * "main" when the studio is the document's own: a whole app's window.
    * "region" when it is drawn into an element of somebody else's page. An
-   * embed's studio drew a `<main>` inside the embed's labelled section, so
+   * embed's studio drew a `<main>` inside the embed's labeled section, so
    * axe failed the host twice (`landmark-main-is-top-level`,
    * `landmark-no-duplicate-main`) whatever the host did. Omitted, it
    * follows `within`: a boxed studio is a region, a page-filling one the main.
@@ -514,7 +514,7 @@ function StudioOverlay<S extends AnySchema>({
 
       {/*
         * THE PICTURE IS THE PAGE'S MAIN ONLY WHEN THE STUDIO IS THE PAGE
-        * (FR-58). Inside somebody else's page (an embed, itself a labelled
+        * (FR-58). Inside somebody else's page (an embed, itself a labeled
         * region of it) a main can never be top-level, and the host's own
         * makes it a second one: there the picture is a region, named.
         */}

@@ -42,7 +42,7 @@ describe("a guest bundle built with buildGuestBundle", () => {
     expect(await checkGuestBundle(built.script)).toEqual([]);
     expect(built.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(built.bytes).toBe(Buffer.byteLength(built.script));
-    // It carries Remote DOM, and so Remote DOM's licence.
+    // It carries Remote DOM, and so Remote DOM's license.
     expect(built.script).toContain("Shopify Inc. — MIT License");
   });
 

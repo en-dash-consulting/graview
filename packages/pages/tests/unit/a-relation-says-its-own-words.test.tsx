@@ -5,7 +5,7 @@ import { PagesApp } from "../../src/index.js";
 
 /**
  * "Related: Drives Test drives · Towards Trade-ins · About Enquiries" over
- * the list of cars: the edge's name, humanised, where the declaration says
+ * the list of cars: the edge's name, humanized, where the declaration says
  * "the test drives booked in it" — and "1 vehicle" over a list of cars
  * (the seventh walk).
  */

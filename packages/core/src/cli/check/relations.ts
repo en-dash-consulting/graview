@@ -94,7 +94,7 @@ export function checkActsFromEnds<S extends AnySchema>(ctx: CheckContext<S>, wri
    *
    * A mutation that declares what it connects or severs is offered from
    * EITHER endpoint — standing on a person, "take this one off the run" is
-   * the natural thing to say. The button there is labelled with `title`,
+   * the natural thing to say. The button there is labeled with `title`,
    * which is written from the subject's side: "Hand it to someone", offered
    * on the owner, reads as handing the owner to someone. The same shape as
    * `edge-without-inverse`, one layer up: the relation has two readings and
@@ -122,7 +122,7 @@ export function checkActsFromEnds<S extends AnySchema>(ctx: CheckContext<S>, wri
       where: `defineMutation("${mutation.name}")`,
       message:
         `"${mutation.title ?? mutation.name}" is written from ${subjectKinds.map((kind) => withArticle(kind)).join(" or ")}, ` +
-        `and is also offered on ${spoken}, where it is labelled with those same words — which is the wrong way round.`,
+        `and is also offered on ${spoken}, where it is labeled with those same words — which is the wrong way round.`,
       fix: `Add fromTheOtherEnd: "…" — how this act reads standing on ${spoken}.`,
     });
   }

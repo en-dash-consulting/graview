@@ -68,7 +68,7 @@ img { max-width: 100%; }
   --rule:      #D9DCE5;
   --rule-2:    #E6E8EE;
 
-  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+  /* En Dash's own two colors, taken from the mark: navy and mint. Mint is a
      brilliant #00E5B9 that only reads on the navy, so it carries the dark
      theme and the navy carries the light one. */
   --navy:      #001769;
@@ -190,7 +190,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Windows High Contrast throws the palette away, so anything carrying meaning
-   in a border or a fill has to say so in system colours too. */
+   in a border or a fill has to say so in system colors too. */
 @media (forced-colors: active) {
   .code, .term, .endash, .lens figure { border-color: CanvasText; }
   .caveat { border-left-color: LinkText; }
@@ -1144,7 +1144,7 @@ export const pages = createPageRegistry&lt;S, PageComponent&lt;S&gt;&gt;(schema)
 <p>What every design must keep doing:</p>
 <ul>
 <li><strong>Read the graph through one model.</strong> <code>readGarden(store)</code> turns nodes, edges and violations into the design's words; every page reads it and none reaches for <code>store.graph</code>. The scene's lens reads the same model.</li>
-<li><strong>Style through the theme's tokens</strong> (<code>--graview-ground</code>, <code>-panel</code>, <code>-ink</code>, <code>-edge</code>, <code>-warn</code>, <code>-accent</code>, <code>-font-display</code>, <code>-font-body</code>), tinted with <code>color-mix</code> for the design's own paper. Never a colour that works in one scheme only.</li>
+<li><strong>Style through the theme's tokens</strong> (<code>--graview-ground</code>, <code>-panel</code>, <code>-ink</code>, <code>-edge</code>, <code>-warn</code>, <code>-accent</code>, <code>-font-display</code>, <code>-font-body</code>), tinted with <code>color-mix</code> for the design's own paper. Never a color that works in one scheme only.</li>
 <li><strong>Keep landmarks and targets honest.</strong> One <code>main</code> — a <code>section</code> when <code>context.embedded</code>, and UNNAMED, or a page holding two embeds has two regions with one name. Controls at least 24px, AA contrast. Every size in <code>rem</code>: at 200% text a flex or grid item's automatic minimum is its CONTENT's, so one un-wrappable row pushes the whole column off the screen — <code>minmax(0, 1fr)</code> and <code>min-width: 0</code> on the column, <code>flex-wrap</code> on the row. Measure rather than trust: <code>-ink-faint</code> fails AA on an 11px label, and the accent fails on the warning ground. `node scripts/verify-pages.mjs` runs axe over every route, both widths, both schemes.</li>
 <li><strong>Withhold, do not hide.</strong> Rule 7 again, at every surface: struck through with the policy's own sentence rather than dropped.</li>
 </ul>
@@ -1255,7 +1255,7 @@ document.querySelectorAll("[data-copy]").forEach(function (button) {
   --rule:      #D9DCE5;
   --rule-2:    #E6E8EE;
 
-  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+  /* En Dash's own two colors, taken from the mark: navy and mint. Mint is a
      brilliant #00E5B9 that only reads on the navy, so it carries the dark
      theme and the navy carries the light one. */
   --navy:      #001769;
@@ -1377,7 +1377,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Windows High Contrast throws the palette away, so anything carrying meaning
-   in a border or a fill has to say so in system colours too. */
+   in a border or a fill has to say so in system colors too. */
 @media (forced-colors: active) {
   .code, .term, .endash, .lens figure { border-color: CanvasText; }
   .caveat { border-left-color: LinkText; }

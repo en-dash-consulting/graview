@@ -82,7 +82,7 @@ violations, and then asks the questions axe cannot: does the first tab stop
 get you past the navigation, does the stepper actually mount a different
 application at a different step, do arrow keys move between the steps, are
 the connector words there as text for a screen reader, is reduced motion
-honoured, do the meaningful marks survive Windows High Contrast, and does
+honored, do the meaningful marks survive Windows High Contrast, and does
 every page reflow at 320px and at 200% text zoom without scrolling sideways.
 
 A marketing page is exactly the kind of thing that rots unmeasured.

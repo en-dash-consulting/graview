@@ -61,7 +61,7 @@ export function onScreen(
  */
 export function altitudeOpacity(state: {
   /** A relation kind is being stressed (hovered in the key). */
-  readonly emphasised: boolean;
+  readonly emphasized: boolean;
   /** This line is of that kind, or is itself chosen. */
   readonly stressed: boolean;
   /** Some strand on screen is touched by the chosen members. */
@@ -83,7 +83,7 @@ export function altitudeOpacity(state: {
    */
   readonly siblings?: number;
 }): number {
-  if (state.emphasised) return state.stressed ? 0.95 : 0.08;
+  if (state.emphasized) return state.stressed ? 0.95 : 0.08;
   if (state.anyChosen) return state.mine ? 0.9 : 0.12;
   if (!state.touches) return 0.12;
   return Math.max(0.34, 0.9 - 0.09 * Math.max(0, (state.siblings ?? 1) - 1));
@@ -103,7 +103,7 @@ export function altitudeOpacity(state: {
  * The kit owns both numbers: `rest` is the crowd's weight while nothing is
  * lit, `dim` what the crowd keeps once something is. A line's own declared
  * opacity multiplies through, so a relation a brand made faint stays
- * fainter than its neighbours at every step.
+ * fainter than its neighbors at every step.
  */
 export function stackOpacity(state: {
   /** This line IS the chosen edge. */
@@ -140,7 +140,7 @@ export function drawnBox(
  * The box a person can SEE for a laid-out node, measured from the DOM.
  *
  * A host is a band slot with the view somewhere inside it — the focus band
- * pokes above its panel, a shrunk view centres in a taller natural box, and
+ * pokes above its panel, a shrunk view centers in a taller natural box, and
  * from altitude the visible thing is the iso block at the bottom of the
  * card. Lines anchored to host borders ended in open air on every one of
  * those; lines anchored to the measured inner box end on the thing itself.

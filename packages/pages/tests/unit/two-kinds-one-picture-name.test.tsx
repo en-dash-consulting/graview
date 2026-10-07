@@ -7,7 +7,7 @@ import { z } from "zod";
 import { galleryOf, PagesApp, type PageContext } from "../../src/index.js";
 
 /**
- * TWO KINDS, ONE PICTURE'S NAME. A programme registers "The timetable" on
+ * TWO KINDS, ONE PICTURE'S NAME. A program registers "The timetable" on
  * its talks and on its workshops: the scene tells them apart by kind, but
  * the pages addressed a picture by its name alone — both cards linked to
  * the talks' timetable, the workshops' had no page, and React was handed

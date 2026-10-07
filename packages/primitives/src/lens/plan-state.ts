@@ -26,7 +26,7 @@ export interface PlanLensOptions {
   /**
    * Hue in DEGREES per category value, when the domain has an opinion.
    *
-   * A hash gives every category a stable colour and no meaning, which is
+   * A hash gives every category a stable color and no meaning, which is
    * right for a lens that cannot know what the categories are — and wrong
    * the moment a domain does know. Grass drawn violet and tarmac drawn
    * green is a picture actively working against the reader. So the hue is
@@ -76,7 +76,7 @@ export interface MappedRegion {
   readonly label: string;
   readonly outline: readonly MapPoint[];
   /** Where a label sits. The polygon's own centroid, not its bounding box. */
-  readonly centre: MapPoint;
+  readonly center: MapPoint;
   readonly what?: string;
   /** How deep this region is nested. Deeper draws later, so it draws on top. */
   readonly depth: number;
@@ -247,7 +247,7 @@ export function buildPlanLens<S extends AnySchema>(
       id: node.id,
       label: name(node),
       outline,
-      centre: centroidOf(outline),
+      center: centroidOf(outline),
       depth: depthOf(node.id),
       markers: markersByRegion.get(node.id) ?? [],
       ...(typeof what === "string" ? { what } : {}),

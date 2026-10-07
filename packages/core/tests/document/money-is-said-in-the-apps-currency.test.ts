@@ -117,16 +117,16 @@ describe("the currency is declared, checked and edited in one place", () => {
     expect(codes).toEqual(["brand-currency", "brand-locale"]);
   });
 
-  it("set-brand sets the money apart from the colours, says so, and a diff says it in words", () => {
+  it("set-brand sets the money apart from the colors, says so, and a diff says it in words", () => {
     const doc = structuredClone(lifelogics);
-    const coloured = editDocument(doc, [{ op: "set-brand", accent: "#2f6f4e" }]);
-    if (!coloured.ok) throw new Error(JSON.stringify(coloured.findings));
-    expect(coloured.document.brand).toEqual({ currency: "USD", accent: "#2f6f4e" });
-    const euros = editDocument(coloured.document, [{ op: "set-brand", currency: "EUR", locale: "de-DE" }]);
+    const colored = editDocument(doc, [{ op: "set-brand", accent: "#2f6f4e" }]);
+    if (!colored.ok) throw new Error(JSON.stringify(colored.findings));
+    expect(colored.document.brand).toEqual({ currency: "USD", accent: "#2f6f4e" });
+    const euros = editDocument(colored.document, [{ op: "set-brand", currency: "EUR", locale: "de-DE" }]);
     if (!euros.ok) throw new Error(JSON.stringify(euros.findings));
     expect(euros.said).toEqual(["Money is said in EUR.", "Money is written for de-DE."]);
     expect(euros.document.brand).toEqual({ currency: "EUR", locale: "de-DE", accent: "#2f6f4e" });
-    expect(diffDocuments(coloured.document, euros.document).sentences).toEqual(["Money is said in EUR, written for de-DE."]);
+    expect(diffDocuments(colored.document, euros.document).sentences).toEqual(["Money is said in EUR, written for de-DE."]);
     const plain = editDocument(euros.document, [{ op: "set-brand", accent: null, currency: null, locale: null }]);
     if (!plain.ok) throw new Error(JSON.stringify(plain.findings));
     expect(plain.document.brand).toBeUndefined();

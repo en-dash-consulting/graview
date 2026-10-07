@@ -1,4 +1,4 @@
-import { humaniseField, labelOf } from "../schema/define-node.js";
+import { humanizeField, labelOf } from "../schema/define-node.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
 import { SchemaError } from "../schema/schema.js";
 import { diffSnapshots, type GraphDiff } from "./diff.js";
@@ -52,7 +52,7 @@ function readably(error: unknown): string {
   }
   return issues
     .map((issue) => {
-      const field = issue.path?.length ? humaniseField(String(issue.path.at(-1))) : null;
+      const field = issue.path?.length ? humanizeField(String(issue.path.at(-1))) : null;
       const said = issue.message ?? "is not what the declaration allows";
       return field ? `${field}: ${said}` : said;
     })
@@ -343,7 +343,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         const next = { ...current } as Record<string, unknown>;
         for (const [key, value] of Object.entries(primitive.after)) {
           // `undefined` in memory, `UNSET` once written down: both mean the
-          // key goes away. See `normalise` in primitives.ts.
+          // key goes away. See `normalize` in primitives.ts.
           if (isUnset(value)) delete next[key];
           else next[key] = value;
         }

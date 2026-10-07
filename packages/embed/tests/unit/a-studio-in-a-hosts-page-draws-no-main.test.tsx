@@ -14,7 +14,7 @@ import { mount, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
  *
  * Graview Cloud's builder mounts the studio through the embed's
  * `studio: { onApply }` into a `<div>` inside its page's own `<main>`. The
- * studio drew a `<main>` of its own inside the embed's labelled section, so
+ * studio drew a `<main>` of its own inside the embed's labeled section, so
  * axe failed the host on `landmark-main-is-top-level` and
  * `landmark-no-duplicate-main` whatever the host did. Here the host's page
  * is built the way Cloud's is (a header, a nav, its main, a footer) and axe

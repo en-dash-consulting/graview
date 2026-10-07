@@ -29,7 +29,7 @@ export const CREATE_USAGE = `  graview create <dir> [--name "Field Notes"] [--ki
         --accent <#hex>    the brand accent (default: a worked green)
         --no-install       write the files and stop
         --no-skills        do not install the authoring skills
-        --no-git           do not initialise a git repository
+        --no-git           do not initialize a git repository
         --workspace        the layout every real product ends up with: a
                            workspace root with the app under app/ and the
                            harness scripts at the root
@@ -100,7 +100,7 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
    * A DIRECTORY THAT ALREADY EXISTS IS THE NORMAL CASE.
    *
    * The realistic start is a repository somebody has already made: a README
-   * they wrote, a licence, CI, assistant instruction files from some other
+   * they wrote, a license, CI, assistant instruction files from some other
    * tool. `--force` is too blunt for that — it writes over the README — so
    * two products independently worked around it by scaffolding into `app/`
    * and hand-writing a workspace root, which is a scaffolder gap rather
@@ -232,9 +232,9 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
 
   // A repository, because the CI workflow just written assumes one — unless
   // this directory is already inside one, which is the person's own choice.
-  let initialised = false;
+  let initialized = false;
   if (!argv.includes("--no-git") && !insideGitRepo(target)) {
-    initialised = io.run("git", ["init", "--quiet"], target);
+    initialized = io.run("git", ["init", "--quiet"], target);
   }
 
   if (install) {
@@ -268,7 +268,7 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
       (install ? "" : `  ${pm} install\n`) +
       `  ${run} dev        # http://localhost:${scaffold.port}  (/pages is the routed face)\n` +
       `  ${run} verify     # typecheck, tests, build, graview check\n` +
-      (initialised ? `  git add -A && git commit -m "${scaffold.name}, on Graview"\n` : "") +
+      (initialized ? `  git add -A && git commit -m "${scaffold.name}, on Graview"\n` : "") +
       "\n" +
       (scaffold.linked
         ? `The framework is consumed by path from ${link}: rebuild it (pnpm -C ${link} build) when its sources change.\n` +

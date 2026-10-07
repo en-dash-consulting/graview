@@ -144,7 +144,7 @@ export function googleCalendar(options: GoogleCalendarOptions): RemoteSystem {
         resource: "events",
         id: String(item["id"]),
         // The etag is Google's own version of the record, and the reason an
-        // echo of our own write is recognisable at all.
+        // echo of our own write is recognizable at all.
         version: String(item["etag"] ?? ""),
         ...(item["status"] === "cancelled"
           ? { deleted: true }

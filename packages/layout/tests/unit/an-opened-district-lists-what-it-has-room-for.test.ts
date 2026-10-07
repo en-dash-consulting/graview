@@ -9,7 +9,7 @@ import { EMPTY_VIEW, interpolate, layout, ROSTER_ROW, rosterHeight } from "../..
  * The layout reserved 96 pixels under an opened district and the view
  * listed sixteen members in 250: a dealership's Vehicles, opened at the
  * bottom of an eight-district city, ran its roster off the scene and over
- * its neighbours. Now the layout reserves rows, says how many it kept
+ * its neighbors. Now the layout reserves rows, says how many it kept
  * (`openedRows`), and the tween carries the number to the view.
  */
 const fields = z.object({ label: z.string() });

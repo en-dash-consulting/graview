@@ -11,7 +11,7 @@ import { openingSeat, SEATS } from "./seats.js";
 
 type S = GauntletSchema;
 
-/** The programme opens from altitude: seven districts, two of them in the thousands. */
+/** The program opens from altitude: seven districts, two of them in the thousands. */
 export const INITIAL_VIEW: ViewState = { ...EMPTY_VIEW, overview: true };
 
 export interface GauntletAppProps {
@@ -52,7 +52,7 @@ export function GauntletApp({
       seats={SEATS}
     >
       <Shell<S>
-        standing="The programme is in order"
+        standing="The program is in order"
         studio={<StudioPlace app={gauntletApp} />}
         remembers={remembers}
         syncUrl={syncUrl}

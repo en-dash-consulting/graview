@@ -8,11 +8,11 @@ import { createSchema, defineMutation, defineNode, nodeRef, nodeRefArgs, Store, 
  * one, among the records the principal may see of the kinds it accepts;
  * several matches come back as candidates; ids keep working unchanged.
  */
-let labelled = 0;
+let labeled = 0;
 const vendor = defineNode("vendor", {
   fields: z.object({ name: z.string(), status: z.enum(["researching", "booked"]) }),
   label: (node) => {
-    labelled += 1;
+    labeled += 1;
     return node.name;
   },
 });
@@ -98,15 +98,15 @@ describe("a record named the way people name it", () => {
     const nodes = Array.from({ length: 5000 }, (_, i) => ({ id: `vendor:v${i}`, kind: "vendor", name: `Vendor ${i}`, status: "researching" }));
     const store = new Store({ schema, mutations: [book] as never, snapshot: { nodes: [...nodes, { id: "vendor:zz", kind: "vendor", name: "Zinnia & Sons", status: "researching" }] as never, edges: [] } });
     store.resolveRef(ref, "zinnia", agent); // the index is built once
-    labelled = 0;
+    labeled = 0;
     const seen = vi.spyOn(store, "sees");
     expect(store.resolveRef(ref, "zinn", agent)).toMatchObject({ ok: true, id: "vendor:zz" });
-    expect(labelled).toBe(0);
+    expect(labeled).toBe(0);
     expect(seen.mock.calls.length).toBeLessThanOrEqual(1);
     // A write keeps the index current by touching only what it changed.
     store.apply({ name: "book", args: { id: "vendor:zz" } });
     store.applyPrimitives([{ op: "patch-node", id: "vendor:v7", before: { name: "Vendor 7" }, after: { name: "Yarrow Hall" } }]);
-    expect(labelled).toBeLessThan(10);
+    expect(labeled).toBeLessThan(10);
     expect(store.resolveRef(ref, "yarrow", agent)).toMatchObject({ ok: true, id: "vendor:v7" });
     const old = store.resolveRef(ref, "vendor 7", agent);
     expect(old.ok).toBe(false);

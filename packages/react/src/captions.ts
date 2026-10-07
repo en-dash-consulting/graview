@@ -1,7 +1,7 @@
 /**
  * WHERE A RELATION'S CAPTION GOES — pure, so it can be held to.
  *
- * The neighbourhood is grouped by relation, and each group is captioned
+ * The neighborhood is grouped by relation, and each group is captioned
  * once, above the first row it occupies. Three things this used to get
  * wrong, all found by a discography whose artist is featured on some songs
  * and produced others:
@@ -69,8 +69,8 @@ export function captionRuns(
   runs.sort((a, b) => a.top - b.top || a.left - b.left);
   /*
    * What each caption WANTS: its own run, or its words, whichever is wider,
-   * centred on the run. A neighbour's ground is borrowed only as far as the
-   * neighbour does not want it; where both want the gutter between them,
+   * centered on the run. A neighbor's ground is borrowed only as far as the
+   * neighbor does not want it; where both want the gutter between them,
    * they split it.
    */
   const want = runs.map((run) => {

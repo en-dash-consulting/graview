@@ -18,7 +18,7 @@ export interface Repair {
 
 /**
  * What a violation says about the rule that produced it. `violated` is a
- * judgement: the rule ran and the graph breaks it. The other two say the
+ * judgment: the rule ran and the graph breaks it. The other two say the
  * rule could not answer — it threw, or it would have read more than its
  * budget — so a host counts them apart rather than matching the message.
  */
@@ -55,11 +55,11 @@ export interface InvariantEvalArgs<S extends AnySchema, Subject> {
 export interface InvariantDefinition<S extends AnySchema = AnySchema> {
   readonly name: string;
   /**
-   * The judgement in the rule language, when the rule was written in it
+   * The judgment in the rule language, when the rule was written in it
    * (`expressionRule`) rather than as a function — so the studio can show
    * it, edit it and write it back instead of a stub (FR-07).
    */
-  readonly judgement?: { readonly require: string; readonly when?: string; readonly says?: string };
+  readonly judgment?: { readonly require: string; readonly when?: string; readonly says?: string };
   readonly label?: string;
   readonly description?: string;
   readonly scope: { readonly kind: string; readonly match?: (node: never) => boolean } | "graph";

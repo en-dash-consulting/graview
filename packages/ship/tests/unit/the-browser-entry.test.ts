@@ -73,6 +73,6 @@ describe("the main entry, which a page may not import", () => {
      */
     const graph = reached("index.js");
     const nodeOnly = [...graph].filter(([, source]) => /from\s+"node:/.test(source));
-    expect(nodeOnly.length, "if this is 0 the Node half moved and the browser guard is theatre").toBeGreaterThan(0);
+    expect(nodeOnly.length, "if this is 0 the Node half moved and the browser guard is theater").toBeGreaterThan(0);
   });
 });

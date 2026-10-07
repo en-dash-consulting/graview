@@ -10,7 +10,7 @@ import { useFlagged } from "./emphasis.js";
  * the 2:1 lattice — a corner cell and a side — and the city a cell size and
  * an origin; until now nothing drew the plot, so a district floated on a
  * hatch. This layer draws each plot as the iso tile it is: four corners of
- * the lattice, filled in the kind's hue, a kerb, a cast shadow. It is the
+ * the lattice, filled in the kind's hue, a curb, a cast shadow. It is the
  * arithmetic the layout already did, made visible — honest geometry, not
  * decoration — and it rides the same origin and pan the lattice rides, so a
  * tile sits exactly on the diamonds a person can see.
@@ -54,7 +54,7 @@ export interface PlotsProps {
   /** The pan baked into the frame's cards, so a tile sits under its card. */
   readonly pan: Point;
   readonly brand?: Brand | undefined;
-  /** Which district ids are hand-placed: their kerb is dashed, as the pinned mark. */
+  /** Which district ids are hand-placed: their curb is dashed, as the pinned mark. */
   readonly pinned?: ReadonlySet<string>;
   /** The scene's own flag for a click that a drag is about to produce: a pan that ends on a tile is not a press. */
   readonly swallowed?: { readonly current: boolean };
@@ -70,7 +70,7 @@ export interface PlotsProps {
  * THE GROUND IS DRAWN AT THE ORIGIN AND MOVED AS ONE. Every piece of it is
  * computed at origin zero and the pan and origin are one translate on the
  * group, so a pan or a tween changes one attribute. Each plot is its own
- * memoised tile whose village is kept for as long as that plot and its
+ * memoized tile whose village is kept for as long as that plot and its
  * members are the same, so dragging one district redraws that district and
  * the roads, not every building in the city on every frame.
  */
@@ -91,7 +91,7 @@ export function Plots({ frame, width, height, pan, brand, pinned, swallowed, onF
 
   /*
    * THE ROADS, one per pair of plots joined by any declared edge
-   * (`roadsOf`), kerb to kerb along the gutters. They depend on every
+   * (`roadsOf`), curb to curb along the gutters. They depend on every
    * plot, so they are routed again when any plot moves — and only then.
    */
   const plotsSignature = `${cell}|${tiles.map((node) => `${node.id}:${node.plot!.col},${node.plot!.row},${node.plot!.side}`).join(";")}`;
@@ -323,7 +323,7 @@ export function streetPoints(from: PlotLike, to: PlotLike): { readonly col: numb
     { col: gc, row: rb },
     { col: cb, row: rb },
   ];
-  // Drop a leg of no length, and a middle point that lies on the line of its neighbours.
+  // Drop a leg of no length, and a middle point that lies on the line of its neighbors.
   const out: { col: number; row: number }[] = [];
   for (const p of raw) {
     const last = out[out.length - 1];
@@ -342,8 +342,8 @@ export function streetPoints(from: PlotLike, to: PlotLike): { readonly col: numb
 }
 
 /**
- * A ROAD FROM KERB TO KERB: the street between two plots, with the run
- * inside either plot cut away, so the road starts at one kerb and ends at
+ * A ROAD FROM CURB TO CURB: the street between two plots, with the run
+ * inside either plot cut away, so the road starts at one curb and ends at
  * the other rather than diving under the buildings. Sampled and bisected,
  * the same way a connector is clipped against a box.
  */

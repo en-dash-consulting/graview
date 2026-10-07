@@ -5,7 +5,7 @@
  * view can REACH, not from what it can DRAW. So the kit is broad — most of
  * HTML's sectioning, text, lists, tables, disclosure and form controls,
  * images, SVG's shapes, paths, text and gradients, and CSS for layout,
- * colour, type, transitions, keyframes and media queries — and what is left
+ * color, type, transitions, keyframes and media queries — and what is left
  * out is exactly what could fetch, escape the region, or speak for the app:
  *
  *   fetch     `<script>`, `<iframe>`, `<object>`, `<embed>`, `<link>`, `<meta>`,
@@ -45,14 +45,14 @@
  *   boolean   present or absent
  *   oneOf     one of a closed list, compared without case
  *   css       a CSS value for the property of the attribute's own name (an
- *             SVG presentation attribute: `fill`, `stroke`, …), sanitised
+ *             SVG presentation attribute: `fill`, `stroke`, …), sanitized
  *             as a stylesheet's value is
  *   geometry  SVG geometry and transforms (`d`, `points`, `viewBox`,
  *             `transform`): numbers, letters, commas and brackets, never `url`
  *   image     an image's source: a `data:image/…` URL, or a `blob:` URL of
  *             the host page's own origin
  *   fragment  a reference to an element of the view's own drawing: `#id`
- *   style     a declaration list, sanitised as a stylesheet's declarations
+ *   style     a declaration list, sanitized as a stylesheet's declarations
  */
 export type OpenAttribute = "text" | "number" | "boolean" | "css" | "geometry" | "image" | "fragment" | "style" | { readonly oneOf: readonly string[] };
 
@@ -142,7 +142,7 @@ export const HTML_ELEMENTS: Readonly<Record<string, OpenElement>> = {
   img: { empty: true, attributes: { src: "image", alt: "text", width: "number", height: "number", decoding: { oneOf: ["async", "sync", "auto"] } } },
 };
 
-/** SVG's presentation attributes: CSS properties, sanitised as a stylesheet's are. */
+/** SVG's presentation attributes: CSS properties, sanitized as a stylesheet's are. */
 const PRESENTATION = [
   "fill", "fill-opacity", "fill-rule", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "stroke-dasharray", "stroke-dashoffset",
   "stroke-opacity", "stroke-miterlimit", "opacity", "color", "display", "visibility", "transform-origin", "clip-path", "clip-rule",
@@ -253,7 +253,7 @@ export const CSS_PROPERTIES: readonly string[] = [
   "grid-area", "grid-column", "grid-row", "grid-column-start", "grid-column-end", "grid-row-start", "grid-row-end",
   "gap", "row-gap", "column-gap", "align-items", "align-content", "align-self", "justify-items", "justify-content", "justify-self", "place-items", "place-content", "place-self",
   "columns", "column-count", "column-width", "column-rule", "column-rule-color", "column-rule-style", "column-rule-width", "column-span", "column-fill",
-  // colour and surface
+  // color and surface
   "color", "background", "background-color", "background-image", "background-position", "background-position-x", "background-position-y", "background-size", "background-repeat",
   "background-origin", "background-clip", "background-attachment", "background-blend-mode",
   "border", "border-top", "border-right", "border-bottom", "border-left", "border-block", "border-inline", "border-block-start", "border-block-end", "border-inline-start", "border-inline-end",

@@ -9,7 +9,7 @@ import { DECLARED_KIND } from "../../src/meta.js";
  * the studio's acts over its meta-graph and `editDocument` over a document
  * produce the same declaration for the same change. Compared as what the
  * declaration says — each kind's fields with their type and whether they
- * must be given, its relations, and every rule's judgement.
+ * must be given, its relations, and every rule's judgment.
  */
 const base: GraviewDocument = {
   format: "graview-document",
@@ -34,7 +34,7 @@ function said(document: GraviewDocument): Said {
       edges: Object.keys(spec.edges ?? {}).sort(),
     };
   }
-  // A judgement compared as what it means, printed one way: "||" and "or" are the same rule.
+  // A judgment compared as what it means, printed one way: "||" and "or" are the same rule.
   out.rules = Object.fromEntries(Object.entries(document.rules ?? {}).map(([name, rule]) => [name, printExpr(parseExpr(rule.require))]));
   return out;
 }

@@ -50,7 +50,7 @@ const hygiene = (page) =>
      * written. The question is whether the control has a name, not which
      * of the two spellings the author reached for.
      */
-    labelledInputs: [...document.querySelectorAll("input, select")].every(
+    labeledInputs: [...document.querySelectorAll("input, select")].every(
       (el) =>
         el.closest("label")?.textContent?.trim() ||
         el.getAttribute("aria-label")?.trim() ||
