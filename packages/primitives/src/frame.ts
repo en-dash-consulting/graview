@@ -18,6 +18,7 @@ export type { Brand, Scheme, ThemeCssOptions, ThemeTokens } from "./theme.js";
 export { Profile } from "./profile.js";
 export type { HostAction } from "./profile.js";
 export { createNoticeBoard, Notices, TOAST_MS } from "./notices.js";
+export { FOOT_MOVED, FOOT_OBSTACLES, NARROW_PICTURE, placeAtTheFoot, placeAtTheTop } from "./notice-place.js";
 export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "./notices.js";
 export { Standing } from "./workbench/standing.js";
 export { descentTarget } from "./workbench/descent.js";

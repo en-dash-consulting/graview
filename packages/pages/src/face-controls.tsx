@@ -1,5 +1,7 @@
 import { layer, type AnySchema, type Principal, type Store } from "@graview/core";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState, type ReactNode, type RefObject } from "react";
+import { FOOT_MOVED, placeAtTheFoot } from "@graview/primitives/pages";
+import { inTopLayer } from "@graview/react/provider";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useLocation } from "react-router-dom";
 import type { PageContext } from "./page-context.js";
 import { useStoreTick } from "./page-context.js";
@@ -113,7 +115,8 @@ function useTakeBack<S extends AnySchema>(context: PageContext<S>) {
  * keyboard, judged by the policy like any change.
  *
  * Exported for a shell that wants it somewhere of its own; a shell that
- * does not place it gets it anyway, docked at the corner of the face.
+ * does not place it gets it anyway, floating over the face at its foot
+ * like a notice (FR-133).
  */
 export function PageUndo<S extends AnySchema>({
   context,
@@ -129,83 +132,177 @@ export function PageUndo<S extends AnySchema>({
 
 function TakeBack<S extends AnySchema>({ context, docked }: { readonly context: PageContext<S>; readonly docked: boolean }) {
   const { change, takeBack, refused, said } = useTakeBack(context);
+  const dock = useRef<HTMLDivElement | null>(null);
+  const shown = docked && (change !== undefined || refused !== null);
+  useFloatingDock(dock, shown);
+  // What can be taken back, said politely as it comes (FR-133); what was taken back, once it is.
+  const heard = said || (docked && change ? takeBackWords(change) : "");
   const corner: React.CSSProperties = docked
-    ? context.embedded
-      ? { position: "sticky", bottom: 12, marginLeft: "auto", marginRight: 12, width: "fit-content" }
-      : { position: "fixed", right: 16, bottom: 16, zIndex: layer("rail") }
+    ? {
+        /*
+         * A NOTICE, OVER THE FACE (FR-133): in the top layer, at the foot of
+         * the picture it is about, and in no row of the page — sticky, it
+         * opened a band of its own under an embed's strip and pushed the
+         * page down. Placed by `placeAtTheFoot`: the middle on a phone, the
+         * left on a desk, above the Ask.
+         */
+        position: "fixed",
+        inset: "auto",
+        margin: 0,
+        padding: 0,
+        border: "none",
+        background: "none",
+        overflow: "visible",
+        zIndex: layer("toast"),
+        width: "max-content",
+        // Under the popover's `fit-content`, WebKit stands a grid as tall as the screen.
+        height: "auto",
+        bottom: "calc(16px + env(safe-area-inset-bottom, 0px))",
+        left: 16,
+        justifyItems: "start",
+        color: "var(--graview-ink)",
+        ...(shown ? {} : { display: "none" }),
+      }
     : {};
   return (
-    <div
-      data-testid={docked ? "face-undo-dock" : "page-undo-place"}
-      style={{
-        ...corner,
-        display: "grid",
-        justifyItems: "end",
-        gap: 4,
-        // Clear of the Ask control at the other corner on a phone.
-        maxWidth: docked ? "min(30rem, calc(100vw - 140px))" : "100%",
-        minWidth: 0,
-      }}
-    >
-      {/* What happened, said once to a screen reader: the control that said it may be gone. */}
-      <span role="status" style={visuallyHidden}>
-        {said}
+    <>
+      {/* What can be taken back, and what was: said once to a screen reader, from outside the dock, which goes when there is nothing to take back. */}
+      <span role="status" aria-live="polite" style={visuallyHidden}>
+        {heard}
       </span>
-      {change ? (
-        <button
-          type="button"
-          data-testid="page-undo"
-          title={`${takeBackWords(change)} — ⌘Z or Ctrl+Z`}
-          aria-keyshortcuts="Meta+Z Control+Z"
-          onClick={(event) => {
-            const face = event.currentTarget.closest("[data-graview-face]");
-            takeBack();
-            // After the face has drawn the change gone: if this control went with it, the keyboard lands on the page.
-            requestAnimationFrame(() => landOnThePage(face));
-          }}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            minHeight: 36,
-            maxWidth: "100%",
-            minWidth: 0,
-            padding: "0 14px",
-            borderRadius: 999,
-            border: "1px solid var(--graview-edge)",
-            background: "var(--graview-float)",
-            color: "var(--graview-ink)",
-            font: "inherit",
-            fontSize: "0.875rem",
-            boxShadow: docked ? "var(--graview-lift-low)" : undefined,
-            cursor: "pointer",
-          }}
-        >
-          <span aria-hidden="true">↶</span>
-          <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {takeBackWords(change)}
+      <div
+        ref={dock}
+        {...(docked ? { popover: "manual", "data-graview-foot": "", "data-graview-offstage": "" } : {})}
+        data-testid={docked ? "face-undo-dock" : "page-undo-place"}
+        style={{
+          display: "grid",
+          justifyItems: "end",
+          gap: 4,
+          maxWidth: "100%",
+          minWidth: 0,
+          ...corner,
+        }}
+      >
+        {change ? (
+          <button
+            type="button"
+            data-testid="page-undo"
+            title={`${takeBackWords(change)} — ⌘Z or Ctrl+Z`}
+            aria-keyshortcuts="Meta+Z Control+Z"
+            onClick={(event) => {
+              const face = event.currentTarget.closest("[data-graview-face]");
+              takeBack();
+              // After the face has drawn the change gone: if this control went with it, the keyboard lands on the page.
+              requestAnimationFrame(() => landOnThePage(face));
+            }}
+            style={docked ? DOCKED : PLACED}
+          >
+            <span aria-hidden="true">↶</span>
+            <span style={docked ? WRAPPED : ONE_LINE}>{takeBackWords(change)}</span>
+          </button>
+        ) : null}
+        {refused ? (
+          <span
+            data-testid="page-undo-refused"
+            role="alert"
+            style={{
+              fontSize: "0.8125rem",
+              lineHeight: 1.4,
+              color: "var(--graview-warn)",
+              background: docked ? "var(--graview-float)" : undefined,
+              padding: docked ? "4px 8px" : undefined,
+              borderRadius: 6,
+            }}
+          >
+            {refused}
           </span>
-        </button>
-      ) : null}
-      {refused ? (
-        <span
-          data-testid="page-undo-refused"
-          role="alert"
-          style={{
-            fontSize: "0.8125rem",
-            lineHeight: 1.4,
-            color: "var(--graview-warn)",
-            background: docked ? "var(--graview-float)" : undefined,
-            padding: docked ? "4px 8px" : undefined,
-            borderRadius: 6,
-          }}
-        >
-          {refused}
-        </span>
-      ) : null}
-    </div>
+        ) : null}
+      </div>
+    </>
   );
 }
+
+/**
+ * The docked way back in the top layer, placed at the foot of the picture
+ * it is about — an embed's content, or the screen — and placed again as
+ * the screen scrolls or resizes, or its sentence changes. Says so to a
+ * notice that stands above it.
+ */
+function useFloatingDock(dock: RefObject<HTMLDivElement | null>, shown: boolean) {
+  useLayoutEffect(() => {
+    const element = dock.current;
+    if (!element || !shown) return;
+    if (typeof element.showPopover === "function" && !inTopLayer(element)) {
+      try {
+        element.showPopover();
+      } catch {
+        // The toast rung holds it over every rail where the top layer is not there.
+      }
+    }
+    const anchor = () => element.parentElement?.closest<HTMLElement>("[data-embed-content]") ?? null;
+    const place = () => {
+      placeAtTheFoot(element, anchor());
+      dispatchEvent(new Event(FOOT_MOVED));
+    };
+    place();
+    addEventListener("resize", place);
+    addEventListener("scroll", place, true);
+    const grows = typeof ResizeObserver === "function" ? new ResizeObserver(place) : null;
+    grows?.observe(element);
+    return () => {
+      grows?.disconnect();
+      removeEventListener("resize", place);
+      removeEventListener("scroll", place, true);
+      if (element.isConnected && inTopLayer(element)) {
+        try {
+          element.hidePopover();
+        } catch {
+          // Gone already.
+        }
+      }
+      dispatchEvent(new Event(FOOT_MOVED));
+    };
+  }, [dock, shown]);
+}
+
+const PLACED: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  minHeight: 36,
+  maxWidth: "100%",
+  minWidth: 0,
+  padding: "0 14px",
+  borderRadius: 999,
+  border: "1px solid var(--graview-edge)",
+  background: "var(--graview-float)",
+  color: "var(--graview-ink)",
+  font: "inherit",
+  fontSize: "0.875rem",
+  cursor: "pointer",
+};
+
+/** Docked, it is a notice: the floating panel's look, a quiet corner rather than a capsule (FR-117). */
+const DOCKED: React.CSSProperties = {
+  ...PLACED,
+  textAlign: "start",
+  lineHeight: 1.4,
+  padding: "8px 14px",
+  borderRadius: "var(--graview-radius, 12px)",
+  boxShadow: "var(--graview-lift-high)",
+};
+
+const ONE_LINE: React.CSSProperties = { minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
+
+/** Wrapped, not cut: four lines before anything is (FR-118), and what is cut is still whole in the button's name and title. */
+const WRAPPED: React.CSSProperties = {
+  minWidth: 0,
+  overflow: "hidden",
+  overflowWrap: "anywhere",
+  display: "-webkit-box",
+  WebkitBoxOrient: "vertical",
+  WebkitLineClamp: 4,
+};
 
 const visuallyHidden: React.CSSProperties = {
   position: "absolute",

@@ -75,9 +75,14 @@ export const BUDGETS = [
      * Raised again when every act came to refuse an argument it does not
      * take (FR-121): the page's store holds a call to its act's shape before
      * the input parses, about 0.4 kB. Measured at 488_607 / 165_764.
+     *
+     * Raised when notices came to float over the page (FR-133): the way
+     * back is drawn as a notice in the top layer, and every notice is
+     * placed at the foot clear of what stands there, about 2.6 kB minified,
+     * 1 kB gzipped. Measured at 491_172 / 166_746.
      */
-    minified: 489_000,
-    gzipped: 166_000,
+    minified: 491_500,
+    gzipped: 167_000,
     load: "first",
   },
   {
@@ -179,9 +184,13 @@ export const BUDGETS = [
      * said no (FR-119) and every act to refuse an argument it does not take
      * (FR-121), in `@graview/core`'s index and the agent runtime the frame
      * imports up front. Measured at 683_560 / 173_530.
+     *
+     * Gzipped raised when notices came to float over the page (FR-133):
+     * every notice is placed at the foot clear of what stands there, about
+     * 0.7 kB gzipped. Measured at 685_141 / 174_211.
      */
     minified: 685_500,
-    gzipped: 174_000,
+    gzipped: 174_500,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -267,9 +276,13 @@ export const BUDGETS = [
      * Measured at 1_500_408 / 446_644 with the pull requests of this round together.
      *
      * Measured at 1_501_142 / 448_675 with the pull requests of this round together.
+     *
+     * Raised when notices came to float over the page (FR-133): the way back
+     * drawn as a notice, every notice placed at the foot clear of what
+     * stands there. Measured at 1_507_037 / 450_941.
      */
-    minified: 1_506_500,
-    gzipped: 450_500,
+    minified: 1_508_000,
+    gzipped: 451_500,
     load: "all",
   },
   {

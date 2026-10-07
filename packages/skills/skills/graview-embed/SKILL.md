@@ -95,7 +95,8 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     not drawn); the reader's own choice is remembered over it. Say the
     host's own news through `handle.notify({ kind: "toast" | "banner",
     sentence, tone, action })`, not a toast of your own fixed over the app:
-    it is drawn in the framework's panel, on top, and read aloud.
+    it is drawn in the framework's panel, on top, read aloud, over the
+    app's foot (left on a desk, middle on a phone), moving nothing.
 12. **When the page IS the app, hand it the address bar.** The default,
     `routing: "memory"`, never touches the host's `location` or `history`
     — right in an article. A host whose whole page is the app passes
