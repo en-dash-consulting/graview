@@ -25,6 +25,7 @@ export default defineConfig({
       "@graview/core/scene": fileURLToPath(new URL("./packages/core/src/scene.ts", import.meta.url)),
       "@graview/core/figures": fileURLToPath(new URL("./packages/core/src/figures.ts", import.meta.url)),
       "@graview/core/describe": fileURLToPath(new URL("./packages/core/src/describe.ts", import.meta.url)),
+      "@graview/core/compiled": fileURLToPath(new URL("./packages/core/src/compiled.ts", import.meta.url)),
       "@graview/core/document": fileURLToPath(new URL("./packages/core/src/document/index.ts", import.meta.url)),
       "@graview/core/conformance": fileURLToPath(new URL("./packages/core/src/conformance/index.ts", import.meta.url)),
       "@graview/core": src("core"),

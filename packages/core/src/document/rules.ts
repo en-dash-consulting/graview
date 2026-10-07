@@ -2,7 +2,8 @@ import { defineInvariant, RuleBudgetError, type AnyGraphNode, type AnySchema, ty
 
 import { evaluateExpr, ExprBudgetError, ExprEvalError, type KindShape } from "./expr/evaluate.js";
 import { parseExpr } from "./expr/parse.js";
-import { parseTemplate, renderTemplate } from "./template.js";
+import { renderTemplate } from "./template.js";
+import { parseTemplate } from "./template-parse.js";
 import { parsedComputed } from "./computed.js";
 
 /**

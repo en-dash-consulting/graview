@@ -148,6 +148,14 @@ own rehearsal (`pnpm smoke`) does exactly this from packed tarballs —
    refuses another `--host` without `--trust-seat-headers`); with neither,
    it answers 401.
 
+7. **A host serving document apps compiles once, on the server.** Send
+   `serializeCompiled(compileDocument(document))` beside the document, and
+   build the app in the page with `appFromOrCompile({ compiled, document })`
+   from `@graview/core/compiled` — never `@graview/core/document`, which
+   brings the compiler back into the first chunk. A compiled app of another
+   format (`graview-compiled@1` today) is refused by name and the document
+   compiled instead; `pnpm verify hosted` says what the page carries.
+
 ## The boundary
 
 Anything ONE deployment needs belongs in ship: the op log, the snapshot,

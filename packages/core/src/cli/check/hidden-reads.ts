@@ -2,7 +2,7 @@ import { documentOf } from "../../document/to-document.js";
 import { parseExpr, type Expr } from "../../document/expr/parse.js";
 import { perMember } from "../../document/expr/analyze.js";
 import { farEnd } from "../../document/far-end.js";
-import { parseTemplate } from "../../document/template.js";
+import { parseTemplate } from "../../document/template-parse.js";
 import { nodeRefKinds } from "../../mutations/node-ref.js";
 import { withArticle } from "../../schema/define-node.js";
 import { permits, rolesOf } from "../../permissions/policy.js";

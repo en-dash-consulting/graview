@@ -40,6 +40,10 @@ Everything a Graview app declares, and the checker that verifies it.
   other end (its "setsOther" key). `editDocument`, `diffDocuments` and
   `planMigration` change a document and say what the change does to stored
   data.
+  A host that compiles a document on its server hands the page
+  `serializeCompiled(compiled)`, and the page builds the same app with
+  `appFrom` or `appFromOrCompile` from `@graview/core/compiled`, which
+  carries no compiler (the format is `graview-compiled@1`).
 - **The city** — `@graview/core/scene`: `sceneThumbnail` draws a document
   (or an app) as the Scene draws it from altitude — the same districts on
   the same map, in their hues — as one SVG string, with no DOM, for a host

@@ -93,6 +93,47 @@ mount(root, {
 });
 `;
 
+/*
+ * THE SAME SHELL, HANDED A COMPILED APP (FR-123). Cloud compiles the
+ * document on its server at every change; its `/graview/document` answer
+ * carries `compiled: serializeCompiled(compileDocument(document))` beside
+ * the document, and the shell builds the app from it with
+ * `appFromOrCompile` — which fetches the compiler only when the compiled
+ * app is missing or of a format this build cannot read. Everything is
+ * imported from `@graview/core/compiled`: the document barrel, imported up
+ * front for anything at all, would bring the compiler back.
+ */
+export const HOSTED_PAGE_COMPILED_ENTRY = HOSTED_PAGE_ENTRY.replace(
+  `import { compileDocumentWithoutCheck } from "@graview/core/document";`,
+  `import { appFromOrCompile, sayFindings } from "@graview/core/compiled";`,
+).replace(
+  `const compiled = compileDocumentWithoutCheck(opened.document);\nif (!compiled.ok) throw new Error("does not compile");`,
+  `const compiled = await appFromOrCompile(opened);\nif (!compiled.ok) throw new Error(sayFindings(compiled.findings));`,
+);
+if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new Error("the hosted page's entry no longer compiles its document where the compiled variant expects");
+
+/*
+ * Bytes, minified, of the page handed a compiled app. It measured 525 197
+ * bytes (512.9 KB) when it arrived, 44 KB under the page that compiles in
+ * the browser; Cloud's shell built from the same sources measured 554.8 KB
+ * compiling and 511.4 KB handed the compiled app. The claim is that figure
+ * with about 7 KB of headroom, spent on purpose as the other budget's is.
+ */
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 520 * 1024 };
+
+/** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
+export const COMPILER_MODULES = [
+  "core/src/document/compile.ts",
+  "core/src/document/views.ts",
+  "core/src/document/schema.ts",
+  "core/src/document/upgrade.ts",
+  "core/src/document/computed.ts",
+  "core/src/document/to-document.ts",
+  "core/src/document/template-parse.ts",
+  "core/src/document/expr/parse.ts",
+  "core/src/document/expr/analyze.ts",
+];
+
 /** zod's ~50 translated message packs, resolved to English alone (Cloud's `englishOnly`). */
 const englishOnly = {
   name: "zod-english-only",
