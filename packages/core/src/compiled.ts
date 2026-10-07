@@ -1,3 +1,4 @@
+import { canonicalize } from "./document/canonical.js";
 import { appFrom, type AppFromOptions, type CompiledDocument, type RefusedDocument } from "./document/compiled.js";
 
 /*
@@ -23,16 +24,39 @@ export { sayFindings } from "./document/findings.js";
 export type { Finding } from "./document/findings.js";
 
 /**
- * The app a host handed the page, or — when it handed none, or one this
- * build cannot read — the document compiled here, as before. The compiler
+ * The app a host handed the page, or — when it handed none, one this build
+ * cannot read, or one compiled from another document than the one handed
+ * beside it — the document compiled here, as before. The compiler
  * is fetched only then, from a fixed path of the framework's own: a stale
  * compiled app cached from another build costs one more request, not a
  * broken page. `handed` is the host's answer, `{ document, compiled }` as
  * Graview Cloud's `/graview/document` serves it.
  */
 export async function appFromOrCompile(handed: { readonly compiled?: unknown; readonly document: unknown }, options: AppFromOptions = {}): Promise<CompiledDocument | RefusedDocument> {
-  const built = handed.compiled === undefined ? undefined : appFrom(handed.compiled, options);
+  const built = handed.compiled === undefined || !compiledFrom(handed.compiled, handed.document) ? undefined : appFrom(handed.compiled, options);
   if (built?.ok) return built;
   const { compileDocumentWithoutCheck } = await import("./document/compile.js");
   return compileDocumentWithoutCheck(handed.document, options);
+}
+
+/*
+ * A COMPILED APP IS BUILT ONLY FOR THE DOCUMENT HANDED BESIDE IT. One kept
+ * in a cache from an earlier version of the document carries that version,
+ * whole and well formed, and building it would run yesterday's acts against
+ * the host's today. Two that mean the same are the same canonical text, so
+ * the check costs a walk of the document and none of the compiler; a
+ * document in an older format, which a compiled app holds upgraded, is
+ * compiled here, as it would have been without one.
+ */
+function compiledFrom(compiled: unknown, document: unknown): boolean {
+  const said = typeof compiled === "object" && compiled !== null ? (compiled as { readonly document?: unknown }).document : undefined;
+  let handed = document;
+  if (typeof handed === "string") {
+    try {
+      handed = JSON.parse(handed);
+    } catch {
+      return false;
+    }
+  }
+  return said !== undefined && canonicalize(said) === canonicalize(handed);
 }
