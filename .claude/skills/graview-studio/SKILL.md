@@ -106,7 +106,7 @@ verify on the files it wrote. Say what they said.
 - Whether a body the studio wrote does what the person meant. It does what
   the act declares — create, connect, sever, write — and nothing more.
 - Whether a rule the studio declared is right. It judges nothing until the
-  checkout gives it an `evaluate`; the checker sees a rule, not a judgement.
+  checkout gives it an `evaluate`; the checker sees a rule, not a judgment.
 - Whether a migration is safe for data it has not met. It is computed
   against the stored graph when it runs; look at the primitives on a copy.
 - Whether the files should replace the checkout's. Read them; a hand-written

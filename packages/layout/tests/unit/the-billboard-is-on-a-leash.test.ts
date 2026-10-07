@@ -6,9 +6,9 @@ import { EMPTY_VIEW, layout, SCREEN_LEASH_CELLS, withWithin } from "../../src/in
 /**
  * A BILLBOARD CAN BE MOVED, AND ONLY SO FAR.
  *
- * Its home is the back kerb of its own plot, which is where it belongs: a
+ * Its home is the back curb of its own plot, which is where it belongs: a
  * picture of a kind, standing on that kind's land. A board planted to the
- * millimetre is furniture, though, and a person wants to nudge it off
+ * millimeter is furniture, though, and a person wants to nudge it off
  * whatever it is covering — so a pin moves it, and the leash is what keeps
  * it a picture OF this village rather than a sheet floating over the city.
  *

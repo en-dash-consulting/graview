@@ -37,7 +37,7 @@ Everything a Graview app declares, and the checker that verifies it.
   (`expressionRule`). Every command that takes an entry takes
   `--document <file>`. A view's blocks resolve with `@graview/core/blocks`.
   A number field may say its range (`min`, `max`, `step`), which every form,
-  tool and apply honours; an act's `connects` links from whichever end
+  tool and apply honors; an act's `connects` links from whichever end
   of the relation its subject is, `replaces` severs the links it supersedes and set the record at the
   other end (its "setsOther" key). `editDocument`, `diffDocuments` and
   `planMigration` change a document and say what the change does to stored
@@ -66,7 +66,7 @@ Everything a Graview app declares, and the checker that verifies it.
   barrels up front, and would otherwise carry them before a face is fetched.
 - **A place's address** — `addressOf(place, { basePath })` spells a place
   from `placesOf` as the routed face links to it under a host's base path,
-  `pathWithin` reads an address back, and `basePathOf` normalises a base.
+  `pathWithin` reads an address back, and `basePathOf` normalizes a base.
   A `search` hit says its own: a record, a kind's list or a place carries
   `address`, spelled the same way under the `basePath` it is given, and a
   seat finds only the records its sight lets it open.
@@ -85,7 +85,7 @@ npx graview docs ./dist/domain/app.js
 ```
 
 `create` writes the declaration split into domain and UI, a shell, a headless
-test and a CI workflow, initialises a repository, installs, and says what to
+test and a CI workflow, initializes a repository, installs, and says what to
 do next. `--link <path>` consumes the framework from a sibling checkout by
 path instead of a registry — the only way that works until the packages are
 published — and refuses a framework that is not built.

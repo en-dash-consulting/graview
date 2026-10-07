@@ -17,7 +17,7 @@ import type { CheckContext } from "./context.js";
 export function checkSettings<S extends AnySchema>(ctx: CheckContext<S>): void {
   const { app, add } = ctx;
   /*
-   * A SETTING NOBODY CAN HONOUR IS A CONTROL THAT DOES NOTHING.
+   * A SETTING NOBODY CAN HONOR IS A CONTROL THAT DOES NOTHING.
    *
    * The profile pane draws what the app declares, and the shell knows
    * exactly two ways to carry an answer to every surface. A setting with
@@ -26,7 +26,7 @@ export function checkSettings<S extends AnySchema>(ctx: CheckContext<S>): void {
    * settings with one name write over each other's storage.
    */
   const settingNames = new Set<string>();
-  const HONOURED = ["root-font-size", "root-attribute"] as const;
+  const HONORED = ["root-font-size", "root-attribute"] as const;
   for (const setting of app.settings ?? []) {
     const where = `settings["${setting.name}"]`;
     if (!/^[a-z][a-z0-9-]*$/.test(setting.name)) {
@@ -48,13 +48,13 @@ export function checkSettings<S extends AnySchema>(ctx: CheckContext<S>): void {
       });
     }
     settingNames.add(setting.name);
-    if (!(HONOURED as readonly string[]).includes(setting.honoured)) {
+    if (!(HONORED as readonly string[]).includes(setting.honored)) {
       add({
         severity: "error",
-        code: "setting-not-honourable",
-        where: `${where}.honoured`,
-        message: `Nothing knows how to apply "${setting.honoured}", so this control would do nothing.`,
-        fix: `Use ${HONOURED.map((one) => `"${one}"`).join(" or ")}.`,
+        code: "setting-not-honorable",
+        where: `${where}.honored`,
+        message: `Nothing knows how to apply "${setting.honored}", so this control would do nothing.`,
+        fix: `Use ${HONORED.map((one) => `"${one}"`).join(" or ")}.`,
       });
     }
     if (setting.options.length < 2) {
@@ -75,7 +75,7 @@ export function checkSettings<S extends AnySchema>(ctx: CheckContext<S>): void {
         fix: `Set initial to one of: ${setting.options.map((option) => `"${option.value}"`).join(", ")}.`,
       });
     }
-    if (setting.honoured === "root-font-size") {
+    if (setting.honored === "root-font-size") {
       for (const option of setting.options) {
         // The starting option means "leave it as the reader has it" and
         // stamps nothing, so it is a word rather than a length.

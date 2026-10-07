@@ -76,7 +76,7 @@ export function clipPolyline(points: readonly Point[], boxes: readonly Box[]): P
  *
  * Out along x to the middle, across, and in along x drew the last leg of a
  * line from the focus down to a card in a band as a horizontal run at the
- * card's own height — through the gap between it and its neighbour, so two
+ * card's own height — through the gap between it and its neighbor, so two
  * chips in a row read as joined by a dashed line. Where the ends are further
  * apart vertically than across, the route leaves and arrives vertically and
  * crosses in the gutter halfway between: a line comes down INTO a card, and

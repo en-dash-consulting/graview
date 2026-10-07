@@ -3,7 +3,7 @@ import type { Box, Point } from "./routes.js";
 /*
  * A LINE BETWEEN TWO CHIPS OF ONE BAND runs in the gutters.
  *
- * A band of many neighbours is a grid: rows of chips with gaps between the
+ * A band of many neighbors is a grid: rows of chips with gaps between the
  * rows and between the chips. An arc between two of them crossed whatever
  * lay between, and clipped under every chip it crossed it was left as
  * confetti — dashes in the gaps that belonged to no visible line. In a

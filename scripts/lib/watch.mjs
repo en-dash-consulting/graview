@@ -51,7 +51,7 @@ export const watchFile = (script, engine = "chromium") =>
   resolve(repoRoot, "docs/watch", `${script}${engine === "chromium" ? "" : `.${engine}`}.json`);
 
 /* ------------------------------------------------------------------ */
-/* In the page. Serialised by addInitScript: no closure over Node.     */
+/* In the page. Serialized by addInitScript: no closure over Node.     */
 /* ------------------------------------------------------------------ */
 
 function watchInPage() {

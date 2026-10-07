@@ -101,7 +101,7 @@ const MEASURE = () => {
    * What is under a point, ignoring the overlay itself. A line routed through
    * the gutters leaves a card exactly at its border, and a border at a
    * fractional pixel (a band drawn at 0.95) is outside the element at that
-   * very point; so the point and its neighbours within two pixels are asked,
+   * very point; so the point and its neighbors within two pixels are asked,
    * which still finds a line ending in open ground.
    */
   const NEAR = [[0, 0], [0, -2], [0, 2], [-2, 0], [2, 0]];
@@ -253,7 +253,7 @@ report.checks.everyLineStaysInThePicture = !report.faults.some((f) => /leaves th
 report.checks.everyLineLandsOnSomething = !report.faults.some((f) => /neither end on anything/.test(f));
 report.checks.nothingThrew = !report.faults.some((f) => /Error|Timeout/.test(f));
 /*
- * A HARNESS THAT PASSES ON NOTHING IS THEATRE: with no lines on any page
+ * A HARNESS THAT PASSES ON NOTHING IS THEATER: with no lines on any page
  * every claim above is vacuously true and the run has checked nothing.
  */
 report.checks.thereWereLinesToCheck = report.lines > 0;

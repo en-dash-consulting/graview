@@ -2,9 +2,9 @@ import { brandFromAccent, checkBrandContrast, checkContrast, SCHEMES, TEXT_PAIRS
 import { describe, expect, it } from "vitest";
 
 /**
- * FR-38: a status says good or bad in the theme's own colours. The theme
+ * FR-38: a status says good or bad in the theme's own colors. The theme
  * had an accent and a warning and nothing for success or danger, so every
- * badge that meant "booked" or "overdue" invented a colour and checked it
+ * badge that meant "booked" or "overdue" invented a color and checked it
  * by hand, if at all.
  */
 describe("the theme has good and bad tones", () => {

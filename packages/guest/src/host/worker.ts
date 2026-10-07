@@ -219,7 +219,7 @@ export type { GuestKitElement, Kit, KitComponent, KitEvent, KitProperty, KitProp
 /*
  * A worker view on the open kit (FR-90): HTML, SVG and CSS drawn into a
  * shadow root of the host's, with what could fetch or escape not drawn.
- * Its sanitiser and renderer are a chunk of their own, fetched the first
+ * Its sanitizer and renderer are a chunk of their own, fetched the first
  * time a view draws.
  */
 export { mountWorkerView } from "./view.js";

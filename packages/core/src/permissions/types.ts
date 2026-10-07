@@ -3,11 +3,11 @@ import type { Author } from "../ops/types.js";
 /**
  * Who is acting, and what they are allowed to be.
  *
- * A principal IS an author with roles. Attribution and authorisation are the
+ * A principal IS an author with roles. Attribution and authorization are the
  * same fact seen twice, not two systems: every op already records `{ kind,
  * id, session }`, so adding roles to that shape means the thing the log
  * blames is the thing the policy judged, by construction. There is no way to
- * act as one participant and be authorised as another.
+ * act as one participant and be authorized as another.
  */
 export interface Principal extends Author {
   readonly roles?: readonly string[];

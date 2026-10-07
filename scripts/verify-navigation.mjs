@@ -2,7 +2,7 @@
 /**
  * Getting somewhere, and getting back.
  *
- * Travelling is a double click, and the screen you land on is the one nobody
+ * Traveling is a double click, and the screen you land on is the one nobody
  * designs: you arrived by accident as often as on purpose, and the first thing
  * you want is out. Every stop here is a URL, so back and forward are the
  * browser's — but an interface whose navigation is the browser's should not
@@ -81,14 +81,14 @@ try {
   // Travel: the double click, and the screen it lands on.
   await page.dblclick('[data-graview-pick="t-deposit"]');
   await page.waitForTimeout(800);
-  await note(page, "travelled");
+  await note(page, "traveled");
 
   /*
    * Travel again, deeper — through a PICK TARGET rather than a card.
    *
    * Double-clicking a card with no pick target inside it zooms it in close,
    * which is a different move with a different meaning ("give this the
-   * room") — and an ordinary stop like any other. Travelling is following a
+   * room") — and an ordinary stop like any other. Traveling is following a
    * thing the view nominated, and that is what a chain of stops is made of.
    */
   const onward = await page.evaluate(
@@ -100,7 +100,7 @@ try {
   if (onward) {
     await page.dblclick(`[data-graview-pick="${onward}"]`);
     await page.waitForTimeout(800);
-    await note(page, "travelled again");
+    await note(page, "traveled again");
   }
   report.wentDeeper = onward !== null;
 
@@ -139,7 +139,7 @@ try {
   await note(page, "lists with every task raised");
 
   // The other way round: the week in focus, the lists raised as cards. A card
-  // summarising its members as chips has not drawn the relation between the
+  // summarizing its members as chips has not drawn the relation between the
   // week's entries and itself; every entry keeps its line to its list.
   await page.goto(`${at("todo")}/?today=2026-09-01#focus=aggregate%3Atask&relation=list`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
@@ -267,7 +267,7 @@ try {
   if (next) {
     await page.dblclick(`[data-graview-pick="${next}"]`);
     await page.waitForTimeout(900);
-    report.moves.travelled = await pinnedNow();
+    report.moves.traveled = await pinnedNow();
     await page.click('[data-testid="backtrack"] button[aria-label="Back"]');
     await page.waitForTimeout(900);
     report.moves.back = await pinnedNow();
@@ -320,7 +320,7 @@ try {
    * THE ACT THAT REMOVES WHAT YOU ARE STANDING IN.
    *
    * Every stop here is an id in the address, and ordinary acts remove
-   * things. Travelled into a task and dropped it, the focus was an id
+   * things. Traveled into a task and dropped it, the focus was an id
    * nothing resolved: the layout placed nothing, the view host measured its
    * own kind tag instead of the panel that was no longer there, and moved
    * it nine pixels up and fourteen right on every render until React gave
@@ -389,7 +389,7 @@ try {
    * "Show the installation" and the studio are both STOPS: one raises the
    * installation's own districts into the scene, the other opens the app's
    * declaration over it. Neither pushed a history entry — the address
-   * changed and the entry was REPLACED — so the arrows stayed grey and one
+   * changed and the entry was REPLACED — so the arrows stayed gray and one
    * Back from either left the app entirely. Both live behind the profile
    * now, which is also where a harness has to go to find them.
    */
@@ -472,7 +472,7 @@ try {
  * on the kind's plot, not in the middle. Pressing a showing focuses the
  * kind and descends in ONE gesture, and the picture tweens from the plot,
  * which the mid-tween capture asserts: at a hundred milliseconds in, the
- * lens's host is nearer the plot than the canvas centre.
+ * lens's host is nearer the plot than the canvas center.
  */
 try {
   const drive = await browser.newPage({ viewport: { width: 1560, height: 940 } });
@@ -539,7 +539,7 @@ try {
   await drive.click('[data-testid="showing-the-month"]');
   await drive.waitForTimeout(1200);
   /* Full screen: the billboard's own control is the way down; capture mid-tween. */
-  const centreX = 1560 / 2;
+  const centerX = 1560 / 2;
   await drive.click('[data-testid="screen-fullscreen"]');
   await drive.waitForTimeout(110);
   const midway = await drive.evaluate(() => {
@@ -564,9 +564,9 @@ try {
     switched,
     midway,
     landed,
-    /* Mid-tween the lens is nearer the plot's column than the centre's. */
+    /* Mid-tween the lens is nearer the plot's column than the center's. */
     movedFromThePlot:
-      midway !== null && plotX !== null && Math.abs(midway.x - plotX) < Math.abs(midway.x - centreX) + 40,
+      midway !== null && plotX !== null && Math.abs(midway.x - plotX) < Math.abs(midway.x - centerX) + 40,
   };
   await drive.close();
 } catch (error) {
@@ -872,7 +872,7 @@ report.verdict = {
   everyRelationIsCaptionedOnce:
     report.steps.length > 0 &&
     report.steps.every((step) => new Set(step.captions ?? []).size === (step.captions ?? []).length),
-  // A kind with named pictures has a drive-in whose showings are real, labelled, focusable buttons, each in a tile that says its name whole and holds no other control or picture; a kind with only defaults has none.
+  // A kind with named pictures has a drive-in whose showings are real, labeled, focusable buttons, each in a tile that says its name whole and holds no other control or picture; a kind with only defaults has none.
   aDriveInHasAMarquee:
     (report.driveIn?.marquee?.length ?? 0) >= 2 &&
     report.driveIn.marquee.every((button) => /^Tasks: /.test(button.label ?? "") && button.focusable) &&
@@ -908,7 +908,7 @@ report.verdict = {
       .every((screen) => screen.width < (report.driveIn?.leavingBefore?.width ?? 0) - 4 && screen.opacity < 0.9) &&
     (report.driveIn?.afterSwitch ?? []).length === 1 &&
     report.driveIn?.afterSwitch?.[0] === "aggregate:list",
-  // The focused picture stands on its plot: the screen's foot sits above the district's nameplate, centred on it.
+  // The focused picture stands on its plot: the screen's foot sits above the district's nameplate, centered on it.
   theScreenStandsOnItsPlot:
     report.driveIn?.standing?.screen !== null &&
     report.driveIn?.standing?.card !== null &&
@@ -926,15 +926,15 @@ report.verdict = {
   // Nowhere to go back to on arrival, and the control says so rather than
   // being offered and doing nothing.
   nothingToGoBackToAtFirst: step("landed")?.back === false,
-  travellingChangesTheAddress: step("travelled")?.url !== step("landed")?.url,
-  backBecomesAvailable: step("travelled")?.back === true,
+  travelingChangesTheAddress: step("traveled")?.url !== step("landed")?.url,
+  backBecomesAvailable: step("traveled")?.back === true,
   // Nothing ahead until you have actually gone back.
-  nothingAheadUntilYouGoBack: step("travelled")?.forward === false,
-  backActuallyGoesBack: placeOf(step("back once")?.url) === placeOf(step("travelled")?.url),
+  nothingAheadUntilYouGoBack: step("traveled")?.forward === false,
+  backActuallyGoesBack: placeOf(step("back once")?.url) === placeOf(step("traveled")?.url),
   // The pane you had open at that stop comes back with it.
   backRestoresTheSelection: (step("back once")?.url ?? "").includes("sel="),
   wentDeeperThanOnce: report.wentDeeper === true,
-  eachTravelIsItsOwnStop: step("travelled again")?.url !== step("travelled")?.url,
+  eachTravelIsItsOwnStop: step("traveled again")?.url !== step("traveled")?.url,
   // Two stops back from two stops in is where you started.
   backAgainReachesTheStart: placeOf(step("back twice")?.url) === placeOf(step("landed")?.url),
   forwardIsOfferedOnceThereIsSomewhere: step("back twice")?.forward === true,
@@ -943,9 +943,9 @@ report.verdict = {
   // Nine entries on the week, nine lines to the lists that hold them.
   aCardsChipsDoNotSilenceItsLines: (report.restated?.entries ?? 0) >= 9 && (report.restated?.weekLines ?? 0) >= (report.restated?.entries ?? 0),
   // Forward is ONE step, not all the way back to where you had got to.
-  forwardActuallyGoesForward: placeOf(step("forward once")?.url) === placeOf(step("travelled")?.url),
+  forwardActuallyGoesForward: placeOf(step("forward once")?.url) === placeOf(step("traveled")?.url),
   // And the breadcrumb still names where you are, and gets you out in one.
-  theTrailNamesWhereYouAre: (step("travelled")?.trail ?? "").includes("deposit"),
+  theTrailNamesWhereYouAre: (step("traveled")?.trail ?? "").includes("deposit"),
   theTrailGetsYouHome: placeOf(step("home by breadcrumb")?.url) === placeOf(step("landed")?.url),
   // The altitude control: a toggle that names where it takes you.
   theControlSaysUpOnTheGround:
@@ -971,8 +971,8 @@ report.verdict = {
   aNewStopStartsWhereTheLayoutPutsThings:
     (report.moves?.arranged?.pinned?.length ?? 0) > 0 &&
     report.moves?.arranged?.url.includes("pin.") &&
-    report.moves?.travelled?.pinned?.length === 0 &&
-    !report.moves?.travelled?.url.includes("pin.") &&
+    report.moves?.traveled?.pinned?.length === 0 &&
+    !report.moves?.traveled?.url.includes("pin.") &&
     (report.moves?.back?.pinned?.length ?? 0) > 0,
   // A kind with a lens goes INTO the lens; a kind without one opens in place.
   aDistrictWithAPictureGoesIntoIt:

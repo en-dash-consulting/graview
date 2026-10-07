@@ -519,7 +519,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     };
     const declared = {
       label: title,
-      judgement: { require: rule.require, ...(rule.when ? { when: rule.when } : {}), ...(rule.says ? { says: rule.says } : {}) },
+      judgment: { require: rule.require, ...(rule.when ? { when: rule.when } : {}), ...(rule.says ? { says: rule.says } : {}) },
       ...(rule.description ? { description: rule.description } : {}),
       ...(repairs.length > 0 ? { repairs: repairs.map((r) => r.act) } : {}),
     };

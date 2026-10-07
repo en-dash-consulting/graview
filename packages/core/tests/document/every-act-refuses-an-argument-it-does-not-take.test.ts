@@ -9,8 +9,8 @@ import { createSchema, defineMutation, defineNode, InvalidArguments, mutationToo
  *
  * Since FR-110 a derived `edit-<kind>` refused an argument it did not take,
  * naming the ones it did; every other act parsed it away and ran as if it
- * had never been given — `set-quote { id, quote, colour }` set the quote and
- * said nothing of the colour, so Graview Cloud kept a stray-argument check
+ * had never been given — `set-quote { id, quote, color }` set the quote and
+ * said nothing of the color, so Graview Cloud kept a stray-argument check
  * of its own in front of every call. A document's act and a TypeScript
  * mutation are strict too, without a product changing its code: an unknown
  * argument is `InvalidArguments` naming what the act takes. `id` stays
@@ -40,12 +40,12 @@ function vendorStore() {
 }
 
 describe("a document's act", () => {
-  it("refuses set-quote { id, quote, colour } as invalid, naming colour and what it takes, and changes nothing", () => {
+  it("refuses set-quote { id, quote, color } as invalid, naming color and what it takes, and changes nothing", () => {
     const { store } = vendorStore();
-    const error = refused(() => store.apply({ name: "set-quote", args: { id: "vendor-bloom", quote: 2400, colour: "red" } }));
+    const error = refused(() => store.apply({ name: "set-quote", args: { id: "vendor-bloom", quote: 2400, color: "red" } }));
     expect(error).toBeInstanceOf(InvalidArguments);
     expect(refusalOf(error).reason).toBe("invalid");
-    expect(refusalOf(error).sentence).toContain('does not take "colour"; it takes "id", "quote"');
+    expect(refusalOf(error).sentence).toContain('does not take "color"; it takes "id", "quote"');
     expect(store.graph.getNode("vendor-bloom")).not.toHaveProperty("quote");
   });
 
@@ -53,8 +53,8 @@ describe("a document's act", () => {
     const { store } = vendorStore();
     store.apply({ name: "add-category", args: { id: "category-florist", name: "Florist" } });
     expect(store.graph.getNode("category-florist")).toMatchObject({ kind: "category", name: "Florist" });
-    const error = refused(() => store.apply({ name: "add-category", args: { name: "Venue", colour: "red" } }));
-    expect(refusalOf(error).sentence).toMatch(/does not take "colour"; it takes .*"id"/);
+    const error = refused(() => store.apply({ name: "add-category", args: { name: "Venue", color: "red" } }));
+    expect(refusalOf(error).sentence).toMatch(/does not take "color"; it takes .*"id"/);
   });
 
   it("refuses a stray in a batch's later call, and nothing in the batch lands", () => {
@@ -117,10 +117,10 @@ describe("a TypeScript mutation, whose product writes z.object as it always has"
     });
 
   it("refuses an argument it does not take, naming the ones it does", () => {
-    const error = refused(() => store().apply({ name: "finish", args: { taskId: "t1", colour: "red" } }));
+    const error = refused(() => store().apply({ name: "finish", args: { taskId: "t1", color: "red" } }));
     expect(error).toBeInstanceOf(InvalidArguments);
     expect(refusalOf(error)).toMatchObject({ reason: "invalid" });
-    expect((error as Error).message).toContain('does not take "colour"; it takes "taskId", "note"');
+    expect((error as Error).message).toContain('does not take "color"; it takes "taskId", "note"');
   });
 
   it("refuses id on an act that does not create and does not take one", () => {
@@ -136,12 +136,12 @@ describe("a TypeScript mutation, whose product writes z.object as it always has"
 
   it("takes an argument given as undefined as no argument at all", () => {
     const one = store();
-    one.apply({ name: "finish", args: { taskId: "t1", colour: undefined } });
+    one.apply({ name: "finish", args: { taskId: "t1", color: undefined } });
     expect(one.graph.getNode("t1")).toMatchObject({ done: true });
   });
 
   it("leaves an input its author made loose as loose, in the apply and in its tool", () => {
-    store().apply({ name: "tag", args: { taskId: "t1", colour: "red" } });
+    store().apply({ name: "tag", args: { taskId: "t1", color: "red" } });
     expect(mutationToolSchema(tag).inputSchema).not.toHaveProperty("additionalProperties", false);
   });
 

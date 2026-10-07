@@ -48,7 +48,7 @@ export function bounded(field: unknown): boolean {
   if (typeof schema?.safeParse !== "function") return true;
   /*
    * WHETHER A CEILING WAS CHOSEN, not whether it is sixty. The note asks
-   * that the call was made; a catalogue's real titles run to 78 characters
+   * that the call was made; a catalog's real titles run to 78 characters
    * and a bound of 100 is a call. Ten thousand characters is past any
    * ceiling somebody chose for a name.
    */

@@ -32,7 +32,7 @@ export interface BrowserAdapterOptions {
  * writes — the snapshot, the append-only log, the stored schema version —
  * as three `localStorage` entries per scope. Not the epochs (FR-27): each
  * keeps a whole copy of the graph as its base, and a second copy in a few
- * megabytes ran a two-thousand-talk programme out of room; a page's store
+ * megabytes ran a two-thousand-talk program out of room; a page's store
  * is verified by the host it is served from, not in the page. It slots into `openStore` unchanged, migrations included, so a
  * sample app that remembers is the
  * same lifecycle as a deployment that does, minus the server.
@@ -129,7 +129,7 @@ export function browserStartsFresh(
 }
 
 /**
- * Drops `?fresh=1` from the address once it has been honoured, so the seed
+ * Drops `?fresh=1` from the address once it has been honored, so the seed
  * is the FIRST load rather than every load: a reload after starting fresh
  * must keep what was done since, or "start fresh" is really "stop
  * remembering".

@@ -163,7 +163,7 @@ function standing(page, pane) {
       return { at: hit ? `${hit.tagName.toLowerCase()}${hit.getAttribute("data-testid") ? `[${hit.getAttribute("data-testid")}]` : ""}` : null, inside: hit !== null && element.contains(hit) };
     };
     const box = element.getBoundingClientRect();
-    const centre = inside(box.left + box.width / 2, box.top + box.height / 2);
+    const center = inside(box.left + box.width / 2, box.top + box.height / 2);
     const rows = [...element.querySelectorAll("li, button, a, input, select, [role=option], [role=menuitem], fieldset")].filter((row) => row.getBoundingClientRect().height > 0);
     const last = rows.at(-1);
     last?.scrollIntoView({ block: "nearest" });
@@ -179,7 +179,7 @@ function standing(page, pane) {
           return false;
         }
       })(),
-      centre,
+      center,
       lastRow,
       inTheViewport: after.left >= -1 && after.top >= -1 && after.right <= view.width + 1 && after.bottom <= view.height + 1,
       box: [Math.round(after.left), Math.round(after.top), Math.round(after.width), Math.round(after.height)],
@@ -272,7 +272,7 @@ async function everyPopoverOn(page, where, size, seen) {
     }
     drawn.push(name);
     const said = await standing(page, entry.pane);
-    const ok = said !== null && said.topLayer && said.centre.inside && said.lastRow.inside && said.inTheViewport;
+    const ok = said !== null && said.topLayer && said.center.inside && said.lastRow.inside && said.inTheViewport;
     /* FR-77: the keyboard goes in on open (a combobox's stays in its box), and it hangs from its trigger. */
     const opened = await keyboardAt(page, entry);
     const tookTheKeyboard = entry.focus === "into" ? opened.inPane : opened.onTrigger;

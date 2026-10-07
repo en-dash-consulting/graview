@@ -14,7 +14,7 @@ import {
  * `may` IS A PROMISE, AND A PROMISE IS KEPT ON EVERY PATH.
  *
  * `graview check` confirms every act in `intelligence[].may` exists. The
- * store never read the list. `validateProposals` honoured it for proposals
+ * store never read the list. `validateProposals` honored it for proposals
  * that went through the tool runtime — and a plan applied by the app's own
  * code goes through `store.apply`, where there was no `may` at all. So an
  * agent principal could run any act its ROLES allowed, whatever the

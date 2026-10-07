@@ -114,11 +114,11 @@ export interface IsoShade {
   readonly right: IsoFace;
   /** The wall away from it: darkest. */
   readonly left: IsoFace;
-  /** The roof's lit edge, as a CSS colour. */
+  /** The roof's lit edge, as a CSS color. */
   readonly roofEdge: string;
   /** The district's plot: the ground the blocks stand on. */
   readonly plot: IsoWash;
-  /** The plot's kerb. */
+  /** The plot's curb. */
   readonly plotEdge: IsoWash;
 }
 
@@ -156,7 +156,7 @@ const SHADES: Readonly<Record<Scheme, IsoShade>> = Object.freeze({
  * scene's. The lighting is not a brand's to set, because it is what makes
  * a block read as a block on the shipped grounds in both schemes.
  *
- * `hsl(${hue} ${face.saturation}% ${face.lightness}%)` is a face's colour.
+ * `hsl(${hue} ${face.saturation}% ${face.lightness}%)` is a face's color.
  */
 export function isoShade(scheme: Scheme): IsoShade {
   return SHADES[scheme];

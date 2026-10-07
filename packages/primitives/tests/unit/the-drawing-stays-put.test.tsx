@@ -20,8 +20,8 @@ import { GRAVIEW_BRAND, KindFigure } from "../../src/index.js";
  * The cost is the smaller half. A double-click only pairs if both clicks land
  * on the SAME node, and the first click's own re-render had already replaced
  * it — so double-clicking a district on its figure selected the card and went
- * nowhere, while double-clicking the same card an inch to the left travelled
- * into it. Travelling is the primary way through the graph, and the figure
+ * nowhere, while double-clicking the same card an inch to the left traveled
+ * into it. Traveling is the primary way through the graph, and the figure
  * was a hole in it.
  */
 const person = defineNode("person", {

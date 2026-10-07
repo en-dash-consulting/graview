@@ -1,7 +1,7 @@
 import {
   createSchema,
   defineNode,
-  summarise,
+  summarize,
 } from "@graview/core";
 import { z } from "zod";
 
@@ -58,7 +58,7 @@ export const app = defineNode("app", {
   fieldRoles: { group: "command" },
 });
 
-export const CAPABILITY_AREAS = ["lens", "declaration", "behaviour"] as const;
+export const CAPABILITY_AREAS = ["lens", "declaration", "behavior"] as const;
 
 export const capability = defineNode("capability", {
   description: "Something the platform offers that an app may or may not use.",
@@ -121,7 +121,7 @@ export const rationale = defineNode("rationale", {
     },
   },
   plural: "Reasons",
-  label: (node) => summarise(node.text),
+  label: (node) => summarize(node.text),
 });
 
 export const launcherSchema = createSchema([desk, app, capability, rule, rationale]);

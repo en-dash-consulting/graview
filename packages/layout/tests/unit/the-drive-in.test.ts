@@ -6,7 +6,7 @@ import { EMPTY_VIEW, interpolate, kindCardId, layout, withWithin } from "../../s
 
 /**
  * A LENS IS A DRIVE-IN. From altitude a kind's named picture stands on
- * that kind's plot — a screen anchored to the plot's far edge, centred on
+ * that kind's plot — a screen anchored to the plot's far edge, centered on
  * it — rather than floating in the middle bound to no kind; a picture
  * over two kinds stands on the road between them; and the screen's
  * address survives the tween.
@@ -29,7 +29,7 @@ const screens = { duty: [{ as: "the-week", title: "The week" }, { as: "the-matri
 const options = { width: 1280, height: 800, cityOrder: ["week", "duty", "person"], screens };
 
 describe("the drive-in", () => {
-  it("stands the focused picture on its kind's plot, anchored to the plot's far edge and centred on it", () => {
+  it("stands the focused picture on its kind's plot, anchored to the plot's far edge and centered on it", () => {
     const result = layout(graph(), schema, focused, options);
     const screen = result.nodes.find((node) => node.id === "aggregate:duty")!;
     const card = result.nodes.find((node) => node.id === kindCardId("duty"))!;
@@ -38,13 +38,13 @@ describe("the drive-in", () => {
     const plot = card.plot!;
     const frame = result.city!;
     const top = { x: frame.originX + toIso(plot.col, plot.row, frame.cell).x, y: frame.originY + toIso(plot.col, plot.row, frame.cell).y };
-    const centre = frame.originX + toIso(plot.col + plot.side / 2, plot.row + plot.side / 2, frame.cell).x;
-    expect(screen.x + screen.width / 2).toBeCloseTo(centre, 3);
+    const center = frame.originX + toIso(plot.col + plot.side / 2, plot.row + plot.side / 2, frame.cell).x;
+    expect(screen.x + screen.width / 2).toBeCloseTo(center, 3);
     /* Its foot is at the far edge of the plot, a little inside — and never on its own nameplate. */
     const foot = screen.y + screen.height;
     expect(foot).toBeLessThanOrEqual(top.y + frame.cell * 0.1 + 0.01);
     // Not above the card any more: the nameplate is a signpost at the front
-    // corner, so the billboard's foot is on the back kerb, wherever the card's top is.
+    // corner, so the billboard's foot is on the back curb, wherever the card's top is.
     expect(foot).toBeGreaterThan(card.y - card.height * 2);
     expect(screen.width).toBeGreaterThanOrEqual(300);
     /* And it covers no other district's nameplate. */

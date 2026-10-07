@@ -63,7 +63,7 @@ HTML's sectioning, headings, text, lists, tables, `details`/`summary`,
 `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients,
 `clipPath`, `mask`, `marker`, `pattern`, `symbol` and `use href="#id"`.
 Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and
-each element's own. CSS for layout, grid, flex, colour, type, transitions,
+each element's own. CSS for layout, grid, flex, color, type, transitions,
 `@keyframes`, `@media`, `@supports` and `@container`.
 
 Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`,

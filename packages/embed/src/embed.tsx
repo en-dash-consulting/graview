@@ -198,7 +198,7 @@ export interface EmbedStudio {
   readonly onApply: StudioOnApply;
   /**
    * What the studio's picture is to the host's page (FR-58). Inside an
-   * embed it is a labelled region by default, never a second `<main>`;
+   * embed it is a labeled region by default, never a second `<main>`;
    * "main" is for a host whose page has none of its own and whose whole
    * body is the studio.
    */
@@ -317,7 +317,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
    * moving by landmark could not reach the app, let alone tell two of them
    * apart at the top. A named region is what the label was for.
    *
-   * Without a label it takes the app's own name, and two unlabelled embeds
+   * Without a label it takes the app's own name, and two unlabeled embeds
    * of one app are then two regions with one name — which is the ambiguity
    * the docs warn about, said out loud by `landmark-unique` instead of
    * silently.

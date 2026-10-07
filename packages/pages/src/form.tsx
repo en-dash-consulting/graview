@@ -3,7 +3,7 @@ import {
   argumentWords,
   failureWords,
   formArgs,
-  humaniseField,
+  humanizeField,
   nounOf,
   labelOf,
   tellApart,
@@ -155,7 +155,7 @@ function Picker({ children }: { children: React.ReactNode }) {
 }
 
 type Words = (name: string) => { readonly label: string; readonly option: (value: string) => string };
-const plainWords: Words = (name) => ({ label: humaniseField(name), option: (value) => value });
+const plainWords: Words = (name) => ({ label: humanizeField(name), option: (value) => value });
 
 function Control<S extends AnySchema>({
   store,
@@ -181,13 +181,13 @@ function Control<S extends AnySchema>({
     return null;
   }
   /*
-   * A node picker is labelled by what it PICKS — "List", not "List id": the
+   * A node picker is labeled by what it PICKS — "List", not "List id": the
    * argument's name is an implementation detail, and the kinds it accepts
    * are the declaration's own word for the thing.
    */
   const named =
     spec.control === "node" && !spec.kinds.includes("*")
-      ? spec.kinds.map((kind) => humaniseField(nounOf(store.schema.tryDefinition(kind), kind))).join(" or ")
+      ? spec.kinds.map((kind) => humanizeField(nounOf(store.schema.tryDefinition(kind), kind))).join(" or ")
       : words(spec.name).label;
   const title = named + (spec.optional ? "" : " *");
 
@@ -349,7 +349,7 @@ function Control<S extends AnySchema>({
         <fieldset data-graview-part="group" data-graview-field={spec.control}>
           <legend data-graview-part="label">{title}</legend>
           <label data-graview-part="field" data-graview-field="choice">
-            <span data-graview-part="label">{humaniseField(spec.tag)}</span>
+            <span data-graview-part="label">{humanizeField(spec.tag)}</span>
             <select
               value={chosen}
               onChange={(event) => onChange({ [spec.tag]: event.target.value })}
@@ -358,7 +358,7 @@ function Control<S extends AnySchema>({
               <option value="">—</option>
               {spec.options.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {humaniseField(option.value)}
+                  {humanizeField(option.value)}
                 </option>
               ))}
             </select>
@@ -412,7 +412,7 @@ function Control<S extends AnySchema>({
       // honestly render is a missing control to build, not a hidden field.
       return (
         <p data-graview-part="unasked">
-          “{humaniseField(spec.name)}” needs a structured answer this form cannot ask for yet.
+          “{humanizeField(spec.name)}” needs a structured answer this form cannot ask for yet.
         </p>
       );
   }

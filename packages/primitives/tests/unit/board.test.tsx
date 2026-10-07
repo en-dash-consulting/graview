@@ -326,8 +326,8 @@ describe("what the board says a mark is about", () => {
     expect(draw(withViolations([], "quiet"))).toContain('data-graview-variant="page"');
   });
 
-  it("says WHY on the board, so a colour is not the whole explanation", () => {
-    // The question this answers is "why is that one a different colour", and
+  it("says WHY on the board, so a color is not the whole explanation", () => {
+    // The question this answers is "why is that one a different color", and
     // a picture that cannot answer it should not have drawn it.
     expect(draw(withViolations(["s1"], "Nobody can hear at the head of the table"))).toContain(
       "Nobody can hear at the head of the table",

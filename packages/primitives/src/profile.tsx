@@ -1,4 +1,4 @@
-import { humaniseField, labelOf, nameOfAuthor, type AnySchema } from "@graview/core";
+import { humanizeField, labelOf, nameOfAuthor, type AnySchema } from "@graview/core";
 import { POPOVER_STYLE, useGraview, usePopover } from "@graview/react/provider";
 import { LadderSetting } from "./ladder.js";
 import type { ReactNode } from "react";
@@ -171,7 +171,7 @@ export function Profile<S extends AnySchema>({
         * pane keeps its children alive, and `hidden` keeps them out of the
         * picture and out of the accessibility tree both.
         *
-        * A labelled region, not an aside: it opens from the bar or inside an
+        * A labeled region, not an aside: it opens from the bar or inside an
         * embed's own region, and a complementary landmark inside another is
         * what axe's `landmark-complementary-is-top-level` refuses (FR-40).
         */}
@@ -216,7 +216,7 @@ export function Profile<S extends AnySchema>({
                   absence of a permission system. */}
               {roles.length > 0
                 ? // A role in words — "Sales manager", never "sales-manager".
-                  roles.map((role) => humaniseField(role)).join(", ")
+                  roles.map((role) => humanizeField(role)).join(", ")
                 : me === undefined
                   ? "This app has no sign-in; everything here is yours."
                   : "No role in particular"}

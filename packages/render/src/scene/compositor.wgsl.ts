@@ -4,7 +4,7 @@
  * One textured quad per drawn view. The vertex stage places it from a plane
  * transform expressed in canvas pixels; the fragment stage applies the
  * atmospheric-depth treatment: a separable-ish box blur, contrast falloff
- * toward the ground colour, and a soft drop shadow that separates one plane
+ * toward the ground color, and a soft drop shadow that separates one plane
  * from the one behind it.
  *
  * Blur and falloff live here rather than in CSS because per-plane blur is
@@ -19,7 +19,7 @@ struct Plane {
   // view's own opacity — which is how a node entering or leaving the scene
   // fades rather than popping.
   style: vec4f,
-  // canvas size in pixels, and the ground colour's rgb packed as xyz.
+  // canvas size in pixels, and the ground color's rgb packed as xyz.
   canvas: vec4f,
   ground: vec4f,
 }
@@ -84,7 +84,7 @@ fn fs_main(in: VertexOut) -> @location(0) vec4f {
 
   var color = blurred(in.uv, radius);
 
-  // Recede toward the GROUND colour, not toward grey. On a dark ground that
+  // Recede toward the GROUND color, not toward gray. On a dark ground that
   // reads as dimming and on a light one as haze — which is what distance
   // actually does to a surface, rather than a fixed "faded" look that only
   // works in one scheme.
@@ -98,7 +98,7 @@ fn fs_main(in: VertexOut) -> @location(0) vec4f {
   color = vec4f(color.rgb * (1.0 - lift * shadow), color.a);
 
   // Premultiplied: the target blends with one-minus-src-alpha, so scaling
-  // colour and alpha together is what keeps a half-faded view from darkening
+  // color and alpha together is what keeps a half-faded view from darkening
   // instead of dissolving.
   return vec4f(color.rgb * opacity, color.a * opacity);
 }

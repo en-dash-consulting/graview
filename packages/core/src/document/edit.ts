@@ -581,15 +581,15 @@ class Editor {
         return;
       }
       case "set-brand": {
-        // The colours and the money (FR-100) are set apart: what an edit does not name stays as it was.
+        // The colors and the money (FR-100) are set apart: what an edit does not name stays as it was.
         const brand: Record<string, unknown> = { ...(this.doc.brand ?? {}) };
         if (e.accent === null) {
           delete brand["accent"];
-          this.said.push("The app goes back to Graview's colours.");
+          this.said.push("The app goes back to Graview's colors.");
         } else if (e.accent !== undefined) {
-          if (!/^#[0-9a-fA-F]{6}$/.test(e.accent)) return this.fail(i, "accent", 'an accent is a colour like "#c2577a"');
+          if (!/^#[0-9a-fA-F]{6}$/.test(e.accent)) return this.fail(i, "accent", 'an accent is a color like "#c2577a"');
           brand["accent"] = e.accent;
-          this.said.push(`The app's accent colour becomes ${e.accent}.`);
+          this.said.push(`The app's accent color becomes ${e.accent}.`);
         }
         if (e.currency === null) {
           delete brand["currency"];

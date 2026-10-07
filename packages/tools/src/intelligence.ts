@@ -34,7 +34,7 @@ export interface ProposedCall {
 /**
  * THE FIRST WHOLE JSON OBJECT IN AN ANSWER, or nothing.
  *
- * Models fence code, apologise first, explain afterwards and — often
+ * Models fence code, apologize first, explain afterwards and — often
  * enough to matter — close one brace too many. Taking everything between
  * the first `{` and the last `}` swallowed the extra, `JSON.parse` threw,
  * and the caller fell back to showing the person the raw answer: a chat
@@ -251,7 +251,7 @@ export function llmIntelligence<S extends AnySchema>(options: {
 /**
  * Starter data FROM THE DECLARATION ALONE — the intelligence an empty app
  * has before any key exists. For each mutation that creates a kind with no
- * members yet, synthesise honest arguments off the derived form: sample
+ * members yet, synthesize honest arguments off the derived form: sample
  * text, today's date, a bounded number, the first choice. Anything needing
  * a node that does not exist is left for the next round rather than faked.
  */

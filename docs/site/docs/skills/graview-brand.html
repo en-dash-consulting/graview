@@ -68,7 +68,7 @@ img { max-width: 100%; }
   --rule:      #D9DCE5;
   --rule-2:    #E6E8EE;
 
-  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+  /* En Dash's own two colors, taken from the mark: navy and mint. Mint is a
      brilliant #00E5B9 that only reads on the navy, so it carries the dark
      theme and the navy carries the light one. */
   --navy:      #001769;
@@ -190,7 +190,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Windows High Contrast throws the palette away, so anything carrying meaning
-   in a border or a fill has to say so in system colours too. */
+   in a border or a fill has to say so in system colors too. */
 @media (forced-colors: active) {
   .code, .term, .endash, .lens figure { border-color: CanvasText; }
   .caveat { border-left-color: LinkText; }
@@ -1083,7 +1083,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <p>const derived = brandFromAccent({ accent: "#7a4bd0", base: { dark: DARK, light: LIGHT } });    if (!derived.ok) {      throw new Error(<code>Needs ${derived.missing.join(", ")} — ${derived.why}</code>);    }</p>
 <p>export const brand: Brand = {      name: "Acme Bids",      // Inline SVG using currentColor: one file works in both schemes.      logo: '&lt;svg viewBox="0 0 24 24" ... stroke="currentColor"&gt;...&lt;/svg&gt;',      typography: { body: '"Inter", ui-sans-serif, system-ui, sans-serif' },      schemes: derived.schemes,    };    ```</p>
 <ol>
-<li><strong>Expect the refusal path to be real.</strong> No single colour can be accent TEXT in both schemes — 4.5:1 on white needs a lightness under about 0.18 and 4.5:1 on a dark panel needs one over about 0.24, and those do not overlap. So <code>brandFromAccent</code> keeps the hue and saturation, which are the brand's, and moves the lightness the smallest distance that clears AA. When that distance is far enough that the colour has stopped being theirs, it refuses and names what to supply. <strong>Do not catch that and carry on with a guess</strong> — shipping a colour they did not choose under their own name is worse than asking.</li>
+<li><strong>Expect the refusal path to be real.</strong> No single color can be accent TEXT in both schemes — 4.5:1 on white needs a lightness under about 0.18 and 4.5:1 on a dark panel needs one over about 0.24, and those do not overlap. So <code>brandFromAccent</code> keeps the hue and saturation, which are the brand's, and moves the lightness the smallest distance that clears AA. When that distance is far enough that the color has stopped being theirs, it refuses and names what to supply. <strong>Do not catch that and carry on with a guess</strong> — shipping a color they did not choose under their own name is worse than asking.</li>
 </ol>
 <ol>
 <li><strong>Hand it to <code>themeCss</code> and to the provider.</strong> <code>sheet.replaceSync(themeCss(scheme, brand))</code> for the tokens; <code>&lt;GraviewProvider brand={brand}&gt;</code> so <code>Wordmark</code> and anything else that asks can read the name and the mark.</li>
@@ -1092,26 +1092,26 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <li><strong>Declare it on the app too:</strong> <code>defineApp({ ..., brand })</code>.</li>
 </ol>
 <ol>
-<li><strong>Colour the kinds themselves.</strong> Every surface that colours by kind — chips, districts, calendar spans, rosters — reads <code>brand.accents</code>, a hue in degrees per kind, before falling back to the stable hash:</li>
+<li><strong>Color the kinds themselves.</strong> Every surface that colors by kind — chips, districts, calendar spans, rosters — reads <code>brand.accents</code>, a hue in degrees per kind, before falling back to the stable hash:</li>
 </ol>
 <p>``<code>ts    accents: { gardener: 28, plot: 42, planting: 122, rule: 210 },    </code>``</p>
 <p><code>graview check</code> refuses an accent naming a kind nobody declared (a typo    would otherwise silently hash) and a value that is not a number.</p>
 <ol>
 <li><strong>Dress the lines: the kit.</strong> Everything the scene draws that is not a view is declared on <code>brand.kit</code> — any part, the rest as shipped:</li>
 </ol>
-<p>``<code>ts    kit: {      connectors: {        all: { route: "orthogonal" },                       // curve | straight | orthogonal        byEdge: { "tended-by": { colour: "#1d3f8a", pattern: "dashed" }, "grows-in": { visible: false } },      },      captions: { visible: true }, grid: { visible: false }, lattice: { size: 46 },      tags: { visible: true }, emphasis: { dim: 0.34 }, marks: { flag: "⚠" },    },    </code>``</p>
-<p>A route or a pattern is a named strategy, one case in one file    (<code>@graview/react</code> <code>routes.ts</code>, <code>@graview/render</code> <code>connectors.ts</code>), so    the next one is one more case. <code>graview check</code> holds an explicit line    colour to 3:1 against both grounds in both schemes    (<code>kit-contrast-below-aa</code>); a kind kept quiet is still on the inspector.    An embed's <code>handle.setBrand({ ...brand, kit })</code> re-dresses it live.</p>
+<p>``<code>ts    kit: {      connectors: {        all: { route: "orthogonal" },                       // curve | straight | orthogonal        byEdge: { "tended-by": { color: "#1d3f8a", pattern: "dashed" }, "grows-in": { visible: false } },      },      captions: { visible: true }, grid: { visible: false }, lattice: { size: 46 },      tags: { visible: true }, emphasis: { dim: 0.34 }, marks: { flag: "⚠" },    },    </code>``</p>
+<p>A route or a pattern is a named strategy, one case in one file    (<code>@graview/react</code> <code>routes.ts</code>, <code>@graview/render</code> <code>connectors.ts</code>), so    the next one is one more case. <code>graview check</code> holds an explicit line    color to 3:1 against both grounds in both schemes    (<code>kit-contrast-below-aa</code>); a kind kept quiet is still on the inspector.    An embed's <code>handle.setBrand({ ...brand, kit })</code> re-dresses it live.</p>
 <ol>
 <li><strong>Say its money.</strong> <code>currency: "EUR"</code> and <code>locale: "de-DE"</code> on the brand (a document's <code>brand</code> may carry them alone, without an accent) are what a sum is said in wherever a block names none: a figure or a field shown as money, and <code>{net | money}</code> in a template — "21.000 €". A block's own <code>currency</code> wins. <code>graview check</code> refuses a code or a locale it cannot write (<code>brand-currency</code>, <code>brand-locale</code>). Without one, sums are numbers.</li>
 </ol>
 <h3>Styling by conversation</h3>
-<p>This skill is built to be DRIVEN IN NATURAL LANGUAGE — "warmer", "more editorial", "our green is #1B4332", "make people amber and money green" — because the whole look is one serialisable declaration:</p>
+<p>This skill is built to be DRIVEN IN NATURAL LANGUAGE — "warmer", "more editorial", "our green is #1B4332", "make people amber and money green" — because the whole look is one serializable declaration:</p>
 <ul>
 <li><strong>palette</strong> → change <code>accent</code> (or supply explicit scheme tokens) and let <code>brandFromAccent</code> move lightness the minimum distance that clears AA;</li>
 <li><strong>lines</strong> → <code>kit.connectors</code> ("right-angled lines", "hide the grows-in lines", "make tended-by dashed and navy") and the ground's <code>kit.grid</code>;</li>
 <li><strong>feel</strong> → <code>shape.radius</code> (square = formal) and <code>shape.density</code> (tight = dense) — one number each;</li>
 <li><strong>voice</strong> → <code>typography.body/display/mono</code> with real fallback stacks (unset, each is the framework's: <code>SHAPE</code> and <code>TYPOGRAPHY</code> in <code>@graview/core</code>; a page outside the app dressed to match reads <code>shapeOf(brand)</code>, <code>typographyOf(brand)</code> and <code>isoShade(scheme)</code>, never copied numbers);</li>
-<li><strong>kind colours</strong> → <code>accents</code> hues per kind;</li>
+<li><strong>kind colors</strong> → <code>accents</code> hues per kind;</li>
 <li><strong>per-kind layout</strong> → register a view over the registry cell, the same authoring move as everything else (see graview-node-kind).</li>
 </ul>
 <p>The loop for each request: edit ONLY the declaration file, run <code>pnpm check</code> (the framework measures contrast rather than trusting either of you), then <code>pnpm survey</code> and show the before/after screenshots from <code>docs/survey/</code> side by side. Never edit a component to achieve a look a token can carry — if a look genuinely needs one, that is a missing token to raise, not a fork to make.</p>
@@ -1228,7 +1228,7 @@ document.querySelectorAll("[data-copy]").forEach(function (button) {
   --rule:      #D9DCE5;
   --rule-2:    #E6E8EE;
 
-  /* En Dash's own two colours, taken from the mark: navy and mint. Mint is a
+  /* En Dash's own two colors, taken from the mark: navy and mint. Mint is a
      brilliant #00E5B9 that only reads on the navy, so it carries the dark
      theme and the navy carries the light one. */
   --navy:      #001769;
@@ -1350,7 +1350,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* Windows High Contrast throws the palette away, so anything carrying meaning
-   in a border or a fill has to say so in system colours too. */
+   in a border or a fill has to say so in system colors too. */
 @media (forced-colors: active) {
   .code, .term, .endash, .lens figure { border-color: CanvasText; }
   .caveat { border-left-color: LinkText; }

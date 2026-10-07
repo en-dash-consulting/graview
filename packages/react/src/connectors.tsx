@@ -18,12 +18,12 @@ import type { SceneNode } from "./scene-root.js";
 
 /**
  * Where a line toward `towards` should MEET a box: on its border, not at its
- * centre.
+ * center.
  *
- * Centre-anchored lines cross the card's own interior on the way out — the
+ * Center-anchored lines cross the card's own interior on the way out — the
  * yellow dash sawing through the middle of REASONS was this — and where
  * several relations share an endpoint they converge to a single point at the
- * centre, which reads as a knot rather than as several roads arriving. The
+ * center, which reads as a knot rather than as several roads arriving. The
  * border is where a road meets a building.
  */
 /**
@@ -31,7 +31,7 @@ import type { SceneNode } from "./scene-root.js";
  * testable without a browser.
  *
  * Two drawings stacked in one column used to get a near-straight vertical
- * aimed centre-to-centre — a line THROUGH every row between them, whose
+ * aimed center-to-center — a line THROUGH every row between them, whose
  * hit corridor then stole those rows' clicks. Boxes that share a column
  * stitch along their common right edge, in the gutter; boxes that share a
  * row stitch over the top. Only ends with clear air between them take the
@@ -77,10 +77,10 @@ export function tieRoute(
       mode: "abreast",
     };
   }
-  const toCentre = { x: toBox.x + toBox.width / 2, y: toBox.y + toBox.height / 2 };
-  const fromCentre = { x: fromBox.x + fromBox.width / 2, y: fromBox.y + fromBox.height / 2 };
-  const from = edgePoint(fromBox, toCentre);
-  const to = edgePoint(toBox, fromCentre);
+  const toCenter = { x: toBox.x + toBox.width / 2, y: toBox.y + toBox.height / 2 };
+  const fromCenter = { x: fromBox.x + fromBox.width / 2, y: fromBox.y + fromBox.height / 2 };
+  const from = edgePoint(fromBox, toCenter);
+  const to = edgePoint(toBox, fromCenter);
   const direct = Math.hypot(to.x - from.x, to.y - from.y);
   if (direct < 8) return null;
   const bow = Math.min(36, direct * 0.12);
@@ -277,7 +277,7 @@ function memberBoxes(
      * past the edge of its own scroller just as happily as for one you can
      * see — with coordinates that are outside the panel, and often outside
      * the stage. A line drawn to that lands somewhere there is nothing,
-     * usually across a neighbouring card, and reads as the picture lying
+     * usually across a neighboring card, and reads as the picture lying
      * about the graph.
      *
      * Where the member is out of sight the line falls back to the host,
@@ -301,7 +301,7 @@ function memberBoxes(
  * Resolves the frame's connectors into the strands the scene will draw.
  *
  * Pure of React and null-safe without a DOM: headless, every strand is
- * anchored on the layout's own boxes, which is the old behaviour exactly.
+ * anchored on the layout's own boxes, which is the old behavior exactly.
  * From altitude nothing is unpicked — the constellation is a picture of
  * kinds, and a line from a span inside the shrunk stamp would say nothing
  * the road between two districts does not.
@@ -432,7 +432,7 @@ export function connectorStrands(
        * view draws every task inside its list; a line from each list column
        * to the same task's chip in the band restated, twelve times over the
        * panel, what the columns already said. Only the FOCUS counts: a card
-       * in the band summarising its members as chips has not drawn the
+       * in the band summarizing its members as chips has not drawn the
        * relation between the focus's spans and itself — those lines are the
        * point of raising it, and silencing them left a calendar whose
        * entries seemed to belong to no list until one was selected.
@@ -558,7 +558,7 @@ export function clipQuadratic(q: Quadratic, boxes: readonly Box[]): Quadratic[] 
     );
   const out = (t: number) => !inside(quadraticAt(q, t));
   const STEPS = 64;
-  // Where a sample and its neighbour disagree, the border lies between them.
+  // Where a sample and its neighbor disagree, the border lies between them.
   const refine = (lo: number, hi: number, loOut: boolean): number => {
     for (let i = 0; i < 10; i++) {
       const mid = (lo + hi) / 2;
@@ -710,18 +710,18 @@ export function Connectors({
 
   const drawn = strands.map((strand, lane) => {
         const { connector, fromBox, toBox } = strand;
-        const fromCentre = { x: fromBox.x + fromBox.width / 2, y: fromBox.y + fromBox.height / 2 };
-        const toCentre = { x: toBox.x + toBox.width / 2, y: toBox.y + toBox.height / 2 };
+        const fromCenter = { x: fromBox.x + fromBox.width / 2, y: fromBox.y + fromBox.height / 2 };
+        const toCenter = { x: toBox.x + toBox.width / 2, y: toBox.y + toBox.height / 2 };
         /*
          * In the overview a line meets a card at its border, facing the
          * other end — the border is honest up there, because a kind card
          * fills its box. Inside the stack a host is a band slot with the
-         * panel centred somewhere in it, so a border anchor dangles in open
-         * ground; centre-to-centre is right, and the run inside each box is
+         * panel centered somewhere in it, so a border anchor dangles in open
+         * ground; center-to-center is right, and the run inside each box is
          * clipped away below.
          */
-        const from = overview ? edgePoint(fromBox, toCentre) : fromCentre;
-        const to = overview ? edgePoint(toBox, fromCentre) : toCentre;
+        const from = overview ? edgePoint(fromBox, toCenter) : fromCenter;
+        const to = overview ? edgePoint(toBox, fromCenter) : toCenter;
         /*
          * A LOOP, where both ends are the same card.
          *
@@ -741,7 +741,7 @@ export function Connectors({
         /*
          * The loop SITS ON the card's top edge, off to the right.
          *
-         * Centred it drew a ring straight through the card's own name; pushed
+         * Centered it drew a ring straight through the card's own name; pushed
          * clear of the corner it became a circle floating in the ground next
          * to a card, which from the Graview read as a stray mark rather than
          * as a relation belonging to anything. Overlapping the edge by a few
@@ -749,8 +749,8 @@ export function Connectors({
          */
         const anchor = self
           ? {
-              x: fromCentre.x + fromBox.width * 0.22,
-              y: fromCentre.y - fromBox.height / 2 - radius + 7,
+              x: fromCenter.x + fromBox.width * 0.22,
+              y: fromCenter.y - fromBox.height / 2 - radius + 7,
             }
           : from;
         /*
@@ -779,7 +779,7 @@ export function Connectors({
             const cy = stamp.y + stamp.height / 2;
             awayX = midX - cx;
             awayY = midY - cy;
-            // How close the chord passes to the view's centre, against how
+            // How close the chord passes to the view's center, against how
             // far the view's corner reaches: the shortfall, doubled (the
             // apex of a quadratic sits halfway to its control), is the bow
             // that clears it.
@@ -815,13 +815,13 @@ export function Connectors({
          * that crosses nothing, so it is drawn whole rather than clipped to
          * the pieces an arc left between the chips it ran under.
          */
-        const channelled = !self && strand.band ? channelRoute(fromBox, toBox, strand.band, lane) : null;
-        const runs = self || orthogonal || channelled ? [] : clipQuadratic(curve, [fromBox, toBox, ...strand.obstacles]);
-        const legs = channelled ? [channelled] : !self && orthogonal ? clipPolyline(bends(from, to), [fromBox, toBox, ...strand.obstacles]) : [];
+        const channeled = !self && strand.band ? channelRoute(fromBox, toBox, strand.band, lane) : null;
+        const runs = self || orthogonal || channeled ? [] : clipQuadratic(curve, [fromBox, toBox, ...strand.obstacles]);
+        const legs = channeled ? [channeled] : !self && orthogonal ? clipPolyline(bends(from, to), [fromBox, toBox, ...strand.obstacles]) : [];
         if (!self && runs.length === 0 && legs.length === 0) return null;
         const lastLeg = legs[legs.length - 1];
-        const firstDrawn = orthogonal || channelled ? legs[0]?.[0] : runs[0]?.p0;
-        const lastDrawn = orthogonal || channelled ? lastLeg?.[lastLeg.length - 1] : runs[runs.length - 1]?.p1;
+        const firstDrawn = orthogonal || channeled ? legs[0]?.[0] : runs[0]?.p0;
+        const lastDrawn = orthogonal || channeled ? lastLeg?.[lastLeg.length - 1] : runs[runs.length - 1]?.p1;
         const quad = (segments: Quadratic[]) =>
           segments
             .map((run) => `M ${run.p0.x} ${run.p0.y} Q ${run.c.x} ${run.c.y} ${run.p1.x} ${run.p1.y}`)
@@ -831,14 +831,14 @@ export function Connectors({
           // circle, so it closes cleanly at any size.
           `M ${anchor.x - radius} ${anchor.y} A ${radius} ${radius} 0 1 1 ${anchor.x + radius} ${anchor.y}` +
           ` A ${radius} ${radius} 0 0 1 ${anchor.x - radius} ${anchor.y}`;
-        const d = self ? loopD : channelled ? roundedPolylineD(channelled, 10) : orthogonal ? polylineD(legs) : quad(runs);
+        const d = self ? loopD : channeled ? roundedPolylineD(channeled, 10) : orthogonal ? polylineD(legs) : quad(runs);
         // The hit stroke also keeps out of the cards an end is drawn inside.
         /*
          * The hit corridor keeps OFF the cards by its own half-width: a
          * road leaves a district at its border, and a fourteen-pixel
-         * corridor centred on that border sat seven pixels inside the
+         * corridor centered on that border sat seven pixels inside the
          * card — so a press on the card's corner selected the road, and a
-         * double-click there travelled down it instead of into the kind.
+         * double-click there traveled down it instead of into the kind.
          */
         const clear = (box: { x: number; y: number; width: number; height: number }) => ({
           x: box.x - 8,
@@ -849,7 +849,7 @@ export function Connectors({
         const keptOff = [fromBox, toBox, ...strand.hosts, ...strand.obstacles].map(clear);
         const hitD = self
           ? loopD
-          : channelled
+          : channeled
             ? polylineD(legs)
             : orthogonal
             ? polylineD(clipPolyline(bends(from, to), keptOff))
@@ -862,7 +862,7 @@ export function Connectors({
         const stressed = (emphasis !== null && connector.kind === emphasis) || edgeChosen;
         /*
          * FROM ALTITUDE THE ROADS ARE ON THE GROUND (the plots layer draws
-         * one per pair of districts, kerb to kerb). A line up here is drawn
+         * one per pair of districts, curb to curb). A line up here is drawn
          * only when it says something the road cannot: the relation the
          * legend is asking about, the edge that is chosen, a member of the
          * selection, or a change that just happened. A focused screen's
@@ -872,7 +872,7 @@ export function Connectors({
         if (overview && !stressed && !mine && !(chosen.size > 0 && touches(connector)) && !live) return null;
         const opacity = overview
           ? altitudeOpacity({
-              emphasised: emphasis !== null,
+              emphasized: emphasis !== null,
               stressed,
               anyChosen: anyStrandChosen,
               mine,
@@ -934,7 +934,7 @@ export function Connectors({
 
             {/*
               * A loop says WHICH relation it is, in place. A dashed circle
-              * hanging off a card was the one unlabelled mark in the whole
+              * hanging off a card was the one unlabeled mark in the whole
               * picture — every line has a legend row, but nothing tied this
               * shape to its row without guessing.
               */}

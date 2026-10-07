@@ -6,8 +6,8 @@ import { DECLARED_KIND } from "../../src/meta.js";
 
 /**
  * FR-07. A rule the studio declares used to judge nothing — "the checkout
- * gives it a judgement" — so an agent in the studio could name a rule and
- * never make it hold. Its judgement is now a field in the rule language: the
+ * gives it a judgment" — so an agent in the studio could name a rule and
+ * never make it hold. Its judgment is now a field in the rule language: the
  * studio's declaration judges it after apply, and the files it writes carry
  * the same words.
  */

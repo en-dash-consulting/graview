@@ -5,7 +5,7 @@ import { brandFromAccent, DARK, LIGHT, type Brand } from "@graview/core";
  *
  * A todo app is used for thirty seconds at a time by somebody deciding what to
  * do next, and anything decorative is in the way. One confident indigo, no
- * second colour, and the framework's own neutrals — which is also the point of
+ * second color, and the framework's own neutrals — which is also the point of
  * showing it here: a brand can be a single line, and the framework does the
  * rest and refuses what it cannot do.
  */

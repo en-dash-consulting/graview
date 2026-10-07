@@ -8,7 +8,7 @@ import type { BinaryOp, Expr } from "./parse.js";
  * never a regular expression over the text, which cannot tell the field
  * `quote` from the word 'quote' in a string or from a relation's `quote`.
  *
- * Parenthesises only where the grammar needs it. `and`, `or` and `not` are
+ * Parenthesizes only where the grammar needs it. `and`, `or` and `not` are
  * printed as words, the way the authoring guide writes them.
  */
 

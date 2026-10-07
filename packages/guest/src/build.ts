@@ -17,7 +17,7 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { Script } from "node:vm";
 
-/** Remote DOM's licence, carried by every guest bundle, which carries Remote DOM. */
+/** Remote DOM's license, carried by every guest bundle, which carries Remote DOM. */
 const REMOTE_DOM_NOTICE = `/*! @remote-dom/core and @remote-dom/polyfill — Copyright 2020-present, Shopify Inc. — MIT License.
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -27,7 +27,7 @@ const REMOTE_DOM_NOTICE = `/*! @remote-dom/core and @remote-dom/polyfill — Cop
 /**
  * What every guest bundle starts with: strict mode for the whole script —
  * so no frame of the runtime hands its `this` or itself to a stack trace's
- * reader — and the licences of what it carries.
+ * reader — and the licenses of what it carries.
  */
 export const GUEST_BUNDLE_BANNER = `"use strict";\n${REMOTE_DOM_NOTICE}`;
 

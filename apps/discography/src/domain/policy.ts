@@ -3,7 +3,7 @@ import type { Policy } from "@graview/core";
 /**
  * Who may do what in the discography.
  *
- * - the LABEL runs the catalogue: everything.
+ * - the LABEL runs the catalog: everything.
  * - an ARTIST makes songs and releases and says who is on them.
  * - a PRODUCER may only add or take away production credits.
  * - a fan holds no role, and reads.

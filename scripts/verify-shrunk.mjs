@@ -171,7 +171,7 @@ try {
             entry.stillLive = await page.evaluate(
               () => document.querySelector('[data-testid="inspector-strip"]') !== null,
             );
-            // And it selected in place rather than travelling.
+            // And it selected in place rather than traveling.
             entry.stayedInGraview = await page.evaluate(
               () => document.querySelector("[data-graview-natural]") !== null,
             );

@@ -13,7 +13,7 @@ export const togetherLens = createCoverageLens<S>({ rows: "artist", columns: "ar
 export const tracklistLens = createTracklistLens<S>({ entries: "tracks", order: "track" });
 
 /**
- * The catalogue's pictures. What the songs are about and the releases are
+ * The catalog's pictures. What the songs are about and the releases are
  * declared, with titles, in domain/app.ts, and drawn by the framework as
  * places (FR-79); laid over last, the releases stay what the albums'
  * district draws when an address names no picture. The tracklist is this

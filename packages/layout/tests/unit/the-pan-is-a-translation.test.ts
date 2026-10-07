@@ -42,7 +42,7 @@ const pan = { x: -137, y: 64 };
 const size = { width: 1280, height: 800 };
 
 /*
- * A PICOMETRE IS NOT A DIFFERENCE IN THE PICTURE.
+ * A PICOMETER IS NOT A DIFFERENCE IN THE PICTURE.
  *
  * Cards land on exactly the same coordinates either way. The lines between
  * them do not, by one unit in the last place: `layout` builds an endpoint as

@@ -38,7 +38,7 @@ export interface AwkwardOptions {
   readonly chain?: boolean;
   /** Include the installation's kinds, and an edge from the domain to a person. */
   readonly people?: boolean;
-  /** A kind nothing creates: the catalogue that arrives with the data. */
+  /** A kind nothing creates: the catalog that arrives with the data. */
   readonly unreachable?: boolean;
   /** Plural length. Long ones are what a district row actually has to hold. */
   readonly plurals?: "short" | "long";
@@ -119,13 +119,13 @@ export function awkwardApp(options: AwkwardOptions = {}): GraviewApp {
         : {}),
     }),
   );
-  const catalogue = options.unreachable
+  const catalog = options.unreachable
     ? [defineNode("almanac", { fields: z.object({ label: z.string() }), plural: "Almanacs" })]
     : [];
 
   const schema = createSchema([
     ...definitions,
-    ...catalogue,
+    ...catalog,
     ...(people ? [...installation.kinds] : []),
   ] as never);
   const { defineMutation } = bindSchema(schema as never);

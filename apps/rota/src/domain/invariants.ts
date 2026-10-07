@@ -19,7 +19,7 @@ const nodesOf = (graph: Reader, kind: string): AnyNode[] =>
   graph.allNodes().filter((node) => node.kind === kind);
 
 /**
- * The two things an organiser actually worries about, as rules that name
+ * The two things an organizer actually worries about, as rules that name
  * the acts that put them right.
  *
  * This is the seam the whole interface rides on: nobody writes "offer to
@@ -52,7 +52,7 @@ export const everyShiftCovered: I = defineInvariant("every-shift-covered", {
             /*
              * The repair ASKS for the person rather than choosing one. A
              * rota that assigned somebody on your behalf would be the one
-             * thing an organiser would never forgive it for — and the
+             * thing an organizer would never forgive it for — and the
              * framework already knows which volunteers would fit, so the
              * question has an honest list of answers.
              */

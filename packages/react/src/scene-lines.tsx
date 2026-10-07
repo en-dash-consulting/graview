@@ -31,7 +31,7 @@ import { railInset } from "./rails.js";
  * ties layer yields to exactly the relations that already have a line.
  * Deciding that from the layout alone was the bug: a session's line into
  * the week was CLAIMED as drawn while it actually rose from the panel's
- * centre, so selecting the session lit three of its four drills and left
+ * center, so selecting the session lit three of its four drills and left
  * the fourth to a faint line from nowhere.
  */
 export function Lines<S extends AnySchema>({
@@ -128,7 +128,7 @@ export function Lines<S extends AnySchema>({
     const watch = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(again);
     if (watch) {
       watch.observe(stage);
-      /* Every view, because a view growing moves its neighbours' members. */
+      /* Every view, because a view growing moves its neighbors' members. */
       for (const view of stage.querySelectorAll("[data-graview-view]")) watch.observe(view);
     }
     return () => {
@@ -192,7 +192,7 @@ export function Lines<S extends AnySchema>({
  * calendar: the graph knew the span's agreement, its person and its reasons,
  * and the picture kept that to itself. These lines start at the selected
  * element's real drawn box — the pick target inside the view, measured from
- * the DOM — and run to whatever stands for each neighbour on screen: another
+ * the DOM — and run to whatever stands for each neighbor on screen: another
  * pick target in the same view, a raised card, or the kind card holding it
  * on the shelf. Item-level, not kind-level; and the kind cards say "N tied"
  * at the same moment, so the lines have destinations that answer back.
@@ -697,7 +697,7 @@ function SelectionTies<S extends AnySchema>({
  * The schema has always carried a description on every edge — "who does the
  * run", "a nap that must not be interrupted" — and nothing ever showed them.
  * A row of anonymous cards under the thing you clicked is a puzzle; the same
- * row under "who does the run" is an answer. Layout groups the neighbourhood
+ * row under "who does the run" is an answer. Layout groups the neighborhood
  * by edge kind, so each caption spans one contiguous run rather than
  * repeating itself once per card.
  */
@@ -735,7 +735,7 @@ export function RelationCaptions({
       if (!node.via || Math.round(node.plane) !== 1) continue;
       /*
        * Above the PANEL someone can see, not the band slot the layout allots:
-       * a raised card centres its panel in a taller host, so a caption hung
+       * a raised card centers its panel in a taller host, so a caption hung
        * from the host's top floated in open ground half a band above the
        * cards it captions.
        */
@@ -765,11 +765,11 @@ export function RelationCaptions({
         /*
          * The caption may be WIDER than the cards it captions.
          *
-         * Constrained to the run, a single neighbour gave it about 240
+         * Constrained to the run, a single neighbor gave it about 240
          * pixels and "attends a block, or rides along on a run" was cut to
          * "attends a block, or rides alo…" — the schema's own words, the one
          * thing this element exists to show, truncated mid-word with empty
-         * ground on both sides of it. It is centred over the run and clamped
+         * ground on both sides of it. It is centered over the run and clamped
          * to the stage instead, so it borrows the gutter when it needs it.
          */
         const { left, width: span } = run;

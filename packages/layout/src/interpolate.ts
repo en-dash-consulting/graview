@@ -20,7 +20,7 @@ export interface InterpolatedLayout {
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-function centre(node: LayoutNode): { x: number; y: number } {
+function center(node: LayoutNode): { x: number; y: number } {
   return { x: node.x + node.width / 2, y: node.y + node.height / 2 };
 }
 
@@ -100,7 +100,7 @@ function standInFresh(node: LayoutNode, other: Layout): LayoutNode | null {
       .map((id) => byId.get(id))
       .filter((n): n is LayoutNode => n !== undefined);
     if (members.length === 0) return null;
-    const points = members.map(centre);
+    const points = members.map(center);
     const x = points.reduce((sum, p) => sum + p.x, 0) / points.length;
     const y = points.reduce((sum, p) => sum + p.y, 0) / points.length;
     return { ...node, x: x - node.width / 2, y: y - node.height / 2 };
@@ -110,7 +110,7 @@ function standInFresh(node: LayoutNode, other: Layout): LayoutNode | null {
     .get(node.id)
     ?.find((candidate) => candidate.id === kindCardId(node.kind) || candidate.id === aggregateId(node.kind));
   if (!group) return null;
-  const point = centre(group);
+  const point = center(group);
   return { ...node, x: point.x - node.width / 2, y: point.y - node.height / 2 };
 }
 

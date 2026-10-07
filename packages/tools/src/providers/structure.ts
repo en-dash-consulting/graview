@@ -1,4 +1,4 @@
-import { fieldWords, humaniseField, labelOf, nodeRefKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { fieldWords, humanizeField, labelOf, nodeRefKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
 import type { Affordance, AffordanceProvider, Observation } from "../types.js";
 
 const SHARED_SCORE = 70;
@@ -10,7 +10,7 @@ const IGNORED_FIELDS = new Set(["id", "kind"]);
  * What is TRUE about this selection, and what that makes worth doing.
  *
  * Nothing here knows what a duty or a person is. It notices shared
- * neighbours, agreement on a field, and the one node that breaks the
+ * neighbors, agreement on a field, and the one node that breaks the
  * agreement — then looks for a declared mutation that could resolve the
  * difference. "Move the Wednesday run to Tuesday like the other three" comes
  * out of this without anyone writing a rule about days, because the schema
@@ -27,7 +27,7 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
       const affordances: Affordance[] = [];
       const ids = nodes.map((node) => node.id);
 
-      // ---------------------------------------------------- shared neighbours
+      // ---------------------------------------------------- shared neighbors
       for (const edgeKind of store.schema.edgeKinds) {
         const shared = intersect(
           nodes.map(
@@ -38,13 +38,13 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
               ]),
           ),
         );
-        for (const neighbourId of shared) {
-          const neighbour = store.graph.getNode(neighbourId);
-          if (!neighbour) continue;
+        for (const neighborId of shared) {
+          const neighbor = store.graph.getNode(neighborId);
+          if (!neighbor) continue;
           observations.push({
-            id: `shared:${edgeKind}:${neighbourId}`,
-            text: `all ${nodes.length} share "${named(neighbour)}" (${humaniseField(edgeKind).toLowerCase()})`,
-            nodeIds: [...ids, neighbourId],
+            id: `shared:${edgeKind}:${neighborId}`,
+            text: `all ${nodes.length} share "${named(neighbor)}" (${humanizeField(edgeKind).toLowerCase()})`,
+            nodeIds: [...ids, neighborId],
           });
         }
 
@@ -52,29 +52,29 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
         // of step is a thing you can fix.
         const counts = new Map<string, number>();
         for (const node of nodes) {
-          for (const neighbour of [
+          for (const neighbor of [
             ...store.graph.out(node.id, edgeKind),
             ...store.graph.in(node.id, edgeKind),
           ]) {
-            counts.set(neighbour.id, (counts.get(neighbour.id) ?? 0) + 1);
+            counts.set(neighbor.id, (counts.get(neighbor.id) ?? 0) + 1);
           }
         }
-        for (const [neighbourId, count] of counts) {
+        for (const [neighborId, count] of counts) {
           if (count !== nodes.length - 1 || nodes.length < 3) continue;
-          const neighbour = store.graph.getNode(neighbourId);
-          if (!neighbour) continue;
+          const neighbor = store.graph.getNode(neighborId);
+          if (!neighbor) continue;
           const odd = nodes.find(
             (node) =>
               ![
                 ...store.graph.out(node.id, edgeKind),
                 ...store.graph.in(node.id, edgeKind),
-              ].some((n) => n.id === neighbourId),
+              ].some((n) => n.id === neighborId),
           );
           if (!odd) continue;
           observations.push({
-            id: `near-shared:${edgeKind}:${neighbourId}`,
-            text: `all but "${named(odd)}" share "${named(neighbour)}" (${humaniseField(edgeKind).toLowerCase()})`,
-            nodeIds: [...ids, neighbourId],
+            id: `near-shared:${edgeKind}:${neighborId}`,
+            text: `all but "${named(odd)}" share "${named(neighbor)}" (${humanizeField(edgeKind).toLowerCase()})`,
+            nodeIds: [...ids, neighborId],
           });
           for (const mutation of store.allMutations()) {
             const subject = mutation.subject;
@@ -82,18 +82,18 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
             if (subject.kinds !== "*" && !(subject.kinds as readonly string[]).includes(odd.kind)) {
               continue;
             }
-            const target = argAccepting(mutation.input, neighbour.kind);
+            const target = argAccepting(mutation.input, neighbor.kind);
             if (!target) continue;
             affordances.push({
-              id: `structure:join:${mutation.name}:${odd.id}:${neighbourId}`,
+              id: `structure:join:${mutation.name}:${odd.id}:${neighborId}`,
               label: `${mutation.title ?? mutation.name}: bring "${named(odd)}" in line with the others`,
               provider: "structure",
               mutation: mutation.name,
-              args: { [subject.arg]: odd.id, [target]: neighbourId },
+              args: { [subject.arg]: odd.id, [target]: neighborId },
               open: [],
               score: SHARED_SCORE,
-              why: `every other selected node is connected to "${named(neighbour)}"`,
-              nodeIds: [odd.id, neighbourId],
+              why: `every other selected node is connected to "${named(neighbor)}"`,
+              nodeIds: [odd.id, neighborId],
             });
           }
         }

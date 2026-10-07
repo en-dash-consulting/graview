@@ -92,7 +92,7 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
   readonly run: HeadlessRun;
   /** Where the view is drawn: the record, or the members, a face would hand it. Every member the seat sees by default. */
   readonly input?: GuestViewInput;
-  /** The app's look. A light one in the framework's own colours by default. */
+  /** The app's look. A light one in the framework's own colors by default. */
   readonly theme?: GuestTheme;
   /** The app's named places, which the view may link to (FR-93). */
   readonly places?: readonly GuestPlace[];

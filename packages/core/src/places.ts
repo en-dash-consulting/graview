@@ -329,7 +329,7 @@ export function openingOf(first: string | undefined, schema: AnySchema, places: 
   return kind ? { to: "kind", kind } : undefined;
 }
 
-/** What the arrangement asks that the declaration cannot honour: kinds and places that do not exist. */
+/** What the arrangement asks that the declaration cannot honor: kinds and places that do not exist. */
 export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, places: readonly Place[] = placesOfLenses(app)): readonly PlaceFinding[] {
   const pages = app.pages;
   if (!pages) return [];

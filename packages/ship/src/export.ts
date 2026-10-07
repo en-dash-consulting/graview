@@ -4,7 +4,7 @@ import type { GraphSnapshot } from "./snapshot.js";
 /**
  * THE ANTI-LOCK-IN CLAIM, as a data shape. Everything a deployment is —
  * the graph, its whole attributed history, and the version it stands at —
- * leaves in one JSON-serialisable bundle, and re-imports into any other
+ * leaves in one JSON-serializable bundle, and re-imports into any other
  * deployment of the same declaration: hosted to self-hosted and back.
  * A tenant who cannot leave was never a customer, only a hostage.
  */

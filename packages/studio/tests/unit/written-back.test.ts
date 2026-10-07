@@ -58,19 +58,19 @@ const unlink = bound.defineMutation("unlink-thing", {
     ctx.removeEdge({ kind: "depends-on", from: args.id, to: args.dependsOn });
   },
 });
-/** A rule the checkout judges — whose judgement the studio can never write. */
-const labelled = bound.defineInvariant("labelled-things", {
-  label: "Things are labelled",
+/** A rule the checkout judges — whose judgment the studio can never write. */
+const labeled = bound.defineInvariant("labeled-things", {
+  label: "Things are labeled",
   description: "A thing called by a single letter has not been named.",
   scope: { kind: "thing" },
   repairs: [],
   evaluate({ subject }) {
     return subject.label.length > 1
       ? []
-      : [{ invariant: "labelled-things", subjectId: subject.id, label: subject.label, message: `${subject.label} is not a name`, nodeIds: [subject.id], repairs: [] }];
+      : [{ invariant: "labeled-things", subjectId: subject.id, label: subject.label, message: `${subject.label} is not a name`, nodeIds: [subject.id], repairs: [] }];
   },
 });
-const app = defineApp({ name: "Field Notes", schema, mutations: [addThing, link, unlink], invariants: [labelled], brand: { name: "Field Notes", schemes: { dark: DARK, light: LIGHT } } });
+const app = defineApp({ name: "Field Notes", schema, mutations: [addThing, link, unlink], invariants: [labeled], brand: { name: "Field Notes", schemes: { dark: DARK, light: LIGHT } } });
 
 afterAll(() => rmSync(out, { recursive: true, force: true }));
 
@@ -100,21 +100,21 @@ export const app = defineApp({ name: "Field Notes", schema: fieldNotesSchema, mu
     expect(result.findings.filter((f) => f.severity === "error")).toEqual([]);
     expect(checkout.app.schema.kinds).toEqual(["thing"]);
     expect((checkout.app.mutations ?? []).map((m) => m.name)).toEqual(["add-thing", "link-thing", "unlink-thing", "close-thing"]);
-    expect((checkout.app.invariants ?? []).map((i) => i.name)).toEqual(["labelled-things", "closed-in-order"]);
+    expect((checkout.app.invariants ?? []).map((i) => i.name)).toEqual(["labeled-things", "closed-in-order"]);
 
     /*
      * A RULE THE CHECKOUT WROTE IS NOT SILENTLY DISARMED. The studio cannot
-     * write a judgement it never saw; the file used to write `return []`
+     * write a judgment it never saw; the file used to write `return []`
      * for it — a rule that holds, under a comment saying the checkout's
      * evaluate was kept. Now the file names what the checkout must supply,
      * the written rule keeps the checkout's own words, and until a person
-     * puts the judgement back it fails loudly rather than holding.
+     * puts the judgment back it fails loudly rather than holding.
      */
     const files = studio.files({ schemaVar: "fieldNotesSchema" });
-    expect(files.find((file) => file.path.endsWith("invariants.ts"))?.kept).toEqual(["labelled-things: evaluate"]);
+    expect(files.find((file) => file.path.endsWith("invariants.ts"))?.kept).toEqual(["labeled-things: evaluate"]);
     // And every act the checkout wrote: its body is the checkout's to put back.
     expect(files.find((file) => file.path.endsWith("mutations.ts"))?.kept).toEqual(["add-thing: apply", "link-thing: apply", "unlink-thing: apply"]);
-    expect(files.find((file) => file.path.endsWith("invariants.ts"))?.contents).toContain('label: "Things are labelled"');
+    expect(files.find((file) => file.path.endsWith("invariants.ts"))?.contents).toContain('label: "Things are labeled"');
     {
       const disarmed = new Store({ schema: checkout.app.schema, mutations: checkout.app.mutations ?? [], invariants: checkout.app.invariants ?? [] } as never);
       expect(() => disarmed.apply({ name: "add-thing", args: { label: "x" } })).toThrow(/add-thing: the checkout's apply belongs here/);
@@ -122,15 +122,15 @@ export const app = defineApp({ name: "Field Notes", schema: fieldNotesSchema, mu
       // never a rule that quietly holds — one that could not be judged, saying what belongs there (FR-29).
       const halfway = new Store({ schema: checkout.app.schema, mutations: [addThing, link, unlink, ...(checkout.app.mutations ?? []).filter((m) => m.name === "close-thing")], invariants: checkout.app.invariants ?? [] } as never);
       halfway.apply({ name: "add-thing", args: { label: "x" } });
-      const stub = halfway.violations().find((violation) => violation.invariant === "labelled-things");
+      const stub = halfway.violations().find((violation) => violation.invariant === "labeled-things");
       expect(stub?.status).toBe("could-not-judge");
-      expect(stub?.message).toMatch(/labelled-things: the checkout's evaluate belongs here/);
+      expect(stub?.message).toMatch(/labeled-things: the checkout's evaluate belongs here/);
     }
     // With the checkout's bodies put back where the files say, the checkout runs.
     const store = new Store({
       schema: checkout.app.schema,
       mutations: (checkout.app.mutations ?? []).map((act) => (act.name === "add-thing" ? addThing : act.name === "link-thing" ? link : act.name === "unlink-thing" ? unlink : act)),
-      invariants: (checkout.app.invariants ?? []).map((rule) => (rule.name === "labelled-things" ? labelled : rule)),
+      invariants: (checkout.app.invariants ?? []).map((rule) => (rule.name === "labeled-things" ? labeled : rule)),
     } as never);
     store.apply({ name: "add-thing", args: { label: "Water the beds" } });
     const [made] = store.graph.allNodes();

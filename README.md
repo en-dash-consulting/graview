@@ -126,7 +126,7 @@ It opens in whichever scheme your system asks for, remembers what you pick,
 and `?theme=light` / `?theme=dark` forces one. The two are not inversions:
 dark is a lit control surface where depth loses luminance, light is daylight
 and paper where depth loses contrast and gains haze. Inverting one to get the
-other gives grey-on-grey mush, because glow does not exist in daylight.
+other gives gray-on-gray mush, because glow does not exist in daylight.
 
 ```sh
 pnpm test          # 1,435 tests, no GPU, no browser
@@ -168,7 +168,7 @@ pnpm engines       # the core subset in Chromium, WebKit AND Firefox, per-engine
 pnpm shrunk        # the shrunk interface is the interface, scaled
 pnpm seat          # an agent seat does what it says, and says when there is nothing to do
 pnpm chat          # the chat: graph answers first, proposals apply, undo really works
-pnpm navigation    # travelling, and getting back
+pnpm navigation    # traveling, and getting back
 pnpm pages         # the routed face at phone width
 pnpm remember      # edits survive a reload, and the way back to the example
 pnpm menu          # the menu scales: search, pins, and what you use
@@ -291,7 +291,7 @@ in three more, which is what more than one app is for:
 Framework bugs surfaced too, each invisible until an app needed the thing:
 jacking in rendered *underneath* the scene; a coverage cell duplicated a target
 already reachable, putting seventy-two extra tab stops between a keyboard user
-and the rest of the page; the timeline's window could be centred onto half a
+and the rest of the page; the timeline's window could be centered onto half a
 minute and hand the app's own formatter `14:7.5`; and a board read its
 occupants out of the aggregate, which never contains them, so every slot
 reported itself empty.
@@ -302,7 +302,7 @@ reported itself empty.
 tool schemas, drag legality, aggregate contents and a11y labels all derive from
 it, and every derived value stays inspectable and overridable. Click anything
 the interface draws — an event in a calendar, a chip in a list — and you travel
-to that node: its neighbours rise onto the plane behind it, each captioned with
+to that node: its neighbors rise onto the plane behind it, each captioned with
 the description its edge was declared with ("who does the run", "a nap that
 must not be interrupted"). Nobody writes that copy, and a new edge kind shows
 up there the moment it is declared.
@@ -352,7 +352,7 @@ Nothing below is a claim about intent; each is a test or a measurement.
 | Selective undo names the blocking op | `packages/core/tests/unit/op-log.test.ts` |
 | A suggestion appears nobody wrote a rule for | `packages/tools/tests/unit/affordances.test.ts` |
 | A new node kind renders with zero view code | `packages/primitives/tests/unit/primitives.test.tsx` |
-| A focused node surfaces its whole neighbourhood, captioned | `packages/layout/tests/unit/layout.test.ts` |
+| A focused node surfaces its whole neighborhood, captioned | `packages/layout/tests/unit/layout.test.ts` |
 | An unanswered argument says what sort of answer it wants | `packages/core/tests/unit/mutations.test.ts` |
 | The coverage lens works in a domain neither app is about | `packages/primitives/tests/unit/coverage.test.tsx` — controls against risks |
 | The board lens works in a domain nothing here is about | `packages/primitives/tests/unit/board.test.tsx` — a seating plan |
@@ -363,10 +363,10 @@ Nothing below is a claim about intent; each is a test or a measurement.
 | The shrunk interface is the interface, scaled | `scripts/verify-shrunk.mjs` — 8 criteria across the example's places in both schemes |
 | The example reaches assistive technology at depth | `apps/todo/scripts/run-a11y.mjs` — the real accessibility tree through CDP, keyboard order, axe-core |
 | An inbound change is an ordinary op, undoable, authored by the system | `packages/core/tests/integration/sync.test.ts` |
-| An echo of our own write is recognised and not re-applied | `packages/core/tests/integration/sync.test.ts` — the loop that breaks naive two-way sync |
+| An echo of our own write is recognized and not re-applied | `packages/core/tests/integration/sync.test.ts` — the loop that breaks naive two-way sync |
 | A conflict is surfaced as a violation with a repair, not resolved silently | `packages/core/tests/integration/sync.test.ts` |
 | Offline degrades to local-only and reconciles on reconnect | `packages/core/tests/integration/sync.test.ts` |
-| Travelling changes the address, and back and forward both work | `scripts/verify-navigation.mjs` — 12 criteria, driven through the controls rather than the keyboard |
+| Traveling changes the address, and back and forward both work | `scripts/verify-navigation.mjs` — 12 criteria, driven through the controls rather than the keyboard |
 | A stranger can install the tarballs and build a real app | `scripts/smoke-install.mjs` — packs, installs into a scratch project with no workspace or path mapping, typechecks and runs |
 | `graview create` makes a project a stranger can install, verify, and use | `scripts/smoke-create.mjs` — 22 criteria: from the tarballs under npm and pnpm, through `create-graview`, and by path; the project's own `verify`; the first hour driven in a browser with axe-core in both schemes |
 | A tarball contains what it should and nothing else | `scripts/inspect-pack.mjs` — no `src`, no tests, no tsbuildinfo, and every `exports` path present |
@@ -388,7 +388,7 @@ anything about HTML-in-Canvas. The short version, measured in Chrome Canary
   `PointerRouter` supplies that meanwhile, verified at three plane depths.
   Accessibility needs no fallback — views stay real, focusable DOM.
 - Capture costs ~0.016 ms/node up to ~128 live captures a frame, then falls
-  off a cliff. The fidelity split is load-bearing, not an optimisation.
+  off a cliff. The fidelity split is load-bearing, not an optimization.
 - Inline SVG captures fine. Nested canvas and cross-origin frames capture
   **silently blank**, which is worse than throwing.
 
@@ -435,7 +435,7 @@ settles; the changelogs say what changed and why.
   offline reconciliation, and the exact request and response shapes — and the
   household product declares its mapping. What no test covers is Google
   itself: a token that expires mid-run, a sync token rejected after a week, a
-  timezone normalised on save and handed back as somebody else's change. The
+  timezone normalized on save and handed back as somebody else's change. The
   product's `sync-google` script is runnable and read-only by default; until
   somebody runs it, "works end to end" is a claim rather than a fact.
 

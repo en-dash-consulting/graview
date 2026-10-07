@@ -35,18 +35,18 @@ export function LivenessProvider({ children }: { children: ReactNode }) {
   const [live, setLive] = useState<Readonly<Record<string, boolean>>>({});
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
     const controller = new AbortController();
     const sweep = async () => {
       const results = await Promise.all(
         APPS.map(async (entry) => [entry.id, await reachable(entry, controller.signal)] as const),
       );
-      if (!cancelled) setLive(Object.fromEntries(results));
+      if (!canceled) setLive(Object.fromEntries(results));
     };
     void sweep();
     const timer = setInterval(() => void sweep(), 4000);
     return () => {
-      cancelled = true;
+      canceled = true;
       controller.abort();
       clearInterval(timer);
     };

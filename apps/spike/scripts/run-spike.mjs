@@ -256,7 +256,7 @@ try {
         const el = document.createElement("div");
         el.style.cssText =
           "width:160px;height:100px;background:#fff;border:1px solid #ddd;font:13px system-ui;padding:6px";
-        el.textContent = `node ${i} — a line of real text to rasterise`;
+        el.textContent = `node ${i} — a line of real text to rasterize`;
         el.style.position = "absolute";
         el.style.left = "0px";
         el.style.top = `${2000 + i * 4}px`;

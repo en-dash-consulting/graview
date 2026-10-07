@@ -26,7 +26,7 @@ const car = (glance?: readonly string[]): GraviewDocument =>
           year: { type: "integer" },
           make: { type: "string" },
           body: { type: "string" },
-          colour: { type: "string" },
+          color: { type: "string" },
           price: { type: "number", format: "money", label: "Asking price" },
           mileage: { type: "integer" },
         },
@@ -87,7 +87,7 @@ describe("a document's glance", () => {
   });
 
   it("comes back from a declaration that chose one", () => {
-    const fields = z.object({ name: z.string(), vin: z.string(), year: z.number(), make: z.string(), body: z.string(), colour: z.string(), price: z.number(), mileage: z.number() });
+    const fields = z.object({ name: z.string(), vin: z.string(), year: z.number(), make: z.string(), body: z.string(), color: z.string(), price: z.number(), mileage: z.number() });
     const app = defineApp({ name: "Lot", schema: createSchema([defineNode("car", { fields, plural: "cars", display: { glance: ["price", "mileage", "body"] } })]) });
     const { document } = toDocument(app);
     expect(document.kinds["car"]!.glance).toEqual(["price", "mileage", "body"]);

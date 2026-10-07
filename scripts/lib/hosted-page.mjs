@@ -12,8 +12,8 @@
  * when asked.
  *
  * The packages are read from the workspace's sources, as `bundle-budget.mjs`
- * reads them, with each package's own `sideEffects` honoured, as a bundler
- * honours it in the tarball a stranger installs.
+ * reads them, with each package's own `sideEffects` honored, as a bundler
+ * honors it in the tarball a stranger installs.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";

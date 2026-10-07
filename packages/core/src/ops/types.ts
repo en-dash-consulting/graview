@@ -85,7 +85,7 @@ export interface Operation {
   readonly withheld?: true;
   /**
    * THE RECORDS ITS SENTENCE READ (FR-55): the ids the act's `describe`
-   * looked up to word `intent` ("in favour of Freya Davies"). A sentence
+   * looked up to word `intent` ("in favor of Freya Davies"). A sentence
    * names records by their labels, which no id check catches, so a seat
    * that may not see one of these is served the op withheld. Absent on an
    * act without `describe`, and on ops made before it was kept.

@@ -4,7 +4,7 @@
  * Every surface used to pick its own number in one stacking context: the
  * profile and the problems at 20, the companion at 40, the altitude
  * control at 5, the zoom at 8, a menu at 60, the studio at 100. Each was
- * right the day it was written and wrong the day a neighbour moved — on a
+ * right the day it was written and wrong the day a neighbor moved — on a
  * hosted app the profile opened UNDER the seat's rail and could not be
  * read. So there is one ladder, written once, here, and nothing else in
  * the framework writes a number:
@@ -48,7 +48,7 @@ export type Layer = keyof typeof LAYERS;
 export const SCENE_LAYERS = {
   /** The ground's plots, under everything drawn on them. */
   plots: 0,
-  /** The cards' stage; a lit card over its unlit neighbours. */
+  /** The cards' stage; a lit card over its unlit neighbors. */
   stage: 1,
   /** A district's tag and face, over its plate. */
   tag: 2,

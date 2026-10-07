@@ -60,10 +60,10 @@ export function rememberSetting(setting: SettingDeclaration, value: string, memo
  * rather than a guess at what those are — the root keeps the size the person
  * set, and the media query underneath is what answers about motion.
  */
-export function honourSetting(setting: SettingDeclaration, value: string): void {
+export function honorSetting(setting: SettingDeclaration, value: string): void {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  if (setting.honoured === "root-font-size") {
+  if (setting.honored === "root-font-size") {
     root.style.fontSize = value === setting.initial ? "" : value;
     return;
   }
@@ -83,5 +83,5 @@ export function honourSetting(setting: SettingDeclaration, value: string): void 
  * same shape as applying the scheme there, and for the same reason.
  */
 export function applySettings(settings: readonly SettingDeclaration[]): void {
-  for (const setting of settings) honourSetting(setting, loadSetting(setting));
+  for (const setting of settings) honorSetting(setting, loadSetting(setting));
 }

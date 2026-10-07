@@ -92,7 +92,7 @@ export function tellApart(
   return apart;
 }
 
-/** Resolves a node's display label, honouring the declaration's override. */
+/** Resolves a node's display label, honoring the declaration's override. */
 export function labelOf(
   definition: AnyNodeDefinition | undefined,
   node: { id: string; kind: string } & Record<string, unknown>,
@@ -116,7 +116,7 @@ export function labelOf(
  * A single word longer than the limit is still cut, because the alternative
  * is a heading that ignores the limit it was given.
  */
-export function summarise(text: string, max = 60): string {
+export function summarize(text: string, max = 60): string {
   const clean = text.trim().replace(/\s+/g, " ");
   if (clean.length <= max) return clean;
   const cut = clean.slice(0, max);
@@ -139,7 +139,7 @@ export function describeNode(
 /** One field, as a person sees it. */
 export interface ReadableField {
   readonly key: string;
-  /** The field name in words, after `display.labels` and humanising. */
+  /** The field name in words, after `display.labels` and humanizing. */
   readonly label: string;
   /** The value in words, after `display.format` and the built-in defaults. */
   readonly value: string;
@@ -157,7 +157,7 @@ export interface ReadableField {
 const NOT_A_FIELD = new Set(["id", "kind", "label"]);
 
 /** `effectiveFrom` shown to a person is a schema leaking through a surface. */
-export function humaniseField(field: string): string {
+export function humanizeField(field: string): string {
   const spaced = field
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .replace(/[_-]+/g, " ")
@@ -181,7 +181,7 @@ export function humaniseField(field: string): string {
  */
 export function valueWords(definition: AnyNodeDefinition | undefined, key: string, value: unknown): string {
   const format = definition?.display?.format?.[key];
-  return format ? format(value) : typeof value === "string" ? humaniseField(value) : String(value);
+  return format ? format(value) : typeof value === "string" ? humanizeField(value) : String(value);
 }
 
 /**
@@ -201,7 +201,7 @@ export function fieldWords(
 ): string {
   // A computed field's own label is its words too (FR-83), where the display does not say otherwise.
   const computed = definition?.computed && Object.prototype.hasOwnProperty.call(definition.computed, key) ? definition.computed[key] : undefined;
-  return definition?.display?.labels?.[key] ?? (typeof computed === "object" ? computed.label : undefined) ?? humaniseField(key);
+  return definition?.display?.labels?.[key] ?? (typeof computed === "object" ? computed.label : undefined) ?? humanizeField(key);
 }
 
 /*
@@ -223,7 +223,7 @@ const SILENT_H = /^(hour|honest|hono[ur]r?|heir)/;
 
 /** "a" or "an", by how the word SOUNDS. */
 export function article(word: string): "a" | "an" {
-  const first = humaniseField(word).toLowerCase();
+  const first = humanizeField(word).toLowerCase();
   if (SILENT_H.test(first)) return "an";
   if (SOUNDS_LIKE_YOU.test(first)) return "a";
   return /^[aeiou]/.test(first) ? "an" : "a";
@@ -236,7 +236,7 @@ export function article(word: string): "a" | "an" {
  * identifier's punctuation, not a word's.
  */
 export function withArticle(word: string): string {
-  return `${article(word)} ${humaniseField(word).toLowerCase()}`;
+  return `${article(word)} ${humanizeField(word).toLowerCase()}`;
 }
 
 /**
@@ -245,7 +245,7 @@ export function withArticle(word: string): string {
  * member called …", "Remove the staff member" — reads this, never the id.
  */
 export function nounOf(definition: { readonly noun?: string } | undefined, kind: string): string {
-  return definition?.noun ?? humaniseField(kind).toLowerCase();
+  return definition?.noun ?? humanizeField(kind).toLowerCase();
 }
 
 /** Whether `line` carries `value` as whole words: "2027 Subaru Forester" says "Subaru" and "2027", not "Sub". */

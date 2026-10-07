@@ -9,7 +9,7 @@ import { deriveAffordances, defaultProviders } from "../../src/index.js";
  *
  * A mutation that declares what it connects or severs is offered from either
  * endpoint — standing on the owner, "give this one something to do" is the
- * natural thing to say. The button there was labelled with `title`, which is
+ * natural thing to say. The button there was labeled with `title`, which is
  * written from the SUBJECT's side: "Hand it to someone", offered on the
  * owner, reads as handing the owner to someone. The same shape as
  * `edge-without-inverse` one layer up — the relation has two readings and

@@ -16,7 +16,7 @@ import { DECLARED_KIND, type FieldType } from "./meta.js";
  * called `kind:rule` and the RULES district's card were the same id. Every
  * app here declares a kind called "rule", so in every one of their studios
  * the edge from a rule to the kind it judges resolved to the district it
- * started from and was drawn as a loop: a dotted circle labelled OVER,
+ * started from and was drawn as a loop: a dotted circle labeled OVER,
  * saying a rule judges a rule.
  */
 
@@ -181,7 +181,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       judgesPast: rule.judgesPast ?? false,
       wholeGraph: rule.scope === "graph",
       ...(rule.label ? { title: rule.label } : {}),
-      ...(rule.judgement ? { require: rule.judgement.require, ...(rule.judgement.when ? { when: rule.judgement.when } : {}), ...(rule.judgement.says ? { says: rule.judgement.says } : {}) } : {}),
+      ...(rule.judgment ? { require: rule.judgment.require, ...(rule.judgment.when ? { when: rule.judgment.when } : {}), ...(rule.judgment.says ? { says: rule.judgment.says } : {}) } : {}),
       ...(rule.description ?? rule.label ? { description: rule.description ?? rule.label } : {}),
       ...(derivedRepairs.length > 0 ? { derivedRepairs } : {}),
     });

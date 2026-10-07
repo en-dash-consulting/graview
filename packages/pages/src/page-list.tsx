@@ -2,7 +2,7 @@ import { ArrangeBar, RelationMark } from "@graview/primitives/pages";
 import { admitArrangement, arrange, arrangeable, formatArrangement, asksForThePast, parseArrangement } from "@graview/core/arrange";
 import {
   describeSearched,
-  humaniseField,
+  humanizeField,
   nounOf,
   isCurrent,
   labelOf,
@@ -38,7 +38,7 @@ import {
   rule,
 } from "./page-typography.js";
 import { PageMain } from "./page-shell.js";
-import { capitalise } from "./page-typography.js";
+import { capitalize } from "./page-typography.js";
 
 
 /**
@@ -222,10 +222,10 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
                 <span key={`${relation.edgeKind}|${relation.from}|${relation.to}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                   <RelationMark edgeKind={relation.edgeKind} width={22} {...(context.brand?.kit ? { kit: context.brand.kit } : {})} />
                   {far === "*" ? (
-                    <span>{capitalise(words ?? humaniseField(relation.edgeKind))}</span>
+                    <span>{capitalize(words ?? humanizeField(relation.edgeKind))}</span>
                   ) : (
                     <Link to={`/${pluralSlug(store.schema, far)}`} style={link} title={pluralOf(store, far)}>
-                      {capitalise(words ?? pluralOf(store, far))}
+                      {capitalize(words ?? pluralOf(store, far))}
                     </Link>
                   )}
                 </span>
@@ -257,10 +257,10 @@ export function DefaultListPage<S extends AnySchema>({ context }: { context: Pag
             `Only the ${plural.toLowerCase()}`,
             ...narrowing.map((condition) =>
               condition.value === "*"
-                ? `that ${humaniseField(condition.key).toLowerCase()} anything`
+                ? `that ${humanizeField(condition.key).toLowerCase()} anything`
                 : condition.value === "none"
-                  ? `that ${humaniseField(condition.key).toLowerCase()} nothing`
-                  : `${humaniseField(condition.key).toLowerCase()} ${named(condition.value)}`,
+                  ? `that ${humanizeField(condition.key).toLowerCase()} nothing`
+                  : `${humanizeField(condition.key).toLowerCase()} ${named(condition.value)}`,
             ),
           ].join(" ")}
           {" · "}

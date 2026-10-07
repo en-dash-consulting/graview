@@ -11,7 +11,7 @@ import { trail } from "./hooks.js";
  */
 
 /**
- * Keeps the view in the URL fragment and honours the back button.
+ * Keeps the view in the URL fragment and honors the back button.
  *
  * The back button returning to the exact prior view is not a nicety here: it
  * is the thing that makes a spatial interface navigable at all, because it
@@ -29,7 +29,7 @@ export function UrlSync(): null {
 
 export function useUrlSync(): void {
   const { view, setView, views, principal } = useGraview();
-  /* Who the page is seated as, by what decides what it sees: a change of it resolves the stop rather than travelling. */
+  /* Who the page is seated as, by what decides what it sees: a change of it resolves the stop rather than traveling. */
   const seat = JSON.stringify(principal);
 
   /*
@@ -56,7 +56,7 @@ export function useUrlSync(): void {
    * Adopt the fragment on FIRST load, not only on navigation.
    *
    * "Every stop is a URL" was only half true: the view was written to the
-   * fragment and the back button honoured it, but opening a shared link
+   * fragment and the back button honored it, but opening a shared link
    * landed on the default view and silently overwrote the address bar. A
    * pasted link that does not go where it says is worse than no link.
    */
@@ -115,7 +115,7 @@ export function useUrlSync(): void {
       return;
     }
     /*
-     * MOVING THE FURNITURE IS NOT TRAVELLING.
+     * MOVING THE FURNITURE IS NOT TRAVELING.
      *
      * A drag writes the view state on every pointer move, because that is what
      * makes the connectors follow the card. Pushed, one drag would be sixty
@@ -125,7 +125,7 @@ export function useUrlSync(): void {
      * Back still means the place you were before you started fiddling.
      */
     /*
-     * CHANGING THE SEAT IS NOT TRAVELLING. A seat that may not see the
+     * CHANGING THE SEAT IS NOT TRAVELING. A seat that may not see the
      * focused record has its stop resolved to where the app opens, in the
      * render that changed the seat. Pushed, Back landed on the record's
      * address, which the seat cannot see, which fell back again — an entry
@@ -158,7 +158,7 @@ export function useUrlSync(): void {
  * Exported so it can be read and held to: what belongs in here is the
  * difference between the back button meaning something and meaning "one
  * pixel ago", and the two things that went wrong went wrong silently — the
- * address changed, no entry was pushed, and the arrows stayed grey.
+ * address changed, no entry was pushed, and the arrows stayed gray.
  */
 export function adjustment(before: ViewState | null, after: ViewState): boolean {
   if (!before) return false;
@@ -170,16 +170,16 @@ export function adjustment(before: ViewState | null, after: ViewState): boolean 
     (before.past ?? false) === (after.past ?? false) &&
     before.expanded.join(",") === after.expanded.join(",") &&
     /*
-     * SHOWING A MODULE IS TRAVELLING. "Show the installation" raises whole
+     * SHOWING A MODULE IS TRAVELING. "Show the installation" raises whole
      * districts into the scene — who is here, who has been invited — and
      * its own comment always said it was a stop Back knew the way out of.
      * It was not: `shown` was missing from this comparison, so the address
      * gained `show=installation` and the entry was REPLACED, the arrows
-     * stayed grey, and one Back from the installation left the app.
+     * stayed gray, and one Back from the installation left the app.
      */
     (before.shown ?? []).join(",") === (after.shown ?? []).join(",") &&
     /*
-     * A VIEW MOVING ALONG ITS OWN DIMENSION IS TRAVELLING.
+     * A VIEW MOVING ALONG ITS OWN DIMENSION IS TRAVELING.
      *
      * Turning the calendar to October is going somewhere: a URL to send
      * somebody, a place to come back to, a Back that means "the month I was
@@ -205,7 +205,7 @@ function sameWithin(
 }
 
 /*
- * TYPING IS NOT TRAVELLING. The words a row narrows by (`in.q`) change on
+ * TYPING IS NOT TRAVELING. The words a row narrows by (`in.q`) change on
  * every keystroke, and each one pushed a history entry — five letters, five
  * Backs to leave a list. The scene's own `q` was never compared; the row's
  * words are the same act and read the same way.

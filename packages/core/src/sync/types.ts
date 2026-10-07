@@ -27,7 +27,7 @@ export interface ResourceMapping {
   readonly match?: (node: Record<string, unknown>) => boolean;
   /**
    * Fields we will send but never accept back. Useful where the remote
-   * rewrites something on save — Google normalises a timezone — and echoing
+   * rewrites something on save — Google normalizes a timezone — and echoing
    * that back as "someone changed it" would start a loop.
    */
   readonly ours?: readonly string[];
@@ -61,7 +61,7 @@ export interface RemoteChange {
   readonly id: string;
   /**
    * The remote's version of this record — an etag, a sequence number, a
-   * timestamp. This is what makes an echo recognisable, so a remote that has
+   * timestamp. This is what makes an echo recognizable, so a remote that has
    * none cannot be synced two-way safely and the engine says so.
    */
   readonly version: string;

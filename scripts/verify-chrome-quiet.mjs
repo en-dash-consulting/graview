@@ -211,9 +211,9 @@ function measure() {
     }
     return true;
   };
-  const alpha = (colour) => {
-    if (!colour || colour === "transparent") return 0;
-    const match = colour.match(/rgba?\(([^)]+)\)/);
+  const alpha = (color) => {
+    if (!color || color === "transparent") return 0;
+    const match = color.match(/rgba?\(([^)]+)\)/);
     if (!match) return 1;
     const parts = match[1].split(/[ ,/]+/).filter(Boolean);
     return parts.length >= 4 ? Number.parseFloat(parts[3]) : 1;

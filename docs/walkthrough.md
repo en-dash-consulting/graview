@@ -193,7 +193,7 @@ class's shared check let it through.
 - **A focus id nothing resolves.** A kind card's own id was made the focus
   by double-click. Cousins: any id in the URL that lays out an empty scene.
 - **Words read from the wrong end.** An edge has two readings; the caption
-  over a neighbour must be the focus's reading. Cousins: a heading that
+  over a neighbor must be the focus's reading. Cousins: a heading that
   names the edge kind, a plural where a singular is meant, a title that is
   an identifier.
 - **An act that cannot act.** A one-press button that refused on press
@@ -222,7 +222,7 @@ The fourth walk and the days after it added these:
   host — which is right when the FOCUS restates the relation and wrong when
   a band card merely lists its members as chips. Cousins: any rule keyed on
   "is drawn somewhere" without asking by whom and at what plane.
-- **A crowd squeezed instead of wrapped.** Twelve neighbours in one row got
+- **A crowd squeezed instead of wrapped.** Twelve neighbors in one row got
   slots 57 pixels wide under chips 150 wide; the lines between them, clipped
   under every chip, were confetti. Cousins: any band, row or grid that
   divides its width by the count with no floor; any line drawn across a
@@ -292,7 +292,7 @@ through the line's own menu, and through the pages record.
 True when:
 - `graview check` is clean; declaring the edge without `inverse` warns
   `edge-without-inverse` with the far end's caption in the message.
-- The scene draws the line; the caption over the neighbour is the focus's
+- The scene draws the line; the caption over the neighbor is the focus's
   reading; the connections panel on each end uses that end's words; the
   pages record captions both directions correctly.
 - The connecting act offers only candidates not already connected; the
@@ -345,7 +345,7 @@ True when:
 - The board holds several occupants per slot; the coverage grid has all its
   rows and columns; neither throws on an empty graph.
 
-### E · The pages, customised
+### E · The pages, customized
 
 Do: follow `graview-pages`. Replace one record page. Then replace every
 surface with a design of the app's own.
@@ -354,7 +354,7 @@ True when:
 - A custom page still re-renders on every op, offers acts by
   `store.permits`, and uses `PageMain` so an embedded copy has one main.
 - The full design passes axe at 390 and 1280 in both schemes; every link
-  and button is at least 24px; the design's own colours hold AA on both
+  and button is at least 24px; the design's own colors hold AA on both
   grounds.
 - The derived face is nowhere in it (`aria-label="Kinds"` absent) and every
   route renders.
@@ -375,7 +375,7 @@ True when:
   seat may not take; the rail and the pages name the other seat's work by
   its author, never "you"; a form or repair on the routed face applies as
   the person at the keyboard and the log says so.
-- Dress the app: declare `brand.kit` with a route and a per-edge colour the
+- Dress the app: declare `brand.kit` with a route and a per-edge color the
   checker refuses (`kit-contrast-below-aa`), then one it accepts; the lines
   change and the relation key agrees; a kind kept quiet says "not drawn"
   in the key and stays selectable from the inspector.

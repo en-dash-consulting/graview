@@ -61,6 +61,6 @@ describe("the arrange bar", () => {
     // Clearing a part removes its word; clearing everything removes `within`.
     expect(withArrangement(view, { sort: arrangement.sort }).within).toEqual({ sort: "label" });
     expect(withArrangement(view, {}).within).toBeUndefined();
-    expect(sayCondition(schema, graph, arrangeable(schema, "task"), { key: "colour", value: "red" })).toBe("colour: red");
+    expect(sayCondition(schema, graph, arrangeable(schema, "task"), { key: "color", value: "red" })).toBe("color: red");
   });
 });

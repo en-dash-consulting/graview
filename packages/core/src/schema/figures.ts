@@ -1,7 +1,7 @@
 /*
  * A KIND HAS A FIGURE: a drawing of the THING, not an emblem for it.
  *
- * Every kind is drawn the same way today — a coloured dot on its chips, a
+ * Every kind is drawn the same way today — a colored dot on its chips, a
  * plural on its district, an isometric block at altitude, a heading on its
  * page. The picture would say far more if a kind carried a drawing of what
  * it represents: a person's silhouette, a plot of ground, a vehicle, a
@@ -12,7 +12,7 @@
  * the thing — single weight, drawn from the isometric city's own three-
  * quarter angle, no fill but the ground's. It is never a decorative badge, a
  * rounded-square app icon, or a shape chosen because it filled the space.
- * A kind whose figure is a circle with a smaller circle in it has learnt
+ * A kind whose figure is a circle with a smaller circle in it has learned
  * nothing about itself and taught the reader nothing.
  *
  * Everything is `currentColor`, so a figure takes the scheme, the kind's own
@@ -128,10 +128,10 @@ export function figureSvg(figure: Figure | undefined): string | undefined {
  * answer with an `<svg>` carrying a `<script>`, an `onload`, or a remote
  * `href`, and a drawing is inserted as markup wherever it is shown; a check
  * of the house style alone would have passed all three, because none of
- * them is a colour or a viewBox. So the vocabulary is closed: these
+ * them is a color or a viewBox. So the vocabulary is closed: these
  * elements, these attributes, and anything else is a fault with a name.
  *
- * It is one judgement rather than a second sanitiser beside the first,
+ * It is one judgment rather than a second sanitizer beside the first,
  * because the surfaces that draw a figure already ask this function's
  * caller — `graview check`, `graview figure`, the agent that draws one —
  * whether the drawing is any good.
@@ -150,7 +150,7 @@ const DRAWING_ATTRIBUTES: ReadonlySet<string> = new Set([
  * What is wrong with a figure, in the words of somebody about to fix it.
  *
  * Art with no `viewBox` cannot be sized by anything that draws it, a
- * literal colour ignores the scheme and the kind's hue, a `fill` that is
+ * literal color ignores the scheme and the kind's hue, a `fill` that is
  * not `none` turns a line drawing into a blob at chip size, a name that is
  * not in the shipped set is a silent blank — and anything in the markup
  * that is not a drawing is not a figure at all.
@@ -181,7 +181,7 @@ export function figureBrief(kind: string, from: string): string {
     '  - stroke with currentColor, fill="none", stroke-width 1.4,',
     "    stroke-linecap and stroke-linejoin round;",
     "  - use only path, circle, ellipse, rect, line, polyline, polygon and g;",
-    "  - carry no literal colour anywhere, no class, no style, no id;",
+    "  - carry no literal color anywhere, no class, no style, no id;",
     "  - READ AT TWENTY PIXELS, because that is the size a chip gives it.",
     "",
     "This is the shipped figure for a person, as the style to match:",
@@ -204,7 +204,7 @@ export function figureFaults(figure: Figure): readonly string[] {
     faults.push(`its viewBox "${box[1]}" is not four numbers.`);
   }
   /*
-   * A literal colour anywhere. `currentColor` is what lets one drawing take
+   * A literal color anywhere. `currentColor` is what lets one drawing take
    * the scheme, the kind's hue and the brand's ink without being redrawn —
    * and a figure that hard-codes #333 is invisible in one of the two
    * schemes, which nobody notices until somebody switches.

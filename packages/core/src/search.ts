@@ -3,7 +3,7 @@ import { arrangeable, asksForThePast, conditionHolds, type ArrangeContext, type 
 import { describeArg } from "./mutations/node-ref.js";
 import type { Operation } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
-import { humaniseField, isCurrent, labelOf, readableFields, tellApart } from "./schema/define-node.js";
+import { humanizeField, isCurrent, labelOf, readableFields, tellApart } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
 import { hidesFrom, seesId } from "./seen.js";
@@ -298,7 +298,7 @@ export function searchableFields(schema: AnySchema, kind: string): readonly { re
     // A state is a condition (`done:false`), not a word to find; see textsOf.
     if (type === "boolean") continue;
     if (type === "unknown" && definition.display?.format?.[key] === undefined) continue;
-    fields.push({ key, reading: definition.display?.labels?.[key] ?? humaniseField(key) });
+    fields.push({ key, reading: definition.display?.labels?.[key] ?? humanizeField(key) });
   }
   return fields;
 }
@@ -351,7 +351,7 @@ export function touchWeights(ops: readonly Operation[]): ReadonlyMap<string, num
   return weights;
 }
 
-const pluralOf = (definition: AnyNodeDefinition | undefined, kind: string) => definition?.plural ?? `${humaniseField(kind)}s`;
+const pluralOf = (definition: AnyNodeDefinition | undefined, kind: string) => definition?.plural ?? `${humanizeField(kind)}s`;
 
 /** A kind's list on the routed face, as its router addresses it: the declared plural, else the kind and an s, as a slug. */
 const listPath = (definition: AnyNodeDefinition | undefined, kind: string) => `/${placeSlug(definition?.plural ?? `${kind}s`)}`;
@@ -361,7 +361,7 @@ function kindStrength(schema: AnySchema, kind: string, words: readonly string[])
   const definition = schema.tryDefinition(kind);
   const candidates: { field: string; text: string }[] = [
     { field: "plural", text: pluralOf(definition, kind) },
-    { field: "kind", text: humaniseField(kind) },
+    { field: "kind", text: humanizeField(kind) },
     ...(definition?.noun ? [{ field: "noun", text: definition.noun }] : []),
   ];
   let best: { strength: Exclude<MatchStrength, "field">; field: string; text: string } | undefined;
@@ -445,7 +445,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
   const near = new Set<string>();
   for (const id of options.from ?? []) {
     near.add(id);
-    for (const neighbour of store.graph.neighbors(id)) near.add(neighbour.id);
+    for (const neighbor of store.graph.neighbors(id)) near.add(neighbor.id);
   }
   // The same words mean the same thing in a search box and in a list page's filter.
   /*
@@ -484,7 +484,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
         words.length > 0
           ? matchNode(definition, node, parsed.words)
           : own[0]
-            ? { field: own[0].key, reading: humaniseField(own[0].key), fragment: `${own[0].key}:${own[0].value}`, strength: "field" as const }
+            ? { field: own[0].key, reading: humanizeField(own[0].key), fragment: `${own[0].key}:${own[0].value}`, strength: "field" as const }
             : { field: "is", reading: "Is", fragment: `is:${narrowingIs[0]!}`, strength: "field" as const };
       if (!why) continue;
       const label = labelOf(definition, node);
@@ -545,9 +545,9 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
     for (const rule of store.allInvariants()) {
       const scoped = rule.scope === "graph" ? undefined : rule.scope.kind;
       if (scoped && !kinds.includes(scoped)) continue;
-      const label = rule.label ?? humaniseField(rule.name);
+      const label = rule.label ?? humanizeField(rule.name);
       const onLabel = strengthOf(label, words);
-      const onName = onLabel ? undefined : strengthOf(humaniseField(rule.name), words);
+      const onName = onLabel ? undefined : strengthOf(humanizeField(rule.name), words);
       const strength = onLabel ?? onName;
       if (!strength) continue;
       const why: Why = { field: onLabel ? "label" : "name", reading: onLabel ? "Rule" : "Name", fragment: onLabel ? label : rule.name, strength };
@@ -611,7 +611,7 @@ export function actsOn<S extends AnySchema>(
     if (!binding) continue;
     if (binding.kinds !== "*" && !(binding.kinds as readonly string[]).includes(subject.kind as string)) continue;
     if (!store.permits({ name: mutation.name, args: { [binding.arg]: subject.id } }, principal).ok) continue;
-    const title = mutation.title ?? humaniseField(mutation.name);
+    const title = mutation.title ?? humanizeField(mutation.name);
     const titled = tokensOf(title);
     const own = asked.filter((word) => titled.some((token) => token.startsWith(word)));
     const strength = own.length > 0 ? strengthOf(title, own) : undefined;

@@ -66,7 +66,7 @@ export { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 export type { ApplyPrimitivesOptions, GraphListener, GraphOptions } from "./graph/graph.js";
 export { diffSnapshots, EMPTY_DIFF, isEmptyDiff } from "./graph/diff.js";
 export type { GraphDiff, NodeChange } from "./graph/diff.js";
-export { invert, isUnset, normalise, UNSET, writesOf } from "./graph/primitives.js";
+export { invert, isUnset, normalize, UNSET, writesOf } from "./graph/primitives.js";
 export type { Primitive } from "./graph/primitives.js";
 export { TrackedReader } from "./graph/tracked.js";
 export { edgeId } from "./graph/types.js";
@@ -209,7 +209,7 @@ export {
 export type { AccentBrandOptions, DerivedBrand, RefusedBrand } from "./theme/derive.js";
 export {
   checkContrast,
-  coloursIn,
+  colorsIn,
   composite,
   contrast,
   luminance,
@@ -245,10 +245,10 @@ export {
   isoDate,
 } from "./temporal/effectivity.js";
 export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
-export { article, counted, fieldWords, humaniseField, nounOf, readableFields, summarise, valueWords, withArticle } from "./schema/define-node.js";
+export { article, counted, fieldWords, humanizeField, nounOf, readableFields, summarize, valueWords, withArticle } from "./schema/define-node.js";
 export type { ReadableField } from "./schema/define-node.js";
 export { TEXT_PAIRS } from "./theme/types.js";
-export { checkKitContrast, connectorHueColour, connectorKitFor, DEFAULT_KIT, kitVariables, resolveKit } from "./theme/kit.js";
+export { checkKitContrast, connectorHueColor, connectorKitFor, DEFAULT_KIT, kitVariables, resolveKit } from "./theme/kit.js";
 export type { ConnectorKit, ConnectorRoute, Kit, KitContrastFinding, KitEndCap, KitOverrides, KitStrokePattern } from "./theme/kit.js";
 export { layer, layerProperty, layerVariables, LAYERS, LOCAL_LAYERS, SCENE_LAYERS } from "./theme/layers.js";
 export type { Layer } from "./theme/layers.js";

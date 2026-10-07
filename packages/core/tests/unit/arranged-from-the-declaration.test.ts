@@ -106,10 +106,10 @@ describe("the grammar", () => {
 
   it("admits only what the kind offers, and says what it dropped", () => {
     const offers = arrangeable(schema, "task");
-    const stale = parseArrangement({ sort: "priority", filter: "done:true,colour:red", group: "holds" });
+    const stale = parseArrangement({ sort: "priority", filter: "done:true,color:red", group: "holds" });
     const { arrangement, dropped } = admitArrangement(stale, offers);
     expect(arrangement).toEqual({ filter: [{ key: "done", value: "true" }], group: { by: "holds" } });
-    expect(dropped).toEqual(["sort priority", "filter colour"]);
+    expect(dropped).toEqual(["sort priority", "filter color"]);
   });
 
   it("lets a lens decline a part or the whole", () => {
@@ -170,7 +170,7 @@ describe("arranging", () => {
     expect(bucketStart("2026-09-28", "week")).toBe("2026-09-28");
     expect(bucketStart("2026-09-27", "week")).toBe("2026-09-21");
     expect(bucketStart("nonsense", "day")).toBeUndefined();
-    // A catalogue of thirty years reads by the year and the decade.
+    // A catalog of thirty years reads by the year and the decade.
     expect(bucketStart("2006-11-07", "year")).toBe("2006-01-01");
     expect(bucketStart("2006-11-07", "decade")).toBe("2000-01-01");
     expect(bucketStart("1999-11-09", "decade")).toBe("1990-01-01");
@@ -193,7 +193,7 @@ describe("the checker and the readers", () => {
       mutations: [],
       invariants: [],
       lenses: [
-        { name: "calendar", requiredRoles: ["start"], bindings: { task: { start: "due" } }, arrangedBy: { group: "holds", sort: "colour" } },
+        { name: "calendar", requiredRoles: ["start"], bindings: { task: { start: "due" } }, arrangedBy: { group: "holds", sort: "color" } },
         { name: "board", requiredRoles: [], binds: "entities", bindings: { slots: { kind: "list" } }, arrangedBy: { filter: "is:flagged" } },
       ],
     });
@@ -201,7 +201,7 @@ describe("the checker and the readers", () => {
     const codes = result.findings.map((finding) => `${finding.code} @ ${finding.where}`);
     expect(codes).toContain('order-role-unknown @ defineNode("lost").fieldRoles.order');
     expect(codes).toContain('lens-arrangement-unknown @ lens "calendar" arrangedBy');
-    expect(result.findings.find((finding) => finding.code === "lens-arrangement-unknown")?.message).toMatch(/sort colour/);
+    expect(result.findings.find((finding) => finding.code === "lens-arrangement-unknown")?.message).toMatch(/sort color/);
     // The board's `is:flagged` is something every kind offers: nothing to say.
     expect(codes.filter((code) => code.includes('lens "board"'))).toEqual([]);
 
@@ -209,7 +209,7 @@ describe("the checker and the readers", () => {
     expect(described).toContain("## What can be arranged");
     expect(described).toMatch(/task: sort by label \(name\), done \(done\), due \(due date\)/);
     expect(described).toContain("sorted by due unless asked");
-    expect(described).toContain("The calendar lens opens with group=holds and sort=colour.");
+    expect(described).toContain("The calendar lens opens with group=holds and sort=color.");
     const llms = generateLlmsTxt(app);
     expect(llms).toContain("## Arranging a picture");
     expect(llms).toMatch(/- arranged by: sort label \| done \| due \| size \| notes \| holds; filter done \| due \| size \| notes \| holds \| is; group done \| due \| size \| holds; due unless asked/);

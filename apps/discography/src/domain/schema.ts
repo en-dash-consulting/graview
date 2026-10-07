@@ -13,7 +13,7 @@ export const song = defineNode("song", {
     track: z.number().int().min(1).max(99).optional(),
     /** Seconds. */
     duration: z.number().int().min(1).max(3600).optional(),
-    // No source for a real catalogue says it for every track; unknown is not "No".
+    // No source for a real catalog says it for every track; unknown is not "No".
     explicit: z.boolean().optional(),
     status: z.enum(["released", "unreleased", "scrapped"]),
     /** When the first demo was cut. */

@@ -12,7 +12,7 @@ import type { IntelligenceCapability } from "@graview/core";
  * a rung is choosing a config value, and whatever answers, its proposals
  * still travel the one validated path.
  *
- * The config is plain serialisable data in the BROWSER's storage, because
+ * The config is plain serializable data in the BROWSER's storage, because
  * an API key belongs to the person at the keyboard: it must never sit in a
  * repo, a bundle, or a declaration that ships.
  */

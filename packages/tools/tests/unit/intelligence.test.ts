@@ -211,7 +211,7 @@ describe("an intelligence surfaces as an ordinary provider", () => {
     expect(first.affordances).toHaveLength(0);
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(woken).toBe(1);
-    // Second derive: the cached proposals arrive as labelled affordances.
+    // Second derive: the cached proposals arrive as labeled affordances.
     const second = deriveAffordances(store, [], { providers: [provider] });
     expect(second.affordances.map((a) => a.provider)).toEqual(["llm", "llm"]);
     expect(second.affordances[0]?.why).toContain("starter:");

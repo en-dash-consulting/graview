@@ -47,8 +47,8 @@ export type EntityBinding =
    * pressing "mosquitoes are covered in the Back Lawn" can show WHICH
    * routine does it and when it next runs.
    *
-   * Generalises well past one domain: controls↔risks through a policy,
-   * tests↔behaviours through a suite, staff↔shifts through a rota line.
+   * Generalizes well past one domain: controls↔risks through a policy,
+   * tests↔behaviors through a suite, staff↔shifts through a rota line.
    * Wherever the relationship has attributes, it is a node.
    */
   | { readonly path: readonly string[] }
@@ -163,7 +163,7 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
   /**
    * HOW THE HOME IS ARRANGED AND WHERE THE APP OPENS (FR-80): the kinds in
    * order, the kinds the home leaves off, and the place it opens on. Both
-   * faces honour it — the routed face's gallery and nav, the city's order —
+   * faces honor it — the routed face's gallery and nav, the city's order —
    * and `graview check` names a kind or place it cannot find.
    */
   readonly pages?: PagesArrangement;
@@ -178,7 +178,7 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    * The name, the palette and the typography this installation wears.
    *
    * Declared so `graview check` can verify it: a custom palette can be wrong
-   * in ways nobody notices — a secondary colour that clears 4.5:1 on a dark
+   * in ways nobody notices — a secondary color that clears 4.5:1 on a dark
    * ground and fails badly on paper — and contrast is a property the
    * framework can measure rather than trust.
    */
@@ -224,7 +224,7 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    * is: the profile pane draws exactly what the app declares, so adding a
    * setting is a line in the declaration rather than a control somebody
    * wires into a shell — and `graview check` can refuse one nothing could
-   * ever honour, which is a control that does nothing.
+   * ever honor, which is a control that does nothing.
    */
   readonly settings?: readonly SettingDeclaration[];
 }
@@ -232,7 +232,7 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
 /**
  * One thing a reader may set for themselves.
  *
- * `honoured` is a CLOSED SET, and that is the point of declaring settings
+ * `honored` is a CLOSED SET, and that is the point of declaring settings
  * at all: the shell knows two ways to carry a person's answer to every
  * surface at once, and a setting that names neither is a control nobody
  * could act on. The checker says so before anybody meets it.
@@ -243,7 +243,7 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
  *                       without a single component hearing about it.
  *   "root-attribute"  — `data-graview-<name>` on <html>, for the theme's
  *                       own CSS (and an app's) to read. How motion is
- *                       carried: the stylesheet already honours the
+ *                       carried: the stylesheet already honors the
  *                       system's preference; this lets a person override it.
  */
 export interface SettingDeclaration {
@@ -252,7 +252,7 @@ export interface SettingDeclaration {
   /** What a person is choosing, in their words. */
   readonly title: string;
   readonly description?: string;
-  readonly honoured: "root-font-size" | "root-attribute";
+  readonly honored: "root-font-size" | "root-attribute";
   /** The answers, in order. At least two — one choice is not a setting. */
   readonly options: readonly { readonly value: string; readonly label: string }[];
   /** Where a reader who has never chosen starts. Must be one of the options. */

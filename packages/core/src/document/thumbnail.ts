@@ -1,7 +1,7 @@
 import type { GraviewApp } from "../app.js";
 import { heightOf, MAX_SIDE, toIso, villageCap, villageOf, type Plot } from "../city.js";
 import { sceneDistricts, type SceneDistrict } from "../scene-districts.js";
-import { coloursIn, hsl, type Rgba } from "../theme/contrast.js";
+import { colorsIn, hsl, type Rgba } from "../theme/contrast.js";
 import { isoShade, type IsoFace } from "../theme/look.js";
 import { SCHEMES } from "../theme/palettes.js";
 import type { Scheme } from "../theme/types.js";
@@ -26,7 +26,7 @@ import type { GraviewDocument } from "./schema.js";
  *
  * Everything from the document is a tenant's words, so every one is
  * escaped, the picture refers to nothing outside itself (no `href`, no
- * `url()`, no font), and every colour is written as a hex the code
+ * `url()`, no font), and every color is written as a hex the code
  * computed rather than a value it was handed.
  */
 
@@ -119,7 +119,7 @@ interface Point {
   readonly y: number;
 }
 
-/** One block on the ground: three faces from its foot's centre in lattice cells, and every point it reaches (for the view box). */
+/** One block on the ground: three faces from its foot's center in lattice cells, and every point it reaches (for the view box). */
 function block(col: number, row: number, footprint: number, height: number, hue: number, scheme: Scheme): { readonly svg: string; readonly reach: readonly Point[] } {
   const shade = isoShade(scheme);
   const half = footprint / 2;
@@ -137,7 +137,7 @@ function block(col: number, row: number, footprint: number, height: number, hue:
   const right = at(col + half, row - half, rise);
   const front = at(col + half, row + half, rise);
   const left = at(col - half, row + half, rise);
-  const edge = coloursIn(shade.roofEdge)[0]!;
+  const edge = colorsIn(shade.roofEdge)[0]!;
   /*
    * Each face a path from one corner, the rest relative: a wall is two
    * corners of the roof and the drop to the ground, a roof the diamond.
@@ -173,11 +173,11 @@ interface Standing {
 const VILLAGE_MIN_PX = 4;
 const MOST_BUILDINGS = 300;
 
-/** One block for the district itself, at its plot's centre, taller for more members: the district seen from furthest away. */
+/** One block for the district itself, at its plot's center, taller for more members: the district seen from furthest away. */
 function landmark(plot: Plot, district: SceneDistrict, scheme: Scheme): Standing {
-  const centre = { col: plot.col + plot.side / 2, row: plot.row + plot.side / 2 };
+  const center = { col: plot.col + plot.side / 2, row: plot.row + plot.side / 2 };
   const height = 1.25 + Math.min(1.25, Math.log2(1 + district.count) * 0.2);
-  return { depth: centre.col + centre.row, ...block(centre.col, centre.row, plot.side * 0.56, height, district.hue, scheme) };
+  return { depth: center.col + center.row, ...block(center.col, center.row, plot.side * 0.56, height, district.hue, scheme) };
 }
 
 /** What stands on one district: its village when it has members and room to show them, else one block for the district itself. */
@@ -293,7 +293,7 @@ function standingFitted(district: SceneDistrict, scheme: Scheme, rung: Rung, sai
   return { stands, narrowest: footprint };
 }
 
-/** The view box: the drawing's own bounds with `pad` of air, widened on its shorter side to the picture's proportion so the city is centred, never stretched. */
+/** The view box: the drawing's own bounds with `pad` of air, widened on its shorter side to the picture's proportion so the city is centered, never stretched. */
 function frame(all: readonly Point[], pad: number, width: number, height: number): { minX: number; maxX: number; minY: number; maxY: number } {
   const box = bounds(all);
   let minX = box.minX - pad;
@@ -329,7 +329,7 @@ function bounds(all: readonly Point[]): { minX: number; maxX: number; minY: numb
  * in its accent. At that size a village is a smudge and a street is
  * nothing, so the icon keeps what still reads: each district on its whole
  * block, from the corner the Scene gives it, in its hue — the plot solid,
- * in its kerb's colour, since the Scene's 12% wash is invisible at 16 px —
+ * in its curb's color, since the Scene's 12% wash is invisible at 16 px —
  * and one block on it, taller for more. Its coordinates are the
  * icon's own pixels, to a tenth, so the whole picture is a kilobyte.
  */
@@ -338,9 +338,9 @@ const ICON = 32;
 function sceneIcon(app: GraviewApp | null, name: string, districts: readonly SceneDistrict[], scheme: Scheme, options: SceneThumbnailOptions): string {
   const shade = isoShade(scheme);
   const tokens = (app?.brand?.schemes ?? SCHEMES)[scheme] ?? SCHEMES[scheme];
-  const ground = coloursIn(tokens.ground)[0] ?? coloursIn(SCHEMES[scheme].ground)[0]!;
+  const ground = colorsIn(tokens.ground)[0] ?? colorsIn(SCHEMES[scheme].ground)[0]!;
 
-  /* In lattice units first: each district's diamond and the block at its centre, as the landmark stands it. */
+  /* In lattice units first: each district's diamond and the block at its center, as the landmark stands it. */
   const drawn = districts.map((district) => {
     const plot = wholeBlock(district.plot);
     const at = (c: number, r: number, lift = 0): Point => {
@@ -348,10 +348,10 @@ function sceneIcon(app: GraviewApp | null, name: string, districts: readonly Sce
       return { x: p.x, y: p.y - lift };
     };
     const ground4 = [at(plot.col, plot.row), at(plot.col + plot.side, plot.row), at(plot.col + plot.side, plot.row + plot.side), at(plot.col, plot.row + plot.side)];
-    const centre = { col: plot.col + plot.side / 2, row: plot.row + plot.side / 2 };
+    const center = { col: plot.col + plot.side / 2, row: plot.row + plot.side / 2 };
     const half = (plot.side * 0.56) / 2;
     const rise = plot.side * 0.56 * CELL * 0.5 * (1.25 + Math.min(1.25, Math.log2(1 + district.count) * 0.2));
-    const foot = [at(centre.col - half, centre.row - half), at(centre.col + half, centre.row - half), at(centre.col + half, centre.row + half), at(centre.col - half, centre.row + half)];
+    const foot = [at(center.col - half, center.row - half), at(center.col + half, center.row - half), at(center.col + half, center.row + half), at(center.col - half, center.row + half)];
     const roof = foot.map((p) => ({ x: p.x, y: p.y - rise }));
     const [back, right, front, left] = roof as [Point, Point, Point, Point];
     const [, rightFoot, frontFoot, leftFoot] = foot as [Point, Point, Point, Point];
@@ -361,7 +361,7 @@ function sceneIcon(app: GraviewApp | null, name: string, districts: readonly Sce
       left: [left, front, frontFoot, leftFoot],
       right: [front, right, rightFoot, frontFoot],
       roof: [back, right, front, left],
-      depth: centre.col + centre.row,
+      depth: center.col + center.row,
     };
   });
   const view = frame(drawn.flatMap((d) => [...d.plot, ...d.roof]), CELL * 0.25, ICON, ICON);
@@ -372,10 +372,10 @@ function sceneIcon(app: GraviewApp | null, name: string, districts: readonly Sce
     .sort((a, b) => a.depth - b.depth)
     .map((d) => {
       const hue = d.district.hue;
-      const kerb = shade.plotEdge;
+      const curb = shade.plotEdge;
       return (
         `<g data-kind="${escapeSvg(d.district.kind)}">` +
-        path(face(hue, kerb), d.plot) +
+        path(face(hue, curb), d.plot) +
         path(face(hue, shade.left), d.left) +
         path(face(hue, shade.right), d.right) +
         path(face(hue, shade.roof), d.roof) +
@@ -411,8 +411,8 @@ export function sceneThumbnail(source: ThumbnailSource, options: SceneThumbnailO
   if (options.size === "icon") return sceneIcon(app, name, districts, scheme, options);
   const shade = isoShade(scheme);
   const tokens = (app?.brand?.schemes ?? SCHEMES)[scheme] ?? SCHEMES[scheme];
-  const ground = coloursIn(tokens.ground)[0] ?? coloursIn(SCHEMES[scheme].ground)[0]!;
-  const roofEdge = coloursIn(shade.roofEdge)[0]!;
+  const ground = colorsIn(tokens.ground)[0] ?? colorsIn(SCHEMES[scheme].ground)[0]!;
+  const roofEdge = colorsIn(shade.roofEdge)[0]!;
 
   const fitted = options.fit === "content";
   const given = options.minBuilding;
@@ -427,10 +427,10 @@ export function sceneThumbnail(source: ThumbnailSource, options: SceneThumbnailO
     const corners = [toIso(plot.col, plot.row, CELL), toIso(plot.col + plot.side, plot.row, CELL), toIso(plot.col + plot.side, plot.row + plot.side, CELL), toIso(plot.col, plot.row + plot.side, CELL)];
     all.push(...corners);
     const fill = hsl(hue, shade.plot.saturation / 100, shade.plot.lightness / 100);
-    const kerb = hsl(hue, shade.plotEdge.saturation / 100, shade.plotEdge.lightness / 100);
+    const curb = hsl(hue, shade.plotEdge.saturation / 100, shade.plotEdge.lightness / 100);
     tiles.push(
       `<g data-kind="${escapeSvg(district.kind)}"><title>${escapeSvg(district.count > 0 ? `${district.label}: ${district.count}` : district.label)}</title>` +
-        `<polygon fill="${hex(fill)}" stroke="${hex(kerb)}" points="${points(corners)}"/></g>`,
+        `<polygon fill="${hex(fill)}" stroke="${hex(curb)}" points="${points(corners)}"/></g>`,
     );
   }
   let stands: Standing[] = [];

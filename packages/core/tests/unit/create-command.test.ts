@@ -58,7 +58,7 @@ describe("graview create", () => {
     expect(brand).toContain('name: "My Field Notes"');
   });
 
-  it("initialises a repository, installs with the package manager, then the skills", async () => {
+  it("initializes a repository, installs with the package manager, then the skills", async () => {
     const t = io();
     mkdirSync(resolve(scratch, "app/node_modules/.bin"), { recursive: true });
     writeFileSync(resolve(scratch, "app/node_modules/.bin/graview"), "");
@@ -182,7 +182,7 @@ describe("graview create", () => {
  * A DIRECTORY THAT ALREADY EXISTS IS THE NORMAL CASE.
  *
  * The realistic start is a repository somebody already made — a README they
- * wrote, a licence, CI, instruction files from another tool. `--force` is
+ * wrote, a license, CI, instruction files from another tool. `--force` is
  * too blunt for that: it writes over the README. Two products independently
  * worked around the refusal by scaffolding into `app/` and hand-writing a
  * workspace root around it, which is a scaffolder gap rather than a taste
@@ -192,7 +192,7 @@ describe("starting in a repository that already exists", () => {
   const existing = () => {
     mkdirSync(resolve(scratch, "grounds"), { recursive: true });
     writeFileSync(resolve(scratch, "grounds/README.md"), "# Groundskeeper\n", "utf8");
-    writeFileSync(resolve(scratch, "grounds/LICENCE"), "MIT\n", "utf8");
+    writeFileSync(resolve(scratch, "grounds/LICENSE"), "MIT\n", "utf8");
   };
   const run = (...argv: string[]) =>
     create(["grounds", "--name", "Groundskeeper", "--kind", "zone", "--pm", "npm", "--no-install", "--no-git", ...argv], io().handle);
@@ -210,7 +210,7 @@ describe("starting in a repository that already exists", () => {
     existing();
     expect(await run("--merge")).toBe(1);
     expect(readFileSync(resolve(scratch, "grounds/README.md"), "utf8")).toBe("# Groundskeeper\n");
-    expect(readFileSync(resolve(scratch, "grounds/LICENCE"), "utf8")).toBe("MIT\n");
+    expect(readFileSync(resolve(scratch, "grounds/LICENSE"), "utf8")).toBe("MIT\n");
     /* And everything that was not there is there now. */
     expect(readdirSync(resolve(scratch, "grounds")).sort()).toContain("package.json");
     expect(readdirSync(resolve(scratch, "grounds/src")).sort()).toEqual(["domain", "embed.tsx", "main.tsx", "ui"]);

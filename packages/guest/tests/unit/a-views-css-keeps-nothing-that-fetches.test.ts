@@ -183,7 +183,7 @@ describe("what stays in the region", () => {
 });
 
 describe("what a view may write", () => {
-  it("keeps layout, grid, flex, colour, type and the theme's tokens", () => {
+  it("keeps layout, grid, flex, color, type and the theme's tokens", () => {
     const css = `.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 12px }
 .card { background: var(--graview-panel); color: var(--graview-ink); border: 1px solid var(--graview-edge); border-radius: 12px; padding: 12px 16px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.1) }
 .row { display: flex; align-items: center; justify-content: space-between; font: 600 14px/1.4 var(--graview-font-body) }`;

@@ -1,7 +1,7 @@
 import { arrange } from "@graview/core/arrange";
 import {
   describeNode,
-  humaniseField,
+  humanizeField,
   labelOf,
   nounOf,
   readableFields,
@@ -47,7 +47,7 @@ import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
  * only the cells they actually care about.
  */
 
-// The canonical hue lives beside the other colour logic in @graview/render;
+// The canonical hue lives beside the other color logic in @graview/render;
 // re-exported here because every view author already imports it from views.
 import { hueFor } from "@graview/render";
 import { hasFigure, KindFigure } from "./figure.js";
@@ -64,7 +64,7 @@ export function useHue(kind: string): number {
  * The field a shortened label was shortened FROM, when there is one.
  *
  * Matched by stem rather than by name, because which field a label came from
- * is the app's business — `label: (node) => summarise(node.text)` names no
+ * is the app's business — `label: (node) => summarize(node.text)` names no
  * field the framework can see, and asking every app to declare it would be
  * asking them to repeat themselves.
  */
@@ -153,7 +153,7 @@ export function registerDefaultViews<S extends AnySchema>(
        * background tint, no words, no mark, nothing in the accessibility
        * tree. The chips in a district get a "⚠" in their own label and the
        * routed record page carries the rule's sentence — the biggest drawing
-       * of the same record, the one you travelled to, was the only place the
+       * of the same record, the one you traveled to, was the only place the
        * problem existed purely as a shade. That is W-014's shape, one view
        * along: emphasis painted and not said.
        */
@@ -315,7 +315,7 @@ export function registerDefaultViews<S extends AnySchema>(
           label={broken ? `${labelOf(definition, node)} ${flag}` : labelOf(definition, node)}
           hue={hue}
           selected={props.selected}
-          title={broken ? `${humaniseField(nounOf(definition, String(kind)))} — implicated in a problem` : humaniseField(nounOf(definition, String(kind)))}
+          title={broken ? `${humanizeField(nounOf(definition, String(kind)))} — implicated in a problem` : humanizeField(nounOf(definition, String(kind)))}
         />
       );
     };
@@ -495,7 +495,7 @@ export function registerDefaultViews<S extends AnySchema>(
              * A DISTRICT'S NAME IS READ, not glanced at. Thirteen pixels
              * before the kinds plane's own recession put it on the screen at
              * ten, and the kind above it at under eight — small enough that
-             * the bottom of the picture was a row of grey marks rather than
+             * the bottom of the picture was a row of gray marks rather than
              * a map of the domain.
              */
             fontSize: nested ? "0.75rem" : "0.9375rem",
@@ -627,11 +627,11 @@ export function registerDefaultViews<S extends AnySchema>(
               : tied > 0
                 ? "1px solid var(--graview-accent-dim)"
                 : `1px solid hsl(${Math.round(hue)} 55% var(--graview-tint-lightness) / 0.34)`,
-            // The kind you are looking at is brighter and lit, not labelled:
+            // The kind you are looking at is brighter and lit, not labeled:
             // a ninety-pixel card has no room for a word that says so.
             /*
              * An OPAQUE face under the tint. A card that was only a wash of
-             * colour let every connector show through it — a road running
+             * color let every connector show through it — a road running
              * through a building rather than behind it — and in daylight the
              * wash alone read as a pastel sticky note.
              */
@@ -843,7 +843,7 @@ export function registerDefaultViews<S extends AnySchema>(
           </div>
           {props.opened ? (
             /*
-             * BUILDINGS. An opened neighbourhood lays its members out inside
+             * BUILDINGS. An opened neighborhood lays its members out inside
              * its plot as a small grid on the lattice — `side` to a row, the
              * plot's own width in cells — rather than a column of chips. Each
              * is still a Chip with a pick id, so measuring, ties and the

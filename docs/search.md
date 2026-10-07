@@ -14,7 +14,7 @@ app. It is the answer to four questions a person asks a picture of a domain:
    month"), a page.
 3. **What can I do about X?** — an act by its title ("finish"), a rule by
    its name.
-4. **Show me everything about X** — the neighbourhood: what X is tied to.
+4. **Show me everything about X** — the neighborhood: what X is tied to.
 
 The framework already answers pieces of each in different places with
 different code: the list page's `?q=`, the inspector's searcher over acts,
@@ -28,7 +28,7 @@ graph itself is the result list.
 - **The graph is the result list.** Typing lights what matches and dims what
   does not, in whichever picture you are looking at; a strip under the box
   names the hits for the keyboard and the screen reader. There is no modal
-  palette floating over a greyed-out app.
+  palette floating over a grayed-out app.
 - **A search is a stop.** `#q=van` in the scene, `?q=van` on a page. It goes
   in the URL, Back returns to it, a link carries it, a harness can
   photograph it twice.
@@ -158,7 +158,7 @@ derived already (`beginning(app)`, `DerivedForm`, the policy).
 
 ## What is deliberately not here
 
-- A palette that greys the app out. The picture is the result list.
+- A palette that grays the app out. The picture is the result list.
 - A search index service or a worker. Tens of thousands of nodes scan in a
   keystroke; a lowercase index per node is rebuilt on store change if a
   product ever needs it.

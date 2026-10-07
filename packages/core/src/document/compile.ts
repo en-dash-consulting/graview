@@ -548,8 +548,8 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
   if (document.brand) {
     const { accent, name: wordmark, ...money } = document.brand;
     const derived = accent ? brandFromAccent({ accent, base: SCHEMES as never }) : undefined;
-    // A colour that cannot be read is not a reason to refuse an app: it wears the default colours and says why.
-    if (derived && !derived.ok) findings.push(warning("brand", "brand.accent", `that accent cannot make a readable brand, so the app keeps Graview's colours: ${derived.why}`, "pick a colour further from orange-red, or a darker one"));
+    // A color that cannot be read is not a reason to refuse an app: it wears the default colors and says why.
+    if (derived && !derived.ok) findings.push(warning("brand", "brand.accent", `that accent cannot make a readable brand, so the app keeps Graview's colors: ${derived.why}`, "pick a color further from orange-red, or a darker one"));
     // The app's money stands with or without an accent (FR-100).
     if (!derived || derived.ok || money.currency || money.locale) brand = { name: wordmark ?? document.name, schemes: derived?.ok ? derived.schemes : (SCHEMES as Brand["schemes"]), ...money };
   }

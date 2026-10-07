@@ -24,7 +24,7 @@ standing up.
 
 **One thing does not work yet, and it is the important one:**
 `updateElementGeometry` is accepted and has no effect on hit-testing. See
-[Geometry sync](#geometry-sync-accepted-but-not-honoured).
+[Geometry sync](#geometry-sync-accepted-but-not-honored).
 
 ---
 
@@ -62,7 +62,7 @@ All of it is behind one module — `packages/render/src/platform/html-in-canvas.
 
 ---
 
-## Geometry sync: accepted, but not honoured
+## Geometry sync: accepted, but not honored
 
 `updateElementGeometry(el, { canvasTransform })` is accepted for both affine and
 perspective matrices and **does not move the hit region**. Measured with real
@@ -131,7 +131,7 @@ it is what makes the scene correct the day it starts working. Set
 
 `canvasTransform` **accepts a perspective matrix without error**. It also
 accepts an affine one. Because geometry sync has no observable effect on
-hit-testing in this build, "accepted" cannot be upgraded to "honoured": there is
+hit-testing in this build, "accepted" cannot be upgraded to "honored": there is
 nothing to observe.
 
 **The answer @graview/layout should act on: stay affine.**
@@ -188,12 +188,12 @@ whether anything actually appeared — "no error thrown" is not "content drawn".
 
 | Case | Result |
 |---|---|
-| plain div | captured with content (96 colours, 100% opaque) |
-| styled text, transparent background | captured with content (116 colours, 9% opaque) — antialiased glyphs |
-| **inline SVG** | **captured with content (14 colours, 46% opaque)** |
-| `<img>` from a data URI | captured; a single flat colour, which is what that image is |
+| plain div | captured with content (96 colors, 100% opaque) |
+| styled text, transparent background | captured with content (116 colors, 9% opaque) — antialiased glyphs |
+| **inline SVG** | **captured with content (14 colors, 46% opaque)** |
+| `<img>` from a data URI | captured; a single flat color, which is what that image is |
 | **nested `<canvas>`** | **captured but fully transparent — nothing drawn, and no error** |
-| **cross-origin `<iframe>`** | **2 colours, 6% opaque — the frame's chrome only, content excluded** |
+| **cross-origin `<iframe>`** | **2 colors, 6% opaque — the frame's chrome only, content excluded** |
 
 **Inline SVG is capturable.** The feared constraint — "iconography must be font
 or raster" — does not apply. Icons, connectors and rules can be SVG.
@@ -225,11 +225,11 @@ remains the right shape regardless.
 | Question | Answer | Consequence |
 |---|---|---|
 | Does capture + composite work? | **Yes** | The spatial premise stands. |
-| Perspective or affine? | Accepts both; honours neither observably | **Layout stays affine.** No cost — the plane model already assumed it. |
+| Perspective or affine? | Accepts both; honors neither observably | **Layout stays affine.** No cost — the plane model already assumed it. |
 | Do clicks follow the drawn pixels? | **Not from the platform** | `PointerRouter` supplies it, verified at three depths. Revisit each Chromium release. |
 | Is the capture path safe to point at? | **Only outside hit-testing** | A hover into a captured subtree kills the renderer. Hosts carry `pointer-events: none`; `scripts/verify-capture.mjs` holds it. |
 | Does accessibility follow? | **Yes, for focus** | Real DOM, real focus order. Screen-reader pass still outstanding. |
-| What is the capture ceiling? | ~128 live/frame, cliff then crash | Fidelity split is load-bearing, not an optimisation. |
+| What is the capture ceiling? | ~128 live/frame, cliff then crash | Fidelity split is load-bearing, not an optimization. |
 | Can SVG be captured? | **Yes** | No constraint on iconography. |
 | Nested canvas? | Silent blank | Detect at registration; jack in instead. |
 | Cross-origin? | Silent exclusion | Placeholder required. |

@@ -24,7 +24,7 @@ describe("an argument says what sort of answer it wants", () => {
     expect(argShape(input, "label")).toEqual({ type: "text" });
   });
 
-  it("recognises a date by its pattern, so the UI can offer a picker", () => {
+  it("recognizes a date by its pattern, so the UI can offer a picker", () => {
     expect(argShape(input, "date")).toEqual({ type: "date" });
   });
 

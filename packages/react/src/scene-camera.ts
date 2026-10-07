@@ -38,8 +38,8 @@ export function useCameraFlights({
 }): { readonly gliding: () => boolean } {
   /*
    * THE DESCENT LANDS IN THE VILLAGE. Double-clicking a district from
-   * altitude used to fly it to the stage's centre while the rest
-   * reorganised around it — the picture rearranging rather than you coming
+   * altitude used to fly it to the stage's center while the rest
+   * reorganized around it — the picture rearranging rather than you coming
    * down. The plot is the pivot now: the stack's focus is landed where the
    * village stood, so it grows in place, and the camera then glides to
    * rest so the world slides to meet it. Every way down — the Down
@@ -59,7 +59,7 @@ export function useCameraFlights({
     const screen = result.nodes.find((node) => node.id === screenId);
     if (!screen) return;
     /*
-     * FLOWN CLOSER, the camera centres on the whole drive-in — the
+     * FLOWN CLOSER, the camera centers on the whole drive-in — the
      * billboard and the village under it — rather than only keeping the
      * picture inside the edge; a person chose that plot, and it is what
      * they are looking at.
@@ -76,7 +76,7 @@ export function useCameraFlights({
     const inside = want.x >= 0 && want.y >= 0 && want.x + want.width <= result.width && want.y + want.height <= result.height;
     if (inside && !village) return;
     /*
-     * THE SMALLEST MOVE THAT BRINGS THE SCREEN IN. Centring it dragged the
+     * THE SMALLEST MOVE THAT BRINGS THE SCREEN IN. Centering it dragged the
      * rest of the city off the far side — six districts fit the window and
      * four of them left it — so the camera goes only as far as it must for
      * the screen to clear the edge, and the rest stays where it was.
@@ -89,12 +89,12 @@ export function useCameraFlights({
     const limit = cameraLimit(result);
     const pan = view.pan ?? { x: 0, y: 0 };
     const wantedX = village ? panned.x + (result.width / 2 - (want.x + want.width / 2)) : panned.x + shift(want.x, want.width, result.width);
-    // Centred on the drive-in — but the PICTURE is what was chosen, so when the
+    // Centered on the drive-in — but the PICTURE is what was chosen, so when the
     // drive-in is taller than the window the picture's top stays in and the
     // village hangs below rather than the picture losing its head.
-    const centredY = result.height / 2 - (want.y + want.height / 2);
+    const centeredY = result.height / 2 - (want.y + want.height / 2);
     const wantedY = village
-      ? panned.y + (screen.y + centredY < EDGE ? EDGE - screen.y : centredY)
+      ? panned.y + (screen.y + centeredY < EDGE ? EDGE - screen.y : centeredY)
       : panned.y + shift(want.y, want.height, result.height);
     // Flown closer, the billboard stands above the city's extent, which the
     // limit does not know about: the camera goes where the drive-in is.
@@ -105,12 +105,12 @@ export function useCameraFlights({
     // Only when the focus lands, or the camera flies closer: a person's own pan afterwards is theirs.
   }, [screenId, view.overview, closer]);
   if (frame.city) {
-    // Remembered every altitude frame: where each plot's centre is on the canvas right now.
+    // Remembered every altitude frame: where each plot's center is on the canvas right now.
     const remembered = new Map<string, { x: number; y: number }>();
     for (const node of frame.nodes) {
       if (!node.plot || Math.round(node.plane) !== 2) continue;
-      const centre = toIso(node.plot.col + node.plot.side / 2, node.plot.row + node.plot.side / 2, frame.city.cell);
-      remembered.set(node.id, { x: frame.city.originX + panned.x + centre.x, y: frame.city.originY + panned.y + centre.y });
+      const center = toIso(node.plot.col + node.plot.side / 2, node.plot.row + node.plot.side / 2, frame.city.cell);
+      remembered.set(node.id, { x: frame.city.originX + panned.x + center.x, y: frame.city.originY + panned.y + center.y });
     }
     stood.current = remembered;
   }

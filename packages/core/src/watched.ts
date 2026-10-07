@@ -14,7 +14,7 @@
  */
 import type { Policy, Refusal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
-import { humaniseField, labelOf } from "./schema/define-node.js";
+import { humanizeField, labelOf } from "./schema/define-node.js";
 import type { Principal } from "./permissions/types.js";
 
 interface Watch {
@@ -46,11 +46,11 @@ export function tellTheWatchItsNames(
   for (const definition of schema.definitions) {
     ids.push(definition.kind);
     // A kind with a noun of its own is never shown by its id: "vehicle" where the declaration says "car".
-    if (definition.noun && humaniseField(definition.kind).toLowerCase() !== definition.noun.toLowerCase()) unsaid.push(definition.kind);
+    if (definition.noun && humanizeField(definition.kind).toLowerCase() !== definition.noun.toLowerCase()) unsaid.push(definition.kind);
     const fieldsOf = (definition.fields as { shape?: Record<string, { def?: { entries?: Record<string, unknown> } }> }).shape ?? {};
     for (const [key, field] of Object.entries(fieldsOf)) {
       const declared = definition.display?.labels?.[key];
-      if (declared !== undefined && humaniseField(key) !== declared) unsaid.push(humaniseField(key));
+      if (declared !== undefined && humanizeField(key) !== declared) unsaid.push(humanizeField(key));
       const entries = field?.def?.entries;
       const format = definition.display?.format?.[key];
       for (const value of entries && typeof entries === "object" ? Object.values(entries) : []) {
@@ -74,7 +74,7 @@ export function tellTheWatchItsNames(
     for (const [name, edge] of Object.entries(definition.edges ?? {})) {
       ids.push(name);
       // An edge's name spoken ("Drives", "On show at") where it has words of its own ("the test drives booked in it").
-      if (edge.description || edge.inverse) unsaid.push(humaniseField(name));
+      if (edge.description || edge.inverse) unsaid.push(humanizeField(name));
       words.push(edge.description ?? "", edge.inverse ?? "");
     }
   }
@@ -89,15 +89,15 @@ export function tellTheWatchItsNames(
   for (const definition of schema.definitions) {
     // A kind's own words: what a picker asks for ("Owner") is a noun, not an edge's name.
     declared.add(definition.plural ?? "");
-    declared.add(humaniseField(definition.noun ?? definition.kind));
+    declared.add(humanizeField(definition.noun ?? definition.kind));
     for (const label of Object.values(definition.display?.labels ?? {})) declared.add(label);
     const fieldsOf = (definition.fields as { shape?: Record<string, { def?: { entries?: Record<string, unknown> } }> }).shape ?? {};
     for (const [key, field] of Object.entries(fieldsOf)) {
       const format = definition.display?.format?.[key];
       const entries = field?.def?.entries;
-      if (!format && !definition.display?.labels?.[key]) declared.add(humaniseField(key));
+      if (!format && !definition.display?.labels?.[key]) declared.add(humanizeField(key));
       // A value is said by its format, or spoken plainly where there is none ("Given", a talk's state).
-      if (entries && typeof entries === "object") for (const value of Object.values(entries)) declared.add(format ? format(value) : humaniseField(String(value)));
+      if (entries && typeof entries === "object") for (const value of Object.values(entries)) declared.add(format ? format(value) : humanizeField(String(value)));
     }
   }
   watch.learn({ ids, words: words.filter(Boolean), unsaid: [...new Set(unsaid)].filter((word) => !declared.has(word)) });

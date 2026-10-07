@@ -9,7 +9,7 @@ import { isAffine, planeTransform, perspectiveProbeMatrix, IDENTITY } from "../.
 import { mixStyles, PLANE_STYLES, styleFor, transformFor } from "../../src/scene/plane.js";
 
 /**
- * The routing maths, tested headlessly. The browser half is verified by
+ * The routing math, tested headlessly. The browser half is verified by
  * `apps/spike/scripts/run-spike.mjs`, which clicks three real panels at three
  * plane depths in Chrome Canary; this covers the arithmetic that has to be
  * right for that to work.

@@ -6,11 +6,11 @@ const ACCENT = "#7a3db8";
 const derived = brandFromAccent({ accent: ACCENT, base: { dark: DARK, light: LIGHT } });
 
 if (!derived.ok) {
-  throw new Error(`The programme cannot be derived from ${ACCENT} alone. Needs: ${derived.missing.join(", ")} — ${derived.why}`);
+  throw new Error(`The program cannot be derived from ${ACCENT} alone. Needs: ${derived.missing.join(", ")} — ${derived.why}`);
 }
 
 export const gauntletBrand: Brand = {
-  name: "Programme",
+  name: "Program",
   logo:
     '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" ' +
     'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +

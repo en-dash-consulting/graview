@@ -235,7 +235,7 @@ export function storeHookInPage() {
   };
 }
 
-/** Reads one fact from the app's store, in the page. `fn(store, arg)` is serialised. */
+/** Reads one fact from the app's store, in the page. `fn(store, arg)` is serialized. */
 export async function inStore(page, kinds, fn, arg) {
   return page.evaluate(
     ({ kinds, source, arg }) => {

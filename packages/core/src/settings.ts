@@ -26,7 +26,7 @@ export function textSize(): SettingDeclaration {
     name: "text-size",
     title: "Text size",
     description: "Applies everywhere: the picture, the panes and the pages.",
-    honoured: "root-font-size",
+    honored: "root-font-size",
     /*
      * THE STARTING OPTION DEFERS RATHER THAN DECIDES.
      *
@@ -57,7 +57,7 @@ export function textSize(): SettingDeclaration {
 /**
  * Whether things move.
  *
- * The stylesheet already honours `prefers-reduced-motion` from the system.
+ * The stylesheet already honors `prefers-reduced-motion` from the system.
  * This is the override for the person whose system says one thing and who
  * wants another here — so "As your system has it" is the starting value and
  * stamps no attribute at all, leaving the media query to answer.
@@ -66,7 +66,7 @@ export function motion(): SettingDeclaration {
   return {
     name: "motion",
     title: "Motion",
-    honoured: "root-attribute",
+    honored: "root-attribute",
     initial: "system",
     options: [
       { value: "system", label: "As your system has it" },

@@ -118,7 +118,7 @@ export function diffDocuments(before: GraviewDocument, after: GraviewDocument): 
       }
     }
     for (const edge of keys(now.edges)) if (!was.edges?.[edge] && !(now.edges?.[edge] as { renamedFrom?: string } | undefined)?.renamedFrom) sentences.push(`${kind} gains a relation, "${edge}".`);
-    if (!same(was.label, now.label) || !same(was.describe, now.describe)) sentences.push(`How ${withArticle(kind)} is labelled changes.`);
+    if (!same(was.label, now.label) || !same(was.describe, now.describe)) sentences.push(`How ${withArticle(kind)} is labeled changes.`);
     // A glance follows its fields: a rename or a removal is already said, so only a different choice is.
     const movedTo = new Map(Object.entries(now.fields).flatMap(([field, f]) => ((f as { renamedFrom?: string }).renamedFrom ? [[(f as { renamedFrom: string }).renamedFrom, field] as const] : [])));
     const wasGlance = (was.glance ?? []).map((field) => movedTo.get(field) ?? field).filter((field) => now.fields[field] || now.computed?.[field] !== undefined);
@@ -133,8 +133,8 @@ export function diffDocuments(before: GraviewDocument, after: GraviewDocument): 
     for (const n of keys(b)) if (n in a && !same((a as Record<string, unknown>)[n], (b as Record<string, unknown>)[n])) sentences.push(`The ${noun} "${(b as Record<string, { title?: string }>)[n]!.title ?? n}" changes.`);
   }
   if (!same(before.policy, after.policy) || !same(before.roles, after.roles)) sentences.push("Who may do what changes.");
-  if (!same(before.brand?.accent, after.brand?.accent) || !same(before.brand?.name, after.brand?.name)) sentences.push("The app's colours change.");
-  // The app's money (FR-100), said apart from its colours.
+  if (!same(before.brand?.accent, after.brand?.accent) || !same(before.brand?.name, after.brand?.name)) sentences.push("The app's colors change.");
+  // The app's money (FR-100), said apart from its colors.
   if (!same(before.brand?.currency, after.brand?.currency) || !same(before.brand?.locale, after.brand?.locale)) {
     const currency = after.brand?.currency;
     sentences.push(currency ? `Money is said in ${currency}${after.brand?.locale ? `, written for ${after.brand.locale}` : ""}.` : "Money is said with no currency.");

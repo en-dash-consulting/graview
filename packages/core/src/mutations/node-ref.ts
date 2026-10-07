@@ -208,7 +208,7 @@ export function describeArg(schema: unknown): ArgShape {
   }
 
   if (type === "string") {
-    // A date is a string with a date-shaped pattern. Recognising it means
+    // A date is a string with a date-shaped pattern. Recognizing it means
     // the interface offers a date picker instead of a free text box, which
     // is the difference between an action anyone can run and one only its
     // author knows the format for.

@@ -9,7 +9,7 @@ import { GRAVIEW_BRAND } from "./theme.js";
  * The name and the logo come from the declared brand, alongside the palette
  * and the typography, because they are one decision — a brand handing over a
  * hex code has not given you a theme, and one handing over a logo without a
- * colour has not either. An app that declares nothing gets the framework's
+ * color has not either. An app that declares nothing gets the framework's
  * own, which is an ordinary declared brand like any other.
  *
  * The logo is inline SVG using `currentColor` by convention, so one file

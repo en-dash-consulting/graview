@@ -1,6 +1,6 @@
 import { KindFigure } from "@graview/primitives/pages";
 import {
-  humaniseField,
+  humanizeField,
   readableFields,
   type AnyNodeDefinition,
   type AnySchema,
@@ -119,7 +119,7 @@ export const button: React.CSSProperties = {
   cursor: "pointer",
 };
 
-/** The kind's own colour, as a small mark — the thread the scene wears too. */
+/** The kind's own color, as a small mark — the thread the scene wears too. */
 /**
  * The mark beside a kind's name — its FIGURE where it has one, and the dot
  * it has always had where it does not.
@@ -155,9 +155,9 @@ export function listed<S extends AnySchema>(
   const kinds = [...new Set(group.targets.map((target) => target.kind))];
   const said = kinds.map((kind) => {
     const definition = store.schema.tryDefinition(kind);
-    return definition?.plural ?? humaniseField(kind);
+    return definition?.plural ?? humanizeField(kind);
   });
-  return said.length > 0 ? said.join(" and ") : humaniseField(group.edgeKind);
+  return said.length > 0 ? said.join(" and ") : humanizeField(group.edgeKind);
 }
 
 /** Words for who did something, from the op's own author. */
@@ -218,4 +218,4 @@ export const homeKinds = <S extends AnySchema>(context: Arranged<S>): readonly s
   return arrangedKinds(context).filter((kind) => !hidden.has(kind));
 };
 
-export const capitalise = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
+export const capitalize = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);

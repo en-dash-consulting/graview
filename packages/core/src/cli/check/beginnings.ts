@@ -28,14 +28,14 @@ export function checkBlankInstallation<S extends AnySchema>(ctx: CheckContext<S>
    * to open it is the first to find out.
    *
    * Notes rather than warnings, because every answer here is a legitimate
-   * design: a kind a migration seeds, a catalogue that arrives whole, a
+   * design: a kind a migration seeds, a catalog that arrives whole, a
    * product whose data comes from a sync. The author should have to look at
    * it once, not argue with it forever.
    */
   const chain = beginning(app);
   /*
    * Only an app that says it MAKES things is asked how. An app whose every
-   * act edits what is already there — a catalogue, a graph that arrives by
+   * act edits what is already there — a catalog, a graph that arrives by
    * seed or sync — never claimed a way in, and telling it there is none is
    * a note with no question in it.
    */
