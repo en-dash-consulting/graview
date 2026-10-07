@@ -65,6 +65,9 @@ Everything a Graview app declares, and the checker that verifies it.
 - **A place's address** — `addressOf(place, { basePath })` spells a place
   from `placesOf` as the routed face links to it under a host's base path,
   `pathWithin` reads an address back, and `basePathOf` normalises a base.
+  A `search` hit says its own: a record, a kind's list or a place carries
+  `address`, spelled the same way under the `basePath` it is given, and a
+  seat finds only the records its sight lets it open.
 - **Conformance** — `@graview/core/conformance`: fixtures a host runs against
   a version (`conformance()`) to prove it reads, compiles and derives the same.
 - **A status board's moves** — `@graview/core/describe`: `columnReach` says
