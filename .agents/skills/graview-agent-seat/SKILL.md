@@ -116,6 +116,15 @@ it("produces the same diff whether a human or an agent acts", async () => {
 mutation it was not given a tool for and check it is refused by the STORE
 rather than merely absent from the schema.
 
+**Branch on the reason, never the words.** A refused call says `reason`
+beside its sentence (MCP's `structuredContent` too): `forbidden`, `missing`,
+`invalid` for the call as sent, `refused` when the act's own rule said no. A
+TypeScript mutation says its rule's no with `throw new ActRefusal(sentence)`;
+a bare `Error` is `invalid`, since nothing can tell it from a slip. Every act
+refuses an argument it does not take, naming those it does (a creating act
+takes `id` too), and its tool says `additionalProperties: false`; write
+`z.looseObject` only for an act that means to keep the rest.
+
 ## What the check cannot see
 
 - Whether the agent's turn is legible while it is happening. Open the app and

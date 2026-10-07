@@ -1,4 +1,4 @@
-import { bindSchema, createSchema, defineApp, defineNode, nodeRef, REFUSAL_REASONS, Store, type Principal } from "@graview/core";
+import { ActRefusal, bindSchema, createSchema, defineApp, defineNode, nodeRef, REFUSAL_REASONS, Store, type Principal } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createStoreHandler, LIVE_PATH, openRemote, REFUSAL_REASONS as SHIPPED_REASONS, RemoteRefusedError, type LiveServerMessage, type LiveSocketLike, type RemoteRefusal, type StoreHandler } from "../../src/index.js";
@@ -42,15 +42,27 @@ const drop = defineMutation("drop", {
     ctx.removeNode(args.id);
   },
 });
+/** An act whose own rule says no (FR-119): a task that is not done cannot be reopened. */
+const reopen = defineMutation("reopen", {
+  title: "Reopen",
+  subject: { kinds: ["task"], arg: "id" },
+  writes: ["done"],
+  input: z.object({ id: nodeRef(["task"]) }),
+  apply(ctx, args) {
+    const node = ctx.graph.getNode(args.id) as { label: string; done: boolean } | undefined;
+    if (node && !node.done) throw new ActRefusal(`${node.label} is not done`);
+    ctx.patchNode(args.id, { done: false });
+  },
+});
 const app = defineApp({
   name: "reasons",
   schema,
-  mutations: [finish, rename, drop],
+  mutations: [finish, rename, drop, reopen],
   policy: {
     roles: ["keeper", "admin"],
     grants: [
       { roles: ["keeper"], mutations: ["finish"] },
-      { roles: ["admin"], mutations: ["finish", "rename", "drop"] },
+      { roles: ["admin"], mutations: ["finish", "rename", "drop", "reopen"] },
     ],
   },
   version: 1,
@@ -157,6 +169,20 @@ describe("a refusal says why on the wire", () => {
     say({ t: "hello", seq: -1 });
     say({ t: "call", cid: "c1", calls: [{ name: "rename", args: { id: "t1", label: 4 } }] });
     expect(await refusalsOn(heard, "c1")).toMatchObject({ t: "refused", reason: "invalid" });
+  });
+
+  it("refused, on the socket, on POST and to openRemote: the act's own rule said no to a call that was well formed (FR-119)", async () => {
+    const { heard, say } = await socketOn(await hosted(admin));
+    say({ t: "hello", seq: -1 });
+    say({ t: "call", cid: "c1", calls: [{ name: "reopen", args: { id: "t1" } }] });
+    expect(await refusalsOn(heard, "c1")).toMatchObject({ t: "refused", reason: "refused", sentence: "Book the hall is not done" });
+    const response = await (await hosted(admin)).handle(new Request("https://store.example/graview/ops", { method: "POST", body: JSON.stringify({ calls: [{ name: "reopen", args: { id: "t1" } }] }) }));
+    expect([response.status, await response.json()]).toMatchObject([409, { refused: true, reason: "refused" }]);
+    const handler = await hosted(admin);
+    const remote = await openRemote({ app, url: "https://store.example", principal: admin, live: false, pollMs: 0, ...wired(handler) });
+    const sent = await remote.send([{ name: "reopen", args: { id: "t1" } }]).catch((error: unknown) => error);
+    expect((sent as RemoteRefusedError).refusal).toEqual({ reason: "refused", sentence: "Book the hall is not done" });
+    remote.close();
   });
 
   it("limit, on the socket: the host's hard cap, which no wait would get past", async () => {

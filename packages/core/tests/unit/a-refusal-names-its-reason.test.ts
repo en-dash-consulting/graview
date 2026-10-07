@@ -77,8 +77,8 @@ const thrown = (act: () => unknown): unknown => {
 };
 
 describe("a refusal names its reason", () => {
-  it("is one of a closed set of five codes", () => {
-    expect([...REFUSAL_REASONS]).toEqual(["forbidden", "missing", "invalid", "limit", "unavailable"]);
+  it("is one of a closed set of six codes", () => {
+    expect([...REFUSAL_REASONS]).toEqual(["forbidden", "missing", "invalid", "limit", "unavailable", "refused"]);
   });
 
   it("forbidden: the policy refused the seat, and names the roles that could", () => {
