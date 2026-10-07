@@ -47,7 +47,11 @@ async function mounted(options: Partial<EmbedOptions<S>>, run: (host: HTMLElemen
   await act(async () => {
     handle = mount<S>(host, { app, seed, fonts: false, ...options } as EmbedOptions<S>);
   });
-  await act(async () => new Promise((resolve) => setTimeout(resolve, 20)));
+  // A face is fetched as it is drawn (FR-57) and its box is aria-busy until it has: wait for that,
+  // not for a moment that is enough only on a quiet machine.
+  for (const end = Date.now() + 2000; (!host.firstElementChild || host.querySelector('[aria-busy="true"]')) && Date.now() < end; ) {
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 10)));
+  }
   try {
     run(host, handle!);
   } finally {
@@ -114,7 +118,10 @@ describe("views reach every face", () => {
     await act(async () => {
       handle = mountPages<S>(host, { app, seed, fonts: false, views: hostViews });
     });
-    await act(async () => new Promise((resolve) => setTimeout(resolve, 20)));
+    // The pages-only embed draws in its first commit; wait for the host's card rather than for a moment.
+    for (const end = Date.now() + 2000; !host.querySelector('[data-testid="host-card"]') && Date.now() < end; ) {
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 10)));
+    }
     try {
       expect(host.querySelector('[data-testid="kind-sheet"] [data-testid="host-card"]')?.textContent).toBe("Bloom & Co");
     } finally {
