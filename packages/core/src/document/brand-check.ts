@@ -38,8 +38,8 @@ export function brandFindings(brand: Partial<BrandSpec> | undefined, options: Br
   if (brand.accent) {
     const refused = accentProblem(brand.accent);
     if (refused) {
-      const drawn = documentSchemes(brand.accent).ok ? "The app draws a shade it moved to read, not the colour given." : "The app keeps Graview's colours.";
-      out.push(warning("brand-accent", `${at}.accent`, `${refused.sentence} ${drawn}`, refused.suggestion ? `say { "accent": "${refused.suggestion}" }` : "pick another colour"));
+      const drawn = documentSchemes(brand.accent).ok ? "The app draws a shade it moved to read, not the color given." : "The app keeps Graview's colors.";
+      out.push(warning("brand-accent", `${at}.accent`, `${refused.sentence} ${drawn}`, refused.suggestion ? `say { "accent": "${refused.suggestion}" }` : "pick another color"));
     }
   }
   return out;

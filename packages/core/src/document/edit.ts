@@ -503,13 +503,13 @@ class Editor {
     if (judged.length > 0) return void this.findings.push(...judged);
     if (e.accent === null) {
       delete brand["accent"];
-      this.said.push("The app goes back to Graview's colours.");
+      this.said.push("The app goes back to Graview's colors.");
     } else if (e.accent !== undefined) {
-      if (!/^#[0-9a-fA-F]{6}$/.test(e.accent)) return this.fail(i, "accent", 'an accent is a colour like "#c2577a"');
+      if (!/^#[0-9a-fA-F]{6}$/.test(e.accent)) return this.fail(i, "accent", 'an accent is a color like "#c2577a"');
       const refused = accentProblem(e.accent);
-      if (refused) return this.fail(i, "accent", refused.sentence, refused.suggestion ? `{"op": "set-brand", "accent": "${refused.suggestion}"}` : "pick a colour of another hue");
+      if (refused) return this.fail(i, "accent", refused.sentence, refused.suggestion ? `{"op": "set-brand", "accent": "${refused.suggestion}"}` : "pick a color of another hue");
       brand["accent"] = e.accent;
-      this.said.push(`The app's accent colour becomes ${e.accent}.`);
+      this.said.push(`The app's accent color becomes ${e.accent}.`);
     }
     if (e.currency === null) {
       delete brand["currency"];

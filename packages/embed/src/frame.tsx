@@ -511,7 +511,8 @@ export function Strip({
       }}
     >
       <span style={{ fontFamily: "var(--graview-font-display)", letterSpacing: "0.12em", textTransform: "uppercase", fontSize: "0.75rem", marginRight: 6 }}>
-        <AppTitle brand={brand} name={brand?.name ?? "Graview"} subtitle={!compact} size={16} />
+        {/* The app's mark and the line under its name at a desk's width; at a phone's, the name alone, so the strip keeps to its rows (FR-117). */}
+        <AppTitle brand={compact && brand ? { ...brand, logo: undefined } : brand} name={brand?.name ?? "Graview"} subtitle={!compact} size={16} />
       </span>
       {faces}
       {scene?.(compact)}

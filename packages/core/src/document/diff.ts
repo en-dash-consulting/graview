@@ -134,7 +134,7 @@ export function diffDocuments(before: GraviewDocument, after: GraviewDocument): 
     for (const n of keys(b)) if (n in a && !same((a as Record<string, unknown>)[n], (b as Record<string, unknown>)[n])) sentences.push(`The ${noun} "${(b as Record<string, { title?: string }>)[n]!.title ?? n}" changes.`);
   }
   if (!same(before.policy, after.policy) || !same(before.roles, after.roles)) sentences.push("Who may do what changes.");
-  if (!same(before.brand?.accent, after.brand?.accent)) sentences.push("The app's colours change.");
+  if (!same(before.brand?.accent, after.brand?.accent)) sentences.push("The app's colors change.");
   sentences.push(...brandSentences(before.brand ?? {}, after.brand ?? {}));
   // The app's money (FR-100), said apart from its colours.
   if (!same(before.brand?.currency, after.brand?.currency) || !same(before.brand?.locale, after.brand?.locale)) {

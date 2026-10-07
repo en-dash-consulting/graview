@@ -40,7 +40,7 @@ describe("set-brand refuses an accent that does not read, naming the pair, the r
     expect(outcome.ok ? "" : outcome.findings[0]!.fix).toBe(`{"op": "set-brand", "accent": "${suggestion}"}`);
   });
 
-  it("takes the suggestion, and the app compiles wearing it with nothing said about its colours", () => {
+  it("takes the suggestion, and the app compiles wearing it with nothing said about its colors", () => {
     const taken = editDocument(vendors, [{ op: "set-brand", accent: suggestion }]);
     expect(taken.ok).toBe(true);
     if (!taken.ok) return;
@@ -65,12 +65,12 @@ describe("check says the same of a document that holds such an accent", () => {
     expect(compiled.ok).toBe(true);
     const said = compiled.findings.filter((f) => f.code === "brand-accent");
     expect(said.map((f) => f.severity)).toEqual(["warning"]);
-    expect(said[0]!.message).toMatch(/^#c2577a text on #f6f4f0 is 3\.8:1; 4\.5:1 is needed — #[0-9a-f]{6} would pass\. The app draws a shade it moved to read, not the colour given\.$/);
+    expect(said[0]!.message).toMatch(/^#c2577a text on #f6f4f0 is 3\.8:1; 4\.5:1 is needed — #[0-9a-f]{6} would pass\. The app draws a shade it moved to read, not the color given\.$/);
   });
 });
 
-describe("check says a TypeScript palette's failing pair as colours, with a shade that would pass", () => {
-  it("names the ink and the ground as colours, the ratio, and the fix", () => {
+describe("check says a TypeScript palette's failing pair as colors, with a shade that would pass", () => {
+  it("names the ink and the ground as colors, the ratio, and the fix", () => {
     const schema = createSchema([defineNode("thing", { fields: z.object({ name: z.string() }) })]);
     const app = defineApp({ name: "pale", schema, brand: { name: "Pale", schemes: { ...SCHEMES, light: { ...LIGHT, inkMuted: "#b0b0b0" } } } });
     const found = checkApp(app).findings.filter((f) => f.code === "theme-contrast-below-aa" && f.where === "brand.schemes.light: inkMuted on panel");

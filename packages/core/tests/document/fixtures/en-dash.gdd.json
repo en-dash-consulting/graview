@@ -21,7 +21,7 @@
       "plural": "people",
       "fields": {
         "name": { "type": "string", "required": true },
-        "organisation": { "type": "string" }
+        "organization": { "type": "string" }
       }
     }
   },

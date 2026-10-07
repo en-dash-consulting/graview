@@ -1140,7 +1140,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 </ul>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code>pnpm build &amp;&amp; npx graview check ./dist/domain/app.js</code></pre></div>
-<p><code>theme-contrast-below-aa</code> names the exact token pair as colours, the scheme, its ratio and where it is drawn — "a field name", "text on a filled accent" — and the shade of that ink that would pass, because "your theme has a contrast problem" is not something anyone can act on. <code>theme-token-unreadable</code> reports a value the checker could not parse rather than passing it silently, which is the failure mode a contrast check exists to prevent.</p>
+<p><code>theme-contrast-below-aa</code> names the exact token pair as colors, the scheme, its ratio and where it is drawn — "a field name", "text on a filled accent" — and the shade of that ink that would pass, because "your theme has a contrast problem" is not something anyone can act on. <code>theme-token-unreadable</code> reports a value the checker could not parse rather than passing it silently, which is the failure mode a contrast check exists to prevent.</p>
 <p><strong>And look at it, in both schemes.</strong> The checker measures contrast and nothing else. Run the app with <code>?theme=light</code> and <code>?theme=dark</code>, and run axe against both — the framework's harnesses do this and report zero violations, which is the bar a branded installation should also clear.</p>
 <h3>What the check cannot see</h3>
 <ul>

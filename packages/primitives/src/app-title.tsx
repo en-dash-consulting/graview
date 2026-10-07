@@ -10,7 +10,7 @@ import { useMarkup } from "./markup.js";
  *
  * The mark is drawn as the brand gives it, never redrawn: an SVG written
  * inline is put in the page as it is (so `currentColor` takes the accent,
- * and nothing else is recoloured), and only when it could not act — an
+ * and nothing else is recolored), and only when it could not act — an
  * SVG with a script, a handler or a load in it is not drawn at all. A path
  * is an `<img>`. Beside the name the mark is said only when its alt text
  * says more than the name does.

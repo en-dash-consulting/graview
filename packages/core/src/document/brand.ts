@@ -18,9 +18,9 @@ import type { GraviewDocument } from "./schema.js";
 export function brandOf(document: GraviewDocument, findings: Finding[]): Brand {
   const spec = document.brand ?? {};
   const derived = spec.accent ? documentSchemes(spec.accent) : undefined;
-  // A colour that cannot be read is not a reason to refuse an app: it wears the default colours and says why.
+  // A color that cannot be read is not a reason to refuse an app: it wears the default colors and says why.
   // The checker says which pair, its ratio and a shade that would pass (brand-check.ts, FR-126); a page says only this.
-  if (derived && !derived.ok) findings.push(warning("brand", "brand.accent", `that accent cannot make a readable brand, so the app keeps Graview's colours: ${derived.why}`, "pick a colour further from orange-red, or a darker one"));
+  if (derived && !derived.ok) findings.push(warning("brand", "brand.accent", `that accent cannot make a readable brand, so the app keeps Graview's colors: ${derived.why}`, "pick a color further from orange-red, or a darker one"));
   const logo = typeof spec.logo === "string" ? { src: spec.logo } : spec.logo;
   const name = spec.name ?? document.name;
   const typography = spec.typography

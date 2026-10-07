@@ -7,8 +7,8 @@ import { SCHEMES } from "./palettes.js";
  *
  * A document's accent is drawn as it is written in the light scheme — as
  * text on the panel and on the ground, and as the fill a button's words
- * sit on — so it has to read there as it is: a colour moved to make it
- * read would be a colour the author did not choose, and a chat that chose
+ * sit on — so it has to read there as it is: a color moved to make it
+ * read would be a color the author did not choose, and a chat that chose
  * it could not tell. The dark scheme takes the shade of the same hue that
  * reads on its own grounds. When it does not read, the refusal names the
  * pair, the ratio and the ratio needed, and a shade that would pass: the
@@ -22,23 +22,23 @@ const AA = 4.5;
 export interface AccentRefusal {
   /** One sentence: the pair, its ratio, what is needed, and a shade that would pass. */
   readonly sentence: string;
-  /** The text and what it was on, as colours. */
+  /** The text and what it was on, as colors. */
   readonly pair: { readonly text: string; readonly on: string };
   readonly ratio: number;
   readonly requires: number;
-  /** The nearest shade of the same hue that passes, as a hex colour, when there is one. */
+  /** The nearest shade of the same hue that passes, as a hex color, when there is one. */
   readonly suggestion?: string;
 }
 
-const hex = (colour: Rgba) => `#${[colour.r, colour.g, colour.b].map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, "0")).join("")}`;
+const hex = (color: Rgba) => `#${[color.r, color.g, color.b].map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, "0")).join("")}`;
 /** A ratio as said: rounded down, so a near miss is never said as a pass. */
 const said = (ratio: number) => `${Math.floor(ratio * 10) / 10}:1`;
 
 /**
  * The schemes a document's accent derives (FR-124): `brandFromAccent` over
- * Graview's own, and — where the only trouble is that the warning colour
+ * Graview's own, and — where the only trouble is that the warning color
  * shares the accent's hue — with the warning drawn in the bad status's red,
- * since a document cannot name a warning colour of its own.
+ * since a document cannot name a warning color of its own.
  */
 export function documentSchemes(accent: string): DerivedBrand | RefusedBrand {
   const derived = brandFromAccent({ accent, base: SCHEMES as never });
@@ -46,24 +46,24 @@ export function documentSchemes(accent: string): DerivedBrand | RefusedBrand {
   return brandFromAccent({ accent, base: SCHEMES as never, warn: { light: SCHEMES.light.bad, dark: SCHEMES.dark.bad } });
 }
 
-/** The first pair this colour fails as given in the light scheme, or null when it reads. */
-function lightFailure(colour: Rgba): Omit<AccentRefusal, "sentence" | "suggestion"> | null {
+/** The first pair this color fails as given in the light scheme, or null when it reads. */
+function lightFailure(color: Rgba): Omit<AccentRefusal, "sentence" | "suggestion"> | null {
   const ground = coloursIn(SCHEMES.light.ground)[0]!;
   const panel = composite(coloursIn(SCHEMES.light.panel)[0]!, ground);
-  const onPanel = contrast(colour, panel);
-  const onGround = contrast(colour, ground);
+  const onPanel = contrast(color, panel);
+  const onGround = contrast(color, ground);
   if (Math.min(onPanel, onGround) < AA) {
     const [ratio, on] = onPanel <= onGround ? [onPanel, panel] : [onGround, ground];
-    return { pair: { text: hex(colour), on: hex(on) }, ratio, requires: AA };
+    return { pair: { text: hex(color), on: hex(on) }, ratio, requires: AA };
   }
-  const white = contrast(WHITE, colour);
-  const black = contrast(BLACK, colour);
-  if (Math.max(white, black) < AA) return { pair: { text: white >= black ? "#ffffff" : "#000000", on: hex(colour) }, ratio: Math.max(white, black), requires: AA };
+  const white = contrast(WHITE, color);
+  const black = contrast(BLACK, color);
+  if (Math.max(white, black) < AA) return { pair: { text: white >= black ? "#ffffff" : "#000000", on: hex(color) }, ratio: Math.max(white, black), requires: AA };
   return null;
 }
 
-function passes(colour: Rgba): boolean {
-  return lightFailure(colour) === null && documentSchemes(hex(colour)).ok;
+function passes(color: Rgba): boolean {
+  return lightFailure(color) === null && documentSchemes(hex(color)).ok;
 }
 
 /**
@@ -72,17 +72,17 @@ function passes(colour: Rgba): boolean {
  * needed — #8a7400 would pass."`
  */
 export function accentProblem(accent: string): AccentRefusal | null {
-  const colour = coloursIn(accent)[0];
-  if (!colour) return { sentence: `"${accent}" is not a colour; an accent is one like "#c2577a".`, pair: { text: accent, on: "" }, ratio: 0, requires: AA };
-  const failure = lightFailure(colour);
+  const color = coloursIn(accent)[0];
+  if (!color) return { sentence: `"${accent}" is not a color; an accent is one like "#c2577a".`, pair: { text: accent, on: "" }, ratio: 0, requires: AA };
+  const failure = lightFailure(color);
   const derived = failure ? undefined : documentSchemes(accent);
   if (!failure && derived?.ok) return null;
-  const suggestion = nearestPassing(colour);
-  const fix = suggestion ? ` — ${suggestion} would pass.` : "; no shade of this hue does, so pick another colour.";
+  const suggestion = nearestPassing(color);
+  const fix = suggestion ? ` — ${suggestion} would pass.` : "; no shade of this hue does, so pick another color.";
   if (failure) {
-    const text = failure.pair.text === hex(colour) ? accent : `${failure.pair.text === "#ffffff" ? "white" : "black"} text`;
-    const on = failure.pair.on === hex(colour) ? accent : failure.pair.on;
-    const pair = failure.pair.text === hex(colour) ? `${text} text on ${on}` : `${text} on ${on}`;
+    const text = failure.pair.text === hex(color) ? accent : `${failure.pair.text === "#ffffff" ? "white" : "black"} text`;
+    const on = failure.pair.on === hex(color) ? accent : failure.pair.on;
+    const pair = failure.pair.text === hex(color) ? `${text} text on ${on}` : `${text} on ${on}`;
     return { ...failure, sentence: `${pair} is ${said(failure.ratio)}; ${failure.requires}:1 is needed${fix}`, ...(suggestion ? { suggestion } : {}) };
   }
   const why = (derived as RefusedBrand).why;
@@ -90,13 +90,13 @@ export function accentProblem(accent: string): AccentRefusal | null {
 }
 
 /** The nearest shade of the same hue and saturation that passes, by lightness alone, as hex; undefined when none does. */
-function nearestPassing(colour: Rgba): string | undefined {
-  const base = rgbToHsl(colour);
+function nearestPassing(color: Rgba): string | undefined {
+  const base = rgbToHsl(color);
   for (let step = 1; step <= 200; step++) {
     for (const l of [base.l - step / 200, base.l + step / 200]) {
       if (l < 0 || l > 1) continue;
       const shade = hsl(base.h, base.s, l);
-      // Said as hex, so judged as hex: the colour a chat sends back is this one, rounded.
+      // Said as hex, so judged as hex: the color a chat sends back is this one, rounded.
       const rounded = coloursIn(hex(shade))[0]!;
       if (passes(rounded)) return hex(rounded);
     }
@@ -110,11 +110,11 @@ function nearestPassing(colour: Rgba): string | undefined {
  * fix a contrast finding says (FR-126). Undefined when none does.
  */
 export function passingShade(ink: string, on: string, requires: number, over?: string): string | undefined {
-  const colour = coloursIn(ink)[0];
+  const color = coloursIn(ink)[0];
   const ground = coloursIn(on)[0];
-  if (!colour || !ground) return undefined;
+  if (!color || !ground) return undefined;
   const solid = composite(ground, (over ? coloursIn(over)[0] : undefined) ?? WHITE);
-  const base = rgbToHsl(colour);
+  const base = rgbToHsl(color);
   for (let step = 0; step <= 200; step++) {
     for (const l of [base.l - step / 200, base.l + step / 200]) {
       if (l < 0 || l > 1) continue;

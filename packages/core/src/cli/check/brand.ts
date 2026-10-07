@@ -92,7 +92,7 @@ export function checkPalette<S extends AnySchema>(ctx: CheckContext<S>): void {
         });
         continue;
       }
-      // The pair as colours, its ratio, and a shade that would pass (FR-126): a sentence somebody can act on.
+      // The pair as colors, its ratio, and a shade that would pass (FR-126): a sentence somebody can act on.
       const tokens = app.brand.schemes[finding.scheme] as unknown as Record<string, string>;
       const pair = TEXT_PAIRS.find((one) => one.ink === finding.ink && one.on === finding.on);
       const shade = passingShade(String(tokens[finding.ink]), String(tokens[finding.on]), finding.requires, pair?.over ? String(tokens[pair.over]) : undefined);

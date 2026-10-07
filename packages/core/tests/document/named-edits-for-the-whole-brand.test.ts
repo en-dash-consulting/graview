@@ -50,8 +50,8 @@ const ROUND_TRIPS: readonly { name: string; on: GraviewDocument; edit: Record<st
     on: vendors,
     edit: { op: "set-brand", name: "En Dash", accent: "#0f6e5c", logo: { src: ASSET, alt: "En Dash" }, typography: { display: "system-serif" } },
     inverse: { op: "set-brand", name: null, accent: vendors.brand!.accent, logo: null, typography: null },
-    said: /^The app's accent colour becomes #0f6e5c\. The app's wordmark says En Dash\. The app gets a logo\. Headings are now set in system-serif\.$/,
-    says: /^The app's colours change\. The wordmark says En Dash\. The app gets a logo\. Headings are now set in system-serif\.$/,
+    said: /^The app's accent color becomes #0f6e5c\. The app's wordmark says En Dash\. The app gets a logo\. Headings are now set in system-serif\.$/,
+    says: /^The app's colors change\. The wordmark says En Dash\. The app gets a logo\. Headings are now set in system-serif\.$/,
   },
 ];
 

@@ -178,7 +178,7 @@ kind's mark is its plot in miniature, not a dot.
 pnpm build && npx graview check ./dist/domain/app.js
 ```
 
-`theme-contrast-below-aa` names the exact token pair as colours, the scheme,
+`theme-contrast-below-aa` names the exact token pair as colors, the scheme,
 its ratio and where it is drawn — "a field name", "text on a filled accent" —
 and the shade of that ink that would pass, because "your theme has a contrast
 problem" is not something anyone can act on.
