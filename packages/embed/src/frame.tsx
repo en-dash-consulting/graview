@@ -416,7 +416,7 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
     // the seat is one (FR-40).
     // A landmark that already says which picture it is in — a board's column, "Vendors by status · Researching, 0" (FR-109) — keeps its name.
     const sweep = () =>
-      root.querySelectorAll("aside, nav, main, header, footer, section[aria-label]:not([role]), [role=region], [role=complementary], [role=navigation]").forEach((el) => {
+      root.querySelectorAll("aside, nav, main, header, footer, section[aria-label]:not([role]), [role=region], [role=complementary], [role=navigation], [role=search]").forEach((el) => {
         if (!el.hasAttribute("data-graview-named-by-lens")) name(el);
       });
     sweep();

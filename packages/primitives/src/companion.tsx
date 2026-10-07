@@ -536,8 +536,8 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
           aria-expanded={false}
           aria-label={`Open the seat — about ${subject.name}`}
           title={`Open the seat — about ${subject.name}`}
-          onClick={() => {
-            followTo.current = "dock";
+          onClick={(event) => {
+            if (document.activeElement === event.currentTarget) followTo.current = "dock";
             setOpen(true);
           }}
           style={{ display: "grid", justifyItems: "center", gap: 8, width: 28, minHeight: 28, padding: "6px 0", borderRadius: 8, fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}
@@ -636,8 +636,9 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
         data-testid="companion-dock"
         aria-expanded={open}
         onClick={(event) => {
-          // Put away from the header where there is a tab to put it away to, the keyboard lands on the tab.
-          if (open && !narrow) followTo.current = "tab";
+          // Put away from the header where there is a tab to put it away to, the keyboard lands on the tab —
+          // when the keyboard was on the header. A press a host's script makes leaves the reader's keyboard where it is.
+          if (open && !narrow && document.activeElement === event.currentTarget) followTo.current = "tab";
           setOpen(!open);
           /*
            * Put away from the keyboard (a click no pointer made), the
