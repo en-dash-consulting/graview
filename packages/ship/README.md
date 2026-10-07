@@ -356,7 +356,7 @@ host's.
 | `invalid` | the call as sent does not fit: its arguments, one the act does not take, a call that changes nothing, the kind, an invariant, a call before `hello` |
 | `limit` | the host's hard cap: the call can never succeed as asked, however long the caller waits |
 | `unavailable` | the host takes no changes for a while and cannot say how long — a room read-only while it is checked, a write to storage that failed; the one refusal that is not final |
-| `refused` | the act's own rule said no to a call that was well formed: a document act's `allowedWhen`, a TypeScript mutation's `ActRefusal` (FR-119) |
+| `refused` | the act's own rule said no to a call that was well formed: a document act's condition, a TypeScript mutation's `ActRefusal` (FR-119) |
 
 `openRemote`'s `remote.onRefusal((sentence, refusal) => …)` is handed the reason beside the
 sentence, and `remote.send` throws a `RemoteRefusedError` carrying it. What a person reads is
