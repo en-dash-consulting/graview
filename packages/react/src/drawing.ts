@@ -13,7 +13,7 @@
  * import the scene's, or `@graview/react`.
  */
 export { useActivity, useAttention } from "./attention.js";
-export { useDrawnSize, useTextMeasure } from "./drawn.js";
+export { useDrawnSize, useMarqueeRoom, useTextMeasure } from "./drawn.js";
 export type { DrawnOptions, DrawnSize } from "./drawn.js";
 export { useEditableFields } from "./editable-fields.js";
 export { NOTHING_FOUND, useFlagged, useImplicated, useReached } from "./emphasis.js";

@@ -67,7 +67,7 @@ export {
   useSelection,
 } from "./hooks.js";
 export { useEditableFields } from "./editable-fields.js";
-export { useDrawnSize, useTextMeasure } from "./drawn.js";
+export { useDrawnSize, useMarqueeRoom, useTextMeasure } from "./drawn.js";
 export type { DrawnOptions, DrawnSize } from "./drawn.js";
 export { createMotionStore, useSceneStill } from "./motion.js";
 export type { MotionStore } from "./motion.js";

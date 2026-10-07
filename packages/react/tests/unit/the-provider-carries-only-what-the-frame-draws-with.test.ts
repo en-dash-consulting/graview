@@ -24,6 +24,7 @@ const DRAWN_ONLY = [
   "useFlagged",
   "useImplicated",
   "useKit",
+  "useMarqueeRoom",
   "useReached",
   "useTextMeasure",
   "ViewBoundary",

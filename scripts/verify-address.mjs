@@ -18,7 +18,10 @@
  *   a deep link to a record opens it;
  *   the face toggle is a step Back undoes, the scene's stop in the fragment,
  *   and a reload of the scene stays on the scene;
- *   the embed in an article never writes `history` and leaves `location` as it was;
+ *   a seat that cannot see the scene's focused record resolves the stop in
+ *   place, with no step Back would have to undo;
+ *   the embed in an article never writes `history` and leaves `location` as
+ *   it was, a seat change included;
  *   and across a new declaration (`setApp`, FR-116), in an article and at an
  *   address: a place open on Pages stays open, the scene keeps its focus on a
  *   record, a reader on a kind the change removed lands on the home, and the
@@ -210,6 +213,17 @@ try {
     for (const viewport of SIZES) {
       const where = `${engine} ${viewport.width}×${viewport.height}`;
       const context = await browser.newContext({ viewport });
+      /* Every write the page makes to the history: a step Back would undo is a push. */
+      await context.addInitScript(() => {
+        window.__writes = [];
+        for (const name of ["pushState", "replaceState"]) {
+          const original = history[name].bind(history);
+          history[name] = (...args) => {
+            window.__writes.push([name, String(args[2] ?? "")]);
+            return original(...args);
+          };
+        }
+      });
       const tab = await context.newPage();
       tab.on("pageerror", (error) => errors.push(`${where}: ${error.message}`));
       const ready = async () => {
@@ -226,6 +240,8 @@ try {
           hash: location.hash,
           fragment: location.href.includes("#"),
           length: history.length,
+          pushes: window.__writes.filter(([name]) => name === "pushState").length,
+          replaces: window.__writes.filter(([name]) => name === "replaceState").length,
           face: document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed") ?? null,
           heading: document.querySelector("[data-graview-face=pages] h1")?.textContent?.trim() ?? null,
           place: document.querySelector('[data-testid="place-lens"]') !== null,
@@ -287,6 +303,23 @@ try {
       } catch (error) {
         one.error = String(error?.message ?? error);
       }
+      try {
+        /*
+         * A SEAT CHANGE IS NOT A STOP. On the scene focused on a task, the
+         * host seats a viewer, who sees only their own tasks: the stop is
+         * resolved where it stands — the address no longer names the task,
+         * and no entry is pushed whose Back lands on an address this seat
+         * cannot see.
+         */
+        await tab.click('[data-testid="embed-face-scene"]');
+        await settled();
+        await tab.evaluate(() => (location.hash = "#focus=t1"));
+        one.seatBefore = await settled();
+        await tab.evaluate(() => window.__handle.setSeat({ kind: "human", id: "p9", roles: ["viewer"] }));
+        one.seatAfter = await settled();
+      } catch (error) {
+        one.seatError = String(error?.message ?? error);
+      }
       await context.close();
 
       // Somebody else's article: the history and the address are the article's, never the embed's.
@@ -321,6 +354,12 @@ try {
         await reader.click('[data-testid="embed-face-pages"]');
         await reader.waitForTimeout(600);
         quiet.after = await where();
+        // A seat change on the scene, in the article: still the article's history, never written.
+        await reader.click('[data-testid="embed-face-scene"]');
+        await reader.waitForTimeout(800);
+        await reader.evaluate(() => window.__handle.setSeat({ kind: "human", id: "p9", roles: ["viewer"] }));
+        await reader.waitForTimeout(600);
+        quiet.reseated = await where();
         quiet.writes = await reader.evaluate(() => window.__writes);
       } catch (error) {
         quiet.error = String(error?.message ?? error);
@@ -460,6 +499,22 @@ try {
     seen: pick("told"),
     ok: every(({ told }) => told.some(([path, how]) => path === "/tasks/t1" && how === "push") && told.some(([path, how]) => path === "/tasks" && how === "pop") && told.some(([path, how]) => path === "/places/the-board" && how === "pop")),
   };
+  report.checks.aSeatThatCannotSeeTheFocusResolvesTheStopWithoutAStep = {
+    seen: Object.fromEntries(Object.entries(results).filter(([name]) => !name.endsWith("article")).map(([name, one]) => [name, one.seatError ? { error: one.seatError } : { before: one.seatBefore, after: one.seatAfter }])),
+    ok: Object.entries(results)
+      .filter(([name]) => !name.endsWith("article"))
+      .every(
+        ([, { seatError, seatBefore, seatAfter }]) =>
+          !seatError &&
+          seatBefore.face !== "pages" &&
+          fromStop(seatBefore.hash) === "t1" &&
+          seatAfter.face !== "pages" &&
+          seatAfter.path === BASE &&
+          fromStop(seatAfter.hash) !== "t1" &&
+          seatAfter.length === seatBefore.length &&
+          seatAfter.pushes === seatBefore.pushes,
+      ),
+  };
   const articles = Object.entries(results).filter(([name]) => name.endsWith("article"));
   report.checks.anEmbedInAnArticleNeverTouchesTheAddressOrTheHistory = {
     seen: Object.fromEntries(articles),
@@ -470,7 +525,7 @@ try {
           !quiet.error &&
           quiet.onRecord.heading === "Write the brief" &&
           quiet.writes.length === 0 &&
-          [quiet.onRecord, quiet.after].every((seen) => seen.href === quiet.before.href && seen.length === quiet.before.length),
+          [quiet.onRecord, quiet.after, quiet.reseated].every((seen) => seen.href === quiet.before.href && seen.length === quiet.before.length),
       ),
   };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };

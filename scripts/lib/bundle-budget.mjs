@@ -164,8 +164,10 @@ export const BUDGETS = [
      * `@graview/tools/edit` and `@graview/core/arrange`: a bundler places a
      * whole file in the first chunk when the first chunk can reach it and any
      * chunk uses it. Measured at 681_770 / 172_990.
+     *
+     * Measured at 682_731 / 173_310 with the pull requests of this round together.
      */
-    minified: 682_500,
+    minified: 685_500,
     gzipped: 173_500,
     load: "first",
     lacks: ["@graview/studio"],
@@ -295,7 +297,7 @@ export const BUDGETS = [
     // And when acts came to say what they set (FR-110, FR-114, FR-115: writes read off an act, a number's range, the other end of a link): the document compiler loads with the studio. Measured at 1_473_024 / 432_613.
     // Lowered when what only a drawn view uses left the frame's entries and the describer came to be fetched when first asked for: measured at 1_471_243 / 435_726.
     minified: 1_479_000,
-    gzipped: 436_500,
+    gzipped: 438_500,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

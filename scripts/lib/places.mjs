@@ -1,24 +1,26 @@
 /**
- * PRESS A PLACE BY NAME, wherever the bar put it.
+ * PRESS A PLACE BY NAME, as a person does: its tab on the bar.
  *
- * The bar's places are one row: the pills that fit, and a "+N more" menu
- * for the rest. A harness that finds the pill by its text finds a hidden
- * one at a laptop's width and waits thirty seconds for it to become
- * clickable. This does what a person does — presses the pill if it shows,
- * chooses from the menu if it folded.
+ * The bar's places are one row of tabs (FR-117) that scrolls sideways when
+ * it is longer than its room, rather than folding the rest into a "+N more"
+ * menu. A tab scrolled out of the row is still there; the press scrolls it
+ * into view first. A place the bar does not name is an error, never a
+ * quiet no-op, so a claim downstream of it cannot pass without the press.
  */
+export const PLACE_TAB = 'nav[aria-label="Places"] .graview-place-tab, [data-testid="places"] .graview-place-tab';
+
 export async function pressPlace(page, title) {
-  const pill = page.locator('nav[aria-label="Places"] button', { hasText: title }).first();
-  if (await pill.isVisible().catch(() => false)) {
-    await pill.click();
-    return "pill";
+  const tab = page.locator(PLACE_TAB).filter({ hasText: new RegExp(`^\\s*${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`) }).first();
+  if ((await tab.count()) === 0) {
+    const named = await page.locator(PLACE_TAB).allTextContents().catch(() => []);
+    throw new Error(`No place called "${title}" on the bar (it names: ${named.map((one) => one.trim()).join(", ") || "nothing"})`);
   }
-  const more = page.locator('[data-testid="places-more"], select[data-testid="places"]').first();
-  const value = await more.evaluate((select, wanted) => {
-    const option = [...select.options].find((o) => o.textContent.trim() === wanted);
-    return option ? option.value : null;
-  }, title);
-  if (value === null) throw new Error(`No place called "${title}" on the bar`);
-  await more.selectOption(value);
-  return "menu";
+  await tab.scrollIntoViewIfNeeded();
+  await tab.click();
+  return "tab";
+}
+
+/** Waits for the bar to name a place by its `as`, so a face fetched lazily has drawn its tabs. */
+export async function waitForPlace(page, as, timeout = 20_000) {
+  await page.waitForSelector(`[data-testid="place-${as}"].graview-place-tab`, { state: "attached", timeout });
 }

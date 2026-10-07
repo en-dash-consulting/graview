@@ -352,6 +352,13 @@ export interface LayoutOptions {
    * foot is on the kerb. Absent (or not yet measured): the whole box.
    */
   readonly screenHeight?: number;
+  /**
+   * HOW WIDE A SHOWING'S NAME IS DRAWN, in the brand's own face, measured
+   * by whoever renders it (FR-118). The room under a district's signpost is
+   * sized from it, so a wide face gets the lines it wraps onto. Absent (in
+   * Node, or before a page can measure): estimated from the letter count.
+   */
+  readonly nameWidth?: (text: string) => number;
 }
 
 /**
@@ -365,7 +372,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "screenHeight">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "screenHeight" | "nameWidth">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1200, height: 420 },

@@ -1,5 +1,5 @@
 import { estimateWidth, type Measure } from "@graview/layout/view";
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 
 /**
  * WHAT A DRAWING CAN HONESTLY CLAIM TO BE, at the size it was actually given.
@@ -99,4 +99,44 @@ export function useTextMeasure(faceVariable = "--graview-font-body", fallback = 
       return measured > 0 ? measured : estimateWidth(text, fontSize);
     };
   }, [face]);
+}
+
+/**
+ * HOW WIDE A SHOWING'S NAME IS DRAWN on a district's marquee (FR-118), in
+ * the face the scene actually draws it in.
+ *
+ * The room under a signpost is sized before the names are drawn, and it was
+ * sized for an average letter: a brand whose body is a wide display face ran
+ * the column past its district into the one below. This reads the face off
+ * the scene's own element — an embed scopes its brand to itself, so the
+ * document's root may not have it — and measures at the marquee's size and
+ * its heavier weight, again once the brand's fonts have loaded. Undefined
+ * where nothing can measure (no canvas, jsdom): the layout estimates.
+ */
+export function useMarqueeNameWidth(within: RefObject<Element | null>, rootPx: number, dressed?: unknown): ((text: string) => number) | undefined {
+  // Measured once the page's fonts are ready (and the scene's element is there), and again when it is dressed anew.
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    void (document.fonts?.ready ?? Promise.resolve()).then(() => setReady(true));
+  }, []);
+  return useMemo(() => {
+    const element = within.current;
+    const context = ready && element ? document.createElement("canvas").getContext("2d") : null;
+    if (!context) return undefined;
+    // The marquee's 0.8125rem, at the weight of the showing that is pressed: the wider of the two it is drawn in.
+    context.font = `600 ${0.8125 * rootPx}px ${getComputedStyle(element!).fontFamily}`;
+    // jsdom's canvas measures nothing: the estimate is the answer there.
+    return context.measureText("M").width > 0 ? (text: string) => context.measureText(text).width : undefined;
+  }, [ready, rootPx, dressed]);
+}
+
+/**
+ * The room a district's marquee takes for these names, as the scene's layout
+ * made it — handed down by the scene, so a district keeps exactly the room
+ * the city reserved, and a page that draws no city carries none of it.
+ */
+export const MarqueeRoomContext = createContext<((titles: readonly string[]) => number) | undefined>(undefined);
+/** The scene's room for a marquee of these names, or undefined outside a scene (there is no marquee there). */
+export function useMarqueeRoom(): ((titles: readonly string[]) => number) | undefined {
+  return useContext(MarqueeRoomContext);
 }

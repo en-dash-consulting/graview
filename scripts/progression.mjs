@@ -195,7 +195,7 @@ try {
           }
           // A member DRAWN IN THE SCENE, and one a person can press: a chapter that
           // opened the activity rail has chips there too (a log entry, not a thing),
-          // and a drive-in's thumbnail draws its lens small and inert.
+          // and a lens drawn small as a picture is inert.
           const member = (
             await page.evaluateHandle(() =>
               [...document.querySelectorAll("[data-graview-stage] [data-graview-pick]")].find((el) => !el.closest("[inert]")) ?? null,

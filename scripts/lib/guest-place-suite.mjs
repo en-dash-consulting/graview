@@ -20,6 +20,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { graviewSources } from "./graview-sources.mjs";
+import { pressPlace, waitForPlace } from "./places.mjs";
 
 export const PACKAGES_MANIFEST = { name: "packages", title: "The packages", attach: "package", cardinality: "many", reads: { kinds: ["offer"], edges: ["includes"] } };
 export const NOTES_MANIFEST = { name: "notes", title: "What we heard", attach: "signal", cardinality: "many" };
@@ -139,12 +140,11 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     // ── the Graview face ──
     await open("face=scene");
     /* The strip's controls are fetched with the face: wait for the bar to hold the places before pressing one. */
-    await tab.waitForSelector('[data-testid="place-the-packages"], [data-testid="places-more"], select[data-testid="places"]', { state: "attached", timeout: 20_000 }).catch(async () => {
+    await waitForPlace(tab, "the-packages").catch(async () => {
       throw new Error(`no places on the bar: ${(await tab.evaluate(() => document.body.innerText)).slice(0, 600)}`);
     });
-    /* The pill, as a person presses it; the embed names its landmarks after itself ("Offers · Places"), so by its test id. */
-    const pill = tab.locator('[data-testid="place-the-packages"]');
-    const how = (await pill.isVisible()) ? (await pill.click(), "pill") : (await tab.locator('[data-testid="places-more"]').selectOption({ label: "The packages" }), "menu");
+    /* The tab, as a person presses it; the embed names its landmarks after itself ("Offers · Places"), so the bar by its test id. */
+    const how = await pressPlace(tab, "The packages");
     const scene = await lens();
     claim('on the Graview face "The packages" is a place on the bar, and pressing it draws the worker view', /The packages$/.test(scene.label) && scene.packages.length === 3, { how, packages: scene.packages.map((one) => one.title) });
     claim("on the Graview face too, the offer Lin may not see is nowhere", !scene.text.includes("Internal margin review") && JSON.stringify(scene.packages.find((one) => one.id === "package:start")?.offers) === JSON.stringify(["Team coaching", "AI strategy sprint"]), scene.packages);
@@ -183,10 +183,8 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     const placePage = await tab.evaluate(() => Boolean(document.querySelector('[data-worker-view="packages"]')?.shadowRoot?.querySelector(".package")));
     claim("on the pages face, a view's link to a place, followed with Enter, goes to that place", placePage);
     await open("face=scene");
-    await tab.waitForSelector('[data-testid="place-what-we-heard"], [data-testid="places-more"]', { state: "attached", timeout: 20_000 });
-    const notesPill = tab.locator('[data-testid="place-what-we-heard"]');
-    if (await notesPill.isVisible()) await notesPill.click();
-    else await tab.locator('[data-testid="places-more"]').selectOption({ label: "What we heard" });
+    await waitForPlace(tab, "what-we-heard");
+    await pressPlace(tab, "What we heard");
     await inRegion("notes", "#to-packages").waitFor({ timeout: 15_000 });
     await inRegion("notes", "#to-packages").click();
     const scenePlace = await lens().then((drawn) => drawn.packages.length === 3).catch(() => false);

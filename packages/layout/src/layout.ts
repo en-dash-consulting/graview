@@ -1,5 +1,5 @@
 import { marqueeHeightFor, ROSTER_ROW, ROSTER_KEPT, ROSTER_CHROME, rosterRows, rosterHeight } from "./sizes.js";
-export { MARQUEE_WIDTH, marqueeHeightFor, ROSTER_ROW, ROSTER_MOST, rosterRows, rosterHeight } from "./sizes.js";
+export { MARQUEE_WIDTH, marqueeHeightFor, ROSTER_ROW, ROSTER_MOST, rosterRows, rosterHeight, type NameWidth } from "./sizes.js";
 import { isCurrent, type AnySchema, type GraphReader, type NodeOfSchema } from "@graview/core";
 import { toIso } from "@graview/core/scene";
 import {
@@ -933,7 +933,7 @@ export function layout<S extends AnySchema>(
           // A district with showings carries their marquee under its name:
           // its buttons, wrapped to the card, in the reader's unit.
           ...((options.screens?.[item.kind]?.length ?? 0) > 0
-            ? { marquee: marqueeHeightFor((options.screens?.[item.kind] ?? []).map((place) => place.title), DISTRICT_MIN_WIDTH * unit) * unit }
+            ? { marquee: marqueeHeightFor((options.screens?.[item.kind] ?? []).map((place) => place.title), DISTRICT_MIN_WIDTH * unit, options.nameWidth) * unit }
             : {}),
         })),
         schema,

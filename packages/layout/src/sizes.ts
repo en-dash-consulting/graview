@@ -19,12 +19,43 @@ const NAME_ROOM = MARQUEE_WIDTH - 18;
 /** About an average letter's width at 13 pixels. */
 const LETTER = 7.1;
 const LINE = 16;
-/** A name's height: its lines, and never under a fingertip. */
-const nameHeight = (title: string) => Math.max(24, Math.ceil((title.length * LETTER) / NAME_ROOM) * LINE + 6);
-export function marqueeHeightFor(titles: readonly string[], cardWidth: number): number {
+/**
+ * HOW WIDE A NAME IS DRAWN, in pixels, in the face and size the marquee
+ * draws it in — measured by whoever can see the font (`measureText` on a
+ * canvas, in the page). Without one the width is estimated from the letter
+ * count, which a wider brand face outruns: names sized for an average
+ * letter ran the column past its district into the one below.
+ */
+export type NameWidth = (text: string) => number;
+/** The lines a name wraps onto in the column, word by word as the browser breaks it; a word wider than the column breaks anywhere. */
+function linesFor(title: string, width: NameWidth): number {
+  // The first word always starts a line; a word wider than the column breaks anywhere, onto whole lines and the rest.
+  let lines = 0;
+  let used = NAME_ROOM;
+  for (const word of title.split(" ")) {
+    const wide = width(word);
+    const after = used + width(" ") + wide;
+    if (after <= NAME_ROOM) used = after;
+    else {
+      const spans = Math.ceil(wide / NAME_ROOM) || 1;
+      lines += spans;
+      used = wide - (spans - 1) * NAME_ROOM;
+    }
+  }
+  return lines;
+}
+/** A measured line: 13-pixel type at the marquee's 1.25 line height, not rounded down. */
+const MEASURED_LINE = 16.25;
+/** A name's height: its lines, and never under a fingertip. Measured, it is never less than the estimate. */
+const nameHeight = (title: string, width?: NameWidth) => {
+  const estimated = Math.ceil((title.length * LETTER) / NAME_ROOM);
+  if (!width) return Math.max(24, estimated * LINE + 6);
+  return Math.max(24, Math.ceil(Math.max(estimated, linesFor(title, width)) * MEASURED_LINE) + 6);
+};
+export function marqueeHeightFor(titles: readonly string[], cardWidth: number, width?: NameWidth): number {
   void cardWidth;
   if (titles.length === 0) return 0;
-  return 10 + titles.reduce((sum, title) => sum + nameHeight(title), 0) + (titles.length - 1) * MARQUEE_GAP;
+  return 10 + titles.reduce((sum, title) => sum + nameHeight(title, width), 0) + (titles.length - 1) * MARQUEE_GAP;
 }
 
 /**
