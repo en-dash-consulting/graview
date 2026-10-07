@@ -98,6 +98,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
     return (
       <PageMain context={context} style={wide}>
         <div style={{ display: "grid", gap: 12 }} data-testid="home-view">
+          {brand?.subtitle ? <p style={{ ...quiet, margin: 0 }} data-testid="app-subtitle">{brand.subtitle}</p> : null}
           {violations.length > 0 ? (
             <Link to="/problems" style={{ ...link, color: "var(--graview-warn)" }}>
               {seeWhatIsBroken}

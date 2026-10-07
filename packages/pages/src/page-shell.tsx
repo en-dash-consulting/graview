@@ -96,6 +96,7 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
       <AppBar
         brand={brand}
         name={brand?.name ?? "Graview"}
+        description={brand?.subtitle}
         home={{ href: `${base}/`, go: () => navigate("/"), current: location.pathname === "/" }}
         places={places}
         current={barPlaceAt(places, here)}

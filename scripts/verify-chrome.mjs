@@ -509,7 +509,8 @@ function toastOverThePopover(page, pane) {
     // Moved, not restacked: where it stands in the top layer is what is asked.
     stack.style.bottom = "auto";
     stack.style.top = `${Math.round(at.top + at.height / 2 - 10)}px`;
-    stack.style.left = `${Math.round(at.left + at.width / 2)}px`;
+    // Centered on the pane, and kept on the screen: on a phone the pane hangs from the person at the bar's right (FR-131).
+    stack.style.left = `${Math.max(4, Math.round(at.left + at.width / 2 - stack.getBoundingClientRect().width / 2))}px`;
     const card = stack.querySelector('[data-testid="notice"]').getBoundingClientRect();
     const hit = document.elementFromPoint(card.left + card.width / 2, card.top + Math.min(card.height / 2, 12));
     return stack.contains(hit);

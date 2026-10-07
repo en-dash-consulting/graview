@@ -107,9 +107,9 @@ describe("the face an address opens", () => {
     expect(faceAtAddress({ routing: "address", basePath: "/apps/a1", face: "pages" })).toBe("graview");
     window.history.replaceState({ idx: 3 }, "", "/apps/a1/places/overview");
     expect(faceAtAddress({ routing: "address", basePath: "/apps/a1", face: "pages" })).toBe("scene");
-    // Under memory routing the overview's path is the scene too.
-    expect(faceAtAddress({ face: faceOf(undefined, "/places/overview") })).toBe("scene");
-    expect(faceOf(undefined, "/tasks")).toBe("pages");
+    // Under memory routing the face is the host's, the stop's when it names none.
+    expect(faceAtAddress({ face: faceOf(undefined) })).toBe("scene");
+    expect(faceOf("#overview=1")).toBe("graview");
   });
 });
 

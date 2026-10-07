@@ -109,7 +109,7 @@ const BAR_CSS = `
 .graview-bar-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"app places tools";align-items:stretch;column-gap:20px;padding:0 16px;min-height:48px}
 .graview-bar-app{grid-area:app;display:flex;align-items:center;min-width:0}
 .graview-bar-name{margin:0;min-width:0;display:flex;font-family:var(--graview-font-display,var(--graview-font-body,system-ui));font-size:.9375rem;font-weight:600;line-height:1.3;letter-spacing:-.005em}
-.graview-bar-home{display:inline-flex;align-items:center;gap:8px;min-width:0;min-height:30px;color:var(--graview-ink);text-decoration:none;font:inherit;letter-spacing:inherit;overflow-wrap:anywhere}
+.graview-bar-home{display:inline-flex;align-items:center;gap:8px;min-width:0;min-height:30px;color:var(--graview-ink);text-decoration:none;font:inherit;letter-spacing:inherit;overflow-wrap:anywhere;margin:0;padding:0;border:0;background:none;box-shadow:none;cursor:pointer;text-align:left}
 .graview-bar-more{display:grid;min-width:200px;max-width:calc(100vw - 32px);margin:0;padding:4px;list-style:none;border-radius:10px;border:1px solid var(--graview-edge);background:var(--graview-float);box-shadow:var(--graview-lift-high)}
 .graview-bar-more[hidden]{display:none}
 .graview-bar-item{display:flex;align-items:center;width:100%;min-height:32px;padding:0 10px;border:0;border-left:2px solid transparent;border-radius:7px;background:none;box-shadow:none;font:inherit;font-size:.875rem;text-align:left;text-decoration:none;color:var(--graview-ink);cursor:pointer}
@@ -172,6 +172,7 @@ export function AppBar({
   reach,
   tools,
   find = true,
+  description,
   findBox,
   onFind,
 }: {
@@ -189,6 +190,8 @@ export function AppBar({
   readonly tools: ReactNode;
   /** Whether a face puts a Find box in the bar. */
   readonly find?: boolean;
+  /** The line under the app's name (the brand's `subtitle`): said on the home, and as the name's hover here. */
+  readonly description?: string | undefined;
   /** A Find box the bar is handed to draw in its place, for a face drawn inside the bar's own tree; otherwise the face puts its own there. */
   readonly findBox?: ReactNode;
   /** Told where the bar keeps the Find box, for the face under it (`BarFindContext`). */
@@ -236,17 +239,18 @@ export function AppBar({
       <div className="graview-bar-row">
         <div className="graview-bar-app">
           <Heading className="graview-bar-name">
-            <a
-              href={home.href ?? "#"}
-              onClick={press(home.go)}
-              data-testid="app-home"
-              {...(home.current ? { "aria-current": "page" as const } : {})}
-              title={`${name} — home`}
-              className="graview-bar-home"
-            >
-              <AppMark brand={brand} size={20} />
-              <span data-testid="app-name">{name}</span>
-            </a>
+            {/* A link where home has an address; a press where the embed keeps its places in memory. */}
+            {home.href !== undefined ? (
+              <a href={home.href} onClick={press(home.go)} data-testid="app-home" {...(home.current ? { "aria-current": "page" as const } : {})} title={description ? `${name} — ${description}` : `${name} — home`} className="graview-bar-home">
+                <AppMark brand={brand} size={20} />
+                <span data-testid="app-name">{name}</span>
+              </a>
+            ) : (
+              <button type="button" onClick={home.go} data-testid="app-home" {...(home.current ? { "aria-current": "page" as const } : {})} title={description ? `${name} — ${description}` : `${name} — home`} className="graview-bar-home">
+                <AppMark brand={brand} size={20} />
+                <span data-testid="app-name">{name}</span>
+              </button>
+            )}
           </Heading>
         </div>
         <BarPlaces places={places} current={current} reach={reach} />

@@ -139,6 +139,8 @@ function read() {
     nameFaces: names.map((one) => getComputedStyle(one).fontFamily),
     headingFaces: headings.map((one) => ({ text: one.textContent.trim().slice(0, 40), face: getComputedStyle(one).fontFamily })),
     subtitles: [...document.querySelectorAll('[data-testid="app-subtitle"]')].filter((one) => one.getBoundingClientRect().width > 0).map((one) => one.textContent.trim()),
+    // The bar says the app's name alone (FR-131); the line under it is the name's hover.
+    nameTitles: [...document.querySelectorAll('[data-testid="app-home"]')].map((one) => one.getAttribute("title") ?? ""),
     radius: root ? getComputedStyle(root).getPropertyValue("--graview-radius").trim() : null,
     drawn: root ? getComputedStyle(root).colorScheme : null,
     icons: [...document.querySelectorAll('link[rel~="icon"]')].map((one) => one.getAttribute("href")),
@@ -183,7 +185,10 @@ const checks = {
     seen: seen.map(({ engine, scheme, face, nameFaces, headingFaces }) => ({ engine, scheme, face, nameFaces, headingFaces })),
     ok: seen.every((one) => one.nameFaces.length > 0 && one.nameFaces.every((face) => flat(face) === SERIF) && (one.face !== "pages" || (one.headingFaces.some((h) => h.text === "Workshops by En Dash") && one.headingFaces.every((h) => flat(h.face) === SERIF)))),
   },
-  theDescriptionIsDrawnUnderTheName: { seen: seen.map(({ engine, scheme, face, subtitles }) => ({ engine, scheme, face, subtitles })), ok: seen.every((one) => one.subtitles.includes(document_.description)) },
+  theDescriptionIsTheHomesLineAndTheNamesHover: {
+    seen: seen.map(({ engine, scheme, face, subtitles, nameTitles }) => ({ engine, scheme, face, subtitles, nameTitles })),
+    ok: seen.every((one) => one.nameTitles.some((title) => title.includes(document_.description)) && (one.face !== "pages" || one.subtitles.includes(document_.description))),
+  },
   theBrandsShapeReachesThePage: { seen: seen.map(({ engine, scheme, face, radius }) => ({ engine, scheme, face, radius })), ok: seen.every((one) => one.radius === "6px") },
   theSchemeTheHostStampedIsDrawn: { seen: seen.map(({ engine, scheme, face, drawn }) => ({ engine, face, stamped: scheme, drawn })), ok: seen.every((one) => one.drawn === one.scheme) },
   theAppsPreferredSchemeIsDrawnWhenNobodyChose: { preferred: document_.brand.scheme, seen: preferred, ok: preferred.length === engines.length * FACES.length && preferred.every((one) => one.drawn === "dark") },

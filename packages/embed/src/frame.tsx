@@ -497,6 +497,7 @@ export function FrameBar({
     <AppBar
       brand={brand}
       name={name}
+      description={brand?.subtitle}
       heading={heading}
       home={home}
       places={places}

@@ -141,10 +141,9 @@ export { AUTO_SCENE_HEIGHT };
 
 export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOptions<S> {
   /**
-   * Which face to open on. Omitted, the path and the stop decide: the
-   * overview's path (`/places/overview`) or a stop opens the scene — at
-   * altitude, the Graview — and any other path the routed face. The scene
-   * is the app's overview, one of its places (FR-132).
+   * Which face to open on. Omitted, the stop decides: at altitude the
+   * Graview, anything else the scene — the app's overview, one of its
+   * places (FR-132).
    */
   readonly face?: EmbedFace;
   /** The scene's view state, as the fragment the app itself would put in its address bar. */
@@ -259,13 +258,8 @@ function viewFor(face: EmbedFace, stop: string | undefined, kinds: readonly stri
   return asked;
 }
 
-/**
- * The face a path and a stop imply: a path on the routed face that is not
- * the overview's opens the pages; otherwise a stop at altitude opens the
- * Graview, and anything else the scene.
- */
-export function faceOf(stop: string | undefined, path?: string): EmbedFace {
-  if (path !== undefined && path !== "" && !isOverview(path)) return "pages";
+/** The face a stop implies: a stop at altitude opens the Graview, anything else the scene — the overview (FR-132). */
+export function faceOf(stop: string | undefined): EmbedFace {
   return stop && fromUrl(stop).overview ? "graview" : "scene";
 }
 
@@ -277,7 +271,7 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
 }
 
 function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
-  const { app, face = props.at?.face ?? faceOf(props.stop, props.path), stop, bar = true, standing = "Everything is in order", principal, heading = 2 } = props;
+  const { app, face = props.at?.face ?? faceOf(props.stop), stop, bar = true, standing = "Everything is in order", principal, heading = 2 } = props;
   const { rootRef, scope, css, scheme, store, presence, brand, auto, height } = useFrame(props);
   const views = useViews<S>(props, frameworkViewDoors) as never;
   const kinds = app.schema.kinds as readonly string[];
@@ -685,7 +679,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
   let swapping: Promise<void> = Promise.resolve();
   // Which face is asked for, which is drawn, and who is waiting for the one asked for.
   // Under address routing, the face the address names (FR-106).
-  const opening = faceAtAddress({ ...options, face: options.at?.face ?? options.face ?? faceOf(options.stop, options.path) });
+  const opening = faceAtAddress({ ...options, face: options.at?.face ?? options.face ?? faceOf(options.stop) });
   let asked: EmbedFace = opening;
   let drawnFace: EmbedFace | null = null;
   let waiting: (() => void)[] = [];
