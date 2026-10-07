@@ -1,5 +1,40 @@
 # @graview/studio
 
+## 0.1.14
+
+### Patch Changes
+
+- 45842b7: A number field may say its range (FR-114). In a document, a `number` or `integer` field — and an act's declared argument — takes `min`, `max` and `step` (`"level": { "type": "integer", "min": 1, "max": 5 }`); `step` is what its values are whole multiples of, JSON Schema's `multipleOf`. The range is the field's schema, so everything that reads the schema honours it: a value outside it is refused at apply as `invalid`, whichever act brought it (a `set-level` given 9, a `note-strength` that makes a strength at 9, a derived `edit-<kind>`); an agent's tool says `minimum`, `maximum` and `multipleOf`; and `describeArg` and `formField` carry `min`, `max` and now `step` (1 for a whole number), which the routed face's form, the workbench's answer box and the studio's agent panel put on their number inputs, so a form will not take 9. A declared argument that fills a ranged field and says no range of its own is asked for within the field's. `graview check` refuses `default-range` when a default is outside its field's range or off its step, and `field-range` for a range on a field that is not a number, a `max` below its `min`, or a `step` that is not above zero, by path — asked with the checker (`compileDocument`), not by a page compiling a document its host has judged, so the hosted page does not carry them. `editDocument` gains `set-range` (`{ kind, field, min?, max?, step? }`, `null` clears one), refused on a field that is not a number or one whose default it would leave outside; `set-default` is refused outside the range, and `retype-field` to anything that is not a number lets the range go. `diffDocuments` says a changed range ("strength's level now takes 1 to 3, where it took 1 to 5; values outside it are cleared"), and a narrowed one is breaking and listed in `narrowedRanges`; `planMigration` clears the values a narrowed range no longer takes. `toDocument` writes a TypeScript field's inclusive bounds (`.min(0).max(1)`, `.multipleOf(0.5)`) as its document field's range. The studio keeps a document's range through a change it makes, says it up front (`studio-keeps-range`, "taken from 1 to 5"), and refuses to retype such a field rather than let the range go unsaid.
+  
+  Compatibility: unchanged for stored data, ops and the wire. Additive within `graview-document@1` (docs/stability.md): a field without a range means what it meant. `ArgShape`'s number and `ScalarField` gain an optional `step`, and an integer argument now describes itself with `step: 1`. `DocumentDiff` gains `narrowedRanges`, and the edit vocabulary gains `set-range`. `graview check` gains two error codes, `default-range` and `field-range`, which judge only keys a declaration could not hold before. `capabilities().shipped` gains `FR-114`.
+- Updated dependencies [f842422]
+- Updated dependencies [fc42f1e]
+- Updated dependencies [860223c]
+- Updated dependencies [1e7eba5]
+- Updated dependencies [0cee289]
+- Updated dependencies [3f02759]
+- Updated dependencies [5a236ea]
+- Updated dependencies [cc50785]
+- Updated dependencies [1712959]
+- Updated dependencies [45842b7]
+- Updated dependencies [8c43964]
+- Updated dependencies [f16cfbc]
+- Updated dependencies [63dfe90]
+- Updated dependencies [b8c4527]
+- Updated dependencies [ab91f13]
+- Updated dependencies [b9435aa]
+- Updated dependencies [05b0a95]
+- Updated dependencies [196033b]
+- Updated dependencies [6ac06de]
+- Updated dependencies [bd69456]
+  - @graview/core@0.1.14
+  - @graview/primitives@0.1.14
+  - @graview/react@0.1.14
+  - @graview/pages@0.1.14
+  - @graview/layout@0.1.14
+  - @graview/tools@0.1.14
+  - @graview/ship@0.1.14
+
 ## 0.1.13
 
 ### Patch Changes
