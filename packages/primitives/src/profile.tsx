@@ -1,6 +1,6 @@
 import { labelOf, nameOfAuthor, type AnySchema } from "@graview/core";
 import { POPOVER_STYLE, useGraview, usePopover } from "@graview/react/provider";
-import { lazy, Suspense, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { TOOL, toolStyle } from "./app-bar.js";
 
 /**
@@ -86,6 +86,11 @@ export function Profile<S extends AnySchema>({
    * so a studio it opened outlives the menu (below).
    */
   const [everOpened, setEverOpened] = useState(false);
+  // Fetched once the page has drawn, so the first press opens a full menu.
+  useEffect(() => {
+    const later = setTimeout(fetchPane, 2500);
+    return () => clearTimeout(later);
+  }, []);
   if (open && !everOpened) setEverOpened(true);
 
   /*

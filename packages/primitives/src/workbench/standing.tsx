@@ -1,6 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import { POPOVER_STYLE, usePopover, useSelection, useViolations } from "@graview/react/provider";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { toolStyle } from "../app-bar.js";
 
 const ProblemRows = lazy(() => import("../bar-panes.js").then((panes) => ({ default: panes.ProblemRows })));
@@ -37,6 +37,12 @@ export function Standing({
   const popover = usePopover("problems", { open: asked && count > 0, onOpenChange: setAsked });
   const open = popover.open;
   const said = standingWords(count, clean);
+  // A rule broken is a press likely to come: its rows are fetched once the page has drawn, not when it is pressed.
+  useEffect(() => {
+    if (count === 0) return;
+    const later = setTimeout(fetchRows, 1500);
+    return () => clearTimeout(later);
+  }, [count > 0]);
 
   return (
     <div style={{ position: "relative", display: "inline-flex" }}>

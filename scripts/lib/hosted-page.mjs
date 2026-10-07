@@ -58,8 +58,8 @@ export const FACE_DOORS = {
  * bar (FR-131, FR-132) replaced the strip, the routed face's masthead and
  * its tabs with one bar, and fetches what is behind its tools when they are
  * first reached for — the person's menu, the problems' rows — and the blocks
- * a view is drawn with with the face that draws one: 574 403 bytes
- * (560.9 KB), against the 563 KB it was asked to come back under. The claim
+ * a view is drawn with with the face that draws one: 574 574 bytes
+ * (561.1 KB), against the 563 KB it was asked to come back under. The claim
  * is that figure with about 1 KB of headroom.
  */
 export const HOSTED_PAGE_BUDGET = { minified: 562 * 1024, zod: 150 * 1024 };
@@ -128,8 +128,8 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * with about 7 KB of headroom, spent on purpose as the other budget's is.
  * Raised to 523 KB for the whole brand in the document (FR-124–FR-128),
  * measured at 521.0 KB, and 522.6 KB with the notices that float (FR-133).
- * The one app bar (FR-131, FR-132) brought it to 529 602 bytes (517.2 KB):
- * 2.2 KB short of the 515 it was asked for, which FR-133's placing of a
+ * The one app bar (FR-131, FR-132) brought it to 529 773 bytes (517.4 KB):
+ * 2.4 KB short of the 515 it was asked for, which FR-133's placing of a
  * notice (1.7 KB up front) took while it was built. The claim is that
  * figure with about 1 KB of headroom.
  */
