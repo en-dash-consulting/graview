@@ -43,6 +43,12 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   const { store, brand, invariantContext } = context;
   useStoreTick(store);
   const violations = store.violations(invariantContext);
+  /*
+   * WHAT TO DO, NOT HOW MANY (FR-122). The bar says the count — the
+   * embed's strip, or the shell's Problems tab — so the home points to the
+   * problems rather than saying the number a third time.
+   */
+  const seeWhatIsBroken = `${violations.length === 1 ? "A rule is broken" : "Rules are broken"} — see what, and what would fix it`;
   const recent = [...store.log.all()].slice(-5).reverse();
   // In the declaration's order, less what it leaves off the home (FR-80).
   const kinds = homeKinds(context);
@@ -96,7 +102,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
         <div style={{ display: "grid", gap: 12 }} data-testid="home-view">
           {violations.length > 0 ? (
             <Link to="/problems" style={{ ...link, color: "var(--graview-warn)" }}>
-              {violations.length} {violations.length === 1 ? "problem" : "problems"} — see what is broken, and what would fix it
+              {seeWhatIsBroken}
             </Link>
           ) : null}
           <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} />
@@ -127,8 +133,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
             <span>All rules hold.</span>
           ) : (
             <Link to="/problems" style={{ ...link, color: "var(--graview-warn)" }}>
-              {violations.length} {violations.length === 1 ? "problem" : "problems"} — see what is
-              broken, and what would fix it
+              {seeWhatIsBroken}
             </Link>
           )}
         </p>
