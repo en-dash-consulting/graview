@@ -122,23 +122,53 @@ export interface BarFaces {
   readonly pages: BarFace;
 }
 
+/** How the switch is drawn: its words beside its marks where there is room, or its marks alone (the words its names). */
+export type BarSwitch = "words" | "icons";
+
 /** One size for every tool on the bar (FR-131). */
 export const TOOL = 30;
 /** The bar's one row, its rule under it included, on a desk and a phone alike (FR-138). */
 export const BAR_HEIGHT = 48;
 
+/** Below this width of its own the bar is a phone's: the place is the page's first line, and Find a magnifier that opens the box over the row. */
+export const BAR_PHONE = 640;
+
+/*
+ * THE BAR FITS ITS BOX. Every rule here reads the bar's own width (it is
+ * its own container), never the screen's: an embed in a 650 px box on a
+ * 1440 desk is a narrow bar, not a desk's bar squeezed. When the row is
+ * short, Find gives first (a small box that says its shortcut, drawn wide
+ * while it is used), then the place down to 9em of its name (whole in its
+ * title), then the app's name, which wraps between its words onto a second
+ * line and never inside one; the switch keeps its size, and draws its marks
+ * alone when its words do not fit (`roomForWords`).
+ *
+ * The order is the shrink factors: Find 600, the place 100, the app 1. A
+ * factor under 1 would not do — the free space is scaled by the factors
+ * left when the others have reached their least, so an app at 0.001 would
+ * give 0.1% of what is still needed and the row would run out of its box.
+ * At 1 the app gives a fraction of a pixel while the others still can,
+ * which would wrap its last word; its 2 px spacer (`::after`) takes that.
+ * The tools (`display:contents`) stand on the row themselves, so Find's
+ * box is what gives, not a column around it.
+ */
 const BAR_CSS = `
-.graview-bar{display:block;margin:0;padding:0;container-type:inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px solid var(--graview-edge);color:var(--graview-ink);font-family:var(--graview-font-body,system-ui)}
+.graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px solid var(--graview-edge);color:var(--graview-ink);font-family:var(--graview-font-body,system-ui)}
 .graview-bar-row{display:flex;flex-wrap:nowrap;align-items:center;gap:16px;height:${BAR_HEIGHT - 1}px;margin:0;padding:0 16px}
 .graview-bar-home,.graview-bar-face,.graview-bar-place,.graview-bar-item{display:inline-flex;align-items:center;box-sizing:border-box;min-width:0;margin:0;border:0;background:none;box-shadow:none;font:inherit;letter-spacing:normal;text-transform:none;text-decoration:none;color:var(--graview-ink);cursor:pointer;text-align:left}
-.graview-bar-app{display:flex;flex:0 1 auto;min-width:0;max-width:34%}
-.graview-bar-name{margin:0;min-width:0;display:flex;font-family:var(--graview-font-display,var(--graview-font-body,system-ui));font-size:.9375rem;font-weight:600;line-height:1.25}
-.graview-bar-home{gap:8px;min-height:30px;padding:0;letter-spacing:-.005em;overflow-wrap:anywhere}
+.graview-bar-app{display:flex;flex:0 1 auto;max-width:50%}
+.graview-bar-app::after{content:"";flex:0 100000 auto;width:2px;min-width:0}
+.graview-bar-name{margin:0;display:flex;font-family:var(--graview-font-display,var(--graview-font-body,system-ui));font-size:.9375rem;font-weight:600;line-height:1.25}
+.graview-bar-home{gap:8px;min-width:auto;min-height:30px;padding:0;letter-spacing:-.005em}
+.graview-bar-app-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal;word-break:normal}
 .graview-bar-faces{display:inline-flex;flex:0 0 auto;box-sizing:border-box;height:30px;margin:0;padding:2px;gap:2px;border:1px solid var(--graview-edge);border-radius:8px}
 .graview-bar-face{gap:6px;padding:0 10px;border-radius:6px;font-size:.8125rem;white-space:nowrap;color:var(--graview-ink-muted)}
 .graview-bar-face span{min-width:0;max-width:11em;overflow:hidden;text-overflow:ellipsis}
 .graview-bar-face[aria-pressed=true]{color:var(--graview-ink);font-weight:600;background:color-mix(in srgb,var(--graview-accent) 16%,transparent)}
-.graview-bar-mid{display:flex;flex:1 1 auto;min-width:0}
+[data-switch-drawn=icons] .graview-bar-face{padding:0 8px}
+[data-switch-drawn=icons] .graview-bar-face span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.graview-bar-mid{display:flex;flex:1 100 0;min-width:0}
+.graview-bar-mid[data-place]{min-width:9em;flex-basis:auto}
 .graview-bar-place-at{position:relative;display:inline-flex;min-width:0;max-width:100%}
 .graview-bar-place{gap:6px;height:30px;max-width:100%;padding:0 8px;border:1px solid transparent;border-radius:8px;font-size:.875rem;font-weight:600}
 .graview-bar-face:hover,.graview-bar-place:hover{border-color:var(--graview-edge);color:var(--graview-ink)}
@@ -152,23 +182,25 @@ const BAR_CSS = `
 .graview-bar-item[aria-current]{font-weight:600;background:color-mix(in srgb,var(--graview-accent) 14%,transparent)}
 .graview-bar-mark{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:14px;height:1.3em;color:var(--graview-ink-muted)}
 .graview-bar :focus-visible{outline:2px solid var(--graview-accent);outline-offset:1px}
-.graview-bar-tools{display:flex;align-items:center;flex:0 0 auto;gap:8px;margin-left:auto}
-.graview-bar-find{display:flex;width:15rem;min-width:7rem;flex:0 1 auto}
-.graview-bar-find-open{display:none}
+.graview-bar-tools{display:contents}
+.graview-bar-tools>*{margin-left:-8px}
+.graview-bar-tools>:is(.graview-bar-find,.graview-bar-find-open){margin-left:auto}
+.graview-bar-find{position:relative;display:flex;min-width:7.5rem;flex:0 600 9rem;--graview-bar-find-end:3.25em}
+.graview-bar-find-slot{display:flex;flex:1;min-width:0}
+.graview-bar-find-keys{position:absolute;right:10px;line-height:30px;pointer-events:none;font-size:.75rem;color:var(--graview-ink-faint)}
+.graview-bar-find:is(:focus-within,:has(input:not(:placeholder-shown))){flex-basis:16rem;--graview-bar-find-end:10px}
+:is(:focus-within,:has(input:not(:placeholder-shown)))>.graview-bar-find-keys,.graview-bar-find-open{display:none}
 .graview-bar-line{display:flex;flex:0 0 auto;padding:6px 8px;background:var(--graview-ground);border-bottom:1px solid var(--graview-edge);font-family:var(--graview-font-body,system-ui)}
 .graview-bar-line .graview-bar-place{height:auto;min-height:32px}
 .graview-bar-line .graview-bar-place-words{white-space:normal}
-@container (max-width: 639px){
+@media (pointer:coarse){.graview-bar-find-keys{display:none}}
+@container graview-bar (max-width: ${BAR_PHONE - 1}px){
 .graview-bar-row{gap:10px;padding:0 12px}
 .graview-bar-app{max-width:none;flex:1 1 auto}
-.graview-bar-app-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-.graview-bar-face{padding:0 8px}
-.graview-bar-face span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .graview-bar-mid,.graview-bar-find{display:none}
 .graview-bar-find-open{display:inline-flex}
 .graview-bar[data-finding] :is(.graview-bar-app,.graview-bar-faces,.graview-bar-find-open){display:none}
-.graview-bar[data-finding] .graview-bar-tools{flex:1 1 auto}
-.graview-bar[data-finding] .graview-bar-find{display:flex;flex:1 1 auto;width:auto;min-width:0}
+.graview-bar[data-finding] .graview-bar-find{display:flex;flex:1 1 auto;min-width:0}
 }`;
 
 /** A tool's own box: one size, square, its name in words for whoever cannot see the mark. */
@@ -213,6 +245,7 @@ export function AppBar({
   description,
   findBox,
   onFind,
+  switch: switchForm = "words",
 }: {
   readonly brand: Brand | undefined;
   readonly name: string;
@@ -236,21 +269,43 @@ export function AppBar({
   readonly findBox?: ReactNode;
   /** Told where the bar keeps the Find box, for the face under it (`BarFindContext`). */
   readonly onFind?: (find: BarFind | null) => void;
+  /**
+   * How the switch is drawn: `"words"` (the default) says "Scene" and
+   * "Pages" beside their marks where the bar has room and draws the marks
+   * alone where it is narrow; `"icons"` draws the marks alone at every
+   * width. Either way the words are the buttons' names and their titles.
+   */
+  readonly switch?: BarSwitch;
 }) {
   const bar = useRef<HTMLElement>(null);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   const [compact, setCompact] = useState(false);
   const [finding, setFinding] = useState(false);
+  // Whether the switch's words fit beside everything else the row holds (`roomForWords`).
+  const [roomy, setRoomy] = useState(true);
+  const weigh = useCallback(() => {
+    const element = bar.current;
+    const room = element ? roomForWords(element) : null;
+    if (room !== null) setRoomy(room);
+  }, []);
   useLayoutEffect(() => {
     const element = bar.current;
     if (!element) return;
-    const read = () => setCompact(element.getBoundingClientRect().width < 640);
+    const read = () => {
+      const width = element.getBoundingClientRect().width;
+      setCompact(width < BAR_PHONE);
+      // What hangs from the bar as wide as it (a phone's Find sheet) is told the bar's width, not the screen's.
+      element.style.setProperty("--graview-bar-width", `${Math.round(width)}px`);
+      weigh();
+    };
     read();
+    // The brand's face, once it has come, is wider or narrower than the one the row was first weighed in.
+    void (typeof document === "undefined" ? undefined : document.fonts?.ready.then(weigh));
     if (typeof ResizeObserver === "undefined") return;
     const watch = new ResizeObserver(read);
     watch.observe(element);
     return () => watch.disconnect();
-  }, []);
+  }, [weigh]);
   const told = useRef(onFind);
   told.current = onFind;
   useLayoutEffect(() => {
@@ -283,6 +338,10 @@ export function AppBar({
   // The place control stands on Pages: in the bar on a desk, as the page's first line on a phone.
   const onPages = !faces || faces.pages.current;
   const placeControl = onPages && places.length > 0 ? <PlaceControl places={places} current={current} reach={reach} /> : null;
+  // What the row holds changed — the name, the place, the face — so the words may fit now, or no longer.
+  useLayoutEffect(weigh, [weigh, name, current, onPages, compact, switchForm, places.length]);
+  // The marks alone on a phone's bar, when asked, or when the words do not fit.
+  const drawn: BarSwitch = switchForm === "icons" || !roomy || compact ? "icons" : "words";
   return (
     <>
       <header
@@ -311,8 +370,10 @@ export function AppBar({
               </Home>
             </Heading>
           </div>
-          {faces ? <FaceSwitch faces={faces} /> : null}
-          <div className="graview-bar-mid">{compact ? null : placeControl}</div>
+          {faces ? <FaceSwitch faces={faces} form={switchForm} drawn={drawn} /> : null}
+          <div className="graview-bar-mid" {...(!compact && placeControl ? { "data-place": "" } : {})}>
+            {compact ? null : placeControl}
+          </div>
           <div className="graview-bar-tools">
             {find ? (
               <>
@@ -329,7 +390,6 @@ export function AppBar({
                   <FindMark />
                 </button>
                 <div
-                  ref={setSlot}
                   className="graview-bar-find"
                   data-testid="app-find"
                   onBlur={(event) => {
@@ -348,7 +408,13 @@ export function AppBar({
                     else escaping.current = false;
                   }}
                 >
-                  {findBox}
+                  {/* The face's box goes here; the shortcut is said over its end until it is used. */}
+                  <div ref={setSlot} className="graview-bar-find-slot">
+                    {findBox}
+                  </div>
+                  <span className="graview-bar-find-keys" data-testid="app-find-keys" aria-hidden="true">
+                    {findKeys()}
+                  </span>
                 </div>
               </>
             ) : null}
@@ -372,7 +438,7 @@ export function AppBar({
  * drawn pressed. Choosing the scene draws it under the bar; choosing the
  * pages goes back to the page you were on.
  */
-function FaceSwitch({ faces }: { readonly faces: BarFaces }) {
+function FaceSwitch({ faces, form, drawn }: { readonly faces: BarFaces; readonly form: BarSwitch; readonly drawn: BarSwitch }) {
   const face = (which: "scene" | "pages") => {
     const one = faces[which];
     return (
@@ -392,11 +458,52 @@ function FaceSwitch({ faces }: { readonly faces: BarFaces }) {
     );
   };
   return (
-    <div className="graview-bar-faces" role="group" aria-label={`${faces.scene.label} or ${faces.pages.label}`} data-testid="app-faces">
+    <div className="graview-bar-faces" role="group" aria-label={`${faces.scene.label} or ${faces.pages.label}`} data-testid="app-faces" data-switch={form} data-switch-drawn={drawn}>
       {face("scene")}
       {face("pages")}
     </div>
   );
+}
+
+/**
+ * WHETHER THE SWITCH'S WORDS FIT (the switch left to say its words where
+ * there is room). The row is weighed as it is drawn: the room the middle
+ * has past what the place wants (its words, up to 14em; none on the
+ * scene), less what Find has given up; none when the app's name has
+ * wrapped. The words fit when that room holds them — the words
+ * drawn already, or their width to come when the marks are drawn alone —
+ * so the switch never flips back and forth at one width. Not weighed while
+ * Find is in use (it is drawn wide then), on a phone's bar (the marks
+ * alone), or where nothing is laid out (null).
+ */
+function roomForWords(header: HTMLElement): boolean | null {
+  const faces = header.querySelector<HTMLElement>(".graview-bar-faces");
+  const mid = header.querySelector<HTMLElement>(".graview-bar-mid");
+  const find = header.querySelector<HTMLElement>(".graview-bar-find");
+  if (!faces || !mid || find?.matches(":focus-within")) return null;
+  const row = header.getBoundingClientRect().width;
+  if (row < BAR_PHONE) return null;
+  // The words to come, beside each mark: the word, the gap before it, and the button's wider padding.
+  const words = [...faces.querySelectorAll<HTMLElement>(".graview-bar-face span")].reduce((sum, span) => sum + span.scrollWidth + 10, 0);
+  const place = mid.querySelector<HTMLElement>(".graview-bar-place-words");
+  const em = place ? Number.parseFloat(getComputedStyle(place).fontSize) || 14 : 0;
+  // The place's words, its chevron, its gap, padding and frame: up to 14em of them.
+  const wanted = place ? Math.min(place.scrollWidth + 34, 14 * em) : 0;
+  let spare = mid.getBoundingClientRect().width - wanted;
+  if (find && find.getBoundingClientRect().width > 0) {
+    const basis = Number.parseFloat(getComputedStyle(find).flexBasis);
+    if (Number.isFinite(basis)) spare -= Math.max(0, basis - find.getBoundingClientRect().width);
+  }
+  // The app's name on two lines has given its room already: no room for the words.
+  const name = header.querySelector(".graview-bar-app-name");
+  if (name && name.getBoundingClientRect().height > Number.parseFloat(getComputedStyle(name).lineHeight) * 1.5) return false;
+  return faces.getAttribute("data-switch-drawn") === "icons" ? spare >= words + 2 : spare >= -1;
+}
+
+/** Find's shortcut as the keyboard says it: ⌘K on a Mac (and an iPad's keyboard), Ctrl K elsewhere. */
+function findKeys(): string {
+  const platform = typeof navigator === "undefined" ? "" : (navigator.platform ?? "");
+  return /Mac|iPhone|iPad|iPod/.test(platform) ? "⌘K" : "Ctrl K";
 }
 
 /** The scene's mark: a plot of the city, seen from above at an angle. */

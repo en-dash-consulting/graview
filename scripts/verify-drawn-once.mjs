@@ -205,8 +205,14 @@ function measure({ partId, goal, summary, topics }) {
   const nameBox = district ? rect(district) : null;
   const faceBox = face ? rect(face) : null;
   const words = district?.firstElementChild ?? district;
+  // A district whose count is said twice: "4 4 tied".
+  const countedTwice = [...document.querySelectorAll(".graview-kind-face")].filter(shown).flatMap((face) => {
+    const said = leaves(face).map((leaf) => (leaf.textContent ?? "").trim());
+    return said.filter((text) => /^\d+$/.test(text) && said.includes(`${text} tied`)).map((text) => `${text} ${text} tied`);
+  });
   return {
     stop: window.__handle.where().stop,
+    countedTwice,
     frame: frameBox,
     barBottom: Math.round(barBottom),
     window: { width: innerWidth, height: innerHeight },
@@ -325,6 +331,10 @@ report.checks.thePanelSaysTheRelationInItsWords = {
 report.checks.theDistrictsBoxHoldsItsName = {
   seen: brief(seen.drawnOnce, ["district"]),
   ok: all(seen.drawnOnce, (one) => one.district !== null && one.district.inside && one.district.lines === 1),
+};
+report.checks.aDistrictSaysItsCountOnce = {
+  seen: brief(seen.drawnOnce, ["countedTwice"]),
+  ok: all(seen.drawnOnce, (one) => one.countedTwice.length === 0),
 };
 report.checks.aLongerNameStaysInItsBoxAndIsWholeOnHover = {
   seen: seen.longName,

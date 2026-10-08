@@ -49,7 +49,7 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
   const address = props.routing === "address";
   const base = props.basePath === undefined ? {} : { basePath: props.basePath };
   // Where the routed face is, said by its router, for the bar's tabs; and the bar's presses, taken by it (FR-131).
-  const { at, steering } = useSteering(address && typeof window !== "undefined" ? `${pathWithin(window.location.pathname, props.basePath) ?? "/"}${window.location.search}` : (props.path ?? "/"));
+  const { at, steering, steer } = useSteering(address && typeof window !== "undefined" ? `${pathWithin(window.location.pathname, props.basePath) ?? "/"}${window.location.search}` : (props.path ?? "/"));
   const [barFind, setBarFind] = useState<BarFind | null>(null);
   // No scene here, so no overview among the places (FR-132).
   const places = barPlaces({ store: store as never, principal: props.principal, views: views as never });
@@ -74,8 +74,8 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
                   heading={props.heading ?? 2}
                   places={places}
                   current={barPlaceAt(places, at)}
-                  home={{ ...(address ? { href: addressOf("/", base) } : {}), go: () => steering.go.current?.("/"), current: at.split("?")[0] === "/" }}
-                  reach={{ ...(address ? { href: (path: string) => addressOf(path, base) } : {}), go: (place) => steering.go.current?.(place.path) }}
+                  home={{ ...(address ? { href: addressOf("/", base) } : {}), go: () => steer("/"), current: at.split("?")[0] === "/" }}
+                  reach={{ ...(address ? { href: (path: string) => addressOf(path, base) } : {}), go: (place) => steer(place.path) }}
                   standing={standing}
                   hostActions={props.hostActions}
                   onFind={setBarFind}

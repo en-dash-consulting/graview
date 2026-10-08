@@ -105,11 +105,13 @@ export const BUDGETS = [
     // drawn with the bar. Measured at 505_406 / 173_425.
     // Raised when the scene and the pages became two things on the bar and the places left it (FR-137, FR-138): the switch, the
     // place control and its grouped list with their marks, the phone's place line, 2_047 / 595 more. Measured at 507_453 / 174_021.
+    // Raised when the bar came to fit its box (it lays itself out by its own width; Find a small box that says its shortcut,
+    // the switch's marks alone when its words do not fit): about 2.4 kB minified, all of it the bar. Measured at 510_795 / 175_163.
     // Raised when a selected record came to be drawn once (FR-141–FR-143): a declared page read for what it already says and
-    // the record page leaving that out, a district name fitted to its box, a relation said in its words: 3_791 / 1_280 more.
-    // Measured at 512_239 / 175_657.
-    minified: 512_350,
-    gzipped: 175_750,
+    // the record page leaving that out, a district name fitted to its box and its count said once, a relation said in its
+    // words: 4_120 / 1_425 more. Measured at 514_915 / 176_588.
+    minified: 515_050,
+    gzipped: 176_700,
     load: "first",
   },
   {
@@ -236,8 +238,10 @@ export const BUDGETS = [
     // Raised when the scene and the pages became two things on the bar and the places left it (FR-137, FR-138), and an app with a
     // home view came to open on it (FR-136): the bar's switch and place list, and the embed's opening, 3_369 / 992 more.
     // Measured at 696_617 / 180_207.
-    minified: 697_900,
-    gzipped: 180_750,
+    // Raised when the bar came to fit its box (it lays itself out by its own width; Find a small box that says its shortcut,
+    // the switch's marks alone when its words do not fit): about 2.4 kB minified, all of it the bar. Measured at 699_612 / 181_352.
+    minified: 700_900,
+    gzipped: 181_900,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -349,10 +353,12 @@ export const BUDGETS = [
     // the home view no longer is: 1_680 / 623 more. Measured at 1_550_975 / 468_183.
     // Raised with the review after 0.1.16: the profile's choices drawn by one style rather than three, the app's line under
     // a home's own headline, the narrow embed's way back to the pages. Measured at 1_551_385 / 468_484.
+    // Raised when the bar came to fit its box: about 2.7 kB minified, all of it the bar and the scene's Find hung from it.
+    // Measured at 1_554_099 / 469_514.
     // Raised with the pages face alone for a selected record drawn once (FR-141–FR-143), with the page at the head of the
-    // scene's record and the record in focus held to its box: 4_239 / 1_346 more. Measured at 1_555_753 / 469_952.
-    minified: 1_555_850,
-    gzipped: 470_050,
+    // scene's record and the record in focus held to its box: 4_687 / 1_505 more. Measured at 1_558_786 / 471_019.
+    minified: 1_558_900,
+    gzipped: 471_150,
     load: "all",
   },
   {
@@ -401,9 +407,11 @@ export const BUDGETS = [
     // Measured at 1_516_402 / 453_220.
     // Raised with every face's for the review after 0.1.16, and the document's own part of it the studio loads: arrange-pages
     // reading the scene's old word, and the check's warning for a switch that says one word twice. Measured at 1_517_351 / 453_603.
-    // Raised with every face's for a selected record drawn once (FR-141–FR-143): 4_244 / 1_343 more. Measured at 1_521_724 / 455_066.
-    minified: 1_521_850,
-    gzipped: 455_150,
+    // Raised when the bar came to fit its box: about 2.7 kB minified, all of it the bar and the scene's Find hung from it.
+    // Measured at 1_520_065 / 454_627.
+    // Raised with every face's for a selected record drawn once (FR-141–FR-143): 4_692 / 1_506 more. Measured at 1_524_757 / 456_133.
+    minified: 1_524_900,
+    gzipped: 456_250,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

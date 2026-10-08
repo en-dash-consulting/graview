@@ -562,6 +562,13 @@ export function registerDefaultViews<S extends AnySchema>(
         ? 0
         : members.filter((member) => reached.includes(member.id) && !chosen.has(member.id)).length;
       /*
+       * THE COUNT SAID ONCE (FR-143). A district every member of which the
+       * selection reaches read "4 4 tied": the count, then the count again.
+       * With nothing broken in it, the tie IS the count — "4 tied", or
+       * "2 of 4 tied" — in one place.
+       */
+      const saysTied = tied > 0 && !trouble;
+      /*
        * WHAT THE WORDS FOUND HERE. With a search open, a district with hits
        * is lit and says how many; one with none recedes. Pressing the count
        * descends into the district already narrowed by the same words — the
@@ -819,7 +826,7 @@ export function registerDefaultViews<S extends AnySchema>(
             <span
               style={{
                 fontVariantNumeric: "tabular-nums",
-                color: trouble ? "var(--graview-warn)" : "var(--graview-ink-faint)",
+                color: trouble ? "var(--graview-warn)" : saysTied ? "var(--graview-accent)" : "var(--graview-ink-faint)",
               }}
             >
               {/*
@@ -828,7 +835,7 @@ export function registerDefaultViews<S extends AnySchema>(
                 * it is — the same honesty the actions strip gives when a kind
                 * has no verbs.
                 */}
-              {members.length === 0 ? "none yet" : `${trouble ? `${flag} ` : ""}${members.length}`}
+              {members.length === 0 ? "none yet" : saysTied ? (tied === members.length ? `${tied} tied` : `${tied} of ${members.length} tied`) : `${trouble ? `${flag} ` : ""}${members.length}`}
             </span>
             {/*
               * What sits BEHIND THE HORIZON, advertised where it dropped
@@ -870,7 +877,7 @@ export function registerDefaultViews<S extends AnySchema>(
               </button>
             ) : null}
             {/* The selection's reach into this kind, said in place. */}
-            {tied > 0 ? (
+            {tied > 0 && !saysTied ? (
               <span style={{ fontSize: "0.8125rem", color: "var(--graview-accent)" }}>
                 {tied} tied
               </span>

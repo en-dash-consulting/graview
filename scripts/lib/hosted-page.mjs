@@ -82,9 +82,21 @@ export const FACE_DOORS = {
  * under its 595. The review after 0.1.16 (a long word cut on the switch,
  * the narrow embed's way back to the pages) paid for itself by saying an
  * address within the app one way in the embed where it said it four:
- * 583 814 bytes (570.1 KB).
+ * 583 814 bytes (570.1 KB). The bar fitting its box (it lays itself out
+ * by its own width: Find a small box that says its shortcut, the switch's
+ * marks alone when its words do not fit, the name broken only between
+ * words, a phone's Find list the bar's width) took it from 583 896 to
+ * 586 278 bytes (572.5 KB), 2 382 more: the bar's rules 1.0 KB, weighing
+ * whether the switch's words fit 0.9 KB, the shortcut and the slot 0.5 KB.
+ * The claim rises by that: 572.8 KB, which leaves Cloud's shell 22.2 KB
+ * under its 595. FR-140 (a pick kept for the routed face until it listens)
+ * took it to 586 433 bytes (572.7 KB), inside the claim.
+ * A selected record drawn once (FR-141–FR-143: a relation said in its words,
+ * the record in focus held to its box, drawn with the scene) took it to
+ * 586 619 bytes (572.9 KB), 186 more; the claim rises by that with 0.1 KB
+ * of room: 573.0 KB, which leaves Cloud's shell 22.0 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 570.5 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 573.0 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -160,12 +172,17 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * and opening on the home view (FR-136) took it to 538 735 bytes
  * (526.1 KB), 3 578 more, the same bar and embed as the page that compiles
  * (above); the claim rises by that: 526.5 KB. The review after 0.1.16
- * left it at 539 006 bytes (526.4 KB), as above. A selected record drawn once
- * (FR-141–FR-143) took it from 539 090 to 539 276 bytes (526.6 KB), 186
- * more: a relation said in its words and the record in focus held to its
- * box, drawn with the scene. The claim rises by that: 526.7 KB.
+ * left it at 539 006 bytes (526.4 KB), as above. The bar fitting its box
+ * took it from 539 090 to 541 472 bytes (528.8 KB), the same 2 382 as the
+ * page that compiles (above); the claim rises by that: 528.8 KB. A pick
+ * made the moment the place list opens going to its place (FR-140: a path
+ * asked for before the routed face listens, kept for it) took it to
+ * 541 627 bytes (528.9 KB), 155 more; the claim rises by that: 529.0 KB.
+ * A selected record drawn once (FR-141–FR-143), the same 186 bytes as the
+ * page that compiles, took it to 541 813 bytes (529.1 KB); the claim rises
+ * by that with 0.1 KB of room: 529.2 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 526.7 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 529.2 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

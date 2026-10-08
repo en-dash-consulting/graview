@@ -81,21 +81,52 @@ export interface PagesAppProps<S extends AnySchema> {
 
 /** What a bar drawn outside the router holds of it: where the face is, and the way to move it. */
 export interface PagesSteering {
-  /** Set by the face to its own way of going to a path, basename-relative. */
+  /** Set by the face to its own way of going to a path, basename-relative; none while no face is listening. */
   readonly go: { current: ((path: string) => void) | undefined };
   /** Told the path, basename-relative with its search, each time the face moves. */
   readonly at: (path: string) => void;
+  /**
+   * A path the bar was asked for before the face was listening (FR-140):
+   * the face goes there as it arrives.
+   */
+  readonly pending?: { current: string | undefined };
 }
 
-/** Says where the face is to a bar above it, and takes its presses. */
+/**
+ * Says where the face is to a bar above it, and takes its presses.
+ *
+ * THE PLACE LIST IS READY WHEN IT OPENS (FR-140). The bar can be pressed
+ * before this face is listening — Pages pressed, the list opened and an
+ * entry chosen while the face is still being fetched — so a path asked for
+ * meanwhile waits in `pending` and is gone to as the face arrives; and a
+ * face that leaves takes its way of going with it, so a pick is never
+ * handed to a router that is gone.
+ */
 function Steered({ steering }: { readonly steering: PagesSteering }) {
   const location = useLocation();
   const navigate = useNavigate();
   const here = `${location.pathname}${location.search}`;
-  steering.go.current = (path) => {
-    if (path !== here) navigate(path);
-  };
   useLayoutEffect(() => steering.at(here), [here, steering]);
+  /*
+   * The way of going is handed over once this face is on the page, never
+   * while it renders: a render the face's fetch suspends is never
+   * committed, and a router that was never committed ignores a navigation —
+   * the pick was handed to it and lost.
+   */
+  useLayoutEffect(() => {
+    const go = (path: string) => {
+      if (path !== here) navigate(path);
+    };
+    steering.go.current = go;
+    const asked = steering.pending?.current;
+    if (asked !== undefined) {
+      steering.pending!.current = undefined;
+      go(asked);
+    }
+    return () => {
+      if (steering.go.current === go) steering.go.current = undefined;
+    };
+  }, [here, navigate, steering]);
   return null;
 }
 
