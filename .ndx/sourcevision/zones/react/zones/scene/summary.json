@@ -1,8 +1,9 @@
 {
   "id": "react/scene",
   "name": "Scene",
-  "description": "8 files, primarily TypeScript",
+  "description": "10 files, primarily TypeScript",
   "files": [
+    "packages/react/src/drawn.ts",
     "packages/react/src/edge-signs.tsx",
     "packages/react/src/picking.ts",
     "packages/react/src/rails.ts",
@@ -10,17 +11,20 @@
     "packages/react/src/scene-hand.ts",
     "packages/react/src/scene-helpers.tsx",
     "packages/react/src/scene-root.tsx",
+    "packages/react/src/seat-marks.tsx",
     "packages/react/src/view-host.tsx"
   ],
   "entryPoints": [
+    "packages/react/src/drawn.ts",
     "packages/react/src/picking.ts",
     "packages/react/src/rails.ts",
     "packages/react/src/scene-helpers.tsx",
     "packages/react/src/scene-root.tsx",
+    "packages/react/src/seat-marks.tsx",
     "packages/react/src/view-host.tsx"
   ],
-  "cohesion": 0.44,
-  "coupling": 0.56,
-  "fileCount": 8,
-  "lineCount": 2679
+  "cohesion": 0.43,
+  "coupling": 0.57,
+  "fileCount": 10,
+  "lineCount": 2970
 }

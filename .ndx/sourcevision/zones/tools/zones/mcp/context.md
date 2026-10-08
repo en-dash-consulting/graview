@@ -8,13 +8,13 @@ Zone: Mcp (`tools/mcp`)
 Files: 3, Cohesion: 0.40, Coupling: 0.60
 Description: 3 files, primarily TypeScript
 Entry points: packages/tools/src/mcp-http.ts, packages/tools/src/mcp-protocol.ts, packages/tools/src/mcp-stdio.ts
-Lines: 284
+Lines: 287
 
 </zone>
 
 <files>
 
-packages/tools/src/mcp-http.ts (TypeScript, 131 lines, source)
+packages/tools/src/mcp-http.ts (TypeScript, 134 lines, source)
 packages/tools/src/mcp-protocol.ts (TypeScript, 88 lines, source)
 packages/tools/src/mcp-stdio.ts (TypeScript, 65 lines, source)
 

@@ -1,4 +1,4 @@
-import type { AnyGraphNode, GraphReader } from "../index.js";
+import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import type { AnySchema } from "../schema/schema.js";
 import { counted, isCurrent, labelOf, readableFields } from "../schema/define-node.js";
 import { walkKinds } from "../schema/path.js";

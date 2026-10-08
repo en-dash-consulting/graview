@@ -1,5 +1,4 @@
-import { MONTHS, addDays, addMonths, daysBetween, daysFrom, iso, startOfMonth, startOfWeek } from "./calendar-dates.js";
-import { longDay } from "./calendar-drawing.js";
+import { MONTHS, addDays, addMonths, daysBetween, daysFrom, iso, longDay, startOfMonth, startOfWeek } from "./calendar-dates.js";
 import type { CalendarGrain, CalendarHorizon, CalendarRange, PlacedEntry } from "./calendar-options.js";
 
 /**

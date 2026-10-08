@@ -5,11 +5,11 @@
 <zone>
 
 Zone: Apps (`apps`)
-Files: 83, Cohesion: 1.00, Coupling: 0.00
+Files: 99, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 83 files, mostly components and entry points; entry points app.ts, survey.ts, app.ts; imported by Apps and Apps.
-Entry points: apps/launcher/src/domain/app.ts, apps/launcher/src/domain/survey.ts, apps/rota/src/domain/app.ts, apps/rota/src/domain/policy.ts, apps/rota/src/ui/app.tsx, apps/rota/src/ui/views.tsx, apps/seedbed/src/domain/app.ts, apps/seedbed/src/domain/chapters.ts, apps/seedbed/src/domain/schema.ts, apps/seedbed/src/ui/app.tsx, apps/seedbed/src/ui/design.tsx, apps/seedbed/src/ui/pages.tsx, apps/seedbed/src/ui/views.tsx
-Lines: 13313
+Description: 99 files, mostly components and schemas; entry points app.ts, survey.ts, app.ts; imported by Apps and Apps.
+Entry points: apps/launcher/src/domain/app.ts, apps/launcher/src/domain/survey.ts, apps/rota/src/domain/app.ts, apps/rota/src/domain/policy.ts, apps/rota/src/ui/app.tsx, apps/rota/src/ui/views.tsx, apps/seedbed/src/domain/app.ts, apps/seedbed/src/domain/chapters.ts, apps/seedbed/src/domain/schema.ts, apps/seedbed/src/ui/app.tsx, apps/seedbed/src/ui/design.tsx, apps/seedbed/src/ui/pages.tsx, apps/seedbed/src/ui/views.tsx, apps/todo/src/domain/app.ts, apps/todo/src/domain/policy.ts, apps/todo/src/domain/schema.ts, apps/todo/src/ui/app.tsx, apps/todo/src/ui/views.tsx
+Lines: 16244
 
 </zone>
 
@@ -62,7 +62,7 @@ apps/promo/src/scenes/OutroBumper.tsx (TypeScript, 21 lines, source)
 apps/promo/src/scenes/RelationsDemo.tsx (TypeScript, 763 lines, source)
 apps/promo/src/scenes/SettleLockup.tsx (TypeScript, 99 lines, source)
 apps/promo/src/theme.ts (TypeScript, 80 lines, source)
-apps/rota/src/domain/app.ts (TypeScript, 138 lines, source)
+apps/rota/src/domain/app.ts (TypeScript, 162 lines, source)
 apps/rota/src/domain/brand.ts (TypeScript, 68 lines, source)
 apps/rota/src/domain/installation.ts (TypeScript, 21 lines, source)
 apps/rota/src/domain/invariants.ts (TypeScript, 119 lines, source)
@@ -75,7 +75,7 @@ apps/rota/src/main.tsx (TypeScript, 111 lines, source)
 apps/rota/src/open.ts (TypeScript, 88 lines, source)
 apps/rota/src/ui/app.tsx (TypeScript, 181 lines, source)
 apps/rota/src/ui/design.tsx (TypeScript, 1001 lines, source)
-apps/rota/src/ui/views.tsx (TypeScript, 101 lines, source)
+apps/rota/src/ui/views.tsx (TypeScript, 27 lines, source)
 apps/rota/src/ui/when.ts (TypeScript, 16 lines, source)
 apps/seedbed/src/domain/app.ts (TypeScript, 88 lines, source)
 apps/seedbed/src/domain/brand.ts (TypeScript, 39 lines, source)
@@ -92,12 +92,28 @@ apps/seedbed/src/ui/design.tsx (TypeScript, 779 lines, source)
 apps/seedbed/src/ui/garden-map.tsx (TypeScript, 414 lines, source)
 apps/seedbed/src/ui/pages.tsx (TypeScript, 96 lines, source)
 apps/seedbed/src/ui/views.tsx (TypeScript, 183 lines, source)
+apps/seedbed/vite.site.config.ts (TypeScript, 69 lines, config)
 apps/spike/scripts/introspect4.mjs (JavaScript, 55 lines, build)
 apps/spike/scripts/run-probe.mjs (JavaScript, 94 lines, build)
 apps/spike/scripts/run-restrictions.mjs (JavaScript, 151 lines, build)
 apps/spike/scripts/run-spike.mjs (JavaScript, 346 lines, build)
 apps/spike/src/main.ts (TypeScript, 20 lines, source)
 apps/spike/src/three-planes.ts (TypeScript, 162 lines, source)
+apps/spike/vite.config.ts (TypeScript, 21 lines, config)
+apps/todo/src/domain/app.ts (TypeScript, 109 lines, source)
+apps/todo/src/domain/brand.ts (TypeScript, 41 lines, source)
+apps/todo/src/domain/installation.ts (TypeScript, 29 lines, source)
+apps/todo/src/domain/invariants.ts (TypeScript, 166 lines, source)
+apps/todo/src/domain/mutations.ts (TypeScript, 231 lines, source)
+apps/todo/src/domain/policy.ts (TypeScript, 31 lines, source)
+apps/todo/src/domain/schema.ts (TypeScript, 188 lines, source)
+apps/todo/src/index.ts (TypeScript, 5 lines, source)
+apps/todo/src/main.tsx (TypeScript, 128 lines, source)
+apps/todo/src/open.ts (TypeScript, 61 lines, source)
+apps/todo/src/ui/app.tsx (TypeScript, 264 lines, source)
+apps/todo/src/ui/design.tsx (TypeScript, 1138 lines, source)
+apps/todo/src/ui/views.tsx (TypeScript, 472 lines, source)
+apps/todo/src/ui/when.ts (TypeScript, 28 lines, source)
 
 </files>
 
@@ -263,9 +279,9 @@ Internal:
   apps/rota/src/ui/app.tsx → apps/rota/src/ui/when.ts {today}
   apps/rota/src/ui/design.tsx → apps/rota/src/domain/schema.ts {RotaSchema}
   apps/rota/src/ui/design.tsx → apps/rota/src/ui/when.ts {today}
+  apps/rota/src/ui/views.tsx → apps/rota/src/domain/app.ts {rotaApp}
   apps/rota/src/ui/views.tsx → apps/rota/src/domain/schema.ts {rotaSchema}
   apps/rota/src/ui/views.tsx → apps/rota/src/domain/schema.ts {RotaSchema}
-  apps/rota/src/ui/views.tsx → apps/rota/src/ui/when.ts {EXAMPLE_TODAY}
   apps/seedbed/src/domain/app.ts → apps/seedbed/src/domain/brand.ts {seedbedBrand}
   apps/seedbed/src/domain/app.ts → apps/seedbed/src/domain/invariants.ts {seedbedInvariants}
   apps/seedbed/src/domain/app.ts → apps/seedbed/src/domain/mutations.ts {seedbedMutations}
@@ -314,10 +330,52 @@ Internal:
   apps/seedbed/src/ui/views.tsx → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
   apps/seedbed/src/ui/views.tsx → apps/seedbed/src/ui/garden-map.tsx {GardenMapView}
   apps/spike/src/main.ts → apps/spike/src/three-planes.ts {mountThreePlanes}
+  apps/todo/src/domain/app.ts → apps/todo/src/domain/brand.ts {thingsBrand}
+  apps/todo/src/domain/app.ts → apps/todo/src/domain/installation.ts {todoInstallation}
+  apps/todo/src/domain/app.ts → apps/todo/src/domain/invariants.ts {todoInvariants}
+  apps/todo/src/domain/app.ts → apps/todo/src/domain/mutations.ts {todoMutations}
+  apps/todo/src/domain/app.ts → apps/todo/src/domain/policy.ts {todoPolicy}
+  apps/todo/src/domain/app.ts → apps/todo/src/domain/schema.ts {todoSchema}
+  apps/todo/src/domain/app.ts → apps/todo/src/domain/schema.ts {TodoSchema}
+  apps/todo/src/domain/invariants.ts → apps/todo/src/domain/schema.ts {todoSchema}
+  apps/todo/src/domain/invariants.ts → apps/todo/src/domain/schema.ts {TodoSchema}
+  apps/todo/src/domain/mutations.ts → apps/todo/src/domain/schema.ts {todoSchema}
+  apps/todo/src/domain/mutations.ts → apps/todo/src/domain/schema.ts {TodoSchema}
+  apps/todo/src/domain/policy.ts → apps/todo/src/domain/installation.ts {todoInstallation}
+  apps/todo/src/domain/policy.ts → apps/todo/src/domain/mutations.ts {todoMutations}
+  apps/todo/src/domain/schema.ts → apps/todo/src/domain/installation.ts {todoInstallation}
+  apps/todo/src/index.ts → apps/todo/src/domain/app.ts {*}
+  apps/todo/src/index.ts → apps/todo/src/domain/brand.ts {*}
+  apps/todo/src/index.ts → apps/todo/src/domain/invariants.ts {*}
+  apps/todo/src/index.ts → apps/todo/src/domain/mutations.ts {*}
+  apps/todo/src/index.ts → apps/todo/src/domain/schema.ts {*}
+  apps/todo/src/main.tsx → apps/todo/src/domain/app.ts {todoApp}
+  apps/todo/src/main.tsx → apps/todo/src/domain/brand.ts {thingsBrand}
+  apps/todo/src/main.tsx → apps/todo/src/open.ts {open}
+  apps/todo/src/main.tsx → apps/todo/src/ui/app.tsx {today, TodoApp}
+  apps/todo/src/main.tsx → apps/todo/src/ui/design.tsx {thingsDesign}
+  apps/todo/src/main.tsx → apps/todo/src/ui/views.tsx {todoViews}
+  apps/todo/src/open.ts → apps/todo/src/domain/app.ts {todoApp}
+  apps/todo/src/open.ts → apps/todo/src/domain/brand.ts {thingsBrand}
+  apps/todo/src/open.ts → apps/todo/src/domain/schema.ts {TodoSchema}
+  apps/todo/src/open.ts → apps/todo/src/ui/app.tsx {openingSeat, today}
+  apps/todo/src/ui/app.tsx → apps/todo/src/domain/app.ts {createTodoStore, todoApp}
+  apps/todo/src/ui/app.tsx → apps/todo/src/domain/app.ts {TodoStore}
+  apps/todo/src/ui/app.tsx → apps/todo/src/domain/brand.ts {thingsBrand}
+  apps/todo/src/ui/app.tsx → apps/todo/src/domain/schema.ts {TodoSchema}
+  apps/todo/src/ui/app.tsx → apps/todo/src/ui/views.tsx {todoViews}
+  apps/todo/src/ui/app.tsx → apps/todo/src/ui/when.ts {EXAMPLE_TODAY, today}
+  apps/todo/src/ui/app.tsx → apps/todo/src/ui/when.ts {today}
+  apps/todo/src/ui/design.tsx → apps/todo/src/domain/schema.ts {TodoSchema}
+  apps/todo/src/ui/design.tsx → apps/todo/src/ui/when.ts {today}
+  apps/todo/src/ui/views.tsx → apps/todo/src/domain/app.ts {todoApp}
+  apps/todo/src/ui/views.tsx → apps/todo/src/domain/schema.ts {todoSchema}
+  apps/todo/src/ui/views.tsx → apps/todo/src/domain/schema.ts {TodoSchema}
 
 Incoming (other zones → this zone):
   ← tests: tests/a-refusal-never-names-your-own-role.test.ts → apps/rota/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/rota/src/ui/app.tsx; tests/the-desk-points-at-the-moved-ports.test.ts → apps/launcher/src/domain/survey.ts
-  ← tests-apps: apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/app.ts; apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/survey.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/app.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/policy.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/app.tsx; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/views.tsx
+  ← tests-apps: apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/app.ts; apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/survey.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/app.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/policy.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/app.tsx; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/views.tsx; apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/domain/app.ts; apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/domain/schema.ts; apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/ui/app.tsx; apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/ui/views.tsx; apps/todo/tests/integration/who-is-here.test.tsx → apps/todo/src/domain/app.ts; apps/todo/tests/integration/who-is-here.test.tsx → apps/todo/src/domain/policy.ts; apps/todo/tests/integration/who-is-here.test.tsx → apps/todo/src/ui/app.tsx
+  ← tests-core-document: packages/core/tests/document/a-page-is-handed-a-compiled-app.test.ts → apps/rota/src/domain/app.ts; packages/core/tests/document/a-page-is-handed-a-compiled-app.test.ts → apps/seedbed/src/domain/app.ts; packages/core/tests/document/a-page-is-handed-a-compiled-app.test.ts → apps/todo/src/domain/app.ts
   ← tests-seedbed-integration: apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/app.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/schema.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/app.tsx; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/views.tsx
   ← tests-studio-unit: packages/studio/tests/unit/rewrite-before-writing.test.tsx → apps/seedbed/src/domain/app.ts; packages/studio/tests/unit/written-in-place.test.ts → apps/seedbed/src/domain/app.ts
 
@@ -325,35 +383,34 @@ Incoming (other zones → this zone):
 
 <findings>
 
-[observation] [warning] 13 entry points — wide API surface, consider consolidating exports
+[observation] [warning] 18 entry points — wide API surface, consider consolidating exports
 [observation] [info] High cohesion (1) — files are tightly interconnected
-[observation] [info] Files in zone "Apps" appear to serve unrelated purposes; a maintainer would expect them in separate modules.
-[suggestion] [info] Zone "apps" has files across 18 directories — consider consolidating under a dedicated directory
+[suggestion] [info] Zone "apps" has files across 23 directories — consider consolidating under a dedicated directory
 
 </findings>
 
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- 13 entry points — wide API surface, consider consolidating exports
-- Files in zone "Apps" appear to serve unrelated purposes; a maintainer would expect them in separate modules.
-- Zone "apps" has files across 18 directories — consider consolidating under a dedicated directory
-- [call graph] 481 internal calls, 0 outgoing, 47 incoming (cohesion: 1, coupling: 0)
+- 18 entry points — wide API surface, consider consolidating exports
+- Zone "apps" has files across 23 directories — consider consolidating under a dedicated directory
+- [call graph] 570 internal calls, 0 outgoing, 65 incoming (cohesion: 1, coupling: 0)
 
 </insights>
 
 <sub-zones>
 
-This zone has 7 sub-zone(s):
+This zone has 8 sub-zone(s):
 
-- **Discography Scripts** (`apps/discography`): 4 files, cohesion 0, coupling 0
+- **Discography Build Scripts** (`apps/discography`): 6 files, cohesion 0, coupling 0
 - **App Launcher** (`apps/launcher`): 9 files, cohesion 1, coupling 0
-- **Promo** (`apps/promo`): 32 files, cohesion 1, coupling 0
+- **Promotional Interface** (`apps/promo`): 32 files, cohesion 1, coupling 0
   - Has 6 nested sub-zone(s)
 - **Rota** (`apps/rota`): 15 files, cohesion 1, coupling 0
 - **Seedbed** (`apps/seedbed`): 15 files, cohesion 1, coupling 0
 - **Feature Validation Spike** (`apps/spike`): 4 files, cohesion 1, coupling 0
 - **Spike Scripts** (`apps/spike-scripts`): 4 files, cohesion 0, coupling 0
+- **Todo** (`apps/todo`): 14 files, cohesion 1, coupling 0
 
 Detailed sub-zone context available in `zones/{sub-zone-id}/context.md`
 

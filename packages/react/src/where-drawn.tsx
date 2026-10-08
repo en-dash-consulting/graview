@@ -2,7 +2,7 @@ import { aggregateId, isAggregateId, kindCardId, kindOfCard, kindsOfAggregate } 
 import { mixStyles, styleFor } from "@graview/render";
 import type { Manner } from "./activity.js";
 import type { DrawnBox } from "./context.js";
-import type { SceneNode } from "./scene-root.js";
+import type { SceneNode } from "./scene-node.js";
 
 /** How each manner reads in words, for the tooltip and for assistive tech. */
 export const WHO: Record<Manner, string> = {

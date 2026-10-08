@@ -8,16 +8,16 @@ Zone: Tool Integration Layer (`tools/agent`)
 Files: 4, Cohesion: 0.42, Coupling: 0.58
 Description: 4 files, primarily TypeScript
 Entry points: packages/tools/src/agent/adapters.ts, packages/tools/src/agent/tools.ts, packages/tools/src/agent/untrusted.ts, packages/tools/src/cli.ts
-Lines: 1407
+Lines: 1523
 
 </zone>
 
 <files>
 
-packages/tools/src/agent/adapters.ts (TypeScript, 91 lines, source)
-packages/tools/src/agent/tools.ts (TypeScript, 722 lines, source)
-packages/tools/src/agent/untrusted.ts (TypeScript, 146 lines, source)
-packages/tools/src/cli.ts (TypeScript, 448 lines, source)
+packages/tools/src/agent/adapters.ts (TypeScript, 97 lines, source)
+packages/tools/src/agent/tools.ts (TypeScript, 805 lines, source)
+packages/tools/src/agent/untrusted.ts (TypeScript, 168 lines, source)
+packages/tools/src/cli.ts (TypeScript, 453 lines, source)
 
 </files>
 
@@ -25,7 +25,7 @@ packages/tools/src/cli.ts (TypeScript, 448 lines, source)
 
 Internal:
   packages/tools/src/agent/adapters.ts → packages/tools/src/agent/tools.ts {ToolAnnotations, ToolRuntime}
-  packages/tools/src/agent/tools.ts → packages/tools/src/agent/untrusted.ts {authorship, markGraph, markHits, markNode}
+  packages/tools/src/agent/tools.ts → packages/tools/src/agent/untrusted.ts {authorship, markComputed, markGraph, markHits, markNode}
   packages/tools/src/cli.ts → packages/tools/src/agent/adapters.ts {createMcpAdapter}
   packages/tools/src/cli.ts → packages/tools/src/agent/tools.ts {createToolRuntime}
 

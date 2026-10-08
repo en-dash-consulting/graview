@@ -1,44 +1,34 @@
 {
   "id": "core-graph",
   "name": "Core Graph",
-  "description": "12 files, mostly utilities and types; entry points primitives.ts, types.ts, types.ts; imports Core; imported by Core and Core Persistence.",
+  "description": "7 files, mostly utilities and types; entry points types.ts, define-mutation.ts, integrity.ts; imports Core Invariants and Core; imported by Core and Core Document.",
   "files": [
-    "packages/core/src/cli/check/fields.ts",
     "packages/core/src/graph/diff.ts",
     "packages/core/src/graph/graph.ts",
-    "packages/core/src/graph/primitives.ts",
     "packages/core/src/graph/tracked.ts",
     "packages/core/src/graph/types.ts",
     "packages/core/src/integrity.ts",
     "packages/core/src/mutations/define-mutation.ts",
-    "packages/core/src/mutations/derive-edits.ts",
-    "packages/core/src/mutations/types.ts",
-    "packages/core/src/ops/served.ts",
     "packages/core/src/validate-graph.ts"
   ],
   "entryPoints": [
-    "packages/core/src/cli/check/fields.ts",
     "packages/core/src/graph/diff.ts",
     "packages/core/src/graph/graph.ts",
-    "packages/core/src/graph/primitives.ts",
     "packages/core/src/graph/tracked.ts",
     "packages/core/src/graph/types.ts",
     "packages/core/src/integrity.ts",
     "packages/core/src/mutations/define-mutation.ts",
-    "packages/core/src/mutations/derive-edits.ts",
-    "packages/core/src/mutations/types.ts",
-    "packages/core/src/ops/served.ts",
     "packages/core/src/validate-graph.ts"
   ],
-  "cohesion": 0.33,
-  "coupling": 0.67,
-  "fileCount": 12,
-  "lineCount": 2740,
+  "cohesion": 0.27,
+  "coupling": 0.73,
+  "fileCount": 7,
+  "lineCount": 1591,
   "riskMetrics": {
-    "cohesion": 0.33,
-    "coupling": 0.67,
-    "riskScore": 0.6699999999999999,
-    "riskLevel": "critical",
+    "cohesion": 0.27,
+    "coupling": 0.73,
+    "riskScore": 0.73,
+    "riskLevel": "catastrophic",
     "failsThreshold": true
   }
 }

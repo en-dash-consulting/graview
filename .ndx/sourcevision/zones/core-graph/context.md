@@ -5,27 +5,22 @@
 <zone>
 
 Zone: Core Graph (`core-graph`)
-Files: 12, Cohesion: 0.33, Coupling: 0.67
-Risk: critical (score: 0.67)
-Description: 12 files, mostly utilities and types; entry points primitives.ts, types.ts, types.ts; imports Core; imported by Core and Core Persistence.
-Entry points: packages/core/src/cli/check/fields.ts, packages/core/src/graph/diff.ts, packages/core/src/graph/graph.ts, packages/core/src/graph/primitives.ts, packages/core/src/graph/tracked.ts, packages/core/src/graph/types.ts, packages/core/src/integrity.ts, packages/core/src/mutations/define-mutation.ts, packages/core/src/mutations/derive-edits.ts, packages/core/src/mutations/types.ts, packages/core/src/ops/served.ts, packages/core/src/validate-graph.ts
-Lines: 2740
+Files: 7, Cohesion: 0.27, Coupling: 0.73
+Risk: catastrophic (score: 0.73)
+Description: 7 files, mostly utilities and types; entry points types.ts, define-mutation.ts, integrity.ts; imports Core Invariants and Core; imported by Core and Core Document.
+Entry points: packages/core/src/graph/diff.ts, packages/core/src/graph/graph.ts, packages/core/src/graph/tracked.ts, packages/core/src/graph/types.ts, packages/core/src/integrity.ts, packages/core/src/mutations/define-mutation.ts, packages/core/src/validate-graph.ts
+Lines: 1591
 
 </zone>
 
 <files>
 
-packages/core/src/cli/check/fields.ts (TypeScript, 257 lines, source)
 packages/core/src/graph/diff.ts (TypeScript, 95 lines, source)
 packages/core/src/graph/graph.ts (TypeScript, 524 lines, source)
-packages/core/src/graph/primitives.ts (TypeScript, 86 lines, source)
 packages/core/src/graph/tracked.ts (TypeScript, 79 lines, source)
 packages/core/src/graph/types.ts (TypeScript, 0 lines, source)
 packages/core/src/integrity.ts (TypeScript, 243 lines, source)
-packages/core/src/mutations/define-mutation.ts (TypeScript, 247 lines, source)
-packages/core/src/mutations/derive-edits.ts (TypeScript, 297 lines, source)
-packages/core/src/mutations/types.ts (TypeScript, 150 lines, source)
-packages/core/src/ops/served.ts (TypeScript, 399 lines, source)
+packages/core/src/mutations/define-mutation.ts (TypeScript, 287 lines, source)
 packages/core/src/validate-graph.ts (TypeScript, 363 lines, source)
 
 </files>
@@ -33,72 +28,60 @@ packages/core/src/validate-graph.ts (TypeScript, 363 lines, source)
 <imports>
 
 Internal:
-  packages/core/src/cli/check/fields.ts → packages/core/src/mutations/derive-edits.ts {editVia, fieldWriters, subjectKindsOf, unwrittenFields}
   packages/core/src/graph/diff.ts → packages/core/src/graph/types.ts {edgeId}
   packages/core/src/graph/diff.ts → packages/core/src/graph/types.ts {AnyGraphNode, GraphEdge, GraphNodeBase}
   packages/core/src/graph/graph.ts → packages/core/src/graph/diff.ts {diffSnapshots}
   packages/core/src/graph/graph.ts → packages/core/src/graph/diff.ts {GraphDiff}
-  packages/core/src/graph/graph.ts → packages/core/src/graph/primitives.ts {isUnset}
-  packages/core/src/graph/graph.ts → packages/core/src/graph/primitives.ts {Primitive}
   packages/core/src/graph/graph.ts → packages/core/src/graph/types.ts {edgeId}
   packages/core/src/graph/graph.ts → packages/core/src/graph/types.ts {GraphEdge, GraphReader, GraphSnapshot}
-  packages/core/src/graph/primitives.ts → packages/core/src/graph/types.ts {AnyGraphNode, GraphEdge}
   packages/core/src/graph/tracked.ts → packages/core/src/graph/types.ts {GraphEdge, GraphNodeBase, GraphReader}
   packages/core/src/integrity.ts → packages/core/src/graph/graph.ts {Graph}
   packages/core/src/integrity.ts → packages/core/src/graph/types.ts {edgeId}
   packages/core/src/integrity.ts → packages/core/src/graph/types.ts {GraphSnapshot}
   packages/core/src/mutations/define-mutation.ts → packages/core/src/graph/graph.ts {GraphError, MissingRecordError}
   packages/core/src/mutations/define-mutation.ts → packages/core/src/graph/graph.ts {Graph}
-  packages/core/src/mutations/define-mutation.ts → packages/core/src/graph/primitives.ts {Primitive}
   packages/core/src/mutations/define-mutation.ts → packages/core/src/graph/tracked.ts {TrackedReader}
   packages/core/src/mutations/define-mutation.ts → packages/core/src/graph/types.ts {edgeId}
   packages/core/src/mutations/define-mutation.ts → packages/core/src/graph/types.ts {GraphEdge, GraphReader}
-  packages/core/src/mutations/define-mutation.ts → packages/core/src/mutations/types.ts {AnyMutationDefinition, MutationContext, MutationDefinition, MutationDefinitionSpec}
-  packages/core/src/mutations/derive-edits.ts → packages/core/src/mutations/types.ts {AnyMutationDefinition}
-  packages/core/src/mutations/types.ts → packages/core/src/graph/primitives.ts {Primitive}
-  packages/core/src/mutations/types.ts → packages/core/src/graph/types.ts {GraphEdge, GraphReader}
-  packages/core/src/ops/served.ts → packages/core/src/graph/primitives.ts {isUnset, UNSET}
-  packages/core/src/ops/served.ts → packages/core/src/graph/primitives.ts {Primitive}
-  packages/core/src/ops/served.ts → packages/core/src/graph/types.ts {edgeId}
-  packages/core/src/ops/served.ts → packages/core/src/graph/types.ts {AnyGraphNode, GraphEdge}
   packages/core/src/validate-graph.ts → packages/core/src/graph/graph.ts {Graph}
-  packages/core/src/validate-graph.ts → packages/core/src/graph/primitives.ts {UNSET}
-  packages/core/src/validate-graph.ts → packages/core/src/graph/primitives.ts {Primitive}
   packages/core/src/validate-graph.ts → packages/core/src/graph/types.ts {edgeId}
   packages/core/src/validate-graph.ts → packages/core/src/graph/types.ts {AnyGraphNode, GraphEdge, GraphSnapshot}
 
 Outgoing (this zone → other zones):
-  → core: packages/core/src/cli/check/fields.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/fields.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/cli/check/fields.ts → packages/core/src/permissions/policy.ts; packages/core/src/cli/check/fields.ts → packages/core/src/schema/define-node.ts; packages/core/src/cli/check/fields.ts → packages/core/src/schema/schema.ts; packages/core/src/graph/graph.ts → packages/core/src/schema/define-node.ts; packages/core/src/graph/graph.ts → packages/core/src/schema/schema.ts; packages/core/src/graph/graph.ts → packages/core/src/schema/schema.ts; packages/core/src/integrity.ts → packages/core/src/ops/types.ts; packages/core/src/integrity.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/mutations/words.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/define-node.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/types.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/zod.ts; packages/core/src/mutations/types.ts → packages/core/src/schema/schema.ts; packages/core/src/ops/served.ts → packages/core/src/ops/types.ts; packages/core/src/ops/served.ts → packages/core/src/ops/writers.ts; packages/core/src/ops/served.ts → packages/core/src/permissions/policy.ts; packages/core/src/ops/served.ts → packages/core/src/permissions/types.ts; packages/core/src/validate-graph.ts → packages/core/src/invariants/engine.ts; packages/core/src/validate-graph.ts → packages/core/src/invariants/types.ts; packages/core/src/validate-graph.ts → packages/core/src/schema/define-node.ts; packages/core/src/validate-graph.ts → packages/core/src/schema/schema.ts
+  → core: packages/core/src/graph/graph.ts → packages/core/src/schema/define-node.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/mutations/words.ts; packages/core/src/validate-graph.ts → packages/core/src/schema/define-node.ts
+  → core-document: packages/core/src/graph/graph.ts → packages/core/src/graph/primitives.ts; packages/core/src/graph/graph.ts → packages/core/src/graph/primitives.ts; packages/core/src/integrity.ts → packages/core/src/ops/types.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/graph/primitives.ts; packages/core/src/validate-graph.ts → packages/core/src/graph/primitives.ts; packages/core/src/validate-graph.ts → packages/core/src/graph/primitives.ts
+  → core-invariants: packages/core/src/graph/graph.ts → packages/core/src/schema/schema.ts; packages/core/src/graph/graph.ts → packages/core/src/schema/schema.ts; packages/core/src/integrity.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/schema/schema.ts; packages/core/src/validate-graph.ts → packages/core/src/invariants/engine.ts; packages/core/src/validate-graph.ts → packages/core/src/invariants/types.ts; packages/core/src/validate-graph.ts → packages/core/src/schema/schema.ts
+  → core-mutations: packages/core/src/mutations/define-mutation.ts → packages/core/src/mutations/types.ts
 
 Incoming (other zones → this zone):
   ← capabilities-formats: packages/core/src/formats.ts → packages/core/src/graph/types.ts
-  ← core: packages/core/src/app.ts → packages/core/src/graph/primitives.ts; packages/core/src/app.ts → packages/core/src/graph/types.ts; packages/core/src/app.ts → packages/core/src/mutations/types.ts; packages/core/src/beginning.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/beginning.ts → packages/core/src/mutations/types.ts; packages/core/src/bind.ts → packages/core/src/mutations/types.ts; packages/core/src/cli/check/context.ts → packages/core/src/mutations/types.ts; packages/core/src/cli/check/policy.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/describe.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/docs.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/conformance/index.ts → packages/core/src/integrity.ts; packages/core/src/conformance/index.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/extend.ts → packages/core/src/mutations/types.ts; packages/core/src/index.ts → packages/core/src/graph/diff.ts; packages/core/src/index.ts → packages/core/src/graph/diff.ts; packages/core/src/index.ts → packages/core/src/graph/graph.ts; packages/core/src/index.ts → packages/core/src/graph/graph.ts; packages/core/src/index.ts → packages/core/src/graph/primitives.ts; packages/core/src/index.ts → packages/core/src/graph/primitives.ts; packages/core/src/index.ts → packages/core/src/graph/tracked.ts; packages/core/src/index.ts → packages/core/src/graph/types.ts; packages/core/src/index.ts → packages/core/src/graph/types.ts; packages/core/src/index.ts → packages/core/src/integrity.ts; packages/core/src/index.ts → packages/core/src/integrity.ts; packages/core/src/index.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/index.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/index.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/index.ts → packages/core/src/mutations/types.ts; packages/core/src/index.ts → packages/core/src/validate-graph.ts; packages/core/src/index.ts → packages/core/src/validate-graph.ts; packages/core/src/installation.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/installation.ts → packages/core/src/mutations/types.ts; packages/core/src/invariants/engine.ts → packages/core/src/graph/graph.ts; packages/core/src/invariants/types.ts → packages/core/src/graph/types.ts; packages/core/src/labels.ts → packages/core/src/graph/diff.ts; packages/core/src/labels.ts → packages/core/src/graph/graph.ts; packages/core/src/mutations/words.ts → packages/core/src/graph/graph.ts; packages/core/src/ops/log.ts → packages/core/src/graph/graph.ts; packages/core/src/ops/log.ts → packages/core/src/graph/types.ts; packages/core/src/ops/revisions.ts → packages/core/src/graph/primitives.ts; packages/core/src/ops/types.ts → packages/core/src/graph/primitives.ts; packages/core/src/ops/types.ts → packages/core/src/mutations/types.ts; packages/core/src/ops/undo.ts → packages/core/src/graph/graph.ts; packages/core/src/ops/withheld.ts → packages/core/src/graph/primitives.ts; packages/core/src/ops/withheld.ts → packages/core/src/graph/primitives.ts; packages/core/src/ops/withheld.ts → packages/core/src/graph/types.ts; packages/core/src/ops/withheld.ts → packages/core/src/ops/served.ts; packages/core/src/ops/withheld.ts → packages/core/src/ops/served.ts; packages/core/src/ops/writers.ts → packages/core/src/graph/primitives.ts; packages/core/src/ops/writers.ts → packages/core/src/graph/primitives.ts; packages/core/src/permissions/policy.ts → packages/core/src/mutations/types.ts; packages/core/src/refusal.ts → packages/core/src/graph/graph.ts; packages/core/src/schema/json-schema.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/seen.ts → packages/core/src/graph/diff.ts; packages/core/src/seen.ts → packages/core/src/graph/primitives.ts; packages/core/src/seen.ts → packages/core/src/graph/types.ts; packages/core/src/seen.ts → packages/core/src/ops/served.ts; packages/core/src/seen.ts → packages/core/src/ops/served.ts; packages/core/src/store.ts → packages/core/src/graph/diff.ts; packages/core/src/store.ts → packages/core/src/graph/diff.ts; packages/core/src/store.ts → packages/core/src/graph/graph.ts; packages/core/src/store.ts → packages/core/src/graph/primitives.ts; packages/core/src/store.ts → packages/core/src/graph/primitives.ts; packages/core/src/store.ts → packages/core/src/graph/types.ts; packages/core/src/store.ts → packages/core/src/integrity.ts; packages/core/src/store.ts → packages/core/src/integrity.ts; packages/core/src/store.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/store.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/store.ts → packages/core/src/mutations/types.ts; packages/core/src/store.ts → packages/core/src/validate-graph.ts; packages/core/src/store.ts → packages/core/src/validate-graph.ts; packages/core/src/testing.ts → packages/core/src/graph/types.ts
-  ← core-cli: packages/core/src/cli/check.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/fields.ts
-  ← core-document: packages/core/src/document/graview-template.ts → packages/core/src/graph/primitives.ts
+  ← core: packages/core/src/document/describe-coverage.ts → packages/core/src/graph/types.ts; packages/core/src/labels.ts → packages/core/src/graph/diff.ts; packages/core/src/labels.ts → packages/core/src/graph/graph.ts; packages/core/src/mutations/words.ts → packages/core/src/graph/graph.ts
+  ← core-document: packages/core/src/app.ts → packages/core/src/graph/types.ts; packages/core/src/conformance/index.ts → packages/core/src/integrity.ts; packages/core/src/graph/primitives.ts → packages/core/src/graph/types.ts; packages/core/src/index.ts → packages/core/src/graph/diff.ts; packages/core/src/index.ts → packages/core/src/graph/diff.ts; packages/core/src/index.ts → packages/core/src/graph/graph.ts; packages/core/src/index.ts → packages/core/src/graph/graph.ts; packages/core/src/index.ts → packages/core/src/graph/tracked.ts; packages/core/src/index.ts → packages/core/src/graph/types.ts; packages/core/src/index.ts → packages/core/src/graph/types.ts; packages/core/src/index.ts → packages/core/src/integrity.ts; packages/core/src/index.ts → packages/core/src/integrity.ts; packages/core/src/index.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/index.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/index.ts → packages/core/src/validate-graph.ts; packages/core/src/index.ts → packages/core/src/validate-graph.ts; packages/core/src/installation.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/ops/log.ts → packages/core/src/graph/graph.ts; packages/core/src/ops/log.ts → packages/core/src/graph/types.ts; packages/core/src/ops/served.ts → packages/core/src/graph/types.ts; packages/core/src/ops/served.ts → packages/core/src/graph/types.ts; packages/core/src/ops/undo.ts → packages/core/src/graph/graph.ts; packages/core/src/ops/withheld.ts → packages/core/src/graph/types.ts; packages/core/src/refusal.ts → packages/core/src/graph/graph.ts; packages/core/src/schema/json-schema.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/seen.ts → packages/core/src/graph/diff.ts; packages/core/src/seen.ts → packages/core/src/graph/types.ts; packages/core/src/store.ts → packages/core/src/graph/diff.ts; packages/core/src/store.ts → packages/core/src/graph/diff.ts; packages/core/src/store.ts → packages/core/src/graph/graph.ts; packages/core/src/store.ts → packages/core/src/graph/types.ts; packages/core/src/store.ts → packages/core/src/integrity.ts; packages/core/src/store.ts → packages/core/src/integrity.ts; packages/core/src/store.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/store.ts → packages/core/src/validate-graph.ts; packages/core/src/store.ts → packages/core/src/validate-graph.ts; packages/core/src/testing.ts → packages/core/src/graph/types.ts
+  ← core-invariants: packages/core/src/invariants/engine.ts → packages/core/src/graph/graph.ts; packages/core/src/invariants/types.ts → packages/core/src/graph/types.ts
+  ← core-mutations: packages/core/src/columns.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/mutations/types.ts → packages/core/src/graph/types.ts
   ← core-persistence: packages/core/src/persistence/memory.ts → packages/core/src/graph/types.ts; packages/core/src/persistence/sql.ts → packages/core/src/graph/types.ts; packages/core/src/persistence/types.ts → packages/core/src/graph/types.ts
   ← core-sync: packages/core/src/sync/engine.ts → packages/core/src/graph/types.ts
+  ← document: packages/core/src/document/blocks.ts → packages/core/src/graph/types.ts; packages/core/src/document/computed-values.ts → packages/core/src/graph/types.ts; packages/core/src/document/expr/evaluate.ts → packages/core/src/graph/types.ts; packages/core/src/document/template.ts → packages/core/src/graph/types.ts
+  ← findings: packages/core/src/document/graview-template.ts → packages/core/src/graph/types.ts
   ← tests-core-unit: packages/core/tests/unit/a-store-proves-its-own-fold.test.ts → packages/core/src/integrity.ts; packages/core/tests/unit/an-id-is-the-name-folded.test.ts → packages/core/src/mutations/define-mutation.ts
 
 </imports>
 
 <findings>
 
-[observation] [warning] 12 entry points — wide API surface, consider consolidating exports
-[observation] [warning] High coupling (0.67) — 26 imports target "core"
-[observation] [warning] Low cohesion (0.33) — files are loosely related, consider splitting this zone
-[suggestion] [info] Zone "core-graph" has files across 5 directories — consider consolidating under a dedicated directory
-[suggestion] [warning] Zone "Core Graph" is fragile and needs refactoring before new feature development — cohesion: 0.33, coupling: 0.67 (risk score: 0.67)
-[move-file] [info] File "packages/core/src/cli/check/fields.ts" belongs with Core Cli: 1 of its cross-zone imports go there — consider moving it to packages/core/src/cli/check/
+[observation] [warning] High coupling (0.73) — 7 imports target "core-invariants"
+[observation] [warning] Low cohesion (0.27) — files are loosely related, consider splitting this zone
+[pattern] [warning] core-graph and core-document are mutually dependent (core-document→core-graph: 37, core-graph→core-document: 6): core-graph cannot be treated as a foundational layer core-document simply builds on, since a handful of its own files reach back up into core-document — isolating those 6 imports (likely type-only) would let core-graph become acyclic.
+[suggestion] [critical] Zone "Core Graph" is severely fragile and needs immediate architectural intervention — cohesion: 0.27, coupling: 0.73 (risk score: 0.73)
 
 </findings>
 
 <insights>
 
-- Low cohesion (0.33) — files are loosely related, consider splitting this zone
-- High coupling (0.67) — 26 imports target "core"
-- 12 entry points — wide API surface, consider consolidating exports
-- Zone "core-graph" has files across 5 directories — consider consolidating under a dedicated directory
-- File "packages/core/src/cli/check/fields.ts" belongs with Core Cli: 1 of its cross-zone imports go there — consider moving it to packages/core/src/cli/check/
-- [call graph] 112 internal calls, 22 outgoing, 50 incoming (cohesion: 0.84, coupling: 0.16)
+- Low cohesion (0.27) — files are loosely related, consider splitting this zone
+- High coupling (0.73) — 7 imports target "core-invariants"
+- [call graph] 72 internal calls, 6 outgoing, 42 incoming (cohesion: 0.92, coupling: 0.08)
+- core-document → core-graph (37 imports) versus core-graph → core-document (6 imports) is a true circular dependency, not a simple high-coupling-in-one-direction pattern — the 6 back-imports are what prevent core-graph from being a clean dependency-free layer under core-document.
+- define-mutation.ts is filed under src/mutations/ but is classified into the core-graph zone — its directory and its zone disagree, indicating mutation definition is really graph-internal logic rather than a separate mutations layer.
 
 </insights>

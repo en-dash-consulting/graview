@@ -1,0 +1,28 @@
+{
+  "id": "core-invariants",
+  "name": "Core Invariants",
+  "description": "4 files, mostly utilities and types; entry points types.ts, schema.ts, bind.ts; imports Core and Core Graph; imported by Core and Core Graph.",
+  "files": [
+    "packages/core/src/bind.ts",
+    "packages/core/src/invariants/engine.ts",
+    "packages/core/src/invariants/types.ts",
+    "packages/core/src/schema/schema.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/bind.ts",
+    "packages/core/src/invariants/engine.ts",
+    "packages/core/src/invariants/types.ts",
+    "packages/core/src/schema/schema.ts"
+  ],
+  "cohesion": 0.13,
+  "coupling": 0.87,
+  "fileCount": 4,
+  "lineCount": 530,
+  "riskMetrics": {
+    "cohesion": 0.13,
+    "coupling": 0.87,
+    "riskScore": 0.87,
+    "riskLevel": "catastrophic",
+    "failsThreshold": true
+  }
+}

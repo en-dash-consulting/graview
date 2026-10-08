@@ -1,26 +1,34 @@
 {
   "id": "primitives/src",
   "name": "Src",
-  "description": "7 files, primarily TypeScript",
+  "description": "12 files, primarily TypeScript",
   "files": [
-    "packages/primitives/src/arrange-bar.tsx",
-    "packages/primitives/src/default-view.tsx",
-    "packages/primitives/src/lens/arranging.tsx",
+    "packages/primitives/src/app-bar.tsx",
+    "packages/primitives/src/app-title.tsx",
+    "packages/primitives/src/bar-panes-door.ts",
+    "packages/primitives/src/figure.tsx",
+    "packages/primitives/src/frame.ts",
+    "packages/primitives/src/markup.ts",
     "packages/primitives/src/pages.ts",
-    "packages/primitives/src/relation-key.tsx",
-    "packages/primitives/src/spec-css.ts",
-    "packages/primitives/src/spec-views.tsx"
+    "packages/primitives/src/popover.ts",
+    "packages/primitives/src/profile.tsx",
+    "packages/primitives/src/workbench/back-out.tsx",
+    "packages/primitives/src/workbench/descent.ts",
+    "packages/primitives/src/workbench/standing.tsx"
   ],
   "entryPoints": [
-    "packages/primitives/src/arrange-bar.tsx",
-    "packages/primitives/src/default-view.tsx",
-    "packages/primitives/src/lens/arranging.tsx",
-    "packages/primitives/src/relation-key.tsx",
-    "packages/primitives/src/spec-css.ts",
-    "packages/primitives/src/spec-views.tsx"
+    "packages/primitives/src/app-bar.tsx",
+    "packages/primitives/src/app-title.tsx",
+    "packages/primitives/src/figure.tsx",
+    "packages/primitives/src/frame.ts",
+    "packages/primitives/src/markup.ts",
+    "packages/primitives/src/pages.ts",
+    "packages/primitives/src/profile.tsx",
+    "packages/primitives/src/workbench/back-out.tsx",
+    "packages/primitives/src/workbench/standing.tsx"
   ],
-  "cohesion": 0.38,
-  "coupling": 0.63,
-  "fileCount": 7,
-  "lineCount": 1343
+  "cohesion": 0.57,
+  "coupling": 0.43,
+  "fileCount": 12,
+  "lineCount": 1667
 }

@@ -1,19 +1,19 @@
 {
   "id": "tools/src-providers",
-  "name": "Src Providers",
+  "name": "Decision Logic Providers",
   "description": "3 files, primarily TypeScript",
   "files": [
-    "packages/tools/src/derive.ts",
-    "packages/tools/src/providers/insight.ts",
-    "packages/tools/src/usage.ts"
+    "packages/tools/src/decide.ts",
+    "packages/tools/src/loop.ts",
+    "packages/tools/src/providers/jev.ts"
   ],
   "entryPoints": [
-    "packages/tools/src/derive.ts",
-    "packages/tools/src/providers/insight.ts",
-    "packages/tools/src/usage.ts"
+    "packages/tools/src/decide.ts",
+    "packages/tools/src/loop.ts",
+    "packages/tools/src/providers/jev.ts"
   ],
-  "cohesion": 0.31,
-  "coupling": 0.69,
+  "cohesion": 0.22,
+  "coupling": 0.78,
   "fileCount": 3,
-  "lineCount": 584
+  "lineCount": 618
 }

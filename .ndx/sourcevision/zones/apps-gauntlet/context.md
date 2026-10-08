@@ -9,13 +9,13 @@ Files: 10, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: 10 files, mostly schemas and components; entry points app.ts, schema.ts, seats.ts; imported by Tests and Apps.
 Entry points: apps/gauntlet/src/domain/app.ts, apps/gauntlet/src/domain/schema.ts, apps/gauntlet/src/ui/seats.ts
-Lines: 978
+Lines: 963
 
 </zone>
 
 <files>
 
-apps/gauntlet/src/domain/app.ts (TypeScript, 47 lines, source)
+apps/gauntlet/src/domain/app.ts (TypeScript, 54 lines, source)
 apps/gauntlet/src/domain/brand.ts (TypeScript, 26 lines, source)
 apps/gauntlet/src/domain/invariants.ts (TypeScript, 56 lines, source)
 apps/gauntlet/src/domain/mutations.ts (TypeScript, 362 lines, source)
@@ -24,7 +24,7 @@ apps/gauntlet/src/domain/schema.ts (TypeScript, 224 lines, source)
 apps/gauntlet/src/main.tsx (TypeScript, 81 lines, source)
 apps/gauntlet/src/ui/app.tsx (TypeScript, 67 lines, source)
 apps/gauntlet/src/ui/seats.ts (TypeScript, 27 lines, source)
-apps/gauntlet/src/ui/views.tsx (TypeScript, 36 lines, source)
+apps/gauntlet/src/ui/views.tsx (TypeScript, 14 lines, source)
 
 </files>
 
@@ -50,12 +50,13 @@ Internal:
   apps/gauntlet/src/ui/app.tsx → apps/gauntlet/src/domain/schema.ts {GauntletSchema}
   apps/gauntlet/src/ui/app.tsx → apps/gauntlet/src/ui/seats.ts {openingSeat, SEATS}
   apps/gauntlet/src/ui/app.tsx → apps/gauntlet/src/ui/views.tsx {views}
+  apps/gauntlet/src/ui/views.tsx → apps/gauntlet/src/domain/app.ts {gauntletApp}
   apps/gauntlet/src/ui/views.tsx → apps/gauntlet/src/domain/schema.ts {gauntletSchema}
-  apps/gauntlet/src/ui/views.tsx → apps/gauntlet/src/domain/schema.ts {GauntletSchema}
 
 Incoming (other zones → this zone):
   ← tests: tests/a-refusal-never-names-your-own-role.test.ts → apps/gauntlet/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/gauntlet/src/ui/seats.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/gauntlet/src/domain/app.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/gauntlet/src/ui/seats.ts
   ← tests-apps: apps/gauntlet/tests/the-awkward-shapes.test.ts → apps/gauntlet/src/domain/app.ts; apps/gauntlet/tests/the-awkward-shapes.test.ts → apps/gauntlet/src/domain/schema.ts; apps/gauntlet/tests/the-awkward-shapes.test.ts → apps/gauntlet/src/ui/seats.ts
+  ← tests-core-document: packages/core/tests/document/a-page-is-handed-a-compiled-app.test.ts → apps/gauntlet/src/domain/app.ts
 
 </imports>
 

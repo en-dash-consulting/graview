@@ -1,25 +1,31 @@
 {
   "id": "primitives/src-workbench",
   "name": "Src Workbench",
-  "description": "7 files, primarily TypeScript",
+  "description": "10 files, primarily TypeScript",
   "files": [
-    "packages/primitives/src/find.tsx",
-    "packages/primitives/src/installation.tsx",
-    "packages/primitives/src/places.tsx",
+    "packages/primitives/src/chat.tsx",
+    "packages/primitives/src/companion.tsx",
+    "packages/primitives/src/quick-relations.tsx",
+    "packages/primitives/src/relation-key.tsx",
+    "packages/primitives/src/seat.tsx",
     "packages/primitives/src/shell.tsx",
+    "packages/primitives/src/subject.ts",
     "packages/primitives/src/workbench/agent-seat.tsx",
     "packages/primitives/src/workbench/following.tsx",
     "packages/primitives/src/workbench/index.tsx"
   ],
   "entryPoints": [
-    "packages/primitives/src/find.tsx",
-    "packages/primitives/src/installation.tsx",
-    "packages/primitives/src/places.tsx",
+    "packages/primitives/src/chat.tsx",
+    "packages/primitives/src/companion.tsx",
+    "packages/primitives/src/quick-relations.tsx",
+    "packages/primitives/src/relation-key.tsx",
+    "packages/primitives/src/seat.tsx",
     "packages/primitives/src/shell.tsx",
+    "packages/primitives/src/subject.ts",
     "packages/primitives/src/workbench/index.tsx"
   ],
-  "cohesion": 0.38,
-  "coupling": 0.63,
-  "fileCount": 7,
-  "lineCount": 1299
+  "cohesion": 0.44,
+  "coupling": 0.56,
+  "fileCount": 10,
+  "lineCount": 2961
 }

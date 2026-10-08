@@ -8,7 +8,7 @@ Zone: Tests Packages (`tests-packages`)
 Files: 5, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: Non-source files in packages: door.test.ts, a-separator-is-not-a-command.test.ts, frame-plan.test.ts (+2 more)
-Lines: 734
+Lines: 737
 
 </zone>
 
@@ -18,7 +18,7 @@ packages/create-graview/tests/unit/door.test.ts (TypeScript, 30 lines, test)
 packages/graview/tests/unit/a-separator-is-not-a-command.test.ts (TypeScript, 21 lines, test)
 packages/render/tests/unit/frame-plan.test.ts (TypeScript, 296 lines, test)
 packages/render/tests/unit/pointer-router.test.ts (TypeScript, 104 lines, test)
-packages/skills/tests/unit/skills.test.ts (TypeScript, 283 lines, test)
+packages/skills/tests/unit/skills.test.ts (TypeScript, 286 lines, test)
 
 </files>
 

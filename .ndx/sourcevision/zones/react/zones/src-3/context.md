@@ -5,28 +5,28 @@
 <zone>
 
 Zone: Src 3 (`react/src-3`)
-Files: 4, Cohesion: 0.47, Coupling: 0.53
+Files: 4, Cohesion: 0.25, Coupling: 0.75
 Description: 4 files, primarily TypeScript
-Entry points: packages/react/src/channels.ts, packages/react/src/connectors.tsx, packages/react/src/parallel.ts, packages/react/src/routes.ts
-Lines: 1376
+Entry points: packages/react/src/captions.ts, packages/react/src/kit.ts, packages/react/src/scene-lines.tsx, packages/react/src/where-drawn.tsx
+Lines: 1230
 
 </zone>
 
 <files>
 
-packages/react/src/channels.ts (TypeScript, 118 lines, source)
-packages/react/src/connectors.tsx (TypeScript, 1052 lines, source)
-packages/react/src/parallel.ts (TypeScript, 30 lines, source)
-packages/react/src/routes.ts (TypeScript, 176 lines, source)
+packages/react/src/captions.ts (TypeScript, 100 lines, source)
+packages/react/src/kit.ts (TypeScript, 34 lines, source)
+packages/react/src/scene-lines.tsx (TypeScript, 817 lines, source)
+packages/react/src/where-drawn.tsx (TypeScript, 279 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/react/src/channels.ts → packages/react/src/routes.ts {Box, Point}
-  packages/react/src/connectors.tsx → packages/react/src/channels.ts {channelRoute}
-  packages/react/src/connectors.tsx → packages/react/src/parallel.ts {parallelOffsets}
-  packages/react/src/connectors.tsx → packages/react/src/routes.ts {clipPolyline, latticePoints, orthogonalPoints, polylineD, roundedPolylineD, routedQuadratic}
+  packages/react/src/scene-lines.tsx → packages/react/src/captions.ts {captionRuns}
+  packages/react/src/scene-lines.tsx → packages/react/src/captions.ts {CaptionEntry, CaptionRun}
+  packages/react/src/scene-lines.tsx → packages/react/src/kit.ts {kitConnector, useKit}
+  packages/react/src/scene-lines.tsx → packages/react/src/where-drawn.tsx {drawnBox, measureVisible, visibleRect}
 
 </imports>

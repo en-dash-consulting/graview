@@ -5,20 +5,23 @@
 <zone>
 
 Zone: Src Workbench (`primitives/src-workbench`)
-Files: 7, Cohesion: 0.38, Coupling: 0.63
-Description: 7 files, primarily TypeScript
-Entry points: packages/primitives/src/find.tsx, packages/primitives/src/installation.tsx, packages/primitives/src/places.tsx, packages/primitives/src/shell.tsx, packages/primitives/src/workbench/index.tsx
-Lines: 1299
+Files: 10, Cohesion: 0.44, Coupling: 0.56
+Description: 10 files, primarily TypeScript
+Entry points: packages/primitives/src/chat.tsx, packages/primitives/src/companion.tsx, packages/primitives/src/quick-relations.tsx, packages/primitives/src/relation-key.tsx, packages/primitives/src/seat.tsx, packages/primitives/src/shell.tsx, packages/primitives/src/subject.ts, packages/primitives/src/workbench/index.tsx
+Lines: 2961
 
 </zone>
 
 <files>
 
-packages/primitives/src/find.tsx (TypeScript, 372 lines, source)
-packages/primitives/src/installation.tsx (TypeScript, 54 lines, source)
-packages/primitives/src/places.tsx (TypeScript, 283 lines, source)
-packages/primitives/src/shell.tsx (TypeScript, 328 lines, source)
-packages/primitives/src/workbench/agent-seat.tsx (TypeScript, 203 lines, source)
+packages/primitives/src/chat.tsx (TypeScript, 595 lines, source)
+packages/primitives/src/companion.tsx (TypeScript, 680 lines, source)
+packages/primitives/src/quick-relations.tsx (TypeScript, 227 lines, source)
+packages/primitives/src/relation-key.tsx (TypeScript, 268 lines, source)
+packages/primitives/src/seat.tsx (TypeScript, 414 lines, source)
+packages/primitives/src/shell.tsx (TypeScript, 352 lines, source)
+packages/primitives/src/subject.ts (TypeScript, 162 lines, source)
+packages/primitives/src/workbench/agent-seat.tsx (TypeScript, 204 lines, source)
 packages/primitives/src/workbench/following.tsx (TypeScript, 36 lines, source)
 packages/primitives/src/workbench/index.tsx (TypeScript, 23 lines, source)
 
@@ -27,9 +30,16 @@ packages/primitives/src/workbench/index.tsx (TypeScript, 23 lines, source)
 <imports>
 
 Internal:
-  packages/primitives/src/shell.tsx → packages/primitives/src/find.tsx {FindBox}
-  packages/primitives/src/shell.tsx → packages/primitives/src/installation.tsx {ShowInstallation}
-  packages/primitives/src/shell.tsx → packages/primitives/src/places.tsx {Places}
+  packages/primitives/src/chat.tsx → packages/primitives/src/seat.tsx {describeSource, proposalKey, SeatComposer, SeatHeader, SeatSettings, SeatThread, Settled, useSeatConversation}
+  packages/primitives/src/chat.tsx → packages/primitives/src/subject.ts {useSubject}
+  packages/primitives/src/chat.tsx → packages/primitives/src/workbench/index.tsx {AnswerArgs}
+  packages/primitives/src/companion.tsx → packages/primitives/src/chat.tsx {ChatPanel}
+  packages/primitives/src/companion.tsx → packages/primitives/src/quick-relations.tsx {QuickRelations}
+  packages/primitives/src/companion.tsx → packages/primitives/src/relation-key.tsx {RelationKey}
+  packages/primitives/src/companion.tsx → packages/primitives/src/subject.ts {useSubject}
+  packages/primitives/src/companion.tsx → packages/primitives/src/workbench/index.tsx {Inspector}
+  packages/primitives/src/shell.tsx → packages/primitives/src/companion.tsx {Companion}
+  packages/primitives/src/shell.tsx → packages/primitives/src/companion.tsx {CompanionMode}
   packages/primitives/src/shell.tsx → packages/primitives/src/workbench/index.tsx {ActivityRail, BackOut, Backtrack, Inspector, OverviewButton, FollowingLine, Standing, Trail}
   packages/primitives/src/workbench/index.tsx → packages/primitives/src/workbench/agent-seat.tsx {*}
   packages/primitives/src/workbench/index.tsx → packages/primitives/src/workbench/following.tsx {*}

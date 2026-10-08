@@ -1,0 +1,37 @@
+{
+  "id": "core-document/core-mutations",
+  "name": "Core Mutations",
+  "description": "15 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/document/migrate.ts",
+    "packages/core/src/document/rules.ts",
+    "packages/core/src/extend.ts",
+    "packages/core/src/index.ts",
+    "packages/core/src/intelligence-bridge.ts",
+    "packages/core/src/mutations/decidable.ts",
+    "packages/core/src/mutations/form.ts",
+    "packages/core/src/mutations/node-ref.ts",
+    "packages/core/src/presence.ts",
+    "packages/core/src/schema/json-schema.ts",
+    "packages/core/src/schema/zod.ts",
+    "packages/core/src/studio-door.ts",
+    "packages/core/src/sync/conflict.ts",
+    "packages/core/src/temporal/effectivity.ts",
+    "packages/core/src/theme/layers.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/document/migrate.ts",
+    "packages/core/src/document/rules.ts",
+    "packages/core/src/index.ts",
+    "packages/core/src/mutations/decidable.ts",
+    "packages/core/src/mutations/node-ref.ts",
+    "packages/core/src/presence.ts",
+    "packages/core/src/schema/json-schema.ts",
+    "packages/core/src/schema/zod.ts",
+    "packages/core/src/theme/layers.ts"
+  ],
+  "cohesion": 0.42,
+  "coupling": 0.58,
+  "fileCount": 15,
+  "lineCount": 2187
+}

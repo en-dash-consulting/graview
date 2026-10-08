@@ -7,7 +7,8 @@ import { useRef, useState, type ReactElement, type ReactNode } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel, Roster, useWidth } from "../primitives/index.js";
 import { addDays, addMonths, daysBetween, minutesOf } from "./calendar-dates.js";
-import { Agenda, Grid, PER_CELL, Step, longDay, stepStyle } from "./calendar-drawing.js";
+import { Agenda, Grid, PER_CELL, Step, stepStyle } from "./calendar-drawing.js";
+import { longDay } from "./calendar-dates.js";
 import {
   CALENDAR_REQUIRED_ROLES,
   type CalendarBindings,
@@ -23,7 +24,9 @@ import { entriesOn, placeOnCalendar } from "./calendar-placing.js";
 import { type CalendarCell, finerThan, spanOf } from "./calendar-spans.js";
 
 
-export type Emphasis = "plain" | "lit" | "dimmed";
+import type { Emphasis } from "./calendar-drawing.js";
+
+export type { Emphasis };
 
 export interface CalendarLens<S extends AnySchema> {
   readonly name: "calendar";

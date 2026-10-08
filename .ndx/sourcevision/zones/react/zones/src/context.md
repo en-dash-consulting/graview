@@ -5,52 +5,32 @@
 <zone>
 
 Zone: Src (`react/src`)
-Files: 10, Cohesion: 0.44, Coupling: 0.56
-Description: 10 files, primarily TypeScript
-Entry points: packages/react/src/activity.ts, packages/react/src/affordances.ts, packages/react/src/context.tsx, packages/react/src/hooks.ts, packages/react/src/occupants.tsx, packages/react/src/plots.tsx, packages/react/src/pointer.ts, packages/react/src/presence.ts, packages/react/src/robot.ts, packages/react/src/settings.ts
-Lines: 3269
+Files: 6, Cohesion: 0.39, Coupling: 0.61
+Description: 6 files, primarily TypeScript
+Entry points: packages/react/src/activity.ts, packages/react/src/attention.ts, packages/react/src/channels.ts, packages/react/src/connectors.tsx, packages/react/src/parallel.ts, packages/react/src/routes.ts
+Lines: 1710
 
 </zone>
 
 <files>
 
-packages/react/src/activity.ts (TypeScript, 322 lines, source)
-packages/react/src/affordances.ts (TypeScript, 73 lines, source)
-packages/react/src/context.tsx (TypeScript, 1066 lines, source)
-packages/react/src/hooks.ts (TypeScript, 497 lines, source)
-packages/react/src/occupants.tsx (TypeScript, 206 lines, source)
-packages/react/src/plots.tsx (TypeScript, 447 lines, source)
-packages/react/src/pointer.ts (TypeScript, 61 lines, source)
-packages/react/src/presence.ts (TypeScript, 350 lines, source)
-packages/react/src/robot.ts (TypeScript, 160 lines, source)
-packages/react/src/settings.ts (TypeScript, 87 lines, source)
+packages/react/src/activity.ts (TypeScript, 260 lines, source)
+packages/react/src/attention.ts (TypeScript, 70 lines, source)
+packages/react/src/channels.ts (TypeScript, 118 lines, source)
+packages/react/src/connectors.tsx (TypeScript, 1056 lines, source)
+packages/react/src/parallel.ts (TypeScript, 30 lines, source)
+packages/react/src/routes.ts (TypeScript, 176 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/react/src/activity.ts → packages/react/src/context.tsx {useGraview}
-  packages/react/src/affordances.ts → packages/react/src/context.tsx {useGraph, useGraview}
-  packages/react/src/context.tsx → packages/react/src/activity.ts {useActivityState}
-  packages/react/src/context.tsx → packages/react/src/activity.ts {ActivityMark, Attention}
-  packages/react/src/context.tsx → packages/react/src/pointer.ts {createPointerStore}
-  packages/react/src/context.tsx → packages/react/src/pointer.ts {PointerStore, ScenePoint}
-  packages/react/src/context.tsx → packages/react/src/presence.ts {PRESENCE_SETTINGS, tabSession, usePresenceState}
-  packages/react/src/context.tsx → packages/react/src/robot.ts {foldRobots}
-  packages/react/src/context.tsx → packages/react/src/robot.ts {RobotEvent, RobotState, SeatNote}
-  packages/react/src/context.tsx → packages/react/src/settings.ts {honourSetting, loadSetting, rememberSetting}
-  packages/react/src/context.tsx → packages/react/src/settings.ts {ReaderMemory}
-  packages/react/src/hooks.ts → packages/react/src/context.tsx {useFound, useGraph, useGraview}
-  packages/react/src/occupants.tsx → packages/react/src/context.tsx {useGraview}
-  packages/react/src/occupants.tsx → packages/react/src/context.tsx {DrawnBox}
-  packages/react/src/occupants.tsx → packages/react/src/presence.ts {placeOthers}
-  packages/react/src/occupants.tsx → packages/react/src/robot.ts {RobotState}
-  packages/react/src/plots.tsx → packages/react/src/context.tsx {useGraview}
-  packages/react/src/plots.tsx → packages/react/src/hooks.ts {useFlagged}
-  packages/react/src/presence.ts → packages/react/src/context.tsx {DrawnBox}
-  packages/react/src/presence.ts → packages/react/src/robot.ts {keyOf}
-  packages/react/src/presence.ts → packages/react/src/robot.ts {RobotState}
-  packages/react/src/presence.ts → packages/react/src/settings.ts {ReaderMemory}
+  packages/react/src/attention.ts → packages/react/src/activity.ts {ActivityMark, ToolCallLike}
+  packages/react/src/channels.ts → packages/react/src/routes.ts {Box, Point}
+  packages/react/src/connectors.tsx → packages/react/src/activity.ts {ActivityMark}
+  packages/react/src/connectors.tsx → packages/react/src/channels.ts {channelRoute}
+  packages/react/src/connectors.tsx → packages/react/src/parallel.ts {parallelOffsets}
+  packages/react/src/connectors.tsx → packages/react/src/routes.ts {clipPolyline, latticePoints, orthogonalPoints, polylineD, roundedPolylineD, routedQuadratic}
 
 </imports>

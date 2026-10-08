@@ -5,19 +5,37 @@
 <zone>
 
 Zone: Scripts 2 (`scripts/scripts/scripts-2`)
-Files: 6, Cohesion: 0.00, Coupling: 1.00
-Description: 6 files, primarily JavaScript
-Lines: 2462
+Files: 9, Cohesion: 0.50, Coupling: 0.50
+Description: 9 files, primarily JavaScript
+Entry points: scripts/lib/graview-sources.mjs, scripts/lib/guest-limits-suite.mjs, scripts/lib/guest-writes-suite.mjs
+Lines: 4474
 
 </zone>
 
 <files>
 
-scripts/progression.mjs (JavaScript, 276 lines, build)
-scripts/rehearse-studio.mjs (JavaScript, 332 lines, build)
-scripts/smoke-create.mjs (JavaScript, 691 lines, build)
-scripts/verify-lines.mjs (JavaScript, 286 lines, build)
-scripts/verify-panning.mjs (JavaScript, 440 lines, build)
-scripts/verify-site.mjs (JavaScript, 437 lines, build)
+scripts/lib/graview-sources.mjs (JavaScript, 26 lines, build)
+scripts/lib/guest-limits-suite.mjs (JavaScript, 254 lines, build)
+scripts/lib/guest-writes-suite.mjs (JavaScript, 193 lines, build)
+scripts/verify-address.mjs (JavaScript, 635 lines, build)
+scripts/verify-brand.mjs (JavaScript, 201 lines, build)
+scripts/verify-chrome-quiet.mjs (JavaScript, 1606 lines, build)
+scripts/verify-chrome.mjs (JavaScript, 669 lines, build)
+scripts/verify-declared.mjs (JavaScript, 619 lines, build)
+scripts/verify-offline.mjs (JavaScript, 271 lines, build)
 
 </files>
+
+<imports>
+
+Internal:
+  scripts/lib/guest-limits-suite.mjs → scripts/lib/graview-sources.mjs {graviewSources}
+  scripts/lib/guest-writes-suite.mjs → scripts/lib/graview-sources.mjs {graviewSources}
+  scripts/verify-address.mjs → scripts/lib/graview-sources.mjs {graviewSources}
+  scripts/verify-brand.mjs → scripts/lib/graview-sources.mjs {graviewSources}
+  scripts/verify-chrome-quiet.mjs → scripts/lib/graview-sources.mjs {graviewSources}
+  scripts/verify-chrome.mjs → scripts/lib/graview-sources.mjs {graviewSources}
+  scripts/verify-declared.mjs → scripts/lib/graview-sources.mjs {graviewSources}
+  scripts/verify-offline.mjs → scripts/lib/graview-sources.mjs {graviewSources}
+
+</imports>

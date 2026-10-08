@@ -1,5 +1,5 @@
 import { withArticle } from "../../schema/define-node.js";
-import type { AnyGraphNode, GraphReader } from "../../index.js";
+import type { AnyGraphNode, GraphReader } from "../../graph/types.js";
 import type { Expr } from "./parse.js";
 
 /*

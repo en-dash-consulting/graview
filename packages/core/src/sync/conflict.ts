@@ -1,7 +1,7 @@
 import { defineInvariant } from "../invariants/engine.js";
 import type { InvariantDefinition, Violation } from "../invariants/types.js";
 import type { AnySchema } from "../schema/schema.js";
-import type { SyncConflict } from "./engine.js";
+import type { SyncConflict } from "./types.js";
 
 /** Where an app threads the run's conflicts into invariant evaluation. */
 export const SYNC_CONFLICTS = "syncConflicts";

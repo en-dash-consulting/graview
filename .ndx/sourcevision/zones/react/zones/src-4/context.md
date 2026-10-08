@@ -5,32 +5,28 @@
 <zone>
 
 Zone: Src 4 (`react/src-4`)
-Files: 5, Cohesion: 0.35, Coupling: 0.65
-Description: 5 files, primarily TypeScript
-Entry points: packages/react/src/drawn.ts, packages/react/src/keyboard.ts, packages/react/src/local-intelligence.ts, packages/react/src/motion.ts
-Lines: 455
+Files: 4, Cohesion: 0.32, Coupling: 0.68
+Description: 4 files, primarily TypeScript
+Entry points: packages/react/src/drawing.ts, packages/react/src/editable-fields.ts, packages/react/src/occupants.tsx, packages/react/src/placement.ts
+Lines: 376
 
 </zone>
 
 <files>
 
-packages/react/src/drawn.ts (TypeScript, 102 lines, source)
-packages/react/src/keyboard.ts (TypeScript, 172 lines, source)
-packages/react/src/local-intelligence.ts (TypeScript, 90 lines, source)
-packages/react/src/motion.ts (TypeScript, 39 lines, source)
-packages/react/src/provider.ts (TypeScript, 52 lines, source)
+packages/react/src/drawing.ts (TypeScript, 24 lines, source)
+packages/react/src/editable-fields.ts (TypeScript, 38 lines, source)
+packages/react/src/occupants.tsx (TypeScript, 206 lines, source)
+packages/react/src/placement.ts (TypeScript, 108 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/react/src/provider.ts → packages/react/src/drawn.ts {useDrawnSize, useTextMeasure}
-  packages/react/src/provider.ts → packages/react/src/drawn.ts {DrawnOptions, DrawnSize}
-  packages/react/src/provider.ts → packages/react/src/keyboard.ts {landingIn, useTheKeyboardLandsSomewhere}
-  packages/react/src/provider.ts → packages/react/src/local-intelligence.ts {useLocalIntelligence}
-  packages/react/src/provider.ts → packages/react/src/local-intelligence.ts {Ask, LocalIntelligence}
-  packages/react/src/provider.ts → packages/react/src/motion.ts {createMotionStore, useSceneStill}
-  packages/react/src/provider.ts → packages/react/src/motion.ts {MotionStore}
+  packages/react/src/drawing.ts → packages/react/src/editable-fields.ts {useEditableFields}
+  packages/react/src/drawing.ts → packages/react/src/placement.ts {anchorOf, AUDIENCE_ROW, placeOthers}
+  packages/react/src/drawing.ts → packages/react/src/placement.ts {Placed}
+  packages/react/src/occupants.tsx → packages/react/src/placement.ts {placeOthers}
 
 </imports>

@@ -1,10 +1,11 @@
 {
   "id": "tests-layout-unit",
   "name": "Tests Layout Unit",
-  "description": "Non-source files in packages: a-band-is-named-in-words.test.ts, a-name-that-fits.test.ts, a-tuck-goes-with-its-parent.test.ts (+9 more)",
+  "description": "Non-source files in packages: a-band-is-named-in-words.test.ts, a-name-that-fits.test.ts, a-thumbnail-is-the-scenes-city.test.ts (+11 more)",
   "files": [
     "packages/layout/tests/unit/a-band-is-named-in-words.test.ts",
     "packages/layout/tests/unit/a-name-that-fits.test.ts",
+    "packages/layout/tests/unit/a-thumbnail-is-the-scenes-city.test.ts",
     "packages/layout/tests/unit/a-tuck-goes-with-its-parent.test.ts",
     "packages/layout/tests/unit/an-opened-district-lists-what-it-has-room-for.test.ts",
     "packages/layout/tests/unit/layout.test.ts",
@@ -13,14 +14,15 @@
     "packages/layout/tests/unit/the-billboard-is-on-a-leash.test.ts",
     "packages/layout/tests/unit/the-city-at-altitude.test.ts",
     "packages/layout/tests/unit/the-city-stays-beside-the-rail.test.ts",
+    "packages/layout/tests/unit/the-district-you-are-in-stays-in-the-row.test.ts",
     "packages/layout/tests/unit/the-drive-in.test.ts",
     "packages/layout/tests/unit/the-pan-is-a-translation.test.ts"
   ],
   "entryPoints": [],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 12,
-  "lineCount": 2712,
+  "fileCount": 14,
+  "lineCount": 2922,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

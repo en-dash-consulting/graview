@@ -5,36 +5,37 @@
 <zone>
 
 Zone: Tests Studio Unit (`tests-studio-unit`)
-Files: 22, Cohesion: 1.00, Coupling: 0.00
+Files: 23, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in packages: a-document-is-judged-as-a-document.test.ts, a-field-changes-in-place.test.ts, a-name-keeps-its-casing.test.ts (+19 more)
-Lines: 2625
+Description: Non-source files in packages: a-computed-field-survives-the-round-trip.test.ts, a-document-is-judged-as-a-document.test.ts, a-field-changes-in-place.test.ts (+20 more)
+Lines: 2763
 
 </zone>
 
 <files>
 
-packages/studio/tests/unit/a-document-is-judged-as-a-document.test.ts (TypeScript, 83 lines, test)
+packages/studio/tests/unit/a-computed-field-survives-the-round-trip.test.ts (TypeScript, 102 lines, test)
+packages/studio/tests/unit/a-document-is-judged-as-a-document.test.ts (TypeScript, 84 lines, test)
 packages/studio/tests/unit/a-field-changes-in-place.test.ts (TypeScript, 87 lines, test)
 packages/studio/tests/unit/a-name-keeps-its-casing.test.ts (TypeScript, 46 lines, test)
-packages/studio/tests/unit/a-rename-is-only-a-rename.test.ts (TypeScript, 63 lines, test)
+packages/studio/tests/unit/a-rename-is-only-a-rename.test.ts (TypeScript, 64 lines, test)
 packages/studio/tests/unit/a-rule-judged-in-words.test.ts (TypeScript, 67 lines, test)
 packages/studio/tests/unit/a-typed-app-opens-in-the-studio.test.ts (TypeScript, 35 lines, test)
 packages/studio/tests/unit/an-agent-in-the-studio.test.ts (TypeScript, 394 lines, test)
-packages/studio/tests/unit/apply-hands-back-the-document-it-compiled.test.ts (TypeScript, 51 lines, test)
-packages/studio/tests/unit/one-seat-one-conversation.test.tsx (TypeScript, 136 lines, test)
+packages/studio/tests/unit/apply-hands-back-the-document-it-compiled.test.ts (TypeScript, 52 lines, test)
+packages/studio/tests/unit/one-seat-one-conversation.test.tsx (TypeScript, 147 lines, test)
 packages/studio/tests/unit/rewrite-before-writing.test.tsx (TypeScript, 99 lines, test)
-packages/studio/tests/unit/studio.test.ts (TypeScript, 381 lines, test)
-packages/studio/tests/unit/templates.ts (TypeScript, 43 lines, test)
-packages/studio/tests/unit/the-document-is-said-not-guessed.test.ts (TypeScript, 60 lines, test)
-packages/studio/tests/unit/the-round-trip-keeps-the-checkouts-words.test.ts (TypeScript, 189 lines, test)
+packages/studio/tests/unit/studio.test.ts (TypeScript, 382 lines, test)
+packages/studio/tests/unit/templates.ts (TypeScript, 44 lines, test)
+packages/studio/tests/unit/the-document-is-said-not-guessed.test.ts (TypeScript, 61 lines, test)
+packages/studio/tests/unit/the-round-trip-keeps-the-checkouts-words.test.ts (TypeScript, 190 lines, test)
 packages/studio/tests/unit/the-studio-agent-panel.test.tsx (TypeScript, 54 lines, test)
-packages/studio/tests/unit/the-studio-and-edit-document-agree.test.ts (TypeScript, 90 lines, test)
-packages/studio/tests/unit/the-studio-hands-back-a-document.test.ts (TypeScript, 195 lines, test)
+packages/studio/tests/unit/the-studio-and-edit-document-agree.test.ts (TypeScript, 91 lines, test)
+packages/studio/tests/unit/the-studio-hands-back-a-document.test.ts (TypeScript, 196 lines, test)
 packages/studio/tests/unit/the-studio-says-who-sees-what.test.ts (TypeScript, 74 lines, test)
-packages/studio/tests/unit/what-it-does-not-model.test.ts (TypeScript, 164 lines, test)
-packages/studio/tests/unit/what-the-studio-will-not-change-is-said-up-front.test.ts (TypeScript, 60 lines, test)
-packages/studio/tests/unit/written-back.test.ts (TypeScript, 161 lines, test)
+packages/studio/tests/unit/what-it-does-not-model.test.ts (TypeScript, 165 lines, test)
+packages/studio/tests/unit/what-the-studio-will-not-change-is-said-up-front.test.ts (TypeScript, 74 lines, test)
+packages/studio/tests/unit/written-back.test.ts (TypeScript, 162 lines, test)
 packages/studio/tests/unit/written-in-place.test.ts (TypeScript, 93 lines, test)
 
 </files>
@@ -54,7 +55,7 @@ Internal:
 Outgoing (this zone → other zones):
   → apps: packages/studio/tests/unit/rewrite-before-writing.test.tsx → apps/seedbed/src/domain/app.ts; packages/studio/tests/unit/written-in-place.test.ts → apps/seedbed/src/domain/app.ts
   → ship: packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/ship/src/source-edit.ts; packages/studio/tests/unit/written-in-place.test.ts → packages/ship/src/source-edit.ts
-  → studio: packages/studio/tests/unit/a-document-is-judged-as-a-document.test.ts → packages/studio/src/place.tsx; packages/studio/tests/unit/a-document-is-judged-as-a-document.test.ts → packages/studio/src/place.tsx; packages/studio/tests/unit/a-field-changes-in-place.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/a-rule-judged-in-words.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/a-rule-judged-in-words.test.ts → packages/studio/src/meta.ts; packages/studio/tests/unit/a-typed-app-opens-in-the-studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/an-agent-in-the-studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/templates.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-document-is-said-not-guessed.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-round-trip-keeps-the-checkouts-words.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/the-studio-and-edit-document-agree.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-and-edit-document-agree.test.ts → packages/studio/src/meta.ts; packages/studio/tests/unit/the-studio-and-edit-document-agree.test.ts → packages/studio/src/migration.ts; packages/studio/tests/unit/the-studio-hands-back-a-document.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-says-who-sees-what.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/what-it-does-not-model.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/what-the-studio-will-not-change-is-said-up-front.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-back.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-in-place.test.ts → packages/studio/src/index.ts
+  → studio: packages/studio/tests/unit/a-computed-field-survives-the-round-trip.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/a-document-is-judged-as-a-document.test.ts → packages/studio/src/place.tsx; packages/studio/tests/unit/a-document-is-judged-as-a-document.test.ts → packages/studio/src/place.tsx; packages/studio/tests/unit/a-field-changes-in-place.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/a-rule-judged-in-words.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/a-rule-judged-in-words.test.ts → packages/studio/src/meta.ts; packages/studio/tests/unit/a-typed-app-opens-in-the-studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/an-agent-in-the-studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/one-seat-one-conversation.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/rewrite-before-writing.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/studio.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/templates.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-document-is-said-not-guessed.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-round-trip-keeps-the-checkouts-words.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-agent-panel.test.tsx → packages/studio/src/meta.ts; packages/studio/tests/unit/the-studio-and-edit-document-agree.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-and-edit-document-agree.test.ts → packages/studio/src/meta.ts; packages/studio/tests/unit/the-studio-and-edit-document-agree.test.ts → packages/studio/src/migration.ts; packages/studio/tests/unit/the-studio-hands-back-a-document.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/the-studio-says-who-sees-what.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/what-it-does-not-model.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/what-the-studio-will-not-change-is-said-up-front.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-back.test.ts → packages/studio/src/index.ts; packages/studio/tests/unit/written-in-place.test.ts → packages/studio/src/index.ts
 
 </imports>
 
@@ -67,6 +68,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 125 internal calls, 102 outgoing, 0 incoming (cohesion: 0.55, coupling: 0.45)
+- [call graph] 135 internal calls, 106 outgoing, 0 incoming (cohesion: 0.56, coupling: 0.44)
 
 </insights>

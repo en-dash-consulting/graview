@@ -1,0 +1,19 @@
+{
+  "id": "primitives/measure-notice-place",
+  "name": "Measure Notice Place",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/notice-place.ts",
+    "packages/primitives/src/notices.tsx",
+    "packages/primitives/src/primitives/measure.ts"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/notice-place.ts",
+    "packages/primitives/src/notices.tsx",
+    "packages/primitives/src/primitives/measure.ts"
+  ],
+  "cohesion": 0.33,
+  "coupling": 0.67,
+  "fileCount": 3,
+  "lineCount": 502
+}

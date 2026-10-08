@@ -1,20 +1,23 @@
 {
   "id": "root",
   "name": "Project Root",
-  "description": "Project configuration and manifest files: vitest.config.ts",
+  "description": "Build, packaging, and CI scripts: offers-app.ts, vitest.config.ts",
   "files": [
+    "scripts/fixtures/offers-app.ts",
     "vitest.config.ts"
   ],
-  "entryPoints": [],
-  "cohesion": 1,
+  "entryPoints": [
+    "scripts/fixtures/offers-app.ts"
+  ],
+  "cohesion": 0,
   "coupling": 0,
-  "fileCount": 1,
-  "lineCount": 80,
+  "fileCount": 2,
+  "lineCount": 211,
   "riskMetrics": {
-    "cohesion": 1,
+    "cohesion": 0,
     "coupling": 0,
-    "riskScore": 0,
-    "riskLevel": "healthy",
+    "riskScore": 0.5,
+    "riskLevel": "at-risk",
     "failsThreshold": false
   }
 }

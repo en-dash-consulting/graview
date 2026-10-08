@@ -5,28 +5,46 @@
 <zone>
 
 Zone: Src 2 (`react/src-2`)
-Files: 4, Cohesion: 0.27, Coupling: 0.73
-Description: 4 files, primarily TypeScript
-Entry points: packages/react/src/captions.ts, packages/react/src/kit.ts, packages/react/src/scene-lines.tsx, packages/react/src/where-drawn.tsx
-Lines: 1195
+Files: 8, Cohesion: 0.31, Coupling: 0.69
+Description: 8 files, primarily TypeScript
+Entry points: packages/react/src/animation.ts, packages/react/src/error-report.ts, packages/react/src/index.ts, packages/react/src/popover.ts, packages/react/src/resolved-view.tsx, packages/react/src/scene-node.ts, packages/react/src/scene.tsx, packages/react/src/view-boundary.tsx
+Lines: 1391
 
 </zone>
 
 <files>
 
-packages/react/src/captions.ts (TypeScript, 100 lines, source)
-packages/react/src/kit.ts (TypeScript, 34 lines, source)
-packages/react/src/scene-lines.tsx (TypeScript, 782 lines, source)
-packages/react/src/where-drawn.tsx (TypeScript, 279 lines, source)
+packages/react/src/animation.ts (TypeScript, 285 lines, source)
+packages/react/src/error-report.ts (TypeScript, 15 lines, source)
+packages/react/src/index.ts (TypeScript, 79 lines, source)
+packages/react/src/popover.ts (TypeScript, 421 lines, source)
+packages/react/src/resolved-view.tsx (TypeScript, 459 lines, source)
+packages/react/src/scene-node.ts (TypeScript, 10 lines, source)
+packages/react/src/scene.tsx (TypeScript, 18 lines, source)
+packages/react/src/view-boundary.tsx (TypeScript, 104 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/react/src/scene-lines.tsx → packages/react/src/captions.ts {captionRuns}
-  packages/react/src/scene-lines.tsx → packages/react/src/captions.ts {CaptionEntry, CaptionRun}
-  packages/react/src/scene-lines.tsx → packages/react/src/kit.ts {kitConnector, useKit}
-  packages/react/src/scene-lines.tsx → packages/react/src/where-drawn.tsx {drawnBox, measureVisible, visibleRect}
+  packages/react/src/index.ts → packages/react/src/animation.ts {useAnimatedLayout, useSeatWork, useTouched}
+  packages/react/src/index.ts → packages/react/src/animation.ts {SeatAct, SeatWork, TransitionOptions}
+  packages/react/src/index.ts → packages/react/src/error-report.ts {ErrorReportContext}
+  packages/react/src/index.ts → packages/react/src/error-report.ts {ErrorReport}
+  packages/react/src/index.ts → packages/react/src/popover.ts {inTopLayer, placePane, POPOVER_STYLE, POPOVERS, raiseOverPopovers, usePopover, useTopLayer}
+  packages/react/src/index.ts → packages/react/src/popover.ts {PlaceOptions, Popover, PopoverAnchor, PopoverName, PopoverOptions}
+  packages/react/src/index.ts → packages/react/src/scene.tsx {clipQuadratic, connectorStrands, altitudeOpacity, stackOpacity, onScreen, ResolvedView, Scene, selectionFor, tieRoute, whereIsIn}
+  packages/react/src/index.ts → packages/react/src/scene.tsx {SceneNode, Strand, ResolvedViewProps, SceneProps}
+  packages/react/src/index.ts → packages/react/src/view-boundary.tsx {ViewBoundary}
+  packages/react/src/index.ts → packages/react/src/view-boundary.tsx {ViewBoundaryProps}
+  packages/react/src/resolved-view.tsx → packages/react/src/popover.ts {POPOVER_STYLE, usePopover}
+  packages/react/src/resolved-view.tsx → packages/react/src/scene-node.ts {SceneNode}
+  packages/react/src/resolved-view.tsx → packages/react/src/view-boundary.tsx {ViewBoundary}
+  packages/react/src/scene.tsx → packages/react/src/resolved-view.tsx {*}
+  packages/react/src/scene.tsx → packages/react/src/scene-node.ts {*}
+  packages/react/src/view-boundary.tsx → packages/react/src/error-report.ts {ErrorReportContext, ErrorReport}
+  packages/react/src/view-boundary.tsx → packages/react/src/error-report.ts {ErrorReportContext}
+  packages/react/src/view-boundary.tsx → packages/react/src/error-report.ts {ErrorReport}
 
 </imports>

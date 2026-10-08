@@ -8,7 +8,7 @@ import { useFound, useGraph, useGraview, ViewModeProvider, type ViewMode } from 
 import { POPOVER_STYLE, usePopover } from "./popover.js";
 import { ViewBoundary } from "./view-boundary.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
-import type { SceneNode } from "./scene-root.js";
+import type { SceneNode } from "./scene-node.js";
 
 export interface ResolvedViewProps {
   readonly node: SceneNode;

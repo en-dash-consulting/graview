@@ -11,7 +11,15 @@ import {
   type ViewRegistry,
 } from "@graview/core";
 import type { ComponentType } from "react";
-import type { ViewMode } from "./context.js";
+
+/**
+ * How a view is being drawn right now.
+ *
+ * Every view must render correctly in BOTH modes — captured into the scene,
+ * and live as a full page. That two-mode contract is the central constraint
+ * on the view authoring API, and this is how a view finds out which it is in.
+ */
+export type ViewMode = "scene" | "fullscreen";
 
 /**
  * What a view receives. Deliberately small: a node (or a group of them), how

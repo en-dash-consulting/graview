@@ -1,0 +1,22 @@
+{
+  "id": "scripts/scripts/scripts/lib",
+  "name": "Lib",
+  "description": "6 files, primarily JavaScript",
+  "files": [
+    "scripts/lib/graview-sources.mjs",
+    "scripts/lib/guest-limits-suite.mjs",
+    "scripts/lib/guest-writes-suite.mjs",
+    "scripts/verify-address.mjs",
+    "scripts/verify-brand.mjs",
+    "scripts/verify-offline.mjs"
+  ],
+  "entryPoints": [
+    "scripts/lib/graview-sources.mjs",
+    "scripts/lib/guest-limits-suite.mjs",
+    "scripts/lib/guest-writes-suite.mjs"
+  ],
+  "cohesion": 0.59,
+  "coupling": 0.41,
+  "fileCount": 6,
+  "lineCount": 1580
+}
