@@ -6,7 +6,7 @@ import type { CompanionMode } from "@graview/primitives";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { ErrorReportContext, GraviewProvider, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { AddressBar, faceAtAddress, stopAtAddress } from "./address.js";
-import { createContext, createElement, lazy, Suspense, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { createContext, createElement, lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { EmbedWhere } from "./where.js";
 import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
@@ -356,7 +356,21 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     latest.current.onFace?.(next);
     told.current?.(next === "pages" ? (path ?? pagesAt.current.path) : OVERVIEW_PATH, "push");
   }, [address]);
+  /*
+   * The stop a page's way to the overview names ("On the overview ↗") is
+   * landed on once: it is let go when the reader leaves the scene and when
+   * the host sets a stop of its own, so it never holds the scene after.
+   */
   const [overviewStop, setOverviewStop] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (shown === "pages") setOverviewStop(undefined);
+  }, [shown]);
+  const hostStop = useRef(stop);
+  useEffect(() => {
+    if (hostStop.current === stop) return;
+    hostStop.current = stop;
+    setOverviewStop(undefined);
+  }, [stop]);
   const toOverview = useCallback((stop?: string) => {
     if (latest.current.shown !== "pages") return;
     setOverviewAsked(true);

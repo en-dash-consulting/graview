@@ -136,6 +136,15 @@ describe("check refuses a face from anywhere but the list", () => {
     expect(refusals(withBrand({ typography: { display: "system-serif", body: "Georgia, serif", mono: '"JetBrains Mono", Menlo, monospace' } }))).toEqual([]);
   });
 
+  it("never writes a face that would break out of the style sheet, even in a page that compiled it without the checker", () => {
+    const breaking = '"x"}body{background:url(//evil.example/x)}';
+    const result = compileDocumentWithoutCheck(withBrand({ typography: { display: "system-serif", body: breaking } }));
+    if (!result.ok) throw new Error("does not compile");
+    const typography = (result.app as GraviewApp<AnySchema>).brand!.typography!;
+    expect(typography.display).toBe(SYSTEM_STACKS["system-serif"]);
+    expect(typography.body).toBeUndefined();
+  });
+
   it("takes a face the host says it serves itself", () => {
     const result = compileDocument(withBrand({ typography: { body: '"Comic Neue", sans-serif' } }), { fonts: ["Comic Neue"] });
     expect(result.ok).toBe(true);

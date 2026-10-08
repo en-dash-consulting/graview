@@ -100,8 +100,11 @@ export const BUDGETS = [
      * face's masthead; a page's title said under the app's name. About
      * 5 kB minified. Measured at 500_664 / 171_557.
      */
-    minified: 503_000,
-    gzipped: 172_500,
+    // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
+    // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
+    // drawn with the bar. Measured at 505_406 / 173_425.
+    minified: 506_500,
+    gzipped: 174_000,
     load: "first",
   },
   {
@@ -222,8 +225,11 @@ export const BUDGETS = [
      * reached for, and the blocks a view is drawn with come with the face
      * that draws one. Measured at 687_871 / 177_160.
      */
-    minified: 690_500,
-    gzipped: 178_000,
+    // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
+    // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
+    // drawn with the bar. Measured at 693_248 / 179_214.
+    minified: 694_500,
+    gzipped: 179_750,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -328,8 +334,11 @@ export const BUDGETS = [
      * the whole-page Shell always had, which the embed's scene had none of —
      * drawn in the bar's place for it, about 8 kB. Measured at 1_541_263 / 464_618.
      */
-    minified: 1_548_000,
-    gzipped: 467_000,
+    // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
+    // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
+    // drawn with the bar. Measured at 1_548_449 / 467_201.
+    minified: 1_549_500,
+    gzipped: 467_750,
     load: "all",
   },
   {
@@ -371,8 +380,11 @@ export const BUDGETS = [
     // Lowered when what only a drawn view uses left the frame's entries and the describer came to be fetched when first asked for: measured at 1_471_243 / 435_726.
     // Raised when the document came to hold the whole brand (FR-124–FR-126): the app's mark, name and subtitle in one component, a mark judged before it is drawn, the page's icon. Measured at 1_488_861 / 442_563.
     // Raised with every face's when one app bar came to stand on every face (FR-131, FR-132): the bar, and Find on the scene's face. Measured at 1_506_675 / 449_629.
-    minified: 1_513_000,
-    gzipped: 452_000,
+    // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
+    // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
+    // drawn with the bar. Measured at 1_513_861 / 452_251.
+    minified: 1_514_750,
+    gzipped: 452_750,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
@@ -440,8 +452,11 @@ export const BUDGETS = [
      * show without loading anything (host/theme.ts, `createGuestLogo`).
      */
     entry: `import { guestView, mountGuestView } from "@graview/guest/host"; globalThis.host = { guestView, mountGuestView };`,
-    minified: 12_100,
-    gzipped: 5_700,
+    // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
+    // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
+    // the guest host judging an inline logo before it makes an image of the host page from it. Measured at 16_358 / 7_540.
+    minified: 16_600,
+    gzipped: 7_750,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -464,8 +479,11 @@ export const BUDGETS = [
      * frame pushes a frame's theme and places (FR-86, FR-87).
      */
     entry: `import { registerWorkerView, workerHome } from "@graview/guest/host/views"; globalThis.views = { registerWorkerView, workerHome };`,
-    minified: 12_750,
-    gzipped: 5_500,
+    // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
+    // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
+    // the guest host judging an inline logo before it makes an image of the host page from it. Measured at 16_857 / 7_266.
+    minified: 17_100,
+    gzipped: 7_500,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -538,8 +556,11 @@ export const BUDGETS = [
      * policy refuses one, a `data:` image; the budget just above it.
      */
     entry: `import { mountWorkerView } from "@graview/guest/host/worker"; globalThis.mount = mountWorkerView;`,
-    minified: 122_600,
-    gzipped: 43_800,
+    // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
+    // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
+    // the guest host judging an inline logo before it makes an image of the host page from it. Measured at 126_521 / 45_488.
+    minified: 127_000,
+    gzipped: 45_750,
     load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },

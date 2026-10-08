@@ -26,6 +26,8 @@ import type { TemplatePart } from "./template.js";
 import { parseTemplate, templateBraces, TemplateError } from "./template-parse.js";
 import { validateViews, VIEW_SLOTS } from "./views.js";
 import { brandFindings } from "./brand-check.js";
+import { canonicalize } from "./canonical.js";
+import { quotedAtTheEnd } from "./quote.js";
 import { accentProblem } from "../theme/accent.js";
 
 /*
@@ -60,6 +62,12 @@ export interface Fill {
 export type EditOutcome =
   | { readonly ok: true; readonly document: GraviewDocument; readonly said: readonly string[]; readonly fills: readonly Fill[] }
   | { readonly ok: false; readonly findings: readonly Finding[] };
+
+/** What an edit is judged against beyond the document itself. */
+export interface EditOptions {
+  /** Web fonts the host serves itself, beyond `DOCUMENT_FONTS`: what `compileDocument(…, { fonts })` is told, so an edit takes what a compile would. */
+  readonly fonts?: readonly string[];
+}
 
 /** The ops, for tool schemas and the guide. */
 export const EDIT_OPS = [
@@ -475,6 +483,7 @@ class Editor {
   constructor(
     readonly doc: Doc,
     base: GraviewDocument,
+    private readonly options: EditOptions = {},
   ) {
     for (const [kind, spec] of Object.entries(base.kinds)) {
       this.kindOrigin.set(kind, kind);
@@ -497,9 +506,14 @@ class Editor {
   private setBrand(i: number, e: Doc) {
     const brand: Record<string, any> = clone(this.doc.brand ?? {});
     const at = `edits.${i}`;
+    // An edit that names nothing to change is refused, never applied with nothing said.
+    const named = Object.keys(e).filter((key) => key !== "op" && e[key] !== undefined);
+    if (named.length === 0) return this.fail(i, "", "a set-brand edit names at least one key of the brand to set, or null to clear one", '{"op": "set-brand", "accent": "#0f6e5c"}');
+    const emptyPart = (["typography", "shape", "accents"] as const).find((key) => isObject(e[key]) && Object.keys(e[key]).length === 0);
+    if (emptyPart) return this.fail(i, emptyPart, `${emptyPart} names no part to set; name one, or give null to clear all of it`);
     const judged = brandFindings(
       { ...(typeof e.logo === "string" || isObject(e.logo) ? { logo: e.logo } : {}), ...(typeof e.favicon === "string" ? { favicon: e.favicon } : {}), ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}) },
-      { at },
+      { at, ...(this.options.fonts ? { fonts: this.options.fonts } : {}) },
     );
     if (judged.length > 0) return void this.findings.push(...judged);
     if (e.accent === null) {
@@ -535,10 +549,16 @@ class Editor {
     }
     for (const [key, what] of [["logo", "logo"], ["favicon", "page icon"]] as const) {
       if (e[key] === undefined) continue;
-      const had = brand[key] !== undefined;
+      const was = brand[key];
       if (e[key] === null) delete brand[key];
       else brand[key] = e[key];
-      this.said.push(e[key] === null ? `The app has no ${what}.` : had ? `The ${what} changes.` : `The app gets a ${what}.`);
+      const src = (mark: unknown) => (typeof mark === "string" ? mark : isObject(mark) ? mark["src"] : undefined);
+      const alt = (mark: unknown) => (isObject(mark) && typeof mark["alt"] === "string" ? mark["alt"] : undefined);
+      if (e[key] === null) this.said.push(`The app has no ${what}.`);
+      else if (was === undefined) this.said.push(`The app gets a ${what}.`);
+      else if (canonicalize(was) === canonicalize(e[key])) this.said.push(`The ${what} stays as it was.`);
+      else if (src(was) === src(e[key])) this.said.push(`The ${what} is said as ${quotedAtTheEnd(alt(e[key]) ?? brand["name"] ?? this.doc.name)}`);
+      else this.said.push(`The ${what} changes.`);
     }
     const merge = (key: "typography" | "shape" | "accents", say: (part: string, value: unknown) => string, cleared: string) => {
       if (e[key] === undefined) return;
@@ -683,14 +703,20 @@ class Editor {
       case "set-brand":
         return this.setBrand(i, e);
       case "set-name": {
+        const already = this.doc.name === e.name;
         this.doc.name = e.name;
-        this.said.push(`The app is now called "${e.name}".`);
+        this.said.push(already ? `The app is already called ${quotedAtTheEnd(e.name)}` : `The app is now called ${quotedAtTheEnd(e.name)}`);
         return;
       }
       case "set-description": {
+        const already = (this.doc.description ?? null) === e.description;
         if (e.description === null) delete this.doc.description;
         else this.doc.description = e.description;
-        this.said.push(e.description === null ? "The app has no line under its name." : `The line under the app's name reads "${e.description}".`);
+        this.said.push(
+          e.description === null
+            ? already ? "The app already has no line under its name." : "The app has no line under its name."
+            : already ? `The line under the app's name already reads ${quotedAtTheEnd(e.description)}` : `The line under the app's name reads ${quotedAtTheEnd(e.description)}`,
+        );
         return;
       }
       case "set-label": {
@@ -2111,12 +2137,12 @@ function pruneBlock(doc: Doc, b: Record<string, unknown>, ctx: Kinds, r: Rename,
  * `edits.<i>.…`) and no document. The result is NOT compiled here: the caller
  * previews it like any other proposed document.
  */
-export function editDocument(document: GraviewDocument, edits: readonly unknown[]): EditOutcome {
+export function editDocument(document: GraviewDocument, edits: readonly unknown[], options: EditOptions = {}): EditOutcome {
   if (!Array.isArray(edits)) return { ok: false, findings: [error("edit", "edits", "edits are a list, like [{\"op\": \"add-field\", …}]")] };
   // No edits is no change: the document as it was, and nothing said.
   if (edits.length === 0) return { ok: true, document: clone(document), said: [], fills: [] };
   if (edits.length > MAX_EDITS) return { ok: false, findings: [error("edit", "edits", `at most ${MAX_EDITS} edits at once`)] };
-  const editor = new Editor(clone(document), document);
+  const editor = new Editor(clone(document), document, options);
   edits.forEach((raw, i) => {
     if (editor.findings.length > 0) return;
     if (!isObject(raw)) return editor.findings.push(error("edit", `edits.${i}`, 'an edit is an object like {"op": "add-field", "kind": "vendor", "field": "deposit", "type": "number"}'));

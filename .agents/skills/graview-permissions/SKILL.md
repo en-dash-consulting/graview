@@ -83,7 +83,7 @@ yesterday and now the button is gone.
    policy: installation.withPolicy(policy);                 // the admin's grants, and "you, on yours" for a profile
    ```
 
-   The coach sees "Show the installation" in the bar and on an embed's strip
+   The coach sees "Show the installation" in the person's menu on the app bar
    and the people and invitations rise as ordinary districts; nobody else
    ever sees them. A person's record page is their profile, and the derived
    `edit-user` is theirs alone through a `self: true` grant. Register

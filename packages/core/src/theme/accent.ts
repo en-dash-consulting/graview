@@ -78,15 +78,33 @@ export function accentProblem(accent: string): AccentRefusal | null {
   const derived = failure ? undefined : documentSchemes(accent);
   if (!failure && derived?.ok) return null;
   const suggestion = nearestPassing(color);
-  const fix = suggestion ? ` — ${suggestion} would pass.` : "; no shade of this hue does, so pick another color.";
+  /*
+   * A hue the warning color stands on cannot be an accent at any shade:
+   * "something is broken" would look like "this is selected". Said as that,
+   * not as a contrast, since no lightness answers it.
+   */
+  const asIs = derived ?? documentSchemes(accent);
+  const clash = !asIs.ok && asIs.missing.some((part) => part.startsWith("warn"));
+  const fix = suggestion
+    ? ` — ${suggestion} would pass.`
+    : clash
+      ? "; no shade of this hue does, since the warning color is drawn in it — pick another hue."
+      : "; no shade of this hue does, so pick another color.";
   if (failure) {
     const text = failure.pair.text === hex(color) ? accent : `${failure.pair.text === "#ffffff" ? "white" : "black"} text`;
     const on = failure.pair.on === hex(color) ? accent : failure.pair.on;
     const pair = failure.pair.text === hex(color) ? `${text} text on ${on}` : `${text} on ${on}`;
     return { ...failure, sentence: `${pair} is ${said(failure.ratio)}; ${failure.requires}:1 is needed${fix}`, ...(suggestion ? { suggestion } : {}) };
   }
-  const why = (derived as RefusedBrand).why;
-  return { sentence: `${accent} reads in the light scheme, but not in the dark: ${why}${fix}`, pair: { text: accent, on: SCHEMES.dark.panel }, ratio: 0, requires: AA, ...(suggestion ? { suggestion } : {}) };
+  const refused = derived as RefusedBrand;
+  const darkPanel = composite(colorsIn(SCHEMES.dark.panel)[0]!, colorsIn(SCHEMES.dark.ground)[0]!);
+  const pair = { text: hex(color), on: hex(darkPanel) };
+  if (refused.missing.every((part) => part.startsWith("warn"))) {
+    return { sentence: `${accent} reads as given, but the warning color is drawn in its hue, so "something is broken" would look like "this is selected"${suggestion ? fix : ", at any shade — pick another hue."}`, pair, ratio: contrast(color, darkPanel), requires: AA, ...(suggestion ? { suggestion } : {}) };
+  }
+  // A document cannot give the dark scheme an accent of its own, so the derivation's advice to is left out.
+  const why = refused.why.replace(/ — supply one for (dark|light)/g, "").replace(/, so (dark|light) needs an accent of its own/g, "");
+  return { sentence: `${accent} reads in the light scheme, but not in the dark: ${why}${fix}`, pair, ratio: contrast(color, darkPanel), requires: AA, ...(suggestion ? { suggestion } : {}) };
 }
 
 /** The nearest shade of the same hue and saturation that passes, by lightness alone, as hex; undefined when none does. */
@@ -107,19 +125,21 @@ function nearestPassing(color: Rgba): string | undefined {
 /**
  * The nearest shade of `ink`'s hue that clears `requires` on `on` (laid
  * over `over`, for a translucent ground), by lightness alone, as hex — the
- * fix a contrast finding says (FR-126). Undefined when none does.
+ * fix a contrast finding says (FR-126). On a gradient it clears every stop,
+ * as the check judges the worst of them. Undefined when none does.
  */
 export function passingShade(ink: string, on: string, requires: number, over?: string): string | undefined {
   const color = colorsIn(ink)[0];
-  const ground = colorsIn(on)[0];
-  if (!color || !ground) return undefined;
-  const solid = composite(ground, (over ? colorsIn(over)[0] : undefined) ?? WHITE);
+  const grounds = colorsIn(on);
+  if (!color || grounds.length === 0) return undefined;
+  const under = (over ? colorsIn(over)[0] : undefined) ?? WHITE;
+  const solids = grounds.map((ground) => composite(ground, under));
   const base = rgbToHsl(color);
   for (let step = 0; step <= 200; step++) {
     for (const l of [base.l - step / 200, base.l + step / 200]) {
       if (l < 0 || l > 1) continue;
       const shade = colorsIn(hex(hsl(base.h, base.s, l)))[0]!;
-      if (contrast(shade, solid) >= requires) return hex(shade);
+      if (solids.every((solid) => contrast(shade, solid) >= requires)) return hex(shade);
     }
   }
   return undefined;

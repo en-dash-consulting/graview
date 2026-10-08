@@ -1115,12 +1115,12 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
   "accents": { "workshop": 168 }, "scheme": "dark"
 }</code></pre></div>
 <ul>
-<li><strong>A mark</strong> is inline SVG or a path on the app's own host — never another origin. It is drawn as given (<code>currentColor</code> takes the accent), so an SVG with a script, a handler, <code>foreignObject</code> or anything it loads is refused (<code>brand-mark</code>), never rewritten. On Cloud, <code>add_image</code> answers the path.</li>
+<li><strong>A mark</strong> is inline SVG or a path on the app's own host — never another origin. It is drawn as given (<code>currentColor</code> takes the accent), so it is read element by element as the browser reads it: shapes, groups, gradients, filters, text and links to its own <code>#id</code>s, every attribute quoted, and nothing after <code>&lt;/svg&gt;</code>. A script, a handler, <code>&lt;a&gt;</code>, <code>&lt;style&gt;</code>, an animation, <code>foreignObject</code> or anything it loads is refused (<code>brand-mark</code>, with the reason), never rewritten. On Cloud, <code>add_image</code> answers the path.</li>
 <li><strong>A face</strong> is <code>system-serif</code>, <code>system-sans</code>, <code>system-mono</code>, a face every system has (Georgia, Menlo), or a web font on <code>DOCUMENT_FONTS</code>; one named by its address is refused (<code>brand-font</code>). The host decides where web fonts load from.</li>
 <li><strong>An accent</strong> must read as given in light: <code>set-brand</code> refuses one that does not with the pair, its ratio and the shade that would pass — "#e6c200 text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the shade it names.</li>
 <li><strong>The icon</strong> is set only by a face that owns the page; an embed on somebody else's page leaves theirs alone unless the host passes <code>favicon: true</code>.</li>
 </ul>
-<p><code>describe_place("home")</code> says the masthead: the name, the line under it, and the logo by its alt text.</p>
+<p><code>describe_place("home")</code> says the app as the home draws it (its <code>masthead</code>): the name, the line under it, and the logo by its alt text.</p>
 <h3>Styling by conversation</h3>
 <p>This skill is built to be DRIVEN IN NATURAL LANGUAGE — "warmer", "more editorial", "our green is #1B4332", "make people amber and money green" — because the whole look is one serializable declaration:</p>
 <ul>

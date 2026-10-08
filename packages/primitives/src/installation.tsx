@@ -7,7 +7,7 @@ import { useGraview, useNavigation } from "@graview/react/provider";
  *
  * A module drawn only for those who administer it is never a district for
  * anyone else. For the seat that may run its acts there is one control, in
- * the bar and on an embed's strip: press it and the installation's own
+ * the person's menu on the app bar (FR-131): press it and the installation's own
  * kinds — the people, the invitations — rise into the scene beside the
  * domain, as ordinary districts with ordinary cards and acts; press it
  * again and they are gone. It is a stop (`show=installation` in the

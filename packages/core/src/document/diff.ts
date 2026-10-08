@@ -1,5 +1,6 @@
 import { withArticle } from "../schema/define-node.js";
 import { canonicalize } from "./canonical.js";
+import { quoted, quotedAtTheEnd } from "./quote.js";
 import { narrows, rangeWords } from "./range.js";
 import type { GraviewDocument } from "./schema.js";
 import { homeOf, VIEW_SLOTS, viewsOf } from "./views.js";
@@ -42,8 +43,8 @@ export function diffDocuments(before: GraviewDocument, after: GraviewDocument): 
   const newlyRequired: { kind: string; field: string }[] = [];
   const narrowedRanges: { kind: string; field: string }[] = [];
 
-  if (before.name !== after.name) sentences.push(`The app is now called "${after.name}", where it was "${before.name}".`);
-  if (!same(before.description, after.description)) sentences.push(after.description === undefined ? "The app has no line under its name." : `The line under the app's name reads "${after.description}".`);
+  if (before.name !== after.name) sentences.push(`The app is now called ${quoted(after.name)}, where it was ${quotedAtTheEnd(before.name)}`);
+  if (!same(before.description, after.description)) sentences.push(after.description === undefined ? "The app has no line under its name." : `The line under the app's name reads ${quotedAtTheEnd(after.description)}`);
   // A kind declared `renamedFrom` an old one continues it: compared as the same kind, said as a rename.
   const continues = new Map<string, string>();
   for (const [kind, spec] of Object.entries(after.kinds)) {
@@ -135,7 +136,7 @@ export function diffDocuments(before: GraviewDocument, after: GraviewDocument): 
   }
   if (!same(before.policy, after.policy) || !same(before.roles, after.roles)) sentences.push("Who may do what changes.");
   if (!same(before.brand?.accent, after.brand?.accent)) sentences.push("The app's colors change.");
-  sentences.push(...brandSentences(before.brand ?? {}, after.brand ?? {}));
+  sentences.push(...brandSentences(before.brand ?? {}, after.brand ?? {}, after.name));
   // The app's money (FR-100), said apart from its colors.
   if (!same(before.brand?.currency, after.brand?.currency) || !same(before.brand?.locale, after.brand?.locale)) {
     const currency = after.brand?.currency;
@@ -154,7 +155,7 @@ type Brand = NonNullable<GraviewDocument["brand"]>;
 const ROLES = { display: "Headings", body: "Body text", mono: "Code" } as const;
 
 /** The rest of the brand (FR-124, FR-125), key by key: "The logo changes.", "Headings are now set in system-serif." */
-function brandSentences(was: Brand, now: Brand): string[] {
+function brandSentences(was: Brand, now: Brand, appName: string): string[] {
   const out: string[] = [];
   if (!same(was.name, now.name)) out.push(now.name === undefined ? "The wordmark says the app's name." : `The wordmark says ${now.name}.`);
   const src = (logo: Brand["logo"]) => (typeof logo === "string" ? logo : logo?.src);
@@ -163,7 +164,7 @@ function brandSentences(was: Brand, now: Brand): string[] {
     out.push(b === undefined ? `The app has no ${what}.` : a === undefined ? `The app gets a ${what}.` : `The ${what} changes.`);
   }
   const alt = (logo: Brand["logo"]) => (typeof logo === "object" ? logo.alt : undefined);
-  if (same(src(was.logo), src(now.logo)) && now.logo !== undefined && !same(alt(was.logo), alt(now.logo))) out.push(`The logo is said as "${alt(now.logo) ?? now.name ?? "the app's name"}".`);
+  if (same(src(was.logo), src(now.logo)) && now.logo !== undefined && !same(alt(was.logo), alt(now.logo))) out.push(`The logo is said as ${quotedAtTheEnd(alt(now.logo) ?? now.name ?? appName)}`);
   for (const role of ["display", "body", "mono"] as const) {
     const [a, b] = [was.typography?.[role], now.typography?.[role]];
     if (!same(a, b)) out.push(b === undefined ? `${ROLES[role]} go${role === "display" ? "" : "es"} back to Graview's face.` : `${ROLES[role]} ${role === "display" ? "are" : "is"} now set in ${b}.`);

@@ -113,7 +113,7 @@ export function kitFindings(n: number, kit: KitOverrides): readonly { readonly e
  * The rota is the other product in the tree — a shift roster with a
  * policy, three seats and the same calendar lens — so it mounts here the
  * way a chapter does: its declaration, its example week, its own pictures,
- * its seats on the strip. The seats are the rota's own, restated rather
+ * its seats in the person's menu. The seats are the rota's own, restated rather
  * than imported, because importing its `ui` entry would bring the whole
  * app's interface into a bundle that only needs its declaration.
  */

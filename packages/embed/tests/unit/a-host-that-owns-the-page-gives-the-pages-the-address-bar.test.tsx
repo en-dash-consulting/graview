@@ -132,6 +132,29 @@ describe("memory routing, the default", () => {
   });
 });
 
+describe("the way to the overview from a page", () => {
+  it("lands once on the stop it names, and then leaves the scene to the reader and the host (FR-132)", async () => {
+    const { host, handle } = await at("/an-article", { face: "pages", path: "/tasks/t1" });
+    expect(heading(host)).toBe("Buy stamps");
+    await click(host.querySelector('[data-testid="spatial-link"]'));
+    await act(async () => handle.drawn());
+    expect(face(host)).toBe("scene");
+    expect(new URLSearchParams(handle.where().stop?.slice(1)).get("focus")).toBe("t1");
+    // The host moves the scene: it moves, though the reader came by the link.
+    handle.setStop("#focus=t2");
+    await settle();
+    expect(new URLSearchParams(handle.where().stop?.slice(1)).get("focus")).toBe("t2");
+    // To a list and back: the scene is where it was left, not snapped back to the link's stop.
+    handle.setPath("/tasks");
+    await settle();
+    expect(face(host)).toBe("pages");
+    handle.setPath("/places/overview");
+    await settle();
+    expect(face(host)).toBe("scene");
+    expect(new URLSearchParams(handle.where().stop?.slice(1)).get("focus")).not.toBe("t1");
+  });
+});
+
 describe("address routing under a base path", () => {
   it("opens the page the address names, whatever face the host asked for", async () => {
     const { host } = await at("/apps/a1/tasks/t1", { routing: "address", basePath: "/apps/a1/", face: "graview" });

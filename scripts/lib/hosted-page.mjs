@@ -59,10 +59,15 @@ export const FACE_DOORS = {
  * its tabs with one bar, and fetches what is behind its tools when they are
  * first reached for — the person's menu, the problems' rows — and the blocks
  * a view is drawn with with the face that draws one: 574 574 bytes
- * (561.1 KB), against the 563 KB it was asked to come back under. The claim
- * is that figure with about 1 KB of headroom.
+ * (561.1 KB), against the 563 KB it was asked to come back under. Then a
+ * brand's mark came to be read element by element as the browser reads it
+ * before it is put in the page (the review after 0.1.15: the rules that
+ * searched the string could be talked past), about 3.9 KB the page needs
+ * before it draws the bar's logo: 579 107 bytes (565.5 KB). The claim is
+ * that figure with about 1.5 KB of headroom: 567 KB, which leaves Cloud's
+ * shell its ~25 KB under its 595 with 3 to spare.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 562 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 567 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -93,7 +98,7 @@ mount(root, {
   presence: remote.presence,
   studio: false,
   face: window.innerWidth < 768 ? "pages" : "graview",
-  toggle: true,
+  bar: true,
   height: "100dvh",
   label: compiled.app.name,
   heading: 1,
@@ -130,10 +135,12 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * measured at 521.0 KB, and 522.6 KB with the notices that float (FR-133).
  * The one app bar (FR-131, FR-132) brought it to 529 773 bytes (517.4 KB):
  * 2.4 KB short of the 515 it was asked for, which FR-133's placing of a
- * notice (1.7 KB up front) took while it was built. The claim is that
- * figure with about 1 KB of headroom.
+ * notice (1.7 KB up front) took while it was built. A brand's mark read
+ * element by element as the browser reads it (the review after 0.1.15)
+ * took it to 534 306 bytes (521.8 KB). The claim is that figure with about
+ * 1 KB of headroom: 523 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 518 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 523 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

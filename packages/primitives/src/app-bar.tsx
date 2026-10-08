@@ -221,6 +221,18 @@ export function AppBar({
     setFinding(true);
     requestAnimationFrame(() => slot?.querySelector<HTMLInputElement>("input")?.focus());
   }, [slot]);
+  /*
+   * Put away on a phone by Escape, the box gives the keyboard back to the
+   * magnifier that opened it — never to the page's body.
+   */
+  const opener = useRef<HTMLButtonElement>(null);
+  const escaping = useRef(false);
+  const putAway = useCallback(() => {
+    setFinding(false);
+    if (!escaping.current) return;
+    escaping.current = false;
+    requestAnimationFrame(() => opener.current?.focus());
+  }, []);
   const Heading = heading === false ? "span" : (`h${heading}` as const);
   const press = (go: (() => void) | undefined) => (event: MouseEvent) => {
     if (!go || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -260,6 +272,7 @@ export function AppBar({
               <button
                 type="button"
                 className="graview-bar-find-open"
+                ref={opener}
                 data-testid="app-find-open"
                 aria-label="Find"
                 title="Find"
@@ -276,10 +289,16 @@ export function AppBar({
                   // Put away on a phone when the keyboard leaves it with nothing typed.
                   const next = event.relatedTarget;
                   if (next instanceof Node && event.currentTarget.contains(next)) return;
-                  if (!event.currentTarget.querySelector<HTMLInputElement>("input")?.value) setFinding(false);
+                  if (!event.currentTarget.querySelector<HTMLInputElement>("input")?.value) putAway();
+                }}
+                onKeyDownCapture={(event) => {
+                  if (event.key === "Escape" && compact) escaping.current = true;
                 }}
                 onKeyDown={(event) => {
-                  if (event.key === "Escape" && compact && !event.defaultPrevented) setFinding(false);
+                  if (event.key !== "Escape" || !compact) return;
+                  // The scene's Find takes Escape for its words first; an empty box is put away.
+                  if (!event.defaultPrevented || !event.currentTarget.querySelector<HTMLInputElement>("input")?.value) putAway();
+                  else escaping.current = false;
                 }}
               >
                 {findBox}
@@ -314,8 +333,9 @@ function FindMark() {
 
 /**
  * THE PLACES AS PLAIN TABS. As many as the row holds, in order; the rest
- * under "More". The tab you are on is marked — and when it is one of the
- * rest, "More" says its name, marked, so where you are is never hidden.
+ * under "More". The tab you are on is marked, and always on the row — in
+ * the last tab's room when the row could not otherwise hold it, and alone
+ * beside "More" when the row holds none — so where you are is never hidden.
  */
 function BarPlaces({ places, current, reach }: { readonly places: readonly BarPlace[]; readonly current: string | null; readonly reach: BarGo }) {
   const row = useRef<HTMLElement>(null);
@@ -349,11 +369,13 @@ function BarPlaces({ places, current, reach }: { readonly places: readonly BarPl
     if (typeof ResizeObserver === "undefined") return;
     const watch = new ResizeObserver(fit);
     watch.observe(element);
+    // The ruler too: a brand's web font arriving after the first measure widens every tab.
+    watch.observe(ruler);
     return () => watch.disconnect();
   }, [signature, currentAt]);
   if (places.length === 0) return <div className="graview-bar-places" data-testid="app-places" ref={row as never} />;
-  // The place you are on is on the row: in the last tab's room when it is one the row could not otherwise hold.
-  const shown = currentAt >= fits && fits > 0 ? [...places.slice(0, fits - 1), places[currentAt]!] : places.slice(0, fits);
+  // The place you are on is on the row: in the last tab's room when it is one the row could not otherwise hold, alone when it holds none.
+  const shown = currentAt >= fits ? [...places.slice(0, Math.max(0, fits - 1)), places[currentAt]!] : places.slice(0, fits);
   const rest = places.filter((place) => !shown.includes(place));
   const tab = (place: BarPlace, inMenu: boolean) => {
     const here = place.key === current;

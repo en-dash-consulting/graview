@@ -167,7 +167,7 @@ async function buildHost() {
           height: "100%",
           fonts: false,
           studio: false,
-          toggle: true,
+          bar: true,
         });
         window.__handle.drawn().then(() => { window.__ready = true; });`,
       resolveDir: resolve(repoRoot, "packages/embed"),

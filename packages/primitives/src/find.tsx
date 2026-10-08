@@ -46,13 +46,26 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
   /*
    * `/` OR ⌘K, FROM ANYWHERE. ⌘K is a chord nobody types into a field, so
    * it works from one; `/` is a character, so it only reaches the box when
-   * the keys are not already somewhere writing.
+   * the keys are not already somewhere writing. Inside an embed, on
+   * somebody else's page, only a key pressed in the embed or on nothing at
+   * all is the box's (`/` only in the embed), and one the host's page
+   * already answered is not: ⌘K
+   * in the host's own editor stays the editor's, and of two embeds the
+   * first to answer has it (FR-131).
    */
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
       const chord = event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey;
       const slash = event.key === "/" && !event.metaKey && !event.ctrlKey && !event.altKey;
       if (!chord && !slash) return;
+      const box = input.current;
+      if (!box) return;
+      const root = box.closest("[data-graview-embed]");
+      const target = event.target;
+      const nowhere = target === document.body || target === document.documentElement || target === window;
+      // `/` is a character the host's page may want (a browser's quick find): inside an embed it is the box's only from within.
+      if (root && !((chord && nowhere) || (target instanceof Node && root.contains(target)))) return;
       const at = document.activeElement;
       const writing =
         at instanceof HTMLInputElement ||
@@ -61,8 +74,10 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
         (at instanceof HTMLElement && at.isContentEditable);
       if (slash && writing) return;
       event.preventDefault();
-      input.current?.focus();
-      input.current?.select();
+      // A phone's bar keeps the box put away until it is asked for.
+      if (box.getClientRects().length === 0) box.closest<HTMLElement>("[data-graview-app-bar]")?.querySelector<HTMLButtonElement>('[data-testid="app-find-open"]')?.click();
+      box.focus({ preventScroll: true });
+      box.select();
       setOpen(true);
     };
     window.addEventListener("keydown", onKey);

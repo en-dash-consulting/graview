@@ -44,3 +44,51 @@ describe("two embeds on one page", () => {
     }
   });
 });
+
+/*
+ * ⌘K IS THE HOST'S WHERE THE HOST'S PAGE HAS THE KEYBOARD (FR-131). The
+ * scene's Find stands in the embed's bar now, on somebody else's page, and
+ * it listened for ⌘K and `/` on the whole window: ⌘K in the host's own
+ * editor ("insert a link") was taken from it and the page scrolled to the
+ * embed, and with two embeds both answered.
+ */
+describe("the scene's Find on somebody else's page", () => {
+  it("leaves ⌘K and / to the host's own fields, and answers ⌘K only for its own embed", async () => {
+    const editor = document.createElement("textarea");
+    const hosts = [document.createElement("div"), document.createElement("div")];
+    document.body.append(editor, ...hosts);
+    const handles: EmbedHandle[] = [];
+    await act(async () => {
+      handles.push(mount(hosts[0]!, { app, fonts: false, face: "scene", seed, label: "The notes" } as unknown as EmbedOptions));
+      handles.push(mount(hosts[1]!, { app, fonts: false, face: "scene", seed, label: "The log" } as unknown as EmbedOptions));
+    });
+    try {
+      for (let turn = 0; turn < 200 && document.querySelectorAll("[data-testid='find-input'], [data-graview-app-bar] input").length < 2; turn++) await act(async () => new Promise((resolve) => setTimeout(resolve, 5)));
+      const press = (target: Element, key: string, chord: boolean) =>
+        act(async () => {
+          const event = new KeyboardEvent("keydown", { key, metaKey: chord, ctrlKey: false, bubbles: true, cancelable: true });
+          target.dispatchEvent(event);
+          await new Promise((resolve) => setTimeout(resolve, 20));
+          return event;
+        });
+      editor.focus();
+      const chord = await press(editor, "k", true);
+      expect(chord.defaultPrevented).toBe(false);
+      expect(document.activeElement).toBe(editor);
+      editor.blur();
+      const slash = await press(document.body, "/", false);
+      expect(slash.defaultPrevented).toBe(false);
+      const inSecond = hosts[1]!.querySelector<HTMLElement>("[data-graview-app-bar] button")!;
+      inSecond.focus();
+      const own = await press(inSecond, "k", true);
+      expect(own.defaultPrevented).toBe(true);
+      expect(hosts[1]!.contains(document.activeElement)).toBe(true);
+      expect(document.activeElement?.tagName).toBe("INPUT");
+    } finally {
+      await act(async () => {
+        for (const handle of handles) handle.unmount();
+      });
+      for (const host of [editor, ...hosts]) host.remove();
+    }
+  });
+});

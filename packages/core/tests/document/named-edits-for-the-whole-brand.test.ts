@@ -34,7 +34,7 @@ function compiles(document: GraviewDocument) {
 
 const ROUND_TRIPS: readonly { name: string; on: GraviewDocument; edit: Record<string, unknown>; inverse: Record<string, unknown>; said: RegExp; says: RegExp }[] = [
   { name: "set-name", on: vendors, edit: { op: "set-name", name: "Our wedding" }, inverse: { op: "set-name", name: "Wedding vendors" }, said: /^The app is now called "Our wedding"\.$/, says: /^The app is now called "Our wedding", where it was "Wedding vendors"\.$/ },
-  { name: "set-description", on: vendors, edit: { op: "set-description", description: "Who we hire, and for how much." }, inverse: { op: "set-description", description: vendors.description }, said: /^The line under the app's name reads "Who we hire, and for how much\."\.$/, says: /^The line under the app's name reads "Who we hire, and for how much\."\.$/ },
+  { name: "set-description", on: vendors, edit: { op: "set-description", description: "Who we hire, and for how much." }, inverse: { op: "set-description", description: vendors.description }, said: /^The line under the app's name reads "Who we hire, and for how much\."$/, says: /^The line under the app's name reads "Who we hire, and for how much\."$/ },
   { name: "set-description to none", on: vendors, edit: { op: "set-description", description: null }, inverse: { op: "set-description", description: vendors.description }, said: /^The app has no line under its name\.$/, says: /^The app has no line under its name\.$/ },
   { name: "set-brand: a logo, inline", on: vendors, edit: { op: "set-brand", logo: LOGO }, inverse: { op: "set-brand", logo: null }, said: /^The app gets a logo\.$/, says: /^The app gets a logo\.$/ },
   { name: "set-brand: a logo from the app's assets, with its alt text", on: enDash, edit: { op: "set-brand", logo: { src: ASSET, alt: "The En Dash mark" } }, inverse: { op: "set-brand", logo: enDash.brand!.logo }, said: /^The logo changes\.$/, says: /^The logo changes\.$/ },
@@ -75,6 +75,34 @@ describe("every key of the brand, the name and the description: previewed, appli
     expect(outcome.ok).toBe(false);
     if (outcome.ok) return;
     expect(outcome.findings.map((f) => `${f.code} at ${f.path}: ${f.message}`)).toEqual(["brand-mark at edits.0.logo: the logo cannot be drawn as given, because it has a script in it"]);
+  });
+
+  it("says what changed and nothing that did not: the same name or logo again, an alt text alone, words with quotes in them", () => {
+    expect(edit(vendors, [{ op: "set-name", name: vendors.name }]).said).toEqual([`The app is already called "${vendors.name}".`]);
+    expect(edit(enDash, [{ op: "set-brand", logo: enDash.brand!.logo }]).said).toEqual(["The logo stays as it was."]);
+    const alt = edit(enDash, [{ op: "set-brand", logo: { src: LOGO, alt: "The En Dash mark" } }]);
+    expect(alt.said).toEqual(['The logo is said as "The En Dash mark".']);
+    expect(diffDocuments(enDash, alt.document).sentences).toEqual(['The logo is said as "The En Dash mark".']);
+    // An alt taken away is said as the name it falls back to, never as a placeholder in quotes.
+    const unnamed = edit(vendors, [{ op: "set-brand", logo: { src: LOGO, alt: "A mark" } }]).document;
+    const plain = edit(unnamed, [{ op: "set-brand", logo: LOGO }]).document;
+    expect(diffDocuments(unnamed, plain).sentences).toEqual([`The logo is said as "${vendors.name}".`]);
+    const quoting = edit(vendors, [{ op: "set-description", description: 'Say "yes" to fewer vendors' }]);
+    expect(quoting.said).toEqual(["The line under the app's name reads “Say \"yes\" to fewer vendors”."]);
+  });
+
+  it("refuses a set-brand that names nothing to change, rather than saying nothing", () => {
+    for (const empty of [{ op: "set-brand" }, { op: "set-brand", typography: {} }]) {
+      const outcome = editDocument(vendors, [empty]);
+      expect([JSON.stringify(empty), outcome.ok]).toEqual([JSON.stringify(empty), false]);
+    }
+  });
+
+  it("takes a face the host serves itself, as compileDocument does when told of it", () => {
+    const refused = editDocument(vendors, [{ op: "set-brand", typography: { body: '"Comic Neue", sans-serif' } }]);
+    expect(refused.ok).toBe(false);
+    const taken = editDocument(vendors, [{ op: "set-brand", typography: { body: '"Comic Neue", sans-serif' } }], { fonts: ["Comic Neue"] });
+    expect(taken.ok).toBe(true);
   });
 
   it("refuses a face from an origin, and a hue for a kind the app does not have", () => {

@@ -48,7 +48,7 @@ describe("every edit says what it did", () => {
     const outcome = editDocument(base?.ok ? base.document : vendors, [ONE_OF_EACH[op]]);
     if (!outcome.ok) throw new Error(JSON.stringify(outcome.findings));
     expect(outcome.said.length).toBeGreaterThan(0);
-    for (const sentence of outcome.said) expect(sentence).toMatch(/\S.*[.)]$/);
+    for (const sentence of outcome.said) expect(sentence).toMatch(/\S.*([.)]|[.!?]["”])$/); // a quotation that ends the sentence carries its stop inside, as American English writes it
     const compiled = compileDocument(outcome.document);
     expect(compiled.ok, JSON.stringify(compiled.findings.filter((finding) => finding.severity === "error"))).toBe(true);
   });

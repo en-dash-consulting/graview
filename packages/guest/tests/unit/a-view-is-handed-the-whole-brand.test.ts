@@ -111,6 +111,28 @@ describe("a frame guest's theme", () => {
     expect(themes.every((theme) => theme.logo === undefined && theme.name === "En Dash")).toBe(true);
     done();
   });
+
+  it("never fetches a path that climbs out of where it is, so a view is never handed the bytes of another page of the host", async () => {
+    const fetched = vi.spyOn(window, "fetch");
+    for (const climbing of ["/graview/assets/../photos/private.jpg", "../api/export", "/graview/assets/%2e%2e/photos/x.jpg"]) {
+      const { themes, done } = frameWith({ current: { name: "En Dash", logo: climbing } });
+      await vi.waitFor(() => expect(themes).toHaveLength(1));
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect([climbing, themes.every((theme) => theme.logo === undefined)]).toEqual([climbing, true]);
+      done();
+    }
+    expect(fetched).not.toHaveBeenCalled();
+  });
+
+  it("never makes an image of an inline SVG that could act, so no blob: of the host's origin carries a script", async () => {
+    const made = vi.spyOn(window, "Blob");
+    const { themes, done } = frameWith({ current: { name: "En Dash", logo: '<svg xmlns="http://www.w3.org/2000/svg"><x:script xmlns:x="http://www.w3.org/2000/svg">alert(1)</x:script></svg>' } });
+    await vi.waitFor(() => expect(themes).toHaveLength(1));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(themes.every((theme) => theme.logo === undefined)).toBe(true);
+    expect(made).not.toHaveBeenCalled();
+    done();
+  });
 });
 
 describe("a worker view's logo", () => {
