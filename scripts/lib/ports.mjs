@@ -57,6 +57,8 @@ export const OWN = {
   "quiet-host": 5277,
   /** The host's page `verify-offline` mounts the embed into, to take the browser offline before the person's menu has arrived (FR-139). */
   "offline-host": 5274,
+  /** The host's page `verify-drawn-once` mounts Cloud's workshop into, to see a selected record drawn by one thing (FR-141–FR-143). */
+  "drawn-once-host": 5273,
   /** `pnpm site:serve`: docs/site served as graview.dev serves it, so the site's own font loads (a file:// page cannot load one). */
   "site-preview": 5275,
   /** The OpenAI-shaped stand-in `verify-studio` points the studio's remote model at. */
