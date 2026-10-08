@@ -1,4 +1,4 @@
-import { isSystemFamily, type Brand } from "@graview/core";
+import { GRAVIEW_FACE, isSystemFamily, type Brand } from "@graview/core";
 
 /**
  * The families a brand names, in the order it names them — the first family
@@ -12,6 +12,8 @@ export function familiesOf(brand: Brand | undefined): readonly string[] {
     const first = stack?.split(",")[0]?.trim().replace(/^["']|["']$/g, "");
     // A face the reader's system has (Georgia, Menlo, a `system-serif` stack) is never fetched (FR-124).
     if (!first || isSystemFamily(first)) continue;
+    // Nor the framework's own face: Montserrat is named by `TYPOGRAPHY`, and the host loads it (`@graview/primitives/montserrat.css`) or the system sans stands in.
+    if (first.toLowerCase() === GRAVIEW_FACE.toLowerCase()) continue;
     if (!out.includes(first)) out.push(first);
   }
   return out;

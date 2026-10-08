@@ -54,7 +54,7 @@ describe("a document holds the whole brand, and each key reaches what the faces 
   });
 
   it("sets headings in the display face, the body in the body's, code in the mono — each keyword its system stack", () => {
-    expect(typographyOf(brand)).toEqual({ display: SYSTEM_STACKS["system-serif"], body: SYSTEM_STACKS["system-sans"], mono: SYSTEM_STACKS["system-mono"] });
+    expect(typographyOf(brand)).toEqual({ display: SYSTEM_STACKS["system-serif"], body: SYSTEM_STACKS["system-sans"], mono: SYSTEM_STACKS["system-mono"], weights: { display: 600, body: 400, label: 600 } });
     expect(typographyOf(brand).display).toMatch(/serif$/);
   });
 

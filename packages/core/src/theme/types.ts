@@ -99,6 +99,12 @@ export interface Brand {
     readonly display?: string;
     /** Code, ids, anything that must align in columns. */
     readonly mono?: string;
+    /**
+     * The three weights (100–900): headings, reading text and action
+     * labels. Absent, the identity's 550, 450 and 600 on the framework's
+     * own face, and 600, 400 and 600 on a face this brand names.
+     */
+    readonly weights?: { readonly display?: number; readonly body?: number; readonly label?: number };
   };
   /**
    * How square and how tight this product is.

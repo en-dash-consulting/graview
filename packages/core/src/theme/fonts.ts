@@ -17,7 +17,8 @@ import { TYPOGRAPHY } from "./look.js";
 
 /** The three stacks a document names by keyword, made of the faces the reader's system already has. */
 export const SYSTEM_STACKS: Readonly<Record<"system-sans" | "system-serif" | "system-mono", string>> = {
-  "system-sans": TYPOGRAPHY.body,
+  /* The system's own sans, as `system-sans` has always meant: not `TYPOGRAPHY.body`, which names Montserrat first. */
+  "system-sans": 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
   "system-serif": 'ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, Cambria, "Times New Roman", serif',
   "system-mono": TYPOGRAPHY.mono,
 };

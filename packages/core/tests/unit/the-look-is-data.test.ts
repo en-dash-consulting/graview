@@ -9,8 +9,8 @@ import { isoShade, SCHEMES, SHAPE, shapeOf, TYPOGRAPHY, typographyOf } from "../
  */
 describe("the look is data a host can read", () => {
   it("is the framework's own shape and type", () => {
-    expect(SHAPE).toMatchObject({ radius: 12, density: 1, pad: 15, padSmall: 10, gap: 7 });
-    expect(TYPOGRAPHY.body).toBe('ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif');
+    expect(SHAPE).toMatchObject({ radius: 8, density: 1, pad: 15, padSmall: 10, gap: 7 });
+    expect(TYPOGRAPHY.body).toBe('"Montserrat", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif');
     expect(TYPOGRAPHY.mono).toBe('ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace');
   });
 
@@ -40,19 +40,19 @@ describe("the look is data a host can read", () => {
   });
 
   it("resolves a brand that says nothing to the framework's own pixels", () => {
-    expect(shapeOf({})).toEqual({ radius: 12, radiusSmall: 9, pad: 15, padSmall: 10, gap: 7 });
+    expect(shapeOf({})).toEqual({ radius: 8, radiusSmall: 6, pad: 15, padSmall: 10, gap: 7 });
     expect(shapeOf()).toEqual(shapeOf({}));
-    expect(typographyOf({})).toEqual({ body: TYPOGRAPHY.body, display: TYPOGRAPHY.body, mono: TYPOGRAPHY.mono });
+    expect(typographyOf({})).toEqual({ body: TYPOGRAPHY.body, display: TYPOGRAPHY.body, mono: TYPOGRAPHY.mono, weights: { display: 550, body: 450, label: 600 } });
   });
 
   it("lets a brand move its radius and density, and every pixel of spacing moves with the one number", () => {
     const square = shapeOf({ shape: { radius: 2, density: 0.8 } });
     expect(square).toEqual({ radius: 2, radiusSmall: 2, pad: 12, padSmall: 8, gap: 6 });
-    expect(shapeOf({ shape: { density: 1.4 } })).toMatchObject({ radius: 12, pad: 21 });
+    expect(shapeOf({ shape: { density: 1.4 } })).toMatchObject({ radius: 8, pad: 21 });
   });
 
   it("gives a brand's display face to the body when it names only one, and its own when it names two", () => {
-    expect(typographyOf({ typography: { body: "Inter, sans-serif" } })).toEqual({ body: "Inter, sans-serif", display: "Inter, sans-serif", mono: TYPOGRAPHY.mono });
+    expect(typographyOf({ typography: { body: "Inter, sans-serif" } })).toEqual({ body: "Inter, sans-serif", display: "Inter, sans-serif", mono: TYPOGRAPHY.mono, weights: { display: 600, body: 400, label: 600 } });
     expect(typographyOf({ typography: { body: "Inter, sans-serif", display: "Fraunces, serif" } }).display).toBe("Fraunces, serif");
   });
 

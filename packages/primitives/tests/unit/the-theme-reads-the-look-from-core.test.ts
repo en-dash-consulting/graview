@@ -48,7 +48,7 @@ describe("themeCss reads the look from core", () => {
   it("draws the framework's own numbers for a brand that declares no shape — the values a host mirrored by hand", () => {
     const css = themeCss("light");
     expect(css).toContain(`--graview-radius: ${SHAPE.radius}px;`);
-    expect(css).toContain("--graview-radius: 12px;");
+    expect(css).toContain("--graview-radius: 8px;");
     expect(css).toContain("--graview-pad: 15px;");
     expect(flat(themeCss("dark"))).toContain(".graview-iso-left { fill: hsl(var(--graview-hue, 200) 38% 13%); }");
   });

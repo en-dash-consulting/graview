@@ -24,7 +24,7 @@ describe("set-brand refuses an accent that does not read, naming the pair, the r
     if (outcome.ok) return;
     expect(outcome.findings).toHaveLength(1);
     expect(outcome.findings[0]!.path).toBe("edits.0.accent");
-    expect(outcome.findings[0]!.message).toMatch(/^#e6c200 text on #f6f4f0 is 1\.5:1; 4\.5:1 is needed — #[0-9a-f]{6} would pass\.$/);
+    expect(outcome.findings[0]!.message).toMatch(/^#e6c200 text on #f7f7f2 is 1\.6:1; 4\.5:1 is needed — #[0-9a-f]{6} would pass\.$/);
   });
 
   const suggestion = accentProblem("#e6c200")!.suggestion!;
@@ -67,7 +67,7 @@ describe("check says the same of a document that holds such an accent", () => {
     const compiled = compileDocument({ ...vendors, brand: { accent: "#e6c200" } });
     const said = compiled.findings.filter((f) => f.path === "brand.accent");
     expect(said).toHaveLength(1);
-    expect(said[0]!.message).toMatch(/#e6c200 text on #f6f4f0 is 1\.5:1; 4\.5:1 is needed — #[0-9a-f]{6} would pass\./);
+    expect(said[0]!.message).toMatch(/#e6c200 text on #f7f7f2 is 1\.6:1; 4\.5:1 is needed — #[0-9a-f]{6} would pass\./);
     expect(said[0]!.fix).toMatch(/^say \{ "accent": "#[0-9a-f]{6}" \}$/);
   });
 
@@ -77,7 +77,7 @@ describe("check says the same of a document that holds such an accent", () => {
     expect(compiled.ok).toBe(true);
     const said = compiled.findings.filter((f) => f.code === "brand-accent");
     expect(said.map((f) => f.severity)).toEqual(["warning"]);
-    expect(said[0]!.message).toMatch(/^#c2577a text on #f6f4f0 is 3\.8:1; 4\.5:1 is needed — #[0-9a-f]{6} would pass\. The app draws a shade it moved to read, not the color given\.$/);
+    expect(said[0]!.message).toMatch(/^#c2577a text on #f7f7f2 is 3\.9:1; 4\.5:1 is needed — #[0-9a-f]{6} would pass\. The app draws a shade it moved to read, not the color given\.$/);
   });
 });
 

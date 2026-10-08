@@ -141,8 +141,8 @@ describe("a thumbnail with no counts reads as a place (FR-120)", () => {
   it("leaves every other picture byte for byte as it was: the map with and without counts, and the fitted picture with counts", () => {
     const all = (options: (t: Template) => Parameters<typeof sceneThumbnail>[1]) =>
       sha(templates.flatMap((t) => (["light", "dark"] as const).map((scheme) => sceneThumbnail(t.document, { scheme, ...options(t) }))).join("\n"));
-    expect(all(() => ({}))).toBe("d66c5c012cfeda1a");
-    expect(all((t) => ({ counts: t.counts }))).toBe("aa5a4b1fd2adfc3b");
-    expect(all((t) => ({ counts: t.counts, fit: "content" }))).toBe("8961f4c2fb3e3672");
+    expect(all(() => ({}))).toBe("7a38855afb50dae9");
+    expect(all((t) => ({ counts: t.counts }))).toBe("f3697c708914d72c");
+    expect(all((t) => ({ counts: t.counts, fit: "content" }))).toBe("b32eaeaaad9b10a5");
   });
 });

@@ -1,3 +1,4 @@
+import { GRAVIEW_FACE, PLAIN_WEIGHTS, WEIGHTS } from "./identity.js";
 import type { Brand, Scheme } from "./types.js";
 
 /*
@@ -25,8 +26,11 @@ import type { Brand, Scheme } from "./types.js";
  * for how tight a product is, not five.
  */
 export const SHAPE = Object.freeze({
-  /** A panel's corner, in pixels. */
-  radius: 12,
+  /**
+   * A panel's corner, in pixels. Modest, as the identity asks (the design
+   * kit, revision 03): a panel is a sheet with corners, not a capsule.
+   */
+  radius: 8,
   /** Padding multiplier. 1 is the framework's own spacing. */
   density: 1,
   /** A small corner (a chip, a field) as a share of the panel's, never under `radiusSmallFloor`. */
@@ -44,9 +48,14 @@ export const SHAPE = Object.freeze({
  * The framework's own type: the stacks a brand's `typography` overrides.
  * The display face is the body face unless a brand names one — a brand with
  * one font is not asked to name it twice.
+ *
+ * The body names Montserrat, the identity's face, and then the system's.
+ * The framework never fetches a font: where the host has not loaded
+ * Montserrat (`@graview/primitives/montserrat.css`, or its own copy), the
+ * words are set in the reader's system sans, as they always were.
  */
 export const TYPOGRAPHY = Object.freeze({
-  body: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
+  body: `"${GRAVIEW_FACE}", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`,
   mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
 });
 
@@ -80,15 +89,32 @@ export interface ResolvedTypography {
   readonly body: string;
   readonly display: string;
   readonly mono: string;
+  /** What `themeCss` writes as `--graview-weight-display`, `-body` and `-label`. */
+  readonly weights: { readonly display: number; readonly body: number; readonly label: number };
 }
 
-/** The faces a brand sets its words in: its own where it named them, the framework's where it did not. */
+/**
+ * The faces a brand sets its words in: its own where it named them, the
+ * framework's where it did not. The weights are the brand's where it named
+ * them; otherwise the identity's (550, 450, 600) on the framework's own
+ * face, and the plain ones (600, 400, 600) on a face the brand chose, since
+ * the in-between weights only mean something in a variable face.
+ */
 export function typographyOf(brand?: Pick<Brand, "typography">): ResolvedTypography {
   const body = brand?.typography?.body ?? TYPOGRAPHY.body;
+  const display = brand?.typography?.display ?? body;
+  const own = body === TYPOGRAPHY.body && display === TYPOGRAPHY.body;
+  const base = own ? WEIGHTS : PLAIN_WEIGHTS;
+  const asked = brand?.typography?.weights;
   return Object.freeze({
     body,
-    display: brand?.typography?.display ?? body,
+    display,
     mono: brand?.typography?.mono ?? TYPOGRAPHY.mono,
+    weights: Object.freeze({
+      display: asked?.display ?? base.display,
+      body: asked?.body ?? base.body,
+      label: asked?.label ?? base.label,
+    }),
   });
 }
 

@@ -139,10 +139,8 @@ export function brandFromAccent(options: AccentBrandOptions): DerivedBrand | Ref
        * so it gives way to the alpha that can actually be seen.
        */
       edgeBright: rgba(shown, visibleAlpha(shown, panel, scheme === "dark" ? 0.55 : 0.42, 3)),
-      wash:
-        scheme === "dark"
-          ? `radial-gradient(120% 80% at 50% -10%, var(--graview-glow) 0%, transparent 60%), radial-gradient(90% 60% at 12% 108%, ${rgba(shown, 0.1)} 0%, transparent 62%)`
-          : `radial-gradient(120% 80% at 50% -20%, rgba(255,255,255,0.9) 0%, transparent 58%), radial-gradient(80% 60% at 92% 104%, ${rgba(shown, 0.06)} 0%, transparent 60%)`,
+      // The wash is the base's, as it is (the shipped ones paint none): an
+      // accent is not a reason to start glowing behind the scene.
       ...(options.warn?.[scheme] ? { warn: options.warn[scheme]! } : {}),
     };
 
