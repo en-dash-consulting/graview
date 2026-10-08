@@ -492,7 +492,8 @@ function noticeLooks(page, kind) {
       topLayer: stack.matches(":popover-open"),
       onTop: hit !== null && card.contains(hit),
       inTheViewport: box.left >= 0 && box.top >= 0 && box.right <= document.documentElement.clientWidth && box.bottom <= innerHeight,
-      floatingPanel: style.backgroundImage.includes("gradient") && style.boxShadow !== "none",
+      // The float surface, filled and cast: a gradient once, a flat fill since the design kit's revision 03.
+      floatingPanel: (style.backgroundImage.includes("gradient") || !/^(transparent|rgba\(0, 0, 0, 0\))$/.test(style.backgroundColor)) && style.boxShadow !== "none",
       contrast: Math.round(((light + 0.05) / (dark + 0.05)) * 100) / 100,
       text: card.textContent,
     };

@@ -25,11 +25,15 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Cstyle%3Eg%7Bstroke:%23001769%7Dcircle%7Bfill:%23001769%7D%40media (prefers-color-scheme:dark)%7Bg%7Bstroke:%23fff%7Dcircle%7Bfill:%23fff%7D%7D%3C/style%3E%3Cg fill=%27none%27 stroke-width=%272.4%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M13 11 L3 8 L14 3 H29 L21 9%27/%3E%3Cpath d=%27M10 18 L3 23 L16.5 28 L29 21 L22 19%27/%3E%3Cpath d=%27M16.5 18.5 V23.5%27 stroke-linecap=%27round%27/%3E%3C/g%3E%3Ccircle cx=%2716.5%27 cy=%2713.5%27 r=%272%27/%3E%3C/svg%3E" type="image/svg+xml">
 <link rel="icon" href="brand/favicon.ico" sizes="16x16 32x32">
 <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
-<link rel="preload" href="brand/montserrat-latin.woff2" as="font" type="font/woff2" crossorigin>
-<style>
-/* Montserrat, served from this site (brand/, cut from the Graview design kit; SIL Open Font License, brand/OFL-Montserrat.txt). */
-@font-face { font-family: "Montserrat"; src: url("brand/montserrat-latin.woff2") format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; }
-</style>
+<script>
+/* Montserrat, served from this site (brand/, cut from the Graview design kit; SIL Open Font License, brand/OFL-Montserrat.txt).
+   Only where the page is served: a browser refuses a font to a file:// page, which then reads in the system's sans. */
+if (location.protocol !== "file:") {
+  var face = document.createElement("style");
+  face.textContent = '@font-face { font-family: "Montserrat"; src: url("brand/montserrat-latin.woff2") format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; }';
+  document.head.appendChild(face);
+}
+</script>
 <style>
 /* The host that publishes this as an artifact supplies a small reset; a
    standalone page has to supply its own, so the two render identically. */

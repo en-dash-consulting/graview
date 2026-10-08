@@ -57,6 +57,7 @@
     "site:numbers": "node scripts/site-numbers.mjs",
     "site:docs": "node scripts/site-docs.mjs",
     "site:build:all": "pnpm site:css && pnpm site:numbers && pnpm site:docs",
+    "site:serve": "node scripts/site-serve.mjs",
     "lines": "node scripts/verify-lines.mjs",
     "companion": "node scripts/verify-companion.mjs",
     "who": "node scripts/verify-who.mjs",
