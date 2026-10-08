@@ -13,6 +13,9 @@ import { plainNode, readAcross, type GuestViewInput } from "./session.js";
  *   cardinality  one record, or the kind's members
  *   reads        the other kinds and the edges it is shown, beyond its own kind
  *   acts         the acts it may ask for (FR-92 says when one applies)
+ *   replaces     "page", for a view of one record drawn alone in place of
+ *                the record's own fields (FR-149); left out, it sits above
+ *                them and they stay editable
  *
  * What it is handed is the viewer's sight — never more — cut down to the
  * kind it is attached to and what it reads. A record the viewer may not see
@@ -42,6 +45,14 @@ export interface WorkerViewManifest {
   readonly cardinality: "one" | "many";
   readonly reads?: { readonly kinds?: readonly string[]; readonly edges?: readonly string[] };
   readonly acts?: readonly (string | ManifestAct)[];
+  /**
+   * What a view of one record replaces (FR-149). Left out, the view is drawn
+   * above the record's own fields, which stay editable: on the scene the
+   * record drawn at full, on Pages the record's page. `"page"` draws the
+   * view alone in their place, and the record is then changed only through
+   * the view. Only for `cardinality: "one"` on a kind.
+   */
+  readonly replaces?: "page";
 }
 
 /** An act of a manifest, said in full. */
@@ -64,6 +75,8 @@ export function checkManifest<S extends AnySchema>(manifest: WorkerViewManifest,
   if (manifest.attach !== "home" && !kinds.has(manifest.attach)) findings.push(`The view attaches to "${manifest.attach}", which is no kind of this app.`);
   if (manifest.cardinality !== "one" && manifest.cardinality !== "many") findings.push(`The view's cardinality is "${String(manifest.cardinality)}", not one or many.`);
   if (manifest.attach === "home" && manifest.cardinality !== "many") findings.push("A view of the home draws many records: its cardinality is many.");
+  if (manifest.replaces !== undefined && manifest.replaces !== "page") findings.push(`The view's replaces is "${String(manifest.replaces)}": the one thing a view replaces is "page", or leave it out to draw the view above the record's own fields.`);
+  else if (manifest.replaces === "page" && (manifest.attach === "home" || manifest.cardinality !== "one")) findings.push('Only a view of one record replaces its page: replaces "page" needs cardinality one on a kind.');
   for (const kind of manifest.reads?.kinds ?? []) if (!kinds.has(kind)) findings.push(`The view reads "${kind}", which is no kind of this app.`);
   for (const edge of manifest.reads?.edges ?? []) if (!edges.has(edge)) findings.push(`The view reads the edge "${edge}", which no kind of this app declares.`);
   const named = new Set<string>();

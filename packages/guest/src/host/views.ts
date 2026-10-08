@@ -13,7 +13,7 @@ export type { WorkerHomeContext, WorkerViewDefinition } from "./worker-react.js"
 export { checkManifest, manifestActs, workerViewProps } from "./manifest.js";
 export type { ManifestAct, WorkerViewManifest, WorkerViewPropsInput } from "./manifest.js";
 export { judgeCodeAct, sightIsTotal } from "./writes.js";
-export type { Judged, Press, PressedField } from "./writes.js";
+export type { Judged, Prefilled, Press, PressedField } from "./writes.js";
 export { checkViewSource } from "./view-source.js";
 export { viewScript } from "./view-script.js";
 export type { MountWorkerViewOptions, WorkerView, WorkerViewCode, WorkerViewFailure, WorkerViewLimits } from "./view.js";
