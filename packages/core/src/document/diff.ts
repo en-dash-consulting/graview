@@ -130,7 +130,7 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
     const wasGlance = (was.glance ?? []).map((field) => movedTo.get(field) ?? field).filter((field) => now.fields[field] || now.computed?.[field] !== undefined);
     if (!same(wasGlance, now.glance ?? [])) sentences.push(`What a glance at ${withArticle(kind)} says changes.`);
     // Its page follows its fields the same way (FR-148): only a different order or grouping is said.
-    const moved = (fields: readonly string[] | undefined) => (fields ?? []).map((field) => movedTo.get(field) ?? field).filter((field) => now.fields[field] || now.computed?.[field] !== undefined);
+    const moved = (fields: readonly string[] | undefined) => (fields ?? []).map((field) => movedTo.get(field) ?? field).filter((field) => Object.hasOwn(now.fields, field) || (now.computed !== undefined && Object.hasOwn(now.computed, field)));
     const wasPage = { fields: moved(was.page?.fields), groups: (was.page?.groups ?? []).map((group) => ({ title: group.title, fields: moved(group.fields) })).filter((group) => group.fields.length > 0) };
     const nowPage = { fields: [...(now.page?.fields ?? [])], groups: (now.page?.groups ?? []).map((group) => ({ title: group.title, fields: [...group.fields] })) };
     if (!same(wasPage, nowPage)) sentences.push(`How ${withArticle(kind)}'s page orders its facts changes.`);

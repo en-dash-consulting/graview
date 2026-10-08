@@ -78,12 +78,12 @@ describe("on the scene, the record drawn at full", () => {
 });
 
 describe("on Pages, the record's page", () => {
-  const page = async (manifest: WorkerViewManifest) => {
+  const page = async (manifest: WorkerViewManifest, wait = 20) => {
     const host = document.createElement("div");
     document.body.appendChild(host);
     const root = createRoot(host);
     await act(async () => root.render(<PagesApp context={{ store: store(), views: registry(manifest) as never, principal: nick }} initialPath="/deliverables/deliverable%3Aemail" />));
-    await act(async () => new Promise((done) => setTimeout(done, 20)));
+    await act(async () => new Promise((done) => setTimeout(done, wait)));
     const said = {
       view: Boolean(host.querySelector('[data-testid="record-view"] [data-worker-view-place="deliverable"]')),
       facts: Boolean(host.querySelector('[data-testid="record-fields"]')),
@@ -100,5 +100,11 @@ describe("on Pages, the record's page", () => {
   });
   it("is the view alone under the heading when its manifest says it replaces the page", async () => {
     expect(await page(replacing)).toEqual({ view: true, facts: false, acts: false, twice: false });
+  });
+  it("still says the record's facts when a view that replaces the page fails", async () => {
+    // A manifest naming an act the app does not declare is refused: the view fails, and the record's own face says its fields.
+    const said = await page({ ...replacing, acts: ["no-such-act"] }, 300);
+    expect(said.view).toBe(false);
+    expect(said.twice).toBe(true);
   });
 });

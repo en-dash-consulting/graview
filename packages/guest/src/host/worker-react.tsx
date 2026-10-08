@@ -101,6 +101,8 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
  */
 export function workerView(definition: WorkerViewDefinition, options: { readonly fallback?: ViewComponent<AnySchema>; readonly beside?: ViewComponent<AnySchema> } = {}): ViewComponent<AnySchema> {
   const Fallback = options.fallback;
+  /* A view that replaces the record's page took the page's facts with it: where it fails, the record's own face is all that is left to say them. */
+  const replaces = definition.manifest.replaces === "page";
   function WorkerViewOfKind(props: ViewProps<AnySchema>) {
     const graview = useGraviewIfAny<AnySchema>();
     const goTo = useGoTo();
@@ -110,7 +112,7 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     latest.current = props;
     if (!graview) return null;
     /* Past its limits, the kind's own face — what the registry drew there before — in its place (FR-94); nothing, where the surface is that face already. */
-    if (failed && Fallback) return elsewhere && isDefaultView(Fallback) ? null : <Fallback {...props} />;
+    if (failed && Fallback) return elsewhere && isDefaultView(Fallback) && !replaces ? null : <Fallback {...props} />;
     /*
      * BESIDE THE RECORD'S OWN FIELDS (FR-149): what was drawn for the record
      * before, under the view — its fields, editable where an act writes

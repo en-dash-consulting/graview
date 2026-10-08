@@ -335,7 +335,7 @@ export function readableFields(
    * as the kind declares them, its computed ones after.
    */
   const chosen = options.glance ? (display?.glance ?? []) : pageOrder(display?.page);
-  const keys = [...new Set([...chosen, ...declaredOrder(definition), ...Object.keys(node)])].filter((key) => key in node);
+  const keys = [...new Set([...chosen, ...declaredOrder(definition), ...Object.keys(node)])].filter((key) => Object.hasOwn(node, key));
   const entries = keys.map((key) => [key, node[key]] as const);
   for (const [key, value] of entries) {
     if (skip.has(key) || value === undefined || value === null) continue;

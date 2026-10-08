@@ -65,4 +65,16 @@ describe("a record's facts", () => {
     expect(codes).toContain("page-unknown-field");
     expect(codes).toContain("page-field-twice");
   });
+
+  it("hold display.page to a document's limits, and read only a record's own fields", () => {
+    const groups = Array.from({ length: 13 }, (_, index) => ({ title: `Group ${index}`, fields: ["due"] }));
+    const tooMany = defineApp({ name: "Workshop", schema: createSchema([defineNode("deliverable", { fields: deliverable.fields, display: { page: { groups } } })]) });
+    expect(checkApp(tooMany).findings.map((finding) => finding.code)).toContain("page-too-large");
+    const longTitle = defineApp({ name: "Workshop", schema: createSchema([defineNode("deliverable", { fields: deliverable.fields, display: { page: { groups: [{ title: "x".repeat(61), fields: ["due"] }] } } })]) });
+    expect(checkApp(longTitle).findings.map((finding) => finding.code)).toContain("page-too-large");
+    const inherited = defineApp({ name: "Workshop", schema: createSchema([defineNode("deliverable", { fields: deliverable.fields, display: { page: { fields: ["constructor", "toString"] } } })]) });
+    expect(checkApp(inherited).findings.map((finding) => finding.code)).toContain("page-unknown-field");
+    const paged = defineNode("deliverable", { fields: deliverable.fields, display: { page: { fields: ["constructor", "name"] } } });
+    expect(readableFields(written, paged as never).map((field) => field.key)).not.toContain("constructor");
+  });
 });

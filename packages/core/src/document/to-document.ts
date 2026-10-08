@@ -143,7 +143,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     // What a glance says, of the fields the document could carry (FR-39); one it could not is named above.
     const glance = (definition?.display?.glance ?? []).filter((name) => fields[name]);
     // How its page orders its facts (FR-148), of the fields the document could carry.
-    const carried = (names: readonly string[]) => names.filter((name) => fields[name] || definition?.computed?.[name] !== undefined);
+    const carried = (names: readonly string[]) => names.filter((name) => Object.hasOwn(fields, name) || (definition?.computed !== undefined && Object.hasOwn(definition.computed, name)));
     const pageFields = carried(definition?.display?.page?.fields ?? []);
     const pageGroups = (definition?.display?.page?.groups ?? []).map((group) => ({ title: group.title, fields: carried(group.fields) })).filter((group) => group.fields.length > 0);
     const page = pageFields.length > 0 || pageGroups.length > 0 ? { ...(pageFields.length > 0 ? { fields: pageFields } : {}), ...(pageGroups.length > 0 ? { groups: pageGroups } : {}) } : undefined;
