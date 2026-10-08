@@ -25,8 +25,9 @@ export type TextBlock =
   | { readonly t: "ol"; readonly start: number; readonly items: readonly string[] }
   | { readonly t: "ul"; readonly items: readonly string[] };
 
-const NUMBERED = /^\s*(\d{1,6})[.)]\s+(.*)$/;
-const BULLETED = /^\s*[-*•]\s+(.*)$/;
+// `s`: `.` reaches the line's end whatever it holds (U+2028 among it), so a long line is read in one pass, never every split of its spaces.
+const NUMBERED = /^\s*(\d{1,6})[.)]\s+(.*)$/s;
+const BULLETED = /^\s*[-*•]\s+(.*)$/s;
 
 /** The blocks a piece of plain text is written in. */
 export function textBlocks(text: string): readonly TextBlock[] {

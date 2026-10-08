@@ -150,3 +150,22 @@ describe("a record's fields", () => {
     host.remove();
   });
 });
+
+/**
+ * A LONG LINE IS READ IN ONE PASS (the security review before 0.1.18). A
+ * field anybody who may write it fills is drawn for everybody who reads it,
+ * and a list item's line holding a character `.` does not match (U+2028)
+ * made the list rules try every split of its spaces: forty thousand spaces
+ * took a second, a megabyte minutes, on every draw.
+ */
+describe("a long line", () => {
+  it("is read in one pass, whatever it holds", () => {
+    for (const start of ["1.", "-"]) {
+      const line = `${start}${" ".repeat(100_000)}a b`;
+      const began = performance.now();
+      const blocks = textBlocks(line);
+      expect(performance.now() - began).toBeLessThan(200);
+      expect(blocks).toHaveLength(1);
+    }
+  });
+});
