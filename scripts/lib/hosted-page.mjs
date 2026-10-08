@@ -187,9 +187,12 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * 541 627 bytes (528.9 KB), 155 more; the claim rises by that: 529.0 KB.
  * A lazy part that tries again after it failed to arrive (FR-139), over
  * the bar that fits its box and FR-140, took it to 544 890 bytes (532.1 KB),
- * 3 263 more, as above: 532.25 KB.
+ * 3 263 more, as above: 532.25 KB. The security review before 0.1.18 (a
+ * retry imports only a chunk on the bundle's own origin, and a link's pins
+ * and dimensions have no prototype) took it to 545 059 bytes (532.3 KB),
+ * 169 more: 532.5 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 532.25 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 532.5 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [
