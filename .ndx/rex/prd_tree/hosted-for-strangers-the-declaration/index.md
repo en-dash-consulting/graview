@@ -9,7 +9,7 @@ tags:
 source: "Nick, 2026-10-02: \"anything you find that should be factored into the graview framework, go ahead and capture those in the graview repo\" — from the Graview Cloud refinement, ../graview-cloud/docs/framework-requirements.md"
 startedAt: "2026-10-03T16:25:57.725Z"
 description: "Graview Cloud (../graview-cloud) is a host of many apps for people who are not us: they make apps from a ChatGPT or Claude conversation, from templates, and share them by URL to work on together, live, with their agents. Reading the framework for it found what one deployment would also want and the framework does not yet have. THE DECLARATION IS CODE: defineApp is a TypeScript module, every host path import()s it, and serveStore re-runs mutation.apply and invariant.evaluate on the server, so a host of strangers' apps would run strangers' code beside other strangers' data. The studio already holds a declaration as a JSON graph and writes act bodies from data; it cannot judge a rule. THE WIRE POLLS: openRemote polls /graview/since every 800 ms; there is no push, no rebase of pending optimistic calls, and concurrent patches are last-writer-wins. THE SEAT IS A HEADER: the default seatOf trusts x-graview-seat and labels every remote caller human, so an agent reaching a served store over graview mcp --remote-url is logged as a person. THE WIRE IS NODE: serveStore is node:http only and MCP is stdio only. POSITION: each item below is a public seam a self-hoster wants too; Cloud carries interim implementations on public APIs (marked INTERIM(FR-xx) there) and deletes them as these land. Out of scope here, and staying in Cloud: tenancy, accounts, OAuth servers, billing, quotas, the multi-app connector. Related and already tracked: 'What a seat may not see never leaves the store' (d6f8b50f), which Cloud needs at critical priority."
-lastModified: "2026-10-08T12:09:32.940Z"
+lastModified: "2026-10-08T18:52:30.245Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
 
@@ -26,6 +26,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A coverage cell over a path selects what it joins (FR-111)](./a-coverage-cell-over-a-path-selects.md) | completed |
 | [A declared lens draws: a lenses entry maps to the shipped factory and is a named place (FR-79)](./a-declared-lens-draws-a-lenses-entry.md) | completed |
 | [A derived edit offers every field nothing else really sets, and refuses what it can't take (FR-110)](./a-derived-edit-offers-every-field.md) | completed |
+| [A district's box holds its name (FR-143)](./a-district-s-box-holds-its-name-fr-143.md) | pending |
 | [A document can say a kind's glance fields, and the compiler stops asking for what it cannot say (FR-39)](./a-document-can-say-a-kind-s-glance.md) | completed |
 | [A figure's label is a template, and check flags braces in any non-template string (FR-99)](./a-figure-s-label-is-a-template-and.md) | completed |
 | [A guest view can be a named place: guestView takes a title (FR-87)](./a-guest-view-can-be-a-named-place.md) | completed |
@@ -43,6 +44,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A host that keeps the declaration chooses who sees the studio (FR-59)](./a-host-that-keeps-the-declaration.md) | completed |
 | [A host that owns the page gives the routed face the address bar (FR-106)](./a-host-that-owns-the-page-gives-the.md) | completed |
 | [A hosted page carries at most 600 KB of framework up front, and zod at most 150 KB of it (FR-57)](./a-hosted-page-carries-at-most-600-kb.md) | completed |
+| [A lazy part that fails to load tries again, and never breaks the page (FR-139)](./a-lazy-part-that-fails-to-load-tries.md) | pending |
 | [A live client a host can observe: status, counters, pending, backoff, presence cadence and visibility (FR-49)](./a-live-client-a-host-can-observe.md) | completed |
 | [A live connection a hibernating host can resume from serialized per-socket state (FR-41)](./a-live-connection-a-hibernating-host.md) | completed |
 | [A live wire: ops pushed as they land, pending edits rebased, and a stale write is a conflict rather than a loss](./a-live-wire-ops-pushed-as-they-land.md) | completed |
@@ -60,6 +62,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A rule's refusal says so: reason refused, not invalid (FR-119)](./a-rule-s-refusal-says-so-reason.md) | completed |
 | [A search hit says its address (FR-129)](./a-search-hit-says-its-address-fr-129.md) | completed |
 | [A seat's first state read after a wake costs what it did before FR-55](./a-seat-s-first-state-read-after-a-wake.md) | completed |
+| [A selected record is drawn once (FR-141)](./a-selected-record-is-drawn-once-fr-141.md) | pending |
 | [A stability contract a host can hold the framework to: what a version may change, a changelog that says so, and capabilities() naming the seams it ships](./a-stability-contract-a-host-can-hold.md) | completed |
 | [A status board: a shipped columns lens over a choice field (FR-97)](./a-status-board-a-shipped-columns-lens.md) | completed |
 | [A store can adopt the server's whole state, with pending batches applied again on top (FR-53)](./a-store-can-adopt-the-server-s-whole.md) | completed |
@@ -110,6 +113,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [One place says how many problems there are (FR-122)](./one-place-says-how-many-problems-there.md) | completed |
 | [openRemote's runtime entry exports the observable-client types, and read-only MCP calls can show presence](./openremote-s-runtime-entry-exports-the.md) | completed |
 | [pages is a real arrangement: order, hide and first, compiled and honoured on both faces (FR-80)](./pages-is-a-real-arrangement-order-hide.md) | completed |
+| [Places stand in the bar when there's room (FR-145)](./places-stand-in-the-bar-when-there-s.md) | pending |
 | [Presence a host can add to: kind, name, onBehalfOf, announce for socketless visitors, and welcome.participant (FR-47)](./presence-a-host-can-add-to-kind-name.md) | completed |
 | [Presence speaks one dialect and forgets the gone; seats can be added after mount without offering to sit as someone else](./presence-speaks-one-dialect-and.md) | completed |
 | [Refusal reasons a program can branch on: forbidden, missing, invalid, limit, with wouldNeed (FR-46)](./refusal-reasons-a-program-can-branch.md) | completed |
@@ -120,6 +124,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Say what a host page needs for worker views, and say when it is missing (FR-102)](./say-what-a-host-page-needs-for-worker.md) | completed |
 | [sceneThumbnail sizes districts by counts the way the live Scene does (FR-103)](./scenethumbnail-sizes-districts-by.md) | completed |
 | [SECURITY: the seat view serves no unseen record's id, in field values, primitives, reads, writes or args (FR-55)](./security-the-seat-view-serves-no.md) | completed |
+| [Sentences use the declaration's words for an edge (FR-142)](./sentences-use-the-declaration-s-words.md) | pending |
 | [setApp takes the new label, so a renamed app says its new name without a reload (FR-128)](./setapp-takes-the-new-label-so-a.md) | completed |
 | [Sights follow the log: seesId's judgement, an appended-op creator index, and the ambiguous refusal names the kind (FR-51)](./sights-follow-the-log-seesid-s.md) | completed |
 | [Stored data checked against its declaration: validateGraph, and repairs as ordinary ops](./stored-data-checked-against-its.md) | completed |
@@ -142,9 +147,11 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The framework says its own version, and rule failures are structured](./the-framework-says-its-own-version-and.md) | completed |
 | [The language computes what pages need: expressions in aggregates, first and sort, computed fields, template filters (FR-83)](./the-language-computes-what-pages-need.md) | completed |
 | [The live handler serves a store the host already holds (FR-42)](./the-live-handler-serves-a-store-the.md) | completed |
+| [The place list is ready when it opens (FR-140)](./the-place-list-is-ready-when-it-opens.md) | pending |
 | [The places move out of the bar (FR-138)](./the-places-move-out-of-the-bar-fr-138.md) | completed |
 | [The record names Graview Cloud and npm as they are](./the-record-names-graview-cloud-and-npm.md) | completed |
 | [The scene and the pages are two things, and the bar says so (FR-137)](./the-scene-and-the-pages-are-two-things.md) | completed |
+| [The scene has its place control in the bar (FR-144)](./the-scene-has-its-place-control-in-the.md) | pending |
 | [The scene is a place, not a mode (FR-132)](./the-scene-is-a-place-not-a-mode-fr-132.md) | completed |
 | [The seat view serves an op that names a record that isn't there (FR-67)](./the-seat-view-serves-an-op-that-names.md) | completed |
 | [The server pushes that the declaration changed, and a remote client reopens on it (FR-43)](./the-server-pushes-that-the-declaration.md) | completed |

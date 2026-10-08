@@ -1,6 +1,6 @@
 import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { AppBar, createNoticeBoard, Notices, Profile, registerDeclaredLenses, Standing, themeBaseCss, useFavicon, type BarFaces, type BarFind, type BarGo, type BarPlace, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
+import { AppBar, createNoticeBoard, Notices, Profile, registerDeclaredLenses, Standing, themeBaseCss, useFavicon, type BarFaces, type BarFind, type BarGo, type BarPlace, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -170,6 +170,16 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * on; off for a host whose own page already says all of that.
    */
   readonly bar?: boolean;
+  /**
+   * HOW THE BAR'S SWITCH BETWEEN THE SCENE AND THE PAGES IS DRAWN (FR-137).
+   * `"words"`, the default, says "Scene" and "Pages" beside their marks
+   * where the bar has room, and draws the marks alone where the bar is
+   * narrow — by the bar's own width, the box the host gives it, never the
+   * screen's. `"icons"` draws the marks alone at every width, for a host
+   * whose box is small or whose own page already says what the faces are.
+   * Either way the words are the buttons' names and their titles.
+   */
+  readonly switch?: BarSwitch;
   /**
    * THE PAGE'S ICON (FR-124): `true` when the host's page IS the app (a
    * hosted app on its own address), so the page wears the brand's
@@ -482,6 +492,7 @@ export function FrameBar({
   hostActions,
   keeping,
   onFind,
+  switch: switchForm,
 }: {
   readonly name: string;
   readonly heading: 1 | 2 | 3 | 4 | 5 | 6 | false;
@@ -497,6 +508,8 @@ export function FrameBar({
   /** The ways into the app, for the seat that keeps it. */
   readonly keeping?: ReactNode;
   readonly onFind: (find: BarFind | null) => void;
+  /** How the switch is drawn (`FrameOptions["switch"]`). */
+  readonly switch?: BarSwitch | undefined;
 }) {
   const { brand } = useGraview();
   return (
@@ -511,6 +524,7 @@ export function FrameBar({
       current={current}
       reach={reach}
       onFind={onFind}
+      {...(switchForm ? { switch: switchForm } : {})}
       tools={
         <>
           <Standing clean={standing} />
@@ -532,8 +546,21 @@ export const titleBelow = (heading: 1 | 2 | 3 | 4 | 5 | 6 | false): 2 | 3 | 4 | 
 export function useSteering(initial: string) {
   const [at, setAt] = useState(initial);
   const go = useRef<((path: string) => void) | undefined>(undefined);
-  const steering = useMemo(() => ({ go, at: setAt }), []);
-  return { at, setAt, steering };
+  const pending = useRef<string | undefined>(undefined);
+  const steering = useMemo(() => ({ go, at: setAt, pending }), []);
+  /*
+   * Sends the routed face to a path, or, while it is still arriving (FR-140:
+   * fetched as it is first drawn), keeps the path for it to go to as it does.
+   */
+  const steer = useCallback((path: string) => {
+    if (go.current) {
+      go.current(path);
+      return;
+    }
+    pending.current = path;
+    setAt(path);
+  }, []);
+  return { at, setAt, steering, steer };
 }
 
 /** An error as a host may keep it: its class, and nothing it says. */

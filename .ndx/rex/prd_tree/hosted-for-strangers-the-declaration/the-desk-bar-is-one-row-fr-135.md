@@ -18,5 +18,5 @@ acceptanceCriteria:
   - "At 1024, 1280 and 1440 px with six or more places: one row, More ▾ holding the rest"
 description: "At 1280 px with six places the tabs fill the top edge, More ▾ drops to a second row, and the underline touches the top edge."
 lastModified: "2026-10-08T11:54:57.388Z"
-resolution: "Not built: replaced by FR-137 and FR-138 (Graview Cloud's handoff: scene or pages, in one glance). The two-row desk bar was a symptom of putting every place in the bar; the places move out of it instead."
+resolution: "Not built: replaced by FR-137 and FR-138 (Graview Cloud's handoff: scene or pages, in one glance). The two-row desk bar was a symptom of putting every place in the bar; the places move out of it instead. Correction from Graview Cloud after 0.1.17: part of the two-row bar was Cloud's own page stylesheet (plain button, nav and table rules reaching into #graview-app); Cloud now scopes them outside the app."
 ---

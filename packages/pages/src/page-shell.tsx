@@ -264,7 +264,8 @@ export function PageFind<S extends AnySchema>({
           width: "100%",
           minWidth: 0,
           height: 30,
-          padding: "0 10px",
+          // Room at its end for the shortcut the bar says over it until it is used.
+          padding: "0 var(--graview-bar-find-end, 10px) 0 10px",
           font: "inherit",
           fontSize: "0.875rem",
           color: "var(--graview-ink)",

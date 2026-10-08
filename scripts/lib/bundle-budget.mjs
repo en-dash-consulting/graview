@@ -105,11 +105,13 @@ export const BUDGETS = [
     // drawn with the bar. Measured at 505_406 / 173_425.
     // Raised when the scene and the pages became two things on the bar and the places left it (FR-137, FR-138): the switch, the
     // place control and its grouped list with their marks, the phone's place line, 2_047 / 595 more. Measured at 507_453 / 174_021.
-    // Raised when a part fetched as it is first drawn came to try again after it failed to arrive, and to say so in its place
-    // rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the menu's fetch when the page is idle. 2_823 / 1_276 more.
-    // Measured at 511_271 / 175_653.
-    minified: 511_650,
-    gzipped: 176_200,
+    // Raised when the bar came to fit its box (it lays itself out by its own width; Find a small box that says its shortcut,
+    // the switch's marks alone when its words do not fit): about 2.4 kB minified, all of it the bar. Measured at 510_795 / 175_163.
+    // Raised, over the bar that fits its box and FR-140, when a part fetched as it is first drawn came to try again after it
+    // failed to arrive and to say so in its place rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the
+    // menu's fetch when the page is idle. 3_049 / 1_355 more. Measured at 513_844 / 176_518.
+    minified: 514_250,
+    gzipped: 177_050,
     load: "first",
   },
   {
@@ -236,11 +238,13 @@ export const BUDGETS = [
     // Raised when the scene and the pages became two things on the bar and the places left it (FR-137, FR-138), and an app with a
     // home view came to open on it (FR-136): the bar's switch and place list, and the embed's opening, 3_369 / 992 more.
     // Measured at 696_617 / 180_207.
-    // Raised when a part fetched as it is first drawn came to try again after it failed to arrive, and to say so in its place
-    // rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the menu's fetch when the page is idle. 2_859 / 1_310 more.
-    // Measured at 700_156 / 181_851.
-    minified: 700_700,
-    gzipped: 182_400,
+    // Raised when the bar came to fit its box (it lays itself out by its own width; Find a small box that says its shortcut,
+    // the switch's marks alone when its words do not fit): about 2.4 kB minified, all of it the bar. Measured at 699_612 / 181_352.
+    // Raised, over the bar that fits its box and FR-140, when a part fetched as it is first drawn came to try again after it
+    // failed to arrive and to say so in its place rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the
+    // menu's fetch when the page is idle. 2_986 / 1_355 more. Measured at 702_598 / 182_707.
+    minified: 703_150,
+    gzipped: 183_250,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -352,11 +356,13 @@ export const BUDGETS = [
     // the home view no longer is: 1_680 / 623 more. Measured at 1_550_975 / 468_183.
     // Raised with the review after 0.1.16: the profile's choices drawn by one style rather than three, the app's line under
     // a home's own headline, the narrow embed's way back to the pages. Measured at 1_551_385 / 468_484.
-    // Raised when a part fetched as it is first drawn came to try again after it failed to arrive, and to say so in its place
-    // rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the menu's fetch when the page is idle. 3_008 / 1_359 more.
-    // Measured at 1_554_522 / 469_969.
-    minified: 1_554_800,
-    gzipped: 470_200,
+    // Raised when the bar came to fit its box: about 2.7 kB minified, all of it the bar and the scene's Find hung from it.
+    // Measured at 1_554_099 / 469_514.
+    // Raised, over the bar that fits its box and FR-140, when a part fetched as it is first drawn came to try again after it
+    // failed to arrive and to say so in its place rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the
+    // menu's fetch when the page is idle. 3_358 / 1_475 more. Measured at 1_557_457 / 470_989.
+    minified: 1_557_750,
+    gzipped: 471_200,
     load: "all",
   },
   {
@@ -405,11 +411,13 @@ export const BUDGETS = [
     // Measured at 1_516_402 / 453_220.
     // Raised with every face's for the review after 0.1.16, and the document's own part of it the studio loads: arrange-pages
     // reading the scene's old word, and the check's warning for a switch that says one word twice. Measured at 1_517_351 / 453_603.
-    // Raised when a part fetched as it is first drawn came to try again after it failed to arrive, and to say so in its place
-    // rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the menu's fetch when the page is idle. 3_008 / 1_376 more.
-    // Measured at 1_520_488 / 455_095.
-    minified: 1_520_800,
-    gzipped: 455_300,
+    // Raised when the bar came to fit its box: about 2.7 kB minified, all of it the bar and the scene's Find hung from it.
+    // Measured at 1_520_065 / 454_627.
+    // Raised, over the bar that fits its box and FR-140, when a part fetched as it is first drawn came to try again after it
+    // failed to arrive and to say so in its place rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the
+    // menu's fetch when the page is idle. 3_358 / 1_482 more. Measured at 1_523_423 / 456_109.
+    minified: 1_523_750,
+    gzipped: 456_300,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

@@ -3,7 +3,7 @@ import { aggregateId, kindCardId, withFocus, withJackIn, withOverview, withoutSe
 import { useKit } from "@graview/react/drawing";
 import { POPOVER_STYLE, useFound, useGraview, usePopover, useViolations } from "@graview/react/provider";
 import { hueFor } from "@graview/render";
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
 
 /**
@@ -162,11 +162,24 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
    * closes the one before it. The keyboard stays in the box, as a
    * combobox's does; its rows are `aria-activedescendant`.
    */
+  /*
+   * On a phone's bar the strip is a sheet the bar's width, hung from the
+   * bar's bottom edge — the bar's, not the screen's: in a narrow box on a
+   * desk it is the box's width, under the box.
+   */
+  const underTheBar = useCallback(() => {
+    const bar = input.current?.closest("[data-graview-app-bar]")?.getBoundingClientRect();
+    if (bar) return { x: bar.right, y: bar.bottom - SHEET_GAP };
+    // A box with no bar above it (the Shell's): the sheet hangs under the box, as it always did.
+    const box = input.current?.getBoundingClientRect();
+    return box ? { x: box.right, y: box.bottom } : null;
+  }, []);
   const popover = usePopover("find", {
     open: expanded,
     onOpenChange: (next) => {
       if (!next) setOpen(false);
     },
+    ...(compact ? { at: underTheBar } : {}),
   });
 
   return (
@@ -220,7 +233,8 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
           boxSizing: "border-box",
           minWidth: 0,
           height: 30,
-          padding: "0 10px",
+          // Room at its end for the shortcut the bar says over it until it is used.
+          padding: "0 var(--graview-bar-find-end, 10px) 0 10px",
           font: "inherit",
           fontSize: "0.875rem",
           color: "var(--graview-ink)",
@@ -364,9 +378,11 @@ const STRIP: CSSProperties = {
   padding: "4px 0",
 };
 
-/** On a phone the strip is a sheet under the box, the screen's full width (placed by `useTopLayer`). */
+/** The gap `useTopLayer` leaves under an anchor, taken back so the sheet meets the bar's edge. */
+const SHEET_GAP = 6;
+/** On a phone's bar the strip is a sheet under the bar, the bar's own width (`--graview-bar-width`, the screen's where no bar says it). */
 const SHEET: CSSProperties = {
-  width: "100vw",
+  width: "var(--graview-bar-width, 100vw)",
   maxHeight: "55vh",
   borderRadius: 0,
   borderLeft: "none",
