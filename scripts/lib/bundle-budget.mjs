@@ -107,8 +107,11 @@ export const BUDGETS = [
     // place control and its grouped list with their marks, the phone's place line, 2_047 / 595 more. Measured at 507_453 / 174_021.
     // Raised when the bar came to fit its box (it lays itself out by its own width; Find a small box that says its shortcut,
     // the switch's marks alone when its words do not fit): about 2.4 kB minified, all of it the bar. Measured at 510_795 / 175_163.
-    minified: 511_900,
-    gzipped: 175_700,
+    // Raised when a record's prose came to keep its paragraphs and its facts their declared order (FR-146–FR-148): the prose
+    // renderer, its row with an "Edit", the record page's values changed in place, a kind's page; 6_146 / 2_002 more than main's 511_021 / 175_236, the
+    // editor itself fetched when first opened. Measured at 517_167 / 177_238.
+    minified: 517_800,
+    gzipped: 177_800,
     load: "first",
   },
   {
@@ -237,8 +240,10 @@ export const BUDGETS = [
     // Measured at 696_617 / 180_207.
     // Raised when the bar came to fit its box (it lays itself out by its own width; Find a small box that says its shortcut,
     // the switch's marks alone when its words do not fit): about 2.4 kB minified, all of it the bar. Measured at 699_612 / 181_352.
-    minified: 700_900,
-    gzipped: 181_900,
+    // Raised when a record's facts came to read in declared order and a kind's page to order them (FR-146–FR-148): core's order,
+    // the compile's reading of the page, and the lazy door to the prose editor, 1_138 / 558 more than main's 699_739 / 181_391. Measured at 700_877 / 181_947.
+    minified: 701_500,
+    gzipped: 182_500,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -352,8 +357,11 @@ export const BUDGETS = [
     // a home's own headline, the narrow embed's way back to the pages. Measured at 1_551_385 / 468_484.
     // Raised when the bar came to fit its box: about 2.7 kB minified, all of it the bar and the scene's Find hung from it.
     // Measured at 1_554_099 / 469_514.
-    minified: 1_555_200,
-    gzipped: 470_100,
+    // Raised when a record's prose came to keep its paragraphs and its facts their declared order (FR-146–FR-148): the prose
+    // renderer and editor, the record page's values changed in place, forms' text areas, a kind's page and its edit.
+    // 13_150 / 4_647 more than main's 1_554_449 / 469_604. Measured at 1_567_599 / 474_251.
+    minified: 1_568_200,
+    gzipped: 474_800,
     load: "all",
   },
   {
@@ -404,8 +412,10 @@ export const BUDGETS = [
     // reading the scene's old word, and the check's warning for a switch that says one word twice. Measured at 1_517_351 / 453_603.
     // Raised when the bar came to fit its box: about 2.7 kB minified, all of it the bar and the scene's Find hung from it.
     // Measured at 1_520_065 / 454_627.
-    minified: 1_521_200,
-    gzipped: 455_200,
+    // Raised with every face's for a record's prose and its page (FR-146–FR-148), and the document's `set-page-fields` the
+    // studio loads: 10_959 / 3_527 more than main's 1_520_415 / 454_727. Measured at 1_531_374 / 458_254.
+    minified: 1_532_000,
+    gzipped: 458_800,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

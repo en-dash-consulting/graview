@@ -90,9 +90,16 @@ export const FACE_DOORS = {
  * whether the switch's words fit 0.9 KB, the shortcut and the slot 0.5 KB.
  * The claim rises by that: 572.8 KB, which leaves Cloud's shell 22.2 KB
  * under its 595. FR-140 (a pick kept for the routed face until it listens)
- * took it to 586 433 bytes (572.7 KB), inside the claim.
+ * took it to 586 433 bytes (572.7 KB), inside the claim. A record's facts
+ * read in declared order, a kind's page that orders and groups them, and
+ * the test for prose (FR-146–FR-148) took it to 588 602 bytes (574.8 KB),
+ * 2 169 more: `readableFields`'s order and `isLongText` 0.9 KB, the
+ * compile's reading of `kinds.<kind>.page` and its findings 1.0 KB, a
+ * declaration's page written back as a document 0.3 KB. The editor is
+ * fetched when first opened. The claim rises by that: 574.9 KB, which
+ * leaves Cloud's shell 20.1 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 572.8 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 574.9 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -174,8 +181,12 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * made the moment the place list opens going to its place (FR-140: a path
  * asked for before the routed face listens, kept for it) took it to
  * 541 627 bytes (528.9 KB), 155 more; the claim rises by that: 529.0 KB.
+ * A record's facts in declared order, a kind's page and the test for prose
+ * (FR-146–FR-148) took it to 542 920 bytes (530.2 KB), 1 293 more, the
+ * page's order in the compiled app and the same reading of a record as the
+ * page that compiles (above); the claim rises by that: 530.3 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 529 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 530.3 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [
