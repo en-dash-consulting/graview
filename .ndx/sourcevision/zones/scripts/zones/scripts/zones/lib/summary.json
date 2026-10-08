@@ -1,20 +1,18 @@
 {
   "id": "scripts/scripts/lib",
   "name": "Lib",
-  "description": "5 files, primarily JavaScript",
+  "description": "3 files, primarily JavaScript",
   "files": [
-    "scripts/lib/engine.mjs",
-    "scripts/lib/places.mjs",
-    "scripts/lib/tarballs.mjs",
-    "scripts/verify-calendar.mjs",
-    "scripts/verify-rota.mjs"
+    "scripts/inspect-pack.mjs",
+    "scripts/lib/bundle-budget.mjs",
+    "scripts/lib/readme-exports.mjs"
   ],
   "entryPoints": [
-    "scripts/lib/engine.mjs",
-    "scripts/lib/tarballs.mjs"
+    "scripts/lib/bundle-budget.mjs",
+    "scripts/lib/readme-exports.mjs"
   ],
-  "cohesion": 0.23,
-  "coupling": 0.77,
-  "fileCount": 5,
-  "lineCount": 969
+  "cohesion": 0.8,
+  "coupling": 0.2,
+  "fileCount": 3,
+  "lineCount": 995
 }

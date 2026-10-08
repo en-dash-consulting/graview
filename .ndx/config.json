@@ -11,5 +11,12 @@
   "_initVersion": "0.8.0",
   "cli": {
     "name": "n-dx"
+  },
+  "sourcevision": {
+    "zones": {
+      "pins": {
+        "packages/core/src/sync/conflict.ts": "core-sync"
+      }
+    }
   }
 }

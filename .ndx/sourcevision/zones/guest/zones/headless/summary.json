@@ -1,0 +1,25 @@
+{
+  "id": "guest/headless",
+  "name": "Headless",
+  "description": "8 files, primarily TypeScript",
+  "files": [
+    "packages/guest/src/cli.ts",
+    "packages/guest/src/headless/describe.ts",
+    "packages/guest/src/headless/index.ts",
+    "packages/guest/src/headless/judge.ts",
+    "packages/guest/src/headless/node.ts",
+    "packages/guest/src/headless/protocol.ts",
+    "packages/guest/src/headless/runtime.ts",
+    "packages/guest/src/headless/tree.ts"
+  ],
+  "entryPoints": [
+    "packages/guest/src/cli.ts",
+    "packages/guest/src/headless/index.ts",
+    "packages/guest/src/headless/node.ts",
+    "packages/guest/src/headless/tree.ts"
+  ],
+  "cohesion": 0.62,
+  "coupling": 0.38,
+  "fileCount": 8,
+  "lineCount": 1128
+}

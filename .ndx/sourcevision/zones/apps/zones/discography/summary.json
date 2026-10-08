@@ -1,16 +1,18 @@
 {
   "id": "apps/discography",
-  "name": "Discography Scripts",
-  "description": "4 files, primarily Python",
+  "name": "Discography Build Scripts",
+  "description": "6 files, primarily Python, TypeScript",
   "files": [
     "apps/discography/scripts/musicbrainz/build.py",
     "apps/discography/scripts/musicbrainz/fetch_guest.py",
     "apps/discography/scripts/musicbrainz/fetch_own.py",
-    "apps/discography/scripts/musicbrainz/mb.py"
+    "apps/discography/scripts/musicbrainz/mb.py",
+    "apps/seedbed/vite.site.config.ts",
+    "apps/spike/vite.config.ts"
   ],
   "entryPoints": [],
   "cohesion": 0,
   "coupling": 0,
-  "fileCount": 4,
-  "lineCount": 168
+  "fileCount": 6,
+  "lineCount": 258
 }

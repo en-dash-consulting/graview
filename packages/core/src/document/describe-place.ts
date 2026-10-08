@@ -1,7 +1,7 @@
 import type { AnyGraphNode, GraphReader, GraviewApp, Principal, Store } from "../index.js";
 import { declaredLenses, orderKinds, placesOf, type AppPlace } from "../places.js";
 import type { AnySchema } from "../schema/schema.js";
-import { fieldWords, isCurrent, labelOf, readableFields } from "../schema/define-node.js";
+import { fieldWords, isCurrent, labelOf, pageSections, readableFields } from "../schema/define-node.js";
 import { columnMoves, columnOf, statusColumns } from "../columns.js";
 import { coverageParts } from "./describe-coverage.js";
 import { compileBlocks, fieldSpecsOf, resolveBlocks, type BlockContext, type ResolvedBlock } from "./blocks.js";
@@ -247,7 +247,11 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     const page = views[record.kind]?.page;
     if (page) parts.push(...say(resolveBlocks(compileBlocks(page), base(record, 2)), 1, `views.${record.kind}.page`));
     const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(schema, graph, record) : record;
-    for (const field of readableFields(read as Record<string, unknown>, definition, { said: [title] })) parts.push({ t: "field", label: field.label, text: field.value });
+    // In the order and the groups its page declares (FR-148), each value as stored: a draft's paragraphs kept (FR-146).
+    for (const section of pageSections(definition, readableFields(read as Record<string, unknown>, definition, { said: [title] }))) {
+      if (section.title) parts.push({ t: "heading", level: 2, text: section.title });
+      for (const field of section.fields) parts.push({ t: "field", label: field.label, text: field.value });
+    }
   } else {
     const at = found!;
     described = { slug: at.slug, title: at.title, kind: at.kind, address: at.address };

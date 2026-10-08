@@ -7,8 +7,8 @@ description: Put a Graview app on somebody else's page — a picture in an artic
 
 `@graview/embed` mounts an app into any element on any page. It brings its
 own theme scoped to that element, the brand's fonts, and one app bar — no
-`Shell`, no router, nothing of the host's styled or listened to. It is the same declaration, the same store and the same acts
-as the app itself; only the frame is the host's.
+`Shell`, no router, nothing of the host's styled or listened to. The same
+declaration, store and acts as the app; only the frame is the host's.
 
 ```ts
 import { mount } from "@graview/embed";
@@ -33,8 +33,9 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
    `#view=the-week` — so a link you copied from the app is an embed's
    starting point. `face` follows the stop unless you name one.
 2. **Pick the face for the page.** One app bar: the name, the switch
-   (Scene, Pages), on Pages the place you are on — which opens every
-   place — Find, the standing, the person. Name no `face` and an
+   (Scene, Pages), the place you are on (a page, or the scene's
+   picture) opening the rest — on a wide row they stand, the rest under
+   More — Find, the standing, the person. Name no `face` and an
    app with a home view opens on it, else the scene; `"scene"`,
    `"graview"`, `"pages"` (on `path`); `"picture"` is ONE lens alone
    (`stop: "#view=the-week"`), no bar. `bar: false` drops the bar;
@@ -52,11 +53,11 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
    and `setSeat` does it from the host. See `graview-permissions`.
 6. **Many on one page: mount when near.** `mountWhenNear(elements,
    mountOne)` mounts each as the reader scrolls toward it, so a page of
-   sixteen chapters costs one at a time. Share a `store` between embeds
-   only when they are meant to be one app seen twice.
+   sixteen chapters costs one at a time. Share a `store` only between
+   embeds meant as one app seen twice.
 7. **Presence is opt-in.** An embed broadcasts nothing and draws nobody
-   unless it is handed a `presence` channel: putting a graph on a page does
-   not tell its readers about each other.
+   unless handed a `presence` channel: a graph on a page does not tell its
+   readers about each other.
 8. **Register only what differs.** `views(schema, registry)` is handed the
    framework's own view for every cell, with the declaration's `viewSpecs`
    already drawn; register onto it the cells you want different, and the

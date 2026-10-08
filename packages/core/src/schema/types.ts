@@ -109,6 +109,14 @@ export interface NodeDefinitionSpec<
      * which for a car declared VIN-first was its VIN and never its price.
      */
     readonly glance?: readonly string[];
+    /**
+     * HOW A RECORD'S PAGE ORDERS AND GROUPS ITS FACTS (FR-148). Unsaid, a
+     * record reads its fields in the order the kind declares them. `fields`
+     * come first, in this order; each of `groups` follows under its title;
+     * the fields neither names follow in declared order — under "Details"
+     * when there are groups, else after `fields`.
+     */
+    readonly page?: PageFields;
   };
   /**
    * When a node of this kind stops being CURRENT.
@@ -194,6 +202,16 @@ export type ComputedField =
       readonly label?: string;
       readonly description?: string;
     };
+
+/**
+ * How a record's page orders and groups its facts (FR-148): `fields` first,
+ * in this order, then each group under its title; what neither names
+ * follows in declared order, under "Details" when there are groups.
+ */
+export interface PageFields {
+  readonly fields?: readonly string[];
+  readonly groups?: readonly { readonly title: string; readonly fields: readonly string[] }[];
+}
 
 export interface LifecycleDeclaration {
   /** The field that carries the node's currency. */

@@ -1,0 +1,38 @@
+{
+  "id": "scripts/scripts/scripts/scripts-fixtures",
+  "name": "Scripts Fixtures",
+  "description": "23 files, primarily JavaScript",
+  "files": [
+    "scripts/fixtures/views/notes.js",
+    "scripts/fixtures/views/packages.js",
+    "scripts/lib/places.mjs",
+    "scripts/lib/ports.mjs",
+    "scripts/lib/surfaces.mjs",
+    "scripts/require-changeset.mjs",
+    "scripts/verify-all.mjs",
+    "scripts/verify-calendar.mjs",
+    "scripts/verify-chrome-quiet.mjs",
+    "scripts/verify-companion.mjs",
+    "scripts/verify-declared.mjs",
+    "scripts/verify-engines.mjs",
+    "scripts/verify-gauntlet.mjs",
+    "scripts/verify-menu.mjs",
+    "scripts/verify-navigation.mjs",
+    "scripts/verify-pages.mjs",
+    "scripts/verify-remember.mjs",
+    "scripts/verify-rota.mjs",
+    "scripts/verify-scale.mjs",
+    "scripts/verify-seat.mjs",
+    "scripts/verify-shrunk.mjs",
+    "scripts/verify-studio.mjs",
+    "scripts/verify-who.mjs"
+  ],
+  "entryPoints": [
+    "scripts/lib/ports.mjs",
+    "scripts/lib/surfaces.mjs"
+  ],
+  "cohesion": 0.61,
+  "coupling": 0.39,
+  "fileCount": 23,
+  "lineCount": 9686
+}

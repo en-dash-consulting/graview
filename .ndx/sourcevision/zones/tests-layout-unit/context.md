@@ -5,10 +5,10 @@
 <zone>
 
 Zone: Tests Layout Unit (`tests-layout-unit`)
-Files: 12, Cohesion: 1.00, Coupling: 0.00
+Files: 14, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in packages: a-band-is-named-in-words.test.ts, a-name-that-fits.test.ts, a-tuck-goes-with-its-parent.test.ts (+9 more)
-Lines: 2712
+Description: Non-source files in packages: a-band-is-named-in-words.test.ts, a-name-that-fits.test.ts, a-thumbnail-is-the-scenes-city.test.ts (+11 more)
+Lines: 2922
 
 </zone>
 
@@ -16,15 +16,17 @@ Lines: 2712
 
 packages/layout/tests/unit/a-band-is-named-in-words.test.ts (TypeScript, 29 lines, test)
 packages/layout/tests/unit/a-name-that-fits.test.ts (TypeScript, 174 lines, test)
+packages/layout/tests/unit/a-thumbnail-is-the-scenes-city.test.ts (TypeScript, 134 lines, test)
 packages/layout/tests/unit/a-tuck-goes-with-its-parent.test.ts (TypeScript, 62 lines, test)
 packages/layout/tests/unit/an-opened-district-lists-what-it-has-room-for.test.ts (TypeScript, 59 lines, test)
 packages/layout/tests/unit/layout.test.ts (TypeScript, 1492 lines, test)
 packages/layout/tests/unit/properties.test.ts (TypeScript, 171 lines, test)
 packages/layout/tests/unit/the-band-draws-what-fits.test.ts (TypeScript, 172 lines, test)
 packages/layout/tests/unit/the-billboard-is-on-a-leash.test.ts (TypeScript, 92 lines, test)
-packages/layout/tests/unit/the-city-at-altitude.test.ts (TypeScript, 142 lines, test)
+packages/layout/tests/unit/the-city-at-altitude.test.ts (TypeScript, 168 lines, test)
 packages/layout/tests/unit/the-city-stays-beside-the-rail.test.ts (TypeScript, 63 lines, test)
-packages/layout/tests/unit/the-drive-in.test.ts (TypeScript, 144 lines, test)
+packages/layout/tests/unit/the-district-you-are-in-stays-in-the-row.test.ts (TypeScript, 49 lines, test)
+packages/layout/tests/unit/the-drive-in.test.ts (TypeScript, 145 lines, test)
 packages/layout/tests/unit/the-pan-is-a-translation.test.ts (TypeScript, 112 lines, test)
 
 </files>
@@ -33,7 +35,7 @@ packages/layout/tests/unit/the-pan-is-a-translation.test.ts (TypeScript, 112 lin
 
 
 Outgoing (this zone → other zones):
-  → layout: packages/layout/tests/unit/a-band-is-named-in-words.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/a-name-that-fits.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/a-tuck-goes-with-its-parent.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/an-opened-district-lists-what-it-has-room-for.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/layout.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/layout.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/properties.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-band-draws-what-fits.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-band-draws-what-fits.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-billboard-is-on-a-leash.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-city-at-altitude.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-city-at-altitude.test.ts → packages/layout/src/layout.ts; packages/layout/tests/unit/the-city-stays-beside-the-rail.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-drive-in.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-pan-is-a-translation.test.ts → packages/layout/src/index.ts
+  → layout: packages/layout/tests/unit/a-band-is-named-in-words.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/a-name-that-fits.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/a-thumbnail-is-the-scenes-city.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/a-tuck-goes-with-its-parent.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/an-opened-district-lists-what-it-has-room-for.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/layout.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/layout.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/properties.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-band-draws-what-fits.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-band-draws-what-fits.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-billboard-is-on-a-leash.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-city-at-altitude.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-city-at-altitude.test.ts → packages/layout/src/layout.ts; packages/layout/tests/unit/the-city-stays-beside-the-rail.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-district-you-are-in-stays-in-the-row.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-drive-in.test.ts → packages/layout/src/index.ts; packages/layout/tests/unit/the-pan-is-a-translation.test.ts → packages/layout/src/index.ts
 
 </imports>
 
@@ -46,6 +48,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 272 internal calls, 434 outgoing, 0 incoming (cohesion: 0.39, coupling: 0.61)
+- [call graph] 291 internal calls, 450 outgoing, 0 incoming (cohesion: 0.39, coupling: 0.61)
 
 </insights>

@@ -1,7 +1,7 @@
 {
   "id": "studio",
   "name": "Studio",
-  "description": "18 files, mostly utilities and components; entry points place.tsx, index.ts, meta.ts; imported by Packages.",
+  "description": "18 files, mostly utilities and components; entry points index.ts, place.tsx, meta.ts; imported by Packages.",
   "files": [
     "packages/studio/src/agent-panel.tsx",
     "packages/studio/src/agent.ts",
@@ -31,7 +31,7 @@
   "cohesion": 1,
   "coupling": 0,
   "fileCount": 18,
-  "lineCount": 5865,
+  "lineCount": 6005,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

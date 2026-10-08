@@ -1,6 +1,6 @@
 ## Summary
 
-**Branch:** `analysis/sourcevision-scan-2026-10-02`
+**Branch:** `chore/sourcevision-after-0-1-17`
 **Base:** `origin/main`
 **Completed items:** 0
 

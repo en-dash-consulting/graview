@@ -1,0 +1,16 @@
+# What sourcevision leaves out of `ndx analyze .`, on top of .gitignore.
+# Generated output is judged where it is generated from, not as a second copy.
+
+# The docs site's bundles, built from apps/seedbed by `pnpm site:build`.
+/docs/site/*.js
+
+# The guest runtimes, bundled into source by scripts/guest-view-runtime.mjs.
+*.generated.ts
+
+# The installed copies of the authoring skills; the source is packages/skills/skills/.
+/.claude/skills/
+/.agents/skills/
+
+# Built output, wherever a package or app writes it.
+dist/
+build/

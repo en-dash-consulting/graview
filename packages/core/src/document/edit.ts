@@ -30,6 +30,7 @@ import { canonicalize } from "./canonical.js";
 import { quotedAtTheEnd } from "./quote.js";
 import { respellDocument } from "./respell.js";
 import { accentProblem } from "../theme/accent.js";
+import { pageFieldFindings, pageNames, renamedOnPage, withoutOnPage } from "./page-fields.js";
 
 /*
  * STRUCTURAL EDITS — a closed vocabulary for changing what an app declares.
@@ -97,6 +98,7 @@ export const EDIT_OPS = [
   "set-describe",
   "set-view",
   "set-glance",
+  "set-page-fields",
   "add-lens",
   "remove-lens",
   "set-home",
@@ -162,6 +164,15 @@ const SHAPES: Record<EditOp, z.ZodType> = {
   // A kind's slot; the front page (`slot: "home"`, no kind); or a blocks lens's blocks, by its title (FR-84).
   "set-view": z.object({ op: z.literal("set-view"), kind: kindName.optional(), slot: z.enum([...VIEW_SLOTS, "home"]).optional(), lens: lensTitle.optional(), blocks: z.union([z.array(z.unknown()).min(1), z.null()]) }).strict(),
   "set-glance": z.object({ op: z.literal("set-glance"), kind: kindName, fields: z.array(fieldName).max(20) }).strict(),
+  // How a record's page orders and groups its facts (FR-148): these first, then each group under its title; none of either takes the choice away.
+  "set-page-fields": z
+    .object({
+      op: z.literal("set-page-fields"),
+      kind: kindName,
+      fields: z.array(fieldName).max(40),
+      groups: z.union([z.array(z.object({ title: z.string().min(1).max(60), fields: z.array(fieldName).min(1).max(40) }).strict()).max(12), z.null()]).optional(),
+    })
+    .strict(),
   "add-lens": z
     .object({
       op: z.literal("add-lens"),
@@ -772,6 +783,8 @@ class Editor {
         }
         return;
       }
+      case "set-page-fields":
+        return this.setPageFields(i, e);
       case "add-lens":
         return this.addLens(i, e);
       case "remove-lens":
@@ -783,6 +796,27 @@ class Editor {
       case "set-computed":
         return this.setComputed(i, e);
     }
+  }
+
+  /** How a record's page orders and groups its facts (FR-148): judged as the compile judges `kinds.<kind>.page`. */
+  private setPageFields(i: number, e: Doc) {
+    const spec = this.kind(i, e.kind);
+    if (!spec) return;
+    const fields: string[] = e.fields;
+    const groups: { title: string; fields: string[] }[] = e.groups ?? [];
+    const noun: string = spec.noun ?? words(e.kind);
+    const a = /^[aeiou]/i.test(noun) ? "An" : "A";
+    if (fields.length === 0 && groups.length === 0) {
+      delete spec.page;
+      this.said.push(`${a} ${noun}'s page shows its facts in the order the kind declares them.`);
+      return;
+    }
+    const page = { ...(fields.length > 0 ? { fields: [...fields] } : {}), ...(groups.length > 0 ? { groups: groups.map((group) => ({ title: group.title, fields: [...group.fields] })) } : {}) };
+    const wrong = pageFieldFindings(e.kind, { ...spec, page }, "")[0];
+    if (wrong) return this.fail(i, wrong.path.replace(/^\./, ""), wrong.message, wrong.fix);
+    spec.page = page;
+    const shown = [...(fields.length > 0 ? [`${listOf(fields)} first`] : []), ...groups.map((group) => `${listOf(group.fields)} under "${group.title}"`)];
+    this.said.push(`${a} ${noun}'s page shows ${listOf(shown)}, and the rest ${groups.length > 0 ? 'under "Details"' : "after them"}.`);
   }
 
   // ── views, the front page, lenses, the arrangement, what is worked out (FR-84) ──
@@ -1260,6 +1294,10 @@ class Editor {
       spec.glance = spec.glance.map((name: string) => (name === field ? to : name));
       touched.push(`${kind}'s glance`);
     }
+    if (pageNames(spec.page, field)) {
+      spec.page = renamedOnPage(spec.page, field, to);
+      touched.push(`${kind}'s page`);
+    }
     for (const x of this.fills) {
       if (x.kind === kind && x.field === field) (x as { field: string }).field = to;
       if (x.kind === kind && x.from === field) (x as { from: string }).from = to;
@@ -1358,6 +1396,15 @@ class Editor {
       if (spec.glance.length === 0) {
         delete spec.glance;
         gone.push(`${kind}'s glance`);
+      }
+    }
+    // Its page shows the fields that are left; one that showed only this one goes back to the declared order.
+    if (pageNames(spec.page, field)) {
+      const page = withoutOnPage(spec.page, field);
+      if (page) spec.page = page;
+      else {
+        delete spec.page;
+        gone.push(`${kind}'s page order`);
       }
     }
     for (const x of [...this.fills]) if (x.kind === kind && (x.field === field || x.from === field)) this.fills.splice(this.fills.indexOf(x), 1);
@@ -1769,6 +1816,11 @@ class Editor {
       if (spec.glance?.includes(name)) {
         spec.glance = spec.glance.filter((field: string) => field !== name);
         if (spec.glance.length === 0) delete spec.glance;
+      }
+      if (pageNames(spec.page, name)) {
+        const page = withoutOnPage(spec.page, name);
+        if (page) spec.page = page;
+        else delete spec.page;
       }
     }
     this.dropping.delete(key);

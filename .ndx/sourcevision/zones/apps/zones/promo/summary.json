@@ -1,6 +1,6 @@
 {
   "id": "apps/promo",
-  "name": "Promo",
+  "name": "Promotional Interface",
   "description": "32 files, primarily TypeScript",
   "files": [
     "apps/promo/src/Composition.tsx",

@@ -1,0 +1,19 @@
+{
+  "id": "react/picked-picking",
+  "name": "Picked Picking",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/picked.ts",
+    "packages/react/src/picking.ts",
+    "packages/react/src/view-host.tsx"
+  ],
+  "entryPoints": [
+    "packages/react/src/picked.ts",
+    "packages/react/src/picking.ts",
+    "packages/react/src/view-host.tsx"
+  ],
+  "cohesion": 0.36,
+  "coupling": 0.64,
+  "fileCount": 3,
+  "lineCount": 813
+}

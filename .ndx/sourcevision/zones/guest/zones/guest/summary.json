@@ -1,0 +1,25 @@
+{
+  "id": "guest/guest",
+  "name": "Guest",
+  "description": "6 files, primarily TypeScript",
+  "files": [
+    "packages/guest/src/headless/draw.ts",
+    "packages/guest/src/host/css.ts",
+    "packages/guest/src/host/open-draw.ts",
+    "packages/guest/src/host/open-judge.ts",
+    "packages/guest/src/host/open-render.ts",
+    "packages/guest/src/open-kit.ts"
+  ],
+  "entryPoints": [
+    "packages/guest/src/headless/draw.ts",
+    "packages/guest/src/host/css.ts",
+    "packages/guest/src/host/open-draw.ts",
+    "packages/guest/src/host/open-judge.ts",
+    "packages/guest/src/host/open-render.ts",
+    "packages/guest/src/open-kit.ts"
+  ],
+  "cohesion": 0.69,
+  "coupling": 0.31,
+  "fileCount": 6,
+  "lineCount": 1960
+}

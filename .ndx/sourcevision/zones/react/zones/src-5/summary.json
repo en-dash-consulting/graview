@@ -1,0 +1,29 @@
+{
+  "id": "react/src-5",
+  "name": "Src 5",
+  "description": "8 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/go.ts",
+    "packages/react/src/keyboard.ts",
+    "packages/react/src/lazy-part.tsx",
+    "packages/react/src/local-intelligence.ts",
+    "packages/react/src/picked.ts",
+    "packages/react/src/presence.ts",
+    "packages/react/src/provider.ts",
+    "packages/react/src/settings.ts"
+  ],
+  "entryPoints": [
+    "packages/react/src/go.ts",
+    "packages/react/src/keyboard.ts",
+    "packages/react/src/lazy-part.tsx",
+    "packages/react/src/local-intelligence.ts",
+    "packages/react/src/picked.ts",
+    "packages/react/src/presence.ts",
+    "packages/react/src/provider.ts",
+    "packages/react/src/settings.ts"
+  ],
+  "cohesion": 0.44,
+  "coupling": 0.56,
+  "fileCount": 8,
+  "lineCount": 912
+}

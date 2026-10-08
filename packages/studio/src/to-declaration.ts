@@ -14,6 +14,7 @@ import {
   type GraviewApp,
   type InvariantDefinition,
   type LensDeclaration,
+  type PageFields,
   type Policy,
   type Sight,
 } from "@graview/core";
@@ -74,6 +75,15 @@ export type ComputedWritten = string | { readonly expr: string; readonly label?:
  * were read: the short form — just the expression — where nothing else is
  * said, as a declaration writes it. Undefined when it works out nothing.
  */
+/** A kind's page (FR-148), of the fields it still has: a group left with none goes, and no page when nothing is left. */
+export function pageWhile(page: PageFields | undefined, here: (field: string) => boolean): PageFields | undefined {
+  if (!page) return undefined;
+  const fields = (page.fields ?? []).filter(here);
+  const groups = (page.groups ?? []).map((group) => ({ title: group.title, fields: group.fields.filter(here) })).filter((group) => group.fields.length > 0);
+  if (fields.length === 0 && groups.length === 0) return undefined;
+  return { ...(fields.length > 0 ? { fields } : {}), ...(groups.length > 0 ? { groups } : {}) };
+}
+
 export function computedFor(graph: { in(to: string, kind: string): readonly ({ readonly id: string } & Record<string, unknown>)[] }, kind: { readonly id: string }): Record<string, ComputedWritten> | undefined {
   const out: Record<string, ComputedWritten> = {};
   for (const node of graph.in(kind.id, "computed-on")) {
@@ -169,6 +179,7 @@ function kept(
           format?: Record<string, unknown>;
           hide?: readonly string[];
           glance?: readonly string[];
+          page?: PageFields;
         };
         fixed?: Record<string, string>;
         fieldRoles?: Record<string, string>;
@@ -191,13 +202,16 @@ function kept(
   const hide = was.display?.hide?.filter(here);
   // What a glance says, while its fields do (W-169: the round trip dropped it).
   const glance = was.display?.glance?.filter((field) => here(field) || worked.has(field));
+  // How its page orders its facts (FR-148), while its fields do.
+  const page = pageWhile(was.display?.page, (field) => here(field) || worked.has(field));
   const display =
-    labels || format || (hide && hide.length > 0) || (glance && glance.length > 0)
+    labels || format || (hide && hide.length > 0) || (glance && glance.length > 0) || page
       ? {
           ...(labels ? { labels } : {}),
           ...(format ? { format } : {}),
           ...(hide && hide.length > 0 ? { hide } : {}),
           ...(glance && glance.length > 0 ? { glance } : {}),
+          ...(page ? { page } : {}),
         }
       : undefined;
   const fixed = narrow(was.fixed);

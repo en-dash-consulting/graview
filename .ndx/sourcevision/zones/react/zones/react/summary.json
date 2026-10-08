@@ -1,21 +1,34 @@
 {
   "id": "react/react",
   "name": "React",
-  "description": "4 files, primarily TypeScript",
+  "description": "11 files, primarily TypeScript",
   "files": [
-    "packages/react/src/animation.ts",
-    "packages/react/src/index.ts",
-    "packages/react/src/scene.tsx",
-    "packages/react/src/seat-marks.tsx"
+    "packages/react/src/affordances.ts",
+    "packages/react/src/context.tsx",
+    "packages/react/src/emphasis.ts",
+    "packages/react/src/hooks.ts",
+    "packages/react/src/motion-store.ts",
+    "packages/react/src/motion.ts",
+    "packages/react/src/plots.tsx",
+    "packages/react/src/pointer.ts",
+    "packages/react/src/robot.ts",
+    "packages/react/src/url-sync.ts",
+    "packages/react/src/view-registry.ts"
   ],
   "entryPoints": [
-    "packages/react/src/animation.ts",
-    "packages/react/src/index.ts",
-    "packages/react/src/scene.tsx",
-    "packages/react/src/seat-marks.tsx"
+    "packages/react/src/affordances.ts",
+    "packages/react/src/context.tsx",
+    "packages/react/src/emphasis.ts",
+    "packages/react/src/hooks.ts",
+    "packages/react/src/motion.ts",
+    "packages/react/src/plots.tsx",
+    "packages/react/src/pointer.ts",
+    "packages/react/src/robot.ts",
+    "packages/react/src/url-sync.ts",
+    "packages/react/src/view-registry.ts"
   ],
-  "cohesion": 0.17,
-  "coupling": 0.83,
-  "fileCount": 4,
-  "lineCount": 484
+  "cohesion": 0.42,
+  "coupling": 0.58,
+  "fileCount": 11,
+  "lineCount": 2500
 }

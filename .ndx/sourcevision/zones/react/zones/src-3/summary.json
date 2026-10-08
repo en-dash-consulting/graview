@@ -3,19 +3,19 @@
   "name": "Src 3",
   "description": "4 files, primarily TypeScript",
   "files": [
-    "packages/react/src/channels.ts",
-    "packages/react/src/connectors.tsx",
-    "packages/react/src/parallel.ts",
-    "packages/react/src/routes.ts"
+    "packages/react/src/captions.ts",
+    "packages/react/src/kit.ts",
+    "packages/react/src/scene-lines.tsx",
+    "packages/react/src/where-drawn.tsx"
   ],
   "entryPoints": [
-    "packages/react/src/channels.ts",
-    "packages/react/src/connectors.tsx",
-    "packages/react/src/parallel.ts",
-    "packages/react/src/routes.ts"
+    "packages/react/src/captions.ts",
+    "packages/react/src/kit.ts",
+    "packages/react/src/scene-lines.tsx",
+    "packages/react/src/where-drawn.tsx"
   ],
-  "cohesion": 0.47,
-  "coupling": 0.53,
+  "cohesion": 0.25,
+  "coupling": 0.75,
   "fileCount": 4,
-  "lineCount": 1376
+  "lineCount": 1230
 }

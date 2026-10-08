@@ -5,21 +5,18 @@
 <zone>
 
 Zone: Src (`tools/src`)
-Files: 8, Cohesion: 0.65, Coupling: 0.35
-Description: 8 files, primarily TypeScript
-Entry points: packages/tools/src/conversation.ts, packages/tools/src/decide.ts, packages/tools/src/intelligence.ts, packages/tools/src/loop.ts, packages/tools/src/plan.ts, packages/tools/src/providers/jev.ts, packages/tools/src/questions.ts, packages/tools/src/run.ts
-Lines: 3495
+Files: 5, Cohesion: 0.39, Coupling: 0.61
+Description: 5 files, primarily TypeScript
+Entry points: packages/tools/src/conversation.ts, packages/tools/src/intelligence.ts, packages/tools/src/plan.ts, packages/tools/src/questions.ts, packages/tools/src/run.ts
+Lines: 2877
 
 </zone>
 
 <files>
 
 packages/tools/src/conversation.ts (TypeScript, 849 lines, source)
-packages/tools/src/decide.ts (TypeScript, 144 lines, source)
 packages/tools/src/intelligence.ts (TypeScript, 516 lines, source)
-packages/tools/src/loop.ts (TypeScript, 256 lines, source)
 packages/tools/src/plan.ts (TypeScript, 433 lines, source)
-packages/tools/src/providers/jev.ts (TypeScript, 218 lines, source)
 packages/tools/src/questions.ts (TypeScript, 439 lines, source)
 packages/tools/src/run.ts (TypeScript, 640 lines, source)
 
@@ -31,25 +28,10 @@ Internal:
   packages/tools/src/conversation.ts → packages/tools/src/intelligence.ts {droppedProposals, firstJsonObject, resolveProposal, validateProposals}
   packages/tools/src/conversation.ts → packages/tools/src/intelligence.ts {Completion, ProposedCall}
   packages/tools/src/conversation.ts → packages/tools/src/questions.ts {OfferedQuestion}
-  packages/tools/src/decide.ts → packages/tools/src/intelligence.ts {firstJsonObject}
-  packages/tools/src/decide.ts → packages/tools/src/intelligence.ts {Completion}
-  packages/tools/src/decide.ts → packages/tools/src/providers/jev.ts {Answer, Decide, Decided}
-  packages/tools/src/decide.ts → packages/tools/src/questions.ts {Question}
-  packages/tools/src/loop.ts → packages/tools/src/conversation.ts {ChatReply}
-  packages/tools/src/loop.ts → packages/tools/src/plan.ts {applyPlan, planFrom}
-  packages/tools/src/loop.ts → packages/tools/src/plan.ts {PlanOptions, PlannedCall}
-  packages/tools/src/loop.ts → packages/tools/src/providers/jev.ts {jevCostUsd}
-  packages/tools/src/loop.ts → packages/tools/src/providers/jev.ts {Answer, Decide}
-  packages/tools/src/loop.ts → packages/tools/src/questions.ts {questionsForInvariant}
-  packages/tools/src/loop.ts → packages/tools/src/questions.ts {DerivedQuestion, OfferedQuestion}
-  packages/tools/src/loop.ts → packages/tools/src/run.ts {offerOf}
   packages/tools/src/plan.ts → packages/tools/src/intelligence.ts {ProposedCall}
-  packages/tools/src/providers/jev.ts → packages/tools/src/questions.ts {Question}
   packages/tools/src/run.ts → packages/tools/src/conversation.ts {ChatReply}
   packages/tools/src/run.ts → packages/tools/src/plan.ts {applyPlan, planFrom}
   packages/tools/src/run.ts → packages/tools/src/plan.ts {AppliedPlan, Plan, PlanOptions, PlannedCall}
-  packages/tools/src/run.ts → packages/tools/src/providers/jev.ts {jevCostUsd}
-  packages/tools/src/run.ts → packages/tools/src/providers/jev.ts {Answer, Decide, Decided}
   packages/tools/src/run.ts → packages/tools/src/questions.ts {nodeState, pairQuestion, questionsForInvariant, questionsForKind, questionsForMutation, scoreToValue}
   packages/tools/src/run.ts → packages/tools/src/questions.ts {DerivedQuestion, OfferedQuestion, Question}
 

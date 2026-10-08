@@ -1,23 +1,29 @@
 {
   "id": "tools/providers",
-  "name": "Providers",
-  "description": "5 files, primarily TypeScript",
+  "name": "Framework Providers",
+  "description": "8 files, primarily TypeScript",
   "files": [
+    "packages/tools/src/derive.ts",
+    "packages/tools/src/providers/insight.ts",
     "packages/tools/src/providers/invariant.ts",
     "packages/tools/src/providers/llm.ts",
     "packages/tools/src/providers/schema.ts",
     "packages/tools/src/providers/structure.ts",
-    "packages/tools/src/types.ts"
+    "packages/tools/src/types.ts",
+    "packages/tools/src/usage.ts"
   ],
   "entryPoints": [
+    "packages/tools/src/derive.ts",
+    "packages/tools/src/providers/insight.ts",
     "packages/tools/src/providers/invariant.ts",
     "packages/tools/src/providers/llm.ts",
     "packages/tools/src/providers/schema.ts",
     "packages/tools/src/providers/structure.ts",
-    "packages/tools/src/types.ts"
+    "packages/tools/src/types.ts",
+    "packages/tools/src/usage.ts"
   ],
-  "cohesion": 0.36,
-  "coupling": 0.64,
-  "fileCount": 5,
-  "lineCount": 1091
+  "cohesion": 0.63,
+  "coupling": 0.37,
+  "fileCount": 8,
+  "lineCount": 1696
 }

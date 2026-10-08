@@ -5,21 +5,27 @@
 <zone>
 
 Zone: Site (`scripts/site`)
-Files: 8, Cohesion: 0.00, Coupling: 0.00
-Description: 8 files, primarily JavaScript
-Lines: 1771
+Files: 13, Cohesion: 0.00, Coupling: 1.00
+Description: 13 files, primarily JavaScript
+Entry points: scripts/guest-view-runtime.mjs
+Lines: 3232
 
 </zone>
 
 <files>
 
-scripts/conformance-fixtures.mjs (JavaScript, 133 lines, build)
+scripts/audit-ui.mjs (JavaScript, 987 lines, build)
+scripts/conformance-fixtures.mjs (JavaScript, 136 lines, build)
 scripts/eval-elm.mjs (JavaScript, 225 lines, build)
-scripts/guest-sandbox.mjs (JavaScript, 283 lines, build)
-scripts/release-approve.mjs (JavaScript, 159 lines, build)
-scripts/release-stage.mjs (JavaScript, 58 lines, build)
+scripts/guest-view-runtime.mjs (JavaScript, 118 lines, build)
+scripts/release-trust.mjs (JavaScript, 112 lines, build)
 scripts/site-artifact.mjs (JavaScript, 50 lines, build)
 scripts/site-css.mjs (JavaScript, 53 lines, build)
-scripts/site-docs.mjs (JavaScript, 810 lines, build)
+scripts/site-docs.mjs (JavaScript, 813 lines, build)
+scripts/site-numbers.mjs (JavaScript, 135 lines, build)
+scripts/site-progression.mjs (JavaScript, 105 lines, build)
+scripts/smoke-install.mjs (JavaScript, 366 lines, build)
+scripts/verify-products.mjs (JavaScript, 111 lines, build)
+scripts/write-framework-version.mjs (JavaScript, 21 lines, build)
 
 </files>

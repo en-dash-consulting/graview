@@ -1,33 +1,25 @@
 {
   "id": "react/src",
   "name": "Src",
-  "description": "10 files, primarily TypeScript",
+  "description": "6 files, primarily TypeScript",
   "files": [
     "packages/react/src/activity.ts",
-    "packages/react/src/affordances.ts",
-    "packages/react/src/context.tsx",
-    "packages/react/src/hooks.ts",
-    "packages/react/src/occupants.tsx",
-    "packages/react/src/plots.tsx",
-    "packages/react/src/pointer.ts",
-    "packages/react/src/presence.ts",
-    "packages/react/src/robot.ts",
-    "packages/react/src/settings.ts"
+    "packages/react/src/attention.ts",
+    "packages/react/src/channels.ts",
+    "packages/react/src/connectors.tsx",
+    "packages/react/src/parallel.ts",
+    "packages/react/src/routes.ts"
   ],
   "entryPoints": [
     "packages/react/src/activity.ts",
-    "packages/react/src/affordances.ts",
-    "packages/react/src/context.tsx",
-    "packages/react/src/hooks.ts",
-    "packages/react/src/occupants.tsx",
-    "packages/react/src/plots.tsx",
-    "packages/react/src/pointer.ts",
-    "packages/react/src/presence.ts",
-    "packages/react/src/robot.ts",
-    "packages/react/src/settings.ts"
+    "packages/react/src/attention.ts",
+    "packages/react/src/channels.ts",
+    "packages/react/src/connectors.tsx",
+    "packages/react/src/parallel.ts",
+    "packages/react/src/routes.ts"
   ],
-  "cohesion": 0.44,
-  "coupling": 0.56,
-  "fileCount": 10,
-  "lineCount": 3269
+  "cohesion": 0.39,
+  "coupling": 0.61,
+  "fileCount": 6,
+  "lineCount": 1710
 }

@@ -98,6 +98,20 @@
  * politely, and its act a real button the keyboard reaches without the
  * notice having taken the focus.
  *
+ * And THE SCENE HAS ITS PLACES IN THE BAR, AND THE PLACES STAND ON THE ROW
+ * WHEN THERE IS ROOM (FR-144, FR-145). Nick on 0.1.17: "is there a way to
+ * have a subnav on Scene like how there is for Pages … Might also be nice
+ * to have some of them available with a More dropdown when screen real
+ * estate allows". On Cloud's workshop, on both faces, at 1920, 1440, 1280,
+ * 1024 and 390 px and in 480, 640 and 900 px boxes: one row of at most
+ * 48 px, every control on its middle line, the place you are on said on
+ * the row (or the phone's first line); four or more places standing at
+ * 1920 on Pages, fewer at 1280, the one control at 390; the same after the
+ * window is narrowed and widened again; every place reached in two presses
+ * by pointer and keyboard (`pressPlace`, the recipe a host's harness
+ * uses); and on the scene, a picture chosen from the bar moves the scene's
+ * `in.view` and says it.
+ *
  *   node scripts/verify-chrome-quiet.mjs [--engine=chromium|webkit|firefox] [--shots=<dir>] [--quick] [--notices]
  *
  * `--notices` measures only the notices (FR-133), for iterating on them.
@@ -127,6 +141,8 @@ const ONLY_NOTICES = process.argv.includes("--notices");
 const ONLY_BOXES = process.argv.includes("--boxes");
 /** `--picks`: only a pick made the moment the place list opens (FR-140). */
 const ONLY_PICKS = process.argv.includes("--picks");
+/** `--standing`: only the places in the bar on both faces (FR-144, FR-145). */
+const ONLY_STANDING = process.argv.includes("--standing");
 /** What a notice says here: a sentence as long as a real change's, which must wrap on a phone rather than be cut. */
 const LONG_VENDOR = "Could Val lead the Thursday tasting while Sam is away for the fortnight";
 const ORG = resolve(repoRoot, "scripts/fixtures/quiet/org.gdd.json");
@@ -157,8 +173,13 @@ const SHORT_NAME = "Seedbed";
 const SHORT_BOXES = [480, 640, 720];
 /* The fewest letters of the place's name the control shows, when the name is longer. */
 const PLACE_LETTERS = 10;
+/* Below this width of its own the bar is a phone's (`BAR_PHONE`): the place is the page's first line. */
+const BAR_PHONE_WIDTH = 640;
 /* Down to this box the bar is one row of at most 48 px. */
 const ONE_ROW_FROM = 480;
+/* FR-144, FR-145: the whole pages and the boxes (on a 1440 desk) the places in the bar are measured at, on both faces. */
+const STANDING_PAGES = QUICK ? [1920, 1280, 390] : [1920, 1440, 1280, 1024, 390];
+const STANDING_BOXES = QUICK ? [480, 900] : [480, 640, 900];
 /* FR-140: the fresh pages a pick is made on at once, two picks each. */
 const PICK_PAGES = 10;
 
@@ -397,10 +418,10 @@ function measure() {
 }
 
 /* The bar's measures, defined in every page the harness opens, for `theBar` and `theRow` to share. */
-const BAR_HELPERS = `${[barControls, linesOf, theSwitch, saysOverview].map(String).join("\n")}\nObject.assign(window, { barControls, linesOf, theSwitch, saysOverview });`;
+const BAR_HELPERS = `${[barControls, linesOf, theSwitch, saysOverview, placesSaid].map(String).join("\n")}\nObject.assign(window, { barControls, linesOf, theSwitch, saysOverview, placesSaid });`;
 const host = await buildHost();
 const errors = [];
-const results = { quickPicks: [], boxes: [], boxSwitches: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [] };
+const results = { standing: [], standingResized: [], standingPresses: [], quickPicks: [], boxes: [], boxSwitches: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -431,6 +452,43 @@ try {
        * pause between them — on a fresh page, while the routed face is still being fetched; then Scene and the same again,
        * which once handed the pick to the router of the last time Pages was drawn. Ten pages, twenty picks, in the first scheme.
        */
+      /*
+       * ---- FR-144, FR-145: the places in the bar, on both faces, at whole pages and in boxes; the same after a resize;
+       * every place in two presses, and on the scene a picture from the bar moves `in.view`.
+       */
+      if (!ONLY_NOTICES && !ONLY_BOXES && !ONLY_PICKS) {
+        const sizes = [...STANDING_PAGES.map((width) => ({ box: 0, viewport: width < 640 ? PHONE : { width, height: 800 } })), ...STANDING_BOXES.map((box) => ({ box, viewport: BOX_DESK }))];
+        for (const face of ["pages", "graview"]) {
+          const query = `doc=workshop&face=${face}&heading=1${face === "pages" ? `&path=${encodeURIComponent("/places/email-to-todd")}` : ""}`;
+          for (const { box, viewport } of sizes) {
+            const { page, close } = await open(`${query}${box ? `&box=${box}` : ""}`, viewport);
+            const where = box ? `a ${box} px box` : `a ${viewport.width} px page`;
+            const name = `${face === "pages" ? "pages" : "scene"}-${box ? `box${box}` : viewport.width}-${scheme}-${engine}`;
+            if (SHOTS && (engine === "chromium" || engine === "webkit")) await page.screenshot({ path: join(SHOTS, `standing-${name}.png`), clip: { x: 0, y: 0, width: viewport.width, height: box ? 240 : 160 } });
+            results.standing.push({ engine, scheme, face, box, width: viewport.width, where, ...(await page.evaluate(theRow)) });
+            /* Every place, two presses each, by pointer and keyboard: at the widest page and a phone on both faces, and at 1024 on the scene, where its pictures fold. */
+            if (!box && (viewport.width === 1920 || viewport === PHONE || (face === "graview" && viewport.width === 1024))) {
+              const shot = SHOTS && (engine === "chromium" || engine === "webkit") ? join(SHOTS, `standing-${name}-list-open.png`) : null;
+              results.standingPresses.push({ engine, scheme, face, where, places: face === "pages" ? 7 : 3, ...(await everyPlaceInTwoPresses(page, shot, face !== "pages")) });
+            }
+            await close();
+          }
+          /* Narrowed and widened again: the row is the row a fresh page draws at each width. */
+          if (!QUICK || face === "pages") {
+            const { page, close } = await open(query, { width: 1920, height: 800 });
+            const seen = [];
+            for (const width of [1920, 1024, 1280, 1920]) {
+              await page.setViewportSize({ width, height: 800 });
+              await page.waitForTimeout(400);
+              seen.push({ width, ...(await page.evaluate(theRow)) });
+            }
+            results.standingResized.push({ engine, scheme, face, seen });
+            await close();
+          }
+        }
+      }
+      if (ONLY_STANDING) continue;
+
       if (scheme === SCHEMES[0] && !ONLY_NOTICES && !ONLY_BOXES) {
         for (let trial = 0; trial < PICK_PAGES; trial++) {
           const { page, close } = await open("doc=vendors&face=graview", DESK);
@@ -776,15 +834,15 @@ try {
     seen: results.deskBars.map(({ engine, scheme, places, face, viewport, dpr, off, nearestTheTop }) => ({ engine, scheme, places, face, viewport, dpr, nearestTheTop, ...(off.length > 0 ? { off } : {}) })),
     ok: deskBarsAll && results.deskBars.every((one) => one.off.length === 0 && one.nearestTheTop >= 4),
   };
-  report.checks.onPagesThePlaceIsOneControlOnTheBarOrThePhonesFirstLine = {
-    seen: results.deskBars.filter((one) => one.face === "pages").map(({ engine, scheme, places, viewport, dpr, place }) => ({ engine, scheme, places, viewport, dpr, place })),
-    ok: deskBarsAll && results.deskBars.every((one) => (one.face === "pages" ? one.place.said === "Email to Todd" && (one.phone ? one.place.firstLine : one.place.onTheRow) : one.place.said === null)),
+  report.checks.thePlaceYouAreOnIsSaidOnTheRowOrThePhonesFirstLineOnBothFaces = {
+    seen: results.deskBars.map(({ engine, scheme, places, face, viewport, dpr, place }) => ({ engine, scheme, places, face, viewport, dpr, place })),
+    ok: deskBarsAll && results.deskBars.every((one) => one.place.said === (one.face === "pages" ? "Email to Todd" : "The whole thing") && (one.phone ? one.place.firstLine : one.place.onTheRow)),
   };
   report.checks.everyPlaceIsTwoPressesAwayByPointerAndKeyboard = {
     seen: results.twoPresses,
     ok:
       results.twoPresses.length === engines.length * SCHEMES.length * 4 &&
-      results.twoPresses.every((one) => one.listed === one.places && one.groups.join() === "home,lists,pictures" && one.reached.length === one.places && one.missed.length === 0 && one.keyboard.switchReached && one.keyboard.controlReached && one.keyboard.into && one.keyboard.escapeBack && one.keyboard.entriesByTab === one.places && one.keyboard.went && !one.keyboard.onBody),
+      results.twoPresses.every(twoPressesHeld),
   };
   report.checks.aPicturesPageDoesNotRepeatThePlaces = {
     seen: results.repeats,
@@ -794,6 +852,50 @@ try {
     seen: results.homes,
     ok: results.homes.length === engines.length * SCHEMES.length * (DESKS.length + 1) * 2 && results.homes.every((one) => (one.home ? one.face === "pages" && one.homeView && one.fullWidth && one.underTheBar && !one.floating && one.place === "Home" : ["scene", "graview"].includes(one.face) && !one.homeView)),
   };
+  /* FR-144, FR-145 */
+  const standing = results.standing;
+  const standingAll = standing.length === engines.length * SCHEMES.length * 2 * (STANDING_PAGES.length + STANDING_BOXES.length);
+  const standingAt = (face, width, box = 0) => standing.filter((one) => one.face === face && one.width === width && one.box === box);
+  const whereStanding = ({ engine, scheme, face, where }) => ({ engine, scheme, face: face === "pages" ? "pages" : "scene", where });
+  const fewerAt1280 = standingAt("pages", 1280).every((one) => one.place.standing < (standingAt("pages", 1920).find((wide) => wide.engine === one.engine && wide.scheme === one.scheme)?.place.standing ?? 0));
+  const pressesAll = results.standingPresses.length === engines.length * SCHEMES.length * (2 + (STANDING_PAGES.includes(1024) ? 3 : 2));
+  const STANDING_CHECKS = {
+    theBarIsOneRowOfAtMost48PxEveryControlOnItsMiddleOnBothFacesAtEveryWidthAndBox: {
+      seen: standing.map((one) => ({ ...whereStanding(one), height: one.height, lines: one.lines, ...(one.off.length > 0 ? { off: one.off } : {}) })),
+      ok: standingAll && standing.every((one) => one.lines === 1 && one.height <= BAR_MOST && one.off.length === 0 && one.nearestTheTop >= 4),
+    },
+    thePlaceYouAreOnIsAlwaysSeenOnTheRowOrThePhonesFirstLine: {
+      seen: standing.map((one) => ({ ...whereStanding(one), place: one.place })),
+      ok: standingAll && standing.every((one) => one.place.said === (one.face === "pages" ? "Email to Todd" : "The whole thing") && one.place.seen && ((one.box || one.width) < BAR_PHONE_WIDTH ? one.place.firstLine : one.place.onTheRow)),
+    },
+    fourOrMorePlacesStandAt1920OnPagesAndFewerAt1280: {
+      seen: [...standingAt("pages", 1920), ...standingAt("pages", 1280)].map((one) => ({ ...whereStanding(one), standing: one.place.standing, opener: one.place.opener })),
+      ok: standingAll && standingAt("pages", 1920).every((one) => one.place.standing >= 4) && standingAt("pages", 1280).every((one) => one.place.standing >= 2 && one.place.opener === "More") && fewerAt1280,
+    },
+    theScenesPicturesStandAt1920: {
+      seen: standingAt("graview", 1920).map((one) => ({ ...whereStanding(one), standing: one.place.standing, opener: one.place.opener })),
+      ok: standingAll && standingAt("graview", 1920).every((one) => one.place.standing === 3 && one.place.opener === null),
+    },
+    aPhoneAndANarrowBoxKeepTheOneControl: {
+      seen: standing.filter((one) => one.width < BAR_PHONE_WIDTH || (one.box && one.box <= 640)).map((one) => ({ ...whereStanding(one), standing: one.place.standing, opener: one.place.opener })),
+      ok: standingAll && standing.filter((one) => one.width < BAR_PHONE_WIDTH || (one.box && one.box <= 640)).every((one) => one.place.standing === 0 && one.place.opener === "one control"),
+    },
+    theRowIsTheSameAfterTheWindowIsNarrowedAndWidenedAgain: {
+      seen: results.standingResized.map(({ engine, scheme, face, seen }) => ({ engine, scheme, face: face === "pages" ? "pages" : "scene", seen: seen.map(({ width, height, lines, place }) => ({ width, height, lines, standing: place.standing, opener: place.opener })) })),
+      ok:
+        results.standingResized.length === engines.length * SCHEMES.length * (QUICK ? 1 : 2) &&
+        results.standingResized.every(({ seen }) => seen.every((one) => one.lines === 1 && one.height <= BAR_MOST && one.place.seen) && seen[0].place.standing === seen[3].place.standing && seen[0].place.opener === seen[3].place.opener && seen[1].place.standing <= seen[0].place.standing),
+    },
+    everyPlaceInTheBarIsTwoPressesAwayOnBothFacesByPointerAndKeyboard: {
+      seen: results.standingPresses,
+      ok: pressesAll && results.standingPresses.every(twoPressesHeld),
+    },
+    aPictureChosenFromTheBarIsWhatTheSceneShows: {
+      seen: results.standingPresses.filter((one) => one.face !== "pages").map(({ engine, scheme, where, inView }) => ({ engine, scheme, where, inView })),
+      ok: pressesAll && results.standingPresses.filter((one) => one.face !== "pages").every((one) => one.inView.length === one.places && one.inView.every((seen) => seen.ok) && one.inView.some((seen) => seen.asked !== null)),
+    },
+  };
+  if (!ONLY_NOTICES && !ONLY_BOXES && !ONLY_PICKS) Object.assign(report.checks, STANDING_CHECKS);
   /* FR-133 */
   const notices = results.notices;
   const allNotices = notices.length === engines.length * SCHEMES.length * 4;
@@ -860,6 +962,9 @@ try {
   }
   if (ONLY_BOXES) {
     for (const name of Object.keys(report.checks)) if (!(name in BOX_CHECKS)) delete report.checks[name];
+  }
+  if (ONLY_STANDING) {
+    for (const name of Object.keys(report.checks)) if (!(name in STANDING_CHECKS)) delete report.checks[name];
   }
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);
@@ -1038,21 +1143,55 @@ function theRow() {
   const controls = barControls(header);
   const middle = (row.top + row.bottom) / 2;
   const off = controls.filter((one) => Math.abs((one.box.top + one.box.bottom) / 2 - middle) > 1.5).map((one) => ({ name: one.name, by: Math.round(((one.box.top + one.box.bottom) / 2 - middle) * 10) / 10 }));
-  const control = root.querySelector('[data-testid="app-places-open"]');
-  const line = root.querySelector("[data-graview-place-line]");
   return {
     height: Math.round(bar.height * 10) / 10,
     lines: linesOf(controls.map((one) => one.box)),
     off,
     nearestTheTop: Math.round(Math.min(...controls.map((one) => one.box.top - bar.top)) * 10) / 10,
-    place: {
-      said: control?.querySelector('[data-testid="app-place-current"]')?.textContent.trim() ?? null,
-      onTheRow: Boolean(control && header.contains(control)),
-      firstLine: Boolean(control && line?.contains(control) && Math.abs(line.getBoundingClientRect().top - bar.bottom) <= 1),
-    },
+    place: placesSaid(root, header),
     switch: theSwitch(header),
     saysOverview: saysOverview(root),
   };
+}
+
+/**
+ * WHERE THE BAR SAYS THE READER IS, AND HOW ITS PLACES ARE DRAWN (FR-138,
+ * FR-145): the words of the place you are on (`app-place-current`, on the
+ * one control or on the place standing on the row) and whether a person
+ * sees them on the row or on a phone's first line; how many places stand
+ * on the row; whether "More" or the one control opens the rest.
+ */
+function placesSaid(root, header) {
+  const said = root.querySelector('[data-testid="app-place-current"]');
+  const line = root.querySelector("[data-graview-place-line]");
+  const bar = header.getBoundingClientRect();
+  const seen = (one) => {
+    if (!one || one.closest("[hidden]")) return false;
+    const box = one.getBoundingClientRect();
+    return box.width > 1 && box.height > 1 && box.left >= 0 && box.right <= innerWidth + 0.5 && getComputedStyle(one).visibility !== "hidden";
+  };
+  const opener = root.querySelector('[data-testid="app-places-open"]');
+  return {
+    said: said?.textContent.trim() ?? null,
+    seen: seen(said),
+    onTheRow: Boolean(said && header.contains(said) && seen(said) && said.getBoundingClientRect().bottom <= bar.bottom + 0.5),
+    firstLine: Boolean(said && line?.contains(said) && Math.abs(line.getBoundingClientRect().top - bar.bottom) <= 1),
+    standing: [...root.querySelectorAll('[data-testid="app-places-standing"] [data-place-path]')].filter((one) => !one.closest('[data-testid="app-places"]') && seen(one)).length,
+    opener: opener ? (opener.textContent.trim() === "More" ? "More" : "one control") : null,
+  };
+}
+
+/**
+ * HOW A HARNESS REACHES ANY PLACE IN THE BAR (FR-145), whatever the width:
+ * each place is one element in the embed, `app-place-<key>` with its
+ * `data-place-path`. When it stands on the row it is pressed; when it does
+ * not, `app-places-open` — "More", or the one control — opens the list it
+ * is in, and it is pressed there.
+ */
+async function pressPlace(page, selector) {
+  const one = page.locator(`[data-graview-embed] ${selector}`).first();
+  if (!(await one.isVisible().catch(() => false))) await page.locator('[data-testid="app-places-open"]').click();
+  await one.click();
 }
 
 /**
@@ -1063,8 +1202,7 @@ function theRow() {
  */
 async function pickAtOnce(page, key, label) {
   await page.locator('[data-testid="app-face-pages"]').click();
-  await page.locator('[data-testid="app-places-open"]').click();
-  await page.locator(`[data-testid="app-place-${key}"]`).click();
+  await pressPlace(page, `[data-testid="app-place-${key}"]`);
   const landed = await page
     .waitForFunction(
       ({ key, label }) => {
@@ -1209,8 +1347,7 @@ async function sceneAndBack(page) {
   const pressed = (which) => page.evaluate((which) => document.querySelector(`[data-testid="app-face-${which}"]`)?.getAttribute("aria-pressed") === "true", which);
   const heading = () => page.locator("main h2, [data-embed-content] h2").first().textContent().catch(() => "").then((text) => (text ?? "").trim().toLowerCase());
   const settle = () => page.waitForTimeout(1200);
-  await page.locator('[data-testid="app-places-open"]').click();
-  await page.locator('[data-testid="app-place-kind:vendor"]').click();
+  await pressPlace(page, '[data-testid="app-place-kind:vendor"]');
   await settle();
   const toList = (await face()) === "pages" && (await heading()) === "vendors";
   await page.locator('[data-testid="app-face-scene"]').click();
@@ -1238,45 +1375,71 @@ async function sceneAndBack(page) {
 }
 
 /**
- * EVERY PLACE IN TWO PRESSES (FR-138): the place control, then its entry —
- * for every entry the list holds, by the pointer, each landing on its
- * place with the control saying its name. Then by keyboard: Tab from the
- * app's name reaches the switch and the control; Enter opens the list with
+ * EVERY PLACE IN TWO PRESSES (FR-138, FR-145): each place the bar offers —
+ * standing on the row, or in the list "More" or the one control opens —
+ * pressed as a harness reaches it (`pressPlace`), each landing on its place
+ * with the bar saying its name; on the scene (FR-144), with the scene's
+ * `in.view` the picture's own, and none for the whole thing. Then by
+ * keyboard: Tab from the app's name reaches the switch, every place
+ * standing and the control that opens the rest; Enter opens the list with
  * the keyboard in it; Escape gives it back to the control; Tab walks every
  * entry; Enter on one goes there, and the keyboard is never left on the body.
  */
-async function everyPlaceInTwoPresses(page, shot) {
-  const open = async () => {
-    if (await page.evaluate(() => document.querySelector('[data-testid="app-places"]')?.hasAttribute("hidden") !== false)) await page.locator('[data-testid="app-places-open"]').click();
+async function everyPlaceInTwoPresses(page, shot, scene = false) {
+  const openList = async () => {
+    if (await page.evaluate(() => document.querySelector('[data-testid="app-places"]')?.hasAttribute("hidden") === true)) await page.locator('[data-testid="app-places-open"]').click();
     await page.waitForTimeout(120);
   };
-  await open();
+  await openList();
   if (shot) await page.screenshot({ path: shot });
-  const entries = await page.evaluate(() => [...document.querySelectorAll('[data-testid="app-places"] [data-testid^="app-place-"]')].map((one) => ({ id: one.getAttribute("data-testid"), label: one.textContent.trim() })));
-  const groups = await page.evaluate(() => [...document.querySelectorAll('[data-testid="app-places"] [data-place-group]')].map((one) => one.getAttribute("data-place-group")));
+  /* The list as tall as what it holds (or its most, scrolling): no room left between its groups or under them (WebKit stretched it to its most). */
+  const snug = await page.evaluate(() => {
+    const pane = document.querySelector('[data-testid="app-places"]');
+    if (!pane || pane.hasAttribute("hidden")) return null;
+    const box = pane.getBoundingClientRect();
+    const groups = [...pane.querySelectorAll("[data-place-group]")].map((group) => group.getBoundingClientRect());
+    const gaps = groups.slice(1).map((group, at) => group.top - groups[at].bottom);
+    const under = pane.scrollHeight > pane.clientHeight + 1 ? 0 : box.bottom - (groups.at(-1)?.bottom ?? box.bottom);
+    return gaps.every((gap) => gap <= 16) && under <= 16;
+  });
+  const entries = await page.evaluate(() => [...document.querySelectorAll("[data-graview-embed] [data-place-path]")].map((one) => ({ id: one.getAttribute("data-testid"), label: one.textContent.trim(), path: one.getAttribute("data-place-path") })));
+  const order = ["home", "lists", "pictures"];
+  const groupOf = (id) => (/^app-place-(home|scene:whole)$/.test(id) ? "home" : id.startsWith("app-place-kind:") ? "lists" : "pictures");
+  const groups = [...new Set(entries.map((entry) => groupOf(entry.id)))].sort((x, y) => order.indexOf(x) - order.indexOf(y));
   await page.keyboard.press("Escape");
   const reached = [];
   const missed = [];
+  const inView = [];
   for (const entry of entries) {
-    await open();
-    await page.locator(`[data-testid="${entry.id}"]`).click();
+    await pressPlace(page, `[data-testid="${entry.id}"]`);
     const landed = await page
       .waitForFunction((label) => document.querySelector('[data-testid="app-place-current"]')?.textContent.trim() === label, entry.label, { timeout: 4000 })
       .then(() => true, () => false);
+    if (scene) {
+      /* The scene's view says the picture: its `in.view` is the one its path names, none for the whole thing. */
+      await page.waitForTimeout(200);
+      const where = await page.evaluate(() => ({ stop: window.__handle.where().stop ?? "", face: document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed") }));
+      const asked = new URLSearchParams(entry.path.split("#")[1] ?? "").get("in.view");
+      const shown = new URLSearchParams(where.stop.replace(/^#/, "")).get("in.view");
+      inView.push({ label: entry.label, asked, shown, face: where.face, ok: shown === asked && where.face !== "pages" });
+    }
     (landed ? reached : missed).push(entry.label);
   }
   /* By keyboard. */
   const active = () => page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? (document.activeElement === document.body ? "<body>" : document.activeElement?.tagName.toLowerCase()));
-  let onBody = false;
-  const keyboard = { switchReached: false, controlReached: false, into: false, escapeBack: false, entriesByTab: 0, went: false, onBody: false };
+  const opener = await page.evaluate(() => document.querySelector('[data-testid="app-places-open"]') !== null);
+  const keyboard = { opener, switchReached: false, controlReached: !opener, into: !opener, escapeBack: !opener, entriesByTab: 0, went: false, onBody: false };
+  const seen = new Set();
   await page.locator('[data-testid="app-home"]').focus();
-  for (let step = 0; step < 8 && !keyboard.controlReached; step++) {
+  for (let step = 0; step < entries.length + 10; step++) {
     await page.keyboard.press("Tab");
     const at = await active();
     if (at === "app-face-scene" || at === "app-face-pages") keyboard.switchReached = true;
+    if (at?.startsWith("app-place-") && at !== "app-place-current") seen.add(at);
     if (at === "app-places-open") keyboard.controlReached = true;
+    if (opener ? keyboard.controlReached : seen.size === entries.length) break;
   }
-  if (keyboard.controlReached) {
+  if (opener && keyboard.controlReached) {
     await page.keyboard.press("Enter");
     await page.waitForTimeout(150);
     keyboard.into = await page.evaluate(() => document.querySelector('[data-testid="app-places"]')?.contains(document.activeElement) === true);
@@ -1285,30 +1448,49 @@ async function everyPlaceInTwoPresses(page, shot) {
     keyboard.escapeBack = (await active()) === "app-places-open";
     await page.keyboard.press("Enter");
     await page.waitForTimeout(150);
-    const seen = new Set();
     for (let step = 0; step < entries.length + 2; step++) {
       const at = await active();
       if (at?.startsWith("app-place-") && at !== "app-place-current") seen.add(at);
       if (seen.size === entries.length) break;
       await page.keyboard.press("Tab");
     }
-    keyboard.entriesByTab = seen.size;
-    const target = entries.find((entry) => entry.id === "app-place-home") ?? entries[0];
-    if (await page.evaluate(() => document.querySelector('[data-testid="app-places"]')?.hasAttribute("hidden"))) {
-      await page.locator('[data-testid="app-places-open"]').focus();
-      await page.keyboard.press("Enter");
-      await page.waitForTimeout(150);
-    }
-    await page.locator(`[data-testid="${target.id}"]`).focus();
-    await page.keyboard.press("Enter");
-    keyboard.went = await page
-      .waitForFunction((label) => document.querySelector('[data-testid="app-place-current"]')?.textContent.trim() === label, target.label, { timeout: 4000 })
-      .then(() => true, () => false);
-    await page.waitForTimeout(300);
-    onBody = (await active()) === "<body>";
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(150);
   }
-  keyboard.onBody = onBody;
-  return { listed: entries.length, groups, reached, missed, keyboard };
+  keyboard.entriesByTab = seen.size;
+  /* Enter on a place goes there: the first, the home or the whole thing. */
+  const target = entries[0];
+  if (!(await page.locator(`[data-testid="${target.id}"]`).isVisible().catch(() => false))) {
+    await page.locator('[data-testid="app-places-open"]').focus();
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(150);
+  }
+  await page.locator(`[data-testid="${target.id}"]`).focus();
+  await page.keyboard.press("Enter");
+  keyboard.went = await page
+    .waitForFunction((label) => document.querySelector('[data-testid="app-place-current"]')?.textContent.trim() === label, target.label, { timeout: 4000 })
+    .then(() => true, () => false);
+  await page.waitForTimeout(300);
+  keyboard.onBody = (await active()) === "<body>";
+  return { listed: entries.length, groups, snug, reached, missed, keyboard, ...(scene ? { inView } : {}) };
+}
+
+/** Every place reached by pointer and keyboard, two presses at most, and the keyboard never left on the body (FR-138, FR-145). */
+function twoPressesHeld(one) {
+  return (
+    one.listed === one.places &&
+    one.snug !== false &&
+    one.groups.join() === (one.face === "graview" ? "home,pictures" : "home,lists,pictures") &&
+    one.reached.length === one.places &&
+    one.missed.length === 0 &&
+    one.keyboard.switchReached &&
+    one.keyboard.controlReached &&
+    one.keyboard.into &&
+    one.keyboard.escapeBack &&
+    one.keyboard.entriesByTab === one.places &&
+    one.keyboard.went &&
+    !one.keyboard.onBody
+  );
 }
 
 /** What a picture's page says under its title that is another place's name, as a link or a button (FR-138). */

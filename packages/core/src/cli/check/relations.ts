@@ -198,6 +198,32 @@ export function checkActsFromEnds<S extends AnySchema>(ctx: CheckContext<S>, wri
           fix: `Use one of: ${readable.join(", ")}.`,
         });
       }
+      // What a record's page names (FR-148): a field or computed field of the kind, each once.
+      const page = definition.display?.page;
+      const named = [...(page?.fields ?? []), ...(page?.groups ?? []).flatMap((group) => group.fields)];
+      // The limits a document's `kinds.<kind>.page` holds to hold for `display.page` too: 40 fields to a list, 12 groups, a title of 60 characters.
+      const lists = [page?.fields ?? [], ...(page?.groups ?? []).map((group) => group.fields)];
+      const titles = (page?.groups ?? []).map((group) => group.title);
+      if (lists.some((list) => list.length > 40) || (page?.groups?.length ?? 0) > 12 || titles.some((title) => title.length < 1 || title.length > 60)) {
+        add({
+          severity: "error",
+          code: "page-too-large",
+          where: `defineNode("${definition.kind}").display.page`,
+          message: `${withArticle(definition.kind).replace(/^./, (first) => first.toUpperCase())}'s page is past what a page holds: at most 40 fields to a list, 12 groups, and a group's title of 1 to 60 characters.`,
+          fix: "Name fewer fields or groups, and give each group a short title.",
+        });
+      }
+      for (const [index, key] of named.entries()) {
+        const known = Object.hasOwn(shape, key) || Object.prototype.hasOwnProperty.call((definition as { computed?: object }).computed ?? {}, key);
+        if (known && named.indexOf(key) === index) continue;
+        add({
+          severity: "error",
+          code: known ? "page-field-twice" : "page-unknown-field",
+          where: `defineNode("${definition.kind}").display.page`,
+          message: known ? `"${key}" is on ${withArticle(definition.kind)}'s page twice.` : `${withArticle(definition.kind).replace(/^./, (first) => first.toUpperCase())}'s page is to show "${key}", which it does not declare.`,
+          fix: known ? "Name each field once: in `fields`, or in one group." : `Use one of: ${readable.join(", ")}.`,
+        });
+      }
       if (readable.length > 5 && !definition.display?.glance) {
         add({
           severity: "note",

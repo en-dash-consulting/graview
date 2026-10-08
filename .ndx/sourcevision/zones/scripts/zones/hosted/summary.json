@@ -1,0 +1,19 @@
+{
+  "id": "scripts/hosted",
+  "name": "Hosted",
+  "description": "4 files, primarily JavaScript",
+  "files": [
+    "scripts/lib/hosted-page-notes.mjs",
+    "scripts/lib/hosted-page.mjs",
+    "scripts/release-publish.mjs",
+    "scripts/verify-hosted-page.mjs"
+  ],
+  "entryPoints": [
+    "scripts/lib/hosted-page-notes.mjs",
+    "scripts/lib/hosted-page.mjs"
+  ],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 4,
+  "lineCount": 615
+}

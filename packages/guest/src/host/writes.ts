@@ -59,6 +59,20 @@ export interface PressedField {
    * app itself declares for the argument, or a record the view was shown.
    */
   readonly chosen?: true;
+  /**
+   * The host filled it from a record the view was shown (FR-150): that
+   * record's field, as this viewer sees it. It goes only back where it came
+   * from — to an act that writes that field of that record.
+   */
+  readonly from?: Prefilled;
+}
+
+/** Where a field the host filled came from: a field of a record the view was shown (FR-150). */
+export interface Prefilled {
+  readonly record: string;
+  readonly field: string;
+  /** What the host filled it with, as the field held it. */
+  readonly value: string;
 }
 
 /**
@@ -103,4 +117,3 @@ export function judgeCodeAct<S extends AnySchema>(store: Store<S>, manifest: Wor
   if (!sightIsTotal(store)) return refuse("press-only", "In this app some members may not see some records, so a view's act applies only when you press it.");
   return { ok: true, name: entry.act, args: { ...args, ...(entry.constants ?? {}) } };
 }
-

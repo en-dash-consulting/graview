@@ -7,6 +7,7 @@ import { DefaultView, useDefaultElsewhere } from "./default-view.js";
 import { RecordHeadContext } from "./record-head.js";
 import { KindFigure } from "./figure.js";
 import { Panel } from "./primitives/index.js";
+import { hasShape, TextBody } from "./text-body.js";
 
 /*
  * VIEWS AS DATA, DRAWN (FR-03).
@@ -71,6 +72,14 @@ function Resolved({ block }: { readonly block: ResolvedBlock }): ReactNode {
     case "title":
       return <strong className="graview-spec-title">{block.text}</strong>;
     case "text":
+      // A value with lines in it keeps them — its paragraphs and lists (FR-146); one line of words stays a line.
+      if (hasShape(block.text)) {
+        return (
+          <div className="graview-spec-text" {...(block.tone ? { "data-graview-tone": block.tone } : {})}>
+            <TextBody text={block.text} />
+          </div>
+        );
+      }
       return (
         <p className="graview-spec-text" {...(block.tone ? { "data-graview-tone": block.tone } : {})}>
           {block.text}
@@ -86,7 +95,8 @@ function Resolved({ block }: { readonly block: ResolvedBlock }): ReactNode {
       return (
         <span className="graview-spec-field" data-graview-field={block.field}>
           <span className="graview-spec-label">{block.label}</span>
-          <span className="graview-spec-value">
+          {/* A value with lines in it keeps them (FR-146): a field block stays one span, its breaks drawn where they stand. */}
+          <span className="graview-spec-value" {...(hasShape(block.text) ? { style: { whiteSpace: "pre-line" } } : {})}>
             {block.href ? (
               <a className="graview-spec-link" href={block.href} rel="noopener noreferrer" target="_blank">
                 {block.text}

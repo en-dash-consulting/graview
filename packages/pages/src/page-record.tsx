@@ -1,6 +1,6 @@
-import { describeNode, humanizeField, isWithheld, type AnySchema } from "@graview/core";
-import { DefaultViewElsewhere, pageSays } from "@graview/primitives/pages";
-import { isDefaultView, type ViewProps } from "@graview/react/provider";
+import { describeNode, humanizeField, isWithheld, pageSections, type AnySchema } from "@graview/core";
+import { DefaultViewElsewhere, EditableValue, LongValue, pageSays } from "@graview/primitives/pages";
+import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useRef, useState } from "react";
@@ -39,6 +39,8 @@ import { capitalize } from "./page-typography.js";
 export function DefaultRecordPage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const { store, brand, principal, invariantContext } = context;
   useStoreTick(store);
+  // A value is changed where it stands where the face provides the store its edits run through (a face handed views).
+  const inPlace = useGraviewIfAny<S>() !== null;
   const params = useParams();
   const id = decodeURIComponent(params["id"] ?? "");
   const facts = recordFacts(store, id, {
@@ -95,6 +97,13 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         return targets.length > 0 ? [{ ...group, targets }] : [];
       })
     : facts.links;
+  /*
+   * A view that says it IS the record's page (FR-149: a worker view whose
+   * manifest says `replaces: "page"`) is drawn alone under the heading,
+   * with what is wrong and what has happened: no facts, no links, nothing
+   * to be done but what it offers. Any other view sits above all of those.
+   */
+  const whole = PageView !== undefined && replacesPage(ownPage);
 
   return (
     <PageMain context={context}>
@@ -165,28 +174,64 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         </section>
       ) : null}
 
-      {fields.length > 0 ? (
+      {!whole && fields.length > 0 ? (
         <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="record-fields">
           <h2 style={h2}>The facts</h2>
-          <dl
-            style={{
-              margin: 0,
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-              gap: "14px 24px",
-            }}
-          >
-            {fields.map((field) => (
-              <div key={field.key} style={{ display: "grid", gap: 2, minWidth: 0 }}>
-                <dt style={{ ...eyebrow, fontSize: "0.75rem" }}>{field.label}</dt>
-                <dd style={{ margin: 0, fontSize: "1.125rem", overflowWrap: "anywhere" }}>{field.value}</dd>
-              </div>
-            ))}
-          </dl>
+          {/*
+            * IN THE SECTIONS THE KIND'S PAGE DECLARES (FR-148) — its first
+            * fields, each group under its title, the rest under "Details" —
+            * or, unsaid, in declared order. Each value is changed where it
+            * stands, as the scene's record changes it; prose spans the page
+            * under its label, its paragraphs kept (FR-146, FR-147).
+            */}
+          {pageSections(definition, fields).map((section, index) => {
+            const list = (
+              <dl
+                style={{
+                  margin: 0,
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                  gap: "14px 24px",
+                }}
+              >
+                {section.fields.map((field) =>
+                  field.long ? (
+                    <LongValue<S>
+                      key={field.key}
+                      nodeId={id}
+                      field={field.key}
+                      label={field.label}
+                      value={field.value}
+                      style={{ gridColumn: "1 / -1", gap: 4 }}
+                      labelStyle={{ ...eyebrow, fontSize: "0.75rem" }}
+                      valueStyle={{ fontSize: "1.0625rem", lineHeight: 1.6 }}
+                    />
+                  ) : (
+                    <div key={field.key} style={{ display: "grid", gap: 2, minWidth: 0, alignContent: "start" }}>
+                      <dt style={{ ...eyebrow, fontSize: "0.75rem" }}>{field.label}</dt>
+                      <dd style={{ margin: 0, fontSize: "1.125rem", overflowWrap: "anywhere", minWidth: 0 }}>
+                        {inPlace ? <EditableValue<S> nodeId={id} field={field.key} value={field.value} /> : field.value}
+                      </dd>
+                    </div>
+                  ),
+                )}
+              </dl>
+            );
+            return section.title ? (
+              <section key={index} style={{ display: "grid", gap: 10, minWidth: 0 }}>
+                <h3 data-graview-field-group={section.title} style={{ ...h2, fontSize: "1.0625rem" }}>
+                  {section.title}
+                </h3>
+                {list}
+              </section>
+            ) : (
+              <div key={index}>{list}</div>
+            );
+          })}
         </section>
       ) : null}
 
-      {links.map((group) => (
+      {(whole ? [] : links).map((group) => (
         <section key={`${group.edgeKind}|${group.direction}`} style={{ ...rule, display: "grid", gap: 10 }}>
           {/*
             * THE EYEBROW SAYS WHAT IS LISTED, NOT WHICH WAY THE EDGE WAS
@@ -242,7 +287,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         </section>
       ))}
 
-      {offered.length > 0 || facts.actions.withheld.length > 0 ? (
+      {!whole && (offered.length > 0 || facts.actions.withheld.length > 0) ? (
         <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="record-actions">
           <h2 style={h2} ref={actsHeading} tabIndex={-1}>What can be done</h2>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>

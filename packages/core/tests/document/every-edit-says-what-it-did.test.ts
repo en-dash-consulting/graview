@@ -31,6 +31,7 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "set-describe": { op: "set-describe", kind: "vendor", describe: "{status}" },
   "set-view": { op: "set-view", kind: "vendor", slot: "card", blocks: [{ title: "{name}" }] },
   "set-glance": { op: "set-glance", kind: "vendor", fields: ["status", "quote"] },
+  "set-page-fields": { op: "set-page-fields", kind: "vendor", fields: ["quote"], groups: [{ title: "Status", fields: ["status"] }] },
   "add-lens": { op: "add-lens", title: "The shortlist", on: "vendor", options: { blocks: [{ headline: "{count(all('vendor')) | words} vendors" }, { list: "all('vendor')", sort: "name", as: "row" }] } },
   "remove-lens": { op: "remove-lens", title: "The shortlist" },
   "set-home": { op: "set-home", blocks: [{ headline: "The wedding" }, { figure: "sum(all('vendor'), quote)", as: "money", currency: "USD", label: "Quoted so far" }] },

@@ -1,134 +1,140 @@
 {
   "schemaVersion": "1.0.0",
   "toolVersion": "0.1.0",
-  "analyzedAt": "2026-10-05T00:02:39.551Z",
+  "analyzedAt": "2026-10-08T21:28:46.119Z",
   "targetPath": "graview",
   "modules": {
     "inventory": {
       "status": "complete",
-      "startedAt": "2026-10-05T00:01:12.930Z",
-      "completedAt": "2026-10-05T00:01:13.069Z"
+      "startedAt": "2026-10-08T21:26:44.691Z",
+      "completedAt": "2026-10-08T21:26:44.826Z"
     },
     "imports": {
       "status": "complete",
-      "startedAt": "2026-10-05T00:01:13.070Z",
-      "completedAt": "2026-10-05T00:01:14.099Z"
+      "startedAt": "2026-10-08T21:26:44.827Z",
+      "completedAt": "2026-10-08T21:26:46.055Z"
     },
     "classifications": {
       "status": "complete",
-      "startedAt": "2026-10-05T00:01:14.100Z",
-      "completedAt": "2026-10-05T00:02:35.060Z"
+      "startedAt": "2026-10-08T21:26:46.056Z",
+      "completedAt": "2026-10-08T21:28:39.084Z"
     },
     "zones": {
       "status": "complete",
-      "startedAt": "2026-10-05T00:02:35.061Z",
-      "completedAt": "2026-10-05T00:02:36.928Z"
+      "startedAt": "2026-10-08T21:28:39.086Z",
+      "completedAt": "2026-10-08T21:28:41.513Z"
     },
     "components": {
       "status": "complete",
-      "startedAt": "2026-10-05T00:02:36.931Z",
-      "completedAt": "2026-10-05T00:02:37.330Z"
+      "startedAt": "2026-10-08T21:28:41.524Z",
+      "completedAt": "2026-10-08T21:28:42.509Z"
     },
     "callgraph": {
       "status": "complete",
-      "startedAt": "2026-10-05T00:02:37.331Z",
-      "completedAt": "2026-10-05T00:02:39.551Z"
+      "startedAt": "2026-10-08T21:28:42.510Z",
+      "completedAt": "2026-10-08T21:28:46.119Z"
     }
   },
   "language": "typescript",
   "languages": [
     "typescript"
   ],
-  "gitSha": "1a45bf34a3ebb833692bf906889e969c81c24078",
-  "gitBranch": "analysis/sourcevision-scan-2026-10-02",
-  "analysisFingerprint": "1e7f662730821a5d",
+  "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180",
+  "gitBranch": "chore/sourcevision-after-0-1-17",
+  "analysisFingerprint": "facc2de3efe5a16c",
   "zoneOutputs": true,
   "tokenUsage": {
     "calls": 10,
-    "inputTokens": 148883,
-    "outputTokens": 16491,
+    "inputTokens": 78350,
+    "outputTokens": 8338,
     "vendor": "claude",
     "model": "claude-sonnet-5"
   },
   "lastAnalysis": {
-    "at": "2026-10-05T00:01:12.928Z",
+    "at": "2026-10-08T21:26:44.689Z",
     "mode": "cascade",
-    "durationMs": 87570,
+    "durationMs": 122394,
     "phases": {
-      "inventory": 140,
-      "imports": 1029,
-      "classifications": 80960,
-      "zones": 1869,
-      "components": 400,
-      "callgraph": 2340
+      "inventory": 135,
+      "imports": 1228,
+      "classifications": 113029,
+      "zones": 2437,
+      "components": 986,
+      "callgraph": 3762
     },
     "llm": {
       "byTaskClass": {
         "code.classify": {
-          "calls": 3,
-          "inputTokens": 109910,
-          "outputTokens": 12350,
-          "durationMs": 1414,
+          "calls": 2,
+          "inputTokens": 26014,
+          "outputTokens": 2835,
+          "durationMs": 547,
           "vendor": "typesafe",
           "model": "jev-1.13.0"
         },
         "code.classify/claude": {
-          "calls": 3,
+          "calls": 2,
           "inputTokens": 0,
           "outputTokens": 0,
-          "durationMs": 79467,
+          "durationMs": 112390,
           "vendor": "claude",
           "model": "claude-haiku-4-5"
         },
         "zone.judge": {
-          "calls": 5,
-          "inputTokens": 52566,
-          "outputTokens": 5650,
-          "durationMs": 1285,
+          "calls": 6,
+          "inputTokens": 58590,
+          "outputTokens": 6884,
+          "durationMs": 1398,
           "vendor": "typesafe",
           "model": "jev-1.13.0"
         },
         "finding.judge": {
-          "calls": 1,
-          "inputTokens": 6104,
-          "outputTokens": 228,
-          "durationMs": 165,
+          "calls": 2,
+          "inputTokens": 12287,
+          "outputTokens": 460,
+          "durationMs": 535,
           "vendor": "typesafe",
           "model": "jev-1.13.0"
         }
       },
       "judgmentCache": {
-        "hits": 7,
-        "misses": 255
+        "hits": 18,
+        "misses": 228
       }
     },
     "partition": {
-      "fingerprint": "5d36251d404e23dc",
+      "fingerprint": "22434b910ad4463b",
       "health": {
-        "zones": 44,
-        "smallZones": 10,
-        "smallShare": 0.23,
+        "zones": 46,
+        "smallZones": 5,
+        "smallShare": 0.11,
         "numericIds": 0,
-        "largestShare": 0.1,
-        "verdict": "borderline",
-        "reasons": [
-          "10/44 zones hold 2 files or fewer"
-        ]
+        "largestShare": 0.09,
+        "verdict": "healthy"
       },
       "rejected": false,
-      "mapProbability": 0.47,
       "reused": false
     }
   },
   "narration": {
     "status": "done",
     "zones": [
-      "core"
+      "check",
+      "core-graph",
+      "document",
+      "findings"
     ],
     "names": [],
-    "startedAt": "2026-10-05T00:02:40.499Z",
-    "pid": 86430,
-    "log": ".sourcevision/.cache/narration.log",
-    "finishedAt": "2026-10-05T00:03:36.156Z"
+    "startedAt": "2026-10-08T21:28:47.084Z",
+    "pid": 41383,
+    "log": ".ndx/sourcevision/.cache/narration.log",
+    "finishedAt": "2026-10-08T21:31:14.428Z"
+  },
+  "repo": {
+    "name": "graview",
+    "remoteUrl": "git@github.com:en-dash-consulting/graview.git",
+    "remoteHost": "github.com",
+    "remotePath": "en-dash-consulting/graview",
+    "defaultBranch": null
   }
 }

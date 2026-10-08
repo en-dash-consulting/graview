@@ -1,0 +1,172 @@
+{
+  "overall": 65,
+  "dimensions": {
+    "testing": {
+      "score": 90,
+      "weight": 0.2,
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "package.json",
+          "confidence": "certain",
+          "excerpt": "\"test\": \"vitest run\""
+        },
+        {
+          "kind": "dependency",
+          "path": "package.json",
+          "confidence": "certain",
+          "excerpt": "vitest"
+        },
+        {
+          "kind": "file-present",
+          "path": "apps/launcher/tests/integration/acceptance.test.ts",
+          "confidence": "likely"
+        },
+        {
+          "kind": "file-present",
+          "path": "apps/discography/tests/domain.test.ts",
+          "confidence": "likely"
+        }
+      ],
+      "gaps": [
+        {
+          "summary": "Coverage is not measured.",
+          "wouldRaiseScore": "A coverage tool configured in a manifest or a CI step, ideally with a threshold that fails the build."
+        }
+      ]
+    },
+    "ci": {
+      "score": 100,
+      "weight": 0.15,
+      "evidence": [
+        {
+          "kind": "workflow-file",
+          "path": ".github/workflows/ci.yml",
+          "confidence": "certain"
+        },
+        {
+          "kind": "workflow-file",
+          "path": ".github/workflows/nightly.yml",
+          "confidence": "certain"
+        },
+        {
+          "kind": "workflow-file",
+          "path": ".github/workflows/pages.yml",
+          "confidence": "certain"
+        },
+        {
+          "kind": "workflow-file",
+          "path": ".github/workflows/release.yml",
+          "confidence": "certain"
+        }
+      ],
+      "gaps": []
+    },
+    "cd": {
+      "score": 80,
+      "weight": 0.15,
+      "evidence": [
+        {
+          "kind": "workflow-job",
+          "path": ".github/workflows/pages.yml",
+          "confidence": "likely",
+          "excerpt": "deploy"
+        }
+      ],
+      "gaps": [
+        {
+          "summary": "Only one environment is deployed to, so changes reach production unrehearsed.",
+          "wouldRaiseScore": "A second deploy job that names a staging or preview environment ahead of production."
+        }
+      ]
+    },
+    "rollback": {
+      "score": 100,
+      "weight": 0.1,
+      "evidence": [
+        {
+          "kind": "file-present",
+          "path": ".changeset/config.json",
+          "confidence": "likely"
+        }
+      ],
+      "gaps": []
+    },
+    "migrations": {
+      "score": 0,
+      "weight": 0.1,
+      "evidence": [],
+      "gaps": [
+        {
+          "summary": "No data migrations were detected.",
+          "wouldRaiseScore": "A migrations directory for a recognised tool — Prisma, Alembic, Rails, Flyway. A repository with no database legitimately scores zero here."
+        }
+      ]
+    },
+    "featureFlags": {
+      "score": 0,
+      "weight": 0.05,
+      "evidence": [],
+      "gaps": [
+        {
+          "summary": "No feature-flag system was detected.",
+          "wouldRaiseScore": "A dependency on a flag provider — LaunchDarkly, Unleash, Split, Flagsmith — or an in-house toggle module, so a change can ship dark."
+        }
+      ]
+    },
+    "qualityGates": {
+      "score": 0,
+      "weight": 0.1,
+      "evidence": [],
+      "gaps": [
+        {
+          "summary": "No merge-blocking gate was detected.",
+          "wouldRaiseScore": "A CODEOWNERS file, a pre-commit hook config, or branch protection requiring review and status checks. Branch protection is only visible through the host's API, which this analysis does not call."
+        }
+      ]
+    },
+    "observability": {
+      "score": 0,
+      "weight": 0.05,
+      "evidence": [],
+      "gaps": [
+        {
+          "summary": "No instrumentation was detected, so a failed change would be invisible.",
+          "wouldRaiseScore": "A logging, metrics, tracing or error-reporting dependency — OpenTelemetry, Sentry, Prometheus, pino — in a manifest."
+        }
+      ]
+    },
+    "agentSafety": {
+      "score": 95,
+      "weight": 0.1,
+      "evidence": [
+        {
+          "kind": "agent-config",
+          "path": ".ndx/hench/config.json",
+          "confidence": "certain"
+        },
+        {
+          "kind": "agent-config",
+          "path": ".ndx/rex/config.json",
+          "confidence": "certain"
+        },
+        {
+          "kind": "agent-config",
+          "path": ".mcp.json",
+          "confidence": "certain"
+        }
+      ],
+      "gaps": [
+        {
+          "summary": "Does not block credential files (.env, keys); the current defaults do. Blocked anyway until trusted.",
+          "wouldRaiseScore": "Bring the setting in line with the current defaults, or record a review with `n-dx trust accept`."
+        }
+      ]
+    }
+  },
+  "suggestions": [
+    "Migrations: No data migrations were detected. A migrations directory for a recognised tool — Prisma, Alembic, Rails, Flyway. A repository with no database legitimately scores zero here.",
+    "Quality gates: No merge-blocking gate was detected. A CODEOWNERS file, a pre-commit hook config, or branch protection requiring review and status checks. Branch protection is only visible through the host's API, which this analysis does not call.",
+    "Feature flags: No feature-flag system was detected. A dependency on a flag provider — LaunchDarkly, Unleash, Split, Flagsmith — or an in-house toggle module, so a change can ship dark."
+  ]
+}

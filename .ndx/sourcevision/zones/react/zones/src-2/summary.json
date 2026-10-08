@@ -1,21 +1,29 @@
 {
   "id": "react/src-2",
   "name": "Src 2",
-  "description": "4 files, primarily TypeScript",
+  "description": "8 files, primarily TypeScript",
   "files": [
-    "packages/react/src/captions.ts",
-    "packages/react/src/kit.ts",
-    "packages/react/src/scene-lines.tsx",
-    "packages/react/src/where-drawn.tsx"
+    "packages/react/src/animation.ts",
+    "packages/react/src/error-report.ts",
+    "packages/react/src/index.ts",
+    "packages/react/src/popover.ts",
+    "packages/react/src/resolved-view.tsx",
+    "packages/react/src/scene-node.ts",
+    "packages/react/src/scene.tsx",
+    "packages/react/src/view-boundary.tsx"
   ],
   "entryPoints": [
-    "packages/react/src/captions.ts",
-    "packages/react/src/kit.ts",
-    "packages/react/src/scene-lines.tsx",
-    "packages/react/src/where-drawn.tsx"
+    "packages/react/src/animation.ts",
+    "packages/react/src/error-report.ts",
+    "packages/react/src/index.ts",
+    "packages/react/src/popover.ts",
+    "packages/react/src/resolved-view.tsx",
+    "packages/react/src/scene-node.ts",
+    "packages/react/src/scene.tsx",
+    "packages/react/src/view-boundary.tsx"
   ],
-  "cohesion": 0.27,
-  "coupling": 0.73,
-  "fileCount": 4,
-  "lineCount": 1195
+  "cohesion": 0.31,
+  "coupling": 0.69,
+  "fileCount": 8,
+  "lineCount": 1391
 }

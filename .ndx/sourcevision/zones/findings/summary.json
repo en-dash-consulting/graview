@@ -1,0 +1,31 @@
+{
+  "id": "findings",
+  "name": "Findings",
+  "description": "6 files, mostly utilities; entry points compile-checked.ts, instantiate-template.ts, graview-template.ts; imports Core and Core Document; imported by Core and Core Document.",
+  "files": [
+    "packages/core/src/document/act-findings.ts",
+    "packages/core/src/document/brand-check.ts",
+    "packages/core/src/document/compile-checked.ts",
+    "packages/core/src/document/findings.ts",
+    "packages/core/src/document/graview-template.ts",
+    "packages/core/src/document/instantiate-template.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/document/brand-check.ts",
+    "packages/core/src/document/compile-checked.ts",
+    "packages/core/src/document/findings.ts",
+    "packages/core/src/document/graview-template.ts",
+    "packages/core/src/document/instantiate-template.ts"
+  ],
+  "cohesion": 0.29,
+  "coupling": 0.71,
+  "fileCount": 6,
+  "lineCount": 681,
+  "riskMetrics": {
+    "cohesion": 0.29,
+    "coupling": 0.71,
+    "riskScore": 0.71,
+    "riskLevel": "catastrophic",
+    "failsThreshold": true
+  }
+}

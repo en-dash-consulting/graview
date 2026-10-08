@@ -107,8 +107,14 @@ export const FACE_DOORS = {
  * took it to 589 828 bytes (576.0 KB), 186 more; the claim rises by that
  * with about 0.2 KB of room: 576.2 KB, which leaves Cloud's shell 18.8 KB
  * under its 595.
+ * Views beside editing (FR-149–FR-151), long text on a record page
+ * (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed in
+ * one integration over a record drawn once and the security review before
+ * 0.1.18, took it to 597 214 bytes (583.2 KB), 7 386 more; the claim rises
+ * by that with about 0.2 KB of room: 583.4 KB, which leaves Cloud's shell
+ * 11.6 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 576.2 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 583.4 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -199,8 +205,10 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * review before 0.1.18 (a retry imports only a chunk on the bundle's own
  * origin, and a link's pins and dimensions have no prototype) adds 169
  * bytes: 532.6 KB.
+ * The same integration (FR-144–FR-151) took it to 551 584 bytes
+ * (538.7 KB); the claim rises by that with about 0.1 KB of room: 538.8 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 532.6 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 538.8 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

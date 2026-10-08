@@ -5,32 +5,47 @@
 <zone>
 
 Zone: Tests Embed Unit (`tests-embed-unit`)
-Files: 17, Cohesion: 1.00, Coupling: 0.00
+Files: 32, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in packages: a-face-is-fetched-as-it-is-drawn.test.tsx, a-host-refuses-in-its-own-words.test.tsx, a-host-says-who-is-offered-the-studio.test.tsx (+14 more)
-Lines: 1662
+Description: Non-source files in packages: a-coverage-cell-selects-what-it-joins.test.tsx, a-declared-lens-is-a-place-on-the-graview-face.test.tsx, a-face-is-fetched-as-it-is-drawn.test.tsx (+29 more)
+Lines: 3365
 
 </zone>
 
 <files>
 
+packages/embed/tests/unit/a-coverage-cell-selects-what-it-joins.test.tsx (TypeScript, 76 lines, test)
+packages/embed/tests/unit/a-declared-lens-is-a-place-on-the-graview-face.test.tsx (TypeScript, 62 lines, test)
 packages/embed/tests/unit/a-face-is-fetched-as-it-is-drawn.test.tsx (TypeScript, 90 lines, test)
+packages/embed/tests/unit/a-home-view-is-where-a-desk-opens.test.tsx (TypeScript, 161 lines, test)
+packages/embed/tests/unit/a-host-can-ask-for-the-switch-as-its-marks.test.tsx (TypeScript, 48 lines, test)
 packages/embed/tests/unit/a-host-refuses-in-its-own-words.test.tsx (TypeScript, 144 lines, test)
 packages/embed/tests/unit/a-host-says-who-is-offered-the-studio.test.tsx (TypeScript, 84 lines, test)
+packages/embed/tests/unit/a-host-speaks-in-the-apps-notices.test.tsx (TypeScript, 113 lines, test)
+packages/embed/tests/unit/a-host-that-owns-the-page-gives-the-pages-the-address-bar.test.tsx (TypeScript, 254 lines, test)
 packages/embed/tests/unit/a-host-that-refuses-is-heard.test.tsx (TypeScript, 120 lines, test)
+packages/embed/tests/unit/a-hosts-own-actions-are-in-the-profile.test.tsx (TypeScript, 73 lines, test)
+packages/embed/tests/unit/a-new-app-keeps-the-readers-place.test.tsx (TypeScript, 239 lines, test)
+packages/embed/tests/unit/a-place-handed-back-is-settled-as-the-seat-sees.test.tsx (TypeScript, 90 lines, test)
+packages/embed/tests/unit/a-renamed-app-says-its-new-name.test.tsx (TypeScript, 132 lines, test)
+packages/embed/tests/unit/a-search-hit-is-the-record-link-the-pages-draw.test.tsx (TypeScript, 115 lines, test)
 packages/embed/tests/unit/a-seat-change-keeps-the-store.test.tsx (TypeScript, 46 lines, test)
+packages/embed/tests/unit/a-status-board-draws-on-the-graview-face.test.tsx (TypeScript, 69 lines, test)
 packages/embed/tests/unit/a-studio-in-a-hosts-page-draws-no-main.test.tsx (TypeScript, 95 lines, test)
-packages/embed/tests/unit/an-embed-holds-inside-a-chat-widget.test.tsx (TypeScript, 218 lines, test)
+packages/embed/tests/unit/an-embed-holds-inside-a-chat-widget.test.tsx (TypeScript, 258 lines, test)
 packages/embed/tests/unit/an-embed-knows-what-its-host-can-keep.test.tsx (TypeScript, 120 lines, test)
 packages/embed/tests/unit/an-embed-reports-what-went-wrong.test.tsx (TypeScript, 120 lines, test)
 packages/embed/tests/unit/embed.test.ts (TypeScript, 35 lines, test)
 packages/embed/tests/unit/one-name-said-once.test.tsx (TypeScript, 63 lines, test)
-packages/embed/tests/unit/people-are-named-without-a-seat.test.tsx (TypeScript, 97 lines, test)
+packages/embed/tests/unit/people-are-named-without-a-seat.test.tsx (TypeScript, 100 lines, test)
+packages/embed/tests/unit/the-place-list-is-ready-when-it-opens.test.tsx (TypeScript, 63 lines, test)
+packages/embed/tests/unit/the-scenes-rules-come-with-the-scene.test.tsx (TypeScript, 58 lines, test)
 packages/embed/tests/unit/the-seat-is-a-region-not-a-landmark-inside-one.test.tsx (TypeScript, 138 lines, test)
 packages/embed/tests/unit/the-studio-handed-in-is-drawn-at-once.test.tsx (TypeScript, 54 lines, test)
 packages/embed/tests/unit/the-studio-is-fetched-only-when-it-is-on.test.tsx (TypeScript, 56 lines, test)
-packages/embed/tests/unit/the-workbench-names-itself.test.tsx (TypeScript, 57 lines, test)
-packages/embed/tests/unit/views-reach-every-face.test.tsx (TypeScript, 125 lines, test)
+packages/embed/tests/unit/the-workbench-names-itself.test.tsx (TypeScript, 63 lines, test)
+packages/embed/tests/unit/two-embeds-name-their-search-apart.test.tsx (TypeScript, 94 lines, test)
+packages/embed/tests/unit/views-reach-every-face.test.tsx (TypeScript, 132 lines, test)
 
 </files>
 
@@ -38,7 +53,7 @@ packages/embed/tests/unit/views-reach-every-face.test.tsx (TypeScript, 125 lines
 
 
 Outgoing (this zone → other zones):
-  → embed: packages/embed/tests/unit/a-face-is-fetched-as-it-is-drawn.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-face-is-fetched-as-it-is-drawn.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-refuses-in-its-own-words.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-refuses-in-its-own-words.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-says-who-is-offered-the-studio.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-says-who-is-offered-the-studio.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-that-refuses-is-heard.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-that-refuses-is-heard.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-seat-change-keeps-the-store.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-studio-in-a-hosts-page-draws-no-main.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-studio-in-a-hosts-page-draws-no-main.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-holds-inside-a-chat-widget.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-holds-inside-a-chat-widget.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-knows-what-its-host-can-keep.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-knows-what-its-host-can-keep.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-reports-what-went-wrong.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-reports-what-went-wrong.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/embed.test.ts → packages/embed/src/index.ts; packages/embed/tests/unit/one-name-said-once.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/people-are-named-without-a-seat.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/people-are-named-without-a-seat.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-seat-is-a-region-not-a-landmark-inside-one.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-seat-is-a-region-not-a-landmark-inside-one.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-studio-handed-in-is-drawn-at-once.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-studio-is-fetched-only-when-it-is-on.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-workbench-names-itself.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-workbench-names-itself.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/views-reach-every-face.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/views-reach-every-face.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/views-reach-every-face.test.tsx → packages/embed/src/pages.tsx
+  → embed: packages/embed/tests/unit/a-coverage-cell-selects-what-it-joins.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-declared-lens-is-a-place-on-the-graview-face.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-face-is-fetched-as-it-is-drawn.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-face-is-fetched-as-it-is-drawn.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-home-view-is-where-a-desk-opens.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-home-view-is-where-a-desk-opens.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-can-ask-for-the-switch-as-its-marks.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-refuses-in-its-own-words.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-refuses-in-its-own-words.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-says-who-is-offered-the-studio.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-says-who-is-offered-the-studio.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-speaks-in-the-apps-notices.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-speaks-in-the-apps-notices.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-speaks-in-the-apps-notices.test.tsx → packages/embed/src/pages.tsx; packages/embed/tests/unit/a-host-that-owns-the-page-gives-the-pages-the-address-bar.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-that-owns-the-page-gives-the-pages-the-address-bar.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-that-owns-the-page-gives-the-pages-the-address-bar.test.tsx → packages/embed/src/pages.tsx; packages/embed/tests/unit/a-host-that-owns-the-page-gives-the-pages-the-address-bar.test.tsx → packages/embed/src/pages.tsx; packages/embed/tests/unit/a-host-that-refuses-is-heard.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-host-that-refuses-is-heard.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-hosts-own-actions-are-in-the-profile.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-hosts-own-actions-are-in-the-profile.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-hosts-own-actions-are-in-the-profile.test.tsx → packages/embed/src/pages.tsx; packages/embed/tests/unit/a-new-app-keeps-the-readers-place.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-new-app-keeps-the-readers-place.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-place-handed-back-is-settled-as-the-seat-sees.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-place-handed-back-is-settled-as-the-seat-sees.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-renamed-app-says-its-new-name.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-renamed-app-says-its-new-name.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-renamed-app-says-its-new-name.test.tsx → packages/embed/src/pages.tsx; packages/embed/tests/unit/a-renamed-app-says-its-new-name.test.tsx → packages/embed/src/pages.tsx; packages/embed/tests/unit/a-search-hit-is-the-record-link-the-pages-draw.test.tsx → packages/embed/src/pages.tsx; packages/embed/tests/unit/a-search-hit-is-the-record-link-the-pages-draw.test.tsx → packages/embed/src/pages.tsx; packages/embed/tests/unit/a-seat-change-keeps-the-store.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-status-board-draws-on-the-graview-face.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-studio-in-a-hosts-page-draws-no-main.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/a-studio-in-a-hosts-page-draws-no-main.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-holds-inside-a-chat-widget.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-holds-inside-a-chat-widget.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-knows-what-its-host-can-keep.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-knows-what-its-host-can-keep.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-reports-what-went-wrong.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/an-embed-reports-what-went-wrong.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/embed.test.ts → packages/embed/src/index.ts; packages/embed/tests/unit/one-name-said-once.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/people-are-named-without-a-seat.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/people-are-named-without-a-seat.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-place-list-is-ready-when-it-opens.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-scenes-rules-come-with-the-scene.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-scenes-rules-come-with-the-scene.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-seat-is-a-region-not-a-landmark-inside-one.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-seat-is-a-region-not-a-landmark-inside-one.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-studio-handed-in-is-drawn-at-once.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-studio-is-fetched-only-when-it-is-on.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-workbench-names-itself.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/the-workbench-names-itself.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/two-embeds-name-their-search-apart.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/two-embeds-name-their-search-apart.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/views-reach-every-face.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/views-reach-every-face.test.tsx → packages/embed/src/index.ts; packages/embed/tests/unit/views-reach-every-face.test.tsx → packages/embed/src/pages.tsx
 
 </imports>
 
@@ -51,6 +66,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 94 internal calls, 28 outgoing, 0 incoming (cohesion: 0.77, coupling: 0.23)
+- [call graph] 362 internal calls, 68 outgoing, 0 incoming (cohesion: 0.84, coupling: 0.16)
 
 </insights>

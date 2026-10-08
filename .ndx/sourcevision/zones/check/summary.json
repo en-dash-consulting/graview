@@ -1,0 +1,32 @@
+{
+  "id": "check",
+  "name": "Core Cli",
+  "description": "6 files, mostly utilities; entry points context.ts, intelligence.ts, lenses.ts; imports Core Invariants and Core; imported by Core Cli and Core.",
+  "files": [
+    "packages/core/src/cli/check/context.ts",
+    "packages/core/src/cli/check/intelligence.ts",
+    "packages/core/src/cli/check/lenses.ts",
+    "packages/core/src/cli/check/modules.ts",
+    "packages/core/src/cli/check/settings.ts",
+    "packages/core/src/schema/path.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/cli/check/context.ts",
+    "packages/core/src/cli/check/intelligence.ts",
+    "packages/core/src/cli/check/lenses.ts",
+    "packages/core/src/cli/check/modules.ts",
+    "packages/core/src/cli/check/settings.ts",
+    "packages/core/src/schema/path.ts"
+  ],
+  "cohesion": 0.24,
+  "coupling": 0.76,
+  "fileCount": 6,
+  "lineCount": 816,
+  "riskMetrics": {
+    "cohesion": 0.24,
+    "coupling": 0.76,
+    "riskScore": 0.76,
+    "riskLevel": "catastrophic",
+    "failsThreshold": true
+  }
+}

@@ -67,7 +67,11 @@ export const GUEST_SANDBOX = "allow-scripts";
 /** The origin a sandboxed frame without `allow-same-origin` posts from. */
 export const OPAQUE_ORIGIN = "null";
 
-/** A record as a guest receives it: plain data, only ever one the viewer may see. */
+/**
+ * A record as a guest receives it: plain data, only ever one the viewer may
+ * see. Its `id`, `kind` and `label`, and each of its declared fields on it
+ * by name — a deliverable's draft is `node.draft` — with no `fields` key.
+ */
 export interface GuestNode {
   readonly id: string;
   readonly kind: string;
@@ -133,7 +137,7 @@ export interface GuestProps {
   readonly view: string;
   /** The record, for a `one` view. Absent when the viewer may not see it. */
   readonly node?: GuestNode;
-  /** The members, for a `many` view. */
+  /** The members, for a `many` view, and the records a view reads beyond its own. A `one` view's own record is `node`, never one of these. */
   readonly nodes?: readonly GuestNode[];
   /** The links among the records above. */
   readonly edges: readonly GuestEdge[];

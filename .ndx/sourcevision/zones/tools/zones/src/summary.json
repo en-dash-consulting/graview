@@ -1,29 +1,23 @@
 {
   "id": "tools/src",
   "name": "Src",
-  "description": "8 files, primarily TypeScript",
+  "description": "5 files, primarily TypeScript",
   "files": [
     "packages/tools/src/conversation.ts",
-    "packages/tools/src/decide.ts",
     "packages/tools/src/intelligence.ts",
-    "packages/tools/src/loop.ts",
     "packages/tools/src/plan.ts",
-    "packages/tools/src/providers/jev.ts",
     "packages/tools/src/questions.ts",
     "packages/tools/src/run.ts"
   ],
   "entryPoints": [
     "packages/tools/src/conversation.ts",
-    "packages/tools/src/decide.ts",
     "packages/tools/src/intelligence.ts",
-    "packages/tools/src/loop.ts",
     "packages/tools/src/plan.ts",
-    "packages/tools/src/providers/jev.ts",
     "packages/tools/src/questions.ts",
     "packages/tools/src/run.ts"
   ],
-  "cohesion": 0.65,
-  "coupling": 0.35,
-  "fileCount": 8,
-  "lineCount": 3495
+  "cohesion": 0.39,
+  "coupling": 0.61,
+  "fileCount": 5,
+  "lineCount": 2877
 }

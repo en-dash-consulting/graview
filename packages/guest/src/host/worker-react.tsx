@@ -1,6 +1,6 @@
 import type { AnySchema, KindOfSchema, Principal, Store } from "@graview/core";
-import { useGoTo, useGraviewIfAny, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
-import { useEffect, useRef, useState, type ComponentType } from "react";
+import { DefaultDrawnElsewhere, isDefaultView, markReplacesPage, useGoTo, useGraviewIfAny, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { useContext, useEffect, useRef, useState, type ComponentType } from "react";
 import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
 import type { GuestViewInput } from "./session.js";
@@ -99,18 +99,28 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
  * worker, a manifest that names what the app does not declare, a view past
  * its limits — `fallback` is drawn in its place.
  */
-export function workerView(definition: WorkerViewDefinition, options: { readonly fallback?: ViewComponent<AnySchema> } = {}): ViewComponent<AnySchema> {
+export function workerView(definition: WorkerViewDefinition, options: { readonly fallback?: ViewComponent<AnySchema>; readonly beside?: ViewComponent<AnySchema> } = {}): ViewComponent<AnySchema> {
   const Fallback = options.fallback;
+  /* A view that replaces the record's page took the page's facts with it: where it fails, the record's own face is all that is left to say them. */
+  const replaces = definition.manifest.replaces === "page";
   function WorkerViewOfKind(props: ViewProps<AnySchema>) {
     const graview = useGraviewIfAny<AnySchema>();
     const goTo = useGoTo();
+    const elsewhere = useContext(DefaultDrawnElsewhere);
     const [failed, setFailed] = useState<WorkerViewFailure | null>(null);
     const latest = useRef(props);
     latest.current = props;
     if (!graview) return null;
-    /* Past its limits, the kind's own face — what the registry drew there before — in its place (FR-94). */
-    if (failed && Fallback) return <Fallback {...props} />;
-    return (
+    /* Past its limits, the kind's own face — what the registry drew there before — in its place (FR-94); nothing, where the surface is that face already. */
+    if (failed && Fallback) return elsewhere && isDefaultView(Fallback) && !replaces ? null : <Fallback {...props} />;
+    /*
+     * BESIDE THE RECORD'S OWN FIELDS (FR-149): what was drawn for the record
+     * before, under the view — its fields, editable where an act writes
+     * them. Not where the surface is that record already (the pages face's
+     * record page draws its facts and acts itself).
+     */
+    const Beside = options.beside && !(elsewhere && isDefaultView(options.beside)) ? options.beside : undefined;
+    const mount = (
       <WorkerViewMount
         definition={definition}
         store={graview.store}
@@ -128,6 +138,13 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
         }}
       />
     );
+    if (!Beside) return mount;
+    return (
+      <div data-worker-view-beside={definition.manifest.name} style={{ display: "grid", gap: 12, minWidth: 0 }}>
+        {mount}
+        <Beside {...props} />
+      </div>
+    );
   }
   WorkerViewOfKind.displayName = `WorkerView(${definition.manifest.name})`;
   return WorkerViewOfKind;
@@ -138,7 +155,9 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
  * the cell its cardinality says, at full fidelity, and — given a title — as
  * a named place, on the Graview face and the pages face alike. Whatever the
  * registry drew there before (the framework's own face of the kind) is what
- * is drawn if the view fails.
+ * is drawn if the view fails — and, for a view of one record, what is drawn
+ * under it (FR-149): the record's own fields, editable, unless the manifest
+ * says `replaces: "page"`.
  */
 export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry<S>, definition: WorkerViewDefinition): ReactViewRegistry<S> {
   const { manifest } = definition;
@@ -155,7 +174,14 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
   }
   const cell = { cardinality: manifest.cardinality, fidelity: "full" } as const;
   const before = (views.lookup(manifest.attach, cell) ?? views.resolve(manifest.attach, cell)?.view) as ViewComponent<AnySchema> | undefined;
-  views.register(manifest.attach as KindOfSchema<S>, cell, workerView(definition, before ? { fallback: before } : {}) as unknown as ViewComponent<S>, manifest.title ? { title: manifest.title } : undefined);
+  /*
+   * A VIEW OF ONE RECORD SITS ABOVE THE RECORD'S OWN FIELDS (FR-149), which
+   * stay editable, unless its manifest says it replaces the page: then it is
+   * drawn alone, on the scene and as the whole of the record's page.
+   */
+  const one = manifest.cardinality === "one";
+  const view = workerView(definition, { ...(before ? { fallback: before } : {}), ...(one && manifest.replaces !== "page" && before ? { beside: before } : {}) });
+  views.register(manifest.attach as KindOfSchema<S>, cell, (one && manifest.replaces === "page" ? markReplacesPage(view) : view) as unknown as ViewComponent<S>, manifest.title ? { title: manifest.title } : undefined);
   return views;
 }
 
