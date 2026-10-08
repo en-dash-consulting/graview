@@ -240,7 +240,7 @@ function Starter({ onCall }: { onCall: (call: ToolCall) => void }) {
 
 export function pagesTsx(ids: Ids): string {
   return `import { isCurrent, nounOf, withArticle } from "@graview/core";
-import { Begin } from "@graview/primitives";
+import { Begin, TextBody } from "@graview/primitives";
 import {
   createPageRegistry,
   DefaultHomePage,
@@ -354,12 +354,22 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
         */}
       {facts.fields.length > 0 ? (
         <dl style={{ ...pageStyles.rule, margin: 0, display: "grid", gridTemplateColumns: "minmax(0, max-content) minmax(0, 1fr)", gap: "6px 18px" }} data-testid="record-fields">
-          {facts.fields.map((field) => (
-            <div key={field.key} style={{ display: "contents" }}>
-              <dt style={pageStyles.quiet}>{field.label}</dt>
-              <dd style={{ margin: 0, overflowWrap: "anywhere" }}>{field.value}</dd>
-            </div>
-          ))}
+          {facts.fields.map((field) =>
+            /* Prose — a draft, a note — spans the page under its label, its paragraphs and lists kept. */
+            field.long ? (
+              <div key={field.key} style={{ gridColumn: "1 / -1", display: "grid", gap: 4, marginTop: 6 }}>
+                <dt style={pageStyles.quiet}>{field.label}</dt>
+                <dd style={{ margin: 0 }}>
+                  <TextBody text={field.value} />
+                </dd>
+              </div>
+            ) : (
+              <div key={field.key} style={{ display: "contents" }}>
+                <dt style={pageStyles.quiet}>{field.label}</dt>
+                <dd style={{ margin: 0, overflowWrap: "anywhere" }}>{field.value}</dd>
+              </div>
+            ),
+          )}
         </dl>
       ) : null}
       {ties.length > 0 ? (

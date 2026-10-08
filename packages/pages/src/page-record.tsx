@@ -1,5 +1,5 @@
-import { describeNode, humanizeField, isWithheld, type AnySchema } from "@graview/core";
-import { DefaultViewElsewhere } from "@graview/primitives/pages";
+import { describeNode, humanizeField, isWithheld, pageSections, type AnySchema } from "@graview/core";
+import { DefaultViewElsewhere, EditableValue, LongValue } from "@graview/primitives/pages";
 import { isDefaultView, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -153,21 +153,57 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
       {facts.fields.length > 0 ? (
         <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="record-fields">
           <h2 style={h2}>The facts</h2>
-          <dl
-            style={{
-              margin: 0,
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-              gap: "14px 24px",
-            }}
-          >
-            {facts.fields.map((field) => (
-              <div key={field.key} style={{ display: "grid", gap: 2, minWidth: 0 }}>
-                <dt style={{ ...eyebrow, fontSize: "0.75rem" }}>{field.label}</dt>
-                <dd style={{ margin: 0, fontSize: "1.125rem", overflowWrap: "anywhere" }}>{field.value}</dd>
-              </div>
-            ))}
-          </dl>
+          {/*
+            * IN THE SECTIONS THE KIND'S PAGE DECLARES (FR-148) — its first
+            * fields, each group under its title, the rest under "Details" —
+            * or, unsaid, in declared order. Each value is changed where it
+            * stands, as the scene's record changes it; prose spans the page
+            * under its label, its paragraphs kept (FR-146, FR-147).
+            */}
+          {pageSections(definition, facts.fields).map((section, index) => {
+            const list = (
+              <dl
+                style={{
+                  margin: 0,
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                  gap: "14px 24px",
+                }}
+              >
+                {section.fields.map((field) =>
+                  field.long ? (
+                    <LongValue<S>
+                      key={field.key}
+                      nodeId={id}
+                      field={field.key}
+                      label={field.label}
+                      value={field.value}
+                      style={{ gridColumn: "1 / -1", gap: 4 }}
+                      labelStyle={{ ...eyebrow, fontSize: "0.75rem" }}
+                      valueStyle={{ fontSize: "1.0625rem", lineHeight: 1.6 }}
+                    />
+                  ) : (
+                    <div key={field.key} style={{ display: "grid", gap: 2, minWidth: 0, alignContent: "start" }}>
+                      <dt style={{ ...eyebrow, fontSize: "0.75rem" }}>{field.label}</dt>
+                      <dd style={{ margin: 0, fontSize: "1.125rem", overflowWrap: "anywhere", minWidth: 0 }}>
+                        <EditableValue<S> nodeId={id} field={field.key} value={field.value} />
+                      </dd>
+                    </div>
+                  ),
+                )}
+              </dl>
+            );
+            return section.title ? (
+              <section key={index} style={{ display: "grid", gap: 10, minWidth: 0 }}>
+                <h3 data-graview-field-group={section.title} style={{ ...h2, fontSize: "1.0625rem" }}>
+                  {section.title}
+                </h3>
+                {list}
+              </section>
+            ) : (
+              <div key={index}>{list}</div>
+            );
+          })}
         </section>
       ) : null}
 

@@ -3,7 +3,7 @@ import { relationWords } from "../relation-key.js";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { useGraview } from "@graview/react/provider";
 import type { Affordance, OpenParameter } from "@graview/tools";
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 
 /**
@@ -322,6 +322,41 @@ export function AnswerArgs({
             answer(shape.type === "number" ? Number(draft) : draft);
           }}
         >
+          {shape.type === "text" && shape.long ? (
+            /* Prose is asked for in a text area (FR-147): Enter is a new line, Ctrl or ⌘ with Enter answers. */
+            <textarea
+              autoFocus
+              name={parameter.name}
+              aria-label={words.label}
+              placeholder={words.label}
+              value={draft}
+              rows={4}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") onCancel();
+                else if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+                  event.preventDefault();
+                  event.currentTarget.form?.requestSubmit();
+                }
+              }}
+              style={{
+                flex: "1 1 100%",
+                minWidth: 0,
+                font: "inherit",
+                fontSize: "0.875rem",
+                lineHeight: 1.45,
+                padding: "5px 8px",
+                borderRadius: 7,
+                border: "1px solid var(--graview-edge)",
+                background: "var(--graview-panel)",
+                color: "var(--graview-ink)",
+                resize: "vertical",
+                fieldSizing: "content",
+                minHeight: "5.5em",
+                maxHeight: "40vh",
+              } as CSSProperties}
+            />
+          ) : (
           <input
             autoFocus
             type={shape.type === "date" ? (shape.time ? "datetime-local" : "date") : shape.type === "number" ? "number" : "text"}
@@ -354,6 +389,7 @@ export function AnswerArgs({
               color: "var(--graview-ink)",
             }}
           />
+          )}
           <button type="submit" disabled={!listed && draft.trim().length === 0} style={{ fontSize: "0.8125rem" }}>
             {remaining.length > 1 ? "Next" : "Apply"}
           </button>

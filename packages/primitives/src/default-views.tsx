@@ -5,6 +5,7 @@ import {
   labelOf,
   nounOf,
   readableFields,
+  type AnyNodeDefinition,
   type AnySchema,
   type KindOfSchema,
   type NodeOfSchema,
@@ -136,6 +137,11 @@ function MemberRows<S extends AnySchema>({
   );
 }
 
+/** Whether a record is read down the page: a value in it is prose, or its page groups its facts (FR-147, FR-148). */
+function readsDown(definition: AnyNodeDefinition | undefined, node: Record<string, unknown>): boolean {
+  return Boolean(definition?.display?.page?.groups?.length) || readableFields(node, definition).some((field) => field.long);
+}
+
 export function registerDefaultViews<S extends AnySchema>(
   schema: S,
   registry: ReactViewRegistry<S> = createViews(schema),
@@ -219,7 +225,12 @@ export function registerDefaultViews<S extends AnySchema>(
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "minmax(200px, 1fr) minmax(220px, 1.4fr)",
+              /*
+               * A record with prose in it is read down the page (FR-147): its
+               * facts the panel's width, its relationships under them. A
+               * draft in the left column was a third of the panel wide.
+               */
+              gridTemplateColumns: readsDown(definition, node) ? "minmax(0, 1fr)" : "minmax(200px, 1fr) minmax(220px, 1.4fr)",
               gap: "22px 34px",
               alignItems: "start",
             }}

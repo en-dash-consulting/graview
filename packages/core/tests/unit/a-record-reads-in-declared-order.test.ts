@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createSchema, defineApp, defineNode, isLongText, pageSections, readableFields } from "../../src/index.js";
+import { createSchema, defineApp, defineNode, fragmentOf, isLongText, pageSections, readableFields } from "../../src/index.js";
 import { checkApp } from "../../src/check.js";
 
 /**
@@ -42,6 +42,14 @@ describe("a record's facts", () => {
     expect(isLongText(deliverable as never, "summary", "One line\nand another")).toBe(true);
     expect(isLongText(deliverable as never, "summary", "x".repeat(161))).toBe(true);
     expect(isLongText(deliverable as never, "summary", "x".repeat(160))).toBe(false);
+  });
+
+  it("a hit in Find quotes prose as one line, its line breaks read as spaces", () => {
+    const draft = "Hi Todd,\n\nThank you for two good days.\n\n1. Price the pilot by the acre.\n2. Start with three townships that share a drainage district.";
+    const fragment = fragmentOf(draft, ["townships"]);
+    expect(fragment).not.toMatch(/\n/);
+    expect(fragment).toMatch(/three townships/);
+    expect(fragmentOf("One\ntwo", ["two"])).toBe("One two");
   });
 
   it("follow display.page, and the checker names a field it does not declare", () => {

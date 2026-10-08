@@ -41,6 +41,8 @@ export interface ScalarField {
   readonly optional: boolean;
   /** A date with a time of day in it (`YYYY-MM-DDTHH:MM`): asked for with a date AND a time. */
   readonly time?: true;
+  /** Prose (FR-147): asked for in a text area that keeps its line breaks. */
+  readonly long?: true;
   readonly options?: readonly string[];
   readonly min?: number;
   readonly max?: number;
@@ -134,7 +136,7 @@ export function formField(name: string, schema: unknown): FormField {
   }
 
   const scalar = describeArg(schema);
-  if (scalar.type === "text") return { control: "text", name, optional };
+  if (scalar.type === "text") return { control: "text", name, optional, ...(scalar.long ? { long: true as const } : {}) };
   if (scalar.type === "date") return { control: "date", name, optional, ...(scalar.time ? { time: true as const } : {}) };
   if (scalar.type === "number") {
     return {
