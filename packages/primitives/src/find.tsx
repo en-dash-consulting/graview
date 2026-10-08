@@ -169,7 +169,10 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
    */
   const underTheBar = useCallback(() => {
     const bar = input.current?.closest("[data-graview-app-bar]")?.getBoundingClientRect();
-    return bar ? { x: bar.right, y: bar.bottom - SHEET_GAP } : null;
+    if (bar) return { x: bar.right, y: bar.bottom - SHEET_GAP };
+    // A box with no bar above it (the Shell's): the sheet hangs under the box, as it always did.
+    const box = input.current?.getBoundingClientRect();
+    return box ? { x: box.right, y: box.bottom } : null;
   }, []);
   const popover = usePopover("find", {
     open: expanded,
