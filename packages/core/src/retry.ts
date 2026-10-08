@@ -73,9 +73,29 @@ function importAgain<M>(url: string): Promise<M> {
   return import(/* @vite-ignore */ /* webpackIgnore: true */ again) as Promise<M>;
 }
 
-/** The URL a failed `import()` names in its message, where the engine names one. */
-export function failedUrl(error: unknown): string | undefined {
+/**
+ * The URL a failed `import()` names in its message, where the engine names
+ * one — and only a URL the retry may import again.
+ *
+ * The words are read from an error, and an import that fetched its module
+ * but whose module threw while it ran rejects with that module's own words,
+ * which may carry any URL a message was built from. So only an engine's own
+ * sentence for a fetch that failed counts, from its first word, and only a
+ * URL on the origin the bundle's own modules came from (`own`, this
+ * module's URL by default): a chunk the bundle asked for, never a script
+ * somewhere else.
+ */
+export function failedUrl(error: unknown, own: string = import.meta.url): string | undefined {
   const message = error instanceof Error ? error.message : typeof error === "string" ? error : "";
-  const found = /\b(?:https?|file):\/\/[^\s"'<>]+/.exec(message)?.[0];
-  return found?.replace(/[.,;:)\]]+$/, "");
+  const found = /^(?:Failed to fetch dynamically imported module|error loading dynamically imported module): ((?:https?|file):\/\/[^\s"'<>]+)/.exec(message)?.[1];
+  if (found === undefined) return undefined;
+  const url = found.replace(/[.,;:)\]]+$/, "");
+  try {
+    const named = new URL(url);
+    const home = new URL(own);
+    if (named.protocol !== home.protocol || named.host !== home.host) return undefined;
+    return named.href;
+  } catch {
+    return undefined;
+  }
 }
