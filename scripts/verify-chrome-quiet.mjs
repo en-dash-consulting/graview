@@ -1392,6 +1392,16 @@ async function everyPlaceInTwoPresses(page, shot, scene = false) {
   };
   await openList();
   if (shot) await page.screenshot({ path: shot });
+  /* The list as tall as what it holds (or its most, scrolling): no room left between its groups or under them (WebKit stretched it to its most). */
+  const snug = await page.evaluate(() => {
+    const pane = document.querySelector('[data-testid="app-places"]');
+    if (!pane || pane.hasAttribute("hidden")) return null;
+    const box = pane.getBoundingClientRect();
+    const groups = [...pane.querySelectorAll("[data-place-group]")].map((group) => group.getBoundingClientRect());
+    const gaps = groups.slice(1).map((group, at) => group.top - groups[at].bottom);
+    const under = pane.scrollHeight > pane.clientHeight + 1 ? 0 : box.bottom - (groups.at(-1)?.bottom ?? box.bottom);
+    return gaps.every((gap) => gap <= 16) && under <= 16;
+  });
   const entries = await page.evaluate(() => [...document.querySelectorAll("[data-graview-embed] [data-place-path]")].map((one) => ({ id: one.getAttribute("data-testid"), label: one.textContent.trim(), path: one.getAttribute("data-place-path") })));
   const order = ["home", "lists", "pictures"];
   const groupOf = (id) => (/^app-place-(home|scene:whole)$/.test(id) ? "home" : id.startsWith("app-place-kind:") ? "lists" : "pictures");
@@ -1462,13 +1472,14 @@ async function everyPlaceInTwoPresses(page, shot, scene = false) {
     .then(() => true, () => false);
   await page.waitForTimeout(300);
   keyboard.onBody = (await active()) === "<body>";
-  return { listed: entries.length, groups, reached, missed, keyboard, ...(scene ? { inView } : {}) };
+  return { listed: entries.length, groups, snug, reached, missed, keyboard, ...(scene ? { inView } : {}) };
 }
 
 /** Every place reached by pointer and keyboard, two presses at most, and the keyboard never left on the body (FR-138, FR-145). */
 function twoPressesHeld(one) {
   return (
     one.listed === one.places &&
+    one.snug !== false &&
     one.groups.join() === (one.face === "graview" ? "home,pictures" : "home,lists,pictures") &&
     one.reached.length === one.places &&
     one.missed.length === 0 &&

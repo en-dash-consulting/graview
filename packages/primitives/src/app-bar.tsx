@@ -233,7 +233,7 @@ const BAR_CSS = `
 .graview-bar-at[aria-current]{font-weight:600;border-bottom-color:var(--graview-accent)}
 .graview-bar-ruler{position:absolute;left:0;top:0;display:flex;width:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none}
 .graview-bar-ruler .graview-bar-at{font-weight:600}
-.graview-bar-list{display:grid;width:min(320px,calc(100vw - 24px));max-height:min(70vh,560px);overflow:auto;margin:0;padding:6px;border-radius:10px;border:1px solid var(--graview-edge);background:var(--graview-float);box-shadow:var(--graview-lift-high);color:var(--graview-ink)}
+.graview-bar-list{display:grid;align-content:start;width:min(320px,calc(100vw - 24px));height:auto;max-height:min(70vh,560px);overflow:auto;margin:0;padding:6px;border-radius:10px;border:1px solid var(--graview-edge);background:var(--graview-float);box-shadow:var(--graview-lift-high);color:var(--graview-ink)}
 .graview-bar-list[hidden]{display:none}
 .graview-bar-list p{margin:8px 8px 2px;font-size:.6875rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--graview-ink-muted)}
 .graview-bar-list ul,.graview-bar-list li{display:grid;margin:0;padding:0;list-style:none}
