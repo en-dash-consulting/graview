@@ -21,6 +21,8 @@ export type { DeclaredKinds, DocumentEdit, EditOptions, EditOutcome, EditOp, Fil
 export type { MigrationPlan, StoredGraph, MigrationFill } from "./migrate.js";
 export { upgradeDocument, UPGRADES } from "./upgrade.js";
 export type { Upgrade, Upgraded } from "./upgrade.js";
+export { RESPELLED, respellDocument } from "./respell.js";
+export type { Respelled, Respelling } from "./respell.js";
 export { expressionRule, shapesOfSchema } from "./rules.js";
 export { computedOf, validateComputed } from "./computed.js";
 export type { ComputedEntry, ComputedKind } from "./computed.js";

@@ -84,6 +84,11 @@ const ALLOWED_IN: Readonly<Record<string, readonly RegExp[]>> = {
   // Google Calendar's own status for a deleted event.
   "packages/core/src/sync/google-calendar.ts": [/"cancelled"/g],
   "packages/core/tests/integration/sync.test.ts": [/"cancelled"/g],
+  // The key older builds wrote in a document, read as its new name (FR-134).
+  "packages/core/src/document/respell.ts": [/honoured/g],
+  "packages/core/src/conformance/fixtures.ts": [/"honoured"/g],
+  "packages/core/tests/document/an-older-document-keeps-compiling.test.ts": [/honoured/g],
+  "packages/core/tests/document/no-document-key-is-taken-away.test.ts": [/honoured/g],
 };
 
 /** Every British form on one line, after what is allowed has been taken out. */

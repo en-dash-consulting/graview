@@ -1,4 +1,5 @@
 import { canonicalize } from "./document/canonical.js";
+import { respellDocument } from "./document/respell.js";
 import { appFrom, type AppFromOptions, type CompiledDocument, type RefusedDocument } from "./document/compiled.js";
 
 /*
@@ -46,7 +47,10 @@ export async function appFromOrCompile(handed: { readonly compiled?: unknown; re
  * the host's today. Two that mean the same are the same canonical text, so
  * the check costs a walk of the document and none of the compiler; a
  * document in an older format, which a compiled app holds upgraded, is
- * compiled here, as it would have been without one.
+ * compiled here, as it would have been without one. A key renamed within
+ * the format is not a different document (FR-134): both are read in this
+ * build's spelling, so a document stored as an older build wrote it is
+ * built from the app this build compiled of it.
  */
 function compiledFrom(compiled: unknown, document: unknown): boolean {
   const said = typeof compiled === "object" && compiled !== null ? (compiled as { readonly document?: unknown }).document : undefined;
@@ -58,5 +62,5 @@ function compiledFrom(compiled: unknown, document: unknown): boolean {
       return false;
     }
   }
-  return said !== undefined && canonicalize(said) === canonicalize(handed);
+  return said !== undefined && canonicalize(respellDocument(said).document) === canonicalize(respellDocument(handed).document);
 }

@@ -2,6 +2,7 @@ import { withArticle } from "../schema/define-node.js";
 import { canonicalize } from "./canonical.js";
 import { quoted, quotedAtTheEnd } from "./quote.js";
 import { narrows, rangeWords } from "./range.js";
+import { respellDocument } from "./respell.js";
 import type { GraviewDocument } from "./schema.js";
 import { homeOf, VIEW_SLOTS, viewsOf } from "./views.js";
 
@@ -33,7 +34,10 @@ const keys = <T extends object>(o: T | undefined) => Object.keys(o ?? {});
 /** The same meaning, whatever order the keys were written in: compared as documentHash compares. */
 const same = (a: unknown, b: unknown) => canonicalize(a) === canonicalize(b);
 
-export function diffDocuments(before: GraviewDocument, after: GraviewDocument): DocumentDiff {
+export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument): DocumentDiff {
+  // A key renamed within the format is not a change (FR-134): both are read as this build spells them.
+  const before = respellDocument(stored).document;
+  const after = respellDocument(proposed).document;
   const sentences: string[] = [];
   const removedKinds: string[] = [];
   const removedFields: { kind: string; field: string }[] = [];

@@ -1023,5 +1023,199 @@ export const FIXTURES: readonly ConformanceFixture[] = [
     "expect": {
       "hash": "sha256:b29541a9aba631c123aaa684556f463846c22f3471b098e0147469e864874eb5"
     }
+  },
+  {
+    "id": "document:shortlist-0.1.10",
+    "since": "0.1.16",
+    "kind": "document",
+    "document": {
+      "format": "graview-document",
+      "formatVersion": 1,
+      "name": "Vendor shortlist",
+      "kinds": {
+        "category": {
+          "fields": {
+            "name": {
+              "type": "string",
+              "required": true
+            }
+          },
+          "plural": "categories"
+        },
+        "vendor": {
+          "fields": {
+            "name": {
+              "type": "string",
+              "required": true
+            },
+            "status": {
+              "type": "enum",
+              "options": [
+                "researching",
+                "booked",
+                "declined"
+              ],
+              "required": true
+            },
+            "quote": {
+              "type": "number"
+            }
+          },
+          "plural": "vendors",
+          "edges": {
+            "fills": {
+              "to": [
+                "category"
+              ],
+              "cardinality": "one",
+              "description": "the category it fills"
+            }
+          }
+        }
+      },
+      "rules": {
+        "booked-has-a-quote": {
+          "over": "vendor",
+          "require": "quote != null",
+          "when": "status == 'booked'",
+          "says": "{name} is booked without a quote",
+          "title": "A booked vendor has a quote"
+        }
+      },
+      "settings": [
+        {
+          "name": "text-size",
+          "title": "Text size",
+          "description": "Applies everywhere: the picture, the panes and the pages.",
+          "honoured": "root-font-size",
+          "initial": "browser",
+          "options": [
+            {
+              "value": "14px",
+              "label": "Smaller"
+            },
+            {
+              "value": "browser",
+              "label": "As your browser has it"
+            },
+            {
+              "value": "20px",
+              "label": "Larger"
+            },
+            {
+              "value": "32px",
+              "label": "Largest"
+            }
+          ]
+        },
+        {
+          "name": "motion",
+          "title": "Motion",
+          "honoured": "root-attribute",
+          "initial": "system",
+          "options": [
+            {
+              "value": "system",
+              "label": "As your system has it"
+            },
+            {
+              "value": "reduce",
+              "label": "Reduced"
+            },
+            {
+              "value": "full",
+              "label": "Full"
+            }
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "compiles": true,
+      "findings": [
+        "warning:edge-without-inverse"
+      ],
+      "tools": {
+        "edit-category": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (category)."
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 500
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        "edit-vendor": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (vendor)."
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "researching",
+                "booked",
+                "declined"
+              ]
+            },
+            "quote": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        "remove-category": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (category)."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        "remove-vendor": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (vendor)."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
   }
 ] as never;

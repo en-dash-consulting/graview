@@ -1,0 +1,102 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Vendor shortlist",
+  "kinds": {
+    "category": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "plural": "categories"
+    },
+    "vendor": {
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "researching",
+            "booked",
+            "declined"
+          ],
+          "required": true
+        },
+        "quote": {
+          "type": "number"
+        }
+      },
+      "plural": "vendors",
+      "edges": {
+        "fills": {
+          "to": [
+            "category"
+          ],
+          "cardinality": "one",
+          "description": "the category it fills"
+        }
+      }
+    }
+  },
+  "rules": {
+    "booked-has-a-quote": {
+      "over": "vendor",
+      "require": "quote != null",
+      "when": "status == 'booked'",
+      "says": "{name} is booked without a quote",
+      "title": "A booked vendor has a quote"
+    }
+  },
+  "settings": [
+    {
+      "name": "text-size",
+      "title": "Text size",
+      "description": "Applies everywhere: the picture, the panes and the pages.",
+      "honoured": "root-font-size",
+      "initial": "browser",
+      "options": [
+        {
+          "value": "14px",
+          "label": "Smaller"
+        },
+        {
+          "value": "browser",
+          "label": "As your browser has it"
+        },
+        {
+          "value": "20px",
+          "label": "Larger"
+        },
+        {
+          "value": "32px",
+          "label": "Largest"
+        }
+      ]
+    },
+    {
+      "name": "motion",
+      "title": "Motion",
+      "honoured": "root-attribute",
+      "initial": "system",
+      "options": [
+        {
+          "value": "system",
+          "label": "As your system has it"
+        },
+        {
+          "value": "reduce",
+          "label": "Reduced"
+        },
+        {
+          "value": "full",
+          "label": "Full"
+        }
+      ]
+    }
+  ]
+}

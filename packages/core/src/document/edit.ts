@@ -28,6 +28,7 @@ import { validateViews, VIEW_SLOTS } from "./views.js";
 import { brandFindings } from "./brand-check.js";
 import { canonicalize } from "./canonical.js";
 import { quotedAtTheEnd } from "./quote.js";
+import { respellDocument } from "./respell.js";
 import { accentProblem } from "../theme/accent.js";
 
 /*
@@ -2142,7 +2143,9 @@ export function editDocument(document: GraviewDocument, edits: readonly unknown[
   // No edits is no change: the document as it was, and nothing said.
   if (edits.length === 0) return { ok: true, document: clone(document), said: [], fills: [] };
   if (edits.length > MAX_EDITS) return { ok: false, findings: [error("edit", "edits", `at most ${MAX_EDITS} edits at once`)] };
-  const editor = new Editor(clone(document), document, options);
+  // Edited as this build spells it, so what the edit writes says each key's current name (FR-134).
+  const current = respellDocument(document).document;
+  const editor = new Editor(clone(current), current, options);
   edits.forEach((raw, i) => {
     if (editor.findings.length > 0) return;
     if (!isObject(raw)) return editor.findings.push(error("edit", `edits.${i}`, 'an edit is an object like {"op": "add-field", "kind": "vendor", "field": "deposit", "type": "number"}'));
