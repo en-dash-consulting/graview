@@ -31,6 +31,11 @@ export function defaultViewsOf<S extends AnySchema>(schema: S): ReactViewRegistr
  */
 const ELSEWHERE = createContext(false);
 
+/** Whether the surface around is itself the default for the cell: the pages face's record page. */
+export function useDefaultElsewhere(): boolean {
+  return useContext(ELSEWHERE);
+}
+
 /** Marks the views inside as drawn where the surface itself is the default. */
 export function DefaultViewElsewhere({ children }: { readonly children: ReactNode }) {
   return <ELSEWHERE.Provider value={true}>{children}</ELSEWHERE.Provider>;

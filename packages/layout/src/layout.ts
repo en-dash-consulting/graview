@@ -882,13 +882,29 @@ export function layout<S extends AnySchema>(
    * Service appointments were two cards stacked behind "+3 more", reachable
    * neither by pointer nor from the list, which named only the three.
    */
-  const shedIds = new Set(sheds ? inRow.slice(keep).map((item) => item.id) : []);
+  /*
+   * THE DISTRICT YOU ARE IN STAYS IN THE ROW (FR-143). The row kept the
+   * first kinds in its order and shed the rest, so at 1280 wide the
+   * workshop's own district — the one in focus, its record selected above
+   * it — went behind "+5 more" while three empty districts kept their
+   * slots. The focused kind, then the raised ones, are kept first; the row
+   * still reads in its own order.
+   */
+  const standing = (item: (typeof inRow)[number]) => (item.focused ? 0 : item.raised ? 1 : 2);
+  const kept = new Set(
+    [...inRow]
+      .map((item, at) => ({ item, at }))
+      .sort((a, b) => standing(a.item) - standing(b.item) || a.at - b.at)
+      .slice(0, keep)
+      .map(({ item }) => item.id),
+  );
+  const shedIds = new Set(sheds ? inRow.filter((item) => !kept.has(item.id)).map((item) => item.id) : []);
   const tucked = hanging.filter((item) => !shedIds.has(item.nestedUnder!));
   const shedWithParent = hanging.filter((item) => shedIds.has(item.nestedUnder!));
   const slotted = sheds
     ? [
-        ...inRow.slice(0, keep),
-        { id: BEYOND_CARD, kind: "", beyond: [...inRow.slice(keep), ...shedWithParent].map((item) => item.kind) },
+        ...inRow.filter((item) => kept.has(item.id)),
+        { id: BEYOND_CARD, kind: "", beyond: [...inRow.filter((item) => shedIds.has(item.id)), ...shedWithParent].map((item) => item.kind) },
       ]
     : inRow;
 

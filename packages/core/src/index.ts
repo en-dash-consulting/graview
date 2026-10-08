@@ -261,7 +261,7 @@ export {
   isoDate,
 } from "./temporal/effectivity.js";
 export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
-export { article, counted, fieldWords, humanizeField, nounOf, readableFields, summarize, valueWords, withArticle } from "./schema/define-node.js";
+export { article, counted, edgeWords, fieldWords, humanizeField, nounOf, readableFields, summarize, valueWords, withArticle } from "./schema/define-node.js";
 export type { ReadableField } from "./schema/define-node.js";
 export { TEXT_PAIRS } from "./theme/types.js";
 export { checkKitContrast, connectorHueColor, connectorKitFor, DEFAULT_KIT, kitVariables, resolveKit } from "./theme/kit.js";

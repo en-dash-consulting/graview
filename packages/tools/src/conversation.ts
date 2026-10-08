@@ -531,7 +531,7 @@ export function graphResponder<S extends AnySchema>(
             said = direction === "out" ? spec.description : (spec.inverse ?? spec.description);
             if (said) break;
           }
-          groups.set(key, { sentence: said ?? edge.kind.replace(/-/g, " "), names: [] });
+          groups.set(key, { sentence: said ?? humanizeField(edge.kind).toLowerCase(), names: [] });
         }
         const group = groups.get(key)!;
         if (group.names.length < 6) group.names.push(name(other));
