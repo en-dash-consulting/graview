@@ -157,6 +157,8 @@ function DistrictName({ text, accent }: { readonly text: string; readonly accent
   const words = useRef<HTMLSpanElement>(null);
   const [scale, setScale] = useState(1);
   const [cut, setCut] = useState(false);
+  /* A share of the name's own size, so a reader's larger text is still larger. */
+  const smaller = scale < 1 ? `${scale}em` : undefined;
   useLayoutEffect(() => {
     const outer = box.current;
     const inner = words.current;
@@ -204,7 +206,7 @@ function DistrictName({ text, accent }: { readonly text: string; readonly accent
         textOverflow: "ellipsis",
       }}
     >
-      <span ref={words} style={{ fontSize: scale < 1 ? `${scale}em` : undefined }}>
+      <span ref={words} style={{ fontSize: smaller }}>
         {text}
       </span>
     </span>

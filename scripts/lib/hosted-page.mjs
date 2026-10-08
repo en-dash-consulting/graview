@@ -160,9 +160,12 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * and opening on the home view (FR-136) took it to 538 735 bytes
  * (526.1 KB), 3 578 more, the same bar and embed as the page that compiles
  * (above); the claim rises by that: 526.5 KB. The review after 0.1.16
- * left it at 539 006 bytes (526.4 KB), as above.
+ * left it at 539 006 bytes (526.4 KB), as above. A selected record drawn once
+ * (FR-141–FR-143) took it from 539 090 to 539 276 bytes (526.6 KB), 186
+ * more: a relation said in its words and the record in focus held to its
+ * box, drawn with the scene. The claim rises by that: 526.7 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 526.5 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 526.7 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

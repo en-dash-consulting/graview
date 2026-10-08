@@ -77,6 +77,8 @@ const CHAIN = [
   ["brand", "verify-brand.mjs"],
   // A document's declared lenses drawn as places on both faces, and its arrangement honored, with no view of the host's (FR-79, FR-80).
   ["declared", "verify-declared.mjs"],
+  // A selected record drawn once, its relations said in their words, a district's name in its box, on a document shaped like Cloud's workshop, in three engines (FR-141–FR-143).
+  ["drawn-once", "verify-drawn-once.mjs"],
   // A host whose page is the app hands the routed face the address bar, in three engines; an article's embed never touches it (FR-106).
   ["address", "verify-address.mjs"],
   // The studio's whole path, on a scratch copy of seedbed: said, rewritten, written, compiled, migrated.

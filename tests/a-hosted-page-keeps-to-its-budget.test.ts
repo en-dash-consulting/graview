@@ -58,7 +58,8 @@ describe("a hosted page", () => {
     // 860 KB since FR-110–FR-116 together: the scene face measured 870_479 B before it draws (it was 860_295 at 850).
     // 865 KB since a brand's mark is read element by element before it is drawn (the review after 0.1.15): the scene face measured 883_431 B.
     // 867 KB since the switch and the place list (FR-137, FR-138) and the home view first (FR-136): the scene face measured 886_469 B, 2_209 more than before them.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(867 * 1024);
+    // 871 KB since a selected record is drawn once (FR-141–FR-143): the scene face measured 891_357 B, 4_135 more than before it.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(871 * 1024);
   });
 
   it("carries no studio, up front or when asked: the shell stubs it out", () => {

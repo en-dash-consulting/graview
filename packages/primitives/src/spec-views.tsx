@@ -1,5 +1,5 @@
 import { labelOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
-import { compileBlocks, fieldSpecsOf, isTallBlock, resolveBlocks, whatBlocksSay, type BlockContext, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
+import { compileBlocks, fieldSpecsOf, isTallBlock, resolveBlocks, whatBlocksSay, type BlockContext, type BlocksSaid, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
 import { shapesOfSchema, type FieldSpec, type KindShape, type ViewSlot, type ViewSpecsByKind } from "@graview/core/document";
 import { useGraph, useGraview, ViewModeProvider, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { createContext, useContext, type MouseEvent, type ReactNode } from "react";
@@ -433,9 +433,19 @@ function SpecPage<S extends AnySchema>({ blocks, props }: { readonly blocks: rea
   const node = props.node as AnyGraphNode;
   const ctx = useSpecContext(node);
   const elsewhere = useDefaultElsewhere();
-  if (elsewhere) return <SpecView slot="page" blocks={blocks} node={node} />;
   const resolved = resolveBlocks(blocks, { ...ctx, heading: 2 });
   const said = whatBlocksSay(blocks, resolved);
+  if (elsewhere) {
+    // The record page's own heading is the record's name: a page title saying it again is not drawn under it.
+    const named = said.title !== undefined && said.title === labelOf(ctx.schema?.tryDefinition(node.kind), node);
+    return (
+      <div className="graview-spec graview-spec-page" data-graview-spec="page" data-graview-kind={node.kind}>
+        <Figure.Provider value={ctx.figure}>
+          <ResolvedBlocks blocks={named ? resolved.slice(1) : resolved} />
+        </Figure.Provider>
+      </div>
+    );
+  }
   const body = (
     <div className="graview-spec graview-spec-page" data-graview-spec="page" data-graview-kind={node.kind}>
       <Figure.Provider value={ctx.figure}>
@@ -448,6 +458,19 @@ function SpecPage<S extends AnySchema>({ blocks, props }: { readonly blocks: rea
       <DefaultView<S> {...props} />
     </RecordHeadContext.Provider>
   );
+}
+
+/** A view that can say, without drawing, what it says about a record: a kind's declared page. */
+type SaysWhat = { says?: (node: AnyGraphNode, graph: GraphReader) => BlocksSaid };
+
+/**
+ * WHAT A RECORD'S OWN PAGE VIEW ALREADY SAYS (FR-141), for a surface that
+ * draws the framework's record under it — the pages face's record page —
+ * to leave out the facts and the related records the page said. Nothing
+ * for a view that is no declared page.
+ */
+export function pageSays(view: unknown, node: AnyGraphNode, graph: GraphReader): BlocksSaid | undefined {
+  return typeof view === "function" ? (view as SaysWhat).says?.(node, graph) : undefined;
 }
 
 /** A row: one line, named for assistive technology by the record's own label. */
@@ -487,6 +510,12 @@ export function registerViewSpecs<S extends AnySchema>(registry: ReactViewRegist
     if (slots.page) {
       const blocks = compileBlocks(slots.page);
       const Page: ViewComponent<S> = (props: ViewProps<S>) => (props.node ? <SpecPage<S> blocks={blocks} props={props} /> : null);
+      (Page as SaysWhat).says = (node, graph) => {
+        const at = schema as AnySchema;
+        const definition = at.tryDefinition(node.kind) as SpecContext["definition"];
+        const ctx: BlockContext = { node, graph, schema: at, kinds: shapesFor(at), fields: fieldsFor(at, node.kind), ...(definition ? { definition } : {}), today: today(), heading: 2 };
+        return whatBlocksSay(blocks, resolveBlocks(blocks, ctx));
+      };
       registry.register(at, { cardinality: "one", fidelity: "full" }, Page);
     }
   }

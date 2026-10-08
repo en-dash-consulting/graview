@@ -1,7 +1,6 @@
 import type { AnyGraphNode, GraphReader } from "../index.js";
 import type { AnySchema } from "../schema/schema.js";
 import { fieldWords, valueWords } from "../schema/define-node.js";
-import { analyzeExpr } from "./expr/analyze.js";
 import { evaluateExpr, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import { parseExpr, type Expr } from "./expr/parse.js";
 import type { FieldSpec } from "./schema.js";
@@ -383,11 +382,39 @@ export interface BlocksSaid {
  * only what is shown counts, so a `when` that does not hold says nothing —
  * so whoever draws around them leaves out what they said.
  */
+/** The functions whose second argument is read once per member of the set before it (`perMember` in `expr/analyze.ts`). */
+const PER_MEMBER = new Set(["every", "some", "sum", "min", "max", "sort"]);
+
 export function whatBlocksSay(blocks: readonly SpecBlock[], resolved: readonly ResolvedBlock[]): BlocksSaid {
   const fields = new Set<string>();
   const records = new Set<string>();
-  const reads = (expr: Parsed<Expr> | undefined) => {
-    if (expr) for (const name of analyzeExpr(expr).names) fields.add(name);
+  // The subject's own names an expression reads: not those inside a `where`, nor those read per member of a set.
+  const reads = (expr: Parsed<Expr> | undefined): void => {
+    if (!expr) return;
+    switch (expr.t) {
+      case "ident":
+        fields.add(expr.name);
+        return;
+      case "list":
+        expr.items.forEach(reads);
+        return;
+      case "member":
+        return reads(expr.object);
+      case "unary":
+        return reads(expr.operand);
+      case "binary":
+        reads(expr.left);
+        return reads(expr.right);
+      case "where":
+        return reads(expr.set);
+      case "call":
+        expr.args.forEach((arg, i) => {
+          if (!(i === 1 && PER_MEMBER.has(expr.fn))) reads(arg);
+        });
+        return;
+      default:
+        return;
+    }
   };
   const readsParts = (parts: Parsed<readonly TemplatePart[]> | undefined) => {
     for (const part of parts ?? []) reads(part.expr);

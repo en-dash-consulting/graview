@@ -105,8 +105,11 @@ export const BUDGETS = [
     // drawn with the bar. Measured at 505_406 / 173_425.
     // Raised when the scene and the pages became two things on the bar and the places left it (FR-137, FR-138): the switch, the
     // place control and its grouped list with their marks, the phone's place line, 2_047 / 595 more. Measured at 507_453 / 174_021.
-    minified: 508_550,
-    gzipped: 174_600,
+    // Raised when a selected record came to be drawn once (FR-141–FR-143): a declared page read for what it already says and
+    // the record page leaving that out, a district name fitted to its box, a relation said in its words: 3_791 / 1_280 more.
+    // Measured at 512_239 / 175_657.
+    minified: 512_350,
+    gzipped: 175_750,
     load: "first",
   },
   {
@@ -346,8 +349,10 @@ export const BUDGETS = [
     // the home view no longer is: 1_680 / 623 more. Measured at 1_550_975 / 468_183.
     // Raised with the review after 0.1.16: the profile's choices drawn by one style rather than three, the app's line under
     // a home's own headline, the narrow embed's way back to the pages. Measured at 1_551_385 / 468_484.
-    minified: 1_551_600,
-    gzipped: 468_700,
+    // Raised with the pages face alone for a selected record drawn once (FR-141–FR-143), with the page at the head of the
+    // scene's record and the record in focus held to its box: 4_239 / 1_346 more. Measured at 1_555_753 / 469_952.
+    minified: 1_555_850,
+    gzipped: 470_050,
     load: "all",
   },
   {
@@ -396,8 +401,9 @@ export const BUDGETS = [
     // Measured at 1_516_402 / 453_220.
     // Raised with every face's for the review after 0.1.16, and the document's own part of it the studio loads: arrange-pages
     // reading the scene's old word, and the check's warning for a switch that says one word twice. Measured at 1_517_351 / 453_603.
-    minified: 1_517_600,
-    gzipped: 453_800,
+    // Raised with every face's for a selected record drawn once (FR-141–FR-143): 4_244 / 1_343 more. Measured at 1_521_724 / 455_066.
+    minified: 1_521_850,
+    gzipped: 455_150,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
