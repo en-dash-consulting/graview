@@ -195,9 +195,12 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * 3 263 more, as above: 532.25 KB.
  * A selected record drawn once (FR-141–FR-143), over FR-139, the same 186
  * bytes as the page that compiles, took it to 545 076 bytes (532.3 KB); the
- * claim rises by that with about 0.1 KB of room: 532.4 KB.
+ * claim rises by that with about 0.1 KB of room: 532.4 KB. The security
+ * review before 0.1.18 (a retry imports only a chunk on the bundle's own
+ * origin, and a link's pins and dimensions have no prototype) adds 169
+ * bytes: 532.6 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 532.4 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 532.6 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [
