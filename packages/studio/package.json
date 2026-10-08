@@ -1,6 +1,6 @@
 {
   "name": "@graview/studio",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "type": "module",
   "description": "The declaration itself as a graph: kinds, fields, edges, acts, rules, roles and grants as nodes, edited with ordinary mutations in Graview's own interface, checked before they are applied, migrated, and written back as the files graview create writes.",
   "keywords": [
