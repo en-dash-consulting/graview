@@ -20,7 +20,17 @@ import { AppMark } from "./app-title.js";
  * sentences beside kind lists — and wrapped, and the scene was one of seven
  * equal words; a reader could no longer see how to get to it. The bar is a
  * fixed row now whatever the app holds: the switch says where the scene is,
- * and the places are two presses away, never on the row.
+ * and the places are two presses away.
+ *
+ * THE SCENE HAS ITS PLACES TOO (FR-144): what is in view — the whole thing,
+ * or the picture showing — and every picture the scene has, in the same
+ * control, grouped as on Pages (`useScenePlaces`).
+ *
+ * AND THE PLACES STAND IN THE BAR WHEN THERE IS ROOM (FR-145): measured from
+ * the bar's own width, the first places in their order — the one you are on
+ * always among them — stand on the row as words, the one you are on
+ * underlined, and the rest fold into "More". When too few would stand, the
+ * one control comes back. The row stays one row; a phone keeps the control.
  */
 
 /** Which of the places a place is: the home, a kind's list, or a picture. */
@@ -41,6 +51,8 @@ export interface BarPlace {
 export const HOME_KEY = "home";
 /** The home's address on the routed face: the app's own. */
 export const HOME_PATH = "/";
+/** The key of the scene's first place (FR-144): the whole thing, no picture in view. */
+export const WHOLE_KEY = "scene:whole";
 
 const upper = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
 
@@ -133,6 +145,42 @@ export const BAR_HEIGHT = 48;
 /** Below this width of its own the bar is a phone's: the place is the page's first line, and Find a magnifier that opens the box over the row. */
 export const BAR_PHONE = 640;
 
+/** The room between two places standing on the row (FR-145). */
+export const PLACE_GAP = 4;
+/** The fewest places that stand on the row: fewer, and the one control says the same in less room. */
+export const FEWEST_STANDING = 2;
+
+/**
+ * WHICH PLACES STAND ON THE ROW (FR-145), from their widths and the room:
+ * every one when all fit; else the first ones in their order, the current
+ * one always among them (in its own place in the order, the last of the
+ * first ones giving way to it), with "More" after them; else none — null,
+ * the one control. Fewer than `FEWEST_STANDING` is none. A width that is
+ * not measured (nothing laid out) is none too.
+ */
+export function placesThatStand(input: {
+  /** Each place's width as it would stand, in the order of the list. */
+  readonly widths: readonly number[];
+  /** Where the current place is in the list; -1 for none. */
+  readonly current: number;
+  /** The room the row has for them. */
+  readonly room: number;
+  /** "More"'s width. */
+  readonly more: number;
+  readonly gap?: number;
+}): readonly number[] | null {
+  const { widths, current, room, more, gap = PLACE_GAP } = input;
+  if (widths.length === 0 || !(room > 0) || !(more > 0) || widths.some((width) => !(width > 0))) return null;
+  const span = (set: readonly number[], folded: boolean) => set.reduce((sum, at) => sum + widths[at]!, 0) + gap * Math.max(0, set.length - 1) + (folded ? gap + more : 0);
+  const all = widths.map((_, at) => at);
+  if (span(all, false) <= room) return all;
+  for (let count = widths.length - 1; count >= FEWEST_STANDING; count--) {
+    const set = current < count ? all.slice(0, count) : [...all.slice(0, count - 1), current];
+    if (span(set, true) <= room) return set;
+  }
+  return null;
+}
+
 /*
  * THE BAR FITS ITS BOX. Every rule here reads the bar's own width (it is
  * its own container), never the screen's: an embed in a 650 px box on a
@@ -142,6 +190,11 @@ export const BAR_PHONE = 640;
  * title), then the app's name, which wraps between its words onto a second
  * line and never inside one; the switch keeps its size, and draws its marks
  * alone when its words do not fit (`roomForWords`).
+ *
+ * Where the places stand on the row (FR-145), Find gives first — down to
+ * its least — then the places fold into "More", then into the one control,
+ * which gives as above. The places are weighed with the switch's words
+ * kept: the words are worth more than a third place on the row.
  *
  * The order is the shrink factors: Find 600, the place 100, the app 1. A
  * factor under 1 would not do — the free space is scaled by the factors
@@ -173,6 +226,14 @@ const BAR_CSS = `
 .graview-bar-place{gap:6px;height:30px;max-width:100%;padding:0 8px;border:1px solid transparent;border-radius:8px;font-size:.875rem;font-weight:600}
 .graview-bar-face:hover,.graview-bar-place:hover{border-color:var(--graview-edge);color:var(--graview-ink)}
 .graview-bar-place-words{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.graview-bar-mid[data-places=standing]{flex:0 0 auto}
+.graview-bar-places{display:flex;align-items:center;gap:${PLACE_GAP}px;min-width:0;margin:0;padding:0}
+.graview-bar-at{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;box-sizing:border-box;height:30px;margin:0;padding:0 8px;border:0;border-top:2px solid transparent;border-bottom:2px solid transparent;border-radius:0;background:none;box-shadow:none;font:inherit;font-size:.875rem;font-weight:500;letter-spacing:normal;text-transform:none;text-decoration:none;white-space:nowrap;color:var(--graview-ink-muted);cursor:pointer}
+.graview-bar-at:hover{color:var(--graview-ink)}
+.graview-bar-at[aria-current]{color:var(--graview-ink);font-weight:600;border-bottom-color:var(--graview-accent)}
+.graview-bar-at[aria-expanded=true]{color:var(--graview-ink)}
+.graview-bar-ruler{position:absolute;left:0;top:0;display:flex;width:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none}
+.graview-bar-ruler .graview-bar-at{font-weight:600}
 .graview-bar-list{display:grid;width:min(320px,calc(100vw - 24px));max-height:min(70vh,560px);overflow:auto;margin:0;padding:6px;border-radius:10px;border:1px solid var(--graview-edge);background:var(--graview-float);box-shadow:var(--graview-lift-high);color:var(--graview-ink)}
 .graview-bar-list[hidden]{display:none}
 .graview-bar-list p{margin:8px 8px 2px;font-size:.6875rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--graview-ink-muted)}
@@ -246,6 +307,7 @@ export function AppBar({
   findBox,
   onFind,
   switch: switchForm = "words",
+  scenePlaces,
 }: {
   readonly brand: Brand | undefined;
   readonly name: string;
@@ -276,6 +338,12 @@ export function AppBar({
    * width. Either way the words are the buttons' names and their titles.
    */
   readonly switch?: BarSwitch;
+  /**
+   * On the scene, what it can show (FR-144): the whole thing and each
+   * picture, the one in view, and the way to each (`useScenePlaces`). None,
+   * and the scene's bar names no place.
+   */
+  readonly scenePlaces?: { readonly places: readonly BarPlace[]; readonly current: string | null; readonly reach: BarGo } | undefined;
 }) {
   const bar = useRef<HTMLElement>(null);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
@@ -283,11 +351,23 @@ export function AppBar({
   const [finding, setFinding] = useState(false);
   // Whether the switch's words fit beside everything else the row holds (`roomForWords`).
   const [roomy, setRoomy] = useState(true);
+  // Which places stand on the row, by their place in the list ("0,1,2"); null, the one control (FR-145).
+  const [standing, setStanding] = useState<string | null>(null);
+  // The places on the face drawn: the routed face's, or the scene's (FR-144).
+  const onPages = !faces || faces.pages.current;
+  const shown = onPages ? { places, current, reach } : scenePlaces;
+  const list = shown && shown.places.length > 0 ? shown : null;
+  const currentAt = list ? list.places.findIndex((place) => place.key === list.current) : -1;
+  const wordsAsked = Boolean(faces) && switchForm === "words";
   const weigh = useCallback(() => {
     const element = bar.current;
-    const room = element ? roomForWords(element) : null;
+    if (!element) return;
+    const stand = standsIn(element, currentAt, wordsAsked);
+    if (stand !== undefined) setStanding(stand);
+    // Standing places were weighed with the switch's words kept.
+    const room = stand ? true : roomForWords(element);
     if (room !== null) setRoomy(room);
-  }, []);
+  }, [currentAt, wordsAsked]);
   useLayoutEffect(() => {
     const element = bar.current;
     if (!element) return;
@@ -300,11 +380,18 @@ export function AppBar({
     };
     read();
     // The brand's face, once it has come, is wider or narrower than the one the row was first weighed in.
-    void (typeof document === "undefined" ? undefined : document.fonts?.ready.then(weigh));
-    if (typeof ResizeObserver === "undefined") return;
+    const fonts = typeof document === "undefined" ? undefined : document.fonts;
+    void fonts?.ready.then(weigh);
+    fonts?.addEventListener?.("loadingdone", weigh);
+    if (typeof ResizeObserver === "undefined") return () => fonts?.removeEventListener?.("loadingdone", weigh);
     const watch = new ResizeObserver(read);
     watch.observe(element);
-    return () => watch.disconnect();
+    // What stands beside the places — the tools, a count on the standing — changes their room without changing the bar's width.
+    for (const tool of element.querySelectorAll(".graview-bar-tools > *")) watch.observe(tool);
+    return () => {
+      watch.disconnect();
+      fonts?.removeEventListener?.("loadingdone", weigh);
+    };
   }, [weigh]);
   const told = useRef(onFind);
   told.current = onFind;
@@ -335,11 +422,13 @@ export function AppBar({
     event.preventDefault();
     go();
   };
-  // The place control stands on Pages: in the bar on a desk, as the page's first line on a phone.
-  const onPages = !faces || faces.pages.current;
-  const placeControl = onPages && places.length > 0 ? <PlaceControl places={places} current={current} reach={reach} /> : null;
-  // What the row holds changed — the name, the place, the face — so the words may fit now, or no longer.
-  useLayoutEffect(weigh, [weigh, name, current, onPages, compact, switchForm, places.length]);
+  // The place control: in the bar on a desk, as the page's first line on a phone; the places themselves on the row when they fit (FR-145).
+  const scene = !onPages;
+  const placeControl = list ? <PlaceControl places={list.places} current={list.current} reach={list.reach} scene={scene} /> : null;
+  const stands = list && !compact && standing !== null ? standing.split(",").map(Number).filter((at) => at < list.places.length) : null;
+  const said = list ? list.places.map((place) => place.label).join("\n") : "";
+  // What the row holds changed — the name, the places, the face, the brand — so the places and the words may fit now, or no longer.
+  useLayoutEffect(weigh, [weigh, name, brand, said, list?.current, onPages, compact, switchForm, find]);
   // The marks alone on a phone's bar, when asked, or when the words do not fit.
   const drawn: BarSwitch = switchForm === "icons" || !roomy || compact ? "icons" : "words";
   return (
@@ -371,9 +460,23 @@ export function AppBar({
             </Heading>
           </div>
           {faces ? <FaceSwitch faces={faces} form={switchForm} drawn={drawn} /> : null}
-          <div className="graview-bar-mid" {...(!compact && placeControl ? { "data-place": "" } : {})}>
-            {compact ? null : placeControl}
+          <div className="graview-bar-mid" {...(stands ? { "data-places": "standing" } : !compact && placeControl ? { "data-place": "" } : {})}>
+            {compact || !list ? null : stands ? <StandingPlaces places={list.places} current={list.current} reach={list.reach} stands={stands} scene={scene} /> : placeControl}
           </div>
+          {/* The places as they would stand, unseen, for the row to be weighed by (FR-145). */}
+          {!compact && list && list.places.length > 1 ? (
+            <span className="graview-bar-ruler" aria-hidden="true" data-graview-bar-ruler="">
+              {list.places.map((place) => (
+                <span key={place.key} className="graview-bar-at">
+                  {place.label}
+                </span>
+              ))}
+              <span className="graview-bar-at">
+                {MORE}
+                <Chevron />
+              </span>
+            </span>
+          ) : null}
           <div className="graview-bar-tools">
             {find ? (
               <>
@@ -484,7 +587,7 @@ function roomForWords(header: HTMLElement): boolean | null {
   const row = header.getBoundingClientRect().width;
   if (row < BAR_PHONE) return null;
   // The words to come, beside each mark: the word, the gap before it, and the button's wider padding.
-  const words = [...faces.querySelectorAll<HTMLElement>(".graview-bar-face span")].reduce((sum, span) => sum + span.scrollWidth + 10, 0);
+  const words = wordsOf(faces);
   const place = mid.querySelector<HTMLElement>(".graview-bar-place-words");
   const em = place ? Number.parseFloat(getComputedStyle(place).fontSize) || 14 : 0;
   // The place's words, its chevron, its gap, padding and frame: up to 14em of them.
@@ -547,6 +650,8 @@ function FindMark() {
 
 /** A place's mark in the list: the home's house, a kind's plot in its own hue. */
 function PlaceMark({ place }: { readonly place: BarPlace }) {
+  // The scene's whole thing: the scene's own mark, as on the switch (FR-144).
+  if (place.key === WHOLE_KEY) return <SceneMark />;
   if (place.group === "home") {
     return (
       <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
@@ -572,43 +677,85 @@ function PlaceMark({ place }: { readonly place: BarPlace }) {
 
 const GROUPS: readonly { readonly group: BarPlaceGroup; readonly heading?: string }[] = [{ group: "home" }, { group: "lists", heading: "Lists" }, { group: "pictures", heading: "Pictures" }];
 
+/** The word the places that do not stand on the row fold under (FR-145). */
+const MORE = "More";
+
+/** What a face's places are called, for a reader moving by landmark: the app's, or what the scene can show (FR-144). */
+const placesNamed = (scene: boolean): string => (scene ? "What the scene shows" : "The app’s places");
+
+/**
+ * ONE PLACE, AS THE BAR OFFERS IT — in the list, or standing on the row: a
+ * link where it has an address, a press where the bar decides; marked
+ * `aria-current` where the reader is. Whichever way it is drawn it is
+ * `app-place-<key>` and says its path (`data-place-path`), once in the bar.
+ */
+function PlaceEntry({ place, current, reach, standing, done }: { readonly place: BarPlace; readonly current: string | null; readonly reach: BarGo; readonly standing: boolean; readonly done: () => void }) {
+  const at = place.key === current;
+  const href = reach.href?.(place.path);
+  const Entry = (href !== undefined ? "a" : "button") as "a";
+  return (
+    <Entry
+      className={standing ? "graview-bar-at" : "graview-bar-item"}
+      data-testid={`app-place-${place.key}`}
+      data-place-path={place.path}
+      {...(at ? { "aria-current": "page" as const } : {})}
+      {...(href !== undefined ? { href } : { type: "button" as const })}
+      onClick={(event: MouseEvent) => {
+        done();
+        if (!reach.go) return;
+        if (href !== undefined && (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)) return;
+        event.preventDefault();
+        reach.go(place);
+      }}
+    >
+      {standing ? null : (
+        <span className="graview-bar-mark">
+          <PlaceMark place={place} />
+        </span>
+      )}
+      {/* Where the reader is, said where a harness and a reader find it whichever way the places are drawn. */}
+      {standing && at ? <span data-testid="app-place-current">{place.label}</span> : <span>{place.label}</span>}
+    </Entry>
+  );
+}
+
+/** The places of a list, grouped — the home (or the whole thing), the Lists, the Pictures — each group with its heading. */
+function PlaceGroups({ places, current, reach, id, done }: { readonly places: readonly BarPlace[]; readonly current: string | null; readonly reach: BarGo; readonly id: string; readonly done: () => void }) {
+  return (
+    <>
+      {GROUPS.map(({ group, heading }) => {
+        const listed = places.filter((place) => place.group === group);
+        if (listed.length === 0) return null;
+        const named = `${id}-${group}`;
+        return (
+          <div key={group} role="group" {...(heading ? { "aria-labelledby": named } : { "aria-label": listed[0]!.label })} data-place-group={group}>
+            {heading ? <p id={named}>{heading}</p> : null}
+            <ul>
+              {listed.map((place) => (
+                <li key={place.key}>
+                  <PlaceEntry place={place} current={current} reach={reach} standing={false} done={done} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 /**
  * THE PLACE YOU ARE ON, AND EVERY OTHER (FR-138): one control, the place's
  * name and a chevron, that opens the app's places — the home first, then
  * the Lists and the Pictures, each with its mark, a long name wrapped
  * rather than cut. Every place is two presses away, and the bar is one row
- * of one height however many there are.
+ * of one height however many there are. On the scene, what is in view and
+ * every picture it can show (FR-144).
  */
-function PlaceControl({ places, current, reach }: { readonly places: readonly BarPlace[]; readonly current: string | null; readonly reach: BarGo }) {
+function PlaceControl({ places, current, reach, scene }: { readonly places: readonly BarPlace[]; readonly current: string | null; readonly reach: BarGo; readonly scene: boolean }) {
   const popover = usePopover("places");
   const here = places.find((place) => place.key === current);
   const said = here?.label ?? "Places";
-  const entry = (place: BarPlace) => {
-    const at = place.key === current;
-    const href = reach.href?.(place.path);
-    const common = {
-      className: "graview-bar-item",
-      "data-testid": `app-place-${place.key}`,
-      "data-place-path": place.path,
-      ...(at ? { "aria-current": "page" as const } : {}),
-      onClick: (event: MouseEvent) => {
-        popover.setOpen(false);
-        if (!reach.go) return;
-        if (href !== undefined && (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)) return;
-        event.preventDefault();
-        reach.go(place);
-      },
-    };
-    const Entry = (href !== undefined ? "a" : "button") as "a";
-    return (
-      <Entry key={place.key} {...common} {...(href !== undefined ? { href } : { type: "button" as const })}>
-        <span className="graview-bar-mark">
-          <PlaceMark place={place} />
-        </span>
-        <span>{place.label}</span>
-      </Entry>
-    );
-  };
   return (
     <span className="graview-bar-place-at">
       <button
@@ -617,7 +764,7 @@ function PlaceControl({ places, current, reach }: { readonly places: readonly Ba
         data-testid="app-places-open"
         {...popover.trigger}
         onClick={popover.toggle}
-        aria-label={`${said} — every place`}
+        aria-label={`${said} — ${scene ? "everything the scene shows" : "every place"}`}
         title={said}
       >
         <span className="graview-bar-place-words" data-testid="app-place-current">
@@ -625,27 +772,84 @@ function PlaceControl({ places, current, reach }: { readonly places: readonly Ba
         </span>
         <Chevron />
       </button>
-      <nav {...popover.pane} data-testid="app-places" aria-label="The app’s places" hidden={!popover.open} className="graview-bar-list" style={POPOVER_STYLE}>
-        {GROUPS.map(({ group, heading }) => {
-          const listed = places.filter((place) => place.group === group);
-          if (listed.length === 0) return null;
-          const id = `${popover.pane.id}-${group}`;
-          return (
-            <div key={group} role="group" {...(heading ? { "aria-labelledby": id } : { "aria-label": "Home" })} data-place-group={group}>
-              {heading ? (
-                <p id={id}>
-                  {heading}
-                </p>
-              ) : null}
-              <ul>
-                {listed.map((place) => (
-                  <li key={place.key}>{entry(place)}</li>
-                ))}
-              </ul>
-            </div>
-          );
-        })}
+      <nav {...popover.pane} data-testid="app-places" aria-label={placesNamed(scene)} hidden={!popover.open} className="graview-bar-list" style={POPOVER_STYLE}>
+        <PlaceGroups places={places} current={current} reach={reach} id={popover.pane.id} done={() => popover.setOpen(false)} />
       </nav>
     </span>
   );
+}
+
+/**
+ * THE PLACES ON THE ROW (FR-145): the ones that stand, as words in their
+ * order, the one you are on underlined; then "More", which opens the rest,
+ * grouped as the one control's list is. When every place stands there is no
+ * "More". "More" is `app-places-open` and its list `app-places`, as the one
+ * control and its list are, so a place that does not stand is reached by
+ * the same two presses either way.
+ */
+function StandingPlaces({ places, current, reach, stands, scene }: { readonly places: readonly BarPlace[]; readonly current: string | null; readonly reach: BarGo; readonly stands: readonly number[]; readonly scene: boolean }) {
+  const popover = usePopover("places");
+  const rest = places.filter((_, at) => !stands.includes(at));
+  return (
+    <nav className="graview-bar-places" aria-label={placesNamed(scene)} data-testid="app-places-standing">
+      {stands.map((at) => (
+        <PlaceEntry key={places[at]!.key} place={places[at]!} current={current} reach={reach} standing done={() => undefined} />
+      ))}
+      {rest.length > 0 ? (
+        <span className="graview-bar-place-at">
+          <button
+            type="button"
+            className="graview-bar-at"
+            data-testid="app-places-open"
+            {...popover.trigger}
+            onClick={popover.toggle}
+            aria-label={`${MORE} — ${rest.length} more ${scene ? "pictures" : "places"}`}
+            title={rest.map((place) => place.label).join(", ")}
+          >
+            {MORE}
+            <Chevron />
+          </button>
+          <div {...popover.pane} data-testid="app-places" hidden={!popover.open} className="graview-bar-list" style={POPOVER_STYLE}>
+            <PlaceGroups places={rest} current={current} reach={reach} id={popover.pane.id} done={() => popover.setOpen(false)} />
+          </div>
+        </span>
+      ) : null}
+    </nav>
+  );
+}
+
+/**
+ * WHICH PLACES STAND ON THE ROW, WEIGHED FROM THE ROW AS DRAWN (FR-145):
+ * the places' widths read off the ruler (each at its weight as the place
+ * you are on, so marking one never moves the others), and the room from
+ * where the places begin to where Find ends, less Find at its least, less
+ * the switch's words when they are asked for. The same answer whichever way
+ * the places are drawn, so the row never flips between the two at one
+ * width. Not weighed while Find is in use (`undefined`); none on a phone's
+ * bar, when the app's name has wrapped, or where nothing is laid out (null).
+ */
+function standsIn(header: HTMLElement, current: number, wordsAsked: boolean): string | null | undefined {
+  const ruler = header.querySelector<HTMLElement>(".graview-bar-ruler");
+  const mid = header.querySelector<HTMLElement>(".graview-bar-mid");
+  if (!ruler || !mid) return null;
+  const find = header.querySelector<HTMLElement>(".graview-bar-find");
+  if (find?.matches(":focus-within")) return undefined;
+  if (header.getBoundingClientRect().width < BAR_PHONE) return null;
+  const name = header.querySelector(".graview-bar-app-name");
+  if (name && name.getBoundingClientRect().height > Number.parseFloat(getComputedStyle(name).lineHeight) * 1.5) return null;
+  const widths = [...ruler.children].map((one) => one.getBoundingClientRect().width);
+  const more = widths.pop() ?? 0;
+  const faces = header.querySelector<HTMLElement>(".graview-bar-faces");
+  const words = faces && wordsAsked ? wordsOf(faces) : 0;
+  const drawnWords = faces?.getAttribute("data-switch-drawn") === "words" ? words : 0;
+  const from = mid.getBoundingClientRect().left;
+  const end = find?.getBoundingClientRect();
+  // To Find's end, less Find at its least and the room between them (the row's gap, less the tools' pull); with no Find, the middle's own room.
+  const room = end && end.width > 0 ? end.right - from - (Number.parseFloat(getComputedStyle(find!).minWidth) || 0) - 8 : mid.getBoundingClientRect().width;
+  return placesThatStand({ widths, current, room: Math.floor(room + drawnWords - words), more })?.join(",") ?? null;
+}
+
+/** The switch's words, beside each mark: the word, the gap before it, and the button's wider padding. */
+function wordsOf(faces: HTMLElement): number {
+  return [...faces.querySelectorAll<HTMLElement>(".graview-bar-face span")].reduce((sum, span) => sum + span.scrollWidth + 10, 0);
 }
