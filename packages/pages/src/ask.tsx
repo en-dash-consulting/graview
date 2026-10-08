@@ -2,7 +2,8 @@ import { labelOf, layer, type AnySchema } from "@graview/core";
 import { retryingImport } from "@graview/core/retry";
 import { aggregateId, kindCardId } from "@graview/layout/view";
 import { lazyModule, useGraviewIfAny } from "@graview/react/provider";
-import { Suspense, useEffect, useRef, useState, type ComponentType } from "react";
+import { Suspense, useEffect, useLayoutEffect, useRef, useState, type ComponentType, type RefObject } from "react";
+import { askPlace } from "./ask-place.js";
 import { useLocation, useNavigate } from "react-router-dom";
 import { kindOfSlug, recordPath } from "./registry.js";
 import type { PageContext } from "./pages.js";
@@ -40,11 +41,15 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const here = useGraviewIfAny<S>();
+  const button = useRef<HTMLButtonElement | null>(null);
+  const drawer = useRef<HTMLDivElement | null>(null);
+  useInsideItsEmbed(button, drawer, open, here !== undefined);
   if (!here) return null;
   return (
     <>
       <RouteSubject context={context} />
       <button
+        ref={button}
         type="button"
         data-testid="page-ask"
         // At the foot: a notice placed there stands above it (FR-133).
@@ -77,6 +82,7 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
       </button>
       {open ? (
         <div
+          ref={drawer}
           data-testid="page-ask-drawer"
           /*
            * The scene's companion positions itself inside the scene's box;
@@ -109,6 +115,68 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
       ) : null}
     </>
   );
+}
+
+/**
+ * IN AN EMBED, THE ASK AND ITS DRAWER STAY IN THE EMBED'S BOX (see
+ * `ask-place.ts`): placed from that box as it shows on the screen, again as
+ * the host's page scrolls or the box changes size, and put away while too
+ * little of it shows. A face that is the whole page keeps the window's foot.
+ */
+function useInsideItsEmbed(button: RefObject<HTMLButtonElement | null>, drawer: RefObject<HTMLDivElement | null>, open: boolean, drawn: boolean) {
+  useLayoutEffect(() => {
+    const ask = button.current;
+    const box = ask?.parentElement?.closest<HTMLElement>("[data-embed-content]");
+    if (!ask || !box) return;
+    const place = () => {
+      const size = ask.getBoundingClientRect();
+      const at = askPlace(box.getBoundingClientRect(), { width: document.documentElement.clientWidth || innerWidth, height: innerHeight }, { width: size.width, height: size.height });
+      const viewHeight = innerHeight;
+      ask.style.left = `${at.button.left}px`;
+      ask.style.bottom = `${at.button.bottom}px`;
+      ask.style.visibility = at.shown ? "" : "hidden";
+      /*
+       * FIXED TO WHAT HOLDS IT, which is not always the window: a host that
+       * animates its stage with a transform (graview.dev's hero) makes that
+       * stage the box "fixed" is measured from, and the Ask stood on the
+       * caption under it. Where it landed is read back and the difference
+       * taken off.
+       */
+      const landed = ask.getBoundingClientRect();
+      const dx = landed.left - at.button.left;
+      const dy = landed.bottom - (viewHeight - at.button.bottom);
+      if (landed.width > 0 && (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5)) {
+        ask.style.left = `${Math.round(at.button.left - dx)}px`;
+        ask.style.bottom = `${Math.round(at.button.bottom + dy)}px`;
+      }
+      const sheet = drawer.current;
+      if (sheet) {
+        sheet.style.left = `${at.drawer.left}px`;
+        sheet.style.top = `${at.drawer.top}px`;
+        sheet.style.bottom = "auto";
+        sheet.style.height = `${at.drawer.height}px`;
+        sheet.style.width = `${at.drawer.width}px`;
+        sheet.style.visibility = at.shown ? "" : "hidden";
+        const drawn = sheet.getBoundingClientRect();
+        const sx = drawn.left - at.drawer.left;
+        const sy = drawn.top - at.drawer.top;
+        if (drawn.width > 0 && (Math.abs(sx) > 0.5 || Math.abs(sy) > 0.5)) {
+          sheet.style.left = `${Math.round(at.drawer.left - sx)}px`;
+          sheet.style.top = `${Math.round(at.drawer.top - sy)}px`;
+        }
+      }
+    };
+    place();
+    addEventListener("resize", place);
+    addEventListener("scroll", place, true);
+    const grows = typeof ResizeObserver === "function" ? new ResizeObserver(place) : null;
+    grows?.observe(box);
+    return () => {
+      grows?.disconnect();
+      removeEventListener("resize", place);
+      removeEventListener("scroll", place, true);
+    };
+  }, [button, drawer, open, drawn]);
 }
 
 /** The page's own subject, put where every surface reads it: the selection. */
