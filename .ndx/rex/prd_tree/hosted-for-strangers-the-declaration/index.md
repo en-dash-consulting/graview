@@ -9,7 +9,7 @@ tags:
 source: "Nick, 2026-10-02: \"anything you find that should be factored into the graview framework, go ahead and capture those in the graview repo\" — from the Graview Cloud refinement, ../graview-cloud/docs/framework-requirements.md"
 startedAt: "2026-10-03T16:25:57.725Z"
 description: "Graview Cloud (../graview-cloud) is a host of many apps for people who are not us: they make apps from a ChatGPT or Claude conversation, from templates, and share them by URL to work on together, live, with their agents. Reading the framework for it found what one deployment would also want and the framework does not yet have. THE DECLARATION IS CODE: defineApp is a TypeScript module, every host path import()s it, and serveStore re-runs mutation.apply and invariant.evaluate on the server, so a host of strangers' apps would run strangers' code beside other strangers' data. The studio already holds a declaration as a JSON graph and writes act bodies from data; it cannot judge a rule. THE WIRE POLLS: openRemote polls /graview/since every 800 ms; there is no push, no rebase of pending optimistic calls, and concurrent patches are last-writer-wins. THE SEAT IS A HEADER: the default seatOf trusts x-graview-seat and labels every remote caller human, so an agent reaching a served store over graview mcp --remote-url is logged as a person. THE WIRE IS NODE: serveStore is node:http only and MCP is stdio only. POSITION: each item below is a public seam a self-hoster wants too; Cloud carries interim implementations on public APIs (marked INTERIM(FR-xx) there) and deletes them as these land. Out of scope here, and staying in Cloud: tenancy, accounts, OAuth servers, billing, quotas, the multi-app connector. Related and already tracked: 'What a seat may not see never leaves the store' (d6f8b50f), which Cloud needs at critical priority."
-lastModified: "2026-10-07T17:57:47.892Z"
+lastModified: "2026-10-08T11:54:57.388Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
 
@@ -33,6 +33,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A guest view may read across kinds, gets labels, and may attach to the home (FR-85)](./a-guest-view-may-read-across-kinds.md) | completed |
 | [A hardened guest worker runtime: every global outside an allowlist removed before guest code runs (FR-70)](./a-hardened-guest-worker-runtime-every.md) | completed |
 | [A home view from the closed block set: headline, figure and list (FR-81)](./a-home-view-from-the-closed-block-set.md) | completed |
+| [A home view is the front page on a desk too (FR-136)](./a-home-view-is-the-front-page-on-a.md) | pending |
 | [A host can ask up front what the studio will not edit: uneditable(document) (FR-62)](./a-host-can-ask-up-front-what-the.md) | completed |
 | [A host can hand the page a compiled app, so the page no longer carries the compiler (FR-123)](./a-host-can-hand-the-page-a-compiled.md) | completed |
 | [A host can read Graview's shape and type: SHAPE, TYPOGRAPHY and isoShade(scheme) from core (FR-73)](./a-host-can-read-graview-s-shape-and.md) | completed |
@@ -103,6 +104,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Modules reach the host: the enabled set is passed to opened, served and remote stores, and turning one off is in history](./modules-reach-the-host-the-enabled-set.md) | completed |
 | [Named edits for the brand, the name and the subtitle (FR-125)](./named-edits-for-the-brand-the-name-and.md) | completed |
 | [Notices float, and never move the page (FR-133)](./notices-float-and-never-move-the-page.md) | completed |
+| [Old documents keep compiling after the en-US renames (FR-134)](./old-documents-keep-compiling-after-the.md) | pending |
 | [One app bar on every face: the app, its places, and three tools (FR-131)](./one-app-bar-on-every-face-the-app-its.md) | completed |
 | [One guest client, served not copied: a prebuilt classic script and an authoring guide (FR-88)](./one-guest-client-served-not-copied-a.md) | completed |
 | [One place says how many problems there are (FR-122)](./one-place-says-how-many-problems-there.md) | completed |
@@ -130,6 +132,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The companion is a top-level landmark or none, so axe's landmark-complementary-is-top-level holds (FR-40)](./the-companion-is-a-top-level-landmark.md) | completed |
 | [The component kit as remote elements, declared once for both sides (FR-69)](./the-component-kit-as-remote-elements.md) | completed |
 | [The declaration is a document: one JSON object compiles into the same app defineApp declares](./the-declaration-is-a-document-one-json.md) | completed |
+| [The desk bar is one row (FR-135)](./the-desk-bar-is-one-row-fr-135.md) | pending |
 | [The document holds the whole brand: logo, favicon, typography, shape, accents and a preferred scheme (FR-124)](./the-document-holds-the-whole-brand.md) | completed |
 | [The embed has a place for a host's own actions, in the bar's profile menu (FR-72)](./the-embed-has-a-place-for-a-host-s-own.md) | completed |
 | [The embed has one layering system: popovers in the top layer, persistent surfaces on one ladder (FR-76)](./the-embed-has-one-layering-system.md) | completed |
