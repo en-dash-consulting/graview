@@ -1,6 +1,6 @@
 {
   "name": "@graview/skills",
-  "version": "0.1.17",
+  "version": "0.1.16",
   "type": "module",
   "description": "Skills that teach an assistant the authoring moves, each ending in a real graview check verdict.",
   "keywords": [
