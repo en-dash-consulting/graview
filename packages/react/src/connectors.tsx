@@ -14,7 +14,7 @@ import {
 import { channelRoute } from "./channels.js";
 import { parallelOffsets } from "./parallel.js";
 import { altitudeOpacity, drawnBox, measureVisible, onScreen, stackOpacity } from "./where-drawn.js";
-import type { SceneNode } from "./scene-root.js";
+import type { SceneNode } from "./scene-node.js";
 
 /**
  * Where a line toward `towards` should MEET a box: on its border, not at its

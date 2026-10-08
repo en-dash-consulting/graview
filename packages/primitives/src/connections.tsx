@@ -1,7 +1,7 @@
 import { labelOf, nounOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
 import { useGraph, useGraview } from "@graview/react/provider";
 import { Chip } from "./primitives/index.js";
-import { hueFor } from "./default-views.js";
+import { hueFor } from "@graview/render";
 
 /**
  * Everything one edge away from a node, in the schema's own words.

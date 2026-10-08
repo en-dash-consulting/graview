@@ -1,13 +1,12 @@
-import { MONTHS, WEEKDAYS, clock, daysBetween, daysFrom, startOfWeek, weekdayOf } from "./calendar-dates.js";
+import { WEEKDAYS, clock, daysBetween, daysFrom, longDay, startOfWeek, weekdayOf } from "./calendar-dates.js";
 import type { CalendarGrain, PlacedEntry } from "./calendar-options.js";
 import { entriesOn } from "./calendar-placing.js";
 import { type CalendarCell, type CalendarSpan, entriesIn } from "./calendar-spans.js";
-import type { Emphasis } from "./calendar-view.js";
 import { useRef } from "react";
 import { useWidth } from "../primitives/index.js";
 
-export const longDay = (day: string): string =>
-  `${WEEKDAYS[weekdayOf(day)]} ${Number(day.slice(8, 10))} ${MONTHS[Number(day.slice(5, 7)) - 1]!.slice(0, 3)}`;
+/** How a calendar entry stands against the others: as it is, picked out, or set back. */
+export type Emphasis = "plain" | "lit" | "dimmed";
 
 export function Step({ label, glyph, onPress }: { label: string; glyph: string; onPress: () => void }) {
   return (

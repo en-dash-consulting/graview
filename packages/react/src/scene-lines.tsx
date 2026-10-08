@@ -7,7 +7,7 @@ import { kitConnector, useKit } from "./kit.js";
 import { orthogonalPoints, polylineD, routePoint, routedQuadratic } from "./routes.js";
 import { Connectors, connectorStrands, tieRoute } from "./connectors.js";
 import { drawnBox, measureVisible, visibleRect } from "./where-drawn.js";
-import type { SceneNode } from "./scene-root.js";
+import type { SceneNode } from "./scene-node.js";
 import { captionRuns, type CaptionEntry, type CaptionRun } from "./captions.js";
 import { railInset } from "./rails.js";
 

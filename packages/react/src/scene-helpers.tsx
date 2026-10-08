@@ -1,6 +1,6 @@
 import type { Matrix4 } from "@graview/render";
 import { useEffect, useState } from "react";
-import type { SceneNode } from "./scene-root.js";
+import type { SceneNode } from "./scene-node.js";
 
 /**
  * What a click on a view selects.

@@ -14,7 +14,7 @@ import { useGraview } from "./context.js";
 import { joinedFrom, pickedFrom, usePickTargets } from "./picking.js";
 import { WHO } from "./where-drawn.js";
 import { cssTransform, planeShadow } from "./scene-helpers.js";
-import type { SceneNode } from "./scene-root.js";
+import type { SceneNode } from "./scene-node.js";
 
 interface HostProps {
   readonly node: SceneNode;

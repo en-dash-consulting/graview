@@ -136,3 +136,13 @@ export const EMPTY_SYNC_STATE: SyncState = { links: {}, outbox: [] };
 export function systemAuthor(system: string): Author {
   return { kind: "system", id: system };
 }
+
+/** One field, changed on both sides since the last time they agreed. */
+export interface SyncConflict {
+  readonly localId: string;
+  readonly field: string;
+  readonly ours: unknown;
+  readonly theirs: unknown;
+  /** What both sides last agreed it was. */
+  readonly base: unknown;
+}
