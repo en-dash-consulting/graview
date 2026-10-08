@@ -1,6 +1,7 @@
 import type { IntelligenceConfig } from "@graview/tools";
 import { useGraview } from "@graview/react/provider";
 import type { CSSProperties } from "react";
+import { choiceStyle } from "./choice.js";
 
 /*
  * THE LADDER, AS ONE ROW IN THE PROFILE. Which rung answers the chat —
@@ -57,16 +58,9 @@ export function LadderSetting() {
               title={rung.why}
               onClick={() => chooseIntelligence({ ...intelligence, source: rung.value })}
               style={{
-                minHeight: 24,
-                padding: "3px 10px",
-                borderRadius: 999,
-                fontSize: "0.875rem",
-                borderWidth: 1,
-                borderStyle: "solid",
-                // The one chosen wears the capsule — it is the setting's state; the others are words to choose (FR-117).
-                borderColor: chosen ? "var(--graview-accent)" : "transparent",
-                color: chosen ? "var(--graview-accent)" : "var(--graview-ink-muted)",
-                background: chosen ? "var(--graview-panel)" : "transparent",
+                ...choiceStyle(chosen),
+                // The others are words to choose; the one chosen is pressed, as the bar's switch is (FR-117, FR-137).
+                borderColor: "transparent",
               }}
             >
               {rung.label}

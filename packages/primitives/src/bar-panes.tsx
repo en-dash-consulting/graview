@@ -1,5 +1,6 @@
 import { humanizeField, type AnySchema, type AnyGraphNode, type Violation } from "@graview/core";
 import { useGraview } from "@graview/react/provider";
+import { choiceStyle } from "./choice.js";
 import { LadderSetting } from "./ladder.js";
 import type { HostAction } from "./profile.js";
 import { Seats } from "./seats.js";
@@ -216,22 +217,7 @@ export function ProfilePane<S extends AnySchema>({
                           aria-pressed={chosen}
                           data-testid={`setting-${setting.name}-${option.value}`}
                           onClick={() => chooseSetting(setting.name, option.value)}
-                          style={{
-                            /*
-                             * 24px tall, like every other control the audit
-                             * counts — a setting for people who find the
-                             * text small must not itself be a small target.
-                             */
-                            minHeight: 24,
-                            padding: "3px 10px",
-                            borderRadius: 999,
-                            fontSize: "0.875rem",
-                            borderWidth: 1,
-                            borderStyle: "solid",
-                            borderColor: chosen ? "var(--graview-accent)" : "var(--graview-edge)",
-                            color: chosen ? "var(--graview-accent)" : "var(--graview-ink-muted)",
-                            background: chosen ? "var(--graview-panel)" : "transparent",
-                          }}
+                          style={choiceStyle(chosen)}
                         >
                           {option.label}
                         </button>
@@ -254,17 +240,7 @@ export function ProfilePane<S extends AnySchema>({
                   aria-pressed={scheme === candidate}
                   data-testid={`profile-scheme-${candidate}`}
                   onClick={() => onScheme(candidate)}
-                  style={{
-                    minHeight: 24,
-                    padding: "3px 10px",
-                    borderRadius: 999,
-                    fontSize: "0.875rem",
-                    borderWidth: 1,
-                    borderStyle: "solid",
-                    borderColor: scheme === candidate ? "var(--graview-accent)" : "var(--graview-edge)",
-                    color: scheme === candidate ? "var(--graview-accent)" : "var(--graview-ink-muted)",
-                    background: scheme === candidate ? "var(--graview-panel)" : "transparent",
-                  }}
+                  style={choiceStyle(scheme === candidate)}
                 >
                   {candidate === "light" ? "☀ Light" : "☾ Dark"}
                 </button>

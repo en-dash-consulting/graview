@@ -94,7 +94,7 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
           {link("/problems", "Problems", <span className="ln-n">{problems}</span>, problems > 0)}
         </nav>
         <PageFind context={context} narrowsLists={false} />
-        <a className="ln-link" href={context.sceneHref ?? "/"}>Overview ↗</a>
+        <a className="ln-link" href={context.sceneHref ?? "/"}>In the scene ↗</a>
         {context.remembers ? (
           <span className="ln-quiet" style={{ display: "inline-flex", gap: "0.5rem", alignItems: "center" }}>
             <span data-testid="remembered">Remembered here.</span>

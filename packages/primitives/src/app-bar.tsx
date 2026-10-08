@@ -136,6 +136,7 @@ const BAR_CSS = `
 .graview-bar-home{gap:8px;min-height:30px;padding:0;letter-spacing:-.005em;overflow-wrap:anywhere}
 .graview-bar-faces{display:inline-flex;flex:0 0 auto;box-sizing:border-box;height:30px;margin:0;padding:2px;gap:2px;border:1px solid var(--graview-edge);border-radius:8px}
 .graview-bar-face{gap:6px;padding:0 10px;border-radius:6px;font-size:.8125rem;white-space:nowrap;color:var(--graview-ink-muted)}
+.graview-bar-face span{min-width:0;max-width:11em;overflow:hidden;text-overflow:ellipsis}
 .graview-bar-face[aria-pressed=true]{color:var(--graview-ink);font-weight:600;background:color-mix(in srgb,var(--graview-accent) 16%,transparent)}
 .graview-bar-mid{display:flex;flex:1 1 auto;min-width:0}
 .graview-bar-place-at{position:relative;display:inline-flex;min-width:0;max-width:100%}

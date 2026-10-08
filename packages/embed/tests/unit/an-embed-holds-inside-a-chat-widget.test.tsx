@@ -218,6 +218,23 @@ describe("an embed narrower than its scene", () => {
     await act(async () => root.querySelector<HTMLElement>("[data-testid='app-face-scene']")!.click());
     expect(root.getAttribute("data-graview-embed")).toBe("graview");
   });
+
+  it("goes back to the pages there on the switch, and keeps the host's face for when there is room (FR-137)", async () => {
+    geometry.width = 360;
+    const told: string[] = [];
+    const { root, handle } = await mounting({ seed, face: "graview", pagesBelow: 560, onNavigate: (path) => told.push(path) });
+    await act(async () => root.querySelector<HTMLElement>("[data-testid='app-face-scene']")!.click());
+    expect(root.getAttribute("data-graview-embed")).toBe("graview");
+    await act(async () => root.querySelector<HTMLElement>("[data-testid='app-face-pages']")!.click());
+    expect(root.getAttribute("data-graview-embed")).toBe("pages");
+    expect(root.querySelector("[data-testid='app-face-pages']")!.getAttribute("aria-pressed")).toBe("true");
+    // The pages stood in for the scene; the host asked for the Graview, and gets it back with room.
+    expect(handle.where().face).toBe("graview");
+    geometry.width = 900;
+    await act(async () => FakeResizeObserver.fire());
+    expect(root.getAttribute("data-graview-embed")).toBe("graview");
+    expect(told.at(-1)).toBe("/");
+  });
 });
 
 describe("an embed over a remote store", () => {

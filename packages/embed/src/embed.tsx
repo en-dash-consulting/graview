@@ -297,7 +297,10 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
    * is the home's when there is a home view, whatever face the host names:
    * the host is told the pages (`onFace`), as if the reader had pressed it.
    */
-  const routed = { ...(props.routing ? { routing: props.routing } : {}), ...(props.basePath === undefined ? {} : { basePath: props.basePath }) };
+  const based = props.basePath === undefined ? {} : { basePath: props.basePath };
+  // The app's own address for a path within it, under address routing.
+  const addressAt = (path: string) => addressOf(path, based);
+  const routed = { ...(props.routing ? { routing: props.routing } : {}), ...based };
   const [opened] = useState<EmbedFace>(() => {
     const given = props.at?.face;
     if (given) return given;
@@ -353,6 +356,9 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   const [overviewAsked, setOverviewAsked] = useState(false);
   const narrow = props.pagesBelow !== undefined && width !== null && width < props.pagesBelow && (face === "scene" || face === "graview") && !overviewAsked;
   const shown: EmbedFace = narrow ? "pages" : face;
+  // Whether the scene drawn is one the reader asked for where the pages stand in for it.
+  const standsAside = useRef(false);
+  standsAside.current = overviewAsked && props.pagesBelow !== undefined && width !== null && width < props.pagesBelow && (face === "scene" || face === "graview");
   if (whereabouts) whereabouts.shown = shown;
   // The scene's face the reader was last on, to go back to from a page: the Graview at altitude, or the scene.
   const sceneFace = useRef<EmbedFace>(face === "graview" ? "graview" : "scene");
@@ -367,7 +373,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     if (!address || typeof window === "undefined" || shown === "pages" || shown === "picture") return;
     const { pathname, search, hash } = window.location;
     if (pathWithin(pathname, props.basePath) !== "/") return;
-    window.history.replaceState(window.history.state, "", `${addressOf(OVERVIEW_PATH, props.basePath === undefined ? {} : { basePath: props.basePath })}${search}${hash}`);
+    window.history.replaceState(window.history.state, "", `${addressAt(OVERVIEW_PATH)}${search}${hash}`);
   });
   useIntrinsicHeight(rootRef, shown, props.onIntrinsicHeight);
   const report = useErrorReport(props.onError, shown);
@@ -418,7 +424,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     setOverviewStop(stop);
     if (face === "scene" || face === "graview") {
       // Narrow, the scene was standing aside for the pages: the reader asked for it.
-      if (address) window.history.pushState(null, "", `${addressOf(OVERVIEW_PATH, props.basePath === undefined ? {} : { basePath: props.basePath })}${stop ?? ""}`);
+      if (address) window.history.pushState(null, "", `${addressAt(OVERVIEW_PATH)}${stop ?? ""}`);
       else told.current?.(OVERVIEW_PATH, "push");
       return;
     }
@@ -431,12 +437,19 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     }
     pagesAt.current.path = path;
     setPageAt(path);
+    if (standsAside.current) {
+      // Narrow, the pages stand in for the host's face again: the scene was the reader's ask, and the host's face is kept for when there is room.
+      setOverviewAsked(false);
+      if (address) window.history.pushState(null, "", addressAt(path));
+      else told.current?.(path, "push");
+      return;
+    }
     toFace("pages", path);
-  }, [steering, setPageAt, toFace]);
+  }, [steering, setPageAt, toFace, address, props.basePath]);
   const barPlacesHere = barPlaces({ store: store as never, principal, views: views as never });
   const arrangement = (views as ReactViewRegistry<S>).arrangement?.();
   const onPages = shown === "pages";
-  const hrefOf = address ? (path: string) => addressOf(path, props.basePath === undefined ? {} : { basePath: props.basePath }) : undefined;
+  const hrefOf = address ? addressAt : undefined;
 
   /*
    * THE EMBED IS ITSELF A LANDMARK.

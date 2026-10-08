@@ -267,9 +267,13 @@ export const PagesSpec = z.looseObject({
   order: z.optional(z.array(z.string())),
   hide: z.optional(z.array(z.string())),
   first: z.optional(z.string()),
-  /* What the bar's switch calls the scene and the pages (FR-137); "Scene" and "Pages" when unsaid. */
-  scene: z.optional(z.string().check(z.minLength(1), z.maxLength(24))),
-  pages: z.optional(z.string().check(z.minLength(1), z.maxLength(24))),
+  /*
+   * What the bar's switch calls the scene and the pages (FR-137); "Scene" and "Pages" when unsaid.
+   * At most 40 characters, as `pages.overview` was (FR-132), which a stored document says for `scene`
+   * (RESPELLED): a respelling never narrows what the key may hold. The bar cuts a long word, whole on hover.
+   */
+  scene: z.optional(z.string().check(z.minLength(1), z.maxLength(40))),
+  pages: z.optional(z.string().check(z.minLength(1), z.maxLength(40))),
 });
 
 export const DocumentSpec = z.strictObject({

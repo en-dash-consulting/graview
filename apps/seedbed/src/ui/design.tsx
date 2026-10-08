@@ -167,7 +167,7 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
           {garden.growing.length} growing, {garden.past.length} past, {garden.gardeners.length} {garden.gardeners.length === 1 ? "gardener" : "gardeners"}.
           <br />
           <a href={sceneHref} className="sb-scene" title="The whole garden at once, drawn as a map">
-            Overview ↗
+            In the scene ↗
           </a>
         </p>
       </aside>

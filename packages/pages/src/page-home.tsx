@@ -2,6 +2,7 @@ import { isCurrent, type AnySchema } from "@graview/core";
 import type { ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link } from "react-router-dom";
+import { HomeLine } from "@graview/primitives/pages";
 import { kindMap } from "./facts.js";
 import { pluralSlug } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
@@ -95,16 +96,21 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   const HomeView = context.views?.homeView?.() as ComponentType<ViewProps<S>> | undefined;
   const anything = (store.schema.kinds as readonly string[]).some((kind) => store.graph.nodesOfKind(kind as never).length > 0);
   if (HomeView && anything) {
+    const line = brand?.subtitle ? <p style={{ ...quiet, margin: 0 }} data-testid="app-subtitle">{brand.subtitle}</p> : null;
+    // A home written as blocks says the app's line under its own headline (`HomeLine`); any other home view, over it.
+    const placesItsLine = (HomeView as unknown as Record<symbol, unknown>)[Symbol.for("graview.home-blocks")] === true;
     return (
       <PageMain context={context} style={wide}>
         <div style={{ display: "grid", gap: 12 }} data-testid="home-view">
-          {brand?.subtitle ? <p style={{ ...quiet, margin: 0 }} data-testid="app-subtitle">{brand.subtitle}</p> : null}
+          {placesItsLine ? null : line}
           {violations.length > 0 ? (
             <Link to="/problems" style={{ ...link, color: "var(--graview-warn)" }}>
               {seeWhatIsBroken}
             </Link>
           ) : null}
-          <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} />
+          <HomeLine.Provider value={placesItsLine ? line : null}>
+            <HomeView cardinality="many" fidelity="full" mode="fullscreen" selected={false} />
+          </HomeLine.Provider>
         </div>
       </PageMain>
     );

@@ -87,7 +87,7 @@ const HomeArriving = lazy(() => fetchHomeView().then(() => ({ default: HomeDrawn
 
 /** The home view (FR-81) behind a door, fetched when the home first draws it. */
 function homeDoor<S extends AnySchema>(blocks: readonly unknown[]): ViewComponent<S> {
-  return (view: ViewProps<S>) => {
+  const door = (view: ViewProps<S>) => {
     const [here] = useState(() => home !== undefined);
     const props: HomeDoorProps = { blocks, view: view as unknown as ViewProps<AnySchema> };
     return here ? (
@@ -98,6 +98,13 @@ function homeDoor<S extends AnySchema>(blocks: readonly unknown[]): ViewComponen
       </Suspense>
     );
   };
+  /*
+   * A home written as blocks says the app's line itself, under its own
+   * headline (`HomeLine`, FR-131). The mark is read by `Symbol.for`, so the
+   * routed face's home asks without importing anything of this.
+   */
+  Object.defineProperty(door, Symbol.for("graview.home-blocks"), { value: true });
+  return door;
 }
 
 /**
