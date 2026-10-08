@@ -57,8 +57,13 @@ entries import nothing of the framework, so a guest bundle carries none of it.
 `GuestProps` is the plain-data half of `ViewProps` — `node`, `nodes`, the
 `edges` among them, `label`, `fidelity`, `cardinality`, `mode`, `selected`,
 `implicated`, `flagged` — and `acts`, the acts the viewer may run. A record
-the viewer may not see is in none of them. Every record's `label` is
-filled as the host labels it, and `theme` and `places` are the app's.
+the viewer may not see is in none of them. A record is plain data: its
+`id`, `kind` and `label`, and each of its fields on it by name — a
+deliverable's draft is `node.draft`, its status `node.status` — with no
+`fields` key. A view of one record finds it in `node`; `nodes` are the
+members of a view of many, and the records a view reads beyond its own.
+Every record's `label` is filled as the host labels it, and `theme` and
+`places` are the app's.
 
 ### What a frame guest reads, its look, and its place
 
@@ -294,7 +299,16 @@ none of it, and a kind it did not ask to read is not handed to it however
 visible. Every record's `label` is filled as the host labels it — for a
 frame guest too. A titled view is a named place on the Graview face and
 the pages face, by its title; whatever the registry drew for that kind
-before is drawn if the view fails. With `attach: "home"`,
+before is drawn if the view fails. A view of one record (`cardinality:
+"one"`) is drawn above the record's own fields, which stay editable: on
+the scene the record drawn at full is the view and then the record's
+fields, each editable where an act writes it; on Pages the record's page
+is its heading, the view, then its facts and what can be done (FR-149).
+With `replaces: "page"` in its manifest it is drawn alone in their place —
+on the scene the view only, on Pages the view under the heading with what
+is wrong and what has happened — and the record is then changed only
+through what the view offers. `checkManifest` refuses `replaces` on a view
+of many or of the home. With `attach: "home"`,
 `registerWorkerView` makes it the home's own view (FR-81). That is the
 routed home's body — the page the app opens on, full width on a desk as on
 a phone (FR-136) — in place of the home the app declared, which is drawn if the view fails.
@@ -338,6 +352,36 @@ until the viewer empties it; a `change` a browser raises when such a field
 loses focus is not typing; a view that says back what a field shows, or
 empties it, takes nothing away. Either way an act is applied as the viewer,
 `via: "view:<name>"`, within the view's allowance, and undoable.
+
+A view cannot fill a field, so to offer a record's own text to change —
+a three-thousand-character draft — it asks the host to (FR-150):
+
+```html
+<fieldset data-record="deliverable:email">
+  <textarea name="draft" data-prefill="draft"></textarea>
+  <button data-act="set-draft">Save the draft</button>
+</fieldset>
+```
+
+After each batch the view draws, the host fills an empty `input` or
+`textarea` whose `data-prefill` and `name` name the same field with that
+field of its bound record (`data-record` on it or around it, else the one
+record the acts in its `fieldset` are bound to), read through the viewer's
+sight, whole and with its line breaks — when the record is one the view
+was shown, and an act in the `fieldset` is named in the manifest, is done
+to that record, takes the field, writes it (`writes`, or `fieldsWrittenBy`'s
+reading), writes no other record's fields (`writesOther`), and may be run
+there by this viewer (`store.permits`). Otherwise the field stays empty;
+a seat that may not write the field is never handed it to edit. The value
+filled is the viewer's, as if typed, and what they type after it is
+theirs; but a press carries it only to an act that writes that field of
+that record (`writesBack`), and any other press carrying it is refused
+`untyped`. A field the view drew words into, or writes into after the
+host filled it, is the view's, as ever. Nothing leaks by it: the value is
+a field of a record the view was already shown, and it can only be saved
+back where it came from, by an act the viewer may run there.
+`prefillOf(store, principal, manifest, shown, { record, field, acts })`
+(from `@graview/guest/host/views`) is the judgment.
 
 ### Links stay in the app
 

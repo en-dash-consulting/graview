@@ -1,6 +1,6 @@
 import type { AnySchema } from "@graview/core";
-import { createViews, useGraview, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
-import { createContext, useContext, type ReactNode } from "react";
+import { createViews, DefaultDrawnElsewhere, useGraview, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { useContext, type ReactNode } from "react";
 import { registerDefaultViews } from "./default-views.js";
 
 /*
@@ -27,9 +27,11 @@ export function defaultViewsOf<S extends AnySchema>(schema: S): ReactViewRegistr
 /**
  * Where the default for a cell is already drawn by the surface around a
  * view: the pages face's record page is the framework's own record, so a
- * page view that wraps the default draws only what it adds there.
+ * page view that wraps the default draws only what it adds there. The
+ * context is `@graview/react`'s, so a view drawn by a package that does not
+ * import this one — a worker view of one record (FR-149) — reads it too.
  */
-const ELSEWHERE = createContext(false);
+const ELSEWHERE = DefaultDrawnElsewhere;
 
 /** Marks the views inside as drawn where the surface itself is the default. */
 export function DefaultViewElsewhere({ children }: { readonly children: ReactNode }) {

@@ -15,7 +15,8 @@ export type { PointerStore, ScenePoint } from "./pointer.js";
 export { applySettings, honorSetting, loadSetting, rememberSetting } from "./settings.js";
 export type { ReaderMemory } from "./settings.js";
 
-export { createViews, DEFAULT_VIEW, isDefaultView, layerViews, markDefaultView } from "./view-registry.js";
+export { createViews, DEFAULT_VIEW, isDefaultView, layerViews, markDefaultView, markReplacesPage, REPLACES_PAGE, replacesPage } from "./view-registry.js";
+export { DefaultDrawnElsewhere } from "./default-elsewhere.js";
 export { ErrorReportContext } from "./error-report.js";
 export type { ErrorReport } from "./error-report.js";
 export { ViewBoundary } from "./view-boundary.js";

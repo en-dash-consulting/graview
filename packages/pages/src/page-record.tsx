@@ -1,6 +1,6 @@
 import { describeNode, humanizeField, isWithheld, type AnySchema } from "@graview/core";
 import { DefaultViewElsewhere } from "@graview/primitives/pages";
-import { isDefaultView, type ViewProps } from "@graview/react/provider";
+import { isDefaultView, replacesPage, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useRef, useState } from "react";
@@ -80,6 +80,13 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    */
   const ownPage = context.views?.lookup(facts.kind, { cardinality: "one", fidelity: "full" });
   const PageView = ownPage !== undefined && !isDefaultView(ownPage) ? (ownPage as ComponentType<ViewProps<S>>) : undefined;
+  /*
+   * A view that says it IS the record's page (FR-149: a worker view whose
+   * manifest says `replaces: "page"`) is drawn alone under the heading,
+   * with what is wrong and what has happened: no facts, no links, nothing
+   * to be done but what it offers. Any other view sits above all of those.
+   */
+  const whole = PageView !== undefined && replacesPage(ownPage);
 
   return (
     <PageMain context={context}>
@@ -150,7 +157,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         </section>
       ) : null}
 
-      {facts.fields.length > 0 ? (
+      {!whole && facts.fields.length > 0 ? (
         <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="record-fields">
           <h2 style={h2}>The facts</h2>
           <dl
@@ -171,7 +178,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         </section>
       ) : null}
 
-      {facts.links.map((group) => (
+      {(whole ? [] : facts.links).map((group) => (
         <section key={`${group.edgeKind}|${group.direction}`} style={{ ...rule, display: "grid", gap: 10 }}>
           {/*
             * THE EYEBROW SAYS WHAT IS LISTED, NOT WHICH WAY THE EDGE WAS
@@ -227,7 +234,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         </section>
       ))}
 
-      {offered.length > 0 || facts.actions.withheld.length > 0 ? (
+      {!whole && (offered.length > 0 || facts.actions.withheld.length > 0) ? (
         <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="record-actions">
           <h2 style={h2} ref={actsHeading} tabIndex={-1}>What can be done</h2>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>

@@ -4,7 +4,7 @@ import { checkManifest, workerViewProps, type WorkerViewManifest } from "./manif
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
-import { judgeCodeAct } from "./writes.js";
+import { judgeCodeAct, prefillOf } from "./writes.js";
 import { createDrawBudget } from "./draw-budget.js";
 import { checkViewSource, viewScript } from "./view-source.js";
 import { createLinks, type Destination } from "./links.js";
@@ -349,12 +349,15 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   };
   /* The host's own time drawing the view, at most `drawMs` of any second (draw-budget.ts): past it, the view is slow. */
   const budget = createDrawBudget(limits.drawMs, () => clock.now());
+  /* The fields the view marked `data-prefill`, filled by the host from the record after each batch it draws (FR-150, press.ts). */
+  let refill = () => {};
   const draw = (one: ["render", unknown] | ["style", string]) => {
     if (failed) return;
     if (!drawing) return void waiting.push(one);
     const live = drawing;
     const within = budget.draw((spent) => (one[0] === "render" ? live.apply(one[1], spent) : (live.style(one[1]), true)));
-    if (!within) fail("slow");
+    if (!within) return fail("slow");
+    if (one[0] === "render") refill();
   };
   /* Links stay in the app (FR-93): a record the viewer may see, or a place the app has. */
   const links = createLinks({
@@ -365,9 +368,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
 
   /* The records the view was last shown: a press may be bound to one of these, and to nothing else (FR-92). */
   let shown: ReadonlySet<string> = new Set();
-  void Promise.all([import("./open-draw.js"), import("./press.js")]).then(([{ createOpenDrawing }, { createPressReader, judgePress }]) => {
+  void Promise.all([import("./open-draw.js"), import("./press.js")]).then(([{ createOpenDrawing }, { createPressReader, fillPrefills, judgePress }]) => {
     if (failed) return;
     const reader = createPressReader();
+    const prefilled = new WeakSet<Element>();
+    refill = () => fillPrefills(shadow, reader, prefilled, (asked) => prefillOf(options.store, options.principal, manifest, shown, asked));
     drawing = createOpenDrawing(shadow, {
       origin: options.origin ?? window.location.origin,
       ...(options.limits?.maxNodes !== undefined ? { maxNodes: options.limits.maxNodes } : {}),
