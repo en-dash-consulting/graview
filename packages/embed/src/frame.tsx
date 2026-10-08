@@ -546,8 +546,21 @@ export const titleBelow = (heading: 1 | 2 | 3 | 4 | 5 | 6 | false): 2 | 3 | 4 | 
 export function useSteering(initial: string) {
   const [at, setAt] = useState(initial);
   const go = useRef<((path: string) => void) | undefined>(undefined);
-  const steering = useMemo(() => ({ go, at: setAt }), []);
-  return { at, setAt, steering };
+  const pending = useRef<string | undefined>(undefined);
+  const steering = useMemo(() => ({ go, at: setAt, pending }), []);
+  /*
+   * Sends the routed face to a path, or, while it is still arriving (FR-140:
+   * fetched as it is first drawn), keeps the path for it to go to as it does.
+   */
+  const steer = useCallback((path: string) => {
+    if (go.current) {
+      go.current(path);
+      return;
+    }
+    pending.current = path;
+    setAt(path);
+  }, []);
+  return { at, setAt, steering, steer };
 }
 
 /** An error as a host may keep it: its class, and nothing it says. */

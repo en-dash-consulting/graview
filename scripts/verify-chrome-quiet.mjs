@@ -125,6 +125,8 @@ const PROBE = process.argv.includes("--probe");
 const ONLY_NOTICES = process.argv.includes("--notices");
 /** `--boxes`: only the bar in boxes on a desk (the bar fits its box). */
 const ONLY_BOXES = process.argv.includes("--boxes");
+/** `--picks`: only a pick made the moment the place list opens (FR-140). */
+const ONLY_PICKS = process.argv.includes("--picks");
 /** What a notice says here: a sentence as long as a real change's, which must wrap on a phone rather than be cut. */
 const LONG_VENDOR = "Could Val lead the Thursday tasting while Sam is away for the fortnight";
 const ORG = resolve(repoRoot, "scripts/fixtures/quiet/org.gdd.json");
@@ -157,6 +159,8 @@ const SHORT_BOXES = [480, 640, 720];
 const PLACE_LETTERS = 10;
 /* Down to this box the bar is one row of at most 48 px. */
 const ONE_ROW_FROM = 480;
+/* FR-140: the fresh pages a pick is made on at once, two picks each. */
+const PICK_PAGES = 10;
 
 /** A wide display face every engine here has on macOS, with wide fallbacks: an average letter well over the 7.1 px the marquee was estimated at. */
 const WIDE_FONT = '"Arial Black", "Verdana", "DejaVu Sans", sans-serif';
@@ -396,7 +400,7 @@ function measure() {
 const BAR_HELPERS = `${[barControls, linesOf, theSwitch, saysOverview].map(String).join("\n")}\nObject.assign(window, { barControls, linesOf, theSwitch, saysOverview });`;
 const host = await buildHost();
 const errors = [];
-const results = { boxes: [], boxSwitches: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [] };
+const results = { quickPicks: [], boxes: [], boxSwitches: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -421,6 +425,23 @@ try {
           const link = links.find(said);
           return link ? new URL(link.getAttribute("href"), location.href).pathname.replace(/^.*(\/places\/)/, "$1") : null;
         }, title);
+
+      /*
+       * ---- FR-140: the place list is ready when it opens. From the scene on a desk: Pages, the list, an entry, with no
+       * pause between them — on a fresh page, while the routed face is still being fetched; then Scene and the same again,
+       * which once handed the pick to the router of the last time Pages was drawn. Ten pages, twenty picks, in the first scheme.
+       */
+      if (scheme === SCHEMES[0] && !ONLY_NOTICES && !ONLY_BOXES) {
+        for (let trial = 0; trial < PICK_PAGES; trial++) {
+          const { page, close } = await open("doc=vendors&face=graview", DESK);
+          results.quickPicks.push({ engine, trial, first: true, ...(await pickAtOnce(page, "kind:vendor", "Vendors")) });
+          await page.locator('[data-testid="app-face-scene"]').click();
+          await page.waitForFunction(() => document.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed") === "true");
+          results.quickPicks.push({ engine, trial, first: false, ...(await pickAtOnce(page, "home", "Home")) });
+          await close();
+        }
+      }
+      if (ONLY_PICKS) continue;
 
       /* ---- The bar fits its box: in boxes on a desk, and on whole pages, both faces, a long name and a short one */
       if (!ONLY_NOTICES) {
@@ -738,6 +759,10 @@ try {
     seen: [...results.bars, ...results.deskBars].filter((one) => one.saysOverview.length > 0).map(({ engine, scheme, doc, places, face, viewport, saysOverview }) => ({ engine, scheme, doc: doc ?? `workshop, ${places} places`, face, viewport, saysOverview })),
     ok: results.bars.length > 0 && results.deskBars.length > 0 && [...results.bars, ...results.deskBars].every((one) => one.saysOverview.length === 0),
   };
+  report.checks.aPickMadeTheMomentTheListOpensGoesToItsPlace = {
+    seen: results.quickPicks,
+    ok: results.quickPicks.length === engines.length * PICK_PAGES * 2 && results.quickPicks.every((one) => one.landed),
+  };
   report.checks.theSceneAndAListAreOnePressOnTheSwitchApart = {
     seen: results.switchPresses,
     ok: results.switchPresses.length === engines.length * SCHEMES.length * 2 && results.switchPresses.every((one) => one.toList && one.toScene && one.sceneMarked && one.backToTheList && one.pagesMarked && one.byKeyboard && !one.onBody),
@@ -829,6 +854,9 @@ try {
   if (!ONLY_NOTICES) Object.assign(report.checks, BOX_CHECKS);
   if (ONLY_NOTICES) {
     for (const name of Object.keys(report.checks)) if (!/Notice|WayBack/.test(name)) delete report.checks[name];
+  }
+  if (ONLY_PICKS) {
+    for (const name of Object.keys(report.checks)) if (name !== "aPickMadeTheMomentTheListOpensGoesToItsPlace") delete report.checks[name];
   }
   if (ONLY_BOXES) {
     for (const name of Object.keys(report.checks)) if (!(name in BOX_CHECKS)) delete report.checks[name];
@@ -1025,6 +1053,32 @@ function theRow() {
     switch: theSwitch(header),
     saysOverview: saysOverview(root),
   };
+}
+
+/**
+ * A PICK MADE AT ONCE (FR-140): Pages, the place list and an entry pressed
+ * one after another with no pause, then the routed face waited for — not a
+ * timer, its own page: the place's heading (a list's) or the bar saying the
+ * place with no list's heading under it (the home) — for up to 5 s.
+ */
+async function pickAtOnce(page, key, label) {
+  await page.locator('[data-testid="app-face-pages"]').click();
+  await page.locator('[data-testid="app-places-open"]').click();
+  await page.locator(`[data-testid="app-place-${key}"]`).click();
+  const landed = await page
+    .waitForFunction(
+      ({ key, label }) => {
+        const said = document.querySelector('[data-testid="app-place-current"]')?.textContent.trim();
+        const heading = document.querySelector("[data-embed-content] h2")?.textContent.trim().toLowerCase();
+        return key === "home" ? said === label && heading !== undefined && heading !== "vendors" : heading === label.toLowerCase();
+      },
+      { key, label },
+      { timeout: 5000 },
+    )
+    .then(() => true)
+    .catch(() => false);
+  const at = await page.evaluate(() => ({ said: document.querySelector('[data-testid="app-place-current"]')?.textContent.trim() ?? null, heading: document.querySelector("[data-embed-content] h2")?.textContent.trim() ?? null }));
+  return { asked: label, landed, ...at };
 }
 
 /**

@@ -341,7 +341,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     told.current?.(path, how);
   }, []);
   // Where the routed face is, said by its router as it moves, for the bar's tabs (FR-131).
-  const { at: pageAt, setAt: setPageAt, steering } = useSteering(pagesAt.current.path);
+  const { at: pageAt, setAt: setPageAt, steering, steer } = useSteering(pagesAt.current.path);
   const whereabouts = useContext(Whereabouts);
   if (whereabouts) whereabouts.pages = () => pagesAt.current.path;
   const toggled = useRef<((face: EmbedFace, path?: string, stop?: string) => void) | undefined>(undefined);
@@ -432,7 +432,9 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   }, [address, face, props.basePath, toFace]);
   const toPage = useCallback((path: string) => {
     if (latest.current.shown === "pages") {
-      steering.go.current?.(path);
+      // The face may still be arriving: the path waits for it (FR-140).
+      if (!steering.go.current) pagesAt.current.path = path;
+      steer(path);
       return;
     }
     pagesAt.current.path = path;
@@ -445,7 +447,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
       return;
     }
     toFace("pages", path);
-  }, [steering, setPageAt, toFace, address, props.basePath]);
+  }, [steering, steer, setPageAt, toFace, address, props.basePath]);
   const barPlacesHere = barPlaces({ store: store as never, principal, views: views as never });
   const arrangement = (views as ReactViewRegistry<S>).arrangement?.();
   const onPages = shown === "pages";

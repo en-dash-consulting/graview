@@ -89,7 +89,8 @@ export const FACE_DOORS = {
  * 586 278 bytes (572.5 KB), 2 382 more: the bar's rules 1.0 KB, weighing
  * whether the switch's words fit 0.9 KB, the shortcut and the slot 0.5 KB.
  * The claim rises by that: 572.8 KB, which leaves Cloud's shell 22.2 KB
- * under its 595.
+ * under its 595. FR-140 (a pick kept for the routed face until it listens)
+ * took it to 586 433 bytes (572.7 KB), inside the claim.
  */
 export const HOSTED_PAGE_BUDGET = { minified: 572.8 * 1024, zod: 150 * 1024 };
 
@@ -169,9 +170,12 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * (above); the claim rises by that: 526.5 KB. The review after 0.1.16
  * left it at 539 006 bytes (526.4 KB), as above. The bar fitting its box
  * took it from 539 090 to 541 472 bytes (528.8 KB), the same 2 382 as the
- * page that compiles (above); the claim rises by that: 528.8 KB.
+ * page that compiles (above); the claim rises by that: 528.8 KB. A pick
+ * made the moment the place list opens going to its place (FR-140: a path
+ * asked for before the routed face listens, kept for it) took it to
+ * 541 627 bytes (528.9 KB), 155 more; the claim rises by that: 529.0 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 528.8 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 529 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [
