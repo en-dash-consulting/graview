@@ -35,7 +35,7 @@ const store = () =>
 
 (Element.prototype as { scrollTo?: unknown }).scrollTo = () => {};
 
-async function mounted(view: ViewState, onView?: (next: ViewState) => void) {
+async function mounted(view: ViewState, onView?: (next: ViewState) => void, focused = false) {
   const host = document.createElement("div");
   document.body.appendChild(host);
   const root = createRoot(host);
@@ -46,7 +46,7 @@ async function mounted(view: ViewState, onView?: (next: ViewState) => void) {
   await act(async () =>
     root.render(
       <GraviewProvider store={at} views={registry} initialView={view} {...(onView ? { onViewChange: onView } : {})}>
-        <Card nodes={at.graph.nodesOfKind("task" as never) as never} fidelity="glyph" cardinality="many" mode="scene" selected={false} label="Tasks" />
+        <Card nodes={at.graph.nodesOfKind("task" as never) as never} fidelity="glyph" cardinality="many" mode="scene" selected={false} label="Tasks" focused={focused} />
         <NoteCard nodes={at.graph.nodesOfKind("note" as never) as never} fidelity="glyph" cardinality="many" mode="scene" selected={false} label="Notes" />
       </GraviewProvider>,
     ),
@@ -94,6 +94,63 @@ describe("the marquee", () => {
     expect(landed.overview).toBe(true);
     expect(landed.focusId).toBe("aggregate:task");
     expect(landed.within?.["view"]).toBe("the-month");
+    await unmount();
+  });
+
+  /*
+   * A LENS DOUBLE-CLICKED FROM UP OPENS IT. The second click of a
+   * double-click arrives as a click whose `detail` is 2: it goes down into
+   * that picture, the same stop the bar's place list makes. It used to land
+   * on the showing the first click had just pressed, and do nothing.
+   */
+  it("goes down into the picture on a double-click: the kind in focus, on the ground, with that picture in.view", async () => {
+    const seen: ViewState[] = [];
+    const { host, unmount } = await mounted({ ...EMPTY_VIEW, overview: true }, (next) => seen.push(next));
+    const press = () => host.querySelector<HTMLButtonElement>('[data-testid="showing-the-month"]')!;
+    await act(async () => press().dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 })));
+    expect(seen.at(-1)?.overview).toBe(true);
+    await act(async () => press().dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 2 })));
+    const landed = seen.at(-1)!;
+    expect(landed.overview).toBe(false);
+    expect(landed.focusId).toBe("aggregate:task");
+    expect(landed.within?.["view"]).toBe("the-month");
+    await unmount();
+  });
+
+  it("takes the second press of a double-click wherever the camera's flight left it, and keeps it from what is under it now", async () => {
+    const seen: ViewState[] = [];
+    const { host, unmount } = await mounted({ ...EMPTY_VIEW, overview: true }, (next) => seen.push(next));
+    // What the flight put under the pointer: the district's own card, here a stand-in that records what reaches it.
+    const under = document.createElement("div");
+    document.body.appendChild(under);
+    const reached: string[] = [];
+    for (const type of ["pointerdown", "click", "dblclick"]) under.addEventListener(type, () => reached.push(type));
+    await act(async () => host.querySelector('[data-testid="showing-the-month"]')!.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 })));
+    expect(seen.at(-1)?.overview).toBe(true);
+    await act(async () => {
+      under.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+      under.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 2 }));
+      under.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, detail: 2 }));
+    });
+    const landed = seen.at(-1)!;
+    expect(landed.overview).toBe(false);
+    expect(landed.focusId).toBe("aggregate:task");
+    expect(landed.within?.["view"]).toBe("the-month");
+    expect(reached).toEqual([]);
+    under.remove();
+    await unmount();
+  });
+
+  it("goes down when the showing already on the billboard is pressed again, as a second Enter or a second tap does", async () => {
+    const seen: ViewState[] = [];
+    const { host, unmount } = await mounted({ ...EMPTY_VIEW, overview: true, focusId: "aggregate:task", within: { view: "the-week" } }, (next) => seen.push(next), true);
+    const press = host.querySelector<HTMLButtonElement>('[data-testid="showing-the-week"]')!;
+    expect(press.getAttribute("aria-pressed")).toBe("true");
+    await act(async () => press.click());
+    const landed = seen.at(-1)!;
+    expect(landed.overview).toBe(false);
+    expect(landed.focusId).toBe("aggregate:task");
+    expect(landed.within?.["view"]).toBe("the-week");
     await unmount();
   });
 });

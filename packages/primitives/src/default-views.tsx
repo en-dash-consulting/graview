@@ -12,7 +12,7 @@ import {
   violationsTouching,
 } from "@graview/core";
 import { withComputed } from "@graview/core/blocks";
-import { aggregateId, kindCardId, rosterRows, withFocus, withJackIn, withOverview, withPast, withWithin } from "@graview/layout/view";
+import { aggregateId, kindCardId, rosterRows, withFocus, withJackIn, withOverview, withPast, withPicture, withWithin } from "@graview/layout/view";
 import { useKit, useMarqueeRoom, useReached } from "@graview/react/drawing";
 import {
   createViews,
@@ -104,6 +104,50 @@ export function rosterOf(names: readonly string[], rows: number): { readonly col
 
 /** How many members a pile draws as rows before it says how many more. */
 const ROWS_SHOWN = 8;
+
+/** How long after a lens is pressed a second press still makes it a double-click: the platforms' own default. */
+const SECOND_PRESS_MS = 500;
+
+/**
+ * THE SECOND PRESS OF A DOUBLE-CLICK, WHEREVER IT LANDS.
+ *
+ * Pressing a lens on its district flies the camera to it, so by the second
+ * click of a double-click the lens has moved out from under the pointer and
+ * the district's own card is there instead: the double-click jacked into
+ * the district — zoomed, still aloft — rather than opening the lens. So the
+ * first press listens, for as long as a double-click lasts, for the next
+ * press anywhere on the page, keeps it from whatever is under it now, and
+ * takes it as the second half of its own gesture. A second tap is the same
+ * press, so a double-tap opens the lens too.
+ */
+function awaitSecondPress(document: Document, second: () => void): void {
+  const until = performance.now() + SECOND_PRESS_MS;
+  const kept = ["pointerdown", "pointerup", "mousedown", "mouseup", "dblclick"] as const;
+  const keep = (event: Event) => {
+    if (performance.now() > until) return done();
+    event.stopPropagation();
+  };
+  const take = (event: Event) => {
+    if (performance.now() > until) return done();
+    event.stopPropagation();
+    event.preventDefault();
+    // The dblclick that follows this click belongs to the same gesture; keep it a moment longer.
+    document.removeEventListener("click", take, true);
+    setTimeout(done, 50);
+    second();
+  };
+  let finished = false;
+  const done = () => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+    document.removeEventListener("click", take, true);
+    for (const type of kept) document.removeEventListener(type, keep, true);
+  };
+  for (const type of kept) document.addEventListener(type, keep, true);
+  document.addEventListener("click", take, true);
+  const timer = setTimeout(done, SECOND_PRESS_MS);
+}
 
 /**
  * Members drawn as their kind's own row (FR-37): one line each, a target
@@ -935,11 +979,25 @@ export function registerDefaultViews<S extends AnySchema>(
                         data-testid={`showing-${place.as}`}
                         aria-label={`${plural}: ${place.title}`}
                         aria-pressed={showing}
-                        title={showing ? `${place.title} is showing` : `Show ${place.title} on the billboard`}
+                        title={showing ? `${place.title} is showing — press again to open it` : `Show ${place.title} on the billboard — double-click to open it`}
                         onClick={(event) => {
                           event.stopPropagation();
-                          if (showing && props.focused) return;
+                          /*
+                           * A LENS DOUBLE-CLICKED FROM UP OPENS IT. The first
+                           * press shows it on the billboard and stays aloft;
+                           * the second — of a double-click or a double-tap,
+                           * wherever the flight has put it, or Enter again on
+                           * the showing already pressed — goes down into it,
+                           * by the same stop the bar's place list makes.
+                           */
+                          const down = () => go(withPicture(view, String(kind), place.as));
+                          if (event.detail >= 2 || (showing && props.focused)) {
+                            down();
+                            return;
+                          }
                           go(withWithin(withFocus(withOverview(view, true), aggregateId(String(kind))), "view", place.as));
+                          // A pointer's press (`detail` 1); a key's is 0 and has its own second press.
+                          if (event.detail === 1) awaitSecondPress(event.currentTarget.ownerDocument, down);
                         }}
                       />
                     </div>

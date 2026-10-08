@@ -124,6 +124,18 @@ export function withJackIn(
 }
 
 /**
+ * Going down into one of a kind's pictures, as view state: the kind's
+ * district in focus, on the ground, with that picture `in.view`.
+ *
+ * ONE WAY DOWN TO A PICTURE. The bar's place list, Find, a host's `go.place`
+ * and a lens double-clicked on its district from altitude all arrive at the
+ * same stop, so they all say it here rather than each spelling it out.
+ */
+export function withPicture(state: ViewState, kind: string, as: string): ViewState {
+  return withWithin(withOverview(withFocus(state, aggregateId(kind)), false), "view", as);
+}
+
+/**
  * Ranks by a STABLE key — the node id — and never by a mutable count.
  *
  * This is the single rule that protects spatial memory. Ordering people by
