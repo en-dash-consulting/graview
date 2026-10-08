@@ -113,8 +113,6 @@ export function lazyModule<M>(load: () => Promise<M>): LazyModule<M> {
     // Handled here, so an attempt nobody waits on is never an unhandled rejection (a page error).
     going.catch(() => undefined);
     pending = going;
-    // A retry after a failure: the line says it is on its way.
-    if (failed) notify();
     return going;
   }
 
@@ -164,7 +162,7 @@ export function lazyModule<M>(load: () => Promise<M>): LazyModule<M> {
             </>
           );
         }
-        return options.quiet ? null : <PartMissing what={what} busy={pending !== undefined} button={button} {...(options.as ? { as: options.as } : {})} />;
+        return options.quiet ? null : <PartMissing what={what} button={button} {...(options.as ? { as: options.as } : {})} />;
       }
       // The first attempt suspends; it never rejects into React, so nothing is thrown at the page.
       const First = lazy(() => attempt().then(
@@ -180,28 +178,28 @@ export function lazyModule<M>(load: () => Promise<M>): LazyModule<M> {
   };
 }
 
-const FOCUSABLE = "button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])";
+const FOCUSABLE = "button,a[href],input,select,textarea,[tabindex]:not([tabindex='-1'])";
 
 /**
  * THE ONE LINE IN A MISSING PART'S PLACE: what did not arrive, and a real
- * button that asks again. Its words a status, so a screen reader hears them politely;
- * the button stays put while it asks, so the keyboard stays on it.
+ * button that asks again. Its words a status, so a screen reader hears them
+ * politely; the button stays put while it asks, so the keyboard stays on it.
  */
-function PartMissing({ what, busy, button, as: Line = "p" }: { readonly what: string; readonly busy: boolean; readonly button: RefObject<HTMLButtonElement | null>; readonly as?: "p" | "li" | "div" }) {
+function PartMissing({ what, button, as: Line = "p" }: { readonly what: string; readonly button: RefObject<HTMLButtonElement | null>; readonly as?: "p" | "li" | "div" }) {
   const offline = typeof navigator !== "undefined" && navigator.onLine === false;
-  const said = busy ? `${what} is on its way…` : offline ? `${what} will load when you're back online.` : `${what} didn't load.`;
+  const said = offline ? `${what} will load when you're back online.` : `${what} didn't load.`;
   return (
     <Line
       data-testid="lazy-part-missing"
-      style={{ margin: 0, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 10px", fontSize: "0.875rem", lineHeight: 1.4, color: "var(--graview-ink-muted)" }}
+      style={{ margin: 0, fontSize: "0.875rem", color: "var(--graview-ink-muted)" }}
     >
-      <span role="status">{said}</span>
+      <span role="status">{said}</span>{" "}
       <button
         ref={button}
         type="button"
         data-testid="lazy-part-retry"
         onClick={retryLazyParts}
-        style={{ font: "inherit", fontWeight: 600, color: "var(--graview-ink)", background: "transparent", border: "1px solid var(--graview-edge)", borderRadius: 6, padding: "2px 10px", minHeight: 28, cursor: "pointer" }}
+        style={{ font: "inherit", fontWeight: 600, color: "var(--graview-ink)", background: "none", border: "1px solid var(--graview-edge)", borderRadius: 6, padding: "2px 10px" }}
       >
         Try again
       </button>
