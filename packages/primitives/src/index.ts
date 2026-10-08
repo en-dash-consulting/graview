@@ -70,6 +70,7 @@ export {
 } from "./seat.js";
 export type { SeatAnswer, SeatOutcome, SeatTurn } from "./seat.js";
 export { Wordmark } from "./wordmark.js";
+export { GraviewMark } from "./graview-mark.js";
 export { AppMark, AppTitle, useFavicon } from "./app-title.js";
 export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, HOME_KEY, HOME_PATH, TOOL, toolStyle, useBarFind } from "./app-bar.js";
 export type { BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup } from "./app-bar.js";

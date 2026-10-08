@@ -330,7 +330,9 @@ export function render(markdown) {
 const head = readFileSync(at("docs/site/index.html"), "utf8");
 const HEAD_START = head.indexOf("<!doctype html>");
 const HEAD_END = head.indexOf('<a class="skip"');
-const MARK = /<a class="who"[\s\S]*?<\/a>/.exec(head)?.[0] ?? "";
+/* The Graview logo off the landing page's header: the kit's outlines, inline so it takes the page's ink. */
+const LOGO = /<a class="logo"[\s\S]*?<\/a>/.exec(head)?.[0] ?? "";
+if (!LOGO) throw new Error("docs/site/index.html has no <a class=\"logo\"> in its header to put on the docs pages");
 const CSS_START = "/* site-css:start — written by scripts/site-css.mjs. Edit docs/site/site.css. */";
 const CSS_END = "/* site-css:end */";
 const css = readFileSync(at("docs/site/site.css"), "utf8").trimEnd();
@@ -347,7 +349,9 @@ function shell({ title, blurb, here, body, up = "..", scripts = [] }) {
     .replace(/<title>[\s\S]*?<\/title>/, `<title>${escape(title)} — Graview docs</title>`)
     .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${escape(blurb)}">`)
     .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${escape(title)} — Graview docs">`)
-    .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${escape(blurb)}">`);
+    .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${escape(blurb)}">`)
+    // The site's own files (the face, the icons) are `brand/` at the root: `up` from here.
+    .replaceAll('"brand/', `"${up}/brand/`);
   /* A package's or a skill's page is one directory down, so the nav's
      links to the docs root are one `../` longer there — a nav that forgot
      this sent every nested page's "Docs home" to a file that does not exist. */
@@ -368,8 +372,7 @@ function shell({ title, blurb, here, body, up = "..", scripts = [] }) {
 <div class="wrap" lang="en">
   <nav class="rail" aria-label="Documentation">
     <div class="brand">
-      ${MARK}
-      <span class="it"><a href="${up}/index.html" style="color: inherit; text-decoration: none;">Graview</a></span>
+      ${LOGO.replace('href="index.html"', `href="${up}/index.html"`)}
       <span class="sub">Documentation</span>
     </div>
 

@@ -216,6 +216,17 @@ export {
 } from "./theme/contrast.js";
 export type { ContrastFinding, Rgba } from "./theme/contrast.js";
 export { DARK, LIGHT, SCHEMES } from "./theme/palettes.js";
+export {
+  DISPLAY_TRACKING,
+  GRAVIEW_COLORS,
+  GRAVIEW_FACE,
+  graviewSymbol,
+  LOGO_RULES,
+  PLAIN_WEIGHTS,
+  symbolCut,
+  WEIGHTS,
+} from "./theme/identity.js";
+export type { SymbolOptions } from "./theme/identity.js";
 export { isoShade, SHAPE, shapeOf, TYPOGRAPHY, typographyOf } from "./theme/look.js";
 export { faviconHref, isInlineSvg, markHref, markProblem, MAX_INLINE_SVG, svgProblem } from "./theme/marks.js";
 export { DOCUMENT_FONTS, familiesIn, fontProblem, isSystemFamily, stackOf, SYSTEM_FONTS, SYSTEM_STACKS } from "./theme/fonts.js";

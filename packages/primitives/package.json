@@ -20,7 +20,9 @@
     "./scene": {
       "types": "./dist/scene.d.ts",
       "default": "./dist/scene.js"
-    }
+    },
+    "./montserrat.css": "./fonts/montserrat.css",
+    "./montserrat-latin.woff2": "./fonts/montserrat-latin.woff2"
   },
   "scripts": {
     "build": "tsc -b"
@@ -52,9 +54,12 @@
   ],
   "files": [
     "dist",
+    "fonts",
     "README.md"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/en-dash-consulting/graview.git",

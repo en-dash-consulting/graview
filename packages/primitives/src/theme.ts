@@ -40,7 +40,7 @@ import type { Brand, Scheme, ThemeTokens } from "@graview/core";
  * without reaching into the UI package.
  */
 export { DARK, LIGHT, SCHEMES } from "@graview/core";
-import { SCHEMES, kitVariables, layer, layerVariables, resolveKit, SCENE_LAYERS, shapeOf, TYPOGRAPHY, typographyOf } from "@graview/core";
+import { DISPLAY_TRACKING, SCHEMES, kitVariables, layer, layerVariables, resolveKit, SCENE_LAYERS, shapeOf, TYPOGRAPHY, typographyOf } from "@graview/core";
 import { MARQUEE_GAP, MARQUEE_WIDTH } from "@graview/layout/view";
 
 
@@ -301,6 +301,10 @@ ${layerVariables()}
   --graview-font-body: ${type.body};
   --graview-font-display: ${type.display};
   --graview-font-mono: ${type.mono};
+  ${/* The weights: headings, reading text, action labels (the identity's 550, 450 and 600 on its own face). */ ""}
+  --graview-weight-display: ${type.weights.display};
+  --graview-weight-body: ${type.weights.body};
+  --graview-weight-label: ${type.weights.label};
   ${/* Shape, as tokens, so a component never has to know whose product it is. */ ""}
   --graview-radius: ${shape.radius}px;
   --graview-radius-sm: ${shape.radiusSmall}px;
@@ -327,6 +331,7 @@ ${/*
  */ ""}
 ${text} {
   font: 0.875rem/1.55 var(--graview-font-body);
+  font-weight: var(--graview-weight-body);
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }
@@ -334,7 +339,8 @@ ${text} {
 ${/* Headings and the wordmark take the display face when a brand supplies one,
    and the body face when it does not — so a brand with one font is not asked
    to name it twice. */ ""}
-h1, h2, h3, h4, .graview-wordmark { font-family: var(--graview-font-display); }
+h1, h2, h3, h4, .graview-wordmark { font-family: var(--graview-font-display); font-weight: var(--graview-weight-display); }
+h1, h2 { letter-spacing: ${DISPLAY_TRACKING}; }
 ${/* The app's mark (FR-124) is as tall as the box it is drawn in; its own width follows. */ ""}
 .graview-logo > svg { display: block; height: 100%; width: auto; }
 code, kbd, samp { font-family: var(--graview-font-mono); }
@@ -972,27 +978,25 @@ ${/* A view is a thing you can act on. It should look like one. */ ""}
 [data-graview-view]:focus-visible {
   outline: 2px solid var(--graview-accent);
   outline-offset: 3px;
-  border-radius: 12px;
+  border-radius: var(--graview-radius);
 }
 
 button {
   font: inherit;
+  font-weight: var(--graview-weight-label);
   color: var(--graview-ink);
   padding: 7px 13px;
   border: 1px solid var(--graview-edge);
   border-radius: var(--graview-radius-sm, 8px);
   background: var(--graview-panel);
-  box-shadow: ${scheme === "light" ? "0 1px 2px rgba(20,30,32,0.05)" : "none"};
+  box-shadow: ${scheme === "light" ? "0 1px 2px rgba(24,33,58,0.05)" : "none"};
   cursor: pointer;
   transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
+${/* Hover firms the edge; it does not glow. A ring the accent's width says "this one" in both schemes. */ ""}
 button:hover:not(:disabled) {
   border-color: var(--graview-edge-bright);
-  box-shadow: ${
-    scheme === "light"
-      ? "0 1px 2px rgba(20,30,32,0.06), 0 6px 16px -8px rgba(20,30,32,0.22)"
-      : "0 0 0 1px var(--graview-accent-dim), 0 0 18px -6px var(--graview-accent)"
-  };
+  box-shadow: ${scheme === "light" ? "0 1px 2px rgba(24,33,58,0.06), 0 6px 16px -8px rgba(24,33,58,0.2)" : "0 0 0 1px var(--graview-accent-dim)"};
 }
 button:focus-visible {
   outline: 2px solid var(--graview-accent);

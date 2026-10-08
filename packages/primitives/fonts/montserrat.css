@@ -1,0 +1,23 @@
+/*
+ * Montserrat, the face Graview's identity is set in — OPTIONAL.
+ *
+ * The framework names "Montserrat" first in its default stack
+ * (`TYPOGRAPHY.body` in @graview/core) and never fetches a font, so an app
+ * whose host loads nothing is set in the reader's system sans. A host that
+ * wants the identity's face imports this once:
+ *
+ *   import "@graview/primitives/montserrat.css";
+ *
+ * One variable file, weights 400–700 (the identity uses 450, 550 and 600),
+ * Latin and Latin-1 with the punctuation Graview's own words use: 32 KB.
+ * Cut from the Montserrat in the Graview design kit (revision 03), under the
+ * SIL Open Font License 1.1 — OFL-Montserrat.txt beside this file.
+ */
+@font-face {
+  font-family: "Montserrat";
+  src: url("./montserrat-latin.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2190-2193, U+2212, U+2215, U+2713, U+00D7;
+}

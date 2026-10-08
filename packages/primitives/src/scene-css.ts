@@ -256,7 +256,7 @@ ${/* An OPENED district is a PANEL, not a pill with a list stuffed in it:
   align-items: baseline !important;
   column-gap: 10px;
   row-gap: 2px;
-  border-radius: 12px !important;
+  border-radius: var(--graview-radius) !important;
   ${/* Open, the name is a panel's header again: the panel's own ground and edge. */ ""}
   background: var(--graview-panel) !important;
   border-color: var(--graview-edge) !important;
@@ -676,7 +676,7 @@ ${/* And never on the natural box either — a view drawn scaled sits inside a
 [data-graview-pinned] > [data-graview-natural] > * {
   outline: 1px dashed var(--graview-edge-bright);
   outline-offset: 3px;
-  border-radius: 12px;
+  border-radius: var(--graview-radius);
 }
 ${/* AND NOT FROM ALTITUDE, where a district is a village on a plot and its
    card is a box with nothing drawn in it: the dashed outline was the only
