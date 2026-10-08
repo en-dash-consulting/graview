@@ -159,8 +159,13 @@ export function fillPrefills(
     const value = valueOf({ record, field: asked, acts: acts.map((act) => act.getAttribute("data-act") ?? "") });
     if (value === undefined) continue;
     field.value = value;
-    reader.prefilled(field, { record, field: asked });
     done.add(field);
+    /* A field that cannot hold the value whole — a number field handed words, a one-line field handed paragraphs — is left empty: what it would send is not what the record holds. */
+    if (field.value !== value) {
+      field.value = "";
+      continue;
+    }
+    reader.prefilled(field, { record, field: asked, value });
   }
 }
 
@@ -198,6 +203,9 @@ export function judgePress<S extends AnySchema>(store: Store<S>, manifest: Worke
     } else if (field.typed && field.from && !(press.record === field.from.record && field.name === field.from.field && writesBack(store, entry, field.from.record, field.from.field)))
       /* Filled by the host from a record: it goes only back into the field it came from (FR-150). */
       return refuse("untyped", `“${field.name}” was filled in from a record for an act that writes it back there, not for this one, so it was not sent.`);
+    else if (field.typed && field.from && String(field.value) === field.from.value)
+      /* Filled and untouched since: the record's value as it is now, never the copy it was filled with, which another seat may have changed since. */
+      args[field.name] = (store.graph.getNode(field.from.record) as Record<string, unknown> | undefined)?.[field.name] ?? field.value;
     else if (field.typed) args[field.name] = field.value;
     else if (!field.empty) return refuse("untyped", `“${field.name}” was filled in by the view, not typed by you, so it was not sent.`);
   }
@@ -219,10 +227,10 @@ export function judgePress<S extends AnySchema>(store: Store<S>, manifest: Worke
  *     record every act in its `fieldset` is bound to), one the view was
  *     shown;
  *   · an act in its `fieldset` is named in the manifest, is done to that
- *     record, takes that field as an argument and WRITES it (`writes`, or the
- *     name-match `fieldsWrittenBy` reads), writes no other record's fields
- *     (`writesOther`), and this viewer may run it on that record;
- *   · the value is text or a number.
+ *     record, takes that field as an argument and declares it WRITES it
+ *     (`writes`), writes no other record's fields (`writesOther`), and this
+ *     viewer may run it on that record;
+ *   · the value is text or a number, and the field holds it whole.
  *
  * The value is then the viewer's, as if they had typed it, and they edit it
  * in place: what they type after it is theirs too. But it goes only back
@@ -244,20 +252,20 @@ export function writesBack<S extends AnySchema>(store: Store<S>, entry: Manifest
   const mutation = store.allMutations().find((one) => one.name === entry.act);
   const subject = mutation?.subject;
   if (!mutation || !subject) return false;
-  if ((entry.record ?? subject.arg) !== subject.arg || field === subject.arg || field in (entry.constants ?? {})) return false;
-  if (!(field in ((mutation.input as { shape?: Record<string, unknown> }).shape ?? {}))) return false;
+  if ((entry.record ?? subject.arg) !== subject.arg || field === subject.arg || Object.hasOwn(entry.constants ?? {}, field)) return false;
+  if (!Object.hasOwn((mutation.input as { shape?: Record<string, unknown> }).shape ?? {}, field)) return false;
   if (Object.keys(mutation.writesOther ?? {}).length > 0) return false;
   const kind = store.graph.getNode(record)?.kind as string | undefined;
   const definition = kind === undefined ? undefined : store.schema.tryDefinition(kind);
   if (!definition || (subject.kinds !== "*" && !(subject.kinds as readonly string[]).includes(kind!))) return false;
-  if (!(field in ((definition.fields as { shape?: Record<string, unknown> }).shape ?? {}))) return false;
+  if (!Object.hasOwn((definition.fields as { shape?: Record<string, unknown> }).shape ?? {}, field)) return false;
   /*
-   * `fieldsWrittenBy`'s reading, said here so a page drawing views does not
-   * carry core's derived edits: what the act declares it `writes`, or, for
-   * a TypeScript act that declares nothing, an argument named exactly like
-   * a field of its subject.
+   * Only what the act DECLARES it `writes` (every act a document compiles
+   * declares it). A TypeScript act that declares nothing may do anything
+   * with an argument named like a field — copy it into a record other seats
+   * read — so a record's value is never handed to it unasked.
    */
-  return mutation.writes ? mutation.writes.includes(field) : true;
+  return mutation.writes?.includes(field) ?? false;
 }
 
 /** What the host fills a field with: one field of a record the view was shown, as the viewer sees it, when an act bound beside it writes it back and the viewer may run it there. */

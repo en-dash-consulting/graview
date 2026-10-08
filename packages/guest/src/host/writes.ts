@@ -71,6 +71,8 @@ export interface PressedField {
 export interface Prefilled {
   readonly record: string;
   readonly field: string;
+  /** What the host filled it with, as the field held it. */
+  readonly value: string;
 }
 
 /**
