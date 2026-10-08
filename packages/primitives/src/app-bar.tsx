@@ -208,7 +208,7 @@ export function placesThatStand(input: {
 const BAR_CSS = `
 .graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px solid var(--graview-edge);color:var(--graview-ink);font-family:var(--graview-font-body,system-ui)}
 .graview-bar-row{display:flex;flex-wrap:nowrap;align-items:center;gap:16px;height:${BAR_HEIGHT - 1}px;margin:0;padding:0 16px}
-.graview-bar-home,.graview-bar-face,.graview-bar-place,.graview-bar-item{display:inline-flex;align-items:center;box-sizing:border-box;min-width:0;margin:0;border:0;background:none;box-shadow:none;font:inherit;letter-spacing:normal;text-transform:none;text-decoration:none;color:var(--graview-ink);cursor:pointer;text-align:left}
+.graview-bar-home,.graview-bar-face,.graview-bar-place,.graview-bar-item,.graview-bar-at{display:inline-flex;align-items:center;box-sizing:border-box;min-width:0;margin:0;border:0;background:none;box-shadow:none;font:inherit;letter-spacing:normal;text-transform:none;text-decoration:none;color:var(--graview-ink);cursor:pointer;text-align:left}
 .graview-bar-app{display:flex;flex:0 1 auto;max-width:50%}
 .graview-bar-app::after{content:"";flex:0 100000 auto;width:2px;min-width:0}
 .graview-bar-name{margin:0;display:flex;font-family:var(--graview-font-display,var(--graview-font-body,system-ui));font-size:.9375rem;font-weight:600;line-height:1.25}
@@ -228,10 +228,9 @@ const BAR_CSS = `
 .graview-bar-place-words{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .graview-bar-mid[data-places=standing]{flex:0 0 auto}
 .graview-bar-places{display:flex;align-items:center;gap:${PLACE_GAP}px;min-width:0;margin:0;padding:0}
-.graview-bar-at{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;box-sizing:border-box;height:30px;margin:0;padding:0 8px;border:0;border-top:2px solid transparent;border-bottom:2px solid transparent;border-radius:0;background:none;box-shadow:none;font:inherit;font-size:.875rem;font-weight:500;letter-spacing:normal;text-transform:none;text-decoration:none;white-space:nowrap;color:var(--graview-ink-muted);cursor:pointer}
-.graview-bar-at:hover{color:var(--graview-ink)}
-.graview-bar-at[aria-current]{color:var(--graview-ink);font-weight:600;border-bottom-color:var(--graview-accent)}
-.graview-bar-at[aria-expanded=true]{color:var(--graview-ink)}
+.graview-bar-at{gap:6px;flex:0 0 auto;height:30px;padding:0 8px;border-block:2px solid transparent;border-radius:0;font-size:.875rem;font-weight:500;white-space:nowrap;color:var(--graview-ink-muted)}
+.graview-bar-at:is(:hover,[aria-current],[aria-expanded=true]){color:var(--graview-ink)}
+.graview-bar-at[aria-current]{font-weight:600;border-bottom-color:var(--graview-accent)}
 .graview-bar-ruler{position:absolute;left:0;top:0;display:flex;width:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none}
 .graview-bar-ruler .graview-bar-at{font-weight:600}
 .graview-bar-list{display:grid;width:min(320px,calc(100vw - 24px));max-height:min(70vh,560px);overflow:auto;margin:0;padding:6px;border-radius:10px;border:1px solid var(--graview-edge);background:var(--graview-float);box-shadow:var(--graview-lift-high);color:var(--graview-ink)}
@@ -424,8 +423,8 @@ export function AppBar({
   };
   // The place control: in the bar on a desk, as the page's first line on a phone; the places themselves on the row when they fit (FR-145).
   const scene = !onPages;
-  const placeControl = list ? <PlaceControl places={list.places} current={list.current} reach={list.reach} scene={scene} /> : null;
   const stands = list && !compact && standing !== null ? standing.split(",").map(Number).filter((at) => at < list.places.length) : null;
+  const placeControl = list ? <Places places={list.places} current={list.current} reach={list.reach} scene={scene} stands={stands} /> : null;
   const said = list ? list.places.map((place) => place.label).join("\n") : "";
   // What the row holds changed — the name, the places, the face, the brand — so the places and the words may fit now, or no longer.
   useLayoutEffect(weigh, [weigh, name, brand, said, list?.current, onPages, compact, switchForm, find]);
@@ -461,7 +460,7 @@ export function AppBar({
           </div>
           {faces ? <FaceSwitch faces={faces} form={switchForm} drawn={drawn} /> : null}
           <div className="graview-bar-mid" {...(stands ? { "data-places": "standing" } : !compact && placeControl ? { "data-place": "" } : {})}>
-            {compact || !list ? null : stands ? <StandingPlaces places={list.places} current={list.current} reach={list.reach} stands={stands} scene={scene} /> : placeControl}
+            {compact ? null : placeControl}
           </div>
           {/* The places as they would stand, unseen, for the row to be weighed by (FR-145). */}
           {!compact && list && list.places.length > 1 ? (
@@ -680,9 +679,6 @@ const GROUPS: readonly { readonly group: BarPlaceGroup; readonly heading?: strin
 /** The word the places that do not stand on the row fold under (FR-145). */
 const MORE = "More";
 
-/** What a face's places are called, for a reader moving by landmark: the app's, or what the scene can show (FR-144). */
-const placesNamed = (scene: boolean): string => (scene ? "What the scene shows" : "The app’s places");
-
 /**
  * ONE PLACE, AS THE BAR OFFERS IT — in the list, or standing on the row: a
  * link where it has an address, a press where the bar decides; marked
@@ -751,68 +747,45 @@ function PlaceGroups({ places, current, reach, id, done }: { readonly places: re
  * rather than cut. Every place is two presses away, and the bar is one row
  * of one height however many there are. On the scene, what is in view and
  * every picture it can show (FR-144).
+ *
+ * WHERE THEY FIT, THE PLACES THEMSELVES (FR-145): the ones that stand, as
+ * words in their order, the one you are on underlined; then "More", which
+ * opens the rest, grouped as the one control's list is — no "More" when
+ * every place stands. "More" is `app-places-open` and its list
+ * `app-places`, as the one control and its list are, so a place that does
+ * not stand is reached by the same two presses either way.
  */
-function PlaceControl({ places, current, reach, scene }: { readonly places: readonly BarPlace[]; readonly current: string | null; readonly reach: BarGo; readonly scene: boolean }) {
+function Places({ places, current, reach, scene, stands }: { readonly places: readonly BarPlace[]; readonly current: string | null; readonly reach: BarGo; readonly scene: boolean; readonly stands: readonly number[] | null }) {
   const popover = usePopover("places");
-  const here = places.find((place) => place.key === current);
-  const said = here?.label ?? "Places";
+  const said = places.find((place) => place.key === current)?.label ?? "Places";
+  const rest = stands ? places.filter((_, at) => !stands.includes(at)) : places;
   return (
-    <span className="graview-bar-place-at">
-      <button
-        type="button"
-        className="graview-bar-place"
-        data-testid="app-places-open"
-        {...popover.trigger}
-        onClick={popover.toggle}
-        aria-label={`${said} — ${scene ? "everything the scene shows" : "every place"}`}
-        title={said}
-      >
-        <span className="graview-bar-place-words" data-testid="app-place-current">
-          {said}
-        </span>
-        <Chevron />
-      </button>
-      <nav {...popover.pane} data-testid="app-places" aria-label={placesNamed(scene)} hidden={!popover.open} className="graview-bar-list" style={POPOVER_STYLE}>
-        <PlaceGroups places={places} current={current} reach={reach} id={popover.pane.id} done={() => popover.setOpen(false)} />
-      </nav>
-    </span>
-  );
-}
-
-/**
- * THE PLACES ON THE ROW (FR-145): the ones that stand, as words in their
- * order, the one you are on underlined; then "More", which opens the rest,
- * grouped as the one control's list is. When every place stands there is no
- * "More". "More" is `app-places-open` and its list `app-places`, as the one
- * control and its list are, so a place that does not stand is reached by
- * the same two presses either way.
- */
-function StandingPlaces({ places, current, reach, stands, scene }: { readonly places: readonly BarPlace[]; readonly current: string | null; readonly reach: BarGo; readonly stands: readonly number[]; readonly scene: boolean }) {
-  const popover = usePopover("places");
-  const rest = places.filter((_, at) => !stands.includes(at));
-  return (
-    <nav className="graview-bar-places" aria-label={placesNamed(scene)} data-testid="app-places-standing">
-      {stands.map((at) => (
-        <PlaceEntry key={places[at]!.key} place={places[at]!} current={current} reach={reach} standing done={() => undefined} />
-      ))}
+    <nav className={stands ? "graview-bar-places" : "graview-bar-place-at"} aria-label={scene ? "What the scene shows" : "The app’s places"} {...(stands ? { "data-testid": "app-places-standing" } : {})}>
+      {stands?.map((at) => <PlaceEntry key={places[at]!.key} place={places[at]!} current={current} reach={reach} standing done={() => undefined} />)}
       {rest.length > 0 ? (
-        <span className="graview-bar-place-at">
+        <>
           <button
             type="button"
-            className="graview-bar-at"
+            className={stands ? "graview-bar-at" : "graview-bar-place"}
             data-testid="app-places-open"
             {...popover.trigger}
             onClick={popover.toggle}
-            aria-label={`${MORE} — ${rest.length} more ${scene ? "pictures" : "places"}`}
-            title={rest.map((place) => place.label).join(", ")}
+            aria-label={stands ? `${MORE} — ${rest.length} more ${scene ? "pictures" : "places"}` : `${said} — ${scene ? "everything the scene shows" : "every place"}`}
+            title={stands ? rest.map((place) => place.label).join(", ") : said}
           >
-            {MORE}
+            {stands ? (
+              MORE
+            ) : (
+              <span className="graview-bar-place-words" data-testid="app-place-current">
+                {said}
+              </span>
+            )}
             <Chevron />
           </button>
           <div {...popover.pane} data-testid="app-places" hidden={!popover.open} className="graview-bar-list" style={POPOVER_STYLE}>
             <PlaceGroups places={rest} current={current} reach={reach} id={popover.pane.id} done={() => popover.setOpen(false)} />
           </div>
-        </span>
+        </>
       ) : null}
     </nav>
   );

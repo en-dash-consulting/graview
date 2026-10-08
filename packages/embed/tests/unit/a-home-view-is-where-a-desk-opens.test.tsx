@@ -95,8 +95,9 @@ describe("an app with a home view, mounted with no face named", () => {
     expect(pressed(root, "scene")).toBe("true");
     expect(root.querySelector('[data-testid="home-view"]')).toBeNull();
     expect(root.querySelector('[data-testid="home-landing"]')).toBeNull();
-    // The place control is the pages': not on the bar while the scene is drawn.
-    expect(root.querySelector('[data-testid="app-places-open"]')).toBeNull();
+    // On the scene the bar's places are the scene's (FR-144): the Pages' are not offered.
+    expect(root.querySelector('[data-testid="app-place-scene:whole"]')).not.toBeNull();
+    expect(root.querySelector('[data-testid="app-place-kind:offer"]')).toBeNull();
     await press(root, '[data-testid="app-face-pages"]');
     expect(face(root)).toBe("pages");
     expect(current(root)).toBe("Offers");

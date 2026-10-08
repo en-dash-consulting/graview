@@ -136,9 +136,16 @@ describe("a chapter, embedded", () => {
     });
     const entry = (key: string) => element.querySelector<HTMLElement>(`[data-testid="app-place-${key}"]`);
     const face = () => element.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed");
-    // On the scene the switch is pressed at Scene, and the places are the pages'.
+    // On the scene the switch is pressed at Scene, and the bar names the picture the scene shows (FR-144).
     expect(element.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
-    expect(element.querySelector('[data-testid="app-places-open"]')).toBeNull();
+    expect(element.querySelector('[data-testid="app-place-current"]')?.textContent).toBe("Who tends what");
+    // Two presses change it, and the scene's view says so: still the scene, the other picture in view.
+    element.querySelector<HTMLElement>('[data-testid="app-places-open"]')?.click();
+    entry("scene:plot:what-grows-where")?.click();
+    await new Promise((done) => setTimeout(done, 30));
+    expect(face()).toBe("scene");
+    expect(handle.where().stop).toContain("in.view=what-grows-where");
+    expect(element.querySelector('[data-testid="app-place-current"]')?.textContent).toBe("What grows where");
     element.querySelector<HTMLElement>('[data-testid="app-face-pages"]')?.click();
     await Promise.resolve();
     expect(face()).toBe("pages");

@@ -156,7 +156,7 @@ describe("the scene's place control (FR-144)", () => {
     expect(at.querySelector('[data-testid="app-faces"]')!.compareDocumentPosition(open) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     act(() => open.click());
     const list = at.querySelector('[data-testid="app-places"]')!;
-    expect(list.getAttribute("aria-label")).toBe("What the scene shows");
+    expect(list.closest("nav")?.getAttribute("aria-label")).toBe("What the scene shows");
     expect([...list.querySelectorAll("[data-place-group]")].map((group) => group.getAttribute("data-place-group"))).toEqual(["home", "pictures"]);
     expect(list.querySelector('[aria-current="page"]')?.getAttribute("data-testid")).toBe(`app-place-${WHOLE_KEY}`);
     act(() => list.querySelector<HTMLButtonElement>('[data-testid="app-place-scene:deliverable:email-to-todd"]')!.click());
