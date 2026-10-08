@@ -1120,7 +1120,7 @@ graview.navigate("offer:7")     // a record; graview.navigate({ place: "the-pack
 <div class="code" data-scroller><pre><code>import { registerWorkerView, workerHome } from "@graview/guest/host/views";
 views: (schema, registry) =&gt; registerWorkerView(registry, { manifest, worker: { source } }),
 pages.surface("home", workerHome({ manifest: front, worker: { source: frontSource } }));</code></pre></div>
-<p>A view with <code>attach: "home"</code> given to <code>registerWorkerView</code> is the home's own view on both faces. It is the routed home's body and the landing over the scene, and the app's declared home is drawn if it fails.</p>
+<p>A view with <code>attach: "home"</code> given to <code>registerWorkerView</code> is the home's own view: the routed home's body, the page the app opens on — full width under the bar on a desk too (FR-136) — and the app's declared home is drawn if it fails.</p>
 <h3>Then find out whether it worked</h3>
 <ol>
 <li><code>graview check</code> the app the view names: a manifest is only as sound as the declaration it reads. <code>checkManifest(manifest, store)</code> and <code>checkViewSource(source)</code> from <code>@graview/guest/host/views</code> must both say nothing.</li>

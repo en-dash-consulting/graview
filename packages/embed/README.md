@@ -10,14 +10,14 @@ import { mount } from "@graview/embed";
 const handle = mount(document.querySelector("#garden")!, {
   app,                        // defineApp(...)
   seed,                       // the graph to open with, or nothing
-  face: "graview",            // "scene" | "graview" | "pages" | "picture" — one named lens, no chrome: stop "#view=<place>"
+  face: "graview",            // "scene" | "graview" | "pages" | "picture" — one named lens, no chrome: stop "#view=<place>"; leave it out and the app opens on its home view, else the scene
   stop: "#focus=plot-1",      // the scene's view state, as its URL fragment
   principal: { kind: "human", id: "june", roles: ["coordinator"] },
   bar: true,                  // the app bar over every face (the default)
 });
 
 handle.setPath("/plots");     // a place: the plots' list, at the element's width
-handle.setPath("/places/overview"); // the overview: the scene
+handle.setPath("/places/overview"); // the scene, at its own address
 handle.setStop("#overview=1&expand=kind:plot");
 handle.unmount();
 ```
@@ -30,23 +30,34 @@ One bar stands over every face (FR-131). At the left, the app: its mark —
 the brand's logo, when the document has one — and its name, said once, as
 the page's heading (`heading`: `1` when the host's page is the app, `2`, the
 default, inside an article, `false` when the host's own heading says it),
-and the way home. Then the app's places as plain tabs, the one you are on
-marked (`aria-current`), and what the row cannot hold under "More": the
-overview, each named picture, each kind's list, and how the kinds connect.
-At the right, three tools of one size: Find (inline; ⌘K or Ctrl+K on a
-desk, a magnifier that opens the box on a phone), the standing (a dot in the
-tone of the rules, a number only when one is broken, opening what is broken;
-its name says "Everything is in order" otherwise), and the person (an avatar
-whose menu holds who is signed in, the seats, the host's own actions and,
-for whoever keeps the app, the installation and the studio). On a desk it
-is one row; on a phone the places take a second.
-
-THE SCENE IS A PLACE (FR-132): the overview, a tab beside the others —
-"Overview" unless the declaration calls it something else (`pages: {
-overview: "The farm" }`), at `/places/overview` whatever it is called.
-Choosing it draws the scene under the same bar; any other tab draws that
-page. Nothing says "Scene" or "Pages". `bar: false` draws none of it, for a
+and the way home. Right after it, the switch between the app's two faces
+(FR-137): "Scene" and "Pages", an icon and a word each (the icons alone on
+a phone, the words their accessible names), two buttons whose
+`aria-pressed` says which is drawn. Scene draws the scene under the bar;
+Pages goes back to the page the reader was on. A declaration may call them
+something else (`pages: { scene: "The farm", pages: "Lists" }`); the
+scene's address is `/places/overview` whatever it is called. Then, on
+Pages, the place you are on as one control — its name and a chevron — that
+opens every place the app has (FR-138): the home first, then the Lists
+(one per kind) and the Pictures (each named lens, and how the kinds
+connect), each with its mark, a long name wrapped. Every place is two
+presses away, Escape gives the keyboard back to the control, and the bar
+is one row of 48 px however many places there are; on a phone the place
+control is the page's first line, under the bar. At the right, three tools
+of one size: Find (inline; ⌘K or Ctrl+K on a desk, a magnifier that opens
+the box on a phone), the standing (a dot in the tone of the rules, a number
+only when one is broken, opening what is broken; its name says "Everything
+is in order" otherwise), and the person (an avatar whose menu holds who is
+signed in, the seats, the host's own actions and, for whoever keeps the
+app, the installation and the studio). `bar: false` draws none of it, for a
 host whose own page already says all of that.
+
+A HOME VIEW IS THE FRONT PAGE (FR-136). An app with a home view — the
+declaration's `views.home`, or a worker view attached to `"home"` — opens
+on Pages at its home, full width under the bar, on a desk as on a phone,
+when the host names no face; under address routing it does so at the bare
+address whatever face the host names. Nothing floats over the scene. A
+declaration that names another first place (`pages.first`) opens there.
 
 ## What a page loads first
 
@@ -109,14 +120,14 @@ Shell spells it:
 | Address | Drawn |
 |---|---|
 | `/apps/a1/places/the-board`, `/apps/a1/tasks/t1` | the routed face, at that page |
-| `/apps/a1/places/overview#focus=t1`, `/apps/a1/places/overview#overview=1` | the overview: the scene, at that stop (the Graview at altitude) |
-| `/apps/a1#focus=t1` | the scene too — a link written before the scene was a place — tidied on arrival to the overview's address |
-| `/apps/a1` | the routed face's home, or on arrival the host's `face` (the Graview or the scene land on the overview's address) |
+| `/apps/a1/places/overview#focus=t1`, `/apps/a1/places/overview#overview=1` | the scene, at that stop (the Graview at altitude) |
+| `/apps/a1#focus=t1` | the scene too — a link written before the scene had an address — tidied on arrival to the scene's address |
+| `/apps/a1` | the routed face's home; on arrival, the home when the app has a home view, else the host's `face` (the Graview or the scene land on the scene's address) |
 
 Each page the routed face opens is pushed, and Back returns. The scene
 keeps its stop in the fragment the way the Shell does: a step is pushed,
-moving the furniture replaces. A tab pushes the address of the place it goes
-to, the overview's included, so Back undoes it. A reload stays where it
+moving the furniture replaces. The switch and the place list push the
+address of where they go, the scene's included, so Back undoes it. A reload stays where it
 was. `faceAtAddress(options)`
 is the face an address opens on, for a host that renders `<Embed>` itself.
 `placesOf(app)` gives each place's `address` within the app, and
@@ -129,7 +140,7 @@ own history stays on memory routing: `onNavigate(path, how)` is told each
 place the reader goes to (the path within the app — `/places/overview` for
 the scene — and `"push"`, `"replace"` or `"pop"`), and `handle.setPath(path)`
 sends the reader back to one when the host's own Back arrives: the
-overview's path draws the scene, any other the page. `where().path` is the
+scene's path draws the scene, any other the page. `where().path` is the
 place's path the same way.
 
 ## When the declaration changes
@@ -280,7 +291,7 @@ how many milliseconds it took.
 
 ## What the host can keep
 
-The Studio is in the person's menu on the overview for the seat that keeps the app, and writes
+The Studio is in the person's menu on the scene for the seat that keeps the app, and writes
 through a dev server's door or hands over files. A host whose readers
 cannot save a declaration leaves it off, or keeps what it applies:
 

@@ -1082,17 +1082,17 @@ if (location.pathname.startsWith("/pages")) {
 }</code></pre></div>
 <p><code>PagesApp</code> renders with no registry at all:</p>
 <ul>
-<li><code>/</code> — a GALLERY. The standing as the headline ("2 gardeners, 3 plots and 1 planting.", or "Nothing here yet." and which act begins it), then every picture as a large live card, two across at a desk, one on a phone, then the kinds as a row of counts, a line to the map, and Recently. A kind with no titled lens gets a contact sheet of its members, so a new app lands on a gallery; titling a lens replaces that card with the lens by its name. An empty picture names the act that fills it.</li>
+<li><code>/</code> — a GALLERY. The standing as the headline ("2 gardeners, 3 plots and 1 planting." or "Nothing here yet." and the act that begins it), then every picture as a large live card, two across at a desk, one on a phone, then the kinds as a row of counts, a line to the map, and Recently. A kind with no titled lens gets a contact sheet of its members, so a new app lands on a gallery. An empty picture names the act that fills it.</li>
 <li><code>/&lt;plural&gt;</code> — a list per kind, marking trouble, with the creating acts beneath it.</li>
 <li><code>/&lt;plural&gt;/&lt;id&gt;</code> — a record: its facts, its relations captioned in the declaration's words, what can be done, what has happened.</li>
 <li><code>/problems</code> — every broken rule with its repairs.</li>
 </ul>
-<p>The shell is one row — pictures (home), kinds, Map, Problems — scrolling sideways on a phone.</p>
+<p>The shell is the app bar, a row: the name, the switch (Scene, Pages; <code>pages: { scene, pages }</code> renames them), the place you are on — whose list holds the home, the Lists, the Pictures — Find, standing, person.</p>
 <p><strong>Arrange it in the declaration</strong>: <code>pages: { order: ["offer", "package"], hide: ["party"], first: "The offers" }</code>. <code>order</code> sets the gallery, nav and city; <code>hide</code> takes kinds off the home only; <code>first</code> (a place, a kind or <code>"home"</code>) is where both faces open. <code>placesOf(app)</code> lists every place.</p>
-<p><strong>Home as data</strong> (FR-81): <code>home</code>, blocks as in <code>graview-node-kind</code> (<code>views.home</code>), replaces this body and stands over the scene at home; an empty graph keeps the way in.</p>
+<p><strong>Home as data</strong> (FR-81): <code>home</code>, blocks as in <code>graview-node-kind</code> (<code>views.home</code>), replaces this body, and the app opens on it (FR-136).</p>
 <p><strong>Hand it <code>views</code></strong> (the scene's registry, plus <code>settings</code>/<code>presence</code>) — <code>graview create</code> does — and the face puts the scene's provider under its routes, which buys three things at once:</p>
 <ul>
-<li><code>/places</code>, <code>/places/&lt;as&gt;</code> — every named lens as a page (fullscreen, over the kind's members, siblings one press away, the beginning acts beneath) and the gallery again. A kind's page lists its pictures; a pick in a lens travels to the record. A kind's own row (one × glyph) is each line of its list, and its own page view (one × full) heads its record.</li>
+<li><code>/places</code>, <code>/places/&lt;as&gt;</code> — every named lens as a page (fullscreen, over the kind's members, its kind as a list, the beginning acts beneath) and the gallery again. A kind's page lists its pictures; a pick in a lens travels to the record. A kind's own row (one × glyph) is each line of its list, and its own page view (one × full) heads its record.</li>
 <li><code>/map</code> — <code>kindMap(store)</code>: every declared relation in its words with its live count, also a section on the home page. A kind's list says what it relates to and arranges itself in the shared words (<code>?sort=due:desc</code>, <code>?filter=done:false</code>, <code>?group=due:month</code>, <code>?q=tape</code>) a lens carries in its fragment, so an arrangement is a link; <code>?by=</code>, <code>?&lt;edge&gt;=&lt;id&gt;</code>, <code>?with=</code> and <code>?past=1</code> still land. A record links back.</li>
 <li><code>/search?q=</code> — the Find box's matcher: hits by kind, each with why; a nav box narrows a list, else lands here. Find and the way back ("Take back “…”", ⌘Z) are on every face: a shell that places <code>&lt;PageFind&gt;</code> or <code>&lt;PageUndo&gt;</code> says where, one that does not gets them drawn around it, and <code>surface("shell", Shell, { without: ["find"] })</code> goes without.</li>
 <li><strong>The assistant</strong>, on every route: one control opens the scene's own <code>Companion</code> in a drawer, and the ROUTE is what "this" means. Grounded questions before anybody types; proposals apply through the same runtime, attributed and undoable, withheld ones struck through. Open questions are listed on <code>/problems</code>; the rung that answers is chosen in the footer.</li>
@@ -1111,7 +1111,7 @@ function PlotPage({ context }: { context: PageContext&lt;S&gt; }) {
   return (
     &lt;PageMain context={context}&gt;
       &lt;h1 style={pageStyles.h1}&gt;{facts.label}&lt;/h1&gt;
-      &lt;a href={spatialHref(id)}&gt;On the overview ↗&lt;/a&gt;
+      &lt;a href={spatialHref(id)}&gt;In the scene ↗&lt;/a&gt;
       &lt;DerivedForm store={store} mutation={sow} prefilled={{ plotId: id }} /&gt;
     &lt;/PageMain&gt;
   );

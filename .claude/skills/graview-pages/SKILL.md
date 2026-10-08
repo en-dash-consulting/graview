@@ -24,20 +24,20 @@ if (location.pathname.startsWith("/pages")) {
 `PagesApp` renders with no registry at all:
 
 - `/` — a GALLERY. The standing as the headline ("2 gardeners, 3 plots and
-  1 planting.", or "Nothing here yet." and which act begins it), then every
+  1 planting." or "Nothing here yet." and the act that begins it), then every
   picture as a large live card, two across at a desk, one on a phone, then
   the kinds as a row of counts, a line to the map, and Recently. A kind
   with no titled lens gets a contact sheet of its members, so a new app
-  lands on a gallery; titling a lens replaces that card with the
-  lens by its name. An empty picture names the act that fills it.
+  lands on a gallery. An empty picture names the act that fills it.
 - `/<plural>` — a list per kind, marking trouble, with the creating acts
   beneath it.
 - `/<plural>/<id>` — a record: its facts, its relations captioned in the
   declaration's words, what can be done, what has happened.
 - `/problems` — every broken rule with its repairs.
 
-The shell is one row — pictures (home), kinds, Map, Problems — scrolling
-sideways on a phone.
+The shell is the app bar, a row: the name, the switch (Scene, Pages;
+`pages: { scene, pages }` renames them), the place you are on — whose list
+holds the home, the Lists, the Pictures — Find, standing, person.
 
 **Arrange it in the declaration**: `pages: { order: ["offer",
 "package"], hide: ["party"], first: "The offers" }`. `order` sets the
@@ -45,15 +45,14 @@ gallery, nav and city; `hide` takes kinds off the home only; `first` (a
 place, a kind or `"home"`) is where both faces open.
 `placesOf(app)` lists every place.
 **Home as data** (FR-81): `home`, blocks as in `graview-node-kind`
-(`views.home`), replaces this body and stands over the scene at
-home; an empty graph keeps the way in.
+(`views.home`), replaces this body, and the app opens on it (FR-136).
 
 **Hand it `views`** (the scene's registry, plus `settings`/`presence`) —
 `graview create` does — and the face puts the scene's provider
 under its routes, which buys three things at once:
 
 - `/places`, `/places/<as>` — every named lens as a page (fullscreen, over
-  the kind's members, siblings one press away, the beginning acts beneath)
+  the kind's members, its kind as a list, the beginning acts beneath)
   and the gallery again. A kind's page lists its pictures; a pick in a lens
   travels to the record. A kind's own row (one × glyph) is each line of its
   list, and its own page view (one × full) heads its record.
@@ -96,7 +95,7 @@ function PlotPage({ context }: { context: PageContext<S> }) {
   return (
     <PageMain context={context}>
       <h1 style={pageStyles.h1}>{facts.label}</h1>
-      <a href={spatialHref(id)}>On the overview ↗</a>
+      <a href={spatialHref(id)}>In the scene ↗</a>
       <DerivedForm store={store} mutation={sow} prefilled={{ plotId: id }} />
     </PageMain>
   );

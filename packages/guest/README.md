@@ -76,7 +76,7 @@ viewer sees them (`readAcross`, the rule a worker view's manifest uses
 too). A guest over packages that reads `offer` and `includes` gets each
 package's offers, and an offer the viewer may not see is in none of it.
 Drawn as the home (`views.home`), a guest is drawn over nothing and sees
-what it reads: it is the routed home's body, and the landing over the scene.
+what it reads: it is the routed home's body, the page the app opens on (FR-136).
 
 Its props carry `theme`, a `GuestTheme`: the scheme, the accent, ground,
 panel, ink, muted ink and edge colors, the body, display and mono fonts
@@ -296,8 +296,8 @@ frame guest too. A titled view is a named place on the Graview face and
 the pages face, by its title; whatever the registry drew for that kind
 before is drawn if the view fails. With `attach: "home"`,
 `registerWorkerView` makes it the home's own view (FR-81). That is the
-routed home's body and the landing over the scene when it is at home, in
-place of the home the app declared, which is drawn if the view fails.
+routed home's body — the page the app opens on, full width on a desk as on
+a phone (FR-136) — in place of the home the app declared, which is drawn if the view fails.
 `workerHome` makes it the routed face's whole home surface instead. Its props carry the app's look as a
 `GuestTheme` — the scheme, the accent, ground, panel, ink, muted ink and
 edge colors, the body, display and mono fonts and the radius — read off

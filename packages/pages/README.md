@@ -19,11 +19,12 @@ this package serves lists, records, forms, problems and history as ordinary link
   discriminated unions as a type picker plus that arm's fields, arrays as repeatable rows —
   and `DerivedForm` renders it. Nothing renderable is hand-written; anything unrenderable
   says so instead of hiding.
-- **One bar, and the scene a place.** The shell is the one app bar (FR-131): the app's mark
-  and name — the page's one heading, the way home — its places as tabs (the overview, each
-  picture, each kind's list, the connections; "More" for what the row cannot hold), and Find,
-  the standing and the person. The overview is the scene (FR-132), at the scene's own address on a face
-  that owns its page; a record and a picture say "On the overview ↗", to their stop there.
+- **One bar: the scene or the pages, and the place you are on.** The shell is the one app bar
+  (FR-131): the app's mark and name — the page's one heading, the way home — then the switch,
+  "Scene" and "Pages" (FR-137; the scene at its own address on a face that owns its page), then
+  the place you are on as one control that opens every place: the home, the Lists, the Pictures
+  (FR-138); then Find, the standing and the person. A page keeps only its own links — a picture
+  its kind as a list, a record "In the scene ↗" to its stop there.
   Under an embed's bar the shell draws none of it, and the face's Find goes in
   that bar. Each page's own title is said a level under the app's name. See
   `apps/todo` for both mounted from one declaration (`/` scene, `/pages` routed).
