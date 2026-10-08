@@ -123,6 +123,8 @@ const SHOTS = process.argv.find((arg) => arg.startsWith("--shots="))?.slice("--s
 const PROBE = process.argv.includes("--probe");
 /** `--notices`: only the notices (FR-133). */
 const ONLY_NOTICES = process.argv.includes("--notices");
+/** `--boxes`: only the bar in boxes on a desk (the bar fits its box). */
+const ONLY_BOXES = process.argv.includes("--boxes");
 /** What a notice says here: a sentence as long as a real change's, which must wrap on a phone rather than be cut. */
 const LONG_VENDOR = "Could Val lead the Thursday tasting while Sam is away for the fortnight";
 const ORG = resolve(repoRoot, "scripts/fixtures/quiet/org.gdd.json");
@@ -136,6 +138,25 @@ const WORKSHOP_SEED = resolve(repoRoot, "scripts/fixtures/desk-bar/workshop.seed
 const DESKS = (QUICK ? [1024, 1280] : [1000, 1024, 1280, 1440]).map((width) => ({ width, height: 800 }));
 /* The longest a bar may be, its rule included (FR-138). */
 const BAR_MOST = 48;
+/*
+ * THE BAR FITS ITS BOX. graview.dev's landing page gives the garden a box
+ * about 650 px wide on a 1440 desk, and on 0.1.17 the bar laid itself out
+ * as a desk's: the app's name crushed to a letter a line down the side and
+ * over the page under it, the place cut to "W… ▾", Find holding the room.
+ * The boxes it is measured in, on a 1440 desk; then whole pages.
+ */
+const BOX_DESK = { width: 1440, height: 800 };
+const BOXES = QUICK ? [360, 480, 640, 720] : [360, 480, 560, 640, 720, 900];
+const BOX_PAGES = QUICK ? [390, 1440] : [390, 1024, 1280, 1440];
+/* The names it is measured with: Cloud's workshop's four words, and one. */
+const LONG_NAME = "Farm Bureau POM Workshop";
+const SHORT_NAME = "Seedbed";
+/* The boxes the one-word name is measured in too: those between a phone's bar and a desk's. */
+const SHORT_BOXES = [480, 640, 720];
+/* The fewest letters of the place's name the control shows, when the name is longer. */
+const PLACE_LETTERS = 10;
+/* Down to this box the bar is one row of at most 48 px. */
+const ONE_ROW_FROM = 480;
 
 /** A wide display face every engine here has on macOS, with wide fallbacks: an average letter well over the 7.1 px the marquee was estimated at. */
 const WIDE_FONT = '"Arial Black", "Verdana", "DejaVu Sans", sans-serif';
@@ -158,7 +179,7 @@ const report = { at: new Date().toISOString(), engines, schemes: SCHEMES, defini
 
 const HOST_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>An app, on a host's page</title>
 <style>body{margin:0;font:16px/1.4 Georgia,serif;background:#faf8f2;color:#222}#app{position:relative;height:100vh}</style></head>
-<body><main><h1 style="position:absolute;left:-9999px">An app</h1><div id="app"></div></main><script type="module" src="/entry.js"></script></body></html>`;
+<body><main><h1 style="position:absolute;left:-9999px">An app</h1><div id="app"></div><p data-host-under="">The host's page goes on under the box.</p></main><script type="module" src="/entry.js"></script></body></html>`;
 
 /** The host's page: the embed over either document, as Cloud's shell mounts it. */
 async function buildHost() {
@@ -192,7 +213,11 @@ async function buildHost() {
          * room sized for the average runs short by a line a name.
          */
         const edgeNames = ${JSON.stringify(EDGE_NAMES)};
-        const document_ = isWorkshop ? shop : isOrg && asked.get("font") === "wide" ? { ...org, lenses: org.lenses.map((lens, i) => ({ ...lens, title: edgeNames[i % edgeNames.length] })) } : isOrg ? org : vendors.document;
+        let document_ = isWorkshop ? shop : isOrg && asked.get("font") === "wide" ? { ...org, lenses: org.lenses.map((lens, i) => ({ ...lens, title: edgeNames[i % edgeNames.length] })) } : isOrg ? org : vendors.document;
+        /* The app under another name: a one-word name, or one long enough to give (the bar fits its box). */
+        if (asked.get("name")) document_ = { ...document_, name: asked.get("name") };
+        /* A box on the host's page, as graview.dev's landing page gives the garden: so wide, on a desk however wide. */
+        if (asked.get("box")) document.getElementById("app").style.cssText = "position:relative;width:" + Number(asked.get("box")) + "px;height:560px;margin:24px auto 0";
         const compiled = compileDocumentWithoutCheck(document_, { today: () => "2026-10-02" });
         if (!compiled.ok) throw new Error("the document did not compile");
         const withIds = (seed) => ({ nodes: seed.nodes, edges: seed.edges.map((edge, i) => ({ id: edge.id ?? "e" + i, ...edge })) });
@@ -212,6 +237,7 @@ async function buildHost() {
           fonts: false,
           studio: false,
           bar: true,
+          ...(asked.get("switch") ? { switch: asked.get("switch") } : {}),
         });
         window.__handle.drawn().then(() => { window.__ready = true; });`,
       resolveDir: resolve(repoRoot, "packages/embed"),
@@ -370,7 +396,7 @@ function measure() {
 const BAR_HELPERS = `${[barControls, linesOf, theSwitch, saysOverview].map(String).join("\n")}\nObject.assign(window, { barControls, linesOf, theSwitch, saysOverview });`;
 const host = await buildHost();
 const errors = [];
-const results = { screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [] };
+const results = { boxes: [], boxSwitches: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -395,6 +421,35 @@ try {
           const link = links.find(said);
           return link ? new URL(link.getAttribute("href"), location.href).pathname.replace(/^.*(\/places\/)/, "$1") : null;
         }, title);
+
+      /* ---- The bar fits its box: in boxes on a desk, and on whole pages, both faces, a long name and a short one */
+      if (!ONLY_NOTICES) {
+        /* The workshop with thirty places, on a picture's page whose name is as long as a sentence. */
+        const longPlace = "/places/what-the-room-said-about-the-budget-part-1";
+        const sizes = [...BOXES.map((box) => ({ box, viewport: BOX_DESK })), ...BOX_PAGES.map((width) => ({ box: 0, viewport: width < 640 ? PHONE : { width, height: 800 } }))];
+        for (const face of ["graview", "pages"]) {
+          for (const name of [LONG_NAME, SHORT_NAME]) {
+            for (const { box, viewport } of sizes) {
+              if (name === SHORT_NAME && !SHORT_BOXES.includes(box)) continue;
+              const query = `doc=workshop&many=1&face=${face}&heading=1&name=${encodeURIComponent(name)}${box ? `&box=${box}` : ""}${face === "pages" ? `&path=${encodeURIComponent(longPlace)}` : ""}`;
+              const { page, close } = await open(query, viewport);
+              const where = box ? `a ${box} px box on a ${viewport.width} px desk` : `a ${viewport.width} px page`;
+              if (SHOTS && engine === "chromium") await page.screenshot({ path: join(SHOTS, `box-${face}-${name === SHORT_NAME ? "short" : "long"}-${box ? `box${box}` : `page${viewport.width}`}-${scheme}.png`), clip: { x: 0, y: 0, width: viewport.width, height: 180 } });
+              results.boxes.push({ engine, scheme, face, name, box, where, ...(await page.evaluate(theBarInItsBox)), find: await findInEveryForm(page) });
+              await close();
+            }
+          }
+        }
+        /* The switch as marks alone, asked for by the host: on a desk's whole page and in a box, its words its names. */
+        for (const face of ["graview", "pages"]) {
+          for (const box of [0, 720]) {
+            const { page, close } = await open(`doc=workshop&face=${face}&heading=1&switch=icons${box ? `&box=${box}` : ""}`, BOX_DESK);
+            results.boxSwitches.push({ engine, scheme, face, where: box ? `a ${box} px box` : `a ${BOX_DESK.width} px page`, ...(await page.evaluate(theSwitchsWords)) });
+            await close();
+          }
+        }
+      }
+      if (ONLY_BOXES) continue;
 
       /* ---- FR-133: notices float over the page and never move it */
       for (const face of ["pages", "graview"]) {
@@ -741,8 +796,42 @@ try {
     seen: notices.map(({ engine, scheme, face, viewport, said, act }) => ({ engine, scheme, face, viewport, said, act })),
     ok: allNotices && notices.every((one) => one.said.polite && one.said.wayBack !== false && one.act.button && one.act.focusStayed && one.act.reached),
   };
+  /* The bar fits its box */
+  const boxes = results.boxes;
+  const allBoxes = boxes.length === engines.length * SCHEMES.length * 2 * (BOXES.length + BOX_PAGES.length + BOXES.filter((box) => SHORT_BOXES.includes(box)).length);
+  const whereOf = ({ engine, scheme, face, name, where }) => ({ engine, scheme, face, name, where });
+  const BOX_CHECKS = {
+    theAppsNameIsWholeWordsOnAtMostTwoLinesInEveryBox: {
+      seen: boxes.map((one) => ({ ...whereOf(one), ...one.app })),
+      ok: allBoxes && boxes.every((one) => one.app.lines >= 1 && one.app.lines <= 2 && one.app.width >= one.app.firstWord - 1 && one.app.whole),
+    },
+    theBarIsOneRowOfAtMost48PxInABoxDownTo480: {
+      seen: boxes.map((one) => ({ ...whereOf(one), height: one.height, lines: one.lines })),
+      ok: allBoxes && boxes.filter((one) => one.box === 0 || one.box >= ONE_ROW_FROM).every((one) => one.lines === 1 && one.height <= BAR_MOST),
+    },
+    nothingOnTheBarOverlapsThePageUnderIt: {
+      seen: boxes.map((one) => ({ ...whereOf(one), ...(one.over.length > 0 ? { over: one.over } : {}), underTheBar: one.underTheBar })),
+      ok: allBoxes && boxes.every((one) => one.over.length === 0 && one.underTheBar),
+    },
+    thePlaceShowsTenLettersOrItsWholeName: {
+      seen: boxes.filter((one) => one.face === "pages").map((one) => ({ ...whereOf(one), place: one.place })),
+      ok: allBoxes && boxes.filter((one) => one.face === "pages").every((one) => one.place !== null && one.place.shown >= Math.min(PLACE_LETTERS, one.place.length)),
+    },
+    findIsReachedByTheKeyboardAndItsShortcutInEveryForm: {
+      seen: boxes.map((one) => ({ ...whereOf(one), find: one.find })),
+      ok: allBoxes && boxes.every((one) => one.find.byTab && one.find.byShortcut && one.find.typed),
+    },
+    theSwitchAskedForAsMarksSaysItsWordsAsNames: {
+      seen: results.boxSwitches,
+      ok: results.boxSwitches.length === engines.length * SCHEMES.length * 4 && results.boxSwitches.every((one) => one.names.join() === "Scene,Pages" && one.titles.join() === "Scene,Pages" && one.wordsDrawn === 0 && one.asked === "icons"),
+    },
+  };
+  if (!ONLY_NOTICES) Object.assign(report.checks, BOX_CHECKS);
   if (ONLY_NOTICES) {
     for (const name of Object.keys(report.checks)) if (!/Notice|WayBack/.test(name)) delete report.checks[name];
+  }
+  if (ONLY_BOXES) {
+    for (const name of Object.keys(report.checks)) if (!(name in BOX_CHECKS)) delete report.checks[name];
   }
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);
@@ -935,6 +1024,124 @@ function theRow() {
     },
     switch: theSwitch(header),
     saysOverview: saysOverview(root),
+  };
+}
+
+/**
+ * THE BAR IN ITS BOX: the app's name — the lines it is drawn on, clipped
+ * lines left out, its width against its first word's, and whether its
+ * whole name is its title; the bar's height and the lines its controls
+ * stand on; anything of the bar's drawn past its bottom edge, over the
+ * page under it (a control, or a line of the name); whether the page
+ * starts under the bar; and how many letters of the place's name the
+ * place control shows.
+ */
+function theBarInItsBox() {
+  const root = document.querySelector("[data-graview-embed]");
+  const header = root?.querySelector("[data-graview-app-bar]");
+  const name = header?.querySelector('[data-testid="app-name"]');
+  if (!header || !name) return { app: { lines: 0, width: 0, firstWord: 1, whole: false }, height: null, lines: 0, over: ["no bar"], underTheBar: false, place: null };
+  const bar = header.getBoundingClientRect();
+  const said = name.textContent.trim();
+  const nameBox = name.getBoundingClientRect();
+  /* The boxes above the name that clip it: a line past them is not drawn. */
+  const clips = [];
+  for (let up = name; up && up !== header; up = up.parentElement) {
+    const style = getComputedStyle(up);
+    if (["hidden", "clip"].includes(style.overflowY) || ["hidden", "clip"].includes(style.overflowX)) clips.push(up.getBoundingClientRect());
+  }
+  const range = document.createRange();
+  range.selectNodeContents(name);
+  const drawn = [...range.getClientRects()].filter((rect) => rect.width > 0.5 && clips.every((clip) => rect.bottom > clip.top + 1 && rect.top < clip.bottom - 1 && rect.right > clip.left + 1 && rect.left < clip.right - 1));
+  /* The first word, set alone in the name's own face. */
+  const probe = document.createElement("span");
+  const style = getComputedStyle(name);
+  probe.style.cssText = `position:absolute;visibility:hidden;white-space:nowrap;font:${style.font};letter-spacing:${style.letterSpacing}`;
+  probe.textContent = said.split(/\s+/)[0] ?? "";
+  header.append(probe);
+  const firstWord = probe.getBoundingClientRect().width;
+  probe.remove();
+  const title = header.querySelector('[data-testid="app-home"]')?.getAttribute("title") ?? "";
+  const whole = said.length > 0 && title.startsWith(said);
+  const over = [];
+  for (const control of barControls(header)) if (control.box.bottom > bar.bottom + 0.5 || control.box.top < bar.top - 0.5) over.push({ what: control.name, by: Math.round(control.box.bottom - bar.bottom) });
+  for (const rect of drawn) if (rect.bottom > bar.bottom + 0.5) over.push({ what: "the app's name", by: Math.round(rect.bottom - bar.bottom) });
+  const line = root.querySelector("[data-graview-place-line]");
+  const above = (line && line.getBoundingClientRect().height > 1 ? line : header).getBoundingClientRect();
+  const content = root.querySelector("[data-embed-content]");
+  const underTheBar = Boolean(content && content.getBoundingClientRect().top >= above.bottom - 1);
+  const words = root.querySelector('[data-testid="app-place-current"]');
+  let place = null;
+  if (words && words.getBoundingClientRect().width > 1) {
+    /* The letters drawn inside the control's own box, the ellipsis's room left out when it is cut. */
+    const edge = words.getBoundingClientRect();
+    const cut = words.scrollWidth > words.clientWidth + 1;
+    const text = words.firstChild;
+    const letter = document.createRange();
+    let shown = 0;
+    for (let at = 0; text && at < text.length; at++) {
+      letter.setStart(text, at);
+      letter.setEnd(text, at + 1);
+      if (letter.getBoundingClientRect().right <= edge.right - (cut ? 12 : -1)) shown += 1;
+      else break;
+    }
+    place = { said: words.textContent.trim(), length: words.textContent.trim().length, shown };
+  }
+  return { app: { said, lines: linesOf(drawn), width: Math.round(nameBox.width), firstWord: Math.round(firstWord), whole }, height: Math.round(bar.height * 10) / 10, lines: linesOf(barControls(header).map((one) => one.box)), over, underTheBar, place };
+}
+
+/**
+ * FIND, IN EVERY FORM IT TAKES: reached by Tab from the way home (a box,
+ * or the button that opens one, then Enter), then by its shortcut with
+ * nothing focused, and typed into.
+ */
+async function findInEveryForm(page) {
+  const isFind = () =>
+    page.evaluate(() => {
+      const at = document.activeElement;
+      if (!at) return null;
+      if (at.matches('input[type="search"]') && /^(Find anything|Narrow this list)$/.test(at.getAttribute("aria-label") ?? "")) return at.getBoundingClientRect().width >= 80 ? "box" : "squeezed";
+      if (at.matches('[data-testid="app-find-open"]')) return "opener";
+      return null;
+    });
+  await page.evaluate(() => document.querySelector('[data-testid="app-home"]')?.focus());
+  let byTab = false;
+  for (let press = 0; press < 12 && !byTab; press++) {
+    await page.keyboard.press("Tab");
+    const at = await isFind();
+    if (at === "box") byTab = true;
+    if (at === "opener") {
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(150);
+      byTab = (await isFind()) === "box";
+      break;
+    }
+  }
+  await page.keyboard.press("Escape");
+  await page.evaluate(() => document.activeElement?.blur?.());
+  await page.waitForTimeout(150);
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.waitForTimeout(200);
+  const byShortcut = (await isFind()) === "box";
+  let typed = false;
+  if (byShortcut) {
+    await page.keyboard.type("bud");
+    await page.waitForTimeout(150);
+    typed = await page.evaluate(() => document.activeElement?.value === "bud");
+  }
+  return { byTab, byShortcut, typed };
+}
+
+/** The switch asked for as marks: its buttons' names and titles, how many draw their words, and what the bar says was asked. */
+function theSwitchsWords() {
+  const group = document.querySelector('[data-testid="app-faces"]');
+  const buttons = [...(group?.querySelectorAll("button") ?? [])];
+  const wordsDrawn = buttons.filter((button) => [...button.querySelectorAll("span")].some((span) => span.textContent.trim() && span.getBoundingClientRect().width > 4)).length;
+  return {
+    names: buttons.map((button) => (button.getAttribute("aria-label") ?? button.textContent ?? "").trim()),
+    titles: buttons.map((button) => button.getAttribute("title")),
+    wordsDrawn,
+    asked: group?.getAttribute("data-switch") ?? null,
   };
 }
 
