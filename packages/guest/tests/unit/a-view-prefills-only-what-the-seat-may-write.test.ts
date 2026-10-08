@@ -182,3 +182,50 @@ describe("a field the host filled", () => {
     expect(view.last()).toMatchObject({ ok: false, reason: "untyped" });
   });
 });
+
+/**
+ * WHAT THE HOST FILLED IS WHAT THE RECORD HOLDS, AND NEVER AN OLD COPY OF
+ * IT (the security review before 0.1.18). A press carries a filled field as
+ * the person's own words, so the field must hold the record's value exactly
+ * — an input that cannot hold it (a number field handed words, a one-line
+ * field handed paragraphs) is left empty — and a filled field nobody touched
+ * since writes the record's value as it is now, never the one it was filled
+ * with: a view could hide it, and Save would put back what another seat
+ * changed meanwhile.
+ */
+describe("a field the host filled holds the record's value, and only while it is the record's", () => {
+  const formWith = (input: ReturnType<typeof element>) => element("fieldset", { "data-record": EMAIL }, [input, element("button", { "data-act": "set-draft" }, [text("Save")])]);
+
+  it("is left empty where the field cannot hold the value whole, and Save writes no flattened or empty draft", () => {
+    for (const type of ["text", "number"]) {
+      const s = store();
+      const view = region(s, nick, formWith(element("input", { type, name: "draft", "data-prefill": "draft" })));
+      const input = view.shadow.querySelector("input")!;
+      expect(input.value).toBe("");
+      view.press();
+      expect(view.last()).toMatchObject({ ok: false });
+      expect(draftOf(s)).toBe(EMAIL_DRAFT);
+    }
+  });
+
+  it("writes what the record holds now when nobody touched it, never reverting another seat's change", () => {
+    const s = store();
+    const view = region(s);
+    expect(view.field.value).toBe(EMAIL_DRAFT);
+    s.apply({ name: "set-draft", args: { deliverableId: EMAIL, draft: "Changed by another seat." } }, { author: nick });
+    view.press();
+    expect(view.last()).toMatchObject({ ok: true });
+    expect(draftOf(s)).toBe("Changed by another seat.");
+  });
+
+  it("is nothing for a TypeScript act that declares no `writes`, whatever its arguments are named", () => {
+    const s = store();
+    const loose = { ...(s.allMutations().find((one) => one.name === "set-draft") as object), writes: undefined };
+    const looseStore = Object.create(s, { allMutations: { value: () => s.allMutations().map((one) => (one.name === "set-draft" ? loose : one)) } }) as Store<AnySchema>;
+    expect(prefillOf(looseStore, nick, manifest, shownTo(s), { record: EMAIL, field: "draft", acts: ["set-draft"] })).toBeUndefined();
+  });
+
+  it("is nothing for a field named like what every object inherits", () => {
+    expect(prefillOf(store(), nick, manifest, shownTo(store()), { record: EMAIL, field: "constructor", acts: ["set-draft"] })).toBeUndefined();
+  });
+});
