@@ -44,6 +44,29 @@ function startVite() {
   return serving("seedbed", port, repoRoot);
 }
 
+/*
+ * WHAT A CHAPTER ASKED OF THE NETWORK, BY ADDRESS. A request that failed
+ * was a console line, "Failed to load resource:
+ * net::ERR_INTERNET_DISCONNECTED", which says the network was missing and
+ * not what wanted it; the request's own failure names the address. Every
+ * request off this machine is kept too, so a chapter that needs the
+ * network says so whether or not the network was there.
+ */
+function listen(page, entry) {
+  page.on("pageerror", (error) => entry.errors.push(String(error.message ?? error)));
+  page.on("console", (message) => {
+    if (message.type() !== "error") return;
+    // Said again, with its address, by the request's own failure below.
+    if (/^Failed to load resource: net::/.test(message.text())) return;
+    entry.errors.push(message.text());
+  });
+  page.on("requestfailed", (request) => entry.errors.push(`${request.failure()?.errorText ?? "failed"}: ${request.url()}`));
+  page.on("request", (request) => {
+    const { protocol, hostname } = new URL(request.url());
+    if (/^https?:$/.test(protocol) && hostname !== "localhost" && hostname !== "127.0.0.1" && !entry.offTheMachine.includes(request.url())) entry.offTheMachine.push(request.url());
+  });
+}
+
 const report = { at: new Date().toISOString(), engine: engineName(), chapters: [] };
 let vite;
 let browser;
@@ -64,22 +87,21 @@ try {
       check: { ok: check.ok, errors: check.errors, warnings: check.warnings, findings: check.findings.map((f) => f.code) },
       pictures: {},
       errors: [],
+      offTheMachine: [],
     };
     // A fresh context per chapter: what one chapter remembered must not leak into the next.
     // Twice the pixels: the page shows these in a column two-thirds this
     // wide, and text photographed at 1x and shown at 0.6x is not text.
     const context = await browser.newContext({ viewport: { width: 1280, height: 680 }, deviceScaleFactor: 2 });
     const page = await context.newPage();
-    page.on("pageerror", (error) => entry.errors.push(String(error.message ?? error)));
-    page.on("console", (message) => { if (message.type() === "error") entry.errors.push(message.text()); });
+    listen(page, entry);
     for (const scheme of ["light", "dark"]) {
       if (chapter.face === "pages") {
         // The routed face, at phone width: the whole page, as a phone shows it.
         const phone = await context.newPage();
         // A phone for the derived face; a desk for a design that earns one.
         await phone.setViewportSize(chapter.wide ? { width: 1280, height: 800 } : { width: 390, height: 844 });
-        phone.on("pageerror", (error) => entry.errors.push(String(error.message ?? error)));
-        phone.on("console", (message) => { if (message.type() === "error") entry.errors.push(message.text()); });
+        listen(phone, entry);
         await phone.goto(`http://localhost:${port}${chapter.path}?chapter=${chapter.n}&theme=${scheme}`, { waitUntil: "networkidle" });
         await phone.waitForTimeout(900);
         const file = `${String(chapter.n).padStart(2, "0")}-${chapter.slug}-${scheme}.png`;
@@ -231,6 +253,8 @@ try {
 report.verdict = {
   everyChapterChecksClean: report.chapters.length === CHAPTERS.length && report.chapters.every((c) => c.check.ok),
   everyChapterRenderedWithoutErrors: report.chapters.every((c) => c.errors.length === 0 && c.pictures.light && c.pictures.dark),
+  // The chapters are photographed from this checkout: nothing they draw is fetched from anywhere else.
+  noChapterAsksTheNetwork: report.chapters.length > 0 && report.chapters.every((c) => c.offTheMachine.length === 0),
   theRuleFiresInChapterThree: /1 problem/.test(report.chapters[2]?.saw?.standing ?? "") && /Nobody tends Plot 2/.test(report.chapters[2]?.saw?.problems ?? ""),
   theHorizonShowsInChapterFour: (report.chapters[3]?.saw?.districts ?? []).some((d) => /past/.test(d)),
   theSeatPlantedInChapterFive: (report.chapters[4]?.saw?.activity ?? []).length > 0,

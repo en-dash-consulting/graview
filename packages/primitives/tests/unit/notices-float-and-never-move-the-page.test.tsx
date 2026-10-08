@@ -124,6 +124,19 @@ describe("a notice at the foot of the picture", () => {
     expect(lift(stack())).toBe(16);
   });
 
+  it("is not drawn over the host's page while its picture is scrolled out of the window", () => {
+    screen(1280, 800);
+    const notice = document.createElement("div");
+    document.body.appendChild(notice);
+    boxes.set(notice, { left: 16, top: 0, width: 300, height: 52 });
+    boxes.set(picture, { left: 100, top: 1400, width: 700, height: 600 });
+    placeAtTheFoot(notice, picture);
+    expect(notice.style.visibility).toBe("hidden");
+    boxes.set(picture, { left: 100, top: 100, width: 700, height: 600 });
+    placeAtTheFoot(notice, picture);
+    expect(notice.style.visibility).toBe("");
+  });
+
   it("stands above another notice at the foot, so several never overlap", () => {
     screen(1280, 800);
     boxes.set(picture, { left: 0, top: 56, width: 1280, height: 744 });

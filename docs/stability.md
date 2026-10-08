@@ -101,7 +101,11 @@ Where the places stand is the look as well (FR-145): on a bar with room after th
 3. If not, press `[data-testid="app-places-open"]` — "More" where places stand, the one control where none do, on a phone the page's first line — and press it in `[data-testid="app-places"]`, the list it opens.
 4. `[data-testid="app-place-current"]` says the place the reader is on: the one control's words, or the place standing on the row, marked `aria-current="page"`.
 
-The list is grouped as before (`data-place-group`: `home`, `lists`, `pictures`), holding the places that do not stand; `app-places-open` is absent only when every place stands.
+The list is grouped as before (`data-place-group`: `home`, `lists`, `pictures`), holding the places that do not stand; `app-places-open` is absent only when every place stands. The places standing on the row are inside `nav[data-testid="app-places-standing"]`.
+
+What a page draws while a part it fetches has not arrived is kept the same way (FR-139): the line `[data-testid="lazy-part-missing"]` in the part's place, a polite status, with its button `[data-testid="lazy-part-retry"]` ("Try again"); a part that never arrives draws that line and throws nothing into the embed. `retryingImport` is on its own entry, `@graview/core/retry`, for a page only: the main entry, tools and ship carry no `import()` of a computed URL, which workerd refuses. A selected record in the scene marks its host `data-graview-record-focus`, under a declared page is one `[data-graview-primitive="panel"]` holding `[data-graview-spec="page"]`, and a district's name is `[data-graview-district-name]` (FR-141, FR-143). In an embed, the pages face's Ask (`page-ask`) and its drawer (`page-ask-drawer`), the panes the bar opens and the notices at the foot stay inside the embed's box where they fit there; a harness finds them there, never at the window's foot.
+
+Sentences a program may match are said in the changeset when they move: the insight observation `insight:load:<id>:<edge>` reads "<name> <the relation's words>: all <n> <plural>" (or "<n> of the <m> <plural>") since FR-142, a relation's words from its `description` or `inverse`, else its key spoken (`edgeWords`, `@graview/core`).
 
 ## The conformance kit
 

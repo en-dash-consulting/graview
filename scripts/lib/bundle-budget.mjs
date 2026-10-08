@@ -118,8 +118,11 @@ export const BUDGETS = [
     // Raised when a lens double-clicked from Up came to open it: the first press waits a double-click's length for the
     // second where the pointer still is, and the one stop down into a picture (`withPicture`): 1_034 / 392 more, over the security review. Measured at 518_939 / 178_343.
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review, module moves and a lens double-clicked from Up. Measured at 529_985 / 181_983.
-    minified: 530_500,
-    gzipped: 182_300,
+    // Raised by the review after 0.1.17: the Ask and its drawer placed inside their embed's box (and read back where a host's
+    // transform moved them), a pane kept inside its embed where it fits, a notice put away while its embed is scrolled out of
+    // the window. 1_617 / 502 more. Measured at 531_602 / 182_485.
+    minified: 532_100,
+    gzipped: 182_800,
     load: "first",
   },
   {
@@ -376,8 +379,10 @@ export const BUDGETS = [
     // dimensions have no prototype). Measured at 1_561_966 / 472_529.
     // Raised when a lens double-clicked from Up came to open it: 985 / 364 more, over the security review. Measured at 1_562_951 / 472_893.
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review, module moves and a lens double-clicked from Up. Measured at 1_581_667 / 479_348.
-    minified: 1_582_300,
-    gzipped: 479_700,
+    // Raised with the pages face's by the review after 0.1.17 (the Ask and the panes kept inside their embed): 1_612 / 551 more.
+    // Measured at 1_583_279 / 479_899.
+    minified: 1_583_800,
+    gzipped: 480_300,
     load: "all",
   },
   {
@@ -437,8 +442,10 @@ export const BUDGETS = [
     // dimensions have no prototype). Measured at 1_527_937 / 457_645.
     // Raised with every face's when a lens double-clicked from Up came to open it: 985 / 370 more, over the security review. Measured at 1_528_922 / 458_015.
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review, module moves and a lens double-clicked from Up. Measured at 1_545_447 / 463_365.
-    minified: 1_546_000,
-    gzipped: 463_700,
+    // Raised with the pages face's by the review after 0.1.17 (the Ask and the panes kept inside their embed): 1_612 / 537 more.
+    // Measured at 1_547_059 / 463_902.
+    minified: 1_547_600,
+    gzipped: 464_200,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

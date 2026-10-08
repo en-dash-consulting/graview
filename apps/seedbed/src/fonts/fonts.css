@@ -1,0 +1,27 @@
+/*
+ * Seedbed's faces, from this checkout rather than from Google Fonts: the
+ * chapters are photographed by `scripts/progression.mjs`, which claims no
+ * chapter asks the network, and a machine without one failed every chapter
+ * on a stylesheet nobody drew with. Latin subsets, variable, OFL (OFL.txt).
+ */
+@font-face {
+  font-family: "Figtree";
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url("./figtree-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./fraunces-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("./jetbrains-mono-latin.woff2") format("woff2");
+}

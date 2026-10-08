@@ -58,6 +58,8 @@ export function placeAtTheFoot(element: HTMLElement, anchor: HTMLElement | null)
   if (size.width === 0 && size.height === 0 && element.style.left !== "") return;
   const width = size.width;
   const height = size.height;
+  /* An embed scrolled out of the window keeps its notices: they are not drawn over the host's page meanwhile (still said aloud). */
+  element.style.visibility = anchor && foot - top < height + GAP ? "hidden" : "";
   let x = narrow ? left + (span - width) / 2 : left + GAP;
   let lift = view.height - foot + GAP;
   const standing = [...document.querySelectorAll<HTMLElement>(FOOT_OBSTACLES)]

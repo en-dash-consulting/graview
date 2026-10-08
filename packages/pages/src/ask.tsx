@@ -2,7 +2,8 @@ import { labelOf, layer, type AnySchema } from "@graview/core";
 import { retryingImport } from "@graview/core/retry";
 import { aggregateId, kindCardId } from "@graview/layout/view";
 import { lazyModule, useGraviewIfAny } from "@graview/react/provider";
-import { Suspense, useEffect, useRef, useState, type ComponentType } from "react";
+import { Suspense, useEffect, useLayoutEffect, useRef, useState, type ComponentType, type RefObject } from "react";
+import { askPlace, pin } from "./ask-place.js";
 import { useLocation, useNavigate } from "react-router-dom";
 import { kindOfSlug, recordPath } from "./registry.js";
 import type { PageContext } from "./pages.js";
@@ -40,11 +41,15 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const here = useGraviewIfAny<S>();
+  const button = useRef<HTMLButtonElement | null>(null);
+  const drawer = useRef<HTMLDivElement | null>(null);
+  useInsideItsEmbed(button, drawer, open, here !== undefined);
   if (!here) return null;
   return (
     <>
       <RouteSubject context={context} />
       <button
+        ref={button}
         type="button"
         data-testid="page-ask"
         // At the foot: a notice placed there stands above it (FR-133).
@@ -77,6 +82,7 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
       </button>
       {open ? (
         <div
+          ref={drawer}
           data-testid="page-ask-drawer"
           /*
            * The scene's companion positions itself inside the scene's box;
@@ -109,6 +115,40 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
       ) : null}
     </>
   );
+}
+
+/**
+ * IN AN EMBED, THE ASK AND ITS DRAWER STAY IN THE EMBED'S BOX (see
+ * `ask-place.ts`): placed from that box as it shows on the screen, again as
+ * the host's page scrolls or the box changes size, and put away while too
+ * little of it shows. A face that is the whole page keeps the window's foot.
+ */
+function useInsideItsEmbed(button: RefObject<HTMLButtonElement | null>, drawer: RefObject<HTMLDivElement | null>, open: boolean, drawn: boolean) {
+  useLayoutEffect(() => {
+    const ask = button.current;
+    const box = ask?.parentElement?.closest<HTMLElement>("[data-embed-content]");
+    if (!ask || !box) return;
+    const place = () => {
+      const at = askPlace(box.getBoundingClientRect(), { width: document.documentElement.clientWidth || innerWidth, height: innerHeight }, ask.getBoundingClientRect());
+      pin(ask, at.button, at.shown);
+      const sheet = drawer.current;
+      if (sheet) {
+        sheet.style.width = `${at.drawer.width}px`;
+        sheet.style.height = `${at.drawer.height}px`;
+        pin(sheet, at.drawer, at.shown);
+      }
+    };
+    place();
+    addEventListener("resize", place);
+    addEventListener("scroll", place, true);
+    const grows = typeof ResizeObserver === "function" ? new ResizeObserver(place) : null;
+    grows?.observe(box);
+    return () => {
+      grows?.disconnect();
+      removeEventListener("resize", place);
+      removeEventListener("scroll", place, true);
+    };
+  }, [button, drawer, open, drawn]);
 }
 
 /** The page's own subject, put where every surface reads it: the selection. */

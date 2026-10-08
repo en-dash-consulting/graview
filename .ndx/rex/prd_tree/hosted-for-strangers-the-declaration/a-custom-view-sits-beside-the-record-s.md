@@ -18,4 +18,5 @@ acceptanceCriteria:
   - "Replacement only with an explicit manifest option (replaces: page), off by default"
 description: "A cardinality-one view attached to a deliverable replaced the record page, so the record became read-only in practice."
 lastModified: "2026-10-08T21:00:00.000Z"
+resolution: "Shipped in #157, merged through #162 (0.1.18): a worker view of one record is drawn above the record's own editable fields unless its manifest says replaces: \"page\"."
 ---

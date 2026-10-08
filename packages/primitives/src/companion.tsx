@@ -504,7 +504,8 @@ export function Companion<S extends AnySchema>({ respond, onCall, onPick, chat =
           outline: "revert-layer",
           cursor: "pointer",
           display: "grid",
-          gridTemplateColumns: "auto minmax(0, 1fr) auto",
+          /* The subject, then its toggle at the header's end: with a third column the toggle stood in the middle one, a stray mark beside the name. */
+          gridTemplateColumns: "minmax(0, 1fr) auto",
           alignItems: "center",
           gap: 8,
           minHeight: 32,
