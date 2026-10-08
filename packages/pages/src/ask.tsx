@@ -1,7 +1,8 @@
 import { labelOf, layer, type AnySchema } from "@graview/core";
+import { retryingImport } from "@graview/core/retry";
 import { aggregateId, kindCardId } from "@graview/layout/view";
-import { useGraviewIfAny } from "@graview/react/provider";
-import { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from "react";
+import { lazyModule, useGraviewIfAny } from "@graview/react/provider";
+import { Suspense, useEffect, useRef, useState, type ComponentType } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { kindOfSlug, recordPath } from "./registry.js";
 import type { PageContext } from "./pages.js";
@@ -12,7 +13,13 @@ import type { PageContext } from "./pages.js";
  * it — and a page that is read and never asked does not carry it.
  */
 type CompanionProps = { readonly framed?: boolean; readonly onPick?: (id: string) => void };
-const Companion = lazy(() => import("./ask-companion.js").then((companion) => ({ default: companion.Companion as ComponentType<CompanionProps> })));
+const Companion = lazyModule(retryingImport(() => import("./ask-companion.js"))).part(
+  (companion, props: CompanionProps) => {
+    const Panel = companion.Companion as ComponentType<CompanionProps>;
+    return <Panel {...props} />;
+  },
+  { what: "The assistant" },
+);
 
 /**
  * THE ASSISTANT ON EVERY PAGE — the same panel, not a second one.

@@ -1,6 +1,7 @@
 import type { AnySchema } from "@graview/core";
 import { useGoTo, useGraview, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useEffect, useRef } from "react";
+import { untilItArrives, workerChunk } from "./arrive.js";
 import { mountGuestView, type GuestFrame } from "./frame.js";
 import type { GuestLimits, GuestReads, GuestViewInput } from "./session.js";
 import type { KitLinks } from "./kit.js";
@@ -78,10 +79,8 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
       if (!element) return;
       const worker = options.worker;
       if (worker) {
-        let gone = false;
         let drawn: { update(): void; dispose(): void } | undefined;
-        void import("./worker.js").then(({ mountGuestWorker }) => {
-          if (gone) return;
+        const stop = untilItArrives(workerChunk, ({ mountGuestWorker }) => {
           drawn = mountGuestWorker(element, {
             worker,
             view: options.name,
@@ -95,7 +94,7 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
           frame.current = drawn;
         });
         return () => {
-          gone = true;
+          stop();
           drawn?.dispose();
           frame.current = null;
         };

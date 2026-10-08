@@ -55,6 +55,8 @@ export const OWN = {
   "brand-host": 5276,
   /** The host's page `verify-chrome-quiet` mounts the org app and Cloud's vendor template into, to count pills and cut-off names (FR-113, FR-117, FR-118). */
   "quiet-host": 5277,
+  /** The host's page `verify-offline` mounts the embed into, to take the browser offline before the person's menu has arrived (FR-139). */
+  "offline-host": 5274,
   /** `pnpm site:serve`: docs/site served as graview.dev serves it, so the site's own font loads (a file:// page cannot load one). */
   "site-preview": 5275,
   /** The OpenAI-shaped stand-in `verify-studio` points the studio's remote model at. */

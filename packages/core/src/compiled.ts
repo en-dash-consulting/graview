@@ -36,9 +36,22 @@ export type { Finding } from "./document/findings.js";
 export async function appFromOrCompile(handed: { readonly compiled?: unknown; readonly document: unknown }, options: AppFromOptions = {}): Promise<CompiledDocument | RefusedDocument> {
   const built = handed.compiled === undefined || !compiledFrom(handed.compiled, handed.document) ? undefined : appFrom(handed.compiled, options);
   if (built?.ok) return built;
-  const { compileDocumentWithoutCheck } = await import("./document/compile.js");
+  const { compileDocumentWithoutCheck } = await compiler();
   return compileDocumentWithoutCheck(handed.document, options);
 }
+
+/*
+ * The compiler, asked for again on the next call when it did not arrive
+ * (FR-139): a failed fetch is not kept. A literal specifier and nothing
+ * more: this module runs in workerd too, which refuses an `import()` whose
+ * specifier is computed at run time when it loads the script.
+ */
+let compiling: Promise<typeof import("./document/compile.js")> | undefined;
+const compiler = () =>
+  (compiling ??= import("./document/compile.js").catch((error: unknown) => {
+    compiling = undefined;
+    throw error;
+  }));
 
 /*
  * A COMPILED APP IS BUILT ONLY FOR THE DOCUMENT HANDED BESIDE IT. One kept

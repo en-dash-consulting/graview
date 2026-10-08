@@ -6,7 +6,8 @@ import { GENERATED, GENERATED_HEADLESS, headlessRuntimeModule, viewRuntimeModule
 import { GUEST_BUNDLE_BANNER } from "../../src/build.js";
 import { HEADLESS_RUNTIME } from "../../src/headless/runtime.generated.js";
 import { VIEW_RUNTIME } from "../../src/host/view-runtime.generated.js";
-import { checkViewSource, viewScript } from "../../src/host/view-source.js";
+import { viewScript } from "../../src/host/view-script.js";
+import { checkViewSource } from "../../src/host/view-source.js";
 
 /**
  * A VIEW NEEDS NO BUILD (FR-96). A chat writes a worker view as one plain

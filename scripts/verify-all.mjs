@@ -71,6 +71,8 @@ const CHAIN = [
   ["studio", "verify-studio.mjs"],
   // The embed's chrome as one family: every popover over everything, the host's actions, the seat put away, the host's notices (FR-72, FR-75–FR-78).
   ["chrome", "verify-chrome.mjs"],
+  // A part of the page missed while offline arrives when the network is back, in three engines, and never breaks the page (FR-139).
+  ["offline", "verify-offline.mjs"],
   // Fewer pills and no name cut off, on Cloud's two apps, in three engines (FR-113, FR-117, FR-118).
   ["quiet", "verify-chrome-quiet.mjs"],
   // The whole brand from the document — logo, faces, shape, scheme, icon, the line under the name — on both faces, in three engines (FR-124, FR-125).

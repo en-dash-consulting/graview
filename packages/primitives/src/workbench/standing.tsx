@@ -1,10 +1,13 @@
 import type { AnySchema } from "@graview/core";
 import { POPOVER_STYLE, usePopover, useSelection, useViolations } from "@graview/react/provider";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { toolStyle } from "../app-bar.js";
+import { barPanes } from "../bar-panes-door.js";
 
-const ProblemRows = lazy(() => import("../bar-panes.js").then((panes) => ({ default: panes.ProblemRows })));
-const fetchRows = () => void import("../bar-panes.js");
+// The rows, fetched when reached for, and asked for again when they did not arrive (FR-139): a list item says so in the list.
+type RowsProps = Parameters<typeof import("../bar-panes.js").ProblemRows>[0];
+const ProblemRows = barPanes.part((panes, props: RowsProps) => <panes.ProblemRows {...props} />, { what: "The problems", as: "li" });
+const fetchRows = () => barPanes.prefetch();
 
 
 /**

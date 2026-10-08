@@ -147,9 +147,11 @@ describe("a chapter, embedded", () => {
     expect(entry("place:gardener:who-tends-what")?.textContent).toBe("Who tends what");
     expect(entry("place:plot:what-grows-where")?.textContent).toBe("What grows where");
     entry("place:gardener:who-tends-what")?.click();
-    await new Promise((done) => setTimeout(done, 30));
+    // The lens's page draws once its part is here (fetched as it is first drawn): waited for, not timed, so a loaded machine does not fail it.
+    const title = () => element.querySelector("[data-graview-page-title]")?.textContent;
+    for (let waited = 0; waited < 3000 && title() !== "Who tends what"; waited += 30) await new Promise((done) => setTimeout(done, 30));
     expect(face()).toBe("pages");
-    expect(element.querySelector("[data-graview-page-title]")?.textContent).toBe("Who tends what");
+    expect(title()).toBe("Who tends what");
     expect(element.querySelector('[data-testid="app-place-current"]')?.textContent).toBe("Who tends what");
     expect(entry("place:gardener:who-tends-what")?.getAttribute("aria-current")).toBe("page");
     // And the scene is one press back, on the switch.

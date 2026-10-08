@@ -91,8 +91,19 @@ export const FACE_DOORS = {
  * The claim rises by that: 572.8 KB, which leaves Cloud's shell 22.2 KB
  * under its 595. FR-140 (a pick kept for the routed face until it listens)
  * took it to 586 433 bytes (572.7 KB), inside the claim.
+ *
+ * Then, over the bar that fits its box and FR-140, a part fetched as it is
+ * first drawn came to try again after it failed to arrive, and to say so in
+ * its place rather than throw into the embed (FR-139): Cloud's realtime
+ * harness took the browser offline before the person's menu had arrived,
+ * and the menu was broken until a reload. `lazyModule` and its one line
+ * with "Try again" (2.1 KB, most of it the line and keeping the keyboard on
+ * what arrives), `retryingImport` (0.5 KB), the menu fetched when the page
+ * is idle and online, and the guest host's worker asked for again: 589 642
+ * bytes (575.8 KB), 3 209 more. The claim rises by that and no more:
+ * 576.0 KB, which leaves Cloud's shell 19 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 572.8 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 576 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -174,8 +185,11 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * made the moment the place list opens going to its place (FR-140: a path
  * asked for before the routed face listens, kept for it) took it to
  * 541 627 bytes (528.9 KB), 155 more; the claim rises by that: 529.0 KB.
+ * A lazy part that tries again after it failed to arrive (FR-139), over
+ * the bar that fits its box and FR-140, took it to 544 890 bytes (532.1 KB),
+ * 3 263 more, as above: 532.25 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 529 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 532.25 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

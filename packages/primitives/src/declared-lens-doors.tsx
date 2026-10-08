@@ -1,6 +1,7 @@
+import { retryingImport } from "@graview/core/retry";
 import { declaredLenses, type AnySchema, type DrawnLens, type GraviewApp } from "@graview/core";
-import type { ReactViewRegistry, ViewComponent, ViewProps } from "@graview/react/provider";
-import { lazy, Suspense, useState, type ComponentType } from "react";
+import { lazyModule, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { Suspense } from "react";
 
 /**
  * A DECLARED LENS DRAWS (FR-79), REGISTERED BEFORE IT IS FETCHED.
@@ -22,15 +23,11 @@ import { lazy, Suspense, useState, type ComponentType } from "react";
  * And the declaration's arrangement (FR-80) goes on the registry beside the
  * places, so every face that reads the places reads where they go.
  */
-type Heavy = typeof import("./declared-lenses.js");
-let heavy: Heavy | undefined;
-let fetching: Promise<void> | undefined;
+const heavy = lazyModule(retryingImport(() => import("./declared-lenses.js")));
 
-/** Fetch the shipped lenses' factories; resolved, every door draws in the commit it is first drawn in. */
+/** Fetch the shipped lenses' factories; resolved, every door draws in the commit it is first drawn in. Rejected when they did not arrive, and asked for again on the next call (FR-139). */
 export function fetchDeclaredLenses(): Promise<void> {
-  return (fetching ??= import("./declared-lenses.js").then((lenses) => {
-    heavy = lenses;
-  }));
+  return heavy.load().then(() => undefined);
 }
 
 interface DoorProps {
@@ -39,38 +36,31 @@ interface DoorProps {
 }
 
 function Drawn({ lens, view }: DoorProps) {
-  const View = heavy!.declaredLensView(lens);
+  const View = heavy.current!.declaredLensView(lens);
   return <View {...view} />;
 }
 
-const Arriving = lazy(() => fetchDeclaredLenses().then(() => ({ default: Drawn as ComponentType<DoorProps> })));
+/* Drawn once the factories are here; until then the line, and they are asked for again (FR-139). */
+const Arriving = heavy.part((_, props: DoorProps) => <Drawn {...props} />, { what: "This picture" });
 
 /** The view a declared lens draws as, behind a door: the lens itself once its factory is here. */
 function doorFor<S extends AnySchema>(lens: DrawnLens): ViewComponent<S> {
   const Door = (view: ViewProps<S>) => {
-    // Which of the two this door is, it stays: a change of element would draw the lens again from nothing.
-    const [here] = useState(() => heavy !== undefined);
-    const props: DoorProps = { lens, view: view as unknown as ViewProps<AnySchema> };
-    return here ? (
-      <Drawn {...props} />
-    ) : (
+    // Drawn at once when the factories are here, and the same element either way (`lazyModule`).
+    return (
       <Suspense fallback={null}>
-        <Arriving {...props} />
+        <Arriving lens={lens} view={view as unknown as ViewProps<AnySchema>} />
       </Suspense>
     );
   };
   return Door;
 }
 
-type HomeModule = typeof import("./home-view.js");
-let home: HomeModule | undefined;
-let fetchingHome: Promise<void> | undefined;
+const home = lazyModule(retryingImport(() => import("./home-view.js")));
 
-/** Fetch the home view's drawing: the blocks, and nothing of the lenses. */
+/** Fetch the home view's drawing: the blocks, and nothing of the lenses. Asked for again after it failed (FR-139). */
 export function fetchHomeView(): Promise<void> {
-  return (fetchingHome ??= import("./home-view.js").then((module) => {
-    home = module;
-  }));
+  return home.load().then(() => undefined);
 }
 
 interface HomeDoorProps {
@@ -79,22 +69,18 @@ interface HomeDoorProps {
 }
 
 function HomeDrawn({ blocks, view }: HomeDoorProps) {
-  const View = home!.homeView(blocks);
+  const View = home.current!.homeView(blocks);
   return <View {...view} />;
 }
 
-const HomeArriving = lazy(() => fetchHomeView().then(() => ({ default: HomeDrawn as ComponentType<HomeDoorProps> })));
+const HomeArriving = home.part((_, props: HomeDoorProps) => <HomeDrawn {...props} />, { what: "The home" });
 
 /** The home view (FR-81) behind a door, fetched when the home first draws it. */
 function homeDoor<S extends AnySchema>(blocks: readonly unknown[]): ViewComponent<S> {
   const door = (view: ViewProps<S>) => {
-    const [here] = useState(() => home !== undefined);
-    const props: HomeDoorProps = { blocks, view: view as unknown as ViewProps<AnySchema> };
-    return here ? (
-      <HomeDrawn {...props} />
-    ) : (
+    return (
       <Suspense fallback={null}>
-        <HomeArriving {...props} />
+        <HomeArriving blocks={blocks} view={view as unknown as ViewProps<AnySchema>} />
       </Suspense>
     );
   };
