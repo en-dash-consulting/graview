@@ -9,7 +9,7 @@ tags:
 source: "Nick, 2026-10-02: \"anything you find that should be factored into the graview framework, go ahead and capture those in the graview repo\" — from the Graview Cloud refinement, ../graview-cloud/docs/framework-requirements.md"
 startedAt: "2026-10-03T16:25:57.725Z"
 description: "Graview Cloud (../graview-cloud) is a host of many apps for people who are not us: they make apps from a ChatGPT or Claude conversation, from templates, and share them by URL to work on together, live, with their agents. Reading the framework for it found what one deployment would also want and the framework does not yet have. THE DECLARATION IS CODE: defineApp is a TypeScript module, every host path import()s it, and serveStore re-runs mutation.apply and invariant.evaluate on the server, so a host of strangers' apps would run strangers' code beside other strangers' data. The studio already holds a declaration as a JSON graph and writes act bodies from data; it cannot judge a rule. THE WIRE POLLS: openRemote polls /graview/since every 800 ms; there is no push, no rebase of pending optimistic calls, and concurrent patches are last-writer-wins. THE SEAT IS A HEADER: the default seatOf trusts x-graview-seat and labels every remote caller human, so an agent reaching a served store over graview mcp --remote-url is logged as a person. THE WIRE IS NODE: serveStore is node:http only and MCP is stdio only. POSITION: each item below is a public seam a self-hoster wants too; Cloud carries interim implementations on public APIs (marked INTERIM(FR-xx) there) and deletes them as these land. Out of scope here, and staying in Cloud: tenancy, accounts, OAuth servers, billing, quotas, the multi-app connector. Related and already tracked: 'What a seat may not see never leaves the store' (d6f8b50f), which Cloud needs at critical priority."
-lastModified: "2026-10-08T12:09:32.940Z"
+lastModified: "2026-10-08T18:31:13.493Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
 
@@ -43,6 +43,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A host that keeps the declaration chooses who sees the studio (FR-59)](./a-host-that-keeps-the-declaration.md) | completed |
 | [A host that owns the page gives the routed face the address bar (FR-106)](./a-host-that-owns-the-page-gives-the.md) | completed |
 | [A hosted page carries at most 600 KB of framework up front, and zod at most 150 KB of it (FR-57)](./a-hosted-page-carries-at-most-600-kb.md) | completed |
+| [A lazy part that fails to load tries again, and never breaks the page (FR-139)](./a-lazy-part-that-fails-to-load-tries.md) | pending |
 | [A live client a host can observe: status, counters, pending, backoff, presence cadence and visibility (FR-49)](./a-live-client-a-host-can-observe.md) | completed |
 | [A live connection a hibernating host can resume from serialized per-socket state (FR-41)](./a-live-connection-a-hibernating-host.md) | completed |
 | [A live wire: ops pushed as they land, pending edits rebased, and a stale write is a conflict rather than a loss](./a-live-wire-ops-pushed-as-they-land.md) | completed |
@@ -142,6 +143,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The framework says its own version, and rule failures are structured](./the-framework-says-its-own-version-and.md) | completed |
 | [The language computes what pages need: expressions in aggregates, first and sort, computed fields, template filters (FR-83)](./the-language-computes-what-pages-need.md) | completed |
 | [The live handler serves a store the host already holds (FR-42)](./the-live-handler-serves-a-store-the.md) | completed |
+| [The place list is ready when it opens (FR-140)](./the-place-list-is-ready-when-it-opens.md) | pending |
 | [The places move out of the bar (FR-138)](./the-places-move-out-of-the-bar-fr-138.md) | completed |
 | [The record names Graview Cloud and npm as they are](./the-record-names-graview-cloud-and-npm.md) | completed |
 | [The scene and the pages are two things, and the bar says so (FR-137)](./the-scene-and-the-pages-are-two-things.md) | completed |
