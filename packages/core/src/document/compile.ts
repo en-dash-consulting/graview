@@ -19,6 +19,7 @@ import { upgradeDocument } from "./upgrade.js";
 import { homeOf, validateViews, viewsOf } from "./views.js";
 import { farEnd } from "./far-end.js";
 import { computedOf, parsedComputed, validateComputed, workedOutAlone } from "./computed.js";
+import { pageFieldFindings } from "./page-fields.js";
 import {
   build,
   COMPILED_FORMAT,
@@ -231,6 +232,7 @@ function validate(document: GraviewDocument): Finding[] {
     for (const field of spec.glance ?? []) {
       if (!spec.fields[field] && !computedHere(field)) findings.push(error("glance-field", `${at}.glance`, `a glance at ${kind} is to say "${field}", and ${kind} has no field or computed field called that`, `use one of: ${[...Object.keys(spec.fields), ...Object.keys(spec.computed ?? {})].join(", ")}`));
     }
+    findings.push(...pageFieldFindings(kind, spec));
     for (const key of ["label", "describe"] as const) {
       const source = spec[key];
       if (!source) continue;

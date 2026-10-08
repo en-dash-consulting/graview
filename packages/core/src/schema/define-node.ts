@@ -5,6 +5,7 @@ import type {
   EmptyEdgeMap,
   NodeDefinition,
   NodeDefinitionSpec,
+  PageFields,
 } from "./types.js";
 
 /**
@@ -151,6 +152,14 @@ export interface ReadableField {
    * which is three facts and no sentence.
    */
   readonly alone: string;
+  /**
+   * PROSE, NOT A FACT (FR-147): a string the declaration allows more than
+   * 500 characters (a document's `text`), or one that holds a line break
+   * or runs past 160 characters. A record draws it the width of the
+   * record with its label above it, keeps its paragraphs and lists, and
+   * edits it in a text area.
+   */
+  readonly long: boolean;
 }
 
 /** Never shown: identity and the name, which the heading already is. */
@@ -297,11 +306,18 @@ export function readableFields(
     .filter((stem) => stem.length > 12);
 
   const fields: ReadableField[] = [];
-  // A glance says what the declaration chose for it first, in its order (`display.glance`).
-  const chosen = options.glance ? (display?.glance ?? []) : [];
-  const entries = chosen.length > 0
-    ? [...chosen.filter((key) => key in node).map((key) => [key, node[key]] as const), ...Object.entries(node).filter(([key]) => !chosen.includes(key))]
-    : Object.entries(node);
+  /*
+   * IN THE ORDER THE DECLARATION SAYS, NOT THE ORDER THE RECORD WAS WRITTEN
+   * IN (FR-148). This read `Object.entries(node)`, so a record created with
+   * three of its fields and given two more later read Status, Summary, Due,
+   * Draft, Subject line — the order of its writes, which nobody chose.
+   * A glance says what the declaration chose for it first (`display.glance`);
+   * a record's page, what its page chose (`display.page`); then the fields
+   * as the kind declares them, its computed ones after.
+   */
+  const chosen = options.glance ? (display?.glance ?? []) : pageOrder(display?.page);
+  const keys = [...new Set([...chosen, ...declaredOrder(definition), ...Object.keys(node)])].filter((key) => key in node);
+  const entries = keys.map((key) => [key, node[key]] as const);
   for (const [key, value] of entries) {
     if (skip.has(key) || value === undefined || value === null) continue;
     const format = display?.format?.[key];
@@ -342,8 +358,74 @@ export function readableFields(
     const label = fieldWords(definition, key);
     const alone =
       typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" ? `${label}: ${text.toLowerCase()}` : text;
-    fields.push({ key, label, value: text, alone });
+    fields.push({ key, label, value: text, alone, long: typeof value === "string" && isLongText(definition, key, text) });
     if (options.limit !== undefined && fields.length >= options.limit) break;
   }
   return fields;
+}
+
+/** The kind's fields as it declares them, then its computed fields. */
+function declaredOrder(definition: AnyNodeDefinition | undefined): readonly string[] {
+  const shape = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape;
+  return [...Object.keys(shape ?? {}), ...Object.keys((definition as { computed?: object } | undefined)?.computed ?? {})];
+}
+
+/** Every field a page names, in the order it names them: its first fields, then each group's. */
+function pageOrder(page: PageFields | undefined): readonly string[] {
+  return [...(page?.fields ?? []), ...(page?.groups ?? []).flatMap((group) => group.fields)];
+}
+
+/** What a string field may hold beyond which it is prose: a document's `string` holds 500, its `text` 20,000. */
+const PROSE_ALLOWED = 500;
+/** A value this long, or with a line break in it, is read as prose whatever its field allows. */
+const PROSE_LENGTH = 160;
+
+/** The string schema under optional, default and nullable. */
+function stringSchema(schema: unknown): { readonly checks?: readonly { readonly _zod?: { readonly def?: { readonly check?: string; readonly maximum?: number } } }[] } | undefined {
+  let at = schema as { _zod?: { def?: { type?: string; innerType?: unknown; checks?: never } } } | undefined;
+  for (let depth = 0; depth < 6 && at?._zod?.def?.innerType !== undefined; depth++) at = at._zod.def.innerType as typeof at;
+  return at?._zod?.def?.type === "string" ? (at._zod.def as never) : undefined;
+}
+
+/**
+ * WHETHER A FIELD'S VALUE IS PROSE (FR-147): a string field declared to hold
+ * more than 500 characters — a document's `text`, or `z.string().max(5000)`
+ * in TypeScript — whatever it holds now, so an empty draft is still edited
+ * in a text area; or a value with a line break in it, or longer than 160
+ * characters.
+ */
+export function isLongText(definition: AnyNodeDefinition | undefined, key: string, value: unknown): boolean {
+  const field = stringSchema((definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key]);
+  if (field?.checks?.some((check) => check._zod?.def?.check === "max_length" && (check._zod.def.maximum ?? 0) > PROSE_ALLOWED)) return true;
+  return typeof value === "string" && (value.includes("\n") || value.length > PROSE_LENGTH);
+}
+
+/** One run of a record's facts: under a group's title, or (the first) under none. */
+export interface FieldSection<F extends { readonly key: string } = ReadableField> {
+  readonly title?: string;
+  readonly fields: readonly F[];
+}
+
+/**
+ * A RECORD'S FACTS, IN THE SECTIONS ITS PAGE DECLARES (FR-148).
+ *
+ * `fields` are read as `readableFields` ordered them. Unsaid, one untitled
+ * section of all of them. With `display.page`, its `fields` first, untitled;
+ * each of its `groups` under its title; and what neither names under
+ * "Details" when there are groups, else after the first fields. A section
+ * with nothing to show is left out.
+ */
+export function pageSections<F extends { readonly key: string }>(definition: AnyNodeDefinition | undefined, fields: readonly F[]): readonly FieldSection<F>[] {
+  const page = definition?.display?.page;
+  const groups = page?.groups ?? [];
+  const byKey = new Map(fields.map((field) => [field.key, field]));
+  const named = new Set(pageOrder(page));
+  const pick = (keys: readonly string[]) => keys.flatMap((key) => (byKey.has(key) ? [byKey.get(key)!] : []));
+  const rest = fields.filter((field) => !named.has(field.key));
+  const sections: FieldSection<F>[] = [
+    { fields: [...pick(page?.fields ?? []), ...(groups.length > 0 ? [] : rest)] },
+    ...groups.map((group) => ({ title: group.title, fields: pick(group.fields) })),
+    ...(groups.length > 0 ? [{ title: "Details", fields: rest }] : []),
+  ];
+  return sections.filter((section) => section.fields.length > 0);
 }

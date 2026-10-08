@@ -1,6 +1,6 @@
-import type { AnyMutationDefinition, GraphEdge, GraphSnapshot, AnySchema, GraviewApp } from "@graview/core";
+import type { AnyMutationDefinition, GraphEdge, GraphSnapshot, AnySchema, GraviewApp, PageFields } from "@graview/core";
 import { fieldTypeOf } from "./from-declaration.js";
-import { computedFor } from "./to-declaration.js";
+import { computedFor, pageWhile } from "./to-declaration.js";
 import type { FieldType } from "./meta.js";
 import { printZod, type ZodUses } from "./zod-source.js";
 
@@ -111,7 +111,7 @@ function carried(
 ): string[] {
   const was = base?.schema?.tryDefinition?.(kind) as
     | {
-        display?: { labels?: Record<string, string>; format?: Record<string, unknown>; hide?: readonly string[]; glance?: readonly string[] };
+        display?: { labels?: Record<string, string>; format?: Record<string, unknown>; hide?: readonly string[]; glance?: readonly string[]; page?: PageFields };
         fixed?: Record<string, string>;
         fieldRoles?: Record<string, string>;
       }
@@ -125,12 +125,19 @@ function carried(
   const labels = pairs(was.display?.labels);
   const hide = was.display?.hide?.filter((field) => fields.has(field));
   const glance = was.display?.glance?.filter((field) => fields.has(field));
+  // How its page orders its facts (FR-148), while its fields do.
+  const page = pageWhile(was.display?.page, (field) => fields.has(field));
   const formatted = Object.keys(was.display?.format ?? {}).filter((field) => fields.has(field));
-  if (labels || (hide && hide.length > 0) || (glance && glance.length > 0)) {
+  if (labels || (hide && hide.length > 0) || (glance && glance.length > 0) || page) {
     lines.push(`  display: {`);
     if (labels) lines.push(`    labels: ${labels},`);
     if (hide && hide.length > 0) lines.push(`    hide: [${hide.map(q).join(", ")}],`);
     if (glance && glance.length > 0) lines.push(`    glance: [${glance.map(q).join(", ")}],`);
+    if (page) {
+      const fieldsLine = page.fields ? `fields: [${page.fields.map(q).join(", ")}]` : undefined;
+      const groupsLine = page.groups ? `groups: [${page.groups.map((group) => `{ title: ${q(group.title)}, fields: [${group.fields.map(q).join(", ")}] }`).join(", ")}]` : undefined;
+      lines.push(`    page: { ${[fieldsLine, groupsLine].filter(Boolean).join(", ")} },`);
+    }
     if (formatted.length > 0) {
       lines.push(
         `    // The checkout also formats ${formatted.map(q).join(", ")}; a format is a`,

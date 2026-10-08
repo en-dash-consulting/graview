@@ -113,6 +113,18 @@ export const KindSpec = z.strictObject({
   figure: z.optional(str(undefined, 20_000)),
   /** What a glance at one says — a card, a row, a hit in Find — first, in this order: the definition's `display.glance` (FR-39). */
   glance: z.optional(some(fieldName, 1, 20)),
+  /**
+   * How a record's page orders and groups its facts (FR-148): `fields`
+   * first, in this order, then each group under its title; the rest follow
+   * in declared order, under "Details" when there are groups. The
+   * definition's `display.page`.
+   */
+  page: z.optional(
+    z.strictObject({
+      fields: z.optional(some(fieldName, 1, 40)),
+      groups: z.optional(some(z.strictObject({ title: str(1, 60), fields: some(fieldName, 1, 40) }), 1, 12)),
+    }),
+  ),
   edges: z.optional(z.record(edgeName, EdgeSpec)),
   /**
    * Values worked out, not stored (FR-83): a name and a rule-language

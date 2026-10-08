@@ -51,6 +51,7 @@ export type {
   NodeDefinition,
   NodeDefinitionSpec,
   NodeOf,
+  PageFields,
   ValidateEdgeTargets,
 } from "./schema/types.js";
 export {
@@ -261,7 +262,8 @@ export {
   isoDate,
 } from "./temporal/effectivity.js";
 export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
-export { article, counted, fieldWords, humanizeField, nounOf, readableFields, summarize, valueWords, withArticle } from "./schema/define-node.js";
+export { article, counted, fieldWords, humanizeField, isLongText, nounOf, pageSections, readableFields, summarize, valueWords, withArticle } from "./schema/define-node.js";
+export type { FieldSection } from "./schema/define-node.js";
 export type { ReadableField } from "./schema/define-node.js";
 export { TEXT_PAIRS } from "./theme/types.js";
 export { checkKitContrast, connectorHueColor, connectorKitFor, DEFAULT_KIT, kitVariables, resolveKit } from "./theme/kit.js";
