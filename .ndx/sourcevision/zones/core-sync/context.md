@@ -5,48 +5,53 @@
 <zone>
 
 Zone: Core Sync (`core-sync`)
-Files: 3, Cohesion: 0.33, Coupling: 0.67
+Files: 4, Cohesion: 0.33, Coupling: 0.67
 Risk: critical (score: 0.67)
-Description: 3 files, mostly utilities and types; entry points engine.ts, google-calendar.ts, types.ts; imports Core and Core Graph; imported by Core.
+Description: 4 files, mostly utilities and types; entry points engine.ts, google-calendar.ts, types.ts; imports Core Invariants and Core; imported by Core.
 Entry points: packages/core/src/sync/engine.ts, packages/core/src/sync/google-calendar.ts, packages/core/src/sync/types.ts
-Lines: 801
+Lines: 883
 
 </zone>
 
 <files>
 
-packages/core/src/sync/engine.ts (TypeScript, 452 lines, source)
+packages/core/src/sync/conflict.ts (TypeScript, 79 lines, source)
+packages/core/src/sync/engine.ts (TypeScript, 445 lines, source)
 packages/core/src/sync/google-calendar.ts (TypeScript, 211 lines, source)
-packages/core/src/sync/types.ts (TypeScript, 138 lines, source)
+packages/core/src/sync/types.ts (TypeScript, 148 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
+  packages/core/src/sync/conflict.ts → packages/core/src/sync/types.ts {SyncConflict}
   packages/core/src/sync/engine.ts → packages/core/src/sync/types.ts {EMPTY_SYNC_STATE, systemAuthor}
-  packages/core/src/sync/engine.ts → packages/core/src/sync/types.ts {RemoteAck, RemoteLink, RemoteSystem, RemoteWrite, ResourceMapping, SyncMapping, SyncState}
+  packages/core/src/sync/engine.ts → packages/core/src/sync/types.ts {RemoteAck, RemoteLink, RemoteSystem, RemoteWrite, ResourceMapping, SyncConflict, SyncMapping, SyncState}
   packages/core/src/sync/google-calendar.ts → packages/core/src/sync/types.ts {RemoteAck, RemoteChange, RemoteSystem, RemoteWrite, SyncMapping}
 
 Outgoing (this zone → other zones):
-  → core: packages/core/src/sync/engine.ts → packages/core/src/schema/schema.ts; packages/core/src/sync/engine.ts → packages/core/src/store.ts; packages/core/src/sync/types.ts → packages/core/src/ops/types.ts
+  → core-document: packages/core/src/sync/engine.ts → packages/core/src/store.ts; packages/core/src/sync/types.ts → packages/core/src/ops/types.ts
   → core-graph: packages/core/src/sync/engine.ts → packages/core/src/graph/types.ts
+  → core-invariants: packages/core/src/sync/conflict.ts → packages/core/src/invariants/engine.ts; packages/core/src/sync/conflict.ts → packages/core/src/invariants/types.ts; packages/core/src/sync/conflict.ts → packages/core/src/schema/schema.ts; packages/core/src/sync/engine.ts → packages/core/src/schema/schema.ts
 
 Incoming (other zones → this zone):
-  ← core: packages/core/src/index.ts → packages/core/src/sync/engine.ts; packages/core/src/index.ts → packages/core/src/sync/engine.ts; packages/core/src/index.ts → packages/core/src/sync/google-calendar.ts; packages/core/src/index.ts → packages/core/src/sync/google-calendar.ts; packages/core/src/index.ts → packages/core/src/sync/types.ts; packages/core/src/index.ts → packages/core/src/sync/types.ts; packages/core/src/sync/conflict.ts → packages/core/src/sync/engine.ts
+  ← core-document: packages/core/src/index.ts → packages/core/src/sync/conflict.ts; packages/core/src/index.ts → packages/core/src/sync/conflict.ts; packages/core/src/index.ts → packages/core/src/sync/engine.ts; packages/core/src/index.ts → packages/core/src/sync/engine.ts; packages/core/src/index.ts → packages/core/src/sync/google-calendar.ts; packages/core/src/index.ts → packages/core/src/sync/google-calendar.ts; packages/core/src/index.ts → packages/core/src/sync/types.ts; packages/core/src/index.ts → packages/core/src/sync/types.ts
 
 </imports>
 
 <findings>
 
-[observation] [warning] High coupling (0.67) — 3 imports target "core"
-[suggestion] [info] Zone "Core Sync" has an unreliable risk reading: only 3 files tracked (minimum 5 needed for reliable metrics) — cohesion: 0.33, coupling: 0.67 (risk score: 0.67)
+[observation] [warning] High coupling (0.67) — 4 imports target "core-invariants"
+[observation] [warning] Low cohesion (0.33) — files are loosely related, consider splitting this zone
+[suggestion] [info] Zone "Core Sync" has an unreliable risk reading: only 4 files tracked (minimum 5 needed for reliable metrics) — cohesion: 0.33, coupling: 0.67 (risk score: 0.67)
 
 </findings>
 
 <insights>
 
-- High coupling (0.67) — 3 imports target "core"
-- [call graph] 21 internal calls, 0 outgoing, 0 incoming (cohesion: 1, coupling: 0)
+- Low cohesion (0.33) — files are loosely related, consider splitting this zone
+- High coupling (0.67) — 4 imports target "core-invariants"
+- [call graph] 21 internal calls, 1 outgoing, 0 incoming (cohesion: 0.95, coupling: 0.05)
 
 </insights>

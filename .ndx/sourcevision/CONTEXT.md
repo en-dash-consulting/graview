@@ -6,143 +6,146 @@
 <architecture>
 
 Project: graview
-Git: analysis/sourcevision-scan-2026-10-02 @ 1a45bf3
-Files: 986, Lines: 186554
-Languages: TypeScript(917) JavaScript(65) Python(4)
-Zones: 47, Described: 47
-Weighted avg cohesion: 0.96, coupling: 0.04 (36 zones with ≥5 files)
-Unweighted avg cohesion: 0.93, coupling: 0.07
-Small zones excluded from averages: 11 (<5 files, unreliable metrics)
-Import edges: 2658, External packages: 35
-Circulars: 40
+Git: chore/sourcevision-after-0-1-17 @ e46c7df
+Files: 1249, Lines: 228202
+Languages: TypeScript(1153) JavaScript(92) Python(4)
+Zones: 48, Described: 48
+Weighted avg cohesion: 0.95, coupling: 0.05 (38 zones with ≥5 files)
+Unweighted avg cohesion: 0.88, coupling: 0.12
+Small zones excluded from averages: 10 (<5 files, unreliable metrics)
+Import edges: 3663, External packages: 37
+Circulars: 17
 
 </architecture>
 
 <zones>
 
-[apps] Apps (83 files, coh=1.00 coup=0.00)
-  83 files, mostly components and entry points; entry points app.ts, survey.ts, app.ts; imported by Apps and Apps.
-  files: apps/discography/scripts/musicbrainz/build.py, apps/discography/scripts/musicbrainz/fetch_guest.py, apps/discography/scripts/musicbrainz/fetch_own.py, apps/discography/scripts/musicbrainz/mb.py, apps/gauntlet/scripts/generate-seed.mjs, apps/launcher/src/domain/app.ts [schema], apps/launcher/src/domain/invariants.ts [types], apps/launcher/src/domain/mutations.ts [schema], apps/launcher/src/domain/schema.ts [schema], apps/launcher/src/domain/survey.ts [model] +73
+[apps] Apps (99 files, coh=1.00 coup=0.00)
+  99 files, mostly components and schemas; entry points app.ts, survey.ts, app.ts; imported by Apps and Apps.
+  files: apps/discography/scripts/musicbrainz/build.py, apps/discography/scripts/musicbrainz/fetch_guest.py, apps/discography/scripts/musicbrainz/fetch_own.py, apps/discography/scripts/musicbrainz/mb.py, apps/gauntlet/scripts/generate-seed.mjs, apps/launcher/src/domain/app.ts [schema], apps/launcher/src/domain/invariants.ts [types], apps/launcher/src/domain/mutations.ts [schema], apps/launcher/src/domain/schema.ts [schema], apps/launcher/src/domain/survey.ts [model] +89
 [apps-discography] Discography (13 files, coh=1.00 coup=0.00)
   13 files, mostly components and schemas; entry points app.ts, tracklist.tsx, seats.ts; imported by Tests and Apps.
-  files: apps/discography/src/domain/app.ts, apps/discography/src/domain/brand.ts [schema], apps/discography/src/domain/invariants.ts [model], apps/discography/src/domain/mutations.ts, apps/discography/src/domain/policy.ts, apps/discography/src/domain/schema.ts [schema], apps/discography/src/main.tsx [entrypoint], apps/discography/src/ui/app.tsx [component], apps/discography/src/ui/design.tsx [component], apps/discography/src/ui/pages.tsx [component] +3
+  files: apps/discography/src/domain/app.ts [schema], apps/discography/src/domain/brand.ts [model], apps/discography/src/domain/invariants.ts [schema], apps/discography/src/domain/mutations.ts [schema], apps/discography/src/domain/policy.ts [schema], apps/discography/src/domain/schema.ts [schema], apps/discography/src/main.tsx [entrypoint], apps/discography/src/ui/app.tsx [component], apps/discography/src/ui/design.tsx [component], apps/discography/src/ui/pages.tsx [component] +3
 [apps-gauntlet] Gauntlet (10 files, coh=1.00 coup=0.00)
   10 files, mostly schemas and components; entry points app.ts, schema.ts, seats.ts; imported by Tests and Apps.
-  files: apps/gauntlet/src/domain/app.ts [schema], apps/gauntlet/src/domain/brand.ts [schema], apps/gauntlet/src/domain/invariants.ts, apps/gauntlet/src/domain/mutations.ts, apps/gauntlet/src/domain/policy.ts, apps/gauntlet/src/domain/schema.ts [schema], apps/gauntlet/src/main.tsx [entrypoint], apps/gauntlet/src/ui/app.tsx [component], apps/gauntlet/src/ui/seats.ts [component], apps/gauntlet/src/ui/views.tsx [component]
-[apps-todo] Todo (14 files, coh=1.00 coup=0.00)
-  14 files, mostly components and entry points; entry points app.ts, schema.ts, app.tsx; imported by Apps.
-  files: apps/todo/src/domain/app.ts [schema], apps/todo/src/domain/brand.ts [types], apps/todo/src/domain/installation.ts [model], apps/todo/src/domain/invariants.ts [types], apps/todo/src/domain/mutations.ts [service], apps/todo/src/domain/policy.ts, apps/todo/src/domain/schema.ts [model], apps/todo/src/index.ts [entrypoint], apps/todo/src/main.tsx [entrypoint], apps/todo/src/open.ts [entrypoint] +4
-[capabilities-formats] Capabilities Formats (3 files, coh=0.55 coup=0.45)
+  files: apps/gauntlet/src/domain/app.ts [schema], apps/gauntlet/src/domain/brand.ts [config], apps/gauntlet/src/domain/invariants.ts [schema], apps/gauntlet/src/domain/mutations.ts [model], apps/gauntlet/src/domain/policy.ts [model], apps/gauntlet/src/domain/schema.ts [schema], apps/gauntlet/src/main.tsx [entrypoint], apps/gauntlet/src/ui/app.tsx [component], apps/gauntlet/src/ui/seats.ts [component], apps/gauntlet/src/ui/views.tsx [component]
+[capabilities-formats] Capabilities And Formats (3 files, coh=0.55 coup=0.45)
   3 files, mostly utilities; entry points capabilities.ts, formats.ts, version.ts; imports Core Graph and Core; imported by Core.
   files: packages/core/src/capabilities.ts [utility], packages/core/src/formats.ts [utility], packages/core/src/version.ts [utility]
-[core] Core (81 files, coh=0.77 coup=0.23)
-  81 files, mostly utilities and entry points; entry points app.ts, context.ts, schema.ts; imports Core Graph and Core Document; imported by Packages and Packages.
-  files: packages/core/src/app.ts [utility], packages/core/src/arrange.ts [utility], packages/core/src/beginning.ts [utility], packages/core/src/bind.ts [utility], packages/core/src/city.ts [utility], packages/core/src/cli/check/arrangement.ts [utility], packages/core/src/cli/check/beginnings.ts [utility], packages/core/src/cli/check/city.ts [utility], packages/core/src/cli/check/context.ts [utility], packages/core/src/cli/check/intelligence.ts [utility] +71
-[core-cli] Core Cli (5 files, coh=0.24 coup=0.76)
-  5 files, mostly utilities and entry points; entry points check.ts; imports Core and Core Graph; imported by Core.
+[check] Core Cli (6 files, coh=0.24 coup=0.76)
+  6 files, mostly utilities; entry points context.ts, intelligence.ts, lenses.ts; imports Core Invariants and Core; imported by Core Cli and Core.
+  files: packages/core/src/cli/check/context.ts [utility], packages/core/src/cli/check/intelligence.ts [utility], packages/core/src/cli/check/lenses.ts [utility], packages/core/src/cli/check/modules.ts [utility], packages/core/src/cli/check/settings.ts [utility], packages/core/src/schema/path.ts [utility]
+[core] Core (10 files, coh=0.23 coup=0.77)
+  10 files, mostly utilities and types; entry points define-node.ts, types.ts, search.ts; imports Core and Core Invariants; imported by Core and Core Mutations.
+  files: packages/core/src/address.ts [utility], packages/core/src/cli/check/relations.ts [utility], packages/core/src/document/describe-coverage.ts [utility], packages/core/src/document/describe-place.ts [utility], packages/core/src/labels.ts [utility], packages/core/src/mutations/words.ts [utility], packages/core/src/schema/define-node.ts [utility], packages/core/src/schema/types.ts [types], packages/core/src/search.ts [utility], packages/core/src/theme/marks.ts [utility]
+[core-cli] Core Cli (5 files, coh=0.22 coup=0.78)
+  5 files, mostly utilities and entry points; entry points check.ts; imports Core and Core Cli; imported by Packages and Core.
   files: packages/core/src/cli/check.ts [utility], packages/core/src/cli/check/index.ts [entrypoint], packages/core/src/cli/check/migrations.ts [utility], packages/core/src/cli/check/routes.ts [route-handler], packages/core/src/cli/check/views.ts [utility]
-[core-document] Core Document (8 files, coh=0.47 coup=0.53)
-  8 files, mostly utilities and entry points; entry points views.ts, graview-template.ts, findings.ts; imports Core and Core Graph; imported by Core and Core Cli.
-  files: packages/core/src/document/edit.ts [utility], packages/core/src/document/expr/analyze.ts [utility], packages/core/src/document/expr/index.ts [entrypoint], packages/core/src/document/expr/parse.ts [utility], packages/core/src/document/expr/print.ts [utility], packages/core/src/document/findings.ts [utility], packages/core/src/document/graview-template.ts [utility], packages/core/src/document/views.ts [utility]
-[core-graph] Core Graph (12 files, coh=0.33 coup=0.67)
-  12 files, mostly utilities and types; entry points primitives.ts, types.ts, types.ts; imports Core; imported by Core and Core Persistence.
-  files: packages/core/src/cli/check/fields.ts [utility], packages/core/src/graph/diff.ts [utility], packages/core/src/graph/graph.ts [utility], packages/core/src/graph/primitives.ts [utility], packages/core/src/graph/tracked.ts [utility], packages/core/src/graph/types.ts [types], packages/core/src/integrity.ts [utility], packages/core/src/mutations/define-mutation.ts [utility], packages/core/src/mutations/derive-edits.ts [utility], packages/core/src/mutations/types.ts [types] +2
+[core-document] Core (102 files, coh=0.71 coup=0.29)
+  102 files, mostly utilities and entry points; entry points types.ts, app.ts, node-ref.ts; imports Core Invariants and Core Graph; imported by Packages and Packages.
+  files: packages/core/src/app.ts [utility], packages/core/src/arrange.ts [utility], packages/core/src/arrangement.ts [utility], packages/core/src/arranging.ts [utility], packages/core/src/beginning.ts [utility], packages/core/src/check.ts [utility], packages/core/src/city.ts [utility], packages/core/src/cli/check/arrangement.ts [utility], packages/core/src/cli/check/beginnings.ts [utility], packages/core/src/cli/check/brand.ts [utility] +92
+[core-graph] Core Graph (7 files, coh=0.27 coup=0.73)
+  7 files, mostly utilities and types; entry points types.ts, define-mutation.ts, integrity.ts; imports Core Invariants and Core; imported by Core and Core Document.
+  files: packages/core/src/graph/diff.ts [utility], packages/core/src/graph/graph.ts [utility], packages/core/src/graph/tracked.ts [utility], packages/core/src/graph/types.ts [types], packages/core/src/integrity.ts [utility], packages/core/src/mutations/define-mutation.ts [utility], packages/core/src/validate-graph.ts [utility]
+[core-invariants] Core Invariants (4 files, coh=0.13 coup=0.87)
+  4 files, mostly utilities and types; entry points types.ts, schema.ts, bind.ts; imports Core and Core Graph; imported by Core and Core Graph.
+  files: packages/core/src/bind.ts [utility], packages/core/src/invariants/engine.ts [utility], packages/core/src/invariants/types.ts [types], packages/core/src/schema/schema.ts [utility]
+[core-mutations] Core Mutations (4 files, coh=0.15 coup=0.85)
+  4 files, mostly utilities and types; entry points types.ts, derive-edits.ts, fields.ts; imports Core and Core; imported by Core and Core Cli.
+  files: packages/core/src/cli/check/fields.ts [utility], packages/core/src/columns.ts [utility], packages/core/src/mutations/derive-edits.ts [utility], packages/core/src/mutations/types.ts [types]
 [core-persistence] Core Persistence (4 files, coh=0.38 coup=0.62)
   4 files, mostly utilities and types; entry points memory.ts, sql.ts, sqlite.ts; imports Core and Core Graph; imported by Core and Packages.
   files: packages/core/src/persistence/memory.ts [utility], packages/core/src/persistence/sql.ts [utility], packages/core/src/persistence/sqlite.ts [utility], packages/core/src/persistence/types.ts [types]
-[core-sync] Core Sync (3 files, coh=0.33 coup=0.67)
-  3 files, mostly utilities and types; entry points engine.ts, google-calendar.ts, types.ts; imports Core and Core Graph; imported by Core.
-  files: packages/core/src/sync/engine.ts [utility], packages/core/src/sync/google-calendar.ts [utility], packages/core/src/sync/types.ts [types]
-[core-theme] Core Theme (6 files, coh=0.64 coup=0.36)
-  6 files, mostly utilities and types; entry points types.ts, brand.ts, derive.ts; imports Core; imported by Core and Core Cli.
-  files: packages/core/src/cli/check/brand.ts [utility], packages/core/src/theme/contrast.ts [utility], packages/core/src/theme/derive.ts [utility], packages/core/src/theme/kit.ts [utility], packages/core/src/theme/palettes.ts [utility], packages/core/src/theme/types.ts [types]
+[core-sync] Core Sync (4 files, coh=0.33 coup=0.67)
+  4 files, mostly utilities and types; entry points engine.ts, google-calendar.ts, types.ts; imports Core Invariants and Core; imported by Core.
+  files: packages/core/src/sync/conflict.ts [utility], packages/core/src/sync/engine.ts [utility], packages/core/src/sync/google-calendar.ts [utility], packages/core/src/sync/types.ts [types]
 [create-graview] Create Graview (2 files, coh=1.00 coup=0.00)
   2 files, mostly entry points.
   files: packages/create-graview/src/cli.ts [entrypoint], packages/create-graview/src/index.ts [entrypoint]
-[docs] Documentation Site (1 files, coh=1.00 coup=0.00)
-  Documentation and static-site assets: chapters.js
-  files: docs/site/chapters.js
-[embed] Embed (8 files, coh=1.00 coup=0.00)
-  8 files, mostly components and utilities; entry points index.ts, pages.tsx; imported by Packages.
-  files: packages/embed/src/embed.tsx [component], packages/embed/src/fonts.ts [utility], packages/embed/src/frame.tsx [component], packages/embed/src/index.ts [entrypoint], packages/embed/src/pages-content.tsx [component], packages/embed/src/pages.tsx [component], packages/embed/src/picture-face.tsx [component], packages/embed/src/scene-face.tsx [component]
+[document] Core Document (7 files, coh=0.31 coup=0.69)
+  7 files, mostly utilities; entry points views.ts, template-parse.ts, evaluate.ts; imports Core and Core Graph; imported by Core and Packages.
+  files: packages/core/src/blocks.ts [utility], packages/core/src/document/blocks.ts [utility], packages/core/src/document/computed-values.ts [utility], packages/core/src/document/expr/evaluate.ts [utility], packages/core/src/document/template-parse.ts [utility], packages/core/src/document/template.ts [utility], packages/core/src/document/views.ts [utility]
+[embed] Embed (10 files, coh=1.00 coup=0.00)
+  10 files, mostly components and utilities; entry points index.ts, pages.tsx; imported by Packages.
+  files: packages/embed/src/address.tsx [component], packages/embed/src/embed.tsx [component], packages/embed/src/fonts.ts [utility], packages/embed/src/frame.tsx [component], packages/embed/src/index.ts [entrypoint], packages/embed/src/pages-content.tsx [component], packages/embed/src/pages.tsx [component], packages/embed/src/picture-face.tsx [component], packages/embed/src/scene-face.tsx [component], packages/embed/src/where.ts [utility]
+[findings] Findings (6 files, coh=0.29 coup=0.71)
+  6 files, mostly utilities; entry points compile-checked.ts, instantiate-template.ts, graview-template.ts; imports Core and Core Document; imported by Core and Core Document.
+  files: packages/core/src/document/act-findings.ts [utility], packages/core/src/document/brand-check.ts [utility], packages/core/src/document/compile-checked.ts [utility], packages/core/src/document/findings.ts [utility], packages/core/src/document/graview-template.ts [utility], packages/core/src/document/instantiate-template.ts [utility]
 [graview] Graview (2 files, coh=1.00 coup=0.00)
   2 files, mostly entry points; entry points index.ts; imported by Packages.
   files: packages/graview/src/cli.ts [entrypoint], packages/graview/src/index.ts [entrypoint]
-[guest] Guest (8 files, coh=1.00 coup=0.00)
-  8 files, mostly entry points and services; entry points index.ts, protocol.ts, index.ts; imported by Packages.
-  files: packages/guest/src/guest.ts [entrypoint], packages/guest/src/host/frame.ts [service], packages/guest/src/host/index.ts [entrypoint], packages/guest/src/host/react.tsx [component], packages/guest/src/host/session.ts [service], packages/guest/src/index.ts [entrypoint], packages/guest/src/protocol.ts [schema], packages/guest/src/react.ts [gateway]
-[layout] Layout (13 files, coh=1.00 coup=0.00)
-  13 files, mostly utilities and types; entry points index.ts, layout.ts; imported by Packages.
-  files: packages/layout/src/band.ts [utility], packages/layout/src/city.ts [utility], packages/layout/src/ids.ts [utility], packages/layout/src/index.ts [entrypoint], packages/layout/src/interpolate.ts [utility], packages/layout/src/label-fit.ts [utility], packages/layout/src/layout.ts [utility], packages/layout/src/rank.ts [utility], packages/layout/src/related.ts [utility], packages/layout/src/sizes.ts [types] +3
+[guest] Guest (51 files, coh=1.00 coup=0.00)
+  51 files, mostly utilities and entry points; entry points index.ts, protocol.ts, session.ts; imported by Packages.
+  files: packages/guest/client.js [entrypoint], packages/guest/src/build.ts [entrypoint], packages/guest/src/channel.ts [utility], packages/guest/src/cli.ts [entrypoint], packages/guest/src/client-script.ts [entrypoint], packages/guest/src/client.ts [service], packages/guest/src/guest.ts [entrypoint], packages/guest/src/headless/describe.ts [utility], packages/guest/src/headless/draw.ts [utility], packages/guest/src/headless/index.ts [entrypoint] +41
+[layout] Layout (14 files, coh=1.00 coup=0.00)
+  14 files, mostly utilities and entry points; entry points index.ts, layout.ts; imported by Packages.
+  files: packages/layout/src/band.ts [utility], packages/layout/src/city.ts [utility], packages/layout/src/estimate.ts [utility], packages/layout/src/ids.ts [utility], packages/layout/src/index.ts [entrypoint], packages/layout/src/interpolate.ts [utility], packages/layout/src/label-fit.ts [utility], packages/layout/src/layout.ts [entrypoint], packages/layout/src/rank.ts [utility], packages/layout/src/related.ts [utility] +4
 [pages] Pages (20 files, coh=1.00 coup=0.00)
   20 files, mostly pages and entry points; entry points index.ts, page-list.tsx; imported by Packages.
   files: packages/pages/src/ask-companion.tsx [page], packages/pages/src/ask.tsx [page], packages/pages/src/face-controls.tsx [page], packages/pages/src/face-placed.ts [page], packages/pages/src/facts.ts [page], packages/pages/src/form.tsx [page], packages/pages/src/index.ts [entrypoint], packages/pages/src/page-context.tsx [page], packages/pages/src/page-home.tsx [page], packages/pages/src/page-list.tsx [page] +10
-[primitives] Primitives (59 files, coh=1.00 coup=0.00)
-  59 files, mostly components and utilities; entry points index.ts, coverage.tsx, theme.ts; imported by Packages.
-  files: packages/primitives/src/arrange-bar.tsx [component], packages/primitives/src/arrangement.ts [utility], packages/primitives/src/chat.tsx [component], packages/primitives/src/companion.tsx [component], packages/primitives/src/connections.tsx [component], packages/primitives/src/default-view.tsx [component], packages/primitives/src/default-views.tsx [component], packages/primitives/src/editable.tsx [component], packages/primitives/src/figure.tsx [component], packages/primitives/src/find.tsx [component] +49
-[react] React (38 files, coh=1.00 coup=0.00)
-  38 files, mostly components and utilities; entry points index.ts, local-intelligence.ts, picking.ts; imported by Packages.
-  files: packages/react/src/activity.ts [hook], packages/react/src/affordances.ts [utility], packages/react/src/animation.ts [utility], packages/react/src/captions.ts [component], packages/react/src/channels.ts [utility], packages/react/src/connectors.tsx [component], packages/react/src/context.tsx [component], packages/react/src/drawn.ts [component], packages/react/src/edge-signs.tsx [component], packages/react/src/hooks.ts [hook] +28
+[primitives] Primitives (79 files, coh=1.00 coup=0.00)
+  79 files, mostly components and utilities; entry points index.ts, declared-lenses.tsx, home-view.tsx; imported by Packages and Tests.
+  files: packages/primitives/src/app-bar.tsx [component], packages/primitives/src/app-title.tsx [component], packages/primitives/src/arrange-bar.tsx [component], packages/primitives/src/arrangement.ts [utility], packages/primitives/src/bar-panes-door.ts [component], packages/primitives/src/bar-panes.tsx [component], packages/primitives/src/chat.tsx [component], packages/primitives/src/choice.ts [utility], packages/primitives/src/companion.tsx [component], packages/primitives/src/connections.tsx [component] +69
+[react] React (51 files, coh=1.00 coup=0.00)
+  51 files, mostly components and utilities; entry points index.ts, local-intelligence.ts, picking.ts; imported by Packages.
+  files: packages/react/src/activity.ts [component], packages/react/src/affordances.ts [utility], packages/react/src/animation.ts [component], packages/react/src/attention.ts [component], packages/react/src/captions.ts [component], packages/react/src/channels.ts [component], packages/react/src/connectors.tsx [component], packages/react/src/context.tsx [component], packages/react/src/drawing.ts [component], packages/react/src/drawn.ts [component] +41
 [render] Render (11 files, coh=1.00 coup=0.00)
   11 files, mostly utilities and entry points; entry points gpu.ts, index.ts, pointer-router.ts; imported by Packages.
   files: packages/render/src/gpu.ts [utility], packages/render/src/index.ts [entrypoint], packages/render/src/interaction/pointer-router.ts [utility], packages/render/src/platform/html-in-canvas.ts [utility], packages/render/src/platform/matrix.ts [utility], packages/render/src/scene/compositor.ts [utility], packages/render/src/scene/compositor.wgsl.ts, packages/render/src/scene/connectors.ts [utility], packages/render/src/scene/frame-plan.ts [utility], packages/render/src/scene/from-layout.ts [utility] +1
-[root] Project Root (1 files, coh=1.00 coup=0.00)
-  Project configuration and manifest files: vitest.config.ts
-  files: vitest.config.ts
-[scripts] Build & CI Scripts (65 files, coh=1.00 coup=0.00)
-  Build, packaging, and CI scripts: vite.config.ts, vite.config.ts, vite.config.ts (+62 more)
-  files: apps/discography/vite.config.ts, apps/gauntlet/vite.config.ts, apps/launcher/vite.config.ts, apps/rota/vite.config.ts, apps/seedbed/vite.config.ts, apps/todo/scripts/run-a11y.mjs, apps/todo/vite.config.ts, scripts/audit-ui.mjs, scripts/conformance-fixtures.mjs, scripts/eval-elm.mjs +55
-[seedbed] Apps Config (1 files, coh=1.00 coup=0.00)
-  Project configuration and manifest files: vite.site.config.ts
-  files: apps/seedbed/vite.site.config.ts
+[root] Project Root (2 files, coh=0.00 coup=0.00)
+  Build, packaging, and CI scripts: offers-app.ts, vitest.config.ts
+  files: scripts/fixtures/offers-app.ts, vitest.config.ts
+[scripts] Build & CI Scripts (85 files, coh=1.00 coup=0.00)
+  Build, packaging, and CI scripts: vite.config.ts, vite.config.ts, vite.config.ts (+82 more)
+  files: apps/discography/vite.config.ts, apps/gauntlet/vite.config.ts, apps/launcher/vite.config.ts, apps/rota/vite.config.ts, apps/seedbed/vite.config.ts, apps/todo/scripts/run-a11y.mjs, apps/todo/vite.config.ts, scripts/audit-ui.mjs, scripts/conformance-fixtures.mjs, scripts/eval-elm.mjs +75
 [ship] Ship (28 files, coh=1.00 coup=0.00)
   28 files, mostly utilities and services; entry points index.ts, runtime.ts, export.ts; imported by Packages and Packages.
   files: packages/ship/src/browser-adapter.ts [utility], packages/ship/src/browser.ts [entrypoint], packages/ship/src/cli.ts [entrypoint], packages/ship/src/dev.ts [service], packages/ship/src/door.ts, packages/ship/src/export.ts [entrypoint], packages/ship/src/file-adapter.ts [utility], packages/ship/src/handler.ts [route-handler], packages/ship/src/health.ts [utility], packages/ship/src/index.ts [entrypoint] +18
-[skills] Skills (2 files, coh=1.00 coup=0.00)
-  2 files, mostly entry points; entry points index.ts; imported by Packages.
-  files: packages/skills/src/cli.ts [entrypoint], packages/skills/src/index.ts [entrypoint]
-[spike] Apps Spike (1 files, coh=1.00 coup=0.00)
-  Project configuration and manifest files: vite.config.ts
-  files: apps/spike/vite.config.ts
+[skills] Skills (4 files, coh=1.00 coup=0.00)
+  4 files, mostly entry points and pages; entry points index.ts; imported by Packages.
+  files: packages/skills/skills/graview-worker-view/examples/front-page.js [page], packages/skills/skills/graview-worker-view/examples/offers-list.js [component], packages/skills/src/cli.ts [entrypoint], packages/skills/src/index.ts [entrypoint]
 [studio] Studio (18 files, coh=1.00 coup=0.00)
-  18 files, mostly utilities and components; entry points place.tsx, index.ts, meta.ts; imported by Packages.
-  files: packages/studio/src/agent-panel.tsx [component], packages/studio/src/agent.ts [service], packages/studio/src/changes.ts, packages/studio/src/edits.ts [utility], packages/studio/src/from-declaration.ts [utility], packages/studio/src/in-place.tsx [component], packages/studio/src/index.ts [entrypoint], packages/studio/src/lens.tsx [component], packages/studio/src/meta.ts [schema], packages/studio/src/migration.ts [utility] +8
-[tests] Tests (18 files, coh=1.00 coup=0.00)
-  Non-source files in tests: a-declaration-as-a-document.test.ts, a-document-runs-without-code.test.ts, a-hosted-page-keeps-to-its-budget.test.ts (+15 more)
-  files: tests/a-declaration-as-a-document.test.ts, tests/a-document-runs-without-code.test.ts, tests/a-hosted-page-keeps-to-its-budget.test.ts, tests/a-kind-is-counted-by-its-noun.test.ts, tests/a-refusal-never-names-your-own-role.test.ts, tests/an-app-aliases-what-the-framework-imports.test.ts, tests/changesets.test.ts, tests/document-compile.test.ts, tests/every-harness-honours-the-port-base.test.ts, tests/journeys.test.ts +8
+  18 files, mostly utilities and components; entry points index.ts, place.tsx, meta.ts; imported by Packages.
+  files: packages/studio/src/agent-panel.tsx [component], packages/studio/src/agent.ts [service], packages/studio/src/changes.ts [utility], packages/studio/src/edits.ts [utility], packages/studio/src/from-declaration.ts [utility], packages/studio/src/in-place.tsx [component], packages/studio/src/index.ts [entrypoint], packages/studio/src/lens.tsx [component], packages/studio/src/meta.ts [route-module], packages/studio/src/migration.ts [utility] +8
+[tests] Tests (21 files, coh=1.00 coup=0.00)
+  Non-source files in tests: a-declaration-as-a-document.test.ts, a-document-runs-without-code.test.ts, a-hosted-page-keeps-to-its-budget.test.ts (+18 more)
+  files: tests/a-declaration-as-a-document.test.ts, tests/a-document-runs-without-code.test.ts, tests/a-hosted-page-keeps-to-its-budget.test.ts, tests/a-kind-is-counted-by-its-noun.test.ts, tests/a-refusal-never-names-your-own-role.test.ts, tests/a-worker-view-runs-headless-in-workerd.test.ts, tests/an-app-aliases-what-the-framework-imports.test.ts, tests/changesets.test.ts, tests/document-compile.test.ts, tests/every-harness-honors-the-port-base.test.ts +11
 [tests-apps] Tests Apps (7 files, coh=1.00 coup=0.00)
   Non-source files in apps: domain.test.ts, lens-reuse.test.ts, the-awkward-shapes.test.ts (+4 more)
   files: apps/discography/tests/domain.test.ts, apps/discography/tests/lens-reuse.test.ts, apps/gauntlet/tests/the-awkward-shapes.test.ts, apps/launcher/tests/integration/acceptance.test.ts, apps/rota/tests/integration/acceptance.test.ts, apps/todo/tests/integration/acceptance.test.tsx, apps/todo/tests/integration/who-is-here.test.tsx
 [tests-core] Tests Core (5 files, coh=1.00 coup=0.00)
   Non-source files in packages: persistence.test.ts, sync.test.ts, adapter-contract.ts (+2 more)
   files: packages/core/tests/integration/persistence.test.ts, packages/core/tests/integration/sync.test.ts, packages/core/tests/support/adapter-contract.ts, packages/core/tests/support/unseen-worlds.ts, packages/core/tests/types/judges-past.ts
-[tests-core-document] Tests Core Document (18 files, coh=1.00 coup=0.00)
-  Non-source files in packages: a-compiled-document-is-read-like-a-declared-one.test.ts, a-diff-reads-meaning-not-key-order.test.ts, a-document-says-what-a-glance-says.test.ts (+15 more)
-  files: packages/core/tests/document/a-compiled-document-is-read-like-a-declared-one.test.ts, packages/core/tests/document/a-diff-reads-meaning-not-key-order.test.ts, packages/core/tests/document/a-document-says-what-a-glance-says.test.ts, packages/core/tests/document/a-documents-sights-are-the-apps.test.ts, packages/core/tests/document/a-glance-is-an-edit.test.ts, packages/core/tests/document/a-name-on-the-prototype-is-no-field.test.ts, packages/core/tests/document/a-page-compiles-without-the-checker.test.ts, packages/core/tests/document/a-removal-leaves-nothing-dangling.test.ts, packages/core/tests/document/a-repair-takes-a-documents-default.test.ts, packages/core/tests/document/a-template-is-data.test.ts +8
-[tests-core-unit] Packages (89 files, coh=1.00 coup=0.00)
-  Non-source files in packages: a-change-in-the-records-words.test.ts, a-change-refused-before-it-is-kept-leaves-nothing.test.ts, a-conformance-kit.test.ts (+86 more)
-  files: packages/core/tests/unit/a-change-in-the-records-words.test.ts, packages/core/tests/unit/a-change-refused-before-it-is-kept-leaves-nothing.test.ts, packages/core/tests/unit/a-conformance-kit.test.ts, packages/core/tests/unit/a-described-node-ref.test.ts, packages/core/tests/unit/a-glance-does-not-say-its-heading-again.test.ts, packages/core/tests/unit/a-glance-says-what-is-chosen.test.ts, packages/core/tests/unit/a-hue-is-degrees.test.ts, packages/core/tests/unit/a-kind-says-what-one-is-called.test.ts, packages/core/tests/unit/a-lens-started.test.ts, packages/core/tests/unit/a-log-a-seat-may-not-see-is-redacted.test.ts +79
-[tests-embed-unit] Tests Embed Unit (17 files, coh=1.00 coup=0.00)
-  Non-source files in packages: a-face-is-fetched-as-it-is-drawn.test.tsx, a-host-refuses-in-its-own-words.test.tsx, a-host-says-who-is-offered-the-studio.test.tsx (+14 more)
-  files: packages/embed/tests/unit/a-face-is-fetched-as-it-is-drawn.test.tsx, packages/embed/tests/unit/a-host-refuses-in-its-own-words.test.tsx, packages/embed/tests/unit/a-host-says-who-is-offered-the-studio.test.tsx, packages/embed/tests/unit/a-host-that-refuses-is-heard.test.tsx, packages/embed/tests/unit/a-seat-change-keeps-the-store.test.tsx, packages/embed/tests/unit/a-studio-in-a-hosts-page-draws-no-main.test.tsx, packages/embed/tests/unit/an-embed-holds-inside-a-chat-widget.test.tsx, packages/embed/tests/unit/an-embed-knows-what-its-host-can-keep.test.tsx, packages/embed/tests/unit/an-embed-reports-what-went-wrong.test.tsx, packages/embed/tests/unit/embed.test.ts +7
-[tests-guest-unit] Tests Guest Unit (6 files, coh=1.00 coup=0.00)
-  Non-source files in packages: a-guest-is-shown-only-what-the-viewer-may-see.test.ts, a-guest-talks-only-over-its-port.test.ts, a-guests-act-is-the-viewers-click.test.tsx (+3 more)
-  files: packages/guest/tests/unit/a-guest-is-shown-only-what-the-viewer-may-see.test.ts, packages/guest/tests/unit/a-guest-talks-only-over-its-port.test.ts, packages/guest/tests/unit/a-guests-act-is-the-viewers-click.test.tsx, packages/guest/tests/unit/a-hostile-guest-changes-nothing.test.ts, packages/guest/tests/unit/showroom.ts, packages/guest/tests/unit/the-frame-is-sandboxed-and-answers-only-its-own.test.ts
-[tests-layout-unit] Tests Layout Unit (12 files, coh=1.00 coup=0.00)
-  Non-source files in packages: a-band-is-named-in-words.test.ts, a-name-that-fits.test.ts, a-tuck-goes-with-its-parent.test.ts (+9 more)
-  files: packages/layout/tests/unit/a-band-is-named-in-words.test.ts, packages/layout/tests/unit/a-name-that-fits.test.ts, packages/layout/tests/unit/a-tuck-goes-with-its-parent.test.ts, packages/layout/tests/unit/an-opened-district-lists-what-it-has-room-for.test.ts, packages/layout/tests/unit/layout.test.ts, packages/layout/tests/unit/properties.test.ts, packages/layout/tests/unit/the-band-draws-what-fits.test.ts, packages/layout/tests/unit/the-billboard-is-on-a-leash.test.ts, packages/layout/tests/unit/the-city-at-altitude.test.ts, packages/layout/tests/unit/the-city-stays-beside-the-rail.test.ts +2
+[tests-core-document] Tests Core Document (50 files, coh=1.00 coup=0.00)
+  Non-source files in packages: a-compiled-app-handed-wrong-is-compiled-instead.test.ts, a-compiled-document-is-read-like-a-declared-one.test.ts, a-contrast-refusal-names-the-pair.test.ts (+47 more)
+  files: packages/core/tests/document/a-compiled-app-handed-wrong-is-compiled-instead.test.ts, packages/core/tests/document/a-compiled-document-is-read-like-a-declared-one.test.ts, packages/core/tests/document/a-contrast-refusal-names-the-pair.test.ts, packages/core/tests/document/a-coverage-is-said-at-the-cost-of-its-links.test.ts, packages/core/tests/document/a-coverage-is-said-row-by-row.test.ts, packages/core/tests/document/a-declared-lens-is-a-place.test.ts, packages/core/tests/document/a-diff-reads-meaning-not-key-order.test.ts, packages/core/tests/document/a-document-says-what-a-glance-says.test.ts, packages/core/tests/document/a-documents-sights-are-the-apps.test.ts, packages/core/tests/document/a-figures-label-is-a-template.test.ts +40
+[tests-core-unit] Packages (97 files, coh=1.00 coup=0.00)
+  Non-source files in packages: a-change-in-the-records-words.test.ts, a-change-refused-before-it-is-kept-leaves-nothing.test.ts, a-conformance-kit.test.ts (+94 more)
+  files: packages/core/tests/unit/a-change-in-the-records-words.test.ts, packages/core/tests/unit/a-change-refused-before-it-is-kept-leaves-nothing.test.ts, packages/core/tests/unit/a-conformance-kit.test.ts, packages/core/tests/unit/a-described-node-ref.test.ts, packages/core/tests/unit/a-glance-does-not-say-its-heading-again.test.ts, packages/core/tests/unit/a-glance-says-what-is-chosen.test.ts, packages/core/tests/unit/a-hue-is-degrees.test.ts, packages/core/tests/unit/a-kind-says-what-one-is-called.test.ts, packages/core/tests/unit/a-lazy-part-tries-again.test.ts, packages/core/tests/unit/a-lens-started.test.ts +87
+[tests-embed-unit] Tests Embed Unit (32 files, coh=1.00 coup=0.00)
+  Non-source files in packages: a-coverage-cell-selects-what-it-joins.test.tsx, a-declared-lens-is-a-place-on-the-graview-face.test.tsx, a-face-is-fetched-as-it-is-drawn.test.tsx (+29 more)
+  files: packages/embed/tests/unit/a-coverage-cell-selects-what-it-joins.test.tsx, packages/embed/tests/unit/a-declared-lens-is-a-place-on-the-graview-face.test.tsx, packages/embed/tests/unit/a-face-is-fetched-as-it-is-drawn.test.tsx, packages/embed/tests/unit/a-home-view-is-where-a-desk-opens.test.tsx, packages/embed/tests/unit/a-host-can-ask-for-the-switch-as-its-marks.test.tsx, packages/embed/tests/unit/a-host-refuses-in-its-own-words.test.tsx, packages/embed/tests/unit/a-host-says-who-is-offered-the-studio.test.tsx, packages/embed/tests/unit/a-host-speaks-in-the-apps-notices.test.tsx, packages/embed/tests/unit/a-host-that-owns-the-page-gives-the-pages-the-address-bar.test.tsx, packages/embed/tests/unit/a-host-that-refuses-is-heard.test.tsx +22
+[tests-guest-fixtures] Tests Guest Fixtures (5 files, coh=1.00 coup=0.00)
+  Non-source files in packages: heard.js, offers.js, packages.js (+2 more)
+  files: packages/guest/tests/fixtures/lifelogics/heard.js, packages/guest/tests/fixtures/lifelogics/offers.js, packages/guest/tests/fixtures/lifelogics/packages.js, packages/guest/tests/fixtures/lifelogics/questions.js, packages/guest/tests/fixtures/lifelogics/throws.js
+[tests-guest-unit] Tests Guest Unit (30 files, coh=1.00 coup=0.00)
+  Non-source files in packages: a-frame-guest-follows-the-apps-theme.test.ts, a-frame-guest-reads-across-kinds.test.tsx, a-guest-bundle-is-one-classic-script.test.ts (+27 more)
+  files: packages/guest/tests/unit/a-frame-guest-follows-the-apps-theme.test.ts, packages/guest/tests/unit/a-frame-guest-reads-across-kinds.test.tsx, packages/guest/tests/unit/a-guest-bundle-is-one-classic-script.test.ts, packages/guest/tests/unit/a-guest-is-shown-only-what-the-viewer-may-see.test.ts, packages/guest/tests/unit/a-guest-talks-only-over-its-port.test.ts, packages/guest/tests/unit/a-guest-view-follows-the-providers-brand.test.tsx, packages/guest/tests/unit/a-guests-act-is-the-viewers-click.test.tsx, packages/guest/tests/unit/a-guests-worker-keeps-only-the-allowlist.test.ts, packages/guest/tests/unit/a-hostile-guest-changes-nothing.test.ts, packages/guest/tests/unit/a-titled-guest-view-is-a-place.test.tsx +20
+[tests-layout-unit] Tests Layout Unit (14 files, coh=1.00 coup=0.00)
+  Non-source files in packages: a-band-is-named-in-words.test.ts, a-name-that-fits.test.ts, a-thumbnail-is-the-scenes-city.test.ts (+11 more)
+  files: packages/layout/tests/unit/a-band-is-named-in-words.test.ts, packages/layout/tests/unit/a-name-that-fits.test.ts, packages/layout/tests/unit/a-thumbnail-is-the-scenes-city.test.ts, packages/layout/tests/unit/a-tuck-goes-with-its-parent.test.ts, packages/layout/tests/unit/an-opened-district-lists-what-it-has-room-for.test.ts, packages/layout/tests/unit/layout.test.ts, packages/layout/tests/unit/properties.test.ts, packages/layout/tests/unit/the-band-draws-what-fits.test.ts, packages/layout/tests/unit/the-billboard-is-on-a-leash.test.ts, packages/layout/tests/unit/the-city-at-altitude.test.ts +4
 [tests-packages] Tests Packages (5 files, coh=1.00 coup=0.00)
   Non-source files in packages: door.test.ts, a-separator-is-not-a-command.test.ts, frame-plan.test.ts (+2 more)
   files: packages/create-graview/tests/unit/door.test.ts, packages/graview/tests/unit/a-separator-is-not-a-command.test.ts, packages/render/tests/unit/frame-plan.test.ts, packages/render/tests/unit/pointer-router.test.ts, packages/skills/tests/unit/skills.test.ts
-[tests-pages-unit] Tests Pages Unit (32 files, coh=1.00 coup=0.00)
-  Non-source files in packages: a-document-wears-both-faces.test.tsx, a-form-asks-in-the-records-words.test.tsx, a-link-a-browser-would-render.test.tsx (+29 more)
-  files: packages/pages/tests/unit/a-document-wears-both-faces.test.tsx, packages/pages/tests/unit/a-form-asks-in-the-records-words.test.tsx, packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx, packages/pages/tests/unit/a-list-fits-a-phone-at-200.test.tsx, packages/pages/tests/unit/a-list-left-empty-is-sent-empty.test.tsx, packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx, packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx, packages/pages/tests/unit/a-page-links-to-a-picture.test.ts, packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx, packages/pages/tests/unit/a-picker-fits-its-field.test.tsx +22
-[tests-primitives-unit] Tests Primitives Unit (68 files, coh=1.00 coup=0.00)
-  Non-source files in packages: a-calendar-draws-every-kind-it-is-bound-to.test.tsx, a-card-s-acts-are-one-key-away.test.tsx, a-cell-is-an-edge.test.tsx (+65 more)
-  files: packages/primitives/tests/unit/a-calendar-draws-every-kind-it-is-bound-to.test.tsx, packages/primitives/tests/unit/a-card-s-acts-are-one-key-away.test.tsx, packages/primitives/tests/unit/a-cell-is-an-edge.test.tsx, packages/primitives/tests/unit/a-chip-says-what-it-is.test.tsx, packages/primitives/tests/unit/a-companion-names-its-subject.test.tsx, packages/primitives/tests/unit/a-coverage-path-gets-there.test.ts, packages/primitives/tests/unit/a-district-offers-what-it-can-do.test.tsx, packages/primitives/tests/unit/a-district-stands-as-its-figure.test.tsx, packages/primitives/tests/unit/a-filter-says-a-value-as-the-record-does.test.tsx, packages/primitives/tests/unit/a-lens-arranges-before-it-draws.test.tsx +58
-[tests-react-unit] Tests React Unit (31 files, coh=1.00 coup=0.00)
-  Non-source files in packages: a-chosen-member-is-not-its-district.test.ts, a-door-that-is-not-there.test.tsx, a-door-the-back-button-knows.test.ts (+28 more)
-  files: packages/react/tests/unit/a-chosen-member-is-not-its-district.test.ts, packages/react/tests/unit/a-door-that-is-not-there.test.tsx, packages/react/tests/unit/a-door-the-back-button-knows.test.ts, packages/react/tests/unit/a-drawn-shape-is-a-control.test.tsx, packages/react/tests/unit/a-line-goes-under-what-it-crosses.test.ts, packages/react/tests/unit/a-link-to-a-picture.test.tsx, packages/react/tests/unit/a-relation-is-captioned-once.test.ts, packages/react/tests/unit/a-search-lights-the-picture.test.tsx, packages/react/tests/unit/a-stop-that-still-exists.test.tsx, packages/react/tests/unit/a-tile-is-its-district.test.tsx +21
+[tests-pages-unit] Tests Pages Unit (39 files, coh=1.00 coup=0.00)
+  Non-source files in packages: a-declared-lens-is-a-page.test.tsx, a-document-wears-both-faces.test.tsx, a-form-asks-in-the-records-words.test.tsx (+36 more)
+  files: packages/pages/tests/unit/a-declared-lens-is-a-page.test.tsx, packages/pages/tests/unit/a-document-wears-both-faces.test.tsx, packages/pages/tests/unit/a-form-asks-in-the-records-words.test.tsx, packages/pages/tests/unit/a-form-names-its-parts.test.tsx, packages/pages/tests/unit/a-home-view-is-the-home.test.tsx, packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx, packages/pages/tests/unit/a-list-fits-a-phone-at-200.test.tsx, packages/pages/tests/unit/a-list-left-empty-is-sent-empty.test.tsx, packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx, packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx +29
+[tests-primitives-unit] Tests Primitives Unit (85 files, coh=1.00 coup=0.00)
+  Non-source files in packages: a-calendar-draws-every-kind-it-is-bound-to.test.tsx, a-call-is-told-by-its-arguments.test.tsx, a-card-s-acts-are-one-key-away.test.tsx (+82 more)
+  files: packages/primitives/tests/unit/a-calendar-draws-every-kind-it-is-bound-to.test.tsx, packages/primitives/tests/unit/a-call-is-told-by-its-arguments.test.tsx, packages/primitives/tests/unit/a-card-s-acts-are-one-key-away.test.tsx, packages/primitives/tests/unit/a-cell-is-an-edge.test.tsx, packages/primitives/tests/unit/a-chip-says-what-it-is.test.tsx, packages/primitives/tests/unit/a-companion-names-its-subject.test.tsx, packages/primitives/tests/unit/a-computed-field-is-drawn-like-a-stored-one.test.tsx, packages/primitives/tests/unit/a-coverage-cell-joins-its-ends.test.tsx, packages/primitives/tests/unit/a-coverage-path-gets-there.test.ts, packages/primitives/tests/unit/a-district-offers-what-it-can-do.test.tsx +75
+[tests-react-unit] Tests React Unit (35 files, coh=1.00 coup=0.00)
+  Non-source files in packages: a-chosen-member-is-not-its-district.test.ts, a-door-that-is-not-there.test.tsx, a-door-the-back-button-knows.test.ts (+32 more)
+  files: packages/react/tests/unit/a-chosen-member-is-not-its-district.test.ts, packages/react/tests/unit/a-door-that-is-not-there.test.tsx, packages/react/tests/unit/a-door-the-back-button-knows.test.ts, packages/react/tests/unit/a-drawn-shape-is-a-control.test.tsx, packages/react/tests/unit/a-lazy-part-that-failed-tries-again.test.tsx, packages/react/tests/unit/a-line-goes-under-what-it-crosses.test.ts, packages/react/tests/unit/a-link-to-a-picture.test.tsx, packages/react/tests/unit/a-relation-is-captioned-once.test.ts, packages/react/tests/unit/a-search-lights-the-picture.test.tsx, packages/react/tests/unit/a-seat-change-is-not-a-stop.test.tsx +25
 [tests-seedbed-integration] Tests Seedbed Integration (4 files, coh=1.00 coup=0.00)
   Non-source files in apps: acceptance.test.tsx, chapters.test.ts, design-keyboard.test.tsx (+1 more)
   files: apps/seedbed/tests/integration/acceptance.test.tsx, apps/seedbed/tests/integration/chapters.test.ts, apps/seedbed/tests/integration/design-keyboard.test.tsx, apps/seedbed/tests/integration/embed.test.tsx
@@ -152,15 +155,15 @@ Circulars: 40
 [tests-ship-unit] Tests Ship Unit (41 files, coh=1.00 coup=0.00)
   Non-source files in packages: a-batch-is-answered-only-to-its-author.test.ts, a-batch-tag-belongs-to-its-first-seat.test.ts, a-build-per-socket-and-a-host-protocol.test.ts (+38 more)
   files: packages/ship/tests/unit/a-batch-is-answered-only-to-its-author.test.ts, packages/ship/tests/unit/a-batch-tag-belongs-to-its-first-seat.test.ts, packages/ship/tests/unit/a-build-per-socket-and-a-host-protocol.test.ts, packages/ship/tests/unit/a-change-is-heard-once-it-is-written.test.ts, packages/ship/tests/unit/a-compacted-log-keeps-who-made-each-record.test.ts, packages/ship/tests/unit/a-declaration-number-is-the-hosts.test.ts, packages/ship/tests/unit/a-failed-flush-is-never-acked.test.ts, packages/ship/tests/unit/a-handler-takes-every-protocol-option.test.ts, packages/ship/tests/unit/a-host-admits-a-call-by-what-it-would-do.test.ts, packages/ship/tests/unit/a-host-routes-its-own-requests.test.ts +31
-[tests-studio-unit] Tests Studio Unit (22 files, coh=1.00 coup=0.00)
-  Non-source files in packages: a-document-is-judged-as-a-document.test.ts, a-field-changes-in-place.test.ts, a-name-keeps-its-casing.test.ts (+19 more)
-  files: packages/studio/tests/unit/a-document-is-judged-as-a-document.test.ts, packages/studio/tests/unit/a-field-changes-in-place.test.ts, packages/studio/tests/unit/a-name-keeps-its-casing.test.ts, packages/studio/tests/unit/a-rename-is-only-a-rename.test.ts, packages/studio/tests/unit/a-rule-judged-in-words.test.ts, packages/studio/tests/unit/a-typed-app-opens-in-the-studio.test.ts, packages/studio/tests/unit/an-agent-in-the-studio.test.ts, packages/studio/tests/unit/apply-hands-back-the-document-it-compiled.test.ts, packages/studio/tests/unit/one-seat-one-conversation.test.tsx, packages/studio/tests/unit/rewrite-before-writing.test.tsx +12
-[tests-tools-unit] Tests Tools Unit (43 files, coh=1.00 coup=0.00)
-  Non-source files in packages: a-district-that-waits.test.ts, a-loop-knows-when-to-stop.test.ts, a-module-off-is-off-on-every-route-and-tool.test.ts (+40 more)
-  files: packages/tools/tests/unit/a-district-that-waits.test.ts, packages/tools/tests/unit/a-loop-knows-when-to-stop.test.ts, packages/tools/tests/unit/a-module-off-is-off-on-every-route-and-tool.test.ts, packages/tools/tests/unit/a-plan-is-an-object.test.ts, packages/tools/tests/unit/a-read-only-mcp-call-shows-the-agent-is-here.test.ts, packages/tools/tests/unit/a-reading-is-not-a-fact.test.ts, packages/tools/tests/unit/a-run-is-declared.test.ts, packages/tools/tests/unit/a-template-sets-up-a-live-store.test.ts, packages/tools/tests/unit/affordances.test.ts, packages/tools/tests/unit/an-act-under-specified-is-an-ask.test.ts +33
+[tests-studio-unit] Tests Studio Unit (23 files, coh=1.00 coup=0.00)
+  Non-source files in packages: a-computed-field-survives-the-round-trip.test.ts, a-document-is-judged-as-a-document.test.ts, a-field-changes-in-place.test.ts (+20 more)
+  files: packages/studio/tests/unit/a-computed-field-survives-the-round-trip.test.ts, packages/studio/tests/unit/a-document-is-judged-as-a-document.test.ts, packages/studio/tests/unit/a-field-changes-in-place.test.ts, packages/studio/tests/unit/a-name-keeps-its-casing.test.ts, packages/studio/tests/unit/a-rename-is-only-a-rename.test.ts, packages/studio/tests/unit/a-rule-judged-in-words.test.ts, packages/studio/tests/unit/a-typed-app-opens-in-the-studio.test.ts, packages/studio/tests/unit/an-agent-in-the-studio.test.ts, packages/studio/tests/unit/apply-hands-back-the-document-it-compiled.test.ts, packages/studio/tests/unit/one-seat-one-conversation.test.tsx +13
+[tests-tools-unit] Tests Tools Unit (47 files, coh=1.00 coup=0.00)
+  Non-source files in packages: a-concentration-is-said-in-the-declarations-words.test.ts, a-district-that-waits.test.ts, a-loop-knows-when-to-stop.test.ts (+44 more)
+  files: packages/tools/tests/unit/a-concentration-is-said-in-the-declarations-words.test.ts, packages/tools/tests/unit/a-district-that-waits.test.ts, packages/tools/tests/unit/a-loop-knows-when-to-stop.test.ts, packages/tools/tests/unit/a-module-off-is-off-on-every-route-and-tool.test.ts, packages/tools/tests/unit/a-plan-is-an-object.test.ts, packages/tools/tests/unit/a-read-only-mcp-call-shows-the-agent-is-here.test.ts, packages/tools/tests/unit/a-reading-is-not-a-fact.test.ts, packages/tools/tests/unit/a-run-is-declared.test.ts, packages/tools/tests/unit/a-template-sets-up-a-live-store.test.ts, packages/tools/tests/unit/a-tool-says-why-it-was-refused.test.ts +37
 [tools] Tools (32 files, coh=1.00 coup=0.00)
   32 files, mostly utilities and services; entry points index.ts, cli.ts, mcp-stdio.ts; imported by Packages.
-  files: packages/tools/src/agent/adapters.ts [utility], packages/tools/src/agent/tools.ts [utility], packages/tools/src/agent/untrusted.ts [utility], packages/tools/src/cli.ts [entrypoint], packages/tools/src/conversation.ts [utility], packages/tools/src/decide.ts [utility], packages/tools/src/derive.ts [utility], packages/tools/src/edit.ts [utility], packages/tools/src/figure.ts [utility], packages/tools/src/frame.ts [types] +22
+  files: packages/tools/src/agent/adapters.ts [utility], packages/tools/src/agent/tools.ts [utility], packages/tools/src/agent/untrusted.ts [utility], packages/tools/src/cli.ts [entrypoint], packages/tools/src/conversation.ts [service], packages/tools/src/decide.ts [utility], packages/tools/src/derive.ts [utility], packages/tools/src/edit.ts [utility], packages/tools/src/figure.ts [utility], packages/tools/src/frame.ts [entrypoint] +22
 
 Detailed zone context: .sourcevision/zones/{id}/context.md
 
@@ -169,88 +172,89 @@ Detailed zone context: .sourcevision/zones/{id}/context.md
 <imports>
 
 Most imported:
-  packages/core/src/index.ts ← packages/core/src/document/compile.ts, packages/core/src/document/compile.ts, packages/core/src/document/expr/evaluate.ts, packages/core/src/document/graview-template.ts, packages/core/src/document/migrate.ts +145
-  packages/primitives/src/index.ts ← packages/primitives/tests/unit/a-calendar-draws-every-kind-it-is-bound-to.test.tsx, packages/primitives/tests/unit/a-card-s-acts-are-one-key-away.test.tsx, packages/primitives/tests/unit/a-cell-is-an-edge.test.tsx, packages/primitives/tests/unit/a-chip-says-what-it-is.test.tsx, packages/primitives/tests/unit/a-companion-names-its-subject.test.tsx +62
-  packages/tools/src/index.ts ← packages/tools/tests/unit/a-district-that-waits.test.ts, packages/tools/tests/unit/a-loop-knows-when-to-stop.test.ts, packages/tools/tests/unit/a-loop-knows-when-to-stop.test.ts, packages/tools/tests/unit/a-module-off-is-off-on-every-route-and-tool.test.ts, packages/tools/tests/unit/a-plan-is-an-object.test.ts +42
-  scripts/lib/ports.mjs ← apps/discography/vite.config.ts, apps/gauntlet/vite.config.ts, apps/launcher/vite.config.ts, apps/rota/vite.config.ts, apps/seedbed/vite.config.ts +28
-  packages/pages/src/index.ts ← packages/pages/tests/unit/a-form-asks-in-the-records-words.test.tsx, packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx, packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx, packages/pages/tests/unit/a-list-fits-a-phone-at-200.test.tsx, packages/pages/tests/unit/a-list-left-empty-is-sent-empty.test.tsx +41
+  packages/core/src/index.ts ← packages/core/src/document/compiled.ts, packages/core/src/document/compiled.ts, packages/core/src/document/describe-place.ts, packages/core/src/document/migrate.ts, packages/core/src/document/migrate.ts +199
+  packages/primitives/src/index.ts ← packages/primitives/tests/unit/a-calendar-draws-every-kind-it-is-bound-to.test.tsx, packages/primitives/tests/unit/a-call-is-told-by-its-arguments.test.tsx, packages/primitives/tests/unit/a-card-s-acts-are-one-key-away.test.tsx, packages/primitives/tests/unit/a-cell-is-an-edge.test.tsx, packages/primitives/tests/unit/a-chip-says-what-it-is.test.tsx +75
+  packages/core/src/check.ts ← packages/core/tests/document/a-compiled-app-handed-wrong-is-compiled-instead.test.ts, packages/core/tests/document/a-compiled-document-is-read-like-a-declared-one.test.ts, packages/core/tests/document/a-contrast-refusal-names-the-pair.test.ts, packages/core/tests/document/a-coverage-is-said-at-the-cost-of-its-links.test.ts, packages/core/tests/document/a-coverage-is-said-row-by-row.test.ts +58
+  packages/tools/src/index.ts ← packages/tools/tests/unit/a-concentration-is-said-in-the-declarations-words.test.ts, packages/tools/tests/unit/a-district-that-waits.test.ts, packages/tools/tests/unit/a-loop-knows-when-to-stop.test.ts, packages/tools/tests/unit/a-loop-knows-when-to-stop.test.ts, packages/tools/tests/unit/a-module-off-is-off-on-every-route-and-tool.test.ts +46
+  scripts/lib/ports.mjs ← apps/discography/vite.config.ts, apps/gauntlet/vite.config.ts, apps/launcher/vite.config.ts, apps/rota/vite.config.ts, apps/seedbed/vite.config.ts +37
+  packages/core/src/document/index.ts ← packages/core/tests/document/a-compiled-app-handed-wrong-is-compiled-instead.test.ts, packages/core/tests/document/a-compiled-document-is-read-like-a-declared-one.test.ts, packages/core/tests/document/a-contrast-refusal-names-the-pair.test.ts, packages/core/tests/document/a-contrast-refusal-names-the-pair.test.ts, packages/core/tests/document/a-diff-reads-meaning-not-key-order.test.ts +67
+  packages/pages/src/index.ts ← packages/pages/tests/unit/a-declared-lens-is-a-page.test.tsx, packages/pages/tests/unit/a-form-asks-in-the-records-words.test.tsx, packages/pages/tests/unit/a-form-names-its-parts.test.tsx, packages/pages/tests/unit/a-home-view-is-the-home.test.tsx, packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx +48
+  scripts/lib/engine.mjs ← scripts/audit-ui.mjs, scripts/progression.mjs, scripts/rehearse-studio.mjs, scripts/smoke-create.mjs, scripts/survey-ui.mjs +29
+  packages/embed/src/index.ts ← packages/embed/tests/unit/a-coverage-cell-selects-what-it-joins.test.tsx, packages/embed/tests/unit/a-declared-lens-is-a-place-on-the-graview-face.test.tsx, packages/embed/tests/unit/a-face-is-fetched-as-it-is-drawn.test.tsx, packages/embed/tests/unit/a-face-is-fetched-as-it-is-drawn.test.tsx, packages/embed/tests/unit/a-home-view-is-where-a-desk-opens.test.tsx +47
   packages/ship/src/index.ts ← packages/ship/tests/integration/a-client-that-falls-behind-adopts-the-servers-state.test.ts, packages/ship/tests/integration/a-client-that-falls-behind-adopts-the-servers-state.test.ts, packages/ship/tests/integration/a-declaration-swap-carries-the-hosts-wiring.test.ts, packages/ship/tests/integration/a-declaration-swap-carries-the-hosts-wiring.test.ts, packages/ship/tests/integration/a-live-client-a-host-can-observe.test.ts +47
-  scripts/lib/engine.mjs ← scripts/audit-ui.mjs, scripts/progression.mjs, scripts/rehearse-studio.mjs, scripts/smoke-create.mjs, scripts/survey-ui.mjs +22
-  scripts/lib/serve.mjs ← apps/todo/scripts/run-a11y.mjs, scripts/audit-ui.mjs, scripts/progression.mjs, scripts/survey-ui.mjs, scripts/verify-all.mjs +19
-  apps/promo/src/motion.ts ← apps/promo/src/Composition.tsx, apps/promo/src/camera.ts, apps/promo/src/components/BigTitle.tsx, apps/promo/src/components/BrandPresence.tsx, apps/promo/src/components/CodeGlyphs.tsx +18
-  packages/core/src/schema/define-node.ts ← packages/core/src/arrange.ts, packages/core/src/cli/check/fields.ts, packages/core/src/cli/check/relations.ts, packages/core/src/cli/describe.ts, packages/core/src/document/diff.ts +17
 
 Circular chains:
-  packages/core/src/app.ts → packages/core/src/arrange.ts → packages/core/src/search.ts → packages/core/src/store.ts
-  packages/core/src/app.ts → packages/core/src/document/views.ts → packages/core/src/document/expr/analyze.ts → packages/core/src/document/expr/evaluate.ts → packages/core/src/index.ts
-  packages/core/src/app.ts → packages/core/src/document/views.ts → packages/core/src/document/expr/analyze.ts → packages/core/src/document/expr/evaluate.ts → packages/core/src/index.ts
+  packages/core/src/app.ts → packages/core/src/document/views.ts → packages/core/src/document/to-document.ts → packages/core/src/index.ts
+  packages/core/src/app.ts → packages/core/src/document/views.ts → packages/core/src/document/to-document.ts → packages/core/src/index.ts
+  packages/core/src/app.ts → packages/core/src/document/views.ts → packages/core/src/document/to-document.ts → packages/core/src/index.ts → packages/core/src/beginning.ts
 
 </imports>
 
 <findings>
 
-[warning] 13 entry points — wide API surface, consider consolidating exports [apps]
-[warning] 42 entry points — wide API surface, consider consolidating exports [core]
-[warning] High coupling (0.76) — 18 imports target "core" [core-cli]
-[warning] Low cohesion (0.24) — files are loosely related, consider splitting this zone [core-cli]
-[warning] High coupling (0.53) — 18 imports target "core" [core-document]
-[warning] 12 entry points — wide API surface, consider consolidating exports [core-graph]
-[warning] High coupling (0.67) — 26 imports target "core" [core-graph]
-[warning] Low cohesion (0.33) — files are loosely related, consider splitting this zone [core-graph]
-[warning] High coupling (0.62) — 6 imports target "core" [core-persistence]
-[warning] Low cohesion (0.38) — files are loosely related, consider splitting this zone [core-persistence]
-[warning] High coupling (0.67) — 3 imports target "core" [core-sync]
-[warning] 40 circular dependency chains detected — see imports.json for details
-[warning] Bidirectional coupling: "core" ↔ "core-graph" (72+26 crossings) — consider extracting shared interface
-[warning] 15 entry points — wide API surface, consider consolidating exports [react]
-[warning] 12 entry points — wide API surface, consider consolidating exports [ship]
-... +8 more
+[warning] 18 entry points — wide API surface, consider consolidating exports [apps]
+[warning] High coupling (0.76) — 6 imports target "core-invariants" [check]
+[warning] Low cohesion (0.24) — files are loosely related, consider splitting this zone [check]
+[warning] 9 entry points — wide API surface, consider consolidating exports [core]
+[warning] High coupling (0.77) — 16 imports target "core-document" [core]
+[warning] Low cohesion (0.23) — files are loosely related, consider splitting this zone [core]
+[warning] High coupling (0.78) — 9 imports target "core-document" [core-cli]
+[warning] Low cohesion (0.22) — files are loosely related, consider splitting this zone [core-cli]
+[warning] 55 entry points — wide API surface, consider consolidating exports [core-document]
+[warning] High coupling (0.73) — 7 imports target "core-invariants" [core-graph]
+[warning] Low cohesion (0.27) — files are loosely related, consider splitting this zone [core-graph]
+[warning] High coupling (0.87) — 3 imports target "core-document" [core-invariants]
+[warning] Low cohesion (0.13) — files are loosely related, consider splitting this zone [core-invariants]
+[warning] High coupling (0.85) — 9 imports target "core-document" [core-mutations]
+[warning] Low cohesion (0.15) — files are loosely related, consider splitting this zone [core-mutations]
+... +28 more
 
 </findings>
 
 <next-steps>
 
+[high] 6 zones are fragile: they hold loosely related files and depend heavily on othe…
+  category: refactor
+[high] 2 related findings: <module> in scripts/verify-pages.mjs calls 143 unique funct…
+  category: fix
+[high] 3 imports target "core-document"
+  files: packages/core/src/bind.ts, packages/core/src/invariants/engine.ts, packages/core/src/invariants/types.ts
+  category: refactor
+[high] Files are loosely related, consider splitting this zone
+  files: packages/core/src/bind.ts, packages/core/src/invariants/engine.ts, packages/core/src/invariants/types.ts
+  category: refactor
+[high] 9 imports target "core-document"
+  files: packages/core/src/cli/check/fields.ts, packages/core/src/columns.ts, packages/core/src/mutations/derive-edits.ts
+  category: refactor
+[high] Files are loosely related, consider splitting this zone
+  files: packages/core/src/cli/check/fields.ts, packages/core/src/columns.ts, packages/core/src/mutations/derive-edits.ts
+  category: refactor
 [high] Zone "Core Cli" is severely fragile and needs immediate architectural intervent…
   files: packages/core/src/cli/check.ts, packages/core/src/cli/check/index.ts, packages/core/src/cli/check/migrations.ts
   category: fix
-[high] 18 imports target "core"
+[high] 9 imports target "core-document"
   files: packages/core/src/cli/check.ts, packages/core/src/cli/check/index.ts, packages/core/src/cli/check/migrations.ts
   category: refactor
 [high] Files are loosely related, consider splitting this zone
   files: packages/core/src/cli/check.ts, packages/core/src/cli/check/index.ts, packages/core/src/cli/check/migrations.ts
   category: refactor
-[high] Zone "Core Graph" is fragile and needs refactoring before new feature developme…
-  files: packages/core/src/cli/check/fields.ts, packages/core/src/graph/diff.ts, packages/core/src/graph/graph.ts
-  category: refactor
-[high] 12 entry points
-  files: packages/core/src/cli/check/fields.ts, packages/core/src/graph/diff.ts, packages/core/src/graph/graph.ts
-  category: refactor
-[high] 26 imports target "core"
-  files: packages/core/src/cli/check/fields.ts, packages/core/src/graph/diff.ts, packages/core/src/graph/graph.ts
-  category: refactor
-[high] Files are loosely related, consider splitting this zone
-  files: packages/core/src/cli/check/fields.ts, packages/core/src/graph/diff.ts, packages/core/src/graph/graph.ts
-  category: refactor
-[high] 3 imports target "core"
-  files: packages/core/src/sync/engine.ts, packages/core/src/sync/google-calendar.ts, packages/core/src/sync/types.ts
-  category: refactor
-[high] 6 imports target "core"
-  files: packages/core/src/persistence/memory.ts, packages/core/src/persistence/sql.ts, packages/core/src/persistence/sqlite.ts
-  category: refactor
-[high] Files are loosely related, consider splitting this zone
-  files: packages/core/src/persistence/memory.ts, packages/core/src/persistence/sql.ts, packages/core/src/persistence/sqlite.ts
-  category: refactor
-[high] <module> in docs/site/chapters.js calls 539 unique functions
+[high] Zone "Core" is severely fragile and needs immediate architectural intervention
+  files: packages/core/src/address.ts, packages/core/src/cli/check/relations.ts, packages/core/src/document/describe-coverage.ts
   category: fix
-[medium] 2 zones are fragile: they hold loosely related files and depend heavily on othe…
+[high] 9 entry points
+  files: packages/core/src/address.ts, packages/core/src/cli/check/relations.ts, packages/core/src/document/describe-coverage.ts
   category: refactor
-[medium] 3 related findings: Circular dependency (critical): core ↔ core-graph is a two-…
-  files: packages/core/src/app.ts, packages/core/src/arrange.ts, packages/core/src/beginning.ts
+[high] 16 imports target "core-document"
+  files: packages/core/src/address.ts, packages/core/src/cli/check/relations.ts, packages/core/src/document/describe-coverage.ts
   category: refactor
-[medium] 18 imports target "core"
-  files: packages/core/src/document/edit.ts, packages/core/src/document/expr/analyze.ts, packages/core/src/document/expr/index.ts
+[high] Files are loosely related, consider splitting this zone
+  files: packages/core/src/address.ts, packages/core/src/cli/check/relations.ts, packages/core/src/document/describe-coverage.ts
   category: refactor
-[medium] 5 potentially unused exports in packages/pages/src/page-places.tsx have no inco…
+[high] Zone "Core Cli" is severely fragile and needs immediate architectural intervent…
+  files: packages/core/src/cli/check/context.ts, packages/core/src/cli/check/intelligence.ts, packages/core/src/cli/check/lenses.ts
+  category: fix
+[high] check and core-document form a circular dependency (core-document→check: 8, che…
+  files: packages/core/src/cli/check/context.ts, packages/core/src/cli/check/intelligence.ts, packages/core/src/cli/check/lenses.ts
   category: refactor
 
 </next-steps>

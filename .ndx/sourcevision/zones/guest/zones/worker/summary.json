@@ -1,0 +1,22 @@
+{
+  "id": "guest/worker",
+  "name": "Worker",
+  "description": "5 files, primarily TypeScript",
+  "files": [
+    "packages/guest/src/worker/harden.ts",
+    "packages/guest/src/worker/index.ts",
+    "packages/guest/src/worker/listeners.ts",
+    "packages/guest/src/worker/natives.ts",
+    "packages/guest/src/worker/view.ts"
+  ],
+  "entryPoints": [
+    "packages/guest/src/worker/harden.ts",
+    "packages/guest/src/worker/index.ts",
+    "packages/guest/src/worker/listeners.ts",
+    "packages/guest/src/worker/view.ts"
+  ],
+  "cohesion": 0.5,
+  "coupling": 0.5,
+  "fileCount": 5,
+  "lineCount": 584
+}

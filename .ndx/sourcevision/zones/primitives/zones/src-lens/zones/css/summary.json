@@ -1,0 +1,23 @@
+{
+  "id": "primitives/src-lens/css",
+  "name": "Css",
+  "description": "5 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/scene-css.ts",
+    "packages/primitives/src/spec-css.ts",
+    "packages/primitives/src/theme.ts",
+    "packages/primitives/src/views-css.ts",
+    "packages/primitives/src/wordmark.tsx"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/scene-css.ts",
+    "packages/primitives/src/spec-css.ts",
+    "packages/primitives/src/theme.ts",
+    "packages/primitives/src/views-css.ts",
+    "packages/primitives/src/wordmark.tsx"
+  ],
+  "cohesion": 0.67,
+  "coupling": 0.33,
+  "fileCount": 5,
+  "lineCount": 2074
+}

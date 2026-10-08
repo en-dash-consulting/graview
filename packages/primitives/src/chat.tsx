@@ -16,7 +16,7 @@ import {
   type ToolCall,
 } from "@graview/tools";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useSubject } from "./companion.js";
+import { useSubject } from "./subject.js";
 import { describeSource, proposalKey, SeatComposer, SeatHeader, SeatSettings, SeatThread, Settled, useSeatConversation } from "./seat.js";
 import { AnswerArgs } from "./workbench/index.js";
 

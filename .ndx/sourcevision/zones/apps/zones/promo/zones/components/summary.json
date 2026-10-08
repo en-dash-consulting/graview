@@ -1,6 +1,6 @@
 {
   "id": "apps/promo/components",
-  "name": "Components",
+  "name": "Promo",
   "description": "5 files, primarily TypeScript",
   "files": [
     "apps/promo/src/Composition.tsx",

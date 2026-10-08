@@ -1,6 +1,6 @@
 {
   "id": "apps/promo/promo",
-  "name": "Promo",
+  "name": "Interactive Visuals",
   "description": "9 files, primarily TypeScript",
   "files": [
     "apps/promo/src/camera.ts",

@@ -1,4 +1,4 @@
-import type { AnyGraphNode, GraphReader } from "../index.js";
+import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import { evaluateExpr, ExprEvalError, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
 

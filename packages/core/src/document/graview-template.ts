@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { GraphReader } from "../index.js";
+import type { GraphReader } from "../graph/types.js";
 import type { Primitive } from "../graph/primitives.js";
 import type { CompiledDocument } from "./compile.js";
 import { analyzeExpr } from "./expr/analyze.js";

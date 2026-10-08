@@ -1,8 +1,9 @@
 {
   "id": "tests-studio-unit",
   "name": "Tests Studio Unit",
-  "description": "Non-source files in packages: a-document-is-judged-as-a-document.test.ts, a-field-changes-in-place.test.ts, a-name-keeps-its-casing.test.ts (+19 more)",
+  "description": "Non-source files in packages: a-computed-field-survives-the-round-trip.test.ts, a-document-is-judged-as-a-document.test.ts, a-field-changes-in-place.test.ts (+20 more)",
   "files": [
+    "packages/studio/tests/unit/a-computed-field-survives-the-round-trip.test.ts",
     "packages/studio/tests/unit/a-document-is-judged-as-a-document.test.ts",
     "packages/studio/tests/unit/a-field-changes-in-place.test.ts",
     "packages/studio/tests/unit/a-name-keeps-its-casing.test.ts",
@@ -29,8 +30,8 @@
   "entryPoints": [],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 22,
-  "lineCount": 2625,
+  "fileCount": 23,
+  "lineCount": 2763,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

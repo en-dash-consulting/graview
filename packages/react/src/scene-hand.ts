@@ -1,6 +1,6 @@
 import { withOverview, withPan, withPin, type ViewState } from "@graview/layout/view";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
-import type { SceneNode } from "./scene-root.js";
+import type { SceneNode } from "./scene-node.js";
 
 /*
  * THE HAND ON THE SCENE: dragging the ground to look around, and dragging a

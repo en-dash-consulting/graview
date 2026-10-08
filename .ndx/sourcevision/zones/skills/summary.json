@@ -1,8 +1,10 @@
 {
   "id": "skills",
   "name": "Skills",
-  "description": "2 files, mostly entry points; entry points index.ts; imported by Packages.",
+  "description": "4 files, mostly entry points and pages; entry points index.ts; imported by Packages.",
   "files": [
+    "packages/skills/skills/graview-worker-view/examples/front-page.js",
+    "packages/skills/skills/graview-worker-view/examples/offers-list.js",
     "packages/skills/src/cli.ts",
     "packages/skills/src/index.ts"
   ],
@@ -11,8 +13,8 @@
   ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 2,
-  "lineCount": 120,
+  "fileCount": 4,
+  "lineCount": 230,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

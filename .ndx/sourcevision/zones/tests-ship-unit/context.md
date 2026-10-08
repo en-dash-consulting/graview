@@ -8,7 +8,7 @@ Zone: Tests Ship Unit (`tests-ship-unit`)
 Files: 41, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: Non-source files in packages: a-batch-is-answered-only-to-its-author.test.ts, a-batch-tag-belongs-to-its-first-seat.test.ts, a-build-per-socket-and-a-host-protocol.test.ts (+38 more)
-Lines: 5845
+Lines: 5854
 
 </zone>
 
@@ -29,7 +29,7 @@ packages/ship/tests/unit/a-long-lived-log-compacts-behind-an-undo-horizon.test.t
 packages/ship/tests/unit/a-migration-is-data.test.ts (TypeScript, 77 lines, test)
 packages/ship/tests/unit/a-refusal-in-a-persons-words.test.ts (TypeScript, 82 lines, test)
 packages/ship/tests/unit/a-seat-is-seen-once-and-a-withheld-batch-says-nobody.test.ts (TypeScript, 155 lines, test)
-packages/ship/tests/unit/a-seat-is-served-its-view-at-about-the-cost-of-the-whole-store.test.ts (TypeScript, 143 lines, test)
+packages/ship/tests/unit/a-seat-is-served-its-view-at-about-the-cost-of-the-whole-store.test.ts (TypeScript, 152 lines, test)
 packages/ship/tests/unit/a-seat-the-host-lost-is-opened-again.test.ts (TypeScript, 177 lines, test)
 packages/ship/tests/unit/a-served-store-trusts-headers-on-request.test.ts (TypeScript, 18 lines, test)
 packages/ship/tests/unit/a-socket-fits-its-attachment.test.ts (TypeScript, 103 lines, test)

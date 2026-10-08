@@ -20,7 +20,7 @@
       "file": "apps/discography/src/ui/design.tsx",
       "name": "Acts",
       "kind": "function",
-      "line": 303,
+      "line": 304,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -28,7 +28,7 @@
       "file": "apps/discography/src/ui/design.tsx",
       "name": "Home",
       "kind": "function",
-      "line": 112,
+      "line": 113,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -36,7 +36,7 @@
       "file": "apps/discography/src/ui/design.tsx",
       "name": "KindList",
       "kind": "function",
-      "line": 165,
+      "line": 166,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -44,7 +44,7 @@
       "file": "apps/discography/src/ui/design.tsx",
       "name": "KindRecord",
       "kind": "function",
-      "line": 227,
+      "line": 228,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -52,7 +52,7 @@
       "file": "apps/discography/src/ui/design.tsx",
       "name": "Problems",
       "kind": "function",
-      "line": 278,
+      "line": 279,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -60,7 +60,7 @@
       "file": "apps/discography/src/ui/design.tsx",
       "name": "Shell",
       "kind": "function",
-      "line": 68,
+      "line": 69,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -700,7 +700,7 @@
       "file": "apps/todo/src/ui/design.tsx",
       "name": "About",
       "kind": "function",
-      "line": 666,
+      "line": 667,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -708,7 +708,7 @@
       "file": "apps/todo/src/ui/design.tsx",
       "name": "Acts",
       "kind": "function",
-      "line": 913,
+      "line": 914,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -716,7 +716,7 @@
       "file": "apps/todo/src/ui/design.tsx",
       "name": "Ask",
       "kind": "function",
-      "line": 989,
+      "line": 990,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -724,7 +724,7 @@
       "file": "apps/todo/src/ui/design.tsx",
       "name": "Empty",
       "kind": "function",
-      "line": 713,
+      "line": 714,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -732,7 +732,7 @@
       "file": "apps/todo/src/ui/design.tsx",
       "name": "Home",
       "kind": "function",
-      "line": 343,
+      "line": 344,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -740,7 +740,7 @@
       "file": "apps/todo/src/ui/design.tsx",
       "name": "InPlace",
       "kind": "function",
-      "line": 806,
+      "line": 807,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -748,7 +748,7 @@
       "file": "apps/todo/src/ui/design.tsx",
       "name": "KindList",
       "kind": "function",
-      "line": 410,
+      "line": 411,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -756,7 +756,7 @@
       "file": "apps/todo/src/ui/design.tsx",
       "name": "KindRecord",
       "kind": "function",
-      "line": 530,
+      "line": 531,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -764,7 +764,7 @@
       "file": "apps/todo/src/ui/design.tsx",
       "name": "Problems",
       "kind": "function",
-      "line": 634,
+      "line": 635,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -772,7 +772,7 @@
       "file": "apps/todo/src/ui/design.tsx",
       "name": "Rail",
       "kind": "function",
-      "line": 308,
+      "line": 309,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -780,7 +780,7 @@
       "file": "apps/todo/src/ui/design.tsx",
       "name": "Repairs",
       "kind": "function",
-      "line": 1016,
+      "line": 1017,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -788,7 +788,7 @@
       "file": "apps/todo/src/ui/design.tsx",
       "name": "Rows",
       "kind": "function",
-      "line": 729,
+      "line": 730,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -796,7 +796,7 @@
       "file": "apps/todo/src/ui/design.tsx",
       "name": "Section",
       "kind": "function",
-      "line": 701,
+      "line": 702,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -804,7 +804,7 @@
       "file": "apps/todo/src/ui/design.tsx",
       "name": "Shell",
       "kind": "function",
-      "line": 222,
+      "line": 223,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -812,7 +812,7 @@
       "file": "apps/todo/src/ui/design.tsx",
       "name": "Tick",
       "kind": "function",
-      "line": 764,
+      "line": 765,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -820,7 +820,7 @@
       "file": "apps/todo/src/ui/views.tsx",
       "name": "BurndownView",
       "kind": "function",
-      "line": 378,
+      "line": 326,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -828,7 +828,7 @@
       "file": "apps/todo/src/ui/views.tsx",
       "name": "TaskView",
       "kind": "function",
-      "line": 68,
+      "line": 32,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -836,7 +836,15 @@
       "file": "packages/embed/src/embed.tsx",
       "name": "Arriving",
       "kind": "function",
-      "line": 99,
+      "line": 110,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/embed/src/embed.tsx",
+      "name": "Drawing",
+      "kind": "function",
+      "line": 293,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -844,31 +852,23 @@
       "file": "packages/embed/src/embed.tsx",
       "name": "Embed",
       "kind": "function",
-      "line": 235,
+      "line": 286,
       "isDefaultExport": false,
       "conventionExports": []
     },
     {
       "file": "packages/embed/src/embed.tsx",
-      "name": "EmbedStrip",
+      "name": "Keeping",
       "kind": "function",
-      "line": 355,
+      "line": 637,
       "isDefaultExport": false,
       "conventionExports": []
     },
     {
       "file": "packages/embed/src/embed.tsx",
-      "name": "HeadingAt",
+      "name": "StudioOnTheBar",
       "kind": "function",
-      "line": 320,
-      "isDefaultExport": false,
-      "conventionExports": []
-    },
-    {
-      "file": "packages/embed/src/embed.tsx",
-      "name": "StudioOnTheStrip",
-      "kind": "function",
-      "line": 444,
+      "line": 656,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -876,15 +876,23 @@
       "file": "packages/embed/src/frame.tsx",
       "name": "FaceBoundary",
       "kind": "class",
-      "line": 561,
+      "line": 615,
       "isDefaultExport": false,
       "conventionExports": []
     },
     {
       "file": "packages/embed/src/frame.tsx",
-      "name": "Strip",
+      "name": "FrameBar",
       "kind": "function",
-      "line": 390,
+      "line": 483,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/embed/src/frame.tsx",
+      "name": "FrameNotices",
+      "kind": "function",
+      "line": 452,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -892,7 +900,7 @@
       "file": "packages/embed/src/pages-content.tsx",
       "name": "PagesContent",
       "kind": "function",
-      "line": 11,
+      "line": 14,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -900,7 +908,7 @@
       "file": "packages/embed/src/pages.tsx",
       "name": "PagesEmbed",
       "kind": "function",
-      "line": 34,
+      "line": 40,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -908,15 +916,7 @@
       "file": "packages/embed/src/picture-face.tsx",
       "name": "PictureFace",
       "kind": "function",
-      "line": 10,
-      "isDefaultExport": false,
-      "conventionExports": []
-    },
-    {
-      "file": "packages/embed/src/scene-face.tsx",
-      "name": "SceneControls",
-      "kind": "function",
-      "line": 27,
+      "line": 12,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -924,7 +924,15 @@
       "file": "packages/embed/src/scene-face.tsx",
       "name": "SceneFace",
       "kind": "function",
-      "line": 14,
+      "line": 18,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/embed/src/scene-face.tsx",
+      "name": "SceneKeeping",
+      "kind": "function",
+      "line": 50,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -961,10 +969,18 @@
       "conventionExports": []
     },
     {
+      "file": "packages/guest/src/host/worker-react.tsx",
+      "name": "WorkerViewMount",
+      "kind": "function",
+      "line": 60,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
       "file": "packages/pages/src/ask.tsx",
       "name": "PageAsk",
       "kind": "function",
-      "line": 32,
+      "line": 39,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -972,7 +988,7 @@
       "file": "packages/pages/src/face-controls.tsx",
       "name": "FaceControlsRoot",
       "kind": "function",
-      "line": 265,
+      "line": 364,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -980,7 +996,7 @@
       "file": "packages/pages/src/face-controls.tsx",
       "name": "Fallbacks",
       "kind": "function",
-      "line": 287,
+      "line": 386,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -988,7 +1004,7 @@
       "file": "packages/pages/src/face-controls.tsx",
       "name": "FindInBar",
       "kind": "function",
-      "line": 332,
+      "line": 434,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -996,7 +1012,7 @@
       "file": "packages/pages/src/face-controls.tsx",
       "name": "PageUndo",
       "kind": "function",
-      "line": 118,
+      "line": 123,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1004,7 +1020,7 @@
       "file": "packages/pages/src/face-controls.tsx",
       "name": "TakeBack",
       "kind": "function",
-      "line": 130,
+      "line": 135,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1012,7 +1028,7 @@
       "file": "packages/pages/src/form.tsx",
       "name": "Control",
       "kind": "function",
-      "line": 109,
+      "line": 160,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1020,7 +1036,7 @@
       "file": "packages/pages/src/form.tsx",
       "name": "DerivedForm",
       "kind": "function",
-      "line": 417,
+      "line": 470,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1028,7 +1044,15 @@
       "file": "packages/pages/src/form.tsx",
       "name": "Picker",
       "kind": "function",
-      "line": 83,
+      "line": 146,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-context.tsx",
+      "name": "SceneLink",
+      "kind": "function",
+      "line": 102,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1036,7 +1060,7 @@
       "file": "packages/pages/src/page-context.tsx",
       "name": "StartFreshLink",
       "kind": "function",
-      "line": 75,
+      "line": 144,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1044,7 +1068,7 @@
       "file": "packages/pages/src/page-home.tsx",
       "name": "DefaultHomePage",
       "kind": "function",
-      "line": 38,
+      "line": 40,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1052,7 +1076,7 @@
       "file": "packages/pages/src/page-list.tsx",
       "name": "DefaultListPage",
       "kind": "function",
-      "line": 54,
+      "line": 49,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1092,7 +1116,7 @@
       "file": "packages/pages/src/page-places.tsx",
       "name": "DefaultPlacePage",
       "kind": "function",
-      "line": 442,
+      "line": 451,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1100,7 +1124,7 @@
       "file": "packages/pages/src/page-places.tsx",
       "name": "DefaultPlacesPage",
       "kind": "function",
-      "line": 408,
+      "line": 418,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1108,7 +1132,7 @@
       "file": "packages/pages/src/page-places.tsx",
       "name": "Gallery",
       "kind": "function",
-      "line": 390,
+      "line": 400,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1116,7 +1140,7 @@
       "file": "packages/pages/src/page-places.tsx",
       "name": "GalleryCard",
       "kind": "function",
-      "line": 263,
+      "line": 273,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1124,7 +1148,7 @@
       "file": "packages/pages/src/page-places.tsx",
       "name": "KindOnPage",
       "kind": "function",
-      "line": 138,
+      "line": 141,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1132,7 +1156,7 @@
       "file": "packages/pages/src/page-places.tsx",
       "name": "LensOnPage",
       "kind": "function",
-      "line": 75,
+      "line": 77,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1140,7 +1164,7 @@
       "file": "packages/pages/src/page-places.tsx",
       "name": "PlaceCard",
       "kind": "function",
-      "line": 363,
+      "line": 373,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1148,7 +1172,7 @@
       "file": "packages/pages/src/page-places.tsx",
       "name": "PlacePicture",
       "kind": "function",
-      "line": 108,
+      "line": 111,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1172,7 +1196,7 @@
       "file": "packages/pages/src/page-record.tsx",
       "name": "DefaultRecordPage",
       "kind": "function",
-      "line": 40,
+      "line": 39,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1204,7 +1228,15 @@
       "file": "packages/pages/src/page-shell.tsx",
       "name": "DefaultShell",
       "kind": "function",
-      "line": 21,
+      "line": 23,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-shell.tsx",
+      "name": "OwnBar",
+      "kind": "function",
+      "line": 85,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1212,7 +1244,7 @@
       "file": "packages/pages/src/page-shell.tsx",
       "name": "PageFind",
       "kind": "function",
-      "line": 224,
+      "line": 179,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1220,7 +1252,15 @@
       "file": "packages/pages/src/page-shell.tsx",
       "name": "PageMain",
       "kind": "function",
-      "line": 195,
+      "line": 131,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/page-shell.tsx",
+      "name": "PageTitle",
+      "kind": "function",
+      "line": 151,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1228,7 +1268,7 @@
       "file": "packages/pages/src/page-typography.tsx",
       "name": "KindMark",
       "kind": "function",
-      "line": 129,
+      "line": 131,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1236,7 +1276,15 @@
       "file": "packages/pages/src/router.tsx",
       "name": "FaceRoot",
       "kind": "function",
-      "line": 75,
+      "line": 207,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/router.tsx",
+      "name": "GoesByAddress",
+      "kind": "function",
+      "line": 277,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1244,7 +1292,15 @@
       "file": "packages/pages/src/router.tsx",
       "name": "KindSwitch",
       "kind": "function",
-      "line": 36,
+      "line": 168,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/router.tsx",
+      "name": "Opening",
+      "kind": "function",
+      "line": 302,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1252,7 +1308,7 @@
       "file": "packages/pages/src/router.tsx",
       "name": "PagesApp",
       "kind": "function",
-      "line": 199,
+      "line": 384,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1260,7 +1316,15 @@
       "file": "packages/pages/src/router.tsx",
       "name": "PagesRoutes",
       "kind": "function",
-      "line": 140,
+      "line": 312,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/pages/src/router.tsx",
+      "name": "RecordLinks",
+      "kind": "function",
+      "line": 21,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1268,7 +1332,7 @@
       "file": "packages/pages/src/router.tsx",
       "name": "ScrollReset",
       "kind": "function",
-      "line": 95,
+      "line": 227,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1369,10 +1433,90 @@
       "conventionExports": []
     },
     {
+      "file": "packages/primitives/src/app-bar.tsx",
+      "name": "AppBar",
+      "kind": "function",
+      "line": 234,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/app-bar.tsx",
+      "name": "Chevron",
+      "kind": "function",
+      "line": 530,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/app-bar.tsx",
+      "name": "FaceSwitch",
+      "kind": "function",
+      "line": 441,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/app-bar.tsx",
+      "name": "FindMark",
+      "kind": "function",
+      "line": 539,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/app-bar.tsx",
+      "name": "PagesMark",
+      "kind": "function",
+      "line": 520,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/app-bar.tsx",
+      "name": "PlaceControl",
+      "kind": "function",
+      "line": 582,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/app-bar.tsx",
+      "name": "PlaceMark",
+      "kind": "function",
+      "line": 549,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/app-bar.tsx",
+      "name": "SceneMark",
+      "kind": "function",
+      "line": 510,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/app-title.tsx",
+      "name": "AppMark",
+      "kind": "function",
+      "line": 20,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/app-title.tsx",
+      "name": "AppTitle",
+      "kind": "function",
+      "line": 38,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
       "file": "packages/primitives/src/arrange-bar.tsx",
       "name": "AddCondition",
       "kind": "function",
-      "line": 362,
+      "line": 360,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1380,7 +1524,23 @@
       "file": "packages/primitives/src/arrange-bar.tsx",
       "name": "ArrangeBar",
       "kind": "function",
-      "line": 190,
+      "line": 188,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/bar-panes.tsx",
+      "name": "ProblemRows",
+      "kind": "function",
+      "line": 16,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/bar-panes.tsx",
+      "name": "ProfilePane",
+      "kind": "function",
+      "line": 63,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1396,7 +1556,7 @@
       "file": "packages/primitives/src/companion.tsx",
       "name": "Companion",
       "kind": "function",
-      "line": 224,
+      "line": 114,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1404,7 +1564,23 @@
       "file": "packages/primitives/src/connections.tsx",
       "name": "Connections",
       "kind": "function",
-      "line": 34,
+      "line": 40,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/declared-lens-doors.tsx",
+      "name": "Drawn",
+      "kind": "function",
+      "line": 38,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/declared-lens-doors.tsx",
+      "name": "HomeDrawn",
+      "kind": "function",
+      "line": 71,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1412,7 +1588,7 @@
       "file": "packages/primitives/src/default-view.tsx",
       "name": "DefaultView",
       "kind": "function",
-      "line": 48,
+      "line": 53,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1420,7 +1596,15 @@
       "file": "packages/primitives/src/default-view.tsx",
       "name": "DefaultViewElsewhere",
       "kind": "function",
-      "line": 35,
+      "line": 40,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/default-views.tsx",
+      "name": "DistrictName",
+      "kind": "function",
+      "line": 160,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1428,15 +1612,7 @@
       "file": "packages/primitives/src/default-views.tsx",
       "name": "MemberRows",
       "kind": "function",
-      "line": 265,
-      "isDefaultExport": false,
-      "conventionExports": []
-    },
-    {
-      "file": "packages/primitives/src/default-views.tsx",
-      "name": "WhenSeen",
-      "kind": "function",
-      "line": 164,
+      "line": 113,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1444,7 +1620,7 @@
       "file": "packages/primitives/src/editable.tsx",
       "name": "EditableTitle",
       "kind": "function",
-      "line": 346,
+      "line": 351,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1452,7 +1628,7 @@
       "file": "packages/primitives/src/editable.tsx",
       "name": "EditableValue",
       "kind": "function",
-      "line": 20,
+      "line": 21,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1460,7 +1636,7 @@
       "file": "packages/primitives/src/editable.tsx",
       "name": "Fields",
       "kind": "function",
-      "line": 270,
+      "line": 275,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1468,7 +1644,7 @@
       "file": "packages/primitives/src/figure.tsx",
       "name": "KindFigure",
       "kind": "function",
-      "line": 20,
+      "line": 21,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1476,7 +1652,7 @@
       "file": "packages/primitives/src/find.tsx",
       "name": "FindBox",
       "kind": "function",
-      "line": 32,
+      "line": 33,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1484,7 +1660,7 @@
       "file": "packages/primitives/src/find.tsx",
       "name": "HitLine",
       "kind": "function",
-      "line": 256,
+      "line": 304,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1492,7 +1668,15 @@
       "file": "packages/primitives/src/find.tsx",
       "name": "Mark",
       "kind": "function",
-      "line": 295,
+      "line": 343,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/graview-mark.tsx",
+      "name": "GraviewMark",
+      "kind": "function",
+      "line": 18,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1508,7 +1692,7 @@
       "file": "packages/primitives/src/ladder.tsx",
       "name": "LadderSetting",
       "kind": "function",
-      "line": 39,
+      "line": 40,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1548,7 +1732,7 @@
       "file": "packages/primitives/src/lens/calendar-drawing.tsx",
       "name": "Step",
       "kind": "function",
-      "line": 12,
+      "line": 11,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1556,7 +1740,23 @@
       "file": "packages/primitives/src/lens/calendar-view.tsx",
       "name": "CalendarView",
       "kind": "function",
-      "line": 131,
+      "line": 134,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/columns.tsx",
+      "name": "ColumnCard",
+      "kind": "function",
+      "line": 277,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/columns.tsx",
+      "name": "ColumnsBoard",
+      "kind": "function",
+      "line": 147,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1564,7 +1764,7 @@
       "file": "packages/primitives/src/lens/coverage.tsx",
       "name": "CoverageBar",
       "kind": "function",
-      "line": 1010,
+      "line": 1139,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1573,6 +1773,14 @@
       "name": "CoverageView",
       "kind": "function",
       "line": 511,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/lens/coverage.tsx",
+      "name": "JoinLines",
+      "kind": "function",
+      "line": 1044,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1617,10 +1825,42 @@
       "conventionExports": []
     },
     {
+      "file": "packages/primitives/src/notices.tsx",
+      "name": "NoticeCard",
+      "kind": "function",
+      "line": 206,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/notices.tsx",
+      "name": "Notices",
+      "kind": "function",
+      "line": 341,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/notices.tsx",
+      "name": "Spoken",
+      "kind": "function",
+      "line": 312,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/notices.tsx",
+      "name": "Stack",
+      "kind": "function",
+      "line": 135,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
       "file": "packages/primitives/src/places.tsx",
       "name": "Places",
       "kind": "function",
-      "line": 26,
+      "line": 31,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1628,7 +1868,7 @@
       "file": "packages/primitives/src/primitives/index.tsx",
       "name": "Aggregate",
       "kind": "function",
-      "line": 583,
+      "line": 551,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1636,7 +1876,7 @@
       "file": "packages/primitives/src/primitives/index.tsx",
       "name": "Axis",
       "kind": "function",
-      "line": 604,
+      "line": 572,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1644,7 +1884,7 @@
       "file": "packages/primitives/src/primitives/index.tsx",
       "name": "Chip",
       "kind": "function",
-      "line": 421,
+      "line": 383,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1652,7 +1892,7 @@
       "file": "packages/primitives/src/primitives/index.tsx",
       "name": "Connector",
       "kind": "function",
-      "line": 706,
+      "line": 674,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1660,7 +1900,7 @@
       "file": "packages/primitives/src/primitives/index.tsx",
       "name": "Grid",
       "kind": "function",
-      "line": 638,
+      "line": 606,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1668,7 +1908,7 @@
       "file": "packages/primitives/src/primitives/index.tsx",
       "name": "Panel",
       "kind": "function",
-      "line": 144,
+      "line": 125,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1676,7 +1916,7 @@
       "file": "packages/primitives/src/primitives/index.tsx",
       "name": "Prose",
       "kind": "function",
-      "line": 361,
+      "line": 342,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1684,7 +1924,7 @@
       "file": "packages/primitives/src/primitives/index.tsx",
       "name": "Roster",
       "kind": "function",
-      "line": 545,
+      "line": 513,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1692,7 +1932,7 @@
       "file": "packages/primitives/src/primitives/index.tsx",
       "name": "Title",
       "kind": "function",
-      "line": 138,
+      "line": 119,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1700,7 +1940,7 @@
       "file": "packages/primitives/src/profile.tsx",
       "name": "Profile",
       "kind": "function",
-      "line": 44,
+      "line": 43,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1716,7 +1956,7 @@
       "file": "packages/primitives/src/relation-key.tsx",
       "name": "RelationKey",
       "kind": "function",
-      "line": 27,
+      "line": 28,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1724,7 +1964,7 @@
       "file": "packages/primitives/src/relation-key.tsx",
       "name": "RelationMark",
       "kind": "function",
-      "line": 258,
+      "line": 259,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1772,7 +2012,7 @@
       "file": "packages/primitives/src/seats.tsx",
       "name": "Seats",
       "kind": "function",
-      "line": 22,
+      "line": 23,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1780,7 +2020,7 @@
       "file": "packages/primitives/src/seeding.tsx",
       "name": "Begin",
       "kind": "function",
-      "line": 154,
+      "line": 155,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1788,7 +2028,7 @@
       "file": "packages/primitives/src/seeding.tsx",
       "name": "BeginHere",
       "kind": "function",
-      "line": 284,
+      "line": 285,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1796,7 +2036,7 @@
       "file": "packages/primitives/src/seeding.tsx",
       "name": "BeginInside",
       "kind": "function",
-      "line": 162,
+      "line": 163,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1804,7 +2044,7 @@
       "file": "packages/primitives/src/seeding.tsx",
       "name": "Door",
       "kind": "function",
-      "line": 916,
+      "line": 944,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1812,7 +2052,7 @@
       "file": "packages/primitives/src/seeding.tsx",
       "name": "Intake",
       "kind": "function",
-      "line": 799,
+      "line": 827,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1820,7 +2060,7 @@
       "file": "packages/primitives/src/seeding.tsx",
       "name": "Lifted",
       "kind": "function",
-      "line": 129,
+      "line": 130,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1828,7 +2068,7 @@
       "file": "packages/primitives/src/seeding.tsx",
       "name": "PlanReview",
       "kind": "function",
-      "line": 474,
+      "line": 507,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1836,7 +2076,7 @@
       "file": "packages/primitives/src/seeding.tsx",
       "name": "PlanReviewInside",
       "kind": "function",
-      "line": 482,
+      "line": 515,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1844,15 +2084,39 @@
       "file": "packages/primitives/src/shell.tsx",
       "name": "Shell",
       "kind": "function",
-      "line": 93,
+      "line": 114,
       "isDefaultExport": false,
       "conventionExports": []
     },
     {
       "file": "packages/primitives/src/spec-views.tsx",
-      "name": "Block",
+      "name": "Listed",
       "kind": "function",
-      "line": 208,
+      "line": 223,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/spec-views.tsx",
+      "name": "ListedLink",
+      "kind": "function",
+      "line": 247,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/spec-views.tsx",
+      "name": "Resolved",
+      "kind": "function",
+      "line": 64,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/spec-views.tsx",
+      "name": "ResolvedBlocks",
+      "kind": "function",
+      "line": 170,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1860,7 +2124,7 @@
       "file": "packages/primitives/src/spec-views.tsx",
       "name": "SpecBlocks",
       "kind": "function",
-      "line": 292,
+      "line": 175,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1868,7 +2132,39 @@
       "file": "packages/primitives/src/spec-views.tsx",
       "name": "SpecCard",
       "kind": "function",
-      "line": 352,
+      "line": 406,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/spec-views.tsx",
+      "name": "SpecFigure",
+      "kind": "function",
+      "line": 161,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/spec-views.tsx",
+      "name": "SpecList",
+      "kind": "function",
+      "line": 273,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/spec-views.tsx",
+      "name": "SpecPage",
+      "kind": "function",
+      "line": 432,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/spec-views.tsx",
+      "name": "SpecPlace",
+      "kind": "function",
+      "line": 320,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1876,7 +2172,7 @@
       "file": "packages/primitives/src/spec-views.tsx",
       "name": "SpecRow",
       "kind": "function",
-      "line": 366,
+      "line": 477,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1884,7 +2180,7 @@
       "file": "packages/primitives/src/spec-views.tsx",
       "name": "SpecView",
       "kind": "function",
-      "line": 342,
+      "line": 389,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1908,7 +2204,7 @@
       "file": "packages/primitives/src/workbench/activity.tsx",
       "name": "ActivityRail",
       "kind": "function",
-      "line": 211,
+      "line": 210,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1916,7 +2212,7 @@
       "file": "packages/primitives/src/workbench/activity.tsx",
       "name": "StartFresh",
       "kind": "function",
-      "line": 174,
+      "line": 173,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1924,7 +2220,7 @@
       "file": "packages/primitives/src/workbench/activity.tsx",
       "name": "UndoTurn",
       "kind": "function",
-      "line": 73,
+      "line": 72,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1932,7 +2228,7 @@
       "file": "packages/primitives/src/workbench/agent-seat.tsx",
       "name": "AgentSeat",
       "kind": "function",
-      "line": 63,
+      "line": 64,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1948,7 +2244,7 @@
       "file": "packages/primitives/src/workbench/back-out.tsx",
       "name": "OverviewButton",
       "kind": "function",
-      "line": 172,
+      "line": 146,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -1972,7 +2268,15 @@
       "file": "packages/primitives/src/workbench/standing.tsx",
       "name": "Standing",
       "kind": "function",
-      "line": 16,
+      "line": 22,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/primitives/src/workbench/standing.tsx",
+      "name": "StandingDot",
+      "kind": "function",
+      "line": 119,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2001,10 +2305,10 @@
       "conventionExports": []
     },
     {
-      "file": "packages/primitives/tests/unit/a-thumbnail-is-a-picture.test.tsx",
-      "name": "Lens",
-      "kind": "arrow",
-      "line": 24,
+      "file": "packages/primitives/tests/unit/the-bar-keeps-the-keyboard.test.tsx",
+      "name": "SceneLikeBox",
+      "kind": "function",
+      "line": 19,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2028,7 +2332,7 @@
       "file": "packages/primitives/tests/unit/views-as-data.test.tsx",
       "name": "Card",
       "kind": "function",
-      "line": 153,
+      "line": 155,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2036,7 +2340,7 @@
       "file": "packages/react/src/connectors.tsx",
       "name": "Connectors",
       "kind": "function",
-      "line": 599,
+      "line": 600,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2044,7 +2348,7 @@
       "file": "packages/react/src/context.tsx",
       "name": "FoundProvider",
       "kind": "function",
-      "line": 904,
+      "line": 929,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2052,7 +2356,7 @@
       "file": "packages/react/src/context.tsx",
       "name": "GraviewProvider",
       "kind": "function",
-      "line": 429,
+      "line": 433,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2060,7 +2364,7 @@
       "file": "packages/react/src/context.tsx",
       "name": "ViewModeProvider",
       "kind": "function",
-      "line": 301,
+      "line": 305,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2069,6 +2373,14 @@
       "name": "EdgeSigns",
       "kind": "function",
       "line": 24,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
+      "file": "packages/react/src/lazy-part.tsx",
+      "name": "PartMissing",
+      "kind": "function",
+      "line": 188,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2100,7 +2412,7 @@
       "file": "packages/react/src/plots.tsx",
       "name": "Plots",
       "kind": "function",
-      "line": 76,
+      "line": 77,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2108,7 +2420,7 @@
       "file": "packages/react/src/resolved-view.tsx",
       "name": "BeyondCard",
       "kind": "function",
-      "line": 39,
+      "line": 40,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2116,7 +2428,7 @@
       "file": "packages/react/src/resolved-view.tsx",
       "name": "MissingView",
       "kind": "function",
-      "line": 408,
+      "line": 368,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2124,7 +2436,7 @@
       "file": "packages/react/src/resolved-view.tsx",
       "name": "ResolvedView",
       "kind": "function",
-      "line": 248,
+      "line": 208,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2140,7 +2452,7 @@
       "file": "packages/react/src/scene-lines.tsx",
       "name": "RelationCaptions",
       "kind": "function",
-      "line": 670,
+      "line": 705,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2156,7 +2468,7 @@
       "file": "packages/react/src/scene-root.tsx",
       "name": "Scene",
       "kind": "function",
-      "line": 124,
+      "line": 119,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2172,7 +2484,7 @@
       "file": "packages/react/src/view-boundary.tsx",
       "name": "ViewBoundary",
       "kind": "class",
-      "line": 56,
+      "line": 48,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2225,6 +2537,14 @@
       "conventionExports": []
     },
     {
+      "file": "packages/react/tests/unit/a-seat-change-is-not-a-stop.test.tsx",
+      "name": "Where",
+      "kind": "function",
+      "line": 48,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
       "file": "packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx",
       "name": "Tasks",
       "kind": "function",
@@ -2257,6 +2577,14 @@
       "conventionExports": []
     },
     {
+      "file": "packages/react/tests/unit/popovers-are-one-family.test.tsx",
+      "name": "One",
+      "kind": "function",
+      "line": 18,
+      "isDefaultExport": false,
+      "conventionExports": []
+    },
+    {
       "file": "packages/react/tests/unit/remote-presence-forgets-the-gone.test.tsx",
       "name": "Who",
       "kind": "function",
@@ -2276,7 +2604,7 @@
       "file": "packages/studio/src/agent-panel.tsx",
       "name": "Argument",
       "kind": "function",
-      "line": 465,
+      "line": 466,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2284,7 +2612,7 @@
       "file": "packages/studio/src/agent-panel.tsx",
       "name": "Offered",
       "kind": "function",
-      "line": 345,
+      "line": 346,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2292,7 +2620,7 @@
       "file": "packages/studio/src/agent-panel.tsx",
       "name": "ProposedDrawing",
       "kind": "function",
-      "line": 589,
+      "line": 594,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2300,7 +2628,7 @@
       "file": "packages/studio/src/agent-panel.tsx",
       "name": "StudioAgentPanel",
       "kind": "function",
-      "line": 61,
+      "line": 63,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2324,7 +2652,7 @@
       "file": "packages/studio/src/place.tsx",
       "name": "StudioOverlay",
       "kind": "function",
-      "line": 265,
+      "line": 278,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2332,7 +2660,7 @@
       "file": "packages/studio/src/place.tsx",
       "name": "StudioPlace",
       "kind": "function",
-      "line": 114,
+      "line": 115,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2340,7 +2668,7 @@
       "file": "packages/studio/src/place.tsx",
       "name": "StudioSeat",
       "kind": "function",
-      "line": 687,
+      "line": 701,
       "isDefaultExport": false,
       "conventionExports": []
     },
@@ -2348,7 +2676,7 @@
       "file": "packages/studio/src/place.tsx",
       "name": "Written",
       "kind": "function",
-      "line": 577,
+      "line": 591,
       "isDefaultExport": false,
       "conventionExports": []
     }
@@ -2572,6 +2900,12 @@
     },
     {
       "from": "packages/embed/src/embed.tsx",
+      "to": "packages/embed/src/address.tsx",
+      "componentName": "AddressBar",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/embed/src/embed.tsx",
       "to": "packages/embed/src/frame.tsx",
       "componentName": "FaceBoundary",
       "usageCount": 4
@@ -2579,7 +2913,13 @@
     {
       "from": "packages/embed/src/embed.tsx",
       "to": "packages/embed/src/frame.tsx",
-      "componentName": "Strip",
+      "componentName": "FrameBar",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/embed/src/embed.tsx",
+      "to": "packages/embed/src/frame.tsx",
+      "componentName": "FrameNotices",
       "usageCount": 1
     },
     {
@@ -2591,7 +2931,13 @@
     {
       "from": "packages/embed/src/pages.tsx",
       "to": "packages/embed/src/frame.tsx",
-      "componentName": "Strip",
+      "componentName": "FrameBar",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/embed/src/pages.tsx",
+      "to": "packages/embed/src/frame.tsx",
+      "componentName": "FrameNotices",
       "usageCount": 1
     },
     {
@@ -2601,10 +2947,34 @@
       "usageCount": 1
     },
     {
+      "from": "packages/embed/tests/unit/a-coverage-cell-selects-what-it-joins.test.tsx",
+      "to": "packages/embed/src/index.ts",
+      "componentName": "Embed",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/embed/tests/unit/a-declared-lens-is-a-place-on-the-graview-face.test.tsx",
+      "to": "packages/embed/src/index.ts",
+      "componentName": "Embed",
+      "usageCount": 3
+    },
+    {
+      "from": "packages/embed/tests/unit/a-host-can-ask-for-the-switch-as-its-marks.test.tsx",
+      "to": "packages/embed/src/index.ts",
+      "componentName": "Embed",
+      "usageCount": 1
+    },
+    {
       "from": "packages/embed/tests/unit/a-seat-change-keeps-the-store.test.tsx",
       "to": "packages/embed/src/index.ts",
       "componentName": "Embed",
       "usageCount": 2
+    },
+    {
+      "from": "packages/embed/tests/unit/a-status-board-draws-on-the-graview-face.test.tsx",
+      "to": "packages/embed/src/index.ts",
+      "componentName": "Embed",
+      "usageCount": 1
     },
     {
       "from": "packages/embed/tests/unit/one-name-said-once.test.tsx",
@@ -2628,6 +2998,12 @@
       "from": "packages/pages/src/page-home.tsx",
       "to": "packages/pages/src/page-shell.tsx",
       "componentName": "PageMain",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/pages/src/page-home.tsx",
+      "to": "packages/pages/src/page-shell.tsx",
+      "componentName": "PageTitle",
       "usageCount": 1
     },
     {
@@ -2656,6 +3032,12 @@
     },
     {
       "from": "packages/pages/src/page-list.tsx",
+      "to": "packages/pages/src/page-shell.tsx",
+      "componentName": "PageTitle",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/pages/src/page-list.tsx",
       "to": "packages/pages/src/page-typography.tsx",
       "componentName": "KindMark",
       "usageCount": 1
@@ -2664,6 +3046,12 @@
       "from": "packages/pages/src/page-map.tsx",
       "to": "packages/pages/src/page-shell.tsx",
       "componentName": "PageMain",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-map.tsx",
+      "to": "packages/pages/src/page-shell.tsx",
+      "componentName": "PageTitle",
       "usageCount": 1
     },
     {
@@ -2682,6 +3070,12 @@
       "from": "packages/pages/src/page-places.tsx",
       "to": "packages/pages/src/page-shell.tsx",
       "componentName": "PageMain",
+      "usageCount": 3
+    },
+    {
+      "from": "packages/pages/src/page-places.tsx",
+      "to": "packages/pages/src/page-shell.tsx",
+      "componentName": "PageTitle",
       "usageCount": 3
     },
     {
@@ -2710,6 +3104,12 @@
     },
     {
       "from": "packages/pages/src/page-problems.tsx",
+      "to": "packages/pages/src/page-shell.tsx",
+      "componentName": "PageTitle",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-problems.tsx",
       "to": "packages/pages/src/page-typography.tsx",
       "componentName": "KindMark",
       "usageCount": 1
@@ -2719,6 +3119,12 @@
       "to": "packages/pages/src/form.tsx",
       "componentName": "DerivedForm",
       "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-record.tsx",
+      "to": "packages/pages/src/page-context.tsx",
+      "componentName": "SceneLink",
+      "usageCount": 2
     },
     {
       "from": "packages/pages/src/page-record.tsx",
@@ -2734,6 +3140,12 @@
     },
     {
       "from": "packages/pages/src/page-record.tsx",
+      "to": "packages/pages/src/page-shell.tsx",
+      "componentName": "PageTitle",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/pages/src/page-record.tsx",
       "to": "packages/pages/src/page-typography.tsx",
       "componentName": "KindMark",
       "usageCount": 2
@@ -2748,6 +3160,12 @@
       "from": "packages/pages/src/page-search.tsx",
       "to": "packages/pages/src/page-shell.tsx",
       "componentName": "PageMain",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/src/page-search.tsx",
+      "to": "packages/pages/src/page-shell.tsx",
+      "componentName": "PageTitle",
       "usageCount": 1
     },
     {
@@ -2799,9 +3217,27 @@
       "usageCount": 1
     },
     {
+      "from": "packages/pages/tests/unit/a-declared-lens-is-a-page.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PagesApp",
+      "usageCount": 1
+    },
+    {
       "from": "packages/pages/tests/unit/a-form-asks-in-the-records-words.test.tsx",
       "to": "packages/pages/src/index.ts",
       "componentName": "DerivedForm",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/pages/tests/unit/a-form-names-its-parts.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "DerivedForm",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/pages/tests/unit/a-home-view-is-the-home.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PagesApp",
       "usageCount": 2
     },
     {
@@ -2865,6 +3301,12 @@
       "usageCount": 1
     },
     {
+      "from": "packages/pages/tests/unit/a-status-board-moves-by-acts.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PagesApp",
+      "usageCount": 1
+    },
+    {
       "from": "packages/pages/tests/unit/a-stranger-is-shown-nobody.test.tsx",
       "to": "packages/pages/src/index.ts",
       "componentName": "PagesApp",
@@ -2911,6 +3353,12 @@
       "to": "packages/pages/src/index.ts",
       "componentName": "PagesApp",
       "usageCount": 2
+    },
+    {
+      "from": "packages/pages/tests/unit/one-place-says-how-many-problems.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PagesApp",
+      "usageCount": 3
     },
     {
       "from": "packages/pages/tests/unit/parity.test.tsx",
@@ -2973,6 +3421,12 @@
       "usageCount": 1
     },
     {
+      "from": "packages/pages/tests/unit/the-way-back-floats-over-the-face.test.tsx",
+      "to": "packages/pages/src/index.ts",
+      "componentName": "PagesApp",
+      "usageCount": 1
+    },
+    {
       "from": "packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx",
       "to": "packages/pages/src/index.ts",
       "componentName": "PagesApp",
@@ -3000,6 +3454,24 @@
       "from": "packages/pages/tests/unit/whose-work.test.tsx",
       "to": "packages/pages/src/index.ts",
       "componentName": "PagesApp",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/app-bar.tsx",
+      "to": "packages/primitives/src/app-title.tsx",
+      "componentName": "AppMark",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/bar-panes.tsx",
+      "to": "packages/primitives/src/ladder.tsx",
+      "componentName": "LadderSetting",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/bar-panes.tsx",
+      "to": "packages/primitives/src/seats.tsx",
+      "componentName": "Seats",
       "usageCount": 1
     },
     {
@@ -3069,6 +3541,18 @@
       "usageCount": 2
     },
     {
+      "from": "packages/primitives/src/declared-lenses.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Panel",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/declared-lenses.tsx",
+      "to": "packages/primitives/src/spec-views.tsx",
+      "componentName": "SpecPlace",
+      "usageCount": 1
+    },
+    {
       "from": "packages/primitives/src/default-views.tsx",
       "to": "packages/primitives/src/connections.tsx",
       "componentName": "Connections",
@@ -3115,6 +3599,12 @@
       "to": "packages/primitives/src/primitives/index.tsx",
       "componentName": "Roster",
       "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/home-view.tsx",
+      "to": "packages/primitives/src/spec-views.tsx",
+      "componentName": "SpecPlace",
+      "usageCount": 2
     },
     {
       "from": "packages/primitives/src/lens/arranging.tsx",
@@ -3174,6 +3664,24 @@
       "from": "packages/primitives/src/lens/calendar-view.tsx",
       "to": "packages/primitives/src/primitives/index.tsx",
       "componentName": "Roster",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/columns.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Chip",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/lens/columns.tsx",
+      "to": "packages/primitives/src/primitives/index.tsx",
+      "componentName": "Panel",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/src/lens/columns.tsx",
+      "to": "packages/primitives/src/spec-views.tsx",
+      "componentName": "ListedLink",
       "usageCount": 1
     },
     {
@@ -3237,18 +3745,6 @@
       "usageCount": 1
     },
     {
-      "from": "packages/primitives/src/profile.tsx",
-      "to": "packages/primitives/src/ladder.tsx",
-      "componentName": "LadderSetting",
-      "usageCount": 1
-    },
-    {
-      "from": "packages/primitives/src/profile.tsx",
-      "to": "packages/primitives/src/seats.tsx",
-      "componentName": "Seats",
-      "usageCount": 1
-    },
-    {
       "from": "packages/primitives/src/seat.tsx",
       "to": "packages/primitives/src/ladder.tsx",
       "componentName": "LadderSetting",
@@ -3282,6 +3778,12 @@
       "from": "packages/primitives/src/shell.tsx",
       "to": "packages/primitives/src/installation.tsx",
       "componentName": "ShowInstallation",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/src/shell.tsx",
+      "to": "packages/primitives/src/notices.tsx",
+      "componentName": "Notices",
       "usageCount": 1
     },
     {
@@ -3369,6 +3871,12 @@
       "usageCount": 1
     },
     {
+      "from": "packages/primitives/src/wordmark.tsx",
+      "to": "packages/primitives/src/app-title.tsx",
+      "componentName": "AppTitle",
+      "usageCount": 1
+    },
+    {
       "from": "packages/primitives/src/workbench/activity.tsx",
       "to": "packages/primitives/src/primitives/index.tsx",
       "componentName": "Chip",
@@ -3379,6 +3887,12 @@
       "to": "packages/primitives/src/workbench/answer-args.tsx",
       "componentName": "AnswerArgs",
       "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-call-is-told-by-its-arguments.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "ActivityRail",
+      "usageCount": 2
     },
     {
       "from": "packages/primitives/tests/unit/a-card-s-acts-are-one-key-away.test.tsx",
@@ -3394,6 +3908,12 @@
     },
     {
       "from": "packages/primitives/tests/unit/a-filter-says-a-value-as-the-record-does.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "ArrangeBar",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-lens-handed-fewer-says-how-many-more.test.tsx",
       "to": "packages/primitives/src/index.ts",
       "componentName": "ArrangeBar",
       "usageCount": 1
@@ -3429,9 +3949,21 @@
       "usageCount": 1
     },
     {
+      "from": "packages/primitives/tests/unit/a-number-edited-in-place-keeps-its-range.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "EditableValue",
+      "usageCount": 1
+    },
+    {
       "from": "packages/primitives/tests/unit/a-panel-that-scrolls-is-a-stop.test.tsx",
       "to": "packages/primitives/src/index.ts",
       "componentName": "Panel",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/a-plan-review-names-its-parts.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "PlanReview",
       "usageCount": 1
     },
     {
@@ -3450,12 +3982,6 @@
       "from": "packages/primitives/tests/unit/a-select-keeps-its-floor-in-webkit.test.tsx",
       "to": "packages/primitives/src/index.ts",
       "componentName": "Places",
-      "usageCount": 1
-    },
-    {
-      "from": "packages/primitives/tests/unit/a-thumbnail-is-a-picture.test.tsx",
-      "to": "packages/primitives/src/index.ts",
-      "componentName": "ArrangeBar",
       "usageCount": 1
     },
     {
@@ -3525,6 +4051,12 @@
       "usageCount": 1
     },
     {
+      "from": "packages/primitives/tests/unit/notices-float-and-never-move-the-page.test.tsx",
+      "to": "packages/primitives/src/frame.ts",
+      "componentName": "Notices",
+      "usageCount": 2
+    },
+    {
       "from": "packages/primitives/tests/unit/one-request-one-press.test.tsx",
       "to": "packages/primitives/src/index.ts",
       "componentName": "ChatPanel",
@@ -3562,6 +4094,12 @@
     },
     {
       "from": "packages/primitives/tests/unit/shell.test.tsx",
+      "to": "packages/primitives/src/bar-panes.tsx",
+      "componentName": "ProfilePane",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/primitives/tests/unit/shell.test.tsx",
       "to": "packages/primitives/src/index.ts",
       "componentName": "AgentSeat",
       "usageCount": 1
@@ -3570,13 +4108,37 @@
       "from": "packages/primitives/tests/unit/shell.test.tsx",
       "to": "packages/primitives/src/index.ts",
       "componentName": "Shell",
-      "usageCount": 2
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-app-is-said-once-with-its-mark.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "AppTitle",
+      "usageCount": 8
     },
     {
       "from": "packages/primitives/tests/unit/the-ask-says-what-it-asks.test.tsx",
       "to": "packages/primitives/src/index.ts",
       "componentName": "Inspector",
       "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-bar-fits-its-box.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "AppBar",
+      "usageCount": 6
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-bar-keeps-the-keyboard.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "AppBar",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-desk-bar-is-one-row.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "AppBar",
+      "usageCount": 4
     },
     {
       "from": "packages/primitives/tests/unit/the-door-keeps-the-keyboard.test.tsx",
@@ -3642,6 +4204,12 @@
       "from": "packages/primitives/tests/unit/the-rail-shows-a-change-you-cannot-see.test.tsx",
       "to": "packages/primitives/src/index.ts",
       "componentName": "ActivityRail",
+      "usageCount": 1
+    },
+    {
+      "from": "packages/primitives/tests/unit/the-seat-can-be-put-away.test.tsx",
+      "to": "packages/primitives/src/index.ts",
+      "componentName": "Companion",
       "usageCount": 1
     },
     {
@@ -3813,6 +4381,18 @@
       "usageCount": 1
     },
     {
+      "from": "packages/react/tests/unit/a-seat-change-is-not-a-stop.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "GraviewProvider",
+      "usageCount": 2
+    },
+    {
+      "from": "packages/react/tests/unit/a-seat-change-is-not-a-stop.test.tsx",
+      "to": "packages/react/src/index.ts",
+      "componentName": "UrlSync",
+      "usageCount": 2
+    },
+    {
       "from": "packages/react/tests/unit/a-stop-that-still-exists.test.tsx",
       "to": "packages/react/src/index.ts",
       "componentName": "GraviewProvider",
@@ -3876,7 +4456,7 @@
       "from": "packages/react/tests/unit/binding.test.tsx",
       "to": "packages/react/src/index.ts",
       "componentName": "Scene",
-      "usageCount": 19
+      "usageCount": 20
     },
     {
       "from": "packages/react/tests/unit/remote-presence-forgets-the-gone.test.tsx",
@@ -3967,41 +4547,46 @@
   "routeTree": [],
   "serverRoutes": [],
   "summary": {
-    "totalComponents": 294,
+    "totalComponents": 335,
     "totalRouteModules": 0,
-    "totalUsageEdges": 268,
+    "totalUsageEdges": 310,
     "totalServerRoutes": 0,
     "routeConventions": {},
     "mostUsedComponents": [
       {
         "name": "PagesApp",
         "file": "packages/pages/src/index.ts",
-        "usageCount": 34
+        "usageCount": 42
       },
       {
         "name": "Scene",
         "file": "packages/react/src/index.ts",
-        "usageCount": 22
-      },
-      {
-        "name": "GraviewProvider",
-        "file": "packages/react/src/index.ts",
-        "usageCount": 18
+        "usageCount": 23
       },
       {
         "name": "Panel",
         "file": "packages/primitives/src/primitives/index.tsx",
-        "usageCount": 17
+        "usageCount": 20
+      },
+      {
+        "name": "GraviewProvider",
+        "file": "packages/react/src/index.ts",
+        "usageCount": 20
       },
       {
         "name": "Chip",
         "file": "packages/primitives/src/primitives/index.tsx",
-        "usageCount": 14
+        "usageCount": 15
       },
       {
         "name": "DerivedForm",
         "file": "packages/pages/src/index.ts",
-        "usageCount": 13
+        "usageCount": 14
+      },
+      {
+        "name": "PageMain",
+        "file": "packages/pages/src/page-shell.tsx",
+        "usageCount": 12
       },
       {
         "name": "SurveyInsert",
@@ -4009,7 +4594,7 @@
         "usageCount": 11
       },
       {
-        "name": "PageMain",
+        "name": "PageTitle",
         "file": "packages/pages/src/page-shell.tsx",
         "usageCount": 11
       },
@@ -4017,6 +4602,26 @@
         "name": "Inspector",
         "file": "packages/primitives/src/index.ts",
         "usageCount": 11
+      },
+      {
+        "name": "AppBar",
+        "file": "packages/primitives/src/index.ts",
+        "usageCount": 11
+      },
+      {
+        "name": "Embed",
+        "file": "packages/embed/src/index.ts",
+        "usageCount": 10
+      },
+      {
+        "name": "ActivityRail",
+        "file": "packages/primitives/src/index.ts",
+        "usageCount": 10
+      },
+      {
+        "name": "PlanReview",
+        "file": "packages/primitives/src/index.ts",
+        "usageCount": 10
       },
       {
         "name": "KindMark",
@@ -4029,17 +4634,7 @@
         "usageCount": 9
       },
       {
-        "name": "PlanReview",
-        "file": "packages/primitives/src/index.ts",
-        "usageCount": 9
-      },
-      {
-        "name": "ActivityRail",
-        "file": "packages/primitives/src/index.ts",
-        "usageCount": 8
-      },
-      {
-        "name": "Shell",
+        "name": "AppTitle",
         "file": "packages/primitives/src/index.ts",
         "usageCount": 8
       },
@@ -4057,21 +4652,6 @@
         "name": "ArrangeBar",
         "file": "packages/primitives/src/index.ts",
         "usageCount": 7
-      },
-      {
-        "name": "Roster",
-        "file": "packages/primitives/src/primitives/index.tsx",
-        "usageCount": 6
-      },
-      {
-        "name": "Sprout",
-        "file": "apps/seedbed/src/ui/garden-map.tsx",
-        "usageCount": 5
-      },
-      {
-        "name": "DerivedForm",
-        "file": "packages/pages/src/form.tsx",
-        "usageCount": 5
       }
     ],
     "layoutDepth": 0

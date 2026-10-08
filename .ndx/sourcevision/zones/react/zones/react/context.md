@@ -5,29 +5,49 @@
 <zone>
 
 Zone: React (`react/react`)
-Files: 4, Cohesion: 0.17, Coupling: 0.83
-Description: 4 files, primarily TypeScript
-Entry points: packages/react/src/animation.ts, packages/react/src/index.ts, packages/react/src/scene.tsx, packages/react/src/seat-marks.tsx
-Lines: 484
+Files: 11, Cohesion: 0.42, Coupling: 0.58
+Description: 11 files, primarily TypeScript
+Entry points: packages/react/src/affordances.ts, packages/react/src/context.tsx, packages/react/src/emphasis.ts, packages/react/src/hooks.ts, packages/react/src/motion.ts, packages/react/src/plots.tsx, packages/react/src/pointer.ts, packages/react/src/robot.ts, packages/react/src/url-sync.ts, packages/react/src/view-registry.ts
+Lines: 2500
 
 </zone>
 
 <files>
 
-packages/react/src/animation.ts (TypeScript, 285 lines, source)
-packages/react/src/index.ts (TypeScript, 74 lines, source)
-packages/react/src/scene.tsx (TypeScript, 17 lines, source)
-packages/react/src/seat-marks.tsx (TypeScript, 108 lines, source)
+packages/react/src/affordances.ts (TypeScript, 73 lines, source)
+packages/react/src/context.tsx (TypeScript, 1107 lines, source)
+packages/react/src/emphasis.ts (TypeScript, 85 lines, source)
+packages/react/src/hooks.ts (TypeScript, 183 lines, source)
+packages/react/src/motion-store.ts (TypeScript, 30 lines, source)
+packages/react/src/motion.ts (TypeScript, 11 lines, source)
+packages/react/src/plots.tsx (TypeScript, 388 lines, source)
+packages/react/src/pointer.ts (TypeScript, 61 lines, source)
+packages/react/src/robot.ts (TypeScript, 160 lines, source)
+packages/react/src/url-sync.ts (TypeScript, 217 lines, source)
+packages/react/src/view-registry.ts (TypeScript, 185 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/react/src/index.ts → packages/react/src/animation.ts {useAnimatedLayout, useSeatWork, useTouched}
-  packages/react/src/index.ts → packages/react/src/animation.ts {SeatAct, SeatWork, TransitionOptions}
-  packages/react/src/index.ts → packages/react/src/scene.tsx {clipQuadratic, connectorStrands, altitudeOpacity, stackOpacity, onScreen, ResolvedView, Scene, selectionFor, tieRoute, whereIsIn}
-  packages/react/src/index.ts → packages/react/src/scene.tsx {SceneNode, Strand, ResolvedViewProps, SceneProps}
-  packages/react/src/index.ts → packages/react/src/seat-marks.tsx {SeatMarks}
+  packages/react/src/affordances.ts → packages/react/src/context.tsx {useGraph, useGraview}
+  packages/react/src/context.tsx → packages/react/src/motion-store.ts {createMotionStore}
+  packages/react/src/context.tsx → packages/react/src/motion-store.ts {MotionStore}
+  packages/react/src/context.tsx → packages/react/src/pointer.ts {createPointerStore}
+  packages/react/src/context.tsx → packages/react/src/pointer.ts {PointerStore, ScenePoint}
+  packages/react/src/context.tsx → packages/react/src/robot.ts {foldRobots}
+  packages/react/src/context.tsx → packages/react/src/robot.ts {RobotEvent, RobotState, SeatNote}
+  packages/react/src/context.tsx → packages/react/src/view-registry.ts {ViewComponent, ViewMode}
+  packages/react/src/emphasis.ts → packages/react/src/context.tsx {useFound, useGraph, useGraview}
+  packages/react/src/emphasis.ts → packages/react/src/hooks.ts {useViolations}
+  packages/react/src/hooks.ts → packages/react/src/context.tsx {useGraph, useGraview}
+  packages/react/src/motion.ts → packages/react/src/context.tsx {useGraview}
+  packages/react/src/motion.ts → packages/react/src/motion-store.ts {createMotionStore}
+  packages/react/src/motion.ts → packages/react/src/motion-store.ts {MotionStore}
+  packages/react/src/plots.tsx → packages/react/src/context.tsx {useGraview}
+  packages/react/src/plots.tsx → packages/react/src/emphasis.ts {useFlagged}
+  packages/react/src/url-sync.ts → packages/react/src/context.tsx {useGraview}
+  packages/react/src/url-sync.ts → packages/react/src/hooks.ts {trail}
 
 </imports>

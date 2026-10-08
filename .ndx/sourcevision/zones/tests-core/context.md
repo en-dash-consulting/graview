@@ -29,7 +29,7 @@ Internal:
   packages/core/tests/integration/persistence.test.ts → packages/core/tests/support/adapter-contract.ts {adapterCases, sqlCases}
 
 Outgoing (this zone → other zones):
-  → core: packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts; packages/core/tests/support/unseen-worlds.ts → packages/core/src/index.ts; packages/core/tests/support/unseen-worlds.ts → packages/core/src/index.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts
+  → core-document: packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts; packages/core/tests/support/unseen-worlds.ts → packages/core/src/index.ts; packages/core/tests/support/unseen-worlds.ts → packages/core/src/index.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts
   → core-persistence: packages/core/tests/integration/persistence.test.ts → packages/core/src/persistence/sqlite.ts
 
 Incoming (other zones → this zone):

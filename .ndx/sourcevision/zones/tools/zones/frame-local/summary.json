@@ -1,0 +1,17 @@
+{
+  "id": "tools/frame-local",
+  "name": "Frame Local",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/tools/src/frame.ts",
+    "packages/tools/src/local.ts",
+    "packages/tools/src/rungs.ts"
+  ],
+  "entryPoints": [
+    "packages/tools/src/local.ts"
+  ],
+  "cohesion": 0.4,
+  "coupling": 0.6,
+  "fileCount": 3,
+  "lineCount": 540
+}

@@ -1,6 +1,6 @@
 {
   "id": "capabilities-formats",
-  "name": "Capabilities Formats",
+  "name": "Capabilities And Formats",
   "description": "3 files, mostly utilities; entry points capabilities.ts, formats.ts, version.ts; imports Core Graph and Core; imported by Core.",
   "files": [
     "packages/core/src/capabilities.ts",

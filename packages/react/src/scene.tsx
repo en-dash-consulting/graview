@@ -9,6 +9,7 @@
  */
 
 export * from "./scene-root.js";
+export * from "./scene-node.js";
 export * from "./scene-lines.js";
 export * from "./scene-helpers.js";
 export * from "./view-host.js";

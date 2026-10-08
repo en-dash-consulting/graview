@@ -5,29 +5,25 @@
 <zone>
 
 Zone: Lib (`scripts/scripts/lib`)
-Files: 5, Cohesion: 0.23, Coupling: 0.77
-Description: 5 files, primarily JavaScript
-Entry points: scripts/lib/engine.mjs, scripts/lib/tarballs.mjs
-Lines: 969
+Files: 3, Cohesion: 0.80, Coupling: 0.20
+Description: 3 files, primarily JavaScript
+Entry points: scripts/lib/bundle-budget.mjs, scripts/lib/readme-exports.mjs
+Lines: 995
 
 </zone>
 
 <files>
 
-scripts/lib/engine.mjs (JavaScript, 89 lines, build)
-scripts/lib/places.mjs (JavaScript, 24 lines, build)
-scripts/lib/tarballs.mjs (JavaScript, 53 lines, build)
-scripts/verify-calendar.mjs (JavaScript, 441 lines, build)
-scripts/verify-rota.mjs (JavaScript, 362 lines, build)
+scripts/inspect-pack.mjs (JavaScript, 159 lines, build)
+scripts/lib/bundle-budget.mjs (JavaScript, 731 lines, build)
+scripts/lib/readme-exports.mjs (JavaScript, 105 lines, build)
 
 </files>
 
 <imports>
 
 Internal:
-  scripts/verify-calendar.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
-  scripts/verify-calendar.mjs → scripts/lib/places.mjs {pressPlace}
-  scripts/verify-rota.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
-  scripts/verify-rota.mjs → scripts/lib/places.mjs {pressPlace}
+  scripts/inspect-pack.mjs → scripts/lib/bundle-budget.mjs {measureBudgets}
+  scripts/inspect-pack.mjs → scripts/lib/readme-exports.mjs {exportsOf, unexported}
 
 </imports>

@@ -1,0 +1,487 @@
+{
+  "schemaVersion": "1.0.0",
+  "snapshots": [
+    {
+      "zoneId": "apps",
+      "zoneName": "Apps",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 99,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "apps-discography",
+      "zoneName": "Discography",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 13,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "apps-gauntlet",
+      "zoneName": "Gauntlet Application",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 10,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "capabilities-formats",
+      "zoneName": "Capabilities And Formats",
+      "cohesion": 0.55,
+      "coupling": 0.45,
+      "riskScore": 0.44999999999999996,
+      "fileCount": 3,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "check",
+      "zoneName": "Core Cli",
+      "cohesion": 0.24,
+      "coupling": 0.76,
+      "riskScore": 0.76,
+      "fileCount": 6,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "core",
+      "zoneName": "Core",
+      "cohesion": 0.23,
+      "coupling": 0.77,
+      "riskScore": 0.77,
+      "fileCount": 10,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "core-cli",
+      "zoneName": "Core Cli",
+      "cohesion": 0.22,
+      "coupling": 0.78,
+      "riskScore": 0.78,
+      "fileCount": 5,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "core-document",
+      "zoneName": "Core",
+      "cohesion": 0.71,
+      "coupling": 0.29,
+      "riskScore": 0.29000000000000004,
+      "fileCount": 102,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "core-graph",
+      "zoneName": "Core Graph",
+      "cohesion": 0.27,
+      "coupling": 0.73,
+      "riskScore": 0.73,
+      "fileCount": 7,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "core-invariants",
+      "zoneName": "Core Invariants",
+      "cohesion": 0.13,
+      "coupling": 0.87,
+      "riskScore": 0.87,
+      "fileCount": 4,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "core-mutations",
+      "zoneName": "Core Mutations",
+      "cohesion": 0.15,
+      "coupling": 0.85,
+      "riskScore": 0.85,
+      "fileCount": 4,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "core-persistence",
+      "zoneName": "Core Persistence",
+      "cohesion": 0.38,
+      "coupling": 0.62,
+      "riskScore": 0.62,
+      "fileCount": 4,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "core-sync",
+      "zoneName": "Core Sync",
+      "cohesion": 0.33,
+      "coupling": 0.67,
+      "riskScore": 0.6699999999999999,
+      "fileCount": 4,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "create-graview",
+      "zoneName": "Create Graview",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 2,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "document",
+      "zoneName": "Core Document",
+      "cohesion": 0.31,
+      "coupling": 0.69,
+      "riskScore": 0.69,
+      "fileCount": 7,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "embed",
+      "zoneName": "Embed",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 10,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "findings",
+      "zoneName": "Findings",
+      "cohesion": 0.29,
+      "coupling": 0.71,
+      "riskScore": 0.71,
+      "fileCount": 6,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "graview",
+      "zoneName": "Graview",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 2,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "guest",
+      "zoneName": "Guest",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 51,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "layout",
+      "zoneName": "Layout",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 14,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "pages",
+      "zoneName": "Pages",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 20,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "primitives",
+      "zoneName": "Primitives",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 79,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "react",
+      "zoneName": "React",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 51,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "render",
+      "zoneName": "Render",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 11,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "root",
+      "zoneName": "Project Root",
+      "cohesion": 0,
+      "coupling": 0,
+      "riskScore": 0.5,
+      "fileCount": 2,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "scripts",
+      "zoneName": "Build & CI Scripts",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 85,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "ship",
+      "zoneName": "Ship",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 28,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "skills",
+      "zoneName": "Skills",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 4,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "studio",
+      "zoneName": "Studio",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 18,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests",
+      "zoneName": "Tests",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 21,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-apps",
+      "zoneName": "Tests Apps",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 7,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-core",
+      "zoneName": "Tests Core",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 5,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-core-document",
+      "zoneName": "Tests Core Document",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 50,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-core-unit",
+      "zoneName": "Packages",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 97,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-embed-unit",
+      "zoneName": "Tests Embed Unit",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 32,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-guest-fixtures",
+      "zoneName": "Tests Guest Fixtures",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 5,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-guest-unit",
+      "zoneName": "Tests Guest Unit",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 30,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-layout-unit",
+      "zoneName": "Tests Layout Unit",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 14,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-packages",
+      "zoneName": "Tests Packages",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 5,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-pages-unit",
+      "zoneName": "Tests Pages Unit",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 39,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-primitives-unit",
+      "zoneName": "Tests Primitives Unit",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 85,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-react-unit",
+      "zoneName": "Tests React Unit",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 35,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-seedbed-integration",
+      "zoneName": "Tests Seedbed Integration",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 4,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-ship-integration",
+      "zoneName": "Tests Ship Integration",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 16,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-ship-unit",
+      "zoneName": "Tests Ship Unit",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 41,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-studio-unit",
+      "zoneName": "Tests Studio Unit",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 23,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tests-tools-unit",
+      "zoneName": "Tests Tools Unit",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 47,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    },
+    {
+      "zoneId": "tools",
+      "zoneName": "Tools",
+      "cohesion": 1,
+      "coupling": 0,
+      "riskScore": 0,
+      "fileCount": 32,
+      "timestamp": "2026-10-08T21:28:41.514Z",
+      "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+    }
+  ],
+  "analyzedAt": "2026-10-08T21:28:41.514Z",
+  "gitSha": "e46c7df20aada6bd6faa06bb1493677c3c3f8180"
+}

@@ -8,16 +8,16 @@ Zone: Tests Seedbed Integration (`tests-seedbed-integration`)
 Files: 4, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: Non-source files in apps: acceptance.test.tsx, chapters.test.ts, design-keyboard.test.tsx (+1 more)
-Lines: 857
+Lines: 870
 
 </zone>
 
 <files>
 
 apps/seedbed/tests/integration/acceptance.test.tsx (TypeScript, 149 lines, test)
-apps/seedbed/tests/integration/chapters.test.ts (TypeScript, 341 lines, test)
+apps/seedbed/tests/integration/chapters.test.ts (TypeScript, 342 lines, test)
 apps/seedbed/tests/integration/design-keyboard.test.tsx (TypeScript, 77 lines, test)
-apps/seedbed/tests/integration/embed.test.tsx (TypeScript, 290 lines, test)
+apps/seedbed/tests/integration/embed.test.tsx (TypeScript, 302 lines, test)
 
 </files>
 
@@ -38,6 +38,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 49 internal calls, 31 outgoing, 0 incoming (cohesion: 0.61, coupling: 0.39)
+- [call graph] 53 internal calls, 31 outgoing, 0 incoming (cohesion: 0.63, coupling: 0.37)
 
 </insights>

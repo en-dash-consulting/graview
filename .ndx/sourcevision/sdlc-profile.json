@@ -1,0 +1,819 @@
+{
+  "schemaVersion": "1.0.0",
+  "commands": [
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/guest packages/ski"
+        }
+      ],
+      "kind": "build",
+      "command": "pnpm run build",
+      "runner": "pnpm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "package.json",
+          "confidence": "certain",
+          "excerpt": "\"lint\": \"tsc -b --dry\""
+        }
+      ],
+      "kind": "lint",
+      "command": "pnpm run lint",
+      "runner": "pnpm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "package.json",
+          "confidence": "certain",
+          "excerpt": "\"test\": \"vitest run\""
+        }
+      ],
+      "kind": "test",
+      "command": "pnpm run test",
+      "runner": "pnpm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "package.json",
+          "confidence": "certain",
+          "excerpt": "\"typecheck\": \"tsc -b packages/core packages/layout packages/tools packages/render packages/react packages/primitives packages/pages packages/ship packages/studio packages/embed packages/guest packages"
+        }
+      ],
+      "kind": "typecheck",
+      "command": "pnpm run typecheck",
+      "runner": "pnpm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "apps/discography/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "apps/discography",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "apps/gauntlet/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "apps/gauntlet",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "apps/launcher/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "apps/launcher",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "apps/promo/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"remotion bundle\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "apps/promo",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "apps/promo/package.json",
+          "confidence": "certain",
+          "excerpt": "\"typecheck\": \"tsc --noEmit\""
+        }
+      ],
+      "kind": "typecheck",
+      "command": "npm run typecheck",
+      "cwd": "apps/promo",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "apps/rota/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "apps/rota",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "apps/seedbed/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "apps/seedbed",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "apps/spike/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"vite build\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "apps/spike",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "apps/todo/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "apps/todo",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "packages/core/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "packages/core",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "packages/create-graview/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "packages/create-graview",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "packages/embed/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "packages/embed",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "packages/graview/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "packages/graview",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "packages/guest/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "packages/guest",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "packages/layout/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "packages/layout",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "packages/pages/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "packages/pages",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "packages/primitives/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "packages/primitives",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "packages/react/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "packages/react",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "packages/render/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "packages/render",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "packages/ship/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "packages/ship",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "packages/skills/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "packages/skills",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "packages/studio/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "packages/studio",
+      "runner": "npm"
+    },
+    {
+      "evidence": [
+        {
+          "kind": "manifest-script",
+          "path": "packages/tools/package.json",
+          "confidence": "certain",
+          "excerpt": "\"build\": \"tsc -b\""
+        }
+      ],
+      "kind": "build",
+      "command": "npm run build",
+      "cwd": "packages/tools",
+      "runner": "npm"
+    }
+  ],
+  "tests": {
+    "frameworks": [
+      {
+        "evidence": [
+          {
+            "kind": "dependency",
+            "path": "package.json",
+            "confidence": "certain",
+            "excerpt": "vitest"
+          }
+        ],
+        "name": "vitest"
+      }
+    ],
+    "suites": [
+      {
+        "evidence": [
+          {
+            "kind": "file-present",
+            "path": "apps/launcher/tests/integration/acceptance.test.ts",
+            "confidence": "likely"
+          }
+        ],
+        "kind": "integration",
+        "fileCount": 26
+      },
+      {
+        "evidence": [
+          {
+            "kind": "file-present",
+            "path": "apps/discography/tests/domain.test.ts",
+            "confidence": "likely"
+          }
+        ],
+        "kind": "unit",
+        "fileCount": 522
+      }
+    ]
+  },
+  "ci": [
+    {
+      "evidence": [
+        {
+          "kind": "workflow-file",
+          "path": ".github/workflows/ci.yml",
+          "confidence": "certain"
+        }
+      ],
+      "provider": "github-actions",
+      "name": "CI",
+      "triggers": [
+        "push",
+        "pull_request",
+        "workflow_dispatch"
+      ],
+      "jobs": [
+        {
+          "name": "verify",
+          "steps": [
+            {
+              "kind": "checkout",
+              "uses": "actions/checkout@v4"
+            },
+            {
+              "kind": "other",
+              "uses": "pnpm/action-setup@v4"
+            },
+            {
+              "kind": "setup",
+              "uses": "actions/setup-node@v4"
+            },
+            {
+              "kind": "install",
+              "run": "pnpm install --frozen-lockfile"
+            },
+            {
+              "kind": "typecheck",
+              "name": "Typecheck",
+              "run": "pnpm typecheck"
+            },
+            {
+              "kind": "test",
+              "name": "Test",
+              "run": "pnpm test"
+            },
+            {
+              "kind": "build",
+              "name": "Build",
+              "run": "pnpm build"
+            },
+            {
+              "kind": "test",
+              "name": "Run core, tools and ship in workerd",
+              "run": "pnpm vitest run tests/the-framework-runs-in-workerd.test.ts"
+            },
+            {
+              "kind": "other",
+              "name": "graview check",
+              "run": "pnpm check"
+            },
+            {
+              "kind": "other",
+              "name": "Inspect the packed tarballs",
+              "run": "node scripts/inspect-pack.mjs"
+            },
+            {
+              "kind": "build",
+              "name": "Build a scratch app from the tarballs",
+              "run": "node scripts/smoke-install.mjs"
+            },
+            {
+              "kind": "other",
+              "name": "A browser for the scaffolded app",
+              "run": "npx playwright install --with-deps chromium"
+            },
+            {
+              "kind": "other",
+              "name": "Scaffold a project, install it, verify it, open it",
+              "run": "node scripts/smoke-create.mjs"
+            },
+            {
+              "kind": "other",
+              "name": "Photograph the progression",
+              "run": "node scripts/progression.mjs"
+            }
+          ]
+        },
+        {
+          "name": "changeset",
+          "steps": [
+            {
+              "kind": "checkout",
+              "uses": "actions/checkout@v4"
+            },
+            {
+              "kind": "other",
+              "uses": "pnpm/action-setup@v4"
+            },
+            {
+              "kind": "setup",
+              "uses": "actions/setup-node@v4"
+            },
+            {
+              "kind": "install",
+              "run": "pnpm install --frozen-lockfile"
+            },
+            {
+              "kind": "other",
+              "name": "A package change needs a changeset",
+              "run": "node scripts/require-changeset.mjs"
+            }
+          ],
+          "condition": "github.event_name == 'pull_request'"
+        }
+      ]
+    },
+    {
+      "evidence": [
+        {
+          "kind": "workflow-file",
+          "path": ".github/workflows/nightly.yml",
+          "confidence": "certain"
+        }
+      ],
+      "provider": "github-actions",
+      "name": "Nightly",
+      "triggers": [
+        "schedule",
+        "workflow_dispatch"
+      ],
+      "jobs": [
+        {
+          "name": "harnesses",
+          "steps": [
+            {
+              "kind": "checkout",
+              "uses": "actions/checkout@v4"
+            },
+            {
+              "kind": "other",
+              "uses": "pnpm/action-setup@v4"
+            },
+            {
+              "kind": "setup",
+              "uses": "actions/setup-node@v4"
+            },
+            {
+              "kind": "install",
+              "run": "pnpm install --frozen-lockfile"
+            },
+            {
+              "kind": "typecheck",
+              "run": "pnpm typecheck"
+            },
+            {
+              "kind": "other",
+              "name": "Chromium",
+              "run": "npx playwright install --with-deps chromium"
+            },
+            {
+              "kind": "other",
+              "name": "${{ matrix.shard }}",
+              "run": "${{ matrix.run }}"
+            },
+            {
+              "kind": "other",
+              "name": "The verdicts, for reading",
+              "uses": "actions/upload-artifact@v4"
+            }
+          ]
+        },
+        {
+          "name": "engines",
+          "steps": [
+            {
+              "kind": "checkout",
+              "uses": "actions/checkout@v4"
+            },
+            {
+              "kind": "other",
+              "uses": "pnpm/action-setup@v4"
+            },
+            {
+              "kind": "setup",
+              "uses": "actions/setup-node@v4"
+            },
+            {
+              "kind": "install",
+              "run": "pnpm install --frozen-lockfile"
+            },
+            {
+              "kind": "typecheck",
+              "run": "pnpm typecheck"
+            },
+            {
+              "kind": "other",
+              "run": "npx playwright install --with-deps chromium webkit firefox"
+            },
+            {
+              "kind": "other",
+              "run": "pnpm engines"
+            }
+          ],
+          "condition": "github.event.schedule == '17 9 * * 1' || inputs.engines"
+        }
+      ]
+    },
+    {
+      "evidence": [
+        {
+          "kind": "workflow-file",
+          "path": ".github/workflows/pages.yml",
+          "confidence": "certain"
+        }
+      ],
+      "provider": "github-actions",
+      "name": "Pages",
+      "triggers": [
+        "push",
+        "workflow_dispatch"
+      ],
+      "jobs": [
+        {
+          "name": "deploy",
+          "steps": [
+            {
+              "kind": "checkout",
+              "uses": "actions/checkout@v4"
+            },
+            {
+              "kind": "other",
+              "uses": "actions/configure-pages@v5"
+            },
+            {
+              "kind": "other",
+              "uses": "actions/upload-pages-artifact@v3"
+            },
+            {
+              "kind": "deploy",
+              "uses": "actions/deploy-pages@v4"
+            }
+          ],
+          "condition": "github.event_name == 'workflow_dispatch' || github.event.repository.visibility == 'public'",
+          "environment": "github-pages"
+        }
+      ]
+    },
+    {
+      "evidence": [
+        {
+          "kind": "workflow-file",
+          "path": ".github/workflows/release.yml",
+          "confidence": "certain"
+        }
+      ],
+      "provider": "github-actions",
+      "name": "Release",
+      "triggers": [
+        "push"
+      ],
+      "jobs": [
+        {
+          "name": "version",
+          "steps": [
+            {
+              "kind": "checkout",
+              "uses": "actions/checkout@v4"
+            },
+            {
+              "kind": "other",
+              "uses": "pnpm/action-setup@v4"
+            },
+            {
+              "kind": "setup",
+              "uses": "actions/setup-node@v4"
+            },
+            {
+              "kind": "install",
+              "run": "pnpm install --frozen-lockfile"
+            },
+            {
+              "kind": "other",
+              "name": "What there is to do",
+              "run": "set -euo pipefail\nif ls .changeset/*.md 2>/dev/null | grep -qv README.md; then PENDING=true; else PENDING=false; fi\nVERSION=$(node -p \"require('./packages/graview/package.json').version\")\nif npm view \"graview@${VERSION}\" version >/dev/null 2>&1; then UNPUBLISHED=false; else UNPUBLISHED=true; fi\necho \"Changesets pending: ${PENDING}; graview@${VERSION} unpublished: ${UNPUBLISHED}\"\necho \"pending=${PENDING}\" >> \"$GITHUB_OUTPUT\"\necho \"unpublished=${UNPUBLISHED}\" >> \"$GITHUB_OUTPUT\""
+            },
+            {
+              "kind": "other",
+              "name": "Open or update the Version packages pull request",
+              "uses": "changesets/action@v2"
+            },
+            {
+              "kind": "publish",
+              "name": "Run CI on it",
+              "run": "gh workflow run ci.yml --ref changeset-release/main"
+            }
+          ]
+        },
+        {
+          "name": "publish",
+          "steps": [
+            {
+              "kind": "checkout",
+              "uses": "actions/checkout@v4"
+            },
+            {
+              "kind": "other",
+              "uses": "pnpm/action-setup@v4"
+            },
+            {
+              "kind": "setup",
+              "uses": "actions/setup-node@v4"
+            },
+            {
+              "kind": "install",
+              "name": "npm that can do trusted publishing",
+              "run": "npm install -g npm@11.15.0"
+            },
+            {
+              "kind": "install",
+              "run": "pnpm install --frozen-lockfile"
+            },
+            {
+              "kind": "build",
+              "run": "pnpm build"
+            },
+            {
+              "kind": "typecheck",
+              "run": "pnpm typecheck"
+            },
+            {
+              "kind": "test",
+              "run": "pnpm test"
+            },
+            {
+              "kind": "other",
+              "name": "The last nightly on main holds",
+              "run": "set -euo pipefail\nRESULT=$(gh run list --workflow nightly.yml --branch main --status completed --limit 1 --json conclusion,headSha,url --jq '.[0] // empty | \"\\(.conclusion) \\(.headSha[0:8]) \\(.url)\"')\nif [ -z \"$RESULT\" ]; then\n  echo \"::error::no finished Nightly on main — run it (Actions → Nightly → Run workflow), then re-run this job\"\n  exit 1\nfi\necho \"Last nightly: $RESULT\"\ncase \"$RESULT\" in\n  success*) ;;\n  *) echo \"::error::the last Nightly on main is not green: $RESULT\"; exit 1 ;;\nesac"
+            },
+            {
+              "kind": "publish",
+              "name": "Publish, tag and release",
+              "run": "git config user.name \"github-actions[bot]\"\ngit config user.email \"41898282+github-actions[bot]@users.noreply.github.com\"\nnode scripts/release-publish.mjs"
+            },
+            {
+              "kind": "publish",
+              "name": "The tags and releases match what npm has",
+              "run": "set -euo pipefail\nVERSION=$(node -p \"require('./packages/graview/package.json').version\")\nFAILED=0\nfor dir in packages/*/; do\n  NAME=$(node -p \"require('./${dir}package.json').name\")\n  TAG=\"${NAME}@${VERSION}\"\n  SERVED=0\n  for TRY in $(seq 1 30); do\n    if npm view \"${TAG}\" version --prefer-online >/dev/null 2>&1; then SERVED=1; break; fi\n    sleep 20\n  done\n  if [ \"$SERVED\" = 0 ]; then\n    echo \"::error::${TAG} is not on npm after ten minutes\"; FAILED=1\n  fi\n  if ! git ls-remote --tags origin \"refs/tags/${TAG}\" | grep -q .; then\n    echo \"::error::no tag ${TAG} on origin\"; FAILED=1\n  fi\n  if ! gh release view \"${TAG}\" >/dev/null 2>&1; then\n    echo \"::error::no GitHub release ${TAG}\"; FAILED=1\n  fi\ndone\nexit $FAILED"
+            }
+          ],
+          "needs": [
+            "version"
+          ],
+          "condition": "needs.version.outputs.pending == 'false' && needs.version.outputs.unpublished == 'true'",
+          "environment": "npm"
+        }
+      ]
+    }
+  ],
+  "cd": [
+    {
+      "evidence": [
+        {
+          "kind": "workflow-job",
+          "path": ".github/workflows/pages.yml",
+          "confidence": "likely",
+          "excerpt": "deploy"
+        }
+      ],
+      "environment": "github-pages",
+      "mechanism": "github-actions",
+      "requiresApproval": false,
+      "automated": true
+    }
+  ],
+  "rollback": [
+    {
+      "evidence": [
+        {
+          "kind": "file-present",
+          "path": ".changeset/config.json",
+          "confidence": "likely"
+        }
+      ],
+      "mechanism": "tagged-release",
+      "tool": "changesets"
+    }
+  ],
+  "migrations": [],
+  "featureFlags": [],
+  "qualityGates": [],
+  "observability": [],
+  "containers": [],
+  "iac": [],
+  "parseFailures": [
+    {
+      "path": ".",
+      "kind": "walk",
+      "reason": "directories deeper than 8 levels were not entered; anything under them is missing from the profile"
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import { beginning, orderKinds, SCENE_LAYERS, touchWeights } from "@graview/core";
 import { toIso } from "@graview/core/scene";
+import type { SceneNode } from "./scene-node.js";
 import type { AnySchema } from "@graview/core";
 import {
   aggregateId,
@@ -17,7 +18,6 @@ import {
   withRelation,
   type InterpolatedLayout,
   type Layout,
-  type LayoutNode,
   type LayoutOptions,
   withJackIn,
   holdLayout,
@@ -102,15 +102,6 @@ export interface SceneProps {
   /** Rendered over the scene — an affordance surface, a header, a legend. */
   readonly children?: ReactNode;
 }
-
-/**
- * A node as the scene draws it: a laid-out node, possibly mid-transition, so
- * its plane is fractional and it may be fading in or out.
- */
-export type SceneNode = Omit<LayoutNode, "plane"> & {
-  readonly plane: number;
-  readonly opacity?: number;
-};
 
 /**
  * The spatial scene: one `<canvas layoutsubtree>` with the views as its

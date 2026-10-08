@@ -5,40 +5,110 @@
 <zone>
 
 Zone: Lens (`primitives/lens`)
-Files: 7, Cohesion: 0.86, Coupling: 0.14
-Description: 7 files, primarily TypeScript
-Entry points: packages/primitives/src/lens/calendar.tsx
-Lines: 1426
+Files: 29, Cohesion: 0.72, Coupling: 0.28
+Description: 29 files, primarily TypeScript
+Entry points: packages/primitives/src/arrange-bar.tsx, packages/primitives/src/default-views.tsx, packages/primitives/src/figure.tsx, packages/primitives/src/index.ts, packages/primitives/src/lens/board.tsx, packages/primitives/src/lens/calendar-options.ts, packages/primitives/src/lens/calendar-view.tsx, packages/primitives/src/lens/coverage.tsx, packages/primitives/src/lens/more.tsx, packages/primitives/src/lens/plan-lens.tsx, packages/primitives/src/lens/plan-state.ts, packages/primitives/src/lens/reach.tsx, packages/primitives/src/lens/timeline.tsx, packages/primitives/src/markup.ts, packages/primitives/src/primitives/index.tsx
+Lines: 10258
 
 </zone>
 
 <files>
 
+packages/primitives/src/arrange-bar.tsx (TypeScript, 454 lines, source)
+packages/primitives/src/arrangement.ts (TypeScript, 27 lines, source)
+packages/primitives/src/connections.tsx (TypeScript, 173 lines, source)
+packages/primitives/src/default-views.tsx (TypeScript, 970 lines, source)
+packages/primitives/src/editable.tsx (TypeScript, 369 lines, source)
+packages/primitives/src/figure.tsx (TypeScript, 108 lines, source)
+packages/primitives/src/graview-mark.tsx (TypeScript, 29 lines, source)
+packages/primitives/src/index.ts (TypeScript, 210 lines, source)
+packages/primitives/src/lens/arranging.tsx (TypeScript, 100 lines, source)
+packages/primitives/src/lens/board.tsx (TypeScript, 1113 lines, source)
 packages/primitives/src/lens/calendar-dates.ts (TypeScript, 68 lines, source)
-packages/primitives/src/lens/calendar-drawing.tsx (TypeScript, 427 lines, source)
+packages/primitives/src/lens/calendar-drawing.tsx (TypeScript, 428 lines, source)
 packages/primitives/src/lens/calendar-options.ts (TypeScript, 125 lines, source)
 packages/primitives/src/lens/calendar-placing.ts (TypeScript, 122 lines, source)
 packages/primitives/src/lens/calendar-spans.ts (TypeScript, 189 lines, source)
-packages/primitives/src/lens/calendar-view.tsx (TypeScript, 452 lines, source)
+packages/primitives/src/lens/calendar-view.tsx (TypeScript, 457 lines, source)
 packages/primitives/src/lens/calendar.tsx (TypeScript, 43 lines, source)
+packages/primitives/src/lens/coverage.tsx (TypeScript, 1256 lines, source)
+packages/primitives/src/lens/horizon.ts (TypeScript, 26 lines, source)
+packages/primitives/src/lens/more.tsx (TypeScript, 28 lines, source)
+packages/primitives/src/lens/plan-lens.tsx (TypeScript, 40 lines, source)
+packages/primitives/src/lens/plan-state.ts (TypeScript, 261 lines, source)
+packages/primitives/src/lens/plan-view.tsx (TypeScript, 979 lines, source)
+packages/primitives/src/lens/plan.tsx (TypeScript, 25 lines, source)
+packages/primitives/src/lens/reach.tsx (TypeScript, 159 lines, source)
+packages/primitives/src/lens/timeline.tsx (TypeScript, 725 lines, source)
+packages/primitives/src/markup.ts (TypeScript, 24 lines, source)
+packages/primitives/src/primitives/index.tsx (TypeScript, 699 lines, source)
+packages/primitives/src/seeding.tsx (TypeScript, 1051 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
+  packages/primitives/src/arrange-bar.tsx → packages/primitives/src/arrangement.ts {arrangementOf, withArrangement}
+  packages/primitives/src/connections.tsx → packages/primitives/src/default-views.tsx {hueFor}
+  packages/primitives/src/connections.tsx → packages/primitives/src/primitives/index.tsx {Chip}
+  packages/primitives/src/default-views.tsx → packages/primitives/src/arrange-bar.tsx {*}
+  packages/primitives/src/default-views.tsx → packages/primitives/src/arrangement.ts {arrangementOf, withArrangement}
+  packages/primitives/src/default-views.tsx → packages/primitives/src/connections.tsx {Connections}
+  packages/primitives/src/default-views.tsx → packages/primitives/src/editable.tsx {EditableTitle, Fields}
+  packages/primitives/src/default-views.tsx → packages/primitives/src/figure.tsx {hasFigure, KindFigure}
+  packages/primitives/src/default-views.tsx → packages/primitives/src/primitives/index.tsx {Aggregate, Chip, Panel, Roster}
+  packages/primitives/src/figure.tsx → packages/primitives/src/default-views.tsx {hueFor}
+  packages/primitives/src/figure.tsx → packages/primitives/src/markup.ts {useMarkup}
+  packages/primitives/src/index.ts → packages/primitives/src/arrange-bar.tsx {ArrangeBar, arrangementCaption, arrangementOf, roundSteps, sayCondition, withArrangement}
+  packages/primitives/src/index.ts → packages/primitives/src/arrange-bar.tsx {ArrangeBarProps}
+  packages/primitives/src/index.ts → packages/primitives/src/connections.tsx {Connections}
+  packages/primitives/src/index.ts → packages/primitives/src/connections.tsx {ConnectionsProps}
+  packages/primitives/src/index.ts → packages/primitives/src/default-views.tsx {rosterOf, hueFor, registerDefaultViews}
+  packages/primitives/src/index.ts → packages/primitives/src/editable.tsx {EditableTitle, EditableValue, Fields, humanize}
+  packages/primitives/src/index.ts → packages/primitives/src/figure.tsx {hasFigure, KindFigure}
+  packages/primitives/src/index.ts → packages/primitives/src/graview-mark.tsx {GraviewMark}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/arranging.tsx {useArranging}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/arranging.tsx {Arranging, ArrangingOptions}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/board.tsx {BOARD_REQUIRED_ROLES, BoardBindingError, BoardView, buildBoard, createBoardLens}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/board.tsx {BoardLens, BoardOptions, BoardSlot, BoardState, BoardViewProps}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/calendar.tsx {actThatMoves, addDays, addMonths, CalendarBindingError, CALENDAR_RANGES, CALENDAR_REQUIRED_ROLES, createCalendarLens, dayOf, daysBetween, daysFrom, endOfMonth, entriesIn, entriesOn, finerThan, minutesOf, placeOnCalendar, rangesOf, spanOf, startOfMonth, startOfQuarter, startOfWeek, titleOf, weekdayOf}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/calendar.tsx {CalendarBindings, CalendarCell, CalendarGrain, CalendarHorizon, CalendarLens, CalendarOptions, CalendarRange, CalendarRoles, CalendarSpan, PlacedEntry}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/coverage.tsx {buildCoverage, capCoverage, CoverageBindingError, COVERAGE_MAX_COLUMNS, COVERAGE_MAX_ROWS, COVERAGE_REQUIRED_ROLES, CoverageView, createCoverageLens}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/coverage.tsx {CappedCoverage, CoverageCell, CoverageGrid, CoverageLens, CoverageOptions, CoverageRoles, CoverageViewProps}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/more.tsx {withMore}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/plan.tsx {buildPlanLens, createPlanLens, PlanBindingError, PlanView, PLAN_REQUIRED_ROLES}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/plan.tsx {PlanLens, PlanLensOptions, PlanLensState, PlanViewProps}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/reach.tsx {buildReach, ReachView, reachLens}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/reach.tsx {Reach, ReachCell}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/timeline.tsx {activeWindow, assignLanes, createTimelineLens, placeOnTimeline, TimelineBindingError, TimelineView, TIMELINE_REQUIRED_ROLES}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/timeline.tsx {LanedSpan, PlacedSpan, TimelineBindings, TimelineColumn, TimelineLens, TimelineOptions, TimelineRoles, TimelineViewProps}
+  packages/primitives/src/index.ts → packages/primitives/src/markup.ts {useMarkup}
+  packages/primitives/src/index.ts → packages/primitives/src/primitives/index.tsx {Aggregate, Axis, Chip, Connector, FAINT_TEXT, Grid, MUTED_TEXT, Panel, Prose, VISUALLY_HIDDEN, Roster, useWidth}
+  packages/primitives/src/index.ts → packages/primitives/src/primitives/index.tsx {AggregateProps, AxisProps, ChipProps, ConnectorProps, GridProps, PanelProps, RosterProps}
+  packages/primitives/src/index.ts → packages/primitives/src/seeding.tsx {Begin, Door, downscale, Intake, PlanReview, PHOTO_MAX_EDGE, PHOTO_QUALITY}
+  packages/primitives/src/index.ts → packages/primitives/src/seeding.tsx {BeginProps, DoorProps, IntakeProps, PlanReviewProps}
+  packages/primitives/src/lens/arranging.tsx → packages/primitives/src/arrange-bar.tsx {ArrangeBar, arrangementOf, withArrangement}
+  packages/primitives/src/lens/board.tsx → packages/primitives/src/default-views.tsx {hueFor}
+  packages/primitives/src/lens/board.tsx → packages/primitives/src/lens/arranging.tsx {useArranging}
+  packages/primitives/src/lens/board.tsx → packages/primitives/src/lens/horizon.ts {onTheHorizon}
+  packages/primitives/src/lens/board.tsx → packages/primitives/src/lens/more.tsx {withMore}
+  packages/primitives/src/lens/board.tsx → packages/primitives/src/primitives/index.tsx {Chip, Panel, Roster}
   packages/primitives/src/lens/calendar-drawing.tsx → packages/primitives/src/lens/calendar-dates.ts {MONTHS, WEEKDAYS, clock, daysBetween, daysFrom, startOfWeek, weekdayOf}
   packages/primitives/src/lens/calendar-drawing.tsx → packages/primitives/src/lens/calendar-options.ts {CalendarGrain, PlacedEntry}
   packages/primitives/src/lens/calendar-drawing.tsx → packages/primitives/src/lens/calendar-placing.ts {entriesOn}
   packages/primitives/src/lens/calendar-drawing.tsx → packages/primitives/src/lens/calendar-spans.ts {entriesIn}
   packages/primitives/src/lens/calendar-drawing.tsx → packages/primitives/src/lens/calendar-spans.ts {CalendarCell, CalendarSpan}
   packages/primitives/src/lens/calendar-drawing.tsx → packages/primitives/src/lens/calendar-view.tsx {Emphasis}
+  packages/primitives/src/lens/calendar-drawing.tsx → packages/primitives/src/primitives/index.tsx {useWidth}
   packages/primitives/src/lens/calendar-placing.ts → packages/primitives/src/lens/calendar-dates.ts {dayOf, daysBetween, minutesOf}
   packages/primitives/src/lens/calendar-placing.ts → packages/primitives/src/lens/calendar-options.ts {CALENDAR_REQUIRED_ROLES, holds}
   packages/primitives/src/lens/calendar-placing.ts → packages/primitives/src/lens/calendar-options.ts {CalendarBindings, PlacedEntry}
   packages/primitives/src/lens/calendar-spans.ts → packages/primitives/src/lens/calendar-dates.ts {MONTHS, addDays, addMonths, daysBetween, daysFrom, iso, startOfMonth, startOfWeek}
   packages/primitives/src/lens/calendar-spans.ts → packages/primitives/src/lens/calendar-drawing.tsx {longDay}
   packages/primitives/src/lens/calendar-spans.ts → packages/primitives/src/lens/calendar-options.ts {CalendarGrain, CalendarHorizon, CalendarRange, PlacedEntry}
+  packages/primitives/src/lens/calendar-view.tsx → packages/primitives/src/default-views.tsx {hueFor}
+  packages/primitives/src/lens/calendar-view.tsx → packages/primitives/src/lens/arranging.tsx {useArranging}
   packages/primitives/src/lens/calendar-view.tsx → packages/primitives/src/lens/calendar-dates.ts {addDays, addMonths, daysBetween, minutesOf}
   packages/primitives/src/lens/calendar-view.tsx → packages/primitives/src/lens/calendar-drawing.tsx {Agenda, Grid, PER_CELL, Step, longDay, stepStyle}
   packages/primitives/src/lens/calendar-view.tsx → packages/primitives/src/lens/calendar-options.ts {CALENDAR_REQUIRED_ROLES, rangesOf, titleOf}
@@ -46,11 +116,33 @@ Internal:
   packages/primitives/src/lens/calendar-view.tsx → packages/primitives/src/lens/calendar-placing.ts {actThatMoves, entriesOn, placeOnCalendar}
   packages/primitives/src/lens/calendar-view.tsx → packages/primitives/src/lens/calendar-spans.ts {finerThan, spanOf}
   packages/primitives/src/lens/calendar-view.tsx → packages/primitives/src/lens/calendar-spans.ts {CalendarCell}
+  packages/primitives/src/lens/calendar-view.tsx → packages/primitives/src/lens/more.tsx {withMore}
+  packages/primitives/src/lens/calendar-view.tsx → packages/primitives/src/primitives/index.tsx {Chip, Panel, Roster, useWidth}
   packages/primitives/src/lens/calendar.tsx → packages/primitives/src/lens/calendar-dates.ts {*}
   packages/primitives/src/lens/calendar.tsx → packages/primitives/src/lens/calendar-drawing.tsx {*}
   packages/primitives/src/lens/calendar.tsx → packages/primitives/src/lens/calendar-options.ts {*}
   packages/primitives/src/lens/calendar.tsx → packages/primitives/src/lens/calendar-placing.ts {*}
   packages/primitives/src/lens/calendar.tsx → packages/primitives/src/lens/calendar-spans.ts {*}
   packages/primitives/src/lens/calendar.tsx → packages/primitives/src/lens/calendar-view.tsx {*}
+  packages/primitives/src/lens/coverage.tsx → packages/primitives/src/default-views.tsx {hueFor}
+  packages/primitives/src/lens/coverage.tsx → packages/primitives/src/lens/horizon.ts {onTheHorizon}
+  packages/primitives/src/lens/coverage.tsx → packages/primitives/src/primitives/index.tsx {Chip, Panel, Roster, useWidth}
+  packages/primitives/src/lens/plan-lens.tsx → packages/primitives/src/lens/plan-state.ts {PLAN_REQUIRED_ROLES, buildPlanLens}
+  packages/primitives/src/lens/plan-lens.tsx → packages/primitives/src/lens/plan-state.ts {PlanLensOptions, PlanLensState}
+  packages/primitives/src/lens/plan-lens.tsx → packages/primitives/src/lens/plan-view.tsx {PlanView}
+  packages/primitives/src/lens/plan-view.tsx → packages/primitives/src/default-views.tsx {hueFor}
+  packages/primitives/src/lens/plan-view.tsx → packages/primitives/src/lens/plan-state.ts {buildPlanLens}
+  packages/primitives/src/lens/plan-view.tsx → packages/primitives/src/lens/plan-state.ts {MapPoint, PlanLensOptions, PlanLensState}
+  packages/primitives/src/lens/plan-view.tsx → packages/primitives/src/primitives/index.tsx {Chip, Panel}
+  packages/primitives/src/lens/plan.tsx → packages/primitives/src/lens/plan-lens.tsx {*}
+  packages/primitives/src/lens/plan.tsx → packages/primitives/src/lens/plan-state.ts {*}
+  packages/primitives/src/lens/plan.tsx → packages/primitives/src/lens/plan-view.tsx {*}
+  packages/primitives/src/lens/reach.tsx → packages/primitives/src/default-views.tsx {hueFor}
+  packages/primitives/src/lens/reach.tsx → packages/primitives/src/primitives/index.tsx {Chip}
+  packages/primitives/src/lens/timeline.tsx → packages/primitives/src/default-views.tsx {hueFor}
+  packages/primitives/src/lens/timeline.tsx → packages/primitives/src/lens/arranging.tsx {useArranging}
+  packages/primitives/src/lens/timeline.tsx → packages/primitives/src/lens/more.tsx {withMore}
+  packages/primitives/src/lens/timeline.tsx → packages/primitives/src/primitives/index.tsx {Chip, Panel, Roster}
+  packages/primitives/src/seeding.tsx → packages/primitives/src/primitives/index.tsx {MUTED_TEXT, Panel}
 
 </imports>
