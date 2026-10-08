@@ -1,6 +1,6 @@
 {
   "name": "@graview/embed",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "type": "module",
   "description": "Mount a declared Graview app into any element — the scene, the Graview, or the routed pages — without the Shell, sized and themed within the element.",
   "keywords": [
