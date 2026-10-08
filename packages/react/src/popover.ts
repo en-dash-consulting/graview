@@ -120,7 +120,19 @@ export function placePane(pane: HTMLElement, anchor: PopoverAnchor, options: Pla
   // Border-box (`POPOVER_STYLE`), so the room is the pane's whole height, its frame included.
   if (natural.height > room) pane.style.maxHeight = designed ? `min(${designed}, ${room}px)` : `${room}px`;
   const width = natural.width;
-  const wanted = options.align === "start" ? at.left : at.right - width;
+  let wanted = options.align === "start" ? at.left : at.right - width;
+  /*
+   * INSIDE ITS EMBED WHERE IT FITS THERE. Hung from the right edge of a
+   * control at an embed's left (the place list on graview.dev's hero, on a
+   * 1024 desk), a pane opened out of the embed's box, over the host's own
+   * page; it is kept to the box when it fits in it, and to the window when not.
+   */
+  const embed = typeof anchor === "function" ? null : anchor.current?.closest("[data-graview-embed]")?.getBoundingClientRect();
+  if (embed && width <= embed.right - embed.left) {
+    // Hung from the anchor's other edge when that keeps it in, else held at the box's edge.
+    if (wanted < embed.left) wanted = at.left + width <= embed.right ? at.left : embed.left;
+    else if (wanted + width > embed.right) wanted = at.right - width >= embed.left ? at.right - width : embed.right - width;
+  }
   // A sheet the viewport's width (a phone's) stands from its left edge; anything narrower keeps a margin.
   const left = width >= view.width - 2 * MARGIN ? Math.max(0, (view.width - width) / 2) : Math.max(MARGIN, Math.min(wanted, view.width - MARGIN - width));
   const top = down ? at.bottom + GAP : Math.max(MARGIN, at.top - GAP - height);
