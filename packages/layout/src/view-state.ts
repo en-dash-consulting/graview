@@ -165,7 +165,8 @@ function unabbreviated(id: string | null): string | null {
 export function fromUrl(url: string): ViewState {
   const hash = url.includes("#") ? url.slice(url.indexOf("#") + 1) : url;
   const params = new URLSearchParams(hash);
-  const pins: Record<string, Pin> = {};
+  // No prototype: the keys are a link's, and `pin.__proto__` names a pin, never what the pins inherit.
+  const pins: Record<string, Pin> = Object.create(null);
   for (const [key, value] of params) {
     if (!key.startsWith("pin.")) continue;
     const [rawX, rawY] = value.split(",");
@@ -174,7 +175,7 @@ export function fromUrl(url: string): ViewState {
     if (x === null || y === null) continue;
     pins[key.slice(4)] = { x, y };
   }
-  const within: Record<string, string> = {};
+  const within: Record<string, string> = Object.create(null);
   for (const [key, value] of params) {
     if (!key.startsWith("in.") || value.length === 0) continue;
     within[key.slice(3)] = value;
