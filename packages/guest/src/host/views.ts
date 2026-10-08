@@ -12,7 +12,7 @@ export { registerWorkerView, workerHome, workerView } from "./worker-react.js";
 export type { WorkerHomeContext, WorkerViewDefinition } from "./worker-react.js";
 export { checkManifest, manifestActs, workerViewProps } from "./manifest.js";
 export type { ManifestAct, WorkerViewManifest, WorkerViewPropsInput } from "./manifest.js";
-export { judgeCodeAct, prefillOf, sightIsTotal, writesBack } from "./writes.js";
+export { judgeCodeAct, sightIsTotal } from "./writes.js";
 export type { Judged, Prefilled, Press, PressedField } from "./writes.js";
 export { checkViewSource, viewScript } from "./view-source.js";
 export type { MountWorkerViewOptions, WorkerView, WorkerViewCode, WorkerViewFailure, WorkerViewLimits } from "./view.js";

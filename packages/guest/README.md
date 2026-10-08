@@ -369,19 +369,17 @@ field of its bound record (`data-record` on it or around it, else the one
 record the acts in its `fieldset` are bound to), read through the viewer's
 sight, whole and with its line breaks — when the record is one the view
 was shown, and an act in the `fieldset` is named in the manifest, is done
-to that record, takes the field, writes it (`writes`, or `fieldsWrittenBy`'s
-reading), writes no other record's fields (`writesOther`), and may be run
+to that record, takes the field, writes it (its `writes`, or, declaring none, an argument
+named like the field), writes no other record's fields, and may be run
 there by this viewer (`store.permits`). Otherwise the field stays empty;
 a seat that may not write the field is never handed it to edit. The value
 filled is the viewer's, as if typed, and what they type after it is
 theirs; but a press carries it only to an act that writes that field of
-that record (`writesBack`), and any other press carrying it is refused
+that record, and any other press carrying it is refused
 `untyped`. A field the view drew words into, or writes into after the
 host filled it, is the view's, as ever. Nothing leaks by it: the value is
 a field of a record the view was already shown, and it can only be saved
 back where it came from, by an act the viewer may run there.
-`prefillOf(store, principal, manifest, shown, { record, field, acts })`
-(from `@graview/guest/host/views`) is the judgment.
 
 ### Links stay in the app
 

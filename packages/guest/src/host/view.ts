@@ -4,7 +4,7 @@ import { checkManifest, workerViewProps, type WorkerViewManifest } from "./manif
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestStats, type GuestViewInput } from "./session.js";
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
-import { judgeCodeAct, prefillOf } from "./writes.js";
+import { judgeCodeAct } from "./writes.js";
 import { createDrawBudget } from "./draw-budget.js";
 import { checkViewSource, viewScript } from "./view-source.js";
 import { createLinks, type Destination } from "./links.js";
@@ -368,7 +368,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
 
   /* The records the view was last shown: a press may be bound to one of these, and to nothing else (FR-92). */
   let shown: ReadonlySet<string> = new Set();
-  void Promise.all([import("./open-draw.js"), import("./press.js")]).then(([{ createOpenDrawing }, { createPressReader, fillPrefills, judgePress }]) => {
+  void Promise.all([import("./open-draw.js"), import("./press.js")]).then(([{ createOpenDrawing }, { createPressReader, fillPrefills, judgePress, prefillOf }]) => {
     if (failed) return;
     const reader = createPressReader();
     const prefilled = new WeakSet<Element>();

@@ -1,6 +1,6 @@
-import type { AnySchema, Store } from "@graview/core";
-import type { WorkerViewManifest } from "./manifest.js";
-import { declaredValues, entryFor, refuse, writesBack, type Judged, type Prefilled, type Press, type PressedField } from "./writes.js";
+import type { AnySchema, Principal, Store } from "@graview/core";
+import type { ManifestAct, WorkerViewManifest } from "./manifest.js";
+import { declaredValues, entryFor, refuse, type Judged, type Prefilled, type Press, type PressedField } from "./writes.js";
 
 /*
  * A PRESS, AS THE HOST SEES IT (FR-92): the half of the write rules that
@@ -202,4 +202,82 @@ export function judgePress<S extends AnySchema>(store: Store<S>, manifest: Worke
     else if (!field.empty) return refuse("untyped", `“${field.name}” was filled in by the view, not typed by you, so it was not sent.`);
   }
   return { ok: true, name: entry.act, args };
+}
+
+/*
+ * A FIELD THE HOST FILLS FROM THE RECORD (FR-150).
+ *
+ * A view cannot fill a field (above), so a view that offered to change a
+ * three-thousand-character draft asked the person to type all of it again.
+ * So the HOST fills it. A view marks a field with what it holds —
+ * `<textarea name="draft" data-prefill="draft">` inside an act's
+ * `fieldset` — and the host writes the record's own value into it, read
+ * through the viewer's sight, when every one of these holds:
+ *
+ *   · the field's `name` is the field it asks for, and the record is the one
+ *     the field is bound to (`data-record` on it or around it, else the one
+ *     record every act in its `fieldset` is bound to), one the view was
+ *     shown;
+ *   · an act in its `fieldset` is named in the manifest, is done to that
+ *     record, takes that field as an argument and WRITES it (`writes`, or the
+ *     name-match `fieldsWrittenBy` reads), writes no other record's fields
+ *     (`writesOther`), and this viewer may run it on that record;
+ *   · the value is text or a number.
+ *
+ * The value is then the viewer's, as if they had typed it, and they edit it
+ * in place: what they type after it is theirs too. But it goes only back
+ * where it came from. A press carries a filled field only to an act that
+ * writes that field of that same record (`writesBack`); any other press
+ * carrying it is refused `untyped`. A view that sets the field after the
+ * host filled it makes it the view's, as ever.
+ *
+ * Nothing leaks by it. The value is a field of a record the view was shown,
+ * so the view could already read it in its props; the host hands it nothing
+ * the viewer may not see, and nothing that is not in the record. And it can
+ * be written only into the field it came from, on the record it came from,
+ * by an act the viewer may run there: the most a view can do with it is
+ * have the person save a field as it was.
+ */
+
+/** Whether an act, as the manifest names it, writes this field of this record back: done to it, taking the field, writing it, and no other record's. */
+export function writesBack<S extends AnySchema>(store: Store<S>, entry: ManifestAct, record: string, field: string): boolean {
+  const mutation = store.allMutations().find((one) => one.name === entry.act);
+  const subject = mutation?.subject;
+  if (!mutation || !subject) return false;
+  if ((entry.record ?? subject.arg) !== subject.arg || field === subject.arg || field in (entry.constants ?? {})) return false;
+  if (!(field in ((mutation.input as { shape?: Record<string, unknown> }).shape ?? {}))) return false;
+  if (Object.keys(mutation.writesOther ?? {}).length > 0) return false;
+  const kind = store.graph.getNode(record)?.kind as string | undefined;
+  const definition = kind === undefined ? undefined : store.schema.tryDefinition(kind);
+  if (!definition || (subject.kinds !== "*" && !(subject.kinds as readonly string[]).includes(kind!))) return false;
+  if (!(field in ((definition.fields as { shape?: Record<string, unknown> }).shape ?? {}))) return false;
+  /*
+   * `fieldsWrittenBy`'s reading, said here so a page drawing views does not
+   * carry core's derived edits: what the act declares it `writes`, or, for
+   * a TypeScript act that declares nothing, an argument named exactly like
+   * a field of its subject.
+   */
+  return mutation.writes ? mutation.writes.includes(field) : true;
+}
+
+/** What the host fills a field with: one field of a record the view was shown, as the viewer sees it, when an act bound beside it writes it back and the viewer may run it there. */
+export function prefillOf<S extends AnySchema>(
+  store: Store<S>,
+  principal: Principal,
+  manifest: WorkerViewManifest,
+  shown: ReadonlySet<string>,
+  asked: { readonly record: string; readonly field: string; readonly acts: readonly string[] },
+): string | undefined {
+  if (!shown.has(asked.record)) return undefined;
+  const node = store.seenBy(principal).graph.getNode(asked.record) as Record<string, unknown> | undefined;
+  if (!node) return undefined;
+  const writable = asked.acts.some((as) => {
+    const entry = entryFor(manifest, as);
+    if (!entry || !writesBack(store, entry, asked.record, asked.field)) return false;
+    const subject = store.allMutations().find((one) => one.name === entry.act)!.subject!;
+    return store.permits({ name: entry.act, args: { [subject.arg]: asked.record } }, principal).ok;
+  });
+  if (!writable) return undefined;
+  const value = node[asked.field];
+  return typeof value === "string" ? value : typeof value === "number" && Number.isFinite(value) ? String(value) : undefined;
 }

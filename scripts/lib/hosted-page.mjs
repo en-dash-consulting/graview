@@ -90,9 +90,13 @@ export const FACE_DOORS = {
  * whether the switch's words fit 0.9 KB, the shortcut and the slot 0.5 KB.
  * The claim rises by that: 572.8 KB, which leaves Cloud's shell 22.2 KB
  * under its 595. FR-140 (a pick kept for the routed face until it listens)
- * took it to 586 433 bytes (572.7 KB), inside the claim.
+ * took it to 586 433 bytes (572.7 KB), inside the claim. A view of one
+ * record drawn beside the record's own fields (FR-149) — the record page
+ * asking whether a view replaces it, and the marks a view carries in a file
+ * of their own — took it to 586 596 bytes (572.8 KB), 163 more; the claim
+ * rises by that: 573.0 KB, which leaves Cloud's shell 22.0 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 572.8 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 573 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -174,8 +178,11 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * made the moment the place list opens going to its place (FR-140: a path
  * asked for before the routed face listens, kept for it) took it to
  * 541 627 bytes (528.9 KB), 155 more; the claim rises by that: 529.0 KB.
+ * A view of one record drawn beside the record's own fields (FR-149) took
+ * it to 541 790 bytes (529.1 KB), the same 163 as the page that compiles;
+ * the claim rises by that: 529.2 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 529 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 529.2 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

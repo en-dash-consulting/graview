@@ -503,8 +503,11 @@ export const BUDGETS = [
     // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
     // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
     // the guest host judging an inline logo before it makes an image of the host page from it. Measured at 16_857 / 7_266.
-    minified: 17_100,
-    gzipped: 7_500,
+    // Raised when a view of one record came to sit above the record's own fields unless its manifest says it replaces the
+    // page (FR-149): the registration draws the kind's own face beside it, and the manifest judges `replaces`, about
+    // 1 kB minified. Measured at 17_837 / 7_680.
+    minified: 18_100,
+    gzipped: 7_900,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -580,8 +583,11 @@ export const BUDGETS = [
     // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
     // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
     // the guest host judging an inline logo before it makes an image of the host page from it. Measured at 126_521 / 45_488.
-    minified: 127_000,
-    gzipped: 45_750,
+    // Raised when the host came to fill a field a view marks `data-prefill` from the record it draws, for a seat that may
+    // write it, and to send it only back where it came from (FR-150), and a manifest to say `replaces` (FR-149), about
+    // 2.6 kB minified. Measured at 129_085 / 46_402.
+    minified: 129_400,
+    gzipped: 46_650,
     load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },

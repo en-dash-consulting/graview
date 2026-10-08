@@ -76,6 +76,15 @@ when the host names no face; under address routing it does so at the bare
 address whatever face the host names. Nothing floats over the scene. A
 declaration that names another first place (`pages.first`) opens there.
 
+A VIEW OF ONE RECORD SITS ABOVE ITS FIELDS (FR-149). A worker view
+registered through `views` with `cardinality: "one"` is drawn above the
+record's own fields, which stay editable: on the scene the record drawn at
+full is the view and then its fields, on Pages the record's page is its
+heading, the view, then its facts and what can be done. Its manifest's
+`replaces: "page"` draws it alone instead. A view may ask the host to fill
+a field from the record it draws (`data-prefill`, FR-150): see
+`@graview/guest`.
+
 ## What a page loads first
 
 The frame — the element's region, its theme, the app bar, the provider — is

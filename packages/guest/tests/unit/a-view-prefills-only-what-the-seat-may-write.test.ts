@@ -4,9 +4,9 @@ import { describe, expect, it } from "vitest";
 import { EMAIL_DRAFT, nick, rae, workshopApp, workshopSeed } from "../../../../scripts/fixtures/workshop-app.js";
 import { workerViewProps, type WorkerViewManifest } from "../../src/host/manifest.js";
 import { createOpenDrawing } from "../../src/host/open-draw.js";
-import { createPressReader, fillPrefills, judgePress } from "../../src/host/press.js";
+import { createPressReader, fillPrefills, judgePress, prefillOf } from "../../src/host/press.js";
 import { createGuestHost } from "../../src/host/session.js";
-import { judgeCodeAct, prefillOf } from "../../src/host/writes.js";
+import { judgeCodeAct } from "../../src/host/writes.js";
 import type { GuestDomEvent, HostMessage } from "../../src/protocol.js";
 
 /**
