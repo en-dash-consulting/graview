@@ -181,9 +181,9 @@ try {
     await page.waitForTimeout(1200);
     return page;
   };
-  /** The pictures in the list the bar's place control opens, on Pages (FR-138). */
+  /** The pictures among the bar's places on Pages (FR-138): standing on the row, or in the list "More" or the place control opens (FR-145). */
   const picturesInThePlaceList = (page) =>
-    page.evaluate(() => [...document.querySelectorAll('[data-testid="app-places"] [data-place-group="pictures"] [data-testid^="app-place-place:"]')].map((entry) => entry.textContent?.trim() ?? ""));
+    page.evaluate(() => [...document.querySelectorAll('[data-graview-embed] [data-place-path][data-testid^="app-place-place:"]')].map((entry) => entry.textContent?.trim() ?? ""));
   /** The scene sent to a place's stop, the way a link to it does: a picture in the place list is its page (FR-138). */
   const toPlace = async (page, as) => {
     await page.evaluate((stop) => window.__handle.setStop(stop), `#view=${as}`);
@@ -251,7 +251,8 @@ try {
     await page.waitForTimeout(600);
     const home = await page.evaluate(() => ({
       kinds: [...document.querySelectorAll('[data-testid="kinds"] li a')].map((link) => link.getAttribute("href")),
-      nav: [...document.querySelectorAll('[data-testid="app-places"] [data-place-path]')].map((tab) => tab.getAttribute("data-place-path")),
+      /* Every place the bar offers, standing or in the list (FR-145): on the home, the first stand and the rest follow in the order. */
+      nav: [...document.querySelectorAll("[data-graview-embed] [data-place-path]")].map((tab) => tab.getAttribute("data-place-path")),
       gallery: [...document.querySelectorAll(".graview-gallery-card")].map((card) => card.getAttribute("href")),
     }));
     report.checks.theHomeFollowsTheDeclaredOrderLessTheHiddenKind = {

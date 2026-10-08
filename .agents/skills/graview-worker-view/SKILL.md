@@ -29,6 +29,7 @@ Every view comes with a manifest the host enforces:
 - `attach` is a kind, or `"home"` for the front page's body (cardinality `many`).
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
+- A view of one record (`cardinality: "one"`) is drawn above the record's own fields, which stay editable. `replaces: "page"` draws it alone instead; only then is the record changed through the view alone.
 
 A manifest that names a kind, an edge or an act the app does not declare is
 refused before the view starts.
@@ -46,9 +47,13 @@ graview.act(name, args)         // ask for an act: resolves { ok, intent } or { 
 graview.navigate("offer:7")     // a record; graview.navigate({ place: "the-packages" }) a place
 ```
 
-`props` holds `nodes` (each with its `id`, `kind`, `label` and fields),
-`edges` (`{ kind, from, to }` among them), `node` for a view of one,
-`label` (its title), `acts`, `places` (`{ as, title }`), and `theme`
+`props` holds `node`, the record a view of one is drawn for, and `nodes`,
+the records a view of many is drawn for and those it reads. A record is
+plain data: its `id`, `kind` and `label`, and each field on it by name, so
+a deliverable's draft is `props.node.draft`; there is no `fields` key. A
+view of one finds its record in `node`, never in `nodes`. Then `edges`
+(`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name,
+title }`, those the viewer may run), `places` (`{ as, title }`), and `theme`
 (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's
 `name`, and its `logo` as a URL the host made: draw it with
 `<img src="${props.theme.logo}">`, never a URL of your own). `render` keeps what it can, by
@@ -112,7 +117,21 @@ named for the act's arguments and typed by the person:
 ```
 
 A field the view filled (`value="…"`) is the view's until the person
-empties it, and a press carrying it is refused. Do not prefill. A view
+empties it, and a press carrying it is refused. To offer a record's own
+text to edit, let the host fill it: `data-prefill` names the field, and
+`name` is the same.
+
+```html
+<fieldset data-record="deliverable:email">
+  <textarea name="draft" data-prefill="draft"></textarea>
+  <button data-act="set-draft">Save the draft</button>
+</fieldset>
+```
+
+The host fills it with the record's whole value, line breaks kept, when
+an act in the fieldset writes that field of that record and the person
+may run it there; otherwise it stays empty. The person edits it in place,
+and it goes only back into that field. A view
 may empty a field after a press. A radio or a select is the person's
 pick, not their words: its value goes only if it is one the act declares
 (an enum's option) or a record the view was shown. The press is applied before the view
@@ -132,8 +151,10 @@ does not, so never spin.
 
 `examples/offers-list.js` is a list lens: rows linking to their records,
 and a note typed and pressed in. `examples/front-page.js` is a home: a
-headline, a figure, an SVG ring and cards linking to a place. Each opens
-with its manifest.
+headline, a figure, an SVG ring and cards linking to a place.
+`examples/a-record.js` is a view of one record: a deliverable's subject
+and its draft as paragraphs, read off `props.node`, and "Edit draft"
+with the draft prefilled. Each opens with its manifest.
 
 ## Registering it
 
@@ -169,7 +190,8 @@ fails.
    'unsafe-inline'`, and the note under the plain face names what it lacks.
 4. Toggle the app to dark. Does the view restyle?
 5. Press each bound button with typed words, then again with a field the
-   view filled. The first applies and the second is refused.
+   view filled. The first applies and the second is refused. A prefilled
+   field is filled only for a seat that may write it.
 
 ## What the check cannot see
 

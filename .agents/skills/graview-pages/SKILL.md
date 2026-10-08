@@ -8,9 +8,9 @@ description: Give a Graview app the routed face it wants — from the derived pa
 A Graview app has two faces over one store. The scene is the picture. The
 pages face is the same declaration routed as an ordinary web application:
 a home, a list per kind, a record per node, forms for every act, and a
-problems page — derived, then replaceable one surface at a time, all the way
-to a product design of its own. The ladder ends where the framework's own
-example does: `apps/seedbed`, chapters nine and thirteen.
+problems page — derived, then replaceable one surface at a time, up to a
+product design of its own. The ladder ends at the framework's own example:
+`apps/seedbed`, chapters nine and thirteen.
 
 ## What comes for free
 
@@ -25,25 +25,25 @@ if (location.pathname.startsWith("/pages")) {
 
 - `/` — a GALLERY. The standing as the headline ("2 gardeners, 3 plots and
   1 planting." or "Nothing here yet." and the act that begins it), then every
-  picture as a large live card, two across at a desk, one on a phone, then
-  the kinds as a row of counts, a line to the map, and Recently. A kind
+  picture as a large live card, then the kinds as a row of counts, a line to the map, and Recently. A kind
   with no titled lens gets a contact sheet of its members, so a new app
   lands on a gallery. An empty picture names the act that fills it.
 - `/<plural>` — a list per kind, marking trouble, with the creating acts
   beneath it.
-- `/<plural>/<id>` — a record: its facts, its relations captioned in the
-  declaration's words, what can be done, what has happened.
+- `/<plural>/<id>` — a record: its facts, changed where they stand, its
+  relations in the declaration's words, what can be done, what happened.
 - `/problems` — every broken rule with its repairs.
 
 The shell is the app bar, a row: the name, the switch (Scene, Pages;
 `pages: { scene, pages }` renames them), the place you are on — whose list
-holds the home, the Lists, the Pictures — Find, standing, person.
+holds the home, the Lists, the Pictures (on a wide bar they stand, the
+rest under More) — Find, standing, person.
 
 **Arrange it in the declaration**: `pages: { order: ["offer",
 "package"], hide: ["party"], first: "The offers" }`. `order` sets the
 gallery, nav and city; `hide` takes kinds off the home only; `first` (a
 place, a kind or `"home"`) is where both faces open.
-`placesOf(app)` lists every place.
+`placesOf(app)` lists them.
 **Home as data** (FR-81): `home`, blocks as in `graview-node-kind`
 (`views.home`), replaces this body, and the app opens on it (FR-136).
 
@@ -52,13 +52,12 @@ place, a kind or `"home"`) is where both faces open.
 under its routes, which buys three things at once:
 
 - `/places`, `/places/<as>` — every named lens as a page (fullscreen, over
-  the kind's members, its kind as a list, the beginning acts beneath)
-  and the gallery again. A kind's page lists its pictures; a pick in a lens
+  the kind's members, the beginning acts beneath). A kind's page lists its pictures; a pick in a lens
   travels to the record. A kind's own row (one × glyph) is each line of its
   list, and its own page view (one × full) heads its record.
 - `/map` — `kindMap(store)`: every declared relation in its words with
   its live count, also a section on the home page. A kind's list says what
-  it relates to and arranges itself in the shared words (`?sort=due:desc`,
+  it relates to, arranged in the shared words (`?sort=due:desc`,
   `?filter=done:false`, `?group=due:month`, `?q=tape`) a lens carries in
   its fragment, so an arrangement is a link; `?by=`, `?<edge>=<id>`,
   `?with=` and `?past=1` still land. A record links back.
@@ -68,17 +67,18 @@ under its routes, which buys three things at once:
   `<PageUndo>` says where, one that does not gets them drawn around it,
   and `surface("shell", Shell, { without: ["find"] })` goes without.
 - **The assistant**, on every route: one control opens the scene's own
-  `Companion` in a drawer, and the ROUTE is what "this" means. Grounded
-  questions before anybody types; proposals apply through the same runtime,
+  `Companion` in a drawer, the ROUTE what "this" means. Grounded questions
+  before anyone types; proposals apply through the same runtime,
   attributed and undoable, withheld ones struck through. Open questions are
   listed on `/problems`; the rung that answers is chosen in the footer.
 
-Everything a page shows is a derivation the scene also uses: `recordFacts`,
+Everything a page shows is a derivation the scene uses too: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is
 or who may take it** — it strikes through what the seat may not, and says why.
-A record's facts include its `computed` fields, from what the seat may see.
+A record's facts, `computed` ones too, read in declared order or as the
+kind's `display.page` groups them; prose keeps its paragraphs, full width.
 
-**At a phone's width this face is the answer.** `Shell` carries `pagesHref`.
+**On a phone this face is the answer.** `Shell` carries `pagesHref`.
 
 ## Rung one: a page in the app's own words
 

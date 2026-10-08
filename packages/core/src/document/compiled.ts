@@ -344,7 +344,9 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       ...(spec.lifecycle ? { lifecycle: { field: spec.lifecycle.field, retired: spec.lifecycle.retired } } : {}),
       ...(spec.figure ? { figure: spec.figure } : {}),
       ...(spec.computed && Object.keys(spec.computed).length > 0 ? { computed: spec.computed } : {}),
-      ...(Object.keys(labels).length > 0 || spec.glance ? { display: { ...(Object.keys(labels).length > 0 ? { labels } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}) } } : {}),
+      ...(Object.keys(labels).length > 0 || spec.glance || spec.page
+        ? { display: { ...(Object.keys(labels).length > 0 ? { labels } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}), ...(spec.page ? { page: spec.page } : {}) } }
+        : {}),
       ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
     } as never);
   });

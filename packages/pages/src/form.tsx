@@ -14,7 +14,7 @@ import {
 } from "@graview/core";
 import type { AnyMutationDefinition } from "@graview/core";
 import type { OpenParameter } from "@graview/tools";
-import { useState, type ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 
 /**
  * A form, walked off the mutation's own declaration.
@@ -194,6 +194,23 @@ function Control<S extends AnySchema>({
   switch (spec.control) {
     case "text":
     case "date":
+      // Prose is asked for in a text area: Enter is a new line, and every line break is kept (FR-147).
+      if (spec.control === "text" && spec.long) {
+        return (
+          <label data-graview-part="field" data-graview-field="text">
+            <span data-graview-part="label">{title}</span>
+            <textarea
+              name={spec.name}
+              required={!spec.optional}
+              rows={6}
+              value={typeof value === "string" ? value : ""}
+              onChange={(event) => onChange(event.target.value)}
+              data-graview-part="control"
+              style={{ fieldSizing: "content", minHeight: "7.5em", resize: "vertical", font: "inherit", lineHeight: 1.5 } as CSSProperties}
+            />
+          </label>
+        );
+      }
       return (
         <label data-graview-part="field" data-graview-field={spec.control}>
           <span data-graview-part="label">{title}</span>

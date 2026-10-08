@@ -13,6 +13,9 @@
 export { ArrangeBar, arrangementCaption, arrangementOf, withArrangement } from "./arrange-bar.js";
 export type { ArrangeBarProps } from "./arrange-bar.js";
 export { DefaultViewElsewhere } from "./default-view.js";
+// A record's values as the scene draws them: changed in place, prose with its paragraphs kept (FR-146, FR-147).
+export { EditableValue, LongValue } from "./editable.js";
+export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
 export { KindFigure } from "./figure.js";
 export { LadderSetting } from "./ladder.js";
 export { useMarkup } from "./markup.js";

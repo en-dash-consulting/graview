@@ -166,20 +166,4 @@ export function layerViews<S extends AnySchema>(base: ReactViewRegistry<S>, over
 
 export type { Cardinality, Fidelity, ViewCell };
 
-/**
- * The mark a framework-supplied view carries, so a scene can tell a group
- * shown by the framework's own list from one an app gave a picture of its
- * own. From altitude the first is its district; the second keeps its card.
- */
-export const DEFAULT_VIEW: unique symbol = Symbol.for("graview.default-view");
-
-/** Marks a view as the framework's own. Returns the same component. */
-export function markDefaultView<V extends object>(view: V): V {
-  Object.defineProperty(view, DEFAULT_VIEW, { value: true, enumerable: false });
-  return view;
-}
-
-/** Whether a view is the framework's own rather than the app's. */
-export function isDefaultView(view: unknown): boolean {
-  return typeof view === "function" && (view as { [DEFAULT_VIEW]?: boolean })[DEFAULT_VIEW] === true;
-}
+export { DEFAULT_VIEW, isDefaultView, markDefaultView, markReplacesPage, REPLACES_PAGE, replacesPage } from "./view-marks.js";

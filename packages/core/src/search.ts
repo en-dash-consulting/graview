@@ -206,7 +206,9 @@ export function strengthOf(text: string, words: readonly string[]): Exclude<Matc
 }
 
 /** The text around the first word's match, with an ellipsis where it was cut. */
-export function fragmentOf(text: string, words: readonly string[], width = 48): string {
+export function fragmentOf(written: string, words: readonly string[], width = 48): string {
+  // One line: a draft's paragraphs and lists, read as words in a line of a list of hits (FR-146).
+  const text = written.replace(/\s+/g, " ").trim();
   if (text.length <= width) return text;
   const first = words[0];
   const folded = text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();

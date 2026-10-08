@@ -49,7 +49,19 @@ opens every place the app has (FR-138): the home first, then the Lists
 connect), each with its mark, a long name wrapped. Every place is two
 presses away, Escape gives the keyboard back to the control, and the bar
 is one row of 48 px however many places there are; on a phone the place
-control is the page's first line, under the bar. At the right, three tools
+control is the page's first line, under the bar. On the scene the same
+control names what the scene shows — "The whole thing", or the picture in
+view — and lists its pictures (FR-144): choosing one moves the scene's
+`in.view`, and its address under `routing: "address"`, as any other way
+to a picture does. Where the bar has room after the name, the switch and
+the tools, the places themselves stand on the row as words in their order,
+the one you are on underlined and always among them, and the rest fold
+into "More" (FR-145); measured from the bar's own width, so a narrow box
+keeps the one control. A harness reaches any place the same way at every
+width: `[data-testid="app-place-<key>"]` (with its `data-place-path`) is
+one element in the embed — press it if it is visible, else press
+`app-places-open` ("More", or the one control) and then press it in
+`app-places`; `app-place-current` says where the reader is. At the right, three tools
 of one size: Find (a small box that says "Find…" and its shortcut, ⌘K on a
 Mac and Ctrl K elsewhere, and is drawn wide while it is used; a magnifier
 that opens the box over the row on a phone), the standing (a dot in the tone of the rules, a number
@@ -75,6 +87,15 @@ on Pages at its home, full width under the bar, on a desk as on a phone,
 when the host names no face; under address routing it does so at the bare
 address whatever face the host names. Nothing floats over the scene. A
 declaration that names another first place (`pages.first`) opens there.
+
+A VIEW OF ONE RECORD SITS ABOVE ITS FIELDS (FR-149). A worker view
+registered through `views` with `cardinality: "one"` is drawn above the
+record's own fields, which stay editable: on the scene the record drawn at
+full is the view and then its fields, on Pages the record's page is its
+heading, the view, then its facts and what can be done. Its manifest's
+`replaces: "page"` draws it alone instead. A view may ask the host to fill
+a field from the record it draws (`data-prefill`, FR-150): see
+`@graview/guest`.
 
 ## What a page loads first
 

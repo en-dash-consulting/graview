@@ -19,7 +19,9 @@
  *   the switch's Scene is a step Back undoes, the scene at its own address
  *   (`<base>/places/overview`, FR-132) with its stop in the fragment, a
  *   reload of the scene stays on the scene, and the switch's Pages goes
- *   back to the page the reader was on (FR-137);
+ *   back to the page the reader was on (FR-137); a picture of the scene's
+ *   chosen from the bar moves the scene's `in.view` and its address
+ *   together, a step Back undoes (FR-144);
  *   from Up, a lens double-clicked on its district goes down into it — the
  *   kind in focus, that picture `in.view`, the address saying so — and Back
  *   returns to Up;
@@ -318,6 +320,15 @@ try {
         one.toggleUndone = await settled();
         await tab.goForward();
         one.toggleRedone = await settled();
+        // FR-144: a picture of the scene's, chosen from the bar — the scene's `in.view` and the address move together, and Back undoes it.
+        await press('[data-testid="app-place-scene:whole"]');
+        one.wholeFromTheBar = { ...(await settled()), said: await tab.evaluate(() => document.querySelector('[data-testid="app-place-current"]')?.textContent.trim() ?? null) };
+        await press('[data-testid="app-place-scene:task:the-board"]');
+        one.pictureFromTheBar = { ...(await settled()), said: await tab.evaluate(() => document.querySelector('[data-testid="app-place-current"]')?.textContent.trim() ?? null) };
+        await tab.goBack();
+        one.pictureUndone = { ...(await settled()), said: await tab.evaluate(() => document.querySelector('[data-testid="app-place-current"]')?.textContent.trim() ?? null) };
+        await tab.goForward();
+        await settled();
         // The switch's Pages: back to the page the reader was on (FR-137).
         await press('[data-testid="app-face-pages"]');
         one.backToPages = await settled();
@@ -588,6 +599,26 @@ try {
         backToPages.face === "pages" &&
         backToPages.path === `${BASE}/places/the-board` &&
         !backToPages.fragment,
+    ),
+  };
+  /* FR-144: the scene's picture, from the bar, is the scene's `in.view` and its address at once. */
+  const inView = (state) => new URLSearchParams(String(state?.hash ?? "").replace(/^#/, "")).get("in.view");
+  report.checks.aScenePictureChosenFromTheBarMovesInViewAndTheAddress = {
+    seen: Object.fromEntries(Object.entries(pick("pictureFromTheBar")).map(([name, seen]) => [name, { whole: results[name].wholeFromTheBar, chosen: seen, back: results[name].pictureUndone }])),
+    ok: every(
+      ({ wholeFromTheBar, pictureFromTheBar, pictureUndone }) =>
+        wholeFromTheBar.face !== "pages" &&
+        wholeFromTheBar.said === "The whole thing" &&
+        inView(wholeFromTheBar) === null &&
+        pictureFromTheBar.face !== "pages" &&
+        pictureFromTheBar.path === `${BASE}/places/overview` &&
+        inView(pictureFromTheBar) === "the-board" &&
+        pictureFromTheBar.said === "The board" &&
+        pictureFromTheBar.pushes === wholeFromTheBar.pushes + 1 &&
+        pictureUndone.face !== "pages" &&
+        pictureUndone.path === `${BASE}/places/overview` &&
+        inView(pictureUndone) === null &&
+        pictureUndone.said === "The whole thing",
     ),
   };
   /* FR-132: the scene is a place, at its own address, its stop riding on it. */

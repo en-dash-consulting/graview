@@ -41,8 +41,11 @@ the schema, the invariants and the op log.
 **The app, said once** — `AppBar`: one bar over every face (FR-131) — the
 brand's mark (`AppMark`, drawn as given, never an SVG that could act) and
 the app's name as the page's heading, the switch between the scene and the
-pages (`faces`, FR-137), on Pages the place you are on as one control that
-opens every place (`barPlaces`: the home, the Lists, the Pictures, FR-138),
+pages (`faces`, FR-137), the place you are on as one control that
+opens every place (`barPlaces`: the home, the Lists, the Pictures, FR-138;
+on the scene `useScenePlaces`: the whole thing and each picture, FR-144),
+the places standing on the row where they fit, the rest under "More"
+(`placesThatStand`, FR-145),
 and three tools of one size: the Find a
 face puts in it (`useBarFind`), `Standing` and `Profile`. `AppTitle` draws
 the mark, the name and the line under it elsewhere; `useFavicon` is for a
