@@ -113,8 +113,9 @@ export const BUDGETS = [
     // Raised, over FR-139, when a selected record came to be drawn once (FR-141–FR-143): a declared page read for what it
     // already says and the record page leaving that out, a district name fitted to its box and its count said once, a
     // relation said in its words: 3_892 / 1_348 more. Measured at 517_736 / 177_866.
-    minified: 517_850,
-    gzipped: 177_950,
+    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration. Measured at 528_836 / 181_493.
+    minified: 529_500,
+    gzipped: 181_900,
     load: "first",
   },
   {
@@ -246,8 +247,9 @@ export const BUDGETS = [
     // Raised, over the bar that fits its box and FR-140, when a part fetched as it is first drawn came to try again after it
     // failed to arrive and to say so in its place rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the
     // menu's fetch when the page is idle. 2_986 / 1_355 more. Measured at 702_598 / 182_707.
-    minified: 703_150,
-    gzipped: 183_250,
+    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration. Measured at 708_858 / 185_034.
+    minified: 709_500,
+    gzipped: 185_400,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -366,8 +368,9 @@ export const BUDGETS = [
     // menu's fetch when the page is idle. 3_358 / 1_475 more. Measured at 1_557_457 / 470_989.
     // Raised, over FR-139, when a selected record came to be drawn once (FR-141–FR-143), with the page at the head of the
     // scene's record and the record in focus held to its box: 4_345 / 1_455 more. Measured at 1_561_802 / 472_444.
-    minified: 1_561_900,
-    gzipped: 472_550,
+    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration. Measured at 1_579_964 / 478_795.
+    minified: 1_580_800,
+    gzipped: 479_300,
     load: "all",
   },
   {
@@ -423,8 +426,9 @@ export const BUDGETS = [
     // menu's fetch when the page is idle. 3_358 / 1_482 more. Measured at 1_523_423 / 456_109.
     // Raised, over FR-139, with every face's for a selected record drawn once (FR-141–FR-143): 4_350 / 1_454 more.
     // Measured at 1_527_773 / 457_563.
-    minified: 1_527_900,
-    gzipped: 457_650,
+    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration. Measured at 1_543_744 / 462_801.
+    minified: 1_544_500,
+    gzipped: 463_200,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
@@ -526,8 +530,9 @@ export const BUDGETS = [
     // the guest host judging an inline logo before it makes an image of the host page from it. Measured at 16_857 / 7_266.
     // Raised when the host's half of a worker view, and its drawing, came to be asked for again after they failed to arrive
     // (FR-139): `retryingImport`, and asking again when the browser is back online. 753 / 343 more. Measured at 17_610 / 7_610.
-    minified: 17_850,
-    gzipped: 7_800,
+    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration. Measured at 18_580 / 8_058.
+    minified: 18_850,
+    gzipped: 8_250,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -605,8 +610,9 @@ export const BUDGETS = [
     // the guest host judging an inline logo before it makes an image of the host page from it. Measured at 126_521 / 45_488.
     // Raised when the host's half of a worker view, and its drawing, came to be asked for again after they failed to arrive
     // (FR-139): `retryingImport`, and asking again when the browser is back online. 582 / 252 more. Measured at 127_103 / 45_742.
-    minified: 127_600,
-    gzipped: 46_000,
+    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration. Measured at 129_687 / 46_681.
+    minified: 130_000,
+    gzipped: 46_900,
     load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
