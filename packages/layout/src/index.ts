@@ -7,6 +7,7 @@ export {
   kindsOfAggregate,
   KIND_PREFIX,
   withJackIn,
+  withPicture,
   AGGREGATE_PREFIX,
 } from "./ids.js";
 export { holdLayout, layout, marqueeHeightFor, panLayout, planeOf, ROSTER_MOST, ROSTER_ROW, rosterHeight, rosterRows, SCREEN_LEASH_CELLS, type NameWidth } from "./layout.js";

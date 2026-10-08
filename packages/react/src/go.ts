@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { aggregateId, withFocus, withOverview, withWithin } from "@graview/layout/view";
+import { withFocus, withOverview, withPicture } from "@graview/layout/view";
 import { createContext, useContext, useMemo } from "react";
 import { useGraviewIfAny } from "./context.js";
 
@@ -37,7 +37,7 @@ export function useGoTo<S extends AnySchema>(): GoTo {
         },
         place: (as) => {
           const place = graview?.views.places().find((candidate) => candidate.as === as);
-          if (place) graview!.setView((view) => withWithin(withOverview(withFocus(view, aggregateId(place.kind)), false), "view", place.as));
+          if (place) graview!.setView((view) => withPicture(view, place.kind, place.as));
         },
       },
     [given, graview],

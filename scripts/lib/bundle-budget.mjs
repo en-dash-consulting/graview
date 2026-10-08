@@ -115,8 +115,10 @@ export const BUDGETS = [
     // relation said in its words: 3_892 / 1_348 more. Measured at 517_736 / 177_866.
     // Raised by the security review before 0.1.18 (a retry imports only a chunk on the bundle's own origin; a link's pins and
     // dimensions have no prototype). Measured at 517_905 / 177_951.
-    minified: 518_000,
-    gzipped: 178_000,
+    // Raised when a lens double-clicked from Up came to open it: the first press waits a double-click's length for the
+    // second where the pointer still is, and the one stop down into a picture (`withPicture`): 1_034 / 392 more, over the security review. Measured at 518_939 / 178_343.
+    minified: 519_050,
+    gzipped: 178_450,
     load: "first",
   },
   {
@@ -370,8 +372,9 @@ export const BUDGETS = [
     // scene's record and the record in focus held to its box: 4_345 / 1_455 more. Measured at 1_561_802 / 472_444.
     // Raised by the security review before 0.1.18 (a retry imports only a chunk on the bundle's own origin; a link's pins and
     // dimensions have no prototype). Measured at 1_561_966 / 472_529.
-    minified: 1_562_050,
-    gzipped: 472_550,
+    // Raised when a lens double-clicked from Up came to open it: 985 / 364 more, over the security review. Measured at 1_562_951 / 472_893.
+    minified: 1_563_050,
+    gzipped: 473_000,
     load: "all",
   },
   {
@@ -429,8 +432,9 @@ export const BUDGETS = [
     // Measured at 1_527_773 / 457_563.
     // Raised by the security review before 0.1.18 (a retry imports only a chunk on the bundle's own origin; a link's pins and
     // dimensions have no prototype). Measured at 1_527_937 / 457_645.
-    minified: 1_528_050,
-    gzipped: 457_650,
+    // Raised with every face's when a lens double-clicked from Up came to open it: 985 / 370 more, over the security review. Measured at 1_528_922 / 458_015.
+    minified: 1_529_050,
+    gzipped: 458_100,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

@@ -14,7 +14,7 @@
  * chunk whenever any chunk uses it.
  */
 export * from "./view-state.js";
-export { aggregateId, AGGREGATE_PREFIX, BAND_PREFIX, isAggregateId, isBandAggregate, KIND_PREFIX, kindCardId, kindOfCard, kindsOf, kindsOfAggregate, withJackIn } from "./ids.js";
+export { aggregateId, AGGREGATE_PREFIX, BAND_PREFIX, isAggregateId, isBandAggregate, KIND_PREFIX, kindCardId, kindOfCard, kindsOf, kindsOfAggregate, withJackIn, withPicture } from "./ids.js";
 export { MARQUEE_GAP, marqueeHeightFor, ROSTER_CHROME, ROSTER_KEPT, ROSTER_MOST, ROSTER_ROW, rosterHeight, rosterRows, MARQUEE_WIDTH, type NameWidth } from "./sizes.js";
 export { estimateWidth } from "./estimate.js";
 export type { Measure } from "./estimate.js";

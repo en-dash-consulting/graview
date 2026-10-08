@@ -107,8 +107,14 @@ export const FACE_DOORS = {
  * took it to 589 828 bytes (576.0 KB), 186 more; the claim rises by that
  * with about 0.2 KB of room: 576.2 KB, which leaves Cloud's shell 18.8 KB
  * under its 595.
+ *
+ * A lens double-clicked from Up opening it (the one stop down into a
+ * picture that the bar's places and `go.place` now share), over the security
+ * review before 0.1.18, took it to 590 033 bytes, 41 more than without it;
+ * the claim rises by 0.1 KB to 576.3 KB, which leaves Cloud's shell 18.7 KB
+ * under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 576.2 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 576.3 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
