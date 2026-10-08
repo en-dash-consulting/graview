@@ -116,8 +116,11 @@ export const BUDGETS = [
     // Raised by the security review before 0.1.18 (a retry imports only a chunk on the bundle's own origin; a link's pins and
     // dimensions have no prototype). Measured at 517_905 / 177_951.
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review and module moves. Measured at 528_973 / 181_573.
-    minified: 529_500,
-    gzipped: 181_900,
+    // Raised by the review after 0.1.17: the Ask and its drawer placed inside their embed's box (and read back where a host's
+    // transform moved them), a pane kept inside its embed where it fits, a notice put away while its embed is scrolled out of
+    // the window. 1_617 / 513 more. Measured at 530_590 / 182_086.
+    minified: 531_100,
+    gzipped: 182_400,
     load: "first",
   },
   {
@@ -373,8 +376,10 @@ export const BUDGETS = [
     // Raised by the security review before 0.1.18 (a retry imports only a chunk on the bundle's own origin; a link's pins and
     // dimensions have no prototype). Measured at 1_561_966 / 472_529.
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review and module moves. Measured at 1_580_701 / 478_984.
-    minified: 1_581_300,
-    gzipped: 479_400,
+    // Raised with the pages face's by the review after 0.1.17 (the Ask and the panes kept inside their embed): 1_612 / 540 more.
+    // Measured at 1_582_313 / 479_524.
+    minified: 1_582_800,
+    gzipped: 479_900,
     load: "all",
   },
   {
@@ -433,8 +438,10 @@ export const BUDGETS = [
     // Raised by the security review before 0.1.18 (a retry imports only a chunk on the bundle's own origin; a link's pins and
     // dimensions have no prototype). Measured at 1_527_937 / 457_645.
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review and module moves. Measured at 1_544_481 / 462_997.
-    minified: 1_545_000,
-    gzipped: 463_400,
+    // Raised with the pages face's by the review after 0.1.17 (the Ask and the panes kept inside their embed): 1_612 / 542 more.
+    // Measured at 1_546_093 / 463_539.
+    minified: 1_546_600,
+    gzipped: 463_900,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

@@ -113,8 +113,13 @@ export const FACE_DOORS = {
  * 0.1.18, took it to 597 214 bytes (583.2 KB), 7 386 more; the claim rises
  * by that with about 0.2 KB of room: 583.4 KB, which leaves Cloud's shell
  * 11.6 KB under its 595.
+ * The review after 0.1.17 (the pages face's Ask and its drawer placed inside
+ * their embed's box, a pane hung from a control in an embed kept inside it,
+ * a notice put away while its embed is scrolled out of the window) took it
+ * to 597 483 bytes (583.5 KB), 269 more; the claim rises by that with about
+ * 0.1 KB of room: 583.6 KB, which leaves Cloud's shell 11.4 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 583.4 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 583.6 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -207,8 +212,10 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * bytes: 532.6 KB.
  * The same integration (FR-144–FR-151) took it to 551 584 bytes
  * (538.7 KB); the claim rises by that with about 0.1 KB of room: 538.8 KB.
+ * The review after 0.1.17, the same 269 bytes as the page that compiles,
+ * took it to 551 853 bytes (538.9 KB): 539.0 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 538.8 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 539 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [
