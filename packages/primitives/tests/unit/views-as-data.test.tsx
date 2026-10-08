@@ -91,15 +91,17 @@ describe("views as data", () => {
     expect(html).toContain("Bloom &amp; Co");
   });
 
-  it("draws a row at one × glyph and a page above the default record view", () => {
+  it("draws a row at one × glyph and a page at the head of the default record view", () => {
     const row = draw({ cardinality: "one", fidelity: "glyph" });
     expect(row).toContain('data-graview-spec="row"');
     expect(row).toContain('data-graview-tone="accent"');
     const page = draw({ cardinality: "one", fidelity: "full" });
     expect(page).toContain('data-graview-spec="page"');
     expect(page).toContain("Quoted 2,400");
-    // The default is still under it: the rename control and the fields.
-    expect(page.indexOf('data-graview-spec="page"')).toBeLessThan(page.indexOf('data-graview-primitive="panel"'));
+    // One frame (FR-141): the page inside the default record, at its head, above the fields it does not say.
+    expect(page.split('data-graview-primitive="panel"').length - 1).toBe(1);
+    expect(page.indexOf('data-graview-primitive="panel"')).toBeLessThan(page.indexOf('data-graview-spec="page"'));
+    expect(page.indexOf('data-graview-spec="page"')).toBeLessThan(page.indexOf("data-graview-fields"));
   });
 
   it("tones a badge from the theme's tokens, and nothing else", () => {

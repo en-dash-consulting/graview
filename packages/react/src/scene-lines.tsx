@@ -1,4 +1,4 @@
-import { SCENE_LAYERS, type AnySchema, type GraphReader, type NodeOfSchema } from "@graview/core";
+import { humanizeField, SCENE_LAYERS, type AnySchema, type GraphReader, type NodeOfSchema } from "@graview/core";
 import { type InterpolatedLayout, edgeSelectionId, edgeOfSelection } from "@graview/layout";
 import { CONNECTOR_DASH, connectorStroke, styleFor } from "@graview/render";
 import { useMemo, useLayoutEffect, useState } from "react";
@@ -743,7 +743,7 @@ export function RelationCaptions({
       const { scale } = styleFor(1, scheme);
       entries.push({
         key: `${node.via.edgeKind}|${node.via.direction}`,
-        text: node.via.description ?? node.via.edgeKind.replace(/-/g, " "),
+        text: node.via.description ?? humanizeField(node.via.edgeKind).toLowerCase(),
         left: measured?.x ?? node.x,
         right: measured ? measured.x + measured.width : node.x + node.width * scale,
         top: measured?.y ?? node.y,

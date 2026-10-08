@@ -1,4 +1,4 @@
-import { SCENE_LAYERS } from "@graview/core";
+import { humanizeField, SCENE_LAYERS } from "@graview/core";
 import { type Connector, edgeSelectionId, edgeOfSelection } from "@graview/layout";
 import { CONNECTOR_DASH, connectorStroke, connectorWidth } from "@graview/render";
 import type { ActivityMark } from "./activity.js";
@@ -951,7 +951,7 @@ export function Connectors({
                   fill: "var(--graview-ink-faint)",
                 }}
               >
-                {connector.kind.replace(/-/g, " ")}
+                {humanizeField(connector.kind).toLowerCase()}
               </text>
             ) : null}
           </g>

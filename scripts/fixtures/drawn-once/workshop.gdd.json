@@ -1,0 +1,250 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Farm Bureau probe",
+  "description": "The parts of a product operating model workshop, the topics each covers, and what comes out of it.",
+  "kinds": {
+    "segment": {
+      "noun": "workshop part",
+      "plural": "workshop parts",
+      "description": "One part of the workshop, in the order it runs.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "order": {
+          "type": "integer",
+          "label": "Order"
+        },
+        "goal": {
+          "type": "text",
+          "label": "Goal",
+          "description": "what this part is for"
+        },
+        "phase": {
+          "type": "enum",
+          "options": [
+            "before",
+            "during",
+            "after"
+          ],
+          "default": "during"
+        },
+        "summary": {
+          "type": "text",
+          "label": "Summary"
+        }
+      },
+      "label": "{title}"
+    },
+    "topic": {
+      "noun": "topic",
+      "plural": "topics",
+      "description": "Something a part of the workshop covers.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "detail": {
+          "type": "text",
+          "description": "why it matters"
+        }
+      },
+      "label": "{title}",
+      "edges": {
+        "partOf": {
+          "to": [
+            "segment"
+          ],
+          "cardinality": "one",
+          "description": "the workshop part it belongs to",
+          "inverse": "covers"
+        }
+      }
+    },
+    "decision": {
+      "noun": "decision",
+      "plural": "decisions",
+      "description": "Something the workshop settled.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "label": "{title}"
+    },
+    "deliverable": {
+      "noun": "deliverable",
+      "plural": "deliverables",
+      "description": "Something the workshop hands over.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "label": "{title}"
+    },
+    "person": {
+      "noun": "person",
+      "plural": "people",
+      "description": "Someone in the room.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    "open-item": {
+      "noun": "open item",
+      "plural": "open items",
+      "description": "Something still to answer.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "label": "{title}"
+    },
+    "date-option": {
+      "noun": "date option",
+      "plural": "date options",
+      "description": "A day the workshop could run.",
+      "fields": {
+        "day": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "label": "{day}"
+    },
+    "workstream": {
+      "noun": "workstream",
+      "plural": "workstreams",
+      "description": "A line of work that comes out of the workshop.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "label": "{title}"
+    }
+  },
+  "acts": {
+    "add-segment": {
+      "title": "Add a workshop part",
+      "creates": "segment",
+      "description": "Add a part of the workshop."
+    },
+    "change-segment": {
+      "title": "Change the workshop part",
+      "on": "segment",
+      "writes": [
+        "title",
+        "goal",
+        "phase",
+        "summary",
+        "order"
+      ],
+      "description": "Change what a part of the workshop says."
+    },
+    "add-topic": {
+      "title": "Add a topic",
+      "creates": "topic",
+      "description": "Add something a part covers."
+    },
+    "file-topic": {
+      "title": "Put a topic in a part",
+      "on": "topic",
+      "connects": "partOf",
+      "description": "Say which part of the workshop a topic belongs to.",
+      "fromTheOtherEnd": "Put a topic in this part"
+    },
+    "unfile-topic": {
+      "title": "Take out of its part",
+      "on": "topic",
+      "severs": "partOf",
+      "description": "Take a topic out of its part of the workshop.",
+      "fromTheOtherEnd": "Take a topic out of this part"
+    }
+  },
+  "roles": [
+    "owner",
+    "editor",
+    "viewer"
+  ],
+  "policy": {
+    "grants": [
+      {
+        "roles": [
+          "owner",
+          "editor"
+        ],
+        "mutations": "*",
+        "describe": "Owners and editors may do everything; viewers can look."
+      }
+    ]
+  },
+  "views": {
+    "segment": {
+      "card": [
+        {
+          "title": "{title}"
+        },
+        {
+          "text": "Goal: {goal}",
+          "tone": "bad"
+        },
+        {
+          "text": "Covers"
+        },
+        {
+          "list": "in('partOf')",
+          "as": "row",
+          "sort": "title"
+        }
+      ],
+      "page": [
+        {
+          "title": "{title}"
+        },
+        {
+          "text": "{summary}"
+        },
+        {
+          "text": "Goal: {goal}",
+          "tone": "bad"
+        },
+        {
+          "text": "Covers"
+        },
+        {
+          "list": "in('partOf')",
+          "as": "row",
+          "sort": "title"
+        }
+      ]
+    },
+    "topic": {
+      "row": [
+        {
+          "group": [
+            {
+              "title": "{title}"
+            },
+            {
+              "text": "{detail}"
+            }
+          ],
+          "direction": "row"
+        }
+      ]
+    }
+  }
+}
