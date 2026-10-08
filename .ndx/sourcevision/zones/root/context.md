@@ -5,28 +5,39 @@
 <zone>
 
 Zone: Project Root (`root`)
-Files: 1, Cohesion: 1.00, Coupling: 0.00
-Risk: healthy (score: 0.00)
-Description: Project configuration and manifest files: vitest.config.ts
-Lines: 80
+Files: 2, Cohesion: 0.00, Coupling: 0.00
+Risk: at-risk (score: 0.50)
+Description: Build, packaging, and CI scripts: offers-app.ts, vitest.config.ts
+Entry points: scripts/fixtures/offers-app.ts
+Lines: 211
 
 </zone>
 
 <files>
 
-vitest.config.ts (TypeScript, 80 lines, config)
+scripts/fixtures/offers-app.ts (TypeScript, 110 lines, build)
+vitest.config.ts (TypeScript, 101 lines, config)
 
 </files>
 
+<imports>
+
+
+Incoming (other zones → this zone):
+  ← tests-guest-unit: packages/guest/tests/unit/a-frame-guest-reads-across-kinds.test.tsx → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-titled-guest-view-is-a-place.test.tsx → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-worker-that-cannot-start-says-start.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-worker-view-is-a-place-shown-only-what-it-reads.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-worker-view-past-its-limits-is-stopped.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-worker-views-links-stay-in-the-app.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → scripts/fixtures/offers-app.ts
+
+</imports>
+
 <findings>
 
-[observation] [info] High cohesion (1) — files are tightly interconnected
+[observation] [info] Isolated files — no import edges between 2 files, cohesion is unmeasurable (reported as 0)
+[suggestion] [info] Zone "Project Root" has an unreliable risk reading: only 2 files tracked (minimum 5 needed for reliable metrics) — cohesion: 0.00, coupling: 0.00 (risk score: 0.50)
 
 </findings>
 
 <insights>
 
-- High cohesion (1) — files are tightly interconnected
+- Isolated files — no import edges between 2 files, cohesion is unmeasurable (reported as 0)
 - [call graph] 14 internal calls, 0 outgoing, 0 incoming (cohesion: 1, coupling: 0)
 
 </insights>

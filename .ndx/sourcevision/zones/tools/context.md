@@ -9,32 +9,32 @@ Files: 32, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: 32 files, mostly utilities and services; entry points index.ts, cli.ts, mcp-stdio.ts; imported by Packages.
 Entry points: packages/tools/src/cli.ts, packages/tools/src/derive.ts, packages/tools/src/index.ts, packages/tools/src/local.ts, packages/tools/src/mcp-stdio.ts, packages/tools/src/pins.ts, packages/tools/src/usage.ts
-Lines: 7975
+Lines: 8121
 
 </zone>
 
 <files>
 
-packages/tools/src/agent/adapters.ts (TypeScript, 91 lines, source)
-packages/tools/src/agent/tools.ts (TypeScript, 722 lines, source)
-packages/tools/src/agent/untrusted.ts (TypeScript, 146 lines, source)
-packages/tools/src/cli.ts (TypeScript, 448 lines, source)
+packages/tools/src/agent/adapters.ts (TypeScript, 97 lines, source)
+packages/tools/src/agent/tools.ts (TypeScript, 805 lines, source)
+packages/tools/src/agent/untrusted.ts (TypeScript, 168 lines, source)
+packages/tools/src/cli.ts (TypeScript, 453 lines, source)
 packages/tools/src/conversation.ts (TypeScript, 849 lines, source)
 packages/tools/src/decide.ts (TypeScript, 144 lines, source)
 packages/tools/src/derive.ts (TypeScript, 431 lines, source)
-packages/tools/src/edit.ts (TypeScript, 153 lines, source)
+packages/tools/src/edit.ts (TypeScript, 160 lines, source)
 packages/tools/src/figure.ts (TypeScript, 116 lines, source)
-packages/tools/src/frame.ts (TypeScript, 20 lines, source)
+packages/tools/src/frame.ts (TypeScript, 19 lines, source)
 packages/tools/src/index.ts (TypeScript, 117 lines, source)
 packages/tools/src/intelligence.ts (TypeScript, 516 lines, source)
 packages/tools/src/local.ts (TypeScript, 408 lines, source)
 packages/tools/src/loop.ts (TypeScript, 256 lines, source)
-packages/tools/src/mcp-http.ts (TypeScript, 131 lines, source)
+packages/tools/src/mcp-http.ts (TypeScript, 134 lines, source)
 packages/tools/src/mcp-protocol.ts (TypeScript, 88 lines, source)
 packages/tools/src/mcp-stdio.ts (TypeScript, 65 lines, source)
 packages/tools/src/pins.ts (TypeScript, 73 lines, source)
 packages/tools/src/plan.ts (TypeScript, 433 lines, source)
-packages/tools/src/providers/insight.ts (TypeScript, 95 lines, source)
+packages/tools/src/providers/insight.ts (TypeScript, 116 lines, source)
 packages/tools/src/providers/invariant.ts (TypeScript, 135 lines, source)
 packages/tools/src/providers/jev.ts (TypeScript, 218 lines, source)
 packages/tools/src/providers/lens.ts (TypeScript, 49 lines, source)
@@ -54,7 +54,7 @@ packages/tools/src/usage.ts (TypeScript, 58 lines, source)
 
 Internal:
   packages/tools/src/agent/adapters.ts → packages/tools/src/agent/tools.ts {ToolAnnotations, ToolRuntime}
-  packages/tools/src/agent/tools.ts → packages/tools/src/agent/untrusted.ts {authorship, markGraph, markHits, markNode}
+  packages/tools/src/agent/tools.ts → packages/tools/src/agent/untrusted.ts {authorship, markComputed, markGraph, markHits, markNode}
   packages/tools/src/agent/tools.ts → packages/tools/src/derive.ts {deriveAffordances, applyAffordance}
   packages/tools/src/agent/tools.ts → packages/tools/src/derive.ts {DeriveOptions}
   packages/tools/src/cli.ts → packages/tools/src/agent/adapters.ts {createMcpAdapter}
@@ -77,10 +77,6 @@ Internal:
   packages/tools/src/derive.ts → packages/tools/src/usage.ts {usageBoost, usageWeights}
   packages/tools/src/edit.ts → packages/tools/src/types.ts {OpenParameter}
   packages/tools/src/figure.ts → packages/tools/src/intelligence.ts {Completion}
-  packages/tools/src/frame.ts → packages/tools/src/edit.ts {editableFields}
-  packages/tools/src/frame.ts → packages/tools/src/edit.ts {EditableField}
-  packages/tools/src/frame.ts → packages/tools/src/pins.ts {loadPins, NO_PINS, savePins, togglePin}
-  packages/tools/src/frame.ts → packages/tools/src/pins.ts {PinOverrides}
   packages/tools/src/frame.ts → packages/tools/src/rungs.ts {DEFAULT_INTELLIGENCE, loadIntelligenceConfig, RUNGS, rungFor, rungHonesty, saveIntelligenceConfig}
   packages/tools/src/frame.ts → packages/tools/src/rungs.ts {IntelligenceConfig, IntelligenceSource}
   packages/tools/src/frame.ts → packages/tools/src/types.ts {Affordance, AffordanceProvider, AffordanceSet, DeriveContext, Observation, OpenParameter, ProviderName, WithheldAffordance}
@@ -176,7 +172,7 @@ Internal:
   packages/tools/src/run.ts → packages/tools/src/questions.ts {DerivedQuestion, OfferedQuestion, Question}
 
 Incoming (other zones → this zone):
-  ← tests-tools-unit: packages/tools/tests/unit/a-district-that-waits.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-loop-knows-when-to-stop.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-loop-knows-when-to-stop.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-module-off-is-off-on-every-route-and-tool.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-plan-is-an-object.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-read-only-mcp-call-shows-the-agent-is-here.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-read-only-mcp-call-shows-the-agent-is-here.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-reading-is-not-a-fact.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-reading-is-not-a-fact.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-run-is-declared.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-run-is-declared.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-template-sets-up-a-live-store.test.ts → packages/tools/src/cli.ts; packages/tools/tests/unit/affordances.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-act-under-specified-is-an-ask.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts → packages/tools/src/cli.ts; packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts → packages/tools/src/mcp-stdio.ts; packages/tools/tests/unit/an-agent-finds-by-name.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-finds-by-name.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-is-never-answered-an-id-it-may-not-see.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-names-records-the-way-people-do.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-seat-reads-only-what-it-may-see.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-observation-reads-a-value-as-the-card-does.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/asked-as-somebody.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/chat-experience.test.ts → packages/tools/src/local.ts; packages/tools/tests/unit/chat-experience.test.ts → packages/tools/src/local.ts; packages/tools/tests/unit/checked-against-the-space.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/confidence-is-an-answer.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/confidence-is-an-answer.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/conversation.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/conversation.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/derived-tools-say-what-they-do.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/draws-a-figure.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/edge-affordances.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/edit.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/four-rungs.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/four-rungs.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/from-the-other-end.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/intelligence.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/leads-with-what-you-clicked.test.ts → packages/tools/src/derive.ts; packages/tools/tests/unit/local.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/mcp-for-remote-hosts.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/never-the-plumbing.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/nothing-left-to-do.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/pins.test.ts → packages/tools/src/pins.ts; packages/tools/tests/unit/properties.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/ranking.test.ts → packages/tools/src/derive.ts; packages/tools/tests/unit/ranking.test.ts → packages/tools/src/usage.ts; packages/tools/tests/unit/says-the-kind.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-chat-at-a-dealership.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-log-says-what-happened.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-provider-is-one-call.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-provider-is-one-call.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-questions-are-derived.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-reason-says-the-noun.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/yours-from-the-other-end.test.ts → packages/tools/src/index.ts
+  ← tests-tools-unit: packages/tools/tests/unit/a-concentration-is-said-in-the-declarations-words.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-district-that-waits.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-loop-knows-when-to-stop.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-loop-knows-when-to-stop.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-module-off-is-off-on-every-route-and-tool.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-plan-is-an-object.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-read-only-mcp-call-shows-the-agent-is-here.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-read-only-mcp-call-shows-the-agent-is-here.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-reading-is-not-a-fact.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-reading-is-not-a-fact.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-run-is-declared.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-run-is-declared.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/a-template-sets-up-a-live-store.test.ts → packages/tools/src/cli.ts; packages/tools/tests/unit/a-tool-says-why-it-was-refused.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/affordances.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-act-under-specified-is-an-ask.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts → packages/tools/src/cli.ts; packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-attaches-with-a-shell.test.ts → packages/tools/src/mcp-stdio.ts; packages/tools/tests/unit/an-agent-finds-by-name.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-finds-by-name.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-is-never-answered-an-id-it-may-not-see.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-is-told-what-a-place-shows.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-names-records-the-way-people-do.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-reads-computed-values-it-cannot-write.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-agent-seat-reads-only-what-it-may-see.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/an-observation-reads-a-value-as-the-card-does.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/asked-as-somebody.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/chat-experience.test.ts → packages/tools/src/local.ts; packages/tools/tests/unit/chat-experience.test.ts → packages/tools/src/local.ts; packages/tools/tests/unit/checked-against-the-space.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/confidence-is-an-answer.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/confidence-is-an-answer.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/conversation.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/conversation.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/derived-tools-say-what-they-do.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/draws-a-figure.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/edge-affordances.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/edit.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/four-rungs.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/four-rungs.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/from-the-other-end.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/intelligence.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/leads-with-what-you-clicked.test.ts → packages/tools/src/derive.ts; packages/tools/tests/unit/local.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/mcp-for-remote-hosts.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/never-the-plumbing.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/nothing-left-to-do.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/pins.test.ts → packages/tools/src/pins.ts; packages/tools/tests/unit/properties.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/ranking.test.ts → packages/tools/src/derive.ts; packages/tools/tests/unit/ranking.test.ts → packages/tools/src/usage.ts; packages/tools/tests/unit/says-the-kind.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-chat-at-a-dealership.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-log-says-what-happened.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-provider-is-one-call.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-provider-is-one-call.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-questions-are-derived.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/the-reason-says-the-noun.test.ts → packages/tools/src/index.ts; packages/tools/tests/unit/yours-from-the-other-end.test.ts → packages/tools/src/index.ts
 
 </imports>
 
@@ -189,7 +185,7 @@ Incoming (other zones → this zone):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 397 internal calls, 0 outgoing, 380 incoming (cohesion: 1, coupling: 0)
+- [call graph] 408 internal calls, 0 outgoing, 394 incoming (cohesion: 1, coupling: 0)
 
 </insights>
 
@@ -197,20 +193,23 @@ Incoming (other zones → this zone):
 
 Cross-dependencies between sub-zones:
   tools/agent → tools/mcp: 1
+  tools/agent → tools/providers: 2
   tools/agent → tools/src: 2
-  tools/agent → tools/src-providers: 2
+  tools/frame-local → tools/providers: 1
+  tools/frame-local → tools/src: 3
+  tools/frame-local → tools/src-providers: 3
   tools/mcp → tools/agent: 4
-  tools/src → tools/agent: 2
+  tools/src → tools/agent: 1
   tools/src → tools/providers: 1
-  tools/src-2 → tools/agent: 5
-  tools/src-2 → tools/mcp: 3
-  tools/src-2 → tools/providers: 7
-  tools/src-2 → tools/src: 23
-  tools/src-2 → tools/src-providers: 4
-  tools/src-2 → tools/tools: 4
-  tools/src-providers → tools/providers: 5
-  tools/tools → tools/providers: 2
-  tools/tools → tools/src-2: 2
+  tools/src → tools/src-providers: 2
+  tools/src-providers → tools/agent: 1
+  tools/src-providers → tools/src: 10
+  tools/tools → tools/agent: 5
+  tools/tools → tools/frame-local: 2
+  tools/tools → tools/mcp: 3
+  tools/tools → tools/providers: 12
+  tools/tools → tools/src: 11
+  tools/tools → tools/src-providers: 6
 
 </sub-crossings>
 
@@ -219,12 +218,12 @@ Cross-dependencies between sub-zones:
 This zone has 7 sub-zone(s):
 
 - **Tool Integration Layer** (`tools/agent`): 4 files, cohesion 0.42, coupling 0.58
+- **Frame Local** (`tools/frame-local`): 3 files, cohesion 0.4, coupling 0.6
 - **Mcp** (`tools/mcp`): 3 files, cohesion 0.4, coupling 0.6
-- **Providers** (`tools/providers`): 5 files, cohesion 0.36, coupling 0.64
-- **Src** (`tools/src`): 8 files, cohesion 0.65, coupling 0.35
-- **Src 2** (`tools/src-2`): 6 files, cohesion 0.25, coupling 0.75
-- **Src Providers** (`tools/src-providers`): 3 files, cohesion 0.31, coupling 0.69
-- **Document Edit Tools** (`tools/tools`): 3 files, cohesion 0.44, coupling 0.56
+- **Framework Providers** (`tools/providers`): 8 files, cohesion 0.63, coupling 0.37
+- **Src** (`tools/src`): 5 files, cohesion 0.39, coupling 0.61
+- **Decision Logic Providers** (`tools/src-providers`): 3 files, cohesion 0.22, coupling 0.78
+- **Tools** (`tools/tools`): 6 files, cohesion 0.29, coupling 0.71
 
 Detailed sub-zone context available in `zones/{sub-zone-id}/context.md`
 

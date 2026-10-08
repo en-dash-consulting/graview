@@ -1,0 +1,41 @@
+{
+  "id": "core-document/core",
+  "name": "Core",
+  "description": "14 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/app.ts",
+    "packages/core/src/beginning.ts",
+    "packages/core/src/check.ts",
+    "packages/core/src/cli/check/beginnings.ts",
+    "packages/core/src/cli/describe.ts",
+    "packages/core/src/cli/docs.ts",
+    "packages/core/src/cli/index.ts",
+    "packages/core/src/figures.ts",
+    "packages/core/src/places.ts",
+    "packages/core/src/scaffold/lens.ts",
+    "packages/core/src/schema/figures.ts",
+    "packages/core/src/settings.ts",
+    "packages/core/src/testing.ts",
+    "packages/core/src/views/types.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/app.ts",
+    "packages/core/src/beginning.ts",
+    "packages/core/src/check.ts",
+    "packages/core/src/cli/check/beginnings.ts",
+    "packages/core/src/cli/describe.ts",
+    "packages/core/src/cli/docs.ts",
+    "packages/core/src/cli/index.ts",
+    "packages/core/src/figures.ts",
+    "packages/core/src/places.ts",
+    "packages/core/src/scaffold/lens.ts",
+    "packages/core/src/schema/figures.ts",
+    "packages/core/src/settings.ts",
+    "packages/core/src/testing.ts",
+    "packages/core/src/views/types.ts"
+  ],
+  "cohesion": 0.53,
+  "coupling": 0.47,
+  "fileCount": 14,
+  "lineCount": 3221
+}

@@ -1,5 +1,5 @@
 import { failureWords, humanizeField, InvalidArguments, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
-import { useSubject } from "../companion.js";
+import { useSubject } from "../subject.js";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { POPOVER_STYLE, useAffordances, useApplyAffordance, useGraview, usePopover, useSelection } from "@graview/react";
 import { loadPins, togglePin, type Affordance, type PinOverrides } from "@graview/tools";

@@ -1,0 +1,24 @@
+{
+  "id": "tests-guest-fixtures",
+  "name": "Tests Guest Fixtures",
+  "description": "Non-source files in packages: heard.js, offers.js, packages.js (+2 more)",
+  "files": [
+    "packages/guest/tests/fixtures/lifelogics/heard.js",
+    "packages/guest/tests/fixtures/lifelogics/offers.js",
+    "packages/guest/tests/fixtures/lifelogics/packages.js",
+    "packages/guest/tests/fixtures/lifelogics/questions.js",
+    "packages/guest/tests/fixtures/lifelogics/throws.js"
+  ],
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 5,
+  "lineCount": 158,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

@@ -5,29 +5,35 @@
 <zone>
 
 Zone: Lib (`scripts/lib`)
-Files: 5, Cohesion: 0.73, Coupling: 0.27
-Description: 5 files, primarily JavaScript
-Entry points: scripts/lib/bundle-budget.mjs, scripts/lib/readme-exports.mjs
-Lines: 1254
+Files: 7, Cohesion: 0.72, Coupling: 0.28
+Description: 7 files, primarily JavaScript
+Lines: 2433
 
 </zone>
 
 <files>
 
-scripts/inspect-pack.mjs (JavaScript, 159 lines, build)
-scripts/lib/bundle-budget.mjs (JavaScript, 191 lines, build)
-scripts/lib/graview-sources.mjs (JavaScript, 26 lines, build)
-scripts/lib/readme-exports.mjs (JavaScript, 87 lines, build)
-scripts/verify-studio.mjs (JavaScript, 791 lines, build)
+scripts/guest-sandbox.mjs (JavaScript, 935 lines, build)
+scripts/lib/guest-brand-suite.mjs (JavaScript, 293 lines, build)
+scripts/lib/guest-client-suite.mjs (JavaScript, 318 lines, build)
+scripts/lib/guest-open-suite.mjs (JavaScript, 436 lines, build)
+scripts/lib/guest-place-suite.mjs (JavaScript, 204 lines, build)
+scripts/lib/guest-plain-suite.mjs (JavaScript, 124 lines, build)
+scripts/lib/widget-policies.mjs (JavaScript, 123 lines, build)
 
 </files>
 
 <imports>
 
 Internal:
-  scripts/inspect-pack.mjs → scripts/lib/bundle-budget.mjs {measureBudgets}
-  scripts/inspect-pack.mjs → scripts/lib/readme-exports.mjs {exportsOf, unexported}
-  scripts/lib/bundle-budget.mjs → scripts/lib/graview-sources.mjs {graviewSources}
-  scripts/verify-studio.mjs → scripts/lib/graview-sources.mjs {graviewSources}
+  scripts/guest-sandbox.mjs → scripts/lib/guest-brand-suite.mjs {brandSuite}
+  scripts/guest-sandbox.mjs → scripts/lib/guest-client-suite.mjs {clientSuite}
+  scripts/guest-sandbox.mjs → scripts/lib/guest-open-suite.mjs {openSuite, viewScriptOf}
+  scripts/guest-sandbox.mjs → scripts/lib/guest-place-suite.mjs {placeSuite}
+  scripts/guest-sandbox.mjs → scripts/lib/guest-plain-suite.mjs {plainSuite}
+  scripts/guest-sandbox.mjs → scripts/lib/widget-policies.mjs {localize, POLICIES, proxyPage}
+  scripts/lib/guest-brand-suite.mjs → scripts/lib/widget-policies.mjs {localize, POLICIES, proxyPage}
+  scripts/lib/guest-client-suite.mjs → scripts/lib/guest-brand-suite.mjs {PNG, PNG_PATH, SVG_A}
+  scripts/lib/guest-open-suite.mjs → scripts/lib/widget-policies.mjs {localize, POLICIES, proxyPage}
 
 </imports>

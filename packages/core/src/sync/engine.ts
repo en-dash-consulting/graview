@@ -9,6 +9,7 @@ import {
   type RemoteSystem,
   type RemoteWrite,
   type ResourceMapping,
+  type SyncConflict,
   type SyncMapping,
   type SyncState,
 } from "./types.js";
@@ -38,15 +39,7 @@ export interface SyncReport {
   readonly state: SyncState;
 }
 
-/** One field, changed on both sides since the last time they agreed. */
-export interface SyncConflict {
-  readonly localId: string;
-  readonly field: string;
-  readonly ours: unknown;
-  readonly theirs: unknown;
-  /** What both sides last agreed it was. */
-  readonly base: unknown;
-}
+export type { SyncConflict } from "./types.js";
 
 /** Reads a node's mapped values, in OUR field names. */
 function mappedValues(

@@ -1,0 +1,37 @@
+{
+  "id": "primitives/src-lens/lens",
+  "name": "Display Primitives",
+  "description": "14 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/arrange-bar.tsx",
+    "packages/primitives/src/connections.tsx",
+    "packages/primitives/src/graview-mark.tsx",
+    "packages/primitives/src/index.ts",
+    "packages/primitives/src/lens/arranging.tsx",
+    "packages/primitives/src/lens/board.tsx",
+    "packages/primitives/src/lens/calendar.tsx",
+    "packages/primitives/src/lens/coverage.tsx",
+    "packages/primitives/src/lens/horizon.ts",
+    "packages/primitives/src/lens/more.tsx",
+    "packages/primitives/src/lens/reach.tsx",
+    "packages/primitives/src/lens/timeline.tsx",
+    "packages/primitives/src/primitives/index.tsx",
+    "packages/primitives/src/seeding.tsx"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/arrange-bar.tsx",
+    "packages/primitives/src/connections.tsx",
+    "packages/primitives/src/index.ts",
+    "packages/primitives/src/lens/arranging.tsx",
+    "packages/primitives/src/lens/board.tsx",
+    "packages/primitives/src/lens/coverage.tsx",
+    "packages/primitives/src/lens/more.tsx",
+    "packages/primitives/src/lens/reach.tsx",
+    "packages/primitives/src/lens/timeline.tsx",
+    "packages/primitives/src/primitives/index.tsx"
+  ],
+  "cohesion": 0.56,
+  "coupling": 0.44,
+  "fileCount": 14,
+  "lineCount": 6068
+}

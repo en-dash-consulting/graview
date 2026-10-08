@@ -5,18 +5,22 @@
 <zone>
 
 Zone: Workbench (`primitives/workbench`)
-Files: 4, Cohesion: 0.40, Coupling: 0.60
-Description: 4 files, primarily TypeScript
-Entry points: packages/primitives/src/workbench/activity.tsx, packages/primitives/src/workbench/answer-args.tsx, packages/primitives/src/workbench/inspector.tsx, packages/primitives/src/workbench/trail.tsx
-Lines: 2380
+Files: 8, Cohesion: 0.41, Coupling: 0.59
+Description: 8 files, primarily TypeScript
+Entry points: packages/primitives/src/find.tsx, packages/primitives/src/installation.tsx, packages/primitives/src/places.tsx, packages/primitives/src/workbench/activity.tsx, packages/primitives/src/workbench/answer-args.tsx, packages/primitives/src/workbench/inspector.tsx, packages/primitives/src/workbench/trail.tsx
+Lines: 3027
 
 </zone>
 
 <files>
 
-packages/primitives/src/workbench/activity.tsx (TypeScript, 507 lines, source)
-packages/primitives/src/workbench/answer-args.tsx (TypeScript, 430 lines, source)
-packages/primitives/src/workbench/inspector.tsx (TypeScript, 1156 lines, source)
+packages/primitives/src/find.tsx (TypeScript, 415 lines, source)
+packages/primitives/src/installation.tsx (TypeScript, 54 lines, source)
+packages/primitives/src/places.tsx (TypeScript, 161 lines, source)
+packages/primitives/src/scene.ts (TypeScript, 23 lines, source)
+packages/primitives/src/workbench/activity.tsx (TypeScript, 495 lines, source)
+packages/primitives/src/workbench/answer-args.tsx (TypeScript, 431 lines, source)
+packages/primitives/src/workbench/inspector.tsx (TypeScript, 1161 lines, source)
 packages/primitives/src/workbench/trail.tsx (TypeScript, 287 lines, source)
 
 </files>
@@ -24,6 +28,10 @@ packages/primitives/src/workbench/trail.tsx (TypeScript, 287 lines, source)
 <imports>
 
 Internal:
+  packages/primitives/src/scene.ts → packages/primitives/src/find.tsx {FindBox}
+  packages/primitives/src/scene.ts → packages/primitives/src/installation.tsx {ShowInstallation}
+  packages/primitives/src/scene.ts → packages/primitives/src/places.tsx {Places}
+  packages/primitives/src/scene.ts → packages/primitives/src/workbench/inspector.tsx {Inspector}
   packages/primitives/src/workbench/activity.tsx → packages/primitives/src/workbench/answer-args.tsx {nameOf}
   packages/primitives/src/workbench/inspector.tsx → packages/primitives/src/workbench/answer-args.tsx {AnswerArgs, nameOf}
   packages/primitives/src/workbench/trail.tsx → packages/primitives/src/workbench/answer-args.tsx {nameOf}

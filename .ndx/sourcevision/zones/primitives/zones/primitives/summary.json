@@ -1,30 +1,20 @@
 {
   "id": "primitives/primitives",
   "name": "Primitives",
-  "description": "9 files, primarily TypeScript",
+  "description": "4 files, primarily TypeScript",
   "files": [
-    "packages/primitives/src/frame.ts",
+    "packages/primitives/src/bar-panes.tsx",
+    "packages/primitives/src/choice.ts",
     "packages/primitives/src/ladder.tsx",
-    "packages/primitives/src/popover.ts",
-    "packages/primitives/src/profile.tsx",
-    "packages/primitives/src/seats.tsx",
-    "packages/primitives/src/theme.ts",
-    "packages/primitives/src/wordmark.tsx",
-    "packages/primitives/src/workbench/back-out.tsx",
-    "packages/primitives/src/workbench/standing.tsx"
+    "packages/primitives/src/seats.tsx"
   ],
   "entryPoints": [
+    "packages/primitives/src/bar-panes.tsx",
     "packages/primitives/src/ladder.tsx",
-    "packages/primitives/src/popover.ts",
-    "packages/primitives/src/profile.tsx",
-    "packages/primitives/src/seats.tsx",
-    "packages/primitives/src/theme.ts",
-    "packages/primitives/src/wordmark.tsx",
-    "packages/primitives/src/workbench/back-out.tsx",
-    "packages/primitives/src/workbench/standing.tsx"
+    "packages/primitives/src/seats.tsx"
   ],
-  "cohesion": 0.51,
-  "coupling": 0.49,
-  "fileCount": 9,
-  "lineCount": 3089
+  "cohesion": 0.63,
+  "coupling": 0.38,
+  "fileCount": 4,
+  "lineCount": 516
 }

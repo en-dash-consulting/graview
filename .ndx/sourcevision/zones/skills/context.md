@@ -5,16 +5,18 @@
 <zone>
 
 Zone: Skills (`skills`)
-Files: 2, Cohesion: 1.00, Coupling: 0.00
+Files: 4, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 2 files, mostly entry points; entry points index.ts; imported by Packages.
+Description: 4 files, mostly entry points and pages; entry points index.ts; imported by Packages.
 Entry points: packages/skills/src/index.ts
-Lines: 120
+Lines: 230
 
 </zone>
 
 <files>
 
+packages/skills/skills/graview-worker-view/examples/front-page.js (JavaScript, 56 lines, source)
+packages/skills/skills/graview-worker-view/examples/offers-list.js (JavaScript, 54 lines, source)
 packages/skills/src/cli.ts (TypeScript, 56 lines, source)
 packages/skills/src/index.ts (TypeScript, 64 lines, source)
 
@@ -39,6 +41,6 @@ Incoming (other zones → this zone):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 4 internal calls, 0 outgoing, 1 incoming (cohesion: 1, coupling: 0)
+- [call graph] 14 internal calls, 0 outgoing, 1 incoming (cohesion: 1, coupling: 0)
 
 </insights>

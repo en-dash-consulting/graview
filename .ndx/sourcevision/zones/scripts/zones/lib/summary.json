@@ -1,20 +1,19 @@
 {
   "id": "scripts/lib",
   "name": "Lib",
-  "description": "5 files, primarily JavaScript",
+  "description": "7 files, primarily JavaScript",
   "files": [
-    "scripts/inspect-pack.mjs",
-    "scripts/lib/bundle-budget.mjs",
-    "scripts/lib/graview-sources.mjs",
-    "scripts/lib/readme-exports.mjs",
-    "scripts/verify-studio.mjs"
+    "scripts/guest-sandbox.mjs",
+    "scripts/lib/guest-brand-suite.mjs",
+    "scripts/lib/guest-client-suite.mjs",
+    "scripts/lib/guest-open-suite.mjs",
+    "scripts/lib/guest-place-suite.mjs",
+    "scripts/lib/guest-plain-suite.mjs",
+    "scripts/lib/widget-policies.mjs"
   ],
-  "entryPoints": [
-    "scripts/lib/bundle-budget.mjs",
-    "scripts/lib/readme-exports.mjs"
-  ],
-  "cohesion": 0.73,
-  "coupling": 0.27,
-  "fileCount": 5,
-  "lineCount": 1254
+  "entryPoints": [],
+  "cohesion": 0.72,
+  "coupling": 0.28,
+  "fileCount": 7,
+  "lineCount": 2433
 }

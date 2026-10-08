@@ -1,0 +1,24 @@
+{
+  "id": "primitives/src-lens/src",
+  "name": "Primitives",
+  "description": "6 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/arrangement.ts",
+    "packages/primitives/src/default-views.tsx",
+    "packages/primitives/src/editable.tsx",
+    "packages/primitives/src/framework-views.ts",
+    "packages/primitives/src/record-head.ts",
+    "packages/primitives/src/view-doors.tsx"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/arrangement.ts",
+    "packages/primitives/src/default-views.tsx",
+    "packages/primitives/src/editable.tsx",
+    "packages/primitives/src/record-head.ts",
+    "packages/primitives/src/view-doors.tsx"
+  ],
+  "cohesion": 0.34,
+  "coupling": 0.66,
+  "fileCount": 6,
+  "lineCount": 1585
+}

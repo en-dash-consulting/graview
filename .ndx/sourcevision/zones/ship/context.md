@@ -210,6 +210,6 @@ Incoming (other zones → this zone):
 
 - High cohesion (1) — files are tightly interconnected
 - 12 entry points — wide API surface, consider consolidating exports
-- [call graph] 676 internal calls, 0 outgoing, 500 incoming (cohesion: 1, coupling: 0)
+- [call graph] 676 internal calls, 0 outgoing, 501 incoming (cohesion: 1, coupling: 0)
 
 </insights>

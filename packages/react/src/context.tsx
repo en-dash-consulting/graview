@@ -31,18 +31,11 @@ import {
   type ReactNode,
 } from "react";
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
-import { createMotionStore, type MotionStore } from "./motion.js";
+import { createMotionStore, type MotionStore } from "./motion-store.js";
 import { foldRobots, type RobotEvent, type RobotState, type SeatNote } from "./robot.js";
-import type { ViewComponent } from "./view-registry.js";
+import type { ViewComponent, ViewMode } from "./view-registry.js";
 
-/**
- * How a view is being drawn right now.
- *
- * Every view must render correctly in BOTH modes — captured into the scene,
- * and live as a full page. That two-mode contract is the central constraint
- * on the view authoring API, and this is how a view finds out which it is in.
- */
-export type ViewMode = "scene" | "fullscreen";
+export type { ViewMode } from "./view-registry.js";
 
 /** Which visual scheme the scene is drawn in. */
 export type Scheme = "light" | "dark";

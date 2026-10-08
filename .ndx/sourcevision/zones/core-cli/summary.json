@@ -1,7 +1,7 @@
 {
   "id": "core-cli",
   "name": "Core Cli",
-  "description": "5 files, mostly utilities and entry points; entry points check.ts; imports Core and Core Graph; imported by Core.",
+  "description": "5 files, mostly utilities and entry points; entry points check.ts; imports Core and Core Cli; imported by Packages and Core.",
   "files": [
     "packages/core/src/cli/check.ts",
     "packages/core/src/cli/check/index.ts",
@@ -12,14 +12,14 @@
   "entryPoints": [
     "packages/core/src/cli/check.ts"
   ],
-  "cohesion": 0.24,
-  "coupling": 0.76,
+  "cohesion": 0.22,
+  "coupling": 0.78,
   "fileCount": 5,
-  "lineCount": 280,
+  "lineCount": 299,
   "riskMetrics": {
-    "cohesion": 0.24,
-    "coupling": 0.76,
-    "riskScore": 0.76,
+    "cohesion": 0.22,
+    "coupling": 0.78,
+    "riskScore": 0.78,
     "riskLevel": "catastrophic",
     "failsThreshold": true
   }

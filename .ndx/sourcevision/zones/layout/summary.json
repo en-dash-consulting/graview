@@ -1,10 +1,11 @@
 {
   "id": "layout",
   "name": "Layout",
-  "description": "13 files, mostly utilities and types; entry points index.ts, layout.ts; imported by Packages.",
+  "description": "14 files, mostly utilities and entry points; entry points index.ts, layout.ts; imported by Packages.",
   "files": [
     "packages/layout/src/band.ts",
     "packages/layout/src/city.ts",
+    "packages/layout/src/estimate.ts",
     "packages/layout/src/ids.ts",
     "packages/layout/src/index.ts",
     "packages/layout/src/interpolate.ts",
@@ -23,8 +24,8 @@
   ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 13,
-  "lineCount": 4237,
+  "fileCount": 14,
+  "lineCount": 4302,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

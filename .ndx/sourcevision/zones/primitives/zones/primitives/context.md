@@ -5,39 +5,29 @@
 <zone>
 
 Zone: Primitives (`primitives/primitives`)
-Files: 9, Cohesion: 0.51, Coupling: 0.49
-Description: 9 files, primarily TypeScript
-Entry points: packages/primitives/src/ladder.tsx, packages/primitives/src/popover.ts, packages/primitives/src/profile.tsx, packages/primitives/src/seats.tsx, packages/primitives/src/theme.ts, packages/primitives/src/wordmark.tsx, packages/primitives/src/workbench/back-out.tsx, packages/primitives/src/workbench/standing.tsx
-Lines: 3089
+Files: 4, Cohesion: 0.63, Coupling: 0.38
+Description: 4 files, primarily TypeScript
+Entry points: packages/primitives/src/bar-panes.tsx, packages/primitives/src/ladder.tsx, packages/primitives/src/seats.tsx
+Lines: 516
 
 </zone>
 
 <files>
 
-packages/primitives/src/frame.ts (TypeScript, 21 lines, source)
-packages/primitives/src/ladder.tsx (TypeScript, 141 lines, source)
-packages/primitives/src/popover.ts (TypeScript, 52 lines, source)
-packages/primitives/src/profile.tsx (TypeScript, 418 lines, source)
-packages/primitives/src/seats.tsx (TypeScript, 87 lines, source)
-packages/primitives/src/theme.ts (TypeScript, 1852 lines, source)
-packages/primitives/src/wordmark.tsx (TypeScript, 71 lines, source)
-packages/primitives/src/workbench/back-out.tsx (TypeScript, 288 lines, source)
-packages/primitives/src/workbench/standing.tsx (TypeScript, 159 lines, source)
+packages/primitives/src/bar-panes.tsx (TypeScript, 280 lines, source)
+packages/primitives/src/choice.ts (TypeScript, 22 lines, source)
+packages/primitives/src/ladder.tsx (TypeScript, 136 lines, source)
+packages/primitives/src/seats.tsx (TypeScript, 78 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/primitives/src/frame.ts → packages/primitives/src/profile.tsx {Profile}
-  packages/primitives/src/frame.ts → packages/primitives/src/theme.ts {DARK, GRAVIEW_BRAND, LIGHT, SCHEMES, themeCss, themeVariables}
-  packages/primitives/src/frame.ts → packages/primitives/src/theme.ts {Brand, Scheme, ThemeCssOptions, ThemeTokens}
-  packages/primitives/src/frame.ts → packages/primitives/src/workbench/back-out.tsx {descentTarget}
-  packages/primitives/src/frame.ts → packages/primitives/src/workbench/standing.tsx {Standing}
-  packages/primitives/src/profile.tsx → packages/primitives/src/ladder.tsx {LadderSetting}
-  packages/primitives/src/profile.tsx → packages/primitives/src/popover.ts {closeToTrigger, keepInside}
-  packages/primitives/src/profile.tsx → packages/primitives/src/seats.tsx {Seats}
-  packages/primitives/src/wordmark.tsx → packages/primitives/src/theme.ts {GRAVIEW_BRAND}
-  packages/primitives/src/workbench/standing.tsx → packages/primitives/src/popover.ts {closeToTrigger}
+  packages/primitives/src/bar-panes.tsx → packages/primitives/src/choice.ts {choiceStyle}
+  packages/primitives/src/bar-panes.tsx → packages/primitives/src/ladder.tsx {LadderSetting}
+  packages/primitives/src/bar-panes.tsx → packages/primitives/src/seats.tsx {Seats}
+  packages/primitives/src/ladder.tsx → packages/primitives/src/choice.ts {choiceStyle}
+  packages/primitives/src/seats.tsx → packages/primitives/src/choice.ts {choiceStyle}
 
 </imports>
