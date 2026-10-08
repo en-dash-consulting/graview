@@ -9,7 +9,7 @@ tags:
 source: "Nick, 2026-10-02: \"anything you find that should be factored into the graview framework, go ahead and capture those in the graview repo\" — from the Graview Cloud refinement, ../graview-cloud/docs/framework-requirements.md"
 startedAt: "2026-10-03T16:25:57.725Z"
 description: "Graview Cloud (../graview-cloud) is a host of many apps for people who are not us: they make apps from a ChatGPT or Claude conversation, from templates, and share them by URL to work on together, live, with their agents. Reading the framework for it found what one deployment would also want and the framework does not yet have. THE DECLARATION IS CODE: defineApp is a TypeScript module, every host path import()s it, and serveStore re-runs mutation.apply and invariant.evaluate on the server, so a host of strangers' apps would run strangers' code beside other strangers' data. The studio already holds a declaration as a JSON graph and writes act bodies from data; it cannot judge a rule. THE WIRE POLLS: openRemote polls /graview/since every 800 ms; there is no push, no rebase of pending optimistic calls, and concurrent patches are last-writer-wins. THE SEAT IS A HEADER: the default seatOf trusts x-graview-seat and labels every remote caller human, so an agent reaching a served store over graview mcp --remote-url is logged as a person. THE WIRE IS NODE: serveStore is node:http only and MCP is stdio only. POSITION: each item below is a public seam a self-hoster wants too; Cloud carries interim implementations on public APIs (marked INTERIM(FR-xx) there) and deletes them as these land. Out of scope here, and staying in Cloud: tenancy, accounts, OAuth servers, billing, quotas, the multi-app connector. Related and already tracked: 'What a seat may not see never leaves the store' (d6f8b50f), which Cloud needs at critical priority."
-lastModified: "2026-10-08T11:54:57.388Z"
+lastModified: "2026-10-08T12:09:32.940Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
 
@@ -132,7 +132,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The companion is a top-level landmark or none, so axe's landmark-complementary-is-top-level holds (FR-40)](./the-companion-is-a-top-level-landmark.md) | completed |
 | [The component kit as remote elements, declared once for both sides (FR-69)](./the-component-kit-as-remote-elements.md) | completed |
 | [The declaration is a document: one JSON object compiles into the same app defineApp declares](./the-declaration-is-a-document-one-json.md) | completed |
-| [The desk bar is one row (FR-135)](./the-desk-bar-is-one-row-fr-135.md) | pending |
+| [The desk bar is one row (FR-135)](./the-desk-bar-is-one-row-fr-135.md) | completed |
 | [The document holds the whole brand: logo, favicon, typography, shape, accents and a preferred scheme (FR-124)](./the-document-holds-the-whole-brand.md) | completed |
 | [The embed has a place for a host's own actions, in the bar's profile menu (FR-72)](./the-embed-has-a-place-for-a-host-s-own.md) | completed |
 | [The embed has one layering system: popovers in the top layer, persistent surfaces on one ladder (FR-76)](./the-embed-has-one-layering-system.md) | completed |
@@ -142,7 +142,9 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The framework says its own version, and rule failures are structured](./the-framework-says-its-own-version-and.md) | completed |
 | [The language computes what pages need: expressions in aggregates, first and sort, computed fields, template filters (FR-83)](./the-language-computes-what-pages-need.md) | completed |
 | [The live handler serves a store the host already holds (FR-42)](./the-live-handler-serves-a-store-the.md) | completed |
+| [The places move out of the bar (FR-138)](./the-places-move-out-of-the-bar-fr-138.md) | pending |
 | [The record names Graview Cloud and npm as they are](./the-record-names-graview-cloud-and-npm.md) | completed |
+| [The scene and the pages are two things, and the bar says so (FR-137)](./the-scene-and-the-pages-are-two-things.md) | pending |
 | [The scene is a place, not a mode (FR-132)](./the-scene-is-a-place-not-a-mode-fr-132.md) | completed |
 | [The seat view serves an op that names a record that isn't there (FR-67)](./the-seat-view-serves-an-op-that-names.md) | completed |
 | [The server pushes that the declaration changed, and a remote client reopens on it (FR-43)](./the-server-pushes-that-the-declaration.md) | completed |
