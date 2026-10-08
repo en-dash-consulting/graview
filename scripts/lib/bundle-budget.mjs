@@ -105,8 +105,11 @@ export const BUDGETS = [
     // drawn with the bar. Measured at 505_406 / 173_425.
     // Raised when the scene and the pages became two things on the bar and the places left it (FR-137, FR-138): the switch, the
     // place control and its grouped list with their marks, the phone's place line, 2_047 / 595 more. Measured at 507_453 / 174_021.
-    minified: 508_550,
-    gzipped: 174_600,
+    // Raised when a part fetched as it is first drawn came to try again after it failed to arrive, and to say so in its place
+    // rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the menu's fetch when the page is idle. 2_823 / 1_276 more.
+    // Measured at 511_271 / 175_653.
+    minified: 511_650,
+    gzipped: 176_200,
     load: "first",
   },
   {
@@ -233,8 +236,11 @@ export const BUDGETS = [
     // Raised when the scene and the pages became two things on the bar and the places left it (FR-137, FR-138), and an app with a
     // home view came to open on it (FR-136): the bar's switch and place list, and the embed's opening, 3_369 / 992 more.
     // Measured at 696_617 / 180_207.
-    minified: 697_900,
-    gzipped: 180_750,
+    // Raised when a part fetched as it is first drawn came to try again after it failed to arrive, and to say so in its place
+    // rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the menu's fetch when the page is idle. 2_859 / 1_310 more.
+    // Measured at 700_156 / 181_851.
+    minified: 700_700,
+    gzipped: 182_400,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -346,8 +352,11 @@ export const BUDGETS = [
     // the home view no longer is: 1_680 / 623 more. Measured at 1_550_975 / 468_183.
     // Raised with the review after 0.1.16: the profile's choices drawn by one style rather than three, the app's line under
     // a home's own headline, the narrow embed's way back to the pages. Measured at 1_551_385 / 468_484.
-    minified: 1_551_600,
-    gzipped: 468_700,
+    // Raised when a part fetched as it is first drawn came to try again after it failed to arrive, and to say so in its place
+    // rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the menu's fetch when the page is idle. 3_008 / 1_359 more.
+    // Measured at 1_554_522 / 469_969.
+    minified: 1_554_800,
+    gzipped: 470_200,
     load: "all",
   },
   {
@@ -396,8 +405,11 @@ export const BUDGETS = [
     // Measured at 1_516_402 / 453_220.
     // Raised with every face's for the review after 0.1.16, and the document's own part of it the studio loads: arrange-pages
     // reading the scene's old word, and the check's warning for a switch that says one word twice. Measured at 1_517_351 / 453_603.
-    minified: 1_517_600,
-    gzipped: 453_800,
+    // Raised when a part fetched as it is first drawn came to try again after it failed to arrive, and to say so in its place
+    // rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the menu's fetch when the page is idle. 3_008 / 1_376 more.
+    // Measured at 1_520_488 / 455_095.
+    minified: 1_520_800,
+    gzipped: 455_300,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
@@ -468,8 +480,10 @@ export const BUDGETS = [
     // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
     // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
     // the guest host judging an inline logo before it makes an image of the host page from it. Measured at 16_358 / 7_540.
-    minified: 16_600,
-    gzipped: 7_750,
+    // Raised when the host's half of a worker view, and its drawing, came to be asked for again after they failed to arrive
+    // (FR-139): `retryingImport`, and asking again when the browser is back online. 688 / 287 more. Measured at 17_046 / 7_826.
+    minified: 17_300,
+    gzipped: 8_000,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -495,8 +509,10 @@ export const BUDGETS = [
     // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
     // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
     // the guest host judging an inline logo before it makes an image of the host page from it. Measured at 16_857 / 7_266.
-    minified: 17_100,
-    gzipped: 7_500,
+    // Raised when the host's half of a worker view, and its drawing, came to be asked for again after they failed to arrive
+    // (FR-139): `retryingImport`, and asking again when the browser is back online. 753 / 343 more. Measured at 17_610 / 7_610.
+    minified: 17_850,
+    gzipped: 7_800,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -572,8 +588,10 @@ export const BUDGETS = [
     // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
     // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
     // the guest host judging an inline logo before it makes an image of the host page from it. Measured at 126_521 / 45_488.
-    minified: 127_000,
-    gzipped: 45_750,
+    // Raised when the host's half of a worker view, and its drawing, came to be asked for again after they failed to arrive
+    // (FR-139): `retryingImport`, and asking again when the browser is back online. 582 / 252 more. Measured at 127_103 / 45_742.
+    minified: 127_600,
+    gzipped: 46_000,
     load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },

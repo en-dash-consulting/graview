@@ -83,8 +83,19 @@ export const FACE_DOORS = {
  * the narrow embed's way back to the pages) paid for itself by saying an
  * address within the app one way in the embed where it said it four:
  * 583 814 bytes (570.1 KB).
+ *
+ * Then a part fetched as it is first drawn came to try again after it
+ * failed to arrive, and to say so in its place rather than throw into the
+ * embed (FR-139): Cloud's realtime harness took the browser offline before
+ * the person's menu had arrived, and the menu was broken until a reload.
+ * `lazyModule` and its one line with "Try again" (2.1 KB, most of it the
+ * line and keeping the keyboard on what arrives), `retryingImport` (0.5
+ * KB), the menu fetched when the page is idle and online, and the guest
+ * host's worker asked for again: 587 005 bytes (573.2 KB), 3 109 more than
+ * main's 583 896. The claim rises by that and no more: 573.5 KB, which
+ * leaves Cloud's shell 21.5 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 570.5 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 573.5 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -160,9 +171,11 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * and opening on the home view (FR-136) took it to 538 735 bytes
  * (526.1 KB), 3 578 more, the same bar and embed as the page that compiles
  * (above); the claim rises by that: 526.5 KB. The review after 0.1.16
- * left it at 539 006 bytes (526.4 KB), as above.
+ * left it at 539 006 bytes (526.4 KB), as above. A lazy part that tries
+ * again after it failed to arrive (FR-139) took it to 542 217 bytes
+ * (529.5 KB), 3 127 more than main's 539 090, as above: 529.75 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 526.5 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 529.75 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

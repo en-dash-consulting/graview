@@ -18,3 +18,13 @@ The provider holds the store, the view registry, the current view, the
 selection, the activity and the principal — together, so the scene, the chrome
 and an agent seat are looking at the same thing rather than at three copies of
 it.
+
+A part fetched only when it is first drawn is a `lazyModule` over
+`retryingImport(() => import("./part.js"))` (from `@graview/core`), drawn
+with its `part(draw, { what })`. Until it arrives, its place says so in one
+line with a "Try again" button (`lazy-part-missing`, `lazy-part-retry`)
+rather than throwing; it is asked for again when the browser is back online,
+when it is drawn again, on `prefetch()`, and when the button is pressed
+(`retryLazyParts`). Every part the framework fetches as it is drawn — the
+person's menu, the problems' rows, the faces, the views and lenses, the
+studio, the assistant — is one.
