@@ -24,9 +24,10 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A conformance kit: fixtures any host runs against a version to prove it reads, compiles and derives the same](./a-conformance-kit-fixtures-any-host.md) | completed |
 | [A contrast refusal names the pair and the ratio, with a fix (FR-126)](./a-contrast-refusal-names-the-pair-and.md) | completed |
 | [A coverage cell over a path selects what it joins (FR-111)](./a-coverage-cell-over-a-path-selects.md) | completed |
+| [A custom view sits beside the record's editable fields (FR-149)](./a-custom-view-sits-beside-the-record-s.md) | completed |
 | [A declared lens draws: a lenses entry maps to the shipped factory and is a named place (FR-79)](./a-declared-lens-draws-a-lenses-entry.md) | completed |
 | [A derived edit offers every field nothing else really sets, and refuses what it can't take (FR-110)](./a-derived-edit-offers-every-field.md) | completed |
-| [A district's box holds its name (FR-143)](./a-district-s-box-holds-its-name-fr-143.md) | pending |
+| [A district's box holds its name (FR-143)](./a-district-s-box-holds-its-name-fr-143.md) | completed |
 | [A document can say a kind's glance fields, and the compiler stops asking for what it cannot say (FR-39)](./a-document-can-say-a-kind-s-glance.md) | completed |
 | [A figure's label is a template, and check flags braces in any non-template string (FR-99)](./a-figure-s-label-is-a-template-and.md) | completed |
 | [A guest view can be a named place: guestView takes a title (FR-87)](./a-guest-view-can-be-a-named-place.md) | completed |
@@ -44,7 +45,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A host that keeps the declaration chooses who sees the studio (FR-59)](./a-host-that-keeps-the-declaration.md) | completed |
 | [A host that owns the page gives the routed face the address bar (FR-106)](./a-host-that-owns-the-page-gives-the.md) | completed |
 | [A hosted page carries at most 600 KB of framework up front, and zod at most 150 KB of it (FR-57)](./a-hosted-page-carries-at-most-600-kb.md) | completed |
-| [A lazy part that fails to load tries again, and never breaks the page (FR-139)](./a-lazy-part-that-fails-to-load-tries.md) | pending |
+| [A lazy part that fails to load tries again, and never breaks the page (FR-139)](./a-lazy-part-that-fails-to-load-tries.md) | completed |
 | [A live client a host can observe: status, counters, pending, backoff, presence cadence and visibility (FR-49)](./a-live-client-a-host-can-observe.md) | completed |
 | [A live connection a hibernating host can resume from serialized per-socket state (FR-41)](./a-live-connection-a-hibernating-host.md) | completed |
 | [A live wire: ops pushed as they land, pending edits rebased, and a stale write is a conflict rather than a loss](./a-live-wire-ops-pushed-as-they-land.md) | completed |
@@ -62,7 +63,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A rule's refusal says so: reason refused, not invalid (FR-119)](./a-rule-s-refusal-says-so-reason.md) | completed |
 | [A search hit says its address (FR-129)](./a-search-hit-says-its-address-fr-129.md) | completed |
 | [A seat's first state read after a wake costs what it did before FR-55](./a-seat-s-first-state-read-after-a-wake.md) | completed |
-| [A selected record is drawn once (FR-141)](./a-selected-record-is-drawn-once-fr-141.md) | pending |
+| [A selected record is drawn once (FR-141)](./a-selected-record-is-drawn-once-fr-141.md) | completed |
 | [A stability contract a host can hold the framework to: what a version may change, a changelog that says so, and capabilities() naming the seams it ships](./a-stability-contract-a-host-can-hold.md) | completed |
 | [A status board: a shipped columns lens over a choice field (FR-97)](./a-status-board-a-shipped-columns-lens.md) | completed |
 | [A store can adopt the server's whole state, with pending batches applied again on top (FR-53)](./a-store-can-adopt-the-server-s-whole.md) | completed |
@@ -73,7 +74,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A thumbnail reads as a place with no counts (FR-120)](./a-thumbnail-reads-as-a-place-with-no.md) | completed |
 | [A view can list related records: a list block with a walk as its source (FR-82)](./a-view-can-list-related-records-a-list.md) | completed |
 | [A view can prefill an input from the record it draws (FR-150)](./a-view-can-prefill-an-input-from-the.md) | completed |
-| [A custom view sits beside the record's editable fields (FR-149)](./a-custom-view-sits-beside-the-record-s.md) | completed |
 | [A walk from every member of a set: out()/in() over a set return the distinct union, costed (FR-101)](./a-walk-from-every-member-of-a-set-out.md) | completed |
 | [A worker view is a place, with a manifest the host enforces (FR-91)](./a-worker-view-is-a-place-with-a.md) | completed |
 | [Agents name records the way people do: a node argument accepts a label, and ambiguity comes back as candidates](./agents-name-records-the-way-people-do.md) | completed |
@@ -104,7 +104,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Guest views: someone else's React in a sandboxed frame that can only ask, under the viewer's seat](./guest-views-someone-else-s-react-in-a.md) | completed |
 | [Limits and fallback for worker views: bytes, nodes, messages and CPU per push (FR-94)](./limits-and-fallback-for-worker-views.md) | completed |
 | [Links from a worker view stay in the app (FR-93)](./links-from-a-worker-view-stay-in-the.md) | completed |
-| [Long text gets the full width, with its label above (FR-147)](./long-text-gets-the-full-width-with-its.md) | pending |
+| [Long text gets the full width, with its label above (FR-147)](./long-text-gets-the-full-width-with-its.md) | completed |
 | [MCP for remote hosts: Streamable HTTP, honest tool hints, and other people's words marked as data](./mcp-for-remote-hosts-streamable-http.md) | completed |
 | [Migrations that keep data: declared renames and type coercion in steps and migrationBetween](./migrations-that-keep-data-declared.md) | completed |
 | [Modules reach the host: the enabled set is passed to opened, served and remote stores, and turning one off is in history](./modules-reach-the-host-the-enabled-set.md) | completed |
@@ -116,10 +116,10 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [One place says how many problems there are (FR-122)](./one-place-says-how-many-problems-there.md) | completed |
 | [openRemote's runtime entry exports the observable-client types, and read-only MCP calls can show presence](./openremote-s-runtime-entry-exports-the.md) | completed |
 | [pages is a real arrangement: order, hide and first, compiled and honoured on both faces (FR-80)](./pages-is-a-real-arrangement-order-hide.md) | completed |
-| [Places stand in the bar when there's room (FR-145)](./places-stand-in-the-bar-when-there-s.md) | pending |
+| [Places stand in the bar when there's room (FR-145)](./places-stand-in-the-bar-when-there-s.md) | completed |
 | [Presence a host can add to: kind, name, onBehalfOf, announce for socketless visitors, and welcome.participant (FR-47)](./presence-a-host-can-add-to-kind-name.md) | completed |
 | [Presence speaks one dialect and forgets the gone; seats can be added after mount without offering to sit as someone else](./presence-speaks-one-dialect-and.md) | completed |
-| [Record-page field order and grouping can be set (FR-148)](./record-page-field-order-and-grouping.md) | pending |
+| [Record-page field order and grouping can be set (FR-148)](./record-page-field-order-and-grouping.md) | completed |
 | [Refusal reasons a program can branch on: forbidden, missing, invalid, limit, with wouldNeed (FR-46)](./refusal-reasons-a-program-can-branch.md) | completed |
 | [Registering one view layers over the defaults instead of replacing them, and a default can be wrapped](./registering-one-view-layers-over-the.md) | completed |
 | [Room on the hosted page: weight by entry in release notes, and headroom under 600 KB (FR-104)](./room-on-the-hosted-page-weight-by.md) | completed |
@@ -128,7 +128,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Say what a host page needs for worker views, and say when it is missing (FR-102)](./say-what-a-host-page-needs-for-worker.md) | completed |
 | [sceneThumbnail sizes districts by counts the way the live Scene does (FR-103)](./scenethumbnail-sizes-districts-by.md) | completed |
 | [SECURITY: the seat view serves no unseen record's id, in field values, primitives, reads, writes or args (FR-55)](./security-the-seat-view-serves-no.md) | completed |
-| [Sentences use the declaration's words for an edge (FR-142)](./sentences-use-the-declaration-s-words.md) | pending |
+| [Sentences use the declaration's words for an edge (FR-142)](./sentences-use-the-declaration-s-words.md) | completed |
 | [setApp takes the new label, so a renamed app says its new name without a reload (FR-128)](./setapp-takes-the-new-label-so-a.md) | completed |
 | [Sights follow the log: seesId's judgement, an appended-op creator index, and the ambiguous refusal names the kind (FR-51)](./sights-follow-the-log-seesid-s.md) | completed |
 | [Stored data checked against its declaration: validateGraph, and repairs as ordinary ops](./stored-data-checked-against-its.md) | completed |
@@ -136,7 +136,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Structural edits as a vocabulary: add, rename, retype, remove — and a rename rewrites every reference](./structural-edits-as-a-vocabulary-add.md) | completed |
 | [Swap the app under a mounted embed without losing the reader's place (FR-116)](./swap-the-app-under-a-mounted-embed.md) | completed |
 | [Templates as data: graview create and graview apply take a template made anywhere](./templates-as-data-graview-create-and.md) | completed |
-| [Text keeps its line breaks everywhere it is drawn (FR-146)](./text-keeps-its-line-breaks-everywhere.md) | pending |
+| [Text keeps its line breaks everywhere it is drawn (FR-146)](./text-keeps-its-line-breaks-everywhere.md) | completed |
 | [The AI rail can be put away: collapse to a tab, overlay when narrow, and a host's starting state (FR-78)](./the-ai-rail-can-be-put-away-collapse.md) | completed |
 | [The channel is the host's word: the live handler takes via from the seat, never from the client (FR-52)](./the-channel-is-the-host-s-word-the.md) | completed |
 | [The companion is a top-level landmark or none, so axe's landmark-complementary-is-top-level holds (FR-40)](./the-companion-is-a-top-level-landmark.md) | completed |
@@ -152,11 +152,11 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The framework says its own version, and rule failures are structured](./the-framework-says-its-own-version-and.md) | completed |
 | [The language computes what pages need: expressions in aggregates, first and sort, computed fields, template filters (FR-83)](./the-language-computes-what-pages-need.md) | completed |
 | [The live handler serves a store the host already holds (FR-42)](./the-live-handler-serves-a-store-the.md) | completed |
-| [The place list is ready when it opens (FR-140)](./the-place-list-is-ready-when-it-opens.md) | pending |
+| [The place list is ready when it opens (FR-140)](./the-place-list-is-ready-when-it-opens.md) | completed |
 | [The places move out of the bar (FR-138)](./the-places-move-out-of-the-bar-fr-138.md) | completed |
 | [The record names Graview Cloud and npm as they are](./the-record-names-graview-cloud-and-npm.md) | completed |
 | [The scene and the pages are two things, and the bar says so (FR-137)](./the-scene-and-the-pages-are-two-things.md) | completed |
-| [The scene has its place control in the bar (FR-144)](./the-scene-has-its-place-control-in-the.md) | pending |
+| [The scene has its place control in the bar (FR-144)](./the-scene-has-its-place-control-in-the.md) | completed |
 | [The scene is a place, not a mode (FR-132)](./the-scene-is-a-place-not-a-mode-fr-132.md) | completed |
 | [The seat view serves an op that names a record that isn't there (FR-67)](./the-seat-view-serves-an-op-that-names.md) | completed |
 | [The server pushes that the declaration changed, and a remote client reopens on it (FR-43)](./the-server-pushes-that-the-declaration.md) | completed |

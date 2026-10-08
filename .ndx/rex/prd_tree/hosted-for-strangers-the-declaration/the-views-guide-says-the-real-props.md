@@ -18,4 +18,5 @@ acceptanceCriteria:
   - "A tested worked example of a cardinality-one view that reads its own record's fields"
 description: "A view written to the guide's props.nodes[].fields renders empty."
 lastModified: "2026-10-08T21:00:00.000Z"
+resolution: "Shipped in #157, merged through #162 (0.1.18): the views guide says the props a view is handed, with a worked example of one record."
 ---

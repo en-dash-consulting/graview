@@ -18,4 +18,5 @@ acceptanceCriteria:
   - "A long text edits in a view with its line breaks kept"
 description: "The guide says 'Do not prefill', so editing a 3,000-character draft in a view means retyping all of it."
 lastModified: "2026-10-08T21:00:00.000Z"
+resolution: "Shipped in #157, merged through #162 (0.1.18): an input or textarea a view draws with data-prefill is filled by the host from the record, only where the seat may write it."
 ---
