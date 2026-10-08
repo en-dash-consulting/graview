@@ -1,4 +1,4 @@
-import { labelOf, nounOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
+import { edgeWords, labelOf, nounOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
 import { useGraph, useGraview } from "@graview/react/provider";
 import { Chip } from "./primitives/index.js";
 import { hueFor } from "./default-views.js";
@@ -23,6 +23,12 @@ export interface ConnectionsProps {
   readonly max?: number;
   /** Shown when the node has no edges at all. Omit for silence. */
   readonly empty?: string;
+  /**
+   * Records the surrounding view already lists (FR-141): a declared page's
+   * own list of what a workshop part covers. A tie said there is not said
+   * again here, and a heading left with nothing under it is not drawn.
+   */
+  readonly hide?: ReadonlySet<string>;
 }
 
 interface Group {
@@ -31,17 +37,24 @@ interface Group {
   readonly ids: string[];
 }
 
-export function Connections({ id, max = 8, empty }: ConnectionsProps) {
+export function Connections({ id, max = 8, empty, hide }: ConnectionsProps) {
   const { store } = useGraview<AnySchema>();
   // Subscribing to the graph keeps this current when an edge is added.
   useGraph();
   // What it JUDGES counts as a connection: a rule's violations name the
   // nodes it is about, and a card saying "nothing is connected" over a band
   // of them was two surfaces disagreeing.
-  const groups = groupsFor(store, id, store.violations());
+  const all = groupsFor(store, id, store.violations());
+  const groups = hide
+    ? all.flatMap((group) => {
+        const ids = group.ids.filter((other) => !hide.has(other));
+        return ids.length > 0 ? [{ ...group, ids }] : [];
+      })
+    : all;
 
+  // Ties the view already listed are not "nothing connected": then it says nothing.
   if (groups.length === 0) {
-    return empty ? (
+    return empty && all.length === 0 ? (
       <p style={{ margin: 0, fontSize: "0.875rem", color: "var(--graview-ink-faint)" }}>{empty}</p>
     ) : null;
   }
@@ -146,11 +159,7 @@ function groupsFor(
          * declaration's `inverse` when it has one, and the edge kind in plain
          * words when it does not — which says less and is at least not wrong.
          */
-        label:
-          (direction === "out"
-            ? describeEdge(store.schema, owner, edge.kind)?.description
-            : describeEdge(store.schema, owner, edge.kind)?.inverse) ??
-          edge.kind.replace(/-/g, " "),
+        label: edgeWords(store.schema, owner, edge.kind, direction),
         ids: [],
       } satisfies Group);
     if (!group.ids.includes(otherId)) group.ids.push(otherId);
@@ -159,15 +168,4 @@ function groupsFor(
 
   for (const group of byKey.values()) group.ids.sort();
   return [...byKey.values()].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
-}
-
-function describeEdge(
-  schema: AnySchema,
-  ownerKind: string,
-  edgeKind: string,
-): { description?: string; inverse?: string } | undefined {
-  const edges = schema.tryDefinition(ownerKind)?.edges as
-    | Record<string, { description?: string; inverse?: string }>
-    | undefined;
-  return edges?.[edgeKind];
 }

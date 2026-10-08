@@ -692,6 +692,19 @@ ${/* AND NOT FROM ALTITUDE, where a district is a village on a plot and its
 [data-graview-stage="dom"] [data-graview-view] > [data-graview-natural] > * {
   pointer-events: auto;
 }
+${/* THE RECORD IN FOCUS KEEPS TO ITS BOX (FR-141). Whatever draws it — the
+   framework's record, a declared page at its head, a worker view — is held
+   to the box the layout gave it: no taller than the box, scrolling inside
+   when it is taller, from its top. A view centered on a box it outgrew
+   spilled under the bar and over the cards it is tied to. A frame that
+   scrolls its own body (a Panel) keeps doing so; the kind tag astride the
+   frame's edge is not held. */ ""}
+[data-graview-record-focus] > :not(.graview-kind-tag) {
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  flex-shrink: 1;
+}
 [data-graview-view][data-graview-selected] {
   filter: drop-shadow(0 0 14px var(--graview-accent-dim));
 }

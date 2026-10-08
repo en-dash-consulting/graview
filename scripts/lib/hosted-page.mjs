@@ -102,8 +102,13 @@ export const FACE_DOORS = {
  * is idle and online, and the guest host's worker asked for again: 589 642
  * bytes (575.8 KB), 3 209 more. The claim rises by that and no more:
  * 576.0 KB, which leaves Cloud's shell 19 KB under its 595.
+ * A selected record drawn once (FR-141–FR-143: a relation said in its words,
+ * the record in focus held to its box, drawn with the scene), over FR-139,
+ * took it to 589 828 bytes (576.0 KB), 186 more; the claim rises by that
+ * with about 0.2 KB of room: 576.2 KB, which leaves Cloud's shell 18.8 KB
+ * under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 576 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 576.2 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -187,12 +192,15 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * 541 627 bytes (528.9 KB), 155 more; the claim rises by that: 529.0 KB.
  * A lazy part that tries again after it failed to arrive (FR-139), over
  * the bar that fits its box and FR-140, took it to 544 890 bytes (532.1 KB),
- * 3 263 more, as above: 532.25 KB. The security review before 0.1.18 (a
- * retry imports only a chunk on the bundle's own origin, and a link's pins
- * and dimensions have no prototype) took it to 545 059 bytes (532.3 KB),
- * 169 more: 532.5 KB.
+ * 3 263 more, as above: 532.25 KB.
+ * A selected record drawn once (FR-141–FR-143), over FR-139, the same 186
+ * bytes as the page that compiles, took it to 545 076 bytes (532.3 KB); the
+ * claim rises by that with about 0.1 KB of room: 532.4 KB. The security
+ * review before 0.1.18 (a retry imports only a chunk on the bundle's own
+ * origin, and a link's pins and dimensions have no prototype) adds 169
+ * bytes: 532.6 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 532.5 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 532.6 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

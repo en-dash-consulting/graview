@@ -1,4 +1,4 @@
-import { labelOf, type AnySchema } from "@graview/core";
+import { counted, edgeWords, labelOf, type AnySchema } from "@graview/core";
 import type { AffordanceProvider, Observation } from "../types.js";
 
 /**
@@ -46,13 +46,12 @@ export function insightProvider<S extends AnySchema>(): AffordanceProvider<S> {
         for (const edgeKind of store.schema.edgeKinds) {
           const mine = store.graph.in(node.id, edgeKind).length;
           if (mine < 3) continue;
-          const everywhere = [...store.graph.allEdges()].filter(
-            (edge) => edge.kind === edgeKind,
-          ).length;
+          const edges = [...store.graph.allEdges()].filter((edge) => edge.kind === edgeKind);
+          const everywhere = edges.length;
           if (everywhere >= 4 && mine / everywhere > 0.6) {
             observations.push({
               id: `insight:load:${node.id}:${edgeKind}`,
-              text: `${name(node)} holds ${mine} of ${everywhere} "${edgeKind}" — most of them`,
+              text: `${name(node)} ${loadSaid(store, edges, edgeKind, mine)}`,
               nodeIds: [node.id],
             });
           }
@@ -92,4 +91,26 @@ export function insightProvider<S extends AnySchema>(): AffordanceProvider<S> {
       return { observations };
     },
   };
+}
+
+/**
+ * A CONCENTRATION, SAID IN THE DECLARATION'S WORDS (FR-142). It said
+ * `Holds 4 of 4 "partOf" — most of them`: the relation's key where its
+ * words belong, and "most" for all of them. The relation is read from the
+ * end the record stands on — its `inverse`, "covers" — and the count is
+ * said plainly: "all 4 topics" when it is all of them, "5 of the 6
+ * sessions" when it is most.
+ */
+function loadSaid(
+  store: { readonly schema: AnySchema; readonly graph: { getNode(id: string): { readonly kind: string } | undefined } },
+  edges: readonly { readonly from: string }[],
+  edgeKind: string,
+  mine: number,
+): string {
+  const kinds = new Set(edges.map((edge) => store.graph.getNode(edge.from)?.kind).filter((kind): kind is string => kind !== undefined));
+  const only = kinds.size === 1 ? [...kinds][0]! : undefined;
+  const everywhere = edges.length;
+  const words = edgeWords(store.schema, only ?? [...kinds][0] ?? "", edgeKind, "in");
+  const of = (count: number) => (only ? counted(store.schema, only, count) : String(count));
+  return mine === everywhere ? `${words}: all ${of(mine)}` : `${words}: ${mine} of the ${of(everywhere)}`;
 }

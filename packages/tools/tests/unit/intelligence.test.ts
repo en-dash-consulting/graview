@@ -157,7 +157,7 @@ describe("the graph itself is the first intelligence", () => {
       }).observations ?? []).map((o) => o.text);
 
     expect(said(["alone"])[0]).toMatch(/connected to nothing/);
-    expect(said(["june"])[0]).toMatch(/holds 4 of 4/);
+    expect(said(["june"])[0]).toBe("June tended by: all 4 plots");
 
     const bare = new Store({ schema, mutations: [], invariants: [] });
     const gap = (insightProvider<typeof schema>().derive({

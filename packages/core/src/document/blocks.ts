@@ -364,6 +364,102 @@ export function resolveBlocks(blocks: readonly SpecBlock[], ctx: BlockContext): 
   return blocks.map((block, i) => resolveOne(block, ctx, i === first));
 }
 
+/** What a record's blocks said, once worked out: what a view drawn around them must not say again (FR-141). */
+export interface BlocksSaid {
+  /** The record's fields a shown block says: a `field` block's, and every name a shown template or figure reads. */
+  readonly fields: ReadonlySet<string>;
+  /** The records a shown list lists. */
+  readonly records: ReadonlySet<string>;
+  /** The words of the first block, when it is a title: the heading the author wrote. */
+  readonly title?: string;
+}
+
+/**
+ * WHAT THE BLOCKS ALREADY SAY (FR-141). A kind's declared page heads the
+ * record the scene draws in focus, and the record's own card said it all
+ * again under it: the goal the page said, the four topics the page listed,
+ * as fields and as chips. Read here from the blocks as they were resolved —
+ * only what is shown counts, so a `when` that does not hold says nothing —
+ * so whoever draws around them leaves out what they said.
+ */
+/** The functions whose second argument is read once per member of the set before it (`perMember` in `expr/analyze.ts`). */
+const PER_MEMBER = new Set(["every", "some", "sum", "min", "max", "sort"]);
+
+export function whatBlocksSay(blocks: readonly SpecBlock[], resolved: readonly ResolvedBlock[]): BlocksSaid {
+  const fields = new Set<string>();
+  const records = new Set<string>();
+  // The subject's own names an expression reads: not those inside a `where`, nor those read per member of a set.
+  const reads = (expr: Parsed<Expr> | undefined): void => {
+    if (!expr) return;
+    switch (expr.t) {
+      case "ident":
+        fields.add(expr.name);
+        return;
+      case "list":
+        expr.items.forEach(reads);
+        return;
+      case "member":
+        return reads(expr.object);
+      case "unary":
+        return reads(expr.operand);
+      case "binary":
+        reads(expr.left);
+        return reads(expr.right);
+      case "where":
+        return reads(expr.set);
+      case "call":
+        expr.args.forEach((arg, i) => {
+          if (!(i === 1 && PER_MEMBER.has(expr.fn))) reads(arg);
+        });
+        return;
+      default:
+        return;
+    }
+  };
+  const readsParts = (parts: Parsed<readonly TemplatePart[]> | undefined) => {
+    for (const part of parts ?? []) reads(part.expr);
+  };
+  const walk = (specs: readonly SpecBlock[], drawn: readonly ResolvedBlock[]) => {
+    specs.forEach((block, i) => {
+      const one = drawn[i];
+      if (!one) return;
+      switch (block.t) {
+        case "field":
+          fields.add(block.field);
+          return;
+        case "title":
+        case "text":
+        case "badge":
+        case "headline":
+          readsParts(block.parts);
+          return;
+        case "number":
+          reads(block.value);
+          readsParts(block.label);
+          return;
+        case "progress":
+          reads(block.value);
+          reads(block.max);
+          return;
+        case "group":
+          if (one.t === "group") walk(block.blocks, one.blocks);
+          return;
+        case "when":
+          if (one.t === "when" && one.shown) walk(block.show, one.blocks);
+          return;
+        case "list":
+          if (one.t === "list") for (const member of one.members) records.add(member.id);
+          return;
+        default:
+          return;
+      }
+    });
+  };
+  walk(blocks, resolved);
+  const first = resolved[0];
+  return { fields, records, ...(blocks[0]?.t === "title" && first?.t === "title" ? { title: first.text } : {}) };
+}
+
 /**
  * A LIST OF RECORDS: the records its expression names — the kinds swept,
  * or a walk from the record (`out('includes')`, `in('answers')`) — in their

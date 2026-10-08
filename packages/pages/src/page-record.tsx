@@ -1,5 +1,5 @@
 import { describeNode, humanizeField, isWithheld, type AnySchema } from "@graview/core";
-import { DefaultViewElsewhere } from "@graview/primitives/pages";
+import { DefaultViewElsewhere, pageSays } from "@graview/primitives/pages";
 import { isDefaultView, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -80,6 +80,21 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    */
   const ownPage = context.views?.lookup(facts.kind, { cardinality: "one", fidelity: "full" });
   const PageView = ownPage !== undefined && !isDefaultView(ownPage) ? (ownPage as ComponentType<ViewProps<S>>) : undefined;
+  /*
+   * WHAT THE PAGE VIEW ALREADY SAYS IS NOT SAID AGAIN (FR-141). A kind's
+   * declared page heads this record, and the facts and the related records
+   * under it said its goal and its four topics a second time. The facts it
+   * read and the records it listed are left out below; a relation left with
+   * nothing to list has no heading.
+   */
+  const said = PageView && node ? pageSays(ownPage, node as never, store.graph as never) : undefined;
+  const fields = said ? facts.fields.filter((field) => !said.fields.has(field.key)) : facts.fields;
+  const links = said
+    ? facts.links.flatMap((group) => {
+        const targets = group.targets.filter((target) => !said.records.has(target.id));
+        return targets.length > 0 ? [{ ...group, targets }] : [];
+      })
+    : facts.links;
 
   return (
     <PageMain context={context}>
@@ -150,7 +165,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         </section>
       ) : null}
 
-      {facts.fields.length > 0 ? (
+      {fields.length > 0 ? (
         <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="record-fields">
           <h2 style={h2}>The facts</h2>
           <dl
@@ -161,7 +176,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               gap: "14px 24px",
             }}
           >
-            {facts.fields.map((field) => (
+            {fields.map((field) => (
               <div key={field.key} style={{ display: "grid", gap: 2, minWidth: 0 }}>
                 <dt style={{ ...eyebrow, fontSize: "0.75rem" }}>{field.label}</dt>
                 <dd style={{ margin: 0, fontSize: "1.125rem", overflowWrap: "anywhere" }}>{field.value}</dd>
@@ -171,7 +186,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         </section>
       ) : null}
 
-      {facts.links.map((group) => (
+      {links.map((group) => (
         <section key={`${group.edgeKind}|${group.direction}`} style={{ ...rule, display: "grid", gap: 10 }}>
           {/*
             * THE EYEBROW SAYS WHAT IS LISTED, NOT WHICH WAY THE EDGE WAS

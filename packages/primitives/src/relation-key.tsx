@@ -1,4 +1,4 @@
-import { layer, resolveKit, type AnySchema } from "@graview/core";
+import { humanizeField, layer, resolveKit, type AnySchema } from "@graview/core";
 import { kitConnector, useKit } from "@graview/react/drawing";
 import { useGraph, useGraview, useGraviewIfAny, useNavigation, useSelection } from "@graview/react/provider";
 import {
@@ -242,7 +242,7 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
  */
 export function relationWords(schema: AnySchema, edgeKind: string): { readonly words: string; readonly ends: string } {
   const info = schema.edge(edgeKind);
-  const said = info?.description ?? edgeKind.replace(/[-_]+/g, " ");
+  const said = info?.description ?? humanizeField(edgeKind).toLowerCase();
   const plural = (kind: string) => schema.tryDefinition(kind)?.plural ?? kind;
   const from = (info?.from ?? []).map(plural).join(", ");
   const to = info === undefined ? "" : info.to === "*" ? "anything" : info.to.map(plural).join(", ");
