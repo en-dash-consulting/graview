@@ -33,7 +33,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A guest view may read across kinds, gets labels, and may attach to the home (FR-85)](./a-guest-view-may-read-across-kinds.md) | completed |
 | [A hardened guest worker runtime: every global outside an allowlist removed before guest code runs (FR-70)](./a-hardened-guest-worker-runtime-every.md) | completed |
 | [A home view from the closed block set: headline, figure and list (FR-81)](./a-home-view-from-the-closed-block-set.md) | completed |
-| [A home view is the front page on a desk too (FR-136)](./a-home-view-is-the-front-page-on-a.md) | pending |
+| [A home view is the front page on a desk too (FR-136)](./a-home-view-is-the-front-page-on-a.md) | completed |
 | [A host can ask up front what the studio will not edit: uneditable(document) (FR-62)](./a-host-can-ask-up-front-what-the.md) | completed |
 | [A host can hand the page a compiled app, so the page no longer carries the compiler (FR-123)](./a-host-can-hand-the-page-a-compiled.md) | completed |
 | [A host can read Graview's shape and type: SHAPE, TYPOGRAPHY and isoShade(scheme) from core (FR-73)](./a-host-can-read-graview-s-shape-and.md) | completed |
@@ -104,7 +104,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Modules reach the host: the enabled set is passed to opened, served and remote stores, and turning one off is in history](./modules-reach-the-host-the-enabled-set.md) | completed |
 | [Named edits for the brand, the name and the subtitle (FR-125)](./named-edits-for-the-brand-the-name-and.md) | completed |
 | [Notices float, and never move the page (FR-133)](./notices-float-and-never-move-the-page.md) | completed |
-| [Old documents keep compiling after the en-US renames (FR-134)](./old-documents-keep-compiling-after-the.md) | pending |
+| [Old documents keep compiling after the en-US renames (FR-134)](./old-documents-keep-compiling-after-the.md) | completed |
 | [One app bar on every face: the app, its places, and three tools (FR-131)](./one-app-bar-on-every-face-the-app-its.md) | completed |
 | [One guest client, served not copied: a prebuilt classic script and an authoring guide (FR-88)](./one-guest-client-served-not-copied-a.md) | completed |
 | [One place says how many problems there are (FR-122)](./one-place-says-how-many-problems-there.md) | completed |
@@ -142,9 +142,9 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The framework says its own version, and rule failures are structured](./the-framework-says-its-own-version-and.md) | completed |
 | [The language computes what pages need: expressions in aggregates, first and sort, computed fields, template filters (FR-83)](./the-language-computes-what-pages-need.md) | completed |
 | [The live handler serves a store the host already holds (FR-42)](./the-live-handler-serves-a-store-the.md) | completed |
-| [The places move out of the bar (FR-138)](./the-places-move-out-of-the-bar-fr-138.md) | pending |
+| [The places move out of the bar (FR-138)](./the-places-move-out-of-the-bar-fr-138.md) | completed |
 | [The record names Graview Cloud and npm as they are](./the-record-names-graview-cloud-and-npm.md) | completed |
-| [The scene and the pages are two things, and the bar says so (FR-137)](./the-scene-and-the-pages-are-two-things.md) | pending |
+| [The scene and the pages are two things, and the bar says so (FR-137)](./the-scene-and-the-pages-are-two-things.md) | completed |
 | [The scene is a place, not a mode (FR-132)](./the-scene-is-a-place-not-a-mode-fr-132.md) | completed |
 | [The seat view serves an op that names a record that isn't there (FR-67)](./the-seat-view-serves-an-op-that-names.md) | completed |
 | [The server pushes that the declaration changed, and a remote client reopens on it (FR-43)](./the-server-pushes-that-the-declaration.md) | completed |

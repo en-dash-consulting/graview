@@ -79,7 +79,10 @@ export const FACE_DOORS = {
  * faces, and the place line in the frame's own height; the scene's name
  * on the switch and its old spelling read as the new 0.1 KB. The claim
  * rises by that and no more: 570.5 KB, which leaves Cloud's shell 24.5 KB
- * under its 595.
+ * under its 595. The review after 0.1.16 (a long word cut on the switch,
+ * the narrow embed's way back to the pages) paid for itself by saying an
+ * address within the app one way in the embed where it said it four:
+ * 583 814 bytes (570.1 KB).
  */
 export const HOSTED_PAGE_BUDGET = { minified: 570.5 * 1024, zod: 150 * 1024 };
 
@@ -156,7 +159,8 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * 535 157 bytes (522.6 KB). The switch and the place list (FR-137, FR-138)
  * and opening on the home view (FR-136) took it to 538 735 bytes
  * (526.1 KB), 3 578 more, the same bar and embed as the page that compiles
- * (above); the claim rises by that: 526.5 KB.
+ * (above); the claim rises by that: 526.5 KB. The review after 0.1.16
+ * left it at 539 006 bytes (526.4 KB), as above.
  */
 export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 526.5 * 1024 };
 

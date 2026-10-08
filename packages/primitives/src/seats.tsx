@@ -1,5 +1,6 @@
 import type { AnySchema, Principal } from "@graview/core";
 import { useGraview } from "@graview/react/provider";
+import { choiceStyle } from "./choice.js";
 
 /**
  * WHO YOU ARE SITTING AS — on the bar, where a policy can be felt.
@@ -55,17 +56,7 @@ export function Seats<S extends AnySchema>() {
             data-testid={`seat-${seat.principal.id ?? seat.label}`}
             title={`Sit down as ${seat.label}: the acts, the kinds and the pages narrow to what this seat may do`}
             onClick={() => takeSeat(seat.principal)}
-            style={{
-              padding: "3px 11px",
-              borderRadius: 999,
-              fontSize: "0.875rem",
-              whiteSpace: "nowrap",
-              borderWidth: 1,
-              borderStyle: "solid",
-              borderColor: here ? "var(--graview-accent)" : "var(--graview-edge)",
-              color: here ? "var(--graview-accent)" : "var(--graview-ink-muted)",
-              background: here ? "var(--graview-panel)" : "transparent",
-            }}
+            style={{ ...choiceStyle(here), whiteSpace: "nowrap" }}
           >
             {seat.label}
           </button>

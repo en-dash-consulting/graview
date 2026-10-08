@@ -63,6 +63,7 @@ const sameWords = (a: string, b: string) => a.trim().toLowerCase().replace(/[_-]
 function Resolved({ block }: { readonly block: ResolvedBlock }): ReactNode {
   const said = useContext(SaidAround);
   const under = useContext(HeadingsUnder);
+  const homeLine = useContext(HomeLine);
   if (said && block.t === "badge" && said.values.some((value) => sameWords(value, block.text))) return null;
   if (said && block.t === "field" && said.field !== undefined && block.field === said.field) return null;
   switch (block.t) {
@@ -127,10 +128,19 @@ function Resolved({ block }: { readonly block: ResolvedBlock }): ReactNode {
       return <SpecFigure />;
     case "headline": {
       const Tag = `h${Math.min(6, block.level + under)}` as "h1";
-      return (
+      const heading = (
         <Tag className="graview-spec-headline" data-level={block.level}>
           {block.text}
         </Tag>
+      );
+      // The home's first headline is the page's heading: the app's line follows it.
+      return homeLine !== null && block.level === 1 ? (
+        <>
+          {heading}
+          {homeLine}
+        </>
+      ) : (
+        heading
       );
     }
     case "number":
@@ -196,6 +206,15 @@ export const SpecLinks = createContext<SpecLinkTo | null>(null);
  * element (`data-level`), which is what it is drawn by.
  */
 export const HeadingsUnder = createContext(0);
+
+/**
+ * THE LINE UNDER THE HOME'S HEADING: the app's description, said on the
+ * routed face's home (FR-131). Where the declaration writes its home as
+ * blocks, the line follows the home's own headline — the page's heading —
+ * rather than standing over it as an eyebrow; a home with no headline says
+ * it first. Given only where the home is the page.
+ */
+export const HomeLine = createContext<ReactNode>(null);
 
 /** The steps a list or a figure about no one record may take: it sweeps whole kinds. */
 const SWEEP_BUDGET = 5_000;
@@ -313,9 +332,15 @@ export function SpecPlace({ blocks, heading = 2, firstHeading, slot }: { readonl
     ...(firstHeading !== undefined ? { firstHeading } : {}),
     budget: SWEEP_BUDGET,
   };
+  // The app's line goes under the home's headline when it has one (`HomeLine`), else first.
+  const line = useContext(HomeLine);
+  const headed = blocks.some((block) => block.t === "headline");
   return (
     <div className={`graview-spec graview-spec-${slot}`} data-graview-spec={slot}>
-      <SpecBlocks blocks={blocks} ctx={ctx} />
+      {line !== null && !headed ? line : null}
+      <HomeLine.Provider value={headed ? line : null}>
+        <SpecBlocks blocks={blocks} ctx={ctx} />
+      </HomeLine.Provider>
     </div>
   );
 }

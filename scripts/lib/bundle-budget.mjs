@@ -344,8 +344,10 @@ export const BUDGETS = [
     // drawn with the bar. Measured at 1_548_449 / 467_201.
     // Raised with every face's for the switch, the place list and the home view first (FR-136–FR-138), less the scene's landing
     // the home view no longer is: 1_680 / 623 more. Measured at 1_550_975 / 468_183.
-    minified: 1_551_200,
-    gzipped: 468_400,
+    // Raised with the review after 0.1.16: the profile's choices drawn by one style rather than three, the app's line under
+    // a home's own headline, the narrow embed's way back to the pages. Measured at 1_551_385 / 468_484.
+    minified: 1_551_600,
+    gzipped: 468_700,
     load: "all",
   },
   {
@@ -392,8 +394,10 @@ export const BUDGETS = [
     // drawn with the bar. Measured at 1_513_861 / 452_251.
     // Raised with every face's for the switch, the place list and the home view first (FR-136–FR-138): 1_695 / 613 more.
     // Measured at 1_516_402 / 453_220.
-    minified: 1_516_450,
-    gzipped: 453_400,
+    // Raised with every face's for the review after 0.1.16, and the document's own part of it the studio loads: arrange-pages
+    // reading the scene's old word, and the check's warning for a switch that says one word twice. Measured at 1_517_351 / 453_603.
+    minified: 1_517_600,
+    gzipped: 453_800,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

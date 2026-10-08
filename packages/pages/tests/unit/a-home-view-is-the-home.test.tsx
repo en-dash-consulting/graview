@@ -53,6 +53,21 @@ describe("the home view on the routed face", () => {
     await done();
   });
 
+  it("says the app's line under its headline, once, not over it as an eyebrow (FR-131)", async () => {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    const store = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], policy: app.policy!, snapshot: seed as never });
+    const brand = { ...app.brand!, subtitle: "Packages, offers and what we heard." };
+    await act(async () => root.render(<PagesApp context={{ store, views: declaredViews(app), principal: owner, brand }} initialPath="/" />));
+    await act(async () => new Promise((done) => setTimeout(done, 30)));
+    const lines = [...host.querySelectorAll('[data-testid="app-subtitle"]')];
+    expect(lines.map((line) => line.textContent)).toEqual(["Packages, offers and what we heard."]);
+    expect(lines[0]!.previousElementSibling?.textContent).toBe("A small start, on three fronts.");
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
   it("makes each listed record a link to its own page", async () => {
     const { host, done } = await rendered("/");
     const links = [...host.querySelectorAll<HTMLAnchorElement>("a.graview-spec-item-link")].map((a) => a.getAttribute("href"));

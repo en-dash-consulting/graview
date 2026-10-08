@@ -368,6 +368,15 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, pla
     });
   }
   if (!pages) return findings;
+  if (sceneTitle(pages).toLowerCase() === pagesTitle(pages).toLowerCase()) {
+    findings.push({
+      severity: "warning",
+      code: "pages-faces-alike",
+      path: "pages",
+      message: `The bar's switch would call both the scene and the pages "${sceneTitle(pages)}", so a reader could not tell its two buttons apart.`,
+      fix: `Give pages.scene and pages.pages two different words (unsaid, they are "Scene" and "Pages").`,
+    });
+  }
   const kinds = app.schema.kinds as readonly string[];
   for (const part of ["order", "hide"] as const) {
     (pages[part] ?? []).forEach((kind, index) => {

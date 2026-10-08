@@ -32,7 +32,7 @@ describe("a hosted page", () => {
     for (const name of ["react-dom", "zod", "@graview/core", "@graview/embed", "@graview/ship"]) expect(Object.keys(measured.upFront.packages)).toContain(name);
   });
 
-  it("carries at most 570.5 KB minified up front: 569.9 KB with the switch between the scene and the pages and the place list, so Cloud's shell keeps room for its own under its 595", () => {
+  it("carries at most 570.5 KB minified up front: 570.1 KB with the switch between the scene and the pages and the place list, so Cloud's shell keeps room for its own under its 595", () => {
     expect(measured.upFront.minified, `${Math.round(measured.upFront.minified / 1024)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
     expect(measured.over).toBe(false);
   });

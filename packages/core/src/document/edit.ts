@@ -182,8 +182,10 @@ const SHAPES: Record<EditOp, z.ZodType> = {
       order: z.union([z.array(kindName).max(40), z.null()]).optional(),
       hide: z.union([z.array(kindName).max(40), z.null()]).optional(),
       first: z.union([z.string().min(1).max(80), z.null()]).optional(),
-      scene: z.union([z.string().min(1).max(24), z.null()]).optional(),
-      pages: z.union([z.string().min(1).max(24), z.null()]).optional(),
+      scene: z.union([z.string().min(1).max(40), z.null()]).optional(),
+      pages: z.union([z.string().min(1).max(40), z.null()]).optional(),
+      // The scene's word as a chat or a tool written before 0.1.17 sends it (FR-132's key, RESPELLED as `scene`).
+      overview: z.union([z.string().min(1).max(40), z.null()]).optional(),
     })
     .strict(),
   "set-computed": z
@@ -927,7 +929,10 @@ class Editor {
     this.said.push(`${cap(said.replace(/ \(the app opens at its home again\)$/, ""))} is removed${said.endsWith("again)") ? "; the app opens at its home again" : ""}.`);
   }
 
-  private arrangePages(i: number, e: Doc) {
+  private arrangePages(i: number, given: Doc) {
+    // `overview` is the scene's word as 0.1.15 and 0.1.16 took it (FR-134): read as `scene`, which wins when both are said.
+    const { overview, ...rest } = given;
+    const e: Doc = rest.scene === undefined && overview !== undefined ? { ...rest, scene: overview } : rest;
     if (e.order === undefined && e.hide === undefined && e.first === undefined && e.scene === undefined && e.pages === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide", "first", "scene" or "pages"');
     const kinds = Object.keys(this.doc.kinds);
     for (const part of ["order", "hide"] as const) {
@@ -2143,8 +2148,8 @@ function pruneBlock(doc: Doc, b: Record<string, unknown>, ctx: Kinds, r: Rename,
  */
 export function editDocument(document: GraviewDocument, edits: readonly unknown[], options: EditOptions = {}): EditOutcome {
   if (!Array.isArray(edits)) return { ok: false, findings: [error("edit", "edits", "edits are a list, like [{\"op\": \"add-field\", …}]")] };
-  // No edits is no change: the document as it was, and nothing said.
-  if (edits.length === 0) return { ok: true, document: clone(document), said: [], fills: [] };
+  // No edits is no change: the document as it was, in the current spelling (FR-134), and nothing said.
+  if (edits.length === 0) return { ok: true, document: clone(respellDocument(document).document), said: [], fills: [] };
   if (edits.length > MAX_EDITS) return { ok: false, findings: [error("edit", "edits", `at most ${MAX_EDITS} edits at once`)] };
   // Edited as this build spells it, so what the edit writes says each key's current name (FR-134).
   const current = respellDocument(document).document;
