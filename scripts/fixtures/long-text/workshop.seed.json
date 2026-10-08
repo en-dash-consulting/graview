@@ -1,0 +1,22 @@
+{
+  "nodes": [
+    {
+      "id": "email",
+      "kind": "deliverable",
+      "status": "drafting",
+      "summary": "The follow-up email to Todd after the workshop",
+      "due": "2026-10-28",
+      "draft": "Hi Todd,\n\nThank you for two good days in Lansing. The room did the hard part: it said out loud what the pilot is for, who it serves first, and what the county will need to see before it signs anything. This note gathers what we agreed, what is still open, and what each of us owes before the board meets on the fourth of November.\n\nWhat we agreed, in the order the room reached it:\n\n1. The pilot is priced by the acre, not by the farm, so a small grower and a large one pay the same for the same ground and the numbers stay easy to explain at a kitchen table.\n2. The first season covers the three townships that already share a drainage district, because their records are in one place and their supervisors have worked together before.\n3. Every grower who joins gets a named contact at the Bureau and a written summary of what the pilot will ask of them, before they sign, in plain words and on one page.\n4. We report to the board twice: once at planting and once after harvest, with the same five measures both times so the two reports can be read side by side.\n\nWhat is still open, and who is carrying it:\n\n- Who signs for the county. Maria is asking the commissioners whether the drainage board can sign alone or whether the full commission has to vote; she expects an answer by the twentieth.\n- How the cost share is paid. The finance committee prefers one payment at planting; several growers asked for two, split at planting and at harvest. Dale will bring both versions with their effect on cash flow.\n- Whether the soil tests are paid by the pilot or by the grower. We leaned toward the pilot paying for the first year only, but nobody wanted to decide it without the extension office in the room.\n\nWhat I owe you, and when:\n\n* A one-page summary for the board, in the Bureau's own format, by the twenty-eighth.\n* The pilot's budget, with the per-acre price and the two payment schedules side by side, by the same day.\n* A draft of the grower letter, for you and Maria to mark up before it goes anywhere.\n\nTwo things I would ask of you. First, could you share the attendance list with the townships each person represents? I want the summary to say who was in the room without my guessing at it. Second, if the commissioners' answer comes back before the twentieth, a short note would let me write the summary the right way the first time.\n\nI will hold the afternoon of the thirtieth for a call in case anything in the summary needs a second pass before it goes to the board. If that afternoon does not work, any time on the thirty-first is fine.\n\nOne more thing, so it is written down somewhere: the growers who came on the second morning asked whether the pilot could share what it learns with the townships that are not in it yet. I said we would ask the board, and I would like the summary to carry that question rather than have it come up from the floor in November.\n\nThanks again for hosting, and for keeping the room on the questions that mattered. It was a better two days than most workshops manage in a week.\n\nBest,\nNick",
+      "subject": "What we agreed in Lansing, and what is still open",
+      "name": "Email to Todd"
+    },
+    {
+      "id": "budget",
+      "kind": "deliverable",
+      "status": "drafting",
+      "name": "The pilot's budget",
+      "due": "2026-10-28"
+    }
+  ],
+  "edges": []
+}

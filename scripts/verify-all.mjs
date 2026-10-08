@@ -77,6 +77,8 @@ const CHAIN = [
   ["brand", "verify-brand.mjs"],
   // A document's declared lenses drawn as places on both faces, and its arrangement honored, with no view of the host's (FR-79, FR-80).
   ["declared", "verify-declared.mjs"],
+  // A record's long text keeps its paragraphs and lists, spans the record under its label, is edited in a text area, and its facts follow the declared or the page's order, in three engines (FR-146–FR-148).
+  ["long-text", "verify-long-text.mjs"],
   // A host whose page is the app hands the routed face the address bar, in three engines; an article's embed never touches it (FR-106).
   ["address", "verify-address.mjs"],
   // The studio's whole path, on a scratch copy of seedbed: said, rewritten, written, compiled, migrated.

@@ -1,0 +1,94 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Farm Bureau POM Workshop",
+  "description": "A workshop's deliverables, one of them an email drafted in full: paragraphs, a numbered list and bulleted lists, stored as a chat wrote them.",
+  "roles": [
+    "owner"
+  ],
+  "policy": {
+    "grants": [
+      {
+        "roles": [
+          "owner"
+        ],
+        "mutations": "*"
+      }
+    ]
+  },
+  "kinds": {
+    "deliverable": {
+      "noun": "deliverable",
+      "plural": "deliverables",
+      "description": "Something owed after the workshop.",
+      "fields": {
+        "due": {
+          "type": "date"
+        },
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "drafting",
+            "sent"
+          ],
+          "default": "drafting",
+          "required": true
+        },
+        "summary": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string",
+          "label": "Subject line"
+        },
+        "draft": {
+          "type": "text"
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-deliverable": {
+      "title": "Add a deliverable",
+      "creates": "deliverable",
+      "description": "Write down what is owed."
+    }
+  },
+  "lenses": [
+    {
+      "name": "blocks",
+      "title": "Email to Todd",
+      "on": "deliverable",
+      "options": {
+        "blocks": [
+          {
+            "list": "all('deliverable')",
+            "as": "card",
+            "empty": "Nothing owed yet."
+          }
+        ]
+      }
+    }
+  ],
+  "views": {
+    "deliverable": {
+      "card": [
+        {
+          "title": "{name}"
+        },
+        {
+          "text": "{draft}"
+        }
+      ],
+      "row": [
+        {
+          "title": "{name}"
+        }
+      ]
+    }
+  }
+}
