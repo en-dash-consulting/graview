@@ -200,7 +200,10 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * 3 263 more, as above: 532.25 KB.
  * A selected record drawn once (FR-141–FR-143), over FR-139, the same 186
  * bytes as the page that compiles, took it to 545 076 bytes (532.3 KB); the
- * claim rises by that with about 0.1 KB of room: 532.4 KB.
+ * claim rises by that with about 0.1 KB of room: 532.4 KB. The security
+ * review before 0.1.18 (a retry imports only a chunk on the bundle's own
+ * origin, and a link's pins and dimensions have no prototype) adds 169
+ * bytes: 532.6 KB.
  * The same integration (FR-144–FR-151) took it to 551 424 bytes
  * (538.5 KB), 6 348 more; the claim rises by that with about 0.2 KB of
  * room: 538.7 KB.

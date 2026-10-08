@@ -49,8 +49,41 @@ describe("a lazy part tries again", () => {
   });
 
   it("reads the URL from each engine's words", () => {
-    expect(failedUrl(new TypeError("Failed to fetch dynamically imported module: http://x.test/a-1.js"))).toBe("http://x.test/a-1.js");
-    expect(failedUrl(new TypeError("error loading dynamically imported module: https://x.test/a.js?v=2"))).toBe("https://x.test/a.js?v=2");
+    expect(failedUrl(new TypeError("Failed to fetch dynamically imported module: http://x.test/a-1.js"), "http://x.test/retry.js")).toBe("http://x.test/a-1.js");
+    expect(failedUrl(new TypeError("error loading dynamically imported module: https://x.test/a.js?v=2"), "https://x.test/retry.js")).toBe("https://x.test/a.js?v=2");
     expect(failedUrl(new TypeError("Importing a module script failed."))).toBeUndefined();
+  });
+});
+
+/**
+ * THE RETRY ONLY EVER ASKS AGAIN FOR A CHUNK THE BUNDLE ASKED FOR.
+ *
+ * The URL is read from an error's words, and a module that arrived but threw
+ * while it ran rejects the import with ITS words, which may carry any URL a
+ * message was built from. Only an engine's own "could not fetch" sentence,
+ * naming a URL on the origin the bundle's own modules came from, is ever
+ * imported again; anything else calls the bundler's import again.
+ */
+describe("the retry imports only what the bundle asked for", () => {
+  it("reads no URL from words that are not an engine's failed fetch", () => {
+    expect(failedUrl(new Error("could not reach https://evil.test/x.js"))).toBeUndefined();
+    expect(failedUrl(new Error("Lookup failed. Failed to fetch dynamically imported module: https://evil.test/x.js"))).toBeUndefined();
+  });
+
+  it("reads no URL on another origin than the bundle's own", () => {
+    const own = "https://app.test/assets/retry-1.js";
+    expect(failedUrl(new TypeError("Failed to fetch dynamically imported module: https://evil.test/x.js"), own)).toBeUndefined();
+    expect(failedUrl(new TypeError("Failed to fetch dynamically imported module: https://app.test.evil.test/x.js"), own)).toBeUndefined();
+    expect(failedUrl(new TypeError("Failed to fetch dynamically imported module: https://app.test@evil.test/x.js"), own)).toBeUndefined();
+    expect(failedUrl(new TypeError("Failed to fetch dynamically imported module: javascript:alert(1)//https://app.test/x.js"), own)).toBeUndefined();
+    expect(failedUrl(new TypeError("Failed to fetch dynamically imported module: https://app.test/assets/menu-2.js"), own)).toBe("https://app.test/assets/menu-2.js");
+  });
+
+  it("calls the bundler's import again when a module that ran threw words naming another URL", async () => {
+    let calls = 0;
+    const part = retryingImport(() => (++calls === 1 ? Promise.reject(new Error("could not reach https://evil.test/x.js")) : Promise.resolve({ part: "here" })));
+    await expect(part()).rejects.toThrow(/could not reach/);
+    expect((await part()).part).toBe("here");
+    expect(calls).toBe(2);
   });
 });
