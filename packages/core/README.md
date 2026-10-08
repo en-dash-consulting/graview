@@ -30,7 +30,14 @@ Everything a Graview app declares, and the checker that verifies it.
   images; faces named from `SYSTEM_STACKS`, the system's own and
   `DOCUMENT_FONTS`, judged by `fontProblem`; and an accent that does not
   read as given is refused by `accentProblem` with the pair, its ratio and
-  a shade that would pass (FR-126).
+  a shade that would pass (FR-126). Graview's own identity (the design kit,
+  revision 03) is data too, and reaches an app only through these defaults:
+  `GRAVIEW_COLORS` (En Dash navy and turquoise, paper, reading ink, muted
+  text), `GRAVIEW_FACE` and `WEIGHTS` (Montserrat at 550, 450 and 600, named
+  first in `TYPOGRAPHY` and never fetched), `LOGO_RULES`, and the
+  shared-plane symbol as an inline currentColor SVG (`graviewSymbol`,
+  the micro cut under 28 px by `symbolCut`). The shipped palettes are built
+  on it; turquoise is in neither, since it is a point and a fill, never text.
 - **`graview check`** — reads a declaration and reports what is wrong with it,
   in terms an agent can act on. In code it is `@graview/core/check`:
   `checkApp`, `describeApp`, the agent docs (`generateLlmsTxt`), and
