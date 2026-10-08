@@ -188,7 +188,18 @@ const unseen = ["shopper:freya", "Freya Davies", "freya@mail.example", "enquiry:
  * came to, and where navigation went.
  */
 function protocolClaims({ seen, answers, wire, log, heard, stats, went }) {
-  claim("the card was shown the cars and Bethan, and nobody else", seen.length > 0 && JSON.stringify(seen[0].nodes.map((n) => n.id)) === JSON.stringify(["car:golf", "shopper:bethan"]), seen[0]?.nodes);
+  /*
+   * The card and the hostile guest run side by side, and every act of the
+   * hostile guest's flood that lands is an enquiry Bethan made and so may
+   * see (`own`). Which of those had landed when the card was first shown
+   * is a race the claim does not judge: under load the card's first props
+   * can arrive after some of them. What it judges is that every push held
+   * the cars and Bethan, and beyond them only an enquiry the log says she
+   * made.
+   */
+  const hers = new Set(log.filter((op) => op.author === "shopper:bethan").map((op) => op.intent));
+  const strangers = seen.flatMap((props) => (props.nodes ?? []).filter((n) => n.id !== "car:golf" && n.id !== "shopper:bethan" && !(n.kind === "enquiry" && hers.has(`Ask ${n.label}`))));
+  claim("the card was shown the cars and Bethan, and nobody else", seen.length > 0 && seen.every((props) => ["car:golf", "shopper:bethan"].every((id) => (props.nodes ?? []).some((n) => n.id === id))) && strangers.length === 0, { strangers, first: seen[0]?.nodes });
   claim("nothing a guest received names what Bethan may not see, or a secret of the host's", unseen.every((word) => !wire.includes(word)), unseen.filter((word) => wire.includes(word)));
   claim("the card's own act was applied", answers[0]?.ok === true, answers[0]);
   /*
