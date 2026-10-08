@@ -23,7 +23,8 @@ this package serves lists, records, forms, problems and history as ordinary link
   (FR-131): the app's mark and name — the page's one heading, the way home — then the switch,
   "Scene" and "Pages" (FR-137; the scene at its own address on a face that owns its page), then
   the place you are on as one control that opens every place: the home, the Lists, the Pictures
-  (FR-138); then Find, the standing and the person. A page keeps only its own links — a picture
+  (FR-138) — or, where the bar has room, the places themselves on the row, the rest under
+  "More" (FR-145); then Find, the standing and the person. A page keeps only its own links — a picture
   its kind as a list, a record "In the scene ↗" to its stop there.
   Under an embed's bar the shell draws none of it, and the face's Find goes in
   that bar. Each page's own title is said a level under the app's name. See

@@ -49,7 +49,19 @@ opens every place the app has (FR-138): the home first, then the Lists
 connect), each with its mark, a long name wrapped. Every place is two
 presses away, Escape gives the keyboard back to the control, and the bar
 is one row of 48 px however many places there are; on a phone the place
-control is the page's first line, under the bar. At the right, three tools
+control is the page's first line, under the bar. On the scene the same
+control names what the scene shows — "The whole thing", or the picture in
+view — and lists its pictures (FR-144): choosing one moves the scene's
+`in.view`, and its address under `routing: "address"`, as any other way
+to a picture does. Where the bar has room after the name, the switch and
+the tools, the places themselves stand on the row as words in their order,
+the one you are on underlined and always among them, and the rest fold
+into "More" (FR-145); measured from the bar's own width, so a narrow box
+keeps the one control. A harness reaches any place the same way at every
+width: `[data-testid="app-place-<key>"]` (with its `data-place-path`) is
+one element in the embed — press it if it is visible, else press
+`app-places-open` ("More", or the one control) and then press it in
+`app-places`; `app-place-current` says where the reader is. At the right, three tools
 of one size: Find (a small box that says "Find…" and its shortcut, ⌘K on a
 Mac and Ctrl K elsewhere, and is drawn wide while it is used; a magnifier
 that opens the box over the row on a phone), the standing (a dot in the tone of the rules, a number
