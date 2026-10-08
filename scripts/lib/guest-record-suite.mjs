@@ -122,7 +122,8 @@ window.__handle.drawn().then(() => { window.__ready = true; });
           heading: root?.querySelector(".record h2")?.textContent ?? null,
           paragraphs: [...(root?.querySelectorAll(".draft p") ?? [])].map((p) => p.textContent),
           fields: Boolean(fields),
-          draftEditable: fields?.querySelector('[data-graview-field="draft"]')?.getAttribute("data-graview-editable") ?? null,
+          // Long text says it can be changed on its "Edit" by the label (FR-147); a short field, on itself.
+          draftEditable: (fields?.querySelector('[data-graview-long="draft"] [data-graview-editable]') ?? fields?.querySelector('[data-graview-field="draft"]'))?.getAttribute("data-graview-editable") ?? null,
           below,
           facts: Boolean(document.querySelector('[data-testid="record-fields"]')),
           acts: Boolean(document.querySelector('[data-testid="record-actions"]')),
