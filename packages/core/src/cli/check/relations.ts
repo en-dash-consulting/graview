@@ -198,6 +198,20 @@ export function checkActsFromEnds<S extends AnySchema>(ctx: CheckContext<S>, wri
           fix: `Use one of: ${readable.join(", ")}.`,
         });
       }
+      // What a record's page names (FR-148): a field or computed field of the kind, each once.
+      const page = definition.display?.page;
+      const named = [...(page?.fields ?? []), ...(page?.groups ?? []).flatMap((group) => group.fields)];
+      for (const [index, key] of named.entries()) {
+        const known = key in shape || Object.prototype.hasOwnProperty.call((definition as { computed?: object }).computed ?? {}, key);
+        if (known && named.indexOf(key) === index) continue;
+        add({
+          severity: "error",
+          code: known ? "page-field-twice" : "page-unknown-field",
+          where: `defineNode("${definition.kind}").display.page`,
+          message: known ? `"${key}" is on ${withArticle(definition.kind)}'s page twice.` : `${withArticle(definition.kind).replace(/^./, (first) => first.toUpperCase())}'s page is to show "${key}", which it does not declare.`,
+          fix: known ? "Name each field once: in `fields`, or in one group." : `Use one of: ${readable.join(", ")}.`,
+        });
+      }
       if (readable.length > 5 && !definition.display?.glance) {
         add({
           severity: "note",

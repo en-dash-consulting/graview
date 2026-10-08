@@ -106,7 +106,8 @@ export function nodeRefArgs(
  * asked it.
  */
 export type ArgShape =
-  | { readonly type: "text" }
+  /** Words; `long` where the field allows more than 500 characters — prose, asked for in a text area (FR-147). */
+  | { readonly type: "text"; readonly long?: true }
   /**
    * A DATE, AND WITH `time` A TIME OF DAY IN IT. A workshop's start is
    * `YYYY-MM-DDTHH:MM`; read as a plain date it got a date picker, whose
@@ -218,7 +219,9 @@ export function describeArg(schema: unknown): ArgShape {
       // A time of day in the pattern as well: `T\d{2}:\d{2}`, or a space before it.
       return sources.some((source) => source.includes("\\d{2}:\\d{2}")) ? { type: "date", time: true } : { type: "date" };
     }
-    return { type: "text" };
+    // Prose: more than 500 characters allowed — a document's `text` (FR-147), asked for in a text area.
+    const long = checks.some((check) => check.check === "max_length" && typeof (check as { maximum?: unknown }).maximum === "number" && (check as { maximum: number }).maximum > 500);
+    return long ? { type: "text", long: true } : { type: "text" };
   }
 
   return { type: "unknown" };

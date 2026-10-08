@@ -1,8 +1,9 @@
-import { fieldWords, humanizeField as humanize, readableFields, type AnySchema } from "@graview/core";
+import { fieldWords, humanizeField as humanize, pageSections, readableFields, type AnySchema } from "@graview/core";
 import { useEditableFields } from "@graview/react/drawing";
-import { useGraview, useNode } from "@graview/react/provider";
+import { useGraview, useGraviewIfAny, useNode } from "@graview/react/provider";
 import type { EditableField } from "@graview/tools";
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
+import { TextBody } from "./text-body.js";
 
 /**
  * One field's value, changeable where it is shown when something can change
@@ -301,39 +302,181 @@ export function Fields<S extends AnySchema>({
   );
   if (rows.length === 0) return null;
 
+  /*
+   * IN THE SECTIONS THE KIND'S PAGE DECLARES (FR-148): its first fields,
+   * then each group under its title, the rest under "Details" — or, unsaid,
+   * one run in declared order. Each section is its own list, so its labels
+   * line up with each other and not with a group's below.
+   */
   return (
-    <dl
-      data-graview-fields={node.id}
-      style={{
-        margin: 0,
-        display: "grid",
-        gridTemplateColumns: "auto 1fr",
-        gap: "5px 16px",
-        fontSize: "0.875rem",
-        alignContent: "start",
-      }}
-    >
-      {rows.map((field) => (
-        <div key={field.key} style={{ display: "contents" }}>
-          <dt
-            style={{
-              color: "var(--graview-ink-faint)",
-              whiteSpace: "nowrap",
-              // A field name is a label, not a heading: it should read as
-              // quieter than its value rather than competing with it.
-              fontSize: "0.8125rem",
-            }}
-          >
-            {labels[field.key] ?? field.label}
-          </dt>
-          <dd style={{ margin: 0, minWidth: 0 }}>
-            <EditableValue<S> nodeId={node.id} field={field.key} value={field.value} />
-          </dd>
-        </div>
-      ))}
-    </dl>
+    <div data-graview-fields={node.id} style={{ display: "grid", gap: 14, alignContent: "start", minWidth: 0, fontSize: "0.875rem" }}>
+      {pageSections(definition, rows).map((section, index) => {
+        const list = (
+          <dl style={{ margin: 0, display: "grid", gridTemplateColumns: "auto 1fr", gap: "5px 16px", alignContent: "start", minWidth: 0 }}>
+            {section.fields.map((field) =>
+              field.long ? (
+                <LongValue<S> key={field.key} nodeId={node.id} field={field.key} label={labels[field.key] ?? field.label} value={field.value} labelStyle={LABEL} style={{ gridColumn: "1 / -1", marginTop: 6 }} />
+              ) : (
+                <div key={field.key} style={{ display: "contents" }}>
+                  <dt style={{ ...LABEL, whiteSpace: "nowrap" }}>{labels[field.key] ?? field.label}</dt>
+                  <dd style={{ margin: 0, minWidth: 0 }}>
+                    <EditableValue<S> nodeId={node.id} field={field.key} value={field.value} />
+                  </dd>
+                </div>
+              ),
+            )}
+          </dl>
+        );
+        if (!section.title) return <div key={index}>{list}</div>;
+        const titleId = `graview-field-group-${node.id}-${index}`;
+        return (
+          <div key={index} role="group" aria-labelledby={titleId} style={{ display: "grid", gap: 6, minWidth: 0 }}>
+            <p id={titleId} data-graview-field-group={section.title} style={GROUP_TITLE}>
+              {section.title}
+            </p>
+            {list}
+          </div>
+        );
+      })}
+    </div>
   );
 }
+
+/* A field name is a label, not a heading: it should read as quieter than its value rather than competing with it. */
+const LABEL = { color: "var(--graview-ink-faint)", fontSize: "0.8125rem" } as const;
+/* A group's title: one step above its labels, a step below the record's heading. */
+const GROUP_TITLE = { margin: 0, fontSize: "0.75rem", letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--graview-ink-muted)", fontWeight: 560 } as const;
+
+/**
+ * A FIELD THAT IS PROSE (FR-146, FR-147): the width of the record with its
+ * label above it, its paragraphs and lists kept, and changed in a text area
+ * that keeps every line break.
+ *
+ * A row of the definition list (`<dt>` and `<dd>` in a `<div>`), so it sits
+ * among the short facts in their order. A `text` field in a value column a
+ * third of the page wide was a tall narrow wall with "Summary" and "Due"
+ * crammed above it in the same style; here it reads like what it is.
+ *
+ * Changing it: the label carries an "Edit" button — the keyboard's way in,
+ * named for the field — and a click on the words opens it too. The text
+ * area is as tall as what it holds (`field-sizing: content`, measured where
+ * an engine lacks it), Enter is a new line, Ctrl or ⌘ with Enter saves, as
+ * does leaving it; Escape puts it back. Saving runs the mutation the
+ * framework found, like every edit in place.
+ *
+ * Drawn where no store is provided — a routed face handed no views — it is
+ * read, not changed: the same row, without the "Edit".
+ */
+export function LongValue<S extends AnySchema>(props: LongValueProps) {
+  return useGraviewIfAny<S>() ? <EditableProse<S> {...props} /> : <ReadProse {...props} />;
+}
+
+interface LongValueProps {
+  readonly nodeId: string;
+  readonly field: string;
+  readonly label: string;
+  readonly value: string;
+  readonly labelStyle?: CSSProperties;
+  readonly valueStyle?: CSSProperties;
+  readonly style?: CSSProperties;
+}
+
+function ReadProse({ field, label, value, labelStyle, valueStyle, style }: LongValueProps) {
+  return (
+    <div data-graview-long={field} style={{ display: "grid", gap: 6, minWidth: 0, ...style }}>
+      <dt style={labelStyle}>{label}</dt>
+      <dd style={{ margin: 0, minWidth: 0, ...valueStyle }}>
+        <div data-graview-field={field}>
+          <TextBody text={value} />
+        </div>
+      </dd>
+    </div>
+  );
+}
+
+function EditableProse<S extends AnySchema>({ nodeId, field, label, value, labelStyle, valueStyle, style }: LongValueProps) {
+  const { fields, commit } = useEditableFields<S>(nodeId);
+  const editable = fields.find((candidate) => candidate.field === field && candidate.takesValue);
+  const [editing, setEditing] = useState(false);
+  const opener = useRef<HTMLButtonElement | null>(null);
+  const comeBack = useRef(false);
+  useEffect(() => {
+    if (!editing && comeBack.current) {
+      comeBack.current = false;
+      opener.current?.focus();
+    }
+  }, [editing]);
+  const close = (keepTheKeyboard: boolean) => {
+    comeBack.current = keepTheKeyboard;
+    setEditing(false);
+  };
+  const words = label.toLowerCase();
+  const drawn = <TextBody text={value} />;
+
+  return (
+    <div data-graview-long={field} style={{ display: "grid", gap: 6, minWidth: 0, ...style }}>
+      <dt style={{ display: "flex", alignItems: "baseline", gap: 10, ...labelStyle }}>
+        <span>{label}</span>
+        {editable && !editing ? (
+          <button
+            ref={opener}
+            type="button"
+            data-graview-editable={editable.mutation}
+            aria-label={`Edit the ${words}`}
+            title={`${editable.title} — changes the ${words}, and can be undone`}
+            onClick={() => setEditing(true)}
+            style={EDIT_BUTTON}
+          >
+            Edit
+          </button>
+        ) : null}
+      </dt>
+      <dd style={{ margin: 0, minWidth: 0, ...valueStyle }}>
+        {editing && editable ? (
+          <Suspense fallback={drawn}>
+            <ProseEditor
+              field={field}
+              label={label}
+              value={value}
+              onCancel={() => close(true)}
+              onSave={(draft, left) => {
+                close(!left);
+                if (draft !== value) commit(editable, draft);
+              }}
+            />
+          </Suspense>
+        ) : (
+          <div
+            data-graview-field={field}
+            {...(editable ? {} : { "data-graview-readonly": "", title: `Read-only — nothing this app declares changes the ${words}` })}
+            // The words open it too, for a pointer; the keyboard's way in is the button by the label.
+            {...(editable ? { onClick: () => setEditing(true) } : {})}
+            style={{ cursor: editable ? "text" : "default", minWidth: 0 }}
+          >
+            {drawn}
+          </div>
+        )}
+      </dd>
+    </div>
+  );
+}
+
+/* The text area, fetched the first time somebody opens one (FR-57's way: a page's first load carries what it draws). */
+const ProseEditor = lazy(() => import("./prose-editor.js"));
+
+const EDIT_BUTTON: CSSProperties = {
+  all: "unset",
+  cursor: "pointer",
+  fontSize: "0.75rem",
+  letterSpacing: "normal",
+  textTransform: "none",
+  color: "var(--graview-accent)",
+  borderBottom: "1px dashed currentColor",
+  minHeight: 24,
+  minWidth: 24,
+  display: "inline-flex",
+  alignItems: "flex-end",
+};
 
 /**
  * A heading you can change by clicking it.
