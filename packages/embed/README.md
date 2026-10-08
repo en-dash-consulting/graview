@@ -14,6 +14,7 @@ const handle = mount(document.querySelector("#garden")!, {
   stop: "#focus=plot-1",      // the scene's view state, as its URL fragment
   principal: { kind: "human", id: "june", roles: ["coordinator"] },
   bar: true,                  // the app bar over every face (the default)
+  switch: "words",            // the bar's Scene/Pages switch: its words where they fit (the default), or "icons" for its marks alone
 });
 
 handle.setPath("/plots");     // a place: the plots' list, at the element's width
@@ -31,9 +32,14 @@ the brand's logo, when the document has one — and its name, said once, as
 the page's heading (`heading`: `1` when the host's page is the app, `2`, the
 default, inside an article, `false` when the host's own heading says it),
 and the way home. Right after it, the switch between the app's two faces
-(FR-137): "Scene" and "Pages", an icon and a word each (the icons alone on
-a phone, the words their accessible names), two buttons whose
-`aria-pressed` says which is drawn. Scene draws the scene under the bar;
+(FR-137): "Scene" and "Pages", an icon and a word each, two buttons whose
+`aria-pressed` says which is drawn. The words are drawn where they fit and
+the icons alone where they do not — on a phone, or in a narrow box beside a
+long place name — and always their accessible names and their titles;
+`switch: "icons"` asks for the icons alone at every width, for a host whose
+box is small or whose own page already says what the two faces are
+(`[data-testid="app-faces"]` says what was asked in `data-switch` and what
+is drawn in `data-switch-drawn`). Scene draws the scene under the bar;
 Pages goes back to the page the reader was on. A declaration may call them
 something else (`pages: { scene: "The farm", pages: "Lists" }`); the
 scene's address is `/places/overview` whatever it is called. Then, on
@@ -44,13 +50,24 @@ connect), each with its mark, a long name wrapped. Every place is two
 presses away, Escape gives the keyboard back to the control, and the bar
 is one row of 48 px however many places there are; on a phone the place
 control is the page's first line, under the bar. At the right, three tools
-of one size: Find (inline; ⌘K or Ctrl+K on a desk, a magnifier that opens
-the box on a phone), the standing (a dot in the tone of the rules, a number
+of one size: Find (a small box that says "Find…" and its shortcut, ⌘K on a
+Mac and Ctrl K elsewhere, and is drawn wide while it is used; a magnifier
+that opens the box over the row on a phone), the standing (a dot in the tone of the rules, a number
 only when one is broken, opening what is broken; its name says "Everything
 is in order" otherwise), and the person (an avatar whose menu holds who is
 signed in, the seats, the host's own actions and, for whoever keeps the
 app, the installation and the studio). `bar: false` draws none of it, for a
 host whose own page already says all of that.
+
+THE BAR FITS ITS BOX. Every rule the bar is drawn by reads the bar's own
+width, never the screen's: an embed in a 650 px box on a 1440 desk is a
+narrow bar, not a desk's bar squeezed, and below 640 px of its own it is a
+phone's bar (the place on the first line under it, Find a magnifier, Find's
+list a sheet the bar's width under it). When the row is short, Find gives
+first, down to a box that still says "Find…"; then the place, down to 9em of
+its name (whole in its title); then the app's name, which wraps between its
+words onto a second line and never inside one, its whole name the way
+home's title. The bar stays one row of 48 px in any box from 480 px up.
 
 A HOME VIEW IS THE FRONT PAGE (FR-136). An app with a home view — the
 declaration's `views.home`, or a worker view attached to `"home"` — opens

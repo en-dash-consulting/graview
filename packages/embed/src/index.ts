@@ -4,7 +4,7 @@ export { hostScheme } from "./frame.js";
 export { faceAtAddress } from "./address.js";
 export type { EmbedWhere } from "./where.js";
 export type { EmbedError, EmbedErrorWhere, EmbedFace, EmbedHostContext, EmbedReady, EmbedRemote, FrameOptions } from "./frame.js";
-export type { HostAction } from "@graview/primitives/frame";
+export type { BarSwitch, HostAction } from "@graview/primitives/frame";
 export type { CompanionMode } from "@graview/primitives";
 export { createNoticeBoard } from "@graview/primitives/frame";
 export type { Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "@graview/primitives/frame";
