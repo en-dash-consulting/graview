@@ -22,7 +22,7 @@ export interface ScreenBox {
 export interface AskPlace {
   /** False when too little of the box shows to hold the Ask: it is put away until more does. */
   readonly shown: boolean;
-  readonly button: { readonly left: number; readonly bottom: number };
+  readonly button: { readonly left: number; readonly top: number };
   readonly drawer: { readonly left: number; readonly top: number; readonly height: number; readonly width: number };
 }
 
@@ -43,7 +43,26 @@ export function askPlace(box: ScreenBox, view: { readonly width: number; readonl
   const shown = foot - top >= size.height + 2 * GAP && right - left >= size.width + 2 * GAP;
   return {
     shown,
-    button: { left: Math.round(left + GAP), bottom: Math.round(view.height - foot + GAP) },
+    button: { left: Math.round(left + GAP), top: Math.round(foot - GAP - size.height) },
     drawer: { left: Math.round(left), top: Math.round(top), height: Math.round(Math.max(0, foot - top)), width: Math.round(Math.max(0, Math.min(DRAWER, right - left))) },
   };
+}
+
+/**
+ * Puts a fixed `element` at `at` on the screen, or away. FIXED TO WHAT HOLDS
+ * IT, which is not always the window: a host that animates its stage with a
+ * transform (graview.dev's hero) makes that stage the box `fixed` is measured
+ * from, and the Ask stood on the caption under it. Where it landed is read
+ * back and the difference taken off.
+ */
+export function pin(element: HTMLElement, at: { readonly left: number; readonly top: number }, shown: boolean): void {
+  const style = element.style;
+  style.left = `${at.left}px`;
+  style.top = `${at.top}px`;
+  style.bottom = "auto";
+  style.visibility = shown ? "" : "hidden";
+  const landed = element.getBoundingClientRect();
+  if (landed.width === 0) return;
+  style.left = `${Math.round(2 * at.left - landed.left)}px`;
+  style.top = `${Math.round(2 * at.top - landed.top)}px`;
 }

@@ -20,14 +20,14 @@ describe("the Ask stays inside its embed", () => {
   it("stands at the foot's left of the box it belongs to, not the window's", () => {
     const place = askPlace({ left: 646, top: 142, right: 1304, bottom: 802 }, VIEW, ASK);
     expect(place.shown).toBe(true);
-    expect(place.button).toEqual({ left: 662, bottom: 900 - 802 + 16 });
+    expect(place.button).toEqual({ left: 662, top: 802 - 16 - 40 });
     expect(place.drawer).toEqual({ left: 646, top: 142, height: 660, width: 320 });
   });
 
   it("stands at the window's foot while the box runs past it", () => {
     const place = askPlace({ left: 100, top: 300, right: 800, bottom: 1400 }, VIEW, ASK);
     expect(place.shown).toBe(true);
-    expect(place.button.bottom).toBe(16);
+    expect(place.button.top).toBe(900 - 16 - 40);
     expect(place.drawer).toEqual({ left: 100, top: 300, height: 600, width: 320 });
   });
 
