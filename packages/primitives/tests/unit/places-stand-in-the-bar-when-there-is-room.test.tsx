@@ -105,7 +105,7 @@ describe("the scene's places (FR-144)", () => {
       ["What the workshop covers", "pictures"],
       ["Email to Todd", "pictures"],
     ]);
-    expect(scene.places[0]!.path).toBe("/places/overview");
+    expect(scene.places[0]!.path).toBe("/places/overview#overview=1");
     const todd = scene.places[2]!;
     expect(todd.path.startsWith("/places/overview#")).toBe(true);
     const there = fromUrl(todd.path.slice("/places/overview".length));
@@ -114,7 +114,7 @@ describe("the scene's places (FR-144)", () => {
     expect(scene.current).toBe(WHOLE_KEY);
   });
 
-  it("go where every other way to a picture goes: its kind in focus, on the ground, its picture in view — and the whole thing back again", () => {
+  it("go where every other way to a picture goes: its kind in focus, on the ground, its picture in view — and the whole thing from above, where Up goes", () => {
     const scene = scenePlacesOf({ places: registered, hidden: new Set(), view: { ...EMPTY_VIEW, overview: true } });
     const todd = scene.to("scene:deliverable:email-to-todd", { ...EMPTY_VIEW, overview: true })!;
     expect(todd.focusId).toBe("aggregate:deliverable");
@@ -122,8 +122,9 @@ describe("the scene's places (FR-144)", () => {
     expect(todd.within?.["view"]).toBe("email-to-todd");
     expect(toUrl(todd)).toContain("in.view=email-to-todd");
     const whole = scene.to(WHOLE_KEY, todd)!;
-    expect(whole.focusId).toBeNull();
+    expect(whole.overview).toBe(true);
     expect(whole.within?.["view"]).toBeUndefined();
+    expect(scenePlacesOf({ places: registered, hidden: new Set(), view: whole }).current).toBe(WHOLE_KEY);
     expect(scene.to("place:nowhere", todd)).toBeNull();
   });
 

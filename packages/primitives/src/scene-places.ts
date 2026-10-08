@@ -37,7 +37,8 @@ const keyOf = (place: Place): string => `scene:${place.kind}:${place.as}`;
  * THE SCENE'S PLACES (FR-144): the whole thing, then each picture the seat
  * may see, in the order they were registered; which is in view — the
  * picture the view names on its kind's district, or the one that district
- * draws when it names none, else the whole thing; and the view each goes to.
+ * draws when it names none on the ground, else the whole thing — the scene
+ * from above, where "Up" rises to; and the view each goes to.
  * Each one's path is the scene's address for it (`/places/overview#…`), what
  * a harness finds it by (`data-place-path`).
  */
@@ -50,12 +51,13 @@ export function scenePlacesOf(input: { readonly places: readonly Place[]; readon
     return true;
   });
   const to = (key: string, from: ViewState): ViewState | null => {
-    if (key === WHOLE_KEY) return withWithin(withFocus(from, null), "view", null);
+    // The whole thing is the scene from above, as "Up" rises to it: no picture in view.
+    if (key === WHOLE_KEY) return withWithin(withOverview(from, true), "view", null);
     const place = pictures.find((one) => keyOf(one) === key);
     return place ? withWithin(withOverview(withFocus(from, aggregateId(place.kind)), false), "view", place.as) : null;
   };
   const places: BarPlace[] = [
-    { key: WHOLE_KEY, label: WHOLE_LABEL, path: OVERVIEW_PATH, group: "home" },
+    { key: WHOLE_KEY, label: WHOLE_LABEL, path: `${OVERVIEW_PATH}${toUrl(to(WHOLE_KEY, EMPTY_VIEW)!)}`, group: "home" },
     ...pictures.map((place) => ({ key: keyOf(place), label: place.title, path: `${OVERVIEW_PATH}${toUrl(to(keyOf(place), EMPTY_VIEW)!)}`, group: "pictures" as const, kind: place.kind })),
   ];
   // Which picture a district draws when the view names none: the last registered for its kind, as the registry resolves it.

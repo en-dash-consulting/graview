@@ -134,8 +134,8 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     const placesListed = await tab.evaluate(() => document.body.textContent.includes("The packages"));
     claim("the pages face lists the worker view among the app's places, by its title", placesListed);
     await open("face=pages&path=/places/the-packages");
-    /* The place list the bar's place control opens names it among the Pictures, and says it is where the reader is (FR-138). */
-    const named = await tab.waitForSelector('[data-testid="app-places"] [data-place-group="pictures"] [data-testid="app-place-place:package:the-packages"]', { state: "attached", timeout: 20_000 }).then(() => true, () => false);
+    /* The bar names it among its places — standing on the row, or among the Pictures in the list (FR-138, FR-145) — and says it is where the reader is. */
+    const named = await tab.waitForSelector('[data-graview-embed] [data-testid="app-place-place:package:the-packages"][aria-current="page"]', { state: "attached", timeout: 20_000 }).then(() => true, () => false);
     const pages = await lens();
     const start = pages.packages.find((one) => one.id === "package:start");
     claim('on the pages face the worker view is the place "The packages", among the Pictures in the place list, labeled as its title and with its author said', named && /The packages$/.test(pages.label) && pages.heading === "The packages" && pages.author === "Made by Claude for Nick", pages);
