@@ -177,6 +177,12 @@ function measure({ face, recordId }) {
     const box = element.getBoundingClientRect();
     return { left: Math.round(box.left), top: Math.round(box.top), right: Math.round(box.right), bottom: Math.round(box.bottom), width: Math.round(box.width) };
   };
+  /* A label's words, less a control standing in it (an "Edit" beside the label). */
+  const words = (element) => {
+    const copy = element.cloneNode(true);
+    for (const control of copy.querySelectorAll("button")) control.remove();
+    return (copy.textContent ?? "").trim();
+  };
   /* The record: the routed page's facts, or the scene's record of it. */
   const record =
     face === "pages"
@@ -206,7 +212,7 @@ function measure({ face, recordId }) {
   })();
   /* The order the facts read in: each term, and each heading over a group of them, as a person meets them. */
   const order = fields
-    ? [...fields.querySelectorAll("dt, [data-graview-field-group]")].filter(shown).map((one) => (one.matches("[data-graview-field-group]") ? one.getAttribute("data-graview-field-group") : (one.textContent ?? "").trim()))
+    ? [...fields.querySelectorAll("dt, [data-graview-field-group]")].filter(shown).map((one) => (one.matches("[data-graview-field-group]") ? one.getAttribute("data-graview-field-group") : words(one)))
     : [];
   const valueBox = value ? rect(value) : null;
   const labelBox = label ? rect(label) : null;
@@ -217,7 +223,7 @@ function measure({ face, recordId }) {
     room,
     valueBox,
     labelBox,
-    label: label ? (label.textContent ?? "").trim() : null,
+    label: label ? words(label) : null,
     paragraphs: value ? [...value.querySelectorAll("p")].filter(shown).length : 0,
     numbered: value ? [...value.querySelectorAll("ol > li")].filter(shown).length : 0,
     bulleted: value ? [...value.querySelectorAll("ul > li")].filter(shown).length : 0,
@@ -289,6 +295,7 @@ try {
               edit.named = await area.evaluate((element) => element.labels?.[0]?.textContent?.trim() ?? element.getAttribute("aria-label"));
               edit.kept = (await area.inputValue()) === EMAIL.draft;
               edit.tall = await area.evaluate((element) => element.getBoundingClientRect().height >= element.scrollHeight - 2 && element.getBoundingClientRect().height > 200);
+              if (PROBE) process.stdout.write(`${engine} textarea: ${JSON.stringify(await area.evaluate((element) => ({ height: element.getBoundingClientRect().height, scroll: element.scrollHeight, client: element.clientHeight, style: element.style.height })))}\n`);
               await shot(page, "editing");
               await area.evaluate((element) => element.setSelectionRange(element.value.length, element.value.length));
               await area.press("Enter");

@@ -1,8 +1,8 @@
 import { fieldWords, humanizeField as humanize, pageSections, readableFields, type AnySchema } from "@graview/core";
 import { useEditableFields } from "@graview/react/drawing";
-import { useGraview, useNode } from "@graview/react/provider";
+import { useGraview, useGraviewIfAny, useNode } from "@graview/react/provider";
 import type { EditableField } from "@graview/tools";
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
 import { TextBody } from "./text-body.js";
 
 /**
@@ -363,16 +363,15 @@ const GROUP_TITLE = { margin: 0, fontSize: "0.75rem", letterSpacing: "0.06em", t
  * an engine lacks it), Enter is a new line, Ctrl or ⌘ with Enter saves, as
  * does leaving it; Escape puts it back. Saving runs the mutation the
  * framework found, like every edit in place.
+ *
+ * Drawn where no store is provided — a routed face handed no views — it is
+ * read, not changed: the same row, without the "Edit".
  */
-export function LongValue<S extends AnySchema>({
-  nodeId,
-  field,
-  label,
-  value,
-  labelStyle,
-  valueStyle,
-  style,
-}: {
+export function LongValue<S extends AnySchema>(props: LongValueProps) {
+  return useGraviewIfAny<S>() ? <EditableProse<S> {...props} /> : <ReadProse {...props} />;
+}
+
+interface LongValueProps {
   readonly nodeId: string;
   readonly field: string;
   readonly label: string;
@@ -380,40 +379,39 @@ export function LongValue<S extends AnySchema>({
   readonly labelStyle?: CSSProperties;
   readonly valueStyle?: CSSProperties;
   readonly style?: CSSProperties;
-}) {
+}
+
+function ReadProse({ field, label, value, labelStyle, valueStyle, style }: LongValueProps) {
+  return (
+    <div data-graview-long={field} style={{ display: "grid", gap: 6, minWidth: 0, ...style }}>
+      <dt style={labelStyle}>{label}</dt>
+      <dd style={{ margin: 0, minWidth: 0, ...valueStyle }}>
+        <div data-graview-field={field}>
+          <TextBody text={value} />
+        </div>
+      </dd>
+    </div>
+  );
+}
+
+function EditableProse<S extends AnySchema>({ nodeId, field, label, value, labelStyle, valueStyle, style }: LongValueProps) {
   const { fields, commit } = useEditableFields<S>(nodeId);
   const editable = fields.find((candidate) => candidate.field === field && candidate.takesValue);
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-  const area = useRef<HTMLTextAreaElement | null>(null);
   const opener = useRef<HTMLButtonElement | null>(null);
   const comeBack = useRef(false);
-  useEffect(() => setDraft(value), [value, editing]);
   useEffect(() => {
-    if (editing) area.current?.focus();
-    else if (comeBack.current) {
+    if (!editing && comeBack.current) {
       comeBack.current = false;
       opener.current?.focus();
     }
   }, [editing]);
-  /* As tall as what it holds: `field-sizing: content` where the engine has it, measured where it does not. */
-  useLayoutEffect(() => {
-    const element = area.current;
-    if (!editing || !element || sizesItself()) return;
-    element.style.height = "auto";
-    const style = getComputedStyle(element);
-    element.style.height = `${element.scrollHeight + parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth)}px`;
-  }, [editing, draft]);
-
   const close = (keepTheKeyboard: boolean) => {
     comeBack.current = keepTheKeyboard;
     setEditing(false);
   };
-  const save = (keepTheKeyboard: boolean) => {
-    close(keepTheKeyboard);
-    if (editable && draft !== value) commit(editable, draft);
-  };
   const words = label.toLowerCase();
+  const drawn = <TextBody text={value} />;
 
   return (
     <div data-graview-long={field} style={{ display: "grid", gap: 6, minWidth: 0, ...style }}>
@@ -435,55 +433,27 @@ export function LongValue<S extends AnySchema>({
       </dt>
       <dd style={{ margin: 0, minWidth: 0, ...valueStyle }}>
         {editing && editable ? (
-          <form
-            style={{ display: "grid", gap: 8, minWidth: 0 }}
-            onSubmit={(event) => {
-              event.preventDefault();
-              save(true);
-            }}
-          >
-            <textarea
-              ref={area}
-              aria-label={label}
-              data-graview-field={field}
-              value={draft}
-              rows={3}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  event.preventDefault();
-                  close(true);
-                } else if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-                  event.preventDefault();
-                  save(true);
-                }
+          <Suspense fallback={drawn}>
+            <ProseEditor
+              field={field}
+              label={label}
+              value={value}
+              onCancel={() => close(true)}
+              onSave={(draft, left) => {
+                close(!left);
+                if (draft !== value) commit(editable, draft);
               }}
-              onBlur={(event) => {
-                // Moving to the form's own buttons is not leaving it.
-                if (event.relatedTarget instanceof Node && event.currentTarget.form?.contains(event.relatedTarget)) return;
-                save(false);
-              }}
-              style={TEXT_AREA}
             />
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-              <button type="submit" style={{ font: "inherit", fontSize: "0.8125rem", minHeight: 28, padding: "2px 12px" }}>
-                Save
-              </button>
-              <button type="button" onClick={() => close(true)} style={{ font: "inherit", fontSize: "0.8125rem", minHeight: 28, padding: "2px 12px" }}>
-                Cancel
-              </button>
-              <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>Ctrl or ⌘ Enter saves · Esc puts it back</span>
-            </div>
-          </form>
+          </Suspense>
         ) : (
           <div
             data-graview-field={field}
             {...(editable ? {} : { "data-graview-readonly": "", title: `Read-only — nothing this app declares changes the ${words}` })}
             // The words open it too, for a pointer; the keyboard's way in is the button by the label.
             {...(editable ? { onClick: () => setEditing(true) } : {})}
-            style={{ cursor: editable ? "text" : "default", color: "var(--graview-ink)", minWidth: 0 }}
+            style={{ cursor: editable ? "text" : "default", minWidth: 0 }}
           >
-            <TextBody text={value} />
+            {drawn}
           </div>
         )}
       </dd>
@@ -491,10 +461,8 @@ export function LongValue<S extends AnySchema>({
   );
 }
 
-/** Whether this engine sizes a text area to its content by itself. */
-function sizesItself(): boolean {
-  return typeof CSS !== "undefined" && typeof CSS.supports === "function" && CSS.supports("field-sizing", "content");
-}
+/* The text area, fetched the first time somebody opens one (FR-57's way: a page's first load carries what it draws). */
+const ProseEditor = lazy(() => import("./prose-editor.js"));
 
 const EDIT_BUTTON: CSSProperties = {
   all: "unset",
@@ -509,21 +477,6 @@ const EDIT_BUTTON: CSSProperties = {
   display: "inline-flex",
   alignItems: "flex-end",
 };
-
-const TEXT_AREA = {
-  font: "inherit",
-  lineHeight: 1.5,
-  width: "100%",
-  boxSizing: "border-box",
-  minHeight: "7.5em",
-  padding: "8px 10px",
-  resize: "vertical",
-  fieldSizing: "content",
-  color: "var(--graview-ink)",
-  background: "var(--graview-panel, transparent)",
-  border: "1px solid var(--graview-edge-bright)",
-  borderRadius: 6,
-} as CSSProperties;
 
 /**
  * A heading you can change by clicking it.

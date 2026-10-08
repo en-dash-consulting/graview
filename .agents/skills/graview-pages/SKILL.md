@@ -25,14 +25,13 @@ if (location.pathname.startsWith("/pages")) {
 
 - `/` — a GALLERY. The standing as the headline ("2 gardeners, 3 plots and
   1 planting." or "Nothing here yet." and the act that begins it), then every
-  picture as a large live card, two across at a desk, one on a phone, then
-  the kinds as a row of counts, a line to the map, and Recently. A kind
+  picture as a large live card, then the kinds as a row of counts, a line to the map, and Recently. A kind
   with no titled lens gets a contact sheet of its members, so a new app
   lands on a gallery. An empty picture names the act that fills it.
 - `/<plural>` — a list per kind, marking trouble, with the creating acts
   beneath it.
-- `/<plural>/<id>` — a record: its facts, its relations captioned in the
-  declaration's words, what can be done, what has happened.
+- `/<plural>/<id>` — a record: its facts, changed where they stand, its
+  relations in the declaration's words, what can be done, what happened.
 - `/problems` — every broken rule with its repairs.
 
 The shell is the app bar, a row: the name, the switch (Scene, Pages;
@@ -52,8 +51,7 @@ place, a kind or `"home"`) is where both faces open.
 under its routes, which buys three things at once:
 
 - `/places`, `/places/<as>` — every named lens as a page (fullscreen, over
-  the kind's members, its kind as a list, the beginning acts beneath)
-  and the gallery again. A kind's page lists its pictures; a pick in a lens
+  the kind's members, the beginning acts beneath). A kind's page lists its pictures; a pick in a lens
   travels to the record. A kind's own row (one × glyph) is each line of its
   list, and its own page view (one × full) heads its record.
 - `/map` — `kindMap(store)`: every declared relation in its words with
@@ -76,7 +74,8 @@ under its routes, which buys three things at once:
 Everything a page shows is a derivation the scene also uses: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is
 or who may take it** — it strikes through what the seat may not, and says why.
-A record's facts include its `computed` fields, from what the seat may see.
+A record's facts, `computed` ones too, read in declared order or as the
+kind's `display.page` groups them; prose keeps its paragraphs, full width.
 
 **At a phone's width this face is the answer.** `Shell` carries `pagesHref`.
 

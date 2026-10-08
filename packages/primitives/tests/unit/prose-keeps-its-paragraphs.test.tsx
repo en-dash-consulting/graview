@@ -20,6 +20,16 @@ import { Fields, TextBody, textBlocks } from "../../src/index.js";
  * word a text node; the record's fields are drawn in declared order; and
  * editing the draft keeps every line break through the store.
  */
+/** The text area is fetched the first time one is opened: wait for it. */
+async function opened<T extends Element>(find: () => T | null): Promise<T> {
+  for (let tries = 0; tries < 100; tries++) {
+    const found = find();
+    if (found) return found;
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 10)));
+  }
+  throw new Error("the text area never opened");
+}
+
 const DRAFT = "Hi Todd,\n\nThank you for two good days.\n\nWhat we agreed:\n\n1. Price it by the acre.\n2. Three townships first.\n\n- Who signs for the county\n* How the cost share is paid\n\nBest,\nNick";
 
 describe("the blocks plain text is written in", () => {
@@ -102,7 +112,7 @@ describe("a record's fields", () => {
     const opener = long.querySelector<HTMLButtonElement>("dt button")!;
     expect(opener.getAttribute("aria-label")).toBe("Edit the draft");
     await act(async () => opener.click());
-    const area = host.querySelector<HTMLTextAreaElement>('textarea[data-graview-field="draft"]')!;
+    const area = await opened(() => host.querySelector<HTMLTextAreaElement>('textarea[data-graview-field="draft"]'));
     expect(area.value).toBe(DRAFT);
     expect(area.getAttribute("aria-label")).toBe("Draft");
     const setValue = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!;
@@ -132,7 +142,7 @@ describe("a record's fields", () => {
       );
     });
     await act(async () => host.querySelector<HTMLButtonElement>('[data-graview-long="draft"] dt button')!.click());
-    const area = host.querySelector<HTMLTextAreaElement>("textarea")!;
+    const area = await opened(() => host.querySelector<HTMLTextAreaElement>("textarea"));
     await act(async () => area.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
     expect(host.querySelector("textarea")).toBeNull();
     expect(store.graph.getNode("email")?.["draft"]).toBe(DRAFT);

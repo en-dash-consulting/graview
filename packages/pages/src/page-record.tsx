@@ -1,6 +1,6 @@
 import { describeNode, humanizeField, isWithheld, pageSections, type AnySchema } from "@graview/core";
 import { DefaultViewElsewhere, EditableValue, LongValue } from "@graview/primitives/pages";
-import { isDefaultView, type ViewProps } from "@graview/react/provider";
+import { isDefaultView, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useRef, useState } from "react";
@@ -39,6 +39,8 @@ import { capitalize } from "./page-typography.js";
 export function DefaultRecordPage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const { store, brand, principal, invariantContext } = context;
   useStoreTick(store);
+  // A value is changed where it stands where the face provides the store its edits run through (a face handed views).
+  const inPlace = useGraviewIfAny<S>() !== null;
   const params = useParams();
   const id = decodeURIComponent(params["id"] ?? "");
   const facts = recordFacts(store, id, {
@@ -186,7 +188,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                     <div key={field.key} style={{ display: "grid", gap: 2, minWidth: 0, alignContent: "start" }}>
                       <dt style={{ ...eyebrow, fontSize: "0.75rem" }}>{field.label}</dt>
                       <dd style={{ margin: 0, fontSize: "1.125rem", overflowWrap: "anywhere", minWidth: 0 }}>
-                        <EditableValue<S> nodeId={id} field={field.key} value={field.value} />
+                        {inPlace ? <EditableValue<S> nodeId={id} field={field.key} value={field.value} /> : field.value}
                       </dd>
                     </div>
                   ),

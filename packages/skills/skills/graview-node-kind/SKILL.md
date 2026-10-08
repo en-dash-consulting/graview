@@ -22,11 +22,8 @@ agent tool that walks the graph.
    ```ts
    export const fixture = defineNode("fixture", {
      fields: z.object({
-       // A NAME, and bounded. Every derived surface draws `label` — on a
-       // card, in a list, on a plan — and `z.string().min(1)` permits a
-       // paragraph: a model surveying a garden named a corner with a whole
-       // sentence, because the prompt is generated from this file.
-       // `graview check` notes `label-unbounded` where a provider creates.
+       // A NAME, and bounded: every surface draws `label`, and `min(1)`
+       // alone permits a paragraph (`graview check`: `label-unbounded`).
        label: z.string().min(1).max(60),
        kickOff: z.string(),
        opponent: z.string(),
@@ -67,8 +64,7 @@ agent tool that walks the graph.
    permitted through the acts that create it.
 
 5. **Give it verbs.** A kind with no mutation naming it as a subject renders
-   fine and can have nothing done to it, and the actions strip will say so out
-   loud. If that is not what you meant, see `graview-invariant` for the rule
+   fine and can have nothing done to it, and the actions strip will say so. If that is not what you meant, see `graview-invariant` for the rule
    shape and add at least one mutation whose `subject.kinds` includes it.
 
 6. **Let the fields be changed, or say why not.** A field you could set at
@@ -103,15 +99,19 @@ agent tool that walks the graph.
   a `nodeRef` has no candidates on an empty graph, so it is withheld (a
   picker with nothing in it is worse than no button) and the district says
   what it is waiting for instead: *"Place a feature" cannot begin until there
-  is a zone.* Expect exactly one way in on a blank installation, and check
-  that it is the one you meant — this only ever shows up on the graph nobody
-  tests against.
+  is a zone.*
 - **`fromTheOtherEnd`** on the act that makes or breaks the edge. An act
   declaring `connects` or `severs` is offered from BOTH ends of the tie, and
   `title` is written from the subject's side: "Name a caretaker", offered on
   the gardener, reads as naming hers. Say how it reads standing there
   (`fromTheOtherEnd: "Take on a plot"`) — `graview check` warns
   `act-without-far-end-reading` and names the end it has no words for.
+- **`display.page`** when a record should not read in declared order:
+  `page: { fields: ["subject", "draft"], groups: [{ title: "Schedule",
+  fields: ["due"] }] }` puts those first, the rest under "Details" (a
+  document's `kinds.<kind>.page`; `{ op: "set-page-fields" }`). A string
+  allowed past 500 characters (`.max(5000)`, a `text`) is prose: full
+  width, paragraphs and lists kept, edited in a text area.
 - **`lifecycle`** when members expire — `{ field: "status", retired:
   ["played"] }` or `{ field: "until", retired: "date" }`. Every count then
   aggregates over the horizon ("4, +12 past") instead of drowning, and
