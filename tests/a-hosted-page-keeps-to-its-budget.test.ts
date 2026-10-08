@@ -32,7 +32,7 @@ describe("a hosted page", () => {
     for (const name of ["react-dom", "zod", "@graview/core", "@graview/embed", "@graview/ship"]) expect(Object.keys(measured.upFront.packages)).toContain(name);
   });
 
-  it("carries at most 572.8 KB minified up front: 572.5 KB with the bar that fits its box, so Cloud's shell keeps room for its own under its 595", () => {
+  it("carries at most 577.6 KB minified up front: 577.4 KB with the places in the bar on both faces, so Cloud's shell keeps room for its own under its 595", () => {
     expect(measured.upFront.minified, `${Math.round(measured.upFront.minified / 1024)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
     expect(measured.over).toBe(false);
   });
@@ -59,7 +59,8 @@ describe("a hosted page", () => {
     // 865 KB since a brand's mark is read element by element before it is drawn (the review after 0.1.15): the scene face measured 883_431 B.
     // 867 KB since the switch and the place list (FR-137, FR-138) and the home view first (FR-136): the scene face measured 886_469 B, 2_209 more than before them.
     // 870 KB since the bar fits its box: the scene face measured 889_834 B, 2_612 more than before it (887_222).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(870 * 1024);
+    // 875 KB since the scene's places in the bar and the places standing on the row (FR-144, FR-145): the scene face measured 894_928 B, 4_864 more than before them (890_064).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(875 * 1024);
   });
 
   it("carries no studio, up front or when asked: the shell stubs it out", () => {
@@ -84,8 +85,8 @@ describe("a hosted page", () => {
     expect(packageOf("<stdin>")).toBe("(the page)");
   });
 
-  it("holds its budget's numbers: 572.8 KB up front, under the 595 Cloud's shell holds itself to, and 150 KB of it zod's", () => {
-    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 572.8 * 1024, zod: 150 * 1024 });
+  it("holds its budget's numbers: 577.6 KB up front, under the 595 Cloud's shell holds itself to, and 150 KB of it zod's", () => {
+    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 577.6 * 1024, zod: 150 * 1024 });
   });
 
   /*

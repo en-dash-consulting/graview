@@ -90,9 +90,15 @@ export const FACE_DOORS = {
  * whether the switch's words fit 0.9 KB, the shortcut and the slot 0.5 KB.
  * The claim rises by that: 572.8 KB, which leaves Cloud's shell 22.2 KB
  * under its 595. FR-140 (a pick kept for the routed face until it listens)
- * took it to 586 433 bytes (572.7 KB), inside the claim.
+ * took it to 586 433 bytes (572.7 KB), inside the claim. The scene's places
+ * in the bar (FR-144) and the places standing on the row where they fit
+ * (FR-145) took it to 591 297 bytes (577.4 KB), 4 864 more: the bar 3.7 KB
+ * (the places drawn as words with "More", weighing which of them fit, one
+ * entry for the row and the list, their rules 0.6 KB of it) and the
+ * scene's places 0.9 KB (`useScenePlaces`). The claim rises by that:
+ * 577.6 KB, which leaves Cloud's shell 17.4 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 572.8 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 577.6 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -174,8 +180,11 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * made the moment the place list opens going to its place (FR-140: a path
  * asked for before the routed face listens, kept for it) took it to
  * 541 627 bytes (528.9 KB), 155 more; the claim rises by that: 529.0 KB.
+ * The scene's places in the bar and the places standing on the row
+ * (FR-144, FR-145) took it to 546 491 bytes (533.7 KB), the same 4 864 as
+ * the page that compiles (above); the claim rises by that: 533.8 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 529 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 533.8 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

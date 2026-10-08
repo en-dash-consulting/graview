@@ -107,8 +107,10 @@ export const BUDGETS = [
     // place control and its grouped list with their marks, the phone's place line, 2_047 / 595 more. Measured at 507_453 / 174_021.
     // Raised when the bar came to fit its box (it lays itself out by its own width; Find a small box that says its shortcut,
     // the switch's marks alone when its words do not fit): about 2.4 kB minified, all of it the bar. Measured at 510_795 / 175_163.
-    minified: 511_900,
-    gzipped: 175_700,
+    // Raised when the scene came to have its places in the bar (FR-144) and the places to stand on the row where they fit (FR-145):
+    // the places drawn as words with "More", weighing which fit, the scene's places; 4_719 / 1_618 more. Measured at 515_740 / 176_863.
+    minified: 516_700,
+    gzipped: 177_350,
     load: "first",
   },
   {
@@ -237,8 +239,10 @@ export const BUDGETS = [
     // Measured at 696_617 / 180_207.
     // Raised when the bar came to fit its box (it lays itself out by its own width; Find a small box that says its shortcut,
     // the switch's marks alone when its words do not fit): about 2.4 kB minified, all of it the bar. Measured at 699_612 / 181_352.
-    minified: 700_900,
-    gzipped: 181_900,
+    // Raised when the scene came to have its places in the bar (FR-144) and the places to stand on the row where they fit (FR-145):
+    // the places drawn as words with "More", weighing which fit, the scene's places; 4_762 / 1_637 more. Measured at 704_501 / 183_039.
+    minified: 705_700,
+    gzipped: 183_550,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -352,8 +356,10 @@ export const BUDGETS = [
     // a home's own headline, the narrow embed's way back to the pages. Measured at 1_551_385 / 468_484.
     // Raised when the bar came to fit its box: about 2.7 kB minified, all of it the bar and the scene's Find hung from it.
     // Measured at 1_554_099 / 469_514.
-    minified: 1_555_200,
-    gzipped: 470_100,
+    // Raised for the scene's places in the bar and the places standing on the row (FR-144, FR-145): 4_762 / 1_639 more.
+    // Measured at 1_559_211 / 471_261.
+    minified: 1_560_000,
+    gzipped: 471_750,
     load: "all",
   },
   {
@@ -404,8 +410,10 @@ export const BUDGETS = [
     // reading the scene's old word, and the check's warning for a switch that says one word twice. Measured at 1_517_351 / 453_603.
     // Raised when the bar came to fit its box: about 2.7 kB minified, all of it the bar and the scene's Find hung from it.
     // Measured at 1_520_065 / 454_627.
-    minified: 1_521_200,
-    gzipped: 455_200,
+    // Raised with every face's for the scene's places in the bar and the places standing on the row (FR-144, FR-145): 4_762 / 1_634 more.
+    // Measured at 1_525_177 / 456_381.
+    minified: 1_526_000,
+    gzipped: 456_850,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
