@@ -6,7 +6,7 @@ import { isDefaultView, type ViewProps } from "@graview/react/provider";
 import { useLayoutEffect, useRef, useState, type ComponentType } from "react";
 import { DerivedForm } from "./form.js";
 import { placePath, pluralSlug, recordPath } from "./registry.js";
-import { OverviewLink, type PageContext, useStoreTick } from "./page-context.js";
+import { type PageContext, useStoreTick } from "./page-context.js";
 import {
   DISPLAY,
   KindMark,
@@ -444,9 +444,8 @@ export function DefaultPlacesPage<S extends AnySchema>({ context }: { context: P
 
 /**
  * ONE PICTURE, FULL WIDTH: the lens over the kind's current members, what
- * it is a picture of, its sibling pictures for the hop between them, the
- * acts that begin the kind beneath it, and the way to the same picture in
- * the scene. A pick inside it travels to the record — on a page, choosing a
+ * it is a picture of, the way to its kind as a list, and the acts that
+ * begin the kind beneath it. The other places are the bar's (FR-138). A pick inside it travels to the record — on a page, choosing a
  * thing means going to it.
  */
 export function DefaultPlacePage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
@@ -474,7 +473,6 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
     );
   }
   const plural = pluralOf(store, place.kind);
-  const siblings = places.filter((other) => placeKey(other) !== placeKey(place));
   const facts = kindFacts(store, place.kind, {
     ...(principal ? { principal } : {}),
     ...(context.invariantContext ? { context: context.invariantContext } : {}),
@@ -501,34 +499,12 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         <p style={lede} data-testid="place-lede">
           {overOf(store, place.kind, place.across)}.
         </p>
-        <p style={{ ...quiet, margin: 0, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 16px" }}>
-          <OverviewLink context={context} stop={`#view=${encodeURIComponent(place.as)}`} style={{ ...link, ...quiet }} data-testid="place-stop" />
-          <Link to={`/${pluralSlug(store.schema, place.kind)}`} style={{ ...link, ...quiet }}>
+        {/* What belongs to the picture alone: its kind as a list. The other places are the bar's (FR-138). */}
+        <p style={{ ...quiet, margin: 0 }}>
+          <Link to={`/${pluralSlug(store.schema, place.kind)}`} style={{ ...link, ...quiet }} data-testid="place-as-list">
             All {plural.toLowerCase()} as a list →
           </Link>
         </p>
-        {siblings.length > 0 ? (
-          /* THE OTHER PICTURES, one press away: the gallery's hop, on the picture itself. */
-          <nav aria-label="Other pictures" data-testid="sibling-pictures" style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", paddingTop: 4 }}>
-            {siblings.map((other) => (
-              <Link
-                key={placeKey(other)}
-                to={pathOfPlace(context, other)}
-                style={{
-                  ...plain,
-                  fontSize: "0.9375rem",
-                  // The other pictures are words to follow, as the places are on the bar: links, not capsules (FR-117).
-                  padding: "4px 2px",
-                  textDecoration: "underline",
-                  textUnderlineOffset: 3,
-                  color: "var(--graview-ink-muted)",
-                }}
-              >
-                {other.title}
-              </Link>
-            ))}
-          </nav>
-        ) : null}
       </header>
       {/*
         * The lens's own region: as wide as the column and most of the window

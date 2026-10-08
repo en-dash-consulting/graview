@@ -103,8 +103,10 @@ export const BUDGETS = [
     // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
     // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
     // drawn with the bar. Measured at 505_406 / 173_425.
-    minified: 506_500,
-    gzipped: 174_000,
+    // Raised when the scene and the pages became two things on the bar and the places left it (FR-137, FR-138): the switch, the
+    // place control and its grouped list with their marks, the phone's place line, 2_047 / 595 more. Measured at 507_453 / 174_021.
+    minified: 508_550,
+    gzipped: 174_600,
     load: "first",
   },
   {
@@ -228,8 +230,11 @@ export const BUDGETS = [
     // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
     // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
     // drawn with the bar. Measured at 693_248 / 179_214.
-    minified: 694_500,
-    gzipped: 179_750,
+    // Raised when the scene and the pages became two things on the bar and the places left it (FR-137, FR-138), and an app with a
+    // home view came to open on it (FR-136): the bar's switch and place list, and the embed's opening, 3_369 / 992 more.
+    // Measured at 696_617 / 180_207.
+    minified: 697_900,
+    gzipped: 180_750,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -337,8 +342,10 @@ export const BUDGETS = [
     // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
     // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
     // drawn with the bar. Measured at 1_548_449 / 467_201.
-    minified: 1_549_500,
-    gzipped: 467_750,
+    // Raised with every face's for the switch, the place list and the home view first (FR-136–FR-138), less the scene's landing
+    // the home view no longer is: 1_680 / 623 more. Measured at 1_550_975 / 468_183.
+    minified: 1_551_200,
+    gzipped: 468_400,
     load: "all",
   },
   {
@@ -383,8 +390,10 @@ export const BUDGETS = [
     // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
     // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
     // drawn with the bar. Measured at 1_513_861 / 452_251.
-    minified: 1_514_750,
-    gzipped: 452_750,
+    // Raised with every face's for the switch, the place list and the home view first (FR-136–FR-138): 1_695 / 613 more.
+    // Measured at 1_516_402 / 453_220.
+    minified: 1_516_450,
+    gzipped: 453_400,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

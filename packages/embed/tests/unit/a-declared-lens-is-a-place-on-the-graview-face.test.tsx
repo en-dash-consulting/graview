@@ -15,8 +15,8 @@ import { Embed, preload } from "../../src/index.js";
  * WHERE THE DECLARATION SAYS (FR-80).
  *
  * The embed is handed a compiled document and nothing else — no views, no
- * registration — and every lens the document titles is a pill on the bar,
- * the one `pages.first` names already pressed.
+ * registration — and every lens the document titles is a picture among the
+ * places the bar's place control opens (FR-138).
  */
 const hall = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../core/tests/document/fixtures/every-lens.gdd.json"), "utf8"));
 const compiled = compileDocument(hall, { today: () => "2026-09-01" });
@@ -36,18 +36,26 @@ const seed = {
 beforeAll(() => Promise.all([preload(), fetchDeclaredLenses()]));
 
 describe("a document's declared lenses, in the embed's scene", () => {
-  it("are places on the bar by their titles, after the overview the scene is drawn on", async () => {
+  it("are the Pictures among the places by their titles, while the switch says the scene is drawn", async () => {
     const host = document.createElement("div");
     document.body.appendChild(host);
     const root = createRoot(host);
     await act(async () => root.render(<Embed app={app} seed={seed as never} face="scene" principal={{ kind: "human", id: "m1", roles: ["keeper"] }} fonts={false} />));
     await act(async () => new Promise((done) => setTimeout(done, 30)));
-    // The bar names each, after the overview (FR-131, FR-132), in the row or under "More".
-    const tabs = [...host.querySelectorAll('[data-testid="app-places"] [data-testid^="app-place-place:"]')];
-    expect(tabs.map((tab) => tab.textContent?.trim())).toEqual(declaredLenses(app).drawn.map((lens) => lens.title));
-    expect(host.querySelector('[data-testid="app-places"] [data-testid]')?.getAttribute("data-testid")).toBe("app-place-overview");
-    // The scene is the place you are on: the overview.
-    expect(host.querySelector('[data-testid="app-place-overview"]')?.getAttribute("aria-current")).toBe("page");
+    // The switch says the scene is drawn (FR-137); the places are the pages' (FR-138).
+    expect(host.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
+    expect(host.querySelector('[data-testid="app-places-open"]')).toBeNull();
+    // The host decides the face (`onFace`): it is told, and draws the pages.
+    const asked: string[] = [];
+    await act(async () => root.render(<Embed app={app} seed={seed as never} face="scene" onFace={(face) => asked.push(face)} principal={{ kind: "human", id: "m1", roles: ["keeper"] }} fonts={false} />));
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="app-face-pages"]')!.click());
+    expect(asked).toEqual(["pages"]);
+    await act(async () => root.render(<Embed app={app} seed={seed as never} face="pages" principal={{ kind: "human", id: "m1", roles: ["keeper"] }} fonts={false} />));
+    await act(async () => new Promise((done) => setTimeout(done, 30)));
+    // Each is a picture among the places, by its title, after the home and the lists.
+    const pictures = [...host.querySelectorAll('[data-testid="app-places"] [data-place-group="pictures"] [data-testid^="app-place-place:"]')];
+    expect(pictures.map((entry) => entry.textContent?.trim())).toEqual(declaredLenses(app).drawn.map((lens) => lens.title));
+    expect(host.querySelector('[data-testid="app-places"] [data-testid]')?.getAttribute("data-testid")).toBe("app-place-home");
     await act(async () => root.unmount());
     host.remove();
   });

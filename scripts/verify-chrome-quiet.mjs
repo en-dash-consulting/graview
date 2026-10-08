@@ -47,15 +47,40 @@
  * count keeps its accessible name, and the problems it opens are still
  * reached from the keyboard.
  *
- * And ONE APP BAR ON EVERY FACE (FR-131, FR-132). Nick, on a real app: the
- * title and the Scene/Pages toggle were ugly, bloated and broken under a
+ * And ONE APP BAR ON EVERY FACE (FR-131). Nick, on a real app: the title
+ * and the Scene/Pages toggle were ugly, bloated and broken under a
  * notification — two stacked bars said the app's name, the way into the
  * scene and the state of the rules twice each. On both faces, at a desk and
- * a phone: one bar — one row on a desk, two on a phone, the second the
- * places — one heading naming the app, nothing the bar says said again
- * above the fold, one Find box, the tools one size and named, no control
- * that says "Scene" or "Pages"; and the overview and a list one press on a
- * tab apart, by pointer and by keyboard.
+ * a phone: one bar of one row, one heading naming the app, nothing the bar
+ * says said again above the fold, one Find box, the tools one size and
+ * named.
+ *
+ * And THE SCENE AND THE PAGES ARE TWO THINGS, AND THE PLACES ARE OUT OF THE
+ * BAR (FR-137, FR-138, FR-136). Nick on 0.1.16, at a desk: "the new nav
+ * kinda sucks, and i don't see a way to go to the scene vs pages anymore".
+ * FR-132 had made the scene "Overview", one of the places laid along the
+ * bar as tabs, and on Cloud's workshop app — two pictures named in
+ * sentences ("What the workshop covers", "Email to Todd") beside three
+ * kinds' lists — the tabs filled the bar's top edge and wrapped to a second
+ * row. The claim that was to catch that, "at most one bar row on a desk",
+ * measured the wrong boxes on the wrong app: it counted the distinct tops
+ * of the bar's three regions (the app, the places, the tools), and a tab
+ * that wraps inside the places' region moves no region's top — the region
+ * only grows downward — and it ran on the org app and the vendor template
+ * at 1280 px, whose short place names fit. So this measures every control
+ * on the bar by its own box — the lines their middles stand on, how far
+ * each stands from the bar's top edge, the bar's height — on a document
+ * shaped like Cloud's (`scripts/fixtures/desk-bar/workshop.gdd.json`) and
+ * on the same with thirty places, at 1000, 1024, 1280 (also at twice the
+ * pixels) and 1440 px and on a phone: one row of at most 48 px, every
+ * control on its middle line and none at the top edge; right after the
+ * app's name a switch that says Scene and Pages and marks the one drawn,
+ * reached from the keyboard; on Pages the place you are on as one control
+ * — on a phone, the page's first line — whose list holds every place, each
+ * two presses away by pointer and by keyboard, Escape giving the keyboard
+ * back to the control; nothing calling the scene "the overview"; a
+ * picture's page that does not repeat the places; and an app with a home
+ * view opening on it, full width under the bar, not over the scene.
  *
  * And NOTICES FLOAT, AND NEVER MOVE THE PAGE (FR-133). Nick, with an app
  * open in place on a desk: the top "is … broken when there's a
@@ -104,6 +129,13 @@ const ORG = resolve(repoRoot, "scripts/fixtures/quiet/org.gdd.json");
 const ORG_SEED = resolve(repoRoot, "scripts/fixtures/quiet/org.seed.json");
 const VENDORS = resolve(repoRoot, "scripts/fixtures/quiet/vendor-shortlist.template.json");
 const ORG_PLACES = JSON.parse(readFileSync(ORG, "utf8")).lenses.map((lens) => lens.title);
+/* Cloud's workshop app (FR-137, FR-138): three kinds and two pictures named in sentences. */
+const WORKSHOP = resolve(repoRoot, "scripts/fixtures/desk-bar/workshop.gdd.json");
+const WORKSHOP_SEED = resolve(repoRoot, "scripts/fixtures/desk-bar/workshop.seed.json");
+/* The desk widths the bar is measured at: below, at and above the width Cloud's bar wrapped at. */
+const DESKS = (QUICK ? [1024, 1280] : [1000, 1024, 1280, 1440]).map((width) => ({ width, height: 800 }));
+/* The longest a bar may be, its rule included (FR-138). */
+const BAR_MOST = 48;
 
 /** A wide display face every engine here has on macOS, with wide fallbacks: an average letter well over the 7.1 px the marquee was estimated at. */
 const WIDE_FONT = '"Arial Black", "Verdana", "DejaVu Sans", sans-serif';
@@ -141,15 +173,26 @@ async function buildHost() {
         import org from ${JSON.stringify(ORG)};
         import orgSeed from ${JSON.stringify(ORG_SEED)};
         import vendors from ${JSON.stringify(VENDORS)};
+        import workshop from ${JSON.stringify(WORKSHOP)};
+        import workshopSeed from ${JSON.stringify(WORKSHOP_SEED)};
         const asked = new URLSearchParams(location.search);
         const isOrg = asked.get("doc") === "org";
+        const isWorkshop = asked.get("doc") === "workshop";
+        /*
+         * Cloud's workshop — its home, three lists, two pictures and how the kinds connect — and the same with thirty places: twenty-three more pictures, each named in a
+         * sentence; with "home=1", a home view of its own, as the one a chat wrote (FR-136).
+         */
+        const kinds = ["date", "decision", "deliverable"];
+        let shop = workshop;
+        if (asked.get("many") === "1") shop = { ...shop, lenses: [...shop.lenses, ...Array.from({ length: 23 }, (_, i) => ({ name: "blocks", title: "What the room said about the " + ["budget", "county", "pilot", "board", "season"][i % 5] + ", part " + (i + 1), on: kinds[i % 3], options: { blocks: [{ list: "all('" + kinds[i % 3] + "')", as: "row" }] } }))] };
+        if (asked.get("home") === "1") shop = { ...shop, views: { ...shop.views, home: [{ headline: "This week at the workshop" }, { list: "all('deliverable')", as: "row" }] } };
         /*
          * In the wide face, the org's places are named at the edge of a line: nineteen
          * letters, one line at an average letter's width and two in a wide face, so a
          * room sized for the average runs short by a line a name.
          */
         const edgeNames = ${JSON.stringify(EDGE_NAMES)};
-        const document_ = isOrg && asked.get("font") === "wide" ? { ...org, lenses: org.lenses.map((lens, i) => ({ ...lens, title: edgeNames[i % edgeNames.length] })) } : isOrg ? org : vendors.document;
+        const document_ = isWorkshop ? shop : isOrg && asked.get("font") === "wide" ? { ...org, lenses: org.lenses.map((lens, i) => ({ ...lens, title: edgeNames[i % edgeNames.length] })) } : isOrg ? org : vendors.document;
         const compiled = compileDocumentWithoutCheck(document_, { today: () => "2026-10-02" });
         if (!compiled.ok) throw new Error("the document did not compile");
         const withIds = (seed) => ({ nodes: seed.nodes, edges: seed.edges.map((edge, i) => ({ id: edge.id ?? "e" + i, ...edge })) });
@@ -158,8 +201,9 @@ async function buildHost() {
         window.__handle = mount(document.getElementById("app"), {
           ...wide,
           app: compiled.app,
-          seed: withIds(isOrg ? orgSeed : vendors.seed),
-          face: asked.get("face") ?? "graview",
+          seed: withIds(isWorkshop ? workshopSeed : isOrg ? orgSeed : vendors.seed),
+          /* "none": the face is the app's to choose — its home view, else the scene (FR-136). */
+          ...(asked.get("face") === "none" ? {} : { face: asked.get("face") ?? "graview" }),
           ...(asked.get("path") ? { path: asked.get("path") } : {}),
           principal: { kind: "human", id: "u:owner", roles: ["owner"] },
           label: compiled.app.name,
@@ -322,16 +366,19 @@ function measure() {
   return { pills, cut, cutByGeometry };
 }
 
+/* The bar's measures, defined in every page the harness opens, for `theBar` and `theRow` to share. */
+const BAR_HELPERS = `${[barControls, linesOf, theSwitch, saysOverview].map(String).join("\n")}\nObject.assign(window, { barControls, linesOf, theSwitch, saysOverview });`;
 const host = await buildHost();
 const errors = [];
-const results = { screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], overviewPresses: [] };
+const results = { screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [] };
 let browser;
 try {
   for (const engine of engines) {
     browser = await launchEngine(engine, { headless: !process.argv.includes("--headed") });
     for (const scheme of SCHEMES) {
-      const open = async (query, viewport) => {
-        const context = await browser.newContext({ viewport, colorScheme: scheme });
+      const open = async (query, viewport, extra = {}) => {
+        const context = await browser.newContext({ viewport, colorScheme: scheme, ...extra });
+        await context.addInitScript({ content: BAR_HELPERS });
         const page = await context.newPage();
         page.on("pageerror", (error) => errors.push(`${engine} ${scheme} ${query}: ${error.message}`));
         await page.goto(`${at("quiet-host")}/?${query}`, { waitUntil: "load" });
@@ -531,11 +578,45 @@ try {
           }
         }
       }
-      /* ---- FR-132: the overview and a list are one press on a tab apart, from the pointer and the keyboard */
+      /* ---- FR-137: the scene and a list are one press on the switch apart, from the pointer and the keyboard */
       for (const viewport of [DESK, PHONE]) {
         const { page, close } = await open("doc=vendors&face=pages", viewport);
-        results.overviewPresses.push({ engine, scheme, viewport: `${viewport.width}×${viewport.height}`, ...(await overviewAndBack(page)) });
+        results.switchPresses.push({ engine, scheme, viewport: `${viewport.width}×${viewport.height}`, ...(await sceneAndBack(page)) });
         await close();
+      }
+      /* ---- FR-137, FR-138: Cloud's workshop and thirty places, at four desk widths (one at twice the pixels) and a phone */
+      for (const many of [false, true]) {
+        for (const viewport of [...DESKS, PHONE]) {
+          for (const dpr of viewport.width === 1280 && !QUICK ? [1, 2] : [1]) {
+            for (const face of ["pages", "graview"]) {
+              const query = `doc=workshop${many ? "&many=1" : ""}&face=${face}&heading=1${face === "pages" ? `&path=${encodeURIComponent("/places/email-to-todd")}` : ""}`;
+              const { page, close } = await open(query, viewport, { deviceScaleFactor: dpr });
+              const phone = viewport === PHONE;
+              results.deskBars.push({ engine, scheme, places: many ? 30 : 7, face, viewport: `${viewport.width}×${viewport.height}`, dpr, phone, ...(await page.evaluate(theRow)) });
+              if (SHOTS && dpr === 1 && (engine === "chromium" || engine === "webkit")) await page.screenshot({ path: join(SHOTS, `desk-bar-${many ? "thirty" : "workshop"}-${face}-${viewport.width}-${scheme}-${engine}.png`) });
+              if (face === "pages" && dpr === 1 && (viewport.width === 1280 || phone)) {
+                /* Every place, two presses each, by the pointer; then by the keyboard. */
+                results.twoPresses.push({ engine, scheme, places: many ? 30 : 7, viewport: `${viewport.width}×${viewport.height}`, ...(await everyPlaceInTwoPresses(page, SHOTS && (engine === "chromium" || engine === "webkit") ? join(SHOTS, `desk-bar-${many ? "thirty" : "workshop"}-list-open-${viewport.width}-${scheme}-${engine}.png`) : null)) });
+              }
+              await close();
+            }
+          }
+        }
+      }
+      /* ---- FR-138: a picture's page keeps only its own links; the places are the bar's */
+      {
+        const { page, close } = await open(`doc=workshop&face=pages&path=${encodeURIComponent("/places/email-to-todd")}`, DESK);
+        results.repeats.push({ engine, scheme, ...(await page.evaluate(placesRepeated)) });
+        await close();
+      }
+      /* ---- FR-136: a home view is the front page on a desk, full width under the bar; without one nothing changes */
+      for (const viewport of [...DESKS, PHONE]) {
+        for (const home of [true, false]) {
+          const { page, close } = await open(`doc=workshop&face=none&heading=1${home ? "&home=1" : ""}`, viewport);
+          if (SHOTS && (engine === "chromium" || engine === "webkit") && viewport.width !== 1024) await page.screenshot({ path: join(SHOTS, `desk-bar-${home ? "home-view" : "no-home-view"}-${viewport.width}-${scheme}-${engine}.png`) });
+          results.homes.push({ engine, scheme, home, viewport: `${viewport.width}×${viewport.height}`, ...(await page.evaluate(theHome)) });
+          await close();
+        }
       }
       /* ---- FR-122: the bar's count still opens the problems, from the keyboard alone */
       {
@@ -577,10 +658,9 @@ try {
     seen: results.problemsByKeyboard,
     ok: results.problemsByKeyboard.length === engines.length * SCHEMES.length && results.problemsByKeyboard.every((one) => one.named && one.reached && one.opened),
   };
-  const bar = (one) => one.rows === (one.phone ? 2 : 1) && (!one.phone || one.secondRowIsThePlaces);
-  report.checks.atMostOneBarRowOnADeskAndTwoOnAPhone = {
-    seen: results.bars.map(({ engine, scheme, doc, face, viewport, rows, secondRowIsThePlaces, bars }) => ({ engine, scheme, doc, face, viewport, rows, secondRowIsThePlaces, bars })),
-    ok: results.bars.length === engines.length * SCHEMES.length * 8 && results.bars.every((one) => bar(one) && one.bars === 1 && one.contentUnderTheBar),
+  report.checks.oneBarRowOnADeskAndAPhone = {
+    seen: results.bars.map(({ engine, scheme, doc, face, viewport, rows, placeLineUnderTheBar, bars }) => ({ engine, scheme, doc, face, viewport, rows, placeLineUnderTheBar, bars })),
+    ok: results.bars.length === engines.length * SCHEMES.length * 8 && results.bars.every((one) => one.rows === 1 && one.bars === 1 && one.contentUnderTheBar && (!one.phone || one.face !== "pages" || one.placeLineUnderTheBar)),
   };
   report.checks.oneHeadingNamesTheAppOnBothFaces = {
     seen: results.bars.map(({ engine, scheme, doc, face, viewport, headings, name }) => ({ engine, scheme, doc, face, viewport, name, headings })),
@@ -594,13 +674,45 @@ try {
     seen: results.bars.map(({ engine, scheme, doc, face, viewport, tools }) => ({ engine, scheme, doc, face, viewport, tools })),
     ok: results.bars.length > 0 && results.bars.every((one) => one.tools.length >= 3 && one.tools.every((tool) => tool.height >= 28 && tool.height <= 32 && tool.named)),
   };
-  report.checks.noControlSaysSceneOrPages = {
-    seen: results.bars.filter((one) => one.saysSceneOrPages.length > 0).map(({ engine, scheme, doc, face, viewport, saysSceneOrPages }) => ({ engine, scheme, doc, face, viewport, saysSceneOrPages })),
-    ok: results.bars.length > 0 && results.bars.every((one) => one.saysSceneOrPages.length === 0),
+  const switchSays = (one) => one.switch !== null && one.switch.scene.name === "Scene" && one.switch.pages.name === "Pages" && one.switch.scene.pressed === (one.face !== "pages") && one.switch.pages.pressed === (one.face === "pages") && one.switch.rightAfterTheName && (one.phone || (one.switch.width >= 110 && one.switch.width <= 190));
+  report.checks.theSwitchSaysSceneAndPagesAndMarksTheOneDrawn = {
+    seen: [...results.bars, ...results.deskBars].map(({ engine, scheme, doc, places, face, viewport, dpr, switch: said }) => ({ engine, scheme, doc: doc ?? `workshop, ${places} places`, face, viewport, ...(dpr ? { dpr } : {}), switch: said })),
+    ok: results.bars.length > 0 && results.deskBars.length > 0 && [...results.bars, ...results.deskBars].every(switchSays),
   };
-  report.checks.theOverviewAndAListAreOnePressApart = {
-    seen: results.overviewPresses,
-    ok: results.overviewPresses.length === engines.length * SCHEMES.length * 2 && results.overviewPresses.every((one) => one.toOverview && one.overviewMarked && one.toList && one.listMarked && one.backToOverview && one.byKeyboard),
+  report.checks.nothingCallsTheSceneTheOverview = {
+    seen: [...results.bars, ...results.deskBars].filter((one) => one.saysOverview.length > 0).map(({ engine, scheme, doc, places, face, viewport, saysOverview }) => ({ engine, scheme, doc: doc ?? `workshop, ${places} places`, face, viewport, saysOverview })),
+    ok: results.bars.length > 0 && results.deskBars.length > 0 && [...results.bars, ...results.deskBars].every((one) => one.saysOverview.length === 0),
+  };
+  report.checks.theSceneAndAListAreOnePressOnTheSwitchApart = {
+    seen: results.switchPresses,
+    ok: results.switchPresses.length === engines.length * SCHEMES.length * 2 && results.switchPresses.every((one) => one.toList && one.toScene && one.sceneMarked && one.backToTheList && one.pagesMarked && one.byKeyboard && !one.onBody),
+  };
+  const deskBarsAll = results.deskBars.length === engines.length * SCHEMES.length * 2 * (DESKS.length + 1 + (QUICK ? 0 : 1)) * 2;
+  report.checks.theDeskBarIsOneRowOfAtMost48PxWithSevenOrThirtyPlaces = {
+    seen: results.deskBars.map(({ engine, scheme, places, face, viewport, dpr, height, lines }) => ({ engine, scheme, places, face, viewport, dpr, height, lines })),
+    ok: deskBarsAll && results.deskBars.every((one) => one.lines === 1 && one.height <= BAR_MOST),
+  };
+  report.checks.everyBarControlStandsOnTheRowsMiddleAndNoneTouchesTheTopEdge = {
+    seen: results.deskBars.map(({ engine, scheme, places, face, viewport, dpr, off, nearestTheTop }) => ({ engine, scheme, places, face, viewport, dpr, nearestTheTop, ...(off.length > 0 ? { off } : {}) })),
+    ok: deskBarsAll && results.deskBars.every((one) => one.off.length === 0 && one.nearestTheTop >= 4),
+  };
+  report.checks.onPagesThePlaceIsOneControlOnTheBarOrThePhonesFirstLine = {
+    seen: results.deskBars.filter((one) => one.face === "pages").map(({ engine, scheme, places, viewport, dpr, place }) => ({ engine, scheme, places, viewport, dpr, place })),
+    ok: deskBarsAll && results.deskBars.every((one) => (one.face === "pages" ? one.place.said === "Email to Todd" && (one.phone ? one.place.firstLine : one.place.onTheRow) : one.place.said === null)),
+  };
+  report.checks.everyPlaceIsTwoPressesAwayByPointerAndKeyboard = {
+    seen: results.twoPresses,
+    ok:
+      results.twoPresses.length === engines.length * SCHEMES.length * 4 &&
+      results.twoPresses.every((one) => one.listed === one.places && one.groups.join() === "home,lists,pictures" && one.reached.length === one.places && one.missed.length === 0 && one.keyboard.switchReached && one.keyboard.controlReached && one.keyboard.into && one.keyboard.escapeBack && one.keyboard.entriesByTab === one.places && one.keyboard.went && !one.keyboard.onBody),
+  };
+  report.checks.aPicturesPageDoesNotRepeatThePlaces = {
+    seen: results.repeats,
+    ok: results.repeats.length === engines.length * SCHEMES.length && results.repeats.every((one) => one.asList && one.repeated.length === 0),
+  };
+  report.checks.aHomeViewIsTheFrontPageFullWidthUnderTheBar = {
+    seen: results.homes,
+    ok: results.homes.length === engines.length * SCHEMES.length * (DESKS.length + 1) * 2 && results.homes.every((one) => (one.home ? one.face === "pages" && one.homeView && one.fullWidth && one.underTheBar && !one.floating && one.place === "Home" : ["scene", "graview"].includes(one.face) && !one.homeView)),
   };
   /* FR-133 */
   const notices = results.notices;
@@ -701,14 +813,17 @@ function theBar() {
     const style = getComputedStyle(element);
     return style.display !== "none" && style.visibility !== "hidden";
   };
-  const parts = header ? [".graview-bar-app", ".graview-bar-places", ".graview-bar-tools"].map((selector) => header.querySelector(selector)).filter(shown) : [];
-  const tops = [...new Set(parts.map((part) => Math.round(part.getBoundingClientRect().top / 4)))].sort((a, b) => a - b);
-  const places = header?.querySelector(".graview-bar-places");
-  const secondRowIsThePlaces = tops.length === 2 && shown(places) && Math.round(places.getBoundingClientRect().top / 4) === tops[1];
+  /* The lines the bar's controls stand on: each control's own middle, never a region's top (a region grows downward when what is in it wraps). */
+  const row = header ? barControls(header) : [];
+  const lines = linesOf(row.map((one) => one.box));
+  const line = root?.querySelector("[data-graview-place-line]");
+  const placeLineUnderTheBar = Boolean(header && shown(line) && Math.abs(line.getBoundingClientRect().top - header.getBoundingClientRect().bottom) <= 1);
   /* Rows of navigation over the content that are not the bar: a masthead, a nav of pages, a Find bar of the face's own, the old strip. */
   const others = root ? [...root.querySelectorAll('[data-testid="masthead"], [data-testid="shell-nav"], [data-testid="face-find-bar"], [data-testid="embed-faces"], [data-embed-strip]')].filter(shown) : [];
   const content = root?.querySelector("[data-embed-content]");
-  const contentUnderTheBar = Boolean(header && content && Math.abs(content.getBoundingClientRect().top - header.getBoundingClientRect().bottom) <= 1);
+  /* The page under the bar — on a phone's Pages, under the place's line, which is the page's first. */
+  const above = shown(line) ? line : header;
+  const contentUnderTheBar = Boolean(above && content && Math.abs(content.getBoundingClientRect().top - above.getBoundingClientRect().bottom) <= 1);
   const headings = root ? [...root.querySelectorAll("h1")].filter((one) => !one.closest("[hidden]")).map((one) => one.textContent.trim()) : [];
   const name = header?.querySelector('[data-testid="app-name"]')?.textContent.trim() ?? "";
   /* The bar's own words — the app's name, and a line under it — said again on the screen outside the bar. */
@@ -726,52 +841,240 @@ function theBar() {
   }
   /* Find boxes of the app's own — a lens may carry a box for its own words, which is the picture's, not the bar's. */
   const findBoxes = [...document.querySelectorAll('input[type="search"]')].filter((one) => shown(one) && (header?.contains(one) || /^(Find anything|Narrow this list)$/.test(one.getAttribute("aria-label") ?? ""))).length + (shown(header?.querySelector('[data-testid="app-find-open"]')) ? 1 : 0);
-  const tools = header ? [...header.querySelectorAll('.graview-bar-tools > *')].flatMap((one) => (one.matches("button, a, input") ? [one] : [...one.querySelectorAll("button, a, input")])).filter(shown).map((one) => ({ name: one.getAttribute("aria-label") ?? one.textContent.trim(), height: Math.round(one.getBoundingClientRect().height), named: Boolean((one.getAttribute("aria-label") ?? "").trim()) })) : [];
-  const saysSceneOrPages = root ? [...root.querySelectorAll("button, a, [role=tab], [role=button]")].filter(shown).map((one) => (one.getAttribute("aria-label") ?? one.textContent ?? "").trim()).filter((words) => /\b(scene|pages)\b/i.test(words)) : [];
-  return { rows: tops.length, secondRowIsThePlaces, bars: header ? 1 + others.length : others.length, contentUnderTheBar, headings, name, repeated, findBoxes, tools, saysSceneOrPages };
+  const tools = header ? [...header.querySelectorAll(".graview-bar-tools > *")].flatMap((one) => (one.matches("button, a, input") ? [one] : [...one.querySelectorAll("button, a, input")])).filter(shown).map((one) => ({ name: one.getAttribute("aria-label") ?? one.textContent.trim(), height: Math.round(one.getBoundingClientRect().height), named: Boolean((one.getAttribute("aria-label") ?? "").trim()) })) : [];
+  return { rows: lines, placeLineUnderTheBar, bars: header ? 1 + others.length : others.length, contentUnderTheBar, headings, name, repeated, findBoxes, tools, switch: theSwitch(header), saysOverview: saysOverview(root) };
+}
+
+/** The bar's controls on its row — not the place list, which opens over the page — each with its box. */
+function barControls(header) {
+  const row = header.querySelector(".graview-bar-row") ?? header;
+  return [...row.querySelectorAll("a, button, input")]
+    .filter((one) => {
+      if (one.closest("[hidden], .graview-bar-list")) return false;
+      const box = one.getBoundingClientRect();
+      if (box.width < 2 || box.height < 2) return false;
+      const style = getComputedStyle(one);
+      return style.display !== "none" && style.visibility !== "hidden";
+    })
+    .map((one) => ({ name: one.getAttribute("data-testid") ?? one.getAttribute("aria-label") ?? one.tagName.toLowerCase(), box: one.getBoundingClientRect() }));
+}
+
+/** How many lines boxes stand on: their middles, any two within 3 px one line. */
+function linesOf(boxes) {
+  const middles = boxes.map((box) => (box.top + box.bottom) / 2).sort((a, b) => a - b);
+  let lines = 0;
+  let last = -Infinity;
+  for (const middle of middles) {
+    if (middle - last > 3) lines += 1;
+    last = middle;
+  }
+  return lines;
+}
+
+/** The switch (FR-137): its two buttons' accessible names and states, its width, and whether it stands right after the app's name. */
+function theSwitch(header) {
+  const group = header?.querySelector('[data-testid="app-faces"]');
+  if (!group) return null;
+  const face = (which) => {
+    const button = group.querySelector(`[data-testid="app-face-${which}"]`);
+    /* The accessible name: the words, which a phone draws for a reader's ear alone. */
+    const name = (button?.getAttribute("aria-label") ?? button?.textContent ?? "").trim();
+    return { name, pressed: button?.getAttribute("aria-pressed") === "true", button: button?.tagName.toLowerCase() ?? null };
+  };
+  const app = header.querySelector(".graview-bar-app");
+  const between = app && group ? group.getBoundingClientRect().left - app.getBoundingClientRect().right : null;
+  return { role: group.getAttribute("role"), label: group.getAttribute("aria-label"), scene: face("scene"), pages: face("pages"), width: Math.round(group.getBoundingClientRect().width), rightAfterTheName: between !== null && between >= 0 && between <= 24 && app.nextElementSibling === group };
+}
+
+/** Every word on the screen, and every control's name, that calls the scene "the overview" (FR-137). */
+function saysOverview(root) {
+  const said = [];
+  if (!root) return said;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const text = node.textContent.trim();
+    const element = node.parentElement;
+    if (!text || !element || !/\boverview\b/i.test(text) || element.closest("style, script, [hidden]")) continue;
+    const box = element.getBoundingClientRect();
+    if (box.width < 2 || box.height < 2) continue;
+    said.push(text.slice(0, 60));
+  }
+  for (const control of root.querySelectorAll("a, button, [role=button], [role=tab]")) {
+    const named = `${control.getAttribute("aria-label") ?? ""} ${control.getAttribute("title") ?? ""}`;
+    if (/\boverview\b/i.test(named) && !control.closest("[hidden]")) said.push(named.trim().slice(0, 60));
+  }
+  return said;
 }
 
 /**
- * FROM A LIST TO THE OVERVIEW AND BACK, ONE PRESS EACH (FR-132): the
- * overview's tab draws the scene under the same bar and is marked; a kind's
- * tab draws its list and is marked; the overview's tab again. Then the same
- * by keyboard: Tab to the overview's tab, Enter.
+ * THE ROW, MEASURED CONTROL BY CONTROL (FR-138): the bar's height, rule
+ * included; the lines its controls' middles stand on; each control that
+ * stands off the row's middle, and how near the top edge the nearest
+ * comes; the place control's words and where it stands; and the switch.
  */
-async function overviewAndBack(page) {
-  const face = () => page.evaluate(() => document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed"));
-  const marked = (key) => page.evaluate((key) => document.querySelector(`[data-testid="app-place-${key}"]`)?.getAttribute("aria-current") === "page", key);
-  const tab = (key) => page.locator(`[data-testid="app-place-${key}"]`).first();
-  const press = async (key) => {
-    const one = tab(key);
-    if (!(await one.isVisible().catch(() => false))) {
-      await page.locator('[data-testid="app-places-more"]').click();
-      await page.waitForTimeout(150);
-    }
-    await one.click();
-    await page.waitForTimeout(1200);
+function theRow() {
+  const root = document.querySelector("[data-graview-embed]");
+  const header = root?.querySelector("[data-graview-app-bar]");
+  if (!header) return { height: null, lines: 0, off: ["no bar"], nearestTheTop: 0, place: { said: null }, switch: null, saysOverview: [] };
+  const bar = header.getBoundingClientRect();
+  const row = header.querySelector(".graview-bar-row")?.getBoundingClientRect() ?? bar;
+  const controls = barControls(header);
+  const middle = (row.top + row.bottom) / 2;
+  const off = controls.filter((one) => Math.abs((one.box.top + one.box.bottom) / 2 - middle) > 1.5).map((one) => ({ name: one.name, by: Math.round(((one.box.top + one.box.bottom) / 2 - middle) * 10) / 10 }));
+  const control = root.querySelector('[data-testid="app-places-open"]');
+  const line = root.querySelector("[data-graview-place-line]");
+  return {
+    height: Math.round(bar.height * 10) / 10,
+    lines: linesOf(controls.map((one) => one.box)),
+    off,
+    nearestTheTop: Math.round(Math.min(...controls.map((one) => one.box.top - bar.top)) * 10) / 10,
+    place: {
+      said: control?.querySelector('[data-testid="app-place-current"]')?.textContent.trim() ?? null,
+      onTheRow: Boolean(control && header.contains(control)),
+      firstLine: Boolean(control && line?.contains(control) && Math.abs(line.getBoundingClientRect().top - bar.bottom) <= 1),
+    },
+    switch: theSwitch(header),
+    saysOverview: saysOverview(root),
   };
-  await press("overview");
-  const toOverview = ["scene", "graview"].includes(await face());
-  const overviewMarked = await marked("overview");
-  await press("kind:vendor");
-  const toList = (await face()) === "pages" && (await page.locator("main h2, [data-embed-content] h2").first().textContent().catch(() => "")).trim().toLowerCase() === "vendors";
-  const listMarked = await marked("kind:vendor");
-  await press("overview");
-  const backToOverview = ["scene", "graview"].includes(await face());
-  /* By keyboard: from the list, Tab to the overview's tab and press Enter. */
-  await press("kind:vendor");
+}
+
+/**
+ * FROM A LIST TO THE SCENE AND BACK (FR-137): a list by the place control,
+ * the scene by the switch — drawn under the same bar, Scene pressed — and
+ * Pages again, back on the same list. Then by keyboard: Tab to Scene, Enter.
+ */
+async function sceneAndBack(page) {
+  const face = () => page.evaluate(() => document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed"));
+  const pressed = (which) => page.evaluate((which) => document.querySelector(`[data-testid="app-face-${which}"]`)?.getAttribute("aria-pressed") === "true", which);
+  const heading = () => page.locator("main h2, [data-embed-content] h2").first().textContent().catch(() => "").then((text) => (text ?? "").trim().toLowerCase());
+  const settle = () => page.waitForTimeout(1200);
+  await page.locator('[data-testid="app-places-open"]').click();
+  await page.locator('[data-testid="app-place-kind:vendor"]').click();
+  await settle();
+  const toList = (await face()) === "pages" && (await heading()) === "vendors";
+  await page.locator('[data-testid="app-face-scene"]').click();
+  await settle();
+  const toScene = ["scene", "graview"].includes(await face());
+  const sceneMarked = (await pressed("scene")) && !(await pressed("pages"));
+  await page.locator('[data-testid="app-face-pages"]').click();
+  await settle();
+  const backToTheList = (await face()) === "pages" && (await heading()) === "vendors";
+  const pagesMarked = await pressed("pages");
+  /* By keyboard: from the list, Tab from the app's name to Scene, and Enter. */
   let byKeyboard = false;
   await page.locator('[data-testid="app-home"]').focus();
-  for (let step = 0; step < 20; step++) {
+  for (let step = 0; step < 6; step++) {
     await page.keyboard.press("Tab");
-    if (await page.evaluate(() => document.activeElement?.getAttribute("data-testid") === "app-place-overview")) {
+    if (await page.evaluate(() => document.activeElement?.getAttribute("data-testid") === "app-face-scene")) {
       await page.keyboard.press("Enter");
-      await page.waitForTimeout(1200);
+      await settle();
       byKeyboard = ["scene", "graview"].includes(await face());
       break;
     }
   }
-  return { toOverview, overviewMarked, toList, listMarked, backToOverview, byKeyboard };
+  const onBody = await page.evaluate(() => document.activeElement === document.body);
+  return { toList, toScene, sceneMarked, backToTheList, pagesMarked, byKeyboard, onBody };
+}
+
+/**
+ * EVERY PLACE IN TWO PRESSES (FR-138): the place control, then its entry —
+ * for every entry the list holds, by the pointer, each landing on its
+ * place with the control saying its name. Then by keyboard: Tab from the
+ * app's name reaches the switch and the control; Enter opens the list with
+ * the keyboard in it; Escape gives it back to the control; Tab walks every
+ * entry; Enter on one goes there, and the keyboard is never left on the body.
+ */
+async function everyPlaceInTwoPresses(page, shot) {
+  const open = async () => {
+    if (await page.evaluate(() => document.querySelector('[data-testid="app-places"]')?.hasAttribute("hidden") !== false)) await page.locator('[data-testid="app-places-open"]').click();
+    await page.waitForTimeout(120);
+  };
+  await open();
+  if (shot) await page.screenshot({ path: shot });
+  const entries = await page.evaluate(() => [...document.querySelectorAll('[data-testid="app-places"] [data-testid^="app-place-"]')].map((one) => ({ id: one.getAttribute("data-testid"), label: one.textContent.trim() })));
+  const groups = await page.evaluate(() => [...document.querySelectorAll('[data-testid="app-places"] [data-place-group]')].map((one) => one.getAttribute("data-place-group")));
+  await page.keyboard.press("Escape");
+  const reached = [];
+  const missed = [];
+  for (const entry of entries) {
+    await open();
+    await page.locator(`[data-testid="${entry.id}"]`).click();
+    const landed = await page
+      .waitForFunction((label) => document.querySelector('[data-testid="app-place-current"]')?.textContent.trim() === label, entry.label, { timeout: 4000 })
+      .then(() => true, () => false);
+    (landed ? reached : missed).push(entry.label);
+  }
+  /* By keyboard. */
+  const active = () => page.evaluate(() => document.activeElement?.getAttribute("data-testid") ?? (document.activeElement === document.body ? "<body>" : document.activeElement?.tagName.toLowerCase()));
+  let onBody = false;
+  const keyboard = { switchReached: false, controlReached: false, into: false, escapeBack: false, entriesByTab: 0, went: false, onBody: false };
+  await page.locator('[data-testid="app-home"]').focus();
+  for (let step = 0; step < 8 && !keyboard.controlReached; step++) {
+    await page.keyboard.press("Tab");
+    const at = await active();
+    if (at === "app-face-scene" || at === "app-face-pages") keyboard.switchReached = true;
+    if (at === "app-places-open") keyboard.controlReached = true;
+  }
+  if (keyboard.controlReached) {
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(150);
+    keyboard.into = await page.evaluate(() => document.querySelector('[data-testid="app-places"]')?.contains(document.activeElement) === true);
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(150);
+    keyboard.escapeBack = (await active()) === "app-places-open";
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(150);
+    const seen = new Set();
+    for (let step = 0; step < entries.length + 2; step++) {
+      const at = await active();
+      if (at?.startsWith("app-place-") && at !== "app-place-current") seen.add(at);
+      if (seen.size === entries.length) break;
+      await page.keyboard.press("Tab");
+    }
+    keyboard.entriesByTab = seen.size;
+    const target = entries.find((entry) => entry.id === "app-place-home") ?? entries[0];
+    if (await page.evaluate(() => document.querySelector('[data-testid="app-places"]')?.hasAttribute("hidden"))) {
+      await page.locator('[data-testid="app-places-open"]').focus();
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(150);
+    }
+    await page.locator(`[data-testid="${target.id}"]`).focus();
+    await page.keyboard.press("Enter");
+    keyboard.went = await page
+      .waitForFunction((label) => document.querySelector('[data-testid="app-place-current"]')?.textContent.trim() === label, target.label, { timeout: 4000 })
+      .then(() => true, () => false);
+    await page.waitForTimeout(300);
+    onBody = (await active()) === "<body>";
+  }
+  keyboard.onBody = onBody;
+  return { listed: entries.length, groups, reached, missed, keyboard };
+}
+
+/** What a picture's page says under its title that is another place's name, as a link or a button (FR-138). */
+function placesRepeated() {
+  const root = document.querySelector("[data-graview-embed]");
+  const content = root?.querySelector("[data-embed-content]");
+  const labels = new Set([...(root?.querySelectorAll('[data-testid="app-places"] [data-testid^="app-place-"]') ?? [])].map((one) => one.textContent.trim()));
+  const repeated = [...(content?.querySelectorAll("a, button") ?? [])].map((one) => one.textContent.trim()).filter((words) => labels.has(words) || /overview/i.test(words));
+  const asList = [...(content?.querySelectorAll("a") ?? [])].some((one) => /^All deliverables as a list/.test(one.textContent.trim()));
+  return { repeated, asList };
+}
+
+/** Where the app opened, with a home view or without (FR-136): the face, the home view's box against the page's, and whether anything floats over the scene. */
+function theHome() {
+  const root = document.querySelector("[data-graview-embed]");
+  const face = root?.getAttribute("data-graview-embed") ?? null;
+  const header = root?.querySelector("[data-graview-app-bar]");
+  const view = root?.querySelector('[data-testid="home-view"]');
+  const content = root?.querySelector("[data-embed-content]");
+  const box = view?.getBoundingClientRect();
+  const page = content?.getBoundingClientRect();
+  /* As wide as the page's column: the page's width less its gutters, up to the column's measure — never a card's 440 px. */
+  const fullWidth = Boolean(box && page && box.width >= Math.min(page.width - 128, 1100));
+  let floating = false;
+  for (let up = view; up && up !== root; up = up.parentElement) if (["absolute", "fixed"].includes(getComputedStyle(up).position)) floating = true;
+  const underTheBar = Boolean(box && header && box.top >= header.getBoundingClientRect().bottom);
+  return { face, homeView: Boolean(view), width: box ? Math.round(box.width) : null, page: page ? Math.round(page.width) : null, fullWidth, floating, underTheBar, place: root?.querySelector('[data-testid="app-place-current"]')?.textContent.trim() ?? null };
 }
 
 /** The bar's Standing: its accessible name says the count, Tab reaches it, and Enter opens the problems it counts. */
@@ -994,8 +1297,8 @@ async function noticesFloat(page, face, engine, shot) {
 }
 
 /**
- * Goes to a place IN THE SCENE: the bar's tab for a picture opens its page
- * (FR-132), so the scene is sent to the place's stop, `#view=<as>`, the way
+ * Goes to a place IN THE SCENE: a picture in the place list opens its page
+ * (FR-138), so the scene is sent to the place's stop, `#view=<as>`, the way
  * a link to it does.
  */
 async function goToPlace(page, title) {

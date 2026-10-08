@@ -58,7 +58,7 @@ describe("@graview/embed/pages", () => {
     expect(root?.getAttribute("data-graview-embed")).toBe("pages");
     expect(host.textContent).toContain("Tasks");
     expect(host.querySelector("[data-testid=app-bar]"), "the bar").not.toBeNull();
-    expect(host.querySelector("[data-testid=app-place-overview]")).toBeNull();
+    expect(host.querySelector("[data-testid=app-face-scene]")).toBeNull();
     expect(host.querySelector("[data-testid=studio-place]")).toBeNull();
     await act(async () => handle.setHostContext({ theme: "dark" }));
     expect(root?.getAttribute("data-graview-scheme")).toBe("dark");

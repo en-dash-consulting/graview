@@ -536,10 +536,12 @@ try {
   const lens = await desk.evaluate(() => ({
     present: document.querySelector('[data-testid="place-lens"]') !== null,
     picks: document.querySelectorAll('[data-testid="place-lens"] [data-graview-pick]').length,
-    stop: document.querySelector('[data-testid="place-stop"]')?.getAttribute("href") ?? null,
+    // Its own way to its kind as a list, and not the other places again: those are the bar's (FR-138).
+    asList: document.querySelector('[data-testid="place-as-list"]')?.getAttribute("href") ?? null,
+    repeats: document.querySelector('[data-testid="place-stop"], [data-testid="sibling-pictures"]') !== null,
     noSideScroll: document.documentElement.scrollWidth <= window.innerWidth + 1,
   }));
-  report.checks.placePage = { ...lens, ok: lens.present && lens.picks > 0 && lens.stop === "/#view=the-week" && lens.noSideScroll };
+  report.checks.placePage = { ...lens, ok: lens.present && lens.picks > 0 && lens.asList === "/pages/tasks" && !lens.repeats && lens.noSideScroll };
   // A pick inside the picture travels to the record.
   // A moment in the week has its own children under the pointer; the click lands on them and bubbles, as a finger's would.
   await desk.click('[data-testid="place-lens"] [data-graview-pick]', { force: true });
@@ -689,7 +691,13 @@ try {
       const gallery = document.querySelector('[data-testid="gallery"]');
       const cards = [...document.querySelectorAll('[data-testid="place-card"], [data-testid="kind-card"]')];
       const tops = cards.map((card) => Math.round(card.getBoundingClientRect().top));
-      const navTops = [...document.querySelectorAll('[data-testid="app-places"] .graview-bar-tab')].map((a) => Math.round(a.getBoundingClientRect().top));
+      /* The bar's row, control by control (FR-138): the lines their middles stand on, and its height. */
+      const bar = document.querySelector("[data-graview-app-bar]");
+      const middles = [...(bar?.querySelectorAll(".graview-bar-row a, .graview-bar-row button, .graview-bar-row input") ?? [])]
+        .filter((one) => !one.closest("[hidden], .graview-bar-list") && one.getBoundingClientRect().width > 2)
+        .map((one) => { const box = one.getBoundingClientRect(); return (box.top + box.bottom) / 2; })
+        .sort((a, b) => a - b);
+      const barLines = middles.reduce((lines, middle, at) => (at === 0 || middle - middles[at - 1] > 3 ? lines + 1 : lines), 0);
       return {
         headerThenGallery: sections[0]?.tagName === "HEADER" && sections[1] === gallery,
         cards: cards.length,
@@ -698,8 +706,9 @@ try {
         narrowest: Math.min(...cards.map((card) => Math.round(card.getBoundingClientRect().width))),
         // Two cards sharing a top are two cards in one row.
         rows: new Set(tops).size,
+        barLines,
+        barHeight: bar ? Math.round(bar.getBoundingClientRect().height) : null,
         drawn: cards.every((card) => card.querySelector('[data-testid$="-picture"] > span > *') !== null),
-        navRows: new Set(navTops).size,
         noSideScroll: document.documentElement.scrollWidth <= window.innerWidth + 1,
         readmeGone: !document.querySelector('main [data-testid="kind-map"]') && !/none yet<\/span><\/div><p/.test(main?.innerHTML ?? ""),
       };
@@ -751,10 +760,10 @@ try {
     cameBackTo,
     ok: pressedFrom > 400 && landedAt.path === "/pages/rules" && landedAt.scrollY === 0 && cameBackTo > 400,
   };
-  report.checks.theNavIsOneRow = {
-    desk: deskGallery.navRows,
-    phone: phoneGallery.navRows,
-    ok: deskGallery.navRows === 1 && phoneGallery.navRows === 1 && phoneGallery.noSideScroll,
+  report.checks.theBarIsOneRow = {
+    desk: { lines: deskGallery.barLines, height: deskGallery.barHeight },
+    phone: { lines: phoneGallery.barLines, height: phoneGallery.barHeight },
+    ok: deskGallery.barLines === 1 && phoneGallery.barLines === 1 && deskGallery.barHeight <= 48 && phoneGallery.barHeight <= 48 && phoneGallery.noSideScroll,
   };
   await bed.close();
 /* ------------------- a page draws with whatever the picture needs */

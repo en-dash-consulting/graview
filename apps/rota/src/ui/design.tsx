@@ -192,7 +192,7 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
           style={{ display: "grid", gap: "0.45rem", justifyItems: "start", paddingTop: "0.9rem", borderTop: "1px solid var(--ro-line)" }}
         >
           <a href={context.sceneHref ?? "/"} className="ro-btn">
-            On the overview ↗
+            In the scene ↗
           </a>
           {/* A browser that keeps your edits owes you the way back to the
               example, on every face a design replaces. */}
@@ -518,7 +518,7 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
         </h1>
         <p className="ro-lede">
           <a className="ro-btn" data-testid="spatial-link" href={spatialHref(id)}>
-            On the overview ↗
+            In the scene ↗
           </a>
         </p>
       </header>

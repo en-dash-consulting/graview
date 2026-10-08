@@ -17,8 +17,8 @@ export { DARK, GRAVIEW_BRAND, LIGHT, SCHEMES, themeBaseCss, themeVariables } fro
 export type { Brand, Scheme, ThemeCssOptions, ThemeTokens } from "./theme.js";
 export { Profile } from "./profile.js";
 export { AppMark, AppTitle, useFavicon } from "./app-title.js";
-export { AppBar, BarFindContext, barPlaceAt, barPlaces, OVERVIEW_KEY, TOOL, toolStyle, useBarFind } from "./app-bar.js";
-export type { BarFind, BarGo, BarPlace } from "./app-bar.js";
+export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, HOME_KEY, HOME_PATH, TOOL, toolStyle, useBarFind } from "./app-bar.js";
+export type { BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup } from "./app-bar.js";
 export type { HostAction } from "./profile.js";
 export { createNoticeBoard, Notices, TOAST_MS } from "./notices.js";
 export { FOOT_MOVED, FOOT_OBSTACLES, NARROW_PICTURE, placeAtTheFoot, placeAtTheTop } from "./notice-place.js";

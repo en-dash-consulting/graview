@@ -1,11 +1,11 @@
-import { addressOf, OVERVIEW_PATH, pathWithin, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
+import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
 import { EMPTY_VIEW, aggregateId, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
-import { BarFindContext, barPlaceAt, barPlaces, descentTarget, fetchFrameworkViews, frameworkViewDoors, OVERVIEW_KEY, useWidth, type BarFind } from "@graview/primitives/frame";
+import { BarFindContext, barPlaceAt, barPlaces, descentTarget, fetchFrameworkViews, frameworkViewDoors, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import type { CompanionMode } from "@graview/primitives";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { ErrorReportContext, GraviewProvider, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
-import { AddressBar, faceAtAddress, stopAtAddress } from "./address.js";
+import { AddressBar, atTheBareHome, faceAtAddress, stopAtAddress } from "./address.js";
 import { createContext, createElement, lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { EmbedWhere } from "./where.js";
 import { createRoot, type Root } from "react-dom/client";
@@ -231,8 +231,10 @@ export interface EmbedStudio {
 }
 
 export interface EmbedProps<S extends AnySchema = AnySchema> extends EmbedOptions<S> {
-  /** Called when the bar moves between the overview and a page (FR-132); the host decides the face. */
+  /** Called when the bar's switch moves between the scene and the pages (FR-137); the host decides the face. */
   readonly onFace?: (face: EmbedFace) => void;
+  /** Told, once, the face the embed opened on when the host named none (FR-136): the home's, or the scene. */
+  readonly onOpening?: (face: EmbedFace) => void;
   /** Called when a seat is taken in the person's menu; the host decides who sits. */
   readonly onSeat?: (principal: Principal) => void;
 }
@@ -258,9 +260,20 @@ function viewFor(face: EmbedFace, stop: string | undefined, kinds: readonly stri
   return asked;
 }
 
-/** The face a stop implies: a stop at altitude opens the Graview, anything else the scene — the overview (FR-132). */
+/** The face a stop implies: a stop at altitude opens the Graview, anything else the scene (FR-132). */
 export function faceOf(stop: string | undefined): EmbedFace {
   return stop && fromUrl(stop).overview ? "graview" : "scene";
+}
+
+/**
+ * WHETHER AN APP OPENS ON ITS HOME (FR-136): it has a home view — the
+ * declaration's home blocks, or a worker view attached to "home" — and its
+ * declaration names no other first place (`pages.first`).
+ */
+export function opensOnTheHome(app: Pick<GraviewApp<AnySchema>, "pages">, views: { homeView?(): unknown }): boolean {
+  if (views.homeView?.() === undefined) return false;
+  const first = app.pages?.first?.trim();
+  return first === undefined || first === "" || first === "/" || first.toLowerCase() === "home";
 }
 
 export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
@@ -271,9 +284,37 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
 }
 
 function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
-  const { app, face = props.at?.face ?? faceOf(props.stop), stop, bar = true, standing = "Everything is in order", principal, heading = 2 } = props;
+  const { app, stop, bar = true, standing = "Everything is in order", principal, heading = 2 } = props;
   const { rootRef, scope, css, scheme, store, presence, brand, auto, height } = useFrame(props);
   const views = useViews<S>(props, frameworkViewDoors) as never;
+  /*
+   * THE FACE IT OPENS ON (FR-136). When the host names none: the home, when
+   * the app has a home view and the declaration names no other first place
+   * — the front page a chat wrote is the page the app opens on, on a desk
+   * as on a phone — else the scene, as before. A host that names a face, a
+   * stop or a place handed back is drawn what it asked for; under address
+   * routing, what the address names — and the bare address, naming no face,
+   * is the home's when there is a home view, whatever face the host names:
+   * the host is told the pages (`onFace`), as if the reader had pressed it.
+   */
+  const routed = { ...(props.routing ? { routing: props.routing } : {}), ...(props.basePath === undefined ? {} : { basePath: props.basePath }) };
+  const [opened] = useState<EmbedFace>(() => {
+    const given = props.at?.face;
+    if (given) return given;
+    const decided = stop === undefined && opensOnTheHome(app, views as ReactViewRegistry<S>) ? "pages" : faceOf(stop);
+    const face = faceAtAddress({ ...routed, face: decided });
+    if (props.face === undefined) props.onOpening?.(face);
+    return face;
+  });
+  const [homeFirst, setHomeFirst] = useState(() => props.face !== undefined && props.face !== "pages" && !props.at && stop === undefined && atTheBareHome(routed) && opensOnTheHome(app, views as ReactViewRegistry<S>));
+  const toldHome = useRef(props.onFace);
+  toldHome.current = props.onFace;
+  useLayoutEffect(() => {
+    if (!homeFirst) return;
+    toldHome.current?.("pages");
+    setHomeFirst(false);
+  }, [homeFirst]);
+  const face = homeFirst ? "pages" : (props.face ?? opened);
   const kinds = app.schema.kinds as readonly string[];
   const address = props.routing === "address";
   const at = useMemo(() => (props.at ? settling!.settleAt(props as never, store.seenBy(principal ?? { kind: "human" }) as never, (views as ReactViewRegistry<S>).places()) : undefined), []);
@@ -357,7 +398,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     told.current?.(next === "pages" ? (path ?? pagesAt.current.path) : OVERVIEW_PATH, "push");
   }, [address]);
   /*
-   * The stop a page's way to the overview names ("On the overview ↗") is
+   * The stop a page's way to the scene names ("In the scene ↗") is
    * landed on once: it is let go when the reader leaves the scene and when
    * the host sets a stop of its own, so it never holds the scene after.
    */
@@ -392,7 +433,8 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     setPageAt(path);
     toFace("pages", path);
   }, [steering, setPageAt, toFace]);
-  const barPlacesHere = barPlaces({ store: store as never, principal, views: views as never, overview: true });
+  const barPlacesHere = barPlaces({ store: store as never, principal, views: views as never });
+  const arrangement = (views as ReactViewRegistry<S>).arrangement?.();
   const onPages = shown === "pages";
   const hrefOf = address ? (path: string) => addressOf(path, props.basePath === undefined ? {} : { basePath: props.basePath }) : undefined;
 
@@ -432,18 +474,24 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
         {/*
           * THE ONE APP BAR (FR-131): the app's name, said once as the
           * heading — the workbench says its name to a reader moving by
-          * headings (FR-25) — its places with the overview among them,
-          * Find, the standing and the person. Not on a picture alone.
+          * headings (FR-25) — the switch between the scene and the pages
+          * (FR-137), the place you are on (FR-138), Find, the standing and
+          * the person. Not on a picture alone.
           */}
         {bar && shown !== "picture" ? (
           <FaceBoundary module="@graview/embed" report={report}>
             <FrameBar
               name={brand?.name ?? app.name}
               heading={heading}
+              faces={{
+                scene: { label: sceneTitle(arrangement), current: !onPages, go: () => toOverview() },
+                // The pages, back at the page the reader was on.
+                pages: { label: pagesTitle(arrangement), current: onPages, go: () => toPage(pagesAt.current.path) },
+              }}
               places={barPlacesHere}
-              current={onPages ? barPlaceAt(barPlacesHere, pageAt) : OVERVIEW_KEY}
+              current={onPages ? barPlaceAt(barPlacesHere, pageAt) : null}
               home={{ ...(hrefOf ? { href: hrefOf("/") } : {}), go: () => toPage("/"), current: onPages && pageAt.split("?")[0] === "/" }}
-              reach={{ ...(hrefOf ? { href: hrefOf } : {}), go: (place) => (place.key === OVERVIEW_KEY ? toOverview() : toPage(place.path)) }}
+              reach={{ ...(hrefOf ? { href: hrefOf } : {}), go: (place) => toPage(place.path) }}
               standing={standing}
               hostActions={props.hostActions}
               keeping={onPages ? undefined : <Keeping app={app} studio={props.studio} report={report} />}
@@ -692,9 +740,11 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
   // A new declaration on its way (FR-116): `drawn()` waits for it.
   let swapping: Promise<void> = Promise.resolve();
   // Which face is asked for, which is drawn, and who is waiting for the one asked for.
-  // Under address routing, the face the address names (FR-106).
-  const opening = faceAtAddress({ ...options, face: options.at?.face ?? options.face ?? faceOf(options.stop) });
-  let asked: EmbedFace = opening;
+  // Under address routing, the face the address names (FR-106). A host that names
+  // none is told the face the app opens on as it first draws (FR-136).
+  const namedFace = options.at?.face ?? options.face;
+  const opening: EmbedFace | undefined = namedFace === undefined ? undefined : faceAtAddress({ ...options, face: namedFace });
+  let asked: EmbedFace = opening ?? faceOf(options.stop);
   let drawnFace: EmbedFace | null = null;
   let waiting: (() => void)[] = [];
   const onDrawn = (face: EmbedFace) => {
@@ -706,7 +756,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     for (const resolve of done) resolve();
   };
   function Host() {
-    const [face, setFace] = useState<EmbedFace>(opening);
+    const [face, setFace] = useState<EmbedFace | undefined>(opening);
     const [stop, setStop] = useState<string | undefined>(options.stop);
     const [path, setPath] = useState<string | undefined>(options.path);
     const [scheme, setScheme] = useState<Scheme | "auto">(options.scheme ?? "auto");
@@ -732,7 +782,10 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         {...(swap ? swapped(options, swap) : options)}
         store={store as never}
         notices={board}
-        face={face}
+        {...(face !== undefined ? { face } : {})}
+        onOpening={(opened) => {
+          asked = opened;
+        }}
         {...(stop !== undefined ? { stop } : {})}
         {...(path !== undefined ? { path } : {})}
         {...(principal ? { principal } : {})}

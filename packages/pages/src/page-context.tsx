@@ -1,4 +1,4 @@
-import { overviewTitle, type AnySchema, type Brand, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration } from "@graview/core";
+import { sceneTitle, type AnySchema, type Brand, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { ReactViewRegistry } from "@graview/react/provider";
 
@@ -93,13 +93,13 @@ export interface PageContext<S extends AnySchema> {
 }
 
 /**
- * WHERE A THING STANDS ON THE OVERVIEW (FR-132): a link from a page to the
- * scene at a stop — a record in focus, a picture in place. Through the
+ * WHERE A THING STANDS IN THE SCENE (FR-132, FR-137): a link from a page to
+ * the scene at a stop — a record in focus, a picture in place. Through the
  * embed's own way when the face is in one that draws the scene; to the
  * scene's address when the face owns its page; nowhere, and nothing drawn,
  * when there is no scene to go to.
  */
-export function OverviewLink<S extends AnySchema>({
+export function SceneLink<S extends AnySchema>({
   context,
   stop,
   title,
@@ -113,8 +113,8 @@ export function OverviewLink<S extends AnySchema>({
   readonly style?: CSSProperties;
   readonly children?: ReactNode;
 } & Record<`data-${string}`, string>) {
-  const label = overviewTitle(context.views?.arrangement?.());
-  const words = children ?? `On ${label === "Overview" ? "the overview" : label.replace(/^The /, "the ")} ↗`;
+  const label = sceneTitle(context.views?.arrangement?.());
+  const words = children ?? `In ${label === "Scene" ? "the scene" : label.replace(/^The /, "the ")} ↗`;
   if (context.overview) {
     const go = context.overview;
     return (

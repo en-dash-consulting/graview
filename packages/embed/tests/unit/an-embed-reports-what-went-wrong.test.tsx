@@ -87,7 +87,7 @@ describe("an error inside a face", () => {
     expect(said, "the face says it could not draw").not.toBeNull();
     expect(said?.textContent).not.toContain("Post the letter");
     expect(host.querySelector("[data-testid=app-bar]"), "the bar").not.toBeNull();
-    await act(async () => host.querySelector<HTMLButtonElement>("[data-testid=app-place-overview]")!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>("[data-testid=app-face-scene]")!.click());
     expect(host.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed")).toBe("scene");
     expect(host.querySelector("[data-graview-face-error]")).toBeNull();
   });

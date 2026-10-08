@@ -28,7 +28,7 @@ export {
   beginningsFrom,
   WhyLine,
   StartFreshLink,
-  OverviewLink,
+  SceneLink,
   useStoreTick,
   pageStyles,
   PageMain,

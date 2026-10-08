@@ -1,6 +1,6 @@
 import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { AppBar, createNoticeBoard, Notices, Profile, registerDeclaredLenses, Standing, themeBaseCss, useFavicon, type BarFind, type BarGo, type BarPlace, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
+import { AppBar, createNoticeBoard, Notices, Profile, registerDeclaredLenses, Standing, themeBaseCss, useFavicon, type BarFaces, type BarFind, type BarGo, type BarPlace, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -321,12 +321,14 @@ export function useIntrinsicHeight(rootRef: { readonly current: HTMLElement | nu
       const strip = children.find((child) => child.hasAttribute("data-graview-app-bar"));
       const content = children.find((child) => child.hasAttribute("data-embed-content"));
       const measure = content?.querySelector("[data-embed-measure]") ?? null;
-      return { strip, content, measure };
+      // On a phone the place is the page's first line, under the bar (FR-138).
+      const line = children.find((child) => child.hasAttribute("data-graview-place-line"));
+      return { strip, line, content, measure };
     };
     let last = -1;
     const report = () => {
-      const { strip, content, measure } = parts();
-      const height = Math.ceil(heightOf(strip) + (measure ? heightOf(measure) : heightOf(content)));
+      const { strip, line, content, measure } = parts();
+      const height = Math.ceil(heightOf(strip) + heightOf(line) + (measure ? heightOf(measure) : heightOf(content)));
       if (height === last) return;
       last = height;
       told.current?.(height);
@@ -336,8 +338,8 @@ export function useIntrinsicHeight(rootRef: { readonly current: HTMLElement | nu
     const observer = new ResizeObserver(report);
     const watch = () => {
       observer.disconnect();
-      const { strip, content, measure } = parts();
-      for (const element of [root, strip, content, measure]) if (element) observer.observe(element);
+      const { strip, line, content, measure } = parts();
+      for (const element of [root, strip, line, content, measure]) if (element) observer.observe(element);
     };
     watch();
     // The bar comes and goes with the face's own children; a page that
@@ -462,7 +464,8 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
 
 /**
  * THE ONE APP BAR (FR-131), as every face of the embed draws it: the app's
- * mark and name — the heading, the way home — its places as tabs, then
+ * mark and name — the heading, the way home — the switch between the scene
+ * and the pages (FR-137), the place you are on (FR-138), then
  * Find (the face under the bar puts its own box there), the standing and
  * the person, whose menu holds the seats, the host's own actions and, for
  * the seat that keeps the app, the ways into it.
@@ -470,6 +473,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
 export function FrameBar({
   name,
   heading,
+  faces,
   places,
   current,
   home,
@@ -481,6 +485,8 @@ export function FrameBar({
 }: {
   readonly name: string;
   readonly heading: 1 | 2 | 3 | 4 | 5 | 6 | false;
+  /** The switch between the scene and the pages (FR-137); none where only the pages are drawn. */
+  readonly faces?: BarFaces | undefined;
   readonly places: readonly BarPlace[];
   readonly current: string | null;
   readonly home: { readonly href?: string | undefined; readonly go: () => void; readonly current: boolean };
@@ -499,6 +505,7 @@ export function FrameBar({
       name={name}
       description={brand?.subtitle}
       heading={heading}
+      faces={faces}
       home={home}
       places={places}
       current={current}

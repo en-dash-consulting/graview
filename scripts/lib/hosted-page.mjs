@@ -65,9 +65,23 @@ export const FACE_DOORS = {
  * searched the string could be talked past), about 3.9 KB the page needs
  * before it draws the bar's logo: 579 107 bytes (565.5 KB). The claim is
  * that figure with about 1.5 KB of headroom: 567 KB, which leaves Cloud's
- * shell its ~25 KB under its 595 with 3 to spare.
+ * shell its ~25 KB under its 595 with 3 to spare. Reading a document's old
+ * key names (FR-134) took it to 579 936 bytes (566.3 KB).
+ *
+ * Then the scene and the pages became two things on the bar, and the places
+ * left it (FR-137, FR-138): measured at 583 543 bytes (569.9 KB), 3 607
+ * more. What costs what, minified: the bar itself 2.4 KB — the switch (two
+ * buttons, their two marks), the place control and the list it opens (the
+ * home, the Lists and the Pictures, each with its mark, grouped and
+ * labeled), the phone's place line, and their rules (4.4 KB of CSS where
+ * 3.5 KB were), less the tabs' measuring and "More" they replace; the embed
+ * 0.8 KB — opening on the home view at a desk (FR-136), the switch's two
+ * faces, and the place line in the frame's own height; the scene's name
+ * on the switch and its old spelling read as the new 0.1 KB. The claim
+ * rises by that and no more: 570.5 KB, which leaves Cloud's shell 24.5 KB
+ * under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 567 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 570.5 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -138,9 +152,13 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * notice (1.7 KB up front) took while it was built. A brand's mark read
  * element by element as the browser reads it (the review after 0.1.15)
  * took it to 534 306 bytes (521.8 KB). The claim is that figure with about
- * 1 KB of headroom: 523 KB.
+ * 1 KB of headroom: 523 KB. Reading old key names (FR-134) took it to
+ * 535 157 bytes (522.6 KB). The switch and the place list (FR-137, FR-138)
+ * and opening on the home view (FR-136) took it to 538 735 bytes
+ * (526.1 KB), 3 578 more, the same bar and embed as the page that compiles
+ * (above); the claim rises by that: 526.5 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 523 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 526.5 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

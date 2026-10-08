@@ -71,10 +71,9 @@ export {
 export type { SeatAnswer, SeatOutcome, SeatTurn } from "./seat.js";
 export { Wordmark } from "./wordmark.js";
 export { AppMark, AppTitle, useFavicon } from "./app-title.js";
-export { AppBar, BarFindContext, barPlaceAt, barPlaces, OVERVIEW_KEY, TOOL, toolStyle, useBarFind } from "./app-bar.js";
-export type { BarFind, BarGo, BarPlace } from "./app-bar.js";
+export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, HOME_KEY, HOME_PATH, TOOL, toolStyle, useBarFind } from "./app-bar.js";
+export type { BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup } from "./app-bar.js";
 export { Places } from "./places.js";
-export { HomeLanding } from "./home-landing.js";
 export { FindBox } from "./find.js";
 export { ShowInstallation } from "./installation.js";
 export { Seats } from "./seats.js";

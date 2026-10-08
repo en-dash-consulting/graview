@@ -19,7 +19,9 @@ import type { EmbedFace, FrameOptions } from "./frame.js";
  *                                              place: the scene still, tidied to the
  *                                              overview's address on arrival
  *   <base>                                     the routed face's home — or, on arrival
- *                                              with no entry the router wrote, the host's face
+ *                                              with no entry the router wrote, the home
+ *                                              when the app has a home view (FR-136),
+ *                                              else the host's face
  *
  * Moving between the overview and a page is a step like any other: the bar
  * pushes the address of the place it goes to, and Back undoes it.
@@ -50,6 +52,17 @@ export function faceAtAddress(options: Pick<FrameOptions, "routing" | "basePath"
   const asked = options.face ?? (options.stop && fromUrl(options.stop).overview ? "graview" : "scene");
   if (options.routing !== "address" || typeof window === "undefined") return asked;
   return faceNamed(options.basePath) ?? asked;
+}
+
+/**
+ * WHETHER THE ADDRESS IS THE BARE HOME, NAMING NO FACE (FR-136): under
+ * address routing, the app's own address on arrival with no fragment and
+ * no entry the router wrote. An app with a home view opens on it there,
+ * whatever face the host would otherwise draw.
+ */
+export function atTheBareHome(options: Pick<FrameOptions, "routing" | "basePath">): boolean {
+  if (options.routing !== "address" || typeof window === "undefined") return false;
+  return pathWithin(window.location.pathname, options.basePath) === "/" && faceNamed(options.basePath) === null;
 }
 
 /** The stop the address holds for the scene on arrival, if it holds one: on the overview's address, or the home's. */

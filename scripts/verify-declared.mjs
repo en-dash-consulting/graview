@@ -11,9 +11,9 @@
  * every-lens.gdd.json`), three kinds ordered, one hidden, a lens named
  * first. No view is registered by the host. Then it asks the browser:
  *
- *   on the Graview face, every declared lens is a pill by its title and a
- *   drive-in on its kind's district, and pressing a pill draws the lens;
- *   the scene opens on the place `pages.first` names;
+ *   every declared lens is a picture, by its title, in the list the bar's
+ *   place control opens (FR-138), and a drive-in on its kind's district on
+ *   the Graview face; the scene opens on the place `pages.first` names;
  *   on the Pages face, every lens has its page at /places/<as>, the face
  *   opens on the first place, the home's kinds follow `pages.order` less
  *   the hidden kind, and the hidden kind is still reached by link, by the
@@ -124,7 +124,8 @@ async function buildHost() {
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
           seed: proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : ${JSON.stringify(SEED)},
-          face: asked.get("face") ?? "scene",
+          /* "none": the app's to choose — its home view, else the scene (FR-136). */
+          ...(asked.get("face") === "none" ? {} : { face: asked.get("face") ?? "scene" }),
           ...(asked.get("path") ? { path: asked.get("path") } : {}),
           principal: proposal || org
             ? { kind: "human", id: "u:owner", roles: ["owner"] }
@@ -180,24 +181,26 @@ try {
     await page.waitForTimeout(1200);
     return page;
   };
-  /** The pictures the app bar names (FR-131): its tabs, in the row or under "More". */
-  const placesOnTheBar = (page) =>
-    page.evaluate(() => [...document.querySelectorAll('[data-testid="app-places"] [data-testid^="app-place-place:"]')].map((tab) => tab.textContent?.trim() ?? ""));
-  /** The scene sent to a place's stop, the way a link to it does: the bar's tab for a picture is its page (FR-132). */
+  /** The pictures in the list the bar's place control opens, on Pages (FR-138). */
+  const picturesInThePlaceList = (page) =>
+    page.evaluate(() => [...document.querySelectorAll('[data-testid="app-places"] [data-place-group="pictures"] [data-testid^="app-place-place:"]')].map((entry) => entry.textContent?.trim() ?? ""));
+  /** The scene sent to a place's stop, the way a link to it does: a picture in the place list is its page (FR-138). */
   const toPlace = async (page, as) => {
     await page.evaluate((stop) => window.__handle.setStop(stop), `#view=${as}`);
     await page.waitForTimeout(1200);
   };
 
-  /* ---- FR-79 on the Graview face: every lens a pill, and a drive-in from altitude */
+  /* ---- FR-79: every lens a picture in the place list, and a drive-in from altitude on the Graview face */
   {
+    const listed = await open("face=pages");
+    const pictures = await picturesInThePlaceList(listed);
+    await listed.close();
     const page = await open("face=graview");
-    const pills = await placesOnTheBar(page);
     const marquees = await page.evaluate(() =>
       [...document.querySelectorAll('[data-testid^="drive-in-"] .graview-drive-in-thumb-press')].map((press) => press.getAttribute("aria-label") ?? ""),
     );
     await page.close();
-    report.checks.everyDeclaredLensIsATabOnTheBar = { titles: TITLES, tabs: pills, ok: TITLES.every((title) => pills.includes(title)) };
+    report.checks.everyDeclaredLensIsAPictureInThePlaceList = { titles: TITLES, pictures, ok: TITLES.every((title) => pictures.includes(title)) };
     report.checks.everyDeclaredLensIsADriveInFromAltitude = {
       marquees,
       ok: TITLES.every((title) => marquees.some((label) => label.endsWith(`: ${title}`) || label.includes(title))),
@@ -207,8 +210,8 @@ try {
   /* ---- FR-80 on the scene: it opens on the place pages.first names; FR-79: each place's stop draws its lens */
   {
     const page = await open("face=scene");
-    const opened = await page.evaluate(() => ({ stop: window.__handle.where().stop, overview: document.querySelector('[data-testid="app-place-overview"]')?.getAttribute("aria-current") === "page" }));
-    report.checks.theSceneOpensOnTheFirstPlace = { ...opened, ok: opened.stop.includes("view=the-floor") && opened.overview };
+    const opened = await page.evaluate(() => ({ stop: window.__handle.where().stop, scenePressed: document.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed") === "true" }));
+    report.checks.theSceneOpensOnTheFirstPlace = { ...opened, ok: opened.stop.includes("view=the-floor") && opened.scenePressed };
     const drawn = {};
     for (const title of TITLES) {
       const as = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -318,11 +321,16 @@ try {
         pages[at] = await drawn(page, '[data-testid="home-view"]');
         await shoot(page, `front-pages-${size.width}-${scheme}`);
         await page.close();
-        // The Graview face at ground level, and from altitude: the home view is the landing over the picture.
-        for (const [face, into] of [["scene", scene], ["graview", city]]) {
+        // Named no face, the app opens on it — at a desk as on a phone (FR-136).
+        page = await open("doc=lifelogics&face=none", size, scheme);
+        await page.waitForSelector('[data-testid="home-view"] .graview-spec-headline', { timeout: 15_000 }).catch(() => {});
+        city[at] = { face: await page.evaluate(() => document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed")), ...(await drawn(page, '[data-testid="home-view"]')) };
+        await shoot(page, `front-opening-${size.width}-${scheme}`);
+        await page.close();
+        // The Graview face at ground level, and from altitude: nothing floats over the picture; the home is a press on Pages away.
+        for (const face of ["scene", "graview"]) {
           page = await open(`doc=lifelogics&face=${face}`, size, scheme);
-          await page.waitForSelector('[data-testid="home-landing"] .graview-spec-headline', { timeout: 15_000 }).catch(() => {});
-          into[at] = await drawn(page, '[data-testid="home-landing"]');
+          scene[`${at} ${face}`] = await page.evaluate(() => ({ over: document.querySelector('[data-testid="home-view"], [data-testid="home-landing"]') !== null }));
           await shoot(page, `front-${face}-${size.width}-${scheme}`);
           await page.close();
         }
@@ -330,31 +338,22 @@ try {
     }
     // Its first headline is said under the app's name on the bar, which is the page's h1 (FR-131).
     report.checks.theFrontPageMadeOfDataIsTheHomeOnThePagesFace = { pages, ok: Object.values(pages).every((seen) => frontOk(seen, "h2")) };
-    report.checks.theFrontPageMadeOfDataIsTheLandingOnTheGraviewFace = {
+    report.checks.theFrontPageMadeOfDataIsWhereTheAppOpensAndNothingFloatsOverTheScene = {
+      opening: city,
       scene,
-      city,
-      ok: [...Object.values(scene), ...Object.values(city)].every((seen) => frontOk(seen, "h2")),
+      ok: Object.values(city).every((seen) => seen.face === "pages" && frontOk(seen, "h2")) && Object.values(scene).every((seen) => !seen.over),
     };
   }
 
   {
-    // A listed record is a link: on the routed face to its page; on the picture, to the record itself.
-    let page = await open("doc=lifelogics&face=pages", SIZES[0]);
+    // A listed record on the front page is a link to its page.
+    const page = await open("doc=lifelogics&face=pages", SIZES[0]);
     await page.waitForSelector('[data-graview-listed="pkg-start"] .graview-spec-item-link', { timeout: 15_000 });
     await page.click('[data-graview-listed="pkg-start"] .graview-spec-item-link');
     await page.waitForTimeout(500);
     const followed = await page.evaluate(() => document.querySelector("[data-graview-page-title]")?.textContent?.trim() ?? null);
     await page.close();
-    page = await open("doc=lifelogics&face=scene", SIZES[0]);
-    await page.waitForSelector('[data-testid="home-landing"] [data-graview-listed="pkg-start"] .graview-spec-item-link', { timeout: 15_000 });
-    await page.click('[data-testid="home-landing"] [data-graview-listed="pkg-start"] .graview-spec-item-link');
-    await page.waitForTimeout(900);
-    const picked = await page.evaluate(() => ({
-      selected: [...document.querySelectorAll("[data-graview-view][data-graview-selected]")].map((view) => view.getAttribute("data-graview-view")),
-      landing: document.querySelector('[data-testid="home-landing"]') !== null,
-    }));
-    await page.close();
-    report.checks.aListedRecordIsALinkOnBothFaces = { followed, picked, ok: followed === "The small start" && !picked.landing && picked.selected.includes("pkg-start") };
+    report.checks.aListedRecordOnTheFrontPageIsALinkToItsPage = { followed, ok: followed === "The small start" };
   }
 
   {
