@@ -5,6 +5,7 @@ import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
 import type { GuestViewInput } from "./session.js";
 import type { GuestBrand } from "./theme.js";
+import { untilItArrives, workerChunk } from "./arrive.js";
 import type { WorkerView, WorkerViewCode, WorkerViewFailure, WorkerViewLimits } from "./view.js";
 
 /** A worker view as an app registers it: its manifest, its code, and how far it may go. */
@@ -64,9 +65,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
   useEffect(() => {
     const element = holder.current;
     if (!element) return;
-    let gone = false;
-    void import("./worker.js").then(({ mountWorkerView }) => {
-      if (gone) return;
+    const stop = untilItArrives(workerChunk, ({ mountWorkerView }) => {
       mounted.current = mountWorkerView(element, {
         manifest: definition.manifest,
         worker: definition.worker,
@@ -84,7 +83,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
       });
     });
     return () => {
-      gone = true;
+      stop();
       mounted.current?.dispose();
       mounted.current = null;
     };

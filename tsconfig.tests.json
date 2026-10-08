@@ -19,6 +19,7 @@
       "@graview/core/figures": ["./packages/core/src/figures.ts"],
       "@graview/core/compiled": ["./packages/core/src/compiled.ts"],
       "@graview/core/describe": ["./packages/core/src/describe.ts"],
+      "@graview/core/retry": ["./packages/core/src/retry.ts"],
       "@graview/core/document": ["./packages/core/src/document/index.ts"],
       "@graview/core/conformance": ["./packages/core/src/conformance/index.ts"],
       "@graview/core": ["./packages/core/src/index.ts"],

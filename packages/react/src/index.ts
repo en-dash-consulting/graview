@@ -74,4 +74,6 @@ export type { MotionStore } from "./motion.js";
 export { landingIn, useTheKeyboardLandsSomewhere } from "./keyboard.js";
 export { inTopLayer, placePane, POPOVER_STYLE, POPOVERS, raiseOverPopovers, usePopover, useTopLayer } from "./popover.js";
 export type { PlaceOptions, Popover, PopoverAnchor, PopoverName, PopoverOptions } from "./popover.js";
+export { lazyModule, retryLazyParts } from "./lazy-part.js";
+export type { LazyModule, LazyPartOptions } from "./lazy-part.js";
 export { useAffordances, useApplyAffordance } from "./affordances.js";

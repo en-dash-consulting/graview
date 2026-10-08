@@ -30,6 +30,19 @@ import {
   type DeriveOptions,
 } from "../derive.js";
 
+/*
+ * The describer, fetched when a place is first asked about, and asked for
+ * again on the next ask when it did not arrive (FR-139). A literal
+ * specifier and nothing more: tools runs in workerd, which refuses an
+ * `import()` whose specifier is computed at run time.
+ */
+let describing: Promise<typeof import("@graview/core/describe")> | undefined;
+const describer = () =>
+  (describing ??= import("@graview/core/describe").catch((error: unknown) => {
+    describing = undefined;
+    throw error;
+  }));
+
 /**
  * WHAT A TOOL DOES, in the words every MCP directory asks for (FR-10).
  *
@@ -663,7 +676,7 @@ export function createToolRuntime<S extends AnySchema>(
            * with the seat: a page whose assistant is never asked carries
            * none of it (FR-112's coverage made it a few kB).
            */
-          const { describePlace } = await import("@graview/core/describe");
+          const { describePlace } = await describer();
           // Described for this seat: what it may see, and nothing else (FR-55).
           const said = describePlace(store, principal, String(args["place"] ?? ""), { app, width });
           if (!said.ok) return { ok: false, error: `${said.error} The places are: ${said.places.join(", ")}.` };

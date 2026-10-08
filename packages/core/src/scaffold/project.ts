@@ -461,6 +461,7 @@ export default defineConfig({
       "@graview/core/figures": framework("core/src/figures.ts"),
       "@graview/core/compiled": framework("core/src/compiled.ts"),
       "@graview/core/describe": framework("core/src/describe.ts"),
+      "@graview/core/retry": framework("core/src/retry.ts"),
       "@graview/core/document": framework("core/src/document/index.ts"),
       "@graview/core/conformance": framework("core/src/conformance/index.ts"),
       "@graview/core/cli": framework("core/src/cli/index.ts"),
