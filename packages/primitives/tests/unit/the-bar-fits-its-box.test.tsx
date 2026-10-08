@@ -102,8 +102,9 @@ describe("Find on the bar", () => {
       // The box is the face's, in the bar's place for it, and the keyboard reaches it as it is.
       expect(at.querySelector('[data-testid="app-find"] input[type="search"]')).not.toBeNull();
       const css = sheet(at);
-      expect(css).toMatch(/\.graview-bar-find:focus-within/);
-      expect(css).toMatch(/\.graview-bar-find:has\(input:not\(:placeholder-shown\)\)/);
+      // Wide while the keyboard is in it or it holds words; the shortcut said only until then.
+      expect(css).toContain(".graview-bar-find:is(:focus-within,:has(input:not(:placeholder-shown))){flex-basis:16rem");
+      expect(css).toContain(":is(:focus-within,:has(input:not(:placeholder-shown)))>.graview-bar-find-keys");
       act(() => root.unmount());
       host?.remove();
     }
@@ -121,14 +122,15 @@ describe("the switch as its marks alone", () => {
     expect(buttons.map((button) => button.textContent)).toEqual(["Scene", "Pages"]);
     expect(buttons.map((button) => button.getAttribute("title"))).toEqual(["Scene", "Pages"]);
     expect(group.getAttribute("data-switch-drawn")).toBe("icons");
-    expect(sheet(at)).toMatch(/\[data-switch=icons\],\[data-switch-drawn=icons\]\) \.graview-bar-face span\{[^}]*clip/);
+    expect(sheet(at)).toMatch(/\[data-switch-drawn=icons\] \.graview-bar-face span\{[^}]*clip/);
     act(() => root.unmount());
   });
 
   it("says its words by default, and goes to its marks on its own when they do not fit or the bar is a phone's", () => {
     const { root, at } = drawn(<AppBar brand={undefined} name="Seedbed" home={{ go: () => undefined, current: false }} faces={faces} places={places} current="home" reach={{}} tools={null} find={false} />);
     expect(at.querySelector('[data-testid="app-faces"]')?.getAttribute("data-switch")).toBe("words");
-    expect(sheet(at)).toMatch(/@container graview-bar \(max-width: ?\d+px\)\{[^@]*\.graview-bar-face span\{[^}]*clip/);
+    // What is drawn is weighed in a browser (`roomForWords`; jsdom lays nothing out, so its bar is a phone's, drawn as marks).
+    expect(at.querySelector('[data-testid="app-faces"]')?.getAttribute("data-switch-drawn")).toBe("icons");
     act(() => root.unmount());
   });
 });

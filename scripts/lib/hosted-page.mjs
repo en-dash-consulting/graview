@@ -82,9 +82,16 @@ export const FACE_DOORS = {
  * under its 595. The review after 0.1.16 (a long word cut on the switch,
  * the narrow embed's way back to the pages) paid for itself by saying an
  * address within the app one way in the embed where it said it four:
- * 583 814 bytes (570.1 KB).
+ * 583 814 bytes (570.1 KB). The bar fitting its box (it lays itself out
+ * by its own width: Find a small box that says its shortcut, the switch's
+ * marks alone when its words do not fit, the name broken only between
+ * words, a phone's Find list the bar's width) took it from 583 896 to
+ * 586 278 bytes (572.5 KB), 2 382 more: the bar's rules 1.0 KB, weighing
+ * whether the switch's words fit 0.9 KB, the shortcut and the slot 0.5 KB.
+ * The claim rises by that: 572.8 KB, which leaves Cloud's shell 22.2 KB
+ * under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 570.5 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 572.8 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -160,9 +167,11 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * and opening on the home view (FR-136) took it to 538 735 bytes
  * (526.1 KB), 3 578 more, the same bar and embed as the page that compiles
  * (above); the claim rises by that: 526.5 KB. The review after 0.1.16
- * left it at 539 006 bytes (526.4 KB), as above.
+ * left it at 539 006 bytes (526.4 KB), as above. The bar fitting its box
+ * took it from 539 090 to 541 472 bytes (528.8 KB), the same 2 382 as the
+ * page that compiles (above); the claim rises by that: 528.8 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 526.5 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 528.8 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

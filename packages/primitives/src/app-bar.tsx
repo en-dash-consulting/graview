@@ -160,13 +160,13 @@ const BAR_CSS = `
 .graview-bar-app::after{content:"";flex:0 100000 auto;width:2px;min-width:0}
 .graview-bar-name{margin:0;display:flex;font-family:var(--graview-font-display,var(--graview-font-body,system-ui));font-size:.9375rem;font-weight:600;line-height:1.25}
 .graview-bar-home{gap:8px;min-width:auto;min-height:30px;padding:0;letter-spacing:-.005em}
-.graview-bar-app-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal;word-break:normal;hyphens:manual}
+.graview-bar-app-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal;word-break:normal}
 .graview-bar-faces{display:inline-flex;flex:0 0 auto;box-sizing:border-box;height:30px;margin:0;padding:2px;gap:2px;border:1px solid var(--graview-edge);border-radius:8px}
 .graview-bar-face{gap:6px;padding:0 10px;border-radius:6px;font-size:.8125rem;white-space:nowrap;color:var(--graview-ink-muted)}
 .graview-bar-face span{min-width:0;max-width:11em;overflow:hidden;text-overflow:ellipsis}
 .graview-bar-face[aria-pressed=true]{color:var(--graview-ink);font-weight:600;background:color-mix(in srgb,var(--graview-accent) 16%,transparent)}
-.graview-bar-faces:is([data-switch=icons],[data-switch-drawn=icons]) .graview-bar-face{padding:0 8px}
-.graview-bar-faces:is([data-switch=icons],[data-switch-drawn=icons]) .graview-bar-face span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[data-switch-drawn=icons] .graview-bar-face{padding:0 8px}
+[data-switch-drawn=icons] .graview-bar-face span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .graview-bar-mid{display:flex;flex:1 100 0;min-width:0}
 .graview-bar-mid[data-place]{min-width:9em;flex-basis:auto}
 .graview-bar-place-at{position:relative;display:inline-flex;min-width:0;max-width:100%}
@@ -185,28 +185,22 @@ const BAR_CSS = `
 .graview-bar-tools{display:contents}
 .graview-bar-tools>*{margin-left:-8px}
 .graview-bar-tools>:is(.graview-bar-find,.graview-bar-find-open){margin-left:auto}
-.graview-bar-find{position:relative;display:flex;box-sizing:border-box;min-width:6.5rem;flex:0 600 9rem;container:graview-bar-find/inline-size;--graview-bar-find-end:3.25em;transition:flex-basis 140ms ease-out}
-.graview-bar-find-slot{display:flex;flex:1 1 auto;min-width:0}
-.graview-bar-find-keys{position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;font:inherit;font-size:.75rem;line-height:1;color:var(--graview-ink-faint,var(--graview-ink-muted));white-space:nowrap}
-.graview-bar-find:focus-within,.graview-bar-find:has(input:not(:placeholder-shown)){flex-basis:16rem;min-width:9rem;--graview-bar-find-end:10px}
-.graview-bar-find:focus-within .graview-bar-find-keys,.graview-bar-find:has(input:not(:placeholder-shown)) .graview-bar-find-keys{display:none}
-.graview-bar-find-open{display:none}
+.graview-bar-find{position:relative;display:flex;min-width:7.5rem;flex:0 600 9rem;--graview-bar-find-end:3.25em}
+.graview-bar-find-slot{display:flex;flex:1;min-width:0}
+.graview-bar-find-keys{position:absolute;right:10px;line-height:30px;pointer-events:none;font-size:.75rem;color:var(--graview-ink-faint)}
+.graview-bar-find:is(:focus-within,:has(input:not(:placeholder-shown))){flex-basis:16rem;--graview-bar-find-end:10px}
+:is(:focus-within,:has(input:not(:placeholder-shown)))>.graview-bar-find-keys,.graview-bar-find-open{display:none}
 .graview-bar-line{display:flex;flex:0 0 auto;padding:6px 8px;background:var(--graview-ground);border-bottom:1px solid var(--graview-edge);font-family:var(--graview-font-body,system-ui)}
 .graview-bar-line .graview-bar-place{height:auto;min-height:32px}
 .graview-bar-line .graview-bar-place-words{white-space:normal}
-@media (hover:none) and (pointer:coarse){.graview-bar-find{--graview-bar-find-end:10px}.graview-bar-find-keys{display:none}}
-@media (prefers-reduced-motion:reduce){.graview-bar-find{transition:none}}
-@container graview-bar-find (max-width: 7.5rem){.graview-bar-find-slot{--graview-bar-find-end:10px}.graview-bar-find-keys{display:none}}
+@media (pointer:coarse){.graview-bar-find-keys{display:none}}
 @container graview-bar (max-width: ${BAR_PHONE - 1}px){
-.graview-bar-face{padding:0 8px}
-.graview-bar-face span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .graview-bar-row{gap:10px;padding:0 12px}
 .graview-bar-app{max-width:none;flex:1 1 auto}
 .graview-bar-mid,.graview-bar-find{display:none}
 .graview-bar-find-open{display:inline-flex}
 .graview-bar[data-finding] :is(.graview-bar-app,.graview-bar-faces,.graview-bar-find-open){display:none}
-.graview-bar[data-finding] .graview-bar-find{display:flex;flex:1 1 auto;min-width:0;--graview-bar-find-end:10px}
-.graview-bar[data-finding] .graview-bar-find-keys{display:none}
+.graview-bar[data-finding] .graview-bar-find{display:flex;flex:1 1 auto;min-width:0}
 }`;
 
 /** A tool's own box: one size, square, its name in words for whoever cannot see the mark. */
@@ -346,7 +340,8 @@ export function AppBar({
   const placeControl = onPages && places.length > 0 ? <PlaceControl places={places} current={current} reach={reach} /> : null;
   // What the row holds changed — the name, the place, the face — so the words may fit now, or no longer.
   useLayoutEffect(weigh, [weigh, name, current, onPages, compact, switchForm, places.length]);
-  const drawn: BarSwitch = switchForm === "icons" || !roomy ? "icons" : "words";
+  // The marks alone on a phone's bar, when asked, or when the words do not fit.
+  const drawn: BarSwitch = switchForm === "icons" || !roomy || compact ? "icons" : "words";
   return (
     <>
       <header
@@ -470,27 +465,12 @@ function FaceSwitch({ faces, form, drawn }: { readonly faces: BarFaces; readonly
   );
 }
 
-/** A text's width on one line in its own face, for a row that has wrapped or cut it. */
-let ruler: CanvasRenderingContext2D | null | undefined;
-function lineWidth(element: Element): number {
-  if (ruler === undefined) {
-    try {
-      ruler = document.createElement("canvas").getContext("2d");
-    } catch {
-      ruler = null;
-    }
-  }
-  if (!ruler) return element.getBoundingClientRect().width;
-  ruler.font = getComputedStyle(element).font;
-  return ruler.measureText(element.textContent ?? "").width;
-}
-
 /**
  * WHETHER THE SWITCH'S WORDS FIT (the switch left to say its words where
  * there is room). The row is weighed as it is drawn: the room the middle
  * has past what the place wants (its words, up to 14em; none on the
- * scene), less what Find has given up and what the app's name has given
- * up by wrapping. The words fit when that room holds them — the words
+ * scene), less what Find has given up; none when the app's name has
+ * wrapped. The words fit when that room holds them — the words
  * drawn already, or their width to come when the marks are drawn alone —
  * so the switch never flips back and forth at one width. Not weighed while
  * Find is in use (it is drawn wide then), on a phone's bar (the marks
@@ -514,8 +494,9 @@ function roomForWords(header: HTMLElement): boolean | null {
     const basis = Number.parseFloat(getComputedStyle(find).flexBasis);
     if (Number.isFinite(basis)) spare -= Math.max(0, basis - find.getBoundingClientRect().width);
   }
+  // The app's name on two lines has given its room already: no room for the words.
   const name = header.querySelector(".graview-bar-app-name");
-  if (name) spare -= Math.max(0, lineWidth(name) - name.getBoundingClientRect().width - 1);
+  if (name && name.getBoundingClientRect().height > Number.parseFloat(getComputedStyle(name).lineHeight) * 1.5) return false;
   return faces.getAttribute("data-switch-drawn") === "icons" ? spare >= words + 2 : spare >= -1;
 }
 

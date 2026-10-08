@@ -37,11 +37,12 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
    place — Find, the standing, the person. Name no `face` and an
    app with a home view opens on it, else the scene; `"scene"`,
    `"graview"`, `"pages"` (on `path`); `"picture"` is ONE lens alone
-   (`stop: "#view=the-week"`), no bar. `bar: false` drops the bar.
+   (`stop: "#view=the-week"`), no bar. `bar: false` drops the bar;
+   `switch: "icons"` keeps the switch to its marks.
 3. **Name it.** Two embeds on one page carry the same landmarks — the
    relation key, the inspector, the pages' navigation — and a landmark must
    be unique by role and name. `label` names every one of them after the
-   embed; leave it off and two embeds are one confusing region twice.
+   embed.
 4. **Let the host decide the look.** `scheme: "auto"` follows the host's
    `data-theme` stamp; `setScheme` follows a host toggle; `fonts: false`
    when the host already loads them; `brand` / `setBrand` to dress it.
