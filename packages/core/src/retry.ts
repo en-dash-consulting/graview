@@ -87,15 +87,8 @@ function importAgain<M>(url: string): Promise<M> {
  */
 export function failedUrl(error: unknown, own: string = import.meta.url): string | undefined {
   const message = error instanceof Error ? error.message : typeof error === "string" ? error : "";
-  const found = /^(?:Failed to fetch dynamically imported module|error loading dynamically imported module): ((?:https?|file):\/\/[^\s"'<>]+)/.exec(message)?.[1];
-  if (found === undefined) return undefined;
-  const url = found.replace(/[.,;:)\]]+$/, "");
-  try {
-    const named = new URL(url);
-    const home = new URL(own);
-    if (named.protocol !== home.protocol || named.host !== home.host) return undefined;
-    return named.href;
-  } catch {
-    return undefined;
-  }
+  const found = /^(?:Failed to fetch|error loading) dynamically imported module: ([a-z]+:\/\/[^\s"'<>]+)/.exec(message)?.[1]?.replace(/[.,;:)\]]+$/, "");
+  // Its scheme and authority, character for character: everything before the path's first slash.
+  const origin = (url: string) => url.split("/", 3).join("/");
+  return found && origin(found) === origin(own) ? found : undefined;
 }

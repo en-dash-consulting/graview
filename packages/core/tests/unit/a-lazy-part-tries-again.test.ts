@@ -74,6 +74,7 @@ describe("the retry imports only what the bundle asked for", () => {
     const own = "https://app.test/assets/retry-1.js";
     expect(failedUrl(new TypeError("Failed to fetch dynamically imported module: https://evil.test/x.js"), own)).toBeUndefined();
     expect(failedUrl(new TypeError("Failed to fetch dynamically imported module: https://app.test.evil.test/x.js"), own)).toBeUndefined();
+    expect(failedUrl(new TypeError("Failed to fetch dynamically imported module: https://app.test@evil.test/x.js"), own)).toBeUndefined();
     expect(failedUrl(new TypeError("Failed to fetch dynamically imported module: javascript:alert(1)//https://app.test/x.js"), own)).toBeUndefined();
     expect(failedUrl(new TypeError("Failed to fetch dynamically imported module: https://app.test/assets/menu-2.js"), own)).toBe("https://app.test/assets/menu-2.js");
   });
