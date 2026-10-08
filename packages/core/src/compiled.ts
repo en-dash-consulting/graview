@@ -1,5 +1,4 @@
 import { canonicalize } from "./document/canonical.js";
-import { retryingImport } from "./retrying-import.js";
 import { respellDocument } from "./document/respell.js";
 import { appFrom, type AppFromOptions, type CompiledDocument, type RefusedDocument } from "./document/compiled.js";
 
@@ -41,8 +40,18 @@ export async function appFromOrCompile(handed: { readonly compiled?: unknown; re
   return compileDocumentWithoutCheck(handed.document, options);
 }
 
-/* The compiler, asked for again with a URL of its own when it did not arrive (FR-139). */
-const compiler = retryingImport(() => import("./document/compile.js"));
+/*
+ * The compiler, asked for again on the next call when it did not arrive
+ * (FR-139): a failed fetch is not kept. A literal specifier and nothing
+ * more: this module runs in workerd too, which refuses an `import()` whose
+ * specifier is computed at run time when it loads the script.
+ */
+let compiling: Promise<typeof import("./document/compile.js")> | undefined;
+const compiler = () =>
+  (compiling ??= import("./document/compile.js").catch((error: unknown) => {
+    compiling = undefined;
+    throw error;
+  }));
 
 /*
  * A COMPILED APP IS BUILT ONLY FOR THE DOCUMENT HANDED BESIDE IT. One kept

@@ -1,4 +1,5 @@
-import { declaredLenses, retryingImport, type AnySchema, type DrawnLens, type GraviewApp } from "@graview/core";
+import { retryingImport } from "@graview/core/retry";
+import { declaredLenses, type AnySchema, type DrawnLens, type GraviewApp } from "@graview/core";
 import { lazyModule, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { Suspense } from "react";
 

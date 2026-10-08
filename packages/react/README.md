@@ -20,7 +20,7 @@ and an agent seat are looking at the same thing rather than at three copies of
 it.
 
 A part fetched only when it is first drawn is a `lazyModule` over
-`retryingImport(() => import("./part.js"))` (from `@graview/core`), drawn
+`retryingImport(() => import("./part.js"))` (from `@graview/core/retry`), drawn
 with its `part(draw, { what })`. Until it arrives, its place says so in one
 line with a "Try again" button (`lazy-part-missing`, `lazy-part-retry`)
 rather than throwing; it is asked for again when the browser is back online,

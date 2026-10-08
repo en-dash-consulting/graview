@@ -1,4 +1,5 @@
-import { labelOf, layer, retryingImport, type AnySchema } from "@graview/core";
+import { labelOf, layer, type AnySchema } from "@graview/core";
+import { retryingImport } from "@graview/core/retry";
 import { aggregateId, kindCardId } from "@graview/layout/view";
 import { lazyModule, useGraviewIfAny } from "@graview/react/provider";
 import { Suspense, useEffect, useRef, useState, type ComponentType } from "react";

@@ -1,4 +1,4 @@
-import { DECISION_BRIDGE_PATH, retryingImport, type AnySchema } from "@graview/core";
+import { DECISION_BRIDGE_PATH, type AnySchema } from "@graview/core";
 import { graphResponder, llmResponder, type ChatReply, type Responder } from "./conversation.js";
 import { completionDecide } from "./decide.js";
 import type { Completion } from "./intelligence.js";
@@ -10,10 +10,6 @@ import { jevDecide, type Decide } from "./providers/jev.js";
  * rung does not carry the chat that answers on it (FR-57).
  */
 import { RUNGS, rungHonesty, type IntelligenceConfig } from "./rungs.js";
-
-/* The in-browser model's loader, from its CDN when first warmed, and asked for again with a URL of its own when it did not arrive (FR-139). */
-const WEBLLM_URL = "https://esm.run/@mlc-ai/web-llm";
-const webllmChunk = retryingImport((): Promise<unknown> => import(/* @vite-ignore */ WEBLLM_URL));
 export { DEFAULT_INTELLIGENCE, loadIntelligenceConfig, RUNGS, rungFor, rungHonesty, saveIntelligenceConfig } from "./rungs.js";
 export type { IntelligenceConfig, IntelligenceSource } from "./rungs.js";
 
@@ -169,7 +165,8 @@ export function localCompletion(
     if (!(globalThis.navigator as { gpu?: unknown } | undefined)?.gpu) {
       throw new Error("this browser has no WebGPU, which the local model needs");
     }
-    const webllm = (await webllmChunk()) as {
+    const url = "https://esm.run/@mlc-ai/web-llm";
+    const webllm = (await import(/* @vite-ignore */ url)) as {
       CreateMLCEngine(model: string, options: { initProgressCallback?: (p: { progress: number; text: string }) => void }): Promise<EngineLike>;
     };
     return webllm.CreateMLCEngine(options.model ?? WEBLLM_DEFAULT_MODEL, {

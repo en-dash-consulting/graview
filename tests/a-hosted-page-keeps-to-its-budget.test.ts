@@ -32,7 +32,7 @@ describe("a hosted page", () => {
     for (const name of ["react-dom", "zod", "@graview/core", "@graview/embed", "@graview/ship"]) expect(Object.keys(measured.upFront.packages)).toContain(name);
   });
 
-  it("carries at most 576 KB minified up front: 575.7 KB with the bar that fits its box and a lazy part that tries again after it failed to arrive, so Cloud's shell keeps room for its own under its 595", () => {
+  it("carries at most 576 KB minified up front: 575.8 KB with the bar that fits its box and a lazy part that tries again after it failed to arrive, so Cloud's shell keeps room for its own under its 595", () => {
     expect(measured.upFront.minified, `${Math.round(measured.upFront.minified / 1024)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
     expect(measured.over).toBe(false);
   });
@@ -59,7 +59,7 @@ describe("a hosted page", () => {
     // 865 KB since a brand's mark is read element by element before it is drawn (the review after 0.1.15): the scene face measured 883_431 B.
     // 867 KB since the switch and the place list (FR-137, FR-138) and the home view first (FR-136): the scene face measured 886_469 B, 2_209 more than before them.
     // 870 KB since the bar fits its box: the scene face measured 889_834 B, 2_612 more than before it (887_222).
-    // 873 KB since a lazy part tries again after it failed to arrive (FR-139), over the bar that fits its box: the scene face measured 893_284 B, 3_450 more.
+    // 873 KB since a lazy part tries again after it failed to arrive (FR-139), over the bar that fits its box: the scene face measured 893_470 B, 3_636 more.
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(873 * 1024);
   });
 

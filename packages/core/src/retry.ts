@@ -29,6 +29,11 @@
  * Only ever wrap a bare `import()`: the retry imports the URL itself, so a
  * loader that picked or combined what it imported would get the module
  * back instead of what it made of it. Combine wrapped loaders instead.
+ *
+ * FOR A PAGE ONLY: `@graview/core/retry`, never the main entry. The retry is
+ * an `import()` of a URL computed at run time, and workerd — where a host
+ * runs core, tools and ship — refuses a script with one in it, reached or
+ * not. Nothing a server imports may import this.
  */
 export function retryingImport<M>(load: () => Promise<M>): () => Promise<M> {
   let here: M | undefined;

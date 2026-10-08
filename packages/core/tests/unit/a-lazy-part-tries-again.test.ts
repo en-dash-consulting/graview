@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it, vi } from "vitest";
-import { failedUrl, retryingImport } from "../../src/retrying-import.js";
+import { failedUrl, retryingImport } from "../../src/retry.js";
 
 /**
  * A LAZY PART THAT FAILED TO LOAD TRIES AGAIN (FR-139).

@@ -138,7 +138,7 @@ pinned at 1.49.1 on purpose.
   deprecated aliases for a package nobody depends on yet; the changelog
   records the change.
 - **Public API is `src/index.ts` → `exports` in `package.json`**, with the
-  entries listed there (core's `./document`, `./compiled`, `./check`, `./scene`,
+  entries listed there (core's `./document`, `./compiled`, `./retry`, `./check`, `./scene`,
   `./figures`, `./blocks`, `./describe`, `./arrange`, `./conformance`, `./scaffold`,
   `./testing`; layout's `./view`; react's `./provider` and `./drawing`;
   tools' `./frame` and `./edit`; embed's `./pages`;

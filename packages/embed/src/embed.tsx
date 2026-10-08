@@ -1,4 +1,5 @@
-import { addressOf, OVERVIEW_PATH, retryingImport, pagesTitle, pathWithin, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
+import { retryingImport } from "@graview/core/retry";
+import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
 import { EMPTY_VIEW, aggregateId, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
 import { BarFindContext, barPlaceAt, barPlaces, descentTarget, fetchFrameworkViews, frameworkViewDoors, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";

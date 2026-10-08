@@ -8,7 +8,6 @@ import {
   permittedMutations,
   refusalOf,
   resolveModules,
-  retryingImport,
   search,
   sha256Hex,
   type AnyMutationDefinition,
@@ -31,8 +30,18 @@ import {
   type DeriveOptions,
 } from "../derive.js";
 
-/* The describer, fetched when a place is first asked about, and asked for again with a URL of its own when it did not arrive (FR-139). */
-const describer = retryingImport(() => import("@graview/core/describe"));
+/*
+ * The describer, fetched when a place is first asked about, and asked for
+ * again on the next ask when it did not arrive (FR-139). A literal
+ * specifier and nothing more: tools runs in workerd, which refuses an
+ * `import()` whose specifier is computed at run time.
+ */
+let describing: Promise<typeof import("@graview/core/describe")> | undefined;
+const describer = () =>
+  (describing ??= import("@graview/core/describe").catch((error: unknown) => {
+    describing = undefined;
+    throw error;
+  }));
 
 /**
  * WHAT A TOOL DOES, in the words every MCP directory asks for (FR-10).

@@ -1,4 +1,4 @@
-import { retryingImport } from "@graview/core";
+import { retryingImport } from "@graview/core/retry";
 
 /**
  * The host's half of a worker view, fetched when one is first drawn, and

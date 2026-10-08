@@ -1,11 +1,11 @@
 import { arrange } from "@graview/core/arrange";
+import { retryingImport } from "@graview/core/retry";
 import {
   describeNode,
   humanizeField,
   labelOf,
   nounOf,
   readableFields,
-  retryingImport,
   type AnySchema,
   type KindOfSchema,
   type NodeOfSchema,

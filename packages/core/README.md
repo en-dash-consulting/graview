@@ -59,11 +59,12 @@ Everything a Graview app declares, and the checker that verifies it.
   `serializeCompiled(compiled)`, and the page builds the same app with
   `appFrom` or `appFromOrCompile` from `@graview/core/compiled`, which
   carries no compiler (the format is `graview-compiled@1`).
-- **A part that tries again** — `retryingImport(() => import("./part.js"))`
-  is a loader that asks again after the import failed, with a URL of its
-  own (`?retry=<n>`) where the engine keeps a failed module for the page's
-  life, as Chromium and Firefox do. The compiler `appFromOrCompile` fetches
-  is one.
+- **A part that tries again** — `@graview/core/retry`, for a page only:
+  `retryingImport(() => import("./part.js"))` is a loader that asks again
+  after the import failed, with a URL of its own (`?retry=<n>`) where the
+  engine keeps a failed module for the page's life, as Chromium and Firefox
+  do. Never from a server's code: workerd
+  refuses a script with a computed `import()` in it.
 - **The city** — `@graview/core/scene`: `sceneThumbnail` draws a document
   (or an app) as the Scene draws it from altitude — the same districts on
   the same map, in their hues — as one SVG string, with no DOM, for a host

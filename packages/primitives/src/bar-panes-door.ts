@@ -1,4 +1,4 @@
-import { retryingImport } from "@graview/core";
+import { retryingImport } from "@graview/core/retry";
 import { lazyModule } from "@graview/react/provider";
 
 /**

@@ -12,7 +12,7 @@ import { createElement, lazy, useEffect, useLayoutEffect, useRef, useState, useS
  * browser keeps the failed module: only a reload brought the menu back.
  *
  * A lazy module here is fetched by a loader that asks again after a failure
- * (`retryingImport` in `@graview/core`, which defeats the browser's kept
+ * (`retryingImport` in `@graview/core/retry`, which defeats the browser's kept
  * failure with a URL of its own), and a part drawn from it never throws for
  * want of it. Until it is here, the place it goes says so in one line with
  * a "Try again" button; it is asked for again when the browser says it is

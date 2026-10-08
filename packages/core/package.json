@@ -17,6 +17,10 @@
       "types": "./dist/compiled.d.ts",
       "default": "./dist/compiled.js"
     },
+    "./retry": {
+      "types": "./dist/retry.d.ts",
+      "default": "./dist/retry.js"
+    },
     "./describe": {
       "types": "./dist/describe.d.ts",
       "default": "./dist/describe.js"

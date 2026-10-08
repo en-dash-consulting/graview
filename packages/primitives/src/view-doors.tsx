@@ -1,4 +1,5 @@
-import { retryingImport, type AnySchema } from "@graview/core";
+import type { AnySchema } from "@graview/core";
+import { retryingImport } from "@graview/core/retry";
 import type { ViewSpecsByKind } from "@graview/core/document";
 import { createViews, lazyModule, markDefaultView, type Cardinality, type Fidelity, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 

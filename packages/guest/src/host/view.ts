@@ -1,4 +1,5 @@
-import { retryingImport, type AnySchema, type Principal, type Store } from "@graview/core";
+import type { AnySchema, Principal, Store } from "@graview/core";
+import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import { checkManifest, workerViewProps, type WorkerViewManifest } from "./manifest.js";
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
