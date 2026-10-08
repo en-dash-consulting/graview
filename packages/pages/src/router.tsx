@@ -1,13 +1,13 @@
 import type { AnySchema } from "@graview/core";
 import { BrowserRouter, MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
-import { openingOf } from "@graview/core";
+import { openingOf, OVERVIEW_PATH, OVERVIEW_SLUG } from "@graview/core";
 import { pluralSlug } from "./registry.js";
 import { useEffect, useLayoutEffect, useMemo, useRef, type ComponentType, type ReactNode } from "react";
 import { GoToContext, GraviewProvider, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo } from "@graview/react/provider";
 import { PageAsk } from "./ask.js";
 import { FaceControlsRoot } from "./face-controls.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
-import { pathOfPlace } from "./page-places.js";
+import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
 import { HeadingsUnder, SpecLinks } from "@graview/primitives/pages";
@@ -327,6 +327,15 @@ export function PagesRoutes<S extends AnySchema>({
         {/* The app's pictures, when it handed the face its views: an index, and each lens at its name. */}
         <Route path="/map" element={<DefaultMapPage context={inside} />} />
         <Route path="/places" element={<DefaultPlacesPage context={inside} />} />
+        {/*
+          * THE OVERVIEW'S ADDRESS ON THE ROUTED FACE (FR-132): the scene is
+          * drawn there, so the routed face reaches it only where the scene
+          * stands aside — an embed narrower than `pagesBelow` arriving at
+          * it — and there it is the home, never a place nobody declared. A
+          * place that took the address (`pages-overview-taken` warns of it)
+          * keeps its page here.
+          */}
+        {placesOf(inside).some((place) => place.as === OVERVIEW_SLUG) ? null : <Route path={OVERVIEW_PATH} element={<Navigate to="/" replace />} />}
         <Route path="/places/:as" element={<DefaultPlacePage context={inside} />} />
         <Route path="/:slug" element={<KindSwitch context={inside} registry={registry} page="list" />} />
         <Route

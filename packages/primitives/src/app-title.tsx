@@ -5,8 +5,8 @@ import { useMarkup } from "./markup.js";
 /*
  * THE APP, SAID ONCE (FR-124, FR-125): its mark, its name, and the line
  * under the name — the one component every face draws its title with, so
- * the Graview face's bar, the embed's strip and the routed face's masthead
- * say the same app the same way, and a later bar moves one component.
+ * the whole-page Shell's wordmark and the one app bar (FR-131, with `AppMark`)
+ * say the same app the same way.
  *
  * The mark is drawn as the brand gives it, never redrawn: an SVG written
  * inline is put in the page as it is (so `currentColor` takes the accent,

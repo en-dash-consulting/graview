@@ -1,3 +1,4 @@
+import { svgProblem } from "@graview/core";
 import type { GuestTheme } from "../protocol.js";
 
 /*
@@ -101,7 +102,9 @@ export function createGuestLogo(window: Window & typeof globalThis, moved: () =>
     if (url?.startsWith("blob:")) window.URL.revokeObjectURL(url);
   };
   const blobOf = async (logo: string): Promise<Blob | undefined> => {
-    if (logo.startsWith("<")) return new window.Blob([logo], { type: "image/svg+xml" });
+    // An SVG that could act is never made an image of this page's origin; a path that climbs (`..`, `%2e`) never reaches another page of it.
+    if (logo.startsWith("<")) return svgProblem(logo) === null ? new window.Blob([logo], { type: "image/svg+xml" }) : undefined;
+    if (/\\|%2e/i.test(logo) || logo.split(/[?#]/)[0]!.split("/").some((part) => part === "." || part === "..")) return undefined;
     const url = new window.URL(logo, window.document.baseURI);
     if (url.origin !== window.location.origin || !/^https?:$/.test(url.protocol)) return undefined;
     const response = await window.fetch(url.href, { credentials: "same-origin" });

@@ -105,9 +105,13 @@ optional, and an edit for each — `set-brand` (`null` clears a key),
 ```
 
 - **A mark** is inline SVG or a path on the app's own host — never another
-  origin. It is drawn as given (`currentColor` takes the accent), so an SVG
-  with a script, a handler, `foreignObject` or anything it loads is refused
-  (`brand-mark`), never rewritten. On Cloud, `add_image` answers the path.
+  origin. It is drawn as given (`currentColor` takes the accent), so it is
+  read element by element as the browser reads it: shapes, groups,
+  gradients, filters, text and links to its own `#id`s, every attribute
+  quoted, and nothing after `</svg>`. A script, a handler, `<a>`, `<style>`,
+  an animation, `foreignObject` or anything it loads is refused
+  (`brand-mark`, with the reason), never rewritten. On Cloud, `add_image`
+  answers the path.
 - **A face** is `system-serif`, `system-sans`, `system-mono`, a face every
   system has (Georgia, Menlo), or a web font on `DOCUMENT_FONTS`; one named
   by its address is refused (`brand-font`). The host decides where web
@@ -120,7 +124,8 @@ optional, and an edit for each — `set-brand` (`null` clears a key),
   somebody else's page leaves theirs alone unless the host passes
   `favicon: true`.
 
-`describe_place("home")` says the masthead: the name, the line under it,
+`describe_place("home")` says the app as the home draws it (its `masthead`):
+the name, the line under it,
 and the logo by its alt text.
 
 ## Styling by conversation

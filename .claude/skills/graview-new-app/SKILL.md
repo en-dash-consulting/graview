@@ -118,7 +118,7 @@ in this order, and each step has a skill and a worked chapter in
    `title` and `description`; they are the button and the tool schema.
    (`graview-node-kind`.)
 2. **A lens with a name.** A lens registered over a group with a `title` is
-   a PLACE — in the bar, on an embed's strip, one press from anywhere. Start
+   a PLACE — a tab on the app bar, one press from anywhere. Start
    from the three that ship; write your own when the domain has a picture of
    itself, the way the garden has a map. (`graview-lens`, chapters 10-13.)
 3. **The pages.** One page in the product's words first, then, when the

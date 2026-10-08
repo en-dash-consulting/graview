@@ -6,7 +6,7 @@
  * entry because a bundler splits a page by which files its first chunk can
  * reach, and `@graview/react` reaches the scene: a frame that imported the
  * provider from it carried the map into a page that drew only the pages.
- * What the frame of every face needs — the embed's strip, the default
+ * What the frame of every face needs — the app bar, the default
  * views, the routed face — imports from here, and the scene is fetched
  * with the face that draws it. Nothing in this module's files may import
  * the scene's, or `@graview/react`.

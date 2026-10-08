@@ -357,7 +357,7 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, pla
       code: "pages-overview-taken",
       path: "pages",
       message: `The place "${taken.title}" has the address the overview keeps (${OVERVIEW_PATH}), so the bar's "${overviewTitle(pages)}" tab and it cannot both be reached there.`,
-      fix: `Give "${taken.title}" another title, or call the overview something else with pages.overview and keep its address.`,
+      fix: `Give "${taken.title}" another title (or another "as"): the overview keeps ${OVERVIEW_PATH} whatever pages.overview calls it.`,
     });
   }
   if (!pages) return findings;

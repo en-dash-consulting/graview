@@ -42,9 +42,9 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
   useStoreTick(store);
   const violations = store.violations(invariantContext);
   /*
-   * WHAT TO DO, NOT HOW MANY (FR-122). The bar says the count — the
-   * embed's strip, or the shell's Problems tab — so the home points to the
-   * problems rather than saying the number a third time.
+   * WHAT TO DO, NOT HOW MANY (FR-122). The app bar says the count — its
+   * standing (FR-131) — so the home points to the
+   * problems rather than saying the number again.
    */
   const seeWhatIsBroken = `${violations.length === 1 ? "A rule is broken" : "Rules are broken"} — see what, and what would fix it`;
   const recent = [...store.log.all()].slice(-5).reverse();

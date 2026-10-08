@@ -166,4 +166,16 @@ describe("placesOf lists every place an app has", () => {
     const renamed = { ...app, pages: { ...app.pages, overview: "The hall" } };
     expect(placesOf(renamed as never).find((place) => place.slug === "overview")).toMatchObject({ title: "The hall", address: "/places/overview" });
   });
+
+  it("warns of a place at the overview's address, with a fix that clears it: retitling the place, since renaming the overview keeps the address (FR-132)", () => {
+    const lens = { name: "calendar", title: "Overview", bindings: { shift: { start: "on" } } };
+    const taken = (pages: Record<string, unknown>) =>
+      compileDocument({ ...document, pages: { ...document.pages, ...pages }, lenses: [...(document.lenses ?? []), lens] }, { today: () => "2026-09-01" }).findings.filter((f) => f.code === "check:pages-overview-taken");
+    const found = taken({});
+    expect(found.map((f) => [f.path, f.severity])).toEqual([["pages", "warning"]]);
+    expect(found[0]!.fix).toMatch(/^Give "Overview" another title/);
+    expect(found[0]!.fix).not.toMatch(/call the overview something else/);
+    // Following the old advice — renaming the overview — leaves the place where it was.
+    expect(taken({ overview: "The hall" })).toHaveLength(1);
+  });
 });

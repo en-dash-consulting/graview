@@ -6,9 +6,11 @@
  * the embed over the vendors document, esbuild ESM split and minified, zod's
  * locales cut to English, the studio stubbed out (lib/hosted-page.mjs) — and
  * writes docs/hosted-page.json: what the page loads up front, package by
- * package, what each door it opens only when asked costs, and two claims:
- * at most 563 KB minified up front, at most 150 KB of it zod's — and
- * docs/hosted-page.md, the same by package as the release notes carry it.
+ * package, what each door it opens only when asked costs, and its claims:
+ * at most 567 KB minified up front, at most 150 KB of it zod's, and at most
+ * 523 KB handed a compiled app (`HOSTED_PAGE_BUDGET`,
+ * `HOSTED_PAGE_COMPILED_BUDGET`) — and docs/hosted-page.md, the same by
+ * package as the release notes carry it.
  *
  * No browser and no port: it reads esbuild's metafile, so it runs first.
  */

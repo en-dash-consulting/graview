@@ -161,7 +161,7 @@ from its own origin and passes `worker: { url }` (the guest README).
 ## Worked examples
 
 - `apps/seedbed/src/site-embed.ts` — the docs site's chapters, many to a
-  page, mounted as the reader nears them, the rota's seats on the strip
+  page, mounted as the reader nears them, the rota's seats in the person's menu
 - `apps/rota/src/embed.ts` — two embeds of one app on one host page, each
   named for what it shows
 - `packages/core/src/scaffold/ui.ts` — what `graview create` writes

@@ -89,7 +89,7 @@ async function buildHost() {
           height: "100%",
           fonts: false,
           studio: false,
-          toggle: true,
+          bar: true,
           ...(asked.get("favicon") === "1" ? { favicon: true } : {}),
         });
         window.__handle.drawn().then(() => { window.__ready = true; });`,

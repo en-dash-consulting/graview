@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { accentProblem, brandFromAccent, colorsIn, contrast, defineApp, defineNode, LIGHT, SCHEMES, z } from "../../src/index.js";
+import { accentProblem, brandFromAccent, colorsIn, contrast, passingShade, defineApp, defineNode, LIGHT, SCHEMES, z } from "../../src/index.js";
 import { editDocument, type GraviewDocument } from "../../src/document/index.js";
 import { checkApp, compileDocument } from "../../src/check.js";
 import { createSchema } from "../../src/schema/schema.js";
@@ -48,6 +48,18 @@ describe("set-brand refuses an accent that does not read, naming the pair, the r
     expect(compiled.ok).toBe(true);
     expect(compiled.findings.filter((f) => f.path.startsWith("brand"))).toEqual([]);
   });
+
+  it("says a hue the warning color is drawn in as that, not as a contrast, and never asks a document for a dark accent it cannot give", () => {
+    const clash = accentProblem("#993300")!;
+    expect(clash.sentence).toBe('#993300 reads as given, but the warning color is drawn in its hue, so "something is broken" would look like "this is selected", at any shade — pick another hue.');
+    expect(clash.pair.on).toMatch(/^#[0-9a-f]{6}$/);
+    expect(clash.ratio).toBeGreaterThan(0);
+    expect(accentProblem("#ff6600")!.sentence).toMatch(/; no shade of this hue does, since the warning color is drawn in it — pick another hue\.$/);
+    const dark = accentProblem("#3a0ca3")!;
+    expect(dark.sentence).toMatch(/^#3a0ca3 reads in the light scheme, but not in the dark: /);
+    expect(dark.sentence).not.toMatch(/supply one|needs an accent of its own/);
+    expect(dark.pair.on).toMatch(/^#[0-9a-f]{6}$/);
+  });
 });
 
 describe("check says the same of a document that holds such an accent", () => {
@@ -77,5 +89,22 @@ describe("check says a TypeScript palette's failing pair as colors, with a shade
     expect(found).toHaveLength(1);
     expect(found[0]!.message).toMatch(/^#b0b0b0 text \(inkMuted\) on #ffffff \(panel\) is 2\.\d:1; 4\.5:1 is needed — a subtitle\.$/);
     expect(found[0]!.fix).toMatch(/^#[0-9a-f]{6} would pass as "inkMuted"\.$/);
+  });
+
+  it("offers a shade that passes on every stop of a gradient ground, as the check judges it, so following the fix clears it", () => {
+    for (const ground of ["linear-gradient(#ffffff, #c8c8c8)", "linear-gradient(#f6f4f0, #d0d0d0, #ffffff)"]) {
+      const shade = passingShade("#a0a0a0", ground, 4.5);
+      expect(shade).toBeDefined();
+      const worst = Math.min(...colorsIn(ground).map((stop) => contrast(colorsIn(shade!)[0]!, stop)));
+      expect([ground, shade, worst >= 4.5]).toEqual([ground, shade, true]);
+    }
+    const schema = createSchema([defineNode("thing", { fields: z.object({ name: z.string() }) })]);
+    const pale = defineApp({ name: "pale", schema, brand: { name: "Pale", schemes: { ...SCHEMES, light: { ...LIGHT, inkMuted: "#a0a0a0" } } } });
+    for (const finding of checkApp(pale).findings.filter((f) => f.code === "theme-contrast-below-aa" && f.where?.startsWith("brand.schemes.light: inkMuted"))) {
+      const fixed = /^(#[0-9a-f]{6}) would pass/.exec(finding.fix ?? "")?.[1];
+      expect(fixed, finding.where).toBeDefined();
+      const again = defineApp({ name: "pale", schema, brand: { name: "Pale", schemes: { ...SCHEMES, light: { ...LIGHT, inkMuted: fixed! } } } });
+      expect(checkApp(again).findings.filter((f) => f.code === "theme-contrast-below-aa" && f.where === finding.where)).toEqual([]);
+    }
   });
 });

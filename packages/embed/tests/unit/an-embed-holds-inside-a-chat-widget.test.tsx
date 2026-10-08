@@ -195,6 +195,22 @@ describe("an embed narrower than its scene", () => {
     expect(root.getAttribute("data-graview-embed")).toBe("graview");
   });
 
+  it("opens on the home, not on a place nobody declared, when the host owns the address bar and the scene stands aside (FR-132)", async () => {
+    geometry.width = 360;
+    for (const arrived of ["/", "/places/overview", "/#focus=t1"]) {
+      window.history.replaceState(null, "", arrived);
+      const { root, handle, host } = await mounting({ seed, face: "scene", pagesBelow: 560, routing: "address" });
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 20)));
+      expect([arrived, root.getAttribute("data-graview-embed")]).toEqual([arrived, "pages"]);
+      expect([arrived, root.textContent]).not.toEqual([arrived, expect.stringContaining("No picture is called that.")]);
+      expect([arrived, window.location.pathname]).toEqual([arrived, "/"]);
+      await act(async () => handle.unmount());
+      host.remove();
+      mounted.splice(0);
+    }
+    window.history.replaceState(null, "", "/");
+  });
+
   it("draws the overview there when the reader asks for it on the bar (FR-132)", async () => {
     geometry.width = 360;
     const { root } = await mounting({ seed, face: "graview", pagesBelow: 560 });

@@ -37,6 +37,18 @@ describe("the app's title: its mark, its name, the line under it", () => {
     expect(html).not.toContain("app-mark");
   });
 
+  it("does not draw a logo the HTML parser would read as more than a picture, nor a mark at a script's address", () => {
+    const acting = [
+      '<svg xmlns="http://www.w3.org/2000/svg"><animate/onbegin=alert(1) attributeName=x dur=1s></svg>',
+      '<svg xmlns="http://www.w3.org/2000/svg"></svg><img/src/onerror=alert(1)>',
+      '<svg xmlns="http://www.w3.org/2000/svg"></svg><base href="//evil.example/">',
+      '<svg xmlns="http://www.w3.org/2000/svg"><a href=javascript:alert(1)><rect width="9" height="9"/></a></svg>',
+      '<svg xmlns="http://www.w3.org/2000/svg"><style>@\\69mport "http://evil.example/x.css";</style></svg>',
+    ];
+    for (const logo of acting) expect(renderToStaticMarkup(<AppTitle brand={brand({ logo })} />)).not.toContain("app-mark");
+    expect(renderToStaticMarkup(<AppTitle brand={brand({ logo: "javascript:alert(1)" })} />)).not.toContain("app-mark");
+  });
+
   it("draws the line under the name only where it is asked for", () => {
     const withLine = brand({ subtitle: "Workshops, who came, and what each one left behind." });
     expect(renderToStaticMarkup(<AppTitle brand={withLine} subtitle />)).toContain(">Workshops, who came, and what each one left behind.</span>");

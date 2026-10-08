@@ -12,7 +12,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type 
  * takes no name that is not.
  */
 export const POPOVERS = {
-  /** Who you are and your own settings, from the bar and the embed's strip. */
+  /** Who you are and your own settings, from the app bar (FR-131). */
   profile: { trigger: "profile-button", pane: "profile", opens: "press", focus: "into", drawn: ["shell", "embed"] },
   /** What is broken, from Standing, on the bar and the strip. */
   problems: { trigger: "standing", pane: "problems", opens: "press", focus: "into", drawn: ["shell", "embed"] },
