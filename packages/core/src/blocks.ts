@@ -9,7 +9,7 @@
  * hosted page loads first. The views that draw blocks, the pages and an
  * agent's seat import it from here, and it loads when they do.
  */
-export { compileBlocks, fieldSpecsOf, isTallBlock, resolveBlocks, safeHref, sayNumber } from "./document/blocks.js";
-export type { BlockContext, ResolvedBlock, ResolvedList, SpecBlock } from "./document/blocks.js";
+export { compileBlocks, fieldSpecsOf, isTallBlock, resolveBlocks, safeHref, sayNumber, whatBlocksSay } from "./document/blocks.js";
+export type { BlockContext, BlocksSaid, ResolvedBlock, ResolvedList, SpecBlock } from "./document/blocks.js";
 export { computedNames, computedValues, withComputed } from "./document/computed-values.js";
 export type { ComputedRecord, ComputedValues, PlainComputed } from "./document/computed-values.js";

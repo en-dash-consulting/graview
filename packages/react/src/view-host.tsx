@@ -313,6 +313,15 @@ export function SceneViewHost({
       data-graview-plot={frontY !== undefined ? "" : undefined}
       data-graview-screen={screen ? "" : undefined}
       /*
+       * THE RECORD IN FOCUS KEEPS TO ITS BOX (FR-141). The box is the
+       * layout's — under the bar, above the cards it is tied to — and a view
+       * taller than it was centered on it and spilled both ways: under the
+       * app bar, where nothing scrolls to it, and over its neighbors. Marked
+       * here, the stylesheet holds what it draws inside the box, scrolling
+       * from its top when it is taller (`scene-css.ts`).
+       */
+      data-graview-record-focus={Math.round(node.plane) === 0 && !node.aggregate && !natural && !screen ? "" : undefined}
+      /*
        * A card drawn deliberately BEHIND another says so in the tree.
        *
        * Two boxes overlapping is either a tuck or a collision, and from the

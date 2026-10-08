@@ -27,7 +27,7 @@ import {
   type ViewProps,
  lazyModule,
  markDefaultView } from "@graview/react/provider";
-import { Suspense } from "react";
+import { Suspense, useContext, useLayoutEffect, useRef, useState } from "react";
 import { arrangementOf, withArrangement } from "./arrangement.js";
 /*
  * THE ROW THAT ARRANGES A DISTRICT, fetched when a district is opened full
@@ -41,6 +41,7 @@ const ArrangeBar = lazyModule(retryingImport(() => import("./arrange-bar.js"))).
 import { Connections } from "./connections.js";
 import { EditableTitle, Fields } from "./editable.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
+import { RecordHeadContext } from "./record-head.js";
 
 /**
  * A generic view for every cell of the matrix, derived from the declaration.
@@ -185,6 +186,82 @@ function MemberRows<S extends AnySchema>({
   );
 }
 
+/** The smallest a district's name is drawn at, as a share of its own size: eleven pixels of fifteen. */
+const NAME_FLOOR = 11 / 15;
+
+/**
+ * A DISTRICT'S BOX HOLDS ITS NAME (FR-143).
+ *
+ * A district's name is read, not glanced at, so it is drawn at fifteen
+ * pixels — and a name longer than its box wrapped to a second line the
+ * box had no room for: "WORKSHOP PARTS" stood half out of the top of its
+ * box, its count pushed out of the bottom. The name keeps one line. Where
+ * it is wider than the box it is drawn smaller, as much as it needs and no
+ * smaller than eleven pixels; past that it is cut, and said whole on
+ * hover. Measured from the name's own width, which a transform does not
+ * change, and again whenever the box is resized.
+ */
+function DistrictName({ text, accent }: { readonly text: string; readonly accent: boolean }) {
+  const box = useRef<HTMLSpanElement>(null);
+  const words = useRef<HTMLSpanElement>(null);
+  const [scale, setScale] = useState(1);
+  const [cut, setCut] = useState(false);
+  /* A share of the name's own size, so a reader's larger text is still larger. */
+  const smaller = scale < 1 ? `${scale}em` : undefined;
+  useLayoutEffect(() => {
+    const outer = box.current;
+    const inner = words.current;
+    if (!outer || !inner) return;
+    const fit = () => {
+      const room = outer.clientWidth;
+      const drawn = inner.offsetWidth;
+      if (room <= 0 || drawn <= 0) return;
+      const current = parseFloat(getComputedStyle(inner).fontSize) / parseFloat(getComputedStyle(outer).fontSize) || 1;
+      // The name's width at its own size, from its width at the size it is drawn at.
+      const whole = drawn / current;
+      const next = Math.max(NAME_FLOOR, Math.min(1, Math.floor((room / whole) * 100) / 100));
+      setScale((was) => (Math.abs(was - next) < 0.01 ? was : next));
+      setCut(whole * next > room + 0.5);
+    };
+    fit();
+    if (typeof ResizeObserver === "undefined") return;
+    const watch = new ResizeObserver(fit);
+    watch.observe(outer);
+    return () => watch.disconnect();
+  }, [text]);
+  return (
+    <span
+      ref={box}
+      data-graview-district-name=""
+      {...(scale < 1 ? { "data-graview-fitted": "" } : {})}
+      {...(cut ? { title: text } : {})}
+      style={{
+        display: "block",
+        minWidth: 0,
+        /*
+         * A DISTRICT'S NAME IS READ, not glanced at. Thirteen pixels
+         * before the kinds plane's own recession put it on the screen at
+         * ten, and the kind above it at under eight — small enough that
+         * the bottom of the picture was a row of gray marks rather than
+         * a map of the domain.
+         */
+        fontSize: "0.9375rem",
+        lineHeight: 1.25,
+        letterSpacing: "0.05em",
+        textTransform: "uppercase",
+        color: accent ? "var(--graview-accent)" : "var(--graview-ink-muted)",
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+      }}
+    >
+      <span ref={words} style={{ fontSize: smaller }}>
+        {text}
+      </span>
+    </span>
+  );
+}
+
 export function registerDefaultViews<S extends AnySchema>(
   schema: S,
   registry: ReactViewRegistry<S> = createViews(schema),
@@ -207,7 +284,10 @@ export function registerDefaultViews<S extends AnySchema>(
        * along: emphasis painted and not said.
        */
       const violations = useViolations<S>();
+      // The kind's declared page, when it heads this record (FR-141): drawn inside this frame, not beside it.
+      const headed = useContext(RecordHeadContext);
       if (!node) return null;
+      const head = headed?.nodeId === node.id ? headed : null;
       /*
        * On a page, the heading is the WHOLE thing.
        *
@@ -229,7 +309,8 @@ export function registerDefaultViews<S extends AnySchema>(
         <Panel
           // The name is the rename control. Nothing else on the page repeats
           // it, so the thing you click to change it is the thing itself.
-          title={<EditableTitle<S> nodeId={node.id}>{heading}</EditableTitle>}
+          // A declared page's own title heads the frame: the heading its author wrote, still the rename control where it is the name.
+          title={<EditableTitle<S> nodeId={node.id}>{head?.title ?? heading}</EditableTitle>}
           /*
            * What THIS node is, when the declaration can say — and only the
            * kind's own description as a fallback.
@@ -237,16 +318,21 @@ export function registerDefaultViews<S extends AnySchema>(
            * A subtitle that is the kind's description is identical on every
            * node of that kind, which makes it furniture rather than
            * information: it tells you what a rationale is, on a page you
-           * reached by choosing one particular rationale.
+           * reached by choosing one particular rationale. Under a declared
+           * page there is none: the page says what this one is, in its
+           * author's words.
            */
-          subtitle={
-            // `describeNode` falls back to "<kind> <label>", which would put
-            // the heading back under the heading — so only take it when the
-            // declaration actually supplied one.
-            definition?.describe
-              ? describeNode(definition, node)
-              : (definition?.description ?? String(kind))
-          }
+          {...(head
+            ? {}
+            : {
+                subtitle:
+                  // `describeNode` falls back to "<kind> <label>", which would put
+                  // the heading back under the heading — so only take it when the
+                  // declaration actually supplied one.
+                  definition?.describe
+                    ? describeNode(definition, node)
+                    : (definition?.description ?? String(kind)),
+              })}
           selected={props.selected}
           // Something broken is marked WHERE IT IS. A violation implicating
           // two people has to show on those people, not only in a list
@@ -256,6 +342,8 @@ export function registerDefaultViews<S extends AnySchema>(
           // only difference is which of those two things it is sitting on.
           fit
         >
+          {/* The declared page first, as the author wrote it; nothing drawn inside it is headed by it. */}
+          {head ? <RecordHeadContext.Provider value={null}>{head.body}</RecordHeadContext.Provider> : null}
           {/*
             * Fields and relationships side by side, both filling the panel.
             *
@@ -285,11 +373,15 @@ export function registerDefaultViews<S extends AnySchema>(
               // What the panel already said: its title and its subtitle. A
               // record repeating its own heading is what made this read as a
               // debug dump rather than as a page about something.
-              shown={[heading, short, definition?.description]}
+              shown={[heading, short, definition?.description, head?.title]}
+              // And what a declared page at its head said, by name (FR-141).
+              {...(head ? { hide: [...head.fields] } : {})}
             />
             <Connections
               id={node.id}
               empty={`Nothing is connected to this ${nounOf(definition, String(kind))} yet.`}
+              // A tie the page already lists is not listed again (FR-141).
+              {...(head ? { hide: head.records } : {})}
             />
           </div>
           {touching.length > 0 ? (
@@ -519,6 +611,13 @@ export function registerDefaultViews<S extends AnySchema>(
         ? 0
         : members.filter((member) => reached.includes(member.id) && !chosen.has(member.id)).length;
       /*
+       * THE COUNT SAID ONCE (FR-143). A district every member of which the
+       * selection reaches read "4 4 tied": the count, then the count again.
+       * With nothing broken in it, the tie IS the count — "4 tied", or
+       * "2 of 4 tied" — in one place.
+       */
+      const saysTied = tied > 0 && !trouble;
+      /*
        * WHAT THE WORDS FOUND HERE. With a search open, a district with hits
        * is lit and says how many; one with none recedes. Pressing the count
        * descends into the district already narrowed by the same words — the
@@ -537,17 +636,10 @@ export function registerDefaultViews<S extends AnySchema>(
        * The district's NAME, lifted out of the markup because a figure stands
        * beside it and a name written twice is a name that drifts.
        */
-      const name = (
+      const name = nested ? (
         <span
           style={{
-            /*
-             * A DISTRICT'S NAME IS READ, not glanced at. Thirteen pixels
-             * before the kinds plane's own recession put it on the screen at
-             * ten, and the kind above it at under eight — small enough that
-             * the bottom of the picture was a row of gray marks rather than
-             * a map of the domain.
-             */
-            fontSize: nested ? "0.75rem" : "0.9375rem",
+            fontSize: "0.75rem",
             lineHeight: 1.25,
             letterSpacing: "0.05em",
             textTransform: "uppercase",
@@ -559,13 +651,15 @@ export function registerDefaultViews<S extends AnySchema>(
              * the alternative, growing the tuck until it fits, makes it the
              * same size as the thing it is meant to be behind.
              */
-            ...(nested
-              ? { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
-              : { overflowWrap: "anywhere" }),
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
           {props.label ?? plural}
         </span>
+      ) : (
+        <DistrictName text={props.label ?? plural} accent={Boolean(accent)} />
       );
       return (
         <div
@@ -781,7 +875,7 @@ export function registerDefaultViews<S extends AnySchema>(
             <span
               style={{
                 fontVariantNumeric: "tabular-nums",
-                color: trouble ? "var(--graview-warn)" : "var(--graview-ink-faint)",
+                color: trouble ? "var(--graview-warn)" : saysTied ? "var(--graview-accent)" : "var(--graview-ink-faint)",
               }}
             >
               {/*
@@ -790,7 +884,7 @@ export function registerDefaultViews<S extends AnySchema>(
                 * it is — the same honesty the actions strip gives when a kind
                 * has no verbs.
                 */}
-              {members.length === 0 ? "none yet" : `${trouble ? `${flag} ` : ""}${members.length}`}
+              {members.length === 0 ? "none yet" : saysTied ? (tied === members.length ? `${tied} tied` : `${tied} of ${members.length} tied`) : `${trouble ? `${flag} ` : ""}${members.length}`}
             </span>
             {/*
               * What sits BEHIND THE HORIZON, advertised where it dropped
@@ -832,7 +926,7 @@ export function registerDefaultViews<S extends AnySchema>(
               </button>
             ) : null}
             {/* The selection's reach into this kind, said in place. */}
-            {tied > 0 ? (
+            {tied > 0 && !saysTied ? (
               <span style={{ fontSize: "0.8125rem", color: "var(--graview-accent)" }}>
                 {tied} tied
               </span>

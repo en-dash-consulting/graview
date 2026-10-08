@@ -110,8 +110,11 @@ export const BUDGETS = [
     // Raised, over the bar that fits its box and FR-140, when a part fetched as it is first drawn came to try again after it
     // failed to arrive and to say so in its place rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the
     // menu's fetch when the page is idle. 3_049 / 1_355 more. Measured at 513_844 / 176_518.
-    minified: 514_250,
-    gzipped: 177_050,
+    // Raised, over FR-139, when a selected record came to be drawn once (FR-141–FR-143): a declared page read for what it
+    // already says and the record page leaving that out, a district name fitted to its box and its count said once, a
+    // relation said in its words: 3_892 / 1_348 more. Measured at 517_736 / 177_866.
+    minified: 517_850,
+    gzipped: 177_950,
     load: "first",
   },
   {
@@ -361,8 +364,10 @@ export const BUDGETS = [
     // Raised, over the bar that fits its box and FR-140, when a part fetched as it is first drawn came to try again after it
     // failed to arrive and to say so in its place rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the
     // menu's fetch when the page is idle. 3_358 / 1_475 more. Measured at 1_557_457 / 470_989.
-    minified: 1_557_750,
-    gzipped: 471_200,
+    // Raised, over FR-139, when a selected record came to be drawn once (FR-141–FR-143), with the page at the head of the
+    // scene's record and the record in focus held to its box: 4_345 / 1_455 more. Measured at 1_561_802 / 472_444.
+    minified: 1_561_900,
+    gzipped: 472_550,
     load: "all",
   },
   {
@@ -416,8 +421,10 @@ export const BUDGETS = [
     // Raised, over the bar that fits its box and FR-140, when a part fetched as it is first drawn came to try again after it
     // failed to arrive and to say so in its place rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the
     // menu's fetch when the page is idle. 3_358 / 1_482 more. Measured at 1_523_423 / 456_109.
-    minified: 1_523_750,
-    gzipped: 456_300,
+    // Raised, over FR-139, with every face's for a selected record drawn once (FR-141–FR-143): 4_350 / 1_454 more.
+    // Measured at 1_527_773 / 457_563.
+    minified: 1_527_900,
+    gzipped: 457_650,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

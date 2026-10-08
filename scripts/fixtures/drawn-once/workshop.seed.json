@@ -1,0 +1,63 @@
+{
+  "nodes": [
+    {
+      "id": "segment:ongoing-support",
+      "kind": "segment",
+      "title": "Ongoing support",
+      "order": 5,
+      "goal": "The product operating model holds because funding and prioritization follow the products.",
+      "phase": "after",
+      "summary": "Once the products are formal: guidance on how products get funded and how work is prioritized within them, woven into Farm Bureau's existing practices."
+    },
+    {
+      "id": "topic:apply-the-actions",
+      "kind": "topic",
+      "title": "Apply the actions that come out",
+      "detail": "Workshops are only effective if they are followed up on."
+    },
+    {
+      "id": "topic:watch-for-old-habits",
+      "kind": "topic",
+      "title": "Watch for old habits",
+      "detail": "Transformations stall when old habits persist after products and owners are defined."
+    },
+    {
+      "id": "topic:prioritize-within",
+      "kind": "topic",
+      "title": "Prioritize within each product",
+      "detail": "Initiatives are prioritized by economic value inside the product's budget."
+    },
+    {
+      "id": "topic:fund-products",
+      "kind": "topic",
+      "title": "Fund products, not projects",
+      "detail": "Each product gets a budget and the money is fungible within it."
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "kind": "partOf",
+      "from": "topic:apply-the-actions",
+      "to": "segment:ongoing-support"
+    },
+    {
+      "id": "e2",
+      "kind": "partOf",
+      "from": "topic:watch-for-old-habits",
+      "to": "segment:ongoing-support"
+    },
+    {
+      "id": "e3",
+      "kind": "partOf",
+      "from": "topic:prioritize-within",
+      "to": "segment:ongoing-support"
+    },
+    {
+      "id": "e4",
+      "kind": "partOf",
+      "from": "topic:fund-products",
+      "to": "segment:ongoing-support"
+    }
+  ]
+}
