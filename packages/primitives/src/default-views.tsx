@@ -5,6 +5,7 @@ import {
   labelOf,
   nounOf,
   readableFields,
+  retryingImport,
   type AnySchema,
   type KindOfSchema,
   type NodeOfSchema,
@@ -24,15 +25,19 @@ import {
   type ReactViewRegistry,
   type ViewComponent,
   type ViewProps,
+ lazyModule,
  markDefaultView } from "@graview/react/provider";
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { arrangementOf, withArrangement } from "./arrangement.js";
 /*
  * THE ROW THAT ARRANGES A DISTRICT, fetched when a district is opened full
  * with more than one member in it: every other card draws without it, and a
  * page's first chunk does not carry it (FR-57).
  */
-const ArrangeBar = lazy(() => import("./arrange-bar.js").then((bar) => ({ default: bar.ArrangeBar })));
+const ArrangeBar = lazyModule(retryingImport(() => import("./arrange-bar.js"))).part(
+  (bar, props: Parameters<typeof import("./arrange-bar.js").ArrangeBar>[0]) => <bar.ArrangeBar {...props} />,
+  { what: "Arranging this list" },
+);
 import { Connections } from "./connections.js";
 import { EditableTitle, Fields } from "./editable.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";

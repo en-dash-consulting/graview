@@ -8,6 +8,7 @@ import {
   permittedMutations,
   refusalOf,
   resolveModules,
+  retryingImport,
   search,
   sha256Hex,
   type AnyMutationDefinition,
@@ -29,6 +30,9 @@ import {
   applyAffordance,
   type DeriveOptions,
 } from "../derive.js";
+
+/* The describer, fetched when a place is first asked about, and asked for again with a URL of its own when it did not arrive (FR-139). */
+const describer = retryingImport(() => import("@graview/core/describe"));
 
 /**
  * WHAT A TOOL DOES, in the words every MCP directory asks for (FR-10).
@@ -663,7 +667,7 @@ export function createToolRuntime<S extends AnySchema>(
            * with the seat: a page whose assistant is never asked carries
            * none of it (FR-112's coverage made it a few kB).
            */
-          const { describePlace } = await import("@graview/core/describe");
+          const { describePlace } = await describer();
           // Described for this seat: what it may see, and nothing else (FR-55).
           const said = describePlace(store, principal, String(args["place"] ?? ""), { app, width });
           if (!said.ok) return { ok: false, error: `${said.error} The places are: ${said.places.join(", ")}.` };

@@ -1,12 +1,12 @@
-import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
+import { addressOf, OVERVIEW_PATH, retryingImport, pagesTitle, pathWithin, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
 import { EMPTY_VIEW, aggregateId, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
 import { BarFindContext, barPlaceAt, barPlaces, descentTarget, fetchFrameworkViews, frameworkViewDoors, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import type { CompanionMode } from "@graview/primitives";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
-import { ErrorReportContext, GraviewProvider, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
+import { ErrorReportContext, GraviewProvider, lazyModule, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { AddressBar, atTheBareHome, faceAtAddress, stopAtAddress } from "./address.js";
-import { createContext, createElement, lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { createContext, createElement, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { EmbedWhere } from "./where.js";
 import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
@@ -51,31 +51,29 @@ type SceneFaceProps = Parameters<typeof import("./scene-face.js").SceneFace<AnyS
  * suspends until it arrives. Which of the two an instance is, it stays: a
  * component that changed from the lazy wrapper to the module's own would be
  * a different element, and the face would be drawn again from nothing.
+ *
+ * One that does not arrive — the network away as it was first drawn — says
+ * so in its place with "Try again", and is asked for again when the browser
+ * is back online, when it is drawn again or the button is pressed; it never
+ * throws into the embed (FR-139, `lazyModule`).
  */
-function door<P extends object>(load: () => Promise<ComponentType<P>>) {
-  let loaded: ComponentType<P> | undefined;
-  let fetching: Promise<void> | undefined;
-  const fetch = (): Promise<void> =>
-    (fetching ??= load().then((component) => {
-      loaded = component;
-    }));
-  const Lazy = lazy(async () => {
-    await fetch();
-    return { default: loaded! };
-  });
-  function Face(props: P) {
-    const [here] = useState(() => loaded);
-    return here ? createElement(here, props) : createElement(Lazy as unknown as ComponentType<P>, props);
-  }
-  return { Face, fetch };
+function door<P extends object>(load: () => Promise<ComponentType<P>>, options: { readonly what?: string; readonly quiet?: boolean } = {}) {
+  const face = lazyModule(load);
+  const Face = face.part((Drawn, props: P) => createElement(Drawn, props), options);
+  return { Face, fetch: (): Promise<void> => face.load().then(() => undefined) };
 }
 
 /* Each face draws the framework's own views, so it fetches them beside its own chunk (`frameworkViewDoors`). */
 const withViews = <T,>(face: Promise<T>): Promise<T> => Promise.all([face, fetchFrameworkViews()]).then(([loaded]) => loaded);
-const scene = door(() => withViews(import("./scene-face.js").then((face) => face.SceneFace as ComponentType<SceneFaceProps>)));
-const sceneKeeping = door(() => import("./scene-face.js").then((face) => face.SceneKeeping as ComponentType<object>));
-const pages = door(() => withViews(import("./pages-content.js").then((face) => face.PagesContent as ComponentType<PagesContentProps>)));
-const picture = door(() => withViews(import("./picture-face.js").then((face) => face.PictureFace as ComponentType<PictureFaceProps>)));
+/* Each chunk asked for again with a URL of its own after it failed (`retryingImport`). */
+const sceneChunk = retryingImport(() => import("./scene-face.js"));
+const pagesChunk = retryingImport(() => import("./pages-content.js"));
+const pictureChunk = retryingImport(() => import("./picture-face.js"));
+const scene = door(() => withViews(sceneChunk().then((face) => face.SceneFace as ComponentType<SceneFaceProps>)), { what: "This view" });
+// In the person's menu, which says once, at its top, what did not arrive.
+const sceneKeeping = door(() => sceneChunk().then((face) => face.SceneKeeping as ComponentType<object>), { quiet: true });
+const pages = door(() => withViews(pagesChunk().then((face) => face.PagesContent as ComponentType<PagesContentProps>)), { what: "This page" });
+const picture = door(() => withViews(pictureChunk().then((face) => face.PictureFace as ComponentType<PictureFaceProps>)), { what: "This picture" });
 const SceneFace = scene.Face;
 const SceneKeeping = sceneKeeping.Face;
 const PagesContent = pages.Face;
@@ -91,7 +89,11 @@ const PictureFace = picture.Face;
 export function preload(...faces: readonly EmbedFace[]): Promise<void> {
   const asked = faces.length > 0 ? faces : (["scene", "pages", "picture"] as const);
   const doors = new Set<{ fetch(): Promise<void> }>(asked.flatMap((face): { fetch(): Promise<void> }[] => (face === "pages" ? [pages] : face === "picture" ? [picture] : [scene, sceneKeeping])));
-  return Promise.all([...doors].map((one) => one.fetch())).then(() => undefined);
+  // Resolved when they are here or did not arrive: a face that did not is asked for again as it is drawn (FR-139).
+  return Promise.all([...doors].map((one) => one.fetch())).then(
+    () => undefined,
+    () => undefined,
+  );
 }
 
 /**
@@ -122,7 +124,11 @@ function Arriving({ auto, scene }: { readonly auto: boolean; readonly scene: boo
  * simply has no studio in it yet. A host that hands it in (`studio.place`,
  * FR-63) has it drawn in the frame's own render.
  */
-const StudioPlace = lazy(() => import("@graview/studio").then((studio) => ({ default: studio.StudioPlace })));
+const StudioPlace = lazyModule(retryingImport(() => import("@graview/studio"))).part(
+  (studio, props: Parameters<typeof StudioPlaceType>[0]) => <studio.StudioPlace {...props} />,
+  // Quiet: the person's menu it sits in says once, at its top, what did not arrive (FR-139).
+  { quiet: true },
+);
 
 /**
  * A GRAVIEW IN SOMEBODY ELSE'S PAGE.
@@ -567,7 +573,21 @@ function Watch({ into }: { readonly into: Whereabouts }) {
  * the rules for what falls back to what.
  */
 let settling: typeof import("./where.js") | undefined;
-const fetchSettling = () => import("./where.js").then((module) => void (settling = module));
+const whereChunk = retryingImport(() => import("./where.js"));
+/* Asked for again when the browser is back online, or every ten seconds, until it arrives (FR-139). */
+const fetchSettling = (): Promise<void> =>
+  whereChunk().then(
+    (module) => void (settling = module),
+    () => new Promise<void>((resolve) => {
+      const again = () => {
+        window.removeEventListener("online", again);
+        clearTimeout(timer);
+        resolve();
+      };
+      const timer = setTimeout(again, 10_000);
+      window.addEventListener("online", again);
+    }).then(fetchSettling),
+  );
 
 /** Stands in for the embed while the rules for a handed-back place arrive, then draws it. */
 function Settling({ onReady }: { readonly onReady: () => void }) {

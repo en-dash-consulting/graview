@@ -1,7 +1,6 @@
-import type { AnySchema } from "@graview/core";
+import { retryingImport, type AnySchema } from "@graview/core";
 import type { ViewSpecsByKind } from "@graview/core/document";
-import { createViews, markDefaultView, type Cardinality, type Fidelity, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
-import { lazy, useState, type ComponentType } from "react";
+import { createViews, lazyModule, markDefaultView, type Cardinality, type Fidelity, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 
 /**
  * THE FRAMEWORK'S OWN VIEWS, REGISTERED BEFORE THEY ARE FETCHED (FR-57).
@@ -17,15 +16,15 @@ import { lazy, useState, type ComponentType } from "react";
  * (`fetchFrameworkViews`, which an embed's face asks for beside its own
  * chunk). A door drawn before they arrive waits for them.
  */
-type Heavy = typeof import("./framework-views.js");
-let heavy: Heavy | undefined;
-let fetching: Promise<void> | undefined;
+const heavy = lazyModule(retryingImport(() => import("./framework-views.js")));
 
-/** Fetch the framework's own views; resolved, every door draws in the commit it is first drawn in. */
+/**
+ * Fetch the framework's own views; resolved, every door draws in the commit
+ * it is first drawn in. Rejected when they did not arrive, and asked for
+ * again on the next call (FR-139).
+ */
 export function fetchFrameworkViews(): Promise<void> {
-  return (fetching ??= import("./framework-views.js").then((views) => {
-    heavy = views;
-  }));
+  return heavy.load().then(() => undefined);
 }
 
 const CELLS: readonly { readonly cardinality: Cardinality; readonly fidelity: Fidelity; readonly slot?: "page" | "card" | "row" }[] = [
@@ -46,11 +45,12 @@ interface DoorProps {
 
 /** The view the framework registered for this cell, drawn with the props the door was. */
 function Drawn({ schema, specs, kind, view }: DoorProps) {
-  const View = heavy!.frameworkViews(schema, specs).lookup(kind as never, { cardinality: view.cardinality, fidelity: view.fidelity }) as ViewComponent<AnySchema> | undefined;
+  const View = heavy.current!.frameworkViews(schema, specs).lookup(kind as never, { cardinality: view.cardinality, fidelity: view.fidelity }) as ViewComponent<AnySchema> | undefined;
   return View ? <View {...view} /> : null;
 }
 
-const Arriving = lazy(() => fetchFrameworkViews().then(() => ({ default: Drawn as ComponentType<DoorProps> })));
+/* Drawn once they are here; until then the line, and they are asked for again (FR-139). */
+const Arriving = heavy.part((_, props: DoorProps) => <Drawn {...props} />, { what: "This view" });
 
 /** Registers a door for every cell the framework's own views fill: its defaults, and the declaration's specs over them. */
 export function registerFrameworkViews<S extends AnySchema>(registry: ReactViewRegistry<S>, schema: S, specs: ViewSpecsByKind | undefined): ReactViewRegistry<S> {
@@ -58,10 +58,8 @@ export function registerFrameworkViews<S extends AnySchema>(registry: ReactViewR
     const slots = specs?.[kind];
     for (const cell of CELLS) {
       const Door: ViewComponent<S> = (view: ViewProps<S>) => {
-        // Which of the two this door is, it stays: a change of element would draw the view again from nothing.
-        const [here] = useState(() => heavy !== undefined);
-        const props: DoorProps = { schema, specs, kind, view: view as unknown as ViewProps<AnySchema> };
-        return here ? <Drawn {...props} /> : <Arriving {...props} />;
+        // Drawn at once when the views are here, and the same element either way (`lazyModule`).
+        return <Arriving schema={schema} specs={specs} kind={kind} view={view as unknown as ViewProps<AnySchema>} />;
       };
       const bySpec = cell.slot !== undefined && slots?.[cell.slot] !== undefined;
       registry.register(kind as never, { cardinality: cell.cardinality, fidelity: cell.fidelity }, bySpec ? Door : markDefaultView(Door));

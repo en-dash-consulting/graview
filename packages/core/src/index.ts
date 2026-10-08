@@ -409,3 +409,5 @@ export { defineApp } from "./app.js";
 export type { EntityBinding, GraviewApp, LensDeclaration } from "./app.js";
 export { foldPresence, nextExpiry, parseParticipant, participantKey, PRESENCE_TTL_MS, presenceName, presenceStands, REMOTE_PRESENCE_TTL_MS, samePresence, VISITOR_PRESENCE_TTL_MS } from "./presence.js";
 export type { Participant, Presence, PresenceChannel, PresenceRobot } from "./presence.js";
+// A part fetched when it is first drawn, asked for again after it failed to arrive (FR-139).
+export { retryingImport } from "./retrying-import.js";

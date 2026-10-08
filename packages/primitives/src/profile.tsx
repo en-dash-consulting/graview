@@ -1,7 +1,8 @@
 import { labelOf, nameOfAuthor, type AnySchema } from "@graview/core";
 import { POPOVER_STYLE, useGraview, usePopover } from "@graview/react/provider";
-import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { TOOL, toolStyle } from "./app-bar.js";
+import { barPanes as panes } from "./bar-panes-door.js";
 
 /**
  * WHO YOU ARE AT THIS KEYBOARD, AND WHAT YOU SET FOR YOURSELF.
@@ -86,12 +87,13 @@ export function Profile<S extends AnySchema>({
    * so a studio it opened outlives the menu (below).
    */
   const [everOpened, setEverOpened] = useState(false);
-  // Fetched once the page has drawn, so the first press opens a full menu.
-  useEffect(() => {
-    const later = setTimeout(fetchPane, 2500);
-    return () => clearTimeout(later);
-  }, []);
+  // Fetched once the page has drawn and is idle, while it is online, so the first press opens a full menu (FR-139).
+  useEffect(() => whenIdle(fetchPane), []);
   if (open && !everOpened) setEverOpened(true);
+  // Each open asks again for a part that did not arrive (FR-139).
+  useEffect(() => {
+    if (open) fetchPane();
+  }, [open]);
 
   /*
    * The person's own record, WHERE THERE IS ONE.
@@ -199,7 +201,7 @@ export function Profile<S extends AnySchema>({
         >
           {everOpened ? (
             <Suspense fallback={null}>
-              <ProfilePane<S> part="top" name={name} me={me} profileHref={profileHref} hostActions={hostActions} close={() => popover.setOpen(false)} />
+              <ProfileTop part="top"name={name} me={me} profileHref={profileHref} hostActions={hostActions} close={() => popover.setOpen(false)} />
             </Suspense>
           ) : null}
           {/*
@@ -223,7 +225,7 @@ export function Profile<S extends AnySchema>({
 
           {everOpened ? (
             <Suspense fallback={null}>
-              <ProfilePane<S> part="rest" name={name} me={me} scheme={scheme} onScheme={onScheme} hostActions={hostActions} close={() => popover.setOpen(false)} />
+              <ProfileRest part="rest"name={name} me={me} scheme={scheme} onScheme={onScheme} hostActions={hostActions} close={() => popover.setOpen(false)} />
             </Suspense>
           ) : null}
         </section>
@@ -248,8 +250,31 @@ const NO_HOST_ACTIONS: readonly HostAction[] = [];
 
 
 
-const fetchPane = () => void import("./bar-panes.js");
-const ProfilePane = lazy(() => import("./bar-panes.js").then((pane) => ({ default: pane.ProfilePane }))) as typeof import("./bar-panes.js").ProfilePane;
+/*
+ * WHAT IS BEHIND THE PERSON, ASKED FOR AGAIN WHEN IT DID NOT ARRIVE (FR-139).
+ * Reached for while the network was away, the menu says so in one line with
+ * "Try again", and its part arrives when the browser is back online, when
+ * the person is reached for again, or when the button is pressed. Said once,
+ * at the top: the rest of the menu is quiet while it waits.
+ */
+const fetchPane = () => panes.prefetch();
+type PaneProps = Parameters<typeof import("./bar-panes.js").ProfilePane<AnySchema>>[0];
+const ProfileTop = panes.part((pane, props: PaneProps) => <pane.ProfilePane {...props} />, { what: "The rest of your menu" });
+const ProfileRest = panes.part((pane, props: PaneProps) => <pane.ProfilePane {...props} />, { quiet: true });
+
+/** When the page is idle and online — or, where the browser cannot say when it is idle, a little after it has drawn. */
+function whenIdle(then: () => void): () => void {
+  const go = () => {
+    if (typeof navigator === "undefined" || navigator.onLine !== false) then();
+  };
+  const idle = globalThis as { requestIdleCallback?: (run: () => void, options?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+  if (idle.requestIdleCallback) {
+    const asked = idle.requestIdleCallback(go, { timeout: 5000 });
+    return () => idle.cancelIdleCallback?.(asked);
+  }
+  const later = setTimeout(go, 2500);
+  return () => clearTimeout(later);
+}
 
 /** One letter for the mark, from a name rather than from an id. */
 function initial(name: string): string {

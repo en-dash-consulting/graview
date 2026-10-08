@@ -1,4 +1,4 @@
-import type { AnySchema, Principal, Store } from "@graview/core";
+import { retryingImport, type AnySchema, type Principal, type Store } from "@graview/core";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import { checkManifest, workerViewProps, type WorkerViewManifest } from "./manifest.js";
 import type { OpenDrawing, ViewRefusal } from "./open-draw.js";
@@ -6,7 +6,8 @@ import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, 
 import { startWorker, type GuestWorkerSource, type StartedWorker } from "./worker-start.js";
 import { judgeCodeAct } from "./writes.js";
 import { createDrawBudget } from "./draw-budget.js";
-import { checkViewSource, viewScript } from "./view-source.js";
+import { checkViewSource } from "./view-source.js";
+import { viewScript } from "./view-script.js";
 import { createLinks, type Destination } from "./links.js";
 import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand } from "./theme.js";
 
@@ -18,6 +19,10 @@ export type WorkerViewCode = GuestWorkerSource | { readonly source: string };
  * the worker, draws the plain face of what the view was shown in its place
  * (or the host's own `fallback`), and says why.
  */
+/* The host's drawing and press reader, asked for again with URLs of their own when they did not arrive (FR-139). */
+const openDrawChunk = retryingImport(() => import("./open-draw.js"));
+const pressChunk = retryingImport(() => import("./press.js"));
+
 export type WorkerViewFailure =
   /** Its manifest names a kind, an edge or an act the app does not declare (FR-91): it was never started. */
   | "manifest"
@@ -365,7 +370,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
 
   /* The records the view was last shown: a press may be bound to one of these, and to nothing else (FR-92). */
   let shown: ReadonlySet<string> = new Set();
-  void Promise.all([import("./open-draw.js"), import("./press.js")]).then(([{ createOpenDrawing }, { createPressReader, judgePress }]) => {
+  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing }, { createPressReader, judgePress }]) => {
     if (failed) return;
     const reader = createPressReader();
     drawing = createOpenDrawing(shadow, {
@@ -404,7 +409,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       },
     });
     for (const one of waiting.splice(0)) draw(one);
-  });
+  },
+  // The drawing did not arrive (the network away as it was drawn): the plain face says so, and it is asked for again as the view is drawn again (FR-139).
+  () => fail("start", "the view's drawing could not be loaded"));
 
   const begin = (source: GuestWorkerSource) => (started = startWorker(window, {
     source,
