@@ -1,6 +1,6 @@
 {
   "name": "graview",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "type": "module",
   "description": "The Graview command line: start a product, check its declaration, write its agent docs, serve its store, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.",
   "keywords": [
