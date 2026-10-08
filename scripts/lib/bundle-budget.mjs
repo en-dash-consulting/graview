@@ -115,6 +115,8 @@ export const BUDGETS = [
     // relation said in its words: 3_892 / 1_348 more. Measured at 517_736 / 177_866.
     // Raised by the security review before 0.1.18 (a retry imports only a chunk on the bundle's own origin; a link's pins and
     // dimensions have no prototype). Measured at 517_905 / 177_951.
+    // Raised when a lens double-clicked from Up came to open it: the first press waits a double-click's length for the
+    // second where the pointer still is, and the one stop down into a picture (`withPicture`): 1_034 / 392 more, over the security review. Measured at 518_939 / 178_343.
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review and module moves. Measured at 528_973 / 181_573.
     minified: 529_500,
     gzipped: 181_900,
@@ -372,6 +374,7 @@ export const BUDGETS = [
     // scene's record and the record in focus held to its box: 4_345 / 1_455 more. Measured at 1_561_802 / 472_444.
     // Raised by the security review before 0.1.18 (a retry imports only a chunk on the bundle's own origin; a link's pins and
     // dimensions have no prototype). Measured at 1_561_966 / 472_529.
+    // Raised when a lens double-clicked from Up came to open it: 985 / 364 more, over the security review. Measured at 1_562_951 / 472_893.
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review and module moves. Measured at 1_580_701 / 478_984.
     minified: 1_581_300,
     gzipped: 479_400,
@@ -432,6 +435,7 @@ export const BUDGETS = [
     // Measured at 1_527_773 / 457_563.
     // Raised by the security review before 0.1.18 (a retry imports only a chunk on the bundle's own origin; a link's pins and
     // dimensions have no prototype). Measured at 1_527_937 / 457_645.
+    // Raised with every face's when a lens double-clicked from Up came to open it: 985 / 370 more, over the security review. Measured at 1_528_922 / 458_015.
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review and module moves. Measured at 1_544_481 / 462_997.
     minified: 1_545_000,
     gzipped: 463_400,

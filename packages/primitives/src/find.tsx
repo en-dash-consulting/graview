@@ -1,5 +1,5 @@
 import { actsOn, counted, type AnySchema, type Hit } from "@graview/core";
-import { aggregateId, kindCardId, withFocus, withJackIn, withOverview, withoutSearch, withQuery, withSelection, withWithin } from "@graview/layout/view";
+import { kindCardId, withFocus, withJackIn, withOverview, withoutSearch, withPicture, withQuery, withSelection } from "@graview/layout/view";
 import { useKit } from "@graview/react/drawing";
 import { POPOVER_STYLE, useFound, useGraview, usePopover, useViolations } from "@graview/react/provider";
 import { hueFor } from "@graview/render";
@@ -135,7 +135,7 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
         setView((stop) => withJackIn(stop, kindCardId(hit.kind), { ownPicture: true, ...(stop.q ? { carry: stop.q } : {}) }));
         break;
       case "place":
-        setView((stop) => withWithin(withOverview(withFocus(stop, aggregateId(hit.kind)), false), "view", hit.as));
+        setView((stop) => withPicture(stop, hit.kind, hit.as));
         break;
       case "rule": {
         const named = violations.filter((violation) => violation.invariant === hit.name).flatMap((violation) => violation.nodeIds);

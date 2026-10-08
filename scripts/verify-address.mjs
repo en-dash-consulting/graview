@@ -22,6 +22,9 @@
  *   back to the page the reader was on (FR-137); a picture of the scene's
  *   chosen from the bar moves the scene's `in.view` and its address
  *   together, a step Back undoes (FR-144);
+ *   from Up, a lens double-clicked on its district goes down into it — the
+ *   kind in focus, that picture `in.view`, the address saying so — and Back
+ *   returns to Up;
  *   a link to a stop at the bare address still opens the scene, tidied to
  *   the scene's address; a host that mounts on the Graview lands there —
  *   unless the app has a home view, which it then opens on (FR-136);
@@ -338,6 +341,31 @@ try {
       } catch (error) {
         one.error = String(error?.message ?? error);
       }
+      if (viewport.width >= 1024) {
+        try {
+          /*
+           * A LENS DOUBLE-CLICKED FROM UP OPENS IT. From Up, the tasks'
+           * district says its pictures under it; a double-click on one goes
+           * down into it — the tasks in focus, on the ground, that picture
+           * `in.view`, the address saying so — and Back returns to Up.
+           */
+          const scene = async () => ({
+            ...(await state()),
+            up: await tab.evaluate(() => document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true"),
+          });
+          await go(`${BASE}/places/overview#overview=1`);
+          await tab.waitForTimeout(600);
+          one.lensUp = await scene();
+          await tab.dblclick('[data-testid="showing-the-board"]', { timeout: 10_000 });
+          await tab.waitForTimeout(1200);
+          one.lensDown = await scene();
+          await tab.goBack();
+          await tab.waitForTimeout(1200);
+          one.lensBack = await scene();
+        } catch (error) {
+          one.lensError = String(error?.message ?? error);
+        }
+      }
       try {
         /*
          * A SEAT CHANGE IS NOT A STOP. On the scene focused on a task, the
@@ -614,6 +642,27 @@ try {
     ok: Object.entries(results)
       .filter(([name]) => !name.endsWith("article"))
       .every(([, one]) => !one.error && one.homeFirst.face === "pages" && one.homeFirst.homeView && one.homeFirst.path.replace(/\/$/, "") === SWAP_BASE && !one.homeFirst.scenePressed),
+  };
+  /* From Up, a lens double-clicked goes down into it, the address says so, and Back returns to Up. */
+  const desks = Object.entries(results).filter(([name]) => !name.endsWith("article") && name.includes("1440"));
+  const stopOf = (hash) => new URLSearchParams(String(hash ?? "").replace(/^#/, ""));
+  report.checks.aLensDoubleClickedFromUpOpensItAndBackReturnsUp = {
+    seen: Object.fromEntries(desks.map(([name, one]) => [name, one.lensError ? { error: one.lensError } : { up: one.lensUp, down: one.lensDown, back: one.lensBack }])),
+    ok:
+      desks.length === engines.length &&
+      desks.every(
+        ([, { lensError, lensUp, lensDown, lensBack }]) =>
+          !lensError &&
+          lensUp.up &&
+          !lensDown.up &&
+          lensDown.face !== "pages" &&
+          lensDown.path === `${BASE}/places/overview` &&
+          stopOf(lensDown.hash).get("focus") === "aggregate:task" &&
+          stopOf(lensDown.hash).get("in.view") === "the-board" &&
+          stopOf(lensDown.hash).get("overview") === null &&
+          lensBack.up &&
+          lensBack.path === `${BASE}/places/overview`,
+      ),
   };
   report.checks.aHostThatKeepsItsOwnHistoryIsToldEachPage = {
     seen: pick("told"),

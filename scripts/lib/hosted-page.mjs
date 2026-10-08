@@ -107,6 +107,12 @@ export const FACE_DOORS = {
  * took it to 589 828 bytes (576.0 KB), 186 more; the claim rises by that
  * with about 0.2 KB of room: 576.2 KB, which leaves Cloud's shell 18.8 KB
  * under its 595.
+ *
+ * A lens double-clicked from Up opening it (the one stop down into a
+ * picture that the bar's places and `go.place` now share), over the security
+ * review before 0.1.18, took it to 590 033 bytes, 41 more than without it;
+ * the claim rises by 0.1 KB to 576.3 KB, which leaves Cloud's shell 18.7 KB
+ * under its 595.
  * Views beside editing (FR-149–FR-151), long text on a record page
  * (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed in
  * one integration over a record drawn once and the security review before
