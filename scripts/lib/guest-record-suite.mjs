@@ -122,7 +122,8 @@ window.__handle.drawn().then(() => { window.__ready = true; });
           heading: root?.querySelector(".record h2")?.textContent ?? null,
           paragraphs: [...(root?.querySelectorAll(".draft p") ?? [])].map((p) => p.textContent),
           fields: Boolean(fields),
-          draftEditable: fields?.querySelector('[data-graview-field="draft"]')?.getAttribute("data-graview-editable") ?? null,
+          // The draft is prose (FR-147): its "Edit" stands by its label; a short value is its own button.
+          draftEditable: fields?.querySelector('[data-graview-long="draft"] [data-graview-editable], [data-graview-field="draft"][data-graview-editable]')?.getAttribute("data-graview-editable") ?? null,
           below,
           facts: Boolean(document.querySelector('[data-testid="record-fields"]')),
           acts: Boolean(document.querySelector('[data-testid="record-actions"]')),
