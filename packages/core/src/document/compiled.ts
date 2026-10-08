@@ -25,6 +25,7 @@ import { error, type Finding } from "./findings.js";
 import type { EffectSpec, FieldSpec, GraviewDocument, KindSpec, SightSpec, ValueSpec } from "./schema.js";
 import { renderTemplate, type TemplatePart } from "./template.js";
 import { rememberDocument } from "./remembered.js";
+import { respellDocument } from "./respell.js";
 import { moneyOf } from "./brand.js";
 import type { HomeView, ViewSpecsByKind } from "./views.js";
 
@@ -263,8 +264,14 @@ export function appFrom(compiled: unknown, options: AppFromOptions = {}): Compil
   if (format !== COMPILED_FORMAT) {
     return { ok: false, findings: [error("compiled-format", "format", format === undefined ? "this is not a compiled Graview app" : `this compiled app is ${JSON.stringify(format)}, and this build reads ${COMPILED_FORMAT}`, "compile the document instead")] };
   }
-  const plan = compiled as unknown as CompiledApp;
-  const document = plan.document as GraviewDocument | undefined;
+  /*
+   * Its document is read as this build spells it (FR-134): a compiled app an
+   * older build made carries the document as that build read it, and 0.1.15
+   * read a setting's `honored` under its old name.
+   */
+  const handed = compiled as unknown as CompiledApp;
+  const document = respellDocument(handed.document as GraviewDocument | undefined).document;
+  const plan: CompiledApp = document === handed.document ? handed : { ...handed, document: document as GraviewDocument };
   const whole =
     isRecord(document) &&
     typeof document.name === "string" &&

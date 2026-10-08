@@ -24,6 +24,8 @@ const { FIXTURES, ANNOUNCED, THIS_BUILD } = await core("conformance/index.js");
 
 const readJson = (path) => JSON.parse(readFileSync(resolve(root, path), "utf8"));
 const vendors = readJson("packages/core/tests/document/fixtures/vendors.gdd.json");
+// As @graview/core@0.1.10's toDocument wrote it, settings and all (FR-134).
+const shortlist0110 = readJson("packages/core/tests/document/fixtures/shortlist-0.1.10.gdd.json");
 const twoLines = {
   format: "graview-document",
   formatVersion: 1,
@@ -58,6 +60,7 @@ const firstOf = (store, kind) => store.graph.nodesOfKind(kind)[0].id;
 const CANDIDATES = [
   { id: "document:vendors", kind: "document", document: vendors },
   { id: "document:two-lines", kind: "document", document: twoLines },
+  { id: "document:shortlist-0.1.10", kind: "document", document: shortlist0110 },
   {
     id: "log:vendors-booked-then-taken-back",
     kind: "log",
