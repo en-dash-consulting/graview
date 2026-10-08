@@ -5,10 +5,10 @@
 <zone>
 
 Zone: Tests React Unit (`tests-react-unit`)
-Files: 31, Cohesion: 1.00, Coupling: 0.00
+Files: 35, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in packages: a-chosen-member-is-not-its-district.test.ts, a-door-that-is-not-there.test.tsx, a-door-the-back-button-knows.test.ts (+28 more)
-Lines: 3183
+Description: Non-source files in packages: a-chosen-member-is-not-its-district.test.ts, a-door-that-is-not-there.test.tsx, a-door-the-back-button-knows.test.ts (+32 more)
+Lines: 3674
 
 </zone>
 
@@ -18,18 +18,21 @@ packages/react/tests/unit/a-chosen-member-is-not-its-district.test.ts (TypeScrip
 packages/react/tests/unit/a-door-that-is-not-there.test.tsx (TypeScript, 91 lines, test)
 packages/react/tests/unit/a-door-the-back-button-knows.test.ts (TypeScript, 57 lines, test)
 packages/react/tests/unit/a-drawn-shape-is-a-control.test.tsx (TypeScript, 74 lines, test)
+packages/react/tests/unit/a-lazy-part-that-failed-tries-again.test.tsx (TypeScript, 130 lines, test)
 packages/react/tests/unit/a-line-goes-under-what-it-crosses.test.ts (TypeScript, 116 lines, test)
 packages/react/tests/unit/a-link-to-a-picture.test.tsx (TypeScript, 113 lines, test)
 packages/react/tests/unit/a-relation-is-captioned-once.test.ts (TypeScript, 71 lines, test)
 packages/react/tests/unit/a-search-lights-the-picture.test.tsx (TypeScript, 92 lines, test)
-packages/react/tests/unit/a-stop-that-still-exists.test.tsx (TypeScript, 166 lines, test)
+packages/react/tests/unit/a-seat-change-is-not-a-stop.test.tsx (TypeScript, 112 lines, test)
+packages/react/tests/unit/a-stop-that-still-exists.test.tsx (TypeScript, 190 lines, test)
 packages/react/tests/unit/a-tile-is-its-district.test.tsx (TypeScript, 54 lines, test)
 packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx (TypeScript, 135 lines, test)
 packages/react/tests/unit/activity.test.ts (TypeScript, 168 lines, test)
 packages/react/tests/unit/administered.test.tsx (TypeScript, 56 lines, test)
 packages/react/tests/unit/an-agent-in-the-room-says-for-whom.test.tsx (TypeScript, 87 lines, test)
-packages/react/tests/unit/binding.test.tsx (TypeScript, 503 lines, test)
+packages/react/tests/unit/binding.test.tsx (TypeScript, 530 lines, test)
 packages/react/tests/unit/channels.test.ts (TypeScript, 57 lines, test)
+packages/react/tests/unit/popovers-are-one-family.test.tsx (TypeScript, 151 lines, test)
 packages/react/tests/unit/remote-presence-forgets-the-gone.test.tsx (TypeScript, 92 lines, test)
 packages/react/tests/unit/routes.test.ts (TypeScript, 74 lines, test)
 packages/react/tests/unit/strands.test.ts (TypeScript, 120 lines, test)
@@ -38,6 +41,7 @@ packages/react/tests/unit/the-edge-says-what-is-past-it.test.tsx (TypeScript, 10
 packages/react/tests/unit/the-ground-under-a-district.test.ts (TypeScript, 136 lines, test)
 packages/react/tests/unit/the-keyboard-always-lands-somewhere.test.tsx (TypeScript, 111 lines, test)
 packages/react/tests/unit/the-occupants.test.tsx (TypeScript, 51 lines, test)
+packages/react/tests/unit/the-provider-carries-only-what-the-frame-draws-with.test.ts (TypeScript, 47 lines, test)
 packages/react/tests/unit/the-row-that-sheds.test.tsx (TypeScript, 102 lines, test)
 packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx (TypeScript, 98 lines, test)
 packages/react/tests/unit/the-seats-standing.test.ts (TypeScript, 64 lines, test)
@@ -52,7 +56,7 @@ packages/react/tests/unit/who-is-where.test.ts (TypeScript, 86 lines, test)
 
 
 Outgoing (this zone → other zones):
-  → react: packages/react/tests/unit/a-chosen-member-is-not-its-district.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-door-that-is-not-there.test.tsx → packages/react/src/local-intelligence.ts; packages/react/tests/unit/a-door-the-back-button-knows.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-drawn-shape-is-a-control.test.tsx → packages/react/src/picking.ts; packages/react/tests/unit/a-line-goes-under-what-it-crosses.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-line-goes-under-what-it-crosses.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-link-to-a-picture.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-link-to-a-picture.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-relation-is-captioned-once.test.ts → packages/react/src/captions.ts; packages/react/tests/unit/a-relation-is-captioned-once.test.ts → packages/react/src/captions.ts; packages/react/tests/unit/a-search-lights-the-picture.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-stop-that-still-exists.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-tile-is-its-district.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-tile-is-its-district.test.tsx → packages/react/src/plots.tsx; packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/activity.test.ts → packages/react/src/activity.ts; packages/react/tests/unit/activity.test.ts → packages/react/src/activity.ts; packages/react/tests/unit/administered.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/an-agent-in-the-room-says-for-whom.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/binding.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/binding.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/channels.test.ts → packages/react/src/channels.ts; packages/react/tests/unit/remote-presence-forgets-the-gone.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/routes.test.ts → packages/react/src/routes.ts; packages/react/tests/unit/strands.test.ts → packages/react/src/index.ts; packages/react/tests/unit/strands.test.ts → packages/react/src/index.ts; packages/react/tests/unit/the-crowd-recedes-in-the-stack.test.ts → packages/react/src/index.ts; packages/react/tests/unit/the-edge-says-what-is-past-it.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-ground-under-a-district.test.ts → packages/react/src/plots.tsx; packages/react/tests/unit/the-keyboard-always-lands-somewhere.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-occupants.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-row-that-sheds.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx → packages/react/src/animation.ts; packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx → packages/react/src/context.tsx; packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx → packages/react/src/view-registry.ts; packages/react/tests/unit/the-seats-standing.test.ts → packages/react/src/robot.ts; packages/react/tests/unit/the-seats-standing.test.ts → packages/react/src/robot.ts; packages/react/tests/unit/tie-route.test.ts → packages/react/src/scene.tsx; packages/react/tests/unit/two-relations-are-two-lines.test.ts → packages/react/src/parallel.ts; packages/react/tests/unit/where-is.test.ts → packages/react/src/index.ts; packages/react/tests/unit/where-is.test.ts → packages/react/src/index.ts; packages/react/tests/unit/who-is-where.test.ts → packages/react/src/context.tsx; packages/react/tests/unit/who-is-where.test.ts → packages/react/src/presence.ts
+  → react: packages/react/tests/unit/a-chosen-member-is-not-its-district.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-door-that-is-not-there.test.tsx → packages/react/src/local-intelligence.ts; packages/react/tests/unit/a-door-the-back-button-knows.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-drawn-shape-is-a-control.test.tsx → packages/react/src/picking.ts; packages/react/tests/unit/a-lazy-part-that-failed-tries-again.test.tsx → packages/react/src/lazy-part.tsx; packages/react/tests/unit/a-line-goes-under-what-it-crosses.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-line-goes-under-what-it-crosses.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-link-to-a-picture.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-link-to-a-picture.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-relation-is-captioned-once.test.ts → packages/react/src/captions.ts; packages/react/tests/unit/a-relation-is-captioned-once.test.ts → packages/react/src/captions.ts; packages/react/tests/unit/a-search-lights-the-picture.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-seat-change-is-not-a-stop.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-stop-that-still-exists.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-tile-is-its-district.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-tile-is-its-district.test.tsx → packages/react/src/plots.tsx; packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/activity.test.ts → packages/react/src/activity.ts; packages/react/tests/unit/activity.test.ts → packages/react/src/activity.ts; packages/react/tests/unit/administered.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/an-agent-in-the-room-says-for-whom.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/binding.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/binding.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/channels.test.ts → packages/react/src/channels.ts; packages/react/tests/unit/popovers-are-one-family.test.tsx → packages/react/src/popover.ts; packages/react/tests/unit/popovers-are-one-family.test.tsx → packages/react/src/popover.ts; packages/react/tests/unit/remote-presence-forgets-the-gone.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/routes.test.ts → packages/react/src/routes.ts; packages/react/tests/unit/strands.test.ts → packages/react/src/index.ts; packages/react/tests/unit/strands.test.ts → packages/react/src/index.ts; packages/react/tests/unit/the-crowd-recedes-in-the-stack.test.ts → packages/react/src/index.ts; packages/react/tests/unit/the-edge-says-what-is-past-it.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-ground-under-a-district.test.ts → packages/react/src/plots.tsx; packages/react/tests/unit/the-keyboard-always-lands-somewhere.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-occupants.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-provider-carries-only-what-the-frame-draws-with.test.ts → packages/react/src/drawing.ts; packages/react/tests/unit/the-provider-carries-only-what-the-frame-draws-with.test.ts → packages/react/src/index.ts; packages/react/tests/unit/the-provider-carries-only-what-the-frame-draws-with.test.ts → packages/react/src/provider.ts; packages/react/tests/unit/the-row-that-sheds.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx → packages/react/src/animation.ts; packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx → packages/react/src/context.tsx; packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx → packages/react/src/view-registry.ts; packages/react/tests/unit/the-seats-standing.test.ts → packages/react/src/robot.ts; packages/react/tests/unit/the-seats-standing.test.ts → packages/react/src/robot.ts; packages/react/tests/unit/tie-route.test.ts → packages/react/src/scene.tsx; packages/react/tests/unit/two-relations-are-two-lines.test.ts → packages/react/src/parallel.ts; packages/react/tests/unit/where-is.test.ts → packages/react/src/index.ts; packages/react/tests/unit/where-is.test.ts → packages/react/src/index.ts; packages/react/tests/unit/who-is-where.test.ts → packages/react/src/context.tsx; packages/react/tests/unit/who-is-where.test.ts → packages/react/src/placement.ts
 
 </imports>
 
@@ -65,6 +69,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 218 internal calls, 193 outgoing, 0 incoming (cohesion: 0.53, coupling: 0.47)
+- [call graph] 280 internal calls, 204 outgoing, 0 incoming (cohesion: 0.58, coupling: 0.42)
 
 </insights>

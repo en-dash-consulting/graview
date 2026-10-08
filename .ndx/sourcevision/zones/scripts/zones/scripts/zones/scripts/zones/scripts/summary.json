@@ -1,0 +1,23 @@
+{
+  "id": "scripts/scripts/scripts/scripts",
+  "name": "Scripts",
+  "description": "8 files, primarily JavaScript",
+  "files": [
+    "apps/todo/scripts/run-a11y.mjs",
+    "scripts/lib/ledger.mjs",
+    "scripts/lib/serve.mjs",
+    "scripts/survey-ui.mjs",
+    "scripts/verify-chat.mjs",
+    "scripts/verify-chrome.mjs",
+    "scripts/verify-desk.mjs",
+    "scripts/verify-served.mjs"
+  ],
+  "entryPoints": [
+    "scripts/lib/ledger.mjs",
+    "scripts/lib/serve.mjs"
+  ],
+  "cohesion": 0.36,
+  "coupling": 0.64,
+  "fileCount": 8,
+  "lineCount": 2104
+}

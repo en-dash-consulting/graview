@@ -8,7 +8,7 @@ Zone: Tests Ship Integration (`tests-ship-integration`)
 Files: 16, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: Non-source files in packages: a-client-that-falls-behind-adopts-the-servers-state.test.ts, a-declaration-swap-carries-the-hosts-wiring.test.ts, a-live-client-a-host-can-observe.test.ts (+13 more)
-Lines: 3358
+Lines: 3384
 
 </zone>
 
@@ -18,7 +18,7 @@ packages/ship/tests/integration/a-client-that-falls-behind-adopts-the-servers-st
 packages/ship/tests/integration/a-declaration-swap-carries-the-hosts-wiring.test.ts (TypeScript, 204 lines, test)
 packages/ship/tests/integration/a-live-client-a-host-can-observe.test.ts (TypeScript, 374 lines, test)
 packages/ship/tests/integration/a-live-wire.test.ts (TypeScript, 374 lines, test)
-packages/ship/tests/integration/a-refusal-says-why-on-the-wire.test.ts (TypeScript, 218 lines, test)
+packages/ship/tests/integration/a-refusal-says-why-on-the-wire.test.ts (TypeScript, 244 lines, test)
 packages/ship/tests/integration/a-socket-holds-presence-without-a-heartbeat.test.ts (TypeScript, 178 lines, test)
 packages/ship/tests/integration/a-view-claims-its-channel-on-the-wire.test.ts (TypeScript, 104 lines, test)
 packages/ship/tests/integration/a-visitor-who-goes-is-said-to-go.test.ts (TypeScript, 63 lines, test)
@@ -50,6 +50,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 329 internal calls, 141 outgoing, 0 incoming (cohesion: 0.7, coupling: 0.3)
+- [call graph] 337 internal calls, 142 outgoing, 0 incoming (cohesion: 0.7, coupling: 0.3)
 
 </insights>

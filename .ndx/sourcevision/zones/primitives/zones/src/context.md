@@ -5,34 +5,54 @@
 <zone>
 
 Zone: Src (`primitives/src`)
-Files: 7, Cohesion: 0.38, Coupling: 0.63
-Description: 7 files, primarily TypeScript
-Entry points: packages/primitives/src/arrange-bar.tsx, packages/primitives/src/default-view.tsx, packages/primitives/src/lens/arranging.tsx, packages/primitives/src/relation-key.tsx, packages/primitives/src/spec-css.ts, packages/primitives/src/spec-views.tsx
-Lines: 1343
+Files: 12, Cohesion: 0.57, Coupling: 0.43
+Description: 12 files, primarily TypeScript
+Entry points: packages/primitives/src/app-bar.tsx, packages/primitives/src/app-title.tsx, packages/primitives/src/figure.tsx, packages/primitives/src/frame.ts, packages/primitives/src/markup.ts, packages/primitives/src/pages.ts, packages/primitives/src/profile.tsx, packages/primitives/src/workbench/back-out.tsx, packages/primitives/src/workbench/standing.tsx
+Lines: 1667
 
 </zone>
 
 <files>
 
-packages/primitives/src/arrange-bar.tsx (TypeScript, 456 lines, source)
-packages/primitives/src/default-view.tsx (TypeScript, 57 lines, source)
-packages/primitives/src/lens/arranging.tsx (TypeScript, 102 lines, source)
-packages/primitives/src/pages.ts (TypeScript, 19 lines, source)
-packages/primitives/src/relation-key.tsx (TypeScript, 267 lines, source)
-packages/primitives/src/spec-css.ts (TypeScript, 30 lines, source)
-packages/primitives/src/spec-views.tsx (TypeScript, 412 lines, source)
+packages/primitives/src/app-bar.tsx (TypeScript, 651 lines, source)
+packages/primitives/src/app-title.tsx (TypeScript, 87 lines, source)
+packages/primitives/src/bar-panes-door.ts (TypeScript, 10 lines, source)
+packages/primitives/src/figure.tsx (TypeScript, 108 lines, source)
+packages/primitives/src/frame.ts (TypeScript, 30 lines, source)
+packages/primitives/src/markup.ts (TypeScript, 24 lines, source)
+packages/primitives/src/pages.ts (TypeScript, 30 lines, source)
+packages/primitives/src/popover.ts (TypeScript, 26 lines, source)
+packages/primitives/src/profile.tsx (TypeScript, 294 lines, source)
+packages/primitives/src/workbench/back-out.tsx (TypeScript, 262 lines, source)
+packages/primitives/src/workbench/descent.ts (TypeScript, 24 lines, source)
+packages/primitives/src/workbench/standing.tsx (TypeScript, 121 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/primitives/src/lens/arranging.tsx → packages/primitives/src/arrange-bar.tsx {ArrangeBar, arrangementOf, withArrangement}
-  packages/primitives/src/pages.ts → packages/primitives/src/arrange-bar.tsx {ArrangeBar, arrangementCaption, arrangementOf, withArrangement}
-  packages/primitives/src/pages.ts → packages/primitives/src/arrange-bar.tsx {ArrangeBarProps}
-  packages/primitives/src/pages.ts → packages/primitives/src/default-view.tsx {DefaultViewElsewhere}
-  packages/primitives/src/pages.ts → packages/primitives/src/relation-key.tsx {RelationMark}
-  packages/primitives/src/spec-views.tsx → packages/primitives/src/default-view.tsx {DefaultView}
-  packages/primitives/src/spec-views.tsx → packages/primitives/src/spec-css.ts {SPEC_VIEW_CSS}
+  packages/primitives/src/app-bar.tsx → packages/primitives/src/app-title.tsx {AppMark}
+  packages/primitives/src/app-title.tsx → packages/primitives/src/markup.ts {useMarkup}
+  packages/primitives/src/figure.tsx → packages/primitives/src/markup.ts {useMarkup}
+  packages/primitives/src/frame.ts → packages/primitives/src/app-bar.tsx {AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, HOME_KEY, HOME_PATH, TOOL, toolStyle, useBarFind}
+  packages/primitives/src/frame.ts → packages/primitives/src/app-bar.tsx {BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch}
+  packages/primitives/src/frame.ts → packages/primitives/src/app-title.tsx {AppMark, AppTitle, useFavicon}
+  packages/primitives/src/frame.ts → packages/primitives/src/profile.tsx {Profile}
+  packages/primitives/src/frame.ts → packages/primitives/src/profile.tsx {HostAction}
+  packages/primitives/src/frame.ts → packages/primitives/src/workbench/descent.ts {descentTarget}
+  packages/primitives/src/frame.ts → packages/primitives/src/workbench/standing.tsx {Standing, StandingDot, standingWords}
+  packages/primitives/src/pages.ts → packages/primitives/src/app-bar.tsx {AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, HOME_KEY, HOME_PATH, TOOL, toolStyle, useBarFind}
+  packages/primitives/src/pages.ts → packages/primitives/src/app-bar.tsx {BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch}
+  packages/primitives/src/pages.ts → packages/primitives/src/app-title.tsx {AppMark, AppTitle, useFavicon}
+  packages/primitives/src/pages.ts → packages/primitives/src/figure.tsx {KindFigure}
+  packages/primitives/src/pages.ts → packages/primitives/src/markup.ts {useMarkup}
+  packages/primitives/src/pages.ts → packages/primitives/src/profile.tsx {Profile}
+  packages/primitives/src/pages.ts → packages/primitives/src/workbench/standing.tsx {StandingDot, standingWords}
+  packages/primitives/src/profile.tsx → packages/primitives/src/app-bar.tsx {TOOL, toolStyle}
+  packages/primitives/src/profile.tsx → packages/primitives/src/bar-panes-door.ts {panes}
+  packages/primitives/src/workbench/back-out.tsx → packages/primitives/src/workbench/descent.ts {descentTarget}
+  packages/primitives/src/workbench/standing.tsx → packages/primitives/src/app-bar.tsx {toolStyle}
+  packages/primitives/src/workbench/standing.tsx → packages/primitives/src/bar-panes-door.ts {barPanes}
 
 </imports>

@@ -5,17 +5,20 @@
 <zone>
 
 Zone: Tests Pages Unit (`tests-pages-unit`)
-Files: 32, Cohesion: 1.00, Coupling: 0.00
+Files: 39, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in packages: a-document-wears-both-faces.test.tsx, a-form-asks-in-the-records-words.test.tsx, a-link-a-browser-would-render.test.tsx (+29 more)
-Lines: 2893
+Description: Non-source files in packages: a-declared-lens-is-a-page.test.tsx, a-document-wears-both-faces.test.tsx, a-form-asks-in-the-records-words.test.tsx (+36 more)
+Lines: 3565
 
 </zone>
 
 <files>
 
+packages/pages/tests/unit/a-declared-lens-is-a-page.test.tsx (TypeScript, 106 lines, test)
 packages/pages/tests/unit/a-document-wears-both-faces.test.tsx (TypeScript, 43 lines, test)
 packages/pages/tests/unit/a-form-asks-in-the-records-words.test.tsx (TypeScript, 65 lines, test)
+packages/pages/tests/unit/a-form-names-its-parts.test.tsx (TypeScript, 85 lines, test)
+packages/pages/tests/unit/a-home-view-is-the-home.test.tsx (TypeScript, 113 lines, test)
 packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx (TypeScript, 84 lines, test)
 packages/pages/tests/unit/a-list-fits-a-phone-at-200.test.tsx (TypeScript, 23 lines, test)
 packages/pages/tests/unit/a-list-left-empty-is-sent-empty.test.tsx (TypeScript, 47 lines, test)
@@ -23,24 +26,28 @@ packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx (TypeScript, 12
 packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx (TypeScript, 184 lines, test)
 packages/pages/tests/unit/a-page-links-to-a-picture.test.ts (TypeScript, 36 lines, test)
 packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx (TypeScript, 66 lines, test)
-packages/pages/tests/unit/a-picker-fits-its-field.test.tsx (TypeScript, 31 lines, test)
+packages/pages/tests/unit/a-picker-fits-its-field.test.tsx (TypeScript, 34 lines, test)
 packages/pages/tests/unit/a-record-says-every-field.test.ts (TypeScript, 36 lines, test)
+packages/pages/tests/unit/a-record-says-what-it-works-out.test.ts (TypeScript, 51 lines, test)
 packages/pages/tests/unit/a-relation-says-its-own-words.test.tsx (TypeScript, 34 lines, test)
-packages/pages/tests/unit/a-repair-asks-what-it-left-open.test.tsx (TypeScript, 67 lines, test)
+packages/pages/tests/unit/a-repair-asks-what-it-left-open.test.tsx (TypeScript, 71 lines, test)
 packages/pages/tests/unit/a-search-fits-a-phone-at-200.test.tsx (TypeScript, 38 lines, test)
+packages/pages/tests/unit/a-status-board-moves-by-acts.test.tsx (TypeScript, 133 lines, test)
 packages/pages/tests/unit/a-stranger-is-shown-nobody.test.tsx (TypeScript, 65 lines, test)
 packages/pages/tests/unit/a-time-of-day-is-asked-for.test.tsx (TypeScript, 28 lines, test)
 packages/pages/tests/unit/asked-as-the-person.test.tsx (TypeScript, 88 lines, test)
 packages/pages/tests/unit/its-own-far-end.test.tsx (TypeScript, 79 lines, test)
 packages/pages/tests/unit/one-is-not-a-pile.test.tsx (TypeScript, 50 lines, test)
 packages/pages/tests/unit/one-main-under-a-shell.test.tsx (TypeScript, 118 lines, test)
-packages/pages/tests/unit/parity.test.tsx (TypeScript, 567 lines, test)
+packages/pages/tests/unit/one-place-says-how-many-problems.test.tsx (TypeScript, 70 lines, test)
+packages/pages/tests/unit/parity.test.tsx (TypeScript, 569 lines, test)
 packages/pages/tests/unit/the-assistant-on-every-page.test.tsx (TypeScript, 60 lines, test)
 packages/pages/tests/unit/the-button-says-the-heading.test.tsx (TypeScript, 39 lines, test)
 packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx (TypeScript, 214 lines, test)
-packages/pages/tests/unit/the-map-of-kinds.test.tsx (TypeScript, 127 lines, test)
-packages/pages/tests/unit/the-pictures-on-pages.test.tsx (TypeScript, 156 lines, test)
+packages/pages/tests/unit/the-map-of-kinds.test.tsx (TypeScript, 130 lines, test)
+packages/pages/tests/unit/the-pictures-on-pages.test.tsx (TypeScript, 169 lines, test)
 packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx (TypeScript, 74 lines, test)
+packages/pages/tests/unit/the-way-back-floats-over-the-face.test.tsx (TypeScript, 89 lines, test)
 packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx (TypeScript, 132 lines, test)
 packages/pages/tests/unit/two-kinds-one-picture-name.test.tsx (TypeScript, 53 lines, test)
 packages/pages/tests/unit/two-ties-of-one-name.test.tsx (TypeScript, 45 lines, test)
@@ -53,7 +60,7 @@ packages/pages/tests/unit/whose-work.test.tsx (TypeScript, 34 lines, test)
 
 
 Outgoing (this zone → other zones):
-  → pages: packages/pages/tests/unit/a-form-asks-in-the-records-words.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-fits-a-phone-at-200.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-left-empty-is-sent-empty.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx → packages/pages/src/page-list.tsx; packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-links-to-a-picture.test.ts → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-picker-fits-its-field.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-record-says-every-field.test.ts → packages/pages/src/index.ts; packages/pages/tests/unit/a-relation-says-its-own-words.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-repair-asks-what-it-left-open.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-search-fits-a-phone-at-200.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-search-fits-a-phone-at-200.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-stranger-is-shown-nobody.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-time-of-day-is-asked-for.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/asked-as-the-person.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/its-own-far-end.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-is-not-a-pile.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-is-not-a-pile.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-main-under-a-shell.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-main-under-a-shell.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/parity.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-assistant-on-every-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-assistant-on-every-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-button-says-the-heading.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-map-of-kinds.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-map-of-kinds.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-pictures-on-pages.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-pictures-on-pages.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-kinds-one-picture-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-kinds-one-picture-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-ties-of-one-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-ties-of-one-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/what-begins-a-kind.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/whose-work.test.tsx → packages/pages/src/index.ts
+  → pages: packages/pages/tests/unit/a-declared-lens-is-a-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-form-asks-in-the-records-words.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-form-names-its-parts.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-home-view-is-the-home.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-fits-a-phone-at-200.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-left-empty-is-sent-empty.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx → packages/pages/src/page-list.tsx; packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-links-to-a-picture.test.ts → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-picker-fits-its-field.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-record-says-every-field.test.ts → packages/pages/src/index.ts; packages/pages/tests/unit/a-record-says-what-it-works-out.test.ts → packages/pages/src/index.ts; packages/pages/tests/unit/a-relation-says-its-own-words.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-repair-asks-what-it-left-open.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-search-fits-a-phone-at-200.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-search-fits-a-phone-at-200.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-status-board-moves-by-acts.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-stranger-is-shown-nobody.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-time-of-day-is-asked-for.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/asked-as-the-person.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/its-own-far-end.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-is-not-a-pile.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-is-not-a-pile.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-main-under-a-shell.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-main-under-a-shell.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-place-says-how-many-problems.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/parity.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-assistant-on-every-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-assistant-on-every-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-button-says-the-heading.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-map-of-kinds.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-map-of-kinds.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-pictures-on-pages.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-pictures-on-pages.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-way-back-floats-over-the-face.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-kinds-one-picture-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-kinds-one-picture-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-ties-of-one-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-ties-of-one-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/what-begins-a-kind.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/whose-work.test.tsx → packages/pages/src/index.ts
 
 </imports>
 
@@ -66,6 +73,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 230 internal calls, 39 outgoing, 0 incoming (cohesion: 0.86, coupling: 0.14)
+- [call graph] 289 internal calls, 40 outgoing, 0 incoming (cohesion: 0.88, coupling: 0.12)
 
 </insights>

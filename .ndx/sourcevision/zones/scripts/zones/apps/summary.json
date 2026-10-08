@@ -1,0 +1,18 @@
+{
+  "id": "scripts/apps",
+  "name": "App Build Config",
+  "description": "6 files, primarily TypeScript",
+  "files": [
+    "apps/discography/vite.config.ts",
+    "apps/gauntlet/vite.config.ts",
+    "apps/launcher/vite.config.ts",
+    "apps/rota/vite.config.ts",
+    "apps/seedbed/vite.config.ts",
+    "apps/todo/vite.config.ts"
+  ],
+  "entryPoints": [],
+  "cohesion": 0,
+  "coupling": 1,
+  "fileCount": 6,
+  "lineCount": 347
+}

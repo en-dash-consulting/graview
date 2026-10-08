@@ -9,14 +9,14 @@ Files: 2, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: 2 files, mostly entry points; entry points index.ts; imported by Packages.
 Entry points: packages/graview/src/index.ts
-Lines: 63
+Lines: 68
 
 </zone>
 
 <files>
 
 packages/graview/src/cli.ts (TypeScript, 11 lines, source)
-packages/graview/src/index.ts (TypeScript, 52 lines, source)
+packages/graview/src/index.ts (TypeScript, 57 lines, source)
 
 </files>
 

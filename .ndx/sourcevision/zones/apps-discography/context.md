@@ -9,13 +9,13 @@ Files: 13, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: 13 files, mostly components and schemas; entry points app.ts, tracklist.tsx, seats.ts; imported by Tests and Apps.
 Entry points: apps/discography/src/domain/app.ts, apps/discography/src/ui/seats.ts, apps/discography/src/ui/tracklist.tsx
-Lines: 1624
+Lines: 1626
 
 </zone>
 
 <files>
 
-apps/discography/src/domain/app.ts (TypeScript, 77 lines, source)
+apps/discography/src/domain/app.ts (TypeScript, 89 lines, source)
 apps/discography/src/domain/brand.ts (TypeScript, 41 lines, source)
 apps/discography/src/domain/invariants.ts (TypeScript, 126 lines, source)
 apps/discography/src/domain/mutations.ts (TypeScript, 285 lines, source)
@@ -23,11 +23,11 @@ apps/discography/src/domain/policy.ts (TypeScript, 22 lines, source)
 apps/discography/src/domain/schema.ts (TypeScript, 117 lines, source)
 apps/discography/src/main.tsx (TypeScript, 94 lines, source)
 apps/discography/src/ui/app.tsx (TypeScript, 112 lines, source)
-apps/discography/src/ui/design.tsx (TypeScript, 376 lines, source)
+apps/discography/src/ui/design.tsx (TypeScript, 377 lines, source)
 apps/discography/src/ui/pages.tsx (TypeScript, 184 lines, source)
 apps/discography/src/ui/seats.ts (TypeScript, 19 lines, source)
 apps/discography/src/ui/tracklist.tsx (TypeScript, 131 lines, source)
-apps/discography/src/ui/views.tsx (TypeScript, 40 lines, source)
+apps/discography/src/ui/views.tsx (TypeScript, 29 lines, source)
 
 </files>
 
@@ -58,6 +58,7 @@ Internal:
   apps/discography/src/ui/design.tsx → apps/discography/src/domain/schema.ts {DiscographySchema}
   apps/discography/src/ui/pages.tsx → apps/discography/src/domain/schema.ts {discographySchema}
   apps/discography/src/ui/pages.tsx → apps/discography/src/domain/schema.ts {DiscographySchema}
+  apps/discography/src/ui/views.tsx → apps/discography/src/domain/app.ts {discographyApp}
   apps/discography/src/ui/views.tsx → apps/discography/src/domain/schema.ts {discographySchema}
   apps/discography/src/ui/views.tsx → apps/discography/src/domain/schema.ts {DiscographySchema}
   apps/discography/src/ui/views.tsx → apps/discography/src/ui/tracklist.tsx {createTracklistLens}
@@ -65,6 +66,7 @@ Internal:
 Incoming (other zones → this zone):
   ← tests: tests/a-refusal-never-names-your-own-role.test.ts → apps/discography/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/discography/src/ui/seats.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/discography/src/domain/app.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/discography/src/ui/seats.ts
   ← tests-apps: apps/discography/tests/domain.test.ts → apps/discography/src/domain/app.ts; apps/discography/tests/lens-reuse.test.ts → apps/discography/src/ui/tracklist.tsx
+  ← tests-core-document: packages/core/tests/document/a-page-is-handed-a-compiled-app.test.ts → apps/discography/src/domain/app.ts
 
 </imports>
 

@@ -1,0 +1,20 @@
+{
+  "id": "core-document/core-cli",
+  "name": "Arrangement Logic",
+  "description": "4 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/arrange.ts",
+    "packages/core/src/arrangement.ts",
+    "packages/core/src/arranging.ts",
+    "packages/core/src/cli/check/arrangement.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/arrange.ts",
+    "packages/core/src/arrangement.ts",
+    "packages/core/src/cli/check/arrangement.ts"
+  ],
+  "cohesion": 0.53,
+  "coupling": 0.47,
+  "fileCount": 4,
+  "lineCount": 739
+}

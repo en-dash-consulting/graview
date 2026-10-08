@@ -33,18 +33,18 @@ Internal:
   packages/core/src/persistence/sqlite.ts → packages/core/src/persistence/types.ts {PersistenceAdapter}
 
 Outgoing (this zone → other zones):
-  → core: packages/core/src/persistence/memory.ts → packages/core/src/ops/log.ts; packages/core/src/persistence/memory.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/sql.ts → packages/core/src/ops/log.ts; packages/core/src/persistence/sql.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/types.ts → packages/core/src/ops/log.ts; packages/core/src/persistence/types.ts → packages/core/src/ops/types.ts
+  → core-document: packages/core/src/persistence/memory.ts → packages/core/src/ops/log.ts; packages/core/src/persistence/memory.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/sql.ts → packages/core/src/ops/log.ts; packages/core/src/persistence/sql.ts → packages/core/src/ops/types.ts; packages/core/src/persistence/types.ts → packages/core/src/ops/log.ts; packages/core/src/persistence/types.ts → packages/core/src/ops/types.ts
   → core-graph: packages/core/src/persistence/memory.ts → packages/core/src/graph/types.ts; packages/core/src/persistence/sql.ts → packages/core/src/graph/types.ts; packages/core/src/persistence/types.ts → packages/core/src/graph/types.ts
 
 Incoming (other zones → this zone):
-  ← core: packages/core/src/index.ts → packages/core/src/persistence/memory.ts; packages/core/src/index.ts → packages/core/src/persistence/sql.ts; packages/core/src/index.ts → packages/core/src/persistence/sqlite.ts; packages/core/src/index.ts → packages/core/src/persistence/sqlite.ts; packages/core/src/index.ts → packages/core/src/persistence/types.ts
+  ← core-document: packages/core/src/index.ts → packages/core/src/persistence/memory.ts; packages/core/src/index.ts → packages/core/src/persistence/sql.ts; packages/core/src/index.ts → packages/core/src/persistence/sqlite.ts; packages/core/src/index.ts → packages/core/src/persistence/sqlite.ts; packages/core/src/index.ts → packages/core/src/persistence/types.ts
   ← tests-core: packages/core/tests/integration/persistence.test.ts → packages/core/src/persistence/sqlite.ts
 
 </imports>
 
 <findings>
 
-[observation] [warning] High coupling (0.62) — 6 imports target "core"
+[observation] [warning] High coupling (0.62) — 6 imports target "core-document"
 [observation] [warning] Low cohesion (0.38) — files are loosely related, consider splitting this zone
 [suggestion] [info] Zone "Core Persistence" has an unreliable risk reading: only 4 files tracked (minimum 5 needed for reliable metrics) — cohesion: 0.38, coupling: 0.62 (risk score: 0.62)
 
@@ -53,7 +53,7 @@ Incoming (other zones → this zone):
 <insights>
 
 - Low cohesion (0.38) — files are loosely related, consider splitting this zone
-- High coupling (0.62) — 6 imports target "core"
+- High coupling (0.62) — 6 imports target "core-document"
 - [call graph] 54 internal calls, 0 outgoing, 9 incoming (cohesion: 1, coupling: 0)
 
 </insights>

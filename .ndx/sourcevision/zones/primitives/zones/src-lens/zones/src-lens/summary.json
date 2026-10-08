@@ -1,0 +1,26 @@
+{
+  "id": "primitives/src-lens/src-lens",
+  "name": "Lens Declarations",
+  "description": "7 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/declared-lens-doors.tsx",
+    "packages/primitives/src/declared-lenses.tsx",
+    "packages/primitives/src/declared-views.ts",
+    "packages/primitives/src/default-view.tsx",
+    "packages/primitives/src/home-view.tsx",
+    "packages/primitives/src/lens/columns.tsx",
+    "packages/primitives/src/spec-views.tsx"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/declared-lens-doors.tsx",
+    "packages/primitives/src/declared-lenses.tsx",
+    "packages/primitives/src/declared-views.ts",
+    "packages/primitives/src/default-view.tsx",
+    "packages/primitives/src/home-view.tsx",
+    "packages/primitives/src/spec-views.tsx"
+  ],
+  "cohesion": 0.45,
+  "coupling": 0.55,
+  "fileCount": 7,
+  "lineCount": 1229
+}

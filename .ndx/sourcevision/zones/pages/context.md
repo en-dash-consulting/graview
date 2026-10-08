@@ -9,32 +9,32 @@ Files: 20, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
 Description: 20 files, mostly pages and entry points; entry points index.ts, page-list.tsx; imported by Packages.
 Entry points: packages/pages/src/index.ts, packages/pages/src/page-list.tsx
-Lines: 4583
+Lines: 5060
 
 </zone>
 
 <files>
 
 packages/pages/src/ask-companion.tsx (TypeScript, 7 lines, source)
-packages/pages/src/ask.tsx (TypeScript, 145 lines, source)
-packages/pages/src/face-controls.tsx (TypeScript, 338 lines, source)
+packages/pages/src/ask.tsx (TypeScript, 154 lines, source)
+packages/pages/src/face-controls.tsx (TypeScript, 440 lines, source)
 packages/pages/src/face-placed.ts (TypeScript, 53 lines, source)
-packages/pages/src/facts.ts (TypeScript, 295 lines, source)
-packages/pages/src/form.tsx (TypeScript, 476 lines, source)
-packages/pages/src/index.ts (TypeScript, 41 lines, source)
-packages/pages/src/page-context.tsx (TypeScript, 122 lines, source)
-packages/pages/src/page-home.tsx (TypeScript, 159 lines, source)
-packages/pages/src/page-list.tsx (TypeScript, 420 lines, source)
+packages/pages/src/facts.ts (TypeScript, 297 lines, source)
+packages/pages/src/form.tsx (TypeScript, 526 lines, source)
+packages/pages/src/index.ts (TypeScript, 42 lines, source)
+packages/pages/src/page-context.tsx (TypeScript, 191 lines, source)
+packages/pages/src/page-home.tsx (TypeScript, 198 lines, source)
+packages/pages/src/page-list.tsx (TypeScript, 417 lines, source)
 packages/pages/src/page-map.tsx (TypeScript, 159 lines, source)
-packages/pages/src/page-places.tsx (TypeScript, 564 lines, source)
+packages/pages/src/page-places.tsx (TypeScript, 570 lines, source)
 packages/pages/src/page-problems.tsx (TypeScript, 215 lines, source)
-packages/pages/src/page-record.tsx (TypeScript, 337 lines, source)
+packages/pages/src/page-record.tsx (TypeScript, 349 lines, source)
 packages/pages/src/page-search.tsx (TypeScript, 261 lines, source)
-packages/pages/src/page-shell.tsx (TypeScript, 300 lines, source)
-packages/pages/src/page-typography.tsx (TypeScript, 204 lines, source)
+packages/pages/src/page-shell.tsx (TypeScript, 279 lines, source)
+packages/pages/src/page-typography.tsx (TypeScript, 221 lines, source)
 packages/pages/src/pages.tsx (TypeScript, 19 lines, source)
 packages/pages/src/registry.ts (TypeScript, 198 lines, source)
-packages/pages/src/router.tsx (TypeScript, 270 lines, source)
+packages/pages/src/router.tsx (TypeScript, 464 lines, source)
 
 </files>
 
@@ -58,18 +58,18 @@ Internal:
   packages/pages/src/index.ts → packages/pages/src/facts.ts {KindFacts, KindMap, KindRelation, RecordFacts, RecordLinkGroup, FactsOptions}
   packages/pages/src/index.ts → packages/pages/src/form.tsx {DerivedForm}
   packages/pages/src/index.ts → packages/pages/src/form.tsx {DerivedFormProps}
-  packages/pages/src/index.ts → packages/pages/src/pages.tsx {DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, PlaceCard, Gallery, GalleryCard, galleryOf, pathOfPlace, PlacePicture, KindMapSection, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, PageFind, SearchToCreate, beginningsFor, beginningsFrom, WhyLine, StartFreshLink, useStoreTick, pageStyles, PageMain, Repairs}
+  packages/pages/src/index.ts → packages/pages/src/pages.tsx {DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, PlaceCard, Gallery, GalleryCard, galleryOf, pathOfPlace, PlacePicture, KindMapSection, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, PageFind, SearchToCreate, beginningsFor, beginningsFrom, WhyLine, StartFreshLink, SceneLink, useStoreTick, pageStyles, PageMain, Repairs}
   packages/pages/src/index.ts → packages/pages/src/pages.tsx {PageContext, GalleryEntry, Beginning}
   packages/pages/src/index.ts → packages/pages/src/registry.ts {createPageRegistry, kindOfSlug, placeHref, placePath, pluralSlug, recordPath, spatialHref}
   packages/pages/src/index.ts → packages/pages/src/registry.ts {RouteRegistration, PageRegistry, PageRegistration, PageType, ShellComponent, ShellOptions, SurfaceType}
   packages/pages/src/index.ts → packages/pages/src/router.tsx {PagesApp, PagesRoutes}
-  packages/pages/src/index.ts → packages/pages/src/router.tsx {PagesAppProps, PageComponent}
+  packages/pages/src/index.ts → packages/pages/src/router.tsx {NavigationHow, PagesAppProps, PagesSteering, PageComponent}
   packages/pages/src/page-home.tsx → packages/pages/src/facts.ts {kindMap}
   packages/pages/src/page-home.tsx → packages/pages/src/page-context.tsx {useStoreTick}
   packages/pages/src/page-home.tsx → packages/pages/src/page-context.tsx {PageContext}
   packages/pages/src/page-home.tsx → packages/pages/src/page-places.tsx {Gallery}
-  packages/pages/src/page-home.tsx → packages/pages/src/page-shell.tsx {PageMain}
-  packages/pages/src/page-home.tsx → packages/pages/src/page-typography.tsx {KindMark, eyebrow, h1, h2, lede, link, liveKinds, plain, pluralOf, quiet, rule, whoDid, wide}
+  packages/pages/src/page-home.tsx → packages/pages/src/page-shell.tsx {PageMain, PageTitle}
+  packages/pages/src/page-home.tsx → packages/pages/src/page-typography.tsx {KindMark, h2, lede, link, homeKinds, liveKinds, plain, pluralOf, quiet, rule, whoDid, wide}
   packages/pages/src/page-home.tsx → packages/pages/src/registry.ts {pluralSlug}
   packages/pages/src/page-list.tsx → packages/pages/src/facts.ts {kindFacts, kindMap}
   packages/pages/src/page-list.tsx → packages/pages/src/form.tsx {DerivedForm}
@@ -77,54 +77,52 @@ Internal:
   packages/pages/src/page-list.tsx → packages/pages/src/page-context.tsx {PageContext}
   packages/pages/src/page-list.tsx → packages/pages/src/page-places.tsx {pathOfPlace, placeKey, placesOf}
   packages/pages/src/page-list.tsx → packages/pages/src/page-search.tsx {beginningsFrom, WhyLine}
-  packages/pages/src/page-list.tsx → packages/pages/src/page-shell.tsx {PageMain}
-  packages/pages/src/page-list.tsx → packages/pages/src/page-typography.tsx {DISPLAY, KindMark, eyebrow, glance, h1, h2, lede, link, plain, pluralOf, quiet, rule, capitalise}
+  packages/pages/src/page-list.tsx → packages/pages/src/page-shell.tsx {PageMain, PageTitle}
+  packages/pages/src/page-list.tsx → packages/pages/src/page-typography.tsx {DISPLAY, KindMark, eyebrow, glance, h2, lede, link, plain, pluralOf, quiet, rule, capitalize}
   packages/pages/src/page-list.tsx → packages/pages/src/registry.ts {kindOfSlug, pluralSlug, recordPath}
   packages/pages/src/page-map.tsx → packages/pages/src/facts.ts {kindMap}
   packages/pages/src/page-map.tsx → packages/pages/src/facts.ts {KindRelation}
   packages/pages/src/page-map.tsx → packages/pages/src/page-context.tsx {useStoreTick}
   packages/pages/src/page-map.tsx → packages/pages/src/page-context.tsx {PageContext}
-  packages/pages/src/page-map.tsx → packages/pages/src/page-shell.tsx {PageMain}
-  packages/pages/src/page-map.tsx → packages/pages/src/page-typography.tsx {KindMark, eyebrow, h1, h2, lede, link, liveKinds, plain, pluralOf, quiet, rule, capitalise}
+  packages/pages/src/page-map.tsx → packages/pages/src/page-shell.tsx {PageMain, PageTitle}
+  packages/pages/src/page-map.tsx → packages/pages/src/page-typography.tsx {KindMark, eyebrow, h2, lede, link, liveKinds, plain, pluralOf, quiet, rule, capitalize}
   packages/pages/src/page-map.tsx → packages/pages/src/registry.ts {pluralSlug, recordPath}
   packages/pages/src/page-places.tsx → packages/pages/src/facts.ts {kindFacts}
   packages/pages/src/page-places.tsx → packages/pages/src/form.tsx {DerivedForm}
   packages/pages/src/page-places.tsx → packages/pages/src/page-context.tsx {useStoreTick}
   packages/pages/src/page-places.tsx → packages/pages/src/page-context.tsx {PageContext}
-  packages/pages/src/page-places.tsx → packages/pages/src/page-shell.tsx {PageMain}
-  packages/pages/src/page-places.tsx → packages/pages/src/page-typography.tsx {DISPLAY, KindMark, eyebrow, h1, h2, lede, link, liveKinds, plain, pluralOf, quiet, rule, wide}
-  packages/pages/src/page-places.tsx → packages/pages/src/registry.ts {placeHref, placePath, pluralSlug, recordPath}
+  packages/pages/src/page-places.tsx → packages/pages/src/page-shell.tsx {PageMain, PageTitle}
+  packages/pages/src/page-places.tsx → packages/pages/src/page-typography.tsx {DISPLAY, KindMark, eyebrow, h2, lede, link, arrangedKinds, homeKinds, liveKinds, plain, pluralOf, quiet, rule, wide}
+  packages/pages/src/page-places.tsx → packages/pages/src/registry.ts {placePath, pluralSlug, recordPath}
   packages/pages/src/page-problems.tsx → packages/pages/src/form.tsx {DerivedForm}
   packages/pages/src/page-problems.tsx → packages/pages/src/page-context.tsx {useStoreTick}
   packages/pages/src/page-problems.tsx → packages/pages/src/page-context.tsx {PageContext}
   packages/pages/src/page-problems.tsx → packages/pages/src/page-map.tsx {SeatQuestions}
-  packages/pages/src/page-problems.tsx → packages/pages/src/page-shell.tsx {PageMain}
+  packages/pages/src/page-problems.tsx → packages/pages/src/page-shell.tsx {PageMain, PageTitle}
   packages/pages/src/page-problems.tsx → packages/pages/src/page-typography.tsx {KindMark, button, column, eyebrow, h1, h2, lede, link, plain, quiet, rule}
   packages/pages/src/page-problems.tsx → packages/pages/src/registry.ts {recordPath}
   packages/pages/src/page-record.tsx → packages/pages/src/facts.ts {rankedRepairs, recordFacts}
   packages/pages/src/page-record.tsx → packages/pages/src/form.tsx {DerivedForm}
-  packages/pages/src/page-record.tsx → packages/pages/src/page-context.tsx {useStoreTick}
+  packages/pages/src/page-record.tsx → packages/pages/src/page-context.tsx {SceneLink, useStoreTick}
   packages/pages/src/page-record.tsx → packages/pages/src/page-context.tsx {PageContext}
   packages/pages/src/page-record.tsx → packages/pages/src/page-places.tsx {pathOfPlace, placeKey, placesOf}
   packages/pages/src/page-record.tsx → packages/pages/src/page-problems.tsx {Repairs}
-  packages/pages/src/page-record.tsx → packages/pages/src/page-shell.tsx {PageMain}
-  packages/pages/src/page-record.tsx → packages/pages/src/page-typography.tsx {KindMark, button, eyebrow, h1, h2, lede, link, listed, plain, pluralOf, quiet, rule, whoDid, capitalise}
-  packages/pages/src/page-record.tsx → packages/pages/src/registry.ts {placeHref, pluralSlug, recordPath, spatialHref}
+  packages/pages/src/page-record.tsx → packages/pages/src/page-shell.tsx {PageMain, PageTitle}
+  packages/pages/src/page-record.tsx → packages/pages/src/page-typography.tsx {KindMark, button, eyebrow, h2, lede, link, listed, plain, pluralOf, quiet, rule, whoDid, capitalize}
+  packages/pages/src/page-record.tsx → packages/pages/src/registry.ts {pluralSlug, recordPath}
   packages/pages/src/page-search.tsx → packages/pages/src/facts.ts {kindFacts}
   packages/pages/src/page-search.tsx → packages/pages/src/form.tsx {DerivedForm}
   packages/pages/src/page-search.tsx → packages/pages/src/page-context.tsx {useStoreTick}
   packages/pages/src/page-search.tsx → packages/pages/src/page-context.tsx {PageContext}
   packages/pages/src/page-search.tsx → packages/pages/src/page-places.tsx {pathOfPlace, placesOf}
-  packages/pages/src/page-search.tsx → packages/pages/src/page-shell.tsx {PageMain}
-  packages/pages/src/page-search.tsx → packages/pages/src/page-typography.tsx {DISPLAY, KindMark, eyebrow, h1, h2, lede, link, plain, pluralOf, quiet, rule}
+  packages/pages/src/page-search.tsx → packages/pages/src/page-shell.tsx {PageMain, PageTitle}
+  packages/pages/src/page-search.tsx → packages/pages/src/page-typography.tsx {DISPLAY, KindMark, eyebrow, h2, lede, link, plain, pluralOf, quiet, rule}
   packages/pages/src/page-search.tsx → packages/pages/src/registry.ts {pluralSlug, recordPath}
   packages/pages/src/page-shell.tsx → packages/pages/src/face-placed.ts {usePlacedOnTheFace}
-  packages/pages/src/page-shell.tsx → packages/pages/src/facts.ts {kindMap}
   packages/pages/src/page-shell.tsx → packages/pages/src/page-context.tsx {StartFreshLink, useStoreTick}
   packages/pages/src/page-shell.tsx → packages/pages/src/page-context.tsx {PageContext}
-  packages/pages/src/page-shell.tsx → packages/pages/src/page-places.tsx {placesOf}
-  packages/pages/src/page-shell.tsx → packages/pages/src/page-typography.tsx {DISPLAY, WIDE, column, liveKinds, plain, pluralOf, quiet}
-  packages/pages/src/page-shell.tsx → packages/pages/src/registry.ts {kindOfSlug, pluralSlug}
+  packages/pages/src/page-shell.tsx → packages/pages/src/page-typography.tsx {WIDE, column, h1, quiet}
+  packages/pages/src/page-shell.tsx → packages/pages/src/registry.ts {kindOfSlug}
   packages/pages/src/pages.tsx → packages/pages/src/page-context.tsx {*}
   packages/pages/src/pages.tsx → packages/pages/src/page-home.tsx {*}
   packages/pages/src/pages.tsx → packages/pages/src/page-list.tsx {*}
@@ -139,13 +137,14 @@ Internal:
   packages/pages/src/registry.ts → packages/pages/src/page-context.tsx {PageContext}
   packages/pages/src/router.tsx → packages/pages/src/ask.tsx {PageAsk}
   packages/pages/src/router.tsx → packages/pages/src/face-controls.tsx {FaceControlsRoot}
+  packages/pages/src/router.tsx → packages/pages/src/page-places.tsx {pathOfPlace, placesOf}
   packages/pages/src/router.tsx → packages/pages/src/pages.tsx {DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell}
   packages/pages/src/router.tsx → packages/pages/src/pages.tsx {PageContext}
-  packages/pages/src/router.tsx → packages/pages/src/registry.ts {createPageRegistry, kindOfSlug}
+  packages/pages/src/router.tsx → packages/pages/src/registry.ts {pluralSlug, createPageRegistry, kindOfSlug, recordPath}
   packages/pages/src/router.tsx → packages/pages/src/registry.ts {PageRegistry}
 
 Incoming (other zones → this zone):
-  ← tests-pages-unit: packages/pages/tests/unit/a-form-asks-in-the-records-words.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-fits-a-phone-at-200.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-left-empty-is-sent-empty.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx → packages/pages/src/page-list.tsx; packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-links-to-a-picture.test.ts → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-picker-fits-its-field.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-record-says-every-field.test.ts → packages/pages/src/index.ts; packages/pages/tests/unit/a-relation-says-its-own-words.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-repair-asks-what-it-left-open.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-search-fits-a-phone-at-200.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-search-fits-a-phone-at-200.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-stranger-is-shown-nobody.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-time-of-day-is-asked-for.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/asked-as-the-person.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/its-own-far-end.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-is-not-a-pile.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-is-not-a-pile.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-main-under-a-shell.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-main-under-a-shell.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/parity.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-assistant-on-every-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-assistant-on-every-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-button-says-the-heading.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-map-of-kinds.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-map-of-kinds.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-pictures-on-pages.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-pictures-on-pages.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-kinds-one-picture-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-kinds-one-picture-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-ties-of-one-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-ties-of-one-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/what-begins-a-kind.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/whose-work.test.tsx → packages/pages/src/index.ts
+  ← tests-pages-unit: packages/pages/tests/unit/a-declared-lens-is-a-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-form-asks-in-the-records-words.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-form-names-its-parts.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-home-view-is-the-home.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-link-a-browser-would-render.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-fits-a-phone-at-200.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-left-empty-is-sent-empty.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-list-you-arranged-is-a-link.test.tsx → packages/pages/src/page-list.tsx; packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-draws-with-what-it-needs.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-links-to-a-picture.test.ts → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-page-that-is-not-about-a-kind.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-picker-fits-its-field.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-record-says-every-field.test.ts → packages/pages/src/index.ts; packages/pages/tests/unit/a-record-says-what-it-works-out.test.ts → packages/pages/src/index.ts; packages/pages/tests/unit/a-relation-says-its-own-words.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-repair-asks-what-it-left-open.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-search-fits-a-phone-at-200.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-search-fits-a-phone-at-200.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-status-board-moves-by-acts.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-stranger-is-shown-nobody.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/a-time-of-day-is-asked-for.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/asked-as-the-person.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/its-own-far-end.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-is-not-a-pile.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-is-not-a-pile.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-main-under-a-shell.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-main-under-a-shell.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/one-place-says-how-many-problems.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/parity.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-assistant-on-every-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-assistant-on-every-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-button-says-the-heading.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-face-offers-find-and-the-way-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-map-of-kinds.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-map-of-kinds.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-pictures-on-pages.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-pictures-on-pages.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-record-gives-the-keyboard-back.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-way-back-floats-over-the-face.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/the-words-find-it-on-a-page.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-kinds-one-picture-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-kinds-one-picture-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-ties-of-one-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/two-ties-of-one-name.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/what-begins-a-kind.test.tsx → packages/pages/src/index.ts; packages/pages/tests/unit/whose-work.test.tsx → packages/pages/src/index.ts
 
 </imports>
 
@@ -158,6 +157,6 @@ Incoming (other zones → this zone):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 174 internal calls, 0 outgoing, 39 incoming (cohesion: 1, coupling: 0)
+- [call graph] 172 internal calls, 0 outgoing, 40 incoming (cohesion: 1, coupling: 0)
 
 </insights>

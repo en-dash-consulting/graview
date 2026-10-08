@@ -1,0 +1,34 @@
+{
+  "id": "document",
+  "name": "Core Document",
+  "description": "7 files, mostly utilities; entry points views.ts, template-parse.ts, evaluate.ts; imports Core and Core Graph; imported by Core and Packages.",
+  "files": [
+    "packages/core/src/blocks.ts",
+    "packages/core/src/document/blocks.ts",
+    "packages/core/src/document/computed-values.ts",
+    "packages/core/src/document/expr/evaluate.ts",
+    "packages/core/src/document/template-parse.ts",
+    "packages/core/src/document/template.ts",
+    "packages/core/src/document/views.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/blocks.ts",
+    "packages/core/src/document/blocks.ts",
+    "packages/core/src/document/computed-values.ts",
+    "packages/core/src/document/expr/evaluate.ts",
+    "packages/core/src/document/template-parse.ts",
+    "packages/core/src/document/template.ts",
+    "packages/core/src/document/views.ts"
+  ],
+  "cohesion": 0.31,
+  "coupling": 0.69,
+  "fileCount": 7,
+  "lineCount": 2028,
+  "riskMetrics": {
+    "cohesion": 0.31,
+    "coupling": 0.69,
+    "riskScore": 0.69,
+    "riskLevel": "critical",
+    "failsThreshold": true
+  }
+}
