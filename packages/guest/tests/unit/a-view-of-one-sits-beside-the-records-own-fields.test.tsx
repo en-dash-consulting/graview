@@ -66,7 +66,8 @@ describe("on the scene, the record drawn at full", () => {
     const html = drawn(beside);
     expect(html).toContain('data-worker-view-place="deliverable"');
     expect(html).toContain('data-graview-fields="deliverable:email"');
-    expect(html).toMatch(/data-graview-field="draft"[^>]*data-graview-editable="set-draft"/);
+    // The draft is prose, so it is drawn under its label with an "Edit" that writes it (FR-147), the words themselves beneath.
+    expect(html).toMatch(/data-graview-long="draft"[^]*data-graview-editable="set-draft"[^]*data-graview-field="draft"/);
     expect(html.indexOf("data-worker-view-place")).toBeLessThan(html.indexOf("data-graview-fields"));
   });
   it("is the view alone when its manifest says it replaces the page", () => {
