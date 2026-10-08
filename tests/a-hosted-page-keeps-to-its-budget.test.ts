@@ -61,8 +61,9 @@ describe("a hosted page", () => {
     // 870 KB since the bar fits its box: the scene face measured 889_834 B, 2_612 more than before it (887_222).
     // 873 KB since a lazy part tries again after it failed to arrive (FR-139), over the bar that fits its box: the scene face measured 893_470 B, 3_636 more.
     // 877 KB since a selected record is drawn once (FR-141–FR-143), over FR-139: the scene face measured 897_697 B, 4_227 more.
-    // 890 KB since views beside editing, long text on a record page and the places in the bar landed together (FR-144–FR-151): the scene face measured 910_431 B, 12_734 more.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(890 * 1024);
+    // 878 KB since a lens double-clicked from Up opens it: the scene face measured 898_844 B over the security review before 0.1.18.
+    // 891 KB since views beside editing, long text on a record page and the places in the bar landed together (FR-144–FR-151), over a lens double-clicked from Up: the scene face measured 911_396 B, 12_552 more.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(891 * 1024);
   });
 
   it("carries no studio, up front or when asked: the shell stubs it out", () => {

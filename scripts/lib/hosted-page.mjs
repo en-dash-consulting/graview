@@ -107,16 +107,23 @@ export const FACE_DOORS = {
  * took it to 589 828 bytes (576.0 KB), 186 more; the claim rises by that
  * with about 0.2 KB of room: 576.2 KB, which leaves Cloud's shell 18.8 KB
  * under its 595.
+ *
+ * A lens double-clicked from Up opening it (the one stop down into a
+ * picture that the bar's places and `go.place` now share), over the security
+ * review before 0.1.18, took it to 590 033 bytes, 41 more than without it;
+ * the claim rises by 0.1 KB to 576.3 KB, which leaves Cloud's shell 18.7 KB
+ * under its 595.
  * Views beside editing (FR-149–FR-151), long text on a record page
  * (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed in
- * one integration over a record drawn once and the security review before
- * 0.1.18, took it to 597 214 bytes (583.2 KB), 7 386 more; the claim rises
+ * one integration over a record drawn once, the security review before
+ * 0.1.18 and a lens double-clicked from Up, took it to 597 234 bytes
+ * (583.2 KB), 7 201 more; the claim rises
  * by that with about 0.2 KB of room: 583.4 KB, which leaves Cloud's shell
  * 11.6 KB under its 595.
  * The review after 0.1.17 (the pages face's Ask and its drawer placed inside
  * their embed's box, a pane hung from a control in an embed kept inside it,
  * a notice put away while its embed is scrolled out of the window) took it
- * to 597 483 bytes (583.5 KB), 269 more; the claim rises by that with about
+ * to 597 503 bytes (583.5 KB), 269 more; the claim rises by that with about
  * 0.1 KB of room: 583.6 KB, which leaves Cloud's shell 11.4 KB under its 595.
  */
 export const HOSTED_PAGE_BUDGET = { minified: 583.6 * 1024, zod: 150 * 1024 };
@@ -210,10 +217,10 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * review before 0.1.18 (a retry imports only a chunk on the bundle's own
  * origin, and a link's pins and dimensions have no prototype) adds 169
  * bytes: 532.6 KB.
- * The same integration (FR-144–FR-151) took it to 551 584 bytes
+ * The same integration (FR-144–FR-151) took it to 551 604 bytes
  * (538.7 KB); the claim rises by that with about 0.1 KB of room: 538.8 KB.
  * The review after 0.1.17, the same 269 bytes as the page that compiles,
- * took it to 551 853 bytes (538.9 KB): 539.0 KB.
+ * took it to 551 873 bytes (538.9 KB): 539.0 KB.
  */
 export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 539 * 1024 };
 

@@ -1,5 +1,5 @@
 import { OVERVIEW_PATH, type Place } from "@graview/core";
-import { aggregateId, EMPTY_VIEW, toUrl, withFocus, withOverview, withWithin, type ViewState } from "@graview/layout/view";
+import { aggregateId, EMPTY_VIEW, toUrl, withOverview, withPicture, withWithin, type ViewState } from "@graview/layout/view";
 import { useGraview, useNavigation } from "@graview/react/provider";
 import { useMemo } from "react";
 import { WHOLE_KEY, type BarGo, type BarPlace } from "./app-bar.js";
@@ -54,7 +54,7 @@ export function scenePlacesOf(input: { readonly places: readonly Place[]; readon
     // The whole thing is the scene from above, as "Up" rises to it: no picture in view.
     if (key === WHOLE_KEY) return withWithin(withOverview(from, true), "view", null);
     const place = pictures.find((one) => keyOf(one) === key);
-    return place ? withWithin(withOverview(withFocus(from, aggregateId(place.kind)), false), "view", place.as) : null;
+    return place ? withPicture(from, place.kind, place.as) : null;
   };
   const places: BarPlace[] = [
     { key: WHOLE_KEY, label: WHOLE_LABEL, path: `${OVERVIEW_PATH}${toUrl(to(WHOLE_KEY, EMPTY_VIEW)!)}`, group: "home" },

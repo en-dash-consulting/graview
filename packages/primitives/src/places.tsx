@@ -1,5 +1,5 @@
 import type { AnySchema, Place } from "@graview/core";
-import { aggregateId, withFocus, withOverview, withWithin } from "@graview/layout/view";
+import { aggregateId, withPicture } from "@graview/layout/view";
 import { useGraview, useNavigation } from "@graview/react/provider";
 import { useEffect, useRef, useState, type WheelEvent } from "react";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
@@ -88,7 +88,7 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
   }, [places.length]);
   if (places.length === 0) return null;
   const fade = more === "" ? undefined : `linear-gradient(to right, ${more === "end" ? "#000" : "transparent"} 0, #000 28px, #000 calc(100% - 28px), ${more === "start" ? "#000" : "transparent"} 100%)`;
-  const goTo = (place: Place) => go(withWithin(withOverview(withFocus(view, aggregateId(place.kind)), false), "view", place.as));
+  const goTo = (place: Place) => go(withPicture(view, place.kind, place.as));
   /* A mouse's wheel scrolls the row sideways when the row is longer than its room: a desk has no swipe. */
   const onWheel = (event: WheelEvent<HTMLElement>) => {
     const scroller = event.currentTarget;
