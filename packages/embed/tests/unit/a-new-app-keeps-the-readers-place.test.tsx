@@ -77,12 +77,12 @@ async function swap(handle: EmbedHandle, app: GraviewApp<AnySchema>, ids: readon
   return store;
 }
 
-const heading = (host: HTMLElement) => host.querySelector("[data-graview-face=pages] h1")?.textContent?.trim();
+const heading = (host: HTMLElement) => host.querySelector("[data-graview-face=pages] [data-graview-page-title]")?.textContent?.trim();
 const face = (host: HTMLElement) => host.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed");
 const click = (element: Element | null) => act(async () => (element as HTMLElement).click());
 
 describe("where the reader is, read from the handle", () => {
-  it("says the face, the page open on Pages and the scene's stop", async () => {
+  it("says the face, the place's path — the overview's on the scene — and the scene's stop", async () => {
     const { host, handle } = await open({ face: "pages", path: "/tasks" });
     await click(host.querySelector('a[href="/tasks/t1"]'));
     expect(heading(host)).toBe("Buy stamps");
@@ -93,11 +93,11 @@ describe("where the reader is, read from the handle", () => {
     await settle();
     const where = handle.where();
     expect(where.face).toBe("scene");
-    // The page Pages had is still where it was: the scene does not forget it.
-    expect(where.path).toBe("/tasks/t1");
+    // On the scene the place is the overview, and its stop rides on it (FR-132).
+    expect(where.path).toBe("/places/overview");
     expect(fromUrl(where.stop).focusId).toBe("t2");
     expect(where.kind).toBe("task");
-    // And the pages come back on it.
+    // And the pages come back on the page they had: the scene does not forget it.
     handle.setFace("pages");
     await act(async () => handle.drawn());
     await settle();
@@ -183,8 +183,8 @@ describe("a new app under the reader", () => {
     await act(async () => handle.setSeat(bea));
     const store = await swap(handle, appOf("both"), ["t1"], { remote: true });
     expect(handle.store).toBe(store);
-    const pressed = [...host.querySelectorAll('[aria-pressed="true"]')].map((button) => button.textContent ?? "");
-    expect(pressed.some((label) => label.includes("Bea"))).toBe(true);
+    // The person on the bar is who sits now (FR-131).
+    expect(host.querySelector('[data-testid="profile-button"]')?.getAttribute("aria-label")).toMatch(/^Bea /);
   });
 
   it("under memory routing touches neither the address nor the history", async () => {

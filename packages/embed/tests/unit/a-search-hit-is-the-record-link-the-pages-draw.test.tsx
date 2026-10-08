@@ -81,7 +81,7 @@ describe("a search hit's address is the routed face's own record link", () => {
       const listHit = search(store, plural, { basePath: BASE }).hits.find((hit) => hit.about === "kind" && hit.kind === kind) as Extract<Hit, { about: "kind" }>;
       expect(listHit, kind).toBeDefined();
       const host = await pagesAt(listHit.address);
-      expect(host.querySelector("h1")?.textContent?.trim(), kind).toBe(plural);
+      expect(host.querySelector("[data-graview-page-title]")?.textContent?.trim(), kind).toBe(plural);
       const links = recordLinks(host, listHit.address).sort();
       const addresses = records.map((node) => nodeHits(search(store, node.label, { basePath: BASE }).hits).find((hit) => hit.id === node.id)!.address).sort();
       expect(links, kind).toEqual(addresses);
@@ -95,7 +95,7 @@ describe("a search hit's address is the routed face's own record link", () => {
     for (const node of seed.nodes) {
       const hit = nodeHits(search(store, node.label, { basePath: BASE }).hits).find((one) => one.id === node.id)!;
       const host = await pagesAt(hit.address);
-      expect(host.querySelector("h1")?.textContent?.trim(), node.id).toBe(node.label);
+      expect(host.querySelector("[data-graview-page-title]")?.textContent?.trim(), node.id).toBe(node.label);
     }
   });
 

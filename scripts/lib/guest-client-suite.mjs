@@ -259,8 +259,8 @@ window.__handle.drawn().then(() => { window.__ready = true; });
 
     // ── it navigates ──
     await prices.getByText("Team coaching").first().click();
-    await tab.waitForFunction(() => /Team coaching/.test(document.querySelector("h1")?.textContent ?? ""), null, { timeout: 10_000 }).catch(() => {});
-    const heading = await tab.evaluate(() => document.querySelector("h1")?.textContent ?? null);
+    await tab.waitForFunction(() => /Team coaching/.test(document.querySelector("[data-graview-page-title]")?.textContent ?? ""), null, { timeout: 10_000 }).catch(() => {});
+    const heading = await tab.evaluate(() => document.querySelector("[data-graview-page-title]")?.textContent ?? null);
     claim("a link in it goes to the record's own page", /Team coaching/.test(heading ?? ""), heading);
 
     // ── the home ──
@@ -288,7 +288,7 @@ window.__handle.drawn().then(() => { window.__ready = true; });
         return { name: name.textContent, src: image.src.slice(0, 40), natural: [image.naturalWidth, image.naturalHeight], bytes: [...text].map((c) => c.charCodeAt(0)), font: getComputedStyle(name).fontFamily, radius: getComputedStyle(name).borderTopLeftRadius, pushes: window.__pushes, marked: window.__marked === true };
       });
       const app = await tab.evaluate(() => {
-        const heading = document.querySelector("[data-graview-face=pages] h1");
+        const heading = document.querySelector("[data-graview-face=pages] [data-graview-page-title]");
         return { headingFont: heading ? getComputedStyle(heading).fontFamily : null, frame: document.querySelector('iframe[data-guest-view="masthead"]') };
       });
       const wordmark = await tab.evaluate((said) => {

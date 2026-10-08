@@ -134,10 +134,12 @@ describe("pages is a real arrangement", () => {
 });
 
 describe("placesOf lists every place an app has", () => {
-  it("lists the home, each lens and each kind, in the arrangement's order, saying which opens first and which the home leaves off", () => {
+  it("lists the home, the overview, each lens and each kind, in the arrangement's order, saying which opens first and which the home leaves off", () => {
     const places = placesOf(compiled());
     expect(places.map((place) => [place.slug, place.kind, place.address])).toEqual([
       ["home", null, "/"],
+      // The scene is a place like the others, at its own address (FR-132).
+      ["overview", null, "/places/overview"],
       ["the-floor", "seat", "/places/the-floor"],
       ["the-week", "shift", "/places/the-week"],
       ["the-month", "shift", "/places/the-month"],
@@ -156,5 +158,12 @@ describe("placesOf lists every place an app has", () => {
     expect(places.filter((place) => place.hidden).map((place) => place.slug)).toEqual(["rooms"]);
     expect(places.find((place) => place.slug === "the-floor")).toMatchObject({ title: "The floor", cardinality: "many", stop: "#view=the-floor", lens: "board" });
     expect(places.find((place) => place.slug === "shifts")?.stop).toBe("#focus=aggregate:shift");
+    expect(places.find((place) => place.slug === "overview")).toMatchObject({ title: "Overview", stop: "#" });
+  });
+
+  it("calls the overview what the declaration calls it, at the address it keeps whatever it is called (FR-132)", () => {
+    const app = compiled();
+    const renamed = { ...app, pages: { ...app.pages, overview: "The hall" } };
+    expect(placesOf(renamed as never).find((place) => place.slug === "overview")).toMatchObject({ title: "The hall", address: "/places/overview" });
   });
 });

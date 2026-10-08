@@ -11,7 +11,9 @@ const pagesViews = <S extends AnySchema>(schema: S, specs: Parameters<typeof reg
   registerViewSpecs(registerDefaultViews(schema, createViews(schema)), schema, specs) as unknown as ReactViewRegistry<S>;
 import { flushSync } from "react-dom";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
-import { FaceBoundary, FrameNotices, providerProps, storeOf, Strip, useErrorReport, useFrame, useIntrinsicHeight, useReady, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
+import { FaceBoundary, FrameBar, FrameNotices, providerProps, storeOf, titleBelow, useErrorReport, useFrame, useIntrinsicHeight, useReady, useSteering, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
+import { addressOf, pathWithin } from "@graview/core";
+import { BarFindContext, barPlaceAt, barPlaces, type BarFind } from "@graview/primitives/frame";
 
 /**
  * THE PAGES AND NOTHING ELSE (FR-19). `@graview/embed/pages` mounts the
@@ -21,19 +23,22 @@ import { FaceBoundary, FrameNotices, providerProps, storeOf, Strip, useErrorRepo
  * (`scripts/lib/bundle-budget.mjs`).
  *
  * It takes what the whole embed takes except what only the scene has (a
- * face, a stop, the studio, the workbench's heading), and its handle is the
- * same less the faces. It takes `views`: the pages draw the same pictures
+ * face, a stop, the studio), and its handle is the same less the faces. Its
+ * bar names no overview: there is no scene here to go to (FR-132). It takes `views`: the pages draw the same pictures
  * the scene would (FR-35).
  */
-export type PagesEmbedOptions<S extends AnySchema = AnySchema> = FrameOptions<S>;
+export interface PagesEmbedOptions<S extends AnySchema = AnySchema> extends FrameOptions<S> {
+  /** The level the app bar says the app's name at (FR-131): `1` when the host's page is the app, `2` (the default) in an article, `false` when the host's own heading says it. */
+  readonly heading?: 1 | 2 | 3 | 4 | 5 | 6 | false;
+}
 
 export interface PagesEmbedProps<S extends AnySchema = AnySchema> extends PagesEmbedOptions<S> {
-  /** Called when a seat on the strip is pressed; the host decides who sits. */
+  /** Called when a seat is taken in the person's menu; the host decides who sits. */
   readonly onSeat?: (principal: Principal) => void;
 }
 
 export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
-  const { app, toggle = true, standing = "Everything is in order" } = props;
+  const { app, bar = true, standing = "Everything is in order" } = props;
   const { rootRef, scope, css, scheme, store, presence, brand, auto, height } = useFrame(props);
   // The registry the whole embed would draw from: the pages' cards, rows and record pages (FR-35).
   const views = useViews<S>(props, pagesViews);
@@ -41,6 +46,13 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
   const report = useErrorReport(props.onError, "pages");
   const ready = useReady(props.onReady, "pages");
   useEffect(() => ready("pages"), [ready]);
+  const address = props.routing === "address";
+  const base = props.basePath === undefined ? {} : { basePath: props.basePath };
+  // Where the routed face is, said by its router, for the bar's tabs; and the bar's presses, taken by it (FR-131).
+  const { at, steering } = useSteering(address && typeof window !== "undefined" ? `${pathWithin(window.location.pathname, props.basePath) ?? "/"}${window.location.search}` : (props.path ?? "/"));
+  const [barFind, setBarFind] = useState<BarFind | null>(null);
+  // No scene here, so no overview among the places (FR-132).
+  const places = barPlaces({ store: store as never, principal: props.principal, views: views as never, overview: false });
   return (
     <section
       ref={rootRef}
@@ -54,15 +66,27 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
       <ErrorReportContext.Provider value={report}>
         <FrameNotices rootRef={rootRef} board={props.notices} />
         <FaceBoundary module="@graview/react" report={report} content>
-          <GraviewProvider store={store} views={views} scheme={scheme} {...providerProps(props, presence, brand)}>
-            {toggle ? (
+          <GraviewProvider store={store} views={views} scheme={scheme} {...providerProps(props, presence, brand)} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>
+            {bar ? (
               <FaceBoundary module="@graview/embed" report={report}>
-                <Strip standing={standing} seats={props.seats} principal={props.principal} onSeat={props.onSeat} hostActions={props.hostActions} />
+                <FrameBar
+                  name={brand?.name ?? app.name}
+                  heading={props.heading ?? 2}
+                  places={places}
+                  current={barPlaceAt(places, at)}
+                  home={{ ...(address ? { href: addressOf("/", base) } : {}), go: () => steering.go.current?.("/"), current: at.split("?")[0] === "/" }}
+                  reach={{ ...(address ? { href: (path: string) => addressOf(path, base) } : {}), go: (place) => steering.go.current?.(place.path) }}
+                  standing={standing}
+                  hostActions={props.hostActions}
+                  onFind={setBarFind}
+                />
               </FaceBoundary>
             ) : null}
-            <FaceBoundary module="@graview/pages" report={report} content>
-              <PagesContent<S> store={store} views={views} presence={presence} auto={auto} brand={brand} props={props} />
-            </FaceBoundary>
+            <BarFindContext.Provider value={barFind}>
+              <FaceBoundary module="@graview/pages" report={report} content>
+                <PagesContent<S> store={store} views={views} presence={presence} auto={auto} brand={brand} steering={steering} scope={scope} titleLevel={titleBelow(props.heading ?? 2)} props={props} />
+              </FaceBoundary>
+            </BarFindContext.Provider>
           </GraviewProvider>
         </FaceBoundary>
       </ErrorReportContext.Provider>

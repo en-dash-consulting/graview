@@ -47,7 +47,7 @@ async function choose(face: "scene" | "pages") {
     ryan: emphasis("p-ryan"),
     val: emphasis("p-val"),
     seo: emphasis("sk-seo"),
-    heading: host.querySelector("h1")?.textContent?.trim() ?? null,
+    heading: host.querySelector("[data-graview-page-title]")?.textContent?.trim() ?? null,
     // The seat names the selection: the strength, and the two it joins.
     inspector: host.textContent?.includes("Ryan SEO and 2 more") ?? false,
   };

@@ -38,14 +38,19 @@ is selected and what can be done with it, whether the rules hold, what just
 happened and how to take it back, how to back out of a view. All derived from
 the schema, the invariants and the op log.
 
-**The app, said once** — `AppTitle`: the brand's mark (`AppMark`, drawn as
-given, never an SVG that could act), its name, and the line under it, which
-every face's title is drawn with; `useFavicon` for a face that owns the page.
+**The app, said once** — `AppBar`: one bar over every face (FR-131) — the
+brand's mark (`AppMark`, drawn as given, never an SVG that could act) and
+the app's name as the page's heading, the app's places as tabs (`barPlaces`,
+the overview among them, FR-132), and three tools of one size: the Find a
+face puts in it (`useBarFind`), `Standing` and `Profile`. `AppTitle` draws
+the mark, the name and the line under it elsewhere; `useFavicon` is for a
+face that owns the page.
 
 **Visual system** — `themeCss(scheme, brand)`. Two schemes that are not
 inversions of each other: dark loses luminance, light loses contrast and gains
 haze. A brand supplies its own and `graview check` measures it. The sheet is
-two halves: `themeBaseCss`, what every face draws on, and `sceneCss`, the
-rules only the scene draws (the districts from altitude, the plots, the
-village, the billboards), which an embed's scene face draws beside it so a
-page on the pages face carries none of them.
+three parts: `themeBaseCss`, what every face draws on; `viewsCss`, the blocks
+a view spec is drawn with, which each face that draws a view draws beside it;
+and `sceneCss`, the rules only the scene draws (the districts from altitude,
+the plots, the village, the billboards), which an embed's scene face draws
+beside it so a page on the pages face carries none of them.

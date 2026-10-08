@@ -20,7 +20,6 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { graviewSources } from "./graview-sources.mjs";
-import { pressPlace, waitForPlace } from "./places.mjs";
 
 export const PACKAGES_MANIFEST = { name: "packages", title: "The packages", attach: "package", cardinality: "many", reads: { kinds: ["offer"], edges: ["includes"] } };
 export const NOTES_MANIFEST = { name: "notes", title: "What we heard", attach: "signal", cardinality: "many" };
@@ -95,6 +94,11 @@ window.__handle.drawn().then(() => { window.__ready = true; });
       await tab.goto(`${HOST}/?${query}`, { waitUntil: "load" });
       await tab.waitForFunction(() => window.__ready === true, null, { timeout: 30_000 });
     };
+    /* The scene sent to a place's stop, `#view=<as>`, the way a link to it does. */
+    const inScene = async (as) => {
+      await tab.evaluate((stop) => window.__handle.setStop(stop), `#view=${as}`);
+      await tab.waitForTimeout(900);
+    };
     const lens = async () => {
       await tab.waitForFunction(() => Boolean(document.querySelector('[data-worker-view="packages"]')?.shadowRoot?.querySelector(".package")), null, { timeout: 20_000 });
       return tab.evaluate(() => {
@@ -139,14 +143,11 @@ window.__handle.drawn().then(() => { window.__ready = true; });
 
     // ── the Graview face ──
     await open("face=scene");
-    /* The strip's controls are fetched with the face: wait for the bar to hold the places before pressing one. */
-    await waitForPlace(tab, "the-packages").catch(async () => {
-      throw new Error(`no places on the bar: ${(await tab.evaluate(() => document.body.innerText)).slice(0, 600)}`);
-    });
-    /* The tab, as a person presses it; the embed names its landmarks after itself ("Offers · Places"), so the bar by its test id. */
-    const how = await pressPlace(tab, "The packages");
+    /* The bar names the place (FR-131); its tab is the place's page, so the scene goes to it by its stop, as a link to it does (FR-132). */
+    const named = await tab.waitForSelector('[data-testid="app-place-place:package:the-packages"]', { state: "attached", timeout: 20_000 }).then(() => true, () => false);
+    await inScene("the-packages");
     const scene = await lens();
-    claim('on the Graview face "The packages" is a place on the bar, and pressing it draws the worker view', /The packages$/.test(scene.label) && scene.packages.length === 3, { how, packages: scene.packages.map((one) => one.title) });
+    claim('on the Graview face "The packages" is a place on the bar, and its stop draws the worker view in the scene', named && /The packages$/.test(scene.label) && scene.packages.length === 3, { named, packages: scene.packages.map((one) => one.title) });
     claim("on the Graview face too, the offer Lin may not see is nowhere", !scene.text.includes("Internal margin review") && JSON.stringify(scene.packages.find((one) => one.id === "package:start")?.offers) === JSON.stringify(["Team coaching", "AI strategy sprint"]), scene.packages);
 
     // ── Erin sees it, so it is sight and not the data ──
@@ -170,8 +171,8 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     await open("face=pages&path=/places/the-packages");
     await lens();
     await inRegion("packages", 'a[data-record="offer:coaching"]').first().click();
-    await tab.waitForFunction(() => /Team coaching/.test(document.querySelector("h1")?.textContent ?? ""), null, { timeout: 10_000 }).catch(() => {});
-    const recordPage = await tab.evaluate(() => ({ heading: document.querySelector("h1")?.textContent ?? null, region: Boolean(document.querySelector('[data-worker-view="packages"]')) }));
+    await tab.waitForFunction(() => /Team coaching/.test(document.querySelector("[data-graview-page-title]")?.textContent ?? ""), null, { timeout: 10_000 }).catch(() => {});
+    const recordPage = await tab.evaluate(() => ({ heading: document.querySelector("[data-graview-page-title]")?.textContent ?? null, region: Boolean(document.querySelector('[data-worker-view="packages"]')) }));
     claim("on the pages face, a view's link to a record goes to that record's page", /Team coaching/.test(recordPage.heading ?? "") && !recordPage.region, recordPage);
     await open("face=pages&path=/places/what-we-heard");
     await inRegion("notes", "#to-packages").waitFor({ timeout: 15_000 });
@@ -183,8 +184,7 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     const placePage = await tab.evaluate(() => Boolean(document.querySelector('[data-worker-view="packages"]')?.shadowRoot?.querySelector(".package")));
     claim("on the pages face, a view's link to a place, followed with Enter, goes to that place", placePage);
     await open("face=scene");
-    await waitForPlace(tab, "what-we-heard");
-    await pressPlace(tab, "What we heard");
+    await inScene("what-we-heard");
     await inRegion("notes", "#to-packages").waitFor({ timeout: 15_000 });
     await inRegion("notes", "#to-packages").click();
     const scenePlace = await lens().then((drawn) => drawn.packages.length === 3).catch(() => false);

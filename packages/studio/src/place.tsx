@@ -5,7 +5,7 @@ import { EMPTY_VIEW, withWithin } from "@graview/layout";
 import { GraviewProvider, Scene, createViews, useGraview, useNavigation, useTheKeyboardLandsSomewhere } from "@graview/react";
 import { ActivityRail, AgentSeat, Inspector, Places, registerDefaultViews } from "@graview/primitives";
 import type { ToolCall } from "@graview/tools";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useStoreTick } from "@graview/pages";
 import { StudioAgentPanel } from "./agent-panel.js";
@@ -174,11 +174,21 @@ export function StudioPlace<S extends AnySchema>({
   const { view, go } = useNavigation();
   const open = view.within?.["studio"] === "open";
   const setOpen = (next: boolean) => go(withWithin(view, "studio", next ? "open" : null));
+  /*
+   * THE BOX IS THE EMBED'S (FR-131). The way in lives in the person's menu
+   * on the app bar, a popover that is out of sight when it is closed; a
+   * studio drawn beside it took the menu for its box, and was out of sight
+   * with it. Boxed, it is drawn into the embed's own element, which it fills.
+   */
+  const way = useRef<HTMLButtonElement>(null);
+  const [box, setBox] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => setBox(way.current?.closest<HTMLElement>("[data-graview-embed]") ?? null), []);
   const may = offered === undefined ? maySeeTheStudio(store, principal) : typeof offered === "function" ? offered(store as unknown as Store<AnySchema>, principal) : offered;
   if (!may) return null;
   return (
     <>
       <button
+        ref={way}
         type="button"
         data-testid="studio-place"
         aria-expanded={open}
@@ -214,6 +224,8 @@ export function StudioPlace<S extends AnySchema>({
          */
         within === "page" ? (
           createPortal(<StudioOverlay app={app} within={within} landmark={landmark ?? "main"} onClose={() => setOpen(false)} {...(onApply ? { onApply } : {})} />, document.body)
+        ) : box ? (
+          createPortal(<StudioOverlay app={app} within={within} landmark={landmark ?? "region"} onClose={() => setOpen(false)} {...(onApply ? { onApply } : {})} />, box)
         ) : (
           <StudioOverlay app={app} within={within} landmark={landmark ?? "region"} onClose={() => setOpen(false)} {...(onApply ? { onApply } : {})} />
         )

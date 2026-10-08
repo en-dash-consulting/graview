@@ -1,18 +1,19 @@
-import { addressOf, pathWithin, placeSlug, type AnySchema, type GraviewApp, type Place, type Store } from "@graview/core";
+import { addressOf, OVERVIEW_PATH, pathWithin, placeSlug, type AnySchema, type GraviewApp, type Place, type Store } from "@graview/core";
 import { aggregateId, AGGREGATE_PREFIX, fromUrl, kindOfCard, toUrl, withFocus, type ViewState } from "@graview/layout/view";
 import { faceAtAddress, stopAtAddress } from "./address.js";
 import type { EmbedProps } from "./embed.js";
 import type { EmbedFace } from "./frame.js";
 
 /**
- * WHERE THE READER IS (FR-116): the face, the page open on Pages (or the
- * one it last had), and the scene's stop. `handle.where()` reads it; a host
+ * WHERE THE READER IS (FR-116): the face, the path of the place they are
+ * on — the overview's, `/places/overview`, on the scene (FR-132) — and the
+ * scene's stop. `handle.where()` reads it; a host
  * that must remount hands it back as `mount(…, { at })`, and `setApp`
  * carries it across a new declaration by itself.
  */
 export interface EmbedWhere {
   readonly face: EmbedFace;
-  /** The routed face's path within the app's own routes, with its search. */
+  /** The place's path within the app's own routes, with its search: `/places/overview` on the scene (FR-132). */
   readonly path: string;
   /** The scene's stop, as the fragment the app itself would write. */
   readonly stop: string;
@@ -55,7 +56,8 @@ export function settle(where: EmbedWhere, app: GraviewApp<AnySchema>, store: Sto
   const kind = parts.length > 0 && !OWN.includes(parts[0]!) ? kinds.find((one) => slugOf(schema, one) === parts[0]) : undefined;
   let path = where.path;
   if (parts[0] === "places" && parts.length === 2) {
-    if (!places.some((place) => place.as === decodeURIComponent(parts[1]!))) path = "/";
+    // The overview is a place every app has (FR-132).
+    if (`/places/${parts[1]}` !== OVERVIEW_PATH && !places.some((place) => place.as === decodeURIComponent(parts[1]!))) path = "/";
   } else if (kind) {
     const id = parts[1] === undefined ? undefined : decodeURIComponent(parts[1]);
     path = `/${slugOf(schema, kind)}${id !== undefined && store.graph.getNode(id)?.kind === kind ? `/${parts[1]}` : ""}${query}`;

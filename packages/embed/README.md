@@ -2,7 +2,7 @@
 
 Mount a declared Graview app into any element — a paragraph of a docs page, a
 card on a dashboard, a preview in a builder — without the Shell, sized to the
-element, themed within it, and switchable between its faces.
+element, themed within it, under one app bar.
 
 ```ts
 import { mount } from "@graview/embed";
@@ -13,19 +13,44 @@ const handle = mount(document.querySelector("#garden")!, {
   face: "graview",            // "scene" | "graview" | "pages" | "picture" — one named lens, no chrome: stop "#view=<place>"
   stop: "#focus=plot-1",      // the scene's view state, as its URL fragment
   principal: { kind: "human", id: "june", roles: ["coordinator"] },
-  toggle: true,               // the face switcher and Standing, above the picture
+  bar: true,                  // the app bar over every face (the default)
 });
 
-handle.setFace("pages");      // the routed face, at the element's width
+handle.setPath("/plots");     // a place: the plots' list, at the element's width
+handle.setPath("/places/overview"); // the overview: the scene
 handle.setStop("#overview=1&expand=kind:plot");
 handle.unmount();
 ```
 
 `<Embed {...options} />` is the same thing as a React component.
 
+## The app bar
+
+One bar stands over every face (FR-131). At the left, the app: its mark —
+the brand's logo, when the document has one — and its name, said once, as
+the page's heading (`heading`: `1` when the host's page is the app, `2`, the
+default, inside an article, `false` when the host's own heading says it),
+and the way home. Then the app's places as plain tabs, the one you are on
+marked (`aria-current`), and what the row cannot hold under "More": the
+overview, each named picture, each kind's list, and how the kinds connect.
+At the right, three tools of one size: Find (inline; ⌘K or Ctrl+K on a
+desk, a magnifier that opens the box on a phone), the standing (a dot in the
+tone of the rules, a number only when one is broken, opening what is broken;
+its name says "Everything is in order" otherwise), and the person (an avatar
+whose menu holds who is signed in, the seats, the host's own actions and,
+for whoever keeps the app, the installation and the studio). On a desk it
+is one row; on a phone the places take a second.
+
+THE SCENE IS A PLACE (FR-132): the overview, a tab beside the others —
+"Overview" unless the declaration calls it something else (`pages: {
+overview: "The farm" }`), at `/places/overview` whatever it is called.
+Choosing it draws the scene under the same bar; any other tab draws that
+page. Nothing says "Scene" or "Pages". `bar: false` draws none of it, for a
+host whose own page already says all of that.
+
 ## What a page loads first
 
-The frame — the element's region, its theme, the strip, the provider — is
+The frame — the element's region, its theme, the app bar, the provider — is
 on the page when `mount` returns. Each face is a chunk of its own, fetched
 the first time it is drawn: a page that opens on the pages never loads the
 scene, one that opens on the scene never loads the router, and the
@@ -49,8 +74,9 @@ const handle = mount(root, { app, face });  // drawn in this commit
 ```
 
 What this asks of the framework, and what it adds: the theme scopes to the
-element (`themeBaseCss(scheme, brand, { scope })`, and the scene's own rules,
-`sceneCss`, drawn by the scene face beside it) rather than the document, every
+element (`themeBaseCss(scheme, brand, { scope })`, and the blocks a view is
+drawn with, `viewsCss`, and the scene's own rules, `sceneCss`, drawn by the
+face that needs them beside it) rather than the document, every
 rule of it held inside that element, so nothing of the host's is restyled; the
 panes size against the picture's own box (`cqh`) rather than the viewport;
 the routed face runs on a memory router, so the host page's address is never
@@ -83,14 +109,15 @@ Shell spells it:
 | Address | Drawn |
 |---|---|
 | `/apps/a1/places/the-board`, `/apps/a1/tasks/t1` | the routed face, at that page |
-| `/apps/a1#overview=1`, `/apps/a1#focus=t1` | the scene, at that stop (the Graview at altitude) |
-| `/apps/a1` | the routed face's home, or on arrival the host's `face` |
+| `/apps/a1/places/overview#focus=t1`, `/apps/a1/places/overview#overview=1` | the overview: the scene, at that stop (the Graview at altitude) |
+| `/apps/a1#focus=t1` | the scene too — a link written before the scene was a place — tidied on arrival to the overview's address |
+| `/apps/a1` | the routed face's home, or on arrival the host's `face` (the Graview or the scene land on the overview's address) |
 
 Each page the routed face opens is pushed, and Back returns. The scene
 keeps its stop in the fragment the way the Shell does: a step is pushed,
-moving the furniture replaces. The face toggle pushes the address of the
-face it goes to, so Back undoes it, and the page you left is where the
-toggle returns you. A reload stays where it was. `faceAtAddress(options)`
+moving the furniture replaces. A tab pushes the address of the place it goes
+to, the overview's included, so Back undoes it. A reload stays where it
+was. `faceAtAddress(options)`
 is the face an address opens on, for a host that renders `<Embed>` itself.
 `placesOf(app)` gives each place's `address` within the app, and
 `addressOf(place, { basePath })` from `@graview/core` gives it under the
@@ -99,9 +126,11 @@ base, spelled as the face's own links are (`pathWithin` reads one back).
 `routing: "memory"`, the default, is for somebody else's page: it never
 writes `history` and leaves `location` as it was. A host that keeps its
 own history stays on memory routing: `onNavigate(path, how)` is told each
-page the routed face opens (the path within the app, and `"push"`,
-`"replace"` or `"pop"`), and `handle.setPath(path)` sends it back to one
-when the host's own Back arrives.
+place the reader goes to (the path within the app — `/places/overview` for
+the scene — and `"push"`, `"replace"` or `"pop"`), and `handle.setPath(path)`
+sends the reader back to one when the host's own Back arrives: the
+overview's path draws the scene, any other the page. `where().path` is the
+place's path the same way.
 
 ## When the declaration changes
 
@@ -127,9 +156,8 @@ resolves once the new app is on the page.
 
 A renamed app says its new name at once (FR-128). A `label` that was the
 app's own name — as a host that mounts with `label: app.name` gives it —
-follows the new app: the embed's accessible name, the workbench's heading
-and each landmark inside say the new name, and the wordmark is the new
-app's brand. A label the host chose ("Chapter 13") stays;
+follows the new app: the embed's accessible name and each landmark inside
+say the new name, and the bar's name — its heading — is the new app's. A label the host chose ("Chapter 13") stays;
 `setApp(app, store, { label })` gives another, and `handle.setLabel(label)`
 renames the embed in place. `handle.setHostActions(actions)` changes the
 host's own actions in the profile menu the same way.
@@ -160,7 +188,7 @@ the embed reads the rung it means rather than guessing a number.
 ## The host's own actions
 
 A host's links about the app and the person — "Change the app", "Your
-apps", "Report this app" — go in the strip's profile menu, under who is
+apps", "Report this app" — go in the person's menu on the app bar, under who is
 signed in, rather than in a menu of the host's own laid over the scene:
 
 ```ts
@@ -243,7 +271,7 @@ mount(root, {
 });
 ```
 
-A view, a page, the strip or the studio that throws is contained where it
+A view, a page, the bar or the studio that throws is contained where it
 threw: it says it could not draw and offers to try again, and the rest of
 the embed keeps working. The host is told the error's class (a TypeError,
 a `GraphError`) and the framework module that caught it, never the message,
@@ -252,7 +280,7 @@ how many milliseconds it took.
 
 ## What the host can keep
 
-The Studio is on the strip for the seat that keeps the app, and writes
+The Studio is in the person's menu on the overview for the seat that keeps the app, and writes
 through a dev server's door or hands over files. A host whose readers
 cannot save a declaration leaves it off, or keeps what it applies:
 

@@ -28,6 +28,7 @@ export {
   beginningsFrom,
   WhyLine,
   StartFreshLink,
+  OverviewLink,
   useStoreTick,
   pageStyles,
   PageMain,
@@ -38,4 +39,4 @@ export { PageAsk } from "./ask.js";
 export { lastChangeOf, PageUndo } from "./face-controls.js";
 export type { FaceControl, LastChange } from "./face-controls.js";
 export { PagesApp, PagesRoutes } from "./router.js";
-export type { NavigationHow, PagesAppProps, PageComponent } from "./router.js";
+export type { NavigationHow, PagesAppProps, PagesSteering, PageComponent } from "./router.js";

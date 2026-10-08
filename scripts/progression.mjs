@@ -126,7 +126,9 @@ try {
       }
       if (chapter.drive === "standing") {
         await page.click('[data-testid="standing"]');
-        await page.waitForTimeout(500);
+        // The problems' rows are fetched when first reached for (FR-131), so wait for a row rather than a fixed time.
+        await page.waitForFunction(() => document.querySelector('[data-testid="problems"] li'), null, { timeout: 10_000 }).catch(() => {});
+        await page.waitForTimeout(200);
       }
       /*
        * The picture is the part that matters, not the whole window. A city
@@ -158,7 +160,8 @@ try {
       if (clip) entry.picture = { width: Math.round(clip.width), height: Math.round(clip.height) };
       if (scheme === "light") {
         entry.saw = await page.evaluate(() => ({
-          standing: document.querySelector('[data-testid="standing"]')?.textContent?.trim() ?? null,
+          // The standing is a dot and a number; what it says is its name.
+          standing: document.querySelector('[data-testid="standing"]')?.getAttribute("aria-label") ?? null,
           districts: [...document.querySelectorAll('[data-graview-view^="kind:"]')].map((el) => el.textContent?.trim().replace(/\s+/g, " ") ?? ""),
           trail: document.querySelector("header")?.textContent?.trim().replace(/\s+/g, " ").slice(0, 160) ?? null,
           withheld: document.querySelector('[data-testid="withheld"]')?.textContent?.trim() ?? null,

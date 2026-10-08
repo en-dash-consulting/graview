@@ -734,7 +734,7 @@ async function openFind(person, face) {
       ? page.locator('[data-testid="find-box"]')
       : page.getByRole("searchbox", { name: "Find anything" }).or(page.locator('[data-testid="find-box"]'));
   if (face === "scene" && person.input === "keyboard") {
-    // The box says its own key ("Find…  /"); a keyboard person uses it.
+    // The box says its own keys (`aria-keyshortcuts`: "/" and ⌘K); a keyboard person uses one.
     await person.key("/");
     await person.settle(100);
     if (await box.first().evaluate((el) => el === document.activeElement).catch(() => false)) return box.first();

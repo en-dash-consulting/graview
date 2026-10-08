@@ -154,10 +154,10 @@ to make.
 ## What a capsule means
 
 One rule across the faces: a capsule (a pill) is a choice the reader can
-make — the face switch, a range, a setting, where the one chosen wears it —
+make — a range, a setting, a seat, where the one chosen wears it —
 or a record's state badge. Nothing else is one. A record is a card (a chip
 has a card's corners), a field is its label and its value, the places are
-text tabs that scroll with the current one underlined, a district's name is
+text tabs on the app bar with the current one underlined, a district's name is
 text on its plot, a drive-in says its showings by name, and the scene's
 "Down to …", zoom and the seat's suggestions are quiet. A badge whose
 context already says it is not drawn: no card wears its own board column's

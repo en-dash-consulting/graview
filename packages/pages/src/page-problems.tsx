@@ -6,7 +6,7 @@ import { recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
 import { SeatQuestions } from "./page-map.js";
 import { KindMark, button, column, eyebrow, h1, h2, lede, link, plain, quiet, rule } from "./page-typography.js";
-import { PageMain } from "./page-shell.js";
+import { PageMain, PageTitle } from "./page-shell.js";
 
 
 /**
@@ -21,7 +21,7 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
     <PageMain context={context}>
       <header style={{ display: "grid", gap: 12 }}>
         <p style={eyebrow}>{violations.length === 0 ? "The standing" : `${violations.length} ${violations.length === 1 ? "problem" : "problems"}`}</p>
-        <h1 style={h1}>{violations.length === 0 ? "All rules hold" : "What is broken"}</h1>
+        <PageTitle context={context}>{violations.length === 0 ? "All rules hold" : "What is broken"}</PageTitle>
         {violations.length === 0 ? (
           <p style={lede}>Every declared rule is satisfied by what is here.</p>
         ) : (
@@ -179,7 +179,7 @@ export function Repairs<S extends AnySchema>({
                 return;
               }
               // The problem is gone with its repairs: the page's own heading is the honest home.
-              const heading = document.querySelector<HTMLElement>("main h1, h1");
+              const heading = document.querySelector<HTMLElement>("[data-graview-page-title]") ?? document.querySelector<HTMLElement>("main h1, main h2");
               if (!heading) return;
               if (!heading.hasAttribute("tabindex")) heading.tabIndex = -1;
               heading.focus();

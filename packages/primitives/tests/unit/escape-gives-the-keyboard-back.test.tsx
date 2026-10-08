@@ -77,6 +77,8 @@ describe("a popover closed from the keyboard", () => {
     const { host, unmount } = await mount(<Standing clean="All good" />);
     const button = host.querySelector<HTMLButtonElement>('[data-testid="standing"]')!;
     await act(async () => button.click());
+    // The problems are fetched when Standing is first reached for (FR-131).
+    for (let tries = 0; tries < 40 && !host.querySelector('[data-testid="problems"] button'); tries += 1) await act(async () => new Promise((wait) => setTimeout(wait, 25)));
     const inside = [...host.querySelectorAll<HTMLElement>("button, a")].find((el) => el !== button);
     expect(inside).toBeDefined();
     inside!.focus();

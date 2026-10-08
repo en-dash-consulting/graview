@@ -302,6 +302,23 @@ export interface PagesArrangement {
   readonly order?: readonly string[];
   readonly hide?: readonly string[];
   readonly first?: string;
+  /**
+   * WHAT THE SCENE IS CALLED ON THE BAR (FR-132): the scene is one of the
+   * app's places, a tab beside the others, and this is its name —
+   * "Overview" when the declaration says none. Its address stays
+   * `/places/overview` whatever it is called.
+   */
+  readonly overview?: string;
+}
+
+/** The scene's place (FR-132): its address word, whatever the declaration calls it. */
+export const OVERVIEW_SLUG = "overview";
+/** The scene's address on the routed face (FR-132); its stop rides on it as the fragment. */
+export const OVERVIEW_PATH = `/places/${OVERVIEW_SLUG}`;
+/** What the scene's place is called on the bar: the declaration's word, else "Overview". */
+export function overviewTitle(pages: PagesArrangement | undefined): string {
+  const said = pages?.overview?.trim();
+  return said ? said : "Overview";
 }
 
 /** Kinds in the arrangement's order: those `order` names first, the rest as given. */
@@ -332,8 +349,18 @@ export function openingOf(first: string | undefined, schema: AnySchema, places: 
 /** What the arrangement asks that the declaration cannot honor: kinds and places that do not exist. */
 export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, places: readonly Place[] = placesOfLenses(app)): readonly PlaceFinding[] {
   const pages = app.pages;
-  if (!pages) return [];
   const findings: PlaceFinding[] = [];
+  const taken = places.find((place) => place.as === OVERVIEW_SLUG);
+  if (taken) {
+    findings.push({
+      severity: "warning",
+      code: "pages-overview-taken",
+      path: "pages",
+      message: `The place "${taken.title}" has the address the overview keeps (${OVERVIEW_PATH}), so the bar's "${overviewTitle(pages)}" tab and it cannot both be reached there.`,
+      fix: `Give "${taken.title}" another title, or call the overview something else with pages.overview and keep its address.`,
+    });
+  }
+  if (!pages) return findings;
   const kinds = app.schema.kinds as readonly string[];
   for (const part of ["order", "hide"] as const) {
     (pages[part] ?? []).forEach((kind, index) => {
@@ -404,7 +431,11 @@ export function placesOf<S extends AnySchema>(app: GraviewApp<S>): readonly AppP
   const hidden = new Set(app.pages?.hide ?? []);
   const kinds = orderKinds(app.schema.kinds as readonly string[], app.pages?.order);
   const shared = (place: Place) => lensPlaces.some((other) => other.as === place.as && other.kind !== place.kind);
-  const out: AppPlace[] = [{ slug: "home", title: "Home", kind: null, cardinality: "many", address: "/", stop: "#", ...(opening?.to === "home" ? { first: true } : {}) }];
+  const out: AppPlace[] = [
+    { slug: "home", title: "Home", kind: null, cardinality: "many", address: "/", stop: "#", ...(opening?.to === "home" ? { first: true } : {}) },
+    // The scene, a place like the others (FR-132): its stop rides on its address.
+    { slug: OVERVIEW_SLUG, title: overviewTitle(app.pages), kind: null, cardinality: "many", address: OVERVIEW_PATH, stop: "#" },
+  ];
   const byKind = [...lensPlaces].sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind));
   for (const place of byKind) {
     const lens = drawn.find((one) => one.as === place.as && one.kinds.includes(place.kind));

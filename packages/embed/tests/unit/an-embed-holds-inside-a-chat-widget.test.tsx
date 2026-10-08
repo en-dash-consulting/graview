@@ -66,14 +66,14 @@ beforeEach(() => {
   (globalThis as { ResizeObserver?: unknown }).ResizeObserver = FakeResizeObserver;
   Object.assign(geometry, { width: 800, strip: 40, page: 400, content: 300 });
   HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
-    const height = this.hasAttribute("data-embed-strip")
+    const height = this.hasAttribute("data-graview-app-bar")
       ? geometry.strip
       : this.hasAttribute("data-embed-measure")
         ? geometry.page
         : this.hasAttribute("data-embed-content")
           ? geometry.content
           : 0;
-    const width = this.hasAttribute("data-graview-embed") || this.hasAttribute("data-embed-strip") ? geometry.width : 0;
+    const width = this.hasAttribute("data-graview-embed") || this.hasAttribute("data-graview-app-bar") ? geometry.width : 0;
     return { x: 0, y: 0, top: 0, left: 0, right: width, bottom: height, width, height, toJSON() {} } as DOMRect;
   };
 });
@@ -117,7 +117,7 @@ describe("an embed in a sandboxed frame", () => {
       for (const face of ["pages", "graview", "scene"] as const) {
         const { root } = await mounting({ seed, face });
         expect(root.getAttribute("data-graview-embed")).toBe(face);
-        expect(root.querySelector("[data-testid=embed-faces]"), "the strip").not.toBeNull();
+        expect(root.querySelector("[data-testid=app-bar]"), "the bar").not.toBeNull();
         expect(root.textContent).toContain("Tasks");
       }
     } finally {
@@ -190,9 +190,16 @@ describe("an embed narrower than its scene", () => {
     geometry.width = 360;
     const { root } = await mounting({ seed, face: "graview", pagesBelow: 560 });
     expect(root.getAttribute("data-graview-embed")).toBe("pages");
-    expect(root.querySelector("[data-testid=embed-face-scene]"), "no face to switch to").toBeNull();
     geometry.width = 900;
     await act(async () => FakeResizeObserver.fire());
+    expect(root.getAttribute("data-graview-embed")).toBe("graview");
+  });
+
+  it("draws the overview there when the reader asks for it on the bar (FR-132)", async () => {
+    geometry.width = 360;
+    const { root } = await mounting({ seed, face: "graview", pagesBelow: 560 });
+    expect(root.getAttribute("data-graview-embed")).toBe("pages");
+    await act(async () => root.querySelector<HTMLElement>("[data-testid='app-place-overview']")!.click());
     expect(root.getAttribute("data-graview-embed")).toBe("graview");
   });
 });

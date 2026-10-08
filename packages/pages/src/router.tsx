@@ -10,7 +10,7 @@ import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, Def
 import { pathOfPlace } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
-import { SpecLinks } from "@graview/primitives/pages";
+import { HeadingsUnder, SpecLinks } from "@graview/primitives/pages";
 import { recordPath } from "./registry.js";
 
 /**
@@ -28,7 +28,12 @@ function RecordLinks<S extends AnySchema>({ context, children }: { readonly cont
     }),
     [schema, navigate],
   );
-  return <SpecLinks.Provider value={value}>{children}</SpecLinks.Provider>;
+  // A view's own headlines are said under the page's title, which is said under the app's name (FR-131).
+  return (
+    <SpecLinks.Provider value={value}>
+      <HeadingsUnder.Provider value={(context.titleLevel ?? (context.framed ? 1 : 2)) - 1}>{children}</HeadingsUnder.Provider>
+    </SpecLinks.Provider>
+  );
 }
 
 /**
@@ -66,6 +71,32 @@ export interface PagesAppProps<S extends AnySchema> {
    * keeps its own history hands back the path its own Back arrived at.
    */
   readonly path?: string;
+  /**
+   * A BAR ABOVE THE FACE, OUTSIDE ITS ROUTER (FR-131): told where the face
+   * is each time it moves — on arrival too — and handed the way to send it
+   * somewhere, for its tabs.
+   */
+  readonly steering?: PagesSteering;
+}
+
+/** What a bar drawn outside the router holds of it: where the face is, and the way to move it. */
+export interface PagesSteering {
+  /** Set by the face to its own way of going to a path, basename-relative. */
+  readonly go: { current: ((path: string) => void) | undefined };
+  /** Told the path, basename-relative with its search, each time the face moves. */
+  readonly at: (path: string) => void;
+}
+
+/** Says where the face is to a bar above it, and takes its presses. */
+function Steered({ steering }: { readonly steering: PagesSteering }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const here = `${location.pathname}${location.search}`;
+  steering.go.current = (path) => {
+    if (path !== here) navigate(path);
+  };
+  useLayoutEffect(() => steering.at(here), [here, steering]);
+  return null;
 }
 
 /** How the face arrived where it is: a new entry, a replaced one, or Back and Forward. */
@@ -197,7 +228,7 @@ function ScrollReset() {
     const active = document.activeElement;
     if (active !== null && active !== document.body && active !== document.documentElement) return;
     const main = mark.current?.closest("main") ?? document.querySelector("main");
-    const heading = main?.querySelector<HTMLElement>("h1") ?? null;
+    const heading = mark.current?.closest("[data-graview-face]")?.querySelector<HTMLElement>("[data-graview-page-title]") ?? main?.querySelector<HTMLElement>("h1, h2") ?? null;
     const target = heading ?? main ?? null;
     if (!target) return;
     if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
@@ -277,7 +308,7 @@ export function PagesRoutes<S extends AnySchema>({
     <FaceRoot context={context} registry={registry}>
     <GoesByAddress context={context}>
     <Shell context={context}>
-    <RecordLinks context={context}>
+    <RecordLinks context={inside}>
       <ScrollReset />
       <Routes>
         {/*
@@ -317,6 +348,7 @@ export function PagesApp<S extends AnySchema>({
   initialPath,
   onNavigate,
   path,
+  steering,
 }: PagesAppProps<S>) {
   /*
    * WHAT THE SEAT MAY SEE. Every page reads `context.store`; under a policy
@@ -330,6 +362,7 @@ export function PagesApp<S extends AnySchema>({
   const routed = (
     <>
       {onNavigate || path !== undefined ? <Reported onNavigate={onNavigate} path={path} /> : null}
+      {steering ? <Steered steering={steering} /> : null}
       <PagesRoutes context={context} {...(registry ? { registry } : {})} />
     </>
   );

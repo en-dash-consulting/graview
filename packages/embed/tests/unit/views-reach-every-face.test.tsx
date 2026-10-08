@@ -73,7 +73,7 @@ describe("views reach every face", () => {
       expect(page?.textContent).toContain("About Bloom & Co");
       // The record page IS the default record: the wrapped default draws nothing here.
       expect(page?.querySelector('[data-graview-primitive="panel"]')).toBeNull();
-      expect(host.querySelectorAll("h1")).toHaveLength(1);
+      expect(host.querySelectorAll("[data-graview-page-title]")).toHaveLength(1);
     });
   });
 

@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { sceneCss, themeCss } from "../../src/scene-css.js";
 import { themeBaseCss } from "../../src/theme.js";
+import { viewsCss } from "../../src/views-css.js";
 
 /*
  * FR-104. The theme sheet was one stylesheet, drawn by the frame of every
@@ -13,7 +14,8 @@ import { themeBaseCss } from "../../src/theme.js";
  * `themeBaseCss`; `themeCss` is the two together. This holds that nothing
  * was lost or doubled in the split, that the order the scene face draws
  * them in is `themeCss`'s, and that the scene's rules name nothing another
- * face draws.
+ * face draws. And the views' own blocks (FR-131) are `viewsCss`, drawn by
+ * each face that draws a view, between the frame's sheet and the scene's.
  */
 const rulesOf = (css: string): string[] => {
   const out: string[] = [];
@@ -56,12 +58,14 @@ const onlyTheScenes = (name: string) => {
 describe("the scene's rules are the scene face's", () => {
   for (const scheme of ["light", "dark"] as const) {
     for (const scope of [undefined, ".graview-embed-7"]) {
-      it(`themeCss is the frame's sheet and then the scene's, every rule once — ${scheme}${scope ? ", scoped" : ""}`, () => {
+      it(`themeCss is the frame's sheet, the views' and then the scene's, every rule once — ${scheme}${scope ? ", scoped" : ""}`, () => {
         const options = scope ? { scope } : {};
         const whole = rulesOf(themeCss(scheme, undefined, options));
         const base = rulesOf(themeBaseCss(scheme, undefined, options));
+        const views = rulesOf(viewsCss(options));
         const scene = rulesOf(sceneCss(scheme, options));
-        expect(whole).toEqual([...base, ...scene]);
+        expect(whole).toEqual([...base, ...views, ...scene]);
+        expect(views.filter((rule) => base.includes(rule))).toEqual([]);
         expect(scene.filter((rule) => base.includes(rule))).toEqual([]);
         // A third of the sheet, or near it: the cut is worth its seam.
         expect(scene.length).toBeGreaterThan(60);

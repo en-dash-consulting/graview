@@ -47,6 +47,16 @@
  * count keeps its accessible name, and the problems it opens are still
  * reached from the keyboard.
  *
+ * And ONE APP BAR ON EVERY FACE (FR-131, FR-132). Nick, on a real app: the
+ * title and the Scene/Pages toggle were ugly, bloated and broken under a
+ * notification — two stacked bars said the app's name, the way into the
+ * scene and the state of the rules twice each. On both faces, at a desk and
+ * a phone: one bar — one row on a desk, two on a phone, the second the
+ * places — one heading naming the app, nothing the bar says said again
+ * above the fold, one Find box, the tools one size and named, no control
+ * that says "Scene" or "Pages"; and the overview and a list one press on a
+ * tab apart, by pointer and by keyboard.
+ *
  * And NOTICES FLOAT, AND NEVER MOVE THE PAGE (FR-133). Nick, with an app
  * open in place on a desk: the top "is … broken when there's a
  * notification". The way back ("Take back “Mark done: Could Val lead…”")
@@ -68,7 +78,6 @@
  * `--notices` measures only the notices (FR-133), for iterating on them.
  */
 import { createServer } from "node:http";
-import { pressPlace } from "./lib/places.mjs";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
@@ -154,7 +163,7 @@ async function buildHost() {
           ...(asked.get("path") ? { path: asked.get("path") } : {}),
           principal: { kind: "human", id: "u:owner", roles: ["owner"] },
           label: compiled.app.name,
-          heading: false,
+          heading: asked.get("heading") ? Number(asked.get("heading")) : false,
           height: "100%",
           fonts: false,
           studio: false,
@@ -315,7 +324,7 @@ function measure() {
 
 const host = await buildHost();
 const errors = [];
-const results = { screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [] };
+const results = { screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], overviewPresses: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -511,6 +520,23 @@ try {
           await close();
         }
       }
+      /* ---- FR-131: one bar, one heading naming the app, nothing said twice — both faces, a desk and a phone */
+      for (const face of ["graview", "pages"]) {
+        for (const viewport of [DESK, PHONE]) {
+          for (const doc of ["vendors", "org"]) {
+            const { page, close } = await open(`doc=${doc}&face=${face}&heading=1`, viewport);
+            if (SHOTS) await page.screenshot({ path: join(SHOTS, `bar-${doc}-${face}-${viewport.width}-${scheme}-${engine}.png`) });
+            results.bars.push({ engine, scheme, doc, face, viewport: `${viewport.width}×${viewport.height}`, phone: viewport === PHONE, ...(await page.evaluate(theBar)) });
+            await close();
+          }
+        }
+      }
+      /* ---- FR-132: the overview and a list are one press on a tab apart, from the pointer and the keyboard */
+      for (const viewport of [DESK, PHONE]) {
+        const { page, close } = await open("doc=vendors&face=pages", viewport);
+        results.overviewPresses.push({ engine, scheme, viewport: `${viewport.width}×${viewport.height}`, ...(await overviewAndBack(page)) });
+        await close();
+      }
       /* ---- FR-122: the bar's count still opens the problems, from the keyboard alone */
       {
         const { page, close } = await open("doc=vendors&face=pages", PHONE);
@@ -550,6 +576,31 @@ try {
   report.checks.theBarsProblemCountIsNamedAndOpensFromTheKeyboard = {
     seen: results.problemsByKeyboard,
     ok: results.problemsByKeyboard.length === engines.length * SCHEMES.length && results.problemsByKeyboard.every((one) => one.named && one.reached && one.opened),
+  };
+  const bar = (one) => one.rows === (one.phone ? 2 : 1) && (!one.phone || one.secondRowIsThePlaces);
+  report.checks.atMostOneBarRowOnADeskAndTwoOnAPhone = {
+    seen: results.bars.map(({ engine, scheme, doc, face, viewport, rows, secondRowIsThePlaces, bars }) => ({ engine, scheme, doc, face, viewport, rows, secondRowIsThePlaces, bars })),
+    ok: results.bars.length === engines.length * SCHEMES.length * 8 && results.bars.every((one) => bar(one) && one.bars === 1 && one.contentUnderTheBar),
+  };
+  report.checks.oneHeadingNamesTheAppOnBothFaces = {
+    seen: results.bars.map(({ engine, scheme, doc, face, viewport, headings, name }) => ({ engine, scheme, doc, face, viewport, name, headings })),
+    ok: results.bars.length > 0 && results.bars.every((one) => one.headings.length === 1 && one.headings[0] === one.name),
+  };
+  report.checks.noTextIsRepeatedBetweenTheBarAndThePage = {
+    seen: results.bars.map(({ engine, scheme, doc, face, viewport, repeated, findBoxes }) => ({ engine, scheme, doc, face, viewport, repeated, findBoxes })),
+    ok: results.bars.length > 0 && results.bars.every((one) => one.repeated.length === 0 && one.findBoxes === 1),
+  };
+  report.checks.theBarsToolsAreOneSizeAndNamed = {
+    seen: results.bars.map(({ engine, scheme, doc, face, viewport, tools }) => ({ engine, scheme, doc, face, viewport, tools })),
+    ok: results.bars.length > 0 && results.bars.every((one) => one.tools.length >= 3 && one.tools.every((tool) => tool.height >= 28 && tool.height <= 32 && tool.named)),
+  };
+  report.checks.noControlSaysSceneOrPages = {
+    seen: results.bars.filter((one) => one.saysSceneOrPages.length > 0).map(({ engine, scheme, doc, face, viewport, saysSceneOrPages }) => ({ engine, scheme, doc, face, viewport, saysSceneOrPages })),
+    ok: results.bars.length > 0 && results.bars.every((one) => one.saysSceneOrPages.length === 0),
+  };
+  report.checks.theOverviewAndAListAreOnePressApart = {
+    seen: results.overviewPresses,
+    ok: results.overviewPresses.length === engines.length * SCHEMES.length * 2 && results.overviewPresses.every((one) => one.toOverview && one.overviewMarked && one.toList && one.listMarked && one.backToOverview && one.byKeyboard),
   };
   /* FR-133 */
   const notices = results.notices;
@@ -599,8 +650,9 @@ try {
  * or link that leads to them.
  */
 function problemCountSaid() {
-  const standing = [...document.querySelectorAll('button[data-testid="standing"]')].find((one) => /\d+ problems?/.test(one.textContent));
-  const count = Number(standing?.textContent.match(/(\d+) problems?/)?.[1] ?? 0);
+  /* The bar's standing says the number, and names it in words (FR-131). */
+  const standing = [...document.querySelectorAll('button[data-testid="standing"]')].find((one) => /\d+ problems?/.test(one.getAttribute("aria-label") ?? ""));
+  const count = Number(standing?.getAttribute("aria-label")?.match(/(\d+) problems?/)?.[1] ?? 0);
   const said = [];
   if (count === 0) return { count, said };
   const number = new RegExp(`(^|\\D)${count}(\\D|$)`);
@@ -628,6 +680,98 @@ function problemCountSaid() {
     if (/problem/i.test(text) || element.closest(leadsToProblems) !== null) said.push({ text: leading.textContent.trim().replace(/\s+/g, " ").slice(0, 80), where: leading.getAttribute("data-testid") ?? leading.tagName.toLowerCase() });
   }
   return { count, said };
+}
+
+/**
+ * THE ONE BAR, AS A PERSON SEES IT (FR-131): how many rows it stands in —
+ * the distinct tops of the app, the places and the tools — and whether the
+ * second, on a phone, is the places; how many bars there are above the
+ * face (the app bar, and anything else that is a row of navigation over the
+ * content); the headings in the embed; the texts the bar says that the page
+ * says again above the fold; how many Find boxes are on the screen; the
+ * tools' heights and names; and any control that says "Scene" or "Pages".
+ */
+function theBar() {
+  const root = document.querySelector("[data-graview-embed]");
+  const header = root?.querySelector("[data-graview-app-bar]");
+  const shown = (element) => {
+    if (!element) return false;
+    const box = element.getBoundingClientRect();
+    if (box.width < 2 || box.height < 2) return false;
+    const style = getComputedStyle(element);
+    return style.display !== "none" && style.visibility !== "hidden";
+  };
+  const parts = header ? [".graview-bar-app", ".graview-bar-places", ".graview-bar-tools"].map((selector) => header.querySelector(selector)).filter(shown) : [];
+  const tops = [...new Set(parts.map((part) => Math.round(part.getBoundingClientRect().top / 4)))].sort((a, b) => a - b);
+  const places = header?.querySelector(".graview-bar-places");
+  const secondRowIsThePlaces = tops.length === 2 && shown(places) && Math.round(places.getBoundingClientRect().top / 4) === tops[1];
+  /* Rows of navigation over the content that are not the bar: a masthead, a nav of pages, a Find bar of the face's own, the old strip. */
+  const others = root ? [...root.querySelectorAll('[data-testid="masthead"], [data-testid="shell-nav"], [data-testid="face-find-bar"], [data-testid="embed-faces"], [data-embed-strip]')].filter(shown) : [];
+  const content = root?.querySelector("[data-embed-content]");
+  const contentUnderTheBar = Boolean(header && content && Math.abs(content.getBoundingClientRect().top - header.getBoundingClientRect().bottom) <= 1);
+  const headings = root ? [...root.querySelectorAll("h1")].filter((one) => !one.closest("[hidden]")).map((one) => one.textContent.trim()) : [];
+  const name = header?.querySelector('[data-testid="app-name"]')?.textContent.trim() ?? "";
+  /* The bar's own words — the app's name, and a line under it — said again on the screen outside the bar. */
+  const said = new Set([name, ...[...(header?.querySelectorAll("[data-testid='app-subtitle']") ?? [])].map((one) => one.textContent.trim())].filter(Boolean));
+  const repeated = [];
+  const walker = document.createTreeWalker(root ?? document.body, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const text = node.textContent.trim();
+    const element = node.parentElement;
+    if (!text || !element || header?.contains(element) || !said.has(text) || !shown(element)) continue;
+    const box = element.getBoundingClientRect();
+    if (box.top >= innerHeight || box.bottom <= 0) continue;
+    if (element.closest('[aria-hidden="true"]')) continue;
+    repeated.push({ text, where: element.closest("[data-testid]")?.getAttribute("data-testid") ?? element.tagName.toLowerCase() });
+  }
+  /* Find boxes of the app's own — a lens may carry a box for its own words, which is the picture's, not the bar's. */
+  const findBoxes = [...document.querySelectorAll('input[type="search"]')].filter((one) => shown(one) && (header?.contains(one) || /^(Find anything|Narrow this list)$/.test(one.getAttribute("aria-label") ?? ""))).length + (shown(header?.querySelector('[data-testid="app-find-open"]')) ? 1 : 0);
+  const tools = header ? [...header.querySelectorAll('.graview-bar-tools > *')].flatMap((one) => (one.matches("button, a, input") ? [one] : [...one.querySelectorAll("button, a, input")])).filter(shown).map((one) => ({ name: one.getAttribute("aria-label") ?? one.textContent.trim(), height: Math.round(one.getBoundingClientRect().height), named: Boolean((one.getAttribute("aria-label") ?? "").trim()) })) : [];
+  const saysSceneOrPages = root ? [...root.querySelectorAll("button, a, [role=tab], [role=button]")].filter(shown).map((one) => (one.getAttribute("aria-label") ?? one.textContent ?? "").trim()).filter((words) => /\b(scene|pages)\b/i.test(words)) : [];
+  return { rows: tops.length, secondRowIsThePlaces, bars: header ? 1 + others.length : others.length, contentUnderTheBar, headings, name, repeated, findBoxes, tools, saysSceneOrPages };
+}
+
+/**
+ * FROM A LIST TO THE OVERVIEW AND BACK, ONE PRESS EACH (FR-132): the
+ * overview's tab draws the scene under the same bar and is marked; a kind's
+ * tab draws its list and is marked; the overview's tab again. Then the same
+ * by keyboard: Tab to the overview's tab, Enter.
+ */
+async function overviewAndBack(page) {
+  const face = () => page.evaluate(() => document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed"));
+  const marked = (key) => page.evaluate((key) => document.querySelector(`[data-testid="app-place-${key}"]`)?.getAttribute("aria-current") === "page", key);
+  const tab = (key) => page.locator(`[data-testid="app-place-${key}"]`).first();
+  const press = async (key) => {
+    const one = tab(key);
+    if (!(await one.isVisible().catch(() => false))) {
+      await page.locator('[data-testid="app-places-more"]').click();
+      await page.waitForTimeout(150);
+    }
+    await one.click();
+    await page.waitForTimeout(1200);
+  };
+  await press("overview");
+  const toOverview = ["scene", "graview"].includes(await face());
+  const overviewMarked = await marked("overview");
+  await press("kind:vendor");
+  const toList = (await face()) === "pages" && (await page.locator("main h2, [data-embed-content] h2").first().textContent().catch(() => "")).trim().toLowerCase() === "vendors";
+  const listMarked = await marked("kind:vendor");
+  await press("overview");
+  const backToOverview = ["scene", "graview"].includes(await face());
+  /* By keyboard: from the list, Tab to the overview's tab and press Enter. */
+  await press("kind:vendor");
+  let byKeyboard = false;
+  await page.locator('[data-testid="app-home"]').focus();
+  for (let step = 0; step < 20; step++) {
+    await page.keyboard.press("Tab");
+    if (await page.evaluate(() => document.activeElement?.getAttribute("data-testid") === "app-place-overview")) {
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(1200);
+      byKeyboard = ["scene", "graview"].includes(await face());
+      break;
+    }
+  }
+  return { toOverview, overviewMarked, toList, listMarked, backToOverview, byKeyboard };
 }
 
 /** The bar's Standing: its accessible name says the count, Tab reaches it, and Enter opens the problems it counts. */
@@ -699,7 +843,7 @@ async function noticesFloat(page, face, engine, shot) {
     const content = document.querySelector("[data-embed-content]") ?? document.body;
     const heading = [...content.querySelectorAll("h1, h2, h3, [role=heading]")].find(shown) ?? null;
     const item = [...content.querySelectorAll("li, [role=listitem], [data-graview-view]")].find(shown) ?? null;
-    const bar = document.querySelector("[data-embed-strip]");
+    const bar = document.querySelector("[data-graview-app-bar]");
     for (const [name, element] of [["bar", bar], ["heading", heading], ["item", item]]) element?.setAttribute("data-notices-watch", name);
     const field = document.createElement("input");
     field.setAttribute("aria-label", "The host's own field");
@@ -849,9 +993,17 @@ async function noticesFloat(page, face, engine, shot) {
   return { ...rest, kept, moved: Math.round(moved * 100) / 100, act: { ...after.act, reached }, ...(face === "pages" ? {} : { wayBack: undefined }) };
 }
 
-/** Goes to a place on the Graview face the way a person does: by its tab on the bar. Throws if the bar does not name it. */
+/**
+ * Goes to a place IN THE SCENE: the bar's tab for a picture opens its page
+ * (FR-132), so the scene is sent to the place's stop, `#view=<as>`, the way
+ * a link to it does.
+ */
 async function goToPlace(page, title) {
-  await pressPlace(page, title);
+  const as = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  await page.evaluate((as) => {
+    window.__handle.setFace("scene");
+    window.__handle.setStop(`#view=${as}`);
+  }, as);
   // The pointer off the bar, so no tab is drawn hovered in a screenshot.
   await page.mouse.move(2, (page.viewportSize()?.height ?? 800) - 2);
   await page.waitForTimeout(1500);

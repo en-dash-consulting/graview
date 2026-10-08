@@ -184,7 +184,7 @@ async function landings(browser) {
         const pages = { face: "pages", width, scheme, seat };
         await reach(page, pages, "the pages' home", async () => {
           await open(page, "/pages", { scheme, seat });
-          return has(page, '[data-testid="masthead"]');
+          return has(page, '[data-testid="app-home"]');
         });
       }
       await page.close();

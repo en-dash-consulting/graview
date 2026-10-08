@@ -1,13 +1,13 @@
 import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { AppTitle, createNoticeBoard, Notices, Profile, registerDeclaredLenses, Standing, themeBaseCss, useFavicon, useWidth, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
+import { AppBar, createNoticeBoard, Notices, Profile, registerDeclaredLenses, Standing, themeBaseCss, useFavicon, type BarFind, type BarGo, type BarPlace, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
 
 /*
  * THE FRAME EVERY FACE SHARES: the element the embed owns, the theme scoped
- * to it, the store, the strip, the routed face. The scene, the Graview and
+ * to it, the store, the bar, the routed face. The scene, the Graview and
  * the studio are `./embed.tsx`'s; the pages alone (`@graview/embed/pages`)
  * are this module and `./pages.tsx`, so a host that only ever shows the
  * pages does not bundle a map it never draws (FR-19).
@@ -107,8 +107,8 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
   readonly presence?: PresenceChannel;
   /**
    * The seats a reader may take, when the page wants the policy to be felt
-   * rather than read: each is a name and a principal, shown on the strip and
-   * pressed while it is at the keyboard. The strip, the pages and the acts
+   * rather than read: each is a name and a principal, shown in the person's menu and
+   * pressed while it is at the keyboard. The bar, the pages and the acts
    * all narrow to the seat, so what a gardener may not do is struck through
    * the moment a gardener sits down.
    */
@@ -164,8 +164,12 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   /** Views beyond the derived defaults. */
   readonly views?: (schema: S, registry: ReactViewRegistry<S>) => ReactViewRegistry<S>;
-  /** The strip (the faces, Standing, who is here) above the picture. Default on. */
-  readonly toggle?: boolean;
+  /**
+   * THE APP BAR (FR-131) above every face: the app's name, its places —
+   * the overview among them — Find, the standing and the person. Default
+   * on; off for a host whose own page already says all of that.
+   */
+  readonly bar?: boolean;
   /**
    * THE PAGE'S ICON (FR-124): `true` when the host's page IS the app (a
    * hosted app on its own address), so the page wears the brand's
@@ -183,8 +187,8 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly height?: number | string;
   /**
-   * THE HEIGHT THE EMBED ASKS FOR, as it changes (FR-13): the strip and the
-   * whole page under it on the pages face, the strip and the picture's box
+   * THE HEIGHT THE EMBED ASKS FOR, as it changes (FR-13): the bar and the
+   * whole page under it on the pages face, the bar and the picture's box
    * on the others. A widget forwards it to its host (MCP Apps'
    * `ui/notifications/size-changed`, ChatGPT's `notifyIntrinsicHeight`).
    */
@@ -193,7 +197,7 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
   readonly standing?: string;
   /**
    * THE HOST'S OWN ACTIONS (FR-72): "Your apps", "Change the app", "Report
-   * this app" — links (or presses, with `onSelect`) drawn in the strip's
+   * this app" — links (or presses, with `onSelect`) drawn in the bar's
    * profile menu, under who is signed in, reached by the keyboard like
    * everything else in it. Nothing of the host's needs to stand over the
    * scene.
@@ -206,7 +210,7 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly notices?: NoticeBoard;
   /**
-   * TOLD WHAT WENT WRONG (FR-24). A view, a page or the strip that throws
+   * TOLD WHAT WENT WRONG (FR-24). A view, a page or the bar that throws
    * is contained where it threw, the rest of the embed keeps working, and
    * the host is told the error's class and the framework module that
    * caught it, never what was on screen.
@@ -302,8 +306,8 @@ const heightOf = (element: Element | null | undefined): number => (element ? ele
  * THE HEIGHT THE EMBED ASKS FOR, told as it changes (FR-13). A chat's
  * widget frame is sized from its content, and an embed that filled
  * whatever box it was given had no height of its own to say: the frame
- * stayed at its first guess. The pages face asks for the strip and the
- * whole page; the other faces for the strip and the picture's box.
+ * stayed at its first guess. The pages face asks for the bar and the
+ * whole page; the other faces for the bar and the picture's box.
  */
 export function useIntrinsicHeight(rootRef: { readonly current: HTMLElement | null }, face: string, onHeight: ((height: number) => void) | undefined): void {
   const told = useRef(onHeight);
@@ -314,7 +318,7 @@ export function useIntrinsicHeight(rootRef: { readonly current: HTMLElement | nu
     if (!root || !wanted) return;
     const parts = () => {
       const children = [...root.children];
-      const strip = children.find((child) => child.hasAttribute("data-embed-strip"));
+      const strip = children.find((child) => child.hasAttribute("data-graview-app-bar"));
       const content = children.find((child) => child.hasAttribute("data-embed-content"));
       const measure = content?.querySelector("[data-embed-measure]") ?? null;
       return { strip, content, measure };
@@ -336,7 +340,7 @@ export function useIntrinsicHeight(rootRef: { readonly current: HTMLElement | nu
       for (const element of [root, strip, content, measure]) if (element) observer.observe(element);
     };
     watch();
-    // The strip comes and goes with the face's own children; a page that
+    // The bar comes and goes with the face's own children; a page that
     // routes changes size inside the measured box, which the observer sees.
     const swapped = new MutationObserver(() => {
       watch();
@@ -457,134 +461,72 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
 }
 
 /**
- * The strip above the picture: the brand's name, the faces when there are
- * faces to switch between, the scene's own controls on the scene, who is at
- * the keyboard, the seats a host offers, and Standing.
+ * THE ONE APP BAR (FR-131), as every face of the embed draws it: the app's
+ * mark and name — the heading, the way home — its places as tabs, then
+ * Find (the face under the bar puts its own box there), the standing and
+ * the person, whose menu holds the seats, the host's own actions and, for
+ * the seat that keeps the app, the ways into it.
  */
-export function Strip({
-  faces,
-  scene,
+export function FrameBar({
+  name,
+  heading,
+  places,
+  current,
+  home,
+  reach,
   standing,
-  seats,
-  principal,
-  onSeat,
   hostActions,
+  keeping,
+  onFind,
 }: {
-  /** The face switcher, where there is more than one face. */
-  faces?: ReactNode;
-  /** The scene's own controls (the places, the installation, the studio), given the strip's compactness. */
-  scene?: ((compact: boolean) => ReactNode) | undefined;
-  standing: string;
-  seats?: FrameOptions["seats"] | undefined;
-  principal?: Principal | undefined;
-  onSeat?: ((principal: Principal) => void) | undefined;
-  /** The host's own actions, in the profile menu (FR-72). */
-  hostActions?: readonly HostAction[] | undefined;
+  readonly name: string;
+  readonly heading: 1 | 2 | 3 | 4 | 5 | 6 | false;
+  readonly places: readonly BarPlace[];
+  readonly current: string | null;
+  readonly home: { readonly href?: string | undefined; readonly go: () => void; readonly current: boolean };
+  readonly reach: BarGo;
+  readonly standing: string;
+  /** The host's own actions, in the person's menu (FR-72). */
+  readonly hostActions?: readonly HostAction[] | undefined;
+  /** The ways into the app, for the seat that keeps it. */
+  readonly keeping?: ReactNode;
+  readonly onFind: (find: BarFind | null) => void;
 }) {
   const { brand } = useGraview();
-  const sameSeat = (a: Principal | undefined, b: Principal) => a !== undefined && a.id === b.id && a.kind === b.kind;
-  /*
-   * COMPACT BELOW A PHONE'S WIDTH: the places and the seats as one select
-   * each rather than a pill per name. At 360px the pills wrapped to five
-   * rows and the strip was taller than the picture under it.
-   */
-  const strip = useRef<HTMLDivElement>(null);
-  const width = useWidth(strip);
-  const compact = width !== null && width < 560;
   return (
-    <div
-      ref={strip}
-      role="group"
-      aria-label="Face"
-      data-testid="embed-faces"
-      data-embed-strip={compact ? "compact" : "full"}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        // Wraps rather than clips: at a phone's width Standing takes the
-        // next line instead of losing its last word.
-        flexWrap: "wrap",
-        gap: 6,
-        padding: "8px 12px",
-        flex: "0 0 auto",
-        borderBottom: "1px solid var(--graview-edge)",
-        background: "var(--graview-bar)",
-        fontSize: "0.875rem",
-      }}
-    >
-      <span style={{ fontFamily: "var(--graview-font-display)", letterSpacing: "0.12em", textTransform: "uppercase", fontSize: "0.75rem", marginRight: 6 }}>
-        {/* The app's mark and the line under its name at a desk's width; at a phone's, the name alone, so the strip keeps to its rows (FR-117). */}
-        <AppTitle brand={compact && brand ? { ...brand, logo: undefined } : brand} name={brand?.name ?? "Graview"} subtitle={!compact} size={16} />
-      </span>
-      {faces}
-      {scene?.(compact)}
-      {/* Who is at the keyboard, and the reader's own settings. The seats
-          keep their own control beside it, because the HOST owns which one
-          is taken here — the pane says who that turned out to be. */}
-      <Profile {...(hostActions ? { hostActions } : {})} />
-      {seats && seats.length > 1 && compact ? (
-        <select
-          aria-label="Seat"
-          data-testid="embed-seats"
-          value={seats.find((seat) => sameSeat(principal, seat.principal))?.principal.id ?? ""}
-          onChange={(event) => {
-            const seat = seats.find((candidate) => candidate.principal.id === event.target.value);
-            if (seat) onSeat?.(seat.principal);
-          }}
-          style={{
-            minHeight: 24,
-            maxWidth: "46%",
-            padding: "3px 8px",
-            borderRadius: 999,
-            fontSize: "0.875rem",
-            borderWidth: 1,
-            borderStyle: "solid",
-            borderColor: "var(--graview-accent)",
-            color: "var(--graview-accent)",
-            background: "var(--graview-panel)",
-          }}
-        >
-          {seats.map((seat) => (
-            <option key={seat.principal.id} value={seat.principal.id}>
-              As {seat.label}
-            </option>
-          ))}
-        </select>
-      ) : seats && seats.length > 1 ? (
-        <div role="group" aria-label="Seat" data-testid="embed-seats" style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: 6 }}>
-          <span style={{ fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>As</span>
-          {seats.map((seat) => {
-            const pressed = sameSeat(principal, seat.principal);
-            return (
-              <button
-                key={seat.principal.id}
-                type="button"
-                aria-pressed={pressed}
-                data-testid={`embed-seat-${seat.principal.id}`}
-                title={`Sit down as ${seat.label}: the strip, the pages and the acts narrow to what this seat may do`}
-                onClick={() => onSeat?.(seat.principal)}
-                style={{
-                  padding: "3px 11px",
-                  borderRadius: 999,
-                  fontSize: "0.875rem",
-                  borderWidth: 1,
-                  borderStyle: "solid",
-                  borderColor: pressed ? "var(--graview-accent)" : "transparent",
-                  color: pressed ? "var(--graview-accent)" : "var(--graview-ink-muted)",
-                  background: pressed ? "var(--graview-panel)" : "transparent",
-                }}
-              >
-                {seat.label}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-      <div style={{ marginLeft: "auto", minWidth: 0 }}>
-        <Standing clean={standing} />
-      </div>
-    </div>
+    <AppBar
+      brand={brand}
+      name={name}
+      description={brand?.subtitle}
+      heading={heading}
+      home={home}
+      places={places}
+      current={current}
+      reach={reach}
+      onFind={onFind}
+      tools={
+        <>
+          <Standing clean={standing} />
+          <Profile {...(hostActions ? { hostActions } : {})} {...(keeping ? { keeping } : {})} />
+        </>
+      }
+    />
   );
+}
+
+/** The level a page's own title is said at: one below the app's name on the bar, or 2 when the host's own heading says the name (FR-131). */
+export const titleBelow = (heading: 1 | 2 | 3 | 4 | 5 | 6 | false): 2 | 3 | 4 | 5 | 6 => (heading === false ? 2 : (Math.min(heading + 1, 6) as 2 | 3 | 4 | 5 | 6));
+
+/**
+ * THE PLACE THE ROUTED FACE IS ON, and the way to send it elsewhere (FR-131):
+ * the bar is drawn above the face, outside its router, so the router says
+ * where it is as it moves, and takes the bar's presses.
+ */
+export function useSteering(initial: string) {
+  const [at, setAt] = useState(initial);
+  const go = useRef<((path: string) => void) | undefined>(undefined);
+  const steering = useMemo(() => ({ go, at: setAt }), []);
+  return { at, setAt, steering };
 }
 
 /** An error as a host may keep it: its class, and nothing it says. */
@@ -625,13 +567,13 @@ interface FaceBoundaryProps {
   /** The framework module this part of the embed is drawn by. */
   readonly module: string;
   readonly report: ErrorReport;
-  /** Whether the fallback stands in for the face's content (measured for height) or for a part of the strip. */
+  /** Whether the fallback stands in for the face's content (measured for height) or for a part of the bar. */
   readonly content?: boolean;
   readonly children: ReactNode;
 }
 
 /**
- * A PART THAT THROWS STAYS A PART (FR-24). Each face, the strip and the
+ * A PART THAT THROWS STAYS A PART (FR-24). Each face, the bar and the
  * studio's place on it draw behind one of these: what threw says it could
  * not draw, in the framework's words rather than the error's, and offers
  * to try again; everything around it keeps working.

@@ -180,9 +180,14 @@ try {
     await page.waitForTimeout(1200);
     return page;
   };
-  /** The places the bar names: its tabs, one row that scrolls rather than folding into a menu (FR-117). */
+  /** The pictures the app bar names (FR-131): its tabs, in the row or under "More". */
   const placesOnTheBar = (page) =>
-    page.evaluate(() => [...document.querySelectorAll('[data-testid="places"] .graview-place-tab')].map((tab) => tab.textContent?.trim() ?? ""));
+    page.evaluate(() => [...document.querySelectorAll('[data-testid="app-places"] [data-testid^="app-place-place:"]')].map((tab) => tab.textContent?.trim() ?? ""));
+  /** The scene sent to a place's stop, the way a link to it does: the bar's tab for a picture is its page (FR-132). */
+  const toPlace = async (page, as) => {
+    await page.evaluate((stop) => window.__handle.setStop(stop), `#view=${as}`);
+    await page.waitForTimeout(1200);
+  };
 
   /* ---- FR-79 on the Graview face: every lens a pill, and a drive-in from altitude */
   {
@@ -192,39 +197,30 @@ try {
       [...document.querySelectorAll('[data-testid^="drive-in-"] .graview-drive-in-thumb-press')].map((press) => press.getAttribute("aria-label") ?? ""),
     );
     await page.close();
-    report.checks.everyDeclaredLensIsAPillOnTheGraviewFace = { titles: TITLES, pills, ok: TITLES.every((title) => pills.includes(title)) };
+    report.checks.everyDeclaredLensIsATabOnTheBar = { titles: TITLES, tabs: pills, ok: TITLES.every((title) => pills.includes(title)) };
     report.checks.everyDeclaredLensIsADriveInFromAltitude = {
       marquees,
       ok: TITLES.every((title) => marquees.some((label) => label.endsWith(`: ${title}`) || label.includes(title))),
     };
   }
 
-  /* ---- FR-80 on the scene: it opens on the place pages.first names; FR-79: each pill draws its lens */
+  /* ---- FR-80 on the scene: it opens on the place pages.first names; FR-79: each place's stop draws its lens */
   {
     const page = await open("face=scene");
-    const opened = await page.evaluate(() => ({
-      pressed: [...document.querySelectorAll('[data-testid="places"] button[aria-pressed="true"]')].map((pill) => pill.textContent?.trim()),
-      hash: location.hash,
-    }));
-    report.checks.theSceneOpensOnTheFirstPlace = { ...opened, ok: opened.pressed.includes("The floor") };
+    const opened = await page.evaluate(() => ({ stop: window.__handle.where().stop, overview: document.querySelector('[data-testid="app-place-overview"]')?.getAttribute("aria-current") === "page" }));
+    report.checks.theSceneOpensOnTheFirstPlace = { ...opened, ok: opened.stop.includes("view=the-floor") && opened.overview };
     const drawn = {};
     for (const title of TITLES) {
-      const pill = page.locator('[data-testid="places"] button[data-testid^="place-"]', { hasText: title }).first();
-      if ((await pill.count()) === 0) {
-        drawn[title] = { pill: false };
-        continue;
-      }
-      await pill.click();
-      await page.waitForTimeout(900);
+      const as = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      await toPlace(page, as);
       drawn[title] = await page.evaluate((wanted) => {
-        const pressed = document.querySelector('[data-testid="places"] button[aria-pressed="true"]')?.textContent?.trim() ?? null;
         // The lens draws under its own title, in the scene's focused card.
         const titled = [...document.querySelectorAll(".graview-ground *")].some((element) => element.childElementCount === 0 && element.textContent?.trim() === wanted);
-        return { pressed, titled };
+        return { stop: window.__handle.where().stop, titled };
       }, title);
     }
     await page.close();
-    report.checks.pressingEachPillDrawsItsLens = { drawn, ok: TITLES.every((title) => drawn[title]?.pressed === title && drawn[title]?.titled) };
+    report.checks.eachPlacesStopDrawsItsLensInTheScene = { drawn, ok: TITLES.every((title) => drawn[title]?.titled) };
   }
 
   /* ---- FR-79 on the Pages face: each lens at /places/<as> */
@@ -234,7 +230,7 @@ try {
       const as = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
       const page = await open(`face=pages&path=${encodeURIComponent(`/places/${as}`)}`, { width: 1280, height: 900 });
       pages[title] = await page.evaluate(() => ({
-        heading: document.querySelector("[data-graview-embed] h1")?.textContent?.trim() ?? null,
+        heading: document.querySelector("[data-graview-page-title]")?.textContent?.trim() ?? null,
         lens: document.querySelector('[data-testid="place-lens"]') !== null,
         drawn: (document.querySelector('[data-testid="place-lens"]')?.querySelectorAll("*").length ?? 0) > 3,
       }));
@@ -246,13 +242,13 @@ try {
   /* ---- FR-80 on the Pages face: it opens on the first place; the home is in order; the hidden kind stays reachable */
   {
     const page = await open("face=pages", { width: 1280, height: 900 });
-    const opened = await page.evaluate(() => document.querySelector("[data-graview-embed] h1")?.textContent?.trim() ?? null);
+    const opened = await page.evaluate(() => document.querySelector("[data-graview-page-title]")?.textContent?.trim() ?? null);
     report.checks.thePagesFaceOpensOnTheFirstPlace = { opened, ok: opened?.includes("The floor") === true };
-    await page.click('[data-testid="masthead"]');
+    await page.click('[data-testid="app-home"]');
     await page.waitForTimeout(600);
     const home = await page.evaluate(() => ({
       kinds: [...document.querySelectorAll('[data-testid="kinds"] li a')].map((link) => link.getAttribute("href")),
-      nav: [...document.querySelectorAll('[data-testid="shell-nav"] a')].map((link) => link.getAttribute("href")),
+      nav: [...document.querySelectorAll('[data-testid="app-places"] [data-place-path]')].map((tab) => tab.getAttribute("data-place-path")),
       gallery: [...document.querySelectorAll(".graview-gallery-card")].map((card) => card.getAttribute("href")),
     }));
     report.checks.theHomeFollowsTheDeclaredOrderLessTheHiddenKind = {
@@ -332,7 +328,8 @@ try {
         }
       }
     }
-    report.checks.theFrontPageMadeOfDataIsTheHomeOnThePagesFace = { pages, ok: Object.values(pages).every((seen) => frontOk(seen, "h1")) };
+    // Its first headline is said under the app's name on the bar, which is the page's h1 (FR-131).
+    report.checks.theFrontPageMadeOfDataIsTheHomeOnThePagesFace = { pages, ok: Object.values(pages).every((seen) => frontOk(seen, "h2")) };
     report.checks.theFrontPageMadeOfDataIsTheLandingOnTheGraviewFace = {
       scene,
       city,
@@ -346,7 +343,7 @@ try {
     await page.waitForSelector('[data-graview-listed="pkg-start"] .graview-spec-item-link', { timeout: 15_000 });
     await page.click('[data-graview-listed="pkg-start"] .graview-spec-item-link');
     await page.waitForTimeout(500);
-    const followed = await page.evaluate(() => document.querySelector("[data-graview-embed] h1")?.textContent?.trim() ?? null);
+    const followed = await page.evaluate(() => document.querySelector("[data-graview-page-title]")?.textContent?.trim() ?? null);
     await page.close();
     page = await open("doc=lifelogics&face=scene", SIZES[0]);
     await page.waitForSelector('[data-testid="home-landing"] [data-graview-listed="pkg-start"] .graview-spec-item-link', { timeout: 15_000 });
@@ -374,18 +371,9 @@ try {
           await shoot(page, `lens-${as}-pages-${size.width}-${scheme}`);
           await page.close();
           page = await open("doc=lifelogics&face=scene", size, scheme);
-          const pill = page.locator('[data-testid="places"] button[data-testid^="place-"]', { hasText: title }).first();
-          let onPicture = { pill: false };
-          if ((await pill.count()) > 0 && (await pill.isVisible())) {
-            await pill.click();
-            await page.waitForTimeout(900);
-            onPicture = { pill: true, ...(await drawn(page, ".graview-ground .graview-spec-place")) };
-          } else {
-            // A narrow bar keeps its places in a menu; the place is its stop, as a host would set it.
-            await page.evaluate((stop) => window.__handle.setStop(stop), `#view=${as}`);
-            await page.waitForTimeout(1200);
-            onPicture = { pill: false, menu: true, ...(await drawn(page, ".graview-ground .graview-spec-place")) };
-          }
+          // The place in the scene is its stop, as a link to it says (FR-132).
+          await toPlace(page, as);
+          const onPicture = await drawn(page, ".graview-ground .graview-spec-place");
           await shoot(page, `lens-${as}-scene-${size.width}-${scheme}`);
           await page.close();
           lenses[at] = { onPage, onPicture };
@@ -591,7 +579,7 @@ try {
             val: emphasis("p-val"),
             cellSays: cell?.textContent?.trim() ?? "",
             proxies: document.querySelectorAll("[data-graview-tie-proxy]").length,
-            heading: document.querySelector("[data-graview-embed] h1")?.textContent?.trim() ?? null,
+            heading: document.querySelector("[data-graview-page-title]")?.textContent?.trim() ?? null,
           };
         }, { selector: within, joins });
         await shoot(page, `strengths-${face}-${size.width}`);

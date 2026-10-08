@@ -1,23 +1,24 @@
-import { AppTitle, LadderSetting, useFavicon } from "@graview/primitives/pages";
-import { faviconHref } from "@graview/core";
+import { AppBar, barPlaceAt, barPlaces, LadderSetting, Profile, StandingDot, standingWords, toolStyle, useFavicon } from "@graview/primitives/pages";
+import { faviconHref, OVERVIEW_PATH } from "@graview/core";
 import type { AnySchema } from "@graview/core";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useHref, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { kindMap } from "./facts.js";
-import { kindOfSlug, pluralSlug } from "./registry.js";
+import { kindOfSlug } from "./registry.js";
 import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
-import { placesOf } from "./page-places.js";
 import { usePlacedOnTheFace } from "./face-placed.js";
-import { DISPLAY, WIDE, arrangedKinds, column, plain, pluralOf, quiet } from "./page-typography.js";
+import { WIDE, column, h1, quiet } from "./page-typography.js";
 
 
 /**
- * The shell: the installation's masthead, one row of navigation, the way to
- * the scene. The pictures are the home, so they are not also a row of the
- * nav — the row is the kinds, the map and the standing, and on a phone it
- * scrolls sideways inside itself rather than wrapping to three rows over
- * the page.
+ * THE SHELL: the one app bar (FR-131) over the page, and a quiet foot.
+ *
+ * The bar is the app — its mark and name, the page's one heading, the way
+ * home — then its places as tabs: the overview (the scene, FR-132), each
+ * named picture, each kind's list, how the kinds connect; then Find, the
+ * standing and, where there is a seat, the person. Under an embed's bar
+ * (`barAbove`) the shell draws none of it: the embed's bar already says
+ * every word, and the face's Find goes there.
  */
 export function DefaultShell<S extends AnySchema>({
   context,
@@ -26,29 +27,10 @@ export function DefaultShell<S extends AnySchema>({
   context: PageContext<S>;
   children: ReactNode;
 }) {
-  const { store, brand, sceneHref = "/", invariantContext } = context;
+  const { store, brand } = context;
   useStoreTick(store);
   // On its own the routed face owns the page, and wears the brand's icon; embedded, the host's page keeps its own (FR-124).
   useFavicon(context.embedded ? undefined : faviconHref(brand));
-  const location = useLocation();
-  const problems = store.violations(invariantContext).length;
-  const current = (path: string) =>
-    path === "/"
-      ? location.pathname === "/" || location.pathname === "/places" || location.pathname.startsWith("/places/")
-      : location.pathname === path || location.pathname.startsWith(`${path}/`);
-  const navLink = (path: string): React.CSSProperties => ({
-    ...plain,
-    fontSize: "0.9375rem",
-    padding: "8px 0",
-    flexShrink: 0,
-    color: current(path) ? "var(--graview-ink)" : "var(--graview-ink-muted)",
-    borderBottom: current(path) ? "2px solid var(--graview-accent)" : "2px solid transparent",
-  });
-  const tab = (path: string, label: ReactNode, extra?: React.CSSProperties) => (
-    <Link key={path} to={path} style={{ ...navLink(path), ...extra }} {...(current(path) ? { "aria-current": "page" as const } : {})}>
-      {label}
-    </Link>
-  );
   return (
     <div
       style={{
@@ -56,7 +38,7 @@ export function DefaultShell<S extends AnySchema>({
          * A WINDOW'S HEIGHT ONLY FOR A FACE THAT OWNS THE WINDOW. Embedded,
          * `100vh` is the host's viewport, or the frame's when the embed is
          * a chat's widget sized from its content: the page asked for the
-         * frame's height, the frame grew to the page plus the strip, and
+         * frame's height, the frame grew to the page plus the bar, and
          * the page asked again, without end (FR-13).
          */
         ...(context.embedded ? {} : { minHeight: "100vh" }),
@@ -69,116 +51,72 @@ export function DefaultShell<S extends AnySchema>({
         lineHeight: 1.6,
       }}
     >
-      <header style={{ borderBottom: "1px solid var(--graview-edge)", background: "var(--graview-bar)" }}>
-        <div
+      {context.embedded ? null : <OwnBar context={context} />}
+      <div style={{ flex: 1 }}>{children}</div>
+      {/* Which rung answers, and whether this browser remembers: the reader's own, at the foot. The app's name is the bar's alone. */}
+      {context.views || context.remembers ? (
+        <footer
           style={{
-            maxWidth: WIDE,
-            margin: "0 auto",
-            padding: "14px 20px 0",
-            display: "flex",
-            flexDirection: "column",
-            gap: 2,
+            borderTop: "1px solid var(--graview-edge)",
+            padding: "18px 20px 28px",
+            ...quiet,
+            fontSize: "0.875rem",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-            {/* The masthead: the installation's mark and name, the way home. */}
-            <Link
-              to="/"
-              data-testid="masthead"
-              style={{
-                ...plain,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 10,
-                fontFamily: DISPLAY,
-                fontSize: "1.3125rem",
-                fontWeight: 600,
-                letterSpacing: "-0.01em",
-                minHeight: 32,
-              }}
-            >
-              {/* The mark, the name, and on the home the line under it (FR-124, FR-125). */}
-              <AppTitle brand={brand} name={brand?.name ?? "Graview"} subtitle={current("/")} size={26} />
-            </Link>
-            <PageFind context={context} />
-            <a
-              href={sceneHref}
-              style={{ ...plain, ...quiet, whiteSpace: "nowrap" }}
-              title="The same thing, as a scene"
-            >
-              Open the scene ↗
-            </a>
+          <div style={{ maxWidth: WIDE, margin: "0 auto", display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
+            {/* Which rung answers, chosen here as it is in the scene's profile: the reader's own setting. */}
+            {context.views ? <LadderSetting /> : null}
+            {context.remembers ? (
+              <span data-testid="remembered" style={{ marginLeft: "auto" }}>
+                Remembered in this browser · <StartFreshLink />
+              </span>
+            ) : null}
           </div>
-          {/*
-            * ONE ROW. The home first — it is the pictures, when the face has
-            * any — then the kinds, the map, and the standing at the end. On
-            * a phone the row scrolls inside itself; `verify-pages` tells a
-            * row that scrolls on purpose from a page that scrolls by accident.
-            */}
-          <nav
-            aria-label="Pages"
-            data-testid="shell-nav"
-            style={{
-              display: "flex",
-              gap: 18,
-              alignItems: "baseline",
-              overflowX: "auto",
-              whiteSpace: "nowrap",
-              scrollbarWidth: "thin",
-              minWidth: 0,
-            }}
-          >
-            {tab("/", placesOf(context).length > 0 ? "Pictures" : "Home")}
-            {arrangedKinds(context).map((kind) => tab(`/${pluralSlug(store.schema, kind)}`, pluralOf(store, kind)))}
-            {kindMap(store).relations.length > 0 ? tab("/map", "Map") : null}
-            {tab(
-              "/problems",
-              <>
-                Problems
-                {/* The count, said once (FR-122): here, unless a bar above already says it. */}
-                {problems > 0 && !context.standingAbove ? (
-                  <span
-                    data-testid="problems-count"
-                    style={{
-                      fontSize: "0.8125rem",
-                      lineHeight: 1,
-                      padding: "3px 7px",
-                      borderRadius: 999,
-                      color: "var(--graview-warn)",
-                      border: "1px solid var(--graview-warn)",
-                    }}
-                  >
-                    {problems}
-                  </span>
-                ) : null}
-              </>,
-              // At the end of the row, set apart from the sections: the standing.
-              { display: "inline-flex", alignItems: "center", gap: 6, marginLeft: "auto" },
-            )}
-          </nav>
-        </div>
-      </header>
-      <div style={{ flex: 1 }}>{children}</div>
-      <footer
-        style={{
-          borderTop: "1px solid var(--graview-edge)",
-          padding: "18px 20px 28px",
-          ...quiet,
-          fontSize: "0.875rem",
-        }}
-      >
-        <div style={{ maxWidth: WIDE, margin: "0 auto", display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
-          <span>{brand?.name ?? "Graview"}</span>
-          {/* Which rung answers, chosen here as it is in the scene's profile: the reader's own setting. */}
-          {context.views ? <LadderSetting /> : null}
-          {context.remembers ? (
-            <span data-testid="remembered" style={{ marginLeft: "auto" }}>
-              Remembered in this browser · <StartFreshLink />
-            </span>
-          ) : null}
-        </div>
-      </footer>
+        </footer>
+      ) : null}
     </div>
+  );
+}
+
+/**
+ * The bar of a routed face that owns its page: the overview is the scene on
+ * its own address (`sceneHref`), every other place is this face's.
+ */
+function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContext<S> }) {
+  const { store, brand, sceneHref = "/", invariantContext } = context;
+  const location = useLocation();
+  const navigate = useNavigate();
+  const base = useHref("/").replace(/\/$/, "");
+  const places = barPlaces({ store: store as never, principal: context.principal, views: context.views, overview: true });
+  const here = `${location.pathname}${location.search}`;
+  const problems = store.violations(invariantContext).length;
+  const said = standingWords(problems, "All rules hold");
+  return (
+    <>
+      <AppBar
+        brand={brand}
+        name={brand?.name ?? "Graview"}
+        description={brand?.subtitle}
+        home={{ href: `${base}/`, go: () => navigate("/"), current: location.pathname === "/" }}
+        places={places}
+        current={barPlaceAt(places, here)}
+        reach={{
+          href: (path) => (path === OVERVIEW_PATH ? sceneHref : `${base}${path}`),
+          go: (place) => (place.path === OVERVIEW_PATH ? window.location.assign(sceneHref) : navigate(place.path)),
+        }}
+        findBox={<PageFind context={context} />}
+        tools={
+          <>
+            {/* The standing, as the problems' own page: a dot, a number only when a rule is broken (FR-131). */}
+            <Link to="/problems" data-testid="standing-link" aria-label={said} title={said} style={{ ...toolStyle, padding: problems === 0 ? 0 : "0 8px", textDecoration: "none", fontWeight: 600, fontVariantNumeric: "tabular-nums", color: problems === 0 ? "var(--graview-ink-muted)" : "var(--graview-warn)" }}>
+              <StandingDot tone={problems === 0 ? "var(--graview-good)" : "var(--graview-warn)"} />
+              {problems > 0 ? <span aria-hidden="true">{problems}</span> : null}
+            </Link>
+            {context.views ? <Profile /> : null}
+          </>
+        }
+      />
+    </>
   );
 }
 
@@ -197,6 +135,25 @@ export function PageMain<S extends AnySchema>({
   const Tag = (context.embedded || context.framed ? "section" : "main") as "main";
   return (
     <Tag style={{ ...column, ...style }} {...rest}>
+      {children}
+    </Tag>
+  );
+}
+
+/**
+ * A PAGE'S OWN TITLE (FR-131): said under the app's name, which the bar
+ * says as the heading — so a level below it (`titleLevel`, `2` by default),
+ * never a second `h1` on a page that is the app's.
+ */
+export function PageTitle<S extends AnySchema>({
+  context,
+  children,
+  ...rest
+}: { context: PageContext<S>; children?: ReactNode } & Record<`data-${string}`, string>) {
+  // Under a shell of the app's own, which says the app however it likes, a page's title is its h1 again.
+  const Tag = `h${context.titleLevel ?? (context.framed ? 1 : 2)}` as "h2";
+  return (
+    <Tag style={h1} data-graview-page-title="" {...rest}>
       {children}
     </Tag>
   );
@@ -232,6 +189,27 @@ export function PageFind<S extends AnySchema>({
   const onSearch = location.pathname === "/search";
   const addressed = onList || onSearch ? (params.get("q") ?? "") : "";
   const [typed, setTyped] = useState(addressed);
+  /* ⌘K or Ctrl+K, from the keyboard anywhere in the app or on nothing at all: this box (FR-131). The scene's own Find hears its own. */
+  const box = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.altKey || event.shiftKey || !(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "k") return;
+      const input = box.current;
+      const root = input?.closest("[data-graview-embed]");
+      const target = event.target;
+      const nowhere = target === document.body || target === document.documentElement;
+      if (!input || !(nowhere || !root || (target instanceof Node && root.contains(target)))) return;
+      event.preventDefault();
+      // A phone's bar keeps the box put away until it is asked for.
+      input.closest<HTMLElement>("[data-graview-app-bar]")?.querySelector<HTMLButtonElement>('[data-testid="app-find-open"]')?.click();
+      requestAnimationFrame(() => {
+        input.focus();
+        input.select();
+      });
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
   /*
    * Back, a link, or the list's own row changed the words: the box follows
    * the address. But not its own words coming back: each keystroke writes the
@@ -263,7 +241,7 @@ export function PageFind<S extends AnySchema>({
     <form
       role="search"
       aria-label={onList ? "Narrow this list" : "Find anything"}
-      style={{ marginLeft: "auto", display: "flex", minWidth: 0, flex: "0 1 16rem" }}
+      style={{ display: "flex", minWidth: 0, flex: "1 1 auto" }}
       onSubmit={(event) => {
         event.preventDefault();
         // Enter from a list widens the look to everything the words find.
@@ -271,19 +249,21 @@ export function PageFind<S extends AnySchema>({
       }}
     >
       <input
+        ref={box}
         type="search"
         data-testid="nav-find"
         value={typed}
         onChange={(event) => go(event.target.value)}
         placeholder={onList ? "Narrow…" : "Find…"}
+        aria-keyshortcuts="Meta+K Control+K"
         aria-label={onList ? "Narrow this list" : "Find anything"}
         style={{
           width: "100%",
           minWidth: 0,
-          minHeight: 32,
-          padding: "4px 10px",
+          height: 30,
+          padding: "0 10px",
           font: "inherit",
-          fontSize: "0.9375rem",
+          fontSize: "0.875rem",
           color: "var(--graview-ink)",
           background: "var(--graview-ground)",
           border: "1px solid var(--graview-edge)",

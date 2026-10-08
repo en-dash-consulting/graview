@@ -1,6 +1,7 @@
 import type { IsoFace, IsoWash, Scheme } from "@graview/core";
 import { isoShade, layer, SCENE_LAYERS } from "@graview/core";
 import { baseSheet, GRAVIEW_BRAND, withinTheBox, type Brand, type ThemeCssOptions } from "./theme.js";
+import { SPEC_VIEW_CSS } from "./spec-css.js";
 
 /*
  * THE SCENE'S OWN RULES (FR-104).
@@ -762,6 +763,6 @@ export function sceneCss(scheme: Scheme = "dark", options: ThemeCssOptions = {})
  * component, and switching scheme is one `replaceSync`, not a re-render.
  */
 export function themeCss(scheme: Scheme = "dark", brand: Brand = GRAVIEW_BRAND, options: ThemeCssOptions = {}): string {
-  const css = `${baseSheet(scheme, brand, options)}\n${sceneSheet(scheme)}`;
+  const css = `${baseSheet(scheme, brand, options)}\n${SPEC_VIEW_CSS}\n${sceneSheet(scheme)}`;
   return options.scope === undefined ? css : withinTheBox(css, options.scope);
 }

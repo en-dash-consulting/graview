@@ -185,9 +185,11 @@ try {
      */
     const bar = async () => {
       await page.click('[data-testid="profile-button"]');
-      await page.waitForSelector('[data-testid="profile"]', { timeout: 10_000 });
+      // What is behind the person is fetched when first reached for (FR-131): wait for who is signed in.
+      await page.waitForFunction(() => document.querySelector('[data-testid="profile"]')?.textContent?.includes("Signed in as"), null, { timeout: 10_000 });
       const said = await page.evaluate(() => ({
-        signedInAs: document.querySelector('[data-testid="profile-button"]')?.textContent.trim(),
+        // The person on the bar is a mark; who it is is its name (FR-131).
+        signedInAs: document.querySelector('[data-testid="profile-button"]')?.getAttribute("aria-label")?.trim(),
         seats: [...document.querySelectorAll('[data-testid="profile"] [data-testid="seats"] button')].map(
           (b) => b.textContent.trim(),
         ),

@@ -311,6 +311,9 @@ export {
   isShippedLens,
   openingOf,
   orderKinds,
+  OVERVIEW_PATH,
+  OVERVIEW_SLUG,
+  overviewTitle,
   placesOf,
   requiredRolesOf,
 } from "./places.js";

@@ -3,7 +3,7 @@
 import { createSchema, defineApp, defineNode, z } from "@graview/core";
 import { act } from "react";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { faceAtAddress, mount, preload, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
+import { faceAtAddress, faceOf, mount, preload, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
 import { mount as mountPages, type PagesEmbedHandle, type PagesEmbedOptions } from "../../src/pages.js";
 
 /**
@@ -64,7 +64,7 @@ async function pagesAt(path: string, options: Partial<PagesEmbedOptions> = {}) {
   return { host, handle: handle! };
 }
 
-const heading = (host: HTMLElement) => host.querySelector("h1")?.textContent?.trim();
+const heading = (host: HTMLElement) => host.querySelector("[data-graview-page-title]")?.textContent?.trim();
 const face = (host: HTMLElement) => host.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed");
 const click = (element: Element | null) => act(async () => (element as HTMLElement).click());
 async function back() {
@@ -98,6 +98,18 @@ describe("the face an address opens", () => {
     // An address outside the base is no page of the app's: the host's face.
     window.history.replaceState(null, "", "/elsewhere/tasks");
     expect(faceAtAddress({ routing: "address", basePath: "/apps/a1", face: "scene" })).toBe("scene");
+  });
+
+  it("is the scene's at the overview's own address, its stop riding on it (FR-132)", () => {
+    window.history.replaceState(null, "", "/apps/a1/places/overview#focus=t1");
+    expect(faceAtAddress({ routing: "address", basePath: "/apps/a1", face: "pages" })).toBe("scene");
+    window.history.replaceState(null, "", "/apps/a1/places/overview#overview=1");
+    expect(faceAtAddress({ routing: "address", basePath: "/apps/a1", face: "pages" })).toBe("graview");
+    window.history.replaceState({ idx: 3 }, "", "/apps/a1/places/overview");
+    expect(faceAtAddress({ routing: "address", basePath: "/apps/a1", face: "pages" })).toBe("scene");
+    // Under memory routing the face is the host's, the stop's when it names none.
+    expect(faceAtAddress({ face: faceOf(undefined) })).toBe("scene");
+    expect(faceOf("#overview=1")).toBe("graview");
   });
 });
 
@@ -152,27 +164,53 @@ describe("address routing under a base path", () => {
     expect(heading(again.host)).toBe("Post the letter");
   });
 
-  it("keeps the scene's stop in the fragment, and the face toggle is an entry Back undoes", async () => {
+  it("keeps the scene at the overview's address with its stop in the fragment, and a tab is an entry Back undoes (FR-132)", async () => {
     const { host } = await at("/apps/a1/", { routing: "address", basePath: "/apps/a1", face: "graview" });
     expect(face(host)).toBe("graview");
-    // Arriving is not traveling: the scene tidies its own address in place.
+    // Arriving is not traveling: the scene tidies its own address in place — to its place's.
+    expect(window.location.pathname).toBe("/apps/a1/places/overview");
     expect(window.location.hash).toBe("#overview=1");
+    expect(host.querySelector('[data-testid="app-place-overview"]')?.getAttribute("aria-current")).toBe("page");
     const length = window.history.length;
-    await click(host.querySelector('[data-testid="embed-face-pages"]'));
+    await click(host.querySelector('[data-testid="app-place-kind:task"]'));
     await settle();
     expect(face(host)).toBe("pages");
-    expect(window.location.pathname).toBe("/apps/a1");
+    expect(window.location.pathname).toBe("/apps/a1/tasks");
     expect(window.location.href.includes("#")).toBe(false);
     expect(window.history.length).toBe(length + 1);
+    expect(heading(host)).toBe("Tasks");
+    expect(host.querySelector('[data-testid="app-place-kind:task"]')?.getAttribute("aria-current")).toBe("page");
     await back();
     expect(face(host)).not.toBe("pages");
+    expect(window.location.pathname).toBe("/apps/a1/places/overview");
     expect(window.location.hash).toBe("#overview=1");
     expect(window.history.length).toBe(length + 1);
+  });
+
+  it("goes from a page to the overview with one press, at its address, and Back returns to the page", async () => {
+    const { host } = await at("/apps/a1/tasks", { routing: "address", basePath: "/apps/a1", face: "pages" });
+    expect(heading(host)).toBe("Tasks");
+    await click(host.querySelector('[data-testid="app-place-overview"]'));
+    await settle();
+    expect(face(host)).toBe("scene");
+    expect(window.location.pathname).toBe("/apps/a1/places/overview");
+    expect(window.location.href.includes("#")).toBe(true);
+    await back();
+    expect(face(host)).toBe("pages");
+    expect(window.location.pathname).toBe("/apps/a1/tasks");
+    expect(heading(host)).toBe("Tasks");
   });
 
   it("opens the scene at a stop a fragment names", async () => {
     const { host } = await at("/apps/a1#overview=1", { routing: "address", basePath: "/apps/a1", face: "pages" });
     expect(face(host)).toBe("graview");
+  });
+
+  it("opens a stop linked before the scene was a place, and tidies the address to the overview's", async () => {
+    const { host } = await at("/apps/a1#focus=t1", { routing: "address", basePath: "/apps/a1", face: "pages" });
+    expect(face(host)).toBe("scene");
+    expect(window.location.pathname).toBe("/apps/a1/places/overview");
+    expect(window.location.hash).toContain("focus=t1");
   });
 });
 

@@ -47,7 +47,7 @@ async function mounting(studio?: false) {
 describe("the embed's studio chunk", () => {
   it("is never imported by an embed with studio: false, and is imported once one offers it", async () => {
     const hidden = await mounting(false);
-    expect(hidden.querySelector("[data-testid=embed-faces]"), "the embed drew").not.toBeNull();
+    expect(hidden.querySelector("[data-testid=app-bar]"), "the embed drew").not.toBeNull();
     expect(imported.times).toBe(0);
     const offered = await mounting();
     expect(imported.times).toBe(1);

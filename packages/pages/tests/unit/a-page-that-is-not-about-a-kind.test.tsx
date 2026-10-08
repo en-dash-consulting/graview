@@ -40,9 +40,9 @@ describe("a route the app added", () => {
   it("renders at its own address, inside the shell like any other page", () => {
     const html = draw("/survey", pages());
     expect(html).toContain('data-testid="survey-desk"');
-    /* Inside the face, not instead of it: the shell's own nav is still there. */
+    /* Inside the face, not instead of it: the shell's own bar is still there. */
     expect(html).toContain("Plots");
-    expect(html).toContain("Problems");
+    expect(html).toContain('data-testid="app-bar"');
   });
 
   it("does not disturb the routes the schema derives", () => {

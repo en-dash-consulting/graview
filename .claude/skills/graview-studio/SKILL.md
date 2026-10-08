@@ -67,7 +67,7 @@ any other.
 
    Without the studio, `editDocument` covers the rest of a document too:
    `add-lens` (`replace` retitles; `at` puts one back), `remove-lens`,
-   `set-home`, `arrange-pages` (`order`, `hide`, `first`; `null` clears),
+   `set-home`, `arrange-pages` (`order`, `hide`, `first`, `overview` — the scene's tab; `null` clears),
    `set-computed` (`expr: null` removes it and what reads it), and
    `set-view` for a kind's slot, `slot: "home"`, or `lens: "<title>"`.
    Blocks are checked as they are set. A rename reaches lenses, the home,

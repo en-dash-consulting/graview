@@ -93,9 +93,15 @@ export const BUDGETS = [
      * 1 kB gzipped. Measured at 491_172 / 166_746.
      *
      * Measured at 495_633 / 168_648 with the pull requests of this round together.
+     *
+     * Raised when one app bar came to stand on every face (FR-131, FR-132):
+     * the app, its places as tabs with "More" for what the row cannot hold,
+     * and three tools of one size, in place of the strip and the routed
+     * face's masthead; a page's title said under the app's name. About
+     * 5 kB minified. Measured at 500_664 / 171_557.
      */
-    minified: 498_000,
-    gzipped: 169_500,
+    minified: 503_000,
+    gzipped: 172_500,
     load: "first",
   },
   {
@@ -210,9 +216,14 @@ export const BUDGETS = [
      * 0.7 kB gzipped. Measured at 685_141 / 174_211.
      *
      * Measured at 693_389 / 177_979 with the pull requests of this round together.
+     *
+     * Lowered when one app bar came to stand on every face (FR-131): what is
+     * behind the person and the problems' rows are fetched when first
+     * reached for, and the blocks a view is drawn with come with the face
+     * that draws one. Measured at 687_871 / 177_160.
      */
-    minified: 696_500,
-    gzipped: 179_000,
+    minified: 690_500,
+    gzipped: 178_000,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -311,9 +322,14 @@ export const BUDGETS = [
      * stands there. Measured at 1_507_037 / 450_941.
      *
      * Measured at 1_521_447 / 456_817 with the pull requests of this round together.
+     *
+     * Raised when one app bar came to stand on every face (FR-131, FR-132):
+     * the bar itself, about 10 kB, and Find on the scene's face — the box
+     * the whole-page Shell always had, which the embed's scene had none of —
+     * drawn in the bar's place for it, about 8 kB. Measured at 1_541_263 / 464_618.
      */
-    minified: 1_528_000,
-    gzipped: 459_000,
+    minified: 1_548_000,
+    gzipped: 467_000,
     load: "all",
   },
   {
@@ -354,8 +370,9 @@ export const BUDGETS = [
     // And when acts came to say what they set (FR-110, FR-114, FR-115: writes read off an act, a number's range, the other end of a link): the document compiler loads with the studio. Measured at 1_473_024 / 432_613.
     // Lowered when what only a drawn view uses left the frame's entries and the describer came to be fetched when first asked for: measured at 1_471_243 / 435_726.
     // Raised when the document came to hold the whole brand (FR-124–FR-126): the app's mark, name and subtitle in one component, a mark judged before it is drawn, the page's icon. Measured at 1_488_861 / 442_563.
-    minified: 1_496_000,
-    gzipped: 446_000,
+    // Raised with every face's when one app bar came to stand on every face (FR-131, FR-132): the bar, and Find on the scene's face. Measured at 1_506_675 / 449_629.
+    minified: 1_513_000,
+    gzipped: 452_000,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

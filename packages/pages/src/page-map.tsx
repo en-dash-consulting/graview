@@ -5,8 +5,8 @@ import { kindMap, type KindRelation } from "./facts.js";
 import { useGraviewIfAny } from "@graview/react/provider";
 import { pluralSlug, recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
-import { KindMark, eyebrow, h1, h2, lede, link, liveKinds, plain, pluralOf, quiet, rule } from "./page-typography.js";
-import { PageMain } from "./page-shell.js";
+import { KindMark, eyebrow, h2, lede, link, liveKinds, plain, pluralOf, quiet, rule } from "./page-typography.js";
+import { PageMain, PageTitle } from "./page-shell.js";
 import { capitalize } from "./page-typography.js";
 
 
@@ -80,7 +80,7 @@ export function KindMapSection<S extends AnySchema>({ context, heading = true }:
         <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
           <h2 style={h2}>
             <Link to="/map" style={plain}>
-              How it fits together
+              Connections
             </Link>
           </h2>
           <span style={quiet}>{relations.length === 1 ? "1 relation" : `${relations.length} relations`}</span>
@@ -105,7 +105,7 @@ export function DefaultMapPage<S extends AnySchema>({ context }: { context: Page
     <PageMain context={context}>
       <header style={{ display: "grid", gap: 12 }}>
         <p style={eyebrow}>{relations.length === 0 ? "No relations" : `${relations.length} ${relations.length === 1 ? "relation" : "relations"}`}</p>
-        <h1 style={h1}>How it fits together</h1>
+        <PageTitle context={context}>Connections</PageTitle>
         <p style={lede}>
           {relations.length === 0
             ? "Nothing here is declared to relate to anything else yet."

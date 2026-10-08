@@ -3,6 +3,8 @@ import { FOOT_MOVED, placeAtTheFoot } from "@graview/primitives/pages";
 import { inTopLayer } from "@graview/react/provider";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useLocation } from "react-router-dom";
+import { createPortal } from "react-dom";
+import { useBarFind } from "@graview/primitives/pages";
 import type { PageContext } from "./page-context.js";
 import { useStoreTick } from "./page-context.js";
 import { kindOfSlug, type PageRegistry } from "./registry.js";
@@ -81,7 +83,7 @@ function landOnThePage(face: Element | null) {
   if (active !== null && active !== document.body && active !== document.documentElement && active.isConnected) return;
   const root = face ?? document;
   const main = root.querySelector("main") ?? root.querySelector("[data-graview-page]") ?? null;
-  const target = main?.querySelector<HTMLElement>("h1") ?? root.querySelector<HTMLElement>("h1") ?? main;
+  const target = root.querySelector<HTMLElement>("[data-graview-page-title]") ?? main?.querySelector<HTMLElement>("h1, h2") ?? main;
   if (!(target instanceof HTMLElement)) return;
   if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
   target.focus({ preventScroll: true });
@@ -398,6 +400,8 @@ function Fallbacks<S extends AnySchema>({
   const findPlaced = usePlaced(placed, "find");
   const undoPlaced = usePlaced(placed, "undo");
   const location = useLocation();
+  // The app bar above the face keeps a place for Find (FR-131): the face's box goes there.
+  const bar = useBarFind();
   if (!ready) return null;
   const segments = location.pathname.split("/").filter(Boolean);
   const listKind = segments.length === 1 ? kindOfSlug(context.store.schema, segments[0]!) : undefined;
@@ -405,7 +409,8 @@ function Fallbacks<S extends AnySchema>({
   const narrows = listKind !== undefined && registry?.lookup(listKind, "list") === undefined;
   return (
     <>
-      {!findPlaced && !without.has("find") ? (
+      {!findPlaced && !without.has("find") && bar ? createPortal(<FindInBar context={context} narrowsLists={narrows} />, bar.slot) : null}
+      {!findPlaced && !without.has("find") && !bar ? (
         <div
           data-testid="face-find-bar"
           style={{

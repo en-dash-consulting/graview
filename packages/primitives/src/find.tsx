@@ -170,7 +170,8 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
         aria-autocomplete="list"
         {...(expanded && current ? { "aria-activedescendant": current.id } : {})}
         data-testid="find-box"
-        placeholder="Find…  /"
+        placeholder="Find…"
+        aria-keyshortcuts="/ Meta+K Control+K"
         value={q}
         onChange={(event) => {
           const words = event.target.value;
@@ -203,8 +204,8 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
           width: "100%",
           boxSizing: "border-box",
           minWidth: 0,
-          minHeight: 32,
-          padding: "4px 10px",
+          height: 30,
+          padding: "0 10px",
           font: "inherit",
           fontSize: "0.875rem",
           color: "var(--graview-ink)",

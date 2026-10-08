@@ -5,8 +5,8 @@
  * Graview Cloud's page IS the app, and the embed's routed face ran on a
  * memory router: a place could not be linked, reloaded or shared. This
  * mounts the embed the way Cloud's shell does — `mount` over a compiled
- * document, the Graview on a desk and the pages on a phone, the strip's
- * toggle on — with `routing: "address"` under a base path of the host's own
+ * document, the Graview on a desk and the pages on a phone, the app bar
+ * on — with `routing: "address"` under a base path of the host's own
  * (`/apps/a1/`), on a server that answers every address under it with the
  * one page. And the same embed in somebody else's article, on the default
  * memory routing. Then it asks each engine, at a desk and a phone:
@@ -16,8 +16,11 @@
  *   Back returns to the list, and to the place before it;
  *   a reload stays on the record;
  *   a deep link to a record opens it;
- *   the face toggle is a step Back undoes, the scene's stop in the fragment,
- *   and a reload of the scene stays on the scene;
+ *   the overview's tab is a step Back undoes, the scene at the overview's
+ *   own address (`<base>/places/overview`) with its stop in the fragment,
+ *   and a reload of the scene stays on the scene (FR-132);
+ *   a link to a stop at the bare address still opens the scene, tidied to
+ *   the overview's address; a host that mounts on the Graview lands there;
  *   a seat that cannot see the scene's focused record resolves the stop in
  *   place, with no step Back would have to undo;
  *   the embed in an article never writes `history` and leaves `location` as
@@ -134,7 +137,7 @@ async function buildHost() {
             ...(asked.get("stop") ? { stop: asked.get("stop") } : {}),
             // As Cloud's shell mounts it: labeled with the app's name, its heading a page's h1.
             ...(asked.get("named") ? { label: first.name, heading: 1 } : {}),
-            toggle: true,
+            bar: true,
             height: "100%",
             fonts: false,
             studio: false,
@@ -153,7 +156,7 @@ async function buildHost() {
           principal: { kind: "human", id: "p1", roles: ["owner"] },
           // As Cloud's shell: the Graview on a desk, the pages on a phone.
           face: article ? "pages" : window.innerWidth < 768 ? "pages" : "graview",
-          toggle: true,
+          bar: true,
           label: "The tasks",
           heading: article ? 2 : 1,
           height: "100%",
@@ -247,8 +250,9 @@ try {
           pushes: window.__writes.filter(([name]) => name === "pushState").length,
           replaces: window.__writes.filter(([name]) => name === "replaceState").length,
           face: document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed") ?? null,
-          heading: document.querySelector("[data-graview-face=pages] h1")?.textContent?.trim() ?? null,
+          heading: (document.querySelector("[data-graview-face=pages] [data-graview-page-title]") ?? document.querySelector("[data-graview-face=pages] :is(h1, h2, h3, h4)"))?.textContent?.trim() ?? null,
           place: document.querySelector('[data-testid="place-lens"]') !== null,
+          overviewMarked: document.querySelector('[data-testid="app-place-overview"]')?.getAttribute("aria-current") === "page",
         }));
       const settled = async () => {
         await tab.waitForTimeout(600);
@@ -262,6 +266,12 @@ try {
       const reload = async () => {
         await Promise.all([tab.waitForEvent("load"), tab.evaluate(() => location.reload())]);
         await ready();
+      };
+      /* A tab on the bar, as a person presses it: under "More" when the row could not hold it. */
+      const press = async (selector) => {
+        const one = tab.locator(selector).first();
+        if (!(await one.isVisible().catch(() => false))) await tab.click('[data-testid="app-places-more"]');
+        await one.click();
       };
       const follow = async (href) => {
         await tab.click(`[data-graview-face=pages] a[href="${href}"]`, { timeout: 10_000 });
@@ -291,10 +301,10 @@ try {
         // A deep link to a record.
         await go(`${BASE}/tasks/t2`);
         one.deep = await state();
-        // The face toggle, from the place: the scene, its stop in the fragment, and Back.
+        // The overview's tab, from the place: the scene at its own address, its stop in the fragment, and Back (FR-132).
         await go(`${BASE}/places/the-board`);
         one.beforeToggle = await state();
-        await tab.click('[data-testid="embed-face-scene"]');
+        await press('[data-testid="app-place-overview"]');
         one.toScene = await settled();
         await reload();
         one.sceneReloaded = await state();
@@ -302,8 +312,14 @@ try {
         one.toggleUndone = await settled();
         await tab.goForward();
         one.toggleRedone = await settled();
-        await tab.click('[data-testid="embed-face-pages"]');
+        await press('[data-place-path="/places/the-board"]');
         one.backToPages = await settled();
+        // A link to a stop at the bare address, written before the scene was a place, still opens it.
+        await go(`${BASE}#focus=t2`);
+        one.oldStop = await state();
+        // A host that mounts on the Graview at the bare address lands on the overview's place.
+        await go(BASE);
+        one.bare = await state();
       } catch (error) {
         one.error = String(error?.message ?? error);
       }
@@ -315,7 +331,7 @@ try {
          * and no entry is pushed whose Back lands on an address this seat
          * cannot see.
          */
-        await tab.click('[data-testid="embed-face-scene"]');
+        await press('[data-testid="app-place-overview"]');
         await settled();
         await tab.evaluate(() => (location.hash = "#focus=t1"));
         one.seatBefore = await settled();
@@ -346,20 +362,20 @@ try {
         await reader.goto(`${at("address-host")}/article.html?from=somewhere#the-picture`, { waitUntil: "load" });
         await reader.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
         await reader.waitForTimeout(500);
-        const where = () => reader.evaluate(() => ({ href: location.href, length: history.length, writes: window.__writes.length, heading: document.querySelector("[data-graview-face=pages] h1")?.textContent?.trim() ?? null }));
+        const where = () => reader.evaluate(() => ({ href: location.href, length: history.length, writes: window.__writes.length, heading: (document.querySelector("[data-graview-face=pages] [data-graview-page-title]") ?? document.querySelector("[data-graview-face=pages] :is(h1, h2, h3, h4)"))?.textContent?.trim() ?? null }));
         quiet.before = await where();
         await reader.click('[data-graview-face=pages] a[href="/tasks"]', { timeout: 10_000 });
         await reader.waitForTimeout(400);
         await reader.click('[data-graview-face=pages] a[href="/tasks/t1"]', { timeout: 10_000 });
         await reader.waitForTimeout(400);
         quiet.onRecord = await where();
-        await reader.click('[data-testid="embed-face-scene"]');
+        await reader.click('[data-testid="app-place-overview"]');
         await reader.waitForTimeout(800);
-        await reader.click('[data-testid="embed-face-pages"]');
+        await reader.click('[data-testid="app-home"]');
         await reader.waitForTimeout(600);
         quiet.after = await where();
         // A seat change on the scene, in the article: still the article's history, never written.
-        await reader.click('[data-testid="embed-face-scene"]');
+        await reader.click('[data-testid="app-place-overview"]');
         await reader.waitForTimeout(800);
         await reader.evaluate(() => window.__handle.setSeat({ kind: "human", id: "p9", roles: ["viewer"] }));
         await reader.waitForTimeout(600);
@@ -401,7 +417,7 @@ try {
           length: history.length,
           writes: window.__writes.length,
           face: document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed") ?? null,
-          heading: document.querySelector("[data-graview-face=pages] h1")?.textContent?.trim() ?? null,
+          heading: (document.querySelector("[data-graview-face=pages] [data-graview-page-title]") ?? document.querySelector("[data-graview-face=pages] :is(h1, h2, h3, h4)"))?.textContent?.trim() ?? null,
           focused: document.querySelector('[data-graview-plane="0"]')?.dataset.graviewView ?? null,
           where: window.__handle.where(),
         }));
@@ -432,7 +448,8 @@ try {
         tab.evaluate(() => {
           const embed = document.querySelector("section[data-graview-embed]");
           const says = (name) => [...embed.querySelectorAll("a, span, h1, p")].filter((one) => one.textContent.trim() === name && one.children.length <= 1).length;
-          const heading = [...embed.children].find((one) => one.tagName === "H1");
+          // The app's name is the bar's heading (FR-131).
+          const heading = embed.querySelector("[data-graview-app-bar] h1");
           return {
             face: embed.getAttribute("data-graview-embed"),
             region: embed.getAttribute("aria-label"),
@@ -514,12 +531,12 @@ try {
   };
   report.checks.aReloadStaysPut = { seen: pick("reloaded"), ok: every(({ reloaded, forwardToRecord }) => reloaded.length === forwardToRecord.length && reloaded.path === `${BASE}/tasks/t1` && reloaded.face === "pages" && reloaded.heading === "Write the brief") };
   report.checks.aDeepLinkToARecordOpensIt = { seen: pick("deep"), ok: every(({ deep }) => deep.face === "pages" && deep.heading === "Book the hall") };
-  report.checks.theFaceToggleIsAStepBackUndoes = {
+  report.checks.theOverviewsTabIsAStepBackUndoes = {
     seen: Object.fromEntries(Object.entries(pick("toScene")).map(([name, seen]) => [name, { before: results[name].beforeToggle, scene: seen, reloaded: results[name].sceneReloaded, undone: results[name].toggleUndone, redone: results[name].toggleRedone, pages: results[name].backToPages }])),
     ok: every(
       ({ beforeToggle, toScene, sceneReloaded, toggleUndone, toggleRedone, backToPages }) =>
         toScene.face !== "pages" &&
-        toScene.path === BASE &&
+        toScene.overviewMarked &&
         toScene.fragment &&
         toScene.length === beforeToggle.length + 1 &&
         sceneReloaded.face !== "pages" &&
@@ -533,6 +550,21 @@ try {
         backToPages.path === `${BASE}/places/the-board` &&
         !backToPages.fragment,
     ),
+  };
+  /* FR-132: the scene is a place, at its own address, its stop riding on it. */
+  report.checks.theOverviewsAddressIsItsPlaceWithItsStopOnIt = {
+    seen: Object.fromEntries(Object.entries(pick("toScene")).map(([name, seen]) => [name, { scene: seen, reloaded: results[name].sceneReloaded }])),
+    ok: every(({ toScene, sceneReloaded }) => toScene.path === `${BASE}/places/overview` && toScene.fragment && sceneReloaded.path === `${BASE}/places/overview` && sceneReloaded.face !== "pages" && sceneReloaded.overviewMarked),
+  };
+  report.checks.aLinkToAStopWrittenBeforeTheSceneWasAPlaceStillOpensIt = {
+    seen: pick("oldStop"),
+    ok: every(({ oldStop }) => oldStop.face === "scene" && oldStop.path === `${BASE}/places/overview` && fromStop(oldStop.hash) === "t2" && oldStop.overviewMarked),
+  };
+  report.checks.aHostThatMountsOnTheGraviewLandsOnTheOverview = {
+    seen: Object.fromEntries(Object.entries(results).filter(([name]) => !name.endsWith("article") && name.includes("1440")).map(([name, one]) => [name, one.error ? { error: one.error } : one.bare])),
+    ok: Object.entries(results)
+      .filter(([name]) => !name.endsWith("article") && name.includes("1440"))
+      .every(([, one]) => !one.error && one.bare.face === "graview" && one.bare.path === `${BASE}/places/overview` && one.bare.overviewMarked),
   };
   report.checks.aHostThatKeepsItsOwnHistoryIsToldEachPage = {
     seen: pick("told"),
@@ -548,7 +580,7 @@ try {
           seatBefore.face !== "pages" &&
           fromStop(seatBefore.hash) === "t1" &&
           seatAfter.face !== "pages" &&
-          seatAfter.path === BASE &&
+          seatAfter.path === `${BASE}/places/overview` &&
           fromStop(seatAfter.hash) !== "t1" &&
           seatAfter.length === seatBefore.length &&
           seatAfter.pushes === seatBefore.pushes,

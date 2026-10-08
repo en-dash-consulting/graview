@@ -62,6 +62,7 @@ const sameWords = (a: string, b: string) => a.trim().toLowerCase().replace(/[_-]
 
 function Resolved({ block }: { readonly block: ResolvedBlock }): ReactNode {
   const said = useContext(SaidAround);
+  const under = useContext(HeadingsUnder);
   if (said && block.t === "badge" && said.values.some((value) => sameWords(value, block.text))) return null;
   if (said && block.t === "field" && said.field !== undefined && block.field === said.field) return null;
   switch (block.t) {
@@ -125,7 +126,7 @@ function Resolved({ block }: { readonly block: ResolvedBlock }): ReactNode {
     case "figure":
       return <SpecFigure />;
     case "headline": {
-      const Tag = `h${block.level}` as "h1";
+      const Tag = `h${Math.min(6, block.level + under)}` as "h1";
       return (
         <Tag className="graview-spec-headline" data-level={block.level}>
           {block.text}
@@ -187,6 +188,14 @@ export interface SpecLinkTo {
   readonly go: (node: AnyGraphNode) => void;
 }
 export const SpecLinks = createContext<SpecLinkTo | null>(null);
+
+/**
+ * HOW MANY LEVELS ABOVE A VIEW'S HEADLINES ARE ALREADY SAID (FR-131): under
+ * the app bar, whose name is the page's `h1`, a home's "level 1" headline is
+ * said at the level below it. The level the view declares stays on the
+ * element (`data-level`), which is what it is drawn by.
+ */
+export const HeadingsUnder = createContext(0);
 
 /** The steps a list or a figure about no one record may take: it sweeps whole kinds. */
 const SWEEP_BUDGET = 5_000;

@@ -316,11 +316,11 @@ try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await arrive(page, pageAt("progression.html"));
   await page.waitForTimeout(600);
-  /* A chapter's face switches on the page itself: the picture is the app. */
+  /* A chapter goes from its overview to a page on the page itself: the picture is the app, its home one press away on the bar (FR-132). */
   await page.locator('#chapter-1 [data-graview-chapter="1"]').scrollIntoViewIfNeeded();
   await page.waitForFunction(() => document.querySelector('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]') !== null, null, { timeout: 20_000 }).catch(() => {});
   const faceBefore = await page.locator('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]').getAttribute("data-graview-embed").catch(() => null);
-  await page.locator('#chapter-1 [data-graview-chapter="1"] [data-testid="embed-face-pages"]').click().catch(() => {});
+  await page.locator('#chapter-1 [data-graview-chapter="1"] [data-testid="app-home"]').click().catch(() => {});
   await page.waitForTimeout(500);
   const faceAfter = await page.locator('#chapter-1 [data-graview-chapter="1"] [data-graview-embed]').getAttribute("data-graview-embed").catch(() => null);
   report.criteria.aChapterSwitchesFaceOnThePage = faceBefore !== null && faceBefore !== "pages" && faceAfter === "pages";

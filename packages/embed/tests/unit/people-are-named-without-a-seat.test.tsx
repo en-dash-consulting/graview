@@ -77,10 +77,13 @@ describe("a hosted reader", () => {
       { id: "acct_9aa", name: "Ana Ruiz" },
     ];
     const { handle, host } = await mounting({ seed: { nodes: [], edges: [] }, face: "graview", principal: me, people, seats: [{ label: "Me", principal: me }] });
-    expect(host.querySelector("[data-testid=embed-seats]")).toBeNull();
+    // The seats are in the person's menu on the bar (FR-131), and there is none to choose.
+    expect(host.querySelector("[data-testid=seats]")).toBeNull();
     const profile = host.querySelector<HTMLButtonElement>("[data-testid=profile-button]");
     expect(profile).not.toBeNull();
     await act(async () => profile!.click());
+    // What is behind the person is fetched when it is first reached for.
+    for (let tries = 0; tries < 40 && !host.textContent?.includes("Signed in as"); tries += 1) await act(async () => new Promise((wait) => setTimeout(wait, 25)));
     expect(host.textContent).toContain("Me");
     expect(host.textContent).not.toContain("Sit as somebody else");
     expect(host.querySelector("[data-testid=seats]")).toBeNull();
@@ -92,6 +95,6 @@ describe("a hosted reader", () => {
         { label: "A visitor", principal: { kind: "human", id: "visitor" } },
       ]),
     );
-    expect(host.querySelector("[data-testid=embed-seats]")).not.toBeNull();
+    expect(host.querySelector("[data-testid=seats]")).not.toBeNull();
   });
 });
