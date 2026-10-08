@@ -104,42 +104,49 @@ describe("the pictures on pages", () => {
     expect(html).toContain("2 tasks");
   });
 
-  it("draws one place full width in fullscreen mode, over the kind's members, with its siblings, the way to the scene and the way to the list", () => {
+  it("draws one place full width in fullscreen mode, over the kind's members, with only its own way to the list — the other places are the bar's (FR-138)", () => {
     const html = draw("/places/the-week");
     expect(html).toContain('data-testid="place-lens"');
     expect(html).toContain('data-mode="fullscreen"');
     expect(html).toContain("The week: 2 on the board");
     expect(html).toContain('data-graview-pick="t1"');
-    expect(html).toContain('data-testid="place-stop"');
-    expect(html).toContain('href="/#view=the-week"');
+    expect(html).toContain('data-testid="place-as-list"');
     expect(html).toContain("All tasks as a list");
-    // The other pictures, one press away — and not this one, which the bar marks as where you are.
+    // The page does not repeat the places: no sibling pictures, no way to the scene under the title (the switch is that).
     const page = html.slice(html.indexOf("<main"));
-    expect(page).toContain('data-testid="sibling-pictures"');
-    expect(page).toContain(`href="${placePath("the-board")}"`);
-    expect(page.match(new RegExp(`href="${placePath("the-week")}"`, "g"))).toBeNull();
-    expect(html).toMatch(/data-testid="app-place-place:task:the-week"[^>]*aria-current="page"/);
+    expect(page).not.toContain('data-testid="sibling-pictures"');
+    expect(page).not.toContain('data-testid="place-stop"');
+    expect(page).not.toContain(`href="${placePath("the-board")}"`);
+    expect(html).toMatch(/data-testid="app-place-current"[^>]*>The week</);
   });
 
   it("says so when no picture is called that", () => {
     expect(draw("/places/the-year")).toContain("No picture is called that");
   });
 
-  it("has one row of navigation on the one bar: the overview, then each picture, then the kinds (FR-131, FR-132)", () => {
+  it("has the switch and the place you are on on the one bar, and every place in the list it opens: the home, the Lists, the Pictures (FR-137, FR-138)", () => {
     const html = draw("/");
-    const nav = html.slice(html.indexOf('data-testid="app-places"'), html.indexOf("</nav>"));
-    const at = (text: string) => nav.indexOf(text);
-    expect(at(">Overview<")).toBeGreaterThan(-1);
-    expect(at(">Overview<")).toBeLessThan(at(">The board<"));
-    expect(at(">The board<")).toBeLessThan(at(">Tasks<"));
-    // The home is the app's name, said once as the heading; the problems are the standing's to open.
-    expect(nav).not.toContain(">Pictures<");
-    expect(nav).not.toContain("Problems");
+    const bar = html.slice(html.indexOf('data-testid="app-bar"'), html.indexOf("</header>"));
+    expect(bar).toMatch(/data-testid="app-face-scene"[^>]*aria-pressed="false"/);
+    expect(bar).toMatch(/data-testid="app-face-pages"[^>]*aria-pressed="true"/);
+    expect(bar).toContain(">Scene<");
+    expect(bar).toContain(">Pages<");
+    expect(bar.toLowerCase()).not.toContain("overview");
+    expect(bar).toMatch(/data-testid="app-place-current"[^>]*>Home</);
+    const list = html.slice(html.indexOf('data-testid="app-places"'), html.indexOf("</nav>"));
+    const at = (text: string) => list.indexOf(text);
+    expect(at(">Home<")).toBeGreaterThan(-1);
+    expect(at(">Home<")).toBeLessThan(at(">Lists<"));
+    expect(at(">Lists<")).toBeLessThan(at(">Tasks<"));
+    expect(at(">Tasks<")).toBeLessThan(at(">Pictures<"));
+    expect(at(">Pictures<")).toBeLessThan(at(">The board<"));
+    // The problems are the standing's to open; the home is the app's name, said once as the heading.
+    expect(list).not.toContain("Problems");
     expect(html).toMatch(/<h1[^>]*><a[^>]*data-testid="app-home"[^>]*aria-current="page"/);
     expect(html.match(/<nav /g)).toHaveLength(1);
-    // Without any picture the tabs are the overview and the kinds.
+    // Without any picture the list holds the home and the kinds.
     const plain = draw("/", false);
-    expect(plain).toContain(">Overview<");
+    expect(plain).toContain(">Lists<");
     expect(plain).not.toContain(">The board<");
   });
 

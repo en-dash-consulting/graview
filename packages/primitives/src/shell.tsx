@@ -3,7 +3,6 @@ import { Scene, useGraview, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, 
 import type { Responder, ToolCall } from "@graview/tools";
 import { useCallback, useLayoutEffect, useState, type ReactNode, useRef } from "react";
 import { Companion, type CompanionMode } from "./companion.js";
-import { HomeLanding } from "./home-landing.js";
 import { VISUALLY_HIDDEN, useWidth } from "./primitives/index.js";
 import { FindBox } from "./find.js";
 import { ShowInstallation } from "./installation.js";
@@ -329,8 +328,6 @@ export function Shell<S extends AnySchema>({
         <Scene renderer={renderer} {...(attachRenderer ? { attachRenderer } : {})} />
         {/* The altitude control, on the picture it controls. */}
         <OverviewButton />
-        {/* The home's own view, when the declaration writes one, over the picture at home (FR-81). */}
-        <HomeLanding />
         {/*
           * THE COMPANION: the acts, the relations, the seat and the key, on
           * the frame, about one subject. It replaces the relation key, the

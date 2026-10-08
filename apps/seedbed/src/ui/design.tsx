@@ -576,7 +576,7 @@ function PlotRecord({ context }: { context: Ctx }) {
           {plot.growing.length > 0 ? ` Growing now: ${plot.growing.map((p) => p.label).join(", ")}.` : " Nothing is growing."}
         </p>
         <p style={{ margin: "10px 0 0" }}>
-          <a href={spatialHref(id)} className="sb-scene" data-testid="spatial-link">On the overview ↗</a>
+          <a href={spatialHref(id)} className="sb-scene" data-testid="spatial-link">In the scene ↗</a>
         </p>
       </header>
       {untended ? (

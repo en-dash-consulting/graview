@@ -1,5 +1,5 @@
 import { AppBar, barPlaceAt, barPlaces, LadderSetting, Profile, StandingDot, standingWords, toolStyle, useFavicon } from "@graview/primitives/pages";
-import { faviconHref, OVERVIEW_PATH } from "@graview/core";
+import { faviconHref, pagesTitle, sceneTitle } from "@graview/core";
 import type { AnySchema } from "@graview/core";
 import { Link, useHref, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
@@ -14,9 +14,9 @@ import { WIDE, column, h1, quiet } from "./page-typography.js";
  * THE SHELL: the one app bar (FR-131) over the page, and a quiet foot.
  *
  * The bar is the app — its mark and name, the page's one heading, the way
- * home — then its places as tabs: the overview (the scene, FR-132), each
- * named picture, each kind's list, how the kinds connect; then Find, the
- * standing and, where there is a seat, the person. Under an embed's bar
+ * home — then the switch between the scene and the pages (FR-137), the
+ * place you are on, which opens every place the app has (FR-138); then
+ * Find, the standing and, where there is a seat, the person. Under an embed's bar
  * (`barAbove`) the shell draws none of it: the embed's bar already says
  * every word, and the face's Find goes there.
  */
@@ -79,7 +79,7 @@ export function DefaultShell<S extends AnySchema>({
 }
 
 /**
- * The bar of a routed face that owns its page: the overview is the scene on
+ * The bar of a routed face that owns its page: the scene is on
  * its own address (`sceneHref`), every other place is this face's.
  */
 function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContext<S> }) {
@@ -87,7 +87,8 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
   const location = useLocation();
   const navigate = useNavigate();
   const base = useHref("/").replace(/\/$/, "");
-  const places = barPlaces({ store: store as never, principal: context.principal, views: context.views, overview: true });
+  const places = barPlaces({ store: store as never, principal: context.principal, views: context.views });
+  const arrangement = context.views?.arrangement?.();
   const here = `${location.pathname}${location.search}`;
   const problems = store.violations(invariantContext).length;
   const said = standingWords(problems, "All rules hold");
@@ -98,12 +99,14 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
         name={brand?.name ?? "Graview"}
         description={brand?.subtitle}
         home={{ href: `${base}/`, go: () => navigate("/"), current: location.pathname === "/" }}
+        faces={{
+          // The scene is on its own address (`sceneHref`); this face is the pages.
+          scene: { label: sceneTitle(arrangement), current: false, go: () => window.location.assign(sceneHref) },
+          pages: { label: pagesTitle(arrangement), current: true, go: () => undefined },
+        }}
         places={places}
         current={barPlaceAt(places, here)}
-        reach={{
-          href: (path) => (path === OVERVIEW_PATH ? sceneHref : `${base}${path}`),
-          go: (place) => (place.path === OVERVIEW_PATH ? window.location.assign(sceneHref) : navigate(place.path)),
-        }}
+        reach={{ href: (path) => `${base}${path}`, go: (place) => navigate(place.path) }}
         findBox={<PageFind context={context} />}
         tools={
           <>

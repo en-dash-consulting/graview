@@ -52,7 +52,7 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
   const { at, steering } = useSteering(address && typeof window !== "undefined" ? `${pathWithin(window.location.pathname, props.basePath) ?? "/"}${window.location.search}` : (props.path ?? "/"));
   const [barFind, setBarFind] = useState<BarFind | null>(null);
   // No scene here, so no overview among the places (FR-132).
-  const places = barPlaces({ store: store as never, principal: props.principal, views: views as never, overview: false });
+  const places = barPlaces({ store: store as never, principal: props.principal, views: views as never });
   return (
     <section
       ref={rootRef}

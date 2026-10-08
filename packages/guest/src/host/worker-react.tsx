@@ -145,9 +145,9 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
   const { manifest } = definition;
   if (manifest.attach === "home") {
     /*
-     * THE HOME'S OWN VIEW (FR-81): drawn by both faces — the routed home's
-     * body, and the landing over the scene when it is at home — in place of
-     * the home the app declared, which is drawn if the view fails.
+     * THE HOME'S OWN VIEW (FR-81): the routed home's body, full width under
+     * the bar on a desk as on a phone — the page the app opens on (FR-136) —
+     * in place of the home the app declared, which is drawn if the view fails.
      */
     if (!views.home) throw new Error(`The worker view "${manifest.name}" is the home's body: draw it with workerHome, on the home.`);
     const declared = views.homeView?.() as ViewComponent<AnySchema> | undefined;

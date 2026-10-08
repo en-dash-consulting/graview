@@ -211,11 +211,11 @@ describe("an embed narrower than its scene", () => {
     window.history.replaceState(null, "", "/");
   });
 
-  it("draws the overview there when the reader asks for it on the bar (FR-132)", async () => {
+  it("draws the scene there when the reader asks for it on the switch (FR-132, FR-137)", async () => {
     geometry.width = 360;
     const { root } = await mounting({ seed, face: "graview", pagesBelow: 560 });
     expect(root.getAttribute("data-graview-embed")).toBe("pages");
-    await act(async () => root.querySelector<HTMLElement>("[data-testid='app-place-overview']")!.click());
+    await act(async () => root.querySelector<HTMLElement>("[data-testid='app-face-scene']")!.click());
     expect(root.getAttribute("data-graview-embed")).toBe("graview");
   });
 });

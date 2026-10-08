@@ -56,9 +56,10 @@ describe("a chapter, embedded", () => {
     // the document element for the whole browser, so a scoped stylesheet asks
     // about it and applies inside its own box — which owns nothing outside.
     expect(style).not.toContain(":root {");
-    // The overview is the place you are on, one tab of the app's (FR-132); no switch says "Scene" or "Pages".
-    expect(element.querySelector('[data-testid="app-place-overview"]')?.getAttribute("aria-current")).toBe("page");
-    expect([...element.querySelectorAll("button, a")].some((control) => /^(Scene|Pages)$/.test(control.textContent?.trim() ?? ""))).toBe(false);
+    // The switch says the scene is drawn (FR-137), and nothing on the bar calls it the overview.
+    expect(element.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
+    expect(element.querySelector('[data-testid="app-face-pages"]')?.getAttribute("aria-pressed")).toBe("false");
+    expect(element.querySelector('[data-testid="app-bar"]')?.textContent?.toLowerCase()).not.toContain("overview");
     expect(element.querySelector('[data-testid="standing"]')?.getAttribute("aria-label")).toContain("Everything is in order");
     handle.unmount();
     expect(element.innerHTML).toBe("");
@@ -123,7 +124,7 @@ describe("a chapter, embedded", () => {
     handle.unmount();
   });
 
-  it("names the lenses on the bar, each a place of its own, and the overview a press away (FR-131, FR-132)", async () => {
+  it("lists the lenses among the places, each a place of its own, and the scene one press on the switch away (FR-137, FR-138)", async () => {
     const element = into();
     const handle = mount(element, {
       app: chapter.app,
@@ -133,20 +134,28 @@ describe("a chapter, embedded", () => {
       principal: chapter.principal,
       views: (schema) => seedbedViews(schema, { lens: true, board: true }),
     });
-    const tab = (key: string) => element.querySelector<HTMLElement>(`[data-testid="app-place-${key}"]`);
-    expect(tab("place:gardener:who-tends-what")?.textContent).toBe("Who tends what");
-    expect(tab("place:plot:what-grows-where")?.textContent).toBe("What grows where");
-    expect(tab("overview")?.getAttribute("aria-current")).toBe("page");
-    // A lens's tab is its page, under the same bar.
-    tab("place:gardener:who-tends-what")?.click();
+    const entry = (key: string) => element.querySelector<HTMLElement>(`[data-testid="app-place-${key}"]`);
+    const face = () => element.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed");
+    // On the scene the switch is pressed at Scene, and the places are the pages'.
+    expect(element.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
+    expect(element.querySelector('[data-testid="app-places-open"]')).toBeNull();
+    element.querySelector<HTMLElement>('[data-testid="app-face-pages"]')?.click();
     await Promise.resolve();
-    expect(element.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed")).toBe("pages");
+    expect(face()).toBe("pages");
+    // Two presses: the place control, then the lens.
+    element.querySelector<HTMLElement>('[data-testid="app-places-open"]')?.click();
+    expect(entry("place:gardener:who-tends-what")?.textContent).toBe("Who tends what");
+    expect(entry("place:plot:what-grows-where")?.textContent).toBe("What grows where");
+    entry("place:gardener:who-tends-what")?.click();
+    await new Promise((done) => setTimeout(done, 30));
+    expect(face()).toBe("pages");
     expect(element.querySelector("[data-graview-page-title]")?.textContent).toBe("Who tends what");
-    expect(tab("place:gardener:who-tends-what")?.getAttribute("aria-current")).toBe("page");
-    // And the overview is one press back.
-    tab("overview")?.click();
-    await Promise.resolve();
-    expect(element.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed")).toBe("scene");
+    expect(element.querySelector('[data-testid="app-place-current"]')?.textContent).toBe("Who tends what");
+    expect(entry("place:gardener:who-tends-what")?.getAttribute("aria-current")).toBe("page");
+    // And the scene is one press back, on the switch.
+    element.querySelector<HTMLElement>('[data-testid="app-face-scene"]')?.click();
+    await new Promise((done) => setTimeout(done, 30));
+    expect(face()).toBe("scene");
     handle.unmount();
   });
 

@@ -187,22 +187,21 @@ describe("address routing under a base path", () => {
     expect(heading(again.host)).toBe("Post the letter");
   });
 
-  it("keeps the scene at the overview's address with its stop in the fragment, and a tab is an entry Back undoes (FR-132)", async () => {
+  it("keeps the scene at its address with its stop in the fragment, and the switch is an entry Back undoes (FR-132, FR-137)", async () => {
     const { host } = await at("/apps/a1/", { routing: "address", basePath: "/apps/a1", face: "graview" });
     expect(face(host)).toBe("graview");
     // Arriving is not traveling: the scene tidies its own address in place — to its place's.
     expect(window.location.pathname).toBe("/apps/a1/places/overview");
     expect(window.location.hash).toBe("#overview=1");
-    expect(host.querySelector('[data-testid="app-place-overview"]')?.getAttribute("aria-current")).toBe("page");
+    expect(host.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
     const length = window.history.length;
-    await click(host.querySelector('[data-testid="app-place-kind:task"]'));
+    await click(host.querySelector('[data-testid="app-face-pages"]'));
     await settle();
     expect(face(host)).toBe("pages");
-    expect(window.location.pathname).toBe("/apps/a1/tasks");
+    expect(window.location.pathname.replace(/\/$/, "")).toBe("/apps/a1");
     expect(window.location.href.includes("#")).toBe(false);
     expect(window.history.length).toBe(length + 1);
-    expect(heading(host)).toBe("Tasks");
-    expect(host.querySelector('[data-testid="app-place-kind:task"]')?.getAttribute("aria-current")).toBe("page");
+    expect(host.querySelector('[data-testid="app-face-pages"]')?.getAttribute("aria-pressed")).toBe("true");
     await back();
     expect(face(host)).not.toBe("pages");
     expect(window.location.pathname).toBe("/apps/a1/places/overview");
@@ -210,10 +209,10 @@ describe("address routing under a base path", () => {
     expect(window.history.length).toBe(length + 1);
   });
 
-  it("goes from a page to the overview with one press, at its address, and Back returns to the page", async () => {
+  it("goes from a page to the scene with one press on the switch, at its address, and Back returns to the page", async () => {
     const { host } = await at("/apps/a1/tasks", { routing: "address", basePath: "/apps/a1", face: "pages" });
     expect(heading(host)).toBe("Tasks");
-    await click(host.querySelector('[data-testid="app-place-overview"]'));
+    await click(host.querySelector('[data-testid="app-face-scene"]'));
     await settle();
     expect(face(host)).toBe("scene");
     expect(window.location.pathname).toBe("/apps/a1/places/overview");

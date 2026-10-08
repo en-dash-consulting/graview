@@ -243,7 +243,7 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
       <header style={{ display: "grid", gap: "0.5rem" }}>
         <p className="ln-eyebrow"><Link className="ln-link" to={`/${pluralSlug(store.schema, kind)}`}>{plural(store, kind)}</Link></p>
         <h1 className="ln-h1">{facts.label}</h1>
-        <a className="ln-link" href={spatialHref(id)} data-testid="spatial-link">On the overview ↗</a>
+        <a className="ln-link" href={spatialHref(id)} data-testid="spatial-link">In the scene ↗</a>
       </header>
       {facts.violations.map((violation, at) => (
         <section key={at} className="ln-card" data-testid="record-violations">

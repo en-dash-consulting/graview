@@ -16,11 +16,13 @@
  *   Back returns to the list, and to the place before it;
  *   a reload stays on the record;
  *   a deep link to a record opens it;
- *   the overview's tab is a step Back undoes, the scene at the overview's
- *   own address (`<base>/places/overview`) with its stop in the fragment,
- *   and a reload of the scene stays on the scene (FR-132);
+ *   the switch's Scene is a step Back undoes, the scene at its own address
+ *   (`<base>/places/overview`, FR-132) with its stop in the fragment, a
+ *   reload of the scene stays on the scene, and the switch's Pages goes
+ *   back to the page the reader was on (FR-137);
  *   a link to a stop at the bare address still opens the scene, tidied to
- *   the overview's address; a host that mounts on the Graview lands there;
+ *   the scene's address; a host that mounts on the Graview lands there —
+ *   unless the app has a home view, which it then opens on (FR-136);
  *   a seat that cannot see the scene's focused record resolves the stop in
  *   place, with no step Back would have to undo;
  *   the embed in an article never writes `history` and leaves `location` as
@@ -252,7 +254,8 @@ try {
           face: document.querySelector("[data-graview-embed]")?.getAttribute("data-graview-embed") ?? null,
           heading: (document.querySelector("[data-graview-face=pages] [data-graview-page-title]") ?? document.querySelector("[data-graview-face=pages] :is(h1, h2, h3, h4)"))?.textContent?.trim() ?? null,
           place: document.querySelector('[data-testid="place-lens"]') !== null,
-          overviewMarked: document.querySelector('[data-testid="app-place-overview"]')?.getAttribute("aria-current") === "page",
+          scenePressed: document.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed") === "true",
+          homeView: document.querySelector('[data-testid="home-view"]') !== null,
         }));
       const settled = async () => {
         await tab.waitForTimeout(600);
@@ -267,10 +270,10 @@ try {
         await Promise.all([tab.waitForEvent("load"), tab.evaluate(() => location.reload())]);
         await ready();
       };
-      /* A tab on the bar, as a person presses it: under "More" when the row could not hold it. */
+      /* A control on the bar, as a person presses it: a place in the list the place control opens (FR-138). */
       const press = async (selector) => {
         const one = tab.locator(selector).first();
-        if (!(await one.isVisible().catch(() => false))) await tab.click('[data-testid="app-places-more"]');
+        if (!(await one.isVisible().catch(() => false))) await tab.click('[data-testid="app-places-open"]');
         await one.click();
       };
       const follow = async (href) => {
@@ -301,10 +304,10 @@ try {
         // A deep link to a record.
         await go(`${BASE}/tasks/t2`);
         one.deep = await state();
-        // The overview's tab, from the place: the scene at its own address, its stop in the fragment, and Back (FR-132).
+        // The switch's Scene, from the place: the scene at its own address, its stop in the fragment, and Back (FR-132, FR-137).
         await go(`${BASE}/places/the-board`);
         one.beforeToggle = await state();
-        await press('[data-testid="app-place-overview"]');
+        await press('[data-testid="app-face-scene"]');
         one.toScene = await settled();
         await reload();
         one.sceneReloaded = await state();
@@ -312,12 +315,13 @@ try {
         one.toggleUndone = await settled();
         await tab.goForward();
         one.toggleRedone = await settled();
-        await press('[data-place-path="/places/the-board"]');
+        // The switch's Pages: back to the page the reader was on (FR-137).
+        await press('[data-testid="app-face-pages"]');
         one.backToPages = await settled();
         // A link to a stop at the bare address, written before the scene was a place, still opens it.
         await go(`${BASE}#focus=t2`);
         one.oldStop = await state();
-        // A host that mounts on the Graview at the bare address lands on the overview's place.
+        // A host that mounts on the Graview at the bare address lands on the scene's place.
         await go(BASE);
         one.bare = await state();
       } catch (error) {
@@ -331,7 +335,7 @@ try {
          * and no entry is pushed whose Back lands on an address this seat
          * cannot see.
          */
-        await press('[data-testid="app-place-overview"]');
+        await press('[data-testid="app-face-scene"]');
         await settled();
         await tab.evaluate(() => (location.hash = "#focus=t1"));
         one.seatBefore = await settled();
@@ -339,6 +343,13 @@ try {
         one.seatAfter = await settled();
       } catch (error) {
         one.seatError = String(error?.message ?? error);
+      }
+      try {
+        // A host that mounts an app with a home view on the Graview, at the bare address: it opens on the home, the front page (FR-136).
+        await go(`${SWAP_BASE}?face=graview&named=1`);
+        one.homeFirst = await state();
+      } catch (error) {
+        one.error = String(error?.message ?? error);
       }
       await context.close();
 
@@ -369,13 +380,13 @@ try {
         await reader.click('[data-graview-face=pages] a[href="/tasks/t1"]', { timeout: 10_000 });
         await reader.waitForTimeout(400);
         quiet.onRecord = await where();
-        await reader.click('[data-testid="app-place-overview"]');
+        await reader.click('[data-testid="app-face-scene"]');
         await reader.waitForTimeout(800);
         await reader.click('[data-testid="app-home"]');
         await reader.waitForTimeout(600);
         quiet.after = await where();
         // A seat change on the scene, in the article: still the article's history, never written.
-        await reader.click('[data-testid="app-place-overview"]');
+        await reader.click('[data-testid="app-face-scene"]');
         await reader.waitForTimeout(800);
         await reader.evaluate(() => window.__handle.setSeat({ kind: "human", id: "p9", roles: ["viewer"] }));
         await reader.waitForTimeout(600);
@@ -536,7 +547,7 @@ try {
     ok: every(
       ({ beforeToggle, toScene, sceneReloaded, toggleUndone, toggleRedone, backToPages }) =>
         toScene.face !== "pages" &&
-        toScene.overviewMarked &&
+        toScene.scenePressed &&
         toScene.fragment &&
         toScene.length === beforeToggle.length + 1 &&
         sceneReloaded.face !== "pages" &&
@@ -554,17 +565,24 @@ try {
   /* FR-132: the scene is a place, at its own address, its stop riding on it. */
   report.checks.theOverviewsAddressIsItsPlaceWithItsStopOnIt = {
     seen: Object.fromEntries(Object.entries(pick("toScene")).map(([name, seen]) => [name, { scene: seen, reloaded: results[name].sceneReloaded }])),
-    ok: every(({ toScene, sceneReloaded }) => toScene.path === `${BASE}/places/overview` && toScene.fragment && sceneReloaded.path === `${BASE}/places/overview` && sceneReloaded.face !== "pages" && sceneReloaded.overviewMarked),
+    ok: every(({ toScene, sceneReloaded }) => toScene.path === `${BASE}/places/overview` && toScene.fragment && sceneReloaded.path === `${BASE}/places/overview` && sceneReloaded.face !== "pages" && sceneReloaded.scenePressed),
   };
   report.checks.aLinkToAStopWrittenBeforeTheSceneWasAPlaceStillOpensIt = {
     seen: pick("oldStop"),
-    ok: every(({ oldStop }) => oldStop.face === "scene" && oldStop.path === `${BASE}/places/overview` && fromStop(oldStop.hash) === "t2" && oldStop.overviewMarked),
+    ok: every(({ oldStop }) => oldStop.face === "scene" && oldStop.path === `${BASE}/places/overview` && fromStop(oldStop.hash) === "t2" && oldStop.scenePressed),
   };
-  report.checks.aHostThatMountsOnTheGraviewLandsOnTheOverview = {
+  report.checks.aHostThatMountsOnTheGraviewLandsOnTheScenesAddress = {
     seen: Object.fromEntries(Object.entries(results).filter(([name]) => !name.endsWith("article") && name.includes("1440")).map(([name, one]) => [name, one.error ? { error: one.error } : one.bare])),
     ok: Object.entries(results)
       .filter(([name]) => !name.endsWith("article") && name.includes("1440"))
-      .every(([, one]) => !one.error && one.bare.face === "graview" && one.bare.path === `${BASE}/places/overview` && one.bare.overviewMarked),
+      .every(([, one]) => !one.error && one.bare.face === "graview" && one.bare.path === `${BASE}/places/overview` && one.bare.scenePressed),
+  };
+  /* FR-136: the same host, the same face, an app with a home view: it opens on the home, full page, at the bare address. */
+  report.checks.anAppWithAHomeViewOpensOnItAtTheBareAddress = {
+    seen: Object.fromEntries(Object.entries(results).filter(([name]) => !name.endsWith("article")).map(([name, one]) => [name, one.error ? { error: one.error } : one.homeFirst])),
+    ok: Object.entries(results)
+      .filter(([name]) => !name.endsWith("article"))
+      .every(([, one]) => !one.error && one.homeFirst.face === "pages" && one.homeFirst.homeView && one.homeFirst.path.replace(/\/$/, "") === SWAP_BASE && !one.homeFirst.scenePressed),
   };
   report.checks.aHostThatKeepsItsOwnHistoryIsToldEachPage = {
     seen: pick("told"),

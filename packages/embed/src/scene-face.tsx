@@ -1,6 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import type { Scheme } from "@graview/core";
-import { Companion, FindBox, HomeLanding, Inspector, OverviewButton, sceneCss, ShowInstallation, viewsCss, type CompanionMode } from "@graview/primitives/scene";
+import { Companion, FindBox, Inspector, OverviewButton, sceneCss, ShowInstallation, viewsCss, type CompanionMode } from "@graview/primitives/scene";
 import { useBarFind } from "@graview/primitives/frame";
 import { useMemo } from "react";
 import { createPortal } from "react-dom";
@@ -38,8 +38,6 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, companio
       {address ? <UrlSync /> : null}
       <Scene renderer="dom" />
       <OverviewButton />
-      {/* The home's own view, when the declaration writes one, over the picture at home (FR-81). */}
-      <HomeLanding />
       {/* One panel on the frame — the acts, the relations, the seat, the key. */}
       <Companion<S> {...(companion ? { start: companion } : {})} {...(rememberAs ? { rememberAs } : {})} />
       <Inspector placement="menu" />
@@ -48,7 +46,7 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, companio
   );
 }
 
-/** The ways into the installation itself, in the person's menu on the overview, for the seat that keeps it. */
+/** The ways into the installation itself, in the person’s menu on the scene, for the seat that keeps it. */
 export function SceneKeeping() {
   return <ShowInstallation />;
 }

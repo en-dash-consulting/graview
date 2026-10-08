@@ -1,0 +1,43 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Farm Bureau POM Workshop",
+  "description": "The dates, the decisions and the deliverables of a two-day workshop, shaped like the app Graview Cloud built from a chat: three kinds and two pictures named in sentences.",
+  "roles": ["owner"],
+  "policy": { "grants": [{ "roles": ["owner"], "mutations": "*" }] },
+  "kinds": {
+    "date": {
+      "noun": "date",
+      "plural": "dates",
+      "description": "A day something happens.",
+      "fields": { "name": { "type": "string", "required": true }, "on": { "type": "string" } }
+    },
+    "decision": {
+      "noun": "decision",
+      "plural": "decisions",
+      "description": "Something the room agreed.",
+      "fields": { "name": { "type": "string", "required": true }, "status": { "type": "enum", "options": ["open", "agreed"], "default": "open", "required": true } }
+    },
+    "deliverable": {
+      "noun": "deliverable",
+      "plural": "deliverables",
+      "description": "Something owed after the workshop.",
+      "fields": { "name": { "type": "string", "required": true } },
+      "edges": { "decidedBy": { "to": ["decision"], "cardinality": "many", "description": "the decision it follows from", "inverse": "what it leads to" } }
+    }
+  },
+  "acts": {
+    "add-date": { "title": "Add a date", "creates": "date", "description": "Name a day." },
+    "add-decision": { "title": "Add a decision", "creates": "decision", "description": "Write down what was agreed." },
+    "add-deliverable": { "title": "Add a deliverable", "creates": "deliverable", "description": "Write down what is owed." }
+  },
+  "lenses": [
+    { "name": "blocks", "title": "What the workshop covers", "on": "decision", "options": { "blocks": [{ "list": "all('decision')", "group": { "by": "status", "headings": { "open": "Still open", "agreed": "Agreed" } }, "as": "row", "empty": "Nothing decided yet." }] } },
+    { "name": "blocks", "title": "Email to Todd", "on": "deliverable", "options": { "blocks": [{ "list": "all('deliverable')", "as": "row", "empty": "Nothing owed yet." }] } }
+  ],
+  "views": {
+    "date": { "row": [{ "title": "{name}" }] },
+    "decision": { "row": [{ "title": "{name}" }] },
+    "deliverable": { "row": [{ "title": "{name}" }] }
+  }
+}

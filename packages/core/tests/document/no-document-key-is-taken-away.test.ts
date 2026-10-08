@@ -82,7 +82,7 @@ function readable(): Set<string> {
 describe("the keys a document could carry", () => {
   it("are read: the walk finds the shape the reader holds", () => {
     const paths = readable();
-    for (const path of ["name", "kinds.*.fields.*.type", "kinds.*.edges.*.cardinality", "rules.*.require", "brand.currency", "pages.overview", "settings[].honored"]) expect(paths).toContain(path);
+    for (const path of ["name", "kinds.*.fields.*.type", "kinds.*.edges.*.cardinality", "rules.*.require", "brand.currency", "pages.scene", "pages.pages", "settings[].honored"]) expect(paths).toContain(path);
   });
 
   it("are every one still read, as it was spelled or as RESPELLED reads it", () => {

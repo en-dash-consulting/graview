@@ -134,20 +134,21 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     const placesListed = await tab.evaluate(() => document.body.textContent.includes("The packages"));
     claim("the pages face lists the worker view among the app's places, by its title", placesListed);
     await open("face=pages&path=/places/the-packages");
+    /* The place list the bar's place control opens names it among the Pictures, and says it is where the reader is (FR-138). */
+    const named = await tab.waitForSelector('[data-testid="app-places"] [data-place-group="pictures"] [data-testid="app-place-place:package:the-packages"]', { state: "attached", timeout: 20_000 }).then(() => true, () => false);
     const pages = await lens();
     const start = pages.packages.find((one) => one.id === "package:start");
-    claim('on the pages face the worker view is the place "The packages", labeled as its title and with its author said', /The packages$/.test(pages.label) && pages.heading === "The packages" && pages.author === "Made by Claude for Nick", pages);
+    claim('on the pages face the worker view is the place "The packages", among the Pictures in the place list, labeled as its title and with its author said', named && /The packages$/.test(pages.label) && pages.heading === "The packages" && pages.author === "Made by Claude for Nick", pages);
     claim("it lists each package's offers, from the offers and the includes edges it reads", pages.packages.length === 3 && JSON.stringify(start?.offers) === JSON.stringify(["Team coaching", "AI strategy sprint"]) && pages.packages.find((one) => one.id === "package:later")?.offers.join() === "Copernicus build", pages.packages);
     claim("an offer Lin may not see is not in what the view was handed or drew", !pages.text.includes("Internal margin review"), pages.packages);
     claim("it was handed only the kind it attaches to and the kind it reads", pages.kinds === "offer package", pages.kinds);
 
     // ── the Graview face ──
     await open("face=scene");
-    /* The bar names the place (FR-131); its tab is the place's page, so the scene goes to it by its stop, as a link to it does (FR-132). */
-    const named = await tab.waitForSelector('[data-testid="app-place-place:package:the-packages"]', { state: "attached", timeout: 20_000 }).then(() => true, () => false);
+    /* A picture in the place list is the place's page, so the scene goes to it by its stop, as a link to it does (FR-132). */
     await inScene("the-packages");
     const scene = await lens();
-    claim('on the Graview face "The packages" is a place on the bar, and its stop draws the worker view in the scene', named && /The packages$/.test(scene.label) && scene.packages.length === 3, { named, packages: scene.packages.map((one) => one.title) });
+    claim('on the Graview face the stop of "The packages" draws the worker view in the scene', /The packages$/.test(scene.label) && scene.packages.length === 3, { packages: scene.packages.map((one) => one.title) });
     claim("on the Graview face too, the offer Lin may not see is nowhere", !scene.text.includes("Internal margin review") && JSON.stringify(scene.packages.find((one) => one.id === "package:start")?.offers) === JSON.stringify(["Team coaching", "AI strategy sprint"]), scene.packages);
 
     // ── Erin sees it, so it is sight and not the data ──

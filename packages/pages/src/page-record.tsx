@@ -7,7 +7,7 @@ import { useRef, useState } from "react";
 import { rankedRepairs, recordFacts } from "./facts.js";
 import { DerivedForm } from "./form.js";
 import { pluralSlug, recordPath } from "./registry.js";
-import { OverviewLink, type PageContext, useStoreTick } from "./page-context.js";
+import { SceneLink, type PageContext, useStoreTick } from "./page-context.js";
 import { pathOfPlace, placeKey, placesOf } from "./page-places.js";
 import { Repairs } from "./page-problems.js";
 import {
@@ -92,7 +92,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         </p>
         <PageTitle context={context}>{facts.label}</PageTitle>
         {described && described !== facts.label ? <p style={lede}>{described}</p> : null}
-        <OverviewLink context={context} stop={`#focus=${encodeURIComponent(id)}`} style={{ ...link, ...quiet }} data-testid="spatial-link" />
+        <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} style={{ ...link, ...quiet }} data-testid="spatial-link" />
         {placesOf(context).some((place) => place.kind === facts.kind || place.across === facts.kind) ? (
           /* WHERE IT IS SEEN: the pictures this kind of thing appears in, each as a page and as a stop in the scene. */
           <p style={{ ...quiet, margin: 0 }} data-testid="seen-in">
@@ -105,9 +105,9 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   <Link to={pathOfPlace(context, place)} style={link}>
                     {place.title}
                   </Link>{" "}
-                  <OverviewLink context={context} stop={`#view=${encodeURIComponent(place.as)}`} style={{ ...link, ...quiet }} title={`${place.title}, on the overview`}>
+                  <SceneLink context={context} stop={`#view=${encodeURIComponent(place.as)}`} style={{ ...link, ...quiet }} title={`${place.title}, in the scene`}>
                     ↗
-                  </OverviewLink>
+                  </SceneLink>
                 </span>
               ))}
           </p>

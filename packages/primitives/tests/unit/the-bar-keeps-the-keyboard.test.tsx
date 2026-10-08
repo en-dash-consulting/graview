@@ -76,31 +76,3 @@ describe("the bar's Find on a phone", () => {
     await act(async () => root.unmount());
   });
 });
-
-describe("the bar's places on a row that holds none of them", () => {
-  it("keeps the place you are on on the row, beside More, never only inside it", async () => {
-    const real = HTMLElement.prototype.getBoundingClientRect;
-    // A row 60 px wide, and every tab and More 80 px: not even one tab fits beside More.
-    HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
-      const width = this.classList.contains("graview-bar-places") ? 60 : this.classList.contains("graview-bar-tab") ? 80 : 0;
-      return { width, height: 20, top: 0, left: 0, right: width, bottom: 20, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
-    };
-    try {
-      host = document.createElement("div");
-      document.body.append(host);
-      const root = createRoot(host);
-      const places = ["Overview", "Tasks", "People", "Rooms"].map((label) => ({ key: `kind:${label}`, label, path: `/${label.toLowerCase()}` }));
-      await act(async () => {
-        root.render(<AppBar brand={undefined} name="Errands" home={{ go: () => undefined, current: false }} places={places} current="kind:People" reach={{}} tools={null} find={false} />);
-      });
-      const row = host.querySelector('[data-testid="app-places"]')!;
-      const onRow = [...row.querySelectorAll(":scope > .graview-bar-tab")].map((tab) => tab.textContent);
-      expect(onRow).toEqual(["People"]);
-      expect(row.querySelector('[aria-current="page"]')?.textContent).toBe("People");
-      expect(host.querySelector('[data-testid="app-places-more"]')).not.toBeNull();
-      await act(async () => root.unmount());
-    } finally {
-      HTMLElement.prototype.getBoundingClientRect = real;
-    }
-  });
-});

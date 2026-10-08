@@ -141,8 +141,12 @@ describe("a compiled app an older build made of it (FR-123)", () => {
 });
 
 describe("the keys respelled within a format", () => {
-  it("name 0.1.16's one: settings[].honoured, read as honored", () => {
-    expect(RESPELLED).toEqual([{ where: "settings[]", was: "honoured", now: "honored", since: "0.1.16" }]);
+  it("name 0.1.16's one, settings[].honoured read as honored, and 0.1.17's, pages.overview read as pages.scene", () => {
+    expect(RESPELLED).toEqual([
+      { where: "settings[]", was: "honoured", now: "honored", since: "0.1.16" },
+      { where: "pages", was: "overview", now: "scene", since: "0.1.17" },
+    ]);
+    expect(respellDocument({ pages: { overview: "The farm", first: "home" } }).document).toEqual({ pages: { scene: "The farm", first: "home" } });
   });
 
   it("say which they respelled, and leave a document in the current spelling as it is", () => {

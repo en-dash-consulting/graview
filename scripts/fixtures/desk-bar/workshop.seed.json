@@ -1,0 +1,13 @@
+{
+  "nodes": [
+    { "id": "d1", "kind": "date", "name": "Day one", "on": "2026-10-20" },
+    { "id": "d2", "kind": "date", "name": "Day two", "on": "2026-10-21" },
+    { "id": "c1", "kind": "decision", "name": "Price the pilot by acre", "status": "agreed" },
+    { "id": "c2", "kind": "decision", "name": "Who signs for the county", "status": "open" },
+    { "id": "v1", "kind": "deliverable", "name": "A one-page summary for the board" },
+    { "id": "v2", "kind": "deliverable", "name": "The pilot's budget" }
+  ],
+  "edges": [
+    { "id": "e1", "kind": "decidedBy", "from": "v2", "to": "c1" }
+  ]
+}

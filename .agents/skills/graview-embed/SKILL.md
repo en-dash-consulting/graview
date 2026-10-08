@@ -6,9 +6,8 @@ description: Put a Graview app on somebody else's page — a picture in an artic
 # The embed: an app on somebody else's page
 
 `@graview/embed` mounts an app into any element on any page. It brings its
-own theme scoped to that element, the brand's fonts, and a strip with the
-faces and the places — no `Shell`, no router, nothing of the host's styled
-or listened to. It is the same declaration, the same store and the same acts
+own theme scoped to that element, the brand's fonts, and one app bar — no
+`Shell`, no router, nothing of the host's styled or listened to. It is the same declaration, the same store and the same acts
 as the app itself; only the frame is the host's.
 
 ```ts
@@ -33,12 +32,12 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
    the fragment the app writes — `#overview=1`, `#focus=agg:plot`,
    `#view=the-week` — so a link you copied from the app is an embed's
    starting point. `face` follows the stop unless you name one.
-2. **Pick the face for the page.** One app bar stands over every face:
-   the name, the places — the overview (the scene) among them — Find,
-   the standing and the person. `"scene"` and
-   `"graview"` open on the overview; `"pages"` on `path`; `"picture"` is
-   ONE named lens alone (`stop: "#view=the-week"`), no bar and no rail.
-   `bar: false` drops the bar.
+2. **Pick the face for the page.** One app bar: the name, the switch
+   (Scene, Pages), on Pages the place you are on — which opens every
+   place — Find, the standing, the person. Name no `face` and an
+   app with a home view opens on it, else the scene; `"scene"`,
+   `"graview"`, `"pages"` (on `path`); `"picture"` is ONE lens alone
+   (`stop: "#view=the-week"`), no bar. `bar: false` drops the bar.
 3. **Name it.** Two embeds on one page carry the same landmarks — the
    relation key, the inspector, the pages' navigation — and a landmark must
    be unique by role and name. `label` names every one of them after the
@@ -103,8 +102,8 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     `routing: "address"` (and `basePath: "/apps/a1/"` when it is not served
     at `/`), and answers every address under the base with the one page:
     `<base>/places/<as>`, `<base>/<plural>/<id>` and the home are the routed
-    face's pages, pushed and reloadable; the scene is the overview,
-    `<base>/places/overview#overview=1`; a tab is a step Back undoes.
+    face's pages, pushed and reloadable; the scene is
+    `<base>/places/overview#overview=1`; the switch is a step Back undoes.
     `faceAtAddress(options)` is the face an address opens on, and
     `addressOf(place, { basePath })` (`@graview/core`) spells a place's
     link. A host that keeps its own history stays on memory, hears
