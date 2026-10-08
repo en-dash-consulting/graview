@@ -509,6 +509,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
               hostActions={props.hostActions}
               keeping={onPages ? undefined : <Keeping app={app} studio={props.studio} report={report} />}
               onFind={setBarFind}
+              switch={props.switch}
             />
           </FaceBoundary>
         ) : null}
