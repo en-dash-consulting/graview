@@ -1,0 +1,7 @@
+---
+"@graview/core": patch
+---
+
+The security review before 0.1.18. A lazy part that failed to load asks again only for a chunk the bundle asked for (FR-139 had not shipped; 0.1.17 is not affected). `retryingImport` read the URL to import again from anywhere in the failure's words, and an import whose module arrived but threw while it ran rejects with that module's own words, which may carry any URL a message was built from: the next try would have imported it, a script from anywhere, run as the page's own. `failedUrl` now reads a URL only from an engine's own sentence for a fetch that failed, from its first word ("Failed to fetch dynamically imported module: …" in Chromium, "error loading dynamically imported module: …" in Firefox), and only on the scheme and authority the bundle's own modules came from (the retry module's own URL, or the second argument); anything else calls the bundler's import again, as where the failure names no URL.
+
+Compatibility: `failedUrl` takes an optional second argument, the URL whose origin a retried import must share, and answers `undefined` for a URL on any other origin or for words that are not an engine's failed fetch. Ops, stored formats, the compiled-app format, wire messages, check finding codes and tool names and input schemas are unchanged. What Graview Cloud changes: nothing, where its page and its chunks share an origin; a host serving the framework's chunks from one origin and `@graview/core/retry` from another would see a failed part retried by the bundler's import instead.
