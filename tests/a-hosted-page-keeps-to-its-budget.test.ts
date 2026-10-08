@@ -32,7 +32,7 @@ describe("a hosted page", () => {
     for (const name of ["react-dom", "zod", "@graview/core", "@graview/embed", "@graview/ship"]) expect(Object.keys(measured.upFront.packages)).toContain(name);
   });
 
-  it("carries at most 576.2 KB minified up front: 576.0 KB with the bar that fits its box, a lazy part that tries again after it failed to arrive and a record drawn once, so Cloud's shell keeps room for its own under its 595", () => {
+  it("carries at most 576.3 KB minified up front: 576.2 KB with the bar that fits its box, a lazy part that tries again after it failed to arrive, a record drawn once and a lens double-clicked from Up, so Cloud's shell keeps room for its own under its 595", () => {
     expect(measured.upFront.minified, `${Math.round(measured.upFront.minified / 1024)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
     expect(measured.over).toBe(false);
   });
@@ -61,7 +61,7 @@ describe("a hosted page", () => {
     // 870 KB since the bar fits its box: the scene face measured 889_834 B, 2_612 more than before it (887_222).
     // 873 KB since a lazy part tries again after it failed to arrive (FR-139), over the bar that fits its box: the scene face measured 893_470 B, 3_636 more.
     // 877 KB since a selected record is drawn once (FR-141–FR-143), over FR-139: the scene face measured 897_697 B, 4_227 more.
-    // 878 KB since a lens double-clicked from Up opens it: the scene face measured 898_680 B, 983 more.
+    // 878 KB since a lens double-clicked from Up opens it: the scene face measured 898_844 B over the security review before 0.1.18.
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(878 * 1024);
   });
 
@@ -87,8 +87,8 @@ describe("a hosted page", () => {
     expect(packageOf("<stdin>")).toBe("(the page)");
   });
 
-  it("holds its budget's numbers: 576.2 KB up front, under the 595 Cloud's shell holds itself to, and 150 KB of it zod's", () => {
-    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 576.2 * 1024, zod: 150 * 1024 });
+  it("holds its budget's numbers: 576.3 KB up front, under the 595 Cloud's shell holds itself to, and 150 KB of it zod's", () => {
+    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 576.3 * 1024, zod: 150 * 1024 });
   });
 
   /*

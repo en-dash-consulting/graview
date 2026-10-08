@@ -113,10 +113,12 @@ export const BUDGETS = [
     // Raised, over FR-139, when a selected record came to be drawn once (FR-141–FR-143): a declared page read for what it
     // already says and the record page leaving that out, a district name fitted to its box and its count said once, a
     // relation said in its words: 3_892 / 1_348 more. Measured at 517_736 / 177_866.
+    // Raised by the security review before 0.1.18 (a retry imports only a chunk on the bundle's own origin; a link's pins and
+    // dimensions have no prototype). Measured at 517_905 / 177_951.
     // Raised when a lens double-clicked from Up came to open it: the first press waits a double-click's length for the
-    // second where the pointer still is, and the one stop down into a picture (`withPicture`): 1_039 / 404 more. Measured at 518_775 / 178_271.
-    minified: 518_900,
-    gzipped: 178_350,
+    // second where the pointer still is, and the one stop down into a picture (`withPicture`): 1_034 / 392 more, over the security review. Measured at 518_939 / 178_343.
+    minified: 519_050,
+    gzipped: 178_450,
     load: "first",
   },
   {
@@ -368,9 +370,11 @@ export const BUDGETS = [
     // menu's fetch when the page is idle. 3_358 / 1_475 more. Measured at 1_557_457 / 470_989.
     // Raised, over FR-139, when a selected record came to be drawn once (FR-141–FR-143), with the page at the head of the
     // scene's record and the record in focus held to its box: 4_345 / 1_455 more. Measured at 1_561_802 / 472_444.
-    // Raised when a lens double-clicked from Up came to open it: 985 / 398 more. Measured at 1_562_787 / 472_841.
-    minified: 1_562_900,
-    gzipped: 472_950,
+    // Raised by the security review before 0.1.18 (a retry imports only a chunk on the bundle's own origin; a link's pins and
+    // dimensions have no prototype). Measured at 1_561_966 / 472_529.
+    // Raised when a lens double-clicked from Up came to open it: 985 / 364 more, over the security review. Measured at 1_562_951 / 472_893.
+    minified: 1_563_050,
+    gzipped: 473_000,
     load: "all",
   },
   {
@@ -426,9 +430,11 @@ export const BUDGETS = [
     // menu's fetch when the page is idle. 3_358 / 1_482 more. Measured at 1_523_423 / 456_109.
     // Raised, over FR-139, with every face's for a selected record drawn once (FR-141–FR-143): 4_350 / 1_454 more.
     // Measured at 1_527_773 / 457_563.
-    // Raised with every face's when a lens double-clicked from Up came to open it: 985 / 386 more. Measured at 1_528_758 / 457_949.
-    minified: 1_528_900,
-    gzipped: 458_050,
+    // Raised by the security review before 0.1.18 (a retry imports only a chunk on the bundle's own origin; a link's pins and
+    // dimensions have no prototype). Measured at 1_527_937 / 457_645.
+    // Raised with every face's when a lens double-clicked from Up came to open it: 985 / 370 more, over the security review. Measured at 1_528_922 / 458_015.
+    minified: 1_529_050,
+    gzipped: 458_100,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
