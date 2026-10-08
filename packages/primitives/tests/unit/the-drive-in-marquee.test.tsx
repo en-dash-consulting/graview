@@ -117,28 +117,43 @@ describe("the marquee", () => {
     await unmount();
   });
 
-  it("takes the second press of a double-click wherever the camera's flight left it, and keeps it from what is under it now", async () => {
+  /** A first press on the month's lens at (x, y), then a second press at (x2, y2) on whatever the flight put there. */
+  async function twoPresses(first: { x: number; y: number }, then: { x: number; y: number }) {
     const seen: ViewState[] = [];
     const { host, unmount } = await mounted({ ...EMPTY_VIEW, overview: true }, (next) => seen.push(next));
-    // What the flight put under the pointer: the district's own card, here a stand-in that records what reaches it.
+    // What is under the pointer by the second press: the district's own card, here a stand-in that records what reaches it.
     const under = document.createElement("div");
     document.body.appendChild(under);
     const reached: string[] = [];
     for (const type of ["pointerdown", "click", "dblclick"]) under.addEventListener(type, () => reached.push(type));
-    await act(async () => host.querySelector('[data-testid="showing-the-month"]')!.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 })));
-    expect(seen.at(-1)?.overview).toBe(true);
+    const at = (x: number, y: number, detail: number) => ({ bubbles: true, detail, clientX: x, clientY: y });
+    await act(async () => host.querySelector('[data-testid="showing-the-month"]')!.dispatchEvent(new MouseEvent("click", at(first.x, first.y, 1))));
+    const aloft = seen.at(-1);
     await act(async () => {
-      under.dispatchEvent(new Event("pointerdown", { bubbles: true }));
-      under.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 2 }));
-      under.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, detail: 2 }));
+      // jsdom has no PointerEvent; a browser's is a MouseEvent, which is what the second press is read as.
+      under.dispatchEvent(new MouseEvent("pointerdown", at(then.x, then.y, 0)));
+      under.dispatchEvent(new MouseEvent("click", at(then.x, then.y, 2)));
+      under.dispatchEvent(new MouseEvent("dblclick", at(then.x, then.y, 2)));
     });
-    const landed = seen.at(-1)!;
+    under.remove();
+    await unmount();
+    return { aloft, landed: seen.at(-1)!, reached };
+  }
+
+  it("takes the second press of a double-click where the pointer still is, though the flight moved the lens, and keeps it from what is under it now", async () => {
+    const { aloft, landed, reached } = await twoPresses({ x: 200, y: 300 }, { x: 204, y: 303 });
+    expect(aloft?.overview).toBe(true);
     expect(landed.overview).toBe(false);
     expect(landed.focusId).toBe("aggregate:task");
     expect(landed.within?.["view"]).toBe("the-month");
     expect(reached).toEqual([]);
-    under.remove();
-    await unmount();
+  });
+
+  it("lets a press somewhere else within the same half second through untouched, and does not go down", async () => {
+    const { landed, reached } = await twoPresses({ x: 200, y: 300 }, { x: 520, y: 140 });
+    expect(landed.overview).toBe(true);
+    expect(landed.within?.["view"]).toBe("the-month");
+    expect(reached).toEqual(["pointerdown", "click", "dblclick"]);
   });
 
   it("goes down when the showing already on the billboard is pressed again, as a second Enter or a second tap does", async () => {

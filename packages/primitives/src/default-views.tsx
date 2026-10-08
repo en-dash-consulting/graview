@@ -109,27 +109,52 @@ const ROWS_SHOWN = 8;
 /** How long after a lens is pressed a second press still makes it a double-click: the platforms' own default. */
 const SECOND_PRESS_MS = 500;
 
+/** How far from the first press the second may land and still be its double-click: the platforms' own slop, in CSS pixels. */
+const SECOND_PRESS_SLOP = 12;
+
+/** Where a press was made, and with what. */
+interface Press {
+  readonly x: number;
+  readonly y: number;
+  /** "mouse", "pen" or "touch"; empty where the event does not say (a click in WebKit, a synthetic one). */
+  readonly pointerType: string;
+}
+
+/** The press an event is, read the same way for the first press and the second. */
+function pressOf(event: MouseEvent & { pointerType?: string }): Press {
+  return { x: event.clientX, y: event.clientY, pointerType: event.pointerType ?? "" };
+}
+
 /**
- * THE SECOND PRESS OF A DOUBLE-CLICK, WHEREVER IT LANDS.
+ * THE SECOND PRESS OF A DOUBLE-CLICK, WHERE THE POINTER STILL IS.
  *
  * Pressing a lens on its district flies the camera to it, so by the second
  * click of a double-click the lens has moved out from under the pointer and
  * the district's own card is there instead: the double-click jacked into
- * the district — zoomed, still aloft — rather than opening the lens. So the
- * first press listens, for as long as a double-click lasts, for the next
- * press anywhere on the page, keeps it from whatever is under it now, and
- * takes it as the second half of its own gesture. A second tap is the same
- * press, so a double-tap opens the lens too.
+ * the district — zoomed, still aloft — rather than opening the lens. The
+ * pointer did not move; the city did. So the first press listens, for as
+ * long as a double-click lasts, for a second press where the first was made
+ * — within the platforms' slop, by the same kind of pointer — keeps it from
+ * whatever is under it now, and takes it as the second half of its own
+ * gesture. A second tap is the same press, so a double-tap opens the lens
+ * too. A press anywhere else — another district, the bar, another lens — is
+ * not this gesture: it goes through untouched, and the listening ends.
  */
-function awaitSecondPress(document: Document, second: () => void): void {
+function awaitSecondPress(document: Document, first: Press, second: () => void): void {
   const until = performance.now() + SECOND_PRESS_MS;
   const kept = ["pointerdown", "pointerup", "mousedown", "mouseup", "dblclick"] as const;
+  const ours = (event: Event): boolean => {
+    if (performance.now() > until || !(event instanceof MouseEvent)) return false;
+    const press = pressOf(event);
+    if (first.pointerType && press.pointerType && first.pointerType !== press.pointerType) return false;
+    return Math.hypot(press.x - first.x, press.y - first.y) <= SECOND_PRESS_SLOP;
+  };
   const keep = (event: Event) => {
-    if (performance.now() > until) return done();
+    if (!ours(event)) return done();
     event.stopPropagation();
   };
   const take = (event: Event) => {
-    if (performance.now() > until) return done();
+    if (!ours(event)) return done();
     event.stopPropagation();
     event.preventDefault();
     // The dblclick that follows this click belongs to the same gesture; keep it a moment longer.
@@ -1091,7 +1116,7 @@ export function registerDefaultViews<S extends AnySchema>(
                           }
                           go(withWithin(withFocus(withOverview(view, true), aggregateId(String(kind))), "view", place.as));
                           // A pointer's press (`detail` 1); a key's is 0 and has its own second press.
-                          if (event.detail === 1) awaitSecondPress(event.currentTarget.ownerDocument, down);
+                          if (event.detail === 1) awaitSecondPress(event.currentTarget.ownerDocument, pressOf(event.nativeEvent), down);
                         }}
                       />
                     </div>
