@@ -16,7 +16,7 @@ export const POPOVERS = {
   profile: { trigger: "profile-button", pane: "profile", opens: "press", focus: "into", drawn: ["shell", "embed"] },
   /** What is broken, from Standing, on the bar and the strip. */
   problems: { trigger: "standing", pane: "problems", opens: "press", focus: "into", drawn: ["shell", "embed"] },
-  /** Every place the app has — the home, the Lists, the Pictures — from the place control on Pages (FR-138). */
+  /** Every place the app has — the home, the Lists, the Pictures — from the place control on Pages (FR-138), or what the scene can show from its own (FR-144); where places stand on the row, the rest, from "More" (FR-145). */
   places: { trigger: "app-places-open", pane: "app-places", opens: "press", focus: "into", drawn: ["embed"] },
   /** What has happened, from the bar. */
   activity: { trigger: "activity-button", pane: "activity", opens: "press", focus: "into", drawn: ["shell"] },

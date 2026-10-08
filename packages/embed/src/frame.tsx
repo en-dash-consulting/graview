@@ -1,6 +1,6 @@
 import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { AppBar, createNoticeBoard, Notices, Profile, registerDeclaredLenses, Standing, themeBaseCss, useFavicon, type BarFaces, type BarFind, type BarGo, type BarPlace, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
+import { AppBar, createNoticeBoard, Notices, Profile, registerDeclaredLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, type BarFaces, type BarFind, type BarGo, type BarPlace, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -475,7 +475,8 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
 /**
  * THE ONE APP BAR (FR-131), as every face of the embed draws it: the app's
  * mark and name — the heading, the way home — the switch between the scene
- * and the pages (FR-137), the place you are on (FR-138), then
+ * and the pages (FR-137), the place you are on (FR-138) — on the scene,
+ * what it shows (FR-144) — or the places themselves where they fit (FR-145), then
  * Find (the face under the bar puts its own box there), the standing and
  * the person, whose menu holds the seats, the host's own actions and, for
  * the seat that keeps the app, the ways into it.
@@ -512,6 +513,8 @@ export function FrameBar({
   readonly switch?: BarSwitch | undefined;
 }) {
   const { brand } = useGraview();
+  // On the scene, what it can show, from the view it holds (FR-144).
+  const scene = useScenePlaces();
   return (
     <AppBar
       brand={brand}
@@ -525,6 +528,7 @@ export function FrameBar({
       reach={reach}
       onFind={onFind}
       {...(switchForm ? { switch: switchForm } : {})}
+      {...(faces ? { scenePlaces: scene } : {})}
       tools={
         <>
           <Standing clean={standing} />

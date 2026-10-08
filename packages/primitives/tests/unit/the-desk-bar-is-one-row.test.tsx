@@ -87,7 +87,7 @@ describe("the place control (FR-138)", () => {
     act(() => root.unmount());
   });
 
-  it("is not on the bar while the scene is drawn", () => {
+  it("is not on the bar while the scene is drawn and the bar is handed none of the scene's places", () => {
     const { root, host: at } = drawn(<AppBar brand={undefined} name="Errands" home={{ go: () => undefined, current: false }} faces={faces(false, [])} places={many} current={null} reach={{}} tools={null} find={false} />);
     expect(at.querySelector('[data-testid="app-places-open"]')).toBeNull();
     act(() => root.unmount());
