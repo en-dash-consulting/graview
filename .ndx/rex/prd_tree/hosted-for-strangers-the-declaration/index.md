@@ -72,8 +72,8 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A thumbnail fitted to what stands: fit to content and a legible minimum building (FR-107)](./a-thumbnail-fitted-to-what-stands-fit.md) | completed |
 | [A thumbnail reads as a place with no counts (FR-120)](./a-thumbnail-reads-as-a-place-with-no.md) | completed |
 | [A view can list related records: a list block with a walk as its source (FR-82)](./a-view-can-list-related-records-a-list.md) | completed |
-| [A view can prefill an input from the record it draws (FR-150)](./a-view-can-prefill-an-input-from-the.md) | pending |
-| [A custom view sits beside the record's editable fields (FR-149)](./a-custom-view-sits-beside-the-record-s.md) | pending |
+| [A view can prefill an input from the record it draws (FR-150)](./a-view-can-prefill-an-input-from-the.md) | completed |
+| [A custom view sits beside the record's editable fields (FR-149)](./a-custom-view-sits-beside-the-record-s.md) | completed |
 | [A walk from every member of a set: out()/in() over a set return the distinct union, costed (FR-101)](./a-walk-from-every-member-of-a-set-out.md) | completed |
 | [A worker view is a place, with a manifest the host enforces (FR-91)](./a-worker-view-is-a-place-with-a.md) | completed |
 | [Agents name records the way people do: a node argument accepts a label, and ambiguity comes back as candidates](./agents-name-records-the-way-people-do.md) | completed |
@@ -166,7 +166,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The studio hands a document-compiled app back as a document, and editDocument can set a glance (FR-54)](./the-studio-hands-a-document-compiled.md) | completed |
 | [The studio says the host refused when it did: onApply can answer with findings (FR-60)](./the-studio-says-the-host-refused-when.md) | completed |
 | [The theme has good and bad tones, checked for contrast in both schemes](./the-theme-has-good-and-bad-tones.md) | completed |
-| [The views guide says the real props shape, with a worked example (FR-151)](./the-views-guide-says-the-real-props.md) | pending |
+| [The views guide says the real props shape, with a worked example (FR-151)](./the-views-guide-says-the-real-props.md) | completed |
 | [The workbench has a heading: an h1 naming the app, and headings for its regions](./the-workbench-has-a-heading-an-h1.md) | completed |
 | [Version skew on the wire: build strings, a reload answer, carried calls, and a codec name (FR-44)](./version-skew-on-the-wire-build-strings.md) | completed |
 | [Views as data: a card, a row and a badge declared rather than written, and drawn by the framework](./views-as-data-a-card-a-row-and-a-badge.md) | completed |
