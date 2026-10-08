@@ -115,8 +115,9 @@ export const FACE_DOORS = {
  * under its 595.
  * Views beside editing (FR-149–FR-151), long text on a record page
  * (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed in
- * one integration over a record drawn once and the security review before
- * 0.1.18, took it to 597 214 bytes (583.2 KB), 7 386 more; the claim rises
+ * one integration over a record drawn once, the security review before
+ * 0.1.18 and a lens double-clicked from Up, took it to 597 234 bytes
+ * (583.2 KB), 7 201 more; the claim rises
  * by that with about 0.2 KB of room: 583.4 KB, which leaves Cloud's shell
  * 11.6 KB under its 595.
  */
@@ -211,7 +212,7 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * review before 0.1.18 (a retry imports only a chunk on the bundle's own
  * origin, and a link's pins and dimensions have no prototype) adds 169
  * bytes: 532.6 KB.
- * The same integration (FR-144–FR-151) took it to 551 584 bytes
+ * The same integration (FR-144–FR-151) took it to 551 604 bytes
  * (538.7 KB); the claim rises by that with about 0.1 KB of room: 538.8 KB.
  */
 export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 538.8 * 1024 };
