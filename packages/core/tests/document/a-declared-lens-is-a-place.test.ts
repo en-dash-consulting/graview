@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
 import { checkApp } from "../../src/cli/check.js";
 import { describeApp } from "../../src/cli/describe.js";
-import { declaredLenses, placesOf, SHIPPED_LENS_NAMES, type GraviewApp } from "../../src/index.js";
+import { declaredLenses, pagesTitle, placesOf, sceneTitle, SHIPPED_LENS_NAMES, type GraviewApp } from "../../src/index.js";
 
 /**
  * A DECLARED LENS IS A PLACE (FR-79), AND THE ARRANGEMENT IS HONORED (FR-80).
@@ -158,13 +158,20 @@ describe("placesOf lists every place an app has", () => {
     expect(places.filter((place) => place.hidden).map((place) => place.slug)).toEqual(["rooms"]);
     expect(places.find((place) => place.slug === "the-floor")).toMatchObject({ title: "The floor", cardinality: "many", stop: "#view=the-floor", lens: "board" });
     expect(places.find((place) => place.slug === "shifts")?.stop).toBe("#focus=aggregate:shift");
-    expect(places.find((place) => place.slug === "overview")).toMatchObject({ title: "Overview", stop: "#" });
+    expect(places.find((place) => place.slug === "overview")).toMatchObject({ title: "Scene", stop: "#" });
   });
 
-  it("calls the overview what the declaration calls it, at the address it keeps whatever it is called (FR-132)", () => {
+  it("calls the scene what the declaration calls it, at the address it keeps whatever it is called (FR-132, FR-137)", () => {
     const app = compiled();
-    const renamed = { ...app, pages: { ...app.pages, overview: "The hall" } };
+    const renamed = { ...app, pages: { ...app.pages, scene: "The hall" } };
     expect(placesOf(renamed as never).find((place) => place.slug === "overview")).toMatchObject({ title: "The hall", address: "/places/overview" });
+    expect([sceneTitle(undefined), pagesTitle(undefined), sceneTitle({ scene: "Map" }), pagesTitle({ pages: "Lists" })]).toEqual(["Scene", "Pages", "Map", "Lists"]);
+  });
+
+  it("reads a document an older build wrote with pages.overview as pages.scene: the switch says its word (FR-137)", () => {
+    const old = compileDocument({ ...document, pages: { ...document.pages, overview: "The hall" } }, { today: () => "2026-09-01" });
+    expect(old.ok).toBe(true);
+    if (old.ok) expect(sceneTitle(old.app.pages)).toBe("The hall");
   });
 
   it("warns of a place at the overview's address, with a fix that clears it: retitling the place, since renaming the overview keeps the address (FR-132)", () => {
@@ -175,7 +182,7 @@ describe("placesOf lists every place an app has", () => {
     expect(found.map((f) => [f.path, f.severity])).toEqual([["pages", "warning"]]);
     expect(found[0]!.fix).toMatch(/^Give "Overview" another title/);
     expect(found[0]!.fix).not.toMatch(/call the overview something else/);
-    // Following the old advice — renaming the overview — leaves the place where it was.
-    expect(taken({ overview: "The hall" })).toHaveLength(1);
+    // Following the old advice — renaming the scene — leaves the place where it was.
+    expect(taken({ scene: "The hall" })).toHaveLength(1);
   });
 });

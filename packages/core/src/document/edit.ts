@@ -182,7 +182,8 @@ const SHAPES: Record<EditOp, z.ZodType> = {
       order: z.union([z.array(kindName).max(40), z.null()]).optional(),
       hide: z.union([z.array(kindName).max(40), z.null()]).optional(),
       first: z.union([z.string().min(1).max(80), z.null()]).optional(),
-      overview: z.union([z.string().min(1).max(40), z.null()]).optional(),
+      scene: z.union([z.string().min(1).max(24), z.null()]).optional(),
+      pages: z.union([z.string().min(1).max(24), z.null()]).optional(),
     })
     .strict(),
   "set-computed": z
@@ -927,7 +928,7 @@ class Editor {
   }
 
   private arrangePages(i: number, e: Doc) {
-    if (e.order === undefined && e.hide === undefined && e.first === undefined && e.overview === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide", "first" or "overview"');
+    if (e.order === undefined && e.hide === undefined && e.first === undefined && e.scene === undefined && e.pages === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide", "first", "scene" or "pages"');
     const kinds = Object.keys(this.doc.kinds);
     for (const part of ["order", "hide"] as const) {
       for (const [n, kind] of (e[part] ?? []).entries()) {
@@ -969,14 +970,16 @@ class Editor {
         said.push(`the app opens on "${e.first}"`);
       }
     }
-    if (e.overview !== undefined) {
-      // What the scene is called on the bar (FR-132); its address stays /places/overview.
-      if (e.overview === null || e.overview.trim() === "" || e.overview.trim() === "Overview") {
-        delete pages.overview;
-        said.push("the overview is called Overview");
+    // What the bar's switch calls the two faces (FR-137); the scene's address stays /places/overview.
+    for (const [face, word] of [["scene", "Scene"], ["pages", "Pages"]] as const) {
+      const asked = e[face];
+      if (asked === undefined) continue;
+      if (asked === null || asked.trim() === "" || asked.trim() === word) {
+        delete pages[face];
+        said.push(`the switch calls the ${face} ${word}`);
       } else {
-        pages.overview = e.overview.trim();
-        said.push(`the overview is called "${pages.overview}"`);
+        pages[face] = asked.trim();
+        said.push(`the switch calls the ${face} "${pages[face]}"`);
       }
     }
     if (Object.keys(pages).length === 0) delete this.doc.pages;

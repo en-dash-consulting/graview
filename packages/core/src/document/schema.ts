@@ -267,8 +267,9 @@ export const PagesSpec = z.looseObject({
   order: z.optional(z.array(z.string())),
   hide: z.optional(z.array(z.string())),
   first: z.optional(z.string()),
-  /* What the scene is called on the bar (FR-132); "Overview" when unsaid. */
-  overview: z.optional(z.string().check(z.minLength(1), z.maxLength(40))),
+  /* What the bar's switch calls the scene and the pages (FR-137); "Scene" and "Pages" when unsaid. */
+  scene: z.optional(z.string().check(z.minLength(1), z.maxLength(24))),
+  pages: z.optional(z.string().check(z.minLength(1), z.maxLength(24))),
 });
 
 export const DocumentSpec = z.strictObject({

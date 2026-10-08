@@ -109,6 +109,8 @@
   "pages.hide",
   "pages.order",
   "pages.overview",
+  "pages.pages",
+  "pages.scene",
   "policy",
   "policy.grants",
   "policy.grants[].describe",

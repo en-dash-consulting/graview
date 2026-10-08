@@ -296,29 +296,36 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
  * counts — and nowhere else: a hidden kind keeps its list, its records,
  * its links and its search results. `first` is where the app opens: a
  * place by its title or address word, a kind by its name or plural, or
- * `"home"`.
+ * `"home"`. `scene` and `pages` are what the bar's switch calls the two
+ * faces (FR-137).
  */
 export interface PagesArrangement {
   readonly order?: readonly string[];
   readonly hide?: readonly string[];
   readonly first?: string;
   /**
-   * WHAT THE SCENE IS CALLED ON THE BAR (FR-132): the scene is one of the
-   * app's places, a tab beside the others, and this is its name —
-   * "Overview" when the declaration says none. Its address stays
-   * `/places/overview` whatever it is called.
+   * WHAT THE BAR'S SWITCH CALLS THE SCENE (FR-137): "Scene" when the
+   * declaration says none. Its address stays `/places/overview` whatever
+   * it is called (FR-132).
    */
-  readonly overview?: string;
+  readonly scene?: string;
+  /** WHAT THE SWITCH CALLS THE ROUTED FACE (FR-137): "Pages" when the declaration says none. */
+  readonly pages?: string;
 }
 
-/** The scene's place (FR-132): its address word, whatever the declaration calls it. */
+/** The scene's address word (FR-132), whatever the declaration calls the scene. */
 export const OVERVIEW_SLUG = "overview";
 /** The scene's address on the routed face (FR-132); its stop rides on it as the fragment. */
 export const OVERVIEW_PATH = `/places/${OVERVIEW_SLUG}`;
-/** What the scene's place is called on the bar: the declaration's word, else "Overview". */
-export function overviewTitle(pages: PagesArrangement | undefined): string {
-  const said = pages?.overview?.trim();
-  return said ? said : "Overview";
+/** What the scene is called on the bar's switch (FR-137): the declaration's word, else "Scene". */
+export function sceneTitle(pages: PagesArrangement | undefined): string {
+  const said = pages?.scene?.trim();
+  return said ? said : "Scene";
+}
+/** What the routed face is called on the bar's switch (FR-137): the declaration's word, else "Pages". */
+export function pagesTitle(pages: PagesArrangement | undefined): string {
+  const said = pages?.pages?.trim();
+  return said ? said : "Pages";
 }
 
 /** Kinds in the arrangement's order: those `order` names first, the rest as given. */
@@ -356,8 +363,8 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, pla
       severity: "warning",
       code: "pages-overview-taken",
       path: "pages",
-      message: `The place "${taken.title}" has the address the overview keeps (${OVERVIEW_PATH}), so the bar's "${overviewTitle(pages)}" tab and it cannot both be reached there.`,
-      fix: `Give "${taken.title}" another title (or another "as"): the overview keeps ${OVERVIEW_PATH} whatever pages.overview calls it.`,
+      message: `The place "${taken.title}" has the address the scene keeps (${OVERVIEW_PATH}), so the bar's "${sceneTitle(pages)}" and it cannot both be reached there.`,
+      fix: `Give "${taken.title}" another title (or another "as"): the scene keeps ${OVERVIEW_PATH} whatever the declaration calls it.`,
     });
   }
   if (!pages) return findings;
@@ -432,9 +439,9 @@ export function placesOf<S extends AnySchema>(app: GraviewApp<S>): readonly AppP
   const kinds = orderKinds(app.schema.kinds as readonly string[], app.pages?.order);
   const shared = (place: Place) => lensPlaces.some((other) => other.as === place.as && other.kind !== place.kind);
   const out: AppPlace[] = [
-    { slug: "home", title: "Home", kind: null, cardinality: "many", address: "/", stop: "#", ...(opening?.to === "home" ? { first: true } : {}) },
+    { slug: "home", title: "Home", kind: null, cardinality: "many", address: "/", stop: "#", ...(opening?.to === "home" || (opening === undefined && (app.home?.length ?? 0) > 0) ? { first: true } : {}) },
     // The scene, a place like the others (FR-132): its stop rides on its address.
-    { slug: OVERVIEW_SLUG, title: overviewTitle(app.pages), kind: null, cardinality: "many", address: OVERVIEW_PATH, stop: "#" },
+    { slug: OVERVIEW_SLUG, title: sceneTitle(app.pages), kind: null, cardinality: "many", address: OVERVIEW_PATH, stop: "#" },
   ];
   const byKind = [...lensPlaces].sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind));
   for (const place of byKind) {

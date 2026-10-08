@@ -313,7 +313,8 @@ export {
   orderKinds,
   OVERVIEW_PATH,
   OVERVIEW_SLUG,
-  overviewTitle,
+  pagesTitle,
+  sceneTitle,
   placesOf,
   requiredRolesOf,
 } from "./places.js";

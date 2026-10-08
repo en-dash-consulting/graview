@@ -35,7 +35,11 @@ export interface Respelling {
   readonly since: string;
 }
 
-export const RESPELLED: readonly Respelling[] = [{ where: "settings[]", was: "honoured", now: "honored", since: "0.1.16" }];
+export const RESPELLED: readonly Respelling[] = [
+  { where: "settings[]", was: "honoured", now: "honored", since: "0.1.16" },
+  // What the scene is called: the name of its tab beside the places (FR-132), now its word on the bar's switch (FR-137).
+  { where: "pages", was: "overview", now: "scene", since: "0.1.17" },
+];
 
 export interface Respelled<T = unknown> {
   /** The document with each key spelled as now: the one handed when nothing needed it, never changed in place. */
