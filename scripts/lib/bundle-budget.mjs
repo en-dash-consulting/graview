@@ -115,7 +115,7 @@ export const BUDGETS = [
     // relation said in its words: 3_892 / 1_348 more. Measured at 517_736 / 177_866.
     // Raised by the security review before 0.1.18 (a retry imports only a chunk on the bundle's own origin; a link's pins and
     // dimensions have no prototype). Measured at 517_905 / 177_951.
-    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration. Measured at 528_836 / 181_493.
+    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review and module moves. Measured at 528_973 / 181_573.
     minified: 529_500,
     gzipped: 181_900,
     load: "first",
@@ -249,7 +249,7 @@ export const BUDGETS = [
     // Raised, over the bar that fits its box and FR-140, when a part fetched as it is first drawn came to try again after it
     // failed to arrive and to say so in its place rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the
     // menu's fetch when the page is idle. 2_986 / 1_355 more. Measured at 702_598 / 182_707.
-    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration. Measured at 708_858 / 185_034.
+    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review and module moves. Measured at 708_988 / 185_119.
     minified: 709_500,
     gzipped: 185_400,
     load: "first",
@@ -372,9 +372,9 @@ export const BUDGETS = [
     // scene's record and the record in focus held to its box: 4_345 / 1_455 more. Measured at 1_561_802 / 472_444.
     // Raised by the security review before 0.1.18 (a retry imports only a chunk on the bundle's own origin; a link's pins and
     // dimensions have no prototype). Measured at 1_561_966 / 472_529.
-    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration. Measured at 1_579_964 / 478_795.
-    minified: 1_580_800,
-    gzipped: 479_300,
+    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review and module moves. Measured at 1_580_701 / 478_984.
+    minified: 1_581_300,
+    gzipped: 479_400,
     load: "all",
   },
   {
@@ -432,9 +432,9 @@ export const BUDGETS = [
     // Measured at 1_527_773 / 457_563.
     // Raised by the security review before 0.1.18 (a retry imports only a chunk on the bundle's own origin; a link's pins and
     // dimensions have no prototype). Measured at 1_527_937 / 457_645.
-    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration. Measured at 1_543_744 / 462_801.
-    minified: 1_544_500,
-    gzipped: 463_200,
+    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review and module moves. Measured at 1_544_481 / 462_997.
+    minified: 1_545_000,
+    gzipped: 463_400,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
@@ -536,9 +536,9 @@ export const BUDGETS = [
     // the guest host judging an inline logo before it makes an image of the host page from it. Measured at 16_857 / 7_266.
     // Raised when the host's half of a worker view, and its drawing, came to be asked for again after they failed to arrive
     // (FR-139): `retryingImport`, and asking again when the browser is back online. 753 / 343 more. Measured at 17_610 / 7_610.
-    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration. Measured at 18_580 / 8_058.
-    minified: 18_850,
-    gzipped: 8_250,
+    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review and module moves. Measured at 18_745 / 8_167.
+    minified: 19_000,
+    gzipped: 8_350,
     load: "first",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -616,9 +616,9 @@ export const BUDGETS = [
     // the guest host judging an inline logo before it makes an image of the host page from it. Measured at 126_521 / 45_488.
     // Raised when the host's half of a worker view, and its drawing, came to be asked for again after they failed to arrive
     // (FR-139): `retryingImport`, and asking again when the browser is back online. 582 / 252 more. Measured at 127_103 / 45_742.
-    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration. Measured at 129_687 / 46_681.
-    minified: 130_000,
-    gzipped: 46_900,
+    // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review and module moves. Measured at 130_001 / 46_790.
+    minified: 130_300,
+    gzipped: 47_000,
     load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
