@@ -113,8 +113,10 @@ export const BUDGETS = [
     // Raised, over FR-139, when a selected record came to be drawn once (FR-141–FR-143): a declared page read for what it
     // already says and the record page leaving that out, a district name fitted to its box and its count said once, a
     // relation said in its words: 3_892 / 1_348 more. Measured at 517_736 / 177_866.
-    minified: 517_850,
-    gzipped: 177_950,
+    // Raised when a lens double-clicked from Up came to open it: the first press waits a double-click's length for the
+    // second, wherever it lands, and the one stop down into a picture (`withPicture`): 783 / 292 more. Measured at 518_519 / 178_159.
+    minified: 518_650,
+    gzipped: 178_250,
     load: "first",
   },
   {
@@ -366,8 +368,9 @@ export const BUDGETS = [
     // menu's fetch when the page is idle. 3_358 / 1_475 more. Measured at 1_557_457 / 470_989.
     // Raised, over FR-139, when a selected record came to be drawn once (FR-141–FR-143), with the page at the head of the
     // scene's record and the record in focus held to its box: 4_345 / 1_455 more. Measured at 1_561_802 / 472_444.
-    minified: 1_561_900,
-    gzipped: 472_550,
+    // Raised when a lens double-clicked from Up came to open it: 729 / 295 more. Measured at 1_562_531 / 472_738.
+    minified: 1_562_650,
+    gzipped: 472_850,
     load: "all",
   },
   {
@@ -423,8 +426,9 @@ export const BUDGETS = [
     // menu's fetch when the page is idle. 3_358 / 1_482 more. Measured at 1_523_423 / 456_109.
     // Raised, over FR-139, with every face's for a selected record drawn once (FR-141–FR-143): 4_350 / 1_454 more.
     // Measured at 1_527_773 / 457_563.
-    minified: 1_527_900,
-    gzipped: 457_650,
+    // Raised with every face's when a lens double-clicked from Up came to open it: 729 / 272 more. Measured at 1_528_502 / 457_835.
+    minified: 1_528_650,
+    gzipped: 457_950,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
