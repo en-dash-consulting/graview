@@ -1,5 +1,6 @@
 import type { IsoFace, IsoWash, Scheme } from "@graview/core";
 import { isoShade, layer, SCENE_LAYERS } from "@graview/core";
+import { MARQUEE_GAP, MARQUEE_WIDTH } from "@graview/layout/view";
 import { baseSheet, GRAVIEW_BRAND, withinTheBox, type Brand, type ThemeCssOptions } from "./theme.js";
 import { SPEC_VIEW_CSS } from "./spec-css.js";
 
@@ -24,6 +25,534 @@ const wash = (f: IsoWash): string => `${face(f)} / ${f.alpha}`;
 function sceneSheet(scheme: Scheme): string {
   const iso = isoShade(scheme);
   return `
+${/* What theme.ts drew for the scene alone, before FR-104's own rules and
+   in the order it drew them: the altitude control, the kind's card, its
+   drive-in, the others in the city, the district's block, and the seat's
+   marks. */ ""}
+${/*
+ * The altitude control rides the SAME number the scene rides — its own copy,
+ * because it sits beside the ground rather than inside it — on the same
+ * curve. So the mark morphs exactly as long as the scene does, and where an
+ * engine cannot register the property, both cut together: one mechanism,
+ * and no way for the control and the picture to disagree about the change.
+ */ ""}
+.graview-altitude-control {
+  --graview-altitude: 0;
+  transition:
+    --graview-altitude 640ms cubic-bezier(0.33, 0, 0.2, 1),
+    color 240ms ease,
+    border-color 240ms ease;
+}
+.graview-altitude-mark * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+${/* The ring of three kinds tightens to one ring around one node. */ ""}
+.graview-altitude-mark-ring {
+  transform: scaleX(calc(1 - 0.48 * var(--graview-altitude)));
+  opacity: calc(0.55 + 0.4 * var(--graview-altitude));
+}
+.graview-altitude-mark-apex {
+  transform: translateY(calc(2.6px * var(--graview-altitude)));
+}
+${/* The two wings gather into the center and give their ink to the apex. */ ""}
+.graview-altitude-mark-wing {
+  opacity: calc(0.75 * (1 - var(--graview-altitude)));
+}
+.graview-altitude-mark-wing[data-side="left"] {
+  transform: translate(calc(4.4px * var(--graview-altitude)), calc(-0.8px * var(--graview-altitude)));
+}
+.graview-altitude-mark-wing[data-side="right"] {
+  transform: translate(calc(-4.4px * var(--graview-altitude)), calc(-0.8px * var(--graview-altitude)));
+}
+
+${/* A card on the kinds plane.
+ *
+ * Title and count only at rest — a strip of ten cards each showing three
+ * truncated member names is ten unreadable things, and the members are not
+ * what you are asking the strip. Hovering lifts one and reveals the kind's
+ * own description, which the declaration has always carried and nothing has
+ * ever shown. */ ""}
+.graview-kind-card {
+  height: 100%;
+  transition: transform 170ms cubic-bezier(0.22, 1, 0.36, 1), height 170ms ease,
+    box-shadow 170ms ease;
+  ${/* IN THE STACK NOTHING HANGS BELOW A CARD. The iso block rests eighteen
+     pixels low there, invisible, ready to rise — and an invisible box that
+     pokes under the bottom row still made the stage scroll by nine pixels
+     with nowhere to scroll. Clipped (not hidden: no scroll container, no
+     scrollable overflow), and let out again from altitude, where the plate
+     floats above the card and the block stands up out of it. */ ""}
+  overflow: clip;
+}
+.graview-kind-card:hover,
+.graview-kind-card:focus-within {
+  height: auto;
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: var(--graview-lift-high);
+  position: relative;
+  z-index: ${SCENE_LAYERS.lines};
+}
+
+${/* The district-open control and its roster: altitude-only chrome. Inside
+   the stack expanding dissolves a card, so the control does not exist
+   there. A full fingertip even though the glyph is small — the audit holds
+   every control to 24px. */ ""}
+.graview-kind-open { display: none; }
+${/* The roster reads as a LIST, one member a row — chips wrapping at their
+   own widths read as spilled tiles, and a district's population is a roll
+   call, not a mosaic. */ ""}
+
+${/* A DRIVE-IN: a dark screen standing on the plot, and the showings under
+   it as a marquee of real buttons. Only from altitude; the same list the
+   places tabs carry, drawn where the pictures live. */ ""}
+.graview-drive-in {
+  ${/* Its own block under the nameplate, never a row inside the pill: the
+     pill is one line of name and count, and a marquee flattened into it
+     read as "12 • shown above The month The week". On a box the pill sits
+     on the roof at the top of the card, so the marquee hangs under it; on
+     a landmark the pill floats above the card, so the marquee takes the
+     card's own top edge. */ ""}
+  position: absolute;
+  left: 50%;
+  top: 42px;
+  transform: translateX(-50%);
+  z-index: ${SCENE_LAYERS.lines};
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  animation: graview-settle 240ms ease backwards;
+}
+[data-graview-landmark] .graview-drive-in {
+  top: 4px;
+}
+${/* THE SHOWINGS, BY NAME (FR-118): a column of names hanging off the
+   signpost's post, each whole and wrapped rather than cut, the one showing
+   now marked by the post's rule in the accent. Words on the ground, haloed
+   in the ground's color like the district's own name — no capsules, no
+   pictures drawn too small to read. */ ""}
+.graview-drive-in-marquee {
+  display: grid;
+  gap: ${MARQUEE_GAP}px;
+  width: ${MARQUEE_WIDTH}px;
+  justify-items: stretch;
+}
+.graview-drive-in-thumb {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  min-height: max(1.5rem, 24px);
+  padding: 3px 6px 3px 10px;
+  border-left: 2px solid var(--graview-edge-bright, var(--graview-edge));
+  color: var(--graview-ink);
+  font: inherit;
+  text-align: left;
+}
+.graview-drive-in-thumb[data-graview-pressed] {
+  border-left-color: var(--graview-accent);
+  color: var(--graview-accent);
+}
+${/* The press: the whole name, laid over it. */ ""}
+.graview-drive-in-thumb-press {
+  position: absolute;
+  inset: 0;
+  min-height: max(1.5rem, 24px);
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+.graview-drive-in-thumb-press:hover {
+  background: color-mix(in srgb, var(--graview-accent) 8%, transparent);
+}
+.graview-drive-in-thumb-press:focus-visible {
+  outline: 2px solid var(--graview-accent);
+  outline-offset: 1px;
+}
+.graview-drive-in-thumb-title {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  text-shadow: 0 0 3px var(--graview-ground), 0 0 6px var(--graview-ground);
+}
+.graview-drive-in-thumb[data-graview-pressed] .graview-drive-in-thumb-title {
+  font-weight: 600;
+}
+
+${/* THE OTHERS: people and their agents in the city, each a small figure in
+   the scene's own line vocabulary with a name under it. They move by a
+   transition on transform — one number, the layout tween's curve — so a
+   quiet city runs nothing. This tab's own seat is not drawn here: the
+   ask field is where it speaks. */ ""}
+.graview-occupants {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: ${SCENE_LAYERS.occupants};
+}
+.graview-figure {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  transition: transform 420ms cubic-bezier(0.33, 0, 0.2, 1);
+  will-change: transform;
+}
+.graview-figure-body {
+  position: absolute;
+  left: -16px;
+  top: -38px;
+  width: 32px;
+  height: 38px;
+  min-height: max(1.5rem, 24px);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: hsl(var(--graview-hue, 200) 50% 48%);
+  cursor: pointer;
+  pointer-events: auto;
+  border-radius: 6px;
+}
+.graview-figure-body:focus-visible {
+  outline: 2px solid var(--graview-accent);
+  outline-offset: 2px;
+}
+.graview-figure-body svg {
+  display: block;
+  width: 32px;
+  height: 38px;
+  overflow: visible;
+}
+.graview-figure[data-graview-mode="following"] .graview-figure-body {
+  color: var(--graview-accent);
+}
+.graview-figure[data-graview-mode="refused"] .graview-figure-body {
+  color: var(--graview-warn);
+}
+.graview-figure-name {
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--graview-ink-muted);
+  pointer-events: none;
+}
+${/* ANOTHER PERSON, on your map: a head and shoulders in their own hue, at
+   the plot their stop names or in the audience row of the showing they are
+   watching. Press to follow them; their name is under them like a robot's. */ ""}
+.graview-figure[data-graview-person] .graview-figure-body {
+  left: -11px;
+  top: -24px;
+  width: 22px;
+  height: 24px;
+  min-height: 0;
+}
+.graview-figure[data-graview-person] .graview-figure-body svg {
+  width: 22px;
+  height: 24px;
+}
+.graview-figure[data-graview-person][data-graview-followed] .graview-figure-body {
+  color: var(--graview-accent);
+}
+${/* Their robot, beside them, captioned as theirs. */ ""}
+.graview-figure[data-graview-theirs] .graview-figure-body {
+  opacity: 0.85;
+}
+${/* More than a row can hold, and the anonymous: a number where they stand. */ ""}
+.graview-figure-count {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--graview-edge);
+  background: var(--graview-float);
+  color: var(--graview-ink-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+${/* What somebody else is pointing at, outlined in their color. */ ""}
+.graview-presence-over {
+  position: absolute;
+  border: 2px solid hsl(var(--graview-hue, 200) 55% 52%);
+  border-radius: 8px;
+  pointer-events: none;
+  opacity: 0.75;
+  transition: left 200ms ease, top 200ms ease, width 200ms ease, height 200ms ease;
+}
+${/* Off the visible ground: an indicator at the border, pointing at it. */ ""}
+.graview-figure-edge {
+  position: absolute;
+  min-height: max(1.5rem, 24px);
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--graview-edge);
+  background: var(--graview-float);
+  color: var(--graview-ink-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.graview-kind-members {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  margin-top: 7px;
+  animation: graview-settle 240ms ease backwards;
+}
+
+${/* The way into the archive, on the card that fed it: quiet, but a real
+   control at a real size. */ ""}
+.graview-kind-past {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  ${/* The same floor as the disclosure beside it — see .graview-kind-open. */ ""}
+  min-height: max(1.5rem, 24px);
+  padding: 1px 8px;
+  margin: -3px 0;
+  border-radius: 999px;
+  border: 1px dashed var(--graview-edge);
+  background: none;
+  box-shadow: none;
+  color: var(--graview-ink-faint);
+  cursor: pointer;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.graview-kind-past:hover {
+  color: var(--graview-accent);
+  border-color: var(--graview-accent-dim);
+}
+
+${/* A SEARCH OVER THE CITY. The districts the words found are lit and say how
+   many; the rest recede — the same dimming a selection's reach has always
+   used, so a search reads as "where the thing is", not as a new mode. The
+   count is the way in: a real control, the words carried down. */ ""}
+.graview-kind-card[data-graview-emphasis="dimmed"] {
+  opacity: 0.42;
+  transition: opacity 160ms ease;
+}
+.graview-kind-card[data-graview-emphasis="lit"] {
+  z-index: ${SCENE_LAYERS.stage};
+}
+.graview-kind-card[data-graview-emphasis="lit"] .graview-kind-face {
+  border-color: var(--graview-accent) !important;
+  box-shadow: 0 0 0 1px var(--graview-accent-dim);
+}
+.graview-kind-hits {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: max(1.5rem, 24px);
+  padding: 1px 8px;
+  margin: -3px 0;
+  border-radius: 999px;
+  border: 1px solid var(--graview-accent);
+  background: none;
+  box-shadow: none;
+  color: var(--graview-accent);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .graview-kind-card[data-graview-emphasis="dimmed"] { transition: none; }
+}
+
+${/* A district STANDS: an isometric block — roof, two shaded walls — whose
+   height is its population. Always in the tree, faded and settled by the
+   altitude number: rising, each block grows up out of its card while the
+   card flies to its ring stop — a morph, not a cut. At altitude zero it is
+   fully transparent and costs nothing. */ ""}
+.graview-kind-block {
+  display: block;
+  ${/* Architecture, not a control: clicks fall through to the card, and an
+     invisible in-stack block must never sit over a neighbor's tuck. */ ""}
+  pointer-events: none;
+  position: absolute;
+  left: 8%;
+  bottom: 2px;
+  width: 84%;
+  height: auto;
+  ${/* Under a marquee the block keeps out of its band: the drawing scales down inside the box. */ ""}
+  max-height: calc(100% - var(--graview-marquee-room, 0px));
+  opacity: var(--graview-altitude);
+  transform: translateY(calc((1 - var(--graview-altitude)) * 18px));
+  filter: drop-shadow(${
+    scheme === "light" ? "10px 7px 14px rgba(20,30,32,0.28)" : "12px 8px 18px rgba(0,0,0,0.6)"
+  });
+}
+
+${/* WHERE THE KIND HAS ITS OWN DRAWING, the drawing is the building.
+   Same footprint as the block, same ground line, same cast shadow — the
+   difference is that the district is now a person, a plot or a vehicle
+   rather than one more box. Size carries the population the box's height
+   used to: the rise the card computed, in a channel a drawing can use.
+
+   Stroke weight is set HERE rather than in the art, because the art is
+   drawn to read at twenty pixels and a 1.4-unit stroke on a 24-unit box
+   becomes a six-pixel marker line at a hundred. Thinned to a drafting
+   line, which is what a blueprint of a thing looks like. */ ""}
+.graview-kind-landmark {
+  display: block;
+  left: 50%;
+  ${/* The block's own two pixels of ground clearance, kept: at altitude zero
+     every block is pushed eighteen pixels down as part of the morph, and
+     without them the drawing hangs two pixels past the bottom of the scene
+     and gives the whole page a scrollbar's worth of overflow. */ ""}
+  bottom: 2px;
+  aspect-ratio: 1;
+  ${/* Sized by the card's HEIGHT, not its width: a district card is wider
+     than it is tall, and a square drawing at 96% of the width stood a third
+     of itself above the card and back through the nameplate. Population is
+     in the drawing's size either way — the same rise the box's height
+     carried, 10 for a district of one and 46 for the largest. */ ""}
+  height: calc((100% - var(--graview-marquee-room, 0px)) * (0.72 + var(--graview-rise, 24) * 0.008));
+  width: auto;
+  ${/* AND IT KEEPS UP WITH THE WORDS. The card is laid out in pixels off the
+     stage and the nameplate is sized in rem, so a reader on Largest doubled
+     every name in the city while every drawing under one stayed exactly the
+     size it was — a postage stamp under a headline. A floor in em ties the
+     drawing to the same number the names follow; at the browser's own size
+     it is below what the card already gives and nothing moves.
+
+     Capped at the card, because a floor alone overflowed it: the drawings
+     grew past the box they stand in and were sliced off at the bottom
+     edge — a plot that reads as a V rather than a bed. The card's own
+     height is what the picture can actually show, and the CARD is the thing
+     that still does not follow the reader's size (see below).
+
+     (No back ticks in here: this whole stylesheet is a template literal,
+     and one of them ends it.) */ ""}
+  min-height: min(5em, calc(96% - var(--graview-marquee-room, 0px)));
+  ${/* The morph is a GROWTH from the ground line, not a drop: a block slides
+     eighteen pixels down at altitude zero and grows up out of the card, and
+     a drawing given the same treatment hangs below the card it belongs to —
+     two pixels past the bottom of the scene on the lowest row, which is a
+     scrollbar on every ground-level screen in the app. Scaling from the
+     drawing's own feet is the same reading and costs nothing below. */ ""}
+  transform-origin: bottom center;
+  transform: translateX(-50%) scale(calc(0.55 + var(--graview-altitude) * 0.45));
+  ${/* A cast shadow belongs to a solid; on a line drawing it is a blurred
+     second copy of every stroke. The drawing keeps a hint of one so it
+     still stands on the lattice rather than floating over it. */ ""}
+  filter: drop-shadow(${
+    scheme === "light" ? "6px 5px 7px rgba(20,30,32,0.16)" : "7px 6px 9px rgba(0,0,0,0.45)"
+  });
+}
+${/* The nameplate floats ABOVE a drawing rather than standing on it. On a box
+   the pill sits on the roof, which is what a label does over a building; on
+   a figure the same 2% put it across the head. */ ""}
+
+.graview-kind-landmark [data-graview-figure] {
+  width: 100% !important;
+  height: 100% !important;
+  color: hsl(var(--graview-hue, 200) ${scheme === "light" ? "42% 44%" : "45% 62%"}) !important;
+}
+.graview-kind-landmark svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: 0.85;
+}
+
+${/* From altitude the card's face becomes the district's NAMEPLATE: an
+   upright pill standing on the roof, the way a label floats over a building
+   in any city view — the block carries the architecture, the pill carries
+   the words. Inline styles drew the in-stack card, so the pill overrides
+   must outrank them. */ ""}
+.graview-kind-face {
+  transition: border-radius 640ms cubic-bezier(0.33, 0, 0.2, 1),
+    padding 640ms cubic-bezier(0.33, 0, 0.2, 1),
+    box-shadow 640ms ease;
+}
+
+${/* THE SEAT'S MARK on what it just wrote: its own glyph, in its own hue, at
+   the thing's top-right corner. It arrives with the change and fades with
+   it. */ ""}
+.graview-seat-marks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: ${SCENE_LAYERS.seatMarks};
+}
+.graview-seat-mark {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 999px;
+  border: 1px solid var(--graview-edge);
+  background: var(--graview-float);
+  color: oklch(0.62 0.16 var(--graview-hue, 250));
+  font-size: 0.6875rem;
+  line-height: 1;
+  box-shadow: var(--graview-lift-low);
+  animation: graview-seat-mark 4000ms ease-out forwards;
+}
+${/* A QUESTION THE SEAT ASKED, standing at the node it is about: it says
+   itself and waits, because a dot nobody can read is a question nobody
+   answers. It does not fade — an unanswered question is still open. */ ""}
+.graview-seat-asking {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 260px;
+  padding: 3px 9px 3px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--graview-accent);
+  background: var(--graview-float);
+  color: var(--graview-ink);
+  font-size: 0.75rem;
+  line-height: 1.3;
+  box-shadow: var(--graview-lift-low);
+  pointer-events: auto;
+}
+.graview-seat-asking > [aria-hidden] {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--graview-accent);
+  color: var(--graview-panel);
+  font-size: 0.6875rem;
+}
+.graview-seat-asking-said {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes graview-seat-mark {
+  0% { opacity: 0; transform: translateY(3px) scale(0.8); }
+  8% { opacity: 1; transform: none; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .graview-figure { transition: none; }
+}
+
 [data-graview-altitude] .graview-kind-card {
   overflow: visible;
 }

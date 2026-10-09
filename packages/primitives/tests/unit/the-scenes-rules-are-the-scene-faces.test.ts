@@ -32,7 +32,17 @@ const rulesOf = (css: string): string[] => {
 };
 
 /* The modules only the scene face draws with; a name the scene's rules use must appear in one of these and in no other source. */
-const SCENE_FILES = ["scene-root.tsx", "view-host.tsx", "plots.tsx", "scene-hand.ts", "scene-lines.tsx", "connectors.tsx", "scene.tsx", "resolved-view.tsx", "where-drawn.tsx"].map((file) => `react/src/${file}`);
+const SCENE_FILES = [
+  ...["scene-root.tsx", "view-host.tsx", "plots.tsx", "scene-hand.ts", "scene-lines.tsx", "connectors.tsx", "scene.tsx", "resolved-view.tsx", "where-drawn.tsx", "occupants.tsx", "seat-marks.tsx"].map((file) => `react/src/${file}`),
+  // The altitude control: the scene face's (and the Shell's, which draws `themeCss`).
+  "primitives/src/workbench/back-out.tsx",
+];
+/*
+ * The district's card and its drive-in are the kind's many × glyph cell in
+ * the framework's views, which only the scene's planes draw: no other face
+ * asks a group for a glyph. Its names are the scene's though the file is not.
+ */
+const SCENE_CELLS: Record<string, string> = { "graview-kind-": "primitives/src/default-views.tsx", "graview-drive-in": "primitives/src/default-views.tsx" };
 const packages = resolve(import.meta.dirname, "../../..");
 const sources: [string, string][] = [];
 const walk = (dir: string) => {
@@ -50,9 +60,11 @@ for (const pkg of readdirSync(packages)) {
   }
 }
 const onlyTheScenes = (name: string) => {
-  const said = new RegExp(`${name}(?![a-z0-9-])`);
+  // A class is not the attribute that ends with the same words: `graview-figure` is not `data-graview-figure`.
+  const said = new RegExp(`${name.startsWith("data-") ? "" : "(?<!data-)"}${name}(?![a-z0-9-])`);
   const where = sources.filter(([, text]) => said.test(text)).map(([path]) => path);
-  return where.length > 0 && where.every((path) => SCENE_FILES.includes(path));
+  const cell = Object.entries(SCENE_CELLS).find(([prefix]) => name.startsWith(prefix))?.[1];
+  return where.length > 0 && where.every((path) => SCENE_FILES.includes(path) || path === cell);
 };
 
 describe("the scene's rules are the scene face's", () => {
@@ -75,7 +87,10 @@ describe("the scene's rules are the scene face's", () => {
 
   it("names in every selector something only the scene draws", () => {
     const strays: string[] = [];
-    for (const rule of rulesOf(sceneCss("light"))) {
+    // A rule inside an at-rule (the reduced-motion ones) is judged by its own selectors.
+    const within = (rule: string): string[] =>
+      rule.startsWith("@media") ? rulesOf(rule.slice(rule.indexOf("{") + 1, rule.lastIndexOf("}"))).flatMap(within) : [rule];
+    for (const rule of rulesOf(sceneCss("light")).flatMap(within)) {
       const prelude = rule.slice(0, rule.indexOf("{"));
       for (const selector of prelude.split(",")) {
         const names = selector.match(/(?:data-)?graview-[a-z0-9-]+/g) ?? [];
