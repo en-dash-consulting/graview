@@ -121,8 +121,11 @@ export const BUDGETS = [
     // Raised by the review after 0.1.17: the Ask and its drawer placed inside their embed's box (and read back where a host's
     // transform moved them), a pane kept inside its embed where it fits, a notice put away while its embed is scrolled out of
     // the window. 1_617 / 502 more. Measured at 531_602 / 182_485.
-    minified: 532_100,
-    gzipped: 182_800,
+    // Raised when the seat came to take you where you ask: the conversation reads an ask for a place, a record, a narrowed
+    // kind, the problems or what is here as moves, and fetches the resolver (`@graview/tools/go`) with the first ask, not with
+    // the page; what stays up front is the turn's glue and the model's "go" names. 1_129 / 1_347 more. Measured at 532_731 / 183_832.
+    minified: 533_200,
+    gzipped: 184_300,
     load: "first",
   },
   {
@@ -381,8 +384,10 @@ export const BUDGETS = [
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review, module moves and a lens double-clicked from Up. Measured at 1_581_667 / 479_348.
     // Raised with the pages face's by the review after 0.1.17 (the Ask and the panes kept inside their embed): 1_612 / 551 more.
     // Measured at 1_583_279 / 479_899.
-    minified: 1_583_800,
-    gzipped: 480_300,
+    // Raised when the seat came to take you where you ask: the resolver, fetched with the first ask, is a chunk every face
+    // carries — about 15 kB minified with what it reads a kind's filters by. Measured at 1_599_651 / 487_268.
+    minified: 1_600_200,
+    gzipped: 487_700,
     load: "all",
   },
   {
@@ -444,8 +449,9 @@ export const BUDGETS = [
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review, module moves and a lens double-clicked from Up. Measured at 1_545_447 / 463_365.
     // Raised with the pages face's by the review after 0.1.17 (the Ask and the panes kept inside their embed): 1_612 / 537 more.
     // Measured at 1_547_059 / 463_902.
-    minified: 1_547_600,
-    gzipped: 464_200,
+    // Raised with the pages face's when the seat came to take you where you ask: 1_221 / 1_358 more. Measured at 1_548_280 / 465_260.
+    minified: 1_548_800,
+    gzipped: 465_700,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
