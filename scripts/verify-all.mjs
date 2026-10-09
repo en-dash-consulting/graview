@@ -63,6 +63,8 @@ const CHAIN = [
   ["menu", "verify-menu.mjs"],
   // The seat as a guide: a quiet field that grows into a conversation, on both faces, in three engines.
   ["seat-guide", "verify-seat-guide.mjs"],
+  // The seat takes you where you ask and draws a view kept as a lens, on both faces and Cloud's workshop, in three engines.
+  ["seat-goes-and-draws", "verify-seat-goes-and-draws.mjs"],
   ["chat", "verify-chat.mjs"],
   ["seat", "verify-seat.mjs"],
   ["who", "verify-who.mjs"],
