@@ -1,3 +1,4 @@
+import type { HostAi } from "@graview/tools";
 import { EMPTY_VIEW, type ViewState } from "@graview/layout";
 import { GraviewProvider, useGraph, useGraview, type Scheme } from "@graview/react";
 import { AgentSeat, Shell } from "@graview/primitives";
@@ -26,6 +27,8 @@ export interface DiscographyAppProps {
   readonly onSchemeChange?: (scheme: Scheme) => void;
   /** Whether the store behind this app is remembered in the browser (see main.tsx). */
   readonly remembers?: boolean;
+  /** The host's model for the seat — a dev server's, when it holds a key (`aiThroughDevServer`). */
+  readonly ai?: HostAi;
 }
 
 /**
@@ -41,6 +44,7 @@ export function DiscographyApp({
   initialScheme = "light",
   onSchemeChange,
   remembers = false,
+  ai,
 }: DiscographyAppProps) {
   const created = useMemo(() => store ?? createStore(), [store]);
   const registry = useMemo(() => views(), []);
@@ -48,6 +52,7 @@ export function DiscographyApp({
 
   return (
     <GraviewProvider
+      {...(ai ? { ai } : {})}
       store={created}
       views={registry}
       initialView={initialView}
@@ -59,6 +64,8 @@ export function DiscographyApp({
     >
       <Shell<S>
         standing="Everything is in order"
+        // Graview's own example, so it signs itself — quietly, in the person's menu.
+        signature
         /*
          * THE APP'S OWN DECLARATION, one press away and in place. The
          * kinds, fields, edges, acts and rules of `src/domain` are a graph

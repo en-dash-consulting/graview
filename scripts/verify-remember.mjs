@@ -189,6 +189,60 @@ try {
   report.steps.stranger = { deposit: await labelOf(stranger, "t-deposit") };
   await other.close();
 
+  /* ------------------------------ the garden opens planted, and empties */
+  /*
+   * THE SEEDBED OPENS ON THE EXAMPLE GARDEN. It used to open empty on
+   * purpose, so the first thing anybody saw was a city of "none yet" and a
+   * seat with nothing to answer about. Now a first visit is planted, and an
+   * empty garden is one press in the person menu — "Start empty" — which
+   * this browser remembers until "Load the example garden" plants it again.
+   */
+  const garden = await serving("seedbed", portFor("seedbed"), repoRoot);
+  try {
+    const gardenContext = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+    const bed = await gardenContext.newPage();
+    const gardenErrors = [];
+    bed.on("pageerror", (error) => gardenErrors.push(String(error).slice(0, 120)));
+    const opened = async () => {
+      await bed.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 120_000 });
+      await bed.waitForTimeout(900);
+      return bed.evaluate(() => {
+        const stored = JSON.parse(localStorage.getItem("graview:seedbed:snapshot") ?? "null");
+        const gardeners = document.querySelector('[data-graview-view="kind:gardener"]')?.textContent?.trim() ?? null;
+        return { nodes: stored?.nodes?.length ?? 0, gardeners, address: window.location.search };
+      });
+    };
+    const pressInMenu = async (label) => {
+      await bed.click('[data-testid="profile-button"]');
+      await bed.waitForSelector('[data-testid="host-action"]', { timeout: 20_000 });
+      const offered = await bed.evaluate(() => [...document.querySelectorAll('[data-testid="host-action"]')].map((one) => one.textContent.trim()));
+      await Promise.all([bed.waitForNavigation({ waitUntil: "load" }), bed.locator('[data-testid="host-action"]', { hasText: label }).first().click()]);
+      return offered;
+    };
+    await bed.goto(`${at("seedbed")}/?theme=light&remember=1`, { waitUntil: "load" });
+    const planted = await opened();
+    const offered = await pressInMenu("Start empty");
+    const emptied = await opened();
+    await bed.reload({ waitUntil: "load" });
+    const reloaded = await opened();
+    await pressInMenu("Load the example garden");
+    const restored = await opened();
+    // The flag itself, from a fresh browser: `?empty=1` opens the garden with nothing in it.
+    const flagged = await gardenContext.newPage();
+    await flagged.goto(`${at("seedbed")}/?theme=light&empty=1`, { waitUntil: "load" });
+    await flagged.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 120_000 });
+    await flagged.waitForTimeout(900);
+    const byFlag = await flagged.evaluate(() => ({
+      nodes: JSON.parse(localStorage.getItem("graview:seedbed:snapshot") ?? "null")?.nodes?.length ?? 0,
+      address: window.location.search,
+    }));
+    await flagged.close();
+    report.steps.garden = { planted, offered, emptied, reloaded, restored, byFlag, errors: gardenErrors };
+    await gardenContext.close();
+  } finally {
+    garden.stop();
+  }
+
   /* -------------------------------------- and the same is true on the desk */
   /*
    * THE LAUNCHER MOUNTS EACH DEMO THE WAY THE DEMO OPENS ITSELF.
@@ -214,7 +268,7 @@ try {
       // which is what keeps every other harness from inheriting the last one's.
       await page.goto(`${at("launcher")}/?theme=light&remember=1&app=${app}`, { waitUntil: "load" });
       /*
-       * For the MOUNT, not for a card: the garden starts empty on purpose,
+       * For the MOUNT, not for a card: a garden can be empty on purpose,
        * and waiting for something pickable there waits for ever. A district
        * exists whether or not anything is in it — which is the seedbed's
        * whole first screen.
@@ -263,7 +317,7 @@ try {
     await alone.close();
     own.stop();
 
-    // And the garden, which starts empty and has nothing of Things' in it.
+    // And the garden, which has nothing of Things' in it.
     await onTheDesk("seedbed");
     const separate = await page.evaluate(() => document.querySelector('[data-graview-pick="t-deposit"]') === null);
 
@@ -326,6 +380,15 @@ report.verdict = {
     s.onTheDesk?.atItsOwnPort === false,
   // Two demos on one desk keep two stores, because each names its own scope.
   eachDemoKeepsItsOwnStore: s.onTheDesk?.separate === true,
+  /* The seedbed opens on the example garden; "Start empty" empties it, and it stays empty until the example is loaded again. */
+  theGardenOpensPlanted: (s.garden?.planted?.nodes ?? 0) > 0,
+  thePersonMenuOffersStartEmptyAndTheExample:
+    (s.garden?.offered ?? []).includes("Start empty") && (s.garden?.offered ?? []).includes("Load the example garden"),
+  startEmptyEmptiesTheGarden: s.garden?.emptied?.nodes === 0 && !(s.garden?.emptied?.address ?? "").includes("empty="),
+  anEmptyGardenStaysEmptyAfterAReload: s.garden?.reloaded?.nodes === 0,
+  loadTheExampleGardenPlantsItAgain: s.garden?.restored?.nodes === s.garden?.planted?.nodes && (s.garden?.restored?.nodes ?? 0) > 0,
+  theEmptyFlagOpensItEmpty: s.garden?.byFlag?.nodes === 0 && !(s.garden?.byFlag?.address ?? "").includes("empty="),
+  nothingThrewInTheGarden: (s.garden?.errors ?? []).length === 0,
   nothingThrewOnTheDesk: (s.deskErrors ?? []).length === 0,
 };
 report.passed = Object.values(report.verdict).every(Boolean) && !report.error;

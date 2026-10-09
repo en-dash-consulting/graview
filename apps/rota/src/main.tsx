@@ -1,3 +1,4 @@
+import { aiThroughDevServer } from "@graview/tools";
 import { themeCss, type Scheme } from "@graview/primitives";
 import { applySettings } from "@graview/react";
 import { createRoot } from "react-dom/client";
@@ -64,6 +65,14 @@ opened.onRefusal((reason) => {
 });
 (window as unknown as Record<string, unknown>)["__rotaOps"] = () => opened.intents();
 
+/*
+ * A MODEL IN DEVELOPMENT. Started with `ANTHROPIC_API_KEY=… pnpm dev`, the
+ * dev server lends the seat one through its door (`aiDevProxy`), holding
+ * the key itself; without a key the seat says how to turn it on. Only in a
+ * dev build: a built page asks no door and says what any product says.
+ */
+const ai = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? await aiThroughDevServer() : undefined;
+
 const root = document.getElementById("root");
 if (!root) throw new Error("no #root");
 
@@ -72,8 +81,10 @@ if (window.location.pathname.startsWith("/pages")) {
     <PagesApp
       basename="/pages"
       context={{
+        ...(ai ? { ai } : {}),
         store,
         brand: rotaBrand,
+        signature: true,
         sceneHref: "/",
         invariantContext: { today: today() },
         principal,
@@ -88,6 +99,7 @@ if (window.location.pathname.startsWith("/pages")) {
 } else {
   createRoot(root).render(
     <RotaApp
+      {...(ai ? { ai } : {})}
       store={store}
       principal={principal}
       remembers={remembers}

@@ -265,7 +265,11 @@ const APPS = {
       await p.waitForTimeout(800);
     },
   } },
-  seedbed: { port: portFor("seedbed"), ready: "__seedbedReady", states: {
+  /*
+   * `empty=1`: these states are the empty garden's (the city of "none yet",
+   * the starter seat, the first gardener), and the garden opens planted now.
+   */
+  seedbed: { port: portFor("seedbed"), ready: "__seedbedReady", query: "&empty=1", states: {
     /*
      * AT THE READER'S LARGEST TEXT, which is 200% of the browser's own and
      * the size WCAG 1.4.4 asks an interface to survive. Every count in this

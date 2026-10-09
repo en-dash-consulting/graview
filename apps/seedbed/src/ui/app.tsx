@@ -64,7 +64,34 @@ export interface SeedbedAppProps {
   readonly principal?: Principal;
   /** The AI the seat may use, as the host decided it. The garden has none of its own. */
   readonly ai?: HostAi;
+  /**
+   * Whether this is the finished garden, opened the way `open.ts` opens it:
+   * the person menu then offers "Start empty" and "Load the example garden".
+   * A chapter's garden, and an embedded one, offer neither.
+   */
+  readonly garden?: boolean;
 }
+
+/** The address that opens this garden empty, or planted with the example again. */
+function gardenHref(how: "empty" | "example", href: string = window.location.href): string {
+  const url = new URL(href);
+  url.searchParams.delete(how === "empty" ? "fresh" : "empty");
+  url.searchParams.set(how === "empty" ? "empty" : "fresh", "1");
+  return url.toString();
+}
+
+/**
+ * THE WAY TO AN EMPTY GARDEN, AND BACK. The garden opens planted, so the
+ * blank graph this example was built to hold the framework to is one press
+ * away in the person menu rather than gone: "Start empty" opens it with
+ * nothing in it (and this browser remembers that), and "Load the example
+ * garden" plants the example again. Each is a navigation, like "Start
+ * fresh": the address says what to open and is tidied once it has.
+ */
+const GARDEN_ACTIONS = [
+  { label: "Start empty", onSelect: () => window.location.assign(gardenHref("empty")) },
+  { label: "Load the example garden", onSelect: () => window.location.assign(gardenHref("example")) },
+] as const;
 
 /**
  * The whole application: the provider, the Shell, and one seat. What the
@@ -93,6 +120,7 @@ export function SeedbedApp({
   rotation = false,
   principal,
   ai,
+  garden = false,
 }: SeedbedAppProps) {
   const created = useMemo(() => store ?? createSeedbedUiStore(), [store]);
   const views = useMemo(
@@ -123,6 +151,9 @@ export function SeedbedApp({
     >
       <Shell<S>
         standing="The garden keeps its agreements"
+        {...(garden ? { hostActions: GARDEN_ACTIONS } : {})}
+        // Graview's own example, so it signs itself — quietly, in the person's menu.
+        signature
         /*
          * The chapter's own declaration, one press away — the chapter the
          * reader is standing in, not a fixed one. Chapter fifteen IS the

@@ -68,7 +68,7 @@ export const APPS: readonly AppEntry[] = [
     id: "seedbed",
     app: seedbedApp,
     label: "Seedbed",
-    tagline: "The example that starts empty: a declared graph and no data, so onboarding is filling it in.",
+    tagline: "A community garden that opens planted, and empties with one press: the blank graph is where onboarding is filling it in.",
     port: portOf("seedbed", 5194),
     command: "pnpm dev:seedbed",
   },

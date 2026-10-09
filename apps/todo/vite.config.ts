@@ -1,3 +1,4 @@
+import { aiDevProxy } from "@graview/ship/dev";
 import { defineConfig } from "vite";
 import { moved } from "../../scripts/lib/ports.mjs";
 import { fileURLToPath } from "node:url";
@@ -7,6 +8,13 @@ const pkg = (name: string) =>
 
 export default defineConfig({
   esbuild: { jsx: "automatic" },
+  /*
+   * A MODEL FOR THE SEAT IN DEVELOPMENT: `ANTHROPIC_API_KEY=… pnpm dev`
+   * (and `GRAVIEW_AI_MODEL` to choose one) lends the seat a model through
+   * `/__graview/ai`, the key held here and never in the page. Serve only:
+   * a build carries none of it.
+   */
+  plugins: [aiDevProxy()],
   resolve: {
     alias: {
       "@graview/core/blocks": fileURLToPath(new URL("../../packages/core/src/blocks.ts", import.meta.url)),

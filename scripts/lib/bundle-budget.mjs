@@ -441,8 +441,12 @@ export const BUDGETS = [
     // at 1_658_715 / 515_787.
     // Lowered when the host came to decide the AI once: the ladder, its pills, key fields and words, the seat's ⚙ and the
     // studio's, and the rung's honesty sentences left. 9_511 / 3_160 fewer. Measured at 1_649_204 / 512_627.
-    minified: 1_649_700,
-    gzipped: 512_900,
+    // Raised when the graph came to answer who and when without a model: the resolver's chunk, fetched with the first ask,
+    // reads a named day, a weekend and a date, and follows one relation by its words ("who's working thursday"); and the
+    // person's menu, fetched when first opened, can sign an example "Built with Graview". Nothing more up front.
+    // 7_323 / 2_859 more. Measured at 1_656_527 / 515_486.
+    minified: 1_657_000,
+    gzipped: 515_800,
     load: "all",
   },
   {
