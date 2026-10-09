@@ -143,6 +143,23 @@ export function BackOut({ home }: { readonly home: string | null }) {
  */
 export { descentTarget };
 
+/*
+ * The altitude control rides the SAME number the scene rides — its own copy,
+ * because it sits beside the ground rather than inside it — on the same
+ * curve. So the mark morphs exactly as long as the scene does, and where an
+ * engine cannot register the property, both cut together: one mechanism,
+ * and no way for the control and the picture to disagree about the change.
+ * The ring of three kinds tightens to one ring around one node; the two
+ * wings gather into the center and give their ink to the apex.
+ */
+const ALTITUDE_CSS = `.graview-altitude-control{--graview-altitude:0;transition:--graview-altitude 640ms cubic-bezier(.33,0,.2,1),color 240ms ease,border-color 240ms ease}
+.graview-altitude-mark *{transform-box:fill-box;transform-origin:center}
+.graview-altitude-mark-ring{transform:scaleX(calc(1 - .48 * var(--graview-altitude)));opacity:calc(.55 + .4 * var(--graview-altitude))}
+.graview-altitude-mark-apex{transform:translateY(calc(2.6px * var(--graview-altitude)))}
+.graview-altitude-mark-wing{opacity:calc(.75 * (1 - var(--graview-altitude)))}
+.graview-altitude-mark-wing[data-side="left"]{transform:translate(calc(4.4px * var(--graview-altitude)),calc(-.8px * var(--graview-altitude)))}
+.graview-altitude-mark-wing[data-side="right"]{transform:translate(calc(-4.4px * var(--graview-altitude)),calc(-.8px * var(--graview-altitude)))}`;
+
 export function OverviewButton() {
   const { view, go } = useNavigation();
   const { store, views, hiddenKinds } = useGraview();
@@ -172,6 +189,9 @@ export function OverviewButton() {
   })();
   const label = overview ? (landing ? `Down to ${landing}` : "Down") : "Up";
   return (
+    <>
+    {/* The control's own rules, drawn with it: only a face that draws the scene draws Up. */}
+    <style>{ALTITUDE_CSS}</style>
     <button
       type="button"
       data-testid="overview"
@@ -258,5 +278,6 @@ export function OverviewButton() {
           back from altitude. */}
       <span className="graview-altitude-label">{label}</span>
     </button>
+    </>
   );
 }

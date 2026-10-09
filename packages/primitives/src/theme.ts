@@ -41,6 +41,7 @@ import type { Brand, Scheme, ThemeTokens } from "@graview/core";
  */
 export { DARK, LIGHT, SCHEMES } from "@graview/core";
 import { DISPLAY_TRACKING, SCHEMES, kitVariables, layer, layerVariables, resolveKit, SCENE_LAYERS, shapeOf, TYPOGRAPHY, typographyOf } from "@graview/core";
+import { MARQUEE_GAP, MARQUEE_WIDTH } from "@graview/layout/view";
 
 
 /**
@@ -383,42 +384,6 @@ ${/* The ground: a slow wash, so depth has something to recede into. */ ""}
   transition: --graview-altitude 640ms cubic-bezier(0.33, 0, 0.2, 1);
 }
 
-${/*
- * The altitude control rides the SAME number the scene rides — its own copy,
- * because it sits beside the ground rather than inside it — on the same
- * curve. So the mark morphs exactly as long as the scene does, and where an
- * engine cannot register the property, both cut together: one mechanism,
- * and no way for the control and the picture to disagree about the change.
- */ ""}
-.graview-altitude-control {
-  --graview-altitude: 0;
-  transition:
-    --graview-altitude 640ms cubic-bezier(0.33, 0, 0.2, 1),
-    color 240ms ease,
-    border-color 240ms ease;
-}
-.graview-altitude-mark * {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-${/* The ring of three kinds tightens to one ring around one node. */ ""}
-.graview-altitude-mark-ring {
-  transform: scaleX(calc(1 - 0.48 * var(--graview-altitude)));
-  opacity: calc(0.55 + 0.4 * var(--graview-altitude));
-}
-.graview-altitude-mark-apex {
-  transform: translateY(calc(2.6px * var(--graview-altitude)));
-}
-${/* The two wings gather into the center and give their ink to the apex. */ ""}
-.graview-altitude-mark-wing {
-  opacity: calc(0.75 * (1 - var(--graview-altitude)));
-}
-.graview-altitude-mark-wing[data-side="left"] {
-  transform: translate(calc(4.4px * var(--graview-altitude)), calc(-0.8px * var(--graview-altitude)));
-}
-.graview-altitude-mark-wing[data-side="right"] {
-  transform: translate(calc(-4.4px * var(--graview-altitude)), calc(-0.8px * var(--graview-altitude)));
-}
 
 ${/* A fine measure under the scene. Faint enough to feel like calibration
    rather than graph paper, and it fades out at the edges so the scene has no
@@ -557,6 +522,86 @@ ${/* The district-open control and its roster: altitude-only chrome. Inside
 ${/* The roster reads as a LIST, one member a row — chips wrapping at their
    own widths read as spilled tiles, and a district's population is a roll
    call, not a mosaic. */ ""}
+${/* A DRIVE-IN: a dark screen standing on the plot, and the showings under
+   it as a marquee of real buttons. Only from altitude; the same list the
+   places tabs carry, drawn where the pictures live. */ ""}
+.graview-drive-in {
+  ${/* Its own block under the nameplate, never a row inside the pill: the
+     pill is one line of name and count, and a marquee flattened into it
+     read as "12 • shown above The month The week". On a box the pill sits
+     on the roof at the top of the card, so the marquee hangs under it; on
+     a landmark the pill floats above the card, so the marquee takes the
+     card's own top edge. */ ""}
+  position: absolute;
+  left: 50%;
+  top: 42px;
+  transform: translateX(-50%);
+  z-index: ${SCENE_LAYERS.lines};
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  animation: graview-settle 240ms ease backwards;
+}
+[data-graview-landmark] .graview-drive-in {
+  top: 4px;
+}
+${/* THE SHOWINGS, BY NAME (FR-118): a column of names hanging off the
+   signpost's post, each whole and wrapped rather than cut, the one showing
+   now marked by the post's rule in the accent. Words on the ground, haloed
+   in the ground's color like the district's own name — no capsules, no
+   pictures drawn too small to read. */ ""}
+.graview-drive-in-marquee {
+  display: grid;
+  gap: ${MARQUEE_GAP}px;
+  width: ${MARQUEE_WIDTH}px;
+  justify-items: stretch;
+}
+.graview-drive-in-thumb {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  min-height: max(1.5rem, 24px);
+  padding: 3px 6px 3px 10px;
+  border-left: 2px solid var(--graview-edge-bright, var(--graview-edge));
+  color: var(--graview-ink);
+  font: inherit;
+  text-align: left;
+}
+.graview-drive-in-thumb[data-graview-pressed] {
+  border-left-color: var(--graview-accent);
+  color: var(--graview-accent);
+}
+${/* The press: the whole name, laid over it. */ ""}
+.graview-drive-in-thumb-press {
+  position: absolute;
+  inset: 0;
+  min-height: max(1.5rem, 24px);
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+.graview-drive-in-thumb-press:hover {
+  background: color-mix(in srgb, var(--graview-accent) 8%, transparent);
+}
+.graview-drive-in-thumb-press:focus-visible {
+  outline: 2px solid var(--graview-accent);
+  outline-offset: 1px;
+}
+.graview-drive-in-thumb-title {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  text-shadow: 0 0 3px var(--graview-ground), 0 0 6px var(--graview-ground);
+}
+.graview-drive-in-thumb[data-graview-pressed] .graview-drive-in-thumb-title {
+  font-weight: 600;
+}
 
 ${/* THE OTHERS: people and their agents in the city, each a small figure in
    the scene's own line vocabulary with a name under it. They move by a

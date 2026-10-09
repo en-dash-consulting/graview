@@ -136,8 +136,11 @@ export const BUDGETS = [
     // beside the app's places as the face opens, and the host's onKeepLens. 3_609 / 3_242 more. Measured at 539_301 / 189_328.
     // Raised by the pass after the seat: a design's shell drawn under the one bar, which hands the bar its Find, and the
     // seat's words across apps. 1_117 / 734 more. Measured at 540_418 / 190_062.
-    minified: 540_900,
-    gzipped: 190_500,
+    // Raised when a day came to be said as it is read in every sentence the framework writes and a record's facts, a choice as
+    // it is declared, and a date filter's day asked beside it with the browser's own date control: 695 / 388 more, less the
+    // altitude control's and the place tabs' rules, which left the frame's sheet. Measured at 541_113 / 190_450.
+    minified: 541_600,
+    gzipped: 190_900,
     load: "first",
   },
   {
@@ -416,9 +419,8 @@ export const BUDGETS = [
     // across apps (a day and a yes or no said, what an act still needs in its words). 2_180 / 972 more. Measured at 1_651_491 / 514_087.
     // Raised when the whole-page Shell and an embed came to wear one bar on the scene: the embed's scene face puts the scene's
     // Activity in the bar as the Shell does (what happened, the turns to take back, the seat's agent), and what the picture is
-    // doing on the picture; a day said as it is read in every sentence, and a date filter's day asked in place. The scene's
-    // drive-ins left the frame's sheet for the scene's, so a page's first load is smaller. 6_219 / 1_740 more. Measured at
-    // 1_657_710 / 515_827.
+    // doing on the picture; a day said as it is read in every sentence, and a date filter's day asked in place. The altitude
+    // control's rules and the place tabs' left the frame's sheet for their own, so a page's first load is no larger.
     minified: 1_658_200,
     gzipped: 516_300,
     load: "all",
