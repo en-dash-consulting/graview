@@ -29,6 +29,7 @@ import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./o
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
 import { validateGraph, type GraphFinding } from "./validate-graph.js";
 import { tellTheWatchItsNames, tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } from "./watched.js";
+import { pluralOf } from "./schema/define-node.js";
 
 export interface StoreOptions<S extends AnySchema> {
   readonly schema: S;
@@ -560,7 +561,7 @@ export class Store<S extends AnySchema> {
       names
         .map((name) => {
           const kinds = this.declaredModules?.[name]?.kinds ?? [];
-          return kinds.length > 0 ? kinds.map((kind) => this.schema.tryDefinition(kind)?.plural ?? kind).join(", ") : name;
+          return kinds.length > 0 ? kinds.map((kind) => pluralOf(this.schema, kind)).join(", ") : name;
         })
         .join(", ");
     const said = [off.length > 0 ? `Turn off ${named(off)}` : "", on.length > 0 ? `turn on ${named(on)}` : ""].filter(Boolean).join("; ");

@@ -1,4 +1,4 @@
-import { beginning, counted, providerCan, type AnySchema, type Beginning, type Principal, type Store } from "@graview/core";
+import { pluralLabel, pluralOf, beginning, counted, providerCan, type AnySchema, type Beginning, type Principal, type Store } from "@graview/core";
 import { kindCardId } from "@graview/layout/view";
 import {
   createViews,
@@ -254,7 +254,7 @@ function BeginInside<S extends AnySchema>({ whenFull, frame, title = "Begin", he
       <ol data-testid="begin" style={{ margin: 0, paddingLeft: markerRoom(chain.order.length), display: "grid", gap: 10 }}>
         {chain.order.map((entry) => {
           const has = counts[entry.kind] ?? 0;
-          const plural = store.schema.tryDefinition(entry.kind)?.plural ?? entry.kind;
+          const plural = pluralLabel(store.schema, entry.kind);
           const ready = entry.needs.every((needed) => (counts[needed] ?? 0) > 0);
           return (
             <li key={entry.kind} data-begin-kind={entry.kind} data-begin-ready={ready || undefined}>
@@ -271,7 +271,7 @@ function BeginInside<S extends AnySchema>({ whenFull, frame, title = "Begin", he
               ) : (
                 <div style={{ fontSize: "0.875rem", ...MUTED_TEXT }}>
                   {/* Only what is still missing: "waiting for Showrooms and Cars" was said beside 4 showrooms and 340 cars. */}
-                  Waiting for {entry.needs.filter((kind) => (counts[kind] ?? 0) === 0).map((kind) => store.schema.tryDefinition(kind)?.plural ?? kind).join(" and ")}.
+                  Waiting for {entry.needs.filter((kind) => (counts[kind] ?? 0) === 0).map((kind) => pluralOf(store.schema, kind)).join(" and ")}.
                 </div>
               )}
             </li>

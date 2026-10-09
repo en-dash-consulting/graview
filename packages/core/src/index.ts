@@ -263,7 +263,7 @@ export {
   isoDate,
 } from "./temporal/effectivity.js";
 export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
-export { article, counted, edgeWords, fieldWords, humanizeField, isLongText, nounOf, pageSections, readableFields, summarize, valueWords, withArticle } from "./schema/define-node.js";
+export { actTitle, article, counted, pluralLabel, pluralOf, edgeWords, fieldWords, humanizeField, isLongText, nounOf, pageSections, readableFields, summarize, valueWords, withArticle } from "./schema/define-node.js";
 export { dayAsRead, daysAsRead } from "./days.js";
 export type { FieldSection } from "./schema/define-node.js";
 export type { ReadableField } from "./schema/define-node.js";
@@ -315,7 +315,7 @@ export type {
 } from "./store.js";
 
 // Views — the cardinality x fidelity matrix.
-export { createViewRegistry, FIDELITIES, placeSlug } from "./views/types.js";
+export { createViewRegistry, FIDELITIES, kindPath, placePath, placeSlug, recordPath, sharesItsName } from "./views/types.js";
 // Declared lenses that draw (FR-79), the arrangement (FR-80) and every place an app has.
 export {
   SHIPPED_LENSES,
@@ -330,6 +330,7 @@ export {
   OVERVIEW_SLUG,
   pagesTitle,
   sceneTitle,
+  placesFrom,
   placesOf,
   requiredRolesOf,
 } from "./places.js";

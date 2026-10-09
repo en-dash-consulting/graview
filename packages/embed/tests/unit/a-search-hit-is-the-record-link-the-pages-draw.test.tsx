@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-import { createSchema, defineApp, defineNode, search, Store, z, type Hit, type Principal } from "@graview/core";
+import { createSchema, defineApp, defineNode, pluralLabel, search, Store, z, type Hit, type Principal } from "@graview/core";
 import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { mount, type PagesEmbedHandle, type PagesEmbedOptions } from "../../src/pages.js";
@@ -81,7 +81,8 @@ describe("a search hit's address is the routed face's own record link", () => {
       const listHit = search(store, plural, { basePath: BASE }).hits.find((hit) => hit.about === "kind" && hit.kind === kind) as Extract<Hit, { about: "kind" }>;
       expect(listHit, kind).toBeDefined();
       const host = await pagesAt(listHit.address);
-      expect(host.querySelector("[data-graview-page-title]")?.textContent?.trim(), kind).toBe(plural);
+      // Titled as a label (`pluralLabel`): "Shelf items" for a kind with none declared.
+      expect(host.querySelector("[data-graview-page-title]")?.textContent?.trim(), kind).toBe(pluralLabel(schema, kind));
       const links = recordLinks(host, listHit.address).sort();
       const addresses = records.map((node) => nodeHits(search(store, node.label, { basePath: BASE }).hits).find((hit) => hit.id === node.id)!.address).sort();
       expect(links, kind).toEqual(addresses);

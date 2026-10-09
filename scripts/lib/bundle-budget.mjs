@@ -283,8 +283,12 @@ export const BUDGETS = [
     // places, the host's onKeepLens, a drawn view held with the conversation. Measured at 712_201 / 186_467.
     // Lowered by the cleanup after the seat: the scene's own rules left the frame's sheet for the scene face's, as the pages
     // face's did. 9_527 / 1_765 fewer. Measured at 702_947 / 184_886.
-    minified: 703_400,
-    gzipped: 185_300,
+    // Raised by the small truths after the cleanup, over main at 703_342 / 184_990: an address and a plural each said by one
+    // rule in core, the keyboard's landing asking only while its window is open. 233 / 216 more. Measured at 703_575 / 185_206.
+    // And by a press on a control while the keyboard is nowhere landing it when the control goes (Firefox and Safari on
+    // macOS focus no button on click), and a plural standing alone as a label: 325 / 64 more. Measured at 703_900 / 185_270.
+    minified: 704_200,
+    gzipped: 185_500,
     load: "first",
     lacks: ["@graview/studio"],
   },

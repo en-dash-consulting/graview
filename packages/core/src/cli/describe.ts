@@ -6,10 +6,11 @@ import { cityMap, roadsOf } from "../city.js";
 import { deriveMutations } from "../mutations/derive-edits.js";
 import type { AnySchema } from "../schema/schema.js";
 import { hueFor } from "../theme/derive.js";
-import { withArticle } from "../schema/define-node.js";
+import { pluralOf, withArticle } from "../schema/define-node.js";
 import { declaredLenses, isShippedLens, placesOf } from "../places.js";
 import { columnReach } from "../columns.js";
 import { computedOf } from "../document/computed.js";
+import { placePath } from "../views/types.js";
 
 /**
  * WHAT THIS APP IS, READ OUT — the rung between `check` and a browser.
@@ -126,7 +127,7 @@ export function describeApp<S extends AnySchema>(
       `${lensesDeclared.drawn.length} declared ${lensesDeclared.drawn.length === 1 ? "lens draws" : "lenses draw"} as places, with no view of the app's own: ${list(
         lensesDeclared.drawn.map((lens) => {
           const at = everywhere.find((place) => place.slug === lens.as && place.kind === lens.kinds[0]);
-          return `"${lens.title}" (the ${lens.lens} over ${list(lens.kinds.map((kind) => app.schema.tryDefinition(kind)?.plural ?? `${kind}s`))}${lens.across ? ` across ${app.schema.tryDefinition(lens.across)?.plural ?? `${lens.across}s`}` : ""}, at ${at?.address ?? `/places/${lens.as}`})`;
+          return `"${lens.title}" (the ${lens.lens} over ${list(lens.kinds.map((kind) => pluralOf(app.schema, kind)))}${lens.across ? ` across ${pluralOf(app.schema, lens.across)}` : ""}, at ${at?.address ?? placePath(lens.as)})`;
         }),
       )}.`,
     );

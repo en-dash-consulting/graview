@@ -228,12 +228,14 @@ export function ChatPanel<S extends AnySchema>({
       /* The places this seat may go to, and where it stands: what "go to The week" and "here" are read against. */
       const { placesFromViews } = await import("@graview/tools/go");
       const here = place ?? view.within?.["view"];
+      const arranged = views.arrangement?.();
       const today = store.today();
       return answer(store, text, {
         ...context,
         selection: subject.id ? [subject.id] : selection,
         principal: { ...author, ...(principal.roles ? { roles: principal.roles } : {}) },
-        places: placesFromViews(store.schema, views.places()),
+        // Arranged as the bar arranges them, the scene called what the bar calls it.
+        places: placesFromViews(store.schema, views.places(), arranged ? { pages: arranged } : {}),
         ...(here ? { place: here } : {}),
         ...(today ? { today } : {}),
       });

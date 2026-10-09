@@ -1,4 +1,4 @@
-import { placeSlug, type AnySchema } from "@graview/core";
+import { kindPath, placePath, placeSlug, pluralLabel, sharesItsName, type AnySchema } from "@graview/core";
 import { useGraview, type KeepLensAnswer, type SeatKept } from "@graview/react/provider";
 import type { SeatMove } from "@graview/tools";
 import type { AddLensEdit, SeatDraft } from "@graview/tools/draft";
@@ -81,7 +81,6 @@ export function useLensKeeping(go: (move: SeatMove) => void): LensKeeping {
   const { store, views, brand, seatTalk, onKeepLens } = useGraview<AnySchema>();
   const board = useContext(NoticeBoardContext);
   const app = appKeyOf(brand, store.schema);
-  const plural = (kind: string) => (store.schema.tryDefinition(kind)?.plural as string | undefined) ?? `${kind}s`;
 
   const takeBack = async (kept: SeatKept): Promise<void> => {
     const { edit } = kept;
@@ -100,8 +99,8 @@ export function useLensKeeping(go: (move: SeatMove) => void): LensKeeping {
       { role: "seat" as const, text: `Took “${edit.title}” back out of the places.` },
     ]);
     // Wherever the reader stood, the place is gone: its kind's own list is the nearest place that is not.
-    const title = plural(edit.on);
-    go({ to: "kind", kind: edit.on, title, address: `/${placeSlug(title)}`, said: `Went to ${title}.` });
+    const title = pluralLabel(store.schema, edit.on);
+    go({ to: "kind", kind: edit.on, title, address: kindPath(store.schema, edit.on), said: `Went to ${title}.` });
   };
 
   const keep = async (draft: SeatDraft): Promise<void> => {
@@ -118,7 +117,8 @@ export function useLensKeeping(go: (move: SeatMove) => void): LensKeeping {
     }
     if (!written) keepReaderLens(app, lensOf(edit));
     registerLensPlaces(views, store.schema, [lensOf(edit)]);
-    const place = views.places().find((one) => one.title === title);
+    const places = views.places();
+    const place = places.find((one) => one.title === title);
     const sentence =
       said ??
       (written
@@ -131,7 +131,7 @@ export function useLensKeeping(go: (move: SeatMove) => void): LensKeeping {
     seatTalk.setTurns((turns) => [...turns, { role: "seat" as const, text: sentence, kept }]);
     // Said once: in the open conversation, with its Take back; else in a notice (FR-133), never both over each other.
     if (!seatTalk.get().open) board?.notify({ kind: "toast", id: `kept:${title}`, sentence, action: { label: "Take back", onSelect: () => void takeBack(kept) } });
-    if (place) go({ to: "picture", kind: place.kind, as: place.as, title, address: `/places/${encodeURIComponent(place.as)}`, said: `Went to ${title}.` });
+    if (place) go({ to: "picture", kind: place.kind, as: place.as, title, address: placePath(place.as, sharesItsName(place, places) ? kindPath(store.schema, place.kind).slice(1) : undefined), said: `Went to ${title}.` });
   };
 
   return { keep, takeBack };
