@@ -8,17 +8,16 @@
  * "was due 2026-08-28" on the bar while its card says "28 Aug 2026".
  */
 
-const MONTH_WORDS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
+/** The months' words, three letters each, in order. */
+const MONTH_WORDS = "JanFebMarAprMayJunJulAugSepOctNovDec";
 
 /** A day as the record holds it: `YYYY-MM-DD`, nothing before or after. */
 export const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 /** A `YYYY-MM-DD` day as a person reads it: "28 Aug 2026". Anything else is said as it is. */
 export function dayAsRead(day: string): string {
-  if (!ISO_DAY.test(day)) return day;
-  const [year, month, date] = day.split("-").map(Number) as [number, number, number];
-  const word = MONTH_WORDS[month - 1];
-  return word && date >= 1 && date <= 31 ? `${date} ${word} ${year}` : day;
+  const month = ISO_DAY.test(day) ? MONTH_WORDS.slice(+day.slice(5, 7) * 3 - 3, +day.slice(5, 7) * 3) : "";
+  return month ? `${+day.slice(8)} ${month} ${day.slice(0, 4)}` : day;
 }
 
 /*

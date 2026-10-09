@@ -12,7 +12,6 @@ export {
   AgentSeat,
   AnswerArgs,
   BackOut,
-  Backtrack,
   Inspector,
   nameOf,
   OverviewButton,
@@ -79,7 +78,6 @@ export {
   useSeatConversation,
 } from "./seat.js";
 export type { SeatAnswer, SeatOutcome, SeatTurn } from "./seat.js";
-export { Wordmark } from "./wordmark.js";
 export { GraviewMark } from "./graview-mark.js";
 export { AppMark, AppTitle, useFavicon } from "./app-title.js";
 export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, FEWEST_STANDING, HOME_KEY, HOME_PATH, PLACE_GAP, placesThatStand, TOOL, toolStyle, useBarFind } from "./app-bar.js";

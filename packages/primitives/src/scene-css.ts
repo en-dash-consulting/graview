@@ -1,5 +1,6 @@
 import type { IsoFace, IsoWash, Scheme } from "@graview/core";
 import { isoShade, layer, SCENE_LAYERS } from "@graview/core";
+import { MARQUEE_GAP, MARQUEE_WIDTH } from "@graview/layout/view";
 import { baseSheet, GRAVIEW_BRAND, withinTheBox, type Brand, type ThemeCssOptions } from "./theme.js";
 import { SPEC_VIEW_CSS } from "./spec-css.js";
 
@@ -24,6 +25,86 @@ const wash = (f: IsoWash): string => `${face(f)} / ${f.alpha}`;
 function sceneSheet(scheme: Scheme): string {
   const iso = isoShade(scheme);
   return `
+${/* A DRIVE-IN: a dark screen standing on the plot, and the showings under
+   it as a marquee of real buttons. Only from altitude; the same list the
+   places tabs carry, drawn where the pictures live. */ ""}
+.graview-drive-in {
+  ${/* Its own block under the nameplate, never a row inside the pill: the
+     pill is one line of name and count, and a marquee flattened into it
+     read as "12 • shown above The month The week". On a box the pill sits
+     on the roof at the top of the card, so the marquee hangs under it; on
+     a landmark the pill floats above the card, so the marquee takes the
+     card's own top edge. */ ""}
+  position: absolute;
+  left: 50%;
+  top: 42px;
+  transform: translateX(-50%);
+  z-index: ${SCENE_LAYERS.lines};
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  animation: graview-settle 240ms ease backwards;
+}
+[data-graview-landmark] .graview-drive-in {
+  top: 4px;
+}
+${/* THE SHOWINGS, BY NAME (FR-118): a column of names hanging off the
+   signpost's post, each whole and wrapped rather than cut, the one showing
+   now marked by the post's rule in the accent. Words on the ground, haloed
+   in the ground's color like the district's own name — no capsules, no
+   pictures drawn too small to read. */ ""}
+.graview-drive-in-marquee {
+  display: grid;
+  gap: ${MARQUEE_GAP}px;
+  width: ${MARQUEE_WIDTH}px;
+  justify-items: stretch;
+}
+.graview-drive-in-thumb {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  min-height: max(1.5rem, 24px);
+  padding: 3px 6px 3px 10px;
+  border-left: 2px solid var(--graview-edge-bright, var(--graview-edge));
+  color: var(--graview-ink);
+  font: inherit;
+  text-align: left;
+}
+.graview-drive-in-thumb[data-graview-pressed] {
+  border-left-color: var(--graview-accent);
+  color: var(--graview-accent);
+}
+${/* The press: the whole name, laid over it. */ ""}
+.graview-drive-in-thumb-press {
+  position: absolute;
+  inset: 0;
+  min-height: max(1.5rem, 24px);
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+.graview-drive-in-thumb-press:hover {
+  background: color-mix(in srgb, var(--graview-accent) 8%, transparent);
+}
+.graview-drive-in-thumb-press:focus-visible {
+  outline: 2px solid var(--graview-accent);
+  outline-offset: 1px;
+}
+.graview-drive-in-thumb-title {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  text-shadow: 0 0 3px var(--graview-ground), 0 0 6px var(--graview-ground);
+}
+.graview-drive-in-thumb[data-graview-pressed] .graview-drive-in-thumb-title {
+  font-weight: 600;
+}
 [data-graview-altitude] .graview-kind-card {
   overflow: visible;
 }

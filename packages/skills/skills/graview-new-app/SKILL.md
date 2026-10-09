@@ -77,9 +77,9 @@ drag a UI package into the checker.
      say "+N past".
    - `subject: { kinds, arg }` on every mutation that acts on a thing.
 
-5. **Take the shell.** `Inspector`, `Standing`, `ActivityRail`, `ChatPanel`,
-   `QuickRelations`, `RelationKey`, `BackOut`, `Trail`, `OverviewButton` and
-   `Wordmark` from `@graview/primitives` are the parts of an interface that
+5. **Take the shell.** `Shell` — or `AppBar`, `Inspector`, `Standing`,
+   `ActivityRail`, `ChatPanel`, `QuickRelations`, `RelationKey`, `BackOut`,
+   `Trail` and `OverviewButton` from `@graview/primitives` — are the parts of an interface that
    are not about your domain — including a chat seat that answers from the
    graph with no API key. A shell is about eighty lines; if yours is longer,
    you are probably rebuilding something derived.

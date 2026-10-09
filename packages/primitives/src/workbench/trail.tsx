@@ -1,70 +1,15 @@
 import type { AnySchema } from "@graview/core";
 import { withoutMoves, withPast, withZoom } from "@graview/layout/view";
-import { useBacktrack, useGraview, useNavigation } from "@graview/react/provider";
+import { useGraview, useNavigation } from "@graview/react/provider";
 import { Fragment, type ReactNode } from "react";
 import { nameOf } from "./answer-args.js";
 
 
 /**
  * Where you are, and the way back. The view used to be printed as a raw URL
- * fragment; the same information reads as a trail.
+ * fragment; the same information reads as a trail. Back and forward are the
+ * browser's own: every stop is a URL, and the bar no longer draws them again.
  */
-/**
- * Back and forward, because every stop here is a URL.
- *
- * Traveling into a task changes `focusId`, which changes the address, which
- * means the browser's own back button already works — and that is exactly the
- * problem: the person using the app has to KNOW that its navigation is the
- * browser's. On a screen you reached by double-clicking, the only way out was
- * a breadcrumb crumb or a keyboard shortcut nobody was told about.
- *
- * Disabled rather than hidden at the ends of the history, so the control does
- * not appear and disappear as you move — and never enabled when there is
- * nowhere to go, since an arrow that does nothing is worse than no arrow.
- */
-export function Backtrack() {
-  const { canGoBack, canGoForward, back, forward } = useBacktrack();
-  // Ghost buttons: the way back is furniture, not a call to action.
-  const style = {
-    minWidth: 30,
-    height: 30,
-    display: "inline-grid",
-    placeItems: "center",
-    padding: "0 8px",
-    fontSize: "0.9375rem",
-    lineHeight: 1,
-    borderRadius: 999,
-    border: "1px solid transparent",
-    background: "transparent",
-    boxShadow: "none",
-    color: "var(--graview-ink-muted)",
-  } as const;
-  return (
-    <div style={{ display: "inline-flex", gap: 2 }} data-testid="backtrack">
-      <button
-        type="button"
-        onClick={back}
-        disabled={!canGoBack}
-        aria-label="Back"
-        title="Back"
-        style={style}
-      >
-        ←
-      </button>
-      <button
-        type="button"
-        onClick={forward}
-        disabled={!canGoForward}
-        aria-label="Forward"
-        title="Forward"
-        style={style}
-      >
-        →
-      </button>
-    </div>
-  );
-}
-
 export function Trail({
   home,
   homeLabel,

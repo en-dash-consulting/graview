@@ -414,8 +414,13 @@ export const BUDGETS = [
     // taking back, and the moves made by each face. Measured at 1_649_311 / 513_115.
     // Raised by the pass after the seat: a design's shell under the one bar, the first picture a cut, the seat's words
     // across apps (a day and a yes or no said, what an act still needs in its words). 2_180 / 972 more. Measured at 1_651_491 / 514_087.
-    minified: 1_652_000,
-    gzipped: 514_600,
+    // Raised when the whole-page Shell and an embed came to wear one bar on the scene: the embed's scene face puts the scene's
+    // Activity in the bar as the Shell does (what happened, the turns to take back, the seat's agent), and what the picture is
+    // doing on the picture; a day said as it is read in every sentence, and a date filter's day asked in place. The scene's
+    // drive-ins left the frame's sheet for the scene's, so a page's first load is smaller. 6_219 / 1_740 more. Measured at
+    // 1_657_710 / 515_827.
+    minified: 1_658_200,
+    gzipped: 516_300,
     load: "all",
   },
   {
@@ -485,8 +490,10 @@ export const BUDGETS = [
     // Raised with the pages face's when the seat came to take you where you ask and draw a view kept as a lens. Measured at
     // 1_552_767 / 473_850.
     // Raised with the pages face's by the pass after the seat: 1_619 / 766 more. Measured at 1_554_386 / 474_616.
-    minified: 1_554_900,
-    gzipped: 475_100,
+    // Raised with every face's when the whole-page Shell and an embed came to wear one bar on the scene: 6_097 / 1_672 more.
+    // Measured at 1_560_483 / 476_288.
+    minified: 1_561_000,
+    gzipped: 476_800,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

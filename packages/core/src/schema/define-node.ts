@@ -152,7 +152,7 @@ export interface ReadableField {
   readonly stored: string;
   /**
    * The value as it reads WITHOUT its label beside it — on a chip, in a
-   * list line, on a card at summary. A word says what it is ("released");
+   * list line, on a card at summary. A word says what it is ("Released");
    * a number or a yes/no does not, so it carries the label: "Track 8",
    * "Length 4:27", "Explicit: yes". A song's card read "8 · 4:27 · Yes",
    * which is three facts and no sentence.

@@ -26,7 +26,8 @@ export type { ZodDef } from "./schema/zod.js";
 
 // Schema — the single declaration everything else derives from.
 export { defineNode, isCurrent, labelOf, describeNode, tellApart } from "./schema/define-node.js";
-export { nameOfAuthor, viaSaid } from "./who.js";
+export { nameOfAuthor } from "./who.js";
+export { viaSaid } from "./via.js";
 export type { Person } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";
 export type {

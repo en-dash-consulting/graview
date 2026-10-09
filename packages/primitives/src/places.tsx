@@ -28,6 +28,11 @@ import { VISUALLY_HIDDEN } from "./primitives/index.js";
  * than cutting a name or hiding it behind a press. Every name is whole,
  * everywhere, and the place you are on is scrolled into view.
  */
+const PLACE_TAB_CSS = `.graview-places::-webkit-scrollbar{display:none}
+.graview-place-tab:hover{color:var(--graview-ink)!important;border-bottom-color:var(--graview-edge-bright,var(--graview-edge))!important}
+.graview-place-tab[aria-pressed="true"]:hover{border-bottom-color:var(--graview-accent)!important}
+.graview-place-tab:focus-visible{outline:2px solid var(--graview-accent);outline-offset:-2px}`;
+
 export function Places<S extends AnySchema>({ compact = false }: { compact?: boolean } = {}) {
   const { views, hiddenKinds } = useGraview<S>();
   const { view, go } = useNavigation();
@@ -119,6 +124,14 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
       }}
       data-graview-more={more || undefined}
     >
+      {/*
+        * THE TABS' OWN RULES (FR-117): the place you are on underlined, the
+        * others the ink's quieter shade until reached for; a row longer than
+        * its room scrolls, with no bar drawn under it. With the row, not in
+        * the theme every page carries: the app bar holds an app's places
+        * now, and only a surface that draws this row pays for its rules.
+        */}
+      <style>{PLACE_TAB_CSS}</style>
       {/* A heading for the region (FR-25), named as its landmark is; out of the row's flow. */}
       <h2 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>Places</h2>
       {places.map((place) => {
