@@ -222,12 +222,14 @@ export function counted(schema: { tryDefinition(kind: string): { readonly noun?:
 }
 
 /**
- * WHAT A KIND'S RECORDS ARE CALLED TOGETHER: its declared plural, else its
- * name with an "s" — the word the routed face's lists are titled and
- * addressed by, so every surface that says a kind's many says the same.
+ * WHAT A KIND'S RECORDS ARE CALLED TOGETHER, inside a sentence: its
+ * declared plural, else its name in words with an "s" — "shelf items" for
+ * `shelfItem`, split as `humanizeField` splits a name. Every surface that
+ * says a kind's many says the same. A label is `pluralLabel`; an address is
+ * `kindPath`, which keeps the name as written.
  */
 export function pluralOf(schema: { tryDefinition(kind: string): { readonly plural?: string } | undefined }, kind: string): string {
-  return schema.tryDefinition(kind)?.plural ?? `${kind}s`;
+  return schema.tryDefinition(kind)?.plural ?? `${humanizeField(kind).toLowerCase()}s`;
 }
 
 /**

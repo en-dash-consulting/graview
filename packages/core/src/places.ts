@@ -2,7 +2,7 @@ import type { GraviewApp, LensDeclaration } from "./app.js";
 import { parseArrangement } from "./arrangement.js";
 import { defOf } from "./schema/zod.js";
 import type { AnySchema } from "./schema/schema.js";
-import { pluralOf } from "./schema/define-node.js";
+import { pluralLabel } from "./schema/define-node.js";
 import { kindPath, placePath, placeSlug, sharesItsName, type Place } from "./views/types.js";
 
 /**
@@ -349,7 +349,7 @@ export function openingOf(first: string | undefined, schema: AnySchema, places: 
   const place = places.find((one) => one.title === word) ?? places.find((one) => one.as === slug);
   if (place) return { to: "place", place };
   const kinds = schema.kinds as readonly string[];
-  const kind = kinds.find((one) => one === word) ?? kinds.find((one) => placeSlug(pluralOf(schema, one)) === slug);
+  const kind = kinds.find((one) => one === word) ?? kinds.find((one) => kindPath(schema, one).slice(1) === slug);
   return kind ? { to: "kind", kind } : undefined;
 }
 
@@ -476,17 +476,16 @@ export function placesFrom(
       title: place.title,
       kind: place.kind,
       cardinality: "many",
-      address: placePath(place.as, shared ? placeSlug(pluralOf(schema, place.kind)) : undefined),
+      address: placePath(place.as, shared ? kindPath(schema, place.kind).slice(1) : undefined),
       stop: shared ? `#focus=aggregate:${place.kind}&in.view=${encodeURIComponent(place.as)}` : `#view=${encodeURIComponent(place.as)}`,
       ...(lens ? { lens: lens.lens } : {}),
       ...(opening?.to === "place" && opening.place.kind === place.kind && opening.place.as === place.as ? { first: true } : {}),
     });
   }
   for (const kind of kinds) {
-    const plural = pluralOf(schema, kind);
     out.push({
-      slug: placeSlug(plural),
-      title: plural,
+      slug: kindPath(schema, kind).slice(1),
+      title: pluralLabel(schema, kind),
       kind,
       cardinality: "many",
       address: kindPath(schema, kind),

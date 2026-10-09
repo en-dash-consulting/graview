@@ -1,6 +1,5 @@
 import type { AnySchema, KindOfSchema } from "../schema/schema.js";
 import type { PagesArrangement } from "../places.js";
-import { pluralOf } from "../schema/define-node.js";
 
 /** One node, or a group of them standing in for a kind. */
 export type Cardinality = "one" | "many";
@@ -86,9 +85,13 @@ export function placeSlug(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-/** A kind's list on the routed face: `/<its plural, as a slug>`. */
+/**
+ * A kind's list on the routed face: `/<its plural, as a slug>` — the
+ * declared plural, else the kind's name as written and an "s", so a route
+ * does not move when the words a kind is said in do.
+ */
 export function kindPath(schema: { tryDefinition(kind: string): { readonly plural?: string } | undefined }, kind: string): string {
-  return `/${placeSlug(pluralOf(schema, kind))}`;
+  return `/${placeSlug(schema.tryDefinition(kind)?.plural ?? `${kind}s`)}`;
 }
 
 /** One record's page on the routed face: its kind's list, then its id, encoded. */

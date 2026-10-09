@@ -1,4 +1,4 @@
-import { pluralOf, addressOf, OVERVIEW_PATH, pathWithin, placeSlug, type AnySchema, type GraviewApp, type Place, type Store } from "@graview/core";
+import { addressOf, kindPath, OVERVIEW_PATH, pathWithin, type AnySchema, type GraviewApp, type Place, type Store } from "@graview/core";
 import { aggregateId, AGGREGATE_PREFIX, fromUrl, kindOfCard, toUrl, withFocus, type ViewState } from "@graview/layout/view";
 import { faceAtAddress, stopAtAddress } from "./address.js";
 import type { EmbedProps } from "./embed.js";
@@ -21,7 +21,7 @@ export interface EmbedWhere {
   readonly kind?: string;
 }
 
-const slugOf = (schema: AnySchema, kind: string) => placeSlug(pluralOf(schema, kind));
+const slugOf = (schema: AnySchema, kind: string) => kindPath(schema, kind).slice(1);
 
 /** Whether one of the app's own routes (`/survey`, `/desk/:id`) answers a path. */
 function answers(route: string, parts: readonly string[]): boolean {

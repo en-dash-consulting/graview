@@ -1,4 +1,4 @@
-import { placePath as placePathOf, placeSlug, pluralOf, recordPath as recordPathOf } from "@graview/core";
+import { kindPath, placePath as placePathOf, recordPath as recordPathOf } from "@graview/core";
 import type { AnySchema, KindOfSchema } from "@graview/core";
 import type { ComponentType, ReactNode } from "react";
 import type { PageContext } from "./page-context.js";
@@ -148,7 +148,7 @@ export function createPageRegistry<S extends AnySchema, P = ComponentType<never>
  * depends on registration order is a route nobody can link to.
  */
 export function pluralSlug(schema: AnySchema, kind: string): string {
-  return placeSlug(pluralOf(schema, kind));
+  return kindPath(schema, kind).slice(1);
 }
 
 /** kind ← slug, the other direction of `pluralSlug`. */

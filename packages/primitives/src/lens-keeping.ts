@@ -1,4 +1,4 @@
-import { pluralLabel, kindPath, placePath, placeSlug, pluralOf, sharesItsName, type AnySchema } from "@graview/core";
+import { kindPath, placePath, placeSlug, pluralLabel, sharesItsName, type AnySchema } from "@graview/core";
 import { useGraview, type KeepLensAnswer, type SeatKept } from "@graview/react/provider";
 import type { SeatMove } from "@graview/tools";
 import type { AddLensEdit, SeatDraft } from "@graview/tools/draft";
@@ -81,7 +81,6 @@ export function useLensKeeping(go: (move: SeatMove) => void): LensKeeping {
   const { store, views, brand, seatTalk, onKeepLens } = useGraview<AnySchema>();
   const board = useContext(NoticeBoardContext);
   const app = appKeyOf(brand, store.schema);
-  const plural = (kind: string) => pluralOf(store.schema, kind);
 
   const takeBack = async (kept: SeatKept): Promise<void> => {
     const { edit } = kept;
@@ -132,7 +131,7 @@ export function useLensKeeping(go: (move: SeatMove) => void): LensKeeping {
     seatTalk.setTurns((turns) => [...turns, { role: "seat" as const, text: sentence, kept }]);
     // Said once: in the open conversation, with its Take back; else in a notice (FR-133), never both over each other.
     if (!seatTalk.get().open) board?.notify({ kind: "toast", id: `kept:${title}`, sentence, action: { label: "Take back", onSelect: () => void takeBack(kept) } });
-    if (place) go({ to: "picture", kind: place.kind, as: place.as, title, address: placePath(place.as, sharesItsName(place, places) ? placeSlug(plural(place.kind)) : undefined), said: `Went to ${title}.` });
+    if (place) go({ to: "picture", kind: place.kind, as: place.as, title, address: placePath(place.as, sharesItsName(place, places) ? kindPath(store.schema, place.kind).slice(1) : undefined), said: `Went to ${title}.` });
   };
 
   return { keep, takeBack };
