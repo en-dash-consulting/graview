@@ -34,5 +34,6 @@ export { FOOT_MOVED, FOOT_OBSTACLES, NARROW_PICTURE, placeAtTheFoot, placeAtTheT
 // The seat: the ask field at the foot of the face, its panel fetched when it is first opened.
 export { SeatField } from "./seat-field.js";
 export { DraftDoor } from "./draft-door.js";
-export { appKeyOf, registerReaderLenses } from "./reader-lenses.js";
+export { appKeyOf } from "./reader-lenses.js";
+export { registerReaderLenses } from "./declared-lens-doors.js";
 export type { SeatFieldProps, SeatStart } from "./seat-field.js";

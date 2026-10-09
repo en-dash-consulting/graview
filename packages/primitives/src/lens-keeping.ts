@@ -22,8 +22,9 @@ import type { ReactViewRegistry } from "@graview/react/provider";
  * writes a declaration.
  *
  * Take back is the inverse: the `remove-lens` edit to the host, or the
- * reader's own lens dropped, and the place gone. It is offered in a notice
- * (FR-133) where the app has a board, and in the conversation where not.
+ * reader's own lens dropped, and the place gone. The conversation keeps it
+ * under the line that says the lens was kept; with the seat put away, a
+ * notice (FR-133) says it too, where the app has a board.
  */
 
 function write(app: string, lenses: readonly KeptLens[]): void {
@@ -128,7 +129,8 @@ export function useLensKeeping(go: (move: SeatMove) => void): LensKeeping {
     const kept: SeatKept = { edit, written };
     seatTalk.setDraft(null);
     seatTalk.setTurns((turns) => [...turns, { role: "seat" as const, text: sentence, kept }]);
-    board?.notify({ kind: "toast", id: `kept:${title}`, sentence, action: { label: "Take back", onSelect: () => void takeBack(kept) } });
+    // Said once: in the open conversation, with its Take back; else in a notice (FR-133), never both over each other.
+    if (!seatTalk.get().open) board?.notify({ kind: "toast", id: `kept:${title}`, sentence, action: { label: "Take back", onSelect: () => void takeBack(kept) } });
     if (place) go({ to: "picture", kind: place.kind, as: place.as, title, address: `/places/${encodeURIComponent(place.as)}`, said: `Went to ${title}.` });
   };
 

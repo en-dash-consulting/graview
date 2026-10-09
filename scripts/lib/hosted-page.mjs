@@ -133,8 +133,19 @@ export const FACE_DOORS = {
  * draws is 28 KB smaller for the rail that left it. The claim rises by that
  * with about 0.2 KB of room: 585.0 KB, which leaves Cloud's shell 10 KB
  * under its 595.
+ * The seat taking you where you ask and drawing a view kept as a lens took
+ * it to 600 716 bytes (586.6 KB), 1 858 more over the resolver's and the
+ * drafting engine's own branches (598 858): the lenses a reader kept,
+ * laid beside the app's own places as a face opens (`reader-lenses.ts`, a
+ * place registered `beside` and taken away again in the view registry),
+ * the host's `onKeepLens` carried by the provider, a drawn view held with
+ * the conversation, and the day the app is pinned to (`Store.today`). The
+ * frame a view is drawn in, the resolver, the drafting engine and keeping
+ * are fetched when asked, and `@graview/tools/keep` never. The claim rises
+ * by that with about 0.2 KB of room: 586.8 KB, which leaves Cloud's shell
+ * 8.2 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 585 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 586.8 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -231,8 +242,11 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * took it to 551 873 bytes (538.9 KB): 539.0 KB.
  * The seat floating and quiet, the same 1 303 bytes as the page that
  * compiles, took it to 553 176 bytes (540.2 KB): 540.4 KB.
+ * The seat taking you where you ask and drawing a view kept as a lens, the
+ * same reader's lenses and host's keeping as the page that compiles, took
+ * it to 555 091 bytes (542.1 KB): 542.2 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 540.4 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 542.2 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

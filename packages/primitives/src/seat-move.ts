@@ -45,6 +45,12 @@ export function sceneMove(state: ViewState, move: SeatMove): SceneMove {
   }
 }
 
+/** The standing's problems, opened or put away as a press on it would. */
+export function problemsShown(shown: boolean): void {
+  const standing = typeof document === "undefined" ? null : document.querySelector<HTMLButtonElement>('[data-testid="standing"]');
+  if (standing && (standing.getAttribute("aria-expanded") === "true") !== shown) standing.click();
+}
+
 /**
  * THE SCENE MAKES A SEAT'S MOVE: a stop set through the provider (so the
  * address follows it and Back walks out of it), or the problems opened at
@@ -56,12 +62,9 @@ export function useSceneGo(): (move: SeatMove) => void {
   return useCallback(
     (move: SeatMove) => {
       if (seatTalk.get().draft) seatTalk.setDraft(null);
-      if (move.to === "problems") {
-        // The standing is the scene's list of problems: opened as a press would open it.
-        const standing = document.querySelector<HTMLButtonElement>('[data-testid="standing"]');
-        if (standing && standing.getAttribute("aria-expanded") !== "true") standing.click();
-        return;
-      }
+      // The standing is the scene's list of problems: opened as a press would open it, and put away when the seat goes elsewhere.
+      problemsShown(move.to === "problems");
+      if (move.to === "problems") return;
       setView((state) => {
         const made = sceneMove(state, move);
         return "view" in made ? made.view : state;

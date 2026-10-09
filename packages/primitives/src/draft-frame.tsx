@@ -6,7 +6,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { LINK } from "./chat.js";
 import { declaredLensView } from "./declared-lenses.js";
 import { useLensKeeping } from "./lens-keeping.js";
-import { useSceneGo } from "./seat-move.js";
+import { problemsShown, useSceneGo } from "./seat-move.js";
 
 /**
  * A VIEW THE SEAT DREW, IN PLACE OF THE PICTURE — fetched when the seat
@@ -44,6 +44,10 @@ export function DraftFrame({ page = false, go, onPick, onDiscard }: DraftFramePr
   const draft = talk.draft;
   // A draft that was kept or put away while a press was on its way: the press is over.
   useEffect(() => setKeeping(false), [draft]);
+  // Over the scene, the view is what the reader asked to see: a list of problems left open over it is put away.
+  useEffect(() => {
+    if (!page) problemsShown(false);
+  }, [page]);
   if (!draft) return null;
   const View = declaredLensView(draft.drawn);
   const definition = store.schema.tryDefinition(draft.kind);
@@ -100,7 +104,7 @@ export function DraftFrame({ page = false, go, onPick, onDiscard }: DraftFramePr
       <div
         data-testid="draft-lens"
         data-graview-draft={draft.lens.name}
-        style={page ? { height: "min(72vh, 760px)", display: "grid", gridTemplateRows: "minmax(0, 1fr)", overflow: "auto", border: "1px solid var(--graview-edge)", borderRadius: 12, background: "var(--graview-panel)" } : { minHeight: 0, overflow: "auto", display: "grid", gridTemplateRows: "minmax(0, 1fr)" }}
+        style={page ? { height: "min(72vh, 760px)", display: "grid", gridTemplateRows: "minmax(0, 1fr)", overflow: "auto", scrollbarGutter: "stable", border: "1px solid var(--graview-edge)", borderRadius: 12, background: "var(--graview-panel)" } : { minHeight: 0, overflow: "auto", scrollbarGutter: "stable", display: "grid", gridTemplateRows: "minmax(0, 1fr)" }}
         onClick={(event) => {
           const id = (event.target as HTMLElement | null)?.closest("[data-graview-pick]")?.getAttribute("data-graview-pick");
           if (!id || !store.graph.getNode(id)) return;

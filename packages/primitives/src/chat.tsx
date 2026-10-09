@@ -19,9 +19,8 @@ import {
   type ChatReply,
 } from "@graview/tools";
 import type { SeatTurn } from "@graview/react/provider";
-import { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLensKeeping } from "./lens-keeping.js";
-import { NoticeBoardContext } from "./notices.js";
 import { useSceneGo } from "./seat-move.js";
 import { useSubject } from "./subject.js";
 import { describeSource, proposalKey, SeatComposer, SeatHeader, SeatThread, Settled, useSeatConversation } from "./seat.js";
@@ -129,7 +128,6 @@ export function ChatPanel<S extends AnySchema>({
   const sceneGo = useSceneGo();
   const go = onMove ?? sceneGo;
   const { takeBack } = useLensKeeping(go);
-  const board = useContext(NoticeBoardContext);
   const { selection } = useSelection();
   const subject = useSubject<S>();
   /* The chat writes as the tab's seat when one has sat down, so the two are one robot — in this tab's own session. */
@@ -460,8 +458,8 @@ export function ChatPanel<S extends AnySchema>({
                     </button>,
                   ]
                 : []),
-              /* A LENS KEPT, with the way to take it back where no notice says it. */
-              ...(turn.kept && !turn.kept.taken && !board
+              /* A LENS KEPT, with the way to take it back: the notice goes, the conversation keeps it. */
+              ...(turn.kept && !turn.kept.taken
                 ? [
                     <button key={`${index}:take-back`} type="button" data-testid={`${testId}-take-back`} onClick={() => void takeBack(turn.kept!)} style={{ ...QUIET_BUTTON, justifySelf: "start" }}>
                       Take back

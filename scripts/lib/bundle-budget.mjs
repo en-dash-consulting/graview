@@ -130,8 +130,12 @@ export const BUDGETS = [
     // Raised when the seat came to draw a view and keep it as a lens: the seat's tools list draft_view and keep_lens when a
     // host offers them (their two definitions), the engine behind its own door (@graview/tools/draft). 2_047 / 1_662 more.
     // Measured at 533_649 / 184_147.
-    minified: 534_200,
-    gzipped: 184_500,
+    // Raised when the seat came to take you where you ask and draw a view kept as a lens, wired into the faces over the
+    // resolver's and the drafting engine's own branches (which together measured 535_692 / 186_086): an answer's move
+    // through the router, the route a drawn view stands at (its page fetched when shown), the reader's kept lenses laid
+    // beside the app's places as the face opens, and the host's onKeepLens. 3_609 / 3_242 more. Measured at 539_301 / 189_328.
+    minified: 539_800,
+    gzipped: 189_800,
     load: "first",
   },
   {
@@ -266,8 +270,10 @@ export const BUDGETS = [
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review, module moves and a lens double-clicked from Up. Measured at 709_029 / 185_123.
     // Raised when the seat came to float and be quiet (the ask field with each face, the conversation held by the provider,
     // Find's "Ask:" row): 1_519 / 109 more. Measured at 710_548 / 185_232.
-    minified: 711_000,
-    gzipped: 185_700,
+    // Raised when the seat came to take you where you ask and draw a view kept as a lens: the reader's kept lenses beside the
+    // places, the host's onKeepLens, a drawn view held with the conversation. Measured at 712_201 / 186_467.
+    minified: 712_700,
+    gzipped: 186_900,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -401,8 +407,11 @@ export const BUDGETS = [
     // Raised when the seat came to draw a view and keep it as a lens: the drafting engine (@graview/tools/draft, fetched when
     // a view is first asked for), the two tools that reach it, and the studio's act that takes a lens away (remove-lens).
     // 33_055 / 13_112 more. Measured at 1_616_334 / 493_011.
-    minified: 1_617_000,
-    gzipped: 493_400,
+    // Raised when the seat came to take you where you ask and draw a view kept as a lens, wired into the faces: the frame a
+    // drawn view stands in and the Pages route for it, each a chunk of its own fetched when first shown, the keeping and
+    // taking back, and the moves made by each face. Measured at 1_649_311 / 513_115.
+    minified: 1_649_900,
+    gzipped: 513_600,
     load: "all",
   },
   {
@@ -469,8 +478,10 @@ export const BUDGETS = [
     // Raised with the pages face's when the seat came to take you where you ask: 1_221 / 1_358 more. Measured at 1_548_280 / 465_260.
     // Raised with the pages face's when the seat came to draw a view and keep it as a lens: 1_939 / 2_163 more, the two tools'
     // definitions and the studio's act that takes a lens away. Measured at 1_549_531 / 466_208.
-    minified: 1_550_100,
-    gzipped: 466_600,
+    // Raised with the pages face's when the seat came to take you where you ask and draw a view kept as a lens. Measured at
+    // 1_552_767 / 473_850.
+    minified: 1_553_300,
+    gzipped: 474_300,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

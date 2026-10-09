@@ -2,6 +2,7 @@ import { retryingImport } from "@graview/core/retry";
 import { declaredLenses, type AnySchema, type DrawnLens, type GraviewApp } from "@graview/core";
 import { lazyModule, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { Suspense } from "react";
+import { readerLenses } from "./reader-lenses.js";
 
 /**
  * A DECLARED LENS DRAWS (FR-79), REGISTERED BEFORE IT IS FETCHED.
@@ -142,4 +143,9 @@ export interface KeptLens {
  */
 export function registerLensPlaces<S extends AnySchema>(registry: ReactViewRegistry<S>, schema: S, kept: readonly KeptLens[]): void {
   if (kept.length > 0) doors(registry, { schema, lenses: kept.map(({ lens, ...rest }) => ({ ...rest, name: lens })) as never }, true);
+}
+
+/** Lays the reader's own kept lenses beside the app's places in `registry`, once a face opens (`reader-lenses.ts`). */
+export function registerReaderLenses<S extends AnySchema>(registry: ReactViewRegistry<S>, schema: S, app: string): void {
+  registerLensPlaces(registry, schema, readerLenses(app));
 }

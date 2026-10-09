@@ -8,8 +8,8 @@ import type { DraftFrameProps } from "./draft-frame.js";
  * then the frame (`draft-frame.tsx`), fetched when it is first needed — a
  * page whose reader never asks for a view carries none of it.
  */
-const frameModule = lazyModule(retryingImport(() => import("./draft-frame.js")));
-const Frame = frameModule.part(
+const frameModule = /* @__PURE__ */ lazyModule(retryingImport(() => import("./draft-frame.js")));
+const Frame = /* @__PURE__ */ frameModule.part(
   (module, props: DraftFrameProps) => {
     const Drawn = module.DraftFrame as ComponentType<DraftFrameProps>;
     return <Drawn {...props} />;

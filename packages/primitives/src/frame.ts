@@ -22,11 +22,11 @@ export { scenePlacesOf, useScenePlaces, WHOLE_KEY, WHOLE_LABEL, type ScenePlaces
 export type { BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch } from "./app-bar.js";
 export type { HostAction } from "./profile.js";
 export { createNoticeBoard, NoticeBoardContext, Notices, TOAST_MS } from "./notices.js";
-export { appKeyOf, readerLenses, registerReaderLenses } from "./reader-lenses.js";
+export { appKeyOf, readerLenses } from "./reader-lenses.js";
 export { FOOT_MOVED, FOOT_OBSTACLES, NARROW_PICTURE, placeAtTheFoot, placeAtTheTop } from "./notice-place.js";
 export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "./notices.js";
 export { Standing, StandingDot, standingWords } from "./workbench/standing.js";
 export { descentTarget } from "./workbench/descent.js";
 export { fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews } from "./view-doors.js";
 export { useWidth, VISUALLY_HIDDEN } from "./primitives/measure.js";
-export { fetchDeclaredLenses, fetchHomeView, registerDeclaredLenses } from "./declared-lens-doors.js";
+export { fetchDeclaredLenses, fetchHomeView, registerDeclaredLenses, registerReaderLenses } from "./declared-lens-doors.js";

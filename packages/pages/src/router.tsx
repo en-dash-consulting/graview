@@ -2,10 +2,11 @@ import type { AnySchema } from "@graview/core";
 import { BrowserRouter, MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
 import { openingOf, OVERVIEW_PATH, OVERVIEW_SLUG } from "@graview/core";
 import { pluralSlug } from "./registry.js";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { GoToContext, GraviewProvider, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo } from "@graview/react/provider";
 import { PageAsk } from "./ask.js";
-import { DraftPage } from "./page-draft.js";
+/* A view the seat drew, as a page: fetched when one is first shown here. */
+const DraftPage = lazy(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
 import { FaceControlsRoot } from "./face-controls.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
 import { pathOfPlace, placesOf } from "./page-places.js";
@@ -355,7 +356,14 @@ export function PagesRoutes<S extends AnySchema>({
         <Route path="/" element={<Opening context={inside} Home={Home} />} />
         <Route path="/problems" element={<Problems context={inside} />} />
         {/* A view the seat drew, before it is kept as a lens or put away. */}
-        <Route path="/~draft" element={<DraftPage context={inside} />} />
+        <Route
+          path="/~draft"
+          element={
+            <Suspense fallback={null}>
+              <DraftPage context={inside as unknown as PageContext<AnySchema>} />
+            </Suspense>
+          }
+        />
         {/* What the words find, anywhere: the Find box's matcher at an address. */}
         <Route path="/search" element={<DefaultSearchPage context={inside} />} />
         {/* The app's pictures, when it handed the face its views: an index, and each lens at its name. */}

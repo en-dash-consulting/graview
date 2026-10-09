@@ -1,6 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import type { ReactViewRegistry } from "@graview/react/provider";
-import { registerLensPlaces, type KeptLens } from "./declared-lens-doors.js";
+import type { KeptLens } from "./declared-lens-doors.js";
 
 /**
  * YOUR LENSES — a view the seat drew and a reader kept, in an app whose
@@ -29,9 +28,4 @@ export function readerLenses(app: string): readonly KeptLens[] {
     // A private window, a sandboxed frame: nothing kept, and nothing broken.
     return [];
   }
-}
-
-/** Lays the reader's lenses beside the app's own places in `registry`, once a face opens. */
-export function registerReaderLenses<S extends AnySchema>(registry: ReactViewRegistry<S>, schema: S, app: string): void {
-  registerLensPlaces(registry, schema, readerLenses(app));
 }

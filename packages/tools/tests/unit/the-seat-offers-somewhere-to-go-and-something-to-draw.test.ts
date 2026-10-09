@@ -41,7 +41,7 @@ describe("what the seat offers to ask, beyond what is wrong", () => {
 
   it("never offers to go where the reader already is", () => {
     const here = places[0]!;
-    const offered = suggestionsFor({ store, subject: nothing, violations: [], today: "2030-01-01", places, place: { title: here.title, kind: here.kind } });
+    const offered = suggestionsFor({ store, subject: nothing, violations: [], today: "2030-01-01", places, place: { title: here.title, kind: here.kind ?? "task" } });
     expect(offered.map((one) => one.ask)).not.toContain(`Go to ${here.title}`);
   });
 

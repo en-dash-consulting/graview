@@ -10,7 +10,8 @@ import { ShowInstallation } from "./installation.js";
 import { Profile, type HostAction } from "./profile.js";
 import { createNoticeBoard, NoticeBoardContext, Notices, type NoticeBoard } from "./notices.js";
 import { DraftDoor } from "./draft-door.js";
-import { appKeyOf, registerReaderLenses } from "./reader-lenses.js";
+import { appKeyOf } from "./reader-lenses.js";
+import { registerReaderLenses } from "./declared-lens-doors.js";
 import { Places } from "./places.js";
 import {
   ActivityRail,
