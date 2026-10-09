@@ -16,8 +16,7 @@ import { useSeatWork } from "../../src/animation.js";
  *
  * The robot walked to what it wrote and stood there; the walk is gone and
  * the attribution is not. What the log attributes to an agent marks what
- * it wrote for a hold, and stays in a list the companion offers to take
- * you back to. A person's own edit is not the seat's work, and an undo
+ * it wrote for a hold, and stays in the seat's list of acts. A person's own edit is not the seat's work, and an undo
  * takes the mark with it: a mark over a change that no longer exists is
  * the seat claiming credit for nothing.
  */

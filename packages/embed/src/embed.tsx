@@ -33,8 +33,8 @@ import {
 
 /*
  * EACH FACE, FETCHED WHEN IT IS DRAWN (FR-57). Every face was imported
- * outright, so a page that drew the pages carried the scene, the companion
- * and the inspector, and one that drew the scene carried the routed face
+ * outright, so a page that drew the pages carried the scene, the seat's
+ * panel and the inspector, and one that drew the scene carried the routed face
  * and its router — Graview Cloud's hosted page loaded 1.1 MB before the app
  * drew. The frame, the bar and the provider are here; each face is a
  * chunk of its own, fetched as it is first drawn, and the frame stands

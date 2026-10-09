@@ -306,7 +306,7 @@ export interface LayoutOptions {
   };
   /**
    * Room the picture must leave for chrome that lives ON the scene — the
-   * left rail at altitude, where the relation key and the inspector sit.
+   * panes at its edges and the ask field at its foot.
    * The ring and the focused card center within what is left, so a
    * district is never drawn under a pane. Nothing is reserved by default.
    */

@@ -27,7 +27,7 @@ function Seated({ who }: { who: string }) {
 }
 
 describe("the occupants", () => {
-  it("draws no body for the seat at all: it lives on the frame, in the companion", async () => {
+  it("draws no body for the seat at all: it speaks from the ask field", async () => {
     const host = document.createElement("div");
     document.body.appendChild(host);
     const root = createRoot(host);
@@ -41,7 +41,7 @@ describe("the occupants", () => {
     );
     /* No pad, no walk, no follow: a thing in the middle of the picture that
        moved on its own read as a distraction, and had no place inside a
-       full-screen lens. The companion says who the seat is and what it is
+       full-screen lens. The ask field says who the seat is and what it is
        doing, at every height. */
     expect(host.querySelector('[data-graview-figure^="agent:tidy:"]')).toBeNull();
     await act(async () => root.unmount());
