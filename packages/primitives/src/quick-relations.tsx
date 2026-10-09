@@ -1,4 +1,4 @@
-import { labelOf, layer, type AnySchema } from "@graview/core";
+import { pluralOf, labelOf, layer, type AnySchema } from "@graview/core";
 import { kindsOfAggregate } from "@graview/layout/view";
 import { useGraph, useGraview, useSelection } from "@graview/react/provider";
 import { useMemo } from "react";
@@ -103,7 +103,7 @@ export function QuickRelations<S extends AnySchema>({ inside = false }: { readon
       .filter(([, members]) => members.size > 0 && members.size <= MOST_MEMBERS)
       .map(([kind, members]) => ({
         kind,
-        plural: store.schema.tryDefinition(kind)?.plural ?? `${kind}s`,
+        plural: pluralOf(store.schema, kind),
         reach: [...members.values()].reduce((sum, entry) => sum + entry.touches, 0),
         members: [...members.values()].sort(
           (a, b) => b.touches - a.touches || a.id.localeCompare(b.id),

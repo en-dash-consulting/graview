@@ -1,4 +1,4 @@
-import { labelOf, placeSlug, type AnySchema } from "@graview/core";
+import { pluralOf, labelOf, placeSlug, type AnySchema } from "@graview/core";
 import { bandAggregateWords, kindOfCard, kindsOfAggregate } from "@graview/layout";
 import { useGraview, useSelection } from "@graview/react";
 import { useEffect, useState } from "react";
@@ -126,11 +126,11 @@ export function useSubject<S extends AnySchema>({ hover = true }: { readonly hov
     const band = bandAggregateWords(id, store.schema);
     if (band) return band;
     const kind = kindOfCard(id);
-    if (kind) return store.schema.tryDefinition(kind)?.plural ?? kind;
+    if (kind) return pluralOf(store.schema, kind);
     /* A group of several kinds is its plurals together, as the scene's own label says: "Blocks and Runs", never "block+duty". */
     const kinds = kindsOfAggregate(id);
     if (kinds.length > 0) {
-      const plurals = kinds.map((one) => store.schema.tryDefinition(one)?.plural ?? one);
+      const plurals = kinds.map((one) => pluralOf(store.schema, one));
       return plurals.length === 1 ? plurals[0]! : `${plurals.slice(0, -1).join(", ")} and ${plurals.at(-1)}`;
     }
     return null;

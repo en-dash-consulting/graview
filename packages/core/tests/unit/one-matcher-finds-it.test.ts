@@ -157,7 +157,8 @@ describe("the worked example", () => {
 
   it("names a kind, a place and a rule, ahead of records only when the words name them outright", () => {
     const tasks = search(store, "tasks", { today, places });
-    expect(tasks.hits[0]).toMatchObject({ about: "kind", kind: "task", label: "Tasks" });
+    // Called as its list is on the routed face: no plural is declared, so the kind and an s (`pluralOf`).
+    expect(tasks.hits[0]).toMatchObject({ about: "kind", kind: "task", label: "tasks", address: "/tasks" });
     expect(search(store, "month", { today, places }).hits).toEqual([
       expect.objectContaining({ about: "place", title: "The month", as: "the-month" }),
     ]);

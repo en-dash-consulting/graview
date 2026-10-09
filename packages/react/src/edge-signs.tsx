@@ -1,4 +1,4 @@
-import { SCENE_LAYERS, type AnySchema } from "@graview/core";
+import { pluralOf, SCENE_LAYERS, type AnySchema } from "@graview/core";
 import { districtsPastTheEdge, type Layout, type PastTheEdge } from "@graview/layout";
 import type { CSSProperties, ReactElement } from "react";
 
@@ -41,7 +41,7 @@ export function EdgeSigns({
     for (const one of onSide) {
       const at = Math.max(MARGIN, Math.min(span - MARGIN, Math.max(one.along, last + SPACING)));
       last = at;
-      const plural = schema.tryDefinition(one.kind)?.plural ?? one.kind;
+      const plural = pluralOf(schema, one.kind);
       const place: CSSProperties =
         side === "left"
           ? { left: 6, top: at, transform: "translateY(-50%)" }

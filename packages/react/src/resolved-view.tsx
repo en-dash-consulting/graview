@@ -1,4 +1,4 @@
-import { counted, type AnySchema, type Fidelity, type NodeOfSchema } from "@graview/core";
+import { pluralOf, counted, type AnySchema, type Fidelity, type NodeOfSchema } from "@graview/core";
 import { aggregateId, isAggregateId, kindCardId, kindOfCard, withFocus } from "@graview/layout/view";
 import { PLANE_STYLES } from "@graview/render";
 import { memo, useMemo, useRef, type ReactNode } from "react";
@@ -52,7 +52,7 @@ export function BeyondCard({ kinds }: { kinds: readonly string[] }) {
    */
   const popover = usePopover("districts", { align: "start" });
   const open = popover.open;
-  const plural = (kind: string) => store.schema.tryDefinition(kind)?.plural ?? `${kind}s`;
+  const plural = (kind: string) => pluralOf(store.schema, kind);
   const count = (kind: string) => store.graph.allNodes().filter((node) => node.kind === kind).length;
   const here = (kind: string) => !view.overview && view.focusId === aggregateId(kind);
   const going = kinds.filter((kind) => !here(kind));

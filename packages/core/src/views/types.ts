@@ -1,5 +1,6 @@
 import type { AnySchema, KindOfSchema } from "../schema/schema.js";
 import type { PagesArrangement } from "../places.js";
+import { pluralOf } from "../schema/define-node.js";
 
 /** One node, or a group of them standing in for a kind. */
 export type Cardinality = "one" | "many";
@@ -83,6 +84,29 @@ export interface Place {
 /** A place's own name in an address: its title, lower-cased and hyphenated. */
 export function placeSlug(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+/** A kind's list on the routed face: `/<its plural, as a slug>`. */
+export function kindPath(schema: { tryDefinition(kind: string): { readonly plural?: string } | undefined }, kind: string): string {
+  return `/${placeSlug(pluralOf(schema, kind))}`;
+}
+
+/** One record's page on the routed face: its kind's list, then its id, encoded. */
+export function recordPath(schema: { tryDefinition(kind: string): { readonly plural?: string } | undefined }, kind: string, id: string): string {
+  return `${kindPath(schema, kind)}/${encodeURIComponent(id)}`;
+}
+
+/**
+ * A named place on the routed face: `/places/<as>`, and `?of=<the kind's
+ * plural>` when another kind has a place of the same name (`sharesItsName`).
+ */
+export function placePath(as: string, of?: string): string {
+  return `/places/${encodeURIComponent(as)}${of ? `?of=${encodeURIComponent(of)}` : ""}`;
+}
+
+/** Whether another kind has a place of this one's name, so its address has to say which kind's. */
+export function sharesItsName(place: { readonly as: string; readonly kind: string }, places: readonly { readonly as: string; readonly kind: string }[]): boolean {
+  return places.some((other) => other.as === place.as && other.kind !== place.kind);
 }
 
 export interface ViewRegistry<S extends AnySchema, V = unknown> {

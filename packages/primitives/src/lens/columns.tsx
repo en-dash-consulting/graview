@@ -1,4 +1,4 @@
-import { counted, isCurrent, labelOf, LOCAL_LAYERS, type AnyGraphNode, type AnySchema } from "@graview/core";
+import { pluralOf, counted, isCurrent, labelOf, LOCAL_LAYERS, type AnyGraphNode, type AnySchema } from "@graview/core";
 import { columnMoves, columnOf, statusColumns, type ColumnMove, type StatusColumn } from "@graview/core/describe";
 import { useGraph, useGraview, ViewModeProvider, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactElement } from "react";
@@ -199,7 +199,7 @@ function ColumnsBoard({ boards, title }: { readonly boards: readonly Board[]; re
         ) : null}
       </p>
       {boards.map((board) => (
-        <section key={board.kind} data-columns-kind={board.kind} aria-label={`${store.schema.tryDefinition(board.kind)?.plural ?? board.kind} by ${board.field}`}>
+        <section key={board.kind} data-columns-kind={board.kind} aria-label={`${pluralOf(store.schema, board.kind)} by ${board.field}`}>
           <div className="graview-columns">
             {board.columns.map(({ column, cards, count }) => {
               const value = column.value ?? "";

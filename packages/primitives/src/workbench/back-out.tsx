@@ -1,5 +1,5 @@
 import { withFocus, withoutMoves, withOverview, withoutSearch, kindsOfAggregate } from "@graview/layout/view";
-import { layer } from "@graview/core";
+import { pluralOf, layer } from "@graview/core";
 import { useGraview, useJackIn, useNavigation, useSelection } from "@graview/react/provider";
 import { useEffect } from "react";
 import { descentTarget } from "./descent.js";
@@ -167,7 +167,7 @@ export function OverviewButton() {
       (showing ? views.places().find((one) => one.as === showing) : undefined) ??
       (kind ? views.places().find((one) => one.kind === kind) : undefined);
     if (place) return place.title;
-    if (kind) return store.schema.tryDefinition(kind)?.plural ?? kind;
+    if (kind) return pluralOf(store.schema, kind);
     return store.graph.getNode(target)?.label ?? null;
   })();
   const label = overview ? (landing ? `Down to ${landing}` : "Down") : "Up";

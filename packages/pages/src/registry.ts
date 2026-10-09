@@ -1,3 +1,4 @@
+import { placePath as placePathOf, placeSlug, pluralOf, recordPath as recordPathOf } from "@graview/core";
 import type { AnySchema, KindOfSchema } from "@graview/core";
 import type { ComponentType, ReactNode } from "react";
 import type { PageContext } from "./page-context.js";
@@ -147,12 +148,7 @@ export function createPageRegistry<S extends AnySchema, P = ComponentType<never>
  * depends on registration order is a route nobody can link to.
  */
 export function pluralSlug(schema: AnySchema, kind: string): string {
-  const definition = schema.tryDefinition(kind);
-  const plural = definition?.plural ?? `${kind}s`;
-  return plural
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+  return placeSlug(pluralOf(schema, kind));
 }
 
 /** kind ← slug, the other direction of `pluralSlug`. */
@@ -162,7 +158,7 @@ export function kindOfSlug(schema: AnySchema, slug: string): string | undefined 
 
 /** The routed address of one node — shared ids are what make two faces one app. */
 export function recordPath(schema: AnySchema, kind: string, id: string): string {
-  return `/${pluralSlug(schema, kind)}/${encodeURIComponent(id)}`;
+  return recordPathOf(schema, kind, id);
 }
 
 /** The spatial stop for the same node, for the link back into the scene. */
@@ -194,5 +190,5 @@ export function placeHref(as: string, sceneHref = "/"): string {
  * with a kind's plural, whatever an app calls its pictures.
  */
 export function placePath(as: string, of?: string): string {
-  return `/places/${encodeURIComponent(as)}${of ? `?of=${encodeURIComponent(of)}` : ""}`;
+  return placePathOf(as, of);
 }

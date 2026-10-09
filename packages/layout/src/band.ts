@@ -1,5 +1,5 @@
 import { arrange, arrangeable } from "@graview/core/arrange";
-import { fieldWords, humanizeField, type AnySchema, type ArrangeGraph, type ArrangeNode, type DateBucket, type GraphReader } from "@graview/core";
+import { fieldWords, humanizeField, pluralOf, type AnySchema, type ArrangeGraph, type ArrangeNode, type DateBucket, type GraphReader } from "@graview/core";
 import { aggregateId, BAND_PREFIX, isBandAggregate } from "./ids.js";
 export { BAND_PREFIX, isBandAggregate } from "./ids.js";
 import type { Aggregate, Opens, Via } from "./types.js";
@@ -80,7 +80,7 @@ export function bandAggregateWords(id: string, schema: AnySchema): string | null
   if (!isBandAggregate(id)) return null;
   const [kind = "", first = "", second = "", part = ""] = id.slice(BAND_PREFIX.length).split("|");
   const definition = schema.definitions.find((one) => one.kind === kind);
-  const plural = definition?.plural ?? humanizeField(`${kind}s`);
+  const plural = pluralOf(schema, kind);
   const relation =
     first === "raised"
       ? null
