@@ -71,6 +71,13 @@ jobs:
           echo "pending=${PENDING}" >> "$GITHUB_OUTPUT"
           echo "unpublished=${UNPUBLISHED}" >> "$GITHUB_OUTPUT"
 
+      # The version step regenerates the site's numbers and docs pages (they
+      # name the release, and its llms files and structured data with them),
+      # and the docs generator reads the built packages.
+      - name: Build, for the site the version step regenerates
+        if: steps.state.outputs.pending == 'true'
+        run: pnpm build
+
       # changesets/action@v2, not v1: v1 learned what was published by scraping
       # `New tag:` lines that @changesets/cli v3 no longer prints. Here it only
       # versions; publishing is the next job's.
