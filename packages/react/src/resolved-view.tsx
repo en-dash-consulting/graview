@@ -4,7 +4,7 @@ import { PLANE_STYLES } from "@graview/render";
 import { memo, useMemo, useRef, type ReactNode } from "react";
 import { useFlagged, useImplicated } from "./emphasis.js";
 import { useNavigation } from "./hooks.js";
-import { useFound, useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
+import { foundIds, useFound, useGraph, useGraview, ViewModeProvider, type ViewMode } from "./context.js";
 import { POPOVER_STYLE, usePopover } from "./popover.js";
 import { ViewBoundary } from "./view-boundary.js";
 import type { ViewComponent, ViewProps } from "./view-registry.js";
@@ -172,6 +172,17 @@ function sameValue(a: unknown, b: unknown): boolean {
   const proto = Object.getPrototypeOf(a);
   // Only plain data: anything with a class of its own is compared by identity.
   if (proto !== Object.prototype && proto !== Array.prototype) return false;
+  /*
+   * A list item by item, without listing its keys first: a group's members
+   * are a thousand ids at a hub, compared for every host on every render
+   * while a search re-lays the band.
+   */
+  if (Array.isArray(a)) {
+    const other = b as readonly unknown[];
+    if (a.length !== other.length) return false;
+    for (let i = 0; i < a.length; i++) if (!sameValue(a[i], other[i])) return false;
+    return true;
+  }
   const keys = Object.keys(a);
   if (keys.length !== Object.keys(b).length) return false;
   return keys.every((key) => sameValue((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]));
@@ -319,8 +330,9 @@ export function ResolvedView<S extends AnySchema>({
     node.plot ? `${node.plot.col},${node.plot.row},${node.plot.side}` : "",
     node.aggregate ? idsKey(node.aggregate.memberIds) : "",
     node.aggregate?.retired ?? "",
-    (implicated ?? []).join(","),
-    (flagged ?? []).join(","),
+    // Hashed once per set, as the members are: a search lights hundreds, and joining them was every host's every render.
+    implicated ? idsKey(implicated) : "",
+    flagged ? idsKey(flagged) : "",
     hasOwnView,
   ].join("|");
   /*
@@ -400,7 +412,12 @@ export const BandCard = memo(function BandCard({ node }: { readonly node: SceneN
     const definition = member ? store.schema.tryDefinition(member.kind) : undefined;
     return member ? (definition?.label ? definition.label(member as never) : String((member as { label?: unknown }).label ?? id)) : id;
   });
-  const hits = found ? aggregate.memberIds.filter(new Set(found.matched).has, new Set(found.matched)).length : 0;
+  // Counted once per search and group, not on every frame the band is tweened through.
+  const memberIds = aggregate.memberIds;
+  const hits = useMemo(() => {
+    const matched = found ? foundIds(found) : null;
+    return matched ? memberIds.filter((id) => matched.has(id)).length : 0;
+  }, [found, memberIds]);
   const door = opens.in === "picture";
   /*
    * TWO LINES, read at a glance: what the group is and which way it opens,

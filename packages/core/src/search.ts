@@ -182,7 +182,25 @@ export function squeeze(text: string): string {
   return fold(text).replace(/ /g, "");
 }
 
-const tokensOf = (text: string): string[] => fold(text).split(" ").filter(Boolean);
+/*
+ * A TEXT'S WORDS, FOLDED ONCE. Every keystroke in Find asks the same names
+ * and fields again, and folding is a Unicode normalization and three
+ * replacements: kept by the text, which is all they depend on, and let go
+ * when there are more than a catalog holds.
+ */
+const folded = new Map<string, { readonly tokens: readonly string[]; readonly whole: string }>();
+const FOLDED_MAX = 50_000;
+function foldedOf(text: string): { readonly tokens: readonly string[]; readonly whole: string } {
+  let held = folded.get(text);
+  if (held === undefined) {
+    if (folded.size >= FOLDED_MAX) folded.clear();
+    const once = fold(text);
+    held = { tokens: once.split(" ").filter(Boolean), whole: once.replace(/ /g, "") };
+    folded.set(text, held);
+  }
+  return held;
+}
+const tokensOf = (text: string): string[] => [...foldedOf(text).tokens];
 
 /**
  * How strongly `text` answers the words, or undefined when it does not.
@@ -194,11 +212,10 @@ const tokensOf = (text: string): string[] => fold(text).split(" ").filter(Boolea
  */
 export function strengthOf(text: string, words: readonly string[]): Exclude<MatchStrength, "field"> | undefined {
   if (words.length === 0) return undefined;
-  const whole = squeeze(text);
+  const { whole, tokens: own } = foldedOf(text);
   const asked = words.join("");
   if (whole.length === 0) return undefined;
   if (whole === asked) return "exact";
-  const own = tokensOf(text);
   const found = words.every((word) => own.some((token) => token.startsWith(word)));
   if (!found) return undefined;
   if (whole.startsWith(asked)) return "prefix";
@@ -267,7 +284,21 @@ interface Text {
   readonly text: string;
 }
 
+/*
+ * A record's texts, worked out once per record as it stands: a change
+ * replaces the record, so a record held here is one whose fields have not
+ * moved, and it is read again only under another definition.
+ */
+const textsHeld = new WeakMap<object, { readonly definition: AnyNodeDefinition | undefined; readonly texts: Text[] }>();
 function textsOf(definition: AnyNodeDefinition | undefined, node: { id: string; kind: string } & Record<string, unknown>): Text[] {
+  const held = textsHeld.get(node);
+  if (held && held.definition === definition) return held.texts;
+  const texts = textsRead(definition, node);
+  textsHeld.set(node, { definition, texts });
+  return texts;
+}
+
+function textsRead(definition: AnyNodeDefinition | undefined, node: { id: string; kind: string } & Record<string, unknown>): Text[] {
   const label = labelOf(definition, node);
   const texts: Text[] = [{ field: "label", reading: "Name", text: label }];
   for (const field of readableFields(node, definition, { limit: Number.POSITIVE_INFINITY })) {
@@ -325,7 +356,7 @@ export function matchNode(
   const [label, ...rest] = texts;
   const onLabel = strengthOf(label!.text, asked);
   if (onLabel) return { field: "label", reading: label!.reading, fragment: fragmentOf(label!.text, asked), strength: onLabel };
-  const everywhere = (word: string) => (text: Text) => tokensOf(text.text).some((token) => token.startsWith(word));
+  const everywhere = (word: string) => (text: Text) => foldedOf(text.text).tokens.some((token) => token.startsWith(word));
   if (!asked.every((word) => texts.some(everywhere(word)))) return undefined;
   const labelTokens = tokensOf(label!.text);
   const carried = asked.find((word) => !labelTokens.some((token) => token.startsWith(word))) ?? asked[0]!;
@@ -376,6 +407,14 @@ function kindStrength(schema: AnySchema, kind: string, words: readonly string[])
 
 type Ranked = { hit: Hit; tier: number; inKind: number; near: number; past: number; touched: number; flagged: number; name: string; id: string };
 
+/*
+ * Alphabetical as `localeCompare` with these options says it, from one
+ * collator: building the options on every comparison was most of a sort
+ * over a thousand hits.
+ */
+let names: Intl.Collator | undefined;
+const byName = (a: string, b: string): number => (names ??= new Intl.Collator(undefined, { sensitivity: "base", numeric: true })).compare(a, b);
+
 /** The ranking, as one comparison: how it matched, the kind the person is in, near, current, touched, flagged, alphabetical, id. */
 const byRank = (a: Ranked, b: Ranked): number =>
   a.tier - b.tier ||
@@ -384,7 +423,7 @@ const byRank = (a: Ranked, b: Ranked): number =>
   a.past - b.past ||
   a.touched - b.touched ||
   a.flagged - b.flagged ||
-  a.name.localeCompare(b.name, undefined, { sensitivity: "base", numeric: true }) ||
+  byName(a.name, b.name) ||
   (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 
 /**
