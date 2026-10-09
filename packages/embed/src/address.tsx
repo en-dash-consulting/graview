@@ -1,5 +1,5 @@
 import { addressOf, OVERVIEW_PATH, pathWithin, type Place } from "@graview/core";
-import { aggregateId, fromUrl, toUrl, withFocus, withOverview } from "@graview/layout/view";
+import { aggregateId, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
 import { descentTarget } from "@graview/primitives/frame";
 import { useNavigation } from "@graview/react/provider";
 import { useEffect, useRef, type MutableRefObject } from "react";
@@ -114,7 +114,7 @@ export function AddressBar({
       leaving();
       // The view the scene will draw, decided here so the fragment pushed is the one it lands on.
       const given = asked === undefined ? here : placed(fromUrl(asked), places);
-      const stop = next === "graview" ? withOverview(given, true) : given.overview ? withFocus(withOverview(given, false), descentTarget(given, kinds)) : given;
+      const stop = landing(next, given, kinds);
       go(stop);
       window.history.pushState(null, "", `${addressOf(OVERVIEW_PATH, { basePath })}${toUrl(stop)}`);
     }
@@ -143,8 +143,14 @@ export function AddressBar({
 }
 
 /** A stop that names a place by its name alone (`#view=the-board`) goes to the group it is a picture of. */
-function placed(parsed: ReturnType<typeof fromUrl>, places: readonly Place[]) {
+export function placed(parsed: ReturnType<typeof fromUrl>, places: readonly Place[]): ReturnType<typeof fromUrl> {
   const name = parsed.within?.["view"];
   const place = name !== undefined && !parsed.focusId ? places.find((candidate) => candidate.as === name) : undefined;
   return place ? { ...parsed, focusId: aggregateId(place.kind) } : parsed;
+}
+
+/** Where a face lands on a stop: the Graview at altitude, the scene down from altitude to what the stop was over. */
+export function landing(face: EmbedFace, given: ViewState, kinds: readonly string[]): ViewState {
+  if (face === "graview") return withOverview(given, true);
+  return given.overview ? withFocus(withOverview(given, false), descentTarget(given, kinds)) : given;
 }

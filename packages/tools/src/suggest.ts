@@ -1,5 +1,6 @@
 import { counted, labelOf, nounOf, withArticle, type AnySchema, type Store, type Violation } from "@graview/core";
 import type { Affordance } from "./types.js";
+import { capitalize } from "./capital.js";
 
 /**
  * WHAT THE SEAT OFFERS BEFORE ANYBODY ASKS — a few things, in the reader's
@@ -187,7 +188,7 @@ function dueThisWeek<S extends AnySchema>(input: SuggestInput<S>, kind: string |
     });
     if (!soon) continue;
     const plural = (store.schema.tryDefinition(one)?.plural as string | undefined) ?? `${one}s`;
-    return { ask: `${capitalized(plural)} due this week`, why: "due" };
+    return { ask: `${capitalize(plural)} due this week`, why: "due" };
   }
   return undefined;
 }
@@ -217,8 +218,6 @@ function aDrawing<S extends AnySchema>(input: SuggestInput<S>, kind: string | un
   }
   return undefined;
 }
-
-const capitalized = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 
 export interface OfferedAct {
   readonly affordance: Affordance;

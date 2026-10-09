@@ -13,8 +13,8 @@ import type { DrawnBox } from "./context.js";
  * node's box otherwise — so it is right on both render paths, at every
  * height, and inside a full-screen lens.
  *
- * It fades on its own; what it marks is in the companion's log, which
- * does not.
+ * It fades on its own; what it marks stays in the op log, which does
+ * not.
  */
 /** A question the seat asked, standing at the node it is about. */
 export interface SeatQuestion {

@@ -985,6 +985,20 @@ function FoundProvider({ children }: { children: ReactNode }) {
   return <FoundContext.Provider value={found}>{children}</FoundContext.Provider>;
 }
 
+/*
+ * WHAT THE WORDS FOUND, AS A SET: "is this one of them", asked by every
+ * band card and by the layout. Made once per search rather than once per
+ * reader per render — "the" at a hub matches most of a thousand songs, and
+ * each card building its own two sets of them was most of a keystroke's
+ * frame (docs/scale.md).
+ */
+const foundSets = new WeakMap<SearchResult, ReadonlySet<string>>();
+export function foundIds(found: SearchResult): ReadonlySet<string> {
+  let ids = foundSets.get(found);
+  if (!ids) foundSets.set(found, (ids = new Set(found.matched)));
+  return ids;
+}
+
 /** The scene's search, when `#q=` says there is one; null otherwise. */
 export function useFound(): SearchResult | null {
   return useContext(FoundContext);

@@ -1,12 +1,12 @@
 import { retryingImport } from "@graview/core/retry";
 import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
-import { EMPTY_VIEW, aggregateId, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
+import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
 import { BarFindContext, barPlaceAt, barPlaces, descentTarget, fetchFrameworkViews, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import type { SeatStart } from "@graview/primitives";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { ErrorReportContext, GraviewProvider, lazyModule, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
-import { AddressBar, atTheBareHome, faceAtAddress, stopAtAddress } from "./address.js";
+import { AddressBar, atTheBareHome, faceAtAddress, landing, placed, stopAtAddress } from "./address.js";
 import { createContext, createElement, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { EmbedWhere } from "./where.js";
 import { createRoot, type Root } from "react-dom/client";
@@ -33,8 +33,8 @@ import {
 
 /*
  * EACH FACE, FETCHED WHEN IT IS DRAWN (FR-57). Every face was imported
- * outright, so a page that drew the pages carried the scene, the companion
- * and the inspector, and one that drew the scene carried the routed face
+ * outright, so a page that drew the pages carried the scene, the seat's
+ * panel and the inspector, and one that drew the scene carried the routed face
  * and its router — Graview Cloud's hosted page loaded 1.1 MB before the app
  * drew. The frame, the bar and the provider are here; each face is a
  * chunk of its own, fetched as it is first drawn, and the frame stands
@@ -256,13 +256,7 @@ export interface EmbedProps<S extends AnySchema = AnySchema> extends EmbedOption
  */
 function viewFor(face: EmbedFace, stop: string | undefined, kinds: readonly string[], places: readonly Place[], opening?: ViewState): ViewState {
   // No stop: where the declaration says the app opens (FR-80), else nowhere in particular.
-  const parsed = stop ? fromUrl(stop) : (opening ?? EMPTY_VIEW);
-  const named = parsed.within?.["view"];
-  const place = named !== undefined && !parsed.focusId ? places.find((candidate) => candidate.as === named) : undefined;
-  const asked = place ? { ...parsed, focusId: aggregateId(place.kind) } : parsed;
-  if (face === "graview") return withOverview(asked, true);
-  if (asked.overview) return withFocus(withOverview(asked, false), descentTarget(asked, kinds));
-  return asked;
+  return landing(face, placed(stop ? fromUrl(stop) : (opening ?? EMPTY_VIEW), places), kinds);
 }
 
 /** The face a stop implies: a stop at altitude opens the Graview, anything else the scene (FR-132). */

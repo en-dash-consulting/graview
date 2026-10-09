@@ -136,11 +136,15 @@ export const BUDGETS = [
     // beside the app's places as the face opens, and the host's onKeepLens. 3_609 / 3_242 more. Measured at 539_301 / 189_328.
     // Raised by the pass after the seat: a design's shell drawn under the one bar, which hands the bar its Find, and the
     // seat's words across apps. 1_117 / 734 more. Measured at 540_418 / 190_062.
-    // Raised when a day came to be said as it is read in every sentence the framework writes and a record's facts, a choice as
-    // it is declared, and a date filter's day asked beside it with the browser's own date control: 695 / 388 more, less the
-    // altitude control's and the place tabs' rules, which left the frame's sheet. Measured at 541_113 / 190_450.
-    minified: 541_600,
-    gzipped: 190_900,
+    // Lowered by the cleanup after the seat: the district's card and drive-in, the altitude control, the others in the city
+    // and the seat's marks left the frame's sheet for the scene face's, which only the scene draws. 9_830 / 1_959 fewer.
+    // Measured at 530_819 / 188_218.
+    // Raised, over the cleanup, when a day came to be said as it is read in every sentence the framework writes and a
+    // record's facts, a choice as it is declared, a date filter's day asked beside it with the browser's own date control, and
+    // the bar given a place for the scene's own tool, less the place tabs' rules, which left the frame's sheet: 1_598 / 481
+    // more. Measured at 532_417 / 188_699.
+    minified: 532_900,
+    gzipped: 189_200,
     load: "first",
   },
   {
@@ -277,8 +281,10 @@ export const BUDGETS = [
     // Find's "Ask:" row): 1_519 / 109 more. Measured at 710_548 / 185_232.
     // Raised when the seat came to take you where you ask and draw a view kept as a lens: the reader's kept lenses beside the
     // places, the host's onKeepLens, a drawn view held with the conversation. Measured at 712_201 / 186_467.
-    minified: 712_700,
-    gzipped: 186_900,
+    // Lowered by the cleanup after the seat: the scene's own rules left the frame's sheet for the scene face's, as the pages
+    // face's did. 9_527 / 1_765 fewer. Measured at 702_947 / 184_886.
+    minified: 703_400,
+    gzipped: 185_300,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -417,11 +423,15 @@ export const BUDGETS = [
     // taking back, and the moves made by each face. Measured at 1_649_311 / 513_115.
     // Raised by the pass after the seat: a design's shell under the one bar, the first picture a cut, the seat's words
     // across apps (a day and a yes or no said, what an act still needs in its words). 2_180 / 972 more. Measured at 1_651_491 / 514_087.
+    // Raised by the cleanup after the seat, over main at 1_651_812 / 514_225: a keystroke in Find fitting one frame at a hub
+    // (the hits a set once per search, a record's words folded once, one collator for the ranking) and the one capitalize
+    // in core and in tools each a module of its own. 432 more minified, 176 fewer gzipped. Measured at 1_652_244 / 514_049.
     // Raised when the whole-page Shell and an embed came to wear one bar on the scene: the embed's scene face puts the scene's
     // Activity in the bar as the Shell does (what happened, the turns to take back, the seat's agent), and what the picture is
-    // doing on the picture; a day said as it is read in every sentence, and a date filter's day asked in place. The altitude
-    // control's rules and the place tabs' left the frame's sheet for their own, so a page's first load is no larger.
-    minified: 1_658_200,
+    // doing on the picture; a day said as it is read in every sentence, and a date filter's day asked in place. The place
+    // tabs' rules left the frame's sheet for their own. 6_471 / 1_738 more, over the cleanup. Measured
+    // at 1_658_715 / 515_787.
+    minified: 1_659_200,
     gzipped: 516_300,
     load: "all",
   },
@@ -492,10 +502,12 @@ export const BUDGETS = [
     // Raised with the pages face's when the seat came to take you where you ask and draw a view kept as a lens. Measured at
     // 1_552_767 / 473_850.
     // Raised with the pages face's by the pass after the seat: 1_619 / 766 more. Measured at 1_554_386 / 474_616.
-    // Raised with every face's when the whole-page Shell and an embed came to wear one bar on the scene: 6_097 / 1_672 more.
-    // Measured at 1_560_483 / 476_288.
-    minified: 1_561_000,
-    gzipped: 476_800,
+    // Raised with every face's by the cleanup after the seat, over main at 1_554_617 / 474_711: 391 more minified, 212 fewer
+    // gzipped. Measured at 1_555_008 / 474_499.
+    // Raised with every face's when the whole-page Shell and an embed came to wear one bar on the scene: 6_439 / 1_715 more,
+    // over the cleanup. Measured at 1_561_447 / 476_214.
+    minified: 1_561_900,
+    gzipped: 476_700,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

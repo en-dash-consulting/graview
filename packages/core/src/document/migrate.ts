@@ -1,4 +1,5 @@
-import { UNSET, type GraphEdge, type Primitive } from "../index.js";
+import { UNSET, type Primitive } from "../graph/primitives.js";
+import type { GraphEdge } from "../graph/types.js";
 import { canonicalize } from "./canonical.js";
 import { hasRange, outsideRange, rangeWords } from "./range.js";
 import type { FieldSpec, FieldType, GraviewDocument } from "./schema.js";

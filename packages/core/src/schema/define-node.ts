@@ -37,7 +37,7 @@ export function defineNode<
 export function isCurrent(
   definition: AnyNodeDefinition | undefined,
   node: { id: string; kind: string } & Record<string, unknown>,
-  today: string = new Date().toISOString().slice(0, 10),
+  today?: string,
 ): boolean {
   const lifecycle = definition?.lifecycle;
   if (!lifecycle) return true;
@@ -45,7 +45,8 @@ export function isCurrent(
   if (lifecycle.retired === "date") {
     // No date means no expiry: an open-ended node is current for ever.
     if (typeof value !== "string" || value.length === 0) return true;
-    return value >= today;
+    // The clock is read only where a date decides: a search asks this of every record it looks through.
+    return value >= (today ?? new Date().toISOString().slice(0, 10));
   }
   return !lifecycle.retired.includes(value);
 }

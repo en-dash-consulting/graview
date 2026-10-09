@@ -1100,7 +1100,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
       </p>
     </div>
     <div class="hero-stage">
-      <div class="chapter-live hero-live" data-graview-chapter="16" data-stop="#overview=1" data-settle="hero" data-label="The garden, grown" role="region" aria-label="The example garden, running on this page">
+      <div class="chapter-live hero-live" data-graview-chapter="16" data-stop="#overview=1" data-label="The garden, grown" role="region" aria-label="The example garden, running on this page">
         <p class="chapter-loading">The garden, loading…</p>
       </div>
       <p class="stage-caption">
@@ -1198,7 +1198,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
         <p class="more"><a href="docs/skills/graview-invariant.html">Writing a rule that repairs &rarr;</a></p>
       </div>
       <div class="visual">
-        <div class="chapter-live" data-graview-chapter="3" data-stop="#overview=1&amp;expand=kind:rule" data-settle="rule" data-label="The garden's agreement" role="region" aria-label="The garden with one rule and one problem, live">
+        <div class="chapter-live" data-graview-chapter="3" data-stop="#overview=1&amp;expand=kind:rule" data-label="The garden's agreement" role="region" aria-label="The garden with one rule and one problem, live">
           <p class="chapter-loading">The rule, loading…</p>
         </div>
         <p class="stage-caption"><span class="live">Live</span><span>one rule, one problem it found, and the repair it names — press the problem</span></p>
@@ -1289,7 +1289,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
         <p class="more"><a href="docs/skills/graview-studio.html">The studio, in full &rarr;</a></p>
       </div>
       <div class="visual">
-        <div class="chapter-live" data-graview-chapter="15" data-stop="#overview=1" data-settle="studio" data-label="Seedbed, in the studio" role="region" aria-label="The garden's own declaration open in the studio, live">
+        <div class="chapter-live" data-graview-chapter="15" data-stop="#overview=1" data-label="Seedbed, in the studio" role="region" aria-label="The garden's own declaration open in the studio, live">
           <p class="chapter-loading">The studio, loading…</p>
         </div>
         <p class="stage-caption"><span class="live">Live</span><span>the example's declaration, as a city of kinds, fields, acts and rules</span></p>
@@ -1721,34 +1721,6 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(markScroll
         function () { done("Select it"); }
       );
     });
-  });
-})();
-</script>
-<script>
-/*
- * THE HERO, SETTLED. The garden mounts as any embed does — the seat open
- * and listening, the city at 100% — and on a page whose first job is to
- * show the city, a reader would put the seat away and step back once. So
- * the page does exactly that, through the product's own two controls,
- * once, after the mount; nothing here reaches past what a hand could press.
- * The same for the frames whose subject is a lens or the studio rather
- * than the seat.
- */
-(function () {
-  /* No zoom-out: at 80% the buildings' own targets fall under a fingertip, which the site harness measures. The city runs past the frame's edge, and that is what the caption says to do about it. */
-  var settle = { hero: 0, lens: 0, studio: 0, rule: 0 };
-  function press(host, selector) {
-    var button = host.querySelector(selector);
-    if (button) button.click();
-  }
-  document.addEventListener("graview:mounted", function (event) {
-    var host = event.target;
-    if (!(host instanceof Element) || !host.hasAttribute("data-settle")) return;
-    var kind = host.getAttribute("data-settle");
-    setTimeout(function () {
-      press(host, '[data-graview-companion="open"] button[aria-expanded="true"]');
-      for (var i = 0; i < (settle[kind] || 0); i += 1) press(host, '[data-testid="zoom-out"]');
-    }, 250);
   });
 })();
 </script>

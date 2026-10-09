@@ -85,8 +85,11 @@ export function useTheKeyboardLandsSomewhere(root: RefObject<HTMLElement | null>
       for (let el: Element | null = target; el && el !== at.parentElement; el = el.parentElement) line.push(el);
     };
     let queued = false;
+    // Unmounted: what was asked for later asks nothing of a document that may be gone.
+    let gone = false;
     const land = (afterAnAct: boolean) => {
       queued = false;
+      if (gone) return;
       const active = document.activeElement;
       const onNothing = active === null || active === document.body || active === document.documentElement;
       if (!onNothing || line.length === 0) return;
@@ -117,6 +120,7 @@ export function useTheKeyboardLandsSomewhere(root: RefObject<HTMLElement | null>
      */
     const persist = (afterAnAct: boolean, until = Date.now() + 2500) => {
       setTimeout(() => {
+        if (gone) return;
         land(afterAnAct);
         const active = document.activeElement;
         const onNothing = active === null || active === document.body || active === document.documentElement;
@@ -162,6 +166,7 @@ export function useTheKeyboardLandsSomewhere(root: RefObject<HTMLElement | null>
     at.addEventListener("keydown", acted);
     observer.observe(at, { childList: true, subtree: true });
     return () => {
+      gone = true;
       at.removeEventListener("focusin", remember);
       at.removeEventListener("focusout", letGo);
       at.removeEventListener("click", acted);

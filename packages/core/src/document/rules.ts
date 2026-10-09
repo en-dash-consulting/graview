@@ -1,3 +1,8 @@
+/*
+ * From the barrel on purpose, unlike the document's other files: imported
+ * from the engine's own file, the rules made the engine a chunk of its own
+ * on a hosted page, half a kilobyte more up front (docs/hosted-page.md).
+ */
 import { defineInvariant, RuleBudgetError, type AnyGraphNode, type AnySchema, type GraphReader, type InvariantDefinition, type Violation } from "../index.js";
 
 import { evaluateExpr, ExprBudgetError, ExprEvalError, type KindShape } from "./expr/evaluate.js";

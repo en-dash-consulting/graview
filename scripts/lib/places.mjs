@@ -31,8 +31,3 @@ export async function pressPlace(page, title) {
   await place.click();
   return "bar";
 }
-
-/** Waits for the bar to name a place by its `as`, so a face fetched lazily has drawn its places. */
-export async function waitForPlace(page, as, timeout = 20_000) {
-  await page.waitForSelector(`${SCENE_PLACE}[data-testid$=":${as}"]`, { state: "attached", timeout });
-}
