@@ -43,6 +43,18 @@ const describer = () =>
     throw error;
   }));
 
+/*
+ * The drafting engine, fetched when a view is first asked for (draft_view,
+ * keep_lens): a seat that never asks carries none of it. A literal
+ * specifier, as above.
+ */
+let drafting: Promise<typeof import("../draft.js")> | undefined;
+const drafter = () =>
+  (drafting ??= import("../draft.js").catch((error: unknown) => {
+    drafting = undefined;
+    throw error;
+  }));
+
 /**
  * WHAT A TOOL DOES, in the words every MCP directory asks for (FR-10).
  *
@@ -150,9 +162,34 @@ export interface ToolRuntimeOptions<S extends AnySchema> {
    * told what a kind's list, a record's page and the derived home show.
    */
   readonly app?: GraviewApp<S>;
+  /**
+   * DRAWING A VIEW AND KEEPING IT: `draft_view` is listed — a read that
+   * drafts a lens from an ask, or judges one the model wrote, under this
+   * seat's sight — and, when the host can write the app's declaration,
+   * `keep_lens`, which hands `keep` the checked `add-lens` edit. Unsaid,
+   * neither is listed.
+   */
+  readonly drafts?: DraftTools;
 }
 
-const read = (title: string): ToolAnnotations => ({ title, readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
+/** The `add-lens` edit `keep_lens` hands the host. */
+export interface KeptLensEdit {
+  readonly op: "add-lens";
+  readonly title: string;
+  readonly lens: string;
+  readonly on: string;
+  readonly bindings?: Readonly<Record<string, unknown>>;
+  readonly options?: Readonly<Record<string, unknown>>;
+}
+
+/** What a host gives a seat that may draw views: its model, for an ask no template reads, and how a kept lens is written. */
+export interface DraftTools {
+  readonly complete?: (prompt: string) => Promise<string>;
+  /** Write the `add-lens` edit into the app's declaration (a document host's write); absent, `keep_lens` is not listed. */
+  readonly keep?: (edit: KeptLensEdit) => Promise<{ readonly ok: true; readonly said?: string } | { readonly ok: false; readonly error: string }>;
+}
+
+const read =(title: string): ToolAnnotations => ({ title, readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
 
 const READ_TOOLS: readonly ToolDefinition[] = [
   {
@@ -292,6 +329,55 @@ const READ_TOOLS: readonly ToolDefinition[] = [
   },
 ];
 
+const LENS_SPEC = {
+  type: "object",
+  description: "A lens, as draft_view returns one.",
+  properties: {
+    title: { type: "string" },
+    lens: { type: "string" },
+    on: { type: "string" },
+    bindings: { type: "object" },
+    options: { type: "object" },
+  },
+  required: ["title", "lens", "on"],
+} as const;
+
+/** `draft_view`: a read. Nothing is written, and the draft is judged under the seat's sight. */
+const DRAFT_VIEW: ToolDefinition = {
+  name: "draft_view",
+  title: "Draw a view",
+  description:
+    'Draw a view of the data from words ("a board of tasks by status", "who covers what") as a lens the app could keep; or check a lens you wrote (lens); or change the one on screen (current, with ask: "only this month"). Returns the lens and its add-lens edit, or one sentence saying why not. Writes nothing.',
+  inputSchema: {
+    type: "object",
+    properties: {
+      ask: { type: "string", description: "What to see, in words." },
+      lens: LENS_SPEC,
+      current: LENS_SPEC,
+    },
+    additionalProperties: false,
+  },
+  mutating: false,
+  annotations: read("Draw a view"),
+};
+
+/** `keep_lens`: changes the app's declaration, through the host's own write. */
+const KEEP_LENS: ToolDefinition = {
+  name: "keep_lens",
+  title: "Keep a view as a lens",
+  description:
+    "Keep a lens draft_view drew as one of the app's places: checked again, then written as the add-lens edit. Returns the remove-lens edit that takes it back.",
+  inputSchema: { ...LENS_SPEC, additionalProperties: false },
+  mutating: true,
+  annotations: { title: "Keep a view as a lens", readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+};
+
+/** The drafting tools a seat lists: none, draft_view, or draft_view and keep_lens. */
+function draftTools(drafts: "draw" | "keep" | undefined, readOnly: boolean): readonly ToolDefinition[] {
+  if (drafts === undefined) return [];
+  return drafts === "keep" && !readOnly ? [DRAFT_VIEW, KEEP_LENS] : [DRAFT_VIEW];
+}
+
 /**
  * One tool call, as it happens.
  *
@@ -344,7 +430,7 @@ export interface ToolRuntime<S extends AnySchema> {
 /** Said on every act whose arguments name records: a name is resolved as well as an id (FR-33). */
 export const BY_NAME = "An argument that names a record takes its id or its name.";
 
-const READ_NAMES: readonly string[] = READ_TOOLS.map((tool) => tool.name);
+const READ_NAMES: readonly string[] = [...READ_TOOLS.map((tool) => tool.name), DRAFT_VIEW.name, KEEP_LENS.name];
 const MAX_NAME = 64;
 
 /**
@@ -433,11 +519,13 @@ function surfaceOf(
   acts: readonly AnyMutationDefinition[],
   permitted: ReadonlySet<string>,
   readOnly: boolean,
+  drafts?: "draw" | "keep",
 ): { readonly definitions: readonly ToolDefinition[]; readonly names: ReadonlyMap<string, string> } {
   const names = toolNames(acts.map((act) => act.name));
+  const drawing = draftTools(drafts, readOnly);
   const definitions = readOnly
-    ? READ_TOOLS.filter((tool) => !tool.mutating)
-    : [...READ_TOOLS, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!))];
+    ? [...READ_TOOLS.filter((tool) => !tool.mutating), ...drawing]
+    : [...READ_TOOLS, ...drawing, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!))];
   return { definitions, names };
 }
 
@@ -446,6 +534,8 @@ export interface ToolDefinitionsOptions {
   readonly readOnly?: boolean;
   /** The modules this workspace has on, when the app declares modules; every one otherwise. */
   readonly enabledModules?: readonly string[];
+  /** List `draft_view` ("draw"), or it and `keep_lens` ("keep"), as a runtime given `drafts` (with `drafts.keep`) lists them. */
+  readonly drafts?: "draw" | "keep";
 }
 
 /**
@@ -476,7 +566,7 @@ export function toolDefinitions<S extends AnySchema>(
       .filter((act) => act.derived !== undefined && permits(app.policy, principal, act.name, act.derived.kind, derivedVia(app.schema as AnySchema, every as never, act as never)).ok)
       .map((act) => act.name),
   ]);
-  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true);
+  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts);
   return { definitions, hash: surfaceHash(definitions) };
 }
 
@@ -504,7 +594,7 @@ export function createToolRuntime<S extends AnySchema>(
    */
   const acts = store.allMutations() as unknown as AnyMutationDefinition[];
   const permitted = new Set(store.permittedMutations(principal).map((mutation) => mutation.name));
-  const { definitions, names } = surfaceOf(acts, permitted, options.readOnly === true);
+  const { definitions, names } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts ? (options.drafts.keep ? "keep" : "draw") : undefined);
   const hash = surfaceHash(definitions);
   /** A tool's name, or an act's declared one, as the act it runs. */
   const actNamed = (name: string): string | undefined => {
@@ -691,6 +781,13 @@ export function createToolRuntime<S extends AnySchema>(
           };
           walk(said.description.parts);
           return { ok: true, data: said.description, reads: [...reads] };
+        }
+
+        case "draft_view":
+        case "keep_lens": {
+          // Drawn and judged as this seat sees the app, by the engine fetched for it (FR-55).
+          const app = options.app ?? ({ name: "", schema: store.schema } as unknown as GraviewApp<S>);
+          return (await drafter()).runDraftTool(definition.name, args, { app, principal, ...(options.drafts ? { drafts: options.drafts } : {}) }) as Promise<ToolResult<S>>;
         }
 
         case "get_violations": {

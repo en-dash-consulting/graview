@@ -473,6 +473,8 @@ export default defineConfig({
       "@graview/tools/cli": framework("tools/src/cli.ts"),
       "@graview/tools/frame": framework("tools/src/frame.ts"),
       "@graview/tools/edit": framework("tools/src/edit.ts"),
+      "@graview/tools/draft": framework("tools/src/draft.ts"),
+      "@graview/tools/keep": framework("tools/src/keep.ts"),
       "@graview/tools": framework("tools/src/index.ts"),
       "@graview/render/gpu": framework("render/src/gpu.ts"),
       "@graview/render": framework("render/src/index.ts"),
