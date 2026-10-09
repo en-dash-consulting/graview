@@ -1,4 +1,7 @@
-import type { AnySchema, GraviewApp, InvariantDefinition, Policy } from "../index.js";
+import type { GraviewApp } from "../app.js";
+import type { InvariantDefinition } from "../invariants/types.js";
+import type { Policy } from "../permissions/types.js";
+import type { AnySchema } from "../schema/schema.js";
 import { descriptionOf } from "../schema/zod.js";
 import { error, warning, type Finding } from "./findings.js";
 import { documentOf } from "./remembered.js";

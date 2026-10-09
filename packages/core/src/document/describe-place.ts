@@ -1,4 +1,7 @@
-import type { AnyGraphNode, GraphReader, GraviewApp, Principal, Store } from "../index.js";
+import type { GraviewApp } from "../app.js";
+import type { AnyGraphNode, GraphReader } from "../graph/types.js";
+import type { Principal } from "../permissions/types.js";
+import type { Store } from "../store.js";
 import { declaredLenses, orderKinds, placesOf, type AppPlace } from "../places.js";
 import type { AnySchema } from "../schema/schema.js";
 import { fieldWords, isCurrent, labelOf, pageSections, readableFields } from "../schema/define-node.js";
