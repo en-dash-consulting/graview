@@ -266,6 +266,27 @@ try {
         {
           const { page, close } = await open("", desk);
           const measured = await page.evaluate(measure, asks);
+          /*
+           * THE PANEL'S SENTENCES ARE THE CONTEXT MENU'S NOW: the scene's
+           * selection draws no strip beside the picture (the seat floats at
+           * the foot), so what is true about the record is read where it is
+           * said — in the menu a right-click on the record opens.
+           */
+          if (measured.observations === null) {
+            // The keyboard's right-click: the acts key on the record's own card.
+            const focused = await page.evaluate((id) => {
+              const card = document.querySelector(`[data-graview-view="${CSS.escape(id)}"]`);
+              card?.focus({ preventScroll: true });
+              return document.activeElement === card;
+            }, PART.id);
+            if (focused) {
+              await page.keyboard.press("a");
+              await page.waitForTimeout(600);
+              measured.observations = await page.evaluate(() => document.querySelector('[data-testid="context-menu"] [data-testid="observations"]')?.textContent?.trim() ?? null);
+              await page.keyboard.press("Escape");
+              await page.waitForTimeout(200);
+            }
+          }
           seen.drawnOnce.push({ engine, scheme, desk: desk.width, ...measured });
           if (SHOTS && engine === engines[0]) {
             mkdirSync(SHOTS, { recursive: true });
