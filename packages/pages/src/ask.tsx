@@ -26,7 +26,7 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
   const navigate = useNavigate();
   const here = useGraviewIfAny<S>();
   const box = useRef<HTMLDivElement | null>(null);
-  useInsideItsEmbed(box, here !== null);
+  useInItsBox(box, here !== null);
   if (!here) return null;
   return (
     <>
@@ -35,8 +35,8 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
         ref={box}
         data-testid="page-seat"
         /*
-         * The box the seat stands at the foot of: the window, or the part
-         * of an embed's box that shows. It takes no pointer and no room; the
+         * The box the seat stands at the foot of: the page's reading
+         * column, or the part of an embed's box that shows. It takes no pointer and no room; the
          * seat inside it is the only thing a press lands on.
          */
         style={{ position: "fixed", left: 0, top: 0, width: "100vw", height: "100dvh", pointerEvents: "none", zIndex: layer("rail"), containerType: "size" }}
@@ -57,18 +57,24 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
 const NEED = { width: 160, height: 40 };
 
 /**
- * IN AN EMBED, THE SEAT STAYS IN THE EMBED'S BOX (see `ask-place.ts`):
- * placed in that box as it shows on the screen, again as the host's page
- * scrolls or the box changes size, and put away while too little of it
- * shows. A face that is the whole page keeps the window.
+ * THE SEAT STANDS IN THE PAGE'S OWN BOX (see `ask-place.ts`): in an embed,
+ * the embed's box as it shows on the screen; on a face that is the whole
+ * page, its reading column (`main`), so a field at the foot's left stands
+ * under the page and not across the list of places beside it. Placed again
+ * as the page scrolls, the box changes size or the route changes, and put
+ * away while too little of the box shows.
  */
-function useInsideItsEmbed(anchor: RefObject<HTMLDivElement | null>, drawn: boolean) {
+function useInItsBox(anchor: RefObject<HTMLDivElement | null>, drawn: boolean) {
+  const { pathname } = useLocation();
   useLayoutEffect(() => {
     const element = anchor.current;
-    const embed = element?.parentElement?.closest<HTMLElement>("[data-embed-content]");
-    if (!element || !embed) return;
+    if (!element) return;
+    const embed = element.parentElement?.closest<HTMLElement>("[data-embed-content]") ?? null;
+    const boxOf = () => embed ?? document.querySelector<HTMLElement>("main") ?? null;
     const place = () => {
-      const at = askPlace(embed.getBoundingClientRect(), { width: document.documentElement.clientWidth || innerWidth, height: innerHeight }, NEED);
+      const box = boxOf();
+      const view = { width: document.documentElement.clientWidth || innerWidth, height: innerHeight };
+      const at = askPlace(box?.getBoundingClientRect() ?? { left: 0, top: 0, right: view.width, bottom: view.height }, view, NEED);
       element.style.width = `${at.width}px`;
       element.style.height = `${at.height}px`;
       pin(element, at, at.shown);
@@ -77,13 +83,14 @@ function useInsideItsEmbed(anchor: RefObject<HTMLDivElement | null>, drawn: bool
     addEventListener("resize", place);
     addEventListener("scroll", place, true);
     const grows = typeof ResizeObserver === "function" ? new ResizeObserver(place) : null;
-    grows?.observe(embed);
+    const box = boxOf();
+    if (box) grows?.observe(box);
     return () => {
       grows?.disconnect();
       removeEventListener("resize", place);
       removeEventListener("scroll", place, true);
     };
-  }, [anchor, drawn]);
+  }, [anchor, drawn, pathname]);
 }
 
 /** The page's own subject, put where every surface reads it: the selection. */
