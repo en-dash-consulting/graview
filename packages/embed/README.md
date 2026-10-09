@@ -224,7 +224,7 @@ handle = mount(root, { app, store, at });
 Every popover, menu and list of suggestions the embed draws — the profile,
 the problems, the districts a row could not hold, a card's acts at the
 pointer — opens in the browser's top layer, hung from what opened it and
-kept to the viewport, so nothing in the embed (the seat's rail, the
+kept to the viewport, so nothing in the embed (the ask field, the
 altitude control, the scene) and nothing on the host's page stands over it.
 It is still inside the embed's element, so the scoped theme reaches it and
 nothing of it lands on the host. Everything that stays on screen takes a
@@ -256,24 +256,21 @@ Each is a stop for the keyboard in the menu, in the order given, drawn in
 the embed's own scheme; a press closes the menu. The whole-page Shell takes
 the same host actions.
 
-## The seat, put away
+## The ask field
 
-The seat's rail — the subject, its acts, its relations, the conversation —
-stands as a column at the picture's left edge. A reader puts it away to a
-slim tab from its header and opens it again from the tab, by the pointer
-or the keyboard, and what they chose is remembered for the app (in
-`memory`, or the page's storage, wherever the browser allows it). Put
-away, the picture and its controls take the whole width but the tab, and
-the city lays out into it. Narrower than a laptop, the open rail lies over
-the picture instead of taking a column of it; on a phone it is a sheet
-along the bottom. The host says where it starts:
+At the foot of both faces stands one quiet field, "Ask <the app>…". Asked,
+it grows into a panel over the app — never pushing the page — with a line
+about where the reader is, a few things to ask, at most three acts (the
+repairs a broken rule names for what they are on, and their own pins) and
+the conversation; ⇄ snaps it to the other foot, and on a phone it is a
+bottom sheet with a grab line to put it away. Escape closes it and puts the
+keyboard back. The conversation is the app's, so it is still there after a
+switch between the scene and Pages, and Find's last row, "Ask: ‘…’", asks
+it. The host can leave it out:
 
 ```ts
-mount(root, { app, companion: "collapsed" });   // "open" (the default), "collapsed" or "hidden"
+mount(root, { app, seat: "hidden" });   // "field" (the default) or "hidden"
 ```
-
-The reader's own choice wins over `"open"` and `"collapsed"`; `"hidden"` is
-the host's to make, and draws no rail and no tab at all.
 
 ## The host's notices
 

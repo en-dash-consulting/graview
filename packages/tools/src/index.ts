@@ -65,9 +65,6 @@ export {
 } from "./intelligence.js";
 export type { Completion, Intelligence, ProposedCall } from "./intelligence.js";
 export { graphResponder, llmResponder } from "./conversation.js";
-// What the seat offers before anybody asks: one line, a few questions, at most three acts.
-export { offeredActs, SEAT_OFFERS, sayAct, suggestionsFor, whereLine } from "./suggest.js";
-export type { OfferedAct, SeatSubject, SuggestInput, Suggestion, SuggestionWhy } from "./suggest.js";
 export type { ChatContext, ChatReply, Responder } from "./conversation.js";
 export {
   completionFor,

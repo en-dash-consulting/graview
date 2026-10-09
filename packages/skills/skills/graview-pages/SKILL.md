@@ -66,10 +66,11 @@ under its routes, which buys three things at once:
   back “…”", ⌘Z) are on every face: a shell that places `<PageFind>` or
   `<PageUndo>` says where, one that does not gets them drawn around it,
   and `surface("shell", Shell, { without: ["find"] })` goes without.
-- **The assistant**, on every route: one control opens the scene's own
-  `Companion` in a drawer, the ROUTE what "this" means. Grounded questions
-  before anyone types; proposals apply through the same runtime,
-  attributed and undoable, withheld ones struck through. Open questions are
+- **The assistant**, on every route: the scene's own ask field at the foot,
+  the ROUTE what "this" means, its conversation the same one the scene
+  holds. A line and a few questions before anyone types; proposals apply
+  through the same runtime, attributed and undoable, withheld ones struck
+  through. Open questions are
   listed on `/problems`; the rung that answers is chosen in the footer.
 
 Everything a page shows is a derivation the scene uses too: `recordFacts`,

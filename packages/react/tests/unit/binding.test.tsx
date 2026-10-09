@@ -267,10 +267,10 @@ describe("a raised crowd", () => {
     expect(roomy).not.toContain("data-graview-crowded");
 
     const crowded = render(
-      <Scene renderer="dom" options={{ width: 380, height: 700 }} />,
+      <Scene renderer="dom" options={{ width: 240, height: 700 }} />,
       { ...EMPTY_VIEW, focusId: "week-1", relation: "person" },
     );
-    // The same people over 380px are slivers: the hosts say so and render
+    // The same people over 240px are slivers: the hosts say so and render
     // glyphs instead.
     expect(crowded).toContain("data-graview-crowded");
   });
@@ -293,10 +293,10 @@ describe("zooming in", () => {
       focusId: aggregateId("person"),
       zoom: true,
     });
-    // Most, not all: the default 1200-wide canvas, less the rails the scene
-    // reserves for chrome (264 left, 128 right), less five gaps of 16.
-    expect(after).toContain("width:728px");
-    expect(before).not.toContain("width:728px");
+    // Most, not all: the default 1200-wide canvas, less the gutters the scene
+    // keeps for chrome (8 left, 128 right), less five gaps of 16.
+    expect(after).toContain("width:984px");
+    expect(before).not.toContain("width:984px");
     // Still the scene — same mode, same components, no dialog.
     expect(after).toContain('data-mode="scene"');
     expect(after).not.toContain('role="dialog"');
@@ -312,8 +312,8 @@ describe("zooming in", () => {
       zoom: true,
     });
     // A two-line record set wall to wall is unreadable; 880 is a document.
-    // A reading column: the lesser of 880 and the span less five gaps (728).
-    expect(html).toContain("width:728px");
+    // A reading column: the lesser of 880 and the span less five gaps (984).
+    expect(html).toContain("width:880px");
   });
 
   it("is a stop: in the URL, and back out of it", () => {

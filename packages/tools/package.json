@@ -20,6 +20,10 @@
     "./edit": {
       "types": "./dist/edit.d.ts",
       "default": "./dist/edit.js"
+    },
+    "./suggest": {
+      "types": "./dist/suggest.d.ts",
+      "default": "./dist/suggest.js"
     }
   },
   "scripts": {

@@ -1,7 +1,9 @@
 import { failureWords, type AnySchema } from "@graview/core";
 import { withFocus, withOverview, withSelection } from "@graview/layout/view";
 import { useAffordances, useApplyAffordance, useGraview, useSeatTalkState, useViolations } from "@graview/react";
-import { loadPins, offeredActs, suggestionsFor, whereLine, type Affordance, type Responder, type ToolCall } from "@graview/tools";
+import { loadPins, type Affordance, type Responder, type ToolCall } from "@graview/tools";
+// Its own entry: a bundler places a file in every chunk that can reach it, and only the open seat uses this.
+import { offeredActs, suggestionsFor, whereLine } from "@graview/tools/suggest";
 import { useCallback, useMemo, useState, type CSSProperties } from "react";
 import { ChatPanel, LINK, QUIET_BUTTON } from "./chat.js";
 import { useSubject } from "./subject.js";
