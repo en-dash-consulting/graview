@@ -42,13 +42,7 @@ describe("the Find box keeps room to type in", () => {
     expect(Number.parseFloat(floor!), "a floor of at least a few characters, in rem").toBeGreaterThanOrEqual(5);
   });
 
-  it("the focused record's crumb, on the picture now, is capped and truncates, whole in its title", () => {
-    const crumb = bar().querySelector<HTMLElement>('[data-testid="focused"]')!;
-    expect(crumb.style.maxWidth, "a crumb as wide as its name takes the bar").not.toBe("");
-    expect(crumb.getAttribute("title")).toBe(LONG);
-    const name = crumb.querySelector<HTMLElement>("span")!;
-    expect(name.textContent).toBe(LONG);
-    expect(name.style.textOverflow).toBe("ellipsis");
-    expect(name.style.overflow).toBe("hidden");
+  it("the focused record is not named again over the picture, where its crumb stood on its own title", () => {
+    expect(bar().querySelector('[data-testid="focused"]')).toBeNull();
   });
 });

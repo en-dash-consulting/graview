@@ -217,7 +217,7 @@ export function Shell<S extends AnySchema>({
         style={{ position: "relative", flex: "1 1 auto", minHeight: 0, containerType: "size", outline: "none" }}
       >
         <Scene renderer={renderer} {...(attachRenderer ? { attachRenderer } : {})} />
-        {/* What the picture is doing — the focus, the past, a move — each with its way back, on the picture. */}
+        {/* What the picture is doing — the past, a move, a raised relation — each with its way back, on the picture. */}
         <SceneTrail home={home} />
         {/* The altitude control, on the picture it controls. */}
         <OverviewButton />

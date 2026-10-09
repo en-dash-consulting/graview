@@ -321,7 +321,7 @@ try {
       grain: cells[0]?.getAttribute("data-calendar-grain") ?? null,
       cells: cells.length,
       withEntries: cells.filter((cell) => Number(cell.getAttribute("data-calendar-count")) > 0).length,
-      places: [...document.querySelectorAll('nav[aria-label="Places"] button')].map((b) => b.textContent?.trim()),
+      places: [...document.querySelectorAll('[data-testid^="app-place-scene:"]')].map((b) => b.textContent?.trim()),
     };
   });
   report.checks.theRotaPlansByTheQuarter = {

@@ -21,8 +21,9 @@ import { Trail } from "./workbench/trail.js";
  * place for the face's own tool (`BarFind.own`).
  *
  * The rest of what the Shell's bar said was about the picture, not the app:
- * the record in focus, "the past", "zoomed in", "moved", a raised relation,
- * whose stop you are following — each with its ×. Those are on the picture
+ * "the past", "zoomed in", "moved", a raised relation, whose stop you are
+ * following — each with its ×. The record in focus is not named again: its
+ * own card says its name, and a crumb over the picture stood on its title. Those are on the picture
  * now (`SceneTrail`), in its top corner opposite Up, the way a map carries
  * its own state; the browser keeps its own back and forward.
  */
@@ -69,8 +70,8 @@ export function SceneBarTools<S extends AnySchema>({
 }
 
 /**
- * WHAT THE PICTURE IS DOING, ON THE PICTURE: the record in focus, the past,
- * zoomed in, what a hand moved, a raised relation and whose stop you follow,
+ * WHAT THE PICTURE IS DOING, ON THE PICTURE: the past, zoomed in, what a
+ * hand moved, a raised relation and whose stop you follow,
  * each a word with its × — in the picture's top corner, opposite Up. Nothing
  * at all while the picture is as it opened.
  */

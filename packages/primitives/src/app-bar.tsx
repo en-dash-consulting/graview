@@ -268,6 +268,8 @@ const BAR_CSS = `
 .graview-bar-app{max-width:none;flex:1 1 auto}
 .graview-bar-mid,.graview-bar-find{display:none}
 .graview-bar-find-open{display:inline-flex}
+.graview-bar-own{--graview-activity-mark:inline}
+.graview-bar-own .graview-activity-word{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .graview-bar[data-finding] :is(.graview-bar-app,.graview-bar-faces,.graview-bar-find-open){display:none}
 .graview-bar[data-finding] .graview-bar-find{display:flex;flex:1 1 auto;min-width:0}
 }`;

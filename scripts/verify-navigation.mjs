@@ -112,10 +112,14 @@ try {
   await page.waitForTimeout(600);
   await note(page, "forward once");
 
-  // And the breadcrumb gets you home in one.
-  await page.click('[data-testid="focused"]');
-  await page.waitForTimeout(600);
-  await note(page, "home by breadcrumb");
+  // And Escape gets you home: the focused record's own card names it, so no crumb repeats it over the picture.
+  await page.locator("main").focus().catch(() => {});
+  // Escape backs out a step at a time — the selection first, then the focus — so it is pressed until it has left the record, at most three times.
+  for (let press = 0; press < 3 && (await where(page)).includes("focus=t-deposit"); press++) {
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(600);
+  }
+  await note(page, "home by escape");
 
   /*
    * A VIEW THAT DRAWS BOTH ENDS HAS DRAWN THE RELATION. With the lists in
@@ -931,9 +935,9 @@ report.verdict = {
   aCardsChipsDoNotSilenceItsLines: (report.restated?.entries ?? 0) >= 9 && (report.restated?.weekLines ?? 0) >= (report.restated?.entries ?? 0),
   // Forward is ONE step, not all the way back to where you had got to.
   forwardActuallyGoesForward: placeOf(step("forward once")?.url) === placeOf(step("traveled")?.url),
-  // And the breadcrumb still names where you are, and gets you out in one.
-  theTrailNamesWhereYouAre: (step("traveled")?.trail ?? "").includes("deposit"),
-  theTrailGetsYouHome: placeOf(step("home by breadcrumb")?.url) === placeOf(step("landed")?.url),
+  // Where you are is said once, by the record's own card, not again by a crumb over it; Escape gets you out.
+  theFocusIsNotNamedAgainOverThePicture: report.steps.every((one) => !(one.trail ?? "").includes("deposit")),
+  escapeGetsYouHome: placeOf(step("home by escape")?.url) === placeOf(step("landed")?.url),
   // The altitude control: a toggle that names where it takes you.
   theControlSaysUpOnTheGround:
     report.control?.ground?.label === "Up" &&
