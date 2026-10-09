@@ -210,7 +210,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                     <div key={field.key} style={{ display: "grid", gap: 2, minWidth: 0, alignContent: "start" }}>
                       <dt style={{ ...eyebrow, fontSize: "0.75rem" }}>{field.label}</dt>
                       <dd style={{ margin: 0, fontSize: "1.125rem", overflowWrap: "anywhere", minWidth: 0 }}>
-                        {inPlace ? <EditableValue<S> nodeId={id} field={field.key} value={field.value} /> : field.value}
+                        {inPlace ? <EditableValue<S> nodeId={id} field={field.key} value={field.value} stored={field.stored} /> : field.value}
                       </dd>
                     </div>
                   ),

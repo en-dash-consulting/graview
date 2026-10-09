@@ -1,4 +1,4 @@
-import { fieldWords, humanizeField as humanize, pageSections, readableFields, type AnySchema } from "@graview/core";
+import { fieldWords, humanizeField as humanize, pageSections, readableFields, valueWords, type AnySchema } from "@graview/core";
 import { useEditableFields } from "@graview/react/drawing";
 import { useGraview, useGraviewIfAny, useNode } from "@graview/react/provider";
 import type { EditableField } from "@graview/tools";
@@ -23,19 +23,24 @@ export function EditableValue<S extends AnySchema>({
   nodeId,
   field,
   value,
+  stored = value,
 }: {
   readonly nodeId: string;
   readonly field: string;
+  /** The value as a person reads it: "28 Aug 2026", "Tue". */
   readonly value: string;
+  /** The value as the record keeps it, which the edit control holds and writes back: "2026-08-28", "tue". The value said, when not given. */
+  readonly stored?: string;
 }) {
   const { fields, commit } = useEditableFields<S>(nodeId);
   const editable = fields.find((candidate) => candidate.field === field);
   // The field as the declaration says it: a tooltip read "changes "plannedAt"".
   const { store } = useGraview<S>();
   const kind = store.graph.getNode(nodeId)?.kind as string | undefined;
-  const words = fieldWords(store.schema.definitions.find((definition) => definition.kind === kind), field).toLowerCase();
+  const definition = store.schema.definitions.find((one) => one.kind === kind);
+  const words = fieldWords(definition, field).toLowerCase();
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
+  const [draft, setDraft] = useState(stored);
   const input = useRef<HTMLInputElement | HTMLSelectElement | HTMLButtonElement | null>(null);
   /*
    * THE VALUE IS THE CONTROL, AND THE KEYBOARD COMES BACK TO IT.
@@ -58,7 +63,7 @@ export function EditableValue<S extends AnySchema>({
 
   // The graph can change underneath an open editor — an agent turn, an undo —
   // and the draft must not silently overwrite it on blur.
-  useEffect(() => setDraft(value), [value, editing]);
+  useEffect(() => setDraft(stored), [stored, editing]);
   useEffect(() => {
     if (editing) input.current?.focus();
     else if (comeBack.current) {
@@ -127,7 +132,7 @@ export function EditableValue<S extends AnySchema>({
   /** Commit the draft. `left` says the person already moved the keyboard elsewhere. */
   const done = (next: unknown, { left = false } = {}) => {
     close(!left);
-    if (next === value || next === "" || next === undefined) return;
+    if (next === stored || next === "" || next === undefined) return;
     commit(editable, next);
   };
 
@@ -191,9 +196,10 @@ export function EditableValue<S extends AnySchema>({
           onBlur={() => close(false)}
           style={{ font: "inherit", fontSize: "inherit" }}
         >
+          {/* Each choice as it is declared, as the value is said when it is not being changed. */}
           {editable.shape.options.map((option) => (
             <option key={option} value={option}>
-              {option}
+              {valueWords(definition, field, option)}
             </option>
           ))}
         </select>
@@ -320,7 +326,7 @@ export function Fields<S extends AnySchema>({
                 <div key={field.key} style={{ display: "contents" }}>
                   <dt style={{ ...LABEL, whiteSpace: "nowrap" }}>{labels[field.key] ?? field.label}</dt>
                   <dd style={{ margin: 0, minWidth: 0 }}>
-                    <EditableValue<S> nodeId={node.id} field={field.key} value={field.value} />
+                    <EditableValue<S> nodeId={node.id} field={field.key} value={field.value} stored={field.stored} />
                   </dd>
                 </div>
               ),

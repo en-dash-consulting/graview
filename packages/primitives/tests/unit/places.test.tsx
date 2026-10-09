@@ -48,12 +48,13 @@ describe("the named places", () => {
     expect(render(true, { ...EMPTY_VIEW, focusId: aggregateId("person"), overview: true })).toContain('aria-pressed="false"');
   });
 
-  it("sits in the shell's bar", () => {
+  it("is offered by the shell's bar, as the scene's places (FR-144)", () => {
     const html = renderToStaticMarkup(
       <GraviewProvider store={store()} views={views(true)} initialView={{ ...EMPTY_VIEW, overview: true }}>
         <Shell<typeof schema> scheme="light" onScheme={() => {}} />
       </GraviewProvider>,
     );
-    expect(html).toContain('data-testid="place-who-does-what"');
+    expect(html).toContain('aria-label="What the scene shows"');
+    expect(html).toContain("Who does what");
   });
 });

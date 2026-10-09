@@ -24,6 +24,7 @@ import { fileURLToPath } from "node:url";
 import { launchCanaryGpu } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { portFor } from "./lib/ports.mjs";
+import { pressPlace } from "./lib/places.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "..");
@@ -145,11 +146,8 @@ try {
 
         for (const place of app.places) {
           if (place.switchTo) {
-            // Switch place the way a person does: press the button that says so.
-            await page
-              .locator('[data-testid="places"] button', { hasText: place.switchTo })
-              .first()
-              .click();
+            // Switch place the way a person does: on the bar, by its name.
+            await pressPlace(page, place.switchTo);
             await page.waitForTimeout(400);
           }
           // Rise above the stack.

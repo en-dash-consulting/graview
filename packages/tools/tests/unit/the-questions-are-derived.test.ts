@@ -180,7 +180,7 @@ describe("the state a question is asked over", () => {
       kind: "zone",
       "what the kind is": "A piece of ground with one purpose.",
       label: "Long Border",
-      fields: { Surface: "bed" },
+      fields: { Surface: "Bed" },
       joined: { within: ["Back Lawn"] },
     });
     expect(nodeState(store(), "nobody")).toBeUndefined();

@@ -1,5 +1,6 @@
 import type { Graph } from "../graph/graph.js";
 import { isCurrent } from "../schema/define-node.js";
+import { daysAsRead } from "../days.js";
 import type { AnySchema, KindOfSchema, NodeOfKind, NodeOfSchema } from "../schema/schema.js";
 import type {
   EvaluateOptions,
@@ -169,12 +170,24 @@ export function evaluate<S extends AnySchema>(
    * true twins.
    */
   const seen = new Set<string>();
-  return violations.filter((violation) => {
-    const key = `${violation.message}|${[...violation.nodeIds].sort().join(",")}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return violations
+    .filter((violation) => {
+      const key = `${violation.message}|${[...violation.nodeIds].sort().join(",")}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    /*
+     * A RULE'S SENTENCE SAYS A DAY AS A PERSON READS IT. A rule written in
+     * code says what it likes, and "was due 2026-08-28" reached the bar, the
+     * problems and the seat while the task's own card said "28 Aug 2026".
+     * Every message is a sentence for a person, so every day in it is said
+     * the way the glance says it (`daysAsRead`).
+     */
+    .map((violation) => {
+      const said = daysAsRead(violation.message);
+      return said === violation.message ? violation : { ...violation, message: said };
+    });
 }
 
 /** Violations that implicate any of the given node ids. */

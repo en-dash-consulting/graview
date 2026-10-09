@@ -273,7 +273,13 @@ export function ActivityRail({
         }}
       >
         {running ? <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: 999, background: "var(--graview-accent)" }} /> : null}
-        {changes.length > 0 ? changes.length : ""} Activity
+        {changes.length > 0 ? changes.length : ""}
+        {/* On a phone's bar the word gives its room and the mark stands for it; the word stays its name. */}
+        <svg className="graview-activity-mark" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style={{ display: "var(--graview-activity-mark, none)" }}>
+          <circle cx="8" cy="8" r="5.75" fill="none" stroke="currentColor" strokeWidth="1.4" />
+          <path d="M8 4.75 V8 L10.25 9.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="graview-activity-word"> Activity</span>
       </button>
 
       {/*

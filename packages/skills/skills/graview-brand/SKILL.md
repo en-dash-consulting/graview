@@ -43,8 +43,8 @@ somebody with a bright office files a bug — so the framework measures it.
 
 3. **Hand it to `themeCss` and to the provider.**
    `sheet.replaceSync(themeCss(scheme, brand))` for the tokens;
-   `<GraviewProvider brand={brand}>` so `Wordmark` and anything else that asks
-   can read the name and the mark.
+   `<GraviewProvider brand={brand}>` so the app bar and anything else that
+   asks can read the name and the mark.
 
 4. **Declare it on the app too:** `defineApp({ ..., brand })`.
 

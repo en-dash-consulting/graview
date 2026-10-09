@@ -45,17 +45,19 @@ describe("the shell", () => {
   it("has the landmarks a page needs: one heading, one main, the bar as banner", () => {
     const html = render();
     expect(html.match(/<h1/g)?.length).toBe(1);
-    expect(html).toContain("Field Notes</h1>");
+    expect(html).toMatch(/<h1[^>]*>(?:(?!<\/h1>).)*Field Notes(?:(?!<\/h1>).)*<\/h1>/);
     expect(html.match(/<main/g)?.length).toBe(1);
     expect(html).toContain("<header");
   });
 
   it("carries the parts the harnesses drive, under the ids they use", () => {
     const html = render({ seat: () => <button type="button" data-testid="agent-x">seat</button> });
-    for (const id of ["pages-link", "standing", "activity-button", "overview", "profile-button"]) {
+    // The one app bar, as an embed's scene face wears it (FR-131, FR-137); Find and Activity are put in it once it has drawn.
+    for (const id of ["app-bar", "app-home", "app-face-scene", "app-face-pages", "standing", "overview", "profile-button"]) {
       expect(html, id).toContain(`data-testid="${id}"`);
     }
-    expect(html).toContain('href="/pages"');
+    // The way home is the app's front page on the pages, as an embed's is.
+    expect(html).toMatch(/href="\/pages"[^>]*data-testid="app-home"/);
   });
 
   /**
@@ -95,18 +97,23 @@ describe("the shell", () => {
     expect(html).not.toContain(">sales-manager<");
   });
 
-  it("says what the app says when nothing is wrong, and hides the pages link when asked", () => {
+  it("says what the app says when nothing is wrong, and draws no switch when there are no pages", () => {
     const html = render({ standing: "The garden keeps its agreements", pagesHref: null, chat: false });
     expect(html).toContain("The garden keeps its agreements");
-    expect(html).not.toContain('data-testid="pages-link"');
+    expect(html).not.toContain('data-testid="app-faces"');
+    // The way home is then the scene's own: a press, not a link.
+    expect(html).toMatch(/<button[^>]*data-testid="app-home"/);
   });
 
-  it("puts the app's own navigation between the browser controls and the trail", () => {
-    const html = render({ nav: <nav data-testid="places">places</nav> });
-    const backtrack = html.indexOf('data-testid="backtrack"');
-    const places = html.indexOf('data-testid="places"');
-    expect(backtrack).toBeGreaterThan(-1);
-    expect(places).toBeGreaterThan(backtrack);
+  /*
+   * THE OLD BAR'S FURNITURE IS GONE: the wordmark (the bar's name is the way
+   * home), the browser's back and forward drawn again (the browser has its
+   * own), "Lists" (the switch's Pages), and the places as tabs (the bar's
+   * place control). What the picture is doing is on the picture.
+   */
+  it("draws none of the old bar's furniture", () => {
+    const html = render();
+    for (const id of ["wordmark", "backtrack", "pages-link", "places"]) expect(html, id).not.toContain(`data-testid="${id}"`);
   });
 });
 

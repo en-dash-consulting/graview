@@ -26,8 +26,8 @@ const definitionOf = (kind: string) => schema.tryDefinition(kind as never);
 describe("two of one name", () => {
   it("says the word that differs, before a date", () => {
     const apart = tellApart(nodes.slice(0, 3) as never, definitionOf);
-    expect(apart.get("album:blue-hour")).toBe("single");
-    expect(apart.get("album:blue-hour-2")).toBe("album");
+    expect(apart.get("album:blue-hour")).toBe("Single");
+    expect(apart.get("album:blue-hour-2")).toBe("Album");
     expect(apart.has("album:paper-money")).toBe(false);
   });
 
@@ -39,7 +39,7 @@ describe("two of one name", () => {
   it("carries it on search hits", () => {
     const store = new Store({ schema, mutations: [], invariants: [], snapshot: { nodes: nodes as never, edges: [] } });
     const hits = search(store, "blue hour").hits.filter((hit) => hit.about === "node" && hit.kind === "album");
-    expect(hits.map((hit) => (hit.about === "node" ? hit.apart : null)).sort()).toEqual(["album", "single"]);
+    expect(hits.map((hit) => (hit.about === "node" ? hit.apart : null)).sort()).toEqual(["Album", "Single"]);
   });
 
   it("heads a group of songs by release in words that tell the releases apart", () => {
@@ -58,7 +58,7 @@ describe("two of one name", () => {
     });
     const songs = store.graph.nodesOfKind("song");
     const grouped = arrange(songs, { group: { by: "on" } }, { schema, graph: store.graph as never, flagged: new Set() });
-    expect(grouped.groups.map((group) => group.label).sort()).toEqual(["Blue Hour · album", "Blue Hour · album, Blue Hour · single"]);
+    expect(grouped.groups.map((group) => group.label).sort()).toEqual(["Blue Hour · Album", "Blue Hour · Album, Blue Hour · Single"]);
   });
 
   it("says each one's noun on search hits when a song and an album share a name", () => {

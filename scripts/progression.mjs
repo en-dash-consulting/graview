@@ -198,7 +198,7 @@ try {
           activity: [...document.querySelectorAll('[data-testid="diff-log"] li')].map((li) => li.textContent?.trim().replace(/\s+/g, " ") ?? "").slice(0, 6),
           remembered: document.querySelector('[data-testid="remembered"]')?.textContent?.trim() ?? null,
           problems: document.querySelector('[data-testid="problems"]')?.textContent?.trim().replace(/\s+/g, " ").slice(0, 300) ?? null,
-          wordmark: document.querySelector("header h1")?.textContent?.trim() ?? null,
+          wordmark: document.querySelector('[data-testid="app-name"]')?.textContent?.trim() ?? null,
           focused: document.querySelector('[data-graview-plane="0"]')?.textContent?.trim().replace(/\s+/g, " ").slice(0, 400) ?? null,
         }));
         /*
