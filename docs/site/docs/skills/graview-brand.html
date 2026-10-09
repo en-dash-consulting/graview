@@ -963,8 +963,8 @@ main.page footer { max-width: 100%; }
    ─────────────────────────────────────────────────────────────────── */
 
 main.page > section.feature, main.page > section.how, main.page > section.cases,
-main.page > section.grow, main.page > section.closing { padding-top: 120px; }
-@media (max-width: 900px) { main.page > section.feature, main.page > section.how, main.page > section.cases, main.page > section.grow, main.page > section.closing { padding-top: 84px; } }
+main.page > section.grow, main.page > section.ways, main.page > section.closing { padding-top: 120px; }
+@media (max-width: 900px) { main.page > section.feature, main.page > section.how, main.page > section.cases, main.page > section.grow, main.page > section.ways, main.page > section.closing { padding-top: 84px; } }
 
 /* A section's opening: eyebrow, big claim, one paragraph. */
 .claim { max-width: 56ch; }
@@ -1043,6 +1043,64 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 .grow .step-adds li { position: relative; padding-left: 20px; margin-top: 8px; color: var(--ink-2); }
 .grow .step-adds li::before { content: ""; position: absolute; left: 0; top: 11px; width: 10px; height: 2px; background: var(--mint); }
 @media (max-width: 820px) { .grow .step-two { grid-template-columns: minmax(0, 1fr); } .grow .step-two .chapter-live { height: 440px; } }
+
+/* ── Two ways in ──────────────────────────────────────────────────────
+   Graview is the framework; Graview Cloud is the hosted product built on
+   it, under the same symbol. The page offers both doors without turning
+   the second into an advertisement: in the hero, a line the same weight as
+   the install line beside it; further down, two columns under one rule
+   each, the way the design kit draws the brand's architecture — no cards,
+   no badges, the lockups doing the naming.
+   ─────────────────────────────────────────────────────────────────── */
+
+.way-in { display: grid; gap: 8px; }
+.way-in + .way-in { margin-top: 14px; }
+.way-label {
+  margin: 0; font-family: var(--sans); font-weight: var(--w-label); font-size: 11.5px;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);
+}
+/* The hosted door, as tall and as quiet as the install line above it. */
+.cloud-line {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 16px; border: 1px solid var(--rule); border-radius: var(--radius-sm);
+  background: var(--panel); color: var(--ink-2); text-decoration: none;
+  font-size: 14.5px; line-height: 1.5;
+}
+.cloud-line strong { color: var(--pine); }
+.cloud-line .arr { margin-left: auto; color: var(--pine); flex: 0 0 auto; font-size: 17px; }
+.cloud-line:hover { border-color: var(--pine); color: var(--ink); }
+.hero .cta-sub { margin-top: 2px; }
+
+.ways-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px clamp(28px, 4vw, 64px); margin-top: 40px; }
+.way { display: grid; gap: 14px; align-content: start; min-width: 0; padding-top: 18px; border-top: 2px solid var(--pine); }
+.way-for {
+  margin: 0; font-family: var(--sans); font-weight: var(--w-label); font-size: 11.5px;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--pine);
+}
+/* The kit's outlined lockups, inline so they take the page's ink. The Cloud
+   lockup is 291px wide here, over the kit's 220px minimum, and gives way to
+   the column before it would ever scroll; the clear space the kit asks for,
+   half the symbol's height, is the margin above and below. */
+.way-mark { margin: 6px 0; line-height: 0; }
+.way-mark svg { display: block; height: auto; max-width: 100%; color: var(--logo); --point: var(--mint); }
+.way-mark .gv { width: 188px; }
+.way-mark .gvc { width: 291px; }
+.way-mark a { display: inline-block; padding: 6px; margin: -6px; border-radius: var(--radius-sm); }
+.way-line { margin: 0; font-family: var(--sans); font-size: clamp(22px, 2.2vw, 28px); font-weight: var(--w-display); letter-spacing: var(--track-display); line-height: 1.2; color: var(--ink); }
+.way > p:not([class]) { font-size: 15.5px; line-height: 1.68; color: var(--ink-2); max-width: 52ch; }
+.way ul.plain { margin-top: 4px; max-width: 52ch; }
+.way ul.plain li { padding: 10px 0 10px 26px; position: relative; font-size: 14.5px; }
+.way ul.plain li::before { content: ""; position: absolute; left: 0; top: 19px; width: 12px; height: 2px; background: var(--mint); }
+.way .more { margin: 4px 0 0; font-family: var(--sans); font-size: 14px; font-weight: 600; }
+.way .more a { text-decoration: none; display: inline-flex; align-items: center; min-height: 28px; gap: 6px; }
+.way .more a:hover { text-decoration: underline; }
+.ways-note { margin-top: 28px; max-width: 72ch; }
+@media (max-width: 900px) { .ways-grid { grid-template-columns: minmax(0, 1fr); gap: 44px; } }
+@media (max-width: 420px) { .cloud-line { font-size: 14px; padding: 12px 14px; } }
+@media (forced-colors: active) {
+  .way { border-top-color: CanvasText; }
+  .cloud-line { border-color: LinkText; }
+}
 /* site-css:end */
 </style>
 
@@ -1167,7 +1225,8 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 
 <footer>
   <p class="sm dim">
-    Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>. These pages are
+    Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
+    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. These pages are
     generated from the repository — <code>node scripts/site-docs.mjs</code> — so nothing
     on them can disagree with the code they describe.
   </p>
@@ -2143,8 +2202,8 @@ main.page footer { max-width: 100%; }
    ─────────────────────────────────────────────────────────────────── */
 
 main.page > section.feature, main.page > section.how, main.page > section.cases,
-main.page > section.grow, main.page > section.closing { padding-top: 120px; }
-@media (max-width: 900px) { main.page > section.feature, main.page > section.how, main.page > section.cases, main.page > section.grow, main.page > section.closing { padding-top: 84px; } }
+main.page > section.grow, main.page > section.ways, main.page > section.closing { padding-top: 120px; }
+@media (max-width: 900px) { main.page > section.feature, main.page > section.how, main.page > section.cases, main.page > section.grow, main.page > section.ways, main.page > section.closing { padding-top: 84px; } }
 
 /* A section's opening: eyebrow, big claim, one paragraph. */
 .claim { max-width: 56ch; }
@@ -2223,6 +2282,64 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 .grow .step-adds li { position: relative; padding-left: 20px; margin-top: 8px; color: var(--ink-2); }
 .grow .step-adds li::before { content: ""; position: absolute; left: 0; top: 11px; width: 10px; height: 2px; background: var(--mint); }
 @media (max-width: 820px) { .grow .step-two { grid-template-columns: minmax(0, 1fr); } .grow .step-two .chapter-live { height: 440px; } }
+
+/* ── Two ways in ──────────────────────────────────────────────────────
+   Graview is the framework; Graview Cloud is the hosted product built on
+   it, under the same symbol. The page offers both doors without turning
+   the second into an advertisement: in the hero, a line the same weight as
+   the install line beside it; further down, two columns under one rule
+   each, the way the design kit draws the brand's architecture — no cards,
+   no badges, the lockups doing the naming.
+   ─────────────────────────────────────────────────────────────────── */
+
+.way-in { display: grid; gap: 8px; }
+.way-in + .way-in { margin-top: 14px; }
+.way-label {
+  margin: 0; font-family: var(--sans); font-weight: var(--w-label); font-size: 11.5px;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);
+}
+/* The hosted door, as tall and as quiet as the install line above it. */
+.cloud-line {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 16px; border: 1px solid var(--rule); border-radius: var(--radius-sm);
+  background: var(--panel); color: var(--ink-2); text-decoration: none;
+  font-size: 14.5px; line-height: 1.5;
+}
+.cloud-line strong { color: var(--pine); }
+.cloud-line .arr { margin-left: auto; color: var(--pine); flex: 0 0 auto; font-size: 17px; }
+.cloud-line:hover { border-color: var(--pine); color: var(--ink); }
+.hero .cta-sub { margin-top: 2px; }
+
+.ways-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px clamp(28px, 4vw, 64px); margin-top: 40px; }
+.way { display: grid; gap: 14px; align-content: start; min-width: 0; padding-top: 18px; border-top: 2px solid var(--pine); }
+.way-for {
+  margin: 0; font-family: var(--sans); font-weight: var(--w-label); font-size: 11.5px;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--pine);
+}
+/* The kit's outlined lockups, inline so they take the page's ink. The Cloud
+   lockup is 291px wide here, over the kit's 220px minimum, and gives way to
+   the column before it would ever scroll; the clear space the kit asks for,
+   half the symbol's height, is the margin above and below. */
+.way-mark { margin: 6px 0; line-height: 0; }
+.way-mark svg { display: block; height: auto; max-width: 100%; color: var(--logo); --point: var(--mint); }
+.way-mark .gv { width: 188px; }
+.way-mark .gvc { width: 291px; }
+.way-mark a { display: inline-block; padding: 6px; margin: -6px; border-radius: var(--radius-sm); }
+.way-line { margin: 0; font-family: var(--sans); font-size: clamp(22px, 2.2vw, 28px); font-weight: var(--w-display); letter-spacing: var(--track-display); line-height: 1.2; color: var(--ink); }
+.way > p:not([class]) { font-size: 15.5px; line-height: 1.68; color: var(--ink-2); max-width: 52ch; }
+.way ul.plain { margin-top: 4px; max-width: 52ch; }
+.way ul.plain li { padding: 10px 0 10px 26px; position: relative; font-size: 14.5px; }
+.way ul.plain li::before { content: ""; position: absolute; left: 0; top: 19px; width: 12px; height: 2px; background: var(--mint); }
+.way .more { margin: 4px 0 0; font-family: var(--sans); font-size: 14px; font-weight: 600; }
+.way .more a { text-decoration: none; display: inline-flex; align-items: center; min-height: 28px; gap: 6px; }
+.way .more a:hover { text-decoration: underline; }
+.ways-note { margin-top: 28px; max-width: 72ch; }
+@media (max-width: 900px) { .ways-grid { grid-template-columns: minmax(0, 1fr); gap: 44px; } }
+@media (max-width: 420px) { .cloud-line { font-size: 14px; padding: 12px 14px; } }
+@media (forced-colors: active) {
+  .way { border-top-color: CanvasText; }
+  .cloud-line { border-color: LinkText; }
+}
 /* site-css:end */
 </style>
 </body>

@@ -396,7 +396,8 @@ ${body}
 
 <footer>
   <p class="sm dim">
-    Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>. These pages are
+    Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
+    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. These pages are
     generated from the repository — <code>node scripts/site-docs.mjs</code> — so nothing
     on them can disagree with the code they describe.
   </p>
