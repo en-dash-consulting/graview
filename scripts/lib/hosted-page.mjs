@@ -144,8 +144,16 @@ export const FACE_DOORS = {
  * are fetched when asked, and `@graview/tools/keep` never. The claim rises
  * by that with about 0.2 KB of room: 586.8 KB, which leaves Cloud's shell
  * 8.2 KB under its 595.
+ * The cleanup after the seat, over main at 600 647 bytes (586.6 KB), took
+ * it to 591 125 (577.3 KB), 9 522 fewer: the district's card and drive-in,
+ * the altitude control, the others in the city and the seat's marks — about
+ * 9.8 KB of rules only the scene draws — left the frame's sheet, which every
+ * face draws up front, for the scene face's (`sceneCss`); a keystroke in
+ * Find fitting one frame at a hub added about 0.4 KB. The claim falls to
+ * that with about 0.2 KB of room: 577.5 KB, which leaves Cloud's shell
+ * 17.5 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 586.8 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 577.5 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -245,8 +253,11 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * The seat taking you where you ask and drawing a view kept as a lens, the
  * same reader's lenses and host's keeping as the page that compiles, took
  * it to 555 091 bytes (542.1 KB): 542.2 KB.
+ * The cleanup after the seat, the same scene's rules moved to the scene
+ * face's sheet as the page that compiles (above), took it from main's
+ * 555 022 bytes (542.0 KB) to 545 500 (532.7 KB): 533.0 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 542.2 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 533.0 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [
