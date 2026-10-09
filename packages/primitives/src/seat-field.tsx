@@ -128,7 +128,8 @@ export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start 
     const back = cameFrom.current;
     cameFrom.current = null;
     if (back?.isConnected) back.focus({ preventScroll: true });
-    else field.current?.focus({ preventScroll: true });
+    // Gone, or no longer something the keyboard can stand on (a view drawn over it): the field keeps it.
+    if (document.activeElement !== back) field.current?.focus({ preventScroll: true });
   };
 
   if (hidden) return null;

@@ -104,10 +104,20 @@ function useInItsBox(anchor: RefObject<HTMLDivElement | null>, drawn: boolean) {
     place();
     addEventListener("resize", place);
     addEventListener("scroll", place, true);
-    const grows = typeof ResizeObserver === "function" ? new ResizeObserver(place) : null;
+    /*
+     * Placed in the next frame, not inside the observer's own delivery: the
+     * box placed is one the seat's field measures too, and a size changed
+     * while notifications are being delivered is a loop WebKit reports.
+     */
+    let frame = 0;
+    const grows = typeof ResizeObserver === "function" ? new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(place);
+    }) : null;
     const box = boxOf();
     if (box) grows?.observe(box);
     return () => {
+      cancelAnimationFrame(frame);
       grows?.disconnect();
       removeEventListener("resize", place);
       removeEventListener("scroll", place, true);
