@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
-import { bindSchema, createSchema, defineNode, nodeRef, placesOf, Store, type AnySchema, type Policy, type Principal } from "@graview/core";
+import { bindSchema, createSchema, declaredLenses, defineNode, nodeRef, placesOf, Store, type AnySchema, type Policy, type Principal } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { movesFromNames, NOTHING_BY_THAT_NAME, resolveAsk, type AskAnswer, type AskContext, type SeatMove } from "../../src/go.js";
+import { movesFromNames, NOTHING_BY_THAT_NAME, placesFromViews, resolveAsk, type AskAnswer, type AskContext, type SeatMove } from "../../src/go.js";
 import { configuredResponder, graphResponder, llmResponder } from "../../src/index.js";
 import { createTodoStore, todoApp } from "../../../../apps/todo/src/domain/app.js";
 import { seedbedApp, createSeedbedStore } from "../../../../apps/seedbed/src/domain/app.js";
@@ -35,6 +35,15 @@ const only = (answer: AskAnswer): SeatMove => {
   expect(moves, JSON.stringify(answer)).toHaveLength(1);
   return moves[0]!;
 };
+
+describe("the places a face holds", () => {
+  it("are the places the declaration makes, at the same addresses, from the schema and the registered pictures alone", () => {
+    const registered = declaredLenses(todoApp).drawn.flatMap((lens) => lens.kinds.map((kind) => ({ kind, title: lens.title, as: lens.as })));
+    const fromViews = placesFromViews(todoApp.schema as AnySchema, registered);
+    const said = (places: readonly { slug: string; title: string; kind: string | null; address: string }[]) => places.map(({ slug, title, kind, address }) => ({ slug, title, kind, address })).sort((a, b) => a.address.localeCompare(b.address));
+    expect(said(fromViews)).toEqual(said(placesOf(todoApp)));
+  });
+});
 
 describe("1. a place by its title", () => {
   it("goes to a declared lens as a picture of its kind, on both faces, and says so", () => {

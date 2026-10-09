@@ -5,15 +5,16 @@ import {
   readableFields,
   search,
   squeeze,
+  violationsTouching,
   withArticle,
   type AnySchema,
   type AppPlace,
   type Hit,
+  type Place,
   type Principal,
   type Store,
 } from "@graview/core";
 import { arrangeable, conditionHolds, type ArrangeGraph, type ArrangeOffer, type Condition } from "@graview/core/arrange";
-import { violationsTouching } from "@graview/core";
 import { readyRepairsOf, type ChatContext, type ChatReply } from "./conversation.js";
 import { validateProposals } from "./intelligence.js";
 
@@ -644,6 +645,38 @@ const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 /** "A, B and C". */
 function list(items: readonly string[]): string {
   return items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
+/**
+ * THE PLACES, FROM WHAT A FACE HOLDS: the schema and the places its view
+ * registry names (a declared lens registers one). The same list `placesOf`
+ * makes from the declaration — the home, the scene, each picture, each
+ * kind's list, with the same addresses — for a seat that is handed a store
+ * and its views rather than the app.
+ */
+export function placesFromViews(schema: AnySchema, places: readonly Place[], options: { readonly scene?: string } = {}): AppPlace[] {
+  const plural = (kind: string) => (schema.tryDefinition(kind)?.plural as string | undefined) ?? `${kind}s`;
+  const out: AppPlace[] = [
+    { slug: "home", title: "Home", kind: null, cardinality: "many", address: "/", stop: "#" },
+    { slug: "overview", title: options.scene ?? "Scene", kind: null, cardinality: "many", address: "/places/overview", stop: "#" },
+  ];
+  for (const place of places) {
+    if (!(schema.kinds as readonly string[]).includes(place.kind)) continue;
+    const shared = places.some((other) => other.as === place.as && other.kind !== place.kind);
+    const of = shared ? `?of=${encodeURIComponent(placeSlug(plural(place.kind)))}` : "";
+    out.push({
+      slug: place.as,
+      title: place.title,
+      kind: place.kind,
+      cardinality: "many",
+      address: `/places/${encodeURIComponent(place.as)}${of}`,
+      stop: shared ? `#focus=aggregate:${place.kind}&in.view=${encodeURIComponent(place.as)}` : `#view=${encodeURIComponent(place.as)}`,
+    });
+  }
+  for (const kind of schema.kinds as readonly string[]) {
+    out.push({ slug: placeSlug(plural(kind)), title: plural(kind), kind, cardinality: "many", address: `/${placeSlug(plural(kind))}`, stop: `#focus=aggregate:${kind}` });
+  }
+  return out;
 }
 
 /** What the resolver is handed from a turn's context. */
