@@ -1157,6 +1157,17 @@ handle = mount(root, { app, store, at });</code></pre></div>
 <h3>The ask field</h3>
 <p>At the foot of both faces stands one quiet field, "Ask &lt;the app&gt;…". Asked, it grows into a panel over the app — never pushing the page — with a line about where the reader is, a few things to ask, at most three acts (the repairs a broken rule names for what they are on, and their own pins) and the conversation; ⇄ snaps it to the other foot, and on a phone it is a bottom sheet with a grab line to put it away. Escape closes it and puts the keyboard back. The conversation is the app's, so it is still there after a switch between the scene and Pages, and Find's last row, "Ask: ‘…’", asks it. The host can leave it out:</p>
 <div class="code" data-scroller><pre><code>mount(root, { app, seat: "hidden" });   // "field" (the default) or "hidden"</code></pre></div>
+<p>What answers it is the host's to decide, once — a reader is never asked. The graph answers first, always: where things are, what is wrong, what a record says, the repairs a rule names, a view a template draws. Give the seat a model and open questions go to it:</p>
+<div class="code" data-scroller><pre><code>mount(root, {
+  app,
+  ai: {
+    complete: (prompt) =&gt; myModel(prompt),   // prompt in, text out
+    name: "house-model",                     // logged as via "ai:house-model"; never shown
+    // decide: jevDecide({ ... }),            // typed decisions, if you have a provider
+    // onDevice: true,                        // a model in the reader's browser, off unless said
+  },
+});</code></pre></div>
+<p>With no <code>ai</code>, an open question is answered "I can answer about what's in this app. Open questions need AI, which isn't on here." An answer a model gave carries one quiet "Answered with AI"; one the graph gave carries nothing.</p>
 <h3>The host's notices</h3>
 <p>What the host has to say while the app is open — a newer version, the connection gone, the app held while a repair is checked, a conflict to settle, a refusal — it says in the app's own notices rather than in elements of its own fixed over the app:</p>
 <div class="code" data-scroller><pre><code>const offline = handle.notify({ kind: "banner", sentence: "Offline — changes will be sent when you reconnect.", tone: "warn" });

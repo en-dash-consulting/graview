@@ -990,7 +990,7 @@ export async function draftView<S extends AnySchema>(ask: string, options: Draft
   if (ask.trim().length === 0) return { failed: "Say what you would like to see, like “a board of tasks by status”.", ...keep };
   const templated = templateDraft(ask, options);
   if (templated && !isDraftFailure(templated)) return templated;
-  if (!options.complete) return templated ?? { failed: "Couldn't draw that without a model: ask for a board, a calendar, a timeline, a list or who covers what.", ...keep };
+  if (!options.complete) return templated ?? { failed: "Couldn't draw that: drawing freely needs AI, which isn't on here. Ask for a board, a calendar, a timeline, a list or who covers what.", ...keep };
   const modeled = await modelDraft(ask, options, undefined);
   // The template's reason is the better sentence when the model could not do better.
   if (isDraftFailure(modeled) && templated) return templated;
@@ -1041,7 +1041,7 @@ export async function refineDraft<S extends AnySchema>(draft: SeatDraft, ask: st
     if (!(error instanceof Cannot)) throw error;
     return { failed: `Couldn't change that: ${error.message}.`, ...keep };
   }
-  if (!options.complete) return { failed: "Couldn't change that without a model: try “group by status”, “only this month” or “as a calendar”.", ...keep };
+  if (!options.complete) return { failed: "Couldn't change that: changing it freely needs AI, which isn't on here. Try “group by status”, “only this month” or “as a calendar”.", ...keep };
   const modeled = await modelDraft(ask, opts, draft);
   return isDraftFailure(modeled) ? modeled : { ...modeled, asks };
 }

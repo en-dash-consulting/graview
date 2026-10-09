@@ -2,6 +2,7 @@ import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type P
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, createNoticeBoard, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, type BarFaces, type BarFind, type BarGo, type BarPlace, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
+import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
 
@@ -229,6 +230,14 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * to keep it".
    */
   readonly onKeepLens?: KeepLensHost;
+  /**
+   * THE AI THE SEAT MAY USE, decided by the host and never by a reader:
+   * `{ complete }` (the host's model: prompt in, text out) for open
+   * questions and views no template draws, `decide` for typed decisions,
+   * `onDevice` to let a model run in the reader's browser. Unsaid, the
+   * graph answers alone, and an open question is told AI isn't on here.
+   */
+  readonly ai?: HostAi;
   /**
    * TOLD WHAT WENT WRONG (FR-24). A view, a page or the bar that throws
    * is contained where it threw, the rest of the embed keeps working, and
@@ -480,6 +489,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     ...(props.memory ? { memory: props.memory } : {}),
     ...(props.presenceTtlMs !== undefined ? { presenceTtlMs: props.presenceTtlMs } : {}),
     ...(props.onKeepLens ? { onKeepLens: props.onKeepLens } : {}),
+    ...(props.ai ? { ai: props.ai } : {}),
     /* The reader's own text size and motion, on somebody else's page
        too: the answer lives on the browser, not on the installation. */
     settings: props.app.settings ?? [],

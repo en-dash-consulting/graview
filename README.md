@@ -222,9 +222,10 @@ The floors, and what happens beneath them:
   altitude morph into the Graview. Where it is missing the transition
   degrades to a clean cut — verified, not assumed: the matrix launches
   Firefox with registered properties disabled and measures the cut.
-- **The local-AI rung** needs WebGPU or Chrome's Prompt API. In an engine
-  with neither, the chat answers from the graph and the header says why —
-  also verified by the matrix, with WebGPU switched off.
+- **A model on the reader's device** (a host's `ai.onDevice`) needs WebGPU
+  or Chrome's Prompt API. In an engine with neither, the seat answers from
+  the graph and says AI isn't available in this browser — verified by the
+  matrix, with WebGPU switched off.
 - **The GPU capture path** (`?renderer=gpu`) is Chromium 147+ behind a flag,
   experimental and opt-in by nature. No other engine has HTML-in-Canvas.
 

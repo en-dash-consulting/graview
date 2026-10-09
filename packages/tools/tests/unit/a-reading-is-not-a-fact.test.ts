@@ -1,7 +1,7 @@
 import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { configuredResponder, type Responder } from "../../src/index.js";
+import { NO_AI, openAiCompatibleCompletion, seatResponder, type Responder } from "../../src/index.js";
 
 /**
  * A FACT OUTRANKS A MODEL. A READING DOES NOT.
@@ -69,10 +69,7 @@ afterEach(() => {
 
 const withModel = (content: string) => {
   answering(content);
-  return configuredResponder<typeof schema>(
-    { source: "remote", remote: { preset: "custom", baseUrl: "http://nowhere/v1", apiKey: "k", model: "test" } },
-    { floor },
-  );
+  return seatResponder<typeof schema>({ complete: openAiCompatibleCompletion({ baseUrl: "http://nowhere/v1", apiKey: "k", model: "test" }) }, { floor });
 };
 
 describe("what the model is asked", () => {
@@ -114,19 +111,20 @@ describe("what the model is asked", () => {
     globalThis.fetch = (async () => {
       throw new Error("no network");
     }) as never;
-    const reply = await configuredResponder<typeof schema>(
-      { source: "remote", remote: { preset: "custom", baseUrl: "http://nowhere/v1", apiKey: "k", model: "test" } },
+    const reply = await seatResponder<typeof schema>(
+      { complete: openAiCompatibleCompletion({ baseUrl: "http://nowhere/v1", apiKey: "k", model: "test" }) },
       { floor },
     )(store(), "call the soup something else");
     expect(reply.say).toContain("A reading.");
-    expect(reply.say).toContain("no network");
+    expect(reply.say).toContain("AI didn't answer just now");
+    expect(reply.via).toBeUndefined();
     expect(reply.proposals).toHaveLength(1);
   });
 });
 
-describe("the ladder with no model on it", () => {
+describe("a seat the host gave no model", () => {
   it("answers from the floor, reading and fact alike", async () => {
-    const graphOnly = configuredResponder<typeof schema>({ source: "graph" }, { floor });
+    const graphOnly = seatResponder<typeof schema>(NO_AI, { floor });
     expect((await graphOnly(store(), "how many meals are there?")).say).toBe("One meal: Soup.");
     expect((await graphOnly(store(), "call the soup something else")).proposals).toHaveLength(1);
   });

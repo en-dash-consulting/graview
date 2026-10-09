@@ -109,17 +109,16 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
     /**
      * A READING of what somebody wants changed — right often enough to be
      * the floor, and never so right that a model should be kept out of it.
-     * Where a model is on the ladder this goes up as a starting point; where
-     * none is, it is the answer.
+     * Where the host gave a model this goes up as a starting point; where
+     * it gave none, it is the answer.
      */
     const reading = (say: string, proposals: readonly ProposedCall[] = []): ChatReply => ({
       say,
       proposals: validateProposals(store as Store<StudioSchema>, proposals),
     });
     /**
-     * A sentence this rung could not read. Honest, and a dead end on its
-     * own — so it is marked, and a surface with no model chosen can offer
-     * the one that reads any phrasing.
+     * A sentence the declaration could not read. Honest, and marked, so
+     * the host's model reads it — or, with none, the seat says AI isn't on.
      */
     const unsure = (say: string): ChatReply => ({ say, proposals: [], unsure: true });
 
@@ -451,8 +450,8 @@ export function studioResponder(options: StudioResponderOptions = {}): Responder
      * answering a different question. The graph responder's last resort is
      * a description of the shape — true, and not what was asked — so an
      * answer with nothing under it from a sentence that was plainly asking
-     * for a CHANGE is marked as unread, and a surface with no model chosen
-     * can offer the rung that reads any phrasing.
+     * for a CHANGE is marked as unread — and with no model, the seat says
+     * that open requests need AI, which isn't on here.
      */
     const fallback = await floor(store, text, context);
     return fallback.grounded || fallback.proposals.length > 0 || question

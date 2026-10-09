@@ -37,6 +37,14 @@
  *   theActsKeyOpensTheMenu       A on a card opens its acts at the card with
  *                                the keyboard in them; Escape goes back
  *   theFieldStaysClearOfCards    no card of the scene stands under the field
+ *   noChoiceOfWhatAnswers        open, closed and in the person's menu: no ⚙,
+ *                                no source line, no picker, and no rung's
+ *                                name ("graph-native", "Onboard AI", "Jev"…)
+ *                                anywhere a reader can see or hear it
+ *   withoutAiAnOpenQuestionIsToldSo
+ *                                with no model given, an open question is
+ *                                answered "…Open questions need AI, which
+ *                                isn't on here." and carries no AI note
  *
  *   node scripts/verify-seat-guide.mjs [--engine=chromium|webkit|firefox] [--quick]
  *
@@ -72,6 +80,21 @@ const DAY = "today=2026-09-01";
 /** Each claim gathers its cases; a claim holds when every case does. */
 const cases = {};
 const note = (claim, one) => (cases[claim] ??= []).push({ engine: ENGINE_NOW, ...one });
+
+/* What offered a choice of what answers, and the words it offered: none of it is ever shown now. */
+const RUNG_WORDS = "graph-native|Graph only|Onboard AI|\\bJev\\b|\\bLLM\\b|on this device|with my key|What answers|Answers come from|Answering now";
+const CHOOSERS = ["seat-settings", "seat-source", "seat-ladder", "setting-intelligence", "seat-offer-model"];
+const NO_AI = "I can answer about what's in this app. Open questions need AI, which isn't on here.";
+
+/** Whatever on the page offers a choice of what answers, and any rung's name it shows or says. */
+const choosers = (page) =>
+  page.evaluate(
+    ({ words, ids }) => {
+      const said = `${document.body.innerText} ${[...document.querySelectorAll("[aria-label],[title]")].map((el) => `${el.getAttribute("aria-label") ?? ""} ${el.getAttribute("title") ?? ""}`).join(" ")}`;
+      return { controls: ids.filter((id) => document.querySelector(`[data-testid="${id}"]`) !== null), words: [...new Set(said.match(new RegExp(words, "g")) ?? [])] };
+    },
+    { words: RUNG_WORDS, ids: CHOOSERS },
+  );
 
 const axeSource = readFileSync(resolve(repoRoot, "node_modules/axe-core/axe.min.js"), "utf8");
 
@@ -300,6 +323,8 @@ try {
 
         const open = await machineWords(page);
         note("noMachineWordsInTheSeat", { at: `${label} open`, ...open, ok: open.found && open.words.length === 0 && open.eyebrows.length === 0 });
+        const offered = await choosers(page);
+        note("noChoiceOfWhatAnswers", { at: `${label} open`, ...offered, ok: offered.controls.length === 0 && offered.words.length === 0 });
         const counted = await counts(page);
         note("atMostThreeActs", { at: label, ...counted, ok: counted.acts <= 3 && counted.suggestions <= 3 && counted.stars === 0 });
 
@@ -332,10 +357,30 @@ try {
           on: document.activeElement === document.body ? "body" : (document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName ?? null),
         }));
         note("escapeReturnsFocus", { at: `${label} from the field`, ...escaped, ok: escaped.seat === "closed" && escaped.on !== "body" && escaped.on !== null });
+
+        /* With no model given, an open question is told so — once, in plain words, with no note under it. */
+        if (!chosen) {
+          await openTheSeat(page);
+          await ask(page, "should we repaint the hallway?");
+          const told = await page.evaluate(() => {
+            const last = [...document.querySelectorAll('[data-testid="seat-panel"] ol > li')].at(-1);
+            return { reply: (last?.textContent ?? "").slice(0, 160), note: Boolean(last?.querySelector('[data-testid="seat-answered-with-ai"]')) };
+          });
+          note("withoutAiAnOpenQuestionIsToldSo", { at: label, ...told, ok: told.reply.includes(NO_AI) && !told.note && !new RegExp(RUNG_WORDS).test(told.reply) });
+          /* And the person's menu offers no choice of it either. */
+          await page.keyboard.press("Escape");
+          if (size === "desk") {
+            await page.click('[data-testid="profile-button"]').catch(() => {});
+            await page.waitForTimeout(300);
+            const menu = await choosers(page);
+            note("noChoiceOfWhatAnswers", { at: `${label} the person's menu`, ...menu, ok: menu.controls.length === 0 && menu.words.length === 0 });
+            await page.keyboard.press("Escape");
+          }
+        }
         } catch (error) {
           /* No field to open, or a step that never came: every claim this page holds fails, saying why. */
           const why = String(error).split("\n")[0].slice(0, 160);
-          for (const claim of ["noMachineWordsInTheSeat", "atMostThreeActs", "thePageDoesNotMove", "everyPartIsReachable", "escapeReturnsFocus", ...(face === "scene" ? ["theFieldStaysClearOfCards"] : [])]) {
+          for (const claim of ["noMachineWordsInTheSeat", "atMostThreeActs", "thePageDoesNotMove", "everyPartIsReachable", "escapeReturnsFocus", "noChoiceOfWhatAnswers", ...(chosen ? [] : ["withoutAiAnOpenQuestionIsToldSo"]), ...(face === "scene" ? ["theFieldStaysClearOfCards"] : [])]) {
             note(claim, { at: `${where} ${face}${chosen ? " t-deposit" : ""}`, why, ok: false });
           }
         }

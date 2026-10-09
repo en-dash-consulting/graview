@@ -64,14 +64,11 @@ export { RelationKey, RelationMark, relationWords } from "./relation-key.js";
 export { QuickRelations, handles } from "./quick-relations.js";
 export { rosterOf } from "./default-views.js";
 export { ChatPanel } from "./chat.js";
-export { LadderSetting } from "./ladder.js";
 export type { ChatPanelProps } from "./chat.js";
 export {
-  describeSource,
   proposalKey,
   SeatComposer,
   SeatHeader,
-  SeatSettings,
   SeatThread,
   Settled,
   splitAside,

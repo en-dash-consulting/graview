@@ -3,7 +3,7 @@ import type { Brand, Principal, GraviewApp } from "@graview/core";
 import { GraviewProvider, useGraph, useGraview, type Scheme, type SceneProps } from "@graview/react";
 import { AgentSeat, Shell } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
-import { templateIntelligence, type ToolCall } from "@graview/tools";
+import { templateIntelligence, type HostAi, type ToolCall } from "@graview/tools";
 import { useMemo, useState } from "react";
 import { createSeedbedStore, seedbedApp, type SeedbedStore } from "../domain/app.js";
 import type { SeedbedSchema } from "../domain/schema.js";
@@ -62,6 +62,8 @@ export interface SeedbedAppProps {
    * nothing at all.
    */
   readonly principal?: Principal;
+  /** The AI the seat may use, as the host decided it. The garden has none of its own. */
+  readonly ai?: HostAi;
 }
 
 /**
@@ -90,6 +92,7 @@ export function SeedbedApp({
   season = false,
   rotation = false,
   principal,
+  ai,
 }: SeedbedAppProps) {
   const created = useMemo(() => store ?? createSeedbedUiStore(), [store]);
   const views = useMemo(
@@ -115,6 +118,7 @@ export function SeedbedApp({
        * permitted: tend — one of coordinator, gardener can" to a gardener.
        */
       {...(principal ? { principal } : {})}
+      {...(ai ? { ai } : {})}
       settings={seedbedApp.settings ?? []}
     >
       <Shell<S>

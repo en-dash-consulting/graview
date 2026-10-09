@@ -30,8 +30,8 @@ export function InPlaceWriter({
   readonly migration: string | null;
   readonly files: readonly WrittenFile[];
 }): ReactNode {
-  const { intelligence } = useGraview();
-  const complete = useMemo(() => completionFor(intelligence), [intelligence]);
+  const { ai } = useGraview();
+  const complete = useMemo(() => completionFor(ai), [ai]);
   // Read once, as Apply was pressed: what is written is what was checked.
   const plan = useMemo(() => studio.sourceChanges(), [studio]);
   const blockers = plan.unwritten;

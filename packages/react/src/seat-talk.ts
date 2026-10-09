@@ -27,8 +27,13 @@ export interface SeatTurn {
   readonly proposals?: readonly ProposedCall[];
   /** Questions the seat is asking back, each at the node it is about. */
   readonly questions?: readonly OfferedQuestion[];
-  /** The rung could not read the sentence: a model would, one press away. */
+  /** The graph could not read the sentence. */
   readonly unsure?: boolean;
+  /**
+   * A model gave this answer (`ai:<name>`): what it proposes is logged
+   * through this, and the seat sets one quiet "Answered with AI" under it.
+   */
+  readonly via?: string;
   /** What the words found, when that was the answer: each a way to go there. */
   readonly picks?: ChatReply["picks"];
   /** Where the answer took the app ("Went to The week."): each a link that goes there again. */

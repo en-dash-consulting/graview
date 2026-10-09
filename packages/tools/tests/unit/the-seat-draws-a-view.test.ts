@@ -162,7 +162,7 @@ describe("a model writes the same JSON, and it is judged before it is drawn", ()
 
   it("says plainly that a free ask needs a model when there is none", async () => {
     const result = await draftView("what is the meaning of this", { app: todo });
-    expect(isDraftFailure(result) ? result.failed : "").toMatch(/without a model/);
+    expect(isDraftFailure(result) ? result.failed : "").toMatch(/needs AI, which isn.t on here/);
   });
 });
 

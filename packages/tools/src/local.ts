@@ -1,17 +1,16 @@
-import { DECISION_BRIDGE_PATH, type AnySchema } from "@graview/core";
+import { DECISION_BRIDGE_PATH, type AnySchema, type IntelligenceProviderDeclaration } from "@graview/core";
+import { aiVia, NO_AI_SAID, type HostAi } from "./ai.js";
 import { graphResponder, llmResponder, type ChatReply, type Responder } from "./conversation.js";
 import { completionDecide } from "./decide.js";
 import type { Completion } from "./intelligence.js";
 import { jevDecide, type Decide } from "./providers/jev.js";
 
 /*
- * The ladder itself — the rungs, the config and where it is kept — is
- * `./rungs.ts`, which reaches no model: a provider that reads the reader's
- * rung does not carry the chat that answers on it (FR-57).
+ * What the host gave a seat (`HostAi`) is `./ai.ts`, which reaches no
+ * model: a provider that holds it does not carry the chat that answers
+ * with it (FR-57). This file is the models themselves, and the one
+ * responder that puts the graph in front of them.
  */
-import { RUNGS, rungHonesty, type IntelligenceConfig } from "./rungs.js";
-export { DEFAULT_INTELLIGENCE, loadIntelligenceConfig, RUNGS, rungFor, rungHonesty, saveIntelligenceConfig } from "./rungs.js";
-export type { IntelligenceConfig, IntelligenceSource } from "./rungs.js";
 
 /* ------------------------------------------------------------- adapters */
 
@@ -80,7 +79,7 @@ export function xaiCompletion(options: {
 
 /* ---------------------------------------------------------- local model */
 
-/** What the local rung is doing, for a UI that wants to say so. */
+/** What the model in the reader's browser is doing, for a surface that wants to say so. */
 export interface LocalStatus {
   readonly state: "cold" | "warming" | "ready" | "failed";
   /** 0–1 while warming, when the engine reports progress. */
@@ -106,7 +105,7 @@ const WEBLLM_DEFAULT_MODEL = "Llama-3.2-3B-Instruct-q4f16_1-MLC";
  * The weights are on the order of a couple of gigabytes, fetched once and
  * cached by the browser; until they are warm the chat answers from the
  * graph. WebLLM arrives by dynamic import at the moment someone turns the
- * rung on — it is not a build dependency, because most installs never
+ * model on — it is not a build dependency, because most installs never
  * will. Chrome's built-in Prompt API is used first where it exists: no
  * download at all.
  */
@@ -125,7 +124,14 @@ export function localCompletion(
     /** Injectable for tests: replaces the whole engine bring-up. */
     readonly load?: () => Promise<EngineLike>;
   } = {},
-): { complete: Completion; ready: () => boolean; warm: () => void } {
+): {
+  complete: Completion;
+  ready: () => boolean;
+  /** Starts the bring-up, once; settles when it has (or at once, when there is nothing to do). */
+  warm: () => Promise<void>;
+  /** Why the bring-up failed in this browser, or `null`. A reload is the retry. */
+  failed: () => string | null;
+} {
   const cacheKey = options.load ? null : (options.model ?? WEBLLM_DEFAULT_MODEL);
   const held = cacheKey
     ? (ENGINES.get(cacheKey) ?? ENGINES.set(cacheKey, { engine: null, failed: null }).get(cacheKey)!)
@@ -158,9 +164,8 @@ export function localCompletion(
     /*
      * CAPABILITY GATING, STATED. WebLLM needs WebGPU; without it the
      * engine would download megabytes of loader only to fail obscurely.
-     * Failing here, first, is what lets the chat header say WHY the rung
-     * is unavailable in this browser rather than shrugging — and the
-     * graph floor answers either way.
+     * Failing here, first, is what lets the seat say AI didn't answer
+     * rather than hanging — and the graph answers either way.
      */
     if (!(globalThis.navigator as { gpu?: unknown } | undefined)?.gpu) {
       throw new Error("this browser has no WebGPU, which the local model needs");
@@ -175,16 +180,18 @@ export function localCompletion(
     });
   };
 
-  const warm = () => {
+  let bringing: Promise<void> = Promise.resolve();
+  const warm = (): Promise<void> => {
     engine = held.engine ?? engine;
-    if (engine || warming) return;
+    if (engine) return Promise.resolve();
+    if (warming) return bringing;
     if (held.failed !== null) {
       say({ state: "failed", detail: held.failed });
-      return;
+      return Promise.resolve();
     }
     warming = true;
     say({ state: "warming" });
-    void bringUp()
+    bringing = bringUp()
       .then((ready) => {
         engine = ready;
         held.engine = ready;
@@ -197,6 +204,7 @@ export function localCompletion(
       .finally(() => {
         warming = false;
       });
+    return bringing;
   };
 
   const complete: Completion = async (prompt) => {
@@ -210,199 +218,138 @@ export function localCompletion(
     return content;
   };
 
-  return { complete, ready: () => (held.engine ?? engine) !== null, warm };
+  return { complete, ready: () => (held.engine ?? engine) !== null, warm, failed: () => held.failed };
 }
 
-/* ------------------------------------------------------ the whole ladder */
+/* ------------------------------------------------- the host's AI, used */
 
 /**
- * THE MODEL BEHIND A RUNG, when the person has chosen one.
+ * THE MODEL THE HOST GAVE, as one completion — or `undefined`, so a caller
+ * can say what it will do INSTEAD (draw from a template, answer from the
+ * graph). The host's `complete` first; a model in the reader's browser
+ * only when the host turned `onDevice` on, warmed on first use and
+ * throwing while cold, which callers already treat as "say what happened".
+ */
+export function completionFor(ai: HostAi, hooks: { readonly onStatus?: (status: LocalStatus) => void } = {}): Completion | undefined {
+  return talkingModel(ai, hooks)?.complete;
+}
+
+interface TalkingModel {
+  readonly complete: Completion;
+  ready(): boolean;
+  warm(): Promise<void>;
+  failed(): string | null;
+}
+
+function talkingModel(ai: HostAi, hooks: { readonly onStatus?: (status: LocalStatus) => void }): TalkingModel | undefined {
+  if (ai.complete) return { complete: ai.complete, ready: () => true, warm: () => Promise.resolve(), failed: () => null };
+  if (!ai.onDevice) return undefined;
+  const model = typeof ai.onDevice === "object" ? ai.onDevice.model : undefined;
+  const local = localCompletion({ ...(model ? { model } : {}), ...(hooks.onStatus ? { onStatus: hooks.onStatus } : {}) });
+  return {
+    complete: async (prompt) => {
+      if (!local.ready()) void local.warm();
+      return local.complete(prompt);
+    },
+    ready: local.ready,
+    warm: local.warm,
+    failed: local.failed,
+  };
+}
+
+/**
+ * THE SEAT'S ONE RESPONDER: the graph first, the host's model after it.
  *
- * A conversation is not the only thing a model is good for: drawing a
- * kind's figure is one prompt and one answer, judged by the checker's own
- * function. Both reach the same configured provider through this, so there
- * is one place a key is read and one place a rung is honored — and a
- * keyless config answers `undefined` rather than a completion that throws,
- * so a caller can say what it will do INSTEAD of drawing.
+ * GROUNDED FACTS OUTRANK ANY MODEL. A question the graph can answer from
+ * its own structure — a standing, a named thing, a who or a when — is
+ * answered by the graph: a small model asked "who can play left back"
+ * will fluently invent a goalkeeper, and nothing is allowed to replace a
+ * fact with a guess about the same fact.
+ *
+ * A READING OF A CHANGE IS NOT A FACT. Speaking a change loosely — "add
+ * details to Meal, the name of the food and the number of people it can
+ * feed" — is two fields in one sentence, and a pattern-matcher can only
+ * ever see one. So the graph's reading goes up to the model as a starting
+ * point: keep it, correct it, or split it. What the model may not do is
+ * come back with less: an answer with no proposals never replaces a
+ * reading that had them.
+ *
+ * HONEST, QUIETLY. An answer a model gave carries `via` (the op log's
+ * channel for whatever it proposes, and the seat's cue for one small
+ * "Answered with AI"); an answer the graph gave carries nothing. With no
+ * model, a question the graph could not read says so in one plain
+ * sentence, and a model that fails leaves the graph's answer with one
+ * quiet line — never a rung, a provider or a key.
  */
-export function completionFor(
-  config: IntelligenceConfig,
-  hooks: { readonly onStatus?: (status: LocalStatus) => void } = {},
-): Completion | undefined {
-  if (config.source === "remote" && config.remote?.apiKey) {
-    const model =
-      config.remote.model ?? (config.remote.preset === "custom" ? "a model" : XAI_DEFAULT_MODEL);
-    return config.remote.preset === "custom" && config.remote.baseUrl
-      ? openAiCompatibleCompletion({ baseUrl: config.remote.baseUrl, apiKey: config.remote.apiKey, model })
-      : xaiCompletion({ apiKey: config.remote.apiKey, ...(config.remote.model ? { model: config.remote.model } : {}) });
-  }
-  if (config.source === "local") {
-    const local = localCompletion({
-      ...(config.local?.model ? { model: config.local.model } : {}),
-      ...(hooks.onStatus ? { onStatus: hooks.onStatus } : {}),
-    });
-    /*
-     * A cold engine is warmed rather than refused: the first ask pays for
-     * the bring-up, and `complete` throws while it is cold — which the
-     * callers already treat as "say what happened instead", never as a
-     * silent failure.
-     */
-    if (!local.ready()) local.warm();
-    return local.complete;
-  }
-  return undefined;
-}
-
-/**
- * One Responder from one config. The graph is always the floor: a remote
- * failure or a cold local model answers from the graph WITH A NOTE rather
- * than failing the conversation — a chat that errors where it could have
- * answered is worse than either rung alone.
- */
-export function configuredResponder<S extends AnySchema>(
-  config: IntelligenceConfig,
+export function seatResponder<S extends AnySchema>(
+  ai: HostAi,
   hooks: {
     readonly onStatus?: (status: LocalStatus) => void;
     /**
-     * The rung below every model, when a surface has one of its own. The
-     * studio's floor answers about the DECLARATION — what kinds there are,
-     * what an act writes — which the ordinary graph responder cannot know
-     * to say; passing it here means the studio climbs the same ladder
-     * rather than growing a second one beside it.
+     * What answers before any model, when a surface has one of its own.
+     * The studio's answers about the DECLARATION — what kinds there are,
+     * what an act writes — which the graph's own responder cannot know to
+     * say; passing it here keeps one way of putting a model behind it.
      */
     readonly floor?: Responder<S>;
-    /**
-     * WHAT THE SETTING IS NOW, asked after the answer lands. A person who
-     * switches rungs while a turn is in flight gets the answer the old
-     * rung was making — and is told so, in the answer, rather than
-     * watching a turn quietly finish on a rung they left.
-     */
-    readonly current?: () => IntelligenceConfig;
   } = {},
 ): Responder<S> {
   const floor = hooks.floor ?? graphResponder<S>();
-  const built = config.source;
-  const switched = (reply: ChatReply): ChatReply => {
-    const now = hooks.current?.();
-    if (!now || now.source === built) return reply;
-    return note(reply, `(answered on the ${RUNGS[built].label} rung — you switched to ${RUNGS[now.source].label} meanwhile.)`);
-  };
-  const honest = (responder: Responder<S>): Responder<S> => async (store, text, context) =>
-    switched(await responder(store, text, context));
-
-  /*
-   * GROUNDED FACTS OUTRANK ANY MODEL. Whatever rung is chosen, a question
-   * the graph can answer from its own structure — a standing, a named
-   * thing, a who or a when — is answered by the graph: a small local model
-   * asked "who can play left back" will fluently invent a goalkeeper, and
-   * no rung is allowed to replace a fact with a guess about the same fact.
-   *
-   * A READING OF A CHANGE IS NOT A FACT, and treating it as one was the
-   * ladder shutting the model out of the only thing it is better at.
-   * Speaking a change loosely — "add details to Meal, the name of the food
-   * and the number of people it can feed" — is two fields in one sentence,
-   * and a pattern-matcher can only ever see one of them. So the floor's
-   * reading goes UP to the model as a starting point: keep it, correct it,
-   * or split it. What the model may not do is come back with less: an
-   * answer with no proposals never replaces a reading that had them.
-   */
-  const groundedFirst =
-    (modeled: Responder<S>, name: string): Responder<S> =>
-    async (store, text, context) => {
+  const talking = talkingModel(ai, hooks);
+  if (!talking) {
+    return async (store, text, context) => {
       const known = await floor(store, text, context);
-      if (known.grounded) return note(known, "(from the graph)");
-      try {
-        const answered = await modeled(store, text, {
-          ...context,
-          ...(known.proposals.length > 0 ? { reading: known.proposals } : {}),
-        });
-        if (answered.proposals.length === 0 && known.proposals.length > 0) {
-          return note(known, "(from the graph)");
-        }
-        return answered;
-      } catch (error) {
-        return note(
-          known,
-          `(${name} did not answer — ${error instanceof Error ? error.message : String(error)}. The graph answered instead.)`,
-        );
-      }
+      // Said alone: the graph's description of its own shape was not what was asked.
+      return known.unsure ? { ...known, say: NO_AI_SAID } : known;
     };
-
-  if (config.source === "remote" && config.remote?.apiKey) {
-    const model =
-      config.remote.model ?? (config.remote.preset === "custom" ? "a model" : XAI_DEFAULT_MODEL);
-    const complete = completionFor(config);
-    if (complete) return honest(groundedFirst(llmResponder<S>({ complete }), model));
   }
-
-  /*
-   * THE RUNG THAT SAYS WHAT IT CANNOT DO. A decision provider has no prose,
-   * so the conversation is the graph's — and the seat SAYS so, in the
-   * answer itself, so every surface the seat speaks from carries the
-   * sentence unchanged: the chat panel now, a figure's bubble later. The
-   * same honesty the seat shows when it is refused an act.
-   */
-  if (config.source === "decision") {
-    const why = rungHonesty(config, "prose")!;
-    return honest(async (store, text, context) => note(await floor(store, text, context), why));
-  }
-
-  if (config.source === "local") {
-    const local = localCompletion({
-      ...(config.local?.model ? { model: config.local.model } : {}),
-      ...(hooks.onStatus ? { onStatus: hooks.onStatus } : {}),
-    });
-    const modeled = groundedFirst(llmResponder<S>({ complete: local.complete }), "the local model");
-    return honest(async (store, text, context) => {
-      if (!local.ready()) {
-        local.warm();
-        const answered = await floor(store, text, context);
-        return answered.grounded
-          ? note(answered, "(from the graph)")
-          : note(answered, "(the local model is warming — the graph answered meanwhile)");
-      }
-      return modeled(store, text, context);
-    });
-  }
-
-  return honest(floor);
+  const modeled = llmResponder<S>({ complete: talking.complete });
+  const via = aiVia(ai);
+  return async (store, text, context) => {
+    const known = await floor(store, text, context);
+    if (known.grounded) return known;
+    if (!talking.ready()) {
+      /* A browser that cannot run it says so at once (no WebGPU fails in a moment); one that can is warming. */
+      await Promise.race([talking.warm(), new Promise((settled) => setTimeout(settled, 100))]);
+      if (talking.failed() !== null) return note(known, "(AI isn't available in this browser, so this is from the app alone.)");
+      if (!talking.ready()) return note(known, "(AI is still getting ready on this device, so this is from the app alone.)");
+    }
+    try {
+      const answered = await modeled(store, text, {
+        ...context,
+        ...(known.proposals.length > 0 ? { reading: known.proposals } : {}),
+      });
+      if (answered.proposals.length === 0 && known.proposals.length > 0) return known;
+      return { ...answered, via };
+    } catch {
+      return note(known, "(AI didn't answer just now, so this is from the app alone.)");
+    }
+  };
 }
 
 /**
- * THE DECISION BEHIND A RUNG, for a surface that asks for one — a field
- * that wants filling, a matrix that wants judging. On the decision rung
- * it is the provider exactly, by the person's key or through the dev
- * server's door; on a model rung it is the model with the parse-and-refuse
- * layer behind it; on the graph rung it is nothing here, because the
- * graph decides by its own rules and needs the store to do it
- * (`graphDecide`). A surface holding `undefined` falls down to that.
+ * THE DECISION A SURFACE ASKS FOR — a field that wants filling, a matrix
+ * that wants judging. The host's decision provider exactly; else one the
+ * app's declaration names (`kind: "decision"`), reached through the dev
+ * server's door, which holds the key so a browser never does; else the
+ * host's model behind the parse-and-refuse layer; else `undefined`, and
+ * the graph decides by its own rules (`graphDecide`).
  */
 export function decideFor(
-  config: IntelligenceConfig,
-  hooks: { readonly onStatus?: (status: LocalStatus) => void } = {},
+  ai: HostAi,
+  options: {
+    /** The app's declared providers (`store.intelligence`). */
+    readonly intelligence?: readonly IntelligenceProviderDeclaration[];
+    readonly onStatus?: (status: LocalStatus) => void;
+  } = {},
 ): Decide | undefined {
-  if (config.source === "decision") {
-    const decision = config.decision ?? {};
-    return decision.apiKey
-      ? jevDecide({ apiKey: decision.apiKey, ...(decision.model ? { model: decision.model } : {}) })
-      : jevDecide({ baseUrl: decision.bridge ?? DECISION_BRIDGE_PATH, ...(decision.model ? { model: decision.model } : {}) });
-  }
-  const complete = completionFor(config, hooks);
+  if (ai.decide) return ai.decide;
+  const declared = options.intelligence?.find((provider) => provider.kind === "decision");
+  if (declared) return jevDecide({ baseUrl: declared.bridge ?? DECISION_BRIDGE_PATH });
+  const complete = completionFor(ai, options.onStatus ? { onStatus: options.onStatus } : {});
   return complete ? completionDecide(complete) : undefined;
 }
 
 function note(reply: ChatReply, added: string): ChatReply {
   return { ...reply, say: `${reply.say} ${added}` };
-}
-
-/** A word for the header: where answers are coming from right now. */
-export function describeIntelligence(config: IntelligenceConfig): string {
-  if (config.source === "remote" && config.remote?.apiKey) {
-    return config.remote.preset === "custom"
-      ? (config.remote.model ?? "custom model")
-      : (config.remote.model ?? XAI_DEFAULT_MODEL);
-  }
-  if (config.source === "local") return "on-device";
-  if (config.source === "decision") return `${config.decision?.model ?? "jev"} — decides; the graph talks`;
-  return "graph-native";
 }

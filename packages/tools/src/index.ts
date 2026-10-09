@@ -70,22 +70,11 @@ export { graphResponder, llmResponder } from "./conversation.js";
 export type { ChatContext, ChatReply, Responder } from "./conversation.js";
 // Where an ask takes the app (`resolveAsk` is `@graview/tools/go`'s, fetched with the seat that asks).
 export type { AskAbout, AskAnswer, AskContext, SeatMove, SeatOffer } from "./go.js";
-export {
-  completionFor,
-  configuredResponder,
-  decideFor,
-  DEFAULT_INTELLIGENCE,
-  describeIntelligence,
-  loadIntelligenceConfig,
-  localCompletion,
-  openAiCompatibleCompletion,
-  RUNGS,
-  rungFor,
-  rungHonesty,
-  saveIntelligenceConfig,
-  xaiCompletion,
-} from "./local.js";
-export type { IntelligenceConfig, IntelligenceSource, LocalStatus } from "./local.js";
+export { completionFor, decideFor, localCompletion, openAiCompatibleCompletion, seatResponder, xaiCompletion } from "./local.js";
+export type { LocalStatus } from "./local.js";
+// The AI the host gave a seat: decided once, in code, never chosen by a reader.
+export { aiTalks, aiVia, ANSWERED_WITH_AI, NO_AI, NO_AI_SAID } from "./ai.js";
+export type { HostAi } from "./ai.js";
 export { completionDecide, graphDecide } from "./decide.js";
 export type { PartlyDecided } from "./decide.js";
 export { drawFigure, FIGURE_STYLE, nearestFigure, onlyTheSvg } from "./figure.js";

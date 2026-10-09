@@ -3,6 +3,7 @@ import { applySettings } from "@graview/react";
 import { createRoot } from "react-dom/client";
 import { seedbedBrand } from "./domain/brand.js";
 import { PagesApp } from "@graview/pages";
+import type { HostAi } from "@graview/tools";
 import {
   browserStartsFresh,
   createBrowserAdapter,
@@ -93,6 +94,13 @@ const remembers = chapter ? chapter.remembers : true;
  */
 applySettings(((chapter?.app ?? seedbedApp) as { settings?: readonly SettingDeclaration[] }).settings ?? []);
 
+/*
+ * THE AI IS THE HOST'S TO GIVE. The garden ships with none — the graph
+ * answers, and an open question is told AI isn't on. A host with a model
+ * passes it as `ai`; the rehearsal hands this example one the same way.
+ */
+const ai = (window as unknown as { __seedbedAi?: HostAi }).__seedbedAi;
+
 if (window.location.pathname.startsWith("/pages")) {
   // The routed, responsive face: same store, same ids, one app.
   createRoot(root).render(
@@ -116,6 +124,7 @@ if (window.location.pathname.startsWith("/pages")) {
           ...(chapter?.rotation ? { rotation: true } : {}),
         }),
         settings: ((chapter?.app ?? seedbedApp) as { settings?: readonly SettingDeclaration[] }).settings ?? [],
+        ...(ai ? { ai } : {}),
       }}
       // The garden's own plot page, over the derived defaults for the rest.
       {...(!chapter || chapter.pages
@@ -137,6 +146,7 @@ if (window.location.pathname.startsWith("/pages")) {
       {...(chapter?.season ? { season: true } : {})}
       {...(chapter?.rotation ? { rotation: true } : {})}
       brand={brand}
+      {...(ai ? { ai } : {})}
       syncUrl
       renderer="dom"
       initialScheme={scheme}

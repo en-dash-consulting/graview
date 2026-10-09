@@ -39,7 +39,7 @@ import type { SeatPanelProps } from "./seat-panel.js";
 export type SeatStart = "field" | "hidden";
 
 export interface SeatFieldProps<S extends AnySchema> {
-  /** How the seat answers; the graph's own responder, or the reader's chosen rung, when unsaid. */
+  /** How the seat answers; when unsaid, the graph first and the host's model (`ai` on the provider) after it. */
   readonly respond?: Responder<S>;
   /** Feeds the app's activity rail, like any other seat. */
   readonly onCall?: (call: ToolCall) => void;

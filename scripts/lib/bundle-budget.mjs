@@ -143,8 +143,10 @@ export const BUDGETS = [
     // record's facts, a choice as it is declared, a date filter's day asked beside it with the browser's own date control, and
     // the bar given a place for the scene's own tool, less the place tabs' rules, which left the frame's sheet: 1_598 / 481
     // more. Measured at 532_417 / 188_699.
-    minified: 532_900,
-    gzipped: 189_200,
+    // Lowered when the host came to decide the AI once: the reader's picker of rungs, its pills and key fields, the ⚙ and
+    // the remembered rung left the seat and the person's menu. 5_885 / 2_137 fewer than main. Measured at 526_532 / 186_562.
+    minified: 527_000,
+    gzipped: 186_800,
     load: "first",
   },
   {
@@ -287,8 +289,10 @@ export const BUDGETS = [
     // rule in core, the keyboard's landing asking only while its window is open. 233 / 216 more. Measured at 703_575 / 185_206.
     // And by a press on a control while the keyboard is nowhere landing it when the control goes (Firefox and Safari on
     // macOS focus no button on click), and a plural standing alone as a label: 325 / 64 more. Measured at 703_900 / 185_270.
-    minified: 704_200,
-    gzipped: 185_500,
+    // Lowered when the host came to decide the AI once: no rung remembered in the reader's storage, no picker in the
+    // person's menu. 684 / 216 fewer. Measured at 703_216 / 185_054.
+    minified: 703_600,
+    gzipped: 185_300,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -435,8 +439,10 @@ export const BUDGETS = [
     // doing on the picture; a day said as it is read in every sentence, and a date filter's day asked in place. The place
     // tabs' rules left the frame's sheet for their own. 6_471 / 1_738 more, over the cleanup. Measured
     // at 1_658_715 / 515_787.
-    minified: 1_659_200,
-    gzipped: 516_300,
+    // Lowered when the host came to decide the AI once: the ladder, its pills, key fields and words, the seat's ⚙ and the
+    // studio's, and the rung's honesty sentences left. 9_511 / 3_160 fewer. Measured at 1_649_204 / 512_627.
+    minified: 1_649_700,
+    gzipped: 512_900,
     load: "all",
   },
   {
@@ -510,8 +516,9 @@ export const BUDGETS = [
     // gzipped. Measured at 1_555_008 / 474_499.
     // Raised with every face's when the whole-page Shell and an embed came to wear one bar on the scene: 6_439 / 1_715 more,
     // over the cleanup. Measured at 1_561_447 / 476_214.
-    minified: 1_561_900,
-    gzipped: 476_700,
+    // Lowered with every face's when the host came to decide the AI once: 8_170 / 2_769 fewer. Measured at 1_553_277 / 473_445.
+    minified: 1_553_800,
+    gzipped: 473_700,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

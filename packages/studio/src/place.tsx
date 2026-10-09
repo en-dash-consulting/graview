@@ -2,7 +2,7 @@ import { INSTALLATION_MODULE, layer, type AnySchema, type GraviewApp, type Migra
 import type { CheckResult } from "@graview/core/check";
 import type { DocumentEdit, Finding, GraviewDocument } from "@graview/core/document";
 import { EMPTY_VIEW, withWithin } from "@graview/layout";
-import { GraviewProvider, Scene, createViews, useGraview, useNavigation, useTheKeyboardLandsSomewhere } from "@graview/react";
+import { GraviewProvider, Scene, createViews, useGraview, useGraviewIfAny, useNavigation, useTheKeyboardLandsSomewhere } from "@graview/react";
 import { ActivityRail, AgentSeat, Inspector, Places, registerDefaultViews } from "@graview/primitives";
 import type { ToolCall } from "@graview/tools";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -338,6 +338,8 @@ function StudioOverlay<S extends AnySchema>({
     };
   }, []);
   const views = useMemo(() => studioViews(app), [app]);
+  /* The app's own AI, as its host gave it: the studio's seat uses the same model, and nobody chooses one here. */
+  const ai = useGraviewIfAny()?.ai;
   /*
    * Re-read on every change rather than cached: the checker is cheap, the
    * declaration is small, and a verdict that can go stale is a verdict
@@ -367,6 +369,7 @@ function StudioOverlay<S extends AnySchema>({
       scheme={scheme}
       principal={principal}
       {...(brand ? { brand } : {})}
+      {...(ai ? { ai } : {})}
       initialView={AT_ALTITUDE}
     >
     <div

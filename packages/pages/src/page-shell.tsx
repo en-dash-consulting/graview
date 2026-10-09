@@ -56,9 +56,8 @@ export function DefaultShell<S extends AnySchema>({
       <div style={{ flex: 1 }}>{children}</div>
       {/*
         * Whether this browser remembers, and the way back to the example: the
-        * reader's own, at the foot, under whichever shell. Which rung answers
-        * is a setting in the person's menu and under the ask field's ⚙ — a
-        * form at the foot of every page said it a third time.
+        * reader's own, at the foot, under whichever shell. What answers the
+        * seat is the host's to decide (`ai`), so nothing here asks a reader.
         */}
       {context.remembers ? (
         <footer

@@ -5,9 +5,11 @@
  * The seat promises specific things: it answers from the graph before any
  * model, a change it proposes travels the same validated path as a click
  * and really can be undone, a refusal is a result in the thread (never a
- * "Done" over a change the store refused), a broken model rung degrades to
- * the graph with a note rather than an error, and a saved key survives
- * visiting another rung. Every one of those is driven here, end to end —
+ * "Done" over a change the store refused), nothing asks the reader which
+ * machine answers, an open question with no model is told AI isn't on
+ * here, the host's model answers it with one quiet "Answered with AI", and
+ * a broken model leaves the graph's answer with a quiet line rather than an
+ * error. Every one of those is driven here, end to end —
  * The refusal half runs in a product's own repository, against its policy.
  *
  *   node scripts/verify-chat.mjs [--engine=chromium|webkit|firefox]
@@ -50,24 +52,40 @@ async function openSeat(page) {
   await page.waitForSelector('[data-testid="seat-panel"]', { timeout: 30_000 });
 }
 
-/** What is answering, said under the seat's ⚙ and nowhere else. */
-async function sourceOf(page) {
+/** A rung's name, or the words of the picker that offered them: none of it is ever shown now. */
+const RUNG_WORDS = "graph-native|Graph only|Onboard AI|\\bJev\\b|\\bLLM\\b|on this device|with my key|What answers|Answers come from|Answering now";
+const CHOOSERS = ["seat-settings", "seat-source", "seat-ladder", "setting-intelligence", "seat-offer-model", "chat-settings"];
+
+/** Whatever in the open seat, and in the person's menu, offers a choice of what answers or names a rung. */
+async function whatAnswersIsOffered(page) {
   await openSeat(page);
-  await page.click('[data-testid="seat-settings"]');
-  const said = (await page.textContent('[data-testid="seat-source"]').catch(() => null)) ?? "";
-  await page.click('[data-testid="seat-settings"]');
-  return said.replace(/^Answering now:\s*/, "").trim();
+  const read = (where) =>
+    page.evaluate(
+      ({ where, words, choosers }) => {
+        const at = document.querySelector(where);
+        const said = `${at?.innerText ?? ""} ${[...(at?.querySelectorAll("[aria-label],[title]") ?? [])].map((el) => `${el.getAttribute("aria-label") ?? ""} ${el.getAttribute("title") ?? ""}`).join(" ")}`;
+        return {
+          found: at !== null,
+          controls: choosers.filter((id) => document.querySelector(`[data-testid="${id}"]`) !== null),
+          words: [...new Set(said.match(new RegExp(words, "g")) ?? [])],
+        };
+      },
+      { where, words: RUNG_WORDS, choosers: CHOOSERS },
+    );
+  const seat = await read('[data-testid="seat"]');
+  await page.click('[data-testid="profile-button"]');
+  await page.waitForTimeout(300);
+  const menu = await read('[data-testid="profile"]');
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
+  return { seat, menu };
 }
 
-/** Waits until what is answering says `test` of itself. */
-async function sourceComes(page, test) {
-  for (let tries = 0; tries < 40; tries++) {
-    const said = await sourceOf(page);
-    if (test(said)) return said;
-    await page.waitForTimeout(250);
-  }
-  return sourceOf(page);
-}
+/** The seat's reply row: its words, and whether it carries the quiet note a model's answer does. */
+const noteOf = (page) =>
+  page.evaluate(() => [...document.querySelectorAll('[data-testid="seat-panel"] ol > li')].at(-1)?.querySelector('[data-testid="seat-answered-with-ai"]')?.textContent ?? null);
+
+const NO_AI = "I can answer about what's in this app. Open questions need AI, which isn't on here.";
 
 /** Sends one message and returns the seat's reply row. */
 async function send(page, text) {
@@ -170,9 +188,12 @@ try {
   await page.mouse.click(1450, 700);
   await page.waitForTimeout(400);
 
-  /* ----------------------- under the ⚙, it says what is answering */
-  const source = await sourceOf(page);
-  report.checks.headerSaysGraphNative = { source, ok: source === "graph-native" };
+  /* ------------- nothing asks the reader which machine answers, nor names one */
+  const offered = await whatAnswersIsOffered(page);
+  report.checks.noChoiceOfWhatAnswers = {
+    ...offered,
+    ok: offered.seat.found && offered.menu.found && [offered.seat, offered.menu].every((one) => one.controls.length === 0 && one.words.length === 0),
+  };
 
   /* ----------------------------- the graph answers its own shape, keyless */
   const overview = await send(page, "what is here?");
@@ -180,6 +201,15 @@ try {
     reply: overview.text.slice(0, 120),
     // Where the reader stands, said from the graph: the home and what it holds, now that the seat knows the places.
     ok: /This graph holds|^Home\. It holds /.test(overview.text) && overview.applies === 0,
+  };
+
+  /* ------------- with no model, an open question is told so, once, in plain words */
+  const open = await send(page, "should we repaint the hallway?");
+  const openNote = await noteOf(page);
+  report.checks.withoutAiAnOpenQuestionIsToldSo = {
+    reply: open.text.slice(0, 160),
+    note: openNote,
+    ok: open.text.includes(NO_AI) && openNote === null && !new RegExp(RUNG_WORDS).test(open.text),
   };
 
   /* ---------------- no act and no fact: the words' hits, each a press */
@@ -297,91 +327,78 @@ try {
   };
   await page.close();
 
-  /* ================== a broken model rung: the graph is always the floor */
-  const remote = await browser.newPage({ viewport: { width: 1560, height: 940 } });
-  await remote.addInitScript(() => {
-    localStorage.setItem(
-      "graview:intelligence",
-      JSON.stringify({
-        source: "remote",
-        remote: { preset: "custom", baseUrl: "http://127.0.0.1:9", apiKey: "k-test", model: "m-test" },
-      }),
-    );
+  /* ============ the host's model: an open question is the model's, said quietly */
+  /*
+   * The host decides the AI, once — here the example's host hook, as a
+   * host's own page passes `ai` to the embed. A fact the graph holds is
+   * still the graph's, with nothing under it; an open question goes to the
+   * model, and its answer carries one quiet "Answered with AI".
+   */
+  const modeled = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+  modeled.on("pageerror", (error) => errors.push(error.message));
+  await modeled.addInitScript(() => {
+    window.__todoModelAsked = 0;
+    window.__todoAi = {
+      name: "harness",
+      complete: async () => {
+        window.__todoModelAsked += 1;
+        return JSON.stringify({ say: "Repaint it in the spring, when the windows can stay open.", proposals: [] });
+      },
+    };
   });
-  await remote.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
-  await remote.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
-  const remoteSource = await sourceOf(remote);
+  await modeled.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
+  await modeled.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+  const fact = await send(modeled, "what's wrong?");
+  const factNote = await noteOf(modeled);
+  const askedForTheFact = await modeled.evaluate(() => window.__todoModelAsked);
+  const answered = await send(modeled, "should we repaint the hallway?");
+  const answeredNote = await noteOf(modeled);
+  const modeledOffered = await whatAnswersIsOffered(modeled);
+  report.checks.theHostsModelAnswersAnOpenQuestionQuietly = {
+    fact: fact.text.slice(0, 80),
+    factNote,
+    askedForTheFact,
+    answered: answered.text.slice(0, 120),
+    answeredNote,
+    offered: modeledOffered,
+    ok:
+      /problem/.test(fact.text) &&
+      factNote === null &&
+      askedForTheFact === 0 &&
+      answered.text.includes("Repaint it in the spring") &&
+      answeredNote === "Answered with AI" &&
+      !answered.text.includes(NO_AI) &&
+      [modeledOffered.seat, modeledOffered.menu].every((one) => one.controls.length === 0 && one.words.length === 0),
+  };
+  await modeled.close();
 
-  // A fact the graph holds is never replaced by a guess about it — the
-  // model is not even consulted for a grounded question. (The bare
-  // overview is deliberately UNgrounded — a model may answer it more
-  // richly — so the probe is a standing question, which is a fact.)
-  const grounded = await send(remote, "what's wrong?");
-  // An ungrounded ask reaches the dead endpoint, which answers nothing;
-  // the graph answers instead and SAYS SO.
-  const floored = await send(remote, "should we repaint the hallway?");
-  report.checks.brokenModelDegradesToTheFloor = {
-    header: remoteSource,
-    grounded: grounded.text.slice(-60),
+  /* ============ a broken model: the graph's answer stands, with a quiet line */
+  const broken = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+  await broken.addInitScript(() => {
+    window.__todoAi = {
+      complete: async () => {
+        throw new Error("the model is down");
+      },
+    };
+  });
+  await broken.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
+  await broken.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+  // A fact the graph holds never reaches the model, broken or not.
+  const grounded = await send(broken, "what's wrong?");
+  const floored = await send(broken, "should we repaint the hallway?");
+  const flooredNote = await noteOf(broken);
+  report.checks.aBrokenModelLeavesTheGraphsAnswer = {
+    grounded: grounded.text.slice(-80),
     floored: floored.text.slice(-120),
+    flooredNote,
     ok:
-      remoteSource?.trim() === "m-test" &&
-      grounded.text.includes("(from the graph)") &&
-      floored.text.includes("The graph answered instead"),
+      /problem/.test(grounded.text) &&
+      !grounded.text.includes("AI didn't answer") &&
+      floored.text.includes("AI didn't answer just now, so this is from the app alone.") &&
+      flooredNote === null &&
+      !new RegExp(RUNG_WORDS).test(floored.text),
   };
-
-  /* ------------------------ a saved key survives visiting another rung */
-  // The ladder is a setting in the profile pane now, not a form in the chat.
-  const rung = async (page, value) => {
-    const shown = await page.evaluate(() => {
-      const pane = document.querySelector('[data-testid="profile"]');
-      return pane !== null && !pane.hasAttribute("hidden");
-    });
-    if (!shown) {
-      await page.click('[data-testid="profile-button"]');
-      await page.waitForTimeout(300);
-    }
-    await page.click(`[data-testid="setting-intelligence-${value}"]`);
-    await page.waitForTimeout(200);
-    await page.keyboard.press("Escape");
-    await page.waitForTimeout(150);
-    // The conversation comes back from the seat's own field.
-    await openSeat(page);
-  };
-  await rung(remote, "graph");
-  await sourceComes(remote, (said) => said === "graph-native");
-  const kept = await remote.evaluate(() => {
-    const stored = JSON.parse(localStorage.getItem("graview:intelligence") ?? "{}");
-    return { source: stored.source, key: stored.remote?.apiKey };
-  });
-  report.checks.keySurvivesRungSwitch = {
-    ...kept,
-    ok: kept.source === "graph" && kept.key === "k-test",
-  };
-
-  /* --------------- the decision rung says what it cannot do, in the answer */
-  // Four rungs on one switch; the fourth decides and does not talk, so the
-  // graph answers the chat and the seat SAYS SO in the reply itself — the
-  // sentence is part of the answer, not chrome painted by the panel — and
-  // switching takes effect without a reload.
-  await rung(remote, "decision");
-  await remote.click('[data-testid="profile-button"]');
-  await remote.waitForTimeout(200);
-  const rungs = await remote.$$eval('[data-testid^="setting-intelligence-"][aria-pressed]', (pills) => pills.map((pill) => pill.getAttribute("data-testid").replace("setting-intelligence-", "")));
-  await remote.keyboard.press("Escape");
-  await remote.waitForTimeout(150);
-  const decidesSaid = await sourceComes(remote, (said) => said.includes("decides"));
-  const decided = await send(remote, "what's wrong?");
-  report.checks.decisionRungSaysItDecides = {
-    rungs,
-    header: decidesSaid,
-    reply: decided.text.slice(-120),
-    ok:
-      rungs.join(",") === "graph,local,decision,remote" &&
-      decided.text.includes("decides rather than talks") &&
-      decided.text.includes("the graph is answering here"),
-  };
-  await remote.close();
+  await broken.close();
   stopVite(vite);
   vite = null;
 

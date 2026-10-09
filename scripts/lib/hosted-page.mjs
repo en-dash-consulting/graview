@@ -170,9 +170,12 @@ export const FACE_DOORS = {
  * keyboard is nowhere landing it beside the control when it goes (Firefox
  * and Safari on macOS focus no button on click) and a plural standing alone
  * as a label (`pluralLabel`) took it to 592 412 bytes (578.5 KB), 326 more:
- * 578.8 KB, which leaves Cloud's shell 16.2 KB under its 595.
+ * 578.8 KB, which leaves Cloud's shell 16.2 KB under its 595. The host
+ * deciding the AI once — no reader's rung kept in storage, no picker in
+ * the person's menu — took it to 591 662 bytes (577.8 KB), 750 fewer:
+ * 578.0 KB, which leaves Cloud's shell 17.0 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 578.8 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 578.0 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -280,9 +283,10 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * The small truths after the cleanup, the same 235 bytes as the page that
  * compiles, took it to 546 459 bytes (533.65 KB): 533.9 KB. The keyboard
  * in Firefox and a plural as a label, the same 326 bytes, took it to
- * 546 786 (534.0 KB): 534.2 KB.
+ * 546 786 (534.0 KB): 534.2 KB. The host deciding the AI once, the same
+ * 750 bytes fewer, took it to 546 036 (533.2 KB): 533.4 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 534.2 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 533.4 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

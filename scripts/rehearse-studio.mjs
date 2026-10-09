@@ -179,15 +179,23 @@ try {
    */
   await page.addInitScript(
     ({ stored, model }) => {
+      // The host's model, handed to the example as a host hands it `ai`: prompt in, text out.
+      window.__seedbedAi = {
+        name: "rehearsal",
+        complete: async (prompt) => {
+          const response = await fetch(`${model}/chat/completions`, {
+            method: "POST",
+            headers: { "content-type": "application/json", authorization: "Bearer rehearsal" },
+            body: JSON.stringify({ model: "stub", messages: [{ role: "user", content: prompt }] }),
+          });
+          return (await response.json()).choices[0].message.content;
+        },
+      };
       if (sessionStorage.getItem("rehearsal:seeded")) return;
       sessionStorage.setItem("rehearsal:seeded", "1");
       localStorage.setItem("graview:seedbed:snapshot", JSON.stringify(stored));
       localStorage.setItem("graview:seedbed:log", "[]");
       localStorage.setItem("graview:seedbed:meta", JSON.stringify({ version: 1 }));
-      localStorage.setItem(
-        "graview:intelligence",
-        JSON.stringify({ source: "remote", remote: { preset: "custom", baseUrl: model, apiKey: "rehearsal", model: "stub" } }),
-      );
     },
     { stored, model: `http://localhost:${MODEL_PORT}/v1` },
   );

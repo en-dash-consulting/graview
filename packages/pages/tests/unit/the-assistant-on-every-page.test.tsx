@@ -59,9 +59,11 @@ describe("the assistant on every page", () => {
     expect(html).not.toContain('data-testid="setting-intelligence"');
   });
 
-  it("lets the reader choose which rung answers from the person's menu on the bar, and does not say it again at the foot of every page", () => {
+  it("asks the reader nowhere which machine answers: the host decided, so no page and no menu offers a choice", () => {
     const html = draw("/");
     expect(html).toContain('data-testid="profile-button"');
-    expect(html).not.toMatch(/<footer[^]*data-testid="setting-intelligence"/);
+    expect(html).not.toContain('data-testid="setting-intelligence"');
+    expect(html).not.toContain('data-testid="seat-settings"');
+    expect(html).not.toMatch(/graph-native|Answers come from|What answers/);
   });
 });
