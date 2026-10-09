@@ -32,7 +32,7 @@ describe("a hosted page", () => {
     for (const name of ["react-dom", "zod", "@graview/core", "@graview/embed", "@graview/ship"]) expect(Object.keys(measured.upFront.packages)).toContain(name);
   });
 
-  it("carries at most 585 KB minified up front: 584.8 KB with the app's conversation held by the provider so a face switch keeps it, so Cloud's shell keeps 10 KB for its own under its 595", () => {
+  it("carries at most 586.8 KB minified up front: 586.6 KB with the reader's kept lenses laid beside the app's places as a face opens, so Cloud's shell keeps 8.2 KB for its own under its 595", () => {
     expect(measured.upFront.minified, `${Math.round(measured.upFront.minified / 1024)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
     expect(measured.over).toBe(false);
   });
@@ -63,7 +63,9 @@ describe("a hosted page", () => {
     // 877 KB since a selected record is drawn once (FR-141–FR-143), over FR-139: the scene face measured 897_697 B, 4_227 more.
     // 878 KB since a lens double-clicked from Up opens it: the scene face measured 898_844 B over the security review before 0.1.18.
     // 891 KB since views beside editing, long text on a record page and the places in the bar landed together (FR-144–FR-151), over a lens double-clicked from Up: the scene face measured 911_396 B, 12_552 more.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(891 * 1024);
+    // 892 KB since the seat takes you where you ask: the conversation's glue for moves, the resolver itself fetched with the first ask: the scene face measured 912_858 B, 1_462 more.
+    // 893 KB since a seat's tools may draw a view and keep it as a lens (draft_view, keep_lens): their two definitions ride with the seat, the engine behind a door; the scene face measured 913_473 B, 1_813 more than before them (911_660).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(893 * 1024);
   });
 
   it("carries no studio, up front or when asked: the shell stubs it out", () => {
@@ -88,8 +90,8 @@ describe("a hosted page", () => {
     expect(packageOf("<stdin>")).toBe("(the page)");
   });
 
-  it("holds its budget's numbers: 585 KB up front, under the 595 Cloud's shell holds itself to, and 150 KB of it zod's", () => {
-    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 585 * 1024, zod: 150 * 1024 });
+  it("holds its budget's numbers: 586.8 KB up front, under the 595 Cloud's shell holds itself to, and 150 KB of it zod's", () => {
+    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 586.8 * 1024, zod: 150 * 1024 });
   });
 
   /*
@@ -126,6 +128,24 @@ describe("a hosted page", () => {
       expect(modules).not.toContain(module);
     }
     expect(Object.keys(measured.upFront.packages)).not.toContain("@graview/render");
+  });
+
+  it("carries no drafting engine up front: @graview/tools/draft is a door, fetched when the seat is first asked to draw a view", () => {
+    expect(Object.keys(measured.upFront.modules)).not.toContain("tools/src/draft.ts");
+    expect(measured.whenAsked.doors.map((door) => door.module)).toContain("tools/src/draft.ts");
+  });
+
+  it("fetches where an ask goes and the frame a drawn view stands in when asked, never up front: @graview/tools/go and the draft frame are doors", () => {
+    for (const module of ["tools/src/go.ts", "primitives/src/draft-frame.tsx", "tools/src/draft.ts"]) {
+      expect(Object.keys(measured.upFront.modules), module).not.toContain(module);
+      expect(measured.whenAsked.doors.map((door) => door.module), module).toContain(module);
+    }
+  });
+
+  it("never carries the keeping of a lens: @graview/tools/keep (the edit vocabulary and the checker) is the host's, up front or when asked", () => {
+    const inputs = Object.keys((measured as unknown as { metafile: { inputs: Record<string, unknown> } }).metafile.inputs);
+    expect(inputs.filter((input) => input.endsWith("tools/src/keep.ts"))).toEqual([]);
+    expect(Object.keys(measured.upFront.modules)).not.toContain("tools/src/keep.ts");
   });
 
   it("fetches the describer when a place is first asked about, not with the assistant's seat", () => {

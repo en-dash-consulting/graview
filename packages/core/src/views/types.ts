@@ -32,6 +32,8 @@ export interface ViewRegistration<V = unknown> {
   readonly title?: string;
   /** The other kind of a picture over two, when the registration said so. */
   readonly across?: string;
+  /** A place beside the kind's own pictures (`ViewMeta.beside`). */
+  readonly beside?: boolean;
 }
 
 /**
@@ -51,6 +53,14 @@ export interface ViewMeta {
    * road between the two plots rather than on one of them.
    */
   readonly across?: string;
+  /**
+   * A PLACE BESIDE THE KIND'S OWN PICTURES: reached by its name, never what
+   * the kind draws when an address names no picture. A lens a reader kept
+   * from the seat, or one kept into a declaration while the app is open,
+   * joins the places without taking its kind's default picture from the
+   * app's own registration.
+   */
+  readonly beside?: boolean;
 }
 
 /** A named group view: somewhere to go, by name. */
@@ -127,6 +137,13 @@ export interface ViewRegistry<S extends AnySchema, V = unknown> {
    */
   home?(view: V | undefined): ViewRegistry<S, V>;
   homeView?(): V | undefined;
+  /**
+   * TAKES A PLACE AWAY: the named place `as` over `kind`, and the views it
+   * answers to by that name. What the kind draws by default is untouched,
+   * so a place registered `beside` leaves no trace. A lens kept from the
+   * seat and then taken back goes this way.
+   */
+  forget?(kind: string, as: string): ViewRegistry<S, V>;
 }
 
 const key = (kind: string, cell: ViewCell, as = "") =>
@@ -175,6 +192,7 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
         view,
         ...(meta?.title ? { title: meta.title } : {}),
         ...(meta?.across ? { across: meta.across } : {}),
+        ...(meta?.beside ? { beside: true } : {}),
       };
       /*
        * A titled registration fills its cell AND stands on its own.
@@ -187,7 +205,7 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
        * kind could only ever have one answer.
        */
       order.push(registration);
-      entries.set(key(kind, cell), registration);
+      if (!meta?.beside) entries.set(key(kind, cell), registration);
       if (meta?.title) {
         const as = placeSlug(meta.title);
         entries.set(key(kind, cell, as), registration);
@@ -198,6 +216,12 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
       return registry;
     },
     places: () => named,
+    forget(kind, as) {
+      for (const fidelity of FIDELITIES) entries.delete(key(kind, { cardinality: "many", fidelity }, as));
+      const at = named.findIndex((place) => place.kind === kind && place.as === as);
+      if (at >= 0) named.splice(at, 1);
+      return registry;
+    },
     lookup(kind, cell) {
       return entries.get(key(kind, cell))?.view;
     },

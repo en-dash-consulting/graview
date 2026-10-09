@@ -2,15 +2,17 @@ import type { AnySchema } from "@graview/core";
 import { BrowserRouter, MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
 import { openingOf, OVERVIEW_PATH, OVERVIEW_SLUG } from "@graview/core";
 import { pluralSlug } from "./registry.js";
-import { useEffect, useLayoutEffect, useMemo, useRef, type ComponentType, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { GoToContext, GraviewProvider, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo } from "@graview/react/provider";
 import { PageAsk } from "./ask.js";
+/* A view the seat drew, as a page: fetched when one is first shown here. */
+const DraftPage = lazy(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
 import { FaceControlsRoot } from "./face-controls.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
 import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
-import { HeadingsUnder, SpecLinks } from "@graview/primitives/pages";
+import { appKeyOf, HeadingsUnder, registerReaderLenses, SpecLinks } from "@graview/primitives/pages";
 import { recordPath } from "./registry.js";
 
 /**
@@ -353,6 +355,15 @@ export function PagesRoutes<S extends AnySchema>({
         })}
         <Route path="/" element={<Opening context={inside} Home={Home} />} />
         <Route path="/problems" element={<Problems context={inside} />} />
+        {/* A view the seat drew, before it is kept as a lens or put away. */}
+        <Route
+          path="/~draft"
+          element={
+            <Suspense fallback={null}>
+              <DraftPage context={inside as unknown as PageContext<AnySchema>} />
+            </Suspense>
+          }
+        />
         {/* What the words find, anywhere: the Find box's matcher at an address. */}
         <Route path="/search" element={<DefaultSearchPage context={inside} />} />
         {/* The app's pictures, when it handed the face its views: an index, and each lens at its name. */}
@@ -396,6 +407,8 @@ export function PagesApp<S extends AnySchema>({
    * may see — a stranger is not shown the customers — and acts still go to
    * the store itself. With no `sees`, it is the store, unchanged.
    */
+  /* The lenses this reader kept from the seat, beside the app's own places, before a page draws them. */
+  useState(() => (given.views ? registerReaderLenses(given.views, given.store.schema, appKeyOf(given.brand, given.store.schema)) : undefined));
   const viewed = given.store.seenBy(given.principal ?? { kind: "human" });
   const context = viewed === given.store ? given : { ...given, store: viewed };
   useTheWatchKnowsWhatIsUnseen(given.store, given.principal);
@@ -427,6 +440,7 @@ export function PagesApp<S extends AnySchema>({
       {...(context.settings ? { settings: context.settings } : {})}
       {...(context.presence ? { presence: context.presence } : {})}
       {...(context.people ? { people: context.people } : {})}
+      {...(context.onKeepLens ? { onKeepLens: context.onKeepLens } : {})}
     >
       {routed}
       <PageAsk context={context} />

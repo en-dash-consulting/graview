@@ -1,6 +1,6 @@
 import { layer } from "@graview/core";
 import { inTopLayer, raiseOverPopovers } from "@graview/react/provider";
-import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { createContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { FOOT_MOVED, placeAtTheFoot, placeAtTheTop } from "./notice-place.js";
 import { VISUALLY_HIDDEN } from "./primitives/measure.js";
 
@@ -333,6 +333,13 @@ function Spoken({ notices }: { readonly notices: readonly HeldNotice[] }) {
     </>
   );
 }
+
+/**
+ * THE BOARD THE APP SPEAKS ON, for what is drawn under it: the seat says
+ * "Kept “X” as a lens" there, with Take back. Set by the Shell and the
+ * embed; absent, a surface says it where it is instead.
+ */
+export const NoticeBoardContext = createContext<NoticeBoard | null>(null);
 
 /**
  * The notices on a board, drawn over the picture `anchor` returns (the

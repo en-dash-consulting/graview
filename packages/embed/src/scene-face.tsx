@@ -1,6 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import type { Scheme } from "@graview/core";
-import { FindBox, Inspector, LinesKey, OverviewButton, sceneCss, SeatField, ShowInstallation, viewsCss, type SeatStart } from "@graview/primitives/scene";
+import { DraftDoor, FindBox, Inspector, LinesKey, OverviewButton, sceneCss, SeatField, ShowInstallation, viewsCss, type SeatStart } from "@graview/primitives/scene";
 import { useBarFind } from "@graview/primitives/frame";
 import { useMemo } from "react";
 import { createPortal } from "react-dom";
@@ -38,6 +38,8 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, seat, sc
       <Scene renderer="dom" />
       <OverviewButton />
       <LinesKey<S> />
+      {/* A view the seat drew, in place of the picture, under the seat. */}
+      <DraftDoor />
       {/* The ask field at the picture's foot, that grows into the conversation when asked. */}
       <SeatField<S> {...(seat ? { start: seat } : {})} />
       <Inspector placement="menu" />

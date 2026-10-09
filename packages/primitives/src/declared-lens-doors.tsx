@@ -2,6 +2,7 @@ import { retryingImport } from "@graview/core/retry";
 import { declaredLenses, type AnySchema, type DrawnLens, type GraviewApp } from "@graview/core";
 import { lazyModule, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { Suspense } from "react";
+import { readerLenses } from "./reader-lenses.js";
 
 /**
  * A DECLARED LENS DRAWS (FR-79), REGISTERED BEFORE IT IS FETCHED.
@@ -106,14 +107,45 @@ function homeDoor<S extends AnySchema>(blocks: readonly unknown[]): ViewComponen
 export function registerDeclaredLenses<S extends AnySchema>(registry: ReactViewRegistry<S>, app: Pick<GraviewApp<S>, "schema" | "lenses" | "pages" | "home">): ReactViewRegistry<S> {
   // The home's own view, when the declaration writes one (FR-81): both faces draw it in place of the derived home's body.
   if (app.home && app.home.length > 0) registry.home?.(homeDoor<S>(app.home));
+  doors(registry, app);
+  registry.arrange?.(app.pages);
+  return registry;
+}
+
+/** Each lens that draws, a door over every kind it stands on; `beside`, a place that takes no kind's default picture and no name a place has. */
+function doors<S extends AnySchema>(registry: ReactViewRegistry<S>, app: Pick<GraviewApp<S>, "schema" | "lenses">, beside?: true): void {
   for (const lens of declaredLenses(app as GraviewApp<S>).drawn) {
+    if (beside && registry.places().some((place) => place.title === lens.title)) continue;
     const Door = doorFor<S>(lens);
-    const meta = { title: lens.title, ...(lens.across ? { across: lens.across } : {}) };
+    const meta = { title: lens.title, ...(lens.across ? { across: lens.across } : {}), ...(beside ? { beside } : {}) };
     for (const kind of lens.kinds) {
       registry.register(kind as never, { cardinality: "many", fidelity: "full" }, Door, meta);
       registry.register(kind as never, { cardinality: "many", fidelity: "summary" }, Door, meta);
     }
   }
-  registry.arrange?.(app.pages);
-  return registry;
+}
+
+/** A lens as an `add-lens` edit says it: what a reader keeps, and what the seat hands its host. */
+export interface KeptLens {
+  readonly title: string;
+  readonly lens: string;
+  readonly on: string;
+  readonly bindings?: Readonly<Record<string, unknown>>;
+  readonly options?: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * LENSES JOINING THE PLACES WHILE THE APP IS OPEN — a lens a reader kept
+ * from the seat, or one just kept into the declaration — registered beside
+ * the app's own: each a door under its name, reached by it, and never what
+ * its kind draws when an address names no picture. A lens whose name a
+ * place already has, or that does not draw, is passed over.
+ */
+export function registerLensPlaces<S extends AnySchema>(registry: ReactViewRegistry<S>, schema: S, kept: readonly KeptLens[]): void {
+  if (kept.length > 0) doors(registry, { schema, lenses: kept.map(({ lens, ...rest }) => ({ ...rest, name: lens })) as never }, true);
+}
+
+/** Lays the reader's own kept lenses beside the app's places in `registry`, once a face opens (`reader-lenses.ts`). */
+export function registerReaderLenses<S extends AnySchema>(registry: ReactViewRegistry<S>, schema: S, app: string): void {
+  registerLensPlaces(registry, schema, readerLenses(app));
 }

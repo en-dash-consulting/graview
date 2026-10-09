@@ -14,7 +14,7 @@ import type {
 import { openingOf, search, tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen, touchWeights, type Place, type PagesArrangement } from "@graview/core";
 import { loadIntelligenceConfig, saveIntelligenceConfig, type AffordanceProvider, type IntelligenceConfig } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
-import { createSeatTalk, type SeatTalk } from "./seat-talk.js";
+import { createSeatTalk, type KeepLensHost, type SeatTalk } from "./seat-talk.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout/view";
@@ -282,6 +282,8 @@ export interface GraviewContextValue<S extends AnySchema> {
    * components that read it.
    */
   readonly brand?: Brand;
+  /** Where a lens the seat drew is kept: the host's, when it keeps one (`GraviewProviderProps.onKeepLens`). */
+  readonly onKeepLens?: KeepLensHost;
 }
 
 const GraviewContext = createContext<GraviewContextValue<AnySchema> | null>(null);
@@ -384,6 +386,14 @@ export interface GraviewProviderProps<S extends AnySchema> {
    */
   readonly presence?: PresenceChannel;
   readonly brand?: Brand;
+  /**
+   * WHERE A LENS THE SEAT DREW IS KEPT (`KeepLensHost`): handed the
+   * check-clean `add-lens` edit when a reader presses "Keep as a lens", and
+   * the `remove-lens` edit when they take it back. A host that writes the
+   * declaration (a document app's server, a dev server) answers
+   * `{ kept: true }`; otherwise the lens is kept as the reader's own.
+   */
+  readonly onKeepLens?: KeepLensHost;
   /** Extra or replacement affordance providers (e.g. an LLM intelligence). */
   readonly providers?: readonly AffordanceProvider<S>[];
   /** Controlled mode: pass both to own navigation yourself (e.g. from a router). */
@@ -444,6 +454,7 @@ export function GraviewProvider<S extends AnySchema>({
   settings: appSettings = NO_SETTINGS,
   presence,
   brand,
+  onKeepLens,
   providers,
   view,
   onViewChange,
@@ -491,6 +502,8 @@ export function GraviewProvider<S extends AnySchema>({
   /* One conversation per app: an outer provider's when this one is drawn inside it (the routed face in an embed). */
   const outer = useContext(GraviewContext);
   const [seatTalk] = useState<SeatTalk>(() => outer?.seatTalk ?? createSeatTalk(brand?.name ?? given.schema.kinds.join(",")));
+  /* The host that keeps a drawn lens: this provider's, else the one it is drawn inside. */
+  const keepLens = onKeepLens ?? outer?.onKeepLens;
   /*
    * The scene's handle, held in a ref: where things are changes every frame
    * of a tween, and a context value that changed with it would re-render
@@ -859,6 +872,7 @@ export function GraviewProvider<S extends AnySchema>({
       administered,
       ...(providers ? { providers } : {}),
       ...(brand ? { brand } : {}),
+      ...(keepLens ? { onKeepLens: keepLens } : {}),
     }),
     [
       store,
@@ -905,6 +919,7 @@ export function GraviewProvider<S extends AnySchema>({
       administered,
       providers,
       brand,
+      keepLens,
     ],
   );
 

@@ -1,7 +1,7 @@
 import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { AppBar, createNoticeBoard, Notices, Profile, registerDeclaredLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, type BarFaces, type BarFind, type BarGo, type BarPlace, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
-import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
+import { AppBar, appKeyOf, createNoticeBoard, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, type BarFaces, type BarFind, type BarGo, type BarPlace, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
+import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
 
@@ -220,6 +220,16 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly notices?: NoticeBoard;
   /**
+   * WHERE A LENS THE SEAT DREW IS KEPT. Pressed "Keep as a lens", the seat
+   * hands this the check-clean `add-lens` edit (and, taken back, the
+   * `remove-lens` edit). A host that writes the declaration — the document
+   * an app was opened from — writes it and answers `{ kept: true }`; then
+   * `setApp` with the new document. Otherwise, or unsaid, the lens is kept
+   * as the reader's own, in this browser, and the seat says "Ask the owner
+   * to keep it".
+   */
+  readonly onKeepLens?: KeepLensHost;
+  /**
    * TOLD WHAT WENT WRONG (FR-24). A view, a page or the bar that throws
    * is contained where it threw, the rest of the embed keeps working, and
    * the host is told the error's class and the framework module that
@@ -244,7 +254,7 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
  * no views at all (FR-03). Every face draws from it, the pages too (FR-35).
  */
 export function useViews<S extends AnySchema>(
-  props: Pick<FrameOptions<S>, "app" | "views">,
+  props: Pick<FrameOptions<S>, "app" | "views" | "brand">,
   /**
    * The framework's own views for the schema, its defaults with the
    * declaration's specs over them. The whole embed registers them behind
@@ -257,7 +267,10 @@ export function useViews<S extends AnySchema>(
   return useMemo(() => {
     // The lenses the declaration titles are places of their own (FR-79), and its arrangement goes with them (FR-80).
     const base = registerDeclaredLenses(framework(app.schema, app.viewSpecs), app);
-    return (props.views ? layerViews(base, props.views(app.schema, base)) : base) as ReactViewRegistry<S>;
+    const views = (props.views ? layerViews(base, props.views(app.schema, base)) : base) as ReactViewRegistry<S>;
+    // The lenses this reader kept from the seat, beside the app's own.
+    registerReaderLenses(views, app.schema, appKeyOf(props.brand ?? app.brand, app.schema));
+    return views;
   }, [props.views, app.schema, app.viewSpecs, app.lenses, app.pages, app.home]);
 }
 
@@ -466,6 +479,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     ...(props.people ? { people: props.people } : {}),
     ...(props.memory ? { memory: props.memory } : {}),
     ...(props.presenceTtlMs !== undefined ? { presenceTtlMs: props.presenceTtlMs } : {}),
+    ...(props.onKeepLens ? { onKeepLens: props.onKeepLens } : {}),
     /* The reader's own text size and motion, on somebody else's page
        too: the answer lives on the browser, not on the installation. */
     settings: props.app.settings ?? [],

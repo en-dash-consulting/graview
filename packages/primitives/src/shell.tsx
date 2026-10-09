@@ -8,7 +8,10 @@ import { VISUALLY_HIDDEN, useWidth } from "./primitives/index.js";
 import { FindBox } from "./find.js";
 import { ShowInstallation } from "./installation.js";
 import { Profile, type HostAction } from "./profile.js";
-import { Notices, type NoticeBoard } from "./notices.js";
+import { createNoticeBoard, NoticeBoardContext, Notices, type NoticeBoard } from "./notices.js";
+import { DraftDoor } from "./draft-door.js";
+import { appKeyOf } from "./reader-lenses.js";
+import { registerReaderLenses } from "./declared-lens-doors.js";
 import { Places } from "./places.js";
 import {
   ActivityRail,
@@ -130,7 +133,12 @@ export function Shell<S extends AnySchema>({
   ask = "field",
   notices,
 }: ShellProps<S>) {
-  const { brand, view } = useGraview<S>();
+  const { brand, view, views, store } = useGraview<S>();
+  /* The lenses this reader kept from the seat, beside the app's own places, before anything draws them. */
+  useState(() => registerReaderLenses(views, store.schema, appKeyOf(brand, store.schema)));
+  /* The board the app speaks on: the host's, else the shell's own — a kept lens is said there, with Take back. */
+  const [ownBoard] = useState(() => createNoticeBoard());
+  const board = notices ?? ownBoard;
   // The Shell owns the whole page, so the page wears the brand's icon (FR-124).
   useFavicon(faviconHref(brand));
   // Below a laptop's width the standing and the profile keep their marks and
@@ -201,6 +209,7 @@ export function Shell<S extends AnySchema>({
   }, []);
 
   return (
+    <NoticeBoardContext.Provider value={board}>
     <div ref={shell} style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
       <header
         ref={bar}
@@ -329,6 +338,8 @@ export function Shell<S extends AnySchema>({
         <OverviewButton />
         {/* What the lines mean, beside Up: the picture's own key. */}
         <LinesKey<S> />
+        {/* A view the seat drew, in place of the picture, under the seat. */}
+        <DraftDoor />
         {/*
           * THE SEAT: a quiet ask field at the picture's foot that grows into
           * a panel over it when asked — never a rail, never a column of acts.
@@ -341,7 +352,8 @@ export function Shell<S extends AnySchema>({
         {/* The acts at the pointer: right-click, or the acts key on a card, is the context menu. */}
         <Inspector placement="menu" />
       </main>
-      {notices ? <Notices board={notices} anchor={scene} /> : null}
+      <Notices board={board} anchor={scene} />
     </div>
+    </NoticeBoardContext.Provider>
   );
 }

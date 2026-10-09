@@ -78,7 +78,8 @@ async function send(page, text) {
     (asked) => {
       const rows = [...document.querySelectorAll('[data-testid="seat-panel"] ol > li')];
       const mine = rows.findIndex((row) => (row.textContent ?? "").includes(asked));
-      return mine >= 0 && rows.length > mine + 1;
+      // The answer itself, not the line that says it is coming.
+      return mine >= 0 && rows.length > mine + 1 && !(rows[rows.length - 1]?.textContent ?? "").startsWith("thinking");
     },
     text.slice(0, 40),
     { timeout: 20_000 },
@@ -177,7 +178,8 @@ try {
   const overview = await send(page, "what is here?");
   report.checks.groundedOverview = {
     reply: overview.text.slice(0, 120),
-    ok: overview.text.includes("This graph holds") && overview.applies === 0,
+    // Where the reader stands, said from the graph: the home and what it holds, now that the seat knows the places.
+    ok: /This graph holds|^Home\. It holds /.test(overview.text) && overview.applies === 0,
   };
 
   /* ---------------- no act and no fact: the words' hits, each a press */

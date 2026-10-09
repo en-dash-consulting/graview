@@ -52,6 +52,11 @@ export { EditableTitle, EditableValue, Fields, humanize, LongValue } from "./edi
 export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
 // The seat: an ask field at the picture's foot that grows into the conversation when asked.
 export { SEAT_PHONE_BELOW, SEAT_WIDTH, SeatField } from "./seat-field.js";
+export { DraftDoor } from "./draft-door.js";
+export type { DraftFrameProps } from "./draft-frame.js";
+export { appKeyOf, readerLenses, readerLensesKey } from "./reader-lenses.js";
+export { registerLensPlaces, registerReaderLenses, type KeptLens } from "./declared-lens-doors.js";
+export { NoticeBoardContext } from "./notices.js";
 export type { SeatFieldProps, SeatStart } from "./seat-field.js";
 export { LinesKey } from "./lines-key.js";
 export { useSubject } from "./subject.js";
@@ -81,6 +86,8 @@ export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, F
 export { scenePlacesOf, useScenePlaces, WHOLE_KEY, WHOLE_LABEL, type ScenePlaces } from "./scene-places.js";
 export type { BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch } from "./app-bar.js";
 export { Places } from "./places.js";
+// A seat's move, as the scene makes it: the stop it is, or the pane it opens.
+export { sceneMove, useSceneGo, type SceneMove } from "./seat-move.js";
 export { FindBox } from "./find.js";
 export { ShowInstallation } from "./installation.js";
 export { Seats } from "./seats.js";

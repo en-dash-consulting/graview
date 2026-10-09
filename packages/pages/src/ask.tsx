@@ -25,6 +25,9 @@ import type { PageContext } from "./pages.js";
 export function PageAsk<S extends AnySchema>({ context }: { readonly context: PageContext<S> }) {
   const navigate = useNavigate();
   const here = useGraviewIfAny<S>();
+  const { pathname } = useLocation();
+  const [, first, second] = pathname.split("/");
+  const placeHere = first === "places" && second ? decodeURIComponent(second) : undefined;
   const box = useRef<HTMLDivElement | null>(null);
   useInItsBox(box, here !== null);
   if (!here) return null;
@@ -46,6 +49,25 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
           onPick={(id) => {
             const node = context.store.graph.getNode(id);
             if (node) navigate(recordPath(context.store.schema, node.kind as string, id));
+          }}
+          /*
+           * WHERE AN ANSWER TAKES THE APP, ON THIS FACE: its address, through
+           * the router, so Back walks out of it. The scene itself is the
+           * other face's: the embed's way there, else its own address.
+           */
+          onMove={(move) => {
+            if (here.seatTalk.get().draft) here.seatTalk.setDraft(null);
+            if (move.to === "place" && (move.face === "scene" || move.slug === "overview")) {
+              if (context.overview) context.overview("#");
+              else if (!context.embedded) window.location.assign(context.sceneHref ?? "/");
+              return;
+            }
+            navigate(move.address);
+          }}
+          {...(placeHere ? { place: placeHere } : {})}
+          /* A view drawn stands in the main column, at its own address. */
+          onDraft={() => {
+            if (pathname !== "/~draft") navigate("/~draft");
           }}
         />
       </div>
@@ -82,10 +104,20 @@ function useInItsBox(anchor: RefObject<HTMLDivElement | null>, drawn: boolean) {
     place();
     addEventListener("resize", place);
     addEventListener("scroll", place, true);
-    const grows = typeof ResizeObserver === "function" ? new ResizeObserver(place) : null;
+    /*
+     * Placed in the next frame, not inside the observer's own delivery: the
+     * box placed is one the seat's field measures too, and a size changed
+     * while notifications are being delivered is a loop WebKit reports.
+     */
+    let frame = 0;
+    const grows = typeof ResizeObserver === "function" ? new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(place);
+    }) : null;
     const box = boxOf();
     if (box) grows?.observe(box);
     return () => {
+      cancelAnimationFrame(frame);
       grows?.disconnect();
       removeEventListener("resize", place);
       removeEventListener("scroll", place, true);

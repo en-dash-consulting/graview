@@ -76,7 +76,8 @@ const ask = async (chat: boolean | { respond?: Responder<typeof schema> }) => {
   });
   await act(async () => input.form!.requestSubmit());
   /* The panel is fetched when the seat first opens, and the answer arrives after it. */
-  for (let tries = 0; tries < 30 && host.querySelectorAll('[data-testid="seat-panel"] ol li').length < 2; tries++) {
+  const waiting = () => host.querySelectorAll('[data-testid="seat-panel"] ol li').length < 2 || (host.querySelector('[data-testid="seat-panel"]')?.textContent ?? "").includes("thinking…");
+  for (let tries = 0; tries < 60 && waiting(); tries++) {
     await act(async () => new Promise<void>((done) => setTimeout(done, 40)));
   }
   return { root, said: host.querySelector('[data-testid="seat-panel"]')?.textContent ?? "" };

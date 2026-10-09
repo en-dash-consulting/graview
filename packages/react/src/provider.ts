@@ -49,5 +49,5 @@ export type { PlaceOptions, Popover, PopoverAnchor, PopoverName, PopoverOptions 
 export { lazyModule, retryLazyParts } from "./lazy-part.js";
 // The conversation with the seat, held by the app so a face switch keeps it.
 export { createSeatTalk, seatTalkKey, useSeatDrawn, useSeatTalkState } from "./seat-talk.js";
-export type { SeatOutcome, SeatSide, SeatTalk, SeatTalkState, SeatTurn } from "./seat-talk.js";
+export type { KeepLensAnswer, KeepLensHost, LensEdit, SeatKept, SeatOutcome, SeatSide, SeatTalk, SeatTalkState, SeatTurn } from "./seat-talk.js";
 export type { LazyModule, LazyPartOptions } from "./lazy-part.js";

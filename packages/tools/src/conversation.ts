@@ -11,9 +11,12 @@ import {
   type AnySchema,
   type FormField,
   type Hit,
+  type AppPlace,
   type Principal,
   type Store,
+  type Violation,
 } from "@graview/core";
+import type { SeatMove, SeatOffer } from "./go.js";
 import {
   droppedProposals,
   firstJsonObject,
@@ -82,6 +85,16 @@ export interface ChatReply {
    * strip, in prose — and a surface draws each as a way to go there.
    */
   readonly picks?: readonly Extract<Hit, { about: "node" }>[];
+  /**
+   * WHERE THE ANSWER TAKES THE APP. "Go to The week", "overdue tasks",
+   * "what's wrong" are answered by being there: each move is data a face
+   * applies (the routed face navigates to its `address`, the scene builds
+   * the same stop) and says itself in a sentence. Read by `resolveAsk`
+   * under the seat's sight, whoever proposed it — a model's moves too.
+   */
+  readonly moves?: readonly SeatMove[];
+  /** A picture the moves could not show, offered: "Show as a view". */
+  readonly offer?: SeatOffer;
 }
 
 export interface ChatContext {
@@ -101,6 +114,12 @@ export interface ChatContext {
   readonly reading?: readonly ProposedCall[];
   /** Who is asking, so what the words find is only what this seat may see. */
   readonly principal?: Principal;
+  /** The app's places (`placesOf(app)`), so an ask can be answered by going to one. */
+  readonly places?: readonly AppPlace[];
+  /** The place the reader stands in, by its slug: what "here" means when nothing is selected. */
+  readonly place?: string;
+  /** The day it is (YYYY-MM-DD) where the app is pinned to one: what "this week" and "overdue" are read against. */
+  readonly today?: string;
 }
 
 export type Responder<S extends AnySchema = AnySchema> = (
@@ -148,6 +167,16 @@ export function graphResponder<S extends AnySchema>(
     const asked = text.toLowerCase();
     const name = (node: { id: string; kind: string }): string =>
       labelOf(store.schema.tryDefinition(node.kind), node);
+
+    /*
+     * WHERE THE WORDS ASK TO GO, read first and without a model (`resolveAsk`,
+     * fetched with the first ask rather than with the page). Problems and a
+     * record told about keep the fuller answers below, with the move.
+     */
+    const going = (await import("./go.js")).goingFrom(store, text, context, options.today);
+    if (going.reply) return going.reply;
+    const told = going.told;
+    const withMoves = (reply: ChatReply): ChatReply => (going.moves ? { ...reply, moves: going.moves } : reply);
 
     /*
      * REFERENTS: the selection first — "this" means what is selected — then
@@ -200,19 +229,21 @@ export function graphResponder<S extends AnySchema>(
       if (node && !referents.some((held) => held.id === node.id)) referents.push(node);
     }
 
+    // "Tell me about it", found by the resolver: that record is what the answer is about.
+    const subject = told && store.graph.getNode(told);
+    if (subject) {
+      const at = referents.findIndex((held) => held.id === subject.id);
+      if (at >= 0) referents.splice(at, 1);
+      referents.unshift(subject);
+    }
+
     const violations = store.violations();
-    const readyRepairs = (subset = violations): ProposedCall[] =>
-      subset.flatMap((violation) => {
-        const repair = violation.repairs.find((candidate) => !candidate.missing?.length);
-        return repair
-          ? [{ mutation: repair.mutation, args: { ...repair.args }, why: violation.message }]
-          : [];
-      });
+    const readyRepairs = (subset = violations): ProposedCall[] => readyRepairsOf(subset);
 
     // ------------------------------------------------------- the standing
-    if (/\b(wrong|broken|problem|violat|standing)\b/.test(asked)) {
+    if (going.problems || (!told && /\b(wrong|broken|problem|violat|standing)\b/.test(asked))) {
       if (violations.length === 0) {
-        return { say: "Nothing is broken — every declared rule holds.", proposals: [], grounded: true };
+        return withMoves({ say: "Nothing is broken — every declared rule holds.", proposals: [], grounded: true });
       }
       /*
        * THE SENTENCE MATCHES WHAT IS ACTUALLY BELOW IT.
@@ -248,8 +279,9 @@ export function graphResponder<S extends AnySchema>(
             .flatMap((repair) => (repair.missing ?? []).map((field) => asked(repair.mutation, field))),
         ),
       ];
-      return {
+      return withMoves({
         say: sentence([
+          going.moves?.[0]?.said ?? "",
           `${violations.length} ${violations.length === 1 ? "problem" : "problems"}:`,
           violations
             .slice(0, 4)
@@ -263,7 +295,7 @@ export function graphResponder<S extends AnySchema>(
         ]),
         proposals: offered,
         grounded: true,
-      };
+      });
     }
 
     // -------------------------------------------- a mutation, said in words
@@ -294,7 +326,7 @@ export function graphResponder<S extends AnySchema>(
       // tie is an act that cannot act, and never what was said.
       const unused = [...referents];
       for (const field of formFields(phrased.input)) {
-        const value = answerFrom(field, unused, quoted, options.today, asked);
+        const value = answerFrom(field, unused, quoted, options.today ?? context.today, asked);
         if (value !== undefined) {
           args[field.name] = value;
           const at = unused.findIndex((node) => node.id === value);
@@ -414,14 +446,14 @@ export function graphResponder<S extends AnySchema>(
       const subject = subjectsFor(true)[0] ?? null;
       const said = subject ? timing(subject) : null;
       if (subject && said) {
-        return {
+        return withMoves({
           say: `${name(subject)} runs ${said}.`,
           proposals: validateProposals(
             store,
             readyRepairs(violationsTouching(violations, [subject.id])).slice(0, 3),
           ),
           grounded: true,
-        };
+        });
       }
     }
 
@@ -459,14 +491,14 @@ export function graphResponder<S extends AnySchema>(
           }
         }
         if (parts.length > 0) {
-          return {
+          return withMoves({
             say: `${name(subject)} — ${parts.join("; ")}.`,
             proposals: validateProposals(
               store,
               readyRepairs(violationsTouching(violations, [subject.id])).slice(0, 3),
             ),
             grounded: true,
-          };
+          });
         }
       }
     }
@@ -541,8 +573,9 @@ export function graphResponder<S extends AnySchema>(
         // Each is a sentence of its own, so it starts like one: "The releases it is on: Blue Hour."
         .map((group) => `${group.sentence.charAt(0).toUpperCase()}${group.sentence.slice(1)}: ${group.names.join(", ")}`)
         .join(". ");
-      return {
+      return withMoves({
         say: sentence([
+          going.moves?.[0]?.said ?? "",
           `${name(node)} — ${withArticle(nounOf(store.schema.tryDefinition(node.kind as string), node.kind as string))}${facts ? ` (${facts})` : ""}.`,
           related ? `${related}.` : "Connected to nothing yet.",
           touching.length > 0
@@ -550,8 +583,8 @@ export function graphResponder<S extends AnySchema>(
             : "Nothing about it is broken.",
         ]),
         proposals: validateProposals(store, readyRepairs(touching).slice(0, 3)),
-        ...(asking ? { grounded: true } : {}),
-      };
+        ...(asking || told ? { grounded: true } : {}),
+      });
     }
 
     // --------------------------------------------------- what the words find
@@ -568,7 +601,7 @@ export function graphResponder<S extends AnySchema>(
         const found = search(store, words.join(" "), {
           ...(context.principal ? { principal: context.principal } : {}),
           ...(context.selection ? { from: context.selection } : {}),
-          ...(options.today ? { today: options.today } : {}),
+          ...((options.today ?? context.today) ? { today: options.today ?? context.today } : {}),
           limit: 6,
         });
         const picks = found.hits.filter((hit): hit is Extract<Hit, { about: "node" }> => hit.about === "node");
@@ -611,6 +644,14 @@ export function graphResponder<S extends AnySchema>(
       proposals: [],
     };
   };
+}
+
+/** The repairs the rules name that need nothing more chosen, as proposals. */
+export function readyRepairsOf(violations: readonly Violation[]): ProposedCall[] {
+  return violations.flatMap((violation) => {
+    const repair = violation.repairs.find((candidate) => !candidate.missing?.length);
+    return repair ? [{ mutation: repair.mutation, args: { ...repair.args }, why: violation.message }] : [];
+  });
 }
 
 const NUMBER_WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
@@ -757,6 +798,8 @@ export function llmResponder<S extends AnySchema>(options: {
     const reading = (context.reading ?? [])
       .map((proposal) => `- ${proposal.mutation} ${JSON.stringify(proposal.args)}`)
       .join("\n");
+    const keptKinds = store.kindsKeptFrom(context.principal);
+    const places = (context.places ?? []).filter((place) => place.kind === null || !keptKinds.has(place.kind)).map((place) => place.title);
     const prompt = [
       [
         "You are the seat of a typed context graph. You answer questions about it and turn requests for change into proposals of its declared mutations, which the person reviews and applies.",
@@ -775,9 +818,17 @@ export function llmResponder<S extends AnySchema>(options: {
         : "Where a request describes several changes, answer with several proposals — one per distinct change.",
       trouble ? `Currently broken:\n${trouble}` : "Nothing is broken.",
       selected ? `Selected right now (what "this" means): ${selected}` : "Nothing is selected.",
+      /*
+       * THE PLACES, so an answer can take the person to one. A model names
+       * where to go; the seat reads that name again as an ask under the
+       * same sight, so a move a model proposes is one the graph alone could
+       * have made.
+       */
+      places.length > 0 ? `Places in the app: ${places.join(", ")}.` : "",
       history ? `Conversation so far:\n${history}` : "",
       `Person: ${text}`,
-      'Answer ONLY JSON: {"say": string, "proposals": [{"mutation": string, "args": object, "why": string}]}.',
+      'To take the person somewhere, put a place\'s title or a thing\'s exact name in "go".',
+      'Answer ONLY JSON: {"say": string, "proposals": [{"mutation": string, "args": object, "why": string}], "go"?: [string]}.',
     ]
       .filter(Boolean)
       .join("\n\n");
@@ -788,7 +839,7 @@ export function llmResponder<S extends AnySchema>(options: {
      * about as often as the one it was asked for.
      */
     const parsed = (Array.isArray(read) ? { proposals: read as ProposedCall[] } : read) as
-      | { say?: string; proposals?: ProposedCall[] }
+      | { say?: string; proposals?: ProposedCall[]; go?: unknown; moves?: unknown }
       | undefined;
     /*
      * A PERSON IS NEVER SHOWN THE PLUMBING.
@@ -841,9 +892,12 @@ export function llmResponder<S extends AnySchema>(options: {
       .filter(Boolean)
       .join(" ");
     const said = typeof parsed.say === "string" && parsed.say.length > 0 ? parsed.say : "";
+    const named = [parsed.go, parsed.moves].flatMap((one) => (Array.isArray(one) ? one : typeof one === "string" ? [one] : []));
+    const moves = named.length > 0 ? (await import("./go.js")).movesFromNames(store, named, context) : [];
     return {
-      say: [said, aside].filter(Boolean).join(" ") || "…",
+      say: [said || moves.map((move) => move.said).join(" "), aside].filter(Boolean).join(" ") || "…",
       proposals: kept,
+      ...(moves.length > 0 ? { moves } : {}),
     };
   };
 }

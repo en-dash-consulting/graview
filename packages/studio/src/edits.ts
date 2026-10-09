@@ -1,6 +1,7 @@
 import { canonicalize, editDocument, error, parseExpr, printExpr, renameIn, type DeclaredKinds, type DocumentEdit, type EditOutcome, type Finding, type GraviewDocument } from "@graview/core/document";
 import { label, Read, type Node } from "./source.js";
 import { keptBy } from "./uneditable.js";
+import { lensNodeId } from "./from-declaration.js";
 import type { Reading } from "./to-declaration.js";
 
 /*
@@ -383,6 +384,14 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       const node = has.get(id);
       const changed = !old || !node || !same(old, node) || !same(outEdges(before, id), outEdges(after, id));
       if (!changed) continue;
+      // A titled lens taken away is a place taken away: `remove-lens`, the edit that takes back a lens the seat kept.
+      if (sort === "lens" && old && !node) {
+        const declared = (document.lenses ?? []).find((lens) => typeof lens["title"] === "string" && lensNodeId(lens as { name: string; title: string }) === id);
+        if (declared) {
+          edits.push({ op: "remove-lens", title: declared["title"] as string, ...(typeof declared["on"] === "string" ? { on: declared["on"] } : {}) });
+          continue;
+        }
+      }
       const what = label((node ?? old)!);
       const verb = !old ? "is new" : !node ? "is gone" : "changed";
       findings.push(unsaid(sort === "brand" ? "brand" : sort === "lens" ? "lenses" : sort === "role" ? "roles" : "policy", `the ${sort} "${what}" ${verb}; no edit says ${sort === "brand" ? "a brand's name or typefaces" : `a ${sort}`} yet`));

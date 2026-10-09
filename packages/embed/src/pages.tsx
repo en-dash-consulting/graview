@@ -10,7 +10,7 @@ import { createViews, type ReactViewRegistry } from "@graview/react/provider";
 const pagesViews = <S extends AnySchema>(schema: S, specs: Parameters<typeof registerViewSpecs>[2]): ReactViewRegistry<S> =>
   registerViewSpecs(registerDefaultViews(schema, createViews(schema)), schema, specs) as unknown as ReactViewRegistry<S>;
 import { flushSync } from "react-dom";
-import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
+import { createNoticeBoard, NoticeBoardContext, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { FaceBoundary, FrameBar, FrameNotices, providerProps, storeOf, titleBelow, useErrorReport, useFrame, useIntrinsicHeight, useReady, useSteering, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
 import { addressOf, pathWithin } from "@graview/core";
 import { BarFindContext, barPlaceAt, barPlaces, type BarFind } from "@graview/primitives/frame";
@@ -83,9 +83,11 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
               </FaceBoundary>
             ) : null}
             <BarFindContext.Provider value={barFind}>
+              <NoticeBoardContext.Provider value={props.notices ?? null}>
               <FaceBoundary module="@graview/pages" report={report} content>
                 <PagesContent<S> store={store} views={views} presence={presence} auto={auto} brand={brand} steering={steering} scope={scope} titleLevel={titleBelow(props.heading ?? 2)} props={props} />
               </FaceBoundary>
+              </NoticeBoardContext.Provider>
             </BarFindContext.Provider>
           </GraviewProvider>
         </FaceBoundary>

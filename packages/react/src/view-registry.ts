@@ -152,6 +152,7 @@ export function layerViews<S extends AnySchema>(base: ReactViewRegistry<S>, over
     const meta = {
       ...(registration.title ? { title: registration.title } : {}),
       ...(registration.across ? { across: registration.across } : {}),
+      ...(registration.beside ? { beside: true } : {}),
     };
     base.register(registration.kind as KindOfSchema<S>, { cardinality: registration.cardinality, fidelity: registration.fidelity }, registration.view, meta);
   }

@@ -874,6 +874,23 @@ export const removeSight = act("remove-sight", {
   },
 });
 
+/**
+ * TAKE A PLACE AWAY: a lens the app declared, and the place its title made.
+ * Said to the document as `remove-lens` (a lens kept from the seat's draft
+ * is taken back the same way); the records it drew are not touched.
+ */
+export const removeLens = act("remove-lens", {
+  title: "Take the lens away",
+  description: "Stop drawing this lens. A lens with a title is a place, and the place goes with it; nothing it drew is removed.",
+  subject: { kinds: ["lens"], arg: "id" },
+  destructive: true,
+  input: z.object({ id: nodeRef(["lens"]) }),
+  describe: (args, graph) => `Take away the lens ${labelOf(graph, args.id)}`,
+  apply(ctx, args) {
+    ctx.removeNode(args.id);
+  },
+});
+
 export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = [
   addKind,
   renameKind,
@@ -900,6 +917,7 @@ export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = 
   addSight,
   changeSight,
   removeSight,
+  removeLens,
 ];
 
 /** The studio as an app: the meta-schema, its acts, and an agent seat that may propose any of them. */
