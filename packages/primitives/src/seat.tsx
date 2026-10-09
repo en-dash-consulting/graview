@@ -87,6 +87,8 @@ export function useSeatConversation({
         proposals: reply.proposals,
         ...(reply.questions ? { questions: reply.questions } : {}),
         ...(reply.picks?.length ? { picks: reply.picks } : {}),
+        ...(reply.moves?.length ? { moves: reply.moves } : {}),
+        ...(reply.offer ? { offer: reply.offer } : {}),
         ...(reply.unsure ? { unsure: true } : {}),
       },
     ]);
@@ -181,6 +183,7 @@ export function SeatThread({
   maxHeight = "min(46cqh, 400px)",
   renderProposal,
   renderAfter,
+  renderSaid,
   ready = () => true,
   onApplyAll,
   applyAllLabel = "Apply all",
@@ -198,6 +201,8 @@ export function SeatThread({
   readonly renderProposal: (proposal: ProposedCall, at: { readonly key: string; readonly turn: number; readonly at: number }) => ReactNode;
   /** Whatever else a seat turn carries on this surface — questions at nodes, in the app. */
   readonly renderAfter?: (turn: SeatTurn, index: number) => ReactNode;
+  /** The seat's own words, drawn: in the app, the names its moves went to are links. */
+  readonly renderSaid?: (turn: SeatTurn, said: string) => ReactNode;
   /** Whether a proposal could be taken at all here; one that could not is not counted for "all". */
   readonly ready?: (proposal: ProposedCall, key: string) => boolean;
   /** One request, one press: take this turn's open proposals in order. */
@@ -265,7 +270,7 @@ export function SeatThread({
               </p>
             ) : (
               <p style={{ margin: 0, fontSize: "0.875rem", lineHeight: 1.5, color: "var(--graview-ink)" }}>
-                {aside.said}
+                {renderSaid ? renderSaid(turn, aside.said) : aside.said}
                 {aside.aside ? (
                   <span style={{ display: "block", marginTop: 2, fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
                     {aside.aside}

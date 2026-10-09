@@ -1,6 +1,6 @@
 import { sceneTitle, type AnySchema, type Brand, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
-import type { ReactViewRegistry } from "@graview/react/provider";
+import type { KeepLensHost, ReactViewRegistry } from "@graview/react/provider";
 
 
 /**
@@ -90,6 +90,13 @@ export interface PageContext<S extends AnySchema> {
   readonly settings?: readonly SettingDeclaration[];
   /** Who else is here, for the same provider. */
   readonly presence?: PresenceChannel;
+  /**
+   * Where a lens the seat drew is kept (`onKeepLens`): handed the
+   * check-clean `add-lens` edit, and `remove-lens` to take it back. A host
+   * that writes the declaration answers `{ kept: true }`; otherwise the
+   * lens is the reader's own.
+   */
+  readonly onKeepLens?: KeepLensHost;
 }
 
 /**

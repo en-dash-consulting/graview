@@ -44,6 +44,7 @@ export default defineConfig({
       "@graview/tools/suggest": fileURLToPath(new URL("../../packages/tools/src/suggest.ts", import.meta.url)),
       "@graview/tools/go": fileURLToPath(new URL("../../packages/tools/src/go.ts", import.meta.url)),
       "@graview/tools/draft": fileURLToPath(new URL("../../packages/tools/src/draft.ts", import.meta.url)),
+      "@graview/tools/keep": fileURLToPath(new URL("../../packages/tools/src/keep.ts", import.meta.url)),
       "@graview/tools": pkg("tools"),
       // The subpath first: an alias for the bare name would otherwise swallow
       // "@graview/render/gpu" and resolve it to the main entry, which has no

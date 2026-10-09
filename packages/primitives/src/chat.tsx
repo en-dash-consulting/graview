@@ -1,4 +1,4 @@
-import type { AnySchema } from "@graview/core";
+import type { AnySchema, GraviewApp } from "@graview/core";
 import { useAttention } from "@graview/react/drawing";
 import { useGraview, useSeatTalkState, useSelection } from "@graview/react/provider";
 import { kindCardId, withFocus, withOverview, withSelection } from "@graview/layout/view";
@@ -13,9 +13,16 @@ import {
   type LocalStatus,
   type ProposedCall,
   type Responder,
+  type SeatMove,
   type ToolCall,
+  completionFor,
+  type ChatReply,
 } from "@graview/tools";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import type { SeatTurn } from "@graview/react/provider";
+import { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useLensKeeping } from "./lens-keeping.js";
+import { NoticeBoardContext } from "./notices.js";
+import { useSceneGo } from "./seat-move.js";
 import { useSubject } from "./subject.js";
 import { describeSource, proposalKey, SeatComposer, SeatHeader, SeatThread, Settled, useSeatConversation } from "./seat.js";
 import { LadderSetting } from "./ladder.js";
@@ -69,6 +76,39 @@ export interface ChatPanelProps<S extends AnySchema> {
    */
   readonly settings?: boolean;
   readonly onSettings?: (open: boolean) => void;
+  /**
+   * WHERE AN ANSWER TAKES THE APP ("go to The week"): the routed face
+   * navigates to the move's address; the scene makes it a stop when unsaid.
+   */
+  readonly onMove?: (move: SeatMove) => void;
+  /** The place the reader stands in, by its slug, when the face knows it better than the scene's stop does (Pages). */
+  readonly place?: string;
+  /** A view was drawn: a face that shows it somewhere of its own (Pages' `/~draft`) goes there. */
+  readonly onDraft?: () => void;
+}
+
+/** An ask for a way of seeing: a board, a calendar, a timeline, who covers what, a list of … */
+const DRAW = /\b(?:board|kanban|timeline|calendar|gantt|who covers|covers what|coverage|floor plan|layout|draw|chart|(?:list|table) of|as an? (?:list|table|board|calendar|timeline|grid))\b/i;
+/** An ask that changes the view on screen: group by, sort by, only, call it, as a … */
+const REFINE = /\b(?:group(?:ed)? by|split by|sort(?:ed)? by|order(?:ed)? by|only|call it|name it|as an? (?:board|kanban|calendar|timeline|list|table|cards|rows|grid|plan|layout)|show all|all of them|clear the filter|no filter)\b/i;
+
+const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1);
+
+/** What a move is called in the sentence that says it: a link that goes there again. */
+const nameOfMove = (move: SeatMove): string => (move.to === "record" ? move.label : move.to === "problems" ? "problems" : move.title);
+
+/** The seat's words with the names its moves went to made links, each the first time it is said. */
+function linked(said: string, moves: readonly SeatMove[], link: (move: SeatMove, words: string) => ReactNode): ReactNode {
+  const parts: ReactNode[] = [];
+  let rest = said;
+  for (const move of moves) {
+    const name = nameOfMove(move);
+    const at = name ? rest.toLowerCase().indexOf(name.toLowerCase()) : -1;
+    if (at < 0) continue;
+    parts.push(rest.slice(0, at), link(move, rest.slice(at, at + name.length)));
+    rest = rest.slice(at + name.length);
+  }
+  return parts.length === 0 ? said : [...parts, rest];
 }
 
 export function ChatPanel<S extends AnySchema>({
@@ -81,8 +121,15 @@ export function ChatPanel<S extends AnySchema>({
   composer = true,
   settings: settingsGiven,
   onSettings,
+  onMove,
+  place,
+  onDraft,
 }: ChatPanelProps<S>) {
-  const { store, views, principal, setView, seatWho, noteSeat, session, intelligence: config, registerHostAnswers, seatTalk } = useGraview<S>();
+  const { store, views, view, principal, setView, seatWho, noteSeat, session, intelligence: config, registerHostAnswers, seatTalk, brand } = useGraview<S>();
+  const sceneGo = useSceneGo();
+  const go = onMove ?? sceneGo;
+  const { takeBack } = useLensKeeping(go);
+  const board = useContext(NoticeBoardContext);
   const { selection } = useSelection();
   const subject = useSubject<S>();
   /* The chat writes as the tab's seat when one has sat down, so the two are one robot — in this tab's own session. */
@@ -136,16 +183,67 @@ export function ChatPanel<S extends AnySchema>({
   // What the conversation looked at reaches the picture, like any seat's reads.
   useAttention(runtime);
 
+  /*
+   * THE APP AS A DRAFT READS IT: its kinds and who may see what. A drawn
+   * view binds only what this seat may see (`draftSight`).
+   */
+  const seatApp = useMemo(
+    () => ({ name: brand?.name ?? "app", schema: store.schema, ...(store.policy ? { policy: store.policy } : {}) }) as unknown as GraviewApp<AnySchema>,
+    [store, brand],
+  );
+  /*
+   * ASKED FOR A WAY OF SEEING, THE SEAT DRAWS IT (`@graview/tools/draft`,
+   * fetched with the first such ask): a template with no model, the app's
+   * model for what no template reads. With a view on screen, an ask that
+   * changes it ("group by status", "only this month") changes that one.
+   * Drawn, it stands in place of the picture; an ask that cannot be drawn
+   * says why in one line and the last good view stays.
+   */
+  const drawIfAsked = async (text: string): Promise<ChatReply | undefined> => {
+    const current = seatTalk.get().draft;
+    const refining = current !== null && REFINE.test(text);
+    if (!refining && !DRAW.test(text)) return undefined;
+    const engine = await import("@graview/tools/draft");
+    const complete = config.source === "graph" || respond ? undefined : completionFor(config);
+    const options = { app: seatApp, sight: engine.draftSight(seatApp, seatAs), ...(complete ? { complete } : {}), ...(current ? { lastGood: current } : {}) };
+    const result = refining && current ? await engine.refineDraft(current, text, options) : await engine.draftView(text, options);
+    if (engine.isDraftFailure(result)) {
+      const kept = result.lastGood ?? current;
+      if (kept) {
+        seatTalk.setDraft(kept, result.failed);
+        onDraft?.();
+        return { say: `${result.failed} The last view stays.`, proposals: [], grounded: true };
+      }
+      return { say: result.failed, proposals: [], grounded: true };
+    }
+    seatTalk.setDraft(result, null);
+    onDraft?.();
+    return { say: `Here is ${lowerFirst(result.said)} Ask to change it, or keep it as a lens.`, proposals: [], grounded: true };
+  };
+
   const conversation = useSeatConversation({
     ...(shared ? { talk: seatTalk } : {}),
     /* "This" is the seat's subject: the selection, else what the pointer settled on, else where you are. */
-    answer: (text, context) =>
-      answer(store, text, {
+    answer: async (text, context) => {
+      const drawn = await drawIfAsked(text);
+      if (drawn) return drawn;
+      /* The places this seat may go to, and where it stands: what "go to The week" and "here" are read against. */
+      const { placesFromViews } = await import("@graview/tools/go");
+      const here = place ?? view.within?.["view"];
+      const today = store.today();
+      return answer(store, text, {
         ...context,
         selection: subject.id ? [subject.id] : selection,
         principal: { ...author, ...(principal.roles ? { roles: principal.roles } : {}) },
-      }),
+        places: placesFromViews(store.schema, views.places()),
+        ...(here ? { place: here } : {}),
+        ...(today ? { today } : {}),
+      });
+    },
     onReply: (reply) => {
+      /* WHERE THE ANSWER TAKES THE APP: the first move is made, and said ("Went to The week."). */
+      const move = reply.moves?.[0];
+      if (move) go(move);
       const asked = reply.questions?.[0];
       if (asked) {
         noteSeat({ type: "asking", author, where: asked.nodeId ?? null, say: `${asked.nodeLabel ? `${asked.nodeLabel}: ` : ""}${asked.asks}`, confidence: asked.confidence });
@@ -344,7 +442,32 @@ export function ChatPanel<S extends AnySchema>({
             onApplyAll={(turn, proposals) => void applyAll(turn, proposals)}
             applyAllLabel="Do all"
             {...(respond || config.source !== "graph" ? {} : { onChooseModel: () => setSettings(true) })}
+            renderSaid={(turn: SeatTurn, said: string) =>
+              turn.moves?.length
+                ? linked(said, turn.moves, (move, words) => (
+                    <button key={`${move.address}:${words}`} type="button" data-testid={`${testId}-went`} title={`Go to ${words}`} onClick={() => go(move)} style={{ ...LINK, fontSize: "inherit" }}>
+                      {words}
+                    </button>
+                  ))
+                : said
+            }
             renderAfter={(turn, index) => [
+              /* A PICTURE THE MOVES COULD NOT SHOW, offered: drawn when pressed. */
+              ...(turn.offer
+                ? [
+                    <button key={`${index}:offer`} type="button" data-testid={`${testId}-offer`} onClick={() => seatTalk.ask(`a list of ${turn.offer!.draft}`)} style={{ ...QUIET_BUTTON, justifySelf: "start" }}>
+                      {turn.offer.label}
+                    </button>,
+                  ]
+                : []),
+              /* A LENS KEPT, with the way to take it back where no notice says it. */
+              ...(turn.kept && !turn.kept.taken && !board
+                ? [
+                    <button key={`${index}:take-back`} type="button" data-testid={`${testId}-take-back`} onClick={() => void takeBack(turn.kept!)} style={{ ...QUIET_BUTTON, justifySelf: "start" }}>
+                      Take back
+                    </button>,
+                  ]
+                : []),
               /* THE NAMES THE WORDS FOUND, each a link that goes there. */
               ...(turn.picks?.length
                 ? [

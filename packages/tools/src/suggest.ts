@@ -36,13 +36,16 @@ export interface SuggestInput<S extends AnySchema> {
   readonly violations: readonly Violation[];
   /** The place the reader is looking at, when the picture is one. */
   readonly place?: { readonly title: string; readonly kind?: string } | null;
+  /** The app's places the reader may go to; `picture` marks a declared picture rather than a kind's list. */
+  readonly places?: readonly { readonly title: string; readonly kind: string | null; readonly picture?: boolean }[];
+  /** The day it is (YYYY-MM-DD): what "this week" is read against. */
+  readonly today?: string;
 }
 
 /**
- * Why a suggestion is offered. B1's are answered by the graph's own
- * responder; "go", "due" and "draw" are the ones the seat will offer once
- * it can take the reader somewhere and draw a view (see the seat-guide
- * epic), each added here behind what the seat can do.
+ * Why a suggestion is offered: a problem; what this is or what is here; a
+ * picture to go to ("go"); what falls due this week ("due"); a way of
+ * drawing what is here ("draw").
  */
 export type SuggestionWhy = "problem" | "about" | "here" | "go" | "due" | "draw";
 
@@ -110,9 +113,15 @@ export function whereLine<S extends AnySchema>({ store, subject, violations, pla
 
 /**
  * AT MOST THREE THINGS TO ASK, each one the graph can answer about where
- * the reader is: what is wrong with it (only when something is), what it
- * is (a record), or what is here (a place). None when none applies — the
- * line stands alone.
+ * the reader is, in this order: what is wrong (only when something is);
+ * what falls due this week, else another picture to go to; a way of
+ * drawing what is here that a shipped lens can bind ("Show tasks as a
+ * board by day"); and, while there is room, what this thing is or what is
+ * here. None when none applies — the line stands alone.
+ *
+ * Each is worded the way the seat reads it without a model: the due-soon
+ * ask as `resolveAsk` narrows a kind, the drawing as `templateDraft` reads
+ * a board.
  */
 export function suggestionsFor<S extends AnySchema>(input: SuggestInput<S>): readonly Suggestion[] {
   const { store, subject, violations } = input;
@@ -120,10 +129,95 @@ export function suggestionsFor<S extends AnySchema>(input: SuggestInput<S>): rea
   const out: Suggestion[] = [];
   if (record && problemOn(violations, record.id)) out.push({ ask: `What's wrong with ${subject.name}?`, why: "problem" });
   else if (violations.length > 0) out.push({ ask: "What needs attention?", why: "problem" });
-  if (record) out.push({ ask: `Tell me about ${subject.name}`, why: "about" });
-  else out.push({ ask: "What is here?", why: "here" });
+  const kind = record ? (record.kind as string) : (input.place?.kind ?? kindOfCard(subject.id));
+  const due = dueThisWeek(input, kind);
+  if (due) out.push(due);
+  else {
+    const go = anotherPlace(input, kind);
+    if (go) out.push(go);
+  }
+  const draw = aDrawing(input, kind);
+  if (draw) out.push(draw);
+  if (out.length < SEAT_OFFERS) {
+    if (record) out.push({ ask: `Tell me about ${subject.name}`, why: "about" });
+    else out.push({ ask: "What is here?", why: "here" });
+  }
   return out.slice(0, SEAT_OFFERS);
 }
+
+type Fields = Readonly<Record<string, { readonly _def?: { readonly typeName?: string; readonly type?: string }; readonly def?: { readonly type?: string }; readonly options?: readonly unknown[] }>>;
+
+/** A kind's declared fields, by name: what a zod object's shape holds. */
+function fieldsOf<S extends AnySchema>(store: SuggestInput<S>["store"], kind: string): Fields {
+  return ((store.schema.tryDefinition(kind) as { fields?: { shape?: Fields } } | undefined)?.fields?.shape ?? {}) as Fields;
+}
+
+/** The choices of a choice field (a zod enum), or undefined. */
+function choicesOf(field: Fields[string] | undefined): readonly string[] | undefined {
+  let inner: unknown = field;
+  for (let depth = 0; depth < 4 && inner; depth++) {
+    const one = inner as { options?: unknown; unwrap?: () => unknown; _def?: { innerType?: unknown } };
+    if (Array.isArray(one.options) && one.options.every((option) => typeof option === "string")) return one.options as string[];
+    inner = typeof one.unwrap === "function" ? one.unwrap() : one._def?.innerType;
+  }
+  return undefined;
+}
+
+const DAY = /^\d{4}-\d{2}-\d{2}/;
+const DATE_NAMES = ["due", "deadline", "date", "when"];
+
+/** "Tasks due this week", when something of this kind (or, nothing chosen, of any kind) falls due in the next seven days. */
+function dueThisWeek<S extends AnySchema>(input: SuggestInput<S>, kind: string | undefined): Suggestion | undefined {
+  const { store } = input;
+  const today = input.today;
+  if (!today || !DAY.test(today)) return undefined;
+  const end = new Date(`${today.slice(0, 10)}T00:00:00Z`);
+  end.setUTCDate(end.getUTCDate() + 6);
+  const last = end.toISOString().slice(0, 10);
+  // This kind first; then, when nothing of it falls due, any kind's.
+  const kinds = [...new Set([...(kind ? [kind] : []), ...(store.schema.kinds as readonly string[])])];
+  for (const one of kinds) {
+    const field = DATE_NAMES.find((name) => name in fieldsOf(store, one));
+    if (!field) continue;
+    const soon = store.graph.nodesOfKind(one as never).some((node) => {
+      const value = (node as Record<string, unknown>)[field];
+      const done = (node as Record<string, unknown>)["done"];
+      return typeof value === "string" && DAY.test(value) && value.slice(0, 10) >= today.slice(0, 10) && value.slice(0, 10) <= last && done !== true;
+    });
+    if (!soon) continue;
+    const plural = (store.schema.tryDefinition(one)?.plural as string | undefined) ?? `${one}s`;
+    return { ask: `${capitalized(plural)} due this week`, why: "due" };
+  }
+  return undefined;
+}
+
+/** "Go to The week": a picture of the app's that the reader is not standing in. */
+function anotherPlace<S extends AnySchema>(input: SuggestInput<S>, kind: string | undefined): Suggestion | undefined {
+  const here = input.place?.title;
+  // A picture of something else than what the reader is looking at.
+  const picture = (input.places ?? []).find((place) => place.kind !== null && place.picture === true && place.title !== here && place.kind !== kind);
+  return picture ? { ask: `Go to ${picture.title}`, why: "go" } : undefined;
+}
+
+/** "Show tasks as a board by day": a kind here with a choice to put its records in columns by. */
+function aDrawing<S extends AnySchema>(input: SuggestInput<S>, kind: string | undefined): Suggestion | undefined {
+  const { store } = input;
+  // This kind first; then the kind with the most records that has a choice to draw by.
+  const most = [...(store.schema.kinds as readonly string[])].sort((a, b) => store.graph.nodesOfKind(b as never).length - store.graph.nodesOfKind(a as never).length);
+  const kinds = [...new Set([...(kind ? [kind] : []), ...most])];
+  for (const one of kinds) {
+    if (store.graph.nodesOfKind(one as never).length < 2) continue;
+    const fields = fieldsOf(store, one);
+    const choice = Object.keys(fields).find((name) => (choicesOf(fields[name])?.length ?? 0) >= 2);
+    if (!choice) continue;
+    const plural = ((store.schema.tryDefinition(one)?.plural as string | undefined) ?? `${one}s`).toLowerCase();
+    const words = choice.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ").toLowerCase();
+    return { ask: `Show ${plural} as a board by ${words}`, why: "draw" };
+  }
+  return undefined;
+}
+
+const capitalized = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 
 export interface OfferedAct {
   readonly affordance: Affordance;

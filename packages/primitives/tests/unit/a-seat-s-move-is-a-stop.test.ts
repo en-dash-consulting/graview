@@ -28,6 +28,16 @@ describe("a seat's move on the scene", () => {
     expect(stop({ to: "record", id: "t-deposit", kind: "task", label: "Pay the deposit", address: "/tasks/t-deposit", said: "Went to Pay the deposit." })).toBe("#focus=t-deposit&sel=t-deposit");
   });
 
+  it("a picture or a record leaves behind a narrowing an earlier ask put on the stop", () => {
+    const narrowed: ViewState = { ...up, overview: false, focusId: "aggregate:task", within: { filter: "due:before:2026-09-01", view: "the-month" } };
+    const at = (move: Parameters<typeof sceneMove>[1]) => {
+      const made = sceneMove(narrowed, move);
+      return "view" in made ? toUrl(made.view) : made.pane;
+    };
+    expect(at({ to: "picture", kind: "task", as: "the-week", title: "The week", address: "/places/the-week", said: "Went to The week." })).toBe("#focus=aggregate%3Atask&in.view=the-week");
+    expect(at({ to: "record", id: "t-deposit", kind: "task", label: "Pay the deposit", address: "/tasks/t-deposit", said: "Went to Pay the deposit." })).toBe("#focus=t-deposit&sel=t-deposit");
+  });
+
   it("the home and the scene are the opening stop, and the problems are the standing's pane", () => {
     expect(stop({ to: "place", slug: "home", title: "Home", address: "/", said: "Went to Home." })).toBe("#");
     expect(stop({ to: "problems", address: "/problems", said: "Went to the problems." })).toBe("problems");

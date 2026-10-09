@@ -1,4 +1,5 @@
-import type { ChatReply, OfferedQuestion, ProposedCall } from "@graview/tools";
+import type { ChatReply, OfferedQuestion, ProposedCall, SeatMove, SeatOffer } from "@graview/tools";
+import type { AddLensEdit, RemoveLensEdit, SeatDraft } from "@graview/tools/draft";
 import { useSyncExternalStore } from "react";
 
 /**
@@ -30,7 +31,36 @@ export interface SeatTurn {
   readonly unsure?: boolean;
   /** What the words found, when that was the answer: each a way to go there. */
   readonly picks?: ChatReply["picks"];
+  /** Where the answer took the app ("Went to The week."): each a link that goes there again. */
+  readonly moves?: readonly SeatMove[];
+  /** A picture the moves could not show, offered: "Show as a view". */
+  readonly offer?: SeatOffer;
+  /** A lens kept from a draft, said in the conversation, with the way to take it back. */
+  readonly kept?: SeatKept;
 }
+
+/** A lens kept from a draft: the edit, whether the declaration has it now, and whether it was taken back. */
+export interface SeatKept {
+  readonly edit: AddLensEdit;
+  /** True when the host wrote it into the declaration; false when it is the reader's own. */
+  readonly written: boolean;
+  readonly taken?: boolean;
+}
+
+/** A lens edit the seat hands its host: keep a drawn view (`add-lens`), or take one back (`remove-lens`). */
+export type LensEdit = AddLensEdit | RemoveLensEdit;
+
+/** What a host says it did with a lens edit: `kept` when the declaration has the change now. */
+export type KeepLensAnswer = boolean | { readonly kept: boolean; readonly said?: string } | undefined | void;
+
+/**
+ * THE HOST THAT KEEPS A LENS THE SEAT DREW (`onKeepLens`). Handed the
+ * check-clean edit; a host that writes the declaration (a document app's
+ * server, a dev server) answers `{ kept: true }`, and the lens is in the
+ * places for everybody. Any other answer, or none, and the lens is kept as
+ * the reader's own.
+ */
+export type KeepLensHost = (edit: LensEdit) => KeepLensAnswer | Promise<KeepLensAnswer>;
 
 /** What became of a proposal, said where it was offered. */
 export type SeatOutcome =
@@ -51,6 +81,10 @@ export interface SeatTalkState {
   readonly pending: string | null;
   /** How many seats are drawn: Find offers "Ask:" only where one is. */
   readonly drawn: number;
+  /** The view the seat drew, shown in place of the picture until it is kept or put away. */
+  readonly draft: SeatDraft | null;
+  /** Why the last ask could not be drawn, said over the last good draft. */
+  readonly draftNote: string | null;
 }
 
 export interface SeatTalk {
@@ -67,9 +101,11 @@ export interface SeatTalk {
   takePending(): string | null;
   /** A seat is drawn; the returned function says it is gone. */
   drawn(): () => void;
+  /** Shows a drawn view (or puts it away, with null), and what to say over it. */
+  setDraft(draft: SeatDraft | null, note?: string | null): void;
 }
 
-const EMPTY: SeatTalkState = { turns: [], outcomes: new Map(), busy: false, open: false, side: "left", pending: null, drawn: 0 };
+const EMPTY: SeatTalkState = { turns: [], outcomes: new Map(), busy: false, open: false, side: "left", pending: null, drawn: 0, draft: null, draftNote: null };
 
 /** The key the tab keeps an app's conversation under. */
 export const seatTalkKey = (app: string): string => `graview:seat:${app}`;
@@ -79,12 +115,13 @@ function read(key: string | null): Partial<SeatTalkState> {
   try {
     const kept = sessionStorage.getItem(key);
     if (!kept) return {};
-    const parsed = JSON.parse(kept) as { turns?: SeatTurn[]; outcomes?: [string, SeatOutcome][]; open?: boolean; side?: SeatSide };
+    const parsed = JSON.parse(kept) as { turns?: SeatTurn[]; outcomes?: [string, SeatOutcome][]; open?: boolean; side?: SeatSide; draft?: SeatDraft | null };
     return {
       ...(Array.isArray(parsed.turns) ? { turns: parsed.turns } : {}),
       ...(Array.isArray(parsed.outcomes) ? { outcomes: new Map(parsed.outcomes) } : {}),
       ...(typeof parsed.open === "boolean" ? { open: parsed.open } : {}),
       ...(parsed.side === "left" || parsed.side === "right" ? { side: parsed.side } : {}),
+      ...(parsed.draft?.drawn ? { draft: parsed.draft } : {}),
     };
   } catch {
     // A private window, a sandboxed frame, a value from another version: the seat starts fresh.
@@ -95,7 +132,7 @@ function read(key: string | null): Partial<SeatTalkState> {
 function write(key: string | null, state: SeatTalkState): void {
   if (!key) return;
   try {
-    sessionStorage.setItem(key, JSON.stringify({ turns: state.turns.slice(-40), outcomes: [...state.outcomes], open: state.open, side: state.side }));
+    sessionStorage.setItem(key, JSON.stringify({ turns: state.turns.slice(-40), outcomes: [...state.outcomes], open: state.open, side: state.side, draft: state.draft }));
   } catch {
     // Kept for this page only.
   }
@@ -136,6 +173,7 @@ export function createSeatTalk(app: string | null): SeatTalk {
       set({ ...state, drawn: state.drawn + 1 }, false);
       return () => set({ ...state, drawn: Math.max(0, state.drawn - 1) }, false);
     },
+    setDraft: (draft, note = null) => set({ ...state, draft, draftNote: note }),
   };
 }
 

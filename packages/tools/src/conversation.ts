@@ -118,6 +118,8 @@ export interface ChatContext {
   readonly places?: readonly AppPlace[];
   /** The place the reader stands in, by its slug: what "here" means when nothing is selected. */
   readonly place?: string;
+  /** The day it is (YYYY-MM-DD) where the app is pinned to one: what "this week" and "overdue" are read against. */
+  readonly today?: string;
 }
 
 export type Responder<S extends AnySchema = AnySchema> = (
@@ -324,7 +326,7 @@ export function graphResponder<S extends AnySchema>(
       // tie is an act that cannot act, and never what was said.
       const unused = [...referents];
       for (const field of formFields(phrased.input)) {
-        const value = answerFrom(field, unused, quoted, options.today, asked);
+        const value = answerFrom(field, unused, quoted, options.today ?? context.today, asked);
         if (value !== undefined) {
           args[field.name] = value;
           const at = unused.findIndex((node) => node.id === value);
@@ -599,7 +601,7 @@ export function graphResponder<S extends AnySchema>(
         const found = search(store, words.join(" "), {
           ...(context.principal ? { principal: context.principal } : {}),
           ...(context.selection ? { from: context.selection } : {}),
-          ...(options.today ? { today: options.today } : {}),
+          ...((options.today ?? context.today) ? { today: options.today ?? context.today } : {}),
           limit: 6,
         });
         const picks = found.hits.filter((hit): hit is Extract<Hit, { about: "node" }> => hit.about === "node");

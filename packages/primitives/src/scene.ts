@@ -14,6 +14,7 @@
 /* The scene's own rules, drawn by the scene face after the frame's sheet (FR-104). */
 export { sceneCss } from "./scene-css.js";
 export { SeatField } from "./seat-field.js";
+export { DraftDoor } from "./draft-door.js";
 export type { SeatFieldProps, SeatStart } from "./seat-field.js";
 export { LinesKey } from "./lines-key.js";
 export { Inspector } from "./workbench/inspector.js";

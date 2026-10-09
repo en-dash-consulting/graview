@@ -1,10 +1,10 @@
 import { failureWords, type AnySchema } from "@graview/core";
 import { withFocus, withOverview, withSelection } from "@graview/layout/view";
 import { useAffordances, useApplyAffordance, useGraview, useSeatTalkState, useViolations } from "@graview/react";
-import { loadPins, type Affordance, type Responder, type ToolCall } from "@graview/tools";
+import { loadPins, type Affordance, type Responder, type SeatMove, type ToolCall } from "@graview/tools";
 // Its own entry: a bundler places a file in every chunk that can reach it, and only the open seat uses this.
 import { offeredActs, suggestionsFor, whereLine } from "@graview/tools/suggest";
-import { useCallback, useMemo, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ChatPanel, LINK, QUIET_BUTTON } from "./chat.js";
 import { useSubject } from "./subject.js";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
@@ -29,14 +29,26 @@ export interface SeatPanelProps {
   readonly respond?: Responder<AnySchema>;
   readonly onCall?: (call: ToolCall) => void;
   readonly onPick?: (id: string) => void;
+  /** Where an answer takes the app: the router on Pages; the scene's own stops when unsaid. */
+  readonly onMove?: (move: SeatMove) => void;
+  /** The place the reader stands in, by its slug, as the face knows it. */
+  readonly place?: string;
+  /** A view was drawn: the face shows it (Pages goes to `/~draft`). */
+  readonly onDraft?: () => void;
 }
 
-export function SeatPanel({ phone, side, name, onClose, respond, onCall, onPick }: SeatPanelProps) {
+export function SeatPanel({ phone, side, name, onClose, respond, onCall, onPick, onMove, place, onDraft }: SeatPanelProps) {
   const { seatTalk } = useGraview();
   const talk = useSeatTalkState(seatTalk);
   const [settings, setSettings] = useState(false);
   const go = useSeatGo(onPick);
   const latest = [...talk.turns].reverse().find((turn) => turn.role === "seat");
+  /* THE LATEST ANSWER IN SIGHT: the panel scrolls to its foot as a turn arrives. */
+  const body = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const at = body.current;
+    if (at) at.scrollTop = at.scrollHeight;
+  }, [talk.turns.length, talk.busy]);
   return (
     <div data-testid="seat-panel" style={{ display: "grid", gridTemplateRows: "auto minmax(0, 1fr)", gap: 4, minHeight: 0 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: phone ? "center" : "flex-end", gap: 2, position: "relative", minHeight: 28 }}>
@@ -77,6 +89,7 @@ export function SeatPanel({ phone, side, name, onClose, respond, onCall, onPick 
         )}
       </div>
       <div
+        ref={body}
         data-testid="seat-body"
         style={{
           minHeight: 0,
@@ -93,7 +106,10 @@ export function SeatPanel({ phone, side, name, onClose, respond, onCall, onPick 
           settings={settings}
           onSettings={setSettings}
           onPick={go}
-          empty={<SeatHere />}
+          {...(onMove ? { onMove } : {})}
+          {...(place ? { place } : {})}
+          {...(onDraft ? { onDraft } : {})}
+          empty={<SeatHere {...(place ? { here: place } : {})} />}
           {...(respond ? { respond } : {})}
           {...(onCall ? { onCall } : {})}
         />
@@ -126,17 +142,26 @@ export function useSeatGo(onPick?: (id: string) => void): (id: string) => void {
  * ask, and at most three acts — the repairs a broken rule names for this
  * thing, and the ones the reader pinned.
  */
-function SeatHere() {
-  const { store, views, seatTalk } = useGraview<AnySchema>();
+function SeatHere({ here }: { readonly here?: string }) {
+  const { store, views, view, seatTalk } = useGraview<AnySchema>();
   const subject = useSubject({ hover: false });
   const violations = useViolations();
   const record = subject.id ? store.graph.getNode(subject.id) : undefined;
-  const place = subject.because === "place" && subject.id === null ? views.places().find((one) => one.title === subject.name) : undefined;
+  const standing = here ?? view.within?.["view"];
+  const place =
+    subject.because === "place" && subject.id === null
+      ? views.places().find((one) => one.title === subject.name)
+      : standing
+        ? views.places().find((one) => one.as === standing)
+        : undefined;
+  const today = store.today();
   const input = {
     store,
     subject: { id: subject.id, name: subject.name },
     violations,
     place: place ? { title: place.title, kind: place.kind as string } : null,
+    places: views.places().map((one) => ({ title: one.title, kind: one.kind as string, picture: true })),
+    ...(today ? { today } : {}),
   };
   const line = whereLine(input);
   const suggestions = suggestionsFor(input);

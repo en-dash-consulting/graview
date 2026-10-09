@@ -21,7 +21,8 @@ export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, F
 export { scenePlacesOf, useScenePlaces, WHOLE_KEY, WHOLE_LABEL, type ScenePlaces } from "./scene-places.js";
 export type { BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch } from "./app-bar.js";
 export type { HostAction } from "./profile.js";
-export { createNoticeBoard, Notices, TOAST_MS } from "./notices.js";
+export { createNoticeBoard, NoticeBoardContext, Notices, TOAST_MS } from "./notices.js";
+export { appKeyOf, readerLenses, registerReaderLenses } from "./reader-lenses.js";
 export { FOOT_MOVED, FOOT_OBSTACLES, NARROW_PICTURE, placeAtTheFoot, placeAtTheTop } from "./notice-place.js";
 export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "./notices.js";
 export { Standing, StandingDot, standingWords } from "./workbench/standing.js";

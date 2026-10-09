@@ -927,6 +927,18 @@ export class Store<S extends AnySchema> {
     return this.graph.getNode(id)?.kind as string | undefined;
   }
 
+  /**
+   * THE DAY THIS STORE'S RULES ARE JUDGED ON (YYYY-MM-DD): `invariantOptions`'
+   * `today`, else its context's `today`, else undefined — the real clock.
+   * What a seat reads "this week" and "overdue" against, so an app pinned to
+   * a day (a test, a demo, a replay) is asked about that day.
+   */
+  today(): string | undefined {
+    const context = this.invariantOptions.context as { readonly today?: unknown } | undefined;
+    const pinned = this.invariantOptions.today ?? context?.today;
+    return typeof pinned === "string" && /^\d{4}-\d{2}-\d{2}$/.test(pinned) ? pinned : undefined;
+  }
+
   /** Current violations, evaluated fresh — nothing is cached or stale. */
   violations(context?: InvariantContext): Violation[] {
     return evaluate(this.graph, this.allInvariants(), {

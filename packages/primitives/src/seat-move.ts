@@ -1,4 +1,6 @@
+import { useGraview } from "@graview/react/provider";
 import type { SeatMove } from "@graview/tools";
+import { useCallback } from "react";
 import { aggregateId, fromUrl, withFocus, withOverview, withPicture, withSelection, withWithin, withZoom, type ViewState } from "@graview/layout/view";
 
 /**
@@ -23,7 +25,8 @@ export function sceneMove(state: ViewState, move: SeatMove): SceneMove {
       // The home and the scene itself are the scene's opening stop.
       return { view: fromUrl("#") };
     case "picture":
-      return { view: withSelection(withPicture(state, move.kind, move.as), []) };
+      // A narrowing an earlier ask left on the stop is not this picture's: it goes.
+      return { view: withSelection(withPicture(withWithin(state, "filter", null), move.kind, move.as), []) };
     case "kind": {
       /*
        * Down into the kind's district, close, narrowed by the same words a
@@ -35,8 +38,35 @@ export function sceneMove(state: ViewState, move: SeatMove): SceneMove {
       return { view: withSelection(withWithin(withWithin(down, "view", null), "filter", move.filter ?? null), []) };
     }
     case "record":
-      return { view: withSelection(withFocus(withOverview(state, false), move.id), [move.id]) };
+      // On the ground at the record: the picture and the narrowing of the place it was found from go with it.
+      return { view: withSelection(withFocus(withOverview(withWithin(withWithin(state, "view", null), "filter", null), false), move.id), [move.id]) };
     case "problems":
       return { pane: "problems" };
   }
+}
+
+/**
+ * THE SCENE MAKES A SEAT'S MOVE: a stop set through the provider (so the
+ * address follows it and Back walks out of it), or the problems opened at
+ * the standing. A drawn view standing in front of the picture is put away
+ * first: the reader asked to be somewhere else.
+ */
+export function useSceneGo(): (move: SeatMove) => void {
+  const { setView, seatTalk } = useGraview();
+  return useCallback(
+    (move: SeatMove) => {
+      if (seatTalk.get().draft) seatTalk.setDraft(null);
+      if (move.to === "problems") {
+        // The standing is the scene's list of problems: opened as a press would open it.
+        const standing = document.querySelector<HTMLButtonElement>('[data-testid="standing"]');
+        if (standing && standing.getAttribute("aria-expanded") !== "true") standing.click();
+        return;
+      }
+      setView((state) => {
+        const made = sceneMove(state, move);
+        return "view" in made ? made.view : state;
+      });
+    },
+    [setView, seatTalk],
+  );
 }

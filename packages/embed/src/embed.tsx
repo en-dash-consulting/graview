@@ -1,7 +1,7 @@
 import { retryingImport } from "@graview/core/retry";
 import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
 import { EMPTY_VIEW, aggregateId, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
-import { BarFindContext, barPlaceAt, barPlaces, descentTarget, fetchFrameworkViews, frameworkViewDoors, useWidth, type BarFind } from "@graview/primitives/frame";
+import { BarFindContext, barPlaceAt, barPlaces, descentTarget, fetchFrameworkViews, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import type { SeatStart } from "@graview/primitives";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
@@ -487,6 +487,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
       <FrameNotices rootRef={rootRef} board={props.notices} />
       <FaceBoundary module="@graview/react" report={report} content>
       <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>
+        <NoticeBoardContext.Provider value={props.notices ?? null}>
         <Faces face={shown} stop={overviewStop ?? stop} kinds={kinds} places={places} />
         {whereabouts ? <Watch into={whereabouts} /> : null}
         {/* THE ADDRESS BAR, when the host's page is the app (FR-106): the face follows it, and the scene, drawn, keeps its stop in the fragment. */}
@@ -545,6 +546,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
           </Suspense>
         </FaceBoundary>
         </BarFindContext.Provider>
+        </NoticeBoardContext.Provider>
       </GraviewProvider>
       </FaceBoundary>
       </ErrorReportContext.Provider>

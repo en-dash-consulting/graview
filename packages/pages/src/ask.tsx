@@ -25,6 +25,9 @@ import type { PageContext } from "./pages.js";
 export function PageAsk<S extends AnySchema>({ context }: { readonly context: PageContext<S> }) {
   const navigate = useNavigate();
   const here = useGraviewIfAny<S>();
+  const { pathname } = useLocation();
+  const [, first, second] = pathname.split("/");
+  const placeHere = first === "places" && second ? decodeURIComponent(second) : undefined;
   const box = useRef<HTMLDivElement | null>(null);
   useInItsBox(box, here !== null);
   if (!here) return null;
@@ -46,6 +49,25 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
           onPick={(id) => {
             const node = context.store.graph.getNode(id);
             if (node) navigate(recordPath(context.store.schema, node.kind as string, id));
+          }}
+          /*
+           * WHERE AN ANSWER TAKES THE APP, ON THIS FACE: its address, through
+           * the router, so Back walks out of it. The scene itself is the
+           * other face's: the embed's way there, else its own address.
+           */
+          onMove={(move) => {
+            if (here.seatTalk.get().draft) here.seatTalk.setDraft(null);
+            if (move.to === "place" && (move.face === "scene" || move.slug === "overview")) {
+              if (context.overview) context.overview("#");
+              else if (!context.embedded) window.location.assign(context.sceneHref ?? "/");
+              return;
+            }
+            navigate(move.address);
+          }}
+          {...(placeHere ? { place: placeHere } : {})}
+          /* A view drawn stands in the main column, at its own address. */
+          onDraft={() => {
+            if (pathname !== "/~draft") navigate("/~draft");
           }}
         />
       </div>

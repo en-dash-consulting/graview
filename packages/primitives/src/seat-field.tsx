@@ -47,6 +47,12 @@ export interface SeatFieldProps<S extends AnySchema> {
   readonly onPick?: (id: string) => void;
   /** `"field"` (the default) draws the ask field; `"hidden"` draws no seat at all. */
   readonly start?: SeatStart;
+  /** Where an answer takes the app: the router on Pages; the scene's own stops when unsaid. */
+  readonly onMove?: SeatPanelProps["onMove"];
+  /** The place the reader stands in, by its slug, when the face knows it (Pages' route). */
+  readonly place?: string;
+  /** A view was drawn: the face shows it (Pages goes to `/~draft`). */
+  readonly onDraft?: () => void;
 }
 
 /** The field's width on a desk, and the gap between it and the picture's edges. */
@@ -68,7 +74,7 @@ const Panel = panelModule.part(
  * The seat, at the foot of the box it is drawn in — the scene's picture, or
  * on Pages a box the routed face lays over the window (or its embed).
  */
-export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start = "field" }: SeatFieldProps<S>) {
+export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start = "field", onMove, place, onDraft }: SeatFieldProps<S>) {
   const { brand, seatTalk } = useGraview<S>();
   const talk = useSeatTalkState(seatTalk);
   const name = brand?.name?.trim() || "this app";
@@ -179,6 +185,9 @@ export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start 
             {...(respond ? { respond: respond as unknown as SeatPanelProps["respond"] } : {})}
             {...(onCall ? { onCall } : {})}
             {...(onPick ? { onPick } : {})}
+            {...(onMove ? { onMove } : {})}
+            {...(place ? { place } : {})}
+            {...(onDraft ? { onDraft } : {})}
           />
         </Suspense>
       ) : null}
