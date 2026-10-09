@@ -31,6 +31,7 @@ import { quotedAtTheEnd } from "./quote.js";
 import { respellDocument } from "./respell.js";
 import { accentProblem } from "../theme/accent.js";
 import { pageFieldFindings, pageNames, renamedOnPage, withoutOnPage } from "./page-fields.js";
+import { capitalize } from "../capital.js";
 
 /*
  * STRUCTURAL EDITS — a closed vocabulary for changing what an app declares.
@@ -598,7 +599,7 @@ class Editor {
       const unknown = Object.keys(e.accents).find((kind) => !this.doc.kinds[kind]);
       if (unknown) return this.fail(i, "accents", `"${unknown}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`);
     }
-    merge("accents", (kind, hue) => (hue === null ? `${cap(kind)} goes back to its own hue.` : `${cap(kind)} is drawn at hue ${hue}°.`), "Every kind goes back to its own hue.");
+    merge("accents", (kind, hue) => (hue === null ? `${capitalize(kind)} goes back to its own hue.` : `${capitalize(kind)} is drawn at hue ${hue}°.`), "Every kind goes back to its own hue.");
     if (e.scheme !== undefined) {
       if (e.scheme === null || e.scheme === "auto") delete brand["scheme"];
       else brand["scheme"] = e.scheme;
@@ -856,12 +857,12 @@ class Editor {
       if (views[e.kind]) delete views[e.kind][e.slot];
       if (views[e.kind] && Object.keys(views[e.kind]).length === 0) delete views[e.kind];
       if (Object.keys(views).length === 0) delete this.doc.views;
-      this.said.push(`${cap(withA(noun))} ${e.slot} goes back to Graview's own look.`);
+      this.said.push(`${capitalize(withA(noun))} ${e.slot} goes back to Graview's own look.`);
       return;
     }
     (views[e.kind] ??= {})[e.slot] = e.blocks;
     if (!this.blocksHold(i, `views.${e.kind}.${e.slot}`)) return;
-    this.said.push(`${cap(withA(noun))} ${e.slot} gets a look of its own: ${blockWords(e.blocks)}.`);
+    this.said.push(`${capitalize(withA(noun))} ${e.slot} gets a look of its own: ${blockWords(e.blocks)}.`);
   }
 
   private setHome(i: number, blocks: unknown[] | null) {
@@ -960,7 +961,7 @@ class Editor {
     const index = this.lensIndex(i, e.title, e.on);
     if (index < 0) return;
     const said = this.removeLensAt(index);
-    this.said.push(`${cap(said.replace(/ \(the app opens at its home again\)$/, ""))} is removed${said.endsWith("again)") ? "; the app opens at its home again" : ""}.`);
+    this.said.push(`${capitalize(said.replace(/ \(the app opens at its home again\)$/, ""))} is removed${said.endsWith("again)") ? "; the app opens at its home again" : ""}.`);
   }
 
   private arrangePages(i: number, given: Doc) {
@@ -1022,7 +1023,7 @@ class Editor {
       }
     }
     if (Object.keys(pages).length === 0) delete this.doc.pages;
-    this.said.push(`${cap(listOf(said))}.`);
+    this.said.push(`${capitalize(listOf(said))}.`);
   }
 
   /** Whether `first` names something the app can open on: home, a kind or its plural, a titled lens. */
@@ -1038,7 +1039,7 @@ class Editor {
     const spec = this.kind(i, e.kind);
     if (!spec) return;
     const name: string = e.name;
-    const plural = cap(pluralWords(this.doc, e.kind));
+    const plural = capitalize(pluralWords(this.doc, e.kind));
     const existing = spec.computed?.[name];
     if (e.expr === null) {
       if (existing === undefined) return this.fail(i, "name", `${e.kind} works out nothing called "${name}"${spec.computed ? `; it works out ${Object.keys(spec.computed).join(", ")}` : ""}`);
@@ -1981,7 +1982,6 @@ function swapToken(name: string, from: string, to: string): string {
   return name;
 }
 
-
 const listOf = (xs: readonly string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`);
 
 /** Map every block of a view, nested ones included; a block mapped to null is dropped. */
@@ -2003,7 +2003,6 @@ function mapBlocks(blocks: unknown[], f: (b: Record<string, unknown>) => Record<
 
 // ── words for what changed ───────────────────────────────────────────────────
 
-const cap = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 const withA = (noun: string) => `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;
 const nounOf = (doc: Doc, kind: string): string => doc.kinds[kind]?.noun ?? words(kind);
 /** A kind's plural as a person reads it: "packages", "people and teams". */

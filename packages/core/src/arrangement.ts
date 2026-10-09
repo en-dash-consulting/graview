@@ -2,6 +2,7 @@ import { describeArg } from "./mutations/node-ref.js";
 import { humanizeField, isCurrent } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
+import { capitalize } from "./capital.js";
 
 /**
  * ARRANGEMENT IS A CAPABILITY OF THE DECLARATION, not of a view.
@@ -139,8 +140,6 @@ export function edgesOf(schema: AnySchema, kind: string): readonly ArrangeOffer[
   }
   return [...offers.values()];
 }
-
-const capitalize = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 
 const IS_WORDS = ["current", "past", "any", "flagged", "clear"] as const;
 

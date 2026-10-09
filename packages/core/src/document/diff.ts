@@ -5,6 +5,7 @@ import { narrows, rangeWords } from "./range.js";
 import { respellDocument } from "./respell.js";
 import type { GraviewDocument } from "./schema.js";
 import { homeOf, VIEW_SLOTS, viewsOf } from "./views.js";
+import { capitalize } from "../capital.js";
 
 /*
  * WHAT A CHANGE TO THE APP MEANS, IN WORDS — and whether data would move.
@@ -182,7 +183,7 @@ function brandSentences(was: Brand, now: Brand, appName: string): string[] {
   if (!same(was.shape?.density, now.shape?.density)) out.push(now.shape?.density === undefined ? "Spacing goes back to Graview's own." : `Spacing is now ${now.shape.density} times Graview's own.`);
   for (const kind of [...new Set([...keys(was.accents), ...keys(now.accents)])]) {
     const hue = now.accents?.[kind];
-    if (!same(was.accents?.[kind], hue)) out.push(hue === undefined ? `${cap(kind)} goes back to its own hue.` : `${cap(kind)} is drawn at hue ${hue}°.`);
+    if (!same(was.accents?.[kind], hue)) out.push(hue === undefined ? `${capitalize(kind)} goes back to its own hue.` : `${capitalize(kind)} is drawn at hue ${hue}°.`);
   }
   if (!same(was.scheme ?? "auto", now.scheme ?? "auto")) out.push(now.scheme === "light" || now.scheme === "dark" ? `The app opens ${now.scheme} when the reader has not chosen.` : "The app follows the reader's system for light and dark.");
   return out;
@@ -200,8 +201,8 @@ function viewSentences(before: GraviewDocument, after: GraviewDocument): string[
       const old = was[kind]?.[slot];
       const next = now[kind]?.[slot];
       if (same(old, next)) continue;
-      if (old === undefined) sentences.push(`${cap(a)} ${noun} ${slot} gets a look of its own.`);
-      else if (next === undefined) sentences.push(`${cap(a)} ${noun} ${slot} goes back to Graview's own look.`);
+      if (old === undefined) sentences.push(`${capitalize(a)} ${noun} ${slot} gets a look of its own.`);
+      else if (next === undefined) sentences.push(`${capitalize(a)} ${noun} ${slot} goes back to Graview's own look.`);
       else sentences.push(`How ${a} ${noun} ${slot} looks changes.`);
     }
   }
@@ -211,12 +212,10 @@ function viewSentences(before: GraviewDocument, after: GraviewDocument): string[
   return sentences;
 }
 
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
 /** What a kind works out, compared (FR-83, FR-84): "Packages work out "net".", in the kind's own plural. */
 function computedSentences(plural: string, was: Record<string, unknown> | undefined, now: Record<string, unknown> | undefined): string[] {
   const out: string[] = [];
-  const said = cap(plural);
+  const said = capitalize(plural);
   const exprOf = (c: unknown) => (typeof c === "string" ? c : (c as { expr?: string } | undefined)?.expr);
   for (const name of keys(now)) {
     if (was?.[name] === undefined) out.push(`${said} work out "${name}".`);

@@ -1,4 +1,5 @@
 import { participantKey, type Author } from "@graview/core";
+import { kindCardId } from "@graview/layout/view";
 
 /**
  * THE SEAT IS A ROBOT IN THE CITY, and where it stands is DERIVED.
@@ -96,7 +97,7 @@ export function standingFor(ids: readonly string[], kindOf: (id: string) => stri
   if (real.length === 0) return null;
   if (real.length <= VISIT_EACH_UP_TO) return real[0]!;
   const kinds = new Set(real.map((id) => kindOf(id)).filter((kind): kind is string => kind !== undefined));
-  if (kinds.size === 1) return `kind:${[...kinds][0]!}`;
+  if (kinds.size === 1) return kindCardId([...kinds][0]!);
   return real[0]!;
 }
 

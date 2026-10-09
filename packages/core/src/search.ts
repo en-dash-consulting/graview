@@ -9,6 +9,7 @@ import type { AnyNodeDefinition } from "./schema/types.js";
 import { hidesFrom, seesId } from "./seen.js";
 import type { Store } from "./store.js";
 import { placeSlug, type Place } from "./views/types.js";
+import { capitalize } from "./capital.js";
 
 /**
  * SEARCH IS ONE SEAM, and the graph is the result list.
@@ -692,8 +693,6 @@ export function describeSearched(schema: AnySchema, searched: SearchResult["sear
         ? plurals[0]!
         : `${plurals.slice(0, -1).join(", ")} and ${plurals[plurals.length - 1]!}`;
   const lifecycled = searched.kinds.some((kind) => schema.tryDefinition(kind)?.lifecycle);
-  if (!lifecycled) return `${capitalFirst(names)}.`;
-  return searched.past ? `${capitalFirst(names)}, past ones included.` : `${capitalFirst(names)}, current ones; add is:any for past ones.`;
+  if (!lifecycled) return `${capitalize(names)}.`;
+  return searched.past ? `${capitalize(names)}, past ones included.` : `${capitalize(names)}, current ones; add is:any for past ones.`;
 }
-
-const capitalFirst = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
