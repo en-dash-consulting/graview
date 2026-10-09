@@ -166,9 +166,13 @@ export const FACE_DOORS = {
  * `sharesItsName`) where search, the places and the seat each spelled their
  * own, `pluralOf` and `actTitle`, and the keyboard's landing asking only
  * while its window is open. The claim rises by that: 578.5 KB, which leaves
- * Cloud's shell 16.5 KB under its 595.
+ * Cloud's shell 16.5 KB under its 595. A press on a control while the
+ * keyboard is nowhere landing it beside the control when it goes (Firefox
+ * and Safari on macOS focus no button on click) and a plural standing alone
+ * as a label (`pluralLabel`) took it to 592 412 bytes (578.5 KB), 326 more:
+ * 578.8 KB, which leaves Cloud's shell 16.2 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 578.5 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 578.8 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -274,9 +278,11 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * The scene wearing the one bar, the same days, choices and bar as the
  * page that compiles, took it to 533.4 KB: 533.6 KB.
  * The small truths after the cleanup, the same 235 bytes as the page that
- * compiles, took it to 546 459 bytes (533.65 KB): 533.9 KB.
+ * compiles, took it to 546 459 bytes (533.65 KB): 533.9 KB. The keyboard
+ * in Firefox and a plural as a label, the same 326 bytes, took it to
+ * 546 786 (534.0 KB): 534.2 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 533.9 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 534.2 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

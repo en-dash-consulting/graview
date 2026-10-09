@@ -32,7 +32,7 @@ describe("a hosted page", () => {
     for (const name of ["react-dom", "zod", "@graview/core", "@graview/embed", "@graview/ship"]) expect(Object.keys(measured.upFront.packages)).toContain(name);
   });
 
-  it("carries at most 578.5 KB minified up front: 578.2 KB once an address and a plural were each said by one rule, so Cloud's shell keeps 16.5 KB for its own under its 595", () => {
+  it("carries at most 578.8 KB minified up front: 578.5 KB once an address and a plural were each said by one rule and the keyboard lands in Firefox, so Cloud's shell keeps 16.2 KB for its own under its 595", () => {
     expect(measured.upFront.minified, `${Math.round(measured.upFront.minified / 1024)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
     expect(measured.over).toBe(false);
   });
@@ -90,8 +90,8 @@ describe("a hosted page", () => {
     expect(packageOf("<stdin>")).toBe("(the page)");
   });
 
-  it("holds its budget's numbers: 578.5 KB up front, under the 595 Cloud's shell holds itself to, and 150 KB of it zod's", () => {
-    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 578.5 * 1024, zod: 150 * 1024 });
+  it("holds its budget's numbers: 578.8 KB up front, under the 595 Cloud's shell holds itself to, and 150 KB of it zod's", () => {
+    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 578.8 * 1024, zod: 150 * 1024 });
   });
 
   /*
