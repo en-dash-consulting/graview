@@ -144,7 +144,8 @@ try {
   });
   await page.waitForTimeout(500);
   report.steps.pages = await page.evaluate(() => ({
-    title: document.querySelector("h1")?.textContent?.trim() ?? null,
+    // The record's own title, under the bar's name (the bar holds the app's h1).
+    title: document.querySelector("main h1, main h2")?.textContent?.trim() ?? null,
     startFresh: document.querySelector('[data-testid="start-fresh"]') !== null,
   }));
 

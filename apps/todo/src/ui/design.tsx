@@ -584,7 +584,7 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
         </h1>
         {/* Where it stands in the scene: a plain link under the name, through the embed's own way when there is one. */}
         <p className="th-lede">
-          <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} data-testid="spatial-link" style={{ color: "inherit", fontSize: "0.9rem", textDecoration: "underline", textUnderlineOffset: "0.2em", textDecorationColor: "var(--th-line)" }} />
+          <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} data-testid="spatial-link" style={{ display: "inline-flex", alignItems: "center", minHeight: 24, color: "inherit", fontSize: "0.9rem", textDecoration: "underline", textUnderlineOffset: "0.2em", textDecorationColor: "var(--th-line)" }} />
         </p>
       </header>
 

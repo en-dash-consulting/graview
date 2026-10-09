@@ -529,7 +529,7 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
           <InPlace context={context} nodeId={id} field="label" value={facts.label} plain />
         </h1>
         <p className="ro-lede">
-          <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} data-testid="spatial-link" style={{ color: "inherit", fontSize: "0.9rem", textDecoration: "underline", textUnderlineOffset: "0.2em", textDecorationColor: "var(--ro-line)" }} />
+          <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} data-testid="spatial-link" style={{ display: "inline-flex", alignItems: "center", minHeight: 24, color: "inherit", fontSize: "0.9rem", textDecoration: "underline", textUnderlineOffset: "0.2em", textDecorationColor: "var(--ro-line)" }} />
         </p>
       </header>
 
