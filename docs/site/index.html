@@ -17,13 +17,20 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Graview — Agent-native apps, built as isometric scenes</title>
-<meta name="description" content="Graview is an open framework and visual language for building apps as isometric scenes, from En Dash. Declare your domain once — kinds, fields, edges, acts, rules, roles — and the spatial interface, the routed pages, the permissions, the checks and an agent's tools are derived from that one declaration. Open under the Elastic License 2.0. Graview Cloud is the hosted product built on it: an app from a conversation in ChatGPT or Claude, shared by link.">
+<meta name="description" content="Graview is a TypeScript framework for agent-native apps built as isometric scenes. Declare your domain once; the interface, the permissions and an AI agent&rsquo;s tools follow from it.">
 <meta name="color-scheme" content="light dark">
-<meta property="og:title" content="Graview">
-<meta property="og:description" content="Agent-native apps, built as isometric scenes. Graview is an open framework and visual language for apps that people and AI agents work in together, from En Dash. Or use it hosted, on Graview Cloud.">
+<meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
+<meta property="og:site_name" content="Graview">
+<meta property="og:title" content="Graview — Agent-native apps, built as isometric scenes">
+<meta property="og:description" content="Graview is a TypeScript framework and visual language for apps that people and AI agents work in together, from En Dash. Source-available under the Elastic License 2.0. Or use it hosted, on Graview Cloud.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://graview.dev/">
 <meta property="og:image" content="https://graview.dev/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The graview.dev landing page: the headline Agent-native apps, built as isometric scenes, beside the example garden drawn as an isometric city.">
+<meta property="og:locale" content="en_US">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://graview.dev/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Cstyle%3Eg%7Bstroke:%23001769%7Dcircle%7Bfill:%23001769%7D%40media (prefers-color-scheme:dark)%7Bg%7Bstroke:%23fff%7Dcircle%7Bfill:%23fff%7D%7D%3C/style%3E%3Cg fill=%27none%27 stroke-width=%272.4%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M13 11 L3 8 L14 3 H29 L21 9%27/%3E%3Cpath d=%27M10 18 L3 23 L16.5 28 L29 21 L22 19%27/%3E%3Cpath d=%27M16.5 18.5 V23.5%27 stroke-linecap=%27round%27/%3E%3C/g%3E%3Ccircle cx=%2716.5%27 cy=%2713.5%27 r=%272%27/%3E%3C/svg%3E" type="image/svg+xml">
@@ -46,6 +53,147 @@ body { margin: 0; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
 </style>
+<!-- site-seo:start — written by scripts/site-docs.mjs. -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "WebSite",
+   "@id": "https://graview.dev/#website",
+   "url": "https://graview.dev/",
+   "name": "Graview",
+   "description": "Graview is a TypeScript framework for agent-native apps built as isometric scenes. Declare your domain once; the interface, the permissions and an AI agent’s tools follow from it.",
+   "inLanguage": "en",
+   "publisher": {
+    "@id": "https://graview.dev/#endash"
+   }
+  },
+  {
+   "@type": "Organization",
+   "@id": "https://graview.dev/#endash",
+   "name": "En Dash",
+   "url": "https://endash.us",
+   "logo": {
+    "@type": "ImageObject",
+    "url": "https://graview.dev/endash-mark.svg"
+   },
+   "sameAs": [
+    "https://github.com/en-dash-consulting"
+   ]
+  },
+  {
+   "@type": "SoftwareApplication",
+   "@id": "https://graview.dev/#software",
+   "name": "Graview",
+   "description": "Graview is a TypeScript framework for agent-native apps built as isometric scenes. Declare your domain once; the interface, the permissions and an AI agent’s tools follow from it.",
+   "url": "https://graview.dev/",
+   "applicationCategory": "DeveloperApplication",
+   "operatingSystem": "Any platform with Node.js 22 or later",
+   "softwareVersion": "0.1.18",
+   "license": "https://www.elastic.co/licensing/elastic-license",
+   "isAccessibleForFree": true,
+   "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+   },
+   "downloadUrl": "https://www.npmjs.com/package/graview",
+   "installUrl": "https://graview.dev/docs/getting-started.html",
+   "softwareHelp": {
+    "@type": "CreativeWork",
+    "url": "https://graview.dev/docs/index.html"
+   },
+   "image": "https://graview.dev/og.png",
+   "publisher": {
+    "@id": "https://graview.dev/#endash"
+   },
+   "sameAs": [
+    "https://github.com/en-dash-consulting/graview"
+   ]
+  },
+  {
+   "@type": "SoftwareSourceCode",
+   "@id": "https://graview.dev/#source",
+   "name": "Graview",
+   "description": "Graview is a TypeScript framework for agent-native apps built as isometric scenes. Declare your domain once; the interface, the permissions and an AI agent’s tools follow from it.",
+   "codeRepository": "https://github.com/en-dash-consulting/graview",
+   "programmingLanguage": {
+    "@type": "ComputerLanguage",
+    "name": "TypeScript"
+   },
+   "runtimePlatform": "Node.js 22",
+   "license": "https://www.elastic.co/licensing/elastic-license",
+   "version": "0.1.18",
+   "targetProduct": {
+    "@id": "https://graview.dev/#software"
+   },
+   "author": {
+    "@id": "https://graview.dev/#endash"
+   }
+  },
+  {
+   "@type": "FAQPage",
+   "@id": "https://graview.dev/#faq",
+   "url": "https://graview.dev/",
+   "isPartOf": {
+    "@id": "https://graview.dev/#website"
+   },
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "What is Graview?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Graview is an agent-native TypeScript framework and visual language for apps built as isometric scenes, made by En Dash for apps that people and AI agents work in together. A product declares its domain once — the kinds of thing, their fields and relations, the acts that change them, the rules they must keep and who may do what — and Graview derives an isometric scene, a routed web app, the permissions, a checker and a typed tool for every act from that one declaration."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "How is Graview different from other app frameworks?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Most frameworks have you build the interface, the permissions and the API separately and keep them in step by hand. In Graview they are one thing: each is derived from the same declaration, so the button a person presses, the tool an agent calls and the rule that judges both cannot drift apart."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "What license is Graview under?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "The Elastic License 2.0. The source is on GitHub, and you may build with it and ship products on it for free. The license does not let you offer Graview itself to others as a hosted or managed service, or remove its license notices."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "How do I start a Graview app?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Run npm create graview@latest my-app with Node 22 or later. It writes a running product for your own domain — the declaration, a shell, a test, a CI workflow and the authoring skills for Claude Code and Codex — and npm run verify checks it."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "How do AI agents use a Graview app?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Through the same acts a person has. Every act in the declaration is a typed tool with a schema and a sentence, and graview mcp serves them over MCP against a real store. An agent is narrowed by the same policy as a person and held to the same rules, and each change it makes lands in the same log with its author, where it can be seen and taken back."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "What is Graview Cloud?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Graview Cloud is the hosted product built on Graview, from En Dash, in private alpha and invite-only at graview.cloud. You say what you are organizing in ChatGPT or Claude, or start from a template, and it becomes an app at its own address for the people you invite. An app and its whole history export as one file that opens in the framework on your own machine."
+     }
+    }
+   ]
+  }
+ ]
+}
+</script>
+<!-- site-seo:end -->
 </head>
 <body>
 <style>
@@ -393,7 +541,7 @@ section > .head .tick {
 .inl { display: inline-flex; align-items: center; min-height: 24px; }
 .chapter-head { display: flex; align-items: baseline; gap: 12px; }
 .chapter-n { font-family: var(--sans); font-size: 26px; color: var(--pine); font-variant-numeric: tabular-nums; min-width: 28px; }
-.chapter-head h3 { margin: 0; font-size: 20px; font-weight: 600; }
+.chapter-head h2 { margin: 0; font-size: 20px; font-weight: 600; }
 .chapter-claim { margin: 8px 0 0 40px; max-width: 62ch; color: var(--ink-2); line-height: 1.6; }
 .chapter-adds { margin: 12px 0 0 40px; font-size: 13px; }
 .chapter-label { display: block; font-family: var(--sans); font-weight: var(--w-label); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px; }
@@ -882,6 +1030,41 @@ main.page > section > .lede { max-width: 60ch; }
 }
 @media (max-width: 560px) { .hero-live { height: 440px; } .hero h1 { max-width: 14ch; } }
 
+/*
+ * THE FIRST FRAME IS A PICTURE OF THE CITY, not a box that says loading.
+ * scripts/site-poster.mjs draws the hero's own chapter from altitude in both
+ * lightings; the mount replaces it with the live scene.
+ */
+.hero-live .poster { position: absolute; inset: 0; display: grid; place-items: center; padding: 6%; pointer-events: none; }
+.hero-live .poster > div { width: 100%; height: 100%; }
+.hero-live .poster svg { display: block; width: 100%; height: 100%; }
+.hero-live .poster .light, .hero-live .poster .dark { display: none; }
+:root[data-theme="light"] .hero-live .poster .light { display: block; }
+:root[data-theme="dark"] .hero-live .poster .dark { display: block; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hero-live .poster .dark { display: block; } }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .hero-live .poster .light { display: block; } }
+.hero-live .chapter-loading { position: relative; }
+
+/*
+ * ON A PHONE, THE PICTURE COMES BEFORE THE SECOND WAY IN. Stacked in source
+ * order the scene began a full screen down, below both ways in and the
+ * links, so the first screen said what Graview is and never showed it.
+ * The copy's parts become the hero's own rows: what it is, how to start,
+ * the scene, then the hosted way in and the links.
+ */
+@media (max-width: 1000px) {
+  .hero { gap: 0; }
+  .hero-copy, .hero .cta { display: contents; }
+  .hero .eyebrow { order: 1; }
+  .hero h1 { order: 2; }
+  .hero .lede { order: 3; }
+  .hero .way-in:first-child { order: 4; margin-top: 24px; }
+  .hero-stage { order: 5; margin-top: 24px; }
+  .hero .way-in:last-child { order: 6; margin-top: 24px; }
+  .hero .hero-links { order: 7; }
+}
+@media (max-width: 560px) { .hero .lede { font-size: 17px; } .hero-live { height: 380px; } }
+
 /* Rises into place once, and not at all for anyone who asked for less motion. */
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 .hero-copy > * { animation: rise 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
@@ -1101,6 +1284,12 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
   .way { border-top-color: CanvasText; }
   .cloud-line { border-color: LinkText; }
 }
+
+/* Questions, answered plainly: short answers in two columns, one at phone width. */
+.faq-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 48px; margin-top: 10px; }
+.qa h3 { font-size: 17px; margin: 0 0 8px; }
+.qa p { color: var(--ink-2); max-width: 62ch; }
+@media (max-width: 760px) { .faq-list { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
 /* site-css:end */
 </style>
 
@@ -1137,11 +1326,10 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <p class="eyebrow"><span class="dot" aria-hidden="true"></span><span>An agent-native framework for developers</span><span>v0.1 · Elastic License 2.0</span></p>
       <h1 id="h-what">Agent-native apps, built as isometric scenes.</h1>
       <p class="lede">
-        A framework and a visual language for apps that people and AI agents
-        work in together. Declare your domain once, in TypeScript. An agent
-        gets a typed tool for every act, served over MCP and held to the same
-        permissions and rules as a person. A person gets the scene — each
-        kind a district, each record a block — and a routed web app.
+        Graview is a TypeScript framework for apps that people and AI
+        agents work in together. Declare your domain once: a person gets an
+        isometric scene and a routed web app, and an agent gets a typed tool
+        for every act, held to the same permissions and rules.
       </p>
       <div class="cta">
         <div class="way-in">
@@ -1163,6 +1351,9 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
     </div>
     <div class="hero-stage">
       <div class="chapter-live hero-live" data-graview-chapter="16" data-stop="#overview=1" data-label="The garden, grown" role="region" aria-label="The example garden, running on this page">
+        <!-- site-poster:start — written by scripts/site-poster.mjs. -->
+        <div class="poster" aria-hidden="true"><div class="light"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="-164 -126.5 448 336" preserveAspectRatio="xMidYMid meet" role="img" data-scheme="light"><title>The example garden from altitude: each kind a plot on its map, a block for each record.</title><g fill-opacity="0.12" stroke-opacity="0.55" stroke-linejoin="round"><g data-kind="plot"><title>Plots: 3</title><polygon fill="#c4a764" stroke="#ab8e49" points="0,0 40,20 0,40 -40,20"/></g><g data-kind="invitation"><title>Invitations: 1</title><polygon fill="#64c487" stroke="#49ab6d" points="100,50 120,60 100,70 80,60"/></g><g data-kind="gardener"><title>Gardeners: 2</title><polygon fill="#c49164" stroke="#ab7749" points="-100,50 -60,70 -100,90 -140,70"/></g><g data-kind="rule"><title>Rules: 1</title><polygon fill="#6494c4" stroke="#497aab" points="-100,-50 -80,-40 -100,-30 -120,-40"/></g><g data-kind="planting"><title>Plantings: 2</title><polygon fill="#64c467" stroke="#49ab4d" points="100,-50 140,-30 100,-10 60,-30"/></g><g data-kind="rotation"><title>Rotations: 8</title><polygon fill="#648cc4" stroke="#4972ab" points="200,0 260,30 200,60 140,30"/></g><g data-kind="user"><title>People: 2</title><polygon fill="#c4a764" stroke="#ab8e49" points="200,100 240,120 200,140 160,120"/></g></g><g stroke-opacity="0.75" stroke-linejoin="round"><path fill="#658cb3" d="M-106 -52l6 3v7l-6 -3z"/><path fill="#86a8cb" d="M-100 -49l6 -3v7l-6 3z"/><path fill="#bbd1e7" stroke="#ffffff" d="M-100 -55l6 3l-6 3l-6 -3z"/><path fill="#65b368" d="M92 -53l8 4v10l-8 -4z"/><path fill="#86cb88" d="M100 -49l8 -4v10l-8 4z"/><path fill="#bbe7bd" stroke="#ffffff" d="M100 -57l8 4l-8 4l-8 -4z"/><path fill="#65b368" d="M78 -43l9 4v6l-9 -4z"/><path fill="#86cb88" d="M87 -39l8 -4v6l-8 4z"/><path fill="#bbe7bd" stroke="#ffffff" d="M87 -47l8 4l-8 4l-9 -4z"/><path fill="#b39c65" d="M-8 1l8 4v6l-8 -4z"/><path fill="#cbb686" d="M0 5l8 -4v6l-8 4z"/><path fill="#e7dabb" stroke="#ffffff" d="M0 -3l8 4l-8 4l-8 -4z"/><path fill="#6586b3" d="M191 -4l9 5v11l-9 -5z"/><path fill="#86a3cb" d="M200 1l9 -5v11l-9 5z"/><path fill="#bbcde7" stroke="#ffffff" d="M200 -8l9 4l-9 5l-9 -5z"/><path fill="#b39c65" d="M-22 5l9 5v8l-9 -5z"/><path fill="#cbb686" d="M-13 10l8 -5v8l-8 5z"/><path fill="#e7dabb" stroke="#ffffff" d="M-13 1l8 4l-8 5l-9 -5z"/><path fill="#b39c65" d="M5 3l8 4v10l-8 -4z"/><path fill="#cbb686" d="M13 7l9 -4v10l-9 4z"/><path fill="#e7dabb" stroke="#ffffff" d="M13 -1l9 4l-9 4l-8 -4z"/><path fill="#6586b3" d="M176 6l9 5v9l-9 -5z"/><path fill="#86a3cb" d="M185 11l9 -5v9l-9 5z"/><path fill="#bbcde7" stroke="#ffffff" d="M185 1l9 5l-9 5l-9 -5z"/><path fill="#6586b3" d="M206 9l9 4v6l-9 -4z"/><path fill="#86a3cb" d="M215 13l9 -4v6l-9 4z"/><path fill="#bbcde7" stroke="#ffffff" d="M215 4l9 5l-9 4l-9 -4z"/><path fill="#6586b3" d="M161 12l9 5v10l-9 -5z"/><path fill="#86a3cb" d="M170 17l9 -5v10l-9 5z"/><path fill="#bbcde7" stroke="#ffffff" d="M170 7l9 5l-9 5l-9 -5z"/><path fill="#6586b3" d="M221 14l9 5v8l-9 -5z"/><path fill="#86a3cb" d="M230 19l9 -5v8l-9 5z"/><path fill="#bbcde7" stroke="#ffffff" d="M230 10l9 4l-9 5l-9 -5z"/><path fill="#6586b3" d="M146 24l9 5v6l-9 -5z"/><path fill="#86a3cb" d="M155 29l9 -5v6l-9 5z"/><path fill="#bbcde7" stroke="#ffffff" d="M155 20l9 4l-9 5l-9 -5z"/><path fill="#6586b3" d="M236 20l9 5v10l-9 -5z"/><path fill="#86a3cb" d="M245 25l9 -5v10l-9 5z"/><path fill="#bbcde7" stroke="#ffffff" d="M245 16l9 4l-9 5l-9 -5z"/><path fill="#6586b3" d="M161 30l9 5v7l-9 -5z"/><path fill="#86a3cb" d="M170 35l9 -5v7l-9 5z"/><path fill="#bbcde7" stroke="#ffffff" d="M170 26l9 4l-9 5l-9 -5z"/><path fill="#65b382" d="M94 51l6 3v4l-6 -3z"/><path fill="#86cb9f" d="M100 54l6 -3v4l-6 3z"/><path fill="#bbe7cb" stroke="#ffffff" d="M100 48l6 3l-6 3l-6 -3z"/><path fill="#b38a65" d="M-108 50l8 4v6l-8 -4z"/><path fill="#cba686" d="M-100 54l8 -4v6l-8 4z"/><path fill="#e7d0bb" stroke="#ffffff" d="M-100 46l8 4l-8 4l-8 -4z"/><path fill="#b38a65" d="M-122 53l9 5v10l-9 -5z"/><path fill="#cba686" d="M-113 58l8 -5v10l-8 5z"/><path fill="#e7d0bb" stroke="#ffffff" d="M-113 49l8 4l-8 5l-9 -5z"/><path fill="#b39c65" d="M192 102l8 4v5l-8 -4z"/><path fill="#cbb686" d="M200 106l8 -4v5l-8 4z"/><path fill="#e7dabb" stroke="#ffffff" d="M200 98l8 4l-8 4l-8 -4z"/><path fill="#b39c65" d="M178 106l9 4v7l-9 -4z"/><path fill="#cbb686" d="M187 110l8 -4v7l-8 4z"/><path fill="#e7dabb" stroke="#ffffff" d="M187 102l8 4l-8 4l-9 -4z"/></g></svg></div><div class="dark"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="-164 -126.5 448 336" preserveAspectRatio="xMidYMid meet" role="img" data-scheme="dark"><title>The example garden from altitude: each kind a plot on its map, a block for each record.</title><g fill-opacity="0.2" stroke-opacity="0.55" stroke-linejoin="round"><g data-kind="plot"><title>Plots: 3</title><polygon fill="#b19043" stroke="#c5ae77" points="0,0 40,20 0,40 -40,20"/></g><g data-kind="invitation"><title>Invitations: 1</title><polygon fill="#43b16c" stroke="#77c594" points="100,50 120,60 100,70 80,60"/></g><g data-kind="gardener"><title>Gardeners: 2</title><polygon fill="#b17743" stroke="#c59c77" points="-100,50 -60,70 -100,90 -140,70"/></g><g data-kind="rule"><title>Rules: 1</title><polygon fill="#437ab1" stroke="#779ec5" points="-100,-50 -80,-40 -100,-30 -120,-40"/></g><g data-kind="planting"><title>Plantings: 2</title><polygon fill="#43b147" stroke="#77c57a" points="100,-50 140,-30 100,-10 60,-30"/></g><g data-kind="rotation"><title>Rotations: 8</title><polygon fill="#4371b1" stroke="#7798c5" points="200,0 260,30 200,60 140,30"/></g><g data-kind="user"><title>People: 2</title><polygon fill="#b19043" stroke="#c5ae77" points="200,100 240,120 200,140 160,120"/></g></g><g stroke-opacity="0.14" stroke-linejoin="round"><path fill="#15212e" d="M-106 -52l6 3v7l-6 -3z"/><path fill="#20364b" d="M-100 -49l6 -3v7l-6 3z"/><path fill="#2f5274" stroke="#ffffff" d="M-100 -55l6 3l-6 3l-6 -3z"/><path fill="#152e15" d="M92 -53l8 4v10l-8 -4z"/><path fill="#204b22" d="M100 -49l8 -4v10l-8 4z"/><path fill="#2f7432" stroke="#ffffff" d="M100 -57l8 4l-8 4l-8 -4z"/><path fill="#152e15" d="M78 -43l9 4v6l-9 -4z"/><path fill="#204b22" d="M87 -39l8 -4v6l-8 4z"/><path fill="#2f7432" stroke="#ffffff" d="M87 -47l8 4l-8 4l-9 -4z"/><path fill="#2e2615" d="M-8 1l8 4v6l-8 -4z"/><path fill="#4b3e20" d="M0 5l8 -4v6l-8 4z"/><path fill="#745f2f" stroke="#ffffff" d="M0 -3l8 4l-8 4l-8 -4z"/><path fill="#151f2e" d="M191 -4l9 5v11l-9 -5z"/><path fill="#20324b" d="M200 1l9 -5v11l-9 5z"/><path fill="#2f4c74" stroke="#ffffff" d="M200 -8l9 4l-9 5l-9 -5z"/><path fill="#2e2615" d="M-22 5l9 5v8l-9 -5z"/><path fill="#4b3e20" d="M-13 10l8 -5v8l-8 5z"/><path fill="#745f2f" stroke="#ffffff" d="M-13 1l8 4l-8 5l-9 -5z"/><path fill="#2e2615" d="M5 3l8 4v10l-8 -4z"/><path fill="#4b3e20" d="M13 7l9 -4v10l-9 4z"/><path fill="#745f2f" stroke="#ffffff" d="M13 -1l9 4l-9 4l-8 -4z"/><path fill="#151f2e" d="M176 6l9 5v9l-9 -5z"/><path fill="#20324b" d="M185 11l9 -5v9l-9 5z"/><path fill="#2f4c74" stroke="#ffffff" d="M185 1l9 5l-9 5l-9 -5z"/><path fill="#151f2e" d="M206 9l9 4v6l-9 -4z"/><path fill="#20324b" d="M215 13l9 -4v6l-9 4z"/><path fill="#2f4c74" stroke="#ffffff" d="M215 4l9 5l-9 4l-9 -4z"/><path fill="#151f2e" d="M161 12l9 5v10l-9 -5z"/><path fill="#20324b" d="M170 17l9 -5v10l-9 5z"/><path fill="#2f4c74" stroke="#ffffff" d="M170 7l9 5l-9 5l-9 -5z"/><path fill="#151f2e" d="M221 14l9 5v8l-9 -5z"/><path fill="#20324b" d="M230 19l9 -5v8l-9 5z"/><path fill="#2f4c74" stroke="#ffffff" d="M230 10l9 4l-9 5l-9 -5z"/><path fill="#151f2e" d="M146 24l9 5v6l-9 -5z"/><path fill="#20324b" d="M155 29l9 -5v6l-9 5z"/><path fill="#2f4c74" stroke="#ffffff" d="M155 20l9 4l-9 5l-9 -5z"/><path fill="#151f2e" d="M236 20l9 5v10l-9 -5z"/><path fill="#20324b" d="M245 25l9 -5v10l-9 5z"/><path fill="#2f4c74" stroke="#ffffff" d="M245 16l9 4l-9 5l-9 -5z"/><path fill="#151f2e" d="M161 30l9 5v7l-9 -5z"/><path fill="#20324b" d="M170 35l9 -5v7l-9 5z"/><path fill="#2f4c74" stroke="#ffffff" d="M170 26l9 4l-9 5l-9 -5z"/><path fill="#152e1e" d="M94 51l6 3v4l-6 -3z"/><path fill="#204b30" d="M100 54l6 -3v4l-6 3z"/><path fill="#2f7448" stroke="#ffffff" d="M100 48l6 3l-6 3l-6 -3z"/><path fill="#2e2015" d="M-108 50l8 4v6l-8 -4z"/><path fill="#4b3420" d="M-100 54l8 -4v6l-8 4z"/><path fill="#744f2f" stroke="#ffffff" d="M-100 46l8 4l-8 4l-8 -4z"/><path fill="#2e2015" d="M-122 53l9 5v10l-9 -5z"/><path fill="#4b3420" d="M-113 58l8 -5v10l-8 5z"/><path fill="#744f2f" stroke="#ffffff" d="M-113 49l8 4l-8 5l-9 -5z"/><path fill="#2e2615" d="M192 102l8 4v5l-8 -4z"/><path fill="#4b3e20" d="M200 106l8 -4v5l-8 4z"/><path fill="#745f2f" stroke="#ffffff" d="M200 98l8 4l-8 4l-8 -4z"/><path fill="#2e2615" d="M178 106l9 4v7l-9 -4z"/><path fill="#4b3e20" d="M187 110l8 -4v7l-8 4z"/><path fill="#745f2f" stroke="#ffffff" d="M187 102l8 4l-8 4l-9 -4z"/></g></svg></div></div>
+        <!-- site-poster:end -->
         <p class="chapter-loading">The garden, loading…</p>
       </div>
       <p class="stage-caption">
@@ -1178,7 +1369,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
     <li><strong data-number="lenses">6</strong> <span>lenses that rebind to any domain</span></li>
     <li><strong data-number="skills">15</strong> <span>skills your assistant reads before it writes</span></li>
     <li><strong data-number="codes">89</strong> <span>things the checker can tell you, in words</span></li>
-    <li><strong data-number="tests">3640</strong> <span>named tests, green on every push</span></li>
+    <li><strong data-number="tests">3660</strong> <span>named tests, green on every push</span></li>
   </ul>
 
   <section id="how" class="how" aria-labelledby="h-how">
@@ -1281,7 +1472,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
           works in yours the day you declare which field plays which role.
         </p>
         <ul class="plain">
-          <li><b>Five ship with it.</b> A timeline, a calendar, a coverage matrix, a board and a plan — each with drag, keyboard and a screen reader in mind.</li>
+          <li><b><span data-number-word="lenses">Six</span> ship with it.</b> A timeline, a calendar, a coverage matrix, a board, a status board in columns and a plan — each with drag, keyboard and a screen reader in mind.</li>
           <li><b>Write your own.</b> The kit scaffolds a lens with its reuse test already written, red until the lens really does rebind.</li>
           <li><b>Every lens is a place.</b> On the map, a lens stands on its own plot with the things it draws around it.</li>
         </ul>
@@ -1318,7 +1509,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
         <ul class="plain">
           <li><b>A seat in the product.</b> Ask what is wrong, ask about anything by name, or say a change in your own words. The seat answers from the graph first and from a model when it needs one.</li>
           <li><b>Readable from the outside.</b> The kit describes the whole application in words for something that cannot see it, and writes the files an assistant reads.</li>
-          <li><b>Fourteen skills ship with it.</b> Each teaches an assistant one shape of the declaration and ends by running the checker and reporting what it said.</li>
+          <li><b><span data-number-word="skills">Fifteen</span> skills ship with it.</b> Each teaches an assistant one shape of the declaration and ends by running the checker and reporting what it said.</li>
         </ul>
         <p class="more"><a href="docs/agents.html">Working with a model &rarr;</a></p>
         <p class="sm dim">The same seat, from a chat: on <a class="inl" href="https://graview.cloud">Graview Cloud</a>, ChatGPT or Claude works in your app with your permissions, and every change it makes is labeled as made for you.</p>
@@ -1500,9 +1691,9 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
     </div>
 
     <p class="sm dim" style="margin-top: 16px;">
-      Sixteen steps in all, each a real declaration that passes its own
+      <span data-number-word="chapters">Sixteen</span> steps in all, each a real declaration that passes its own
       check, opened in a real browser on every push.
-      <a class="inl" href="progression.html">Read all sixteen, with what each declared &rarr;</a>
+      <a class="inl" href="progression.html">Read all <span data-number-word="chapters">sixteen</span>, with what each declared &rarr;</a>
     </p>
   </section>
 
@@ -1562,8 +1753,8 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <p class="eyebrow"><span>Graview and Graview Cloud</span></p>
       <h2 id="h-cloud">One brand. Two ways in.</h2>
       <p class="lede">
-        Graview is the open framework and the visual language this page is
-        about. Graview Cloud is the hosted product built on it, under the same
+        Graview is the framework and the visual language this page is
+        about, source-available under the Elastic License 2.0. Graview Cloud is the hosted product built on it, under the same
         symbol, for people who would rather describe an app than write one.
       </p>
     </div>
@@ -1580,7 +1771,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
         <ul class="plain">
           <li><b>One command to start.</b> <code>npm create graview@latest</code> writes a running product, a test and a CI workflow.</li>
           <li><b>Serve it yourself.</b> A store behind HTTP, with the data in a folder you can open or in SQLite.</li>
-          <li><b>Open.</b> Elastic License 2.0: build on it and ship products with it.</li>
+          <li><b>Source-available.</b> Elastic License 2.0: free to build with and to ship products on.</li>
         </ul>
         <p class="more"><a href="docs/getting-started.html">Getting started &rarr;</a></p>
       </div>
@@ -1632,11 +1823,47 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
           <button type="button" class="copy" data-copy="npm create graview@latest my-app">Copy</button>
         </div>
         <p class="cta-sub sm dim">
-          Open under the Elastic License 2.0: build on it and ship products
-          with it freely. Fourteen packages, one version, on npm.
+          Source-available under the Elastic License 2.0: free to build
+          with and to ship products on. <span data-number-word="packages">Fourteen</span> packages, one version, on npm.
           Rather describe an app than write one? <a class="inl" href="https://graview.cloud">Graview Cloud</a>,
           the hosted product built on it, is in private alpha.
         </p>
+      </div>
+    </div>
+  </section>
+
+  <!--
+    QUESTIONS, ANSWERED PLAINLY. What a person arriving from a search asks
+    first, in the words the rest of the page already earns. The page's
+    structured data (the FAQPage in its head) is read out of this section
+    by scripts/site-docs.mjs, so the two cannot say different things.
+  -->
+  <section id="faq" class="faq" aria-labelledby="h-faq">
+    <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-faq">Questions, answered plainly</h2></div>
+    <div class="faq-list">
+      <div class="qa">
+        <h3>What is Graview?</h3>
+        <p>Graview is an agent-native TypeScript framework and visual language for apps built as isometric scenes, made by En Dash for apps that people and AI agents work in together. A product declares its domain once — the kinds of thing, their fields and relations, the acts that change them, the rules they must keep and who may do what — and Graview derives an isometric scene, a routed web app, the permissions, a checker and a typed tool for every act from that one declaration.</p>
+      </div>
+      <div class="qa">
+        <h3>How is Graview different from other app frameworks?</h3>
+        <p>Most frameworks have you build the interface, the permissions and the API separately and keep them in step by hand. In Graview they are one thing: each is derived from the same declaration, so the button a person presses, the tool an agent calls and the rule that judges both cannot drift apart.</p>
+      </div>
+      <div class="qa">
+        <h3>What license is Graview under?</h3>
+        <p>The Elastic License 2.0. The source is on GitHub, and you may build with it and ship products on it for free. The license does not let you offer Graview itself to others as a hosted or managed service, or remove its license notices.</p>
+      </div>
+      <div class="qa">
+        <h3>How do I start a Graview app?</h3>
+        <p>Run <code>npm create graview@latest my-app</code> with Node 22 or later. It writes a running product for your own domain — the declaration, a shell, a test, a CI workflow and the authoring skills for Claude Code and Codex — and <code>npm run verify</code> checks it.</p>
+      </div>
+      <div class="qa">
+        <h3>How do AI agents use a Graview app?</h3>
+        <p>Through the same acts a person has. Every act in the declaration is a typed tool with a schema and a sentence, and <code>graview mcp</code> serves them over MCP against a real store. An agent is narrowed by the same policy as a person and held to the same rules, and each change it makes lands in the same log with its author, where it can be seen and taken back.</p>
+      </div>
+      <div class="qa">
+        <h3>What is Graview Cloud?</h3>
+        <p>Graview Cloud is the hosted product built on Graview, from En Dash, in private alpha and invite-only at <a class="inl" href="https://graview.cloud">graview.cloud</a>. You say what you are organizing in ChatGPT or Claude, or start from a template, and it becomes an app at its own address for the people you invite. An app and its whole history export as one file that opens in the framework on your own machine.</p>
       </div>
     </div>
   </section>

@@ -19,8 +19,10 @@
  *   node scripts/site-docs.mjs --check    # fail if any of it is stale
  */
 import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync, existsSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { spelled } from "./site-numbers.mjs";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -243,11 +245,14 @@ export function render(markdown) {
     const line = lines[i];
     if (line.startsWith("```")) {
       closeList(list); list = null;
+      /* The fence's language goes on the code, where a reader that cannot
+         see the page — a crawler, a model — learns what it is reading. */
+      const lang = line.slice(3).trim() || "text";
       const fence = [];
       i += 1;
       while (i < lines.length && !lines[i].startsWith("```")) { fence.push(lines[i]); i += 1; }
       i += 1;
-      out.push(`<div class="code" data-scroller><pre><code>${escape(fence.join("\n"))}</code></pre></div>`);
+      out.push(`<div class="code" data-scroller><pre><code class="language-${escape(lang)}">${escape(fence.join("\n"))}</code></pre></div>`);
       continue;
     }
     const heading = /^(#{1,6})\s+(.*)$/.exec(line);
@@ -333,23 +338,95 @@ const HEAD_END = head.indexOf('<a class="skip"');
 /* The Graview logo off the landing page's header: the kit's outlines, inline so it takes the page's ink. */
 const LOGO = /<a class="logo"[\s\S]*?<\/a>/.exec(head)?.[0] ?? "";
 if (!LOGO) throw new Error("docs/site/index.html has no <a class=\"logo\"> in its header to put on the docs pages");
-const CSS_START = "/* site-css:start — written by scripts/site-css.mjs. Edit docs/site/site.css. */";
-const CSS_END = "/* site-css:end */";
-const css = readFileSync(at("docs/site/site.css"), "utf8").trimEnd();
+/* The stylesheet comes with that head: the landing page carries it inline
+   (site-css.mjs keeps it current), so a docs page carries it once. It used
+   to carry a second copy at the foot as well — fifty kilobytes twice. */
+
+/** The address the site is served at, and the one every canonical, card and twin names. */
+const SITE = "https://graview.dev";
+
+/** What Graview is, in the words every page that has to say it uses. */
+const DEFINITION = "a TypeScript framework for agent-native apps built as isometric scenes";
+
+/** How many chapters the long version has, spelled, counted the way site-numbers.mjs counts them. */
+const CHAPTERS = spelled([...readFileSync(at("docs/site/progression.html"), "utf8").matchAll(/id="chapter-\d+"/g)].length);
+
+/** Every docs page as it was written: its title, its description and its body, for the twins and llms.txt. */
+const PAGES = new Map();
+
+/*
+ * THE LANDING PAGE'S OWN STRUCTURED DATA does not come with its head. It
+ * describes the software, the publisher and the questions on that page; a
+ * docs page describes itself.
+ */
+const SEO_START = "<!-- site-seo:start — written by scripts/site-docs.mjs. -->";
+const SEO_END = "<!-- site-seo:end -->";
+const SEO_BLOCK = /<!-- site-seo:start[\s\S]*?<!-- site-seo:end -->\n?/;
+
+/** JSON for a `<script>`: nothing in it can close the element it sits in. */
+const ldScript = (data) => `<script type="application/ld+json">\n${JSON.stringify(data, null, 1).replace(/</g, "\\u003c")}\n</script>`;
+
+/** Where a docs page sits, as the trail back to the home page reads. */
+function trail(path, title) {
+  const crumbs = [["Graview", `${SITE}/`], ["Docs", `${SITE}/docs/index.html`]];
+  if (path.startsWith("packages/")) crumbs.push(["Packages", `${SITE}/docs/packages.html`]);
+  if (path.startsWith("skills/")) crumbs.push(["Skills", `${SITE}/docs/skills.html`]);
+  if (path !== "index.html") crumbs.push([title, `${SITE}/docs/${path}`]);
+  return crumbs;
+}
+
+/** What a docs page says about itself to a search engine: an article, and where it sits. */
+function articleData({ path, title, blurb }) {
+  const url = `${SITE}/docs/${path}`;
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "TechArticle",
+        "@id": `${url}#article`,
+        headline: `${title} — Graview docs`,
+        description: blurb,
+        url,
+        inLanguage: "en",
+        image: `${SITE}/og.png`,
+        isPartOf: { "@id": `${SITE}/#website` },
+        about: { "@id": `${SITE}/#software` },
+        publisher: { "@id": `${SITE}/#endash` },
+        breadcrumb: { "@id": `${url}#breadcrumb` },
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${url}#breadcrumb`,
+        itemListElement: trail(path, title).map(([name, item], i) => ({ "@type": "ListItem", position: i + 1, name, item })),
+      },
+    ],
+  };
+}
 
 /**
  * Every docs page is the same document with different content in it. The
  * head comes off the landing page so the fonts, the icon and the color
  * scheme cannot drift; `..` gets the stylesheet and the mark right from one
- * directory down.
+ * directory down. What is the page's own — its title, its description, its
+ * address, its card, its Markdown twin and its structured data — replaces
+ * the landing page's, so no two pages on the site say the same thing about
+ * themselves.
  */
-function shell({ title, blurb, here, body, up = "..", scripts = [] }) {
+function shell({ path, title, blurb, here, body, scripts = [] }) {
+  const up = path.includes("/") ? "../.." : "..";
+  const url = `${SITE}/docs/${path}`;
+  const twin = path.split("/").pop().replace(/\.html$/, ".md");
   const meta = head
     .slice(HEAD_START, HEAD_END)
+    .replace(SEO_BLOCK, "")
     .replace(/<title>[\s\S]*?<\/title>/, `<title>${escape(title)} — Graview docs</title>`)
     .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${escape(blurb)}">`)
     .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${escape(title)} — Graview docs">`)
     .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${escape(blurb)}">`)
+    .replace(/<meta property="og:type"[^>]*>/, `<meta property="og:type" content="article">`)
+    .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${url}">`)
+    .replace(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${url}">`)
+    .replace("</head>", `<link rel="alternate" type="text/markdown" href="${twin}" title="This page as Markdown">\n${ldScript(articleData({ path, title, blurb }))}\n</head>`)
     // The site's own files (the face, the icons) are `brand/` at the root: `up` from here.
     .replaceAll('"brand/', `"${up}/brand/`);
   /* A package's or a skill's page is one directory down, so the nav's
@@ -366,7 +443,9 @@ function shell({ title, blurb, here, body, up = "..", scripts = [] }) {
     ["skills.html", "Skills"],
     ["checks.html", "What check says"],
     ["demos.html", "Live demos"],
+    ["stability.html", "Stability"],
   ];
+  PAGES.set(path, { title, blurb, body });
   return `${meta}<a class="skip" href="#main">Skip to content</a>
 
 <div class="wrap" lang="en">
@@ -458,11 +537,6 @@ document.querySelectorAll("[data-copy]").forEach(function (button) {
 });
 </script>
 ${scripts.map((src) => `<script src="${src}"></script>`).join("\n")}
-<style>
-${CSS_START}
-${css}
-${CSS_END}
-</style>
 </body>
 </html>
 `;
@@ -486,15 +560,15 @@ async function build() {
 
   /* One page per package. */
   for (const pkg of pkgs) {
-    files.set(`packages/${pkg.dir}.html`, shell({
+    files.set(`packages/${pkg.dir}.html`, shell({ path: `packages/${pkg.dir}.html`,
       title: pkg.name,
       blurb: pkg.description,
       here: "packages.html",
-      up: "../..",
       body:
         `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
         `      <h1 id="h-what">${escape(pkg.name)}</h1>\n` +
-        `      <p class="lede" style="margin-top: 18px;">${escape(pkg.description)}</p>\n` +
+        /* A plain definition first, the sentence an answer engine quotes; the package's own words after it. */
+        `      <p class="lede" style="margin-top: 18px;"><code>${escape(pkg.name)}</code> is one of the ${pkgs.length} npm packages of Graview, ${DEFINITION}. ${inline(pkg.description)}</p>\n` +
         `      <div class="cta"><div class="cta-line"><code>pnpm add ${escape(pkg.name)}</code>` +
         `<button type="button" class="copy" data-copy="pnpm add ${escape(pkg.name)}">Copy</button></div></div>\n` +
         (pkg.exports.length > 1
@@ -512,15 +586,14 @@ async function build() {
 
   /* One page per skill. */
   for (const skill of sks) {
-    files.set(`skills/${skill.dir}.html`, shell({
+    files.set(`skills/${skill.dir}.html`, shell({ path: `skills/${skill.dir}.html`,
       title: skill.name,
       blurb: skill.description,
       here: "skills.html",
-      up: "../..",
       body:
         `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
         `      <h1 id="h-what">${escape(skill.name)}</h1>\n` +
-        `      <p class="lede" style="margin-top: 18px;">${escape(skill.description)}</p>\n` +
+        `      <p class="lede" style="margin-top: 18px;"><code>${escape(skill.name)}</code> is one of Graview's ${sks.length} authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: ${inline(skill.description)}</p>\n` +
         `      <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>\n` +
         `    </section>\n` +
         section("skill", "The skill", render(skill.body)),
@@ -528,13 +601,13 @@ async function build() {
   }
 
   /* And the indexes. */
-  files.set("packages.html", shell({
+  files.set("packages.html", shell({ path: "packages.html",
     title: "Packages", here: "packages.html",
     blurb: `The ${pkgs.length} packages Graview ships, what each is for, and what each exports.`,
     body:
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">The packages</h1>\n` +
-      `      <p class="lede" style="margin-top: 18px;"><code>graview</code> is the tool a person installs; <code>@graview/*</code> is the framework a product imports. ${pkgs.length} packages, one version, each depending only on the ones beneath it.</p>\n` +
+      `      <p class="lede" style="margin-top: 18px;">Graview, ${DEFINITION}, ships as ${pkgs.length} npm packages at one version. <code>graview</code> is the tool a person installs; <code>@graview/*</code> is the framework a product imports, each package depending only on the ones beneath it.</p>\n` +
       `    </section>\n` +
       section("all", "All of them",
         `      <ul class="cards">\n` +
@@ -543,13 +616,13 @@ async function build() {
         ).join("\n") + `\n      </ul>`),
   }));
 
-  files.set("skills.html", shell({
+  files.set("skills.html", shell({ path: "skills.html",
     title: "Skills", here: "skills.html",
     blurb: `The ${sks.length} skills that teach an assistant the authoring moves, each ending in a real check.`,
     body:
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">The skills</h1>\n` +
-      `      <p class="lede" style="margin-top: 18px;">Each teaches a model one shape of the declaration, and each ends in <code>graview check</code> — reporting what it actually said, rather than claiming the work is done.</p>\n` +
+      `      <p class="lede" style="margin-top: 18px;">Graview's ${sks.length} skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in <code>graview check</code> — reporting what it actually said, rather than claiming the work is done.</p>\n` +
       `      <div class="cta"><div class="cta-line"><code>graview skills install .</code><button type="button" class="copy" data-copy="graview skills install .">Copy</button></div></div>\n` +
       `    </section>\n` +
       section("all", "All of them",
@@ -559,29 +632,29 @@ async function build() {
         ).join("\n") + `\n      </ul>`),
   }));
 
-  files.set("cli.html", shell({
+  files.set("cli.html", shell({ path: "cli.html",
     title: "The CLI", here: "cli.html",
     blurb: "graview create, check, docs, describe, lens, figure, serve and skills — what each reads and what each says.",
     body:
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">The CLI</h1>\n` +
-      `      <p class="lede" style="margin-top: 18px;">One command line, <code>graview</code>, and every subcommand lives in the package whose concern it is: the generator and the checker in <code>@graview/core</code>, <code>serve</code> in <code>@graview/ship</code>, <code>skills</code> in <code>@graview/skills</code>. None of them needs a browser.</p>\n` +
+      `      <p class="lede" style="margin-top: 18px;"><code>graview</code> is Graview's command line: it starts a product, checks its declaration, writes its agent docs and serves its store. Every subcommand lives in the package whose concern it is: the generator and the checker in <code>@graview/core</code>, <code>serve</code> in <code>@graview/ship</code>, <code>skills</code> in <code>@graview/skills</code>. None of them needs a browser.</p>\n` +
       `      <div class="cta"><div class="cta-line"><code>npm install -g graview</code><button type="button" class="copy" data-copy="npm install -g graview">Copy</button></div>\n` +
       `      <p class="cta-sub sm dim">Or not at all: a project made by <code>graview create</code> has it as a devDependency, so <code>npx graview check</code> works from inside one, and <code>npx graview create</code> works from nowhere.</p></div>\n` +
       `    </section>\n` +
       cmds.map((c) => section(`cli-${c.name}`, `graview ${c.name}`,
-        (c.usage ? `      <div class="code" data-scroller aria-label="graview ${c.name}, usage"><pre><code>${escape(c.usage)}</code></pre></div>\n` : "") +
+        (c.usage ? `      <div class="code" data-scroller aria-label="graview ${c.name}, usage"><pre><code class="language-text">${escape(c.usage)}</code></pre></div>\n` : "") +
         (c.blurb ? `      <p>${inline(c.blurb)}</p>` : ""),
       )).join(""),
   }));
 
-  files.set("checks.html", shell({
+  files.set("checks.html", shell({ path: "checks.html",
     title: "What check says", here: "checks.html",
     blurb: `Every one of the ${codes.length} things graview check can tell you, and how loudly.`,
     body:
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">What <code>graview check</code> says</h1>\n` +
-      `      <p class="lede" style="margin-top: 18px;">${codes.length} findings, read out of the checker's own source. An <strong>error</strong> should fail your build. A <strong>warning</strong> is a judgment call. A <strong>note</strong> is a question worth answering once.</p>\n` +
+      `      <p class="lede" style="margin-top: 18px;"><code>graview check</code> reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say ${codes.length} things, read here out of the checker's own source. An <strong>error</strong> should fail your build. A <strong>warning</strong> is a judgment call. A <strong>note</strong> is a question worth answering once.</p>\n` +
       `    </section>\n` +
       ["error", "warning", "note"].map((severity) => {
         const mine = codes.filter((c) => c.severity === severity);
@@ -614,13 +687,13 @@ async function build() {
     ["The seat for a model", "graview-agent-seat",
       "An intelligence provider declares what a model may do and how words and pictures reach it. Its turns land in the same log with an author and an intent, and come back out through the same undo."],
   ];
-  files.set("concepts.html", shell({
+  files.set("concepts.html", shell({ path: "concepts.html",
     title: "Concepts", here: "concepts.html",
-    blurb: "The declaration, and the seven things in it.",
+    blurb: "The ideas behind a Graview app: one declaration, and the seven things in it — kinds and edges, acts, rules that repair, lenses, who may do what, and the seat for a model.",
     body:
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">Concepts</h1>\n` +
-      `      <p class="lede" style="margin-top: 18px;">Seven things, one object. Every surface in a Graview application is derived from some part of what is on this page.</p>\n` +
+      `      <p class="lede" style="margin-top: 18px;">A Graview app is one declaration: a TypeScript object, made by <code>defineApp</code>, with seven things in it. Every surface in a Graview application is derived from some part of what is on this page.</p>\n` +
       `    </section>\n` +
       concepts.map(([title, skill, blurb]) => section(slug(title), title,
         `      <p>${blurb}</p>\n` +
@@ -630,19 +703,19 @@ async function build() {
 
   /* Starting a product: what the command asks, what it writes, what to do next. */
   const create = cmds.find((c) => c.name === "create");
-  files.set("getting-started.html", shell({
+  files.set("getting-started.html", shell({ path: "getting-started.html",
     title: "Getting started", here: "getting-started.html",
     blurb: "From nothing to a running product on Graview, and the loop from there: declare, check, look, declare more.",
     body:
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">Getting started</h1>\n` +
-      `      <p class="lede" style="margin-top: 18px;">One command writes a running product for your own domain. Everything on this page below the command is read out of the generator that writes it, so it is what you will actually get.</p>\n` +
+      `      <p class="lede" style="margin-top: 18px;">Starting a product on Graview takes one command, <code>npm create graview</code>, which writes a running app for your own domain. Everything on this page below the command is read out of the generator that writes it, so it is what you will actually get.</p>\n` +
       `      <div class="cta"><div class="cta-line"><code>npm create graview@latest my-app</code><button type="button" class="copy" data-copy="npm create graview@latest my-app">Copy</button></div>\n` +
       `      <p class="cta-sub sm dim">Or <code>pnpm create graview my-app</code>, or <code>npx graview create my-app</code>. Node 22 or later.</p></div>\n` +
       `    </section>\n` +
       section("asks", "What it asks",
         `      <p>The directory is the only thing it needs; the rest has a default it says out loud. Give it the product's name and the first kind of thing your domain has — <code>--kind shift</code>, <code>--kind work-order</code> — and it writes chapter one for that domain rather than for a placeholder.</p>\n` +
-        (create ? `      <div class="code" data-scroller aria-label="graview create, usage"><pre><code>${escape(create.usage)}</code></pre></div>` : "")) +
+        (create ? `      <div class="code" data-scroller aria-label="graview create, usage"><pre><code class="language-text">${escape(create.usage)}</code></pre></div>` : "")) +
       section("writes", `What it writes (${made.files.length} files)`,
         `      <p>The declaration split into domain and UI, so the domain has no React in it and <code>graview check</code> can read it headless. <code>src/domain/</code> is the whole surface you will work in; the shell in <code>src/ui/</code> is eighty lines made of framework parts, and every one of them can be replaced.</p>\n` +
         `      <ul class="names" aria-label="The files graview create writes">${made.files.map((f) => `<li><code>${escape(f)}</code></li>`).join("")}</ul>\n` +
@@ -681,13 +754,13 @@ async function build() {
     const skill = sks.find((s) => s.dir === name);
     return skill ? `        <li><a href="skills/${skill.dir}.html"><strong>${escape(skill.name)}</strong><span>${escape(skill.description)}</span></a></li>\n` : "";
   };
-  files.set("agents.html", shell({
+  files.set("agents.html", shell({ path: "agents.html",
     title: "Working with a model", here: "agents.html",
     blurb: "The declaration is the interface a person uses and the interface a model uses. What a model gets, how it is narrowed, and what it reads before it writes.",
     body:
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">Working with a model</h1>\n` +
-      `      <p class="lede" style="margin-top: 18px;">A declaration is a context graph, and a context graph is the one thing a model reads as well as a person does. Graview has two programming interfaces over one declaration: the surfaces a person uses, and the tools, descriptions and skills a model uses. Neither can drift from the other, because both are derived.</p>\n` +
+      `      <p class="lede" style="margin-top: 18px;">An AI agent uses a Graview app through the same declaration a person does: the same acts, as typed tools, under the same permissions and rules. A declaration is a context graph, and a context graph is the one thing a model reads as well as a person does. Graview has two programming interfaces over one declaration: the surfaces a person uses, and the tools, descriptions and skills a model uses. Neither can drift from the other, because both are derived.</p>\n` +
       `    </section>\n` +
       section("seat", "The seat",
         `      <p>An intelligence provider in the declaration says what a model may do and how words and pictures reach it. The seat gets the same acts a person has, narrowed by the same policy, and its turns land in the same operation log with an author and an intent — watchable from altitude, and undoable out of order. What comes back from a model is a plan before it is a change: one row per thing, what it was sure about, what goes with what if you decline something, then one batch with one undo.</p>\n` +
@@ -697,8 +770,8 @@ async function build() {
         `      <p class="sm dim">The package: <a class="inl" href="packages/tools.html"><code>@graview/tools</code></a>.</p>`) +
       section("read", "What a model can read",
         `      <p><code>graview describe</code> reads the declaration out for something that cannot see: what a blank installation meets and in what order, what is drawn and what falls back, what a seat may do, how a model is reached, what is judged. <code>graview docs</code> writes an <code>llms.txt</code> and an <code>agents.md</code> beside the entry, derived, so they cannot drift.</p>\n` +
-        (describe ? `      <div class="code" data-scroller aria-label="graview describe, usage"><pre><code>${escape(describe.usage)}</code></pre></div>\n` : "") +
-        (docsCmd ? `      <div class="code" data-scroller aria-label="graview docs, usage" style="margin-top: 10px;"><pre><code>${escape(docsCmd.usage)}</code></pre></div>` : "")) +
+        (describe ? `      <div class="code" data-scroller aria-label="graview describe, usage"><pre><code class="language-text">${escape(describe.usage)}</code></pre></div>\n` : "") +
+        (docsCmd ? `      <div class="code" data-scroller aria-label="graview docs, usage" style="margin-top: 10px;"><pre><code class="language-text">${escape(docsCmd.usage)}</code></pre></div>` : "")) +
       section("skills", `What a model reads before it writes (${sks.length} skills)`,
         `      <p>${escape(skillsPkg?.description ?? "")} Installed into a product by <code>graview skills install .</code> — which <code>graview create</code> runs for you — into <code>.claude/skills</code> and <code>.agents/skills</code>, so Claude Code and Codex find the same instructions.</p>\n` +
         `      <ul class="cards">\n` + sks.map((sk) => skillCard(sk.dir)).join("") + `      </ul>`) +
@@ -711,14 +784,14 @@ async function build() {
   /* The demos: the garden's surfaces, live, and the example apps. */
   const frame = (n, label, aria, extra = "") =>
     `      <div class="chapter-live" data-graview-chapter="${n}" data-label="${escape(label)}" role="region" aria-label="${escape(aria)}"${extra}><p class="chapter-loading">${escape(label)}, loading…</p></div>`;
-  files.set("demos.html", shell({
+  files.set("demos.html", shell({ path: "demos.html",
     title: "Live demos", here: "demos.html",
     blurb: "The example garden's surfaces, running on this page, and the example apps in the repository.",
     scripts: ["../chapters.js"],
     body:
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">Live demos</h1>\n` +
-      `      <p class="lede" style="margin-top: 18px;">Nothing here is a screenshot. Each frame is the example garden, mounted on this page by <code>@graview/embed</code> from the same declaration, at a different place in it. <a class="inl" href="../progression.html">The garden, grown</a> has all sixteen chapters, each with what the declaration gained.</p>\n` +
+      `      <p class="lede" style="margin-top: 18px;">These are live demos of Graview: the example garden, running in this page. Nothing here is a screenshot. Each frame is the example garden, mounted on this page by <code>@graview/embed</code> from the same declaration, at a different place in it. <a class="inl" href="../progression.html">The garden, grown</a> has all ${CHAPTERS} chapters, each with what the declaration gained.</p>\n` +
       `    </section>\n` +
       section("city", "The city, at altitude",
         `      <p>Every kind is a district; every record a building on its own plot; every edge a road with its words on it. Drag the ground, press a district, come down to a plot.</p>\n` + frame(16, "The garden, grown", "The example garden at altitude, live", ' data-stop="#overview=1" data-settle="1"')) +
@@ -746,15 +819,32 @@ async function build() {
     </script>`,
   }));
 
-  files.set("index.html", shell({
-    title: "Docs", here: "index.html",
+  /*
+   * What a version may change: `docs/stability.md`, the promise a host holds
+   * a release to, as a page. Its own first heading is the page's h1.
+   */
+  const stability = readFileSync(at("docs/stability.md"), "utf8");
+  const stabilityTitle = /^#\s+(.*)\n/.exec(stability)?.[1] ?? "What a version may change";
+  files.set("stability.html", shell({ path: "stability.html",
+    title: "Stability", here: "stability.html",
+    blurb: "What a Graview version may change on the five surfaces a host holds it to — ops, stored formats, the wire, the declaration and the tool names — and how a host reads what a build ships.",
+    body:
+      `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
+      `      <h1 id="h-what">${inline(stabilityTitle)}</h1>\n` +
+      `      <p class="lede" style="margin-top: 18px;">Graview's stability promise says what a release may change and what it may not. Every <code>@graview/*</code> package shares one version; this page is <code>docs/stability.md</code> in the repository.</p>\n` +
+      `    </section>\n` +
+      section("promise", "The promise", render(stability.replace(/^#\s+.*\n+/, ""))),
+  }));
+
+  files.set("index.html", shell({ path: "index.html",
+    title: "Documentation", here: "index.html",
     blurb: "Graview's documentation: the concepts, the packages, the skills, the CLI and everything the checker can say.",
     body:
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">Documentation</h1>\n` +
-      `      <p class="lede" style="margin-top: 18px;">Everything here except the concepts is written out of the repository, so none of it can disagree with the code it describes.</p>\n` +
+      `      <p class="lede" style="margin-top: 18px;">This is the documentation for Graview, ${DEFINITION}. Everything here except the concepts is written out of the repository, so none of it can disagree with the code it describes.</p>\n` +
       `      <div class="cta"><div class="cta-line"><code>npm create graview@latest my-app</code><button type="button" class="copy" data-copy="npm create graview@latest my-app">Copy</button></div>\n` +
-      `      <p class="cta-sub sm dim">New here? <a class="inl" href="getting-started.html">Getting started</a> is the first hour; <a class="inl" href="../progression.html">the garden, grown</a> is the whole framework in sixteen live steps.</p></div>\n` +
+      `      <p class="cta-sub sm dim">New here? <a class="inl" href="getting-started.html">Getting started</a> is the first hour; <a class="inl" href="../progression.html">the garden, grown</a> is the whole framework in ${CHAPTERS} live steps.</p></div>\n` +
       `    </section>\n` +
       section("map", "Where things are",
         `      <ul class="cards">\n` +
@@ -766,31 +856,308 @@ async function build() {
         `        <li><a href="skills.html"><strong>Skills (${sks.length})</strong><span>What your assistant reads before it writes.</span></a></li>\n` +
         `        <li><a href="cli.html"><strong>The CLI</strong><span>create, check, docs, describe, lens, figure, serve, skills.</span></a></li>\n` +
         `        <li><a href="checks.html"><strong>What check says (${codes.length})</strong><span>Every finding, and how loudly.</span></a></li>\n` +
-        `        <li><a href="../progression.html"><strong>The garden, grown</strong><span>Sixteen live chapters, from one kind to a product.</span></a></li>\n` +
+        `        <li><a href="stability.html"><strong>Stability</strong><span>What a version may change, and what a host can hold it to.</span></a></li>\n` +
+        `        <li><a href="../progression.html"><strong>The garden, grown</strong><span>${CHAPTERS[0].toUpperCase() + CHAPTERS.slice(1)} live chapters, from one kind to a product.</span></a></li>\n` +
         `      </ul>`),
   }));
 
-  /* Each page carries its own address, not the landing page's. */
-  for (const [name, html] of files) {
-    const url = `https://graview.dev/docs/${name}`;
-    files.set(name, html
-      .replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${url}">`)
-      .replace(/<meta property="og:url" content="[^"]*">/, `<meta property="og:url" content="${url}">`));
-  }
   return files;
 }
 
-/** Every page on the site, for the crawlers, in one place. */
-function sitemap(files) {
-  const urls = ["https://graview.dev/", "https://graview.dev/progression.html", ...[...files.keys()].sort().map((name) => `https://graview.dev/docs/${name}`)];
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${u}</loc></url>`).join("\n")}\n</urlset>\n`;
+/* ── the same pages, for a reader that is not a browser ───────────────── */
+
+const ENTITIES = {
+  amp: "&", lt: "<", gt: ">", quot: '"', nbsp: " ", rarr: "→", larr: "←", darr: "↓", rsquo: "’", lsquo: "‘",
+  ldquo: "“", rdquo: "”", middot: "·", mdash: "—", ndash: "–", hellip: "…",
+};
+const decode = (text) =>
+  text.replace(/&(#\d+|[a-z]+);/g, (whole, name) => (name.startsWith("#") ? String.fromCodePoint(Number(name.slice(1))) : ENTITIES[name] ?? whole));
+const plain = (html) => decode(html.replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim();
+const absolute = (href, base) => new URL(decode(href), base).href;
+
+/** A run of prose as Markdown: links made absolute, code, emphasis. */
+function inlineMd(html, base) {
+  return decode(
+    html
+      .replace(/<a\b[^>]*\bhref="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g, (_, href, text) => `[${text}](${absolute(href, base)})`)
+      .replace(/<code[^>]*>([\s\S]*?)<\/code>/g, "`$1`")
+      .replace(/<(strong|b)>([\s\S]*?)<\/\1>/g, "**$2**")
+      .replace(/<(em|i)>([\s\S]*?)<\/\1>/g, "*$2*")
+      .replace(/<[^>]+>/g, ""),
+  ).replace(/\s+/g, " ").trim();
+}
+
+/**
+ * A DOCS PAGE AS MARKDOWN, out of the very HTML the page is.
+ *
+ * A model reading the site wants the words, not the rail, the copy buttons
+ * and a stylesheet the size of the page. Writing a second copy of each page
+ * for it would be the one thing this file exists not to do, so the twin is
+ * the page's own body read back: the subset of HTML these pages are made of
+ * (headings, prose, lists, cards, tables, code, the terminal) and nothing
+ * else. A live frame becomes a sentence saying it is there.
+ */
+export function toMarkdown(html, base) {
+  const held = [];
+  const hold = (md) => `\u0000${held.push(md) - 1}\u0000`;
+  const items = (list) => [...list.matchAll(/<li>([\s\S]*?)<\/li>/g)].map(([, item]) => item);
+  const s = html
+    .replace(/<script[\s\S]*?<\/script>/g, "")
+    .replace(/<button[\s\S]*?<\/button>/g, "")
+    .replace(/<div class="chapter-live"[^>]*aria-label="([^"]*)"[^>]*>[\s\S]*?<\/div>/g, (_, label) => hold(`*${decode(label)}: a live demo, on the HTML page.*`))
+    .replace(/<div class="code"[^>]*><pre><code(?: class="language-([\w+-]+)")?>([\s\S]*?)<\/code><\/pre><\/div>/g, (_, lang, code) => hold(`\`\`\`${lang ?? "text"}\n${decode(code)}\n\`\`\``))
+    .replace(/<div class="term"[^>]*>((?:<div class="l">[\s\S]*?<\/div>)+)<\/div>/g, (_, lines) =>
+      hold(`\`\`\`sh\n${[...lines.matchAll(/<div class="l">([\s\S]*?)<\/div>/g)].map(([, line]) => {
+        const command = decode(/<span class="c2">([\s\S]*?)<\/span>/.exec(line)?.[1] ?? "");
+        const note = /<span class="n2">([\s\S]*?)<\/span>/.exec(line)?.[1];
+        return note ? `${command}  # ${decode(note)}` : command;
+      }).join("\n")}\n\`\`\``))
+    .replace(/<div class="cta-line">\s*<code>([\s\S]*?)<\/code>\s*<\/div>/g, (_, command) => hold(`\`\`\`sh\n${decode(command)}\n\`\`\``))
+    .replace(/<table>([\s\S]*?)<\/table>/g, (_, table) => {
+      const rows = [...table.matchAll(/<tr>([\s\S]*?)<\/tr>/g)].map(([, row]) =>
+        [...row.matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/g)].map(([, cell]) => inlineMd(cell, base).replace(/\|/g, "\\|")));
+      if (rows.length === 0) return "";
+      return hold([rows[0], rows[0].map(() => "---"), ...rows.slice(1)].map((row) => `| ${row.join(" | ")} |`).join("\n"));
+    })
+    .replace(/<ul class="cards">([\s\S]*?)<\/ul>/g, (_, list) =>
+      hold([...list.matchAll(/<li><a href="([^"]*)"><strong>([\s\S]*?)<\/strong><span>([\s\S]*?)<\/span><\/a><\/li>/g)]
+        .map(([, href, name, what]) => `- [${plain(name)}](${absolute(href, base)}): ${inlineMd(what, base)}`).join("\n")))
+    .replace(/<ul class="names"[^>]*>([\s\S]*?)<\/ul>/g, (_, list) => hold(items(list).map((item) => inlineMd(item, base)).join(", ")))
+    .replace(/<(ul|ol)(?: [^>]*)?>([\s\S]*?)<\/\1>/g, (_, kind, list) =>
+      hold(items(list).map((item, n) => `${kind === "ol" ? `${n + 1}.` : "-"} ${inlineMd(item, base)}`).join("\n")))
+    .replace(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/g, (_, level, text) => hold(`${"#".repeat(Number(level))} ${inlineMd(text, base)}`))
+    .replace(/<blockquote>([\s\S]*?)<\/blockquote>/g, (_, quote) => hold(`> ${inlineMd(quote, base)}`))
+    .replace(/<p\b[^>]*>([\s\S]*?)<\/p>/g, (_, para) => hold(inlineMd(para, base)))
+    .replace(/<hr>/g, () => hold("---"));
+  return `${[...s.matchAll(/\u0000(\d+)\u0000/g)].map(([, i]) => held[Number(i)]).filter(Boolean).join("\n\n")}\n`;
+}
+
+/* ── what the landing page says about itself ──────────────────────────── */
+
+const LANDING = at("docs/site/index.html");
+const PROGRESSION = at("docs/site/progression.html");
+const metaOf = (html, name) => decode(new RegExp(`<meta (?:name|property)="${name}" content="([^"]*)">`).exec(html)?.[1] ?? "");
+const titleOf = (html) => decode(/<title>([\s\S]*?)<\/title>/.exec(html)?.[1] ?? "");
+
+/** The landing page's questions and answers, read off the section a person reads. */
+function faqs(html) {
+  const section = /<section id="faq"[\s\S]*?<\/section>/.exec(html)?.[0] ?? "";
+  return [...section.matchAll(/<div class="qa">\s*<h3>([\s\S]*?)<\/h3>\s*<p>([\s\S]*?)<\/p>\s*<\/div>/g)].map(([, q, a]) => ({ question: plain(q), answer: a }));
+}
+
+const VERSION = JSON.parse(readFileSync(at("packages/graview/package.json"), "utf8")).version;
+const REPOSITORY = "https://github.com/en-dash-consulting/graview";
+const LICENSE = "https://www.elastic.co/licensing/elastic-license";
+
+/**
+ * THE LANDING PAGE'S STRUCTURED DATA: the site, its publisher, the software
+ * (as an application a person installs and as the source it is built
+ * from), and the questions the page answers. Everything in it is read off
+ * the page or the tree — the description is the page's own, the version is
+ * the CLI's, the answers are the FAQ section's — so the markup a search
+ * engine reads cannot claim what the page does not.
+ */
+function landingData(html) {
+  const description = metaOf(html, "description");
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      { "@type": "WebSite", "@id": `${SITE}/#website`, url: `${SITE}/`, name: "Graview", description, inLanguage: "en", publisher: { "@id": `${SITE}/#endash` } },
+      {
+        "@type": "Organization", "@id": `${SITE}/#endash`, name: "En Dash", url: "https://endash.us",
+        logo: { "@type": "ImageObject", url: `${SITE}/endash-mark.svg` },
+        sameAs: ["https://github.com/en-dash-consulting"],
+      },
+      {
+        "@type": "SoftwareApplication", "@id": `${SITE}/#software`, name: "Graview", description, url: `${SITE}/`,
+        applicationCategory: "DeveloperApplication", operatingSystem: "Any platform with Node.js 22 or later",
+        softwareVersion: VERSION, license: LICENSE, isAccessibleForFree: true,
+        offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        downloadUrl: "https://www.npmjs.com/package/graview", installUrl: `${SITE}/docs/getting-started.html`,
+        softwareHelp: { "@type": "CreativeWork", url: `${SITE}/docs/index.html` },
+        image: `${SITE}/og.png`, publisher: { "@id": `${SITE}/#endash` }, sameAs: [REPOSITORY],
+      },
+      {
+        "@type": "SoftwareSourceCode", "@id": `${SITE}/#source`, name: "Graview", description,
+        codeRepository: REPOSITORY, programmingLanguage: { "@type": "ComputerLanguage", name: "TypeScript" },
+        runtimePlatform: "Node.js 22", license: LICENSE, version: VERSION,
+        targetProduct: { "@id": `${SITE}/#software` }, author: { "@id": `${SITE}/#endash` },
+      },
+      {
+        "@type": "FAQPage", "@id": `${SITE}/#faq`, url: `${SITE}/`, isPartOf: { "@id": `${SITE}/#website` },
+        mainEntity: faqs(html).map(({ question, answer }) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: plain(answer) } })),
+      },
+    ],
+  };
+}
+
+/** The long version is an article too, one step from the home page. */
+function progressionData(html) {
+  const url = `${SITE}/progression.html`;
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "TechArticle", "@id": `${url}#article`, headline: titleOf(html), description: metaOf(html, "description"), url,
+        inLanguage: "en", image: `${SITE}/og.png`, isPartOf: { "@id": `${SITE}/#website` }, about: { "@id": `${SITE}/#software` },
+        publisher: { "@id": `${SITE}/#endash` }, breadcrumb: { "@id": `${url}#breadcrumb` },
+      },
+      {
+        "@type": "BreadcrumbList", "@id": `${url}#breadcrumb`,
+        itemListElement: [["Graview", `${SITE}/`], ["The garden, grown", url]].map(([name, item], i) => ({ "@type": "ListItem", position: i + 1, name, item })),
+      },
+    ],
+  };
+}
+
+/** A page with its structured data written between its markers, which go just before `</head>` the first time. */
+function withSeo(html, data) {
+  const block = `${SEO_START}\n${ldScript(data)}\n${SEO_END}\n`;
+  return SEO_BLOCK.test(html) ? html.replace(SEO_BLOCK, block) : html.replace("</head>", `${block}</head>`);
+}
+
+/* ── for the crawlers and the models ──────────────────────────────────── */
+
+const twinOf = (path) => `${SITE}/docs/${path.replace(/\.html$/, ".md")}`;
+const START_HERE = ["getting-started.html", "concepts.html", "agents.html", "cli.html", "checks.html", "stability.html", "index.html"];
+
+/** The pages llms.txt lists, in the order it lists them, under the heading it lists them by. */
+function sections() {
+  const paths = [...PAGES.keys()];
+  return [
+    ["Start here", START_HERE.filter((p) => PAGES.has(p))],
+    ["Packages", ["packages.html", ...paths.filter((p) => p.startsWith("packages/")).sort()]],
+    ["Skills", ["skills.html", ...paths.filter((p) => p.startsWith("skills/")).sort()]],
+    ["Examples", ["demos.html"]],
+  ];
+}
+
+function summary(landing) {
+  const answer = faqs(landing).find((f) => f.question === "What is Graview?");
+  if (!answer) throw new Error("docs/site/index.html has no “What is Graview?” in its FAQ section to summarize the site with");
+  return `${inlineMd(answer.answer, `${SITE}/`)} Graview Cloud (https://graview.cloud) is the hosted product built on it.`;
+}
+
+function preamble(landing, pkgCount) {
+  return [
+    "# Graview",
+    "",
+    `> ${summary(landing)}`,
+    "",
+    "- Start a product: `npm create graview@latest my-app` (Node 22 or later)",
+    "- License: Elastic License 2.0 — source-available, free to build with and to ship products on",
+    `- Source: ${REPOSITORY}`,
+    `- npm: https://www.npmjs.com/package/graview — ${pkgCount} packages, one version (${VERSION})`,
+    "- Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)",
+  ];
+}
+
+/**
+ * llms.txt (llmstxt.org): what Graview is, and every docs page with the one
+ * line it says about itself, linked to its Markdown twin. Written from the
+ * same pages the site is, so it lists exactly the pages there are.
+ */
+function llmsTxt(landing, progression, examples, pkgCount) {
+  const line = (path) => `- [${PAGES.get(path).title}](${twinOf(path)}): ${PAGES.get(path).blurb}`;
+  const out = [
+    ...preamble(landing, pkgCount),
+    "",
+    `Every page below is also a web page (drop the \`.md\` for the \`.html\`); [llms-full.txt](${SITE}/llms-full.txt) is all of them in one file.`,
+  ];
+  for (const [heading, paths] of sections()) {
+    out.push("", `## ${heading}`, "", ...paths.map(line));
+    if (heading === "Examples") {
+      out.push(`- [The garden, grown](${SITE}/progression.html): ${metaOf(progression, "description")}`);
+      out.push(...examples.map((app) => `- [apps/${app.dir}](${REPOSITORY}/tree/main/apps/${app.dir}): ${app.description}`));
+    }
+  }
+  const cloud = faqs(landing).find((f) => f.question === "What is Graview Cloud?");
+  out.push("", "## Graview Cloud", "", `- [Graview Cloud](https://graview.cloud): ${cloud ? inlineMd(cloud.answer, `${SITE}/`) : "The hosted product built on Graview."}`);
+  out.push("", "## Optional", "", `- [Questions, answered plainly](${SITE}/#faq): ${faqs(landing).map((f) => f.question).join(" ")}`, `- [llms-full.txt](${SITE}/llms-full.txt): every docs page above, in full, as Markdown`);
+  return `${out.join("\n")}\n`;
+}
+
+/** llms-full.txt: the same preamble, the questions, then every page's twin in llms.txt's order. */
+function llmsFullTxt(landing, pkgCount) {
+  const out = [...preamble(landing, pkgCount), "", "## Questions, answered plainly", ""];
+  for (const { question, answer } of faqs(landing)) out.push(`### ${question}`, "", inlineMd(answer, `${SITE}/`), "");
+  for (const [, paths] of sections()) {
+    for (const path of paths) out.push("---", "", `Source: ${SITE}/docs/${path}`, "", TWINS.get(path).trimEnd(), "");
+  }
+  return `${out.join("\n").trimEnd()}\n`;
+}
+const TWINS = new Map();
+
+/*
+ * ROBOTS: every crawler may read every page. The AI crawlers are named
+ * anyway, in a group of their own, so that a default somewhere else — a
+ * host's, a CDN's — that shuts them out does not get the last word on a site
+ * that wants to be found by them.
+ */
+const AI_CRAWLERS = ["GPTBot", "OAI-SearchBot", "ChatGPT-User", "ClaudeBot", "Claude-User", "Claude-SearchBot", "PerplexityBot", "Google-Extended", "Applebot-Extended", "CCBot"];
+function robotsTxt() {
+  return [
+    "# graview.dev — written by scripts/site-docs.mjs. Every page is for reading.",
+    "User-agent: *",
+    "Allow: /",
+    "",
+    "# Answer engines and AI crawlers, named so that no default elsewhere shuts them out.",
+    ...AI_CRAWLERS.map((bot) => `User-agent: ${bot}`),
+    "Allow: /",
+    "",
+    `Sitemap: ${SITE}/sitemap.xml`,
+    `# For language models: ${SITE}/llms.txt (an index) and ${SITE}/llms-full.txt (every docs page in full).`,
+    "",
+  ].join("\n");
+}
+
+/**
+ * THE SITEMAP, with the day each page last changed. Not the build's date —
+ * every page would claim to change every build — and not git's, which
+ * cannot be known until the very commit that would carry it. Each entry
+ * keeps a short hash of the page's <main>: a page whose words are the same
+ * keeps its date, and a page whose words moved takes today's.
+ */
+const TODAY = new Date().toISOString().slice(0, 10);
+const mainOf = (html) => /<main[\s\S]*<\/main>/.exec(html)?.[0] ?? html;
+const hashOf = (html) => createHash("sha256").update(mainOf(html)).digest("hex").slice(0, 12);
+function sitemap(pages, previous) {
+  const before = new Map([...previous.matchAll(/<url><loc>([^<]+)<\/loc><lastmod>([^<]+)<\/lastmod><!-- ([0-9a-f]+) --><\/url>/g)].map(([, loc, day, hash]) => [loc, { day, hash }]));
+  const urls = pages.map(([loc, html]) => {
+    const hash = hashOf(html);
+    const day = before.get(loc)?.hash === hash ? before.get(loc).day : TODAY;
+    return `  <url><loc>${loc}</loc><lastmod>${day}</lastmod><!-- ${hash} --></url>`;
+  });
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
 }
 
 /* ── writing it out ───────────────────────────────────────────────────── */
 
 const checking = process.argv.includes("--check");
 const files = await build();
-files.set("../sitemap.xml", sitemap(files));
+const read = (path) => (existsSync(path) ? readFileSync(path, "utf8") : "");
+
+/* The twins, one beside each page. */
+for (const [path, page] of PAGES) {
+  const url = `${SITE}/docs/${path}`;
+  const twin = `${toMarkdown(page.body, url).trimEnd()}\n\n---\n\n${page.blurb}\n\nThe page: ${url} · Every Graview docs page, for a model: ${SITE}/llms.txt\n`;
+  TWINS.set(path, twin);
+  files.set(path.replace(/\.html$/, ".md"), twin);
+}
+
+const landing = withSeo(read(LANDING), landingData(read(LANDING)));
+const progression = withSeo(read(PROGRESSION), progressionData(read(PROGRESSION)));
+const pkgCount = dirsIn("packages").length;
+files.set("../index.html", landing);
+files.set("../progression.html", progression);
+files.set("../llms.txt", llmsTxt(landing, progression, apps(), pkgCount));
+files.set("../llms-full.txt", llmsFullTxt(landing, pkgCount));
+files.set("../robots.txt", robotsTxt());
+files.set("../sitemap.xml", sitemap([
+  [`${SITE}/`, landing],
+  [`${SITE}/progression.html`, progression],
+  ...[...PAGES.keys()].sort().map((path) => [`${SITE}/docs/${path}`, files.get(path)]),
+], read(at("docs/site/sitemap.xml"))));
 let stale = 0;
 
 for (const [name, html] of files) {
@@ -808,7 +1175,7 @@ for (const [name, html] of files) {
 
 if (checking) {
   if (stale > 0) process.exit(1);
-  process.stdout.write(`every one of the ${files.size} docs pages is the repository's own\n`);
+  process.stdout.write(`every one of the ${files.size} files written out of the repository is current\n`);
 } else {
-  process.stdout.write(`wrote ${files.size} pages into docs/site/docs\n`);
+  process.stdout.write(`wrote ${files.size} files: ${PAGES.size} docs pages, their Markdown twins, llms.txt, llms-full.txt, robots.txt, the sitemap and the landing pages' structured data\n`);
 }

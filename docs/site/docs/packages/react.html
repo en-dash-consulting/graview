@@ -19,11 +19,18 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 <title>@graview/react — Graview docs</title>
 <meta name="description" content="The React binding: a provider, a scene, and the hooks an app builds on.">
 <meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
+<meta property="og:site_name" content="Graview">
 <meta property="og:title" content="@graview/react — Graview docs">
 <meta property="og:description" content="The React binding: a provider, a scene, and the hooks an app builds on.">
-<meta property="og:type" content="website">
+<meta property="og:type" content="article">
 <meta property="og:url" content="https://graview.dev/docs/packages/react.html">
 <meta property="og:image" content="https://graview.dev/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The graview.dev landing page: the headline Agent-native apps, built as isometric scenes, beside the example garden drawn as an isometric city.">
+<meta property="og:locale" content="en_US">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://graview.dev/docs/packages/react.html">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Cstyle%3Eg%7Bstroke:%23001769%7Dcircle%7Bfill:%23001769%7D%40media (prefers-color-scheme:dark)%7Bg%7Bstroke:%23fff%7Dcircle%7Bfill:%23fff%7D%7D%3C/style%3E%3Cg fill=%27none%27 stroke-width=%272.4%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M13 11 L3 8 L14 3 H29 L21 9%27/%3E%3Cpath d=%27M10 18 L3 23 L16.5 28 L29 21 L22 19%27/%3E%3Cpath d=%27M16.5 18.5 V23.5%27 stroke-linecap=%27round%27/%3E%3C/g%3E%3Ccircle cx=%2716.5%27 cy=%2713.5%27 r=%272%27/%3E%3C/svg%3E" type="image/svg+xml">
@@ -46,6 +53,65 @@ body { margin: 0; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
 </style>
+<link rel="alternate" type="text/markdown" href="react.md" title="This page as Markdown">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "TechArticle",
+   "@id": "https://graview.dev/docs/packages/react.html#article",
+   "headline": "@graview/react — Graview docs",
+   "description": "The React binding: a provider, a scene, and the hooks an app builds on.",
+   "url": "https://graview.dev/docs/packages/react.html",
+   "inLanguage": "en",
+   "image": "https://graview.dev/og.png",
+   "isPartOf": {
+    "@id": "https://graview.dev/#website"
+   },
+   "about": {
+    "@id": "https://graview.dev/#software"
+   },
+   "publisher": {
+    "@id": "https://graview.dev/#endash"
+   },
+   "breadcrumb": {
+    "@id": "https://graview.dev/docs/packages/react.html#breadcrumb"
+   }
+  },
+  {
+   "@type": "BreadcrumbList",
+   "@id": "https://graview.dev/docs/packages/react.html#breadcrumb",
+   "itemListElement": [
+    {
+     "@type": "ListItem",
+     "position": 1,
+     "name": "Graview",
+     "item": "https://graview.dev/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 2,
+     "name": "Docs",
+     "item": "https://graview.dev/docs/index.html"
+    },
+    {
+     "@type": "ListItem",
+     "position": 3,
+     "name": "Packages",
+     "item": "https://graview.dev/docs/packages.html"
+    },
+    {
+     "@type": "ListItem",
+     "position": 4,
+     "name": "@graview/react",
+     "item": "https://graview.dev/docs/packages/react.html"
+    }
+   ]
+  }
+ ]
+}
+</script>
 </head>
 <body>
 <style>
@@ -393,7 +459,7 @@ section > .head .tick {
 .inl { display: inline-flex; align-items: center; min-height: 24px; }
 .chapter-head { display: flex; align-items: baseline; gap: 12px; }
 .chapter-n { font-family: var(--sans); font-size: 26px; color: var(--pine); font-variant-numeric: tabular-nums; min-width: 28px; }
-.chapter-head h3 { margin: 0; font-size: 20px; font-weight: 600; }
+.chapter-head h2 { margin: 0; font-size: 20px; font-weight: 600; }
 .chapter-claim { margin: 8px 0 0 40px; max-width: 62ch; color: var(--ink-2); line-height: 1.6; }
 .chapter-adds { margin: 12px 0 0 40px; font-size: 13px; }
 .chapter-label { display: block; font-family: var(--sans); font-weight: var(--w-label); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px; }
@@ -882,6 +948,41 @@ main.page > section > .lede { max-width: 60ch; }
 }
 @media (max-width: 560px) { .hero-live { height: 440px; } .hero h1 { max-width: 14ch; } }
 
+/*
+ * THE FIRST FRAME IS A PICTURE OF THE CITY, not a box that says loading.
+ * scripts/site-poster.mjs draws the hero's own chapter from altitude in both
+ * lightings; the mount replaces it with the live scene.
+ */
+.hero-live .poster { position: absolute; inset: 0; display: grid; place-items: center; padding: 6%; pointer-events: none; }
+.hero-live .poster > div { width: 100%; height: 100%; }
+.hero-live .poster svg { display: block; width: 100%; height: 100%; }
+.hero-live .poster .light, .hero-live .poster .dark { display: none; }
+:root[data-theme="light"] .hero-live .poster .light { display: block; }
+:root[data-theme="dark"] .hero-live .poster .dark { display: block; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hero-live .poster .dark { display: block; } }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .hero-live .poster .light { display: block; } }
+.hero-live .chapter-loading { position: relative; }
+
+/*
+ * ON A PHONE, THE PICTURE COMES BEFORE THE SECOND WAY IN. Stacked in source
+ * order the scene began a full screen down, below both ways in and the
+ * links, so the first screen said what Graview is and never showed it.
+ * The copy's parts become the hero's own rows: what it is, how to start,
+ * the scene, then the hosted way in and the links.
+ */
+@media (max-width: 1000px) {
+  .hero { gap: 0; }
+  .hero-copy, .hero .cta { display: contents; }
+  .hero .eyebrow { order: 1; }
+  .hero h1 { order: 2; }
+  .hero .lede { order: 3; }
+  .hero .way-in:first-child { order: 4; margin-top: 24px; }
+  .hero-stage { order: 5; margin-top: 24px; }
+  .hero .way-in:last-child { order: 6; margin-top: 24px; }
+  .hero .hero-links { order: 7; }
+}
+@media (max-width: 560px) { .hero .lede { font-size: 17px; } .hero-live { height: 380px; } }
+
 /* Rises into place once, and not at all for anyone who asked for less motion. */
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 .hero-copy > * { animation: rise 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
@@ -1101,6 +1202,12 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
   .way { border-top-color: CanvasText; }
   .cloud-line { border-color: LinkText; }
 }
+
+/* Questions, answered plainly: short answers in two columns, one at phone width. */
+.faq-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 48px; margin-top: 10px; }
+.qa h3 { font-size: 17px; margin: 0 0 8px; }
+.qa p { color: var(--ink-2); max-width: 62ch; }
+@media (max-width: 760px) { .faq-list { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
 /* site-css:end */
 </style>
 
@@ -1123,6 +1230,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <a href="../skills.html">Skills</a>
       <a href="../checks.html">What check says</a>
       <a href="../demos.html">Live demos</a>
+      <a href="../stability.html">Stability</a>
       <a href="../../progression.html">The garden, grown</a>
       <a href="../../index.html">&larr; graview.dev</a>
     </div>
@@ -1137,7 +1245,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">@graview/react</h1>
-      <p class="lede" style="margin-top: 18px;">The React binding: a provider, a scene, and the hooks an app builds on.</p>
+      <p class="lede" style="margin-top: 18px;"><code>@graview/react</code> is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The React binding: a provider, a scene, and the hooks an app builds on.</p>
       <div class="cta"><div class="cta-line"><code>pnpm add @graview/react</code><button type="button" class="copy" data-copy="pnpm add @graview/react">Copy</button></div></div>
       <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/react</code>, <code>@graview/react/provider</code>, <code>@graview/react/drawing</code></p>
     </section>
@@ -1145,7 +1253,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-readme">What it is</h2></div>
 <p>The binding. A provider, a scene, and the hooks an app builds on.</p>
 <p>A view is an ORDINARY React component. No scene API, no base class — that is the whole authoring surface, and it is the reason the capture approach earns its cost. Every view must render correctly in both modes: captured into the scene, and lifted out as a full page.</p>
-<div class="code" data-scroller><pre><code>&lt;GraviewProvider store={store} views={views} brand={brand} principal={me}&gt;
+<div class="code" data-scroller><pre><code class="language-tsx">&lt;GraviewProvider store={store} views={views} brand={brand} principal={me}&gt;
   &lt;Scene /&gt;
   &lt;JackedIn /&gt;
 &lt;/GraviewProvider&gt;</code></pre></div>
@@ -1225,1060 +1333,5 @@ document.querySelectorAll("[data-copy]").forEach(function (button) {
 });
 </script>
 
-<style>
-/* site-css:start — written by scripts/site-css.mjs. Edit docs/site/site.css. */
-/*
- * ONE STYLESHEET, TWO PAGES, AND A THIRD THAT IS NOT A FILE.
- *
- * The landing page is also published as a Claude artifact, whose host
- * supplies the document and rejects a page that brings its own — and blocks
- * an external stylesheet outright. So the styles cannot live in a <link>,
- * and the moment there was a second page they could not live in one page's
- * <style> either.
- *
- * They live here, and `node scripts/site-css.mjs` writes them into every
- * page between its markers. One source, several renderings, and a test that
- * fails when a page's copy has gone stale — the same shape the chapters
- * already use.
- */
-:root {
-  color-scheme: light;
-
-  /* Graview's identity (the design kit, revision 03): paper, reading ink,
-     muted text, En Dash navy and turquoise. The same values the framework
-     ships as GRAVIEW_COLORS in @graview/core. */
-  --paper:     #F7F7F2;
-  --panel:     #FFFFFF;
-  --sunk:      #EFEFE8;
-  --ink:       #18213A;
-  --ink-2:     #343D55;
-  --ink-3:     #586174;
-  --rule:      #DCDCD2;
-  --rule-2:    #E8E8E0;
-
-  /* Navy is the ink of the identity and of every link and control here.
-     Turquoise is the symbol's point and a fill, never a word: on paper it
-     is 1.5:1, so text on it is navy. `--pine` is the page's interactive
-     color — navy here, the navy's hue made light in the dark. */
-  --navy:      #001769;
-  --mint:      #00E5B9;
-  --pine:      #001769;
-  --pine-2:    #22338A;
-  --pine-wash: #E9ECF6;
-  --amber:     #8A5A12;
-  --amber-wash:#F4EBDC;
-  /* The logo: navy with the turquoise point on light, white with it on dark. */
-  --logo:      #001769;
-  --point:     #00E5B9;
-
-  /* One family, Montserrat, served from brand/ (see the head); the system's
-     sans stands in until it arrives. Code is the system's monospace. */
-  --sans:  "Montserrat", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
-  --mono:  ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
-  --w-display: 550;
-  --w-body: 450;
-  --w-label: 600;
-  --track-display: -0.025em;
-  --radius: 6px;
-  --radius-sm: 4px;
-
-  --rail: 234px;
-  --pad: clamp(22px, 4vw, 56px);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --paper:     #0A0F1F;
-    --panel:     #111933;
-    --sunk:      #0E1529;
-    --ink:       #EEF0F6;
-    --ink-2:     #C3CAD9;
-    --ink-3:     #A0A9BD;
-    --rule:      #27314F;
-    --rule-2:    #1C2541;
-    --navy:      #001769;
-    --mint:      #00E5B9;
-    --pine:      #A3B3FF;
-    --pine-2:    #C6D0FF;
-    --pine-wash: #18224A;
-    --amber:     #D4A162;
-    --amber-wash:#2A2115;
-    --logo:      #FFFFFF;
-  }
-}
-
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --paper:     #0A0F1F;
-  --panel:     #111933;
-  --sunk:      #0E1529;
-  --ink:       #EEF0F6;
-  --ink-2:     #C3CAD9;
-  --ink-3:     #A0A9BD;
-  --rule:      #27314F;
-  --rule-2:    #1C2541;
-  --navy:      #001769;
-  --mint:      #00E5B9;
-  --pine:      #A3B3FF;
-  --pine-2:    #C6D0FF;
-  --pine-wash: #18224A;
-  --amber:     #D4A162;
-  --amber-wash:#2A2115;
-  --logo:      #FFFFFF;
-}
-
-*, *::before, *::after { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--sans);
-  font-size: 16px;
-  font-weight: var(--w-body);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
-
-:focus-visible { outline: 3px solid var(--pine); outline-offset: 2px; border-radius: var(--radius-sm); }
-
-/* Text for assistive technology only. Not `display: none`, which removes it
-   from the accessibility tree along with everything else. */
-.sr-only {
-  position: absolute;
-  width: 1px; height: 1px;
-  margin: -1px; padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* The first thing the keyboard reaches is the way past the navigation. */
-.skip {
-  position: absolute;
-  left: 8px; top: -60px;
-  z-index: 20;
-  padding: 10px 16px;
-  background: var(--panel);
-  border: 1px solid var(--pine);
-  color: var(--pine);
-  font-family: var(--sans);
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: top 120ms ease;
-}
-.skip:focus { top: 8px; }
-
-html { scroll-behavior: smooth; }
-
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Someone who has asked for more contrast gets firmer edges, not a different
-   design. */
-@media (prefers-contrast: more) {
-  :root { --rule: #6B7285; --rule-2: #8A90A0; --ink-2: #1A2033; --ink-3: #3A4257; }
-  :root:not([data-theme="light"]) { --rule: #7C8AA8; --rule-2: #5E6C88; --ink-2: #DCE2EF; --ink-3: #B9C2D6; }
-}
-
-/* Windows High Contrast throws the palette away, so anything carrying meaning
-   in a border or a fill has to say so in system colors too. */
-@media (forced-colors: active) {
-  .code, .term, .endash, .lens figure { border-color: CanvasText; }
-  .caveat { border-left-color: LinkText; }
-  section > .head .tick, .plane .no i { background: CanvasText; forced-color-adjust: none; }
-}
-
-a { color: var(--pine); text-underline-offset: 3px; text-decoration-thickness: 1px; }
-a:hover { color: var(--pine-2); }
-
-/* ── shell ─────────────────────────────────────────────────────────── */
-
-.wrap {
-  display: grid;
-  grid-template-columns: var(--rail) minmax(0, 1fr);
-  align-items: start;
-  max-width: 1160px;
-  margin: 0 auto;
-}
-
-.rail {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  padding: 30px var(--pad) 30px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  border-right: 1px solid var(--rule);
-  margin-left: var(--pad);
-}
-
-.col {
-  padding: 30px var(--pad) 90px;
-  min-width: 0;
-}
-
-/* ── rail contents ─────────────────────────────────────────────────── */
-
-.brand { display: grid; gap: 6px; justify-items: start; }
-/*
- * THE GRAVIEW LOGO: the kit's outlined lockup, inline so it takes the page's
- * ink (an <img> of an SVG would not), navy with the turquoise point on light
- * and white with it on dark. 32px tall is 151px wide, over the kit's 140px
- * minimum; the symbol in it is 26px, so the clear space it asks for (half
- * the symbol's height) is the 13px of padding around it, which is also what
- * makes the link a fingertip's target.
- */
-.logo {
-  display: inline-flex; align-items: center;
-  color: var(--logo); --point: var(--mint);
-  padding: 13px; margin: -13px;
-  text-decoration: none;
-  border-radius: var(--radius-sm);
-}
-.logo svg { display: block; height: 32px; width: auto; }
-.logo:hover { color: var(--logo); }
-.brand .sub {
-  font-family: var(--sans);
-  font-size: 11.5px;
-  font-weight: var(--w-label);
-  line-height: 1.45;
-  color: var(--ink-3);
-}
-
-.jump { display: grid; gap: 0; font-family: var(--sans); font-size: 12.5px; }
-.jump a {
-  display: flex;
-  align-items: center;
-  min-height: 26px;
-  padding: 4px 0;
-  color: var(--ink-2);
-  text-decoration: none;
-  font-weight: 500;
-  border-left: 2px solid transparent;
-  padding-left: 10px;
-  margin-left: -12px;
-}
-.jump a:hover { color: var(--pine); border-left-color: var(--pine); }
-
-.railfoot {
-  margin-top: auto;
-  font-family: var(--mono);
-  font-size: 10.5px;
-  line-height: 1.7;
-  color: var(--ink-3);
-}
-@media (max-width: 900px) { .railfoot { display: none; } }
-
-/* ── type ──────────────────────────────────────────────────────────── */
-
-h1, h2, h3 { font-family: var(--sans); margin: 0; text-wrap: balance; }
-
-h1 {
-  font-size: clamp(34px, 4.6vw, 58px);
-  font-weight: var(--w-display);
-  line-height: 1.08;
-  letter-spacing: var(--track-display);
-  max-width: 15ch;
-}
-
-h2 {
-  font-size: 23px;
-  font-weight: var(--w-display);
-  line-height: 1.2;
-  letter-spacing: var(--track-display);
-}
-
-h3 { font-size: 15.5px; font-weight: var(--w-label); letter-spacing: -0.01em; line-height: 1.4; }
-
-p { margin: 0; max-width: 66ch; }
-.lede { font-size: 18.5px; line-height: 1.62; color: var(--ink-2); max-width: 54ch; }
-.sm { font-size: 14px; line-height: 1.7; color: var(--ink-2); }
-.dim { color: var(--ink-3); }
-strong { font-weight: 600; color: var(--ink); }
-code { font-family: var(--mono); font-size: 0.86em; }
-em { font-style: italic; }
-
-/* The page's own sections, not an embed's: a mounted Graview is a <section>
-   too, and this rule reaching it put a blank band above every live frame. */
-section:where(:not([data-graview-embed], [data-graview-embed] *)) { padding-top: 54px; scroll-margin-top: 24px; }
-section > .head {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-section > .head .tick {
-  flex: 0 0 auto;
-  width: 22px;
-  height: 1px;
-  background: var(--pine);
-  transform: translateY(-6px);
-}
-.stack { display: grid; gap: 16px; align-items: start; }
-
-/* ── code ──────────────────────────────────────────────────────────── */
-
-.code {
-  border: 1px solid var(--rule);
-  border-left: 2px solid var(--pine);
-  background: var(--panel);
-  overflow-x: auto;
-  font-family: var(--mono);
-  font-size: 12.5px;
-  line-height: 1.7;
-  padding: 15px 17px;
-  color: var(--ink-2);
-}
-.code pre { margin: 0; }
-
-/* The garden, grown: one article per chapter, one picture each. */
-.chapter-shot { margin: 22px 0 0; }
-.chapter-shot img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); border-radius: var(--radius-sm); background: var(--sunk); }
-.chapter-shot figcaption { font-size: 12.5px; line-height: 1.6; color: var(--ink-3); margin-top: 8px; max-width: 70ch; }
-.hero-shot { margin-top: 28px; }
-/* minmax(0, 1fr) and min-width: 0, or a grid item's automatic minimum is
-   the picture's intrinsic 1280 pixels and the whole page scrolls sideways. */
-.hero-pair { margin-top: 30px; }
-.hero-pair .two { align-items: stretch; }
-.hero-pair .code { max-height: 480px; overflow: auto; }
-.hero-pair .chapter-live { height: 480px; }
-@media (max-width: 820px) { .hero-pair .code { max-height: 320px; } }
-.derived { margin: 26px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 28px; }
-.derived li { font-size: 15px; line-height: 1.6; color: var(--ink-2); padding-top: 12px; border-top: 1px solid var(--rule); min-width: 0; }
-.derived li strong { color: var(--ink); }
-@media (max-width: 640px) { .derived { grid-template-columns: minmax(0, 1fr); } }
-.chapters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px; margin-top: 30px; }
-.chapter { min-width: 0; }
-.chapter.phone .chapter-shot img { max-width: 390px; }
-/* The chapter itself, mounted by chapters.js: sized here, themed within. */
-.chapter-live { position: relative; height: 480px; border: 1px solid var(--rule); border-radius: var(--radius-sm); overflow: hidden; background: var(--sunk); }
-.chapter.phone .chapter-live { max-width: 390px; height: 640px; }
-.chapter-loading { margin: 0; padding: 18px; font-size: 13px; color: var(--ink-3); }
-@media (max-width: 560px) { .chapter-live { height: 420px; } }
-/* An inline link is still a target: tall enough for a fingertip without leaving the line. */
-.inl { display: inline-flex; align-items: center; min-height: 24px; }
-.chapter-head { display: flex; align-items: baseline; gap: 12px; }
-.chapter-n { font-family: var(--sans); font-size: 26px; color: var(--pine); font-variant-numeric: tabular-nums; min-width: 28px; }
-.chapter-head h3 { margin: 0; font-size: 20px; font-weight: 600; }
-.chapter-claim { margin: 8px 0 0 40px; max-width: 62ch; color: var(--ink-2); line-height: 1.6; }
-.chapter-adds { margin: 12px 0 0 40px; font-size: 13px; }
-.chapter-label { display: block; font-family: var(--sans); font-weight: var(--w-label); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px; }
-.chapter-adds ul { margin: 0; padding-left: 18px; }
-.chapter-adds li { margin-top: 3px; }
-.chapter-adds code { font-size: 12px; overflow-wrap: anywhere; }
-@media (max-width: 560px) { .chapter-claim, .chapter-adds { margin-left: 0; } }
-.k { color: var(--pine); }
-.s { color: var(--amber); }
-.c { color: var(--ink-3); }
-.n { color: var(--ink); font-weight: 500; }
-
-.two {
-  display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
-  gap: 26px;
-  align-items: start;
-}
-@media (max-width: 820px) { .two { grid-template-columns: minmax(0, 1fr); } }
-
-/* ── plain lists ───────────────────────────────────────────────────── */
-
-ul.plain { margin: 0; padding: 0; list-style: none; display: grid; gap: 0; }
-ul.plain li {
-  padding: 9px 0;
-  border-top: 1px solid var(--rule-2);
-  font-size: 14.5px;
-  line-height: 1.62;
-  color: var(--ink-2);
-}
-ul.plain li:first-child { border-top: none; padding-top: 0; }
-ul.plain b { color: var(--ink); font-weight: 600; }
-
-/* ── the kit's controls ─────────────────────────────────────────────── */
-
-.kit-controls { display: grid; gap: 14px; margin: 0; min-width: 0; }
-.kit-controls fieldset { margin: 0; padding: 10px 12px 12px; border: 1px solid var(--rule); border-radius: var(--radius-sm); display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
-.kit-controls legend { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); padding: 0 6px; }
-.kit-controls label { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--ink-2); min-height: 24px; }
-.kit-controls select, .kit-controls input[type="color"] { font: inherit; font-size: 13px; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius-sm); padding: 3px 6px; min-height: 28px; }
-.kit-controls input[type="color"] { width: 40px; padding: 2px; }
-.kit-controls input:focus-visible, .kit-controls select:focus-visible { outline: 2px solid var(--pine); outline-offset: 2px; }
-.kit-decl { margin: 0; padding: 12px 14px; background: var(--sunk); border: 1px solid var(--rule); border-radius: var(--radius-sm); font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--ink); overflow-x: auto; }
-.kit-verdict { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
-.kit-verdict b { color: var(--ink); font-weight: 600; }
-.kit-verdict[data-clean="false"] b { color: var(--amber); }
-
-/* ── tables ────────────────────────────────────────────────────────── */
-
-.scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-th {
-  text-align: left;
-  font-family: var(--sans);
-  font-size: 10.5px;
-  font-weight: var(--w-label);
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  padding: 0 16px 8px 0;
-  border-bottom: 1px solid var(--rule);
-  white-space: nowrap;
-}
-td {
-  padding: 9px 16px 9px 0;
-  border-bottom: 1px solid var(--rule-2);
-  vertical-align: top;
-  color: var(--ink-2);
-  line-height: 1.55;
-}
-td:last-child, th:last-child { padding-right: 0; }
-td.pkg { font-family: var(--mono); font-size: 12.5px; color: var(--ink); white-space: nowrap; }
-td.where { font-family: var(--mono); font-size: 11.5px; }
-
-/* ── planes ────────────────────────────────────────────────────────── */
-
-.planes { display: grid; gap: 0; }
-.plane {
-  display: grid;
-  grid-template-columns: 92px minmax(0, 1fr);
-  gap: 20px;
-  padding: 14px 0;
-  border-top: 1px solid var(--rule-2);
-  align-items: start;
-}
-.plane:first-child { border-top: none; }
-.plane .no {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--pine);
-  padding-top: 3px;
-}
-.plane .no i { display: block; height: 2px; background: var(--pine); margin-top: 7px; font-style: normal; }
-.plane:nth-child(2) .no i { opacity: 0.5; }
-.plane:nth-child(3) .no i { opacity: 0.22; }
-.plane p { font-size: 14px; color: var(--ink-2); margin-top: 2px; }
-
-/* ── lenses ────────────────────────────────────────────────────────── */
-
-.lenses { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 20px; }
-.lens { display: grid; gap: 10px; align-content: start; }
-.lens figure { margin: 0; border: 1px solid var(--rule); background: var(--panel); padding: 11px; }
-.lens svg { display: block; width: 100%; height: auto; }
-.lens p { font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
-
-/* ── terminal ──────────────────────────────────────────────────────── */
-
-.term {
-  border: 1px solid var(--rule);
-  background: var(--panel);
-  font-family: var(--mono);
-  font-size: 12.5px;
-  overflow-x: auto;
-}
-.term .l {
-  /* The command keeps its width and the note takes what is left, right-
-     aligned; a row wider than the box scrolls the box (data-scroller)
-     instead of drawing the note over the command. */
-  display: flex;
-  gap: 11px 18px;
-  padding: 8px 15px;
-  border-top: 1px solid var(--rule-2);
-  white-space: nowrap;
-  align-items: baseline;
-}
-.term .p, .term .c2 { flex: 0 0 auto; }
-.term .n2 { flex: 0 0 auto; margin-left: auto; }
-.term .l:first-child { border-top: none; }
-.term .p { color: var(--pine); }
-.term .c2 { color: var(--ink); }
-.term .n2 { color: var(--ink-3); font-size: 11px; }
-
-/* ── en dash block ─────────────────────────────────────────────────── */
-
-.endash {
-  border: 1px solid var(--rule);
-  background: var(--panel);
-  padding: 24px 26px;
-  display: grid;
-  gap: 18px;
-}
-.endash .lockup {
-  display: grid;
-  grid-template-columns: 62px minmax(0, 1fr);
-  gap: 18px;
-  align-items: start;
-}
-.endash .dashmark { width: 62px; }
-.endash .dashmark svg { width: 100%; height: auto; display: block; }
-@media (max-width: 620px) {
-  .endash .lockup { grid-template-columns: minmax(0, 1fr); gap: 14px; }
-}
-.sibs { display: grid; gap: 0; }
-.sib {
-  display: grid;
-  grid-template-columns: minmax(0, 168px) minmax(0, 1fr);
-  gap: 18px;
-  padding: 11px 0;
-  border-top: 1px solid var(--rule-2);
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--ink-2);
-}
-.sib:first-child { border-top: none; }
-.sib a {
-  font-family: var(--sans);
-  font-weight: 600;
-  font-size: 14px;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-}
-.sib a:hover { text-decoration: underline; }
-@media (max-width: 620px) { .sib { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
-
-/* ── caveats ───────────────────────────────────────────────────────── */
-
-.caveat {
-  border-left: 2px solid var(--amber);
-  background: var(--amber-wash);
-  padding: 14px 18px;
-  font-size: 14px;
-  line-height: 1.62;
-  color: var(--ink-2);
-}
-.caveat b { color: var(--amber); }
-
-footer a { display: inline-flex; align-items: center; min-height: 24px; }
-footer {
-  margin-top: 60px;
-  padding-top: 20px;
-  border-top: 1px solid var(--rule);
-  font-family: var(--sans);
-  font-size: 12px;
-  color: var(--ink-3);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 22px;
-}
-
-
-/* ── responsive ──────────────────────────────────────────────────────
-   Last on purpose. These override base rules of equal specificity, and an
-   override that comes first is not an override — it is a rule the cascade
-   throws away. The mobile navigation lost exactly that fight and stacked
-   eleven full-width pills down the first screen of a phone.
-   ─────────────────────────────────────────────────────────────────── */
-
-@media (max-width: 900px) {
-  .wrap { grid-template-columns: minmax(0, 1fr); }
-  .rail {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    height: auto;
-    gap: 14px;
-    border-right: none;
-    border-bottom: 1px solid var(--rule);
-    margin: 0;
-    padding: 18px var(--pad) 12px;
-    background: var(--paper);
-  }
-  .col { padding: 22px var(--pad) 64px; }
-  /* The header is sticky here, so an anchor that scrolls to the top of a
-     section would put its heading underneath it. */
-  section { scroll-margin-top: 132px; }
-  /* Eleven links stacked is a page of navigation before the page. A row that
-     scrolls is one line, and every link is still a link. */
-  .jump {
-    display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: thin;
-    padding-bottom: 4px;
-    margin: 0 calc(var(--pad) * -1);
-    padding-left: var(--pad);
-    padding-right: var(--pad);
-  }
-  .jump a {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    border: 1px solid var(--rule);
-    border-left-width: 1px;
-    border-radius: var(--radius-sm);
-    margin-left: 0;
-    padding: 5px 12px;
-    min-height: 30px;
-    display: inline-flex;
-    align-items: center;
-  }
-  .jump a:hover { border-color: var(--pine); }
-  .brand .sub { max-width: 46ch; }
-}
-
-@media (max-width: 560px) {
-  .plane { grid-template-columns: minmax(0, 1fr); gap: 4px; }
-  .plane .no { padding-top: 0; }
-  .plane .no i { max-width: 92px; }
-  .sib { grid-template-columns: minmax(0, 1fr); gap: 2px; }
-  .two { gap: 20px; }
-  section { padding-top: 42px; }
-}
-
-/* ── The landing page ─────────────────────────────────────────────────────
-   A page whose job is thirty seconds, not fifteen chapters. Everything
-   below exists because the page had the right content in the wrong order:
-   the call to action was in section nine, the proof was prose, and the
-   reason to choose this over a form library was one paragraph at the end of
-   the introduction. */
-
-/* The install line, at the top, where somebody deciding can reach it. */
-.cta { margin-top: 26px; display: grid; gap: 8px; max-width: 62ch; }
-.cta-line {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-  padding: 12px 14px; border: 1px solid var(--rule); border-radius: var(--radius-sm);
-  background: var(--sunk);
-}
-.cta-line code { font-family: var(--mono); font-size: 14.5px; color: var(--ink); overflow-wrap: anywhere; }
-.copy {
-  font: inherit; font-family: var(--sans); font-size: 12.5px; font-weight: 600;
-  min-height: max(1.75rem, 28px); padding: 0 12px; margin-left: auto;
-  color: var(--panel); background: var(--pine); border: 1px solid transparent;
-  border-radius: var(--radius-sm); cursor: pointer;
-}
-.copy:hover { background: var(--pine-2); }
-.copy[data-copied] { background: var(--amber); }
-.cta-sub { margin: 0; max-width: 62ch; }
-
-/* Numbers, counted out of the repository rather than asserted. */
-.numbers {
-  margin: 26px 0 0; padding: 0; list-style: none;
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 16px 22px;
-}
-.numbers li { display: grid; gap: 1px; border-top: 1px solid var(--rule); padding-top: 10px; min-width: 0; }
-.numbers strong {
-  font-family: var(--sans); font-size: 30px; line-height: 1.05; color: var(--pine);
-  font-variant-numeric: tabular-nums;
-}
-.numbers span { font-size: 12.5px; line-height: 1.45; color: var(--ink-3); }
-
-/* The causal arrow over the hero pair, said rather than implied.
-   A FLEX ROW, not a three-column grid: the grid version overlapped its own
-   spans at every width the harness measured, because a `1fr auto 1fr` whose
-   middle cell is a rotated glyph is a promise about boxes that rotation
-   does not keep. Flex items cannot overlap. */
-.pair-says {
-  margin: 0 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
-  font-family: var(--sans); font-weight: var(--w-label); font-size: 11px; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--ink-3);
-}
-.pair-says .pair-arrow { font-size: 14px; color: var(--pine); letter-spacing: 0; }
-
-/* The stepper: press a step, the left says what was added, the right is the
-   application at exactly that point. */
-.steps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
-.steps button {
-  font: inherit; font-family: var(--sans); font-size: 13.5px; font-weight: var(--w-label);
-  display: inline-flex; align-items: center; gap: 8px;
-  min-height: max(2rem, 32px); padding: 0 14px;
-  color: var(--ink-2); background: var(--panel);
-  border: 1px solid var(--rule); border-radius: var(--radius-sm); cursor: pointer;
-}
-.steps button:hover { color: var(--pine); border-color: var(--pine); }
-.steps button[aria-selected="true"] {
-  color: var(--panel); background: var(--pine); border-color: var(--pine);
-}
-.steps .step-n {
-  font-family: var(--sans); font-variant-numeric: tabular-nums; font-size: 15px;
-  opacity: 0.75;
-}
-.step-panel { margin-top: 20px; }
-.step-panel:focus-visible { outline: 2px solid var(--pine); outline-offset: 6px; }
-.step-two { align-items: stretch; }
-/* The left column packs to the top. A grid that stretches two rows over a
-   460px panel puts a hundred and eighty pixels of nothing between a claim
-   and the list under it, which reads as two unrelated things. */
-.step-two > .stack { align-content: start; }
-.step-two .chapter-live { height: 460px; }
-@media (max-width: 560px) { .step-two .chapter-live { height: 400px; } }
-.step-claim { margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-2); max-width: 46ch; }
-.step-adds ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
-.step-adds li { margin-top: 4px; }
-.step-adds code { font-size: 12px; overflow-wrap: anywhere; }
-
-/* The model section, which used to be a paragraph. */
-.minor { margin: 0; font-size: 16px; font-weight: 600; }
-.ai-two .code { max-height: 340px; overflow: auto; }
-.ai-derived { grid-template-columns: minmax(0, 1fr); margin-top: 16px; gap: 12px; }
-
-/* ── The docs ─────────────────────────────────────────────────────────────
-   Thirty pages written out of the repository, so these have to hold whatever
-   a README, a SKILL.md or a barrel turns out to contain. */
-
-/* A list of things to go to: the title, and why you would. */
-.cards { margin: 20px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
-.cards a {
-  display: grid; gap: 3px; min-width: 0;
-  padding: 12px 14px; border: 1px solid var(--rule); border-radius: var(--radius-sm);
-  color: inherit; text-decoration: none; background: var(--panel);
-}
-.cards a:hover { border-color: var(--pine); }
-.cards strong { font-size: 15.5px; color: var(--pine); }
-.cards span { font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
-
-/* A plain list of names — exports, finding codes. Wraps, never scrolls. */
-.names {
-  margin: 14px 0 0; padding: 0; list-style: none;
-  display: flex; flex-wrap: wrap; gap: 6px 10px;
-}
-.names li { min-width: 0; }
-.names code { font-size: 12.5px; overflow-wrap: anywhere; }
-
-/* A README's table, which may be any width at all. */
-.tablewrap { margin-top: 16px; max-width: 100%; overflow-x: auto; }
-.tablewrap table { border-collapse: collapse; font-size: 13.5px; }
-.tablewrap th, .tablewrap td {
-  text-align: left; vertical-align: top;
-  padding: 7px 14px 7px 0; border-bottom: 1px solid var(--rule-2);
-}
-.tablewrap th { font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
-
-main.col hr { margin: 26px 0; border: 0; border-top: 1px solid var(--rule); }
-main.col blockquote {
-  margin: 16px 0; padding-left: 16px; border-left: 2px solid var(--rule);
-  color: var(--ink-2);
-}
-main.col h3 { margin: 24px 0 0; font-size: 17px; font-weight: 600; }
-main.col h4 { margin: 20px 0 0; font-size: 15px; font-weight: 600; }
-main.col .jump a[aria-current="page"] { color: var(--pine); border-left-color: var(--pine); font-weight: 600; }
-.jump a[aria-current="page"] { color: var(--pine); border-left-color: var(--pine); font-weight: 600; }
-
-/* A list the markdown renderer made, which carries no class of its own.
-   The page's other lists (.derived, .cards, .names, .chapter-adds) set
-   their own; these get the hanging indent a bulleted list is supposed to
-   have, which is the thing a reader notices missing without knowing why. */
-main.col ul:not([class]), main.col ol:not([class]) {
-  margin: 12px 0 0; padding-left: 22px;
-  list-style-position: outside;
-}
-main.col ul:not([class]) li, main.col ol:not([class]) li {
-  margin-top: 6px; line-height: 1.62; color: var(--ink-2);
-}
-main.col ul:not([class]) code, main.col ol:not([class]) code { overflow-wrap: anywhere; }
-
-/* ── The landing page, second cut ──────────────────────────────────────
-   The first cut was a docs page with a headline: a rail, a column, the
-   product in a 480px box halfway down. This one puts the running product
-   where the eye lands, gives every surface it derives a live frame, and
-   keeps the rule that nothing on it is a screenshot or a mock-up.
-   ─────────────────────────────────────────────────────────────────── */
-
-.topbar {
-  position: sticky; top: 0; z-index: 30;
-  background: var(--paper);
-  border-bottom: 1px solid var(--rule);
-}
-@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
-  .topbar { background: color-mix(in srgb, var(--paper) 84%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
-}
-.topbar-in {
-  max-width: 1280px; margin: 0 auto; padding: 0 var(--pad);
-  display: flex; align-items: center; gap: 16px; min-height: 58px;
-}
-.topbar .brand { display: flex; align-items: center; flex: 0 0 auto; }
-.topbar .jump {
-  display: flex; gap: 2px; margin-left: auto; font-size: 13px;
-  overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
-  padding: 4px 0;
-}
-.topbar .jump::-webkit-scrollbar { display: none; }
-.topbar .jump a {
-  flex: 0 0 auto; border: 0; margin: 0; padding: 6px 11px;
-  border-radius: var(--radius-sm); white-space: nowrap; min-height: 32px;
-}
-.topbar .jump a:hover { color: var(--pine); background: var(--sunk); }
-.topbar .jump a.go { color: var(--panel); background: var(--pine); font-weight: var(--w-label); margin-left: 6px; }
-.topbar .jump a.go:hover { background: var(--pine-2); color: var(--panel); }
-
-.page { max-width: 1280px; margin: 0 auto; padding: 0 var(--pad) 80px; min-width: 0; }
-/* Direct children only: an embed's root is a <section> too, and a rule that
-   reaches it puts ninety-six pixels of nothing above the product. */
-main.page > section { padding-top: 96px; scroll-margin-top: 70px; }
-main.page > section > .head h2 { font-size: clamp(26px, 3vw, 38px); letter-spacing: var(--track-display); max-width: 22ch; }
-main.page > section > .head { margin-bottom: 16px; }
-main.page > section > .head .tick { transform: translateY(-9px); }
-main.page > section > .lede { max-width: 60ch; }
-.eyebrow {
-  font-family: var(--sans); font-size: 11.5px; font-weight: var(--w-label); letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--pine); margin: 0 0 18px;
-  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center;
-}
-.eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mint); flex: 0 0 auto; }
-.eyebrow > span + span:not(.dot) ~ span { color: var(--ink-3); }
-
-/* The hero: copy beside the running product, the product taller than the copy. */
-.hero {
-  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  gap: 40px; align-items: center;
-  padding-top: 40px !important; min-height: calc(100vh - 58px);
-}
-.hero h1 { font-size: clamp(36px, 4.6vw, 60px); max-width: 13ch; }
-.hero .lede { margin-top: 22px; }
-.hero .cta { margin-top: 28px; max-width: 100%; }
-.hero .cta-line { padding: 14px 16px; }
-.hero .cta-line code { font-size: 15.5px; }
-.hero .copy { min-height: max(2rem, 34px); padding: 0 14px; font-size: 13px; }
-.hero-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; font-family: var(--sans); font-size: 14px; font-weight: 600; }
-.hero-links a { text-decoration: none; display: inline-flex; align-items: center; min-height: 28px; gap: 6px; }
-.hero-links a:hover { text-decoration: underline; }
-.hero-stage { min-width: 0; display: grid; gap: 10px; }
-.hero-live {
-  height: min(660px, 74vh); min-height: 440px;
-  border-radius: var(--radius);
-  box-shadow: 0 0 0 1px var(--rule), 0 18px 40px -30px rgba(0, 23, 105, 0.35);
-}
-.stage-caption {
-  display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline;
-  font-family: var(--sans); font-size: 12.5px; color: var(--ink-3); max-width: 100%;
-}
-.stage-caption .live { color: var(--pine); font-weight: var(--w-label); letter-spacing: 0.08em; text-transform: uppercase; }
-@media (max-width: 1000px) {
-  .hero { grid-template-columns: minmax(0, 1fr); min-height: 0; gap: 28px; padding-top: 28px !important; }
-  .hero-live { height: 500px; min-height: 0; }
-}
-@media (max-width: 560px) { .hero-live { height: 440px; } .hero h1 { max-width: 14ch; } }
-
-/* Rises into place once, and not at all for anyone who asked for less motion. */
-@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-.hero-copy > * { animation: rise 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-.hero-copy > :nth-child(2) { animation-delay: 80ms; }
-.hero-copy > :nth-child(3) { animation-delay: 160ms; }
-.hero-copy > :nth-child(4) { animation-delay: 240ms; }
-.hero-copy > :nth-child(5) { animation-delay: 320ms; }
-.hero-stage { animation: rise 800ms cubic-bezier(0.2, 0.7, 0.2, 1) 200ms both; }
-
-/* The numbers, as a band under the hero rather than a row in the corner. */
-.band {
-  margin: 48px 0 0; padding: 26px 0 0; border-top: 1px solid var(--rule);
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-}
-.band strong { font-size: 40px; }
-
-/* Every surface, live, two up. */
-.faces { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px 32px; margin-top: 30px; }
-.face { display: grid; gap: 12px; min-width: 0; align-content: start; }
-.face .chapter-live { height: 500px; border-radius: 4px; }
-.face.phone .chapter-live { max-width: 390px; height: 640px; }
-.face-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
-.face-n { font-family: var(--sans); font-weight: var(--w-label); font-size: 11.5px; letter-spacing: 0.08em; color: var(--pine); text-transform: uppercase; white-space: nowrap; }
-.face h3 { font-size: 19px; font-weight: var(--w-display); }
-.face p { font-size: 14.5px; line-height: 1.65; color: var(--ink-2); max-width: 54ch; }
-.face p code { font-size: 12.5px; }
-@media (max-width: 900px) { .faces { grid-template-columns: minmax(0, 1fr); } .face .chapter-live { height: 460px; } }
-
-/* Copy beside a frame. */
-.split { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 36px; align-items: start; margin-top: 26px; }
-.split > .stack { align-content: start; }
-@media (max-width: 900px) { .split { grid-template-columns: minmax(0, 1fr); } }
-
-/* Two interfaces, side by side. */
-.hands { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; margin-top: 28px; }
-.hand { display: grid; gap: 12px; align-content: start; min-width: 0; padding: 22px 24px; border: 1px solid var(--rule); border-radius: 4px; background: var(--panel); }
-.hand h3 { font-size: 18px; }
-.hand .who-for { font-family: var(--sans); font-weight: var(--w-label); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--pine); }
-.hand ul.plain li { font-size: 14px; }
-.hand .code { max-height: 300px; overflow: auto; }
-@media (max-width: 900px) { .hands { grid-template-columns: minmax(0, 1fr); } }
-
-/* The packages: the tool, then the framework. */
-.pkgs { list-style: none; margin: 26px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(236px, 1fr)); gap: 12px; }
-.pkgs li { min-width: 0; display: grid; }
-.pkgs a {
-  display: grid; gap: 5px; align-content: start; padding: 15px 16px;
-  border: 1px solid var(--rule); border-radius: 4px; text-decoration: none; color: inherit; background: var(--panel);
-}
-.pkgs a:hover { border-color: var(--pine); }
-.pkgs code { color: var(--pine); font-size: 13px; font-weight: 500; }
-.pkgs span { font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
-.pkgs li.tool { grid-column: 1 / -1; }
-.pkgs li.tool a { border-color: var(--pine); background: var(--pine-wash); grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 6px 22px; align-items: baseline; }
-.pkgs li.tool code { font-size: 15px; }
-@media (max-width: 640px) { .pkgs li.tool a { grid-template-columns: minmax(0, 1fr); } }
-
-/* A wide, quiet line of claims under a heading. */
-.strip { margin: 22px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px 28px; }
-.strip li { font-size: 14.5px; line-height: 1.6; color: var(--ink-2); padding-top: 12px; border-top: 1px solid var(--rule); min-width: 0; }
-.strip li strong { display: block; color: var(--ink); margin-bottom: 2px; }
-
-/* The install section, two commands wide. */
-.install-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 24px; }
-@media (max-width: 900px) { .install-two { grid-template-columns: minmax(0, 1fr); } }
-
-main.page footer { max-width: 100%; }
-@media (forced-colors: active) {
-  .topbar .jump a.go, .pkgs li.tool a { border: 1px solid CanvasText; }
-}
-
-/* ── The landing page, third cut: a marketing page ─────────────────────
-   The second cut showed the product but argued like documentation: code
-   beside every frame, a checks table, a packages grid. This one says what
-   the kit does and who it is for, in words a developer skims, with one
-   large legible picture per claim — every one of them the example itself,
-   live, opened at the stop that shows the claim. The last photographs
-   went when the garden could make each claim in a frame of its own.
-   ─────────────────────────────────────────────────────────────────── */
-
-main.page > section.feature, main.page > section.how, main.page > section.cases,
-main.page > section.grow, main.page > section.ways, main.page > section.closing { padding-top: 120px; }
-@media (max-width: 900px) { main.page > section.feature, main.page > section.how, main.page > section.cases, main.page > section.grow, main.page > section.ways, main.page > section.closing { padding-top: 84px; } }
-
-/* A section's opening: eyebrow, big claim, one paragraph. */
-.claim { max-width: 56ch; }
-.claim .eyebrow { margin-bottom: 14px; }
-.claim h2 { font-size: clamp(30px, 3.6vw, 46px); line-height: 1.1; letter-spacing: var(--track-display); max-width: 18ch; }
-.claim .lede { margin-top: 18px; font-size: 18px; }
-.claim ul.plain { margin-top: 22px; max-width: 52ch; }
-.claim ul.plain li { padding: 10px 0 10px 26px; position: relative; font-size: 15px; }
-.claim ul.plain li::before { content: ""; position: absolute; left: 0; top: 19px; width: 12px; height: 2px; background: var(--mint); }
-.claim ul.plain b { display: inline; }
-.claim .more { margin-top: 18px; font-family: var(--sans); font-size: 14px; font-weight: 600; }
-.claim .more a { text-decoration: none; display: inline-flex; align-items: center; min-height: 28px; gap: 6px; }
-.claim .more a:hover { text-decoration: underline; }
-
-/* A feature: the claim beside its picture, sides alternating. */
-.feature-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; align-items: center; }
-.feature.flip .feature-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
-.feature.flip .feature-grid > .claim { order: 2; }
-.feature .visual { min-width: 0; display: grid; gap: 10px; }
-.feature .chapter-live { height: 580px; border-radius: var(--radius); box-shadow: 0 0 0 1px var(--rule), 0 18px 40px -30px rgba(0, 23, 105, 0.35); }
-/* A picture is one lens with no chrome: a calendar wants a month's height, a matrix a third of it. */
-.feature .chapter-live.picture { height: 440px; }
-.feature .chapter-live.picture.short { height: 250px; }
-.feature .chapter-live.picture + .stage-caption { margin-bottom: 28px; }
-.shot { margin: 0; display: grid; gap: 10px; }
-.shot img { display: block; width: 100%; height: auto; border-radius: var(--radius); border: 1px solid var(--rule); box-shadow: 0 18px 40px -30px rgba(0, 23, 105, 0.35); background: var(--sunk); }
-.shot .light, .shot .dark { display: none; }
-:root[data-theme="light"] .shot .light { display: block; }
-:root[data-theme="dark"] .shot .dark { display: block; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .shot .dark { display: block; } }
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .shot .light { display: block; } }
-.shot figcaption, .feature .visual .stage-caption { font-family: var(--sans); font-size: 12.5px; color: var(--ink-3); }
-.two-shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-@media (max-width: 1000px) {
-  .feature-grid, .feature.flip .feature-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
-  .feature.flip .feature-grid > .claim { order: 0; }
-  .feature .chapter-live { height: 480px; }
-}
-@media (max-width: 560px) { .feature .chapter-live { height: 420px; } .two-shots { grid-template-columns: minmax(0, 1fr); } }
-
-/* How it works: three steps across. */
-.steps-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 40px; }
-.step3 { display: grid; gap: 10px; align-content: start; padding: 26px 24px 28px; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--panel); min-width: 0; position: relative; }
-.step3 .n { font-family: var(--sans); font-size: 34px; line-height: 1; color: var(--pine); }
-.step3 h3 { font-size: 20px; }
-.step3 p { font-size: 14.5px; line-height: 1.65; color: var(--ink-2); }
-.step3 .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-.step3 .tags span { font-family: var(--sans); font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: var(--radius-sm); background: var(--sunk); color: var(--ink-2); }
-@media (max-width: 900px) { .steps-3 { grid-template-columns: minmax(0, 1fr); } }
-
-/* Use cases. */
-.case-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-top: 36px; }
-.case { display: grid; gap: 8px; align-content: start; padding: 22px 22px 24px; border-top: 3px solid var(--pine); background: var(--panel); border-radius: 0 0 var(--radius) var(--radius); min-width: 0; }
-.case .kind { font-family: var(--sans); font-weight: var(--w-label); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
-.case h3 { font-size: 19px; }
-.case p { font-size: 14.5px; line-height: 1.62; color: var(--ink-2); }
-.case .gave { font-size: 13px; color: var(--ink-3); padding-top: 10px; border-top: 1px solid var(--rule-2); margin-top: 4px; }
-.case .gave b { color: var(--ink-2); font-weight: 600; }
-
-/* The proof strip: four short claims across. */
-.proof { margin: 32px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 20px 28px; }
-.proof li { font-size: 14.5px; line-height: 1.6; color: var(--ink-2); padding-top: 14px; border-top: 1px solid var(--rule); min-width: 0; }
-.proof li strong { display: block; color: var(--ink); margin-bottom: 3px; font-family: var(--sans); font-size: 15px; }
-
-/* The closing: one wide invitation. */
-.closing-box { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 36px; align-items: center; padding: 44px 46px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--rule); }
-.closing-box h2 { font-size: clamp(28px, 3.2vw, 40px); letter-spacing: var(--track-display); max-width: 16ch; }
-.closing-box .lede { margin-top: 14px; font-size: 17px; }
-.closing-box .cta { margin-top: 0; }
-@media (max-width: 900px) { .closing-box { grid-template-columns: minmax(0, 1fr); padding: 30px 24px; } }
-
-/* The stepper, without the code. */
-.grow .step-two { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); }
-.grow .step-two .chapter-live { height: 520px; border-radius: var(--radius); }
-.grow .step-adds ul { list-style: none; padding: 0; font-size: 14.5px; }
-.grow .step-adds li { position: relative; padding-left: 20px; margin-top: 8px; color: var(--ink-2); }
-.grow .step-adds li::before { content: ""; position: absolute; left: 0; top: 11px; width: 10px; height: 2px; background: var(--mint); }
-@media (max-width: 820px) { .grow .step-two { grid-template-columns: minmax(0, 1fr); } .grow .step-two .chapter-live { height: 440px; } }
-
-/* ── Two ways in ──────────────────────────────────────────────────────
-   Graview is the framework; Graview Cloud is the hosted product built on
-   it, under the same symbol. The page offers both doors without turning
-   the second into an advertisement: in the hero, a line the same weight as
-   the install line beside it; further down, two columns under one rule
-   each, the way the design kit draws the brand's architecture — no cards,
-   no badges, the lockups doing the naming.
-   ─────────────────────────────────────────────────────────────────── */
-
-.way-in { display: grid; gap: 8px; }
-.way-in + .way-in { margin-top: 14px; }
-.way-label {
-  margin: 0; font-family: var(--sans); font-weight: var(--w-label); font-size: 11.5px;
-  letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);
-}
-/* The hosted door, as tall and as quiet as the install line above it. */
-.cloud-line {
-  display: flex; align-items: center; gap: 14px;
-  padding: 12px 16px; border: 1px solid var(--rule); border-radius: var(--radius-sm);
-  background: var(--panel); color: var(--ink-2); text-decoration: none;
-  font-size: 14.5px; line-height: 1.5;
-}
-.cloud-line strong { color: var(--pine); }
-.cloud-line .arr { margin-left: auto; color: var(--pine); flex: 0 0 auto; font-size: 17px; }
-.cloud-line:hover { border-color: var(--pine); color: var(--ink); }
-.hero .cta-sub { margin-top: 2px; }
-
-.ways-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px clamp(28px, 4vw, 64px); margin-top: 40px; }
-.way { display: grid; gap: 14px; align-content: start; min-width: 0; padding-top: 18px; border-top: 2px solid var(--pine); }
-.way-for {
-  margin: 0; font-family: var(--sans); font-weight: var(--w-label); font-size: 11.5px;
-  letter-spacing: 0.08em; text-transform: uppercase; color: var(--pine);
-}
-/* The kit's outlined lockups, inline so they take the page's ink. The Cloud
-   lockup is 291px wide here, over the kit's 220px minimum, and gives way to
-   the column before it would ever scroll; the clear space the kit asks for,
-   half the symbol's height, is the margin above and below. */
-.way-mark { margin: 6px 0; line-height: 0; }
-.way-mark svg { display: block; height: auto; max-width: 100%; color: var(--logo); --point: var(--mint); }
-.way-mark .gv { width: 188px; }
-.way-mark .gvc { width: 291px; }
-.way-mark a { display: inline-block; padding: 6px; margin: -6px; border-radius: var(--radius-sm); }
-.way-line { margin: 0; font-family: var(--sans); font-size: clamp(22px, 2.2vw, 28px); font-weight: var(--w-display); letter-spacing: var(--track-display); line-height: 1.2; color: var(--ink); }
-.way > p:not([class]) { font-size: 15.5px; line-height: 1.68; color: var(--ink-2); max-width: 52ch; }
-.way ul.plain { margin-top: 4px; max-width: 52ch; }
-.way ul.plain li { padding: 10px 0 10px 26px; position: relative; font-size: 14.5px; }
-.way ul.plain li::before { content: ""; position: absolute; left: 0; top: 19px; width: 12px; height: 2px; background: var(--mint); }
-.way .more { margin: 4px 0 0; font-family: var(--sans); font-size: 14px; font-weight: 600; }
-.way .more a { text-decoration: none; display: inline-flex; align-items: center; min-height: 28px; gap: 6px; }
-.way .more a:hover { text-decoration: underline; }
-.ways-note { margin-top: 28px; max-width: 72ch; }
-@media (max-width: 900px) { .ways-grid { grid-template-columns: minmax(0, 1fr); gap: 44px; } }
-@media (max-width: 420px) { .cloud-line { font-size: 14px; padding: 12px 14px; } }
-@media (forced-colors: active) {
-  .way { border-top-color: CanvasText; }
-  .cloud-line { border-color: LinkText; }
-}
-/* site-css:end */
-</style>
 </body>
 </html>

@@ -1,3 +1,19 @@
+# graview.dev — written by scripts/site-docs.mjs. Every page is for reading.
 User-agent: *
 Allow: /
+
+# Answer engines and AI crawlers, named so that no default elsewhere shuts them out.
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: PerplexityBot
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: CCBot
+Allow: /
+
 Sitemap: https://graview.dev/sitemap.xml
+# For language models: https://graview.dev/llms.txt (an index) and https://graview.dev/llms-full.txt (every docs page in full).

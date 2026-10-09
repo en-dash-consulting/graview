@@ -40,7 +40,7 @@
   "devDependencies": {
     "zod": "^4.6.5"
   },
-  "description": "The primitive set, the three lenses, the workbench and the visual system.",
+  "description": "The primitive set, the lenses, the workbench and the visual system.",
   "keywords": [
     "graview",
     "context-graph",

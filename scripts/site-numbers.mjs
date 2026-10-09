@@ -102,34 +102,70 @@ function tested() {
   return found;
 }
 
-const PAGE = "docs/site/index.html";
-const checking = process.argv.includes("--check");
-const counts = countOf();
-const html = readFileSync(at(PAGE), "utf8");
-const wrong = [];
+/**
+ * A COUNT IN A SENTENCE IS STILL A COUNT. The strip under the hero carried
+ * `data-number` and stayed right; the prose beside it said "Five ship with
+ * it" a lens later and "Fourteen skills" a skill later, because nothing
+ * filled it in. So a number spelled out in prose carries
+ * `data-number-word` and is written here too, keeping the capital it was
+ * given at the start of a sentence.
+ */
+const ONES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+export function spelled(n) {
+  if (n < 20) return ONES[n];
+  if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? `-${ONES[n % 10]}` : "");
+  return String(n);
+}
+const capital = (word, like) => (/^[A-Z]/.test(like) ? word[0].toUpperCase() + word.slice(1) : word);
 
-const next = html.replace(
-  /(<strong data-number="([a-z]+)">)([^<]*)(<\/strong>)/g,
-  (whole, open, name, said, close) => {
-    const found = counts[name];
-    if (found === null || found === undefined) return whole;
-    if (String(found) !== said) wrong.push(`${name}: the page says ${said}, the repository says ${found}`);
-    return `${open}${found}${close}`;
-  },
-);
+/** The pages that carry counts: the landing page, and the long version. */
+export const PAGES = ["docs/site/index.html", "docs/site/progression.html"];
 
-if (checking) {
-  if (wrong.length > 0) {
-    process.stderr.write(`${PAGE} has numbers the repository disagrees with — run \`pnpm site:numbers\`.\n`);
-    for (const line of wrong) process.stderr.write(`  ${line}\n`);
-    process.exit(1);
+/** Fill every marked count on a page; `wrong` collects what disagreed. */
+export function fill(html, counts, wrong = []) {
+  return html
+    .replace(/(<(strong|span) data-number="([a-zA-Z]+)">)([^<]*)(<\/\2>)/g, (whole, open, _tag, name, said, close) => {
+      const found = counts[name];
+      if (found === null || found === undefined) return whole;
+      if (String(found) !== said) wrong.push(`${name}: the page says ${said}, the repository says ${found}`);
+      return `${open}${found}${close}`;
+    })
+    .replace(/(<span data-number-word="([a-zA-Z]+)">)([^<]*)(<\/span>)/g, (whole, open, name, said, close) => {
+      const found = counts[name];
+      if (found === null || found === undefined) return whole;
+      const word = capital(spelled(found), said);
+      if (word !== said) wrong.push(`${name}: the page says "${said}", the repository says ${found}`);
+      return `${open}${word}${close}`;
+    });
+}
+
+const main = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (main) {
+  const checking = process.argv.includes("--check");
+  const counts = countOf();
+  let stale = 0;
+  for (const page of PAGES) {
+    const html = readFileSync(at(page), "utf8");
+    const wrong = [];
+    const next = fill(html, counts, wrong);
+    if (checking) {
+      if (wrong.length > 0) {
+        process.stderr.write(`${page} has numbers the repository disagrees with — run \`pnpm site:numbers\`.\n`);
+        for (const line of wrong) process.stderr.write(`  ${line}\n`);
+        stale += 1;
+      }
+    } else {
+      if (next !== html) writeFileSync(at(page), next);
+      process.stdout.write(
+        wrong.length === 0
+          ? `every number on ${page} was already right\n`
+          : `corrected ${wrong.length} on ${page}: ${wrong.join("; ")}\n`,
+      );
+    }
   }
-  process.stdout.write(`every number on the page is the repository's own\n`);
-} else {
-  writeFileSync(at(PAGE), next);
-  process.stdout.write(
-    wrong.length === 0
-      ? `every number on the page was already right\n`
-      : `corrected ${wrong.length}: ${wrong.join("; ")}\n`,
-  );
+  if (checking) {
+    if (stale > 0) process.exit(1);
+    process.stdout.write(`every number on the pages is the repository's own\n`);
+  }
 }

@@ -1,0 +1,77 @@
+# Graview
+
+> Graview is an agent-native TypeScript framework and visual language for apps built as isometric scenes, made by En Dash for apps that people and AI agents work in together. A product declares its domain once — the kinds of thing, their fields and relations, the acts that change them, the rules they must keep and who may do what — and Graview derives an isometric scene, a routed web app, the permissions, a checker and a typed tool for every act from that one declaration. Graview Cloud (https://graview.cloud) is the hosted product built on it.
+
+- Start a product: `npm create graview@latest my-app` (Node 22 or later)
+- License: Elastic License 2.0 — source-available, free to build with and to ship products on
+- Source: https://github.com/en-dash-consulting/graview
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.18)
+- Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
+
+Every page below is also a web page (drop the `.md` for the `.html`); [llms-full.txt](https://graview.dev/llms-full.txt) is all of them in one file.
+
+## Start here
+
+- [Getting started](https://graview.dev/docs/getting-started.md): From nothing to a running product on Graview, and the loop from there: declare, check, look, declare more.
+- [Concepts](https://graview.dev/docs/concepts.md): The ideas behind a Graview app: one declaration, and the seven things in it — kinds and edges, acts, rules that repair, lenses, who may do what, and the seat for a model.
+- [Working with a model](https://graview.dev/docs/agents.md): The declaration is the interface a person uses and the interface a model uses. What a model gets, how it is narrowed, and what it reads before it writes.
+- [The CLI](https://graview.dev/docs/cli.md): graview create, check, docs, describe, lens, figure, serve and skills — what each reads and what each says.
+- [What check says](https://graview.dev/docs/checks.md): Every one of the 89 things graview check can tell you, and how loudly.
+- [Stability](https://graview.dev/docs/stability.md): What a Graview version may change on the five surfaces a host holds it to — ops, stored formats, the wire, the declaration and the tool names — and how a host reads what a build ships.
+- [Documentation](https://graview.dev/docs/index.md): Graview's documentation: the concepts, the packages, the skills, the CLI and everything the checker can say.
+
+## Packages
+
+- [Packages](https://graview.dev/docs/packages.md): The 14 packages Graview ships, what each is for, and what each exports.
+- [@graview/core](https://graview.dev/docs/packages/core.md): The graph, the log, the schema and the checker. Everything a Graview app declares, and the CLI that verifies it.
+- [create-graview](https://graview.dev/docs/packages/create-graview.md): Start a product on Graview: `npm create graview my-app`. The conventional door to `graview create`.
+- [@graview/embed](https://graview.dev/docs/packages/embed.md): Mount a declared Graview app into any element — the scene, the Graview, or the routed pages — without the Shell, sized and themed within the element.
+- [graview](https://graview.dev/docs/packages/graview.md): The Graview command line: start a product, check its declaration, write its agent docs, serve its store, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.
+- [@graview/guest](https://graview.dev/docs/packages/guest.md): Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.
+- [@graview/layout](https://graview.dev/docs/packages/layout.md): Where every node goes: three planes, one pure function of the graph and the view state.
+- [@graview/pages](https://graview.dev/docs/packages/pages.md): The traditional face: a routed webapp derived from the same declaration that drives the scene.
+- [@graview/primitives](https://graview.dev/docs/packages/primitives.md): The primitive set, the lenses, the workbench and the visual system.
+- [@graview/react](https://graview.dev/docs/packages/react.md): The React binding: a provider, a scene, and the hooks an app builds on.
+- [@graview/render](https://graview.dev/docs/packages/render.md): The spatial renderer. The DOM path is what ships; the GPU capture path is EXPERIMENTAL — see README.
+- [@graview/ship](https://graview.dev/docs/packages/ship.md): What every deployment needs, hosted or self-hosted: persistence wiring, op-log-native migrations, export, health.
+- [@graview/skills](https://graview.dev/docs/packages/skills.md): Skills that teach an assistant the authoring moves, each ending in a real graview check verdict.
+- [@graview/studio](https://graview.dev/docs/packages/studio.md): The declaration itself as a graph: kinds, fields, edges, acts, rules, roles and grants as nodes, edited with ordinary mutations in Graview's own interface, checked before they are applied, migrated, and written back as the files graview create writes.
+- [@graview/tools](https://graview.dev/docs/packages/tools.md): Derived affordances and the agent tool surface, generated from the same declarations; graview mcp and graview apply host it against a real store.
+
+## Skills
+
+- [Skills](https://graview.dev/docs/skills.md): The 15 skills that teach an assistant the authoring moves, each ending in a real check.
+- [graview-agent-seat](https://graview.dev/docs/skills/graview-agent-seat.md): Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
+- [graview-brand](https://graview.dev/docs/skills/graview-brand.md): Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
+- [graview-desk](https://graview.dev/docs/skills/graview-desk.md): Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
+- [graview-embed](https://graview.dev/docs/skills/graview-embed.md): Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
+- [graview-invariant](https://graview.dev/docs/skills/graview-invariant.md): Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
+- [graview-lens](https://graview.dev/docs/skills/graview-lens.md): Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
+- [graview-new-app](https://graview.dev/docs/skills/graview-new-app.md): Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
+- [graview-node-kind](https://graview.dev/docs/skills/graview-node-kind.md): Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
+- [graview-pages](https://graview.dev/docs/skills/graview-pages.md): Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.
+- [graview-permissions](https://graview.dev/docs/skills/graview-permissions.md): Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
+- [graview-port-app](https://graview.dev/docs/skills/graview-port-app.md): Port an existing application onto Graview — deciding what is a node, what is a field and what is an edge — and proving the port with a parity test rather than an assertion.
+- [graview-seed](https://graview.dev/docs/skills/graview-seed.md): Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
+- [graview-ship](https://graview.dev/docs/skills/graview-ship.md): Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.
+- [graview-studio](https://graview.dev/docs/skills/graview-studio.md): Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
+- [graview-worker-view](https://graview.dev/docs/skills/graview-worker-view.md): Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
+
+## Examples
+
+- [Live demos](https://graview.dev/docs/demos.md): The example garden's surfaces, running on this page, and the example apps in the repository.
+- [The garden, grown](https://graview.dev/progression.html): One Graview example, a garden, declared a little at a time: every chapter live on the page, the declaration in full, the packages, the lenses, the kit and what an agent may do.
+- [apps/discography](https://github.com/en-dash-consulting/graview/tree/main/apps/discography): The example at real size: Tech N9ne's discography from MusicBrainz — 1,177 songs, 568 artists, 479 releases.
+- [apps/gauntlet](https://github.com/en-dash-consulting/graview/tree/main/apps/gauntlet): The example built to be awkward: ten years of a conference's program, with every shape of data the walks found by accident declared on purpose.
+- [apps/rota](https://github.com/en-dash-consulting/graview/tree/main/apps/rota): The product-grade example: a volunteer shift roster, branded, permissioned, remembered, embedded and open in its own studio.
+- [apps/seedbed](https://github.com/en-dash-consulting/graview/tree/main/apps/seedbed): A community garden, and the chapters the docs teach from. It opens on the example garden; Start empty gives the blank graph, where onboarding is filling it in.
+- [apps/todo](https://github.com/en-dash-consulting/graview/tree/main/apps/todo): The example. A todo list, because nobody has to be taught what one is.
+
+## Graview Cloud
+
+- [Graview Cloud](https://graview.cloud): Graview Cloud is the hosted product built on Graview, from En Dash, in private alpha and invite-only at [graview.cloud](https://graview.cloud/). You say what you are organizing in ChatGPT or Claude, or start from a template, and it becomes an app at its own address for the people you invite. An app and its whole history export as one file that opens in the framework on your own machine.
+
+## Optional
+
+- [Questions, answered plainly](https://graview.dev/#faq): What is Graview? How is Graview different from other app frameworks? What license is Graview under? How do I start a Graview app? How do AI agents use a Graview app? What is Graview Cloud?
+- [llms-full.txt](https://graview.dev/llms-full.txt): every docs page above, in full, as Markdown

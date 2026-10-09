@@ -52,7 +52,14 @@ describe("the site says what the repository says", () => {
   });
 
   it("has docs pages that match the packages, skills and findings in the tree", () => {
+    /* And their Markdown twins, llms.txt, llms-full.txt, robots.txt, the
+       sitemap and the landing pages' structured data, all written by the
+       same run: tests/site-for-machines.test.ts holds what they promise. */
     expect(run("site-docs.mjs")).toBeNull();
+  });
+
+  it("draws the hero's first frame from the chapter the hero mounts", () => {
+    expect(run("site-poster.mjs")).toBeNull();
   });
 });
 
