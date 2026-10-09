@@ -1097,7 +1097,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
 <li><strong>Expect the refusal path to be real.</strong> No single color can be accent TEXT in both schemes — 4.5:1 on white needs a lightness under about 0.18 and 4.5:1 on a dark panel needs one over about 0.24, and those do not overlap. So <code>brandFromAccent</code> keeps the hue and saturation, which are the brand's, and moves the lightness the smallest distance that clears AA. When that distance is far enough that the color has stopped being theirs, it refuses and names what to supply. <strong>Do not catch that and carry on with a guess</strong> — shipping a color they did not choose under their own name is worse than asking.</li>
 </ol>
 <ol>
-<li><strong>Hand it to <code>themeCss</code> and to the provider.</strong> <code>sheet.replaceSync(themeCss(scheme, brand))</code> for the tokens; <code>&lt;GraviewProvider brand={brand}&gt;</code> so <code>Wordmark</code> and anything else that asks can read the name and the mark.</li>
+<li><strong>Hand it to <code>themeCss</code> and to the provider.</strong> <code>sheet.replaceSync(themeCss(scheme, brand))</code> for the tokens; <code>&lt;GraviewProvider brand={brand}&gt;</code> so the app bar and anything else that asks can read the name and the mark.</li>
 </ol>
 <ol>
 <li><strong>Declare it on the app too:</strong> <code>defineApp({ ..., brand })</code>.</li>

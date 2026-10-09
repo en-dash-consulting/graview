@@ -77,17 +77,18 @@ drag a UI package into the checker.
      say "+N past".
    - `subject: { kinds, arg }` on every mutation that acts on a thing.
 
-5. **Take the shell.** `Shell` — or `AppBar`, `Inspector`, `Standing`,
-   `ActivityRail`, `ChatPanel`, `QuickRelations`, `RelationKey`, `BackOut`,
-   `Trail` and `OverviewButton` from `@graview/primitives` — are the parts of an interface that
-   are not about your domain — including a chat seat that answers from the
-   graph with no API key. A shell is about eighty lines; if yours is longer,
-   you are probably rebuilding something derived.
+5. **Take the shell.** `Shell` from `@graview/primitives` is everything
+   not about your domain: the one app bar an embed wears too (the name, the
+   Scene and Pages switch, the scene's pictures, Find, Activity, the
+   standing, the person), the scene, its key, the ask field — a seat that
+   answers from the graph with no API key — and the acts at the pointer.
+   Its parts (`AppBar`, `Inspector`, `Standing`, `ActivityRail`, `Trail`,
+   `OverviewButton`) are exported for a shell of your own; one is about
+   eighty lines, and a longer one is probably rebuilding something derived.
 
-   Search comes with `Shell`: its `FindBox` answers `/` or ⌘K from
-   anywhere, lights what the words find in whatever picture is open and
-   dims the rest, and `#q=` makes a search a stop Back returns to. A shell
-   of your own puts `<FindBox />` in its bar; nothing is declared per kind.
+   Search comes with `Shell`: Find answers `/` or ⌘K from anywhere, lights
+   what the words find in whatever picture is open and dims the rest, and
+   `#q=` makes a search a stop Back returns to. Nothing is declared per kind.
 
    The routed face is one branch in `main.tsx`: when the path starts with
    `/pages`, render `<PagesApp basename="/pages" context={{ store, brand,
