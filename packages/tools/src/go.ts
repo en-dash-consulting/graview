@@ -626,7 +626,7 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
 }
 
 /** Finished, read by the words a status or a yes/no usually uses for it. */
-const FINISHED = new Set(["done", "finished", "complete", "completed", "closed", "resolved", "agreed", "cancelled", "canceled", "archived", "shipped", "delivered"]);
+const FINISHED = new Set(["done", "finished", "complete", "completed", "closed", "resolved", "agreed", "canceled", "archived", "shipped", "delivered"]);
 /** Words that ask for what is not finished. */
 const OPEN_WORDS = new Set(["open", "unfinished", "outstanding", "pending", "remaining", "undone", "incomplete"]);
 

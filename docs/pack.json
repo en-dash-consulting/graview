@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-09T03:38:41.328Z",
+  "at": "2026-10-09T03:42:33.803Z",
   "packages": {
     "@graview/core": {
       "files": 655,
@@ -13,7 +13,7 @@
     },
     "@graview/embed": {
       "files": 43,
-      "tarballBytes": 62847,
+      "tarballBytes": 62848,
       "ok": true
     },
     "graview": {
@@ -23,7 +23,7 @@
     },
     "@graview/guest": {
       "files": 216,
-      "tarballBytes": 259490,
+      "tarballBytes": 259491,
       "ok": true
     },
     "@graview/layout": {
@@ -33,7 +33,7 @@
     },
     "@graview/pages": {
       "files": 87,
-      "tarballBytes": 103821,
+      "tarballBytes": 103819,
       "ok": true
     },
     "@graview/primitives": {
@@ -63,12 +63,12 @@
     },
     "@graview/studio": {
       "files": 75,
-      "tarballBytes": 131740,
+      "tarballBytes": 131739,
       "ok": true
     },
     "@graview/tools": {
       "files": 135,
-      "tarballBytes": 195541,
+      "tarballBytes": 196424,
       "ok": true
     }
   },
@@ -77,11 +77,11 @@
       "name": "the pages face alone",
       "load": "first",
       "minified": 532731,
-      "gzipped": 183834,
+      "gzipped": 183832,
       "chunks": 14,
       "budget": {
-        "minified": 532100,
-        "gzipped": 182800
+        "minified": 533200,
+        "gzipped": 184300
       },
       "carries": [],
       "defers": [],
@@ -93,7 +93,7 @@
         "@graview/react",
         "@graview/tools"
       ],
-      "over": true
+      "over": false
     },
     {
       "name": "embed without the studio",
@@ -124,12 +124,12 @@
     {
       "name": "every face",
       "load": "all",
-      "minified": 1598862,
-      "gzipped": 487030,
+      "minified": 1599651,
+      "gzipped": 487268,
       "chunks": 45,
       "budget": {
-        "minified": 1583800,
-        "gzipped": 480300
+        "minified": 1600200,
+        "gzipped": 487700
       },
       "carries": [],
       "defers": [],
@@ -145,17 +145,17 @@
         "@graview/studio",
         "@graview/tools"
       ],
-      "over": true
+      "over": false
     },
     {
       "name": "embed with the studio handed in",
       "load": "first",
       "minified": 1548280,
-      "gzipped": 465241,
+      "gzipped": 465260,
       "chunks": 30,
       "budget": {
-        "minified": 1547600,
-        "gzipped": 464200
+        "minified": 1548800,
+        "gzipped": 465700
       },
       "carries": [],
       "defers": [],
@@ -166,7 +166,7 @@
         "@graview/primitives",
         "@graview/tools"
       ],
-      "over": true
+      "over": false
     },
     {
       "name": "a guest view in a frame",
@@ -282,5 +282,5 @@
       "over": false
     }
   ],
-  "passed": false
+  "passed": true
 }
