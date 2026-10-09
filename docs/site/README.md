@@ -34,7 +34,9 @@ example garden live in the hero; how it works in three moves; one feature
 per section (the routed face, rules that repair, lenses, the seat, the
 studio, actions and permissions), each a live frame of the example opened at
 the stop that shows the claim — no photographs remain; the stepper;
-four use cases from the products built on it; and one install line. No code
+four use cases from the products built on it; the two ways in — the
+framework, or Graview Cloud, the hosted product built on it, under the same
+symbol and claiming only what graview.cloud itself says; and one install line. No code
 on it but that line. The first cut was a docs page with a headline; the
 second showed the product but argued like documentation.
 
