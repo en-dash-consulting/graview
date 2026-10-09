@@ -68,6 +68,7 @@ export function ProfilePane<S extends AnySchema>({
   hostActions,
   close,
   part,
+  signature = false,
 }: {
   readonly name: string;
   readonly me: AnyGraphNode | undefined;
@@ -78,6 +79,8 @@ export function ProfilePane<S extends AnySchema>({
   readonly close: () => void;
   /** Which part: who you are and the host's own, above the ways into the app; or the seats and the settings, below them. */
   readonly part: "top" | "rest";
+  /** A quiet "Built with Graview" at the menu's foot, when the host asks for one. */
+  readonly signature?: boolean | undefined;
 }) {
   const { principal, seats, settings, settingValues, chooseSetting, sharing } = useGraview<S>();
   const roles = principal.roles ?? [];
@@ -241,11 +244,36 @@ export function ProfilePane<S extends AnySchema>({
           </div>
           ) : null}
 
+          {/*
+            * A GRAVIEW SIGNATURE, WHEN THE HOST ASKS FOR ONE: last, small and
+            * in the faint ink, because the app leads with its own name and
+            * mark and this is secondary. The link is named "Graview" — the
+            * mark beside the word is decorative — and goes to graview.dev.
+            */}
+          {signature ? (
+            <p data-testid="graview-signature" style={{ ...ruled, margin: 0, display: "flex", alignItems: "center", gap: 6, fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
+              Built with
+              <a href="https://graview.dev" target="_blank" rel="noopener" style={{ display: "inline-flex", alignItems: "center", gap: 4, minHeight: 24, color: "var(--graview-ink-muted)", fontWeight: 600, textDecoration: "none" }}>
+                <span data-testid="graview-mark" style={{ display: "inline-flex", lineHeight: 0 }} dangerouslySetInnerHTML={{ __html: MICRO_MARK }} />
+                Graview
+              </a>
+            </p>
+          ) : null}
         </>
       )}
     </>
   );
 }
+
+/*
+ * The kit's micro cut at 14 px, decorative beside the word — exactly what
+ * `graviewSymbol({ size: 14 })` draws (a test holds them equal). Written
+ * out rather than imported: the symbol's outlines sit beside the identity
+ * a page loads up front, and importing them here took their whole kilobyte
+ * there for a line most pages never open.
+ */
+const MICRO_MARK =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="14" height="14" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M13 11 L3 8 L14 3 H29 L21 9"/><path d="M10 18 L3 23 L16.5 28 L29 21 L22 19"/><path d="M16.5 18.5 V23.5" stroke-linecap="round"/></g><circle cx="16.5" cy="13.5" r="2" fill="var(--graview-mark-point, currentColor)"/></svg>';
 
 /** A row of the host's: a full fingertip, the ink of the pane, the accent when the keyboard is on it. */
 const hostRow = {

@@ -2,7 +2,7 @@ import { themeCss, type Scheme } from "@graview/primitives";
 import { applySettings } from "@graview/react";
 import { createRoot } from "react-dom/client";
 import { PagesApp } from "@graview/pages";
-import type { HostAi } from "@graview/tools";
+import { aiThroughDevServer, type HostAi } from "@graview/tools";
 import { open } from "./open.js";
 import { todoApp } from "./domain/app.js";
 import { thingsBrand } from "./domain/brand.js";
@@ -77,7 +77,13 @@ const { opened, principal, remembers, presence } = await open();
  * Cloud passes its own — and a reader is never asked which. The harnesses
  * hand this example one the same way, before it loads.
  */
-const ai = (window as unknown as { __todoAi?: HostAi }).__todoAi;
+/*
+ * A MODEL IN DEVELOPMENT. Started with `ANTHROPIC_API_KEY=… pnpm dev`, the
+ * dev server lends the seat one through its door (`aiDevProxy`), holding
+ * the key itself; without a key the seat says how to turn it on. Only in a
+ * dev build: a built page asks no door and says what any product says.
+ */
+const ai = (window as unknown as { __todoAi?: HostAi }).__todoAi ?? ((import.meta as { env?: { DEV?: boolean } }).env?.DEV ? await aiThroughDevServer() : undefined);
 
 /*
  * TWO FACES, ONE DECLARATION. The scene owns "/" (and the hash, which is
@@ -92,6 +98,7 @@ if (window.location.pathname.startsWith("/pages")) {
       context={{
         store: opened.store,
         brand: thingsBrand,
+        signature: true,
         sceneHref: "/",
         invariantContext: { today: today() },
         /*

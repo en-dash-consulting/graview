@@ -54,6 +54,14 @@
  *   nothingWritesButDeclaredActs
  *                           drawing, changing, failing and discarding a
  *                           draft adds nothing to the op log
+ *   whoIsWorkingIsTheGraphsToAnswer
+ *                           on rota, pinned to Monday 14 September 2026,
+ *                           "who's working thursday" is answered with no
+ *                           model: "On Thursday 17 Sep: Ada Nowak is
+ *                           working.", her name a press, no "Answered with
+ *                           AI" under it, nothing asked of any server but
+ *                           the page's own; and the app goes to Thursday's
+ *                           shifts
  *
  *   node scripts/verify-seat-goes-and-draws.mjs [--engine=chromium|webkit|firefox] [--quick]
  */
@@ -298,6 +306,7 @@ let checker;
 try {
   servers.push(await serving("todo", portFor("todo"), repoRoot));
   servers.push(await serving("seedbed", portFor("seedbed"), repoRoot));
+  servers.push(await serving("rota", portFor("rota"), repoRoot));
   host = await buildHost().catch((error) => {
     report.hostError = String(error).split("\n")[0].slice(0, 200);
     return null;
@@ -340,6 +349,36 @@ try {
           await page.close();
         } catch (error) {
           note("landsWhereAsked", { at: label, why: String(error).split("\n")[0].slice(0, 160), ok: false });
+        }
+
+        /* Who is working on a named day: the graph's to answer, on the rota, with no model. */
+        try {
+          const page = await context.newPage();
+          page.on("pageerror", (error) => report.pageErrors.push(`${ENGINE_NOW} rota ${label}: ${String(error).slice(0, 200)}`));
+          const left = watchRequests(page);
+          const rota = face === "scene" ? `${at("rota")}/` : `${at("rota")}/pages/`;
+          await visit(page, `${rota}?today=2026-09-14&fresh=1`, face === "scene" ? () => "__rotaReady" in window : undefined);
+          const said = await ask(page, "who's working thursday");
+          const turn = await page.evaluate(() => {
+            const li = [...document.querySelectorAll('[data-testid="seat-panel"] ol > li')].at(-1);
+            return {
+              picks: [...(li?.querySelectorAll("[data-chat-pick]") ?? [])].map((press) => press.textContent?.trim()),
+              withAi: Boolean(li?.querySelector('[data-testid="seat-answered-with-ai"]')),
+            };
+          });
+          const now = await where(page);
+          const thursday = `${decodeURIComponent(now.search)}${now.hash}`.includes("on:after:2026-09-16");
+          note("whoIsWorkingIsTheGraphsToAnswer", {
+            at: `rota ${label}`,
+            said: said?.slice(0, 120) ?? null,
+            ...turn,
+            landed: `${now.path}${now.search}${now.hash}`.slice(0, 160),
+            left: [...new Set(left)],
+            ok: typeof said === "string" && said.startsWith("On Thursday 17 Sep: Ada Nowak is working.") && turn.picks.includes("Ada Nowak") && !turn.withAi && left.length === 0 && thursday,
+          });
+          await page.close();
+        } catch (error) {
+          note("whoIsWorkingIsTheGraphsToAnswer", { at: `rota ${label}`, why: String(error).split("\n")[0].slice(0, 160), ok: false });
         }
 
         /* The todo design's pages under the one bar: what the embed's pages face wears, at the app's own address. */

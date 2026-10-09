@@ -50,6 +50,8 @@ export async function serving(app, port, repoRoot) {
   // The port asked for, said to vite: a harness on a moved port base must not land on the config's.
   const child = spawn("npx", ["vite", "--port", String(port), "--strictPort"], {
     cwd: resolve(repoRoot, "apps", app),
+    // No model key: what a harness sees must not depend on a model's answer (the seat says how to turn one on instead).
+    env: { ...process.env, ANTHROPIC_API_KEY: "" },
     stdio: ["ignore", "pipe", "pipe"],
     detached: true,
   });

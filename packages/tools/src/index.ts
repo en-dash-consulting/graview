@@ -75,6 +75,7 @@ export type { LocalStatus } from "./local.js";
 // The AI the host gave a seat: decided once, in code, never chosen by a reader.
 export { aiTalks, aiVia, ANSWERED_WITH_AI, NO_AI, NO_AI_SAID } from "./ai.js";
 export type { HostAi } from "./ai.js";
+export { aiThroughDevServer } from "./dev-ai.js";
 export { completionDecide, graphDecide } from "./decide.js";
 export type { PartlyDecided } from "./decide.js";
 export { drawFigure, FIGURE_STYLE, nearestFigure, onlyTheSvg } from "./figure.js";

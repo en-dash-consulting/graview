@@ -84,7 +84,8 @@ const note = (claim, one) => (cases[claim] ??= []).push({ engine: ENGINE_NOW, ..
 /* What offered a choice of what answers, and the words it offered: none of it is ever shown now. */
 const RUNG_WORDS = "graph-native|Graph only|Onboard AI|\\bJev\\b|\\bLLM\\b|on this device|with my key|What answers|Answers come from|Answering now";
 const CHOOSERS = ["seat-settings", "seat-source", "seat-ladder", "setting-intelligence", "seat-offer-model"];
-const NO_AI = "I can answer about what's in this app. Open questions need AI, which isn't on here.";
+/** An open question with no model: said plainly, or — on a dev server holding no key — with how to turn one on. */
+const NO_AI = /I can answer about what's in this app\. Open questions need AI(?:, which isn't on here\.|\. Set ANTHROPIC_API_KEY when you start the dev server to turn it on\.)/;
 
 /** Whatever on the page offers a choice of what answers, and any rung's name it shows or says. */
 const choosers = (page) =>
@@ -366,7 +367,7 @@ try {
             const last = [...document.querySelectorAll('[data-testid="seat-panel"] ol > li')].at(-1);
             return { reply: (last?.textContent ?? "").slice(0, 160), note: Boolean(last?.querySelector('[data-testid="seat-answered-with-ai"]')) };
           });
-          note("withoutAiAnOpenQuestionIsToldSo", { at: label, ...told, ok: told.reply.includes(NO_AI) && !told.note && !new RegExp(RUNG_WORDS).test(told.reply) });
+          note("withoutAiAnOpenQuestionIsToldSo", { at: label, ...told, ok: NO_AI.test(told.reply) && !told.note && !new RegExp(RUNG_WORDS).test(told.reply) });
           /* And the person's menu offers no choice of it either. */
           await page.keyboard.press("Escape");
           if (size === "desk") {

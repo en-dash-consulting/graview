@@ -300,7 +300,7 @@ export function seatResponder<S extends AnySchema>(
     return async (store, text, context) => {
       const known = await floor(store, text, context);
       // Said alone: the graph's description of its own shape was not what was asked.
-      return known.unsure ? { ...known, say: NO_AI_SAID } : known;
+      return known.unsure ? { ...known, say: ai.withoutModel ?? NO_AI_SAID } : known;
     };
   }
   const modeled = llmResponder<S>({ complete: talking.complete });

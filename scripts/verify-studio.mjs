@@ -637,7 +637,7 @@ try {
   }));
   report.checks.whatTheDeclarationCannotReadWithNoModelItSaysSo = {
     ...stuck,
-    ok: (stuck.said ?? "").includes("Open questions need AI, which isn't on here.") && stuck.pickers.length === 0,
+    ok: /Open questions need AI(?:, which isn't on here\.|\. Set ANTHROPIC_API_KEY)/.test(stuck.said ?? "") && stuck.pickers.length === 0,
   };
 
   /* ------------------- the host's model, driven against a real provider */

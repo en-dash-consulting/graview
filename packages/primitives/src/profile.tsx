@@ -56,6 +56,7 @@ export function Profile<S extends AnySchema>({
    */
   keeping,
   hostActions = NO_HOST_ACTIONS,
+  signature = false,
 }: {
   /**
    * The scheme, where this surface owns it. An embed wears the scheme its
@@ -69,6 +70,12 @@ export function Profile<S extends AnySchema>({
   readonly keeping?: ReactNode;
   /** The host's own ways out and about: its links, drawn under who you are (FR-72). */
   readonly hostActions?: readonly HostAction[];
+  /**
+   * A quiet "Built with Graview" at the menu's foot, linking to graview.dev.
+   * Off unless the host asks: an app leads with its own name and mark, and
+   * Graview's own examples are the ones that sign themselves.
+   */
+  readonly signature?: boolean;
 }) {
   const { store, principal, seats, people } = useGraview<S>();
   /*
@@ -225,7 +232,7 @@ export function Profile<S extends AnySchema>({
 
           {everOpened ? (
             <Suspense fallback={null}>
-              <ProfileRest part="rest"name={name} me={me} scheme={scheme} onScheme={onScheme} hostActions={hostActions} close={() => popover.setOpen(false)} />
+              <ProfileRest part="rest"name={name} me={me} scheme={scheme} onScheme={onScheme} hostActions={hostActions} signature={signature} close={() => popover.setOpen(false)} />
             </Suspense>
           ) : null}
         </section>

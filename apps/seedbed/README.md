@@ -1,18 +1,27 @@
-# Seedbed — the example that starts empty
+# Seedbed — the community garden
 
-Every other example app ships full of fixture data, so the framework's real first screen — a
-declared schema with nothing in it — had never been rendered once. Seedbed is that screen.
-It is a community garden: gardeners, plots, plantings, and one rule the garden can choose to
-hold itself to. The declaration is complete; the graph is empty on purpose. **Filling it in
-is the framework's onboarding walkthrough.**
+A community garden: gardeners, plots, plantings, the years a bed turns through, and one rule
+the garden can choose to hold itself to. It is also where the docs' chapters come from
+(`src/domain/chapters.ts`).
 
 ```sh
 pnpm --filter @graview/seedbed dev   # http://localhost:5194
 ```
 
+**It opens planted**, on the example garden — the one the chapters grow into
+(`src/domain/example.ts`), so there is something to look at and ask about. The framework's
+real first screen — a declared schema with nothing in it — is one press away:
+
+- **Start empty** (the person menu) or `?empty=1` opens the garden with nothing in it, and
+  this browser remembers that choice;
+- **Load the example garden** (the person menu), **Start fresh** or `?fresh=1` plants the
+  example again.
+
+From an empty garden, **filling it in is the framework's onboarding walkthrough**:
+
 ## The walkthrough: from nothing to a rule-checked graph
 
-1. **You land at altitude.** An empty app opens on the Graview: a city of empty districts,
+1. **You land at altitude.** An empty garden opens on the Graview: a city of empty districts,
    each kind a card saying "none yet". This is the map of what *could* exist — the shape of
    the domain before any of it does.
 

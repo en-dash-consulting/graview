@@ -29,7 +29,7 @@ packages/
   skills/          @graview/skills      the authoring skills an assistant installs into a product
 apps/
   todo/            THE EXAMPLE — the one the docs teach from
-  seedbed/         the example that starts empty, and the chapters on docs/site
+  seedbed/         the garden: opens planted (Start empty or ?empty=1 for a blank graph), and the chapters on docs/site
   rota/            a volunteer rota: the served store, the calendar, three seats
   launcher/        the desk — a Graview app whose subject is the other apps
   promo/           the promotional site
@@ -94,6 +94,7 @@ pnpm verify --quick            # fewer widths, schemes and seats where a harness
 GRAVIEW_SLOW=4 pnpm verify <name>  # every page's CPU throttled like the nightly's runner
 
 pnpm dev                       # apps/todo → http://localhost:5193
+ANTHROPIC_API_KEY=… pnpm dev   # the same, its seat lent a model by the dev server (aiDevProxy; GRAVIEW_AI_MODEL to choose; never in a build, never in a harness)
 pnpm apps                      # the desk → http://localhost:5199 (opens the others in place)
 pnpm graview -- <args>         # the CLI from this checkout
 

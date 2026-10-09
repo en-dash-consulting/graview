@@ -57,6 +57,8 @@ export default defineConfig({
       "@graview/rota": fileURLToPath(new URL("../rota/src/index.ts", import.meta.url)),
     },
   },
+  // The app's own favicons are its page's, not the docs site's: the site has its own in brand/.
+  publicDir: false,
   build: {
     lib: {
       entry: fileURLToPath(new URL("./src/site-embed.ts", import.meta.url)),

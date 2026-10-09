@@ -4,6 +4,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+  AI_BRIDGE_PATH,
   DECISION_BRIDGE_PATH,
   LOCAL_BRIDGE_PATH,
   type DecisionBridgeAnswer,
@@ -439,6 +440,157 @@ export function decisionBridge(options: DecisionBridgeOptions = {}): DevServerPl
     apply: "serve",
     configureServer(server) {
       server.middlewares.use(options.path ?? DECISION_BRIDGE_PATH, (req, res) => {
+        void handler(req, res);
+      });
+    },
+  };
+}
+
+/* ------------------------------------------------------- the model door */
+
+/**
+ * A MODEL FOR THE SEAT, IN DEVELOPMENT, with the key on this side of the door.
+ *
+ * Somebody running an example with `ANTHROPIC_API_KEY=… pnpm dev` wants to
+ * ask it open questions; a page must never hold that key. So the page posts
+ * a prompt to `/__graview/ai` and this server forwards it to the Anthropic
+ * Messages API with the key from ITS environment, answering with the text
+ * alone. GET says whether a key is there — and, when it is not, how to set
+ * one, so the seat of a dev build can say so (`aiThroughDevServer`).
+ *
+ * A DEV-SERVER plugin only (`apply: "serve"`): a build never carries it, its
+ * probe 404s on a static host, and the seat there says only what any
+ * product's says. Same-origin only, and the key is never in a response, a
+ * thrown error or a log line.
+ */
+export interface AiDevProxyOptions {
+  /** The path the door answers on. `/__graview/ai` unless said otherwise. */
+  readonly path?: string;
+  /** Where the key and the model are read from. The process environment unless a test says otherwise. */
+  readonly env?: Readonly<Record<string, string | undefined>>;
+  /** The model when `GRAVIEW_AI_MODEL` is unset. */
+  readonly model?: string;
+  /** The Messages API. Its real endpoint unless a test says otherwise. */
+  readonly endpoint?: string;
+  /** The most one answer may be, in tokens. */
+  readonly maxTokens?: number;
+  /** Injectable for tests. */
+  readonly fetch?: (
+    input: string,
+    init: { method: string; headers: Record<string, string>; body: string },
+  ) => Promise<{ status: number; text(): Promise<string> }>;
+  /** The most one request may carry, in bytes. A prompt holds the graph's shape and can be long. */
+  readonly limitBytes?: number;
+}
+
+const AI_DEFAULTS = {
+  endpoint: "https://api.anthropic.com/v1/messages",
+  model: "claude-sonnet-5-5",
+  maxTokens: 16_000,
+  limitBytes: 2_000_000,
+};
+
+/** What a dev build's seat says when the door is there and no key is set. */
+export const AI_HOW_TO = "Set ANTHROPIC_API_KEY when you start the dev server to turn it on.";
+
+/** The models a server-side fallback and a low effort may be asked of; another model gets the plain request. */
+const CURRENT = /^claude-(?:fable-5-1|opus-5-5|opus-5|sonnet-5-5)$/;
+
+/** What the Messages API answers with, as far as the door reads it. */
+interface MessagesReply {
+  readonly content?: readonly { readonly type: string; readonly text?: string }[];
+  readonly stop_reason?: string;
+  readonly error?: { readonly message?: string };
+}
+
+export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
+  const env = options.env ?? process.env;
+  const call = options.fetch ?? (globalThis.fetch as NonNullable<AiDevProxyOptions["fetch"]>);
+  const keyOf = () => {
+    const key = env["ANTHROPIC_API_KEY"];
+    return key && key.trim().length > 0 ? key.trim() : undefined;
+  };
+  const modelOf = () => env["GRAVIEW_AI_MODEL"]?.trim() || options.model || AI_DEFAULTS.model;
+  return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+    if (!fromThisApp(req)) {
+      sendJson(res, 403, { error: "The model door answers this app only." });
+      return;
+    }
+    const key = keyOf();
+    const model = modelOf();
+    if (req.method === "GET") {
+      sendJson(res, 200, key ? { configured: true, model, name: "claude" } : { configured: false, howTo: AI_HOW_TO });
+      return;
+    }
+    if (req.method !== "POST") {
+      sendJson(res, 405, { error: "GET to ask whether a model is here; POST a prompt." });
+      return;
+    }
+    if (!key) {
+      sendJson(res, 503, { error: `No model here. ${AI_HOW_TO}` });
+      return;
+    }
+    try {
+      const ask = JSON.parse(await readBody(req, options.limitBytes ?? AI_DEFAULTS.limitBytes, "prompt")) as { prompt?: unknown };
+      if (typeof ask.prompt !== "string" || ask.prompt.trim().length === 0) {
+        sendJson(res, 400, { error: "A request is { prompt }." });
+        return;
+      }
+      const current = CURRENT.test(model);
+      const upstream = await call(options.endpoint ?? AI_DEFAULTS.endpoint, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": key,
+          "anthropic-version": "2023-06-01",
+          // A request a model declines is re-run on another, server-side, rather than answered with nothing.
+          ...(current ? { "anthropic-beta": "server-side-fallback-2026-07-01" } : {}),
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: options.maxTokens ?? AI_DEFAULTS.maxTokens,
+          messages: [{ role: "user", content: ask.prompt }],
+          // A seat's answer is a few sentences: a low effort is quick and enough.
+          ...(current ? { output_config: { effort: "low" }, fallbacks: "default" } : {}),
+        }),
+      });
+      const raw = await upstream.text();
+      let reply: MessagesReply = {};
+      try {
+        reply = JSON.parse(raw) as MessagesReply;
+      } catch {
+        // Not JSON: said by its status below.
+      }
+      if (upstream.status < 200 || upstream.status >= 300) {
+        /* The provider's status is the page's; its own sentence, which never held the key. */
+        const said = upstream.status === 401 ? "The model refused the key in ANTHROPIC_API_KEY." : reply.error?.message ?? `The model answered ${upstream.status}.`;
+        sendJson(res, upstream.status, { error: said });
+        return;
+      }
+      if (reply.stop_reason === "refusal") {
+        sendJson(res, 502, { error: "The model declined to answer that." });
+        return;
+      }
+      const text = (reply.content ?? [])
+        .filter((block) => block.type === "text" && typeof block.text === "string")
+        .map((block) => block.text)
+        .join("");
+      sendJson(res, 200, { text });
+    } catch (error) {
+      const said = error instanceof Error ? error.message : String(error);
+      sendJson(res, 500, { error: said.split(key).join("…") });
+    }
+  };
+}
+
+/** The Vite plugin. One path; GET is the probe, POST is the ask. Never in a build. */
+export function aiDevProxy(options: AiDevProxyOptions = {}): DevServerPlugin {
+  const handler = aiDevProxyHandler(options);
+  return {
+    name: "graview:ai-dev-proxy",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use(options.path ?? AI_BRIDGE_PATH, (req, res) => {
         void handler(req, res);
       });
     },

@@ -5,9 +5,11 @@ import { seedbedMutations } from "./mutations.js";
 import { seedbedSchema, type SeedbedSchema } from "./schema.js";
 
 /**
- * The whole app — and deliberately NO data. The declaration is complete and
- * checkable; the graph starts at zero, because rendering zero honestly is
- * what this example exists to hold the framework to.
+ * The whole app, and no data of its own: the declaration is complete and
+ * checkable. The standalone garden opens on the example garden
+ * (`domain/example.ts`, the one the chapters grow into); "Start empty" and
+ * `?empty=1` open it at zero, which rendering honestly is still what this
+ * example holds the framework to.
  */
 export const seedbedApp = defineApp({
   name: "seedbed",

@@ -99,6 +99,13 @@ export interface PageContext<S extends AnySchema> {
    */
   readonly onKeepLens?: KeepLensHost;
   /**
+   * A GRAVIEW SIGNATURE: a quiet "Built with Graview" at the foot of the
+   * person's menu (drawn when `views` is given), linking to graview.dev.
+   * Off by default — an app leads with its own name and mark; Graview's own
+   * examples turn it on.
+   */
+  readonly signature?: boolean;
+  /**
    * THE AI THE SEAT MAY USE, decided by the host and never by a reader:
    * `{ complete }` (the host's model: prompt in, text out) for open
    * questions and views no template draws, `decide` for typed decisions,

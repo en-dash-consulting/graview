@@ -1,3 +1,4 @@
+import { aiThroughDevServer } from "@graview/tools";
 import { PagesApp } from "@graview/pages";
 import { themeCss, type Scheme } from "@graview/primitives";
 import { browserStartsFresh, createBrowserAdapter, forgetFreshParam, openStore } from "@graview/ship/browser";
@@ -41,6 +42,14 @@ function applyScheme(scheme: Scheme): void {
 const scheme = initialScheme();
 applyScheme(scheme);
 
+/*
+ * A MODEL IN DEVELOPMENT. Started with `ANTHROPIC_API_KEY=… pnpm dev`, the
+ * dev server lends the seat one through its door (`aiDevProxy`), holding
+ * the key itself; without a key the seat says how to turn it on. Only in a
+ * dev build: a built page asks no door and says what any product says.
+ */
+const ai = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? await aiThroughDevServer() : undefined;
+
 const root = document.getElementById("root");
 if (!root) throw new Error("no #root");
 
@@ -65,8 +74,10 @@ if (window.location.pathname.startsWith("/pages")) {
     <PagesApp
       basename="/pages"
       context={{
+        ...(ai ? { ai } : {}),
         store: opened.store,
         brand: discographyBrand,
+        signature: true,
         sceneHref: "/",
         remembers: true,
         principal: openingSeat(),
@@ -86,7 +97,7 @@ if (window.location.pathname.startsWith("/pages")) {
   );
 } else {
   createRoot(root).render(
-    <DiscographyApp store={opened.store} remembers syncUrl initialScheme={scheme} onSchemeChange={applyScheme} />,
+    <DiscographyApp store={opened.store} {...(ai ? { ai } : {})} remembers syncUrl initialScheme={scheme} onSchemeChange={applyScheme} />,
   );
 }
 

@@ -3,7 +3,7 @@ import { applySettings } from "@graview/react";
 import { createRoot } from "react-dom/client";
 import { seedbedBrand } from "./domain/brand.js";
 import { PagesApp } from "@graview/pages";
-import type { HostAi } from "@graview/tools";
+import { aiThroughDevServer, type HostAi } from "@graview/tools";
 import {
   browserStartsFresh,
   createBrowserAdapter,
@@ -15,6 +15,7 @@ import { seedbedApp } from "./domain/app.js";
 import type { SeedbedSchema } from "./domain/schema.js";
 import { chapterFromSearch } from "./domain/chapters.js";
 import { SeedbedApp } from "./ui/app.js";
+import { browserEmptyChoice, forgetEmptyParam, openGarden } from "./open.js";
 import { seedbedDesign } from "./ui/design.js";
 import { seedbedViews } from "./ui/views.js";
 import { seedbedPages } from "./ui/pages.js";
@@ -52,14 +53,15 @@ const root = document.getElementById("root");
 if (!root) throw new Error("no #root");
 
 /*
- * The empty app remembers too: what you sow here is still here tomorrow,
- * and "Start fresh" is the way back to the blank graph (see todo's main.tsx).
+ * The garden remembers: what you sow here is still here tomorrow. It opens
+ * on the example garden; "Start fresh" (or "Load the example garden") is
+ * the way back to it, and "Start empty" the way to a blank graph.
  *
  * `?chapter=N` opens the garden as it stood at that chapter of the
  * progression instead (see domain/chapters.ts): its declaration, its seed,
  * and — from the chapter that earns it — the browser adapter.
  */
-type Opened = Awaited<ReturnType<typeof openStore<SeedbedSchema>>>;
+type Opened = Pick<Awaited<ReturnType<typeof openStore<SeedbedSchema>>>, "store">;
 const chapter = chapterFromSearch(window.location.search);
 const brand = chapter ? chapter.app.brand : seedbedBrand;
 applyScheme(scheme);
@@ -84,8 +86,10 @@ const opened: Opened = chapter
       fresh: chapter.stored ? false : !chapter.remembers || browserStartsFresh(),
       storeOptions: chapter.principal ? { principal: chapter.principal } : {},
     } as never)) as Opened)
-  : await openStore({ app: seedbedApp, adapter, fresh: browserStartsFresh() });
+  : // The finished garden opens planted; "Start empty" and `?empty=1` are the way to a blank one (see open.ts).
+    await openGarden({ adapter, search: window.location.search, fresh: browserStartsFresh(), choice: browserEmptyChoice });
 forgetFreshParam();
+forgetEmptyParam();
 const remembers = chapter ? chapter.remembers : true;
 
 /*
@@ -99,7 +103,13 @@ applySettings(((chapter?.app ?? seedbedApp) as { settings?: readonly SettingDecl
  * answers, and an open question is told AI isn't on. A host with a model
  * passes it as `ai`; the rehearsal hands this example one the same way.
  */
-const ai = (window as unknown as { __seedbedAi?: HostAi }).__seedbedAi;
+/*
+ * A MODEL IN DEVELOPMENT. Started with `ANTHROPIC_API_KEY=… pnpm dev`, the
+ * dev server lends the seat one through its door (`aiDevProxy`), holding
+ * the key itself; without a key the seat says how to turn it on. Only in a
+ * dev build: a built page asks no door and says what any product says.
+ */
+const ai = (window as unknown as { __seedbedAi?: HostAi }).__seedbedAi ?? ((import.meta as { env?: { DEV?: boolean } }).env?.DEV ? await aiThroughDevServer() : undefined);
 
 if (window.location.pathname.startsWith("/pages")) {
   // The routed, responsive face: same store, same ids, one app.
@@ -109,6 +119,7 @@ if (window.location.pathname.startsWith("/pages")) {
       context={{
         store: opened.store,
         ...(brand ? { brand } : {}),
+        signature: true,
         // The seat the chapter puts at the keyboard: the pages withhold by it.
         ...(chapter?.principal ? { principal: chapter.principal } : {}),
         sceneHref: "/",
@@ -146,6 +157,8 @@ if (window.location.pathname.startsWith("/pages")) {
       {...(chapter?.season ? { season: true } : {})}
       {...(chapter?.rotation ? { rotation: true } : {})}
       brand={brand}
+      // The finished garden's own way to an empty one, and back; a chapter's garden is the chapter's.
+      garden={!chapter}
       {...(ai ? { ai } : {})}
       syncUrl
       renderer="dom"

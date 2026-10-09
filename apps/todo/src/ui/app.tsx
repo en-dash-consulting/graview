@@ -184,6 +184,8 @@ function TodoShell({
     <Shell<S>
       home={place.id}
       standing="Nothing is out of order"
+      // Graview's own example, so it signs itself — quietly, in the person's menu.
+      signature
       /*
        * NO SWITCHER OF ITS OWN. The framework's named places are the same
        * machinery — three pictures over two groups, each a pill with a URL
