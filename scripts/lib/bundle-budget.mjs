@@ -127,8 +127,11 @@ export const BUDGETS = [
     // Raised when the seat came to take you where you ask: the conversation reads an ask for a place, a record, a narrowed
     // kind, the problems or what is here as moves, and fetches the resolver (`@graview/tools/go`) with the first ask, not with
     // the page; what stays up front is the turn's glue and the model's "go" names. 1_129 / 1_347 more. Measured at 532_731 / 183_832.
-    minified: 533_200,
-    gzipped: 184_300,
+    // Raised when the seat came to draw a view and keep it as a lens: the seat's tools list draft_view and keep_lens when a
+    // host offers them (their two definitions), the engine behind its own door (@graview/tools/draft). 2_047 / 1_662 more.
+    // Measured at 533_649 / 184_147.
+    minified: 534_200,
+    gzipped: 184_500,
     load: "first",
   },
   {
@@ -395,8 +398,11 @@ export const BUDGETS = [
     // Measured at 1_583_704 / 484_156.
     // Raised when the seat came to take you where you ask: the resolver, fetched with the first ask, is a chunk every face
     // carries — about 15 kB minified with what it reads a kind's filters by. Measured at 1_599_651 / 487_268.
-    minified: 1_600_200,
-    gzipped: 487_700,
+    // Raised when the seat came to draw a view and keep it as a lens: the drafting engine (@graview/tools/draft, fetched when
+    // a view is first asked for), the two tools that reach it, and the studio's act that takes a lens away (remove-lens).
+    // 33_055 / 13_112 more. Measured at 1_616_334 / 493_011.
+    minified: 1_617_000,
+    gzipped: 493_400,
     load: "all",
   },
   {
@@ -461,8 +467,10 @@ export const BUDGETS = [
     // Gzipped raised when the seat came to float and be quiet: 6_687 fewer minified (the rail left), 1_228 more gzipped
     // (the open seat a chunk of its own). Measured at 1_540_372 / 465_130.
     // Raised with the pages face's when the seat came to take you where you ask: 1_221 / 1_358 more. Measured at 1_548_280 / 465_260.
-    minified: 1_548_800,
-    gzipped: 465_700,
+    // Raised with the pages face's when the seat came to draw a view and keep it as a lens: 1_939 / 2_163 more, the two tools'
+    // definitions and the studio's act that takes a lens away. Measured at 1_549_531 / 466_208.
+    minified: 1_550_100,
+    gzipped: 466_600,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

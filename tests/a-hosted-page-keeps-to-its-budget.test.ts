@@ -64,7 +64,8 @@ describe("a hosted page", () => {
     // 878 KB since a lens double-clicked from Up opens it: the scene face measured 898_844 B over the security review before 0.1.18.
     // 891 KB since views beside editing, long text on a record page and the places in the bar landed together (FR-144–FR-151), over a lens double-clicked from Up: the scene face measured 911_396 B, 12_552 more.
     // 892 KB since the seat takes you where you ask: the conversation's glue for moves, the resolver itself fetched with the first ask: the scene face measured 912_858 B, 1_462 more.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(892 * 1024);
+    // 893 KB since a seat's tools may draw a view and keep it as a lens (draft_view, keep_lens): their two definitions ride with the seat, the engine behind a door; the scene face measured 913_473 B, 1_813 more than before them (911_660).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(893 * 1024);
   });
 
   it("carries no studio, up front or when asked: the shell stubs it out", () => {
@@ -127,6 +128,11 @@ describe("a hosted page", () => {
       expect(modules).not.toContain(module);
     }
     expect(Object.keys(measured.upFront.packages)).not.toContain("@graview/render");
+  });
+
+  it("carries no drafting engine up front: @graview/tools/draft is a door, fetched when the seat is first asked to draw a view", () => {
+    expect(Object.keys(measured.upFront.modules)).not.toContain("tools/src/draft.ts");
+    expect(measured.whenAsked.doors.map((door) => door.module)).toContain("tools/src/draft.ts");
   });
 
   it("fetches the describer when a place is first asked about, not with the assistant's seat", () => {

@@ -91,6 +91,53 @@ caller — or the person an agent acts for — comes back as
 `{ untrusted: true, authoredBy, text }` in `get_node`, `get_graph` and
 `search_graph`, so a model reads another collaborator's words as data.
 
+## Drawing a view on the fly, and keeping it as a lens
+
+Asked for a way of seeing — "a board of deliverables by status", "a timeline
+of dates", "who covers what" — the seat drafts a view from what the app
+already declares. `@graview/tools/draft` is an entry of its own, fetched when
+a view is first asked for:
+
+```ts
+import { draftView, refineDraft, isDraftFailure, draftSight } from "@graview/tools/draft";
+
+const sight = draftSight(app, principal); // the kinds this seat may see
+const draft = await draftView("a board of deliverables by status", { app, sight });
+if (isDraftFailure(draft)) say(draft.failed); // "Couldn't draw that: deliverables have no choice field to put in columns."
+else {
+  draw(draft.drawn); // a DrawnLens, drawn as a declared lens is
+  const refined = await refineDraft(draft, "only this month", { app, sight }); // or keeps draft as lastGood
+}
+```
+
+A draft is data, never code: a lens the framework ships (`columns`,
+`calendar`, `timeline`, `coverage`, `board`, `plan`) bound to the app's own
+fields and relations, or a lens drawn from `blocks`. With no model, a
+template reads the ask (`templateDraft`): the words pick the lens and the
+kind, the declaration's roles and field types fill the bindings. Given the
+app's `complete`, an ask no template reads goes to the model for the same
+JSON, and what comes back is judged as a declared lens is (`judgeLens`)
+before anything is drawn. Every draft is judged against the kinds the seat
+may see, so a kind it may not see reads as one that is not there. A
+`SeatDraft` carries its `add-lens` edit (`lensEditOf`); a draft that cannot
+be drawn is a `DraftFailure`: one sentence, and the last good draft.
+
+Keeping one changes the declaration, which is the host's, so it is another
+entry: `@graview/tools/keep`. `keepLens({ document }, draft.edit)` runs the
+edit through `editDocument`, `compileDocument` (graview check) and
+`diffDocuments`, and hands back the document to write, the place it made and
+the `remove-lens` edit that takes it back (`takeBackLens`).
+`keepLens({ app }, edit)` does the same for an app declared in code, judged
+by `checkApp`. `withReaderLenses` puts a reader's own kept lenses beside a
+declaration's, passing over one that no longer draws.
+
+An agent reaches the same two steps as tools when its host offers them:
+`createToolRuntime(store, { app, drafts: { complete, keep } })` lists
+`draft_view` (a read: an ask, a lens to check, or the lens on screen to
+change) and, with `keep`, `keep_lens`, which hands `keep` the checked
+`add-lens` edit. `toolDefinitions(app, principal, { drafts: "keep" })` lists
+the same surface without a store.
+
 ## Records by name
 
 A person says "book the florist", not `vendor:bloom-co`. Every argument that
