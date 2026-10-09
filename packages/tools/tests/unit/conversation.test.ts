@@ -459,6 +459,6 @@ describe("a choice is its own word", () => {
     expect(reply.proposals).toEqual([{ mutation: "set-tone", args: { id: "s1", tone: "dark" }, why: expect.any(String) }]);
     const unsure = await ask(at, "set the tone light or dark for Hall");
     expect(unsure.proposals).toEqual([]);
-    expect(unsure.say).toContain("needs tone");
+    expect(unsure.say).toContain("needs a tone");
   });
 });

@@ -151,6 +151,9 @@ const TELL = /^(?:(?:can you |could you |please )?tell me (?:about|of)|what(?: i
 /** "What is here", in the ways it is asked. */
 const HERE = /^(?:what(?: is|'s| am i looking at| do i see)(?: (?:here|this|on (?:this|the) (?:page|screen)|in view|this place|this page))?|where am i|describe (?:this|here|this place|this page)|tell me about (?:this|here|this place|this page))$/;
 const HERE_WORDS = new Set(["here", "this", "this place", "this page", "on this page", "on the page", "on this screen", "in view"]);
+/** A date field whose name only means "when": said as the date words alone. */
+const JUST_WHEN = /^(?:date|day|when|on|at|the date|the day)$/;
+
 /** "What's wrong", and the record it may be about. */
 const WRONG = /^(?:what(?: is|'s) (?:wrong|broken|the (?:problem|matter|trouble))|what needs (?:fixing|attention|doing)|any (?:problems|issues|trouble)|(?:show(?: me)? |go to |open )?(?:the )?(?:problems|issues|trouble|standing|what's wrong)|is (?:anything|something) (?:wrong|broken)|are there (?:any )?(?:problems|issues))(?: (?:with|about|on|in) (.+))?$/;
 
@@ -308,7 +311,14 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
   /** Go to a place or a record by name, or say nothing is called that. */
   const goNamed = (words: string, describe: boolean): AskAnswer => {
     if (HERE_WORDS.has(words)) return here();
-    const place = placeNamed(words);
+    /*
+     * TOLD ABOUT A THING, THE THING. A picture is often named after the
+     * record it draws ("Email to Todd" on Cloud's workshop): asked to be told
+     * about it, the seat went to the picture and counted its records — "2
+     * deliverables are here" — instead of saying what the email is.
+     */
+    const named = describe ? recordsNamed(stripThe(words) || words) : undefined;
+    const place = named?.one && fold(nameOf(named.one)) === fold(stripThe(words) || words) ? undefined : placeNamed(words);
     if (place) {
       const move = toPlace(place);
       return { about: "place", say: describe ? `${move.said} ${describePlace(place)}` : move.said, moves: [move], subject: place.slug };
@@ -527,7 +537,8 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
       }
       const when = dated.ask.words.replace(/^(?:due|for|on) /, "");
       if (dated.ask.overdue) phrases.push("overdue");
-      else after.push(dated.ask.words.startsWith("due") || fold(field.key) === "due" ? `due ${when}` : `${field.label.toLowerCase()} ${when}`);
+      // A field that only means "when" ("Date", "Day") says nothing a reader needs: "shifts this week", not "shifts date this week".
+      else after.push(dated.ask.words.startsWith("due") || fold(field.key) === "due" ? `due ${when}` : JUST_WHEN.test(fold(field.label)) ? when : `${field.label.toLowerCase()} ${when}`);
     }
 
     const members = graph

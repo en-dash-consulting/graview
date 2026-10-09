@@ -412,7 +412,8 @@ export function PagesRoutes<S extends AnySchema>({
     </GoesByAddress>
     </FaceRoot>
   );
-  if (context.embedded) return routes;
+  // Only a design under the bar hands the bar its Find: the derived shell draws its own in the bar, and so says it before any script runs.
+  if (context.embedded || !own || ownsTheWindow) return routes;
   return (
     <OwnBarFind.Provider value={told}>
       <BarFindContext.Provider value={barFind}>{routes}</BarFindContext.Provider>
