@@ -7,10 +7,10 @@ import { z } from "zod";
 import { ChatPanel, registerDefaultViews } from "../../src/index.js";
 
 /**
- * The chat's standing contract, at render time. The living conversation is
- * driven in a real browser by scripts/verify-chat.mjs; what belongs here is
- * what must be true before anyone types: closed until asked for, honestly
- * labeled, and openable from the keyboard.
+ * The conversation's standing contract, at render time. The living
+ * conversation is driven in a real browser by the harnesses; what belongs
+ * here is what must be true before anyone types: drawn in place with its
+ * own field when it stands alone, no pill to press, no word "seat".
  */
 
 const person = defineNode("person", {
@@ -39,20 +39,17 @@ const render = (props: { respond?: never } = {}) =>
     </GraviewProvider>,
   );
 
-describe("the chat before anyone types", () => {
-  it("is closed until asked for, and says so accessibly", () => {
+describe("the conversation before anyone types", () => {
+  it("is drawn in place with a field named for asking, and no pill to press first", () => {
     const html = render();
-    expect(html).toContain('data-testid="chat"');
-    expect(html).toContain('aria-expanded="false"');
-    // The panel is not merely hidden — it is not rendered at all.
-    expect(html).not.toContain('data-testid="chat-panel"');
-    expect(html).not.toContain("Message the seat");
+    expect(html).toContain('data-testid="chat-panel"');
+    expect(html).toContain('aria-label="Ask"');
+    expect(html).not.toContain('data-testid="chat"');
   });
 
-  it("is a real button with a title that says what the seat is for", () => {
-    const html = render();
-    // A person who has never met the product reads this before clicking.
-    expect(html).toContain("Talk to the seat");
-    expect(html).toContain("Ask");
+  it("says what it can answer in the reader's words, never the word seat", () => {
+    const text = render().replace(/<[^>]*>/g, " ").replace(/&#x27;/g, "'");
+    expect(text).toContain("Ask what's wrong");
+    expect(text.toLowerCase()).not.toContain("seat");
   });
 });

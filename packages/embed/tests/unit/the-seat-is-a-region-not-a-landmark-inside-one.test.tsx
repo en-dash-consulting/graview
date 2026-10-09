@@ -17,12 +17,11 @@ beforeAll(() => preload());
 /**
  * FR-40: THE SEAT IS A REGION, NOT A LANDMARK INSIDE ONE.
  *
- * The companion was an `<aside>` — a complementary landmark — drawn inside
- * the Shell's main and inside an embed's own region, and the inspector,
- * the key and the quick relations were asides inside IT. axe's
- * `landmark-complementary-is-top-level` failed on every hosted app at every
- * size and scheme. The seat lives in the picture it is about, so it is a
- * labeled region there, and what it holds are named groups of it.
+ * The seat was an `<aside>` — a complementary landmark — drawn inside the
+ * Shell's main and inside an embed's own region, and what it held were
+ * asides inside IT. axe's `landmark-complementary-is-top-level` failed on
+ * every hosted app at every size and scheme. The seat lives in the picture
+ * it is about, so it is a region there named "Ask <the app>", open or not.
  */
 const person = defineNode("person", {
   fields: z.object({ label: z.string() }),
@@ -85,19 +84,30 @@ async function rendered(tree: ReactNode, run: (host: HTMLElement) => Promise<voi
   }
 }
 
+/** Opens the seat from its field and waits for the panel, which is fetched when the seat first opens. */
+const openSeat = async (host: Element) => {
+  const field = host.querySelector<HTMLInputElement>('[data-testid="seat-field"]');
+  if (!field) return false;
+  await act(async () => field.click());
+  for (let turn = 0; turn < 200 && !host.querySelector('[data-testid="seat-panel"]'); turn++) await act(async () => new Promise((resolve) => setTimeout(resolve, 5)));
+  return host.querySelector('[data-testid="seat-panel"]') !== null;
+};
+
 describe("the seat is a region, not a landmark inside one", () => {
-  it("in the Shell, with the seat, the inspector, the key, the profile and the activity all open", async () => {
+  it("in the Shell, with the seat, the key, the profile and the activity all open", async () => {
     await rendered(
-      <GraviewProvider store={store()} views={views()} initialView={{ ...EMPTY_VIEW, focusId: aggregateId("duty"), overview: true }} initialSelection={["ana"]}>
+      <GraviewProvider store={store()} views={views()} initialView={{ ...EMPTY_VIEW, focusId: aggregateId("duty"), overview: true }} initialSelection={["ana"]} brand={{ name: "Field notes" } as never}>
         <Shell<typeof schema> scheme="light" onScheme={() => {}} remembers />
       </GraviewProvider>,
       async (host) => {
         expect(await click(host, "profile-button")).toBe(true);
         expect(await click(host, "activity-button")).toBe(true);
-        const seat = host.querySelector('[data-testid="companion"]');
-        expect(seat?.getAttribute("aria-label")).toMatch(/^The seat — about /);
-        expect(seat?.querySelector("h2")?.textContent).toMatch(/^The seat/);
-        expect(host.querySelector('[data-testid="inspector-strip"]')).not.toBeNull();
+        expect(await click(host, "lines-key")).toBe(true);
+        expect(await openSeat(host)).toBe(true);
+        const seat = host.querySelector('[data-testid="seat"]');
+        expect(seat?.getAttribute("role")).toBe("region");
+        expect(seat?.getAttribute("aria-label")).toBe("Ask Field notes");
+        expect(seat?.querySelector("h2")?.textContent).toBe("Ask Field notes");
         expect(nested(host)).toEqual([]);
         expect(await axeSays(host)).toEqual([]);
       },
@@ -113,24 +123,24 @@ describe("the seat is a region, not a landmark inside one", () => {
         handle = mount(host, { app, fonts: false, face, seed: snapshot, label: "The notes" } as unknown as EmbedOptions);
       });
       try {
-        await click(host, "page-ask");
-        // The pages fetch the companion when "Ask" is opened (FR-57).
-        for (let turn = 0; turn < 200 && !host.querySelector('[data-testid="companion"]'); turn++) await act(async () => new Promise((resolve) => setTimeout(resolve, 5)));
+        for (let turn = 0; turn < 200 && !host.querySelector('[data-testid="seat-field"]'); turn++) await act(async () => new Promise((resolve) => setTimeout(resolve, 5)));
+        expect(await openSeat(host)).toBe(true);
         await click(host, "profile-button");
-        expect(host.querySelector('[data-testid="companion"]')).not.toBeNull();
+        expect(host.querySelector('[data-testid="seat"]')?.getAttribute("role")).toBe("region");
         expect(nested(host)).toEqual([]);
         expect(await axeSays(host)).toEqual([]);
       } finally {
         await act(async () => handle!.unmount());
         host.remove();
+        sessionStorage.clear();
       }
     });
   }
 
-  it("on the pages face, with the Ask drawer open", async () => {
+  it("on the pages face, with the seat open", async () => {
     await rendered(<PagesApp context={{ store: store(), views: views() } as PageContext<typeof schema>} initialPath="/runs/morning" />, async (host) => {
-      expect(await click(host, "page-ask")).toBe(true);
-      expect(host.querySelector('[data-testid="companion"]')).not.toBeNull();
+      expect(await openSeat(host)).toBe(true);
+      expect(host.querySelector('[data-testid="seat"]')?.getAttribute("role")).toBe("region");
       expect(nested(host)).toEqual([]);
       expect(await axeSays(host)).toEqual([]);
     });

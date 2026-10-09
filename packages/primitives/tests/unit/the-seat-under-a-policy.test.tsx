@@ -62,8 +62,7 @@ describe("the chat under a policy", () => {
     const store = guarded();
     const respond = async () => ({ say: "I can do that.", proposals: [{ mutation: "add-item", args: { label: "Sneak one in" }, why: "test" }], grounded: true });
     const { host, unmount } = await mounted(provider(store, helper, <ChatPanel respond={respond as never} />));
-    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="chat"]')!.click());
-    const field = host.querySelector<HTMLInputElement>('[aria-label="Message the seat"]')!;
+    const field = host.querySelector<HTMLInputElement>('[data-testid="chat-draft"]')!;
     await act(async () => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(field, "add an item");
       field.dispatchEvent(new Event("input", { bubbles: true }));

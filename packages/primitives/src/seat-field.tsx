@@ -4,6 +4,7 @@ import { lazyModule, useGraview, useSeatTalkState } from "@graview/react/provide
 import type { Responder, ToolCall } from "@graview/tools";
 import { Suspense, useEffect, useLayoutEffect, useRef, useState, type ComponentType, type CSSProperties } from "react";
 import { FOOT_MOVED } from "./notice-place.js";
+import { VISUALLY_HIDDEN } from "./primitives/measure.js";
 import type { SeatPanelProps } from "./seat-panel.js";
 
 /**
@@ -166,6 +167,8 @@ export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start 
         ...style,
       }}
     >
+      {/* A HEADING FOR THE REGION (FR-25): a reader moving by headings finds the seat, named as its region is. */}
+      <h2 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>Ask {name}</h2>
       {open ? (
         <Suspense fallback={null}>
           <Panel
@@ -173,7 +176,7 @@ export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start 
             side={right ? "right" : "left"}
             name={name}
             onClose={close}
-            {...(respond ? { respond: respond as SeatPanelProps["respond"] } : {})}
+            {...(respond ? { respond: respond as unknown as SeatPanelProps["respond"] } : {})}
             {...(onCall ? { onCall } : {})}
             {...(onPick ? { onPick } : {})}
           />

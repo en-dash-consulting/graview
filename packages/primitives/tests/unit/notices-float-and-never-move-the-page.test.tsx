@@ -111,14 +111,15 @@ describe("a notice at the foot of the picture", () => {
     expect(lift(stack())).toBe(64);
   });
 
-  it("stands beside a tall panel at the picture's left on a desk", async () => {
+  it("stands beside the open seat at the picture's foot-left on a desk", async () => {
     screen(1440, 900);
     boxes.set(picture, { left: 0, top: 56, width: 1440, height: 844 });
     sized.set("notices-toasts", { width: 420, height: 52 });
+    // The seat, open: a tall panel grown up from its field, marked as standing at the foot.
     const seat = document.createElement("section");
-    seat.setAttribute("data-testid", "companion");
+    seat.setAttribute("data-graview-foot", "");
     document.body.appendChild(seat);
-    boxes.set(seat, { left: 0, top: 56, width: 300, height: 844 });
+    boxes.set(seat, { left: 0, top: 356, width: 300, height: 544 });
     const { stack } = await toast();
     expect(px(stack().style.left)).toBe(316);
     expect(lift(stack())).toBe(16);

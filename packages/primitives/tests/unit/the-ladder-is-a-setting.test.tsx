@@ -59,11 +59,15 @@ describe("the ladder is a setting", () => {
     await unmount();
   });
 
-  it("leaves the chat with no gear and no pane of its own", async () => {
+  it("is the same one setting behind the conversation's ⚙, with what answers said there and nowhere else", async () => {
     const { host, unmount } = await mounted(<ChatPanel />);
-    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="chat"]')!.click());
     expect(host.querySelector('[data-testid="chat-panel"]')).not.toBeNull();
-    expect(host.querySelector('[data-testid="chat-settings"]')).toBeNull();
+    expect(host.querySelector('[data-testid="chat-ladder"]')).toBeNull();
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="chat-settings"]')!.click());
+    const ladder = host.querySelector('[data-testid="chat-ladder"]');
+    expect(ladder).not.toBeNull();
+    // The profile's own control, not a second form that could disagree with it.
+    expect(ladder!.querySelector('[data-testid="setting-intelligence-graph"]')).not.toBeNull();
     expect(host.querySelector('[data-testid="chat-settings-form"]')).toBeNull();
     await unmount();
   });

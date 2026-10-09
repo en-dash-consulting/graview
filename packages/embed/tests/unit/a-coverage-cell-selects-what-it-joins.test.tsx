@@ -48,8 +48,11 @@ async function choose(face: "scene" | "pages") {
     val: emphasis("p-val"),
     seo: emphasis("sk-seo"),
     heading: host.querySelector("[data-graview-page-title]")?.textContent?.trim() ?? null,
-    // The seat names the selection: the strength, and the two it joins.
-    inspector: host.textContent?.includes("Ryan SEO and 2 more") ?? false,
+    /*
+     * The seat no longer names the selection in a header: a selection draws
+     * no strip, and what is chosen is said by the picture itself — Ryan and
+     * SEO lit, the others dimmed.
+     */
   };
   await act(async () => root.unmount());
   host.remove();
@@ -63,7 +66,6 @@ describe("choosing Ryan × SEO on the Strengths lens", () => {
     expect(seen.lines).toEqual(["p-ryan", "sk-seo"]);
     expect(seen.proxies).toBe(0);
     expect([seen.ryan, seen.seo, seen.val]).toEqual(["lit", "lit", "dimmed"]);
-    expect(seen.inspector).toBe(true);
   });
 
   it("on the routed face stays on the picture, lights Ryan and SEO, and draws to them", async () => {

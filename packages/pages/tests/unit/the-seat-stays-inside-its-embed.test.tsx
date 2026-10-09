@@ -9,32 +9,29 @@ import { askPlace } from "../../src/ask-place.js";
 import { PagesApp, type PageContext } from "../../src/index.js";
 
 /**
- * THE ASK STAYS IN ITS OWN BOX. graview.dev's chapters stood the routed
+ * THE SEAT STAYS IN ITS OWN BOX. graview.dev's chapters stood the routed
  * face's "Ask" at the foot of the window, over the hero's caption and over
- * every section scrolled past, wherever the embed it belonged to was.
+ * every section scrolled past, wherever the embed it belonged to was. The
+ * seat stands in the part of its embed's box that shows on the screen.
  */
 const VIEW = { width: 1440, height: 900 };
-const ASK = { width: 70, height: 40 };
+const FIELD = { width: 160, height: 40 };
 
-describe("the Ask stays inside its embed", () => {
-  it("stands at the foot's left of the box it belongs to, not the window's", () => {
-    const place = askPlace({ left: 646, top: 142, right: 1304, bottom: 802 }, VIEW, ASK);
-    expect(place.shown).toBe(true);
-    expect(place.button).toEqual({ left: 662, top: 802 - 16 - 40 });
-    expect(place.drawer).toEqual({ left: 646, top: 142, height: 660, width: 320 });
+describe("the seat stays inside its embed", () => {
+  it("stands in the box it belongs to, not the window", () => {
+    const place = askPlace({ left: 646, top: 142, right: 1304, bottom: 802 }, VIEW, FIELD);
+    expect(place).toEqual({ shown: true, left: 646, top: 142, width: 658, height: 660 });
   });
 
   it("stands at the window's foot while the box runs past it", () => {
-    const place = askPlace({ left: 100, top: 300, right: 800, bottom: 1400 }, VIEW, ASK);
-    expect(place.shown).toBe(true);
-    expect(place.button.top).toBe(900 - 16 - 40);
-    expect(place.drawer).toEqual({ left: 100, top: 300, height: 600, width: 320 });
+    const place = askPlace({ left: 100, top: 300, right: 800, bottom: 1400 }, VIEW, FIELD);
+    expect(place).toEqual({ shown: true, left: 100, top: 300, width: 700, height: 600 });
   });
 
   it("is put away when its box is scrolled out of the window, or too little of it shows", () => {
-    expect(askPlace({ left: 100, top: -900, right: 800, bottom: -100 }, VIEW, ASK).shown).toBe(false);
-    expect(askPlace({ left: 100, top: 1000, right: 800, bottom: 1600 }, VIEW, ASK).shown).toBe(false);
-    expect(askPlace({ left: 100, top: 860, right: 800, bottom: 1600 }, VIEW, ASK).shown).toBe(false);
+    expect(askPlace({ left: 100, top: -900, right: 800, bottom: -100 }, VIEW, FIELD).shown).toBe(false);
+    expect(askPlace({ left: 100, top: 1000, right: 800, bottom: 1600 }, VIEW, FIELD).shown).toBe(false);
+    expect(askPlace({ left: 100, top: 860, right: 800, bottom: 1600 }, VIEW, FIELD).shown).toBe(false);
   });
 
   it("is placed from its embed's box when the face is drawn inside one", async () => {
@@ -57,11 +54,12 @@ describe("the Ask stays inside its embed", () => {
     document.body.append(embed);
     const root = createRoot(embed);
     await act(async () => root.render(<PagesApp context={{ store, views, embedded: true } as PageContext<typeof schema>} initialPath="/" />));
-    const ask = embed.querySelector<HTMLElement>('[data-testid="page-ask"]');
-    expect(ask).not.toBeNull();
-    // The embed is below the window: its Ask is not drawn over the page the reader is looking at.
-    expect(ask!.style.visibility).toBe("hidden");
-    expect(ask!.style.left).toBe("216px");
+    const box = embed.querySelector<HTMLElement>('[data-testid="page-seat"]');
+    expect(box).not.toBeNull();
+    expect(box!.querySelector('[data-testid="seat-field"]')).not.toBeNull();
+    // The embed is below the window: its seat is not drawn over the page the reader is looking at.
+    expect(box!.style.visibility).toBe("hidden");
+    expect(box!.style.left).toBe("200px");
     await act(async () => root.unmount());
     embed.remove();
   });

@@ -47,7 +47,11 @@ beforeEach(() => {
     Object.defineProperty(Element.prototype, "scrollTo", { configurable: true, value: () => {} });
   }
 });
-afterEach(() => host.remove());
+afterEach(() => {
+  host.remove();
+  // The conversation is kept for the tab: each case starts a fresh one.
+  sessionStorage.clear();
+});
 
 const ask = async (chat: boolean | { respond?: Responder<typeof schema> }) => {
   const root = createRoot(host);
@@ -62,23 +66,20 @@ const ask = async (chat: boolean | { respond?: Responder<typeof schema> }) => {
       </GraviewProvider>,
     );
   });
-  /* The conversation lives in the companion now, open with the rail — no pill to press. */
-  const input = host.querySelector<HTMLInputElement>('[data-testid="chat-panel"] input');
-  const form = host.querySelector<HTMLFormElement>('[data-testid="chat-panel"] form');
-  if (!input || !form) return { root, said: null };
+  /* The seat is a field at the picture's foot: what is typed there is asked, and the panel it opens answers. */
+  const input = host.querySelector<HTMLInputElement>('[data-testid="seat-field"]');
+  if (!input) return { root, said: null };
   await act(async () => {
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
     setter?.call(input, "why do I still have mosquitoes?");
     input.dispatchEvent(new Event("input", { bubbles: true }));
   });
-  await act(async () => {
-    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-  });
-  /* The answer arrives a microtask later, whoever gave it. */
-  await act(async () => {
-    await Promise.resolve();
-  });
-  return { root, said: host.querySelector('[data-testid="chat-panel"]')?.textContent ?? "" };
+  await act(async () => input.form!.requestSubmit());
+  /* The panel is fetched when the seat first opens, and the answer arrives after it. */
+  for (let tries = 0; tries < 30 && host.querySelectorAll('[data-testid="seat-panel"] ol li').length < 2; tries++) {
+    await act(async () => new Promise<void>((done) => setTimeout(done, 40)));
+  }
+  return { root, said: host.querySelector('[data-testid="seat-panel"]')?.textContent ?? "" };
 };
 
 describe("the chat in the scene", () => {
@@ -107,9 +108,9 @@ describe("the chat in the scene", () => {
         </GraviewProvider>,
       );
     });
-    // No seat asked for, no conversation in the rail — the acts and the relations stand.
-    expect(host.querySelector('[data-testid="chat-panel"]')).toBeNull();
-    expect(host.querySelector('[data-testid="companion"]')).not.toBeNull();
+    // No conversation asked for, so no field to ask in at all; the acts stay at the pointer.
+    expect(host.querySelector('[data-testid="seat"]')).toBeNull();
+    expect(host.querySelector('[data-testid="seat-field"]')).toBeNull();
     await act(async () => root.unmount());
   });
 });
