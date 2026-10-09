@@ -51,6 +51,15 @@ async function mounted(element: React.ReactElement) {
   await act(async () => root.render(element));
   return { host, unmount: () => act(async () => root.unmount()) };
 }
+/** What `find` gives once it gives something, asked every 10 ms for up to five seconds. */
+async function until<T>(find: () => T | null): Promise<T | null> {
+  for (let waited = 0; waited < 5000; waited += 10) {
+    const found = find();
+    if (found) return found;
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 10)));
+  }
+  return find();
+}
 const provider = (store: Store<typeof schema>, principal: Principal, child: React.ReactElement) => (
   <GraviewProvider store={store} views={registerDefaultViews(schema, createViews(schema))} initialView={EMPTY_VIEW} principal={principal}>
     {child}
@@ -70,9 +79,15 @@ describe("the chat under a policy", () => {
     await act(async () => {
       field.closest("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     });
-    await act(async () => new Promise((r) => setTimeout(r, 20)));
+    /*
+     * Until the answer is drawn, not a fixed 20 ms: the answer is read after
+     * the seat fetches what drafts a view and what reads an ask
+     * (`@graview/tools/draft`, `/go`), which under a
+     * whole suite's load took longer than that, and the test then looked at
+     * a conversation still waiting.
+     */
+    const withheld = await until(() => host.querySelector('[data-testid="chat-withheld"]'));
     expect(host.querySelector('[data-testid="chat-apply"]'), "no press that would refuse").toBeNull();
-    const withheld = host.querySelector('[data-testid="chat-withheld"]');
     // Said in the act's own words, as the activity rail would say it.
     expect(withheld?.textContent).toContain("Sneak one in");
     expect(withheld?.textContent).toContain("Not permitted");

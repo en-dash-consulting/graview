@@ -87,11 +87,21 @@ export function useTheKeyboardLandsSomewhere(root: RefObject<HTMLElement | null>
     let queued = false;
     // Unmounted: what was asked for later asks nothing of a document that may be gone.
     let gone = false;
+    /*
+     * The root's own document, not the global one, and nothing asked of it
+     * once its window is closed: a page torn down without unmounting (a
+     * test's environment) has no global document left, and a timer set a
+     * moment before read it there.
+     */
+    const doc = at.ownerDocument;
+    const live = () => !gone && doc.defaultView !== null;
+    const after = (ms: number, run: () => void) => void setTimeout(() => live() && run(), ms);
+    const nextFrame = (run: () => void) => void requestAnimationFrame(() => live() && run());
     const land = (afterAnAct: boolean) => {
       queued = false;
       if (gone) return;
-      const active = document.activeElement;
-      const onNothing = active === null || active === document.body || active === document.documentElement;
+      const active = doc.activeElement;
+      const onNothing = active === null || active === doc.body || active === doc.documentElement;
       if (!onNothing || line.length === 0) return;
       if (standsAndTakesTheKeyboard(line[0]!)) {
         // Still there: after a press of its own it gets the keyboard back; a
@@ -119,22 +129,21 @@ export function useTheKeyboardLandsSomewhere(root: RefObject<HTMLElement | null>
      * it, because the keyboard is then somewhere.
      */
     const persist = (afterAnAct: boolean, until = Date.now() + 2500) => {
-      setTimeout(() => {
-        if (gone) return;
+      after(100, () => {
         land(afterAnAct);
-        const active = document.activeElement;
-        const onNothing = active === null || active === document.body || active === document.documentElement;
+        const active = doc.activeElement;
+        const onNothing = active === null || active === doc.body || active === doc.documentElement;
         if (onNothing && line.length > 0 && Date.now() < until) persist(afterAnAct, until);
-      }, 100);
+      });
     };
     const later = () => {
       if (queued || line.length === 0) return;
       queued = true;
       // After the frame a surface that knows better gets to move it first.
-      setTimeout(() => requestAnimationFrame(() => {
+      after(60, () => nextFrame(() => {
         land(false);
         persist(false);
-      }), 60);
+      }));
     };
     /*
      * AND AFTER AN ACT, ASKED AGAIN. A press can take the keyboard off a
@@ -147,10 +156,10 @@ export function useTheKeyboardLandsSomewhere(root: RefObject<HTMLElement | null>
       if (event instanceof KeyboardEvent && !["Enter", " ", "Escape"].includes(event.key)) return;
       // A click elsewhere — on the empty picture, say — is a person leaving on purpose.
       if (!(event instanceof KeyboardEvent) && !(event.target instanceof Node && line[0]?.contains(event.target))) return;
-      setTimeout(() => requestAnimationFrame(() => {
+      after(150, () => nextFrame(() => {
         land(true);
         persist(true);
-      }), 150);
+      }));
     };
     const observer = new MutationObserver(() => {
       if (line.length > 0 && !line[0]!.isConnected) later();
