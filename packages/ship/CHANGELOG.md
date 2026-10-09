@@ -1,5 +1,24 @@
 # @graview/ship
 
+## 0.1.19
+
+### Patch Changes
+
+- 41ed9af: The graph answers who and when without a model, a dev server can lend the seat one, and the examples sign themselves. Asked "who's working thursday" on the rota, the seat said "Open questions need AI, which isn't on here." — and the roster holds the answer outright. The seat now reads a named day against a kind's date, relative to the day the store is judged on: a weekday ("thursday", "on friday", "next tuesday", "last monday"), "tomorrow" and "yesterday", "this weekend" and "next weekend", and a date written either way round ("12 Oct", "Oct 12th", "17th of September", "2026-10-12"). "What's due friday" lands on the tasks due Friday 4 Sep and names them; "what's on thursday" on the shifts that day. And "who … on <day>" follows one relation from the records on that day to the people tied to them, chosen by the relation's own declared words ("working" is "who is covering it"; "which plots were planted this week" is a planting's "the plot it is planted in"): "On Thursday 17 Sep: Ada Nowak is working. Went to the shifts on Thursday 17 Sep." with each name a press, what has nobody said too ("Friday repair cafe has nobody."), and the app moved to that day's records. It reads only through the seat's sight, it is grounded so no model is asked, and it loads with the seat as before. In development, `aiDevProxy()` from `@graview/ship/dev` is a Vite plugin that answers `/__graview/ai`: GET says whether `ANTHROPIC_API_KEY` is set in the environment the dev server was started from, POST forwards a prompt to the Anthropic Messages API (`GRAVIEW_AI_MODEL`, else `claude-sonnet-5-5`) with the key on the server side, and answers with the text alone; it answers same-origin pages only, never puts the key in a response or a log, and a build never carries it. `aiThroughDevServer()` in `@graview/tools` asks that door once and gives a page `ai: { complete, name: "claude" }` when there is a key; when the door is there without one, the seat says "I can answer about what's in this app. Open questions need AI. Set ANTHROPIC_API_KEY when you start the dev server to turn it on." — which only a dev server can say, since a built page has no door and says what any product says. A host may now give `withoutModel` on `ai` to say its own sentence there. And a host can sign its app quietly: `signature` on `Shell`, `Profile` and a routed face's context adds one line at the foot of the person's menu, "Built with Graview", the word a link to graview.dev beside the kit's micro mark; it is off unless asked for, and the bar keeps the app's own name.
+  
+  Compatibility: additive. Added: `AI_BRIDGE_PATH`, `AiBridgeStatus`, `AiBridgeAsk`, `AiBridgeAnswer` (`@graview/core`); `aiDevProxy`, `aiDevProxyHandler`, `AiDevProxyOptions` and `AI_HOW_TO` (`@graview/ship/dev`); `aiThroughDevServer` and `withoutModel` on `HostAi` (`@graview/tools`); `"related"` among `resolveAsk`'s `AskAbout`; `signature` on `Shell`, `Profile` and `PageContext`. Changed: asks that named a day or a date and were left for a model ("who's working thursday", "what's due friday") are now answered by the graph, grounded, with moves and picks. Ops, stored formats, the wire, the document format and tool schemas are unchanged. What Graview Cloud changes: nothing; its seat already passes its own `ai`, and its readers see no `signature` unless it asks for one.
+- Updated dependencies [46f2ac8]
+- Updated dependencies [46f2ac8]
+- Updated dependencies [46f2ac8]
+- Updated dependencies [46f2ac8]
+- Updated dependencies [46f2ac8]
+- Updated dependencies [46f2ac8]
+- Updated dependencies [46f2ac8]
+- Updated dependencies [46f2ac8]
+- Updated dependencies [46f2ac8]
+- Updated dependencies [41ed9af]
+  - @graview/core@0.1.19
+
 ## 0.1.18
 
 ### Patch Changes
