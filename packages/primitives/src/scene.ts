@@ -23,3 +23,5 @@ export { Places } from "./places.js";
 export { ShowInstallation } from "./installation.js";
 export { FindBox } from "./find.js";
 export { viewsCss } from "./views-css.js";
+/* What the scene puts in the one bar — its Find and its Activity — and what it keeps on its picture: the same on the whole-page Shell and an embed. */
+export { SceneBarTools, SceneTrail, useCallLog } from "./scene-bar.js";

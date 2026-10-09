@@ -69,6 +69,7 @@ export function Trail({
   home,
   homeLabel,
   children,
+  onPicture = false,
 }: {
   readonly home: string | null;
   /**
@@ -83,6 +84,12 @@ export function Trail({
    */
   readonly homeLabel?: string;
   readonly children?: ReactNode;
+  /**
+   * Drawn over the picture (`SceneTrail`) rather than in a row of chrome: on
+   * the picture's own float, and nothing at all while there is nothing to
+   * say — a box that says nothing over a picture is a box in the way.
+   */
+  readonly onPicture?: boolean;
 }) {
   const { view, focus, show, go } = useNavigation();
   const { store } = useGraview<AnySchema>();
@@ -146,7 +153,7 @@ export function Trail({
           onClick={() => go(withZoom({ ...view, focusId: home }, false))}
           // A name of a hundred characters gives way to the bar, whole on hover.
           title={nameOf(store, focused.id)}
-          style={{ ...chip, maxWidth: "min(14rem, 15vw)" }}
+          style={{ ...chip, maxWidth: onPicture ? "min(16rem, 45cqw)" : "min(14rem, 15vw)" }}
         >
           <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{nameOf(store, focused.id)}</span>
           <span aria-hidden="true" style={{ opacity: 0.7 }}>
@@ -251,10 +258,21 @@ export function Trail({
     });
   }
 
+  if (onPicture && !crumb && chips.length === 0 && children === undefined) return null;
   return (
     <nav
       aria-label="View"
-      style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.875rem", minWidth: 0 }}
+      data-testid="trail"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        fontSize: "0.875rem",
+        minWidth: 0,
+        ...(onPicture
+          ? { pointerEvents: "auto", padding: "4px 6px", borderRadius: 8, background: "var(--graview-float)", boxShadow: "var(--graview-lift-low)", overflow: "hidden" }
+          : {}),
+      }}
     >
       {crumb ? (
         <button

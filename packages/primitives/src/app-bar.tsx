@@ -108,6 +108,13 @@ export interface BarFind {
   readonly slot: HTMLElement;
   /** A phone's bar: the box opens over the bar's row when it is asked for. */
   readonly compact: boolean;
+  /**
+   * Where the face puts a tool of its own, after Find and before the
+   * standing: the scene's Activity — what happened, the turns to take back,
+   * the seat's agent — which only the scene's face holds, so a page that
+   * opens on the pages never fetches it.
+   */
+  readonly own: HTMLElement | null;
 }
 export const BarFindContext = createContext<BarFind | null>(null);
 /** The bar's place for a Find box, when a bar above this face has one. */
@@ -245,6 +252,8 @@ const BAR_CSS = `
 .graview-bar-tools{display:contents}
 .graview-bar-tools>*{margin-left:-8px}
 .graview-bar-tools>:is(.graview-bar-find,.graview-bar-find-open){margin-left:auto}
+.graview-bar-own{display:flex;align-items:center;flex:0 0 auto}
+.graview-bar-own:empty{display:none}
 .graview-bar-find{position:relative;display:flex;min-width:7.5rem;flex:0 600 9rem;--graview-bar-find-end:3.25em}
 .graview-bar-find-slot{display:flex;flex:1;min-width:0}
 .graview-bar-find-keys{position:absolute;right:10px;line-height:30px;pointer-events:none;font-size:.75rem;color:var(--graview-ink-faint)}
@@ -346,14 +355,15 @@ export function AppBar({
 }) {
   const bar = useRef<HTMLElement>(null);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
+  const [own, setOwn] = useState<HTMLElement | null>(null);
   const [compact, setCompact] = useState(false);
   const [finding, setFinding] = useState(false);
   // Whether the switch's words fit beside everything else the row holds (`roomForWords`).
   const [roomy, setRoomy] = useState(true);
   // Which places stand on the row, by their place in the list ("0,1,2"); null, the one control (FR-145).
   const [standing, setStanding] = useState<string | null>(null);
-  // The places on the face drawn: the routed face's, or the scene's (FR-144).
-  const onPages = !faces || faces.pages.current;
+  // The places on the face drawn: the routed face's, or the scene's (FR-144) — a scene with no pages to switch to has its places too.
+  const onPages = faces ? faces.pages.current : !scenePlaces;
   const shown = onPages ? { places, current, reach } : scenePlaces;
   const list = shown && shown.places.length > 0 ? shown : null;
   const currentAt = list ? list.places.findIndex((place) => place.key === list.current) : -1;
@@ -395,8 +405,8 @@ export function AppBar({
   const told = useRef(onFind);
   told.current = onFind;
   useLayoutEffect(() => {
-    told.current?.(find && slot ? { slot, compact } : null);
-  }, [find, slot, compact]);
+    told.current?.(find && slot ? { slot, compact, own } : null);
+  }, [find, slot, compact, own]);
   useLayoutEffect(() => () => told.current?.(null), []);
   const openFind = useCallback(() => {
     setFinding(true);
@@ -520,6 +530,8 @@ export function AppBar({
                 </div>
               </>
             ) : null}
+            {/* The face's own tool (`BarFind.own`): the scene's Activity, when something has happened. */}
+            <div ref={setOwn} className="graview-bar-own" data-graview-bar-own="" />
             {tools}
           </div>
         </div>

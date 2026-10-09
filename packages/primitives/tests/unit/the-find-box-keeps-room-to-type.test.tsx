@@ -33,13 +33,16 @@ const bar = () => {
 
 describe("the Find box keeps room to type in", () => {
   it("has a floor at a desk, so no name on the bar squeezes it to a sliver", () => {
-    const holder = bar().querySelector<HTMLElement>('[data-testid="find"]')!.parentElement!;
-    const floor = holder.style.minWidth;
-    expect(floor, "the Find box's place on the bar may shrink to nothing").not.toMatch(/^(0(px)?)?$/);
-    expect(Number.parseFloat(floor), "a floor of at least a few characters, in rem").toBeGreaterThanOrEqual(5);
+    // The Shell wears the one app bar; Find's place on it keeps a floor in the bar's own rules.
+    const doc = bar();
+    expect(doc.querySelector('[data-testid="app-find"]'), "the bar's place for Find").not.toBeNull();
+    const rules = [...doc.querySelectorAll("style")].map((style) => style.textContent ?? "").join("\n");
+    const floor = /\.graview-bar-find\{[^}]*min-width:([\d.]+)rem/.exec(rules)?.[1];
+    expect(floor, "the Find box's place on the bar may shrink to nothing").toBeDefined();
+    expect(Number.parseFloat(floor!), "a floor of at least a few characters, in rem").toBeGreaterThanOrEqual(5);
   });
 
-  it("the focused record's crumb is capped and truncates, whole in its title", () => {
+  it("the focused record's crumb, on the picture now, is capped and truncates, whole in its title", () => {
     const crumb = bar().querySelector<HTMLElement>('[data-testid="focused"]')!;
     expect(crumb.style.maxWidth, "a crumb as wide as its name takes the bar").not.toBe("");
     expect(crumb.getAttribute("title")).toBe(LONG);

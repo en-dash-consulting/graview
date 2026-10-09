@@ -1,9 +1,8 @@
 import type { AnySchema } from "@graview/core";
 import type { Scheme } from "@graview/core";
-import { DraftDoor, FindBox, Inspector, LinesKey, OverviewButton, sceneCss, SeatField, ShowInstallation, viewsCss, type SeatStart } from "@graview/primitives/scene";
+import { DraftDoor, Inspector, LinesKey, OverviewButton, SceneBarTools, SceneTrail, sceneCss, SeatField, ShowInstallation, useCallLog, viewsCss, type SeatStart } from "@graview/primitives/scene";
 import { useBarFind } from "@graview/primitives/frame";
 import { useMemo } from "react";
-import { createPortal } from "react-dom";
 import { Scene, UrlSync } from "@graview/react";
 import { AUTO_SCENE_HEIGHT } from "./frame.js";
 
@@ -29,21 +28,25 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, seat, sc
    * scene never carries them.
    */
   const css = useMemo(() => `${viewsCss({ scope: `.${scope}` })}\n${sceneCss(scheme, { scope: `.${scope}` })}`, [scheme, scope]);
-  // The scene's Find — its hits are the picture's — in the app bar's place for it (FR-131).
+  // Where the app bar keeps the scene's Find — its hits are the picture's — and its Activity (FR-131).
   const find = useBarFind();
+  const [calls, onCall] = useCallLog();
   return (
     <div data-embed-content="" style={{ position: "relative", flex: auto ? `0 0 ${AUTO_SCENE_HEIGHT}px` : "1 1 auto", minHeight: 0, containerType: "size" }}>
       <style>{css}</style>
       {address ? <UrlSync /> : null}
       <Scene renderer="dom" />
+      {/* What the picture is doing, with the way back from each, on the picture — as on the whole-page Shell. */}
+      <SceneTrail />
       <OverviewButton />
       <LinesKey<S> />
       {/* A view the seat drew, in place of the picture, under the seat. */}
       <DraftDoor />
       {/* The ask field at the picture's foot, that grows into the conversation when asked. */}
-      <SeatField<S> {...(seat ? { start: seat } : {})} />
+      <SeatField<S> {...(seat ? { start: seat } : {})} onCall={onCall} />
       <Inspector placement="menu" />
-      {find ? createPortal(<FindBox<S> compact={find.compact} />, find.slot) : null}
+      {/* The scene's Find and its Activity, in the bar's places for them (FR-131), as the whole-page Shell puts them. */}
+      <SceneBarTools<S> find={find} calls={calls} />
     </div>
   );
 }
