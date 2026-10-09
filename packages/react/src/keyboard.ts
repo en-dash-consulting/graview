@@ -154,6 +154,31 @@ export function useTheKeyboardLandsSomewhere(root: RefObject<HTMLElement | null>
      */
     const acted = (event: Event) => {
       if (event instanceof KeyboardEvent && !["Enter", " ", "Escape"].includes(event.key)) return;
+      /*
+       * A CONTROL PRESSED THAT NEVER HAD THE KEYBOARD. Firefox and Safari on
+       * macOS do not focus a button on click: the press takes the keyboard
+       * off the field it was on and leaves it on nothing. When that button
+       * is then taken away (Keep on a drawn view), Chromium's focused button
+       * was removed and landed by this rule, and Firefox's was never known.
+       * So a press on a control while the keyboard is nowhere stands for the
+       * keyboard having been there: if the control goes, it lands beside it.
+       */
+      if (!(event instanceof KeyboardEvent)) {
+        const pressed = event.target instanceof Element ? event.target.closest(CONTROL) : null;
+        const active = doc.activeElement;
+        const nowhere = active === null || active === doc.body || active === doc.documentElement;
+        if (pressed && nowhere && at.contains(pressed)) {
+          line = [];
+          for (let el: Element | null = pressed; el && el !== at.parentElement; el = el.parentElement) line.push(el);
+          after(150, () =>
+            nextFrame(() => {
+              land(false);
+              persist(false);
+            }),
+          );
+          return;
+        }
+      }
       // A click elsewhere — on the empty picture, say — is a person leaving on purpose.
       if (!(event instanceof KeyboardEvent) && !(event.target instanceof Node && line[0]?.contains(event.target))) return;
       after(150, () => nextFrame(() => {
