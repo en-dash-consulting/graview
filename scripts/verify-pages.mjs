@@ -801,10 +801,28 @@ try {
           named: (canvas.getAttribute("aria-label") ?? "").length > 10,
           // The same facts in the document, for a reader the canvas cannot serve.
           factsInTheDocument: (document.querySelector('[data-testid="burndown-days"]')?.textContent ?? "").includes("left"),
+          /*
+           * And the facts say something IS left: the example has seven
+           * dated tasks open, so its first day reads "26 Aug: 7 left". A
+           * picture that read "0 left" on every day drew a flat line along
+           * the bottom, and every claim above still held.
+           */
+          somethingIsLeft: [...document.querySelectorAll('[data-testid="burndown-days"] li')].some((li) => /: [1-9]\d* left$/.test(li.textContent ?? "")),
+          daysSaidAsRead: (document.querySelector('[data-testid="burndown-days"] li')?.textContent ?? "") === "26 Aug: 7 left",
           // And the picture must not push the page sideways on a phone.
           noSidewaysPage: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
         };
       });
+      await seen.close();
+    }
+    // The same picture on the scene, where it was found reading "0 left" on every day.
+    {
+      const seen = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      await seen.goto(`${vite.url}/#focus=aggregate%3Atask&in.view=what-is-left`, { waitUntil: "load" });
+      await seen.waitForSelector('[data-testid="burndown-canvas"]', { timeout: 20_000 });
+      canvasChecks.onTheSceneSomethingIsLeft = await seen.evaluate(() =>
+        [...document.querySelectorAll('[data-testid="burndown-days"] li')].some((li) => /: [1-9]\d* left$/.test(li.textContent ?? "")),
+      );
       await seen.close();
     }
     const routes = ["", "/problems", "/map", "/places", "/places/what-is-left", "/places/the-week", "/tasks"];

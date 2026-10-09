@@ -13,6 +13,7 @@ import {
 } from "@graview/primitives";
 import { todoApp } from "../domain/app.js";
 import { todoSchema, type TodoSchema } from "../domain/schema.js";
+import { labelsThatFit, whatIsLeft } from "./what-is-left.js";
 
 type S = TodoSchema;
 type ListNode = { id: string; label: string; order: number };
@@ -328,6 +329,12 @@ function BurndownView({ nodes }: ViewProps<S, "task">) {
   const surface = useRef<HTMLCanvasElement | null>(null);
   const [box, setBox] = useState<{ width: number; height: number } | null>(null);
   const holder = useRef<HTMLDivElement | null>(null);
+  /* The scheme changes the ink, and a canvas does not repaint itself when it does. */
+  const [scheme, setScheme] = useState<string | undefined>(undefined);
+
+  /** One point per day that has anything due, and how much is still open on it or after it. */
+  const left = useMemo(() => whatIsLeft((nodes ?? []).map((node) => node as TaskNode)), [nodes]);
+  const drawn = left.days.length >= 2 && left.peak > 0;
 
   useEffect(() => {
     const host = holder.current;
@@ -338,108 +345,199 @@ function BurndownView({ nodes }: ViewProps<S, "task">) {
     });
     watch.observe(host);
     return () => watch.disconnect();
-  }, []);
+  }, [drawn]);
 
-  /** One point per day that has anything due, and how much is still open on it. */
-  const trail = useMemo(() => {
-    const dated = (nodes ?? [])
-      .map((node) => node as TaskNode)
-      .filter((task) => task.due !== undefined)
-      .sort((a, b) => String(a.due).localeCompare(String(b.due)));
-    const days = [...new Set(dated.map((task) => String(task.due)))];
-    return days.map((day) => ({
-      day,
-      left: dated.filter((task) => !task.done && String(task.due) >= day).length,
-    }));
-  }, [nodes]);
+  useEffect(() => {
+    if (typeof MutationObserver === "undefined") return;
+    const root = document.documentElement;
+    const watch = new MutationObserver(() => setScheme(root.dataset["graviewScheme"]));
+    watch.observe(root, { attributes: true, attributeFilter: ["data-graview-scheme"] });
+    return () => watch.disconnect();
+  }, []);
 
   useEffect(() => {
     const canvas = surface.current;
-    if (!canvas || !box || box.width <= 0) return;
+    if (!canvas || !box || box.width <= 0 || !drawn) return;
     const ratio = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
     canvas.width = Math.round(box.width * ratio);
     canvas.height = Math.round(box.height * ratio);
     const ink = canvas.getContext("2d");
     // A browser that will not give a context is a browser that reads the
-    // list below instead. Nothing here is the only way to the facts.
+    // words and the list instead. Nothing here is the only way to the facts.
     if (!ink) return;
     ink.setTransform(ratio, 0, 0, ratio, 0, 0);
     ink.clearRect(0, 0, box.width, box.height);
-    if (trail.length < 2) return;
 
-    const pad = { left: 28, right: 12, top: 12, bottom: 22 };
+    const style = getComputedStyle(canvas);
+    const token = (name: string, otherwise: string) => style.getPropertyValue(name).trim() || otherwise;
+    const line = token("--graview-accent", "#555");
+    const rule = token("--graview-edge", "#ddd");
+    const muted = token("--graview-ink-muted", "#777");
+    ink.font = `11px ${token("--graview-font-body", "system-ui, sans-serif")}`;
+    ink.textBaseline = "middle";
+
+    /*
+     * THE SCALE IS TWO NUMBERS: none left, and the most there ever was.
+     * The room on the left is as wide as the wider of them, and the room
+     * on each side as wide as half a day's label, so the first and the
+     * last day sit under their points without running off the canvas.
+     */
+    const scaleWidth = Math.max(ink.measureText(String(left.peak)).width, ink.measureText("0").width);
+    const widths = left.days.map((point) => ink.measureText(point.said).width);
+    const pad = {
+      left: Math.max(scaleWidth + 10, widths[0]! / 2 + 2),
+      right: Math.max(8, widths[widths.length - 1]! / 2 + 2),
+      top: 8,
+      bottom: 24,
+    };
     const wide = box.width - pad.left - pad.right;
     const tall = box.height - pad.top - pad.bottom;
-    const peak = Math.max(1, ...trail.map((point) => point.left));
-    const style = getComputedStyle(canvas);
-    const line = style.getPropertyValue("--graview-accent").trim() || "#555";
-    const faint = style.getPropertyValue("--graview-edge").trim() || "#ddd";
-    const at = (index: number, left: number) => ({
-      x: pad.left + (wide * index) / (trail.length - 1),
-      y: pad.top + tall - (tall * left) / peak,
-    });
+    if (wide <= 0 || tall <= 0) return;
+    /*
+     * A DAY STANDS WHERE IT FALLS, not at the next even step: four days
+     * between 28 Aug and 1 Sep are four days wide, and a day after the
+     * last due one is room the line needs for its last step down.
+     */
+    const dayNumber = (day: string) => Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10)) / 86_400_000;
+    const start = dayNumber(left.days[0]!.day);
+    const span = Math.max(1, dayNumber(left.days[left.days.length - 1]!.day) - start);
+    const xOfDay = (offset: number) => pad.left + (wide * offset) / span;
+    const xOf = (index: number) => xOfDay(dayNumber(left.days[index]!.day) - start);
+    const yOf = (count: number) => pad.top + tall - (tall * count) / left.peak;
 
-    ink.strokeStyle = faint;
+    // The two rules the scale stands on, and their numbers.
+    ink.strokeStyle = rule;
     ink.lineWidth = 1;
-    for (let step = 0; step <= 2; step += 1) {
-      const y = pad.top + (tall * step) / 2;
+    ink.fillStyle = muted;
+    ink.textAlign = "right";
+    for (const count of [0, left.peak]) {
+      const y = Math.round(yOf(count)) + 0.5;
       ink.beginPath();
       ink.moveTo(pad.left, y);
       ink.lineTo(pad.left + wide, y);
       ink.stroke();
+      ink.fillText(String(count), pad.left - 6, y);
+    }
+
+    // The days, as many as fit, under the points they name.
+    ink.textAlign = "center";
+    const xs = left.days.map((_, index) => xOf(index));
+    for (const index of labelsThatFit(xs, (at) => widths[at]!, 10)) {
+      ink.fillText(left.days[index]!.said, xs[index]!, pad.top + tall + 14);
     }
 
     ink.strokeStyle = line;
     ink.lineWidth = 2;
     ink.lineJoin = "round";
+    /*
+     * THE COUNT MOVES IN STEPS. What is left holds through a due day and
+     * falls the morning after it, so the line keeps its height to the day
+     * and steps down at the day after — a slope between two due days
+     * would say something was finished on a day nothing was due.
+     */
     ink.beginPath();
-    trail.forEach((point, index) => {
-      const spot = at(index, point.left);
-      if (index === 0) ink.moveTo(spot.x, spot.y);
-      else ink.lineTo(spot.x, spot.y);
+    left.days.forEach((point, index) => {
+      const x = xOf(index);
+      if (index === 0) ink.moveTo(x, yOf(point.left));
+      else ink.lineTo(x, yOf(point.left));
+      const next = left.days[index + 1];
+      if (next && next.left !== point.left) {
+        const after = Math.min(xOf(index + 1), x + wide / span);
+        ink.lineTo(after, yOf(point.left));
+        ink.lineTo(after, yOf(next.left));
+      }
     });
     ink.stroke();
 
     ink.fillStyle = line;
-    for (const [index, point] of trail.entries()) {
-      const spot = at(index, point.left);
+    for (const [index, point] of left.days.entries()) {
       ink.beginPath();
-      ink.arc(spot.x, spot.y, 2.5, 0, Math.PI * 2);
+      ink.arc(xOf(index), yOf(point.left), 2.5, 0, Math.PI * 2);
       ink.fill();
     }
-  }, [trail, box]);
+  }, [left, box, drawn, scheme]);
 
-  const peak = Math.max(0, ...trail.map((point) => point.left));
+  const first = left.days[0];
+  const last = left.days[left.days.length - 1];
+  const undated = left.undated > 0 ? ` ${left.undated === 1 ? "One more has" : `${left.undated} more have`} no date.` : "";
+  /*
+   * WHAT THE PICTURE SAYS, IN WORDS — and in place of the line when a line
+   * would say nothing: no day at all, one day, or every dated task done,
+   * which drawn is a flat line along the bottom that reads as broken.
+   */
+  const sentence =
+    !first || !last
+      ? `Nothing has a date yet, so there is no line to draw.${undated}`
+      : left.peak === 0
+        ? `Everything with a date is done: ${left.done === 1 ? "one task" : `${left.done} tasks`}.${undated}`
+        : left.days.length === 1
+          ? `Only ${first.said} has anything due: ${first.left} still open.${undated}`
+          : `Open tasks due on each day or later, from ${first.said} to ${last.said}: ${first.left} at first, ${last.left} on the last day.${undated}`;
   return (
-    <div style={{ display: "grid", gridTemplateRows: "minmax(0, 1fr) auto", gap: 8, minWidth: 0, padding: 12 }}>
-      <div ref={holder} style={{ position: "relative", minHeight: 140, minWidth: 0 }}>
-        <canvas
-          ref={surface}
-          data-testid="burndown-canvas"
-          role="img"
-          aria-label={
-            trail.length < 2
-              ? "Nothing with a date yet."
-              : `What is left, from ${trail[0]!.day} to ${trail[trail.length - 1]!.day}: ${peak} at the most.`
-          }
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}
-        />
-      </div>
+    <div
+      style={{
+        display: "grid",
+        /*
+         * As tall as the room, up to a height a line of a dozen days reads
+         * at: past it a step of one task is a cliff, which says more than
+         * the count does. The rest of a tall box is left below it.
+         */
+        gridTemplateRows: drawn ? "auto minmax(140px, 320px)" : "auto",
+        alignContent: "start",
+        gap: 8,
+        // The whole box the picture is given, so the line is as tall as the room for it.
+        height: "100%",
+        boxSizing: "border-box",
+        minWidth: 0,
+        padding: 12,
+      }}
+    >
+      <p data-testid="burndown-words" style={{ margin: 0, fontSize: 13, color: "var(--graview-ink-muted)" }}>
+        {sentence}
+      </p>
+      {drawn ? (
+        <div ref={holder} style={{ position: "relative", height: "100%", minWidth: 0 }}>
+          <canvas
+            ref={surface}
+            data-testid="burndown-canvas"
+            role="img"
+            aria-label={sentence}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}
+          />
+        </div>
+      ) : null}
       {/*
         * THE SAME FACTS IN THE DOCUMENT. A canvas says nothing to a screen
         * reader, to a search engine, or to a browser that could not start
-        * it — and a routed page is exactly where all three turn up.
+        * it — and a routed page is exactly where all three turn up. The
+        * axis says the days to the eye; this says every one of them to
+        * everybody else, without crowding the picture.
         */}
-      <ol data-testid="burndown-days" style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexWrap: "wrap", gap: "2px 12px", fontSize: 12.5, color: "var(--graview-ink-muted)" }}>
-        {trail.map((point) => (
-          <li key={point.day}>
-            {point.day}: {point.left} left
-          </li>
-        ))}
-      </ol>
+      {left.days.length > 0 ? (
+        <ol data-testid="burndown-days" style={HIDDEN}>
+          {left.days.map((point) => (
+            <li key={point.day}>
+              {point.said}: {point.left} left
+            </li>
+          ))}
+        </ol>
+      ) : null}
     </div>
   );
 }
+
+/** In the document for a reader, out of the way of the eye. */
+const HIDDEN = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  margin: -1,
+  padding: 0,
+  overflow: "hidden",
+  clip: "rect(0 0 0 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+} as const;
 
 export function todoViews() {
   const registry = registerDefaultViews(todoSchema, createViews(todoSchema));
