@@ -186,14 +186,14 @@ async function verifyKeyboardSurvivesThePane(engine, launch) {
     await page.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
     await page.waitForTimeout(900);
-    // Somewhere with a pane, and the keyboard inside it.
-    await page.click('[data-graview-pick="t-deposit"]');
-    await page.waitForSelector('[data-testid="affordances"] [data-affordance]');
-    await page.focus('[data-testid="affordances"] [data-affordance]');
+    // Somewhere with a pane — the acts at the pointer — and the keyboard inside it.
+    await page.click('[data-graview-pick="t-deposit"]', { button: "right" });
+    await page.waitForSelector('[data-testid="context-menu"] [data-affordance]');
+    await page.focus('[data-testid="context-menu"] [data-affordance]');
     await page.keyboard.press("Escape");
     await page.waitForTimeout(500);
     const gone = await page.evaluate(
-      () => document.querySelector('[data-testid="inspector-strip"]') === null,
+      () => document.querySelector('[data-testid="context-menu"]') === null,
     );
     // And now Tab has to go somewhere.
     const reached = [];
@@ -212,12 +212,10 @@ async function verifyKeyboardSurvivesThePane(engine, launch) {
     }
     /*
      * What the claim is ABOUT is the keyboard: after Escape took away the
-     * selection the keyboard stood in, Tab still goes somewhere. Since the
-     * companion's rail the pane stays on screen at a desk's width — it says
-     * what is in view once the selection is gone — so "the pane went away"
-     * stopped being true while the keyboard was fine, and the claim failed
-     * in every engine at the commit the fifth walk started from. The pane's
-     * going is reported; the keyboard is what is judged.
+     * pane the keyboard stood in, Tab still goes somewhere. The selection's
+     * acts are the menu at the pointer now (the scene draws no strip), so
+     * the pane is that menu; its going is reported, the keyboard is what is
+     * judged.
      */
     return {
       ok: reached.length > 0 && reached.every((where) => where !== "body"),
@@ -310,32 +308,35 @@ async function verifyLocalFallback() {
       webgpu: "gpu" in navigator,
       promptApi: "LanguageModel" in globalThis,
     }));
-    /* The rail is already open: the conversation is a section of it, not a panel behind a pill. */
-    await page.waitForSelector('[data-testid="chat-panel"]');
-    await page.fill('[aria-label="Message the seat"]', "what is here?");
-    await page.press('[aria-label="Message the seat"]', "Enter");
+    /* The seat's field at the picture's foot opens into the conversation. */
+    await page.click('[data-testid="seat-field"]');
+    await page.waitForSelector('[data-testid="seat-panel"]');
+    await page.fill('[data-testid="seat-field"]', "what is here?");
+    await page.press('[data-testid="seat-field"]', "Enter");
     // The graph floor answers while the rung tries to warm; the warm-up
     // fails fast (no WebGPU) and the header says why.
     await page.waitForFunction(
-      () => document.querySelectorAll('[data-testid="chat-panel"] ol li').length >= 2,
+      () => document.querySelectorAll('[data-testid="seat-panel"] ol > li').length >= 2,
       null,
       { timeout: 20_000 },
     );
+    const answered = await page.evaluate(
+      () => document.querySelector('[data-testid="seat-panel"] ol > li:last-child')?.textContent ?? "",
+    );
+    // What answers is said under the ⚙.
+    await page.click('[data-testid="seat-settings"]');
     await page.waitForFunction(
       () => {
-        const source = document.querySelector('[data-testid="chat-source"]');
+        const source = document.querySelector('[data-testid="seat-source"]');
         return source !== null && /graph answering/.test(source.textContent ?? "");
       },
       null,
       { timeout: 20_000 },
     );
     const header = await page.evaluate(() => {
-      const source = document.querySelector('[data-testid="chat-source"]');
+      const source = document.querySelector('[data-testid="seat-source"]');
       return { text: source?.textContent ?? "", title: source?.getAttribute("title") ?? "" };
     });
-    const answered = await page.evaluate(
-      () => document.querySelector('[data-testid="chat-panel"] ol li:last-child')?.textContent ?? "",
-    );
     return {
       ok:
         !engineFacts.webgpu &&

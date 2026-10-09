@@ -61,6 +61,8 @@ export const OWN = {
   "drawn-once-host": 5273,
   /** The host's page `verify-long-text` mounts a workshop whose deliverable holds an email drafted in full into (FR-146–FR-148). */
   "long-text-host": 5271,
+  /** The host's page `verify-seat-guide` mounts the todo app into, to switch faces in place under one conversation. */
+  "seat-host": 5272,
   /** `pnpm site:serve`: docs/site served as graview.dev serves it, so the site's own font loads (a file:// page cannot load one). */
   "site-preview": 5275,
   /** The OpenAI-shaped stand-in `verify-studio` points the studio's remote model at. */

@@ -8,11 +8,12 @@ import { PagesApp, type PageContext } from "../../src/index.js";
 /**
  * THE ASSISTANT IS ON EVERY PAGE, and it is the SAME one.
  *
- * The scene keeps the seat in a rail that names its subject; a routed face
- * that grew a chat box of its own would be two assistants with two habits
- * over one graph. The pages face opens the same companion, and the route
- * is what "this" means: a record page is about that record, a kind's page
- * about that kind, a picture about the kind it is a picture of.
+ * The scene keeps an ask field at its foot; a routed face that grew a chat
+ * box of its own would be two assistants with two habits over one graph.
+ * The pages face draws the same field, holding the app's one
+ * conversation, and the route is what "this" means: a record page is about
+ * that record, a kind's page about that kind, a picture about the kind it
+ * is a picture of.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string(), done: z.boolean().default(false) }), plural: "Tasks" });
 const schema = createSchema([task]);
@@ -42,15 +43,19 @@ const draw = (path: string, withViews = true) =>
   );
 
 describe("the assistant on every page", () => {
-  it("offers one control on every route, and it opens the scene's own companion", () => {
+  it("offers the scene's own ask field on every route, and no pill to press", () => {
     for (const path of ["/", "/tasks", "/tasks/t1", "/places", "/places/the-board", "/problems", "/map"]) {
-      expect(draw(path), path).toContain('data-testid="page-ask"');
+      const html = draw(path);
+      expect(html, path).toContain('data-testid="page-seat"');
+      expect(html, path).toContain('data-testid="seat-field"');
+      expect(html, path).not.toContain("◆");
     }
   });
 
   it("is not there at all when the app handed the face no views, because there is no provider to answer from", () => {
     const html = draw("/", false);
-    expect(html).not.toContain('data-testid="page-ask"');
+    expect(html).not.toContain('data-testid="page-seat"');
+    expect(html).not.toContain('data-testid="seat-field"');
     expect(html).not.toContain('data-testid="setting-intelligence"');
   });
 

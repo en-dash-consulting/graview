@@ -563,49 +563,49 @@ try {
   const asker = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await asker.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01&fresh=1`, { waitUntil: "networkidle" });
   await asker.waitForTimeout(600);
-  await asker.click('[data-testid="page-ask"]');
-  await asker.waitForSelector('[data-testid="page-ask-drawer"]');
+  /* The seat's ask field, at the page's foot, opens into the conversation over the page. */
+  await asker.click('[data-testid="page-seat"] [data-testid="seat-field"]');
+  await asker.waitForSelector('[data-testid="seat-panel"]', { timeout: 30_000 });
   await asker.waitForTimeout(500);
   const drawer = await asker.evaluate(() => ({
-    subject: document.querySelector('[data-testid="companion"]')?.getAttribute("data-graview-subject") ?? null,
-    said: document.querySelector('[data-testid="companion-subject"]')?.textContent?.trim() ?? null,
-    offers: [...document.querySelectorAll('[data-testid="chat-offer"]')].map((el) => (el.textContent ?? "").trim()),
+    said: document.querySelector('[data-testid="seat-where"]')?.textContent?.trim() ?? null,
+    offers: [...document.querySelectorAll('[data-testid="seat-suggestion"]')].map((el) => (el.textContent ?? "").trim()),
   }));
   report.checks.theAssistantIsOnThePage = {
     ...drawer,
     // The route is the referent: a record page is about that record.
-    ok: drawer.subject === "t-deposit" && (drawer.said ?? "").includes("deposit") && drawer.offers.length > 0,
+    ok: (drawer.said ?? "").includes("deposit") && drawer.offers.length > 0,
   };
   /* A grounded question, answered from the graph with no model at all. */
-  await asker.click('[data-testid="chat-offer"]');
-  await asker.waitForFunction(() => document.querySelectorAll('[data-testid="chat-panel"] ol li').length >= 2, undefined, { timeout: 15_000 });
+  await asker.click('[data-testid="seat-suggestion"]');
+  await asker.waitForFunction(() => document.querySelectorAll('[data-testid="seat-panel"] ol > li').length >= 2, undefined, { timeout: 15_000 });
   await asker.waitForTimeout(400);
   const answered = await asker.evaluate(() => {
-    const rows = [...document.querySelectorAll('[data-testid="chat-panel"] ol li')];
+    const rows = [...document.querySelectorAll('[data-testid="seat-panel"] ol > li')];
     return (rows[rows.length - 1]?.textContent ?? "").slice(0, 160);
   });
   report.checks.aGroundedQuestionIsAnswered = { answered, ok: answered.length > 0 && !/could not answer/i.test(answered) };
   /* And it says a change in words, which lands through the same runtime, attributed and undoable. */
-  await asker.fill('[aria-label="Message the seat"]', "finish Pay the deposit");
-  await asker.press('[aria-label="Message the seat"]', "Enter");
+  await asker.fill('[data-testid="seat-field"]', "finish Pay the deposit");
+  await asker.press('[data-testid="seat-field"]', "Enter");
   await asker.waitForTimeout(1200);
-  const proposed = await asker.$('[data-testid="chat-apply"]');
+  const proposed = await asker.$('[data-testid="seat-apply"]');
   let applied = { ok: false, why: "nothing proposed" };
   if (proposed) {
     await proposed.click();
     await asker.waitForTimeout(800);
     applied = await asker.evaluate(() => ({
-      said: [...document.querySelectorAll('[data-testid="chat-panel"] ol li')].map((li) => li.textContent ?? "").join(" | ").slice(-160),
-      ok: document.querySelector('[data-testid="chat-applied"]') !== null,
+      said: [...document.querySelectorAll('[data-testid="seat-panel"] ol > li')].map((li) => li.textContent ?? "").join(" | ").slice(-160),
+      ok: document.querySelector('[data-testid="seat-applied"]') !== null,
     }));
   }
   report.checks.aProposalAppliesFromThePage = applied;
   await asker.close();
-  /* The drawer on a phone: nothing side-scrolls the document. */
+  /* The seat's sheet on a phone: nothing side-scrolls the document. */
   const phone4 = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await phone4.goto(`${at("todo")}/pages/tasks?today=2026-09-01`, { waitUntil: "networkidle" });
   await phone4.waitForTimeout(500);
-  await phone4.click('[data-testid="page-ask"]');
+  await phone4.click('[data-testid="seat-field"]');
   await phone4.waitForTimeout(700);
   report.checks.phoneAsk = await hygiene(phone4);
   await phone4.close();

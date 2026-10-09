@@ -302,13 +302,12 @@ const measure = () => {
   /*
    * Chrome sitting ON TOP of the CONTENT.
    *
-   * The strip is an elevated transient surface: it floats in front of the
-   * scene rather than reserving a band of it, and hovering over the
-   * constant plane-2 shelf while a selection is open is the design — the
-   * shelf is a map, the strip is dismissible, and the elevation shadow says
-   * which is nearer. What would still be wrong is the strip sitting on a
-   * real share of the focus or a raised card, so that is what this counts —
-   * against the panel someone can see, not the band slot the layout allots.
+   * The seat is an ask field at the picture's foot, in a strip the layout
+   * keeps clear, and grows over the picture only when asked. What would be
+   * wrong is it sitting on a real share of the focus or a raised card, so
+   * that is what this counts — against the panel someone can see, not the
+   * band slot the layout allots. (This measured the strip a selection drew;
+   * the scene draws none now.)
    *
    * A menu at the pointer is EXCLUDED: covering the thing you right-clicked
    * is what a menu is for.
@@ -317,7 +316,7 @@ const measure = () => {
     // A full page covers the scene on purpose; what is underneath it is not
     // something anyone can see, let alone something the strip is hiding.
     if (document.querySelector('[role="dialog"]')) return [];
-    const strip = document.querySelector('[data-testid="inspector-strip"]');
+    const strip = document.querySelector('[data-testid="seat"]');
     if (!strip) return [];
     const over = strip.getBoundingClientRect();
     return [...document.querySelectorAll("[data-graview-view]")]

@@ -332,7 +332,7 @@ const openProfile = async (page) => {
     await seven.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
     await seven.waitForTimeout(1400);
     /*
-     * An ordinary act this seat may take, from the strip — asked on a
+     * An ordinary act this seat may take, from its acts — asked on a
      * MEMBER. A district's own creating act is the coordinator's, and a
      * gardener may legitimately not take it: standing there, everything is
      * withheld whether or not the seat is reaching the interface at all.
@@ -341,17 +341,18 @@ const openProfile = async (page) => {
     await seven.waitForTimeout(900);
     const member = await seven.$("[data-graview-pick]");
     if (member) {
-      await member.click();
+      // Its acts: the menu a right-click opens on it.
+      await member.click({ button: "right" });
       await seven.waitForTimeout(700);
     }
     const took = await seven
       // The OFFERED list, not the withheld one beside it: those are
       // deliberately disabled buttons carrying the policy's reason.
-      .locator('[data-testid="affordances"] [data-affordance]')
+      .locator('[data-testid="context-menu"] [data-testid="affordances"] [data-affordance]')
       .first()
       .textContent()
       .catch(() => null);
-    await seven.locator('[data-testid="affordances"] [data-affordance]').first().click();
+    await seven.locator('[data-testid="context-menu"] [data-testid="affordances"] [data-affordance]').first().click();
     await seven.waitForTimeout(900);
     // Answer anything the act still wants, so there is a turn to take back.
     for (let step = 0; step < 3 && (await seven.$("[data-graview-asking]")) !== null; step++) {

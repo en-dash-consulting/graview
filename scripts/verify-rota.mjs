@@ -113,15 +113,26 @@ const openProfile = async (page) => {
   /* ------------------------------- three seats, and the third is the point */
   const seatSays = async (as) => {
     await open(`/?${DAY}&fresh=1&as=${as}#focus=aggregate:shift&sel=s-fri-repair`);
-    await openProfile(page);
-    return page.evaluate(() => ({
-      offered: [...document.querySelectorAll('[data-testid="inspector-strip"] [data-affordance]:not([disabled])')].length,
-      withheld: [...document.querySelectorAll('[data-testid="inspector-strip"] [data-withheld]')].map((b) =>
+    // Its acts, as the menu a right-click opens on it says them (the scene draws no strip beside a selection).
+    await page.click('[data-graview-pick="s-fri-repair"]', { button: "right" });
+    await page.waitForSelector('[data-testid="context-menu"]', { timeout: 10_000 }).catch(() => {});
+    await page.waitForTimeout(300);
+    const acts = await page.evaluate(() => ({
+      offered: [...document.querySelectorAll('[data-testid="context-menu"] [data-affordance]:not([disabled])')].length,
+      withheld: [...document.querySelectorAll('[data-testid="context-menu"] [data-withheld]')].map((b) =>
         b.getAttribute("data-withheld"),
       ),
-      installation: document.querySelector('[data-testid="show-installation"]') !== null,
-      studio: document.querySelector('[data-testid="studio-place"]') !== null,
     }));
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(200);
+    await openProfile(page);
+    return {
+      ...acts,
+      ...(await page.evaluate(() => ({
+        installation: document.querySelector('[data-testid="show-installation"]') !== null,
+        studio: document.querySelector('[data-testid="studio-place"]') !== null,
+      }))),
+    };
   };
   const coordinator = await seatSays("user-jo");
   const volunteer = await seatSays("user-ada");

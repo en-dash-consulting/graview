@@ -51,7 +51,8 @@ import { whereIsIn } from "./where-drawn.js";
 import { BandCard, BeyondCard, SettledView } from "./resolved-view.js";
 import { selectionFor, useElementSize, useRootUnit } from "./scene-helpers.js";
 import { Lines, RelationCaptions } from "./scene-lines.js";
-import { railInset } from "./rails.js";
+import { railInset, SEAT_FOOT } from "./rails.js";
+import { useSeatDrawn } from "./seat-talk.js";
 
 export { railInset };
 import { SceneViewHost } from "./view-host.js";
@@ -134,7 +135,9 @@ export function Scene<S extends AnySchema>({
     selection,
     setSelection,
     setMenuAt,
-    emphasis, hiddenKinds, registerScene, pointer, brand, noteMoved, robots, railLeft } = useGraview<S>();
+    emphasis, hiddenKinds, registerScene, pointer, brand, noteMoved, robots, seatTalk } = useGraview<S>();
+  /* Whether an ask field stands at the picture's foot: the layout keeps that strip clear of cards. */
+  const seated = useSeatDrawn(seatTalk);
   const found = useFound();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -237,23 +240,12 @@ export function Scene<S extends AnySchema>({
       // What stands as itself when a relation does not fit the band (docs/scale.md).
       relevance,
       /*
-       * THE LEFT RAIL. The relation key, the quick relations and the
-       * inspector live on the scene's left edge in every mode, and the
-       * picture used to run under them — a district beneath the pane at
-       * altitude, a lens's title under the quick relations in focus. The
-       * layout keeps every card to what is left. The altitude control sits
-       * in the top-right corner, where a full-width focus card's own corner
-       * used to be — so the right has a rail too.
+       * THE GUTTERS. The seat floats over the picture rather than taking a
+       * rail of it, so the left keeps a gutter; the right keeps the corner
+       * the altitude control and the key stand in, in proportion, so an
+       * embed a paragraph wide does not give a third of itself to chrome.
        */
-      // In proportion: an embed a paragraph wide cannot give a third of
-      // itself to chrome. From the default 1200 up these are 264 and 128.
-      //
-      // And below a phone's width there is no rail at all: the companion
-      // is a sheet at the foot, the inspector a sheet over the picture, and
-      // the only thing on the right is the altitude control's corner. A
-      // 360px frame that kept a fifth of itself for panes nobody drew there
-      // gave a focused lens 145 pixels, which is not a lens, it is a spine.
-      inset: railInset(size?.width ?? 1200, railLeft),
+      inset: railInset(size?.width ?? 1200),
       // The reader's own text size, which the cards are sized in: the city
       // grows with the words rather than holding them at a fixed 230×97.
       unit,
@@ -289,17 +281,20 @@ export function Scene<S extends AnySchema>({
         ? {
             width: size.width,
             /*
-             * The scene lays out into its WHOLE box. The actions strip is a
-             * transient elevated surface — it floats in front of the scene
-             * the way a menu floats in front of a page, and reserving a
-             * permanent band of the height for it squeezed every band on
-             * every screen for chrome that mostly is not there.
+             * The scene lays out into its WHOLE box, but for the strip at its
+             * foot the ask field stands in. The actions strip is a transient
+             * elevated surface — it floats in front of the scene the way a
+             * menu floats in front of a page, and reserving a band for it
+             * squeezed every band for chrome that mostly is not there. The
+             * ask field is always there, so its strip is kept: no district
+             * stands under it, and opening it (over the picture) moves
+             * nothing.
              */
-            height: size.height,
+            height: seated ? Math.max(0, size.height - SEAT_FOOT) : size.height,
           }
         : {}),
     }),
-    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, screenHeight, railLeft, nameWidth],
+    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, screenHeight, nameWidth, seated],
   );
   /*
    * THE CAMERA IS NOT A MOVE. A drive-in on the far side of a large city

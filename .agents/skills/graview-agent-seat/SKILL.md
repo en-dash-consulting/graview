@@ -140,28 +140,29 @@ Everything intelligent travels the same contract — validated proposed calls
 to declared mutations — so adding AI is choosing a provider, never a second
 path to the store:
 
-- **Providers** whisper suggestions into the companion's acts
+- **Providers** whisper suggestions into the acts every surface derives
   (`insightProvider` ships in the defaults; `intelligenceProvider(...)`
   wraps any `Intelligence`).
 - **The seat** (this skill) runs one-press turns.
-- **The companion** — `<Companion />`, the scene's left rail — is the one
-  place the seat lives: it names its subject (the selection, else the pick
-  the pointer settled on, else where you are), lists that subject's acts,
-  its relations, the conversation and the key. Right-click opens the same
-  acts at the pointer, so the context menu and the assistant are one
-  construct. The seat has no figure in the picture; other people's agents
-  still have theirs. `useSubject()` gives the same answer to any surface.
-  A reader puts it away to a slim tab from its header and opens it from the
-  tab; the choice is remembered per app, and the city takes the room.
-  Narrower than a laptop it lies over the picture. `<Shell companion="collapsed" />`
-  (or `"hidden"`) and the embed's `companion` option set where it starts.
-- **The conversation** — a section of that rail — answers questions in words.
+- **The ask field** — `<SeatField />`, "Ask <the app>…" at the foot of
+  the scene and of Pages — is where the seat lives for a person. Asked, it
+  grows into a panel over the picture (⇄ snaps it to the other foot; a
+  bottom sheet on a phone): one line about where they are, at most three
+  questions the graph can answer, at most three acts (the repairs a broken
+  rule names for this thing, and their own pins), and the conversation.
+  "This" is `useSubject()`: the selection, else where they are. Every other
+  act is one question, the context menu (right-click, or A on a card), or
+  Pages' "What can be done" away. The person never reads the word "seat".
+  `<Shell ask="hidden" />` and the embed's `seat: "hidden"` draw none.
+- **The conversation** belongs to the app (the provider's `seatTalk`), so it
+  survives a switch between the scene and Pages. It answers in words.
   Keyless it answers from the graph (`graphResponder`: standings, named
   things, when/who, mutations phrased in their own titles); a model plugs in
   through one completion function (`llmResponder`, `xaiCompletion`,
-  `localCompletion`), chosen by the person in the panel's gear. **Your own
+  `localCompletion`), chosen by the person under the panel's ⚙. **Your own
   responder goes in through the shell**: `<Shell chat={{ respond }} />`,
-  which hands it to the companion.
+  which hands it to the ask field. A proposal is one line with "Do it" and
+  "Not now"; Find's last row, "Ask: ‘…’", asks the same seat.
   "Why do I still have mosquitoes?" is a walk through THIS graph, and the
   generic answer to it is a plausible paragraph about gardens.
 - **External agents** arrive over the derived tool surface with a scoped

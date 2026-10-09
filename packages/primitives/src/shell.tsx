@@ -2,7 +2,8 @@ import { layer, type AnySchema } from "@graview/core";
 import { Scene, useGraview, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
 import type { Responder, ToolCall } from "@graview/tools";
 import { useCallback, useLayoutEffect, useState, type ReactNode, useRef } from "react";
-import { Companion, type CompanionMode } from "./companion.js";
+import { SeatField, type SeatStart } from "./seat-field.js";
+import { LinesKey } from "./lines-key.js";
 import { VISUALLY_HIDDEN, useWidth } from "./primitives/index.js";
 import { FindBox } from "./find.js";
 import { ShowInstallation } from "./installation.js";
@@ -94,12 +95,10 @@ export interface ShellProps<S extends AnySchema> {
    */
   readonly hostActions?: readonly HostAction[];
   /**
-   * HOW THE SEAT'S RAIL STARTS (FR-78): `"open"` (the default), `"collapsed"`
-   * to a slim tab, or `"hidden"`. The reader can put it away and open it
-   * again, and what they chose is remembered for the app (by the brand's
-   * name) over this start — except `"hidden"`, which is the app's to say.
+   * THE ASK FIELD at the picture's foot (the seat): `"field"`, the default,
+   * or `"hidden"` for none. `chat: false` hides it too.
    */
-  readonly companion?: CompanionMode;
+  readonly ask?: SeatStart;
   /**
    * A BOARD OF NOTICES (FR-75), made with `createNoticeBoard()`: what the
    * app or its host says on it is drawn over the scene — banners at its
@@ -128,7 +127,7 @@ export function Shell<S extends AnySchema>({
   profileHref,
   studio,
   hostActions,
-  companion,
+  ask = "field",
   notices,
 }: ShellProps<S>) {
   const { brand, view } = useGraview<S>();
@@ -328,22 +327,18 @@ export function Shell<S extends AnySchema>({
         <Scene renderer={renderer} {...(attachRenderer ? { attachRenderer } : {})} />
         {/* The altitude control, on the picture it controls. */}
         <OverviewButton />
+        {/* What the lines mean, beside Up: the picture's own key. */}
+        <LinesKey<S> />
         {/*
-          * THE COMPANION: the acts, the relations, the seat and the key, on
-          * the frame, about one subject. It replaces the relation key, the
-          * quick relations, the inspector's rail and the bar's Ask pill —
-          * four panels that each said the current subject in their own
-          * corner — and the robot that used to carry the last of them
-          * around the ground.
+          * THE SEAT: a quiet ask field at the picture's foot that grows into
+          * a panel over it when asked — never a rail, never a column of acts.
           */}
-        <Companion<S>
-          chat={chat !== false}
+        <SeatField<S>
+          start={chat === false ? "hidden" : ask}
           onCall={onCall}
-          {...(companion ? { start: companion } : {})}
-          rememberAs={brand?.name ?? "graview"}
           {...(typeof chat === "object" && chat.respond ? { respond: chat.respond } : {})}
         />
-        {/* The same pane at the pointer: right-click is the context menu, and it is this. */}
+        {/* The acts at the pointer: right-click, or the acts key on a card, is the context menu. */}
         <Inspector placement="menu" />
       </main>
       {notices ? <Notices board={notices} anchor={scene} /> : null}

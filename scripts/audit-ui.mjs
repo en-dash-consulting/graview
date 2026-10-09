@@ -199,9 +199,10 @@ const APPS = {
      * out of a remembered store, were measured by nothing.
      */
     activity: async (p) => {
-      await p.click('[data-graview-pick="t-deposit"]');
+      // Its acts are the menu a right-click opens on it.
+      await p.click('[data-graview-pick="t-deposit"]', { button: "right" });
       await p.waitForTimeout(300);
-      await p.locator('[data-testid="affordances"] button', { hasText: "Finish it" }).first().click();
+      await p.locator('[data-testid="context-menu"] [data-testid="affordances"] button', { hasText: "Finish it" }).first().click();
       await p.waitForTimeout(400);
       await p.click('[data-testid="activity-button"]');
       await p.waitForTimeout(400);
@@ -213,12 +214,12 @@ const APPS = {
      * screen no count had ever been taken of.
      */
     asked: async (p) => {
-      await p.click('[data-graview-pick="t-deposit"]');
+      await p.click('[data-graview-pick="t-deposit"]', { button: "right" });
       await p.waitForTimeout(400);
       // The DERIVED edit act specifically: its arguments are optional, so
-      // its ask carries a Skip beside the Apply — the widest row the pane
+      // its ask carries a Skip beside the Apply — the widest row the menu
       // is ever asked to hold.
-      await p.locator('[data-testid="affordances"] button', { hasText: "Change the" }).first().click();
+      await p.locator('[data-testid="context-menu"] [data-testid="affordances"] button', { hasText: "Change the" }).first().click();
     },
   } },
   /*
@@ -355,8 +356,8 @@ const APPS = {
       const opener = await p.$("[data-testid^='open-']");
       if (opener) { await opener.click(); await p.waitForTimeout(500); }
       const chip = await p.$("[data-graview-pick]");
-      if (chip) { await chip.click(); await p.waitForTimeout(500); }
-      await p.locator('[data-testid="affordances"] button', { hasText: "Change the" }).first().click();
+      if (chip) { await chip.click({ button: "right" }); await p.waitForTimeout(500); }
+      await p.locator('[data-testid="context-menu"] [data-testid="affordances"] button', { hasText: "Change the" }).first().click();
     },
     /*
      * A LENS, AT ITS OWN PLACE. Every state here reached a picture by
@@ -391,21 +392,10 @@ const APPS = {
        * with acts on it, and "Change the gardener …" is the derived edit
        * this state exists to open.
        */
+      /* Its acts are the menu a right-click opens on it: the scene draws no strip beside a selection. */
       const chip = await p.$('[data-graview-pick^="gardener:"]');
-      if (chip) { await chip.click({ force: true }); await p.waitForTimeout(500); }
-      /*
-       * AND OPEN THE SEAT'S PANE. At this width the companion starts shut —
-       * the scene is a desk view and the routed face is the answer on a
-       * phone — so the acts of whatever is chosen are behind its dock. A
-       * harness that never opened it waited thirty seconds for a list that
-       * was one press away.
-       */
-      const dock = await p.$('[data-testid="companion-dock"]');
-      if (dock && (await dock.getAttribute("aria-expanded")) === "false") {
-        await dock.click();
-        await p.waitForTimeout(400);
-      }
-      await p.locator('[data-testid="affordances"] button', { hasText: "Change the" }).first().click();
+      if (chip) { await chip.click({ force: true, button: "right" }); await p.waitForTimeout(500); }
+      await p.locator('[data-testid="context-menu"] [data-testid="affordances"] button', { hasText: "Change the" }).first().click();
     } },
   } },
 };
@@ -707,10 +697,10 @@ const audit = () => {
      * A RAISED card duplicating its origin's title is the design, not the
      * smell: keeping the origin legible while its members stand on plane 1
      * is an acceptance criterion, and the same node drawn in two places
-     * carries the same name both times. Likewise the strip, which exists to
-     * name the selection the way a crumb names the focus.
+     * carries the same name both times. Likewise the acts' menu and the
+     * seat, which exist to name the selection the way a crumb names the focus.
      */
-    if (el.closest('[data-graview-plane="1"], [data-testid="inspector-strip"], .graview-kind-open')) continue;
+    if (el.closest('[data-graview-plane="1"], [data-testid="inspector-strip"], [data-testid="context-menu"], [data-testid="seat"], .graview-kind-open')) continue;
     const t = (el.textContent ?? "").trim();
     if (t.length < 6) continue;
     seen.set(t, (seen.get(t) ?? 0) + 1);
@@ -767,15 +757,14 @@ const audit = () => {
   /*
    * Chrome sitting on the CONTENT.
    *
-   * The strip is an elevated transient surface now — it floats in front of
-   * the scene instead of reserving a band of it, and hovering over the
-   * constant kinds shelf while a selection is open is the design, not a
-   * defect: the shelf is a map, the strip is dismissible, and the elevation
-   * shadow says which is nearer. What would still be wrong is the strip
-   * sitting on the thing you are actually working with — the focus or a
-   * raised card — so that is what this counts.
+   * The seat is an ask field at the picture's foot, in a strip the layout
+   * keeps clear, and grows over the picture only when asked. What would be
+   * wrong is it sitting on the thing you are actually working with — the
+   * focus or a raised card — so that is what this counts. (The strip a
+   * selection used to draw was the surface measured here; the scene draws
+   * none now.)
    */
-  const strip = document.querySelector('[data-testid="inspector-strip"]');
+  const strip = document.querySelector('[data-testid="seat"]');
   const covered = [];
   if (strip && !document.querySelector('[role="dialog"]')) {
     const s = box(strip);
@@ -879,19 +868,20 @@ const audit = () => {
     fill = Math.round((painted / (s.width * s.height)) * 100);
   }
 
-  /* The strip's own shape: how many actions it is showing against how many
+  /* The acts' own shape, where the menu is open: how many it is showing against how many
      it has, since hiding most of them behind "+N more" defeats the point. */
   let inspector = null;
-  if (strip) {
-    const shown = strip.querySelectorAll('[data-testid="affordances"] > li').length;
-    const more = strip.querySelector('[data-testid="affordances"] li:last-child button');
+  const acts = document.querySelector('[data-testid="context-menu"]');
+  if (acts) {
+    const shown = acts.querySelectorAll('[data-testid="affordances"] > li').length;
+    const more = acts.querySelector('[data-testid="affordances"] li:last-child button');
     const hidden = /^\+(\d+) more$/.exec((more?.textContent ?? "").trim());
-    const b = box(strip);
+    const b = box(acts);
     inspector = {
       shown: hidden ? shown - 1 : shown,
       hidden: hidden ? Number(hidden[1]) : 0,
       size: `${Math.round(b.width)}x${Math.round(b.height)}`,
-      text: (strip.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 90),
+      text: (acts.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 90),
     };
   }
 

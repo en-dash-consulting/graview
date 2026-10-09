@@ -121,8 +121,11 @@ export const BUDGETS = [
     // Raised by the review after 0.1.17: the Ask and its drawer placed inside their embed's box (and read back where a host's
     // transform moved them), a pane kept inside its embed where it fits, a notice put away while its embed is scrolled out of
     // the window. 1_617 / 502 more. Measured at 531_602 / 182_485.
-    minified: 532_100,
-    gzipped: 182_800,
+    // Raised when the seat came to float and be quiet: the ask field at the foot of every page is drawn with the face (its
+    // panel, the conversation and what it offers are fetched when it is first opened), and the conversation is the app's,
+    // held by the provider. 1_081 / 1_038 more. Measured at 532_683 / 183_523.
+    minified: 533_200,
+    gzipped: 184_000,
     load: "first",
   },
   {
@@ -255,8 +258,10 @@ export const BUDGETS = [
     // failed to arrive and to say so in its place rather than throw (FR-139): `lazyModule` and its line, `retryingImport`, the
     // menu's fetch when the page is idle. 2_986 / 1_355 more. Measured at 702_598 / 182_707.
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review, module moves and a lens double-clicked from Up. Measured at 709_029 / 185_123.
-    minified: 709_500,
-    gzipped: 185_400,
+    // Raised when the seat came to float and be quiet (the ask field with each face, the conversation held by the provider,
+    // Find's "Ask:" row): 1_519 / 109 more. Measured at 710_548 / 185_232.
+    minified: 711_000,
+    gzipped: 185_700,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -381,8 +386,12 @@ export const BUDGETS = [
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review, module moves and a lens double-clicked from Up. Measured at 1_581_667 / 479_348.
     // Raised with the pages face's by the review after 0.1.17 (the Ask and the panes kept inside their embed): 1_612 / 551 more.
     // Measured at 1_583_279 / 479_899.
-    minified: 1_583_800,
-    gzipped: 480_300,
+    // Raised when the seat came to float and be quiet: about the same minified (the rail, the quick relations and the log
+    // left the scene's face; the field, the Key and the panel came), and 4 kB gzipped, because the open seat and what it
+    // offers are chunks of their own, fetched when first opened, and each chunk is gzipped alone. 425 / 4_257 more.
+    // Measured at 1_583_704 / 484_156.
+    minified: 1_584_300,
+    gzipped: 484_600,
     load: "all",
   },
   {
@@ -444,8 +453,10 @@ export const BUDGETS = [
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review, module moves and a lens double-clicked from Up. Measured at 1_545_447 / 463_365.
     // Raised with the pages face's by the review after 0.1.17 (the Ask and the panes kept inside their embed): 1_612 / 537 more.
     // Measured at 1_547_059 / 463_902.
+    // Gzipped raised when the seat came to float and be quiet: 6_687 fewer minified (the rail left), 1_228 more gzipped
+    // (the open seat a chunk of its own). Measured at 1_540_372 / 465_130.
     minified: 1_547_600,
-    gzipped: 464_200,
+    gzipped: 465_600,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

@@ -70,11 +70,11 @@ describe("a request the seat answers with several changes", () => {
     await act(async () =>
       root.render(
         <GraviewProvider store={store} views={registerDefaultViews(schema, createViews(schema))} initialView={EMPTY_VIEW} principal={gardener}>
-          <ChatPanel inside respond={respond as never} />
+          <ChatPanel respond={respond as never} />
         </GraviewProvider>,
       ),
     );
-    const field = host.querySelector<HTMLInputElement>('[aria-label="Message the seat"]')!;
+    const field = host.querySelector<HTMLInputElement>('[data-testid="chat-draft"]')!;
     await act(async () => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(field, "add a new plot and put a sunflower in it");
       field.dispatchEvent(new Event("input", { bubbles: true }));
@@ -84,10 +84,10 @@ describe("a request the seat answers with several changes", () => {
     });
     await act(async () => new Promise((r) => setTimeout(r, 20)));
 
-    const offered = [...host.querySelectorAll('[data-testid="chat-apply"]')].map((button) => button.textContent);
-    expect(offered[0]).toBe("Stake out back bed");
+    const offered = [...host.querySelectorAll('[data-testid="chat-apply"]')].map((button) => button.getAttribute("aria-label"));
+    expect(offered[0]).toBe("Do it: Stake out back bed");
     // Waiting on the plot the first one makes: named, not asked for, and not pressable alone yet.
-    expect(offered[1]).toBe("Sow sunflower in back bed");
+    expect(offered[1]).toBe("Do it: Sow sunflower in back bed");
     expect(host.querySelectorAll<HTMLButtonElement>('[data-testid="chat-apply"]')[1]!.disabled).toBe(true);
 
     await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="chat-apply-all"]')!.click());
@@ -117,11 +117,11 @@ describe("a request the seat answers with several changes", () => {
     await act(async () =>
       root.render(
         <GraviewProvider store={store} views={registerDefaultViews(schema, createViews(schema))} initialView={EMPTY_VIEW} principal={gardener}>
-          <ChatPanel inside respond={respond as never} />
+          <ChatPanel respond={respond as never} />
         </GraviewProvider>,
       ),
     );
-    const field = host.querySelector<HTMLInputElement>('[aria-label="Message the seat"]')!;
+    const field = host.querySelector<HTMLInputElement>('[data-testid="chat-draft"]')!;
     await act(async () => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(field, "two plots");
       field.dispatchEvent(new Event("input", { bubbles: true }));
@@ -136,7 +136,39 @@ describe("a request the seat answers with several changes", () => {
     await act(async () => new Promise((r) => setTimeout(r, 20)));
     expect(store.graph.nodesOfKind("plot")).toHaveLength(1);
     expect(document.activeElement).not.toBe(document.body);
-    expect(document.activeElement?.textContent).toBe("Stake out front bed");
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("Do it: Stake out front bed");
+    await act(async () => root.unmount());
+  });
+
+  it("offers each as one line with Do it and Not now, and Not now sets it aside without touching the graph", async () => {
+    const store = new Store({ schema, mutations: [addPlot, sow], invariants: [] });
+    const respond = async () => ({ say: "A plot.", proposals: [{ mutation: "add-plot", args: { label: "back bed" } }] });
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () =>
+      root.render(
+        <GraviewProvider store={store} views={registerDefaultViews(schema, createViews(schema))} initialView={EMPTY_VIEW} principal={gardener}>
+          <ChatPanel respond={respond as never} />
+        </GraviewProvider>,
+      ),
+    );
+    const field = host.querySelector<HTMLInputElement>('[data-testid="chat-draft"]')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(field, "a plot");
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      field.closest("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+    await act(async () => new Promise((r) => setTimeout(r, 20)));
+    expect(host.querySelector('[data-testid="chat-apply"]')!.textContent).toBe("Do it");
+    const decline = host.querySelector<HTMLButtonElement>('[data-testid="chat-decline"]')!;
+    expect(decline.textContent).toBe("Not now");
+    await act(async () => decline.click());
+    expect(host.querySelector('[data-testid="chat-apply"]')).toBeNull();
+    expect(host.querySelector('[data-testid="chat-declined"]')?.textContent).toBe("Stake out back bed");
+    expect(store.graph.nodesOfKind("plot")).toHaveLength(0);
     await act(async () => root.unmount());
   });
 });

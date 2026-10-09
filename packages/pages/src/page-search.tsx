@@ -11,6 +11,7 @@ import {
   type Store,
 } from "@graview/core";
 import type { Affordance } from "@graview/tools";
+import { useGraviewIfAny, useSeatTalkState, type SeatTalk } from "@graview/react/provider";
 import { Link, useSearchParams } from "react-router-dom";
 import { kindFacts } from "./facts.js";
 import { DerivedForm } from "./form.js";
@@ -28,6 +29,9 @@ import { pluralSlug, recordPath } from "./registry.js";
  * heading is a link to its list with the words carried, so "the three tasks
  * about the van" is one press from here and arranged from there. The record
  * is the destination; this page only says where things are.
+ *
+ * AND THE LAST LINE ASKS: words that are a question rather than a name find
+ * little, so "Ask: ‘…’" opens the seat with them, where a seat is drawn.
  */
 export function DefaultSearchPage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const { store, brand, principal, invariantContext } = context;
@@ -136,6 +140,8 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
           </ul>
         </section>
       ))}
+
+      {asked.length > 0 ? <AskTheSeat asked={asked} /> : null}
 
       {asked.length > 0 && found.hits.length === 0 ? (
         <SearchToCreate store={store} kinds={found.searched.kinds} words={found.words} {...(principal ? { principal } : {})} {...(invariantContext ? { invariantContext } : {})} />
@@ -257,5 +263,28 @@ export function SearchToCreate<S extends AnySchema>({
         </section>
       ))}
     </div>
+  );
+}
+
+/** "Ask: ‘…’" — the words, asked of the seat, where the face has one. */
+function AskTheSeat({ asked }: { readonly asked: string }) {
+  const here = useGraviewIfAny();
+  return here ? <AskLine asked={asked} talk={here.seatTalk} /> : null;
+}
+
+function AskLine({ asked, talk }: { readonly asked: string; readonly talk: SeatTalk }) {
+  const { drawn } = useSeatTalkState(talk);
+  if (drawn === 0) return null;
+  return (
+    <p style={{ margin: 0 }}>
+      <button
+        type="button"
+        data-testid="search-ask"
+        onClick={() => talk.ask(asked)}
+        style={{ ...link, font: "inherit", padding: 0, border: 0, background: "transparent", cursor: "pointer", textAlign: "start" }}
+      >
+        Ask: ‘{asked}’
+      </button>
+    </p>
   );
 }

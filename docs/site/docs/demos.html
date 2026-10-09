@@ -1118,7 +1118,7 @@ main.page > section.grow, main.page > section.closing { padding-top: 120px; }
       if (!(host instanceof Element) || !host.hasAttribute("data-settle")) return;
       var presses = Number(host.getAttribute("data-settle")) || 0;
       setTimeout(function () {
-        var seat = host.querySelector('[data-graview-companion="open"] button[aria-expanded="true"]');
+        var seat = host.querySelector('[data-graview-seat="open"] [data-testid="seat-close"]');
         if (seat) seat.click();
         for (var i = 0; i < presses; i += 1) { var out = host.querySelector('[data-testid="zoom-out"]'); if (out) out.click(); }
       }, 250);

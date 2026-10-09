@@ -13,8 +13,9 @@
  */
 /* The scene's own rules, drawn by the scene face after the frame's sheet (FR-104). */
 export { sceneCss } from "./scene-css.js";
-export { Companion } from "./companion.js";
-export type { CompanionMode } from "./companion.js";
+export { SeatField } from "./seat-field.js";
+export type { SeatFieldProps, SeatStart } from "./seat-field.js";
+export { LinesKey } from "./lines-key.js";
 export { Inspector } from "./workbench/inspector.js";
 export { OverviewButton } from "./workbench/back-out.js";
 export { Places } from "./places.js";

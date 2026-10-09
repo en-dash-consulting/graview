@@ -50,8 +50,10 @@ export { Connections } from "./connections.js";
 export type { ConnectionsProps } from "./connections.js";
 export { EditableTitle, EditableValue, Fields, humanize, LongValue } from "./editable.js";
 export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
-export { Companion, COMPANION_OVERLAY_BELOW, COMPANION_TAB } from "./companion.js";
-export type { CompanionMode, CompanionProps } from "./companion.js";
+// The seat: an ask field at the picture's foot that grows into the conversation when asked.
+export { SEAT_PHONE_BELOW, SEAT_WIDTH, SeatField } from "./seat-field.js";
+export type { SeatFieldProps, SeatStart } from "./seat-field.js";
+export { LinesKey } from "./lines-key.js";
 export { useSubject } from "./subject.js";
 export type { Subject } from "./subject.js";
 export { RelationKey, RelationMark, relationWords } from "./relation-key.js";

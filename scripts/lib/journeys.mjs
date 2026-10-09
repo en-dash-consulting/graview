@@ -463,51 +463,41 @@ export class Person {
 
 const escapeAttr = (value) => value.replace(/["\\]/g, "\\$&");
 
-/** The folded seat's own header ("Selected …", "In view …"), not the settings gear beside it. */
-const seatToggle = (page) =>
-  page
-    .locator('[aria-label^="The seat"]')
-    .getByRole("button", { expanded: false })
-    .filter({ hasText: /^(Selected|In view)/ })
-    .first();
-
 /**
- * Open the folded seat. From the keyboard, a card that has it and names a
- * key for its acts (`aria-keyshortcuts`, said on screen by the seat) is
- * answered with that key, the way a person who read it would; anywhere
- * else, or if the key opened nothing, the toggle is walked to as before.
+ * A CHOSEN THING'S ACTS ARE THE MENU AT IT. The scene drew them in a rail
+ * (a sheet on a phone) beside whatever was chosen; it draws no strip now —
+ * the seat offers at most three, and every act is in the menu a right-click
+ * opens, or, from the keyboard, the acts key its card names
+ * (`aria-keyshortcuts`). A person reaching for an act does one of those.
  */
-async function openSeat(person, toggle) {
+async function openActs(person) {
   const page = person.page;
+  if (await page.locator('[data-testid="context-menu"]').first().isVisible().catch(() => false)) return;
+  const before = person.presses;
+  const chosen = page.locator("[data-graview-view][data-graview-selected]").first();
   if (person.input === "keyboard") {
-    const key = await page.evaluate(() => {
-      const card = document.activeElement?.closest?.("[data-graview-view][aria-keyshortcuts]");
-      return card?.getAttribute("aria-keyshortcuts") ?? null;
-    });
-    if (key) {
-      const before = person.presses;
-      await person.key(key.toLowerCase());
-      await person.settle(250);
-      const opened = await page.evaluate(() => document.querySelector('[data-graview-companion="open"]') !== null);
-      if (opened) {
-        person.note("the seat's pane", before);
-        return;
-      }
+    let key = await page.evaluate(() => document.activeElement?.closest?.("[data-graview-view][aria-keyshortcuts]")?.getAttribute("aria-keyshortcuts") ?? null);
+    if (!key && (await chosen.isVisible().catch(() => false))) {
+      await person.reach(chosen, "the chosen card");
+      key = await chosen.getAttribute("aria-keyshortcuts");
     }
+    if (!key) return;
+    await person.key(key.toLowerCase());
+  } else {
+    if (!(await chosen.isVisible().catch(() => false))) return;
+    await chosen.click({ button: "right", timeout: 4_000 }).catch(() => {});
+    person.presses += 1;
   }
-  await person.press(toggle, "the seat's pane");
+  await person.settle(250);
+  person.note("its acts", before);
 }
 
-/** The seat's pane on a narrow screen is a sheet: open it when what is wanted is inside. */
-async function revealSeat(person, wanted) {
+/** A chosen thing's acts are the menu at it: open it when what is wanted is inside. */
+async function revealActs(person, wanted) {
   // What a press just asked for may take a frame or two to be drawn.
   await wanted.first().waitFor({ state: "visible", timeout: 700 }).catch(() => {});
   if (await wanted.first().isVisible().catch(() => false)) return;
-  const toggle = seatToggle(person.page);
-  if (await toggle.isVisible().catch(() => false)) {
-    await openSeat(person, toggle);
-    await person.settle(250);
-  }
+  await openActs(person);
 }
 
 /** An act's control, by the id the derivation gave it or else by its title. */
@@ -517,11 +507,11 @@ function actControl(page, act, title) {
   ).or(page.getByRole("button", { name: new RegExp(`^${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}( …)?$`) }));
 }
 
-/** Press the act, opening "Show N more" or the seat's sheet first if that is where it is. */
+/** Press the act, opening its menu, or "Show N more" on a page, first if that is where it is. */
 async function pressAct(person, act, title) {
   const page = person.page;
   let control = actControl(page, act, title).first();
-  await revealSeat(person, control);
+  await revealActs(person, control);
   if (!(await control.isVisible().catch(() => false))) {
     const more = page.getByRole("button", { name: /^Show \d+ more$/ }).first();
     if (await more.isVisible().catch(() => false)) {
@@ -672,8 +662,8 @@ async function fillForm(person, form, { name, choose = [], values = {} }) {
  */
 async function pressDistrict(person, kind, plural) {
   const page = person.page;
-  // Already what the seat is about: nothing to press.
-  if ((await page.locator(`[aria-label="The seat — about ${escapeAttr(plural)}"]`).count()) > 0) return;
+  // Already chosen: nothing to press.
+  if ((await page.locator(`[data-graview-view="kind:${escapeAttr(kind)}"][data-graview-selected]`).count()) > 0) return;
   const district = page.locator(`[data-graview-view="kind:${escapeAttr(kind)}"]`).first();
   if (!(await district.isVisible().catch(() => false))) {
     // A narrow scene folds the districts it has no room for into a menu.
@@ -1137,7 +1127,7 @@ export const JOBS = {
         await person.press(listed, "the problem");
         await person.settle(300);
         const repair = page.locator('[data-affordance^="invariant:"]').filter({ visible: true }).first();
-        await revealSeat(person, repair);
+        await revealActs(person, repair);
         await person.press(page.locator('[data-affordance^="invariant:"]').filter({ visible: true }).first(), "its repair");
         await answerAsks(person, { name: "Somebody" });
       } else {
@@ -1180,8 +1170,7 @@ export const JOBS = {
         await pressDistrict(person, prep.kind, prep.plural).catch(() => {});
       }
       if (ctx.face === "pages" && !prep.subject) await openKindPage(person, prep.plural).catch(() => {});
-      const seat = seatToggle(page);
-      if (ctx.face === "scene" && (await seat.isVisible().catch(() => false))) await openSeat(person, seat);
+      if (ctx.face === "scene") await openActs(person);
       const said = async () =>
         page.evaluate((title) => {
           const visible = (el) => el.getClientRects().length > 0;

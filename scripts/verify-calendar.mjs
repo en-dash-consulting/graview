@@ -105,7 +105,7 @@ try {
       Object.values(ranges).every((one) => one.range !== null),
   };
 
-  /* ------------------ an entry is a node: selecting it opens the strip */
+  /* ------------------ an entry is a node: chosen, its acts are one key away */
   await page.click('[data-testid="calendar-range-month"]');
   await page.waitForTimeout(500);
   const first = await page.evaluate(
@@ -113,14 +113,18 @@ try {
   );
   await page.focus(`[data-calendar-entry="${first}"]`);
   await page.keyboard.press("Enter");
-  await page.waitForSelector('[data-testid="inspector-strip"] [data-affordance]', { timeout: 10_000 });
+  await page.waitForTimeout(300);
+  // The acts key opens the entry's acts at the pointer, as a right-click would (the scene draws no strip).
+  await page.focus(`[data-calendar-entry="${first}"]`);
+  await page.keyboard.press("a");
+  await page.waitForSelector('[data-testid="context-menu"] [data-affordance]', { timeout: 10_000 });
   const acted = await page.evaluate((id) => ({
-    strip: [...document.querySelectorAll('[data-testid="inspector-strip"] [data-affordance]')].map((b) =>
+    strip: [...document.querySelectorAll('[data-testid="context-menu"] [data-affordance]')].map((b) =>
       b.textContent?.trim(),
     ),
     lit: document.querySelector(`[data-calendar-entry="${id}"]`)?.getAttribute("data-graview-emphasis"),
   }), first);
-  report.checks.anEntryIsANodeAndTheStripKnowsIt = {
+  report.checks.anEntryIsANodeAndItsActsKnowIt = {
     entry: first,
     ...acted,
     ok: acted.strip.length > 0 && acted.lit === "lit",

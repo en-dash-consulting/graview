@@ -92,9 +92,9 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     host's links — "Your apps", "Report this app" — in the person's menu,
     under who is signed in, reached by the keyboard. Every popover
     the embed draws stands in the browser's top layer, so a host needs no
-    `z-index` override and nothing fixed over the scene. `companion:
-    "collapsed"` starts the seat's rail put away to a slim tab (`"hidden"`:
-    not drawn); the reader's own choice is remembered over it. Say the
+    `z-index` override and nothing fixed over the scene. `seat:
+    "hidden"` draws no ask field on either face (`"field"`, the default,
+    draws it, its conversation kept across a face switch). Say the
     host's own news through `handle.notify({ kind: "toast" | "banner",
     sentence, tone, action })`, not a toast of your own fixed over the app:
     it floats at the app's foot, read aloud, moving nothing.

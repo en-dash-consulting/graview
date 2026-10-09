@@ -87,6 +87,29 @@ export function checkEdgeNamesAgree<S extends AnySchema>(ctx: CheckContext<S>): 
   }
 }
 
+/**
+ * AN ACT WITH NO WORDS FOR A PERSON.
+ *
+ * Every surface names an act by its `title` — the context menu, Pages'
+ * "What can be done", the seat's offered repairs. Without one the person
+ * read the mutation's name, `move-to-list`; it is spoken now ("Move to
+ * list"), which is still the code's word and not the app's.
+ */
+export function checkActsHaveTitles<S extends AnySchema>(ctx: CheckContext<S>): void {
+  const { app, add } = ctx;
+  for (const mutation of app.mutations ?? []) {
+    if (mutation.title || mutation.derived) continue;
+    const spoken = mutation.name.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ").trim().toLowerCase();
+    add({
+      severity: "warning",
+      code: "act-without-title",
+      where: `defineMutation("${mutation.name}")`,
+      message: `"${mutation.name}" has no title, so every surface offers it as "${spoken.charAt(0).toUpperCase()}${spoken.slice(1)}" — the code's word for it, not the app's.`,
+      fix: `Add title: "…" — what a person would call this act, said about the thing it is offered on ("Give it a new date").`,
+    });
+  }
+}
+
 export function checkActsFromEnds<S extends AnySchema>(ctx: CheckContext<S>, writtenByAModel: ReadonlySet<string>): void {
   const { app, kinds, mutations, add } = ctx;
   /*

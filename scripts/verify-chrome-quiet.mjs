@@ -1637,8 +1637,8 @@ async function noticesFloat(page, face, engine, shot) {
       ...[...document.querySelectorAll('[data-testid="notices-banners"] [data-testid="notice"]')].map((element) => ({ name: "banner", element, at: "top" })),
       ...(dockShown ? [{ name: "the way back", element: dock.querySelector('[data-testid="page-undo"]'), at: "foot" }] : []),
     ];
-    /* Beside a tall panel at the left of a desk's picture (the seat), "left" is its right edge. */
-    const tallAtLeft = [...document.querySelectorAll("[data-graview-foot], [data-testid='companion']")]
+    /* Beside a tall panel at the left of a desk's picture (the seat, open), "left" is its right edge. */
+    const tallAtLeft = [...document.querySelectorAll("[data-graview-foot]")]
       .map((one) => one.getBoundingClientRect())
       .filter((one) => one.height > (anchor.bottom - anchor.top) * 0.4 && one.left <= anchor.left + 20 && one.width > 0)
       .reduce((edge, one) => Math.max(edge, one.right), Math.max(0, anchor.left));
@@ -1661,7 +1661,7 @@ async function noticesFloat(page, face, engine, shot) {
     const covers = [];
     const rects = notices.map(({ name, element }) => ({ name, box: element.getBoundingClientRect(), element }));
     for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) if (meets(rects[i].box, rects[j].box)) covers.push(`${rects[i].name} over ${rects[j].name}`);
-    const standing = [...document.querySelectorAll("[data-graview-foot], [data-testid='companion'], [data-testid='page-ask']")].filter((one) => one !== dock && !dock?.contains(one));
+    const standing = [...document.querySelectorAll("[data-graview-foot]")].filter((one) => one !== dock && !dock?.contains(one));
     for (const { name, box, element } of rects) {
       for (const one of standing) {
         if (one.contains(element)) continue;

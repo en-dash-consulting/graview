@@ -225,12 +225,17 @@ try {
       );
       await page.waitForTimeout(1000);
     };
+    /* A thing's acts: the menu a right-click opens on it (the scene draws no strip beside a selection). */
     const offeredOn = async (target, id, label) => {
-      await target.click(`[data-graview-pick="${id}"]`);
-      await target.waitForSelector('[data-testid="inspector-strip"] [data-affordance]', { timeout: 20_000 });
+      if (await target.$('[data-testid="context-menu"]')) {
+        await target.keyboard.press("Escape");
+        await target.waitForTimeout(200);
+      }
+      await target.click(`[data-graview-pick="${id}"]`, { button: "right" });
+      await target.waitForSelector('[data-testid="context-menu"] [data-affordance]', { timeout: 20_000 });
       return target.evaluate(
         (wanted) =>
-          [...document.querySelectorAll('[data-testid="inspector-strip"] [data-affordance]')].some((button) =>
+          [...document.querySelectorAll('[data-testid="context-menu"] [data-affordance]')].some((button) =>
             (button.textContent ?? "").includes(wanted),
           ),
         label,
@@ -240,7 +245,7 @@ try {
     await onTheDesk("todo");
     const FINISH = 'Finish "Pay the deposit"';
     const beforeEdit = await offeredOn(page, "t-deposit", FINISH);
-    await page.locator('[data-testid="inspector-strip"] [data-affordance]', { hasText: FINISH }).first().click();
+    await page.locator('[data-testid="context-menu"] [data-affordance]', { hasText: FINISH }).first().click();
     await page.waitForTimeout(1000);
     const afterEdit = await offeredOn(page, "t-deposit", FINISH);
 

@@ -1,4 +1,5 @@
-import type { ChatContext, ChatReply, LocalStatus, OfferedQuestion, ProposedCall } from "@graview/tools";
+import { createSeatTalk, useSeatTalkState, type SeatOutcome, type SeatTalk, type SeatTurn } from "@graview/react/provider";
+import type { ChatContext, ChatReply, LocalStatus, ProposedCall } from "@graview/tools";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { LadderSetting } from "./ladder.js";
 
@@ -20,27 +21,11 @@ import { LadderSetting } from "./ladder.js";
  * drawn and nothing else.
  */
 
-export interface SeatTurn {
-  readonly role: "person" | "seat";
-  readonly text: string;
-  readonly proposals?: readonly ProposedCall[];
-  /** Questions the seat is asking back, each at the node it is about. */
-  readonly questions?: readonly OfferedQuestion[];
-  /** The rung could not read the sentence: a model would, one press away. */
-  readonly unsure?: boolean;
-  /** What the words found, when that was the answer: each a way to go there. */
-  readonly picks?: ChatReply["picks"];
-}
-
-/**
- * WHAT BECAME OF A PROPOSAL, said where it was offered. Each settling used
- * to post a message of its own, so one request read as five; the press
- * becomes its own outcome instead, in place.
+/*
+ * A TURN AND AN OUTCOME are the provider's types: the app's conversation is
+ * held there so a face switch keeps it (see `@graview/react`'s seat talk).
  */
-export type SeatOutcome =
-  | { readonly state: "applied"; readonly said: string }
-  | { readonly state: "declined"; readonly said: string }
-  | { readonly state: "refused"; readonly error: string };
+export type { SeatOutcome, SeatTurn };
 
 /** The key of a proposal in the thread: which turn, which of its proposals. */
 export const proposalKey = (turn: number, at: number): string => `${turn}:${at}`;
@@ -57,28 +42,33 @@ export type SeatAnswer = (text: string, context: Pick<ChatContext, "history">) =
 export function useSeatConversation({
   answer,
   onReply,
+  talk,
 }: {
   readonly answer: SeatAnswer;
   /** Said from the body too, or refused at a gate: whatever the surface does with a reply besides showing it. */
   readonly onReply?: (reply: ChatReply) => void;
+  /**
+   * Where the conversation is kept: the app's (`useGraview().seatTalk`), so
+   * it outlives this surface and a face switch, or this surface's own when
+   * not given — the studio's declaration seat keeps its own.
+   */
+  readonly talk?: SeatTalk;
 }) {
-  const [turns, setTurns] = useState<readonly SeatTurn[]>([]);
-  const [outcomes, setOutcomes] = useState<ReadonlyMap<string, SeatOutcome>>(new Map());
-  const [busy, setBusy] = useState(false);
+  const [own] = useState(() => createSeatTalk(null));
+  const kept = talk ?? own;
+  const { turns, outcomes, busy } = useSeatTalkState(kept);
 
-  const settle = useCallback(
-    (key: string, outcome: SeatOutcome) => setOutcomes((current) => new Map(current).set(key, outcome)),
-    [],
-  );
+  const settle = useCallback((key: string, outcome: SeatOutcome) => kept.settle(key, outcome), [kept]);
 
   const send = async (text: string): Promise<void> => {
     const asked = text.trim();
-    if (!asked || busy) return;
-    setBusy(true);
-    setTurns((current) => [...current, { role: "person", text: asked }]);
-    const history = turns.map((turn, index) => {
+    if (!asked || kept.get().busy) return;
+    kept.setBusy(true);
+    const before = kept.get();
+    kept.setTurns((current) => [...current, { role: "person", text: asked }]);
+    const history = before.turns.map((turn, index) => {
       const landed = (turn.proposals ?? []).flatMap((_, at) => {
-        const outcome = outcomes.get(proposalKey(index, at));
+        const outcome = before.outcomes.get(proposalKey(index, at));
         return outcome?.state === "applied" ? [outcome.said] : [];
       });
       return { role: turn.role, text: landed.length > 0 ? `${turn.text} [applied: ${landed.join("; ")}]` : turn.text };
@@ -87,9 +77,9 @@ export function useSeatConversation({
     try {
       reply = await answer(asked, { history });
     } catch (error) {
-      reply = { say: `The seat could not answer: ${error instanceof Error ? error.message : String(error)}`, proposals: [] };
+      reply = { say: `That couldn't be answered: ${error instanceof Error ? error.message : String(error)}`, proposals: [] };
     }
-    setTurns((current) => [
+    kept.setTurns((current) => [
       ...current,
       {
         role: "seat",
@@ -101,7 +91,7 @@ export function useSeatConversation({
       },
     ]);
     onReply?.(reply);
-    setBusy(false);
+    kept.setBusy(false);
   };
 
   return { turns, outcomes, busy, send, settle };
@@ -222,6 +212,8 @@ export function SeatThread({
     log.current?.scrollTo?.({ top: log.current.scrollHeight });
   }, [turns]);
 
+  // Nothing said, nothing to say before it, nothing coming: no empty list standing in the panel.
+  if (turns.length === 0 && empty === null && !busy) return null;
   return (
     <ol
       ref={log}

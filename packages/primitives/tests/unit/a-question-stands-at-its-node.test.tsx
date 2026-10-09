@@ -73,8 +73,7 @@ describe("the chat", () => {
       ],
     };
     const { host, unmount } = await mounted(at, <ChatPanel respond={async () => reply} />);
-    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="chat"]')!.click());
-    const field = host.querySelector<HTMLInputElement>('[aria-label="Message the seat"]')!;
+    const field = host.querySelector<HTMLInputElement>('[data-testid="chat-draft"]')!;
     await act(async () => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(field, "fill the zones");
       field.dispatchEvent(new Event("input", { bubbles: true }));
