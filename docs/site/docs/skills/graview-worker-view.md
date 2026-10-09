@@ -1,0 +1,117 @@
+# graview-worker-view
+
+`graview-worker-view` is one of Graview's 15 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
+
+Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
+
+## The skill
+
+## A worker view
+
+A worker view is for what the declared blocks cannot draw: a chart, a grid of cards, a front page with a figure and a ring. It is one plain script. The host runs it in a hardened worker with no network, no storage and no DOM of its own, and draws what it says into a shadow root inside a region the host owns. **What it may draw is broad; what it may reach is not.** Write it against one global, `graview`. There is nothing to import and nothing to build; the word `import` may not appear in it at all, even in a comment, and nor may `export`.
+
+### The manifest
+
+Every view comes with a manifest the host enforces:
+
+```js
+{ name: "packages", title: "The packages", attach: "package", cardinality: "many",
+  reads: { kinds: ["offer"], edges: ["includes"] },
+  acts: ["set-summary", { act: "set-standing", as: "recommend", constants: { standing: "recommended" } }] }
+```
+
+- `name` is lower-case letters, digits and hyphens. Acts are recorded `via: "view:<name>"`.
+- `title` makes it a named place on both faces, with the slug `placeSlug(title)` (`"the-packages"`).
+- `attach` is a kind, or `"home"` for the front page's body (cardinality `many`).
+- `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
+- `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
+- A view of one record (`cardinality: "one"`) is drawn above the record's own fields, which stay editable. `replaces: "page"` draws it alone instead; only then is the record changed through the view alone.
+
+A manifest that names a kind, an edge or an act the app does not declare is refused before the view starts.
+
+### The global
+
+```js
+graview.style(css)              // the view's one stylesheet
+graview.onProps((props) => …)   // every push of what it is shown (and at once)
+graview.props                   // the last push
+graview.render(markup)          // draw: a string, graview.html`…`, or nodes
+graview.html`<li>${x}</li>`     // markup; every value put in is escaped
+graview.on("click", ".card", (event) => …)   // also input, change, keydown, toggle
+graview.act(name, args)         // ask for an act: resolves { ok, intent } or { ok: false, reason, message }
+graview.navigate("offer:7")     // a record; graview.navigate({ place: "the-packages" }) a place
+```
+
+`props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: its `id`, `kind` and `label`, and each field on it by name, so a deliverable's draft is `props.node.draft`; there is no `fields` key. A view of one finds its record in `node`, never in `nodes`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's `name`, and its `logo` as a URL the host made: draw it with `<img src="${props.theme.logo}">`, never a URL of your own). `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, and `pressed` for a bound press.
+
+### What it may draw
+
+HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`, `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients, `clipPath`, `mask`, `marker`, `pattern`, `symbol` and `use href="#id"`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and each element's own. CSS for layout, grid, flex, color, type, transitions, `@keyframes`, `@media`, `@supports` and `@container`.
+
+Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video`, `canvas`, SVG `image` and `foreignObject`; any `href`, `srcset` or `on*` attribute; `src` except on `img`, as a `data:` image. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path` or `marker`; `@import`; `@font-face`; `image-set()`, `attr()` and other unlisted functions; `position: fixed` or `sticky`; `:host`. What the host leaves out it lists in `refused`; `graview.refused` is the runtime's own early word on the last render.
+
+A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside` and `search` are drawn as `div`, and `output` as `span`, each with what it holds. They lose their landmark or status role, and a selector for them in your stylesheet still matches. A `section` is never named (no `aria-label` or `title`), so it stays out of the landmarks. `role` takes no landmark or notice's role (`navigation`, `region`, `status`, `alert`, …).
+
+**Draw with the app's tokens**, so light and dark follow the app's own toggle: `var(--graview-panel)`, `--graview-ground`, `--graview-ink`, `--graview-ink-muted`, `--graview-edge`, `--graview-accent`, `--graview-font-body`, `--graview-font-display` (headings, as the app's), `--graview-font-mono`, `--graview-radius`. A brand change pushes `theme` again. Presentation attributes do not take `var()`; put paints in the stylesheet (`.bar { fill: var(--graview-accent) }`).
+
+### Links
+
+`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows, on both faces. `<a href="https://…">` is drawn as text.
+
+### Writes
+
+An act must be in the manifest. If every member of the app sees every record, `graview.act` applies it as given. Otherwise **only a press applies an act**: a person's click on an element with `data-act`. Its arguments come only from the record it is bound to (`data-record`, on it or around it), the manifest's constants, and the fields in its `fieldset`, named for the act's arguments and typed by the person:
+
+```html
+<fieldset>
+  <input name="summary" placeholder="What it is">
+  <button data-act="set-summary" data-record="package:start">Say it</button>
+</fieldset>
+```
+
+A field the view filled (`value="…"`) is the view's until the person empties it, and a press carrying it is refused. To offer a record's own text to edit, let the host fill it: `data-prefill` names the field, and `name` is the same.
+
+```html
+<fieldset data-record="deliverable:email">
+  <textarea name="draft" data-prefill="draft"></textarea>
+  <button data-act="set-draft">Save the draft</button>
+</fieldset>
+```
+
+The host fills it with the record's whole value, line breaks kept, when an act in the fieldset writes that field of that record and the person may run it there; otherwise it stays empty. The person edits it in place, and it goes only back into that field. A view may empty a field after a press. A radio or a select is the person's pick, not their words: its value goes only if it is one the act declares (an enum's option) or a record the view was shown. The press is applied before the view hears it; read `event.pressed`.
+
+### Limits
+
+About 256 kB of source, 5 000 drawn nodes, 120 messages a second, 1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face of its records is drawn instead, with why. Draw summaries, not every row of a huge set. Work a view schedules with timers between pushes is not timed per push. It can keep its own worker busy for just under the heartbeat's 5 s at a time; the page stays responsive, but the person's CPU does not, so never spin.
+
+### Worked examples
+
+`examples/offers-list.js` is a list lens: rows linking to their records, and a note typed and pressed in. `examples/front-page.js` is a home: a headline, a figure, an SVG ring and cards linking to a place. `examples/a-record.js` is a view of one record: a deliverable's subject and its draft as paragraphs, read off `props.node`, and "Edit draft" with the draft prefilled. Each opens with its manifest.
+
+### Registering it
+
+```ts
+import { registerWorkerView, workerHome } from "@graview/guest/host/views";
+views: (schema, registry) => registerWorkerView(registry, { manifest, worker: { source } }),
+pages.surface("home", workerHome({ manifest: front, worker: { source: frontSource } }));
+```
+
+A view with `attach: "home"` given to `registerWorkerView` is the home's own view: the routed home's body, the page the app opens on — full width under the bar on a desk too (FR-136) — and the app's declared home is drawn if it fails.
+
+### Then find out whether it worked
+
+1. `graview check` the app the view names: a manifest is only as sound as the declaration it reads. `checkManifest(manifest, store)` and `checkViewSource(source)` from `@graview/guest/host/views` must both say nothing.
+2. Run it headless, with no network, as a member who may see less than you, over a seed: `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>`. It prints what the view drew, said as `graview describe` says a place, or why it will not do: `error` (what it threw), `nodes`, `flood`, `slow`, `act` (an act its manifest does not name), `manifest` or `source`. Run it on an empty seed too. In code, `runWorkerViewHeadless` from `@graview/guest/headless` does the same in an isolate you supply.
+3. Open the place on both faces as that member. Is anything shown that they should not see? Does the region carry no `data-worker-view-failed`? `start` there means the view never ran: a page with a Content-Security-Policy needs `worker-src blob:` and `style-src 'unsafe-inline'`, and the note under the plain face names what it lacks.
+4. Toggle the app to dark. Does the view restyle?
+5. Press each bound button with typed words, then again with a field the view filled. The first applies and the second is refused. A prefilled field is filled only for a seat that may write it.
+
+### What the check cannot see
+
+`graview check` judges the declaration, not the script. It cannot see a view that throws on an empty graph, draws the wrong number, or takes too long on a big one. Only running it does: `graview view check` on an empty app, a full one, and a member with narrow sight. A headless run is one push with timers that never fire, and nothing laid out, so it cannot see an animation or a layout that breaks at 390; the faces can. Nor can it see a view that misleads. The host keeps it from reaching or leaking anything, not from arranging what the person may see badly.
+
+---
+
+Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
+
+The page: https://graview.dev/docs/skills/graview-worker-view.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

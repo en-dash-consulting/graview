@@ -341,7 +341,7 @@ section > .head .tick {
 .inl { display: inline-flex; align-items: center; min-height: 24px; }
 .chapter-head { display: flex; align-items: baseline; gap: 12px; }
 .chapter-n { font-family: var(--sans); font-size: 26px; color: var(--pine); font-variant-numeric: tabular-nums; min-width: 28px; }
-.chapter-head h3 { margin: 0; font-size: 20px; font-weight: 600; }
+.chapter-head h2 { margin: 0; font-size: 20px; font-weight: 600; }
 .chapter-claim { margin: 8px 0 0 40px; max-width: 62ch; color: var(--ink-2); line-height: 1.6; }
 .chapter-adds { margin: 12px 0 0 40px; font-size: 13px; }
 .chapter-label { display: block; font-family: var(--sans); font-weight: var(--w-label); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px; }
@@ -830,6 +830,41 @@ main.page > section > .lede { max-width: 60ch; }
 }
 @media (max-width: 560px) { .hero-live { height: 440px; } .hero h1 { max-width: 14ch; } }
 
+/*
+ * THE FIRST FRAME IS A PICTURE OF THE CITY, not a box that says loading.
+ * scripts/site-poster.mjs draws the hero's own chapter from altitude in both
+ * lightings; the mount replaces it with the live scene.
+ */
+.hero-live .poster { position: absolute; inset: 0; display: grid; place-items: center; padding: 6%; pointer-events: none; }
+.hero-live .poster > div { width: 100%; height: 100%; }
+.hero-live .poster svg { display: block; width: 100%; height: 100%; }
+.hero-live .poster .light, .hero-live .poster .dark { display: none; }
+:root[data-theme="light"] .hero-live .poster .light { display: block; }
+:root[data-theme="dark"] .hero-live .poster .dark { display: block; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hero-live .poster .dark { display: block; } }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .hero-live .poster .light { display: block; } }
+.hero-live .chapter-loading { position: relative; }
+
+/*
+ * ON A PHONE, THE PICTURE COMES BEFORE THE SECOND WAY IN. Stacked in source
+ * order the scene began a full screen down, below both ways in and the
+ * links, so the first screen said what Graview is and never showed it.
+ * The copy's parts become the hero's own rows: what it is, how to start,
+ * the scene, then the hosted way in and the links.
+ */
+@media (max-width: 1000px) {
+  .hero { gap: 0; }
+  .hero-copy, .hero .cta { display: contents; }
+  .hero .eyebrow { order: 1; }
+  .hero h1 { order: 2; }
+  .hero .lede { order: 3; }
+  .hero .way-in:first-child { order: 4; margin-top: 24px; }
+  .hero-stage { order: 5; margin-top: 24px; }
+  .hero .way-in:last-child { order: 6; margin-top: 24px; }
+  .hero .hero-links { order: 7; }
+}
+@media (max-width: 560px) { .hero .lede { font-size: 17px; } .hero-live { height: 380px; } }
+
 /* Rises into place once, and not at all for anyone who asked for less motion. */
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 .hero-copy > * { animation: rise 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
@@ -1049,3 +1084,9 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
   .way { border-top-color: CanvasText; }
   .cloud-line { border-color: LinkText; }
 }
+
+/* Questions, answered plainly: short answers in two columns, one at phone width. */
+.faq-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 48px; margin-top: 10px; }
+.qa h3 { font-size: 17px; margin: 0 0 8px; }
+.qa p { color: var(--ink-2); max-width: 62ch; }
+@media (max-width: 760px) { .faq-list { grid-template-columns: minmax(0, 1fr); gap: 24px; } }

@@ -1,0 +1,275 @@
+# @graview/guest
+
+`@graview/guest` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.
+
+```sh
+pnpm add @graview/guest
+```
+
+Entry points: `@graview/guest`, `@graview/guest/react`, `@graview/guest/host`, `@graview/guest/host/worker`, `@graview/guest/host/views`, `@graview/guest/headless`, `@graview/guest/headless/node`, `@graview/guest/worker`, `@graview/guest/worker/view`, `@graview/guest/build`, `@graview/guest/cli`, `@graview/guest/client`, `@graview/guest/client.js`
+
+## What it is
+
+A view somebody else wrote — a recipe card, a bespoke dashboard, React or plain script — drawn in an iframe that can see only what the viewer may see and can only ask. The host pushes the view's props as the viewer sees them; the guest asks for an act by name, and the host applies it as the viewer, so the policy refuses on the guest's behalf exactly as it would refuse a click. The rail says the act came through the view.
+
+### In the host
+
+```ts
+import { guestView, mountGuestView } from "@graview/guest/host";
+
+views.register("recipe", { fidelity: "full", cardinality: "one" },
+  guestView({ url: "https://cards.example/recipe.html", name: "recipe-card" }));
+
+// Or without React, into any element:
+const frame = mountGuestView(element, { url, view: "recipe-card", store, principal, input: () => ({ node: { id } }) });
+frame.update();   // the input moved
+frame.dispose();
+```
+
+`mountGuestView` gives the frame `sandbox="allow-scripts"` and never `allow-same-origin`, so its origin is opaque and no cookie, storage or store of the host's is reachable from it. A `guest-ready` is answered only from that frame's own window and from the opaque origin, with a fresh nonce and a MessageChannel; every request over the port carries the nonce. Acts are rate-limited per frame (30 a minute by default, `limits`), and a flood of messages past 120 a second is dropped unread. `createGuestHost` is the same host without the DOM. Where the frame is served from, and its CSP, are the host's business: a separate registrable domain with `connect-src 'none'` is the shape the protocol assumes. It matters where the host's session rides a cookie: in Firefox and WebKit a guest with no CSP can send a credentialed request to the host that carries a cookie without SameSite. It cannot read the answer, but the request is made. Set the cookie SameSite=Lax or Strict, or serve guests with `connect-src 'none'` (`scripts/guest-sandbox.mjs` checks both in all three engines).
+
+### In the guest
+
+```ts
+import { connectGuest } from "@graview/guest";
+
+const guest = connectGuest();
+guest.subscribe((props) => render(props.node, props.acts));
+const answer = await guest.act("mark-cooked", { recipeId: props.node.id });
+if (!answer.ok) show(answer.message);   // the policy's own sentence
+guest.navigate(id);
+guest.autoSize();
+```
+
+In React, `useGuest()` from `@graview/guest/react` is the same connection: `{ props, act, navigate, size }`, re-rendering on every push. The guest entries import nothing of the framework, so a guest bundle carries none of it.
+
+`GuestProps` is the plain-data half of `ViewProps` — `node`, `nodes`, the `edges` among them, `label`, `fidelity`, `cardinality`, `mode`, `selected`, `implicated`, `flagged` — and `acts`, the acts the viewer may run. A record the viewer may not see is in none of them. A record is plain data: its `id`, `kind` and `label`, and each of its fields on it by name — a deliverable's draft is `node.draft`, its status `node.status` — with no `fields` key. A view of one record finds it in `node`; `nodes` are the members of a view of many, and the records a view reads beyond its own. Every record's `label` is filled as the host labels it, and `theme` and `places` are the app's.
+
+#### What a frame guest reads, its look, and its place
+
+```ts
+views.register("package", { cardinality: "many", fidelity: "full" },
+  guestView({ url, name: "prices", title: "The price sheet", reads: { kinds: ["offer"], edges: ["includes"] } }),
+  { title: "The price sheet" });
+views.home(guestView({ url: frontUrl, name: "front", reads: { kinds: ["package"] } }));
+```
+
+A guest is handed what it is drawn over and the edges among those records. With `reads` it is also handed every record of the kinds it reads and every edge of the edges it reads between the records it holds, as the viewer sees them (`readAcross`, the rule a worker view's manifest uses too). A guest over packages that reads `offer` and `includes` gets each package's offers, and an offer the viewer may not see is in none of it. Drawn as the home (`views.home`), a guest is drawn over nothing and sees what it reads: it is the routed home's body, the page the app opens on (FR-136).
+
+Its props carry `theme`, a `GuestTheme`: the scheme, the accent, ground, panel, ink, muted ink and edge colors, the body, display and mono fonts and the radius, read off the element the frame is drawn in; and the brand's `name` and `logo` (FR-127). The logo is a `data:` image the host made from the brand's inline SVG, or from an address on the page's own origin it fetched (another origin's logo is not handed), so the guest loads nothing; its policy needs `img-src data:` to show it. The scheme is the app's own (the embed's `data-graview-scheme`), not the system's, and the host pushes again when the app's toggle or brand changes. `mountGuestView` takes `reads`, `theme`, `brand` and `places` too.
+
+`title` names the frame for assistive technology. Registered with the same title, the guest is a place on both faces: listed by `placesOf`, at `/places/the-price-sheet` on the routed face and `#view=the-price-sheet` in the scene. `props.places` lists the app's places, and `guest.navigate({ place: "the-packages" })` goes to one.
+
+#### One client, served or inlined
+
+`@graview/guest/client.js` is the frame guest's client as one prebuilt classic script (2.4 kB). It leaves one global, `GraviewGuest`, and `GraviewGuest.connect()` is `connectGuest()`. A host serves it at a path of its own, or inlines its text where a frame's policy allows inline script alone, as Graview Cloud serves an uploaded view (`script-src 'unsafe-inline'`). `GUEST_CLIENT` from `@graview/guest/client` is that text, and `GUEST_CLIENT_SHA256` its hash for a policy that names it.
+
+```html
+<main id="app"></main>
+<script>/* GUEST_CLIENT */</script>
+<script>
+  const guest = GraviewGuest.connect();
+  guest.subscribe((props) => {
+    document.body.style.background = props.theme.panel;
+    app.replaceChildren(...props.nodes.map((node) => Object.assign(document.createElement("p"), { textContent: node.label })));
+    guest.size(document.documentElement.scrollHeight);
+  });
+</script>
+```
+
+How to write one, with a worked example, is the `graview-embed` skill. `guest-sandbox --transport=client` serves a guest of a few lines under that policy and finds it renders, acts, navigates, resizes and follows the app's toggle in Chromium, WebKit and Firefox.
+
+### In a worker
+
+Where a frame cannot be nested — a chat's widget, whose sandbox will not frame another origin — the same guest runs in a classic Web Worker the host starts from a `blob:` URL, and draws in the host's page from a component kit.
+
+```ts
+import { mountGuestWorker } from "@graview/guest/host/worker";
+
+const guest = mountGuestWorker(element, { worker: { script }, view: "recipe-card", store, principal,
+  onFailure: (reason, detail) => showTheTierOneCard(reason) });   // start, silent, slow or budget
+
+views.register("recipe", { fidelity: "full", cardinality: "one" },
+  guestView({ worker: { script }, name: "recipe-card" }));
+```
+
+`mountGuestWorker` starts the worker without `type: "module"`, which a `blob:` URL in an opaque origin cannot start, from the script's text or a URL it is given. It speaks the frame's protocol: one `guest-ready`, answered with a fresh nonce and a MessageChannel; the props as the viewer sees them; acts applied as the viewer, `via: "view:<name>"`, under the same limits. A second ready from the same worker is dropped. Once it is ready, the host sends a heartbeat over the port and the worker's runtime answers it; a worker that goes `limits.silentMs` (5 000 by default) without an answer — a guest spinning in `while (true)` — is terminated, and the host is told `silent`. A worker that never says ready — the page refused it, it failed before its first line ran, or it was not ready in `limits.readyMs` — is `start` (see "What the host page allows"). A guest that is busy but yields is kept. The host also counts its own time drawing what the guest sends. Over any one second it spends at most `limits.drawMs` (100 by default). Past it, the rest of the batch is left undrawn, the worker is terminated, and the host is told `slow`. What the guest draws comes over the port as Remote DOM mutation records, and the host draws only the kit (`GUEST_KIT`), with `createKitRenderer`. Both are `@graview/guest/host/worker`, apart from the frame's host, so a page that draws only frames loads none of it, and `guestView` fetches it only when it draws a worker.
+
+In the guest, `connectGuest` from `@graview/guest/worker` is the frame guest's API with a `root` to draw into:
+
+```ts
+import { connectGuest } from "@graview/guest/worker";
+
+const guest = connectGuest();
+guest.subscribe((props) => {
+  const card = document.createElement("gv-card");
+  const title = document.createElement("gv-title");
+  title.textContent = props.node?.label ?? "";
+  const cook = document.createElement("gv-button");
+  cook.textContent = "Cooked it";
+  cook.addEventListener("press", () => guest.act("mark-cooked", { recipeId: props.node!.id }));
+  card.append(title, cook);
+  guest.root.replaceChildren(card);
+});
+```
+
+The kit is one declaration for both sides: each component's host element, typed properties, events and children. The worker's remote elements are made from it, and the host draws from it alone. An element outside it, a property or event it does not declare, a value of another type, and a link that is not an absolute `https:` URL are not drawn, and `refused` says why. A link opens with `rel="noopener noreferrer"` and no referrer, in a new tab unless the kit says `target: "_self"`; a host that passes `links: { origins: ["https://recipes.example"] }` draws a link only to one of those origins, and any other with no `href`.
+
+Before the guest runs, the worker entry hardens the worker's global: every name outside `GUEST_GLOBALS` goes, from the global and every prototype on its chain — the network, storage, channels, nested workers, importScripts, `eval` and every function constructor — and what is left is frozen. A name that will not go stops the worker before any guest code runs. `hardening` says what was removed.
+
+Build the guest with `buildGuestBundle` from `@graview/guest/build` (Node, with esbuild installed): one strict classic script, the worker entry first and the guest after it, with nothing to load at run time.
+
+```ts
+import { buildGuestBundle } from "@graview/guest/build";
+
+const { script, sha256 } = await buildGuestBundle({ entry: "src/recipe-card.ts" });
+```
+
+A guest that writes `import()` or importScripts is refused at build, and `checkGuestBundle` says the same of a script built elsewhere. Hardening holds only for a bundle whose first module is the worker entry, so a host that runs guests it did not build checks them, or better, builds them itself.
+
+The worker entry carries Remote DOM (`@remote-dom/core` and its polyfill, MIT, pinned); the frame guest and the host do not.
+
+### A worker view on the open kit
+
+A view that needs more than the kit's components — a card grid, a chart, an animated ring — draws plain HTML, SVG and one stylesheet instead. What keeps it safe is what it can reach, not what it can draw: it runs in the same hardened classic worker, and the host draws what it says into a shadow root inside a region of the host's own — `contain: layout paint style`, `isolation: isolate`, `overflow: clip` — keeping only what the open kit allows. The view is one plain script with no imports and no build; the host puts the view's runtime in front of it.
+
+```ts
+import { mountWorkerView } from "@graview/guest/host/worker";
+
+const view = mountWorkerView(element, { manifest, worker: { source }, store, principal,
+  onFailure: (reason, detail) => showTheTierOneFace(reason, detail) });
+```
+
+In the worker, the view has one global, `graview`:
+
+```js
+graview.style(`.grid { display: grid; gap: 12px } .card { background: var(--graview-panel) }`);
+graview.onProps((props) => graview.render(graview.html`
+  <section class="grid">${props.nodes.map((n) => graview.html`<article class="card"><h3>${n.label}</h3></article>`)}</section>`));
+graview.on("click", ".card", (event) => { /* … */ });
+```
+
+What may be drawn is one declaration, read by both sides: most of HTML's sectioning, text, lists, tables, `details`, buttons, fields and `img`; SVG's shapes, paths, text, gradients, clip paths, masks, markers and `use` of `#id`; and CSS for layout, grid, flex, color, type, transitions, keyframes, media and container queries, with the app's theme tokens (`--graview-*`) inherited, light or dark as the app is. The stylesheet, every `style` attribute and every SVG paint are read with the CSS Syntax tokenizer and parser — escapes decoded, comments gone — and written afresh from what was kept: `url()` only as `url(#id)` on a paint, no `@import`, `@font-face` or other at-rule but `@media`, `@supports`, `@container` and `@keyframes`, only the functions on the list (no `image-set()`, `attr()`, `cross-fade()`, `element()` …), `position` only static, relative or absolute, and no selector that reaches out of the shadow tree (`:host`, `::slotted`). An image is a `data:` image or a `blob:` of the page's own; an SVG image in an `img` runs no script and loads nothing. No `<script>`, `<iframe>`, `<object>`, `<embed>`, `<link>`, `<meta>`, `<base>`, `<style>`, `<form>`, SVG `<image>` or `<foreignObject>`, no `src`, `href`, `srcset`, `formaction` or `on*` attribute is drawn; what is not drawn is in `refused`, with why. A view never speaks as the app's chrome. `<nav>`, `<header>`, `<footer>`, `<aside>` and `<search>` are drawn as `<div>`, and `<output>` as `<span>`. Each holds what it held and is marked `data-graview-as`, and the view's selectors for those names are read as that attribute. A `<section>` is never named, and `role` takes no landmark or notice's role. `guest-sandbox --transport=open` serves a page with no content security policy, tries every way out, and finds no request leaving it in Chromium, WebKit or Firefox.
+
+#### A worker view is a place
+
+A worker view says what it is and what it may touch in a manifest the host enforces:
+
+```ts
+import { registerWorkerView, workerHome } from "@graview/guest/host/views";
+
+const packages = {
+  manifest: { name: "packages", title: "The packages", attach: "package", cardinality: "many",
+    reads: { kinds: ["offer"], edges: ["includes"] }, acts: ["set-standing"] },
+  worker: { source },
+  author: "Made by Claude for Nick",
+};
+views: (schema, registry) => registerWorkerView(registry, packages),   // the embed's views
+pages.surface("home", workerHome(frontPage));                         // a view of the home
+```
+
+It is handed the viewer's sight and nothing more, cut to the kind it attaches to (the members the face hands it, or every one the viewer sees) and the kinds and edges it reads: a record the viewer may not see is in none of it, and a kind it did not ask to read is not handed to it however visible. Every record's `label` is filled as the host labels it — for a frame guest too. A titled view is a named place on the Graview face and the pages face, by its title; whatever the registry drew for that kind before is drawn if the view fails. A view of one record (`cardinality: "one"`) is drawn above the record's own fields, which stay editable: on the scene the record drawn at full is the view and then the record's fields, each editable where an act writes it; on Pages the record's page is its heading, the view, then its facts and what can be done (FR-149). With `replaces: "page"` in its manifest it is drawn alone in their place — on the scene the view only, on Pages the view under the heading with what is wrong and what has happened — and the record is then changed only through what the view offers. `checkManifest` refuses `replaces` on a view of many or of the home. With `attach: "home"`, `registerWorkerView` makes it the home's own view (FR-81). That is the routed home's body — the page the app opens on, full width on a desk as on a phone (FR-136) — in place of the home the app declared, which is drawn if the view fails. `workerHome` makes it the routed face's whole home surface instead. Its props carry the app's look as a `GuestTheme` — the scheme, the accent, ground, panel, ink, muted ink and edge colors, the body, display and mono fonts and the radius — read off the region it is drawn in, with the brand's `name` and `logo` (FR-127): a `blob:` URL of the host's page the host made from the logo, or a `data:` image where the page's policy refuses `blob:` images (ChatGPT's does), so `<img src="${props.theme.logo}">` loads nothing. The host pushes again when the app's own toggle changes the scheme, whatever the system prefers, and when the brand changes, revoking the last logo's URL. `checkManifest` says what in a manifest names a kind, an edge or an act the app does not declare, and the host refuses to start such a view (`onFailure` hears `manifest`).
+
+#### Writes that cannot leak
+
+A view runs for every member with that member's sight, and its author is not the member, so the danger is a view reading what this viewer may see and writing it where somebody else may. An act must be named in the manifest. Where the app's sight is total — no sight is declared, or every kind is seen whole by everybody (`sightIsTotal`) — an act the view asks for from its code applies with its arguments as given. Otherwise it applies only from a press the host itself saw:
+
+```html
+<fieldset>
+  <input name="summary" placeholder="What it is">
+  <button data-act="set-summary" data-record="package:start">Say it</button>
+</fieldset>
+```
+
+A trusted click on an element with `data-act` is judged and applied in the click's own handler, before the view hears of it (it hears `pressed`). Its arguments come only from the record the element is bound to (`data-record`, one the view was shown), the manifest's constants for the act (`{ act, as, constants }`), and the fields in the press's `fieldset` the host read itself — each one the viewer's: its last change a trusted `input`, and nothing the view wrote in it since. A field the view filled is the view's until the viewer empties it; a `change` a browser raises when such a field loses focus is not typing; a view that says back what a field shows, or empties it, takes nothing away. Either way an act is applied as the viewer, `via: "view:<name>"`, within the view's allowance, and undoable.
+
+A view cannot fill a field, so to offer a record's own text to change — a three-thousand-character draft — it asks the host to (FR-150):
+
+```html
+<fieldset data-record="deliverable:email">
+  <textarea name="draft" data-prefill="draft"></textarea>
+  <button data-act="set-draft">Save the draft</button>
+</fieldset>
+```
+
+After each batch the view draws, the host fills an empty `input` or `textarea` whose `data-prefill` and `name` name the same field with that field of its bound record (`data-record` on it or around it, else the one record the acts in its `fieldset` are bound to), read through the viewer's sight, whole and with its line breaks — when the record is one the view was shown, and an act in the `fieldset` is named in the manifest, is done to that record, takes the field, writes it (its `writes`, or, declaring none, an argument named like the field), writes no other record's fields, and may be run there by this viewer (`store.permits`). Otherwise the field stays empty; a seat that may not write the field is never handed it to edit. The value filled is the viewer's, as if typed, and what they type after it is theirs; but a press carries it only to an act that writes that field of that record, and any other press carrying it is refused `untyped`. A field the view drew words into, or writes into after the host filled it, is the view's, as ever. Nothing leaks by it: the value is a field of a record the view was already shown, and it can only be saved back where it came from, by an act the viewer may run there.
+
+#### Links stay in the app
+
+A worker view links to a record or a named place of this app, and nowhere else. The open kit draws no `href`, so `<a href="https://…">` is text; `<a data-record="offer:coaching">` and `<a data-place="the-packages">` are made links by the host — focusable, a link to assistive technology — and followed by it on a press or Enter, to a record the viewer may see or a place the app has. `graview.navigate("offer:coaching")` and `graview.navigate({ place: "the-packages" })` are held to the same. The props list the app's places (`places`, each with its slug and title). On the Graview face a record is focused and chosen and a place is drawn; on the pages face each goes to its own address — through `useGoTo` in `@graview/react`, which the routed face provides. The kit's `gv-link` keeps `links.origins`: it is the kit's one deliberate way out, to the origins a host lists, and an open-kit view has none.
+
+#### What the host page allows
+
+A worker guest, on the kit or the open kit, starts from a `blob:` URL the host makes of its script. The page's Content-Security-Policy has to allow that, and an open-kit view's stylesheet:
+
+```text
+worker-src blob:; style-src 'unsafe-inline'
+```
+
+With no `worker-src`, the browser reads `script-src` instead (and `default-src` with neither), so a page that says `script-src 'self'` and no `worker-src` refuses every view. Nothing else is needed for the worker: it runs none of the page's scripts and has no network to allow. An open-kit view's stylesheet is a `<style>` in its region's shadow root, and the kit's CSS one in the page's head, hence `style-src 'unsafe-inline'`. An image a view draws is a `data:` image or a `blob:` of the page's own, so `img-src data: blob:` if views draw images.
+
+A page that refuses the worker is told so. Chromium and WebKit throw from `new Worker` and Firefox fires `error` on it. Either way `onFailure` hears `start` once for each view, with a sentence naming the directive (`it needs worker-src blob:`). The plain face is drawn in the view's place, and the page's console is told once however many views it refuses. `start` is also a worker that failed before it said ready, or was not ready in `limits.readyMs` (5 000 by default). Each runtime says ready before a line of the view runs, so a worker with no ready never started. `silent` is a worker that said ready and then stopped answering. `registerWorkerView` takes `onFailure` too, for a host that reports it.
+
+A host that will not allow `blob:` serves each view's whole script from its own origin under `worker-src 'self'`, and passes `worker: { url }`:
+
+```ts
+import { checkViewSource, viewScript } from "@graview/guest/host/views";
+
+// On the server: the runtime, then the view, as the host would have made it.
+if (checkViewSource(source).length === 0) serve(`/views/${name}.js`, await viewScript(source));
+// On the page:
+mountWorkerView(element, { manifest, worker: { url: `/views/${name}.js` }, store, principal });
+```
+
+The server checks the source then, since the page never holds its text, and `maxSourceBytes` is the server's to keep. A kit guest takes `worker: { url }` the same way. `guest-sandbox --transport=limits` serves all three pages in Chromium, WebKit and Firefox: the policy above draws, a page without it reports `start` once a view, and the served script draws under `worker-src 'self'`.
+
+#### Limits, and what is drawn in a view's place
+
+The host caps a view's code (`maxSourceBytes`, 256 000 by default), the nodes it draws (`maxNodes`, 5 000), the messages it sends (`messages` in `messageWindowMs`, 120 a second) and the time it takes over each push of what it is shown (`pushMs`, 1 000 ms: the view's listeners as its runtime times them, and the wait for the runtime to say it drew, as the host times it), beside the heartbeat's `silentMs`, and the page's own time drawing what the view sends (`drawMs`, 100 ms of any second). Past any of them the worker is terminated, the plain face of what the view was shown — its title and each record by its label, drawn by the host — is drawn in the region, and `onFailure` hears why: `source`, `nodes`, `flood`, `slow`, `silent`, `error` (it threw before it drew), `start` (it never started) or `manifest`, with a sentence saying it, once. A host draws its own in its place with `fallback`; the React registrations draw whatever the registry drew for the kind before.
+
+What is left: work a view schedules with timers between pushes is not timed per push. A view that busies its own worker for just under `silentMs`, answers the heartbeat, and does it again can hold a core of the reader's machine for as long as it is shown. That is the worker's thread, not the page's; the page stays responsive.
+
+#### A view with no build
+
+A view is handed over as its plain source, `{ source }`: one script against the `graview` global, with no imports, no bundler and no copy of the protocol. The host puts the view's runtime in front of it — Remote DOM's polyfill, the hardening, the channel and the global, which the host holds as one classic script and fetches only when it first starts a view — and runs both as one strict classic worker. A module worker is not an option: a `blob:` one is refused in an opaque origin. The hardened worker has no `eval`, no function constructor and no `importScripts`, so the one way left to load code is `import()`, which is syntax: a source whose text says `import` anywhere, even in a string or a comment, is refused before it runs (`checkViewSource` says why), and so is one that exports. `{ script }` still takes a whole worker script built against `@graview/guest/worker/view`. How to write one — the manifest, what may be drawn, the theme's tokens, the write rules, links and limits, with a list lens and a home worked through — is the `graview-worker-view` skill (`graview skills install`).
+
+#### Run a view headless, and say what it drew
+
+Before a view is applied, a host can run it once with no network and no DOM, against one member's sight, and be told what it drew in the words `describePlace` says a place in (`@graview/core/describe`): its headings, text, figures and fields, and its lists with each record's title and what its row or card says. Or it is told why the view will not do.
+
+```ts
+import { runWorkerViewHeadless } from "@graview/guest/headless";
+
+const result = await runWorkerViewHeadless({ manifest, source, store, principal, run });
+if (result.ok) say(result.description.text);       // "The packages (/places/the-packages) — as partner …"
+else say(result.reason, result.detail);            // "act": It asks for the act "buy", which its manifest does not name.
+```
+
+The reasons are the page's (`source`, `manifest`, `error`, `nodes`, `flood`, `slow`; never the page's `start`, as nothing is started in a worker) and three of a headless run's own: `refused`, the isolate could not be hardened or something called the script's entry before the host did; `act`, an act asked for from the view's code or bound to a press (`data-act`) that its manifest does not name; and `isolate`, the host's isolate could not run it. Nothing is applied: an act the view asks for is written down in the transcript and answered with a refusal.
+
+A view never runs in the host's own context. The host supplies the isolate: `run` is handed one script and one JSON string (`HeadlessPayload`), loads the script into an isolate of its choosing, calls the global it leaves (`graviewHeadless`) with the string, and hands back the string it resolves with. Nothing but text crosses. There is no default, and without a `run` the helper throws. The script is the headless runtime, then the view. It makes the isolate a worker's before the view is read: the same `graview` global over a transcript, a console that writes to it, timers that never fire, and everything outside the worker's allowlist taken from the global. Then the view's top line runs and it is pushed what it is shown, once. What it sent is judged again in the host's context, from the transcript alone, by the open kit's own renderer drawing into a tree of plain objects (`drawTranscript`, `describeDrawing`), so the isolate's word is not taken for what the view drew.
+
+`nodeIsolate` from `@graview/guest/headless/node` is a `run` for Node: a worker thread with a heap ceiling and a context made from nothing (no `process`, `require`, `fetch` or timers; no code from strings), with a deadline that covers the microtasks the view queues. In workerd, the script is one module of a worker of its own with no outbound network, and the host's module, loaded first, keeps `Response` to answer with:
+
+```js
+// before.js
+const Made = Response; export const answer = (text) => new Made(text);
+// host.js
+import { answer } from "./before.js"; import "./view.js";   // view.js is payload.script
+const run = globalThis.graviewHeadless;
+export default { async fetch(request) { return answer(await run(await request.text())); } };
+```
+
+`graview view check view.js --app app.js --manifest manifest.json --seed seed.json --roles partner` does the same from a terminal, with `nodeIsolate`.
+
+## What it exports (6)
+
+Read off the package's own barrel, so this is what is there today.
+
+`connectGuest`, `GUEST_PROTOCOL`, `GUEST_SANDBOX`, `isGuestReady`, `isHostHello`, `OPAQUE_ORIGIN`
+
+---
+
+Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.
+
+The page: https://graview.dev/docs/packages/guest.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

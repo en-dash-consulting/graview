@@ -32,7 +32,7 @@ const chapter = (c) => {
       <article class="chapter${phone}" id="chapter-${c.n}" aria-labelledby="h-chapter-${c.n}">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">${c.n}</span>
-          <h3 id="h-chapter-${c.n}">${esc(c.title)}</h3>
+          <h2 id="h-chapter-${c.n}">${esc(c.title)}</h2>
         </div>
         <p class="chapter-claim">${esc(c.claim)}</p>
         <figure class="chapter-shot">
@@ -50,7 +50,7 @@ const chapter = (c) => {
 
 const section = `
     <section id="grown" aria-labelledby="h-grown">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-grown">The garden, grown</h2></div>
+      <div class="head"><span class="tick" aria-hidden="true"></span><h1 id="h-grown">The garden, grown</h1></div>
       <p class="lede">
         One example, the community garden, declared a little at a time. Every
         chapter below is a real declaration that passes its own check, opened

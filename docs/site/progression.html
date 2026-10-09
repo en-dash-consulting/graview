@@ -17,10 +17,21 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Graview — the garden, grown</title>
-<meta name="description" content="One example declared a little at a time: sixteen live chapters, the declaration in full, the fourteen packages, the lenses, the kit and what an agent may do.">
+<meta name="description" content="One Graview example, a garden, declared a little at a time: every chapter live on the page, the declaration in full, the packages, the lenses, the kit and what an agent may do.">
 <meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
 <meta property="og:title" content="Graview — the garden, grown">
-<meta property="og:description" content="Agent-native apps, built as isometric scenes. Graview is an open framework and visual language for apps that people and AI agents work in together, from En Dash.">
+<meta property="og:description" content="One Graview example declared a little at a time, each chapter a real declaration running live on the page.">
+<meta property="og:site_name" content="Graview">
+<meta property="og:url" content="https://graview.dev/progression.html">
+<meta property="og:image" content="https://graview.dev/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The graview.dev landing page: the headline Agent-native apps, built as isometric scenes, beside the example garden drawn as an isometric city.">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://graview.dev/progression.html">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Cstyle%3Eg%7Bstroke:%23001769%7Dcircle%7Bfill:%23001769%7D%40media (prefers-color-scheme:dark)%7Bg%7Bstroke:%23fff%7Dcircle%7Bfill:%23fff%7D%7D%3C/style%3E%3Cg fill=%27none%27 stroke-width=%272.4%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M13 11 L3 8 L14 3 H29 L21 9%27/%3E%3Cpath d=%27M10 18 L3 23 L16.5 28 L29 21 L22 19%27/%3E%3Cpath d=%27M16.5 18.5 V23.5%27 stroke-linecap=%27round%27/%3E%3C/g%3E%3Ccircle cx=%2716.5%27 cy=%2713.5%27 r=%272%27/%3E%3C/svg%3E" type="image/svg+xml">
 <link rel="icon" href="brand/favicon.ico" sizes="16x16 32x32">
@@ -42,6 +53,54 @@ body { margin: 0; }
 img { max-width: 100%; }
 [hidden] { display: none !important; }
 </style>
+<!-- site-seo:start — written by scripts/site-docs.mjs. -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "TechArticle",
+   "@id": "https://graview.dev/progression.html#article",
+   "headline": "Graview — the garden, grown",
+   "description": "One Graview example, a garden, declared a little at a time: every chapter live on the page, the declaration in full, the packages, the lenses, the kit and what an agent may do.",
+   "url": "https://graview.dev/progression.html",
+   "inLanguage": "en",
+   "image": "https://graview.dev/og.png",
+   "isPartOf": {
+    "@id": "https://graview.dev/#website"
+   },
+   "about": {
+    "@id": "https://graview.dev/#software"
+   },
+   "publisher": {
+    "@id": "https://graview.dev/#endash"
+   },
+   "breadcrumb": {
+    "@id": "https://graview.dev/progression.html#breadcrumb"
+   }
+  },
+  {
+   "@type": "BreadcrumbList",
+   "@id": "https://graview.dev/progression.html#breadcrumb",
+   "itemListElement": [
+    {
+     "@type": "ListItem",
+     "position": 1,
+     "name": "Graview",
+     "item": "https://graview.dev/"
+    },
+    {
+     "@type": "ListItem",
+     "position": 2,
+     "name": "The garden, grown",
+     "item": "https://graview.dev/progression.html"
+    }
+   ]
+  }
+ ]
+}
+</script>
+<!-- site-seo:end -->
 </head>
 <body>
 <style>
@@ -389,7 +448,7 @@ section > .head .tick {
 .inl { display: inline-flex; align-items: center; min-height: 24px; }
 .chapter-head { display: flex; align-items: baseline; gap: 12px; }
 .chapter-n { font-family: var(--sans); font-size: 26px; color: var(--pine); font-variant-numeric: tabular-nums; min-width: 28px; }
-.chapter-head h3 { margin: 0; font-size: 20px; font-weight: 600; }
+.chapter-head h2 { margin: 0; font-size: 20px; font-weight: 600; }
 .chapter-claim { margin: 8px 0 0 40px; max-width: 62ch; color: var(--ink-2); line-height: 1.6; }
 .chapter-adds { margin: 12px 0 0 40px; font-size: 13px; }
 .chapter-label { display: block; font-family: var(--sans); font-weight: var(--w-label); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px; }
@@ -878,6 +937,41 @@ main.page > section > .lede { max-width: 60ch; }
 }
 @media (max-width: 560px) { .hero-live { height: 440px; } .hero h1 { max-width: 14ch; } }
 
+/*
+ * THE FIRST FRAME IS A PICTURE OF THE CITY, not a box that says loading.
+ * scripts/site-poster.mjs draws the hero's own chapter from altitude in both
+ * lightings; the mount replaces it with the live scene.
+ */
+.hero-live .poster { position: absolute; inset: 0; display: grid; place-items: center; padding: 6%; pointer-events: none; }
+.hero-live .poster > div { width: 100%; height: 100%; }
+.hero-live .poster svg { display: block; width: 100%; height: 100%; }
+.hero-live .poster .light, .hero-live .poster .dark { display: none; }
+:root[data-theme="light"] .hero-live .poster .light { display: block; }
+:root[data-theme="dark"] .hero-live .poster .dark { display: block; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hero-live .poster .dark { display: block; } }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .hero-live .poster .light { display: block; } }
+.hero-live .chapter-loading { position: relative; }
+
+/*
+ * ON A PHONE, THE PICTURE COMES BEFORE THE SECOND WAY IN. Stacked in source
+ * order the scene began a full screen down, below both ways in and the
+ * links, so the first screen said what Graview is and never showed it.
+ * The copy's parts become the hero's own rows: what it is, how to start,
+ * the scene, then the hosted way in and the links.
+ */
+@media (max-width: 1000px) {
+  .hero { gap: 0; }
+  .hero-copy, .hero .cta { display: contents; }
+  .hero .eyebrow { order: 1; }
+  .hero h1 { order: 2; }
+  .hero .lede { order: 3; }
+  .hero .way-in:first-child { order: 4; margin-top: 24px; }
+  .hero-stage { order: 5; margin-top: 24px; }
+  .hero .way-in:last-child { order: 6; margin-top: 24px; }
+  .hero .hero-links { order: 7; }
+}
+@media (max-width: 560px) { .hero .lede { font-size: 17px; } .hero-live { height: 380px; } }
+
 /* Rises into place once, and not at all for anyone who asked for less motion. */
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 .hero-copy > * { animation: rise 640ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
@@ -1097,6 +1191,12 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
   .way { border-top-color: CanvasText; }
   .cloud-line { border-color: LinkText; }
 }
+
+/* Questions, answered plainly: short answers in two columns, one at phone width. */
+.faq-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 48px; margin-top: 10px; }
+.qa h3 { font-size: 17px; margin: 0 0 8px; }
+.qa p { color: var(--ink-2); max-width: 62ch; }
+@media (max-width: 760px) { .faq-list { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
 /* site-css:end */
 </style>
 
@@ -1121,7 +1221,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
     </div>
 
     <div class="railfoot">
-      14 packages<br>
+      <span data-number="packages">14</span> packages<br>
       <span data-chapters-word>sixteen</span> chapters, live<br>
       verified on every push
     </div>
@@ -1132,7 +1232,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
     <!-- progression:start -->
 
     <section id="grown" aria-labelledby="h-grown">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-grown">The garden, grown</h2></div>
+      <div class="head"><span class="tick" aria-hidden="true"></span><h1 id="h-grown">The garden, grown</h1></div>
       <p class="lede">
         One example, the community garden, declared a little at a time. Every
         chapter below is a real declaration that passes its own check, opened
@@ -1148,7 +1248,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter" id="chapter-1" aria-labelledby="h-chapter-1">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">1</span>
-          <h3 id="h-chapter-1">A plot</h3>
+          <h2 id="h-chapter-1">A plot</h2>
         </div>
         <p class="chapter-claim">One kind, one act. The city, the district, the derived form and the routed face all exist before a line of UI is written.</p>
         <figure class="chapter-shot">
@@ -1166,7 +1266,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter" id="chapter-2" aria-labelledby="h-chapter-2">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">2</span>
-          <h3 id="h-chapter-2">Gardeners, and who tends what</h3>
+          <h2 id="h-chapter-2">Gardeners, and who tends what</h2>
         </div>
         <p class="chapter-claim">A second kind and one edge. The line is drawn from the declaration, captioned in its own words, and made and unmade by the act that names it.</p>
         <figure class="chapter-shot">
@@ -1184,7 +1284,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter" id="chapter-3" aria-labelledby="h-chapter-3">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">3</span>
-          <h3 id="h-chapter-3">The garden's agreement</h3>
+          <h2 id="h-chapter-3">The garden's agreement</h2>
         </div>
         <p class="chapter-claim">A rule is data on the map, and it names its own repair. The moment it lands, an untended plot is a problem with a one-click fix, not a bug report.</p>
         <figure class="chapter-shot">
@@ -1202,7 +1302,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter" id="chapter-4" aria-labelledby="h-chapter-4">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">4</span>
-          <h3 id="h-chapter-4">Plantings, and the horizon</h3>
+          <h2 id="h-chapter-4">Plantings, and the horizon</h2>
         </div>
         <p class="chapter-claim">A harvested planting leaves the counts but never the graph. The district says +1 past, and last season is one stop away rather than deleted — and the season calendar draws each planting across the days it was actually in the ground.</p>
         <figure class="chapter-shot">
@@ -1220,7 +1320,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter" id="chapter-5" aria-labelledby="h-chapter-5">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">5</span>
-          <h3 id="h-chapter-5">A seat for an agent</h3>
+          <h2 id="h-chapter-5">A seat for an agent</h2>
         </div>
         <p class="chapter-claim">An agent gets the same acts a person does, through one declared seam. Its turn is attributed in the log, watchable from altitude, and undoable out of order.</p>
         <figure class="chapter-shot">
@@ -1238,7 +1338,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter" id="chapter-6" aria-labelledby="h-chapter-6">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">6</span>
-          <h3 id="h-chapter-6">The garden remembers</h3>
+          <h2 id="h-chapter-6">The garden remembers</h2>
         </div>
         <p class="chapter-claim">Persistence is the operation log. One adapter in main.tsx and an edit survives a reload, still attributed, still undoable, with the way back to empty on the rail.</p>
         <figure class="chapter-shot">
@@ -1256,7 +1356,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter" id="chapter-7" aria-labelledby="h-chapter-7">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">7</span>
-          <h3 id="h-chapter-7">Who may do what</h3>
+          <h2 id="h-chapter-7">Who may do what</h2>
         </div>
         <p class="chapter-claim">One policy, declared once. The store refuses, the actions strip narrows, and an agent's seat narrows with it, so a gardener never sees a button that would fail.</p>
         <figure class="chapter-shot">
@@ -1274,7 +1374,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter" id="chapter-8" aria-labelledby="h-chapter-8">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">8</span>
-          <h3 id="h-chapter-8">The garden's own name</h3>
+          <h2 id="h-chapter-8">The garden's own name</h2>
         </div>
         <p class="chapter-claim">One accent, a mark and a typeface, and both schemes are derived and measured. Every text pair is checked against AA before the brand is allowed to ship.</p>
         <figure class="chapter-shot">
@@ -1292,7 +1392,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter phone" id="chapter-9" aria-labelledby="h-chapter-9">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">9</span>
-          <h3 id="h-chapter-9">The other face</h3>
+          <h2 id="h-chapter-9">The other face</h2>
         </div>
         <p class="chapter-claim">The same declaration is also an ordinary web application, routed, at phone width: it lands on a gallery — every kind drawn as a picture until the garden names a lens, then the lens by its name — with a list, a record and a form per kind, the problems, a map of how the kinds fit together, and the seat on every route. Any page can be replaced with one the app writes, in its own words, over the same derivations.</p>
         <figure class="chapter-shot">
@@ -1310,7 +1410,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter" id="chapter-10" aria-labelledby="h-chapter-10">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">10</span>
-          <h3 id="h-chapter-10">A lens over the garden</h3>
+          <h2 id="h-chapter-10">A lens over the garden</h2>
         </div>
         <p class="chapter-claim">A lens binds roles, not field names. The coverage grid was written for requirements and tests; pointed at gardeners and plots it says, in a picture, which plot nobody tends.</p>
         <figure class="chapter-shot">
@@ -1328,7 +1428,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter" id="chapter-11" aria-labelledby="h-chapter-11">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">11</span>
-          <h3 id="h-chapter-11">What grows where</h3>
+          <h2 id="h-chapter-11">What grows where</h2>
         </div>
         <p class="chapter-claim">A second lens, written for a seating plan, drawn over the plots where they lie in the garden. Things sit where the domain says they sit, and an empty bed is a picture of something to do, not a missing row.</p>
         <figure class="chapter-shot">
@@ -1346,7 +1446,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter" id="chapter-12" aria-labelledby="h-chapter-12">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">12</span>
-          <h3 id="h-chapter-12">Ship it</h3>
+          <h2 id="h-chapter-12">Ship it</h2>
         </div>
         <p class="chapter-claim">Deployment is one declaration plus one adapter. A version and a migration on the app carry a garden stored last season forward, as a logged, attributed, undoable operation.</p>
         <figure class="chapter-shot">
@@ -1364,7 +1464,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter" id="chapter-13" aria-labelledby="h-chapter-13">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">13</span>
-          <h3 id="h-chapter-13">The garden's own face</h3>
+          <h2 id="h-chapter-13">The garden's own face</h2>
         </div>
         <p class="chapter-claim">Every surface of the pages face replaced with the garden's own design — an almanac, not an admin panel — and a lens the garden drew of itself in the scene. The same store, acts, rules and permissions underneath; only what a reader sees is the app's.</p>
         <figure class="chapter-shot">
@@ -1382,7 +1482,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter" id="chapter-14" aria-labelledby="h-chapter-14">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">14</span>
-          <h3 id="h-chapter-14">Who is here</h3>
+          <h2 id="h-chapter-14">Who is here</h2>
         </div>
         <p class="chapter-claim">Users, invitations and roles are nodes and acts like everything else: drawn only for the seat that keeps the installation, refused for everyone else by the same policy, and a person's own record is theirs to edit. A lens over the policy shows what each role reaches.</p>
         <figure class="chapter-shot">
@@ -1400,7 +1500,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter" id="chapter-15" aria-labelledby="h-chapter-15">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">15</span>
-          <h3 id="h-chapter-15">The studio</h3>
+          <h2 id="h-chapter-15">The studio</h2>
         </div>
         <p class="chapter-claim">The declaration itself is a graph: every kind, field, edge, act, rule, role and grant of chapter fourteen is a node here, edited with ordinary acts, checked before it is applied, migrated when a stored garden needs it, and written back as the files graview create writes.</p>
         <figure class="chapter-shot">
@@ -1418,7 +1518,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <article class="chapter" id="chapter-16" aria-labelledby="h-chapter-16">
         <div class="chapter-head">
           <span class="chapter-n" aria-hidden="true">16</span>
-          <h3 id="h-chapter-16">The years it turns through</h3>
+          <h2 id="h-chapter-16">The years it turns through</h2>
         </div>
         <p class="chapter-claim">A bed is turned through four families and comes back to the first four years later. The same calendar lens that drew the season draws the rotation, a month per cell over as many years as the garden says it turns through — and how far out that is is the garden's word, not the framework's.</p>
         <figure class="chapter-shot">
@@ -1484,14 +1584,14 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
     <section id="packages" aria-labelledby="h-packages">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-packages">The packages</h2></div>
       <p class="sm" style="margin-bottom: 16px; max-width: 62ch;">
-        Eleven packages, layered. Take the whole stack or take the parts that
+        <span data-number-word="packages">Fourteen</span> packages, layered. Take the whole stack or take the parts that
         earn their place. <code>layout</code> is pure geometry with no React in
         it; <code>core</code> runs headless in a worker or a test; <code>embed</code>
         puts an app on somebody else's page.
       </p>
       <div class="scroll" data-scroller aria-label="The packages, as a table">
         <table>
-          <caption class="sr-only">The fourteen packages and what each contains</caption>
+          <caption class="sr-only">The <span data-number-word="packages">fourteen</span> packages and what each contains</caption>
             <thead><tr><th scope="col">Package</th><th scope="col">What is in it</th></tr></thead>
           <tbody>
             <tr><td class="pkg">graview</td><td>The command line a person installs: <code>create</code>, <code>check</code>, <code>docs</code>, <code>describe</code>, <code>lens</code>, <code>figure</code>, <code>serve</code>, <code>skills</code>. It dispatches; every subcommand lives in the package whose concern it is.</td></tr>
@@ -1500,7 +1600,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
             <tr><td class="pkg">@graview/tools</td><td>Derived affordances, and one tool surface an agent and an interface both use.</td></tr>
             <tr><td class="pkg">@graview/render</td><td>Capture, depth compositing, pointer routing. Only this package touches the GPU, and only through its <code>/gpu</code> entry.</td></tr>
             <tr><td class="pkg">@graview/react</td><td>The binding, and the routes a line may take. Deliberately thin.</td></tr>
-            <tr><td class="pkg">@graview/primitives</td><td>View primitives, three lenses, the named places, the way into the installation and the lens over its policy, and the workbench: inspector, standing, activity, undo, trail, the shell.</td></tr>
+            <tr><td class="pkg">@graview/primitives</td><td>View primitives, the <span data-number-word="lenses">six</span> lenses, the named places, the way into the installation and the lens over its policy, and the workbench: inspector, standing, activity, undo, trail, the shell.</td></tr>
             <tr><td class="pkg">@graview/pages</td><td>The routed face: home, lists, records, forms and problems derived from the declaration, every surface replaceable.</td></tr>
             <tr><td class="pkg">@graview/ship</td><td>Persistence in the browser, versions and migrations, and the deploy shape.</td></tr>
             <tr><td class="pkg">@graview/embed</td><td><code>mount(el, { app, seed, stop })</code>: an app inside any element, themed to itself, with faces, places and seats on a strip.</td></tr>

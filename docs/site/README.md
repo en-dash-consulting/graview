@@ -7,11 +7,11 @@ written twice.**
 |---|---|---|
 | `index.html` | the landing page | what the kit does and who it is for, one picture per claim, the product live where it fits |
 | `progression.html` | the long version | sixteen live chapters, the packages, the lenses, the kit |
-| `docs/` | the reference | 36 pages, all written out of the repository: getting started, concepts, packages, the CLI, working with a model, skills, the findings, live demos |
+| `docs/` | the reference | every page written out of the repository — getting started, concepts, packages, the CLI, working with a model, skills, the findings, live demos, stability — each with a Markdown twin beside it |
 
 Published at [graview.dev](https://graview.dev) by `.github/workflows/pages.yml`
 on every push to `main` that touches this directory. `CNAME`, `.nojekyll`,
-`robots.txt`, `sitemap.xml` (written by `site-docs.mjs`), `404.html` and
+`robots.txt`, `sitemap.xml`, `llms.txt` and `llms-full.txt` (all four written by `site-docs.mjs`), `404.html` and
 `og.png` are the deployment's own files.
 
 ```sh
@@ -46,11 +46,20 @@ second showed the product but argued like documentation.
 |---|---|
 | `scripts/site-css.mjs` | the stylesheet, inlined into every page — the artifact host blocks a `<link>`, so it cannot live in one |
 | `scripts/site-numbers.mjs` | every number on the landing page, counted out of the tree |
-| `scripts/site-docs.mjs` | all 36 docs pages: a page per package, per skill, plus getting started (from what the scaffolder writes), the CLI (from its help), working with a model, the findings, live demos and the concepts — and the sitemap |
+| `scripts/site-docs.mjs` | every docs page: a page per package, per skill, plus getting started (from what the scaffolder writes), the CLI (from its help), working with a model, the findings, live demos, the concepts and stability (`docs/stability.md`) — and, from those same pages, a Markdown twin of each, `llms.txt`, `llms-full.txt`, `robots.txt`, the sitemap with each page's last change, and the structured data in the heads of the landing page (read off its FAQ section) and the long version |
+| `scripts/site-poster.mjs` | the hero's first frame: the chapter it mounts, drawn by `sceneThumbnail` in both lightings, so the frame is a picture before the bundle arrives |
 | `scripts/site-progression.mjs` | the chapter records in `progression.html` |
 
 `tests/site.test.ts` runs each of them with `--check` and fails when a page
-has gone stale. That is the whole point: a page that says "three lenses" six
+has gone stale; `tests/site-for-machines.test.ts` holds what a crawler, an
+answer engine and a model read: every page's title, description, canonical
+and card, unique; the structured data parsing and matching the page; every
+docs page in the sitemap and in `llms.txt`; no broken link; no script,
+stylesheet or picture in the markup from another site (the analytics tag,
+added by script on graview.dev only, is the one thing that is); every count the tree's; and the license named as what it is, the Elastic
+License 2.0, with "source-available" the only category word for it.
+
+That is the whole point: a page that says "three lenses" six
 months after the fourth one shipped is a page the team quietly stops
 defending, and there is no amount of care that prevents it — only a test.
 
