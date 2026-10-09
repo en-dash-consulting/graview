@@ -160,8 +160,15 @@ export const FACE_DOORS = {
  * own, and the channel's words (`viaSaid`), which left the author's module
  * for one Activity fetches with the scene. 578.2 KB, which leaves Cloud's
  * shell 16.8 KB under its 595.
+ * The small truths after the cleanup took it from 591 851 bytes to 592 086
+ * (578.2 KB), 235 more: a place's, a kind's list's and a record's address
+ * said by one rule each (`placePath`, `kindPath`, `recordPath`,
+ * `sharesItsName`) where search, the places and the seat each spelled their
+ * own, `pluralOf` and `actTitle`, and the keyboard's landing asking only
+ * while its window is open. The claim rises by that: 578.5 KB, which leaves
+ * Cloud's shell 16.5 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 578.2 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 578.5 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -266,8 +273,10 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * 555 022 bytes (542.0 KB) to 545 500 (532.7 KB): 533.0 KB.
  * The scene wearing the one bar, the same days, choices and bar as the
  * page that compiles, took it to 533.4 KB: 533.6 KB.
+ * The small truths after the cleanup, the same 235 bytes as the page that
+ * compiles, took it to 546 459 bytes (533.65 KB): 533.9 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 533.6 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 533.9 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [
