@@ -12,7 +12,7 @@ import type {
   ViewRegistry,
 } from "@graview/core";
 import { openingOf, search, tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen, touchWeights, type Place, type PagesArrangement } from "@graview/core";
-import { loadIntelligenceConfig, saveIntelligenceConfig, type AffordanceProvider, type IntelligenceConfig } from "@graview/tools/frame";
+import { NO_AI, type AffordanceProvider, type HostAi } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
 import { createSeatTalk, type KeepLensHost, type SeatTalk } from "./seat-talk.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
@@ -181,17 +181,11 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly sharing: { readonly participant: string; readonly name: string } | null;
   readonly session: string;
   /**
-   * THE LADDER IS A SETTING. Which rung answers — the graph, a model in
-   * this browser, a decision provider, or a frontier model with the
-   * person's own key — is the reader's, kept in their own storage. Owned
-   * here so the profile pane sets it and the chat reads it: one choice,
-   * two surfaces that cannot disagree.
+   * THE AI THE HOST GAVE THE SEAT (`ai` on the provider): its model, its
+   * decision provider, whether a model may run on this device. Decided
+   * once, in code — a reader is never asked which machine answers.
    */
-  readonly intelligence: IntelligenceConfig;
-  chooseIntelligence(next: IntelligenceConfig): void;
-  /** A host that answers the chat itself (a `respond` on the panel) has decided for the reader: the ladder is not theirs to set. */
-  readonly hostAnswers: boolean;
-  registerHostAnswers(answers: boolean): void;
+  readonly ai: HostAi;
   /** Whether a hand has panned or dragged in this tab, so "moved" on the bar means a move somebody made. */
   readonly movedByHand: boolean;
   noteMoved(): void;
@@ -396,6 +390,14 @@ export interface GraviewProviderProps<S extends AnySchema> {
   readonly onKeepLens?: KeepLensHost;
   /** Extra or replacement affordance providers (e.g. an LLM intelligence). */
   readonly providers?: readonly AffordanceProvider<S>[];
+  /**
+   * THE AI THE SEAT MAY USE, decided here by the host and nowhere by a
+   * reader: `complete` (the host's model) for open questions and views no
+   * template draws, `decide` for typed decisions, `onDevice` to let a model
+   * run in the reader's browser. Unsaid, the graph answers alone and the
+   * seat says so when an ask needs more.
+   */
+  readonly ai?: HostAi;
   /** Controlled mode: pass both to own navigation yourself (e.g. from a router). */
   readonly view?: ViewState;
   readonly onViewChange?: (next: ViewState) => void;
@@ -456,6 +458,7 @@ export function GraviewProvider<S extends AnySchema>({
   brand,
   onKeepLens,
   providers,
+  ai = NO_AI,
   view,
   onViewChange,
   children,
@@ -473,14 +476,7 @@ export function GraviewProvider<S extends AnySchema>({
   useTheWatchKnowsWhatIsUnseen(given, seatNow);
   /* This tab, for the life of the tab: see `tabSession`. */
   const [session] = useState(() => tabSession(memory));
-  const [intelligence, setIntelligence] = useState<IntelligenceConfig>(() => loadIntelligenceConfig());
-  const chooseIntelligence = useCallback((next: IntelligenceConfig) => {
-    saveIntelligenceConfig(next);
-    setIntelligence(next);
-  }, []);
   const [movedByHand, setMovedByHand] = useState(false);
-  const [hostAnswers, setHostAnswers] = useState(false);
-  const registerHostAnswers = useCallback((answers: boolean) => setHostAnswers(answers), []);
   const noteMoved = useCallback(() => setMovedByHand(true), []);
   /* Privacy is a reader setting, and it appears only where there is somebody to be seen by. */
   const settings = useMemo(
@@ -851,10 +847,7 @@ export function GraviewProvider<S extends AnySchema>({
       follow,
       sharing,
       session,
-      intelligence,
-      chooseIntelligence,
-      hostAnswers,
-      registerHostAnswers,
+      ai,
       movedByHand,
       noteMoved,
       emphasis,
@@ -899,10 +892,7 @@ export function GraviewProvider<S extends AnySchema>({
       follow,
       sharing,
       session,
-      intelligence,
-      chooseIntelligence,
-      hostAnswers,
-      registerHostAnswers,
+      ai,
       movedByHand,
       noteMoved,
       emphasis,

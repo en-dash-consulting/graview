@@ -272,6 +272,28 @@ it. The host can leave it out:
 mount(root, { app, seat: "hidden" });   // "field" (the default) or "hidden"
 ```
 
+What answers it is the host's to decide, once — a reader is never asked.
+The graph answers first, always: where things are, what is wrong, what a
+record says, the repairs a rule names, a view a template draws. Give the
+seat a model and open questions go to it:
+
+```ts
+mount(root, {
+  app,
+  ai: {
+    complete: (prompt) => myModel(prompt),   // prompt in, text out
+    name: "house-model",                     // logged as via "ai:house-model"; never shown
+    // decide: jevDecide({ ... }),            // typed decisions, if you have a provider
+    // onDevice: true,                        // a model in the reader's browser, off unless said
+  },
+});
+```
+
+With no `ai`, an open question is answered "I can answer about what's in
+this app. Open questions need AI, which isn't on here." An answer a model
+gave carries one quiet "Answered with AI"; one the graph gave carries
+nothing.
+
 ## The host's notices
 
 What the host has to say while the app is open — a newer version, the

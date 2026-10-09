@@ -63,6 +63,8 @@ describe("an agent acts for someone, through something", () => {
     expect(nameOfAuthor(ops[0]!.author, { graph: s.graph as never, schema })).toBe("Claude, for Nick");
     expect(viaSaid(ops[0]!.via)).toBe("via Claude");
     expect(viaSaid("web")).toBeUndefined();
+    // Which model the host's seat used is the log's to keep, not a reader's to read.
+    expect(viaSaid("ai:model")).toBeUndefined();
   });
 
   it("an agent's roles are the intersection of its own and its person's; beyond them it is refused with the policy's sentence", () => {

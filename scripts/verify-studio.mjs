@@ -623,28 +623,28 @@ try {
     ok: !afterUndo.includes("wanted-by") && afterUndo.includes('defineNode("task"'),
   };
 
-  /* -------------- what the keyless rung cannot read, it offers a way out of */
+  /* -------- what the declaration cannot read, with no model given, it says so */
+  /*
+   * There was a "Let a model read it →" under such a turn, and a ⚙ on the
+   * panel that opened the reader's ladder of rungs. The host decides the AI
+   * now: with none, the seat says open requests need AI, which isn't on
+   * here, and offers no picker.
+   */
   await asked("sort the tasks out a bit, they are a mess");
   const stuck = await page.evaluate(() => ({
-    said: [...document.querySelectorAll('[data-testid="studio-agent-panel"] li p')].at(-1)?.textContent?.trim().slice(0, 80) ?? null,
-    offered: document.querySelector('[data-testid="studio-agent-offer-model"]') !== null,
+    said: [...document.querySelectorAll('[data-testid="studio-agent-panel"] li p')].at(-1)?.textContent?.trim().slice(0, 160) ?? null,
+    pickers: ["studio-agent-offer-model", "studio-agent-settings", "studio-agent-ladder", "studio-agent-source", "setting-intelligence"].filter((id) => document.querySelector(`[data-testid="${id}"]`) !== null),
   }));
-  await page.click('[data-testid="studio-agent-offer-model"]');
-  await page.waitForTimeout(400);
-  const gear = await page.evaluate(() => document.querySelector('[data-testid="studio-agent-ladder"] [data-testid="setting-intelligence"]') !== null);
-  report.checks.whatTheKeylessRungCannotReadItOffersAWayOutOf = {
+  report.checks.whatTheDeclarationCannotReadWithNoModelItSaysSo = {
     ...stuck,
-    opensThePicker: gear,
-    ok: stuck.offered === true && gear === true,
+    ok: (stuck.said ?? "").includes("Open questions need AI, which isn't on here.") && stuck.pickers.length === 0,
   };
-  await page.click('[data-testid="studio-agent-settings"]');
-  await page.waitForTimeout(300);
 
-  /* ------------------- a model on the ladder, driven against a real provider */
+  /* ------------------- the host's model, driven against a real provider */
   /*
    * THE MODEL PATH, END TO END, WITHOUT A MODEL.
    *
-   * The on-device rung needs WebGPU, which a harness machine may not have —
+   * The on-device model needs WebGPU, which a harness machine may not have —
    * but "we cannot run Gemini Nano here" is no reason to leave the whole
    * model path untested, and it was: every test of it stubbed the responder
    * itself, so nothing had ever checked that a provider's answer reaches
@@ -652,8 +652,10 @@ try {
    * waiting on another comes alive when it is kept.
    *
    * So the provider is a real OpenAI-compatible endpoint on localhost that
-   * answers what we tell it to. Everything between the person and it is the
-   * shipping path: the config, the adapter, the prompt, the gate, the forms.
+   * answers what we tell it to, handed to the app as its host's `ai`, as
+   * Graview Cloud hands its own. Everything between the person and it is the
+   * shipping path: the studio inheriting the app's AI, the prompt, the gate,
+   * the forms.
    */
   const prompts = [];
   let answer = "{}";
@@ -699,10 +701,18 @@ try {
       ],
     });
     await page.addInitScript((baseUrl) => {
-      localStorage.setItem(
-        "graview:intelligence",
-        JSON.stringify({ source: "remote", remote: { preset: "custom", baseUrl, apiKey: "harness", model: "stub" } }),
-      );
+      // The host's model, as an OpenAI-shaped endpoint: prompt in, text out.
+      window.__todoAi = {
+        name: "harness",
+        complete: async (prompt) => {
+          const response = await fetch(`${baseUrl}/chat/completions`, {
+            method: "POST",
+            headers: { "content-type": "application/json", authorization: "Bearer harness" },
+            body: JSON.stringify({ model: "stub", messages: [{ role: "user", content: prompt }] }),
+          });
+          return (await response.json()).choices[0].message.content;
+        },
+      };
     }, `${at("studio-model")}/v1`);
     await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1&as=user-nora`, { waitUntil: "load" });
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });

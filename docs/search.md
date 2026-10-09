@@ -165,8 +165,8 @@ derived already (`beginning(app)`, `DerivedForm`, the policy).
 - Per-kind search configuration. `display.hide` and `fixed` already say
   what a person should not see or change; searchable is what is readable.
 - Fuzzy or semantic matching by default. Later, as an intelligence
-  provider with a confidence, behind the same seam, chosen in the panel's
-  gear like every other rung.
+  provider with a confidence, behind the same seam, given by the host
+  like every other model.
 - Saved searches as a feature. A search is a URL; saving one is bookmarking
   it. If products want named searches, they are stops with titles — the
   same shape as a named place — and can be added then.

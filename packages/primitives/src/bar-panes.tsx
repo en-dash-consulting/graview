@@ -1,7 +1,6 @@
 import { humanizeField, type AnySchema, type AnyGraphNode, type Violation } from "@graview/core";
 import { useGraview } from "@graview/react/provider";
 import { choiceStyle } from "./choice.js";
-import { LadderSetting } from "./ladder.js";
 import type { HostAction } from "./profile.js";
 import { Seats } from "./seats.js";
 
@@ -80,7 +79,7 @@ export function ProfilePane<S extends AnySchema>({
   /** Which part: who you are and the host's own, above the ways into the app; or the seats and the settings, below them. */
   readonly part: "top" | "rest";
 }) {
-  const { principal, seats, settings, settingValues, chooseSetting, sharing, hostAnswers } = useGraview<S>();
+  const { principal, seats, settings, settingValues, chooseSetting, sharing } = useGraview<S>();
   const roles = principal.roles ?? [];
   const popover = { setOpen: (_open: false) => close() };
   return (
@@ -185,13 +184,6 @@ export function ProfilePane<S extends AnySchema>({
               <Seats<S> />
             </div>
           ) : null}
-
-          {/* Which rung answers the chat: a setting like the others, not a pane over the map. */}
-          {hostAnswers ? null : (
-            <div style={{ display: "grid", gap: 6, ...ruled }}>
-              <LadderSetting />
-            </div>
-          )}
 
           {settings.length > 0 ? (
             <div style={{ display: "grid", gap: 10, ...ruled }}>

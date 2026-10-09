@@ -45,13 +45,13 @@ export interface ChatReply {
   /**
    * True when the answer is a FACT the graph holds — the standing, a named
    * thing, a when, a who, a rule's own repairs. A grounded answer outranks
-   * any model on the ladder: a small local model asked who can play left
-   * back will fluently invent a goalkeeper, and no rung may replace a fact
+   * any model: a small local model asked who can play left
+   * back will fluently invent a goalkeeper, and no model may replace a fact
    * with a guess about the same fact.
    *
    * NOT for a reading of what somebody wants CHANGED. That is an
    * interpretation, and interpretation is the whole reason a model is on
-   * the ladder at all: "add details to Meal, the name of the food and the
+   * the seat at all: "add details to Meal, the name of the food and the
    * number of people it can feed" is two fields and a pattern-matcher can
    * only ever see one. Marking those answers grounded shut the model out of
    * exactly the turns it was there for — so a change is a `reading`, which
@@ -61,13 +61,11 @@ export interface ChatReply {
   /**
    * The answer is "I could not read that", rather than an answer.
    *
-   * The keyless rung reads a handful of sentence shapes, and says so when a
-   * sentence is not one of them. That is honest, and on its own it is a dead
-   * end: the person is left to guess which phrasing the pattern-matcher
-   * wants, when the thing that reads any phrasing is one press away behind
-   * the gear. A surface that knows no model is chosen can offer to choose
-   * one — and a surface where one already is has nothing to offer, so this
-   * is a fact about the ANSWER, not an instruction to the interface.
+   * The graph reads a handful of sentence shapes, and says so when a
+   * sentence is not one of them. With the host's model, that sentence goes
+   * to the model instead; with none, the seat adds that open questions
+   * need AI, which isn't on here — a fact about the ANSWER, which every
+   * surface the seat speaks from says the same way.
    */
   readonly unsure?: boolean;
   /**
@@ -96,6 +94,13 @@ export interface ChatReply {
   readonly moves?: readonly SeatMove[];
   /** A picture the moves could not show, offered: "Show as a view". */
   readonly offer?: SeatOffer;
+  /**
+   * WHAT THE ANSWER CAME THROUGH, when a model gave it: `ai:<name>`. What
+   * it proposes is recorded with this `via` in the op log, and the seat
+   * sets one quiet "Answered with AI" under it. Absent when the graph
+   * answered, which is said by saying nothing.
+   */
+  readonly via?: string;
 }
 
 export interface ChatContext {
@@ -104,7 +109,7 @@ export interface ChatContext {
   /** Prior turns, oldest first, for responders that use them. */
   readonly history?: readonly { readonly role: "person" | "seat"; readonly text: string }[];
   /**
-   * WHAT THE FLOOR ALREADY WORKED OUT, handed up the ladder.
+   * WHAT THE GRAPH ALREADY WORKED OUT, handed to the model.
    *
    * The graph-native reading of a change is usually right and always cheap,
    * and a model that starts from it does better than one starting from
@@ -345,7 +350,7 @@ export function graphResponder<S extends AnySchema>(
        * A READING, NOT A FACT. This branch matched an act's title in a
        * sentence and filled what it honestly could — right often enough to
        * be the floor, and not so right that a model should be kept out of
-       * it. Marked grounded, it stopped the ladder dead: a person with a
+       * it. Marked grounded, it stopped the model dead: a person with a
        * model chosen still got the pattern-matcher's single act out of a
        * sentence that described three.
        */
@@ -659,6 +664,7 @@ export function graphResponder<S extends AnySchema>(
         `like "${store.allMutations()[0]?.title ?? "an action"}".`,
       ]),
       proposals: [],
+      unsure: true,
     };
   };
 }
@@ -876,7 +882,7 @@ export function llmResponder<S extends AnySchema>(options: {
         say:
           prose.length > 0 && !looksLikeJson
             ? prose
-            : "The model answered in a shape I could not read. Ask again, or try a different one from the gear.",
+            : "The answer came back in a shape I could not read. Ask again in other words.",
         proposals: [],
       };
     }

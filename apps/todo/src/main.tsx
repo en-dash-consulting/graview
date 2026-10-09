@@ -2,6 +2,7 @@ import { themeCss, type Scheme } from "@graview/primitives";
 import { applySettings } from "@graview/react";
 import { createRoot } from "react-dom/client";
 import { PagesApp } from "@graview/pages";
+import type { HostAi } from "@graview/tools";
 import { open } from "./open.js";
 import { todoApp } from "./domain/app.js";
 import { thingsBrand } from "./domain/brand.js";
@@ -70,6 +71,15 @@ if (!root) throw new Error("no #root");
 const { opened, principal, remembers, presence } = await open();
 
 /*
+ * THE AI IS THE HOST'S TO GIVE. Things ships with none: the graph answers
+ * what is here, what is wrong and what a task says, and an open question
+ * is told AI isn't on. A host with a model passes it as `ai` — Graview
+ * Cloud passes its own — and a reader is never asked which. The harnesses
+ * hand this example one the same way, before it loads.
+ */
+const ai = (window as unknown as { __todoAi?: HostAi }).__todoAi;
+
+/*
  * TWO FACES, ONE DECLARATION. The scene owns "/" (and the hash, which is
  * its view state); the routed face lives under "/pages" on ordinary paths.
  * Same store machinery, same ids — a record page links to its spatial stop
@@ -99,6 +109,7 @@ if (window.location.pathname.startsWith("/pages")) {
         views: todoViews(),
         settings: todoApp.settings ?? [],
         ...(presence ? { presence } : {}),
+        ...(ai ? { ai } : {}),
       }}
       /*
        * THE APP'S OWN FACE, over the same derivations. Every surface is
@@ -116,6 +127,7 @@ if (window.location.pathname.startsWith("/pages")) {
       principal={principal}
       remembers={remembers}
       presence={presence}
+      {...(ai ? { ai } : {})}
       syncUrl
       renderer="dom"
       initialScheme={scheme}

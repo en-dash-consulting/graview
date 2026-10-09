@@ -1,21 +1,13 @@
 import { bindSchema, createSchema, defineNode, Store } from "@graview/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import {
-  configuredResponder,
-  DEFAULT_INTELLIGENCE,
-  describeIntelligence,
-  loadIntelligenceConfig,
-  localCompletion,
-  openAiCompatibleCompletion,
-  saveIntelligenceConfig,
-  xaiCompletion,
-} from "../../src/index.js";
+import { localCompletion, NO_AI, openAiCompatibleCompletion, seatResponder, xaiCompletion } from "../../src/index.js";
 
 /**
- * The intelligence ladder: the graph is always the floor, a browser model
- * and a keyed frontier model are rungs above it, and a failed rung answers
- * from the floor with a note — never with an error where an answer existed.
+ * The models a host can give a seat: the graph always answers first, a
+ * model in the browser and a remote one sit behind it, and a model that
+ * fails leaves the graph's answer with a quiet line — never an error where
+ * an answer existed.
  */
 
 const thing = defineNode("thing", { fields: z.object({ label: z.string() }), plural: "Things" });
@@ -37,36 +29,6 @@ const store = () =>
     invariants: [],
     snapshot: { nodes: [{ id: "a", kind: "thing", label: "Widget" }] as never, edges: [] },
   });
-
-type Shim = { getItem(k: string): string | null; setItem(k: string, v: string): void };
-const withStorage = (shim: Shim | undefined) => {
-  (globalThis as { localStorage?: Shim }).localStorage = shim as never;
-};
-afterEach(() => {
-  delete (globalThis as { localStorage?: Shim }).localStorage;
-});
-
-describe("the rung is a setting in the person's own storage", () => {
-  it("defaults to the graph when nothing is stored, or storage throws", () => {
-    expect(loadIntelligenceConfig()).toEqual(DEFAULT_INTELLIGENCE);
-    withStorage({
-      getItem() {
-        throw new Error("blocked");
-      },
-      setItem() {},
-    });
-    expect(loadIntelligenceConfig()).toEqual(DEFAULT_INTELLIGENCE);
-    expect(() => saveIntelligenceConfig({ source: "local" })).not.toThrow();
-  });
-
-  it("round-trips a saved rung", () => {
-    const held = new Map<string, string>();
-    withStorage({ getItem: (k) => held.get(k) ?? null, setItem: (k, v) => void held.set(k, v) });
-    saveIntelligenceConfig({ source: "remote", remote: { preset: "xai", apiKey: "xai-test" } });
-    expect(loadIntelligenceConfig().source).toBe("remote");
-    expect(describeIntelligence(loadIntelligenceConfig())).toBe("grok-4-fast");
-  });
-});
 
 describe("a remote model is one fetch", () => {
   it("speaks the OpenAI-compatible shape and returns the content", async () => {
@@ -118,7 +80,7 @@ describe("a remote model is one fetch", () => {
   });
 });
 
-describe("the local rung warms off the critical path", () => {
+describe("the on-device model warms off the critical path", () => {
   it("reports warming then ready, and answers once warm", async () => {
     const states: string[] = [];
     const local = localCompletion({
@@ -156,57 +118,48 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+const remote = (baseUrl: string) => ({ complete: openAiCompatibleCompletion({ baseUrl, apiKey: "k", model: "m" }) });
+
 describe("grounded facts outrank any model", () => {
-  it("answers a graph-answerable question from the graph, whatever the rung", async () => {
-    let modelAsked = 0;
-    const responder = configuredResponder<typeof schema>(
-      { source: "remote", remote: { preset: "custom", baseUrl: "https://x.invalid/v1", apiKey: "k", model: "m" } },
-    );
+  it("answers a graph-answerable question from the graph, with no note, whatever the host gave", async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
     // "tell me about Widget" is grounded: the model must not even be tried.
-    const reply = await responder(store(), "tell me about Widget");
+    const reply = await seatResponder<typeof schema>(remote("https://x.invalid/v1"))(store(), "tell me about Widget");
     expect(reply.say).toContain("Widget — a thing");
-    expect(reply.say).toContain("(from the graph)");
-    expect(modelAsked).toBe(0);
+    expect(reply.say).not.toContain("AI");
+    expect(reply.via).toBeUndefined();
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("hands the model only what the graph cannot answer specifically", async () => {
     unreachable();
-    const responder = configuredResponder<typeof schema>({
-      source: "remote",
-      remote: { preset: "custom", baseUrl: "https://nowhere.invalid/v1", apiKey: "k", model: "m" },
-    });
-    // Ungrounded chit-chat reaches the model; its failure falls to the floor.
-    const reply = await responder(store(), "write me a poem");
-    expect(reply.say).toContain("m did not answer");
+    // Ungrounded chit-chat reaches the model; its failure leaves the graph's answer.
+    const reply = await seatResponder<typeof schema>(remote("https://nowhere.invalid/v1"))(store(), "write me a poem");
+    expect(reply.say).toContain("AI didn't answer just now, so this is from the app alone.");
   });
 });
 
-describe("configuredResponder: the graph is always the floor", () => {
-  it("answers from the graph by default", async () => {
-    const reply = await configuredResponder<typeof schema>(DEFAULT_INTELLIGENCE)(store(), "hello");
-    expect(reply.say).toContain("1 Things");
+describe("seatResponder: the graph always answers first", () => {
+  it("answers from the graph when the host gave no model", async () => {
+    const reply = await seatResponder<typeof schema>(NO_AI)(store(), "tell me about Widget");
+    expect(reply.say).toContain("Widget — a thing");
+    expect(reply.via).toBeUndefined();
   });
 
-  it("falls back to the graph with a note when the remote model fails", async () => {
-    // An unreachable host: the completion rejects, and the conversation
-    // still gets a real answer.
+  it("falls back to the graph with a quiet line when the model fails", async () => {
     unreachable();
-    const responder = configuredResponder<typeof schema>({
-      source: "remote",
-      remote: { preset: "custom", baseUrl: "https://nowhere.invalid/v1", apiKey: "k", model: "m" },
-    });
-    const reply = await responder(store(), "hello");
+    const reply = await seatResponder<typeof schema>(remote("https://nowhere.invalid/v1"))(store(), "hello");
     expect(reply.say).toContain("1 Things");
-    expect(reply.say).toContain("m did not answer");
+    expect(reply.say).toContain("AI didn't answer just now");
+    expect(reply.via).toBeUndefined();
   });
 
-  it("answers from the graph while the local model warms, then upgrades", async () => {
-    // The default local rung would import WebLLM off the network; here the
-    // point is the LADDER: cold → floor with a note. (The warm path is
-    // covered through localCompletion above.)
-    const responder = configuredResponder<typeof schema>({ source: "local" });
-    const reply = await responder(store(), "hello");
+  it("answers from the graph, saying AI isn't available, where the browser cannot run the on-device model the host turned on", async () => {
+    // Node has no WebGPU and no Prompt API: the bring-up fails at once, and the seat says so rather than "getting ready" forever.
+    const reply = await seatResponder<typeof schema>({ onDevice: { model: `no-webgpu-${Date.now()}` } })(store(), "hello");
     expect(reply.say).toContain("1 Things");
-    expect(reply.say).toContain("warming");
+    expect(reply.say).toContain("AI isn't available in this browser, so this is from the app alone.");
+    expect(reply.via).toBeUndefined();
   });
 });

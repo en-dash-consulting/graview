@@ -1,6 +1,7 @@
 import { sceneTitle, type AnySchema, type Brand, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { KeepLensHost, ReactViewRegistry } from "@graview/react/provider";
+import type { HostAi } from "@graview/tools/frame";
 
 
 /**
@@ -97,6 +98,15 @@ export interface PageContext<S extends AnySchema> {
    * lens is the reader's own.
    */
   readonly onKeepLens?: KeepLensHost;
+  /**
+   * THE AI THE SEAT MAY USE, decided by the host and never by a reader:
+   * `{ complete }` (the host's model: prompt in, text out) for open
+   * questions and views no template draws, `decide` for typed decisions,
+   * `onDevice` to let a model run in the reader's browser — for the
+   * provider under the pages when `views` is given. Unsaid, the graph
+   * answers alone, and an open question is told AI isn't on here.
+   */
+  readonly ai?: HostAi;
 }
 
 /**

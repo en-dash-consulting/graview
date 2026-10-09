@@ -13,8 +13,8 @@ import { AnswerArgs } from "./workbench/index.js";
 /**
  * THE OPEN SEAT — fetched when the seat is first opened (`seat-field.tsx`).
  *
- * A row of three quiet controls (the other foot, what answers, close; on a
- * phone a grab line), then — with nothing asked yet — one plain line about
+ * A row of two quiet controls (the other foot, and close; on a phone a
+ * grab line), then — with nothing asked yet — one plain line about
  * where the reader is, at most three things to ask and at most three acts,
  * and the conversation. No heading over it saying what it is about, no
  * stack of acts, no stars, no filter: the rest is one question away.
@@ -40,7 +40,6 @@ export interface SeatPanelProps {
 export function SeatPanel({ phone, side, name, onClose, respond, onCall, onPick, onMove, place, onDraft }: SeatPanelProps) {
   const { seatTalk } = useGraview();
   const talk = useSeatTalkState(seatTalk);
-  const [settings, setSettings] = useState(false);
   const go = useSeatGo(onPick);
   const latest = [...talk.turns].reverse().find((turn) => turn.role === "seat");
   /*
@@ -84,19 +83,6 @@ export function SeatPanel({ phone, side, name, onClose, respond, onCall, onPick,
             <span aria-hidden="true">⇄</span>
           </button>
         )}
-        {respond ? null : (
-          <button
-            type="button"
-            data-testid="seat-settings"
-            aria-label="What answers"
-            aria-expanded={settings}
-            title="What answers: the graph itself, a model in this browser, a decision provider, or your own key"
-            onClick={() => setSettings((was) => !was)}
-            style={phone ? { ...ICON, position: "absolute", right: 0 } : ICON}
-          >
-            <span aria-hidden="true">⚙</span>
-          </button>
-        )}
         {phone ? null : (
           <button type="button" data-testid="seat-close" aria-label={`Close Ask ${name}`} title="Close" onClick={onClose} style={ICON}>
             <span aria-hidden="true">✕</span>
@@ -119,8 +105,6 @@ export function SeatPanel({ phone, side, name, onClose, respond, onCall, onPick,
           shared
           composer={false}
           testId="seat"
-          settings={settings}
-          onSettings={setSettings}
           onPick={go}
           {...(onMove ? { onMove } : {})}
           {...(place ? { place } : {})}

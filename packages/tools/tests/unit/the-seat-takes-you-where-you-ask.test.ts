@@ -4,7 +4,7 @@ import { compileDocument } from "@graview/core/check";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { movesFromNames, NOTHING_BY_THAT_NAME, placesFromViews, resolveAsk, type AskAnswer, type AskContext, type SeatMove } from "../../src/go.js";
-import { configuredResponder, graphResponder, llmResponder } from "../../src/index.js";
+import { graphResponder, llmResponder, openAiCompatibleCompletion, seatResponder } from "../../src/index.js";
 import { createTodoStore, todoApp } from "../../../../apps/todo/src/domain/app.js";
 import { seedbedApp, createSeedbedStore } from "../../../../apps/seedbed/src/domain/app.js";
 
@@ -357,7 +357,7 @@ describe("the conversation answers with moves", () => {
   it("asks no model for an ask the graph resolves, and asks one for a question it cannot", async () => {
     const fetch = vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { content: '{"say": "Start with the deposit.", "proposals": []}' } }] }), { status: 200 }));
     vi.stubGlobal("fetch", fetch);
-    const respond = configuredResponder({ source: "remote", remote: { preset: "custom", baseUrl: "https://model.test/v1", apiKey: "k", model: "m" } });
+    const respond = seatResponder({ complete: openAiCompatibleCompletion({ baseUrl: "https://model.test/v1", apiKey: "k", model: "m" }) });
     const store = createTodoStore({ snapshot: example }) as unknown as Store<AnySchema>;
     for (const text of ["go to The week", "go to Pay the deposit", "tasks due this week", "what's wrong", "tell me about Book the van", "what is here", "go to Zebedee"]) {
       const reply = await respond(store, text, { principal: keeper, places });

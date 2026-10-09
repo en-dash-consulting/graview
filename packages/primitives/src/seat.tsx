@@ -1,7 +1,7 @@
 import { createSeatTalk, useSeatTalkState, type SeatOutcome, type SeatTalk, type SeatTurn } from "@graview/react/provider";
-import type { ChatContext, ChatReply, LocalStatus, ProposedCall } from "@graview/tools";
+import { ANSWERED_WITH_AI } from "@graview/tools/frame";
+import type { ChatContext, ChatReply, ProposedCall } from "@graview/tools";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { LadderSetting } from "./ladder.js";
 
 /**
  * ONE CONVERSATION WITH A SEAT, WHEREVER IT IS HELD.
@@ -14,8 +14,8 @@ import { LadderSetting } from "./ladder.js";
  * person moving from the app into its studio met a second assistant.
  *
  * What is shared is everything a conversation IS: the turns, what became of
- * each proposal, what the model is told happened, the header that says
- * which rung is answering, the thread and the field. What differs is only
+ * each proposal, what the model is told happened, the thread and the
+ * field. What differs is only
  * what a proposal is FOR — a change to the graph, applied; a change to the
  * declaration, checked and kept — so a surface supplies how one proposal is
  * drawn and nothing else.
@@ -90,6 +90,7 @@ export function useSeatConversation({
         ...(reply.moves?.length ? { moves: reply.moves } : {}),
         ...(reply.offer ? { offer: reply.offer } : {}),
         ...(reply.unsure ? { unsure: true } : {}),
+        ...(reply.via ? { via: reply.via } : {}),
       },
     ]);
     onReply?.(reply);
@@ -99,74 +100,24 @@ export function useSeatConversation({
   return { turns, outcomes, busy, send, settle };
 }
 
-/** Where answers are coming from right now, for the header — the same words on every surface. */
-export function describeSource(described: string, warmth: LocalStatus | null, floor = "graph"): string {
-  if (warmth?.state === "warming") {
-    return `warming${warmth.progress !== undefined ? ` ${Math.round(warmth.progress * 100)}%` : "…"}`;
-  }
-  if (warmth?.state === "failed") return `${floor} answering — ${warmth.detail ?? "the local model failed"}`;
-  return described;
-}
-
 export function SeatHeader({
   label,
-  source,
-  sourceTitle,
   testId,
-  settings,
-  onSettings,
-  foot = false,
 }: {
-  /** What the seat talks about: "Seat" in the app, "Declaration" in the studio. */
+  /** What the seat talks about: "Declaration" in the studio. */
   readonly label: string;
-  readonly source: string;
-  readonly sourceTitle?: string;
   readonly testId: string;
-  readonly settings?: boolean;
-  /** Under the composer rather than over the thread: a status line, not a title. */
-  readonly foot?: boolean;
-  /** Absent when the ladder is not the reader's to set — a host answers for them. */
-  readonly onSettings?: () => void;
 }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        padding: foot ? "4px 4px 0 6px" : "6px 8px 6px 12px",
-        ...(foot ? {} : { borderBottom: "1px solid var(--graview-edge)" }),
-      }}
-    >
-      {foot ? null : (
-        <span style={{ fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>
-          {label}
-        </span>
-      )}
-      <span data-testid={`${testId}-source`} title={sourceTitle} style={{ fontSize: "0.75rem", color: "var(--graview-ink-muted)" }}>
-        {source}
-      </span>
-      <span style={{ flex: "1 1 auto" }} />
-      {onSettings ? (
-        <button
-          type="button"
-          data-testid={`${testId}-settings`}
-          aria-expanded={settings ?? false}
-          onClick={onSettings}
-          title="Choose what answers: the graph itself, a model in this browser, a decision provider, or your own key"
-          style={{ fontSize: "0.8125rem", padding: "2px 8px", minHeight: 24 }}
-        >
-          ⚙
-        </button>
-      ) : null}
+    <div data-testid={`${testId}-header`} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px 6px 12px", borderBottom: "1px solid var(--graview-edge)" }}>
+      <span style={{ fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>{label}</span>
     </div>
   );
 }
 
 /**
- * The seat's trailing aside — "(from the graph)", "(the local model is
- * warming …)" — is which rung answered, not the answer: kept, and set
- * quieter than what was said.
+ * The seat's trailing aside — "(AI didn't answer just now, …)" — is about
+ * the answer, not the answer: kept, and set quieter than what was said.
  */
 export const splitAside = (text: string): { said: string; aside?: string } => {
   const match = /^([\s\S]*?)\s*(\((?:[^()]|\([^()]*\))*\))\s*$/.exec(text);
@@ -187,7 +138,6 @@ export function SeatThread({
   ready = () => true,
   onApplyAll,
   applyAllLabel = "Apply all",
-  onChooseModel,
 }: {
   readonly turns: readonly SeatTurn[];
   readonly outcomes: ReadonlyMap<string, SeatOutcome>;
@@ -208,8 +158,6 @@ export function SeatThread({
   /** One request, one press: take this turn's open proposals in order. */
   readonly onApplyAll?: (turn: number, proposals: readonly ProposedCall[]) => void;
   readonly applyAllLabel?: string;
-  /** Offered under a turn the rung could not read, when a model is one press away. */
-  readonly onChooseModel?: () => void;
 }) {
   const log = useRef<HTMLOListElement | null>(null);
   useEffect(() => {
@@ -276,19 +224,14 @@ export function SeatThread({
                     {aside.aside}
                   </span>
                 ) : null}
+                {/* A MODEL ANSWERED: said once, quietly. The graph answering is said by saying nothing. */}
+                {turn.via ? (
+                  <span data-testid={`${testId}-answered-with-ai`} style={{ display: "block", marginTop: 2, fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
+                    {ANSWERED_WITH_AI}
+                  </span>
+                ) : null}
               </p>
             )}
-            {turn.unsure && onChooseModel ? (
-              <button
-                type="button"
-                data-testid={`${testId}-offer-model`}
-                onClick={onChooseModel}
-                title="A model reads a sentence however it is phrased, and proposes the acts it describes"
-                style={{ fontSize: "0.8125rem", justifySelf: "start" }}
-              >
-                Let a model read it →
-              </button>
-            ) : null}
             {renderAfter?.(turn, index)}
             {proposals.map((proposal, at) => {
               const key = proposalKey(index, at);
@@ -390,22 +333,5 @@ export function SeatComposer({
         Send
       </button>
     </form>
-  );
-}
-
-/**
- * WHAT ANSWERS, chosen where the seat is. The same one setting the profile
- * holds — pills, and a key field only when a rung needs one — so a person
- * pressing "Let a model read it" is shown the choice they would find in
- * the profile, not a second form that could disagree with it.
- */
-export function SeatSettings({ testId, onDone }: { readonly testId: string; readonly onDone: () => void }) {
-  return (
-    <div data-testid={`${testId}-ladder`} style={{ display: "grid", gap: 10, padding: 12 }}>
-      <LadderSetting />
-      <button type="button" onClick={onDone} style={{ justifySelf: "start", fontSize: "0.875rem" }}>
-        Back to the conversation
-      </button>
-    </div>
   );
 }

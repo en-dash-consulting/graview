@@ -2,26 +2,9 @@ import { formFields, humanizeField, labelOf, type AnySchema, type FormField, typ
 import { figureSvg } from "@graview/core/figures";
 import type { Finding } from "@graview/core/check";
 import { POPOVER_STYLE, useGraview, usePopover } from "@graview/react";
-import {
-  describeSource,
-  proposalKey,
-  SeatComposer,
-  SeatHeader,
-  SeatSettings,
-  SeatThread,
-  useSeatConversation,
-} from "@graview/primitives";
-import {
-  completionFor,
-  configuredResponder,
-  describeIntelligence,
-  describeProposal,
-  resolveProposal,
-  type LocalStatus,
-  type ProposedCall,
-  type Responder,
-} from "@graview/tools";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { proposalKey, SeatComposer, SeatHeader, SeatThread, useSeatConversation } from "@graview/primitives";
+import { completionFor, describeProposal, resolveProposal, seatResponder, type ProposedCall, type Responder } from "@graview/tools";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { useStoreTick } from "@graview/pages";
 import { studioResponder } from "./agent.js";
 import type { StudioSchema } from "./meta.js";
@@ -66,40 +49,29 @@ export function StudioAgentPanel({
   testId = "studio-agent",
 }: {
   readonly studio: Studio<AnySchema>;
-  /** How the seat answers, when a host decides — as on the app's own chat. Defaults to the ladder over the declaration's floor. */
+  /** How the seat answers, when a host decides — as on the app's own chat. Defaults to the declaration first, the host's model after it. */
   readonly respond?: Responder<StudioSchema>;
   readonly testId?: string;
 }) {
-  const { principal, intelligence: config } = useGraview<StudioSchema>();
+  const { principal, ai } = useGraview<StudioSchema>();
   /* One of the family (FR-77): in the top layer, hung from its pill; Escape or a press elsewhere in the studio closes it. */
   const popover = usePopover("studio-ask");
   const open = popover.open;
-  const [settings, setSettings] = useState(false);
-  const [warmth, setWarmth] = useState<LocalStatus | null>(null);
-  useEffect(() => setWarmth(null), [config]);
   /** What the person changed on each proposal before keeping it, by proposal key. */
   const [edits, setEdits] = useState<ReadonlyMap<string, Record<string, unknown>>>(new Map());
   const anchor = useRef<HTMLDivElement | null>(null);
 
-  const statusToken = useRef(0);
   /*
-   * THE SAME LADDER, WITH THE STUDIO'S OWN FLOOR. Keyless, the declaration
-   * answers for itself — what kinds there are, what an act writes, which
-   * kinds have no figure — and a model earns only the questions that floor
-   * cannot answer. The drawing reaches the same configured provider through
-   * `completionFor`, so there is one place a key is read.
+   * THE DECLARATION ANSWERS FIRST — what kinds there are, what an act
+   * writes, which kinds have no figure — and the host's model (`ai` on the
+   * provider) only what it cannot. The drawing reaches the same model
+   * through `completionFor`, so there is one place it is read.
    */
-  const configNow = useRef(config);
-  configNow.current = config;
   const answer = useMemo<Responder<StudioSchema>>(() => {
-    const token = ++statusToken.current;
-    const onStatus = (status: LocalStatus) => {
-      if (token === statusToken.current) setWarmth(status);
-    };
-    const complete = completionFor(config, { onStatus });
+    const complete = completionFor(ai);
     const floor = studioResponder(complete ? { complete } : {});
-    return respond ?? configuredResponder<StudioSchema>(config, { onStatus, floor, current: () => configNow.current });
-  }, [config, respond]);
+    return respond ?? seatResponder<StudioSchema>(ai, { floor });
+  }, [ai, respond]);
 
   const conversation = useSeatConversation({
     answer: (text, context) => answer(studio.store, text, context),
@@ -258,59 +230,43 @@ export function StudioAgentPanel({
             overflow: "hidden",
           }}
         >
-          {/*
-            * The studio has no profile of its own on its bar, so the one
-            * setting the app's profile holds is behind the gear here.
-            */}
-          <SeatHeader
-            label="Declaration"
+          <SeatHeader label="Declaration" testId={testId} />
+          <SeatThread
+            turns={conversation.turns}
+            outcomes={outcomes}
+            busy={conversation.busy}
             testId={testId}
-            source={describeSource(describeIntelligence(config), warmth, "the declaration")}
-            {...(warmth?.state === "failed" && warmth.detail ? { sourceTitle: warmth.detail } : {})}
-            settings={settings}
-            onSettings={() => setSettings((current) => !current)}
+            minHeight={140}
+            maxHeight="min(46cqh, 420px)"
+            empty={
+              <>
+                Ask about this declaration — what kinds there are, what an act writes, what a rule
+                judges, which kinds have no figure — or say a change: “add a due date to tasks”,
+                “draw a figure for person”. Nothing is applied until you keep it.
+              </>
+            }
+            renderProposal={(proposal, { key }) => {
+              const offer = offers.get(key) ?? offerFor(proposal, key);
+              return (
+                <Offered
+                  offer={offer}
+                  testId={testId}
+                  store={studio.store}
+                  onEdit={(name, value) => setEdits((current) => new Map(current).set(key, { ...offer.args, [name]: value }))}
+                  onKeep={() => {
+                    keep(key, offer);
+                    handOn();
+                  }}
+                  onDiscard={() => {
+                    settle(key, { state: "declined", said: describeProposal(studio.store, { ...offer.proposal, args: offer.args }) });
+                    handOn();
+                  }}
+                />
+              );
+            }}
+            onApplyAll={keepAll}
+            applyAllLabel="Keep all"
           />
-          {settings ? (
-            <SeatSettings testId={testId} onDone={() => setSettings(false)} />
-          ) : (
-            <SeatThread
-              turns={conversation.turns}
-              outcomes={outcomes}
-              busy={conversation.busy}
-              testId={testId}
-              minHeight={140}
-              maxHeight="min(46cqh, 420px)"
-              empty={
-                <>
-                  Ask about this declaration — what kinds there are, what an act writes, what a rule
-                  judges, which kinds have no figure — or say a change: “add a due date to tasks”,
-                  “draw a figure for person”. Nothing is applied until you keep it.
-                </>
-              }
-              renderProposal={(proposal, { key }) => {
-                const offer = offers.get(key) ?? offerFor(proposal, key);
-                return (
-                  <Offered
-                    offer={offer}
-                    testId={testId}
-                    store={studio.store}
-                    onEdit={(name, value) => setEdits((current) => new Map(current).set(key, { ...offer.args, [name]: value }))}
-                    onKeep={() => {
-                      keep(key, offer);
-                      handOn();
-                    }}
-                    onDiscard={() => {
-                      settle(key, { state: "declined", said: describeProposal(studio.store, { ...offer.proposal, args: offer.args }) });
-                      handOn();
-                    }}
-                  />
-                );
-              }}
-              onApplyAll={keepAll}
-              applyAllLabel="Keep all"
-              {...(config.source === "graph" ? { onChooseModel: () => setSettings(true) } : {})}
-            />
-          )}
           <SeatComposer
             busy={conversation.busy}
             placeholder="Ask for a change…"

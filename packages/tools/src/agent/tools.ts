@@ -170,6 +170,12 @@ export interface ToolRuntimeOptions<S extends AnySchema> {
    * neither is listed.
    */
   readonly drafts?: DraftTools;
+  /**
+   * WHAT A CHANGE CAME THROUGH, read at each call: the op log's `via`. A
+   * seat whose proposal a model made says `ai:<name>` here, so the log
+   * keeps which provider proposed it while the reader is shown none.
+   */
+  readonly via?: string | (() => string | undefined);
 }
 
 /** The `add-lens` edit `keep_lens` hands the host. */
@@ -676,7 +682,10 @@ export function createToolRuntime<S extends AnySchema>(
         const result = answerSeenBy(
           store,
           principal,
-          store.apply({ name: definition.act, args: named.args }, { ...(options.author ? { author: options.author } : {}) }),
+          store.apply(
+            { name: definition.act, args: named.args },
+            { ...(options.author ? { author: options.author } : {}), ...viaNow(options.via) },
+          ),
         );
         return {
           ok: true,
@@ -900,3 +909,9 @@ export function createToolRuntime<S extends AnySchema>(
 }
 
 export { applyAffordance };
+
+/** The channel a runtime's change came through right now, as `ApplyOptions` spells it. */
+function viaNow(via: ToolRuntimeOptions<AnySchema>["via"]): { readonly via?: string } {
+  const now = typeof via === "function" ? via() : via;
+  return now ? { via: now } : {};
+}
