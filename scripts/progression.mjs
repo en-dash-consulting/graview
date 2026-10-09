@@ -145,6 +145,14 @@ try {
       if (chapter.drive === "select-plot") {
         await page.click('[data-graview-view="kind:plot"]');
         await page.waitForTimeout(500);
+        /*
+         * Its acts are the context menu's: the scene's selection draws no
+         * strip beside the picture (the seat floats at the foot), so what
+         * this seat may and may not do is read where it is said — in the
+         * menu a right-click on the district opens, refusals with their reasons.
+         */
+        await page.click('[data-graview-view="kind:plot"]', { button: "right" });
+        await page.waitForTimeout(500);
       }
       if (chapter.drive === "standing") {
         await page.click('[data-testid="standing"]');
@@ -206,6 +214,11 @@ try {
          * MEMBER, after the picture is safely taken.
          */
         if (chapter.principal) {
+          // The district's menu, opened for the picture above, is put away first: this asks of a member.
+          if (chapter.drive === "select-plot") {
+            await page.keyboard.press("Escape");
+            await page.waitForTimeout(300);
+          }
           // Up, and only up: the control is a toggle, and a chapter that already
           // opens at altitude was being taken DOWN, to a ground with nothing on it.
           const up = await page.evaluate(() => document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true");
