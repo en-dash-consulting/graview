@@ -337,10 +337,10 @@ ${text} {
   -webkit-font-smoothing: antialiased;
 }
 
-${/* Headings and the wordmark take the display face when a brand supplies one,
+${/* Headings take the display face when a brand supplies one,
    and the body face when it does not — so a brand with one font is not asked
    to name it twice. */ ""}
-h1, h2, h3, h4, .graview-wordmark { font-family: var(--graview-font-display); font-weight: var(--graview-weight-display); }
+h1, h2, h3, h4 { font-family: var(--graview-font-display); font-weight: var(--graview-weight-display); }
 h1, h2 { letter-spacing: ${DISPLAY_TRACKING}; }
 ${/* The app's mark (FR-124) is as tall as the box it is drawn in; its own width follows. */ ""}
 .graview-logo > svg { display: block; height: 100%; width: auto; }
@@ -488,13 +488,6 @@ ${/* A host's own action in the profile (FR-72): a row of the pane, lit where th
   background: var(--graview-wash);
   color: var(--graview-accent);
 }
-${/* THE PLACES, as text tabs (FR-117): the place you are on underlined, the
-   others the ink's quieter shade until reached for; a row longer than its
-   room scrolls, with no bar drawn under it. */ ""}
-.graview-places::-webkit-scrollbar { display: none; }
-.graview-place-tab:hover { color: var(--graview-ink) !important; border-bottom-color: var(--graview-edge-bright, var(--graview-edge)) !important; }
-.graview-place-tab[aria-pressed="true"]:hover { border-bottom-color: var(--graview-accent) !important; }
-.graview-place-tab:focus-visible { outline: 2px solid var(--graview-accent); outline-offset: -2px; }
 
 
 ${/* Chrome that arrives with a state settles in rather than popping. */ ""}

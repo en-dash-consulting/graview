@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { pressPlace } from "./lib/places.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -54,7 +55,7 @@ const APPS = {
     states: {
       lists: async () => {},
       week: async (page) => {
-        await page.locator('[data-testid="places"] button', { hasText: "The week" }).click();
+        await pressPlace(page, "The week");
       },
       selected: async (page) => {
         await page.click('[data-graview-pick="t-deposit"]');
@@ -81,7 +82,7 @@ const APPS = {
         await openProfile(page);
         await page.click('[data-testid="show-installation"]');
         await page.waitForTimeout(500);
-        await page.locator('nav[aria-label="Places"] button', { hasText: "Who may do what" }).click();
+        await pressPlace(page, "Who may do what");
         await page.waitForTimeout(700);
       },
       // The screen you land on by DOUBLE CLICKING, which is the one nobody

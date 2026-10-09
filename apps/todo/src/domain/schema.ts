@@ -96,7 +96,6 @@ export const task = defineNode("task", {
     format: {
       plannedAt: (value) => clock(Number(value)),
       plannedUntil: (value) => clock(Number(value)),
-      day: (value) => String(value).toUpperCase(),
     },
   },
 });

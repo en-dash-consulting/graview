@@ -400,7 +400,7 @@ try {
           if (ready) await page.waitForFunction(ready, undefined, { timeout: 120_000 });
           await page.waitForTimeout(1500);
           const listed = await page.evaluate((name) => {
-            const nav = document.querySelector('[data-testid="places"]') ?? document.querySelector("nav");
+            const nav = document.querySelector('[data-testid="app-bar"] nav, [data-testid="app-place-line"] nav') ?? document.querySelector("nav");
             return (nav?.textContent ?? "").includes(name);
           }, title ?? "\u0000");
           const checked = checker && kept[0] ? await checker.checkTodo(kept[0]) : { ok: false, failed: report.checkerError ?? "nothing kept" };
@@ -412,7 +412,7 @@ try {
           if (turn) await turn.click();
           await page.waitForTimeout(1000);
           const after = await page.evaluate(() => localStorage.getItem("graview:lenses:Things"));
-          const gone = await page.evaluate((name) => !((document.querySelector('[data-testid="places"]') ?? document.querySelector("nav"))?.textContent ?? "").includes(name), title ?? "\u0000");
+          const gone = await page.evaluate((name) => !((document.querySelector('[data-testid="app-bar"] nav, [data-testid="app-place-line"] nav') ?? document.querySelector("nav"))?.textContent ?? "").includes(name), title ?? "\u0000");
           note("takeBackRemovesIt", { at: `todo ${label}`, pressed: turn !== null, after, gone, ok: turn !== null && after === null && gone });
           note("noModelCall", { at: `todo ${label} drawing`, left: [...new Set(left)], ok: left.length === 0 });
           await page.close();

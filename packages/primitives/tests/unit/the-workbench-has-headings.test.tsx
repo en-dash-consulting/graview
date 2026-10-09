@@ -25,7 +25,7 @@ const views = () => registerDefaultViews(schema, createViews(schema)).register("
 const headings = (html: string) => [...html.matchAll(/<h([1-6])[^>]*>(.*?)<\/h\1>/g)].map((m) => `h${m[1]} ${m[2]!.replace(/<[^>]+>/g, "")}`);
 
 describe("the workbench has headings", () => {
-  it("names the app in an h1 and gives the places and the seat a heading each", () => {
+  it("names the app in an h1 on the bar, names the scene's places, and gives the seat a heading", () => {
     const html = renderToStaticMarkup(
       <GraviewProvider store={store()} views={views()} initialView={EMPTY_VIEW} brand={{ name: "Field Notes" } as never}>
         <Shell<typeof schema> scheme="light" onScheme={() => {}} />
@@ -33,7 +33,8 @@ describe("the workbench has headings", () => {
     );
     const said = headings(html);
     expect(said).toContain("h1 Field Notes");
-    expect(said).toContain("h2 Places");
+    // The scene's places are the bar's, a navigation named for what it holds.
+    expect(html).toContain('aria-label="What the scene shows"');
     expect(said).toContain("h2 Ask Field Notes");
   });
 

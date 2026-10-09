@@ -1,75 +1,21 @@
 import { pluralOf } from "@graview/core";
 import type { AnySchema } from "@graview/core";
 import { withoutMoves, withPast, withZoom } from "@graview/layout/view";
-import { useBacktrack, useGraview, useNavigation } from "@graview/react/provider";
+import { useGraview, useNavigation } from "@graview/react/provider";
 import { Fragment, type ReactNode } from "react";
 import { nameOf } from "./answer-args.js";
 
 
 /**
  * Where you are, and the way back. The view used to be printed as a raw URL
- * fragment; the same information reads as a trail.
+ * fragment; the same information reads as a trail. Back and forward are the
+ * browser's own: every stop is a URL, and the bar no longer draws them again.
  */
-/**
- * Back and forward, because every stop here is a URL.
- *
- * Traveling into a task changes `focusId`, which changes the address, which
- * means the browser's own back button already works — and that is exactly the
- * problem: the person using the app has to KNOW that its navigation is the
- * browser's. On a screen you reached by double-clicking, the only way out was
- * a breadcrumb crumb or a keyboard shortcut nobody was told about.
- *
- * Disabled rather than hidden at the ends of the history, so the control does
- * not appear and disappear as you move — and never enabled when there is
- * nowhere to go, since an arrow that does nothing is worse than no arrow.
- */
-export function Backtrack() {
-  const { canGoBack, canGoForward, back, forward } = useBacktrack();
-  // Ghost buttons: the way back is furniture, not a call to action.
-  const style = {
-    minWidth: 30,
-    height: 30,
-    display: "inline-grid",
-    placeItems: "center",
-    padding: "0 8px",
-    fontSize: "0.9375rem",
-    lineHeight: 1,
-    borderRadius: 999,
-    border: "1px solid transparent",
-    background: "transparent",
-    boxShadow: "none",
-    color: "var(--graview-ink-muted)",
-  } as const;
-  return (
-    <div style={{ display: "inline-flex", gap: 2 }} data-testid="backtrack">
-      <button
-        type="button"
-        onClick={back}
-        disabled={!canGoBack}
-        aria-label="Back"
-        title="Back"
-        style={style}
-      >
-        ←
-      </button>
-      <button
-        type="button"
-        onClick={forward}
-        disabled={!canGoForward}
-        aria-label="Forward"
-        title="Forward"
-        style={style}
-      >
-        →
-      </button>
-    </div>
-  );
-}
-
 export function Trail({
   home,
   homeLabel,
   children,
+  onPicture = false,
 }: {
   readonly home: string | null;
   /**
@@ -84,6 +30,12 @@ export function Trail({
    */
   readonly homeLabel?: string;
   readonly children?: ReactNode;
+  /**
+   * Drawn over the picture (`SceneTrail`) rather than in a row of chrome: on
+   * the picture's own float, and nothing at all while there is nothing to
+   * say — a box that says nothing over a picture is a box in the way.
+   */
+  readonly onPicture?: boolean;
 }) {
   const { view, focus, show, go } = useNavigation();
   const { store } = useGraview<AnySchema>();
@@ -135,7 +87,13 @@ export function Trail({
   const crumb = homeLabel !== undefined && focused !== undefined;
 
   const chips: { key: string; node: ReactNode }[] = [];
-  if (focused) {
+  /*
+   * On the picture the record in focus is not named again: its own card,
+   * drawn there, says its name, and a crumb in the picture's corner stood
+   * over that card's title in a box narrower than a desk. Escape, Back and
+   * the bar's places are the ways out of it.
+   */
+  if (focused && !onPicture) {
     chips.push({
       key: "focused",
       node: (
@@ -252,10 +210,21 @@ export function Trail({
     });
   }
 
+  if (onPicture && !crumb && chips.length === 0 && children === undefined) return null;
   return (
     <nav
       aria-label="View"
-      style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.875rem", minWidth: 0 }}
+      data-testid="trail"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        fontSize: "0.875rem",
+        minWidth: 0,
+        ...(onPicture
+          ? { pointerEvents: "auto", padding: "4px 6px", borderRadius: 8, background: "var(--graview-float)", boxShadow: "var(--graview-lift-low)", overflow: "hidden" }
+          : {}),
+      }}
     >
       {crumb ? (
         <button

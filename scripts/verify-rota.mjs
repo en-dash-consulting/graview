@@ -62,7 +62,7 @@ const openProfile = async (page) => {
   await open(`/?${DAY}&fresh=1`);
   await openProfile(page);
   const opened = await page.evaluate(() => ({
-    places: [...document.querySelectorAll('nav[aria-label="Places"] button')].map((b) => b.textContent?.trim()),
+    places: [...document.querySelectorAll('[data-testid^="app-place-scene:"]')].map((b) => b.textContent?.trim()),
     studio: document.querySelector('[data-testid="studio-place"]') !== null,
     installation: document.querySelector('[data-testid="show-installation"]') !== null,
     /* The kit: the one relation this app has is drawn the way Rota says,

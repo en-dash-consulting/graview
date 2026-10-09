@@ -26,7 +26,8 @@ export type { ZodDef } from "./schema/zod.js";
 
 // Schema — the single declaration everything else derives from.
 export { defineNode, isCurrent, labelOf, describeNode, tellApart } from "./schema/define-node.js";
-export { nameOfAuthor, viaSaid } from "./who.js";
+export { nameOfAuthor } from "./who.js";
+export { viaSaid } from "./via.js";
 export type { Person } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";
 export type {
@@ -263,6 +264,7 @@ export {
 } from "./temporal/effectivity.js";
 export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
 export { actTitle, article, counted, pluralOf, edgeWords, fieldWords, humanizeField, isLongText, nounOf, pageSections, readableFields, summarize, valueWords, withArticle } from "./schema/define-node.js";
+export { dayAsRead, daysAsRead } from "./days.js";
 export type { FieldSection } from "./schema/define-node.js";
 export type { ReadableField } from "./schema/define-node.js";
 export { TEXT_PAIRS } from "./theme/types.js";

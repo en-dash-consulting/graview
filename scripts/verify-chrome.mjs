@@ -15,6 +15,12 @@
  * (a header, the app, a footer), built with esbuild from the workspace's
  * sources, serving the todo app's declaration and seed.
  *
+ * And since that is the same app twice: the whole-page Shell and the embed
+ * wear ONE bar on the scene — the same parts under the same test ids, one
+ * row of at most 48 px at a desk and on a phone, in both schemes — and what
+ * either face says to a person says a day as the glance does and a choice
+ * as it is declared, never "2026-08-28" or "tue".
+ *
  *   node scripts/verify-chrome.mjs [--engine=chromium|webkit|firefox] [--quick]
  */
 import { createServer } from "node:http";
@@ -638,6 +644,83 @@ try {
       }
     }
     report.checks.aHostSpeaksInTheAppsOwnNotices = { ...notices, ok: Object.values(notices).every((one) => one.ok) };
+  }
+  /* ---- One bar on the scene, the whole-page Shell's and the embed's: the same parts under the same ids, one row */
+  {
+    const bars = {};
+    const readBar = (page) =>
+      page.evaluate(() => {
+        const bar = document.querySelector('[data-testid="app-bar"]');
+        if (!bar) return null;
+        // The bar's own parts: not what its panes hold (the person's menu holds what the host and the app put there) nor what Activity holds.
+        const ids = [...bar.querySelectorAll("[data-testid]")].filter((el) => !el.closest('[data-testid="profile"], .graview-bar-own')).map((el) => el.getAttribute("data-testid"));
+        const row = bar.getBoundingClientRect();
+        const parts = [...bar.querySelectorAll(".graview-bar-row > *, .graview-bar-tools > *, .graview-bar-own > *")].filter((el) => el.getBoundingClientRect().width > 0);
+        return {
+          // The places stand or fold by the room and by the one you are on; the rest of the bar is the same bar.
+          ids: ids.filter((id) => !id.startsWith("app-place") && id !== "activity-button"),
+          places: [...document.querySelectorAll('[data-testid^="app-place-scene:"]')].map((el) => el.getAttribute("data-place-path")).sort(),
+          activity: bar.querySelector('[data-testid="activity-button"]') !== null,
+          activityBeforeStanding: (() => {
+            const all = [...bar.querySelectorAll("[data-testid]")].map((el) => el.getAttribute("data-testid"));
+            return !all.includes("activity-button") || all.indexOf("activity-button") < all.indexOf("standing");
+          })(),
+          height: Math.round(row.height),
+          oneRow: parts.every((el) => { const box = el.getBoundingClientRect(); return box.top >= row.top - 1 && box.bottom <= row.bottom + 1; }),
+          oldBar: ["wordmark", "backtrack", "pages-link", "places"].filter((id) => document.querySelector(`[data-testid="${id}"]`) !== null),
+        };
+      });
+    for (const size of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+      for (const colorScheme of ["light", "dark"]) {
+        const page = await browser.newPage({ viewport: size, colorScheme });
+        page.on("pageerror", (error) => errors.push(error.message));
+        await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
+        await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+        await page.waitForTimeout(900);
+        const shell = await readBar(page);
+        await page.goto(`${at("chrome-host")}/?face=graview`, { waitUntil: "load" });
+        await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+        await page.waitForTimeout(900);
+        const embed = await readBar(page);
+        await page.close();
+        // The places are each app's registry's (the Shell's todo registers its own lenses), so they are said, not compared.
+        const same = shell !== null && embed !== null && JSON.stringify(shell.ids) === JSON.stringify(embed.ids);
+        bars[`${size.width}×${size.height} ${colorScheme}`] = {
+          shell,
+          embed,
+          ok: same && [shell, embed].every((one) => one.height <= 48 && one.oneRow && one.oldBar.length === 0 && one.activityBeforeStanding && one.places.length > 0),
+        };
+      }
+    }
+    report.checks.theShellAndAnEmbedWearOneBarOnTheScene = { ...bars, ok: Object.values(bars).every((one) => one.ok) };
+  }
+  /* ---- A day said as the glance says it, and a choice as it is declared: in the problems, and on a record's page */
+  {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
+    await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+    await page.waitForTimeout(900);
+    await page.click('[data-testid="standing"]');
+    await page.waitForSelector('[data-testid="problems"]', { timeout: 10_000 });
+    await page.waitForTimeout(400);
+    const problems = await page.evaluate(() => document.querySelector('[data-testid="problems"]')?.innerText ?? "");
+    await page.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01`, { waitUntil: "load" });
+    await page.waitForTimeout(1200);
+    const record = await page.evaluate(() => {
+      const main = document.querySelector("main") ?? document.body;
+      // What is read, not what is edited: the values as drawn, outside any edit control.
+      const said = [...main.querySelectorAll("dd")].map((dd) => dd.innerText.trim());
+      return { said, text: main.innerText };
+    });
+    await page.close();
+    const iso = /(?<![\w-])\d{4}-\d{2}-\d{2}(?![\w-])/;
+    const raw = /^(mon|tue|wed|thu|fri|sat|sun)$/;
+    report.checks.aSentenceSaysADayAndAChoiceAsAPersonReadsThem = {
+      problems: problems.slice(0, 400),
+      record,
+      ok: problems.length > 0 && !iso.test(problems) && /\b\d{1,2} [A-Z][a-z]{2} \d{4}\b/.test(problems) && !iso.test(record.text) && record.said.length > 0 && !record.said.some((one) => raw.test(one)) && record.said.includes("Tue"),
+    };
   }
   /* ---- FR-78, restated: the seat floats at the foot, snaps between the feet, and can be left out */
   const seat = await theSeatSnapsAndHides(

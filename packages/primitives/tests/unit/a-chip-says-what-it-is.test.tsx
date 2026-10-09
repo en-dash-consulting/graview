@@ -27,7 +27,7 @@ const node = { id: "song:after-midnight", kind: "song" as const, label: "After M
 describe("a field read on its own", () => {
   it("carries its label when the value is a number or a yes/no, and not when it is a word", () => {
     const alone = readableFields(node, song).map((field) => field.alone);
-    expect(alone).toEqual(["Track 8", "Length 4:27", "Explicit: yes", "released"]);
+    expect(alone).toEqual(["Track 8", "Length 4:27", "Explicit: yes", "Released"]);
   });
 
   it("is what the summary card's chips say", () => {

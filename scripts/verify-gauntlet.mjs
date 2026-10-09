@@ -129,6 +129,13 @@ async function newPage(browser, width, scheme) {
   return page;
 }
 
+/** Find, as a person reaches it: the box on a desk's bar, the magnifier first on a phone's, which opens the box over the row. */
+async function openFind(page) {
+  const magnifier = page.locator('[data-testid="app-find-open"]');
+  if ((await magnifier.count()) > 0 && (await magnifier.first().isVisible())) await magnifier.first().click();
+  await page.click('[data-testid="find-box"]');
+}
+
 /** Open a URL of the app as a seat, in a scheme, and wait until the store has opened. */
 async function open(page, path, { scheme, seat, hash = "" }) {
   const query = new URLSearchParams({ theme: scheme, as: seat });
@@ -292,7 +299,7 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
   });
 
   await reach(page, where, "the Find box asked for a name ten records share", async () => {
-    await page.click('[data-testid="find-box"]');
+    await openFind(page);
     await page.fill('[data-testid="find-box"]', "");
     await page.keyboard.type("Opening Remarks", { delay: 20 });
     await page.waitForTimeout(1500);
@@ -311,7 +318,7 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
    * the crumb truncates (the Shell and the Trail in @graview/primitives).
    */
   await reach(page, where, "the Find box asked in another script", async () => {
-    await page.click('[data-testid="find-box"]');
+    await openFind(page);
     await page.fill('[data-testid="find-box"]', "");
     await page.keyboard.type("Плинов", { delay: 20 });
     await page.waitForTimeout(1500);
@@ -416,7 +423,8 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
   await reach(page, where, "the profile opened and the seats listed", async () => {
     await page.click('[data-testid="profile-button"]');
     await page.waitForTimeout(500);
-    const seats = await count(page, '[data-testid^="seat-"]');
+    // The seats the person's menu lists, not the ask field at the picture's foot.
+    const seats = await count(page, '[data-testid="profile"] [data-testid^="seat-"]');
     await page.keyboard.press("Escape");
     await page.waitForTimeout(300);
     return { reached: seats === ALL_SEATS.length, detail: { seats } };

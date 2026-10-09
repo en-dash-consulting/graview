@@ -152,8 +152,16 @@ export const FACE_DOORS = {
  * Find fitting one frame at a hub added about 0.4 KB. The claim falls to
  * that with about 0.2 KB of room: 577.5 KB, which leaves Cloud's shell
  * 17.5 KB under its 595.
+ * The scene wearing the one bar, over the cleanup at 577.3 KB, took it to
+ * 578.0 KB: a day said as it is read in every rule's sentence and template
+ * and a record's facts, a choice as it is declared (the stored value kept
+ * for the edit control), and the bar's place for the scene's own tool —
+ * less the place tabs' rules, which left the frame's sheet for the tabs'
+ * own, and the channel's words (`viaSaid`), which left the author's module
+ * for one Activity fetches with the scene. 578.2 KB, which leaves Cloud's
+ * shell 16.8 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 577.5 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 578.2 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -256,8 +264,10 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * The cleanup after the seat, the same scene's rules moved to the scene
  * face's sheet as the page that compiles (above), took it from main's
  * 555 022 bytes (542.0 KB) to 545 500 (532.7 KB): 533.0 KB.
+ * The scene wearing the one bar, the same days, choices and bar as the
+ * page that compiles, took it to 533.4 KB: 533.6 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 533.0 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 533.6 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [
