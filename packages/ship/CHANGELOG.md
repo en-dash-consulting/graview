@@ -1,20 +1,5 @@
 # @graview/ship
 
-## 0.1.19
-
-### Patch Changes
-
-- Updated dependencies [c86e079]
-- Updated dependencies [1fc12ed]
-- Updated dependencies [70d6b7c]
-- Updated dependencies [1270cad]
-- Updated dependencies [42222b8]
-- Updated dependencies [b0ecb63]
-- Updated dependencies [10cf75d]
-- Updated dependencies [e45f747]
-- Updated dependencies [a24128c]
-  - @graview/core@0.1.19
-
 ## 0.1.18
 
 ### Patch Changes
