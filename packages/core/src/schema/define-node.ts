@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import { dayAsRead, ISO_DAY } from "../days.js";
 import type {
   AnyNodeDefinition,
   EdgeMap,
@@ -142,8 +143,13 @@ export interface ReadableField {
   readonly key: string;
   /** The field name in words, after `display.labels` and humanizing. */
   readonly label: string;
-  /** The value in words, after `display.format` and the built-in defaults. */
+  /** The value in words, after `display.format` and the built-in defaults: a day as a person reads it, a choice as it is declared. */
   readonly value: string;
+  /**
+   * The value as the record keeps it — `2026-08-28`, `tue` — for the one
+   * place that shows it so: the edit control, which writes it back.
+   */
+  readonly stored: string;
   /**
    * The value as it reads WITHOUT its label beside it — on a chip, in a
    * list line, on a card at summary. A word says what it is ("released");
@@ -360,38 +366,41 @@ export function readableFields(
       typeof value === "object" &&
       (!Array.isArray(value) || value.some((one) => typeof one === "object" && one !== null));
     if (nested && format === undefined) continue;
+    const stored = Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? (value ? "Yes" : "No") : String(value);
     const text = format
       ? format(value)
-      : Array.isArray(value)
-        ? value.join(", ")
-        : typeof value === "boolean"
-          ? // Nobody says "false". A boolean is a state, and the words for a
-            // state are words.
-            value
-            ? "Yes"
-            : "No"
-          : // A GLANCE says a day as a person reads one ("28 Aug 2026"); a record's facts keep the day as it is written, where it is changed.
-            options.glance && typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
-            ? dayAsRead(value)
-            : String(value);
+      : Array.isArray(value) || typeof value === "boolean"
+        ? // Nobody says "false". A boolean is a state, and the words for a
+          // state are words.
+          stored
+        : /*
+           * A DAY AS A PERSON READS IT ("28 Aug 2026"), on a glance and in a
+           * record's facts alike; the edit control holds it as it is written
+           * (`stored`). And a CHOICE as it is declared — its `display.format`,
+           * else the value spoken — never the code it is kept as ("tue").
+           */
+          typeof value === "string" && ISO_DAY.test(value)
+          ? dayAsRead(value)
+          : typeof value === "string" && isChoice(definition, key)
+            ? valueWords(definition, key, value)
+            : stored;
 
     if (said.includes(text) || stems.some((stem) => text.startsWith(stem))) continue;
     if (options.glance && (typeof value === "string" || typeof value === "number") && said.some((line) => saysAsWords(line, text))) continue;
     const label = fieldWords(definition, key);
     const alone =
       typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" ? `${label}: ${text.toLowerCase()}` : text;
-    fields.push({ key, label, value: text, alone, long: typeof value === "string" && isLongText(definition, key, text) });
+    fields.push({ key, label, value: text, stored, alone, long: typeof value === "string" && isLongText(definition, key, text) });
     if (options.limit !== undefined && fields.length >= options.limit) break;
   }
   return fields;
 }
 
-const MONTH_WORDS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** A `YYYY-MM-DD` day as a person reads it on a card: "28 Aug 2026". */
-function dayAsRead(day: string): string {
-  const [year, month, date] = day.split("-").map(Number) as [number, number, number];
-  return `${date} ${MONTH_WORDS[month - 1] ?? ""} ${year}`;
+/** Whether a field is one of a declared set of values (`z.enum`), under optional, default and nullable. */
+function isChoice(definition: AnyNodeDefinition | undefined, key: string): boolean {
+  let at = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key] as { _zod?: { def?: { type?: string; innerType?: unknown } } } | undefined;
+  for (let depth = 0; depth < 6 && at?._zod?.def?.innerType !== undefined; depth++) at = at._zod.def.innerType as typeof at;
+  return at?._zod?.def?.type === "enum";
 }
 
 /** The kind's fields as it declares them, then its computed fields. */

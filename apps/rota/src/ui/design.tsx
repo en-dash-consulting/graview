@@ -257,7 +257,8 @@ function Rail({
 function Home({ context }: { context: Ctx }) {
   const { store } = context;
   useStoreTick(store);
-  const now = (context.invariantContext?.["today"] as string | undefined) ?? today();
+  // The day the store is pinned to, as every calendar and rule reads it; the page's own context, else the example's day.
+  const now = store.today() ?? (context.invariantContext?.["today"] as string | undefined) ?? today();
   const shifts = store.graph.nodesOfKind("shift") as ShiftNode[];
   const week = daysFrom(startOfWeek(now), 7);
   const here = shifts.filter((shift) => week.includes(shift.on));

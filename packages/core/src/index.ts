@@ -263,6 +263,7 @@ export {
 } from "./temporal/effectivity.js";
 export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
 export { article, counted, edgeWords, fieldWords, humanizeField, isLongText, nounOf, pageSections, readableFields, summarize, valueWords, withArticle } from "./schema/define-node.js";
+export { dayAsRead, daysAsRead } from "./days.js";
 export type { FieldSection } from "./schema/define-node.js";
 export type { ReadableField } from "./schema/define-node.js";
 export { TEXT_PAIRS } from "./theme/types.js";

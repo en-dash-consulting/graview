@@ -1,5 +1,6 @@
 import { arrangeAllows, arrangeable, formatArrangement } from "@graview/core/arrange";
 import {
+  dayAsRead,
   labelOf,
   valueWords,
   type AnySchema,
@@ -11,7 +12,7 @@ import {
   type Condition,
   type DateBucket,
 } from "@graview/core";
-import type { CSSProperties, ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { VISUALLY_HIDDEN } from "./primitives/measure.js";
 export { arrangementOf, withArrangement } from "./arrangement.js";
 
@@ -169,7 +170,8 @@ export function sayCondition(schema: AnySchema, graph: ArrangeGraph, offers: Arr
   }
   if (offer.type === "date") {
     const [op, date] = condition.value.split(":");
-    return `${offer.label} ${op} ${date ?? ""}`.trim();
+    // The day as a person reads it ("Due before 1 Sep 2026"), as the chip's card says it.
+    return `${offer.label} ${op} ${date ? dayAsRead(date) : ""}`.trim();
   }
   if (offer.type === "boolean") return `${offer.label}: ${condition.value === "true" ? "yes" : "no"}`;
   if (offer.type === "number") {
@@ -377,6 +379,8 @@ function AddCondition({
    * one grouped select and one press adds a chip. A date wants typing, so
    * it is listed as three entries that ask for the date when chosen.
    */
+  // The day a date's condition is waiting for, asked beside the choice (`AskDay`).
+  const [asking, setAsking] = useState<{ key: string; op: string; label: string } | null>(null);
   const entries: { value: string; label: string; group: string; condition?: Condition; ask?: { key: string; op: string; label: string } }[] = [];
   for (const offer of offers.filters) {
     if (offer.about === "is") {
@@ -411,6 +415,7 @@ function AddCondition({
   }
   const groups = [...new Set(entries.map((entry) => entry.group))];
   return (
+    <>
     <label style={label}>
       {/* Said once, by the choice itself ("Only…"), not by a label beside a choice that says it again. */}
       <span style={VISUALLY_HIDDEN}>Only</span>
@@ -420,11 +425,10 @@ function AddCondition({
         onChange={(event) => {
           const entry = entries.find((candidate) => candidate.value === event.target.value);
           if (!entry) return;
-          if (entry.condition) onAdd(entry.condition);
-          else if (entry.ask) {
-            const date = typeof window !== "undefined" ? window.prompt(`${entry.ask.label} ${entry.ask.op} which day? (YYYY-MM-DD)`) : null;
-            if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) onAdd({ key: entry.ask.key, value: `${entry.ask.op}:${date}` });
-          }
+          if (entry.condition) {
+            setAsking(null);
+            onAdd(entry.condition);
+          } else if (entry.ask) setAsking(entry.ask);
         }}
         style={choice}
       >
@@ -442,6 +446,62 @@ function AddCondition({
         ))}
       </select>
     </label>
+    {asking ? (
+      <AskDay
+        ask={asking}
+        testId={testId}
+        onDay={(day) => {
+          setAsking(null);
+          onAdd({ key: asking.key, value: `${asking.op}:${day}` });
+        }}
+        onCancel={() => setAsking(null)}
+      />
+    ) : null}
+    </>
+  );
+}
+
+/*
+ * WHICH DAY, ASKED IN THE FILTER ITSELF. "Due before…" opened the browser's
+ * own prompt — "which day? (YYYY-MM-DD)" — a box over the whole page that
+ * asked a person to type the stored format. The day is asked beside the
+ * choice that wanted it, with the browser's own date control, and added by
+ * Enter or "Add"; Escape or × lets it go.
+ */
+function AskDay({ ask, testId, onDay, onCancel }: { readonly ask: { key: string; op: string; label: string }; readonly testId: string; readonly onDay: (day: string) => void; readonly onCancel: () => void }) {
+  const [day, setDay] = useState("");
+  const valid = /^\d{4}-\d{2}-\d{2}$/.test(day) && Number(day.slice(0, 4)) >= 1000;
+  const add = () => {
+    if (valid) onDay(day);
+  };
+  return (
+    <span role="group" aria-label={`${ask.label} ${ask.op} which day`} data-testid={`${testId}-ask-day`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+      <span aria-hidden="true">{`${ask.label} ${ask.op}`}</span>
+      <input
+        type="date"
+        data-testid={`${testId}-day`}
+        aria-label={`${ask.label} ${ask.op} which day`}
+        autoFocus
+        value={day}
+        onChange={(event) => setDay(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            add();
+          } else if (event.key === "Escape") {
+            event.preventDefault();
+            onCancel();
+          }
+        }}
+        style={{ ...choice, minHeight: 24 }}
+      />
+      <button type="button" data-testid={`${testId}-day-add`} disabled={!valid} onClick={add} style={{ ...choice, minHeight: 24 }}>
+        Add
+      </button>
+      <button type="button" aria-label="Never mind" title="Never mind" onClick={onCancel} style={{ font: "inherit", border: 0, background: "transparent", color: "inherit", cursor: "pointer", padding: 0, minWidth: 24, minHeight: 24 }}>
+        ×
+      </button>
+    </span>
   );
 }
 

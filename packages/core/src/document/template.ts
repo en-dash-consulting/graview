@@ -1,6 +1,7 @@
 import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import { evaluateExpr, ExprEvalError, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
+import { dayAsRead, ISO_DAY } from "../days.js";
 
 /*
  * TEMPLATES: "{name}", "{status} · {quote|money}", "{fills.name}".
@@ -130,7 +131,8 @@ function show(value: Value, format: Formatter | undefined, today: string, args: 
     case "lower":
       return String(value).toLowerCase();
     case "date":
-      return String(value).slice(0, 10);
+      // A day as a person reads it ("28 Aug 2026"), as a card's glance says it.
+      return dayAsRead(String(value).slice(0, 10));
     case "relative": {
       const t = Date.parse(String(value).length === 10 ? `${value}T00:00:00Z` : String(value));
       if (Number.isNaN(t)) return String(value);
@@ -138,7 +140,8 @@ function show(value: Value, format: Formatter | undefined, today: string, args: 
       return days === 0 ? "today" : days === 1 ? "tomorrow" : days === -1 ? "yesterday" : days > 0 ? `in ${days} days` : `${-days} days ago`;
     }
     default:
-      return String(value);
+      // A day said into a sentence — "was due {due}" — is said as a person reads it, never as it is kept.
+      return typeof value === "string" && ISO_DAY.test(value) ? dayAsRead(value) : String(value);
   }
 }
 
