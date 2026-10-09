@@ -13,7 +13,7 @@ import {
   type Principal,
   type ShippedLensName,
 } from "@graview/core";
-import { fieldSpecOf, validateViews, type FieldSpec, type GraviewDocument } from "@graview/core/document";
+import { fieldSpecOf, parseExpr, type Expr } from "@graview/core/document";
 import type { DraftTools } from "./agent/tools.js";
 import { firstJsonObject, type Completion } from "./intelligence.js";
 
@@ -34,7 +34,7 @@ import { firstJsonObject, type Completion } from "./intelligence.js";
  * kind, and the declaration's own roles and field types fill its bindings.
  * With a model (the app's `complete`), an ask no template reads goes to it
  * for the same JSON, and what comes back is judged exactly as a declared
- * lens is — `declaredLenses`, its bindings, and `validateViews` for blocks —
+ * lens is — `declaredLenses`, its bindings, and its blocks' expressions —
  * before anything is drawn. A draft that
  * cannot be drawn says why in one sentence and hands back the last one that
  * could.
@@ -652,29 +652,133 @@ function freeTitle<S extends AnySchema>(title: string, app: GraviewApp<S>): stri
 
 // ── judging a lens, however it was written ──────────────────────────────────
 
-/** The seen kinds as a document's kinds, with one lens: what `validateViews` holds a lens's blocks to. */
-function documentOf(schema: AnySchema, lens: DraftLens): GraviewDocument {
-  const kinds: Record<string, unknown> = {};
-  for (const kind of schema.kinds as readonly string[]) {
-    const definition = schema.tryDefinition(kind) as { fields?: { shape?: Record<string, unknown> }; edges?: Record<string, { to: readonly string[] | "*" }>; figure?: unknown; computed?: Record<string, unknown> } | undefined;
-    const fields: Record<string, FieldSpec> = {};
-    for (const [name, field] of Object.entries(definition?.fields?.shape ?? {})) {
-      const spec = fieldSpecOf(field);
-      if (spec) fields[name] = spec;
+/** What each block may say besides the key that names it, for a place about no one record. */
+const PLACE_BLOCKS: Readonly<Record<string, readonly string[]>> = {
+  title: [],
+  headline: [],
+  text: ["tone"],
+  figure: ["as", "currency", "label"],
+  list: ["sort", "limit", "group", "empty", "as"],
+  progress: ["label"],
+  group: ["direction"],
+  when: ["show"],
+  divider: [],
+};
+
+/**
+ * WHAT IS WRONG WITH A LENS'S BLOCKS, if anything, in one sentence: each
+ * block one the vocabulary has, each expression one the rule language
+ * parses, and every kind, field and choice it names one the seat may see.
+ * Read with the parser a page already runs, so drafting loads no checker.
+ */
+function blocksProblem(reading: Reading, blocks: unknown): string | undefined {
+  if (!Array.isArray(blocks) || blocks.length === 0) return "it has no blocks to draw";
+  if (blocks.length > 40) return "it has more blocks than a place draws";
+  const parsed = (source: unknown, what: string): Expr | string => {
+    if (typeof source !== "string" || source.trim() === "") return `its ${what} says nothing`;
+    try {
+      return parseExpr(source);
+    } catch (error) {
+      return `its ${what} does not read: ${error instanceof Error ? error.message.replace(/ \(at character.*$/, "") : String(error)}`;
     }
-    const edges = Object.fromEntries(Object.entries(definition?.edges ?? {}).map(([name, edge]) => [name, { to: edge.to }]));
-    kinds[kind] = { fields, edges, ...(definition?.figure !== undefined ? { figure: definition.figure } : {}), ...(definition?.computed ? { computed: definition.computed } : {}) };
-  }
-  return { format: "graview-document", formatVersion: 1, name: "draft", kinds, lenses: [lens] } as unknown as GraviewDocument;
+  };
+  /** The kind of record an expression's set holds, where it says: all('k'), and that filtered. */
+  const kindOf = (e: Expr): KindInfo | undefined | null => {
+    if (e.t === "where") return kindOf(e.set);
+    if (e.t === "call" && e.fn === "all") {
+      const word = e.args[0];
+      return word?.t === "lit" && typeof word.value === "string" ? (reading.info(word.value) ?? null) : undefined;
+    }
+    return undefined;
+  };
+  /** The first name an expression reads that the kinds it stands on do not have. */
+  const stray = (e: Expr, over: KindInfo | undefined): string | undefined => {
+    switch (e.t) {
+      case "lit":
+        return undefined;
+      case "ident":
+        return over && !over.fields.some((field) => field.name === e.name) && !over.edges.some((edge) => edge.name === e.name) ? `${over.plural} have nothing called ${e.name}` : undefined;
+      case "member":
+        return stray(e.object, over);
+      case "list":
+        return e.items.map((item) => stray(item, over)).find(Boolean);
+      case "unary":
+        return stray(e.operand, over);
+      case "binary":
+        return stray(e.left, over) ?? stray(e.right, over);
+      case "where": {
+        const kind = kindOf(e.set);
+        if (kind === null) return "Nothing by that name here";
+        return stray(e.set, over) ?? stray(e.filter, kind ?? undefined);
+      }
+      case "call": {
+        if (e.fn === "all") return kindOf(e) === null ? "Nothing by that name here" : undefined;
+        return e.args.map((arg) => stray(arg, over)).find(Boolean);
+      }
+    }
+  };
+  const judge = (list: readonly unknown[], depth: number): string | undefined => {
+    if (depth > 4) return "its blocks nest deeper than a place draws";
+    for (const block of list) {
+      if (!isRecord(block)) return "a block is not an object";
+      const type = Object.keys(PLACE_BLOCKS).find((key) => key in block);
+      if (!type) return `"${Object.keys(block)[0] ?? ""}" is not a block a place draws`;
+      const extra = Object.keys(block).find((key) => key !== type && !PLACE_BLOCKS[type]!.includes(key));
+      if (extra) return `a ${type} block takes no "${extra}"`;
+      const value = block[type];
+      if (type === "list" || type === "figure" || type === "when") {
+        if (type === "figure" && value === true) continue;
+        const e = parsed(value, type);
+        if (typeof e === "string") return e;
+        const wrong = stray(e, undefined);
+        if (wrong) return wrong;
+        if (type === "list") {
+          const kind = kindOf(e);
+          if (kind === null || kind === undefined) return kind === null ? "Nothing by that name here" : "its list does not say which records it lists, like all('task')";
+          for (const key of ["group", "sort"] as const) {
+            const said = block[key];
+            const name = typeof said === "string" ? said : isRecord(said) && typeof said["by"] === "string" ? said["by"] : undefined;
+            if (said === undefined) continue;
+            const field = name ? kind.fields.find((one) => one.name === name) : undefined;
+            if (!field) return `${kind.plural} have nothing called ${String(name ?? said)} to ${key} by`;
+            if (key === "group" && field.type !== "enum") return `${kind.plural}' ${field.words} is not a choice, so they cannot be grouped by it`;
+          }
+        }
+        if (type === "when") {
+          const show = block["show"];
+          if (!Array.isArray(show)) return "a when block shows a list of blocks";
+          const inner = judge(show, depth + 1);
+          if (inner) return inner;
+        }
+      } else if (type === "group") {
+        if (!Array.isArray(value)) return "a group block holds a list of blocks";
+        const inner = judge(value, depth + 1);
+        if (inner) return inner;
+      } else if (type !== "divider" && typeof value !== "string") return `a ${type} block says words`;
+      else if (typeof value === "string") {
+        // A template's braces read like any expression, up to a formatter's bar.
+        for (const brace of value.matchAll(/\{([^{}]*)\}/g)) {
+          const inner = brace[1]!.split(/\|(?![|])/)[0]!;
+          const e = parsed(inner, `${type}'s braces`);
+          if (typeof e === "string") return e;
+          const wrong = stray(e, undefined);
+          if (wrong) return wrong;
+        }
+      }
+    }
+    return undefined;
+  };
+  return judge(blocks, 1);
 }
 
 /**
  * WHETHER A LENS DRAWS, judged as a declared one is, against what the seat
  * may see: the shipped lens's own sorting (`declaredLenses`, the table
  * `graview check` and `placesOf` read), its bindings against the seen
- * kinds' fields, and the blocks it is drawn from (`validateViews`, the
- * vocabulary a document's views are held to). The first thing wrong, in one
- * sentence; or what the primitives draw it with.
+ * kinds' fields, and the blocks it is drawn from (their expressions parsed,
+ * the kinds, fields and choices they name read against what the seat sees).
+ * The first thing wrong, in one sentence; or what the primitives draw it
+ * with. A kept lens is judged in full again where it is kept (`keepLens`).
  *
  * Judged with what a hosted page already runs and nothing more: the edit
  * vocabulary and the checker (`keepLens`, `@graview/tools/keep`) stay
@@ -719,8 +823,8 @@ export function judgeLens<S extends AnySchema>(app: GraviewApp<S>, lens: DraftLe
   // The scene keeps its own address whatever a place is called (FR-132).
   if (drawn.as === "overview") return fail(`"${lens.title}" is the scene's own address; give it another title`);
   if (lens.name === "blocks") {
-    const said = validateViews(documentOf(schema, lens));
-    if (said.length > 0) return fail(said[0]!.message);
+    const wrong = blocksProblem(readApp(schema), lens.options?.["blocks"]);
+    if (wrong) return fail(wrong);
   }
   return { ok: true, drawn };
 }

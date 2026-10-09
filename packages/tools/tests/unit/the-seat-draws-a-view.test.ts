@@ -194,8 +194,8 @@ describe("refining a draft by asking again", () => {
     const byGardener = drafted(await refineDraft(plots, "group by gardener", { app: seedbed }));
     expect(byGardener.lens.name).toBe("coverage");
 
-    const refused = await refineDraft(byGardener, "group by colour", { app: seedbed });
-    expect(isDraftFailure(refused) ? refused.failed : "").toBe("Couldn't change that: plots have nothing called colour to group by.");
+    const refused = await refineDraft(byGardener, "group by shade", { app: seedbed });
+    expect(isDraftFailure(refused) ? refused.failed : "").toBe("Couldn't change that: plots have nothing called shade to group by.");
     expect(isDraftFailure(refused) ? refused.lastGood : undefined).toBe(byGardener);
   });
 
@@ -251,7 +251,7 @@ describe("keeping a draft as a lens", () => {
 
   it("keeps a reader's own lenses beside a declaration's, passing over one that no longer draws", () => {
     const draft = drafted(templateDraft("plantings by status", { app: seedbed }));
-    const mine = withReaderLenses(seedbed, [draft.edit, { op: "add-lens", title: "Gone", lens: "columns", on: "planting", bindings: { planting: { column: "colour" } } }]);
+    const mine = withReaderLenses(seedbed, [draft.edit, { op: "add-lens", title: "Gone", lens: "columns", on: "planting", bindings: { planting: { column: "shade" } } }]);
     const titles = placesOf(mine).map((place) => place.title);
     expect(titles).toContain("Plantings by status");
     expect(titles).not.toContain("Gone");
@@ -261,20 +261,20 @@ describe("keeping a draft as a lens", () => {
 describe("a connector's chat draws a view and keeps it, through the tool surface", () => {
   it("lists draft_view and keep_lens only when the host offers them, the same with a store as without", () => {
     const store = createSeedbedStore();
-    const none = createToolRuntime(store, { app: seedbed });
+    const none = createToolRuntime(store, { app: seedbedApp });
     expect(none.definitions.map((tool) => tool.name)).not.toContain("draft_view");
-    const keeping = createToolRuntime(store, { app: seedbed, drafts: { keep: async () => ({ ok: true }) } });
+    const keeping = createToolRuntime(store, { app: seedbedApp, drafts: { keep: async () => ({ ok: true }) } });
     expect(keeping.definitions.map((tool) => tool.name)).toEqual(expect.arrayContaining(["draft_view", "keep_lens"]));
     expect(keeping.definitions.find((tool) => tool.name === "draft_view")!.annotations.readOnlyHint).toBe(true);
     expect(toolDefinitions(seedbed, { kind: "agent" }, { drafts: "keep" }).hash).toBe(keeping.hash);
-    const drawing = createToolRuntime(store, { app: seedbed, drafts: {} });
+    const drawing = createToolRuntime(store, { app: seedbedApp, drafts: {} });
     expect(drawing.definitions.map((tool) => tool.name)).not.toContain("keep_lens");
     expect(toolDefinitions(seedbed, { kind: "agent" }, { drafts: "draw" }).hash).toBe(drawing.hash);
   });
 
   it("draws from an ask, checks a lens the model wrote, changes the one on screen, and keeps it through the host's write", async () => {
     const written: unknown[] = [];
-    const runtime = createToolRuntime(createSeedbedStore(), { app: seedbed, drafts: { keep: async (edit) => (written.push(edit), { ok: true, said: "Kept." }) } });
+    const runtime = createToolRuntime(createSeedbedStore(), { app: seedbedApp, drafts: { keep: async (edit) => (written.push(edit), { ok: true, said: "Kept." }) } });
     const drawn = await runtime.call("draft_view", { ask: "plantings by status" });
     expect(drawn.ok).toBe(true);
     const lens = (drawn as { data: { lens: Record<string, unknown> } }).data.lens;
