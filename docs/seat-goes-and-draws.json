@@ -1,0 +1,114 @@
+{
+  "at": "2026-10-09T07:43:03.497Z",
+  "engines": [
+    "chromium"
+  ],
+  "quick": true,
+  "checks": {
+    "landsWhereAsked": {
+      "cases": 20,
+      "failing": [],
+      "ok": true
+    },
+    "saidInASentence": {
+      "cases": 20,
+      "failing": [],
+      "ok": true
+    },
+    "backUndoes": {
+      "cases": 4,
+      "failing": [],
+      "ok": true
+    },
+    "noModelCall": {
+      "cases": 8,
+      "failing": [],
+      "ok": true
+    },
+    "hiddenNeverResolves": {
+      "cases": 4,
+      "failing": [],
+      "ok": true
+    },
+    "aDraftAppearsQuickly": {
+      "cases": 10,
+      "failing": [],
+      "ok": true
+    },
+    "refiningReplaces": {
+      "cases": 8,
+      "failing": [],
+      "ok": true
+    },
+    "aDrawnCalendarOpensOnTheStoresDay": {
+      "cases": 4,
+      "failing": [],
+      "ok": true
+    },
+    "aFailedDraftKeepsTheLastGood": {
+      "cases": 8,
+      "failing": [],
+      "ok": true
+    },
+    "keptLensIsAPlace": {
+      "cases": 8,
+      "failing": [],
+      "ok": true
+    },
+    "takeBackRemovesIt": {
+      "cases": 8,
+      "failing": [],
+      "ok": true
+    },
+    "theRoutedFaceWearsTheOneBar": {
+      "cases": 2,
+      "failing": [],
+      "ok": true
+    },
+    "nothingWritesButDeclaredActs": {
+      "cases": 8,
+      "failing": [],
+      "ok": true
+    },
+    "aPhonesSheetYieldsToTheDrawnView": {
+      "cases": 4,
+      "failing": [
+        {
+          "engine": "chromium",
+          "at": "todo phone dark scene",
+          "share": 0.21,
+          "yields": true,
+          "latestWhole": false,
+          "ok": false
+        },
+        {
+          "engine": "chromium",
+          "at": "todo phone dark pages",
+          "share": 0.19,
+          "yields": true,
+          "latestWhole": false,
+          "ok": false
+        },
+        {
+          "engine": "chromium",
+          "at": "workshop phone dark graview",
+          "share": 0.19,
+          "yields": true,
+          "latestWhole": false,
+          "ok": false
+        },
+        {
+          "engine": "chromium",
+          "at": "workshop phone dark pages",
+          "share": 0.19,
+          "yields": true,
+          "latestWhole": false,
+          "ok": false
+        }
+      ],
+      "ok": false
+    }
+  },
+  "pageErrors": [],
+  "passed": false
+}

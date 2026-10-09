@@ -57,7 +57,11 @@ export function SeatPanel({ phone, side, name, onClose, respond, onCall, onPick,
     if (!at) return;
     // Yielding, the sheet is exactly as tall as the latest answer (up to its cap): no half a line of the turn before it.
     const last = yielding ? [...at.querySelectorAll<HTMLElement>("ol > li")].pop() : undefined;
-    if (last) at.style.maxHeight = `min(${last.offsetHeight + 2}px, ${YIELDED})`;
+    if (last) {
+      // From the answer's top to the end of the talk (what follows it is the list's own foot).
+      const from = last.getBoundingClientRect().top - at.getBoundingClientRect().top + at.scrollTop;
+      at.style.maxHeight = `min(${Math.ceil(at.scrollHeight - from)}px, ${YIELDED})`;
+    }
     at.scrollTop = at.scrollHeight;
   }, [talk.turns.length, talk.busy, yielding]);
   return (

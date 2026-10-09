@@ -37,6 +37,20 @@
  *                           document, which compiles
  *   takeBackRemovesIt       Take back takes the place away, and the host
  *                           (workshop) is handed the remove-lens edit
+ *   aDrawnCalendarOpensOnTheStoresDay
+ *                           "as a calendar" on todo, pinned to 1 September
+ *                           2026, opens on that month, not the clock's
+ *   theRoutedFaceWearsTheOneBar
+ *                           todo's own design on Pages, at its own address,
+ *                           stands under the one app bar as it does in an
+ *                           embed: one bar holding the one Find, at most one
+ *                           way to the scene and no capsule of it, "Remembered
+ *                           in this browser" at the foot, nothing sideways
+ *   aPhonesSheetYieldsToTheDrawnView
+ *                           on a phone the open sheet, once a view is drawn,
+ *                           keeps only the latest answer's lines over the
+ *                           field: at most 30% of the screen, that answer
+ *                           whole
  *   nothingWritesButDeclaredActs
  *                           drawing, changing, failing and discarding a
  *                           draft adds nothing to the op log
@@ -245,10 +259,27 @@ async function drawAndKeep(page, { label, first, refine, fail, ops }) {
   const shown = await page.waitForSelector('[data-testid="draft-frame"] [data-testid="draft-lens"]', { timeout: 15_000 }).then(() => Date.now() - pressed).catch(() => null);
   note("aDraftAppearsQuickly", { at: label, ms: shown, ok: shown !== null && shown < QUICKLY_MS });
   await page.waitForTimeout(800);
+  /* On a phone the open sheet yields to the view it drew: the latest answer's lines over the field, the rest is the view. */
+  const sheet = await page.evaluate(() => {
+    const seat = document.querySelector('[data-testid="seat"]');
+    if (seat?.getAttribute("data-graview-seat-shape") !== "phone") return null;
+    const box = (seat.parentElement ?? document.body).getBoundingClientRect();
+    const own = seat.getBoundingClientRect();
+    const said = [...document.querySelectorAll('[data-testid="seat-panel"] ol > li')].pop();
+    const body = document.querySelector('[data-testid="seat-body"]')?.getBoundingClientRect();
+    const latest = said?.getBoundingClientRect();
+    return { share: Math.round((own.height / Math.min(box.height, window.innerHeight)) * 100) / 100, yields: document.querySelector("[data-graview-seat-yields]") !== null, latestWhole: latest && body ? latest.top >= body.top - 1 && latest.bottom <= body.bottom + 1 : false };
+  });
+  if (sheet) note("aPhonesSheetYieldsToTheDrawnView", { at: label, ...sheet, ok: sheet.yields && sheet.share <= 0.3 && sheet.latestWhole });
   const drawn = await page.getAttribute('[data-testid="draft-lens"]', "data-graview-draft").catch(() => null);
   await ask(page, refine.words);
   const refined = await page.evaluate(() => ({ frames: document.querySelectorAll('[data-testid="draft-frame"]').length, lens: document.querySelector('[data-testid="draft-lens"]')?.getAttribute("data-graview-draft") ?? null }));
   note("refiningReplaces", { at: label, drawn, ...refined, ok: drawn !== null && refined.frames === 1 && refined.lens === refine.lens && refined.lens !== drawn });
+  /* Todo is pinned to 1 September 2026 (`?today=`): a calendar drawn there opens on that month, with "Book the van" (due that day) in it. */
+  if (refine.lens === "calendar" && /^todo /.test(label)) {
+    const opened = await page.evaluate(() => document.querySelector('[data-testid="draft-lens"] [data-graview-pick="t-book"]') !== null);
+    note("aDrawnCalendarOpensOnTheStoresDay", { at: label, bookTheVanInView: opened, ok: opened });
+  }
   const said = await ask(page, fail);
   const failed = await page.evaluate(() => ({ note: document.querySelector('[data-testid="draft-note"]')?.textContent?.trim() ?? null, lens: document.querySelector('[data-testid="draft-lens"]')?.getAttribute("data-graview-draft") ?? null }));
   note("aFailedDraftKeepsTheLastGood", { at: label, said, ...failed, ok: failed.note !== null && /^Couldn't/.test(failed.note) && failed.lens === refine.lens });
@@ -309,6 +340,31 @@ try {
           await page.close();
         } catch (error) {
           note("landsWhereAsked", { at: label, why: String(error).split("\n")[0].slice(0, 160), ok: false });
+        }
+
+        /* The todo design's pages under the one bar: what the embed's pages face wears, at the app's own address. */
+        if (face === "pages") {
+          try {
+            const page = await context.newPage();
+            await visit(page, `${base}tasks/t-deposit?${DAY}`, ready);
+            const chrome = await page.evaluate(() => {
+              const bars = document.querySelectorAll("[data-graview-app-bar]");
+              const scene = [...document.querySelectorAll("a, button")].filter((one) => /In the scene/.test(one.textContent ?? ""));
+              const remembered = document.querySelector('[data-testid="remembered"]');
+              return {
+                bars: bars.length,
+                sceneLinks: scene.length,
+                capsules: scene.filter((one) => parseFloat(getComputedStyle(one).borderTopLeftRadius) >= 12).length,
+                findsOutsideTheBar: [...document.querySelectorAll('input[type="search"]')].filter((one) => !bars[0]?.contains(one)).length,
+                rememberedAtTheFoot: remembered === null || remembered.closest("footer") !== null,
+                sideways: document.documentElement.scrollWidth - window.innerWidth,
+              };
+            });
+            note("theRoutedFaceWearsTheOneBar", { at: label, ...chrome, ok: chrome.bars === 1 && chrome.sceneLinks <= 1 && chrome.capsules === 0 && chrome.findsOutsideTheBar === 0 && chrome.rememberedAtTheFoot && chrome.sideways <= 0 });
+            await page.close();
+          } catch (error) {
+            note("theRoutedFaceWearsTheOneBar", { at: label, why: String(error).split("\n")[0].slice(0, 160), ok: false });
+          }
         }
 
         /* A member asks for somebody they may not see. */
