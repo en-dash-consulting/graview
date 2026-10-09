@@ -125,8 +125,16 @@ export const FACE_DOORS = {
  * a notice put away while its embed is scrolled out of the window) took it
  * to 597 503 bytes (583.5 KB), 269 more; the claim rises by that with about
  * 0.1 KB of room: 583.6 KB, which leaves Cloud's shell 11.4 KB under its 595.
+ * The seat floating and quiet took it to 598 806 bytes (584.8 KB), 1 303
+ * more: the conversation is the app's now, held by the provider every face
+ * draws under (`seat-talk.ts`), so a face switch keeps it. The field itself
+ * is drawn with each face, and its panel, the conversation and what it
+ * offers are fetched when it is first opened; the scene's face before it
+ * draws is 28 KB smaller for the rail that left it. The claim rises by that
+ * with about 0.2 KB of room: 585.0 KB, which leaves Cloud's shell 10 KB
+ * under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 583.6 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 585 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -221,8 +229,10 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * (538.7 KB); the claim rises by that with about 0.1 KB of room: 538.8 KB.
  * The review after 0.1.17, the same 269 bytes as the page that compiles,
  * took it to 551 873 bytes (538.9 KB): 539.0 KB.
+ * The seat floating and quiet, the same 1 303 bytes as the page that
+ * compiles, took it to 553 176 bytes (540.2 KB): 540.4 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 539 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 540.4 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [
