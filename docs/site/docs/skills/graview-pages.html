@@ -1098,7 +1098,7 @@ if (location.pathname.startsWith("/pages")) {
 <li><code>/&lt;plural&gt;/&lt;id&gt;</code> — a record: its facts, changed where they stand, its relations in the declaration's words, what can be done, what happened.</li>
 <li><code>/problems</code> — every broken rule with its repairs.</li>
 </ul>
-<p>The shell is the app bar, a row: the name, the switch (Scene, Pages; <code>pages: { scene, pages }</code> renames them), the place you are on — whose list holds the home, the Lists, the Pictures (on a wide bar they stand, the rest under More) — Find, standing, person.</p>
+<p>The app bar, one row over any shell (<code>barAbove</code>): the name, the switch (Scene, Pages; <code>pages: { scene, pages }</code> renames them), the place you are on — whose list holds the home, the Lists, the Pictures (on a wide bar they stand, the rest under More) — Find, standing, person.</p>
 <p><strong>Arrange it in the declaration</strong>: <code>pages: { order: ["offer", "package"], hide: ["party"], first: "The offers" }</code>. <code>order</code> sets the gallery, nav and city; <code>hide</code> takes kinds off the home only; <code>first</code> (a place, a kind or <code>"home"</code>) is where both faces open. <code>placesOf(app)</code> lists them.</p>
 <p><strong>Home as data</strong> (FR-81): <code>home</code>, blocks as in <code>graview-node-kind</code> (<code>views.home</code>), replaces this body, and the app opens on it (FR-136).</p>
 <p><strong>Hand it <code>views</code></strong> (the scene's registry, plus <code>settings</code>/<code>presence</code>) — <code>graview create</code> does — and the face puts the scene's provider under its routes, which buys three things at once:</p>
@@ -1112,7 +1112,7 @@ if (location.pathname.startsWith("/pages")) {
 <p><strong>On a phone this face is the answer.</strong> <code>Shell</code> carries <code>pagesHref</code>.</p>
 <h3>Rung one: a page in the app's own words</h3>
 <p><code>createPageRegistry(schema)</code> replaces pages per kind and surfaces per app:</p>
-<div class="code" data-scroller><pre><code>import { createPageRegistry, DerivedForm, kindFacts, PageMain, pageStyles, recordFacts, spatialHref, useStoreTick } from "@graview/pages";
+<div class="code" data-scroller><pre><code>import { createPageRegistry, DerivedForm, kindFacts, PageMain, pageStyles, recordFacts, SceneLink, useStoreTick } from "@graview/pages";
 
 function PlotPage({ context }: { context: PageContext&lt;S&gt; }) {
   const { store, principal } = context;
@@ -1122,7 +1122,7 @@ function PlotPage({ context }: { context: PageContext&lt;S&gt; }) {
   return (
     &lt;PageMain context={context}&gt;
       &lt;h1 style={pageStyles.h1}&gt;{facts.label}&lt;/h1&gt;
-      &lt;a href={spatialHref(id)}&gt;In the scene ↗&lt;/a&gt;
+      &lt;SceneLink context={context} stop={`#focus=${id}`} /&gt;
       &lt;DerivedForm store={store} mutation={sow} prefilled={{ plotId: id }} /&gt;
     &lt;/PageMain&gt;
   );
@@ -1145,7 +1145,7 @@ export const pages = createPageRegistry&lt;S, PageComponent&lt;S&gt;&gt;(schema)
 <h3>Rung two: a product design</h3>
 <p>The registry has three surfaces and two page types, and replacing all of them is a product:</p>
 <div class="code" data-scroller><pre><code>createPageRegistry&lt;S, PageComponent&lt;S&gt;&gt;(schema)
-  .surface("shell", Shell)        // the frame around every route: the app bar, the foot
+  .surface("shell", Shell)        // the design's own, under the bar
   .surface("home", Home)
   .surface("problems", Problems)
   .register("plot", "list", Plots).register("plot", "record", PlotRecord)

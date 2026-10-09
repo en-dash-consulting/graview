@@ -34,7 +34,7 @@ if (location.pathname.startsWith("/pages")) {
   relations in the declaration's words, what can be done, what happened.
 - `/problems` — every broken rule with its repairs.
 
-The shell is the app bar, a row: the name, the switch (Scene, Pages;
+The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, Pages;
 `pages: { scene, pages }` renames them), the place you are on — whose list
 holds the home, the Lists, the Pictures (on a wide bar they stand, the
 rest under More) — Find, standing, person.
@@ -65,9 +65,7 @@ under its routes, which buys three things at once:
   nav box narrows a list, else lands here. Find and the way back ("Take
   back “…”", ⌘Z) are on every face: a shell that places `<PageFind>` or
   `<PageUndo>` says where, one that does not gets them drawn around it,
-  and `surface("shell", Shell, { without: ["find"] })` goes without. A
-  shell stands under the app bar (`context.barAbove`): no name, Find or
-  scene link of its own; `without: ["bar"]` makes it the whole window.
+  and `surface("shell", Shell, { without: ["find"] })` goes without.
 - **The assistant**, on every route: the scene's own ask field and its
   conversation, the ROUTE what "this" means. A line and a few questions
   before anyone types; proposals apply
@@ -147,7 +145,7 @@ is a product:
 
 ```tsx
 createPageRegistry<S, PageComponent<S>>(schema)
-  .surface("shell", Shell)        // what is the design's own, under the app bar
+  .surface("shell", Shell)        // the design's own, under the bar
   .surface("home", Home)
   .surface("problems", Problems)
   .register("plot", "list", Plots).register("plot", "record", PlotRecord)
