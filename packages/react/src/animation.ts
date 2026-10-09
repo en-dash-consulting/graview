@@ -206,7 +206,7 @@ export interface SeatAct {
 export interface SeatWork {
   /** Node id → the seat that wrote it, while the mark stands. */
   readonly marks: ReadonlyMap<string, string>;
-  /** What the seat has done this session, newest first — the companion's log. */
+  /** What the seat has done this session, newest first. */
   readonly acts: readonly SeatAct[];
 }
 
@@ -218,8 +218,8 @@ const NO_WORK: SeatWork = { marks: new Map(), acts: [] };
  * The robot used to walk to what it wrote and stand there, which is the
  * one thing the body was genuinely good for: attribution in space. The
  * walk is gone; the attribution is not. Every op the log attributes to an
- * agent marks what it wrote for a hold, and the acts stay in a list the
- * companion can offer to fly you to.
+ * agent marks what it wrote for a hold, and the acts stay in a list,
+ * newest first.
  *
  * Read from the OP LOG rather than from the seat's own reports, so it is
  * the same on both render paths, inside a lens, and for a turn that
@@ -240,7 +240,7 @@ export function useSeatWork<S extends AnySchema>(holdMs = 4000): SeatWork {
         for (const op of ops) {
           if (op.undoes !== undefined) {
             /*
-             * Taken back: the act leaves the log the companion shows, and
+             * Taken back: the act leaves the seat's list of acts, and
              * the marks it put on things leave with it. A mark over a
              * change that no longer exists is the seat claiming credit for
              * nothing.

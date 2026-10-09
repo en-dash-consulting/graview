@@ -423,9 +423,9 @@ function Switcher({
 }) {
   const [open, setOpen] = useState(false);
   /*
-   * Out of the app's way. Bottom left is the seat's composer and footer once
-   * the companion docks there, so the switcher sat on its label; the bottom
-   * right corner is the scene's zoom, and on a phone the seat's whole width.
+   * Out of the app's way. The foot of the picture is the seat's ask field,
+   * so a switcher there sat on it; the bottom right corner is the scene's
+   * zoom, and on a phone the seat's whole width.
    * Above both, on the right, is clear in every app the desk mounts.
    */
   return (

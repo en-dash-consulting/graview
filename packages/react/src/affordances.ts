@@ -7,8 +7,8 @@ import { useGraph, useGraview } from "./context.js";
 /*
  * THE ACTS ON OFFER, as hooks. Apart from `./hooks.ts` because deriving
  * them carries every provider, and a page draws its frame — the strip, the
- * cards — without asking: the inspector, the companion and the pages' acts
- * do, and they are fetched with their face (FR-57).
+ * cards — without asking: the inspector, the seat's panel and the pages'
+ * acts do, and they are fetched with their face (FR-57).
  */
 
 /**
@@ -22,9 +22,9 @@ import { useGraph, useGraview } from "./context.js";
 export function useAffordances<S extends AnySchema>(
   options: DeriveOptions<S> & {
     /**
-     * Derive for THESE ids rather than the selection. The companion's rail
-     * is about a subject that may be nothing anybody clicked — the place
-     * you are looking at — and the acts under its name have to be its own.
+     * Derive for THESE ids rather than the selection. The seat's panel is
+     * about a subject that may be nothing anybody clicked — the place you
+     * are looking at — and the acts under its name have to be its own.
      */
     readonly about?: readonly string[];
   } = {},

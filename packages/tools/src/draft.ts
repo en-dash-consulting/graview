@@ -16,6 +16,7 @@ import {
 import { fieldSpecOf, parseExpr, type Expr } from "@graview/core/document";
 import type { DraftTools } from "./agent/tools.js";
 import { firstJsonObject, type Completion } from "./intelligence.js";
+import { capitalize } from "./capital.js";
 
 /*
  * THE SEAT DRAWS A VIEW ON THE FLY, AND KEEPS IT AS A LENS.
@@ -244,7 +245,6 @@ interface KindInfo {
 
 const kebab = (name: string) => name.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
 const wordsOf = (name: string) => kebab(name).replace(/[-_]+/g, " ").trim();
-const capital = (text: string) => (text.length === 0 ? text : text[0]!.toUpperCase() + text.slice(1));
 
 interface Reading {
   readonly schema: AnySchema;
@@ -582,26 +582,26 @@ function titled(recipe: DraftRecipe, reading: Reading): { title: string; detail:
   const words = (name: string | undefined) => (name ? (fieldOf(info, name)?.words ?? wordsOf(name)) : "");
   switch (recipe.lens) {
     case "columns":
-      return { title: `${capital(info.plural)} by ${words(recipe.column)}`, detail: `of ${info.plural} by ${words(recipe.column)}` };
+      return { title: `${capitalize(info.plural)} by ${words(recipe.column)}`, detail: `of ${info.plural} by ${words(recipe.column)}` };
     case "calendar": {
       const range = recipe.range ?? "month";
-      if (range === "agenda") return { title: `${capital(info.plural)} in date order`, detail: `of ${info.plural} in order of ${words(recipe.start)}` };
+      if (range === "agenda") return { title: `${capitalize(info.plural)} in date order`, detail: `of ${info.plural} in order of ${words(recipe.start)}` };
       const span = range === "years" ? "year" : range;
-      return { title: `${capital(info.plural)} by ${span}`, detail: `of ${info.plural} by ${words(recipe.start)}, a ${span} at a time` };
+      return { title: `${capitalize(info.plural)} by ${span}`, detail: `of ${info.plural} by ${words(recipe.start)}, a ${span} at a time` };
     }
     case "timeline":
-      return { title: `${capital(info.plural)} over the ${words(recipe.column)}`, detail: `of ${info.plural} from ${words(recipe.start)} to ${words(recipe.end)}, by ${words(recipe.column)}` };
+      return { title: `${capitalize(info.plural)} over the ${words(recipe.column)}`, detail: `of ${info.plural} from ${words(recipe.start)} to ${words(recipe.end)}, by ${words(recipe.column)}` };
     case "coverage": {
       const across = reading.info(recipe.across!)!;
-      return { title: `${capital(info.plural)} by ${across.noun}`, detail: `of which ${across.noun} covers which ${info.noun}` };
+      return { title: `${capitalize(info.plural)} by ${across.noun}`, detail: `of which ${across.noun} covers which ${info.noun}` };
     }
     case "board":
-      return { title: `${capital(info.plural)} where they stand`, detail: `of ${info.plural} where they stand` };
+      return { title: `${capitalize(info.plural)} where they stand`, detail: `of ${info.plural} where they stand` };
     case "plan":
-      return { title: `${capital(info.plural)} on a plan`, detail: `of ${info.plural}` };
+      return { title: `${capitalize(info.plural)} on a plan`, detail: `of ${info.plural}` };
     default: {
       const parts = [recipe.where?.map((one) => one.says).join(" and "), recipe.group ? `by ${words(recipe.group)}` : undefined, recipe.sort ? `in order of ${words(recipe.sort.by)}` : undefined].filter((part): part is string => !!part);
-      return { title: [capital(info.plural), ...parts].join(" "), detail: [`of ${info.plural}`, ...parts].join(" ") };
+      return { title: [capitalize(info.plural), ...parts].join(" "), detail: [`of ${info.plural}`, ...parts].join(" ") };
     }
   }
 }
@@ -1144,7 +1144,7 @@ async function modelDraft<S extends AnySchema>(ask: string, options: DraftOption
   if (typeof said["failed"] === "string") return { failed: `Couldn't draw that: ${said["failed"].replace(/^Couldn't draw that:\s*/i, "").replace(/\.$/, "")}.`, ...keep };
   const written = lensFromSpec(said);
   if (!isShippedLens(written.name)) return { failed: `Couldn't draw that: "${written.name}" is not a picture the seat can draw.`, ...keep };
-  const title = written.title ? written.title.slice(0, 80) : (current?.title ?? capital(ask.trim()).slice(0, 80));
+  const title = written.title ? written.title.slice(0, 80) : (current?.title ?? capitalize(ask.trim()).slice(0, 80));
   const lens: DraftLens = { ...written, title: current && current.title === title ? title : freeTitle(title, options.app) };
   const judged = judgeLens(options.app, lens, options.sight);
   if (!judged.ok) return { failed: judged.failed, ...keep };

@@ -136,8 +136,11 @@ export const BUDGETS = [
     // beside the app's places as the face opens, and the host's onKeepLens. 3_609 / 3_242 more. Measured at 539_301 / 189_328.
     // Raised by the pass after the seat: a design's shell drawn under the one bar, which hands the bar its Find, and the
     // seat's words across apps. 1_117 / 734 more. Measured at 540_418 / 190_062.
-    minified: 540_900,
-    gzipped: 190_500,
+    // Lowered by the cleanup after the seat: the district's card and drive-in, the altitude control, the others in the city
+    // and the seat's marks left the frame's sheet for the scene face's, which only the scene draws. 9_830 / 1_959 fewer.
+    // Measured at 530_819 / 188_218.
+    minified: 531_300,
+    gzipped: 188_700,
     load: "first",
   },
   {
@@ -274,8 +277,10 @@ export const BUDGETS = [
     // Find's "Ask:" row): 1_519 / 109 more. Measured at 710_548 / 185_232.
     // Raised when the seat came to take you where you ask and draw a view kept as a lens: the reader's kept lenses beside the
     // places, the host's onKeepLens, a drawn view held with the conversation. Measured at 712_201 / 186_467.
-    minified: 712_700,
-    gzipped: 186_900,
+    // Lowered by the cleanup after the seat: the scene's own rules left the frame's sheet for the scene face's, as the pages
+    // face's did. 9_527 / 1_765 fewer. Measured at 702_947 / 184_886.
+    minified: 703_400,
+    gzipped: 185_300,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -414,7 +419,10 @@ export const BUDGETS = [
     // taking back, and the moves made by each face. Measured at 1_649_311 / 513_115.
     // Raised by the pass after the seat: a design's shell under the one bar, the first picture a cut, the seat's words
     // across apps (a day and a yes or no said, what an act still needs in its words). 2_180 / 972 more. Measured at 1_651_491 / 514_087.
-    minified: 1_652_000,
+    // Raised by the cleanup after the seat, over main at 1_651_812 / 514_225: a keystroke in Find fitting one frame at a hub
+    // (the hits a set once per search, a record's words folded once, one collator for the ranking) and the one capitalize
+    // in core and in tools each a module of its own. 432 more minified, 176 fewer gzipped. Measured at 1_652_244 / 514_049.
+    minified: 1_652_700,
     gzipped: 514_600,
     load: "all",
   },
@@ -485,7 +493,9 @@ export const BUDGETS = [
     // Raised with the pages face's when the seat came to take you where you ask and draw a view kept as a lens. Measured at
     // 1_552_767 / 473_850.
     // Raised with the pages face's by the pass after the seat: 1_619 / 766 more. Measured at 1_554_386 / 474_616.
-    minified: 1_554_900,
+    // Raised with every face's by the cleanup after the seat, over main at 1_554_617 / 474_711: 391 more minified, 212 fewer
+    // gzipped. Measured at 1_555_008 / 474_499.
+    minified: 1_555_500,
     gzipped: 475_100,
     load: "first",
     lazyLacks: ["@graview/studio"],

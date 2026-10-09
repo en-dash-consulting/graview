@@ -245,7 +245,7 @@ export interface PopoverOptions extends PlaceOptions {
   readonly at?: () => { readonly x: number; readonly y: number } | null;
   /** Where the keyboard goes back to when there is no trigger: the card a menu was opened on. */
   readonly returnTo?: () => HTMLElement | null;
-  /** False draws it as part of something else — `ChatPanel` inside a rail — and the family leaves it alone. */
+  /** False draws it as part of something else — a panel inside another surface — and the family leaves it alone. */
   readonly popover?: boolean;
 }
 

@@ -1,3 +1,9 @@
+/*
+ * From the barrel on purpose: a hosted page handed a compiled app imports
+ * this file first, and imported from each file that holds them its names
+ * split the page's first chunks differently, a third of a kilobyte more up
+ * front (docs/hosted-page.md).
+ */
 import {
   createSchema,
   defineInvariant,

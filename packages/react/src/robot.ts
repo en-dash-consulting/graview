@@ -1,4 +1,5 @@
 import { participantKey, type Author } from "@graview/core";
+import { kindCardId } from "@graview/layout/view";
 
 /**
  * THE SEAT IS A ROBOT IN THE CITY, and where it stands is DERIVED.
@@ -17,9 +18,9 @@ import { participantKey, type Author } from "@graview/core";
 
 /**
  * What the seat is doing. `following` retired with the figure that walked
- * the ground: the seat lives on the frame now, and what it is about is the
- * companion's subject, not a body trailing the pointer. `docked` stays as
- * the resting state the rail says "listening" for.
+ * the ground: the seat speaks from its ask field now, and what it is about
+ * is the panel's subject, not a body trailing the pointer. `docked` is the
+ * resting state, when it is listening.
  */
 export type RobotMode = "docked" | "reading" | "writing" | "refused" | "asking";
 
@@ -96,7 +97,7 @@ export function standingFor(ids: readonly string[], kindOf: (id: string) => stri
   if (real.length === 0) return null;
   if (real.length <= VISIT_EACH_UP_TO) return real[0]!;
   const kinds = new Set(real.map((id) => kindOf(id)).filter((kind): kind is string => kind !== undefined));
-  if (kinds.size === 1) return `kind:${[...kinds][0]!}`;
+  if (kinds.size === 1) return kindCardId([...kinds][0]!);
   return real[0]!;
 }
 
@@ -146,9 +147,9 @@ export function foldRobots(
       put({ say: event.say, ...(event.confidence !== undefined ? { confidence: event.confidence } : { confidence: undefined }), ...(event.caption ? { caption: event.caption } : {}) });
       return next;
     case "over":
-      // What the pointer is on, for a surface that wants it — the companion
-      // reads its own subject, but a presence figure still says where a
-      // teammate's agent is looking.
+      // What the pointer is on, for a surface that wants it — the seat's
+      // panel reads its own subject, but a presence figure still says where
+      // a teammate's agent is looking.
       put({ over: event.over });
       return next;
     case "home":

@@ -39,7 +39,7 @@ import { useActivity } from "./attention.js";
 import { useAnimatedLayout, useSeatWork, useTouched } from "./animation.js";
 import { SeatMarks } from "./seat-marks.js";
 import { useViolations } from "./hooks.js";
-import { useFound, useGraph, useGraview } from "./context.js";
+import { foundIds, useFound, useGraph, useGraview } from "./context.js";
 import { MarqueeRoomContext, useMarqueeNameWidth } from "./drawn.js";
 import { isDefaultView } from "./view-registry.js";
 import { Plots } from "./plots.js";
@@ -116,6 +116,12 @@ export interface SceneProps {
  * How far a pointer must travel before it is a drag rather than a click.
  * Below this nothing has moved and the gesture is an ordinary selection.
  */
+
+/** A host's activity prop, worked out once: it reads every member of a group. */
+const withActivity = (activity: ActivityMark | undefined): { activity?: ActivityMark } => (activity ? { activity } : {});
+
+/** What no search found: the layout's relevance when nobody is typing. */
+const NO_HITS: ReadonlySet<string> = new Set();
 
 export function Scene<S extends AnySchema>({
   options,
@@ -217,16 +223,17 @@ export function Scene<S extends AnySchema>({
    * hits, the flagged, the recently written — the selection the layout reads
    * from the stop. Each only changes with the graph or the words.
    */
-  const relevance = useMemo(
+  const standing = useMemo(
     () => ({
-      hits: new Set(found?.matched ?? []),
       flagged: new Set(violations.flatMap((violation) => violation.nodeIds)),
       touched: touchWeights(store.log.all()),
     }),
     // `nodes` is the graph's tick: the log only grows when the graph changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [found, violations, store, nodes],
+    [violations, store, nodes],
   );
+  // A keystroke changes the hits alone: the flagged and the log's weights are not worked out again for it.
+  const relevance = useMemo(() => ({ hits: found ? foundIds(found) : NO_HITS, ...standing }), [found, standing]);
   const sized = useMemo<LayoutOptions>(
     () => ({
       ...options,
@@ -707,7 +714,7 @@ export function Scene<S extends AnySchema>({
         : {})}
       {...(node.screenOf !== undefined ? { screen: true, ...(node.id === screenId ? { onDrawnHeight: noteScreenHeight } : {}) } : {})}
       touched={touched.has(node.id)}
-      {...(activityOf(node) ? { activity: activityOf(node) } : {})}
+      {...withActivity(activityOf(node))}
       scheme={scheme}
       canvasWidth={result.width}
       canvasHeight={result.height}

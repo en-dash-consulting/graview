@@ -4,8 +4,8 @@
  *
  * Everything here is also exported from `@graview/primitives`. It is its
  * own entry because a bundler splits a page by which files its first chunk
- * can reach, and `@graview/primitives` reaches the workbench, the companion
- * and the lenses: an embed that took its theme from it carried the scene's
+ * can reach, and `@graview/primitives` reaches the workbench, the seat's
+ * panel and the lenses: an embed that took its theme from it carried the scene's
  * panels into a page that drew only the pages. The embed's frame — the
  * theme, the strip's Profile and Standing, the views every face draws —
  * imports from here; the workbench is fetched with the face that draws it.

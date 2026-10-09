@@ -8,6 +8,7 @@ import { EMPTY_GRAPH, formatMoney, formatValue, type Money, type TemplatePart } 
 import { parseTemplate } from "./template-parse.js";
 import { fieldSpecOf } from "./to-document.js";
 import { FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, VIEW_FIELD_FORMATS, VIEW_TONES, type FigureFormat, type ViewBlock, type ViewTone } from "./views.js";
+import { capitalize } from "../capital.js";
 
 /*
  * BLOCKS, RESOLVED — what a list of blocks says, worked out once, for every
@@ -508,8 +509,6 @@ function inChoiceOrder(nodes: readonly AnyGraphNode[], field: string, schema: An
   return nodes.map((node, i) => ({ node, i, rank: rank(node) })).sort((a, b) => a.rank - b.rank || a.i - b.i).map((one) => one.node);
 }
 
-const sentenceCase = (words: string) => words.charAt(0).toUpperCase() + words.slice(1);
-
 /**
  * The records under a heading per choice, in the declared order; a choice
  * with no record here has no heading at all, so a heading never says that
@@ -524,7 +523,7 @@ function groupsOf(nodes: readonly AnyGraphNode[], group: { readonly by: string; 
     const members = nodes.filter((node) => valueOf(node, group.by) === choice);
     if (members.length === 0) continue;
     const definition = schema.tryDefinition(members[0]!.kind) as Parameters<typeof valueWords>[0];
-    out.push({ value: choice, heading: group.headings[choice] ?? sentenceCase(valueWords(definition, group.by, choice)), members });
+    out.push({ value: choice, heading: group.headings[choice] ?? capitalize(valueWords(definition, group.by, choice)), members });
   }
   const rest = nodes.filter((node) => !order.includes(String(valueOf(node, group.by))));
   if (rest.length > 0) out.push({ value: null, members: rest });

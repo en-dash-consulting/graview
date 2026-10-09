@@ -18,7 +18,7 @@ import { DerivedForm } from "./form.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
 import { PageMain, PageTitle } from "./page-shell.js";
 import { pathOfPlace, placesOf } from "./page-places.js";
-import { DISPLAY, KindMark, eyebrow, h2, lede, link, plain, pluralOf, quiet, rule } from "./page-typography.js";
+import { DISPLAY, KindMark, capitalize, eyebrow, h2, lede, link, plain, pluralOf, quiet, rule } from "./page-typography.js";
 import { pluralSlug, recordPath } from "./registry.js";
 
 /**
@@ -165,10 +165,8 @@ function countSentence<S extends AnySchema>(store: Store<S>, byKind: Readonly<Re
     ([kind, count]) => `${count} ${count === 1 ? nounOf(store.schema.tryDefinition(kind), kind) : pluralOf(store, kind).toLowerCase()}`,
   );
   if (parts.length === 0) return "Found";
-  return parts.length === 1 ? capitalFirst(parts[0]!) : capitalFirst(`${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`);
+  return parts.length === 1 ? capitalize(parts[0]!) : capitalize(`${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`);
 }
-
-const capitalFirst = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /**
  * THE WAY FORWARD FROM NOTHING. Every act the seat may run that begins one
@@ -250,7 +248,7 @@ export function SearchToCreate<S extends AnySchema>({
         <section key={`${affordance.id}|${words}`} style={{ ...rule, display: "grid", gap: 14 }}>
           {/* The thing, named: an act's title need not say its kind ("Welcome them in"), so the heading does and the button keeps the act's own words. */}
           <h2 style={h2}>
-            {capitalFirst(withArticle(nounOf(store.schema.tryDefinition(kind), kind)))} called “{words}”
+            {capitalize(withArticle(nounOf(store.schema.tryDefinition(kind), kind)))} called “{words}”
           </h2>
           <DerivedForm
             store={store}

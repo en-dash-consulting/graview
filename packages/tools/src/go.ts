@@ -17,6 +17,7 @@ import {
 import { arrangeable, conditionHolds, type ArrangeGraph, type ArrangeOffer, type Condition } from "@graview/core/arrange";
 import { readyRepairsOf, type ChatContext, type ChatReply } from "./conversation.js";
 import { validateProposals } from "./intelligence.js";
+import { capitalize } from "./capital.js";
 
 /**
  * THE SEAT TAKES YOU WHERE YOU ASK.
@@ -519,7 +520,7 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
         const move: SeatMove = { to: "kind", kind, title, address: listAddress(kind), said: `Went to the ${plural}.` };
         return {
           about: "kind",
-          say: `${capital(title)} carry no date, so I can't tell which are ${/^(?:due|for|on|overdue|past due|late)\b/.test(dated.ask.words) ? dated.ask.words : `due ${dated.ask.words}`}. ${move.said}`,
+          say: `${capitalize(title)} carry no date, so I can't tell which are ${/^(?:due|for|on|overdue|past due|late)\b/.test(dated.ask.words) ? dated.ask.words : `due ${dated.ask.words}`}. ${move.said}`,
           moves: [move],
         };
       }
@@ -563,7 +564,7 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
     }
     const filter = conditions.map((condition) => `${condition.key}:${condition.value}`).join(",");
     const address = `${listAddress(kind)}?${new URLSearchParams({ filter }).toString()}`;
-    const move: SeatMove = { to: "kind", kind, title: capital(said), filter, address, said: `Went to the ${said}.` };
+    const move: SeatMove = { to: "kind", kind, title: capitalize(said), filter, address, said: `Went to the ${said}.` };
     return { about: "kind", say: `${move.said} ${counted}`, moves: [move], picks };
   };
 
@@ -650,8 +651,6 @@ function finishedNode(schema: AnySchema, node: AnyNode): boolean {
         (offer.type === "choice" && typeof node[offer.key] === "string" && FINISHED.has(String(node[offer.key]).toLowerCase()))),
   );
 }
-
-const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /** "A, B and C". */
 function list(items: readonly string[]): string {

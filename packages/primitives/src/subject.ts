@@ -54,7 +54,7 @@ export function useSubject<S extends AnySchema>({ hover = true }: { readonly hov
    * THE POINTER IS WATCHED, NOT SUBSCRIBED TO.
    *
    * Reading it the ordinary way — `useScenePointer`, a store subscription
-   * React re-renders on — re-rendered this whole rail on every pointer
+   * React re-renders on — re-rendered the whole panel on every pointer
    * move: the acts, the relations, the conversation and the key, sixty
    * times a second, for a subject that changes when you stop rather than
    * while you move. The moves are taken here without a render; only what
@@ -71,7 +71,7 @@ export function useSubject<S extends AnySchema>({ hover = true }: { readonly hov
      *
      * Dragging the city slides one district after another past a pointer
      * that never moved, and the subject chased every one of them: the
-     * rail's header, its acts and its relations flickered through the
+     * panel's header, its acts and its relations flickered through the
      * whole map on the way. The pointer says what you are looking at when
      * YOU move it over a picture that is still — so while a hand is down,
      * and while the scene is still traveling, the question is not asked.

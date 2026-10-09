@@ -1,5 +1,5 @@
 import { nodeRefArgs } from "../../mutations/node-ref.js";
-import { withArticle } from "../../schema/define-node.js";
+import { humanizeField, withArticle } from "../../schema/define-node.js";
 import type { AnySchema } from "../../schema/schema.js";
 
 /**
@@ -99,12 +99,11 @@ export function checkActsHaveTitles<S extends AnySchema>(ctx: CheckContext<S>): 
   const { app, add } = ctx;
   for (const mutation of app.mutations ?? []) {
     if (mutation.title || mutation.derived) continue;
-    const spoken = mutation.name.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ").trim().toLowerCase();
     add({
       severity: "warning",
       code: "act-without-title",
       where: `defineMutation("${mutation.name}")`,
-      message: `"${mutation.name}" has no title, so every surface offers it as "${spoken.charAt(0).toUpperCase()}${spoken.slice(1)}" — the code's word for it, not the app's.`,
+      message: `"${mutation.name}" has no title, so every surface offers it as "${humanizeField(mutation.name)}" — the code's word for it, not the app's.`,
       fix: `Add title: "…" — what a person would call this act, said about the thing it is offered on ("Give it a new date").`,
     });
   }

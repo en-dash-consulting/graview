@@ -20,7 +20,3 @@ export async function pressPlace(page, title) {
   return "tab";
 }
 
-/** Waits for the bar to name a place by its `as`, so a face fetched lazily has drawn its tabs. */
-export async function waitForPlace(page, as, timeout = 20_000) {
-  await page.waitForSelector(`[data-testid="place-${as}"].graview-place-tab`, { state: "attached", timeout });
-}

@@ -51,8 +51,8 @@ jobs:
             run: node scripts/verify-all.mjs --serial gauntlet chat menu
           - shard: site, audit
             run: node scripts/verify-all.mjs --serial site audit
-          - shard: survey, create, pages, companion, navigation
-            run: node scripts/verify-all.mjs --serial survey create pages companion navigation
+          - shard: survey, create, pages, seat-guide, navigation
+            run: node scripts/verify-all.mjs --serial survey create pages seat-guide navigation
           - shard: rota, lines, calendar, desk, remember, studio, watch, who, seat, rehearsal
             run: node scripts/verify-all.mjs --serial rota lines calendar desk remember studio watch who seat rehearsal
           - shard: journeys (gauntlet)
