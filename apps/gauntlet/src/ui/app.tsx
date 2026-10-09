@@ -1,3 +1,4 @@
+import type { HostAi } from "@graview/tools";
 import { EMPTY_VIEW, type ViewState } from "@graview/layout";
 import { GraviewProvider, type Scheme } from "@graview/react";
 import { Shell } from "@graview/primitives";
@@ -21,6 +22,8 @@ export interface GauntletAppProps {
   readonly initialScheme?: Scheme;
   readonly onSchemeChange?: (scheme: Scheme) => void;
   readonly remembers?: boolean;
+  /** The host's model for the seat — a dev server's, when it holds a key (`aiThroughDevServer`). */
+  readonly ai?: HostAi;
 }
 
 /**
@@ -35,6 +38,7 @@ export function GauntletApp({
   initialScheme = "light",
   onSchemeChange,
   remembers = false,
+  ai,
 }: GauntletAppProps) {
   const created = useMemo(() => store ?? createStore(), [store]);
   const registry = useMemo(() => views(), []);
@@ -42,6 +46,7 @@ export function GauntletApp({
 
   return (
     <GraviewProvider
+      {...(ai ? { ai } : {})}
       store={created}
       views={registry}
       initialView={initialView}
@@ -53,6 +58,8 @@ export function GauntletApp({
     >
       <Shell<S>
         standing="The program is in order"
+        // Graview's own example, so it signs itself — quietly, in the person's menu.
+        signature
         studio={<StudioPlace app={gauntletApp} />}
         remembers={remembers}
         syncUrl={syncUrl}

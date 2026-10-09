@@ -1,4 +1,5 @@
 import {
+  edgeWords,
   kindPath,
   labelOf,
   nounOf,
@@ -91,7 +92,7 @@ export interface SeatOffer {
 }
 
 /** Which of the five the ask was read as. */
-export type AskAbout = "place" | "record" | "kind" | "problems" | "describe" | "here" | "picks";
+export type AskAbout = "place" | "record" | "kind" | "related" | "problems" | "describe" | "here" | "picks";
 
 export type AskAnswer =
   | {
@@ -185,12 +186,50 @@ interface DateAsk {
   readonly to?: string;
   /** "Overdue": before today, and not finished. */
   readonly overdue?: boolean;
+  /** One day, said back the way a person says it: "Thursday 17 Sep". */
+  readonly day?: string;
 }
 
-/** The date words in an ask, against today: today, tomorrow, this/next week, this month, overdue. */
+const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
+const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
+/** A weekday as it is said, with the two shortenings nobody confuses with another word. */
+const WEEKDAY = "(monday|tuesday|tues|wednesday|thursday|thurs|friday|saturday|sunday)";
+/** A month as it is said: whole, or its first three letters ("sept" too). */
+const MONTH = "(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept|sep|oct|nov|dec)";
+const ORDINAL = "(\\d{1,2})(?:st|nd|rd|th)?";
+const weekdayOf = (word: string): number => WEEKDAYS.findIndex((name) => name.startsWith(word.slice(0, 3)));
+const monthOf = (word: string): number => MONTH_NAMES.findIndex((name) => word.startsWith(name.toLowerCase()));
+
+/** "Thursday 17 Sep", and the year when it is not this one. */
+function dayWords(day: string, today: string): string {
+  const at = new Date(parseDay(day));
+  const year = day.slice(0, 4) === today.slice(0, 4) ? "" : ` ${day.slice(0, 4)}`;
+  return `${WEEKDAY_NAMES[at.getUTCDay()]} ${at.getUTCDate()} ${MONTH_NAMES[at.getUTCMonth()]}${year}`;
+}
+
+/** A day of a month with no year: this year's, unless that was half a year ago — then next year's. */
+function nearestDate(month: number, date: number, today: string): string | undefined {
+  if (month < 0 || date < 1 || date > 31) return undefined;
+  const year = Number(today.slice(0, 4));
+  const on = (y: number) => {
+    const ms = Date.UTC(y, month, date);
+    return new Date(ms).getUTCMonth() === month ? dayOf(ms) : undefined;
+  };
+  const here = on(year);
+  if (!here) return undefined;
+  return parseDay(here) < parseDay(today) - 183 * DAY_MS ? on(year + 1) : here;
+}
+
+/**
+ * The date words in an ask, against today: today, tomorrow, yesterday, a
+ * weekday ("thursday", "on friday", "next tuesday", "last monday"), this or
+ * next week or weekend, this month, overdue, and a date ("12 Oct", "Oct
+ * 12th", "2026-10-12"). Only shapes a person says; nothing is guessed.
+ */
 function readDate(asked: string, today: string, weekStartsOn: 0 | 1): { ask: DateAsk; rest: string } | undefined {
+  const weekday = new Date(parseDay(today)).getUTCDay();
   const week = (offset: number) => {
-    const weekday = new Date(parseDay(today)).getUTCDay();
     const back = (weekday - weekStartsOn + 7) % 7;
     const first = addDays(today, -back + offset * 7);
     return { from: first, to: addDays(first, 6) };
@@ -200,19 +239,42 @@ function readDate(asked: string, today: string, weekStartsOn: 0 | 1): { ask: Dat
     const next = new Date(Date.UTC(Number(today.slice(0, 4)), Number(today.slice(5, 7)), 1));
     return { from: first, to: addDays(dayOf(next.getTime()), -1) };
   };
-  const shapes: readonly [RegExp, () => Omit<DateAsk, "words">][] = [
+  const one = (day: string | undefined) => (day ? { from: day, to: day, day: dayWords(day, today) } : undefined);
+  /** A weekday: in this week or the next one when said so, else the next such day from today (today included), or the last one before it. */
+  const named = (which: string | undefined, name: string) => {
+    const wanted = weekdayOf(name);
+    if (which === "this" || which === "next") return one(addDays(week(which === "next" ? 1 : 0).from, (wanted - weekStartsOn + 7) % 7));
+    if (which === "last") return one(addDays(today, -(((weekday - wanted + 6) % 7) + 1)));
+    return one(addDays(today, (wanted - weekday + 7) % 7));
+  };
+  /** Saturday and Sunday: the coming ones, or the ones we are in. */
+  const weekend = (offset: number) => {
+    const saturday = addDays(today, weekday === 0 ? -1 : 6 - weekday);
+    return { from: addDays(saturday, offset * 7), to: addDays(saturday, offset * 7 + 1) };
+  };
+  const lead = "\\b(?:(?:due |for |on |by )(?:the )?)?";
+  const shapes: readonly [RegExp, (found: RegExpMatchArray) => Omit<DateAsk, "words"> | undefined][] = [
     [/\b(?:overdue|past due|late)\b/, () => ({ overdue: true, to: addDays(today, -1) })],
     [/\b(?:due |for |on )?today\b/, () => ({ from: today, to: today })],
-    [/\b(?:due |for |on )?tomorrow\b/, () => ({ from: addDays(today, 1), to: addDays(today, 1) })],
+    [/\b(?:due |for |on )?tomorrow\b/, () => one(addDays(today, 1))],
+    [/\b(?:due |for |on )?yesterday\b/, () => one(addDays(today, -1))],
     [/\b(?:due |for |on )?this week\b/, () => week(0)],
     [/\b(?:due |for |on )?next week\b/, () => week(1)],
     [/\b(?:due |for |on )?(?:last|previous) week\b/, () => week(-1)],
+    [/\b(?:due |for |on )?next weekend\b/, () => weekend(1)],
+    [/\b(?:due |for |on )?(?:this |the )?weekend\b/, () => weekend(0)],
     [/\b(?:due |for |on )?this month\b/, () => month()],
+    [new RegExp(`${lead}(\\d{4}) (\\d{2}) (\\d{2})\\b`), (found) => one(nearestDate(Number(found[2]) - 1, Number(found[3]), `${found[1]}-01-01`))],
+    [new RegExp(`${lead}${ORDINAL} (?:of )?${MONTH}\\b`), (found) => one(nearestDate(monthOf(found[2]!), Number(found[1]), today))],
+    [new RegExp(`${lead}${MONTH} (?:the )?${ORDINAL}\\b`), (found) => one(nearestDate(monthOf(found[1]!), Number(found[2]), today))],
+    [new RegExp(`${lead}(?:(this|next|last|coming) )?${WEEKDAY}\\b`), (found) => named(found[1], found[2]!)],
   ];
   for (const [shape, range] of shapes) {
     const found = asked.match(shape);
     if (!found) continue;
-    return { ask: { words: found[0], ...range() }, rest: asked.replace(found[0], " ").replace(/\s+/g, " ").trim() };
+    const read = range(found);
+    if (!read) continue;
+    return { ask: { words: found[0], ...read }, rest: asked.replace(found[0], " ").replace(/\s+/g, " ").trim() };
   }
   return undefined;
 }
@@ -229,7 +291,8 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
   const principal: Principal = context.principal ?? { kind: "human" };
   const seen = store.seenBy(principal);
   const schema = seen.schema as AnySchema;
-  const today = context.today ?? new Date().toISOString().slice(0, 10);
+  // The day asked about: the one handed in, else the day the store is judged on, else the real one.
+  const today = context.today ?? (store as { today?(): string | undefined }).today?.() ?? new Date().toISOString().slice(0, 10);
   const weekStartsOn = context.weekStartsOn ?? 1;
   const kept = store.kindsKeptFrom(principal);
   const off = store.modules.disabledKinds;
@@ -439,6 +502,20 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
     return { conditions: [], holds: () => true };
   };
 
+  /**
+   * A date ask in a reader's words, against the field it reads: "due Friday
+   * 4 Sep", "on Thursday 17 Sep", "sown this week". A field that only means
+   * "when" ("Date", "Day") says nothing a reader needs: "shifts this week",
+   * not "shifts date this week".
+   */
+  const whenWords = (ask: DateAsk, field: ArrangeOffer): string => {
+    const due = ask.words.startsWith("due") || fold(field.key) === "due";
+    const plain = JUST_WHEN.test(fold(field.label));
+    if (ask.day) return due ? `due ${ask.day}` : plain ? `on ${ask.day}` : `${field.label.toLowerCase()} on ${ask.day}`;
+    const when = ask.words.replace(/^(?:due|for|on|by) (?:the )?/, "");
+    return due ? `due ${when}` : plain ? when : `${field.label.toLowerCase()} ${when}`;
+  };
+
   const flaggedIds = new Set(seen.violations().flatMap((violation) => violation.nodeIds));
   const ctx = { schema, graph: seen.graph as unknown as ArrangeGraph, flagged: flaggedIds, today };
 
@@ -539,10 +616,8 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
           holds.push(open.holds);
         }
       }
-      const when = dated.ask.words.replace(/^(?:due|for|on) /, "");
       if (dated.ask.overdue) phrases.push("overdue");
-      // A field that only means "when" ("Date", "Day") says nothing a reader needs: "shifts this week", not "shifts date this week".
-      else after.push(dated.ask.words.startsWith("due") || fold(field.key) === "due" ? `due ${when}` : JUST_WHEN.test(fold(field.label)) ? when : `${field.label.toLowerCase()} ${when}`);
+      else after.push(whenWords(dated.ask, field));
     }
 
     const members = graph
@@ -569,6 +644,134 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
     const address = `${listAddress(kind)}?${new URLSearchParams({ filter }).toString()}`;
     const move: SeatMove = { to: "kind", kind, title: capitalize(said), filter, address, said: `Went to the ${said}.` };
     return { about: "kind", say: `${move.said} ${counted}`, moves: [move], picks };
+  };
+
+  /* ------------------------------------- 3b. who, across one relation */
+
+  /** Whether a kind is somebody: drawn as a person, or named as one. */
+  const personLike = (kind: string): boolean => {
+    const definition = definitionOf(kind) as { readonly figure?: unknown } | undefined;
+    if (definition?.figure === "person") return true;
+    return [kind, nounOf(definitionOf(kind), kind), pluralOf(kind)].some((name) => fold(name).split(" ").some((word) => PEOPLE.has(word)));
+  };
+
+  /** Every relation one kind has, from the end it stands on: to whom, and in whose words. */
+  const relationsOf = (kind: string): { readonly key: string; readonly direction: "out" | "in"; readonly far: string; readonly words: readonly string[] }[] => {
+    const out: { key: string; direction: "out" | "in"; far: string; words: string[] }[] = [];
+    const edges = (of: string) => (definitionOf(of)?.edges ?? {}) as Readonly<Record<string, { readonly to?: readonly string[]; readonly description?: string; readonly inverse?: string }>>;
+    for (const [key, edge] of Object.entries(edges(kind))) {
+      for (const far of edge.to ?? []) if (visible.has(far)) out.push({ key, direction: "out", far, words: stems(`${edge.description ?? ""} ${key}`) });
+    }
+    for (const other of visibleKinds) {
+      for (const [key, edge] of Object.entries(edges(other))) {
+        if ((edge.to ?? []).includes(kind)) out.push({ key, direction: "in", far: other, words: stems(`${edge.inverse ?? ""} ${key}`) });
+      }
+    }
+    return out;
+  };
+
+  /**
+   * "Who's working thursday", "which plots were planted this week": the
+   * records of a kind on a date, and the records one relation ties them
+   * to — the people when the ask is "who", the kind it names otherwise.
+   * The relation is the one whose declared words say what the ask says
+   * ("working" is "who is covering it"); with no verb ("who's on
+   * tuesday"), the only one that reaches the kind asked for.
+   */
+  const whoAsk = (words: string): AskAnswer | undefined => {
+    const asking = words.match(/^(who|which|what)\b/)?.[1];
+    if (!asking) return undefined;
+    const dated = readDate(words, today, weekStartsOn);
+    if (!dated || dated.ask.overdue) return undefined;
+    const said = dated.rest.split(" ").filter(Boolean);
+    // The kinds the words name, longest name first: the kind asked for, and perhaps the kind filtered.
+    const kindNames = visibleKinds
+      .flatMap((kind) => [pluralOf(kind), nounOf(definitionOf(kind), kind), kind].map((name) => ({ kind, name: fold(name) })))
+      .filter((one) => one.name.length > 0)
+      .sort((a, b) => b.name.length - a.name.length);
+    let rest = ` ${said.join(" ")} `;
+    const named: string[] = [];
+    for (const { kind, name } of kindNames) {
+      if (!rest.includes(` ${name} `)) continue;
+      rest = rest.replace(` ${name} `, " ");
+      if (!named.includes(kind)) named.push(kind);
+    }
+    const auxiliary = rest.match(/\b(?:is|are|was|were)\b|'s\b/)?.[0];
+    const verbs = rest
+      .replace(/'s\b/g, " ")
+      .split(" ")
+      .filter((word) => word.length > 0 && !FILLER.has(word) && !ASKING.has(word));
+    const target = asking === "who" ? named.find(personLike) : named[0];
+    if (!target && asking !== "who") return undefined;
+    const filteredNamed = named.find((kind) => kind !== target);
+
+    /* Every (filtered kind, relation) the ask could mean, scored by how plainly it says it. */
+    const verbStems = verbs.flatMap((verb) => [stem(verb), ...(SAME_WORK.has(stem(verb)) ? [...SAME_WORK] : [])]);
+    const readings = visibleKinds
+      .filter((kind) => (filteredNamed ? kind === filteredNamed : kind !== target))
+      .flatMap((kind) => {
+        // A kind with several dates and none named: its first, which is when it happened ("planted" is when it was sown).
+        const field = dateFieldOf(kind, words.split(" ")) ?? arrangeable(schema, kind).filters.find((offer) => offer.about === "field" && offer.type === "date");
+        if (!field) return [];
+        return relationsOf(kind)
+          .filter((relation) => (target ? relation.far === target : personLike(relation.far)) && relation.far !== kind)
+          .map((relation) => ({ kind, field, relation, said: verbs.length === 0 || verbStems.some((verb) => relation.words.some((word) => sameStem(word, verb))) }));
+      })
+      .filter((reading) => reading.said);
+    if (readings.length === 0) return undefined;
+    // Among several, the one whose date the words name; else it is not plain which was meant.
+    const naming = readings.filter((reading) => said.some((word) => fold(reading.field.key) === word || fold(reading.field.label) === word));
+    const chosen = readings.length === 1 ? readings[0]! : naming.length === 1 ? naming[0]! : undefined;
+    if (!chosen) return undefined;
+
+    const { kind, field, relation } = chosen;
+    const conditions: Condition[] = [
+      ...(dated.ask.from ? [{ key: field.key, value: `after:${addDays(dated.ask.from, -1)}` }] : []),
+      ...(dated.ask.to ? [{ key: field.key, value: `before:${addDays(dated.ask.to, 1)}` }] : []),
+    ];
+    const members = graph.nodesOfKind(kind).filter((node) => conditions.every((condition) => conditionHolds(ctx, node, condition)));
+    const reach = (node: AnyNode) =>
+      (relation.direction === "out" ? seen.graph.out(node.id, relation.key) : seen.graph.in(node.id, relation.key)).filter(
+        (far) => (far as AnyNode).kind === relation.far && visible.has(relation.far),
+      ) as AnyNode[];
+    const found: AnyNode[] = [];
+    const nobody: AnyNode[] = [];
+    for (const node of members) {
+      const tied = reach(node);
+      if (tied.length === 0) nobody.push(node);
+      for (const far of tied) if (!found.some((held) => held.id === far.id)) found.push(far);
+    }
+
+    const when = whenWords(dated.ask, field);
+    const lead = dated.ask.day ? `On ${dated.ask.day}` : capitalize(dated.ask.words.replace(/^(?:due|for|on|by) (?:the )?/, ""));
+    const plural = pluralOf(kind).toLowerCase();
+    const filter = conditions.map((condition) => `${condition.key}:${condition.value}`).join(",");
+    const title = `${plural} ${when}`;
+    const move: SeatMove = { to: "kind", kind, title: capitalize(title), filter, address: `${listAddress(kind)}?${new URLSearchParams({ filter }).toString()}`, said: `Went to the ${title}.` };
+    if (members.length === 0) return { about: "related", say: `No ${title}. ${move.said}`, moves: [move] };
+
+    const verb = verbs.join(" ");
+    const past = auxiliary === "was" || auxiliary === "were";
+    const be = (count: number) => (past ? (count === 1 ? "was" : "were") : count === 1 ? "is" : "are");
+    const names = found.map(nameOf);
+    const shown = names.length > 8 ? [...names.slice(0, 8), `${names.length - 8} more`] : names;
+    const answer =
+      found.length === 0
+        ? `${lead}: nobody ${be(1)}${verb ? ` ${verb}` : ""}.`
+        : `${lead}: ${list(shown)}${verb ? ` ${be(found.length)} ${verb}` : ""}.`;
+    // What has nobody tied to it is said too, when the ask is about people: the gap is the news.
+    const gaps = asking === "who" && nobody.length > 0 ? `${list(nobody.slice(0, 4).map(nameOf))}${nobody.length > 4 ? ` and ${nobody.length - 4} more` : ""} ${nobody.length === 1 ? "has" : "have"} nobody.` : "";
+    const picks: NodeHit[] = found.slice(0, 8).map((node) => ({
+      about: "node",
+      id: node.id,
+      kind: node.kind,
+      label: nameOf(node),
+      why: { field: relation.key, reading: edgeWords(schema, relation.direction === "out" ? kind : relation.far, relation.key, relation.direction === "out" ? "out" : "in"), fragment: when, strength: "field" },
+      current: true,
+      flagged: flaggedIds.has(node.id),
+      address: recordAddress(node),
+    }));
+    return { about: "related", say: [answer, gaps, move.said].filter(Boolean).join(" "), moves: [move], picks };
   };
 
   /* ------------------------------------------------------- in order */
@@ -606,6 +809,20 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
   // 5a. What is here.
   if (HERE.test(asked)) return here();
 
+  // 3b. Who, on a day, across one relation: "who's working thursday".
+  const who = whoAsk(asked);
+  if (who) return who;
+  /*
+   * A day and nothing else — "what's on thursday", "what's due friday" —
+   * is the records on that day, unless the day's words are a place's name
+   * ("This week" can be a list of its own).
+   */
+  const onlyDate = readDate(asked, today, weekStartsOn);
+  if (onlyDate && !placeNamed(stripThe(onlyDate.ask.words)) && onlyDate.rest.replace(/'s\b/g, "").split(" ").every((word) => word === "" || FILLER.has(word) || ASKING.has(word))) {
+    const dated = kindAsk(asked);
+    if (dated) return dated;
+  }
+
   // 1, 2. Go to a place or a record by name.
   /*
    * "Open decisions" is the decisions still open, not the decisions'
@@ -639,6 +856,45 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
 
   return { unresolved: true };
 }
+
+/** The words that ask for somebody or something across a relation. */
+const ASKING = new Set(["who", "whom", "whose", "which", "what", "whats", "what's", "who's"]);
+/** Words a kind of somebody is named with: a "who" is one of these. */
+const PEOPLE = new Set([
+  "person", "people", "user", "users", "member", "members", "volunteer", "volunteers", "gardener", "gardeners", "player", "players",
+  "staff", "worker", "workers", "employee", "employees", "owner", "owners", "assignee", "assignees", "helper", "helpers", "student",
+  "students", "teacher", "teachers", "customer", "customers", "client", "clients", "contact", "contacts", "author", "authors",
+]);
+/**
+ * Being there for something, said several ways: "working" a shift is
+ * "covering" it, "staffing" it, being "on" it. Only these are read as the
+ * same; every other verb must match the relation's own words.
+ */
+const SAME_WORK = new Set(["work", "cover", "staff", "assign", "do", "run", "schedul", "roster", "book", "duty", "serv", "help"]);
+
+/** A word without its ending, so "covering", "covered" and "covers" are one word. */
+function stem(word: string): string {
+  const bare = word.toLowerCase().replace(/'s$/, "");
+  for (const ending of ["ing", "ed", "es", "s"]) {
+    if (bare.length > ending.length + 2 && bare.endsWith(ending)) {
+      const cut = bare.slice(0, -ending.length);
+      // "planned" → "plan", "running" → "run".
+      return cut.length > 3 && cut[cut.length - 1] === cut[cut.length - 2] ? cut.slice(0, -1) : cut;
+    }
+  }
+  return bare;
+}
+
+/** The stems of a relation's words, the small words dropped. */
+function stems(text: string): string[] {
+  return text
+    .toLowerCase()
+    .split(/[^a-z']+/)
+    .filter((word) => word.length > 1 && !FILLER.has(word) && !ASKING.has(word) && !["it", "they", "them", "their", "its", "this", "here", "to", "at"].includes(word))
+    .map(stem);
+}
+
+const sameStem = (a: string, b: string): boolean => a === b || (a.length >= 4 && b.length >= 4 && (a.startsWith(b) || b.startsWith(a)));
 
 /** Finished, read by the words a status or a yes/no usually uses for it. */
 const FINISHED = new Set(["done", "finished", "complete", "completed", "closed", "resolved", "agreed", "canceled", "archived", "shipped", "delivered"]);

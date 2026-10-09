@@ -114,8 +114,20 @@ dead links is worse than one that offers none.
 
 ```sh
 pnpm dev            # THE EXAMPLE → http://localhost:5193
-pnpm dev:seedbed    # the empty one → http://localhost:5194
+pnpm dev:seedbed    # the garden, planted; "Start empty" in the person's menu → http://localhost:5194
 ```
+
+The seat answers what the graph holds without any model — where things are,
+what is wrong, "what's due friday", "who's working thursday". For open
+questions, give the examples a model in development:
+
+```sh
+ANTHROPIC_API_KEY=… pnpm dev     # GRAVIEW_AI_MODEL=… to choose one; claude-sonnet-5-5 otherwise
+```
+
+The dev server holds the key and answers the page at `/__graview/ai`
+(`aiDevProxy` from `@graview/ship/dev`); the page never sees it, and a build
+carries none of it. Without a key, the seat says how to turn it on.
 
 That is the whole setup. No flags, no Canary, no GPU: the scene renders
 through the DOM path, which reproduces the plane geometry exactly because the

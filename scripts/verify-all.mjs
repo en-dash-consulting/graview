@@ -238,7 +238,8 @@ const runOne = async ([name, file]) => {
   const { code, output } = await new Promise((done) => {
     const child = spawn("node", [resolve(repoRoot, "scripts", file), ...(TAKES_AN_APP.has(name) ? appPaths : [])], {
       cwd: repoRoot,
-      env: { ...process.env, ...(quick ? { GRAVIEW_QUICK: "1" } : {}) },
+      // No model key reaches a harness's dev servers: a harness judges the app, never a model's answer of the day.
+      env: { ...process.env, ANTHROPIC_API_KEY: "", ...(quick ? { GRAVIEW_QUICK: "1" } : {}) },
     });
     let output = "";
     child.stdout.on("data", (chunk) => (output += chunk));

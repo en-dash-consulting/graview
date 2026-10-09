@@ -86,6 +86,8 @@ const noteOf = (page) =>
   page.evaluate(() => [...document.querySelectorAll('[data-testid="seat-panel"] ol > li')].at(-1)?.querySelector('[data-testid="seat-answered-with-ai"]')?.textContent ?? null);
 
 const NO_AI = "I can answer about what's in this app. Open questions need AI, which isn't on here.";
+/** The same, in a dev build whose server holds no key: how to turn it on (`aiDevProxy`). Never in a built page. */
+const NO_AI_IN_DEV = "I can answer about what's in this app. Open questions need AI. Set ANTHROPIC_API_KEY when you start the dev server to turn it on.";
 
 /** Sends one message and returns the seat's reply row. */
 async function send(page, text) {
@@ -203,13 +205,16 @@ try {
     ok: /This graph holds|^Home\. It holds /.test(overview.text) && overview.applies === 0,
   };
 
-  /* ------------- with no model, an open question is told so, once, in plain words */
+  /*
+   * ------------- with no model, an open question is told so, once, in plain words —
+   * and, this being a dev server holding no key, how to turn one on.
+   */
   const open = await send(page, "should we repaint the hallway?");
   const openNote = await noteOf(page);
   report.checks.withoutAiAnOpenQuestionIsToldSo = {
     reply: open.text.slice(0, 160),
     note: openNote,
-    ok: open.text.includes(NO_AI) && openNote === null && !new RegExp(RUNG_WORDS).test(open.text),
+    ok: open.text.includes(NO_AI_IN_DEV) && openNote === null && !new RegExp(RUNG_WORDS).test(open.text),
   };
 
   /* ---------------- no act and no fact: the words' hits, each a press */

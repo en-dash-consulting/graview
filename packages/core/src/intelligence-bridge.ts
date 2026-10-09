@@ -64,3 +64,28 @@ export type DecisionBridgeAnswer =
       readonly usage?: { readonly input_tokens?: number; readonly output_tokens?: number };
     }
   | { readonly error: string; readonly status?: number };
+
+/* ------------------------------------------------------ the model door */
+
+/**
+ * THE DOOR A HOST'S MODEL IS REACHED BY in development: the dev server
+ * holds `ANTHROPIC_API_KEY` from the environment it was started in, the
+ * page holds the words. GET says whether a key is there — and, when it is
+ * not, how to set one, which is the only place that sentence is said: a
+ * built page has no server here, so its probe finds nothing and its seat
+ * says only what any product's says.
+ */
+export const AI_BRIDGE_PATH = "/__graview/ai";
+
+/** GET — is a model reachable through this server, and if not, how to make it so. */
+export type AiBridgeStatus =
+  | { readonly configured: true; readonly model: string; readonly name: string }
+  | { readonly configured: false; readonly howTo: string };
+
+/** POST — a prompt in, as `Completion` takes it. */
+export interface AiBridgeAsk {
+  readonly prompt: string;
+}
+
+/** What comes back: the model's text, or why there is none. Never the key. */
+export type AiBridgeAnswer = { readonly text: string } | { readonly error: string };

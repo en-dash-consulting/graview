@@ -88,6 +88,12 @@ export interface ShellProps<S extends AnySchema> {
    */
   readonly hostActions?: readonly HostAction[];
   /**
+   * A GRAVIEW SIGNATURE: a quiet "Built with Graview" at the foot of the
+   * person's menu, linking to graview.dev. Off by default — an app leads
+   * with its own name and mark; Graview's own examples turn it on.
+   */
+  readonly signature?: boolean;
+  /**
    * THE ASK FIELD at the picture's foot (the seat): `"field"`, the default,
    * or `"hidden"` for none. `chat: false` hides it too.
    */
@@ -115,6 +121,7 @@ export function Shell<S extends AnySchema>({
   profileHref,
   studio,
   hostActions,
+  signature = false,
   ask = "field",
   notices,
 }: ShellProps<S>) {
@@ -192,6 +199,7 @@ export function Shell<S extends AnySchema>({
               onScheme={onScheme}
               {...(profileHref ? { profileHref } : {})}
               {...(hostActions ? { hostActions } : {})}
+              signature={signature}
               keeping={
                 <>
                   <ShowInstallation<S> />

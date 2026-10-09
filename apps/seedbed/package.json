@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "The example that starts empty. A community garden with a declared graph and no data — onboarding is filling it in.",
+  "description": "A community garden, and the chapters the docs teach from. It opens on the example garden; Start empty gives the blank graph, where onboarding is filling it in.",
   "main": "./dist/index.js",
   "exports": {
     ".": {

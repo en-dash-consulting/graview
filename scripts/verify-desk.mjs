@@ -189,6 +189,86 @@ try {
     ok: APPS.length === 3 && APPS.every((entry) => entry.command && entry.port),
   };
 
+  /* ------------------------- every example wears Graview's icon in its tab */
+  /*
+   * The tab is the one place an example stands among a person's other
+   * tabs, and it was a blank page: no icon, and a title that did not say
+   * whose example it was. Each page links the micro mark — an SVG that
+   * turns white in a dark scheme, an ICO and a touch icon — and each link
+   * is asked for, so a link to nothing is caught as well as no link.
+   */
+  const tabs = {};
+  for (const id of ["launcher", ...APPS.map((entry) => entry.id)]) {
+    await page.goto(`${at(id)}/`, { waitUntil: "load" });
+    const head = await page.evaluate(() => ({
+      title: document.title,
+      icons: [...document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]')].map((link) => ({
+        rel: link.getAttribute("rel"),
+        type: link.getAttribute("type"),
+        href: link.href,
+      })),
+    }));
+    const fetched = [];
+    for (const icon of head.icons) {
+      const answer = await page.request.get(icon.href);
+      const type = answer.headers()["content-type"] ?? "";
+      fetched.push({ href: new URL(icon.href).pathname, status: answer.status(), image: /^image\//.test(type) || /icon/.test(type) });
+    }
+    tabs[id] = {
+      title: head.title,
+      svg: head.icons.some((icon) => icon.rel === "icon" && icon.type === "image/svg+xml"),
+      ico: head.icons.some((icon) => icon.rel === "icon" && icon.href.endsWith(".ico")),
+      touch: head.icons.some((icon) => icon.rel === "apple-touch-icon"),
+      fetched,
+    };
+  }
+  report.checks.everyExampleWearsGraviewsIconInItsTab = {
+    tabs,
+    ok: Object.entries(tabs).every(
+      ([id, tab]) =>
+        tab.svg &&
+        tab.ico &&
+        tab.touch &&
+        tab.fetched.every((one) => one.status === 200 && one.image) &&
+        (id === "launcher" ? /Graview/.test(tab.title) : / — a Graview example$/.test(tab.title)),
+    ),
+  };
+
+  /* -------------- and signs itself quietly, in the person's menu, not the bar */
+  /*
+   * The kit's rule: an app leads with its own name and mark; a Graview
+   * signature, where there is one, is secondary. So the bar says "Rota",
+   * and "Built with Graview" is one line at the foot of the person's menu,
+   * a link named "Graview" to graview.dev — on the scene and on the pages.
+   */
+  const signed = {};
+  for (const [face, path] of [["scene", "/?theme=light"], ["pages", "/pages/?theme=light"]]) {
+    await page.goto(`${at("rota")}${path}`, { waitUntil: "load" });
+    await page.waitForSelector('[data-testid="profile-button"]', { timeout: 40_000 });
+    const before = await page.evaluate(() => ({
+      barName: document.querySelector('[data-testid="app-bar"] [data-testid="app-name"]')?.textContent?.trim() ?? null,
+      barSaysGraview: /Graview/.test(document.querySelector('[data-testid="app-bar"] [data-testid="app-name"]')?.textContent ?? ""),
+      shown: [...document.querySelectorAll('[data-testid="graview-signature"]')].some((one) => one.getClientRects().length > 0),
+    }));
+    await page.click('[data-testid="profile-button"]');
+    const line = page.locator('[data-testid="graview-signature"]');
+    await line.waitFor({ state: "visible", timeout: 10_000 }).catch(() => undefined);
+    const link = line.getByRole("link", { name: "Graview", exact: true });
+    signed[face] = {
+      ...before,
+      line: (await line.count()) > 0 ? (await line.innerText()).replace(/\s+/g, " ").trim() : null,
+      named: (await link.count()) === 1,
+      href: (await link.count()) === 1 ? await link.getAttribute("href") : null,
+    };
+    await page.keyboard.press("Escape");
+  }
+  report.checks.theExamplesSignThemselvesQuietlyInThePersonsMenu = {
+    signed,
+    ok: Object.values(signed).every(
+      (one) => one.barName !== null && !one.barSaysGraview && !one.shown && one.line === "Built with Graview" && one.named && one.href === "https://graview.dev",
+    ),
+  };
+
   report.pageErrors = errors;
   report.passed = Object.values(report.checks).every((check) => check.ok) && errors.length === 0;
 } catch (error) {

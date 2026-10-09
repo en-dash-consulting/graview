@@ -125,7 +125,7 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
               <StandingDot tone={problems === 0 ? "var(--graview-good)" : "var(--graview-warn)"} />
               {problems > 0 ? <span aria-hidden="true">{problems}</span> : null}
             </Link>
-            {context.views ? <Profile /> : null}
+            {context.views ? <Profile {...(context.signature ? { signature: true } : {})} /> : null}
           </>
         }
       />

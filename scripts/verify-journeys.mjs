@@ -52,10 +52,11 @@ const ENGINE = engineName();
 const OUT = resolve(repoRoot, "docs/journeys.json");
 
 /**
- * The apps, and what each needs said in its address. Seedbed is the example
- * that starts empty, so the jobs that need something there arrange it
- * first, through the declaration's own acts — untimed, and the same garden
- * its first chapters plant.
+ * The apps, and what each needs said in its address. Seedbed opens on the
+ * example garden, whose plots are all tended; the jobs that need a problem
+ * with a repair get one first, through the declaration's own acts (an
+ * untended plot), and a garden a person emptied is planted the way its
+ * first chapters plant it. Untimed.
  */
 const APPS = [
   { dir: "todo", query: { today: "2026-09-01" } },
@@ -63,7 +64,12 @@ const APPS = [
     dir: "seedbed",
     query: {},
     arrange: (store) => {
-      if (store.graph.allNodes().length > 0) return;
+      if (store.graph.allNodes().some((node) => node.kind === "plot" && node.label === "Plot 4")) return;
+      if (store.graph.allNodes().length > 0) {
+        // The example garden keeps its agreement; an untended plot is a problem with a repair.
+        store.apply({ name: "add-plot", args: { label: "Plot 4", beds: 2 } });
+        return;
+      }
       store.apply({ name: "add-gardener", args: { label: "June" } });
       store.apply({ name: "add-gardener", args: { label: "Ravi" } });
       store.apply({ name: "add-plot", args: { label: "Plot 1", beds: 4 } });

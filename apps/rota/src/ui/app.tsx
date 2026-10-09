@@ -1,3 +1,4 @@
+import type { HostAi } from "@graview/tools";
 import { aggregateId, EMPTY_VIEW, type ViewState } from "@graview/layout";
 import { GraviewProvider, useGraview, type Scheme, type SceneProps } from "@graview/react";
 import { AgentSeat, Shell } from "@graview/primitives";
@@ -65,6 +66,8 @@ export interface RotaAppProps {
   readonly onSchemeChange?: (scheme: Scheme) => void;
   readonly remembers?: boolean;
   readonly principal?: Principal;
+  /** The host's model for the seat — a dev server's, when it holds a key (`aiThroughDevServer`). */
+  readonly ai?: HostAi;
 }
 
 export function RotaApp({
@@ -77,6 +80,7 @@ export function RotaApp({
   onSchemeChange,
   remembers = false,
   principal,
+  ai,
 }: RotaAppProps) {
   const created = useMemo(() => store ?? createRotaUiStore(), [store]);
   const views = useMemo(() => rotaViews(), []);
@@ -84,6 +88,7 @@ export function RotaApp({
 
   return (
     <GraviewProvider
+      {...(ai ? { ai } : {})}
       store={created}
       views={views}
       initialView={initialView}
@@ -96,6 +101,8 @@ export function RotaApp({
       <Shell<S>
         home={HOME}
         standing="Every shift is covered"
+        // Graview's own example, so it signs itself — quietly, in the person's menu.
+        signature
         seat={(onCall) => <FillTheGaps onCall={onCall} />}
         profileHref={(userId) => `/pages/people/${userId}`}
         studio={<StudioPlace app={rotaApp} />}

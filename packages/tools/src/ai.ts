@@ -42,6 +42,13 @@ export interface HostAi {
    * `via: "ai:<name>"`. Never shown to a reader. "model" when unsaid.
    */
   readonly name?: string;
+  /**
+   * What the seat says when an ask needs a model and there is none, in
+   * place of `NO_AI_SAID`. For a host that can say how to turn one on —
+   * a dev server holding no key, through `aiThroughDevServer` — and nobody
+   * else: a product's readers are never told about keys.
+   */
+  readonly withoutModel?: string;
 }
 
 /** No AI: the graph answers alone. */

@@ -21,7 +21,7 @@ import {
   useGraview,
   useUrlSync,
 } from "@graview/react";
-import { createInAppAdapter, createToolRuntime, type ToolCall } from "@graview/tools";
+import { aiThroughDevServer, createInAppAdapter, createToolRuntime, type HostAi, type ToolCall } from "@graview/tools";
 import { seedbedBrand } from "@graview/seedbed";
 import { SeedbedApp } from "@graview/seedbed/ui";
 import { TodoApp } from "@graview/todo/ui";
@@ -54,10 +54,18 @@ type S = LauncherSchema;
 const MATRIX = aggregateId("app", "capability");
 const HOME: ViewState = { ...EMPTY_VIEW, focusId: MATRIX };
 
+/*
+ * A MODEL IN DEVELOPMENT, for every app the desk opens in place: the dev
+ * server lends one through its door when it was started with
+ * `ANTHROPIC_API_KEY` (`aiDevProxy`), and a built desk asks no door.
+ */
+const lentAi: Promise<HostAi | undefined> = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? aiThroughDevServer() : Promise.resolve(undefined);
+
 const MOUNTS: Record<string, (props: Record<string, unknown>) => ReactElement> = {
   todo: TodoApp,
   // Seedbed's brand is its main.tsx's to pass (a chapter before the brand exists passes none); in place, it is the whole garden's.
-  seedbed: (props) => <SeedbedApp {...props} brand={seedbedBrand} />,
+  // And its way to an empty garden and back, since the desk opens it the way its own port does.
+  seedbed: (props) => <SeedbedApp {...props} brand={seedbedBrand} garden />,
   rota: RotaApp,
 };
 
@@ -174,6 +182,10 @@ function Desk({
   scheme: Scheme;
   onScheme: (scheme: Scheme) => void;
 }) {
+  const [ai, setAi] = useState<HostAi>();
+  useEffect(() => {
+    void lentAi.then((lent) => setAi(lent));
+  }, []);
   const showing = useShowing();
   const demo = useOpened(showing);
   const desk = useDesk();
@@ -218,6 +230,7 @@ function Desk({
               /* The demo's own store, its own seat, and the fact that it
                  remembers — the same three the app gets at its own port. */
               store={demo.store ?? demo.opened?.store}
+              {...(ai ? { ai } : {})}
               {...(demo.principal ? { principal: demo.principal } : {})}
               /* And who else is here, for the demos whose open() carries a channel. */
               {...("presence" in demo && demo.presence ? { presence: demo.presence } : {})}
