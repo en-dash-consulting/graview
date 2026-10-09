@@ -501,8 +501,12 @@ try {
   const desk = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   await desk.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
   await desk.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  // The scene's bar is the one app bar: its switch offers the pages, and the app's name is the way to their front page.
   report.checks.sceneOffersThePages = await desk.evaluate(
-    () => document.querySelector('[data-testid="pages-link"]')?.getAttribute("href") === "/pages",
+    () =>
+      document.querySelector('[data-testid="app-face-pages"]') !== null &&
+      document.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed") === "true" &&
+      document.querySelector('[data-testid="app-home"]')?.getAttribute("href") === "/pages",
   );
   await desk.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01`, { waitUntil: "networkidle" });
   await desk.waitForTimeout(400);

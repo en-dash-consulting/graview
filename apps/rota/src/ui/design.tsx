@@ -555,7 +555,7 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
             <div key={field.key}>
               <dt>{field.label}</dt>
               <dd>
-                <InPlace context={context} nodeId={id} field={field.key} value={field.value} />
+                <InPlace context={context} nodeId={id} field={field.key} value={field.value} stored={field.stored} />
               </dd>
             </div>
           ))}
@@ -672,18 +672,21 @@ function InPlace({
   nodeId,
   field,
   value,
+  stored = value,
   plain = false,
 }: {
   context: Ctx;
   nodeId: string;
   field: string;
   value: string;
+  /** The value as the record keeps it ("2026-08-28", "tue"), which the edit control holds; the value said, when not given. */
+  readonly stored?: string;
   readonly plain?: boolean;
 }) {
   const { store, principal } = context;
   const tick = useStoreTick(store);
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
+  const [draft, setDraft] = useState(stored);
   const [failed, setFailed] = useState<string | null>(null);
   const editable: EditableField | undefined = useMemo(
     () => editableFields(store, nodeId).find((candidate) => candidate.field === field),
@@ -697,7 +700,7 @@ function InPlace({
       ...(editable.takesValue ? { [field]: next } : {}),
     },
   });
-  const verdict = store.permits(call(value), principal);
+  const verdict = store.permits(call(stored), principal);
   if (!verdict.ok) {
     // A viewer sees the value and the reason, not a control that refuses.
     return (
@@ -714,7 +717,7 @@ function InPlace({
         data-graview-editable={editable.mutation}
         title={`${editable.title} — an act, so it is in the history and can be taken back`}
         onClick={() => {
-          setDraft(value);
+          setDraft(stored);
           setEditing(true);
         }}
       >
@@ -742,7 +745,7 @@ function InPlace({
         <select autoFocus value={draft} onChange={(event) => setDraft(event.target.value)} aria-label={humanizeField(field)}>
           {shape.options.map((option) => (
             <option key={option} value={option}>
-              {option}
+              {humanizeField(option)}
             </option>
           ))}
         </select>

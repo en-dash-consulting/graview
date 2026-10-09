@@ -1,26 +1,38 @@
 /**
- * PRESS A PLACE BY NAME, as a person does: its tab on the bar.
+ * PRESS A PLACE BY NAME, as a person does: on the one app bar.
  *
- * The bar's places are one row of tabs (FR-117) that scrolls sideways when
- * it is longer than its room, rather than folding the rest into a "+N more"
- * menu. A tab scrolled out of the row is still there; the press scrolls it
- * into view first. A place the bar does not name is an error, never a
- * quiet no-op, so a claim downstream of it cannot pass without the press.
+ * The scene's places are the bar's (FR-144, FR-145), on the whole-page
+ * Shell as in an embed: the ones that fit stand on the row as words, the
+ * rest fold into "More", and on a phone they are one control on the page's
+ * first line under the bar. Either way a place is `app-place-scene:<kind>:<as>`
+ * and is reached in at most two presses — itself where it stands, else the
+ * control that opens the list and then it. A place the bar does not name is
+ * an error, never a quiet no-op, so a claim downstream of it cannot pass
+ * without the press.
  */
-export const PLACE_TAB = 'nav[aria-label="Places"] .graview-place-tab, [data-testid="places"] .graview-place-tab';
+export const SCENE_PLACE = '[data-testid^="app-place-scene:"]';
 
-export async function pressPlace(page, title) {
-  const tab = page.locator(PLACE_TAB).filter({ hasText: new RegExp(`^\\s*${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`) }).first();
-  if ((await tab.count()) === 0) {
-    const named = await page.locator(PLACE_TAB).allTextContents().catch(() => []);
-    throw new Error(`No place called "${title}" on the bar (it names: ${named.map((one) => one.trim()).join(", ") || "nothing"})`);
-  }
-  await tab.scrollIntoViewIfNeeded();
-  await tab.click();
-  return "tab";
+/** The names of the scene's places, as the bar holds them (standing or listed). */
+export async function placesNamed(page) {
+  return page.evaluate((selector) => [...document.querySelectorAll(selector)].map((one) => one.textContent.trim()), SCENE_PLACE);
 }
 
-/** Waits for the bar to name a place by its `as`, so a face fetched lazily has drawn its tabs. */
+export async function pressPlace(page, title) {
+  const exact = new RegExp(`^\\s*${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`);
+  const place = page.locator(SCENE_PLACE).filter({ hasText: exact }).first();
+  if ((await place.count()) === 0) {
+    const named = await placesNamed(page).catch(() => []);
+    throw new Error(`No place called "${title}" on the bar (it names: ${named.join(", ") || "nothing"})`);
+  }
+  if (!(await place.isVisible())) {
+    await page.locator('[data-testid="app-places-open"]').first().click();
+    await place.waitFor({ state: "visible", timeout: 5_000 });
+  }
+  await place.click();
+  return "bar";
+}
+
+/** Waits for the bar to name a place by its `as`, so a face fetched lazily has drawn its places. */
 export async function waitForPlace(page, as, timeout = 20_000) {
-  await page.waitForSelector(`[data-testid="place-${as}"].graview-place-tab`, { state: "attached", timeout });
+  await page.waitForSelector(`${SCENE_PLACE}[data-testid$=":${as}"]`, { state: "attached", timeout });
 }

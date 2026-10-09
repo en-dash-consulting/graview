@@ -16,6 +16,7 @@ import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { pressPlace } from "./lib/places.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -57,7 +58,7 @@ const APPS = {
       await p.waitForTimeout(1200);
     },
 
-    week: async (p) => { await p.locator('[data-testid="places"] button', { hasText: "The week" }).click(); },
+    week: async (p) => { await pressPlace(p, "The week"); },
     selected: async (p) => { await p.click('[data-graview-pick="t-deposit"]'); },
     /*
      * THE INSTALLATION, SHOWN — and the same app for the seat that may not
@@ -80,7 +81,7 @@ const APPS = {
       await openProfile(p);
       await p.click('[data-testid="show-installation"]');
       await p.waitForTimeout(500);
-      await p.locator('nav[aria-label="Places"] button', { hasText: "Who may do what" }).click();
+      await pressPlace(p, "Who may do what");
       await p.waitForTimeout(700);
     },
     /*
@@ -89,13 +90,13 @@ const APPS = {
      * needs. The week grid could never draw any of it.
      */
     calendar: async (p) => {
-      await p.locator('nav[aria-label="Places"] button', { hasText: "The month" }).click();
+      await pressPlace(p, "The month");
       await p.waitForTimeout(900);
     },
     /* And the agenda: the same entries as a list, which is the range a
        phone actually wants and the one a grid cannot shrink into. */
     agenda: async (p) => {
-      await p.locator('nav[aria-label="Places"] button', { hasText: "The month" }).click();
+      await pressPlace(p, "The month");
       await p.waitForTimeout(600);
       await p.click('[data-testid="calendar-range-agenda"]');
       await p.waitForTimeout(700);
@@ -231,17 +232,17 @@ const APPS = {
   rota: { port: portFor("rota"), ready: "__rotaReady", query: "&today=2026-09-14", states: {
     week: async () => {},
     fortnight: async (p) => {
-      await p.locator('nav[aria-label="Places"] button', { hasText: "The fortnight" }).click();
+      await pressPlace(p, "The fortnight");
       await p.waitForTimeout(900);
     },
     /* THE QUARTER, which is how a rota is actually planned: a week per cell,
        thirteen of them, where the fortnight is one page of three. */
     quarter: async (p) => {
-      await p.locator('nav[aria-label="Places"] button', { hasText: "The quarter" }).click();
+      await pressPlace(p, "The quarter");
       await p.waitForTimeout(900);
     },
     coverage: async (p) => {
-      await p.locator('nav[aria-label="Places"] button', { hasText: "Who is covering what" }).click();
+      await pressPlace(p, "Who is covering what");
       await p.waitForTimeout(900);
     },
     /* A shift nobody has taken, selected: the repair asks WHO rather than
@@ -307,7 +308,7 @@ const APPS = {
       await p.goto(`${at("seedbed")}/?chapter=4&theme=light#overview=1`, { waitUntil: "load" });
       await p.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(700);
-      await p.locator('nav[aria-label="Places"] button', { hasText: "The season" }).click();
+      await pressPlace(p, "The season");
       await p.waitForTimeout(900);
     },
     /* THE YEAR: the same season, a month per cell, with each planting drawn
@@ -316,7 +317,7 @@ const APPS = {
       await p.goto(`${at("seedbed")}/?chapter=4&theme=light#overview=1`, { waitUntil: "load" });
       await p.waitForFunction(() => "__seedbedReady" in window, null, { timeout: 60_000 });
       await p.waitForTimeout(700);
-      await p.locator('nav[aria-label="Places"] button', { hasText: "The year" }).click();
+      await pressPlace(p, "The year");
       await p.waitForTimeout(900);
     },
     /*
@@ -372,7 +373,7 @@ const APPS = {
       await p.waitForTimeout(1600);
       await p.keyboard.press("Escape");
       await p.waitForTimeout(400);
-      await p.locator('[data-testid="places"] button', { hasText: "What grows where" }).first().click();
+      await pressPlace(p, "What grows where");
       await p.waitForTimeout(900);
     },
     askedNarrow: { viewport: { width: 390, height: 620 }, go: async (p) => {

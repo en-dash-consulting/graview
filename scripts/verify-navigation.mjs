@@ -5,9 +5,11 @@
  * Traveling is a double click, and the screen you land on is the one nobody
  * designs: you arrived by accident as often as on purpose, and the first thing
  * you want is out. Every stop here is a URL, so back and forward are the
- * browser's — but an interface whose navigation is the browser's should not
- * require the person using it to know that, which is what the ← → controls are
- * for.
+ * browser's. The bar drew them again as ← and → for a while; it is the one
+ * app bar now, on the scene as in an embed, and the browser's own back and
+ * forward are the way — so this walks them, and holds that the stops they
+ * walk are the ones a person made, and that the bar draws no arrows of its
+ * own beside the browser's.
  *
  * This walks it in a real browser, because history is not something static
  * rendering has an opinion about.
@@ -40,19 +42,12 @@ const report = { at: new Date().toISOString(), engine: ENGINE, steps: [] };
 let browser;
 let vite;
 
-const enabled = (page, label) =>
-  page.evaluate(
-    (name) =>
-      !document.querySelector(`[data-testid="backtrack"] button[aria-label="${name}"]`)?.disabled,
-    label,
-  );
 const where = (page) => page.evaluate(() => window.location.hash);
 const note = async (page, step) =>
   report.steps.push({
     step,
     url: await where(page),
-    back: await enabled(page, "Back"),
-    forward: await enabled(page, "Forward"),
+    arrows: await page.evaluate(() => document.querySelector('[data-testid="backtrack"]') !== null),
     trail: await page.evaluate(
       () => document.querySelector('nav[aria-label="View"]')?.textContent?.trim() ?? null,
     ),
@@ -104,16 +99,16 @@ try {
   }
   report.wentDeeper = onward !== null;
 
-  // And back, twice, through the control rather than the keyboard.
-  await page.click('[data-testid="backtrack"] button[aria-label="Back"]');
+  // And back, twice, by the browser's own back.
+  await page.goBack();
   await page.waitForTimeout(600);
   await note(page, "back once");
-  await page.click('[data-testid="backtrack"] button[aria-label="Back"]');
+  await page.goBack();
   await page.waitForTimeout(600);
   await note(page, "back twice");
 
-  // Forward is only offered when there is somewhere to go.
-  await page.click('[data-testid="backtrack"] button[aria-label="Forward"]');
+  // And forward one.
+  await page.goForward();
   await page.waitForTimeout(600);
   await note(page, "forward once");
 
@@ -268,7 +263,7 @@ try {
     await page.dblclick(`[data-graview-pick="${next}"]`);
     await page.waitForTimeout(900);
     report.moves.traveled = await pinnedNow();
-    await page.click('[data-testid="backtrack"] button[aria-label="Back"]');
+    await page.goBack();
     await page.waitForTimeout(900);
     report.moves.back = await pinnedNow();
   }
@@ -307,7 +302,7 @@ try {
     await page.mouse.dblclick(box.x + 14, box.y + 6);
     await page.waitForTimeout(900);
     const at = await page.evaluate(() => location.hash);
-    await page.click('[data-testid="backtrack"] button[aria-label="Back"]');
+    await page.goBack();
     await page.waitForTimeout(700);
     return at;
   };
@@ -397,7 +392,6 @@ try {
       hash: decodeURIComponent(window.location.hash),
       studio: document.querySelector('[data-testid="studio"]') !== null,
       installation: document.querySelector('[data-graview-view="kind:user"]') !== null,
-      back: !document.querySelector('[data-testid="backtrack"] button[aria-label="Back"]')?.disabled,
     }));
   const openProfile = async () => {
     const shown = await page.evaluate(() => {
@@ -423,22 +417,11 @@ try {
   await page.goForward();
   await page.waitForTimeout(800);
   const afterForward = await doorState();
-  /* And the app's own arrow, which is the browser's made visible. */
-  await page.click('[data-testid="backtrack"] button[aria-label="Back"]');
-  await page.waitForTimeout(800);
-  const afterOwnArrow = await doorState();
   report.installationIsAStop = {
     shown: shownInstallation,
     back: afterBack,
     forward: afterForward,
-    ownArrow: afterOwnArrow,
-    ok:
-      shownInstallation.installation &&
-      shownInstallation.back &&
-      !afterBack.installation &&
-      afterBack.hash.includes("today") === false &&
-      afterForward.installation &&
-      !afterOwnArrow.installation,
+    ok: shownInstallation.installation && !afterBack.installation && afterBack.hash.includes("today") === false && afterForward.installation,
   };
 
   await openProfile();
@@ -807,6 +790,8 @@ try {
   await phone.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await phone.evaluate(() => { document.documentElement.style.fontSize = "32px"; });
   await phone.waitForTimeout(1200);
+  // A phone's bar keeps Find behind its magnifier, as an embed's does: pressed, the box opens over the row.
+  await phone.click('[data-testid="app-find-open"]');
   await phone.focus('[data-testid="find-box"]');
   await phone.keyboard.type("move", { delay: 40 });
   await phone.waitForTimeout(700);
@@ -930,13 +915,9 @@ report.verdict = {
   fullScreenDescendsInOneGesture:
     report.driveIn?.landed?.up === false && (report.driveIn?.landed?.url ?? "").includes("in.view=the-month"),
   theDescentTweensFromThePlot: report.driveIn?.movedFromThePlot === true,
-  // Nowhere to go back to on arrival, and the control says so rather than
-  // being offered and doing nothing.
-  nothingToGoBackToAtFirst: step("landed")?.back === false,
+  // The browser's back and forward are the way: the bar draws no arrows of its own beside them.
+  theBarDrawsNoArrowsOfItsOwn: report.steps.length > 0 && report.steps.every((one) => one.arrows === false),
   travelingChangesTheAddress: step("traveled")?.url !== step("landed")?.url,
-  backBecomesAvailable: step("traveled")?.back === true,
-  // Nothing ahead until you have actually gone back.
-  nothingAheadUntilYouGoBack: step("traveled")?.forward === false,
   backActuallyGoesBack: placeOf(step("back once")?.url) === placeOf(step("traveled")?.url),
   // The pane you had open at that stop comes back with it.
   backRestoresTheSelection: (step("back once")?.url ?? "").includes("sel="),
@@ -944,7 +925,6 @@ report.verdict = {
   eachTravelIsItsOwnStop: step("traveled again")?.url !== step("traveled")?.url,
   // Two stops back from two stops in is where you started.
   backAgainReachesTheStart: placeOf(step("back twice")?.url) === placeOf(step("landed")?.url),
-  forwardIsOfferedOnceThereIsSomewhere: step("back twice")?.forward === true,
   // The lists draw their tasks, the band draws them again, and no line restates it.
   aViewThatDrawsBothEndsDrawsTheRelation: (report.restated?.inside ?? 0) >= 12 && (report.restated?.chips ?? 0) >= 12 && report.restated?.holds === 0,
   // Nine entries on the week, nine lines to the lists that hold them.

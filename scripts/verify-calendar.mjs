@@ -16,7 +16,7 @@
  *
  *   node scripts/verify-calendar.mjs [--engine=chromium|webkit|firefox]
  */
-import { pressPlace } from "./lib/places.mjs";
+import { placesNamed, pressPlace } from "./lib/places.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -54,9 +54,7 @@ try {
   await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
   await page.waitForTimeout(800);
-  const places = await page.evaluate(() =>
-    [...document.querySelectorAll('nav[aria-label="Places"] button')].map((b) => b.textContent?.trim()),
-  );
+  const places = await placesNamed(page);
   await pressPlace(page, "The month");
   await page.waitForSelector('[data-testid="calendar"]', { timeout: 20_000 });
   await page.waitForTimeout(700);
