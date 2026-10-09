@@ -1,74 +1,74 @@
 {
-  "at": "2026-10-06T22:49:32.360Z",
+  "at": "2026-10-09T03:42:33.803Z",
   "packages": {
     "@graview/core": {
-      "files": 591,
-      "tarballBytes": 729325,
+      "files": 655,
+      "tarballBytes": 796651,
       "ok": true
     },
     "create-graview": {
       "files": 11,
-      "tarballBytes": 3661,
+      "tarballBytes": 3662,
       "ok": true
     },
     "@graview/embed": {
       "files": 43,
-      "tarballBytes": 52828,
+      "tarballBytes": 62848,
       "ok": true
     },
     "graview": {
       "files": 11,
-      "tarballBytes": 4956,
+      "tarballBytes": 4959,
       "ok": true
     },
     "@graview/guest": {
-      "files": 208,
-      "tarballBytes": 247679,
+      "files": 216,
+      "tarballBytes": 259491,
       "ok": true
     },
     "@graview/layout": {
-      "files": 55,
-      "tarballBytes": 95444,
+      "files": 59,
+      "tarballBytes": 96945,
       "ok": true
     },
     "@graview/pages": {
-      "files": 83,
-      "tarballBytes": 95006,
+      "files": 87,
+      "tarballBytes": 103819,
       "ok": true
     },
     "@graview/primitives": {
-      "files": 283,
-      "tarballBytes": 395981,
+      "files": 338,
+      "tarballBytes": 484630,
       "ok": true
     },
     "@graview/react": {
-      "files": 167,
-      "tarballBytes": 231568,
+      "files": 215,
+      "tarballBytes": 244367,
       "ok": true
     },
     "@graview/render": {
       "files": 47,
-      "tarballBytes": 40569,
+      "tarballBytes": 40554,
       "ok": true
     },
     "@graview/ship": {
       "files": 115,
-      "tarballBytes": 188979,
+      "tarballBytes": 189068,
       "ok": true
     },
     "@graview/skills": {
-      "files": 29,
-      "tarballBytes": 57611,
+      "files": 30,
+      "tarballBytes": 60225,
       "ok": true
     },
     "@graview/studio": {
       "files": 75,
-      "tarballBytes": 130710,
+      "tarballBytes": 131739,
       "ok": true
     },
     "@graview/tools": {
-      "files": 131,
-      "tarballBytes": 174743,
+      "files": 135,
+      "tarballBytes": 196424,
       "ok": true
     }
   },
@@ -76,32 +76,34 @@
     {
       "name": "the pages face alone",
       "load": "first",
-      "minified": 500454,
-      "gzipped": 169802,
-      "chunks": 7,
+      "minified": 532731,
+      "gzipped": 183832,
+      "chunks": 14,
       "budget": {
-        "minified": 504500,
-        "gzipped": 171000
+        "minified": 533200,
+        "gzipped": 184300
       },
       "carries": [],
       "defers": [],
       "lazy": [
+        "@graview/core",
         "@graview/layout",
         "@graview/pages",
         "@graview/primitives",
-        "@graview/react"
+        "@graview/react",
+        "@graview/tools"
       ],
       "over": false
     },
     {
       "name": "embed without the studio",
       "load": "first",
-      "minified": 697149,
-      "gzipped": 178706,
-      "chunks": 9,
+      "minified": 709307,
+      "gzipped": 185302,
+      "chunks": 13,
       "budget": {
-        "minified": 700000,
-        "gzipped": 179500
+        "minified": 709500,
+        "gzipped": 185400
       },
       "carries": [],
       "defers": [],
@@ -112,6 +114,7 @@
         "@graview/pages",
         "@graview/primitives",
         "@graview/react",
+        "@graview/render",
         "@graview/ship",
         "@graview/studio",
         "@graview/tools"
@@ -121,12 +124,12 @@
     {
       "name": "every face",
       "load": "all",
-      "minified": 1497664,
-      "gzipped": 446025,
-      "chunks": 30,
+      "minified": 1599651,
+      "gzipped": 487268,
+      "chunks": 45,
       "budget": {
-        "minified": 1506500,
-        "gzipped": 448500
+        "minified": 1600200,
+        "gzipped": 487700
       },
       "carries": [],
       "defers": [],
@@ -137,6 +140,7 @@
         "@graview/pages",
         "@graview/primitives",
         "@graview/react",
+        "@graview/render",
         "@graview/ship",
         "@graview/studio",
         "@graview/tools"
@@ -146,19 +150,21 @@
     {
       "name": "embed with the studio handed in",
       "load": "first",
-      "minified": 1480475,
-      "gzipped": 438093,
-      "chunks": 20,
+      "minified": 1548280,
+      "gzipped": 465260,
+      "chunks": 30,
       "budget": {
-        "minified": 1489500,
-        "gzipped": 441000
+        "minified": 1548800,
+        "gzipped": 465700
       },
       "carries": [],
       "defers": [],
       "lazy": [
+        "@graview/core",
         "@graview/embed",
         "@graview/pages",
-        "@graview/primitives"
+        "@graview/primitives",
+        "@graview/tools"
       ],
       "over": false
     },
@@ -195,12 +201,12 @@
     {
       "name": "the guest host, before a worker is drawn",
       "load": "first",
-      "minified": 10520,
-      "gzipped": 4869,
+      "minified": 17213,
+      "gzipped": 7948,
       "chunks": 3,
       "budget": {
-        "minified": 11000,
-        "gzipped": 5000
+        "minified": 17300,
+        "gzipped": 8000
       },
       "carries": [],
       "defers": [],
@@ -212,12 +218,12 @@
     {
       "name": "the guest host, registering a worker view",
       "load": "first",
-      "minified": 12492,
-      "gzipped": 5365,
+      "minified": 18781,
+      "gzipped": 8177,
       "chunks": 3,
       "budget": {
-        "minified": 12750,
-        "gzipped": 5500
+        "minified": 19000,
+        "gzipped": 8350
       },
       "carries": [],
       "defers": [],
@@ -230,7 +236,7 @@
       "name": "the guest host, drawing a worker",
       "load": "first",
       "minified": 18305,
-      "gzipped": 7356,
+      "gzipped": 7357,
       "chunks": 2,
       "budget": {
         "minified": 18750,
@@ -246,12 +252,12 @@
     {
       "name": "the guest host, drawing a worker view on the open kit",
       "load": "all",
-      "minified": 120766,
-      "gzipped": 42998,
+      "minified": 130001,
+      "gzipped": 46790,
       "chunks": 5,
       "budget": {
-        "minified": 121250,
-        "gzipped": 43250
+        "minified": 130300,
+        "gzipped": 47000
       },
       "carries": [],
       "defers": [],

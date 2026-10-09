@@ -124,8 +124,11 @@ export const BUDGETS = [
     // Raised when the seat came to float and be quiet: the ask field at the foot of every page is drawn with the face (its
     // panel, the conversation and what it offers are fetched when it is first opened), and the conversation is the app's,
     // held by the provider. 1_081 / 1_038 more. Measured at 532_683 / 183_523.
+    // Raised when the seat came to take you where you ask: the conversation reads an ask for a place, a record, a narrowed
+    // kind, the problems or what is here as moves, and fetches the resolver (`@graview/tools/go`) with the first ask, not with
+    // the page; what stays up front is the turn's glue and the model's "go" names. 1_129 / 1_347 more. Measured at 532_731 / 183_832.
     minified: 533_200,
-    gzipped: 184_000,
+    gzipped: 184_300,
     load: "first",
   },
   {
@@ -390,8 +393,10 @@ export const BUDGETS = [
     // left the scene's face; the field, the Key and the panel came), and 4 kB gzipped, because the open seat and what it
     // offers are chunks of their own, fetched when first opened, and each chunk is gzipped alone. 425 / 4_257 more.
     // Measured at 1_583_704 / 484_156.
-    minified: 1_584_300,
-    gzipped: 484_600,
+    // Raised when the seat came to take you where you ask: the resolver, fetched with the first ask, is a chunk every face
+    // carries — about 15 kB minified with what it reads a kind's filters by. Measured at 1_599_651 / 487_268.
+    minified: 1_600_200,
+    gzipped: 487_700,
     load: "all",
   },
   {
@@ -455,8 +460,9 @@ export const BUDGETS = [
     // Measured at 1_547_059 / 463_902.
     // Gzipped raised when the seat came to float and be quiet: 6_687 fewer minified (the rail left), 1_228 more gzipped
     // (the open seat a chunk of its own). Measured at 1_540_372 / 465_130.
-    minified: 1_547_600,
-    gzipped: 465_600,
+    // Raised with the pages face's when the seat came to take you where you ask: 1_221 / 1_358 more. Measured at 1_548_280 / 465_260.
+    minified: 1_548_800,
+    gzipped: 465_700,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

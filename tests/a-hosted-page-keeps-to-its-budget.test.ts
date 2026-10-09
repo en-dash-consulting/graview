@@ -63,7 +63,8 @@ describe("a hosted page", () => {
     // 877 KB since a selected record is drawn once (FR-141–FR-143), over FR-139: the scene face measured 897_697 B, 4_227 more.
     // 878 KB since a lens double-clicked from Up opens it: the scene face measured 898_844 B over the security review before 0.1.18.
     // 891 KB since views beside editing, long text on a record page and the places in the bar landed together (FR-144–FR-151), over a lens double-clicked from Up: the scene face measured 911_396 B, 12_552 more.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(891 * 1024);
+    // 892 KB since the seat takes you where you ask: the conversation's glue for moves, the resolver itself fetched with the first ask: the scene face measured 912_858 B, 1_462 more.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(892 * 1024);
   });
 
   it("carries no studio, up front or when asked: the shell stubs it out", () => {
