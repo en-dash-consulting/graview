@@ -74,8 +74,9 @@ jobs:
       # only the packages skipped four apps' journeys and lost the desk.
       - run: pnpm typecheck
 
-      - name: Chromium
-        run: npx playwright install --with-deps chromium
+      # seat-guide and a few others walk all three engines, so every shard has them.
+      - name: The engines
+        run: npx playwright install --with-deps chromium webkit firefox
 
       # panning and scale time frames against a GPU this runner does not
       # have, and shrunk needs Chrome Canary — they hold on a real machine,

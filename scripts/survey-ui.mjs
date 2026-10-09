@@ -139,7 +139,8 @@ const APPS = {
       home: async () => {},
     },
   },
-  seedbed: { port: portFor("seedbed"), ready: "__seedbedReady", states: {
+  // The garden opens planted now; these states begin from the empty one, so ask for it.
+  seedbed: { port: portFor("seedbed"), ready: "__seedbedReady", query: "&empty=1", states: {
     // The empty app's own first screen: a city of districts saying "none yet".
     empty: async () => {},
     /*
