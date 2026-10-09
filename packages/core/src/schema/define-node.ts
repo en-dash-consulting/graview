@@ -370,7 +370,10 @@ export function readableFields(
             value
             ? "Yes"
             : "No"
-          : String(value);
+          : // A GLANCE says a day as a person reads one ("28 Aug 2026"); a record's facts keep the day as it is written, where it is changed.
+            options.glance && typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
+            ? dayAsRead(value)
+            : String(value);
 
     if (said.includes(text) || stems.some((stem) => text.startsWith(stem))) continue;
     if (options.glance && (typeof value === "string" || typeof value === "number") && said.some((line) => saysAsWords(line, text))) continue;
@@ -381,6 +384,14 @@ export function readableFields(
     if (options.limit !== undefined && fields.length >= options.limit) break;
   }
   return fields;
+}
+
+const MONTH_WORDS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** A `YYYY-MM-DD` day as a person reads it on a card: "28 Aug 2026". */
+function dayAsRead(day: string): string {
+  const [year, month, date] = day.split("-").map(Number) as [number, number, number];
+  return `${date} ${MONTH_WORDS[month - 1] ?? ""} ${year}`;
 }
 
 /** The kind's fields as it declares them, then its computed fields. */

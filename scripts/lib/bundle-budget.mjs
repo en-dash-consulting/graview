@@ -134,8 +134,10 @@ export const BUDGETS = [
     // resolver's and the drafting engine's own branches (which together measured 535_692 / 186_086): an answer's move
     // through the router, the route a drawn view stands at (its page fetched when shown), the reader's kept lenses laid
     // beside the app's places as the face opens, and the host's onKeepLens. 3_609 / 3_242 more. Measured at 539_301 / 189_328.
-    minified: 539_800,
-    gzipped: 189_800,
+    // Raised by the pass after the seat: a design's shell drawn under the one bar, which hands the bar its Find, and the
+    // seat's words across apps. 1_117 / 734 more. Measured at 540_418 / 190_062.
+    minified: 540_900,
+    gzipped: 190_500,
     load: "first",
   },
   {
@@ -410,8 +412,10 @@ export const BUDGETS = [
     // Raised when the seat came to take you where you ask and draw a view kept as a lens, wired into the faces: the frame a
     // drawn view stands in and the Pages route for it, each a chunk of its own fetched when first shown, the keeping and
     // taking back, and the moves made by each face. Measured at 1_649_311 / 513_115.
-    minified: 1_649_900,
-    gzipped: 513_600,
+    // Raised by the pass after the seat: a design's shell under the one bar, the first picture a cut, the seat's words
+    // across apps (a day and a yes or no said, what an act still needs in its words). 2_180 / 972 more. Measured at 1_651_491 / 514_087.
+    minified: 1_652_000,
+    gzipped: 514_600,
     load: "all",
   },
   {
@@ -480,8 +484,9 @@ export const BUDGETS = [
     // definitions and the studio's act that takes a lens away. Measured at 1_549_531 / 466_208.
     // Raised with the pages face's when the seat came to take you where you ask and draw a view kept as a lens. Measured at
     // 1_552_767 / 473_850.
-    minified: 1_553_300,
-    gzipped: 474_300,
+    // Raised with the pages face's by the pass after the seat: 1_619 / 766 more. Measured at 1_554_386 / 474_616.
+    minified: 1_554_900,
+    gzipped: 475_100,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

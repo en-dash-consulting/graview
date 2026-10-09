@@ -178,7 +178,7 @@ export function OverviewButton() {
       className="graview-altitude-control"
       aria-pressed={overview}
       aria-label={label}
-      title={overview ? `${label} — back down into the view` : "Up — the whole thing, from outside"}
+      title={overview ? `${label} — back down into the view` : "Up — the whole thing, from above"}
       // A view state, so it is a URL, the back button works, and the cards
       // already on screen fly out into the ring rather than being replaced.
       onClick={() => (overview ? descend() : go(withOverview(view, true)))}

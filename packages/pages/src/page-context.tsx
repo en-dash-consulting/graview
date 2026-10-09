@@ -111,6 +111,7 @@ export function SceneLink<S extends AnySchema>({
   stop,
   title,
   style,
+  className,
   children,
   ...rest
 }: {
@@ -118,6 +119,8 @@ export function SceneLink<S extends AnySchema>({
   readonly stop: string;
   readonly title?: string;
   readonly style?: CSSProperties;
+  /** A design's own class for the link. */
+  readonly className?: string;
   readonly children?: ReactNode;
 } & Record<`data-${string}`, string>) {
   const label = sceneTitle(context.views?.arrangement?.());
@@ -130,6 +133,7 @@ export function SceneLink<S extends AnySchema>({
         {...rest}
         {...(title ? { title } : {})}
         style={style}
+        {...(className ? { className } : {})}
         onClick={(event) => {
           event.preventDefault();
           go(stop);
@@ -141,7 +145,7 @@ export function SceneLink<S extends AnySchema>({
   }
   if (context.embedded) return null;
   return (
-    <a href={`${context.sceneHref ?? "/"}${stop}`} {...rest} {...(title ? { title } : {})} style={style}>
+    <a href={`${context.sceneHref ?? "/"}${stop}`} {...rest} {...(title ? { title } : {})} style={style} {...(className ? { className } : {})}>
       {words}
     </a>
   );

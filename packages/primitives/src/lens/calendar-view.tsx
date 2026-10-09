@@ -17,6 +17,7 @@ import {
   type CalendarRange,
   type PlacedEntry,
   rangesOf,
+  readersToday,
   titleOf,
 } from "./calendar-options.js";
 import { actThatMoves } from "./calendar-placing.js";
@@ -98,7 +99,7 @@ export function createCalendarLens<S extends AnySchema>(options: CalendarOptions
           schema={store.schema}
           {...props}
           nodes={drawn}
-          options={here}
+          options={{ ...here, today: here.today ?? store.today() ?? readersToday() }}
           {...(bar ? { bar } : {})}
           {...(groups ? { groups } : {})}
         />,
@@ -121,7 +122,8 @@ export function createCalendarLens<S extends AnySchema>(options: CalendarOptions
 }
 
 interface CalendarViewProps<S extends AnySchema> extends ViewProps<S> {
-  readonly options: CalendarOptions;
+  /** The lens's options, its day said: the store's when the app named none. */
+  readonly options: CalendarOptions & { readonly today: string };
   readonly schema?: S;
   /** Kept for a host driving the lens directly, outside a scene. */
   readonly selectedIds?: readonly string[];

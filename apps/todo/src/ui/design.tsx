@@ -11,7 +11,7 @@ import {
   rankedRepairs,
   recordFacts,
   recordPath,
-  spatialHref,
+  SceneLink,
   type PageComponent,
   type PageContext,
   useStoreTick,
@@ -89,11 +89,13 @@ const CSS = `
 .th-nav a.warn .n { color: var(--graview-warn); }
 
 .th-main { padding: 2.2rem 2.6rem 5rem; max-width: 68rem; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
+.th-under { grid-template-columns: minmax(0, 1fr); }
+.th-under .th-main { width: 100%; box-sizing: border-box; margin: 0 auto; }
 .th-eyebrow { font-size: 0.6875rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--graview-ink-muted); margin: 0 0 0.5rem; }
 /* An eyebrow that is a LINK is a control, and a control is at least 24px
    tall however small its words are — WCAG 2.5.8, and the one audit-ui
    counts on every screen. */
-.th-eyebrow a { display: inline-flex; align-items: center; min-height: 1.5rem; }
+.th-eyebrow a { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 1.5rem; }
 .th-h1 { font-family: var(--graview-font-display); font-size: 2.2rem; line-height: 1.1; font-weight: 600; letter-spacing: -0.015em; margin: 0; text-wrap: balance; }
 .th-h2 { font-family: var(--graview-font-display); font-size: 1.25rem; line-height: 1.25; font-weight: 600; margin: 0; }
 .th-lede { font-size: 1.05rem; line-height: 1.55; color: var(--graview-ink-muted); max-width: 58ch; margin: 0.6rem 0 0; }
@@ -139,7 +141,7 @@ const CSS = `
 .th-card.bad { border-color: var(--graview-warn); background: var(--graview-panel-warning); }
 .th-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.85rem; }
 
-.th-chip { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 1.5rem; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.75rem; border: 1px solid var(--th-line); color: var(--graview-ink-muted); }
+.th-chip { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 1.5rem; padding: 0.15rem 0.55rem; border-radius: 0.35rem; font-size: 0.75rem; border: 1px solid var(--th-line); color: var(--graview-ink-muted); }
 .th-chip.warn { border-color: var(--graview-warn); color: var(--graview-warn); }
 
 .th-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
@@ -153,7 +155,7 @@ const CSS = `
 }
 .th-controls label { min-width: 0; }
 .th-btn {
-  min-height: 1.75rem; padding: 0.25rem 0.7rem; border-radius: 999px; font: inherit; font-size: 0.8rem;
+  min-height: 1.75rem; padding: 0.25rem 0.7rem; border-radius: 0.45rem; font: inherit; font-size: 0.8rem;
   border: 1px solid var(--th-line); background: transparent; color: var(--graview-ink-muted); cursor: pointer;
 }
 .th-btn:hover { color: var(--graview-ink); }
@@ -240,6 +242,21 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
    */
   const kept = store.kindsKeptFrom(context.principal);
   const kinds = (store.schema.kinds as readonly string[]).filter((kind) => !kept.has(kind));
+
+  /*
+   * UNDER THE APP BAR, only the page. The bar already says the app's name,
+   * every place (the pictures, the kinds, the problems), Find, the way to
+   * the scene and who you are; a rail that said them again was the same
+   * nav twice on a desk and a strip that ran off the side of a phone.
+   */
+  if (context.barAbove) {
+    return (
+      <div className="th th-under">
+        <style>{CSS}</style>
+        <main className="th-main">{children}</main>
+      </div>
+    );
+  }
 
   return (
     <div className="th">
@@ -565,10 +582,9 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
         <h1 className="th-h1">
           <InPlace context={context} nodeId={id} field="label" value={facts.label} plain />
         </h1>
+        {/* Where it stands in the scene: a plain link under the name, through the embed's own way when there is one. */}
         <p className="th-lede">
-          <a className="th-btn" data-testid="spatial-link" href={spatialHref(id)}>
-            In the scene ↗
-          </a>
+          <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} data-testid="spatial-link" style={{ display: "inline-flex", alignItems: "center", minHeight: 24, color: "inherit", fontSize: "0.9rem", textDecoration: "underline", textUnderlineOffset: "0.2em", textDecorationColor: "var(--th-line)" }} />
         </p>
       </header>
 

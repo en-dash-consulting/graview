@@ -27,7 +27,9 @@ this package serves lists, records, forms, problems and history as ordinary link
   "More" (FR-145); then Find, the standing and the person. A page keeps only its own links — a picture
   its kind as a list, a record "In the scene ↗" to its stop there.
   Under an embed's bar the shell draws none of it, and the face's Find goes in
-  that bar. Each page's own title is said a level under the app's name. See
+  that bar. A design's own shell stands under the bar too (`context.barAbove`),
+  drawing only what is its own; `surface("shell", Shell, { without: ["bar"] })`
+  makes it the whole window. Each page's own title is said a level under the app's name. See
   `apps/todo` for both mounted from one declaration (`/` scene, `/pages` routed).
 - **The host may own the history.** `basename` mounts the face under a path;
   `onNavigate(path, how)` tells a host each page the face opens (`"push"`,

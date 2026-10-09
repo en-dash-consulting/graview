@@ -711,7 +711,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
                     data-testid={`edge-${which}`}
                     onClick={() => set([end.id])}
                     title={`Select ${nameOf(store, end.id)}`}
-                    style={{ fontSize: "0.8125rem", padding: "3px 9px", borderRadius: 999 }}
+                    style={{ fontSize: "0.8125rem", padding: "3px 9px", borderRadius: 6 }}
                   >
                     {nameOf(store, end.id)}
                   </button>

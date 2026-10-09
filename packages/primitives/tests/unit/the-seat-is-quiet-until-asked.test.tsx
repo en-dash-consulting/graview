@@ -153,7 +153,7 @@ describe("the seat is quiet until it is asked", () => {
   it("says where you are when nothing is chosen, with no acts", async () => {
     const host = await draw([]);
     await open(host);
-    expect(host.querySelector('[data-testid="seat-where"]')?.textContent).toBe("Everything: 2 tasks.");
+    expect(host.querySelector('[data-testid="seat-where"]')?.textContent).toBe("The whole thing: 2 tasks.");
     expect(host.querySelectorAll('[data-testid="seat-act"]')).toHaveLength(0);
   });
 

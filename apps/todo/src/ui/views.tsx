@@ -161,7 +161,8 @@ const ListsView = ((props: ViewProps<S>) => {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${Math.max(1, lists.length)}, minmax(0, 1fr))`,
+          // Side by side where each list has room for its names; stacked where it would not (a phone), never three slivers of dates.
+          gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, 12rem), 1fr))`,
           gap: 18,
           alignItems: "start",
           minHeight: 0,

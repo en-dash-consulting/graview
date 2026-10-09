@@ -85,8 +85,13 @@ export interface CalendarOptions {
    * The app's, never the clock's — the same discipline the invariants keep.
    * A lens that read `new Date()` would draw a different picture every
    * morning, and no harness could photograph it twice.
+   *
+   * Unsaid, the store's own day (`Store.today()`, the day its rules are
+   * judged on) — so a calendar kept from the ask field, or declared without
+   * a day, opens on the same day the app's late and due-this-week mean —
+   * and only where the store names none, the reader's own.
    */
-  readonly today: string;
+  readonly today?: string;
   /** Which range it opens in. Month, unless an app knows better. */
   readonly range?: CalendarRange;
   /**
@@ -122,4 +127,10 @@ export interface PlacedEntry {
   readonly at: number | null;
   readonly allDay: boolean;
   readonly done: boolean;
+}
+
+/** The day it is where the reader is, as a calendar reads days: for a store that names no day of its own. */
+export function readersToday(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }

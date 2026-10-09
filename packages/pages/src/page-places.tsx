@@ -54,12 +54,6 @@ function membersOf<S extends AnySchema>(store: Store<S>, kind: string) {
   return store.graph.nodesOfKind(kind).filter((node) => isCurrent(definition, node));
 }
 
-/** "a picture of Tasks", "a picture of Skills across People". */
-function pictureOf<S extends AnySchema>(store: Store<S>, place: Place): string {
-  const of = pluralOf(store, place.kind);
-  return place.across ? `A picture of ${of.toLowerCase()} across ${pluralOf(store, place.across).toLowerCase()}` : `A picture of ${of.toLowerCase()}`;
-}
-
 /** "2 plots", "12 plantings across 4 plots" — how much a picture is over, in the schema's plurals. */
 function overOf<S extends AnySchema>(store: Store<S>, kind: string, across?: string): string {
   const count = (n: number, of: string) => counted(store.schema, of, n);
@@ -449,7 +443,7 @@ export function DefaultPlacesPage<S extends AnySchema>({ context }: { context: P
  * thing means going to it.
  */
 export function DefaultPlacePage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
-  const { store, brand, principal } = context;
+  const { store, principal } = context;
   useStoreTick(store);
   const params = useParams();
   const navigate = useNavigate();
@@ -482,13 +476,12 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
     .filter((entry): entry is { affordance: typeof entry.affordance; mutation: NonNullable<typeof entry.mutation> } => entry.mutation !== undefined);
   return (
     <PageMain context={context} style={wide}>
+      {/*
+        * No eyebrow over the title: "A PICTURE OF TASKS" said what the title
+        * and the line under it say, and linked where "All tasks as a list"
+        * links two lines down.
+        */}
       <header style={{ display: "grid", gap: 12 }}>
-        <p style={{ ...eyebrow, display: "flex", alignItems: "center", gap: 8 }}>
-          <KindMark kind={place.kind} brand={brand} schema={store.schema} size={8} />
-          <Link to={`/${pluralSlug(store.schema, place.kind)}`} style={plain}>
-            {pictureOf(store, place)}
-          </Link>
-        </p>
         <PageTitle context={context}>{place.title}</PageTitle>
         {/*
           * WHAT THE PICTURE IS, NOT WHAT ONE OF ITS MEMBERS IS: how much is

@@ -104,12 +104,13 @@ export function Trail({
     // A crumb is a control, and a control is at least a fingertip tall.
     // A crumb of where you are: quiet, since the picture already shows it.
     minHeight: 26,
-    padding: "2px 10px",
+    padding: "2px 6px",
     fontSize: "0.8125rem",
-    borderRadius: 999,
+    // Words on the bar, not a capsule: the crumb is where you are and its ×, as plain as "Lists" beside it.
+    borderRadius: 6,
     border: "1px solid transparent",
     boxShadow: "none",
-    background: "var(--graview-panel-muted)",
+    background: "transparent",
     color: "var(--graview-ink-muted)",
     whiteSpace: "nowrap",
   } as const;

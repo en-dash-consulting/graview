@@ -12,6 +12,7 @@ import {
   type DateBucket,
 } from "@graview/core";
 import type { CSSProperties, ReactNode } from "react";
+import { VISUALLY_HIDDEN } from "./primitives/measure.js";
 export { arrangementOf, withArrangement } from "./arrangement.js";
 
 /**
@@ -411,7 +412,8 @@ function AddCondition({
   const groups = [...new Set(entries.map((entry) => entry.group))];
   return (
     <label style={label}>
-      Only
+      {/* Said once, by the choice itself ("Only…"), not by a label beside a choice that says it again. */}
+      <span style={VISUALLY_HIDDEN}>Only</span>
       <select
         data-testid={`${testId}-add`}
         value=""
@@ -426,7 +428,7 @@ function AddCondition({
         }}
         style={choice}
       >
-        <option value="">only…</option>
+        <option value="">Only…</option>
         {groups.map((group) => (
           <optgroup key={group} label={group}>
             {entries

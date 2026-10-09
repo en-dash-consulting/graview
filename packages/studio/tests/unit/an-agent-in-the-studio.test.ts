@@ -379,7 +379,7 @@ describe("a studio store is still a store", () => {
   it("hands anything it cannot answer to the graph's own responder", async () => {
     const { reply } = await ask("what is wrong?");
     // The meta-graph holds no violations, and the floor says so in its own words.
-    expect(reply.say.toLowerCase()).toContain("nothing is broken");
+    expect(reply.say.toLowerCase()).toContain("nothing is wrong");
   });
 
   it("never proposes an act the studio does not declare", async () => {

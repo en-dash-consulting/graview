@@ -724,7 +724,10 @@ export function BoardView<S extends AnySchema>({
        * "complete" was quietly about slots being filled and never said so.
        */
       meta={
-        board.empty.length === 0
+        // A board with no slots yet says nothing about filling them: "all 0 filled" was a sum, not a sentence.
+        board.slots.length === 0
+          ? undefined
+          : board.empty.length === 0
           ? `all ${board.slots.length} filled`
           : `${board.empty.length} unfilled`
       }

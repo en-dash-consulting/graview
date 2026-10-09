@@ -115,7 +115,7 @@ describe("the routed face's Find box", () => {
     const host = await face(fresh(), designed(PlacingShell));
     expect(findBoxes(host)).toHaveLength(1);
     expect(host.querySelector('[data-testid="face-find-bar"]')).toBeNull();
-    expect(host.querySelector("nav")!.contains(findBoxes(host)[0]!)).toBe(true);
+    expect(host.querySelector('[data-testid="a-design"] nav')!.contains(findBoxes(host)[0]!)).toBe(true);
   });
 
   it("is there once on the derived shell", async () => {
@@ -161,7 +161,7 @@ describe("the routed face's way back", () => {
         store.apply({ name: "rename-item", args: { id: "i1", label: "Later" } }, { author: nina });
       });
       expect(takeBack(host)).toHaveLength(1);
-      if (registry) expect(host.querySelector("nav")!.contains(takeBack(host)[0]!)).toBe(true);
+      if (registry) expect(host.querySelector('[data-testid="a-design"] nav')!.contains(takeBack(host)[0]!)).toBe(true);
     }
   });
 

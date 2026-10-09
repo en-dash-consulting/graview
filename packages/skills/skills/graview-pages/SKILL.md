@@ -34,7 +34,7 @@ if (location.pathname.startsWith("/pages")) {
   relations in the declaration's words, what can be done, what happened.
 - `/problems` — every broken rule with its repairs.
 
-The shell is the app bar, a row: the name, the switch (Scene, Pages;
+The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, Pages;
 `pages: { scene, pages }` renames them), the place you are on — whose list
 holds the home, the Lists, the Pictures (on a wide bar they stand, the
 rest under More) — Find, standing, person.
@@ -86,7 +86,7 @@ kind's `display.page` groups them; prose keeps its paragraphs, full width.
 `createPageRegistry(schema)` replaces pages per kind and surfaces per app:
 
 ```tsx
-import { createPageRegistry, DerivedForm, kindFacts, PageMain, pageStyles, recordFacts, spatialHref, useStoreTick } from "@graview/pages";
+import { createPageRegistry, DerivedForm, kindFacts, PageMain, pageStyles, recordFacts, SceneLink, useStoreTick } from "@graview/pages";
 
 function PlotPage({ context }: { context: PageContext<S> }) {
   const { store, principal } = context;
@@ -96,7 +96,7 @@ function PlotPage({ context }: { context: PageContext<S> }) {
   return (
     <PageMain context={context}>
       <h1 style={pageStyles.h1}>{facts.label}</h1>
-      <a href={spatialHref(id)}>In the scene ↗</a>
+      <SceneLink context={context} stop={`#focus=${id}`} />
       <DerivedForm store={store} mutation={sow} prefilled={{ plotId: id }} />
     </PageMain>
   );
@@ -145,7 +145,7 @@ is a product:
 
 ```tsx
 createPageRegistry<S, PageComponent<S>>(schema)
-  .surface("shell", Shell)        // the frame around every route: the app bar, the foot
+  .surface("shell", Shell)        // the design's own, under the bar
   .surface("home", Home)
   .surface("problems", Problems)
   .register("plot", "list", Plots).register("plot", "record", PlotRecord)

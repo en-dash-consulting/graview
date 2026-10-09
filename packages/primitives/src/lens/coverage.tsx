@@ -606,7 +606,10 @@ export function CoverageView<S extends AnySchema>({
       title={label ?? "Coverage"}
       {...(page ? { style: { flex: "1 1 auto", minHeight: 0, height: "100%" } } : {})}
       meta={
-        grid.gaps.length === 0 && grid.unasked.length === 0
+        // Nothing to cover yet is not "complete": an empty grid says nothing over it.
+        grid.rows.length === 0 || grid.columns.length === 0
+          ? undefined
+          : grid.gaps.length === 0 && grid.unasked.length === 0
           ? "complete"
           : [
               grid.gaps.length > 0 ? gapWords(grid.gaps.length, options, store.schema) : "",

@@ -1,4 +1,5 @@
 import {
+  argumentWords,
   formFields,
   humanizeField,
   nounOf,
@@ -243,7 +244,7 @@ export function graphResponder<S extends AnySchema>(
     // ------------------------------------------------------- the standing
     if (going.problems || (!told && /\b(wrong|broken|problem|violat|standing)\b/.test(asked))) {
       if (violations.length === 0) {
-        return withMoves({ say: "Nothing is broken — every declared rule holds.", proposals: [], grounded: true });
+        return withMoves({ say: "Nothing is wrong: every rule holds.", proposals: [], grounded: true });
       }
       /*
        * THE SENTENCE MATCHES WHAT IS ACTUALLY BELOW IT.
@@ -321,7 +322,14 @@ export function graphResponder<S extends AnySchema>(
     if (phrased) {
       const args: Record<string, unknown> = {};
       const missing: string[] = [];
-      const quoted = text.match(/"([^"]+)"/)?.[1];
+      /*
+       * The words for a text field: in quotes, else what follows the act's
+       * own words and a "to" or "as" — "rename it to Pay the landlord".
+       */
+      const after = text.slice(text.toLowerCase().indexOf((phrased.title ?? phrased.name).toLowerCase()) + (phrased.title ?? phrased.name).length);
+      // The things named are not the words: "rename Email to Todd to Email to Tom" leaves " to Email to Tom".
+      const unnamed = referents.reduce((rest, node) => { const said = name(node).toLowerCase(); const at = rest.toLowerCase().indexOf(said); return at < 0 ? rest : `${rest.slice(0, at)} it${rest.slice(at + said.length)}`; }, after);
+      const quoted = text.match(/"([^"]+)"/)?.[1] ?? unnamed.match(/^(?:\s+(?:it|this|that|them))?\s+(?:to|as)\s+(.+?)\s*[.!]?$/i)?.[1];
       // Each thing named fills ONE blank: the same record in both ends of a
       // tie is an act that cannot act, and never what was said.
       const unused = [...referents];
@@ -331,7 +339,7 @@ export function graphResponder<S extends AnySchema>(
           args[field.name] = value;
           const at = unused.findIndex((node) => node.id === value);
           if (at >= 0) unused.splice(at, 1);
-        } else if (!field.optional) missing.push(field.name);
+        } else if (!field.optional) missing.push(argumentWords(store.schema, phrased, field.name).label.toLowerCase());
       }
       /*
        * A READING, NOT A FACT. This branch matched an act's title in a
@@ -350,7 +358,8 @@ export function graphResponder<S extends AnySchema>(
         };
       }
       return {
-        say: `"${phrased.title ?? phrased.name}" needs ${missing.join(", ")} — name the ${missing.length === 1 ? "thing" : "things"} (or select ${missing.length === 1 ? "it" : "them"}) and ask again.`,
+        // In the act's own words, never its identifiers: "“Rename” needs a name", not "needs label".
+        say: `“${phrased.title ?? humanizeField(phrased.name)}” needs ${withList(missing)} — say ${missing.length === 1 ? "it" : "them"} (or select ${missing.length === 1 ? "it" : "them"}) and ask again.`,
         proposals: [],
       };
     }
@@ -525,10 +534,18 @@ export function graphResponder<S extends AnySchema>(
        * is, "make Tesla", "phone (555) 298-1878", or a VIN reads as noise.
        */
       const quietly = (label: string) => (label === label.toUpperCase() ? label : label.charAt(0).toLowerCase() + label.slice(1));
+      /*
+       * SAID, NOT PRINTED: a day as a person says one ("due 1 Sep 2026", not
+       * "due 2026-09-01"), and a one-word yes/no as the state it is
+       * ("not finished", not "finished: no").
+       */
       const facts = readableFields(node, definition, { limit: 3 })
-        .map((field) =>
-          field.alone.startsWith(field.label) ? quietly(field.label) + field.alone.slice(field.label.length) : `${quietly(field.label)} ${field.alone}`,
-        )
+        .map((field) => {
+          const raw = (node as Record<string, unknown>)[field.key];
+          if (typeof raw === "boolean" && !/\s/.test(field.label)) return raw ? quietly(field.label) : `not ${quietly(field.label)}`;
+          if (typeof raw === "string" && ISO_DAY.test(raw)) return `${quietly(field.label)} ${dayWords(raw)}`;
+          return field.alone.startsWith(field.label) ? quietly(field.label) + field.alone.slice(field.label.length) : `${quietly(field.label)} ${field.alone}`;
+        })
         .join(", ");
       const touching = violationsTouching(violations, [node.id]);
       /*
@@ -900,4 +917,14 @@ export function llmResponder<S extends AnySchema>(options: {
       ...(moves.length > 0 ? { moves } : {}),
     };
   };
+}
+
+/** A day alone, as the record holds it: `YYYY-MM-DD`. */
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** A day as a person says it in a sentence: "1 Sep 2026". */
+function dayWords(day: string): string {
+  const [year, month, date] = day.split("-").map(Number) as [number, number, number];
+  return `${date} ${MONTHS[month - 1] ?? ""} ${year}`;
 }

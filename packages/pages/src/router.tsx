@@ -12,7 +12,8 @@ import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, Def
 import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
-import { appKeyOf, HeadingsUnder, registerReaderLenses, SpecLinks } from "@graview/primitives/pages";
+import { appKeyOf, BarFindContext, HeadingsUnder, registerReaderLenses, SpecLinks, type BarFind } from "@graview/primitives/pages";
+import { OwnBarFind } from "./page-shell.js";
 import { recordPath } from "./registry.js";
 
 /**
@@ -33,7 +34,7 @@ function RecordLinks<S extends AnySchema>({ context, children }: { readonly cont
   // A view's own headlines are said under the page's title, which is said under the app's name (FR-131).
   return (
     <SpecLinks.Provider value={value}>
-      <HeadingsUnder.Provider value={(context.titleLevel ?? (context.framed ? 1 : 2)) - 1}>{children}</HeadingsUnder.Provider>
+      <HeadingsUnder.Provider value={(context.titleLevel ?? (context.framed && !context.barAbove ? 1 : 2)) - 1}>{children}</HeadingsUnder.Provider>
     </SpecLinks.Provider>
   );
 }
@@ -318,11 +319,29 @@ export function PagesRoutes<S extends AnySchema>({
   readonly context: PageContext<S>;
   readonly registry?: PageRegistry<S, PageComponent<S>>;
 }) {
-  const own = registry?.lookupSurface("shell");
-  const Shell = (own ?? DefaultShell) as ComponentType<{
-    context: PageContext<S>;
-    children: ReactNode;
-  }>;
+  const Own = registry?.lookupSurface("shell") as ComponentType<{ context: PageContext<S>; children: ReactNode }> | undefined;
+  const own = Own !== undefined;
+  /*
+   * ONE BAR, WHICHEVER SHELL (FR-131). A design's shell is drawn UNDER the
+   * app bar, as it always was inside an embed. Standalone it used to be the
+   * whole window, so every design drew its own masthead, its own Find, its
+   * own "In the scene ↗" and its own "Remembered in this browser", and the
+   * same app read differently at its own address than in a host's page.
+   * Told `barAbove`, a design draws only what is its own. A design that
+   * really is the whole window says so: `without: ["bar"]`.
+   */
+  const ownsTheWindow = own && (registry?.without().has("bar") ?? false);
+  const under: PageContext<S> = own && !ownsTheWindow && !context.embedded ? { ...context, barAbove: true } : context;
+  const frame = (children: ReactNode) =>
+    Own === undefined ? (
+      <DefaultShell context={context}>{children}</DefaultShell>
+    ) : ownsTheWindow ? (
+      <Own context={context}>{children}</Own>
+    ) : (
+      <DefaultShell context={context}>
+        <Own context={under}>{children}</Own>
+      </DefaultShell>
+    );
   const Home = (registry?.lookupSurface("home") ?? DefaultHomePage) as PageComponent<S>;
   const Problems = (registry?.lookupSurface("problems") ?? DefaultProblemsPage) as PageComponent<S>;
   /*
@@ -335,12 +354,15 @@ export function PagesRoutes<S extends AnySchema>({
    * because there is no kind to register it on. The registry already knows;
    * the pages under the shell just had to be told.
    */
-  const inside: PageContext<S> = own ? { ...context, framed: true } : context;
-  return (
+  const inside: PageContext<S> = own ? { ...under, framed: true } : context;
+  /* The own bar's Find slot, where the face's root puts the one Find box (an embed's bar keeps its own). */
+  const [barFind, setBarFind] = useState<BarFind | null>(null);
+  const told = useMemo(() => ({ onFind: setBarFind, find: !(registry?.without().has("find") ?? false) }), [registry]);
+  const routes = (
     // The routed face holds the keyboard the way the scene does, and offers Find and the way back, whichever shell an app draws.
     <FaceRoot context={context} registry={registry}>
     <GoesByAddress context={context}>
-    <Shell context={context}>
+    {frame(<>
     <RecordLinks context={inside}>
       <ScrollReset />
       <Routes>
@@ -386,9 +408,16 @@ export function PagesRoutes<S extends AnySchema>({
         />
       </Routes>
     </RecordLinks>
-    </Shell>
+    </>)}
     </GoesByAddress>
     </FaceRoot>
+  );
+  // Only a design under the bar hands the bar its Find: the derived shell draws its own in the bar, and so says it before any script runs.
+  if (context.embedded || !own || ownsTheWindow) return routes;
+  return (
+    <OwnBarFind.Provider value={told}>
+      <BarFindContext.Provider value={barFind}>{routes}</BarFindContext.Provider>
+    </OwnBarFind.Provider>
   );
 }
 

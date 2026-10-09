@@ -289,7 +289,8 @@ const openProfile = async (page) => {
     });
     await page.waitForTimeout(1400);
     const listed = await page.evaluate(() =>
-      [...document.querySelectorAll('nav[aria-label="Kinds"] a')].map((a) => a.textContent.trim()),
+      // The places the one bar offers, on the row or under its list.
+      [...document.querySelectorAll("[data-graview-app-bar] [data-place-path]")].map((a) => a.textContent.trim()),
     );
     check("things: the routed face lists People only for the seat that keeps them",
       memberKinds && !listed.some((word) => word.startsWith("People")),
@@ -298,7 +299,8 @@ const openProfile = async (page) => {
     await page.goto(`${at("todo")}/pages?today=2026-09-01&as=user-nora`, { waitUntil: "networkidle" });
     await page.waitForTimeout(700);
     const keeperListed = await page.evaluate(() =>
-      [...document.querySelectorAll('nav[aria-label="Kinds"] a')].map((a) => a.textContent.trim()),
+      // The places the one bar offers, on the row or under its list.
+      [...document.querySelectorAll("[data-graview-app-bar] [data-place-path]")].map((a) => a.textContent.trim()),
     );
     check("things: and lists them for the keeper",
       keeperListed.some((word) => word.startsWith("People")),

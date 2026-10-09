@@ -7,7 +7,7 @@ import {
   rankedRepairs,
   recordFacts,
   recordPath,
-  spatialHref,
+  SceneLink,
   StartFreshLink,
   useStoreTick,
   type PageComponent,
@@ -68,6 +68,8 @@ const CSS = `
 .ro-nav a .n { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 0.75rem; color: var(--graview-ink-muted); }
 
 .ro-main { padding: 2rem 2.4rem 5rem; max-width: 72rem; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
+.ro-under { grid-template-columns: minmax(0, 1fr); }
+.ro-under .ro-main { width: 100%; box-sizing: border-box; margin: 0 auto; }
 .ro-eyebrow { font-size: 0.6875rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--graview-ink-muted); margin: 0 0 0.4rem; }
 .ro-eyebrow a { display: inline-flex; align-items: center; min-height: 1.5rem; }
 .ro-h1 { font-family: var(--graview-font-display); font-size: 2.4rem; line-height: 1.05; font-weight: 600; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
@@ -162,6 +164,16 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
   // people and invitations belong to whoever keeps the installation.
   const kept = store.kindsKeptFrom(context.principal);
   const kinds = (store.schema.kinds as readonly string[]).filter((kind) => !kept.has(kind));
+
+  /* Under the app bar, only the page: the bar says the name, every place, Find and the way to the scene. */
+  if (context.barAbove) {
+    return (
+      <div className="ro ro-under">
+        <style>{CSS}</style>
+        <main className="ro-main">{children}</main>
+      </div>
+    );
+  }
 
   return (
     <div className="ro">
@@ -517,9 +529,7 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
           <InPlace context={context} nodeId={id} field="label" value={facts.label} plain />
         </h1>
         <p className="ro-lede">
-          <a className="ro-btn" data-testid="spatial-link" href={spatialHref(id)}>
-            In the scene ↗
-          </a>
+          <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} data-testid="spatial-link" style={{ display: "inline-flex", alignItems: "center", minHeight: 24, color: "inherit", fontSize: "0.9rem", textDecoration: "underline", textUnderlineOffset: "0.2em", textDecorationColor: "var(--ro-line)" }} />
         </p>
       </header>
 

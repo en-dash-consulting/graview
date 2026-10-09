@@ -97,7 +97,8 @@ try {
     ["Lists", "Tasks", "Rules"].every((word) => document.body.textContent.includes(word)),
   );
 
-  await phone.click('nav[aria-label="Kinds"] a[href="/pages/tasks"]');
+  // The bar holds the places now (the design's rail stands aside under it): the list by its address.
+  await phone.goto(`${at("todo")}/pages/tasks?today=2026-09-01`, { waitUntil: "networkidle" });
   await phone.waitForTimeout(500);
   report.checks.phoneList = await hygiene(phone);
   report.checks.listLinksRecords = await phone.evaluate(
@@ -520,16 +521,15 @@ try {
     ),
     // Each picture is the lens itself, drawn: something is in the frame.
     drawn: [...document.querySelectorAll('[data-testid="place-picture"]')].every((el) => el.querySelector("*") !== null),
-    nav: [...document.querySelectorAll("nav a")].map((a) => (a.textContent ?? "").trim()),
+    nav: [...document.querySelectorAll("nav a, nav [data-place-path]")].map((a) => (a.textContent ?? "").trim()),
+    outsideTheBar: [...document.querySelectorAll("nav a, nav [data-place-path]")].filter((a) => !a.closest("[data-graview-app-bar]")).map((a) => (a.textContent ?? "").trim()),
   }));
   report.checks.placesIndex = { cards: index.cards, inert: index.inert, drawn: index.drawn, ok: index.cards.length >= 2 && index.inert && index.drawn };
-  // The scene's bar, mirrored: a picture's name comes before a kind's plural, and Problems is last.
-  // A rail's link carries its count in the same text ("Tasks10"), so it is read by its opening words.
-  const firstPlace = index.nav.findIndex((text) => text.startsWith("The week"));
-  const firstKind = index.nav.findIndex((text) => text.startsWith("Tasks"));
+  // The places are the one bar's (FR-131, FR-138): the pictures and the kinds are offered there, and no rail under it says them again.
   report.checks.navMirrorsTheBar = {
     nav: index.nav,
-    ok: firstPlace !== -1 && firstKind !== -1 && firstPlace < firstKind && (index.nav[index.nav.length - 1] ?? "").startsWith("Problems"),
+    outsideTheBar: index.outsideTheBar,
+    ok: index.nav.some((text) => text.startsWith("The week")) && index.nav.some((text) => text.startsWith("Tasks")) && index.outsideTheBar.length === 0,
   };
   await desk.goto(`${at("todo")}/pages/places/the-week?today=2026-09-01`, { waitUntil: "networkidle" });
   await desk.waitForTimeout(500);

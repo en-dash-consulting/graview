@@ -500,7 +500,19 @@ export function Scene<S extends AnySchema>({
   }, []);
   // The picture as it is right now, part-way between the last view and this
   // one. Everything downstream draws the tween, not the destination.
-  const frame = useAnimatedLayout(result, { enabled: animate && !dragging && !steering });
+  /*
+   * THE FIRST PICTURE IS A CUT. Before its box is measured the city is laid
+   * out for no box at all — as wide as a desk — and tweening from that to
+   * the box it has flew the whole city in from off its edge: in a 480px
+   * embed the first frames stood the districts hundreds of pixels outside
+   * it. The picture measured for the first time arrives where it is.
+   */
+  const measured = useRef(false);
+  const firstMeasured = size !== null && !measured.current;
+  useEffect(() => {
+    if (size !== null) measured.current = true;
+  }, [size]);
+  const frame = useAnimatedLayout(result, { enabled: animate && !dragging && !steering && size !== null && !firstMeasured });
   // Whether anything is moving: the hand, the wheel, or a transition not yet landed.
   const { motion } = useGraview<S>();
   // `t` is the tween's progress: a landed frame is at 1 (the frame is always a fresh object, never `result`).

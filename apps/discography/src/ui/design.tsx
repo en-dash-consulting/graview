@@ -13,7 +13,7 @@ import {
   recordFacts,
   recordPath,
   Repairs,
-  spatialHref,
+  SceneLink,
   StartFreshLink,
   useStoreTick,
   type PageComponent,
@@ -85,6 +85,8 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
   return (
     <div className="ln">
       <style>{CSS}</style>
+      {/* Under the app bar the bar says the name, the sections, Find and the way to the scene: only the page. */}
+      {context.barAbove ? null : (
       <header className="ln-top">
         <Link to="/" className="ln-mark">{brand?.name ?? "Discography"}</Link>
         <nav className="ln-nav" aria-label="Sections">
@@ -102,6 +104,7 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
           </span>
         ) : null}
       </header>
+      )}
       {/* The one main (a section inside an embed); the pages under it are framed. */}
       <PageMain context={context} style={{ maxWidth: "none", padding: 0, display: "block" }}>
         {children}
@@ -243,7 +246,7 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
       <header style={{ display: "grid", gap: "0.5rem" }}>
         <p className="ln-eyebrow"><Link className="ln-link" to={`/${pluralSlug(store.schema, kind)}`}>{plural(store, kind)}</Link></p>
         <h1 className="ln-h1">{facts.label}</h1>
-        <a className="ln-link" href={spatialHref(id)} data-testid="spatial-link">In the scene ↗</a>
+        <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} className="ln-link" data-testid="spatial-link" />
       </header>
       {facts.violations.map((violation, at) => (
         <section key={at} className="ln-card" data-testid="record-violations">

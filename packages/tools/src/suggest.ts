@@ -108,7 +108,8 @@ export function whereLine<S extends AnySchema>({ store, subject, violations, pla
     .slice(0, 3);
   if (kinds.length === 0) return "Nothing here yet.";
   const said = kinds.map((one) => counted(store.schema, one.kind, one.count));
-  return `Everything: ${said.length === 1 ? said[0] : `${said.slice(0, -1).join(", ")} and ${said[said.length - 1]}`}.`;
+  // In the words the bar names this place by (`The whole thing`), not a second name for it.
+  return `The whole thing: ${said.length === 1 ? said[0] : `${said.slice(0, -1).join(", ")} and ${said[said.length - 1]}`}.`;
 }
 
 /**

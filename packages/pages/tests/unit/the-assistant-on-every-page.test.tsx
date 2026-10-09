@@ -59,7 +59,9 @@ describe("the assistant on every page", () => {
     expect(html).not.toContain('data-testid="setting-intelligence"');
   });
 
-  it("lets the reader choose which rung answers, from the face's own footer", () => {
-    expect(draw("/")).toContain('data-testid="setting-intelligence"');
+  it("lets the reader choose which rung answers from the person's menu on the bar, and does not say it again at the foot of every page", () => {
+    const html = draw("/");
+    expect(html).toContain('data-testid="profile-button"');
+    expect(html).not.toMatch(/<footer[^]*data-testid="setting-intelligence"/);
   });
 });
