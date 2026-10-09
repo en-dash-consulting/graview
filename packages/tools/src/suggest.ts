@@ -161,22 +161,24 @@ export function sayAct<S extends AnySchema>(
   affordance: Affordance,
   { store, subject }: { readonly store: Pick<Store<S>, "graph" | "allMutations">; readonly subject: SeatSubject },
 ): string {
-  const mutation = store.allMutations().find((one) => one.name === affordance.mutation);
-  if (affordance.open.length === 0 && mutation?.describe) {
-    try {
-      const said = mutation.describe(affordance.args as never, store.graph as never);
-      if (said.trim()) return said.trim();
-    } catch {
-      // A sentence that cannot be said for these arguments: the title, below.
-    }
-  }
   let label = affordance.label;
-  if (machineWord(label) || label === affordance.mutation) {
+  const named = machineWord(label) || label === affordance.mutation;
+  if (named) {
     const spoken = label.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ").toLowerCase();
     label = spoken.charAt(0).toUpperCase() + spoken.slice(1);
   }
   const record = subject.id ? store.graph.getNode(subject.id) : undefined;
   const onSubject = record !== undefined && affordance.nodeIds.length <= 1 && (affordance.nodeIds[0] ?? record.id) === record.id;
   if (onSubject && /\bit\b/.test(label)) return label.replace(/\bit\b/, subject.name);
+  /* A title with no "it" to name, or no title at all: the act's own sentence, where nothing is left to ask. */
+  const mutation = store.allMutations().find((one) => one.name === affordance.mutation);
+  if (affordance.open.length === 0 && mutation?.describe && (named || onSubject)) {
+    try {
+      const said = mutation.describe(affordance.args as never, store.graph as never);
+      if (said.trim()) return said.trim();
+    } catch {
+      // A sentence that cannot be said for these arguments: the title.
+    }
+  }
   return label;
 }

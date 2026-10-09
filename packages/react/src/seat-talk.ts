@@ -139,6 +139,12 @@ export function createSeatTalk(app: string | null): SeatTalk {
   };
 }
 
+/** Whether a seat is drawn, re-rendering only when that changes: the scene keeps its foot clear for it. */
+export function useSeatDrawn(talk: SeatTalk): boolean {
+  const drawn = () => talk.get().drawn > 0;
+  return useSyncExternalStore(talk.subscribe, drawn, drawn);
+}
+
 /** The conversation as it is now, re-rendering when it changes. */
 export function useSeatTalkState(talk: SeatTalk): SeatTalkState {
   return useSyncExternalStore(talk.subscribe, talk.get, talk.get);

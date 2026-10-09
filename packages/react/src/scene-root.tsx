@@ -51,7 +51,8 @@ import { whereIsIn } from "./where-drawn.js";
 import { BandCard, BeyondCard, SettledView } from "./resolved-view.js";
 import { selectionFor, useElementSize, useRootUnit } from "./scene-helpers.js";
 import { Lines, RelationCaptions } from "./scene-lines.js";
-import { railInset } from "./rails.js";
+import { railInset, SEAT_FOOT } from "./rails.js";
+import { useSeatDrawn } from "./seat-talk.js";
 
 export { railInset };
 import { SceneViewHost } from "./view-host.js";
@@ -134,7 +135,9 @@ export function Scene<S extends AnySchema>({
     selection,
     setSelection,
     setMenuAt,
-    emphasis, hiddenKinds, registerScene, pointer, brand, noteMoved, robots } = useGraview<S>();
+    emphasis, hiddenKinds, registerScene, pointer, brand, noteMoved, robots, seatTalk } = useGraview<S>();
+  /* Whether an ask field stands at the picture's foot: the layout keeps that strip clear of cards. */
+  const seated = useSeatDrawn(seatTalk);
   const found = useFound();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -278,17 +281,20 @@ export function Scene<S extends AnySchema>({
         ? {
             width: size.width,
             /*
-             * The scene lays out into its WHOLE box. The actions strip is a
-             * transient elevated surface — it floats in front of the scene
-             * the way a menu floats in front of a page, and reserving a
-             * permanent band of the height for it squeezed every band on
-             * every screen for chrome that mostly is not there.
+             * The scene lays out into its WHOLE box, but for the strip at its
+             * foot the ask field stands in. The actions strip is a transient
+             * elevated surface — it floats in front of the scene the way a
+             * menu floats in front of a page, and reserving a band for it
+             * squeezed every band for chrome that mostly is not there. The
+             * ask field is always there, so its strip is kept: no district
+             * stands under it, and opening it (over the picture) moves
+             * nothing.
              */
-            height: size.height,
+            height: seated ? Math.max(0, size.height - SEAT_FOOT) : size.height,
           }
         : {}),
     }),
-    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, screenHeight, nameWidth],
+    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, screenHeight, nameWidth, seated],
   );
   /*
    * THE CAMERA IS NOT A MOVE. A drive-in on the far side of a large city

@@ -212,6 +212,8 @@ export function SeatThread({
     log.current?.scrollTo?.({ top: log.current.scrollHeight });
   }, [turns]);
 
+  // Nothing said, nothing to say before it, nothing coming: no empty list standing in the panel.
+  if (turns.length === 0 && empty === null && !busy) return null;
   return (
     <ol
       ref={log}
