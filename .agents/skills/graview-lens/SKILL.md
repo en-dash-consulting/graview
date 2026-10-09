@@ -198,6 +198,3 @@ than a lens, and that is a legitimate thing to have written.
 - Whether it survives being drawn small. The Graview renders the focused view
   at natural size and scales it; `pnpm shrunk` measures whether it clips.
 - Whether the roles you chose generalize, or merely rename your own fields.
-- Whether a reader would keep it. A seat drafts shipped lenses from words
-  (`@graview/tools/draft`) and keeps one as an `add-lens` edit, checked
-  like yours.
