@@ -6,22 +6,16 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { RelationKey, registerDefaultViews } from "../../src/index.js";
+import { KEY_PANE_WIDTH } from "../../src/relation-key.js";
 
 /**
- * THE RELATION KEY STAYS INSIDE ITS OWN RAIL.
+ * THE RELATION KEY IS AS WIDE AS THE KEY'S PANE, wherever it is drawn.
  *
- * The scene reserves a left rail for the key and the panes beside it —
- * `min(264, width * 0.22)`, in proportion, because an embed a paragraph wide
- * cannot give a third of itself to chrome — and the key was sized in fixed
- * pixels. The two agree only on a wide screen: below about 740px of scene
- * the key is wider than the rail it was given, and whatever the layout drew
- * at the left edge of the focus band ended up underneath it. A product in a
- * 700x520 embed had a panel's title clipped to "…nds" by this card.
- *
- * Measured in this repository's own apps the key is 130px and the rail at
- * 700px is 154, so nothing overlapped here — which is exactly why it went
- * unnoticed: it takes a domain whose edge names are long enough to grow the
- * card, and the framework's examples have short ones.
+ * It was capped against a left rail the scene reserved — `min(264, 22%)` —
+ * and the rail is gone: the key stands in the Key's pane at the top right,
+ * `min(280px, 100% - 28px)` wide. Drawn on its own (a host's page, the
+ * desk) it keeps to that same measure, one number for both, so a long
+ * relation's words wrap at the width they are read at in the pane.
  */
 const plot = defineNode("plot", { fields: z.object({ label: z.string() }), plural: "Plots" });
 const gardener = defineNode("gardener", {
@@ -61,11 +55,11 @@ const drawn = () =>
   );
 
 describe("the key at altitude", () => {
-  it("caps itself against the rail's own formula rather than a fixed width", () => {
+  it("caps itself at the Key's pane's own width, not a rail that is gone", () => {
     const html = drawn();
     expect(html).toContain('data-testid="relation-key"');
-    /* The scene's rail is min(264, 22%); this is that, less its own offset. */
-    expect(html).toContain("max(110px, calc(min(250px, 22%) - 32px))");
+    expect(html).toContain(`max-width:${KEY_PANE_WIDTH}`);
+    expect(KEY_PANE_WIDTH).toBe("min(280px, calc(100% - 28px))");
   });
 
   it("names a relation in its declaration's words and its two ends, never by the edge's name", () => {

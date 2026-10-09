@@ -110,23 +110,12 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
         background: "var(--graview-float)",
         boxShadow: "var(--graview-lift-low)",
         /*
-         * IT STAYS INSIDE ITS OWN RAIL.
-         *
-         * The scene reserves a left rail for this and the panes beside it —
-         * `min(264, width * 0.22)` — and the key was sized in fixed pixels,
-         * so the two agreed only on a wide screen. Below about 740px of
-         * scene the key is wider than the rail it was given, and whatever
-         * the layout drew at the left edge of the focus band was under it:
-         * a product in a 700x520 embed had a panel's title clipped to
-         * "…nds" by this card.
-         *
-         * The same formula, in CSS, minus its own 16px offset and a margin,
-         * so the cap cannot drift from the rail again. The 110px floor is
-         * where a key stops being readable at all — under about 590px of
-         * scene the floor wins, and at that width the scene is a desk view
-         * in a phone's clothing anyway (see the routed face).
+         * AS WIDE AS THE KEY'S PANE. It was capped against a left rail the
+         * scene reserved for it, and the rail is gone: drawn on its own it
+         * keeps to the measure the Key's pane gives it, so a long
+         * relation's words wrap where they do there.
          */
-        maxWidth: "max(110px, calc(min(250px, 22%) - 32px))",
+        maxWidth: KEY_PANE_WIDTH,
         // Arrives after the cards have mostly flown, rather than popping at
         // the cut.
         animation: "graview-settle 380ms 280ms ease backwards",
@@ -235,6 +224,9 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
     </section>
   );
 }
+
+/** The Key's pane's width (`LinesKey`), and the widest the key is drawn on its own. */
+export const KEY_PANE_WIDTH = "min(280px, calc(100% - 28px))";
 
 /**
  * What a relation is called where a person reads it: the declaration's
