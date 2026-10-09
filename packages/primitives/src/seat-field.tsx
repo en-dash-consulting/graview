@@ -202,7 +202,6 @@ export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start 
           value={draft}
           placeholder={`Ask ${name}…`}
           aria-label={`Ask ${name}`}
-          aria-expanded={open}
           onPointerEnter={() => panelModule.prefetch()}
           onFocus={() => panelModule.prefetch()}
           onClick={() => {
