@@ -10,10 +10,7 @@ import { byStableKey } from "./ids.js";
  * from the end you are standing on, and the connectors between them.
  */
 
-export function pluralOf(schema: AnySchema, kind: string): string {
-  const definition = schema.tryDefinition(kind);
-  return definition?.plural ?? `${kind}s`;
-}
+export { pluralOf } from "@graview/core";
 
 /** A node on plane 1, and the edge that put it there. */
 interface Related<N> {

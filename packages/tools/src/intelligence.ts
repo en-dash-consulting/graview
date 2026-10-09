@@ -1,4 +1,5 @@
 import {
+  pluralOf,
   argShape,
   formFields,
   labelOf,
@@ -213,7 +214,7 @@ export function llmIntelligence<S extends AnySchema>(options: {
         .map((kind) => {
           const definition = store.schema.tryDefinition(kind);
           const count = store.graph.nodesOfKind(kind).length;
-          return `- ${kind} (${definition?.plural ?? `${kind}s`}, ${count} present): ${definition?.description ?? ""}`;
+          return `- ${kind} (${pluralOf(store.schema, kind)}, ${count} present): ${definition?.description ?? ""}`;
         })
         .join("\n");
       const mutations = store

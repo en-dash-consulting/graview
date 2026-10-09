@@ -1,3 +1,4 @@
+import { pluralOf } from "@graview/core";
 import type { AnySchema } from "@graview/core";
 import type { ReactElement } from "react";
 
@@ -16,7 +17,7 @@ export function withMore(
   const drawn = props.nodes?.length ?? 0;
   if (props.total === undefined || props.total <= drawn) return picture;
   const kind = props.nodes?.[0]?.kind;
-  const plural = kind ? (schema.tryDefinition(kind)?.plural ?? `${kind}s`).toLowerCase() : "more";
+  const plural = kind ? pluralOf(schema, kind).toLowerCase() : "more";
   return (
     <div style={{ display: "grid", gridTemplateRows: "minmax(0, 1fr) auto", height: "100%", minHeight: 0 }}>
       {picture}

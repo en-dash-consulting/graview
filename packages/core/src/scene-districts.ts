@@ -2,6 +2,7 @@ import type { GraviewApp } from "./app.js";
 import { beginning } from "./beginning.js";
 import { cityMap, villageCap, villageOf, type Building, type Plot } from "./city.js";
 import type { AnySchema } from "./schema/schema.js";
+import { pluralOf } from "./schema/define-node.js";
 import { hueFor } from "./theme/derive.js";
 
 /*
@@ -56,7 +57,6 @@ export function sceneDistricts<S extends AnySchema>(app: GraviewApp<S>, options:
   return order
     .filter((kind) => map.has(kind))
     .map((kind) => {
-      const definition = app.schema.tryDefinition(kind) as { plural?: string } | undefined;
       const given = counts[kind];
       const count = typeof given === "number" && Number.isFinite(given) && given > 0 ? Math.floor(given) : 0;
       const plot = map.get(kind)!;
@@ -65,7 +65,7 @@ export function sceneDistricts<S extends AnySchema>(app: GraviewApp<S>, options:
       const { buildings } = villageOf(plot, Array.from({ length: shown }, (_, i) => `${kind}#${i}`));
       return {
         kind,
-        label: definition?.plural ?? `${kind}s`,
+        label: pluralOf(app.schema, kind),
         hue: Math.round(hueFor(kind, accents)),
         plot,
         count,

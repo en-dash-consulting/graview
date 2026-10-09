@@ -2,7 +2,8 @@ import type { GraviewApp, LensDeclaration } from "./app.js";
 import { parseArrangement } from "./arrangement.js";
 import { defOf } from "./schema/zod.js";
 import type { AnySchema } from "./schema/schema.js";
-import { placeSlug, type Place } from "./views/types.js";
+import { pluralLabel } from "./schema/define-node.js";
+import { kindPath, placePath, placeSlug, sharesItsName, type Place } from "./views/types.js";
 
 /**
  * THE LENSES THIS FRAMEWORK SHIPS, AND WHAT EACH ONE TAKES AS DATA (FR-79).
@@ -338,7 +339,6 @@ export function orderKinds(kinds: readonly string[], order: readonly string[] | 
 /** Where `first` opens, resolved against the places and kinds a face has. */
 export type Opening = { readonly to: "home" } | { readonly to: "place"; readonly place: Place } | { readonly to: "kind"; readonly kind: string };
 
-const pluralWord = (schema: AnySchema, kind: string): string => (schema.tryDefinition(kind)?.plural as string | undefined) ?? `${kind}s`;
 
 export function openingOf(first: string | undefined, schema: AnySchema, places: readonly Place[]): Opening | undefined {
   if (first === undefined) return undefined;
@@ -349,7 +349,7 @@ export function openingOf(first: string | undefined, schema: AnySchema, places: 
   const place = places.find((one) => one.title === word) ?? places.find((one) => one.as === slug);
   if (place) return { to: "place", place };
   const kinds = schema.kinds as readonly string[];
-  const kind = kinds.find((one) => one === word) ?? kinds.find((one) => placeSlug(pluralWord(schema, one)) === slug);
+  const kind = kinds.find((one) => one === word) ?? kinds.find((one) => kindPath(schema, one).slice(1) === slug);
   return kind ? { to: "kind", kind } : undefined;
 }
 
@@ -441,40 +441,54 @@ export interface AppPlace {
  * to.
  */
 export function placesOf<S extends AnySchema>(app: GraviewApp<S>): readonly AppPlace[] {
-  const lensPlaces = placesOfLenses(app);
-  const drawn = declaredLenses(app).drawn;
-  const opening = openingOf(app.pages?.first, app.schema, lensPlaces);
-  const hidden = new Set(app.pages?.hide ?? []);
-  const kinds = orderKinds(app.schema.kinds as readonly string[], app.pages?.order);
-  const shared = (place: Place) => lensPlaces.some((other) => other.as === place.as && other.kind !== place.kind);
+  return placesFrom(app.schema, placesOfLenses(app), { ...(app.pages ? { pages: app.pages } : {}), lenses: declaredLenses(app).drawn, home: (app.home?.length ?? 0) > 0 });
+}
+
+/**
+ * THE SAME LIST FROM WHAT A FACE HOLDS: the schema, the places its view
+ * registry names, and the arrangement — what `placesOf` makes from the
+ * declaration, for a seat handed a store and its views rather than the app.
+ * One builder, so the two can never name, address or order a place
+ * differently.
+ */
+export function placesFrom(
+  schema: AnySchema,
+  lensPlaces: readonly Place[],
+  options: { readonly pages?: PagesArrangement; readonly lenses?: readonly { readonly as: string; readonly kinds: readonly string[]; readonly lens: ShippedLensName }[]; readonly home?: boolean } = {},
+): readonly AppPlace[] {
+  const { pages } = options;
+  const kindsDeclared = schema.kinds as readonly string[];
+  const places = lensPlaces.filter((place) => kindsDeclared.includes(place.kind));
+  const opening = openingOf(pages?.first, schema, places);
+  const hidden = new Set(pages?.hide ?? []);
+  const kinds = orderKinds(kindsDeclared, pages?.order);
   const out: AppPlace[] = [
-    { slug: "home", title: "Home", kind: null, cardinality: "many", address: "/", stop: "#", ...(opening?.to === "home" || (opening === undefined && (app.home?.length ?? 0) > 0) ? { first: true } : {}) },
+    { slug: "home", title: "Home", kind: null, cardinality: "many", address: "/", stop: "#", ...(opening?.to === "home" || (opening === undefined && options.home) ? { first: true } : {}) },
     // The scene, a place like the others (FR-132): its stop rides on its address.
-    { slug: OVERVIEW_SLUG, title: sceneTitle(app.pages), kind: null, cardinality: "many", address: OVERVIEW_PATH, stop: "#" },
+    { slug: OVERVIEW_SLUG, title: sceneTitle(pages), kind: null, cardinality: "many", address: OVERVIEW_PATH, stop: "#" },
   ];
-  const byKind = [...lensPlaces].sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind));
+  const byKind = [...places].sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind));
   for (const place of byKind) {
-    const lens = drawn.find((one) => one.as === place.as && one.kinds.includes(place.kind));
-    const of = shared(place) ? placeSlug(pluralWord(app.schema, place.kind)) : undefined;
+    const lens = options.lenses?.find((one) => one.as === place.as && one.kinds.includes(place.kind));
+    const shared = sharesItsName(place, places);
     out.push({
       slug: place.as,
       title: place.title,
       kind: place.kind,
       cardinality: "many",
-      address: `/places/${encodeURIComponent(place.as)}${of ? `?of=${encodeURIComponent(of)}` : ""}`,
-      stop: of ? `#focus=aggregate:${place.kind}&in.view=${encodeURIComponent(place.as)}` : `#view=${encodeURIComponent(place.as)}`,
+      address: placePath(place.as, shared ? kindPath(schema, place.kind).slice(1) : undefined),
+      stop: shared ? `#focus=aggregate:${place.kind}&in.view=${encodeURIComponent(place.as)}` : `#view=${encodeURIComponent(place.as)}`,
       ...(lens ? { lens: lens.lens } : {}),
       ...(opening?.to === "place" && opening.place.kind === place.kind && opening.place.as === place.as ? { first: true } : {}),
     });
   }
   for (const kind of kinds) {
-    const plural = pluralWord(app.schema, kind);
     out.push({
-      slug: placeSlug(plural),
-      title: plural,
+      slug: kindPath(schema, kind).slice(1),
+      title: pluralLabel(schema, kind),
       kind,
       cardinality: "many",
-      address: `/${placeSlug(plural)}`,
+      address: kindPath(schema, kind),
       stop: `#focus=aggregate:${kind}`,
       ...(hidden.has(kind) ? { hidden: true } : {}),
       ...(opening?.to === "kind" && opening.kind === kind ? { first: true } : {}),

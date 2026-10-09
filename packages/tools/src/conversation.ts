@@ -1,4 +1,5 @@
 import {
+  pluralOf,
   argumentWords,
   formFields,
   humanizeField,
@@ -653,7 +654,7 @@ export function graphResponder<S extends AnySchema>(
     const counts = (store.schema.kinds as readonly string[])
       .filter((kind) => !store.modules.disabledKinds.has(kind))
       .map((kind) => {
-        const plural = store.schema.tryDefinition(kind)?.plural ?? `${kind}s`;
+        const plural = pluralOf(store.schema, kind);
         return `${store.graph.nodesOfKind(kind).length} ${plural}`;
       })
       .join(", ");
@@ -782,7 +783,7 @@ export function llmResponder<S extends AnySchema>(options: {
           .slice(0, 12)
           .map((node) => labelOf(definition, node))
           .join(", ");
-        return `- ${kind} (${definition?.plural ?? `${kind}s`}, ${members.length}): ${names}${members.length > 12 ? ", …" : ""}`;
+        return `- ${kind} (${pluralOf(store.schema, kind)}, ${members.length}): ${names}${members.length > 12 ? ", …" : ""}`;
       })
       .join("\n");
     /*

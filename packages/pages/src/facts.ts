@@ -1,4 +1,5 @@
 import {
+  pluralLabel,
   labelOf,
   readableFields,
   tellApart,
@@ -254,7 +255,7 @@ export interface KindMap {
 export function kindMap<S extends AnySchema>(store: Store<S>): KindMap {
   const kinds = (store.schema.kinds as readonly string[]).map((kind) => ({
     kind,
-    plural: store.schema.tryDefinition(kind)?.plural ?? kind,
+    plural: pluralLabel(store.schema, kind),
     count: store.graph.nodesOfKind(kind).length,
   }));
   const counts = new Map<string, number>();

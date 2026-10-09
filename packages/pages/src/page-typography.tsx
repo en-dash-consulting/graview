@@ -1,3 +1,4 @@
+import { pluralLabel } from "@graview/core";
 import { KindFigure } from "@graview/primitives/pages";
 import {
   humanizeField,
@@ -188,8 +189,8 @@ export function glance(
 }
 
 /** The plural, as declared. */
-export const pluralOf = <S extends AnySchema>(store: Store<S>, kind: string): string =>
-  store.schema.tryDefinition(kind)?.plural ?? `${kind}s`;
+/** The plural as a label (`pluralLabel`); a sentence lower-cases it. */
+export const pluralOf = <S extends AnySchema>(store: Store<S>, kind: string): string => pluralLabel(store.schema, kind);
 
 /**
  * The kinds this face lists: not a disabled module's, and not an administered

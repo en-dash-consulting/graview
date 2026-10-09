@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import { dayAsRead, ISO_DAY } from "../days.js";
+import { capitalize } from "../capital.js";
 import type {
   AnyNodeDefinition,
   EdgeMap,
@@ -173,6 +174,15 @@ export interface ReadableField {
 const NOT_A_FIELD = new Set(["id", "kind", "label"]);
 
 /** `effectiveFrom` shown to a person is a schema leaking through a surface. */
+/**
+ * WHAT AN ACT IS CALLED, everywhere it is offered — the actions strip, the
+ * seat, a model's tool: its title, else its name in words ("markDone" is
+ * "Mark done").
+ */
+export function actTitle(act: { readonly name: string; readonly title?: string }): string {
+  return act.title ?? humanizeField(act.name);
+}
+
 export function humanizeField(field: string): string {
   const spaced = field
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
@@ -208,7 +218,27 @@ export function valueWords(definition: AnyNodeDefinition | undefined, key: strin
  */
 export function counted(schema: { tryDefinition(kind: string): { readonly noun?: string; readonly plural?: string } | undefined }, kind: string, count: number): string {
   const definition = schema.tryDefinition(kind);
-  return `${count} ${count === 1 ? nounOf(definition, kind) : (definition?.plural ?? `${kind}s`).toLowerCase()}`;
+  return `${count} ${count === 1 ? nounOf(definition, kind) : pluralOf(schema, kind).toLowerCase()}`;
+}
+
+/**
+ * WHAT A KIND'S RECORDS ARE CALLED TOGETHER, inside a sentence: its
+ * declared plural, else its name in words with an "s" — "shelf items" for
+ * `shelfItem`, split as `humanizeField` splits a name. Every surface that
+ * says a kind's many says the same. A label is `pluralLabel`; an address is
+ * `kindPath`, which keeps the name as written.
+ */
+export function pluralOf(schema: { tryDefinition(kind: string): { readonly plural?: string } | undefined }, kind: string): string {
+  return schema.tryDefinition(kind)?.plural ?? `${humanizeField(kind).toLowerCase()}s`;
+}
+
+/**
+ * THE SAME WORD STANDING ALONE as a label — a heading, a hit, a group's
+ * name, a button that starts with it: `pluralOf` with its first letter
+ * upper-cased ("Tasks"). Inside a sentence the plural is `pluralOf` itself.
+ */
+export function pluralLabel(schema: { tryDefinition(kind: string): { readonly plural?: string } | undefined }, kind: string): string {
+  return capitalize(pluralOf(schema, kind));
 }
 
 /**

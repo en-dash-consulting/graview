@@ -1,7 +1,10 @@
 import {
+  kindPath,
   labelOf,
   nounOf,
-  placeSlug,
+  placesFrom,
+  pluralOf as pluralOfKind,
+  recordPath,
   readableFields,
   search,
   squeeze,
@@ -10,6 +13,7 @@ import {
   type AnySchema,
   type AppPlace,
   type Hit,
+  type PagesArrangement,
   type Place,
   type Principal,
   type Store,
@@ -239,10 +243,9 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
 
   const definitionOf = (kind: string) => schema.tryDefinition(kind);
   const nameOf = (node: AnyNode) => labelOf(definitionOf(node.kind), node);
-  const pluralOf = (kind: string) => definitionOf(kind)?.plural ?? `${kind}s`;
-  const listAddress = (kind: string) =>
-    places.find((place) => place.kind === kind && place.address === `/${placeSlug(pluralOf(kind))}`)?.address ?? `/${placeSlug(pluralOf(kind))}`;
-  const recordAddress = (node: AnyNode) => `/${placeSlug(pluralOf(node.kind))}/${encodeURIComponent(node.id)}`;
+  const pluralOf = (kind: string) => pluralOfKind(schema, kind);
+  const listAddress = (kind: string) => places.find((place) => place.kind === kind && place.address === kindPath(schema, kind))?.address ?? kindPath(schema, kind);
+  const recordAddress = (node: AnyNode) => recordPath(schema, node.kind, node.id);
   const toRecord = (node: AnyNode): SeatMove => ({
     to: "record",
     id: node.id,
@@ -664,29 +667,10 @@ function list(items: readonly string[]): string {
  * kind's list, with the same addresses — for a seat that is handed a store
  * and its views rather than the app.
  */
-export function placesFromViews(schema: AnySchema, places: readonly Place[], options: { readonly scene?: string } = {}): AppPlace[] {
-  const plural = (kind: string) => (schema.tryDefinition(kind)?.plural as string | undefined) ?? `${kind}s`;
-  const out: AppPlace[] = [
-    { slug: "home", title: "Home", kind: null, cardinality: "many", address: "/", stop: "#" },
-    { slug: "overview", title: options.scene ?? "Scene", kind: null, cardinality: "many", address: "/places/overview", stop: "#" },
-  ];
-  for (const place of places) {
-    if (!(schema.kinds as readonly string[]).includes(place.kind)) continue;
-    const shared = places.some((other) => other.as === place.as && other.kind !== place.kind);
-    const of = shared ? `?of=${encodeURIComponent(placeSlug(plural(place.kind)))}` : "";
-    out.push({
-      slug: place.as,
-      title: place.title,
-      kind: place.kind,
-      cardinality: "many",
-      address: `/places/${encodeURIComponent(place.as)}${of}`,
-      stop: shared ? `#focus=aggregate:${place.kind}&in.view=${encodeURIComponent(place.as)}` : `#view=${encodeURIComponent(place.as)}`,
-    });
-  }
-  for (const kind of schema.kinds as readonly string[]) {
-    out.push({ slug: placeSlug(plural(kind)), title: plural(kind), kind, cardinality: "many", address: `/${placeSlug(plural(kind))}`, stop: `#focus=aggregate:${kind}` });
-  }
-  return out;
+export function placesFromViews(schema: AnySchema, places: readonly Place[], options: { readonly scene?: string; readonly pages?: PagesArrangement } = {}): AppPlace[] {
+  // The scene's word, said outright, stands over the arrangement's.
+  const pages = options.scene !== undefined ? { ...options.pages, scene: options.scene } : options.pages;
+  return [...placesFrom(schema, places, pages ? { pages } : {})].map(({ first: _first, hidden: _hidden, lens: _lens, ...place }) => place);
 }
 
 /** What the resolver is handed from a turn's context. */

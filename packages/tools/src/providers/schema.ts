@@ -1,4 +1,4 @@
-import { argShape, humanizeField, nodeRefArgs, nounOf, withArticle, type AnySchema, type Store } from "@graview/core";
+import { actTitle, argShape, nodeRefArgs, nounOf, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
 import type { Affordance, AffordanceProvider, Observation, OpenParameter } from "../types.js";
 
 const BASE_SCORE = 40;
@@ -90,7 +90,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             if (makes && !breaks && open.length === 0) continue;
             affordances.push({
               id: `schema:edge:${mutation.name}:${edge.kind}:${edge.from}:${edge.to}`,
-              label: mutation.title ?? humanizeField(mutation.name),
+              label: actTitle(mutation),
               provider: "schema",
               mutation: mutation.name,
               args,
@@ -194,7 +194,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           }
           affordances.push({
             id: `schema:add:${mutation.name}`,
-            label: mutation.title ?? humanizeField(mutation.name),
+            label: actTitle(mutation),
             provider: "schema",
             mutation: mutation.name,
             args: {},
@@ -369,8 +369,8 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           id: `schema:${mutation.name}`,
           label:
             nodes.length > 1
-              ? `${mutation.title ?? humanizeField(mutation.name)} (${nodes.length})`
-              : (mutation.title ?? humanizeField(mutation.name)),
+              ? `${actTitle(mutation)} (${nodes.length})`
+              : (actTitle(mutation)),
           provider: "schema",
           mutation: mutation.name,
           args: batch[0] ?? {},
@@ -384,7 +384,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           why:
             nodes.length > 1
               ? `all ${nodes.length} selected nodes are ${[...kinds]
-                  .map((kind) => (store.schema.tryDefinition(kind as string)?.plural ?? humanizeField(kind as string)).toLowerCase())
+                  .map((kind) => pluralOf(store.schema, kind as string).toLowerCase())
                   .join(" or ")}`
               : `this is ${withArticle(nounOf(store.schema.tryDefinition(nodes[0]!.kind as string), nodes[0]!.kind as string))}`,
           nodeIds: nodes.map((node) => node.id),
@@ -483,7 +483,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
              * reading from here; without it the near-end title is all there
              * is, and `graview check` says so by name.
              */
-            label: mutation.fromTheOtherEnd ?? mutation.title ?? humanizeField(mutation.name),
+            label: mutation.fromTheOtherEnd ?? actTitle(mutation),
             provider: "schema",
             mutation: mutation.name,
             args: { [mine.name]: chosen.id },

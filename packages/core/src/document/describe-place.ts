@@ -4,7 +4,8 @@ import type { Principal } from "../permissions/types.js";
 import type { Store } from "../store.js";
 import { declaredLenses, orderKinds, placesOf, type AppPlace } from "../places.js";
 import type { AnySchema } from "../schema/schema.js";
-import { fieldWords, isCurrent, labelOf, pageSections, readableFields } from "../schema/define-node.js";
+import { fieldWords, isCurrent, labelOf, pageSections, pluralOf, readableFields } from "../schema/define-node.js";
+import { recordPath } from "../views/types.js";
 import { columnMoves, columnOf, statusColumns } from "../columns.js";
 import { coverageParts } from "./describe-coverage.js";
 import { compileBlocks, fieldSpecsOf, resolveBlocks, type BlockContext, type ResolvedBlock } from "./blocks.js";
@@ -246,7 +247,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     drawnBy = "record";
     const definition = schema.tryDefinition(record.kind);
     const title = labelOf(definition, record);
-    described = { slug: record.id, title, kind: record.kind, address: `/${record.kind}/${record.id}` };
+    described = { slug: record.id, title, kind: record.kind, address: recordPath(schema, record.kind, record.id) };
     const page = views[record.kind]?.page;
     if (page) parts.push(...say(resolveBlocks(compileBlocks(page), base(record, 2)), 1, `views.${record.kind}.page`));
     const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(schema, graph, record) : record;
@@ -279,7 +280,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
         parts.push({ t: "heading", level: 1, text: app.name ?? "Home" });
         for (const kind of shown) {
           const count = graph.nodesOfKind(kind).filter((node) => isCurrent(schema.tryDefinition(kind), node)).length;
-          if (count > 0) parts.push({ t: "text", text: `${count} ${pluralOf(schema, kind, count)}` });
+          if (count > 0) parts.push({ t: "text", text: `${count} ${kindWord(schema, kind, count)}` });
         }
       }
     } else if (lens?.lens === "blocks") {
@@ -299,8 +300,8 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
         if (!field) continue;
         const columns = statusColumns(schema, kind, field);
         const members = graph.nodesOfKind(kind).filter((node) => isCurrent(schema.tryDefinition(kind), node));
-        if (Object.keys(bindings).length > 1) parts.push({ t: "heading", level: 2, text: pluralOf(schema, kind, 2).replace(/^./, (c) => c.toUpperCase()) });
-        parts.push({ t: "text", text: `${members.length} ${pluralOf(schema, kind, members.length)} in columns by ${fieldWords(schema.tryDefinition(kind), field).toLowerCase()}.` });
+        if (Object.keys(bindings).length > 1) parts.push({ t: "heading", level: 2, text: kindWord(schema, kind, 2).replace(/^./, (c) => c.toUpperCase()) });
+        parts.push({ t: "text", text: `${members.length} ${kindWord(schema, kind, members.length)} in columns by ${fieldWords(schema.tryDefinition(kind), field).toLowerCase()}.` });
         const groups = columns
           .map((column) => ({ column, items: members.filter((node) => columnOf(node as Record<string, unknown>, field, columns) === column.value).map((node) => item(node, "card", 1)) }))
           // The column of records with no value is there only while something is in it.
@@ -321,14 +322,14 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
       // A picture's geometry is not words: say what it is over, and the records it draws.
       drawnBy = `lens:${lens.lens}`;
       const members = lens.kinds.flatMap((kind) => graph.nodesOfKind(kind).filter((node) => isCurrent(schema.tryDefinition(kind), node)));
-      parts.push({ t: "text", text: `A ${lens.lens} of ${members.length} ${lens.kinds.map((kind) => pluralOf(schema, kind, members.length)).join(" and ")}.` });
+      parts.push({ t: "text", text: `A ${lens.lens} of ${members.length} ${lens.kinds.map((kind) => kindWord(schema, kind, members.length)).join(" and ")}.` });
       parts.push({ t: "list", as: "name", columns: 1, groups: [{ items: members.map((node) => item(node, "name", 1)) }] });
     } else {
       // A kind's list page: each current record by its row.
       drawnBy = "derived";
       const members = graph.nodesOfKind(at.kind).filter((node) => isCurrent(schema.tryDefinition(at.kind!), node));
       parts.push({ t: "heading", level: 1, text: at.title });
-      if (members.length === 0) parts.push({ t: "list", as: "row", columns: 1, groups: [], empty: `No ${pluralOf(schema, at.kind, 0)} yet.` });
+      if (members.length === 0) parts.push({ t: "list", as: "row", columns: 1, groups: [], empty: `No ${kindWord(schema, at.kind, 0)} yet.` });
       else parts.push({ t: "list", as: "row", columns: 1, groups: [{ items: members.map((node) => item(node, "row", 1)) }] });
     }
   }
@@ -338,10 +339,10 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
   return { ok: true, description: { ...description, text: placeText(description) } };
 }
 
-function pluralOf(schema: AnySchema, kind: string, count: number): string {
+function kindWord(schema: AnySchema, kind: string, count: number): string {
   const definition = schema.tryDefinition(kind) as { noun?: string; plural?: string } | undefined;
   if (count === 1) return definition?.noun ?? kind;
-  const plural = definition?.plural ?? `${kind}s`;
+  const plural = pluralOf(schema, kind);
   return plural.charAt(0).toLowerCase() + plural.slice(1);
 }
 

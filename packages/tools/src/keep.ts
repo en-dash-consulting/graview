@@ -1,4 +1,4 @@
-import { placesOf, type AnySchema, type AppPlace, type GraviewApp, type LensDeclaration, type ShippedLensName } from "@graview/core";
+import { pluralOf, placesOf, type AnySchema, type AppPlace, type GraviewApp, type LensDeclaration, type ShippedLensName } from "@graview/core";
 import { checkApp, compileDocument } from "@graview/core/check";
 import { diffDocuments, editDocument, type DocumentEdit, type GraviewDocument } from "@graview/core/document";
 import { lensEditOf, takeBackEditOf, type AddLensEdit, type RemoveLensEdit } from "./draft.js";
@@ -17,7 +17,7 @@ import { lensEditOf, takeBackEditOf, type AddLensEdit, type RemoveLensEdit } fro
  * (`onKeepLens`).
  */
 
-const pluralOf = (schema: AnySchema, kind: string): string => ((schema.tryDefinition(kind) as { plural?: string } | undefined)?.plural ?? `${kind}s`).toLowerCase();
+const pluralWords = (schema: AnySchema, kind: string): string => pluralOf(schema, kind).toLowerCase();
 
 /** What a lens is kept in: the document an app was compiled from, or the app as it was declared in code. */
 export type LensHolder<S extends AnySchema = AnySchema> = { readonly document: GraviewDocument } | { readonly app: GraviewApp<S> };
@@ -101,7 +101,7 @@ async function changeLenses<S extends AnySchema>(holder: LensHolder<S>, edit: Ad
   if (wrong.length > 0) return refused(wrong.map((finding) => ({ path: finding.where, message: finding.message })));
   const place = adding ? placesOf(after).find((one) => one.title === edit.title) : undefined;
   if (adding && !place) return refused([{ path: "lenses", message: `“${edit.title}” does not draw, so it would be no place` }]);
-  const where = adding ? (place?.kind ? `, over ${pluralOf(app.schema as AnySchema, place.kind)}` : "") : "";
+  const where = adding ? (place?.kind ? `, over ${pluralWords(app.schema as AnySchema, place.kind)}` : "") : "";
   return { ok: true, said, sentences: [adding ? `A lens "${edit.title}" is added${where}.` : `The lens "${edit.title}" is removed.`], edit, undo, app: after, ...(place ? { place } : {}) };
 }
 

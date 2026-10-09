@@ -1,4 +1,4 @@
-import { fieldWords, humanizeField, labelOf, nodeRefKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { actTitle, fieldWords, humanizeField, labelOf, nodeRefKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
 import type { Affordance, AffordanceProvider, Observation } from "../types.js";
 
 const SHARED_SCORE = 70;
@@ -86,7 +86,7 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
             if (!target) continue;
             affordances.push({
               id: `structure:join:${mutation.name}:${odd.id}:${neighborId}`,
-              label: `${mutation.title ?? humanizeField(mutation.name)}: bring "${named(odd)}" in line with the others`,
+              label: `${actTitle(mutation)}: bring "${named(odd)}" in line with the others`,
               provider: "structure",
               mutation: mutation.name,
               args: { [subject.arg]: odd.id, [target]: neighborId },
