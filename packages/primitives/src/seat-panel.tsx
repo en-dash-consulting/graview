@@ -4,7 +4,7 @@ import { useAffordances, useApplyAffordance, useGraview, useSeatTalkState, useVi
 import { loadPins, type Affordance, type Responder, type SeatMove, type ToolCall } from "@graview/tools";
 // Its own entry: a bundler places a file in every chunk that can reach it, and only the open seat uses this.
 import { offeredActs, suggestionsFor, whereLine } from "@graview/tools/suggest";
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ChatPanel, LINK, QUIET_BUTTON } from "./chat.js";
 import { useSubject } from "./subject.js";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
@@ -52,9 +52,13 @@ export function SeatPanel({ phone, side, name, onClose, respond, onCall, onPick,
   const yielding = phone && talk.draft !== null;
   /* THE LATEST ANSWER IN SIGHT: the panel scrolls to its foot as a turn arrives. */
   const body = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const at = body.current;
-    if (at) at.scrollTop = at.scrollHeight;
+    if (!at) return;
+    // Yielding, the sheet is exactly as tall as the latest answer (up to its cap): no half a line of the turn before it.
+    const last = yielding ? [...at.querySelectorAll<HTMLElement>("ol > li")].pop() : undefined;
+    if (last) at.style.maxHeight = `min(${last.offsetHeight + 2}px, ${YIELDED})`;
+    at.scrollTop = at.scrollHeight;
   }, [talk.turns.length, talk.busy, yielding]);
   return (
     <div data-testid="seat-panel" {...(yielding ? { "data-graview-seat-yields": "" } : {})} style={{ display: "grid", gridTemplateRows: "auto minmax(0, 1fr)", gap: 4, minHeight: 0 }}>

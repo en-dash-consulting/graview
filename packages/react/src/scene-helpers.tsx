@@ -1,5 +1,5 @@
 import type { Matrix4 } from "@graview/render";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import type { SceneNode } from "./scene-node.js";
 
 /**
@@ -71,6 +71,19 @@ export function useElementSize(
   ref: { current: HTMLElement | null },
 ): { width: number; height: number } | null {
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+
+  /*
+   * MEASURED BEFORE THE FIRST PAINT. A ResizeObserver first reports after a
+   * frame has been painted, so the scene's first frame was laid out for no
+   * box at all — a city as wide as a desk — and then flew in to the box it
+   * had: in a 480px embed the first frame stood the districts off its edges.
+   * Read once here, before paint; the observer follows every change after.
+   */
+  useLayoutEffect(() => {
+    const box = ref.current?.getBoundingClientRect();
+    if (!box || box.width === 0 || box.height === 0) return;
+    setSize((current) => current ?? { width: Math.round(box.width), height: Math.round(box.height) });
+  }, [ref]);
 
   useEffect(() => {
     const element = ref.current;

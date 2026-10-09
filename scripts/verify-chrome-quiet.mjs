@@ -112,6 +112,11 @@
  * uses); and on the scene, a picture chosen from the bar moves the scene's
  * `in.view` and says it.
  *
+ * And THE SCENE'S FIRST FRAME STANDS IN ITS BOX: the org app's city in a
+ * 480 and a 640 px box, watched from the moment the address is asked for,
+ * never draws a district past the box's edge (it used to fly in from a
+ * desk's width).
+ *
  *   node scripts/verify-chrome-quiet.mjs [--engine=chromium|webkit|firefox] [--shots=<dir>] [--quick] [--notices]
  *
  * `--notices` measures only the notices (FR-133), for iterating on them.
@@ -421,7 +426,7 @@ function measure() {
 const BAR_HELPERS = `${[barControls, linesOf, theSwitch, saysOverview, placesSaid].map(String).join("\n")}\nObject.assign(window, { barControls, linesOf, theSwitch, saysOverview, placesSaid });`;
 const host = await buildHost();
 const errors = [];
-const results = { standing: [], standingResized: [], standingPresses: [], quickPicks: [], boxes: [], boxSwitches: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [] };
+const results = { standing: [], standingResized: [], standingPresses: [], quickPicks: [], boxes: [], boxSwitches: [], firstFrames: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -518,6 +523,37 @@ try {
               await close();
             }
           }
+        }
+        /*
+         * THE SCENE'S FIRST FRAME STANDS IN ITS BOX. Laid out before its box
+         * was measured, the city flew in from as wide as a desk, and in a
+         * 480 px box its first frames stood the districts hundreds of pixels
+         * outside it. Watched from the moment the address is asked for: every
+         * frame a district is drawn in, the furthest any stands past the box.
+         */
+        for (const box of [480, 640]) {
+          const context = await browser.newContext({ viewport: BOX_DESK, colorScheme: scheme });
+          await context.addInitScript({ content: BAR_HELPERS });
+          const page = await context.newPage();
+          await page.goto(`${at("quiet-host")}/?doc=org&face=graview&heading=1&box=${box}`, { waitUntil: "commit" });
+          let frames = 0;
+          let past = 0;
+          for (let at = Date.now(); Date.now() - at < 4000; ) {
+            const seen = await page.evaluate(() => {
+              const root = document.querySelector("[data-graview-embed]");
+              const plots = [...document.querySelectorAll("[data-graview-plot]")].map((plot) => plot.getBoundingClientRect()).filter((one) => one.width > 0);
+              if (!root || plots.length === 0) return null;
+              const edge = root.getBoundingClientRect();
+              return Math.max(0, ...plots.map((one) => Math.max(edge.left - one.left, one.right - edge.right)));
+            });
+            if (seen !== null) {
+              frames += 1;
+              past = Math.max(past, Math.round(seen));
+            }
+            await page.waitForTimeout(40);
+          }
+          results.firstFrames.push({ engine, scheme, box, frames, past });
+          await context.close();
         }
         /* The switch as marks alone, asked for by the host: on a desk's whole page and in a box, its words its names. */
         for (const face of ["graview", "pages"]) {
@@ -947,6 +983,10 @@ try {
     findIsReachedByTheKeyboardAndItsShortcutInEveryForm: {
       seen: boxes.map((one) => ({ ...whereOf(one), find: one.find })),
       ok: allBoxes && boxes.every((one) => one.find.byTab && one.find.byShortcut && one.find.typed),
+    },
+    theScenesFirstFrameStandsInsideItsBox: {
+      seen: results.firstFrames,
+      ok: results.firstFrames.length === engines.length * SCHEMES.length * 2 && results.firstFrames.every((one) => one.frames > 0 && one.past <= 2),
     },
     theSwitchAskedForAsMarksSaysItsWordsAsNames: {
       seen: results.boxSwitches,
