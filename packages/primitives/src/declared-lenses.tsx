@@ -19,7 +19,8 @@ import { compileBlocks, SpecPlace, type SpecBlock } from "./spec-views.js";
  *
  *   a timeline's `format`: hours and minutes over a day of 1440, the hour
  *     over a day of 24, the number itself otherwise;
- *   a calendar's `today`: the day it is drawn, in the reader's own zone,
+ *   a calendar's `today`: the store's own day (`Store.today()`), else the
+ *     day it is where the reader is,
  *     unless the declaration names one.
  *
  * Drawn under the place's title, which is what the picture is called on the
@@ -27,12 +28,6 @@ import { compileBlocks, SpecPlace, type SpecBlock } from "./spec-views.js";
  * its state while the store changes under it.
  */
 const MADE = new WeakMap<DrawnLens, ViewComponent<AnySchema>>();
-
-/** The day it is where the reader is, as a calendar reads days. */
-function localToday(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-}
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -51,7 +46,8 @@ function made(lens: DrawnLens): ViewComponent<AnySchema> {
       return createTimelineLens<AnySchema>({ ...(options as unknown as TimelineOptions), extent, format: formatFor(extent) }).View as ViewComponent<AnySchema>;
     }
     case "calendar":
-      return createCalendarLens<AnySchema>({ ...(options as unknown as CalendarOptions), today: typeof options["today"] === "string" ? options["today"] : localToday() }).View as ViewComponent<AnySchema>;
+      // A day the declaration names, else the store's own (`Store.today()`), which the lens reads where it is drawn.
+      return createCalendarLens<AnySchema>({ ...(options as unknown as CalendarOptions), ...(typeof options["today"] === "string" ? { today: options["today"] } : {}) }).View as ViewComponent<AnySchema>;
     case "coverage":
       return createCoverageLens<AnySchema>(options as unknown as CoverageOptions).View as ViewComponent<AnySchema>;
     case "board":

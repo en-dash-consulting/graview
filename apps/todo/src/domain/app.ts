@@ -68,14 +68,14 @@ export const todoApp = defineApp({
        * The calendar, over the same tasks, answering the other question.
        *
        * The week is minutes of a day in named columns and cannot say "due
-       * on the 14th of next month". The day it opens on is the one the
-       * example is written around, so a harness photographs the same month
-       * twice; a product would leave `today` out and open on the real one.
+       * on the 14th of next month". It names no day: it opens on the
+       * store's own (`?today=` for a harness, the real one otherwise), the
+       * same day the home's "late" and the ask field's "this week" mean.
        */
       name: "calendar",
       title: "The month",
       bindings: { task: { start: "due", done: "done" } },
-      options: { range: "month", today: "2026-09-01" },
+      options: { range: "month" },
     },
     {
       /*

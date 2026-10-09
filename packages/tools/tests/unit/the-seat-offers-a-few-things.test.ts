@@ -72,7 +72,7 @@ describe("the line about where the reader is", () => {
   });
 
   it("says the whole thing by its largest kinds when nothing is chosen", () => {
-    expect(whereLine({ store, subject: { id: null, name: "the whole thing" }, violations: [] })).toBe("Everything: 3 tasks and 1 list.");
+    expect(whereLine({ store, subject: { id: null, name: "the whole thing" }, violations: [] })).toBe("The whole thing: 3 tasks and 1 list.");
   });
 });
 

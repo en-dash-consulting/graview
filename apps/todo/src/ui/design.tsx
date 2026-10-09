@@ -11,7 +11,7 @@ import {
   rankedRepairs,
   recordFacts,
   recordPath,
-  spatialHref,
+  SceneLink,
   type PageComponent,
   type PageContext,
   useStoreTick,
@@ -89,6 +89,8 @@ const CSS = `
 .th-nav a.warn .n { color: var(--graview-warn); }
 
 .th-main { padding: 2.2rem 2.6rem 5rem; max-width: 68rem; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
+.th-under { grid-template-columns: minmax(0, 1fr); }
+.th-under .th-main { width: 100%; box-sizing: border-box; margin: 0 auto; }
 .th-eyebrow { font-size: 0.6875rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--graview-ink-muted); margin: 0 0 0.5rem; }
 /* An eyebrow that is a LINK is a control, and a control is at least 24px
    tall however small its words are — WCAG 2.5.8, and the one audit-ui
@@ -240,6 +242,21 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
    */
   const kept = store.kindsKeptFrom(context.principal);
   const kinds = (store.schema.kinds as readonly string[]).filter((kind) => !kept.has(kind));
+
+  /*
+   * UNDER THE APP BAR, only the page. The bar already says the app's name,
+   * every place (the pictures, the kinds, the problems), Find, the way to
+   * the scene and who you are; a rail that said them again was the same
+   * nav twice on a desk and a strip that ran off the side of a phone.
+   */
+  if (context.barAbove) {
+    return (
+      <div className="th th-under">
+        <style>{CSS}</style>
+        <main className="th-main">{children}</main>
+      </div>
+    );
+  }
 
   return (
     <div className="th">
@@ -565,10 +582,9 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
         <h1 className="th-h1">
           <InPlace context={context} nodeId={id} field="label" value={facts.label} plain />
         </h1>
+        {/* Where it stands in the scene: a plain link under the name, through the embed's own way when there is one. */}
         <p className="th-lede">
-          <a className="th-btn" data-testid="spatial-link" href={spatialHref(id)}>
-            In the scene ↗
-          </a>
+          <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} data-testid="spatial-link" style={{ color: "inherit", fontSize: "0.9rem", textDecoration: "underline", textUnderlineOffset: "0.2em", textDecorationColor: "var(--th-line)" }} />
         </p>
       </header>
 

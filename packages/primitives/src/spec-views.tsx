@@ -336,7 +336,8 @@ export function SpecPlace({ blocks, heading = 2, firstHeading, slot }: { readonl
     schema: store.schema as AnySchema,
     kinds: shapesFor(store.schema as AnySchema),
     fields: {},
-    today: today(),
+    // The store's own day where it names one: a draft's "due this week" means the week the app's rules mean.
+    today: store.today() ?? today(),
     // The app's currency and locale are its brand's (FR-100).
     ...(brand ? { money: brand } : {}),
     heading,
@@ -389,7 +390,7 @@ export function useSpecContext(node: AnyGraphNode): SpecContext {
     kinds: shapesFor(schema),
     fields: fieldsFor(schema, node.kind),
     ...(definition ? { definition } : {}),
-    today: today(),
+    today: store.today() ?? today(),
     ...(brand ? { money: brand } : {}),
     figure: () => <KindFigure kind={node.kind} schema={schema} {...(brand ? { brand } : {})} size={22} />,
   };

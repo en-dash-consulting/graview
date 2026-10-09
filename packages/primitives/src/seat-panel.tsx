@@ -43,14 +43,21 @@ export function SeatPanel({ phone, side, name, onClose, respond, onCall, onPick,
   const [settings, setSettings] = useState(false);
   const go = useSeatGo(onPick);
   const latest = [...talk.turns].reverse().find((turn) => turn.role === "seat");
+  /*
+   * A PHONE'S SHEET YIELDS TO A DRAWN VIEW. Asked for a board, the sheet
+   * stood over most of it until it was put away: with a draft in place it
+   * keeps only the latest answer's lines above the field (the rest of the
+   * talk scrolls behind them), so the view is what the reader looks at.
+   */
+  const yielding = phone && talk.draft !== null;
   /* THE LATEST ANSWER IN SIGHT: the panel scrolls to its foot as a turn arrives. */
   const body = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const at = body.current;
     if (at) at.scrollTop = at.scrollHeight;
-  }, [talk.turns.length, talk.busy]);
+  }, [talk.turns.length, talk.busy, yielding]);
   return (
-    <div data-testid="seat-panel" style={{ display: "grid", gridTemplateRows: "auto minmax(0, 1fr)", gap: 4, minHeight: 0 }}>
+    <div data-testid="seat-panel" {...(yielding ? { "data-graview-seat-yields": "" } : {})} style={{ display: "grid", gridTemplateRows: "auto minmax(0, 1fr)", gap: 4, minHeight: 0 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: phone ? "center" : "flex-end", gap: 2, position: "relative", minHeight: 28 }}>
         {phone ? (
           /* A GRAB LINE, the sheet's own way away: a real button the width of a thumb. */
@@ -93,7 +100,8 @@ export function SeatPanel({ phone, side, name, onClose, respond, onCall, onPick,
         data-testid="seat-body"
         style={{
           minHeight: 0,
-          maxHeight: phone ? "calc(70cqh - 96px)" : "min(520px, calc(100cqh - 112px))",
+          // A drawn view on a phone: the sheet yields to it, keeping the latest answer's lines over the field.
+          maxHeight: yielding ? YIELDED : phone ? "calc(70cqh - 96px)" : "min(520px, calc(100cqh - 112px))",
           overflowY: "auto",
           overflowX: "hidden",
           padding: "0 4px",
@@ -236,6 +244,9 @@ function SeatHere({ here }: { readonly here?: string }) {
 }
 
 /** A small square control in the panel's top row: a glyph, its name said to the screen reader. */
+/** How much of the talk a phone's sheet keeps over a drawn view: the latest answer's lines. */
+const YIELDED = "min(5.5em, 22cqh)";
+
 const ICON: CSSProperties = {
   display: "inline-grid",
   placeItems: "center",

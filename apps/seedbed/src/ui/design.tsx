@@ -5,7 +5,7 @@ import {
   kindFacts,
   recordFacts,
   recordPath,
-  spatialHref,
+  SceneLink,
   useStoreTick,
   type PageComponent,
   type PageContext,
@@ -142,9 +142,11 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
     <div className="sb" data-testid="seedbed-design">
       <style>{CSS}</style>
       <aside className="sb-rail">
+        {context.barAbove ? null : (
         <Link to="/" className="sb-mark" data-testid="masthead">
           <Sprout size={20} /> Seedbed
         </Link>
+        )}
         <nav className="sb-nav" aria-label="The garden">
           <Link to="/" aria-current={location.pathname === "/" ? "page" : undefined}>
             The garden
@@ -165,10 +167,14 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
         <p className={`sb-standing${problems > 0 ? " bad" : ""}`} data-testid="standing-card">
           <b>{problems === 0 ? "The garden keeps its agreements." : `${problems} ${problems === 1 ? "agreement is" : "agreements are"} not kept.`}</b>
           {garden.growing.length} growing, {garden.past.length} past, {garden.gardeners.length} {garden.gardeners.length === 1 ? "gardener" : "gardeners"}.
+          {context.barAbove ? null : (
+            <>
           <br />
           <a href={sceneHref} className="sb-scene" title="The whole garden at once, drawn as a map">
             In the scene ↗
           </a>
+            </>
+          )}
         </p>
       </aside>
       {/* One main per document: inside somebody else's page this is a section. */}
@@ -576,7 +582,7 @@ function PlotRecord({ context }: { context: Ctx }) {
           {plot.growing.length > 0 ? ` Growing now: ${plot.growing.map((p) => p.label).join(", ")}.` : " Nothing is growing."}
         </p>
         <p style={{ margin: "10px 0 0" }}>
-          <a href={spatialHref(id)} className="sb-scene" data-testid="spatial-link">In the scene ↗</a>
+          <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} data-testid="spatial-link" style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)", display: "inline-flex", alignItems: "center", minHeight: 24 }} />
         </p>
       </header>
       {untended ? (

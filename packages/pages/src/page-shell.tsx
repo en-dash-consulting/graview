@@ -1,8 +1,9 @@
-import { AppBar, barPlaceAt, barPlaces, LadderSetting, Profile, StandingDot, standingWords, toolStyle, useFavicon } from "@graview/primitives/pages";
+import { AppBar, barPlaceAt, barPlaces, Profile, StandingDot, standingWords, toolStyle, useFavicon } from "@graview/primitives/pages";
 import { faviconHref, pagesTitle, sceneTitle } from "@graview/core";
 import type { AnySchema } from "@graview/core";
 import { Link, useHref, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import type { BarFind } from "@graview/primitives/pages";
 import type { ReactNode } from "react";
 import { kindOfSlug } from "./registry.js";
 import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
@@ -53,30 +54,39 @@ export function DefaultShell<S extends AnySchema>({
     >
       {context.embedded ? null : <OwnBar context={context} />}
       <div style={{ flex: 1 }}>{children}</div>
-      {/* Which rung answers, and whether this browser remembers: the reader's own, at the foot. The app's name is the bar's alone. */}
-      {context.views || context.remembers ? (
+      {/*
+        * Whether this browser remembers, and the way back to the example: the
+        * reader's own, at the foot, under whichever shell. Which rung answers
+        * is a setting in the person's menu and under the ask field's ⚙ — a
+        * form at the foot of every page said it a third time.
+        */}
+      {context.remembers ? (
         <footer
           style={{
             borderTop: "1px solid var(--graview-edge)",
-            padding: "18px 20px 28px",
+            padding: "14px 20px 20px",
             ...quiet,
             fontSize: "0.875rem",
           }}
         >
-          <div style={{ maxWidth: WIDE, margin: "0 auto", display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
-            {/* Which rung answers, chosen here as it is in the scene's profile: the reader's own setting. */}
-            {context.views ? <LadderSetting /> : null}
-            {context.remembers ? (
-              <span data-testid="remembered" style={{ marginLeft: "auto" }}>
-                Remembered in this browser · <StartFreshLink />
-              </span>
-            ) : null}
+          <div style={{ maxWidth: WIDE, margin: "0 auto", display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end" }}>
+            <span data-testid="remembered">
+              Remembered in this browser · <StartFreshLink />
+            </span>
           </div>
         </footer>
       ) : null}
     </div>
   );
 }
+
+/**
+ * WHERE THE OWN BAR KEEPS ITS FIND (set by the router): the bar tells the
+ * face's root its slot, and the root puts the face's one Find box there —
+ * unless the shell under the bar placed its own, or goes without. Unset,
+ * the bar draws its own box.
+ */
+export const OwnBarFind = createContext<{ readonly onFind: (find: BarFind | null) => void; readonly find: boolean } | null>(null);
 
 /**
  * The bar of a routed face that owns its page: the scene is on
@@ -92,6 +102,7 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
   const here = `${location.pathname}${location.search}`;
   const problems = store.violations(invariantContext).length;
   const said = standingWords(problems, "All rules hold");
+  const toldFind = useContext(OwnBarFind);
   return (
     <>
       <AppBar
@@ -107,7 +118,7 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
         places={places}
         current={barPlaceAt(places, here)}
         reach={{ href: (path) => `${base}${path}`, go: (place) => navigate(place.path) }}
-        findBox={<PageFind context={context} />}
+        {...(toldFind ? { onFind: toldFind.onFind, find: toldFind.find } : { findBox: <PageFind context={context} /> })}
         tools={
           <>
             {/* The standing, as the problems' own page: a dot, a number only when a rule is broken (FR-131). */}
@@ -154,7 +165,7 @@ export function PageTitle<S extends AnySchema>({
   ...rest
 }: { context: PageContext<S>; children?: ReactNode } & Record<`data-${string}`, string>) {
   // Under a shell of the app's own, which says the app however it likes, a page's title is its h1 again.
-  const Tag = `h${context.titleLevel ?? (context.framed ? 1 : 2)}` as "h2";
+  const Tag = `h${context.titleLevel ?? (context.framed && !context.barAbove ? 1 : 2)}` as "h2";
   return (
     <Tag style={h1} data-graview-page-title="" {...rest}>
       {children}

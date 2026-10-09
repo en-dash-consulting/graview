@@ -2,9 +2,11 @@ import { createContext, useContext, useLayoutEffect, useSyncExternalStore } from
 
 /**
  * Which of the face's own controls a shell placed itself — so the face's
- * root (face-controls.tsx) draws only the ones it did not.
+ * root (face-controls.tsx) draws only the ones it did not. `"bar"` is only
+ * ever gone without: a design's shell that draws the whole window itself
+ * (`surface("shell", Shell, { without: ["bar"] })`) gets no app bar above it.
  */
-export type FaceControl = "find" | "undo";
+export type FaceControl = "find" | "undo" | "bar";
 
 export interface Placed {
   readonly count: (control: FaceControl) => number;
