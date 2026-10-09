@@ -79,6 +79,8 @@ export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, F
 export { scenePlacesOf, useScenePlaces, WHOLE_KEY, WHOLE_LABEL, type ScenePlaces } from "./scene-places.js";
 export type { BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch } from "./app-bar.js";
 export { Places } from "./places.js";
+// A seat's move, as the scene makes it: the stop it is, or the pane it opens.
+export { sceneMove, type SceneMove } from "./seat-move.js";
 export { FindBox } from "./find.js";
 export { ShowInstallation } from "./installation.js";
 export { Seats } from "./seats.js";
