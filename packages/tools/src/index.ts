@@ -66,6 +66,8 @@ export {
 export type { Completion, Intelligence, ProposedCall } from "./intelligence.js";
 export { graphResponder, llmResponder } from "./conversation.js";
 export type { ChatContext, ChatReply, Responder } from "./conversation.js";
+// Where an ask takes the app (`resolveAsk` is `@graview/tools/go`'s, fetched with the seat that asks).
+export type { AskAbout, AskAnswer, AskContext, SeatMove, SeatOffer } from "./go.js";
 export {
   completionFor,
   configuredResponder,

@@ -20,6 +20,10 @@
     "./edit": {
       "types": "./dist/edit.d.ts",
       "default": "./dist/edit.js"
+    },
+    "./go": {
+      "types": "./dist/go.d.ts",
+      "default": "./dist/go.js"
     }
   },
   "scripts": {
