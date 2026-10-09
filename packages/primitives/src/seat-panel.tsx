@@ -4,7 +4,7 @@ import { useAffordances, useApplyAffordance, useGraview, useSeatTalkState, useVi
 import { loadPins, type Affordance, type Responder, type SeatMove, type ToolCall } from "@graview/tools";
 // Its own entry: a bundler places a file in every chunk that can reach it, and only the open seat uses this.
 import { offeredActs, suggestionsFor, whereLine } from "@graview/tools/suggest";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ChatPanel, LINK, QUIET_BUTTON } from "./chat.js";
 import { useSubject } from "./subject.js";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";

@@ -65,7 +65,9 @@ under its routes, which buys three things at once:
   nav box narrows a list, else lands here. Find and the way back ("Take
   back “…”", ⌘Z) are on every face: a shell that places `<PageFind>` or
   `<PageUndo>` says where, one that does not gets them drawn around it,
-  and `surface("shell", Shell, { without: ["find"] })` goes without.
+  and `surface("shell", Shell, { without: ["find"] })` goes without. A
+  shell stands under the app bar (`context.barAbove`): no name, Find or
+  scene link of its own; `without: ["bar"]` makes it the whole window.
 - **The assistant**, on every route: the scene's own ask field and its
   conversation, the ROUTE what "this" means. A line and a few questions
   before anyone types; proposals apply
@@ -86,7 +88,7 @@ kind's `display.page` groups them; prose keeps its paragraphs, full width.
 `createPageRegistry(schema)` replaces pages per kind and surfaces per app:
 
 ```tsx
-import { createPageRegistry, DerivedForm, kindFacts, PageMain, pageStyles, recordFacts, spatialHref, useStoreTick } from "@graview/pages";
+import { createPageRegistry, DerivedForm, kindFacts, PageMain, pageStyles, recordFacts, SceneLink, useStoreTick } from "@graview/pages";
 
 function PlotPage({ context }: { context: PageContext<S> }) {
   const { store, principal } = context;
@@ -96,7 +98,7 @@ function PlotPage({ context }: { context: PageContext<S> }) {
   return (
     <PageMain context={context}>
       <h1 style={pageStyles.h1}>{facts.label}</h1>
-      <a href={spatialHref(id)}>In the scene ↗</a>
+      <SceneLink context={context} stop={`#focus=${id}`} />
       <DerivedForm store={store} mutation={sow} prefilled={{ plotId: id }} />
     </PageMain>
   );
@@ -145,7 +147,7 @@ is a product:
 
 ```tsx
 createPageRegistry<S, PageComponent<S>>(schema)
-  .surface("shell", Shell)        // the frame around every route: the app bar, the foot
+  .surface("shell", Shell)        // what is the design's own, under the app bar
   .surface("home", Home)
   .surface("problems", Problems)
   .register("plot", "list", Plots).register("plot", "record", PlotRecord)

@@ -260,22 +260,19 @@ export function ActivityRail({
           display: "inline-flex",
           alignItems: "center",
           gap: 6,
-          padding: "4px 11px",
-          borderRadius: 999,
+          minHeight: 30,
+          padding: "0 8px",
+          // A word on the bar like "Lists", not a capsule with a dot that says nothing until an agent is at work.
+          borderRadius: 8,
+          border: "1px solid transparent",
+          background: "transparent",
+          boxShadow: "none",
           fontSize: "0.875rem",
           whiteSpace: "nowrap",
-          ...(running ? { borderColor: "var(--graview-accent)", color: "var(--graview-accent)" } : {}),
+          color: running ? "var(--graview-accent)" : "var(--graview-ink-muted)",
         }}
       >
-        <span
-          aria-hidden="true"
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: 999,
-            background: running ? "var(--graview-accent)" : "var(--graview-edge-bright)",
-          }}
-        />
+        {running ? <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: 999, background: "var(--graview-accent)" }} /> : null}
         {changes.length > 0 ? changes.length : ""} Activity
       </button>
 
