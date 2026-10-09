@@ -97,6 +97,28 @@ describe("a root that holds the keyboard", () => {
     expect(document.activeElement?.getAttribute("aria-label")).toBe("Question");
   });
 
+  /*
+   * Firefox and Safari on macOS do not give a button the keyboard when it is
+   * clicked: the press takes it off the field it was on and puts it nowhere.
+   * A button pressed that way and then taken away (Keep on a drawn view)
+   * left the keyboard on <body> in Firefox, where Chromium's focused button
+   * was removed and the rule landed it.
+   */
+  it("lands it where a pressed control was when the browser never gave that control the keyboard", async () => {
+    const host = await mount("open");
+    const question = host.querySelector<HTMLInputElement>('[aria-label="Question"]')!;
+    question.focus();
+    const close = host.querySelector<HTMLButtonElement>('[data-testid="close"]')!;
+    await act(async () => {
+      // The press: the field lets go, the button is not focused, and it is gone.
+      question.blur();
+      close.click();
+    });
+    await later();
+    await later();
+    expect(document.activeElement?.textContent).toBe("Home");
+  });
+
   it("leaves the keyboard where a surface that knew better put it", async () => {
     const host = await mount("open");
     const close = host.querySelector<HTMLButtonElement>('[data-testid="close"]')!;

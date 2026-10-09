@@ -3,12 +3,12 @@ import { arrangeable, asksForThePast, conditionHolds, type ArrangeContext, type 
 import { describeArg } from "./mutations/node-ref.js";
 import type { Operation } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
-import { humanizeField, isCurrent, labelOf, readableFields, tellApart } from "./schema/define-node.js";
+import { actTitle, humanizeField, isCurrent, labelOf, pluralLabel, pluralOf as pluralOfKind, readableFields, tellApart } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
 import { hidesFrom, seesId } from "./seen.js";
 import type { Store } from "./store.js";
-import { placeSlug, type Place } from "./views/types.js";
+import { kindPath, placePath, sharesItsName, type Place } from "./views/types.js";
 import { capitalize } from "./capital.js";
 
 /**
@@ -385,10 +385,11 @@ export function touchWeights(ops: readonly Operation[]): ReadonlyMap<string, num
   return weights;
 }
 
-const pluralOf = (definition: AnyNodeDefinition | undefined, kind: string) => definition?.plural ?? `${humanizeField(kind)}s`;
+/** A kind's plural as every surface says it (`pluralOf`), from the definition in hand. */
+const pluralOf = (definition: AnyNodeDefinition | undefined, kind: string) => pluralOfKind({ tryDefinition: () => definition }, kind);
 
-/** A kind's list on the routed face, as its router addresses it: the declared plural, else the kind and an s, as a slug. */
-const listPath = (definition: AnyNodeDefinition | undefined, kind: string) => `/${placeSlug(definition?.plural ?? `${kind}s`)}`;
+/** A kind's list on the routed face, as its router addresses it (`kindPath`). */
+const listPath = (definition: AnyNodeDefinition | undefined, kind: string) => kindPath({ tryDefinition: () => definition }, kind);
 
 /** Whether the words name this kind: its id, its singular in words, or its plural. */
 function kindStrength(schema: AnySchema, kind: string, words: readonly string[]): { strength: Exclude<MatchStrength, "field">; field: string; text: string } | undefined {
@@ -567,7 +568,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
     for (const kind of kinds) {
       const match = kindStrength(schema, kind, words);
       if (!match) continue;
-      const label = pluralOf(schema.tryDefinition(kind), kind);
+      const label = pluralLabel(schema, kind);
       const why: Why = { field: match.field, reading: match.field === "plural" ? "Plural" : "Kind", fragment: match.text, strength: match.strength };
       ranked.push(declared({ about: "kind", kind, label, why, count: byKind[kind] ?? 0, address: at(listPath(schema.tryDefinition(kind), kind)) }, match.strength, label, `kind:${kind}`));
     }
@@ -579,8 +580,8 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
       if (!strength) continue;
       const why: Why = { field: "title", reading: "Title", fragment: place.title, strength };
       // A name two kinds' pictures share says which kind's, as placesOf spells it.
-      const of = places.some((other) => other.as === place.as && other.kind !== place.kind) ? listPath(schema.tryDefinition(place.kind), place.kind).slice(1) : undefined;
-      const address = at(`/places/${encodeURIComponent(place.as)}${of ? `?of=${encodeURIComponent(of)}` : ""}`);
+      const of = sharesItsName(place, places) ? listPath(schema.tryDefinition(place.kind), place.kind).slice(1) : undefined;
+      const address = at(placePath(place.as, of));
       ranked.push(declared({ about: "place", kind: place.kind, title: place.title, as: place.as, why, address }, strength, place.title, `place:${place.kind}:${place.as}`));
     }
 
@@ -653,7 +654,7 @@ export function actsOn<S extends AnySchema>(
     if (!binding) continue;
     if (binding.kinds !== "*" && !(binding.kinds as readonly string[]).includes(subject.kind as string)) continue;
     if (!store.permits({ name: mutation.name, args: { [binding.arg]: subject.id } }, principal).ok) continue;
-    const title = mutation.title ?? humanizeField(mutation.name);
+    const title = actTitle(mutation);
     const titled = tokensOf(title);
     const own = asked.filter((word) => titled.some((token) => token.startsWith(word)));
     const strength = own.length > 0 ? strengthOf(title, own) : undefined;

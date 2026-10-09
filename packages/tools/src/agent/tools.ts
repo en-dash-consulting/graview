@@ -1,4 +1,5 @@
 import {
+  actTitle,
   answerSeenBy,
   deriveMutations,
   derivedVia,
@@ -470,15 +471,10 @@ function toolNames(acts: readonly string[]): ReadonlyMap<string, string> {
   return names;
 }
 
-const humanized = (name: string): string => {
-  const words = name.replace(/[-_]+/g, " ").trim();
-  return words.length === 0 ? name : words[0]!.toUpperCase() + words.slice(1);
-};
-
 /** One act as the tool a model is offered: its schema, its title and what it does. */
 function actTool(mutation: AnyMutationDefinition, name: string): ToolDefinition {
   const tool = mutationToolSchema(mutation);
-  const title = tool.title ?? humanized(mutation.name);
+  const title = actTitle(mutation);
   const description = tool.nodeRefs.length > 0 ? `${tool.description}${/[.!?]$/.test(tool.description) ? "" : "."} ${BY_NAME}` : tool.description;
   return {
     name,

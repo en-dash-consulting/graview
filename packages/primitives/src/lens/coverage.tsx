@@ -1,4 +1,4 @@
-import { counted, labelOf, LOCAL_LAYERS, nounOf, walkKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { pluralOf, counted, labelOf, LOCAL_LAYERS, nounOf, walkKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
 import { useGraview, type ViewProps } from "@graview/react";
 import { onTheHorizon } from "./horizon.js";
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
@@ -497,7 +497,7 @@ const HEADER_OVERHANG = Math.ceil(HEADER_MAX * RUN);
  * with no theme"; over artists and the artists they worked with, rows and
  * columns of one kind, it says which way the gap runs.
  */
-const pluralWords = (schema: AnySchema, kind: string): string => (schema.tryDefinition(kind)?.plural ?? `${kind}s`).toLowerCase();
+const pluralWords = (schema: AnySchema, kind: string): string => pluralOf(schema, kind).toLowerCase();
 const kindWords = (schema: AnySchema, kind: string): string => nounOf(schema.tryDefinition(kind), kind);
 export function gapWords(count: number, options: CoverageRoles, schema: AnySchema): string {
   if (options.rows === options.columns) return `${count} with none across`;

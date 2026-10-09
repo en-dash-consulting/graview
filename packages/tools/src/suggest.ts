@@ -1,4 +1,4 @@
-import { counted, labelOf, nounOf, withArticle, type AnySchema, type Store, type Violation } from "@graview/core";
+import { pluralOf, counted, labelOf, nounOf, withArticle, type AnySchema, type Store, type Violation } from "@graview/core";
 import type { Affordance } from "./types.js";
 import { capitalize } from "./capital.js";
 
@@ -98,7 +98,7 @@ export function whereLine<S extends AnySchema>({ store, subject, violations, pla
   if (kind) {
     const count = store.graph.nodesOfKind(kind as never).length;
     const title = place?.title ?? subject.name;
-    const plural = store.schema.tryDefinition(kind)?.plural ?? `${kind}s`;
+    const plural = pluralOf(store.schema, kind);
     const said = counted(store.schema, kind, count);
     return title.toLowerCase() === plural.toLowerCase() ? `${count === 1 ? "There is" : "There are"} ${said} here.` : `${title}: ${said}.`;
   }
@@ -187,7 +187,7 @@ function dueThisWeek<S extends AnySchema>(input: SuggestInput<S>, kind: string |
       return typeof value === "string" && DAY.test(value) && value.slice(0, 10) >= today.slice(0, 10) && value.slice(0, 10) <= last && done !== true;
     });
     if (!soon) continue;
-    const plural = (store.schema.tryDefinition(one)?.plural as string | undefined) ?? `${one}s`;
+    const plural = pluralOf(store.schema, one);
     return { ask: `${capitalize(plural)} due this week`, why: "due" };
   }
   return undefined;
@@ -212,7 +212,7 @@ function aDrawing<S extends AnySchema>(input: SuggestInput<S>, kind: string | un
     const fields = fieldsOf(store, one);
     const choice = Object.keys(fields).find((name) => (choicesOf(fields[name])?.length ?? 0) >= 2);
     if (!choice) continue;
-    const plural = ((store.schema.tryDefinition(one)?.plural as string | undefined) ?? `${one}s`).toLowerCase();
+    const plural = pluralOf(store.schema, one).toLowerCase();
     const words = choice.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ").toLowerCase();
     return { ask: `Show ${plural} as a board by ${words}`, why: "draw" };
   }

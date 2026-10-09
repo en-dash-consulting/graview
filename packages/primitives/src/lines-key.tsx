@@ -1,7 +1,7 @@
 import { layer, type AnySchema } from "@graview/core";
 import { useGraph, useGraview } from "@graview/react/provider";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { RelationKey } from "./relation-key.js";
+import { KEY_PANE_WIDTH, RelationKey } from "./relation-key.js";
 
 /**
  * THE KEY TO THE LINES, BESIDE UP.
@@ -79,7 +79,7 @@ export function LinesKey<S extends AnySchema>() {
             top: 98,
             right: 14,
             zIndex: layer("rail"),
-            width: "min(280px, calc(100% - 28px))",
+            width: KEY_PANE_WIDTH,
             maxHeight: "calc(100cqh - 120px)",
             overflowY: "auto",
             boxSizing: "border-box",
