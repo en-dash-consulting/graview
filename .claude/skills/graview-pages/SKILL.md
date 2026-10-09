@@ -71,7 +71,7 @@ under its routes, which buys three things at once:
   before anyone types; proposals apply
   through the same runtime, attributed and undoable, withheld ones struck
   through. Open questions are
-  listed on `/problems`; the rung that answers is chosen in the footer.
+  listed on `/problems`; the model behind them is the host's `ai`.
 
 Everything a page shows is a derivation the scene uses too: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is

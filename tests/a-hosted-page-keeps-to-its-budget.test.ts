@@ -32,7 +32,7 @@ describe("a hosted page", () => {
     for (const name of ["react-dom", "zod", "@graview/core", "@graview/embed", "@graview/ship"]) expect(Object.keys(measured.upFront.packages)).toContain(name);
   });
 
-  it("carries at most 578.8 KB minified up front: 578.5 KB once an address and a plural were each said by one rule and the keyboard lands in Firefox, so Cloud's shell keeps 16.2 KB for its own under its 595", () => {
+  it("carries at most 578.0 KB minified up front: 577.8 KB once the host decides the AI and no reader's rung is kept or offered, so Cloud's shell keeps 17.0 KB for its own under its 595", () => {
     expect(measured.upFront.minified, `${Math.round(measured.upFront.minified / 1024)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
     expect(measured.over).toBe(false);
   });
@@ -65,7 +65,9 @@ describe("a hosted page", () => {
     // 891 KB since views beside editing, long text on a record page and the places in the bar landed together (FR-144–FR-151), over a lens double-clicked from Up: the scene face measured 911_396 B, 12_552 more.
     // 892 KB since the seat takes you where you ask: the conversation's glue for moves, the resolver itself fetched with the first ask: the scene face measured 912_858 B, 1_462 more.
     // 893 KB since a seat's tools may draw a view and keep it as a lens (draft_view, keep_lens): their two definitions ride with the seat, the engine behind a door; the scene face measured 913_473 B, 1_813 more than before them (911_660).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(893 * 1024);
+    // 880 KB since the host decides the AI once: the reader's picker of rungs and the ⚙ left the seat and the person's menu,
+    // and the margin the budget had kept was taken back: the scene face measured 900_495 B, 2_041 fewer than main (902_536).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(880 * 1024);
   });
 
   it("carries no studio, up front or when asked: the shell stubs it out", () => {
@@ -90,8 +92,8 @@ describe("a hosted page", () => {
     expect(packageOf("<stdin>")).toBe("(the page)");
   });
 
-  it("holds its budget's numbers: 578.8 KB up front, under the 595 Cloud's shell holds itself to, and 150 KB of it zod's", () => {
-    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 578.8 * 1024, zod: 150 * 1024 });
+  it("holds its budget's numbers: 578.0 KB up front, under the 595 Cloud's shell holds itself to, and 150 KB of it zod's", () => {
+    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 578.0 * 1024, zod: 150 * 1024 });
   });
 
   /*

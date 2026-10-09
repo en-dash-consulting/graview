@@ -157,10 +157,14 @@ path to the store:
 - **The conversation** belongs to the app (the provider's `seatTalk`), so it
   survives a switch between the scene and Pages. It answers in words.
   Keyless it answers from the graph (`graphResponder`: standings, named
-  things, when/who, mutations phrased in their own titles); a model plugs in
-  through one completion function (`llmResponder`, `xaiCompletion`,
-  `localCompletion`), chosen by the person under the panel's ⚙. **Your own
-  responder goes in through the shell**: `<Shell chat={{ respond }} />`,
+  things, when/who, mutations phrased in their own titles). **The host
+  decides the AI, once**: `ai={{ complete }}` on `GraviewProvider` (or
+  `mount`/`<Embed>`'s `ai`) gives open questions a model; no reader picks
+  one. With none, an open question hears that AI isn't on here; a model's
+  answer carries a quiet "Answered with AI", its proposals logged `via:
+  "ai:<name>"`. `ai.decide` (`jevDecide`) answers typed decisions;
+  `onDevice: true` runs a model in the browser. **Your own responder goes
+  in through the shell**: `<Shell chat={{ respond }} />`,
   which hands it to the ask field. A proposal is one line with "Do it" and
   "Not now"; Find's last row, "Ask: ‘…’", asks the same seat.
   "Why do I still have mosquitoes?" is a walk through THIS graph, and the
