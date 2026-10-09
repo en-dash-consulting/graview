@@ -3,7 +3,7 @@ import { arrangeable, asksForThePast, conditionHolds, type ArrangeContext, type 
 import { describeArg } from "./mutations/node-ref.js";
 import type { Operation } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
-import { actTitle, humanizeField, isCurrent, labelOf, pluralOf as pluralOfKind, readableFields, tellApart } from "./schema/define-node.js";
+import { actTitle, humanizeField, isCurrent, labelOf, pluralLabel, pluralOf as pluralOfKind, readableFields, tellApart } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
 import { hidesFrom, seesId } from "./seen.js";
@@ -568,7 +568,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
     for (const kind of kinds) {
       const match = kindStrength(schema, kind, words);
       if (!match) continue;
-      const label = pluralOf(schema.tryDefinition(kind), kind);
+      const label = pluralLabel(schema, kind);
       const why: Why = { field: match.field, reading: match.field === "plural" ? "Plural" : "Kind", fragment: match.text, strength: match.strength };
       ranked.push(declared({ about: "kind", kind, label, why, count: byKind[kind] ?? 0, address: at(listPath(schema.tryDefinition(kind), kind)) }, match.strength, label, `kind:${kind}`));
     }

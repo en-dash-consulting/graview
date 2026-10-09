@@ -1,4 +1,4 @@
-import { pluralOf } from "@graview/core";
+import { pluralLabel } from "@graview/core";
 import type { AnySchema } from "@graview/core";
 import { withoutMoves, withPast, withZoom } from "@graview/layout/view";
 import { useGraview, useNavigation } from "@graview/react/provider";
@@ -48,7 +48,7 @@ export function Trail({
   const moved = movedByHand && (view.pan !== undefined || Object.keys(view.pins).length > 0);
   const focused =
     view.focusId && view.focusId !== home ? store.graph.getNode(view.focusId) : undefined;
-  const plural = (kind: string) => pluralOf(store.schema, kind);
+  const plural = (kind: string) => pluralLabel(store.schema, kind);
 
   const chip = {
     display: "inline-flex",

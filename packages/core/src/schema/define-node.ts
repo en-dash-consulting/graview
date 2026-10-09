@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import { dayAsRead, ISO_DAY } from "../days.js";
+import { capitalize } from "../capital.js";
 import type {
   AnyNodeDefinition,
   EdgeMap,
@@ -227,6 +228,15 @@ export function counted(schema: { tryDefinition(kind: string): { readonly noun?:
  */
 export function pluralOf(schema: { tryDefinition(kind: string): { readonly plural?: string } | undefined }, kind: string): string {
   return schema.tryDefinition(kind)?.plural ?? `${kind}s`;
+}
+
+/**
+ * THE SAME WORD STANDING ALONE as a label — a heading, a hit, a group's
+ * name, a button that starts with it: `pluralOf` with its first letter
+ * upper-cased ("Tasks"). Inside a sentence the plural is `pluralOf` itself.
+ */
+export function pluralLabel(schema: { tryDefinition(kind: string): { readonly plural?: string } | undefined }, kind: string): string {
+  return capitalize(pluralOf(schema, kind));
 }
 
 /**

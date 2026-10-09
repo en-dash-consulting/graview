@@ -1,4 +1,4 @@
-import { kindPath, placePath, placeSlug, pluralOf, sharesItsName, type AnySchema } from "@graview/core";
+import { pluralLabel, kindPath, placePath, placeSlug, pluralOf, sharesItsName, type AnySchema } from "@graview/core";
 import { useGraview, type KeepLensAnswer, type SeatKept } from "@graview/react/provider";
 import type { SeatMove } from "@graview/tools";
 import type { AddLensEdit, SeatDraft } from "@graview/tools/draft";
@@ -100,7 +100,7 @@ export function useLensKeeping(go: (move: SeatMove) => void): LensKeeping {
       { role: "seat" as const, text: `Took “${edit.title}” back out of the places.` },
     ]);
     // Wherever the reader stood, the place is gone: its kind's own list is the nearest place that is not.
-    const title = plural(edit.on);
+    const title = pluralLabel(store.schema, edit.on);
     go({ to: "kind", kind: edit.on, title, address: kindPath(store.schema, edit.on), said: `Went to ${title}.` });
   };
 
