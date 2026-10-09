@@ -1,7 +1,7 @@
 import { actsOn, counted, type AnySchema, type Hit } from "@graview/core";
 import { kindCardId, withFocus, withJackIn, withOverview, withoutSearch, withPicture, withQuery, withSelection } from "@graview/layout/view";
 import { useKit } from "@graview/react/drawing";
-import { POPOVER_STYLE, useFound, useGraview, usePopover, useViolations } from "@graview/react/provider";
+import { POPOVER_STYLE, useFound, useGraview, usePopover, useSeatTalkState, useViolations } from "@graview/react/provider";
 import { hueFor } from "@graview/render";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
@@ -19,6 +19,11 @@ import { VISUALLY_HIDDEN } from "./primitives/index.js";
  * `/` or ⌘K reaches it from anywhere; Escape clears the words; Back returns
  * to a search the way it returns to any stop. There is no palette over a
  * grayed-out app: the picture is the answer and the strip is its index.
+ *
+ * AND THE LAST ROW ASKS. Words that are a question rather than a name —
+ * "what is overdue", "who covers Thursday" — find little; the strip's last
+ * row, "Ask: ‘…’", opens the seat with them as the question, where a seat
+ * is drawn. ⌘K and `/` stay Find's: the seat has no chord of its own.
  */
 
 /** One row of the strip: a hit, and the id the listbox knows it by. */
@@ -27,11 +32,18 @@ interface Row {
   readonly hit: Hit;
 }
 
+/** The strip's last row: the words, asked of the seat. */
+interface AskRow {
+  readonly id: string;
+  readonly ask: string;
+}
+
 /** The kind a hit belongs with in the strip; rules have a group of their own. */
 const groupOf = (hit: Hit): string => (hit.about === "rule" ? "rule:" : hit.about === "act" ? "act:" : hit.kind);
 
 export function FindBox<S extends AnySchema>({ compact = false }: { readonly compact?: boolean }) {
-  const { store, view, setView, principal, setMenuAt, brand } = useGraview<S>();
+  const { store, view, setView, principal, setMenuAt, brand, seatTalk } = useGraview<S>();
+  const seat = useSeatTalkState(seatTalk);
   const found = useFound();
   const violations = useViolations<S>();
   const flag = useKit().marks.flag;
@@ -107,7 +119,8 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
     }
     return [...held.entries()];
   }, [found, acts, anchor, strip]);
-  const rows = useMemo(() => groups.flatMap(([, entries]) => entries), [groups]);
+  const asking: AskRow | null = seat.drawn > 0 && q.trim() ? { id: `${strip}-ask`, ask: q.trim() } : null;
+  const rows = useMemo<readonly (Row | AskRow)[]>(() => [...groups.flatMap(([, entries]) => entries), ...(asking ? [asking] : [])], [groups, asking?.ask]);
   const current = rows.find((row) => row.id === active) ?? rows[0];
 
   // A new answer starts at its first row, as a list does.
@@ -116,15 +129,26 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
     setAnchor(null);
   }, [q]);
 
-  const highlight = (row: Row | undefined) => {
+  const highlight = (row: Row | AskRow | undefined) => {
     if (!row) return;
     setActive(row.id);
+    if ("ask" in row) {
+      setAnchor(null);
+      return;
+    }
     if (row.hit.about === "node") setAnchor(row.hit.id);
     else if (row.hit.about !== "act") setAnchor(null);
   };
 
-  const travel = (row: Row | undefined) => {
+  const travel = (row: Row | AskRow | undefined) => {
     if (!row) return;
+    if ("ask" in row) {
+      // The words become the seat's question; the picture lets go of them.
+      seatTalk.ask(row.ask);
+      setView((stop) => withoutSearch(stop));
+      setOpen(false);
+      return;
+    }
     const hit = row.hit;
     switch (hit.about) {
       case "node":
@@ -258,7 +282,7 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
         onMouseDown={(event) => event.preventDefault()}
         style={compact ? { ...STRIP, ...SHEET } : STRIP}
       >
-        {rows.length === 0 ? (
+        {rows.every((row) => "ask" in row) ? (
           <p role="presentation" style={{ margin: 0, padding: "10px 12px", color: "var(--graview-ink-muted)", fontSize: "0.875rem" }} data-testid="find-nothing">
             Nothing here is called “{found?.words || q}”.
           </p>
@@ -291,6 +315,26 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
             </div>
           ))
         )}
+        {asking ? (
+          <div
+            id={asking.id}
+            role="option"
+            aria-selected={asking === current || current?.id === asking.id}
+            data-testid="find-ask"
+            onMouseEnter={() => highlight(asking)}
+            onClick={() => travel(asking)}
+            style={{
+              ...OPTION,
+              borderTop: "1px solid var(--graview-edge)",
+              marginTop: 4,
+              background: current?.id === asking.id ? "var(--graview-panel-muted)" : "transparent",
+            }}
+          >
+            <span>
+              Ask: <span style={{ fontWeight: 600 }}>‘{asking.ask}’</span>
+            </span>
+          </div>
+        ) : null}
         {found && found.searched.past === false && found.searched.kinds.some((kind) => store.schema.tryDefinition(kind)?.lifecycle) ? (
           <p role="presentation" style={{ margin: 0, padding: "6px 12px 8px", color: "var(--graview-ink-faint)", fontSize: "0.75rem" }}>
             Current ones; add is:any for the past.

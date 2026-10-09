@@ -26,8 +26,6 @@ export const POPOVERS = {
   districts: { trigger: "beyond-more", pane: "beyond-list", opens: "press", focus: "into", drawn: ["shell", "embed"] },
   /** A card's acts at the pointer: right-click, the context menu. The card is what the keyboard goes back to. */
   acts: { trigger: null, pane: "context-menu", opens: "context-menu", focus: "into", drawn: ["shell", "embed"] },
-  /** The conversation as a pill's popover, where an app puts `ChatPanel` on a bar of its own. */
-  chat: { trigger: "chat", pane: "chat-panel", opens: "press", focus: "into", drawn: [] },
   /** The studio's own seat, from its bar. */
   "studio-ask": { trigger: "studio-agent", pane: "studio-agent-panel", opens: "press", focus: "into", drawn: ["studio"] },
 } as const;

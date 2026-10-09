@@ -17,6 +17,7 @@ import type { AnySchema } from "../schema/schema.js";
 import {
   checkAccents,
   checkActsFromEnds,
+  checkActsHaveTitles,
   checkBlankInstallation,
   checkEditableFields,
   checkFigures,
@@ -105,6 +106,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   checkReadings(ctx);
   checkEdgeNamesAgree(ctx);
   checkActsFromEnds(ctx, writtenByAModel);
+  checkActsHaveTitles(ctx);
   checkUnmakeable(ctx);
   checkEditableFields(ctx);
   checkPolicy(ctx);

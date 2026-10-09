@@ -47,4 +47,7 @@ export { inTopLayer, placePane, POPOVER_STYLE, POPOVERS, raiseOverPopovers, useP
 export type { PlaceOptions, Popover, PopoverAnchor, PopoverName, PopoverOptions } from "./popover.js";
 // A part fetched when it is first drawn: the line and "Try again" in its place until it arrives (FR-139).
 export { lazyModule, retryLazyParts } from "./lazy-part.js";
+// The conversation with the seat, held by the app so a face switch keeps it.
+export { createSeatTalk, seatTalkKey, useSeatTalkState } from "./seat-talk.js";
+export type { SeatOutcome, SeatSide, SeatTalk, SeatTalkState, SeatTurn } from "./seat-talk.js";
 export type { LazyModule, LazyPartOptions } from "./lazy-part.js";

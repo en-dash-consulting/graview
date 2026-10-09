@@ -1,5 +1,4 @@
 import { failureWords, humanizeField, InvalidArguments, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
-import { useSubject } from "../subject.js";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { POPOVER_STYLE, useAffordances, useApplyAffordance, useGraview, usePopover, useSelection } from "@graview/react";
 import { loadPins, togglePin, type Affordance, type PinOverrides } from "@graview/tools";
@@ -23,18 +22,43 @@ import { VISUALLY_HIDDEN } from "../primitives/index.js";
 /**
  * Where this pane is drawn.
  *
- * `float` is what it always was: a rail beside the picture, or a bar along
+ * `float` is what it always was: a pane beside the picture, or a bar along
  * the bottom when the scene is narrow, and the same pane at the pointer
- * when a right-click opened it. `rail` is its body inside the companion,
- * which owns the frame and the scrolling; `menu` is only the pointer
- * popover, for a scene whose rail is the companion — so the context menu
- * and the assistant stay one construct without drawing the acts twice.
+ * when a right-click opened it. `menu` is only the pointer popover — the
+ * context menu, opened by a right-click or by the acts key on a card —
+ * for a scene whose selection draws no strip of its own.
  */
-export type InspectorPlacement = "float" | "rail" | "menu";
+export type InspectorPlacement = "float" | "menu";
+
+/**
+ * The key a card answers with its acts. A letter, and only on the card that
+ * has the keyboard — a character key bound to focus is not one a voice
+ * user's dictation sets off by accident (WCAG 2.1.4).
+ */
+export const ACTS_KEY = "A";
 
 export function Inspector({ placement = "float" }: { readonly placement?: InspectorPlacement } = {}) {
-  const { store, menuAt, setMenuAt, view } = useGraview<AnySchema>();
-  const subject = useSubject();
+  const { store, menuAt, setMenuAt, view, registerActsDoor } = useGraview<AnySchema>();
+  /*
+   * THE KEYBOARD'S RIGHT-CLICK. The acts key on a card opens this menu at
+   * the card, with the keyboard in it, as a right-click opens it at the
+   * pointer; Escape puts the keyboard back on the card.
+   */
+  useEffect(() => {
+    if (placement !== "menu") return;
+    registerActsDoor({
+      key: ACTS_KEY,
+      open: (from) => {
+        const box = from.getBoundingClientRect();
+        const on =
+          from.closest("[data-graview-pick]")?.getAttribute("data-graview-pick") ??
+          from.closest("[data-graview-view]")?.getAttribute("data-graview-view") ??
+          undefined;
+        setMenuAt({ x: Math.round(box.left + Math.min(16, box.width / 2)), y: Math.round(Math.min(box.bottom, box.top + 36)), ...(on ? { on } : {}) });
+      },
+    });
+    return () => registerActsDoor(null);
+  }, [placement, registerActsDoor, setMenuAt]);
   /*
    * The pane is positioned within the SCENE'S BOX, not the window. It was
    * fixed to the viewport, which put it at the page's edge when the scene
@@ -149,23 +173,10 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
    */
   /*
    * WHAT THIS PANE IS ABOUT. The gesture's own target when a right-click
-   * opened it, else the most recent addition to the selection — and, in
-   * the companion's rail, the rail's own subject when nothing is chosen,
-   * so the acts belong to the thing the header names. A rail that said
-   * "Pay the deposit" over the acts of nothing was two panels again.
+   * opened it, else the most recent addition to the selection.
    */
-  const focus = menuAt?.on ?? selection[selection.length - 1] ?? (placement === "rail" ? (subject.id ?? undefined) : undefined);
-  /*
-   * In the rail with nothing chosen, the acts are the SUBJECT's: what the
-   * header names is what the buttons under it do. Everywhere else the
-   * selection is what the strip is about, as it always was.
-   */
-  const about = placement === "rail" && selection.length === 0 && subject.id ? [subject.id] : undefined;
-  const deriveOptions = useMemo(
-    () => ({ pins, ...(focus === undefined ? {} : { focus }), ...(about ? { about } : {}) }),
-    // `about` is a fresh array each render; the one id in it is what changes.
-    [pins, focus, about?.[0]],
-  );
+  const focus = menuAt?.on ?? selection[selection.length - 1];
+  const deriveOptions = useMemo(() => ({ pins, ...(focus === undefined ? {} : { focus }) }), [pins, focus]);
   // Which acts the app itself pinned — the star on those demotes rather
   // than doubling up, so pressing it always visibly does something.
   const declaredPins = useMemo(
@@ -283,13 +294,8 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
    */
 
   const atPointer = menuAt !== null;
-  /*
-   * In the companion's rail the pane is a SECTION, and the pointer popover
-   * belongs to the copy mounted for it: drawing both would put the acts on
-   * screen twice, once in the rail and once under the pointer.
-   */
-  const railed = placement === "rail" && !atPointer;
-  const standDown = (placement === "rail" && atPointer) || (placement === "menu" && !atPointer);
+  /* The menu placement is only the menu: with nothing at the pointer it draws nothing. */
+  const standDown = placement === "menu" && !atPointer;
   /*
    * A MENU AT THE POINTER IS ONE OF THE FAMILY (FR-77), and closes the way a
    * menu does: Escape, or a press anywhere else, and the keyboard goes back
@@ -338,8 +344,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
    */
   useLayoutEffect(() => {
     const parent = asideRef.current?.offsetParent as HTMLElement | null;
-    // In the companion's rail the companion makes the room, for the whole sheet it is part of.
-    if (!parent || !narrow || atPointer || placement === "rail") return;
+    if (!parent || !narrow || atPointer) return;
     const height = asideRef.current?.getBoundingClientRect().height ?? 0;
     const room = `${Math.round(height) + 20}px`;
     if (parent.style.paddingBottom === room) return;
@@ -351,15 +356,8 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
   });
 
 
-  /*
-   * NOTHING CHOSEN, NOTHING TO SAY — as a floating strip. In the rail the
-   * pane is a section of a panel that is about SOMETHING at all times: the
-   * subject is the place you are looking at when you have chosen nothing,
-   * and the acts that begin a kind are exactly what belongs under its name
-   * there. So the rail draws whatever the derivation offers for the
-   * subject, and stands down only when that is empty too.
-   */
-  if (selection.length === 0 && (placement !== "rail" || focus === undefined)) return null;
+  /* NOTHING CHOSEN, NOTHING TO SAY — unless a right-click landed on something. */
+  if (selection.length === 0 && !atPointer) return null;
 
   /*
    * Whether the strip should say what is selected.
@@ -371,12 +369,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
    * from the bottom of the window read as a stale leftover of the previous
    * stop.
    */
-  /*
-   * And in the companion the header above already names the subject, so a
-   * chip saying "0 selected" under it is the same mistake from the other
-   * direction: the rail is one panel about one thing, said once.
-   */
-  const named = !(selection.length === 1 && selection[0] === view.focusId) && placement !== "rail";
+  const named = !(selection.length === 1 && selection[0] === view.focusId);
 
   /*
    * Nine rows before "Show N more", and the ranking has already put what
@@ -498,8 +491,6 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
         if (atPointer) popover.pane.ref(element);
       }}
       aria-label="Inspector"
-      // In the seat's rail it is a part of the seat, not a landmark inside one (FR-40).
-      role={railed ? "group" : undefined}
       // Chrome, not scene: the ties layer must never anchor a line to the
       // node names this pane repeats.
       data-graview-offstage=""
@@ -513,14 +504,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
         if (event.relatedTarget !== null) keptFocus.current = null;
       }}
       onMouseDown={(event) => event.stopPropagation()}
-      style={railed ? {
-        // In the rail the companion owns the frame: this is a section of it.
-        position: "static",
-        boxSizing: "border-box",
-        display: "flex",
-        flexDirection: "column",
-        gap: 7,
-      } : {
+      style={{
         /*
          * Above the jacked-in page, not only above the scene.
          *
@@ -603,8 +587,8 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
             }),
       }}
     >
-      {/* A heading for the region (FR-25) where it stands alone; in the seat's rail, the seat's heading is its. */}
-      {railed ? null : <h2 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>Inspector</h2>}
+      {/* A heading for the region (FR-25). */}
+      <h2 style={{ ...VISUALLY_HIDDEN, margin: 0 }}>Inspector</h2>
       {/*
         * The heading row disappears entirely when it would hold nothing but
         * the dismiss control. An empty bar with one × in it reads as a
@@ -618,7 +602,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
           gap: "2px 8px",
           minWidth: 0,
           // Room for the dismiss control pinned to the pane's corner.
-          paddingRight: atPointer || railed ? 0 : 24,
+          paddingRight: atPointer ? 0 : 24,
         }}
       >
         {/*
@@ -666,10 +650,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
             that lost its way. The docked strip keeps it: clearing the
             selection is a real act there. */}
       </div>
-      {/* And in the rail the × belonged to a pane that could be dismissed; this
-          one cannot — the companion is always there, and its subject follows
-          you whether or not anything is chosen. */}
-      {atPointer || railed ? null : (
+      {atPointer ? null : (
         <button
           type="button"
           onClick={() => {

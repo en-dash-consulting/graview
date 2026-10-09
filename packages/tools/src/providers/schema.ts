@@ -90,7 +90,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             if (makes && !breaks && open.length === 0) continue;
             affordances.push({
               id: `schema:edge:${mutation.name}:${edge.kind}:${edge.from}:${edge.to}`,
-              label: mutation.title ?? mutation.name,
+              label: mutation.title ?? humanizeField(mutation.name),
               provider: "schema",
               mutation: mutation.name,
               args,
@@ -194,7 +194,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           }
           affordances.push({
             id: `schema:add:${mutation.name}`,
-            label: mutation.title ?? mutation.name,
+            label: mutation.title ?? humanizeField(mutation.name),
             provider: "schema",
             mutation: mutation.name,
             args: {},
@@ -369,8 +369,8 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           id: `schema:${mutation.name}`,
           label:
             nodes.length > 1
-              ? `${mutation.title ?? mutation.name} (${nodes.length})`
-              : (mutation.title ?? mutation.name),
+              ? `${mutation.title ?? humanizeField(mutation.name)} (${nodes.length})`
+              : (mutation.title ?? humanizeField(mutation.name)),
           provider: "schema",
           mutation: mutation.name,
           args: batch[0] ?? {},
@@ -483,7 +483,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
              * reading from here; without it the near-end title is all there
              * is, and `graview check` says so by name.
              */
-            label: mutation.fromTheOtherEnd ?? mutation.title ?? mutation.name,
+            label: mutation.fromTheOtherEnd ?? mutation.title ?? humanizeField(mutation.name),
             provider: "schema",
             mutation: mutation.name,
             args: { [mine.name]: chosen.id },

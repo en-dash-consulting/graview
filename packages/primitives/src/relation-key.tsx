@@ -62,8 +62,7 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
   // A key that disappears mid-hover must not leave its question standing.
   useEffect(() => () => setEmphasis(null), [setEmphasis]);
 
-  // Inside the companion it stands at every height: the rail is the one
-  // place the lines are explained, and they are drawn on the ground too.
+  // Under the Key it stands at every height: the lines are drawn on the ground too.
   if ((!view.overview && !inside) || relations.length === 0) return null;
 
   /*
@@ -88,7 +87,7 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
   return (
     <section
       aria-label="What the lines mean"
-      // In the seat it is a part of the seat, not a landmark of its own (FR-40).
+      // Inside the Key's pane it is a part of it, not a landmark of its own (FR-40).
       role={inside ? "group" : undefined}
       data-testid="relation-key"
       style={inside ? { display: "grid", gap: 1 } : {
@@ -133,17 +132,20 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
         animation: "graview-settle 380ms 280ms ease backwards",
       }}
     >
-      <span
-        style={{
-          fontSize: "0.75rem",
-          letterSpacing: "0.16em",
-          textTransform: "uppercase",
-          color: "var(--graview-ink-faint)",
-          paddingBottom: 2,
-        }}
-      >
-        {relations.length === 1 ? "1 relation" : `${relations.length} relations`}
-      </span>
+      {/* Under "Key" the button already says what this is: no caption over it. */}
+      {inside ? null : (
+        <span
+          style={{
+            fontSize: "0.75rem",
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            color: "var(--graview-ink-faint)",
+            paddingBottom: 2,
+          }}
+        >
+          {relations.length === 1 ? "1 relation" : `${relations.length} relations`}
+        </span>
+      )}
       {relations.map(({ kind: edgeKind, count, ends }) => {
         const { connector, style } = kitConnector(kit, edgeKind);
         const lit =

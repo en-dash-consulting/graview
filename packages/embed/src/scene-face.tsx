@@ -1,6 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import type { Scheme } from "@graview/core";
-import { Companion, FindBox, Inspector, OverviewButton, sceneCss, ShowInstallation, viewsCss, type CompanionMode } from "@graview/primitives/scene";
+import { FindBox, Inspector, LinesKey, OverviewButton, sceneCss, SeatField, ShowInstallation, viewsCss, type SeatStart } from "@graview/primitives/scene";
 import { useBarFind } from "@graview/primitives/frame";
 import { useMemo } from "react";
 import { createPortal } from "react-dom";
@@ -10,17 +10,16 @@ import { AUTO_SCENE_HEIGHT } from "./frame.js";
 /*
  * THE SCENE AND THE GRAVIEW, fetched when one of them is drawn (FR-57). A
  * page that opens on the pages face — a phone, a chat's widget — never
- * loads the map, the companion or the inspector; a page that opens on the
+ * loads the map, the seat's field or the inspector; a page that opens on the
  * scene loads them as it draws, not before the frame can.
  */
 
-/** The picture: the scene, the way up, one panel on the frame, and the inspector. */
-export function SceneFace<S extends AnySchema>({ address = false, auto, companion, rememberAs, scheme, scope }: {
+/** The picture: the scene, the way up and its key, the ask field at its foot, and the acts at the pointer. */
+export function SceneFace<S extends AnySchema>({ address = false, auto, seat, scheme, scope }: {
   /** The host's page is the app (FR-106): the scene keeps its stop in the fragment, as the whole-page Shell does. */
   readonly address?: boolean;
   readonly auto: boolean;
-  readonly companion?: CompanionMode;
-  readonly rememberAs?: string;
+  readonly seat?: SeatStart;
   readonly scheme: Scheme;
   readonly scope: string;
 }) {
@@ -38,8 +37,9 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, companio
       {address ? <UrlSync /> : null}
       <Scene renderer="dom" />
       <OverviewButton />
-      {/* One panel on the frame — the acts, the relations, the seat, the key. */}
-      <Companion<S> {...(companion ? { start: companion } : {})} {...(rememberAs ? { rememberAs } : {})} />
+      <LinesKey<S> />
+      {/* The ask field at the picture's foot, that grows into the conversation when asked. */}
+      <SeatField<S> {...(seat ? { start: seat } : {})} />
       <Inspector placement="menu" />
       {find ? createPortal(<FindBox<S> compact={find.compact} />, find.slot) : null}
     </div>

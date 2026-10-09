@@ -3,7 +3,7 @@ import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnyS
 import { EMPTY_VIEW, aggregateId, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
 import { BarFindContext, barPlaceAt, barPlaces, descentTarget, fetchFrameworkViews, frameworkViewDoors, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
-import type { CompanionMode } from "@graview/primitives";
+import type { SeatStart } from "@graview/primitives";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { ErrorReportContext, GraviewProvider, lazyModule, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { AddressBar, atTheBareHome, faceAtAddress, stopAtAddress } from "./address.js";
@@ -186,13 +186,11 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOpti
    */
   readonly onDrawn?: (face: EmbedFace) => void;
   /**
-   * HOW THE SEAT'S RAIL STARTS (FR-78): `"open"` (the default), `"collapsed"`
-   * to a slim tab at the picture's edge, or `"hidden"`. The reader can put
-   * it away and open it again; what they chose is remembered for the app
-   * (in `memory`, or the page's storage) over this start — except
-   * `"hidden"`, which is the host's to say.
+   * THE ASK FIELD (the seat) at the foot of both faces: `"field"`, the
+   * default, or `"hidden"` for none. Its conversation is the app's, so it
+   * is the same on the scene and on Pages.
    */
-  readonly companion?: CompanionMode;
+  readonly seat?: SeatStart;
   /**
    * WHERE TO OPEN, AS `handle.where()` SAID IT (FR-116): the face, the page
    * on Pages and the scene's stop, over `face`, `path` and `stop`, settled
@@ -541,7 +539,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
                 props={{ ...props, onNavigate, ...(address ? {} : { path: pagesAt.current.path }) } as never}
               />
             ) : (
-              <SceneFace address={address} auto={auto} rememberAs={app.name} scheme={scheme} scope={scope} {...(props.companion ? { companion: props.companion } : {})} />
+              <SceneFace address={address} auto={auto} scheme={scheme} scope={scope} {...(props.seat ? { seat: props.seat } : {})} />
             )}
             <Drawn asked={face} shown={shown} onDrawn={drawn} />
           </Suspense>

@@ -4,12 +4,11 @@ import { useGraview, useSelection } from "@graview/react";
 import { useEffect, useState } from "react";
 
 /*
- * The companion's subject, on its own so the panes inside the companion
- * (the chat, the inspector) can ask what "this" means without importing
- * the companion that holds them.
+ * The seat's subject, on its own so what the seat holds (the conversation,
+ * what it offers) can ask what "this" means without importing the seat.
  */
 
-/** What the companion is about, and how it came to be about it. */
+/** What the seat is about, and how it came to be about it. */
 export interface Subject {
   readonly id: string | null;
   readonly name: string;
@@ -47,7 +46,7 @@ function pickAt(stage: HTMLElement | null, point: { readonly x: number; readonly
  * glanced at. Otherwise what the pointer has settled on. Otherwise where
  * you are: the focused place, district or record, or the whole thing.
  */
-export function useSubject<S extends AnySchema>(): Subject {
+export function useSubject<S extends AnySchema>({ hover = true }: { readonly hover?: boolean } = {}): Subject {
   const { store, view, views, pointer } = useGraview<S>();
   const { selection } = useSelection();
   const [dwelt, setDwelt] = useState<string | null>(null);
@@ -63,6 +62,8 @@ export function useSubject<S extends AnySchema>(): Subject {
    * thing from last time.
    */
   useEffect(() => {
+    // Asked without the pointer: what is chosen, else where you are.
+    if (!hover) return;
     let timer: ReturnType<typeof setTimeout> | null = null;
     let handOn = false;
     /*
@@ -117,7 +118,7 @@ export function useSubject<S extends AnySchema>(): Subject {
       document.removeEventListener("pointercancel", up, true);
       if (timer) clearTimeout(timer);
     };
-  }, [pointer]);
+  }, [pointer, hover]);
 
   const name = (id: string): string | null => {
     const node = store.graph.getNode(id);

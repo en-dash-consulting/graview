@@ -86,7 +86,7 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
             if (!target) continue;
             affordances.push({
               id: `structure:join:${mutation.name}:${odd.id}:${neighborId}`,
-              label: `${mutation.title ?? mutation.name}: bring "${named(odd)}" in line with the others`,
+              label: `${mutation.title ?? humanizeField(mutation.name)}: bring "${named(odd)}" in line with the others`,
               provider: "structure",
               mutation: mutation.name,
               args: { [subject.arg]: odd.id, [target]: neighborId },

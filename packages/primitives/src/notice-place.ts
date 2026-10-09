@@ -10,13 +10,13 @@
  * A notice is drawn OVER the picture it is about, never in its flow: at the
  * foot's middle on a phone, above the safe area, and at the foot's left on
  * a desk. It does not cover what already stands at that foot — a control
- * marked `data-graview-foot` (the pages' Ask, the way back, the scene's
- * zoom), the seat — it stands above a short one and beside a tall one, and
+ * marked `data-graview-foot` (the seat's ask field, the way back, the scene's
+ * zoom) — it stands above a short one and beside a tall one (the open seat), and
  * several stand one above the other.
  */
 
 /** What stands at the foot of a picture, that a notice placed there must not cover. */
-export const FOOT_OBSTACLES = "[data-graview-foot], [data-testid='companion']";
+export const FOOT_OBSTACLES = "[data-graview-foot]";
 
 /** Said on `window` when something marked `data-graview-foot` appears, moves or goes, so what stands above it places itself again. */
 export const FOOT_MOVED = "graview:foot-moved";
@@ -67,7 +67,7 @@ export function placeAtTheFoot(element: HTMLElement, anchor: HTMLElement | null)
     .map((one) => one.getBoundingClientRect())
     .filter((one) => one.width > 0 && one.height > 0 && one.right > left && one.left < right && one.bottom > top && one.top < foot);
   const tall = (one: Box) => one.bottom - one.top > (foot - top) * 0.4;
-  /* Beside a tall one at the left of a desk's picture — the seat docked there — rather than over it. */
+  /* Beside a tall one at the left of a desk's picture — the seat, open — rather than over it. */
   if (!narrow) for (const one of standing) if (tall(one) && one.left <= x + 1 && one.right + GAP > x && one.right + GAP + width <= right) x = one.right + GAP;
   /* Above a short one it would stand on, and again above whatever that lifts it onto. */
   const short = standing.filter((one) => !tall(one));
