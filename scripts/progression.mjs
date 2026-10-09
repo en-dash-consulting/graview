@@ -160,7 +160,7 @@ try {
        * across the top so Standing and the trail stay in the picture.
        */
       const clip = await page.evaluate(() => {
-        const rects = [...document.querySelectorAll('[data-graview-view], [data-testid="inspector-strip"], [data-testid="activity"], [data-testid="problems"], [data-testid="context-menu"]')]
+        const rects = [...document.querySelectorAll('[data-graview-view], [data-testid="inspector-strip"], [data-testid="seat"], [data-testid="activity"], [data-testid="problems"], [data-testid="context-menu"]')]
           .map((el) => el.getBoundingClientRect())
           .filter((r) => r.width > 0 && r.height > 0);
         if (rects.length === 0) return null;
@@ -227,11 +227,12 @@ try {
             )
           ).asElement();
           if (member) {
-            await member.click();
+            // Its acts: the menu a right-click opens on it.
+            await member.click({ button: "right" });
             await page.waitForTimeout(600);
           }
           entry.seatSees = await page.evaluate(() => ({
-            offered: [...document.querySelectorAll('[data-testid="affordances"] [data-affordance]')].map(
+            offered: [...document.querySelectorAll('[data-testid="context-menu"] [data-testid="affordances"] [data-affordance]')].map(
               (button) => button.textContent?.trim() ?? "",
             ),
             withheld: document.querySelector('[data-testid="withheld"]')?.textContent?.trim() ?? "",

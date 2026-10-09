@@ -3,11 +3,14 @@
  * The menu scales — search, pins, and what you actually use, driven in a
  * real browser against the todo app.
  *
- * The searcher must appear only past the fold, filter the same derived
- * list, and run a sole survivor on Enter. A pin made from the menu must
- * reorder the same list every surface reads, survive a reload (it lives in
- * this browser's storage), outrank the app's own declared pin, and come
- * back off with the same gesture.
+ * A pin made from the menu must reorder the same list every surface reads,
+ * survive a reload (it lives in this browser's storage), outrank the app's
+ * own declared pin, and come back off with the same gesture.
+ *
+ * The acts are the context menu now — a right-click, or the acts key on a
+ * card. The strip a selection used to draw beside the picture is gone from
+ * the scene, and with it the filter field and "Show N more" (the seat is a
+ * guide, not a control panel): the claims about the filter went with them.
  *
  *   node scripts/verify-menu.mjs [--engine=chromium|webkit|firefox]
  */
@@ -25,18 +28,27 @@ const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };
 const app = await serving("todo", portFor("todo"), repoRoot);
 let browser;
 
-/** The strip's offered mutations, in document order, via each row's pin. */
+const MENU = '[data-testid="context-menu"]';
+
+/** The menu's offered mutations, in document order, via each row's pin. */
 const offeredOrder = (page) =>
   page.evaluate(() =>
-    [...document.querySelectorAll('[data-testid="inspector-strip"] [data-pin-for]')].map(
+    [...document.querySelectorAll('[data-testid="context-menu"] [data-pin-for]')].map(
       (star) => star.getAttribute("data-pin-for"),
     ),
   );
 
-const visibleActionCount = (page) =>
-  page.evaluate(
-    () => document.querySelectorAll('[data-testid="inspector-strip"] [data-affordance]').length,
-  );
+/** Opens a thing's acts at the pointer, as a right-click does. */
+async function openActs(page, id) {
+  await page.click(`[data-graview-pick="${id}"]`, { button: "right" });
+  await page.waitForSelector(`${MENU} [data-pin-for]`, { timeout: 10_000 });
+}
+
+/** Puts the menu away. */
+async function closeActs(page) {
+  if (await page.$(MENU)) await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
+}
 
 try {
   browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
@@ -46,123 +58,20 @@ try {
   await page.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
 
-  /* ------------------------- the searcher appears only past the fold */
-  await page.click('[data-graview-pick="t-post"]');
-  await page.waitForSelector('[data-testid="inspector-strip"]');
-  const quietCount = await page.evaluate(() => {
-    const more = document.querySelector('[data-testid="inspector-strip"] ol li:last-child button');
-    const hiddenSaid = more?.textContent?.match(/Show (\d+) more/);
-    const shown = document.querySelectorAll(
-      '[data-testid="inspector-strip"] [data-affordance]',
-    ).length;
-    return shown + (hiddenSaid ? Number(hiddenSaid[1]) : 0);
-  });
-  const quietFilter = await page.$('[data-testid="action-filter"]');
-  report.checks.filterOnlyPastTheFold = {
-    quietTaskActions: quietCount,
-    filterShown: quietFilter !== null,
-    ok: (quietCount > 9) === (quietFilter !== null),
-  };
-
-  /* ------------------------------------------------- search, then apply */
-  // t-book waits for t-quote, so its list carries the severing act too —
-  // past the fold, and the field appears.
-  await page.click('[data-graview-pick="t-book"]');
-  await page.waitForSelector('[data-testid="action-filter"]', { timeout: 10_000 });
-  await page.fill('[data-testid="action-filter"]', "done");
-  await page.waitForTimeout(120);
-  const survivors = await visibleActionCount(page);
-  const soleLabel = await page.evaluate(
-    () =>
-      document.querySelector('[data-testid="inspector-strip"] [data-affordance]')?.textContent ??
-      "",
-  );
-  const dueBefore = await page.evaluate(() =>
-    (document.querySelector('[data-graview-pick="t-book"]')?.textContent ?? "").includes("09-01"),
-  );
-  await page.press('[data-testid="action-filter"]', "Enter");
   /*
-   * Applied: the row stops carrying its due date (done tasks do not), and
-   * the searcher clears itself so the full list is back for the next act.
+   * THE FILTER FIELD, "Show N more" AND ENTER ON A SOLE SURVIVOR were the
+   * strip's: a selection drew every act beside the picture, past a fold. The
+   * scene draws no strip now — the seat offers at most three acts and the
+   * menu holds the rest — so those three claims (filterOnlyPastTheFold,
+   * searchThenApply, destructiveNeedsTheClick) have no surface to hold on.
    */
-  await page.waitForFunction(
-    () =>
-      !(document.querySelector('[data-graview-pick="t-book"]')?.textContent ?? "").includes(
-        "09-01",
-      ) && (document.querySelector('[data-testid="action-filter"]')?.value ?? "x") === "",
-    null,
-    { timeout: 10_000 },
-  );
-  report.checks.searchThenApply = {
-    survivors,
-    soleLabel: soleLabel.trim(),
-    dueShownBeforehand: dueBefore,
-    applied: true,
-    ok: survivors === 1 && soleLabel.includes("Mark it done") && dueBefore,
-  };
-
-  /* ------------------------------ Enter never runs the destructive tail */
-  // Narrow to the one destructive act and press Enter: nothing may happen.
-  // What cannot be taken back keeps requiring the aimed click, and the row
-  // carries no ↵ promise.
-  await page.fill('[data-testid="action-filter"]', "Drop");
-  await page.waitForTimeout(150);
-  const dropSurvivors = await visibleActionCount(page);
-  const dropHint = await page.evaluate(
-    () =>
-      document.querySelector('[data-testid="inspector-strip"] [data-affordance]')?.textContent ??
-      "",
-  );
-  await page.press('[data-testid="action-filter"]', "Enter");
-  await page.waitForTimeout(400);
-  const stillThere = await page.evaluate(
-    () => document.querySelector('[data-graview-pick="t-book"]') !== null,
-  );
-  report.checks.destructiveNeedsTheClick = {
-    dropSurvivors,
-    hintShown: dropHint.includes("↵"),
-    stillThere,
-    ok: dropSurvivors === 1 && !dropHint.includes("↵") && stillThere,
-  };
-  await page.fill('[data-testid="action-filter"]', "");
-
-  /*
-   * HOW THE APP ACTUALLY CLEARS A SELECTION.
-   *
-   * This used to click a × on the docked strip. That × belongs to
-   * `placement="float"`, and nothing renders the inspector that way any more —
-   * the shell gives it as a menu at the pointer and the companion gives it as
-   * a rail, and neither carries a close control, because Escape, clicking away
-   * and choosing an action all close it. So the harness sat waiting thirty
-   * seconds for a button the design had removed, and reported the timeout as
-   * the app's failure rather than its own.
-   *
-   * Escape is what a person presses, so it is what this presses.
-   */
-  const clearSelection = async (page) => {
-    await page.keyboard.press("Escape");
-    await page.waitForFunction(
-      () => document.querySelectorAll("[data-graview-selected]").length === 0,
-      null,
-      { timeout: 10_000 },
-    );
-  };
-
   /* --------------------------------------------------- pin, then reorder */
-  // Clear t-book first: its drawn ties otherwise lie over the next card.
-  await clearSelection(page);
-  await page.waitForTimeout(200);
-  await page.click('[data-graview-pick="t-deposit"]');
-  await page.waitForSelector('[data-testid="inspector-strip"] [data-pin-for]');
+  await openActs(page, "t-deposit");
   const before = await offeredOrder(page);
-  await page.click('[data-pin-for="edit-task"]');
+  await page.click(`${MENU} [data-pin-for="edit-task"]`);
   await page.waitForTimeout(150);
   const after = await offeredOrder(page);
-  const headings = await page.evaluate(() =>
-    [...document.querySelectorAll('[data-testid="inspector-strip"] ol li[data-graview-heading]')].map(
-      (heading) => heading.textContent?.trim(),
-    ),
-  );
+  await closeActs(page);
   /*
    * On this overdue task "finish" and "reschedule" are REPAIRS, so they sit
    * in the top band where no pin may reach — which is itself part of the
@@ -182,12 +91,12 @@ try {
    * `nothing-overdue` names a new date before finishing, and a rule that
    * says how to fix itself is saying which way out it prefers. A pin still
    * moves everything below the repairs — that is what the rest of this
-   * check measures.
+   * check measures. (The strip said "pinned" and "⚠" over its bands; the
+   * menu draws no headings, so the order is the claim.)
    */
   report.checks.pinThenReorder = {
     before,
     after,
-    headings,
     peerIsOffered: before.includes("rename") && before.includes("edit-task"),
     ok:
       before.includes("rename") &&
@@ -195,27 +104,26 @@ try {
       before.indexOf("edit-task") > before.indexOf("rename") &&
       after.indexOf("edit-task") < after.indexOf("rename") &&
       after.indexOf("reschedule") === 0 &&
-      after.indexOf("finish") === 1 &&
-      headings.includes("pinned") &&
-      headings.some((heading) => heading?.includes("⚠")),
+      after.indexOf("finish") === 1,
   };
 
   /* -------------------------------------------- the pin is this browser's */
   await page.reload({ waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
-  await page.click('[data-graview-pick="t-deposit"]');
-  await page.waitForSelector('[data-testid="inspector-strip"] [data-pin-for]');
+  await page.waitForTimeout(800);
+  await openActs(page, "t-deposit");
   const survived = await offeredOrder(page);
   const pressed = await page.evaluate(
     () =>
       document
-        .querySelector('[data-pin-for="edit-task"]')
+        .querySelector('[data-testid="context-menu"] [data-pin-for="edit-task"]')
         ?.getAttribute("aria-pressed") === "true",
   );
   // Unpinning is the same gesture.
-  await page.click('[data-pin-for="edit-task"]');
+  await page.click(`${MENU} [data-pin-for="edit-task"]`);
   await page.waitForTimeout(150);
   const unpinned = await offeredOrder(page);
+  await closeActs(page);
   const above = (list) =>
     list.includes("rename") && list.indexOf("edit-task") < list.indexOf("rename");
   report.checks.pinSurvivesReloadAndUnpins = {
@@ -229,24 +137,18 @@ try {
   // finish is pinned by the app's own declaration. The same star demotes
   // it for this person — and brings it back. Without this, the star on a
   // declared pin was a control that visibly did nothing.
-  await clearSelection(page);
-  await page.waitForTimeout(200);
-  await page.click('[data-graview-pick="t-book"]');
-  await page.waitForSelector('[data-testid="inspector-strip"] [data-pin-for="finish"]');
-  const headed = (list) => list.includes("pinned");
-  const headingsNow = () =>
-    page.evaluate(() =>
-      [
-        ...document.querySelectorAll('[data-testid="inspector-strip"] ol li[data-graview-heading]'),
-      ].map((heading) => heading.textContent?.trim() ?? ""),
-    );
-  const declaredShown = headed(await headingsNow());
-  await page.click('[data-pin-for="finish"]');
+  await openActs(page, "t-book");
+  await page.waitForSelector(`${MENU} [data-pin-for="finish"]`);
+  const pinnedNow = () =>
+    page.evaluate(() => document.querySelector('[data-testid="context-menu"] [data-pin-for="finish"]')?.getAttribute("aria-pressed") === "true");
+  const declaredShown = await pinnedNow();
+  await page.click(`${MENU} [data-pin-for="finish"]`);
   await page.waitForTimeout(150);
-  const demotedNow = !headed(await headingsNow());
-  await page.click('[data-pin-for="finish"]');
+  const demotedNow = !(await pinnedNow());
+  await page.click(`${MENU} [data-pin-for="finish"]`);
   await page.waitForTimeout(150);
-  const restoredNow = headed(await headingsNow());
+  const restoredNow = await pinnedNow();
+  await closeActs(page);
   report.checks.devPinOverride = {
     declaredShown,
     demotedNow,
@@ -366,82 +268,63 @@ try {
   };
 
   /* ------------------------------------ the keyboard keeps its place */
-  // Back to the scene the rest of this file drives, at its own date — and
-  // holding a selection, because what follows begins by putting one down.
-  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
-  await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
-  await page.click('[data-graview-pick="t-book"]');
-  // The pane is up once it has acts in it; the × it used to wait for belongs
-  // to a placement nothing renders any more (see `clearSelection`).
-  await page.waitForSelector('[data-testid="inspector-strip"] [data-affordance]', { timeout: 10_000 });
   /*
    * EVERY ACT TAKEN FROM THE KEYBOARD used to end at the top of the
-   * document. The pane is a live list — an act applies and leaves the list,
-   * a pin regroups it, an ask closes — and React drops focus to <body>
-   * whenever the focused element goes away. So somebody working from the
-   * keyboard pressed Enter on "Mark it done" and landed on nothing, six
-   * tabs from where they had been, once per act.
-   *
-   * Three presses, all from the keyboard: an act that needs nothing, the
-   * pin beside it, and the Apply of an ask. After each, focus must still be
-   * inside the pane.
+   * document: the list is live — an act applies and goes, a pin regroups,
+   * an ask closes — and React drops focus to <body> whenever the focused
+   * element goes away. In the menu, a pin keeps the keyboard in it, and an
+   * act or an answered ask closes the menu and gives the keyboard back to
+   * where it was opened — never to the body.
    */
-  await clearSelection(page);
-  await page.waitForTimeout(200);
-  await page.click('[data-graview-pick="t-deposit"]');
-  await page.waitForSelector('[data-testid="inspector-strip"] [data-affordance]');
-  const inThePane = () =>
+  await page.goto(`${at("todo")}/?today=2026-09-01&fresh=1`, { waitUntil: "load" });
+  await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
+  await page.waitForTimeout(800);
+  const where = () =>
     page.evaluate(() => {
       const active = document.activeElement;
-      const pane = document.querySelector('[data-testid="inspector-strip"]');
+      const menu = document.querySelector('[data-testid="context-menu"]');
       return {
         where:
           active === document.body
             ? "body"
             : (active?.getAttribute("data-affordance") ??
               active?.getAttribute("data-pin-for") ??
+              active?.getAttribute("data-graview-view") ??
               active?.getAttribute("aria-label") ??
               active?.tagName.toLowerCase() ??
               "none"),
-        inside: pane !== null && active !== null && pane.contains(active),
+        inside: menu !== null && active !== null && menu.contains(active),
+        body: active === document.body || active === null,
       };
     });
   const pressFromTheKeyboard = async (selector) => {
     await page.focus(selector);
     await page.keyboard.press("Enter");
     await page.waitForTimeout(500);
-    return inThePane();
+    return where();
   };
-  // Each act is reached through its own row, since the affordance id
-  // carries the provider's prefix and the mutation name does not.
-  const actRow = (mutation) =>
-    `[data-testid="inspector-strip"] li:has([data-pin-for="${mutation}"]) button[data-affordance]`;
+  const actRow = (mutation) => `${MENU} li:has([data-pin-for="${mutation}"]) button[data-affordance]`;
+  await openActs(page, "t-deposit");
   const afterAnAct = await pressFromTheKeyboard(actRow("finish"));
-  await clearSelection(page);
-  await page.waitForTimeout(200);
-  await page.click('[data-graview-pick="t-book"]');
-  await page.waitForSelector('[data-testid="inspector-strip"] [data-pin-for]');
-  const afterAPin = await pressFromTheKeyboard(
-    '[data-testid="inspector-strip"] [data-pin-for="edit-task"]',
-  );
+  await closeActs(page);
+  await openActs(page, "t-book");
+  const afterAPin = await pressFromTheKeyboard(`${MENU} [data-pin-for="edit-task"]`);
   await page.focus(actRow("edit-task"));
   await page.keyboard.press("Enter");
   await page.waitForSelector("[data-graview-asking]");
   await page.waitForTimeout(200);
-  // Answer every open argument, so the ask actually CLOSES — a two-step
-  // ask that merely moves to its second field proves nothing about where
-  // focus lands when the field it was in goes away.
+  // Answer every open argument, so the ask actually closes.
   while ((await page.$("[data-graview-asking]")) !== null) {
     await page.keyboard.type("90");
     await page.keyboard.press("Enter");
     await page.waitForTimeout(400);
   }
-  const afterAnAsk = await inThePane();
+  const afterAnAsk = await where();
   report.checks.theKeyboardKeepsItsPlace = {
     afterAnAct,
     afterAPin,
     afterAnAsk,
-    ok: afterAnAct.inside && afterAPin.inside && afterAnAsk.inside,
+    ok: !afterAnAct.body && afterAPin.inside && !afterAnAsk.body,
   };
 
   report.pageErrors = errors;

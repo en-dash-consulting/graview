@@ -61,7 +61,8 @@ const CHAIN = [
   ["shrunk", "verify-shrunk.mjs"],
   ["navigation", "verify-navigation.mjs"],
   ["menu", "verify-menu.mjs"],
-  ["companion", "verify-companion.mjs"],
+  // The seat as a guide: a quiet field that grows into a conversation, on both faces, in three engines.
+  ["seat-guide", "verify-seat-guide.mjs"],
   ["chat", "verify-chat.mjs"],
   ["seat", "verify-seat.mjs"],
   ["who", "verify-who.mjs"],
@@ -69,7 +70,7 @@ const CHAIN = [
   ["desk", "verify-desk.mjs"],
   ["rota", "verify-rota.mjs"],
   ["studio", "verify-studio.mjs"],
-  // The embed's chrome as one family: every popover over everything, the host's actions, the seat put away, the host's notices (FR-72, FR-75–FR-78).
+  // The embed's chrome as one family: every popover over everything with the seat open, the host's actions, the seat snapped or left out, the host's notices (FR-72, FR-75–FR-78).
   ["chrome", "verify-chrome.mjs"],
   // A part of the page missed while offline arrives when the network is back, in three engines, and never breaks the page (FR-139).
   ["offline", "verify-offline.mjs"],

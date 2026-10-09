@@ -345,10 +345,12 @@ try {
     await page.dblclick(`[data-graview-pick="${victim}"]`);
     await page.waitForTimeout(900);
     const standingIn = await page.evaluate(() => location.hash);
-    // The destructive act by its own row — the searcher appears only past
-    // the fold, and Enter deliberately never runs a destructive act.
+    // The destructive act by its own row, in the menu the acts key opens on the card.
+    await page.evaluate((id) => document.querySelector(`[data-graview-view="${CSS.escape(id)}"]`)?.focus(), victim);
+    await page.keyboard.press("a");
+    await page.waitForSelector('[data-testid="context-menu"] [data-pin-for="drop"]', { timeout: 10_000 }).catch(() => {});
     await page
-      .locator('[data-testid="inspector-strip"] li:has([data-pin-for="drop"]) button[data-affordance]')
+      .locator('[data-testid="context-menu"] li:has([data-pin-for="drop"]) button[data-affordance]')
       .first()
       .click();
     await page.waitForTimeout(1000);
@@ -358,16 +360,13 @@ try {
       // A live picture, not a blank page.
       views: await page.evaluate(() => document.querySelectorAll("[data-graview-view]").length),
       /*
-       * The rail is furniture: it stands whatever happens, about wherever
-       * you now are. What must not survive is the DEAD NODE — a pane still
-       * offering acts on a thing that is gone.
+       * What must not survive is the DEAD NODE — a menu still offering acts
+       * on a thing that is gone, or the seat still about it.
        */
       pane: await page.evaluate(
-        () => document.querySelector('[data-testid="inspector-strip"]')?.innerText ?? null,
+        () => document.querySelector('[data-testid="context-menu"]')?.innerText ?? null,
       ),
-      subject: await page.evaluate(
-        () => document.querySelector('[data-testid="companion"]')?.getAttribute("data-graview-subject") ?? null,
-      ),
+      seat: await page.evaluate(() => document.querySelector('[data-testid="seat"]')?.innerText ?? null),
       victim,
     };
   };
@@ -380,7 +379,7 @@ try {
       !removed.landedOn.includes(removed.standingIn.replace(/^#focus=/, "").split("&")[0]) &&
       removed.views > 0 &&
       // Nothing left standing about the thing that is gone.
-      removed.subject !== removed.victim &&
+      !(removed.seat ?? "").includes(removed.victim ?? "\u0000") &&
       !(removed.pane ?? "").includes(removed.victim ?? "\u0000"),
   };
 
@@ -651,6 +650,14 @@ try {
    * likely to be under the hand — was the one place panning did not work.
    */
   await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists`, { waitUntil: "load" });
+  /*
+   * A LOAD, NOT A HASH CHANGE: the address differs from the last only after
+   * the #, so without one the camera kept the drag above, already at the
+   * limit of how far the picture goes that way — and a drag the same way
+   * moved nothing. With the left rail gone that limit is where the drag
+   * above leaves it.
+   */
+  await cam.reload({ waitUntil: "load" });
   await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await cam.waitForTimeout(1500);
   const before = await ground();

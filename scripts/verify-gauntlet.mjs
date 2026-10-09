@@ -148,15 +148,20 @@ const go = async (page, hash, settle = 1500) => {
   await page.waitForTimeout(settle);
 };
 /**
- * The strip, wherever this width keeps it: beside the scene at a desk, in
- * the companion's dock on a phone — opened if it is shut.
+ * A record's acts: the menu the acts key opens on its card, at any width —
+ * the scene draws no strip beside a selection any more. Opened from the
+ * keyboard, as the walk's acts are pressed from it.
  */
-const showStrip = async (page) => {
-  const dock = page.locator('[data-testid="companion-dock"]');
-  if ((await dock.count()) > 0 && (await dock.first().getAttribute("aria-expanded")) === "false") {
-    await dock.first().click();
-    await page.waitForTimeout(700);
-  }
+const showActs = async (page, id) => {
+  if (await has(page, '[data-testid="context-menu"]')) return;
+  const card = await page.evaluate((target) => {
+    const one = document.querySelector(`[data-graview-view="${CSS.escape(target)}"]`);
+    one?.focus();
+    return one !== null;
+  }, id);
+  if (card) await page.keyboard.press("a");
+  await page.waitForSelector('[data-testid="context-menu"]', { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(300);
 };
 /** Rise to altitude whichever way the toggle stands. */
 const rise = async (page) => {
@@ -252,9 +257,9 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
     });
   }
 
-  await reach(page, where, "the strip on a submitted talk, withheld acts shown", async () => {
+  await reach(page, where, "the acts on a submitted talk, withheld acts shown", async () => {
     await go(page, focusHash(RECORDS.submittedTalk), 2000);
-    await showStrip(page);
+    await showActs(page, RECORDS.submittedTalk);
     const more = page.locator('[data-testid="withheld-more"]');
     if (await more.count()) await more.first().click();
     await page.waitForTimeout(400);
@@ -264,17 +269,17 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
   });
 
   /*
-   * A seat with no act on a talk reaches a different state — the strip with
-   * every act withheld — and that is the state worth reaching for it.
+   * A seat with no act on a talk reaches a different state — the acts with
+   * every one withheld — and that is the state worth reaching for it.
    */
   if (!MAY_ACT_ON_A_TALK.includes(who)) {
     await reach(page, where, "a talk with every act withheld", async () => {
-      await showStrip(page);
+      await showActs(page, RECORDS.submittedTalk);
       const offered = await count(page, '[data-testid="affordances"] [data-affordance]:not([disabled])');
       return { reached: offered === 0, detail: { offered } };
     });
-  } else await reach(page, where, "an ask opened from the strip and put away with Escape", async () => {
-    await showStrip(page);
+  } else await reach(page, where, "an ask opened from the acts and put away with Escape", async () => {
+    await showActs(page, RECORDS.submittedTalk);
     const asks = page.locator('[data-testid="affordances"] [data-affordance]:not([disabled])', { hasText: /Add a presenter|Say what it is about|Give it a slot/ });
     if ((await asks.count()) === 0) return { reached: false, detail: "this seat is offered no act that asks" };
     await asks.first().focus();
@@ -361,7 +366,7 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
   let pressed = false;
   if (act) await reach(page, where, "an act pressed from the keyboard", async () => {
     await go(page, focusHash(act[0]), 2000);
-    await showStrip(page);
+    await showActs(page, act[0]);
     const button = page.locator('[data-testid="affordances"] [data-affordance]:not([disabled])', { hasText: act[1] });
     if ((await button.count()) === 0) return { reached: false, detail: `${who} is offered no ${act[1]}` };
     await button.first().focus();
@@ -584,7 +589,7 @@ report.checks = {
     reached("a search that folds an accent"),
   // A seat that may act opens an ask and puts it away with Escape; a page opens a form.
   asksAndFormsOpenAndClose:
-    reached("an ask opened from the strip and put away with Escape", (one) => ["u-4f1c9a", "u-9b27e0", "agent-sched-7"].includes(one.seat)) &&
+    reached("an ask opened from the acts and put away with Escape", (one) => ["u-4f1c9a", "u-9b27e0", "agent-sched-7"].includes(one.seat)) &&
     reached("a form opened on a submitted talk and put away with Escape", (one) => ["u-4f1c9a", "u-9b27e0", "agent-sched-7"].includes(one.seat)),
   // Every seat that may act presses an act from the keyboard and takes it back.
   anActIsPressedAndTakenBackByEverySeatThatMayAct:

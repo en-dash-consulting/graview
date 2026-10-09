@@ -230,12 +230,12 @@ try {
     await ready(page);
     b.freshIsEmptyAgain = (await districtText(page)).includes("none yet");
 
-    /* ---- the derived form: select the empty district, take its offer, answer it */
+    /* ---- the derived form: the empty district's acts (a right-click), take its offer, answer it */
     await page.goto(`${base}/?remember=1`, { waitUntil: "networkidle" });
     await ready(page);
-    await page.click('[data-graview-view="kind:note"]');
+    await page.click('[data-graview-view="kind:note"]', { button: "right" });
     await page.waitForTimeout(500);
-    const offers = page.locator('[data-testid="affordances"] button[data-affordance]');
+    const offers = page.locator('[data-testid="context-menu"] [data-testid="affordances"] button[data-affordance]');
     b.offers = await offers.allTextContents();
     await offers.filter({ hasText: "Add a note" }).first().click();
     await page.waitForTimeout(300);
@@ -245,7 +245,7 @@ try {
      * asked with the raw key — the same act reading two ways on two faces.
      */
     b.asksInWords = await page.evaluate(() => {
-      const input = document.querySelector('[data-testid="inspector-strip"] input');
+      const input = document.querySelector('[data-testid="context-menu"] input');
       return input ? { name: input.getAttribute("aria-label"), placeholder: input.placeholder } : null;
     });
     await page.fill('input[aria-label="Name"]', "Water the ferns");
@@ -298,11 +298,12 @@ try {
 
     /* ---- the scene at phone width: chrome must not sit on the content */
     /*
-     * A rail needs a gutter, and 390 has none. The actions strip is placed
-     * from the SCENE's box rather than the window's — an embed in a column
-     * of an article is narrow on the widest monitor there is — and where
-     * there is no room beside the picture it goes along the bottom. What
-     * must never happen is the pane sitting on the thing you are acting on.
+     * A rail needs a gutter, and 390 has none. The acts are the menu at the
+     * pointer, and the seat is an ask field across the picture's foot, in a
+     * strip the layout keeps clear — measured from the SCENE's box rather
+     * than the window's, since an embed in a column of an article is narrow
+     * on the widest monitor there is. What must never happen is the seat
+     * sitting on the thing you are acting on.
      */
     const narrow = watch(await browser.newPage({ viewport: { width: 390, height: 844 } }));
     // The embed page, at phone width: a box about 350 wide, which is the
@@ -310,18 +311,9 @@ try {
     await narrow.goto(`${base}/embed.html`, { waitUntil: "networkidle" });
     await narrow.waitForTimeout(1500);
     // An empty graph has nothing to act on: put one thing in it, then go in.
-    await narrow.click('#here [data-graview-view^="kind:"]');
+    await narrow.click('#here [data-graview-view^="kind:"]', { button: "right" });
     await narrow.waitForTimeout(400);
-    /*
-     * At phone width the acts are in the companion's sheet along the
-     * bottom, which starts closed so the picture is the first thing
-     * (348328a). A person opens it; so does this.
-     */
-    if ((await narrow.getAttribute('#here [data-testid="companion-dock"]', "aria-expanded")) === "false") {
-      await narrow.click('#here [data-testid="companion-dock"]');
-      await narrow.waitForTimeout(300);
-    }
-    await narrow.click('#here [data-testid="affordances"] button[data-affordance]', { timeout: 10_000 }).catch(async (error) => {
+    await narrow.click('[data-testid="context-menu"] [data-testid="affordances"] button[data-affordance]', { timeout: 10_000 }).catch(async (error) => {
       // What the narrow Graview showed instead is the finding.
       const seen = await narrow.evaluate(() => ({
         testids: [...new Set([...document.querySelectorAll("#here [data-testid]")].map((el) => el.getAttribute("data-testid")))].slice(0, 60),
@@ -331,23 +323,19 @@ try {
       throw new Error(`${error.message.split("\n")[0]} — the narrow page showed ${JSON.stringify(seen)}`);
     });
     await narrow.waitForTimeout(300);
-    await narrow.fill('#here input[aria-label="Name"]', "Sweep the path");
-    await narrow.click('#here [data-testid="inspector-strip"] button[type="submit"]');
+    await narrow.fill('[data-testid="context-menu"] input[aria-label="Name"]', "Sweep the path");
+    await narrow.click('[data-testid="context-menu"] button[type="submit"]');
     await narrow.waitForTimeout(700);
     await narrow.click('#here [data-testid^="open-"]');
     await narrow.waitForTimeout(500);
     await narrow.dblclick("#here [data-graview-pick]");
     await narrow.waitForTimeout(900);
     b.narrow = await narrow.evaluate(() => {
-      const found = document.querySelector('#here [data-testid="inspector-strip"]');
+      const found = document.querySelector('#here [data-testid="seat"]');
       const focus = document.querySelector('#here [data-graview-plane="0"] [data-graview-primitive="panel"]');
       if (!found || !focus) return { strip: Boolean(found), focus: Boolean(focus) };
-      /*
-       * The strip is a section of the companion's sheet at this width, and
-       * the sheet scrolls: it is the SHEET that must stay inside the
-       * Graview and off the thing being acted on.
-       */
-      const strip = found.closest('[data-testid="companion"]') ?? found;
+      /* The seat's field across the foot must stay inside the Graview and off the thing being acted on. */
+      const strip = found;
       const a = strip.getBoundingClientRect();
       const b = focus.getBoundingClientRect();
       const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
@@ -431,8 +419,8 @@ try {
     /*
      * A new product's first record, with no pointer at all.
      *
-     * The one district is the whole of a blank app's interface: selecting it
-     * is what opens the strip, and the strip is where the first act lives.
+     * The one district is the whole of a blank app's interface: selecting it,
+     * then its acts key, opens the menu where the first act lives.
      * The card was a tab stop that did nothing, so this could not be done —
      * and nothing measured it, because every other rehearsal clicks.
      */
@@ -452,8 +440,13 @@ try {
     );
     await keys.keyboard.press("Enter");
     await keys.waitForTimeout(400);
-    b.keyboardSelectedIt = (await keys.locator('[data-testid="inspector-strip"]').count()) === 1;
-    b.keyboardReachedTheOffer = await tabUntil(() => Boolean(document.activeElement?.dataset?.affordance));
+    // Chosen, and its acts one key away: the menu the acts key opens, with the keyboard in it.
+    await keys.keyboard.press("a");
+    await keys.waitForTimeout(400);
+    b.keyboardSelectedIt = (await keys.locator('[data-testid="context-menu"]').count()) === 1;
+    b.keyboardReachedTheOffer =
+      (await keys.evaluate(() => Boolean(document.activeElement?.dataset?.affordance))) ||
+      (await tabUntil(() => Boolean(document.activeElement?.dataset?.affordance)));
     await keys.keyboard.press("Enter");
     await keys.waitForTimeout(300);
     await keys.keyboard.type("Sharpen the shears");
@@ -590,9 +583,9 @@ try {
     await page.goto(`http://localhost:${port}/?remember=1`, { waitUntil: "networkidle" });
     await page.waitForFunction(() => "__graviewReady" in window, null, { timeout: 30_000 });
     await page.waitForTimeout(500);
-    await page.click('[data-graview-view="kind:work-order"]');
+    await page.click('[data-graview-view="kind:work-order"]', { button: "right" });
     await page.waitForTimeout(500);
-    await page.locator('[data-testid="affordances"] button[data-affordance]').filter({ hasText: "Add a work order" }).first().click();
+    await page.locator('[data-testid="context-menu"] [data-testid="affordances"] button[data-affordance]').filter({ hasText: "Add a work order" }).first().click();
     await page.waitForTimeout(300);
     await page.fill('input[aria-label="Name"]', "Replace the pump");
     await page.click('form button[type="submit"]');

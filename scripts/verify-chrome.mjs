@@ -66,8 +66,8 @@ async function buildHost() {
           height: "100%",
           fonts: false,
           studio: false,
-          // How the seat starts, when the page asks (FR-78).
-          ...(asked.get("companion") ? { companion: asked.get("companion") } : {}),
+          // Whether the seat's ask field is drawn, when the page asks.
+          ...(asked.get("seat") ? { seat: asked.get("seat") } : {}),
           // A host's own actions, as Graview Cloud has them (FR-72).
           hostActions: [
             { label: "Change the app", href: "/apps/things/change" },
@@ -106,13 +106,22 @@ async function buildHost() {
   return { stop: () => (host.close(), rmSync(out, { recursive: true, force: true })) };
 }
 
-/** Opens the seat if it is put away (a phone's sheet starts shut). */
+/** Opens the seat from its ask field, so every popover is driven with it open over the picture. */
 async function openTheSeat(page) {
-  const shut = await page.evaluate(() => document.querySelector('[data-testid="companion"]')?.getAttribute("data-graview-companion") ?? null);
-  if (shut === null || shut === "open") return shut;
-  await page.click('[data-testid="companion-dock"]');
+  const state = () => page.evaluate(() => document.querySelector('[data-testid="seat"]')?.getAttribute("data-graview-seat") ?? null);
+  const was = await state();
+  if (was === null || was === "open") return was;
+  /*
+   * On a phone the open seat is a bottom sheet over most of the picture —
+   * the triggers under it (the folded districts, a card's acts) are covered
+   * by design while it is up, and put away by its grab line. There the
+   * popovers are driven with the seat's field closed at the foot.
+   */
+  if ((await page.getAttribute('[data-testid="seat"]', "data-graview-seat-shape")) === "phone") return was;
+  await page.click('[data-testid="seat-field"]');
+  await page.waitForSelector('[data-testid="seat-panel"]', { timeout: 30_000 }).catch(() => {});
   await page.waitForTimeout(300);
-  return page.evaluate(() => document.querySelector('[data-testid="companion"]')?.getAttribute("data-graview-companion") ?? null);
+  return state();
 }
 
 /** Opens one popover of the registry the way a person would; false when nothing here opens it. */
@@ -377,32 +386,38 @@ async function hostActionsByKeyboard(page) {
   return { reached, ...looks, overTheScene };
 }
 
-/** The scene's box, the frame it stands in, the seat's tab and where the city's leftmost card starts. */
+/** The scene's box, the frame it stands in, the seat at its foot and where the city's leftmost card starts. */
 function picture(page) {
   return page.evaluate(() => {
     const ground = document.querySelector(".graview-ground");
-    const seat = document.querySelector('[data-testid="companion"]');
-    const tab = document.querySelector('[data-testid="companion-tab"]');
+    const seat = document.querySelector('[data-testid="seat"]');
     const frame = ground?.parentElement;
     const box = ground?.getBoundingClientRect();
+    const at = seat?.getBoundingClientRect();
     const cards = [...document.querySelectorAll(".graview-ground [data-graview-view]")].map((card) => card.getBoundingClientRect()).filter((one) => one.width > 0);
     return {
       frameWidth: Math.round(frame?.getBoundingClientRect().width ?? 0),
       sceneWidth: Math.round(box?.width ?? 0),
-      tabWidth: Math.round(seat && tab ? seat.getBoundingClientRect().width : 0),
-      mode: seat?.getAttribute("data-graview-companion-mode") ?? null,
-      shape: seat?.getAttribute("data-graview-companion-shape") ?? null,
-      dockExpanded: document.querySelector('[data-testid="companion-dock"]')?.getAttribute("aria-expanded") ?? null,
-      tabExpanded: tab?.getAttribute("aria-expanded") ?? null,
+      state: seat?.getAttribute("data-graview-seat") ?? null,
+      side: seat?.getAttribute("data-graview-seat-side") ?? null,
+      fromLeft: at && box ? Math.round(at.left - box.left) : null,
+      fromRight: at && box ? Math.round(box.right - at.right) : null,
       keyboard: document.activeElement?.getAttribute("data-testid") ?? null,
       firstCard: box && cards.length > 0 ? Math.round(Math.min(...cards.map((one) => one.left)) - box.left) : null,
-      seatOverScene: seat && box ? seat.getBoundingClientRect().right > box.left + 4 : false,
     };
   });
 }
 
-/** The seat put away and opened again from the keyboard, remembered across a reload, laid over a narrower picture, started or hidden by the host. */
-async function theSeatPutAway(newPage, readyOf) {
+/*
+ * THE SEAT FLOATS, AND THE PICTURE KEEPS ITS WIDTH (FR-78, restated). The
+ * seat was a rail that took a fifth of the picture, put away to a slim tab
+ * that still took 36 pixels; it is an ask field at the picture's foot now,
+ * that opens over the picture and is snapped between the two feet by ⇄.
+ * Held here: opening it moves no card, ⇄ from the keyboard moves it to the
+ * other foot and the tab's choice is kept across a reload, and a host can
+ * leave it out with the picture keeping every pixel.
+ */
+async function theSeatSnapsAndHides(newPage, readyOf) {
   const said = {};
   const visit = async (page, url, ready) => {
     await page.goto(url, { waitUntil: "load" });
@@ -415,54 +430,47 @@ async function theSeatPutAway(newPage, readyOf) {
   ]) {
     const page = await newPage({ width: 1440, height: 900 });
     await visit(page, url, ready);
-    const open = await picture(page);
-    await page.locator('[data-testid="companion-dock"]').focus();
+    const closed = await picture(page);
+    await page.locator('[data-testid="seat-field"]').focus();
+    await page.keyboard.type("a");
+    await page.waitForSelector('[data-testid="seat-panel"]', { timeout: 30_000 }).catch(() => {});
+    await page.waitForTimeout(500);
+    const opened = await picture(page);
+    await page.locator('[data-testid="seat-side"]').focus();
     await page.keyboard.press("Enter");
-    await page.waitForTimeout(900);
-    const collapsed = await picture(page);
+    await page.waitForTimeout(500);
+    const snapped = await picture(page);
     await visit(page, url, ready);
     const afterAReload = await picture(page);
-    await page.locator('[data-testid="companion-tab"]').focus();
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(600);
-    const reopened = await picture(page);
-    await visit(page, url, ready);
-    const reopenedAfterAReload = await picture(page);
     await page.close();
     said[where] = {
-      open,
-      collapsed,
+      closed,
+      opened,
+      snapped,
       afterAReload,
-      reopened,
-      reopenedAfterAReload,
       ok:
-        open.mode === "open" && open.dockExpanded === "true" &&
-        collapsed.mode === "collapsed" && collapsed.tabExpanded === "false" && collapsed.keyboard === "companion-tab" &&
-        collapsed.tabWidth > 0 && collapsed.tabWidth <= 40 && Math.abs(collapsed.sceneWidth - (collapsed.frameWidth - collapsed.tabWidth)) <= 1 &&
-        collapsed.firstCard !== null && open.firstCard !== null && collapsed.firstCard < open.firstCard &&
-        afterAReload.mode === "collapsed" &&
-        reopened.mode === "open" && reopened.dockExpanded === "true" && reopened.keyboard === "companion-dock" &&
-        reopenedAfterAReload.mode === "open",
+        closed.state === "closed" && closed.side === "left" && closed.fromLeft !== null && closed.fromLeft <= 20 &&
+        closed.sceneWidth === closed.frameWidth &&
+        opened.state === "open" && opened.firstCard === closed.firstCard && opened.sceneWidth === closed.sceneWidth &&
+        snapped.side === "right" && snapped.fromRight !== null && snapped.fromRight <= 20 && snapped.keyboard === "seat-side" &&
+        afterAReload.side === "right",
     };
   }
-  /* Narrower than a laptop, the open seat lies over the picture, which keeps all but the tab. */
+  /* Narrower than a laptop the picture still keeps its whole width: there is no rail to lay over it. */
   {
     const page = await newPage({ width: 820, height: 900 });
     await visit(page, `${at("chrome-host")}/?face=graview`, readyOf.embed);
-    const overlaid = await picture(page);
+    const narrow = await picture(page);
     await page.close();
-    said.overTheSceneBelowALaptop = { overlaid, ok: overlaid.mode === "open" && overlaid.shape === "overlay" && overlaid.seatOverScene && Math.abs(overlaid.sceneWidth - (overlaid.frameWidth - 36)) <= 1 };
+    said.thePictureKeepsItsWidthBelowALaptop = { narrow, ok: narrow.state === "closed" && narrow.sceneWidth === narrow.frameWidth };
   }
-  /* The host's start: collapsed, or not drawn at all. */
-  for (const start of ["collapsed", "hidden"]) {
+  /* The host's choice: no seat at all. */
+  {
     const page = await newPage({ width: 1440, height: 900 });
-    await visit(page, `${at("chrome-host")}/?face=graview&companion=${start}`, readyOf.embed);
+    await visit(page, `${at("chrome-host")}/?face=graview&seat=hidden`, readyOf.embed);
     const started = await picture(page);
     await page.close();
-    said[`startedAs-${start}`] = {
-      started,
-      ok: start === "hidden" ? started.mode === null && started.sceneWidth === started.frameWidth : started.mode === "collapsed" && Math.abs(started.sceneWidth - (started.frameWidth - started.tabWidth)) <= 1,
-    };
+    said["startedAs-hidden"] = { started, ok: started.state === null && started.sceneWidth === started.frameWidth };
   }
   return said;
 }
@@ -631,8 +639,8 @@ try {
     }
     report.checks.aHostSpeaksInTheAppsOwnNotices = { ...notices, ok: Object.values(notices).every((one) => one.ok) };
   }
-  /* ---- FR-78: the seat can be put away, and the picture takes the room */
-  const seat = await theSeatPutAway(
+  /* ---- FR-78, restated: the seat floats at the foot, snaps between the feet, and can be left out */
+  const seat = await theSeatSnapsAndHides(
     async (viewport) => {
       const page = await browser.newPage({ viewport });
       page.on("pageerror", (error) => errors.push(error.message));
@@ -643,7 +651,7 @@ try {
       shell: (page) => page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 }),
     },
   );
-  report.checks.theSeatIsPutAwayAndThePictureTakesTheRoom = { ...seat, ok: Object.values(seat).every((one) => one.ok) };
+  report.checks.theSeatFloatsSnapsAndCanBeLeftOut = { ...seat, ok: Object.values(seat).every((one) => one.ok) };
   /* ---- FR-72: a host's own actions are in the profile menu, reached by the keyboard, readable in both schemes, with nothing of the host's over the scene */
   const wanted = ["Change the app", "Your apps", "Report this app"];
   const astray = Object.entries(hosts)

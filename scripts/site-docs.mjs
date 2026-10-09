@@ -730,14 +730,14 @@ async function build() {
       section("apps", "The example apps",
         `      <p>Each was built to prove a claim the others could not, and each is opened in a real browser on every push. They live under <code>apps/</code> in the repository; <code>pnpm apps</code> opens the desk, which opens the rest.</p>\n` +
         `      <ul class="cards">\n` + examples.map((app) => `        <li><a href="https://github.com/en-dash-consulting/graview/tree/main/apps/${app.dir}"><strong>${escape(app.dir)}</strong><span>${escape(app.description)}</span></a></li>`).join("\n") + `\n      </ul>`) +
-      /* The city and the lens settle the way the landing page's do: the seat put away, the city stepped back once, through the product's own controls. */
+      /* The city and the lens settle the way the landing page's do: the seat closed, the city stepped back once, through the product's own controls. */
       `    <script>
     document.addEventListener("graview:mounted", function (event) {
       var host = event.target;
       if (!(host instanceof Element) || !host.hasAttribute("data-settle")) return;
       var presses = Number(host.getAttribute("data-settle")) || 0;
       setTimeout(function () {
-        var seat = host.querySelector('[data-graview-companion="open"] button[aria-expanded="true"]');
+        var seat = host.querySelector('[data-graview-seat="open"] [data-testid="seat-close"]');
         if (seat) seat.click();
         for (var i = 0; i < presses; i += 1) { var out = host.querySelector('[data-testid="zoom-out"]'); if (out) out.click(); }
       }, 250);

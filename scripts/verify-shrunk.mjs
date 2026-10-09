@@ -168,8 +168,9 @@ try {
             await page.mouse.click(target.x, target.y);
             await page.waitForTimeout(250);
             entry.clickedInside = target.id;
+            // Chosen: the scene marks what is selected (it draws no strip beside it any more).
             entry.stillLive = await page.evaluate(
-              () => document.querySelector('[data-testid="inspector-strip"]') !== null,
+              () => document.querySelector("[data-graview-selected]") !== null || location.hash.includes("sel="),
             );
             // And it selected in place rather than traveling.
             entry.stayedInGraview = await page.evaluate(
