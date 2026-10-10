@@ -448,6 +448,16 @@ const MAX_NAME = 64;
  * fall away ("café" is `cafe`), anything else is `_`, a name that begins
  * otherwise is `act_…`. Already safe — `add-vendor` — is left alone.
  */
+/**
+ * A violation as a tool answers it: without the parts a page draws its line
+ * with. The message says the line already where the rule wrote no sentence
+ * of its own, and a model reads words, not a drawing's pieces.
+ */
+function withoutLine<V extends { readonly line?: unknown }>(violation: V): Omit<V, "line"> {
+  const { line: _line, ...rest } = violation;
+  return rest;
+}
+
 function safeName(name: string): string {
   let safe = name
     .normalize("NFKD")
@@ -754,7 +764,8 @@ export function createToolRuntime<S extends AnySchema>(
               in: inbound,
               violations: seen
                 .violations()
-                .filter((violation) => violation.nodeIds.includes(id)),
+                .filter((violation) => violation.nodeIds.includes(id))
+                .map(withoutLine),
               ...(resolved ? { resolved: [resolved] } : {}),
             },
             // Asking about a node is asking about its neighborhood: the
@@ -801,7 +812,7 @@ export function createToolRuntime<S extends AnySchema>(
           );
           return {
             ok: true,
-            data: violations,
+            data: violations.map(withoutLine),
             reads: [...new Set(violations.flatMap((violation) => violation.nodeIds))],
           };
         }

@@ -3,6 +3,7 @@ import { useGraview } from "@graview/react/provider";
 import { choiceStyle } from "./choice.js";
 import type { HostAction } from "./profile.js";
 import { Seats } from "./seats.js";
+import { problemLine, problemTitle, RuleLineView, useLined } from "./rule-line.js";
 
 /*
  * WHAT IS BEHIND THE BAR'S TOOLS (FR-131), fetched when one is first reached
@@ -13,9 +14,15 @@ import { Seats } from "./seats.js";
 
 /** The problems Standing opens: each says what is broken and how many ways there are to fix it; a press selects what it names. */
 export function ProblemRows({ violations, pick }: { readonly violations: readonly Violation[]; readonly pick: (violation: Violation) => void }) {
+  const { store, brand } = useGraview<AnySchema>();
+  // Each with its rule's line, once the words are here: the rows say the rule's sentence until then.
+  const lined = useLined(store, violations);
   return (
     <>
-      {violations.map((violation, index) => (
+      {lined.map((violation, index) => {
+        const title = problemTitle(violation);
+        const ways = violation.repairs.length > 0 ? `${violation.repairs.length} ${violation.repairs.length === 1 ? "way" : "ways"} to fix` : "";
+        return (
         <li
           key={`${violation.invariant}:${index}`}
           style={{
@@ -28,6 +35,8 @@ export function ProblemRows({ violations, pick }: { readonly violations: readonl
           <button
             type="button"
             onClick={() => pick(violation)}
+            // The rule's own sentence, where it wrote one the line does not show.
+            {...(violation.line && violation.message !== problemLine(violation) ? { title: violation.message } : {})}
             style={{
               width: "100%",
               textAlign: "left",
@@ -40,14 +49,25 @@ export function ProblemRows({ violations, pick }: { readonly violations: readonl
               borderRadius: 7,
             }}
           >
-            <span style={{ display: "block", color: "var(--graview-ink)" }}>{violation.message}</span>
-            <span style={{ color: "var(--graview-ink-faint)", fontSize: "0.75rem" }}>
-              {violation.label}
-              {violation.repairs.length > 0 ? ` · ${violation.repairs.length} ${violation.repairs.length === 1 ? "way" : "ways"} to fix` : ""}
-            </span>
+            {/*
+              * THE RULE'S SHAPE, with the record's own values (`RuleLineView`):
+              * "◆ A club on Team — margin 44% < target margin 50%". A rule that
+              * is a function has only its sentence, said as before.
+              */}
+            {violation.line ? (
+              <RuleLineView line={violation.line} schema={store.schema} {...(brand ? { brand } : {})} stacked style={{ display: "block", color: "var(--graview-ink)" }} />
+            ) : (
+              <span style={{ display: "block", color: "var(--graview-ink)" }}>{violation.message}</span>
+            )}
+            {title || ways ? (
+              <span style={{ color: "var(--graview-ink-faint)", fontSize: "0.75rem" }}>
+                {[title, ways].filter(Boolean).join(" · ")}
+              </span>
+            ) : null}
           </button>
         </li>
-      ))}
+        );
+      })}
     </>
   );
 }

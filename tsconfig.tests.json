@@ -14,6 +14,7 @@
       "@graview/core/cli": ["./packages/core/src/cli/index.ts"],
       "@graview/core/blocks": ["./packages/core/src/blocks.ts"],
       "@graview/core/arrange": ["./packages/core/src/arrange.ts"],
+      "@graview/core/lines": ["./packages/core/src/lines.ts"],
       "@graview/core/check": ["./packages/core/src/check.ts"],
       "@graview/core/scene": ["./packages/core/src/scene.ts"],
       "@graview/core/figures": ["./packages/core/src/figures.ts"],

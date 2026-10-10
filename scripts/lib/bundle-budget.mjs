@@ -145,8 +145,11 @@ export const BUDGETS = [
     // more. Measured at 532_417 / 188_699.
     // Lowered when the host came to decide the AI once: the reader's picker of rungs, its pills and key fields, the ⚙ and
     // the remembered rung left the seat and the person's menu. 5_885 / 2_137 fewer than main. Measured at 526_532 / 186_562.
-    minified: 527_000,
-    gzipped: 186_800,
+    // Raised when a rule came to say its shape: the problems page draws each problem as its rule's line with the record's
+    // values and lists every rule as its shape (`RuleLineView`, the kind's mark beside it), the words themselves fetched
+    // when a problem is drawn (`@graview/core/lines`). 4_635 / 2_091 more. Measured at 531_167 / 188_653.
+    minified: 531_700,
+    gzipped: 188_900,
     load: "first",
   },
   {
@@ -445,8 +448,12 @@ export const BUDGETS = [
     // reads a named day, a weekend and a date, and follows one relation by its words ("who's working thursday"); and the
     // person's menu, fetched when first opened, can sign an example "Built with Graview". Nothing more up front.
     // 7_323 / 2_859 more. Measured at 1_656_527 / 515_486.
-    minified: 1_657_000,
-    gzipped: 515_800,
+    // Raised when a rule came to say its shape: the words a rule's line is said in (`@graview/core/lines`, with the rule
+    // language's evaluator and parser it reads a judgment with) are a chunk fetched when a problem is first drawn, and the
+    // problems page, the record page and the problems' rows draw it. Nothing more up front. 18_573 / 7_674 more.
+    // Measured at 1_675_100 / 523_160.
+    minified: 1_675_600,
+    gzipped: 523_500,
     load: "all",
   },
   {
@@ -521,8 +528,9 @@ export const BUDGETS = [
     // Raised with every face's when the whole-page Shell and an embed came to wear one bar on the scene: 6_439 / 1_715 more,
     // over the cleanup. Measured at 1_561_447 / 476_214.
     // Lowered with every face's when the host came to decide the AI once: 8_170 / 2_769 fewer. Measured at 1_553_277 / 473_445.
-    minified: 1_553_800,
-    gzipped: 473_700,
+    // Raised with the pages face's when a rule came to say its shape: 4_927 / 2_554 more. Measured at 1_558_204 / 475_999.
+    minified: 1_558_700,
+    gzipped: 476_300,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

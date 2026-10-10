@@ -17,6 +17,7 @@ export { DefaultViewElsewhere } from "./default-view.js";
 export { EditableValue, LongValue } from "./editable.js";
 export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
 export { KindFigure } from "./figure.js";
+export { problemLine, problemTitle, RuleLineView, RuleParts, useLined, useRuleLines } from "./rule-line.js";
 export { useMarkup } from "./markup.js";
 export { AppMark, AppTitle, useFavicon } from "./app-title.js";
 export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, HOME_KEY, HOME_PATH, TOOL, toolStyle, useBarFind } from "./app-bar.js";

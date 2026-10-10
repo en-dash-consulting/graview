@@ -1,6 +1,7 @@
 import { failureWords, type AnySchema } from "@graview/core";
 import { withFocus, withOverview, withSelection } from "@graview/layout/view";
 import { useAffordances, useApplyAffordance, useGraview, useSeatTalkState, useViolations } from "@graview/react";
+import { problemLine, useLined } from "./rule-line.js";
 import { loadPins, type Affordance, type Responder, type SeatMove, type ToolCall } from "@graview/tools";
 // Its own entry: a bundler places a file in every chunk that can reach it, and only the open seat uses this.
 import { offeredActs, suggestionsFor, whereLine } from "@graview/tools/suggest";
@@ -145,7 +146,9 @@ export function useSeatGo(onPick?: (id: string) => void): (id: string) => void {
 function SeatHere({ here }: { readonly here?: string }) {
   const { store, views, view, seatTalk } = useGraview<AnySchema>();
   const subject = useSubject({ hover: false });
-  const violations = useViolations();
+  // Each with its rule's line, so the line about where the reader is says the shape and the record's values.
+  const lined = useLined(store, useViolations());
+  const violations = useMemo(() => lined.map((violation) => (violation.line ? { ...violation, message: problemLine(violation) } : violation)), [lined]);
   const record = subject.id ? store.graph.getNode(subject.id) : undefined;
   const standing = here ?? view.within?.["view"];
   const place =

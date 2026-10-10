@@ -78,6 +78,14 @@ export const pricedPackages = expressionRule("priced-packages", {
 });
 ```
 
+A rule in the rule language is drawn as its shape, in the declaration's
+labels: "◆ Scenario margin ≥ target margin, when plan's price > $0", and
+broken, with the record's values: "A club on Team — margin 44% < target
+margin 50%". Its title is a second line under that, so keep it short
+("Margin above target") or leave it out; "A scenario keeps the target
+margin" only says the shape again, less clearly. Label a field that reads
+badly when spoken (`display.labels`) rather than writing round it.
+
 Fields and one-edge hops by name, `out('edge')`, `in('edge')`, `all('kind')`
 and `S where cond`; `count`, `exists`, `every`/`some(S, cond)`;
 `sum`/`min`/`max(S, expr)` with an expression per member

@@ -82,6 +82,9 @@ export type {
 
 // Invariants — pure evaluation, with repairs as the seam to affordances.
 export { defineInvariant, evaluate, RuleBudgetError, UnregisteredInvariantError, violationsTouching } from "./invariants/engine.js";
+// How many rules are broken, said as rules; the words a rule's line is drawn with are `@graview/core/lines`', fetched by what draws one.
+export { brokenWords } from "./invariants/broken.js";
+export type { RuleLine, RulePart, RulePartAs } from "./invariants/line.js";
 export { FRAMEWORK_VERSION } from "./version.js";
 export { capabilities, WIRE_PROTOCOL } from "./capabilities.js";
 export type { Capabilities } from "./capabilities.js";
@@ -99,6 +102,8 @@ export type {
   Repair,
   Violation,
   ViolationStatus,
+  FieldFormat,
+  RuleShapeSource,
 } from "./invariants/types.js";
 
 // Arrangement — what a kind can be sorted, filtered and grouped by, and the grammar that carries it.

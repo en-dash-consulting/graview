@@ -77,7 +77,7 @@ const store = () =>
 describe("the graph answers for itself", () => {
   it("states the standing and proposes the rules' own repairs", async () => {
     const reply = await ask(store(), "what's wrong?");
-    expect(reply.say).toContain("1 problem");
+    expect(reply.say).toContain("1 rule broken");
     expect(reply.say).toContain("School run runs over an hour");
     expect(reply.proposals).toEqual([
       { mutation: "shorten", args: { dutyId: "school" }, why: "School run runs over an hour" },

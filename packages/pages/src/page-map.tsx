@@ -37,7 +37,7 @@ function RelationLine<S extends AnySchema>({ context, relation }: { context: Pag
       <span style={{ display: "grid", gap: 1 }}>
         <span>
           {/* The map of the declaration names each relation by its name, between its two ends, on purpose: its words follow. */}
-          {end(from)} <span style={quiet} data-graview-speaks-ids="">{humanizeField(relation.edgeKind)}</span> {end(to)}
+          {end(from)} <span style={quiet} data-graview-speaks-ids="">{humanizeField(relation.edgeKind)} →</span> {end(to)}
         </span>
         {relation.description || relation.inverse ? (
           <span style={{ ...quiet, fontSize: "0.9375rem" }}>

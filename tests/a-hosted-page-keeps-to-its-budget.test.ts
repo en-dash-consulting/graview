@@ -67,7 +67,8 @@ describe("a hosted page", () => {
     // 893 KB since a seat's tools may draw a view and keep it as a lens (draft_view, keep_lens): their two definitions ride with the seat, the engine behind a door; the scene face measured 913_473 B, 1_813 more than before them (911_660).
     // 880 KB since the host decides the AI once: the reader's picker of rungs and the ⚙ left the seat and the person's menu,
     // and the margin the budget had kept was taken back: the scene face measured 900_495 B, 2_041 fewer than main (902_536).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(880 * 1024);
+    // 881 KB since a rule says its shape: the standing counts rules broken (`brokenWords`) and a document's rule keeps what its line is said from, the words themselves fetched with what draws a problem (`@graview/core/lines`): the scene face measured 901_567 B with FR-157's scene from a page that held nothing.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(881 * 1024);
   });
 
   it("carries no studio, up front or when asked: the shell stubs it out", () => {

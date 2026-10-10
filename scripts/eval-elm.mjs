@@ -116,7 +116,7 @@ const TEST_TEMPLATES = new Set(["s5", "s6", "s7", "e3", "e4", "p2", "p3", "a4", 
 async function baselinePredict(store, text) {
   const reply = await graphResponder()(store, text);
   const say = reply.say;
-  if (/^\d+ problems?:|^Nothing is (?:broken|wrong)/.test(say)) return "standing";
+  if (/^\d+ rules? broken(?: in \d+ places)?:|^Nothing is (?:broken|wrong)/.test(say)) return "standing";
   if (reply.proposals[0]?.why === "you asked in words") return `do:${reply.proposals[0].mutation}`;
   const asked = say.match(/^"(.+)" needs /);
   if (asked) {

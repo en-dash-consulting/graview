@@ -98,8 +98,8 @@ describe("the shell", () => {
   });
 
   it("says what the app says when nothing is wrong, and draws no switch when there are no pages", () => {
-    const html = render({ standing: "The garden keeps its agreements", pagesHref: null, chat: false });
-    expect(html).toContain("The garden keeps its agreements");
+    const html = render({ standing: "Every rule holds", pagesHref: null, chat: false });
+    expect(html).toContain("Every rule holds");
     expect(html).not.toContain('data-testid="app-faces"');
     // The way home is then the scene's own: a press, not a link.
     expect(html).toMatch(/<button[^>]*data-testid="app-home"/);
