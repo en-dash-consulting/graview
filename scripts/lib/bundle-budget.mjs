@@ -469,8 +469,10 @@ export const BUDGETS = [
     // And a large list's way through it and `ListPage` for designs: 3_371 / 1_136 more. Measured at 1_671_420 / 520_666.
     // Together, over main's rule saying its shape: measured at 1_690_539 / 528_634.
     // Raised with the pages face's by FR-159, a showing's name as drawn and FR-154, together. Measured at 1_691_411 / 528_975.
-    minified: 1_691_800,
-    gzipped: 529_000,
+    // Raised when who is here came onto the bar (FR-155): the list of names behind the bar's panes, fetched once somebody
+    // else is here, and the places list held as it opened (FR-158). 3_901 / 1_622 more. Measured at 1_695_312 / 530_597.
+    minified: 1_695_700,
+    gzipped: 530_900,
     load: "all",
   },
   {
@@ -552,8 +554,9 @@ export const BUDGETS = [
     // 3_371 / 1_126 more. Measured at 1_560_294 / 475_612.
     // Together, over main's rule saying its shape: measured at 1_565_066 / 478_232.
     // Raised with the pages face's by FR-159, a showing's name as drawn and FR-154, together. Measured at 1_565_769 / 478_533.
+    // And by who is here on the bar (FR-155): 98 more gzipped. Measured at 1_565_646 / 478_631.
     minified: 1_566_100,
-    gzipped: 478_600,
+    gzipped: 478_900,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

@@ -1,7 +1,11 @@
 import { hueFor, MOST_STANDING, orderKinds, OVERVIEW_SLUG, placeSlug, primaryOf, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
-import { POPOVER_STYLE, usePopover } from "@graview/react/provider";
-import { createContext, useCallback, useContext, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
+import { POPOVER_STYLE, useGraviewIfAny, usePopover } from "@graview/react/provider";
+import { createContext, Suspense, useCallback, useContext, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { AppMark } from "./app-title.js";
+import { barPanes } from "./bar-panes-door.js";
+
+/* Who else is here (FR-155): drawn once somebody is, so a reader alone never fetches it. */
+const Here = barPanes.part((panes, props: { readonly scene: boolean; readonly compact: boolean }) => <panes.Here {...props} />, { quiet: true });
 
 /*
  * ONE APP BAR ON EVERY FACE (FR-131), THE SCENE AND THE PAGES AS TWO THINGS
@@ -386,6 +390,8 @@ export function AppBar({
   readonly scenePlaces?: { readonly places: readonly BarPlace[]; readonly current: string | null; readonly reach: BarGo } | undefined;
 }) {
   const bar = useRef<HTMLElement>(null);
+  // Anybody else here, by the provider's presence (FR-155); none where no provider is.
+  const company = useGraviewIfAny()?.who.size;
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   const [own, setOwn] = useState<HTMLElement | null>(null);
   const [compact, setCompact] = useState(false);
@@ -461,7 +467,7 @@ export function AppBar({
   const Heading = heading === false ? "span" : (`h${heading}` as const);
   const Home = (home.href !== undefined ? "a" : "button") as "a";
   const press = (go: (() => void) | undefined) => (event: MouseEvent) => {
-    if (!go || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (!go || !plain(event)) return;
     event.preventDefault();
     go();
   };
@@ -566,6 +572,11 @@ export function AppBar({
             ) : null}
             {/* The face's own tool (`BarFind.own`): the scene's Activity, when something has happened. */}
             <div ref={setOwn} className="graview-bar-own" data-graview-bar-own="" />
+            {company ? (
+              <Suspense fallback={null}>
+                <Here scene={!onPages} compact={compact} />
+              </Suspense>
+            ) : null}
             {tools}
           </div>
         </div>
@@ -643,10 +654,18 @@ function roomForWords(header: HTMLElement): boolean | null {
     if (Number.isFinite(basis)) spare -= Math.max(0, basis - find.getBoundingClientRect().width);
   }
   // The app's name on two lines has given its room already: no room for the words.
-  const name = header.querySelector(".graview-bar-app-name");
-  if (name && name.getBoundingClientRect().height > Number.parseFloat(getComputedStyle(name).lineHeight) * 1.5) return false;
+  if (nameWrapped(header)) return false;
   return faces.getAttribute("data-switch-drawn") === "icons" ? spare >= words + 2 : spare >= -1;
 }
+
+/** Whether the app's name is on two lines: it has given its room already. */
+function nameWrapped(header: HTMLElement): boolean {
+  const name = header.querySelector(".graview-bar-app-name");
+  return Boolean(name && name.getBoundingClientRect().height > Number.parseFloat(getComputedStyle(name).lineHeight) * 1.5);
+}
+
+/** A press a page should follow itself: the main button, no key held (a new tab, a new window, a download). */
+const plain = (event: MouseEvent): boolean => event.button === 0 && !(event.metaKey || event.ctrlKey || event.shiftKey || event.altKey);
 
 /** Find's shortcut as the keyboard says it: ⌘K on a Mac (and an iPad's keyboard), Ctrl K elsewhere. */
 function findKeys(): string {
@@ -654,42 +673,51 @@ function findKeys(): string {
   return /Mac|iPhone|iPad|iPod/.test(platform) ? "⌘K" : "Ctrl K";
 }
 
+/** A mark of the bar's, drawn in the ink it stands in, hidden from whoever reads its words. */
+function Mark({ size, box = size, children }: { readonly size: number; readonly box?: number; readonly children: ReactNode }) {
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${box} ${box}`} aria-hidden="true" focusable="false" style={{ flex: "0 0 auto" }}>
+      {children}
+    </svg>
+  );
+}
+
 /** The scene's mark: a plot of the city, seen from above at an angle. */
 function SceneMark() {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style={{ flex: "0 0 auto" }}>
+    <Mark size={14}>
       <path d="M7 1.5 L12.5 4.5 L7 7.5 L1.5 4.5 Z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
       <path d="M1.5 7.5 L7 10.5 L12.5 7.5" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round" />
-    </svg>
+    </Mark>
   );
 }
 
 /** The pages' mark: a page of lines. */
 function PagesMark() {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" style={{ flex: "0 0 auto" }}>
+    <Mark size={14}>
       <rect x="2.25" y="1.75" width="9.5" height="10.5" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.3" />
       <path d="M4.5 5 H9.5 M4.5 7.25 H9.5 M4.5 9.5 H7.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-    </svg>
+    </Mark>
   );
 }
 
 /** The way a menu opens: a chevron drawn, not a glyph a face may draw as a dot. */
 function Chevron() {
   return (
-    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" focusable="false" style={{ flex: "0 0 auto" }}>
+    <Mark size={10}>
       <path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    </Mark>
   );
 }
 
 /** A magnifier: the mark for Find where there is no room for the box. */
 function FindMark() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+    <Mark size={16}>
       <circle cx="7" cy="7" r="4.75" fill="none" stroke="currentColor" strokeWidth="1.5" />
       <path d="M10.5 10.5 L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
+    </Mark>
   );
 }
 
@@ -699,9 +727,9 @@ function PlaceMark({ place }: { readonly place: BarPlace }) {
   if (place.key === WHOLE_KEY) return <SceneMark />;
   if (place.group === "home") {
     return (
-      <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+      <Mark size={13} box={14}>
         <path d="M2 6.5 L7 2 L12 6.5 V12 H2 Z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-      </svg>
+      </Mark>
     );
   }
   // A kind's plot, as the scene draws it from altitude (the mark FR-117 gave a kind with no drawing); a picture of it wears its outline; how the kinds connect, the ink's.
@@ -745,7 +773,7 @@ function PlaceEntry({ place, current, reach, standing, done }: { readonly place:
       onClick={(event: MouseEvent) => {
         done();
         if (!reach.go) return;
-        if (href !== undefined && (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)) return;
+        if (href !== undefined && !plain(event)) return;
         event.preventDefault();
         reach.go(place);
       }}
@@ -801,8 +829,19 @@ function PlaceGroups({ places, current, reach, id, done }: { readonly places: re
  * `app-places`, as the one control and its list are, so a place that does
  * not stand is reached by the same two presses either way.
  */
-function Places({ places, current, reach, scene, stands }: { readonly places: readonly BarPlace[]; readonly current: string | null; readonly reach: BarGo; readonly scene: boolean; readonly stands: readonly number[] | null }) {
+function Places({ places, current, reach, scene, stands: weighed }: { readonly places: readonly BarPlace[]; readonly current: string | null; readonly reach: BarGo; readonly scene: boolean; readonly stands: readonly number[] | null }) {
   const popover = usePopover("places");
+  /*
+   * THE LIST RENDERS ONCE AS IT OPENS (FR-158). The row is weighed again
+   * whenever its room may have changed — a face arriving, a count on the
+   * standing, someone else coming in; were that answer taken while the list
+   * is open, entries would move between the row and the list under a press
+   * already on its way, and the press land on an element no longer in the
+   * document. While it is open the places stay as they stood when it opened.
+   */
+  const held = useRef(weighed);
+  if (!popover.open) held.current = weighed;
+  const stands = held.current;
   const said = places.find((place) => place.key === current)?.label ?? "Places";
   const rest = stands ? places.filter((_, at) => !stands.includes(at)) : places;
   return (
@@ -854,8 +893,7 @@ function standsIn(header: HTMLElement, current: number, wordsAsked: boolean, ran
   const find = header.querySelector<HTMLElement>(".graview-bar-find");
   if (find?.matches(":focus-within")) return undefined;
   if (header.getBoundingClientRect().width < BAR_PHONE) return null;
-  const name = header.querySelector(".graview-bar-app-name");
-  if (name && name.getBoundingClientRect().height > Number.parseFloat(getComputedStyle(name).lineHeight) * 1.5) return null;
+  if (nameWrapped(header)) return null;
   const widths = [...ruler.children].map((one) => one.getBoundingClientRect().width);
   const more = widths.pop() ?? 0;
   const faces = header.querySelector<HTMLElement>(".graview-bar-faces");
