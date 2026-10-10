@@ -63,6 +63,13 @@ export function registerFrameworkViews<S extends AnySchema>(registry: ReactViewR
         return <Arriving schema={schema} specs={specs} kind={kind} view={view as unknown as ViewProps<AnySchema>} />;
       };
       const bySpec = cell.slot !== undefined && slots?.[cell.slot] !== undefined;
+      // What a declared page or row says (`pageSays`), asked through the door of the view it opens onto once that has arrived.
+      if (bySpec) {
+        (Door as { says?: unknown }).says = (node: unknown, graph: unknown) => {
+          const View = heavy.current?.frameworkViews(schema, specs).lookup(kind as never, { cardinality: cell.cardinality, fidelity: cell.fidelity }) as { says?: (node: unknown, graph: unknown) => unknown } | undefined;
+          return View?.says?.(node, graph);
+        };
+      }
       registry.register(kind as never, { cardinality: cell.cardinality, fidelity: cell.fidelity }, bySpec ? Door : markDefaultView(Door));
     }
   }

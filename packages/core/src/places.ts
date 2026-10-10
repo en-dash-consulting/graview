@@ -312,6 +312,64 @@ export interface PagesArrangement {
   readonly scene?: string;
   /** WHAT THE SWITCH CALLS THE ROUTED FACE (FR-137): "Pages" when the declaration says none. */
   readonly pages?: string;
+  /**
+   * THE PLACES THAT STAND ON THE BAR (FR-145, ranked): kinds by name or
+   * plural and pictures by title or address word, each of which stands on
+   * the bar's row beside Home when there is room; every other place folds
+   * into "More". Unsaid, the bar derives it (`supportingKinds`): the main
+   * kinds and their pictures stand, the machinery folds. At most
+   * `MOST_STANDING` stand however many are named.
+   *
+   *   pages: { primary: ["task", "list", "The week"] }
+   */
+  readonly primary?: readonly string[];
+}
+
+/** The most places that stand on the bar's row, Home among them, however much room it has: past it a row is a list to read, not a choice to see. */
+export const MOST_STANDING = 6;
+
+/**
+ * THE KINDS THAT SUPPORT THE OTHERS, which fold into the bar's "More" when
+ * the declaration names no `pages.primary`:
+ *
+ *   - a kind the home leaves off (`pages.hide`);
+ *   - a kind of a module drawn only for those who keep it (the
+ *     installation's people and invitations: `visibility: "admin"`);
+ *   - a note about other things: a kind whose every tie points out at two
+ *     or more kinds, and that nothing points at — a reason "about a task
+ *     or a list", a comment about a plan, a person or a place.
+ *
+ * Everything else is a main kind. A picture stands with its kind.
+ */
+export function supportingKinds(
+  schema: AnySchema,
+  pages: PagesArrangement | undefined,
+  kept: Iterable<string> = [],
+): ReadonlySet<string> {
+  const kinds = schema.kinds as readonly string[];
+  // Each tie's far kinds, other than the kind itself.
+  const ties = (kind: string) => Object.values((schema.tryDefinition(kind)?.edges ?? {}) as Record<string, { readonly to?: readonly string[] }>).map((edge) => (edge.to ?? []).filter((far) => far !== kind));
+  const pointedAt = new Set(kinds.flatMap((kind) => ties(kind).flat()));
+  return new Set([...(pages?.hide ?? []), ...kept, ...kinds.filter((kind) => !pointedAt.has(kind) && ties(kind).length > 0 && ties(kind).every((far) => far.length >= 2))]);
+}
+
+/**
+ * What `pages.primary` names, resolved: the kinds and the places (by
+ * `kind|as`) it stands up; undefined when the declaration says nothing.
+ * A word that names nothing is passed over (`graview check` says so).
+ */
+export function primaryOf(
+  pages: PagesArrangement | undefined,
+  schema: AnySchema,
+  places: readonly Place[],
+): { readonly kinds: ReadonlySet<string>; readonly places: ReadonlySet<string> } | undefined {
+  if (!pages?.primary) return undefined;
+  // By address word, as `first` is read: a kind's name or plural, a place's title or `as`.
+  const words = new Set(pages.primary.map(placeSlug));
+  return {
+    kinds: new Set((schema.kinds as readonly string[]).filter((kind) => words.has(placeSlug(kind)) || words.has(kindPath(schema, kind).slice(1)))),
+    places: new Set(places.filter((place) => words.has(place.as) || words.has(placeSlug(place.title))).map((place) => `${place.kind}|${place.as}`)),
+  };
 }
 
 /** The scene's address word (FR-132), whatever the declaration calls the scene. */
@@ -383,6 +441,30 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, pla
       if (!kinds.includes(kind)) {
         findings.push({ severity: "warning", code: "pages-kind-unknown", path: `pages.${part}.${index}`, message: `pages.${part} names "${kind}", which is not a kind, so it is passed over.`, fix: `Use one of: ${kinds.join(", ")}.` });
       }
+    });
+  }
+  (pages.primary ?? []).forEach((word, index) => {
+    const opening = openingOf(word, app.schema, places);
+    if (opening === undefined || opening.to === "home") {
+      findings.push({
+        severity: "warning",
+        code: "pages-primary-unknown",
+        path: `pages.primary.${index}`,
+        message:
+          opening?.to === "home"
+            ? `pages.primary names "${word}", but Home always stands on the bar, so it is passed over.`
+            : `pages.primary names "${word}", which is not a kind or a place, so it is passed over.`,
+        fix: `Name a kind (${kinds.join(", ")}) or a place (${places.map((place) => `"${place.title}"`).join(", ") || "none is declared"}).`,
+      });
+    }
+  });
+  if ((pages.primary?.length ?? 0) > MOST_STANDING - 1) {
+    findings.push({
+      severity: "warning",
+      code: "pages-primary-many",
+      path: "pages.primary",
+      message: `pages.primary names ${pages.primary!.length} places, and at most ${MOST_STANDING - 1} stand beside Home: the rest fold into "More" anyway.`,
+      fix: `Name the ${MOST_STANDING - 1} a person reaches for most.`,
     });
   }
   if (pages.first !== undefined && openingOf(pages.first, app.schema, places) === undefined) {

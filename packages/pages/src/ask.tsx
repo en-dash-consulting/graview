@@ -96,7 +96,14 @@ function useInItsBox(anchor: RefObject<HTMLDivElement | null>, drawn: boolean) {
     const place = () => {
       const box = boxOf();
       const view = { width: document.documentElement.clientWidth || innerWidth, height: innerHeight };
-      const at = askPlace(box?.getBoundingClientRect() ?? { left: 0, top: 0, right: view.width, bottom: view.height }, view, NEED);
+      const rect = box?.getBoundingClientRect() ?? { left: 0, top: 0, right: view.width, bottom: view.height };
+      /*
+       * AT THE WINDOW'S FOOT ON A SHORT PAGE TOO. The page's column ends
+       * where its content does, and on a list of one reason the field stood
+       * under that reason, mid-window. A column that ends above the window's
+       * foot is the window's foot (an embed's box is its own).
+       */
+      const at = askPlace(embed ? rect : { left: rect.left, right: rect.right, top: rect.top, bottom: Math.max(rect.bottom, view.height) }, view, NEED);
       element.style.width = `${at.width}px`;
       element.style.height = `${at.height}px`;
       pin(element, at, at.shown);

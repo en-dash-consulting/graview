@@ -5,7 +5,10 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { ArrangeBar } from "../../src/index.js";
+import { ArrangeBar, preloadArrangeLists } from "../../src/index.js";
+
+// The lists the line opens come when first wanted; here, before the first press.
+await preloadArrangeLists();
 
 /**
  * A DATE FILTER ASKS FOR ITS DAY IN PLACE. "Due before…" opened the
@@ -35,7 +38,8 @@ describe("a date filter", () => {
     const render = () => root.render(<ArrangeBar schema={schema} graph={graph} kind="task" arrangement={arrangement} onChange={(next) => { arrangement = next; render(); }} query={false} />);
     await act(async () => render());
     try {
-      await act(async () => setValue(host.querySelector<HTMLSelectElement>('[data-testid="arrange-add"]')!, "due:before"));
+      await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="arrange-add"]')!.click());
+      await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="arrange-list"] [data-value="due:before"]')!.click());
       expect(prompt).not.toHaveBeenCalled();
       const day = host.querySelector<HTMLInputElement>('[data-testid="arrange-day"]');
       expect(day?.type).toBe("date");

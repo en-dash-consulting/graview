@@ -377,7 +377,7 @@ export function FaceControlsRoot<S extends AnySchema>({
   useTakeBackKeys(context, root, !without.has("undo"));
   return (
     <FaceControls.Provider value={placed}>
-      <Fallbacks context={context} registry={registry} placed={placed} without={without} />
+      <Fallbacks context={context} placed={placed} without={without} />
       {children}
     </FaceControls.Provider>
   );
@@ -385,12 +385,10 @@ export function FaceControlsRoot<S extends AnySchema>({
 
 function Fallbacks<S extends AnySchema>({
   context,
-  registry,
   placed,
   without,
 }: {
   readonly context: PageContext<S>;
-  readonly registry: PageRegistry<S, unknown> | undefined;
   readonly placed: Placed;
   readonly without: ReadonlySet<FaceControl>;
 }) {
@@ -405,8 +403,13 @@ function Fallbacks<S extends AnySchema>({
   if (!ready) return null;
   const segments = location.pathname.split("/").filter(Boolean);
   const listKind = segments.length === 1 ? kindOfSlug(context.store.schema, segments[0]!) : undefined;
-  // `?q=` narrows a list the face derived; a list of the app's own has its own words for that.
-  const narrows = listKind !== undefined && registry?.lookup(listKind, "list") === undefined;
+  /*
+   * `?q=` narrows the list you are on, the face's or the app's own: the
+   * words are the shared grammar's, which an app's list reads as the
+   * derived one does. A list page with a second box for the same words —
+   * a "Find…" under the bar's "Find… ⌘K" — said one thing twice.
+   */
+  const narrows = listKind !== undefined;
   return (
     <>
       {!findPlaced && !without.has("find") && bar ? createPortal(<FindInBar context={context} narrowsLists={narrows} />, bar.slot) : null}

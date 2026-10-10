@@ -425,6 +425,21 @@ export class Person {
     this.note(what, before);
   }
 
+  /** Take an entry of an open list (the arranging line's): pointer presses it, keyboard arrows to it and presses Enter. */
+  async pick(entry, what) {
+    const before = this.presses;
+    if (this.input === "pointer") {
+      await entry.click({ timeout: 4_000 });
+      this.presses += 1;
+    } else {
+      const on = () => entry.evaluate((el) => el === document.activeElement).catch(() => false);
+      for (let i = 0; i < 120 && !(await on()); i++) await this.key("ArrowDown");
+      if (!(await on())) throw new DeadEnd(`the arrow keys do not reach ${what}`);
+      await this.key("Enter");
+    }
+    this.note(what, before);
+  }
+
   /** Choose an option of a native select: pointer picks it, keyboard arrows to it. */
   async choose(select, label, what) {
     const options = await select.evaluate((el) => ({ at: el.selectedIndex, all: [...el.options].map((o) => ({ text: o.textContent.trim(), value: o.value })) }));
@@ -837,16 +852,19 @@ export const JOBS = {
         await person.settle(300);
         // The list arranges where the kind is drawn whole: down into its district.
         const down = page.locator('[data-testid="overview"][aria-pressed="true"]').filter({ visible: true }).first();
-        if (!(await page.locator('select[data-testid$="-add"]').filter({ visible: true }).first().isVisible().catch(() => false)) && (await down.isVisible().catch(() => false))) {
+        if (!(await page.locator('button[data-testid$="-add"], button[data-testid$="-all"]').filter({ visible: true }).first().isVisible().catch(() => false)) && (await down.isVisible().catch(() => false))) {
           await person.press(down, `Down to ${job.plural}`);
           await person.settle(600);
         }
       }
-      const only = page.locator('select[data-testid$="-add"]').filter({ visible: true }).first();
-      if (!(await appears(only))) throw new DeadEnd(`there is no "Only…" to narrow the ${job.plural.toLowerCase()} with`);
-      const option = await only.evaluate((el, field) => [...el.options].find((one) => one.value.startsWith(`${field}:at-most:`))?.textContent?.trim() ?? null, job.field);
-      if (!option) throw new DeadEnd(`"Only…" offers no ${job.label.toLowerCase()} to narrow the ${job.plural.toLowerCase()} by`);
-      await person.choose(only, option, `"${option}"`);
+      // "Filter" on the arranging line, or — where the line is narrow — the one "Arrange" that holds it.
+      const filter = page.locator('button[data-testid$="-add"], button[data-testid$="-all"]').filter({ visible: true }).first();
+      if (!(await appears(filter))) throw new DeadEnd(`there is no "Filter" to narrow the ${job.plural.toLowerCase()} with`);
+      await person.press(filter, '"Filter"');
+      const entry = page.locator(`[data-testid="arrange-list"] [data-value^="${job.field}:at-most:"]`).first();
+      if (!(await appears(entry))) throw new DeadEnd(`"Filter" offers no ${job.label.toLowerCase()} to narrow the ${job.plural.toLowerCase()} by`);
+      const option = (await entry.textContent())?.trim() ?? job.label;
+      await person.pick(entry, `"${option}"`);
       await person.settle(300);
       const chip = page.locator('[data-testid$="-condition"]').filter({ hasText: job.label }).filter({ visible: true }).first();
       if (!(await appears(chip, 3_000))) throw new DeadEnd(`choosing "${option}" did not narrow the ${job.plural.toLowerCase()}`);

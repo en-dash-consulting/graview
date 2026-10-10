@@ -496,6 +496,8 @@ try {
     await phone.goto(`${base}/pages/notes?remember=1`, { waitUntil: "networkidle" });
     await phone.waitForTimeout(500);
     const recordsBefore = await phone.locator('[data-testid="records"] a').count();
+    // Adding one is a quiet act at the list's end; its form opens when it is pressed.
+    if (!(await phone.locator('[data-testid="form-add-note"]').isVisible().catch(() => false))) await phone.click('[data-testid="act-open-add-note"]');
     await phone.fill('[data-testid="form-add-note"] input[name="label"]', "Repot the monstera");
     await phone.click('[data-testid="form-add-note"] button[type="submit"]');
     await phone.waitForTimeout(700);

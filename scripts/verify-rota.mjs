@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { arrangeByKeyboard, endClearsTheFoot, FIRST_RECORD_WITHIN, listHead } from "./lib/arranging-line.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
@@ -304,6 +305,50 @@ const openProfile = async (page) => {
       embedded.hostFont.includes("Georgia") &&
       embedded.views.every((many) => many > 0),
   };
+
+  /* --------------------------- the shifts arrange on one quiet line */
+  /*
+   * The rota's own list page had a Find box, "Show [Everything]", "Group
+   * [By place]" and "Sort [By when]" — four form controls over ten shifts.
+   * It draws the framework's line now: near the top, no select, every way
+   * to arrange from the keyboard, and the words its old links wrote
+   * (`show=bare`, `group=day`) still open the list they meant.
+   */
+  {
+    const heads = [];
+    let keys = null;
+    for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+      const list = await browser.newPage({ viewport });
+      await list.goto(`${BASE}/pages/shifts?${DAY}`, { waitUntil: "networkidle" });
+      await list.waitForSelector('[data-testid="records"]', { timeout: 20_000 });
+      await list.waitForTimeout(300);
+      heads.push({ width: viewport.width, ...(await listHead(list)) });
+      if (viewport.width === 1440) keys = await arrangeByKeyboard(list, "arrange");
+      heads[heads.length - 1].end = await endClearsTheFoot(list);
+      await list.close();
+    }
+    const old = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await old.goto(`${BASE}/pages/shifts?${DAY}&show=bare&group=day`, { waitUntil: "networkidle" });
+    await old.waitForTimeout(400);
+    const addressed = await old.evaluate(() => ({
+      group: document.querySelector('button[data-testid="arrange-group"]')?.value ?? null,
+      kept: [...document.querySelectorAll('[data-testid="arrange-condition"]')].map((token) => token.textContent?.trim()),
+      rows: [...document.querySelectorAll('[data-testid="records"] li')].map((li) => li.textContent ?? ""),
+    }));
+    await old.close();
+    report.checks.theShiftsArrangeOnOneQuietLine = {
+      heads,
+      keys,
+      addressed,
+      ok:
+        heads.every((one) => one.fromTop !== null && one.fromTop <= (one.width >= 1000 ? FIRST_RECORD_WITHIN.desk : FIRST_RECORD_WITHIN.phone) && one.selects === 0 && one.count !== null && !one.scrolls && one.end.ok) &&
+        keys?.ok === true &&
+        addressed.group === "on" &&
+        addressed.kept.length === 1 &&
+        addressed.rows.length > 0 &&
+        addressed.rows.every((row) => row.includes("nobody yet")),
+    };
+  }
 
   /* ------------------- the routed face, read by a machine, on every route */
   const axeSource = readFileSync(resolve(repoRoot, "node_modules/axe-core/axe.min.js"), "utf8");

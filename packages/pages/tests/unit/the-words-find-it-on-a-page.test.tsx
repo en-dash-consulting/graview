@@ -114,7 +114,7 @@ describe("/search", () => {
 
 describe("the nav box", () => {
   it("narrows the list it is on, and goes to /search from anywhere else", () => {
-    expect(draw("/tasks?q=van")).toMatch(/data-testid="nav-find"[^>]*placeholder="Narrow…"[^>]*value="van"/);
+    expect(draw("/tasks?q=van")).toMatch(/data-testid="nav-find"[^>]*placeholder="Narrow tasks…"[^>]*value="van"/);
     expect(draw("/")).toMatch(/data-testid="nav-find"[^>]*placeholder="Find…"/);
     expect(draw("/search?q=van")).toMatch(/data-testid="nav-find"[^>]*value="van"/);
   });

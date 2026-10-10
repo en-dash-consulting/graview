@@ -246,7 +246,7 @@ function lensSentences(before: readonly LooseLens[], after: readonly LooseLens[]
   return out;
 }
 
-type Arrangement = { order?: readonly string[]; hide?: readonly string[]; first?: string; scene?: string; pages?: string } | undefined;
+type Arrangement = { order?: readonly string[]; hide?: readonly string[]; first?: string; primary?: readonly string[]; scene?: string; pages?: string } | undefined;
 
 /** The arrangement (FR-80), compared part by part. */
 function pagesSentences(before: Arrangement, after: Arrangement): string[] {
@@ -261,6 +261,7 @@ function pagesSentences(before: Arrangement, after: Arrangement): string[] {
     if (shown.length > 0) out.push(`The front page shows ${shown.join(", ")} again.`);
   }
   if (!same(before?.first, after?.first)) out.push(after?.first === undefined || after.first.trim().toLowerCase() === "home" ? "The app opens at its home." : `The app opens on "${after.first}".`);
+  if (!same(before?.primary, after?.primary)) out.push(after?.primary && after.primary.length > 0 ? `The bar stands up ${after.primary.join(", ")} beside Home.` : "The bar stands up the main kinds and their pictures again.");
   if (!same(before?.scene, after?.scene)) out.push(after?.scene === undefined ? "The switch calls the scene Scene again." : `The switch calls the scene "${after.scene}".`);
   if (!same(before?.pages, after?.pages)) out.push(after?.pages === undefined ? "The switch calls the pages Pages again." : `The switch calls the pages "${after.pages}".`);
   if (out.length === 0) out.push("The app's pages change.");

@@ -1,12 +1,11 @@
-import { admitArrangement, arrange, arrangeable, formatArrangement, parseArrangement } from "@graview/core/arrange";
 import { humanizeField, labelOf, type Arrangement, type Principal, type Violation } from "@graview/core";
-import { ArrangeBar, KindFigure, useMarkup } from "@graview/primitives";
+import { KindFigure, useMarkup } from "@graview/primitives";
 import {
   DerivedForm,
+  ListPage,
   PageFind,
   StartFreshLink,
   createPageRegistry,
-  kindFacts,
   placePath,
   rankedRepairs,
   recordFacts,
@@ -18,7 +17,7 @@ import {
 } from "@graview/pages";
 import { editableFields, type Affordance, type AffordanceSet, type EditableField } from "@graview/tools";
 import { useMemo, useState, type ReactNode } from "react";
-import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import type { TodoSchema } from "../domain/schema.js";
 import { today } from "./when.js";
 
@@ -56,7 +55,8 @@ type Ctx = PageContext<S>;
  */
 const CSS = `
 .th {
-  --th-paper: color-mix(in oklab, var(--graview-ground) 92%, var(--graview-accent) 8%);
+  /* Neutral paper: an accent wash over every page said nothing about where you are. */
+  --th-paper: var(--graview-ground);
   --th-card: var(--graview-panel);
   --th-line: var(--graview-edge);
   --th-tint: color-mix(in oklab, var(--graview-panel) 88%, var(--graview-accent) 12%);
@@ -88,9 +88,9 @@ const CSS = `
 .th-nav a .n { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 0.75rem; color: var(--graview-ink-muted); }
 .th-nav a.warn .n { color: var(--graview-warn); }
 
-.th-main { padding: 2.2rem 2.6rem 5rem; max-width: 68rem; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
+.th-main { padding: 2.2rem 2.6rem max(5rem, var(--graview-foot-room, 0px)); max-width: 68rem; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
 .th-under { grid-template-columns: minmax(0, 1fr); }
-.th-under .th-main { width: 100%; box-sizing: border-box; margin: 0 auto; }
+.th-under .th-main { width: 100%; box-sizing: border-box; margin: 0 auto; padding-top: 1.4rem; }
 .th-eyebrow { font-size: 0.6875rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--graview-ink-muted); margin: 0 0 0.5rem; }
 /* An eyebrow that is a LINK is a control, and a control is at least 24px
    tall however small its words are — WCAG 2.5.8, and the one audit-ui
@@ -124,7 +124,8 @@ const CSS = `
   flex-wrap: wrap;
 }
 .th-row.bad { border-color: var(--graview-warn); }
-.th-row .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.98rem; }
+/* A name is read whole: a reason that is a sentence wraps rather than losing its end. */
+.th-row .name { flex: 1 1 8rem; min-width: 0; min-height: 1.5rem; overflow-wrap: anywhere; font-size: 0.98rem; }
 .th-row.done .name { text-decoration: line-through; color: var(--graview-ink-muted); }
 .th-row .meta { margin-left: auto; display: flex; align-items: center; gap: 0.6rem; font-size: 0.8rem; color: var(--graview-ink-faint); font-variant-numeric: tabular-nums; flex: 0 1 auto; min-width: 0; white-space: nowrap; }
 .th-row .meta .late { color: var(--graview-warn); }
@@ -207,7 +208,7 @@ const CSS = `
    */
   .th { overflow-x: clip; }
   .th-nav a .n { margin-left: 0.35rem; }
-  .th-main { padding: 1.4rem 1.1rem 4rem; }
+  .th-main { padding: 1.4rem 1.1rem max(4rem, var(--graview-foot-room, 0px)); }
   .th-h1 { font-size: 1.7rem; }
 }
 
@@ -426,120 +427,38 @@ function Home({ context }: { context: Ctx }) {
  * the scene's stops have kept since it existed.
  */
 function KindList({ context, kind }: { context: Ctx; kind: string }) {
-  const { store, principal } = context;
-  const tick = useStoreTick(store);
-  const [params, setParams] = useSearchParams();
   const now = (context.invariantContext?.["today"] as string | undefined) ?? today();
-  const flagged = flaggedIds(store.violations(context.invariantContext));
-  const facts = useMemo(
-    () => kindFacts(store, kind, { ...(principal ? { principal } : {}), ...(context.invariantContext ? { context: context.invariantContext } : {}) }),
-    [store, kind, principal, context.invariantContext, tick],
-  );
-
+  const flagged = flaggedIds(context.store.violations(context.invariantContext));
   /*
-   * ARRANGED THROUGH THE FRAMEWORK'S OWN MODULE, in its words. This page
-   * had a group select, a sort select, a show select and a search box of
-   * its own, each written for tasks and useless for lists. The offers now
-   * come from the declaration and the choice travels in the search as
-   * `sort`, `filter`, `group` and `q` — the same grammar every lens carries
-   * in its fragment — so a list you arranged is still a link you can send,
-   * and a person who arranged the week can ask the list the same thing.
-   * Things opens its tasks by list, open ones only, by name.
+   * THE FRAMEWORK'S LIST, IN THINGS' OWN ROWS. The head, the arranging line
+   * (in the shared words, so a list you arranged is a link), the index of a
+   * long list and adding one are `ListPage`'s; what is Things' own is how
+   * the tasks open — by list, open ones only, by name — and a task's row,
+   * with its tick. This page had its own eyebrow, "10 of 12 shown." and a
+   * second Find under the bar's.
    */
-  const offers = arrangeable(store.schema, kind);
-  const said = ["sort", "filter", "group", "q"].some((word) => params.get(word) !== null);
   const opening: Arrangement =
     kind === "task"
       ? { group: { by: "holds" }, filter: [{ key: "done", value: "false" }], sort: { by: "label", direction: "asc" } }
       : { sort: { by: "label", direction: "asc" } };
-  const asked = said
-    ? parseArrangement({
-        ...(params.get("sort") ? { sort: params.get("sort")! } : {}),
-        ...(params.get("filter") ? { filter: params.get("filter")! } : {}),
-        ...(params.get("group") ? { group: params.get("group")! } : {}),
-        ...(params.get("q") ? { q: params.get("q")! } : {}),
-      })
-    : opening;
-  const arrangement = admitArrangement(asked, offers).arrangement;
-  const rearrange = (next: Arrangement) => {
-    const words = formatArrangement(next);
-    const search = new URLSearchParams(params);
-    for (const word of ["sort", "filter", "group", "q"] as const) {
-      if (words[word]) search.set(word, words[word]!);
-      else search.delete(word);
-    }
-    // Everything cleared is still a choice, and not the opening one.
-    if (!words.sort && !words.filter && !words.group && !words.q) search.set("filter", "is:any");
-    setParams(search, { replace: false });
-  };
-
-  const all = store.graph.nodesOfKind(kind as never) as NamedNode[];
-  const named = (node: NamedNode) => labelOf(store.schema.tryDefinition(kind), node as never);
-  const arranged = arrange(all, arrangement, { schema: store.schema, graph: store.graph, flagged: new Set(flagged), today: now });
-  const shown = arranged.nodes;
-  const groups = arranged.grouped ? arranged.groups.map((group) => ({ title: group.label, members: group.nodes })) : [{ title: plural(store, kind), members: shown }];
-
   return (
-    <>
-      <header>
-        <p className="th-eyebrow">{plural(store, kind)}</p>
-        <h1 className="th-h1">{plural(store, kind)}</h1>
-        <p className="th-lede">
-          {shown.length} of {all.length} shown.
-        </p>
-      </header>
-
-      <div className="th-section">
-        <div className="th-controls" data-testid="list-controls">
-          <ArrangeBar schema={store.schema} graph={store.graph} kind={kind} arrangement={arrangement} onChange={rearrange} testId="list" />
-        </div>
-
-        {shown.length === 0 ? (
-          <Empty
-            said={
-              arrangement.query
-                ? `Nothing here is called “${arrangement.query}”.`
-                : arrangement.filter?.length
-                  ? `None of the ${plural(store, kind).toLowerCase()} fit.`
-                  : `No ${plural(store, kind).toLowerCase()} yet.`
-            }
-            next={
-              arrangement.query || arrangement.filter?.length ? (
-                <button type="button" className="th-btn" onClick={() => rearrange({ ...(arrangement.sort ? { sort: arrangement.sort } : {}), ...(arrangement.group ? { group: arrangement.group } : {}) })}>
-                  {arrangement.query ? "Clear the search" : "Show every one"}
-                </button>
-              ) : null
-            }
-          />
+    <ListPage
+      context={context}
+      kind={kind}
+      bare
+      opening={opening}
+      row={(node, facts) =>
+        kind === "task" ? (
+          <TaskRow task={node as unknown as TaskNode} context={context} flagged={flagged} now={now} />
         ) : (
-          groups.map(({ title, members }) => (
-            <section key={title} className="th-section" style={{ marginTop: 0 }} data-testid={arranged.grouped ? "list-group" : undefined}>
-              {groups.length > 1 || arranged.grouped ? (
-                <header>
-                  <h2 className="th-h2">{title}</h2>
-                  <span className="th-quiet">{members.length}</span>
-                </header>
-              ) : null}
-              {kind === "task" ? (
-                <Rows tasks={[...members] as unknown as TaskNode[]} context={context} flagged={flagged} now={now} />
-              ) : (
-                <ul className="th-list" data-testid="records">
-                  {members.map((node) => (
-                    <li key={node.id}>
-                      <Link className="th-row" to={recordPath(store.schema, kind, node.id)}>
-                        <span className="name">{named(node)}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          ))
-        )}
-      </div>
-
-      <Acts title={`Add ${article(kind)}`} actions={facts.actions} context={context} openFirst />
-    </>
+          <Link className={`th-row${facts.flagged ? " bad" : ""}`} to={facts.href}>
+            {/* A note is read whole on its list: its label is a shortened sentence, and the row has the room. */}
+            <span className="name">{typeof (node as { text?: unknown }).text === "string" ? String((node as { text?: unknown }).text) : facts.label}</span>
+            {facts.glance ? <span className="meta">{facts.glance}</span> : null}
+          </Link>
+        )
+      }
+    />
   );
 }
 
@@ -754,27 +673,31 @@ function Rows({
   flagged: ReadonlySet<string>;
   now: string;
 }) {
-  const { store } = context;
   return (
     <ul className="th-list" data-testid="records">
-      {tasks.map((task) => {
-        const late = !task.done && task.due !== undefined && task.due < now;
-        return (
-          <li key={task.id}>
-            <div className={`th-row${task.done ? " done" : ""}${flagged.has(task.id) ? " bad" : ""}`}>
-              <Tick context={context} task={task} />
-              <Link className="name" to={recordPath(store.schema, "task", task.id)}>
-                {task.label ?? task.id}
-              </Link>
-              <span className="meta">
-                {flagged.has(task.id) ? <span className="th-chip warn">⚠</span> : null}
-                {task.due ? <span className={late ? "late" : undefined}>{shortDate(task.due)}</span> : null}
-              </span>
-            </div>
-          </li>
-        );
-      })}
+      {tasks.map((task) => (
+        <li key={task.id}>
+          <TaskRow task={task} context={context} flagged={flagged} now={now} />
+        </li>
+      ))}
     </ul>
+  );
+}
+
+/** A task's line: its tick, its name, and when it is due. */
+function TaskRow({ task, context, flagged, now }: { task: TaskNode; context: Ctx; flagged: ReadonlySet<string>; now: string }) {
+  const late = !task.done && task.due !== undefined && task.due < now;
+  return (
+    <div className={`th-row${task.done ? " done" : ""}${flagged.has(task.id) ? " bad" : ""}`}>
+      <Tick context={context} task={task} />
+      <Link className="name" to={recordPath(context.store.schema, "task", task.id)}>
+        {task.label ?? task.id}
+      </Link>
+      <span className="meta">
+        {flagged.has(task.id) ? <span className="th-chip warn">⚠</span> : null}
+        {task.due ? <span className={late ? "late" : undefined}>{shortDate(task.due)}</span> : null}
+      </span>
+    </div>
   );
 }
 
@@ -936,16 +859,16 @@ function Acts({
   context,
   openFirst = false,
 }: {
-  title: string;
+  /** The section's heading; a list page says none — its acts are named by their own buttons. */
+  title?: string;
   actions: AffordanceSet;
   context: Ctx;
   /**
    * Whether the first act's form is already open.
    *
-   * A LIST PAGE IS FOR ADDING TO THE LIST. Making somebody press a button
-   * to reveal the one form the page exists for is a click charged for
-   * nothing — on a record, where there are eight acts and no obvious first
-   * one, the opposite is true.
+   * An EMPTY list page is for adding to the list: the form stands open
+   * there. Over a list with things in it, a whole form at its foot took
+   * nearly the room of the list, so it is one press away instead.
    */
   readonly openFirst?: boolean;
 }) {
@@ -957,9 +880,11 @@ function Acts({
   if (actions.affordances.length === 0 && actions.withheld.length === 0) return null;
   return (
     <section className="th-section" data-testid="record-actions">
-      <header>
-        <h2 className="th-h2">{title}</h2>
-      </header>
+      {title ? (
+        <header>
+          <h2 className="th-h2">{title}</h2>
+        </header>
+      ) : null}
       <div className="th-controls">
         {actions.affordances.map((affordance) => (
           <button
@@ -1114,7 +1039,6 @@ const plural = (store: Ctx["store"], kind: string): string =>
 const pluralSlugOf = (store: Ctx["store"], kind: string): string =>
   plural(store, kind).toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
-const article = (kind: string): string => (/^[aeiou]/i.test(kind) ? `an ${kind}` : `a ${kind}`);
 
 const capitalize = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 

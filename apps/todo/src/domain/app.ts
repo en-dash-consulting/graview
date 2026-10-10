@@ -45,6 +45,12 @@ export const todoApp = defineApp({
   settings: readerSettings(),
   brand: thingsBrand,
   /*
+   * WHAT STANDS ON THE BAR (FR-145, ranked): the tasks, the lists and the
+   * two pictures of the work. The rules, the reasons, the people and who
+   * may do what are one press further, in "More" — there, not hidden.
+   */
+  pages: { primary: ["task", "list", "The week", "The month"] },
+  /*
    * THREE PICTURES, DECLARED AND DRAWN (FR-79). Each lens here has a title,
    * so it is a place — a pill on the bar, a drive-in from altitude, a page
    * at /pages/places/<name> — and the framework draws it from these lines

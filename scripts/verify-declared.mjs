@@ -262,7 +262,9 @@ try {
         // The pictures by their kind's place in the order — the seats' first — and no card for the hidden rooms.
         home.gallery[0] === "/places/the-floor" &&
         !home.gallery.includes("/rooms") &&
-        JSON.stringify(home.nav.filter((href) => ["/volunteers", "/seats", "/shifts", "/rooms", "/members"].includes(href))) === JSON.stringify(["/volunteers", "/seats", "/shifts", "/rooms", "/members"]),
+        // The kinds in the declared order; the hidden rooms still reached from the bar, folded into More with what supports the rest (FR-145, ranked).
+        JSON.stringify(home.nav.filter((href) => ["/volunteers", "/seats", "/shifts", "/members"].includes(href))) === JSON.stringify(["/volunteers", "/seats", "/shifts", "/members"]) &&
+        home.nav.includes("/rooms"),
     };
     await page.close();
     const listed = await open(`face=pages&path=${encodeURIComponent("/rooms")}`, { width: 1280, height: 900 });

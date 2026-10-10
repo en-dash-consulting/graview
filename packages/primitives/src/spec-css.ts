@@ -16,6 +16,8 @@ ${/* A ROW IS A LINE OF A LIST, NOT A CAPSULE (FR-113, FR-117). It was a
 .graview-spec-row > .graview-spec-title { font-size: 0.9375rem; }
 .graview-spec-row > .graview-spec-progress { grid-template-columns: auto minmax(3rem, 5rem) auto; align-items: center; column-gap: 6px; }
 .graview-spec-list[data-as="row"] .graview-spec-row { border-width: 0 0 1px; border-radius: 0; background: transparent; padding: 6px 2px; }
+[data-graview-rows] .graview-spec-row { border-width: 0; border-radius: 0; background: transparent; padding: 2px 0; }
+[data-graview-rows] .graview-spec-row > .graview-spec-title { font-size: 1.0625rem; font-weight: 600; }
 .graview-spec-page { padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--graview-edge); }
 .graview-spec-title { font-family: var(--graview-font-display, inherit); font-weight: 600; font-size: 1rem; line-height: 1.3; overflow-wrap: anywhere; }
 .graview-spec-text { margin: 0; font-size: 0.875rem; line-height: 1.45; overflow-wrap: anywhere; }

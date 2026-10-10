@@ -25,7 +25,8 @@ export const DISPLAY = "var(--graview-font-display, var(--graview-font-body, sys
 export const column: React.CSSProperties = {
   maxWidth: 760,
   margin: "0 auto",
-  padding: "40px 20px 96px",
+  // The end clears the seat's field, which stands over the foot (`--graview-foot-room`, set by the field).
+  padding: "40px 20px max(96px, var(--graview-foot-room, 0px))",
   display: "grid",
   /*
    * A TRACK THAT MAY BE NARROWER THAN WHAT IS IN IT.

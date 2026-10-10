@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { ArrangeBar, sayCondition } from "../../src/index.js";
+import { filterEntries } from "../../src/arrange-lists.js";
 
 /**
  * "Only… suv, plug-in-hybrid" on the list of cars whose every record says
@@ -21,10 +22,12 @@ const graph = new Graph(schema);
 
 describe("a filter's choices", () => {
   it("say each value as the record does", () => {
-    const html = renderToStaticMarkup(<ArrangeBar schema={schema} graph={graph} kind="car" arrangement={{}} onChange={() => {}} />);
-    expect(html).toMatch(/<option value="body:suv">SUV<\/option>/);
-    expect(html).toMatch(/<option value="fuel:plug-in-hybrid">Plug in hybrid<\/option>/);
-    expect(html).not.toMatch(/>suv<|>plug-in-hybrid</);
+    const said = Object.fromEntries(filterEntries(schema, graph as never, arrangeable(schema, "car")).map((entry) => [entry.value, entry.label]));
+    expect(said["body:suv"]).toBe("SUV");
+    expect(said["fuel:plug-in-hybrid"]).toBe("Plug in hybrid");
+    expect(Object.values(said)).not.toContain("suv");
+    // The line itself names no value until its list is opened.
+    expect(renderToStaticMarkup(<ArrangeBar schema={schema} graph={graph} kind="car" arrangement={{}} onChange={() => {}} />)).not.toContain("SUV");
   });
 
   it("and so does the chip a chosen one leaves", () => {

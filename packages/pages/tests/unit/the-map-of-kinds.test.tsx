@@ -90,19 +90,19 @@ describe("the map of kinds", () => {
     expect(plain).toContain('data-testid="kind-relations"');
     expect(plain).toContain('href="/people"');
     expect(plain).toContain('href="/weeks"');
-    expect(plain).toContain('data-testid="arrange-group"');
     const drawn = draw("/duties?by=does");
+    expect(drawn).toMatch(/data-testid="arrange-group"[^>]*value="does"/);
     const grouped = drawn.slice(drawn.indexOf("<main"));
     expect(grouped).toContain('data-grouped="does"');
     expect(grouped.match(/data-testid="list-group"/g)).toHaveLength(2);
-    expect(grouped.indexOf("Ana")).toBeLessThan(grouped.indexOf("Bo"));
+    expect(grouped.indexOf(">Ana")).toBeLessThan(grouped.indexOf(">Bo"));
     // Night falls under Bo; a duty nobody does would fall under "No does", last.
     expect(grouped).toContain("Night");
   });
 
   it("narrows the list by a relation to one node, and by having the relation at all", () => {
     const anas = draw("/duties?does=ana");
-    expect(anas).toContain('data-testid="list-filter-note"');
+    expect(anas).toMatch(/data-testid="arrange-condition"[^>]*>[^<]*: Ana</);
     expect(anas).toContain("Morning");
     expect(anas).toContain("Evening");
     expect(anas).not.toContain("Night");

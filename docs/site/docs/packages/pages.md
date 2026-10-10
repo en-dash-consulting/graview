@@ -22,11 +22,11 @@ The traditional face: a routed webapp derived from the same declaration that dri
 
 The host applies `themeCss` from `@graview/primitives` (or supplies its own `--graview-*` tokens); the default pages render entirely from those tokens.
 
-## What it exports (44)
+## What it exports (47)
 
 Read off the package's own barrel, so this is what is there today.
 
-`beginningsFor`, `beginningsFrom`, `createPageRegistry`, `DefaultHomePage`, `DefaultListPage`, `DefaultMapPage`, `DefaultPlacePage`, `DefaultPlacesPage`, `DefaultProblemsPage`, `DefaultRecordPage`, `DefaultSearchPage`, `DefaultShell`, `DerivedForm`, `Gallery`, `GalleryCard`, `galleryOf`, `kindFacts`, `kindMap`, `KindMapSection`, `kindOfSlug`, `lastChangeOf`, `PageAsk`, `PageFind`, `PageMain`, `PagesApp`, `PagesRoutes`, `pageStyles`, `PageUndo`, `pathOfPlace`, `PlaceCard`, `placeHref`, `placePath`, `PlacePicture`, `pluralSlug`, `rankedRepairs`, `recordFacts`, `recordPath`, `Repairs`, `SceneLink`, `SearchToCreate`, `spatialHref`, `StartFreshLink`, `useStoreTick`, `WhyLine`
+`ARRANGE_FROM`, `beginningsFor`, `beginningsFrom`, `createPageRegistry`, `DefaultHomePage`, `DefaultListPage`, `DefaultMapPage`, `DefaultPlacePage`, `DefaultPlacesPage`, `DefaultProblemsPage`, `DefaultRecordPage`, `DefaultSearchPage`, `DefaultShell`, `DerivedForm`, `Gallery`, `GalleryCard`, `galleryOf`, `kindFacts`, `kindMap`, `KindMapSection`, `kindOfSlug`, `LARGE_LIST`, `lastChangeOf`, `ListPage`, `PageAsk`, `PageFind`, `PageMain`, `PagesApp`, `PagesRoutes`, `pageStyles`, `PageUndo`, `pathOfPlace`, `PlaceCard`, `placeHref`, `placePath`, `PlacePicture`, `pluralSlug`, `rankedRepairs`, `recordFacts`, `recordPath`, `Repairs`, `SceneLink`, `SearchToCreate`, `spatialHref`, `StartFreshLink`, `useStoreTick`, `WhyLine`
 
 ---
 

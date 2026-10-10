@@ -3,6 +3,7 @@ import {
   createPageRegistry,
   DerivedForm,
   kindFacts,
+  ListPage,
   recordFacts,
   recordPath,
   SceneLink,
@@ -43,6 +44,10 @@ const CSS = `
       min-height: 100%; display: grid; grid-template-columns: 236px minmax(0, 1fr);
       background: var(--sb-paper); color: var(--graview-ink);
       font-family: var(--graview-font-body, system-ui); font-size: 0.96875rem; line-height: 1.55; }
+/* The paper fills the window under the bar (and a phone's place line under it), however short the page. */
+.sb.sb-under { grid-template-columns: minmax(0, 1fr); min-height: calc(100dvh - 48px); }
+@media (max-width: 639px) { .sb.sb-under { min-height: calc(100dvh - 93px); } }
+.sb-under .sb-main { width: 100%; box-sizing: border-box; margin: 0 auto; }
 .sb a { color: inherit; text-decoration: none; }
 .sb-rail { position: sticky; top: 0; align-self: start; height: 100%; min-height: 100vh; padding: 26px 22px;
       border-right: 1px solid var(--sb-line); display: grid; align-content: start; gap: 26px;
@@ -140,8 +145,13 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
   const here = (path: string) => location.pathname === path || location.pathname.startsWith(`${path}/`);
   void store;
   return (
-    <div className="sb" data-testid="seedbed-design">
+    <div className={`sb${context.barAbove ? " sb-under" : ""}`} data-testid="seedbed-design">
       <style>{CSS}</style>
+      {/*
+        * Under the one bar, which holds the garden's places and its standing,
+        * the rail would say both again beside it: the almanac is its pages.
+        */}
+      {context.barAbove ? null : (
       <aside className="sb-rail">
         {context.barAbove ? null : (
         <Link to="/" className="sb-mark" data-testid="masthead">
@@ -178,6 +188,7 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
           )}
         </p>
       </aside>
+      )}
       {/* One main per document: inside somebody else's page this is a section. */}
       {/*
         * THE LANDMARK, ONCE. Standalone the design owns the document's main;
@@ -446,24 +457,31 @@ function Home({ context }: { context: Ctx }) {
 
 /* ---------------------------------------------------------- the lists */
 
+/*
+ * THE ALMANAC'S LISTS ARE THE FRAMEWORK'S (`ListPage`), in the almanac's
+ * own rows: a plot is a card with its beds, a gardener a line with what
+ * they look after, a planting a line with when and where it was sown, an
+ * agreement a line that says whether it is kept. Each page had an eyebrow
+ * and a heading of its own over a count; the head, the arranging line and
+ * adding one are the framework's now, and the sentence under the title the
+ * almanac's.
+ */
 function Plots({ context }: { context: Ctx }) {
   const { store } = context;
   const { garden } = useGarden(context);
   return (
     <div data-testid="seedbed-plots">
-      <header>
-        <p className="sb-eyebrow">Plots</p>
-        <h1 className="sb-h1">Every patch of ground.</h1>
-        <p className="sb-lede">{garden.plots.length} plots. A plot is beds, a caretaker, and whatever is sown in it this season.</p>
-      </header>
-      <section className="sb-section">
-        <div className="sb-grid">
-          {garden.plots.map((plot) => (
-            <PlotCard key={plot.id} plot={plot} schema={store.schema} />
-          ))}
-        </div>
-        <Acts context={context} actions={beginsOf(context, ["plot"])} />
-      </section>
+      <ListPage
+        context={context}
+        kind="plot"
+        bare
+        layout="grid"
+        description="A plot is beds, a caretaker, and whatever is sown in it this season."
+        row={(node) => {
+          const plot = garden.plots.find((one) => one.id === node.id);
+          return plot ? <PlotCard plot={plot} schema={store.schema} /> : null;
+        }}
+      />
     </div>
   );
 }
@@ -473,83 +491,74 @@ function Gardeners({ context }: { context: Ctx }) {
   const { garden } = useGarden(context);
   return (
     <div data-testid="seedbed-gardeners">
-      <header>
-        <p className="sb-eyebrow">Gardeners</p>
-        <h1 className="sb-h1">Soil under their nails.</h1>
-        <p className="sb-lede">{garden.gardeners.length} gardeners, and what each of them looks after.</p>
-      </header>
-      <section className="sb-section">
-        <div>
-          {garden.gardeners.map((gardener) => (
-            <div className="sb-row" key={gardener.id}>
-              <span className="sb-avatar">{initials(gardener.label)}</span>
-              <Link to={recordPath(store.schema, "gardener", gardener.id)} className="grow" style={{ fontWeight: 600, fontSize: "1.0625rem" }}>{gardener.label}</Link>
-              {gardener.plots.length === 0 ? <span className="k">looks after nothing yet</span> : gardener.plots.map((plot) => (
+      <ListPage
+        context={context}
+        kind="gardener"
+        bare
+        description="Who tends the garden, and what each of them looks after."
+        row={(node, facts) => {
+          const gardener = garden.gardeners.find((one) => one.id === node.id);
+          return (
+            <div className="sb-row">
+              <span className="sb-avatar">{initials(facts.label)}</span>
+              <Link to={facts.href} className="grow" style={{ fontWeight: 600, fontSize: "1.0625rem" }}>{facts.label}</Link>
+              {!gardener || gardener.plots.length === 0 ? <span className="k">looks after nothing yet</span> : gardener.plots.map((plot) => (
                 <Link key={plot.id} to={recordPath(store.schema, "plot", plot.id)} className="sb-pill">{plot.label}</Link>
               ))}
             </div>
-          ))}
-        </div>
-        <Acts context={context} actions={beginsOf(context, ["gardener"])} />
-      </section>
+          );
+        }}
+      />
     </div>
   );
 }
 
 function Plantings({ context }: { context: Ctx }) {
   const { store } = context;
-  const { garden } = useGarden(context);
-  const rows = [...garden.growing, ...garden.past.map((p) => ({ ...p, plot: (store.graph.out(p.id, "grows-in")[0] as { id: string; label: string } | undefined) ?? null }))];
   return (
     <div data-testid="seedbed-plantings">
-      <header>
-        <p className="sb-eyebrow">Plantings</p>
-        <h1 className="sb-h1">From sowing to harvest.</h1>
-        <p className="sb-lede">{garden.growing.length} in the ground, {garden.past.length} behind the horizon. A harvested planting leaves the counts and never the record.</p>
-      </header>
-      <section className="sb-section">
-        <table className="sb-table">
-          <thead>
-            <tr><th>Planting</th><th>Sown</th><th>Where</th><th>Standing</th></tr>
-          </thead>
-          <tbody>
-            {rows.map((planting) => (
-              <tr key={planting.id}>
-                <td><Link to={recordPath(store.schema, "planting", planting.id)}>{planting.label}</Link></td>
-                <td>{planting.sown}</td>
-                <td>{planting.plot ? <Link to={recordPath(store.schema, "plot", planting.plot.id)} className="sb-pill">{planting.plot.label}</Link> : "—"}</td>
-                <td><span className={`sb-pill${planting.status === "growing" ? " leaf" : ""}`}>{planting.status}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <Acts context={context} actions={beginsOf(context, ["planting"])} />
-      </section>
+      <ListPage
+        context={context}
+        kind="planting"
+        bare
+        description="From sowing to harvest. A harvested planting leaves the counts and never the record."
+        row={(node, facts) => {
+          const planting = node as unknown as { id: string; sown?: string; status?: string };
+          const plot = store.graph.out(planting.id, "grows-in")[0] as { id: string; label: string } | undefined;
+          return (
+            <div className="sb-row">
+              <Link to={facts.href} className="grow" style={{ fontWeight: 600 }}>{facts.label}</Link>
+              {planting.sown ? <span className="k">sown {planting.sown}</span> : null}
+              {plot ? <Link to={recordPath(store.schema, "plot", plot.id)} className="sb-pill">{plot.label}</Link> : null}
+              {planting.status ? <span className={`sb-pill${planting.status === "growing" ? " leaf" : ""}`}>{planting.status}</span> : null}
+            </div>
+          );
+        }}
+      />
     </div>
   );
 }
 
 function Rules({ context }: { context: Ctx }) {
-  const { store } = context;
   const { garden } = useGarden(context);
   return (
     <div data-testid="seedbed-rules">
-      <header>
-        <p className="sb-eyebrow">Agreements</p>
-        <h1 className="sb-h1">What the garden holds itself to.</h1>
-        <p className="sb-lede">An agreement is a thing on the map, adopted once, and judged every time the garden changes.</p>
-      </header>
-      <section className="sb-section">
-        <div>
-          {garden.rules.map((rule) => (
-            <div className="sb-row" key={rule.id}>
-              <Link to={recordPath(store.schema, "rule", rule.id)} className="grow" style={{ fontWeight: 600, fontSize: "1.0625rem" }}>{rule.label}</Link>
-              <span className={`sb-pill${rule.broken.length > 0 ? " warn" : " leaf"}`}>{rule.broken.length > 0 ? `broken in ${rule.broken.length}` : "holds"}</span>
+      <ListPage
+        context={context}
+        kind="rule"
+        bare
+        description="An agreement is a thing on the map, adopted once, and judged every time the garden changes."
+        row={(node, facts) => {
+          const rule = garden.rules.find((one) => one.id === node.id);
+          const broken = rule?.broken.length ?? 0;
+          return (
+            <div className="sb-row">
+              <Link to={facts.href} className="grow" style={{ fontWeight: 600, fontSize: "1.0625rem" }}>{facts.label}</Link>
+              <span className={`sb-pill${broken > 0 ? " warn" : " leaf"}`}>{broken > 0 ? `broken in ${broken}` : "holds"}</span>
             </div>
-          ))}
-        </div>
-        <Acts context={context} actions={beginsOf(context, ["rule"])} />
-      </section>
+          );
+        }}
+      />
     </div>
   );
 }

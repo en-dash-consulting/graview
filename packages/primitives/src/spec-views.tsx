@@ -516,6 +516,13 @@ export function registerViewSpecs<S extends AnySchema>(registry: ReactViewRegist
     if (slots.row) {
       const blocks = compileBlocks(slots.row);
       const Row: ViewComponent<S> = (props: ViewProps<S>) => (props.node ? <SpecRow blocks={blocks} node={props.node as AnyGraphNode} selected={props.selected} /> : null);
+      // What the row says, so a list that draws it can add the glance's other facts and not repeat its own.
+      (Row as SaysWhat).says = (node, graph) => {
+        const at = schema as AnySchema;
+        const definition = at.tryDefinition(node.kind) as SpecContext["definition"];
+        const ctx: BlockContext = { node, graph, schema: at, kinds: shapesFor(at), fields: fieldsFor(at, node.kind), ...(definition ? { definition } : {}), today: today(), heading: 2 };
+        return whatBlocksSay(blocks, resolveBlocks(blocks, ctx));
+      };
       registry.register(at, { cardinality: "one", fidelity: "glyph" }, Row);
     }
     if (slots.page) {

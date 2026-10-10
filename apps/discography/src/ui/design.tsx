@@ -1,10 +1,8 @@
-import { admitArrangement, arrange, arrangeable, formatArrangement, parseArrangement } from "@graview/core/arrange";
-import { labelOf, tellApart, type Arrangement } from "@graview/core";
-import { ArrangeBar } from "@graview/primitives";
+import { labelOf, tellApart } from "@graview/core";
 import {
   createPageRegistry,
   DerivedForm,
-  kindFacts,
+  ListPage,
   PageFind,
   PageMain,
   placePath,
@@ -21,7 +19,7 @@ import {
 } from "@graview/pages";
 import type { Affordance, AffordanceSet } from "@graview/tools";
 import { useRef, useState, type ReactNode } from "react";
-import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import type { DiscographySchema } from "../domain/schema.js";
 
 type S = DiscographySchema;
@@ -45,6 +43,10 @@ const CSS = `
 .ln-col { max-width: 52rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.75rem; min-width: 0; }
 .ln-h1 { font-family: Georgia, "Times New Roman", serif; font-size: 2rem; line-height: 1.15; margin: 0; overflow-wrap: anywhere; }
 .ln-h2 { font-family: Georgia, "Times New Roman", serif; font-size: 1.25rem; margin: 0; overflow-wrap: anywhere; }
+.ln-line { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 16px; padding: 5px 0; border-top: 1px solid var(--graview-edge); }
+.ln-line > a { flex: 1 1 14rem; min-width: 0; font-weight: 600; color: inherit; text-decoration: none; min-height: 24px; overflow-wrap: anywhere; }
+.ln-line > a:hover { text-decoration: underline; }
+.ln-line > .ln-quiet { margin: 0; font-size: 0.875rem; }
 .ln-eyebrow { margin: 0; font-size: 0.8125rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--graview-ink-muted); }
 .ln-quiet { color: var(--graview-ink-muted); }
 .ln-warn { color: var(--graview-warn); }
@@ -167,64 +169,44 @@ function Home({ context }: { context: Ctx }) {
 }
 
 function KindList({ context, kind }: { context: Ctx; kind: string }) {
-  const { store, principal } = context;
-  const tick = useStoreTick(store);
-  const [params, setParams] = useSearchParams();
-  const offers = arrangeable(store.schema, kind);
-  const said = ["sort", "filter", "group", "q"].some((word) => params.get(word) !== null);
-  const asked = said
-    ? parseArrangement({
-        ...(params.get("sort") ? { sort: params.get("sort")! } : {}),
-        ...(params.get("filter") ? { filter: params.get("filter")! } : {}),
-        ...(params.get("group") ? { group: params.get("group")! } : {}),
-        ...(params.get("q") ? { q: params.get("q")! } : {}),
-      })
-    : ({ sort: { by: "label", direction: "asc" } } as Arrangement);
-  const arrangement = admitArrangement(asked, offers).arrangement;
-  const rearrange = (next: Arrangement) => {
-    const words = formatArrangement(next);
-    const search = new URLSearchParams(params);
-    for (const word of ["sort", "filter", "group", "q"] as const) {
-      if (words[word]) search.set(word, words[word]!);
-      else search.delete(word);
-    }
-    setParams(search);
+  const { store } = context;
+  /*
+   * THE FRAMEWORK'S LIST, WITH WHAT A CATALOG IS SCANNED BY. 479 albums were
+   * a bare column of names under an eyebrow, "479 of 479 shown." and a
+   * second Find: nothing to scan by and no way through. The list opens newest
+   * first with a year to jump to (`ListPage`), and each row says what a
+   * person reads a catalog by — whose it is, the year, what it is.
+   */
+  const first = (id: string, edge: string, way: "out" | "in" = "out"): string | undefined => {
+    const far = (way === "out" ? store.graph.out(id, edge) : store.graph.in(id, edge))[0] as unknown as Named | undefined;
+    return far ? named(store, far) : undefined;
   };
-  const flagged = flaggedIn(context);
-  const all = store.graph.nodesOfKind(kind as never) as unknown as Named[];
-  const arranged = arrange(all, arrangement, { schema: store.schema, graph: store.graph, flagged });
-  const groups = arranged.grouped ? arranged.groups.map((group) => ({ title: group.label, members: group.nodes })) : [{ title: "", members: arranged.nodes }];
-  const facts = kindFacts(store, kind, { ...(principal ? { principal } : {}) });
-  void tick;
+  const facts = (node: Named, glance: string): string => {
+    if (kind === "album") return [first(node.id, "released-by"), typeof node["released"] === "string" ? String(node["released"]).slice(0, 4) : undefined, node["type"] === "ep" ? "EP" : typeof node["type"] === "string" && node["type"] !== "album" ? String(node["type"]) : undefined].filter(Boolean).join(" · ");
+    // A track number means nothing off its album, and a listed song is a released one: whose, on what, how long.
+    if (kind === "song") return [first(node.id, "by"), first(node.id, "tracks", "in"), typeof node["duration"] === "number" ? `${Math.floor(Number(node["duration"]) / 60)}:${String(Number(node["duration"]) % 60).padStart(2, "0")}` : undefined].filter(Boolean).join(" · ");
+    if (kind === "artist") {
+      const releases = store.graph.in(node.id, "released-by").length;
+      const songs = store.graph.in(node.id, "by").length;
+      return [releases ? `${releases} release${releases === 1 ? "" : "s"}` : "", songs ? `${songs} song${songs === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ");
+    }
+    return glance;
+  };
   return (
-    <PageMain context={context}>
-      <header style={{ display: "grid", gap: "0.5rem" }}>
-        <p className="ln-eyebrow">The discography</p>
-        <h1 className="ln-h1">{plural(store, kind)}</h1>
-        <p className="ln-quiet" style={{ margin: 0 }}>{arranged.nodes.length} of {all.length} shown.</p>
-      </header>
-      <ArrangeBar schema={store.schema} graph={store.graph} kind={kind} arrangement={arrangement} onChange={rearrange} testId="list" />
-      {groups.map(({ title, members }) => (
-        <section key={title || "all"} style={{ display: "grid", gap: "0.5rem" }} data-testid={arranged.grouped ? "list-group" : undefined}>
-          {title ? <h2 className="ln-h2">{title}</h2> : null}
-          {members.length === 0 ? (
-            <p className="ln-quiet">None of them fit.</p>
-          ) : (
-            <ul className="ln-list" data-testid="records">
-              {members.map((node) => (
-                <li key={node.id}>
-                  <Link to={recordPath(store.schema, kind, node.id)} className={flagged.has(node.id) ? "ln-warn" : undefined}>
-                    {named(store, node as Named)}
-                    {flagged.has(node.id) ? " ⚠" : ""}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      ))}
-      <Acts title="Add one" actions={facts.actions} context={context} />
-    </PageMain>
+    <ListPage
+      context={context}
+      kind={kind}
+      layout="lines"
+      row={(node, row) => (
+        <div className="ln-line">
+          <Link to={row.href} className={row.flagged ? "ln-warn" : undefined}>
+            {row.label}
+            {row.flagged ? " ⚠" : ""}
+          </Link>
+          <span className="ln-quiet">{facts(node as unknown as Named, row.glance)}</span>
+        </div>
+      )}
+    />
   );
 }
 
