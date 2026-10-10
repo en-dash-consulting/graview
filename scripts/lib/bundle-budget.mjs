@@ -154,8 +154,11 @@ export const BUDGETS = [
     // And when a large list came to open in a meaningful order with an index of its years or letters, and a design to draw
     // its lists with the same `ListPage`: 3_300 / 1_160 more. Measured at 532_033 / 188_414.
     // Together, over main's rule saying its shape: measured at 536_736 / 190_408.
+    // Raised in the review after 0.1.20: the routed face says where its reader is to the others (FR-155), draws what has
+    // happened on its bar with each change's way back (FR-152; the list itself behind the bar's panes, fetched with the first
+    // change), and says a rule's own sentence apart from its line. 1_704 / 589 more than main. Measured at 535_766 / 190_945.
     minified: 537_200,
-    gzipped: 190_800,
+    gzipped: 191_100,
     load: "first",
   },
   {
@@ -304,8 +307,10 @@ export const BUDGETS = [
     // says through its door: 1_928 / 391 more. Measured at 705_144 / 185_445.
     // Raised when a broken rule came to say its values to a host (FR-159), a showing's name to be a fingertip as drawn and the
     // overview's address to mean the overview alone (FR-154), together. Measured at 705_661 / 185_486.
+    // And by the review after 0.1.20 (a reader on Pages said where they are, FR-155): 7 fewer, 89 more gzipped. Measured at
+    // 705_599 / 185_740.
     minified: 705_900,
-    gzipped: 185_700,
+    gzipped: 185_800,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -475,8 +480,11 @@ export const BUDGETS = [
     // when it is first needed — the scene's after it draws, the routed face's with the first change, so what a page loads
     // first is smaller on the pages and no larger on the scene — and three chunks more for it. 4_316 / 2_952 more. Measured, over who is here,
     // at 1_699_628 / 533_542.
-    minified: 1_700_100,
-    gzipped: 534_000,
+    // Raised in the review after 0.1.20: the routed face says where its reader is (FR-155) and draws what has happened on its
+    // bar (FR-152), the seat's tools fetch the words before any answer (FR-159), and a seat is told a line over what it sees
+    // (FR-55). 2_082 / 1_668 more than main. Measured at 1_701_696 / 535_214.
+    minified: 1_702_100,
+    gzipped: 535_500,
     load: "all",
   },
   {
@@ -559,8 +567,9 @@ export const BUDGETS = [
     // Together, over main's rule saying its shape: measured at 1_565_066 / 478_232.
     // Raised with the pages face's by FR-159, a showing's name as drawn and FR-154, together. Measured at 1_565_769 / 478_533.
     // And by who is here on the bar (FR-155): 98 more gzipped. Measured at 1_565_646 / 478_631.
+    // And by the review after 0.1.20, with the pages face's: 1_664 / 1_446 more than main. Measured at 1_565_087 / 480_013.
     minified: 1_566_100,
-    gzipped: 478_900,
+    gzipped: 480_300,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

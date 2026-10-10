@@ -21,6 +21,9 @@ import { evaluateExpr, NodeSet, type EvalContext, type Value } from "./expr/eval
 import type { BinaryOp, Expr } from "./expr/parse.js";
 import { formatMoney, type Formatter, type Money, type TemplatePart } from "./template.js";
 
+/** The most of a text value a line says, its end cut to "…". */
+const LONGEST_VALUE = 60;
+
 /** What a line is said with: the declaration's words, and how its values are written. */
 export interface LineWords {
   readonly schema: AnySchema;
@@ -131,7 +134,9 @@ function reader(words: LineWords) {
     // A choice as the declaration says it, else spoken: 'to-order' is "to order".
     const shown = at && at.kind !== null ? definition(at.kind)?.display?.format?.[at.key] : undefined;
     if (shown) return value(shown(v));
-    return value(/^[a-z][a-z0-9]*([-_][a-z0-9]+)*$/.test(v) ? v.replace(/[-_]+/g, " ") : v);
+    // A long text is said as its start: a line, and the message a chat reads, carry a value, not a field's whole contents.
+    const said = v.length > LONGEST_VALUE ? `${v.slice(0, LONGEST_VALUE - 1).trimEnd()}…` : v;
+    return value(/^[a-z][a-z0-9]*([-_][a-z0-9]+)*$/.test(said) ? said.replace(/[-_]+/g, " ") : said);
   };
 
   return { definition, relation, farOf, nearOf, fieldName, plural, noun, formatOf, valueWords };

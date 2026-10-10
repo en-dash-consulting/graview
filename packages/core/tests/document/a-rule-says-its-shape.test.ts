@@ -3,7 +3,7 @@ import { compileDocument } from "../../src/check.js";
 import { expressionRule } from "../../src/document/index.js";
 import { judgeWithLines, problemWords, ruleLine, ruleLineWords, ruleSpoken, ruleText, withLines } from "../../src/lines.js";
 import { judgedWith } from "../../src/invariants/engine.js";
-import { brokenWords, createSchema, defineNode, Store, z, type AnySchema, type GraviewApp } from "../../src/index.js";
+import { answerSeenBy, brokenWords, createSchema, defineNode, shapedRules, Store, violationKey, z, type AnySchema, type GraviewApp } from "../../src/index.js";
 
 /**
  * A RULE SAYS ITS SHAPE.
@@ -246,6 +246,55 @@ describe("a rule says its shape", () => {
       expect(result.violationsAfter.find((one) => one.invariant === "scenario-margin")?.line?.text).toBe("margin 40% < target margin 50%");
       expect(result.resolves.map((one) => one.invariant)).not.toContain("scenario-margin");
       expect(result.introduces.map((one) => one.invariant)).not.toContain("scenario-margin");
+    });
+
+    it("a seat that may not see the records a line reads is told the line over what it sees, never their values", () => {
+      const { store: full } = opened();
+      const store = new Store<AnySchema>({
+        schema: full.schema,
+        mutations: full.allMutations(),
+        invariants: full.allInvariants(),
+        snapshot: full.graph.snapshot() as never,
+        policy: { roles: ["planner", "guest"], grants: [{ roles: ["planner"], mutations: "*" }], sees: [{ roles: ["planner"], kinds: full.schema.kinds as string[] }, { roles: ["guest"], kinds: ["category"] }] },
+      });
+      const said = (violations: readonly { readonly invariant: string; readonly message: string }[]) => violations.find((one) => one.invariant === "fits-budget")?.message ?? "";
+      // The whole graph's line sums the two booked vendors' quotes…
+      expect(said(store.violations())).toContain("$7,000");
+      // …which a guest, who sees the venue and none of its vendors, never reads.
+      const guest = store.seenBy({ kind: "human", id: "g", roles: ["guest"] });
+      expect(said(guest.violations())).not.toContain("$7,000");
+      // An act's answer to such a seat carries no line at all: worked out over the whole graph, before or after.
+      const answer = store.preview({ name: "edit-category", args: { id: "c1", budget: 4000 } } as never, undefined, { author: { kind: "human", id: "g", roles: ["guest"] } });
+      for (const one of answerSeenBy(store, { kind: "human", id: "g", roles: ["guest"] }, answer).violationsAfter) expect(one.line).toBeUndefined();
+    });
+
+    it("a long text is said as its start, so a message carries a value and not a field's whole contents", () => {
+      const result = compileDocument(
+        { format: "graview-document", formatVersion: 1, name: "Notes", kinds: { note: { fields: { title: { type: "string" }, body: { type: "string" } }, label: "{title}" } }, rules: { "body-short": { title: "A short body", over: "note", require: "body == 'ok'" } } },
+        { today: () => "2026-10-09" },
+      );
+      if (!result.ok) throw new Error("the document compiles");
+      const app = result.app as GraviewApp<AnySchema>;
+      const body = "word ".repeat(40).trim();
+      const store = new Store<AnySchema>({ schema: app.schema, mutations: [], invariants: app.invariants ?? [], snapshot: { nodes: [{ id: "n1", kind: "note", title: "A note", body }], edges: [] } as never });
+      const [violation] = store.violations();
+      expect(violation!.message).not.toContain(body);
+      expect(violation!.message).toContain(`${body.slice(0, 59).trimEnd()}…`);
+    });
+
+    it("a problem judged before the words arrived is the same problem after, by the key the store and the activity mark it with", () => {
+      const { store } = opened();
+      const shaped = shapedRules(store.allInvariants());
+      const keys = () => store.violations().map((one) => violationKey(one, shaped)).sort();
+      judgedWith(undefined);
+      let before: string[];
+      try {
+        before = keys();
+      } finally {
+        judgeWithLines();
+      }
+      expect(store.violations().some((one) => one.line !== undefined)).toBe(true);
+      expect(keys()).toEqual(before);
     });
 
   });

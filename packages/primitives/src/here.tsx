@@ -1,6 +1,7 @@
-import { labelOf, type AnySchema, type Presence, type Principal, type Store } from "@graview/core";
+import { labelOf, pluralLabel, type AnySchema, type Presence, type Principal, type Store } from "@graview/core";
 import { fromUrl, kindsOfAggregate } from "@graview/layout/view";
 import { POPOVER_STYLE, useGraview, usePopover } from "@graview/react/provider";
+import { useEffect, useState } from "react";
 
 /*
  * WHO ELSE IS HERE, ON THE BAR (FR-155).
@@ -92,7 +93,8 @@ export function whereSaid(stop: string, input: { readonly store: Store<AnySchema
   const kinds = kindsOfAggregate(view.focusId);
   if (kinds.length > 0) {
     if (!kinds.every(may)) return null;
-    return kinds.map((kind) => (store.schema.tryDefinition(kind)?.plural as string | undefined) ?? `${kind}s`).map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" and ");
+    // Each by its plural as the declaration says it, a kind's name humanized where it says none: never the name as written.
+    return kinds.map((kind) => pluralLabel(store.schema, kind)).join(" and ");
   }
   const node = store.graph.getNode(view.focusId);
   return node && may(node.kind as string) ? labelOf(store.schema.tryDefinition(node.kind as string), node) : null;
@@ -108,19 +110,26 @@ export function Here({ scene, compact }: { readonly scene: boolean; readonly com
   const { who, principal, store, views, hiddenKinds, follow } = useGraview<AnySchema>();
   const popover = usePopover("here");
   const others = othersHere(who, principal);
+  const said = others.length === 0 ? "" : hereSaid(others);
+  /*
+   * Written into the status after it is on the page, not with it: a live
+   * region that arrives with its words already in it is read by no screen
+   * reader, so the first person to come in was never said.
+   */
+  const [told, setTold] = useState("");
+  useEffect(() => setTold(said), [said]);
   if (others.length === 0) return null;
   const named = others.filter((one) => one.name);
   const marked = named.slice(0, compact ? 2 : 3);
   const counted = others.length - marked.length;
   const unnamed = others.length - named.length;
-  const said = hereSaid(others);
   const pictures = views.places();
   return (
     <div className="graview-here" data-testid="here">
       <style>{HERE_CSS}</style>
       {/* Told when somebody comes or goes; where they are moves too often to be said aloud. */}
       <span role="status" aria-live="polite" style={UNSEEN}>
-        {said}
+        {told}
       </span>
       <button type="button" data-testid="here-open" {...popover.trigger} onClick={popover.toggle} aria-label={`${said} — who and where`} title={said}>
         {marked.length > 0 ? (

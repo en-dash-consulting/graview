@@ -1,4 +1,4 @@
-import { participantKey, violationKey, type AnySchema, type Author, type Operation, type Store } from "@graview/core";
+import { participantKey, problemsMoved, type AnySchema, type Author, type Operation, type Store } from "@graview/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
@@ -166,11 +166,12 @@ export function useActivityState<S extends AnySchema>(
   );
 
   useEffect(() => {
-    let failing = new Set(store.violations().map(violationKey));
+    // What broke, known as the store knows it: a problem judged before the words arrived is not new once they have.
+    let was = store.violations();
     const unsubscribe = store.subscribe((_diff, ops) => {
       const after = store.violations();
-      const fresh = after.filter((violation) => !failing.has(violationKey(violation)));
-      failing = new Set(after.map(violationKey));
+      const fresh = problemsMoved(store.allInvariants(), was, after).introduces;
+      was = after;
       publish(
         markActivity(
           live.current,

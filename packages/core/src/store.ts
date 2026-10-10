@@ -266,9 +266,29 @@ const putsBack = (op: Operation): boolean => op.mutation === null && op.undoes =
  * what it says. A rule that says its line breaks once per record, so with
  * a line it is the rule and the record: the values the line found, which
  * an act that leaves the rule broken may change, are not who it is (FR-159).
+ * `shaped` names those rules for a judgment that has no lines yet — the
+ * words not fetched, or one that could not be worked out — so a problem is
+ * the same problem before the words arrive and after (`shapedRules`).
  */
-export function violationKey(v: Violation): string {
-  return `${v.invariant}|${v.subjectId ?? ""}|${v.line ? v.label : v.message}`;
+export function violationKey(v: Violation, shaped?: ReadonlySet<string>): string {
+  return `${v.invariant}|${v.subjectId ?? ""}|${v.line || shaped?.has(v.invariant) ? v.label : v.message}`;
+}
+
+/** The rules that have a shape, by name: what `violationKey` keys by the rule and the record. */
+export const shapedRules = (rules: readonly Pick<InvariantDefinition, "name" | "shape">[]): ReadonlySet<string> => new Set(rules.filter((rule) => rule.shape).map((rule) => rule.name));
+
+/**
+ * WHAT A CHANGE BROKE AND MENDED: the problems after it that were not
+ * before, and those before that are not after, each known by its
+ * `violationKey` — a problem judged before the words arrived is the same
+ * problem after.
+ */
+export function problemsMoved(rules: readonly Pick<InvariantDefinition, "name" | "shape">[], before: readonly Violation[], after: readonly Violation[]) {
+  const shaped = shapedRules(rules);
+  const key = (v: Violation) => violationKey(v, shaped);
+  const was = new Set(before.map(key));
+  const is = new Set(after.map(key));
+  return { introduces: after.filter((v) => !was.has(key(v))), resolves: before.filter((v) => !is.has(key(v))) };
 }
 
 /**
@@ -620,6 +640,11 @@ export class Store<S extends AnySchema> {
   private viaOf(mutation: AnyMutationDefinition<S> | undefined): readonly string[] | undefined {
     if (!mutation?.derived) return undefined;
     return derivedVia(this.schema, [...this.mutations.values()], mutation);
+  }
+
+  /** What a change broke and mended, by this store's rules (`problemsMoved`). */
+  private moved(before: readonly Violation[], after: readonly Violation[]) {
+    return problemsMoved(this.allInvariants(), before, after);
   }
 
   allInvariants(): readonly InvariantDefinition<S>[] {
@@ -1059,16 +1084,13 @@ export class Store<S extends AnySchema> {
       ...(meta.context === undefined ? {} : { context: meta.context }),
     });
 
-    const beforeKeys = new Set(before.map(violationKey));
-    const afterKeys = new Set(after.map(violationKey));
     return {
       diff,
       primitives,
       reads: meta.reads,
       writes: meta.writes,
       intent: meta.intent,
-      introduces: after.filter((v) => !beforeKeys.has(violationKey(v))),
-      resolves: before.filter((v) => !afterKeys.has(violationKey(v))),
+      ...this.moved(before, after),
       violationsAfter: after,
     };
   }
@@ -1202,8 +1224,6 @@ export class Store<S extends AnySchema> {
     const diff = diffSnapshots(rollback, this.graph.snapshot());
     this.admitted(options, ops, allPrimitives, diff, rollback, kept);
     const after = this.violations(context);
-    const beforeKeys = new Set(before.map(violationKey));
-    const afterKeys = new Set(after.map(violationKey));
     this.notify(diff, ops);
 
     return {
@@ -1214,8 +1234,7 @@ export class Store<S extends AnySchema> {
       reads: [...reads],
       writes: [...writes],
       intent: options.intent ?? intents.join("; "),
-      introduces: after.filter((v) => !beforeKeys.has(violationKey(v))),
-      resolves: before.filter((v) => !afterKeys.has(violationKey(v))),
+      ...this.moved(before, after),
       violationsAfter: after,
     };
   }
@@ -1386,8 +1405,6 @@ export class Store<S extends AnySchema> {
       tellTheWatchOfAnAuthor(author.id);
     }
     const after = this.violations();
-    const beforeKeys = new Set(before.map(violationKey));
-    const afterKeys = new Set(after.map(violationKey));
     const diff = diffSnapshots(rollback, this.graph.snapshot());
     this.notify(diff, ops);
     return {
@@ -1398,8 +1415,7 @@ export class Store<S extends AnySchema> {
       reads: [],
       writes: ops[0]?.writes ?? [],
       intent,
-      introduces: after.filter((v) => !beforeKeys.has(violationKey(v))),
-      resolves: before.filter((v) => !afterKeys.has(violationKey(v))),
+      ...this.moved(before, after),
       violationsAfter: after,
     };
   }
@@ -1544,8 +1560,6 @@ export class Store<S extends AnySchema> {
     const diff = diffSnapshots(rollback, this.graph.snapshot());
     this.admitted(options, ops, ops.flatMap((op) => [...op.primitives]), diff, rollback, kept);
     const after = this.violations();
-    const beforeKeys = new Set(before.map(violationKey));
-    const afterKeys = new Set(after.map(violationKey));
     this.notify(diff, ops);
 
     return {
@@ -1556,8 +1570,7 @@ export class Store<S extends AnySchema> {
       reads: [...new Set(ops.flatMap((op) => [...op.reads]))],
       writes: [...new Set(ops.flatMap((op) => [...op.writes]))],
       intent: options.intent ?? ops.map((op) => op.intent).join("; "),
-      introduces: after.filter((v) => !beforeKeys.has(violationKey(v))),
-      resolves: before.filter((v) => !afterKeys.has(violationKey(v))),
+      ...this.moved(before, after),
       violationsAfter: after,
     };
   }

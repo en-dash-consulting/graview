@@ -5,6 +5,7 @@ import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, 
 import { useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { useBarFind } from "@graview/primitives/pages";
+import { PagesActivity } from "./pages-activity.js";
 import type { PageContext } from "./page-context.js";
 import { useStoreTick } from "./page-context.js";
 import { kindOfSlug, type PageRegistry } from "./registry.js";
@@ -189,6 +190,7 @@ function Fallbacks<S extends AnySchema>({
         </div>
       ) : null}
       {!undoPlaced && !without.has("undo") ? <WayBack context={context} docked at={location.pathname + location.search} /> : null}
+      {bar?.own && !without.has("undo") ? <PagesActivity context={context} own={bar.own} /> : null}
     </>
   );
 }

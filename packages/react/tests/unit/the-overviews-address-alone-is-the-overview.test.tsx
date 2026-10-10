@@ -61,9 +61,11 @@ describe("the overview's address with no fragment", () => {
     expect(window.location.href.includes("#")).toBe(false);
   });
 
-  it("opens at altitude when the fragment says nothing", async () => {
+  it("opens at altitude when the fragment says nothing, and tidies the address to the bare one", async () => {
     await at("/places/overview#");
     expect(where()).toBe("up");
+    // `location.hash` is "" for a bare `#` as for none: the `#` itself goes.
+    expect(window.location.href.endsWith("/places/overview")).toBe(true);
   });
 
   it("is respected when the fragment says where it stands", async () => {

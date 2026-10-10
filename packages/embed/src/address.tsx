@@ -19,14 +19,14 @@ import type { EmbedFace, FrameOptions } from "./frame.js";
  *   <base>#focus=t1                            a stop written before the scene was a
  *                                              place: the scene still, tidied to the
  *                                              overview's address on arrival
- *
- * A stop in the address that says nothing — `<base>/places/overview`,
- * `<base>#` — is the overview at altitude, never the scene descended on
- * nothing (FR-154).
  *   <base>                                     the routed face's home — or, on arrival
  *                                              with no entry the router wrote, the home
  *                                              when the app has a home view (FR-136),
  *                                              else the host's face
+ *
+ * A stop in the address that says nothing — `<base>/places/overview`,
+ * `<base>#` — is the overview at altitude, never the scene descended on
+ * nothing (FR-154).
  *
  * Moving between the overview and a page is a step like any other: the bar
  * pushes the address of the place it goes to, and Back undoes it.

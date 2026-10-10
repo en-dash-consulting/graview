@@ -85,7 +85,7 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
        * names it for where it does. Only a role that can neither act nor
        * see a thing is one nobody could use.
        */
-      const canRead = !app.policy.sees || app.policy.sees.some((sight) => sight.roles === "*" || sight.roles.includes(role));
+      const canRead = !app.policy.sees?.length || app.policy.sees.some((sight) => sight.roles === "*" || sight.roles.includes(role));
       if (!canDo && !canRead) {
         add({
           severity: "warning",

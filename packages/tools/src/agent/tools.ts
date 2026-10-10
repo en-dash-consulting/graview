@@ -22,6 +22,7 @@ import {
   type RefCandidate,
   type RefusalReason,
   type Store,
+  type Violation,
 } from "@graview/core";
 import { computedValues } from "@graview/core/blocks";
 import { authorship, markComputed, markGraph, markHits, markNode } from "./untrusted.js";
@@ -54,6 +55,18 @@ const describer = () =>
  * arrive, and the next asks again.
  */
 const lines = () => import("@graview/core/lines").catch(() => undefined);
+
+/*
+ * THE WORDS BEFORE ANY ANSWER (FR-159). Fetched before every call, not only
+ * a problems call: an act's `introduces` and `resolves` are judged by the
+ * engine as it applies, so a seat's first act answered without values when
+ * nothing had asked for the problems yet. Handed to the engine by name, so
+ * a bundler that drops an import nothing names, or a judge set aside since,
+ * cannot leave them out. Fetched once; every call after waits on nothing.
+ */
+const judgingWithLines = async (): Promise<void> => {
+  (await lines())?.judgeWithLines();
+};
 
 /*
  * The drafting engine, fetched when a view is first asked for (draft_view,
@@ -470,6 +483,16 @@ function withoutLine<V extends { readonly line?: unknown }>(violation: V): Omit<
   return rest;
 }
 
+/** An answer's problems — what it introduces, resolves and leaves — each as a tool answers it (`withoutLine`). */
+function spokenProblems<A extends { readonly introduces?: readonly Violation[]; readonly resolves?: readonly Violation[]; readonly violationsAfter?: readonly Violation[] }>(answer: A): A {
+  return {
+    ...answer,
+    ...(answer.introduces ? { introduces: answer.introduces.map(withoutLine) } : {}),
+    ...(answer.resolves ? { resolves: answer.resolves.map(withoutLine) } : {}),
+    ...(answer.violationsAfter ? { violationsAfter: answer.violationsAfter.map(withoutLine) } : {}),
+  };
+}
+
 function safeName(name: string): string {
   let safe = name
     .normalize("NFKD")
@@ -665,6 +688,7 @@ export function createToolRuntime<S extends AnySchema>(
     args: Record<string, unknown>,
   ): Promise<ToolResult<S>> => {
     try {
+      await judgingWithLines();
       // The listed name first; an act's declared name reaches it too, unless a listed tool holds that name.
       const definition = definitions.find((tool) => tool.name === name) ?? definitions.find((tool) => tool.act === name);
       if (!definition) {
@@ -748,7 +772,6 @@ export function createToolRuntime<S extends AnySchema>(
         }
 
         case "get_node": {
-          await lines();
           const asked = String(args["id"] ?? "");
           let id = asked;
           let resolved: Resolved | undefined;
@@ -820,7 +843,6 @@ export function createToolRuntime<S extends AnySchema>(
         }
 
         case "get_violations": {
-          await lines();
           const violations = seen.violations(
             args["context"] as Record<string, unknown> | undefined,
           );
@@ -856,7 +878,8 @@ export function createToolRuntime<S extends AnySchema>(
           const missing = store.missingFor({ name: act, args: named.args }, principal);
           if (missing) return { ok: false, error: missing.message, reason: "missing" };
           const preview = answerSeenBy(store, principal, store.preview({ name: act, args: named.args }, undefined, { author: principal }));
-          return { ok: true, data: named.resolved.length > 0 ? { ...preview, resolved: named.resolved } : preview };
+          const spoken = spokenProblems(preview);
+          return { ok: true, data: named.resolved.length > 0 ? { ...spoken, resolved: named.resolved } : spoken };
         }
 
         case "undo_batch": {
@@ -870,7 +893,7 @@ export function createToolRuntime<S extends AnySchema>(
             principal,
             store.undo([batch, ...include], { ...(options.author ? { author: options.author } : {}) }),
           );
-          return { ok: true, data: result, diff: result.diff };
+          return { ok: true, data: spokenProblems(result), diff: result.diff };
         }
 
         default:

@@ -44,6 +44,13 @@ describe("a repair that leaves one argument open, on the routed face", () => {
     const root = createRoot(host);
     const draw = () => root.render(<main><h1>What is broken</h1><Repairs store={store} repairs={store.violations()[0]?.repairs ?? []} /></main>);
     await act(async () => draw());
+    /*
+     * Drawn again as the store changes, as the problems page is: drawn by
+     * hand after the submit instead, the frame that hands the keyboard back
+     * could come first under load, focus the repair, and the redraw then
+     * take the repair and the keyboard with it.
+     */
+    const stop = store.subscribe(() => draw());
     await act(async () => host.querySelector<HTMLButtonElement>("[data-graview-repair]")!.click());
     const inputs = [...host.querySelectorAll("input, select")].map((el) => el.getAttribute("name"));
     expect(inputs).toEqual(["released"]);
@@ -58,14 +65,13 @@ describe("a repair that leaves one argument open, on the routed face", () => {
     await act(async () => {
       input.form!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     });
-    await act(async () => draw());
-    // The keyboard is handed back after the form goes, a frame or more later: on a busy
-    // machine one frame is not enough, so wait for it (up to two seconds) rather than for a frame.
-    for (const end = Date.now() + 2000; document.activeElement === document.body && Date.now() < end; ) {
+    /* Waited on, not timed: the keyboard is handed back a frame or more after the form goes, every wait inside act(). */
+    for (const end = Date.now() + 4000; document.activeElement === document.body && Date.now() < end; ) {
       await act(async () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
     }
     expect(store.graph.getNode("kerosene")).toMatchObject({ label: "Kerosene", released: "2023-04-14" });
     expect(document.activeElement).not.toBe(document.body);
+    stop();
     await act(async () => root.unmount());
   });
 });

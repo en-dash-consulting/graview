@@ -53,6 +53,24 @@ const gardener: Principal = { kind: "human", id: "erin" };
 
 (Element.prototype as { scrollTo?: unknown }).scrollTo = () => {};
 
+/*
+ * WAITED ON, NOT TIMED. The seat answers on a promise and a press settles a
+ * frame or more later; a fixed 20 ms was enough on a quiet machine and not
+ * under a full run, so each step waits for what it says it waits for —
+ * every wait inside act(), so what lands meanwhile is drawn as it lands.
+ */
+async function until(holds: () => void, within = 4000): Promise<void> {
+  for (const end = Date.now() + within; ; ) {
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 10)));
+    try {
+      holds();
+      return;
+    } catch (error) {
+      if (Date.now() > end) throw error;
+    }
+  }
+}
+
 describe("a request the seat answers with several changes", () => {
   it("offers them in their own words, applies them in one press, and settles each in place", async () => {
     const store = new Store({ schema, mutations: [addPlot, sow], invariants: [] });
@@ -82,7 +100,7 @@ describe("a request the seat answers with several changes", () => {
     await act(async () => {
       field.closest("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     });
-    await act(async () => new Promise((r) => setTimeout(r, 20)));
+    await until(() => expect(host.querySelectorAll('[data-testid="chat-apply"]')).toHaveLength(2));
 
     const offered = [...host.querySelectorAll('[data-testid="chat-apply"]')].map((button) => button.getAttribute("aria-label"));
     expect(offered[0]).toBe("Do it: Stake out back bed");
@@ -91,7 +109,7 @@ describe("a request the seat answers with several changes", () => {
     expect(host.querySelectorAll<HTMLButtonElement>('[data-testid="chat-apply"]')[1]!.disabled).toBe(true);
 
     await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="chat-apply-all"]')!.click());
-    await act(async () => new Promise((r) => setTimeout(r, 20)));
+    await until(() => expect(host.querySelectorAll('[data-testid="chat-applied"]')).toHaveLength(2));
 
     const landed = [...host.querySelectorAll('[data-testid="chat-applied"]')].map((line) => line.textContent);
     expect(landed).toEqual(["✓ Stake out back bed", "✓ Sow sunflower in back bed"]);
@@ -129,11 +147,11 @@ describe("a request the seat answers with several changes", () => {
     await act(async () => {
       field.closest("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     });
-    await act(async () => new Promise((r) => setTimeout(r, 20)));
+    await until(() => expect(host.querySelectorAll('[data-testid="chat-apply"]')).toHaveLength(2));
     const first = host.querySelector<HTMLButtonElement>('[data-testid="chat-apply"]')!;
     first.focus();
     await act(async () => first.click());
-    await act(async () => new Promise((r) => setTimeout(r, 20)));
+    await until(() => expect(document.activeElement?.getAttribute("aria-label")).toBe("Do it: Stake out front bed"));
     expect(store.graph.nodesOfKind("plot")).toHaveLength(1);
     expect(document.activeElement).not.toBe(document.body);
     expect(document.activeElement?.getAttribute("aria-label")).toBe("Do it: Stake out front bed");
@@ -161,7 +179,7 @@ describe("a request the seat answers with several changes", () => {
     await act(async () => {
       field.closest("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     });
-    await act(async () => new Promise((r) => setTimeout(r, 20)));
+    await until(() => expect(host.querySelector('[data-testid="chat-apply"]')).not.toBeNull());
     expect(host.querySelector('[data-testid="chat-apply"]')!.textContent).toBe("Do it");
     const decline = host.querySelector<HTMLButtonElement>('[data-testid="chat-decline"]')!;
     expect(decline.textContent).toBe("Not now");

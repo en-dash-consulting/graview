@@ -1,5 +1,5 @@
 import { brokenWords, failureWords, labelOf, violationsTouching, type AnySchema, type Brand, type Principal, type Repair, type Store, type Violation } from "@graview/core";
-import { problemLine, problemTitle, RuleLineView, useLined, useRuleLines } from "@graview/primitives/pages";
+import { ownSentence, problemTitle, RuleLineView, useLined, useRuleLines } from "@graview/primitives/pages";
 import { Link } from "react-router-dom";
 import { useRef, useState, type ReactNode } from "react";
 import { DerivedForm } from "./form.js";
@@ -111,7 +111,7 @@ export function ProblemSaid({ violation, schema, brand }: { readonly violation: 
   if (!violation.line) return <p style={{ margin: 0, color: "var(--graview-warn)", fontWeight: 550 }}>{violation.message}</p>;
   const title = problemTitle(violation);
   return (
-    <div style={{ display: "grid", gap: 2 }} data-testid="problem-line" title={violation.message !== problemLine(violation) ? violation.message : undefined}>
+    <div style={{ display: "grid", gap: 2 }} data-testid="problem-line" title={ownSentence(violation)}>
       <RuleLineView line={violation.line} schema={schema} {...(brand ? { brand } : {})} lead="none" style={{ color: "var(--graview-warn)", fontSize: "1.0625rem" }} />
       {title ? <span style={{ ...quiet, fontSize: "0.875rem" }}>{title}</span> : null}
     </div>

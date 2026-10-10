@@ -48,17 +48,20 @@ function useTakeBack<S extends AnySchema>(context: PageContext<S>, at: string, s
   // What the log held when the face was drawn: what was done before is no act to offer back.
   const seen = useRef(since);
   const [offer, setOffer] = useState<Offer | undefined>();
+  const [said, setSaid] = useState("");
   useEffect(() => {
     const now = freshChangeOf(store, principal, seen.current);
     seen.current = store.batches().length;
-    if (now) setOffer({ batch: now.batch, at, when: Date.now() });
+    if (!now) return;
+    setOffer({ batch: now.batch, at, when: Date.now() });
+    // A new offer is said as it comes: what was taken back before is not said over it.
+    setSaid("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, principal, tick]);
   useEffect(() => {
     setOffer((one) => (!one || one.at === at ? one : Date.now() - one.when < THE_ACTS_OWN_MOVE_MS ? { ...one, at } : undefined));
   }, [at]);
   const [refused, setRefused] = useState<string | null>(null);
-  const [said, setSaid] = useState("");
   const close = useCallback(() => {
     setOffer(undefined);
     setRefused(null);
@@ -76,15 +79,6 @@ function useTakeBack<S extends AnySchema>(context: PageContext<S>, at: string, s
   return { change, offered, close, takeBack, refused, said };
 }
 
-/**
- * THE WAY BACK, on the routed face: one control that says what it takes
- * back — "Take back “Rename to …”" — and takes it back as the person at the
- * keyboard, judged by the policy like any change.
- *
- * Exported for a shell that wants it somewhere of its own, where it stands
- * while there is a change to take back; a shell that does not place it gets
- * it anyway, floating over the face at its foot like a notice (FR-133), for
- * as long as a notice stands (FR-152).
 /** The way back: docked, a notice over the face; placed, a control in a shell's row. `since` is how many batches the log held when the face was drawn. */
 export function TakeBack<S extends AnySchema>({ context, docked, at, since }: { readonly context: PageContext<S>; readonly docked: boolean; readonly at: string; readonly since: number }) {
   const { change: last, offered, close, takeBack, refused, said } = useTakeBack(context, at, since);

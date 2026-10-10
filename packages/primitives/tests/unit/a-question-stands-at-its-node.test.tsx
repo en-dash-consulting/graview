@@ -37,6 +37,24 @@ const store = () =>
 
 (Element.prototype as { scrollTo?: unknown }).scrollTo = () => {};
 
+/*
+ * WAITED ON, NOT TIMED. The seat answers on a promise and a press settles a
+ * frame or more later; a fixed 20 ms was enough on a quiet machine and not
+ * under a full run, so each step waits for what it says it waits for —
+ * every wait inside act(), so what lands meanwhile is drawn as it lands.
+ */
+async function until(holds: () => void, within = 4000): Promise<void> {
+  for (const end = Date.now() + within; ; ) {
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 10)));
+    try {
+      holds();
+      return;
+    } catch (error) {
+      if (Date.now() > end) throw error;
+    }
+  }
+}
+
 async function mounted(at: Store<typeof schema>, child: React.ReactElement) {
   const host = document.createElement("div");
   document.body.appendChild(host);
@@ -79,7 +97,7 @@ describe("the chat", () => {
       field.dispatchEvent(new Event("input", { bubbles: true }));
     });
     await act(async () => field.closest("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
-    await act(async () => new Promise((r) => setTimeout(r, 20)));
+    await until(() => expect(host.querySelector('[data-testid="chat-question"]')).not.toBeNull());
     const asked = host.querySelector('[data-testid="chat-question"]')!;
     expect(asked.getAttribute("data-chat-question-node")).toBe("lawn");
     expect(asked.textContent).toContain("Back Lawn: Which surface?");
@@ -87,7 +105,7 @@ describe("the chat", () => {
     const options = [...asked.querySelectorAll<HTMLButtonElement>('[data-testid="chat-option"]')];
     expect(options.map((option) => option.textContent)).toEqual(["turf 50%", "bed 45%"]);
     await act(async () => options[1]!.click());
-    await act(async () => new Promise((r) => setTimeout(r, 20)));
+    await until(() => expect(at.graph.getNode("lawn")!["surface"]).toBe("bed"));
     expect(at.graph.getNode("lawn")!["surface"]).toBe("bed");
     expect(at.log.all().at(-1)?.author).toMatchObject({ kind: "agent", id: "chat" });
     await unmount();
