@@ -17,7 +17,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [The overview's address means the overview without its fragment (FR-154)](./the-overview-s-address-means-the.md) | pending |
+| [The overview's address means the overview without its fragment (FR-154)](./the-overview-s-address-means-the.md) | completed |
 | [A batch preview is judged as the batch would be: author, via and admit, and the ops as they would be logged (FR-56)](./a-batch-preview-is-judged-as-the-batch.md) | completed |
 | [A board column's accessible name starts with the lens's title (FR-109)](./a-board-column-s-accessible-name.md) | completed |
 | [A classic-worker build: the guest worker entry and a guest bundle need no module worker (FR-71)](./a-classic-worker-build-the-guest.md) | completed |
