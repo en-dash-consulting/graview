@@ -1,5 +1,27 @@
 # @graview/layout
 
+## 0.1.21
+
+### Patch Changes
+
+- b4ea9b7: The framework's own markup passes axe. Graview Cloud's accessibility pass runs axe-core (WCAG 2.0, 2.1 and 2.2 A and AA, and best practice) over every app it hosts, at a desk and a phone, light and dark, and from 0.1.18 on it found 48 nodes inside `#graview-app` on every release and tolerated them as the framework's. All 48 were one rule, `target-size`: the names of a district's showings on its signpost, each a press, were 24 pixels tall in the layout and drawn on the scene at their plane's 0.9, so 21.6 on the screen and 23.8 apart, under the 24 WCAG 2.2 asks of a target (2.5.8). A showing's name is never under 27 pixels now, a fingertip as drawn, and a one-line name sits in the middle of its rule rather than at the top of it; the room under a signpost is sized from the same floor (`MARQUEE_NAME_FLOOR` in `@graview/layout/view`), so nothing is laid over the district below. A new harness, `pnpm verify a11y`, runs Cloud's pass on Cloud's two shapes of app mounted as Cloud mounts them and on every example on both faces, and holds it at nothing. The hosted page grows by 24 bytes up front.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and tool schemas are unchanged. Changed: a showing's name on the scene is at least 27 pixels tall where it was 24, and `marqueeHeightFor` takes 3 more pixels a one-line name. What Graview Cloud changes: nothing; its pass finds no framework nodes once it takes this release, so it can stop tolerating them.
+- 25019d4: The overview's address alone is the overview (FR-154). Graview Cloud: the framework wrote the overview at altitude as `/places/overview#overview=1` and read the altitude from the fragment alone. A fragment never reaches a server, so the same address back through any hop — the sign-in door, a stored link, a bookmark, or typed — came back as `/places/overview` and opened the overview descended on nothing: an empty scene whose control said "Up". Now `/places/overview` with no fragment, or with one that says nothing (`#`), opens the overview at altitude, on the Graview's face, under address routing in an embed and on a hosted page, and on any page that keeps its stop in the fragment (`UrlSync`, the whole-page Shell's `syncUrl`). The framework writes the overview at altitude over nothing in particular as the bare `/places/overview`, so the address it writes means the overview by itself: the bar's switch, Back to it, and "The whole thing" among the scene's places (`data-place-path="/places/overview"`). A fragment that says where it stands is read as it says: `#focus=t1` is the scene descended on that record, and `#overview=1&focus=…` the overview over it; a link written before, `/places/overview#overview=1`, still opens the overview and is tidied to the bare address in place, with no step Back would have to undo. Arriving at an address that says something no longer writes `#` and then pushes the stop: the page adopts the address with no entry. New in `@graview/layout/view`: `overviewStop` (the stop the overview's address holds) and `overviewFragment` (the fragment it carries for a view, none at altitude over nothing). `capabilities().shipped` gains FR-154.
+  
+  A host can delete its interim: Graview Cloud's `restoreOverview` in `packages/client/src/shell.ts`, which put `#overview=1` back on a bare `/places/overview` before the framework read the window, does nothing the framework does not do now.
+  
+  The hosted page measures 120 bytes more up front (593 498, under its 579.7 KB) and 120 more handed a compiled app (547 895, under its 535.2 KB).
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and tool schemas are unchanged; `capabilities().shipped` gains FR-154. Changed: the overview at altitude is written as `/places/overview` with no fragment where it was `/places/overview#overview=1` (an embed's address bar, the scene's "The whole thing" `data-place-path`); a bare `/places/overview`, or `/places/overview#`, opens on the Graview's face at altitude, whatever face the host names, where it opened the scene descended on nothing. `where()` still reports the overview's stop as `#overview=1`.
+- Updated dependencies [5f2f3aa]
+- Updated dependencies [615f368]
+- Updated dependencies [eaffce3]
+- Updated dependencies [25019d4]
+- Updated dependencies [f062004]
+- Updated dependencies [6bf435a]
+  - @graview/core@0.1.21
+
 ## 0.1.20
 
 ### Patch Changes
