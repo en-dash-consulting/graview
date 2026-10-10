@@ -158,7 +158,7 @@ function Stack({ notices, at, anchor, board }: { readonly notices: readonly Held
     const place = () => (at === "top" ? placeAtTheTop : placeAtTheFoot)(element, anchor());
     place();
     // Held while pointed at or in the keyboard's hands: no toast goes from under either (FR-152).
-    if (at === "foot") board.hold?.(() => element.matches(":hover, :has(:focus-visible)"));
+    if (at === "foot") board.hold?.(() => element.matches(":hover, :focus-within"));
     const unraise = raiseOverPopovers(element);
     addEventListener("resize", place);
     addEventListener("scroll", place, true);

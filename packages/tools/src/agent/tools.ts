@@ -45,6 +45,17 @@ const describer = () =>
   }));
 
 /*
+ * The words a broken rule's line is said in (FR-159), fetched and waited
+ * for by the calls that answer problems (get_violations, get_node): once
+ * they are here every judgment carries its line, and a rule that wrote no
+ * sentence of its own says its values in its message — what a model, and
+ * a connector's chat, reads. A literal
+ * specifier, as above; a call answers without them when they did not
+ * arrive, and the next asks again.
+ */
+const lines = () => import("@graview/core/lines").catch(() => undefined);
+
+/*
  * The drafting engine, fetched when a view is first asked for (draft_view,
  * keep_lens): a seat that never asks carries none of it. A literal
  * specifier, as above.
@@ -451,7 +462,8 @@ const MAX_NAME = 64;
 /**
  * A violation as a tool answers it: without the parts a page draws its line
  * with. The message says the line already where the rule wrote no sentence
- * of its own, and a model reads words, not a drawing's pieces.
+ * of its own (`@graview/core/lines`, fetched by the calls that answer
+ * problems), and a model reads words, not a drawing's pieces.
  */
 function withoutLine<V extends { readonly line?: unknown }>(violation: V): Omit<V, "line"> {
   const { line: _line, ...rest } = violation;
@@ -698,8 +710,8 @@ export function createToolRuntime<S extends AnySchema>(
           data: {
             batch: result.batch,
             intent: result.intent,
-            introduces: result.introduces,
-            resolves: result.resolves,
+            introduces: result.introduces.map(withoutLine),
+            resolves: result.resolves.map(withoutLine),
             ...(named.resolved.length > 0 ? { resolved: named.resolved } : {}),
           },
           diff: result.diff,
@@ -736,6 +748,7 @@ export function createToolRuntime<S extends AnySchema>(
         }
 
         case "get_node": {
+          await lines();
           const asked = String(args["id"] ?? "");
           let id = asked;
           let resolved: Resolved | undefined;
@@ -807,6 +820,7 @@ export function createToolRuntime<S extends AnySchema>(
         }
 
         case "get_violations": {
+          await lines();
           const violations = seen.violations(
             args["context"] as Record<string, unknown> | undefined,
           );

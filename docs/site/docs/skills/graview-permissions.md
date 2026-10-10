@@ -55,7 +55,7 @@ The coach sees "Show the installation" in the person's menu on the app bar and t
 pnpm build && npx graview check ./dist/domain/app.js
 ```
 
-The checker reports `mutation-unreachable-by-any-role` (declared and unreachable), `role-may-do-nothing`, `grant-unknown-mutation` and `grant-unknown-kind`. All four are silent at runtime and obvious at build time, and the person who finds them otherwise is the person standing in front of a button they cannot press. Report the output.
+The checker reports `mutation-unreachable-by-any-role` (declared and unreachable), `role-may-do-nothing` (a role that can neither run a mutation nor see a kind; a viewer that only reads is not reported, since reading is the point of it), `grant-unknown-mutation` and `grant-unknown-kind`. All four are silent at runtime and obvious at build time, and the person who finds them otherwise is the person standing in front of a button they cannot press. Report the output.
 
 `act-reads-hidden-kind` (a warning, FR-105) names an act, a role that may run it and a kind that role may not see, which the act reads: its condition, its refusal, a value it sets in a document (on its subject or the other record) or the links it `replaces`; what it declares it `reads` in TypeScript (`reads: ["memo"]` — an `apply` is never read, so say it). The store hides the records; the act's answer can still tell that one exists. Let the role see the kind, keep the act from it, or read only what it sees.
 

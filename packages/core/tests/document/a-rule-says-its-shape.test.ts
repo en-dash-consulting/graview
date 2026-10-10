@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
 import { expressionRule } from "../../src/document/index.js";
-import { problemWords, ruleLine, ruleLineWords, ruleSpoken, ruleText, withLines } from "../../src/lines.js";
+import { judgeWithLines, problemWords, ruleLine, ruleLineWords, ruleSpoken, ruleText, withLines } from "../../src/lines.js";
+import { judgedWith } from "../../src/invariants/engine.js";
 import { brokenWords, createSchema, defineNode, Store, z, type AnySchema, type GraviewApp } from "../../src/index.js";
 
 /**
@@ -170,18 +171,11 @@ describe("a rule says its shape", () => {
       expect(ruleText(broken("fits-budget").line!.parts)).toBe("total quote of vendors with status = booked $7,000 > budget $5,000");
     });
 
-    it("a missing value is a dash; the message is the rule's own, as it was", () => {
+    it("a missing value is a dash, and a rule that wrote no sentence says it in its message after its title (FR-159)", () => {
       const violation = broken("blocker-owned");
       expect(ruleText(violation.line!.parts)).toBe("owner = —");
       expect(problemWords(violation)).toBe("Login fails — owner = —");
-      expect(violation.message).toBe("Login fails: blocker owned");
-    });
-
-    it("the engine sets no line: judging carries no words, and a problem says its sentence until they are asked for", () => {
-      const { store } = opened();
-      const violation = store.violations().find((one) => one.invariant === "scenario-margin")!;
-      expect(violation.line).toBeUndefined();
-      expect(problemWords(violation)).toBe("A club on Team keeps 44%, below the target");
+      expect(violation.message).toBe("Login fails: blocker owned — owner = —");
     });
 
     it("every side of an or that failed, with its value", () => {
@@ -203,6 +197,57 @@ describe("a rule says its shape", () => {
       expect(ruleText(violation.line!.parts)).toBe("number of assumptions sheets 2 ≠ 1");
       expect(violation.line?.record).toBeUndefined();
     });
+  });
+
+  /*
+   * A RULE'S SHAPE IS ON EVERY JUDGMENT ONCE THE WORDS ARE HERE (FR-159).
+   * 0.1.20 drew the line on the framework's own surfaces only: a host that
+   * read `store.violations()` and handed a chat the message read "A
+   * wedding planner on Small: Margin above target", with no values, once
+   * authors had shortened their titles to let the shape speak.
+   */
+  describe("judged once the words are loaded, every violation carries its line, and its message the values", () => {
+    it("the store's own violations carry the line, without asking withLines", () => {
+      const { store } = opened();
+      const violation = store.violations().find((one) => one.invariant === "one-booked")!;
+      expect(ruleText(violation.line!.parts)).toBe("number of vendors with status = booked 2 > 1");
+      expect(violation.message).toBe("Venue: One vendor booked per category — number of vendors with status = booked 2 > 1");
+    });
+
+    it("a rule's own sentence stays as its author wrote it, its line beside it", () => {
+      const { store } = opened();
+      const violation = store.violations().find((one) => one.invariant === "scenario-margin")!;
+      expect(violation.message).toBe("A club on Team keeps 44%, below the target");
+      expect(problemWords(violation)).toBe("A club on Team — margin 44% < target margin 50%");
+    });
+
+    it("withLines over violations already lined changes nothing: the message says its values once", () => {
+      const { store } = opened();
+      const once = store.violations();
+      expect(withLines(store, once)).toEqual(once);
+    });
+
+    it("before the words are here a judgment carries none, and says its sentence until they are asked for", () => {
+      const { store } = opened();
+      judgedWith(undefined);
+      try {
+        const violation = store.violations().find((one) => one.invariant === "blocker-owned")!;
+        expect(violation.line).toBeUndefined();
+        expect(violation.message).toBe("Login fails: blocker owned");
+        expect(withLines(store, [violation])[0]!.message).toBe("Login fails: blocker owned — owner = —");
+      } finally {
+        judgeWithLines();
+      }
+    });
+
+    it("an act that changes a broken rule's values but leaves it broken neither resolves nor introduces it", () => {
+      const { store } = opened();
+      const result = store.preview({ name: "edit-scenario", args: { id: "s1", cost: 60 } } as never);
+      expect(result.violationsAfter.find((one) => one.invariant === "scenario-margin")?.line?.text).toBe("margin 40% < target margin 50%");
+      expect(result.resolves.map((one) => one.invariant)).not.toContain("scenario-margin");
+      expect(result.introduces.map((one) => one.invariant)).not.toContain("scenario-margin");
+    });
+
   });
 
   it("a count of problems is a count of rules broken", () => {

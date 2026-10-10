@@ -14,6 +14,7 @@ import {
   type MutationCall,
   type WireRefusal,
 } from "@graview/core";
+import { judgeWithLines } from "@graview/core/lines";
 import { exportBundle } from "./export.js";
 import { health } from "./health.js";
 import { LIVE_PATH, type Limit, type LimitAnswer, type LimitAsked, type LiveConnection, type LiveSocket } from "./live.js";
@@ -392,6 +393,8 @@ export async function createStoreHandler<S extends AnySchema>(options: AdapterSt
 export async function createStoreHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>): Promise<StoreHandler<S>>;
 export async function createStoreHandler<S extends AnySchema>(options: StoreHandlerOptions<S>): Promise<StoreHandler<S>>;
 export async function createStoreHandler<S extends AnySchema>(options: StoreHandlerOptions<S>): Promise<StoreHandler<S>> {
+  // A store served judges in words: a broken rule's values are on its violations and in its message (FR-159).
+  judgeWithLines();
   if (options.store) {
     const { handler, swap } = storeHandler(options);
     return {

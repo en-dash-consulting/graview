@@ -1,5 +1,5 @@
 import { addressOf, OVERVIEW_PATH, pathWithin, type Place } from "@graview/core";
-import { aggregateId, EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
+import { aggregateId, EMPTY_VIEW, fromUrl, overviewFragment, overviewStop, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
 import { descentTarget } from "@graview/primitives/frame";
 import { useNavigation } from "@graview/react/provider";
 import { useEffect, useRef, type MutableRefObject } from "react";
@@ -12,12 +12,17 @@ import type { EmbedFace, FrameOptions } from "./frame.js";
  * where on it, the way the whole-page Shell spells it:
  *
  *   <base>/places/the-board, <base>/tasks/t1   a page: the routed face, on its router
+ *   <base>/places/overview                     the overview at altitude, the Graview: the
+ *                                              address alone says it (FR-154)
  *   <base>/places/overview#focus=t1            the overview (FR-132): the scene, its
- *                                              view state in the fragment — at altitude
- *                                              (`#overview=1`), the Graview
+ *                                              view state in the fragment
  *   <base>#focus=t1                            a stop written before the scene was a
  *                                              place: the scene still, tidied to the
  *                                              overview's address on arrival
+ *
+ * A stop in the address that says nothing — `<base>/places/overview`,
+ * `<base>#` — is the overview at altitude, never the scene descended on
+ * nothing (FR-154).
  *   <base>                                     the routed face's home — or, on arrival
  *                                              with no entry the router wrote, the home
  *                                              when the app has a home view (FR-136),
@@ -34,9 +39,8 @@ const routerWrote = (state: unknown): boolean => typeof state === "object" && st
 function faceNamed(basePath: string | undefined): EmbedFace | null {
   const path = pathWithin(window.location.pathname, basePath);
   if (path === null) return null;
-  if (path === OVERVIEW_PATH) return fromUrl(window.location.hash).overview ? "graview" : "scene";
-  if (path !== "/") return "pages";
-  if (window.location.href.includes("#")) return fromUrl(window.location.hash).overview ? "graview" : "scene";
+  if (path !== OVERVIEW_PATH && path !== "/") return "pages";
+  if (path === OVERVIEW_PATH || window.location.href.includes("#")) return overviewStop(window.location.hash).overview ? "graview" : "scene";
   return routerWrote(window.history.state) ? "pages" : null;
 }
 
@@ -65,11 +69,11 @@ export function atTheBareHome(options: Pick<FrameOptions, "routing" | "basePath"
   return pathWithin(window.location.pathname, options.basePath) === "/" && faceNamed(options.basePath) === null;
 }
 
-/** The stop the address holds for the scene on arrival, if it holds one: on the overview's address, or the home's. */
+/** The stop the address holds for the scene on arrival, if it holds one: on the overview's address, always (FR-154), or on the home's with a fragment. */
 export function stopAtAddress(basePath: string | undefined): string | undefined {
   if (typeof window === "undefined") return undefined;
   const path = pathWithin(window.location.pathname, basePath);
-  return (path === "/" || path === OVERVIEW_PATH) && window.location.href.includes("#") ? window.location.hash || "#" : undefined;
+  return path === OVERVIEW_PATH || (path === "/" && window.location.href.includes("#")) ? toUrl(overviewStop(window.location.hash)) : undefined;
 }
 
 /**
@@ -122,7 +126,7 @@ export function AddressBar({
       const face = given !== held && given.overview ? "graview" : next;
       const stop = landing(face, given, kinds);
       go(stop);
-      window.history.pushState(null, "", `${addressOf(OVERVIEW_PATH, { basePath })}${toUrl(stop)}`);
+      window.history.pushState(null, "", `${addressOf(OVERVIEW_PATH, { basePath })}${overviewFragment(stop)}`);
       tell?.(face);
       return;
     }
@@ -141,7 +145,7 @@ export function AddressBar({
       }
       // Between the scene and the Graview the fragment sync follows by itself; from the pages, the scene comes back where the fragment says.
       if (from !== "pages") return;
-      go(placed(fromUrl(window.location.hash), places));
+      go(placed(overviewStop(window.location.hash), places));
       tell?.(named);
     };
     window.addEventListener("popstate", onPop);

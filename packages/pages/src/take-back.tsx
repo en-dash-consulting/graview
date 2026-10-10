@@ -97,7 +97,7 @@ export function TakeBack<S extends AnySchema>({ context, docked, at, since }: { 
   useEffect(() => {
     if (!shown) return;
     let going: ReturnType<typeof setTimeout>;
-    const wait = () => (going = setTimeout(() => (dock.current?.matches(":hover, :has(:focus-visible)") ? wait() : close()), WAY_BACK_MS));
+    const wait = () => (going = setTimeout(() => (dock.current?.matches(":hover, :focus-within") ? wait() : close()), WAY_BACK_MS));
     wait();
     return () => clearTimeout(going);
   }, [shown, change?.batch, refused, close]);

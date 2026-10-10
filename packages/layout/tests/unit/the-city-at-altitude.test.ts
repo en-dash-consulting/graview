@@ -114,12 +114,12 @@ describe("the city at altitude", () => {
 describe("the marquee takes the room its names take", () => {
   it("is a line a showing, and more for a name too long for one (FR-118)", async () => {
     const { marqueeHeightFor } = await import("../../src/layout.js");
-    // A name is a fingertip tall however short; one longer than the column wraps onto more lines rather than being cut.
+    // A name is a fingertip tall as drawn (27 at its plane's 0.9 is 24) however short; one longer than the column wraps onto more lines rather than being cut.
     const one = marqueeHeightFor(["The week"], 132);
     const three = marqueeHeightFor(["The quarter", "The fortnight", "The week"], 132);
     const long = marqueeHeightFor(["What the slices of the founder's load call for"], 132);
-    expect(one).toBe(10 + 24);
-    expect(three).toBe(10 + 3 * 24 + 2 * 2);
+    expect(one).toBe(10 + 27);
+    expect(three).toBe(10 + 3 * 27 + 2 * 2);
     expect(long).toBe(10 + 3 * 16 + 6);
     expect(marqueeHeightFor([], 132)).toBe(0);
   });
@@ -135,8 +135,8 @@ describe("the marquee takes the room its names take", () => {
     const average = (text: string) => text.length * 7.1;
     const wide = (text: string) => text.length * 10; // a wide display face
     const narrow = (text: string) => text.length * 4;
-    expect(marqueeHeightFor([name], 132)).toBe(10 + 24);
-    expect(marqueeHeightFor([name], 132, average)).toBe(10 + 24);
+    expect(marqueeHeightFor([name], 132)).toBe(10 + 27);
+    expect(marqueeHeightFor([name], 132, average)).toBe(10 + 27);
     // "Where the work" is 140 px, past the 138 the column holds: two lines, at the marquee's 16.25 px line.
     expect(marqueeHeightFor([name], 132, wide)).toBe(10 + Math.ceil(2 * 16.25) + 6);
     expect(marqueeHeightFor([name, name, name], 132, wide)).toBe(10 + 3 * (Math.ceil(2 * 16.25) + 6) + 2 * 2);

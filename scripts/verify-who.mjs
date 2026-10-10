@@ -20,7 +20,7 @@ import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const { PRESENCE_TTL_MS } = await import(resolve(repoRoot, "packages/core/dist/index.js"));
+const { PRESENCE_TTL_MS, REMOTE_PRESENCE_TTL_MS } = await import(resolve(repoRoot, "packages/core/dist/index.js"));
 const ENGINE = engineName();
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {}, pageErrors: [] };
 let browser;
@@ -59,6 +59,41 @@ const open = async (context, as, hash) => {
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(1500);
   return page;
+};
+/**
+ * WHO ELSE IS HERE, AS A PAGE'S BAR SAYS IT (FR-155): the marks on the
+ * bar's own row, what it says politely, its name, and whether the row is
+ * still one row; null when the bar draws nobody.
+ */
+const barSays = (page) =>
+  page.evaluate(() => {
+    const bar = document.querySelector("[data-graview-app-bar]");
+    const here = bar?.querySelector('[data-testid="here"]');
+    const open = here?.querySelector('[data-testid="here-open"]');
+    if (!bar || !here || !open) return null;
+    const box = open.getBoundingClientRect();
+    const row = bar.getBoundingClientRect();
+    const status = here.querySelector('[role="status"]');
+    return {
+      marks: [...open.querySelectorAll(".graview-here-mark")].filter((one) => getComputedStyle(one).display !== "none").map((one) => one.textContent),
+      said: status?.getAttribute("aria-live") === "polite" ? status.textContent : null,
+      name: open.getAttribute("aria-label"),
+      onTheRow: box.width > 0 && box.top >= row.top && box.bottom <= row.bottom && box.left >= 0 && box.right <= innerWidth,
+      barHeight: Math.round(row.height),
+    };
+  });
+/** The list the bar's marks open: each one's name and where they are, as a reader reads them. */
+const hereListed = async (page) => {
+  await page.locator('[data-graview-app-bar] [data-testid="here-open"]').click();
+  await page.waitForTimeout(200);
+  const listed = await page.evaluate(() => {
+    const list = document.querySelector('[data-testid="here-list"]');
+    if (!list || list.hidden) return null;
+    return { rows: [...list.querySelectorAll('[data-testid="here-one"]')].map((one) => one.innerText.replace(/\s+/g, " ").trim()), goes: list.querySelector('button[data-testid="here-one"]') !== null, keyboardIn: list.contains(document.activeElement) };
+  });
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(150);
+  return listed;
 };
 const go = async (page, hash) => {
   await page.evaluate((next) => {
@@ -168,6 +203,34 @@ try {
   };
 
   /*
+   * WHO IS HERE IS ON THE BAR (FR-155), on the scene, on Pages and on a
+   * phone: Sam's scene bar draws Nora, says so politely, and lists her with
+   * where she is in the app's words; a third tab, Sam again on Pages, draws
+   * Nora and never Sam's own other tab; at a phone's width the marks stand
+   * on the bar's one row. When Nora goes, both bars draw nobody.
+   */
+  await go(a, "#overview=1&focus=aggregate%3Atask");
+  const onTheScene = await barSays(b);
+  const sceneList = await hereListed(b);
+  const c = await context.newPage();
+  c.on("pageerror", (error) => report.pageErrors.push(`pages: ${String(error).slice(0, 200)}`));
+  await c.goto(`${at("todo")}/pages/?today=2026-09-01&as=${SAM}`, { waitUntil: "load" });
+  await c.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await c.waitForTimeout(2500);
+  const onPages = await barSays(c);
+  const pagesList = onPages ? await hereListed(c) : null;
+  await c.setViewportSize({ width: 390, height: 844 });
+  await c.waitForTimeout(600);
+  const onAPhone = await barSays(c);
+  const nora = (one) => one !== null && one.marks.join() === "N" && one.said === "Nora is here" && one.name === "Nora is here — who and where" && one.onTheRow && one.barHeight <= 48;
+  report.checks.whoIsHereIsOnTheBarOnTheScenePagesAndAPhone = { onTheScene, onPages, onAPhone, ok: nora(onTheScene) && nora(onPages) && nora(onAPhone) };
+  report.checks.pressedTheBarListsEachByNameAndWhereTheyAre = {
+    sceneList,
+    pagesList,
+    ok: sceneList !== null && sceneList.rows.join() === "N Nora On Tasks" && sceneList.goes && sceneList.keyboardIn && pagesList !== null && pagesList.rows.length === 1 && pagesList.rows[0].startsWith("N Nora") && !pagesList.goes,
+  };
+
+  /*
    * A closes: gone within the TTL. WHAT THE CODE PROMISES, not a number
    * beside it: the last heartbeat can land just before the close, the
    * person lapses PRESENCE_TTL_MS after it, and the sweep that notices runs
@@ -184,6 +247,12 @@ try {
     gone = await figureOf(b, NORA);
   }
   report.checks.aClosesAndIsGoneWithinTheTtl = { gone, tookMs: Date.now() - closed, promisedMs: promised, ok: gone === null };
+  /* The routed face holds the others for a remote word's grace (`REMOTE_PRESENCE_TTL_MS`, the provider's default): watched as long as that promises. */
+  const pagesPromised = Math.ceil(REMOTE_PRESENCE_TTL_MS * 1.5) + 750;
+  while ((await barSays(c)) !== null && Date.now() - closed < pagesPromised) await c.waitForTimeout(200);
+  const barsAfter = { scene: await barSays(b), pages: await barSays(c), tookMs: Date.now() - closed };
+  report.checks.aloneTheBarDrawsNobodyNotEvenYourOtherTab = { ...barsAfter, ok: barsAfter.scene === null && barsAfter.pages === null };
+  await c.close();
 
   await b.close();
   report.passed = Object.values(report.checks).every((check) => check.ok) && report.pageErrors.length === 0;

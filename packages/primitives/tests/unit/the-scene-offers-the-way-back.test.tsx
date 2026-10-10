@@ -127,7 +127,7 @@ describe("the scene's way back", () => {
 function heldWhen(held: () => boolean) {
   const matches = Element.prototype.matches;
   vi.spyOn(Element.prototype, "matches").mockImplementation(function (this: Element, selector: string) {
-    return selector === ":hover, :has(:focus-visible)" ? held() : matches.call(this, selector);
+    return selector === ":hover, :focus-within" ? held() : matches.call(this, selector);
   });
 }
 

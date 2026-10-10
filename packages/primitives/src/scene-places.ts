@@ -1,5 +1,5 @@
 import { OVERVIEW_PATH, type Place } from "@graview/core";
-import { aggregateId, EMPTY_VIEW, toUrl, withOverview, withPicture, withWithin, type ViewState } from "@graview/layout/view";
+import { aggregateId, EMPTY_VIEW, overviewFragment, withOverview, withPicture, withWithin, type ViewState } from "@graview/layout/view";
 import { useGraview, useNavigation } from "@graview/react/provider";
 import { useMemo } from "react";
 import { WHOLE_KEY, type BarGo, type BarPlace } from "./app-bar.js";
@@ -39,8 +39,9 @@ const keyOf = (place: Place): string => `scene:${place.kind}:${place.as}`;
  * picture the view names on its kind's district, or the one that district
  * draws when it names none on the ground, else the whole thing — the scene
  * from above, where "Up" rises to; and the view each goes to.
- * Each one's path is the scene's address for it (`/places/overview#…`), what
- * a harness finds it by (`data-place-path`).
+ * Each one's path is the scene's address for it (`/places/overview#…`; the
+ * whole thing's is `/places/overview` alone, FR-154), what a harness finds
+ * it by (`data-place-path`).
  */
 export function scenePlacesOf(input: { readonly places: readonly Place[]; readonly hidden: ReadonlySet<string>; readonly view: ViewState }): ScenePlaces {
   const { view } = input;
@@ -57,8 +58,8 @@ export function scenePlacesOf(input: { readonly places: readonly Place[]; readon
     return place ? withPicture(from, place.kind, place.as) : null;
   };
   const places: BarPlace[] = [
-    { key: WHOLE_KEY, label: WHOLE_LABEL, path: `${OVERVIEW_PATH}${toUrl(to(WHOLE_KEY, EMPTY_VIEW)!)}`, group: "home" },
-    ...pictures.map((place) => ({ key: keyOf(place), label: place.title, path: `${OVERVIEW_PATH}${toUrl(to(keyOf(place), EMPTY_VIEW)!)}`, group: "pictures" as const, kind: place.kind })),
+    { key: WHOLE_KEY, label: WHOLE_LABEL, path: `${OVERVIEW_PATH}${overviewFragment(to(WHOLE_KEY, EMPTY_VIEW)!)}`, group: "home" },
+    ...pictures.map((place) => ({ key: keyOf(place), label: place.title, path: `${OVERVIEW_PATH}${overviewFragment(to(keyOf(place), EMPTY_VIEW)!)}`, group: "pictures" as const, kind: place.kind })),
   ];
   // Which picture a district draws when the view names none: the last registered for its kind, as the registry resolves it.
   const showing = view.within?.["view"];

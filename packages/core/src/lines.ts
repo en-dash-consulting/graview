@@ -16,6 +16,7 @@ import type { RuleLine } from "./invariants/line.js";
 import type { KindShape } from "./document/expr/evaluate.js";
 import { brokenLineOf, formatsSaid, ruleLineOf, type LineWords } from "./document/rule-line.js";
 import { shapesOfSchema } from "./document/rules.js";
+import { judgedWith } from "./invariants/engine.js";
 
 export { brokenLineOf, ruleLineOf } from "./document/rule-line.js";
 export { problemWords, ruleLineWords, ruleSpacing, ruleSpoken, ruleText } from "./invariants/line.js";
@@ -48,9 +49,17 @@ const SHAPES = new WeakMap<object, Map<string, KindShape>>();
 
 /**
  * THE PROBLEMS, EACH WITH ITS LINE where its rule has a shape: the record's
- * values, the comparison turned the way it stands. A violation of a rule
- * that is a function, or one that could not be judged, is handed back as it
- * came. Never throws: a line that cannot be worked out is left off.
+ * values, the comparison turned the way it stands. A rule that wrote no
+ * sentence of its own (`says`) says the same in its `message`, after its
+ * title — "A club on Team: Margin above target — margin 44% < target
+ * margin 50%" — so a host, a chat or a model that reads only the message
+ * reads the values too (FR-159); a rule's own sentence is left as its
+ * author wrote it. A violation of a rule that is a function, or one that
+ * could not be judged, is handed back as it came. Never throws: a line that
+ * cannot be worked out is left off.
+ *
+ * Loading this entry hands it to the engine too (`evaluate`), so every
+ * judgment after carries its lines without asking.
  */
 export function withLines<V extends Violation>(
   source: { readonly graph: GraphReader; readonly schema: AnySchema; allInvariants(): readonly Pick<InvariantDefinition, "name" | "shape">[]; today?(): string | undefined },
@@ -70,9 +79,24 @@ export function withLines<V extends Violation>(
     try {
       const today = shape.today?.() ?? source.today?.() ?? new Date().toISOString().slice(0, 10);
       const line = brokenLineOf(shape, wordsOf(shape, source.schema), { graph: source.graph, subject: subject ?? null, kinds, today });
-      return { ...violation, line };
+      return { ...violation, line, ...(shape.says ? {} : { message: `${violation.message} — ${line.text}` }) };
     } catch {
       return violation;
     }
   });
 }
+
+/**
+ * EVERY JUDGMENT FROM NOW ON CARRIES ITS LINES (FR-159): `evaluate`, and so
+ * `store.violations()` and every surface over it, hands back each broken
+ * rule's line and says its values in its message where the rule wrote no
+ * sentence of its own. Loading this entry does it already; a server that
+ * judges with nothing else of this entry calls it, so a bundler that drops
+ * an import nothing names cannot leave the words out. `@graview/ship`'s
+ * store handler and a seat's tools do.
+ */
+export function judgeWithLines(): void {
+  judgedWith((graph, invariants, violations) => withLines({ graph, schema: graph.schema, allInvariants: () => invariants }, violations));
+}
+
+judgeWithLines();

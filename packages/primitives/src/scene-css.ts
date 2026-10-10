@@ -1,6 +1,6 @@
 import type { IsoFace, IsoWash, Scheme } from "@graview/core";
 import { isoShade, layer, SCENE_LAYERS } from "@graview/core";
-import { MARQUEE_GAP, MARQUEE_WIDTH } from "@graview/layout/view";
+import { MARQUEE_GAP, MARQUEE_NAME_FLOOR, MARQUEE_WIDTH } from "@graview/layout/view";
 import { baseSheet, GRAVIEW_BRAND, withinTheBox, type Brand, type ThemeCssOptions } from "./theme.js";
 import { SPEC_VIEW_CSS } from "./spec-css.js";
 
@@ -139,9 +139,10 @@ ${/* THE SHOWINGS, BY NAME (FR-118): a column of names hanging off the
 }
 .graview-drive-in-thumb {
   position: relative;
-  display: block;
+  display: grid;
+  align-content: center;
   box-sizing: border-box;
-  min-height: max(1.5rem, 24px);
+  min-height: max(${MARQUEE_NAME_FLOOR / 16}rem, ${MARQUEE_NAME_FLOOR}px);
   padding: 3px 6px 3px 10px;
   border-left: 2px solid var(--graview-edge-bright, var(--graview-edge));
   color: var(--graview-ink);
@@ -156,7 +157,7 @@ ${/* The press: the whole name, laid over it. */ ""}
 .graview-drive-in-thumb-press {
   position: absolute;
   inset: 0;
-  min-height: max(1.5rem, 24px);
+  min-height: max(${MARQUEE_NAME_FLOOR / 16}rem, ${MARQUEE_NAME_FLOOR}px);
   margin: 0;
   padding: 0;
   border: none;
