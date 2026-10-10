@@ -261,9 +261,14 @@ export const MODULES_AUTHOR: Author = { kind: "system", id: "modules", name: "Mo
  */
 const putsBack = (op: Operation): boolean => op.mutation === null && op.undoes === undefined;
 
-/** A violation's identity across judgments: the rule, what it is about, and what it says. */
+/**
+ * A violation's identity across judgments: the rule, what it is about, and
+ * what it says. A rule that says its line breaks once per record, so with
+ * a line it is the rule and the record: the values the line found, which
+ * an act that leaves the rule broken may change, are not who it is (FR-159).
+ */
 export function violationKey(v: Violation): string {
-  return `${v.invariant}|${v.subjectId ?? ""}|${v.message}`;
+  return `${v.invariant}|${v.subjectId ?? ""}|${v.line ? v.label : v.message}`;
 }
 
 /**
