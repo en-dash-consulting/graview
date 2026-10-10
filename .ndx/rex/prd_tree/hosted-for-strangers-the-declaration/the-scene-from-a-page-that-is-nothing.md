@@ -20,5 +20,5 @@ acceptanceCriteria:
   - "A view that holds a focus or is at altitude is taken as it was"
 description: "On the Pages face at an address no route answers (\"Nothing lives at this address.\"), the bar's Scene control landed the scene at /places/overview#: the empty view, overview off, the control saying Up. The pages leave the scene's view holding nothing when no page named a place in it, and the switch took that view as it was."
 lastModified: "2026-10-10T03:36:35.000Z"
-resolution: "Fixed in the pull request from kit/an-agent-opens-the-repo-cold: when the view the switch would take holds nothing, it lands where the declaration says the app opens (pages.first), else at altitude on the Graview's face; unit tests in @graview/embed and the address harness's theSceneFromAnAddressNothingLivesAtLandsWhereTheSceneOpens."
+resolution: "Fixed in #186: when the view the switch would take holds nothing, it lands where the declaration says the app opens (pages.first), else at altitude on the Graview's face; unit tests in @graview/embed and the address harness's theSceneFromAnAddressNothingLivesAtLandsWhereTheSceneOpens."
 ---
