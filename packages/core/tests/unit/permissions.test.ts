@@ -217,13 +217,25 @@ describe("graview check reads the policy", () => {
     ).toContain("error:mutation-unreachable-by-any-role");
   });
 
-  it("reports a role that may do nothing", () => {
+  it("reports a role that may neither act nor see a thing", () => {
     expect(
       findings({
         roles: ["parent", "guest"],
         grants: [{ roles: ["parent"], mutations: "*" }],
+        sees: [{ roles: ["parent"], kinds: ["duty"] }],
       }),
     ).toContain("warning:role-may-do-nothing");
+  });
+
+  it("does not report a role that only reads: a viewer may run nothing, and reads", () => {
+    // Every role reads every kind where the policy keeps none from anybody.
+    expect(findings({ roles: ["parent", "viewer"], grants: [{ roles: ["parent"], mutations: "*" }] })).not.toContain("warning:role-may-do-nothing");
+    // And where it does, a sight naming the role is its reading, even of its own records only.
+    for (const roles of [["viewer"], "*"] as const) {
+      expect(
+        findings({ roles: ["parent", "viewer"], grants: [{ roles: ["parent"], mutations: "*" }], sees: [{ roles: ["parent"], kinds: ["duty"] }, { roles, kinds: ["duty"], own: true }] }),
+      ).not.toContain("warning:role-may-do-nothing");
+    }
   });
 
   it("reports a grant naming a mutation or kind nobody declared", () => {

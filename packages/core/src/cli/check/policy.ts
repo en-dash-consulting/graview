@@ -78,13 +78,21 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
             permits(app.policy, { kind: "human", id: "themselves", roles: [role] }, mutation.name, kind, via, "themselves").ok,
         );
       });
-      if (!canDo) {
+      /*
+       * A ROLE THAT ONLY READS IS A READER, NOT A MISTAKE. A viewer that
+       * may run nothing is the point of a viewer: it reads every kind where
+       * the policy keeps no kind from anybody (no `sees`), and what a sight
+       * names it for where it does. Only a role that can neither act nor
+       * see a thing is one nobody could use.
+       */
+      const canRead = !app.policy.sees || app.policy.sees.some((sight) => sight.roles === "*" || sight.roles.includes(role));
+      if (!canDo && !canRead) {
         add({
           severity: "warning",
           code: "role-may-do-nothing",
-          where: `policy.grants (role "${role}")`,
-          message: `"${role}" may run no mutation, so anyone holding it can only read.`,
-          fix: "Grant it something, or drop the role if read-only was the intent.",
+          where: `policy (role "${role}")`,
+          message: `"${role}" may run no mutation and see no kind, so anyone holding it can do nothing at all.`,
+          fix: `Grant it a mutation (policy.grants) or a kind to read (policy.sees), or drop the role.`,
         });
       }
     }

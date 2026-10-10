@@ -302,7 +302,9 @@ export const BUDGETS = [
     // person's menu. 684 / 216 fewer. Measured at 703_216 / 185_054.
     // Raised when the bar came to rank its places (the primary ones stand, six at most) and a declared row to say what it
     // says through its door: 1_928 / 391 more. Measured at 705_144 / 185_445.
-    minified: 705_600,
+    // Raised when a broken rule came to say its values to a host (FR-159), a showing's name to be a fingertip as drawn and the
+    // overview's address to mean the overview alone (FR-154), together. Measured at 705_661 / 185_486.
+    minified: 705_900,
     gzipped: 185_700,
     load: "first",
     lacks: ["@graview/studio"],
@@ -466,8 +468,11 @@ export const BUDGETS = [
     // row's glance and adding one as a press at a list's end, the rest. 11_522 / 4_044 more. Measured at 1_668_049 / 519_530.
     // And a large list's way through it and `ListPage` for designs: 3_371 / 1_136 more. Measured at 1_671_420 / 520_666.
     // Together, over main's rule saying its shape: measured at 1_690_539 / 528_634.
-    minified: 1_691_000,
-    gzipped: 529_000,
+    // Raised with the pages face's by FR-159, a showing's name as drawn and FR-154, together. Measured at 1_691_411 / 528_975.
+    // Raised when who is here came onto the bar (FR-155): the list of names behind the bar's panes, fetched once somebody
+    // else is here, and the places list held as it opened (FR-158). 3_901 / 1_622 more. Measured at 1_695_312 / 530_597.
+    minified: 1_695_700,
+    gzipped: 530_900,
     load: "all",
   },
   {
@@ -548,8 +553,10 @@ export const BUDGETS = [
     // And with the pages face's when a large list came to have a way through it and a design to draw with `ListPage`:
     // 3_371 / 1_126 more. Measured at 1_560_294 / 475_612.
     // Together, over main's rule saying its shape: measured at 1_565_066 / 478_232.
-    minified: 1_565_600,
-    gzipped: 478_600,
+    // Raised with the pages face's by FR-159, a showing's name as drawn and FR-154, together. Measured at 1_565_769 / 478_533.
+    // And by who is here on the bar (FR-155): 98 more gzipped. Measured at 1_565_646 / 478_631.
+    minified: 1_566_100,
+    gzipped: 478_900,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

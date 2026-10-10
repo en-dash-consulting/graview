@@ -125,7 +125,9 @@ pnpm build && npx graview check ./dist/domain/app.js
 ```
 
 The checker reports `mutation-unreachable-by-any-role` (declared and
-unreachable), `role-may-do-nothing`, `grant-unknown-mutation` and
+unreachable), `role-may-do-nothing` (a role that can neither run a mutation
+nor see a kind; a viewer that only reads is not reported, since reading is
+the point of it), `grant-unknown-mutation` and
 `grant-unknown-kind`. All four are silent at runtime and obvious at build time,
 and the person who finds them otherwise is the person standing in front of a
 button they cannot press. Report the output.

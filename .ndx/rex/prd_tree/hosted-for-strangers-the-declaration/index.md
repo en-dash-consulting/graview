@@ -76,8 +76,8 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A thumbnail reads as a place with no counts (FR-120)](./a-thumbnail-reads-as-a-place-with-no.md) | completed |
 | [A view can list related records: a list block with a walk as its source (FR-82)](./a-view-can-list-related-records-a-list.md) | completed |
 | [A view can prefill an input from the record it draws (FR-150)](./a-view-can-prefill-an-input-from-the.md) | completed |
-| [A role that only reads is not warned that it may do nothing](./a-role-that-only-reads-is-not-warned.md) | pending |
-| [A violation carries its rule's shape wherever it is read (FR-159)](./a-violation-carries-its-rule-s-shape.md) | pending |
+| [A role that only reads is not warned that it may do nothing](./a-role-that-only-reads-is-not-warned.md) | completed |
+| [A violation carries its rule's shape wherever it is read (FR-159)](./a-violation-carries-its-rule-s-shape.md) | completed |
 | [A walk from every member of a set: out()/in() over a set return the distinct union, costed (FR-101)](./a-walk-from-every-member-of-a-set-out.md) | completed |
 | [A worker view is a place, with a manifest the host enforces (FR-91)](./a-worker-view-is-a-place-with-a.md) | completed |
 | [Agents name records the way people do: a node argument accepts a label, and ambiguity comes back as candidates](./agents-name-records-the-way-people-do.md) | completed |
