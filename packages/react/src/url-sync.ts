@@ -121,7 +121,9 @@ export function useUrlSync(): void {
     // duplicates and the back button stops meaning anything. The baseline
     // still moves: after a popstate re-syncs the view, a stale baseline made
     // the next drag read as travel and push a phantom stop.
-    if (window.location.hash === fragment) {
+    // `location.hash` is "" for a bare `#` too: the address is said as written, so `/places/overview#` is tidied to the bare one.
+    const said = window.location.hash || (window.location.href.includes("#") ? "#" : "");
+    if (said === fragment) {
       // An address that already says the view is arrived at, as much as one tidied to say it.
       landed.current = true;
       written.current = view;

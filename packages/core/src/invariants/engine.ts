@@ -188,7 +188,7 @@ export function evaluate<S extends AnySchema>(
       const said = daysAsRead(violation.message);
       return said === violation.message ? violation : { ...violation, message: said };
     });
-  return lined ? lined(graph as never, invariants as never, said) : said;
+  return linedOver(graph, invariants as never, said);
 }
 
 /*
@@ -201,13 +201,23 @@ export function evaluate<S extends AnySchema>(
  * says its values in its `message` too. The engine carries none of the
  * words itself, so a page that judges before it draws a problem pays nothing.
  */
-type Lined = (graph: Graph<AnySchema>, invariants: readonly InvariantDefinition<AnySchema>[], violations: Violation[]) => Violation[];
+type Lined = (graph: Graph<AnySchema> | null, invariants: readonly InvariantDefinition<AnySchema>[], violations: Violation[]) => Violation[];
 let lined: Lined | undefined;
 
 /** Hands the engine what works out a broken rule's line: `@graview/core/lines` does, as it loads. */
 export function judgedWith(say: Lined | undefined): void {
   lined = say;
 }
+
+/**
+ * A JUDGMENT'S LINES SAID AGAIN OVER A SEAT'S READING OF THE GRAPH (FR-55,
+ * FR-159): a line over the whole graph may name or count records beyond
+ * its subject — the vendors a rule reads, three by name — which a seat
+ * that may not see them must not read in a problem it may. With no graph,
+ * the lines left off and each message as its rule said it. As judged
+ * where the words are not here.
+ */
+export const linedOver = (graph: unknown, invariants: readonly InvariantDefinition<AnySchema>[], violations: Violation[]): Violation[] => (lined ? lined(graph as never, invariants, violations) : violations);
 
 /** Violations that implicate any of the given node ids. */
 export function violationsTouching(

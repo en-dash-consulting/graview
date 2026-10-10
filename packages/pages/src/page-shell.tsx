@@ -1,4 +1,5 @@
 import { AppBar, barPlaceAt, barPlaces, Profile, StandingDot, standingWords, toolStyle, useFavicon } from "@graview/primitives/pages";
+import { PagesActivity } from "./pages-activity.js";
 import { faviconHref, pagesTitle, pluralLabel, sceneTitle } from "@graview/core";
 import type { AnySchema } from "@graview/core";
 import { Link, useHref, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -126,6 +127,8 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
               <StandingDot tone={problems === 0 ? "var(--graview-good)" : "var(--graview-warn)"} />
               {problems > 0 ? <span aria-hidden="true">{problems}</span> : null}
             </Link>
+            {/* What has happened, each with its way back, as the scene's bar has it (FR-152). */}
+            <PagesActivity context={context} />
             {context.views ? <Profile {...(context.signature ? { signature: true } : {})} /> : null}
           </>
         }

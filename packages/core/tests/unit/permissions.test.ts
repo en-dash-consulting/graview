@@ -230,6 +230,8 @@ describe("graview check reads the policy", () => {
   it("does not report a role that only reads: a viewer may run nothing, and reads", () => {
     // Every role reads every kind where the policy keeps none from anybody.
     expect(findings({ roles: ["parent", "viewer"], grants: [{ roles: ["parent"], mutations: "*" }] })).not.toContain("warning:role-may-do-nothing");
+    // An empty `sees` keeps nothing from anybody, as the store reads it.
+    expect(findings({ roles: ["parent", "viewer"], grants: [{ roles: ["parent"], mutations: "*" }], sees: [] })).not.toContain("warning:role-may-do-nothing");
     // And where it does, a sight naming the role is its reading, even of its own records only.
     for (const roles of [["viewer"], "*"] as const) {
       expect(

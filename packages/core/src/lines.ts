@@ -66,9 +66,11 @@ export function withLines<V extends Violation>(
   violations: readonly V[],
 ): V[] {
   const rules = new Map(source.allInvariants().map((rule) => [rule.name, rule]));
-  return violations.map((violation) => {
+  return violations.map((said) => {
+    // A line said already is said again over this reading of the graph, which may be a seat's (FR-55).
+    const violation = unlined(said);
     const shape = rules.get(violation.invariant)?.shape;
-    if (!shape || violation.line || (violation.status && violation.status !== "violated")) return violation;
+    if (!shape || (violation.status && violation.status !== "violated")) return violation;
     const subject = violation.subjectId ? source.graph.getNode(violation.subjectId) : undefined;
     if (shape.over !== "graph" && !subject) return violation;
     let kinds = shape.kinds;
@@ -96,7 +98,15 @@ export function withLines<V extends Violation>(
  * store handler and a seat's tools do.
  */
 export function judgeWithLines(): void {
-  judgedWith((graph, invariants, violations) => withLines({ graph, schema: graph.schema, allInvariants: () => invariants }, violations));
+  judgedWith((graph, invariants, violations) => (graph ? withLines({ graph, schema: graph.schema, allInvariants: () => invariants }, violations) : violations.map(unlined)));
+}
+
+/** A violation as judged before its line was worked out: no line, and the message its rule said. */
+export function unlined<V extends Violation>(violation: V): V {
+  if (!violation.line) return violation;
+  const { line, ...rest } = violation;
+  const said = ` — ${line.text}`;
+  return (rest.message.endsWith(said) ? { ...rest, message: rest.message.slice(0, -said.length) } : rest) as V;
 }
 
 judgeWithLines();

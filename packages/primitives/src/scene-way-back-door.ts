@@ -4,6 +4,23 @@ import { freshChangeOf, isTakeBackKey, lastChangeOf, takeBackLast, WAY_BACK_MS }
 
 /** The one offer on the board: an act's own replaces the one before. */
 const OFFER = "way-back";
+const TOASTS = '[data-testid="notices-toasts"]';
+
+/*
+ * THE KEYBOARD OFF THE NOTICE ONCE ITS TAKE BACK IS PRESSED. The press
+ * takes the control from under the keyboard, and the keyboard fell to the
+ * notice's × beside it — where it stayed, so every offer after, said in the
+ * same place, was held by a keyboard nobody had put there and never went
+ * (FR-152). It goes, as the press is made, where the routed face lands it
+ * on its page: on the app's name, the heading of what is drawn — before the
+ * control goes, so nothing lands it beside the control afterwards (a
+ * click in WebKit and Firefox on macOS gives a button no keyboard at all).
+ */
+function landOnTheApp(app: Element | null | undefined) {
+  const active = document.activeElement;
+  if (active !== null && active !== document.body && !active.closest(TOASTS)) return;
+  (app ?? document).querySelector<HTMLElement>('[data-graview-app-bar] [data-testid="app-home"]')?.focus({ preventScroll: true });
+}
 
 /**
  * THE SCENE'S WAY BACK, BEHIND ITS DOOR (FR-153): heard from each change
@@ -31,7 +48,7 @@ export function sceneWay<S extends AnySchema>(store: Store<S>, principal: Princi
     seen = store.batches().length;
     if (fresh) {
       offered = fresh.batch;
-      board?.notify({ kind: "toast", id: OFFER, sentence: fresh.intent, timeout: WAY_BACK_MS, action: { label: "Take back", onSelect: take } });
+      board?.notify({ kind: "toast", id: OFFER, sentence: fresh.intent, timeout: WAY_BACK_MS, action: { label: "Take back", onSelect: () => (landOnTheApp(app), take()) } });
     } else if (offered && lastChangeOf(store, principal)?.batch !== offered) {
       // Taken back, by the key or from Activity: the offer goes with it.
       offered = undefined;

@@ -3,10 +3,12 @@ import { useGraview } from "@graview/react/provider";
 import { choiceStyle } from "./choice.js";
 import type { HostAction } from "./profile.js";
 import { Seats } from "./seats.js";
-import { problemLine, problemTitle, RuleLineView, useLined } from "./rule-line.js";
+import { ownSentence, problemTitle, RuleLineView, useLined } from "./rule-line.js";
 
 /* Who else is here (FR-155), fetched with the panes once somebody is. */
 export { Here } from "./here.js";
+/* What has happened, on the routed face's bar (FR-152): `BarActivity`. */
+export { ActivityRail } from "./workbench/activity.js";
 
 /*
  * WHAT IS BEHIND THE BAR'S TOOLS (FR-131), fetched when one is first reached
@@ -39,7 +41,7 @@ export function ProblemRows({ violations, pick }: { readonly violations: readonl
             type="button"
             onClick={() => pick(violation)}
             // The rule's own sentence, where it wrote one the line does not show.
-            {...(violation.line && violation.message !== problemLine(violation) ? { title: violation.message } : {})}
+            {...(ownSentence(violation) !== undefined ? { title: ownSentence(violation) } : {})}
             style={{
               width: "100%",
               textAlign: "left",

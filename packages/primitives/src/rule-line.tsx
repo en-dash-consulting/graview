@@ -66,6 +66,17 @@ export function useRuleLines(schema: AnySchema, rules: readonly Pick<InvariantDe
   }, [words, schema, rules]);
 }
 
+/**
+ * The rule's own sentence, where it wrote one the line does not show: a
+ * rule that wrote none says its title and its line in its message (FR-159),
+ * which the row draws already, so it has none to add.
+ */
+export function ownSentence(violation: Pick<Violation, "message" | "line">): string | undefined {
+  const line = violation.line;
+  if (!line || violation.message.endsWith(` — ${line.text}`) || violation.message === problemLine(violation)) return undefined;
+  return violation.message;
+}
+
 /** A problem in one line: the record and the shape it found, else the rule's own sentence. */
 export function problemLine(violation: Pick<Violation, "message" | "line">): string {
   const line = violation.line;

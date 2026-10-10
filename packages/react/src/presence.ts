@@ -105,6 +105,8 @@ export interface PresenceState {
   /** Whose stop this tab is adopting, if anybody's. */
   readonly following: Presence | null;
   follow(participant: string | null): void;
+  /** Where this tab says it is when a face other than the scene draws it (`sayWhere` on the provider). */
+  sayWhere(stop: string | null): void;
 }
 
 /**
@@ -118,6 +120,14 @@ export function usePresenceState<S extends AnySchema>(inputs: PresenceInputs<S>)
   const [who, setWho] = useState<ReadonlyMap<string, Presence>>(() => new Map());
   const [over, setOver] = useState<string | null>(null);
   const [followingId, setFollowingId] = useState<string | null>(null);
+  /*
+   * WHERE A FACE THAT IS NOT THE SCENE SAYS THIS TAB IS (FR-155). The
+   * scene's stop is the view; the routed face's is its page, said as the
+   * stop that page is on the scene — a record, a kind's group, a picture,
+   * the overview — so the others' bars say it in the declaration's words
+   * and a figure on the scene stands there. Null while the scene is the face.
+   */
+  const [said, sayWhere] = useState<string | null>(null);
 
   const named = typeof principal.id === "string" && principal.id.length > 0;
   const shareWhere = named && (settingValues[SHARE_WHERE.name] ?? SHARE_WHERE.initial) === "shared";
@@ -136,12 +146,12 @@ export function usePresenceState<S extends AnySchema>(inputs: PresenceInputs<S>)
       // For whom this seat acts, said as a server would say it (FR-47); a server builds its own from the seat regardless.
       ...(principal.onBehalfOf?.id ? { onBehalfOf: principal.onBehalfOf.id, ...(principal.onBehalfOf.name ? { onBehalfOfName: principal.onBehalfOf.name } : {}) } : {}),
       hue: hueFor(principal.id ?? "nobody"),
-      stop: toUrl(view),
+      stop: said ?? toUrl(view),
       ...(shareOver ? { over } : {}),
       ...(robot ? { robot: { at: robot.at, mode: robot.mode } } : {}),
       at: new Date().toISOString(),
     };
-  }, [channel, shareWhere, shareOver, participant, name, principal.id, principal.kind, principal.onBehalfOf?.id, principal.onBehalfOf?.name, view, over, robot?.at, robot?.mode]);
+  }, [channel, shareWhere, shareOver, participant, name, principal.id, principal.kind, principal.onBehalfOf?.id, principal.onBehalfOf?.name, view, said, over, robot?.at, robot?.mode]);
 
   /* Say it: on change, and on the heartbeat while it stands. */
   useEffect(() => {
@@ -243,6 +253,7 @@ export function usePresenceState<S extends AnySchema>(inputs: PresenceInputs<S>)
       sharing: mine ? { participant, name } : null,
       following,
       follow,
+      sayWhere,
     }),
     [who, mine, participant, name, following, follow],
   );

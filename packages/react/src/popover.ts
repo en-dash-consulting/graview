@@ -21,7 +21,7 @@ export const POPOVERS = {
   /** Who else is here, and where each one is, from the bar (FR-155). */
   here: { trigger: "here-open", pane: "here-list", opens: "press", focus: "into", drawn: ["shell", "embed", "pages"] },
   /** What has happened, from the bar. */
-  activity: { trigger: "activity-button", pane: "activity", opens: "press", focus: "into", drawn: ["shell"] },
+  activity: { trigger: "activity-button", pane: "activity", opens: "press", focus: "into", drawn: ["shell", "embed", "pages"] },
   /** What the words find, under the Find box. */
   find: { trigger: "find-box", pane: "find-strip", opens: "typing", focus: "stays", drawn: ["shell"] },
   /** The districts the row could not hold, from "+N more" on the ground. */
@@ -296,6 +296,12 @@ export interface Popover {
  *     over when there is more room above and no taller than the room, so
  *     no row of it is ever under the viewport's edge.
  */
+/** Whether the keyboard is nowhere: on <body>, or on no element at all. */
+const nowhere = (): boolean => {
+  const active = document.activeElement;
+  return active === null || active === document.body;
+};
+
 export function usePopover(name: PopoverName, options: PopoverOptions = {}): Popover {
   const { at, returnTo, onOpenChange } = options;
   const enabled = options.popover !== false;
@@ -319,18 +325,31 @@ export function usePopover(name: PopoverName, options: PopoverOptions = {}): Pop
     latest.current.onOpenChange?.(next);
   }, []);
 
+  /*
+   * THE KEYBOARD BACK TO THE TRIGGER: the one in the document now, by its
+   * `aria-controls` — a bar that drew its tools again has a new button, and
+   * focusing the one it replaced does nothing — else where the owner says.
+   * Asked again a frame later where it was left nowhere: WebKit, a pane
+   * leaving the top layer, can hand the keyboard to <body> after it.
+   */
+  const giveBack = useCallback(() => {
+    (document.querySelector<HTMLElement>(`[aria-controls="${id}"]`) ?? triggerRef.current ?? latest.current.returnTo?.() ?? null)?.focus({ preventScroll: true });
+  }, [id]);
+
   /** Closes it; the keyboard goes back to where it came from when it was inside, or nowhere. */
   const close = useCallback(
-    (giveBack: boolean) => {
+    (back: boolean) => {
       const pane = paneRef.current;
       const active = typeof document === "undefined" ? null : document.activeElement;
       const lost = active === null || active === document.body || (pane !== null && pane.contains(active));
       change(false);
-      if (!giveBack || !lost) return;
-      const back = triggerRef.current ?? latest.current.returnTo?.() ?? null;
-      back?.focus({ preventScroll: true });
+      if (!back || !lost) return;
+      giveBack();
+      requestAnimationFrame(() => {
+        if (nowhere()) giveBack();
+      });
     },
-    [change],
+    [change, giveBack],
   );
 
   useTopLayer(paneRef, enabled && open, at ?? triggerRef, options.align ? { align: options.align } : {});
@@ -372,10 +391,7 @@ export function usePopover(name: PopoverName, options: PopoverOptions = {}): Pop
        */
       if (POPOVERS[name].focus !== "into") return;
       requestAnimationFrame(() => {
-        const active = document.activeElement;
-        if (active === null || active === document.body || (pane !== null && pane.contains(active))) {
-          (triggerRef.current ?? latest.current.returnTo?.() ?? null)?.focus({ preventScroll: true });
-        }
+        if (nowhere() || (pane !== null && pane.contains(document.activeElement))) giveBack();
       });
     };
     /*
@@ -412,9 +428,7 @@ export function usePopover(name: PopoverName, options: PopoverOptions = {}): Pop
           if (dialog.isConnected) return;
           watching?.disconnect();
           requestAnimationFrame(() => {
-            const active = document.activeElement;
-            const lost = active === null || active === document.body || (active instanceof HTMLElement && active.closest("[hidden]") !== null);
-            if (lost) (triggerRef.current ?? latest.current.returnTo?.() ?? null)?.focus({ preventScroll: true });
+            if (nowhere() || document.activeElement!.closest("[hidden]") !== null) giveBack();
           });
         });
         watching.observe(document.body, { childList: true, subtree: true });
@@ -423,7 +437,7 @@ export function usePopover(name: PopoverName, options: PopoverOptions = {}): Pop
       }
       if (current?.close === me.close) current = null;
     };
-  }, [enabled, open, name, close]);
+  }, [enabled, open, name, close, giveBack]);
 
   return {
     open,

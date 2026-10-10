@@ -1,6 +1,8 @@
 import { Store, type AnySchema, type GraviewApp, type Violation } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+// The engine's own hook: `@graview/core/check` loads the words as it is imported, so each claim starts without them.
+import { judgedWith } from "../../../core/src/invariants/engine.js";
 import { createToolRuntime } from "../../src/index.js";
 
 /**
@@ -34,6 +36,7 @@ const SEED = {
   ],
   edges: [],
 };
+const MESSAGE = "A wedding planner on Small: Margin above target — margin 31% < target 40%";
 
 function opened() {
   const result = compileDocument(DOCUMENT, { today: () => "2026-10-10" });
@@ -43,6 +46,8 @@ function opened() {
 }
 
 describe("a seat reads a broken rule's values", () => {
+  beforeEach(() => judgedWith(undefined));
+
   it("in the message get_violations answers, though the rule wrote only a title", async () => {
     const store = opened();
     const tools = createToolRuntime(store);
@@ -67,5 +72,15 @@ describe("a seat reads a broken rule's values", () => {
     const [violation] = store.violations();
     expect(violation!.line?.text).toBe("margin 31% < target 40%");
     expect(violation!.message).toContain("margin 31% < target 40%");
+  });
+
+  it("in what its first act introduces, before anything asked for the problems", async () => {
+    const store = opened();
+    store.apply({ name: "edit-scenario", args: { id: "s1", margin: 0.5 } });
+    const result = await createToolRuntime(store).call("edit-scenario", { id: "s1", margin: 0.31 });
+    expect(result.ok).toBe(true);
+    const { introduces } = (result as { data: { introduces: Violation[] } }).data;
+    expect(introduces.map((violation) => violation.message)).toEqual([MESSAGE]);
+    expect(introduces[0]).not.toHaveProperty("line");
   });
 });

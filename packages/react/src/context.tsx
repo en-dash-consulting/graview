@@ -178,6 +178,12 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly who: ReadonlyMap<string, Presence>;
   readonly following: Presence | null;
   follow(participant: string | null): void;
+  /**
+   * Says where this tab is on a face that is not the scene: the routed face
+   * hands the stop its page is on the scene, so the others see where the
+   * reader is on either face (FR-155); null hands it back to the scene's view.
+   */
+  sayWhere(stop: string | null): void;
   readonly sharing: { readonly participant: string; readonly name: string } | null;
   readonly session: string;
   /**
@@ -803,7 +809,7 @@ export function GraviewProvider<S extends AnySchema>({
     [setView],
   );
 
-  const { who: others, following, follow, sharing } = usePresenceState<S>({
+  const { who: others, following, follow, sayWhere, sharing } = usePresenceState<S>({
     channel: presence,
     store,
     view: current,
@@ -845,6 +851,7 @@ export function GraviewProvider<S extends AnySchema>({
       who: others,
       following,
       follow,
+      sayWhere,
       sharing,
       session,
       ai,

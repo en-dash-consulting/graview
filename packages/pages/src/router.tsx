@@ -3,7 +3,8 @@ import { BrowserRouter, MemoryRouter, Navigate, Route, Routes } from "react-rout
 import { openingOf, OVERVIEW_PATH, OVERVIEW_SLUG } from "@graview/core";
 import { pluralSlug } from "./registry.js";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
-import { GoToContext, GraviewProvider, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo } from "@graview/react/provider";
+import { aggregateId } from "@graview/layout/view";
+import { GoToContext, GraviewProvider, useGraviewIfAny, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GraviewContextValue } from "@graview/react/provider";
 import { PageAsk } from "./ask.js";
 /* A view the seat drew, as a page: fetched when one is first shown here. */
 const DraftPage = lazy(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
@@ -131,6 +132,46 @@ function Steered({ steering }: { readonly steering: PagesSteering }) {
     };
   }, [here, navigate, steering]);
   return null;
+}
+
+/**
+ * WHERE THE READER IS, SAID TO THE OTHERS FROM THIS FACE (FR-155). The
+ * page is said as the stop it is on the scene — a record, its kind's
+ * group, a picture, the overview — so another reader's bar says where
+ * this one is in the declaration's words, on either face, and a figure on
+ * the scene stands there. A page with no place on the scene (the home,
+ * Find, the problems) says none. Handed back to the scene when the face goes.
+ */
+function SaysWhere<S extends AnySchema>({ context, to }: { readonly context: PageContext<S>; readonly to: GraviewContextValue<AnySchema> | null }) {
+  const { pathname } = useLocation();
+  const nearest = useGraviewIfAny();
+  // The provider above the face first: the one below says nothing of its own there (`PagesApp`).
+  const say = (to ?? nearest)?.sayWhere;
+  const stop = stopOfPage(context, pathname);
+  useEffect(() => {
+    say?.(stop);
+    return () => say?.(null);
+  }, [say, stop]);
+  return null;
+}
+
+/** A page's stop on the scene, as a fragment: `#` for a page that has none. */
+function stopOfPage<S extends AnySchema>(context: PageContext<S>, pathname: string): string {
+  const [first = "", second, more] = pathname.split("/").filter(Boolean).map((part) => {
+    try {
+      return decodeURIComponent(part);
+    } catch {
+      return part;
+    }
+  });
+  if (more !== undefined) return "#";
+  if (first === "places" && second !== undefined) {
+    if (second === OVERVIEW_SLUG) return "#overview=1";
+    const place = context.views?.places().find((one) => one.as === second);
+    return place ? `#focus=${encodeURIComponent(aggregateId(place.kind))}&view=${encodeURIComponent(place.as)}` : "#";
+  }
+  const kind = kindOfSlug(context.store.schema, first);
+  return kind ? `#focus=${encodeURIComponent(second ?? aggregateId(kind))}` : "#";
 }
 
 /** How the face arrived where it is: a new entry, a replaced one, or Back and Forward. */
@@ -438,6 +479,12 @@ export function PagesApp<S extends AnySchema>({
    */
   /* The lenses this reader kept from the seat, beside the app's own places, before a page draws them. */
   useState(() => (given.views ? registerReaderLenses(given.views, given.store.schema, appKeyOf(given.brand, given.store.schema)) : undefined));
+  /*
+   * A provider above this face — an embed's, drawing the bar — already says
+   * where this tab is: it is told this face's page, and the provider below
+   * says nothing of its own, or one tab would say two places by turns.
+   */
+  const outer = useGraviewIfAny();
   const viewed = given.store.seenBy(given.principal ?? { kind: "human" });
   const context = viewed === given.store ? given : { ...given, store: viewed };
   useTheWatchKnowsWhatIsUnseen(given.store, given.principal);
@@ -445,6 +492,7 @@ export function PagesApp<S extends AnySchema>({
     <>
       {onNavigate || path !== undefined ? <Reported onNavigate={onNavigate} path={path} /> : null}
       {steering ? <Steered steering={steering} /> : null}
+      {context.presence || outer ? <SaysWhere context={context} to={outer} /> : null}
       <PagesRoutes context={context} {...(registry ? { registry } : {})} />
     </>
   );
@@ -467,7 +515,7 @@ export function PagesApp<S extends AnySchema>({
       {...(context.principal ? { principal: context.principal } : {})}
       {...(context.brand ? { brand: context.brand } : {})}
       {...(context.settings ? { settings: context.settings } : {})}
-      {...(context.presence ? { presence: context.presence } : {})}
+      {...(context.presence && !outer ? { presence: context.presence } : {})}
       {...(context.people ? { people: context.people } : {})}
       {...(context.onKeepLens ? { onKeepLens: context.onKeepLens } : {})}
       {...(context.ai ? { ai: context.ai } : {})}

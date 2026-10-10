@@ -2,7 +2,8 @@ import type { GraphDiff, NodeChange } from "./graph/diff.js";
 import type { GraphNodeBase } from "./graph/types.js";
 import type { Primitive } from "./graph/primitives.js";
 import type { AnyGraphNode, GraphEdge, GraphSnapshot } from "./graph/types.js";
-import type { Violation } from "./invariants/types.js";
+import type { InvariantDefinition, Violation } from "./invariants/types.js";
+import { linedOver } from "./invariants/engine.js";
 import { batchesOf, undoneIn, type LogReading } from "./ops/log.js";
 import { checkUndo } from "./ops/undo.js";
 import type { Batch, Operation } from "./ops/types.js";
@@ -483,7 +484,8 @@ export function answerSeenBy<
   if (answer.intent !== undefined && namesUnseen(answer.intent, lens.sees)) out["intent"] = WITHHELD_INTENT;
   for (const key of ["introduces", "resolves", "violationsAfter"] as const) {
     const violations = answer[key];
-    if (violations) out[key] = violations.filter((violation) => violationShown(lens, has, violation));
+    // Without their lines: worked out over the whole graph, before the change or after it, a line may name records this seat may not see (FR-55).
+    if (violations) out[key] = linedOver(null, [], violations.filter((violation) => violationShown(lens, has, violation)));
   }
   return out as A;
 }
@@ -678,7 +680,9 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
         case "canUndo":
           return (batchIds: string | readonly string[]) => checkUndo(reading(), typeof batchIds === "string" ? [batchIds] : batchIds);
         case "violations":
-          return (...args: Parameters<Store<S>["violations"]>) => target.violations(...args).filter((violation) => violationShown(lens, (id) => full.has(id), violation));
+          // Each line said again over what this seat sees: a line over the whole graph may name records it may not (FR-55).
+          return (...args: Parameters<Store<S>["violations"]>) =>
+            linedOver(graph, target.allInvariants() as readonly InvariantDefinition<AnySchema>[], target.violations(...args).filter((violation) => violationShown(lens, (id) => full.has(id), violation)));
         // What no longer fits, about records this seat is served and naming none it may not see (FR-55).
         case "findings":
           return () =>

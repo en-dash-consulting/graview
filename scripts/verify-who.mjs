@@ -252,9 +252,40 @@ try {
   while ((await barSays(c)) !== null && Date.now() - closed < pagesPromised) await c.waitForTimeout(200);
   const barsAfter = { scene: await barSays(b), pages: await barSays(c), tookMs: Date.now() - closed };
   report.checks.aloneTheBarDrawsNobodyNotEvenYourOtherTab = { ...barsAfter, ok: barsAfter.scene === null && barsAfter.pages === null };
-  await c.close();
 
+  /*
+   * WHERE EACH ONE IS, FROM PAGES TOO (FR-155): the routed face says the
+   * page a reader is on, as the stop that page is on the scene. Sam, on
+   * Pages alone now, opens a task's page; Nora, back on the scene, reads
+   * on her bar that Sam is on that task, by its label and never its id,
+   * and sees Sam's figure standing at it. 0.1.21 said the scene's last
+   * stop for a reader on Pages, or nothing.
+   */
   await b.close();
+  await c.setViewportSize({ width: 1560, height: 940 });
+  await c.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01&as=${SAM}`, { waitUntil: "load" });
+  await c.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  const d = await open(context, NORA, "#overview=1");
+  const recordLabel = await c.evaluate(() => (document.querySelector("[data-graview-page-title]") ?? document.querySelector("main h1, main h2"))?.textContent?.trim() ?? null);
+  let fromPages = null;
+  for (const end = Date.now() + 8000; Date.now() < end; await d.waitForTimeout(300)) {
+    const said = await barSays(d);
+    if (said === null) continue;
+    fromPages = { said, list: await hereListed(d), figure: await figureOf(d, SAM) };
+    if (fromPages.list?.rows.some((row) => row.includes(" On "))) break;
+  }
+  report.checks.aReaderOnPagesIsSaidWhereTheyAreOnTheOthersBars = {
+    recordLabel,
+    ...fromPages,
+    ok:
+      recordLabel !== null &&
+      fromPages !== null &&
+      fromPages.list?.rows.join() === `S Sam On ${recordLabel}` &&
+      !fromPages.list.rows.join().includes("t-deposit") &&
+      fromPages.figure?.at === "t-deposit",
+  };
+  await d.close();
+  await c.close();
   report.passed = Object.values(report.checks).every((check) => check.ok) && report.pageErrors.length === 0;
 } catch (error) {
   report.error = String(error);
