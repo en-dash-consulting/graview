@@ -1,5 +1,17 @@
 # @graview/layout
 
+## 0.1.20
+
+### Patch Changes
+
+- Updated dependencies [22c88be]
+- Updated dependencies [ea77694]
+- Updated dependencies [95a7248]
+- Updated dependencies [95a7248]
+- Updated dependencies [247506b]
+- Updated dependencies [95a7248]
+  - @graview/core@0.1.20
+
 ## 0.1.19
 
 ### Patch Changes
