@@ -56,7 +56,8 @@ export function listHead(page) {
  */
 export async function endClearsTheFoot(page) {
   return page.evaluate(async () => {
-    const main = document.querySelector("main") ?? document.querySelector("[data-graview-page-title]")?.closest("section");
+    // The page's own column, not a host's page around an embed (which goes on under the box).
+    const main = document.querySelector("[data-graview-page-title]")?.closest("main, section") ?? document.querySelector("main");
     if (!main) return { ok: false, why: "no main" };
     for (let at = main; at; at = at.parentElement) if (at.scrollHeight > at.clientHeight + 1) at.scrollTop = at.scrollHeight;
     window.scrollTo(0, document.documentElement.scrollHeight);
@@ -74,7 +75,8 @@ export async function endClearsTheFoot(page) {
     const left = Math.min(...leaves.map((one) => one.getBoundingClientRect().left));
     const right = Math.max(...leaves.map((one) => one.getBoundingClientRect().right));
     const over = feet.filter((box) => box.right > left && box.left < right && box.top < end);
-    return { end: Math.round(end), feet: feet.map((box) => Math.round(box.top)), ok: over.length === 0 };
+    const last = leaves.find((one) => Math.round(one.getBoundingClientRect().bottom) === Math.round(end));
+    return { end: Math.round(end), feet: feet.map((box) => Math.round(box.top)), last: last ? `${last.tagName.toLowerCase()} ${(last.getAttribute("data-testid") ?? last.textContent ?? "").trim().slice(0, 40)}` : null, ok: over.length === 0 };
   });
 }
 

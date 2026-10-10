@@ -78,7 +78,7 @@ describe("a design's list", () => {
                 kind="artist"
                 bare
                 opening={{ sort: { by: "label", direction: "desc" } }}
-                row={(node, facts) => <span data-testid="own-row">{facts.label}</span>}
+                row={(_node, facts) => <span data-testid="own-row">{facts.label}</span>}
               />
             }
           />

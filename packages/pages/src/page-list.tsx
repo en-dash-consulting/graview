@@ -446,7 +446,12 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
           </div>
         ) : sections && sections.length > 1 ? (
           <div style={{ display: "grid", gap: 14 }} data-testid="records" data-sectioned={sortOffer?.type === "date" ? "year" : "letter"}>
-            <nav aria-label="Jump to" data-testid="list-index" style={{ ...quiet, display: "flex", flexWrap: "wrap", gap: sortOffer?.type === "date" ? "0 12px" : "0 6px", fontSize: "0.875rem" }}>
+            <nav
+              aria-label="Jump to"
+              data-testid="list-index"
+              // One line however many there are: it scrolls sideways inside itself rather than pushing the records down.
+              style={{ ...quiet, display: "flex", flexWrap: "nowrap", overflowX: "auto", scrollbarWidth: "thin", gap: sortOffer?.type === "date" ? "0 12px" : "0 6px", fontSize: "0.875rem", paddingBottom: 2 }}
+            >
               {sections.map((section) => (
                 <a
                   key={section.key}
@@ -456,7 +461,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
                     event.preventDefault();
                     document.getElementById(anchor(section.key))?.scrollIntoView({ block: "start" });
                   }}
-                  style={{ ...link, minWidth: 24, justifyContent: "center", textDecoration: "none" }}
+                  style={{ ...link, flex: "0 0 auto", minWidth: 24, justifyContent: "center", textDecoration: "none" }}
                 >
                   {section.key}
                 </a>

@@ -1265,7 +1265,7 @@ if (location.pathname.startsWith("/pages")) {
 <li><code>/problems</code> — every broken rule with its repairs.</li>
 </ul>
 <p>The app bar, one row over any shell (<code>barAbove</code>): the name, the switch (Scene, Pages; <code>pages: { scene, pages }</code> renames them), the place you are on — whose list holds the home, the Lists, the Pictures (on a wide bar they stand, the rest under More) — Find, standing, person.</p>
-<p><strong>Arrange it in the declaration</strong>: <code>pages: { order: ["offer", "package"], hide: ["party"], first: "The offers" }</code>. <code>order</code> sets the gallery, nav and city; <code>hide</code> takes kinds off the home only; <code>first</code> (a place, a kind or <code>"home"</code>) is where both faces open. <code>placesOf(app)</code> lists them.</p>
+<p><strong>Arrange it, declared</strong>: <code>pages: { order: ["offer", "package"], hide: ["party"], first: "The offers" }</code>. <code>order</code> sorts gallery, nav, city; <code>hide</code> drops kinds from the home only; <code>first</code> (place, kind or <code>"home"</code>) opens both faces; <code>primary</code> stands on the bar. <code>placesOf(app)</code> lists them.</p>
 <p><strong>Home as data</strong> (FR-81): <code>home</code>, blocks as in <code>graview-node-kind</code> (<code>views.home</code>), replaces this body, and the app opens on it (FR-136).</p>
 <p><strong>Hand it <code>views</code></strong> (the scene's registry, plus <code>settings</code>/<code>presence</code>) — <code>graview create</code> does — and the face puts the scene's provider under its routes, which buys three things at once:</p>
 <ul>

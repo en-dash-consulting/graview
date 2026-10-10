@@ -183,7 +183,8 @@ function KindList({ context, kind }: { context: Ctx; kind: string }) {
   };
   const facts = (node: Named, glance: string): string => {
     if (kind === "album") return [first(node.id, "released-by"), typeof node["released"] === "string" ? String(node["released"]).slice(0, 4) : undefined, node["type"] === "ep" ? "EP" : typeof node["type"] === "string" && node["type"] !== "album" ? String(node["type"]) : undefined].filter(Boolean).join(" · ");
-    if (kind === "song") return [first(node.id, "by"), first(node.id, "tracks", "in"), glance].filter(Boolean).join(" · ");
+    // A track number means nothing off its album, and a listed song is a released one: whose, on what, how long.
+    if (kind === "song") return [first(node.id, "by"), first(node.id, "tracks", "in"), typeof node["duration"] === "number" ? `${Math.floor(Number(node["duration"]) / 60)}:${String(Number(node["duration"]) % 60).padStart(2, "0")}` : undefined].filter(Boolean).join(" · ");
     if (kind === "artist") {
       const releases = store.graph.in(node.id, "released-by").length;
       const songs = store.graph.in(node.id, "by").length;
