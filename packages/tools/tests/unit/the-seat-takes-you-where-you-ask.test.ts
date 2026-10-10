@@ -146,7 +146,7 @@ describe("4. what's wrong", () => {
   it("goes to the problems and says them", () => {
     const answer = todo().ask("what's wrong?");
     expect(only(answer)).toEqual({ to: "problems", address: "/problems", said: "Went to the problems." });
-    expect("say" in answer && answer.say).toMatch(/^Went to the problems\. (One|\d+): /);
+    expect("say" in answer && answer.say).toMatch(/^Went to the problems\. \d+ rules? broken( in \d+ places)?: /);
   });
 
   it("'what's wrong with' a record goes to the record and says its trouble", () => {
@@ -348,7 +348,7 @@ describe("the conversation answers with moves", () => {
     const respond = graphResponder({ today: TODAY });
     const store = createTodoStore({ snapshot: example }) as unknown as Store<AnySchema>;
     const problems = await respond(store, "what's wrong?", { principal: keeper, places });
-    expect(problems.say).toMatch(/^Went to the problems\. \d+ problems?:/);
+    expect(problems.say).toMatch(/^Went to the problems\. \d+ rules? broken( in \d+ places)?:/);
     const record = await respond(store, "tell me about Pay the deposit", { principal: keeper, places });
     expect(record.say).toMatch(/^Went to Pay the deposit\. Pay the deposit — a task/);
     expect(record.say).toContain("The list it is on: Today");

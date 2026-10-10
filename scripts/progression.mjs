@@ -269,7 +269,7 @@ report.verdict = {
   everyChapterRenderedWithoutErrors: report.chapters.every((c) => c.errors.length === 0 && c.pictures.light && c.pictures.dark),
   // The chapters are photographed from this checkout: nothing they draw is fetched from anywhere else.
   noChapterAsksTheNetwork: report.chapters.length > 0 && report.chapters.every((c) => c.offTheMachine.length === 0),
-  theRuleFiresInChapterThree: /1 problem/.test(report.chapters[2]?.saw?.standing ?? "") && /Nobody tends Plot 2/.test(report.chapters[2]?.saw?.problems ?? ""),
+  theRuleFiresInChapterThree: /1 rule broken/.test(report.chapters[2]?.saw?.standing ?? "") && /Nobody tends Plot 2/.test(report.chapters[2]?.saw?.problems ?? ""),
   theHorizonShowsInChapterFour: (report.chapters[3]?.saw?.districts ?? []).some((d) => /past/.test(d)),
   theSeatPlantedInChapterFive: (report.chapters[4]?.saw?.activity ?? []).length > 0,
   itRemembersInChapterSix: /Remembered/.test(report.chapters[5]?.saw?.remembered ?? ""),

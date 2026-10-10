@@ -1,5 +1,33 @@
 import type { GraphReader } from "../graph/types.js";
 import type { AnySchema, KindOfSchema, NodeOfKind, NodeOfSchema } from "../schema/schema.js";
+import type { RuleLine } from "./line.js";
+import type { Expr } from "../document/expr/parse.js";
+import type { KindShape } from "../document/expr/evaluate.js";
+import type { TemplatePart } from "../document/template.js";
+
+/** A field's declared format and unit: money in dollars, a fraction said as a percent. */
+export interface FieldFormat {
+  readonly format?: string;
+  readonly unit?: string;
+}
+
+/** What a rule written in the rule language is said from (`InvariantDefinition.shape`). */
+export interface RuleShapeSource {
+  /** The kind it judges, or `"graph"`. */
+  readonly over: string;
+  readonly require: Expr;
+  readonly when?: Expr | undefined;
+  /** The rule's own sentence, parsed: the formats it gives its names (`{margin|percent}`) are its values' formats too. */
+  readonly says?: readonly TemplatePart[] | undefined;
+  /** The document's kinds, where the rule is a document's: each field's declared format and unit. */
+  readonly declared?: Readonly<Record<string, { readonly fields?: Readonly<Record<string, FieldFormat & { readonly type?: string }>> }>>;
+  /** The app's currency and locale. */
+  readonly money?: { readonly currency?: string; readonly locale?: string };
+  /** What each kind holds, as the rule is judged with; read from the schema when absent. */
+  readonly kinds?: ReadonlyMap<string, KindShape>;
+  /** The day the rule is judged on. */
+  readonly today?: () => string;
+}
 
 /**
  * A mutation that would resolve a violation. This field is the seam between
@@ -35,6 +63,14 @@ export interface Violation {
   /** Ids of the nodes that cause the violation, for cross-plane highlighting. */
   readonly nodeIds: readonly string[];
   readonly repairs: readonly Repair[];
+  /**
+   * The rule's shape with the record's own values, where the rule is
+   * written in the rule language: "margin 44% < target margin 50%". Not
+   * set by the engine: a surface that draws problems asks
+   * `@graview/core/lines` (`withLines`) when it draws them, so a page that
+   * judges rules carries none of the words; `problemWords` says it.
+   */
+  readonly line?: RuleLine;
 }
 
 /** Free-form evaluation context an app threads through (e.g. a week start). */
@@ -60,6 +96,14 @@ export interface InvariantDefinition<S extends AnySchema = AnySchema> {
    * it, edit it and write it back instead of a stub (FR-07).
    */
   readonly judgment?: { readonly require: string; readonly when?: string; readonly says?: string };
+  /**
+   * What the rule's line is said from, on a rule written in the rule
+   * language: its parsed judgment and how its values are written. Data, so
+   * a page that judges carries no renderer: `@graview/core/lines` reads it
+   * — "margin ≥ target margin, when price > $0". A rule that is a function
+   * has only its `label` to show.
+   */
+  readonly shape?: RuleShapeSource;
   readonly label?: string;
   readonly description?: string;
   readonly scope: { readonly kind: string; readonly match?: (node: never) => boolean } | "graph";

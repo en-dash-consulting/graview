@@ -1,4 +1,5 @@
 import {
+  brokenWords,
   pluralOf,
   argumentWords,
   formFields,
@@ -289,7 +290,7 @@ export function graphResponder<S extends AnySchema>(
       return withMoves({
         say: sentence([
           going.moves?.[0]?.said ?? "",
-          `${violations.length} ${violations.length === 1 ? "problem" : "problems"}:`,
+          `${brokenWords(violations)}:`,
           violations
             .slice(0, 4)
             .map((violation) => violation.message)

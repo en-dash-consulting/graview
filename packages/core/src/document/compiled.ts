@@ -549,6 +549,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     };
     const declared = {
       label: title,
+      // What its line is said from (`@graview/core/lines`): data, so a page that judges carries no words.
+      shape: { over: rule.over, require, when, says, declared: document.kinds, money, kinds: shapes, today },
       judgment: { require: rule.require, ...(rule.when ? { when: rule.when } : {}), ...(rule.says ? { says: rule.says } : {}) },
       ...(rule.description ? { description: rule.description } : {}),
       ...(repairs.length > 0 ? { repairs: repairs.map((r) => r.act) } : {}),

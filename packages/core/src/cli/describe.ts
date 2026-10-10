@@ -7,6 +7,8 @@ import { deriveMutations } from "../mutations/derive-edits.js";
 import type { AnySchema } from "../schema/schema.js";
 import { hueFor } from "../theme/derive.js";
 import { pluralOf, withArticle } from "../schema/define-node.js";
+import { ruleLineWords } from "../invariants/line.js";
+import { ruleLine } from "../lines.js";
 import { declaredLenses, isShippedLens, placesOf } from "../places.js";
 import { columnReach } from "../columns.js";
 import { computedOf } from "../document/computed.js";
@@ -382,8 +384,11 @@ export function describeApp<S extends AnySchema>(
   if (invariants.length === 0) lines.push("No rules. Nothing about this graph can be wrong.");
   for (const invariant of invariants) {
     const scope = invariant.scope === "graph" ? "the whole graph" : `each ${withArticle((invariant.scope as { kind: string }).kind).slice(2)}`;
+    // Its shape, where it has one, as a person reads it on the page: "margin ≥ target margin, when price > $0".
+    const line = ruleLine(invariant, app.schema as AnySchema);
+    const shape = line ? `: ${ruleLineWords(line)}` : "";
     lines.push(
-      `${invariant.name} over ${scope} — ${
+      `${invariant.name} over ${scope}${shape} — ${
         invariant.repairs?.length ? `repairs with ${list([...invariant.repairs])}` : "NO REPAIR: a person is told and cannot act"
       }.`,
     );

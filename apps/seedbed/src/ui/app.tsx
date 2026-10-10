@@ -150,7 +150,7 @@ export function SeedbedApp({
       settings={seedbedApp.settings ?? []}
     >
       <Shell<S>
-        standing="The garden keeps its agreements"
+        standing="Every rule holds"
         {...(garden ? { hostActions: GARDEN_ACTIONS } : {})}
         // Graview's own example, so it signs itself — quietly, in the person's menu.
         signature

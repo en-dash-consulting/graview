@@ -1,4 +1,4 @@
-import { edgeWords, labelOf, nounOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
+import { edgeWords, humanizeField, labelOf, nounOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
 import { useGraph, useGraview } from "@graview/react/provider";
 import { Chip } from "./primitives/index.js";
 import { hueFor } from "@graview/render";
@@ -34,6 +34,8 @@ export interface ConnectionsProps {
 interface Group {
   readonly key: string;
   readonly label: string;
+  /** What a screen reader says, where the label is an arrow: the relation's words. */
+  readonly said?: string;
   readonly ids: string[];
 }
 
@@ -79,6 +81,7 @@ export function Connections({ id, max = 8, empty, hide }: ConnectionsProps) {
               * a relation drawn in it until the walkthrough did.
               */}
             <h2
+              {...(group.said ? { "aria-label": group.said } : {})}
               style={{
                 margin: 0,
                 fontSize: "0.75rem",
@@ -159,7 +162,7 @@ function groupsFor(
          * declaration's `inverse` when it has one, and the edge kind in plain
          * words when it does not — which says less and is at least not wrong.
          */
-        label: edgeWords(store.schema, owner, edge.kind, direction),
+        ...captionOf(store.schema, owner, edge.kind, direction),
         ids: [],
       } satisfies Group);
     if (!group.ids.includes(otherId)) group.ids.push(otherId);
@@ -168,4 +171,20 @@ function groupsFor(
 
   for (const group of byKey.values()) group.ids.sort();
   return [...byKey.values()].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+}
+
+/**
+ * A GROUP'S CAPTION (FR-142): the declaration's words for this end where
+ * they are a phrase of their own ("covers", "the plan it is on"), else an
+ * arrow that says which way the relation points and its name — "→ tier"
+ * from the record that declares it, "← part of" from the record it points
+ * at. The key spoken alone, "part of" over the topics a workshop part
+ * holds, read the relation the wrong way round. A screen reader hears the
+ * words, never the arrow.
+ */
+function captionOf(schema: AnySchema, owner: string, edgeKind: string, direction: "out" | "in"): { readonly label: string; readonly said?: string } {
+  const words = edgeWords(schema, owner, edgeKind, direction);
+  const key = humanizeField(edgeKind).toLowerCase();
+  if (words.trim().toLowerCase() !== key) return { label: words };
+  return direction === "out" ? { label: `→ ${key}`, said: key } : { label: `← ${key}`, said: `${key}, pointing here` };
 }

@@ -1,4 +1,5 @@
-import { failureWords, labelOf, violationsTouching, type AnySchema, type Principal, type Repair, type Store } from "@graview/core";
+import { brokenWords, failureWords, labelOf, violationsTouching, type AnySchema, type Brand, type Principal, type Repair, type Store, type Violation } from "@graview/core";
+import { problemLine, problemTitle, RuleLineView, useLined, useRuleLines } from "@graview/primitives/pages";
 import { Link } from "react-router-dom";
 import { useRef, useState, type ReactNode } from "react";
 import { DerivedForm } from "./form.js";
@@ -17,10 +18,14 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
   const { store, brand, invariantContext, principal } = context;
   useStoreTick(store);
   const violations = store.violations(invariantContext);
+  const rules = store.allInvariants();
+  // Each problem with its rule's line, where the rule has a shape.
+  const lined = useLined(store, violations);
+  const ruleLines = useRuleLines(store.schema, rules);
   return (
     <PageMain context={context}>
       <header style={{ display: "grid", gap: 12 }}>
-        <p style={eyebrow}>{violations.length === 0 ? "The standing" : `${violations.length} ${violations.length === 1 ? "problem" : "problems"}`}</p>
+        <p style={eyebrow}>{violations.length === 0 ? "The standing" : brokenWords(violations)}</p>
         <PageTitle context={context}>{violations.length === 0 ? "All rules hold" : "What is broken"}</PageTitle>
         {violations.length === 0 ? (
           <p style={lede}>Every declared rule is satisfied by what is here.</p>
@@ -36,7 +41,7 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
         * places means one of them is never looked at.
         */}
       <SeatQuestions context={context} />
-      {violations.map((violation, index) => {
+      {lined.map((violation, index) => {
         const first = violation.nodeIds[0];
         const node = first ? store.graph.getNode(first) : undefined;
         return (
@@ -51,7 +56,8 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
               borderRadius: "0 var(--graview-radius, 12px) var(--graview-radius, 12px) 0",
             }}
           >
-            <p style={{ margin: 0, color: "var(--graview-warn)", fontWeight: 550 }}>{violation.message}</p>
+            {/* A rule with a shape names its record first, then what it found; a rule that is a function says its sentence first. */}
+            {violation.line ? null : <ProblemSaid violation={violation} schema={store.schema} {...(brand ? { brand } : {})} />}
             {node ? (
               <p style={{ margin: 0, display: "inline-flex", alignItems: "center", gap: 8 }}>
                 <KindMark kind={node.kind as string} brand={brand} schema={store.schema} size={7} />
@@ -60,11 +66,57 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
                 </Link>
               </p>
             ) : null}
+            {violation.line ? <ProblemSaid violation={violation} schema={store.schema} {...(brand ? { brand } : {})} /> : null}
             <Repairs<S> store={store} repairs={violation.repairs} {...(principal ? { principal } : {})} />
           </section>
         );
       })}
+      {/*
+        * EVERY RULE, AS ITS SHAPE. What the app holds itself to is worth
+        * reading when nothing is broken too: the kind's mark, then what must
+        * hold — "◆ Scenario  margin ≥ target margin, when plan's price > $0" —
+        * and whether it holds now. A rule that is a function has its title.
+        */}
+      {rules.length > 0 ? (
+        <section style={{ ...rule, display: "grid", gap: 12 }} data-testid="rules">
+          <h2 style={h2}>The rules</h2>
+          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 10 }}>
+            {rules.map((one) => {
+              const broken = violations.filter((violation) => violation.invariant === one.name).length;
+              const line = ruleLines.get(one.name);
+              const title = one.label ?? one.name;
+              return (
+                <li key={one.name} data-graview-rule={one.name} style={{ display: "grid", gap: 2 }}>
+                  <span style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 12, rowGap: 2 }}>
+                    {line ? <RuleLineView line={line} schema={store.schema} {...(brand ? { brand } : {})} style={{ flex: "1 1 18rem" }} /> : <span style={{ flex: "1 1 18rem", fontWeight: 550 }}>{title}</span>}
+                    <span style={{ ...quiet, fontSize: "0.875rem", color: broken > 0 ? "var(--graview-warn)" : "var(--graview-ink-faint)" }}>
+                      {broken === 0 ? "holds" : `broken in ${broken} ${broken === 1 ? "place" : "places"}`}
+                    </span>
+                  </span>
+                  {line && title.trim().length > 0 ? <span style={{ ...quiet, fontSize: "0.875rem" }}>{title}</span> : null}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
     </PageMain>
+  );
+}
+
+/**
+ * WHAT A PROBLEM SAYS, on a page: the rule's shape with the record's values
+ * (the page names the record), and under it the rule's own title; a rule
+ * that is a function says its sentence, as it always has.
+ */
+export function ProblemSaid({ violation, schema, brand }: { readonly violation: Violation; readonly schema: AnySchema; readonly brand?: Brand }): ReactNode {
+  if (!violation.line) return <p style={{ margin: 0, color: "var(--graview-warn)", fontWeight: 550 }}>{violation.message}</p>;
+  const title = problemTitle(violation);
+  return (
+    <div style={{ display: "grid", gap: 2 }} data-testid="problem-line" title={violation.message !== problemLine(violation) ? violation.message : undefined}>
+      <RuleLineView line={violation.line} schema={schema} {...(brand ? { brand } : {})} lead="none" style={{ color: "var(--graview-warn)", fontSize: "1.0625rem" }} />
+      {title ? <span style={{ ...quiet, fontSize: "0.875rem" }}>{title}</span> : null}
+    </div>
   );
 }
 

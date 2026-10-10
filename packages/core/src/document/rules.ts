@@ -104,6 +104,8 @@ export function expressionRule(
   };
   const common = {
     label: title,
+    // What its line is said from (`@graview/core/lines`): data, so judging it carries no words.
+    shape: { over: spec.over, require, when, says, ...(kinds ? { kinds } : {}), today },
     judgment: { require: spec.require, ...(spec.when ? { when: spec.when } : {}), ...(spec.says ? { says: spec.says } : {}) },
     ...(spec.description ? { description: spec.description } : {}),
     ...(spec.repairs && spec.repairs.length > 0 ? { repairs: [...spec.repairs] } : {}),

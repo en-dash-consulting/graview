@@ -284,9 +284,12 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * compiles, took it to 546 459 bytes (533.65 KB): 533.9 KB. The keyboard
  * in Firefox and a plural as a label, the same 326 bytes, took it to
  * 546 786 (534.0 KB): 534.2 KB. The host deciding the AI once, the same
- * 750 bytes fewer, took it to 546 036 (533.2 KB): 533.4 KB.
+ * 750 bytes fewer, took it to 546 036 (533.2 KB): 533.4 KB. A rule saying
+ * its shape — the standing counting rules broken, and a document's rule
+ * keeping what its line is said from, the words fetched with what draws a
+ * problem — took it to 546 270 (533.47 KB): 533.5 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 533.4 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 533.5 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

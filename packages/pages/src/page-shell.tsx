@@ -99,8 +99,9 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
   const places = barPlaces({ store: store as never, principal: context.principal, views: context.views });
   const arrangement = context.views?.arrangement?.();
   const here = `${location.pathname}${location.search}`;
-  const problems = store.violations(invariantContext).length;
-  const said = standingWords(problems, "All rules hold");
+  const broken = store.violations(invariantContext);
+  const problems = broken.length;
+  const said = standingWords(broken, "All rules hold");
   const toldFind = useContext(OwnBarFind);
   return (
     <>

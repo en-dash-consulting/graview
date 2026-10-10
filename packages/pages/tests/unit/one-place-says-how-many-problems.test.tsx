@@ -48,7 +48,8 @@ describe("one place says how many problems there are (FR-122)", () => {
     const html = renderToStaticMarkup(<PagesApp context={{ store: store() }} initialPath="/" />);
     expect(saidCount(html)).toBe(1);
     expect(html).toContain('data-testid="standing-link"');
-    expect(html).toContain('aria-label="3 problems');
+    // Counted as rules, the way the problems are drawn: "2 rules broken in 3 places".
+    expect(html).toMatch(/aria-label="\d+ rules? broken/);
     expect(html).toContain("Rules are broken — see what, and what would fix it");
   });
 

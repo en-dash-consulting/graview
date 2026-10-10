@@ -1024,9 +1024,10 @@ try {
  * or link that leads to them.
  */
 function problemCountSaid() {
-  /* The bar's standing says the number, and names it in words (FR-131). */
-  const standing = [...document.querySelectorAll('button[data-testid="standing"]')].find((one) => /\d+ problems?/.test(one.getAttribute("aria-label") ?? ""));
-  const count = Number(standing?.getAttribute("aria-label")?.match(/(\d+) problems?/)?.[1] ?? 0);
+  /* The bar's standing says the number, and names it in words (FR-131): "2 rules broken", or "1 rule broken in 3 places", whose number is the places. */
+  const standing = [...document.querySelectorAll('button[data-testid="standing"]')].find((one) => /\d+ rules? broken/.test(one.getAttribute("aria-label") ?? ""));
+  const told = standing?.getAttribute("aria-label")?.match(/(\d+) rules? broken(?: in (\d+) places)?/);
+  const count = Number(told?.[2] ?? told?.[1] ?? 0);
   const said = [];
   if (count === 0) return { count, said };
   const number = new RegExp(`(^|\\D)${count}(\\D|$)`);
@@ -1564,7 +1565,7 @@ function theHome() {
 async function problemsByKeyboard(page) {
   const named = await page.evaluate(() => {
     const standing = document.querySelector('button[data-testid="standing"]');
-    return standing !== null && /\d+ problems?/.test(standing.getAttribute("aria-label") ?? standing.textContent ?? "");
+    return standing !== null && /\d+ rules? broken/.test(standing.getAttribute("aria-label") ?? standing.textContent ?? "");
   });
   let reached = false;
   for (let step = 0; step < 60 && !reached; step++) {

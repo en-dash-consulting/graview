@@ -11,6 +11,7 @@ import { seedbedApp } from "../../../../apps/seedbed/src/domain/app.js";
 import { rotaApp } from "../../../../apps/rota/src/domain/app.js";
 import { gauntletApp } from "../../../../apps/gauntlet/src/domain/app.js";
 import { discographyApp } from "../../../../apps/discography/src/domain/app.js";
+import { ruleLine } from "../../src/lines.js";
 
 /**
  * FR-123. A HOST CAN HAND THE PAGE A COMPILED APP.
@@ -211,7 +212,8 @@ describe("a page handed a compiled app rebuilds the app the server compiled", ()
       it("declares the same kinds, acts, rules, policy, brand, views and arrangement", () => {
         expect(kindShape(b)).toEqual(kindShape(a));
         expect(actShape(b)).toEqual(actShape(a));
-        const rules = (app: GraviewApp<AnySchema>) => (app.invariants ?? []).map(({ evaluate: _evaluate, ...rule }) => rule);
+        // What a rule's line is said from holds functions: compared by what it says.
+        const rules = (app: GraviewApp<AnySchema>) => (app.invariants ?? []).map(({ evaluate: _evaluate, shape, ...rule }) => ({ ...rule, line: ruleLine({ shape }, app.schema) }));
         expect(rules(b)).toEqual(rules(a));
         const { schema: _a, mutations: _am, invariants: _ai, ...restA } = a;
         const { schema: _b, mutations: _bm, invariants: _bi, ...restB } = b;

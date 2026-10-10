@@ -1,5 +1,5 @@
-import { describeNode, humanizeField, isWithheld, pageSections, type AnySchema } from "@graview/core";
-import { DefaultViewElsewhere, EditableValue, LongValue, pageSays } from "@graview/primitives/pages";
+import { describeNode, humanizeField, isWithheld, pageSections, type AnySchema, type Violation } from "@graview/core";
+import { DefaultViewElsewhere, EditableValue, LongValue, pageSays, useLined } from "@graview/primitives/pages";
 import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -9,7 +9,7 @@ import { DerivedForm } from "./form.js";
 import { pluralSlug, recordPath } from "./registry.js";
 import { SceneLink, type PageContext, useStoreTick } from "./page-context.js";
 import { pathOfPlace, placeKey, placesOf } from "./page-places.js";
-import { Repairs } from "./page-problems.js";
+import { ProblemSaid, Repairs } from "./page-problems.js";
 import {
   KindMark,
   button,
@@ -36,6 +36,8 @@ import { capitalize } from "./page-typography.js";
  * words for that relation — and, beneath the content, what can be done and
  * what has happened.
  */
+const NO_PROBLEMS: readonly Violation[] = [];
+
 export function DefaultRecordPage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const { store, brand, principal, invariantContext } = context;
   useStoreTick(store);
@@ -47,6 +49,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
     ...(principal ? { principal } : {}),
     ...(invariantContext ? { context: invariantContext } : {}),
   });
+  // Its problems, each with its rule's line once the words are here.
+  const lined = useLined(store, facts?.violations ?? NO_PROBLEMS);
   const [open, setOpen] = useState<string | null>(null);
   const actsHeading = useRef<HTMLHeadingElement | null>(null);
   if (!facts) {
@@ -158,9 +162,11 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             borderRadius: "0 var(--graview-radius, 12px) var(--graview-radius, 12px) 0",
           }}
         >
-          {facts.violations.map((violation, index) => (
+          {lined.map((violation, index) => (
             <div key={index} style={{ display: "grid", gap: 8 }}>
-              <p style={{ margin: 0, color: "var(--graview-warn)", fontWeight: 550 }}>{violation.message}</p>
+              {/* The rule's shape with this record's values; the page already names the record. */}
+              <ProblemSaid violation={violation} schema={store.schema} {...(brand ? { brand } : {})} />
+
               {/* Ranked by the same derivation the strip reads: this
                   record's own repair leads, whichever subject the rule
                   happened to walk first. */}
@@ -249,7 +255,15 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             * something the heading does not.
             */}
           <p style={eyebrow}>{listed(store, group)}</p>
-          <h2 style={h2}>{group.description ? capitalize(group.description) : humanizeField(group.edgeKind)}</h2>
+          {/* Where the declaration has no words for this end, the arrow says which way it points, and the heading's name says the words (FR-142). */}
+          {group.description ? (
+            <h2 style={h2}>{capitalize(group.description)}</h2>
+          ) : (
+            <h2 style={h2} aria-label={humanizeField(group.edgeKind)}>
+              {group.direction === "in" ? "← " : "→ "}
+              {humanizeField(group.edgeKind)}
+            </h2>
+          )}
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexWrap: "wrap", gap: "6px 18px" }}>
             {group.targets.map((target) => (
               <li key={target.id} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
