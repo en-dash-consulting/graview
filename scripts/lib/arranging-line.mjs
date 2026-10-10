@@ -36,8 +36,15 @@ export function listHead(page) {
     const selects = lines.flatMap((one) => [...one.querySelectorAll("select")].filter(shown)).length;
     const count = lines[0]?.querySelector('[data-testid$="-count"]')?.textContent?.trim() ?? null;
     const eyebrow = [...document.querySelectorAll("main p, main span")].filter(shown).some((one) => getComputedStyle(one).textTransform === "uppercase" && /\d/.test(one.textContent ?? "") && one.closest('[role="group"]') === null);
+    // The ask field, closed, at the window's foot however short the page (it had stood under a short list's last row).
+    const seat = document.querySelector('[data-testid="seat"][data-graview-seat="closed"]');
+    const seatBox = seat && shown(seat) ? seat.getBoundingClientRect() : null;
+    // The Related line's links, each saying something its neighbors do not.
+    const related = [...document.querySelectorAll('[data-testid="kind-relations"] a')].map((a) => (a.textContent ?? "").trim());
     return {
       under: Math.round(under),
+      seatFromTheFoot: seatBox ? Math.round(innerHeight - seatBox.bottom) : null,
+      relatedRepeats: related.filter((words, at) => related.indexOf(words) !== at),
       first: first ? Math.round(first.getBoundingClientRect().top) : null,
       fromTop: first ? Math.round(first.getBoundingClientRect().top - under) : null,
       lines: lines.length,

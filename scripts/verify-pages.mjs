@@ -276,7 +276,7 @@ try {
   report.checks.aListsFirstRecordStandsNearTheTopOfThePage = {
     within: FIRST_RECORD_WITHIN,
     seen: quiet.heads,
-    ok: quiet.heads.length === 4 && quiet.heads.every((one) => one.fromTop !== null && one.fromTop <= (one.width >= 1000 ? FIRST_RECORD_WITHIN.desk : FIRST_RECORD_WITHIN.phone) && !one.countedInAnEyebrow && !one.scrolls && one.count !== null && one.end.ok),
+    ok: quiet.heads.length === 4 && quiet.heads.every((one) => one.relatedRepeats.length === 0 && one.seatFromTheFoot !== null && one.seatFromTheFoot >= 0 && one.seatFromTheFoot <= 48 && one.fromTop !== null && one.fromTop <= (one.width >= 1000 ? FIRST_RECORD_WITHIN.desk : FIRST_RECORD_WITHIN.phone) && !one.countedInAnEyebrow && !one.scrolls && one.count !== null && one.end.ok),
   };
   report.checks.noSelectArrangesAList = { seen: quiet.heads.map(({ path, width, lines, selects }) => ({ path, width, lines, selects })), ok: quiet.heads.every((one) => one.selects === 0) };
   report.checks.everyWayToArrangeAListIsReachedByTheKeyboard = { seen: quiet.keys, ok: quiet.keys.length === 2 && quiet.keys.every((one) => one.ok) };
@@ -771,6 +771,13 @@ try {
           placeholderFits,
           selects: [...document.querySelectorAll('[role="group"][aria-label="Arrange"] select')].length,
           eyebrow: document.querySelector(".ln-eyebrow") !== null && document.querySelector("main .ln-eyebrow")?.textContent?.includes("discography"),
+          // No entry of the index cut at its edge, nor the index wider than the page.
+          indexCut: (() => {
+            const index = document.querySelector('[data-testid="list-index"]');
+            if (!index) return null;
+            const box = index.getBoundingClientRect();
+            return index.scrollWidth > index.clientWidth + 1 || [...index.querySelectorAll("a")].some((a) => { const at = a.getBoundingClientRect(); return at.right > box.right + 1 || at.right > document.documentElement.clientWidth; });
+          })(),
         };
       });
       // The index jumps: the fifth year's heading comes to the top of the window.
@@ -797,10 +804,29 @@ try {
           one.rows > 400 &&
           one.saysWhoseAndWhen &&
           one.selects === 0 &&
+          one.indexCut === false &&
           !one.eyebrow &&
           (one.placeholderFits === null || one.placeholderFits) &&
           one.jumped !== null && one.jumped >= 0 && one.jumped < 160,
       ),
+    };
+  }
+  /* A design's short page (the almanac's two gardeners): its paper fills the window, and the ask field stands at the window's foot. */
+  {
+    const seen = [];
+    for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+      const page = await browser.newPage({ viewport });
+      await page.goto(`${at("seedbed")}/pages/gardeners?chapter=13`, { waitUntil: "networkidle" });
+      await page.waitForSelector('[data-testid="records"]', { timeout: 20_000 });
+      await page.waitForTimeout(400);
+      const head = await listHead(page);
+      const paper = await page.evaluate(() => Math.round(document.querySelector('[data-testid="seedbed-design"]')?.getBoundingClientRect().bottom ?? 0));
+      seen.push({ width: viewport.width, seatFromTheFoot: head.seatFromTheFoot, paperEndsAt: paper, window: viewport.height, scrolls: head.scrolls });
+      await page.close();
+    }
+    report.checks.aShortPageKeepsTheAskFieldAtTheWindowsFoot = {
+      seen,
+      ok: seen.every((one) => one.seatFromTheFoot !== null && one.seatFromTheFoot >= 0 && one.seatFromTheFoot <= 48 && one.paperEndsAt >= one.window - 2 && !one.scrolls),
     };
   }
   report.checks.phoneMap = await (async () => {

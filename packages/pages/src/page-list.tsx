@@ -332,6 +332,13 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     const words = relation.from === kind ? relation.description : (relation.inverse ?? relation.description);
     return { relation, far, words };
   });
+  /*
+   * ONE TIE TO TWO KINDS SAYS WHICH. A reason "explains" a task or a list:
+   * one edge, two far ends, and the line read "What this is about · What
+   * this is about" — two links that looked the same and went to two places.
+   * Words said twice carry their far end ("What this is about: tasks").
+   */
+  const saidTwice = new Set(roads.map((road) => (road.words ?? "").toLowerCase()).filter((words, at, all) => words && all.indexOf(words) !== at));
   const Frame = bare ? BareFrame : PageMain;
   return (
     <Frame context={context}>
@@ -360,7 +367,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
                         capitalize(words ?? humanizeField(relation.edgeKind))
                       ) : (
                         <Link to={`/${pluralSlug(store.schema, far)}`} style={link} title={pluralOf(store, far)}>
-                          {capitalize(words ?? pluralOf(store, far))}
+                          {words && saidTwice.has(words.toLowerCase()) ? `${capitalize(words)}: ${pluralOf(store, far).toLowerCase()}` : capitalize(words ?? pluralOf(store, far))}
                         </Link>
                       )}
                     </span>
@@ -449,8 +456,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             <nav
               aria-label="Jump to"
               data-testid="list-index"
-              // One line however many there are: it scrolls sideways inside itself rather than pushing the records down.
-              style={{ ...quiet, display: "flex", flexWrap: "nowrap", overflowX: "auto", scrollbarWidth: "thin", gap: sortOffer?.type === "date" ? "0 12px" : "0 6px", fontSize: "0.875rem", paddingBottom: 2 }}
+                            // Wrapped to as many quiet lines as it needs: an entry is never cut at the edge.
+              style={{ ...quiet, display: "flex", flexWrap: "wrap", gap: sortOffer?.type === "date" ? "0 10px" : "0 4px", fontSize: "0.8125rem", lineHeight: 1.3 }}
             >
               {sections.map((section) => (
                 <a

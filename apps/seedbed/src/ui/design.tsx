@@ -44,7 +44,9 @@ const CSS = `
       min-height: 100%; display: grid; grid-template-columns: 236px minmax(0, 1fr);
       background: var(--sb-paper); color: var(--graview-ink);
       font-family: var(--graview-font-body, system-ui); font-size: 0.96875rem; line-height: 1.55; }
-.sb.sb-under { grid-template-columns: minmax(0, 1fr); }
+/* The paper fills the window under the bar (and a phone's place line under it), however short the page. */
+.sb.sb-under { grid-template-columns: minmax(0, 1fr); min-height: calc(100dvh - 48px); }
+@media (max-width: 639px) { .sb.sb-under { min-height: calc(100dvh - 93px); } }
 .sb-under .sb-main { width: 100%; box-sizing: border-box; margin: 0 auto; }
 .sb a { color: inherit; text-decoration: none; }
 .sb-rail { position: sticky; top: 0; align-self: start; height: 100%; min-height: 100vh; padding: 26px 22px;
