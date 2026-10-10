@@ -1,4 +1,5 @@
-import { aggregateId, EMPTY_VIEW, fromUrl, sameView, toUrl, type ViewState } from "@graview/layout/view";
+import { OVERVIEW_PATH } from "@graview/core";
+import { aggregateId, EMPTY_VIEW, fromUrl, overviewFragment, overviewStop, sameView, toUrl, type ViewState } from "@graview/layout/view";
 import { useCallback, useEffect, useRef } from "react";
 import { useGraview } from "./context.js";
 import { trail } from "./hooks.js";
@@ -26,6 +27,16 @@ export function UrlSync(): null {
   useUrlSync();
   return null;
 }
+
+/*
+ * ON THE OVERVIEW'S ADDRESS THE ADDRESS ALONE IS THE OVERVIEW (FR-154): a
+ * fragment that says nothing there is at altitude, and the overview at
+ * altitude over nothing is written with no fragment, so the address that
+ * comes back from a server — which never sees a fragment — still says it.
+ */
+const onTheOverview = (): boolean => window.location.pathname.endsWith(OVERVIEW_PATH);
+const stopHere = (): ViewState => (onTheOverview() ? overviewStop : fromUrl)(window.location.hash);
+const fragmentHere = (view: ViewState): string => (onTheOverview() ? overviewFragment : toUrl)(view);
 
 export function useUrlSync(): void {
   const { view, setView, views, principal } = useGraview();
@@ -60,13 +71,16 @@ export function useUrlSync(): void {
    * landed on the default view and silently overwrote the address bar. A
    * pasted link that does not go where it says is worse than no link.
    */
+  /* The address's own stop, being adopted: the view this render holds is the one it replaces, not one to write. */
+  const adopting = useRef(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const initial = settled(fromUrl(window.location.hash));
+    const initial = settled(stopHere());
     // Adopt ANY address that says something — overview, zoom, a selection —
     // not only the focus-shaped ones. A pasted link that does not go where
     // it says is worse than no link.
-    if (!sameView(initial, EMPTY_VIEW)) {
+    if (!sameView(initial, EMPTY_VIEW) && !sameView(initial, view)) {
+      adopting.current = true;
       setView(initial);
     }
     // Once, on mount: later changes are this hook's own writes.
@@ -74,7 +88,7 @@ export function useUrlSync(): void {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const onPop = () => setView(settled(fromUrl(window.location.hash)));
+    const onPop = () => setView(settled(stopHere()));
     window.addEventListener("popstate", onPop);
     window.addEventListener("hashchange", onPop);
     return () => {
@@ -88,14 +102,28 @@ export function useUrlSync(): void {
   const seated = useRef(seat);
   useEffect(() => {
     if (typeof window === "undefined") return;
+    /*
+     * ARRIVING AT AN ADDRESS THAT SAYS SOMETHING writes nothing until the
+     * view is the address's: written first, the view it replaces put `#`
+     * in the address — on the overview's place, a fragment it never had —
+     * and the adopted stop was then pushed, an entry nobody went to.
+     */
+    if (adopting.current) {
+      adopting.current = false;
+      return;
+    }
     const reseated = seated.current !== seat;
     seated.current = seat;
-    const next = toUrl(view);
+    const fragment = fragmentHere(view);
+    // No fragment is the bare address: its path and search, the fragment let go.
+    const next = fragment || `${window.location.pathname}${window.location.search}`;
     // Only write when the view actually changed, or the back stack fills with
     // duplicates and the back button stops meaning anything. The baseline
     // still moves: after a popstate re-syncs the view, a stale baseline made
     // the next drag read as travel and push a phantom stop.
-    if (window.location.hash === next) {
+    if (window.location.hash === fragment) {
+      // An address that already says the view is arrived at, as much as one tidied to say it.
+      landed.current = true;
       written.current = view;
       return;
     }

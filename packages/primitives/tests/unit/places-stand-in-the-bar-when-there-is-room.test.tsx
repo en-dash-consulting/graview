@@ -116,7 +116,8 @@ describe("the scene's places (FR-144)", () => {
       ["What the workshop covers", "pictures"],
       ["Email to Todd", "pictures"],
     ]);
-    expect(scene.places[0]!.path).toBe("/places/overview#overview=1");
+    // The whole thing is the overview at altitude: its address alone (FR-154).
+    expect(scene.places[0]!.path).toBe("/places/overview");
     const todd = scene.places[2]!;
     expect(todd.path.startsWith("/places/overview#")).toBe(true);
     const there = fromUrl(todd.path.slice("/places/overview".length));

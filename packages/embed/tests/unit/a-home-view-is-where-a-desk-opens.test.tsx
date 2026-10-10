@@ -137,12 +137,12 @@ describe("a host whose page is the app (routing: \"address\")", () => {
     expect(root.querySelector('[data-testid="home-view"]')).not.toBeNull();
     expect(embed.where()).toMatchObject({ face: "pages", path: "/" });
     await act(async () => void (await embed.drawn()));
-    // The scene's own address still opens the scene.
+    // The scene's own address still opens the scene — alone, at altitude (FR-154).
     await act(async () => handle?.unmount());
     handle = undefined;
     window.history.replaceState(null, "", "/places/overview");
     const again = await opened({ app: withHome, face: "graview", routing: "address" });
-    expect(face(again.element)).toBe("scene");
+    expect(face(again.element)).toBe("graview");
     window.history.replaceState(null, "", "/");
   });
 
