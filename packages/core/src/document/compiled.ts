@@ -9,6 +9,7 @@ import {
   defineInvariant,
   defineMutation,
   defineNode,
+  edgeId,
   RuleBudgetError,
   withArticle,
   type AnyGraphNode,
@@ -416,6 +417,19 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
             }
           }
           const made = new Map<string, string>();
+          /*
+           * A LINK IS SEVERED ONCE (FR-156). Every effect reads the graph as
+           * it stood before the act, so `replaces` and a cardinality-one
+           * connect each found the record's old link and each planned its
+           * removal; the store refused the second, and the act with it.
+           */
+          const severed = new Set<string>();
+          const sever = (edge: { readonly kind: string; readonly from: string; readonly to: string }) => {
+            const key = edgeId(edge);
+            if (severed.has(key)) return;
+            severed.add(key);
+            context.removeEdge(edge);
+          };
           const resolve = (value: ValueSpec, current: AnyGraphNode | undefined): unknown => {
             if (value && typeof value === "object" && !Array.isArray(value) && "expr" in value) {
               try {
@@ -453,10 +467,10 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               if (!graph.has(from) && ![...made.values()].includes(from)) throw new ActRefusal(`there is no record "${from}"`, "invalid");
               if (!graph.has(to) && ![...made.values()].includes(to)) throw new ActRefusal(`there is no record "${to}"`, "invalid");
               if ("connect" in effect) {
-                if (edges.get(kind)?.cardinality === "one") for (const existing of graph.out(from, kind)) if (existing.id !== to) context.removeEdge({ kind, from, to: existing.id });
+                if (edges.get(kind)?.cardinality === "one") for (const existing of graph.out(from, kind)) if (existing.id !== to) sever({ kind, from, to: existing.id });
                 if (!graph.out(from, kind).some((n) => n.id === to)) context.addEdge({ kind, from, to });
               } else {
-                context.removeEdge({ kind, from, to });
+                sever({ kind, from, to });
               }
             } else if ("set" in effect) {
               const targetId = String(resolve(effect.target ?? "$subject", undefined) ?? "");
@@ -479,7 +493,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
                 const fromSubject = edges.get(relation)?.from.includes(subject.kind) ?? true;
                 for (const other of fromSubject ? graph.out(subject.id, relation) : graph.in(subject.id, relation)) {
                   if (relation === effect.keep && other.id === kept) continue;
-                  context.removeEdge(fromSubject ? { kind: relation, from: subject.id, to: other.id } : { kind: relation, from: other.id, to: subject.id });
+                  sever(fromSubject ? { kind: relation, from: subject.id, to: other.id } : { kind: relation, from: other.id, to: subject.id });
                 }
               }
             }
