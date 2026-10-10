@@ -55,6 +55,8 @@ const CHAIN = [
   // Guest views, hostile, in a frame (three engines) and in a worker inside Claude's and ChatGPT's widgets (FR-04, FR-68–FR-71).
   ["guest", "guest-sandbox.mjs"],
   ["site", "verify-site.mjs"],
+  // axe-core over the framework's markup as Cloud hosts it and over every example, on both faces, at a desk and a phone, light and dark.
+  ["a11y", "verify-a11y.mjs"],
   // The awkward example in every face, width, scheme and seat — long, so it starts early.
   ["gauntlet", "verify-gauntlet.mjs"],
   ["lines", "verify-lines.mjs"],
