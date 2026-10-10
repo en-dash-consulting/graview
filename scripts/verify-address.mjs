@@ -25,6 +25,9 @@
  *   from Up, a lens double-clicked on its district goes down into it — the
  *   kind in focus, that picture `in.view`, the address saying so — and Back
  *   returns to Up;
+ *   from an address nothing lives at, the switch's Scene lands where the
+ *   scene opens — at altitude, or where the declaration says — never on the
+ *   empty view (FR-157);
  *   a link to a stop at the bare address still opens the scene, tidied to
  *   the scene's address; a host that mounts on the Graview lands there —
  *   unless the app has a home view, which it then opens on (FR-136);
@@ -332,6 +335,11 @@ try {
         // The switch's Pages: back to the page the reader was on (FR-137).
         await press('[data-testid="app-face-pages"]');
         one.backToPages = await settled();
+        // FR-157: the switch's Scene from an address nothing lives at lands where the scene opens, never on the empty view.
+        await go(`${BASE}/tasks/nobody`);
+        one.nowhere = await state();
+        await press('[data-testid="app-face-scene"]');
+        one.sceneFromNowhere = { ...(await settled()), up: await tab.evaluate(() => document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true") };
         // A link to a stop at the bare address, written before the scene was a place, still opens it.
         await go(`${BASE}#focus=t2`);
         one.oldStop = await state();
@@ -568,6 +576,7 @@ try {
     ok: swapsOk((one) => [one.placeInArticle, one.focusInArticle, one.goneInArticle].every(memoryQuiet)),
   };
 
+  const stopOf = (hash) => new URLSearchParams(String(hash ?? "").replace(/^#/, ""));
   const every = (test) => Object.entries(results).filter(([name]) => !name.endsWith("article")).every(([, one]) => !one.error && test(one));
   const pick = (key) => Object.fromEntries(Object.entries(results).filter(([name]) => !name.endsWith("article")).map(([name, one]) => [name, one.error ? { error: one.error } : one[key]]));
   report.checks.loadingAPlaceAddressOpensThatPlace = { seen: pick("place"), ok: every(({ place }) => place.face === "pages" && place.place && place.heading === "The board" && place.path === `${BASE}/places/the-board`) };
@@ -626,6 +635,21 @@ try {
     seen: Object.fromEntries(Object.entries(pick("toScene")).map(([name, seen]) => [name, { scene: seen, reloaded: results[name].sceneReloaded }])),
     ok: every(({ toScene, sceneReloaded }) => toScene.path === `${BASE}/places/overview` && toScene.fragment && sceneReloaded.path === `${BASE}/places/overview` && sceneReloaded.face !== "pages" && sceneReloaded.scenePressed),
   };
+  /* FR-157: from a page that is nothing, the switch's Scene lands where the declaration says the app opens (`pages.first`: the board), not on the empty view. */
+  report.checks.theSceneFromAnAddressNothingLivesAtLandsWhereTheSceneOpens = {
+    seen: Object.fromEntries(Object.entries(pick("sceneFromNowhere")).map(([name, seen]) => [name, { page: results[name].nowhere, scene: seen }])),
+    ok: every(
+      ({ nowhere, sceneFromNowhere }) =>
+        nowhere.face === "pages" &&
+        nowhere.heading === "Nothing lives at this address." &&
+        sceneFromNowhere.face === "scene" &&
+        sceneFromNowhere.path === `${BASE}/places/overview` &&
+        stopOf(sceneFromNowhere.hash).get("focus") === "aggregate:task" &&
+        stopOf(sceneFromNowhere.hash).get("in.view") === "the-board" &&
+        sceneFromNowhere.scenePressed &&
+        !sceneFromNowhere.up,
+    ),
+  };
   report.checks.aLinkToAStopWrittenBeforeTheSceneWasAPlaceStillOpensIt = {
     seen: pick("oldStop"),
     ok: every(({ oldStop }) => oldStop.face === "scene" && oldStop.path === `${BASE}/places/overview` && fromStop(oldStop.hash) === "t2" && oldStop.scenePressed),
@@ -645,7 +669,6 @@ try {
   };
   /* From Up, a lens double-clicked goes down into it, the address says so, and Back returns to Up. */
   const desks = Object.entries(results).filter(([name]) => !name.endsWith("article") && name.includes("1440"));
-  const stopOf = (hash) => new URLSearchParams(String(hash ?? "").replace(/^#/, ""));
   report.checks.aLensDoubleClickedFromUpOpensItAndBackReturnsUp = {
     seen: Object.fromEntries(desks.map(([name, one]) => [name, one.lensError ? { error: one.lensError } : { up: one.lensUp, down: one.lensDown, back: one.lensBack }])),
     ok:

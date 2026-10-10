@@ -1,5 +1,5 @@
 import { addressOf, OVERVIEW_PATH, pathWithin, type Place } from "@graview/core";
-import { aggregateId, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
+import { aggregateId, EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
 import { descentTarget } from "@graview/primitives/frame";
 import { useNavigation } from "@graview/react/provider";
 import { useEffect, useRef, type MutableRefObject } from "react";
@@ -86,6 +86,7 @@ export function AddressBar({
   toggle,
   kinds,
   places,
+  opens,
 }: {
   readonly basePath: string | undefined;
   /** The page the routed face had before a new declaration (FR-116), to go back to. */
@@ -96,6 +97,8 @@ export function AddressBar({
   readonly toggle: MutableRefObject<((face: EmbedFace, path?: string, stop?: string) => void) | undefined>;
   readonly kinds: readonly string[];
   readonly places: readonly Place[];
+  /** Where the declaration says the app opens (FR-80), for a scene asked for while it holds nothing (FR-157). */
+  readonly opens?: ViewState | undefined;
 }) {
   const { view, go } = useNavigation();
   const latest = useRef({ shown, view, onFace });
@@ -113,10 +116,15 @@ export function AddressBar({
     } else if (next !== "pages" && from === "pages") {
       leaving();
       // The view the scene will draw, decided here so the fragment pushed is the one it lands on.
-      const given = asked === undefined ? here : placed(fromUrl(asked), places);
-      const stop = landing(next, given, kinds);
+      const held = asked === undefined ? here : placed(fromUrl(asked), places);
+      // Nothing held (FR-157): where the scene opens, and at altitude that is the Graview's face.
+      const given = holdsNothing(held) ? whereTheSceneOpens(opens) : held;
+      const face = given !== held && given.overview ? "graview" : next;
+      const stop = landing(face, given, kinds);
       go(stop);
       window.history.pushState(null, "", `${addressOf(OVERVIEW_PATH, { basePath })}${toUrl(stop)}`);
+      tell?.(face);
+      return;
     }
     tell?.(next);
   };
@@ -153,4 +161,20 @@ export function placed(parsed: ReturnType<typeof fromUrl>, places: readonly Plac
 export function landing(face: EmbedFace, given: ViewState, kinds: readonly string[]): ViewState {
   if (face === "graview") return withOverview(given, true);
   return given.overview ? withFocus(withOverview(given, false), descentTarget(given, kinds)) : given;
+}
+
+/**
+ * A VIEW THAT HOLDS NOTHING (FR-157): no focus, and not at altitude. The
+ * pages leave the scene's view like this when no page named a place in it —
+ * an address no route answers ("Nothing lives at this address") — and the
+ * switch's Scene drew exactly that: the empty view, the overview off, the
+ * control saying Up, over nothing.
+ */
+export function holdsNothing(view: ViewState): boolean {
+  return view.focusId === null && view.overview !== true;
+}
+
+/** Where the scene opens: where the declaration says the app opens (FR-80), else at altitude. */
+export function whereTheSceneOpens(opens: ViewState | undefined): ViewState {
+  return opens ?? { ...EMPTY_VIEW, overview: true };
 }

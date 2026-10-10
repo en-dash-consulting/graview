@@ -22,7 +22,7 @@ afterEach(() => {
   rmSync(scratch, { recursive: true, force: true });
 });
 
-function io() {
+function io({ identity = true }: { readonly identity?: boolean } = {}) {
   const out: string[] = [];
   const err: string[] = [];
   const ran: { command: string; args: readonly string[]; cwd: string }[] = [];
@@ -33,6 +33,8 @@ function io() {
       ran.push({ command, args, cwd: dir });
       return true;
     },
+    // git's identity, as `git config user.name` answers it: a name, or nothing set.
+    ask: (command, args) => (command === "git" && args[0] === "config" && identity ? "Ada\n" : undefined),
   };
   return { handle, out: () => out.join(""), err: () => err.join(""), ran };
 }
@@ -43,9 +45,9 @@ describe("graview create", () => {
     const code = await create(["notes", "--name", "Field Notes", "--kind", "note", "--pm", "npm", "--no-install", "--no-git"], t.handle);
     expect(code).toBe(0);
     expect(readdirSync(resolve(scratch, "notes")).sort()).toEqual(
-      [".github", ".gitignore", "README.md", "embed.html", "index.html", "package.json", "src", "tests", "tsconfig.build.json", "tsconfig.json", "vite.config.ts"].sort(),
+      [".github", ".gitignore", "AGENTS.md", "CLAUDE.md", "README.md", "embed.html", "index.html", "package.json", "src", "tests", "tsconfig.build.json", "tsconfig.json", "vite.config.ts"].sort(),
     );
-    expect(t.out()).toContain("20 files → notes");
+    expect(t.out()).toContain("22 files → notes");
     expect(t.out()).toContain("npm run dev");
     expect(t.out()).toContain("npm run verify");
     expect(t.ran).toEqual([]);
@@ -58,18 +60,34 @@ describe("graview create", () => {
     expect(brand).toContain('name: "My Field Notes"');
   });
 
-  it("initializes a repository, installs with the package manager, then the skills", async () => {
+  it("initializes a repository, installs, writes the skills and the agent docs, then commits everything", async () => {
     const t = io();
     mkdirSync(resolve(scratch, "app/node_modules/.bin"), { recursive: true });
     writeFileSync(resolve(scratch, "app/node_modules/.bin/graview"), "");
-    const code = await create(["app", "--pm", "pnpm", "--force"], t.handle);
+    const code = await create(["app", "--name", "Field Notes", "--pm", "pnpm", "--force"], t.handle);
     expect(code).toBe(0);
     expect(t.ran.map((r) => [r.command.split("/").pop(), ...r.args])).toEqual([
       ["git", "init", "--quiet"],
       ["pnpm", "install"],
       ["graview", "skills", "install", "."],
+      ["pnpm", "run", "docs"],
+      ["git", "add", "-A"],
+      ["git", "commit", "--quiet", "-m", "Field Notes, on Graview"],
     ]);
-    expect(t.out()).toContain("git add -A && git commit");
+    expect(t.out()).toContain('The first commit is "Field Notes, on Graview"');
+    expect(t.out()).not.toContain("git commit -m");
+  });
+
+  it("stages everything and says so in one line when git does not know who is committing", async () => {
+    const t = io({ identity: false });
+    const code = await create(["notes", "--name", "Field Notes", "--pm", "pnpm", "--no-install"], t.handle);
+    expect(code).toBe(0);
+    expect(t.ran.map((r) => [r.command, ...r.args])).toEqual([
+      ["git", "init", "--quiet"],
+      ["git", "add", "-A"],
+    ]);
+    expect(t.out().split("\n").filter((line) => line.includes("user.name"))).toHaveLength(1);
+    expect(t.out()).toContain('git commit -m "Field Notes, on Graview"');
   });
 
   it("leaves git alone inside an existing repository, or when told to", async () => {

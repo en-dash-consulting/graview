@@ -17,7 +17,7 @@ New here? [Getting started](https://graview.dev/docs/getting-started.html) is th
 - [Packages (14)](https://graview.dev/docs/packages.html): What each ships and what each exports.
 - [Skills (15)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
 - [The CLI](https://graview.dev/docs/cli.html): create, check, docs, describe, lens, figure, serve, skills.
-- [What check says (89)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
+- [What check says (88)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
 - [Stability](https://graview.dev/docs/stability.html): What a version may change, and what a host can hold it to.
 - [The garden, grown](https://graview.dev/progression.html): Sixteen live chapters, from one kind to a product.
 
