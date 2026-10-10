@@ -20,5 +20,5 @@ acceptanceCriteria:
   - "Refusals, their reasons and permissions are unchanged"
 description: "replaces: true on a connects act was refused \"Cannot remove missing edge\" whenever the record already had the link it was meant to replace: replaces and the cardinality-one connect each planned the same removal from the graph as it stood before the act."
 lastModified: "2026-10-10T02:28:45.000Z"
-resolution: "Fixed in PR_PENDING: a declared act severs a link once however many of its effects ask it to."
+resolution: "Fixed in #184: a declared act severs a link once however many of its effects ask it to."
 ---
