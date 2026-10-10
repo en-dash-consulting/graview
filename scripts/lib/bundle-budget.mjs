@@ -145,8 +145,11 @@ export const BUDGETS = [
     // more. Measured at 532_417 / 188_699.
     // Lowered when the host came to decide the AI once: the reader's picker of rungs, its pills and key fields, the ⚙ and
     // the remembered rung left the seat and the person's menu. 5_885 / 2_137 fewer than main. Measured at 526_532 / 186_562.
-    minified: 527_000,
-    gzipped: 186_800,
+    // Raised when a list came to arrange on one quiet line (the lists it opens fetched when first opened, so the line is
+    // smaller up front than the row of selects was), its glance kept under a declared row, adding one a press at its end,
+    // the end of a page clear of the ask field, and the bar ranking its places: 2_201 / 692 more. Measured at 528_733 / 187_254.
+    minified: 529_200,
+    gzipped: 187_700,
     load: "first",
   },
   {
@@ -291,8 +294,10 @@ export const BUDGETS = [
     // macOS focus no button on click), and a plural standing alone as a label: 325 / 64 more. Measured at 703_900 / 185_270.
     // Lowered when the host came to decide the AI once: no rung remembered in the reader's storage, no picker in the
     // person's menu. 684 / 216 fewer. Measured at 703_216 / 185_054.
-    minified: 703_600,
-    gzipped: 185_300,
+    // Raised when the bar came to rank its places (the primary ones stand, six at most) and a declared row to say what it
+    // says through its door: 1_928 / 391 more. Measured at 705_144 / 185_445.
+    minified: 705_600,
+    gzipped: 185_700,
     load: "first",
     lacks: ["@graview/studio"],
   },
@@ -445,8 +450,12 @@ export const BUDGETS = [
     // reads a named day, a weekend and a date, and follows one relation by its words ("who's working thursday"); and the
     // person's menu, fetched when first opened, can sign an example "Built with Graview". Nothing more up front.
     // 7_323 / 2_859 more. Measured at 1_656_527 / 515_486.
-    minified: 1_657_000,
-    gzipped: 515_800,
+    // Raised when a list came to arrange on one quiet line: the lists its words open (a sort's direction in its values'
+    // words, a date group's width, every way to narrow with the ones on pressed, a date's day asked in the list, the arrow
+    // keys) are a chunk of their own fetched when one is first opened, about 8.4 KB; the bar ranking its places, a declared
+    // row's glance and adding one as a press at a list's end, the rest. 11_522 / 4_044 more. Measured at 1_668_049 / 519_530.
+    minified: 1_668_500,
+    gzipped: 519_900,
     load: "all",
   },
   {
@@ -521,8 +530,10 @@ export const BUDGETS = [
     // Raised with every face's when the whole-page Shell and an embed came to wear one bar on the scene: 6_439 / 1_715 more,
     // over the cleanup. Measured at 1_561_447 / 476_214.
     // Lowered with every face's when the host came to decide the AI once: 8_170 / 2_769 fewer. Measured at 1_553_277 / 473_445.
-    minified: 1_553_800,
-    gzipped: 473_700,
+    // Raised with the pages face's when a list came to arrange on one quiet line and the bar to rank its places: 3_646 / 1_041
+    // more, the arranging lists behind their own door. Measured at 1_556_923 / 474_486.
+    minified: 1_557_400,
+    gzipped: 474_900,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

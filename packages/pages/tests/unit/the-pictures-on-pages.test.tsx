@@ -153,7 +153,7 @@ describe("the pictures on pages", () => {
   it("gives a kind's page its own pictures, by name", () => {
     const html = draw("/tasks");
     expect(html).toContain('data-testid="kind-pictures"');
-    expect(html).toContain("See tasks as:");
+    expect(html).toContain("Also as:");
     expect(html).toContain(">The board<");
     expect(html).toContain(">The week<");
   });

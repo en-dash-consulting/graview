@@ -1,9 +1,9 @@
 import { arrangeable, parseArrangement } from "@graview/core/arrange";
 import { createSchema, defineNode, Graph } from "@graview/core";
-import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { ArrangeBar, roundSteps, sayCondition } from "../../src/index.js";
+import { sayCondition } from "../../src/index.js";
+import { filterEntries, roundSteps } from "../../src/arrange-lists.js";
 
 /**
  * "SUVs UNDER £25,000, A KIA OR A HYUNDAI." The list's Only… offered body
@@ -26,11 +26,12 @@ graph.load({
 
 describe("a list's Only…", () => {
   it("offers a price at most and at least a few round amounts, a year by the year, and a make by name", () => {
-    const html = renderToStaticMarkup(<ArrangeBar schema={schema} graph={graph as never} kind="car" arrangement={{}} onChange={() => {}} />);
-    expect(html).toMatch(/<option value="price:at-most:\d+">at most £\d{1,3},\d{3}<\/option>/);
-    expect(html).toMatch(/<option value="year:at-least:20\d\d">at least 20\d\d<\/option>/);
-    expect(html).toContain('<option value="make:Kia">Kia</option>');
-    expect(html).toContain('<option value="make:Hyundai">Hyundai</option>');
+    const entries = filterEntries(schema, graph as never, arrangeable(schema, "car"));
+    const at = (pattern: RegExp) => entries.find((entry) => pattern.test(entry.value));
+    expect(at(/^price:at-most:\d+$/)?.label).toMatch(/^at most £\d{1,3},\d{3}$/);
+    expect(at(/^year:at-least:20\d\d$/)?.label).toMatch(/^at least 20\d\d$/);
+    expect(at(/^make:Kia$/)?.label).toBe("Kia");
+    expect(at(/^make:Hyundai$/)?.label).toBe("Hyundai");
   });
 
   it("rounds to the spread, and says a chosen one in the record's words", () => {

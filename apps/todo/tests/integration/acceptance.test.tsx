@@ -185,9 +185,9 @@ describe("the picture", () => {
 
   it("draws the week when the week is the place", () => {
     const html = render({ ...EMPTY_VIEW, focusId: PLACES[0].id });
-    // The lens's own columns, from this app's own days.
-    expect(html).toContain(">Mon<");
-    expect(html).toContain(">Sun<");
+    // The lens's own columns, from this app's own days, as declared ("Mon" had only ever matched the old arrange row's options).
+    expect(html).toContain(">MON<");
+    expect(html).toContain(">SUN<");
   });
 
   it("makes every task a real target", () => {

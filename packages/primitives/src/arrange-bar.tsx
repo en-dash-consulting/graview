@@ -10,22 +10,34 @@ import {
   type Arrangement,
   type ArrangeGraph,
   type Condition,
-  type DateBucket,
 } from "@graview/core";
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { retryingImport } from "@graview/core/retry";
+import { lazyModule, POPOVER_STYLE, usePopover } from "@graview/react/provider";
+import { useEffect, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { VISUALLY_HIDDEN } from "./primitives/measure.js";
 export { arrangementOf, withArrangement } from "./arrangement.js";
 
 /**
- * ONE CONTROL ROW FOR EVERY SURFACE THAT ARRANGES.
+ * ONE QUIET LINE FOR EVERY SURFACE THAT ARRANGES.
  *
- * The list page had a group-by select of its own, the todo app's own page
- * had three, the lenses had none. The offers come from the declaration
- * (`arrangeable`), the chosen arrangement is a string in the stop, and
- * this draws the row between them: Sort by, Group by, the conditions as
- * chips with a way to add one, and the words a person types. Whatever
- * carries the arrangement — a page's search, a lens's `within` — hands the
- * current one in and takes the next one back; nothing here holds state.
+ * The offers come from the declaration (`arrangeable`), the chosen
+ * arrangement is a string in the stop, and this draws the line between
+ * them: how many there are, then "Sort", "Group" and "Filter" as words with
+ * a chevron, each opening a short list of its own (`usePopover("arrange")`),
+ * and each condition kept as words with a × that takes it off. A default
+ * says nothing ("Sort", never "as they come"); a choice says itself
+ * ("Sorted by due date ↓", "Grouped by the list it is on").
+ *
+ * It replaced a row of form-sized selects — "Sort by [as they come]",
+ * "Group by [nothing]", a full-width "Only…" — that put three boxes and two
+ * non-choices between a list's title and its first record. Nothing here is
+ * a box until it is hovered or has the keyboard; where the line is narrow
+ * (a phone) it is the count and one "Arrange", which opens the three as
+ * one list.
+ *
+ * Whatever carries the arrangement — a page's search, a lens's `within` —
+ * hands the current one in and takes the next one back; nothing here holds
+ * state but which list is open.
  */
 
 export interface ArrangeBarProps {
@@ -34,130 +46,23 @@ export interface ArrangeBarProps {
   readonly kind: string;
   readonly arrangement: Arrangement;
   readonly onChange: (next: Arrangement) => void;
-  /** What the surface declines, if anything. Everything is on unless declined. */
+  /** What the surface declines, if anything. Everything is on unless declined; `false` leaves the count alone. */
   readonly allow?: ArrangeOption;
   /** Whether to draw the words box. On unless declined. */
   readonly query?: boolean;
-  /** How many the arrangement kept, of how many there were — said beside the row when given. */
+  /** How many the arrangement kept, of how many there were: "4 of 16" where it narrowed. */
   readonly kept?: { readonly shown: number; readonly of: number };
-  /** Prefix for the row's test ids: `arrange` by default. */
+  /** What one record and many are called: the line then opens with the count in words ("16 tasks", "4 of 16 tasks"). */
+  readonly noun?: { readonly one: string; readonly many: string };
+  /** Prefix for the line's test ids: `arrange` by default. */
   readonly testId?: string;
   readonly style?: CSSProperties;
 }
 
-/*
- * NOTHING HERE MAY WIDEN THE PAGE. A select is as wide as its longest
- * option, and at a reader's own text size — 32px root on a 390px phone —
- * "as declared (due date)" alone pushed the tasks page sideways. Every
- * control caps at the row's width and the row wraps; a long option is cut
- * inside its box rather than carried outside it.
- */
-const control: CSSProperties = {
-  font: "inherit",
-  fontSize: "0.875rem",
-  minHeight: 32,
-  minWidth: 0,
-  maxWidth: "100%",
-  padding: "4px 8px",
-  borderRadius: 8,
-  border: "1px solid var(--graview-edge)",
-  background: "var(--graview-panel)",
-  color: "var(--graview-ink)",
-  textOverflow: "ellipsis",
-};
-/*
- * A SELECT THAT KEEPS ITS FLOOR IN EVERY ENGINE. WebKit draws a native
- * select at its own height and ignores `min-height`: at phone width every
- * arrange bar's select was 22 pixels tall in WebKit and 32 elsewhere —
- * under the 24 a target needs, measured by a check that had only ever run
- * in Chromium (the third walk's lesson, in the fifth). With the native
- * appearance off the floor holds, and the chevron is drawn in the text's
- * color the way the places menu draws it.
- */
-const choice: CSSProperties = {
-  ...control,
-  appearance: "none",
-  WebkitAppearance: "none",
-  paddingRight: 24,
-  backgroundImage: "linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%)",
-  backgroundPosition: "calc(100% - 13px) 55%, calc(100% - 9px) 55%",
-  backgroundSize: "4px 4px, 4px 4px",
-  backgroundRepeat: "no-repeat",
-};
-const label: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  flexWrap: "wrap",
-  gap: 6,
-  minWidth: 0,
-  maxWidth: "100%",
-  fontSize: "0.875rem",
-  color: "var(--graview-ink-muted)",
-};
-const chip: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  minHeight: 28,
-  padding: "0 2px 0 10px",
-  borderRadius: 999,
-  border: "1px solid var(--graview-edge)",
-  background: "var(--graview-panel)",
-  color: "var(--graview-ink)",
-  fontSize: "0.8125rem",
-};
+/** Below this width of its own the line is a phone's: the count and one "Arrange". */
+export const ARRANGE_NARROW = 520;
 
-/** The far ends an edge condition may name, from the graph. */
-/**
- * The far ends a menu offers to narrow by. A menu is for choosing, not for
- * reading a catalog: past FAR_ENDS it holds the most connected (the ones a
- * person most likely means), and the search reaches the rest — a select of
- * 1,177 songs was 1,177 elements in every row that offered it (docs/scale.md).
- */
-export const FAR_ENDS = 40;
-
-/** How many distinct values a word field may hold and still be offered as a list to pick from. */
-const WORD_VALUES = 60;
-
-/** Every value one field holds across a kind. */
-function heldValues(graph: ArrangeGraph, kind: string, key: string): readonly unknown[] {
-  return graph.allNodes().filter((node) => node.kind === kind).map((node) => (node as unknown as Record<string, unknown>)[key]);
-}
-
-/** Four round numbers through the spread of what a list holds: £10,000, £15,000, £25,000 — never £23,995. */
-export function roundSteps(values: readonly number[]): readonly number[] {
-  if (values.length < 2) return [];
-  const sorted = [...values].sort((a, b) => a - b);
-  const spread = sorted[sorted.length - 1]! - sorted[0]!;
-  if (spread <= 0) return [];
-  // Rounded to the spread, not the value: prices to the £5,000, years to the year.
-  const unit = Math.max(1, 10 ** Math.floor(Math.log10(spread / 4)));
-  const step = spread / 4 >= unit * 5 ? unit * 5 : unit;
-  const round = (value: number) => Math.round(value / step) * step;
-  return [...new Set([0.2, 0.4, 0.6, 0.8].map((at) => round(sorted[Math.floor(at * (sorted.length - 1))]!)))].filter((value) => value > 0);
-}
-
-function farEndsOf(schema: AnySchema, graph: ArrangeGraph, offer: ArrangeOffer): readonly { id: string; label: string }[] {
-  const kinds = offer.far ?? [];
-  const seen = new Map<string, string>();
-  const wanted = new Set(kinds);
-  for (const node of graph.allNodes()) {
-    if (!wanted.has(node.kind)) continue;
-    seen.set(node.id, labelOf(schema.tryDefinition(node.kind), node));
-  }
-  const ends = [...seen.entries()].map(([id, text]) => ({ id, label: text }));
-  const kept =
-    ends.length <= FAR_ENDS
-      ? ends
-      : ends
-          .map((end) => ({ end, ties: graph.out(end.id).length + graph.in(end.id).length }))
-          .sort((a, b) => b.ties - a.ties || a.end.label.localeCompare(b.end.label))
-          .slice(0, FAR_ENDS)
-          .map((entry) => entry.end);
-  return kept.sort((a, b) => a.label.localeCompare(b.label));
-}
-
-/** A condition in words: "Due date before 2026-10-01", "The list it is on: Today", "Past". */
+/** A condition in words: "Due before 1 Oct 2026", "The list it is on: Today", "Past". */
 export function sayCondition(schema: AnySchema, graph: ArrangeGraph, offers: Arrangeable, condition: Condition): string {
   const offer = offers.filters.find((candidate) => candidate.key === condition.key);
   if (!offer) return `${condition.key}: ${condition.value}`;
@@ -185,6 +90,24 @@ export function sayCondition(schema: AnySchema, graph: ArrangeGraph, offers: Arr
   return `${offer.label}: ${valueWords(schema.tryDefinition(offers.kind), offer.key, condition.value)}`;
 }
 
+/** A field's reading inside a sentence: "due date", "the list it is on" — an initialism ("SUV") kept as it is. */
+export const inSentence = (words: string): string => (/^[A-Z][a-z]/.test(words) ? words.charAt(0).toLowerCase() + words.slice(1) : words);
+
+/** The two directions of a sort, in the words its values read in. */
+export function directionWords(offer: ArrangeOffer | undefined): { readonly asc: string; readonly desc: string } {
+  if (offer?.type === "date") return { asc: "Earliest first", desc: "Latest first" };
+  if (offer?.type === "number") return { asc: "Lowest first", desc: "Highest first" };
+  if (offer?.type === "boolean") return { asc: "No first", desc: "Yes first" };
+  if (offer?.type === "choice") return { asc: "In their order", desc: "In reverse order" };
+  return { asc: "A to Z", desc: "Z to A" };
+}
+
+/** The lists the line opens, fetched when first wanted (`arrange-lists.tsx`). */
+const LISTS = lazyModule(retryingImport(() => import("./arrange-lists.js")));
+const Lists = LISTS.part((module: typeof import("./arrange-lists.js"), props: import("./arrange-lists.js").ListsProps) => <module.ArrangeLists {...props} />, { what: "This list", quiet: true });
+/** The lists, fetched now: for a test, or a page that knows a list is about to open. */
+export const preloadArrangeLists = (): Promise<unknown> => LISTS.load();
+
 /** What each bar last sent, by its test id and kind (see `ArrangeBar`). */
 const SENT = new Map<string, { words: Set<string>; latest: Arrangement | null; at: number }>();
 
@@ -192,11 +115,12 @@ export function ArrangeBar(props: ArrangeBarProps) {
   const { schema, graph, kind, arrangement: given, onChange } = props;
   const offers = arrangeable(schema, kind);
   const id = props.testId ?? "arrange";
-  const sorts = arrangeAllows(props.allow, "sort");
-  const groups = arrangeAllows(props.allow, "group");
-  const filters = arrangeAllows(props.allow, "filter");
-  const words = props.query !== false;
-  if (!sorts && !groups && !filters && !words) return null;
+  const canSort = arrangeAllows(props.allow, "sort") && offers.sorts.length > 1;
+  const canGroup = arrangeAllows(props.allow, "group") && offers.groups.length > 0;
+  const canFilter = arrangeAllows(props.allow, "filter") && offers.filters.length > 0;
+  const words = props.query !== false && props.allow !== false;
+  const count = countWords(props.noun, props.kept);
+  if (!canSort && !canGroup && !canFilter && !words && !count) return null;
 
   /*
    * TWO CHANGES BEFORE ONE RENDER ARE TWO CHANGES. The bar merged each change
@@ -221,7 +145,7 @@ export function ArrangeBar(props: ArrangeBarProps) {
     sent.current = { words: new Set(), latest: null, at: 0 };
     SENT.set(memory, sent.current);
   }
-  // What the controls show: what the bar last sent while what comes back is its echo.
+  // What the line shows: what the bar last sent while what comes back is its echo.
   const arrangement = sent.current.latest ?? given;
   const set = (patch: Partial<Arrangement>) => {
     // What the bar last sent, read now — not the arrangement this render was drawn with.
@@ -237,275 +161,248 @@ export function ArrangeBar(props: ArrangeBarProps) {
     const rest = conditions.filter((_, index) => index !== at);
     set({ filter: rest.length > 0 ? rest : undefined });
   };
-  const add = (condition: Condition) => set({ filter: [...conditions.filter((c) => !(c.key === condition.key && c.value === condition.value)), condition] });
+  const has = (condition: Condition) => conditions.some((c) => c.key === condition.key && c.value === condition.value);
+  // A condition already kept is taken off by pressing it again: the list says which are on.
+  const toggle = (condition: Condition) =>
+    has(condition)
+      ? without(conditions.findIndex((c) => c.key === condition.key && c.value === condition.value))
+      : set({ filter: [...conditions, condition] });
+
+  const sortOffer = arrangement.sort ? offers.sorts.find((offer) => offer.key === arrangement.sort!.by) : undefined;
+  const groupOffer = arrangement.group ? offers.groups.find((offer) => offer.key === arrangement.group!.by) : undefined;
+  const ways = directionWords(sortOffer);
+  // The lists themselves come when one is first opened (`ArrangeLists`): the line is all a page carries up front.
+  const listProps = { schema, graph, offers, arrangement, set, toggle, has, testId: id };
+  const sortTrigger = arrangement.sort ? (
+    <>
+      Sorted by {inSentence(sortOffer?.label ?? arrangement.sort.by)}
+      <span aria-hidden="true">{arrangement.sort.direction === "desc" ? " ↓" : " ↑"}</span>
+    </>
+  ) : (
+    "Sort"
+  );
+  const bucket = arrangement.group?.bucket && groupOffer?.buckets ? `, a ${arrangement.group.bucket} each` : "";
+  const groupTrigger = arrangement.group ? `Grouped by ${inSentence(groupOffer?.label ?? arrangement.group.by)}${bucket}` : "Group";
 
   return (
-    <div
-      data-testid={`${id}-bar`}
-      role="group"
-      aria-label="Arrange"
-      style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 14px", minWidth: 0, maxWidth: "100%", ...props.style }}
-    >
-      {words ? (
-        <label style={label}>
-          <span className="graview-visually-hidden" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
-            Find
+    <div data-testid={`${id}-bar`} role="group" aria-label="Arrange" className="graview-arrange" style={props.style} onPointerEnter={LISTS.prefetch} onFocus={LISTS.prefetch}>
+      <style>{ARRANGE_CSS}</style>
+      <div className="graview-arrange-line">
+        {count ? (
+          <span className="graview-arrange-count" data-testid={`${id}-count`}>
+            {count.kept ? <span data-testid={`${id}-kept`}>{count.kept}</span> : null}
+            {count.words}
           </span>
-          <input
-            type="search"
-            data-testid={`${id}-query`}
-            value={arrangement.query ?? ""}
-            placeholder="Find…"
-            onChange={(event) => set({ query: event.target.value.length > 0 ? event.target.value : undefined })}
-            style={{ ...control, width: "min(100%, 220px)" }}
-          />
-        </label>
-      ) : null}
-      {sorts && offers.sorts.length > 1 ? (
-        <label style={label}>
-          Sort by
-          <select
-            data-testid={`${id}-sort`}
-            value={arrangement.sort?.by ?? ""}
-            onChange={(event) =>
-              set({
-                sort: event.target.value ? { by: event.target.value, direction: arrangement.sort?.direction ?? "asc" } : undefined,
-              })
-            }
-            style={{ ...choice, maxWidth: "min(100%, 60vw)" }}
-          >
-            <option value="">{offers.natural ? `as declared (${offers.sorts.find((o) => o.key === offers.natural!.by)?.label.toLowerCase() ?? offers.natural.by})` : "as they come"}</option>
-            {offers.sorts.map((offer) => (
-              <option key={offer.key} value={offer.key}>
-                {offer.label}
-              </option>
-            ))}
-          </select>
-          {arrangement.sort ? (
-            <button
-              type="button"
-              data-testid={`${id}-direction`}
-              aria-label={arrangement.sort.direction === "asc" ? "Ascending; press for descending" : "Descending; press for ascending"}
-              title={arrangement.sort.direction === "asc" ? "Ascending" : "Descending"}
-              onClick={() => set({ sort: { by: arrangement.sort!.by, direction: arrangement.sort!.direction === "asc" ? "desc" : "asc" } })}
-              style={{ ...control, minWidth: 32, cursor: "pointer" }}
+        ) : null}
+        {canSort ? (
+          <span className="graview-arrange-part graview-arrange-one">
+            <Choice
+              testId={`${id}-sort`}
+              value={arrangement.sort?.by ?? ""}
+              set={arrangement.sort !== undefined}
+              label="Sort"
+              name={arrangement.sort ? `Sorted by ${inSentence(sortOffer?.label ?? arrangement.sort.by)}, ${ways[arrangement.sort.direction].toLowerCase()}` : "Sort"}
+              list={(done) => <Lists which="sort" done={done} {...listProps} />}
             >
-              {arrangement.sort.direction === "asc" ? "↑" : "↓"}
-            </button>
-          ) : null}
-        </label>
-      ) : null}
-      {groups && offers.groups.length > 0 ? (
-        <label style={label}>
-          Group by
-          <select
-            data-testid={`${id}-group`}
-            value={arrangement.group?.by ?? ""}
-            onChange={(event) => set({ group: event.target.value ? { by: event.target.value } : undefined })}
-            style={{ ...choice, maxWidth: "min(100%, 60vw)" }}
-          >
-            <option value="">nothing</option>
-            {offers.groups.map((offer) => (
-              <option key={offer.key} value={offer.key}>
-                {offer.label}
-              </option>
-            ))}
-          </select>
-          {arrangement.group && offers.groups.find((offer) => offer.key === arrangement.group!.by)?.buckets ? (
-            <select
-              data-testid={`${id}-bucket`}
-              aria-label="How wide a group is"
-              value={arrangement.group.bucket ?? "day"}
-              onChange={(event) => set({ group: { by: arrangement.group!.by, bucket: event.target.value as DateBucket } })}
-              style={choice}
+              {sortTrigger}
+            </Choice>
+          </span>
+        ) : null}
+        {canGroup ? (
+          <span className="graview-arrange-part graview-arrange-one">
+            <Choice testId={`${id}-group`} value={arrangement.group?.by ?? ""} set={arrangement.group !== undefined} label="Group" name={groupTrigger} list={(done) => <Lists which="group" done={done} {...listProps} />}>
+              {groupTrigger}
+            </Choice>
+          </span>
+        ) : null}
+        {canFilter ? (
+          <span className="graview-arrange-part graview-arrange-one">
+            <Choice testId={`${id}-add`} value="" set={false} label="Filter" name={conditions.length > 0 ? `Filter — ${conditions.length} on` : "Filter"} list={(done) => <Lists which="filter" done={done} {...listProps} />}>
+              Filter
+            </Choice>
+          </span>
+        ) : null}
+        {canSort || canGroup || canFilter ? (
+          <span className="graview-arrange-part graview-arrange-all">
+            <Choice
+              testId={`${id}-all`}
+              value=""
+              set={false}
+              label="Arrange"
+              name="Arrange: sort, group and filter"
+              list={(done) => <Lists which="all" done={done} parts={{ sort: canSort, group: canGroup, filter: canFilter }} {...listProps} />}
             >
-              <option value="day">by day</option>
-              <option value="week">by week</option>
-              <option value="month">by month</option>
-              <option value="year">by year</option>
-              <option value="decade">by decade</option>
-            </select>
-          ) : null}
-        </label>
-      ) : null}
-      {filters && offers.filters.length > 0 ? (
-        <AddCondition schema={schema} graph={graph} offers={offers} testId={id} onAdd={add} />
-      ) : null}
-      {filters
-        ? conditions.map((condition, at) => (
-            <span key={`${condition.key}:${condition.value}`} style={chip} data-testid={`${id}-condition`}>
-              {sayCondition(schema, graph, offers, condition)}
-              <button
-                type="button"
-                aria-label={`Remove: ${sayCondition(schema, graph, offers, condition)}`}
-                onClick={() => without(at)}
-                // A control big enough to hit: 24px is the floor the face is held to, and a bare "×" glyph is 16 by 13.
-                style={{ font: "inherit", border: 0, background: "transparent", color: "inherit", cursor: "pointer", padding: 0, lineHeight: 1, minWidth: 24, minHeight: 24, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 999 }}
-              >
+              Arrange
+            </Choice>
+          </span>
+        ) : null}
+        {conditions.map((condition, at) => {
+          const words = sayCondition(schema, graph, offers, condition);
+          return (
+            <span key={`${condition.key}:${condition.value}`} className="graview-arrange-token" data-testid={`${id}-condition`}>
+              {words}
+              <button type="button" aria-label={`Remove: ${words}`} title="Remove" onClick={() => without(at)}>
                 ×
               </button>
             </span>
-          ))
-        : null}
-      {props.kept && props.kept.shown !== props.kept.of ? (
-        <span data-testid={`${id}-kept`} style={{ ...label, marginLeft: "auto" }}>
-          {props.kept.shown} of {props.kept.of}
-        </span>
-      ) : null}
+          );
+        })}
+        {words ? (
+          <label className="graview-arrange-words-at">
+            <span style={VISUALLY_HIDDEN}>Find</span>
+            <input
+              type="search"
+              className="graview-arrange-words"
+              data-testid={`${id}-query`}
+              value={arrangement.query ?? ""}
+              placeholder="Find…"
+              onChange={(event) => set({ query: event.target.value.length > 0 ? event.target.value : undefined })}
+            />
+          </label>
+        ) : null}
+      </div>
     </div>
   );
 }
 
+/** The count in words, and the part of it that says what the arrangement kept when it kept fewer. */
+function countWords(
+  noun: ArrangeBarProps["noun"],
+  kept: ArrangeBarProps["kept"],
+): { readonly words: string; readonly kept?: string } | null {
+  if (!kept) return null;
+  const narrowed = kept.shown !== kept.of;
+  if (!noun) return narrowed ? { words: "", kept: `${kept.shown} of ${kept.of}` } : null;
+  const word = kept.of === 1 ? noun.one : noun.many;
+  return narrowed ? { words: ` ${word}`, kept: `${kept.shown} of ${kept.of}` } : { words: `${kept.of} ${word}` };
+}
+
 /**
- * "Add a condition": one select naming the offer, then — for what needs a
- * value — a second control for it. Two presses, and the chip appears.
+ * One word on the line that opens a short list: the trigger is text and a
+ * chevron, a box only while hovered, open or holding the keyboard. Its
+ * list opens in the top layer (the popover family's habits: one open at a
+ * time, the keyboard goes in — to the choice already made — Escape or a
+ * press away closes it and gives the keyboard back), and the arrow keys
+ * walk it.
  */
-function AddCondition({
-  schema,
-  graph,
-  offers,
+function Choice({
   testId,
-  onAdd,
+  value,
+  set,
+  label,
+  name,
+  list,
+  children,
 }: {
-  schema: AnySchema;
-  graph: ArrangeGraph;
-  offers: Arrangeable;
-  testId: string;
-  onAdd: (condition: Condition) => void;
+  readonly testId: string;
+  /** What is chosen, as the trigger's `value`: what a harness reads, as it read a select's. */
+  readonly value: string;
+  /** Whether it says a choice rather than an invitation. */
+  readonly set: boolean;
+  /** What the list is called. */
+  readonly label: string;
+  /** What a screen reader hears for the trigger. */
+  readonly name: string;
+  readonly list: (done: () => void) => ReactNode;
+  readonly children: ReactNode;
 }) {
-  /*
-   * Every offer's values are known up front — a choice's options, `is`'s
-   * words, an edge's far ends, a boolean's yes and no — so the whole set is
-   * one grouped select and one press adds a chip. A date wants typing, so
-   * it is listed as three entries that ask for the date when chosen.
-   */
-  // The day a date's condition is waiting for, asked beside the choice (`AskDay`).
-  const [asking, setAsking] = useState<{ key: string; op: string; label: string } | null>(null);
-  const entries: { value: string; label: string; group: string; condition?: Condition; ask?: { key: string; op: string; label: string } }[] = [];
-  for (const offer of offers.filters) {
-    if (offer.about === "is") {
-      for (const word of offer.options ?? []) entries.push({ value: `is:${word}`, label: word, group: offer.label, condition: { key: "is", value: word } });
-    } else if (offer.about === "edge") {
-      entries.push({ value: `${offer.key}:*`, label: "anything", group: offer.label, condition: { key: offer.key, value: "*" } });
-      entries.push({ value: `${offer.key}:none`, label: "nothing", group: offer.label, condition: { key: offer.key, value: "none" } });
-      for (const end of farEndsOf(schema, graph, offer)) entries.push({ value: `${offer.key}:${end.id}`, label: end.label, group: offer.label, condition: { key: offer.key, value: end.id } });
-    } else if (offer.type === "date") {
-      for (const op of ["before", "after", "on"]) entries.push({ value: `${offer.key}:${op}`, label: `${op}…`, group: offer.label, ask: { key: offer.key, op, label: offer.label } });
-    } else if (offer.type === "number") {
-      // A few round steps through what the list holds: one press, never a number typed blind.
-      const definition = schema.tryDefinition(offers.kind);
-      const steps = roundSteps(heldValues(graph, offers.kind, offer.key).filter((value): value is number => typeof value === "number"));
-      for (const op of ["at-most", "at-least"] as const) {
-        for (const step of op === "at-most" ? steps : [...steps].reverse()) {
-          entries.push({ value: `${offer.key}:${op}:${step}`, label: `${op === "at-most" ? "at most" : "at least"} ${valueWords(definition, offer.key, step)}`, group: offer.label, condition: { key: offer.key, value: `${op}:${step}` } });
-        }
-      }
-    } else if (offer.type === "text") {
-      // A word field by the values it holds — a make, a color — when they are few enough to be a list rather than a name each.
-      const held = [...new Set(heldValues(graph, offers.kind, offer.key).filter((value): value is string => typeof value === "string" && value.length > 0 && !value.includes(",")))].sort((a, b) => a.localeCompare(b));
-      if (held.length >= 2 && held.length <= WORD_VALUES) {
-        for (const word of held) entries.push({ value: `${offer.key}:${word}`, label: word, group: offer.label, condition: { key: offer.key, value: word } });
-      }
-    } else if (offer.type === "boolean") {
-      entries.push({ value: `${offer.key}:true`, label: "yes", group: offer.label, condition: { key: offer.key, value: "true" } });
-      entries.push({ value: `${offer.key}:false`, label: "no", group: offer.label, condition: { key: offer.key, value: "false" } });
-    } else {
-      for (const option of offer.options ?? []) entries.push({ value: `${offer.key}:${option}`, label: valueWords(schema.tryDefinition(offers.kind), offer.key, option), group: offer.label, condition: { key: offer.key, value: option } });
-    }
-  }
-  const groups = [...new Set(entries.map((entry) => entry.group))];
+  const popover = usePopover("arrange", { align: "start" });
+  const pane = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!popover.open) return;
+    // In at the choice already made, when there is one; else the first entry (the family's own rule).
+    pane.current?.querySelector<HTMLElement>('[aria-pressed="true"]')?.focus({ preventScroll: true });
+  }, [popover.open]);
   return (
     <>
-    <label style={label}>
-      {/* Said once, by the choice itself ("Only…"), not by a label beside a choice that says it again. */}
-      <span style={VISUALLY_HIDDEN}>Only</span>
-      <select
-        data-testid={`${testId}-add`}
-        value=""
-        onChange={(event) => {
-          const entry = entries.find((candidate) => candidate.value === event.target.value);
-          if (!entry) return;
-          if (entry.condition) {
-            setAsking(null);
-            onAdd(entry.condition);
-          } else if (entry.ask) setAsking(entry.ask);
-        }}
-        style={choice}
+      <button
+        type="button"
+        className="graview-arrange-open"
+        data-testid={testId}
+        data-set={set ? "" : undefined}
+        value={value}
+        aria-label={name}
+        {...popover.trigger}
+        onClick={popover.toggle}
       >
-        <option value="">Only…</option>
-        {groups.map((group) => (
-          <optgroup key={group} label={group}>
-            {entries
-              .filter((entry) => entry.group === group)
-              .map((entry) => (
-                <option key={entry.value} value={entry.value}>
-                  {entry.label}
-                </option>
-              ))}
-          </optgroup>
-        ))}
-      </select>
-    </label>
-    {asking ? (
-      <AskDay
-        ask={asking}
-        testId={testId}
-        onDay={(day) => {
-          setAsking(null);
-          onAdd({ key: asking.key, value: `${asking.op}:${day}` });
-        }}
-        onCancel={() => setAsking(null)}
-      />
-    ) : null}
+        {children}
+        <Chevron />
+      </button>
+      {popover.open ? (
+        <div
+          {...popover.pane}
+          ref={(element) => {
+            popover.pane.ref(element);
+            pane.current = element;
+          }}
+          role="group"
+          aria-label={label}
+          data-testid="arrange-list"
+          data-arrange={testId}
+          className="graview-arrange-list"
+          style={POPOVER_STYLE}
+          onKeyDown={walk}
+        >
+          {list(() => popover.setOpen(false))}
+        </div>
+      ) : null}
     </>
   );
 }
 
-/*
- * WHICH DAY, ASKED IN THE FILTER ITSELF. "Due before…" opened the browser's
- * own prompt — "which day? (YYYY-MM-DD)" — a box over the whole page that
- * asked a person to type the stored format. The day is asked beside the
- * choice that wanted it, with the browser's own date control, and added by
- * Enter or "Add"; Escape or × lets it go.
- */
-function AskDay({ ask, testId, onDay, onCancel }: { readonly ask: { key: string; op: string; label: string }; readonly testId: string; readonly onDay: (day: string) => void; readonly onCancel: () => void }) {
-  const [day, setDay] = useState("");
-  const valid = /^\d{4}-\d{2}-\d{2}$/.test(day) && Number(day.slice(0, 4)) >= 1000;
-  const add = () => {
-    if (valid) onDay(day);
-  };
+/** The arrow keys walk a list's entries, Home and End go to its ends. */
+function walk(event: KeyboardEvent<HTMLDivElement>) {
+  if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+  const stops = [...event.currentTarget.querySelectorAll<HTMLElement>("button:not([disabled]), input")];
+  if (stops.length === 0) return;
+  const at = stops.indexOf(document.activeElement as HTMLElement);
+  // A date box keeps its own arrows: they change the day.
+  if (document.activeElement instanceof HTMLInputElement && (event.key === "ArrowUp" || event.key === "ArrowDown")) return;
+  event.preventDefault();
+  const next =
+    event.key === "Home" ? 0 : event.key === "End" ? stops.length - 1 : event.key === "ArrowDown" ? (at + 1) % stops.length : (at - 1 + stops.length) % stops.length;
+  stops[next]!.focus();
+}
+
+
+/** The way a list opens: a chevron drawn, as the place control draws it. */
+function Chevron() {
   return (
-    <span role="group" aria-label={`${ask.label} ${ask.op} which day`} data-testid={`${testId}-ask-day`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-      <span aria-hidden="true">{`${ask.label} ${ask.op}`}</span>
-      <input
-        type="date"
-        data-testid={`${testId}-day`}
-        aria-label={`${ask.label} ${ask.op} which day`}
-        autoFocus
-        value={day}
-        onChange={(event) => setDay(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            add();
-          } else if (event.key === "Escape") {
-            event.preventDefault();
-            onCancel();
-          }
-        }}
-        style={{ ...choice, minHeight: 24 }}
-      />
-      <button type="button" data-testid={`${testId}-day-add`} disabled={!valid} onClick={add} style={{ ...choice, minHeight: 24 }}>
-        Add
-      </button>
-      <button type="button" aria-label="Never mind" title="Never mind" onClick={onCancel} style={{ font: "inherit", border: 0, background: "transparent", color: "inherit", cursor: "pointer", padding: 0, minWidth: 24, minHeight: 24 }}>
-        ×
-      </button>
-    </span>
+    <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" focusable="false" style={{ flex: "0 0 auto", opacity: 0.7 }}>
+      <path d="M2 3.5 L5 6.5 L8 3.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
-/** A small caption for what an arrangement did, for a surface with no room for the row. */
+/*
+ * NOTHING HERE MAY WIDEN THE PAGE, and nothing is a box at rest. The line
+ * wraps; a long choice wraps inside its words. The line is its own
+ * container, so a narrow lens in a wide window is narrow too. 28 pixels
+ * is each target's floor (24 is the face's), in every engine: there is no
+ * native select left for WebKit to draw at its own height.
+ */
+const ARRANGE_CSS = `
+.graview-arrange{container-type:inline-size;box-sizing:border-box;width:100%;min-width:0;max-width:100%}
+.graview-arrange-line{display:flex;flex-wrap:wrap;align-items:center;gap:2px 6px;min-width:0;font-size:.875rem;line-height:1.35;color:var(--graview-ink-muted)}
+.graview-arrange-count{margin-right:2px;color:var(--graview-ink-muted)}
+.graview-arrange-part{display:inline-flex;align-items:center;min-width:0}
+.graview-arrange-count~.graview-arrange-part::before{content:"·";margin-right:6px;color:var(--graview-ink-muted)}
+.graview-arrange-open{display:inline-flex;align-items:center;gap:5px;min-height:28px;min-width:0;max-width:100%;margin:0;padding:0 6px;border:1px solid transparent;border-radius:7px;background:none;box-shadow:none;font:inherit;letter-spacing:normal;text-transform:none;text-align:left;color:var(--graview-ink-muted);cursor:pointer}
+.graview-arrange-open[data-set]{color:var(--graview-ink)}
+.graview-arrange-open:hover,.graview-arrange-open[aria-expanded=true]{border-color:var(--graview-edge);color:var(--graview-ink)}
+.graview-arrange :focus-visible,.graview-arrange-list :focus-visible{outline:2px solid var(--graview-accent);outline-offset:1px}
+.graview-arrange-all{display:none}
+@container (max-width: ${ARRANGE_NARROW - 1}px){.graview-arrange-one{display:none}.graview-arrange-all{display:inline-flex}}
+.graview-arrange-token{display:inline-flex;align-items:center;gap:0;min-width:0;padding-left:6px;color:var(--graview-ink);overflow-wrap:anywhere}
+.graview-arrange-token button{display:inline-flex;align-items:center;justify-content:center;min-width:24px;min-height:24px;margin:0;padding:0;border:0;border-radius:6px;background:none;font:inherit;line-height:1;color:var(--graview-ink-muted);cursor:pointer}
+.graview-arrange-token button:hover{color:var(--graview-ink);background:color-mix(in srgb,var(--graview-ink) 7%,transparent)}
+.graview-arrange-words-at{display:inline-flex;min-width:0;max-width:100%}
+.graview-arrange-words{box-sizing:border-box;width:min(100%,12rem);min-height:28px;margin:0;padding:0 8px;border:1px solid transparent;border-radius:7px;background:transparent;font:inherit;color:var(--graview-ink)}
+.graview-arrange-words:hover,.graview-arrange-words:focus{border-color:var(--graview-edge)}
+`;
+
+
+/** A small caption for what an arrangement did, for a surface with no room for the line. */
 export function arrangementCaption(arrangement: Arrangement): ReactNode {
   const parts: string[] = [];
   if (arrangement.query) parts.push(`“${arrangement.query}”`);

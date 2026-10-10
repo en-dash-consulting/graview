@@ -5,7 +5,10 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { ArrangeBar } from "../../src/index.js";
+import { ArrangeBar, preloadArrangeLists } from "../../src/index.js";
+
+// The lists the line opens come when first wanted; here, before the first press.
+await preloadArrangeLists();
 
 /**
  * TWO CHANGES BEFORE ONE REDRAW ARE TWO CHANGES. On a slow runner a list's
@@ -27,11 +30,10 @@ describe("the arrange bar", () => {
     // The page never redraws with what was sent: the slowest it can be.
     const opening: Arrangement = { group: { by: "holds" } };
     await act(async () => root.render(<ArrangeBar schema={schema} graph={graph} kind="task" testId="slow" arrangement={opening} onChange={(next) => sent.push(next)} />));
-    const group = host.querySelector<HTMLSelectElement>('[data-testid="slow-group"]')!;
     const words = host.querySelector<HTMLInputElement>('[data-testid="slow-query"]')!;
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="slow-group"]')!.click());
     await act(async () => {
-      group.value = "size";
-      group.dispatchEvent(new Event("change", { bubbles: true }));
+      host.querySelector<HTMLButtonElement>('[data-testid="arrange-list"] [data-value="size"]')!.click();
       const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
       set.call(words, "the");
       words.dispatchEvent(new Event("input", { bubbles: true }));

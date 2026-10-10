@@ -1,9 +1,9 @@
-import { humanizeField, labelOf, type Violation } from "@graview/core";
+import { humanizeField, labelOf, type Arrangement, type Violation } from "@graview/core";
 import { KindFigure, useMarkup } from "@graview/primitives";
 import {
+  ListPage,
   createPageRegistry,
   DerivedForm,
-  kindFacts,
   rankedRepairs,
   recordFacts,
   recordPath,
@@ -14,7 +14,7 @@ import {
   type PageContext,
 } from "@graview/pages";
 import { editableFields, type Affordance, type AffordanceSet, type EditableField } from "@graview/tools";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import type { RotaSchema } from "../domain/schema.js";
 import { today } from "./when.js";
@@ -39,7 +39,8 @@ type Ctx = PageContext<S>;
 
 const CSS = `
 .ro {
-  --ro-paper: color-mix(in oklab, var(--graview-ground) 94%, var(--graview-accent) 6%);
+  /* Neutral paper: an accent wash over every page said nothing about where you are. */
+  --ro-paper: var(--graview-ground);
   --ro-card: var(--graview-panel);
   --ro-line: var(--graview-edge);
   --ro-tint: color-mix(in oklab, var(--graview-panel) 86%, var(--graview-accent) 14%);
@@ -67,9 +68,9 @@ const CSS = `
 .ro-nav a[aria-current="page"] { background: var(--ro-tint); color: var(--graview-ink); box-shadow: inset 0 0 0 1px var(--ro-line); }
 .ro-nav a .n { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 0.75rem; color: var(--graview-ink-muted); }
 
-.ro-main { padding: 2rem 2.4rem 5rem; max-width: 72rem; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
+.ro-main { padding: 2rem 2.4rem max(5rem, var(--graview-foot-room, 0px)); max-width: 72rem; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
 .ro-under { grid-template-columns: minmax(0, 1fr); }
-.ro-under .ro-main { width: 100%; box-sizing: border-box; margin: 0 auto; }
+.ro-under .ro-main { width: 100%; box-sizing: border-box; margin: 0 auto; padding-top: 1.4rem; }
 .ro-eyebrow { font-size: 0.6875rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--graview-ink-muted); margin: 0 0 0.4rem; }
 .ro-eyebrow a { display: inline-flex; align-items: center; min-height: 1.5rem; }
 .ro-h1 { font-family: var(--graview-font-display); font-size: 2.4rem; line-height: 1.05; font-weight: 600; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
@@ -95,7 +96,7 @@ const CSS = `
 .ro-list > li { min-width: 0; }
 .ro-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.7rem; min-height: 2.5rem; min-width: 0; padding: 0.5rem 0.8rem; border-radius: 0.35rem; background: var(--ro-card); border: 1px solid var(--ro-line); }
 .ro-row.bad { border-color: var(--graview-warn); }
-.ro-row .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.95rem; }
+.ro-row .name { flex: 1 1 10rem; min-width: 0; overflow-wrap: anywhere; font-size: 0.95rem; }
 .ro-row .meta { margin-left: auto; display: flex; align-items: center; gap: 0.55rem; font-size: 0.8rem; color: var(--graview-ink-muted); font-variant-numeric: tabular-nums; white-space: nowrap; flex: 0 1 auto; min-width: 0; }
 
 .ro-card { display: grid; gap: 0.6rem; padding: 1rem 1.1rem; border-radius: 0.4rem; background: var(--ro-card); border: 1px solid var(--ro-line); min-width: 0; }
@@ -139,7 +140,7 @@ const CSS = `
   .ro-rail { position: static; min-height: 0; border-right: 0; border-bottom: 1px solid var(--ro-line); }
   .ro-nav { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; min-width: 0; }
   .ro-nav a .n { margin-left: 0.3rem; }
-  .ro-main { padding: 1.3rem 1rem 4rem; }
+  .ro-main { padding: 1.3rem 1rem max(4rem, var(--graview-foot-room, 0px)); }
   .ro-h1 { font-size: 1.8rem; }
 }
 
@@ -350,136 +351,46 @@ function Slot({ shift, context }: { shift: ShiftNode; context: Ctx }) {
 /* ------------------------------------------------------------- the lists */
 
 function KindList({ context, kind }: { context: Ctx; kind: string }) {
-  const { store, principal } = context;
-  const tick = useStoreTick(store);
-  const [params, setParams] = useSearchParams();
+  const { store } = context;
   const flagged = flaggedIds(store.violations(context.invariantContext));
-  const facts = useMemo(
-    () =>
-      kindFacts(store, kind, {
-        ...(principal ? { principal } : {}),
-        ...(context.invariantContext ? { context: context.invariantContext } : {}),
-      }),
-    [store, kind, principal, context.invariantContext, tick],
-  );
-
-  const group = params.get("group") ?? (kind === "shift" ? "place" : "none");
-  const sort = params.get("sort") ?? (kind === "shift" ? "when" : "name");
-  const query = params.get("q") ?? "";
-  const show = params.get("show") ?? "all";
-  const set = (key: string, value: string) => {
+  const [params, setParams] = useSearchParams();
+  /*
+   * THE WORDS THIS PAGE WROTE BEFORE STILL LAND: `show=bare` keeps the
+   * shifts nobody covers, `group=place|day|none` and `sort=when|name` are
+   * read as what they meant, and the address is put in the shared words.
+   */
+  const legacy = params.get("show") === "bare" || ["place", "day", "none"].includes(params.get("group") ?? "") || ["when", "name"].includes(params.get("sort") ?? "");
+  useEffect(() => {
+    if (!legacy) return;
     const next = new URLSearchParams(params);
-    if (value === "") next.delete(key);
-    else next.set(key, value);
-    setParams(next, { replace: false });
-  };
-
-  const named = (node: { id: string }) => labelOf(store.schema.tryDefinition(kind), node as never);
-  const all = store.graph.nodesOfKind(kind as never) as AnyNode[];
-  const matching = all
-    .filter((node) =>
-      show === "bare" && kind === "shift" ? store.graph.out(node.id, "covered-by").length === 0 : true,
-    )
-    .filter((node) => query === "" || named(node).toLowerCase().includes(query.toLowerCase()));
-  const sorted = [...matching].sort((a, b) =>
-    sort === "when" && kind === "shift"
-      ? `${(a as ShiftNode).on}${String((a as ShiftNode).from).padStart(4, "0")}`.localeCompare(
-          `${(b as ShiftNode).on}${String((b as ShiftNode).from).padStart(4, "0")}`,
-        )
-      : named(a).localeCompare(named(b)),
-  );
-  const groups = groupBy(sorted, group, kind, (id) => whereOf(store, id));
-
+    if (next.get("show") === "bare") next.set("filter", [next.get("filter"), "covered-by:none"].filter(Boolean).join(","));
+    next.delete("show");
+    const group = { place: "held-at", day: "on:day", none: "" }[next.get("group") ?? ""];
+    if (group !== undefined) next.set("group", group);
+    const sort = { when: "on", name: "label" }[next.get("sort") ?? ""];
+    if (sort !== undefined) next.set("sort", sort);
+    setParams(next, { replace: true });
+  }, [legacy, params, setParams]);
+  /*
+   * THE FRAMEWORK'S LIST, IN THE ROTA'S OWN ROWS: the shifts open by where
+   * each happens, earliest first; a row says its day, its hour and who has
+   * it. This page had a Find, a Show, a Group and a Sort of its own — four
+   * form controls over ten shifts — and an eyebrow over its title.
+   */
+  const opening: Arrangement = kind === "shift" ? { group: { by: "held-at" }, sort: { by: "on", direction: "asc" } } : { sort: { by: "label", direction: "asc" } };
   return (
-    <>
-      <header>
-        <p className="ro-eyebrow">{plural(store, kind)}</p>
-        <h1 className="ro-h1">{plural(store, kind)}</h1>
-        <p className="ro-lede">
-          {matching.length} of {all.length} shown.
-        </p>
-      </header>
-
-      <div className="ro-section">
-        <div className="ro-controls" data-testid="list-controls">
-          <label>
-            Find
-            <input
-              type="search"
-              data-testid="list-filter"
-              value={query}
-              placeholder={`Search ${plural(store, kind).toLowerCase()}`}
-              onChange={(event) => set("q", event.target.value)}
-            />
-          </label>
-          {kind === "shift" ? (
-            <>
-              <label>
-                Show
-                <select data-testid="list-show" value={show} onChange={(event) => set("show", event.target.value)}>
-                  <option value="all">Everything</option>
-                  <option value="bare">Only the gaps</option>
-                </select>
-              </label>
-              <label>
-                Group
-                <select data-testid="list-group" value={group} onChange={(event) => set("group", event.target.value)}>
-                  <option value="place">By place</option>
-                  <option value="day">By day</option>
-                  <option value="none">Not at all</option>
-                </select>
-              </label>
-              <label>
-                Sort
-                <select data-testid="list-sort" value={sort} onChange={(event) => set("sort", event.target.value)}>
-                  <option value="when">By when</option>
-                  <option value="name">By name</option>
-                </select>
-              </label>
-            </>
-          ) : null}
-        </div>
-
-        {sorted.length === 0 ? (
-          <Empty
-            said={query === "" ? `No ${plural(store, kind).toLowerCase()} yet.` : `Nothing here is called “${query}”.`}
-            next={
-              query === "" ? null : (
-                <button type="button" className="ro-btn" onClick={() => set("q", "")}>
-                  Clear the search
-                </button>
-              )
-            }
-          />
-        ) : (
-          groups.map(({ title, members }) => (
-            <section key={title} className="ro-section" style={{ marginTop: 0 }}>
-              {groups.length > 1 ? (
-                <header>
-                  <h2 className="ro-h2">{title}</h2>
-                  <span className="ro-quiet">{members.length}</span>
-                </header>
-              ) : null}
-              <ul className="ro-list" data-testid="records">
-                {members.map((node) => (
-                  <li key={node.id}>
-                    <Link
-                      className={`ro-row${flagged.has(node.id) ? " bad" : ""}`}
-                      to={recordPath(store.schema, kind, node.id)}
-                    >
-                      <span className="name">{named(node)}</span>
-                      <span className="meta">{said(store, kind, node)}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))
-        )}
-      </div>
-
-      <Acts title={`Add ${article(kind)}`} actions={facts.actions} context={context} openFirst />
-    </>
+    <ListPage
+      context={context}
+      kind={kind}
+      bare
+      opening={opening}
+      row={(node, facts) => (
+        <Link className={`ro-row${flagged.has(node.id) ? " bad" : ""}`} to={facts.href}>
+          <span className="name">{facts.label}</span>
+          <span className="meta">{said(store, kind, node as unknown as AnyNode) || facts.glance}</span>
+        </Link>
+      )}
+    />
   );
 }
 
@@ -488,7 +399,7 @@ function said(store: Ctx["store"], kind: string, node: AnyNode): string {
   if (kind === "shift") {
     const shift = node as ShiftNode;
     const who = store.graph.out(shift.id, "covered-by") as { label?: string }[];
-    return `${shift.on} · ${who.length === 0 ? "nobody yet" : who.map((one) => one.label ?? "?").join(", ")}`;
+    return `${longDay(shift.on)}, ${clock(shift.from)} · ${who.length === 0 ? "nobody yet" : who.map((one) => one.label ?? "?").join(", ")}`;
   }
   if (kind === "volunteer") {
     const person = node as VolunteerNode;
@@ -778,7 +689,8 @@ function Acts({
   context,
   openFirst = false,
 }: {
-  title: string;
+  /** The section's heading; a list page says none — its acts are named by their own buttons. */
+  title?: string;
   actions: AffordanceSet;
   context: Ctx;
   readonly openFirst?: boolean;
@@ -791,9 +703,11 @@ function Acts({
   if (actions.affordances.length === 0 && actions.withheld.length === 0) return null;
   return (
     <section className="ro-section" data-testid="record-actions">
-      <header>
-        <h2 className="ro-h2">{title}</h2>
-      </header>
+      {title ? (
+        <header>
+          <h2 className="ro-h2">{title}</h2>
+        </header>
+      ) : null}
       {actions.affordances.length > 0 ? (
         <div className="ro-controls">
           {actions.affordances.map((affordance) => (
@@ -956,7 +870,6 @@ const plural = (store: Ctx["store"], kind: string): string =>
   store.schema.tryDefinition(kind)?.plural ?? `${kind}s`;
 const slugOf = (store: Ctx["store"], kind: string): string =>
   plural(store, kind).toLowerCase().replace(/[^a-z0-9]+/g, "-");
-const article = (kind: string): string => (/^[aeiou]/i.test(kind) ? `an ${kind}` : `a ${kind}`);
 const capitalize = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 
 function subjectArgOf(store: Ctx["store"], mutation: string): string {
@@ -979,22 +892,6 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const longDay = (day: string) =>
   `${WEEKDAYS[new Date(utc(day)).getUTCDay()]} ${Number(day.slice(8, 10))} ${MONTHS[Number(day.slice(5, 7)) - 1]}`;
 
-/** The groups a list is shown in, derived rather than written per kind. */
-function groupBy(
-  nodes: readonly AnyNode[],
-  group: string,
-  kind: string,
-  where: (shiftId: string) => string,
-): readonly { title: string; members: readonly AnyNode[] }[] {
-  if (group === "none" || kind !== "shift") return [{ title: "All", members: nodes }];
-  const by = new Map<string, AnyNode[]>();
-  for (const node of nodes) {
-    const shift = node as ShiftNode;
-    const at = group === "day" ? longDay(shift.on) : where(shift.id);
-    by.set(at, [...(by.get(at) ?? []), node]);
-  }
-  return [...by.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([title, members]) => ({ title, members }));
-}
 
 /* ------------------------------------------------------------ the design */
 

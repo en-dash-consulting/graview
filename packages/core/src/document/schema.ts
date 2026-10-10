@@ -279,6 +279,8 @@ export const PagesSpec = z.looseObject({
   order: z.optional(z.array(z.string())),
   hide: z.optional(z.array(z.string())),
   first: z.optional(z.string()),
+  /* The places that stand on the bar beside Home (FR-145, ranked): kinds by name or plural, pictures by title. */
+  primary: z.optional(z.array(z.string().check(z.minLength(1), z.maxLength(80))).check(z.maxLength(40))),
   /*
    * What the bar's switch calls the scene and the pages (FR-137); "Scene" and "Pages" when unsaid.
    * At most 40 characters, as `pages.overview` was (FR-132), which a stored document says for `scene`

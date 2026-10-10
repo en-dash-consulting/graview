@@ -1,4 +1,4 @@
-import { hueFor, orderKinds, OVERVIEW_SLUG, placeSlug, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
+import { hueFor, MOST_STANDING, orderKinds, OVERVIEW_SLUG, placeSlug, primaryOf, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
 import { POPOVER_STYLE, usePopover } from "@graview/react/provider";
 import { createContext, useCallback, useContext, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { AppMark } from "./app-title.js";
@@ -45,6 +45,11 @@ export interface BarPlace {
   readonly group: BarPlaceGroup;
   /** The kind it is a list or a picture of, for its mark. */
   readonly kind?: string;
+  /**
+   * Whether it may stand on the bar's row (FR-145, ranked): the main kinds
+   * and their pictures do, the machinery folds into "More". Unsaid is yes.
+   */
+  readonly primary?: boolean;
 }
 
 /** The key the home's place has (FR-136): the app's front page, first in the list, at the app's own address. */
@@ -73,19 +78,29 @@ export function barPlaces(input: {
   const live = (store.schema.kinds as readonly string[]).filter((kind) => !store.modules.disabledKinds.has(kind) && !kept.has(kind));
   const arrangement = views?.arrangement?.();
   const plural = (kind: string): string => (store.schema.tryDefinition(kind)?.plural as string | undefined) ?? `${kind}s`;
-  const out: BarPlace[] = [{ key: HOME_KEY, label: "Home", path: HOME_PATH, group: "home" }];
-  for (const kind of orderKinds(live, arrangement?.order)) out.push({ key: `kind:${kind}`, label: upper(plural(kind)), path: `/${placeSlug(plural(kind))}`, group: "lists", kind });
   const all = views?.places() ?? [];
+  /*
+   * WHICH STAND: what `pages.primary` names, or — unsaid — every kind but
+   * the ones that support the others (`supportingKinds`: the ones the home
+   * leaves off, the installation's people, notes about other things), with
+   * their pictures. Connections is a way to read the declaration, not a
+   * place of the work: it folds.
+   */
+  const declared = primaryOf(arrangement, store.schema, all);
+  const supporting = supportingKinds(store.schema, arrangement, [...store.modules.administered.values()].flatMap((module) => module.kinds ?? []));
+  const stands = (kind: string, as?: string): boolean => (declared ? (as ? declared.places.has(`${kind}|${as}`) : declared.kinds.has(kind)) : !supporting.has(kind));
+  const out: BarPlace[] = [{ key: HOME_KEY, label: "Home", path: HOME_PATH, group: "home", primary: true }];
+  for (const kind of orderKinds(live, arrangement?.order)) out.push({ key: `kind:${kind}`, label: upper(plural(kind)), path: `/${placeSlug(plural(kind))}`, group: "lists", kind, primary: stands(kind) });
   for (const place of all) {
     // A place at the scene's address is not offered: the address is the scene's (FR-132).
     if (!live.includes(place.kind) || place.as === OVERVIEW_SLUG) continue;
     // Two kinds' pictures of one name say whose with `?of=` (as the routed face addresses them).
     const shared = all.some((other) => other.as === place.as && other.kind !== place.kind);
     const path = `/places/${encodeURIComponent(place.as)}${shared ? `?of=${placeSlug(plural(place.kind))}` : ""}`;
-    if (!out.some((held) => held.path === path)) out.push({ key: `place:${place.kind}:${place.as}`, label: place.title, path, group: "pictures", kind: place.kind });
+    if (!out.some((held) => held.path === path)) out.push({ key: `place:${place.kind}:${place.as}`, label: place.title, path, group: "pictures", kind: place.kind, primary: stands(place.kind, place.as) });
   }
   const connects = live.some((kind) => Object.keys((store.schema.tryDefinition(kind)?.edges ?? {}) as object).length > 0);
-  if (connects) out.push({ key: "connections", label: "Connections", path: "/map", group: "pictures" });
+  if (connects) out.push({ key: "connections", label: "Connections", path: "/map", group: "pictures", primary: false });
   return out;
 }
 
@@ -158,12 +173,20 @@ export const PLACE_GAP = 4;
 export const FEWEST_STANDING = 2;
 
 /**
- * WHICH PLACES STAND ON THE ROW (FR-145), from their widths and the room:
- * every one when all fit; else the first ones in their order, the current
- * one always among them (in its own place in the order, the last of the
- * first ones giving way to it), with "More" after them; else none — null,
- * the one control. Fewer than `FEWEST_STANDING` is none. A width that is
- * not measured (nothing laid out) is none too.
+ * WHICH PLACES STAND ON THE ROW (FR-145), from their widths and the room —
+ * RANKED: only the primary places stand (`primary`, every one when unsaid),
+ * and never more than `most` (`MOST_STANDING`) however wide the row; the
+ * place the reader is on stands too, in its own place in the order. Every
+ * one of those when they fit, with "More" after them when anything folds;
+ * else the first ones, the current one always among them (the last of the
+ * first ones giving way to it); else none — null, the one control. Fewer
+ * than `FEWEST_STANDING` is none. A width that is not measured (nothing
+ * laid out) is none too.
+ *
+ * Ten words of equal weight on a bar — Home, Lists, Tasks, Rules, Reasons,
+ * People, Invitations and three pictures — said nothing about which of
+ * them the app is about; the bar says it now, and the rest are one press
+ * further, in "More".
  */
 export function placesThatStand(input: {
   /** Each place's width as it would stand, in the order of the list. */
@@ -175,14 +198,21 @@ export function placesThatStand(input: {
   /** "More"'s width. */
   readonly more: number;
   readonly gap?: number;
+  /** Which places may stand, by their place in the list; every one when unsaid. */
+  readonly primary?: readonly boolean[];
+  /** The most that stand. */
+  readonly most?: number;
 }): readonly number[] | null {
-  const { widths, current, room, more, gap = PLACE_GAP } = input;
+  const { widths, current, room, more, gap = PLACE_GAP, primary, most = MOST_STANDING } = input;
   if (widths.length === 0 || !(room > 0) || !(more > 0) || widths.some((width) => !(width > 0))) return null;
   const span = (set: readonly number[], folded: boolean) => set.reduce((sum, at) => sum + widths[at]!, 0) + gap * Math.max(0, set.length - 1) + (folded ? gap + more : 0);
-  const all = widths.map((_, at) => at);
-  if (span(all, false) <= room) return all;
-  for (let count = widths.length - 1; count >= FEWEST_STANDING; count--) {
-    const set = current < count ? all.slice(0, count) : [...all.slice(0, count - 1), current];
+  // The first `count` of a list, the current place kept among them in its own place in the order.
+  const first = (list: readonly number[], count: number): readonly number[] =>
+    current < 0 || !list.includes(current) || list.slice(0, count).includes(current) ? list.slice(0, count) : [...list.filter((at) => at !== current).slice(0, count - 1), current].sort((a, b) => a - b);
+  const ranked = first(widths.map((_, at) => at).filter((at) => primary?.[at] !== false || at === current), most);
+  if (span(ranked, ranked.length < widths.length) <= room) return ranked.length >= FEWEST_STANDING ? ranked : null;
+  for (let count = ranked.length - 1; count >= FEWEST_STANDING; count--) {
+    const set = first(ranked, count);
     if (span(set, true) <= room) return set;
   }
   return null;
@@ -370,15 +400,17 @@ export function AppBar({
   const list = shown && shown.places.length > 0 ? shown : null;
   const currentAt = list ? list.places.findIndex((place) => place.key === list.current) : -1;
   const wordsAsked = Boolean(faces) && switchForm === "words";
+  // Which places may stand, as one word for the weighing to depend on ("110010…").
+  const ranks = list ? list.places.map((place) => (place.primary === false ? "0" : "1")).join("") : "";
   const weigh = useCallback(() => {
     const element = bar.current;
     if (!element) return;
-    const stand = standsIn(element, currentAt, wordsAsked);
+    const stand = standsIn(element, currentAt, wordsAsked, ranks);
     if (stand !== undefined) setStanding(stand);
     // Standing places were weighed with the switch's words kept.
     const room = stand ? true : roomForWords(element);
     if (room !== null) setRoomy(room);
-  }, [currentAt, wordsAsked]);
+  }, [currentAt, wordsAsked, ranks]);
   useLayoutEffect(() => {
     const element = bar.current;
     if (!element) return;
@@ -815,7 +847,7 @@ function Places({ places, current, reach, scene, stands }: { readonly places: re
  * width. Not weighed while Find is in use (`undefined`); none on a phone's
  * bar, when the app's name has wrapped, or where nothing is laid out (null).
  */
-function standsIn(header: HTMLElement, current: number, wordsAsked: boolean): string | null | undefined {
+function standsIn(header: HTMLElement, current: number, wordsAsked: boolean, ranks: string): string | null | undefined {
   const ruler = header.querySelector<HTMLElement>(".graview-bar-ruler");
   const mid = header.querySelector<HTMLElement>(".graview-bar-mid");
   if (!ruler || !mid) return null;
@@ -833,7 +865,8 @@ function standsIn(header: HTMLElement, current: number, wordsAsked: boolean): st
   const end = find?.getBoundingClientRect();
   // To Find's end, less Find at its least and the room between them (the row's gap, less the tools' pull); with no Find, the middle's own room.
   const room = end && end.width > 0 ? end.right - from - (Number.parseFloat(getComputedStyle(find!).minWidth) || 0) - 8 : mid.getBoundingClientRect().width;
-  return placesThatStand({ widths, current, room: Math.floor(room + drawnWords - words), more })?.join(",") ?? null;
+  const primary = [...ranks].map((rank) => rank !== "0");
+  return placesThatStand({ widths, current, room: Math.floor(room + drawnWords - words), more, primary })?.join(",") ?? null;
 }
 
 /** The switch's words, beside each mark: the word, the gap before it, and the button's wider padding. */

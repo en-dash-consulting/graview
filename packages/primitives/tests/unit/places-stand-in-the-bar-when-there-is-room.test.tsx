@@ -42,15 +42,26 @@ const workshop: readonly BarPlace[] = [
   { key: "kind:deliverable", label: "Deliverables", path: "/deliverables", group: "lists", kind: "deliverable" },
   { key: "place:decision:what-the-workshop-covers", label: "What the workshop covers", path: "/places/what-the-workshop-covers", group: "pictures", kind: "decision" },
   { key: "place:deliverable:email-to-todd", label: "Email to Todd", path: "/places/email-to-todd", group: "pictures", kind: "deliverable" },
-  { key: "connections", label: "Connections", path: "/map", group: "pictures" },
+  // A way to read the declaration, not a place of the work: it folds (`barPlaces`).
+  { key: "connections", label: "Connections", path: "/map", group: "pictures", primary: false },
 ];
 
 describe("which places stand on the row (FR-145)", () => {
   const widths = [60, 60, 90, 110, 200, 120, 110];
   const more = 64;
 
-  it("are every place when every place fits, with no More", () => {
-    expect(placesThatStand({ widths, current: 5, room: 2000, more })).toEqual([0, 1, 2, 3, 4, 5, 6]);
+  it("are every place when every place fits, with no More — never more than six, however wide the row", () => {
+    expect(placesThatStand({ widths: widths.slice(0, 5), current: 4, room: 2000, more })).toEqual([0, 1, 2, 3, 4]);
+    expect(placesThatStand({ widths, current: 5, room: 2000, more })).toEqual([0, 1, 2, 3, 4, 5]);
+    // The place the reader is on stands, the last of the six giving way to it.
+    expect(placesThatStand({ widths, current: 6, room: 2000, more })).toEqual([0, 1, 2, 3, 4, 6]);
+  });
+
+  it("are the primary places only, ranked: the rest fold into More however much room there is, unless the reader is on one", () => {
+    const primary = [true, true, false, true, false, true, false];
+    expect(placesThatStand({ widths, current: 0, room: 2000, more, primary })).toEqual([0, 1, 3, 5]);
+    expect(placesThatStand({ widths, current: 4, room: 2000, more, primary })).toEqual([0, 1, 3, 4, 5]);
+    expect(placesThatStand({ widths, current: 0, room: 2000, more, primary: primary.map(() => false) })).toBeNull();
   });
 
   it("are the first ones in their order, with room for More, when not every place fits", () => {
@@ -190,18 +201,18 @@ describe("the places standing on the row (FR-145)", () => {
     <AppBar brand={undefined} name="Farm Bureau POM Workshop" home={{ go: () => undefined, current: false }} faces={faces(true)} switch="icons" places={workshop} current={current} reach={reach} tools={null} />
   );
 
-  it("stand as words in their order, the one you are on marked and saying so, with no More when every one fits", () => {
+  it("stand as words in their order, the primary ones only, the one you are on marked and saying so, the rest in More", () => {
     layOut(1920);
     const { root, at } = drawn(bar("place:deliverable:email-to-todd"));
     const standing = at.querySelector('[data-testid="app-places-standing"]')!;
     expect(standing.tagName).toBe("NAV");
-    expect([...standing.querySelectorAll("[data-place-path]")].map((one) => one.textContent)).toEqual(workshop.map((place) => place.label));
+    expect([...standing.querySelectorAll(":scope > [data-place-path]")].map((one) => one.textContent)).toEqual(workshop.filter((place) => place.primary !== false).map((place) => place.label));
     const here = standing.querySelector('[aria-current="page"]')!;
     expect(here.getAttribute("data-testid")).toBe("app-place-place:deliverable:email-to-todd");
     expect(here.getAttribute("data-place-path")).toBe("/places/email-to-todd");
     expect(at.querySelector('[data-testid="app-place-current"]')?.textContent).toBe("Email to Todd");
-    // The one control is gone, and nothing is folded.
-    expect(at.querySelector('[data-testid="app-places-open"]')).toBeNull();
+    // The one control is gone; what supports the work is in More.
+    expect(at.querySelector('[data-testid="app-places-open"]')?.textContent).toBe("More");
     // No pill: a place standing is words, underlined where you are.
     const css = at.querySelector("style")?.textContent ?? "";
     expect(css).toMatch(/\.graview-bar-at\{[^}]*border-radius:0/);

@@ -194,6 +194,7 @@ const SHAPES: Record<EditOp, z.ZodType> = {
       order: z.union([z.array(kindName).max(40), z.null()]).optional(),
       hide: z.union([z.array(kindName).max(40), z.null()]).optional(),
       first: z.union([z.string().min(1).max(80), z.null()]).optional(),
+      primary: z.union([z.array(z.string().min(1).max(80)).max(40), z.null()]).optional(),
       scene: z.union([z.string().min(1).max(40), z.null()]).optional(),
       pages: z.union([z.string().min(1).max(40), z.null()]).optional(),
       // The scene's word as a chat or a tool written before 0.1.17 sends it (FR-132's key, RESPELLED as `scene`).
@@ -968,7 +969,13 @@ class Editor {
     // `overview` is the scene's word as 0.1.15 and 0.1.16 took it (FR-134): read as `scene`, which wins when both are said.
     const { overview, ...rest } = given;
     const e: Doc = rest.scene === undefined && overview !== undefined ? { ...rest, scene: overview } : rest;
-    if (e.order === undefined && e.hide === undefined && e.first === undefined && e.scene === undefined && e.pages === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide", "first", "scene" or "pages"');
+    if (e.order === undefined && e.hide === undefined && e.first === undefined && e.scene === undefined && e.pages === undefined && e.primary === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide", "first", "primary", "scene" or "pages"');
+    for (const [n, word] of (e.primary ?? []).entries()) {
+      if (typeof word !== "string" || !this.opens(word) || word.trim().toLowerCase() === "home") {
+        const titles = (this.doc.lenses ?? []).flatMap((lens: Doc) => (isObject(lens) && typeof lens["title"] === "string" ? [`"${lens["title"]}"`] : []));
+        return this.fail(i, `primary.${n}`, `"${word}" is not a kind or a place to stand on the bar (Home always does)`, `name a kind (${Object.keys(this.doc.kinds).join(", ")}) or a place (${titles.join(", ") || "none is declared"})`);
+      }
+    }
     const kinds = Object.keys(this.doc.kinds);
     for (const part of ["order", "hide"] as const) {
       for (const [n, kind] of (e[part] ?? []).entries()) {
@@ -1008,6 +1015,15 @@ class Editor {
       } else {
         pages.first = e.first;
         said.push(`the app opens on "${e.first}"`);
+      }
+    }
+    if (e.primary !== undefined) {
+      if (e.primary === null || e.primary.length === 0) {
+        delete pages.primary;
+        said.push("the bar stands up the main kinds and their pictures");
+      } else {
+        pages.primary = [...e.primary];
+        said.push(`the bar stands up ${listOf(e.primary.map((word: string) => `"${word}"`))} beside Home`);
       }
     }
     // What the bar's switch calls the two faces (FR-137); the scene's address stays /places/overview.
@@ -1221,7 +1237,7 @@ class Editor {
     gone.push(...this.pruneViews(swept), ...this.pruneLenses(swept));
     // The arrangement names kinds (FR-80): a kind that is gone is no longer ordered or hidden, nor where the app opens.
     if (this.doc.pages) {
-      for (const part of ["order", "hide"] as const) {
+      for (const part of ["order", "hide", "primary"] as const) {
         const named = this.doc.pages[part];
         if (Array.isArray(named)) this.doc.pages[part] = named.filter((k: string) => k !== kind);
       }
@@ -1723,7 +1739,7 @@ class Editor {
     // Pages name kinds: in the order, the kinds the home leaves off, and where the app opens (FR-80).
     if (r.t === "kind" && doc.pages) {
       const before = JSON.stringify(doc.pages);
-      for (const part of ["order", "hide"] as const) if (Array.isArray(doc.pages[part])) doc.pages[part] = doc.pages[part].map((k: string) => (k === r.from ? r.to : k));
+      for (const part of ["order", "hide", "primary"] as const) if (Array.isArray(doc.pages[part])) doc.pages[part] = doc.pages[part].map((k: string) => (k === r.from ? r.to : k));
       if (doc.pages.first === r.from) doc.pages.first = r.to;
       if (JSON.stringify(doc.pages) !== before) touched.push("the pages");
     }

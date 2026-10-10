@@ -1,8 +1,8 @@
 import { AppBar, barPlaceAt, barPlaces, Profile, StandingDot, standingWords, toolStyle, useFavicon } from "@graview/primitives/pages";
-import { faviconHref, pagesTitle, sceneTitle } from "@graview/core";
+import { faviconHref, pagesTitle, pluralLabel, sceneTitle } from "@graview/core";
 import type { AnySchema } from "@graview/core";
 import { Link, useHref, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { BarFind } from "@graview/primitives/pages";
 import type { ReactNode } from "react";
 import { kindOfSlug } from "./registry.js";
@@ -201,6 +201,29 @@ export function PageFind<S extends AnySchema>({
   const onList = narrowsLists && segments.length === 1 && kindOfSlug(context.store.schema, segments[0]!) !== undefined;
   const onSearch = location.pathname === "/search";
   const addressed = onList || onSearch ? (params.get("q") ?? "") : "";
+  /*
+   * "NARROW ALBUMS…" WHERE IT FITS, "NARROW…" WHERE IT DOES NOT. The box is
+   * as wide as the bar can spare, and a placeholder cut at its edge
+   * ("Narrow albu") says less than the short one: the words are measured
+   * in the box's own face against the room inside it.
+   */
+  const narrowing = onList ? `Narrow ${pluralLabel(context.store.schema, kindOfSlug(context.store.schema, segments[0]!)!).toLowerCase()}…` : "";
+  const [named, setNamed] = useState(true);
+  useLayoutEffect(() => {
+    const input = box.current;
+    if (!input || !narrowing || typeof ResizeObserver === "undefined") return;
+    const measure = () => {
+      const style = getComputedStyle(input);
+      const pen = document.createElement("canvas").getContext("2d");
+      if (!pen) return;
+      pen.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+      setNamed(pen.measureText(narrowing).width <= input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
+    };
+    measure();
+    const watch = new ResizeObserver(measure);
+    watch.observe(input);
+    return () => watch.disconnect();
+  }, [narrowing]);
   const [typed, setTyped] = useState(addressed);
   /* ⌘K or Ctrl+K, from the keyboard anywhere in the app or on nothing at all: this box (FR-131). The scene's own Find hears its own. */
   const box = useRef<HTMLInputElement>(null);
@@ -267,7 +290,7 @@ export function PageFind<S extends AnySchema>({
         data-testid="nav-find"
         value={typed}
         onChange={(event) => go(event.target.value)}
-        placeholder={onList ? "Narrow…" : "Find…"}
+        placeholder={onList ? (named ? narrowing : "Narrow…") : "Find…"}
         aria-keyshortcuts="Meta+K Control+K"
         aria-label={onList ? "Narrow this list" : "Find anything"}
         style={{

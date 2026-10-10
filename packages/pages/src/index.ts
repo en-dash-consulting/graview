@@ -7,6 +7,9 @@ export { DerivedForm } from "./form.js";
 export type { DerivedFormProps } from "./form.js";
 export {
   DefaultHomePage,
+  ARRANGE_FROM,
+  LARGE_LIST,
+  ListPage,
   DefaultListPage,
   DefaultMapPage,
   DefaultPlacePage,
@@ -34,7 +37,7 @@ export {
   PageMain,
   Repairs,
 } from "./pages.js";
-export type { PageContext, GalleryEntry, Beginning } from "./pages.js";
+export type { PageContext, GalleryEntry, Beginning, ListPageProps, ListRowFacts } from "./pages.js";
 export { PageAsk } from "./ask.js";
 export { lastChangeOf, PageUndo } from "./face-controls.js";
 export type { FaceControl, LastChange } from "./face-controls.js";

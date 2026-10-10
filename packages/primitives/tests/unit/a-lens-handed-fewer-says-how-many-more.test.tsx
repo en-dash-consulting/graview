@@ -3,8 +3,10 @@ import { createSchema, defineNode } from "@graview/core";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { ArrangeBar, withMore } from "../../src/index.js";
-import { FAR_ENDS } from "../../src/arrange-bar.js";
+import { withMore } from "../../src/index.js";
+import { filterEntries } from "../../src/arrange-lists.js";
+import { arrangeable } from "@graview/core/arrange";
+import { FAR_ENDS } from "../../src/arrange-lists.js";
 import { Graph } from "@graview/core";
 
 /**
@@ -36,8 +38,10 @@ describe("the row's menu of far ends", () => {
       nodes: [...members, { id: "r1", kind: "release", label: "One" }, { id: "r2", kind: "release", label: "Two" }] as never,
       edges: [{ kind: "tracks", from: "r1", to: "s7" }, { kind: "tracks", from: "r2", to: "s7" }],
     });
-    const html = renderToStaticMarkup(<ArrangeBar schema={both} graph={graph as never} kind="release" arrangement={{}} onChange={() => {}} />);
-    const options = [...html.matchAll(/<option value="tracks:([^"]+)"/g)].map((match) => match[1]).filter((value) => value !== "*" && value !== "none");
+    const options = filterEntries(both, graph as never, arrangeable(both, "release"))
+      .filter((entry) => entry.value.startsWith("tracks:"))
+      .map((entry) => entry.value.slice("tracks:".length))
+      .filter((value) => value !== "*" && value !== "none");
     expect(options.length).toBe(FAR_ENDS);
     // The most connected is among them.
     expect(options).toContain("s7");

@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { ArrangeBar, arrangementOf, sayCondition, withArrangement } from "../../src/index.js";
+import { filterEntries } from "../../src/arrange-lists.js";
 
 /**
  * One control row, drawn from the declaration, for every surface that
@@ -31,18 +32,19 @@ describe("the arrange bar", () => {
     const html = renderToStaticMarkup(
       <ArrangeBar schema={schema} graph={graph} kind="task" arrangement={parseArrangement({ sort: "due:desc", filter: "holds:today,done:false,is:past,due:before:2026-10-01", group: "due:month" })} onChange={() => {}} kept={{ shown: 1, of: 4 }} />,
     );
-    expect(html).toContain('data-testid="arrange-sort"');
-    expect(html).toContain(">Due date<");
-    expect(html).toContain('data-testid="arrange-direction"');
+    // The choices say themselves on the line, the direction and the width of a group included.
+    expect(html).toMatch(/data-testid="arrange-sort"[^>]*value="due"[^>]*aria-label="Sorted by due date, latest first"/);
+    expect(html).toContain("Sorted by due date");
     expect(html).toContain("↓");
-    expect(html).toContain('data-testid="arrange-bucket"');
+    expect(html).toMatch(/data-testid="arrange-group"[^>]*value="due"/);
+    expect(html).toContain("Grouped by due date, a month each");
     expect(html).toContain("The list it is on: Today");
     expect(html).toContain("Done: no");
     expect(html).toContain(">Past<");
     expect(html).toContain("Due date before 1 Oct 2026");
     expect(html).toContain("1 of 4");
     // The far ends an edge condition may name come from the graph.
-    expect(html).toContain('value="holds:today"');
+    expect(filterEntries(schema, graph, arrangeable(schema, "task")).map((entry) => entry.value)).toContain("holds:today");
   });
 
   it("declines a part when told to, and the whole row when told everything", () => {

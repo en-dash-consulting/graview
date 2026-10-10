@@ -130,6 +130,7 @@ import { fileURLToPath } from "node:url";
 import { ENGINES, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { arrangeByKeyboard, endClearsTheFoot, FIRST_RECORD_WITHIN, listHead } from "./lib/arranging-line.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const asked = process.argv.find((arg) => arg.startsWith("--engine="))?.slice("--engine=".length);
@@ -426,7 +427,7 @@ function measure() {
 const BAR_HELPERS = `${[barControls, linesOf, theSwitch, saysOverview, placesSaid].map(String).join("\n")}\nObject.assign(window, { barControls, linesOf, theSwitch, saysOverview, placesSaid });`;
 const host = await buildHost();
 const errors = [];
-const results = { standing: [], standingResized: [], standingPresses: [], quickPicks: [], boxes: [], boxSwitches: [], firstFrames: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [] };
+const results = { standing: [], standingResized: [], standingPresses: [], quickPicks: [], boxes: [], boxSwitches: [], firstFrames: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [], workshopLists: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -490,6 +491,26 @@ try {
             results.standingResized.push({ engine, scheme, face, seen });
             await close();
           }
+        }
+      }
+      /*
+       * ---- A LIST ARRANGES ON ONE QUIET LINE: Cloud's workshop's deliverables, as Cloud mounts them, at a desk and on a
+       * phone — the first record near the top, the count said once on the line, no select; arranged by the address, every
+       * way to arrange from the keyboard.
+       */
+      if (!ONLY_NOTICES && !ONLY_BOXES && !ONLY_PICKS && !ONLY_STANDING) {
+        for (const viewport of [{ width: 1440, height: 900 }, PHONE]) {
+          const { page, close } = await open(`doc=workshop&face=pages&heading=1&path=${encodeURIComponent("/deliverables")}`, viewport);
+          const head = { ...(await listHead(page)), end: await endClearsTheFoot(page) };
+          await close();
+          // Arranged by its address (two deliverables are read, not arranged, until an address asks).
+          let keys = null;
+          if (viewport.width >= 1000) {
+            const sorted = await open(`doc=workshop&face=pages&heading=1&path=${encodeURIComponent("/deliverables?sort=label")}`, viewport);
+            keys = await arrangeByKeyboard(sorted.page, "arrange");
+            await sorted.close();
+          }
+          results.workshopLists.push({ engine, scheme, width: viewport.width, ...head, ...(keys ? { keys } : {}) });
         }
       }
       if (ONLY_STANDING) continue;
@@ -893,7 +914,7 @@ try {
   const standingAll = standing.length === engines.length * SCHEMES.length * 2 * (STANDING_PAGES.length + STANDING_BOXES.length);
   const standingAt = (face, width, box = 0) => standing.filter((one) => one.face === face && one.width === width && one.box === box);
   const whereStanding = ({ engine, scheme, face, where }) => ({ engine, scheme, face: face === "pages" ? "pages" : "scene", where });
-  const fewerAt1280 = standingAt("pages", 1280).every((one) => one.place.standing < (standingAt("pages", 1920).find((wide) => wide.engine === one.engine && wide.scheme === one.scheme)?.place.standing ?? 0));
+  const noMoreAt1280 = standingAt("pages", 1280).every((one) => one.place.standing <= (standingAt("pages", 1920).find((wide) => wide.engine === one.engine && wide.scheme === one.scheme)?.place.standing ?? 0));
   const pressesAll = results.standingPresses.length === engines.length * SCHEMES.length * (2 + (STANDING_PAGES.includes(1024) ? 3 : 2));
   const STANDING_CHECKS = {
     theBarIsOneRowOfAtMost48PxEveryControlOnItsMiddleOnBothFacesAtEveryWidthAndBox: {
@@ -904,9 +925,14 @@ try {
       seen: standing.map((one) => ({ ...whereStanding(one), place: one.place })),
       ok: standingAll && standing.every((one) => one.place.said === (one.face === "pages" ? "Email to Todd" : "The whole thing") && one.place.seen && ((one.box || one.width) < BAR_PHONE_WIDTH ? one.place.firstLine : one.place.onTheRow)),
     },
-    fourOrMorePlacesStandAt1920OnPagesAndFewerAt1280: {
+    /*
+     * RANKED (FR-145): the workshop's main places — Home, its three kinds and
+     * its two pictures — stand at 1920, and Connections, which reads the
+     * declaration rather than the work, folds into More however wide the row.
+     */
+    theMainPlacesStandOnPagesAndTheRestFoldIntoMore: {
       seen: [...standingAt("pages", 1920), ...standingAt("pages", 1280)].map((one) => ({ ...whereStanding(one), standing: one.place.standing, opener: one.place.opener })),
-      ok: standingAll && standingAt("pages", 1920).every((one) => one.place.standing >= 4) && standingAt("pages", 1280).every((one) => one.place.standing >= 2 && one.place.opener === "More") && fewerAt1280,
+      ok: standingAll && standingAt("pages", 1920).every((one) => one.place.standing === 6 && one.place.opener === "More") && standingAt("pages", 1280).every((one) => one.place.standing >= 2 && one.place.opener === "More") && noMoreAt1280,
     },
     theScenesPicturesStandAt1920: {
       seen: standingAt("graview", 1920).map((one) => ({ ...whereStanding(one), standing: one.place.standing, opener: one.place.opener })),
@@ -932,6 +958,15 @@ try {
     },
   };
   if (!ONLY_NOTICES && !ONLY_BOXES && !ONLY_PICKS) Object.assign(report.checks, STANDING_CHECKS);
+  if (!ONLY_NOTICES && !ONLY_BOXES && !ONLY_PICKS && !ONLY_STANDING) {
+    report.checks.theWorkshopsListArrangesOnOneQuietLine = {
+      within: FIRST_RECORD_WITHIN,
+      seen: results.workshopLists,
+      ok:
+        results.workshopLists.length === engines.length * SCHEMES.length * 2 &&
+        results.workshopLists.every((one) => one.fromTop !== null && one.fromTop <= (one.width >= 1000 ? FIRST_RECORD_WITHIN.desk : FIRST_RECORD_WITHIN.phone) && one.selects === 0 && !one.countedInAnEyebrow && one.count === "2 deliverables" && !one.scrolls && one.end.ok && (one.keys === undefined || one.keys.ok)),
+    };
+  }
   /* FR-133 */
   const notices = results.notices;
   const allNotices = notices.length === engines.length * SCHEMES.length * 4;

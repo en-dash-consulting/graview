@@ -26,6 +26,12 @@ export const rotaApp = defineApp({
   settings: readerSettings(),
   brand: rotaBrand,
   /*
+   * WHAT STANDS ON THE BAR (FR-145, ranked): the shifts, who covers them,
+   * and the two pictures a coordinator opens every day. Where shifts
+   * happen, the rules and the quarter are one press further, in "More".
+   */
+  pages: { primary: ["shift", "volunteer", "The week", "The fortnight"] },
+  /*
    * FIVE PICTURES OF ONE ROSTER, declared and drawn (FR-79) — not one of
    * them written or registered in the UI. Each has a title, so it is a
    * place; the framework draws it from these lines. The week is the last

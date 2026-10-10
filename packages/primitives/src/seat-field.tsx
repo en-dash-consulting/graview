@@ -107,6 +107,33 @@ export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start 
     if (typeof window !== "undefined") window.dispatchEvent(new Event(FOOT_MOVED));
   }, [open, talk.side, phone]);
 
+  /*
+   * THE END OF A PAGE SCROLLS CLEAR OF THE FIELD. The field stands over the
+   * page's foot, and on a phone it covered a list's last row however far
+   * the page scrolled. Closed, it says how much room it takes from the
+   * bottom — its height, where it stands, and a gutter — as
+   * `--graview-foot-room` on the embed (or the page), and a page that ends
+   * under it pads its end by that much (`PageMain`, an app's own main).
+   */
+  useEffect(() => {
+    const element = region.current;
+    if (hidden || open || !element || typeof window === "undefined") return;
+    const holder = (element.closest<HTMLElement>("[data-graview-embed]") ?? document.documentElement).style;
+    const measure = () => {
+      const box = element.getBoundingClientRect();
+      const frame = element.offsetParent?.getBoundingClientRect();
+      const from = frame ? frame.bottom - box.top : box.height + GAP;
+      holder.setProperty("--graview-foot-room", `${Math.max(0, Math.round(from + GAP))}px`);
+    };
+    measure();
+    const watch = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    watch?.observe(element);
+    return () => {
+      watch?.disconnect();
+      holder.removeProperty("--graview-foot-room");
+    };
+  }, [hidden, open, phone, talk.side]);
+
   /* ASKED FROM ELSEWHERE (Find's "Ask:" row): the keyboard comes to the field, so the reader can go on. */
   useEffect(() => {
     if (!open || talk.pending === null) return;

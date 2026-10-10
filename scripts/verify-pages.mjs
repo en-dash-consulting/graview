@@ -17,6 +17,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
+import { arrangeByKeyboard, chooseOnTheLine, endClearsTheFoot, FIRST_RECORD_WITHIN, listHead } from "./lib/arranging-line.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -37,6 +38,7 @@ const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };
 let browser;
 let vite;
 let garden;
+let catalog;
 
 const hygiene = (page) =>
   page.evaluate(() => ({
@@ -205,9 +207,10 @@ try {
    */
   const desk2 = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await desk2.goto(`${at("todo")}/pages/tasks?today=2026-09-01&fresh=1`, { waitUntil: "networkidle" });
-  await desk2.waitForSelector('[data-testid="list-controls"]', { timeout: 20_000 });
-  await desk2.selectOption('[data-testid="list-group"]', "due");
-  await desk2.fill('[data-testid="list-query"]', "the");
+  await desk2.waitForSelector('[data-testid="arrange-bar"]', { timeout: 20_000 });
+  await chooseOnTheLine(desk2, "arrange", "group", "due");
+  await desk2.waitForTimeout(300);
+  await desk2.fill('[data-testid="nav-find"]', "the");
   await desk2.waitForTimeout(400);
   const arranged = await desk2.evaluate(() => ({
     url: location.search,
@@ -215,11 +218,11 @@ try {
   }));
   // A link somebody could send: opened cold, the same arrangement.
   await desk2.goto(`${at("todo")}/pages/tasks${arranged.url}&today=2026-09-01`, { waitUntil: "networkidle" });
-  await desk2.waitForSelector('[data-testid="list-controls"]', { timeout: 20_000 });
+  await desk2.waitForSelector('[data-testid="arrange-bar"]', { timeout: 20_000 });
   await desk2.waitForTimeout(300);
   const reopened = await desk2.evaluate(() => ({
-    group: document.querySelector('[data-testid="list-group"]')?.value,
-    query: document.querySelector('[data-testid="list-query"]')?.value,
+    group: document.querySelector('button[data-testid="arrange-group"]')?.value,
+    query: document.querySelector('[data-testid="nav-find"]')?.value,
     rows: document.querySelectorAll('[data-testid="records"] li').length,
   }));
   report.checks.aListYouArrangedIsALinkYouCanSend = {
@@ -233,12 +236,62 @@ try {
       reopened.rows === arranged.rows,
   };
 
+  /*
+   * A LIST ARRANGES ON ONE QUIET LINE (todo's own list page, which draws the
+   * framework's line). Nick, on Cloud's "Purchase scenarios": "these
+   * filters/controls are annoying, ugly, and consume a lot of real estate".
+   * The first record stands near the top at a desk and on a phone; the
+   * count is said once, on the line, never in an eyebrow; no select is left
+   * for arranging; the keyboard reaches every way to arrange; an address
+   * opens the list arranged; and a list short enough to read has no
+   * controls at all.
+   */
+  const quiet = { heads: [], keys: [], addressed: null, short: [] };
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    const page = await browser.newPage({ viewport });
+    for (const path of ["/pages/tasks", "/pages/reasons"]) {
+      await page.goto(`${at("todo")}${path}?today=2026-09-01`, { waitUntil: "networkidle" });
+      await page.waitForSelector('[data-testid="records"]', { timeout: 20_000 });
+      await page.waitForTimeout(300);
+      const head = await listHead(page);
+      quiet.heads.push({ app: "todo", path, width: viewport.width, ...head, end: await endClearsTheFoot(page) });
+      if (path === "/pages/reasons") quiet.short.push({ width: viewport.width, count: head.count, controls: await page.locator('[data-testid="arrange-sort"], [data-testid="arrange-all"]').count() });
+    }
+    await page.goto(`${at("todo")}/pages/tasks?today=2026-09-01`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(300);
+    quiet.keys.push({ width: viewport.width, ...(await arrangeByKeyboard(page, "arrange")) });
+    if (viewport.width === 1440) {
+      await page.goto(`${at("todo")}/pages/tasks?sort=due:desc&group=due:month&today=2026-09-01`, { waitUntil: "networkidle" });
+      await page.waitForTimeout(300);
+      quiet.addressed = await page.evaluate(() => ({
+        sort: document.querySelector('button[data-testid="arrange-sort"]')?.value ?? null,
+        sortSaid: document.querySelector('button[data-testid="arrange-sort"]')?.getAttribute("aria-label") ?? null,
+        group: document.querySelector('button[data-testid="arrange-group"]')?.value ?? null,
+        groupSaid: document.querySelector('button[data-testid="arrange-group"]')?.textContent?.trim() ?? null,
+        headings: [...document.querySelectorAll('[data-testid="list-group"] h2')].map((h) => (h.textContent ?? "").trim()),
+      }));
+    }
+    await page.close();
+  }
+  report.checks.aListsFirstRecordStandsNearTheTopOfThePage = {
+    within: FIRST_RECORD_WITHIN,
+    seen: quiet.heads,
+    ok: quiet.heads.length === 4 && quiet.heads.every((one) => one.fromTop !== null && one.fromTop <= (one.width >= 1000 ? FIRST_RECORD_WITHIN.desk : FIRST_RECORD_WITHIN.phone) && !one.countedInAnEyebrow && !one.scrolls && one.count !== null && one.end.ok),
+  };
+  report.checks.noSelectArrangesAList = { seen: quiet.heads.map(({ path, width, lines, selects }) => ({ path, width, lines, selects })), ok: quiet.heads.every((one) => one.selects === 0) };
+  report.checks.everyWayToArrangeAListIsReachedByTheKeyboard = { seen: quiet.keys, ok: quiet.keys.length === 2 && quiet.keys.every((one) => one.ok) };
+  report.checks.anArrangedAddressOpensTheListArranged = {
+    seen: quiet.addressed,
+    ok: quiet.addressed !== null && quiet.addressed.sort === "due" && /latest first/.test(quiet.addressed.sortSaid ?? "") && quiet.addressed.group === "due" && /a month each/.test(quiet.addressed.groupSaid ?? "") && quiet.addressed.headings.length >= 2,
+  };
+  report.checks.aShortListIsReadNotArranged = { seen: quiet.short, ok: quiet.short.length === 2 && quiet.short.every((one) => one.count === "1 reason" && one.controls === 0) };
+
   /* An empty state that says what to do next, rather than a blank page. */
-  await desk2.fill('[data-testid="list-query"]', "zzzz");
+  await desk2.fill('[data-testid="nav-find"]', "zzzz");
   await desk2.waitForTimeout(400);
   const empty = await desk2.evaluate(() => ({
-    said: document.querySelector('[data-testid="empty"]')?.textContent?.trim() ?? null,
-    away: document.querySelectorAll('[data-testid="empty"] button, [data-testid="empty"] a').length,
+    said: document.querySelector('[data-testid="empty"], [data-testid="none-yet"]')?.textContent?.trim() ?? null,
+    away: document.querySelectorAll('[data-testid="empty"] button, [data-testid="empty"] a, [data-testid="none-yet"] a, [data-testid="beginnings"] button').length,
   }));
   report.checks.anEmptyStateSaysWhatToDoNext = {
     ...empty,
@@ -265,11 +318,11 @@ try {
     taskList: document.querySelector('[data-testid="search-group"][data-kind="task"] [data-testid="search-kind-link"]')?.getAttribute("href") ?? null,
   }));
   await finder.click('[data-testid="search-group"][data-kind="task"] [data-testid="search-kind-link"]');
-  await finder.waitForSelector('[data-testid="list-controls"]', { timeout: 20_000 });
+  await finder.waitForSelector('[data-testid="arrange-bar"]', { timeout: 20_000 });
   await finder.waitForTimeout(300);
   const intoTheList = await finder.evaluate(() => ({
     url: location.pathname + location.search,
-    query: document.querySelector('[data-testid="list-query"]')?.value ?? null,
+    query: document.querySelector('[data-testid="nav-find"]')?.value ?? null,
     rows: document.querySelectorAll('[data-testid="records"] li').length,
   }));
   await finder.goto(`${at("todo")}/pages/?today=2026-09-01`, { waitUntil: "networkidle" });
@@ -485,6 +538,8 @@ try {
   const before = await phone.evaluate(
     () => document.querySelectorAll('[data-testid="records"] a').length,
   );
+  // Adding one is a press at the list's end: its form opens there.
+  if (!(await phone.locator('[data-testid="form-add-task"]').isVisible().catch(() => false))) await phone.click('[data-testid="act-open-add-task"]');
   await phone.fill('[data-testid="form-add-task"] input[name="label"]', "Buy compost");
   await phone.selectOption('[data-testid="form-add-task"] select[name="listId"]', { index: 1 });
   await phone.click('[data-testid="form-add-task"] button[type="submit"]');
@@ -657,13 +712,97 @@ try {
   const narrowed = await bed.evaluate(() => ({
     path: location.pathname + location.search,
     rows: document.querySelectorAll('[data-testid="records"] li').length,
-    note: document.querySelector('[data-testid="list-filter-note"]')?.textContent?.trim() ?? null,
+    note: [...document.querySelectorAll('[data-testid="arrange-condition"]')].map((token) => token.textContent?.trim()).join(" ") || null,
   }));
   report.checks.aRecordLinksTheOtherWayRound = {
     related,
     ...narrowed,
     ok: related === "/pages/plots?tended-by=june" && narrowed.rows === 1 && narrowed.note !== null && narrowed.note.includes("June"),
   };
+  /* The same line on the framework's own list page, which seedbed keeps: near the top, no select, every way to arrange by keyboard. */
+  {
+    const heads = [];
+    let keys = null;
+    for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+      const page = await browser.newPage({ viewport });
+      await page.goto(`${at("seedbed")}/pages/plantings?chapter=9&sort=label`, { waitUntil: "networkidle" });
+      await page.waitForSelector('[data-testid="records"]', { timeout: 20_000 });
+      await page.waitForTimeout(300);
+      heads.push({ width: viewport.width, ...(await listHead(page)) });
+      if (viewport.width === 1440) keys = await arrangeByKeyboard(page, "arrange");
+      await page.close();
+    }
+    report.checks.theDerivedListArrangesOnOneQuietLine = {
+      heads,
+      keys,
+      ok: heads.every((one) => one.fromTop !== null && one.fromTop <= (one.width >= 1000 ? FIRST_RECORD_WITHIN.desk : FIRST_RECORD_WITHIN.phone) && one.selects === 0 && !one.countedInAnEyebrow && !one.scrolls) && keys?.ok === true,
+    };
+  }
+  /*
+   * A LARGE LIST HAS A WAY THROUGH IT (Discography's 479 albums, its own
+   * design drawing the framework's list): newest first, said on the line;
+   * each row saying whose and when; an index of years that jumps; and the
+   * bar's "Narrow…" never cut at its box's edge, at a desk and on a phone.
+   */
+  catalog = await startVite("discography", portFor("discography"));
+  {
+    const seen = [];
+    for (const viewport of [{ width: 1440, height: 900 }, { width: 1280, height: 800 }, { width: 390, height: 844 }]) {
+      const page = await browser.newPage({ viewport });
+      await page.goto(`${at("discography")}/pages/albums`, { waitUntil: "networkidle" });
+      await page.waitForSelector('[data-testid="records"]', { timeout: 30_000 });
+      await page.waitForTimeout(400);
+      const read = await page.evaluate(() => {
+        const box = document.querySelector('[data-testid="nav-find"]');
+        let placeholderFits = null;
+        if (box && box.getBoundingClientRect().width > 0) {
+          const style = getComputedStyle(box);
+          const pen = document.createElement("canvas").getContext("2d");
+          pen.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+          placeholderFits = pen.measureText(box.placeholder).width <= box.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) + 0.5;
+        }
+        const rows = [...document.querySelectorAll('[data-testid="records"] [data-testid="record-row"]')];
+        return {
+          sort: document.querySelector('button[data-testid="arrange-sort"]')?.getAttribute("aria-label") ?? null,
+          years: [...document.querySelectorAll('[data-testid="list-index"] a')].map((a) => a.textContent?.trim()).slice(0, 4),
+          rows: rows.length,
+          saysWhoseAndWhen: rows.slice(0, 20).every((row) => /\d{4}/.test(row.textContent ?? "") && (row.textContent ?? "").includes(" · ")),
+          placeholder: box?.placeholder ?? null,
+          placeholderFits,
+          selects: [...document.querySelectorAll('[role="group"][aria-label="Arrange"] select')].length,
+          eyebrow: document.querySelector(".ln-eyebrow") !== null && document.querySelector("main .ln-eyebrow")?.textContent?.includes("discography"),
+        };
+      });
+      // The index jumps: the fifth year's heading comes to the top of the window.
+      const fifth = page.locator('[data-testid="list-index"] a').nth(4);
+      let jumped = null;
+      if (await fifth.isVisible().catch(() => false)) {
+        const year = (await fifth.textContent())?.trim();
+        await fifth.click();
+        await page.waitForTimeout(300);
+        jumped = await page.evaluate((year) => {
+          const heading = [...document.querySelectorAll('[data-testid="list-section"] h2')].find((h) => h.textContent?.trim() === year);
+          return heading ? Math.round(heading.getBoundingClientRect().top) : null;
+        }, year);
+      }
+      seen.push({ width: viewport.width, ...read, jumped });
+      await page.close();
+    }
+    report.checks.aLargeListHasAWayThrough = {
+      seen,
+      ok: seen.every(
+        (one) =>
+          /^Sorted by released, latest first$/.test(one.sort ?? "") &&
+          one.years.length === 4 &&
+          one.rows > 400 &&
+          one.saysWhoseAndWhen &&
+          one.selects === 0 &&
+          !one.eyebrow &&
+          (one.placeholderFits === null || one.placeholderFits) &&
+          one.jumped !== null && one.jumped >= 0 && one.jumped < 160,
+      ),
+    };
+  }
   report.checks.phoneMap = await (async () => {
     const small = await browser.newPage({ viewport: { width: 390, height: 844 } });
     await small.goto(`${at("seedbed")}/pages/map?chapter=9`, { waitUntil: "networkidle" });
@@ -857,6 +996,9 @@ try {
   }
   if (garden) {
     garden.stop();
+  }
+  if (catalog) {
+    catalog.stop();
   }
 }
 
