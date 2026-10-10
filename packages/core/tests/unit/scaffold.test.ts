@@ -11,6 +11,9 @@ import {
   slugify,
   validateScaffoldOptions,
 } from "../../src/scaffold/index.js";
+import { agentRules, SKILLS_BEGIN, SKILLS_END } from "../../src/scaffold/agents.js";
+import { generateAgentsMd } from "../../src/cli/docs.js";
+import { createSchema } from "../../src/index.js";
 
 /**
  * The generator decides what a new project IS. `scripts/smoke-create.mjs`
@@ -84,6 +87,8 @@ describe("what a project starts with", () => {
       "embed.html",
       ".gitignore",
       "README.md",
+      "AGENTS.md",
+      "CLAUDE.md",
       "src/domain/schema.ts",
       "src/domain/mutations.ts",
       "src/domain/invariants.ts",
@@ -490,6 +495,9 @@ describe("a workspace, which is what a product actually is", () => {
     expect(at(".gitignore")).toBeDefined();
     expect(at(".github/workflows/ci.yml")).toBeDefined();
     expect(at("app/README.md")).toBeUndefined();
+    expect(at("AGENTS.md")?.contents).toContain("app/docs/agents.md");
+    expect(at("CLAUDE.md")?.contents).toBe("@AGENTS.md\n");
+    expect(at("app/AGENTS.md")).toBeUndefined();
   });
 
   /*
@@ -513,6 +521,9 @@ describe("a workspace, which is what a product actually is", () => {
       expect(ignored("app/data/store.json")).toBe(true);
       expect(ignored("src/data/seed.json")).toBe(false);
       expect(ignored("app/src/data/seed.json")).toBe(false);
+      /* What an agent reads about the app is committed, and verify keeps it current. */
+      expect(ignored("docs/agents.md")).toBe(false);
+      expect(ignored("app/docs/llms.txt")).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -576,5 +587,48 @@ describe("what a first build says", () => {
       /* React keeps its own, because it changes on nobody's schedule but its own. */
       expect(config).toContain('return "vendor"');
     }
+  });
+});
+
+/*
+ * AN AGENT OPENING THE REPOSITORY COLD found README.md and nothing else at
+ * the root: fifteen skills installed and a generated contract in docs/, and
+ * the loop to be discovered. The root now says it, and CLAUDE.md imports it.
+ */
+describe("what an agent reads first", () => {
+  const project = scaffoldProject({ name: "Field Notes", kind: "note" });
+  const notes = project.files.find((file) => file.path === "AGENTS.md")!.contents;
+
+  it("is AGENTS.md at the root, with the loop, the three rules and a place for the skills", () => {
+    expect(notes).toContain("# Field Notes");
+    expect(notes).toContain("pnpm check");
+    expect(notes).toContain("pnpm verify");
+    expect(notes).toContain("1. **The graph is the interface.**");
+    expect(notes).toContain("2. **Only these mutations exist:**");
+    expect(notes).toContain("3. **Preview before you apply.**");
+    expect(notes).toContain(SKILLS_BEGIN);
+    expect(notes).toContain(SKILLS_END);
+  });
+
+  it("says the rules in the same words docs/agents.md does, because one function says both", () => {
+    const generated = generateAgentsMd({ name: "Field Notes", schema: createSchema([]), mutations: [] } as never);
+    for (const line of agentRules("").slice(2)) {
+      if (line.includes("Only these")) continue;
+      expect(notes).toContain(line);
+      expect(generated).toContain(line);
+    }
+  });
+
+  it("is imported by a one-line CLAUDE.md", () => {
+    expect(project.files.find((file) => file.path === "CLAUDE.md")?.contents).toBe("@AGENTS.md\n");
+  });
+
+  it("has verify write docs/agents.md and docs/llms.txt, which are not ignored", () => {
+    const manifest = JSON.parse(project.files.find((file) => file.path === "package.json")!.contents) as {
+      scripts: Record<string, string>;
+    };
+    expect(manifest.scripts["verify"]).toMatch(/graview docs \.\/dist\/domain\/app\.js --out docs$/);
+    const ignore = project.files.find((file) => file.path === ".gitignore")!.contents;
+    expect(ignore).not.toContain("docs/");
   });
 });

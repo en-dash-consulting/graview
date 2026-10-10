@@ -157,6 +157,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The places move out of the bar (FR-138)](./the-places-move-out-of-the-bar-fr-138.md) | completed |
 | [The record names Graview Cloud and npm as they are](./the-record-names-graview-cloud-and-npm.md) | completed |
 | [The scene and the pages are two things, and the bar says so (FR-137)](./the-scene-and-the-pages-are-two-things.md) | completed |
+| [The scene from a page that is nothing lands where the scene opens (FR-157)](./the-scene-from-a-page-that-is-nothing.md) | completed |
 | [The scene has its place control in the bar (FR-144)](./the-scene-has-its-place-control-in-the.md) | completed |
 | [The scene is a place, not a mode (FR-132)](./the-scene-is-a-place-not-a-mode-fr-132.md) | completed |
 | [The seat view serves an op that names a record that isn't there (FR-67)](./the-seat-view-serves-an-op-that-names.md) | completed |

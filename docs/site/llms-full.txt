@@ -82,11 +82,11 @@ graview create <dir> [--name "Field Notes"] [--kind note] [--plural notes]
 
 ```
 
-## What it writes (20 files)
+## What it writes (22 files)
 
 The declaration split into domain and UI, so the domain has no React in it and `graview check` can read it headless. `src/domain/` is the whole surface you will work in; the shell in `src/ui/` is eighty lines made of framework parts, and every one of them can be replaced.
 
-`package.json`, `tsconfig.json`, `tsconfig.build.json`, `vite.config.ts`, `index.html`, `embed.html`, `.gitignore`, `README.md`, `src/domain/schema.ts`, `src/domain/mutations.ts`, `src/domain/invariants.ts`, `src/domain/brand.ts`, `src/domain/app.ts`, `src/ui/views.tsx`, `src/ui/app.tsx`, `src/ui/pages.tsx`, `src/main.tsx`, `src/embed.tsx`, `tests/domain.test.ts`, `.github/workflows/ci.yml`
+`package.json`, `tsconfig.json`, `tsconfig.build.json`, `vite.config.ts`, `index.html`, `embed.html`, `.gitignore`, `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/domain/schema.ts`, `src/domain/mutations.ts`, `src/domain/invariants.ts`, `src/domain/brand.ts`, `src/domain/app.ts`, `src/ui/views.tsx`, `src/ui/app.tsx`, `src/ui/pages.tsx`, `src/main.tsx`, `src/embed.tsx`, `tests/domain.test.ts`, `.github/workflows/ci.yml`
 
 Dependencies: `@graview/core`, `@graview/layout`, `@graview/tools`, `@graview/render`, `@graview/react`, `@graview/primitives`, `@graview/pages`, `@graview/ship`, `@graview/embed`, `@graview/studio`, `@graview/guest`, `react`, `react-dom`, `react-router-dom`. Dev: `graview`, `@types/node`, `@types/react`, `@types/react-dom`, `typescript`, `vite`, `vitest`. No zod of your own — `@graview/core` re-exports `z`, so a kind's fields are built with exactly the copy the framework was built with.
 
@@ -104,7 +104,7 @@ Dependencies: `@graview/core`, `@graview/layout`, `@graview/tools`, `@graview/re
 | `npm run serve` | `npm run build:domain && graview serve ./dist/domain/app.js --data data` |
 | `npm run mcp` | `npm run build:domain && graview mcp ./dist/domain/app.js --data data` |
 | `npm run skills` | `graview skills install .` |
-| `npm run verify` | `npm run typecheck && npm run test && npm run build && npm run check` |
+| `npm run verify` | `npm run typecheck && npm run test && npm run build && npm run check && graview docs ./dist/domain/app.js --out docs` |
 
 **Start with `verify`** — typecheck, tests, build and `graview check`, in that order — and then `dev`: the scene at the root, the routed face at `/pages`.
 
@@ -405,15 +405,15 @@ Source: https://graview.dev/docs/checks.html
 
 # What `graview check` says
 
-`graview check` reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 89 things, read here out of the checker's own source. An **error** should fail your build. A **warning** is a judgment call. A **note** is a question worth answering once.
+`graview check` reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 88 things, read here out of the checker's own source. An **error** should fail your build. A **warning** is a judgment call. A **note** is a question worth answering once.
 
 ## 57 errors
 
 `brand-accent-not-a-hue`, `brand-accent-unknown-kind`, `brand-currency`, `brand-locale`, `creates-unknown-kind`, `edge-claim-unknown-kind`, `edge-name-shared`, `edge-target-undeclared`, `field-role-missing-field`, `figure-undrawable`, `figure-unknown-kind`, `fixed-unknown-field`, `glance-unknown-field`, `grant-unknown-kind`, `grant-unknown-mutation`, `intelligence-decision-cannot-call`, `intelligence-reach-unknown`, `intelligence-unknown-mutation`, `invariant-scope-undeclared`, `kit-contrast-below-aa`, `lens-binding-empty`, `lens-binding-empty-path`, `lens-binding-fieldless-owner`, `lens-binding-missing-field`, `lens-binding-not-a-field`, `lens-binding-path-misses`, `lens-binding-undeclared-edge`, `lens-binding-undeclared-kind`, `lens-role-unbound`, `lifecycle-missing-field`, `lifecycle-never-retires`, `migration-gap`, `migration-not-single-step`, `migration-without-version`, `module-unknown-invariant`, `module-unknown-kind`, `module-unknown-mutation`, `module-unknown-requirement`, `mutation-subject-arg-missing`, `mutation-subject-undeclared`, `mutation-unreachable-by-any-role`, `mutation-untitled`, `node-ref-undeclared`, `page-too-large`, `plot-overlap`, `plural-slug-collision`, `repair-unknown-mutation`, `setting-name-taken`, `setting-name-unusable`, `setting-not-a-length`, `setting-not-honorable`, `setting-starts-nowhere`, `setting-without-a-choice`, `sight-unknown-kind`, `theme-contrast-below-aa`, `view-for-undeclared-kind`, `writes-unknown-field`
 
-## 24 warnings
+## 23 warnings
 
-`act-reads-hidden-kind`, `act-without-far-end-reading`, `act-without-title`, `brand-unnamed`, `edge-without-inverse`, `edge-without-severer`, `field-without-writer`, `fixed-but-written`, `intelligence-decision-prose-door`, `intelligence-key-without-storage`, `intelligence-local-without-bridge`, `intelligence-reach-on-graph`, `kind-without-view`, `kit-color-unreadable`, `module-edge-leak`, `mutation-title-ambiguous`, `mutation-title-is-an-identifier`, `mutation-undescribed`, `order-role-unknown`, `required-invariant-unregistered`, `role-may-do-nothing`, `sight-hides-required-ref`, `sight-unnamed-kind`, `theme-token-unreadable`
+`act-reads-hidden-kind`, `act-without-far-end-reading`, `brand-unnamed`, `edge-without-inverse`, `edge-without-severer`, `field-without-writer`, `fixed-but-written`, `intelligence-decision-prose-door`, `intelligence-key-without-storage`, `intelligence-local-without-bridge`, `intelligence-reach-on-graph`, `kind-without-view`, `kit-color-unreadable`, `module-edge-leak`, `mutation-title-ambiguous`, `mutation-title-is-an-identifier`, `mutation-undescribed`, `order-role-unknown`, `required-invariant-unregistered`, `role-may-do-nothing`, `sight-hides-required-ref`, `sight-unnamed-kind`, `theme-token-unreadable`
 
 ## 8 notes
 
@@ -421,7 +421,7 @@ Source: https://graview.dev/docs/checks.html
 
 ---
 
-Every one of the 89 things graview check can tell you, and how loudly.
+Every one of the 88 things graview check can tell you, and how loudly.
 
 The page: https://graview.dev/docs/checks.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
 
@@ -487,6 +487,7 @@ What is stored carries the format it was written in (FR-31). `FORMATS` names the
 A declaration that compiled and checked clean on one version compiles on the next version of the major.
 
 - A check finding's `code` never changes meaning. A new code may appear, and a new warning or note is not a break. A new *error* on a declaration that used to pass is a break.
+- A code that only ever said again what another code says may be retired, and the changelog says so. `act-without-title` was retired this way: a mutation without a title was reported twice, as that warning and as the error `mutation-untitled`, which names the path and the fix and is the one finding now. A program that matched on the retired code matches on `mutation-untitled`.
 - The stored-data finding codes of `validateGraph` (FR-21) hold to the same rule. Each is a record, a link or a rule that no longer fits the declaration, found by id:
 
 | Code | What it says | `repairPlan` | |------|--------------|--------------| | `node-shape` | a record's field does not fit its kind (`detail` names the field) | clear an optional field, coerce a required one to its default, else drop the record with its links | | `kind-unknown` | a record of a kind the declaration no longer has | drop it, with its links | | `edge-dangling` | a link to or from a record that is not there | drop the link | | `edge-disallowed` | a link the declaration does not allow between those kinds | drop the link | | `rule-error` | a rule threw rather than judged (`could-not-judge`; `detail` names the rule) | none: the declaration's to fix | | `rule-budget` | a rule would have read more than its budget (`over-budget`) | none: the declaration's to fix |
@@ -600,7 +601,7 @@ New here? [Getting started](https://graview.dev/docs/getting-started.html) is th
 - [Packages (14)](https://graview.dev/docs/packages.html): What each ships and what each exports.
 - [Skills (15)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
 - [The CLI](https://graview.dev/docs/cli.html): create, check, docs, describe, lens, figure, serve, skills.
-- [What check says (89)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
+- [What check says (88)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
 - [Stability](https://graview.dev/docs/stability.html): What a version may change, and what a host can hold it to.
 - [The garden, grown](https://graview.dev/progression.html): Sixteen live chapters, from one kind to a product.
 
@@ -1811,11 +1812,11 @@ A skill that cannot verify its own outcome says so. That is the rule, and the sk
 
 The worked examples live in `apps/` in the framework repository. The skills point at them rather than restating them — a skill that copies an example goes stale the moment the example changes.
 
-## What it exports (3)
+## What it exports (6)
 
 Read off the package's own barrel, so this is what is there today.
 
-`readSkills`, `SKILL_DESTINATIONS`, `SKILLS_DIR`
+`readSkills`, `SKILL_DESTINATIONS`, `SKILLS_BEGIN`, `SKILLS_DIR`, `SKILLS_END`, `withSkillsListed`
 
 ---
 
@@ -2591,7 +2592,7 @@ npm create graview@latest my-app        # or: pnpm create graview my-app
 
 Put the product BESIDE the framework, never inside its git tree; `--link` names it relative to where you run the command. `--workspace` writes the layout every real product ends up with (a root, the app under `app/`, the harnesses beside it); `--merge` starts in a repository that already has a README, naming collisions rather than writing over them.
 
-It writes exactly the shape below — one kind with `creates`, `connects`, `writes` and a `lifecycle`, one rule with its repair, the shell, the routed face, a headless test, a CI workflow — installs it, and installs these skills into it. Run its `verify`, then replace the first kind with the product's own. The rest of this skill is what each part is for.
+It writes exactly the shape below — one kind with `creates`, `connects`, `writes` and a `lifecycle`, one rule with its repair, the shell, the routed face, a headless test, a CI workflow — installs it, installs these skills into it, and makes the first commit ("My App, on Graview"; staged instead when git has no identity). `AGENTS.md` at the root says the loop, the rules and the skills, and `CLAUDE.md` imports it; `verify` rewrites `docs/agents.md` and `docs/llms.txt`, which are committed. Run its `verify`, then replace the first kind with the product's own. The rest of this skill is what each part is for.
 
 ### The shape
 

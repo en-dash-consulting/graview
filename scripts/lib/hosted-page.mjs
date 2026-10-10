@@ -173,15 +173,19 @@ export const FACE_DOORS = {
  * 578.8 KB, which leaves Cloud's shell 16.2 KB under its 595. The host
  * deciding the AI once — no reader's rung kept in storage, no picker in
  * the person's menu — took it to 591 662 bytes (577.8 KB), 750 fewer:
- * 578.0 KB, which leaves Cloud's shell 17.0 KB under its 595.
- * The bar ranking its places (FR-145: the primary ones stand, six at most,
- * from `pages.primary` or the kinds that support the others worked out of
- * the declaration) took it to 592 913 bytes (579.0 KB), 1 251 more; the
- * list's arranging moved behind a door of its own (its lists fetched when
- * one is first opened), so nothing of it is up front. 579.2 KB, which
- * leaves Cloud's shell 15.8 KB under its 595.
+ * 578.0 KB, which leaves Cloud's shell 17.0 KB under its 595. The switch's
+ * Scene landing where the scene opens from a page that held nothing in it
+ * (FR-157: `holdsNothing`, `whereTheSceneOpens`, the opening view handed to
+ * the address bar and the faces) took it to 592 042 bytes (578.2 KB), 380
+ * more: 578.4 KB, which leaves Cloud's shell 16.6 KB under its 595.
+ * The bar ranking its places over FR-157 (FR-145: the primary ones stand,
+ * six at most, from `pages.primary` or the kinds that support the others
+ * worked out of the declaration) took it to 593 266 bytes (579.4 KB), 1 224
+ * more; the list's arranging moved behind a door of its own (its lists
+ * fetched when one is first opened), so nothing of it is up front. 579.6 KB,
+ * which leaves Cloud's shell 15.4 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 579.2 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 579.6 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -290,11 +294,12 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * compiles, took it to 546 459 bytes (533.65 KB): 533.9 KB. The keyboard
  * in Firefox and a plural as a label, the same 326 bytes, took it to
  * 546 786 (534.0 KB): 534.2 KB. The host deciding the AI once, the same
- * 750 bytes fewer, took it to 546 036 (533.2 KB): 533.4 KB. The bar
- * ranking its places, the same as the page that compiles, took it to
- * 547 235 (534.4 KB): 534.6 KB.
+ * 750 bytes fewer, took it to 546 036 (533.2 KB): 533.4 KB. The scene
+ * from a page that held nothing (FR-157), the same 380 bytes, took it to
+ * 546 415 (533.6 KB): 533.8 KB. The bar ranking its places over it, the
+ * same as the page that compiles, took it to 547 587 (534.8 KB): 535.0 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 534.6 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 535.0 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

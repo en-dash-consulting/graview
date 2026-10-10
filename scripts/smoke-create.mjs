@@ -163,6 +163,26 @@ try {
     writeFileSync(schemaPath, schema);
   }
 
+  /*
+   * ONE MISTAKE, ONE FINDING. A mutation without a title was reported twice,
+   * as a warning and as an error, in two voices; the check names it once.
+   */
+  const mutationsPath = resolve(app, "src/domain/mutations.ts");
+  const mutations = readFileSync(mutationsPath, "utf8");
+  writeFileSync(mutationsPath, mutations.replace('  title: "Add a note",\n', ""));
+  try {
+    const said = (() => {
+      try {
+        return run("npm", ["run", "check"], app);
+      } catch (error) {
+        return `${error.stdout ?? ""}${error.stderr ?? ""}`;
+      }
+    })();
+    report.npm.untitled = [...said.matchAll(/\[([a-z][a-z-]*)\]/g)].map((match) => match[1]).filter((code) => code.includes("title"));
+  } finally {
+    writeFileSync(mutationsPath, mutations);
+  }
+
   // The domain compiled to plain modules that the CLI can load — the
   // contract every other tool (docs, the pages face, a host) relies on.
   run("npx", ["graview", "docs", "./dist/domain/app.js", "--out", "docs"], app);
@@ -562,8 +582,36 @@ try {
   const linkedManifest = JSON.parse(readFileSync(resolve(linked, "package.json"), "utf8"));
   report.linked.consumesByPath = Object.values(linkedManifest.dependencies).some((spec) => String(spec).startsWith("link:"));
   report.linked.skills = existsSync(resolve(linked, ".claude/skills/graview-ship/SKILL.md")) && existsSync(resolve(linked, ".agents/skills/graview-ship/SKILL.md"));
+  /*
+   * WHAT AN AGENT OPENING IT COLD FINDS: AGENTS.md at the root with the loop
+   * and the skills listed, a CLAUDE.md that imports it, the agent docs
+   * committed — and a first commit, so the tree is clean after create and
+   * after the project's own verify, which writes the docs again.
+   */
+  const notes = existsSync(resolve(linked, "AGENTS.md")) ? readFileSync(resolve(linked, "AGENTS.md"), "utf8") : "";
+  report.linked.agents = {
+    loop: notes.includes("pnpm check") && notes.includes("pnpm verify"),
+    rules: notes.includes("**The graph is the interface.**") && notes.includes("**Preview before you apply.**"),
+    skillsListed: notes.includes("- `graview-new-app` — ") && notes.includes("- `graview-ship` — "),
+    claude: existsSync(resolve(linked, "CLAUDE.md")) && readFileSync(resolve(linked, "CLAUDE.md"), "utf8") === "@AGENTS.md\n",
+  };
+  const git = (...args) => {
+    try {
+      return run("git", args, linked).trim();
+    } catch {
+      return null;
+    }
+  };
+  report.linked.git = {
+    identity: Boolean(git("config", "user.name")) && Boolean(git("config", "user.email")),
+    commit: git("log", "--format=%s"),
+    statusAfterCreate: git("status", "--porcelain"),
+    staged: git("diff", "--cached", "--name-only"),
+    tracksTheAgentDocs: Boolean(git("ls-files", "docs/agents.md", "docs/llms.txt", "AGENTS.md", "CLAUDE.md", ".claude/skills/graview-new-app/SKILL.md")?.split("\n").length === 5),
+  };
   run("pnpm", ["verify"], linked);
   report.linked.verified = true;
+  report.linked.git.statusAfterVerify = git("status", "--porcelain");
   report.linked.checkSaid = checkerSentence(run("pnpm", ["check"], linked));
   report.linked.hyphenatedKind = readFileSync(resolve(linked, "src/domain/mutations.ts"), "utf8").includes('"add-work-order"');
   report.linked.gitInitialized = existsSync(resolve(linked, ".git/HEAD"));
@@ -614,7 +662,8 @@ const clean = (violations) => Array.isArray(violations) && violations.length ===
 report.verdict = {
   // The profile pane opens wholly on screen and on top in a narrow embed, not off its side or cut by its box (W-119, FR-76).
   theProfileIsWholeAndOnTop: b.profileInEmbed?.pane === true && b.profileInEmbed?.inside === true && b.profileInEmbed?.onTop === true,
-  theScaffoldWroteAProject: (report.npm.tree ?? []).length === 20,
+  theScaffoldWroteAProject: (report.npm.tree ?? []).length === 22,
+  anUntitledMutationIsOneFinding: JSON.stringify(report.npm.untitled) === JSON.stringify(["mutation-untitled"]),
   itInstalledFromTheTarballsWithNpm: report.npm.installed === true && report.npm.lockfile === true,
   itsOwnVerifyPassed: report.npm.verified === true,
   theCheckerActuallySpoke: typeof report.npm.checkSaid === "string" && report.npm.checkSaid.includes("no problems found"),
@@ -674,6 +723,12 @@ report.verdict = {
   aLinkedProjectInstallsSkillsAndVerifies:
     report.linked.verified === true && report.linked.skills === true && (report.linked.checkSaid ?? "").includes("no problems found"),
   aHyphenatedKindWorksEndToEnd: report.linked.hyphenatedKind === true && report.linked.verified === true,
+  anAgentOpeningItColdFindsAgentsMdWithTheLoopAndTheSkills:
+    report.linked.agents?.loop === true && report.linked.agents?.rules === true && report.linked.agents?.skillsListed === true && report.linked.agents?.claude === true,
+  // A first commit with everything in it, clean after create and after verify — or, with no git identity, everything staged.
+  createMakesTheFirstCommit: report.linked.git?.identity
+    ? report.linked.git?.commit === "Linked Orders, on Graview" && report.linked.git?.statusAfterCreate === "" && report.linked.git?.statusAfterVerify === "" && report.linked.git?.tracksTheAgentDocs === true
+    : report.linked.git?.commit === null && (report.linked.git?.staged ?? "").includes("AGENTS.md") && report.linked.said.some((line) => line.includes("user.name")),
   aLinkedProjectIsARepositoryWhoseCiCanBuildTheFramework:
     report.linked.gitInitialized === true && report.linked.ciChecksOutTheFramework === true,
   ...(withBrowser

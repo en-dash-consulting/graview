@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { execFileSync } from "node:child_process";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { readSkills, SKILLS_DIR, SKILL_DESTINATIONS } from "../../src/index.js";
+import { readSkills, SKILLS_BEGIN, SKILLS_DIR, SKILLS_END, SKILL_DESTINATIONS, withSkillsListed } from "../../src/index.js";
 
 /** The checker's own source — `check.ts` and its families — so a skill cannot name a finding it never emits. */
 const checkDir = resolve(SKILLS_DIR, "../../core/src/cli/check");
@@ -282,5 +282,32 @@ describe("installing them", () => {
         ).toBe(readFileSync(join(SKILLS_DIR, skill.name, "SKILL.md"), "utf8"));
       }
     }
+  });
+});
+
+/*
+ * THE LIST IN AGENTS.md. `graview create` leaves a place for it between two
+ * markers, and `install` rewrites what is between them, so the markers this
+ * package looks for are the ones core's scaffold writes, said the same.
+ */
+describe("the skills listed in AGENTS.md", () => {
+  it("looks for the markers the scaffold writes", () => {
+    const scaffold = readFileSync(resolve(SKILLS_DIR, "../../core/src/scaffold/agents.ts"), "utf8");
+    expect(scaffold).toContain(JSON.stringify(SKILLS_BEGIN));
+    expect(scaffold).toContain(JSON.stringify(SKILLS_END));
+  });
+
+  it("rewrites only what is between them, a line a skill", () => {
+    const before = `# Notes\n\nmine\n\n${SKILLS_BEGIN}\nNot installed yet.\n${SKILLS_END}\n\nalso mine\n`;
+    const after = withSkillsListed(before, skills)!;
+    expect(after.startsWith("# Notes\n\nmine\n\n")).toBe(true);
+    expect(after.endsWith(`${SKILLS_END}\n\nalso mine\n`)).toBe(true);
+    expect(after).not.toContain("Not installed yet.");
+    for (const skill of skills) expect(after).toContain(`- \`${skill.name}\` — ${skill.description}\n`);
+    expect(withSkillsListed(after, skills)).toBe(after);
+  });
+
+  it("leaves a file without them alone", () => {
+    expect(withSkillsListed("# Somebody else's notes\n", skills)).toBeUndefined();
   });
 });

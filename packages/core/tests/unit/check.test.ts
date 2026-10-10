@@ -260,6 +260,8 @@ describe("what a mutation calls itself", () => {
       apply: () => {},
     });
     expect(findings(app(untitled))).toContain("error:mutation-untitled");
+    // One mistake, one finding: no second warning about the same missing title in another voice.
+    expect(findings(app(untitled)).filter((finding) => finding.includes("title"))).toEqual(["error:mutation-untitled"]);
   });
 
   it("warns when a title reads as a name in the source rather than a label", () => {

@@ -52,6 +52,7 @@ What is stored carries the format it was written in (FR-31). `FORMATS` names the
 A declaration that compiled and checked clean on one version compiles on the next version of the major.
 
 - A check finding's `code` never changes meaning. A new code may appear, and a new warning or note is not a break. A new *error* on a declaration that used to pass is a break.
+- A code that only ever said again what another code says may be retired, and the changelog says so. `act-without-title` was retired this way: a mutation without a title was reported twice, as that warning and as the error `mutation-untitled`, which names the path and the fix and is the one finding now. A program that matched on the retired code matches on `mutation-untitled`.
 - The stored-data finding codes of `validateGraph` (FR-21) hold to the same rule. Each is a record, a link or a rule that no longer fits the declaration, found by id:
 
   | Code | What it says | `repairPlan` |

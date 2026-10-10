@@ -4,6 +4,7 @@ import type { GraviewApp } from "../app.js";
 import { deriveMutations } from "../mutations/derive-edits.js";
 import { mutationToolSchema } from "../schema/json-schema.js";
 import type { AnySchema } from "../schema/schema.js";
+import { agentRules } from "../scaffold/agents.js";
 
 /**
  * Generates the file an agent reads before touching this app: what kinds
@@ -192,15 +193,7 @@ export function generateAgentsMd<S extends AnySchema>(app: GraviewApp<S>): strin
     "This app is built on Graview. Three rules follow from that, and they are",
     "the whole contract:",
     "",
-    "1. **The graph is the interface.** Do not write to storage. Every change",
-    "   goes through a typed mutation so it carries attribution, an inverse,",
-    "   and the set of nodes it read.",
-    `2. **Only these mutations exist:** ${mutationNames.join(", ") || "(none registered)"}.`,
-    "   A change you cannot express as one of them is a change the app has",
-    "   not agreed to; add a mutation rather than reaching around it.",
-    "3. **Preview before you apply.** Every mutation previews as a diff plus",
-    "   the invariants it would break. A preview that introduces a violation",
-    "   is a proposal, not a fix.",
+    ...agentRules(mutationNames.join(", ") || "(none registered)"),
     "",
     "Run `graview check` after editing any declaration. It reports schema",
     "problems in terms of the declaration to change.",

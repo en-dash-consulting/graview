@@ -1,5 +1,5 @@
 import { nodeRefArgs } from "../../mutations/node-ref.js";
-import { humanizeField, withArticle } from "../../schema/define-node.js";
+import { withArticle } from "../../schema/define-node.js";
 import type { AnySchema } from "../../schema/schema.js";
 
 /**
@@ -83,28 +83,6 @@ export function checkEdgeNamesAgree<S extends AnySchema>(ctx: CheckContext<S>): 
       where: ends.map((end) => `defineNode("${end.kind}").edges["${edgeKind}"]`).join(", "),
       message: `"${edgeKind}" is declared ${said}, but to every surface an edge name is ONE relation: from the far end both are listed together under ${JSON.stringify(first!.inverse ?? edgeKind)}, including the ${second!.kind === first!.kind ? "second" : `${second!.kind}s`}.`,
       fix: `Give each relation its own name (say "${edgeKind}" on ${withArticle(first!.kind)} and "${second!.kind}-${edgeKind}" on ${withArticle(second!.kind)}), or give every declaration the same description and inverse.`,
-    });
-  }
-}
-
-/**
- * AN ACT WITH NO WORDS FOR A PERSON.
- *
- * Every surface names an act by its `title` — the context menu, Pages'
- * "What can be done", the seat's offered repairs. Without one the person
- * read the mutation's name, `move-to-list`; it is spoken now ("Move to
- * list"), which is still the code's word and not the app's.
- */
-export function checkActsHaveTitles<S extends AnySchema>(ctx: CheckContext<S>): void {
-  const { app, add } = ctx;
-  for (const mutation of app.mutations ?? []) {
-    if (mutation.title || mutation.derived) continue;
-    add({
-      severity: "warning",
-      code: "act-without-title",
-      where: `defineMutation("${mutation.name}")`,
-      message: `"${mutation.name}" has no title, so every surface offers it as "${humanizeField(mutation.name)}" — the code's word for it, not the app's.`,
-      fix: `Add title: "…" — what a person would call this act, said about the thing it is offered on ("Give it a new date").`,
     });
   }
 }

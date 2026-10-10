@@ -22,7 +22,7 @@ npm create graview@latest my-app        # or: pnpm create graview my-app
 
 Put the product BESIDE the framework, never inside its git tree; `--link` names it relative to where you run the command. `--workspace` writes the layout every real product ends up with (a root, the app under `app/`, the harnesses beside it); `--merge` starts in a repository that already has a README, naming collisions rather than writing over them.
 
-It writes exactly the shape below — one kind with `creates`, `connects`, `writes` and a `lifecycle`, one rule with its repair, the shell, the routed face, a headless test, a CI workflow — installs it, and installs these skills into it. Run its `verify`, then replace the first kind with the product's own. The rest of this skill is what each part is for.
+It writes exactly the shape below — one kind with `creates`, `connects`, `writes` and a `lifecycle`, one rule with its repair, the shell, the routed face, a headless test, a CI workflow — installs it, installs these skills into it, and makes the first commit ("My App, on Graview"; staged instead when git has no identity). `AGENTS.md` at the root says the loop, the rules and the skills, and `CLAUDE.md` imports it; `verify` rewrites `docs/agents.md` and `docs/llms.txt`, which are committed. Run its `verify`, then replace the first kind with the product's own. The rest of this skill is what each part is for.
 
 ### The shape
 
