@@ -297,6 +297,9 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
    * the host is told the pages (`onFace`), as if the reader had pressed it.
    */
   const based = props.basePath === undefined ? {} : { basePath: props.basePath };
+  /* The board the app speaks on, the host's or the frame's own: the one drawn is the one a face says the way back on (FR-153). */
+  const [ownBoard] = useState(createNoticeBoard);
+  const notices = props.notices ?? ownBoard;
   // The app's own address for a path within it, under address routing.
   const addressAt = (path: string) => addressOf(path, based);
   const routed = { ...(props.routing ? { routing: props.routing } : {}), ...based };
@@ -480,10 +483,10 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     >
       <style>{css}</style>
       <ErrorReportContext.Provider value={report}>
-      <FrameNotices rootRef={rootRef} board={props.notices} />
+      <FrameNotices rootRef={rootRef} board={notices} />
       <FaceBoundary module="@graview/react" report={report} content>
       <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>
-        <NoticeBoardContext.Provider value={props.notices ?? null}>
+        <NoticeBoardContext.Provider value={notices}>
         <Faces face={shown} stop={overviewStop ?? stop} kinds={kinds} places={places} opens={opens} />
         {whereabouts ? <Watch into={whereabouts} /> : null}
         {/* THE ADDRESS BAR, when the host's page is the app (FR-106): the face follows it, and the scene, drawn, keeps its stop in the fragment. */}

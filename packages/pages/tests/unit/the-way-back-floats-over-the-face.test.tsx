@@ -3,7 +3,7 @@
 import { bindSchema, createSchema, defineNode, nodeRef, Store, type Principal } from "@graview/core";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { PagesApp } from "../../src/index.js";
 
@@ -51,6 +51,8 @@ async function face(embedded: boolean) {
   await act(async () => {
     store.apply({ name: "mark-done", args: { id: "i1" } }, { author: nina });
   });
+  // The way back is fetched with the first change (FR-152).
+  await act(async () => vi.dynamicImportSettled());
   return host;
 }
 

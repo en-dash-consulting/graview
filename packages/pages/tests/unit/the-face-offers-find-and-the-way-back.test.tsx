@@ -3,7 +3,7 @@
 import { bindSchema, createSchema, defineNode, nodeRef, Store, type Principal } from "@graview/core";
 import { act, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import {
   createPageRegistry,
@@ -141,6 +141,8 @@ describe("the routed face's way back", () => {
     await act(async () => {
       store.apply({ name: "rename-item", args: { id: "i1", label: "Pay the deposit for now" } }, { author: nina });
     });
+    // The way back is fetched with the first change (FR-152).
+    await act(async () => vi.dynamicImportSettled());
     const [button] = takeBack(host);
     expect(button?.textContent).toContain("Take back “Rename to \"Pay the deposit for now\"”");
     button!.focus();
@@ -160,6 +162,7 @@ describe("the routed face's way back", () => {
       await act(async () => {
         store.apply({ name: "rename-item", args: { id: "i1", label: "Later" } }, { author: nina });
       });
+      await act(async () => vi.dynamicImportSettled());
       expect(takeBack(host)).toHaveLength(1);
       if (registry) expect(host.querySelector('[data-testid="a-design"] nav')!.contains(takeBack(host)[0]!)).toBe(true);
     }

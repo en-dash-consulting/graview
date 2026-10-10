@@ -1,6 +1,6 @@
 import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { AppBar, appKeyOf, createNoticeBoard, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, type BarFaces, type BarFind, type BarGo, type BarPlace, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
+import { AppBar, appKeyOf, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, type BarFaces, type BarFind, type BarGo, type BarPlace, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
@@ -469,12 +469,13 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
 /**
  * THE HOST'S NOTICES, over the face (FR-75): banners at the top of the
  * picture, toasts at its foot, said aloud. The board is the host's when it
- * gave one, else the frame's own.
+ * gave one, else the frame's own — made by the embed, which hands the same
+ * board to the faces under it, so what a face says (the way back after an
+ * act, FR-153) is drawn here.
  */
-export function FrameNotices({ rootRef, board }: { readonly rootRef: { readonly current: HTMLElement | null }; readonly board: NoticeBoard | undefined }) {
-  const [own] = useState(() => board ?? createNoticeBoard());
+export function FrameNotices({ rootRef, board }: { readonly rootRef: { readonly current: HTMLElement | null }; readonly board: NoticeBoard }) {
   const anchor = useCallback(() => rootRef.current?.querySelector<HTMLElement>("[data-embed-content]") ?? rootRef.current, [rootRef]);
-  return <Notices board={board ?? own} anchor={anchor} />;
+  return <Notices board={board} anchor={anchor} />;
 }
 
 /** What the provider under every face is handed from the options, beside the store and the views. */

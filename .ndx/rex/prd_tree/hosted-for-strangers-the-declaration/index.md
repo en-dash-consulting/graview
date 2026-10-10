@@ -172,11 +172,11 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The studio changes a field in place: its type, required flag, options and description (FR-61)](./the-studio-changes-a-field-in-place.md) | completed |
 | [The studio hands a document-compiled app back as a document, and editDocument can set a glance (FR-54)](./the-studio-hands-a-document-compiled.md) | completed |
 | [The studio says the host refused when it did: onApply can answer with findings (FR-60)](./the-studio-says-the-host-refused-when.md) | completed |
-| [The "Take back" notice leaves once the act is settled, and can be closed (FR-152)](./the-take-back-notice-leaves-once-the.md) | pending |
+| [The "Take back" notice leaves once the act is settled, and can be closed (FR-152)](./the-take-back-notice-leaves-once-the.md) | completed |
 | [The theme has good and bad tones, checked for contrast in both schemes](./the-theme-has-good-and-bad-tones.md) | completed |
 | [The views guide says the real props shape, with a worked example (FR-151)](./the-views-guide-says-the-real-props.md) | completed |
 | [The workbench has a heading: an h1 naming the app, and headings for its regions](./the-workbench-has-a-heading-an-h1.md) | completed |
-| [History, activity and taking back are in reach on the scene (FR-153)](./history-activity-and-taking-back-are.md) | pending |
+| [History, activity and taking back are in reach on the scene (FR-153)](./history-activity-and-taking-back-are.md) | completed |
 | [Version skew on the wire: build strings, a reload answer, carried calls, and a codec name (FR-44)](./version-skew-on-the-wire-build-strings.md) | completed |
 | [Views as data: a card, a row and a badge declared rather than written, and drawn by the framework](./views-as-data-a-card-a-row-and-a-badge.md) | completed |
 | [Views get the whole theme, logo included (FR-127)](./views-get-the-whole-theme-logo.md) | completed |

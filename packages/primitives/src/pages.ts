@@ -31,6 +31,9 @@ export { Profile } from "./profile.js";
 export { viewsCss } from "./views-css.js";
 // Where a notice stands over a picture, clear of what stands at its foot (FR-133): the routed face's way back is one.
 export { FOOT_MOVED, FOOT_OBSTACLES, NARROW_PICTURE, placeAtTheFoot, placeAtTheTop } from "./notice-place.js";
+// The way back after an act, judged and timed alike on both faces (FR-152).
+export { freshChangeOf, isTakeBackKey, lastChangeOf, takeBackLast, takeBackWords, WAY_BACK_MS } from "./way-back.js";
+export type { LastChange } from "./way-back.js";
 // The seat: the ask field at the foot of the face, its panel fetched when it is first opened.
 export { SeatField } from "./seat-field.js";
 export { DraftDoor } from "./draft-door.js";

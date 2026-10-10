@@ -471,8 +471,12 @@ export const BUDGETS = [
     // Raised with the pages face's by FR-159, a showing's name as drawn and FR-154, together. Measured at 1_691_411 / 528_975.
     // Raised when who is here came onto the bar (FR-155): the list of names behind the bar's panes, fetched once somebody
     // else is here, and the places list held as it opened (FR-158). 3_901 / 1_622 more. Measured at 1_695_312 / 530_597.
-    minified: 1_695_700,
-    gzipped: 530_900,
+    // Raised when the way back came to leave and the scene to have one (FR-152, FR-153): every byte of it in chunks fetched
+    // when it is first needed — the scene's after it draws, the routed face's with the first change, so what a page loads
+    // first is smaller on the pages and no larger on the scene — and three chunks more for it. 4_316 / 2_952 more. Measured, over who is here,
+    // at 1_699_628 / 533_542.
+    minified: 1_700_100,
+    gzipped: 534_000,
     load: "all",
   },
   {

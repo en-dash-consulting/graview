@@ -2,7 +2,7 @@
 id: "3938df11-4bf2-41d2-9f82-895208f3939a"
 level: "feature"
 title: "The \"Take back\" notice leaves once the act is settled, and can be closed (FR-152)"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "graview-cloud"
@@ -16,5 +16,9 @@ acceptanceCriteria:
   - "Taking back stays reachable afterwards from history/activity"
   - "Pages and the scene behave alike"
 description: "After an act on Pages, the notice offering \"Take back …\" stayed at the foot of the picture for the rest of the session: it never faded and nothing on it closed it, so every page carried a stale offer."
-lastModified: "2026-10-10T16:00:00.000Z"
+startedAt: "2026-10-10T20:00:00.000Z"
+completedAt: "2026-10-10T20:00:00.000Z"
+endedAt: "2026-10-10T20:00:00.000Z"
+lastModified: "2026-10-10T20:00:00.000Z"
+resolution: "Fixed in #195: the Pages offer goes after 10 s (held while pointed at or focused), with the next act, a move to another page or its × close; Cmd/Ctrl+Z still takes back."
 ---
