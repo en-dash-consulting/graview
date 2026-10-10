@@ -62,3 +62,28 @@ export function readSkills(dir: string = SKILLS_DIR): readonly SkillFile[] {
  * that way is worse than not having it.
  */
 export const SKILL_DESTINATIONS = [".claude/skills", ".agents/skills"] as const;
+
+/*
+ * THE SKILLS, LISTED WHERE AN AGENT LOOKS FIRST.
+ *
+ * `graview create` writes AGENTS.md at a product's root with a section
+ * between these two markers; `install` rewrites it with the skills it just
+ * copied, a line each, so the list is the installed one after every upgrade.
+ * The markers are `@graview/core`'s scaffold's, said again here because this
+ * package depends on nothing; a test holds the two the same.
+ */
+export const SKILLS_BEGIN = "<!-- graview skills: `graview skills install .` rewrites this list -->";
+export const SKILLS_END = "<!-- /graview skills -->";
+
+/**
+ * The file with its skills section rewritten: what is between the markers is
+ * replaced and everything around it kept. Undefined when the file has no such
+ * section — it is somebody else's file then, and is left alone.
+ */
+export function withSkillsListed(text: string, skills: readonly Pick<SkillFile, "name" | "description">[]): string | undefined {
+  const begin = text.indexOf(SKILLS_BEGIN);
+  const end = text.indexOf(SKILLS_END);
+  if (begin === -1 || end === -1 || end < begin) return undefined;
+  const list = skills.map((skill) => `- \`${skill.name}\` — ${skill.description}`).join("\n");
+  return `${text.slice(0, begin)}${SKILLS_BEGIN}\n${list}\n${text.slice(end)}`;
+}

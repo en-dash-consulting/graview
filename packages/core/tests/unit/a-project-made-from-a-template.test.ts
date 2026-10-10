@@ -34,7 +34,7 @@ afterEach(() => {
 function io() {
   const out: string[] = [];
   const err: string[] = [];
-  const handle: CreateIo = { stdout: (t) => void out.push(t), stderr: (t) => void err.push(t), run: () => true };
+  const handle: CreateIo = { stdout: (t) => void out.push(t), stderr: (t) => void err.push(t), run: () => true, ask: () => undefined };
   return { handle, out: () => out.join(""), err: () => err.join("") };
 }
 

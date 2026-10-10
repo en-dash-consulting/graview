@@ -16,7 +16,7 @@ Every page below is also a web page (drop the `.md` for the `.html`); [llms-full
 - [Concepts](https://graview.dev/docs/concepts.md): The ideas behind a Graview app: one declaration, and the seven things in it — kinds and edges, acts, rules that repair, lenses, who may do what, and the seat for a model.
 - [Working with a model](https://graview.dev/docs/agents.md): The declaration is the interface a person uses and the interface a model uses. What a model gets, how it is narrowed, and what it reads before it writes.
 - [The CLI](https://graview.dev/docs/cli.md): graview create, check, docs, describe, lens, figure, serve and skills — what each reads and what each says.
-- [What check says](https://graview.dev/docs/checks.md): Every one of the 89 things graview check can tell you, and how loudly.
+- [What check says](https://graview.dev/docs/checks.md): Every one of the 88 things graview check can tell you, and how loudly.
 - [Stability](https://graview.dev/docs/stability.md): What a Graview version may change on the five surfaces a host holds it to — ops, stored formats, the wire, the declaration and the tool names — and how a host reads what a build ships.
 - [Documentation](https://graview.dev/docs/index.md): Graview's documentation: the concepts, the packages, the skills, the CLI and everything the checker can say.
 

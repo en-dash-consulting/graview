@@ -1,6 +1,6 @@
-import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
-import { readSkills, SKILLS_DIR, SKILL_DESTINATIONS } from "./index.js";
+import { readSkills, SKILLS_DIR, SKILL_DESTINATIONS, withSkillsListed } from "./index.js";
 
 /**
  * `graview skills` — installs the skills where Claude Code and Codex look
@@ -47,6 +47,15 @@ export function skills(argv: readonly string[]): number {
         cpSync(join(SKILLS_DIR, skill.name), into, { recursive: true });
       }
       process.stdout.write(`${all.length} skills → ${relative(root, dir) || destination}\n`);
+    }
+    // The list in AGENTS.md, where `graview create` left a place for it.
+    const notes = join(root, "AGENTS.md");
+    if (existsSync(notes)) {
+      const listed = withSkillsListed(readFileSync(notes, "utf8"), all);
+      if (listed !== undefined) {
+        writeFileSync(notes, listed, "utf8");
+        process.stdout.write(`${all.length} skills listed in AGENTS.md\n`);
+      }
     }
     process.stdout.write("\nEvery one of them ends in `graview check` and reports what it actually said.\n");
     return 0;

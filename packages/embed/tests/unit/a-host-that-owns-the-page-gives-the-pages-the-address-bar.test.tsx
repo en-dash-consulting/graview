@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { createSchema, defineApp, defineNode, z } from "@graview/core";
+import { aggregateId } from "@graview/layout/view";
 import { act } from "react";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { faceAtAddress, faceOf, mount, preload, type EmbedHandle, type EmbedOptions } from "../../src/index.js";
@@ -214,13 +215,42 @@ describe("address routing under a base path", () => {
     expect(heading(host)).toBe("Tasks");
     await click(host.querySelector('[data-testid="app-face-scene"]'));
     await settle();
-    expect(face(host)).toBe("scene");
+    // The list holds nothing in the scene, so the scene is where it opens: at altitude (FR-157).
+    expect(face(host)).toBe("graview");
     expect(window.location.pathname).toBe("/apps/a1/places/overview");
-    expect(window.location.href.includes("#")).toBe(true);
+    expect(window.location.hash).toBe("#overview=1");
     await back();
     expect(face(host)).toBe("pages");
     expect(window.location.pathname).toBe("/apps/a1/tasks");
     expect(heading(host)).toBe("Tasks");
+  });
+
+  /*
+   * FR-157: SCENE FROM A PAGE THAT IS NOTHING. At an address no route
+   * answers, the switch's Scene landed the scene at `/places/overview#`:
+   * the empty view, the overview off, the control saying Up, over nothing.
+   * It lands where the scene opens: at altitude, or where the declaration
+   * says the app opens.
+   */
+  it("lands where the scene opens from an address nothing lives at, never on the empty view (FR-157)", async () => {
+    const { host } = await at("/apps/a1/tasks/nobody", { routing: "address", basePath: "/apps/a1", face: "graview" });
+    expect(heading(host)).toBe("Nothing lives at this address.");
+    await click(host.querySelector('[data-testid="app-face-scene"]'));
+    await settle();
+    expect(face(host)).toBe("graview");
+    expect(window.location.pathname).toBe("/apps/a1/places/overview");
+    expect(window.location.hash).toBe("#overview=1");
+    expect(host.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("lands where the declaration says the app opens, when it says (FR-157)", async () => {
+    const opening = defineApp({ name: "Errands", schema: createSchema([task]), mutations: [], pages: { first: "tasks" } });
+    const { host } = await at("/apps/a1/tasks/nobody", { app: opening, routing: "address", basePath: "/apps/a1", face: "graview" });
+    await click(host.querySelector('[data-testid="app-face-scene"]'));
+    await settle();
+    expect(face(host)).toBe("scene");
+    expect(window.location.pathname).toBe("/apps/a1/places/overview");
+    expect(new URLSearchParams(window.location.hash.slice(1)).get("focus")).toBe(aggregateId("task"));
   });
 
   it("opens the scene at a stop a fragment names", async () => {

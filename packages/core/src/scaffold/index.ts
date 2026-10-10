@@ -30,6 +30,7 @@ import {
   readme,
   ciYml,
 } from "./project.js";
+import { agentsMd, claudeMd } from "./agents.js";
 import { schemaTs, mutationsTs, invariantsTs, brandTs, appTs, domainTest } from "./domain.js";
 import { indexHtml, embedHtml, embedTsx, viewsTsx, uiAppTsx, pagesTsx, mainTsx } from "./ui.js";
 import { documentAppTs, documentBrandTs, documentJson, documentSchemaTs, documentTest, templateJson, templateKind } from "./from-template.js";
@@ -213,7 +214,9 @@ export function scaffoldProject(given: ScaffoldOptions): Scaffold {
     { path: "index.html", contents: indexHtml(ids) },
     { path: "embed.html", contents: embedHtml(ids) },
     { path: ".gitignore", contents: gitignore() },
-    { path: "README.md", contents: readme(ids) },
+    { path: "README.md", contents: readme(ids, workspace) },
+    { path: "AGENTS.md", contents: agentsMd(ids, workspace) },
+    { path: "CLAUDE.md", contents: claudeMd() },
     ...domain,
     { path: "src/ui/views.tsx", contents: viewsTsx(ids) },
     { path: "src/ui/app.tsx", contents: uiAppTsx(ids) },
@@ -238,10 +241,11 @@ export function scaffoldProject(given: ScaffoldOptions): Scaffold {
    */
   /*
    * What belongs to the PRODUCT rather than to the app package stays at the
-   * root: the README a person reads first, the CI that verifies the whole
+   * root: the README a person reads first, the notes an agent reads first
+   * (AGENTS.md, and the CLAUDE.md that imports it), the CI that verifies the whole
    * workspace, and the one .gitignore.
    */
-  const atRoot = new Set(["README.md", ".gitignore", ".github/workflows/ci.yml"]);
+  const atRoot = new Set(["README.md", "AGENTS.md", "CLAUDE.md", ".gitignore", ".github/workflows/ci.yml"]);
   const rooted: ScaffoldFile[] = files.map((file) =>
     atRoot.has(file.path) ? file : { ...file, path: `app/${file.path}` },
   );

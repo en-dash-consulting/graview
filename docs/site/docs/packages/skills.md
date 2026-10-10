@@ -44,11 +44,11 @@ A skill that cannot verify its own outcome says so. That is the rule, and the sk
 
 The worked examples live in `apps/` in the framework repository. The skills point at them rather than restating them — a skill that copies an example goes stale the moment the example changes.
 
-## What it exports (3)
+## What it exports (6)
 
 Read off the package's own barrel, so this is what is there today.
 
-`readSkills`, `SKILL_DESTINATIONS`, `SKILLS_DIR`
+`readSkills`, `SKILL_DESTINATIONS`, `SKILLS_BEGIN`, `SKILLS_DIR`, `SKILLS_END`, `withSkillsListed`
 
 ---
 

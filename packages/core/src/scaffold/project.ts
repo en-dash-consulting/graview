@@ -111,7 +111,7 @@ export function workspaceRoot(ids: Ids, link: string | undefined): string {
         test: "vitest run",
         typecheck: inApp("typecheck"),
         check: inApp("check"),
-        verify: `${run} typecheck && ${run} test && ${run} build && ${run} check`,
+        verify: `${run} typecheck && ${run} test && ${run} build && ${run} check && ${inApp("docs")}`,
         // The harnesses, at the root, driving the app. Stubs until written.
         survey: "node scripts/survey.mjs",
         "audit-ui": "node scripts/audit-ui.mjs",
@@ -191,7 +191,8 @@ export function packageJson(ids: Ids, workspace: boolean): string {
       serve: `${run} build:domain && graview serve ./dist/domain/app.js --data data`,
       mcp: `${run} build:domain && graview mcp ./dist/domain/app.js --data data`,
       skills: "graview skills install .",
-      verify: `${run} typecheck && ${run} test && ${run} build && ${run} check`,
+      // The last step writes docs/agents.md and docs/llms.txt from the declaration as it now is.
+      verify: `${run} typecheck && ${run} test && ${run} build && ${run} check && graview docs ./dist/domain/app.js --out docs`,
       // Made from a template: set a store up from it — its acts, as one batch one undo takes back.
       ...(ids.fromTemplate
         ? { "apply-template": `${run} build:domain && graview apply ./dist/domain/app.js --template template.json --data data` }
@@ -531,6 +532,10 @@ export default defineConfig({
 }
 
 /*
+ * `docs/agents.md` and `docs/llms.txt` are NOT ignored: they are what an
+ * agent reads about this app as declared now, `verify` regenerates them,
+ * and a repository opened cold should have them.
+ *
  * `data/` is the store `graview serve --data data` writes, wherever the app
  * sits — and alone it also matched `src/data/`, so every project's seed, the
  * graph it opens on, was quietly never committed. The seed is the source.
@@ -541,14 +546,13 @@ dist/
 build/
 data/
 !**/src/data/
-docs/llms.txt
-docs/agents.md
 *.tsbuildinfo
 .DS_Store
 `;
 }
 
-export function readme(ids: Ids): string {
+export function readme(ids: Ids, workspace = false): string {
+  const docs = workspace ? "app/docs" : "docs";
   const pm = ids.packageManager;
   const run = pm === "pnpm" ? "pnpm" : "npm run";
   const layout = ids.fromTemplate
@@ -585,6 +589,15 @@ ${run} dev        # http://localhost:${ids.port}  — the scene; /pages is the r
 ${run} verify     # typecheck, tests, build, and graview check
 ${run} skills     # the authoring skills, for Claude Code and Codex
 \`\`\`
+
+\`graview create\` made the first commit, "${ids.name}, on Graview", with
+everything above in it — or, when git did not know who you are, staged it for
+you to commit. Commit as you declare: \`${run} verify\` rewrites
+\`${docs}/agents.md\` and \`${docs}/llms.txt\` from the declaration, and they belong in
+the commit beside the change they describe.
+
+\`AGENTS.md\` is what an assistant reads first: the loop, the three rules and
+the skills, a line each. \`CLAUDE.md\` imports it.
 
 ## Where things are
 
