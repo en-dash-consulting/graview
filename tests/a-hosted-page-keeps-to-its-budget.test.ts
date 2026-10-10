@@ -69,7 +69,8 @@ describe("a hosted page", () => {
     // and the margin the budget had kept was taken back: the scene face measured 900_495 B, 2_041 fewer than main (902_536).
     // 881 KB since a rule says its shape: the standing counts rules broken (`brokenWords`) and a document's rule keeps what its line is said from, the words themselves fetched with what draws a problem (`@graview/core/lines`): the scene face measured 901_567 B with FR-157's scene from a page that held nothing.
     // 883 KB since the bar ranks its places and a list arranges on one quiet line (its lists behind a door), over a rule saying its shape and FR-157: the scene face measured 903_581 B.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(883 * 1024);
+    // 884 KB since a broken rule says its values to a host (FR-159, the engine's hook), a showing's name a fingertip as drawn and the overview's address alone (FR-154), together: the scene face measured 904_192 B.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(884 * 1024);
   });
 
   it("carries no studio, up front or when asked: the shell stubs it out", () => {

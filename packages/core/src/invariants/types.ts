@@ -65,10 +65,13 @@ export interface Violation {
   readonly repairs: readonly Repair[];
   /**
    * The rule's shape with the record's own values, where the rule is
-   * written in the rule language: "margin 44% < target margin 50%". Not
-   * set by the engine: a surface that draws problems asks
-   * `@graview/core/lines` (`withLines`) when it draws them, so a page that
-   * judges rules carries none of the words; `problemWords` says it.
+   * written in the rule language: "margin 44% < target margin 50%". Set
+   * by the engine once `@graview/core/lines` is loaded (FR-159) — a page
+   * fetches it when it first draws a problem, `@graview/ship`'s store
+   * handler and a seat's tools load it — and a rule that wrote no sentence
+   * of its own then says the same values in `message`. A page that judges
+   * before it draws a problem carries none of the words; `withLines` adds
+   * the line to violations judged before, and `problemWords` says it.
    */
   readonly line?: RuleLine;
 }

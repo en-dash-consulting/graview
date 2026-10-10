@@ -170,7 +170,7 @@ export function evaluate<S extends AnySchema>(
    * true twins.
    */
   const seen = new Set<string>();
-  return violations
+  const said = violations
     .filter((violation) => {
       const key = `${violation.message}|${[...violation.nodeIds].sort().join(",")}`;
       if (seen.has(key)) return false;
@@ -188,6 +188,25 @@ export function evaluate<S extends AnySchema>(
       const said = daysAsRead(violation.message);
       return said === violation.message ? violation : { ...violation, message: said };
     });
+  return lined ? lined(graph as never, invariants as never, said) : said;
+}
+
+/*
+ * A BROKEN RULE SAYS WHAT IT FOUND, once the words are here (FR-159). The
+ * line — the record's values, the comparison turned the way it stands — is
+ * worked out by `@graview/core/lines`, which a page fetches when it first
+ * draws a problem and a server loads with `@graview/ship` or a seat's
+ * tools. Loading it hands the engine `withLines`, and from then on every
+ * judgment carries each line, and a rule that wrote no sentence of its own
+ * says its values in its `message` too. The engine carries none of the
+ * words itself, so a page that judges before it draws a problem pays nothing.
+ */
+type Lined = (graph: Graph<AnySchema>, invariants: readonly InvariantDefinition<AnySchema>[], violations: Violation[]) => Violation[];
+let lined: Lined | undefined;
+
+/** Hands the engine what works out a broken rule's line: `@graview/core/lines` does, as it loads. */
+export function judgedWith(say: Lined | undefined): void {
+  lined = say;
 }
 
 /** Violations that implicate any of the given node ids. */
