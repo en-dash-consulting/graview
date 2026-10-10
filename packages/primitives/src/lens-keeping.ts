@@ -129,8 +129,8 @@ export function useLensKeeping(go: (move: SeatMove) => void): LensKeeping {
     const kept: SeatKept = { edit, written };
     seatTalk.setDraft(null);
     seatTalk.setTurns((turns) => [...turns, { role: "seat" as const, text: sentence, kept }]);
-    // Said once: in the open conversation, with its Take back; else in a notice (FR-133), never both over each other.
-    if (!seatTalk.get().open) board?.notify({ kind: "toast", id: `kept:${title}`, sentence, action: { label: "Take back", onSelect: () => void takeBack(kept) } });
+    // Said once: in the open conversation, with its Take back; else in a notice (FR-133) that goes when the way back on a face does, after `WAY_BACK_MS` (FR-152; the number, not the module, which would come with it), never both over each other.
+    if (!seatTalk.get().open) board?.notify({ kind: "toast", id: `kept:${title}`, sentence, timeout: 10_000, action: { label: "Take back", onSelect: () => void takeBack(kept) } });
     if (place) go({ to: "picture", kind: place.kind, as: place.as, title, address: placePath(place.as, sharesItsName(place, places) ? kindPath(store.schema, place.kind).slice(1) : undefined), said: `Went to ${title}.` });
   };
 

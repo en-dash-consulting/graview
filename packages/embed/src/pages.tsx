@@ -53,6 +53,9 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
   const [barFind, setBarFind] = useState<BarFind | null>(null);
   // No scene here, so no overview among the places (FR-132).
   const places = barPlaces({ store: store as never, principal: props.principal, views: views as never });
+  // The board the app speaks on, the host's or the frame's own: the one drawn is the one the face says things on.
+  const [ownBoard] = useState(createNoticeBoard);
+  const notices = props.notices ?? ownBoard;
   return (
     <section
       ref={rootRef}
@@ -64,7 +67,7 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
     >
       <style>{css}</style>
       <ErrorReportContext.Provider value={report}>
-        <FrameNotices rootRef={rootRef} board={props.notices} />
+        <FrameNotices rootRef={rootRef} board={notices} />
         <FaceBoundary module="@graview/react" report={report} content>
           <GraviewProvider store={store} views={views} scheme={scheme} {...providerProps(props, presence, brand)} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>
             {bar ? (
@@ -83,7 +86,7 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
               </FaceBoundary>
             ) : null}
             <BarFindContext.Provider value={barFind}>
-              <NoticeBoardContext.Provider value={props.notices ?? null}>
+              <NoticeBoardContext.Provider value={notices}>
               <FaceBoundary module="@graview/pages" report={report} content>
                 <PagesContent<S> store={store} views={views} presence={presence} auto={auto} brand={brand} steering={steering} scope={scope} titleLevel={titleBelow(props.heading ?? 2)} props={props} />
               </FaceBoundary>

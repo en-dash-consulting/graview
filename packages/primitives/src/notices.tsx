@@ -65,6 +65,12 @@ export interface HeldNotice extends Notice {
 export interface NoticeBoard {
   notify(notice: Notice): NoticeHandle;
   dismiss(id: string): void;
+  /**
+   * Whether the toasts are held — a pointer or the keyboard on them — asked
+   * when a toast's time comes: held, it stands its whole time again, so none
+   * goes from under either (FR-152). Set by what draws them.
+   */
+  hold?(held: () => boolean): void;
   list(): readonly HeldNotice[];
   subscribe(listener: () => void): () => void;
 }
@@ -78,6 +84,7 @@ export function createNoticeBoard(): NoticeBoard {
   let sequence = 0;
   const listeners = new Set<() => void>();
   const timers = new Map<string, ReturnType<typeof setTimeout>>();
+  let holding: (() => boolean) | undefined;
   const tell = () => {
     for (const listener of [...listeners]) listener();
   };
@@ -88,7 +95,7 @@ export function createNoticeBoard(): NoticeBoard {
     const acts = (notice.actions?.length ?? 0) + (notice.action ? 1 : 0);
     const after = notice.timeout ?? (acts > 0 ? false : TOAST_MS);
     if (after === false) return;
-    timers.set(notice.id, setTimeout(() => dismiss(notice.id), after));
+    timers.set(notice.id, setTimeout(() => (holding?.() ? time(notice) : dismiss(notice.id)), after));
   };
   const dismiss = (id: string) => {
     clearTimeout(timers.get(id));
@@ -116,6 +123,9 @@ export function createNoticeBoard(): NoticeBoard {
       };
     },
     dismiss,
+    hold(asked) {
+      holding = asked;
+    },
     list: () => held,
     subscribe(listener) {
       listeners.add(listener);
@@ -147,6 +157,8 @@ function Stack({ notices, at, anchor, board }: { readonly notices: readonly Held
     }
     const place = () => (at === "top" ? placeAtTheTop : placeAtTheFoot)(element, anchor());
     place();
+    // Held while pointed at or in the keyboard's hands: no toast goes from under either (FR-152).
+    if (at === "foot") board.hold?.(() => element.matches(":hover, :has(:focus-visible)"));
     const unraise = raiseOverPopovers(element);
     addEventListener("resize", place);
     addEventListener("scroll", place, true);
@@ -168,7 +180,7 @@ function Stack({ notices, at, anchor, board }: { readonly notices: readonly Held
         }
       }
     };
-  }, [shown, at, anchor]);
+  }, [shown, at, anchor, board]);
   if (!shown) return null;
   return (
     <div

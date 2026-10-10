@@ -466,8 +466,12 @@ export const BUDGETS = [
     // row's glance and adding one as a press at a list's end, the rest. 11_522 / 4_044 more. Measured at 1_668_049 / 519_530.
     // And a large list's way through it and `ListPage` for designs: 3_371 / 1_136 more. Measured at 1_671_420 / 520_666.
     // Together, over main's rule saying its shape: measured at 1_690_539 / 528_634.
-    minified: 1_691_000,
-    gzipped: 529_000,
+    // Raised when the way back came to leave and the scene to have one (FR-152, FR-153): every byte of it in chunks fetched
+    // when it is first needed — the scene's after it draws, the routed face's with the first change, so what a page loads
+    // first is smaller on the pages and no larger on the scene — and three chunks more for it. 4_316 / 2_952 more. Measured at
+    // 1_694_855 / 531_586.
+    minified: 1_695_400,
+    gzipped: 532_000,
     load: "all",
   },
   {

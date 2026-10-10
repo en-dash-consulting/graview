@@ -80,6 +80,9 @@ export { AppMark, AppTitle, useFavicon } from "./app-title.js";
 export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, FEWEST_STANDING, HOME_KEY, HOME_PATH, PLACE_GAP, placesThatStand, TOOL, toolStyle, useBarFind } from "./app-bar.js";
 export { scenePlacesOf, useScenePlaces, WHOLE_KEY, WHOLE_LABEL, type ScenePlaces } from "./scene-places.js";
 export { SceneBarTools, SceneTrail, useCallLog } from "./scene-bar.js";
+export { SceneWayBack } from "./scene-way-back.js";
+export { freshChangeOf, isTakeBackKey, lastChangeOf, takeBackLast, takeBackWords, WAY_BACK_MS } from "./way-back.js";
+export type { LastChange } from "./way-back.js";
 export type { BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch } from "./app-bar.js";
 export { Places } from "./places.js";
 // A seat's move, as the scene makes it: the stop it is, or the pane it opens.

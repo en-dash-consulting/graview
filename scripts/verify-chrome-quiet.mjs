@@ -98,6 +98,20 @@
  * politely, and its act a real button the keyboard reaches without the
  * notice having taken the focus.
  *
+ * And THE WAY BACK LEAVES, AND THE SCENE HAS ONE (FR-152, FR-153). Graview
+ * Cloud on staging: after an act on Pages the "Take back …" stood at the
+ * picture's foot for the rest of the session, with nothing on it to close
+ * it; Down in a district on the scene there was no undo in reach. On the
+ * vendor template at 1280×800, an act is made on each face. On the Pages
+ * face its offer comes, its × is a button the keyboard reaches from it and
+ * closes it with the change kept, it goes on its own after its ten seconds
+ * (and ⌘Z still takes the change back), it stands while the pointer is on
+ * it and goes after it leaves, and it goes with a move to another page. On
+ * the scene, at altitude and Down in a district: the act is offered back on
+ * the board, Activity is in the bar and lists the change with its undo,
+ * and the change is taken back by the offer's own Take back and by Ctrl+Z;
+ * the offer goes on its own, and stands while the pointer is on it.
+ *
  * And THE SCENE HAS ITS PLACES IN THE BAR, AND THE PLACES STAND ON THE ROW
  * WHEN THERE IS ROOM (FR-144, FR-145). Nick on 0.1.17: "is there a way to
  * have a subnav on Scene like how there is for Pages … Might also be nice
@@ -119,7 +133,7 @@
  *
  *   node scripts/verify-chrome-quiet.mjs [--engine=chromium|webkit|firefox] [--shots=<dir>] [--quick] [--notices]
  *
- * `--notices` measures only the notices (FR-133), for iterating on them.
+ * `--notices` measures only the notices (FR-133) and the way back (FR-152, FR-153), for iterating on them.
  */
 import { createServer } from "node:http";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -151,6 +165,9 @@ const ONLY_PICKS = process.argv.includes("--picks");
 const ONLY_STANDING = process.argv.includes("--standing");
 /** What a notice says here: a sentence as long as a real change's, which must wrap on a phone rather than be cut. */
 const LONG_VENDOR = "Could Val lead the Thursday tasting while Sam is away for the fortnight";
+/** How long the way back stands after an act: `WAY_BACK_MS` in @graview/primitives. */
+const WAY_BACK_MS = 10_000;
+const OWNER = { kind: "human", id: "u:owner", roles: ["owner"] };
 const ORG = resolve(repoRoot, "scripts/fixtures/quiet/org.gdd.json");
 const ORG_SEED = resolve(repoRoot, "scripts/fixtures/quiet/org.seed.json");
 const VENDORS = resolve(repoRoot, "scripts/fixtures/quiet/vendor-shortlist.template.json");
@@ -427,7 +444,7 @@ function measure() {
 const BAR_HELPERS = `${[barControls, linesOf, theSwitch, saysOverview, placesSaid].map(String).join("\n")}\nObject.assign(window, { barControls, linesOf, theSwitch, saysOverview, placesSaid });`;
 const host = await buildHost();
 const errors = [];
-const results = { standing: [], standingResized: [], standingPresses: [], quickPicks: [], boxes: [], boxSwitches: [], firstFrames: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [], workshopLists: [] };
+const results = { standing: [], standingResized: [], standingPresses: [], quickPicks: [], boxes: [], boxSwitches: [], firstFrames: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [], workshopLists: [], wayBack: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -592,6 +609,14 @@ try {
         for (const viewport of [PHONE, DESK]) {
           const { page, close } = await open(`doc=vendors&face=${face}`, viewport);
           results.notices.push({ engine, scheme, face, viewport: `${viewport.width}×${viewport.height}`, ...(await noticesFloat(page, face, engine, `${face}-${viewport.width}-${scheme}`)) });
+          await close();
+        }
+      }
+      /* ---- FR-152, FR-153: the way back leaves, on both faces, and the scene has one — on a desk, in the first scheme */
+      if (scheme === SCHEMES[0]) {
+        for (const face of ["pages", "graview"]) {
+          const { page, close } = await open(`doc=vendors&face=${face}`, DESK);
+          results.wayBack.push({ engine, face, ...(await (face === "pages" ? theWayBackOnPages(page) : theWayBackOnTheScene(page))) });
           await close();
         }
       }
@@ -993,6 +1018,43 @@ try {
   report.checks.aNoticeIsSaidPolitelyAndItsActIsAButtonTheKeyboardReaches = {
     seen: notices.map(({ engine, scheme, face, viewport, said, act }) => ({ engine, scheme, face, viewport, said, act })),
     ok: allNotices && notices.every((one) => one.said.polite && one.said.wayBack !== false && one.act.button && one.act.focusStayed && one.act.reached),
+  };
+  /* FR-152, FR-153 */
+  const wayBack = results.wayBack;
+  const allWayBack = wayBack.length === engines.length * 2;
+  const onPages = wayBack.filter((one) => one.face === "pages");
+  const onScene = wayBack.filter((one) => one.face === "graview");
+  report.checks.theWayBackOnPagesClosesWithAnXTheKeyboardReachesAndKeepsTheChange = {
+    seen: onPages.map(({ engine, comes, close }) => ({ engine, comes, close })),
+    ok: allWayBack && onPages.every((one) => one.comes && one.close.reached && one.close.named && one.close.closed && one.close.kept && one.close.keyboardOnThePage),
+  };
+  report.checks.theWayBackOnPagesLeavesAfterItsTimeAndCtrlZStillTakesItBack = {
+    seen: onPages.map(({ engine, leaves }) => ({ engine, leaves })),
+    ok: allWayBack && onPages.every((one) => one.leaves.shown && one.leaves.gone && one.leaves.keyTookItBack),
+  };
+  report.checks.theWayBackOnPagesStandsWhileThePointerIsOnIt = {
+    seen: onPages.map(({ engine, held }) => ({ engine, held })),
+    ok: allWayBack && onPages.every((one) => one.held.stood && one.held.goneAfter),
+  };
+  report.checks.theWayBackOnPagesGoesWithAMoveToAnotherPage = {
+    seen: onPages.map(({ engine, move }) => ({ engine, move })),
+    ok: allWayBack && onPages.every((one) => one.move.before && one.move.gone),
+  };
+  report.checks.theWayBackOnTheSceneIsOfferedAtAltitudeAndDownInADistrict = {
+    seen: onScene.map(({ engine, altitude, down }) => ({ engine, altitude, down })),
+    ok: allWayBack && onScene.every((one) => [one.altitude, one.down].every((at) => at.there && at.offered && at.closeNamed)),
+  };
+  report.checks.theWayBackOnTheSceneReachesActivityFromItsBarAtAltitudeAndDownInADistrict = {
+    seen: onScene.map(({ engine, altitude, down }) => ({ engine, altitude: altitude.activity, down: down.activity })),
+    ok: allWayBack && onScene.every((one) => [one.altitude, one.down].every((at) => at.activity.inTheBar && at.activity.opens && at.activity.listsTheChange && at.activity.offersItsUndo)),
+  };
+  report.checks.theWayBackOnTheSceneTakesAnActBackByItsControlAndByCtrlZ = {
+    seen: onScene.map(({ engine, altitude, down }) => ({ engine, altitude: { byControl: altitude.byControl }, down: { byControl: down.byControl, byKey: down.byKey, offerWent: down.offerWent } })),
+    ok: allWayBack && onScene.every((one) => one.altitude.byControl && one.down.byControl && one.down.byKey && one.down.offerWent),
+  };
+  report.checks.theWayBackOnTheSceneLeavesAfterItsTimeAndStandsWhileThePointerIsOnIt = {
+    seen: onScene.map(({ engine, leaves, held }) => ({ engine, leaves, held })),
+    ok: allWayBack && onScene.every((one) => one.leaves.shown && one.leaves.gone && one.held.stood && one.held.goneAfter),
   };
   /* The bar fits its box */
   const boxes = results.boxes;
@@ -1637,6 +1699,12 @@ async function noticesFloat(page, face, engine, shot) {
       window.__dockDisplay = dock.style.display;
       dock.style.display = "none";
     }
+    /* On the scene the way back is a toast of the app's board (FR-153): held out of sight the same way, with the toasts it stands among. */
+    const toasts = document.querySelector('[data-testid="notices-toasts"]');
+    if (toasts) {
+      window.__toastsDisplay = toasts.style.display;
+      toasts.style.display = "none";
+    }
     /* The layout shifts from here on, as Chromium reports them; null where the engine reports none. */
     window.__shifts = null;
     try {
@@ -1687,6 +1755,8 @@ async function noticesFloat(page, face, engine, shot) {
     if (dock) dock.style.display = window.__dockDisplay;
     window.__handle.notify({ kind: "toast", sentence: `Saved “${name}” to the shortlist, with its quote and its date`, action: { label: "Undo", onSelect: () => {} } });
     window.__handle.notify({ kind: "banner", sentence: "Offline — changes will be sent when you reconnect.", tone: "warn" });
+    const toasts = document.querySelector('[data-testid="notices-toasts"]');
+    if (toasts && window.__toastsDisplay !== undefined) toasts.style.display = window.__toastsDisplay;
   }, LONG_VENDOR);
   await page.waitForTimeout(700);
   if (SHOTS) {
@@ -1711,7 +1781,8 @@ async function noticesFloat(page, face, engine, shot) {
     const notices = [
       ...[...document.querySelectorAll('[data-testid="notices-toasts"] [data-testid="notice"]')].map((element) => ({ name: "toast", element, at: "foot" })),
       ...[...document.querySelectorAll('[data-testid="notices-banners"] [data-testid="notice"]')].map((element) => ({ name: "banner", element, at: "top" })),
-      ...(dockShown ? [{ name: "the way back", element: dock.querySelector('[data-testid="page-undo"]'), at: "foot" }] : []),
+      /* The way back's own notice: its panel, the way back and its × (FR-152). */
+      ...(dockShown ? [{ name: "the way back", element: dock.querySelector('[data-testid="page-undo-notice"]') ?? dock.querySelector('[data-testid="page-undo"]'), at: "foot" }] : []),
     ];
     /* Beside a tall panel at the left of a desk's picture (the seat, open), "left" is its right edge. */
     const tallAtLeft = [...document.querySelectorAll("[data-graview-foot]")]
@@ -1813,6 +1884,170 @@ async function noticesFloat(page, face, engine, shot) {
   }
   const { boxes: _boxes, ...rest } = after;
   return { ...rest, kept, moved: Math.round(moved * 100) / 100, act: { ...after.act, reached }, ...(face === "pages" ? {} : { wayBack: undefined }) };
+}
+
+
+/** An act, as the person at the keyboard: a vendor added. The batch it made. */
+async function actOnIt(page, name) {
+  const batch = await page.evaluate(({ name, owner }) => {
+    window.__handle.store.apply({ name: "add-vendor", args: { name } }, { author: owner });
+    return window.__handle.store.batches().at(-1).id;
+  }, { name, owner: OWNER });
+  // The way back is fetched with the first change.
+  await page.waitForTimeout(900);
+  return batch;
+}
+function takenBack(page, batch) {
+  return page.evaluate((batch) => window.__handle.store.batches().find((one) => one.id === batch)?.undone === true, batch);
+}
+/* The pointer somewhere that is no notice and no control: the middle of the picture's right edge. */
+function park(page) {
+  return page.mouse.move((page.viewportSize()?.width ?? 1280) - 4, (page.viewportSize()?.height ?? 800) / 2);
+}
+function ctrlZ(page) {
+  return page.keyboard.press("Control+z");
+}
+
+/** The Pages face's docked way back, as a person sees it: drawn, and what it says. */
+function dockSays(page) {
+  return page.evaluate(() => {
+    const button = document.querySelector('[data-testid="face-undo-dock"] [data-testid="page-undo"]');
+    const box = button?.getBoundingClientRect();
+    return button && box.height > 1 && box.width > 1 ? button.textContent : null;
+  });
+}
+
+/**
+ * THE WAY BACK ON PAGES LEAVES (FR-152): an act brings it; its × closes it
+ * from the keyboard and keeps the change; it goes after its time, and Ctrl+Z
+ * still takes the change back; it stands while the pointer is on it; it
+ * goes with a move to another page.
+ */
+async function theWayBackOnPages(page) {
+  await park(page);
+  /* Comes, and closes with its ×. */
+  let batch = await actOnIt(page, "Way back one");
+  const comes = ((await dockSays(page)) ?? "").includes("Way back one");
+  await page.locator('[data-testid="face-undo-dock"] [data-testid="page-undo"]').focus();
+  await page.keyboard.press("Tab");
+  const reached = await page.evaluate(() => document.activeElement?.getAttribute("data-testid") === "page-undo-dismiss" && document.activeElement.tagName === "BUTTON");
+  const named = await page.evaluate(() => /^Dismiss: Take back “.+”$/.test(document.querySelector('[data-testid="page-undo-dismiss"]')?.getAttribute("aria-label") ?? ""));
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(300);
+  const close = { reached, named, closed: (await dockSays(page)) === null, kept: !(await takenBack(page, batch)), keyboardOnThePage: await page.evaluate(() => document.activeElement !== null && document.activeElement !== document.body) };
+  /* Leaves after its time; Ctrl+Z, from inside the face, still takes it back. */
+  batch = await actOnIt(page, "Way back two");
+  const shown = (await dockSays(page)) !== null;
+  await page.waitForTimeout(WAY_BACK_MS + 700);
+  const gone = (await dockSays(page)) === null;
+  await page.evaluate(() => document.querySelector("[data-embed-content] a[href], [data-embed-content] button")?.focus());
+  await ctrlZ(page);
+  await page.waitForTimeout(300);
+  const leaves = { shown, gone, keyTookItBack: await takenBack(page, batch) };
+  /* Stands while the pointer is on it. */
+  await actOnIt(page, "Way back three");
+  await page.locator('[data-testid="face-undo-dock"] [data-testid="page-undo"]').hover();
+  await page.waitForTimeout(WAY_BACK_MS + 1500);
+  const stood = (await dockSays(page)) !== null;
+  await park(page);
+  await page.waitForTimeout(WAY_BACK_MS + 700);
+  const held = { stood, goneAfter: (await dockSays(page)) === null };
+  /* Goes with a move to another page — one of the person's own, a while after the act. */
+  await actOnIt(page, "Way back four");
+  await page.waitForTimeout(1500);
+  const before = (await dockSays(page)) !== null;
+  await pressPlace(page, '[data-testid="app-place-kind:vendor"]');
+  await page.waitForTimeout(800);
+  const move = { before, gone: (await dockSays(page)) === null };
+  return { comes, close, leaves, held, move };
+}
+
+/** The scene's offer on the board: the toast whose act is "Take back", and what it says. */
+function offerSays(page) {
+  return page.evaluate(() => {
+    const toast = [...document.querySelectorAll('[data-testid="notices-toasts"] [data-testid="notice"]')].find((one) => [...one.querySelectorAll('[data-testid="notice-action"]')].some((act) => act.textContent === "Take back"));
+    const box = toast?.getBoundingClientRect();
+    return toast && box.height > 1 ? { says: toast.textContent, closeNamed: /^Dismiss: /.test(toast.querySelector('[data-testid="notice-dismiss"]')?.getAttribute("aria-label") ?? "") } : null;
+  });
+}
+
+/** Activity, from the scene's bar: there, it opens, and it lists the change with its undo. */
+async function activityReaches(page, name) {
+  const button = page.locator('[data-graview-app-bar] [data-testid="activity-button"]').first();
+  const inTheBar = await button.isVisible().catch(() => false);
+  if (!inTheBar) return { inTheBar, opens: false, listsTheChange: false, offersItsUndo: false };
+  await button.click();
+  await page.waitForTimeout(400);
+  const seen = await page.evaluate((name) => {
+    const pane = document.querySelector('[data-testid="activity"]');
+    return { opens: pane !== null && pane.getBoundingClientRect().height > 1, listsTheChange: (pane?.textContent ?? "").includes(name), offersItsUndo: Boolean(pane?.querySelector('[data-testid="undo-turn"]')) };
+  }, name);
+  // Closed as it was opened, by its button (Escape on the scene also backs the picture out to home).
+  await button.click();
+  await page.waitForTimeout(300);
+  await park(page);
+  return { inTheBar, ...seen };
+}
+
+/** Takes the scene's offer back by its own control: its "Take back", pressed. */
+async function pressTakeBack(page) {
+  const take = page.locator('[data-testid="notices-toasts"] [data-testid="notice-action"]', { hasText: "Take back" }).first();
+  if (!(await take.isVisible().catch(() => false))) return false;
+  await take.click();
+  await page.waitForTimeout(300);
+  await park(page);
+  return true;
+}
+
+/**
+ * THE SCENE HAS A WAY BACK (FR-153): at altitude and Down in a district, an
+ * act is offered back on the board, Activity is in the bar with the change
+ * and its undo, and the change is taken back by the offer's Take back and
+ * by Ctrl+Z; the offer goes after its time and stands while the pointer is
+ * on it (FR-152).
+ */
+async function theWayBackOnTheScene(page) {
+  await park(page);
+  const overview = page.locator('[data-testid="overview"]').first();
+  const up = async () => (await overview.getAttribute("aria-pressed").catch(() => null)) === "true";
+  /* At altitude. */
+  if (!(await up())) {
+    await overview.click();
+    await page.waitForTimeout(1500);
+  }
+  let batch = await actOnIt(page, "Scene way one");
+  const offeredUp = await offerSays(page);
+  const activityUp = await activityReaches(page, "Scene way one");
+  const pressedUp = await pressTakeBack(page);
+  const altitude = { there: await up(), offered: (offeredUp?.says ?? "").includes("Scene way one"), closeNamed: offeredUp?.closeNamed === true, activity: activityUp, byControl: pressedUp && (await takenBack(page, batch)) };
+  /* Down in a district. */
+  await overview.click();
+  await page.waitForTimeout(1800);
+  batch = await actOnIt(page, "Scene way two");
+  const offeredDown = await offerSays(page);
+  const activityDown = await activityReaches(page, "Scene way two");
+  await overview.focus();
+  await ctrlZ(page);
+  await page.waitForTimeout(400);
+  const byKey = await takenBack(page, batch);
+  const offerWent = (await offerSays(page)) === null;
+  batch = await actOnIt(page, "Scene way three");
+  const pressedDown = await pressTakeBack(page);
+  const down = { there: !(await up()), offered: (offeredDown?.says ?? "").includes("Scene way two"), closeNamed: offeredDown?.closeNamed === true, activity: activityDown, byKey, offerWent, byControl: pressedDown && (await takenBack(page, batch)) };
+  /* Goes after its time. */
+  await actOnIt(page, "Scene way four");
+  const shown = (await offerSays(page)) !== null;
+  await page.waitForTimeout(WAY_BACK_MS + 700);
+  const leaves = { shown, gone: (await offerSays(page)) === null };
+  /* Stands while the pointer is on it; its time come while held, it stands its whole time again. */
+  await actOnIt(page, "Scene way five");
+  await page.locator('[data-testid="notices-toasts"] [data-testid="notice"]').first().hover();
+  await page.waitForTimeout(WAY_BACK_MS + 1500);
+  const stood = (await offerSays(page)) !== null;
+  await park(page);
+  await page.waitForTimeout(2 * WAY_BACK_MS + 700);
+  const held = { stood, goneAfter: (await offerSays(page)) === null };
+  return { altitude, down, leaves, held };
 }
 
 /**
