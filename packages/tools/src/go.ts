@@ -1,4 +1,5 @@
 import {
+  brokenWords,
   edgeWords,
   kindPath,
   labelOf,
@@ -798,7 +799,7 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
     const move: SeatMove = { to: "problems", address: "/problems", said: "Went to the problems." };
     return {
       about: "problems",
-      say: `${move.said} ${violations.length === 1 ? "One" : violations.length}: ${violations
+      say: `${move.said} ${brokenWords(violations)}: ${violations
         .slice(0, 4)
         .map((violation) => violation.message)
         .join("; ")}${violations.length > 4 ? "…" : "."}`,

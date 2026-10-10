@@ -137,6 +137,8 @@ export { DefaultView, DefaultViewElsewhere, defaultViewsOf, useDefaultElsewhere 
 export { RecordHeadContext } from "./record-head.js";
 export type { RecordHead } from "./record-head.js";
 export { hasFigure, KindFigure } from "./figure.js";
+// A rule drawn as its shape: the kind's mark, then what must hold in symbols a person knows; broken, the record's values.
+export { problemLine, problemTitle, RuleLineView, RuleParts, useLined, useRuleLines } from "./rule-line.js";
 export { useMarkup } from "./markup.js";
 
 // The worked example: one fully-built lens, from public primitives only.

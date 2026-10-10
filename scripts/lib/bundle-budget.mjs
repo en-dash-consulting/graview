@@ -145,13 +145,17 @@ export const BUDGETS = [
     // more. Measured at 532_417 / 188_699.
     // Lowered when the host came to decide the AI once: the reader's picker of rungs, its pills and key fields, the ⚙ and
     // the remembered rung left the seat and the person's menu. 5_885 / 2_137 fewer than main. Measured at 526_532 / 186_562.
+    // Raised when a rule came to say its shape: the problems page draws each problem as its rule's line with the record's
+    // values and lists every rule as its shape (`RuleLineView`, the kind's mark beside it), the words themselves fetched
+    // when a problem is drawn (`@graview/core/lines`). 4_635 / 2_091 more. Measured at 531_167 / 188_653.
     // Raised when a list came to arrange on one quiet line (the lists it opens fetched when first opened, so the line is
     // smaller up front than the row of selects was), its glance kept under a declared row, adding one a press at its end,
     // the end of a page clear of the ask field, and the bar ranking its places: 2_201 / 692 more. Measured at 528_733 / 187_254.
     // And when a large list came to open in a meaningful order with an index of its years or letters, and a design to draw
     // its lists with the same `ListPage`: 3_300 / 1_160 more. Measured at 532_033 / 188_414.
-    minified: 532_500,
-    gzipped: 188_800,
+    // Together, over main's rule saying its shape: measured at 536_736 / 190_408.
+    minified: 537_200,
+    gzipped: 190_800,
     load: "first",
   },
   {
@@ -452,13 +456,18 @@ export const BUDGETS = [
     // reads a named day, a weekend and a date, and follows one relation by its words ("who's working thursday"); and the
     // person's menu, fetched when first opened, can sign an example "Built with Graview". Nothing more up front.
     // 7_323 / 2_859 more. Measured at 1_656_527 / 515_486.
+    // Raised when a rule came to say its shape: the words a rule's line is said in (`@graview/core/lines`, with the rule
+    // language's evaluator and parser it reads a judgment with) are a chunk fetched when a problem is first drawn, and the
+    // problems page, the record page and the problems' rows draw it. Nothing more up front. 18_573 / 7_674 more.
+    // Measured at 1_675_100 / 523_160.
     // Raised when a list came to arrange on one quiet line: the lists its words open (a sort's direction in its values'
     // words, a date group's width, every way to narrow with the ones on pressed, a date's day asked in the list, the arrow
     // keys) are a chunk of their own fetched when one is first opened, about 8.4 KB; the bar ranking its places, a declared
     // row's glance and adding one as a press at a list's end, the rest. 11_522 / 4_044 more. Measured at 1_668_049 / 519_530.
     // And a large list's way through it and `ListPage` for designs: 3_371 / 1_136 more. Measured at 1_671_420 / 520_666.
-    minified: 1_671_900,
-    gzipped: 521_000,
+    // Together, over main's rule saying its shape: measured at 1_690_539 / 528_634.
+    minified: 1_691_000,
+    gzipped: 529_000,
     load: "all",
   },
   {
@@ -533,12 +542,14 @@ export const BUDGETS = [
     // Raised with every face's when the whole-page Shell and an embed came to wear one bar on the scene: 6_439 / 1_715 more,
     // over the cleanup. Measured at 1_561_447 / 476_214.
     // Lowered with every face's when the host came to decide the AI once: 8_170 / 2_769 fewer. Measured at 1_553_277 / 473_445.
+    // Raised with the pages face's when a rule came to say its shape: 4_927 / 2_554 more. Measured at 1_558_204 / 475_999.
     // Raised with the pages face's when a list came to arrange on one quiet line and the bar to rank its places: 3_646 / 1_041
     // more, the arranging lists behind their own door. Measured at 1_556_923 / 474_486.
     // And with the pages face's when a large list came to have a way through it and a design to draw with `ListPage`:
     // 3_371 / 1_126 more. Measured at 1_560_294 / 475_612.
-    minified: 1_560_800,
-    gzipped: 476_000,
+    // Together, over main's rule saying its shape: measured at 1_565_066 / 478_232.
+    minified: 1_565_600,
+    gzipped: 478_600,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

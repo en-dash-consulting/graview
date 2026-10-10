@@ -177,15 +177,19 @@ export const FACE_DOORS = {
  * Scene landing where the scene opens from a page that held nothing in it
  * (FR-157: `holdsNothing`, `whereTheSceneOpens`, the opening view handed to
  * the address bar and the faces) took it to 592 042 bytes (578.2 KB), 380
- * more: 578.4 KB, which leaves Cloud's shell 16.6 KB under its 595.
- * The bar ranking its places over FR-157 (FR-145: the primary ones stand,
- * six at most, from `pages.primary` or the kinds that support the others
- * worked out of the declaration) took it to 593 266 bytes (579.4 KB), 1 224
- * more; the list's arranging moved behind a door of its own (its lists
- * fetched when one is first opened), so nothing of it is up front. 579.6 KB,
- * which leaves Cloud's shell 15.4 KB under its 595.
+ * more: 578.4 KB, which leaves Cloud's shell 16.6 KB under its 595. A
+ * rule saying its shape, over FR-157 — the standing counting rules broken,
+ * and a document's rule keeping what its line is said from, the words
+ * themselves fetched with what draws a problem (`@graview/core/lines`) —
+ * took it to 592 120 (578.2 KB), 78 more: still under 578.4 KB. The bar
+ * ranking its places over both (FR-145: the primary ones stand, six at
+ * most, from `pages.primary` or the kinds that support the others worked
+ * out of the declaration) took it to 593 378 bytes (579.5 KB), 1 258 more;
+ * the list's arranging moved behind a door of its own (its lists fetched
+ * when one is first opened), so nothing of it is up front. 579.7 KB, which
+ * leaves Cloud's shell 15.3 KB under its 595.
  */
-export const HOSTED_PAGE_BUDGET = { minified: 579.6 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BUDGET = { minified: 579.7 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -296,10 +300,12 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * 546 786 (534.0 KB): 534.2 KB. The host deciding the AI once, the same
  * 750 bytes fewer, took it to 546 036 (533.2 KB): 533.4 KB. The scene
  * from a page that held nothing (FR-157), the same 380 bytes, took it to
- * 546 415 (533.6 KB): 533.8 KB. The bar ranking its places over it, the
- * same as the page that compiles, took it to 547 587 (534.8 KB): 535.0 KB.
+ * 546 415 (533.6 KB): 533.8 KB. A rule saying its shape, over FR-157,
+ * the same few bytes, took it to 546 566 (533.75 KB): still under 533.8 KB.
+ * The bar ranking its places over both, the same as the page that
+ * compiles, took it to 547 775 (534.9 KB): 535.2 KB.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 535.0 * 1024 };
+export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 535.2 * 1024 };
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [

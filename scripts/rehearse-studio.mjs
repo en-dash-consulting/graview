@@ -305,7 +305,7 @@ try {
   await page.goto(`http://localhost:${PORT}/pages/problems?remember=1`, { waitUntil: "load" });
   await page.waitForTimeout(1500);
   const problems = (await page.textContent("main")) ?? "";
-  report.checks.theRuleJudgesTheStoredGarden = { said: problems.slice(0, 400), ok: problems.includes("Mint grows nowhere") };
+  report.checks.theRuleJudgesTheStoredGarden = { said: problems.slice(0, 400), ok: problems.includes("Mint") && problems.includes("grows in = —") };
 
   /* ------------------------------------------ and the checkout still builds */
   const run = (command, args) => {

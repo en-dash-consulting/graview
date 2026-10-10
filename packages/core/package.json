@@ -45,6 +45,10 @@
       "types": "./dist/arrange.d.ts",
       "default": "./dist/arrange.js"
     },
+    "./lines": {
+      "types": "./dist/lines.d.ts",
+      "default": "./dist/lines.js"
+    },
     "./conformance": {
       "types": "./dist/conformance/index.d.ts",
       "default": "./dist/conformance/index.js"

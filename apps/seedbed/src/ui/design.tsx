@@ -1,4 +1,4 @@
-import type { AnySchema, Principal } from "@graview/core";
+import { brokenWords, type AnySchema, type Principal } from "@graview/core";
 import {
   createPageRegistry,
   DerivedForm,
@@ -122,18 +122,19 @@ const KINDS = [
   { kind: "rule", slug: "rules", label: "Agreements", hue: HUE.rule },
 ] as const;
 
-function useGarden(context: Ctx): { garden: Garden; problems: number } {
+function useGarden(context: Ctx): { garden: Garden; problems: number; standing: string } {
   const { store, invariantContext } = context;
   useStoreTick(store);
   const violations = store.violations(invariantContext);
-  return { garden: readGarden(store, violations), problems: violations.length };
+  // Said as rules, the way the problems are drawn: "Every rule holds", "1 rule broken in 2 places".
+  return { garden: readGarden(store, violations), problems: violations.length, standing: violations.length === 0 ? "Every rule holds" : brokenWords(violations) };
 }
 
 /* ------------------------------------------------------------ the shell */
 
 function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
   const { store, sceneHref = "/" } = context;
-  const { garden, problems } = useGarden(context);
+  const { garden, problems, standing } = useGarden(context);
   const location = useLocation();
   const counts: Record<string, number> = {
     plot: garden.plots.length,
@@ -175,7 +176,7 @@ function Shell({ context, children }: { context: Ctx; children: ReactNode }) {
           </Link>
         </nav>
         <p className={`sb-standing${problems > 0 ? " bad" : ""}`} data-testid="standing-card">
-          <b>{problems === 0 ? "The garden keeps its agreements." : `${problems} ${problems === 1 ? "agreement is" : "agreements are"} not kept.`}</b>
+          <b>{standing}.</b>
           {garden.growing.length} growing, {garden.past.length} past, {garden.gardeners.length} {garden.gardeners.length === 1 ? "gardener" : "gardeners"}.
           {context.barAbove ? null : (
             <>
@@ -437,7 +438,7 @@ function Home({ context }: { context: Ctx }) {
             {garden.rules.map((rule) => (
               <div className="sb-row" key={rule.id}>
                 <Link to={recordPath(store.schema, "rule", rule.id)} className="grow" style={{ fontWeight: 600 }}>{rule.label}</Link>
-                <span className={`sb-pill${rule.broken.length > 0 ? " warn" : " leaf"}`}>{rule.broken.length > 0 ? `${rule.broken.length} not kept` : "kept"}</span>
+                <span className={`sb-pill${rule.broken.length > 0 ? " warn" : " leaf"}`}>{rule.broken.length > 0 ? `broken in ${rule.broken.length}` : "holds"}</span>
               </div>
             ))}
           </div>
@@ -553,7 +554,7 @@ function Rules({ context }: { context: Ctx }) {
           return (
             <div className="sb-row">
               <Link to={facts.href} className="grow" style={{ fontWeight: 600, fontSize: "1.0625rem" }}>{facts.label}</Link>
-              <span className={`sb-pill${broken > 0 ? " warn" : " leaf"}`}>{broken > 0 ? `${broken} not kept` : "kept"}</span>
+              <span className={`sb-pill${broken > 0 ? " warn" : " leaf"}`}>{broken > 0 ? `broken in ${broken}` : "holds"}</span>
             </div>
           );
         }}
@@ -722,9 +723,9 @@ function RuleRecord({ context }: { context: Ctx }) {
   return (
     <div data-testid="rule-page">
       <header>
-        <p className="sb-eyebrow">An agreement · {violations.length === 0 ? "kept" : "not kept"}</p>
+        <p className="sb-eyebrow">An agreement · {violations.length === 0 ? "holds" : "broken"}</p>
         <h1 className="sb-h1">{rule.label}</h1>
-        <p className="sb-lede">{violations.length === 0 ? "Every plot keeps it." : `${violations.length} ${violations.length === 1 ? "plot does" : "plots do"} not keep it, and each says what would.`}</p>
+        <p className="sb-lede">{violations.length === 0 ? "It holds for every plot." : `${violations.length} ${violations.length === 1 ? "plot breaks" : "plots break"} it, and each says what would put it right.`}</p>
       </header>
       {violations.length > 0 ? (
         <section className="sb-section" data-testid="record-violations">
@@ -756,7 +757,7 @@ function Problems({ context }: { context: Ctx }) {
     <div data-testid="seedbed-problems">
       <header>
         <p className="sb-eyebrow">What needs doing</p>
-        <h1 className="sb-h1">{violations.length === 0 ? "Nothing. The garden keeps its agreements." : `${violations.length} ${violations.length === 1 ? "thing" : "things"}, each with a way to put it right.`}</h1>
+        <h1 className="sb-h1">{violations.length === 0 ? "Nothing. Every rule holds." : `${violations.length} ${violations.length === 1 ? "thing" : "things"}, each with a way to put it right.`}</h1>
       </header>
       <section className="sb-section">
         {violations.map((violation, index) => (

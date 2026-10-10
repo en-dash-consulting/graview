@@ -743,7 +743,8 @@ export function RelationCaptions({
       const { scale } = styleFor(1, scheme);
       entries.push({
         key: `${node.via.edgeKind}|${node.via.direction}`,
-        text: node.via.description ?? humanizeField(node.via.edgeKind).toLowerCase(),
+        // Where the declaration has no words for this end, the arrow says which way the relation points (FR-142).
+        text: node.via.description ?? `${node.via.direction === "in" ? "←" : "→"} ${humanizeField(node.via.edgeKind).toLowerCase()}`,
         left: measured?.x ?? node.x,
         right: measured ? measured.x + measured.width : node.x + node.width * scale,
         top: measured?.y ?? node.y,

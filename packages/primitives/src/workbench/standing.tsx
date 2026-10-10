@@ -1,4 +1,4 @@
-import type { AnySchema } from "@graview/core";
+import { brokenWords, type AnySchema } from "@graview/core";
 import { POPOVER_STYLE, usePopover, useSelection, useViolations } from "@graview/react/provider";
 import { Suspense, useEffect, useState } from "react";
 import { toolStyle } from "../app-bar.js";
@@ -39,7 +39,7 @@ export function Standing({
   const [asked, setAsked] = useState(false);
   const popover = usePopover("problems", { open: asked && count > 0, onOpenChange: setAsked });
   const open = popover.open;
-  const said = standingWords(count, clean);
+  const said = standingWords(violations, clean);
   // A rule broken is a press likely to come: its rows are fetched once the page has drawn, not when it is pressed.
   useEffect(() => {
     if (count === 0) return;
@@ -106,9 +106,13 @@ export function Standing({
   );
 }
 
-/** What the standing says: its name, and its hover (FR-131). */
-export function standingWords(count: number, clean: string): string {
-  return count === 0 ? clean : `${count} ${count === 1 ? "problem" : "problems"} — open what is broken, and what would fix it`;
+/**
+ * What the standing says: its name, and its hover (FR-131). Counted as
+ * rules — "2 rules broken", "1 rule broken in 3 places" — the way a person
+ * says it, and the way the problems themselves are drawn.
+ */
+export function standingWords(violations: readonly { readonly invariant: string }[], clean: string): string {
+  return violations.length === 0 ? clean : `${brokenWords(violations)} — open what is broken, and what would fix it`;
 }
 
 /** A broken rule is a warning; a rule that could not be judged at all is bad. */
