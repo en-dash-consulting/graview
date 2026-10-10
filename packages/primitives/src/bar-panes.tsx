@@ -5,6 +5,9 @@ import type { HostAction } from "./profile.js";
 import { Seats } from "./seats.js";
 import { problemLine, problemTitle, RuleLineView, useLined } from "./rule-line.js";
 
+/* Who else is here (FR-155), fetched with the panes once somebody is. */
+export { Here } from "./here.js";
+
 /*
  * WHAT IS BEHIND THE BAR'S TOOLS (FR-131), fetched when one is first reached
  * for: the bar draws the standing and the person at once, and a page that

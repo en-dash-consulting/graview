@@ -427,7 +427,7 @@ function measure() {
 const BAR_HELPERS = `${[barControls, linesOf, theSwitch, saysOverview, placesSaid].map(String).join("\n")}\nObject.assign(window, { barControls, linesOf, theSwitch, saysOverview, placesSaid });`;
 const host = await buildHost();
 const errors = [];
-const results = { standing: [], standingResized: [], standingPresses: [], quickPicks: [], boxes: [], boxSwitches: [], firstFrames: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [], workshopLists: [] };
+const results = { standing: [], standingResized: [], standingPresses: [], heldAcross: [], quickPicks: [], boxes: [], boxSwitches: [], firstFrames: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [], workshopLists: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -475,9 +475,24 @@ try {
             /* Every place, two presses each, by pointer and keyboard: at the widest page and a phone on both faces, and at 1024 on the scene, where its pictures fold. */
             if (!box && (viewport.width === 1920 || viewport === PHONE || (face === "graview" && viewport.width === 1024))) {
               const shot = SHOTS && (engine === "chromium" || engine === "webkit") ? join(SHOTS, `standing-${name}-list-open.png`) : null;
+              /* FR-158: an entry held from before the list opened is the one pressed after it, at once. */
+              results.heldAcross.push({ engine, scheme, face, where, ...(await heldAcrossTheOpen(page)) });
               results.standingPresses.push({ engine, scheme, face, where, places: face === "pages" ? 7 : 3, ...(await everyPlaceInTwoPresses(page, shot, face !== "pages")) });
             }
             await close();
+          }
+          /*
+           * FR-158, as Cloud met it: the scene reached by the switch from Pages, its places opened at once and the
+           * held entry pressed — on a phone and at 1024, where the scene's pictures fold into More.
+           */
+          if (face === "graview") {
+            for (const viewport of [PHONE, { width: 1024, height: 800 }]) {
+              const { page, close } = await open(`doc=workshop&face=pages&heading=1`, viewport);
+              await page.locator('[data-testid="app-face-scene"]').click();
+              await page.waitForFunction(() => document.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed") === "true", null, { timeout: 10_000 });
+              results.heldAcross.push({ engine, scheme, face: "scene, from pages", where: `a ${viewport.width} px page`, ...(await heldAcrossTheOpen(page)) });
+              await close();
+            }
           }
           /* Narrowed and widened again: the row is the row a fresh page draws at each width. */
           if (!QUICK || face === "pages") {
@@ -951,6 +966,18 @@ try {
     everyPlaceInTheBarIsTwoPressesAwayOnBothFacesByPointerAndKeyboard: {
       seen: results.standingPresses,
       ok: pressesAll && results.standingPresses.every(twoPressesHeld),
+    },
+    /*
+     * THE LIST RENDERS ONCE AS IT OPENS (FR-158): an entry of the list held
+     * from before it opened is still in the document after the press that
+     * opens it, nothing of the list is replaced while it stands open, and the
+     * held entry pressed at once — no wait — goes to its place. 0.1.20 drew
+     * the list, then drew it again ranked, and a press between the two hit a
+     * node no longer in the document.
+     */
+    anEntryHeldFromBeforeTheListOpenedIsTheOnePressedAfter: {
+      seen: results.heldAcross,
+      ok: results.heldAcross.length === results.standingPresses.length + engines.length * SCHEMES.length * 2 && results.heldAcross.some((one) => one.held) && results.heldAcross.every((one) => (one.opener === false || (one.held !== null && one.replaced === 0 && one.pressed && one.landed))),
     },
     aPictureChosenFromTheBarIsWhatTheSceneShows: {
       seen: results.standingPresses.filter((one) => one.face !== "pages").map(({ engine, scheme, where, inView }) => ({ engine, scheme, where, inView })),
@@ -1549,6 +1576,47 @@ async function everyPlaceInTwoPresses(page, shot, scene = false) {
   await page.waitForTimeout(300);
   keyboard.onBody = (await active()) === "<body>";
   return { listed: entries.length, groups, snug, reached, missed, keyboard, ...(scene ? { inView } : {}) };
+}
+
+/**
+ * AN ENTRY HELD ACROSS THE OPEN (FR-158): with the list closed, the last
+ * entry in it is held as an element; then the control that opens it is
+ * pressed and, with no pause, the held element is pressed — the way a
+ * person on a slow phone taps the moment the list appears. Whether it was
+ * still in the document, how many entries of the list were taken out of it
+ * while it opened, whether the press reached the element, and whether the
+ * bar then says the entry's place.
+ */
+async function heldAcrossTheOpen(page) {
+  if (await page.evaluate(() => document.querySelector('[data-testid="app-places"]')?.hasAttribute("hidden") === false)) await page.keyboard.press("Escape");
+  if (!(await page.locator('[data-testid="app-places-open"]').count())) return { held: null, opener: false };
+  const held = (await page.$$('[data-graview-embed] [data-testid="app-places"] [data-place-path]')).at(-1);
+  if (!held) return { held: null };
+  const label = (await held.textContent())?.trim() ?? "";
+  await page.evaluate(() => {
+    const pane = document.querySelector('[data-testid="app-places"]');
+    window.__replaced = 0;
+    window.__replacing = new MutationObserver((records) => {
+      for (const record of records) for (const node of record.removedNodes) if (node.nodeType === 1 && (node.matches("[data-place-path]") || node.querySelector("[data-place-path]"))) window.__replaced += 1;
+    });
+    window.__replacing.observe(pane, { childList: true, subtree: true });
+  });
+  await page.locator('[data-testid="app-places-open"]').click();
+  /* Counted up to the held entry's own press: what that press then does (the place it goes to) is not the opening's. */
+  await held.evaluate((one) => one.addEventListener("click", () => window.__replacing.disconnect(), { capture: true, once: true })).catch(() => undefined);
+  let pressed = true;
+  let refused = null;
+  await held.click({ timeout: 3000 }).catch((error) => {
+    pressed = false;
+    refused = String(error.message ?? error).split("\n")[0];
+  });
+  const replaced = await page.evaluate(() => {
+    window.__replacing.disconnect();
+    return window.__replaced;
+  });
+  const landed = pressed && (await page.waitForFunction((label) => document.querySelector('[data-testid="app-place-current"]')?.textContent.trim() === label, label, { timeout: 4000 }).then(() => true, () => false));
+  await held.dispose();
+  return { held: label, replaced, pressed, landed, ...(refused ? { refused } : {}) };
 }
 
 /** Every place reached by pointer and keyboard, two presses at most, and the keyboard never left on the body (FR-138, FR-145). */

@@ -74,6 +74,11 @@ async function buildHost() {
           studio: false,
           // Whether the seat's ask field is drawn, when the page asks.
           ...(asked.get("seat") ? { seat: asked.get("seat") } : {}),
+          /*
+           * Somebody else here, when the page asks: Sam, on the whole thing, held as a socket holds a presence — so the bar
+           * draws who is here (FR-155) and its list is opened with the rest of the family.
+           */
+          ...(asked.get("company") ? { presence: { here() {}, leave() {}, onWho(listener) { listener([{ participant: "human:user-sam:tab", kind: "human", name: "Sam", hue: 200, stop: "#overview=1", at: new Date().toISOString(), held: "socket" }]); return () => undefined; } } } : {}),
           // A host's own actions, as Graview Cloud has them (FR-72).
           hostActions: [
             { label: "Change the app", href: "/apps/things/change" },
@@ -581,8 +586,8 @@ try {
     const page = await browser.newPage({ viewport: size });
     page.on("pageerror", (error) => errors.push(error.message));
     const places = [
-      { where: "the embed's Graview", url: `${at("chrome-host")}/?face=graview`, ready: () => page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 }) },
-      { where: "the embed's pages", url: `${at("chrome-host")}/?face=pages`, ready: () => page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 }) },
+      { where: "the embed's Graview", url: `${at("chrome-host")}/?face=graview&company=1`, ready: () => page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 }) },
+      { where: "the embed's pages", url: `${at("chrome-host")}/?face=pages&company=1`, ready: () => page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 }) },
       { where: "the Shell", url: `${at("todo")}/?today=2026-09-01&fresh=1`, ready: () => page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 }) },
     ];
     for (const place of places) {
