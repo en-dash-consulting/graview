@@ -50,6 +50,8 @@ export interface CreateIo {
   readonly stderr: (text: string) => void;
   /** Runs a command in a directory and reports whether it succeeded. */
   readonly run: (command: string, args: readonly string[], cwd: string) => boolean;
+  /** Runs a command quietly and returns what it printed, or undefined when it failed. */
+  readonly ask: (command: string, args: readonly string[], cwd: string) => string | undefined;
 }
 
 const defaultIo: CreateIo = {
@@ -57,6 +59,10 @@ const defaultIo: CreateIo = {
   stderr: (text) => process.stderr.write(text),
   run: (command, args, cwd) =>
     spawnSync(command, [...args], { cwd, stdio: "inherit", shell: process.platform === "win32" }).status === 0,
+  ask: (command, args, cwd) => {
+    const result = spawnSync(command, [...args], { cwd, encoding: "utf8", shell: process.platform === "win32" });
+    return result.status === 0 ? result.stdout : undefined;
+  },
 };
 
 function flag(argv: readonly string[], name: string): string | undefined {
@@ -262,13 +268,45 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
     io.stdout(`graview create: skills: skipped (needs install — then \`${run} skills\`)\n`);
   }
 
+
+  /*
+   * THE DOCS AN AGENT READS, written once so the first commit has them:
+   * `docs/agents.md` and `docs/llms.txt`, from the declaration as scaffolded.
+   * `verify` writes them again whenever the declaration moves.
+   */
+  if (install) {
+    const docsIn = options.workspace ? resolve(target, "app") : target;
+    if (!io.run(pm, ["run", "docs"], docsIn)) {
+      io.stderr(`graview create: the agent docs were not written; \`${run} verify\` writes them.\n`);
+    }
+  }
+
+  /*
+   * THE FIRST COMMIT. A repository initialized with nothing committed showed
+   * `.agents/`, `.claude/` and `.github/` untracked and the rest staged,
+   * which reads as somebody else's half-finished work. Everything goes into
+   * one commit named after the product. Without an identity git would refuse
+   * (or guess one), so then everything is staged and that is said, once.
+   */
+  let committed = false;
+  if (initialized) {
+    const named = (key: string) => (io.ask("git", ["config", key], target) ?? "").trim() !== "";
+    io.run("git", ["add", "-A"], target);
+    if (named("user.name") && named("user.email")) {
+      committed = io.run("git", ["commit", "--quiet", "-m", `${scaffold.name}, on Graview`], target);
+      if (!committed) io.stderr("graview create: the first commit did not go through; everything is staged.\n");
+    } else {
+      io.stdout("graview create: git has no user.name or user.email here, so everything is staged and nothing is committed.\n");
+    }
+  }
+
   io.stdout(
     `\n${scaffold.name} is a product on Graview. Its first kind is "${scaffold.kind}".\n\n` +
       `  cd ${dir}\n` +
       (install ? "" : `  ${pm} install\n`) +
       `  ${run} dev        # http://localhost:${scaffold.port}  (/pages is the routed face)\n` +
       `  ${run} verify     # typecheck, tests, build, graview check\n` +
-      (initialized ? `  git add -A && git commit -m "${scaffold.name}, on Graview"\n` : "") +
+      (initialized && !committed ? `  git commit -m "${scaffold.name}, on Graview"\n` : "") +
       "\n" +
       (scaffold.linked
         ? `The framework is consumed by path from ${link}: rebuild it (pnpm -C ${link} build) when its sources change.\n` +
@@ -279,6 +317,8 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
           `\`${run} apply-template\` runs its setup into ./data as one batch that one undo takes back\n` +
           `(answer its questions with \`${run} apply-template ${pm === "pnpm" ? "" : "-- "}--answers '{"${template.questions[0]?.id ?? "question"}": …}'\`).\n\n`
         : "") +
+      (committed ? `The first commit is "${scaffold.name}, on Graview". ` : "") +
+      `AGENTS.md is what an agent reads first; CLAUDE.md imports it.\n` +
       `Then declare more: src/domain/ is the whole surface, and \`${run} check\` says what is wrong with it.\n`,
   );
   if (collisions.length > 0) {

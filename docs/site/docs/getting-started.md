@@ -42,11 +42,11 @@ graview create <dir> [--name "Field Notes"] [--kind note] [--plural notes]
 
 ```
 
-## What it writes (20 files)
+## What it writes (22 files)
 
 The declaration split into domain and UI, so the domain has no React in it and `graview check` can read it headless. `src/domain/` is the whole surface you will work in; the shell in `src/ui/` is eighty lines made of framework parts, and every one of them can be replaced.
 
-`package.json`, `tsconfig.json`, `tsconfig.build.json`, `vite.config.ts`, `index.html`, `embed.html`, `.gitignore`, `README.md`, `src/domain/schema.ts`, `src/domain/mutations.ts`, `src/domain/invariants.ts`, `src/domain/brand.ts`, `src/domain/app.ts`, `src/ui/views.tsx`, `src/ui/app.tsx`, `src/ui/pages.tsx`, `src/main.tsx`, `src/embed.tsx`, `tests/domain.test.ts`, `.github/workflows/ci.yml`
+`package.json`, `tsconfig.json`, `tsconfig.build.json`, `vite.config.ts`, `index.html`, `embed.html`, `.gitignore`, `README.md`, `AGENTS.md`, `CLAUDE.md`, `src/domain/schema.ts`, `src/domain/mutations.ts`, `src/domain/invariants.ts`, `src/domain/brand.ts`, `src/domain/app.ts`, `src/ui/views.tsx`, `src/ui/app.tsx`, `src/ui/pages.tsx`, `src/main.tsx`, `src/embed.tsx`, `tests/domain.test.ts`, `.github/workflows/ci.yml`
 
 Dependencies: `@graview/core`, `@graview/layout`, `@graview/tools`, `@graview/render`, `@graview/react`, `@graview/primitives`, `@graview/pages`, `@graview/ship`, `@graview/embed`, `@graview/studio`, `@graview/guest`, `react`, `react-dom`, `react-router-dom`. Dev: `graview`, `@types/node`, `@types/react`, `@types/react-dom`, `typescript`, `vite`, `vitest`. No zod of your own — `@graview/core` re-exports `z`, so a kind's fields are built with exactly the copy the framework was built with.
 
@@ -64,7 +64,7 @@ Dependencies: `@graview/core`, `@graview/layout`, `@graview/tools`, `@graview/re
 | `npm run serve` | `npm run build:domain && graview serve ./dist/domain/app.js --data data` |
 | `npm run mcp` | `npm run build:domain && graview mcp ./dist/domain/app.js --data data` |
 | `npm run skills` | `graview skills install .` |
-| `npm run verify` | `npm run typecheck && npm run test && npm run build && npm run check` |
+| `npm run verify` | `npm run typecheck && npm run test && npm run build && npm run check && graview docs ./dist/domain/app.js --out docs` |
 
 **Start with `verify`** — typecheck, tests, build and `graview check`, in that order — and then `dev`: the scene at the root, the routed face at `/pages`.
 

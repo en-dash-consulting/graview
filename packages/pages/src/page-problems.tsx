@@ -25,13 +25,11 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
   return (
     <PageMain context={context}>
       <header style={{ display: "grid", gap: 12 }}>
-        <p style={eyebrow}>{violations.length === 0 ? "The standing" : brokenWords(violations)}</p>
+        {/* The count said once, quietly under the title: no eyebrow repeating the head. */}
         <PageTitle context={context}>{violations.length === 0 ? "All rules hold" : "What is broken"}</PageTitle>
-        {violations.length === 0 ? (
-          <p style={lede}>Every declared rule is satisfied by what is here.</p>
-        ) : (
-          <p style={lede}>Each rule says what it found, and names what would fix it.</p>
-        )}
+        <p style={lede} data-testid="problems-count">
+          {violations.length === 0 ? "Every declared rule is satisfied by what is here." : brokenWords(violations)}
+        </p>
       </header>
       {/*
         * AND WHAT THE SEAT ASKED. The problems page is the face's inbox:

@@ -6,7 +6,7 @@ import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } fro
 import type { SeatStart } from "@graview/primitives";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { ErrorReportContext, GraviewProvider, lazyModule, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
-import { AddressBar, atTheBareHome, faceAtAddress, landing, placed, stopAtAddress } from "./address.js";
+import { AddressBar, atTheBareHome, faceAtAddress, holdsNothing, landing, placed, stopAtAddress, whereTheSceneOpens } from "./address.js";
 import { createContext, createElement, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { EmbedWhere } from "./where.js";
 import { createRoot, type Root } from "react-dom/client";
@@ -321,7 +321,9 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   const address = props.routing === "address";
   const at = useMemo(() => (props.at ? settling!.settleAt(props as never, store.seenBy(principal ?? { kind: "human" }) as never, (views as ReactViewRegistry<S>).places()) : undefined), []);
   // The first view only: after it, where the reader goes is theirs. Under address routing, a stop in the fragment is where it starts.
-  const initialView = useMemo(() => viewFor(face, at?.stop ?? (address ? stopAtAddress(props.basePath) : undefined) ?? stop, kinds, (views as ReactViewRegistry<S>).places(), openingView(views as ReactViewRegistry<S>, app.schema)), []);
+  // Where the declaration says the app opens (FR-80): the first view, and the scene's when the pages leave it holding nothing (FR-157).
+  const opens = useMemo(() => openingView(views as ReactViewRegistry<S>, app.schema), [views, app.schema]);
+  const initialView = useMemo(() => viewFor(face, at?.stop ?? (address ? stopAtAddress(props.basePath) : undefined) ?? stop, kinds, (views as ReactViewRegistry<S>).places(), opens), []);
   /*
    * THE PAGE ON THE ROUTED FACE, KEPT (FR-116): where it is, or last was,
    * so the overview and back is the same page, and `where()` can say it.
@@ -482,10 +484,10 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
       <FaceBoundary module="@graview/react" report={report} content>
       <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>
         <NoticeBoardContext.Provider value={props.notices ?? null}>
-        <Faces face={shown} stop={overviewStop ?? stop} kinds={kinds} places={places} />
+        <Faces face={shown} stop={overviewStop ?? stop} kinds={kinds} places={places} opens={opens} />
         {whereabouts ? <Watch into={whereabouts} /> : null}
         {/* THE ADDRESS BAR, when the host's page is the app (FR-106): the face follows it, and the scene, drawn, keeps its stop in the fragment. */}
-        {address ? <AddressBar pagesWere={at?.path} basePath={props.basePath} shown={shown} onFace={props.onFace} toggle={toggled} kinds={kinds} places={places} /> : null}
+        {address ? <AddressBar pagesWere={at?.path} basePath={props.basePath} shown={shown} onFace={props.onFace} toggle={toggled} kinds={kinds} places={places} opens={opens} /> : null}
         {/*
           * THE ONE APP BAR (FR-131): the app's name, said once as the
           * heading — the workbench says its name to a reader moving by
@@ -594,7 +596,7 @@ function Settling({ onReady }: { readonly onReady: () => void }) {
 }
 
 /** Keeps the scene's view in step with the face and stop props. */
-function Faces({ face, stop, kinds, places }: { face: EmbedFace; stop: string | undefined; kinds: readonly string[]; places: readonly Place[] }) {
+function Faces({ face, stop, kinds, places, opens }: { face: EmbedFace; stop: string | undefined; kinds: readonly string[]; places: readonly Place[]; opens: ViewState | undefined }) {
   const { view, go } = useNavigation();
   const last = useRef({ face, stop });
   // A layout effect, so a face set through the handle is on the page when
@@ -612,13 +614,16 @@ function Faces({ face, stop, kinds, places }: { face: EmbedFace; stop: string | 
     const next =
       (stopChanged || wasPages) && stop !== undefined
         ? viewFor(face, stop, kinds, places)
+        : wasPages && holdsNothing(view)
+          ? // Back from a page that held nothing in the scene (FR-157): where the scene opens.
+            landing(face, whereTheSceneOpens(opens), kinds)
         : face === "graview"
           ? withOverview(view, true)
           : view.overview
             ? withFocus(withOverview(view, false), descentTarget(view, kinds))
             : view;
     go(next);
-  }, [face, stop, kinds, view, go]);
+  }, [face, stop, kinds, view, go, opens]);
   return null;
 }
 

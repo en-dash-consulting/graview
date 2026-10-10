@@ -249,7 +249,7 @@ const machineWord = (label: string): boolean => /^[a-z0-9]+(?:[-_][a-z0-9]+)+$|^
  * where it has one and nothing is left to ask ("Finish “Pay the deposit”");
  * else its title with "it" named ("Give Pay the deposit a new date"); never
  * the mutation's name — a title nobody wrote is spoken, and `graview
- * check` says so (`act-without-title`).
+ * check` says so (`mutation-untitled`).
  */
 export function sayAct<S extends AnySchema>(
   affordance: Affordance,
