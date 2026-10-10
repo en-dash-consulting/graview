@@ -106,8 +106,11 @@ describe("the face an address opens", () => {
     expect(faceAtAddress({ routing: "address", basePath: "/apps/a1", face: "pages" })).toBe("scene");
     window.history.replaceState(null, "", "/apps/a1/places/overview#overview=1");
     expect(faceAtAddress({ routing: "address", basePath: "/apps/a1", face: "pages" })).toBe("graview");
+    // The address alone is the overview at altitude (FR-154), and so is a fragment that says nothing.
     window.history.replaceState({ idx: 3 }, "", "/apps/a1/places/overview");
-    expect(faceAtAddress({ routing: "address", basePath: "/apps/a1", face: "pages" })).toBe("scene");
+    expect(faceAtAddress({ routing: "address", basePath: "/apps/a1", face: "pages" })).toBe("graview");
+    window.history.replaceState(null, "", "/apps/a1/places/overview#");
+    expect(faceAtAddress({ routing: "address", basePath: "/apps/a1", face: "scene" })).toBe("graview");
     // Under memory routing the face is the host's, the stop's when it names none.
     expect(faceAtAddress({ face: faceOf(undefined) })).toBe("scene");
     expect(faceOf("#overview=1")).toBe("graview");
@@ -193,7 +196,7 @@ describe("address routing under a base path", () => {
     expect(face(host)).toBe("graview");
     // Arriving is not traveling: the scene tidies its own address in place — to its place's.
     expect(window.location.pathname).toBe("/apps/a1/places/overview");
-    expect(window.location.hash).toBe("#overview=1");
+    expect(window.location.href.includes("#")).toBe(false);
     expect(host.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
     const length = window.history.length;
     await click(host.querySelector('[data-testid="app-face-pages"]'));
@@ -206,7 +209,7 @@ describe("address routing under a base path", () => {
     await back();
     expect(face(host)).not.toBe("pages");
     expect(window.location.pathname).toBe("/apps/a1/places/overview");
-    expect(window.location.hash).toBe("#overview=1");
+    expect(window.location.href.includes("#")).toBe(false);
     expect(window.history.length).toBe(length + 1);
   });
 
@@ -218,7 +221,7 @@ describe("address routing under a base path", () => {
     // The list holds nothing in the scene, so the scene is where it opens: at altitude (FR-157).
     expect(face(host)).toBe("graview");
     expect(window.location.pathname).toBe("/apps/a1/places/overview");
-    expect(window.location.hash).toBe("#overview=1");
+    expect(window.location.href.includes("#")).toBe(false);
     await back();
     expect(face(host)).toBe("pages");
     expect(window.location.pathname).toBe("/apps/a1/tasks");
@@ -239,7 +242,7 @@ describe("address routing under a base path", () => {
     await settle();
     expect(face(host)).toBe("graview");
     expect(window.location.pathname).toBe("/apps/a1/places/overview");
-    expect(window.location.hash).toBe("#overview=1");
+    expect(window.location.href.includes("#")).toBe(false);
     expect(host.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
   });
 
@@ -251,6 +254,59 @@ describe("address routing under a base path", () => {
     expect(face(host)).toBe("scene");
     expect(window.location.pathname).toBe("/apps/a1/places/overview");
     expect(new URLSearchParams(window.location.hash.slice(1)).get("focus")).toBe(aggregateId("task"));
+  });
+
+  /*
+   * FR-154: THE OVERVIEW'S ADDRESS ALONE. The overview was written
+   * `/places/overview#overview=1`, the altitude in the fragment alone, and a
+   * fragment never reaches a server: the address back through a sign-in
+   * door, a stored link or a bookmark opened the overview descended on
+   * nothing — an empty scene whose control said Up. The address alone is
+   * the overview at altitude, and the framework writes it so.
+   */
+  it("opens the overview at altitude from its address alone, writing nothing and pushing nothing (FR-154)", async () => {
+    window.history.replaceState(null, "", "/apps/a1/places/overview");
+    const length = window.history.length;
+    for (const asked of ["pages", "scene", "graview"] as const) {
+      const { host, handle, done } = await at("/apps/a1/places/overview", { routing: "address", basePath: "/apps/a1", face: asked });
+      expect(face(host)).toBe("graview");
+      expect(host.querySelector('[data-testid="app-face-scene"]')?.getAttribute("aria-pressed")).toBe("true");
+      expect(handle.where()).toMatchObject({ face: "graview", path: "/places/overview", stop: "#overview=1" });
+      expect(window.location.pathname).toBe("/apps/a1/places/overview");
+      expect(window.location.href.includes("#")).toBe(false);
+      expect(window.history.length).toBe(length);
+      await done();
+      mounted.splice(0);
+    }
+  });
+
+  it("tidies a link written before, with the altitude in its fragment, to the bare address in place (FR-154)", async () => {
+    window.history.replaceState(null, "", "/apps/a1/places/overview#overview=1");
+    const length = window.history.length;
+    const { host } = await at("/apps/a1/places/overview#overview=1", { routing: "address", basePath: "/apps/a1", face: "pages" });
+    expect(face(host)).toBe("graview");
+    expect(window.location.pathname).toBe("/apps/a1/places/overview");
+    expect(window.location.href.includes("#")).toBe(false);
+    expect(window.history.length).toBe(length);
+  });
+
+  it("respects a fragment on the overview's address that says where it stands (FR-154)", async () => {
+    const { host } = await at("/apps/a1/places/overview#focus=t1", { routing: "address", basePath: "/apps/a1", face: "graview" });
+    expect(face(host)).toBe("scene");
+    expect(window.location.pathname).toBe("/apps/a1/places/overview");
+    expect(new URLSearchParams(window.location.hash.slice(1)).get("focus")).toBe("t1");
+    expect(new URLSearchParams(window.location.hash.slice(1)).get("overview")).toBeNull();
+  });
+
+  it("goes back to the bare overview's address at altitude (FR-154)", async () => {
+    const { host } = await at("/apps/a1/places/overview", { routing: "address", basePath: "/apps/a1", face: "graview" });
+    await click(host.querySelector('[data-testid="app-face-pages"]'));
+    await settle();
+    expect(face(host)).toBe("pages");
+    await back();
+    expect(face(host)).toBe("graview");
+    expect(window.location.pathname).toBe("/apps/a1/places/overview");
+    expect(window.location.href.includes("#")).toBe(false);
   });
 
   it("opens the scene at a stop a fragment names", async () => {
