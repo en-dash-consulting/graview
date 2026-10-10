@@ -258,7 +258,7 @@ function Desk({
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
       <CommandBar scheme={scheme} onScheme={onScheme} onCall={onCall} calls={calls} />
       <BackOut home={MATRIX} />
-      <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
+      <main aria-label="What each app exercises" style={{ position: "relative", flex: 1, minHeight: 0 }}>
         {/* Both, always: the overview lays the scene down rather than
             replacing it, so you can see where you were. */}
         <Scene renderer="dom" />
@@ -267,7 +267,7 @@ function Desk({
         {/* What the lines mean, up where the lines are the content. */}
         <RelationKey<S> />
         <Inspector />
-      </div>
+      </main>
     </div>
   );
 }
@@ -302,9 +302,12 @@ function CommandBar({
         zIndex: 20,
       }}
     >
-      <span
+      {/* The desk's name, said as the page's one level-one heading. */}
+      <h1
         style={{
+          margin: 0,
           fontSize: "0.6875rem",
+          fontWeight: 400,
           letterSpacing: "0.3em",
           textTransform: "uppercase",
           color: "var(--graview-ink-muted)",
@@ -312,7 +315,7 @@ function CommandBar({
         }}
       >
         graview
-      </span>
+      </h1>
       <Trail home={MATRIX} homeLabel="What each app exercises" />
 
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>

@@ -46,11 +46,20 @@ function linesFor(title: string, width: NameWidth): number {
 }
 /** A measured line: 13-pixel type at the marquee's 1.25 line height, not rounded down. */
 const MEASURED_LINE = 16.25;
+/*
+ * A FINGERTIP AS DRAWN. A name is pressed, so it is never shorter than the
+ * 24 pixels WCAG 2.2 asks of a target (2.5.8) — on the screen, not in the
+ * layout: the marquee hangs off a district drawn at its plane's 0.9, so a
+ * name 24 tall in the layout reached the screen at 21.6, and axe found
+ * every one-line name on a hosted app's scene too small to press. 27 is 24
+ * over the deepest plane's scale, rounded up.
+ */
+export const MARQUEE_NAME_FLOOR = 27;
 /** A name's height: its lines, and never under a fingertip. Measured, it is never less than the estimate. */
 const nameHeight = (title: string, width?: NameWidth) => {
   const estimated = Math.ceil((title.length * LETTER) / NAME_ROOM);
-  if (!width) return Math.max(24, estimated * LINE + 6);
-  return Math.max(24, Math.ceil(Math.max(estimated, linesFor(title, width)) * MEASURED_LINE) + 6);
+  if (!width) return Math.max(MARQUEE_NAME_FLOOR, estimated * LINE + 6);
+  return Math.max(MARQUEE_NAME_FLOOR, Math.ceil(Math.max(estimated, linesFor(title, width)) * MEASURED_LINE) + 6);
 };
 export function marqueeHeightFor(titles: readonly string[], cardWidth: number, width?: NameWidth): number {
   void cardWidth;

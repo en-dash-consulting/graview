@@ -237,6 +237,31 @@ export function fromUrl(url: string): ViewState {
   };
 }
 
+/*
+ * THE OVERVIEW'S ADDRESS MEANS THE OVERVIEW (FR-154).
+ *
+ * The overview at altitude was written `/places/overview#overview=1`, and
+ * read from the fragment alone. A fragment never reaches a server, so the
+ * same address back through any hop — a sign-in door, a stored link, a
+ * bookmark, or typed — came back bare and opened the overview descended on
+ * nothing: an empty scene whose control said Up. The overview at altitude
+ * over nothing in particular is written with no fragment at all, and a
+ * fragment that says nothing — none, `#`, nothing a stop is made of — is
+ * read as it. A fragment that says where it stands is read as it says.
+ */
+
+/** The stop the overview's address holds: its fragment, or at altitude when it says nothing. */
+export function overviewStop(fragment: string): ViewState {
+  const said = fromUrl(fragment);
+  return toUrl(said) === "#" ? { ...said, overview: true } : said;
+}
+
+/** The fragment the overview's address carries for a view: none at altitude over nothing. */
+export function overviewFragment(view: ViewState): string {
+  const fragment = toUrl(view);
+  return fragment === "#overview=1" ? "" : fragment;
+}
+
 function round(value: number): number {
   return Math.round(value * 100) / 100;
 }

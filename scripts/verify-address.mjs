@@ -31,6 +31,10 @@
  *   a link to a stop at the bare address still opens the scene, tidied to
  *   the scene's address; a host that mounts on the Graview lands there —
  *   unless the app has a home view, which it then opens on (FR-136);
+ *   the overview's address alone — what a server hands back, never having
+ *   seen a fragment — opens the overview at altitude, writes no fragment
+ *   and stays there on a reload, and one that says where it stands is
+ *   respected (FR-154);
  *   a seat that cannot see the scene's focused record resolves the stop in
  *   place, with no step Back would have to undo;
  *   the embed in an article never writes `history` and leaves `location` as
@@ -346,6 +350,21 @@ try {
         // A host that mounts on the Graview at the bare address lands on the scene's place.
         await go(BASE);
         one.bare = await state();
+        /*
+         * FR-154: THE OVERVIEW'S ADDRESS ALONE, as it comes back from a server
+         * that never saw a fragment — a sign-in door, a stored link, a
+         * bookmark, or typed — opens the overview at altitude, and stays there
+         * on a reload; a fragment that says where it stands is respected.
+         */
+        const overview = async () => ({ ...(await settled()), up: await tab.evaluate(() => document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true") });
+        await go(`${BASE}/places/overview`);
+        one.overviewAlone = await overview();
+        await reload();
+        one.overviewAloneReloaded = await overview();
+        // A load of its own: from the same address, a fragment alone is a step within the page, not an arrival.
+        await tab.goto("about:blank");
+        await go(`${BASE}/places/overview#focus=t2`);
+        one.overviewWithAStop = await overview();
       } catch (error) {
         one.error = String(error?.message ?? error);
       }
@@ -659,6 +678,21 @@ try {
     ok: Object.entries(results)
       .filter(([name]) => !name.endsWith("article") && name.includes("1440"))
       .every(([, one]) => !one.error && one.bare.face === "graview" && one.bare.path === `${BASE}/places/overview` && one.bare.scenePressed),
+  };
+  /* FR-154: the overview's address alone is the overview at altitude, written without a fragment; one that says where it stands is respected. */
+  const alone = (seen) => seen.face === "graview" && seen.up && seen.scenePressed && seen.path === `${BASE}/places/overview` && !seen.fragment && seen.pushes === 0;
+  report.checks.theOverviewsAddressAloneOpensItAtAltitude = {
+    seen: Object.fromEntries(Object.entries(pick("overviewAlone")).map(([name, seen]) => [name, { alone: seen, reloaded: results[name].overviewAloneReloaded, withAStop: results[name].overviewWithAStop, bare: results[name].bare }])),
+    ok: every(
+      ({ overviewAlone, overviewAloneReloaded, overviewWithAStop, bare }) =>
+        alone(overviewAlone) &&
+        alone(overviewAloneReloaded) &&
+        overviewWithAStop.face === "scene" &&
+        overviewWithAStop.path === `${BASE}/places/overview` &&
+        fromStop(overviewWithAStop.hash) === "t2" &&
+        !overviewWithAStop.up &&
+        (bare.face !== "graview" || !bare.fragment),
+    ),
   };
   /* FR-136: the same host, the same face, an app with a home view: it opens on the home, full page, at the bare address. */
   report.checks.anAppWithAHomeViewOpensOnItAtTheBareAddress = {
