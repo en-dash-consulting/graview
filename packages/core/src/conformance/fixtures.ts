@@ -56,6 +56,11 @@ export const ANNOUNCED: readonly Announcement[] = [
     version: "0.1.15",
     what: "FR-121: add-chore and remove-chore refuse an argument they do not take (additionalProperties: false).",
   },
+  {
+    fixture: "document:vendors",
+    version: "0.1.21",
+    what: "A role that only reads is not warned: the viewer role, which may run nothing and reads every kind where the policy keeps none, no longer draws warning:role-may-do-nothing. The warning stays for a role that can neither act nor see a kind.",
+  },
 ];
 
 export const FIXTURES: readonly ConformanceFixture[] = [
@@ -262,9 +267,7 @@ export const FIXTURES: readonly ConformanceFixture[] = [
     },
     "expect": {
       "compiles": true,
-      "findings": [
-        "warning:role-may-do-nothing"
-      ],
+      "findings": [],
       "tools": {
         "add-category": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
