@@ -22,6 +22,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A classic-worker build: the guest worker entry and a guest bundle need no module worker (FR-71)](./a-classic-worker-build-the-guest.md) | completed |
 | [A compacted log keeps who made each record, so an own sight survives a restart](./a-compacted-log-keeps-who-made-each.md) | completed |
 | [A conformance kit: fixtures any host runs against a version to prove it reads, compiles and derives the same](./a-conformance-kit-fixtures-any-host.md) | completed |
+| [A connect that replaces replaces the link it should (FR-156)](./a-connect-that-replaces-replaces-the.md) | completed |
 | [A contrast refusal names the pair and the ratio, with a fix (FR-126)](./a-contrast-refusal-names-the-pair-and.md) | completed |
 | [A coverage cell over a path selects what it joins (FR-111)](./a-coverage-cell-over-a-path-selects.md) | completed |
 | [A custom view sits beside the record's editable fields (FR-149)](./a-custom-view-sits-beside-the-record-s.md) | completed |
