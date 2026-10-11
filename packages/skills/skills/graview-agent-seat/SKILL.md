@@ -168,7 +168,11 @@ path to the store:
   every call past twelve); the host loops and returns the last text.
   `turnThroughMessages(post)` (`@graview/tools/turn`, the loop alone) is
   that loop over one Messages request at a time; `complete` alone
-  answers from the prompt, which holds no record's fields. `ai.decide` (`jevDecide`) answers typed decisions;
+  answers from the prompt, which holds no record's fields. Hand
+  `GraviewProvider` its `app` (`mount` and `<Embed>` do) so the turn's
+  `describe_place` knows the lenses and the home. Call `seatResponder` or
+  `llmResponder` yourself with `principal` in the context: the prompt is
+  what that seat sees, and without one, what any agent sees, said so. `ai.decide` (`jevDecide`) answers typed decisions;
   `onDevice: true` runs a model in the browser. **Your own responder goes
   in through the shell**: `<Shell chat={{ respond }} />`,
   which hands it to the ask field. A proposal is one line with "Do it" and
