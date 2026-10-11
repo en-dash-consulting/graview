@@ -30,7 +30,8 @@ export type SurfaceType = "shell" | "home" | "problems";
 
 /**
  * What a shell may say it goes without: the routed face's Find box, its way
- * back. Without this said, a shell that does not place `<PageFind>` or
+ * back, the bar above it, or only the bar's places (a shell with its own
+ * rail). Without this said, a shell that does not place `<PageFind>` or
  * `<PageUndo>` gets them drawn around it.
  */
 export interface ShellOptions {

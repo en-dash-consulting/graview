@@ -5,8 +5,11 @@ import { createContext, useContext, useLayoutEffect, useSyncExternalStore } from
  * root (face-controls.tsx) draws only the ones it did not. `"bar"` is only
  * ever gone without: a design's shell that draws the whole window itself
  * (`surface("shell", Shell, { without: ["bar"] })`) gets no app bar above it.
+ * `"places"` is too: a shell with a rail of its own keeps the bar — the
+ * switch, Find, the standing, who is here, the person — and the bar names
+ * no place (`{ without: ["places"] }`).
  */
-export type FaceControl = "find" | "undo" | "bar";
+export type FaceControl = "find" | "undo" | "bar" | "places";
 
 export interface Placed {
   readonly count: (control: FaceControl) => number;
