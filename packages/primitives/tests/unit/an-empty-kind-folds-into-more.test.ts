@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Store, type AnySchema, type GraviewApp } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { barPlaces } from "../../src/index.js";
 
 /**
@@ -35,6 +35,18 @@ describe("an empty kind on the bar", () => {
     expect(places().find((place) => place.key === "kind:decision")).toMatchObject({ label: "Decisions", path: "/decisions", primary: false });
     store.apply({ name: "add-decision", args: { name: "Meet on Thursdays" } }, { author: owner });
     expect(standing(places())).toEqual(["home", "kind:date", "kind:decision", "kind:deliverable", "place:decision:what-the-workshop-covers"]);
+  });
+
+  it("says which kinds hold anything from the counts the graph keeps, never walking every record on a change", () => {
+    const { store, places } = storeOf(workshop, ["date"]);
+    const walked = vi.spyOn(store.graph, "allNodes");
+    const sorted = vi.spyOn(store.graph, "nodesOfKind");
+    expect(standing(places())).toEqual(["home", "kind:date"]);
+    store.apply({ name: "add-deliverable", args: { name: "The report" } }, { author: owner });
+    walked.mockClear();
+    expect(standing(places())).toEqual(["home", "kind:date", "kind:deliverable"]);
+    expect(walked).not.toHaveBeenCalled();
+    expect(sorted).not.toHaveBeenCalled();
   });
 
   it("folds when `pages.primary` names it too", () => {

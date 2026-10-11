@@ -584,6 +584,8 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
     const creators = Object.fromEntries(Object.entries(epoch.creators).filter(([id, maker]) => kept.has(id) && !namesUnseen(maker, lens.sees)));
     return { ...epoch, base, creators };
   };
+  /** An epoch as this seat is served it, when there is one. */
+  const servedIf = <E extends Parameters<typeof servedEpoch>[0]>(epoch: E | undefined) => epoch && servedEpoch(epoch);
   /*
    * THE LOG, REDACTED RATHER THAN GAPPED (FR-16): every op in its place,
    * and one that touched what this seat may not see withheld — so the log
@@ -598,11 +600,13 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
         case "getNode":
           return (id: string) => served(target.getNode(id));
         case "has":
-          return (id: string) => seenId(id);
+          return seenId;
         case "allNodes":
           return () => pinned().servedAll(target.allNodes());
         case "nodesOfKind":
           return (kind: never) => pinned().servedAll(target.nodesOfKind(kind));
+        case "count":
+          return (kind: never) => pinned().servedAll(target.nodesOfKind(kind)).length;
         case "allEdges":
           return () => target.allEdges().filter(pinned().seenEdge);
         case "edgesOfKind":
@@ -634,8 +638,7 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
           };
         case "size": {
           const now = pinned();
-          const nodes = target.allNodes().filter((node) => now.seenNode(node as never)).length;
-          return { nodes, edges: target.allEdges().filter(now.seenEdge).length };
+          return { nodes: now.servedAll(target.allNodes()).length, edges: target.allEdges().filter(now.seenEdge).length };
         }
         default:
           return bound(target, prop);
@@ -655,12 +658,9 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
           return () => [...ops()];
         // Each epoch's base as this seat is served it, so its log folds from there to what it is served (FR-55).
         case "epochs":
-          return () => target.epochs().map((epoch) => servedEpoch(epoch));
+          return () => target.epochs().map(servedEpoch);
         case "lastEpoch":
-          return () => {
-            const epoch = target.lastEpoch();
-            return epoch && servedEpoch(epoch);
-          };
+          return () => servedIf(target.lastEpoch());
         case "live":
           return () => {
             const all = ops();
@@ -687,7 +687,8 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
         case "log":
           return log;
         case "snapshot":
-          return () => (graph as unknown as { snapshot(): unknown }).snapshot();
+          // The graph's own, as this seat is served it: the proxy hands a function that needs no `this`.
+          return (graph as unknown as { snapshot(): unknown }).snapshot;
         case "batches":
           return batches;
         // Judged over what this seat sees, so the sentence never names a change it may not (FR-16).
@@ -715,10 +716,7 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
           return principal;
         // A checkpoint taken through the seat's view is the one it is served.
         case "checkpoint":
-          return (...args: Parameters<Store<S>["checkpoint"]>) => {
-            const epoch = target.checkpoint(...args);
-            return epoch && servedEpoch(epoch);
-          };
+          return (...args: Parameters<Store<S>["checkpoint"]>) => servedIf(target.checkpoint(...args));
         default:
           return bound(target, prop);
       }

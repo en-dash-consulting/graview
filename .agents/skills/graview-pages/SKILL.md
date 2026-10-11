@@ -110,7 +110,8 @@ export const pages = createPageRegistry<S, PageComponent<S>>(schema)
 **Claim a declared block, keep the rest.** A block may say `"key":
 "rewrites"` (unsaid, its sort and place: `list.2`); `<BlockSlots.Provider
 value={{ "change.page": { rewrites: Timeline } }}>` draws yours for it and
-every other block as declared. Never pick a block by its title's words.
+every other block as declared; a blocks lens is claimed by its address
+(`"the-offers"`). Never pick a block by its title's words.
 
 `.route(path, Component)` gives a page that is NOT about a kind an address —
 onboarding, settings, import — matched before `/:plural`. **Every `to` is
