@@ -142,7 +142,7 @@ describe("a store whose log spans two declaration versions", () => {
     const check = opened.store.canUndo(upgrade.batch);
     expect(check.ok).toBe(false);
     if (!check.ok) {
-      expect(check.message).toContain("it is the change of declaration itself");
+      expect(check.message).toContain("it changed the declaration, and undo does not reach back");
       expect(check.message).not.toContain("done before the declaration changed");
     }
     opened.close();

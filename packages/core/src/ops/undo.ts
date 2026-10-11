@@ -156,10 +156,7 @@ export function checkUndo(
       blockedBy: [],
       includeBatches: [],
       // The upgrade itself stood in its own way: "it was done before the declaration changed (migration 1→2 …)", of migration 1→2 (W-185).
-      message:
-        before.intent === crossed.change
-          ? `Cannot undo "${before.intent}": it is the change of declaration itself, and taking it back would write the old declaration's values into the new one.`
-          : `Cannot undo "${before.intent}": it was done before the declaration changed (${crossed.change}), and undo does not reach back across that change.`,
+      message: `Cannot undo "${before.intent}": ${before.intent === crossed.change ? "it changed the declaration" : `it was done before the declaration changed (${crossed.change})`}, and undo does not reach back across that change.`,
     };
   }
 

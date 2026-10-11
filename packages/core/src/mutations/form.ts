@@ -192,8 +192,7 @@ export function formArgs(fields: readonly FormField[], values: Readonly<Record<s
   const sent: Record<string, unknown> = { ...values };
   for (const field of fields) {
     const held = values[field.name];
-    if (field.control === "list" && held === undefined && !field.optional) sent[field.name] = [];
-    if (field.control === "boolean" && held === undefined && !field.optional) sent[field.name] = false;
+    if (held === undefined && !field.optional && (field.control === "list" || field.control === "boolean")) sent[field.name] = field.control === "list" ? [] : false;
     if (field.control === "group" && held !== undefined && typeof held === "object" && held !== null) {
       sent[field.name] = formArgs(field.fields, held as Record<string, unknown>);
     }

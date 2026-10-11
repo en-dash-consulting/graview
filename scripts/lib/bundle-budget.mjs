@@ -501,7 +501,12 @@ export const BUDGETS = [
     // "embed without the studio") is 0 / 5 smaller: the scene's way back taking its offer down when the scene goes (its
     // door), the Key and the inspector saying a shared relation in each kind's own words, and the schema provider's reason
     // in the words of the kind a line leaves. 825 / 478 more than main. Measured at 1_708_282 / 539_229.
-    minified: 1_708_700,
+    // Raised by the eighth walk, mostly by chunks fetched later: a problem's rows opening the acts on its repairs (their
+    // door), a record page's name changed in place and its ↗ a fingertip wide, the seat saying each way to fix it, the way in
+    // leaving a seat's own kinds alone; and 144 bytes of what a page loads first (a box nobody ticked sent as no, a name
+    // called a name, a creating act not guessed to write its subject, the upgrade's refusal, the bar giving on a phone).
+    // 555 / 149 more than main. Measured at 1_708_837 / 539_378.
+    minified: 1_709_000,
     gzipped: 539_500,
     load: "all",
   },

@@ -1,6 +1,6 @@
 import { brokenWords, type AnySchema } from "@graview/core";
-import { POPOVER_STYLE, useGraview, usePopover, useSelection, useViolations } from "@graview/react/provider";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { POPOVER_STYLE, usePopover, useSelection, useViolations } from "@graview/react/provider";
+import { Suspense, useEffect, useState } from "react";
 import { toolStyle } from "../app-bar.js";
 import { barPanes } from "../bar-panes-door.js";
 
@@ -27,8 +27,6 @@ export function Standing({
 }) {
   const violations = useViolations<AnySchema>();
   const { set } = useSelection();
-  const { setMenuAt } = useGraview<AnySchema>();
-  const here = useRef<HTMLDivElement>(null);
   const count = violations.length;
   /*
    * ONE OF THE FAMILY (FR-77): Escape or a press anywhere else closes it
@@ -50,7 +48,7 @@ export function Standing({
   }, [count > 0]);
 
   return (
-    <div ref={here} style={{ position: "relative", display: "inline-flex" }}>
+    <div style={{ position: "relative", display: "inline-flex" }}>
       {/*
         * ONE OF THE BAR'S TOOLS (FR-131): a dot in the tone of the rules —
         * good, or the warning's, or the bad's when a rule could not even be
@@ -99,15 +97,6 @@ export function Standing({
               pick={(violation) => {
                 set(violation.nodeIds);
                 popover.setOpen(false);
-                /*
-                 * AND ITS REPAIRS, under the press (W-179). The scene has no
-                 * inspector standing beside a selection any more — its acts
-                 * are the menu at the pointer — so a problem that only
-                 * selected left its repair where nobody could reach it, at
-                 * altitude above all, where the record is not even drawn.
-                 */
-                const box = here.current!.getBoundingClientRect();
-                setMenuAt({ x: Math.round(box.left), y: Math.round(box.bottom), on: violation.subjectId });
               }}
             />
           </Suspense>

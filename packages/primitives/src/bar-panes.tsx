@@ -19,7 +19,7 @@ export { ActivityRail } from "./workbench/activity.js";
 
 /** The problems Standing opens: each says what is broken and how many ways there are to fix it; a press selects what it names. */
 export function ProblemRows({ violations, pick }: { readonly violations: readonly Violation[]; readonly pick: (violation: Violation) => void }) {
-  const { store, brand } = useGraview<AnySchema>();
+  const { store, brand, setMenuAt } = useGraview<AnySchema>();
   // Each with its rule's line, once the words are here: the rows say the rule's sentence until then.
   const lined = useLined(store, violations);
   return (
@@ -39,7 +39,18 @@ export function ProblemRows({ violations, pick }: { readonly violations: readonl
         >
           <button
             type="button"
-            onClick={() => pick(violation)}
+            onClick={(event) => {
+              /*
+               * AND ITS REPAIRS, where the list was (W-179). The scene has no
+               * inspector beside a selection — its acts are the menu at the
+               * pointer — so a problem that only selected left its repair
+               * where nobody could reach it, at altitude above all, where the
+               * record is not even drawn.
+               */
+              const box = event.currentTarget.closest("ol")!.getBoundingClientRect();
+              pick(violation);
+              setMenuAt({ x: box.left, y: box.top, on: violation.subjectId });
+            }}
             // The rule's own sentence, where it wrote one the line does not show.
             {...(ownSentence(violation) !== undefined ? { title: ownSentence(violation) } : {})}
             style={{

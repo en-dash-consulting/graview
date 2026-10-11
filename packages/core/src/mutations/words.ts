@@ -37,7 +37,7 @@ export function argumentWords(
       option: (value) => (format ? format(value) : humanizeField(value)),
     };
   }
-  return { label: name === "label" ? "Name" : humanizeField(name), option: (value) => humanizeField(value) };
+  return { label: fieldWords(undefined, name), option: (value) => humanizeField(value) };
 }
 
 /** Arguments a mutation refused, each with where it was and what was wrong. */
