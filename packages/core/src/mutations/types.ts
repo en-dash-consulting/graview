@@ -132,10 +132,10 @@ export interface MutationDefinitionSpec<S extends AnySchema, I extends z.ZodType
    *
    * Declared, like `writes`, because a TypeScript body cannot be read
    * without running it. `graview check` warns when a role that may run the
-   * act may not see a kind it reads (`act-reads-hidden-kind`, FR-105): the
-   * act's refusal, or what it writes, can tell that seat a record it may not
-   * see exists. A document's act needs no such list — its condition, its
-   * refusal and its effects are read for it.
+   * act may not see a kind it reads (`act-reads-hidden-kind`, FR-105): run
+   * by that seat, the act reads under its sight and judges as though there
+   * were none of them. A document's act needs no such list — its condition,
+   * its refusal and its effects are read for it.
    */
   readonly reads?: readonly string[];
   /**

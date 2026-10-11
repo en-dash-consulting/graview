@@ -56,7 +56,7 @@ describe("a sentence names only what its reader may see", () => {
     expect(toEveryone.intent).toBe("Tag Barn near Freya Davies");
   });
 
-  it("says an act's own refusal without its words when they were worded from a record its caller may not see", () => {
+  it("words an act's own refusal from what its caller may see: a record it may not see is to the act one that is not there", () => {
     const { defineMutation } = bindSchema(SCHEMA);
     const claim = defineMutation("claim", {
       title: "Claim",
@@ -67,21 +67,23 @@ describe("a sentence names only what its reader may see", () => {
         throw new Error(`${holder?.title ?? "Nobody"} holds it already.`);
       },
     });
-    const store = new Store<AnySchema>({
-      schema: SCHEMA as unknown as AnySchema,
-      mutations: [...MUTATIONS, claim] as never,
-      policy: policyOf({ sights: [{ roles: ["r1"], kinds: ["d"] }, { roles: ["r2"], kinds: ["a", "b", "c", "d"] }] }),
-      snapshot: { nodes: [{ id: "b:freya", kind: "b", title: "Freya Davies" }, { id: "d:barn", kind: "d", title: "Barn", ref: "d:barn" }], edges: [] },
-    });
-    const said = (author: Principal) => {
+    const storeWith = (freya: boolean) =>
+      new Store<AnySchema>({
+        schema: SCHEMA as unknown as AnySchema,
+        mutations: [...MUTATIONS, claim] as never,
+        policy: policyOf({ sights: [{ roles: ["r1"], kinds: ["d"] }, { roles: ["r2"], kinds: ["a", "b", "c", "d"] }] }),
+        snapshot: { nodes: [...(freya ? [{ id: "b:freya", kind: "b", title: "Freya Davies" }] : []), { id: "d:barn", kind: "d", title: "Barn", ref: "d:barn" }], edges: [] },
+      });
+    const said = (author: Principal, freya = true) => {
       try {
-        store.apply({ name: "claim", args: { id: "d:barn", from: "b:freya" } }, { author });
+        storeWith(freya).apply({ name: "claim", args: { id: "d:barn", from: "b:freya" } }, { author });
       } catch (error) {
         return refusalOf(error);
       }
       throw new Error("not refused");
     };
-    expect(said(viewer)).toEqual({ reason: "invalid", sentence: "“Claim” could not be done as asked." });
+    expect(said(viewer)).toEqual(said(viewer, false));
+    expect(said(viewer).sentence).toBe("Nobody holds it already.");
     expect(said(everyone).sentence).toBe("Freya Davies holds it already.");
   });
 

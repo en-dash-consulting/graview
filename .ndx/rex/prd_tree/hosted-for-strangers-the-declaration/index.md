@@ -80,7 +80,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A walk from every member of a set: out()/in() over a set return the distinct union, costed (FR-101)](./a-walk-from-every-member-of-a-set-out.md) | completed |
 | [A worker view is a place, with a manifest the host enforces (FR-91)](./a-worker-view-is-a-place-with-a.md) | completed |
 | [Agents name records the way people do: a node argument accepts a label, and ambiguity comes back as candidates](./agents-name-records-the-way-people-do.md) | completed |
-| [An act's own logic cannot tell a seat whether a hidden record exists](./an-act-s-own-logic-cannot-tell-a-seat.md) | pending |
+| [An act's own logic cannot tell a seat whether a hidden record exists](./an-act-s-own-logic-cannot-tell-a-seat.md) | completed |
 | [An agent acts for someone, through something: delegation and channel on every op, and seat headers trusted only on request](./an-agent-acts-for-someone-through.md) | completed |
 | [An edit can set a kind's glance (set-glance), and the studio renames display.glance with its field](./an-edit-can-set-a-kind-s-glance-set.md) | completed |
 | [An icon-sized thumbnail: sceneThumbnail size icon at 32x32 (FR-130)](./an-icon-sized-thumbnail-scenethumbnail.md) | completed |
