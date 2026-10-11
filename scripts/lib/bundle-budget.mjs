@@ -493,8 +493,12 @@ export const BUDGETS = [
     // `fact()` in the language, the checker's judgment of facts and roles (with the studio's), a list opening newest first
     // and a timeline drawing at a kind's `when`, less a kind's computed fields judged on the page (now the checker's) and
     // the one-relation-one-wording refusal. 3_464 / 1_513 more than main. Measured at 1_705_439 / 537_091.
-    minified: 1_705_500,
-    gzipped: 537_200,
+    // Raised when the seat came to read before it answers (FR-160): the turn a host's model takes with the seat's read
+    // tools, and the seat's model — its framing and the reading of its answer — left the faces for a chunk of its own,
+    // fetched when a model first answers, so each face is about 3.9 KB smaller before it draws and every face is one chunk
+    // more. 2_018 / 1_637 more than main then. Together over facts and roles: measured at 1_707_457 / 538_735.
+    minified: 1_707_900,
+    gzipped: 539_000,
     load: "all",
   },
   {

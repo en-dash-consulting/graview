@@ -147,6 +147,12 @@ describe("a hosted page", () => {
     }
   });
 
+  it("fetches the seat's model — its framing, a host's turn with the read tools and the reading of its answer — with the first ask a model answers, never up front (FR-160)", () => {
+    expect(Object.keys(measured.upFront.modules)).not.toContain("tools/src/seat-model.ts");
+    expect(measured.whenAsked.doors.map((door) => door.module)).toContain("tools/src/seat-model.ts");
+    expect(Object.keys(handed.upFront.modules)).not.toContain("tools/src/seat-model.ts");
+  });
+
   it("never carries the keeping of a lens: @graview/tools/keep (the edit vocabulary and the checker) is the host's, up front or when asked", () => {
     const inputs = Object.keys((measured as unknown as { metafile: { inputs: Record<string, unknown> } }).metafile.inputs);
     expect(inputs.filter((input) => input.endsWith("tools/src/keep.ts"))).toEqual([]);

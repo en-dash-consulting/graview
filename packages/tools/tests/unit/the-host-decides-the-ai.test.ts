@@ -59,7 +59,8 @@ describe("nothing for a reader to choose", () => {
       expect(tools, gone).not.toHaveProperty(gone);
       expect(frame, gone).not.toHaveProperty(gone);
     }
-    expect(Object.keys(frame).sort()).toEqual(["ANSWERED_WITH_AI", "NO_AI", "NO_AI_SAID", "aiTalks", "aiVia"]);
+    // aiVia is the seat's, asked only once a model answered: @graview/tools' alone, never in the frame a page carries up front.
+    expect(Object.keys(frame).sort()).toEqual(["ANSWERED_WITH_AI", "NO_AI", "NO_AI_SAID", "aiTalks"]);
     for (const words of [NO_AI_SAID, ANSWERED_WITH_AI]) expect(words).not.toMatch(/graph-native|Graph only|Onboard|Jev|LLM|rung/);
   });
 });

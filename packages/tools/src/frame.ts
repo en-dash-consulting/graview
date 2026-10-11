@@ -14,6 +14,6 @@
  * too, and rode in every page's first chunk for it: only the inspector and
  * a drawn record use them, so they are `@graview/tools`' alone.
  */
-export { aiTalks, aiVia, ANSWERED_WITH_AI, NO_AI, NO_AI_SAID } from "./ai.js";
-export type { HostAi } from "./ai.js";
+export { aiTalks, ANSWERED_WITH_AI, NO_AI, NO_AI_SAID } from "./ai.js";
+export type { HostAi, HostTurn, TurnMessage } from "./ai.js";
 export type { Affordance, AffordanceProvider, AffordanceSet, DeriveContext, Observation, OpenParameter, ProviderName, WithheldAffordance } from "./types.js";
