@@ -159,11 +159,13 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
         </div>
         <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexWrap: "wrap", gap: "8px 10px" }}>
           {counted.map(({ kind, members }) => (
-            <li key={kind}>
+            <li key={kind} style={{ maxWidth: "100%" }}>
               <Link
                 to={`/${pluralSlug(store.schema, kind)}`}
                 style={{
                   ...plain,
+                  // A long plural and its count wrap inside the card rather than push the page sideways (320 wide, 32px text).
+                  flexWrap: "wrap",
                   gap: 8,
                   padding: "6px 14px 6px 10px",
                   // A way to a kind's list is a small card, not a capsule: capsules are for choices and states (FR-117).
@@ -173,7 +175,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
                 }}
               >
                 <KindMark kind={kind} brand={brand} schema={store.schema} size={7} />
-                <span style={{ fontWeight: 550 }}>{pluralOf(store, kind)}</span>
+                <span style={{ fontWeight: 550, overflowWrap: "anywhere" }}>{pluralOf(store, kind)}</span>
                 <span style={{ ...quiet, fontVariantNumeric: "tabular-nums" }}>{members.length === 0 ? "none yet" : members.length}</span>
               </Link>
             </li>
