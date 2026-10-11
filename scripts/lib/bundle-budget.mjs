@@ -486,7 +486,7 @@ export const BUDGETS = [
     // Raised when a document came to work out facts of the whole graph and a kind to say its natural time and its author:
     // `fact()` in the language, the checker's judgment of facts and roles (with the studio's), a list opening newest first
     // and a timeline drawing at a kind's `when`, less a kind's computed fields judged on the page (now the checker's) and
-    // the one-relation-one-wording refusal. 2_694 / 1_256 more than main. Measured at 1_704_680 / 536_621.
+    // the one-relation-one-wording refusal. 3_078 / 1_373 more than main. Measured at 1_705_005 / 536_700.
     minified: 1_705_100,
     gzipped: 536_900,
     load: "all",
@@ -575,7 +575,7 @@ export const BUDGETS = [
     // Raised with every face's when a document came to work out facts of the whole graph and a kind to say its natural
     // time and its author: the studio carries the checker, and the checker now judges a fact as a computed field and a
     // role against its field's type (`facts-and-roles.ts`, `computedFindings`), less the one-relation-one-wording refusal
-    // and a kind's computed fields judged twice. 2_072 / 977 more than main. Measured at 1_567_208 / 481_012.
+    // and a kind's computed fields judged twice. 2_456 / 1_102 more than main. Measured at 1_567_533 / 481_093.
     minified: 1_567_700,
     gzipped: 481_300,
     load: "first",
