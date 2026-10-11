@@ -36,6 +36,12 @@ export interface PreviewOptions {
   readonly host?: string;
   /** Who the page sits as. A person holding every role the document declares, by default. */
   readonly principal?: Principal;
+  /**
+   * Believe the page's seat on a `host` other machines reach, because the
+   * network in front of it is trusted (`--trust-seat-headers`). Refused
+   * without it: anyone who could reach the preview could sit in any seat.
+   */
+  readonly trustSeatHeaders?: boolean;
 }
 
 export interface Preview {
@@ -45,6 +51,9 @@ export interface Preview {
   readonly principal: Principal;
   close(): Promise<void>;
 }
+
+/** The addresses only this machine reaches. */
+export const LOOPBACK: ReadonlySet<string> = new Set(["127.0.0.1", "::1", "localhost"]);
 
 const TYPES: Readonly<Record<string, string>> = {
   ".html": "text/html; charset=utf-8",
@@ -69,6 +78,10 @@ export function previewPrincipal(document: unknown, asked: { readonly as?: strin
 }
 
 export async function servePreview(options: PreviewOptions): Promise<Preview> {
+  const host = options.host ?? "127.0.0.1";
+  if (!LOOPBACK.has(host) && options.trustSeatHeaders !== true) {
+    throw new Error(`refusing to listen on ${host} while believing seat headers: anyone who can reach it could claim any seat. Preview on 127.0.0.1 (the default), or say the network in front of it is trusted (trustSeatHeaders, --trust-seat-headers).`);
+  }
   const index = join(options.page, "index.html");
   if (!existsSync(index)) {
     throw new Error(`The preview page is not at ${options.page}: build the framework (pnpm build) or reinstall graview.`);
@@ -92,15 +105,16 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
     });
   };
 
-  const host = options.host ?? "127.0.0.1";
   const served = await serveStore({
     app: app as never,
     adapter: (options.adapter ?? createMemoryAdapter()) as never,
     ...(options.seed ? { seed: options.seed } : {}),
     port: options.port ?? 0,
     host,
-    // On loopback only this machine reaches it; the CLI refuses any other host without --trust-seat-headers.
+    // On loopback only this machine reaches it; any other host is refused above unless the network is said to be trusted.
     trustSeatHeaders: true,
+    // And only its own page: a page on another site, or one rebinding its own name to this machine, may not sit in that seat.
+    ownOrigin: true,
     where: options.where ?? "memory (gone when the preview stops)",
     answer,
   });

@@ -164,7 +164,7 @@ type ComputedNames<D, K extends string> = Keys<Get<KindOf<D, K>, "computed">>;
 type AllFields<D> = { [K in KindNames<D>]: FieldNames<D, K> }[KindNames<D>];
 type EdgeNames<D> = { [K in KindNames<D>]: Keys<Get<KindOf<D, K>, "edges">> }[KindNames<D>];
 /** An act a rule's repair or a grant may name: one the document declares, or one every kind is given. */
-type ActNames<D> = Keys<Get<D, "acts">> | `edit-${string}` | `remove-${string}`;
+type ActNames<D> = Keys<Get<D, "acts">> | `edit-${KindNames<D>}` | `remove-${KindNames<D>}`;
 type RoleNames<D> = Get<D, "roles"> extends readonly (infer R)[] ? R & string : string;
 
 /*

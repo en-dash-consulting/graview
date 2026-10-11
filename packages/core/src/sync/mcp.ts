@@ -135,18 +135,42 @@ export function mcpClient(options: McpClientOptions): ToolCall {
 export type DoorHeaders = Readonly<Record<string, string | readonly string[] | undefined>>;
 
 /**
- * WHETHER A REQUEST CAME FROM THIS SERVER'S OWN PAGES: no `Sec-Fetch-Site`
- * other than same-origin (or none, for curl), and an `Origin`, when there is
- * one, naming this host. A page on another origin can fire a request at a
- * local server; it cannot make the browser say it came from here.
+ * WHETHER A HOST IS THIS MACHINE AS A PAGE NAMES IT: `localhost`, a
+ * `*.localhost` name or an IP address — or one of `hosts`, the names the
+ * server was told it answers to. A page on a name of its own that it
+ * rebinds to this machine sends its own name as the Host, and the browser
+ * agrees with it about the origin; the name is what gives it away.
  */
-export function sameOrigin(headers: DoorHeaders): boolean {
+export function ownHost(host: string | undefined, hosts: Iterable<string> = []): boolean {
+  if (host === undefined) return true;
+  let name: string;
+  try {
+    name = new URL(`http://${host}`).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  if (name === "localhost" || name.endsWith(".localhost") || /^\d{1,3}(\.\d{1,3}){3}$/.test(name) || name.startsWith("[")) return true;
+  for (const allowed of hosts) if (allowed.toLowerCase() === name) return true;
+  return false;
+}
+
+/**
+ * WHETHER A REQUEST CAME FROM THIS SERVER'S OWN PAGES: no `Sec-Fetch-Site`
+ * other than same-origin (or none, for curl), an `Origin`, when there is
+ * one, naming this host, and a host that is this machine (`ownHost`). A page
+ * on another origin can fire a request at a local server; it cannot make the
+ * browser say it came from here. Every door answers this the same way: the
+ * dev server's doors (`@graview/ship/dev`) ask this too.
+ */
+export function sameOrigin(headers: DoorHeaders, hosts?: Iterable<string>): boolean {
   const site = headers["sec-fetch-site"];
   if (typeof site === "string" && site !== "same-origin" && site !== "none") return false;
+  const host = headers["host"];
+  if (!ownHost(typeof host === "string" ? host : undefined, hosts)) return false;
   const origin = headers["origin"];
   if (typeof origin !== "string") return true;
   try {
-    return new URL(origin).host === headers["host"];
+    return new URL(origin).host === host;
   } catch {
     return false;
   }
@@ -173,6 +197,10 @@ export interface McpDoorOptions {
   readonly call: ToolCall;
   /** The tools a page may ask for through the door. */
   readonly allow: Iterable<string>;
+  /** Host names the server answers to besides this machine's own (`ownHost`). */
+  readonly hosts?: Iterable<string>;
+  /** The most a request may send, in bytes. Default 1 MB. */
+  readonly limit?: number;
 }
 
 /**
@@ -187,6 +215,8 @@ export interface McpDoorOptions {
 export function mcpDoor(options: McpDoorOptions): (request: DoorRequest, response: DoorResponse, next: () => void) => void {
   const path = options.path ?? "/graview/mcp";
   const refuse = allowTools(options.allow);
+  const hosts = options.hosts ? [...options.hosts] : undefined;
+  const limit = options.limit ?? 1_000_000;
   const answer = (response: DoorResponse, status: number, body: unknown) => {
     response.statusCode = status;
     response.setHeader("content-type", "application/json");
@@ -195,14 +225,29 @@ export function mcpDoor(options: McpDoorOptions): (request: DoorRequest, respons
   return (request, response, next) => {
     if ((request.url ?? "").split("?")[0] !== path) return next();
     if (request.method !== "POST") return answer(response, 405, { ok: false, error: "Refused: the door takes a POST." });
-    if (!sameOrigin(request.headers)) return answer(response, 403, { ok: false, error: "Refused: not from this page's own origin." });
+    if (!sameOrigin(request.headers, hosts)) return answer(response, 403, { ok: false, error: "Refused: not from this page's own origin." });
     const type = request.headers["content-type"];
-    if (typeof type !== "string" || !type.includes("application/json")) {
+    // The media type itself: one a page on another site may send unasked (`text/plain; x=application/json`) is not JSON.
+    if (typeof type !== "string" || type.split(";")[0]!.trim().toLowerCase() !== "application/json") {
       return answer(response, 415, { ok: false, error: "Refused: send application/json." });
     }
+    const decoder = new TextDecoder();
     let text = "";
-    request.on("data", (chunk) => (text += String(chunk)));
+    let size = 0;
+    let over = false;
+    request.on("data", (chunk) => {
+      if (over) return;
+      const bytes = typeof chunk === "string" ? new TextEncoder().encode(chunk) : (chunk as Uint8Array);
+      size += bytes.byteLength;
+      if (size > limit) {
+        over = true;
+        return answer(response, 413, { ok: false, error: `Refused: more than ${limit} bytes.` });
+      }
+      text += decoder.decode(bytes, { stream: true });
+    });
     request.on("end", () => {
+      if (over) return;
+      text += decoder.decode();
       void (async () => {
         let asked: { name?: unknown; arguments?: unknown };
         try {

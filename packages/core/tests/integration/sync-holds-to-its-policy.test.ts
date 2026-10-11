@@ -229,6 +229,27 @@ describe("a resource the remote owns", () => {
     expect(titleOf(store, "z1")).toBe("Unguarded");
   });
 
+  it("is not offered once the engine guards the store: the store's own answer says the declared sentence", () => {
+    const store = projected();
+    const sync = engine(store, remote());
+    expect(store.permits({ name: "rezone", args: { id: "z1", title: "Mine now" } }).ok).toBe(true);
+
+    const unguard = sync.guard();
+    const asked = store.permits({ name: "rezone", args: { id: "z1", title: "Mine now" } });
+    expect(asked.ok).toBe(false);
+    expect(asked.ok ? undefined : asked.refusal.message).toBe(OWNED);
+    // Not chosen yet: an act that can only ever touch a zone is not offered either.
+    expect(store.permits({ name: "drop-zone", args: {} }).ok).toBe(false);
+    expect(store.permittedMutations().map((mutation) => mutation.name)).not.toContain("rezone");
+    // A record that is ours is offered as before.
+    expect(store.permits({ name: "retitle", args: { id: "t1", title: "Ours" } }).ok).toBe(true);
+    expect(store.permittedMutations().map((mutation) => mutation.name)).toContain("retitle");
+
+    unguard();
+    expect(store.permits({ name: "rezone", args: { id: "z1", title: "Mine now" } }).ok).toBe(true);
+    expect(store.permittedMutations().map((mutation) => mutation.name)).toContain("rezone");
+  });
+
   it("still takes what the remote says, and never sends a thing", async () => {
     const store = projected();
     const from = remote([{ changes: [{ resource: "zone", id: "z1", version: "v2", fields: { title: "Core, renamed" } }] }]);
@@ -394,7 +415,17 @@ describe("a remote that speaks MCP", () => {
     expect(refused.body.error).toContain("remove_item is not a tool this sync uses");
     expect(reached).toEqual(["get_item"]);
 
+    // A type that only mentions JSON is not JSON: a page on another site may send `text/plain` without asking first.
+    expect((await knock({ "content-type": "text/plain; x=application/json" }, { name: "get_item" })).status).toBe(415);
+    // A rebinding page names its own host, and the browser agrees with it: a host this server is not is refused.
+    expect((await knock({ ...json, host: "evil.example:5173", origin: "http://evil.example:5173" }, { name: "get_item" })).status).toBe(403);
+    expect((await knock(json, { name: "get_item", arguments: { padding: "x".repeat(1_100_000) } })).status).toBe(413);
+
     expect(sameOrigin({ host: "localhost:5173", origin: "http://localhost:5173" })).toBe(true);
+    expect(sameOrigin({ host: "127.0.0.1:5173", origin: "http://127.0.0.1:5173" })).toBe(true);
+    expect(sameOrigin({ host: "app.localhost:5173" })).toBe(true);
+    expect(sameOrigin({ host: "evil.example:5173", origin: "http://evil.example:5173" })).toBe(false);
+    expect(sameOrigin({ host: "tasks.internal:5173", origin: "http://tasks.internal:5173" }, ["tasks.internal"])).toBe(true);
     expect(allowTools(["a"])("b")).toBe("b is not a tool this sync uses (it uses a).");
   });
 
@@ -408,5 +439,107 @@ describe("a remote that speaks MCP", () => {
     });
     expect(await call("get_item", {})).toBe(1);
     await expect(call("remove_item", {})).rejects.toThrow("Refused: no.");
+  });
+});
+
+/*
+ * WHAT THE REVIEW AFTER 0.1.21 FOUND: a queued write sent a field the pull
+ * then held, an edit made before the first run was agreed as the remote's,
+ * undo got past the guard, a remote delete was read as an empty edit, a
+ * conflict settled by an ordinary act stayed held, and `resolve` chose a
+ * conflict nobody held any longer.
+ */
+describe("the engine keeps to its policy at the edges", () => {
+  it("does not send a queued write for a field the next pull holds in conflict", async () => {
+    const store = projected();
+    let online = false;
+    const sent: RemoteWrite[][] = [];
+    const flaky: RemoteSystem = {
+      name: "n-dx",
+      async pull() {
+        if (!online) throw new Error("offline");
+        return { changes: [theirTitle("v2", "Theirs")], cursor: "c" };
+      },
+      async push(writes) {
+        if (!online) throw new Error("offline");
+        sent.push([...writes]);
+        return writes.map((write) => ({ localId: write.localId, id: write.id ?? write.localId, version: "ours" }));
+      },
+    };
+    const sync = engine(store, flaky);
+    store.apply({ name: "retitle", args: { id: "t1", title: "Ours" } });
+    expect((await sync.run()).queued).toEqual(["t1"]);
+    online = true;
+    const report = await sync.run();
+    expect(report.conflicts).toEqual([expect.objectContaining({ localId: "t1", field: "title" })]);
+    expect(sent.flat().some((write) => write.fields && "title" in write.fields)).toBe(false);
+  });
+
+  it("agrees a projected record at what it was made with, so an edit made before the first run is a conflict, not lost", async () => {
+    const store = projected();
+    store.apply({ name: "retitle", args: { id: "t1", title: "Mine" } });
+    const sync = engine(store, remote([{ changes: [theirTitle("v2", "Theirs")] }]));
+    const report = await sync.run();
+    expect(report.conflicts).toEqual([{ localId: "t1", field: "title", ours: "Mine", theirs: "Theirs", base: "Write it" }]);
+    expect(titleOf(store)).toBe("Mine");
+  });
+
+  it("refuses taking back the remote's own change to a record it owns", async () => {
+    const store = projected();
+    const sync = engine(store, remote([{ changes: [{ resource: "zone", id: "z1", version: "v2", fields: { title: "Core, renamed" } }] }]));
+    sync.guard();
+    await sync.run();
+    const batch = store.log.all().at(-1)!.batch!;
+    expect(() => store.undo(batch)).toThrow(PermissionDeniedError);
+    expect(titleOf(store, "z1")).toBe("Core, renamed");
+  });
+
+  it("removes a record the remote deleted through the declared act, or keeps it unsynced without one", async () => {
+    const deleted: RemoteChange = { resource: "task", id: "t1", version: "v2", deleted: true };
+    const removing = new SyncEngine({
+      store: projected(),
+      mapping,
+      remote: remote([{ changes: [deleted] }]),
+      applyInbound: ({ localId, fields }) => ({ name: "retitle", args: { id: localId, ...fields } }),
+      removeInbound: ({ localId }) => ({ name: "drop-task", args: { id: localId } }),
+    });
+    const removed = await removing.run();
+    expect(removed.applied).toEqual([]);
+    expect(removed.gone).toEqual(["t1"]);
+    expect(removed.state.links["t1"]).toBeUndefined();
+
+    const store = projected();
+    const from = remote([{ changes: [deleted] }]);
+    const keeping = engine(store, from);
+    const kept = await keeping.run();
+    expect(kept.gone).toEqual(["t1"]);
+    expect(titleOf(store)).toBe("Write it");
+    store.apply({ name: "retitle", args: { id: "t1", title: "Still here" } });
+    await keeping.run();
+    // Not made again there as new, nor sent to the id the remote deleted.
+    expect(from.sent.flat().filter((write) => write.localId === "t1")).toEqual([]);
+  });
+
+  it("releases a held field once their value is taken here by an ordinary act", async () => {
+    const store = projected();
+    const from = remote([{ changes: [theirTitle("v2", "Theirs")] }]);
+    const sync = engine(store, from);
+    store.apply({ name: "retitle", args: { id: "t1", title: "Ours" } });
+    expect((await sync.run()).conflicts).toHaveLength(1);
+    store.apply({ name: "retitle", args: { id: "t1", title: "Theirs" } });
+    const after = await sync.run();
+    expect(after.conflicts).toEqual([]);
+    expect(from.sent.flat().some((write) => write.fields && "title" in write.fields)).toBe(false);
+  });
+
+  it("does not choose a conflict a later pull already settled", async () => {
+    const store = projected();
+    const sync = engine(store, remote([{ changes: [theirTitle("v2", "Theirs")] }, { changes: [theirTitle("v3", "Ours")] }]));
+    store.apply({ name: "retitle", args: { id: "t1", title: "Ours" } });
+    const first = await sync.run();
+    await sync.run();
+    expect(sync.snapshot.conflicts).toBeUndefined();
+    sync.resolve(first.conflicts[0]!, "theirs");
+    expect(titleOf(store)).toBe("Ours");
   });
 });

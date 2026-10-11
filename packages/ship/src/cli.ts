@@ -9,7 +9,7 @@ import { openStore } from "./open-store.js";
 import { serveStore } from "./serve.js";
 import type { GraphSnapshot } from "./snapshot.js";
 import { sayStep } from "./steps.js";
-import { previewPrincipal, servePreview } from "./serve-preview.js";
+import { LOOPBACK, previewPrincipal, servePreview } from "./serve-preview.js";
 import { findPlaywright, NO_PLAYWRIGHT, shoot, shotsOf } from "./shots.js";
 import { applySteps, seedSteps } from "./sync-seed.js";
 import type { StoredMeta } from "./meta.js";
@@ -120,7 +120,6 @@ async function entryOf(argv: readonly string[], command: string, usage: string):
   return loadApp(entry);
 }
 
-const LOOPBACK = new Set(["127.0.0.1", "::1", "localhost"]);
 
 /**
  * WHETHER `graview serve` BELIEVES A SEAT HEADER (FR-06). Seat headers are
@@ -263,6 +262,16 @@ const listOf = (said: string | undefined): string[] =>
     .map((one) => one.trim())
     .filter(Boolean);
 
+/** What a step throws, said as the command's sentence rather than a stack: a seed that does not read, say. */
+async function said<T>(command: string, step: () => Promise<T>): Promise<T | undefined> {
+  try {
+    return await step();
+  } catch (error) {
+    process.stderr.write(`graview ${command}: ${error instanceof Error ? error.message : String(error)}\n`);
+    return undefined;
+  }
+}
+
 /**
  * `graview preview` — the store and Graview's own faces over a document,
  * for somebody with no product (`./serve-preview.ts`).
@@ -277,7 +286,8 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
     return 1;
   }
   const keeps = flag(argv, "--data") !== undefined || flag(argv, "--sqlite") !== undefined;
-  const backend = await backendFrom(argv);
+  const backend = await said("preview", () => backendFrom(argv));
+  if (backend === undefined) return 1;
   const roles = flag(argv, "--roles");
   const as = flag(argv, "--as");
   let opened;
@@ -287,8 +297,10 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
       page,
       ...(backend.seed ? { seed: backend.seed } : {}),
       ...(keeps ? { adapter: backend.adapter, where: backend.where } : {}),
-      port: Number(flag(argv, "--port") ?? 5196),
+      // A free port unless told: `graview serve` holds 5196, and the two run side by side.
+      port: Number(flag(argv, "--port") ?? 0),
       host,
+      trustSeatHeaders: trust.trust,
       principal: previewPrincipal(input.document, { ...(as ? { as } : {}), ...(roles !== undefined ? { roles: listOf(roles) } : {}) }),
     });
   } catch (error) {
@@ -338,7 +350,8 @@ export async function shots(argv: readonly string[], { page }: PreviewPage): Pro
     process.stderr.write(NO_PLAYWRIGHT);
     return 1;
   }
-  const backend = await backendFrom(argv);
+  const backend = await said("shots", () => backendFrom(argv));
+  if (backend === undefined) return 1;
   let opened;
   try {
     opened = await servePreview({ document: input.document, page, ...(backend.seed ? { seed: backend.seed } : {}), port: Number(flag(argv, "--port") ?? 0) });

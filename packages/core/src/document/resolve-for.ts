@@ -39,5 +39,8 @@ export function resolveFor(store: BlockSource, principal: Principal | null, node
   // About no record and from the declaration, the blocks are the home: its first headline is the page's own.
   const firstHeading = options.firstHeading ?? (node || options.blocks ? undefined : 1);
   // Parsed already where its first block says what it is (`t`), as `compileBlocks` writes it; else as declared.
-  return resolveBlocks(typeof (blocks[0] as SpecBlock | null)?.t === "string" ? (blocks as readonly SpecBlock[]) : compileBlocks(blocks), blockContextFor(store, principal, node, { ...options, money: options.money ?? app?.brand, firstHeading }));
+  const ctx = blockContextFor(store, principal, node, { ...options, money: options.money ?? app?.brand, firstHeading });
+  // A record the seat may not see has no page to read to it.
+  if (node && !ctx.node) return [];
+  return resolveBlocks(typeof (blocks[0] as SpecBlock | null)?.t === "string" ? (blocks as readonly SpecBlock[]) : compileBlocks(blocks), ctx);
 }

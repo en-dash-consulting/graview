@@ -4,7 +4,7 @@ import { GraviewProvider, createViews } from "@graview/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { Inspector, registerDefaultViews } from "../../src/index.js";
+import { Inspector, registerDefaultViews, relationWords } from "../../src/index.js";
 
 /**
  * A selected LINE gets an inspector about the relation: the declaration's
@@ -251,5 +251,82 @@ describe("the inspector for a selected line", () => {
     expect(html).toContain("Take them off it");
     expect(html).not.toContain("nothing this app declares");
     expect(html).not.toContain("mix of kinds");
+  });
+});
+
+/*
+ * EACH KIND WORDS ITS OWN END OF A SHARED RELATION (#205), on every surface
+ * that names a line: the inspector's heading, its sentence when nothing acts
+ * on the line, the schema provider's reason, and the Key's row.
+ */
+describe("a line of a relation several kinds declare", () => {
+  const artist = defineNode("artist", { fields: z.object({ label: z.string() }), plural: "Artists" });
+  const song = defineNode("song", {
+    fields: z.object({ label: z.string() }),
+    plural: "Songs",
+    edges: { by: { to: ["artist"], description: "the artist whose song it is" } },
+  });
+  const album = defineNode("album", {
+    fields: z.object({ label: z.string() }),
+    plural: "Albums",
+    edges: { by: { to: ["artist"], description: "the artist whose release it is" } },
+  });
+  const shared = createSchema([artist, song, album]);
+  const unlink = bindSchema(shared).defineMutation("unlink", {
+    title: "Unlink it",
+    description: "Remove a by line.",
+    severs: ["by"],
+    input: z.object({ from: nodeRef(["song", "album"]), to: nodeRef(["artist"]) }),
+    apply(ctx, args) {
+      ctx.removeEdge({ kind: "by", from: args.from, to: args.to });
+    },
+  });
+  const open = (from: string, mutations: readonly (typeof unlink)[]) =>
+    renderToStaticMarkup(
+      <GraviewProvider
+        store={
+          new Store({
+            schema: shared,
+            mutations: [...mutations],
+            invariants: [],
+            snapshot: {
+              nodes: [
+                { id: "blue", kind: "artist", label: "Blue Hour" },
+                { id: "arc", kind: "song", label: "Arc" },
+                { id: "cold", kind: "album", label: "Cold Water" },
+              ] as never,
+              edges: [
+                { kind: "by", from: "arc", to: "blue" },
+                { kind: "by", from: "cold", to: "blue" },
+              ],
+            },
+          })
+        }
+        views={registerDefaultViews(shared, createViews(shared))}
+        initialView={EMPTY_VIEW}
+        initialSelection={[edgeSelectionId("by", from, "blue")]}
+      >
+        <Inspector />
+      </GraviewProvider>,
+    );
+
+  it("is named in the words of the kind it leaves, in the heading and when nothing acts on it", () => {
+    const album = open("cold", []);
+    expect(album).toContain("The artist whose release it is");
+    expect(album).toContain("makes or breaks “the artist whose release it is”");
+    expect(album).not.toContain("whose song it is");
+    expect(open("arc", [])).toContain("makes or breaks “the artist whose song it is”");
+  });
+
+  it("gives the schema provider's reason in those words", () => {
+    const album = open("cold", [unlink]);
+    expect(album).toContain("this line is &quot;the artist whose release it is&quot;");
+    expect(album).not.toContain("whose song it is");
+  });
+
+  it("is listed in the Key under every kind's own words", () => {
+    expect(relationWords(shared, "by", "album")).toEqual({ words: "The artist whose release it is", ends: "Albums → Artists" });
+    expect(relationWords(shared, "by").words).toBe("The artist whose song it is · The artist whose release it is");
+    expect(relationWords(shared, "by").ends).toBe("Songs → Artists · Albums → Artists");
   });
 });

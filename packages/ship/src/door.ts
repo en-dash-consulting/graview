@@ -1,4 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { sameOrigin } from "@graview/core/sync";
+
+export { sameOrigin };
 
 /*
  * WHAT EVERY DEV-SERVER DOOR SHARES: who may knock, how much they may
@@ -7,20 +10,14 @@ import type { IncomingMessage, ServerResponse } from "node:http";
  * and they must answer them the same way.
  */
 
-/** Same origin, or no origin at all (curl, a test). Anything else is another site. */
-export function sameOrigin(headers: { readonly origin?: string; readonly host?: string }): boolean {
-  if (headers.origin === undefined) return true;
-  try {
-    return new URL(headers.origin).host === headers.host;
-  } catch {
-    return false;
-  }
-}
-
-/** Whether this request came from the page this server serves. */
+/**
+ * Whether this request came from the page this server serves: the one rule
+ * every door keeps (`sameOrigin` from `@graview/core/sync`) — no other
+ * site's `Origin` or `Sec-Fetch-Site`, and a Host that is this machine, so a
+ * page that rebinds its own name here is refused too.
+ */
 export function fromThisApp(req: IncomingMessage): boolean {
-  const { origin, host } = req.headers;
-  return sameOrigin({ ...(origin ? { origin } : {}), ...(host ? { host } : {}) });
+  return sameOrigin(req.headers);
 }
 
 /** The request's body, refused past `limit` bytes with a sentence saying what was too much. */

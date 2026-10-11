@@ -1,5 +1,4 @@
-import { argumentWords, humanizeField, labelOf, nounOf, tellApart, type AnySchema, type Store } from "@graview/core";
-import { relationWords } from "../relation-key.js";
+import { argumentWords, edgeWords, humanizeField, labelOf, nounOf, tellApart, type AnySchema, type Store } from "@graview/core";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { useGraview } from "@graview/react/provider";
 import type { Affordance, OpenParameter } from "@graview/tools";
@@ -451,7 +450,11 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
    */
   const edge = edgeOfSelection(id);
   // A relation by its words ("Where they work"), never its name ("Works at").
-  if (edge) return relationWords(store.schema, edge.kind).words;
+  if (edge) {
+    // In the words of the kind the line leaves: kinds may word a shared relation their own way.
+    const words = edgeWords(store.schema, store.graph.getNode(edge.from)?.kind ?? "", edge.kind, "out");
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  }
   const kinds = kindsOf(id);
   if (kinds.length > 0) {
     return kinds

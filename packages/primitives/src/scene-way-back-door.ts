@@ -27,13 +27,16 @@ function landOnTheApp(app: Element | null | undefined) {
  * the store makes, and from ⌘Z or Ctrl+Z while the keyboard is in the app
  * `mark` is drawn in (anywhere on the page, under the whole-page Shell). `seen` is how
  * many batches the log held when the scene was drawn: what was done before
- * is no act to offer back. Returns what stops it.
+ * is no act to offer back. Returns what stops it — and, told the scene is
+ * gone, takes its offer off the board.
  */
-export function sceneWay<S extends AnySchema>(store: Store<S>, principal: Principal | undefined, board: NoticeBoard | null, seen: number, mark: Element | null): () => void {
+export function sceneWay<S extends AnySchema>(store: Store<S>, principal: Principal | undefined, board: NoticeBoard | null, seen: number, mark: Element | null): (gone?: boolean) => void {
   // The app the scene is drawn in: an embed's frame, or none — the whole-page Shell owns the page.
   const app = mark?.closest("[data-graview-embed]");
   let offered: string | undefined;
-  const take = () => {
+  const take = (only?: string) => {
+    // The toast's Take back is its own act's: once another came after it, there is nothing for it to take.
+    if (only !== undefined && lastChangeOf(store, principal)?.batch !== only) return false;
     try {
       const taken = takeBackLast(store, principal);
       if (taken) board?.notify({ kind: "toast", id: OFFER, sentence: `Took back “${taken.intent}”` });
@@ -47,8 +50,8 @@ export function sceneWay<S extends AnySchema>(store: Store<S>, principal: Princi
     const fresh = freshChangeOf(store, principal, seen);
     seen = store.batches().length;
     if (fresh) {
-      offered = fresh.batch;
-      board?.notify({ kind: "toast", id: OFFER, sentence: fresh.intent, timeout: WAY_BACK_MS, action: { label: "Take back", onSelect: () => (landOnTheApp(app), take()) } });
+      const batch = (offered = fresh.batch);
+      board?.notify({ kind: "toast", id: OFFER, sentence: fresh.intent, timeout: WAY_BACK_MS, action: { label: "Take back", onSelect: () => (landOnTheApp(app), take(batch)) } });
     } else if (offered && lastChangeOf(store, principal)?.batch !== offered) {
       // Taken back, by the key or from Activity: the offer goes with it.
       offered = undefined;
@@ -62,8 +65,14 @@ export function sceneWay<S extends AnySchema>(store: Store<S>, principal: Princi
   heard();
   const off = store.subscribe(heard);
   document.addEventListener("keydown", key);
-  return () => {
+  /*
+   * `gone` when the scene itself is: a face switch unmounts it while the
+   * board — an embed's frame's, or a host's — stays, and the offer would
+   * stand for an act this scene is no longer there to judge.
+   */
+  return (gone = false) => {
     off();
     document.removeEventListener("keydown", key);
+    if (gone && offered) board?.dismiss(OFFER);
   };
 }

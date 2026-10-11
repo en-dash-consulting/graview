@@ -37,7 +37,9 @@ if (location.pathname.startsWith("/pages")) {
 The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, Pages;
 `pages: { scene, pages }` renames them), the place you are on — whose list
 holds the home, the Lists, the Pictures (on a wide bar they stand, the
-rest under More) — Find, standing, person.
+rest under More; an empty kind folds into More) — Find, standing, person.
+A shell with a rail of its own says `surface("shell", Shell, { without:
+["places"] })`: the bar keeps all that and names no place.
 
 **Arrange it, declared**: `pages: { order: ["offer",
 "package"], hide: ["party"], first: "The offers" }`. `order` sorts
@@ -63,15 +65,13 @@ under its routes, which buys three things at once:
   `?with=` and `?past=1` still land. A record links back.
 - `/search?q=` — the Find box's matcher: hits by kind, each with why; a
   nav box narrows a list, else lands here. Find and the way back ("Take
-  back “…”", ⌘Z) are on every face: a shell that places `<PageFind>` or
-  `<PageUndo>` says where, one that does not gets them drawn around it,
-  and `surface("shell", Shell, { without: ["find"] })` goes without.
-- **The assistant**, on every route: the scene's own ask field and its
-  conversation, the ROUTE what "this" means. A line and a few questions
-  before anyone types; proposals apply
-  through the same runtime, attributed and undoable, withheld ones struck
-  through. Open questions are
-  listed on `/problems`; the model behind them is the host's `ai`.
+  back “…”", ⌘Z) are on every face: a shell places `<PageFind>` or
+  `<PageUndo>` where it wants them, else they are drawn around it
+  (`without: ["find"]` goes without).
+- **The assistant**, on every route: the scene's ask field, the ROUTE what
+  "this" means. Proposals apply through the same runtime, attributed and
+  undoable, withheld ones struck through; open questions are on
+  `/problems`; the model is the host's `ai`.
 
 Everything a page shows is a derivation the scene uses too: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is
@@ -107,6 +107,11 @@ export const pages = createPageRegistry<S, PageComponent<S>>(schema)
   .route("/survey", SurveyDesk);   // about nothing in the schema
 ```
 
+**Claim a declared block, keep the rest.** A block may say `"key":
+"rewrites"` (unsaid, its sort and place: `list.2`); `<BlockSlots.Provider
+value={{ "change.page": { rewrites: Timeline } }}>` draws yours for it and
+every other block as declared. Never pick a block by its title's words.
+
 `.route(path, Component)` gives a page that is NOT about a kind an address —
 onboarding, settings, import — matched before `/:plural`. **Every `to` is
 basename-relative** (`to="/survey"`, never `to="/pages/survey"`), and so is
@@ -126,16 +131,13 @@ Rules for a page at this rung:
    principal)`, struck through with `verdict.refusal.message`. A form that
    refuses on submit is the bug this prevents.
 6. **Link to a PICTURE, not only to a node.** `spatialHref(id)` opens the
-   scene on one thing; `placeHref(as)` — `/#view=the-grounds`, the title
-   through `placeSlug` — opens it on one named place, group in focus, not on
-   a default view that says "press The grounds".
+   scene on one thing; `placeHref(as)` (`/#view=the-grounds`) on one named
+   place, group in focus.
 7. **Take the act LIST from the derivation, not from the mutations.**
-   `recordFacts(store, id, { principal }).actions` is the same `AffordanceSet`
-   the scene's strip reads: `affordances` are the acts that can actually act
-   here, each with its `args` already decided and its `open` questions left,
-   and `withheld` are the ones this seat may not take, with the reason.
-   Filtering `store.allMutations()` is not equivalent: it offers acts with
-   nothing to act on. A **list** page asks it of a kind instead —
+   `recordFacts(store, id, { principal }).actions` is the `AffordanceSet`
+   the scene's strip reads: `affordances` can act here, `args` decided and
+   `open` questions left; `withheld` are this seat's refusals, with the
+   reason. Filtering `store.allMutations()` offers acts with nothing to act on. A **list** page asks it of a kind instead —
    `kindFacts(store, kind, { principal }).actions`, the acts that can BEGIN it.
 
 ## Rung two: a product design
@@ -207,7 +209,5 @@ that passes its tests and reads like an admin panel has replaced nothing.
 - Whether the design's words are the domain's. The derived pages use the
   declaration's `description` and `inverse`; a design that writes its own
   sentences must keep them true as the declaration changes.
-- Whether a page still offers everything the seat may do. Listing acts by
-  NAME misses the one declared after it was written; scanning the mutations
-  offers acts that cannot act. `facts.actions` is neither — but only a
-  person can see whether the page gives them room.
+- Whether a page gives every act `facts.actions` offers room: only a person
+  can see that.

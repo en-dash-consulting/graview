@@ -1,4 +1,4 @@
-import { failureWords, humanizeField, InvalidArguments, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
+import { edgeWords, failureWords, InvalidArguments, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { POPOVER_STYLE, useAffordances, useApplyAffordance, useGraview, usePopover, useSelection } from "@graview/react";
 import { loadPins, togglePin, type Affordance, type PinOverrides } from "@graview/tools";
@@ -833,7 +833,7 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
                     : "this mix of kinds"
               } — ${withheld.length} action${withheld.length === 1 ? "" : "s"} withheld.`
             : edge
-              ? `Nothing can be done with this line yet — nothing this app declares makes or breaks “${store.schema.edge(edge.kind)?.description ?? humanizeField(edge.kind).toLowerCase()}”.`
+              ? `Nothing can be done with this line yet — nothing this app declares makes or breaks “${edgeWords(store.schema, store.graph.getNode(edge.from)?.kind ?? "", edge.kind, "out")}”.`
               : `Nothing can be done with ${
                   subjectKinds.length === 1 ? withArticle(nounOf(store.schema.tryDefinition(subjectKinds[0]!), subjectKinds[0]!)) : "this mix of kinds"
                 } yet — nothing this app declares acts on ${subjectKinds.length === 1 ? "it" : "them"}.`}

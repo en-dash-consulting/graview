@@ -117,15 +117,12 @@ agent tool that walks the graph.
   ["played"] }` or `{ field: "until", retired: "date" }`. Every count then
   aggregates over the horizon ("4, +12 past") instead of drowning, and
   `graview check` refuses a lifecycle reading a missing field.
-- **A figure**, which is line art of the THING at the city's own three-quarter
-  angle — a person, a plot of ground, a gutter — drawn wherever the kind is
-  drawn. Nine ship; any domain that is not an abstract tracker runs out of
-  them at once, so draw the rest:
-  `graview figure ./dist/domain/app.js --kind gutter --from "a gutter along a
-  roof edge"` prints the brief (the rules, the angle, a shipped figure as the
-  style), and `--judge <file>` reads the answer back, holds it to the rules
-  `graview check` holds a figure to, and prints the line to paste. Then look
-  at it at twenty pixels, which is the size a chip gives it.
+- **A figure**, line art of the THING at the city's three-quarter angle — a
+  person, a plot, a gutter — drawn wherever the kind is. Nine ship; draw the
+  rest: `graview figure ./dist/domain/app.js --kind gutter --from "a gutter
+  along a roof edge"` prints the brief, and `--judge <file>` holds the answer
+  to the rules `graview check` holds a figure to and prints the line to
+  paste. Then look at it at twenty pixels, a chip's size.
 - **A declared hue** in the brand (`accents: { fixture: 210 }`) if this kind
   should wear a chosen color rather than a stable hash — every chip dot,
   district roof and the focus tag follow.
@@ -160,6 +157,9 @@ limit: 5, group: { by: "type", headings: { pain: "What hurts" } }, empty:
 "None yet." }` — records by a walk or `all('kind')`, each drawn by its own
 card or row and a link; `direction: "choices"` is a choice's declared order.
 Lists show only what the seat sees, and nest three deep, then say names.
+Any block may say `key: "fixtures"` (unsaid, its sort and place: `list.2`):
+the name a face claims it by (`BlockSlots`, see `graview-pages`), never its
+words.
 
 ## Worked out, not stored
 
@@ -193,8 +193,7 @@ pnpm build && npx graview check ./dist/domain/app.js
 Report **the actual output**, including warnings. What it catches here:
 
 - `view-field`, `view-name`, `view-tone` — a view spec naming a field the kind
-  lacks, or a tone outside the kit
-
+  lacks, or a tone outside the kit; `view-key` — two blocks under one key
 - `edge-target-undeclared` — an edge to a kind nobody declared
 - `edge-without-inverse` — a relation with words for one of its two readings
 - `act-without-far-end-reading` — an act offered on an end it has no words for

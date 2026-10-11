@@ -90,6 +90,19 @@ describe("resolveFor", () => {
     expect(byKey(page, "progress")).toMatchObject({ text: "0 of 0 done" });
   });
 
+  it("reads the record as the seat sees it, whatever record it is handed: one it may not see resolves to nothing", () => {
+    const task = store.graph.getNode("t1")!;
+    const blocks = app.viewSpecs!["change"]!["page"]!;
+    expect(resolveFor(store, owner, task, { app, blocks }).length).toBeGreaterThan(0);
+    // Handed the whole graph's record, not the seat's: its label is not said to a seat that sees no task.
+    expect(resolveFor(store, outsider, task, { app, blocks })).toEqual([]);
+    expect(JSON.stringify(resolveFor(store, outsider, change, { app }))).not.toContain("Task 01");
+  });
+
+  it("says plainly that a seat is read from a store, not from a bare graph", () => {
+    expect(() => blockContextFor({ graph: store.graph, schema: store.schema }, outsider, change)).toThrow(/store/);
+  });
+
   it("resolves the home about no record, its first headline the page's own heading", () => {
     const home = resolveFor(store, owner, null, { app });
     expect(home[0]).toMatchObject({ key: "headline.1", t: "headline", level: 1, text: "Changes" });

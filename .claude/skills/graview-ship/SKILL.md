@@ -173,18 +173,21 @@ own rehearsal (`pnpm smoke`) does exactly this from packed tarballs —
      { kind: "task", resource: "task", fields: { status: "status" }, version: "lastModified" },
      { kind: "zone", resource: "zone", fields: {}, readonly: true, because: "Sourcevision owns the zones." },
    ] } });
-   sync.guard();   // an act on a zone is refused with that sentence
+   sync.guard();   // an act on a zone is not offered, and refused, with that sentence
    ```
 
    `version` links every projected record at the version it was made from,
    so the first run sends nothing. `report` holds a field both sides changed
    and sends neither until `resolve`; `theirs` lands theirs through
    `applyInbound`; `ours` sends ours — `report.resolved` says which it took.
-   A refused delete is said once. A remote that speaks MCP is
+   A refused delete is said once; one made there goes through
+   `removeInbound`, or, without it, stays here unsynced (`report.gone`).
+   A remote that speaks MCP is
    `mcpRemote({ call, pull, push })`: `call` is `mcpClient({ url, allow })`
    in Node, or `doorClient()` in a page behind `mcpDoor({ call, allow })`
-   on the dev server — the door holds the token, takes only its own
-   origin's JSON, and only the allowed tools.
+   on the dev server — the door holds the token, takes only JSON from its
+   own origin on this machine (`hosts` names others), and only the allowed
+   tools. It knows no seat: never put it where sight is a boundary.
 
 9. **Look at a document with no product.** `graview preview <document.json>
    --seed <snapshot.json>` is `serve` with Graview's own faces over the

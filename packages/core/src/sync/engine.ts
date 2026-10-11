@@ -2,7 +2,9 @@ import type { GraphReader } from "../graph/types.js";
 import { PermissionDeniedError } from "../permissions/types.js";
 import type { ApplyOptions, PlannedChange, Store } from "../store.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
-import type { MutationCall } from "../mutations/types.js";
+import type { AnyMutationDefinition, MutationCall } from "../mutations/types.js";
+import type { Principal } from "../permissions/types.js";
+import { seesId } from "../seen.js";
 import {
   EMPTY_SYNC_STATE,
   systemAuthor,
@@ -54,6 +56,8 @@ export interface SyncReport {
    * is said once: the link goes with it, so the next pass does not ask again.
    */
   readonly refused: readonly { readonly localId: string; readonly error: string }[];
+  /** Records the remote deleted: removed here through `removeInbound`, or, without one, kept here and no longer synced. */
+  readonly gone: readonly string[];
   readonly offline: boolean;
   readonly state: SyncState;
 }
@@ -132,6 +136,12 @@ export interface SyncOptions<S extends AnySchema> {
     readonly kind: string;
     readonly fields: Readonly<Record<string, unknown>>;
   }): { readonly name: string; readonly args: Record<string, unknown> };
+  /**
+   * The mutation that removes a record the remote deleted. Absent, the
+   * record stays here and stops being synced — it is not sent back as new —
+   * and the report says so (`gone`).
+   */
+  removeInbound?(call: { readonly localId: string; readonly kind: string }): { readonly name: string; readonly args: Record<string, unknown> } | null;
   /** Called for a remote record we have never seen. Return null to ignore it. */
   createInbound?(change: {
     readonly resource: string;
@@ -218,7 +228,23 @@ export class SyncEngine<S extends AnySchema> {
   private seededLinks(): Record<string, RemoteLink> {
     const links: Record<string, RemoteLink> = {};
     if (!this.options.mapping.resources.some((resource) => resource.version)) return links;
-    for (const [localId, { node, mapping }] of this.participants()) {
+    /*
+     * AS THE REMOTE MADE IT, not as it is now: a field somebody changed here
+     * before the first run is agreed at the value it had before that change,
+     * so the change is sent rather than taken for what the remote holds.
+     */
+    const before = new Map<string, Record<string, unknown>>();
+    for (const op of this.options.store.log.all()) {
+      if (op.author.kind === "system" && op.author.id === this.options.mapping.system) continue;
+      for (const primitive of op.primitives) {
+        if (primitive.op !== "patch-node") continue;
+        const was = before.get(primitive.id) ?? {};
+        for (const [field, value] of Object.entries(primitive.before ?? {})) if (!Object.hasOwn(was, field)) was[field] = value;
+        before.set(primitive.id, was);
+      }
+    }
+    for (const [localId, { node: now, mapping }] of this.participants()) {
+      const node = { ...now, ...before.get(localId) };
       const version = mapping.version ? node[mapping.version] : undefined;
       if ((typeof version !== "string" && typeof version !== "number") || version === "") continue;
       const remoteId = mapping.remoteId ? node[mapping.remoteId] : undefined;
@@ -238,6 +264,29 @@ export class SyncEngine<S extends AnySchema> {
   }
 
   /**
+   * A HELD FIELD SETTLED HERE — somebody took their value by an ordinary act
+   * (the conflict invariant's repair is one) — is not held any longer: the
+   * value both sides hold is agreed, and nothing is sent for it.
+   */
+  private release(): void {
+    const conflicts = this.state.conflicts ?? [];
+    if (conflicts.length === 0) return;
+    const graph = this.options.store.graph as GraphReader<NodeOfSchema<S>>;
+    let links = this.state.links;
+    const still = conflicts.filter((conflict) => {
+      const node = graph.getNode(conflict.localId) as Record<string, unknown> | undefined;
+      const link = links[conflict.localId];
+      const mapping = link ? this.mappingFor(link.resource) : undefined;
+      if (!node || !link || !mapping || !same(mappedValues(node, mapping)[conflict.field], conflict.theirs)) return true;
+      links = { ...links, [conflict.localId]: { ...link, fields: { ...link.fields, [conflict.field]: conflict.theirs } } };
+      return false;
+    });
+    if (still.length === conflicts.length) return;
+    const { conflicts: _was, ...rest } = this.state;
+    this.state = { ...rest, links, ...(still.length > 0 ? { conflicts: still } : {}) };
+  }
+
+  /**
    * The local changes the remote has not seen.
    *
    * Derived by comparing what a node holds NOW against what we last agreed it
@@ -247,12 +296,14 @@ export class SyncEngine<S extends AnySchema> {
    * record the remote owns never is.
    */
   pending(): readonly RemoteWrite[] {
+    this.release();
     const writes: RemoteWrite[] = [];
     const seen = new Set<string>();
     const held = this.held();
+    const gone = new Set(this.state.gone ?? []);
     for (const [localId, { node, mapping }] of this.participants()) {
       seen.add(localId);
-      if (mapping.readonly) continue;
+      if (mapping.readonly || gone.has(localId)) continue;
       const link = this.state.links[localId];
       const values = mappedValues(node, mapping);
       if (!link) {
@@ -295,6 +346,8 @@ export class SyncEngine<S extends AnySchema> {
     const resolved: SettledConflict[] = [];
     const pushed: string[] = [];
     const refused: { localId: string; error: string }[] = [];
+    const gone: string[] = [];
+    this.release();
     const held = this.held();
     const policy = this.policy;
     let offline = false;
@@ -355,6 +408,27 @@ export class SyncEngine<S extends AnySchema> {
         const node = this.options.store.graph.getNode(localId) as
           | Record<string, unknown>
           | undefined;
+
+        /*
+         * DELETED THERE. Removed here through the declared act when there is
+         * one, as any inbound change lands; kept here otherwise, but no longer
+         * linked or sent, so it is not made again there as new. Either way
+         * its held fields are nobody's to choose between any more.
+         */
+        if (change.deleted) {
+          const removal = node ? this.options.removeInbound?.({ localId, kind: mapping.kind }) : null;
+          if (removal) {
+            this.options.store.apply(removal, {
+              author: systemAuthor(this.options.mapping.system),
+              intent: `${this.options.mapping.system}: deleted ${change.resource}`,
+            });
+          }
+          if (node) gone.push(localId);
+          for (const key of [...held.keys()]) if (held.get(key)!.localId === localId) held.delete(key);
+          const { [localId]: _deleted, ...rest } = links;
+          links = rest;
+          continue;
+        }
         if (!node) continue;
         const theirs = ourFields(change.fields ?? {}, mapping);
         const ours = mappedValues(node, mapping);
@@ -429,8 +503,9 @@ export class SyncEngine<S extends AnySchema> {
     }
 
     // What the inbound pass decided is what the outbound pass sends from.
-    const { conflicts: _before, ...kept } = this.state;
-    this.state = { ...kept, links, ...this.heldState(held) };
+    const { conflicts: _before, gone: _gone, ...kept } = this.state;
+    const unsynced = [...new Set([...(this.state.gone ?? []), ...gone])].filter((id) => this.options.store.graph.getNode(id));
+    this.state = { ...kept, links, ...this.heldState(held), ...(unsynced.length > 0 ? { gone: unsynced } : {}) };
 
     /*
      * A RECORD THE REMOTE OWNS, DELETED HERE, is refused here and said once:
@@ -448,10 +523,15 @@ export class SyncEngine<S extends AnySchema> {
 
     // -------------------------------------------------------------- outbound
     this.state = { ...this.state, links };
-    const outbox = [...this.state.outbox, ...this.pending()];
-    // The last write for a node wins; sending three versions of the same edit
-    // is how a remote's rate limit is discovered.
-    const deduped = [...new Map(outbox.map((write) => [write.localId, write])).values()];
+    /*
+     * WHAT IS OWED IS WORKED OUT AGAIN, not replayed: a write queued while
+     * offline is what `pending` says now, unless something since — a
+     * conflict the pull just held, an edit taken back — says otherwise, and
+     * then the queued one would send what nobody now holds. One write per
+     * node: sending three versions of the same edit is how a remote's rate
+     * limit is discovered.
+     */
+    const deduped = [...new Map(this.pending().map((write) => [write.localId, write])).values()];
     let queued: RemoteWrite[] = deduped;
 
     if (!offline && deduped.length > 0) {
@@ -485,6 +565,7 @@ export class SyncEngine<S extends AnySchema> {
       links,
       outbox: queued,
       ...this.heldState(held),
+      ...(this.state.gone ? { gone: this.state.gone } : {}),
     };
 
     return {
@@ -496,6 +577,7 @@ export class SyncEngine<S extends AnySchema> {
       pushed,
       queued: queued.map((write) => write.localId),
       refused,
+      gone,
       offline,
       state: this.state,
     };
@@ -546,6 +628,8 @@ export class SyncEngine<S extends AnySchema> {
   resolve(conflict: SyncConflict, take: "ours" | "theirs"): void {
     const link = this.state.links[conflict.localId];
     if (!link) return;
+    // One a later pull already settled, or that holds another value since, is not this one to choose: choosing it would agree on a value neither side holds.
+    if (!same(this.held().get(heldKey(conflict.localId, conflict.field))?.theirs, conflict.theirs)) return;
     const mapping = this.mappingFor(link.resource);
     if (!mapping) return;
 
@@ -597,7 +681,9 @@ export class SyncEngine<S extends AnySchema> {
         ) as Record<string, unknown> | undefined;
         if (!node) continue;
         const mapping = this.options.mapping.resources.find((resource) => resource.kind === node["kind"]);
-        if (!mapping?.readonly || (mapping.match && !mapping.match(node))) continue;
+        // Judged as it was and as it would be: a patch that moves a record out of what `match` reads is still a write to it.
+        const was = primitive.op === "patch-node" ? { ...node, ...primitive.before } : node;
+        if (!mapping?.readonly || (mapping.match && !mapping.match(node) && !mapping.match(was))) continue;
         throw new PermissionDeniedError({
           mutation: op.mutation?.name ?? "",
           kind: mapping.kind,
@@ -616,19 +702,79 @@ export class SyncEngine<S extends AnySchema> {
    */
   guard(): () => void {
     const store = this.options.store;
-    const own = Object.prototype.hasOwnProperty.call(store, "applyAll");
-    const applyAll = store.applyAll;
-    store.applyAll = (calls: readonly MutationCall[], options: ApplyOptions = {}) =>
-      applyAll.call(store, calls, {
-        ...options,
-        admit: (planned) => {
-          this.admit(planned);
-          options.admit?.(planned);
-        },
-      });
-    return () => {
-      if (own) store.applyAll = applyAll;
-      else delete (store as { applyAll?: unknown }).applyAll;
+    const { applyAll, undo, permits, permittedMutations } = store;
+    const held = store as unknown as Record<string, unknown>;
+    const replaced = (["applyAll", "undo", "permits", "permittedMutations"] as const).map((name) => [name, held[name], Object.prototype.hasOwnProperty.call(store, name)] as const);
+    const admitted = (options: ApplyOptions): ApplyOptions => ({
+      ...options,
+      admit: (planned) => {
+        this.admit(planned);
+        options.admit?.(planned);
+      },
+    });
+    store.applyAll = (calls: readonly MutationCall[], options: ApplyOptions = {}) => applyAll.call(store, calls, admitted(options));
+    // Taking back the remote's own change to a record it owns is a write to it too (redo goes through here).
+    store.undo = (batchIds, options = {}) => undo.call(store, batchIds, admitted(options));
+    /*
+     * THE OFFER SAYS WHAT THE ACT WOULD MEET. The store's own answer is what
+     * every surface asks before it offers an act (the actions strip, the
+     * seat's tools, a lens's press), so a record the remote owns is refused
+     * there with the sentence `admit` gives, rather than offered and then
+     * put back.
+     */
+    store.permits = (call, principal) => {
+      const verdict = permits.call(store, call, principal);
+      const message = verdict.ok ? this.owned(call, principal) : undefined;
+      return message === undefined ? verdict : ({ ok: false, refusal: { mutation: call.name, message, wouldNeed: [] } } as typeof verdict);
     };
+    store.permittedMutations = (principal) =>
+      permittedMutations.call(store, principal).filter((mutation) => this.ownedKindOf(mutation) === undefined);
+    return () => {
+      for (const [name, was, own] of replaced) {
+        if (own) held[name] = was;
+        else delete held[name];
+      }
+    };
+  }
+
+  /** The read-only mapping every record of this kind falls under, whatever its fields: one with no `match`. */
+  private ownedMapping(kind: string): ResourceMapping | undefined {
+    const mapping = this.options.mapping.resources.find((resource) => resource.kind === kind);
+    return mapping?.readonly && !mapping.match ? mapping : undefined;
+  }
+
+  /**
+   * THE KIND AN ACT CAN ONLY EVER WRITE when the remote owns every record of
+   * it: the kind a derived edit rides, its subject's kinds, or every kind it
+   * creates. Undefined when it could write something that is ours.
+   */
+  private ownedKindOf(mutation: AnyMutationDefinition): string | undefined {
+    const subject = mutation.subject;
+    const kinds: readonly string[] = mutation.derived
+      ? [mutation.derived.kind]
+      : subject
+        ? subject.kinds === "*" ? [] : subject.kinds
+        : mutation.creates ?? [];
+    return kinds.length > 0 && kinds.every((kind) => this.ownedMapping(kind)) ? kinds[0] : undefined;
+  }
+
+  /** Why this call would be refused as a write to a record the remote owns — said only of a record the asker sees. */
+  private owned(call: MutationCall, principal?: Principal): string | undefined {
+    const store = this.options.store;
+    let mutation: AnyMutationDefinition;
+    try {
+      mutation = store.mutation(call.name);
+    } catch {
+      return undefined;
+    }
+    const id = mutation.subject ? call.args[mutation.subject.arg] : undefined;
+    if (typeof id === "string") {
+      const node = store.graph.getNode(id) as Record<string, unknown> | undefined;
+      if (!node || (principal && !seesId(store, principal)(id))) return undefined;
+      const mapping = this.options.mapping.resources.find((resource) => resource.kind === node["kind"]);
+      return mapping?.readonly && (!mapping.match || mapping.match(node)) ? this.because(mapping) : undefined;
+    }
+    const kind = this.ownedKindOf(mutation);
+    return kind === undefined ? undefined : this.because(this.ownedMapping(kind) as ResourceMapping);
   }
 }

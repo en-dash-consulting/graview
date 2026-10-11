@@ -49,7 +49,8 @@ export interface ResourceMapping {
   /**
    * THE REMOTE OWNS THESE. Inbound changes land; nothing here is ever sent,
    * and a local act that would write a record of the kind is refused with
-   * `because` once the engine guards the store (`SyncEngine.guard`) — the
+   * `because` once the engine guards the store (`SyncEngine.guard`), and the
+   * store's `permits` stops offering it — the
    * sentence a person reads, so it names who does own it ("sourcevision:
    * re-run the analysis to change the zones").
    */
@@ -140,6 +141,8 @@ export interface SyncState {
    * held here is not sent until `resolve` says which side stands.
    */
   readonly conflicts?: readonly SyncConflict[];
+  /** Records the remote deleted that were kept here: no longer linked, and not sent again as new. */
+  readonly gone?: readonly string[];
 }
 
 export interface RemoteLink {

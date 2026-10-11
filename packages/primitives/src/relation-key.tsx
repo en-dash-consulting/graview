@@ -1,4 +1,4 @@
-import { pluralLabel, humanizeField, layer, resolveKit, type AnySchema } from "@graview/core";
+import { edgeWords, pluralLabel, layer, resolveKit, type AnySchema } from "@graview/core";
 import { kitConnector, useKit } from "@graview/react/drawing";
 import { useGraph, useGraview, useGraviewIfAny, useNavigation, useSelection } from "@graview/react/provider";
 import {
@@ -137,6 +137,8 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
       )}
       {relations.map(({ kind: edgeKind, count, ends }) => {
         const { connector, style } = kitConnector(kit, edgeKind);
+        // Every declaring kind's own words, where kinds word a shared relation apart.
+        const said = relationWords(store.schema, edgeKind);
         const lit =
           emphasis !== null
             ? emphasis === edgeKind
@@ -145,10 +147,7 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
           <button
             key={edgeKind}
             type="button"
-            // The schema's own accessor, which resolves first-declaration-wins
-            // exactly like the hand-rolled scan did, without a cast that would
-            // stop catching a shape change.
-            title={store.schema.edge(edgeKind)?.description ?? `${count} of these`}
+            title={store.schema.edge(edgeKind)?.description === undefined ? `${count} of these` : said.words}
             /*
              * Pointing at a row asks the picture the question: this relation's
              * lines come forward and the rest recede. From up here the lines
@@ -200,8 +199,8 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
               * and the two plurals under it say which way it reads.
               */}
             <span style={{ display: "grid", minWidth: 0 }} data-graview-relation-words={edgeKind}>
-              <span style={{ fontSize: "0.8125rem", color: "var(--graview-ink)" }}>{relationWords(store.schema, edgeKind).words}</span>
-              <span style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}>{relationWords(store.schema, edgeKind).ends}</span>
+              <span style={{ fontSize: "0.8125rem", color: "var(--graview-ink)" }}>{said.words}</span>
+              <span style={{ fontSize: "0.6875rem", color: "var(--graview-ink-faint)" }}>{said.ends}</span>
             </span>
             {/* A kind the kit keeps quiet says so here, the one place it is still listed. */}
             {connector.visible ? null : (
@@ -233,14 +232,27 @@ export const KEY_PANE_WIDTH = "min(280px, calc(100% - 28px))";
  * description, capitalized, and which kinds it runs between in their
  * plurals — "The vehicle it is for", "Deals → Vehicles". The edge's name is
  * the source's word for it and only stands in when nothing else was said.
+ *
+ * EACH KIND WORDS ITS OWN END of a relation several kinds declare: given
+ * the kind a line leaves, it is said in that kind's words; without one,
+ * every reading is said — kinds that word it alike together, the others
+ * after them ("The artist whose song it is · The artist whose release it is").
  */
-export function relationWords(schema: AnySchema, edgeKind: string): { readonly words: string; readonly ends: string } {
-  const info = schema.edge(edgeKind);
-  const said = info?.description ?? humanizeField(edgeKind).toLowerCase();
-  const plural = (kind: string) => pluralLabel(schema, kind);
-  const from = (info?.from ?? []).map(plural).join(", ");
-  const to = info === undefined ? "" : info.to === "*" ? "anything" : info.to.map(plural).join(", ");
-  return { words: said.charAt(0).toUpperCase() + said.slice(1), ends: from && to ? `${from} → ${to}` : "" };
+export function relationWords(schema: AnySchema, edgeKind: string, fromKind?: string): { readonly words: string; readonly ends: string } {
+  const from = schema.edge(edgeKind)?.from ?? [];
+  const readings = new Map<string, string[]>();
+  for (const kind of fromKind !== undefined && from.includes(fromKind) ? [fromKind] : from.length > 0 ? from : [""]) {
+    const words = edgeWords(schema, kind, edgeKind, "out");
+    readings.set(words, [...(readings.get(words) ?? []), kind]);
+  }
+  const plural = (kind: string) => (kind === "*" ? "anything" : pluralLabel(schema, kind));
+  const said = [...readings].map(([words, kinds]) => {
+    // A string `to` ("*") is one element, not its letters.
+    const to = kinds.flatMap((kind) => (schema.tryDefinition(kind)?.edges[edgeKind] as { readonly to?: readonly string[] | "*" } | undefined)?.to ?? []);
+    const ends = kinds[0] && to.length > 0 ? `${kinds.map(plural).join(", ")} → ${(to.includes("*") ? ["*"] : [...new Set(to)]).map(plural).join(", ")}` : "";
+    return [words.charAt(0).toUpperCase() + words.slice(1), ends] as const;
+  });
+  return { words: said.map(([words]) => words).join(" · "), ends: said.flatMap(([, ends]) => (ends ? [ends] : [])).join(" · ") };
 }
 
 /**
