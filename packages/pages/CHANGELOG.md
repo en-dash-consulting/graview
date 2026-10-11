@@ -1,5 +1,53 @@
 # @graview/pages
 
+## 0.1.24
+
+### Patch Changes
+
+- 6dbad14: A box nobody ticked is a no. A form that makes something with a required yes-or-no — "Induction first" on a tool — sent nothing for the box when it was left unticked, and the act refused "expected boolean, received undefined"; `formArgs` now sends it as `false`, as it sends a list nobody added to as `[]`. The derived form no longer marks a box "*", as if it had to be ticked. (W-177, the eighth walk.)
+  
+  Compatibility: ops, stored formats, the wire, the document format, the compiled format and check finding codes are unchanged. Tool names and input schemas are unchanged; what a derived form sends for an untouched required box is now `false` where it was nothing.
+- 9fe145e: A host's turn knows the app the seat is mounted with, so `describe_place` describes a lens place. Inside `HostAi.turn` the seat built its read tools from the store alone, and the chat's own runtime did the same, so a model asking `describe_place` for a lens or the declared home was told "is not a place this app has": the app never reached the seat. `GraviewProvider` now takes `app` and holds it on its context (`useGraview().app`), inheriting the app of a provider it is drawn inside; `mount` and `<Embed>` pass theirs on both faces, and `PagesApp`'s `context.app` reaches the provider under the pages. The chat hands it to its own tool runtime, to the workbench's agent seat and, as `ChatContext.app`, to a host's turn, whose `describe_place` now answers exactly as the runtime `graview mcp` serves does, for the seat that asked. With `app` given, a provider's reader `settings` default to `app.settings`. `graview create` writes `app` on the provider and on the pages' context. The hosted page carries 132 bytes fewer up front (589 625; 589 757 before), and as many fewer handed a compiled app (547 324; 547 456): the embed now hands the provider each option as given, which the provider's props accept as `undefined`, rather than spreading each one in only when it is set.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and tool names and schemas are unchanged. New: `app` on `GraviewProviderProps`, `GraviewContextValue`, `PageContext` and `ChatContext`. Changed: `GraviewProviderProps`' `principal`, `seats`, `people`, `memory`, `presenceTtlMs`, `presence`, `brand`, `onKeepLens` and `ai` also accept `undefined`, which means the same as leaving them out. What a host does: one that mounts its own `GraviewProvider` passes `app={yourApp}` (and `app` in `PagesApp`'s context) so its seat and its turn can describe the app's lenses and home; `mount` and `<Embed>` need nothing.
+- d13dc18: A kind's count on the home wraps on a phone at twice the text. "What is here" set each kind's plural and its count on one line inside its card, so the gauntlet's longest plural with "101" pushed the page 20px sideways at 320 wide and 32px text; the nightly's watch (`breaks-at-width`, W-189's rule) found it. Each card now keeps to the line, its count wraps under its name, and a name with no break point breaks anywhere.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and tool names and schemas are unchanged.
+- 98105c4: A record's name is changed where it stands. The derived record page drew its title as text while every fact under it was pressed and changed in place, as the scene's record is; a record named by a `label` field is now renamed by pressing its name. (W-181, the eighth walk.)
+  
+  Compatibility: ops, stored formats, the wire, the document format, the compiled format, check finding codes and tool names and schemas are unchanged.
+- eb9aac9: A record's "In the scene ↗" beside each place it is seen in is a fingertip wide: it was nine pixels wide, beside the place's own link. (W-188, the eighth walk.)
+  
+  Compatibility: ops, stored formats, the wire, the document format, the compiled format, check finding codes and tool names and schemas are unchanged.
+- Updated dependencies [6dbad14]
+- Updated dependencies [e23f631]
+- Updated dependencies [9fe145e]
+- Updated dependencies [56f203f]
+- Updated dependencies [cfe3b7a]
+- Updated dependencies [a6c8da2]
+- Updated dependencies [e23f631]
+- Updated dependencies [9fe145e]
+- Updated dependencies [108721d]
+- Updated dependencies [e23f631]
+- Updated dependencies [129f2fa]
+- Updated dependencies [5b7e4c8]
+- Updated dependencies [b68d1cc]
+- Updated dependencies [32c54f1]
+- Updated dependencies [791fb0c]
+- Updated dependencies [56f203f]
+- Updated dependencies [e23f631]
+- Updated dependencies [8e1f679]
+- Updated dependencies [9646578]
+- Updated dependencies [129f2fa]
+- Updated dependencies [6b60219]
+- Updated dependencies [fe08229]
+- Updated dependencies [3043dcc]
+  - @graview/core@0.1.24
+  - @graview/react@0.1.24
+  - @graview/primitives@0.1.24
+  - @graview/tools@0.1.24
+  - @graview/layout@0.1.24
+
 ## 0.1.23
 
 ### Patch Changes
