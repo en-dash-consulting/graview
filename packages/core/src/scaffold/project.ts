@@ -469,6 +469,8 @@ export default defineConfig({
       "@graview/core/retry": framework("core/src/retry.ts"),
       "@graview/core/document": framework("core/src/document/index.ts"),
       "@graview/core/conformance": framework("core/src/conformance/index.ts"),
+      "@graview/core/sync": framework("core/src/sync/index.ts"),
+      "@graview/core/snapshot": framework("core/src/snapshot.ts"),
       "@graview/core/cli": framework("core/src/cli/index.ts"),
       "@graview/core/scaffold": framework("core/src/scaffold/index.ts"),
       "@graview/core/sqlite": framework("core/src/persistence/sqlite.ts"),

@@ -1,13 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
+import { bindSchema, createSchema, defineNode, nodeRef, Store } from "../../src/index.js";
 import {
-  bindSchema,
-  createSchema,
-  defineNode,
   googleCalendar,
   googleCalendarMapping,
-  nodeRef,
-  Store,
   SyncEngine,
   type Fetcher,
   type RemoteAck,
@@ -16,7 +12,7 @@ import {
   type RemoteWrite,
   SYNC_CONFLICTS,
   syncConflictInvariant,
-} from "../../src/index.js";
+} from "../../src/sync/index.js";
 
 /**
  * Two-way sync, on top of the op log rather than beside it.

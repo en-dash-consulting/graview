@@ -33,6 +33,8 @@ const NOT_ON_THE_RUNTIME: Readonly<Record<string, string>> = {
   createBrowserAdapter: "localStorage",
   forgetFreshParam: "a page's address bar",
   freshHref: "a page's address bar",
+  PRINCIPAL_KEY: "localStorage",
+  rememberedPrincipal: "localStorage",
   BrowserAdapter: "localStorage",
   BrowserAdapterOptions: "localStorage",
   StorageLike: "localStorage",

@@ -49,6 +49,14 @@
       "types": "./dist/lines.d.ts",
       "default": "./dist/lines.js"
     },
+    "./sync": {
+      "types": "./dist/sync/index.d.ts",
+      "default": "./dist/sync/index.js"
+    },
+    "./snapshot": {
+      "types": "./dist/snapshot.d.ts",
+      "default": "./dist/snapshot.js"
+    },
     "./conformance": {
       "types": "./dist/conformance/index.d.ts",
       "default": "./dist/conformance/index.js"
