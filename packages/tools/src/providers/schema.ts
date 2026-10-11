@@ -1,4 +1,4 @@
-import { actTitle, argShape, nodeRefArgs, nounOf, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
+import { actTitle, argShape, edgeWords, nodeRefArgs, nounOf, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
 import type { Affordance, AffordanceProvider, Observation, OpenParameter } from "../types.js";
 
 const BASE_SCORE = 40;
@@ -99,7 +99,8 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
               // A break offered on the line itself outranks a make; both sit
               // between plain schema actions and repairs.
               score: (breaks ? 62 : 58) - open.length,
-              why: `this line is "${store.schema.edge(edge.kind)?.description ?? edge.kind.replace(/[-_]+/g, " ")}"`,
+              // In the words of the kind the line leaves: kinds may word a shared relation their own way.
+              why: `this line is "${edgeWords(store.schema, store.graph.getNode(edge.from)?.kind ?? "", edge.kind, "out")}"`,
               nodeIds: [edge.from, edge.to],
             });
           }

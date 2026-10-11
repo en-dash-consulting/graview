@@ -451,7 +451,7 @@ export function nameOf(store: Store<AnySchema>, id: string): string {
    */
   const edge = edgeOfSelection(id);
   // A relation by its words ("Where they work"), never its name ("Works at").
-  if (edge) return relationWords(store.schema, edge.kind).words;
+  if (edge) return relationWords(store.schema, edge.kind, store.graph.getNode(edge.from)?.kind).words;
   const kinds = kindsOf(id);
   if (kinds.length > 0) {
     return kinds

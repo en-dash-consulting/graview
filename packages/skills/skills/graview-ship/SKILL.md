@@ -173,7 +173,7 @@ own rehearsal (`pnpm smoke`) does exactly this from packed tarballs —
      { kind: "task", resource: "task", fields: { status: "status" }, version: "lastModified" },
      { kind: "zone", resource: "zone", fields: {}, readonly: true, because: "Sourcevision owns the zones." },
    ] } });
-   sync.guard();   // an act on a zone is refused with that sentence
+   sync.guard();   // an act on a zone is not offered, and refused, with that sentence
    ```
 
    `version` links every projected record at the version it was made from,
