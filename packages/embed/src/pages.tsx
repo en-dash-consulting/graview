@@ -13,7 +13,7 @@ import { flushSync } from "react-dom";
 import { createNoticeBoard, NoticeBoardContext, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { FaceBoundary, FrameBar, FrameNotices, providerProps, storeOf, titleBelow, useErrorReport, useFrame, useIntrinsicHeight, useReady, useSteering, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
 import { addressOf, pathWithin } from "@graview/core";
-import { BarFindContext, barPlaceAt, barPlaces, type BarFind } from "@graview/primitives/frame";
+import { BarFindContext, type BarFind } from "@graview/primitives/frame";
 
 /**
  * THE PAGES AND NOTHING ELSE (FR-19). `@graview/embed/pages` mounts the
@@ -51,8 +51,6 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
   // Where the routed face is, said by its router, for the bar's tabs; and the bar's presses, taken by it (FR-131).
   const { at, steering, steer } = useSteering(address && typeof window !== "undefined" ? `${pathWithin(window.location.pathname, props.basePath) ?? "/"}${window.location.search}` : (props.path ?? "/"));
   const [barFind, setBarFind] = useState<BarFind | null>(null);
-  // No scene here, so no overview among the places (FR-132).
-  const places = barPlaces({ store: store as never, principal: props.principal, views: views as never });
   // The board the app speaks on, the host's or the frame's own: the one drawn is the one the face says things on.
   const [ownBoard] = useState(createNoticeBoard);
   const notices = props.notices ?? ownBoard;
@@ -75,8 +73,8 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
                 <FrameBar
                   name={brand?.name ?? app.name}
                   heading={props.heading ?? 2}
-                  places={places}
-                  current={barPlaceAt(places, at)}
+                  at={at}
+                  without={props.pages?.without()}
                   home={{ ...(address ? { href: addressOf("/", base) } : {}), go: () => steer("/"), current: at.split("?")[0] === "/" }}
                   reach={{ ...(address ? { href: (path: string) => addressOf(path, base) } : {}), go: (place) => steer(place.path) }}
                   standing={standing}

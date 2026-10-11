@@ -17,13 +17,13 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>graview — Graview docs</title>
-<meta name="description" content="The Graview command line: start a product, check its declaration, write its agent docs, serve its store, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.">
+<meta name="description" content="The Graview command line: start a product, check its declaration, write its agent docs, serve its store, preview a document with no product and photograph its places, say whether a product is on one release, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
 <meta property="og:site_name" content="Graview">
 <meta property="og:title" content="graview — Graview docs">
-<meta property="og:description" content="The Graview command line: start a product, check its declaration, write its agent docs, serve its store, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.">
+<meta property="og:description" content="The Graview command line: start a product, check its declaration, write its agent docs, serve its store, preview a document with no product and photograph its places, say whether a product is on one release, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://graview.dev/docs/packages/graview.html">
 <meta property="og:image" content="https://graview.dev/og.png">
@@ -62,7 +62,7 @@ img { max-width: 100%; }
    "@type": "TechArticle",
    "@id": "https://graview.dev/docs/packages/graview.html#article",
    "headline": "graview — Graview docs",
-   "description": "The Graview command line: start a product, check its declaration, write its agent docs, serve its store, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.",
+   "description": "The Graview command line: start a product, check its declaration, write its agent docs, serve its store, preview a document with no product and photograph its places, say whether a product is on one release, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.",
    "url": "https://graview.dev/docs/packages/graview.html",
    "inLanguage": "en",
    "image": "https://graview.dev/og.png",
@@ -1245,7 +1245,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview</code> is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The Graview command line: start a product, check its declaration, write its agent docs, serve its store, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview</code> is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The Graview command line: start a product, check its declaration, write its agent docs, serve its store, preview a document with no product and photograph its places, say whether a product is on one release, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.</p>
       <div class="cta"><div class="cta-line"><code>pnpm add graview</code><button type="button" class="copy" data-copy="pnpm add graview">Copy</button></div></div>
     </section>
     <section id="readme" aria-labelledby="h-readme">
@@ -1263,10 +1263,15 @@ graview serve ./dist/domain/app.js    # the store behind HTTP, data in a folder
 graview mcp ./dist/domain/app.js      # the same store, for an agent over MCP (stdio)
 graview apply ./dist/domain/app.js --call &lt;act&gt; --args '{...}'   # one act, from a shell
 graview sync-seed ./dist/domain/app.js --seed ./seed.json        # default content, moved without a wipe
+graview preview app.json --seed seed.json   # the store AND the scene and Pages over it, no product needed
+graview shots app.json --seed seed.json --places home,overview   # named places, headless, to PNGs
+graview doctor                        # one Graview release in package.json, the lockfile, node_modules, the documents, React's pair
 graview skills install .              # the authoring skills, for Claude Code and Codex</code></pre></div>
+<p><code>preview</code> is <code>serve</code> with Graview's own faces over the store: a JSON document and a snapshot, looked at with nothing built and nothing else installed — the page ships in this package. <code>shots</code> photographs the same page headless; it needs Playwright, which you install beside the project (<code>npm i -D playwright &amp;&amp; npx playwright install chromium</code>).</p>
 <p><code>serve</code>, <code>mcp</code>, <code>apply</code> and <code>sync-seed</code> share one store: <code>--data &lt;dir&gt;</code> (a folder of readable JSON, the default), <code>--sqlite &lt;file&gt;</code>, or — for <code>mcp</code> and <code>apply</code> — <code>--remote-url &lt;url&gt;</code> against a running <code>graview serve</code>. <code>--as</code> and <code>--roles</code> say who is acting; the policy judges on the host exactly as it judges in a browser.</p>
 <p>A project made by <code>graview create</code> has this package as a devDependency, so <code>npm run check</code>, <code>npm run docs</code> and <code>npm run skills</code> reach the same version of the tool the project was scaffolded with.</p>
-<p>Every subcommand is implemented in the package whose concern it is: <code>create</code>, <code>check</code>, <code>docs</code>, <code>describe</code>, <code>lens</code> and <code>figure</code> in <code>@graview/core</code>, <code>serve</code> and <code>sync-seed</code> in <code>@graview/ship</code>, <code>mcp</code> and <code>apply</code> in <code>@graview/tools</code>, <code>skills</code> in <code>@graview/skills</code>. This package dispatches and nothing else.</p>
+<p>Inside a pnpm workspace, run the project's own <code>graview</code> (<code>node_modules/.bin/graview</code>, or <code>pnpm exec graview</code>) rather than <code>npx -y graview@&lt;version&gt;</code>: when the workspace already holds that release in its hidden hoist, npx skips the install and then finds no bin, and says <code>sh: graview: command not found</code>. <code>graview doctor</code> says when the release you run is not the one the project pins.</p>
+<p>Every subcommand is implemented in the package whose concern it is: <code>create</code>, <code>check</code>, <code>docs</code>, <code>describe</code>, <code>lens</code>, <code>figure</code> and <code>doctor</code> in <code>@graview/core</code>, <code>serve</code>, <code>sync-seed</code>, <code>preview</code> and <code>shots</code> in <code>@graview/ship</code>, <code>mcp</code> and <code>apply</code> in <code>@graview/tools</code>, <code>skills</code> in <code>@graview/skills</code>, <code>view</code> in <code>@graview/guest</code>. This package dispatches, and carries the page <code>preview</code> serves (<code>dist/preview/</code>, built with the framework) so that no product has to.</p>
     </section>
     <section id="api" aria-labelledby="h-api">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (1)</h2></div>

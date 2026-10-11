@@ -1,4 +1,4 @@
-import { hueFor, MOST_STANDING, orderKinds, OVERVIEW_SLUG, placeSlug, primaryOf, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
+import { hueFor, kindPath, MOST_STANDING, orderKinds, OVERVIEW_SLUG, pluralLabel, primaryOf, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
 import { POPOVER_STYLE, useGraviewIfAny, usePopover } from "@graview/react/provider";
 import { createContext, Suspense, useCallback, useContext, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { AppMark } from "./app-title.js";
@@ -51,7 +51,8 @@ export interface BarPlace {
   readonly kind?: string;
   /**
    * Whether it may stand on the bar's row (FR-145, ranked): the main kinds
-   * and their pictures do, the machinery folds into "More". Unsaid is yes.
+   * and their pictures do, the machinery folds into "More", and so does a
+   * kind with no records yet. Unsaid is yes.
    */
   readonly primary?: boolean;
 }
@@ -62,8 +63,6 @@ export const HOME_KEY = "home";
 export const HOME_PATH = "/";
 /** The key of the scene's first place (FR-144): the whole thing, no picture in view. */
 export const WHOLE_KEY = "scene:whole";
-
-const upper = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
 
 /**
  * THE APP'S PLACES, IN THE LIST'S ORDER (FR-138): the home; each kind's list
@@ -81,7 +80,6 @@ export function barPlaces(input: {
   const kept = store.kindsKeptFrom(principal);
   const live = (store.schema.kinds as readonly string[]).filter((kind) => !store.modules.disabledKinds.has(kind) && !kept.has(kind));
   const arrangement = views?.arrangement?.();
-  const plural = (kind: string): string => (store.schema.tryDefinition(kind)?.plural as string | undefined) ?? `${kind}s`;
   const all = views?.places() ?? [];
   /*
    * WHICH STAND: what `pages.primary` names, or — unsaid — every kind but
@@ -89,18 +87,26 @@ export function barPlaces(input: {
    * leaves off, the installation's people, notes about other things), with
    * their pictures. Connections is a way to read the declaration, not a
    * place of the work: it folds.
+   *
+   * AND NOT A KIND WITH NOTHING IN IT YET, declared or derived alike: a
+   * tree that has no constraints yet does not say "Constraints" beside the
+   * work, and its first record brings it back. A graph with nothing in any
+   * kind folds none — nothing yet says which matter. The place you are on
+   * stands whatever it holds, and an open list keeps the row it opened
+   * over (FR-158).
    */
   const declared = primaryOf(arrangement, store.schema, all);
   const supporting = supportingKinds(store.schema, arrangement, [...store.modules.administered.values()].flatMap((module) => module.kinds ?? []));
-  const stands = (kind: string, as?: string): boolean => (declared ? (as ? declared.places.has(`${kind}|${as}`) : declared.kinds.has(kind)) : !supporting.has(kind));
+  const held = new Set(store.graph.allNodes().map((node) => node.kind as string));
+  const stands = (kind: string, as?: string): boolean => (!held.size || held.has(kind)) && (declared ? (as ? declared.places.has(`${kind}|${as}`) : declared.kinds.has(kind)) : !supporting.has(kind));
   const out: BarPlace[] = [{ key: HOME_KEY, label: "Home", path: HOME_PATH, group: "home", primary: true }];
-  for (const kind of orderKinds(live, arrangement?.order)) out.push({ key: `kind:${kind}`, label: upper(plural(kind)), path: `/${placeSlug(plural(kind))}`, group: "lists", kind, primary: stands(kind) });
+  for (const kind of orderKinds(live, arrangement?.order)) out.push({ key: `kind:${kind}`, label: pluralLabel(store.schema, kind), path: kindPath(store.schema, kind), group: "lists", kind, primary: stands(kind) });
   for (const place of all) {
     // A place at the scene's address is not offered: the address is the scene's (FR-132).
     if (!live.includes(place.kind) || place.as === OVERVIEW_SLUG) continue;
     // Two kinds' pictures of one name say whose with `?of=` (as the routed face addresses them).
     const shared = all.some((other) => other.as === place.as && other.kind !== place.kind);
-    const path = `/places/${encodeURIComponent(place.as)}${shared ? `?of=${placeSlug(plural(place.kind))}` : ""}`;
+    const path = `/places/${encodeURIComponent(place.as)}${shared ? `?of=${kindPath(store.schema, place.kind).slice(1)}` : ""}`;
     if (!out.some((held) => held.path === path)) out.push({ key: `place:${place.kind}:${place.as}`, label: place.title, path, group: "pictures", kind: place.kind, primary: stands(place.kind, place.as) });
   }
   const connects = live.some((kind) => Object.keys((store.schema.tryDefinition(kind)?.edges ?? {}) as object).length > 0);
@@ -645,13 +651,13 @@ function roomForWords(header: HTMLElement): boolean | null {
   // The words to come, beside each mark: the word, the gap before it, and the button's wider padding.
   const words = wordsOf(faces);
   const place = mid.querySelector<HTMLElement>(".graview-bar-place-words");
-  const em = place ? Number.parseFloat(getComputedStyle(place).fontSize) || 14 : 0;
+  const em = place ? parseFloat(getComputedStyle(place).fontSize) || 14 : 0;
   // The place's words, its chevron, its gap, padding and frame: up to 14em of them.
   const wanted = place ? Math.min(place.scrollWidth + 34, 14 * em) : 0;
   let spare = mid.getBoundingClientRect().width - wanted;
   if (find && find.getBoundingClientRect().width > 0) {
-    const basis = Number.parseFloat(getComputedStyle(find).flexBasis);
-    if (Number.isFinite(basis)) spare -= Math.max(0, basis - find.getBoundingClientRect().width);
+    const basis = parseFloat(getComputedStyle(find).flexBasis);
+    if (isFinite(basis)) spare -= Math.max(0, basis - find.getBoundingClientRect().width);
   }
   // The app's name on two lines has given its room already: no room for the words.
   if (nameWrapped(header)) return false;
@@ -661,7 +667,7 @@ function roomForWords(header: HTMLElement): boolean | null {
 /** Whether the app's name is on two lines: it has given its room already. */
 function nameWrapped(header: HTMLElement): boolean {
   const name = header.querySelector(".graview-bar-app-name");
-  return Boolean(name && name.getBoundingClientRect().height > Number.parseFloat(getComputedStyle(name).lineHeight) * 1.5);
+  return Boolean(name && name.getBoundingClientRect().height > parseFloat(getComputedStyle(name).lineHeight) * 1.5);
 }
 
 /** A press a page should follow itself: the main button, no key held (a new tab, a new window, a download). */
@@ -669,7 +675,7 @@ const plain = (event: MouseEvent): boolean => event.button === 0 && !(event.meta
 
 /** Find's shortcut as the keyboard says it: ⌘K on a Mac (and an iPad's keyboard), Ctrl K elsewhere. */
 function findKeys(): string {
-  const platform = typeof navigator === "undefined" ? "" : (navigator.platform ?? "");
+  const platform = globalThis.navigator?.platform ?? "";
   return /Mac|iPhone|iPad|iPod/.test(platform) ? "⌘K" : "Ctrl K";
 }
 
@@ -902,7 +908,7 @@ function standsIn(header: HTMLElement, current: number, wordsAsked: boolean, ran
   const from = mid.getBoundingClientRect().left;
   const end = find?.getBoundingClientRect();
   // To Find's end, less Find at its least and the room between them (the row's gap, less the tools' pull); with no Find, the middle's own room.
-  const room = end && end.width > 0 ? end.right - from - (Number.parseFloat(getComputedStyle(find!).minWidth) || 0) - 8 : mid.getBoundingClientRect().width;
+  const room = end && end.width > 0 ? end.right - from - (parseFloat(getComputedStyle(find!).minWidth) || 0) - 8 : mid.getBoundingClientRect().width;
   const primary = [...ranks].map((rank) => rank !== "0");
   return placesThatStand({ widths, current, room: Math.floor(room + drawnWords - words), more, primary })?.join(",") ?? null;
 }

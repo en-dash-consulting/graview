@@ -78,6 +78,14 @@ Open a session beside the declaration. The skills are already installed where Cl
 - [graview-pages](https://graview.dev/docs/skills/graview-pages.html): The routed face, from the derived pages to a design of your own.
 - [graview-ship](https://graview.dev/docs/skills/graview-ship.html): Persistence, migrations, export and health, self-hosted or behind a service.
 
+## One release, run from the project
+
+Every `@graview/*` package and `graview` are one release: pin them all to the same version, and run `graview doctor` when something will not start — it says a pin, a lockfile, an install or a document that is on another release, and a `react` beside a `react-dom` of another version, which React refuses at startup with a blank page.
+
+Run the project's own `graview` (`node_modules/.bin/graview`, `pnpm exec graview`) rather than `npx -y graview@<version>`: inside a pnpm workspace that already holds that release in its hidden hoist, npx skips the install, finds no bin and says `sh: graview: command not found`.
+
+Holding only a document and a snapshot, `graview preview app.json --seed seed.json` draws the scene and Pages over them with nothing built, and `graview shots` photographs its places.
+
 ## Working on the framework itself
 
 A product can consume a checkout of the framework by path instead of a registry, the way the first-party examples do: build the framework, then `pnpm graview create ../my-app --link .`. The project resolves every `@graview/*` import into the checkout's `dist/`, and its dev server rebuilds when the framework does.

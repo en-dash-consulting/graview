@@ -1,7 +1,7 @@
 import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { AppBar, appKeyOf, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, type BarFaces, type BarFind, type BarGo, type BarPlace, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
-import { layerViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
+import { AppBar, appKeyOf, barPlaceAt, barPlaces, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, type BarFaces, type BarFind, type BarGo, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
+import { layerViews, useGraph, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -510,8 +510,8 @@ export function FrameBar({
   name,
   heading,
   faces,
-  places,
-  current,
+  at,
+  without,
   home,
   reach,
   standing,
@@ -524,8 +524,10 @@ export function FrameBar({
   readonly heading: 1 | 2 | 3 | 4 | 5 | 6 | false;
   /** The switch between the scene and the pages (FR-137); none where only the pages are drawn. */
   readonly faces?: BarFaces | undefined;
-  readonly places: readonly BarPlace[];
-  readonly current: string | null;
+  /** Where the routed face is; null while the scene is drawn. */
+  readonly at: string | null;
+  /** What the app's own shell goes without (`ShellOptions`): with `"places"`, its rail names them and the bar names none. */
+  readonly without?: ReadonlySet<string> | undefined;
   readonly home: { readonly href?: string | undefined; readonly go: () => void; readonly current: boolean };
   readonly reach: BarGo;
   readonly standing: string;
@@ -537,7 +539,10 @@ export function FrameBar({
   /** How the switch is drawn (`FrameOptions["switch"]`). */
   readonly switch?: BarSwitch | undefined;
 }) {
-  const { brand } = useGraview();
+  const { brand, store, principal, views } = useGraview();
+  // Drawn again as the graph changes: a kind's first record brings it back to the row (`barPlaces`).
+  useGraph();
+  const places = without?.has("places") ? [] : barPlaces({ store, principal, views });
   // On the scene, what it can show, from the view it holds (FR-144).
   const scene = useScenePlaces();
   return (
@@ -549,7 +554,7 @@ export function FrameBar({
       faces={faces}
       home={home}
       places={places}
-      current={current}
+      current={at === null ? null : barPlaceAt(places, at)}
       reach={reach}
       onFind={onFind}
       {...(switchForm ? { switch: switchForm } : {})}

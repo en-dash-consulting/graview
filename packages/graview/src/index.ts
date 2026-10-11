@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { main as core, USAGE as CORE_USAGE } from "@graview/core/cli";
 
 /**
@@ -7,10 +8,13 @@ import { main as core, USAGE as CORE_USAGE } from "@graview/core/cli";
  * is the tool a person installs: `npx graview create my-app` from nothing,
  * or `graview check` from inside a project that has it as a devDependency.
  * It owns no logic. Every subcommand lives in the package whose concern it
- * is — the generator and the checker in core, `serve` and `sync-seed` in
- * ship, `mcp` and `apply` in tools, `skills` in skills, `view` in guest — and this
- * dispatches to it, so a project made with `graview
- * create` and one made by calling core's own CLI are the same project.
+ * is — the generator, the checker and `doctor` in core, `serve`,
+ * `sync-seed`, `preview` and `shots` in ship, `mcp` and `apply` in tools,
+ * `skills` in skills, `view` in guest — and this dispatches to it, so a
+ * project made with `graview create` and one made by calling core's own
+ * CLI are the same project. What it carries is the page `preview` serves,
+ * built into `dist/preview/` at the framework's build: the tool's to ship,
+ * never a product's runtime dependency's.
  *
  * `serve` and `skills` are imported when asked for, not before: `graview
  * check` should not load an HTTP server, and a bundler that ever sees this
@@ -23,6 +27,12 @@ export async function main(given: readonly string[]): Promise<number> {
   if (command === "serve") {
     const { serve } = await import("@graview/ship/cli");
     return serve(rest);
+  }
+  if (command === "preview" || command === "shots") {
+    // The page they serve is built into this package (`dist/preview/`, by scripts/build-preview-page.mjs): it is the tool's to carry, not a product's dependency's.
+    const { preview, shots } = await import("@graview/ship/cli");
+    const page = fileURLToPath(new URL("./preview/", import.meta.url));
+    return command === "preview" ? preview(rest, { page }) : shots(rest, { page });
   }
   if (command === "sync-seed") {
     const { syncSeed } = await import("@graview/ship/cli");

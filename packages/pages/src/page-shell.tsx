@@ -86,7 +86,7 @@ export function DefaultShell<S extends AnySchema>({
  * unless the shell under the bar placed its own, or goes without. Unset,
  * the bar draws its own box.
  */
-export const OwnBarFind = createContext<{ readonly onFind: (find: BarFind | null) => void; readonly find: boolean } | null>(null);
+export const OwnBarFind = createContext<{ readonly onFind: (find: BarFind | null) => void; readonly find: boolean; readonly places: boolean } | null>(null);
 
 /**
  * The bar of a routed face that owns its page: the scene is on
@@ -97,13 +97,14 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
   const location = useLocation();
   const navigate = useNavigate();
   const base = useHref("/").replace(/\/$/, "");
-  const places = barPlaces({ store: store as never, principal: context.principal, views: context.views });
+  const toldFind = useContext(OwnBarFind);
+  // A shell with a rail of its own (`without: ["places"]`) keeps the bar and its tools; the bar names no place.
+  const places = toldFind?.places === false ? [] : barPlaces({ store: store as never, principal: context.principal, views: context.views });
   const arrangement = context.views?.arrangement?.();
   const here = `${location.pathname}${location.search}`;
   const broken = store.violations(invariantContext);
   const problems = broken.length;
   const said = standingWords(broken, "All rules hold");
-  const toldFind = useContext(OwnBarFind);
   return (
     <>
       <AppBar

@@ -29,6 +29,10 @@
  * cell joins and draws to Ryan's row and SEO's column, on both faces, at a
  * desk and a phone — and nothing is drawn to the strengths' district.
  *
+ * And a record page is read under a page's budget (`changes.gdd.json`): a
+ * change of 98 tasks lists every one of them on both faces, where a card's
+ * allowance said "—" for each list on its page.
+ *
  *   node scripts/verify-declared.mjs [--engine=chromium|webkit|firefox]
  */
 import { createServer } from "node:http";
@@ -68,6 +72,15 @@ const TASKS_SEED = {
 /** People by skills, through a strength (FR-111): the Strengths lens, as Graview Cloud's org app declares it. */
 const STRENGTHS = resolve(repoRoot, "packages/core/tests/document/fixtures/org-strengths.gdd.json");
 const STRENGTHS_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/org-strengths.seed.json");
+/** A change of 98 tasks, 60 still open (`resolveFor`'s page budget): the page lists them all. */
+const CHANGES = resolve(repoRoot, "packages/core/tests/document/fixtures/changes.gdd.json");
+const CHANGES_SEED = {
+  nodes: [
+    { id: "c1", kind: "change", label: "Move the blocks" },
+    ...Array.from({ length: 98 }, (_, i) => ({ id: `t${i + 1}`, kind: "task", label: `Task ${String(i + 1).padStart(2, "0")}`, status: i < 60 ? "open" : "done" })),
+  ],
+  edges: Array.from({ length: 98 }, (_, i) => ({ id: `e${i + 1}`, kind: "has", from: "c1", to: `t${i + 1}` })),
+};
 const SIZES = [
   { width: 1440, height: 900 },
   { width: 390, height: 844 },
@@ -115,19 +128,21 @@ async function buildHost() {
         import tasks from ${JSON.stringify(TASKS)};
         import strengths from ${JSON.stringify(STRENGTHS)};
         import strengthsSeed from ${JSON.stringify(STRENGTHS_SEED)};
+        import changes from ${JSON.stringify(CHANGES)};
         const asked = new URLSearchParams(location.search);
         const proposal = asked.get("doc") === "lifelogics";
         const board = asked.get("doc") === "tasks";
         const org = asked.get("doc") === "strengths";
-        const compiled = compileDocumentWithoutCheck(proposal ? lifelogics : board ? tasks : org ? strengths : hall, { today: () => "2026-09-01" });
+        const changed = asked.get("doc") === "changes";
+        const compiled = compileDocumentWithoutCheck(proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : hall, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
-          seed: proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : ${JSON.stringify(SEED)},
+          seed: proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : ${JSON.stringify(SEED)},
           /* "none": the app's to choose — its home view, else the scene (FR-136). */
           ...(asked.get("face") === "none" ? {} : { face: asked.get("face") ?? "scene" }),
           ...(asked.get("path") ? { path: asked.get("path") } : {}),
-          principal: proposal || org
+          principal: proposal || org || changed
             ? { kind: "human", id: "u:owner", roles: ["owner"] }
             : board
               ? asked.get("as") === "viewer" ? { kind: "human", id: "p2", roles: ["viewer"] } : { kind: "human", id: "p1", roles: ["owner"] }
@@ -602,6 +617,32 @@ try {
       ),
     };
     report.checks.aChosenCellDrawsNothingToADistrict = { proxies: Object.fromEntries(Object.entries(chosen).map(([at, seen]) => [at, seen.proxies])), ok: Object.values(chosen).every((seen) => seen.proxies === 0) };
+  }
+
+  {
+    /*
+     * A RECORD PAGE IS READ UNDER A PAGE'S BUDGET. A change's page lists its
+     * open tasks and its done ones; with 98 tasks, a card's allowance of 500
+     * steps said "—" for both lists. Drawn once, a page is read under a
+     * page's (`resolveFor`, PAGE_BUDGET): every task is listed, on the
+     * routed face and in the scene's record.
+     */
+    const pages = await open(`doc=changes&face=pages&path=${encodeURIComponent("/changes/c1")}`, { width: 1280, height: 900 });
+    await pages.waitForSelector("[data-graview-listed]", { timeout: 15_000 }).catch(() => {});
+    const routed = await pages.evaluate(() => {
+      const spec = document.querySelector('[data-graview-spec="page"][data-graview-kind="change"]');
+      return { listed: spec ? new Set([...spec.querySelectorAll("[data-graview-listed]")].map((li) => li.getAttribute("data-graview-listed"))).size : 0, dashes: spec ? [...spec.querySelectorAll(".graview-spec-text")].filter((p) => p.textContent?.trim() === "—").length : -1 };
+    });
+    await pages.close();
+    const scene = await open("doc=changes&face=scene", { width: 1440, height: 900 });
+    await scene.evaluate(() => window.__handle.setStop("#focus=c1"));
+    await scene.waitForSelector('[data-graview-spec="page"][data-graview-kind="change"] [data-graview-listed]', { timeout: 15_000 }).catch(() => {});
+    const pictured = await scene.evaluate(() => {
+      const spec = document.querySelector('[data-graview-spec="page"][data-graview-kind="change"]');
+      return { listed: spec ? new Set([...spec.querySelectorAll("[data-graview-listed]")].map((li) => li.getAttribute("data-graview-listed"))).size : 0, dashes: spec ? [...spec.querySelectorAll(".graview-spec-text")].filter((p) => p.textContent?.trim() === "—").length : -1 };
+    });
+    await scene.close();
+    report.checks.aRecordPageListsEveryRecordUnderAPagesBudget = { routed, scene: pictured, ok: routed.listed === 98 && routed.dashes === 0 && pictured.listed === 98 && pictured.dashes === 0 };
   }
 
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };

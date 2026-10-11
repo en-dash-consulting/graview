@@ -11,6 +11,9 @@ import { compileDocument } from "../document/compile-checked.js";
 import { sayFindings } from "../document/findings.js";
 import { isGraviewTemplate } from "../document/graview-template.js";
 import { create, CREATE_USAGE } from "./create.js";
+import { doctor, DOCTOR_USAGE } from "./doctor.js";
+export { diagnose, doctor, DOCTOR_USAGE } from "./doctor.js";
+export type { DoctorFinding, DoctorLevel } from "./doctor.js";
 import { describeApp } from "./describe.js";
 import { describePlace } from "../document/describe-place.js";
 import { Store } from "../store.js";
@@ -35,6 +38,7 @@ ${CREATE_USAGE}
       --previous <file>, check holds every renamedFrom to the version before.
       A template (a graview-template .json) is read as the document inside it.
 
+${DOCTOR_USAGE}
   graview docs <entry> [--out <dir>] [--views <module>]
       Writes llms.txt and agents.md next to the entry, or into <dir>.
 
@@ -183,6 +187,7 @@ export async function main(argv: string[]): Promise<number> {
     return 0;
   }
   if (command === "create") return create(argv.slice(1));
+  if (command === "doctor") return doctor(argv.slice(1));
   if (command === "lens") {
     /*
      * A LENS, STARTED. The rules in `graview-lens` are the kind that are

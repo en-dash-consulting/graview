@@ -29,6 +29,9 @@ export const PORT_SPAN = 100;
 export const OWN = {
   /** `graview serve` of the rota's data, for `verify-served` and `verify-desk` to open from a folder on a server. */
   served: 5196,
+  /** `graview preview` of a Cloud document and its seed, for `verify-preview`; and the `graview shots` it runs after. */
+  preview: 5200,
+  "preview-shots": 5201,
   /** The discography's production build, `vite preview`, for `verify-scale`. */
   "discography-preview": 5198,
   /** The app `smoke-create` scaffolds, and the linked one after it. */

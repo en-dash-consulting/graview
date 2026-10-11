@@ -63,6 +63,14 @@ const NOT_ON_THE_RUNTIME: Readonly<Record<string, string>> = {
   backendFrom: "the CLI",
   syncSeed: "the CLI",
   StoreBackend: "the CLI",
+  // `graview preview` and `graview shots`: a page served from a folder on disk, behind node:http.
+  preview: "the CLI",
+  shots: "the CLI",
+  PreviewPage: "the CLI",
+  servePreview: "node:http",
+  previewPrincipal: "the CLI",
+  Preview: "node:http",
+  PreviewOptions: "node:http",
 };
 
 describe("the runtime entry, beside the main and browser entries", () => {

@@ -1,7 +1,7 @@
 import { retryingImport } from "@graview/core/retry";
 import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
 import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
-import { BarFindContext, barPlaceAt, barPlaces, descentTarget, fetchFrameworkViews, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
+import { BarFindContext, descentTarget, fetchFrameworkViews, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import type { SeatStart } from "@graview/primitives";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
@@ -452,7 +452,6 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     }
     toFace("pages", path);
   }, [steering, steer, setPageAt, toFace, address, props.basePath]);
-  const barPlacesHere = barPlaces({ store: store as never, principal, views: views as never });
   const arrangement = (views as ReactViewRegistry<S>).arrangement?.();
   const onPages = shown === "pages";
   const hrefOf = address ? addressAt : undefined;
@@ -508,8 +507,8 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
                 // The pages, back at the page the reader was on.
                 pages: { label: pagesTitle(arrangement), current: onPages, go: () => toPage(pagesAt.current.path) },
               }}
-              places={barPlacesHere}
-              current={onPages ? barPlaceAt(barPlacesHere, pageAt) : null}
+              at={onPages ? pageAt : null}
+              without={props.pages?.without()}
               home={{ ...(hrefOf ? { href: hrefOf("/") } : {}), go: () => toPage("/"), current: onPages && pageAt.split("?")[0] === "/" }}
               reach={{ ...(hrefOf ? { href: hrefOf } : {}), go: (place) => toPage(place.path) }}
               standing={standing}
