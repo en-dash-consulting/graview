@@ -23,7 +23,7 @@ lastModified: "2026-10-10T22:00:00.000Z"
 | [graview preview and graview shots: the default faces on a document and a snapshot, in a browser or headless](./graview-preview-and-graview-shots-the.md) | pending |
 | [resolveFor(store, principal, node): one call resolves a record's declared blocks as the scene and describe_place do](./resolvefor-store-principal-node-one.md) | pending |
 | [A kind can say which field is its natural time and which its author](./a-kind-can-say-which-field-is-its.md) | pending |
-| [A published JSON Schema per version, and a typed defineDocument builder](./a-published-json-schema-per-version.md) | pending |
+| [A published JSON Schema per version, and a typed defineDocument builder](./a-published-json-schema-per-version.md) | completed |
 | [A snapshot says when it was made and what it holds, and can load by kind](./a-snapshot-says-when-it-was-made-and.md) | pending |
 | [SyncEngine: conflict policy, read-only resources, seeded links, an MCP remote, a seat and deletes](./syncengine-conflict-policy-read-only.md) | pending |
-| [Types flow from a document to a face](./types-flow-from-a-document-to-a-face.md) | pending |
+| [Types flow from a document to a face](./types-flow-from-a-document-to-a-face.md) | completed |
