@@ -501,8 +501,13 @@ export const BUDGETS = [
     // "embed without the studio") is 0 / 5 smaller: the scene's way back taking its offer down when the scene goes (its
     // door), the Key and the inspector saying a shared relation in each kind's own words, and the schema provider's reason
     // in the words of the kind a line leaves. 825 / 478 more than main. Measured at 1_708_282 / 539_229.
-    minified: 1_708_700,
-    gzipped: 539_500,
+    // Raised when a seat's problems came to be judged over what it sees, a fact's count with them, by chunks fetched later
+    // only — every face as a page loads it first is 42 / 42 smaller: the checker's warning for a rule that says a fact some
+    // role may not see all of (`rule-says-hidden-fact`), where the studio and the frame's compile carry it, and a change's
+    // problems said to a seat as it judges them (`answeredTo`), with the words. 2_364 / 923 more than main. Measured at
+    // 1_710_646 / 540_149.
+    minified: 1_710_800,
+    gzipped: 540_300,
     load: "all",
   },
   {

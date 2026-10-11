@@ -140,6 +140,11 @@ TypeScript (`reads: ["memo"]` — an `apply` is never read, so say it). The
 store hides the records; the act's answer can still tell that one exists.
 Let the role see the kind, keep the act from it, or read only what it sees.
 
+A seat's problems are judged over what it sees: a rule counting
+`fact('proposed')` says 3 to the owner and 1, or nothing, to a guest who
+sees one. `rule-says-hidden-fact` (a warning) names each rule whose message
+says a fact over a kind some role told of it may not see in full.
+
 **And try it.** Two tests that matter more than the check:
 
 ```ts
