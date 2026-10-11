@@ -97,6 +97,7 @@ export function RotaApp({
       principal={principal ?? openingSeat()}
       seats={SEATS}
       settings={rotaApp.settings ?? []}
+      app={rotaApp}
     >
       <Shell<S>
         home={HOME}

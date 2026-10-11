@@ -83,6 +83,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [An act's own logic cannot tell a seat whether a hidden record exists](./an-act-s-own-logic-cannot-tell-a-seat.md) | completed |
 | [An agent acts for someone, through something: delegation and channel on every op, and seat headers trusted only on request](./an-agent-acts-for-someone-through.md) | completed |
 | [An edit can set a kind's glance (set-glance), and the studio renames display.glance with its field](./an-edit-can-set-a-kind-s-glance-set.md) | completed |
+| [An id a seat asks for or is minted, and a single-source link it sets, tell it nothing of a hidden record](./an-id-a-seat-asks-for-or-is-minted-and.md) | pending |
 | [An icon-sized thumbnail: sceneThumbnail size icon at 32x32 (FR-130)](./an-icon-sized-thumbnail-scenethumbnail.md) | completed |
 | [An open kit for worker views: a declared HTML/SVG/CSS allowlist, with everything that can fetch or escape removed (FR-90)](./an-open-kit-for-worker-views-a.md) | completed |
 | [An open page is told the app takes no changes for now, and when it does again (FR-66)](./an-open-page-is-told-the-app-takes-no.md) | completed |

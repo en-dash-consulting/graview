@@ -38,11 +38,7 @@ const CALLS: readonly MutationCall[] = [
   { name: "tally-room", args: { id: "room:blue" } },
   { name: "tidy-room", args: { id: "room:blue" } },
 ];
-/*
- * Not among them: a removal whose cascade takes a link to a hidden record
- * is the store's bookkeeping, not the act's logic, and its op is served to
- * the seat withheld (FR-67) — a follow-up of its own.
- */
+/** A removal whose cascade takes a link to a record the seat may not see. */
 const CLOSE: MutationCall = { name: "close-room", args: { id: "room:blue" } };
 
 describe("an act runs under its caller's sight", () => {
@@ -84,6 +80,36 @@ describe("an act runs under its caller's sight", () => {
     store.undo(done.batch, { author: { kind: "system" } });
     expect(store.graph.getNode("room:blue")).toMatchObject({ name: "Blue" });
     expect(store.graph.allEdges()).toEqual([{ kind: "on", from: "hold:freya", to: "room:blue" }]);
+  });
+
+  it("tells a seat the same of a removal whose cascade takes a link it may not see: its own op served whole, with what it may see", () => {
+    expect(told(world(true), CLOSE, guest)).toBe(told(world(false), CLOSE, guest));
+    const store = world(true);
+    store.apply(CLOSE, { author: guest });
+    const served = store.seenBy(guest).log.all();
+    expect(served.map((op) => op.withheld ?? false)).toEqual([false]);
+    expect(JSON.stringify(served)).not.toContain("hold:freya");
+    // Somebody who sees the hold puts the room back: the seat is served that as it would be with no hold.
+    const undoneBy = (held: boolean) => {
+      const one = world(held);
+      one.undo(one.apply(CLOSE, { author: guest }).batch, { author: keeper });
+      return JSON.stringify(one.seenBy(guest).log.all()).replace(/(batch|op|undo):[a-z0-9:]+/g, "$1:minted").replace(/"at":"[^"]*"/g, '"at":"now"');
+    };
+    expect(undoneBy(true)).toBe(undoneBy(false));
+  });
+
+  it("lets a seat undo its own removal, and the undo puts back the link it may not see", () => {
+    const store = world(true);
+    const done = store.apply(CLOSE, { author: guest });
+    expect(store.seenBy(guest).canUndo(done.batch)).toMatchObject({ ok: true });
+    const undone = store.undo(done.batch, { author: guest });
+    expect(store.graph.allEdges()).toEqual([{ kind: "on", from: "hold:freya", to: "room:blue" }]);
+    // Its undo is its own too, and so is the redo.
+    expect(store.seenBy(guest).log.all().map((op) => op.withheld ?? false)).toEqual([false, false]);
+    store.redo(undone.batch, { author: guest });
+    expect(store.graph.getNode("room:blue")).toBeUndefined();
+    expect(store.graph.getNode("hold:freya")).toBeDefined();
+    expect(store.seenBy(guest).log.all().map((op) => op.withheld ?? false)).toEqual([false, false, false]);
   });
 
   it("keeps a hidden field it never wrote: a patch's prior values are the store's, not the seat's", () => {

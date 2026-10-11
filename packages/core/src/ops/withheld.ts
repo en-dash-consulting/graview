@@ -87,11 +87,12 @@ const fieldsNameUnseen = (node: object, sees: (id: string) => boolean): boolean 
 export function lensOf(seeing: SeatLens | ((id: string) => boolean)): SeatLens {
   if (typeof seeing !== "function") return seeing;
   const sees = seeing;
+  const served = <N extends { readonly id: string; readonly kind: string }>(node: N) => (sees(node.id) && !fieldsNameUnseen(node, sees) ? node : undefined);
   return {
     sees,
     shows: sees,
-    served: (node) => (sees(node.id) && !fieldsNameUnseen(node, sees) ? node : undefined),
-    servedWith: (node) => (sees(node.id) && !fieldsNameUnseen(node, sees) ? node : undefined),
+    served,
+    servedWith: served,
     optional: () => false,
     kindOf: () => undefined,
   };
@@ -124,9 +125,8 @@ export function namesUnseen(value: unknown, sees: (id: string) => boolean): bool
  * names what it touched as surely as its primitives do.
  */
 export function touchesUnseen(op: Operation, sees: (id: string) => boolean): boolean {
-  if (op.primitives.some((primitive) => touchedBy(primitive).some((id) => !sees(id)))) return true;
-  if (op.writes.some((id) => !sees(id)) || op.reads.some((id) => !sees(id))) return true;
-  return op.mutation !== null && namesUnseen(op.mutation.args, sees);
+  const unseen = (id: string) => !sees(id);
+  return op.primitives.some((primitive) => touchedBy(primitive).some(unseen)) || [...op.writes, ...op.reads].some(unseen) || (op.mutation !== null && namesUnseen(op.mutation.args, sees));
 }
 
 /**
@@ -179,6 +179,7 @@ function servedPrimitive(primitive: Primitive, lens: SeatLens): Primitive | unde
  */
 export function withhold(op: Operation, seeing: SeatLens | ((id: string) => boolean), served?: readonly Primitive[]): Operation {
   const lens = lensOf(seeing);
+  const kept = (id: string) => lens.shows(id) && isRecord(lens, id);
   return {
     id: op.id,
     seq: op.seq,
@@ -193,8 +194,8 @@ export function withhold(op: Operation, seeing: SeatLens | ((id: string) => bool
         return one ? [one] : [];
       }),
     inverse: [],
-    reads: op.reads.filter((id) => lens.shows(id) && isRecord(lens, id)),
-    writes: op.writes.filter((id) => lens.shows(id) && isRecord(lens, id)),
+    reads: op.reads.filter(kept),
+    writes: op.writes.filter(kept),
     at: op.at,
     ...(op.undoes !== undefined ? { undoes: op.undoes } : {}),
     withheld: true,
@@ -245,6 +246,17 @@ export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: strin
  */
 function whole(op: Operation, lens: SeatLens, served?: readonly Primitive[]): Operation | undefined {
   /*
+   * A LINK IT IS NOT SERVED IS NO PART OF WHAT IT DID (FR-55): a removal
+   * takes a record's links to what the seat may not see with it, and the
+   * undo puts them back. Left out of the op and of what would put it back,
+   * the op reads as it would had there been no such link. One that did
+   * nothing else is withheld: who made it and why are not the seat's.
+   */
+  if (served && served.length < op.primitives.length) {
+    if (!served.length) return;
+    op = { ...op, primitives: served, inverse: op.inverse.filter((one) => touchedBy(one).every(lens.shows)) };
+  }
+  /*
    * WHAT IT READ, AS RECORDS THE SEAT SEES (FR-55). An act that looked for a
    * record that is not there read its absence, and one that looked for a
    * hidden one read nothing the seat may be told: both are left out alike,
@@ -257,7 +269,7 @@ function whole(op: Operation, lens: SeatLens, served?: readonly Primitive[]): Op
    * names no record is the end of a link it served the seat — a repair
    * removing a dangling one — and stays: the primitive names it already.
    */
-  const touched = new Set((served ?? op.primitives).flatMap(touchedBy));
+  const touched = new Set(op.primitives.flatMap(touchedBy));
   const writes = op.writes.filter((id) => kept(id) || (lens.sees(id) && touched.has(id)));
   const tidy = reads.length === op.reads.length && writes.length === op.writes.length ? op : { ...op, reads, writes };
   /*
@@ -289,11 +301,8 @@ function whole(op: Operation, lens: SeatLens, served?: readonly Primitive[]): Op
   if (served) collect(served);
   const told = (id: string) => lens.sees(id) || said.has(id);
   if (namesUnseen(tidy.inverse, told)) return undefined;
-  if (own) {
-    if (op.mutation) collect(op.mutation.args);
-    return namesUnseen({ ...tidy, primitives: [], inverse: [] }, told) ? undefined : tidy;
-  }
-  return namesUnseen({ ...tidy, primitives: [], inverse: [] }, lens.sees) ? undefined : tidy;
+  if (own && op.mutation) collect(op.mutation.args);
+  return namesUnseen({ ...tidy, primitives: [], inverse: [] }, own ? told : lens.sees) ? undefined : tidy;
 }
 
 /** Whether an id names a record the store knows — in the graph or its log — when the lens can say; a bare sight cannot, and keeps every id. */

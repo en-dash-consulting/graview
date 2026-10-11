@@ -67,7 +67,7 @@ describe("a rule that reads a fact", () => {
     const store = make(0);
     expect(said(store.violations()).map(([rule, message]) => [rule, message])).toEqual([
       ["too-many-proposed", "3 proposed, and at most two may be"],
-      ["none-proposed", "Nothing proposed — fact (proposed) 3 ≥ 1"],
+      ["none-proposed", "Nothing proposed — proposed 3 ≥ 1"],
     ]);
     expect(said(store.seenBy(owner).violations())).toEqual(said(store.violations()));
   });
@@ -79,9 +79,19 @@ describe("a rule that reads a fact", () => {
     expect(theirs.map((v) => v.invariant)).not.toContain("too-many-proposed");
     // …and the line of the rule it does break says the one it sees.
     const none = theirs.find((v) => v.invariant === "none-proposed")!;
-    expect(none.message).toBe("Nothing proposed — fact (proposed) 1 ≥ 1");
-    expect(none.line?.text).toBe("fact (proposed) 1 ≥ 1");
+    expect(none.message).toBe("Nothing proposed — proposed 1 ≥ 1");
+    expect(none.line?.text).toBe("proposed 1 ≥ 1");
     expect(JSON.stringify(theirs)).not.toMatch(/\b3\b/);
+  });
+
+  it("says a fact in a rule's line by its label, or by its name in words: never \"fact (…)\"", () => {
+    const labeled = compileDocument({ ...document, computed: { proposed: { expr: document.computed.proposed, label: "Proposals in play" }, openWork: "count(all('proposal'))" }, rules: { ...document.rules, "little-work": { title: "Little work", over: "graph", require: "fact('openWork') < 2" } } } as never, { today: () => "2026-10-11" });
+    if (!labeled.ok) throw new Error(JSON.stringify(labeled.findings.filter((f) => f.severity === "error")));
+    const app = labeled.app as GraviewApp<AnySchema>;
+    const store = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], snapshot: make(0).graph.snapshot() as never });
+    const lines = Object.fromEntries(store.violations().map((v) => [v.invariant, v.line?.text]));
+    expect(lines["none-proposed"]).toBe("proposals in play 3 ≥ 1");
+    expect(lines["little-work"]).toBe("open work 4 ≥ 2");
   });
 
   it("never changes a seat's line for a record the seat may not see", () => {
@@ -98,17 +108,32 @@ describe("a rule that reads a fact", () => {
     const made = answerSeenBy(store, guest, store.apply({ name: "edit-proposal", args: { id: "draft", proposed: true } }, { author: guest }));
     expect(made.introduces.map((v) => v.invariant)).not.toContain("too-many-proposed");
     expect(JSON.stringify(made.violationsAfter)).not.toMatch(/\b4\b/);
-    expect(made.violationsAfter.map((v) => v.message)).toContain("Nothing proposed");
+    expect(made.violationsAfter.map((v) => v.message)).toContain("Nothing proposed — proposed 2 ≥ 1");
   });
 
-  it("is said by its title in a preview to a seat: judged over the whole graph, it may count what the seat may not see", () => {
+  it("is judged over what the seat would see in a preview: a rule broken only by what it may not see is not said, by its title or otherwise", () => {
     const store = make(0);
     const preview = answerSeenBy(store, guest, store.preview({ name: "edit-proposal", args: { id: "draft", proposed: true } }, undefined, { author: guest }));
-    expect(preview.violationsAfter.map((v) => v.message)).toContain("too many proposed");
-    for (const one of [...preview.introduces, ...preview.resolves, ...preview.violationsAfter]) expect(one.message).not.toMatch(/\d/);
+    // Two proposed, as the guest would see them: within the limit, and the guest's own line says two.
+    expect(preview.violationsAfter.map((v) => v.invariant)).toEqual(["none-proposed"]);
+    expect(preview.violationsAfter[0]!.message).toBe("Nothing proposed — proposed 2 ≥ 1");
+    expect(JSON.stringify(preview)).not.toMatch(/too.many/i);
     // A rule that reads only its subject says its own sentence still.
     const untitled = store.preview({ name: "edit-proposal", args: { id: "draft", title: "" } }, undefined, { author: guest });
     expect(answerSeenBy(store, guest, untitled).introduces.map((v) => v.message)).toEqual([" has no title"]);
+  });
+
+  it("tells a seat what its change mended, and what a preview would break or mend, alike whatever it may not see", () => {
+    const answers = (hidden: number) => {
+      const store = make(hidden);
+      const preview = answerSeenBy(store, guest, store.preview({ name: "edit-proposal", args: { id: "draft", proposed: true } }, undefined, { author: guest }));
+      const made = answerSeenBy(store, guest, store.apply({ name: "edit-proposal", args: { id: "mine", proposed: false } }, { author: guest }));
+      const said = (v: { invariant: string; message: string }) => [v.invariant, v.message];
+      return { preview: [preview.introduces.map(said), preview.resolves.map(said), preview.violationsAfter.map(said)], made: [made.introduces.map(said), made.resolves.map(said), made.violationsAfter.map(said)] };
+    };
+    // Withdrawing its one proposal mends "nothing proposed" as the guest sees it; to the whole graph, it took three down to two.
+    expect(answers(0).made[1]).toEqual([["none-proposed", "Nothing proposed — proposed 1 ≥ 1"]]);
+    for (const hidden of [1, 5]) expect(answers(hidden)).toEqual(answers(0));
   });
 });
 

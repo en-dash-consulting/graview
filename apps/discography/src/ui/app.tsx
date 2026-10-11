@@ -59,6 +59,7 @@ export function DiscographyApp({
       scheme={scheme}
       brand={discographyBrand}
       settings={discographyApp.settings ?? []}
+      app={discographyApp}
       principal={openingSeat()}
       seats={SEATS}
     >

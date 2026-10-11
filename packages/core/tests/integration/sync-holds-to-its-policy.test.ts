@@ -726,7 +726,7 @@ describe("a record deleted here that the remote edited", () => {
     expect(deletes(from)).toEqual([]);
   });
 
-  it("holds field by field once the delete is taken back, never sending ours over their edit", async () => {
+  it("lands their edit once the delete is taken back, where only they changed the field: no conflict, nothing sent", async () => {
     const store = projected();
     const from = remote([{ changes: [theirTitle("v2", "Theirs")] }]);
     const sync = engine(store, from);
@@ -734,7 +734,25 @@ describe("a record deleted here that the remote edited", () => {
     await sync.run();
     store.undo(dropped.batch);
     const after = await sync.run();
-    expect(after.conflicts).toEqual([{ localId: "t1", field: "title", ours: "Write it", theirs: "Theirs", base: "Write it" }]);
+    expect(after.conflicts).toEqual([]);
+    expect(after.applied).toEqual(["t1"]);
+    expect(titleOf(store, "t1")).toBe("Theirs");
+    expect(after.state.links["t1"]).toMatchObject({ version: "v2", fields: { title: "Theirs" } });
+    expect(from.sent).toEqual([]);
+    expect((await sync.run()).conflicts).toEqual([]);
+    expect(from.sent).toEqual([]);
+  });
+
+  it("holds field by field once the delete is taken back where both changed it, never sending ours over their edit", async () => {
+    const store = projected();
+    const from = remote([{ changes: [theirTitle("v2", "Theirs")] }]);
+    const sync = engine(store, from);
+    const dropped = store.apply({ name: "drop-task", args: { id: "t1" } });
+    await sync.run();
+    store.undo(dropped.batch);
+    store.apply({ name: "retitle", args: { id: "t1", title: "Ours" } });
+    const after = await sync.run();
+    expect(after.conflicts).toEqual([{ localId: "t1", field: "title", ours: "Ours", theirs: "Theirs", base: "Write it" }]);
     expect(from.sent).toEqual([]);
   });
 });
