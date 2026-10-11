@@ -20,10 +20,10 @@ lastModified: "2026-10-11T08:00:00.000Z"
 | [A document can declare computed facts of the whole graph](./a-document-can-declare-computed-facts.md) | completed |
 | [A kind can say which field is its natural time and which its author](./a-kind-can-say-which-field-is-its.md) | completed |
 | [A published JSON Schema per version, and a typed defineDocument builder](./a-published-json-schema-per-version.md) | completed |
-| [A responder given an unsighted store puts only what its seat sees in the system prompt](./a-responder-given-an-unsighted-store.md) | pending |
+| [A responder given an unsighted store puts only what its seat sees in the system prompt](./a-responder-given-an-unsighted-store.md) | completed |
 | [A rule that reads a fact() is judged and worded over what the seat sees](./a-rule-that-reads-a-fact-is-judged-and.md) | pending |
 | [A snapshot says when it was made and what it holds, and can load by kind](./a-snapshot-says-when-it-was-made-and.md) | completed |
-| [describe_place in a host turn knows the app, so it describes lens places](./describe-place-in-a-host-turn-knows.md) | pending |
+| [describe_place in a host turn knows the app, so it describes lens places](./describe-place-in-a-host-turn-knows.md) | completed |
 | [Each blocks lens claims BlockSlots under its own view name](./each-blocks-lens-claims-blockslots.md) | pending |
 | [graview doctor says when a product's Graview pins or React pair disagree](./graview-doctor-says-when-a-product-s.md) | completed |
 | [graview preview and graview shots: the default faces on a document and a snapshot, in a browser or headless](./graview-preview-and-graview-shots-the.md) | completed |
@@ -34,3 +34,4 @@ lastModified: "2026-10-11T08:00:00.000Z"
 | [The FrameBar counts without walking every node on each change](./the-framebar-counts-without-walking.md) | pending |
 | [Types flow from a document to a face](./types-flow-from-a-document-to-a-face.md) | completed |
 | [Under report, a local delete and a remote edit become a conflict](./under-report-a-local-delete-and-a.md) | completed |
+

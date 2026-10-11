@@ -130,6 +130,7 @@ export function TodoApp({
       principal={principal ?? openingSeat()}
       seats={SEATS}
       settings={todoApp.settings ?? []}
+      app={todoApp}
       {...(onSeat ? { onSeat } : {})}
       {...(presence ? { presence } : {})}
       {...(ai ? { ai } : {})}
