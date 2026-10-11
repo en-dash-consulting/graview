@@ -286,10 +286,7 @@ export function graphResponder<S extends AnySchema>(
           violations
             .flatMap((violation) => violation.repairs)
             .filter((repair) => (repair.missing ?? []).length > 0)
-            .map((repair) => {
-              const title = repair.label ?? store.allMutations().find((one) => one.name === repair.mutation)?.title ?? repair.mutation;
-              return `“${title}” (${(repair.missing ?? []).map((field) => asked(repair.mutation, field)).join(", ")})`;
-            }),
+            .map((repair) => `“${repair.label}” (${(repair.missing ?? []).map((field) => asked(repair.mutation, field)).join(", ")})`),
         ),
       ];
       return withMoves({

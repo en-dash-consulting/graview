@@ -169,8 +169,8 @@ describe("the graph answers for itself", () => {
               message: `${subject.label} is overdue`,
               nodeIds: [subject.id],
               repairs: [
-                { mutation: "give-back", args: { loanId: subject.id }, missing: ["returned"] },
-                { mutation: "extend-loan", args: { loanId: subject.id }, missing: ["due"] },
+                { mutation: "give-back", args: { loanId: subject.id }, missing: ["returned"], label: "Check it back in" },
+                { mutation: "extend-loan", args: { loanId: subject.id }, missing: ["due"], label: "Extend the loan" },
               ],
             },
           ],
