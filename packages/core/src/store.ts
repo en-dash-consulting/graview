@@ -29,6 +29,7 @@ import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./o
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
 import { validateGraph, type GraphFinding } from "./validate-graph.js";
 import { tellTheWatchItsNames, tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } from "./watched.js";
+import { capitalize } from "./capital.js";
 import { pluralOf } from "./schema/define-node.js";
 
 export interface StoreOptions<S extends AnySchema> {
@@ -595,7 +596,7 @@ export class Store<S extends AnySchema> {
       seq: this.log.length,
       batch: options.batch ?? this.mintBatch("batch"),
       author: MODULES_AUTHOR,
-      intent: said.charAt(0).toUpperCase() + said.slice(1),
+      intent: capitalize(said),
       mutation: null,
       primitives: [],
       inverse: [],

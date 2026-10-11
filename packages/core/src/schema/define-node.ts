@@ -189,7 +189,7 @@ export function humanizeField(field: string): string {
     .replace(/[_-]+/g, " ")
     .trim()
     .toLowerCase();
-  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+  return capitalize(spaced);
 }
 
 /**
