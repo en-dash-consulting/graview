@@ -18,6 +18,8 @@ export type { DoorHeaders, DoorRequest, DoorResponse, McpClientOptions, McpDoorO
 export { EMPTY_SYNC_STATE, systemAuthor } from "./types.js";
 export type {
   ConflictPolicy,
+  DeletedConflict,
+  FieldConflict,
   RemoteAck,
   RemoteChange,
   RemoteLink,
