@@ -114,6 +114,26 @@ describe("Graph", () => {
     ]);
     expect(graph.getNode("t")).toEqual({ id: "t", kind: "thing" });
   });
+
+  it("counts each kind as records come and go, without walking them: added, removed, put back by a failed batch, and loaded", () => {
+    const graph = seeded();
+    const walked = vi.spyOn(graph, "allNodes");
+    expect([graph.count("person"), graph.count("duty"), graph.count("nobody")]).toEqual([2, 1, 0]);
+    graph.applyPrimitives([{ op: "add-node", node: { id: "d2", kind: "duty", label: "Late", at: 1 } }]);
+    graph.applyPrimitives([{ op: "remove-node", node: { id: "p2", kind: "person", label: "Bo" } }]);
+    expect([graph.count("person"), graph.count("duty")]).toEqual([1, 2]);
+    // A batch that fails part way changes no count: the graph is put back as it was.
+    expect(() => graph.applyPrimitives([{ op: "remove-node", node: { id: "p1", kind: "person", label: "Ana" } }, { op: "remove-node", node: { id: "gone", kind: "duty", label: "", at: 0 } }])).toThrow(GraphError);
+    expect([graph.count("person"), graph.count("duty")]).toEqual([1, 2]);
+    // A patch that names the kind moves the record between counts.
+    graph.applyPrimitives([{ op: "patch-node", id: "d2", before: { kind: "duty" }, after: { kind: "person" } }], { restoring: true });
+    expect([graph.count("person"), graph.count("duty")]).toEqual([2, 1]);
+    graph.load({ nodes: [{ id: "p9", kind: "person", label: "Cy" }], edges: [] });
+    expect([graph.count("person"), graph.count("duty")]).toEqual([1, 0]);
+    walked.mockClear();
+    graph.count("person");
+    expect(walked).not.toHaveBeenCalled();
+  });
 });
 
 describe("primitives", () => {

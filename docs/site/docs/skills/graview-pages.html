@@ -1297,7 +1297,7 @@ function PlotPage({ context }: { context: PageContext&lt;S&gt; }) {
 export const pages = createPageRegistry&lt;S, PageComponent&lt;S&gt;&gt;(schema)
   .register("plot", "record", PlotPage)
   .route("/survey", SurveyDesk);   // about nothing in the schema</code></pre></div>
-<p><strong>Claim a declared block, keep the rest.</strong> A block may say <code>"key": "rewrites"</code> (unsaid, its sort and place: <code>list.2</code>); <code>&lt;BlockSlots.Provider value={{ "change.page": { rewrites: Timeline } }}&gt;</code> draws yours for it and every other block as declared. Never pick a block by its title's words.</p>
+<p><strong>Claim a declared block, keep the rest.</strong> A block may say <code>"key": "rewrites"</code> (unsaid, its sort and place: <code>list.2</code>); <code>&lt;BlockSlots.Provider value={{ "change.page": { rewrites: Timeline } }}&gt;</code> draws yours for it and every other block as declared; a blocks lens is claimed by its address (<code>"the-offers"</code>). Never pick a block by its title's words.</p>
 <p><code>.route(path, Component)</code> gives a page that is NOT about a kind an address — onboarding, settings, import — matched before <code>/:plural</code>. <strong>Every <code>to</code> is basename-relative</strong> (<code>to="/survey"</code>, never <code>to="/pages/survey"</code>), and so is <code>initialPath</code>, so a test renders the hrefs a browser will.</p>
 <p>Rules for a page at this rung:</p>
 <ol>
