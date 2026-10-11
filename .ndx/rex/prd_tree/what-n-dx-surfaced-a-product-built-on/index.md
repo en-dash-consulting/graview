@@ -16,7 +16,7 @@ lastModified: "2026-10-10T22:00:00.000Z"
 
 | Title | Status |
 |-------|--------|
-| [The bar demotes an empty kind and can keep itself without its navigation](./the-bar-demotes-an-empty-kind-and-can.md) | pending |
+| [The bar demotes an empty kind and can keep itself without its navigation](./the-bar-demotes-an-empty-kind-and-can.md) | completed |
 | [A declared block has a stable key, and a face claims a slot by it](./a-declared-block-has-a-stable-key-and.md) | pending |
 | [A document can declare computed facts of the whole graph](./a-document-can-declare-computed-facts.md) | pending |
 | [graview doctor says when a product's Graview pins or React pair disagree](./graview-doctor-says-when-a-product-s.md) | pending |
