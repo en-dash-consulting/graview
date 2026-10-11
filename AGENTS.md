@@ -13,7 +13,7 @@ product imports. All fourteen packages share one version.
 
 ```
 packages/
-  graview/         graview              the one CLI: create, check, types, docs, describe, lens, figure, serve, skills
+  graview/         graview              the one CLI: create, check, types, doctor, docs, describe, lens, figure, serve, preview, shots, mcp, skills
   create-graview/  create-graview       `npm create graview` — a three-line door to `graview create`
   core/            @graview/core        schema, graph, invariants, op log, adapters, the checker, the scaffolder
   layout/          @graview/layout      positions and planes — headless, pure
@@ -183,7 +183,7 @@ License: Elastic License 2.0, at the root and in every tarball.
 | Path | Purpose |
 |------|---------|
 | `packages/graview/src/index.ts` | The CLI dispatcher — the only place subcommands are wired |
-| `packages/core/src/cli/` | `check`, `create`, `docs`, `describe`, `lens`, `figure` |
+| `packages/core/src/cli/` | `check`, `create`, `types`, `doctor`, `docs`, `describe`, `lens`, `figure` |
 | `packages/core/src/scaffold/` | What `graview create` writes; `project.ts` holds the manifest and the package lists |
 | `packages/skills/skills/*/SKILL.md` | The authoring skills a product installs |
 | `scripts/verify-all.mjs` | The harness chain, cheapest first |
