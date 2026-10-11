@@ -1,5 +1,39 @@
 # @graview/pages
 
+## 0.1.22
+
+### Patch Changes
+
+- 9154faf: A kind can say which field is its natural time and which its author. `fieldRoles` was not a document key at 0.1.20, so n-dx could not declare a commit's `committedAt` its time nor its `author` who made it: commits had no declared order, and the Runs timeline bound its date in the lens. A document's kind says `fieldRoles` as `defineNode` does — `"fieldRoles": { "when": "committedAt", "who": "author" }`, and any role a lens binds by name — and the framework reads two of them. `when`: a list of the kind opens newest first by it at any length, indexed by year when it is large (it was a large list only, by a `start` role, which a kind that wants it now says as `when`); a timeline or calendar that binds no `start` for the kind draws each record there (`withNaturalTime`, exported for a lens of an app's own). `who` and `when`: an unchosen glance leads with them, before the fields as declared. `graview check` refuses a role naming no field (`field-role-missing-field`, now at `kinds.<kind>.fieldRoles.<role>` for a document) and a `when` that is no date or a `who` that is no name (`field-role-ill-typed`); a lens that binds no start passes where the kind says `when`. `graview describe` lists each kind's roles; a diff says a role that moves; renaming a field moves its role, and removing one lets it go; `toDocument` carries a kind's roles; the document's JSON Schema takes them, and `defineDocument` holds each to a field the kind has.
+  
+  Compatibility: ops, stored formats, wire messages, the compiled format, tool names and schemas are unchanged. New: `kinds.<kind>.fieldRoles` in the document, the `when` and `who` roles, the finding code `field-role-ill-typed`, `withNaturalTime` on `@graview/primitives`. Changed: a large list no longer opens newest first by a kind's `start` role — say `when` (Discography's albums do); a list of a kind with `when` opens newest first at any length; an unchosen glance leads with `who` and `when`.
+- 3399521: A shell with a rail of its own keeps the bar and goes without its places: `surface("shell", Shell, { without: ["places"] })`. n-dx's face lists its places in a rail, and the only way to stop the bar listing them again was `without: ["bar"]`, which also took away the switch between the scene and the pages, Find, the standing, who is here and the person. With `"places"`, the bar keeps every one of those and names no place on the pages, on the app's own address and inside an embed handed the same registry (`pages`). The scene's pictures are the scene's, and stay.
+  
+  Compatibility: unchanged.
+- 9154faf: Each kind words its own end of a relation several kinds declare. An edge's name was one relation to every surface, so a record listed everything that reached it by `by` under the first declaring kind's words, and `graview check` refused two kinds declaring one name in two sets of words (`edge-name-shared`). n-dx's `under` sits on six kinds: a change wants "the tasks inside it", a zone "the zones inside it", and they could not both be said. Now a record's page, a record's connections in the scene, and the cards around a focus list what reaches a record by each reading: kinds that word a relation alike together, kinds that word it their own way apart, each under its own words (an artist's page says "Their songs" and "Their releases"), and a band of a kind is captioned in that kind's own words. So the refusal is gone: a kind may word its own end of a shared relation.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format, tool names and schemas are unchanged. Changed: the finding code `edge-name-shared` is no longer reported; a document or app it refused now compiles. A record's relation groups (`recordFacts(...).links`, the scene's connections) are one per relation, direction and reading, where they were one per relation and direction.
+- Updated dependencies [9df7ef3]
+- Updated dependencies [0f051ef]
+- Updated dependencies [f25b52c]
+- Updated dependencies [9154faf]
+- Updated dependencies [9154faf]
+- Updated dependencies [9154faf]
+- Updated dependencies [0e1bafe]
+- Updated dependencies [3399521]
+- Updated dependencies [9154faf]
+- Updated dependencies [f25b52c]
+- Updated dependencies [9df7ef3]
+- Updated dependencies [0e1bafe]
+- Updated dependencies [6384676]
+- Updated dependencies [e12c94b]
+- Updated dependencies [0f051ef]
+  - @graview/core@0.1.22
+  - @graview/primitives@0.1.22
+  - @graview/tools@0.1.22
+  - @graview/layout@0.1.22
+  - @graview/react@0.1.22
+
 ## 0.1.21
 
 ### Patch Changes
