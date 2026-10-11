@@ -272,13 +272,24 @@ export function graphResponder<S extends AnySchema>(
           : undefined;
         return spec?.control === "node" && !spec.kinds.includes("*")
           ? spec.kinds.map((kind) => nounOf(store.schema.tryDefinition(kind), kind)).join(" or ")
-          : humanizeField(field).toLowerCase();
+          : argumentWords(store.schema, declared, field).label;
       };
+      /*
+       * EACH WAY, IN THE WORDS ITS FORM ASKS IN (W-182). Every repair's
+       * missing arguments ran together as one list of keys — "it needs a
+       * returned and a due chosen" — where the loan's two repairs are a
+       * choice: check it back in (the day it came back) or extend it (the
+       * day it is due back).
+       */
       const wants = [
         ...new Set(
           violations
             .flatMap((violation) => violation.repairs)
-            .flatMap((repair) => (repair.missing ?? []).map((field) => asked(repair.mutation, field))),
+            .filter((repair) => (repair.missing ?? []).length > 0)
+            .map((repair) => {
+              const title = repair.label ?? store.allMutations().find((one) => one.name === repair.mutation)?.title ?? repair.mutation;
+              return `“${title}” (${(repair.missing ?? []).map((field) => asked(repair.mutation, field)).join(", ")})`;
+            }),
         ),
       ];
       return withMoves({
@@ -292,7 +303,7 @@ export function graphResponder<S extends AnySchema>(
           offered.length > 0
             ? "The repairs below come from the rules themselves."
             : wants.length > 0
-              ? `The rules name a way to fix ${violations.length === 1 ? "it" : "these"}, but it needs ${withList(wants)} chosen — select the record and its own actions will ask.`
+              ? `Each way to fix ${violations.length === 1 ? "it" : "these"} asks something first — ${wants.slice(0, 4).join(" or ")} — select the record and its own actions will ask.`
               : "No rule here names a way to fix it.",
         ]),
         proposals: offered,

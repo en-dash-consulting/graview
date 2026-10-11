@@ -133,9 +133,54 @@ describe("the graph answers for itself", () => {
     const reply = await ask(asking, "what's wrong?");
     expect(reply.proposals).toEqual([]);
     expect(reply.say).not.toContain("The repairs below");
-    // Named by what it picks — "a person", never the argument "toPersonId".
-    expect(reply.say).toContain("it needs a person chosen");
+    // Named by what it picks — "person", never the argument "toPersonId" — under the repair that asks it.
+    expect(reply.say).toContain("asks something first — “Give it to someone” (person) —");
     expect(reply.say).not.toContain("to person id");
+  });
+
+  /*
+   * TWO WAYS ARE A CHOICE, EACH IN ITS FORM'S WORDS (W-182). A loan overdue
+   * is checked back in on the day it came back, or extended to the day it
+   * is due back; the seat said "it needs a returned and a due chosen" — the
+   * arguments' keys, run together with "and".
+   */
+  it("says each way to fix it, and what each asks, in the words its form asks in", async () => {
+    const loan = defineNode("loan", {
+      fields: z.object({ label: z.string(), due: z.string(), returned: z.string().optional() }),
+      plural: "Loans",
+      display: { labels: { due: "Due back", returned: "Came back" } },
+    });
+    const loans = createSchema([loan]);
+    const { defineMutation, defineInvariant } = bindSchema(loans);
+    const giveBack = defineMutation("give-back", { title: "Check it back in", subject: { kinds: ["loan"], arg: "loanId" }, writes: ["returned"], input: z.object({ loanId: nodeRef(["loan"]), returned: z.string() }), apply: (ctx, args) => void ctx.patchNode(args.loanId, { returned: args.returned }) });
+    const extend = defineMutation("extend-loan", { title: "Extend the loan", subject: { kinds: ["loan"], arg: "loanId" }, writes: ["due"], input: z.object({ loanId: nodeRef(["loan"]), due: z.string() }), apply: (ctx, args) => void ctx.patchNode(args.loanId, { due: args.due }) });
+    const late = new Store({
+      schema: loans,
+      mutations: [giveBack, extend],
+      invariants: [
+        defineInvariant("back-on-time", {
+          scope: { kind: "loan" },
+          repairs: ["give-back", "extend-loan"],
+          evaluate: ({ subject }): Violation[] => [
+            {
+              invariant: "back-on-time",
+              subjectId: subject.id,
+              label: subject.label,
+              message: `${subject.label} is overdue`,
+              nodeIds: [subject.id],
+              repairs: [
+                { mutation: "give-back", args: { loanId: subject.id }, missing: ["returned"] },
+                { mutation: "extend-loan", args: { loanId: subject.id }, missing: ["due"] },
+              ],
+            },
+          ],
+        }),
+      ],
+      snapshot: { nodes: [{ id: "l1", kind: "loan", label: "Loan 0001", due: "2026-09-01" }] as never, edges: [] },
+    });
+    const reply = await ask(late, "what's wrong?");
+    expect(reply.say).toContain("“Check it back in” (Came back) or “Extend the loan” (Due back)");
+    expect(reply.say).not.toMatch(/\ba returned\b|\ba due\b/);
   });
 
   it("states a named thing's facts, relations in the declared words, and its trouble", async () => {
