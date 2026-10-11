@@ -36,21 +36,22 @@ Counts are primary / also.
 | Class | What it is | The shared check that owns it | Count |
 |-------|------------|-------------------------------|-------|
 | `keyboard-lands-nowhere` | After a key or a press the keyboard is on `<body>`, stranded, or on something nobody pressed — or the key did nothing, or two things | the watch: focus is never on `<body>` after a key or a press; one Escape changes one rung | 13 / 2 |
-| `machine-words-shown` | A declared id, field key, edge or act name, role or user id, or a validator's raw output, is shown or announced where a person reads | the watch: no declared identifier as visible text or accessible name; the gauntlet's ids are not words | 16 / 5 |
-| `prose-wrong-for-the-domain` | A sentence the framework writes fits the fixture's word and not the domain's: an article, a mass noun, a hyphen, a capital, a bare number or yes/no, a vocabulary hard-coded from one domain | the gauntlet (a vowel kind, a mass noun, hyphenated titles, numbers and booleans on cards, a label built from fields), with audit-ui `articles`; nothing reads the rest as prose — none yet | 9 / 4 |
+| `machine-words-shown` | A declared id, field key, edge or act name, role or user id, or a validator's raw output, is shown or announced where a person reads | the watch: no declared identifier as visible text or accessible name; the gauntlet's ids are not words | 18 / 5 |
+| `prose-wrong-for-the-domain` | A sentence the framework writes fits the fixture's word and not the domain's: an article, a mass noun, a hyphen, a capital, a bare number or yes/no, a vocabulary hard-coded from one domain | the gauntlet (a vowel kind, a mass noun, hyphenated titles, numbers and booleans on cards, a label built from fields), with audit-ui `articles`; nothing reads the rest as prose — none yet | 10 / 4 |
 | `wrong-end-of-a-relation` | A relation, an act or a direction is read from the end it was declared at rather than the end it is seen from, or assumed to run one way | the gauntlet (every edge cross-kind with an `inverse`, declared from both sides, one name on two kinds, two relations on one pair) driven through both faces and the chat; `graview check`'s `edge-without-inverse` and `act-without-far-end-reading` hold the declaration only | 7 / 4 |
-| `offered-then-refused` | What a surface offers is not what the store does on press: offered and refused, thrown, or a no-op (often applied as nobody) — or withheld and hidden, or its reason unreachable | the watch: every offered act is permitted for the seat, askable and changes something; every withheld act is drawn with its reason — run in the gauntlet under a policy with two seats and a declared agent | 24 / 3 |
-| `faces-disagree` | The scene, the routed face, the page the scaffold writes, the chat or a worked example answer one question two ways, because a fix landed on one of them | none yet — needs one: the same record, act, repair and history compared across every face over the gauntlet (`parity.test.tsx` compares the derived facts only) | 3 / 16 |
-| `breaks-at-width-zoom-or-engine` | A measured floor — a 24px target, no sideways scroll, every control on screen — holds at the default and fails at a phone width, a short scene, a reader's text size, in WebKit or Firefox, or on a surface the measure never stood on | the watch's no-sideways-scroll rule (`breaks-at-width`, since the seventh walk — until then the watch had no rule for this class at all), on every state of every harness at every width, root size and engine the matrix runs (`pnpm engines`); a target-size rule is still not in the watch — none yet | 14 / 4 |
+| `offered-then-refused` | What a surface offers is not what the store does on press: offered and refused, thrown, or a no-op (often applied as nobody) — or withheld and hidden, or its reason unreachable | the watch: every offered act is permitted for the seat, askable and changes something; every withheld act is drawn with its reason — run in the gauntlet under a policy with two seats and a declared agent | 25 / 4 |
+| `faces-disagree` | The scene, the routed face, the page the scaffold writes, the chat or a worked example answer one question two ways, because a fix landed on one of them | none yet — needs one: the same record, act, repair and history compared across every face over the gauntlet (`parity.test.tsx` compares the derived facts only) | 6 / 16 |
+| `breaks-at-width-zoom-or-engine` | A measured floor — a 24px target, no sideways scroll, every control on screen — holds at the default and fails at a phone width, a short scene, a reader's text size, in WebKit or Firefox, or on a surface the measure never stood on | the watch's no-sideways-scroll rule (`breaks-at-width`, since the seventh walk — until then the watch had no rule for this class at all), on every state of every harness at every width, root size and engine the matrix runs (`pnpm engines`); and its `target-too-small` rule (since the eighth walk), each control at its laid-out size with the standard's exceptions | 16 / 4 |
 | `layout-collision-or-overflow` | Something is drawn over something else or out of its box at an ordinary size: chrome over content, two cards or captions on one spot, a line through a chip, a value out of its cell, a member hidden with no name | `audit-ui` (`covered`, collisions, `asking`) and `survey`, on their fixed states only; the watch should measure it on every state — none yet there | 13 / 3 |
-| `data-shape-not-in-fixtures` | Correct on tame data and wrong on real data: empty, accented, duplicate, case, long, sharing a prefix, minted ids, real size — where no visible rule names the symptom | the gauntlet's data | 9 / 40 |
+| `data-shape-not-in-fixtures` | Correct on tame data and wrong on real data: empty, accented, duplicate, case, long, sharing a prefix, minted ids, real size — where no visible rule names the symptom | the gauntlet's data | 9 / 42 |
 | `round-trip-loses-something` | Something true before a step is lost or stale after it: written as JSON, reloaded, written back by the studio, remounted, or removed from under the stop that named it | the gauntlet through the studio's round trip (`the-round-trip-keeps-the-checkouts-words.test.ts`) and `pnpm verify remember`, and the watch failing on a page error or an address that resolves to nothing — none yet on the gauntlet | 12 / 1 |
 | `what-a-project-copies-is-wrong` | What a project starts from or copies — the scaffold's output, a skill's code or prose, a worked example, a generic type — does not compile, does not run, needs a cast, or teaches the defect | `skills.test.ts`, `scaffold.test.ts` (every generated file parses) and `pnpm smoke:create`; nothing compiles and runs a skill's code blocks against the gauntlet — none yet | 14 / 12 |
 | `accessibility-tree-wrong` | What assistive technology reads is wrong: a heading skipped or missing, a landmark missing, doubled or named twice, invalid nesting, a group with no name — or emphasis or a problem that is only a color | the watch's axe pass, with audit-ui's `halfSaid` and "a problem painted but not said" | 13 / 1 |
-| `says-something-untrue` | A picture, count, caption, hint, search or sentence states what the graph and the declaration do not: a lens dropping or inventing members, "holds" above a violation, a promise with nothing under it, another seat's work called "you" | none yet — needs one: the gauntlet's lenses, counts and chat answers checked against the graph | 16 / 6 |
-| `no-way-to-do-a-job` | A job the declaration plainly implies has no control on any face, so it cannot be done at all — not refused, not hidden, simply never derived: a list narrowed by a number or by a word field's values | the journeys, one job per shape the declaration has (`narrow` since the seventh walk); a job they do not derive is the hole | 1 / 0 |
-| `shown-what-is-not-theirs` | A seat is shown a record the declaration does not let it see — another customer's name, email or question — on any surface: a page, a card, a count, a picker, Find, the history, a problem | the watch: no screen shows the name or address of a record the seat at the keyboard may not see (`shown-what-is-not-theirs`); the gauntlet keeps its staff from its visitor | 2 / 1 |
-| `harness-or-setup-itself` | The criterion could not fail (one width, noise, a fixture that agrees with the bug) or the repository's own setup is broken | the gate: the browser harnesses run on main and the release, each criterion verified failing without its fix — none yet | 8 / 4 |
+| `says-something-untrue` | A picture, count, caption, hint, search or sentence states what the graph and the declaration do not: a lens dropping or inventing members, "holds" above a violation, a promise with nothing under it, another seat's work called "you" | none yet — needs one: the gauntlet's lenses, counts and chat answers checked against the graph | 18 / 7 |
+| `no-way-to-do-a-job` | A job the declaration plainly implies has no control on any face, so it cannot be done at all — not refused, not hidden, simply never derived: a list narrowed by a number or by a word field's values | the journeys, one job per shape the declaration has (`narrow` since the seventh walk); a job they do not derive is the hole | 1 / 1 |
+| `shown-what-is-not-theirs` | A seat is shown a record the declaration does not let it see — another customer's name, email or question — on any surface: a page, a card, a count, a picker, Find, the history, a problem | the watch: no screen shows the name or address of a record the seat at the keyboard may not see (`shown-what-is-not-theirs`); the gauntlet keeps its staff from its visitor | 2 / 2 |
+| `permitted-what-was-never-granted` | The store lets a seat run an act no grant gives it — a derived act riding a guess about what another act writes, a grant read wider than it says — so a seat changes what the policy keeps from it | `tests/an-edit-in-place-makes-nothing.test.ts` over every example (the eighth walk); nothing yet asks, over every seat of the gauntlet, that each act it may run traces to a grant that names it or an act that says what it writes — none yet | 1 / 0 |
+| `harness-or-setup-itself` | The criterion could not fail (one width, noise, a fixture that agrees with the bug) or the repository's own setup is broken | the gate: the browser harnesses run on main and the release, each criterion verified failing without its fix — none yet | 10 / 4 |
 
 Every class but two first appeared in the first walk (`faces-disagree` and
 `layout-collision-or-overflow` as an `also` there, W-004 and W-029). The
@@ -59,7 +60,10 @@ tame, so each new domain was the only adversarial data the framework met.
 The seventh walk added the two: `no-way-to-do-a-job` (W-162 — a job the
 declaration implies that nothing derived) and `shown-what-is-not-theirs`
 (W-163 — a policy that said who may act and never who may see), each with
-its shared check built in the same commit.
+its shared check built in the same commit. The eighth added
+`permitted-what-was-never-granted` (W-180 — a derived act that rode a guess
+about what another act writes, so a member could change any tool), with its
+check over every example.
 
 ## The first walk (2026-09-11)
 
@@ -4384,3 +4388,188 @@ built and passed its tests (244 files, 1730 tests).
 - where it belongs: `packages/pages/src/page-list.tsx`
 - harness that should have caught it: the class's table named "the watch's target-size and no-sideways-scroll rules" as its check, and the watch had neither; `verify-pages`' 200% pass measured its own routes on fixtures with no long unbroken value on a list. The gauntlet still has none: that hole is open
 - status: fixed in "walkthrough: I · a list fits a phone at 200%" · one `minmax(0, 1fr)` track and `overflow-wrap: anywhere`. Criterion: the watch's new `breaks-at-width` rule — a page wider than its window, judged on every state of every harness, re-judged when the text size or the window changes (`verify-watch` `aPageThatScrollsSidewaysIsCaught`); on walk7 it named the shoppers list at 390@32px without the fix and nothing with it, and the whole chain (`pnpm verify --quick`, 24 of 24) holds under it. Also `packages/pages/tests/unit/a-list-fits-a-phone-at-200.test.tsx` (verified failing without the fix); every route of walk7's design and the derived face re-measured at 390@32px and 320: none scrolls
+
+## The eighth walk — a tool library (2026-10-11)
+
+The eighth walk took a neighborhood tool library: shelves of tools lent for
+a week against a deposit, members who borrow them, loans that come back late,
+holds on what is out, faults reported and fixed, and Saturday workshops that
+count as a power tool's induction — with a librarian, a volunteer on the
+counter, a signed-in member and somebody browsing as seats, and a policy that
+keeps members, loans and holds to their own and the library's. Scaffolded with
+`graview create ../walk8 --link . --name "Fernhill Tool Library" --kind tool
+--plural tools --port 6070` from a fresh worktree of main that installed,
+built and passed its tests (619 files, 5,105 tests), then seeded through its
+own acts at real size: 14 shelves, 379 tools, 280 members, 1,299 loans, 28
+holds, 30 repairs and 16 workshops, nine loans overdue on the day.
+
+The walk started, as the kick-off says, from the journeys — and the journeys
+had not walked anything for eight days. Most of what follows was found by
+putting them back on their feet.
+
+### W-176 · The journeys have walked nothing since the ports moved, and said "no regressions"
+- stage: setup (the kick-off: "run the journeys on it") · face: — · width: — · scheme: —
+- impact: blocks a job's measure — every job of every app: `pnpm verify journeys ../walk8` answered "ok … no regressions" in no seconds, and `docs/journeys.json` said every app "could not set up: portFor is not defined"
+- class: harness-or-setup-itself
+- expected: the journeys set up each app named, walk it, and fail when they could not
+- actual: when the harnesses learned `GRAVIEW_PORT_BASE` (7b347ea5, 2026-10-03), `verify-journeys.mjs` was changed to call `portFor` and never imported it; the setup caught its own `ReferenceError` as a verdict, `regressionsOf` compared only apps that had jobs, and the run exited 0. The verdict committed as "24 of 24 hold" before 0.1.4 was that failure, so the baseline the regressions are judged against was empty — and eight days of releases went out with the jobs unwalked. Asked again once it ran, the journeys found that two of their own readings had gone stale behind the app bar of FR-131: a list page's title is an `h2` under the bar's name now, and the phone's places are under "Home — every place", which the menu's name did not match. A path beside the checkout also had no port of its own to be served on
+- where it belongs: `scripts/verify-journeys.mjs`, `scripts/lib/journeys.mjs` (`regressionsOf`, `openKindPage`), `scripts/lib/ports.mjs` (`portFor` of a path)
+- harness that should have caught it: none — nothing compiles a harness, and a harness that catches its own setup reports it as a verdict
+- status: fixed in "walkthrough: setup · the journeys walk again, press what is on the screen, and an app they cannot set up has regressed" · the class's check is new: `tests/every-harness-names-what-it-calls.test.ts` asks TypeScript, of every script under `scripts/`, whether each name it calls is declared or imported (it named `scripts/verify-journeys.mjs:188: Cannot find name 'portFor'` without the fix); and `tests/journeys.test.ts` "is served on the port its own config claims, and a run that could not set it up has regressed" (verified failing without the fix). A walk's app is served on the port its own vite config says (`graview create --port`)
+
+### W-177 · A tool that needs no induction cannot be added from the pages
+- stage: B (adding a tool to a shelf) · face: pages · width: 1440 and 390 · scheme: light
+- impact: blocks a job — "Making a tool" on the pages, all four ways: every field filled, "Induction first" left unticked for a hand saw, and the press refused "Not yet: Induction first — invalid input: expected boolean, received undefined"
+- class: offered-then-refused (also: data-shape-not-in-fixtures)
+- expected: a box nobody ticked is a no, which the act allows; and a box is not marked "*", as if it had to be ticked
+- actual: `formArgs` sent nothing for a box never touched — the cousin W-159 fixed for a list — and the form labeled it "Induction first *". No example asks a required yes-or-no when it makes something
+- where it belongs: `packages/core/src/mutations/form.ts` (`formArgs`), `packages/pages/src/form.tsx`
+- harness that should have caught it: the journeys' "make" job, which could not run (W-176); the gauntlet had no required box on an act that makes something — it has one now (`add-room`'s "step-free")
+- status: fixed in "walkthrough: B · a box nobody ticked is a no" · criterion: `packages/pages/tests/unit/a-box-left-unticked-is-sent-no.test.tsx` (verified failing without the fix), and the journeys' "Making a room" on the gauntlet and "Making a tool" on walk8, done in all eight ways
+
+### W-178 · The journeys press the hidden copy of a control, because the pinned Playwright ignores `visible`
+- stage: setup (the journeys on walk8 and every example) · face: pages and scene · width: 390 above all · scheme: —
+- impact: blocks a job's measure — "Narrowing the tools" on a phone, "Making a repair" at 1440, and a dozen more, reported as jobs nobody could do: the phone's "Filter" folds into "Arrange", the bar's places fold into "More", and the journeys pressed the folded copy
+- class: harness-or-setup-itself
+- expected: `.filter({ visible: true })` keeps what is on the screen
+- actual: the option arrived in Playwright 1.51; the repository pins 1.49.1 (WebKit hangs past it on this macOS), where an unknown option is ignored rather than refused, so all 27 uses in `lib/journeys.mjs` were the first match. They held while the first match happened to be the visible one. Under it, the journeys also right-clicked the middle of a chosen card's host — larger than the card drawn in it — and landed on a chip of another record, or on empty floor that takes no press
+- where it belongs: `scripts/lib/journeys.mjs`
+- harness that should have caught it: none — the class's check is new
+- status: fixed in "walkthrough: setup · the journeys walk again, press what is on the screen, and an app they cannot set up has regressed" · `.locator("visible=true")`, the engine 1.49.1 has, and a right-click on the card's own name. Criterion: `tests/every-harness-names-what-it-calls.test.ts` "ask the pinned Playwright for nothing it ignores" (27 lines named on main)
+
+### W-179 · From the scene, a broken rule cannot be repaired
+- stage: C (a rule and its repair) · face: scene · width: 1440 and 390 · scheme: light
+- impact: blocks a job — "Getting from a problem to its repair" on the scene, at both widths, with either hand, in every example and on walk8: the standing listed the nine overdue loans, a press on one selected it, and nothing anywhere offered "Check it back in"
+- class: faces-disagree (also: no-way-to-do-a-job)
+- expected: a problem pressed opens on what it is about with its repairs, as the problems page does
+- actual: the scene's acts became the menu at the pointer (FR-131, 2026-10-07): there is no inspector standing beside a selection. The standing's comment still promised "the repairs arrive through the ordinary inspector"; at altitude the loan is a cube in a shut district, so not even a right-click could reach it
+- where it belongs: `packages/primitives/src/bar-panes.tsx` (the problems' rows, fetched when the standing is first reached for)
+- harness that should have caught it: the journeys' "repair" job, which had been blind since the day before (W-176)
+- status: fixed in "walkthrough: C · a problem opens on its repairs" · the press opens the acts menu under the standing, on the problem's subject, its repairs first. Criterion: `packages/primitives/tests/unit/a-problem-opens-on-its-repairs.test.tsx` (verified failing without the fix); the journeys' "repair" done on the scene in all four ways on walk8 and every example
+
+### W-180 · Renaming a tool reports a fault, and a member may set any tool's deposit to nothing
+- stage: B and F (a tool's name changed in place; the member's seat at the agent's door) · face: scene, pages and agent · width: — · scheme: —
+- impact: blocks a job — renaming a tool: its name, changed where it stands, ran "Report a fault" (asking when it was reported) and left the tool as it was; and a member, granted only their own holds and the reporting of a fault, could run "Change the tool" on any tool: previewed as that member through `graview apply`, "Change Hammer drill #1: deposit → $0" was allowed
+- class: permitted-what-was-never-granted (new) (also: offered-then-refused)
+- expected: what an act that makes something is told describes what it makes; a tool's name is changed by the tool's own edit; who may change a tool is who the policy lets change or make one
+- actual: a TypeScript act that declares no `writes` is guessed to write each argument named like a field of its subject. "Report a fault" acts on a tool and takes the fault's `label` — so it was taken for the act that renames tools, the tool's derived edit left the name out, and the derived edit, which rides any act that writes a field of the kind, was ridden by every role allowed to report a fault. No class fit: nothing was offered and refused, hidden, or untrue in what it said — the store let a seat do what no grant gave it
+- where it belongs: `packages/core/src/mutations/derive-edits.ts` (`fieldsWrittenBy`)
+- harness that should have caught it: none — the class's check is new
+- status: fixed in "walkthrough: B · an act that makes something is not guessed to change its subject" · a creating act with no `writes` writes nothing on its subject. The class's check: `tests/an-edit-in-place-makes-nothing.test.ts` — over the gauntlet, discography and the rota, no field is edited in place by an act that makes something and never said it writes it, and a member allowed to report a fault may not change the tool (the gauntlet's new "Spin off a workshop" is told the talk's `title`; both verified failing without the fix)
+
+### W-181 · A shelf is renamed on its page only the long way round
+- stage: A and B (renaming in place) · face: pages · width: 1440 and 390 · scheme: light
+- impact: costs a job — "Renaming a category on its record works only the long way round — the name is not something to press; it takes 'Change the category'", at both widths, with either hand
+- class: faces-disagree
+- expected: the record page's name is changed where it stands, as every fact under it is and as the scene's record is
+- actual: `PageRecord` drew the title as text; only the facts were `EditableValue`s
+- where it belongs: `packages/pages/src/page-record.tsx`
+- harness that should have caught it: the journeys' "change" job — the friction it lists is this; they were blind (W-176)
+- status: fixed in "walkthrough: B · a record's name is changed where it stands" · criterion: `packages/pages/tests/unit/a-name-is-changed-where-it-stands.test.tsx` (verified failing without the fix)
+
+### W-182 · The seat says a repair "needs a returned and a due chosen"
+- stage: C (asking the seat what is wrong) · face: scene and pages · width: 1280 · scheme: light
+- impact: costs a job — "what is wrong?" answered nine overdue loans, then "The rules name a way to fix these, but it needs a returned and a due chosen" (first "an on and an until", before the walk named its arguments after the loan's fields)
+- class: machine-words-shown (also: says-something-untrue)
+- expected: each way to fix it, in the words its form asks in — "Check it back in" asks "Came back"; "Extend the loan" asks "Due back" — and two ways said as a choice
+- actual: the seat humanized each missing argument's key, and ran every repair's together with "and"
+- where it belongs: `packages/tools/src/conversation.ts`
+- harness that should have caught it: the watch's `machine-words-shown`, which hears an argument's key only where the declaration words it otherwise and only as all an element says; nothing judged a sentence of the seat's
+- status: fixed in "walkthrough: C · the seat says each way to fix it in its form's words" · criterion: `packages/tools/tests/unit/conversation.test.ts` "says each way to fix it, and what each asks, in the words its form asks in" (verified failing without the fix)
+
+### W-183 · A member's home, and a visitor's, is the setup page: "Holds none yet", "Members none yet"
+- stage: F (sitting down as a member, and as somebody browsing) · face: pages · width: 1280 · scheme: light
+- impact: costs a job — the library a member and a visitor see first: "Begin — What has to exist before the rest of it can", over "Holds none yet" for a member with none of their own in a library of twenty, and "Members none yet" for a visitor in a library of 280
+- class: says-something-untrue (also: shown-what-is-not-theirs)
+- expected: what exists in kinds a seat sees only its own of, or none of, is not that seat's to count, and not the library's onboarding
+- actual: `Begin` counted what the seat sees; under a sight that is `own: true`, or none, that is the seat's own or nothing, and the way in stood in for the home
+- where it belongs: `packages/primitives/src/seeding.tsx`
+- harness that should have caught it: none — the class's check is "none yet"; the gauntlet's visitor sees no kind it may begin
+- status: fixed in "walkthrough: F · the way in is not a seat's own none" · criterion: `packages/primitives/tests/unit/the-way-in-is-not-a-seats-own-none.test.tsx` (both cases verified failing without the fix)
+
+### W-184 · "Change Woodworking: label → “Woodshop”"
+- stage: G (an edit, reloaded, read in the activity) · face: scene · width: 1280 · scheme: light
+- impact: cosmetic — a new hole in a known class's check: the line that says what happened says the field's key
+- class: machine-words-shown
+- expected: a kind's `label` is its name, wherever a field is said — as the form already asked "Name"
+- actual: the derived edit's sentence said `humanizeField("label")`, and `fieldWords` had no word of its own for the name
+- where it belongs: `packages/core/src/schema/define-node.ts` (`fieldWords`), `packages/core/src/mutations/derive-edits.ts`, `packages/core/src/mutations/words.ts`
+- harness that should have caught it: the watch's `machine-words-shown` — "label" is a word, and it was inside a sentence
+- status: fixed in "walkthrough: G · a name is called a name" · criterion: `packages/core/tests/unit/a-name-is-called-a-name.test.ts` (verified failing without the fix)
+
+### W-185 · The upgrade cannot be undone "because it was done before the declaration changed (the upgrade)"
+- stage: G (a migration against a remembered store) · face: CLI and scene · width: — · scheme: —
+- impact: cosmetic — the refusal names the upgrade as what stands in the upgrade's way; and the walkthrough promised "is undoable", which FR-27 deliberately ended
+- class: says-something-untrue
+- expected: the upgrade says why it is not taken back
+- actual: `checkUndo` found the epoch the migration begins after the migration's own op, and said so as for any op before it
+- where it belongs: `packages/core/src/ops/undo.ts`; `docs/walkthrough.md` stage G
+- harness that should have caught it: none
+- status: fixed in "walkthrough: G · the upgrade says why it is not taken back" · criterion: `packages/ship/tests/unit/each-declaration-version-begins-an-epoch.test.ts` "says why the upgrade itself is not taken back" (verified failing without the fix); stage G's criterion now says what FR-27 decided
+
+### W-186 · At the agent's door nothing is ever overdue
+- stage: C and F (a repair from the agent's seat: `graview mcp` as the volunteer and as a member) · face: agent · width: — · scheme: —
+- impact: blocks a job — "see what is wrong and repair it" for an agent: `get_violations` answered `[]` to the member whose drill is 29 days overdue, and to the librarian, while the standing on the pages said nine
+- class: faces-disagree (also: data-shape-not-in-fixtures)
+- expected: a store is judged on a day: the host's own, unless it pins another
+- actual: an invariant reads `today` from its context and keeps no clock, rightly; the browser apps hand one, and nothing handed one to the stores `graview mcp`, `graview apply` and `graview serve` open through `openStore`, so every rule about a day held for an agent. No example's rules about days were ever asked from the CLI
+- where it belongs: `packages/ship/src/open-store.ts`
+- harness that should have caught it: none — the class's check is "none yet"
+- status: fixed in "walkthrough: C · a store is judged on its host's day" · `openStore` reads the host's clock when asked, unless the host pins a day. Criterion: `packages/ship/tests/unit/a-store-is-judged-on-its-hosts-day.test.ts` (verified failing without the fix). With it the volunteer, at the door, checked Loan 1174 back in: one op, signed by the agent's seat, that resolved the problem — the stage C repair from the agent's seat, without a model
+
+### W-187 · "Inducted: not yet inducted", on 280 members
+- stage: B (browsing the members) · face: pages and scene · width: 1280 and 390 · scheme: light
+- impact: cosmetic — a hole in a known class's check: every card and row of a member said its state twice
+- class: prose-wrong-for-the-domain
+- expected: a yes or no the kind words itself ("Not yet inducted") is said in those words alone
+- actual: a glance put the label before every boolean, lowered — right for a bare "yes", wrong for a value the declaration already words
+- where it belongs: `packages/core/src/schema/define-node.ts` (`readableFields`)
+- harness that should have caught it: the gauntlet's booleans, none of which the declaration words — its speaker's "Checked in" now says "Here" or "Not here yet"
+- status: fixed in "walkthrough: B · a worded yes is said whole" · criterion: `packages/core/tests/unit/a-worded-yes-is-said-whole.test.ts` (verified failing without the fix)
+
+### W-188 · "In the scene ↗" beside every place a record is seen in is nine pixels wide
+- stage: I (the cross-cutting pass: target size, which the seventh walk's review asked the next walk to press on) · face: pages · width: 1440 and 390 · scheme: light
+- impact: costs a job — opening a record's place in the scene from its page: the ↗ is 9 by 24 pixels, an inch from the place's own link, on every record of every example with a place (the gauntlet's talks, the long-text workshop, the declared packages, the rota's shifts)
+- class: breaks-at-width-zoom-or-engine
+- expected: every control is at least 24 pixels either way, or far enough from the next that a fingertip cannot hit both (WCAG 2.5.8)
+- actual: the class's table has named "and its `target-too-small` rule (since the eighth walk), each control at its laid-out size with the standard's exceptions" since the first walk; the district's "open" the seventh walk measured at 22 pixels is the city's fit, not the control's own size (24, held in `scene-css.ts`), and the harnesses' own audit-ui held its fixed screens only
+- where it belongs: `packages/pages/src/page-record.tsx`; the watch: `scripts/lib/watch.mjs`
+- harness that should have caught it: the class's check, which did not exist
+- status: fixed in "walkthrough: I · a target a fingertip can hit" · the class's check is new: the watch's `target-too-small` judges every control on every state of every harness at its laid-out size — a link inside a sentence, the browser's own box, the same control at full size elsewhere on the page and a record a lens draws at its data's size (fifteen minutes on a week) are the standard's exceptions. Criterion: `verify-watch` `aTargetTooSmallIsCaught` (two 22-pixel controls side by side caught, one alone and a link in a sentence not); its first run named the ↗ in six harnesses, and none with the fix. Open: the city's fit draws a 24-pixel control at 22 at a phone's width — the reader's zoom, which the rule leaves to the reader
+
+### W-189 · At 320 wide and the reader's largest text, every page scrolls sideways under the bar
+- stage: I (320 wide, text at 200%, every route) · face: pages and scene · width: 320 · scheme: light
+- impact: costs a job — every page of the library at the narrowest phone and the largest text: the person's button sits 23 pixels past the edge, reached only by scrolling the whole page sideways
+- class: breaks-at-width-zoom-or-engine
+- expected: the bar fits any width: what gives is the app's name, which already ends in "…"
+- actual: on a phone the bar's home link kept its content's own width, so a two-line name plus the faces, Find, the standing and the person came to 343 pixels on a 320 screen. The watch's `breaks-at-width` judges this on every state — and no harness stood at 320 with the largest text since the one app bar (FR-131)
+- where it belongs: `packages/primitives/src/app-bar.tsx`
+- harness that should have caught it: the watch's `breaks-at-width`, with no state to judge; `verify-gauntlet` now opens the pages at 320 wide and 32px text
+- status: fixed in "walkthrough: I · the bar fits the narrowest phone at the largest text" · on a phone the home link may give, to its name's ellipsis. Criterion: the watch over `verify-gauntlet`'s new state (verified: "the page scrolls sideways by 39px at 320 wide (text 32px), reached by … profile-button" without the fix, nothing with it); walk8's every route at 320 and 390, 16px and 32px, fits
+
+Fourteen findings, one new class (`permitted-what-was-never-granted`, W-180),
+so the log did not stay still. On walk8 the journeys finish every derived job
+in all eight ways (112 of 112 runs), WebKit and Firefox draw its pages with
+nothing for the watch to say, and stages B (the studio's round trip), G (an
+edit kept across a reload; a migration run once, signed "the upgrade") and H
+(two embeds, two seats, each themed to itself, axe clean, the menu inside its
+box) hold. Open, and carried to the ninth walk:
+
+- the examples' own dead ends, which the journeys could not see for eight
+  days and see now, stable across four runs: narrowing on the scene where
+  the kind's stop is a lens (todo, discography, seedbed), seedbed's plots too
+  few to arrange (the job is derived from a number the list never offers to
+  narrow), "Name a caretaker" not on seedbed's pages, the rota's viewer not
+  told "Add a shift" is not theirs at a lens stop on the scene, todo's "Add a
+  task" after "Today", discography's "Add a release" on a phone, and the
+  gauntlet's longest title out of the keyboard's reach in Find;
+- the keyboard's cost: narrowing by a number takes 70 to 106 presses where
+  the pointer takes 3 (the filter list is walked one entry at a time, and
+  every act in the menu brings a second stop, its pin), and moving a tool to
+  another shelf 38 on the scene;
+- the city's fit draws a 24-pixel control at 22 at a phone's width;
+- a repair asked of the in-app seat needs a model, and no key was available:
+  at the agent's door (`graview mcp`) it is one call (W-186);
+- a list of repairs whose names repeat ("Blade guard sticks", three times)
+  does not say which tool each is on; days are said day first ("10 Sep
+  2023") in an app written for the United States.
