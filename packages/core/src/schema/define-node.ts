@@ -266,7 +266,8 @@ export function fieldWords(
 ): string {
   // A computed field's own label is its words too (FR-83), where the display does not say otherwise.
   const computed = definition?.computed && Object.hasOwn(definition.computed, key) ? definition.computed[key] : undefined;
-  return definition?.display?.labels?.[key] ?? (typeof computed === "object" ? computed.label : undefined) ?? humanizeField(key);
+  // A kind's `label` is its name: the log said "Change Woodworking: label → …" of a shelf renamed (W-184).
+  return definition?.display?.labels?.[key] ?? (typeof computed === "object" ? computed.label : undefined) ?? (key === "label" ? "Name" : humanizeField(key));
 }
 
 /*
@@ -422,7 +423,8 @@ export function readableFields(
     if (options.glance && (typeof value === "string" || typeof value === "number") && said.some((line) => saysAsWords(line, text))) continue;
     const label = fieldWords(definition, key);
     const alone =
-      typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" ? `${label}: ${text.toLowerCase()}` : text;
+      // A yes or no the kind words itself ("Not yet inducted") is said whole; "Inducted: not yet inducted" said it twice (W-187).
+      typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" && !format ? `${label}: ${text.toLowerCase()}` : text;
     fields.push({ key, label, value: text, stored, alone, long: typeof value === "string" && isLongText(definition, key, text) });
     if (options.limit !== undefined && fields.length >= options.limit) break;
   }

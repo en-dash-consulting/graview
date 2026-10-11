@@ -500,7 +500,16 @@ async function openActs(person) {
     await person.key(key.toLowerCase());
   } else {
     if (!(await chosen.isVisible().catch(() => false))) return;
-    await chosen.click({ button: "right", timeout: 4_000 }).catch(() => {});
+    /*
+     * On its name, as a person aims at the card itself. The host is the
+     * layout's box, larger than the card drawn in it, so its middle was
+     * whatever the card draws there — on a member, the chips of what they
+     * borrowed, whose right-click is that record's menu — and its corner
+     * was empty floor, which takes no press at all.
+     */
+    const said = await chosen.getAttribute("aria-label").catch(() => null);
+    const named = said ? chosen.getByText(said, { exact: true }).locator("visible=true").first() : null;
+    await ((named && (await named.isVisible().catch(() => false))) ? named : chosen).click({ button: "right", timeout: 4_000 }).catch(() => {});
     person.presses += 1;
   }
   await person.settle(250);
@@ -711,10 +720,10 @@ async function openKindPage(person, plural) {
   // "Tasks 10" is often "Tasks" and "10" with nothing between: the name ends where its letters do.
   const link = page.locator("a[href]").filter({ hasText: new RegExp(`^\\s*${plural}(?!\\p{L})`, "u") });
   if (!(await link.first().isVisible().catch(() => false))) {
-    const menu = page.getByRole("button", { name: /menu|sections|kinds|navigation/i }).first();
+    const menu = page.getByRole("button", { name: /every place|more (place|picture)|menu|sections|kinds|navigation/i }).first();
     if (await menu.isVisible().catch(() => false)) await person.press(menu, "the menu");
   }
-  const visible = link.filter({ visible: true });
+  const visible = link.locator("visible=true");
   if ((await visible.count()) === 0) throw new DeadEnd(`no link to the ${plural} is on the screen`);
   await person.press(visible.first(), `the ${plural} link`);
   await page.waitForLoadState("domcontentloaded");
@@ -726,7 +735,8 @@ async function openKindPage(person, plural) {
    * and said the keyboard could not reach it. The page is there when its
    * heading names the kind.
    */
-  const heading = page.getByRole("heading", { level: 1, name: new RegExp(`^\\s*${plural}(?!\\p{L})`, "u") });
+  // The page's own title, at whatever level the face says it: under the app bar's name it is an h2 (FR-131).
+  const heading = page.locator("[data-graview-page-title], main h1").filter({ hasText: new RegExp(`^\\s*${plural}(?!\\p{L})`, "u") }).first();
   if (!(await appears(heading))) throw new DeadEnd(`the ${plural} link did not open the ${plural}`);
   await person.settle(300);
 }
@@ -744,11 +754,11 @@ async function openFind(person, face) {
     await person.settle(100);
     if (await box.first().evaluate((el) => el === document.activeElement).catch(() => false)) return box.first();
   }
-  let shown = box.filter({ visible: true }).first();
+  let shown = box.locator("visible=true").first();
   if (!(await shown.isVisible().catch(() => false))) {
     const opener = page.locator('[data-testid="nav-find"]').or(page.getByRole("button", { name: /^(find|search)/i })).first();
     if (await opener.isVisible().catch(() => false)) await person.press(opener, "the way to Find");
-    shown = box.filter({ visible: true }).first();
+    shown = box.locator("visible=true").first();
   }
   if (!(await appears(shown))) throw new DeadEnd("there is no Find box on the screen");
   if (person.input === "pointer") {
@@ -799,7 +809,7 @@ async function findAndOpen(person, face, target, query) {
   await person.key("Enter");
   await page.waitForLoadState("domcontentloaded");
   await person.settle(450);
-  const link = page.locator(`main a[href$="/${encodeURIComponent(target.id)}"], main a[href$="/${target.id}"]`).filter({ visible: true }).first();
+  const link = page.locator(`main a[href$="/${encodeURIComponent(target.id)}"], main a[href$="/${target.id}"]`).locator("visible=true").first();
   if (!(await appears(link))) throw new DeadEnd(`the search page does not link "${target.label}" for "${query}"`);
   await person.press(link, `"${target.label}"`);
   await page.waitForLoadState("domcontentloaded");
@@ -851,14 +861,14 @@ export const JOBS = {
         await pressDistrict(person, job.kind, job.plural);
         await person.settle(300);
         // The list arranges where the kind is drawn whole: down into its district.
-        const down = page.locator('[data-testid="overview"][aria-pressed="true"]').filter({ visible: true }).first();
-        if (!(await page.locator('button[data-testid$="-add"], button[data-testid$="-all"]').filter({ visible: true }).first().isVisible().catch(() => false)) && (await down.isVisible().catch(() => false))) {
+        const down = page.locator('[data-testid="overview"][aria-pressed="true"]').locator("visible=true").first();
+        if (!(await page.locator('button[data-testid$="-add"], button[data-testid$="-all"]').locator("visible=true").first().isVisible().catch(() => false)) && (await down.isVisible().catch(() => false))) {
           await person.press(down, `Down to ${job.plural}`);
           await person.settle(600);
         }
       }
       // "Filter" on the arranging line, or — where the line is narrow — the one "Arrange" that holds it.
-      const filter = page.locator('button[data-testid$="-add"], button[data-testid$="-all"]').filter({ visible: true }).first();
+      const filter = page.locator('button[data-testid$="-add"], button[data-testid$="-all"]').locator("visible=true").first();
       if (!(await appears(filter))) throw new DeadEnd(`there is no "Filter" to narrow the ${job.plural.toLowerCase()} with`);
       await person.press(filter, '"Filter"');
       const entry = page.locator(`[data-testid="arrange-list"] [data-value^="${job.field}:at-most:"]`).first();
@@ -866,7 +876,7 @@ export const JOBS = {
       const option = (await entry.textContent())?.trim() ?? job.label;
       await person.pick(entry, `"${option}"`);
       await person.settle(300);
-      const chip = page.locator('[data-testid$="-condition"]').filter({ hasText: job.label }).filter({ visible: true }).first();
+      const chip = page.locator('[data-testid$="-condition"]').filter({ hasText: job.label }).locator("visible=true").first();
       if (!(await appears(chip, 3_000))) throw new DeadEnd(`choosing "${option}" did not narrow the ${job.plural.toLowerCase()}`);
     },
   },
@@ -894,7 +904,7 @@ export const JOBS = {
           // The record itself, not its copy in a lens drawn small as a picture, which is inert.
           const pick = page
             .locator(`[data-graview-pick="${escapeAttr(prep.subject.id)}"]:not([inert] *):not([aria-hidden="true"] *)`)
-            .filter({ visible: true })
+            .locator("visible=true")
             .first();
           if (await pick.isVisible().catch(() => false)) await person.press(pick, `"${prep.subject.label}"`);
           else await findAndOpen(person, "scene", prep.subject, partOf(prep.subject.label, ctx.labels));
@@ -910,7 +920,7 @@ export const JOBS = {
              * finds next is Up, to every kind at once, and the district
              * from there.
              */
-            const up = page.locator('[data-testid="overview"][aria-pressed="false"]').filter({ visible: true }).first();
+            const up = page.locator('[data-testid="overview"][aria-pressed="false"]').locator("visible=true").first();
             if (!(error instanceof DeadEnd) || !(await up.isVisible().catch(() => false))) throw error;
             await person.press(up, "Up");
             await person.settle(400);
@@ -921,7 +931,7 @@ export const JOBS = {
         await answerAsks(person, { name: prep.name, choose: [prep.subject?.label], values: prep.values });
       } else {
         await openKindPage(person, job.plural);
-        const opener = page.getByRole("button", { name: new RegExp(`^${job.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}( …)?$`) }).filter({ visible: true }).first();
+        const opener = page.getByRole("button", { name: new RegExp(`^${job.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}( …)?$`) }).locator("visible=true").first();
         const form = page.locator(`form[data-testid="form-${job.act}"]`);
         if (!(await form.isVisible().catch(() => false))) {
           if (!(await appears(opener))) throw new DeadEnd(`the ${job.plural} page offers no "${job.title}"`);
@@ -980,9 +990,9 @@ export const JOBS = {
       const page = person.page;
       // The name, drawn on its own record: pressed, it becomes the field that edits it.
       const where = ctx.face === "scene" ? page.locator(`[role="group"][aria-label="${escapeAttr(prep.target.label)}"]`).first() : page.locator("main").first();
-      const name = where.getByRole("button", { name: prep.target.label, exact: true }).filter({ visible: true }).first();
+      const name = where.getByRole("button", { name: prep.target.label, exact: true }).locator("visible=true").first();
       // The framework's field says which it is; an app's own design may only put the cursor in it.
-      const field = page.locator(`[data-graview-field="${job.field}"]`).filter({ visible: true }).or(page.locator("input:focus, textarea:focus")).first();
+      const field = page.locator(`[data-graview-field="${job.field}"]`).locator("visible=true").or(page.locator("input:focus, textarea:focus")).first();
       let via = null;
       if (await name.isVisible().catch(() => false)) {
         await person.press(name, "the record's name");
@@ -1058,7 +1068,7 @@ export const JOBS = {
        * on Plot 1" rather than "Name a caretaker" — and a person presses
        * the one that names who they mean.
        */
-      const own = page.locator("main button").filter({ hasText: prep.other.label }).filter({ visible: true }).first();
+      const own = page.locator("main button").filter({ hasText: prep.other.label }).locator("visible=true").first();
       if (!(await actControl(page, job.act, job.title).first().isVisible().catch(() => false)) && (await own.isVisible().catch(() => false))) {
         await person.press(own, `"${(await own.textContent()).trim()}"`);
       } else if (ctx.face === "scene") {
@@ -1106,12 +1116,12 @@ export const JOBS = {
     },
     async run(person, ctx, _job, prep) {
       const page = person.page;
-      const opener = page.getByRole("button", { name: /^Activity$/ }).or(page.locator('[data-testid="activity-button"]')).filter({ visible: true }).first();
+      const opener = page.getByRole("button", { name: /^Activity$/ }).or(page.locator('[data-testid="activity-button"]')).locator("visible=true").first();
       if (ctx.face === "scene" && (await opener.isVisible().catch(() => false))) await person.press(opener, "Activity");
       const undo = page
         .locator('[data-testid="undo-turn"]')
         .or(page.getByRole("button", { name: /^(undo|take (it |this )?back)/i }))
-        .filter({ visible: true })
+        .locator("visible=true")
         .first();
       if (!(await appears(undo))) throw new DeadEnd(`nothing on the ${ctx.face === "scene" ? "scene" : "page"} offers to take "${prep.intent}" back`);
       await person.press(undo, "undo");
@@ -1137,30 +1147,30 @@ export const JOBS = {
       const page = person.page;
       const before = await inStore(page, ctx.kinds, lastBatch);
       if (ctx.face === "scene") {
-        const standing = page.locator('[data-testid="standing"]').filter({ visible: true }).first();
+        const standing = page.locator('[data-testid="standing"]').locator("visible=true").first();
         if (!(await appears(standing))) throw new DeadEnd("nothing on the scene says something is wrong");
         await person.press(standing, "the problems");
-        const problem = page.locator('[data-testid="standing"] ~ ul button, [data-testid="standing"] + * button, [data-testid="standing-card"] button').filter({ visible: true }).first();
-        const listed = (await problem.isVisible().catch(() => false)) ? problem : page.getByRole("listitem").getByRole("button", { name: /ways? to fix|to fix/ }).filter({ visible: true }).first();
+        const problem = page.locator('[data-testid="standing"] ~ ul button, [data-testid="standing"] + * button, [data-testid="standing-card"] button').locator("visible=true").first();
+        const listed = (await problem.isVisible().catch(() => false)) ? problem : page.getByRole("listitem").getByRole("button", { name: /ways? to fix|to fix/ }).locator("visible=true").first();
         await person.press(listed, "the problem");
         await person.settle(300);
-        const repair = page.locator('[data-affordance^="invariant:"]').filter({ visible: true }).first();
+        const repair = page.locator('[data-affordance^="invariant:"]').locator("visible=true").first();
         await revealActs(person, repair);
-        await person.press(page.locator('[data-affordance^="invariant:"]').filter({ visible: true }).first(), "its repair");
+        await person.press(page.locator('[data-affordance^="invariant:"]').locator("visible=true").first(), "its repair");
         await answerAsks(person, { name: "Somebody" });
       } else {
-        const link = page.locator('a[href$="/problems"]').filter({ visible: true }).first();
+        const link = page.locator('a[href$="/problems"]').locator("visible=true").first();
         if (!(await link.isVisible().catch(() => false))) {
-          const menu = page.getByRole("button", { name: /menu|sections|kinds|navigation/i }).first();
+          const menu = page.getByRole("button", { name: /every place|more (place|picture)|menu|sections|kinds|navigation/i }).first();
           if (await menu.isVisible().catch(() => false)) await person.press(menu, "the menu");
         }
-        await person.press(page.locator('a[href$="/problems"]').filter({ visible: true }).first(), "the Problems link");
+        await person.press(page.locator('a[href$="/problems"]').locator("visible=true").first(), "the Problems link");
         await page.waitForLoadState("domcontentloaded");
         await person.settle(300);
-        const repair = page.locator('[data-testid="repairs"] button, [data-affordance^="invariant:"]').filter({ visible: true }).first();
+        const repair = page.locator('[data-testid="repairs"] button, [data-affordance^="invariant:"]').locator("visible=true").first();
         if (!(await appears(repair))) throw new DeadEnd("the problems page offers no repair to press");
         await person.press(repair, "a repair");
-        const form = page.locator("form[data-testid^='form-']").filter({ visible: true }).first();
+        const form = page.locator("form[data-testid^='form-']").locator("visible=true").first();
         if (await form.isVisible().catch(() => false)) await fillForm(person, form, { name: "Somebody" });
       }
       await until(page, ctx.kinds, (store, { before, repairs }) => {
@@ -1206,12 +1216,12 @@ export const JOBS = {
         return said();
       };
       if (await saidSoon(3_000)) return;
-      const more = page.locator('[data-testid="withheld-more"]').filter({ visible: true }).first();
+      const more = page.locator('[data-testid="withheld-more"]').locator("visible=true").first();
       if (await appears(more, 3_000)) {
         await person.press(more, "what is withheld");
         if (await saidSoon()) return;
       }
-      const offered = actControl(page, prep.act, prep.title).filter({ visible: true }).first();
+      const offered = actControl(page, prep.act, prep.title).locator("visible=true").first();
       if (await offered.isVisible().catch(() => false)) {
         if (await offered.isDisabled().catch(() => false)) return;
         await person.press(offered, `"${prep.title}"`);
@@ -1334,7 +1344,15 @@ export function frictionOf(report) {
  * now is not, or that costs more than 30% more presses than it did.
  */
 export function regressionsOf(previous, current) {
-  if (!previous?.apps) return [];
+  /*
+   * AN APP THAT COULD NOT BE SET UP IS NOT "NO REGRESSIONS". It has no
+   * runs to compare, so the loop below passed over it, and a harness that
+   * threw before it walked anything — every app, for a week — said green.
+   */
+  const unwalked = Object.entries(current.apps)
+    .filter(([, result]) => result.failed)
+    .map(([app, result]) => `${app}: Not one job was walked — it ${result.failed}.`);
+  if (!previous?.apps) return unwalked;
   const found = [];
   for (const [app, result] of Object.entries(current.apps)) {
     for (const [jobId, job] of Object.entries(result.jobs ?? {})) {
@@ -1350,7 +1368,7 @@ export function regressionsOf(previous, current) {
       }
     }
   }
-  return found.map((line) => line.replace(/: (\w)/, (m, c) => `: ${c.toUpperCase()}`));
+  return [...unwalked, ...found.map((line) => line.replace(/: (\w)/, (m, c) => `: ${c.toUpperCase()}`))];
 }
 
 export { lower };

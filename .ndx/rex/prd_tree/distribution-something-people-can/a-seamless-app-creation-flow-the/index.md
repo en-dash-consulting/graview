@@ -40,5 +40,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Walkthrough V · The fifth walk, from a fresh checkout, adds nothing](./walkthrough-v-the-fifth-walk-from-a.md) | completed |
 | [Walkthrough VI · The sixth walk, from a fresh checkout, adds nothing](./walkthrough-vi-the-sixth-walk-from-a.md) | completed |
 | [Walkthrough VII · The seventh walk, from a fresh checkout, adds nothing](./walkthrough-vii-the-seventh-walk-from.md) | failing |
-| [Walkthrough VIII · The eighth walk, from a fresh checkout, adds nothing](./walkthrough-viii-the-eighth-walk-from.md) | pending |
+| [Walkthrough VIII · The eighth walk, from a fresh checkout, adds nothing](./walkthrough-viii-the-eighth-walk-from.md) | failing |
+| [Walkthrough IX · The ninth walk, from a fresh checkout, adds nothing](./walkthrough-ix-the-ninth-walk-from-a.md) | pending |
 | [What a seat may not see never leaves the store: sees applied by graview mcp, graview serve and the served store, and editable in the studio](./what-a-seat-may-not-see-never-leaves.md) | completed |

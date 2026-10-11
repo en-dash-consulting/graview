@@ -5,6 +5,8 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain module of the harness, with no types of its own.
 import { appsNamed, frictionOf, planJobs, regressionsOf, storeHookInPage } from "../scripts/lib/journeys.mjs";
+// @ts-expect-error — a plain module of the harness, with no types of its own.
+import { portFor } from "../scripts/lib/ports.mjs";
 
 /**
  * THE JOURNEYS HARNESS'S OWN LOGIC, held without a browser: which jobs a
@@ -83,6 +85,14 @@ describe("the app a walk builds beside the checkout", () => {
     expect(appsNamed(["../walk7"], apps, root)).toEqual([{ dir: resolve(root, "../walk7"), name: "walk7", query: {} }]);
     expect(appsNamed(["todo", "../walk7"], apps, root).map((one: { name?: string; dir: string }) => one.name ?? one.dir)).toEqual(["todo", "walk7"]);
     expect(appsNamed([], apps, root).map((one: { dir: string }) => one.dir)).toEqual(["todo", "rota"]);
+  });
+
+  it("is served on the port its own config claims, and a run that could not set it up has regressed", () => {
+    const walk = resolve(root, "apps/todo");
+    expect(portFor(walk)).toBe(portFor("todo"));
+    expect(regressionsOf(null, { apps: { walk8: { failed: "could not set up: portFor is not defined" } } })).toEqual([
+      "walk8: Not one job was walked — it could not set up: portFor is not defined.",
+    ]);
   });
 
   it("can be named to `pnpm verify`, which hands it to the journeys and says when there is nothing there", () => {

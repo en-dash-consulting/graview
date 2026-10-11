@@ -118,7 +118,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             {pluralOf(store, facts.kind)}
           </Link>
         </p>
-        <PageTitle context={context}>{facts.label}</PageTitle>
+        {/* The name is changed where it stands, as the scene's record changes it: a shelf renamed on its page took "Change the category" (W-181). */}
+        <PageTitle context={context}>{inPlace && node?.["label"] === facts.label ? <EditableValue<S> nodeId={id} field="label" value={facts.label} /> : facts.label}</PageTitle>
         {described && described !== facts.label ? <p style={lede}>{described}</p> : null}
         <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} style={{ ...link, ...quiet }} data-testid="spatial-link" />
         {placesOf(context).some((place) => place.kind === facts.kind || place.across === facts.kind) ? (
@@ -133,7 +134,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   <Link to={pathOfPlace(context, place)} style={link}>
                     {place.title}
                   </Link>{" "}
-                  <SceneLink context={context} stop={`#view=${encodeURIComponent(place.as)}`} style={{ ...link, ...quiet }} title={`${place.title}, in the scene`}>
+                  <SceneLink context={context} stop={`#view=${encodeURIComponent(place.as)}`} style={{ ...link, ...quiet, display: "inline-block", minWidth: 24, textAlign: "center" }} title={`${place.title}, in the scene`}>
                     ↗
                   </SceneLink>
                 </span>

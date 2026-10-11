@@ -1,6 +1,6 @@
 import * as z from "../schema/zod.js";
 import { labelOf } from "../schema/define-node.js";
-import { humanizeField, nounOf } from "../schema/define-node.js";
+import { fieldWords, nounOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
 import { nodeRefArgs, refTo } from "./node-ref.js";
@@ -50,13 +50,19 @@ export function subjectKindsOf<S extends AnySchema>(
  * TypeScript mutation that declares no `writes` is guessed at, because its
  * `apply` cannot be read without running it; there an argument named
  * exactly like a field of the subject is taken to write it.
+ *
+ * Never for an act that MAKES something (W-180). "Report a fault" on a
+ * tool takes the fault's `label`, and the guess read it as the tool's:
+ * renaming a tool in place reported a fault named the new name, and a
+ * member allowed to report one rode the tool's derived edit to change its
+ * deposit. What a creating act is told describes what it creates.
  */
 export function fieldsWrittenBy<S extends AnySchema>(
   mutation: AnyMutationDefinition<S>,
   definition: AnyNodeDefinition,
 ): readonly string[] {
   const subject = mutation.subject;
-  if (!subject) return [];
+  if (!subject || (!mutation.writes && mutation.creates?.length)) return [];
   const declared = new Set(Object.keys(definition.fields.shape as Record<string, unknown>));
   if (mutation.writes) return mutation.writes.filter((field) => declared.has(field));
   const shape = (mutation.input as { shape?: Record<string, unknown> }).shape ?? {};
@@ -159,7 +165,7 @@ export function deriveEditMutations<S extends AnySchema>(
     if (fields.length === 0) continue;
     const shape = definition.fields.shape as unknown as Record<string, z.ZodMiniType>;
     const noun = nounOf(definition, kind);
-    const said = fields.map((field) => humanizeField(field).toLowerCase());
+    const said = fields.map((field) => fieldWords(definition, field).toLowerCase());
     derived.push({
       name,
       derived: { kind, act: "edit" },
@@ -195,7 +201,7 @@ export function deriveEditMutations<S extends AnySchema>(
             } catch {
               said = JSON.stringify(value);
             }
-            return `${quietly(display?.labels?.[field] ?? humanizeField(field))} → ${said}`;
+            return `${quietly(fieldWords(definition, field))} → ${said}`;
           });
         return `Change ${label}: ${changes.join(", ") || "nothing"}`;
       },

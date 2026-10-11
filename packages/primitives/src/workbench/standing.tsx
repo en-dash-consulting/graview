@@ -15,8 +15,8 @@ const fetchRows = () => barPanes.prefetch();
  *
  * Zero is an answer too: a person wants the reassurance as much as the alarm,
  * so a clean state reads as a statement rather than as a disabled control.
- * Opening a problem SELECTS what it names, and the repairs arrive through the
- * ordinary inspector because repairs already outrank every other provider
+ * Opening a problem SELECTS what it names, and opens the acts menu on what
+ * it is about — there, the repairs lead, because they outrank every other provider
  * there — no second path and no second rendering of an action.
  */
 export function Standing({

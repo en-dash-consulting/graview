@@ -15,7 +15,7 @@
  * hundred (5600–5699 for a worktree).
  */
 import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -76,12 +76,13 @@ export const OWN = {
   "studio-model": 5289,
 };
 
-/** The port an app's vite config claims for its dev server. */
+/** The port an app's vite config claims for its dev server: one under `apps/` by name, or one beside the checkout by its absolute path. */
 function configPort(app) {
-  const config = readFileSync(resolve(repoRoot, "apps", app, "vite.config.ts"), "utf8");
+  const where = isAbsolute(app) ? resolve(app, "vite.config.ts") : resolve(repoRoot, "apps", app, "vite.config.ts");
+  const config = readFileSync(where, "utf8");
   // `port: moved(5193)`: the config moves its own dev server onto the base, and says the port it claims.
   const port = Number(/server:\s*\{[^}]*port:\s*(?:moved\()?(\d+)/.exec(config)?.[1]);
-  if (!port) throw new Error(`apps/${app}/vite.config.ts names no server port`);
+  if (!port) throw new Error(`${isAbsolute(app) ? where : `apps/${app}/vite.config.ts`} names no server port`);
   return port;
 }
 
@@ -100,9 +101,16 @@ export function moved(port) {
 /**
  * The port for what a harness serves: an app under `apps/` by its directory
  * (`"todo"`), or one of `OWN` by name (`"served"`), moved onto the base.
+ * An app beside the checkout — a walk's, named by its absolute path — is
+ * served where its own config says: `graview create --port` may have put
+ * it outside the block, and then the port is that project's to choose.
  */
 export function portFor(name) {
   if (typeof name !== "string") throw new Error(`portFor takes what is served by name, not ${JSON.stringify(name)}`);
+  if (isAbsolute(name)) {
+    const port = configPort(name);
+    return port >= PORT_FLOOR && port < PORT_FLOOR + PORT_SPAN ? moved(port) : port;
+  }
   return moved(Object.hasOwn(OWN, name) ? OWN[name] : configPort(name));
 }
 

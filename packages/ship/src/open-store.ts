@@ -240,6 +240,19 @@ export async function openStore<S extends AnySchema>(
   /* A starting set given here is the host's word too, and is recorded below rather than assumed. */
   const storeOptions: Partial<StoreOptions<S>> = { ...(options.storeOptions ?? {}) };
   delete (storeOptions as { enabledModules?: unknown }).enabledModules;
+  /*
+   * THE DAY ITS RULES ARE JUDGED ON is the host's clock, as `now` is below,
+   * unless the host pinned one (W-186). Nothing said it: an agent at
+   * `graview mcp` and a served store judged "a loan is back by its due date"
+   * on no day at all, and saw nothing overdue that the pages listed nine of.
+   * Read when asked, so a store open past midnight is judged on the new day.
+   */
+  const judged = storeOptions.invariantOptions;
+  if (!judged?.today && !(judged?.context as { today?: unknown } | undefined)?.today) {
+    const context = { ...judged?.context };
+    Object.defineProperty(context, "today", { enumerable: true, get: () => new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10) });
+    (storeOptions as { invariantOptions?: unknown }).invariantOptions = { ...judged, context };
+  }
   const store = new Store<S>({
     schema: app.schema,
     mutations: app.mutations ?? [],

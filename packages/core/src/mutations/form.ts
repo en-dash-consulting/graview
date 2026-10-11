@@ -184,13 +184,15 @@ export function formComplete(fields: readonly FormField[]): boolean {
  * A list a person added nothing to is an empty list, not a missing one:
  * "Put a car on sale" with no features listed refused on press with
  * "Features — expected array, received undefined", for a car whose
- * declaration allows none. A group is sent the same way, all the way down.
+ * declaration allows none. A box nobody ticked is a no: "Add a tool" with
+ * "Induction first" left unticked was refused "expected boolean, received
+ * undefined". A group is sent the same way, all the way down.
  */
 export function formArgs(fields: readonly FormField[], values: Readonly<Record<string, unknown>>): Record<string, unknown> {
   const sent: Record<string, unknown> = { ...values };
   for (const field of fields) {
     const held = values[field.name];
-    if (field.control === "list" && held === undefined && !field.optional) sent[field.name] = [];
+    if (held === undefined && !field.optional && (field.control === "list" || field.control === "boolean")) sent[field.name] = field.control === "list" ? [] : false;
     if (field.control === "group" && held !== undefined && typeof held === "object" && held !== null) {
       sent[field.name] = formArgs(field.fields, held as Record<string, unknown>);
     }
