@@ -112,7 +112,8 @@ export const speaker = defineNode("speaker", {
   }),
   plural: "Speakers",
   label: (node) => (node.family ? `${node.given} ${node.family}` : node.given),
-  display: { labels: { given: "Given name", family: "Family name", checkedIn: "Checked in" } },
+  // A yes or no in its own words: "Not here yet", never "Checked in: not here yet" (W-187).
+  display: { labels: { given: "Given name", family: "Family name", checkedIn: "Checked in" }, format: { checkedIn: (value) => (value ? "Here" : "Not here yet") } },
 });
 
 /** A block of the timetable, in one room, with somebody in the chair. */
