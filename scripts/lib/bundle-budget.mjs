@@ -483,8 +483,11 @@ export const BUDGETS = [
     // Raised in the review after 0.1.20: the routed face says where its reader is (FR-155) and draws what has happened on its
     // bar (FR-152), the seat's tools fetch the words before any answer (FR-159), and a seat is told a line over what it sees
     // (FR-55). 2_082 / 1_668 more than main. Measured at 1_701_696 / 535_214.
-    minified: 1_702_100,
-    gzipped: 535_500,
+    // Raised by what n-dx surfaced, together: a block's key and the slots a face claims by it, an empty kind folding into
+    // More, a shell keeping its bar without its places, and the embed's bar redrawn as the graph changes; the sync and
+    // the snapshot left the first load for entries of their own. Measured at 1_701_975 / 535_578.
+    minified: 1_702_400,
+    gzipped: 535_900,
     load: "all",
   },
   {
@@ -568,8 +571,9 @@ export const BUDGETS = [
     // Raised with the pages face's by FR-159, a showing's name as drawn and FR-154, together. Measured at 1_565_769 / 478_533.
     // And by who is here on the bar (FR-155): 98 more gzipped. Measured at 1_565_646 / 478_631.
     // And by the review after 0.1.20, with the pages face's: 1_664 / 1_446 more than main. Measured at 1_565_087 / 480_013.
+    // And by what n-dx surfaced (a block's key and its claimed slots, an empty kind folding): measured at 1_565_358 / 480_308.
     minified: 1_566_100,
-    gzipped: 480_300,
+    gzipped: 480_600,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
