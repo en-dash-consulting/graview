@@ -75,7 +75,7 @@ export const album = defineNode("album", {
   },
   plural: "Albums",
   label: (node) => node.label,
-  fieldRoles: { start: "released" },
+  fieldRoles: { when: "released" },
   display: { labels: { released: "Released", type: "Type" } },
 });
 

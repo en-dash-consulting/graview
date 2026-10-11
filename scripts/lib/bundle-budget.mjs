@@ -483,8 +483,12 @@ export const BUDGETS = [
     // Raised in the review after 0.1.20: the routed face says where its reader is (FR-155) and draws what has happened on its
     // bar (FR-152), the seat's tools fetch the words before any answer (FR-159), and a seat is told a line over what it sees
     // (FR-55). 2_082 / 1_668 more than main. Measured at 1_701_696 / 535_214.
-    minified: 1_702_100,
-    gzipped: 535_500,
+    // Raised when a document came to work out facts of the whole graph and a kind to say its natural time and its author:
+    // `fact()` in the language, the checker's judgment of facts and roles (with the studio's), a list opening newest first
+    // and a timeline drawing at a kind's `when`, less a kind's computed fields judged on the page (now the checker's) and
+    // the one-relation-one-wording refusal. 2_694 / 1_256 more than main. Measured at 1_704_680 / 536_621.
+    minified: 1_705_100,
+    gzipped: 536_900,
     load: "all",
   },
   {
@@ -568,8 +572,12 @@ export const BUDGETS = [
     // Raised with the pages face's by FR-159, a showing's name as drawn and FR-154, together. Measured at 1_565_769 / 478_533.
     // And by who is here on the bar (FR-155): 98 more gzipped. Measured at 1_565_646 / 478_631.
     // And by the review after 0.1.20, with the pages face's: 1_664 / 1_446 more than main. Measured at 1_565_087 / 480_013.
-    minified: 1_566_100,
-    gzipped: 480_300,
+    // Raised with every face's when a document came to work out facts of the whole graph and a kind to say its natural
+    // time and its author: the studio carries the checker, and the checker now judges a fact as a computed field and a
+    // role against its field's type (`facts-and-roles.ts`, `computedFindings`), less the one-relation-one-wording refusal
+    // and a kind's computed fields judged twice. 2_072 / 977 more than main. Measured at 1_567_208 / 481_012.
+    minified: 1_567_700,
+    gzipped: 481_300,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

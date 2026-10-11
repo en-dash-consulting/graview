@@ -10,7 +10,7 @@ import { LARGE_LIST, ListPage, PagesApp } from "../../src/index.js";
  * Nick, on Discography's 479 albums: an eyebrow, "479 of 479 shown.", a
  * page Find again, and a bare column of names — nothing to scan by and no
  * way to jump. A large list opens in a meaningful order (newest first where
- * the kind says when it starts, else by name) and says so on its line; it
+ * the kind says when a record is, else by name) and says so on its line; it
  * is one line a record, and an index of its years or its letters jumps to
  * each. A design hands `ListPage` its own row and how the list opens, and
  * the head and the line are the framework's.
@@ -19,7 +19,7 @@ const album = defineNode("album", {
   fields: z.object({ label: z.string(), released: isoDate.optional() }),
   plural: "Albums",
   label: (node) => node.label,
-  fieldRoles: { start: "released" },
+  fieldRoles: { when: "released" },
 });
 const artist = defineNode("artist", { fields: z.object({ label: z.string() }), plural: "Artists", label: (node) => node.label });
 const schema = createSchema([album, artist]);
@@ -40,7 +40,7 @@ const store = () =>
 const draw = (path: string) => renderToStaticMarkup(<PagesApp context={{ store: store() }} initialPath={path} />);
 
 describe("a large list", () => {
-  it("opens newest first where the kind says when it starts, says so on its line, and jumps by year", () => {
+  it("opens newest first where the kind says when a record is, says so on its line, and jumps by year", () => {
     const html = draw("/albums");
     expect(html).toMatch(/data-testid="arrange-sort"[^>]*value="released"[^>]*aria-label="Sorted by released, latest first"/);
     expect(html).toContain('data-sectioned="year"');
@@ -51,12 +51,24 @@ describe("a large list", () => {
     expect(html).not.toContain("479 of");
   });
 
-  it("opens by name where the kind says no start, and jumps by letter", () => {
+  it("opens by name where the kind says no time, and jumps by letter", () => {
     const html = draw("/artists");
     // A kind with nothing but a name to sort by offers no "Sort": its order is its names.
     expect(html).toContain('data-sectioned="letter"');
     const index = /data-testid="list-index"[\s\S]*?<\/nav>/.exec(html)?.[0] ?? "";
     expect([...index.matchAll(/>([A-Z])</g)].map((match) => match[1])).toEqual(["A", "B", "C", "D", "E", "Z"]);
+  });
+
+  it("opens newest first at any length where the kind says when a record is: a short list too, without an index", () => {
+    const few = new Store({
+      schema,
+      mutations: [],
+      snapshot: { nodes: [{ id: "old", kind: "album", label: "Old", released: "1999-01-01" }, { id: "new", kind: "album", label: "New", released: "2024-01-01" }] as never, edges: [] },
+    });
+    const html = renderToStaticMarkup(<PagesApp context={{ store: few }} initialPath="/albums" />);
+    expect(html.indexOf(">New<")).toBeGreaterThan(-1);
+    expect(html.indexOf(">New<")).toBeLessThan(html.indexOf(">Old<"));
+    expect(html).not.toContain('data-testid="list-index"');
   });
 
   it("keeps the address's own order when it says one, and has no index when grouped", () => {

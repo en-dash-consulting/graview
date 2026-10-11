@@ -1,4 +1,6 @@
-import { nodeRefArgs } from "../../mutations/node-ref.js";
+import { describeArg, nodeRefArgs, type ArgShape } from "../../mutations/node-ref.js";
+import { roleProblem } from "../../document/facts-and-roles.js";
+import { documentOf } from "../../document/to-document.js";
 import { withArticle } from "../../schema/define-node.js";
 import type { AnySchema } from "../../schema/schema.js";
 
@@ -16,6 +18,9 @@ import type { AnySchema } from "../../schema/schema.js";
  */
 import type { CheckContext } from "./context.js";
 import { bounded } from "./context.js";
+
+/** What a field's schema says it holds, in the words a role is judged in. */
+const ARG_ROLE_TYPES: Readonly<Record<ArgShape["type"], string>> = { date: "date", text: "string", choice: "enum", number: "number", boolean: "boolean", several: "list", unknown: "structured" };
 
 export function checkReadings<S extends AnySchema>(ctx: CheckContext<S>): void {
   const { app, add } = ctx;
@@ -46,44 +51,6 @@ export function checkReadings<S extends AnySchema>(ctx: CheckContext<S>): void {
           `.`,
       });
     }
-  }
-}
-
-/**
- * ONE EDGE NAME, ONE RELATION. Every surface treats an edge kind as a single
- * relation: the connections on a record, the pages' groups, the captions
- * over a band, the arrangement's `by:` all key on its name. Declared on two
- * kinds with two sets of words — `by` on a song ("the artist whose song it
- * is" / "their songs") and on an album ("the artist whose release it is" /
- * "their releases") — the artist's page listed thirty-five songs and six
- * albums together under "Their releases". Declaring the same relation from
- * several kinds in the SAME words is fine and is left alone.
- */
-export function checkEdgeNamesAgree<S extends AnySchema>(ctx: CheckContext<S>): void {
-  const { app, add } = ctx;
-  const declared = new Map<string, { kind: string; description?: string; inverse?: string }[]>();
-  for (const definition of app.schema.definitions) {
-    for (const [edgeKind, edge] of Object.entries(definition.edges)) {
-      const held = declared.get(edgeKind) ?? [];
-      held.push({ kind: definition.kind, ...(edge.description ? { description: edge.description } : {}), ...(edge.inverse ? { inverse: edge.inverse } : {}) });
-      declared.set(edgeKind, held);
-    }
-  }
-  for (const [edgeKind, ends] of declared) {
-    if (ends.length < 2) continue;
-    const words = new Set(ends.map((end) => `${end.description ?? ""}|${end.inverse ?? ""}`));
-    if (words.size < 2) continue;
-    const said = ends
-      .map((end) => `on ${withArticle(end.kind)} ("${end.description ?? edgeKind}" / "${end.inverse ?? edgeKind}")`)
-      .join(" and ");
-    const [first, second] = ends;
-    add({
-      severity: "error",
-      code: "edge-name-shared",
-      where: ends.map((end) => `defineNode("${end.kind}").edges["${edgeKind}"]`).join(", "),
-      message: `"${edgeKind}" is declared ${said}, but to every surface an edge name is ONE relation: from the far end both are listed together under ${JSON.stringify(first!.inverse ?? edgeKind)}, including the ${second!.kind === first!.kind ? "second" : `${second!.kind}s`}.`,
-      fix: `Give each relation its own name (say "${edgeKind}" on ${withArticle(first!.kind)} and "${second!.kind}-${edgeKind}" on ${withArticle(second!.kind)}), or give every declaration the same description and inverse.`,
-    });
   }
 }
 
@@ -225,12 +192,16 @@ export function checkActsFromEnds<S extends AnySchema>(ctx: CheckContext<S>, wri
         });
       }
       if (readable.length > 5 && !definition.display?.glance) {
+        // Unchosen, a glance says the author and the natural time first, where the kind's roles name them, then the fields as declared.
+        const roles = definition.fieldRoles ?? {};
+        const led = [roles["who"], roles["when"]].filter((field): field is string => field !== undefined && readable.includes(field));
+        const first = [...new Set([...led, ...readable])].slice(0, 3);
         add({
           severity: "note",
           code: "glance-unchosen",
           where: `defineNode("${definition.kind}").display`,
-          message: `${withArticle(definition.kind).replace(/^./, (first) => first.toUpperCase())} has ${readable.length} fields and a card shows three — the first three in the order they were declared (${readable.slice(0, 3).join(", ")}).`,
-          fix: `Say which: display: { glance: ["${readable.slice(0, 3).join('", "')}"] } — the facts a person compares one by, at a glance.`,
+          message: `${withArticle(definition.kind).replace(/^./, (first) => first.toUpperCase())} has ${readable.length} fields and a card shows three — ${led.length > 0 ? `${led.map((field) => (field === roles["who"] ? "its author" : "its time")).join(" and ")} first, then the rest in the order they were declared` : "the first three in the order they were declared"} (${first.join(", ")}).`,
+          fix: `Say which: display: { glance: ["${first.join('", "')}"] } — the facts a person compares one by, at a glance.`,
         });
       }
     }
@@ -266,15 +237,19 @@ export function checkActsFromEnds<S extends AnySchema>(ctx: CheckContext<S>, wri
       }
     }
 
+    // A document's roles are judged when it is read, at its own paths (`kinds.<kind>.fieldRoles`).
+    if (documentOf(app)) continue;
     for (const [role, field] of Object.entries(definition.fieldRoles ?? {})) {
       const shape = definition.fields.shape as Record<string, unknown>;
-      if (!(field in shape)) {
+      if (role === "label" && field === "label") continue;
+      const problem = roleProblem(role, field, definition.kind, field in shape ? ARG_ROLE_TYPES[describeArg(shape[field]).type] : undefined, Object.keys(shape));
+      if (problem) {
         add({
           severity: "error",
-          code: "field-role-missing-field",
+          code: problem.code,
           where: `defineNode("${definition.kind}").fieldRoles.${role}`,
-          message: `Field role "${role}" maps to field "${field}", which is not in this kind's fields.`,
-          fix: `Point the role at one of: ${Object.keys(shape).join(", ")}.`,
+          message: `${problem.message[0]!.toUpperCase()}${problem.message.slice(1)}.`,
+          fix: `${problem.fix[0]!.toUpperCase()}${problem.fix.slice(1)}.`,
         });
       }
     }

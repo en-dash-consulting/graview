@@ -1,5 +1,7 @@
 import { checkApp } from "../cli/check.js";
 import { actFindings } from "./act-findings.js";
+import { factFindings, roleFindings } from "./facts-and-roles.js";
+import { computedFindings } from "./computed.js";
 import { brandFindings } from "./brand-check.js";
 import { compileDocumentWithoutCheck, frameworkPath, inDocumentWords, readDocument, type CompiledDocument, type CompileOptions, type RefusedDocument } from "./compile.js";
 import { hasErrors, type Finding } from "./findings.js";
@@ -22,11 +24,11 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
   if (!compiled.ok) {
     // A range and the other end of a link are judged here too (FR-114, FR-115), so a refusal says all of what is wrong.
     const read = readDocument(raw).document;
-    return read ? { ok: false, findings: [...compiled.findings, ...actFindings(read)] } : compiled;
+    return read ? { ok: false, findings: [...compiled.findings, ...actFindings(read), ...computedFindings(read), ...factFindings(read), ...roleFindings(read)] } : compiled;
   }
   const { app, document } = compiled;
   // What the brand may hold (FR-124): a mark that could act or load, a face from off the list.
-  const own = [...actFindings(document), ...brandFindings(document.brand, options.fonts ? { fonts: options.fonts } : {})];
+  const own = [...actFindings(document), ...computedFindings(document), ...factFindings(document), ...roleFindings(document), ...brandFindings(document.brand, options.fonts ? { fonts: options.fonts } : {})];
   if (hasErrors(own)) return { ok: false, findings: [...compiled.findings, ...own] };
   // Braces in a block's plain words (FR-99): asked here, with the checker, and not of a page that compiles without it.
   // The checker's sentence for an accent (FR-126) says what the compile's did, and more: once is enough.

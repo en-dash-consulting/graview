@@ -1,6 +1,7 @@
 import * as z from "./zod.js";
 import type {
   AnyNodeDefinition,
+  ComputedField,
   EdgeDeclaration,
   NodeOf,
   ValidateEdgeTargets,
@@ -27,6 +28,12 @@ export interface Schema<Defs extends readonly AnyNodeDefinition[] = readonly Any
   edgeAllowed(kind: string, fromKind: string, toKind: string): boolean;
   /** Runtime validation of a node against its declared fields. */
   parseNode(node: unknown): NodeOf<Defs[number]>;
+  /**
+   * FACTS OF THE WHOLE GRAPH, by name: rule-language expressions with no
+   * record as their subject, read as `fact('<name>')` wherever the language
+   * is read (a document's top-level `computed`).
+   */
+  readonly computed?: Readonly<Record<string, ComputedField>>;
   /** Phantom carrier for the node union — never populated at runtime. */
   readonly __node: NodeOf<Defs[number]>;
 }
@@ -69,6 +76,8 @@ export class SchemaError extends Error {
  */
 export function createSchema<const Defs extends readonly AnyNodeDefinition[]>(
   definitions: Defs & ValidateEdgeTargets<Defs>,
+  /** The facts this app works out of its whole graph. */
+  computed?: Readonly<Record<string, ComputedField>>,
 ): Schema<Defs> {
   const defs = definitions as Defs;
   const byKind = new Map<string, AnyNodeDefinition>();
@@ -127,6 +136,7 @@ export function createSchema<const Defs extends readonly AnyNodeDefinition[]>(
 
   return {
     definitions: defs,
+    computed,
     kinds: defs.map((d) => d.kind) as readonly Defs[number]["kind"][],
     edgeKinds: [...edgeInfo.keys()],
     definition(kind) {

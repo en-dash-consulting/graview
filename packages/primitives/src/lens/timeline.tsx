@@ -1,6 +1,7 @@
 import { withMore } from "./more.js";
 import { labelOf, type AnySchema, type ArrangeOption, type Arrangement, type NodeOfSchema } from "@graview/core";
 import { useArranging } from "./arranging.js";
+import { withNaturalTime } from "./natural-time.js";
 import { useGraview, type ViewProps } from "@graview/react";
 import type { CSSProperties, ReactElement } from "react";
 import { hueFor } from "../default-views.js";
@@ -172,7 +173,7 @@ export function placeOnTimeline<S extends AnySchema>(
   bindings: TimelineBindings,
   schema?: S,
 ): PlacedSpan | null {
-  const roles = bindings[node.kind];
+  const roles = withNaturalTime(bindings[node.kind], schema?.tryDefinition(node.kind));
   if (!roles) return null;
 
   /*

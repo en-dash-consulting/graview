@@ -5,6 +5,7 @@ import {
   ExprEvalError,
   ExprSyntaxError,
   FUNCTIONS,
+  GRAPH_FACTS,
   parseExpr,
   printExpr,
   type KindShape,
@@ -24,6 +25,8 @@ const schema = createSchema([
 const kinds = new Map<string, KindShape>([
   ["task", { fields: new Set(["title", "hours", "due", "tags"]), edges: new Map([["for", "one"]]) }],
   ["project", { fields: new Set(["name"]), edges: new Map() }],
+  // The whole graph's facts: one worked out over nothing.
+  [GRAPH_FACTS, { fields: new Set(), edges: new Map(), computed: new Map([["longest", parseExpr("max(all('task') where hours == null, 'hours')")]]) }],
 ]);
 const graph = Graph.from(schema as never, {
   nodes: [
@@ -71,12 +74,14 @@ describe("null propagates, and every production says what it does with it", () =
     // FR-83: a per-member expression of nothing is left out; the first of nothing is nothing; nothing sorts to nothing; either skips nothing
     ["sum(all('task') where hours == null, hours * 2)", 0], ["max(all('task') where hours == null, hours + 1)", null],
     ["first(out('for'))", null], ["first(out('for')).name", null], ["count(sort(out('for'), name, 'desc'))", 0], ["either(hours, due, null)", null],
+    // A fact of the whole graph worked out over nothing is nothing.
+    ["fact('longest')", null],
   ])("%s → %j", (source, expected) => {
     expect(on(source)).toEqual(expected);
   });
 
   it("names every function the language knows, and a test above reaches each with nothing", () => {
-    expect([...FUNCTIONS].sort()).toEqual(["all", "contains", "count", "date", "days", "either", "every", "exists", "first", "hours", "if", "in", "len", "lower", "max", "min", "now", "out", "present", "some", "sort", "startsWith", "sum", "today"]);
+    expect([...FUNCTIONS].sort()).toEqual(["all", "contains", "count", "date", "days", "either", "every", "exists", "fact", "first", "hours", "if", "in", "len", "lower", "max", "min", "now", "out", "present", "some", "sort", "startsWith", "sum", "today"]);
   });
 });
 

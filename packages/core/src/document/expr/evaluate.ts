@@ -32,6 +32,13 @@ export interface KindShape {
   readonly computed?: ReadonlyMap<string, Expr>;
 }
 
+/**
+ * WHERE THE WHOLE GRAPH'S FACTS STAND among the kinds: a shape no kind can
+ * have the name of (kinds are words), whose `computed` are the app's facts
+ * (a document's top-level `computed`), read as `fact('<name>')`.
+ */
+export const GRAPH_FACTS = "";
+
 export interface EvalContext {
   readonly graph: GraphReader;
   /** The node bare names refer to; null for graph-wide rules. */
@@ -85,10 +92,10 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
   const worked = new Map<string, Value>();
   const working = new Set<string>();
   let bindings = ctx.bindings;
-  const computed = (node: AnyGraphNode, name: string, expr: Expr, at: number): Value => {
-    const key = `${node.id}\u0000${name}`;
+  const computed = (node: AnyGraphNode | null, name: string, expr: Expr, at: number): Value => {
+    const key = `${node?.id}\u0000${name}`;
     if (worked.has(key)) return worked.get(key)!;
-    if (working.has(key)) throw new ExprEvalError(`"${name}" of ${withArticle(node.kind)} depends on itself`, at);
+    if (working.has(key)) throw new ExprEvalError(`"${name}"${node ? ` of ${withArticle(node.kind)}` : ""} depends on itself`, at);
     working.add(key);
     const outer = bindings;
     bindings = undefined;
@@ -323,6 +330,13 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
         if (values.length === 0) return null;
         return e.fn === "min" ? Math.min(...values) : Math.max(...values);
       }
+      case "fact": {
+        arity(1);
+        const name = word(0);
+        const expr = ctx.kinds.get(GRAPH_FACTS)?.computed?.get(name);
+        if (!expr) throw new ExprEvalError(`no fact is called "${name}"`, e.at);
+        return computed(null, name, expr, e.at);
+      }
       case "first": {
         arity(1);
         return asSet(arg(0), e.at, "first").nodes[0] ?? null;
@@ -436,5 +450,5 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
 /** The names of every function the language knows — the check reports any other. */
 export const FUNCTIONS = [
   "out", "in", "all", "count", "exists", "every", "some", "sum", "min", "max", "present", "len",
-  "contains", "startsWith", "lower", "today", "now", "date", "days", "hours", "if", "first", "sort", "either",
+  "contains", "startsWith", "lower", "today", "now", "date", "days", "hours", "if", "first", "sort", "either", "fact",
 ] as const;

@@ -246,14 +246,16 @@ export function checkLensBindings<S extends AnySchema>(ctx: CheckContext<S>): vo
           });
         }
       }
+      // A start the lens leaves unbound is the kind's natural time, where its `fieldRoles.when` says it: the lens draws it there.
+      const roles: Record<string, unknown> = { start: definition.fieldRoles?.["when"], ...bindings };
       for (const role of requiredRolesOf(lens)) {
-        if (!(role in bindings)) {
+        if (roles[role] === undefined) {
           add({
             severity: "error",
             code: "lens-role-unbound",
             where: `lens "${lens.title ?? lens.name}" bindings.${kind}`,
             message: `Lens "${lens.name}" requires role "${role}", which "${kind}" does not bind.`,
-            fix: `Add ${role}: "<field name>" to the bindings for "${kind}".`,
+            fix: `Add ${role}: "<field name>" to the bindings for "${kind}"${role === "start" ? `, or say which field is its natural time once, on the kind: fieldRoles: { when: "<field name>" }` : ""}.`,
           });
         }
       }

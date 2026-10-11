@@ -221,6 +221,7 @@ export {
 } from "./lens/plan.js";
 export type { PlanLens, PlanLensOptions, PlanLensState, PlanViewProps } from "./lens/plan.js";
 export { withMore } from "./lens/more.js";
+export { withNaturalTime } from "./lens/natural-time.js";
 export { fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews } from "./view-doors.js";
 // A declared lens draws (FR-79): each titled lens a place, from the declaration alone; the arrangement beside them (FR-80).
 export { fetchDeclaredLenses, fetchHomeView, registerDeclaredLenses } from "./declared-lens-doors.js";

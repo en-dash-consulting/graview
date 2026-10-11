@@ -136,7 +136,11 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
     const nowPage = { fields: [...(now.page?.fields ?? [])], groups: (now.page?.groups ?? []).map((group) => ({ title: group.title, fields: [...group.fields] })) };
     if (!same(wasPage, nowPage)) sentences.push(`How ${withArticle(kind)}'s page orders its facts changes.`);
     sentences.push(...computedSentences(now.plural ?? was.plural ?? `${kind}s`, was.computed, now.computed));
+    // Its roles follow its fields the same way: only a different field for a role is said.
+    const wasRoles = Object.fromEntries(Object.entries(was.fieldRoles ?? {}).map(([role, field]) => [role, movedTo.get(field) ?? field]).filter(([, field]) => Object.hasOwn(now.fields, field!)));
+    if (!same(wasRoles, now.fieldRoles ?? {})) sentences.push(`Which of ${withArticle(kind)}'s fields is its time, its author or a lens's role changes.`);
   }
+  sentences.push(...factSentences(before.computed, after.computed));
   for (const [section, noun] of [["acts", "act"], ["rules", "rule"]] as const) {
     const a = before[section] ?? {};
     const b = after[section] ?? {};
@@ -223,6 +227,19 @@ function computedSentences(plural: string, was: Record<string, unknown> | undefi
     else if (!same(typeof was[name] === "string" ? { expr: was[name] } : was[name], typeof now![name] === "string" ? { expr: now![name] } : now![name])) out.push(`${said}' "${name}" is described differently.`);
   }
   for (const name of keys(was)) if (now?.[name] === undefined) out.push(`${said} no longer work out "${name}".`);
+  return out;
+}
+
+/** The whole graph's facts, compared: "The app works out "mapProposed"." */
+function factSentences(was: Record<string, unknown> | undefined, now: Record<string, unknown> | undefined): string[] {
+  const out: string[] = [];
+  const exprOf = (c: unknown) => (typeof c === "string" ? c : (c as { expr?: string } | undefined)?.expr);
+  for (const name of keys(now)) {
+    if (was?.[name] === undefined) out.push(`The app works out "${name}" of the whole graph.`);
+    else if (exprOf(was[name]) !== exprOf(now![name])) out.push(`How the app works out "${name}" changes.`);
+    else if (!same(was[name], now![name])) out.push(`The app's "${name}" is described differently.`);
+  }
+  for (const name of keys(was)) if (now?.[name] === undefined) out.push(`The app no longer works out "${name}".`);
   return out;
 }
 

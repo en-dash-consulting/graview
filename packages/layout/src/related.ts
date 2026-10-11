@@ -71,13 +71,11 @@ export function relatedNodes<S extends AnySchema>(
       });
     }
     if (found.size > 0) {
-      // Grouped by edge kind, so a relationship reads as a run of cards
-      // under one caption rather than as scattered singletons.
-      return [...found.values()].sort(
-        (a, b) =>
-          (a.via!.edgeKind < b.via!.edgeKind ? -1 : a.via!.edgeKind > b.via!.edgeKind ? 1 : 0) ||
-          byStableKey(a.node, b.node),
-      );
+      // Grouped by edge kind and its reading, so a relationship reads as a run of cards
+      // under one caption rather than as scattered singletons — and kinds that word a
+      // shared relation their own way run apart, each under its own words.
+      const run = (one: Related<NodeOfSchema<S>>) => `${one.via!.edgeKind}|${one.via!.description ?? ""}`;
+      return [...found.values()].sort((a, b) => (run(a) < run(b) ? -1 : run(a) > run(b) ? 1 : 0) || byStableKey(a.node, b.node));
     }
   }
 

@@ -372,10 +372,28 @@ export function describeApp<S extends AnySchema>(
       return `${kind} · ${name}${label ? ` (${label})` : ""}, read-only: ${entry.expr}`;
     });
   });
-  if (worked.length > 0) {
+  // And the whole graph's facts: one value each, worked out over all of what the reader may see.
+  const facts = [...computedOf(app.schema)].map(([name, entry]) => `fact('${name}')${entry.label ? ` (${entry.label})` : ""}: ${entry.expr}`);
+  if (worked.length > 0 || facts.length > 0) {
     lines.push("", "## Worked out");
-    lines.push("Computed fields: read like fields, written by nothing, worked out from what the reader may see.");
+    if (worked.length > 0) lines.push("Computed fields: read like fields, written by nothing, worked out from what the reader may see.");
     for (const line of worked) lines.push(`  ${line}`);
+    if (facts.length > 0) lines.push("Facts of the whole graph: read as fact('<name>') in any expression, written by nothing, worked out from what the reader may see.");
+    for (const line of facts) lines.push(`  ${line}`);
+  }
+
+  /*
+   * WHAT A KIND SAYS OF ITSELF: its natural time and its author, which a
+   * list opens newest first by and a glance leads with, and the rest of its
+   * roles, which a lens reads where it binds none.
+   */
+  const roled = kinds.flatMap((kind) => {
+    const roles = Object.entries(app.schema.tryDefinition(kind)?.fieldRoles ?? {});
+    return roles.length === 0 ? [] : [`${kind}: ${roles.map(([role, field]) => `${role} is ${field}`).join(", ")}`];
+  });
+  if (roled.length > 0) {
+    lines.push("", "## Field roles");
+    for (const line of roled) lines.push(`  ${line}`);
   }
 
   /* WHAT IS JUDGED. A rule with no repair is a problem a person is told about and cannot fix. */

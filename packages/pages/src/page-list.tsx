@@ -49,7 +49,7 @@ export const ARRANGE_FROM = 8;
 
 /**
  * From how many records a list is LARGE: it opens in a meaningful order
- * (newest first where the kind declares when it starts, else by name, and
+ * (newest first where the kind declares when a record is, else by name, and
  * the line says so), its rows are one line each, and an index — the
  * letters, or the years — jumps through it.
  */
@@ -132,7 +132,9 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
   // What the address says, or — saying nothing — how the design opens the list, or a large list's meaningful order.
   const addressed = ["sort", "filter", "group", "q", "by", "with", "past", ...edgeKinds].some((key) => search.has(key));
   const large = all.length >= LARGE_LIST;
-  const arrangement = addressed ? asked.arrangement : admitArrangement(opening ?? (large ? largeOpening(offers, definition) : {}), offers).arrangement;
+  // The kind's natural time, which its list opens newest first by and indexes by year.
+  const when = definition?.fieldRoles?.["when"];
+  const arrangement = addressed ? asked.arrangement : admitArrangement(opening ?? naturalOpening(large, when), offers).arrangement;
   // The words may say `is:any` too, as they do in the Find box.
   const typed = parseQuery(arrangement.query ?? "");
   const showingPast =
@@ -160,7 +162,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     const words = formatArrangement(next);
     for (const key of ["sort", "filter", "group", "q"] as const) if (words[key]) params.set(key, words[key]!);
     // Everything taken off is still a choice, and not the opening one.
-    if (![...params.keys()].some((key) => ["sort", "filter", "group", "q"].includes(key)) && (opening || large)) params.set("sort", "");
+    if (![...params.keys()].some((key) => ["sort", "filter", "group", "q"].includes(key)) && (opening || large || when)) params.set("sort", "");
     setSearch(params);
   };
   /*
@@ -304,12 +306,14 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
    * been a bare column of names to scroll.
    */
   const sortOffer = arrangement.sort ? offers.sorts.find((offer) => offer.key === arrangement.sort!.by) : undefined;
+  // A record's natural time is a date whatever its field is kept as: a date and a time is offered as words.
+  const dated = sortOffer?.type === "date" || (sortOffer !== undefined && sortOffer.key === when);
   const sectionOf =
-    large && !arranged.grouped && sortOffer && (sortOffer.about === "label" || sortOffer.type === "text" || sortOffer.type === "date")
+    large && !arranged.grouped && sortOffer && (sortOffer.about === "label" || sortOffer.type === "text" || dated)
       ? (node: (typeof members)[number]): string => {
           const value = sortOffer.about === "label" ? labelOf(definition, node) : (node as unknown as Record<string, unknown>)[sortOffer.key];
-          if (typeof value !== "string" || value.length === 0) return sortOffer.type === "date" ? "No date" : "#";
-          if (sortOffer.type === "date") return value.slice(0, 4);
+          if (typeof value !== "string" || value.length === 0) return dated ? "No date" : "#";
+          if (dated) return value.slice(0, 4);
           const first = value.trim().charAt(0).toLocaleUpperCase();
           return /\p{L}/u.test(first) ? first : "#";
         }
@@ -541,12 +545,14 @@ function BareFrame({ children }: { readonly context: unknown; readonly children?
   return <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 40, minWidth: 0 }}>{children}</div>;
 }
 
-/** How a large list opens: newest first where the kind says when it starts, else by name. */
-function largeOpening(offers: Arrangeable, definition: { readonly fieldRoles?: { readonly start?: string } } | undefined): Arrangement {
-  const start = definition?.fieldRoles?.start;
-  const dated = start ? offers.sorts.find((offer) => offer.key === start && offer.type === "date") : undefined;
-  return dated ? { sort: { by: dated.key, direction: "desc" } } : { sort: { by: "label", direction: "asc" } };
-}
+/**
+ * How a list opens when nothing asks: newest first, at any length, where
+ * the kind says when a record is (`when`, its `fieldRoles.when`) — runs,
+ * commits, releases, a log; else a large one by name, and a short one as
+ * it is.
+ */
+const naturalOpening = (large: boolean, when: string | undefined): Arrangement =>
+  when ? { sort: { by: when, direction: "desc" } } : large ? { sort: { by: "label", direction: "asc" } } : {};
 
 /**
  * The search, read as an arrangement — the shared words first, then the

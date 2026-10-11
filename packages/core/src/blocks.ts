@@ -12,4 +12,5 @@
 export { compileBlocks, fieldSpecsOf, isTallBlock, resolveBlocks, safeHref, sayNumber, whatBlocksSay } from "./document/blocks.js";
 export type { BlockContext, BlocksSaid, ResolvedBlock, ResolvedList, SpecBlock } from "./document/blocks.js";
 export { computedNames, computedValues, withComputed } from "./document/computed-values.js";
+export { factNames, factValues } from "./document/fact-values.js";
 export type { ComputedRecord, ComputedValues, PlainComputed } from "./document/computed-values.js";

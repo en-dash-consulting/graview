@@ -286,6 +286,8 @@ describe("the timeline lens", () => {
       "./arranging.js",
       // So is "+N more": `withMore` is exported, and an app's lens says it the same way.
       "./more.js",
+      // And a kind's natural time where the lens binds no start: `withNaturalTime` is exported too.
+      "./natural-time.js",
       "@graview/core",
       "@graview/react",
       "react",

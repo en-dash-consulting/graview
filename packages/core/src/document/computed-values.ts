@@ -2,7 +2,7 @@ import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import type { AnySchema } from "../schema/schema.js";
 import { labelOf } from "../schema/define-node.js";
 import { computedOf } from "./computed.js";
-import { evaluateExpr, ExprEvalError, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
+import { evaluateExpr, ExprEvalError, GRAPH_FACTS, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import { shapesOfSchema } from "./rules.js";
 
 /*
@@ -49,7 +49,8 @@ function shapesFor(schema: AnySchema): Map<string, KindShape> {
 export function computedValues(
   schema: AnySchema,
   graph: GraphReader,
-  node: AnyGraphNode,
+  /** The record; `null`, the whole graph, whose computed values are its facts (`factValues`). */
+  node: AnyGraphNode | null,
   options: { readonly budget?: number; readonly today?: string } = {},
 ): ComputedValues {
   const kinds = shapesFor(schema);
@@ -64,7 +65,7 @@ export function computedValues(
     }
     return value as PlainComputed;
   };
-  for (const [name, expr] of kinds.get(node.kind)?.computed ?? []) {
+  for (const [name, expr] of kinds.get(node ? node.kind : GRAPH_FACTS)?.computed ?? []) {
     try {
       values[name] = plain(evaluateExpr(expr, { graph, subject: node, kinds, ...(options.today ? { today: options.today } : {}), ...(options.budget ? { budget: options.budget } : {}) }));
     } catch (e) {

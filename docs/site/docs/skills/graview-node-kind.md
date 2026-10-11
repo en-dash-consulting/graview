@@ -16,7 +16,7 @@ A kind is the unit of everything here. Declaring one gets you, without another l
 
 1. **Declare the kind.** Zod is the single source of runtime validation, TypeScript types and JSON Schema — there is no second place to describe a field.
 
-```ts export const fixture = defineNode("fixture", { fields: z.object({ // A NAME, and bounded: every surface draws `label`, and `min(1)` // alone permits a paragraph (`graview check`: `label-unbounded`). label: z.string().min(1).max(60), kickOff: z.string(), opponent: z.string(), }), plural: "Fixtures", description: "A match, and the team you intend to put out for it.", edges: { // One edge, two readings: the fixture's page says who is in the // team; the player's page says which fixtures they are picked for. "picked-for": { to: ["player"], description: "who is in the team", inverse: "the fixtures they are picked for", }, }, // Lets a lens ask for "the start time" without knowing your field names. fieldRoles: { start: "kickOff" }, }); ```
+```ts export const fixture = defineNode("fixture", { fields: z.object({ // A NAME, and bounded: every surface draws `label`, and `min(1)` // alone permits a paragraph (`graview check`: `label-unbounded`). label: z.string().min(1).max(60), kickOff: z.string(), opponent: z.string(), }), plural: "Fixtures", description: "A match, and the team you intend to put out for it.", edges: { // One edge, two readings: the fixture's page says who is in the // team; the player's page says which fixtures they are picked for. // Kinds sharing an edge name word their own end. "picked-for": { to: ["player"], description: "who is in the team", inverse: "the fixtures they are picked for", }, }, // Its time (`who`: its author): lists, glances, timelines read it. fieldRoles: { when: "kickOff" }, }); ```
 
 1. **Add it to `createSchema([...])`.** An edge pointing at a kind that is not in that array is a *typecheck* failure, not a runtime one — `createSchema`'s `ValidateEdgeTargets` sees it.
 
@@ -68,7 +68,7 @@ computed: {
 }
 ```
 
-Every template, view spec, rule, sum and sort reads `net` like a field (`{ field: "net", as: "money" }`, `sort(all('package'), [standing, net], 'desc')`); no act or edit form offers it, and an act that sets one is refused. It is worked out over the graph the reader holds, so a seat is served one from what it may see. A glance may name one; a `label` or `describe` only one worked out from the record alone (no graph is in hand). Templates say counts in words: `{n | words}` ("three"), `{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C"). The check refuses a cycle (`computed-cycle`), a name that is already a field (`computed-clash`) and work that grows with the cube of the graph (`computed-cost`, a warning at the square).
+Every template, view spec, rule, sum and sort reads `net` like a field (`{ field: "net", as: "money" }`, `sort(all('package'), [standing, net], 'desc')`); no act or edit form offers it, and an act that sets one is refused. It is worked out over the graph the reader holds, so a seat is served one from what it may see. A glance may name one; a `label` or `describe` only one worked out from the record alone (no graph is in hand). Templates say counts in words: `{n | words}` ("three"), `{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C"). The check refuses a cycle (`computed-cycle`), a name that is already a field (`computed-clash`) and work that grows with the cube of the graph (`computed-cost`, a warning at the square). A document's top-level `computed` holds facts of the whole graph, read as `fact('name')`.
 
 ### Then find out whether it worked
 
@@ -82,9 +82,8 @@ Report **the actual output**, including warnings. What it catches here:
 
 - `edge-target-undeclared` — an edge to a kind nobody declared
 - `edge-without-inverse` — a relation with words for one of its two readings
-- `edge-name-shared` — one edge name declared on two kinds in two sets of words (`by` on a song and on an album); every surface treats a name as ONE relation, so name each its own
 - `act-without-far-end-reading` — an act offered on an end it has no words for
-- `field-role-missing-field` — a role pointing at a field that is not there
+- `field-role-missing-field`, `field-role-ill-typed` — a role naming no field; a `when` no date, a `who` no name
 - `required-invariant-unregistered` — `requiresInvariant` naming no rule
 - `mutation-untitled` / `mutation-undescribed` — a verb nobody can read
 

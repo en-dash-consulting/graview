@@ -94,8 +94,9 @@ export function validateComputed(kinds: ReadonlyMap<string, ComputedKind>, at: (
       const shape = analyzeExpr(expr);
       for (const fn of shape.unknownFunctions) findings.push(error("unknown-function", path, `"${fn}" is not a function the rule language knows`, "see the rule language in the graview-invariant skill"));
       for (const n of shape.names) {
-        if (n === "id" || spec.fields.has(n) || spec.edges.has(n) || spec.computed.has(n)) continue;
-        findings.push(error("computed-name", path, `${kind} has no field, relation or computed field called "${n}"`));
+        // A fact of the whole graph has no record to read a name from, not even another fact's: it reads them with all() and fact().
+        if (kind !== WHOLE_GRAPH && (n === "id" || spec.fields.has(n) || spec.edges.has(n) || spec.computed.has(n))) continue;
+        findings.push(error("computed-name", path, `${kind} has no field, relation or computed field called "${n}"`, kind === WHOLE_GRAPH ? "read records with all('<kind>'), and a fact with fact('<name>')" : undefined));
       }
       for (const e of shape.edges) if (!edges.has(e)) findings.push(error("computed-edge", path, `"${e}" is not a relation any kind declares`));
       for (const k of shape.sweeps) if (!kinds.has(k)) findings.push(error("computed-kind", path, `"${k}" is not a kind this declaration has`));
@@ -143,6 +144,32 @@ export function validateComputed(kinds: ReadonlyMap<string, ComputedKind>, at: (
     }
   }
   return findings;
+}
+
+/**
+ * A DOCUMENT'S COMPUTED FIELDS, JUDGED, at `kinds.<kind>.computed.<name>` —
+ * by the checker (`compileDocument`), not by a page that compiles a document
+ * its host has already judged (FR-57): one a page cannot work out is refused
+ * where it is read, as any value out of its budget is.
+ */
+export function computedFindings(document: { readonly kinds: Readonly<Record<string, { readonly fields: object; readonly edges?: object } & Parameters<typeof computedOf>[0]>> } & Parameters<typeof computedOf>[0]): Finding[] {
+  const kinds = new Map<string, ComputedKind>(Object.entries(document.kinds).map(([kind, spec]) => [kind, { fields: new Set(Object.keys(spec.fields)), edges: new Set(Object.keys(spec.edges ?? {})), computed: computedOf(spec) }]));
+  return validateComputed(withFacts(kinds, document), (kind, name) => (kind === WHOLE_GRAPH ? `computed.${name}` : `kinds.${kind}.computed.${name}`));
+}
+
+/**
+ * THE WHOLE GRAPH'S FACTS, judged as a kind's computed fields are — the
+ * same names, costs and mistakes — as the computed fields of a kind no
+ * record is, whose fields and relations are none: a fact reads records with
+ * `all('<kind>')`, and other facts with `fact('<name>')`.
+ */
+export const WHOLE_GRAPH = "the whole graph";
+
+/** `kinds` with the app's facts beside them, under `WHOLE_GRAPH`, when it works any out. */
+export function withFacts(kinds: Map<string, ComputedKind>, app: Parameters<typeof computedOf>[0]): Map<string, ComputedKind> {
+  const facts = computedOf(app);
+  if (facts.size > 0) kinds.set(WHOLE_GRAPH, { fields: new Set(), edges: new Set(), computed: facts });
+  return kinds;
 }
 
 /** A path from `start` back to itself through what each name reads, or nothing. */

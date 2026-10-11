@@ -4,12 +4,13 @@ import type { Principal } from "../permissions/types.js";
 import type { Store } from "../store.js";
 import { declaredLenses, orderKinds, placesOf, type AppPlace } from "../places.js";
 import type { AnySchema } from "../schema/schema.js";
-import { fieldWords, isCurrent, labelOf, pageSections, pluralOf, readableFields } from "../schema/define-node.js";
+import { fieldWords, humanizeField, isCurrent, labelOf, pageSections, pluralOf, readableFields } from "../schema/define-node.js";
 import { recordPath } from "../views/types.js";
 import { columnMoves, columnOf, statusColumns } from "../columns.js";
 import { coverageParts } from "./describe-coverage.js";
 import { compileBlocks, fieldSpecsOf, resolveBlocks, type BlockContext, type ResolvedBlock } from "./blocks.js";
-import { withComputed } from "./computed-values.js";
+import { computedValues, withComputed, type ComputedRecord, type PlainComputed } from "./computed-values.js";
+import { computedOf } from "./computed.js";
 import { shapesOfSchema } from "./rules.js";
 import type { KindShape } from "./expr/evaluate.js";
 import { isInlineSvg, markHref } from "../theme/marks.js";
@@ -90,9 +91,25 @@ export interface DescribedMasthead {
   readonly logo?: { readonly alt: string; readonly drawn: "inline SVG" | "image"; readonly src?: string };
 }
 
+/** One fact of the whole graph (a document's top-level `computed`), as this seat's graph works it out. */
+export interface DescribedFact {
+  readonly name: string;
+  readonly label: string;
+  /** Its value as words: yes or no, a number, a record's name, names joined; absent when it could not be worked out. */
+  readonly value?: string;
+  /** Why it could not be worked out. */
+  readonly refused?: string;
+}
+
 export interface PlaceDescription {
   /** On the home: what its masthead says (FR-125). */
   readonly masthead?: DescribedMasthead;
+  /**
+   * On the home, which is about no one record: the app's facts of the whole
+   * graph, worked out over what this seat sees — what any block may say
+   * with `fact('<name>')`, whether or not a block on this place does.
+   */
+  readonly facts?: readonly DescribedFact[];
   readonly place: { readonly slug: string; readonly title: string; readonly kind: string | null; readonly address: string };
   /** Who it was described for: the seat's roles, or "the system". */
   readonly seat: string;
@@ -335,8 +352,25 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
   }
   const seat = principal.kind === "system" ? "the system" : (principal.roles ?? []).length > 0 ? (principal.roles ?? []).join(", ") : principal.kind;
   const variant = width < PHONE ? "phone" : "wide";
-  const description: Omit<PlaceDescription, "text"> = { ...(masthead ? { masthead } : {}), place: described, seat, width, variant, drawnBy: drawnBy!, parts, problems };
+  // The home is about no one record, and so are the app's facts: said beside it, worked out over this seat's graph.
+  const facts = described.kind === null ? factsOf(schema, graph) : [];
+  const description: Omit<PlaceDescription, "text"> = { ...(masthead ? { masthead } : {}), ...(facts.length > 0 ? { facts } : {}), place: described, seat, width, variant, drawnBy: drawnBy!, parts, problems };
   return { ok: true, description: { ...description, text: placeText(description) } };
+}
+
+/**
+ * The whole graph's facts, each as words, worked out over `graph` — read
+ * as `factValues` reads them, from the record-less computed values, so the
+ * module that exports it is reached only by what asks for it.
+ */
+function factsOf(schema: AnySchema, graph: GraphReader): DescribedFact[] {
+  const worked = computedValues(schema, graph, null);
+  const said = (value: PlainComputed): string =>
+    Array.isArray(value) ? value.map(said).join(", ") : value === null ? "nothing" : typeof value === "boolean" ? (value ? "yes" : "no") : typeof value === "object" ? (value as ComputedRecord).label : String(value);
+  return [...computedOf(schema)].map(([name, entry]) => {
+    const label = entry.label ?? humanizeField(name);
+    return Object.hasOwn(worked.values, name) ? { name, label, value: said(worked.values[name]!) } : { name, label, refused: worked.refused[name] ?? "it could not be worked out" };
+  });
 }
 
 function kindWord(schema: AnySchema, kind: string, count: number): string {
@@ -389,6 +423,10 @@ export function placeText(description: Omit<PlaceDescription, "text">): string {
     }
   };
   walk(description.parts, "");
+  if (description.facts) {
+    lines.push("Facts of the whole graph (what fact('<name>') reads):");
+    for (const fact of description.facts) lines.push(`- ${fact.label} (${fact.name}): ${fact.value ?? `not worked out — ${fact.refused}`}`);
+  }
   if (description.problems.length > 0) {
     lines.push("Problems:");
     for (const problem of description.problems) lines.push(`- ${problem.at}: ${problem.says}`);
