@@ -1,4 +1,4 @@
-import { pluralLabel, humanizeField, layer, resolveKit, type AnySchema } from "@graview/core";
+import { edgeWords, pluralLabel, layer, resolveKit, type AnySchema } from "@graview/core";
 import { kitConnector, useKit } from "@graview/react/drawing";
 import { useGraph, useGraview, useGraviewIfAny, useNavigation, useSelection } from "@graview/react/provider";
 import {
@@ -239,24 +239,20 @@ export const KEY_PANE_WIDTH = "min(280px, calc(100% - 28px))";
  * after them ("The artist whose song it is · The artist whose release it is").
  */
 export function relationWords(schema: AnySchema, edgeKind: string, fromKind?: string): { readonly words: string; readonly ends: string } {
-  const info = schema.edge(edgeKind);
-  const declaring = fromKind !== undefined && info?.from.includes(fromKind) ? [fromKind] : (info?.from ?? []);
-  const readings = new Map<string, { from: string[]; to: Set<string> }>();
-  for (const kind of declaring) {
-    const declared = schema.tryDefinition(kind)?.edges[edgeKind] as { readonly description?: string; readonly to: readonly string[] | "*" } | undefined;
-    const said = declared?.description ?? info?.description ?? humanizeField(edgeKind).toLowerCase();
-    const reading = readings.get(said) ?? { from: [], to: new Set<string>() };
-    reading.from.push(kind);
-    for (const to of declared?.to === "*" ? ["*"] : (declared?.to ?? [])) reading.to.add(to);
-    readings.set(said, reading);
+  const from = schema.edge(edgeKind)?.from ?? [];
+  const readings = new Map<string, string[]>();
+  for (const kind of fromKind !== undefined && from.includes(fromKind) ? [fromKind] : from.length > 0 ? from : [""]) {
+    const words = edgeWords(schema, kind, edgeKind, "out");
+    readings.set(words, [...(readings.get(words) ?? []), kind]);
   }
-  if (readings.size === 0) readings.set(info?.description ?? humanizeField(edgeKind).toLowerCase(), { from: [], to: new Set() });
   const plural = (kind: string) => (kind === "*" ? "anything" : pluralLabel(schema, kind));
-  const said = [...readings].map(([words, { from, to }]) => ({
-    words: words.charAt(0).toUpperCase() + words.slice(1),
-    ends: from.length > 0 && to.size > 0 ? `${from.map(plural).join(", ")} → ${(to.has("*") ? ["*"] : [...to]).map(plural).join(", ")}` : "",
-  }));
-  return { words: said.map((one) => one.words).join(" · "), ends: said.map((one) => one.ends).filter(Boolean).join(" · ") };
+  const said = [...readings].map(([words, kinds]) => {
+    // A string `to` ("*") is one element, not its letters.
+    const to = kinds.flatMap((kind) => (schema.tryDefinition(kind)?.edges[edgeKind] as { readonly to?: readonly string[] | "*" } | undefined)?.to ?? []);
+    const ends = kinds[0] && to.length > 0 ? `${kinds.map(plural).join(", ")} → ${(to.includes("*") ? ["*"] : [...new Set(to)]).map(plural).join(", ")}` : "";
+    return [words.charAt(0).toUpperCase() + words.slice(1), ends] as const;
+  });
+  return { words: said.map(([words]) => words).join(" · "), ends: said.flatMap(([, ends]) => (ends ? [ends] : [])).join(" · ") };
 }
 
 /**

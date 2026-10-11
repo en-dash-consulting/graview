@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest";
  */
 const root = resolve(import.meta.dirname, "..");
 /** Modules that run only in Node, and the scaffold's text: their subpath imports never reach an app's bundle. */
-const NODE_ONLY = /(^|\/)(cli|dev|serve|file-adapter|sqlite)[^/]*\.ts$|\/cli\/|\/scaffold\/|\/packages\/(graview|create-graview)\//;
+const NODE_ONLY = /(^|\/)(cli|dev|door|serve|file-adapter|sqlite)[^/]*\.ts$|\/cli\/|\/scaffold\/|\/packages\/(graview|create-graview)\//;
 
 function importedSubpaths(): Set<string> {
   const found = new Set<string>();

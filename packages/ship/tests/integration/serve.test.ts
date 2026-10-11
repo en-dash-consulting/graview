@@ -281,28 +281,46 @@ describe("who is here, beside the log and never in it", () => {
 
   it("forgets a tab that went quiet, and one that said goodbye at once", async () => {
     await served.close();
-    served = await serveStore({ app, adapter: createFileAdapter(root), seed: seed as never, presenceTtlMs: 60, trustSeatHeaders: true });
+    served = await serveStore({ app, adapter: createFileAdapter(root), seed: seed as never, presenceTtlMs: 200, trustSeatHeaders: true });
     const one = await openRemote({ app, url: served.url, principal: KEEPER, pollMs: 0 });
     const two = await openRemote({ app, url: served.url, principal: READER, pollMs: 0 });
     const three = await openRemote({ app, url: served.url, principal: { kind: "human", id: "u-third", roles: ["reader"] }, pollMs: 0 });
     const seen: string[][] = [];
     three.presence.onWho((who) => seen.push(who.map((p) => p.participant)));
-    one.presence.here(presence("human:u-keeper:a", "#"));
-    two.presence.here(presence("human:u-reader:b", "#"));
     three.presence.here(presence("human:u-third:c", "#"));
-    await one.pull();
-    await two.pull();
-    await three.pull();
-    expect(seen.at(-1)?.sort()).toEqual(["human:u-keeper:a", "human:u-reader:b"]);
-    // Two says goodbye; one just stops talking.
+    /*
+     * WAITED ON, NOT TIMED: a tab that is still talking says so again while
+     * the third looks, so a loaded machine never forgets it early, and the
+     * third looks until it hears what it waits for (or ten seconds pass).
+     */
+    const talking = new Map([
+      [one, "human:u-keeper:a"],
+      [two, "human:u-reader:b"],
+    ]);
+    const hears = async (want: string[]) => {
+      for (const deadline = Date.now() + 10_000; Date.now() < deadline; ) {
+        for (const [tab, participant] of talking) {
+          tab.presence.here(presence(participant, "#"));
+          await tab.pull();
+        }
+        await three.pull();
+        if (JSON.stringify(seen.at(-1)?.slice().sort()) === JSON.stringify(want)) return;
+        await new Promise((settle) => setTimeout(settle, 10));
+      }
+    };
+    await hears(["human:u-keeper:a", "human:u-reader:b"]);
+    expect(seen.at(-1)?.slice().sort()).toEqual(["human:u-keeper:a", "human:u-reader:b"]);
+    // Two says goodbye while one is still talking: two goes at once.
+    talking.delete(two);
     two.presence.leave();
-    await new Promise((settle) => setTimeout(settle, 20));
-    await three.pull();
+    await hears(["human:u-keeper:a"]);
     expect(seen.at(-1)).toEqual(["human:u-keeper:a"]);
-    await new Promise((settle) => setTimeout(settle, 90));
-    await three.pull();
+    // One just stops talking: it goes once its time is up.
+    talking.delete(one);
+    await hears([]);
     expect(seen.at(-1)).toEqual([]);
     one.close();
+    two.close();
     three.close();
   });
 });

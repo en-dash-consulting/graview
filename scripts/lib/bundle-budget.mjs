@@ -497,8 +497,12 @@ export const BUDGETS = [
     // tools, and the seat's model — its framing and the reading of its answer — left the faces for a chunk of its own,
     // fetched when a model first answers, so each face is about 3.9 KB smaller before it draws and every face is one chunk
     // more. 2_018 / 1_637 more than main then. Together over facts and roles: measured at 1_707_457 / 538_735.
-    minified: 1_707_900,
-    gzipped: 539_000,
+    // Raised in the review after 0.1.21, by chunks fetched later only — every face as a page loads it first (the budget
+    // "embed without the studio") is 0 / 5 smaller: the scene's way back taking its offer down when the scene goes (its
+    // door), the Key and the inspector saying a shared relation in each kind's own words, and the schema provider's reason
+    // in the words of the kind a line leaves. 825 / 478 more than main. Measured at 1_708_282 / 539_229.
+    minified: 1_708_700,
+    gzipped: 539_500,
     load: "all",
   },
   {

@@ -74,7 +74,7 @@ defineDocument({
     // @ts-expect-error — a rule is over a kind the document declares, or the graph.
     "has-a-label": { over: "tsk", require: "label != null" },
     // @ts-expect-error — the act every kind is given is named for a kind the document declares.
-    "is-labelled": { over: "task", require: "label != null", repairs: [{ act: "edit-tsk" }] },
+    "is-named": { over: "task", require: "label != null", repairs: [{ act: "edit-tsk" }] },
   },
 });
 
