@@ -112,7 +112,7 @@ export function ChatPanel<S extends AnySchema>({
   place,
   onDraft,
 }: ChatPanelProps<S>) {
-  const { store, views, view, principal, setView, seatWho, noteSeat, session, ai, seatTalk, brand } = useGraview<S>();
+  const { store, views, view, principal, setView, seatWho, noteSeat, session, ai, seatTalk, brand, app } = useGraview<S>();
   const sceneGo = useSceneGo();
   const go = onMove ?? sceneGo;
   const { takeBack } = useLensKeeping(go);
@@ -138,8 +138,10 @@ export function ChatPanel<S extends AnySchema>({
         derive: () => ({ pins: loadPins() }),
         places: () => views.places(),
         via: () => viaNow.current,
+        // The app it is mounted with, so `describe_place` says what a lens or the home shows.
+        ...(app ? { app } : {}),
       }),
-    [store, principal, author, views],
+    [store, principal, author, views, app],
   );
   /* THE GRAPH FIRST, THE HOST'S MODEL AFTER IT: a host that passes `respond` answers in its place. */
   const answer = useMemo<Responder<S>>(() => respond ?? seatResponder<S>(ai), [respond, ai]);
@@ -205,6 +207,8 @@ export function ChatPanel<S extends AnySchema>({
         places: placesFromViews(store.schema, views.places(), arranged ? { pages: arranged } : {}),
         ...(here ? { place: here } : {}),
         ...(today ? { today } : {}),
+        // And a host's turn reads with the same tools: its `describe_place` knows the app too.
+        ...(app ? { app: app as GraviewApp<AnySchema> } : {}),
       });
     },
     onReply: (reply) => {

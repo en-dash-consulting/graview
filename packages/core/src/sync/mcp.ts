@@ -5,8 +5,8 @@ import type { RemoteAck, RemoteChange, RemoteSystem, RemoteWrite } from "./types
  * by name, as the sync's transport.
  *
  * Three pieces, each usable alone. `mcpClient` calls a streamable-HTTP MCP
- * endpoint (a session, JSON or an event stream back, one retry when the
- * server forgot the session) and only the tools it was allowed. `mcpDoor` is
+ * endpoint (a session, JSON or an event stream back with the reply read by
+ * its request's id, one retry when the server forgot the session) and only the tools it was allowed. `mcpDoor` is
  * the narrow way a page reaches it: a server route that holds the token,
  * answers only its own origin's JSON, and passes only the allowed tools —
  * and `doorClient` is the page's side of it. `mcpRemote` turns calls into a
@@ -45,22 +45,53 @@ export interface McpClientOptions {
 }
 
 interface RpcAnswer {
+  readonly id?: unknown;
   readonly result?: { readonly content?: readonly { readonly type: string; readonly text?: string }[]; readonly isError?: boolean };
   readonly error?: { readonly message?: string };
 }
 
-/** A JSON-RPC answer, from a JSON body or the last `data:` line of an event stream. */
-async function readAnswer(response: Response): Promise<RpcAnswer> {
-  const text = await response.text();
-  if (response.headers.get("content-type")?.includes("text/event-stream")) {
-    const data = text
-      .split("\n")
-      .filter((line) => line.startsWith("data:"))
-      .map((line) => line.slice(5).trim())
-      .filter(Boolean);
-    return data.length > 0 ? (JSON.parse(data[data.length - 1]!) as RpcAnswer) : {};
+/**
+ * The `data` of each event in an event stream, as the SSE spec reads it: an
+ * event ends at a blank line, its `data:` lines join with a newline, one
+ * space after the colon is dropped, and a line starting `:` is a comment.
+ */
+function streamEvents(text: string): string[] {
+  const events: string[] = [];
+  let data: string[] | undefined;
+  for (const line of `${text}\n\n`.split(/\r\n|\r|\n/)) {
+    if (line === "") {
+      if (data) events.push(data.join("\n"));
+      data = undefined;
+      continue;
+    }
+    const colon = line.indexOf(":");
+    if (colon === 0 || (colon === -1 ? line : line.slice(0, colon)) !== "data") continue;
+    const value = colon === -1 ? "" : line.slice(colon + 1);
+    (data ??= []).push(value.startsWith(" ") ? value.slice(1) : value);
   }
-  return text ? (JSON.parse(text) as RpcAnswer) : {};
+  return events;
+}
+
+/**
+ * THE REPLY TO THIS REQUEST, chosen by its JSON-RPC id: a stream may carry
+ * notifications and the server's own requests before or after it, and a
+ * JSON body may be a batch. Undefined when nothing in the answer is it.
+ */
+async function readAnswer(response: Response, id: number): Promise<RpcAnswer | undefined> {
+  const text = await response.text();
+  const bodies = response.headers.get("content-type")?.includes("text/event-stream") ? streamEvents(text) : [text];
+  for (const body of bodies) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(body);
+    } catch {
+      continue;
+    }
+    for (const message of Array.isArray(parsed) ? parsed : [parsed]) {
+      if (message && typeof message === "object" && (message as RpcAnswer).id === id && ("result" in message || "error" in message)) return message as RpcAnswer;
+    }
+  }
+  return undefined;
 }
 
 /** Calls an MCP server's tools over streamable HTTP. */
@@ -105,10 +136,11 @@ export function mcpClient(options: McpClientOptions): ToolCall {
     const refusal = refuse(name);
     if (refusal) throw new Error(refusal);
     if (session === undefined) session = await (opening ??= open().finally(() => (opening = undefined)));
+    const asked = ++id;
     const response = await send(options.url, {
       method: "POST",
       headers: await headers(),
-      body: JSON.stringify({ jsonrpc: "2.0", id: ++id, method: "tools/call", params: { name, arguments: args } }),
+      body: JSON.stringify({ jsonrpc: "2.0", id: asked, method: "tools/call", params: { name, arguments: args } }),
     });
     if ((response.status === 404 || response.status === 400) && retry && session !== undefined) {
       // The server restarted and forgot the session: open another, once.
@@ -117,7 +149,8 @@ export function mcpClient(options: McpClientOptions): ToolCall {
       return call(name, args, false);
     }
     if (!response.ok) throw new Error(`The MCP server answered ${response.status} to ${name}.`);
-    const answer = await readAnswer(response);
+    const answer = await readAnswer(response, asked);
+    if (!answer) throw new Error(`The MCP server sent no reply to ${name}.`);
     if (answer.error) throw new Error(answer.error.message ?? `The MCP server refused ${name}.`);
     const text = answer.result?.content?.find((part) => part.type === "text")?.text ?? "";
     if (answer.result?.isError) throw new Error(text || `${name} failed.`);

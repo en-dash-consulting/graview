@@ -43,9 +43,9 @@ describe("a seat is served its own words", () => {
     const someone = { kind: "human" as const, id: "someone", roles: ["r1"] };
     there.apply({ name: "make", args: { title: "Shed", ref: hidden } }, { author: someone });
     expect(there.seenBy(viewer).graph.getNode("d:shed")).toBeUndefined();
-    // Once somebody else points that field at a hidden record, the words are theirs, and the record is withheld again.
+    // Once somebody who sees it all points that field at a hidden record, the words are theirs, and the record is withheld again. (Not "someone": d:barn is withheld from them, so it is not there for their acts.)
     const another = w.nodes.find((node) => (node.kind === "b" || node.kind === "c") && node.id !== hidden)!.id;
-    there.apply({ name: "point", args: { id: "d:barn", ref: another } }, { author: someone });
+    there.apply({ name: "point", args: { id: "d:barn", ref: another } }, { author: { kind: "system" } });
     expect(there.seenBy(viewer).graph.getNode("d:barn")).toBeUndefined();
   });
 

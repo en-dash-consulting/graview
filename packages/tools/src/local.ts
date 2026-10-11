@@ -305,7 +305,9 @@ export function seatResponder<S extends AnySchema>(
     readonly floor?: Responder<S>;
   } = {},
 ): Responder<S> {
-  const floor = hooks.floor ?? graphResponder<S>();
+  const graph = hooks.floor ?? graphResponder<S>();
+  /* The graph answers as the seat that asked, whatever store it was handed; the model's prompt is narrowed the same way (`llmResponder`). */
+  const floor: Responder<S> = (store, text, context) => graph(context?.principal ? store.seenBy(context.principal) : store, text, context);
   const talking = talkingModel(ai, hooks);
   if (!talking) {
     return async (store, text, context) => {

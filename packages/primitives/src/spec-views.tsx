@@ -79,8 +79,9 @@ export interface BlockSlotProps {
 }
 export type BlockSlotComponent = ComponentType<BlockSlotProps>;
 /**
- * A face's claims, by view — `"home"`, or a kind's `"<kind>.page"`,
- * `"<kind>.card"` or `"<kind>.row"`, as `describe_place` names them — and in
+ * A face's claims, by view — `"home"`, a kind's `"<kind>.page"`,
+ * `"<kind>.card"` or `"<kind>.row"`, or a blocks lens's own address
+ * (`"the-offers"`), as `describe_place` names them — and in
  * each, by block key. A component may be `lazy`: the framework's drawing
  * stands in until it arrives.
  */
@@ -376,8 +377,8 @@ function SpecList({ list }: { readonly list: ResolvedList }) {
   );
 }
 
-/** Blocks about no one record — the home's body, a blocks lens — drawn under the provider, from the graph its seat may see. */
-export function SpecPlace({ blocks, heading = 2, firstHeading, slot }: { readonly blocks: readonly SpecBlock[]; readonly heading?: number; readonly firstHeading?: number; readonly slot: "home" | "place" }) {
+/** Blocks about no one record — the home's body, a blocks lens — drawn under the provider, from the graph its seat may see, as `view`: `"home"`, or a blocks lens's own address. */
+export function SpecPlace({ blocks, heading = 2, firstHeading, slot, view = slot }: { readonly blocks: readonly SpecBlock[]; readonly heading?: number; readonly firstHeading?: number; readonly slot: "home" | "place"; readonly view?: string }) {
   const { store, brand } = useGraview();
   useGraph();
   // As `resolveFor` reads them: the store's own day, the brand's money (FR-100), a page's budget — blocks about no record sweep whole kinds.
@@ -389,7 +390,7 @@ export function SpecPlace({ blocks, heading = 2, firstHeading, slot }: { readonl
     <div className={`graview-spec graview-spec-${slot}`} data-graview-spec={slot}>
       {line !== null && !headed ? line : null}
       <HomeLine.Provider value={headed ? line : null}>
-        <SpecBlocks blocks={blocks} ctx={ctx} view={slot} />
+        <SpecBlocks blocks={blocks} ctx={ctx} view={view} />
       </HomeLine.Provider>
     </div>
   );

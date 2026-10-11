@@ -59,18 +59,20 @@ function made(lens: DrawnLens): ViewComponent<AnySchema> {
     case "columns":
       return createColumnsLens<AnySchema>(options as unknown as ColumnsOptions).View as ViewComponent<AnySchema>;
     case "blocks":
-      return blocksLens(compileBlocks(Array.isArray(options["blocks"]) ? (options["blocks"] as readonly unknown[]) : []));
+      return blocksLens(compileBlocks(Array.isArray(options["blocks"]) ? (options["blocks"] as readonly unknown[]) : []), lens.as);
   }
 }
 
 /**
  * A PLACE DRAWN FROM BLOCKS (FR-81): the lens's blocks about no one record,
  * under its title in the scene (a card, as every lens is) and bare on a
- * page, whose own heading already says what it is.
+ * page, whose own heading already says what it is. A face claims its blocks
+ * under the lens's own address (`view`, its `as`), so two lenses that say
+ * one key keep their own claims.
  */
-function blocksLens(blocks: readonly SpecBlock[]): ViewComponent<AnySchema> {
+function blocksLens(blocks: readonly SpecBlock[], view: string): ViewComponent<AnySchema> {
   return (props: ViewProps<AnySchema>) => {
-    const place = <SpecPlace blocks={blocks} slot="place" heading={props.mode === "fullscreen" ? 2 : 3} />;
+    const place = <SpecPlace blocks={blocks} slot="place" view={view} heading={props.mode === "fullscreen" ? 2 : 3} />;
     if (props.fidelity === "glyph") return <span className="graview-spec-title">{props.label}</span>;
     // On a page it stands in the page's frame for a picture, which has no padding of its own.
     return props.mode === "fullscreen" ? <div style={{ padding: "14px 16px" }}>{place}</div> : <Panel title={props.label ?? ""}>{place}</Panel>;

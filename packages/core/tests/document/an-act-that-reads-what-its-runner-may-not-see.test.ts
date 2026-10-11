@@ -7,11 +7,11 @@ import { compileDocument } from "../../src/check.js";
 
 /**
  * FR-105. THE CHECK WARNS WHEN AN ACT READS A KIND SOME ROLE THAT MAY RUN
- * IT CANNOT SEE. The store hides what a seat may not see and refuses a call
- * naming a hidden record as one naming nothing; an act's own logic — a
- * condition that counts hidden records, a refusal worded from one, an
- * effect that copies from one — can still tell a seat that one exists. With
- * a chat writing acts, the author is told: the act, the role, the kind, and
+ * IT CANNOT SEE. The store hides what a seat may not see, refuses a call
+ * naming a hidden record as one naming nothing, and runs an act under its
+ * caller's sight — so a condition that counts hidden records counts none
+ * for that seat, and the act judges as though they did not exist. With a
+ * chat writing acts, the author is told: the act, the role, the kind, and
  * where the act reads it. A document's act is read for its condition,
  * refusal and effects; a TypeScript act's body is not read, so it says what
  * it reads with `reads`. A warning only: nothing at run time changes.
@@ -56,9 +56,9 @@ describe("a document's act that reads what a role that may run it cannot see", (
 
   it("names the act, the role, the kind and where the act reads it: a condition, a refusal, a value it sets", () => {
     expect(hidden(result.findings).map((f) => [f.severity, f.path, f.message])).toEqual([
-      ["warning", "acts.close-deal", '"close-deal" reads memo records (its condition), which "agent" may run it but may not see: whether it is allowed, what it refuses with or what it writes can tell "agent" that a memo they cannot see exists.'],
-      ["warning", "acts.reopen-deal", '"reopen-deal" reads memo records (its refusal), which "agent" may run it but may not see: whether it is allowed, what it refuses with or what it writes can tell "agent" that a memo they cannot see exists.'],
-      ["warning", "acts.tally-deal", '"tally-deal" reads memo records (a value it sets), which "agent" may run it but may not see: whether it is allowed, what it refuses with or what it writes can tell "agent" that a memo they cannot see exists.'],
+      ["warning", "acts.close-deal", '"close-deal" reads memo records (its condition), which "agent" may run it but may not see: run by "agent", it reads none, and is allowed, refuses and writes as though no memo existed.'],
+      ["warning", "acts.reopen-deal", '"reopen-deal" reads memo records (its refusal), which "agent" may run it but may not see: run by "agent", it reads none, and is allowed, refuses and writes as though no memo existed.'],
+      ["warning", "acts.tally-deal", '"tally-deal" reads memo records (a value it sets), which "agent" may run it but may not see: run by "agent", it reads none, and is allowed, refuses and writes as though no memo existed.'],
     ]);
   });
 
@@ -109,7 +109,7 @@ describe("a TypeScript act says what it reads, because its body cannot be read",
 
   it("an act that declares it reads memo is named for each role that may run it and may not see one", () => {
     const close = defineMutation("close-deal", { input: z.object({ deal: nodeRef(["deal"]) }), subject: { kinds: ["deal"], arg: "deal" }, reads: ["memo"], apply() {} });
-    expect(said(close)).toEqual([["close-deal", '"close-deal" reads memo records (what it declares it reads), which "agent" may run it but may not see: whether it is allowed, what it refuses with or what it writes can tell "agent" that a memo they cannot see exists.']]);
+    expect(said(close)).toEqual([["close-deal", '"close-deal" reads memo records (what it declares it reads), which "agent" may run it but may not see: run by "agent", it reads none, and is allowed, refuses and writes as though no memo existed.']]);
   });
 
   it("an act that asks for a record of a kind its runner may not see is told it can never be given one", () => {

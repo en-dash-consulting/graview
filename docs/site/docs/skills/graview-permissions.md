@@ -59,6 +59,8 @@ The checker reports `mutation-unreachable-by-any-role` (declared and unreachable
 
 `act-reads-hidden-kind` (a warning, FR-105) names an act, a role that may run it and a kind that role may not see, which the act reads: its condition, its refusal, a value it sets in a document (on its subject or the other record) or the links it `replaces`; what it declares it `reads` in TypeScript (`reads: ["memo"]` — an `apply` is never read, so say it). The store hides the records; the act's answer can still tell that one exists. Let the role see the kind, keep the act from it, or read only what it sees.
 
+A seat's problems are judged over what it sees: a rule counting `fact('proposed')` says 3 to the owner and 1, or nothing, to a guest who sees one. `rule-says-hidden-fact` (a warning) names each rule whose message says a fact over a kind some role told of it may not see in full.
+
 **And try it.** Two tests that matter more than the check:
 
 ```ts

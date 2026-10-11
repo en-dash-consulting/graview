@@ -1,188 +1,154 @@
 {
-  "at": "2026-10-04T07:21:57.172Z",
+  "at": "2026-10-11T18:40:16.927Z",
   "engine": "chromium",
   "stops": {
     "altitude, still": {
       "frames": 15,
-      "first": 20,
-      "p50": 19,
-      "p95": 19.4,
+      "first": 19,
+      "p50": 19.1,
+      "p95": 19.2,
       "worst": 19,
       "slow": [],
       "longTasks": 0,
-      "dom": 2192,
+      "dom": 529,
       "hosts": 5,
       "strands": 0,
-      "thumbnails": 4,
-      "waiting": 0
+      "names": 4
     },
     "altitude, drag": {
-      "frames": 125,
-      "first": 56,
-      "p50": 18.4,
+      "frames": 127,
+      "first": 20,
+      "p50": 17.8,
       "p95": 19.5,
-      "worst": 38,
-      "slow": [
-        [
-          1217,
-          38
-        ]
-      ],
-      "longTasks": 0,
-      "dom": 2194,
-      "hosts": 5,
-      "strands": 0,
-      "thumbnails": 4,
-      "waiting": 0
-    },
-    "altitude, wheel": {
-      "frames": 573,
-      "first": 19,
-      "p50": 0.3,
-      "p95": 19,
       "worst": 20,
       "slow": [],
       "longTasks": 0,
-      "dom": 2202,
+      "dom": 533,
       "hosts": 5,
       "strands": 0,
-      "thumbnails": 4,
-      "waiting": 0
+      "names": 4
+    },
+    "altitude, wheel": {
+      "frames": 105,
+      "first": 19,
+      "p50": 18.8,
+      "p95": 19.3,
+      "worst": 20,
+      "slow": [],
+      "longTasks": 0,
+      "dom": 534,
+      "hosts": 5,
+      "strands": 0,
+      "names": 4
     },
     "descend": {
-      "frames": 243,
+      "frames": 176,
       "first": 19,
-      "p50": 4.7,
+      "p50": 6.7,
       "p95": 19.1,
       "worst": 20,
       "slow": [],
       "longTasks": 0,
-      "dom": 447,
+      "dom": 500,
       "hosts": 6,
       "strands": 0,
-      "thumbnails": 0,
-      "waiting": 0
+      "names": 0
     },
     "focus the hub": {
-      "frames": 1062,
-      "first": 38,
-      "p50": 0.6,
+      "frames": 813,
+      "first": 35,
+      "p50": 0.8,
       "p95": 18.8,
       "worst": 20,
       "slow": [],
       "longTasks": 0,
-      "dom": 540,
-      "hosts": 21,
-      "strands": 26,
-      "thumbnails": 0,
-      "waiting": 0
+      "dom": 440,
+      "hosts": 23,
+      "strands": 28,
+      "names": 0
     },
     "hub, drag": {
-      "frames": 127,
-      "first": 20,
-      "p50": 18.7,
-      "p95": 19.6,
-      "worst": 38,
-      "slow": [
-        [
-          1108,
-          38
-        ]
-      ],
+      "frames": 1452,
+      "first": 18,
+      "p50": 0.3,
+      "p95": 1.7,
+      "worst": 20,
+      "slow": [],
       "longTasks": 0,
-      "dom": 544,
-      "hosts": 21,
-      "strands": 26,
-      "thumbnails": 0,
-      "waiting": 0
+      "dom": 443,
+      "hosts": 23,
+      "strands": 28,
+      "names": 0
     },
     "hub, move a card": {
-      "frames": 144,
+      "frames": 914,
       "first": 20,
-      "p50": 19,
-      "p95": 19.5,
+      "p50": 0.4,
+      "p95": 19,
       "worst": 20,
       "slow": [],
       "longTasks": 0,
-      "dom": 544,
-      "hosts": 21,
-      "strands": 26,
-      "thumbnails": 0,
-      "waiting": 0
+      "dom": 443,
+      "hosts": 23,
+      "strands": 28,
+      "names": 0
     },
     "hub, wheel": {
-      "frames": 171,
+      "frames": 164,
       "first": 19,
-      "p50": 17.3,
-      "p95": 19.6,
+      "p50": 17.2,
+      "p95": 19.3,
       "worst": 20,
       "slow": [],
       "longTasks": 0,
-      "dom": 544,
-      "hosts": 21,
-      "strands": 26,
-      "thumbnails": 0,
-      "waiting": 0
+      "dom": 443,
+      "hosts": 23,
+      "strands": 28,
+      "names": 0
     },
     "hub, select": {
       "frames": 67,
-      "first": 76,
+      "first": 37,
       "p50": 19.1,
-      "p95": 19.4,
+      "p95": 19.3,
       "worst": 20,
       "slow": [],
       "longTasks": 1,
-      "dom": 505,
-      "hosts": 21,
-      "strands": 26,
-      "thumbnails": 0,
-      "waiting": 0
+      "dom": 440,
+      "hosts": 23,
+      "strands": 28,
+      "names": 0
     },
     "hub, type in Find": {
-      "frames": 839,
-      "first": 57,
-      "p50": 0.7,
-      "p95": 18.8,
-      "worst": 38,
+      "frames": 890,
+      "first": 33,
+      "p50": 0.6,
+      "p95": 17.4,
+      "worst": 34,
       "slow": [
         [
-          194,
-          38
-        ],
-        [
-          318,
-          37
-        ]
-      ],
-      "longTasks": 1,
-      "dom": 940,
-      "hosts": 21,
-      "strands": 26,
-      "thumbnails": 0,
-      "waiting": 0
-    },
-    "rise": {
-      "frames": 3243,
-      "first": 17,
-      "p50": 0.1,
-      "p95": 0.8,
-      "worst": 47,
-      "slow": [
-        [
-          866,
-          39
-        ],
-        [
-          934,
-          47
+          166,
+          34
         ]
       ],
       "longTasks": 0,
-      "dom": 2316,
+      "dom": 886,
+      "hosts": 23,
+      "strands": 30,
+      "names": 0
+    },
+    "rise": {
+      "frames": 6496,
+      "first": 18,
+      "p50": 0.1,
+      "p95": 0.2,
+      "worst": 20,
+      "slow": [],
+      "longTasks": 0,
+      "dom": 646,
       "hosts": 6,
       "strands": 0,
-      "thumbnails": 4,
-      "waiting": 0
+      "names": 4
     }
   },
   "pageErrors": [],
@@ -234,13 +200,13 @@
     {
       "id": "aggregate:song|by|in|more:by:artist:tech-n9ne",
       "opens": "picture",
-      "text": "791 more songs↗Assassin's Creed [Remix] · Grammys (skit) · EMJ …",
+      "text": "790 more songs↗Grammys (skit) · EMJ · Roll Call …",
       "reachable": true
     },
     {
       "id": "aggregate:song|features|in|more:features:artist:tech-n9ne",
       "opens": "picture",
-      "text": "325 more songs↗The Anthem (radio) · Reel Wolf: The Underworld · Thanos …",
+      "text": "324 more songs↗Reel Wolf: The Underworld · Thanos · The Underworld …",
       "reachable": true
     }
   ],
@@ -249,7 +215,7 @@
     "before": "#focus=artist%3Atech-n9ne",
     "during": {
       "hash": "#focus=artist%3Atech-n9ne&expand=aggregate%3Aalbum%7Creleased-by%7Cin%7Ctype%3Dalbum",
-      "band": 15
+      "band": 18
     },
     "after": "#focus=artist%3Atech-n9ne&sel=aggregate%3Aalbum%7Creleased-by%7Cin%7Ctype%3Dalbum"
   },

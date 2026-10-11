@@ -13,6 +13,7 @@ import {
   withArticle,
   type AnySchema,
   type FormField,
+  type GraviewApp,
   type Hit,
   type AppPlace,
   type Principal,
@@ -144,8 +145,18 @@ export interface ChatContext {
    * model that answers with nothing does not get to replace it.
    */
   readonly reading?: readonly ProposedCall[];
-  /** Who is asking, so what the words find is only what this seat may see. */
+  /**
+   * Who is asking, so what the words find is only what this seat may see.
+   * A model's prompt and its turn's tools are read as this seat too; with
+   * none, as `{ kind: "agent" }`, never as the whole graph (`llmResponder`).
+   */
   readonly principal?: Principal;
+  /**
+   * The app the seat is mounted with, so a host's turn can describe its
+   * places, lenses and home with `describe_place` as `graview mcp` does.
+   * The chat hands it from the provider's `app`.
+   */
+  readonly app?: GraviewApp<AnySchema>;
   /** The app's places (`placesOf(app)`), so an ask can be answered by going to one. */
   readonly places?: readonly AppPlace[];
   /** The place the reader stands in, by its slug: what "here" means when nothing is selected. */
@@ -765,6 +776,14 @@ function answerFrom(
  * person: its model reads what it needs, and its last text is read here
  * exactly as a completion's is. Preferred over `complete` when both are
  * given; one of the two is.
+ *
+ * ONLY WHAT THE SEAT SEES IS SAID. The prompt is written over
+ * `store.seenBy(context.principal)`, whatever store it is handed, so the
+ * whole store and a principal is as safe as the chat's narrowed one. With
+ * no principal it reads as `{ kind: "agent" }` — the seat the turn's tools
+ * act as without an author — and never as the whole graph; where the
+ * policy keeps something from that seat, the answer says so in one quiet
+ * line. Name the seat to be answered as it.
  */
 export function llmResponder<S extends AnySchema>(options: {
   readonly complete?: Completion;
