@@ -8,6 +8,8 @@ export {
   createBrowserAdapter,
   forgetFreshParam,
   freshHref,
+  PRINCIPAL_KEY,
+  rememberedPrincipal,
 } from "./browser-adapter.js";
 export type { BrowserAdapter, BrowserAdapterOptions, StorageLike } from "./browser-adapter.js";
 export { migrateSnapshot, pendingMigrations } from "./migrations.js";
