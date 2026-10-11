@@ -2,7 +2,7 @@ import { retryingImport } from "@graview/core/retry";
 import { declaredLenses, type AnySchema, type DrawnLens, type GraviewApp } from "@graview/core";
 import { lazyModule, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { Suspense } from "react";
-import { readerLenses } from "./reader-lenses.js";
+import { readerLenses, type KeptLens } from "./reader-lenses.js";
 
 /**
  * A DECLARED LENS DRAWS (FR-79), REGISTERED BEFORE IT IS FETCHED.
@@ -123,15 +123,6 @@ function doors<S extends AnySchema>(registry: ReactViewRegistry<S>, app: Pick<Gr
       registry.register(kind as never, { cardinality: "many", fidelity: "summary" }, Door, meta);
     }
   }
-}
-
-/** A lens as an `add-lens` edit says it: what a reader keeps, and what the seat hands its host. */
-export interface KeptLens {
-  readonly title: string;
-  readonly lens: string;
-  readonly on: string;
-  readonly bindings?: Readonly<Record<string, unknown>>;
-  readonly options?: Readonly<Record<string, unknown>>;
 }
 
 /**

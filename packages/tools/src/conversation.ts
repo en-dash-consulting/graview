@@ -20,9 +20,39 @@ import {
   type Violation,
 } from "@graview/core";
 import type { HostAi } from "./ai.js";
-import type { SeatMove, SeatOffer } from "./go.js";
 import { validateProposals, type Completion, type ProposedCall } from "./intelligence.js";
 import type { OfferedQuestion } from "./questions.js";
+
+/**
+ * ONE MOVE THE SEAT MAKES, as data both faces apply.
+ *
+ * `address` is the routed face's path (under no base path; a host adds its
+ * own, as `addressOf` does). The rest is what the scene needs to build the
+ * same stop. `said` is the sentence the seat says having made it.
+ */
+export type SeatMove =
+  /** The home or the scene itself (`slug` is a `placesOf` slug: `home`, `overview`). */
+  | { readonly to: "place"; readonly slug: string; readonly title: string; readonly address: string; readonly face?: "scene" | "pages"; readonly said: string }
+  /** A picture of a kind: a declared lens or a registered view (scene: `withPicture(state, kind, as)`). */
+  | { readonly to: "picture"; readonly kind: string; readonly as: string; readonly title: string; readonly address: string; readonly said: string }
+  /**
+   * A kind's list or district, narrowed when `filter` is given — the
+   * arrangement's own words (`due:after:2026-09-06,due:before:2026-09-14`):
+   * a page's `?filter=`, a stop's `in.filter`.
+   */
+  | { readonly to: "kind"; readonly kind: string; readonly title: string; readonly filter?: string; readonly address: string; readonly said: string }
+  /** One record (scene: focus and select it). */
+  | { readonly to: "record"; readonly id: string; readonly kind: string; readonly label: string; readonly address: string; readonly said: string }
+  /** The problems: the routed face's `/problems`, the scene's standing. */
+  | { readonly to: "problems"; readonly address: string; readonly said: string };
+
+/** Something the seat could not show by moving, offered instead: B3's draft of a view. */
+export interface SeatOffer {
+  /** What to draw, in the reader's words: "tasks overdue". */
+  readonly draft: string;
+  /** The words on the press. */
+  readonly label: string;
+}
 
 /**
  * A CONVERSATION over the same seam everything else uses.

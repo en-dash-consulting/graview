@@ -40,19 +40,9 @@ import {
   checkComputed,
   checkHiddenReads,
 } from "./check/index.js";
-import type { CheckContext } from "./check/context.js";
+import type { CheckContext, Finding } from "./check/context.js";
 
-export type Severity = "error" | "warning" | "note";
-
-export interface Finding {
-  readonly severity: Severity;
-  readonly code: string;
-  /** Where the problem is, in terms an agent can act on. */
-  readonly where: string;
-  readonly message: string;
-  /** The concrete edit that would fix it. */
-  readonly fix: string;
-}
+export type { Finding, Severity } from "./check/context.js";
 
 export interface CheckResult {
   readonly app: string;

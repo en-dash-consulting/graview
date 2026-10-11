@@ -1,5 +1,3 @@
-import type { ScaffoldOptions } from "./index.js";
-
 /*
  * WHAT A NEW PROJECT IS CALLED, and every way that name is spelled: a slug
  * for paths, a title for people, camel and pascal for code, and the escapes
@@ -35,9 +33,18 @@ export function pascal(slug: string): string {
 /**
  * The reasons a name or a kind cannot be used, said before any file exists.
  * A kind is a TypeScript identifier and a URL segment and an edge target,
- * so it is held to the strictest of those.
+ * so it is held to the strictest of those. Asked of the parts of a
+ * project's options (`ScaffoldOptions`) that a name, a kind or a number
+ * can be wrong in.
  */
-export function validateScaffoldOptions(options: ScaffoldOptions): readonly string[] {
+export function validateScaffoldOptions(options: {
+  readonly name: string;
+  readonly kind?: string;
+  readonly plural?: string;
+  readonly packageName?: string;
+  readonly port?: number;
+  readonly accent?: string;
+}): readonly string[] {
   const problems: string[] = [];
   if (!options.name || options.name.trim().length === 0) {
     problems.push("a name is required — the product's name, as a person would say it");
