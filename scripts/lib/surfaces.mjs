@@ -17,6 +17,7 @@ export const SURFACES = [
     name: "stored formats",
     paths: [
       /^packages\/core\/src\/formats\.ts$/,
+      /^packages\/core\/src\/snapshot\.ts$/,
       /^packages\/core\/src\/persistence\//,
       /^packages\/ship\/src\/(open-store|export|meta|snapshot|file-adapter|browser-adapter|migrations)\.ts$/,
     ],

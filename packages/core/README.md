@@ -65,6 +65,16 @@ Everything a Graview app declares, and the checker that verifies it.
   engine keeps a failed module for the page's life, as Chromium and Firefox
   do. Never from a server's code: workerd
   refuses a script with a computed `import()` in it.
+- **A snapshot file** — `@graview/core/snapshot`: `writeSnapshot(graph)`
+  writes a header line (when it was made, records and links per kind, where
+  each kind's lines are) and then a record per line; `readSnapshot(text,
+  { kinds })` parses only the kinds asked for, `fetchSnapshot(url, { kinds })`
+  fetches only their bytes, and an old `{ nodes, edges }` file still reads.
+- **Two-way sync** — `@graview/core/sync`: `SyncEngine` over the op log, with
+  a conflict policy (`report`, `theirs`, `ours`), resources the remote owns
+  (`readonly`, refused here with their `because`), links seeded from a
+  version field, and transports for Google Calendar and for a tool server
+  over MCP (`mcpClient`, `mcpDoor`, `doorClient`, `mcpRemote`).
 - **The city** — `@graview/core/scene`: `sceneThumbnail` draws a document
   (or an app) as the Scene draws it from altitude — the same districts on
   the same map, in their hues — as one SVG string, with no DOM, for a host
