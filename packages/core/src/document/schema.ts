@@ -288,17 +288,19 @@ export const PagesSpec = z.looseObject({
   hide: z.optional(z.array(z.string())),
   first: z.optional(z.string()),
   /* The places that stand on the bar beside Home (FR-145, ranked): kinds by name or plural, pictures by title. */
-  primary: z.optional(z.array(z.string().check(z.minLength(1), z.maxLength(80))).check(z.maxLength(40))),
+  primary: z.optional(some(str(1, 80), undefined, 40)),
   /*
    * What the bar's switch calls the scene and the pages (FR-137); "Scene" and "Pages" when unsaid.
    * At most 40 characters, as `pages.overview` was (FR-132), which a stored document says for `scene`
    * (RESPELLED): a respelling never narrows what the key may hold. The bar cuts a long word, whole on hover.
    */
-  scene: z.optional(z.string().check(z.minLength(1), z.maxLength(40))),
-  pages: z.optional(z.string().check(z.minLength(1), z.maxLength(40))),
+  scene: z.optional(str(1, 40)),
+  pages: z.optional(str(1, 40)),
 });
 
 export const DocumentSpec = z.strictObject({
+  /* Where an editor finds this shape as JSON Schema (`@graview/core/document.schema.json`); the compiler reads past it. */
+  $schema: z.optional(z.string()),
   format: z.literal(FORMAT),
   formatVersion: z.literal(FORMAT_VERSION),
   name: str(1, 80),

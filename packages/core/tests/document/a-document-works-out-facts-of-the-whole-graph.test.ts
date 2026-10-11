@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { compileDocument, describeApp } from "../../src/check.js";
 import { factNames, factValues } from "../../src/blocks.js";
-import { describePlace } from "../../src/describe.js";
+import { describePlace, resolveFor } from "../../src/describe.js";
 import { appFrom, compileDocumentWithoutCheck, serializeCompiled } from "../../src/document/index.js";
 import { createSchema, defineNode, Store, z, type AnySchema, type GraviewApp, type Principal } from "../../src/index.js";
 import { checkApp } from "../../src/check.js";
@@ -104,6 +104,15 @@ describe("a fact of the whole graph", () => {
     expect(said(owner, false).text).not.toContain("The product map is proposed");
   });
 
+  it("is read by resolveFor as by every face: the home's blocks, and blocks of a product's own about a record, for the seat", () => {
+    const words = (blocks: readonly unknown[]) => JSON.stringify(blocks);
+    expect(words(resolveFor(store(true), owner, null, { app }))).toContain("The product map is proposed, not yet real: 2 capabilities.");
+    expect(words(resolveFor(store(true), guest, null, { app }))).toContain("0 capabilities.");
+    const proposed = store(true);
+    const own = resolveFor(proposed, owner, proposed.graph.getNode("c1")!, { app, blocks: [{ text: "{title}: the map {if(fact('mapProposed'), 'is proposed', 'is real')}." }] });
+    expect(words(own)).toContain("Plan: the map is proposed.");
+  });
+
   it("is said beside the home to an agent, worked out for its seat, whether or not a block says it", () => {
     const result = describePlace(store(true), owner, "home", { app });
     if (!result.ok) throw new Error(result.error);
@@ -176,6 +185,10 @@ describe("graview check, of a document's facts", () => {
     expect(said).toContain("error:fact-unknown:rules.r.require");
     expect(said).toContain("error:fact-unknown:views.home.0.when");
     expect(said).toContain("error:fact-unknown:kinds.capability.computed.mapReady");
+  });
+
+  it("refuses facts that work each other out in a circle", () => {
+    expect(codes({ computed: { a: "fact('b') + 1", b: "fact('a') + 1" } })).toContain("error:computed-cycle:computed.a");
   });
 
   it("warns at work that grows with the square of the graph, and refuses the cube", () => {

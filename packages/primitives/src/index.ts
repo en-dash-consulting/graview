@@ -134,8 +134,8 @@ export type { Brand, Scheme, ThemeCssOptions, ThemeTokens } from "./theme.js";
 // Generic views for every cell, derived from the declaration.
 export { hueFor, registerDefaultViews } from "./default-views.js";
 // Views as data (FR-03), and the default for a cell drawn inside a view of your own (FR-36).
-export { compileBlocks, HeadingsUnder, HomeLine, MAX_LIST_DEPTH, pageSays, registerViewSpecs, safeHref, sayNumber, SpecBlocks, SpecLinks, SpecPlace, SpecView, SPEC_VIEW_CSS, useSpecContext } from "./spec-views.js";
-export type { SpecLinkTo } from "./spec-views.js";
+export { BlockSlots, compileBlocks, HeadingsUnder, HomeLine, MAX_LIST_DEPTH, pageSays, registerViewSpecs, safeHref, sayNumber, SpecBlocks, SpecLinks, SpecPlace, SpecView, SPEC_VIEW_CSS, useSpecContext } from "./spec-views.js";
+export type { BlockSlotComponent, BlockSlotProps, ClaimedSlots, SpecLinkTo } from "./spec-views.js";
 export type { SpecBlock, SpecContext } from "./spec-views.js";
 export { DefaultView, DefaultViewElsewhere, defaultViewsOf, useDefaultElsewhere } from "./default-view.js";
 export { RecordHeadContext } from "./record-head.js";

@@ -17,13 +17,13 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The CLI — Graview docs</title>
-<meta name="description" content="graview create, check, docs, describe, lens, figure, serve and skills — what each reads and what each says.">
+<meta name="description" content="graview create, check, types, docs, describe, lens, figure, serve and skills — what each reads and what each says.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
 <meta property="og:site_name" content="Graview">
 <meta property="og:title" content="The CLI — Graview docs">
-<meta property="og:description" content="graview create, check, docs, describe, lens, figure, serve and skills — what each reads and what each says.">
+<meta property="og:description" content="graview create, check, types, docs, describe, lens, figure, serve and skills — what each reads and what each says.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://graview.dev/docs/cli.html">
 <meta property="og:image" content="https://graview.dev/og.png">
@@ -62,7 +62,7 @@ img { max-width: 100%; }
    "@type": "TechArticle",
    "@id": "https://graview.dev/docs/cli.html#article",
    "headline": "The CLI — Graview docs",
-   "description": "graview create, check, docs, describe, lens, figure, serve and skills — what each reads and what each says.",
+   "description": "graview create, check, types, docs, describe, lens, figure, serve and skills — what each reads and what each says.",
    "url": "https://graview.dev/docs/cli.html",
    "inLanguage": "en",
    "image": "https://graview.dev/og.png",
@@ -1301,6 +1301,11 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <div class="code" data-scroller aria-label="graview docs, usage"><pre><code class="language-text">graview docs &lt;entry&gt; [--out &lt;dir&gt;] [--views &lt;module&gt;]</code></pre></div>
       <p>Writes llms.txt and agents.md next to the entry, or into &lt;dir&gt;.</p>
     </section>
+    <section id="cli-doctor" aria-labelledby="h-cli-doctor">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-doctor">graview doctor</h2></div>
+      <div class="code" data-scroller aria-label="graview doctor, usage"><pre><code class="language-text">graview doctor [&lt;dir&gt;] [--document &lt;file&gt;] [--json]</code></pre></div>
+      <p>Says whether the product in &lt;dir&gt; (default .) is on one Graview release: every graview and @graview/* pin in its package.json the same version, its lockfile and its node_modules holding that version, each declaration document's formatVersion one the installed core reads, and react beside react-dom at one version (React refuses a mismatched pair at startup, and the page is blank). Each problem is said with its fix; exits 1 on any.</p>
+    </section>
     <section id="cli-figure" aria-labelledby="h-cli-figure">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-figure">graview figure</h2></div>
       <div class="code" data-scroller aria-label="graview figure, usage"><pre><code class="language-text">graview figure &lt;entry&gt; --kind &lt;kind&gt; [--name &lt;shipped&gt;]</code></pre></div>
@@ -1311,6 +1316,11 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <div class="code" data-scroller aria-label="graview lens, usage"><pre><code class="language-text">graview lens &lt;name&gt; --roles a,b,c [--binds fields|entities] [--dir &lt;dir&gt;]</code></pre></div>
       <p>Writes a lens that compiles: the role check that fails loudly, the createXLens factory, three fidelities, pick targets — and beside it a REUSE TEST in a domain the app is not about, red until you make the claim true. If you cannot make it pass, you wrote a view, and a view is a legitimate thing to have written.</p>
     </section>
+    <section id="cli-preview" aria-labelledby="h-cli-preview">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-preview">graview preview</h2></div>
+      <div class="code" data-scroller aria-label="graview preview, usage"><pre><code class="language-text">graview preview &lt;document.json&gt; [--seed &lt;file&gt;] [--port &lt;n&gt;] [--host &lt;address&gt;]</code></pre></div>
+      <p>[--data &lt;dir&gt; | --sqlite &lt;file&gt;] [--as &lt;id&gt;] [--roles a,b] Serves the store and Graview's own faces over it — the scene and Pages, with the bar — so a document and a snapshot can be looked at with no product. Nothing to build or install: the page ships with graview. The store is in memory unless --data or --sqlite name where to keep it; the page sits as a person holding every role the document declares, unless --as or --roles say who.</p>
+    </section>
     <section id="cli-serve" aria-labelledby="h-cli-serve">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-serve">graview serve</h2></div>
       <div class="code" data-scroller aria-label="graview serve, usage"><pre><code class="language-text">graview serve &lt;entry&gt; [--data &lt;dir&gt;] [--port &lt;n&gt;] [--seed &lt;file&gt;] [--sqlite &lt;file&gt;]
@@ -1318,6 +1328,11 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
     --trust-seat-headers says the network in front of it can be trusted.
 </code></pre></div>
       <p>[--host &lt;address&gt;] [--trust-seat-headers] Serves the app's store over HTTP, and live over a WebSocket at /graview/live. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back, pushed to every socket as they land. Data lives in &lt;dir&gt; (default ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and believes the seat a request names in its headers, because only this machine can reach it; on any other --host it will not start unless</p>
+    </section>
+    <section id="cli-shots" aria-labelledby="h-cli-shots">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-shots">graview shots</h2></div>
+      <div class="code" data-scroller aria-label="graview shots, usage"><pre><code class="language-text">graview shots &lt;document.json&gt; [--seed &lt;file&gt;] [--places a,b] [--out &lt;dir&gt;]</code></pre></div>
+      <p>[--scheme light|dark|both] [--width &lt;px&gt;[,&lt;px&gt;]] [--faces pages,scene] Photographs places headless to PNGs, &lt;place&gt;-&lt;scheme&gt;-&lt;width&gt;.png in &lt;dir&gt; (default ./shots): each place by its address word or title (the home, overview, a lens's name, a kind's plural) or a path such as /tasks/t1; every place when none is named. Needs Playwright, which you install beside the project (npm i -D playwright, then npx playwright install chromium).</p>
     </section>
     <section id="cli-skills" aria-labelledby="h-cli-skills">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-skills">graview skills</h2></div>
@@ -1330,6 +1345,11 @@ graview skills path            where the skill files live</code></pre></div>
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-sync">graview sync</h2></div>
       <div class="code" data-scroller aria-label="graview sync, usage"><pre><code class="language-text">graview sync-seed &lt;entry&gt; --seed &lt;file&gt; [--data &lt;dir&gt; | --sqlite &lt;file&gt;]</code></pre></div>
       <p>[--apply] [--prune] [--json] Diffs the bootstrap seed against the live store and says, as content steps, what would bring the store in step with it: records put, fields patched, ties made. Prints and exits by default; --apply lands the steps as one logged, undoable operation; --prune also drops what the seed no longer has. The seed itself is only ever read at first install — this is how default content moves afterwards, in place of deleting the store.</p>
+    </section>
+    <section id="cli-types" aria-labelledby="h-cli-types">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-types">graview types</h2></div>
+      <div class="code" data-scroller aria-label="graview types, usage"><pre><code class="language-text">graview types &lt;document.json&gt; [--out &lt;file.d.ts&gt;]</code></pre></div>
+      <p>Writes the document's kinds, fields and relations as TypeScript: each kind's record with its fields' own types (an enum's options as a union), and the Types that typedReader (@graview/core/typed) reads a store through — so a renamed field or relation fails tsc in the product that reads it. To stdout, or to --out.</p>
     </section>
 
   </main>

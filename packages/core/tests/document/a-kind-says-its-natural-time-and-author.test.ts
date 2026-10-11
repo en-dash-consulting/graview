@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { checkApp, compileDocument } from "../../src/check.js";
 import { describeApp } from "../../src/check.js";
 import { diffDocuments, editDocument, toDocument, type GraviewDocument } from "../../src/document/index.js";
-import { createSchema, defineApp, defineNode, isoDate, readableFields, z } from "../../src/index.js";
+import { createSchema, defineApp, defineNode, isoDate, readableFields, Store, z } from "../../src/index.js";
+import { describePlace, resolveFor } from "../../src/describe.js";
 
 /**
  * A KIND CAN SAY WHICH FIELD IS ITS NATURAL TIME AND WHICH ITS AUTHOR.
@@ -52,6 +53,19 @@ describe("a document kind's field roles", () => {
     const definition = compiled.app.schema.tryDefinition("commit");
     const commit = { id: "c1", kind: "commit", sha: "ab12", subject: "Ship it", author: "Nick Daniel", committedAt: "2026-10-09T12:00:00Z", lines: 40 };
     expect(readableFields(commit, definition, { glance: true, limit: 3, said: ["Ship it"] }).map((field) => field.key)).toEqual(["author", "committedAt", "sha"]);
+  });
+
+  it("lead the glance of a record a block lists, as resolveFor resolves it and the describer says it", () => {
+    const compiled = compileDocument(document(undefined, { views: { home: [{ list: "all('commit')", as: "card" }] } }));
+    if (!compiled.ok) throw new Error(JSON.stringify(compiled.findings));
+    const store = new Store({ schema: compiled.app.schema, mutations: [], snapshot: { nodes: [{ id: "c1", kind: "commit", sha: "ab12", subject: "Ship it", author: "Nick Daniel", committedAt: "2026-10-09T12:00:00Z", lines: 40 }], edges: [] } as never });
+    // The list resolves its members; what each card says is said as every face draws it, the describer's words.
+    expect(JSON.stringify(resolveFor(store, null, null, { app: compiled.app }))).toContain('"author":"Nick Daniel"');
+    const described = describePlace(store, { kind: "system" }, "home", { app: compiled.app });
+    if (!described.ok) throw new Error(described.error);
+    const said = described.description.text;
+    expect(said.indexOf("Nick Daniel")).toBeGreaterThan(-1);
+    expect(said.indexOf("Nick Daniel")).toBeLessThan(said.indexOf("ab12"));
   });
 
   it("are refused when they name no field, a `when` that is no date, or a `who` that is no name", () => {

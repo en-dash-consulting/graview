@@ -37,6 +37,14 @@ const FORBIDDEN = [
 /** Things that must BE there, or the package does not work when installed. */
 const REQUIRED = [/(^|\/)dist\/index\.js$/, /(^|\/)dist\/index\.d\.ts$/, /(^|\/)README\.md$/];
 
+/*
+ * What one package must carry besides: `graview preview` and `graview
+ * shots` serve a page built into the CLI's own tarball
+ * (scripts/build-preview-page.mjs), and a tarball packed before it was
+ * built previews nothing.
+ */
+const REQUIRED_IN = { graview: [/^dist\/preview\/index\.html$/, /^dist\/preview\/page\.js$/] };
+
 const packDir = mkdtempSync(join(tmpdir(), "graview-pack-"));
 const report = { at: new Date().toISOString(), packages: {} };
 let failures = 0;
@@ -86,7 +94,7 @@ for (const name of readdirSync(packagesDir).sort()) {
       if (rule.pattern.test(file)) forbidden.push({ file, why: rule.why });
     }
   }
-  const missing = REQUIRED.filter((rule) => !files.some((file) => rule.test(file))).map(String);
+  const missing = [...REQUIRED, ...(REQUIRED_IN[manifest.name] ?? [])].filter((rule) => !files.some((file) => rule.test(file))).map(String);
 
   /*
    * Every path an `exports` map promises has to exist in the tarball. An
@@ -138,6 +146,29 @@ for (const one of unpacked) {
   failures += 1;
   report.packages[one.name] = { ...report.packages[one.name], ok: false, readmeNamesUnexported: promised };
   process.stdout.write(`FAIL ${one.name.padEnd(22)} README names ${promised.map((name) => `\`${name}\``).join(", ")}, which no packed package exports\n`);
+}
+
+/*
+ * THE DOCUMENT'S JSON SCHEMA SHIPS WITH ITS VERSION. A document names
+ * `@graview/core/document.schema.json` in its `$schema`, so an editor
+ * checks it as it is typed: the file has to be in the tarball, parse, and
+ * say the version it was packed as — the build writes it after tsc.
+ */
+{
+  const core = unpacked.find((one) => one.name === "@graview/core");
+  const manifest = JSON.parse(readFileSync(join(core.root, "package.json"), "utf8"));
+  const problems = [];
+  if (manifest.exports?.["./document.schema.json"] !== "./dist/document.schema.json") problems.push("exports names no ./document.schema.json");
+  try {
+    const schema = JSON.parse(readFileSync(join(core.root, "dist/document.schema.json"), "utf8"));
+    if (schema.$id !== `https://unpkg.com/@graview/core@${manifest.version}/dist/document.schema.json`) problems.push(`its $id is ${schema.$id}, not the packed version's`);
+    if (schema.properties?.kinds?.additionalProperties?.additionalProperties !== false) problems.push("a kind is not closed: an unknown key would not be flagged");
+  } catch (error) {
+    problems.push(`dist/document.schema.json is not there to read (${error.message})`);
+  }
+  report.documentSchema = { ok: problems.length === 0, ...(problems.length ? { problems } : {}) };
+  if (problems.length) failures += 1;
+  process.stdout.write(`${problems.length ? "FAIL" : "ok  "} @graview/core/document.schema.json${problems.length ? ` — ${problems.join("; ")}` : ""}\n`);
 }
 
 /*

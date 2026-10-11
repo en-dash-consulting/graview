@@ -84,6 +84,8 @@ const CHAIN = [
   ["brand", "verify-brand.mjs"],
   // A document's declared lenses drawn as places on both faces, and its arrangement honored, with no view of the host's (FR-79, FR-80).
   ["declared", "verify-declared.mjs"],
+  // A document and a seed looked at with no product: `graview preview` draws both faces over the served store, `graview shots` photographs named places.
+  ["preview", "verify-preview.mjs"],
   // A selected record drawn once, its relations said in their words, a district's name in its box, on a document shaped like Cloud's workshop, in three engines (FR-141–FR-143).
   ["drawn-once", "verify-drawn-once.mjs"],
   // A record's long text keeps its paragraphs and lists, spans the record under its label, is edited in a text area, and its facts follow the declared or the page's order, in three engines (FR-146–FR-148).

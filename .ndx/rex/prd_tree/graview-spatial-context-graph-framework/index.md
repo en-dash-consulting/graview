@@ -47,9 +47,9 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A drag that starts on a kind card re-measures every connector against the DOM on every move](./a-drag-that-starts-on-a-kind-card-re.md) | completed |
 | [A kind has a figure: a declared, blueprint-style 3D drawing of the thing, drawn wherever the kind is, and an agent can draw it](./a-kind-has-a-figure-a-declared.md) | completed |
 | [A list over a relation several kinds declare sorts by a choice field of the kinds it reaches](./a-list-over-a-relation-several-kinds.md) | completed |
-| [A record page's blocks get a page's budget by default](./a-record-page-s-blocks-get-a-page-s.md) | pending |
+| [A record page's blocks get a page's budget by default](./a-record-page-s-blocks-get-a-page-s.md) | completed |
 | [A UI kit for the picture: lines, boxes and marks are declared, customisable, and set up for styles nobody has asked for yet](./a-ui-kit-for-the-picture-lines-boxes.md) | completed |
-| [graview preview: mount the default faces on a document with no product](./graview-preview-mount-the-default.md) | pending |
+| [graview preview: mount the default faces on a document with no product](./graview-preview-mount-the-default.md) | completed |
 | [Longer horizons on the calendar lens: a quarter, a year, and a span of years the app names, with the demos scheduling across them](./longer-horizons-on-the-calendar-lens-a.md) | completed |
 | [Per-kind wording on a shared relation name](./per-kind-wording-on-a-shared-relation.md) | completed |
 | [smoke-create fails on main: the scaffolded project's strip never offers a first act](./smoke-create-fails-on-main-the.md) | completed |
@@ -60,3 +60,5 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Three harnesses are failing on main and nobody is being told](./three-harnesses-are-failing-on-main.md) | completed |
 | [Two product repos drifted off the framework without anything saying so](./two-product-repos-drifted-off-the.md) | completed |
 | [verify-site fails inside the chain and passes on its own](./verify-site-fails-inside-the-chain-and.md) | completed |
+
+

@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { checkApp } from "../../src/cli/check.js";
-import { describePlace, type DescribedPart } from "../../src/describe.js";
-import { createSchema, defineApp, defineNode, Store, z, type AnySchema, type AnyGraphNode, type GraviewApp, type Principal } from "../../src/index.js";
-import { compileBlocks, fieldSpecsOf, resolveBlocks, type ResolvedBlock } from "../../src/blocks.js";
-import { diffDocuments, editDocument, formatMoney, shapesOfSchema, toDocument } from "../../src/document/index.js";
+import { describePlace, resolveFor, type DescribedPart } from "../../src/describe.js";
+import { createSchema, defineApp, defineNode, Store, z, type AnySchema, type GraviewApp, type Principal } from "../../src/index.js";
+import type { ResolvedBlock } from "../../src/blocks.js";
+import { diffDocuments, editDocument, formatMoney, toDocument } from "../../src/document/index.js";
 import { compileDocument } from "../../src/check.js";
 
 /**
@@ -27,21 +27,10 @@ function compiled(doc: unknown = lifelogics): GraviewApp {
 }
 const withBrand = (brand: unknown) => ({ ...structuredClone(lifelogics), brand });
 
-/** A card's blocks worked out for one record, with the app's money as the faces hand it over. */
-function card(app: GraviewApp, kind: string, id: string, slot: "card" | "row" = "card"): readonly ResolvedBlock[] {
+/** A card's blocks worked out for one record, with the app's money as the faces hand it over (`resolveFor`). */
+function card(app: GraviewApp, _kind: string, id: string, slot: "card" | "row" = "card"): readonly ResolvedBlock[] {
   const store = new Store<AnySchema>({ schema: app.schema as AnySchema, mutations: app.mutations ?? [], policy: app.policy!, snapshot: seed });
-  const schema = app.schema as AnySchema;
-  const spec = (app.viewSpecs as Record<string, Record<string, unknown[]>>)[kind]![slot]!;
-  return resolveBlocks(compileBlocks(spec), {
-    node: store.graph.getNode(id) as AnyGraphNode,
-    graph: store.graph as never,
-    schema,
-    kinds: shapesOfSchema(schema),
-    fields: fieldSpecsOf(schema, kind),
-    definition: schema.tryDefinition(kind) as never,
-    today: "2026-10-05",
-    ...(app.brand ? { money: app.brand } : {}),
-  });
+  return resolveFor(store, null, store.graph.getNode(id)!, { app, slot, today: "2026-10-05" });
 }
 const texts = (blocks: readonly ResolvedBlock[]) => blocks.map((block) => ("text" in block ? block.text : undefined)).filter(Boolean);
 
@@ -50,7 +39,7 @@ describe("the app's currency is said wherever a block names none", () => {
     const app = compiled();
     expect(app.brand?.currency).toBe("USD");
     // The package's card: a field shown as money, which names no currency.
-    expect(card(app, "package", "pkg-start")).toContainEqual({ t: "field", field: "net", label: "After the discount", text: "$21,000" });
+    expect(card(app, "package", "pkg-start")).toContainEqual({ key: "field.1", t: "field", field: "net", label: "After the discount", text: "$21,000" });
     // The offer's card: a figure naming USD, and {list | money} and {net | money} in a template, naming none.
     const offer = texts(card(app, "offer", "offer-workshop"));
     expect(offer).toContain("$8,400");
@@ -58,13 +47,13 @@ describe("the app's currency is said wherever a block names none", () => {
   });
 
   it("a figure that names no currency takes the app's: a package's row", () => {
-    expect(card(compiled(), "package", "pkg-start", "row")).toContainEqual({ t: "number", text: "$21,000", label: "After the discount" });
+    expect(card(compiled(), "package", "pkg-start", "row")).toContainEqual({ key: "number.1", t: "number", text: "$21,000", label: "After the discount" });
   });
 
   it("in another currency and locale, the figure, the field and the template agree, and a block's own currency wins", () => {
     const app = compiled(withBrand({ currency: "EUR", locale: "de-DE" }));
     const pkg = card(app, "package", "pkg-start");
-    expect(pkg).toContainEqual({ t: "field", field: "net", label: "After the discount", text: formatMoney(21_000, { currency: "EUR", locale: "de-DE" }) });
+    expect(pkg).toContainEqual({ key: "field.1", t: "field", field: "net", label: "After the discount", text: formatMoney(21_000, { currency: "EUR", locale: "de-DE" }) });
     expect(formatMoney(21_000, { currency: "EUR", locale: "de-DE" })).toMatch(/^21\.000\s€$/);
     const offer = texts(card(app, "offer", "offer-workshop"));
     // The offer's figure names USD, so it keeps its dollars, written for the app's locale.
@@ -75,13 +64,13 @@ describe("the app's currency is said wherever a block names none", () => {
   it("a field may name its own currency", () => {
     const doc = withBrand({ currency: "USD" });
     doc.views.package.card[2] = { field: "net", as: "money", currency: "GBP" };
-    expect(card(compiled(doc), "package", "pkg-start")).toContainEqual({ t: "field", field: "net", label: "After the discount", text: "£21,000" });
+    expect(card(compiled(doc), "package", "pkg-start")).toContainEqual({ key: "field.1", t: "field", field: "net", label: "After the discount", text: "£21,000" });
   });
 
   it("an app with no currency says sums as numbers, as before", () => {
     const doc = structuredClone(lifelogics);
     delete doc.brand;
-    expect(card(compiled(doc), "package", "pkg-start")).toContainEqual({ t: "field", field: "net", label: "After the discount", text: "21,000" });
+    expect(card(compiled(doc), "package", "pkg-start")).toContainEqual({ key: "field.1", t: "field", field: "net", label: "After the discount", text: "21,000" });
   });
 
   it("describePlace says the money the faces draw", () => {

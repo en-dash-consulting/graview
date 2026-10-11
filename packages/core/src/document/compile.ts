@@ -230,7 +230,7 @@ function validate(document: GraviewDocument): Finding[] {
     }
     if (spec.lifecycle && !spec.fields[spec.lifecycle.field]) findings.push(error("lifecycle-field", `${at}.lifecycle.field`, `${kind} has no field "${spec.lifecycle.field}"`));
     // A glance may say a computed field: the surfaces that draw a glance work it out over the seat's graph (FR-83).
-    const computedHere = (name: string) => spec.computed !== undefined && Object.prototype.hasOwnProperty.call(spec.computed, name);
+    const computedHere = (name: string) => spec.computed !== undefined && Object.hasOwn(spec.computed, name);
     for (const field of spec.glance ?? []) {
       if (!spec.fields[field] && !computedHere(field)) findings.push(error("glance-field", `${at}.glance`, `a glance at ${kind} is to say "${field}", and ${kind} has no field or computed field called that`, `use one of: ${[...Object.keys(spec.fields), ...Object.keys(spec.computed ?? {})].join(", ")}`));
     }

@@ -13,7 +13,7 @@ product imports. All fourteen packages share one version.
 
 ```
 packages/
-  graview/         graview              the one CLI: create, check, docs, describe, lens, figure, serve, skills
+  graview/         graview              the one CLI: create, check, types, docs, describe, lens, figure, serve, skills
   create-graview/  create-graview       `npm create graview` — a three-line door to `graview create`
   core/            @graview/core        schema, graph, invariants, op log, adapters, the checker, the scaffolder
   layout/          @graview/layout      positions and planes — headless, pure
@@ -70,7 +70,7 @@ These are pinned by tests, not by convention:
   (`checkApp`, `compileDocument`, `describeApp`) lives on
   `@graview/core/check`, the city and `sceneThumbnail` on `/scene`, the
   shipped drawings on `/figures`, a view's block resolver on `/blocks`,
-  a status board's reach on `/describe`, and arranging a list on `/arrange`
+  a status board's reach and `resolveFor` on `/describe`, and arranging a list on `/arrange`
   (`packages/core/tests/unit/the-main-entry-carries-only-what-a-page-draws-with.test.ts`).
   A page its host hands a compiled app imports `@graview/core/compiled`
   and nothing from `/document` up front, which would bring the compiler
@@ -140,8 +140,8 @@ pinned at 1.49.1 on purpose.
   records the change.
 - **Public API is `src/index.ts` → `exports` in `package.json`**, with the
   entries listed there (core's `./document`, `./compiled`, `./retry`, `./check`, `./scene`,
-  `./figures`, `./blocks`, `./describe`, `./arrange`, `./sync`, `./snapshot`, `./conformance`, `./scaffold`,
-  `./testing`; layout's `./view`; react's `./provider` and `./drawing`;
+  `./figures`, `./blocks`, `./describe`, `./arrange`, `./typed`, `./sync`, `./snapshot`, `./conformance`, `./scaffold`,
+  `./testing` and the `./document.schema.json` the build writes; layout's `./view`; react's `./provider` and `./drawing`;
   tools' `./frame`, `./edit`, `./suggest`, `./go`, `./draft` and `./keep`; embed's `./pages`;
   `./cli`, `./browser`, `./dev`, `./gpu`, `./sqlite` and the rest). `files` is an allowlist and
   `scripts/inspect-pack.mjs` asserts against the real tarball.

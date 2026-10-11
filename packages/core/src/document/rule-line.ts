@@ -85,7 +85,7 @@ function reader(words: LineWords) {
   const definition = (kind: Kind): Definition | undefined => (kind === null ? undefined : (schema.tryDefinition(kind) as Definition | undefined));
   const relation = (kind: Kind, key: string) => {
     const edges = definition(kind)?.edges;
-    return edges && Object.prototype.hasOwnProperty.call(edges, key) ? edges[key] : undefined;
+    return edges && Object.hasOwn(edges, key) ? edges[key] : undefined;
   };
   const farOf = (kind: Kind, key: string): Kind => {
     const to = relation(kind, key)?.to;

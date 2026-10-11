@@ -264,7 +264,7 @@ export function serializeCompiled(compiled: CompiledDocument): CompiledApp {
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
-const sameNames = (a: Readonly<Record<string, unknown>> | undefined, b: unknown) => isRecord(b) && Object.keys(a ?? {}).length === Object.keys(b).length && Object.keys(a ?? {}).every((name) => Object.prototype.hasOwnProperty.call(b, name));
+const sameNames = (a: Readonly<Record<string, unknown>> | undefined, b: unknown) => isRecord(b) && Object.keys(a ?? {}).length === Object.keys(b).length && Object.keys(a ?? {}).every((name) => Object.hasOwn(b, name));
 
 /**
  * The app a compiled document describes, built in the page without the

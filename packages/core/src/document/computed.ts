@@ -105,7 +105,8 @@ export function validateComputed(kinds: ReadonlyMap<string, ComputedKind>, at: (
 
   // ── cycles among one kind's computed fields ────────────────────────────────
   for (const [kind, exprs] of parsed) {
-    const reads = new Map([...exprs].map(([name, expr]) => [name, [...analyzeExpr(expr).names].filter((n) => exprs.has(n))]));
+    // A fact reads another as fact('<name>'); a computed field reads another bare.
+    const reads = new Map([...exprs].map(([name, expr]) => [name, (kind === WHOLE_GRAPH ? factsRead(expr) : [...analyzeExpr(expr).names]).filter((n) => exprs.has(n))]));
     const said = new Set<string>();
     for (const start of exprs.keys()) {
       const cycle = cycleFrom(start, reads);
@@ -172,6 +173,24 @@ export function withFacts(kinds: Map<string, ComputedKind>, app: Parameters<type
   return kinds;
 }
 
+/** Every `fact('<name>')` an expression reads, by name. */
+function factsRead(expr: Expr): string[] {
+  const out: string[] = [];
+  const visit = (e: Expr): void => {
+    if (e.t === "call") {
+      const first = e.args[0];
+      if (e.fn === "fact" && first?.t === "lit" && typeof first.value === "string") out.push(first.value);
+      e.args.forEach(visit);
+    } else if (e.t === "list") e.items.forEach(visit);
+    else if (e.t === "member") visit(e.object);
+    else if (e.t === "unary") visit(e.operand);
+    else if (e.t === "binary") [e.left, e.right].forEach(visit);
+    else if (e.t === "where") [e.set, e.filter].forEach(visit);
+  };
+  visit(expr);
+  return out;
+}
+
 /** A path from `start` back to itself through what each name reads, or nothing. */
 function cycleFrom(start: string, reads: ReadonlyMap<string, readonly string[]>): string[] | undefined {
   const path: string[] = [];
@@ -212,7 +231,7 @@ export function workedOutAlone(definition: { readonly fields: ReadonlySet<string
   const shape = analyzeExpr(expr);
   if (shape.edges.length > 0 || shape.sweeps.length > 0 || [...shape.functions].some((fn) => fn === "out" || fn === "in" || fn === "all")) return false;
   const fields = definition!.fields;
-  const isField = (n: string) => (fields instanceof Set ? fields.has(n) : Object.prototype.hasOwnProperty.call(fields, n));
+  const isField = (n: string) => (fields instanceof Set ? fields.has(n) : Object.hasOwn(fields, n));
   const next = new Set([...seen, name]);
   return [...shape.names].every((n) => isField(n) || workedOutAlone(definition, n, next));
 }

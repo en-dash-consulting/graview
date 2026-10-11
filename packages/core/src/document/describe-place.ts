@@ -8,11 +8,10 @@ import { fieldWords, humanizeField, isCurrent, labelOf, pageSections, pluralOf, 
 import { recordPath } from "../views/types.js";
 import { columnMoves, columnOf, statusColumns } from "../columns.js";
 import { coverageParts } from "./describe-coverage.js";
-import { compileBlocks, fieldSpecsOf, resolveBlocks, type BlockContext, type ResolvedBlock } from "./blocks.js";
+import type { ResolvedBlock } from "./blocks.js";
+import { resolveFor, type ResolveForOptions } from "./resolve-for.js";
 import { computedValues, withComputed, type ComputedRecord, type PlainComputed } from "./computed-values.js";
 import { computedOf } from "./computed.js";
-import { shapesOfSchema } from "./rules.js";
-import type { KindShape } from "./expr/evaluate.js";
 import { isInlineSvg, markHref } from "../theme/marks.js";
 
 /*
@@ -133,8 +132,6 @@ const GUTTERS = 40;
 const PHONE = 640;
 /** How deep a list's records say their own lists before they are names, as the faces draw them. */
 const MAX_LIST_DEPTH = 3;
-/** The steps a list or a figure about no one record may take: it sweeps whole kinds. */
-const SWEEP_BUDGET = 5_000;
 
 const columnsAt = (width: number) => Math.max(1, Math.floor((Math.min(width, FACE) - GUTTERS + GAP) / (CARD + GAP)));
 
@@ -150,7 +147,6 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
   const seen = store.seenBy(principal);
   const schema = seen.schema as AnySchema;
   const graph = seen.graph as unknown as GraphReader;
-  const kinds = shapesOfSchema(schema);
   const places = placesOf(app as never);
   const asked = typeof place === "string" ? place.trim() : place.slug;
   const found = typeof place === "string" ? places.find((one) => one.slug === asked || one.title === asked || one.address === asked) : places.find((one) => one.slug === place.slug && one.kind === place.kind) ?? place;
@@ -160,20 +156,8 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
   const problems: DescribedProblem[] = [];
   const views = (app.viewSpecs ?? {}) as Readonly<Record<string, { card?: readonly unknown[]; row?: readonly unknown[]; page?: readonly unknown[] }>>;
   const columns = columnsAt(width);
-  const base = (node: AnyGraphNode | null, heading: number, firstHeading?: number): BlockContext => ({
-    node,
-    graph,
-    schema,
-    kinds: kinds as ReadonlyMap<string, KindShape>,
-    fields: node ? fieldSpecsOf(schema, node.kind) : {},
-    ...(node && schema.tryDefinition(node.kind) ? { definition: schema.tryDefinition(node.kind) as BlockContext["definition"] } : {}),
-    today,
-    // Money is said as the faces say it: in the app's brand currency (FR-100).
-    ...(app.brand ? { money: app.brand } : {}),
-    heading,
-    ...(firstHeading !== undefined ? { firstHeading } : {}),
-    ...(node ? {} : { budget: SWEEP_BUDGET }),
-  });
+  // Resolved as every face resolves them (`resolveFor`): over the seat's graph, money in the app's brand currency (FR-100), a page's budget where drawn once and a card's where many.
+  const resolved = (node: AnyGraphNode | null, options: ResolveForOptions) => resolveFor(seen, null, node, { app, today, ...options });
 
   /** A record as a list draws it: its kind's card or row, or the default's. */
   const item = (node: AnyGraphNode, as: "card" | "row" | "name", depth: number): DescribedItem => {
@@ -182,11 +166,11 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     if (as === "name") return { id: node.id, kind: node.kind, title, parts: [] };
     const spec = views[node.kind]?.[as];
     if (spec) {
-      const resolved = resolveBlocks(compileBlocks(spec), base(node, 3));
-      const [first, ...rest] = resolved;
+      const said = resolved(node, { slot: as });
+      const [first, ...rest] = said;
       // A card's first title is its panel's title; a row's leads its line.
       const titled = first?.t === "title";
-      return { id: node.id, kind: node.kind, title: titled ? first.text : title, parts: say(titled ? rest : resolved, depth, `views.${node.kind}.${as}`, ` (${node.id})`, titled ? 1 : 0) };
+      return { id: node.id, kind: node.kind, title: titled ? first.text : title, parts: say(titled ? rest : said, depth, `views.${node.kind}.${as}`, ` (${node.id})`, titled ? 1 : 0) };
     }
     if (as === "row") return { id: node.id, kind: node.kind, title, parts: [] };
     // The default card: its title, and what a glance at it says (FR-39, FR-83).
@@ -266,7 +250,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     const title = labelOf(definition, record);
     described = { slug: record.id, title, kind: record.kind, address: recordPath(schema, record.kind, record.id) };
     const page = views[record.kind]?.page;
-    if (page) parts.push(...say(resolveBlocks(compileBlocks(page), base(record, 2)), 1, `views.${record.kind}.page`));
+    if (page) parts.push(...say(resolved(record, { slot: "page" }), 1, `views.${record.kind}.page`));
     const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(schema, graph, record) : record;
     // In the order and the groups its page declares (FR-148), each value as stored: a draft's paragraphs kept (FR-146).
     for (const section of pageSections(definition, readableFields(read as Record<string, unknown>, definition, { said: [title] }))) {
@@ -289,7 +273,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
       if (app.home) {
         drawnBy = "blocks";
         // On the routed face the home is the page: its first headline is the page's own h1.
-        parts = say(resolveBlocks(compileBlocks(app.home as readonly unknown[]), base(null, 2, 1)), 0, "views.home");
+        parts = say(resolved(null, {}), 0, "views.home");
       } else {
         drawnBy = "derived";
         const hidden = new Set(app.pages?.hide ?? []);
@@ -302,7 +286,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
       }
     } else if (lens?.lens === "blocks") {
       drawnBy = "lens:blocks";
-      parts = say(resolveBlocks(compileBlocks((lens.options["blocks"] as readonly unknown[]) ?? []), base(null, 2)), 0, `lenses.${lens.index}.options.blocks`);
+      parts = say(resolved(null, { blocks: (lens.options["blocks"] as readonly unknown[]) ?? [] }), 0, `lenses.${lens.index}.options.blocks`);
     } else if (lens?.lens === "columns") {
       /*
        * A STATUS BOARD (FR-97) is groups in words: each column a heading with

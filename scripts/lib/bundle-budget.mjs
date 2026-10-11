@@ -157,8 +157,11 @@ export const BUDGETS = [
     // Raised in the review after 0.1.20: the routed face says where its reader is to the others (FR-155), draws what has
     // happened on its bar with each change's way back (FR-152; the list itself behind the bar's panes, fetched with the first
     // change), and says a rule's own sentence apart from its line. 1_704 / 589 more than main. Measured at 535_766 / 190_945.
+    // Gzipped raised when a document came to work out facts of the whole graph and a kind to say its time and its author:
+    // `fact()` in the evaluator the face reads blocks with, a glance led by `who` and `when`, and each reading of a shared
+    // relation listed apart, less a list opening newest first in fewer bytes. 245 / 145 more than main. Measured at 535_746 / 191_209.
     minified: 537_200,
-    gzipped: 191_100,
+    gzipped: 191_300,
     load: "first",
   },
   {
@@ -483,12 +486,15 @@ export const BUDGETS = [
     // Raised in the review after 0.1.20: the routed face says where its reader is (FR-155) and draws what has happened on its
     // bar (FR-152), the seat's tools fetch the words before any answer (FR-159), and a seat is told a line over what it sees
     // (FR-55). 2_082 / 1_668 more than main. Measured at 1_701_696 / 535_214.
+    // Raised by what n-dx surfaced, together: a block's key and the slots a face claims by it, an empty kind folding into
+    // More, a shell keeping its bar without its places, and the embed's bar redrawn as the graph changes; the sync and
+    // the snapshot left the first load for entries of their own. Measured at 1_701_975 / 535_578.
     // Raised when a document came to work out facts of the whole graph and a kind to say its natural time and its author:
     // `fact()` in the language, the checker's judgment of facts and roles (with the studio's), a list opening newest first
     // and a timeline drawing at a kind's `when`, less a kind's computed fields judged on the page (now the checker's) and
-    // the one-relation-one-wording refusal. 3_078 / 1_373 more than main. Measured at 1_705_005 / 536_700.
-    minified: 1_705_100,
-    gzipped: 536_900,
+    // the one-relation-one-wording refusal. 3_464 / 1_513 more than main. Measured at 1_705_439 / 537_091.
+    minified: 1_705_500,
+    gzipped: 537_200,
     load: "all",
   },
   {
@@ -572,12 +578,13 @@ export const BUDGETS = [
     // Raised with the pages face's by FR-159, a showing's name as drawn and FR-154, together. Measured at 1_565_769 / 478_533.
     // And by who is here on the bar (FR-155): 98 more gzipped. Measured at 1_565_646 / 478_631.
     // And by the review after 0.1.20, with the pages face's: 1_664 / 1_446 more than main. Measured at 1_565_087 / 480_013.
+    // And by what n-dx surfaced (a block's key and its claimed slots, an empty kind folding): measured at 1_565_358 / 480_308.
     // Raised with every face's when a document came to work out facts of the whole graph and a kind to say its natural
     // time and its author: the studio carries the checker, and the checker now judges a fact as a computed field and a
     // role against its field's type (`facts-and-roles.ts`, `computedFindings`), less the one-relation-one-wording refusal
-    // and a kind's computed fields judged twice. 2_456 / 1_102 more than main. Measured at 1_567_533 / 481_093.
-    minified: 1_567_700,
-    gzipped: 481_300,
+    // and a kind's computed fields judged twice. 2_809 / 1_199 more than main. Measured at 1_568_167 / 481_507.
+    minified: 1_568_300,
+    gzipped: 481_600,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

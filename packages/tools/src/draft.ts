@@ -723,7 +723,7 @@ function blocksProblem(reading: Reading, blocks: unknown): string | undefined {
       if (!isRecord(block)) return "a block is not an object";
       const type = Object.keys(PLACE_BLOCKS).find((key) => key in block);
       if (!type) return `"${Object.keys(block)[0] ?? ""}" is not a block a place draws`;
-      const extra = Object.keys(block).find((key) => key !== type && !PLACE_BLOCKS[type]!.includes(key));
+      const extra = Object.keys(block).find((key) => key !== type && key !== "key" && !PLACE_BLOCKS[type]!.includes(key));
       if (extra) return `a ${type} block takes no "${extra}"`;
       const value = block[type];
       if (type === "list" || type === "figure" || type === "when") {

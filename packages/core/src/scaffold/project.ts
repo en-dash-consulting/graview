@@ -455,6 +455,9 @@ export default defineConfig({
      */
     alias: {
       "@graview/core/testing": framework("core/src/testing.ts"),
+      "@graview/core/typed": framework("core/src/typed.ts"),
+      // Written by the build, so it is read from dist: the framework is built first.
+      "@graview/core/document.schema.json": framework("core/dist/document.schema.json"),
       "@graview/core/blocks": framework("core/src/blocks.ts"),
       "@graview/core/arrange": framework("core/src/arrange.ts"),
       "@graview/core/lines": framework("core/src/lines.ts"),

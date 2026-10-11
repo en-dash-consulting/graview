@@ -9,6 +9,8 @@ import { openStore } from "./open-store.js";
 import { serveStore } from "./serve.js";
 import type { GraphSnapshot } from "./snapshot.js";
 import { sayStep } from "./steps.js";
+import { previewPrincipal, servePreview } from "./serve-preview.js";
+import { findPlaywright, NO_PLAYWRIGHT, shoot, shotsOf } from "./shots.js";
 import { applySteps, seedSteps } from "./sync-seed.js";
 import type { StoredMeta } from "./meta.js";
 
@@ -42,6 +44,24 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       the seed no longer has. The seed itself is only ever read at first
       install — this is how default content moves afterwards, in place of
       deleting the store.
+
+  graview preview <document.json> [--seed <file>] [--port <n>] [--host <address>]
+                  [--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b]
+      Serves the store and Graview's own faces over it — the scene and
+      Pages, with the bar — so a document and a snapshot can be looked at
+      with no product. Nothing to build or install: the page ships with
+      graview. The store is in memory unless --data or --sqlite name where
+      to keep it; the page sits as a person holding every role the document
+      declares, unless --as or --roles say who.
+
+  graview shots <document.json> [--seed <file>] [--places a,b] [--out <dir>]
+                [--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene]
+      Photographs places headless to PNGs, <place>-<scheme>-<width>.png in
+      <dir> (default ./shots): each place by its address word or title (the
+      home, overview, a lens's name, a kind's plural) or a path such as
+      /tasks/t1; every place when none is named. Needs Playwright, which you
+      install beside the project (npm i -D playwright, then npx playwright
+      install chromium).
 `;
 
 /** The same store, whichever command asked: parsed from the flags every store command shares. */
@@ -214,6 +234,149 @@ export async function syncSeed(argv: readonly string[]): Promise<number> {
     return 0;
   } finally {
     opened.close();
+  }
+}
+
+/** Where the page `graview preview` serves lives: the `graview` package hands it in, since the page ships there. */
+export interface PreviewPage {
+  readonly page: string;
+}
+
+/** The document a preview or a shots run was asked for, or the reason it cannot start. */
+function previewInput(argv: readonly string[], command: string): { readonly document: unknown } | number {
+  const file = argv[0];
+  if (!file || file.startsWith("--") || !file.endsWith(".json")) {
+    process.stderr.write(`graview ${command}: a declaration document (a .json file) is required\n\n${SERVE_USAGE}`);
+    return 2;
+  }
+  try {
+    return { document: JSON.parse(readFileSync(resolve(process.cwd(), file), "utf8")) as unknown };
+  } catch (error) {
+    process.stderr.write(`graview ${command}: cannot read ${file}: ${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+}
+
+const listOf = (said: string | undefined): string[] =>
+  (said ?? "")
+    .split(",")
+    .map((one) => one.trim())
+    .filter(Boolean);
+
+/**
+ * `graview preview` — the store and Graview's own faces over a document,
+ * for somebody with no product (`./serve-preview.ts`).
+ */
+export async function preview(argv: readonly string[], { page }: PreviewPage): Promise<number> {
+  const input = previewInput(argv, "preview");
+  if (typeof input === "number") return input;
+  const host = flag(argv, "--host") ?? "127.0.0.1";
+  const trust = seatTrust(host, argv.includes("--trust-seat-headers"));
+  if ("refuse" in trust) {
+    process.stderr.write(trust.refuse.replaceAll("graview serve", "graview preview"));
+    return 1;
+  }
+  const keeps = flag(argv, "--data") !== undefined || flag(argv, "--sqlite") !== undefined;
+  const backend = await backendFrom(argv);
+  const roles = flag(argv, "--roles");
+  const as = flag(argv, "--as");
+  let opened;
+  try {
+    opened = await servePreview({
+      document: input.document,
+      page,
+      ...(backend.seed ? { seed: backend.seed } : {}),
+      ...(keeps ? { adapter: backend.adapter, where: backend.where } : {}),
+      port: Number(flag(argv, "--port") ?? 5196),
+      host,
+      principal: previewPrincipal(input.document, { ...(as ? { as } : {}), ...(roles !== undefined ? { roles: listOf(roles) } : {}) }),
+    });
+  } catch (error) {
+    process.stderr.write(`graview preview: ${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+  const { app, served, url, principal } = opened;
+  process.stdout.write(
+    `graview preview: ${app.name} on ${url}\n` +
+      `  Pages: ${url}/   the scene: ${url}/places/overview\n` +
+      `  data: ${keeps ? `${backend.where}  (${backend.adapter.name})` : "in memory, gone when the preview stops"}\n` +
+      `  sits as ${principal.name ?? principal.id}${principal.roles?.length ? `, holding ${principal.roles.join(", ")}` : ""}\n` +
+      `  ${served.store.graph.allNodes().length} nodes. Ctrl-C stops it.\n`,
+  );
+  const stop = () => {
+    void opened.close().then(() => process.exit(0));
+  };
+  process.on("SIGINT", stop);
+  process.on("SIGTERM", stop);
+  return 0;
+}
+
+/**
+ * `graview shots` — named places photographed headless over the same
+ * preview, on a free port of its own, into PNGs (`./shots.ts`).
+ */
+export async function shots(argv: readonly string[], { page }: PreviewPage): Promise<number> {
+  const input = previewInput(argv, "shots");
+  if (typeof input === "number") return input;
+  const scheme = flag(argv, "--scheme") ?? "light";
+  if (!["light", "dark", "both"].includes(scheme)) {
+    process.stderr.write(`graview shots: --scheme is light, dark or both (got ${JSON.stringify(scheme)})\n`);
+    return 2;
+  }
+  const widths = listOf(flag(argv, "--width") ?? "1280").map(Number);
+  if (widths.some((width) => !Number.isInteger(width) || width < 200 || width > 4000)) {
+    process.stderr.write(`graview shots: --width takes widths in pixels, 200 to 4000, separated by commas\n`);
+    return 2;
+  }
+  const faces = listOf(flag(argv, "--faces") ?? "pages");
+  if (faces.length === 0 || faces.some((face) => face !== "pages" && face !== "scene")) {
+    process.stderr.write(`graview shots: --faces is pages, scene or pages,scene\n`);
+    return 2;
+  }
+  const engine = await findPlaywright();
+  if (!engine) {
+    process.stderr.write(NO_PLAYWRIGHT);
+    return 1;
+  }
+  const backend = await backendFrom(argv);
+  let opened;
+  try {
+    opened = await servePreview({ document: input.document, page, ...(backend.seed ? { seed: backend.seed } : {}), port: Number(flag(argv, "--port") ?? 0) });
+  } catch (error) {
+    process.stderr.write(`graview shots: ${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+  try {
+    const { shots: taken, unknown } = shotsOf(opened.app, listOf(flag(argv, "--places")), faces as ("pages" | "scene")[]);
+    if (unknown.length > 0) {
+      const known = shotsOf(opened.app, [], ["pages"]).shots.map((shot) => shot.name).join(", ");
+      process.stderr.write(`graview shots: ${opened.app.name} has no place called ${unknown.map((one) => JSON.stringify(one)).join(", ")}. Its places: ${known}, or a path such as /places/overview.\n`);
+      return 2;
+    }
+    const out = resolve(process.cwd(), flag(argv, "--out") ?? "shots");
+    try {
+      const files = await shoot({
+        url: opened.url,
+        shots: taken,
+        out,
+        schemes: scheme === "both" ? ["light", "dark"] : [scheme as "light" | "dark"],
+        widths,
+        engine,
+        onShot: (file) => process.stdout.write(`  ${file}\n`),
+      });
+      process.stdout.write(`graview shots: ${files.length} picture${files.length === 1 ? "" : "s"} of ${opened.app.name} in ${out}\n`);
+      return 0;
+    } catch (error) {
+      const said = error instanceof Error ? error.message : String(error);
+      process.stderr.write(
+        /Executable doesn't exist|playwright install/i.test(said)
+          ? `graview shots: Playwright is installed but its browser is not. Run: npx playwright install chromium\n`
+          : `graview shots: ${said}\n`,
+      );
+      return 1;
+    }
+  } finally {
+    await opened.close();
   }
 }
 

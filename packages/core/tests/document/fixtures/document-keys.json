@@ -1,4 +1,5 @@
 [
+  "$schema",
   "acts",
   "acts.*.allowedWhen",
   "acts.*.args",

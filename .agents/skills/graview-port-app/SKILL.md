@@ -57,6 +57,27 @@ a thing that should have been a node all along.
   90 across 9 provocations. That fixture-and-test pair is the reason anyone
   should believe a port, and the shape to copy.
 
+## If the port is a document
+
+A system that emits its own projection — an adapter writing a
+`graview-document@1` JSON and a snapshot, with a face of your own over it —
+gets the compiler's help in three places, and should take all three:
+
+1. **Name the schema.** `"$schema": "./node_modules/@graview/core/dist/document.schema.json"`
+   at the top of the document: the editor then flags an unknown key as you
+   type (a `fieldRoles` the format does not have) instead of `graview check`
+   refusing it later. The schema is generated from the compiler's own shape,
+   one per version.
+2. **Or write it in TypeScript.** `defineDocument({...})` from
+   `@graview/core/typed` returns the same JSON; a key the format lacks, an edge
+   to an undeclared kind, a glance field the kind lacks or a relation an act
+   connects that nobody declares is a type error. Expressions stay strings.
+3. **Read the store through its types.** `npx graview types n.graview.json --out src/document.d.ts`,
+   then `typedReader<Types>(store)`: `fieldOf(task, "status")` is the enum's
+   options, `edgesOf(task, "under")` the kinds it reaches. Never
+   `Record<string, unknown>` and `typeof` checks: a renamed relation must fail
+   `tsc`, not draw a blank section. Regenerate in the build so it cannot drift.
+
 ## Then find out whether it worked
 
 ```sh

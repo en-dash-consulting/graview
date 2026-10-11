@@ -115,7 +115,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     const worksOut = shape?.computed?.get(name);
     if (worksOut) return computed(node, name, worksOut, at);
     // A record's OWN values only: `constructor` or `__proto__` is not a field of anything, and reading one would hand a template a function.
-    const own = Object.prototype.hasOwnProperty.call(node, name);
+    const own = Object.hasOwn(node, name);
     if (shape?.fields.has(name) || own) {
       const v = own ? node[name] : undefined;
       return v === undefined ? null : (v as Value);
@@ -172,7 +172,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
       case "list":
         return e.items.map((item) => run(item, subject));
       case "ident": {
-        const bound = bindings && Object.prototype.hasOwnProperty.call(bindings, e.name) ? bindings[e.name] : undefined;
+        const bound = bindings && Object.hasOwn(bindings, e.name) ? bindings[e.name] : undefined;
         if (bound !== undefined) return bound;
         if (subject) return field(subject, e.name, e.at);
         throw new ExprEvalError(`"${e.name}" means nothing in a rule over the whole graph`, e.at);

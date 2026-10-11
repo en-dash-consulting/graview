@@ -177,7 +177,12 @@ from `@graview/render/gpu`; there is no URL switch) — never a requirement.
 
 ```sh
 pnpm verify        # typecheck, tests, build, graview check
+graview doctor     # one Graview release in pins, lockfile, node_modules, documents; React's pair
 ```
+
+Run the project's own `graview`, not `npx -y graview@<pin>`: inside a pnpm
+workspace that already holds the release, npx finds no bin
+(`sh: graview: command not found`).
 
 Report the real output. On a new app the useful early findings are
 `mutation-untitled`, `mutation-undescribed`, `edge-without-inverse` and

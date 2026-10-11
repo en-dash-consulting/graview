@@ -51,7 +51,9 @@ export type ListSort = string | { readonly by: string; readonly direction?: "asc
 /** A list's grouping: a choice field, with a heading per choice where its value does not say it. */
 export type ListGroup = string | { readonly by: string; readonly headings?: Readonly<Record<string, string>> };
 
-export type ViewBlock =
+/** A block of a view. Any block may say its `key`: what a face claims it by (`BlockSlots`), its own in its view. */
+export type ViewBlock = OneBlock & { readonly key?: string };
+type OneBlock =
   | { readonly title: string }
   | { readonly headline: string }
   | { readonly figure: string; readonly as?: FigureFormat; readonly currency?: string; readonly label?: string }
@@ -150,7 +152,7 @@ interface Scope {
 
 const NO_RECORD: KindNames = { field: () => false, relation: () => false, figure: false };
 const about = (scope: Scope) => scope.kind ?? "the home";
-const own = (record: object | undefined, key: string) => record !== undefined && Object.prototype.hasOwnProperty.call(record, key);
+const own = (record: object | undefined, key: string) => record !== undefined && Object.hasOwn(record, key);
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 
@@ -242,7 +244,8 @@ function oneBlock(raw: unknown, path: string, depth: number, scope: Scope): void
     return;
   }
   const type = types[0]!;
-  for (const k of keys) if (k !== type && !BLOCK_KEYS[type]!.includes(k)) scope.findings.push(error("unknown-key", `${path}.${k}`, `"${k}" is not part of a ${type} block`, BLOCK_KEYS[type]!.length > 0 ? `a ${type} block may also say ${BLOCK_KEYS[type]!.map((x) => `"${x}"`).join(", ")}` : `a ${type} block says nothing else`));
+  // A block's `key` is what a face claims it by: any block may say one, and the check holds it (`viewKeys`).
+  for (const k of keys) if (k !== type && k != "key" && !BLOCK_KEYS[type]!.includes(k)) scope.findings.push(error("unknown-key", `${path}.${k}`, `"${k}" is not part of a ${type} block`, BLOCK_KEYS[type]!.length > 0 ? `a ${type} block may also say ${BLOCK_KEYS[type]!.map((x) => `"${x}"`).join(", ")}` : `a ${type} block says nothing else`));
   const value = raw[type];
   switch (type) {
     case "title":
@@ -463,6 +466,35 @@ function label(value: unknown, path: string, scope: Scope): void {
 }
 
 /**
+ * EVERY BLOCK OF EVERY VIEW, nested ones after their own: each kind's slots
+ * (a document's `views` or a declaration's `viewSpecs` at `at`), the home
+ * and each blocks lens, handed to `visit` with its path and the view it is
+ * in. What the check asks of blocks beyond their vocabulary walks this.
+ */
+function eachBlock(views: unknown, at: string, home: unknown, lenses: unknown, visit: (raw: Record<string, unknown>, path: string, view: string) => void): void {
+  const blocks = (list: unknown, path: string, view: string): void => {
+    if (!Array.isArray(list)) return;
+    list.forEach((raw: unknown, i) => {
+      if (!isObject(raw)) return;
+      const where = `${path}.${i}`;
+      visit(raw, where, view);
+      // A list's `group` is how it is grouped, not blocks.
+      if (!("list" in raw)) blocks(raw["group"], `${where}.group`, view);
+      blocks(raw["show"], `${where}.show`, view);
+    });
+  };
+  const view = (list: unknown, path: string) => blocks(list, path, path);
+  if (isObject(views)) {
+    for (const [kind, specs] of Object.entries(views)) {
+      if (Array.isArray(specs)) view(specs, `${at}.${kind}`);
+      else if (isObject(specs)) for (const slot of VIEW_SLOTS) view(specs[slot], `${at}.${kind}.${slot}`);
+    }
+  }
+  view(home, "home");
+  if (Array.isArray(lenses)) lenses.forEach((lens: unknown, i) => isObject(lens) && lens["name"] === "blocks" && isObject(lens["options"]) && view(lens["options"]["blocks"], `lenses.${i}.options.blocks`));
+}
+
+/**
  * BRACES IN WORDS THAT ARE NO TEMPLATE (FR-99). A field's label, what an
  * empty list says and a group's heading are drawn as written, so a `{name}`
  * in one would be drawn with its braces; each is said, at its block's path,
@@ -476,28 +508,39 @@ export function viewBraces(views: unknown, at: string, home?: unknown, lenses?: 
   const words = (value: unknown, path: string, what: string) => {
     if (typeof value === "string" && /[{}]/.test(value)) found.push(warning("view-braces", path, `${what} is words, not a template, so "${value}" would be drawn with its braces`, 'say it without braces, or say the value in a text block: {"text": "… {name} …"}'));
   };
-  const blocks = (list: unknown, path: string): void => {
-    if (!Array.isArray(list)) return;
-    list.forEach((raw: unknown, i) => {
-      if (!isObject(raw)) return;
-      const at = `${path}.${i}`;
-      if ("field" in raw) words(raw["label"], `${at}.label`, "a field's label");
-      if ("list" in raw) {
-        const headings = isObject(raw["group"]) ? raw["group"]["headings"] : undefined;
-        if (isObject(headings)) for (const [choice, heading] of Object.entries(headings)) words(heading, `${at}.group.headings.${choice}`, "a group's heading");
-        words(raw["empty"], `${at}.empty`, "what an empty list says");
-      } else blocks(raw["group"], `${at}.group`);
-      blocks(raw["show"], `${at}.show`);
-    });
-  };
-  if (isObject(views)) {
-    for (const [kind, specs] of Object.entries(views)) {
-      if (Array.isArray(specs)) blocks(specs, `${at}.${kind}`);
-      else if (isObject(specs)) for (const slot of VIEW_SLOTS) blocks(specs[slot], `${at}.${kind}.${slot}`);
+  eachBlock(views, at, home, lenses, (raw, at) => {
+    if ("field" in raw) words(raw["label"], `${at}.label`, "a field's label");
+    if ("list" in raw) {
+      const headings = isObject(raw["group"]) ? raw["group"]["headings"] : undefined;
+      if (isObject(headings)) for (const [choice, heading] of Object.entries(headings)) words(heading, `${at}.group.headings.${choice}`, "a group's heading");
+      words(raw["empty"], `${at}.empty`, "what an empty list says");
     }
-  }
-  blocks(home, "home");
-  if (Array.isArray(lenses)) lenses.forEach((lens: unknown, i) => isObject(lens) && lens["name"] === "blocks" && isObject(lens["options"]) && blocks(lens["options"]["blocks"], `lenses.${i}.options.blocks`));
+  });
+  return found;
+}
+
+/** What a block's own key may be: a word or a few joined by hyphens or underscores, never a dot — a derived key (`list.2`) has one, so the two never meet. */
+const BLOCK_KEY = /^[a-z][\w-]{0,63}$/i;
+
+/**
+ * A BLOCK'S KEY IS ITS OWN IN ITS VIEW. A face claims a block by its key
+ * (`BlockSlots`), so two blocks of one view that say the same key would
+ * both be claimed — the second silently drawn as the first. Each view's
+ * keys, nested ones with them, are held to one each, and to the shape a key
+ * has. Asked by the check (`compileDocument`, `checkApp`), like
+ * `viewBraces`, and not by a page compiling what its host already checked.
+ */
+export function viewKeys(views: unknown, at: string, home?: unknown, lenses?: unknown): Finding[] {
+  const found: Finding[] = [];
+  const seen = new Map<string, string>();
+  eachBlock(views, at, home, lenses, (raw, where, view) => {
+    if (!("key" in raw)) return;
+    const key = raw["key"];
+    const first = seen.get(`${view} ${String(key)}`);
+    if (typeof key !== "string" || !BLOCK_KEY.test(key)) found.push(error("view-key", `${where}.key`, 'a key is a word or a few joined by hyphens, like "works-on"'));
+    else if (first) found.push(error("view-key", `${where}.key`, `"${key}" is the key of ${first} too: a face claims a block by its key, so each in a view has its own`));
+    else seen.set(`${view} ${key}`, where);
+  });
   return found;
 }
 
