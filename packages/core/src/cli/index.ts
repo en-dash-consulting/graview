@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { GraviewApp } from "../app.js";
 import type { AnySchema } from "../schema/schema.js";
@@ -17,6 +17,7 @@ import { Store } from "../store.js";
 import { generateAgentsMd, generateLlmsTxt } from "./docs.js";
 import { figureBrief, figureFaults, FIGURE_NAMES, FIGURES } from "../schema/figures.js";
 import { scaffoldLens, validateLensOptions, type LensScaffoldOptions } from "../scaffold/lens.js";
+import { documentTypes } from "./types.js";
 
 export const USAGE = `graview — start a product, check its declaration, write its agent docs
 
@@ -43,6 +44,13 @@ ${CREATE_USAGE}
       — "run it and look" for something that cannot see.
       --place <slug|id> [--seed <snapshot.json>] [--width <px>] [--id <who>] says what one
       place shows that seat instead: headings, figures, lists and problems.
+
+  graview types <document.json> [--out <file.d.ts>]
+      Writes the document's kinds, fields and relations as TypeScript: each
+      kind's record with its fields' own types (an enum's options as a
+      union), and the Types that typedReader (@graview/core/typed) reads a
+      store through — so a renamed field or relation fails tsc in the
+      product that reads it. To stdout, or to --out.
 
   graview lens <name> --roles a,b,c [--binds fields|entities] [--dir <dir>]
       Writes a lens that compiles: the role check that fails loudly, the
@@ -226,6 +234,31 @@ export async function main(argv: string[]): Promise<number> {
   }
 
   switch (command) {
+    case "types": {
+      if (!isDocument(entry)) {
+        process.stderr.write(`graview types: ${entry} is not a declaration document — it reads a .json file in the Graview document format\n`);
+        return 2;
+      }
+      const { document, findings } = readDocument(documentIn(entry));
+      const errors = findings.filter((finding) => finding.severity === "error");
+      if (!document || errors.length > 0) {
+        process.stderr.write(`graview types: ${entry} is not a document that compiles, so it has no types to write:\n${sayFindings(errors.length > 0 ? errors : findings)}\n`);
+        return 1;
+      }
+      const text = documentTypes(document, relative(process.cwd(), resolve(process.cwd(), entry)));
+      const out = flag(argv, "--out");
+      if (!out) {
+        process.stdout.write(text);
+        return 0;
+      }
+      const path = resolve(process.cwd(), out);
+      mkdirSync(dirname(path), { recursive: true });
+      writeFileSync(path, text, "utf8");
+      const kinds = Object.keys(document.kinds).length;
+      const relations = Object.values(document.kinds).reduce((sum, kind) => sum + Object.keys(kind.edges ?? {}).length, 0);
+      process.stdout.write(`graview types: wrote ${out} — ${kinds} ${kinds === 1 ? "kind" : "kinds"} and ${relations} ${relations === 1 ? "relation" : "relations"}\n`);
+      return 0;
+    }
     case "check": {
       /*
        * A DOCUMENT IS CHECKED AS A DOCUMENT: its own findings — a rule that

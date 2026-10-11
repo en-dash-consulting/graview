@@ -141,6 +141,29 @@ for (const one of unpacked) {
 }
 
 /*
+ * THE DOCUMENT'S JSON SCHEMA SHIPS WITH ITS VERSION. A document names
+ * `@graview/core/document.schema.json` in its `$schema`, so an editor
+ * checks it as it is typed: the file has to be in the tarball, parse, and
+ * say the version it was packed as — the build writes it after tsc.
+ */
+{
+  const core = unpacked.find((one) => one.name === "@graview/core");
+  const manifest = JSON.parse(readFileSync(join(core.root, "package.json"), "utf8"));
+  const problems = [];
+  if (manifest.exports?.["./document.schema.json"] !== "./dist/document.schema.json") problems.push("exports names no ./document.schema.json");
+  try {
+    const schema = JSON.parse(readFileSync(join(core.root, "dist/document.schema.json"), "utf8"));
+    if (schema.$id !== `https://unpkg.com/@graview/core@${manifest.version}/dist/document.schema.json`) problems.push(`its $id is ${schema.$id}, not the packed version's`);
+    if (schema.properties?.kinds?.additionalProperties?.additionalProperties !== false) problems.push("a kind is not closed: an unknown key would not be flagged");
+  } catch (error) {
+    problems.push(`dist/document.schema.json is not there to read (${error.message})`);
+  }
+  report.documentSchema = { ok: problems.length === 0, ...(problems.length ? { problems } : {}) };
+  if (problems.length) failures += 1;
+  process.stdout.write(`${problems.length ? "FAIL" : "ok  "} @graview/core/document.schema.json${problems.length ? ` — ${problems.join("; ")}` : ""}\n`);
+}
+
+/*
  * WHAT A FACE COSTS A HOST'S PAGE (FR-19). Each embed entry, bundled as a
  * product would bundle it, against its budget.
  */

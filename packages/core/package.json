@@ -68,10 +68,15 @@
     "./testing": {
       "types": "./dist/testing.d.ts",
       "default": "./dist/testing.js"
-    }
+    },
+    "./typed": {
+      "types": "./dist/typed.d.ts",
+      "default": "./dist/typed.js"
+    },
+    "./document.schema.json": "./dist/document.schema.json"
   },
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b && node scripts/write-document-schema.mjs"
   },
   "dependencies": {
     "zod": "^4.6.5"

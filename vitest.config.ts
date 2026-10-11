@@ -19,6 +19,7 @@ export default defineConfig({
       ),
       // The command lines, reached by the packages that dispatch to one another.
       "@graview/core/cli": fileURLToPath(new URL("./packages/core/src/cli/index.ts", import.meta.url)),
+      "@graview/core/typed": fileURLToPath(new URL("./packages/core/src/typed.ts", import.meta.url)),
       "@graview/core/blocks": fileURLToPath(new URL("./packages/core/src/blocks.ts", import.meta.url)),
       "@graview/core/arrange": fileURLToPath(new URL("./packages/core/src/arrange.ts", import.meta.url)),
       "@graview/core/lines": fileURLToPath(new URL("./packages/core/src/lines.ts", import.meta.url)),

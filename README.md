@@ -9,7 +9,7 @@ agent tool schemas and accessibility labels from it.
 
 ```
 packages/
-  graview/     graview              THE TOOL: create, check, docs, describe, lens, figure, serve, skills
+  graview/     graview              THE TOOL: create, check, types, docs, describe, lens, figure, serve, skills
   create-graview/                   `npm create graview` — the door to `graview create`
 
   core/        @graview/core        schema, graph, invariants, op log, adapters, the checker

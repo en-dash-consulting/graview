@@ -59,6 +59,23 @@ Everything a Graview app declares, and the checker that verifies it.
   `serializeCompiled(compiled)`, and the page builds the same app with
   `appFrom` or `appFromOrCompile` from `@graview/core/compiled`, which
   carries no compiler (the format is `graview-compiled@1`).
+- **A document's shape, for an editor and a compiler** — every version
+  ships `@graview/core/document.schema.json`, the document format as JSON
+  Schema, written by the build from the shape the compiler reads. A
+  document that says
+  `"$schema": "./node_modules/@graview/core/dist/document.schema.json"`
+  (or the version's own address, its `$id`) is checked as it is typed: an
+  unknown key is underlined in the editor, not refused at run time.
+  `@graview/core/typed` is the same document in TypeScript: `defineDocument`
+  returns the JSON document unchanged, and a key the format does not have,
+  an edge to a kind nobody declares, a glance or lifecycle field the kind
+  lacks, a relation an act connects or a kind a rule is over that is not
+  declared is a type error. `graview types <document> --out document.d.ts`
+  writes a document's kinds, fields (an enum's options as a union) and
+  relations as types, `TypesOf<typeof document>` derives the same from a
+  `defineDocument`, and `typedReader<Types>(store)` reads a store through
+  them — `nodes`, `node`, `is`, `fieldOf`, `edgesOf`, `inwardOf` — so a
+  renamed field or relation fails `tsc` in the product that reads it.
 - **A part that tries again** — `@graview/core/retry`, for a page only:
   `retryingImport(() => import("./part.js"))` is a loader that asks again
   after the import failed, with a URL of its own (`?retry=<n>`) where the
