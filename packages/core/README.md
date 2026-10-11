@@ -74,8 +74,9 @@ Everything a Graview app declares, and the checker that verifies it.
   writes a document's kinds, fields (an enum's options as a union) and
   relations as types, `TypesOf<typeof document>` derives the same from a
   `defineDocument`, and `typedReader<Types>(store)` reads a store through
-  them — `nodes`, `node`, `is`, `fieldOf`, `edgesOf`, `inwardOf` — so a
-  renamed field or relation fails `tsc` in the product that reads it.
+  them (`reader.fieldOf(node, "status")`, `reader.edgesOf(node, "under")`
+  and the rest), so a renamed field or relation fails `tsc` in the product
+  that reads it.
 - **A part that tries again** — `@graview/core/retry`, for a page only:
   `retryingImport(() => import("./part.js"))` is a loader that asks again
   after the import failed, with a URL of its own (`?retry=<n>`) where the
