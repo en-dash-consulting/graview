@@ -78,7 +78,7 @@ export interface PointerMenu {
   readonly x: number;
   readonly y: number;
   /** The node or edge the gesture landed on, when it landed on one. */
-  readonly on?: string;
+  readonly on?: string | undefined;
 }
 
 /** A box in scene coordinates: where something is drawn. */
