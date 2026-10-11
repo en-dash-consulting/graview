@@ -1,5 +1,39 @@
 # @graview/embed
 
+## 0.1.22
+
+### Patch Changes
+
+- 3399521: A shell with a rail of its own keeps the bar and goes without its places: `surface("shell", Shell, { without: ["places"] })`. n-dx's face lists its places in a rail, and the only way to stop the bar listing them again was `without: ["bar"]`, which also took away the switch between the scene and the pages, Find, the standing, who is here and the person. With `"places"`, the bar keeps every one of those and names no place on the pages, on the app's own address and inside an embed handed the same registry (`pages`). The scene's pictures are the scene's, and stay.
+  
+  Compatibility: unchanged.
+- 3399521: A kind with no records folds into More until it has one. n-dx's projection of a v1 tree has no constraints, and the bar still said "Constraints" beside the work, whether `pages.primary` named it or the bar ranked it so. Now the bar does not stand an empty kind's list, or its pictures, on the row, declared and derived alike; they are in More, and the kind's first record brings them back. A graph with nothing in any kind folds none, since nothing yet says which kinds matter. The place you are on stands whatever it holds, and a list that is open keeps the row it opened over (FR-158). The embed's bar is drawn again as the graph changes, so the first record shows on the row without waiting for some other change. A kind's list on the bar is named the way every other surface names it (`pluralLabel`), so a kind with no declared plural reads "Shelf items", not "ShelfItems". The bar costs nothing more up front: the hosted page's first load is 24 bytes lighter than before.
+  
+  Compatibility: unchanged.
+- Updated dependencies [9df7ef3]
+- Updated dependencies [0f051ef]
+- Updated dependencies [f25b52c]
+- Updated dependencies [9154faf]
+- Updated dependencies [9154faf]
+- Updated dependencies [9154faf]
+- Updated dependencies [3399521]
+- Updated dependencies [0e1bafe]
+- Updated dependencies [3399521]
+- Updated dependencies [9154faf]
+- Updated dependencies [f25b52c]
+- Updated dependencies [9df7ef3]
+- Updated dependencies [0e1bafe]
+- Updated dependencies [6384676]
+- Updated dependencies [e12c94b]
+- Updated dependencies [0f051ef]
+  - @graview/core@0.1.22
+  - @graview/primitives@0.1.22
+  - @graview/tools@0.1.22
+  - @graview/pages@0.1.22
+  - @graview/layout@0.1.22
+  - @graview/react@0.1.22
+  - @graview/studio@0.1.22
+
 ## 0.1.21
 
 ### Patch Changes

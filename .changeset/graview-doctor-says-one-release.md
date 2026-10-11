@@ -1,9 +1,0 @@
----
-"@graview/core": patch
-"graview": patch
-"@graview/skills": patch
----
-
-`graview doctor` says whether a product is on one Graview release. One release is named five times in a product — the `@graview/*` pins, `graview` beside them, the lockfile, what is installed, and each document's `formatVersion` — and React's pair makes a sixth: n-dx's face met `react` 19.2.8 beside `react-dom` 19.3.0 as a blank page, since React 19.3 refuses a mismatched pair at startup. `graview doctor [<dir>] [--document <file>] [--json]` reads the product's package.json, the nearest lockfile (pnpm, npm, yarn or bun), its node_modules and every `.json` document in it that says it is a Graview declaration, and says each problem as a sentence with its fix: two releases among the pins ("pin them all to 0.1.20"), a pin the install or the lockfile does not follow, a lockfile holding a second copy, a document of a format the installed core does not read, and the React pair to pin. A pin that is a range, a package named by a path (a checkout, a workspace or a tarball), a document of an older format and a `graview` run at another release than the one pinned are said as notes. It exits 1 on any problem. `diagnose` is exported from `@graview/core/cli` for a host that wants the findings as data. The getting-started page and the `graview` README say the npx trap: inside a pnpm workspace that already holds a release in its hidden hoist, `npx -y graview@<version>` skips the install and finds no bin (`sh: graview: command not found`) — run the project's own `node_modules/.bin/graview`.
-
-Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and tool schemas are unchanged. Added: a `doctor` command and `diagnose`, `doctor` and `DOCTOR_USAGE` on `@graview/core/cli`.

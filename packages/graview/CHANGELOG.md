@@ -1,5 +1,37 @@
 # graview
 
+## 0.1.22
+
+### Patch Changes
+
+- f25b52c: A document and a snapshot can be looked at with no product. `graview serve` was the store and drew nothing, so a stranger holding a JSON document and a seed had to build a product to see them — n-dx built one only to look at its projection, and proved every change with Playwright screenshots it scripted by hand. `graview preview <document.json> --seed <snapshot.json>` serves the same store and, beside it, Graview's own faces over it: the scene and Pages, with the bar and the address bar, so a place can be linked and reloaded. Nothing is built or installed at run time: the page is bundled once at the framework's build, as Graview Cloud's shell is, into the `graview` package's `dist/preview/` (71 files, 1.2 MB unpacked, about 430 KB of the tarball), so it rides with the tool a person runs and never with a product's dependencies. The store is in memory unless `--data` or `--sqlite` say where to keep it, and the page sits as a person holding every role the document declares unless `--as` or `--roles` say who. `graview shots <document.json> [--seed] [--places home,overview,people] [--out shots] [--scheme light|dark|both] [--width 1280,390] [--faces pages,scene]` photographs places headless to `<place>-<scheme>-<width>.png`: each place by its address word or its title, or a path such as `/people/p1`, every place when none is named; a place the app has not got is refused with the ones it has. Playwright is a peer the person installs, found beside the project first; without it the command says how to install it and the browser. `servePreview` and `previewPrincipal` are exported from `@graview/ship`, and `serveStore` takes an optional `answer(request)` that is asked before the store for every request but the live wire. `pnpm verify preview` runs the built command on Graview Cloud's org document and asks a browser for both faces, a change on the served store reaching the open page, and the shots. The ship and new-app skills say when to use them.
+  
+  Compatibility: ops, stored formats, wire messages and routes, the document format, the compiled format, check finding codes and tool schemas are unchanged. Added: `serveStore({ answer })`, optional; a host that passes none serves exactly as before. The hosted page loads nothing more: no module it imports changed.
+- f25b52c: `graview doctor` says whether a product is on one Graview release. One release is named five times in a product — the `@graview/*` pins, `graview` beside them, the lockfile, what is installed, and each document's `formatVersion` — and React's pair makes a sixth: n-dx's face met `react` 19.2.8 beside `react-dom` 19.3.0 as a blank page, since React 19.3 refuses a mismatched pair at startup. `graview doctor [<dir>] [--document <file>] [--json]` reads the product's package.json, the nearest lockfile (pnpm, npm, yarn or bun), its node_modules and every `.json` document in it that says it is a Graview declaration, and says each problem as a sentence with its fix: two releases among the pins ("pin them all to 0.1.20"), a pin the install or the lockfile does not follow, a lockfile holding a second copy, a document of a format the installed core does not read, and the React pair to pin. A pin that is a range, a package named by a path (a checkout, a workspace or a tarball), a document of an older format and a `graview` run at another release than the one pinned are said as notes. It exits 1 on any problem. `diagnose` is exported from `@graview/core/cli` for a host that wants the findings as data. The getting-started page and the `graview` README say the npx trap: inside a pnpm workspace that already holds a release in its hidden hoist, `npx -y graview@<version>` skips the install and finds no bin (`sh: graview: command not found`) — run the project's own `node_modules/.bin/graview`.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and tool schemas are unchanged. Added: a `doctor` command and `diagnose`, `doctor` and `DOCTOR_USAGE` on `@graview/core/cli`.
+- Updated dependencies [9df7ef3]
+- Updated dependencies [f25b52c]
+- Updated dependencies [0f051ef]
+- Updated dependencies [f25b52c]
+- Updated dependencies [9154faf]
+- Updated dependencies [9154faf]
+- Updated dependencies [9154faf]
+- Updated dependencies [0e1bafe]
+- Updated dependencies [3399521]
+- Updated dependencies [9154faf]
+- Updated dependencies [f25b52c]
+- Updated dependencies [9df7ef3]
+- Updated dependencies [0e1bafe]
+- Updated dependencies [6384676]
+- Updated dependencies [e12c94b]
+- Updated dependencies [0f051ef]
+  - @graview/core@0.1.22
+  - @graview/tools@0.1.22
+  - @graview/ship@0.1.22
+  - @graview/skills@0.1.22
+  - @graview/guest@0.1.22
+
 ## 0.1.21
 
 ### Patch Changes
