@@ -249,7 +249,7 @@ describe("a seat may not set what it cannot see", () => {
     (doc.acts!["share-ownership"] as Record<string, unknown>)["setsOther"] = { ownership: { expr: "if(exists(feeds), 'shared', 'owned_elsewhere')" } };
     const warned = compiled(doc).findings.filter((f: Finding) => f.code === "check:act-reads-hidden-kind" && f.path === "acts.share-ownership");
     expect(warned.map((f) => f.message)).toEqual([
-      '"share-ownership" reads revenue-stream records (a value it sets on the other record), which "dasher" may run it but may not see: whether it is allowed, what it refuses with or what it writes can tell "dasher" that a revenue stream they cannot see exists.',
+      '"share-ownership" reads revenue-stream records (a value it sets on the other record), which "dasher" may run it but may not see: run by "dasher", it reads none, and is allowed, refuses and writes as though no revenue stream existed.',
     ]);
   });
 

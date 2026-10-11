@@ -4,7 +4,7 @@ import { perMember } from "../../document/expr/analyze.js";
 import { farEnd } from "../../document/far-end.js";
 import { parseTemplate } from "../../document/template-parse.js";
 import { nodeRefKinds } from "../../mutations/node-ref.js";
-import { withArticle } from "../../schema/define-node.js";
+import { humanizeField } from "../../schema/define-node.js";
 import { permits, rolesOf } from "../../permissions/policy.js";
 import type { AnySchema } from "../../schema/schema.js";
 import type { CheckContext } from "./context.js";
@@ -12,15 +12,16 @@ import type { CheckContext } from "./context.js";
 /*
  * AN ACT THAT READS WHAT ITS RUNNER MAY NOT SEE (FR-105).
  *
- * The store serves a seat only what its sights let it see, and refuses a
- * call that names a hidden record exactly as one that names nothing. What
- * it cannot hide is an act's OWN logic: a condition that counts records the
- * seat may not see, a refusal worded from one, an effect that copies a
- * value from one. Run, the act answers differently when such a record
- * exists — and the seat learns that it does. That is a documented limit
- * (docs/stability.md), and with a chat writing acts the author should be
- * told where it stands: an act, a role the policy lets run it, and a kind
- * that role may not see, read by the act.
+ * The store serves a seat only what its sights let it see, refuses a call
+ * that names a hidden record exactly as one that names nothing, and runs an
+ * act under its caller's sight: a condition that counts records the seat
+ * may not see counts none, a refusal worded from one cannot be, an effect
+ * that copies from one copies nothing. So the seat learns nothing — and the
+ * act, run by that role, judges as though those records did not exist. A
+ * rule meant to hold across them (no double booking) is an invariant's to
+ * judge. With a chat writing acts the author should be told where an act
+ * stands: an act, a role the policy lets run it, and a kind that role may
+ * not see, read by the act.
  *
  * What an act reads is worked out without running it:
  *   - a document's act: its condition (`allowedWhen`), its refusal, and the
@@ -185,8 +186,8 @@ export function checkHiddenReads<S extends AnySchema>(ctx: CheckContext<S>): voi
           where: mutation.name,
           message: argument
             ? `"${mutation.name}" asks for ${kind} records (${why}), and "${role}" may run it but may not see one, so "${role}" can never give one: the store refuses it as missing.`
-            : `"${mutation.name}" reads ${kind} records (${why}), which "${role}" may run it but may not see: whether it is allowed, what it refuses with or what it writes can tell "${role}" that ${withArticle(kind)} they cannot see exists.`,
-          fix: `Let "${role}" see ${kind}, keep "${mutation.name}" from "${role}", or have it read only what "${role}" sees.`,
+            : `"${mutation.name}" reads ${kind} records (${why}), which "${role}" may run it but may not see: run by "${role}", it reads none, and is allowed, refuses and writes as though no ${humanizeField(kind).toLowerCase()} existed.`,
+          fix: `Let "${role}" see ${kind}, keep "${mutation.name}" from "${role}", or say what must hold across every ${kind} as an invariant.`,
         });
       }
     }

@@ -690,6 +690,11 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
               const ids = finding.id.includes("->") ? finding.id.split("->").map((end, at) => (at === 0 ? end.slice(end.indexOf(":") + 1) : end)) : [finding.id];
               return ids.every((id) => !full.has(id) || seenId(id)) && !namesUnseen(finding, lens.sees);
             });
+        // An act asked about through the view runs under its sight, as it would when applied.
+        case "wouldChange":
+          return (call: Parameters<Store<S>["wouldChange"]>[0]) => target.wouldChange(call, principal);
+        case "preview":
+          return (call: Parameters<Store<S>["preview"]>[0], context?: Parameters<Store<S>["preview"]>[1], options?: Parameters<Store<S>["preview"]>[2]) => target.preview(call, context, { author: principal, ...options });
         case "seenBy":
           return (other: Principal) => seenBy(target, other);
         case "seenFor":
