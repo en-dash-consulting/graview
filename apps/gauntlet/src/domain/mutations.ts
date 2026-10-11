@@ -297,10 +297,11 @@ export const addRoom = defineMutation("add-room", {
   title: "Add a room",
   description: "Add a room the conference may use.",
   creates: ["room"],
-  input: z.object({ building: z.string().min(1).max(80), name: z.string().min(1).max(120), seats: z.number().int().min(1).max(5000) }),
+  // A box nobody need tick: a room with a step is a room, and the form must send that as a no (W-177).
+  input: z.object({ building: z.string().min(1).max(80), name: z.string().min(1).max(120), seats: z.number().int().min(1).max(5000), stepFree: z.boolean() }),
   describe: (args) => `Add ${roomKind.label!({ id: "", ...args } as never)}`,
   apply(ctx, args) {
-    ctx.addNode({ id: ctx.freshId(args.name, "room"), kind: "room", building: args.building, name: args.name, seats: args.seats });
+    ctx.addNode({ id: ctx.freshId(args.name, "room"), kind: "room", building: args.building, name: args.name, seats: args.seats, stepFree: args.stepFree });
   },
 });
 

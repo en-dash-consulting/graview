@@ -185,6 +185,8 @@ export const room = defineNode("room", {
     building: z.string().min(1).max(80),
     name: z.string().min(1).max(120),
     seats: z.number().int().min(1).max(5000),
+    /** Reached without a step: a yes or a no a form asks for as a box (W-177). */
+    stepFree: z.boolean().optional(),
   }),
   plural: "Rooms",
   label: (node) => node.name,
